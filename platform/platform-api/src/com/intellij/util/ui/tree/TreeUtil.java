@@ -85,9 +85,10 @@ public final class TreeUtil {
 
   @Nullable
   public static <T> T findObjectInPath(@Nullable TreePath path, @NotNull Class<T> clazz) {
-    for (TreePath p = path; p != null; p = p.getParentPath()) {
-      Object o = getUserObject(p.getLastPathComponent());
-      if (clazz.isInstance(o)) return (T)o;
+    while (path != null) {
+      T object = getUserObject(clazz, path.getLastPathComponent());
+      if (object != null) return object;
+      path = path.getParentPath();
     }
     return null;
   }
@@ -783,19 +784,24 @@ public final class TreeUtil {
   }
 
   public static void expandAll(@NotNull JTree tree) {
-    Object root = tree.getModel().getRoot();
-    if (root == null) return;
-    tree.expandPath(new TreePath(root));
-    int oldRowCount = 0;
-    do {
-      int rowCount = tree.getRowCount();
-      if (rowCount == oldRowCount) break;
-      oldRowCount = rowCount;
-      for (int i = 0; i < rowCount; i++) {
+    if (AbstractTreeBuilder.getBuilderFor(tree) != null) {
+      Object root = tree.getModel().getRoot();
+      if (root == null) return;
+      tree.expandPath(new TreePath(root));
+      int oldRowCount = 0;
+      do {
+        int rowCount = tree.getRowCount();
+        if (rowCount == oldRowCount) break;
+        oldRowCount = rowCount;
+        for (int i = 0; i < rowCount; i++) {
           tree.expandRow(i);
         }
-     }
-    while (true);
+      }
+      while (true);
+    }
+    else {
+      promiseExpandAll(tree);
+    }
   }
 
   /**
@@ -805,7 +811,7 @@ public final class TreeUtil {
    * @param onDone a task to run after expanding nodes
    */
   public static void expandAll(@NotNull JTree tree, @NotNull Runnable onDone) {
-    promiseExpandAll(tree).processed(path -> onDone.run());
+    promiseExpandAll(tree).onProcessed(path -> onDone.run());
   }
 
   /**
@@ -835,7 +841,7 @@ public final class TreeUtil {
    * @param onDone a task to run after expanding nodes
    */
   public static void expand(@NotNull JTree tree, int depth, @NotNull Runnable onDone) {
-    promiseExpand(tree, depth).processed(path -> onDone.run());
+    promiseExpand(tree, depth).onProcessed(path -> onDone.run());
   }
 
   /**
@@ -1004,6 +1010,12 @@ public final class TreeUtil {
   }
 
   @Nullable
+  public static <T> T getUserObject(@NotNull Class<T> type, @Nullable Object node) {
+    node = getUserObject(node);
+    return node != null && type.isInstance(node) ? type.cast(node) : null;
+  }
+
+  @Nullable
   public static TreePath getSelectedPathIfOne(@NotNull JTree tree) {
     TreePath[] paths = tree.getSelectionPaths();
     return paths != null && paths.length == 1 ? paths[0] : null;
@@ -1097,7 +1109,7 @@ public final class TreeUtil {
    * @param consumer a path consumer called on done
    */
   public static void expand(@NotNull JTree tree, @NotNull TreeVisitor visitor, @NotNull Consumer<TreePath> consumer) {
-    promiseExpand(tree, visitor).processed(path -> consumer.accept(path));
+    promiseExpand(tree, visitor).onProcessed(path -> consumer.accept(path));
   }
 
   /**
@@ -1121,7 +1133,7 @@ public final class TreeUtil {
    * @param consumer a path consumer called on done
    */
   public static void makeVisible(@NotNull JTree tree, @NotNull TreeVisitor visitor, @NotNull Consumer<TreePath> consumer) {
-    promiseMakeVisible(tree, visitor).processed(path -> consumer.accept(path));
+    promiseMakeVisible(tree, visitor).onProcessed(path -> consumer.accept(path));
   }
 
   /**
@@ -1151,7 +1163,7 @@ public final class TreeUtil {
    * @param consumer a path consumer called on done
    */
   public static void visit(@NotNull JTree tree, @NotNull TreeVisitor visitor, @NotNull Consumer<TreePath> consumer) {
-    promiseVisit(tree, visitor).processed(path -> consumer.accept(path));
+    promiseVisit(tree, visitor).onProcessed(consumer);
   }
 
   /**

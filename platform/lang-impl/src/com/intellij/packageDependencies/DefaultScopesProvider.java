@@ -31,7 +31,6 @@ public class DefaultScopesProvider extends CustomScopesProviderEx {
   public DefaultScopesProvider(@NotNull Project project) {
     myProject = project;
     myScopes = Arrays.asList(ProjectFilesScope.INSTANCE,
-                             ProblemsScope.INSTANCE,
                              getAllScope(),
                              NonProjectFilesScope.INSTANCE,
                              new ScratchesNamedScope());

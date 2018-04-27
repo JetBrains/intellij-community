@@ -70,7 +70,7 @@ internal class ExternalSystemStreamProviderFactory(private val project: Project)
   }
 
   override fun customizeStorageSpecs(component: PersistentStateComponent<*>, storageManager: StateStorageManager, stateSpec: State, storages: List<Storage>, operation: StateStorageOperation): List<Storage>? {
-    val componentManager = storageManager.componentManager
+    val componentManager = storageManager.componentManager ?: return null
     val project = componentManager as? Project ?: (componentManager as Module).project
     // we store isExternalStorageEnabled option in the project workspace file, so, for such components external storage is always disabled and not applicable
     if ((storages.size == 1 && storages.first().value == StoragePathMacros.WORKSPACE_FILE) || !project.isExternalStorageEnabled) {

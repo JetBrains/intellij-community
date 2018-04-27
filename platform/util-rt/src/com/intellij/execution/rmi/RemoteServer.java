@@ -26,6 +26,7 @@ import java.io.IOException;
 import java.lang.reflect.InvocationHandler;
 import java.lang.reflect.Method;
 import java.lang.reflect.Proxy;
+import java.net.Inet6Address;
 import java.net.InetAddress;
 import java.net.ServerSocket;
 import java.rmi.Remote;
@@ -37,6 +38,9 @@ import java.util.Hashtable;
 import java.util.Random;
 
 public class RemoteServer {
+
+  public static final String SERVER_HOSTNAME = "java.rmi.server.hostname";
+
   static {
     // Radar #5755208: Command line Java applications need a way to launch without a Dock icon.
     System.setProperty("apple.awt.UIElement", "true");
@@ -55,7 +59,7 @@ public class RemoteServer {
 
     RMIClientSocketFactory clientSocketFactory = RMISocketFactory.getDefaultSocketFactory();
     RMIServerSocketFactory serverSocketFactory = new RMIServerSocketFactory() {
-      InetAddress loopbackAddress = InetAddress.getByName("localhost");
+      InetAddress loopbackAddress = InetAddress.getByName(getLoopbackAddress());
       public ServerSocket createServerSocket(int port) throws IOException {
         return new ServerSocket(port, 0, loopbackAddress);
       }
@@ -104,7 +108,9 @@ public class RemoteServer {
     // if we are behind a firewall, if the network connection is lost, etc.
 
     // do not use domain or http address for server
-    System.setProperty("java.rmi.server.hostname", "localhost");
+    if (System.getProperty(SERVER_HOSTNAME) == null) {
+      System.setProperty(SERVER_HOSTNAME, getLoopbackAddress());
+    }
     // do not use HTTP tunnelling
     System.setProperty("java.rmi.server.disableHttp", "true");
   }
@@ -122,6 +128,16 @@ public class RemoteServer {
     if (caCert || clientCert && clientKey) {
       Security.setProperty("ssl.SocketFactory.provider", "com.intellij.execution.rmi.ssl.SslSocketFactory");
     }
+  }
+
+  @NotNull
+  private static String getLoopbackAddress() {
+    boolean ipv6 = false;
+    try {
+      ipv6 = InetAddress.getByName(null) instanceof Inet6Address;
+    }
+    catch (IOException ignore) {}
+    return ipv6 ? "::1" : "127.0.0.1";
   }
 
   @SuppressWarnings("UnusedDeclaration")

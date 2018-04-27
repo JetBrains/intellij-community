@@ -88,6 +88,7 @@ public class SmartType18CompletionTest extends LightFixtureCompletionTestCase {
   }
 
   public void testInnerArrayConstructorRef() { doTest(true); }
+  public void testAbstractArrayConstructorRef() { doTest(true); }
 
   public void testNoConstraintsWildcard() {
     doTest();
@@ -267,6 +268,11 @@ public void testConvertToObjectStream() {
   public void testNoInaccessibleConstructorRef() {
     configureByTestName();
     assertOrderedEquals(myFixture.getLookupElementStrings(), "() -> ");
+  }
+
+  public void testPreselectTreeMapWhenSortedMapExpected() {
+    configureByTestName();
+    myFixture.assertPreferredCompletionItems(2, "SortedMap", "NavigableMap", "TreeMap", "ConcurrentNavigableMap", "ConcurrentSkipListMap");
   }
 
 }

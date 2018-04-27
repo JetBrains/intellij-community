@@ -21,6 +21,7 @@ import com.intellij.psi.PsiFile;
 import com.intellij.psi.impl.PsiFileEx;
 import com.intellij.psi.impl.source.PsiFileImpl;
 import com.intellij.psi.impl.source.tree.injected.InjectedLanguageUtil;
+import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtilBase;
 import com.intellij.reference.SoftReference;
 import org.jetbrains.annotations.NotNull;
@@ -156,6 +157,9 @@ public class CompletionInitializationUtil {
   @NotNull
   private static PsiElement findCompletionPositionLeaf(OffsetsInFile offsets, int offset, PsiFile originalFile) {
     PsiElement insertedElement = offsets.getFile().findElementAt(offset);
+    if (insertedElement == null && offsets.getFile().getTextLength() == 0) {
+      insertedElement = PsiTreeUtil.getDeepestLast(offsets.getFile());
+    }
     CompletionAssertions.assertCompletionPositionPsiConsistent(offsets, offset, originalFile, insertedElement);
     return insertedElement;
   }

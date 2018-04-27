@@ -30,7 +30,7 @@ import com.intellij.vcs.log.CommitId;
 import com.intellij.vcs.log.VcsFullCommitDetails;
 import com.intellij.vcs.log.data.VcsLogData;
 import com.intellij.vcs.log.impl.CommonUiProperties;
-import com.intellij.vcs.log.util.VcsLogUtil;
+import com.intellij.vcs.log.impl.VcsLogContentUtil;
 import com.intellij.vcs.log.impl.VcsProjectLog;
 import com.intellij.vcs.log.ui.VcsLogActionPlaces;
 import com.intellij.vcs.log.ui.VcsLogInternalDataKeys;
@@ -38,6 +38,7 @@ import com.intellij.vcs.log.ui.VcsLogUiImpl;
 import com.intellij.vcs.log.ui.frame.DetailsPanel;
 import com.intellij.vcs.log.ui.table.VcsLogGraphTable;
 import com.intellij.vcs.log.util.VcsLogUiUtil;
+import com.intellij.vcs.log.util.VcsLogUtil;
 import com.intellij.vcs.log.visible.VisiblePack;
 import com.intellij.vcsUtil.VcsUtil;
 import org.jetbrains.annotations.NotNull;
@@ -85,6 +86,7 @@ public class FileHistoryPanel extends JPanel implements DataProvider, Disposable
         VcsLogUiImpl mainLogUi = VcsProjectLog.getInstance(logData.getProject()).getMainLogUi();
         if (mainLogUi != null) {
           mainLogUi.jumpToCommit(commit.getHash(), commit.getRoot());
+          VcsLogContentUtil.selectLogUi(logData.getProject(), mainLogUi);
         }
       }
     };

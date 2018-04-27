@@ -1,5 +1,4 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-
 package com.intellij.ide.actions;
 
 import com.intellij.featureStatistics.FeatureUsageTracker;
@@ -36,6 +35,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.ui.HeldDownKeyListener;
 import com.intellij.util.ui.UIUtil;
+import org.intellij.lang.annotations.JdkConstants;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -51,9 +51,9 @@ import static com.intellij.openapi.keymap.KeymapUtil.getActiveKeymapShortcuts;
 
 public class GotoActionAction extends GotoActionBase implements DumbAware {
   @Override
-  public void gotoActionPerformed(@NotNull final AnActionEvent e) {
-    final Project project = e.getData(CommonDataKeys.PROJECT);
-    final Component component = e.getData(PlatformDataKeys.CONTEXT_COMPONENT);
+  public void gotoActionPerformed(@NotNull AnActionEvent e) {
+    Project project = e.getProject();
+    Component component = e.getData(PlatformDataKeys.CONTEXT_COMPONENT);
     Editor editor = e.getData(CommonDataKeys.EDITOR);
 
     FeatureUsageTracker.getInstance().triggerFeatureUsed("navigation.popup.action");
@@ -66,7 +66,8 @@ public class GotoActionAction extends GotoActionBase implements DumbAware {
           project.putUserData(ChooseByNamePopup.CHOOSE_BY_NAME_POPUP_IN_PROJECT_KEY, null);
         }
         String enteredText = popup.getTrimmedText();
-        openOptionOrPerformAction(((GotoActionModel.MatchedValue)element).value, enteredText, project, component);
+        int modifiers = popup.isClosedByShiftEnter() ? InputEvent.SHIFT_MASK : 0;
+        openOptionOrPerformAction(((GotoActionModel.MatchedValue)element).value, enteredText, project, component, modifiers);
       }
     };
 
@@ -76,20 +77,20 @@ public class GotoActionAction extends GotoActionBase implements DumbAware {
 
   @NotNull
   private static ChooseByNamePopup createPopup(@Nullable Project project,
-                                               @NotNull final GotoActionModel model,
+                                               @NotNull GotoActionModel model,
                                                String initialText,
                                                int initialIndex,
-                                               final Component component,
-                                               final AnActionEvent event) {
+                                               Component component,
+                                               AnActionEvent event) {
     ChooseByNamePopup oldPopup = project == null ? null : project.getUserData(ChooseByNamePopup.CHOOSE_BY_NAME_POPUP_IN_PROJECT_KEY);
     if (oldPopup != null) {
       oldPopup.close(false);
     }
-    final Disposable disposable = Disposer.newDisposable();
+    Disposable disposable = Disposer.newDisposable();
     ShortcutSet altEnterShortcutSet = getActiveKeymapShortcuts(IdeActions.ACTION_SHOW_INTENTION_ACTIONS);
     KeymapManager km = KeymapManager.getInstance();
     Keymap activeKeymap = km != null ? km.getActiveKeymap() : null;
-    final ChooseByNamePopup popup = new ChooseByNamePopup(project, model, new GotoActionItemProvider(model), oldPopup, initialText, false, initialIndex) {
+    ChooseByNamePopup popup = new ChooseByNamePopup(project, model, new GotoActionItemProvider(model), oldPopup, initialText, false, initialIndex) {
       private boolean myPaintInternalInfo;
 
       @Override
@@ -220,14 +221,14 @@ public class GotoActionAction extends GotoActionBase implements DumbAware {
     if (project != null) {
       project.putUserData(ChooseByNamePopup.CHOOSE_BY_NAME_POPUP_IN_PROJECT_KEY, popup);
     }
+
     popup.addMouseClickListener(new MouseAdapter() {
       @Override
       public void mouseClicked(@NotNull MouseEvent me) {
         Object element = popup.getSelectionByPoint(me.getPoint());
-        if (element instanceof GotoActionModel.MatchedValue) {
-          if (processOptionInplace(((GotoActionModel.MatchedValue)element).value, popup, component, event)) {
-            me.consume();
-          }
+        if (element instanceof GotoActionModel.MatchedValue &&
+            processOptionInplace(((GotoActionModel.MatchedValue)element).value, popup, component, event)) {
+          me.consume();
         }
       }
     });
@@ -245,6 +246,7 @@ public class GotoActionAction extends GotoActionBase implements DumbAware {
         }
       }
     }).registerCustomShortcutSet(altEnterShortcutSet, popup.getTextField(), disposable);
+
     return popup;
   }
 
@@ -258,7 +260,7 @@ public class GotoActionAction extends GotoActionBase implements DumbAware {
     else if (value instanceof GotoActionModel.ActionWrapper) {
       AnAction action = ((GotoActionModel.ActionWrapper)value).getAction();
       if (action instanceof ToggleAction) {
-        performAction(action, component, e, () -> repaint(popup));
+        performAction(action, component, e, 0, () -> repaint(popup));
         return true;
       }
     }
@@ -271,43 +273,54 @@ public class GotoActionAction extends GotoActionBase implements DumbAware {
     }
   }
 
-  public static void openOptionOrPerformAction(@NotNull Object element,
-                                               final String enteredText,
-                                               @Nullable final Project project,
-                                               Component component) {
+  public static void openOptionOrPerformAction(@NotNull Object element, String enteredText, @Nullable Project project, Component component) {
+    openOptionOrPerformAction(element, enteredText, project, component, 0);
+  }
+
+  private static void openOptionOrPerformAction(Object element,
+                                                String enteredText,
+                                                @Nullable Project project,
+                                                Component component,
+                                                @JdkConstants.InputEventMask int modifiers) {
     if (element instanceof OptionDescription) {
       OptionDescription optionDescription = (OptionDescription)element;
-      final String configurableId = optionDescription.getConfigurableId();
+      String configurableId = optionDescription.getConfigurableId();
       Disposable disposable = project != null ? project : ApplicationManager.getApplication();
       TransactionGuard guard = TransactionGuard.getInstance();
       if (optionDescription.hasExternalEditor()) {
         guard.submitTransactionLater(disposable, () -> optionDescription.invokeInternalEditor());
-      } else {
+      }
+      else {
         guard.submitTransactionLater(disposable, () -> ShowSettingsUtilImpl.showSettingsDialog(project, configurableId, enteredText));
       }
     }
     else {
-      ApplicationManager.getApplication().invokeLater(() -> IdeFocusManager.getInstance(project).doWhenFocusSettlesDown(
-        () -> performAction(element, component, null)));
+      ApplicationManager.getApplication().invokeLater(
+        () -> IdeFocusManager.getInstance(project).doWhenFocusSettlesDown(
+          () -> performAction(element, component, null, modifiers, null)));
     }
   }
 
-  public static void performAction(Object element, @Nullable final Component component, @Nullable final AnActionEvent e) {
-    performAction(element, component, e, null);
+  public static void performAction(@NotNull Object element, @Nullable Component component, @Nullable AnActionEvent e) {
+    performAction(element, component, e, 0, null);
   }
 
-  public static void performAction(Object element,
-                                   @Nullable final Component component,
-                                   @Nullable final AnActionEvent e,
-                                   @Nullable final Runnable callback) {
+  private static void performAction(Object element,
+                                    @Nullable Component component,
+                                    @Nullable AnActionEvent e,
+                                    @JdkConstants.InputEventMask int modifiers,
+                                    @Nullable Runnable callback) {
     // element could be AnAction (SearchEverywhere)
     if (component == null) return;
-    final AnAction action = element instanceof AnAction ? (AnAction)element : ((GotoActionModel.ActionWrapper)element).getAction();
+    AnAction action = element instanceof AnAction ? (AnAction)element : ((GotoActionModel.ActionWrapper)element).getAction();
     TransactionGuard.getInstance().submitTransactionLater(ApplicationManager.getApplication(), () -> {
         DataManager instance = DataManager.getInstance();
         DataContext context = instance != null ? instance.getDataContext(component) : DataContext.EMPTY_CONTEXT;
-        InputEvent inputEvent = e == null ? null : e.getInputEvent();
+        InputEvent inputEvent = e != null ? e.getInputEvent() : null;
         AnActionEvent event = AnActionEvent.createFromAnAction(action, inputEvent, ActionPlaces.ACTION_SEARCH, context);
+        if (inputEvent == null && modifiers != 0) {
+          event = new AnActionEvent(null, event.getDataContext(), event.getPlace(), event.getPresentation(), event.getActionManager(), modifiers);
+        }
 
         if (ActionUtil.lastUpdateAndCheckDumb(action, event, false)) {
           if (action instanceof ActionGroup && ((ActionGroup)action).getChildren(event).length > 0) {

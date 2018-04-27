@@ -10,6 +10,7 @@ import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
 
 import javax.swing.*;
+import javax.swing.border.Border;
 import java.awt.*;
 
 abstract class ContentLayout {
@@ -56,19 +57,22 @@ abstract class ContentLayout {
 
   protected void updateIdLabel(BaseLabel label) {
     String title = myUi.myWindow.getStripeTitle();
-    if (myUi.myManager.getContentCount() != 1 || myUi.myManager.canCloseContents()) {
+    Border border = JBUI.Borders.empty(0, 2, 0, 8);
+    if (myUi.myManager.getContentCount() != 1) {
       title += ":";
     }
-    label.setText(title);
-    label.setBorder(JBUI.Borders.empty(0, 2, 0, 8));
-
-    if (myUi.myManager.getContentCount() == 1) {
+    else {
       final String text = myUi.myManager.getContent(0).getDisplayName();
       if (text != null && text.trim().length() > 0) {
-        label.setText(label.getText() + " ");
-        label.setBorder(JBUI.Borders.emptyLeft(2));
+        if (myUi.myManager.canCloseContents()) {
+          title += ":";
+        }
+        title += " ";
+        border = JBUI.Borders.emptyLeft(2);
       }
     }
+    label.setText(title);
+    label.setBorder(border);
 
     label.setVisible(shouldShowId());
   }

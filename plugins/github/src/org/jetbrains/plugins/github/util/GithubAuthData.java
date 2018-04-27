@@ -52,12 +52,9 @@ public class GithubAuthData {
     myUseProxy = useProxy;
   }
 
-  public static GithubAuthData createFromSettings() {
-    return GithubSettings.getInstance().getAuthData();
-  }
-
+  @Deprecated
   public static GithubAuthData createAnonymous() {
-    return createAnonymous(GithubSettings.getInstance().getHost());
+    return createAnonymous(StringUtil.notNullize(GithubSettings.getInstance().getHost()));
   }
 
   public static GithubAuthData createAnonymous(@NotNull String host) {

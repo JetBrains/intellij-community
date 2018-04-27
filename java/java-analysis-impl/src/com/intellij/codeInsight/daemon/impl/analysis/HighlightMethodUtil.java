@@ -27,8 +27,8 @@ import com.intellij.psi.impl.PsiSuperMethodImplUtil;
 import com.intellij.psi.infos.CandidateInfo;
 import com.intellij.psi.infos.MethodCandidateInfo;
 import com.intellij.psi.util.*;
-import com.intellij.refactoring.util.RefactoringChangeUtil;
 import com.intellij.ui.ColorUtil;
+import com.intellij.util.JavaPsiConstructorUtil;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.VisibilityUtil;
 import com.intellij.util.containers.MostlySingularMultiMap;
@@ -40,6 +40,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.text.MessageFormat;
 import java.util.*;
+import java.util.stream.Stream;
 
 public class HighlightMethodUtil {
   private static final QuickFixFactory QUICK_FIX_FACTORY = QuickFixFactory.getInstance();
@@ -368,7 +369,7 @@ public class HighlightMethodUtil {
     if (resolved instanceof PsiMethod && resolveResult.isValidResult()) {
       PsiElement nameElement = referenceToMethod.getReferenceNameElement();
       TextRange fixRange = getFixRange(methodCall);
-      highlightInfo = HighlightUtil.checkUnhandledExceptions(methodCall, nameElement != null ? new TextRange(nameElement.getTextOffset(), fixRange.getEndOffset()) : fixRange);
+      highlightInfo = HighlightUtil.checkUnhandledExceptions(methodCall, nameElement != null ? nameElement.getTextRange() : fixRange);
 
       if (highlightInfo == null && ((PsiMethod)resolved).hasModifierProperty(PsiModifier.STATIC)) {
         PsiClass containingClass = ((PsiMethod)resolved).getContainingClass();
@@ -889,6 +890,14 @@ public class HighlightMethodUtil {
     QuickFixAction.registerQuickFixAction(highlightInfo, fixRange, QUICK_FIX_FACTORY.createSurroundWithArrayFix(methodCall, null));
     QualifyThisArgumentFix.registerQuickFixAction(methodCandidates, methodCall, highlightInfo, fixRange);
 
+    PsiType expectedTypeByParent = PsiTypesUtil.getExpectedTypeByParent(methodCall);
+    if (expectedTypeByParent != null) {
+      PsiType methodCallType = methodCall.getType();
+      if (methodCallType != null && TypeConversionUtil.areTypesConvertible(methodCallType, expectedTypeByParent)) {
+        QuickFixAction.registerQuickFixAction(highlightInfo, QUICK_FIX_FACTORY.createAddTypeCastFix(expectedTypeByParent, methodCall));
+      }
+    }
+
     CandidateInfo[] candidates = resolveHelper.getReferencedMethodCandidates(methodCall, true);
     ChangeStringLiteralToCharInMethodCallFix.registerFixes(candidates, methodCall, highlightInfo);
   }
@@ -1274,8 +1283,11 @@ public class HighlightMethodUtil {
       if (!isExtension && !isStatic && !isPrivate) {
         description = JavaErrorMessages.message("interface.methods.cannot.have.body");
         if (languageLevel.isAtLeast(LanguageLevel.JDK_1_8)) {
-          additionalFixes.add(QUICK_FIX_FACTORY.createModifierListFix(method, PsiModifier.DEFAULT, true, false));
-          additionalFixes.add(QUICK_FIX_FACTORY.createModifierListFix(method, PsiModifier.STATIC, true, false));
+          if (Stream.of(method.findDeepestSuperMethods()).map(PsiMethod::getContainingClass)
+                    .filter(Objects::nonNull).map(PsiClass::getQualifiedName).noneMatch(CommonClassNames.JAVA_LANG_OBJECT::equals)) {
+            additionalFixes.add(QUICK_FIX_FACTORY.createModifierListFix(method, PsiModifier.DEFAULT, true, false));
+            additionalFixes.add(QUICK_FIX_FACTORY.createModifierListFix(method, PsiModifier.STATIC, true, false));
+          }
         }
       }
     }
@@ -1306,7 +1318,7 @@ public class HighlightMethodUtil {
 
   @Nullable
   static HighlightInfo checkConstructorCallMustBeFirstStatement(@NotNull PsiMethodCallExpression methodCall) {
-    if (!RefactoringChangeUtil.isSuperOrThisMethodCall(methodCall)) return null;
+    if (!JavaPsiConstructorUtil.isConstructorCall(methodCall)) return null;
     PsiElement codeBlock = methodCall.getParent().getParent();
     if (codeBlock instanceof PsiCodeBlock
         && codeBlock.getParent() instanceof PsiMethod
@@ -1346,14 +1358,7 @@ public class HighlightMethodUtil {
     PsiCodeBlock body = constructor.getBody();
     if (body == null) return null;
 
-    // check whether constructor call super(...) or this(...)
-    PsiElement element = new PsiMatcherImpl(body)
-      .firstChild(PsiMatchers.hasClass(PsiExpressionStatement.class))
-      .firstChild(PsiMatchers.hasClass(PsiMethodCallExpression.class))
-      .firstChild(PsiMatchers.hasClass(PsiReferenceExpression.class))
-      .firstChild(PsiMatchers.hasClass(PsiKeyword.class))
-      .getElement();
-    if (element != null) return null;
+    if (JavaPsiConstructorUtil.findThisOrSuperCallInConstructor(constructor) != null) return null;
     TextRange textRange = HighlightNamesUtil.getMethodDeclarationTextRange(constructor);
     PsiClassType[] handledExceptions = constructor.getThrowsList().getReferencedTypes();
     HighlightInfo info = HighlightClassUtil.checkBaseClassDefaultConstructorProblem(aClass, refCountHolder, resolveHelper, textRange, handledExceptions);

@@ -1,6 +1,6 @@
 # Stubs for pkgutil
 
-from typing import Any, Callable, Generator, IO, Iterable, List, Optional, Tuple
+from typing import Any, Callable, Generator, IO, Iterable, List, Optional, Tuple, NamedTuple
 import sys
 
 if sys.version_info >= (3,):
@@ -8,7 +8,11 @@ if sys.version_info >= (3,):
 else:
     Loader = Any
 
-_YMFNI = Generator[Tuple[Any, str, bool], None, None]
+if sys.version_info >= (3, 6):
+    ModuleInfo = NamedTuple('ModuleInfo', [('module_finder', Any), ('name', str), ('ispkg', bool)])
+    _YMFNI = Generator[ModuleInfo, None, None]
+else:
+    _YMFNI = Generator[Tuple[Any, str, bool], None, None]
 
 
 def extend_path(path: Iterable[str], name: str) -> Iterable[str]: ...

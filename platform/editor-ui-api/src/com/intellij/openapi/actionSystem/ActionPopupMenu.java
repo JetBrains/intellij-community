@@ -25,10 +25,18 @@ import javax.swing.*;
 public interface ActionPopupMenu {
   /**
    * Returns the visual presentation of the popup menu.
-   *
-   * @return visual presentation of the popup menu
    */
   JPopupMenu getComponent();
+
+  /**
+   * Returns the place where the action group is displayed (the first parameter of {@link ActionManager#createActionPopupMenu(String, ActionGroup)}.
+   */
+  String getPlace();
+
+  /**
+   * Returns the action group from which the menu was created.
+   */
+  ActionGroup getActionGroup();
 
   /**
    * Will be used for data-context retrieval.

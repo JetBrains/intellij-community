@@ -94,8 +94,7 @@
 			)?
 		)
 	article.inner =
-		(	style.elem*
-		,	common.inner.flow 
+		(	common.inner.flow
 		)
 		
 	common.elem.flow |= article.elem
@@ -120,8 +119,7 @@
 			)?
 		)
 	aside.inner =
-		(	style.elem*
-		,	common.inner.flow 
+		(	common.inner.flow
 		)
 
 	common.elem.flow |= aside.elem

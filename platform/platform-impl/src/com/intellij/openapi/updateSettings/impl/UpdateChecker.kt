@@ -61,7 +61,10 @@ object UpdateChecker {
   private val ourUpdatedPlugins = hashMapOf<String, PluginDownloader>()
   private val ourShownNotifications = MultiMap<NotificationUniqueType, Notification>()
 
-  /** A special property for making users suffer by excluding some plugins from a normal update process. Better avoid. */
+  /**
+   * Adding a plugin ID to this collection allows to exclude a plugin from a regular update check.
+   * Has no effect on non-bundled or "essential" (i.e. required for one of open projects) plugins.
+   */
   @Suppress("MemberVisibilityCanBePrivate")
   val excludedFromUpdateCheckPlugins = hashSetOf<String>()
 
@@ -152,15 +155,11 @@ object UpdateChecker {
   }
 
   private fun checkPlatformUpdate(settings: UpdateSettings): CheckForUpdateResult {
-    if (!settings.isPlatformUpdateEnabled) {
-      return CheckForUpdateResult(UpdateStrategy.State.NOTHING_LOADED, null)
-    }
-
     val updateInfo: UpdatesInfo?
     try {
       var updateUrl = Urls.newFromEncoded(updateUrl)
       if (updateUrl.scheme != URLUtil.FILE_PROTOCOL) {
-        updateUrl = prepareUpdateCheckArgs(updateUrl)
+        updateUrl = prepareUpdateCheckArgs(updateUrl, settings.packageManagerName)
       }
       LogUtil.debug(LOG, "load update xml (UPDATE_URL='%s')", updateUrl)
 
@@ -168,7 +167,10 @@ object UpdateChecker {
           .forceHttps(settings.canUseSecureConnection())
           .connect {
             try {
-              UpdatesInfo(loadElement(it.reader))
+              if (settings.isPlatformUpdateEnabled)
+                UpdatesInfo(loadElement(it.reader))
+              else
+                null
             }
             catch (e: JDOMException) {
               // corrupted content, don't bother telling user
@@ -260,11 +262,17 @@ object UpdateChecker {
     if (!excludedFromUpdateCheckPlugins.isEmpty()) {
       val required = ProjectManager.getInstance().openProjects
         .flatMap { ExternalDependenciesManager.getInstance(it).getDependencies(DependencyOnPlugin::class.java) }
-        .map { it.pluginId }
+        .map { PluginId.getId(it.pluginId) }
         .toSet()
-      excludedFromUpdateCheckPlugins
-        .filter { it !in required }
-        .forEach { updateable.remove(PluginId.getId(it)) }
+      excludedFromUpdateCheckPlugins.forEach {
+        val excluded = PluginId.getId(it)
+        if (excluded !in required) {
+          val plugin = updateable[excluded]
+          if (plugin != null && plugin.isBundled) {
+            updateable.remove(excluded)
+          }
+        }
+      }
     }
 
     return updateable
@@ -437,10 +445,13 @@ object UpdateChecker {
     ourAdditionalRequestOptions[name] = value
   }
 
-  private fun prepareUpdateCheckArgs(url: Url): Url {
+  private fun prepareUpdateCheckArgs(url: Url, packageManagerName: String?): Url {
     addUpdateRequestParameter("build", ApplicationInfo.getInstance().build.asString())
     addUpdateRequestParameter("uid", PermanentInstallationID.get())
     addUpdateRequestParameter("os", SystemInfo.OS_NAME + ' ' + SystemInfo.OS_VERSION)
+    if (packageManagerName != null) {
+      addUpdateRequestParameter(packageManagerName, "")
+    }
     if (ApplicationInfoEx.getInstanceEx().isEAP) {
       addUpdateRequestParameter("eap", "")
     }

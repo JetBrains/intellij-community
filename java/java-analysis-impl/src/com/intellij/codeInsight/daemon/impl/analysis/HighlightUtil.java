@@ -44,6 +44,7 @@ import com.intellij.psi.util.*;
 import com.intellij.refactoring.util.RefactoringChangeUtil;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.ArrayUtilRt;
+import com.intellij.util.JavaPsiConstructorUtil;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.hash.HashSet;
@@ -384,7 +385,8 @@ public class HighlightUtil extends HighlightUtilBase {
     }
     if (expression == null) return false;
     PsiType rType = expression.getType();
-    return rType != null && toType != null && TypeConversionUtil.areTypesConvertible(rType, toType);
+    PsiType castType = GenericsUtil.getVariableTypeByExpressionType(toType);
+    return rType != null && toType != null && TypeConversionUtil.areTypesConvertible(rType, toType) && toType.isAssignableFrom(castType);
   }
 
 
@@ -2055,7 +2057,7 @@ public class HighlightUtil extends HighlightUtilBase {
       type = qualifier instanceof PsiExpression ? ((PsiExpression)qualifier).getType() : null;
       referencedClass = PsiUtil.resolveClassInType(type);
 
-      boolean isSuperCall = RefactoringChangeUtil.isSuperMethodCall(expression.getParent());
+      boolean isSuperCall = JavaPsiConstructorUtil.isSuperConstructorCall(expression.getParent());
       if (resolved == null && isSuperCall) {
         if (qualifier instanceof PsiReferenceExpression) {
           resolved = ((PsiReferenceExpression)qualifier).resolve();
@@ -2150,7 +2152,7 @@ public class HighlightUtil extends HighlightUtilBase {
     PsiElement element = expression.getParent();
     while (element != null) {
       // check if expression inside super()/this() call
-      if (RefactoringChangeUtil.isSuperOrThisMethodCall(element)) {
+      if (JavaPsiConstructorUtil.isConstructorCall(element)) {
         PsiElement parentClass = new PsiMatcherImpl(element)
           .parent(PsiMatchers.hasClass(PsiExpressionStatement.class))
           .parent(PsiMatchers.hasClass(PsiCodeBlock.class))
@@ -2242,27 +2244,12 @@ public class HighlightUtil extends HighlightUtilBase {
       return createMemberReferencedError(aClass.getName() + ".this", range);
     }
     for (PsiMethod constructor : constructors) {
-      if (!isSuperCalledInConstructor(constructor)) {
+      PsiMethodCallExpression call = JavaPsiConstructorUtil.findThisOrSuperCallInConstructor(constructor);
+      if (!JavaPsiConstructorUtil.isSuperConstructorCall(call)) {
         return createMemberReferencedError(aClass.getName() + ".this", HighlightNamesUtil.getMethodDeclarationTextRange(constructor));
       }
     }
     return null;
-  }
-
-  private static boolean isSuperCalledInConstructor(@NotNull final PsiMethod constructor) {
-    final PsiCodeBlock body = constructor.getBody();
-    if (body == null) return false;
-    final PsiStatement[] statements = body.getStatements();
-    if (statements.length == 0) return false;
-    final PsiStatement statement = statements[0];
-    final PsiElement element = new PsiMatcherImpl(statement)
-      .dot(PsiMatchers.hasClass(PsiExpressionStatement.class))
-      .firstChild(PsiMatchers.hasClass(PsiMethodCallExpression.class))
-      .firstChild(PsiMatchers.hasClass(PsiReferenceExpression.class))
-      .firstChild(PsiMatchers.hasClass(PsiKeyword.class))
-      .dot(PsiMatchers.hasText(PsiKeyword.SUPER))
-      .getElement();
-    return element != null;
   }
 
   private static boolean thisOrSuperReference(@Nullable PsiExpression qualifierExpression, @NotNull PsiClass aClass) {
@@ -2564,7 +2551,7 @@ public class HighlightUtil extends HighlightUtilBase {
     return "<font color='" + color +"'><b>" + getFQName(type, true) + "</b></font>";
   }
 
-  @NotNull 
+  @NotNull
   private static String getFQName(@Nullable PsiType type, boolean longName) {
     return type == null ? "" : XmlStringUtil.escapeString(longName ? type.getInternalCanonicalText() : type.getPresentableText());
   }
@@ -2640,7 +2627,7 @@ public class HighlightUtil extends HighlightUtilBase {
     PsiElement refName = ref.getReferenceNameElement();
     if (!(refName instanceof PsiIdentifier) && !(refName instanceof PsiKeyword)) return null;
     PsiElement resolved = result.getElement();
-    
+
     PsiElement refParent = ref.getParent();
     PsiElement granny;
     if (refParent instanceof PsiReferenceExpression && (granny = refParent.getParent()) instanceof PsiMethodCallExpression) {
@@ -2911,16 +2898,19 @@ public class HighlightUtil extends HighlightUtilBase {
     INTERSECTION_CASTS(LanguageLevel.JDK_1_8, "feature.intersections.in.casts"),
     STATIC_INTERFACE_CALLS(LanguageLevel.JDK_1_8, "feature.static.interface.calls"),
     REFS_AS_RESOURCE(LanguageLevel.JDK_1_9, "feature.try.with.resources.refs"),
-    MODULES(LanguageLevel.JDK_1_9, "feature.modules");
+    MODULES(LanguageLevel.JDK_1_9, "feature.modules"),
+    RAW_LITERALS(LanguageLevel.JDK_11_PREVIEW, "feature.raw.literals");
 
-    @NotNull
     private final LanguageLevel level;
-    @NotNull
     private final String key;
 
-    Feature(@NotNull LanguageLevel level, @NotNull @PropertyKey(resourceBundle = JavaErrorMessages.BUNDLE) String key) {
+    Feature(LanguageLevel level, @PropertyKey(resourceBundle = JavaErrorMessages.BUNDLE) String key) {
       this.level = level;
       this.key = key;
+    }
+
+    private boolean isSufficient(LanguageLevel useSiteLevel) {
+      return level.isPreview() ? useSiteLevel == level : useSiteLevel.isAtLeast(level);
     }
   }
 
@@ -2929,7 +2919,7 @@ public class HighlightUtil extends HighlightUtilBase {
                                     @NotNull Feature feature,
                                     @NotNull LanguageLevel level,
                                     @NotNull PsiFile file) {
-    if (file.getManager().isInProject(file) && !level.isAtLeast(feature.level)) {
+    if (file.getManager().isInProject(file) && !feature.isSufficient(level)) {
       String message = getUnsupportedFeatureMessage(element, feature, level, file);
       HighlightInfo info = HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(element).descriptionAndTooltip(message).create();
       QuickFixAction.registerQuickFixAction(info, QUICK_FIX_FACTORY.createIncreaseLanguageLevelFix(feature.level));

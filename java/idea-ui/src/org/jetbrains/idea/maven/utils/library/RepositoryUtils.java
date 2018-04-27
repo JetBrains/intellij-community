@@ -29,6 +29,7 @@ import com.intellij.openapi.roots.JavadocOrderRootType;
 import com.intellij.openapi.roots.OrderRootType;
 import com.intellij.openapi.roots.impl.libraries.LibraryEx;
 import com.intellij.openapi.roots.libraries.Library;
+import com.intellij.openapi.roots.libraries.ui.OrderRoot;
 import com.intellij.openapi.roots.ui.configuration.libraryEditor.LibraryEditor;
 import com.intellij.openapi.roots.ui.configuration.libraryEditor.NewLibraryEditor;
 import com.intellij.openapi.util.io.FileUtil;
@@ -38,9 +39,10 @@ import com.intellij.util.PathUtil;
 import com.intellij.util.containers.JBIterable;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.concurrency.AsyncPromise;
+import org.jetbrains.concurrency.Promise;
 
 import java.util.*;
-import java.util.concurrent.ExecutionException;
 
 public class RepositoryUtils {
   private static final Logger LOG = Logger.getInstance("#org.jetbrains.idea.maven.utils.library.RepositoryUtils");
@@ -83,73 +85,51 @@ public class RepositoryUtils {
     return Collections.max(counts.entrySet(), Comparator.comparing(Map.Entry::getValue)).getKey();
   }
 
-  /**
-   * Aether-based implementation understands version specification in terms of "LATEST" and "RELEASE"
-   */
-  @Deprecated
-  public static String resolveEffectiveVersion(@NotNull Project project, @NotNull RepositoryLibraryProperties properties) {
-    String version = properties.getVersion();
-    boolean isLatest = RepositoryLibraryDescription.LatestVersionId.equals(version);
-    boolean isRelease = RepositoryLibraryDescription.ReleaseVersionId.equals(version);
-    if (isLatest || isRelease) {
-      try {
-        final Collection<String> versions =  JarRepositoryManager.getAvailableVersions(
-          project, RepositoryLibraryDescription.findDescription(properties.getGroupId(), properties.getArtifactId())
-        ).get();
-        for (String ver : versions) {
-          if (!isRelease || !ver.endsWith(RepositoryLibraryDescription.SnapshotVersionSuffix)) {
-            version = ver;
-            break;
-          }
-        }
-      }
-      catch (InterruptedException | ExecutionException e) {
-        LOG.error("Got unexpected exception while resolving artifact versions", e);
-      }
-    }
-    return version;
-  }
-
-  public static void loadDependencies(@NotNull final Project project,
-                                      @NotNull final LibraryEx library,
-                                      boolean downloadSources,
-                                      boolean downloadJavaDocs,
-                                      @Nullable String copyTo) {
+  public static Promise<List<OrderRoot>> loadDependenciesToLibrary(@NotNull final Project project,
+                                                                   @NotNull final LibraryEx library,
+                                                                   boolean downloadSources,
+                                                                   boolean downloadJavaDocs,
+                                                                   @Nullable String copyTo) {
     if (library.getKind() != RepositoryLibraryType.REPOSITORY_LIBRARY_KIND) {
-      return;
+      return Promise.resolve(Collections.emptyList());
     }
     final RepositoryLibraryProperties properties = (RepositoryLibraryProperties)library.getProperties();
     String[] annotationUrls = library.getUrls(AnnotationOrderRootType.getInstance());
 
-    JarRepositoryManager.loadDependenciesAsync(
-      project, properties, downloadSources, downloadJavaDocs, null, copyTo,
-      roots -> {
-        ApplicationManager.getApplication().invokeLater(
-          roots == null || roots.isEmpty() ?
-          () -> Notifications.Bus.notify(new Notification(
-                "Repository", "Repository library synchronization", "No files were downloaded for " + properties.getMavenId(), NotificationType.ERROR
-                ), project) :
-          () -> {
-            if (!library.isDisposed()) {
-              WriteAction.run(() -> {
-                final NewLibraryEditor editor = new NewLibraryEditor(null, properties);
-                editor.setKeepInvalidUrls(false);
-                editor.removeAllRoots();
-                editor.addRoots(roots);
-                for (String url : annotationUrls) {
-                  editor.addRoot(url, AnnotationOrderRootType.getInstance());
-                }
-                final Library.ModifiableModel model = library.getModifiableModel();
-                editor.applyTo((LibraryEx.ModifiableModelEx)model);
-                model.commit();
-              });
-            }
-          });
-      }
-    );
+    return JarRepositoryManager.loadDependenciesAsync(
+      project, properties, downloadSources, downloadJavaDocs, null, copyTo).thenAsync(roots -> {
+      AsyncPromise<List<OrderRoot>> promise = new AsyncPromise<>();
+      ApplicationManager.getApplication().invokeLater(
+        roots == null || roots.isEmpty() ?
+        () -> {
+          String message = "No files were downloaded for " + properties.getMavenId();
+          Notifications.Bus.notify(new Notification("Repository", "Repository library synchronization",
+                                                    message, NotificationType.ERROR), project);
+          promise.setError(message);
+        } :
+        () -> {
+          if (!library.isDisposed()) {
+            LOG.debug("Loaded dependencies for '" + properties.getMavenId() + "' repository library");
+            WriteAction.run(() -> {
+              final NewLibraryEditor editor = new NewLibraryEditor(null, properties);
+              editor.setKeepInvalidUrls(false);
+              editor.removeAllRoots();
+              editor.addRoots(roots);
+              for (String url : annotationUrls) {
+                editor.addRoot(url, AnnotationOrderRootType.getInstance());
+              }
+              final LibraryEx.ModifiableModelEx model = library.getModifiableModel();
+              editor.applyTo(model);
+              model.commit();
+            });
+          }
+          promise.setResult(roots);
+        });
+      return promise;
+    });
   }
 
-  public static void reloadDependencies(@NotNull final Project project, @NotNull final LibraryEx library) {
-    loadDependencies(project, library, libraryHasSources(library), libraryHasJavaDocs(library), getStorageRoot(library, project));
+  public static Promise<List<OrderRoot>> reloadDependencies(@NotNull final Project project, @NotNull final LibraryEx library) {
+    return loadDependenciesToLibrary(project, library, libraryHasSources(library), libraryHasJavaDocs(library), getStorageRoot(library, project));
   }
 }

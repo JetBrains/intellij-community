@@ -16,10 +16,9 @@
 package com.intellij.ide.ui.laf.intellij;
 
 import com.intellij.ide.ui.laf.darcula.ui.DarculaTextBorder;
-import com.intellij.ide.ui.laf.darcula.ui.TextFieldWithPopupHandlerUI;
-import com.intellij.ui.ColorPanel;
 import com.intellij.util.ui.JBInsets;
 import com.intellij.util.ui.JBUI;
+import com.intellij.util.ui.JBValue;
 
 import javax.swing.*;
 import java.awt.*;
@@ -32,14 +31,11 @@ import static com.intellij.ide.ui.laf.intellij.WinIntelliJTextFieldUI.HOVER_PROP
  * @author Konstantin Bulenkov
  */
 public class WinIntelliJTextBorder extends DarculaTextBorder {
+  static final JBValue MINIMUM_HEIGHT = new JBValue.Float(22);
+
   @Override
   public Insets getBorderInsets(Component c) {
-    if (c instanceof JTextField && c.getParent() instanceof ColorPanel) {
-      return JBUI.insets(3, 3, 2, 2).asUIResource();
-    }
-    Insets insets = JBUI.insets(4, 5).asUIResource();
-    TextFieldWithPopupHandlerUI.updateBorderInsets(c, insets);
-    return insets;
+    return JBUI.insets(1).asUIResource();
   }
 
   @Override
@@ -58,7 +54,8 @@ public class WinIntelliJTextBorder extends DarculaTextBorder {
       if (op != null) {
         Outline.valueOf(op.toString()).setGraphicsColor(g2, c.hasFocus());
         bw = 2;
-      } else {
+      }
+      else {
         //boolean editable = !(c instanceof JTextComponent) || ((JTextComponent)c).isEditable();
         if (c.hasFocus()) {
           g2.setColor(UIManager.getColor("TextField.focusedBorderColor"));
@@ -88,7 +85,8 @@ public class WinIntelliJTextBorder extends DarculaTextBorder {
       border.append(innerRect, false);
 
       g2.fill(border);
-    } finally {
+    }
+    finally {
       g2.dispose();
     }
   }

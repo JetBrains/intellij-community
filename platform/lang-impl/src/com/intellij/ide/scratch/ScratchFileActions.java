@@ -18,10 +18,12 @@ import com.intellij.openapi.fileTypes.LanguageFileType;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Condition;
+import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
+import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.ui.LayeredIcon;
 import com.intellij.util.*;
 import com.intellij.util.containers.ContainerUtil;
@@ -67,13 +69,15 @@ public class ScratchFileActions {
     public void update(@NotNull AnActionEvent e) {
       getTemplatePresentation().setText(myActionText);
 
+      Project project = e.getProject();
       String place = e.getPlace();
-      boolean enabled = e.getProject() != null &&
-                        (ActionPlaces.isMainMenuOrActionSearch(place) || ActionPlaces.isPopupPlace(place));
-      Presentation presentation = e.getPresentation();
-      presentation.setEnabledAndVisible(enabled);
+      boolean enabled = project != null && (
+        e.isFromActionToolbar() ||
+        ActionPlaces.isMainMenuOrActionSearch(place) ||
+        ActionPlaces.isPopupPlace(place) && e.getData(LangDataKeys.IDE_VIEW) != null);
 
-      updatePresentationTextAndIcon(e, presentation);
+      e.getPresentation().setEnabledAndVisible(enabled);
+      updatePresentationTextAndIcon(e, e.getPresentation());
     }
 
     @Override
@@ -153,6 +157,7 @@ public class ScratchFileActions {
     else {
       context.text = StringUtil.notNullize(e.getData(PlatformDataKeys.PREDEFINED_TEXT));
     }
+    context.ideView = e.getData(LangDataKeys.IDE_VIEW);
     return context;
   }
 
@@ -165,13 +170,23 @@ public class ScratchFileActions {
     }
     ScratchFileCreationHelper.EXTENSION.forLanguage(language).beforeCreate(project, context);
 
-    String fileName = PathUtil.makeFileName(ObjectUtils.notNull(context.filePrefix, "scratch") +
+    VirtualFile dir = context.ideView != null ? PsiUtilCore.getVirtualFile(ArrayUtil.getFirstElement(context.ideView.getDirectories())) : null;
+    RootType rootType = dir == null ? null : ScratchFileService.getInstance().getRootType(dir);
+    String relativePath = rootType != ScratchRootType.getInstance() ? "" :
+                          FileUtil.getRelativePath(ScratchFileService.getInstance().getRootPath(rootType), dir.getPath(), '/');
+
+    String fileName = (StringUtil.isEmpty(relativePath) ? "" : relativePath + "/") +
+                      PathUtil.makeFileName(ObjectUtils.notNull(context.filePrefix, "scratch") +
                                             (context.fileCounter != null ? context.fileCounter.create() : ""),
                                             context.fileExtension);
-    VirtualFile f = ScratchRootType.getInstance().createScratchFile(
+    VirtualFile file = ScratchRootType.getInstance().createScratchFile(
       project, fileName, language, context.text, context.createOption);
-    if (f != null) {
-      new OpenFileDescriptor(project, f, context.caretOffset).navigate(true);
+    if (file == null) return;
+
+    new OpenFileDescriptor(project, file, context.caretOffset).navigate(true);
+    PsiFile psiFile = PsiManager.getInstance(project).findFile(file);
+    if (context.ideView != null && psiFile != null) {
+      context.ideView.selectElement(psiFile);
     }
   }
 

@@ -16,6 +16,7 @@
 package com.intellij.idea;
 
 import com.intellij.ide.AppLifecycleListener;
+import com.intellij.ide.CommandLineProcessor;
 import com.intellij.ide.IdeEventQueue;
 import com.intellij.ide.RecentProjectsManager;
 import com.intellij.ide.plugins.PluginManager;
@@ -31,6 +32,7 @@ import com.intellij.openapi.application.ex.ApplicationManagerEx;
 import com.intellij.openapi.application.impl.ApplicationInfoImpl;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Ref;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -44,15 +46,19 @@ import com.intellij.ui.Splash;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import com.intellij.openapi.diagnostic.Logger;
 
 import javax.swing.*;
 import java.awt.*;
 import java.io.File;
+import java.util.Arrays;
 import java.util.EnumSet;
 
 public class IdeStarter extends ApplicationStarterEx {
   private Splash mySplash;
   private boolean myPerformProjectLoad;
+  static final Logger LOG = Logger.getInstance("#com.intellij.idea.IdeaApplication");
+
 
   public IdeStarter(final boolean performProjectLoad) {
     this.myPerformProjectLoad = performProjectLoad;
@@ -116,34 +122,43 @@ public class IdeStarter extends ApplicationStarterEx {
 
   @Override
   public void processExternalCommandLine(@NotNull String[] args, @Nullable String currentDirectory) {
-    IdeaApplication.LOG.info("Request to open in " + currentDirectory + " with parameters: " + StringUtil.join(args, ","));
+      LOG.info("Request to open in " + currentDirectory + " with parameters: " + StringUtil.join(args, ","));
 
-    if (args.length > 0) {
-      String filename = args[0];
-      File file = new File(currentDirectory, filename);
+      if (args.length > 0) {
+        String filename = args[0];
+        File file = new File(currentDirectory, filename);
 
-      if(file.exists()) {
-        VirtualFile virtualFile = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(file);
-        if (virtualFile != null) {
-          int line = -1;
-          if (args.length > 2 && CustomProtocolHandler.LINE_NUMBER_ARG_NAME.equals(args[1])) {
-            try {
-              line = Integer.parseInt(args[2]);
-            } catch (NumberFormatException ex) {
-              IdeaApplication.LOG.error("Wrong line number:" + args[2]);
+        if(file.exists()) {
+          VirtualFile virtualFile = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(file);
+          if (virtualFile != null) {
+            int line = -1;
+            if (args.length > 2 && CustomProtocolHandler.LINE_NUMBER_ARG_NAME.equals(args[1])) {
+              try {
+                line = Integer.parseInt(args[2]);
+              } catch (NumberFormatException ex) {
+                LOG.error("Wrong line number:" + args[2]);
+              }
             }
+            EnumSet<PlatformProjectOpenProcessor.Option> options = EnumSet.noneOf(PlatformProjectOpenProcessor.Option.class);
+            PlatformProjectOpenProcessor.doOpenProject(virtualFile, null, line, null, options);
           }
-          EnumSet<PlatformProjectOpenProcessor.Option> options = EnumSet.noneOf(PlatformProjectOpenProcessor.Option.class);
-          PlatformProjectOpenProcessor.doOpenProject(virtualFile, null, line, null, options);
         }
+        throw new IncorrectOperationException("Can't find file:" + file);
       }
-      throw new IncorrectOperationException("Can't find file:" + file);
     }
-  }
 
-  @Override
-  public void main(String[] args) {
-    SystemDock.updateMenu();
+    private static Project loadProjectFromExternalCommandLine(String[] args) {
+      Project project = null;
+      if (args != null && args.length > 0 && args[0] != null) {
+        LOG.info("IdeaApplication.loadProject");
+        project = CommandLineProcessor.processExternalCommandLine(Arrays.asList(args), null);
+      }
+      return project;
+    }
+
+    @Override
+    public void main(String[] args) {
+      SystemDock.updateMenu();
 
       // if OS has dock, RecentProjectsManager will be already created, but not all OS have dock, so, we trigger creation here to ensure that RecentProjectsManager app listener will be added
       RecentProjectsManager.getInstance();
@@ -159,8 +174,13 @@ public class IdeStarter extends ApplicationStarterEx {
       AppLifecycleListener lifecyclePublisher = app.getMessageBus().syncPublisher(AppLifecycleListener.TOPIC);
       lifecyclePublisher.appFrameCreated(args, willOpenProject);
 
-      IdeaApplication.LOG.info("App initialization took " + (System.nanoTime() - PluginManager.startupStart) / 1000000 + " ms");
+      LOG.info("App initialization took " + (System.nanoTime() - PluginManager.startupStart) / 1000000 + " ms");
       PluginManagerCore.dumpPluginClassStatistics();
+
+      // Temporary check until the jre implementation has been checked and bundled
+      if (Registry.is("ide.popup.enablePopupType")) {
+        System.setProperty("jbre.popupwindow.settype", "true");
+      }
 
       if (JetBrainsProtocolHandler.getCommand() != null || !willOpenProject.get()) {
         WelcomeFrame.showNow();
@@ -178,7 +198,7 @@ public class IdeStarter extends ApplicationStarterEx {
       }
 
       TransactionGuard.submitTransaction(app, () -> {
-        Project projectFromCommandLine = myPerformProjectLoad ? IdeaApplication.getInstance().loadProjectFromExternalCommandLine() : null;
+        Project projectFromCommandLine = myPerformProjectLoad ? loadProjectFromExternalCommandLine(args) : null;
         app.getMessageBus().syncPublisher(AppLifecycleListener.TOPIC).appStarting(projectFromCommandLine);
 
         //noinspection SSBasedInspection
@@ -187,5 +207,6 @@ public class IdeStarter extends ApplicationStarterEx {
         //safe for headless and unit test modes
         UsageTrigger.trigger(app.getName() + "app.started");
       });
-  }
+    }
+
 }

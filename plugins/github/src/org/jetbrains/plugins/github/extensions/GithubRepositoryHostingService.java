@@ -5,64 +5,69 @@ import com.intellij.dvcs.hosting.RepositoryListLoader;
 import com.intellij.dvcs.hosting.RepositoryListLoadingException;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.project.Project;
-import git4idea.DialogManager;
 import git4idea.remote.GitRepositoryHostingService;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.plugins.github.api.GithubApiTaskExecutor;
 import org.jetbrains.plugins.github.api.GithubApiUtil;
 import org.jetbrains.plugins.github.api.data.GithubRepo;
-import org.jetbrains.plugins.github.ui.GithubLoginDialog;
-import org.jetbrains.plugins.github.util.*;
+import org.jetbrains.plugins.github.authentication.GithubAuthenticationManager;
+import org.jetbrains.plugins.github.authentication.accounts.GithubAccount;
+import org.jetbrains.plugins.github.util.GithubGitHelper;
+import org.jetbrains.plugins.github.util.GithubUtil;
 
+import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
 import java.util.stream.Collectors;
 
 public class GithubRepositoryHostingService extends GitRepositoryHostingService {
+  @NotNull private final GithubAuthenticationManager myAuthenticationManager;
+  @NotNull private final GithubGitHelper myGitHelper;
+
+  public GithubRepositoryHostingService(@NotNull GithubAuthenticationManager manager,
+                                        @NotNull GithubGitHelper gitHelper) {
+    myAuthenticationManager = manager;
+    myGitHelper = gitHelper;
+  }
+
   @NotNull
   @Override
   public String getServiceDisplayName() {
-    return "GitHub";
+    return GithubUtil.SERVICE_DISPLAY_NAME;
   }
 
   @Override
   @NotNull
   public RepositoryListLoader getRepositoryListLoader(@NotNull Project project) {
     return new RepositoryListLoader() {
-      @NotNull private final GithubAuthDataHolder myAuthDataHolder = GithubAuthDataHolder.createFromSettings();
-
       @Override
       public boolean isEnabled() {
-        return AuthLevel.LOGGED.accepts(myAuthDataHolder.getAuthData());
+        return myAuthenticationManager.hasAccounts();
       }
 
       @Override
       public boolean enable() {
-        GithubAuthData currentAuthData = myAuthDataHolder.getAuthData();
-        myAuthDataHolder.runTransaction(currentAuthData, () -> {
-          GithubLoginDialog dialog = new GithubLoginDialog(project, currentAuthData, AuthLevel.LOGGED);
-          DialogManager.show(dialog);
-          if (dialog.isOK()) {
-            GithubAuthData authData = dialog.getAuthData();
-            GithubSettings.getInstance().setAuthData(authData, dialog.isSavePasswordSelected());
-            return authData;
-          }
-          return currentAuthData;
-        });
-        return isEnabled();
+        return myAuthenticationManager.requestNewAccount(project) != null;
       }
 
       @NotNull
       @Override
       public List<String> getAvailableRepositories(@NotNull ProgressIndicator progressIndicator) throws RepositoryListLoadingException {
         try {
-          return GithubUtil.runTask(project, myAuthDataHolder, progressIndicator, connection -> GithubApiUtil.getAvailableRepos(connection))
-                           .stream()
-                           .sorted(Comparator.comparing(GithubRepo::getUserName).thenComparing(GithubRepo::getName))
-                           .map(repo -> GithubUrlUtil
-                             .getCloneUrl(GithubUrlUtil.getGitHostWithoutProtocol(myAuthDataHolder.getAuthData().getHost()),
-                                          repo.getUserName(),
-                                          repo.getName()))
-                           .collect(Collectors.toList());
+          List<String> urls = new ArrayList<>();
+          for (GithubAccount account : myAuthenticationManager.getAccounts()) {
+            urls.addAll(
+              GithubApiTaskExecutor.getInstance().execute(progressIndicator, account,
+                                                          connection -> GithubApiUtil.getAvailableRepos(connection))
+                                   .stream()
+                                   .sorted(Comparator.comparing(GithubRepo::getUserName).thenComparing(GithubRepo::getName))
+                                   .map(repo -> myGitHelper.getRemoteUrl(account.getServer(),
+                                                                         repo.getUserName(),
+                                                                         repo.getName()))
+                                   .collect(Collectors.toList())
+            );
+          }
+          return urls;
         }
         catch (Exception e) {
           throw new RepositoryListLoadingException("Error connecting to Github", e);

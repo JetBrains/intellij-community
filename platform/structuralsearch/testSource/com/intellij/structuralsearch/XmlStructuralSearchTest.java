@@ -36,6 +36,17 @@ public class XmlStructuralSearchTest extends StructuralSearchTestCase {
 
     pattern = "   <td>  name  </td>   ";
     assertEquals("Ignore surrounding whitespace", 1, findMatchesCount(content, pattern, StdFileTypes.HTML));
+
+    String in = "<img src=\"foobar.jpg\" alt=\"alt\" width=\"108\" height=\"71\" style=\"display:block\" >";
+    assertEquals(1, findMatchesCount(in, "<img alt '_other+ >", StdFileTypes.HTML));
+    assertEquals(1, findMatchesCount(in, "<img '_alt:alt = \"'_value\" '_other+ >", StdFileTypes.HTML));
+    assertEquals(1, findMatchesCount(in, "<img '_name{2,100} = '_value >", StdFileTypes.HTML));
+
+    String in2 = "<input readonly>" +
+                 "<input readonly>" +
+                 "<input type=button>";
+    assertEquals("should find tags without any attributes without value", 1, findMatchesCount(in2, "<input '_name{0,0} = '_value{0,0} >", StdFileTypes.HTML));
+    assertEquals("should find tags with any attributes without value", 2, findMatchesCount(in2, "<input '_name{1,1}='_value{0,0} >", StdFileTypes.HTML));
   }
 
   public void testHtmlSearchCaseInsensitive() {
@@ -158,10 +169,10 @@ public class XmlStructuralSearchTest extends StructuralSearchTestCase {
     return PlatformTestUtil.getCommunityPath() + "/platform/structuralsearch/testData/html/";
   }
 
-  //public void testXmlSearch2() {
-  //  String s1 = "<body><p class=\"11\"> AAA </p><p class=\"22\"></p> <p> ZZZ </p> <p/> <p/> <p/> </body>";
-  //  String s2 = "<p '_a?=\"'_t:[ regex( 11 ) ]\"> 'content? </p>";
-  //
-  //  assertEquals(5,findMatchesCount(s1,s2,false,StdFileTypes.XML));
-  //}
+  public void testXmlSearch2() {
+    String s1 = "<body><p class=\"11\"> AAA </p><p class=\"22\"></p> <p> ZZZ </p> <p/> <p/> <p/> </body>";
+    String s2 = "<p '_a{0,0}=\"'_t:[ regex( 11 ) ]\"> 'content? </p>";
+
+    assertEquals(5, findMatchesCount(s1, s2, StdFileTypes.XML));
+  }
 }

@@ -44,6 +44,6 @@ public class MacIntelliJCheckBoxUI extends DarculaCheckBoxUI {
 
   @Override
   protected int textIconGap() {
-    return JBUI.scale(4);
+    return JBUI.scale(3);
   }
 }

@@ -607,7 +607,7 @@ public class DirDiffTableModel extends AbstractTableModel implements DirDiffMode
 
       if (source instanceof AsyncDiffElement) {
         ((AsyncDiffElement)source).copyToAsync(myTarget, element.getTarget(), path)
-          .rejected(error -> reportException(error == null ? null : error.getMessage()))
+          .onError(error -> reportException(error == null ? null : error.getMessage()))
           .onSuccess(newElement -> {
             ApplicationManager.getApplication().assertIsDispatchThread();
             if (myDisposed) return;
@@ -652,7 +652,7 @@ public class DirDiffTableModel extends AbstractTableModel implements DirDiffMode
 
       if (target instanceof AsyncDiffElement) {
         ((AsyncDiffElement)target).copyToAsync(mySource, element.getSource(), path)
-          .rejected(error -> reportException(error == null ? null : error.getMessage()))
+          .onError(error -> reportException(error == null ? null : error.getMessage()))
           .onSuccess(newElement -> {
             if (myDisposed) return;
             ApplicationManager.getApplication().assertIsDispatchThread();
@@ -715,7 +715,7 @@ public class DirDiffTableModel extends AbstractTableModel implements DirDiffMode
     LOG.assertTrue(source == null || target == null);
     if (source instanceof AsyncDiffElement || target instanceof AsyncDiffElement) {
       ((AsyncDiffElement)(source != null ? source : target)).deleteAsync()
-        .rejected(error -> reportException(error != null ? error.getMessage() : null))
+        .onError(error -> reportException(error != null ? error.getMessage() : null))
         .onSuccess(result -> {
           if (!myDisposed && myElements.indexOf(element) != -1) {
             removeElement(element, true);

@@ -19,7 +19,6 @@
  */
 package com.intellij.psi.impl.source.tree;
 
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Attachment;
 import com.intellij.openapi.diagnostic.LogUtil;
 import com.intellij.openapi.diagnostic.Logger;
@@ -200,7 +199,7 @@ public class LazyParseableElement extends CompositeElement {
         }
 
         if (parsedNode != null) {
-          setChildren(parsedNode, AstPath.getNodePath(this));
+          setChildren(parsedNode);
         }
 
         myParsed = true;
@@ -220,10 +219,9 @@ public class LazyParseableElement extends CompositeElement {
     }
   }
 
-  private void setChildren(@NotNull TreeElement parsedNode, @Nullable AstPath thisPath) {
+  private void setChildren(@NotNull TreeElement parsedNode) {
     ProgressManager.getInstance().executeNonCancelableSection(() -> {
       try {
-        AstPath.cacheNodePaths(this, parsedNode, thisPath);
         TreeElement last = rawSetParents(parsedNode, this);
         super.setFirstChildNode(parsedNode);
         super.setLastChildNode(last);

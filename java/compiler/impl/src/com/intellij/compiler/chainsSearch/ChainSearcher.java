@@ -54,8 +54,8 @@ public class ChainSearcher {
     List<OperationChain> result = new ArrayList<>();
     while (!q.isEmpty()) {
 
-      ProgressManager.checkCanceled();
       OperationChain currentChain = q.poll();
+      ProgressManager.checkCanceled();
       RefChainOperation head = currentChain.getHead();
 
       if (addChainIfTerminal(currentChain, result, chainMaxLength, context)) continue;
@@ -142,10 +142,10 @@ public class ChainSearcher {
   private static boolean addChainIfTerminal(OperationChain currentChain, List<OperationChain> result,
                                             int pathMaximalLength,
                                             ChainCompletionContext context) {
-    RefChainOperation signature = currentChain.getHeadMethodCall();
+    MethodCall signature = currentChain.getHeadMethodCall();
     if (signature == null) return false;
     RefChainOperation head = currentChain.getHead();
-    if (((MethodCall)signature).isStatic() || context.hasQualifier(context.resolvePsiClass(head.getQualifierDef()))) {
+    if (signature.isStatic() || context.hasQualifier(context.resolvePsiClass(head.getQualifierDef()))) {
       addChainIfNotPresent(currentChain, result);
       return true;
     }

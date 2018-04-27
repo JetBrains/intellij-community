@@ -22,6 +22,7 @@ import com.intellij.ui.tree.AsyncTreeModel;
 import com.intellij.ui.treeStructure.Tree;
 import com.intellij.util.FontUtil;
 import com.intellij.util.ObjectUtils;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.EdtInvocationManager;
 import com.intellij.util.ui.tree.TreeModelAdapter;
 import com.intellij.util.ui.tree.TreeUtil;
@@ -30,9 +31,11 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import javax.swing.event.TreeModelEvent;
+import javax.swing.tree.TreeModel;
 import javax.swing.tree.TreePath;
 import javax.swing.tree.TreeSelectionModel;
 import java.util.List;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 class DiscoveredTestsTree extends Tree implements DataProvider {
@@ -95,11 +98,12 @@ class DiscoveredTestsTree extends Tree implements DataProvider {
     myModel.addTest(testClass, testMethod);
   }
 
-  public List<Module> getContainingModules() {
+  @NotNull
+  public Set<Module> getContainingModules() {
     return myModel.getTestClasses().stream()
                   .map(element -> ModuleUtilCore.findModuleForPsiElement(element))
                   .filter(module -> module != null)
-                  .collect(Collectors.toList());
+                  .collect(Collectors.toSet());
   }
 
   public PsiMethod[] getTestMethods() {
@@ -118,6 +122,29 @@ class DiscoveredTestsTree extends Tree implements DataProvider {
   @Nullable
   @Override
   public Object getData(String dataId) {
+    if (LangDataKeys.PSI_ELEMENT_ARRAY.is(dataId)) {
+      TreePath[] paths = getSelectionModel().getSelectionPaths();
+      List<PsiElement> result = ContainerUtil.newSmartList();
+      TreeModel model = getModel();
+      for (TreePath p : paths) {
+        Object e = p.getLastPathComponent();
+        if (e instanceof PsiMethod) {
+          result.add((PsiMethod)e);
+        }
+        else {
+          int count = model.getChildCount(e);
+          if (count == 0 && e instanceof PsiElement) {
+            result.add((PsiElement)e);
+          }
+          else {
+            for (int i = 0; i < count; i++) {
+              ContainerUtil.addIfNotNull(result, ObjectUtils.tryCast(model.getChild(e, i), PsiMethod.class));
+            }
+          }
+        }
+      }
+      return result.toArray(PsiElement.EMPTY_ARRAY);
+    }
     if (CommonDataKeys.PSI_ELEMENT.is(dataId)) {
       return getSelectedElement();
     }

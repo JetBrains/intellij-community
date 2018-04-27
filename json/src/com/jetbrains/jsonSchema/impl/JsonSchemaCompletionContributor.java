@@ -5,9 +5,12 @@ import com.intellij.codeInsight.AutoPopupController;
 import com.intellij.codeInsight.completion.*;
 import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.codeInsight.lookup.LookupElementBuilder;
+import com.intellij.icons.AllIcons;
 import com.intellij.ide.DataManager;
 import com.intellij.internal.statistic.UsageTrigger;
+import com.intellij.json.psi.JsonProperty;
 import com.intellij.json.psi.JsonStringLiteral;
+import com.intellij.json.psi.JsonValue;
 import com.intellij.openapi.actionSystem.IdeActions;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.Editor;
@@ -20,7 +23,9 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiElement;
+import com.intellij.psi.TokenType;
 import com.intellij.psi.codeStyle.CodeStyleManager;
+import com.intellij.psi.impl.source.tree.LeafPsiElement;
 import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.util.Consumer;
 import com.intellij.util.ObjectUtils;
@@ -28,12 +33,14 @@ import com.intellij.util.containers.ContainerUtil;
 import com.jetbrains.jsonSchema.extension.JsonLikePsiWalker;
 import com.jetbrains.jsonSchema.extension.JsonSchemaFileProvider;
 import com.jetbrains.jsonSchema.extension.SchemaType;
+import com.jetbrains.jsonSchema.extension.adapters.JsonObjectValueAdapter;
 import com.jetbrains.jsonSchema.extension.adapters.JsonPropertyAdapter;
 import com.jetbrains.jsonSchema.ide.JsonSchemaService;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
 
+import javax.swing.*;
 import java.util.*;
 
 /**
@@ -43,6 +50,7 @@ public class JsonSchemaCompletionContributor extends CompletionContributor {
   private static final String BUILTIN_USAGE_KEY = "json.schema.builtin.completion";
   private static final String SCHEMA_USAGE_KEY = "json.schema.schema.completion";
   private static final String USER_USAGE_KEY = "json.schema.user.completion";
+  private static final String REMOTE_USAGE_KEY = "json.schema.remote.completion";
 
   @Override
   public void fillCompletionVariants(@NotNull CompletionParameters parameters, @NotNull CompletionResultSet result) {
@@ -76,14 +84,22 @@ public class JsonSchemaCompletionContributor extends CompletionContributor {
   }
 
   private static void updateStat(@Nullable JsonSchemaFileProvider provider) {
+    // TODO: move to the new statistics engine
     if (provider == null) return;
     final SchemaType schemaType = provider.getSchemaType();
-    if (SchemaType.schema.equals(schemaType)) {
-      UsageTrigger.trigger(SCHEMA_USAGE_KEY);
-    } else if (SchemaType.embeddedSchema.equals(schemaType)) {
-      UsageTrigger.trigger(BUILTIN_USAGE_KEY);
-    } else if (SchemaType.userSchema.equals(schemaType)) {
-      UsageTrigger.trigger(USER_USAGE_KEY);
+    switch (schemaType) {
+      case schema:
+        UsageTrigger.trigger(SCHEMA_USAGE_KEY);
+        break;
+      case userSchema:
+        UsageTrigger.trigger(USER_USAGE_KEY);
+        break;
+      case embeddedSchema:
+        UsageTrigger.trigger(BUILTIN_USAGE_KEY);
+        break;
+      case remoteSchema:
+        UsageTrigger.trigger(REMOTE_USAGE_KEY);
+        break;
     }
   }
 
@@ -129,9 +145,8 @@ public class JsonSchemaCompletionContributor extends CompletionContributor {
           final JsonPropertyAdapter adapter = myWalker.getParentPropertyAdapter(myOriginalPosition);
 
           final Map<String, JsonSchemaObject> schemaProperties = schema.getProperties();
-          schemaProperties.keySet().stream()
-            .filter(name -> !properties.contains(name) || adapter != null && name.equals(adapter.getName()))
-            .forEach(name -> addPropertyVariant(name, schemaProperties.get(name), hasValue, insertComma));
+          addAllPropertyVariants(insertComma, hasValue, properties, adapter, schemaProperties);
+          addIfThenElsePropertyNameVariants(schema, insertComma, hasValue, properties, adapter);
         }
         else {
           suggestValues(schema);
@@ -141,6 +156,46 @@ public class JsonSchemaCompletionContributor extends CompletionContributor {
       for (LookupElement variant : myVariants) {
         myResultConsumer.consume(variant);
       }
+    }
+
+    private void addIfThenElsePropertyNameVariants(@NotNull JsonSchemaObject schema,
+                                                   boolean insertComma,
+                                                   boolean hasValue,
+                                                   @NotNull Collection<String> properties,
+                                                   @Nullable JsonPropertyAdapter adapter) {
+      if (schema.getIf() == null) return;
+
+      JsonLikePsiWalker walker = JsonLikePsiWalker.getWalker(myPosition, schema);
+      JsonPropertyAdapter propertyAdapter = walker == null ? null : walker.getParentPropertyAdapter(myPosition);
+      if (propertyAdapter == null) return;
+
+      JsonObjectValueAdapter object = propertyAdapter.getParentObject();
+      if (object == null) return;
+
+      JsonSchemaAnnotatorChecker checker = new JsonSchemaAnnotatorChecker();
+      checker.checkByScheme(object, schema.getIf());
+      if (checker.isCorrect()) {
+        JsonSchemaObject then = schema.getThen();
+        if (then != null) {
+          addAllPropertyVariants(insertComma, hasValue, properties, adapter, then.getProperties());
+        }
+      }
+      else {
+        JsonSchemaObject schemaElse = schema.getElse();
+        if (schemaElse != null) {
+          addAllPropertyVariants(insertComma, hasValue, properties, adapter, schemaElse.getProperties());
+        }
+      }
+    }
+
+    private void addAllPropertyVariants(boolean insertComma,
+                                        boolean hasValue,
+                                        Collection<String> properties,
+                                        JsonPropertyAdapter adapter,
+                                        Map<String, JsonSchemaObject> schemaProperties) {
+      schemaProperties.keySet().stream()
+        .filter(name -> !properties.contains(name) || adapter != null && name.equals(adapter.getName()))
+        .forEach(name -> addPropertyVariant(name, schemaProperties.get(name), hasValue, insertComma));
     }
 
     private void suggestValues(JsonSchemaObject schema) {
@@ -172,6 +227,10 @@ public class JsonSchemaCompletionContributor extends CompletionContributor {
         addPossibleStringValue(schema);
       } else if (JsonSchemaType._null.equals(type)) {
         addValueVariant("null", null);
+      } else if (JsonSchemaType._array.equals(type)) {
+        addValueVariant("[]", null, createArrayOrObjectLiteralInsertHandler());
+      } else if (JsonSchemaType._object.equals(type)) {
+        addValueVariant("{}", null, createArrayOrObjectLiteralInsertHandler());
       }
     }
 
@@ -204,16 +263,24 @@ public class JsonSchemaCompletionContributor extends CompletionContributor {
 
 
     private void addValueVariant(@NotNull String key, @SuppressWarnings("SameParameterValue") @Nullable final String description) {
+      addValueVariant(key, description, null);
+    }
+
+    private void addValueVariant(@NotNull String key, @SuppressWarnings("SameParameterValue") @Nullable final String description,
+                                 @Nullable InsertHandler<LookupElement> handler) {
       LookupElementBuilder builder = LookupElementBuilder.create(!myWrapInQuotes ? StringUtil.unquoteString(key) : key);
       if (description != null) {
         builder = builder.withTypeText(description);
+      }
+      if (handler != null) {
+        builder = builder.withInsertHandler(handler);
       }
       myVariants.add(builder);
     }
 
     private void addPropertyVariant(@NotNull String key, @NotNull JsonSchemaObject jsonSchemaObject, boolean hasValue, boolean insertComma) {
-      jsonSchemaObject = ObjectUtils.coalesce(ContainerUtil.getFirstItem(new JsonSchemaResolver(jsonSchemaObject).resolve()),
-                                              jsonSchemaObject);
+      final Collection<JsonSchemaObject> variants = new JsonSchemaResolver(jsonSchemaObject).resolve();
+      jsonSchemaObject = ObjectUtils.coalesce(ContainerUtil.getFirstItem(variants), jsonSchemaObject);
       key = !myWrapInQuotes ? key : StringUtil.wrapWithDoubleQuote(key);
       LookupElementBuilder builder = LookupElementBuilder.create(key);
 
@@ -222,15 +289,46 @@ public class JsonSchemaCompletionContributor extends CompletionContributor {
         builder = builder.withTypeText(StringUtil.removeHtmlTags(typeText), true);
       }
 
-      final JsonSchemaType type = jsonSchemaObject.getType();
-      final List<Object> values = jsonSchemaObject.getEnum();
-      if (type != null || !ContainerUtil.isEmpty(values) || jsonSchemaObject.getDefault() != null) {
-        builder = builder.withInsertHandler(createPropertyInsertHandler(jsonSchemaObject, hasValue, insertComma));
+      builder = builder.withIcon(getIcon(jsonSchemaObject.getType()));
+
+      if (hasSameType(variants)) {
+        final JsonSchemaType type = jsonSchemaObject.getType();
+        final List<Object> values = jsonSchemaObject.getEnum();
+        if (type != null || !ContainerUtil.isEmpty(values) || jsonSchemaObject.getDefault() != null) {
+          builder = builder.withInsertHandler(createPropertyInsertHandler(jsonSchemaObject, hasValue, insertComma));
+        }
       } else if (!hasValue) {
         builder = builder.withInsertHandler(createDefaultPropertyInsertHandler(false, insertComma));
       }
 
       myVariants.add(builder);
+    }
+
+    @NotNull
+    private static Icon getIcon(@Nullable JsonSchemaType type) {
+      if (type == null) return AllIcons.Nodes.Property;
+      switch (type) {
+        case _object:
+          return AllIcons.Json.Property_braces;
+        case _array:
+          return AllIcons.Json.Property_brackets;
+        default:
+          return AllIcons.Nodes.Property;
+      }
+    }
+
+    private static boolean hasSameType(@NotNull Collection<JsonSchemaObject> variants) {
+      return variants.stream().map(JsonSchemaObject::getType).filter(Objects::nonNull).distinct().count() <= 1;
+    }
+
+    private static InsertHandler<LookupElement> createArrayOrObjectLiteralInsertHandler() {
+      return new InsertHandler<LookupElement>() {
+        @Override
+        public void handleInsert(InsertionContext context, LookupElement item) {
+          EditorModificationUtil.moveCaretRelatively(context.getEditor(), -1);
+          AutoPopupController.getInstance(context.getProject()).autoPopupMemberLookup(context.getEditor(), null);
+        }
+      };
     }
 
     private InsertHandler<LookupElement> createDefaultPropertyInsertHandler(@SuppressWarnings("SameParameterValue") boolean hasValue,
@@ -322,13 +420,14 @@ public class JsonSchemaCompletionContributor extends CompletionContributor {
       };
     }
 
-    private boolean handleInsideQuotesInsertion(InsertionContext context, Editor editor, boolean hasValue) {
+    private boolean handleInsideQuotesInsertion(@NotNull InsertionContext context, @NotNull Editor editor, boolean hasValue) {
       if (myInsideStringLiteral) {
         int offset = editor.getCaretModel().getOffset();
         PsiElement element = context.getFile().findElementAt(offset);
         int tailOffset = context.getTailOffset();
         int guessEndOffset = tailOffset + 1;
-        if (element != null) {
+        if (element instanceof LeafPsiElement) {
+          if (handleIncompleteString(editor, element)) return false;
           int endOffset = element.getTextRange().getEndOffset();
           if (endOffset > tailOffset) {
             context.getDocument().deleteString(tailOffset, endOffset - 1);
@@ -339,6 +438,21 @@ public class JsonSchemaCompletionContributor extends CompletionContributor {
         }
         editor.getCaretModel().moveToOffset(guessEndOffset);
       } else editor.getCaretModel().moveToOffset(context.getTailOffset());
+      return false;
+    }
+
+    private static boolean handleIncompleteString(@NotNull Editor editor, @NotNull PsiElement element) {
+      if (((LeafPsiElement)element).getElementType() == TokenType.WHITE_SPACE) {
+        PsiElement prevSibling = element.getPrevSibling();
+        if (prevSibling instanceof JsonProperty) {
+          JsonValue nameElement = ((JsonProperty)prevSibling).getNameElement();
+          if (!nameElement.getText().endsWith("\"")) {
+            editor.getCaretModel().moveToOffset(nameElement.getTextRange().getEndOffset());
+            EditorModificationUtil.insertStringAtCaret(editor, "\"", false, true, 1);
+            return true;
+          }
+        }
+      }
       return false;
     }
 

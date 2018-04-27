@@ -86,7 +86,8 @@ public abstract class JavaPostfixTemplatesUtils {
     };
   }
 
-  public static PostfixTemplateExpressionSelector selectorAllExpressionsWithCurrentOffset(final Condition<PsiElement> additionalFilter) {
+  @NotNull
+  public static PostfixTemplateExpressionSelector selectorAllExpressionsWithCurrentOffset(@Nullable Condition<PsiElement> additionalFilter) {
     return new PostfixTemplateExpressionSelectorBase(additionalFilter) {
       @Override
       protected List<PsiElement> getNonFilteredExpressions(@NotNull PsiElement context, @NotNull Document document, int offset) {
@@ -98,7 +99,7 @@ public abstract class JavaPostfixTemplatesUtils {
       @Override
       public List<PsiElement> getExpressions(@NotNull PsiElement context, @NotNull Document document, int offset) {
         if (DumbService.getInstance(context.getProject()).isDumb()) return Collections.emptyList();
-        
+
         List<PsiElement> expressions = super.getExpressions(context, document, offset);
         if (!expressions.isEmpty()) return expressions;
 

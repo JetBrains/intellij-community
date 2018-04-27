@@ -96,11 +96,6 @@ public class RedundantCastUtil {
     }
 
     @Override
-    public void visitReferenceExpression(PsiReferenceExpression expression) {
-      visitElement(expression);
-    }
-
-    @Override
     public void visitClass(PsiClass aClass) {
       // avoid multiple visit
     }
@@ -335,7 +330,7 @@ public class RedundantCastUtil {
 
     @Override
     public void visitReferenceExpression(PsiReferenceExpression expression) {
-      //expression.acceptChildren(this);
+      visitElement(expression);
     }
 
     private void processCall(PsiCall expression){
@@ -848,6 +843,9 @@ public class RedundantCastUtil {
           return true;
         }
       }
+    }
+    else if (parent instanceof PsiLocalVariable) {
+      return ((PsiLocalVariable)parent).getTypeElement().isInferredType();
     }
     return false;
   }

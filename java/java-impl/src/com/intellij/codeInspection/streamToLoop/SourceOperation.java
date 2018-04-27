@@ -111,10 +111,16 @@ abstract class SourceOperation extends Operation {
   }
 
   static class ForEachSource extends SourceOperation {
+    private final boolean myEntrySet;
     private @Nullable PsiExpression myQualifier;
 
     ForEachSource(@Nullable PsiExpression qualifier) {
+      this(qualifier, false);
+    }
+
+    ForEachSource(@Nullable PsiExpression qualifier, boolean entrySet) {
       myQualifier = qualifier;
+      myEntrySet = entrySet;
     }
 
     @Override
@@ -146,7 +152,8 @@ abstract class SourceOperation extends Operation {
     public String wrap(StreamVariable outVar, String code, StreamToLoopReplacementContext context) {
       PsiExpression iterationParameter = myQualifier == null ? ExpressionUtils
         .getQualifierOrThis(((PsiMethodCallExpression)context.createExpression("stream()")).getMethodExpression()) : myQualifier;
-      return context.getLoopLabel() + "for(" + outVar.getDeclaration() + ": " + iterationParameter.getText() + ") {" + code + "}\n";
+      String iterationParameterText = iterationParameter.getText() + (myEntrySet ? ".entrySet()" : "");
+      return context.getLoopLabel() + "for(" + outVar.getDeclaration() + ": " + iterationParameterText + ") {" + code + "}\n";
     }
   }
 

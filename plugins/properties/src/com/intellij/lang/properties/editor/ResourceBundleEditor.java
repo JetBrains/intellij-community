@@ -1,6 +1,4 @@
-/*
- * Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package com.intellij.lang.properties.editor;
 
@@ -147,6 +145,7 @@ public class ResourceBundleEditor extends UserDataHolderBase implements Document
         // filter out temp unselect/select events
         if (getSelectedElementIfOnlyOne() instanceof ResourceBundleFileStructureViewElement) {
           ((CardLayout)myValuesPanel.getLayout()).show(myValuesPanel, NO_PROPERTY_SELECTED);
+          writePreviouslySelectedPropertyValue(e);
           selectedPropertiesFile = null;
           selectedProperty = null;
           return;
@@ -155,19 +154,21 @@ public class ResourceBundleEditor extends UserDataHolderBase implements Document
         if (Comparing.equal(e.getNewLeadSelectionPath(), e.getOldLeadSelectionPath()) || getSelectedProperty() == null) return;
         if (!arePropertiesEquivalent(selectedProperty, getSelectedProperty()) ||
             !Comparing.equal(selectedPropertiesFile, getSelectedPropertiesFile())) {
-
-          if (selectedProperty != null && e.getOldLeadSelectionPath() != null) {
-            for (Map.Entry<VirtualFile, EditorEx> entry : myEditors.entrySet()) {
-              if (entry.getValue() == mySelectedEditor) {
-                writeEditorPropertyValue(selectedProperty.getName(), mySelectedEditor, entry.getKey());
-                break;
-              }
-            }
-          }
-
+          writePreviouslySelectedPropertyValue(e);
           selectedProperty = getSelectedProperty();
           selectedPropertiesFile = getSelectedPropertiesFile();
           selectionChanged();
+        }
+      }
+
+      private void writePreviouslySelectedPropertyValue(TreeSelectionEvent e) {
+        if (selectedProperty != null && e.getOldLeadSelectionPath() != null) {
+          for (Map.Entry<VirtualFile, EditorEx> entry : myEditors.entrySet()) {
+            if (entry.getValue() == mySelectedEditor) {
+              writeEditorPropertyValue(selectedProperty.getName(), mySelectedEditor, entry.getKey());
+              break;
+            }
+          }
         }
       }
 
@@ -438,7 +439,7 @@ public class ResourceBundleEditor extends UserDataHolderBase implements Document
 
       String title = propertiesFile.getName();
       title += PropertiesUtil.getPresentableLocale(propertiesFile.getLocale());
-      JComponent comp = new JPanel(new BorderLayout()) {
+      JPanel comp = new JPanel(new BorderLayout()) {
         @Override
         public Dimension getPreferredSize() {
           Insets insets = getBorder().getBorderInsets(this);
@@ -447,7 +448,7 @@ public class ResourceBundleEditor extends UserDataHolderBase implements Document
       };
       comp.add(editor.getComponent(), BorderLayout.CENTER);
       comp.setBorder(IdeBorderFactory.createTitledBorder(title, false));
-      myTitledPanels.put(propertiesFile.getVirtualFile(), (JPanel)comp);
+      myTitledPanels.put(propertiesFile.getVirtualFile(), comp);
 
       valuesPanelComponent.add(comp, gc);
     }

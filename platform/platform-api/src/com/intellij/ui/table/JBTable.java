@@ -301,7 +301,7 @@ public class JBTable extends JTable implements ComponentWithEmptyText, Component
       GraphicsUtil.setupAntialiasing(g);
     }
     super.paintComponent(g);
-    myEmptyText.paint(this, g);
+    getEmptyText().paint(this, g);
   }
 
   @Override

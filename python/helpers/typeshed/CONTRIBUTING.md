@@ -82,6 +82,7 @@ At present the core developers are (alphabetically):
 * David Fisher (@ddfisher)
 * Łukasz Langa (@ambv)
 * Jukka Lehtosalo (@JukkaL)
+* Ivan Levkivskyi (@ilevkivskyi)
 * Matthias Kramm (@matthiaskramm)
 * Greg Price (@gnprice)
 * Guido van Rossum (@gvanrossum)
@@ -132,6 +133,15 @@ but objects that are listed in the module's documentation, that are
 included in ``__all__`` (if present), and whose names do not start with an
 underscore are more likely to merit inclusion in a stub. If in doubt, err
 on the side of including more objects.
+
+**NEW:** Sometimes it makes sense to include non-public objects
+in a stub.  Mark these with a comment of the form ``# undocumented``.
+See the [motivation](https://github.com/python/typeshed/issues/1902).
+Example:
+
+```python
+def list2cmdline(seq: Sequence[str]) -> str: ...  # undocumented
+```
 
 ### Using stubgen
 
@@ -303,8 +313,6 @@ missing, incomplete or incorrect) and we won't add noise to the
 tracker by labeling all of them.  Here's what our labels mean.  (We
 also apply these to pull requests.)
 
-* **blocked**: This issue is waiting for the resolution of some issue
-    external to typeshed.
 * **bug**: It's a bug in a stub.
 * **bytes-unicode**: It's related to bytes vs. unicode, usually Python 2.
 * **feature**: It's a new typeshed feature.
@@ -315,6 +323,11 @@ also apply these to pull requests.)
 * **size-large**: An issue of high complexity or affecting many files.
 * **size-medium**: An issue of average complexity.
 * **size-small**: An issue that will take only little effort to fix.
+
+Sometimes a PR can't make progress until some external issue is
+addressed.  We indicate this by editing the subject to add a ``[WIP]``
+prefix.  (This should be removed before committing the issue once
+unblocked!)
 
 ### Core developer guidelines
 

@@ -44,8 +44,13 @@ public final class ImportUtils {
         return;
       }
     }
-    else if (PsiTreeUtil.isAncestor(outerClass, context, true) && outerClass.getTextOffset() < context.getTextOffset()) {
-      return;
+    else {
+      if (PsiTreeUtil.isAncestor(outerClass, context, true)) {
+        PsiElement brace = outerClass.getLBrace();
+        if (brace != null && brace.getTextOffset() < context.getTextOffset()) {
+          return;
+        }
+      }
     }
     final String qualifiedName = aClass.getQualifiedName();
     if (qualifiedName == null) {

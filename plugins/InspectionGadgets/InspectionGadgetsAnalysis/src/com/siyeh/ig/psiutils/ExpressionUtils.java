@@ -505,19 +505,6 @@ public class ExpressionUtils {
   }
 
 
-  public static boolean isConstructorInvocation(PsiElement element) {
-    if (!(element instanceof PsiMethodCallExpression)) {
-      return false;
-    }
-    final PsiMethodCallExpression methodCallExpression =
-      (PsiMethodCallExpression)element;
-    final PsiReferenceExpression methodExpression =
-      methodCallExpression.getMethodExpression();
-    final String callName = methodExpression.getReferenceName();
-    return PsiKeyword.THIS.equals(callName) ||
-           PsiKeyword.SUPER.equals(callName);
-  }
-
   public static boolean hasType(@Nullable PsiExpression expression, @NonNls @NotNull String typeName) {
     if (expression == null) {
       return false;
@@ -1216,17 +1203,19 @@ public class ExpressionUtils {
       if (!(e instanceof PsiReferenceExpression)) return true;
       PsiReferenceExpression ref = (PsiReferenceExpression)e;
       if (!ref.isReferenceTo(array)) return true;
-      PsiExpression parent = tryCast(PsiUtil.skipParenthesizedExprUp(ref.getParent()), PsiExpression.class);
-      if (parent == null) return false;
+      PsiElement parent = PsiUtil.skipParenthesizedExprUp(ref.getParent());
+      if (parent instanceof PsiForeachStatement && PsiTreeUtil.isAncestor(((PsiForeachStatement)parent).getIteratedValue(), ref, false)) {
+        return true;
+      }
       if (parent instanceof PsiReferenceExpression) {
-        if (isReferenceTo(getArrayFromLengthExpression(parent), array)) return true;
+        if (isReferenceTo(getArrayFromLengthExpression((PsiExpression)parent), array)) return true;
         if (parent.getParent() instanceof PsiMethodCallExpression &&
             MethodCallUtils.isCallToMethod((PsiMethodCallExpression)parent.getParent(), CommonClassNames.JAVA_LANG_OBJECT,
                                            null, "clone", PsiType.EMPTY_ARRAY)) {
           return true;
         }
       }
-      return parent instanceof PsiArrayAccessExpression && !PsiUtil.isAccessedForWriting(parent);
+      return parent instanceof PsiArrayAccessExpression && !PsiUtil.isAccessedForWriting((PsiExpression)parent);
     });
   }
 

@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.ui.laf.darcula;
 
 import com.intellij.ide.IdeEventQueue;
@@ -26,11 +12,9 @@ import com.intellij.ui.EditorTextField;
 import com.intellij.ui.Gray;
 import com.intellij.ui.JBColor;
 import com.intellij.ui.components.panels.Wrapper;
-import com.intellij.util.ui.JBInsets;
-import com.intellij.util.ui.JBUI;
-import com.intellij.util.ui.MacUIUtil;
-import com.intellij.util.ui.UIUtil;
+import com.intellij.util.ui.*;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import javax.swing.plaf.UIResource;
@@ -76,11 +60,6 @@ public class DarculaUIUtil {
   public static final Color ACTIVE_WARNING_COLOR = new JBColor(() -> UIUtil.isUnderDefaultMacTheme() ? MAC_ACTIVE_WARNING_COLOR : DEFAULT_ACTIVE_WARNING_COLOR);
   public static final Color INACTIVE_WARNING_COLOR = new JBColor(() -> UIUtil.isUnderDefaultMacTheme() ? MAC_INACTIVE_WARNING_COLOR : DEFAULT_INACTIVE_WARNING_COLOR);
 
-  private static final Color MAC_REGULAR_COLOR = new JBColor(new Color(0x80479cfc, true), new Color(0x395d82));
-  private static final Color DEFAULT_REGULAR_COLOR = new JBColor(new Color(0x8ab2eb), new Color(0x395d82));
-
-  private static final Color REGULAR_COLOR = new JBColor(() -> UIUtil.isUnderDefaultMacTheme() ? MAC_REGULAR_COLOR : DEFAULT_REGULAR_COLOR);
-  private static final Color GRAPHITE_COLOR = new JBColor(new Color(0x8099979d, true), new Color(0x676869));
 
   public enum Outline {
     error {
@@ -106,18 +85,18 @@ public class DarculaUIUtil {
     Graphics2D g2 = (Graphics2D)g.create();
     try {
       g2.translate(r.x, r.y);
-      paintFocusBorder(g2, r.width, r.height, arc(), true);
+      paintFocusBorder(g2, r.width, r.height, COMPONENT_ARC.getFloat(), true);
     } finally {
       g2.dispose();
     }
   }
 
   public static void paintFocusOval(Graphics2D g, float x, float y, float width, float height) {
-    g.setPaint(UIUtil.isGraphite() ? GRAPHITE_COLOR : REGULAR_COLOR);
+    g.setPaint(JBUI.CurrentTheme.focusBorderColor());
 
-    float blw = bw() + lw(g);
+    float blw = BW.getFloat() + LW.getFloat();
     Path2D shape = new Path2D.Float(Path2D.WIND_EVEN_ODD);
-    shape.append(new Ellipse2D.Float(x - blw, y - blw, width + blw*2, height + blw*2), false);
+    shape.append(new Ellipse2D.Float(x - blw, y - blw, width + blw * 2, height + blw * 2), false);
     shape.append(new Ellipse2D.Float(x, y, width, height), false);
     g.fill(shape);
   }
@@ -137,14 +116,14 @@ public class DarculaUIUtil {
   }
 
   public static void paintFocusBorder(Graphics2D g, int width, int height, float arc, boolean symmetric) {
-    g.setPaint(UIUtil.isGraphite() ? GRAPHITE_COLOR : REGULAR_COLOR);
+    g.setPaint(JBUI.CurrentTheme.focusBorderColor());
     doPaint(g, width, height, arc, symmetric);
   }
 
   @SuppressWarnings("SuspiciousNameCombination")
   private static void doPaint(Graphics2D g, int width, int height, float arc, boolean symmetric) {
-    float bw = UIUtil.isUnderDefaultMacTheme() ? JBUI.scale(3) : bw();
-    float lw = UIUtil.isUnderDefaultMacTheme() ? JBUI.scale(UIUtil.isRetina(g) ? 0.5f : 1.0f) : lw(g);
+    float bw = UIUtil.isUnderDefaultMacTheme() ? JBUI.scale(3) : BW.getFloat();
+    float lw = UIUtil.isUnderDefaultMacTheme() ? JBUI.scale(UIUtil.isRetina(g) ? 0.5f : 1.0f) : LW.getFloat();
 
     g.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
     g.setRenderingHint(RenderingHints.KEY_STROKE_CONTROL, MacUIUtil.USE_QUARTZ ? RenderingHints.VALUE_STROKE_PURE : RenderingHints.VALUE_STROKE_NORMALIZE);
@@ -259,9 +238,7 @@ public class DarculaUIUtil {
 
     @Override
     public Insets getBorderInsets(Component c) {
-      return isComboBoxEditor(c) ?
-             JBUI.insets(1, 3, 2, 3).asUIResource() :
-             JBUI.insets(5, 8).asUIResource();
+      return isComboBoxEditor(c) ? JBUI.insets(2, 3).asUIResource() : JBUI.insets(5, 8).asUIResource();
     }
   }
 
@@ -363,6 +340,12 @@ public class DarculaUIUtil {
         return isComboBoxEditor(c) ? JBUI.insets(1, 6).asUIResource() : JBUI.insets(4, 6).asUIResource();
       }
     }
+
+    @Nullable
+    @Override
+    public Insets getVisualPaddings(@NotNull Component component) {
+      return JBUI.insets(1);
+    }
   }
 
   public static class MouseHoverPropertyTrigger extends MouseAdapter {
@@ -392,21 +375,48 @@ public class DarculaUIUtil {
     }
   }
 
+  public static final JBValue MINIMUM_HEIGHT = new JBValue.Float(24);
+  public static final JBValue LW = new JBValue.Float(1);
+  public static final JBValue BW = new JBValue.UIInteger("Border.width", 2);
+  public static final JBValue BUTTON_ARC = new JBValue.UIInteger("Button.arc", 6);
+  public static final JBValue COMPONENT_ARC = new JBValue.UIInteger("Component.arc", 5);
+
+  /**
+   * @Deprecated use LW.get() instead
+   */
   @SuppressWarnings("unused")
+  @Deprecated
   public static float lw(Graphics2D g2) {
     return JBUI.scale(1.0f);
   }
 
+  /**
+   * @Deprecated use BW.get() instead
+   */
+  @Deprecated
   public static float bw() {
-    return JBUI.scale(2);
+    return BW.getFloat();
   }
 
+  /**
+   * @Deprecated use COMPONENT_ARC.get() instead
+   */
+  @Deprecated
   public static float arc() {
-    return JBUI.scale(5.0f);
+    return COMPONENT_ARC.getFloat();
   }
 
+  /**
+   *
+   * @Deprecated use BUTTON_ARC.get() instead
+   */
+  @Deprecated
   public static float buttonArc() {
-    return JBUI.scale(3.0f);
+    return BUTTON_ARC.get();
+  }
+
+  public static Insets paddings() {
+    return JBUI.insets(1);
   }
 
   public static Color getOutlineColor(boolean enabled) {
@@ -421,7 +431,11 @@ public class DarculaUIUtil {
     return color == null ? defaultColor : enabled ? color : getOutlineColor(false);
   }
 
-  public static boolean isEmpty(Dimension d) {
+  public static Dimension maximize(@Nullable Dimension s1, @NotNull Dimension s2) {
+    return isEmpty(s1) ? s2 : new Dimension(Math.max(s1.width, s2.width), Math.max(s1.height, s2.height));
+  }
+
+  private static boolean isEmpty(Dimension d) {
     return d == null || d.width == 0 && d.height == 0;
   }
 

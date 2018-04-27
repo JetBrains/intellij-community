@@ -997,13 +997,24 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
     try {
       VirtualFile file = WriteCommandAction.runWriteCommandAction(getProject(), (ThrowableComputable<VirtualFile, IOException>)() -> {
         try {
+          VirtualFile f;
           if (myTempDirFixture instanceof LightTempDirTestFixtureImpl) {
-            return myTempDirFixture.createFile(relativePath, fileText);
+            f = myTempDirFixture.createFile(relativePath, fileText);
           }
-          else {
-            return ((HeavyIdeaTestFixture)myProjectFixture).addFileToProject(rootPath, relativePath, fileText).getViewProvider()
+          else if (myProjectFixture instanceof HeavyIdeaTestFixture){
+            f = ((HeavyIdeaTestFixture)myProjectFixture).addFileToProject(rootPath, relativePath, fileText).getViewProvider()
                                                            .getVirtualFile();
           }
+          else {
+            f = myTempDirFixture.createFile(relativePath, fileText);
+          }
+
+          prepareVirtualFile(f);
+
+          return f;
+        }
+        catch (IOException e) {
+          throw new RuntimeException(e);
         }
         finally {
           PsiManager.getInstance(getProject()).dropPsiCaches();
@@ -1238,9 +1249,7 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
     LookupManager.getInstance(getProject()).hideActiveLookup();
     PsiDocumentManager.getInstance(getProject()).commitAllDocuments();
     FileEditorManagerEx.getInstanceEx(getProject()).closeAllFiles();
-    for (VirtualFile file : EditorHistoryManager.getInstance(getProject()).getFiles()) {
-      EditorHistoryManager.getInstance(getProject()).removeFile(file);
-    }
+    EditorHistoryManager.getInstance(getProject()).removeAllFiles();
   }
 
   @NotNull
@@ -1284,7 +1293,7 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
   @Override
   public PsiFile configureByText(@NotNull final String fileName, @NotNull final String text) {
     assertInitialized();
-    VirtualFile vFile = null;
+    VirtualFile vFile;
     try {
       vFile = WriteCommandAction.writeCommandAction(getProject()).compute(() -> {
         final VirtualFile file;
@@ -1846,7 +1855,7 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
     List<Crumb> result = new ArrayList<>();
     while (element != null) {
       if (provider.acceptElement(element)) {
-        result.add(new Crumb.Impl(provider.getElementIcon(element), provider.getElementInfo(element), provider.getElementTooltip(element)));
+        result.add(new Crumb.Impl(provider, element));
       }
       element = provider.getParent(element);
     }

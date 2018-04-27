@@ -16,6 +16,7 @@ import com.intellij.codeInsight.daemon.quickFix.CreateFieldOrPropertyFix;
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.codeInsight.intention.IntentionManager;
 import com.intellij.codeInsight.intention.QuickFixFactory;
+import com.intellij.codeInsight.daemon.impl.quickfix.AddExceptionToExistingCatchFix;
 import com.intellij.codeInsight.intention.impl.CreateClassInPackageInModuleFix;
 import com.intellij.codeInsight.intention.impl.ReplaceAssignmentWithComparisonFix;
 import com.intellij.codeInspection.*;
@@ -225,6 +226,12 @@ public class QuickFixFactoryImpl extends QuickFixFactory {
   @Override
   public IntentionAction createSurroundWithTryCatchFix(@NotNull PsiElement element) {
     return new SurroundWithTryCatchFix(element);
+  }
+
+  @NotNull
+  @Override
+  public IntentionAction createAddExceptionToExistingCatch(@NotNull PsiElement element) {
+    return new AddExceptionToExistingCatchFix(element);
   }
 
   @NotNull

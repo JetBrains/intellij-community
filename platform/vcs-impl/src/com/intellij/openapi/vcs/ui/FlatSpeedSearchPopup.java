@@ -66,6 +66,20 @@ public class FlatSpeedSearchPopup extends PopupFactoryImpl.ActionGroupPopup {
     return action instanceof SpeedsearchAction;
   }
 
+  protected static <T> T getSpecificAction(Object value, @NotNull Class<T> clazz) {
+    if (value instanceof PopupFactoryImpl.ActionItem) {
+      AnAction action = ((PopupFactoryImpl.ActionItem)value).getAction();
+      if (clazz.isInstance(action)) {
+        return clazz.cast(action);
+      }
+      else if (action instanceof EmptyAction.MyDelegatingActionGroup) {
+        ActionGroup group = ((EmptyAction.MyDelegatingActionGroup)action).getDelegate();
+        return clazz.isInstance(group) ? clazz.cast(group) : null;
+      }
+    }
+    return null;
+  }
+
   public interface SpeedsearchAction {
   }
 

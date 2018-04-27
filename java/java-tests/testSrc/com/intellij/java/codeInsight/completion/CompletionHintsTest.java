@@ -13,6 +13,7 @@ import com.intellij.java.codeInsight.AbstractParameterInfoTestCase;
 import com.intellij.java.codeInsight.JavaExternalDocumentationTest;
 import com.intellij.openapi.actionSystem.IdeActions;
 import com.intellij.openapi.editor.ex.EditorSettingsExternalizable;
+import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.registry.RegistryValue;
 import com.intellij.psi.JavaCodeFragmentFactory;
@@ -930,7 +931,7 @@ public class CompletionHintsTest extends AbstractParameterInfoTestCase {
                           "        <HINT text=\"value:\"/><caret>) } }");
   }
 
-  public void testGlobalStaticMethodCompletion() throws Exception {
+  public void testGlobalStaticMethodCompletion() {
     configureJava("class C { void m() { arraycop<caret> } }");
     complete();
     complete();
@@ -939,6 +940,196 @@ public class CompletionHintsTest extends AbstractParameterInfoTestCase {
     item.as(StaticallyImportable.CLASS_CONDITION_KEY).setShouldBeImported(true); // emulate 'Import statically' intention
     selectItem(item, Lookup.NORMAL_SELECT_CHAR);
     checkResultWithInlays("import static java.lang.System.arraycopy;\n\nclass C { void m() { arraycopy(<HINT text=\"src:\"/><caret>, <Hint text=\"srcPos:\"/>, <Hint text=\"dest:\"/>, <Hint text=\"destPos:\"/>, <Hint text=\"length:\"/>); } }");
+  }
+
+  public void testParameterHintsLimit() throws Exception {
+    setParameterHintsLimit(2);
+    configureJava("class C {\n" +
+                  "    int mmm(int a, int b, int c) { return 0; }\n" +
+                  "    void m2() { mm<caret> }\n" +
+                  "}");
+    complete();
+    checkResultWithInlays("class C {\n" +
+                          "    int mmm(int a, int b, int c) { return 0; }\n" +
+                          "    void m2() { mmm(<HINT text=\"a:\"/><caret>, <Hint text=\"b:\"/><Hint text=\"...more:\"/>) }\n" +
+                          "}");
+    next();
+    waitForAllAsyncStuff();
+    checkResultWithInlays("class C {\n" +
+                          "    int mmm(int a, int b, int c) { return 0; }\n" +
+                          "    void m2() { mmm(<Hint text=\"a:\"/>, <HINT text=\"b:\"/><caret><Hint text=\"...more:\"/>) }\n" +
+                          "}");
+    next();
+    waitForAllAsyncStuff();
+    checkResultWithInlays("class C {\n" +
+                          "    int mmm(int a, int b, int c) { return 0; }\n" +
+                          "    void m2() { mmm(<Hint text=\"a:\"/>, <Hint text=\"b:\"/>, <HINT text=\"c:\"/><caret>) }\n" +
+                          "}");
+    next();
+    waitForAllAsyncStuff();
+    checkResultWithInlays("class C {\n" +
+                          "    int mmm(int a, int b, int c) { return 0; }\n" +
+                          "    void m2() { mmm(<hint text=\"a:\"/>, <hint text=\"b:\"/>, <hint text=\"c:\"/>)<caret> }\n" +
+                          "}");
+    prev();
+    waitForAllAsyncStuff();
+    checkResultWithInlays("class C {\n" +
+                          "    int mmm(int a, int b, int c) { return 0; }\n" +
+                          "    void m2() { mmm(<Hint text=\"a:\"/>, <Hint text=\"b:\"/>, <HINT text=\"c:\"/><caret>) }\n" +
+                          "}");
+    prev();
+    waitForAllAsyncStuff();
+    checkResultWithInlays("class C {\n" +
+                          "    int mmm(int a, int b, int c) { return 0; }\n" +
+                          "    void m2() { mmm(<Hint text=\"a:\"/>, <HINT text=\"b:\"/><caret><Hint text=\"...more:\"/>) }\n" +
+                          "}");
+    prev();
+    waitForAllAsyncStuff();
+    checkResultWithInlays("class C {\n" +
+                          "    int mmm(int a, int b, int c) { return 0; }\n" +
+                          "    void m2() { mmm(<HINT text=\"a:\"/><caret>, <Hint text=\"b:\"/><Hint text=\"...more:\"/>) }\n" +
+                          "}");
+  }
+
+  public void testParameterHintsLimitWithTyping() throws Exception {
+    setParameterHintsLimit(2);
+    configureJava("class C {\n" +
+                  "    int mmm(int a, int b, int c) { return 0; }\n" +
+                  "    void m2() { mm<caret> }\n" +
+                  "}");
+    complete();
+    checkResultWithInlays("class C {\n" +
+                          "    int mmm(int a, int b, int c) { return 0; }\n" +
+                          "    void m2() { mmm(<HINT text=\"a:\"/><caret>, <Hint text=\"b:\"/><Hint text=\"...more:\"/>) }\n" +
+                          "}");
+    type("1");
+    next();
+    waitForAllAsyncStuff();
+    checkResultWithInlays("class C {\n" +
+                          "    int mmm(int a, int b, int c) { return 0; }\n" +
+                          "    void m2() { mmm(<Hint text=\"a:\"/>1, <HINT text=\"b:\"/><caret><Hint text=\"...more:\"/>) }\n" +
+                          "}");
+    type("2");
+    next();
+    waitForAllAsyncStuff();
+    checkResultWithInlays("class C {\n" +
+                          "    int mmm(int a, int b, int c) { return 0; }\n" +
+                          "    void m2() { mmm(<Hint text=\"a:\"/>1, <Hint text=\"b:\"/>2, <HINT text=\"c:\"/><caret>) }\n" +
+                          "}");
+    type("3");
+    next();
+    waitForAllAsyncStuff();
+    checkResultWithInlays("class C {\n" +
+                          "    int mmm(int a, int b, int c) { return 0; }\n" +
+                          "    void m2() { mmm(<hint text=\"a:\"/>1, <hint text=\"b:\"/>2, <hint text=\"c:\"/>3)<caret> }\n" +
+                          "}");
+    prev();
+    waitForAllAsyncStuff();
+    checkResultWithInlays("class C {\n" +
+                          "    int mmm(int a, int b, int c) { return 0; }\n" +
+                          "    void m2() { mmm(<Hint text=\"a:\"/>1, <Hint text=\"b:\"/>2, <HINT text=\"c:\"/>3<caret>) }\n" +
+                          "}");
+    prev();
+    waitForAllAsyncStuff();
+    checkResultWithInlays("class C {\n" +
+                          "    int mmm(int a, int b, int c) { return 0; }\n" +
+                          "    void m2() { mmm(<Hint text=\"a:\"/>1, <HINT text=\"b:\"/>2<caret>, <Hint text=\"c:\"/>3) }\n" +
+                          "}");
+    prev();
+    waitForAllAsyncStuff();
+    checkResultWithInlays("class C {\n" +
+                          "    int mmm(int a, int b, int c) { return 0; }\n" +
+                          "    void m2() { mmm(<HINT text=\"a:\"/>1<caret>, <Hint text=\"b:\"/>2, <Hint text=\"c:\"/>3) }\n" +
+                          "}");
+  }
+
+  public void testParameterHintsLimitMoreParameters() throws Exception {
+    setParameterHintsLimit(2);
+    configureJava("class C {\n" +
+                  "    int mmm(int a, int b, int c, int d) { return 0; }\n" +
+                  "    void m2() { mm<caret> }\n" +
+                  "}");
+    complete();
+    checkResultWithInlays("class C {\n" +
+                          "    int mmm(int a, int b, int c, int d) { return 0; }\n" +
+                          "    void m2() { mmm(<HINT text=\"a:\"/><caret>, <Hint text=\"b:\"/><Hint text=\"...more:\"/>) }\n" +
+                          "}");
+    type("1");
+    next();
+    waitForAllAsyncStuff();
+    checkResultWithInlays("class C {\n" +
+                          "    int mmm(int a, int b, int c, int d) { return 0; }\n" +
+                          "    void m2() { mmm(<Hint text=\"a:\"/>1, <HINT text=\"b:\"/><caret><Hint text=\"...more:\"/>) }\n" +
+                          "}");
+    type("2");
+    next();
+    waitForAllAsyncStuff();
+    checkResultWithInlays("class C {\n" +
+                          "    int mmm(int a, int b, int c, int d) { return 0; }\n" +
+                          "    void m2() { mmm(<Hint text=\"a:\"/>1, <Hint text=\"b:\"/>2, <HINT text=\"c:\"/><caret><Hint text=\"...more:\"/>) }\n" +
+                          "}");
+    type("3");
+    next();
+    waitForAllAsyncStuff();
+    checkResultWithInlays("class C {\n" +
+                          "    int mmm(int a, int b, int c, int d) { return 0; }\n" +
+                          "    void m2() { mmm(<Hint text=\"a:\"/>1, <Hint text=\"b:\"/>2, <Hint text=\"c:\"/>3, <HINT text=\"d:\"/><caret>) }\n" +
+                          "}");
+    type("4");
+    next();
+    waitForAllAsyncStuff();
+    checkResultWithInlays("class C {\n" +
+                          "    int mmm(int a, int b, int c, int d) { return 0; }\n" +
+                          "    void m2() { mmm(<hint text=\"a:\"/>1, <hint text=\"b:\"/>2, <hint text=\"c:\"/>3, <hint text=\"d:\"/>4)<caret> }\n" +
+                          "}");
+  }
+
+  public void testVarargWithLimit() throws Exception {
+    setParameterHintsLimit(1);
+
+    configureJava("class C { void m() { String.for<caret> } }");
+    complete();
+    checkResultWithInlays("class C { void m() { String.format(<HINT text=\"format:\"/><caret><Hint text=\", args:\"/>) } }");
+    type("\"a");
+    next();
+    waitForAllAsyncStuff();
+    checkResultWithInlays("class C { void m() { String.format(<Hint text=\"format:\"/>\"a\", <HINT text=\"args:\"/><caret>) } }");
+    next();
+    waitForAllAsyncStuff();
+    checkResultWithInlays("class C { void m() { String.format(<hint text=\"format:\"/>\"a\"<hint text=\", args:\"/>)<caret> } }");
+    prev();
+    waitForAllAsyncStuff();
+    checkResultWithInlays("class C { void m() { String.format(<Hint text=\"format:\"/>\"a\", <HINT text=\"args:\"/><caret>) } }");
+    prev();
+    waitForAllAsyncStuff();
+    checkResultWithInlays("class C { void m() { String.format(<HINT text=\"format:\"/>\"a\"<caret><Hint text=\", args:\"/>) } }");
+  }
+
+  public void testBlacklistedHintsDoNotAppearWithCompletionHintsDisabled() throws Exception {
+    CodeInsightSettings.getInstance().SHOW_PARAMETER_NAME_HINTS_ON_COMPLETION = false;
+    configureJava("class C { \n" +
+                  "  void something() {}\n" +
+                  "  void some(int begin) {}\n" +
+                  "  void some(int begin, int end) {}\n" +
+                  "  void m() { som<caret> }\n" +
+                  "}");
+    complete("some(int begin)");
+    waitForAllAsyncStuff();
+    checkResultWithInlays("class C { \n" +
+                          "  void something() {}\n" +
+                          "  void some(int begin) {}\n" +
+                          "  void some(int begin, int end) {}\n" +
+                          "  void m() { some(<caret>); }\n" +
+                          "}");
+    type("0, 1");
+    home();
+    waitForAllAsyncStuff();
+    checkResultWithInlays("class C { \n" +
+                          "  void something() {}\n" +
+                          "  void some(int begin) {}\n" +
+                          "  void some(int begin, int end) {}\n" +
+                          "  <caret>void m() { some(0, 1); }\n" +
+                          "}");
   }
 
   private void checkResultWithInlays(String text) {
@@ -987,5 +1178,12 @@ public class CompletionHintsTest extends AbstractParameterInfoTestCase {
 
   private void escape() {
     myFixture.performEditorAction(IdeActions.ACTION_EDITOR_ESCAPE);
+  }
+
+  private void setParameterHintsLimit(int limit) {
+    RegistryValue registryValue = Registry.get("editor.completion.hints.per.call.limit");
+    int storedValue = registryValue.asInteger();
+    registryValue.setValue(limit);
+    Disposer.register(getTestRootDisposable(), () -> registryValue.setValue(storedValue));
   }
 }

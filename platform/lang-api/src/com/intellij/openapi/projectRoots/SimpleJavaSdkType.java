@@ -5,10 +5,12 @@ package com.intellij.openapi.projectRoots;
 
 import com.intellij.openapi.project.ProjectBundle;
 import com.intellij.openapi.projectRoots.impl.SdkVersionUtil;
+import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.util.lang.JavaVersion;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import org.jetbrains.jps.model.java.JdkVersionDetector;
 
 import java.io.File;
@@ -94,5 +96,15 @@ public class SimpleJavaSdkType extends SdkType implements JavaSdkType {
   public final String getVersionString(final String sdkHome) {
     JdkVersionDetector.JdkVersionInfo jdkInfo = SdkVersionUtil.getJdkVersionInfo(sdkHome);
     return jdkInfo != null ? JdkVersionDetector.formatVersionString(jdkInfo.version) : null;
+  }
+
+  @NotNull
+  public static Condition<SdkTypeId> notSimpleJavaSdkType() {
+    return sdkTypeId -> !(sdkTypeId instanceof SimpleJavaSdkType);
+  }
+
+  @NotNull
+  public static Condition<SdkTypeId> notSimpleJavaSdkType(@Nullable Condition<SdkTypeId> condition) {
+    return sdkTypeId -> notSimpleJavaSdkType().value(sdkTypeId) && (condition == null || condition.value(sdkTypeId));
   }
 }

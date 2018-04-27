@@ -19,8 +19,8 @@ import java.awt.Container
 class KeyMapSettingsTestFocusTest : GuiTestCase() {
 
   @Test
-  fun testInlineVariableFocus() {
-    CommunityProjectCreator.createCommandLineProject()
+  fun testKeyMapSettingsTestFocus() {
+    CommunityProjectCreator.importCommandLineAppAndOpenMain()
     Pause.pause(1000)
     ideFrame {
       waitForBackgroundTasksToFinish()

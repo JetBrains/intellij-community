@@ -177,7 +177,7 @@ public class RunContentManagerImpl implements RunContentManager, Disposable {
   }
 
   @Override
-  public void toFrontRunContent(final Executor requestor, final ProcessHandler handler) {
+  public void toFrontRunContent(@NotNull final Executor requestor, @NotNull final ProcessHandler handler) {
     final RunContentDescriptor descriptor = getDescriptorBy(handler, requestor);
     if (descriptor == null) {
       return;
@@ -186,7 +186,7 @@ public class RunContentManagerImpl implements RunContentManager, Disposable {
   }
 
   @Override
-  public void toFrontRunContent(final Executor requestor, final RunContentDescriptor descriptor) {
+  public void toFrontRunContent(@NotNull final Executor requestor, @NotNull final RunContentDescriptor descriptor) {
     ApplicationManager.getApplication().invokeLater(() -> {
       ContentManager contentManager = getContentManagerForRunner(requestor, descriptor);
       Content content = getRunContentByDescriptor(contentManager, descriptor);
@@ -242,7 +242,7 @@ public class RunContentManagerImpl implements RunContentManager, Disposable {
   }
 
   @Override
-  public boolean removeRunContent(@NotNull final Executor executor, final RunContentDescriptor descriptor) {
+  public boolean removeRunContent(@NotNull final Executor executor, @NotNull final RunContentDescriptor descriptor) {
     final ContentManager contentManager = getContentManagerForRunner(executor, descriptor);
     final Content content = getRunContentByDescriptor(contentManager, descriptor);
     return content != null && contentManager.removeContent(content, true);
@@ -485,7 +485,7 @@ public class RunContentManagerImpl implements RunContentManager, Disposable {
     if (descriptor != null && descriptor.getContentToolWindowId() != null) {
       return descriptor.getContentToolWindowId();
     }
-    return  executor.getToolWindowId();
+    return executor.getToolWindowId();
   }
 
   private static Content createNewContent(final RunContentDescriptor descriptor, Executor executor) {

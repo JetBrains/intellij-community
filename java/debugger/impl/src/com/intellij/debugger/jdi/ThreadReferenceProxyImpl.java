@@ -1,6 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 /*
  * @author Eugene Zhuravlev
@@ -18,6 +16,7 @@ import com.intellij.openapi.util.Comparing;
 import com.intellij.util.ThreeState;
 import com.intellij.util.containers.ContainerUtil;
 import com.sun.jdi.*;
+import org.intellij.lang.annotations.MagicConstant;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
@@ -133,6 +132,7 @@ public final class ThreadReferenceProxyImpl extends ObjectReferenceProxyImpl imp
     super.clearCaches();
   }
 
+  @MagicConstant(valuesFromClass = ThreadReference.class)
   public int status() {
     try {
       return getThreadReference().status();

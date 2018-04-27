@@ -51,7 +51,7 @@ class Pogo {}
       configureByText 'Main.java', '''\
 class Main {
   void foo() {
-    new Pogo().<error descr="Unhandled exception: java.lang.CloneNotSupportedException">clone();</error>;
+    new Pogo().<error descr="Unhandled exception: java.lang.CloneNotSupportedException">clone</error>();
     try {
        Pogo pogo = new Pogo().clone();
     } catch (java.lang.CloneNotSupportedException e) {}
@@ -90,7 +90,7 @@ class Pogo {}
 class Pojo extends Pogo {
   void foo() {
     Pogo pogo = new Pogo(); 
-    <error descr="Unhandled exception: java.lang.CloneNotSupportedException">cloneOrCopyMembers(pogo);</error>
+    <error descr="Unhandled exception: java.lang.CloneNotSupportedException">cloneOrCopyMembers</error>(pogo);
     cloneOrCopyMembers<error descr="'cloneOrCopyMembers(Pogo)' in '' cannot be applied to '()'">()</error>;
   }
 }

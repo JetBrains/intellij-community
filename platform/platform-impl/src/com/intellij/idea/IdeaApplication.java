@@ -4,7 +4,6 @@ package com.intellij.idea;
 import com.intellij.ExtensionPoints;
 import com.intellij.Patches;
 import com.intellij.concurrency.IdeaForkJoinWorkerThreadFactory;
-import com.intellij.ide.CommandLineProcessor;
 import com.intellij.ide.IdeEventQueue;
 import com.intellij.ide.IdeRepaintManager;
 import com.intellij.ide.plugins.PluginManagerCore;
@@ -16,7 +15,6 @@ import com.intellij.openapi.application.ex.ApplicationManagerEx;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.ExtensionPoint;
 import com.intellij.openapi.extensions.Extensions;
-import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.util.ShutDownTracker;
@@ -24,8 +22,6 @@ import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.wm.impl.X11UiUtil;
 import com.intellij.ui.Splash;
 import com.intellij.util.ArrayUtil;
-import com.intellij.util.IncorrectOperationException;
-import net.miginfocom.layout.PlatformDefaults;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -154,9 +150,6 @@ public class IdeaApplication {
       }
     }
 
-    //IDEA-170295
-    PlatformDefaults.setLogicalPixelBase(PlatformDefaults.BASE_FONT_SIZE);
-
     IconLoader.activate();
 
     new JFrame().pack(); // this peer will prevent shutting down our application
@@ -212,16 +205,6 @@ public class IdeaApplication {
       UIManager.installLookAndFeel("JGoodies Plastic XP", "com.jgoodies.looks.plastic.PlasticXPLookAndFeel");
     }
     catch (ClassNotFoundException ignored) { }
-  }
-
-
-  Project loadProjectFromExternalCommandLine() {
-    Project project = null;
-    if (myArgs != null && myArgs.length > 0 && myArgs[0] != null) {
-      LOG.info("IdeaApplication.loadProject");
-      project = CommandLineProcessor.processExternalCommandLine(Arrays.asList(myArgs), null);
-    }
-    return project;
   }
 
   /**

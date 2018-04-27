@@ -56,7 +56,7 @@ public class JavaDebuggerSettings extends XDebuggerSettings<Element> {
   public static List<Configurable> createDataViewsConfigurable() {
     return Arrays.asList(new DebuggerDataViewsConfigurable(null),
                          SimpleConfigurable.create("reference.idesettings.debugger.typerenderers", DebuggerBundle.message("user.renderers.configurable.display.name"),
-                                                                 UserRenderersConfigurable.class, NodeRendererSettings::getInstance));
+                                                   UserRenderersConfigurable.class, NodeRendererSettings::getInstance));
   }
 
   @Override

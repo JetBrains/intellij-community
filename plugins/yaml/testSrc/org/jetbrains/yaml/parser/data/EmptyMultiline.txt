@@ -8,7 +8,7 @@ YAML file
         PsiWhiteSpace(' ')
         YAML scalar text
           PsiElement(scalar text)('>')
-      PsiElement(Eol)('\n')
+          PsiElement(Eol)('\n')
       YAML key value
         PsiElement(scalar key)('bar:')
         PsiElement(Eol)('\n')
@@ -26,7 +26,7 @@ YAML file
             PsiWhiteSpace(' ')
             YAML scalar text
               PsiElement(scalar text)('>')
-          PsiElement(Eol)('\n')
+              PsiElement(Eol)('\n')
           PsiElement(indent)('  ')
           YAML key value
             PsiElement(scalar key)('jkl:')

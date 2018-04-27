@@ -151,11 +151,13 @@ public class GrAnnotationNameValuePairImpl extends GrStubElementBase<GrNameValue
     return getNameIdentifierGroovy() == null ? null : this;
   }
 
+  @NotNull
   @Override
   public PsiElement getElement() {
     return this;
   }
 
+  @NotNull
   @Override
   public TextRange getRangeInElement() {
     PsiElement nameId = getNameIdentifierGroovy();

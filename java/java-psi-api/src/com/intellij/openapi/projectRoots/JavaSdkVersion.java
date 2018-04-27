@@ -15,27 +15,34 @@ import java.util.Arrays;
  * @see LanguageLevel
  */
 public enum JavaSdkVersion {
-  JDK_1_0(LanguageLevel.JDK_1_3),
-  JDK_1_1(LanguageLevel.JDK_1_3),
-  JDK_1_2(LanguageLevel.JDK_1_3),
-  JDK_1_3(LanguageLevel.JDK_1_3),
-  JDK_1_4(LanguageLevel.JDK_1_4),
-  JDK_1_5(LanguageLevel.JDK_1_5),
-  JDK_1_6(LanguageLevel.JDK_1_6),
-  JDK_1_7(LanguageLevel.JDK_1_7),
-  JDK_1_8(LanguageLevel.JDK_1_8),
-  JDK_1_9(LanguageLevel.JDK_1_9),
-  JDK_10(LanguageLevel.JDK_10);
+  JDK_1_0(LanguageLevel.JDK_1_3, false),
+  JDK_1_1(LanguageLevel.JDK_1_3, false),
+  JDK_1_2(LanguageLevel.JDK_1_3, false),
+  JDK_1_3(LanguageLevel.JDK_1_3, false),
+  JDK_1_4(LanguageLevel.JDK_1_4, false),
+  JDK_1_5(LanguageLevel.JDK_1_5, false),
+  JDK_1_6(LanguageLevel.JDK_1_6, false),
+  JDK_1_7(LanguageLevel.JDK_1_7, false),
+  JDK_1_8(LanguageLevel.JDK_1_8, true),
+  JDK_1_9(LanguageLevel.JDK_1_9, false),
+  JDK_10(LanguageLevel.JDK_10, false),
+  JDK_11(LanguageLevel.JDK_11, true);
 
   private final LanguageLevel myMaxLanguageLevel;
+  private final boolean myLongTermSupport;
 
-  JavaSdkVersion(@NotNull LanguageLevel maxLanguageLevel) {
+  JavaSdkVersion(LanguageLevel maxLanguageLevel, boolean longTermSupport) {
     myMaxLanguageLevel = maxLanguageLevel;
+    myLongTermSupport = longTermSupport;
   }
 
   @NotNull
   public LanguageLevel getMaxLanguageLevel() {
     return myMaxLanguageLevel;
+  }
+
+  public boolean isLongTermSupport() {
+    return myLongTermSupport;
   }
 
   @NotNull
@@ -50,17 +57,13 @@ public enum JavaSdkVersion {
 
   @NotNull
   public static JavaSdkVersion fromLanguageLevel(@NotNull LanguageLevel languageLevel) throws IllegalArgumentException {
-    if (languageLevel == LanguageLevel.JDK_1_3) {
-      return JDK_1_3;
-    }
     JavaSdkVersion[] values = values();
     if (languageLevel == LanguageLevel.JDK_X) {
       return values[values.length - 1];
     }
-    for (JavaSdkVersion version : values) {
-      if (version.getMaxLanguageLevel().isAtLeast(languageLevel)) {
-        return version;
-      }
+    int feature = languageLevel.toJavaVersion().feature;
+    if (feature < values.length) {
+      return values[feature];
     }
     throw new IllegalArgumentException("Can't map " + languageLevel + " to any of " + Arrays.toString(values));
   }

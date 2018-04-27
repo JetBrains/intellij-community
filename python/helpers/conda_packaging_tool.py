@@ -10,16 +10,30 @@ def usage():
     exit(ERROR_WRONG_USAGE)
 
 def do_list_available_packages():
-    try:
+    import conda
+    version = conda.__version__
+    version_splitted = version.split(".")
+
+    if len(version_splitted) < 2:
+        sys.stderr.write("Conda version %s" % version)
+        sys.stderr.flush()
+        return
+
+    major_version = int(version_splitted[0])
+    minor_version = int(version_splitted[1])
+
+    if major_version >= 4 and minor_version >= 4:
+        from conda.core.index import get_index
+        index = get_index()
+    elif major_version == 4 and minor_version >= 2:
+        from conda.api import get_index
+        index = get_index()
+    elif major_version == 4 and minor_version == 1:
+        from conda.cli.main_search import get_index
+        index = get_index()
+    else:
         from conda.cli.main_search import common
         index = common.get_index_trap()
-    except ImportError:
-        try:
-            from conda.cli.main_search import get_index
-            index = get_index()
-        except ImportError:    # conda.__version__ = 4.3.23
-            from conda.api import get_index
-            index = get_index()
 
     for pkg in index.values():
         sys.stdout.write("\t".join([pkg["name"], pkg["version"], ":".join(pkg["depends"])])+chr(10))

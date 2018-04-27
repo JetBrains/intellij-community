@@ -60,8 +60,6 @@ public class PsiCodeBlockImpl extends LazyParseablePsiElement implements PsiCode
   @Override
   public boolean isEmpty() {
     ApplicationManager.getApplication().assertReadAccessAllowed();
-    // no lock is needed because all chameleons are expanded already
-    int count = 0;
     for (ASTNode child = getFirstChildNode(); child != null; child = child.getTreeNext()) {
       if (child.getPsi() instanceof PsiStatement) {
         return false;
@@ -158,13 +156,13 @@ public class PsiCodeBlockImpl extends LazyParseablePsiElement implements PsiCode
     }
 
     if (before == Boolean.TRUE) {
-      while (isNonJavaStatement(anchor)) {
+      while (anchor != null && isNonJavaStatement(anchor)) {
         anchor = anchor.getTreePrev();
         before = Boolean.FALSE;
       }
     }
     else if (before == Boolean.FALSE) {
-      while (isNonJavaStatement(anchor)) {
+      while (anchor != null && isNonJavaStatement(anchor)) {
         anchor = anchor.getTreeNext();
         before = Boolean.TRUE;
       }

@@ -56,7 +56,7 @@ class a4 {
 }
 
 class a5 {
-  int i = <error descr="Unhandled exception: java.lang.ClassNotFoundException">f();</error>
+  int i = <error descr="Unhandled exception: java.lang.ClassNotFoundException">f</error>();
 
   int f() throws ClassNotFoundException {
     return 0;
@@ -110,7 +110,7 @@ class a9 {
   public AnInterface getAnInterface() {
         return new AnInterface() {
             {
-                <error descr="Unhandled exception: java.io.FileNotFoundException">new java.io.FileInputStream("somefile")</error>;
+                new <error descr="Unhandled exception: java.io.FileNotFoundException">java.io.FileInputStream</error>("somefile");
             }
         };
     }
@@ -121,7 +121,7 @@ class BadStatic {
     static String f() throws ClassNotFoundException {
         return null;
     }
-	private static final String FOO = <error descr="Unhandled exception: java.lang.ClassNotFoundException">f();</error>
+	private static final String FOO = <error descr="Unhandled exception: java.lang.ClassNotFoundException">f</error>();
 
 	public BadStatic()  throws ClassNotFoundException {
 	}

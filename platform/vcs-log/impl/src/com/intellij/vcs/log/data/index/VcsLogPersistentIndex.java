@@ -245,9 +245,13 @@ public class VcsLogPersistentIndex implements VcsLogIndex, Disposable {
 
   @Override
   public synchronized boolean isIndexed(@NotNull VirtualFile root) {
-    return myRoots.contains(root) &&
-           !(myBigRepositoriesList.isBig(root)) &&
+    return isIndexingEnabled(root) &&
            (!myCommitsToIndex.containsKey(root) && myNumberOfTasks.get(root).get() == 0);
+  }
+
+  public boolean isIndexingEnabled(@NotNull VirtualFile root) {
+    if (myIndexStorage == null) return false;
+    return myRoots.contains(root) && !(myBigRepositoriesList.isBig(root));
   }
 
   @Override

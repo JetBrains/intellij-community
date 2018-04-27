@@ -16,14 +16,18 @@
 package org.intellij.images.util;
 
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.util.io.UnsyncByteArrayInputStream;
+import com.intellij.openapi.util.Couple;
+import com.intellij.util.SVGLoader;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.io.DataInput;
-import java.io.DataInputStream;
-import java.io.IOException;
-import java.io.RandomAccessFile;
+import javax.imageio.ImageIO;
+import javax.imageio.ImageReader;
+import javax.imageio.ImageTypeSpecifier;
+import javax.imageio.stream.ImageInputStream;
+import java.io.ByteArrayInputStream;
+import java.io.File;
+import java.util.Iterator;
 
 /**
  * @author spleaner
@@ -35,205 +39,54 @@ public class ImageInfoReader {
   }
 
   @Nullable
-  public static Info getInfo(@NotNull final String file) {
-    return read(file);
+  public static Info getInfo(@NotNull String file) {
+    return read(new File(file));
   }
 
   @Nullable
-  public static Info getInfo(@NotNull final byte[] data) {
-    return read(data);
-  }
-
-  @Nullable
-  private static Info read(@NotNull final String file) {
-    final RandomAccessFile raf;
-    try {
-      //noinspection HardCodedStringLiteral
-      raf = new RandomAccessFile(file, "r");
-      try {
-        return readFileData(raf);
+  public static Info getInfo(@NotNull byte[] data) {
+    for (int i = 0; i < Math.min(data.length, 100); i++) {
+      byte b = data[i];
+      if (b == '<') {
+        Info info = tryReadSvg(data);
+        if (info != null) {
+          return info;
+        }
       }
-      finally {
-        try {
-          raf.close();
-        }
-        catch (IOException e) {
-          // nothing
-        }
+      if (!Character.isWhitespace(b)) {
+        break;
       }
     }
-    catch (IOException e) {
+    return read(new ByteArrayInputStream(data));
+  }
+
+  private static Info tryReadSvg(byte[] data) {
+    try {
+      Couple<Integer> couple = SVGLoader.loadInfo(null, new ByteArrayInputStream(data), 1.0f);
+      return new Info(couple.first, couple.second, 32);
+    } catch (Throwable e) {
       return null;
     }
   }
 
   @Nullable
-  private static Info read(@NotNull final byte[] data) {
-    final DataInputStream is = new DataInputStream(new UnsyncByteArrayInputStream(data));
-    try {
-      return readFileData(is);
-    }
-    catch (IOException e) {
-      return null;
-    }
-    finally {
-      try {
-        is.close();
-      }
-      catch (IOException e) {
-        // nothing
+  private static Info read(@NotNull Object input) {
+    try (ImageInputStream iis = ImageIO.createImageInputStream(input)) {
+      Iterator<ImageReader> it = ImageIO.getImageReaders(iis);
+      ImageReader reader = it.hasNext() ? it.next() : null;
+      if (reader != null) {
+        reader.setInput(iis, true);
+        int w = reader.getWidth(0);
+        int h = reader.getHeight(0);
+        Iterator<ImageTypeSpecifier> it2 = reader.getImageTypes(0);
+        int bpp = it2 != null && it2.hasNext() ? it2.next().getColorModel().getPixelSize() : -1;
+        return new Info(w, h, bpp);
       }
     }
-  }
-
-
-  @Nullable
-  private static Info readFileData(@NotNull final DataInput di) throws IOException {
-    final int b1 = di.readUnsignedByte();
-    final int b2 = di.readUnsignedByte();
-
-    if (b1 == 0x47 && b2 == 0x49) {
-      return readGif(di);
+    catch (Throwable e) {
+      LOG.warn(e);
     }
-
-    if (b1 == 0x89 && b2 == 0x50) {
-      return readPng(di);
-    }
-
-    if (b1 == 0xff && b2 == 0xd8) {
-      return readJpeg(di);
-    }
-
-    //if (b1 == 0x42 && b2 == 0x4d) {
-    //  return readBmp(raf);
-    //}
-
     return null;
-  }
-
-  @Nullable
-  private static Info readGif(DataInput di) throws IOException {
-    final byte[] GIF_MAGIC_87A = {0x46, 0x38, 0x37, 0x61};
-    final byte[] GIF_MAGIC_89A = {0x46, 0x38, 0x39, 0x61};
-    byte[] a = new byte[11]; // 4 from the GIF signature + 7 from the global header
-
-    di.readFully(a);
-    if ((!eq(a, 0, GIF_MAGIC_89A, 0, 4)) && (!eq(a, 0, GIF_MAGIC_87A, 0, 4))) {
-      return null;
-    }
-
-    final int width = getShortLittleEndian(a, 4);
-    final int height = getShortLittleEndian(a, 6);
-
-    int flags = a[8] & 0xff;
-    final int bpp = ((flags >> 4) & 0x07) + 1;
-
-    return new Info(width, height, bpp);
-  }
-
-  private static Info readBmp(RandomAccessFile raf) throws IOException {
-    byte[] a = new byte[44];
-    if (raf.read(a) != a.length) {
-      return null;
-    }
-
-    final int width = getIntLittleEndian(a, 16);
-    final int height = getIntLittleEndian(a, 20);
-
-    if (width < 1 || height < 1) {
-      return null;
-    }
-
-    final int bpp = getShortLittleEndian(a, 26);
-    if (bpp != 1 && bpp != 4 && bpp != 8 && bpp != 16 && bpp != 24 & bpp != 32) {
-      return null;
-    }
-
-    return new Info(width, height, bpp);
-  }
-
-  @Nullable
-  private static Info readJpeg(DataInput di) throws IOException {
-    byte[] a = new byte[13];
-    while (true) {
-      di.readFully(a, 0, 4);
-
-      int marker = getShortBigEndian(a, 0);
-      final int size = getShortBigEndian(a, 2);
-
-      if ((marker & 0xff00) != 0xff00) {
-        return null;
-      }
-
-      if (marker == 0xffe0) {
-        if (size < 14) {
-          di.skipBytes(size - 2);
-          continue;
-        }
-
-        di.readFully(a, 0, 12);
-        di.skipBytes(size - 14);
-      }
-      else if (marker >= 0xffc0 && marker <= 0xffcf && marker != 0xffc4 && marker != 0xffc8) {
-        di.readFully(a, 0, 6);
-
-        final int bpp = (a[0] & 0xff) * (a[5] & 0xff);
-        final int width = getShortBigEndian(a, 3);
-        final int height = getShortBigEndian(a, 1);
-
-        return new Info(width, height, bpp);
-      }
-      else {
-        di.skipBytes(size - 2);
-      }
-    }
-  }
-
-  @Nullable
-  private static Info readPng(DataInput di) throws IOException {
-    final byte[] PNG_MAGIC = {0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a};
-    byte[] a = new byte[27];
-
-    di.readFully(a);
-    if (!eq(a, 0, PNG_MAGIC, 0, 6)) {
-      return null;
-    }
-
-    final int width = getIntBigEndian(a, 14);
-    final int height = getIntBigEndian(a, 18);
-    int bpp = a[22] & 0xff;
-    int colorType = a[23] & 0xff;
-    if (colorType == 2 || colorType == 6) {
-      bpp *= 3;
-    }
-
-    return new Info(width, height, bpp);
-  }
-
-  private static int getShortBigEndian(byte[] a, int offset) {
-    return (a[offset] & 0xff) << 8 | (a[offset + 1] & 0xff);
-  }
-
-  private static boolean eq(byte[] a1, int offset1, byte[] a2, int offset2, int num) {
-    while (num-- > 0) {
-      if (a1[offset1++] != a2[offset2++]) {
-        return false;
-      }
-    }
-
-    return true;
-  }
-
-  private static int getIntBigEndian(byte[] a, int offset) {
-    return (a[offset] & 0xff) << 24 | (a[offset + 1] & 0xff) << 16 | (a[offset + 2] & 0xff) << 8 | a[offset + 3] & 0xff;
-  }
-
-  private static int getIntLittleEndian(byte[] a, int offset) {
-    return (a[offset + 3] & 0xff) << 24 | (a[offset + 2] & 0xff) << 16 | (a[offset + 1] & 0xff) << 8 | a[offset] & 0xff;
-  }
-
-  private static int getShortLittleEndian(byte[] a, int offset) {
-    return (a[offset] & 0xff) | (a[offset + 1] & 0xff) << 8;
   }
 
   public static class Info {

@@ -1,4 +1,4 @@
-// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.actions;
 
 import com.intellij.codeInsight.lookup.LookupManager;
@@ -31,7 +31,6 @@ import com.intellij.ide.ui.search.OptionDescription;
 import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.ide.util.gotoByName.*;
 import com.intellij.ide.util.treeView.smartTree.TreeElement;
-import com.intellij.internal.statistic.collectors.fus.ui.persistence.ToolbarClicksCollector;
 import com.intellij.lang.Language;
 import com.intellij.lang.LanguagePsiElementExternalizer;
 import com.intellij.navigation.ItemPresentation;
@@ -42,6 +41,7 @@ import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.ex.ActionUtil;
 import com.intellij.openapi.actionSystem.ex.AnActionListener;
 import com.intellij.openapi.actionSystem.ex.CustomComponentAction;
+import com.intellij.openapi.actionSystem.impl.ActionButton;
 import com.intellij.openapi.actionSystem.impl.ActionToolbarImpl;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
@@ -84,7 +84,6 @@ import com.intellij.psi.codeStyle.NameUtil;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.ui.*;
 import com.intellij.ui.awt.RelativePoint;
-import com.intellij.ui.components.JBLabel;
 import com.intellij.ui.components.JBList;
 import com.intellij.ui.components.JBScrollPane;
 import com.intellij.ui.components.OnOffButton;
@@ -99,7 +98,6 @@ import com.intellij.util.ui.EmptyIcon;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.StatusText;
 import com.intellij.util.ui.UIUtil;
-import com.intellij.util.ui.components.BorderLayoutPanel;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -152,7 +150,7 @@ public class SearchEverywhereAction extends AnAction implements CustomComponentA
   private final Map<String, String> myConfigurables = new HashMap<>();
 
   private final Alarm myAlarm = new Alarm(Alarm.ThreadToUse.SWING_THREAD, ApplicationManager.getApplication());
-  private JBList myList;
+  private JBList<Object> myList;
   private JCheckBox myNonProjectCheckBox;
   private AnActionEvent myActionEvent;
   private final Set<AnAction> myDisabledActions = new HashSet<>();
@@ -197,58 +195,28 @@ public class SearchEverywhereAction extends AnAction implements CustomComponentA
 
   @Override
   public JComponent createCustomComponent(Presentation presentation) {
-    JPanel panel = new BorderLayoutPanel() {
-      @Override
-      public Dimension getPreferredSize() {
-        return JBUI.size(24);
+    return new ActionButton(this, presentation, ActionPlaces.NAVIGATION_BAR_TOOLBAR, ActionToolbar.DEFAULT_MINIMUM_BUTTON_SIZE) {
+      @Override protected void updateToolTipText() {
+        String shortcutText = getShortcut();
+
+        if (Registry.is("ide.helptooltip.enabled")) {
+          HelpTooltip.dispose(this);
+
+          new HelpTooltip()
+            .setTitle(myPresentation.getText())
+            .setShortcut(shortcutText)
+            .setDescription("Searches for:<br/> - Classes<br/> - Files<br/> - Tool Windows<br/> - Actions<br/> - Settings")
+            .setLocation(getTooltipLocation()).installOn(this);
+        } else {
+          setToolTipText("<html><body>Search Everywhere<br/>Press <b>" + shortcutText +
+                         "</b> to access<br/> - Classes<br/> - Files<br/> - Tool Windows<br/> - Actions<br/> - Settings</body></html>");
+        }
       }
     };
-    panel.setOpaque(false);
-
-    final JLabel label = new JBLabel(AllIcons.Actions.FindPlain) {
-      {
-        enableEvents(AWTEvent.MOUSE_EVENT_MASK);
-        enableEvents(AWTEvent.MOUSE_MOTION_EVENT_MASK);
-      }
-    };
-    panel.add(label, BorderLayout.CENTER);
-    initTooltip(label);
-    label.addMouseListener(new MouseAdapter() {
-      @Override
-      public void mousePressed(MouseEvent e) {
-        if (myBalloon != null) {
-          myBalloon.cancel();
-        }
-        myFocusOwner = IdeFocusManager.findInstance().getFocusOwner();
-        label.setToolTipText(null);
-        IdeTooltipManager.getInstance().hideCurrentNow(false);
-        ActionToolbarImpl toolbar = UIUtil.getParentOfType(ActionToolbarImpl.class, panel);
-        if (toolbar != null) {
-          ToolbarClicksCollector.record(SearchEverywhereAction.this, toolbar.getPlace());
-        }
-        actionPerformed(null, e);
-      }
-
-      @Override
-      public void mouseEntered(MouseEvent e) {
-        if (myBalloon == null || myBalloon.isDisposed()) {
-          label.setIcon(AllIcons.Actions.Find);
-        }
-      }
-
-      @Override
-      public void mouseExited(MouseEvent e) {
-        if (myBalloon == null || myBalloon.isDisposed()) {
-          label.setIcon(AllIcons.Actions.FindPlain);
-        }
-      }
-    });
-
-    return panel;
   }
 
   private void updateComponents() {
-    myList = new JBList(new SearchListModel()) {
+    myList = new JBList<Object>(new SearchListModel()) {
       int lastKnownHeight = JBUI.scale(30);
       @Override
       public Dimension getPreferredSize() {
@@ -315,16 +283,6 @@ public class SearchEverywhereAction extends AnAction implements CustomComponentA
         }
       }
     });
-  }
-
-  private static void initTooltip(JLabel label) {
-    final String shortcutText;
-    shortcutText = getShortcut();
-
-    label.setToolTipText("<html><body>Search Everywhere<br/>Press <b>"
-                                 + shortcutText
-                                 + "</b> to access<br/> - Classes<br/> - Files<br/> - Tool Windows<br/> - Actions<br/> - Settings</body></html>");
-
   }
 
   @Nullable
@@ -517,7 +475,6 @@ public class SearchEverywhereAction extends AnAction implements CustomComponentA
       else if (isActionValue(value) || isSetting(value) || isRunConfiguration(value)) {
         focusManager.requestDefaultFocus(true);
         final Component comp = myContextComponent;
-        final AnActionEvent event = myActionEvent;
         IdeFocusManager.getInstance(project).doWhenFocusSettlesDown(() -> {
           Component c = comp;
           if (c == null) {
@@ -603,6 +560,10 @@ public class SearchEverywhereAction extends AnAction implements CustomComponentA
   }
 
   public void actionPerformed(AnActionEvent e, MouseEvent me) {
+    if (Registry.is("new.search.everywhere")) {
+      //todo[mikhail.sokolov] show new UI
+      return;
+    }
     if (myBalloon != null && myBalloon.isVisible()) {
       showAll.set(!showAll.get());
       myNonProjectCheckBox.setSelected(showAll.get());
@@ -715,7 +676,7 @@ public class SearchEverywhereAction extends AnAction implements CustomComponentA
                             UIManager.getColor("SearchEverywhere.shortcutForeground") : foregroundColor;
 
       StringBuilder cbText = new StringBuilder("<html>");
-      cbText.append(IdeBundle.message("checkbox.include.non.project.items"));
+      cbText.append(IdeBundle.message("checkbox.include.non.project.items", IdeUICustomization.getInstance().getProjectConceptName()));
       cbText.append(" ");
       if (!UIUtil.isUnderWin10LookAndFeel()) cbText.append("<b>");
       cbText.append("<font color=#").append(ColorUtil.toHex(shortcutColor)).append(">").append(getShortcut()).append("</font>");
@@ -1017,7 +978,7 @@ public class SearchEverywhereAction extends AnAction implements CustomComponentA
     }
   }
 
-  private class MyListRenderer extends ColoredListCellRenderer {
+  private class MyListRenderer extends ColoredListCellRenderer<Object> {
     ColoredListCellRenderer myLocation = new ColoredListCellRenderer() {
       @Override
       protected void customizeCellRenderer(@NotNull JList list, Object value, int index, boolean selected, boolean hasFocus) {
@@ -1796,7 +1757,7 @@ public class SearchEverywhereAction extends AnAction implements CustomComponentA
       final MinusculeMatcher matcher = NameUtil.buildMatcher("*" + pattern).build();
       final ArrayList<VirtualFile> files = new ArrayList<>();
       final List<VirtualFile> selected = Arrays.asList(FileEditorManager.getInstance(project).getSelectedFiles());
-      for (VirtualFile file : ArrayUtil.reverseArray(EditorHistoryManager.getInstance(project).getFiles())) {
+      for (VirtualFile file : ContainerUtil.reverse(EditorHistoryManager.getInstance(project).getFileList())) {
         if (StringUtil.isEmptyOrSpaces(pattern) || matcher.matches(file.getName())) {
           if (!files.contains(file) && !selected.contains(file)) {
             files.add(file);
@@ -2085,7 +2046,7 @@ public class SearchEverywhereAction extends AnAction implements CustomComponentA
                     if (component != null) {
                       final JLabel label = UIUtil.getParentOfType(JLabel.class, component);
                       if (label != null) {
-                        SwingUtilities.invokeLater(() -> label.setIcon(AllIcons.Actions.FindPlain));
+                        SwingUtilities.invokeLater(() -> label.setIcon(AllIcons.Actions.Find));
                       }
                     }
                   }
@@ -2385,7 +2346,8 @@ public class SearchEverywhereAction extends AnAction implements CustomComponentA
 
     TitleIndex() {
       String gotoClass = KeymapUtil.getFirstKeyboardShortcutText(ActionManager.getInstance().getAction("GotoClass"));
-      gotoClassTitle = StringUtil.isEmpty(gotoClass) ? "Classes" : "Classes (" + gotoClass + ")";
+      String classesStr = StringUtil.capitalize(StringUtil.join(GotoClassPresentationUpdater.getElementKinds(), s -> StringUtil.pluralize(s), "/"));
+      gotoClassTitle = StringUtil.isEmpty(gotoClass) ? classesStr : classesStr + " (" + gotoClass + ")";
       String gotoFile = KeymapUtil.getFirstKeyboardShortcutText(ActionManager.getInstance().getAction("GotoFile"));
       gotoFileTitle = StringUtil.isEmpty(gotoFile) ? "Files" : "Files (" + gotoFile + ")";
       String gotoAction = KeymapUtil.getFirstKeyboardShortcutText(ActionManager.getInstance().getAction("GotoAction"));
@@ -2448,7 +2410,7 @@ public class SearchEverywhereAction extends AnAction implements CustomComponentA
   }
 
   @SuppressWarnings("unchecked")
-  private static class SearchListModel extends DefaultListModel {
+  private static class SearchListModel extends DefaultListModel<Object> {
     @SuppressWarnings("UseOfObsoleteCollectionType")
     Vector myDelegate;
 

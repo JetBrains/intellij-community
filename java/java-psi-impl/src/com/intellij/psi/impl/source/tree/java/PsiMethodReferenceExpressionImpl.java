@@ -269,6 +269,7 @@ public class PsiMethodReferenceExpressionImpl extends JavaStubPsiElement<Functio
     return element instanceof PsiExpression || element instanceof PsiTypeElement ? element : null;
   }
 
+  @NotNull
   @Override
   public TextRange getRangeInElement() {
     final PsiElement element = getReferenceNameElement();
@@ -444,6 +445,7 @@ public class PsiMethodReferenceExpressionImpl extends JavaStubPsiElement<Functio
     throw new IncorrectOperationException();
   }
 
+  @NotNull
   @Override
   public PsiElement getElement() {
     return this;

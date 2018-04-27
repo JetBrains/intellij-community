@@ -116,6 +116,7 @@ public class RollbackWorker {
                                          return VcsConfiguration.getInstance(myProject).PERFORM_ROLLBACK_IN_BACKGROUND;
                                        }
 
+                                       @Override
                                        public void processSentToBackground() {
                                          VcsConfiguration.getInstance(myProject).PERFORM_ROLLBACK_IN_BACKGROUND = true;
                                        }

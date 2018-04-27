@@ -14,7 +14,6 @@ import com.intellij.psi.util.MethodSignatureUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.containers.ContainerUtil;
-import java.util.HashMap;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.actions.generate.GroovyCodeInsightBundle;
@@ -49,6 +48,7 @@ public class GroovyGenerateEqualsHelper {
 
   private final Project myProject;
   private final boolean myCheckParameterWithInstanceof;
+  private final PsiFile myFile;
 
   public GroovyGenerateEqualsHelper(Project project,
                                     PsiClass aClass,
@@ -69,6 +69,7 @@ public class GroovyGenerateEqualsHelper {
 
     mySuperHasHashCode = superMethodExists(getHashCodeSignature());
 //    myCodeStyleManager = CodeStyleManager.getInstance(myProject);
+    myFile = aClass.getContainingFile();
   }
 
   private static String getUniqueLocalVarName(String base, PsiField[] fields) {
@@ -196,7 +197,7 @@ public class GroovyGenerateEqualsHelper {
   private void addClassInstance(@NonNls StringBuffer buffer) {
     buffer.append("\n");
     // A a = (A) object;
-    CodeStyleSettings settings = CodeStyleSettingsManager.getSettings(myProject);
+    JavaCodeStyleSettings settings = JavaCodeStyleSettings.getInstance(myFile);
     if (settings.GENERATE_FINAL_LOCALS) {
       buffer.append("final ");
     }
@@ -271,7 +272,7 @@ public class GroovyGenerateEqualsHelper {
 
     GrMethod result = myFactory.createMethodFromText(buffer.toString());
     final PsiParameter parameter = result.getParameterList().getParameters()[0];
-    PsiUtil.setModifierProperty(parameter, PsiModifier.FINAL, CodeStyleSettingsManager.getSettings(myProject).GENERATE_FINAL_PARAMETERS);
+    PsiUtil.setModifierProperty(parameter, PsiModifier.FINAL, JavaCodeStyleSettings.getInstance(myFile).GENERATE_FINAL_PARAMETERS);
 
     try {
       result = ((GrMethod) CodeStyleManager.getInstance(myProject).reformat(result));
@@ -299,7 +300,7 @@ public class GroovyGenerateEqualsHelper {
       }
       buffer.append("\n}");
     } else if (myHashCodeFields.length > 0) {
-      CodeStyleSettings settings = CodeStyleSettingsManager.getSettings(myProject);
+      JavaCodeStyleSettings settings = JavaCodeStyleSettings.getInstance(myFile);
       final String resultName = getUniqueLocalVarName(settings.LOCAL_VARIABLE_NAME_PREFIX + RESULT_VARIABLE, myHashCodeFields);
 
       buffer.append("int ");
@@ -380,7 +381,7 @@ public class GroovyGenerateEqualsHelper {
   private String addTempForOneField(PsiField field, StringBuilder buffer) {
     if (PsiType.DOUBLE.equals(field.getType())) {
       final String name = getUniqueLocalVarName(TEMP_VARIABLE, myHashCodeFields);
-      CodeStyleSettings settings = CodeStyleSettingsManager.getSettings(myProject);
+      JavaCodeStyleSettings settings = JavaCodeStyleSettings.getInstance(myFile);
       if (settings.GENERATE_FINAL_LOCALS) {
         buffer.append("final ");
       }

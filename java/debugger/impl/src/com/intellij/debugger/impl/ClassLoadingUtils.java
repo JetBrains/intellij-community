@@ -29,8 +29,7 @@ public class ClassLoadingUtils {
     try {
       // TODO [egor]: cache?
       ArrayType arrayType = (ArrayType)context.getDebugProcess().findClass(context, "java.net.URL[]", context.getClassLoader());
-      ArrayReference emptyUrlArray = arrayType.newInstance(0);
-      DebuggerUtilsEx.keep(emptyUrlArray, context);
+      ArrayReference emptyUrlArray = DebuggerUtilsEx.mirrorOfArray(arrayType, 0, context);
       ClassType loaderClass = (ClassType)process.findClass(context, "java.net.URLClassLoader", context.getClassLoader());
       Method ctorMethod = loaderClass.concreteMethodByName(JVMNameUtil.CONSTRUCTOR_NAME, "([Ljava/net/URL;Ljava/lang/ClassLoader;)V");
       ClassLoaderReference reference = (ClassLoaderReference)process.newInstance(context, loaderClass, ctorMethod,
@@ -52,10 +51,8 @@ public class ClassLoadingUtils {
       VirtualMachineProxyImpl proxy = (VirtualMachineProxyImpl)process.getVirtualMachineProxy();
       Method defineMethod =
         ((ClassType)classLoader.referenceType()).concreteMethodByName("defineClass", "(Ljava/lang/String;[BII)Ljava/lang/Class;");
-      StringReference nameObj = proxy.mirrorOf(name);
-      DebuggerUtilsEx.keep(nameObj, context);
       process.invokeMethod(context, classLoader, defineMethod,
-                           Arrays.asList(nameObj,
+                           Arrays.asList(DebuggerUtilsEx.mirrorOfString(name, proxy, context),
                                          mirrorOf(bytes, context, process),
                                          proxy.mirrorOf(0),
                                          proxy.mirrorOf(bytes.length)));
@@ -100,8 +97,7 @@ public class ClassLoadingUtils {
   private static ArrayReference mirrorOf(byte[] bytes, EvaluationContext context, DebugProcess process)
     throws EvaluateException, InvalidTypeException, ClassNotLoadedException {
     ArrayType arrayClass = (ArrayType)process.findClass(context, "byte[]", context.getClassLoader());
-    ArrayReference reference = process.newInstance(arrayClass, bytes.length);
-    DebuggerUtilsEx.keep(reference, context);
+    ArrayReference reference = DebuggerUtilsEx.mirrorOfArray(arrayClass, bytes.length, context);
     List<Value> mirrors = new ArrayList<>(bytes.length);
     for (byte b : bytes) {
       mirrors.add(((VirtualMachineProxyImpl)process.getVirtualMachineProxy()).mirrorOf(b));

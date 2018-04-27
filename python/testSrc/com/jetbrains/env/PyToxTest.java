@@ -12,6 +12,7 @@ import com.jetbrains.python.testing.tox.PyToxConfigurationFactory;
 import com.jetbrains.python.testing.tox.PyToxTestTools;
 import com.jetbrains.python.tools.sdkTools.SdkCreationType;
 import org.assertj.core.api.Condition;
+import org.hamcrest.Matchers;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.junit.Assert;
@@ -156,6 +157,44 @@ public final class PyToxTest extends PyEnvTestCase {
                                                      ),
                                                      Integer.MAX_VALUE)
     );
+  }
+
+
+  /**
+   * Ensures {posargs} are passed correctly
+   */
+  @Test
+  public void testToxPosArgs() {
+    runPythonTest(
+      new PyProcessWithConsoleTestTask<PyAbstractTestProcessRunner<PyToxConfiguration>>("/toxtest/toxPosArgs/", SdkCreationType.EMPTY_SDK) {
+
+        @NotNull
+        @Override
+        protected PyAbstractTestProcessRunner<PyToxConfiguration> createProcessRunner() {
+          return new MyTestProcessRunner() {
+            @Override
+            protected void configurationCreatedAndWillLaunch(@NotNull final PyToxConfiguration configuration) throws IOException {
+              super.configurationCreatedAndWillLaunch(configuration);
+              PyToxTestTools.setArguments(configuration, "arg1");
+            }
+          };
+        }
+
+
+        @Override
+        protected void checkTestResults(@NotNull final PyAbstractTestProcessRunner<PyToxConfiguration> runner,
+                                        @NotNull final String stdout,
+                                        @NotNull final String stderr,
+                                        @NotNull final String all) {
+          Assert.assertThat("Wrong sys.argv", stdout, Matchers.containsString("['spam.py', 'arg1']"));
+        }
+
+        @NotNull
+        @Override
+        public Set<String> getTags() {
+          return Sets.newHashSet("tox");
+        }
+      });
   }
 
   /**
@@ -364,7 +403,7 @@ public final class PyToxTest extends PyEnvTestCase {
     }
   }
 
-  private static final class MyTestProcessRunner extends PyAbstractTestProcessRunner<PyToxConfiguration> {
+  private static class MyTestProcessRunner extends PyAbstractTestProcessRunner<PyToxConfiguration> {
     private MyTestProcessRunner() {
       this(0);
     }

@@ -28,6 +28,7 @@ import com.intellij.util.ObjectUtils;
 import com.siyeh.ig.callMatcher.CallMapper;
 import com.siyeh.ig.callMatcher.CallMatcher;
 import com.siyeh.ig.psiutils.ExpressionUtils;
+import com.siyeh.ig.psiutils.TypeUtils;
 import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
@@ -79,7 +80,7 @@ public class OptionalChainInliner implements CallInliner {
           .splice(2, 0, 1, 1) // stack: .. elseValue, optValue, optValue
           .ifNotNull()
           .swap() // stack: .. optValue, elseValue
-          .endIf()
+          .end()
           .pop();
       })
       .register(OPTIONAL_OR_NULL, (builder, call) -> {
@@ -93,7 +94,7 @@ public class OptionalChainInliner implements CallInliner {
           .ifNull()
           .pop()
           .invokeFunction(0, fn)
-          .endIf();
+          .end();
       })
       .register(OPTIONAL_IF_PRESENT, (builder, call) -> {
         PsiExpression fn = call.getArgumentList().getExpressions()[0];
@@ -105,7 +106,7 @@ public class OptionalChainInliner implements CallInliner {
           .elseBranch()
           .pop()
           .pushUnknown()
-          .endIf();
+          .end();
       });
 
   private static final CallMapper<BiConsumer<CFGBuilder, PsiExpression>> INTERMEDIATE_MAPPER =
@@ -121,19 +122,19 @@ public class OptionalChainInliner implements CallInliner {
         .ifConditionIs(false)
         .pop()
         .pushNull()
-        .endIf()
-        .endIf())
+        .end()
+        .end())
       .register(OPTIONAL_FLAT_MAP, (builder, function) -> builder
         .dup()
         .ifNotNull()
         .chain(b -> invokeAndUnwrapOptional(b, 1, function))
-        .endIf())
+        .end())
       .register(OPTIONAL_OR, (builder, function) -> builder
         .dup()
         .ifNull()
         .pop()
         .chain(b -> invokeAndUnwrapOptional(b, 0, function))
-        .endIf())
+        .end())
       .register(GUAVA_TO_JAVA, (builder, stub) -> {/* no op */});
 
   @Override
@@ -153,7 +154,7 @@ public class OptionalChainInliner implements CallInliner {
         .push(factFactory.getFactValue(DfaFactType.OPTIONAL_PRESENCE, true))
         .elseBranch()
         .push(factFactory.getFactValue(DfaFactType.OPTIONAL_PRESENCE, false))
-        .endIf();
+        .end();
       return true;
     }
     if (OPTIONAL_EMPTY.test(call)) {
@@ -199,7 +200,7 @@ public class OptionalChainInliner implements CallInliner {
       .push(builder.getFactory().createTypeValue(optionalElementType, Nullness.NOT_NULL))
       .elseBranch()
       .pushNull()
-      .endIf()
+      .end()
       .assignTo(builder.createTempVariable(optionalElementType));
     return true;
   }
@@ -234,7 +235,7 @@ public class OptionalChainInliner implements CallInliner {
           return;
         }
         // Restore stack for common invokeFunction
-        StreamEx.of(parameters).forEach(p -> builder.push(builder.getFactory().getVarFactory().createVariableValue(p, false)));
+        StreamEx.of(parameters).map(builder.getFactory().getVarFactory()::createVariableValue).forEach(builder::push);
       }
     }
     builder
@@ -250,7 +251,7 @@ public class OptionalChainInliner implements CallInliner {
       .dup()
       .ifNotNull()
       .invokeFunction(1, function, resultNullness)
-      .endIf();
+      .end();
   }
 
   private static void inlineOf(CFGBuilder builder, PsiType optionalElementType, PsiMethodCallExpression qualifierCall) {
@@ -264,5 +265,10 @@ public class OptionalChainInliner implements CallInliner {
     if ("of".equals(qualifierCall.getMethodExpression().getReferenceName())) {
       builder.checkNotNull(argument, NullabilityProblemKind.passingNullableToNotNullParameter);
     }
+  }
+
+  @Override
+  public boolean mayInferPreciseType(@NotNull PsiExpression expression) {
+    return InlinerUtil.isLambdaChainParameterReference(expression, TypeUtils::isOptional);
   }
 }

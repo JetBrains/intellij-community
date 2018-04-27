@@ -43,7 +43,6 @@ import java.io.IOException;
 import java.lang.management.ManagementFactory;
 import java.lang.management.MemoryPoolMXBean;
 import java.lang.management.ThreadMXBean;
-import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 import java.util.Arrays;
 import java.util.Date;
@@ -61,7 +60,6 @@ public class PerformanceWatcher implements Disposable, ApplicationComponent {
   private static final String THREAD_DUMPS_PREFIX = "threadDumps-";
   private final ScheduledFuture<?> myThread;
   private final ThreadMXBean myThreadMXBean;
-  private final DateFormat myDateFormat = new SimpleDateFormat("yyyyMMdd-HHmmss");
   private final File myLogDir = new File(PathManager.getLogPath());
   private List<StackTraceElement> myStacktraceCommonPart;
   private final IdePerformanceListener myPublisher;
@@ -234,7 +232,7 @@ public class PerformanceWatcher implements Disposable, ApplicationComponent {
   }
 
   private String formatTime(long timeMs) {
-    return myDateFormat.format(new Date(timeMs));
+    return new SimpleDateFormat("yyyyMMdd-HHmmss").format(new Date(timeMs));
   }
 
   private void edtResponds(long currentMillis) {

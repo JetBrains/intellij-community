@@ -102,13 +102,13 @@ public class EditorStressTest extends AbstractEditorTest {
   private static class MoveCharacter implements Action {
     @Override
     public void perform(EditorEx editor, Random random) {
-      Document document = editor.getDocument();
+      DocumentEx document = editor.getDocument();
       int textLength = document.getTextLength();
       if (textLength <= 0) return;
       int offset = random.nextInt(textLength);
       int targetOffset = random.nextInt(textLength + 1);
       if (targetOffset < offset || targetOffset > offset + 1) {
-        WriteCommandAction.writeCommandAction(getProject()).run(() -> ((DocumentEx)document).moveText(offset, offset + 1, targetOffset));
+        WriteCommandAction.writeCommandAction(getProject()).run(() -> document.moveText(offset, offset + 1, targetOffset));
       }
     }
   }
@@ -167,7 +167,7 @@ public class EditorStressTest extends AbstractEditorTest {
       DocumentEx document = editor.getDocument();
       if (document.isInBulkUpdate()) return;
       FoldingModelEx foldingModel = editor.getFoldingModel();
-      foldingModel.runBatchFoldingOperation(() -> foldingModel.clearFoldRegions());
+      foldingModel.runBatchFoldingOperation(foldingModel::clearFoldRegions);
     }
   }
   

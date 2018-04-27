@@ -15,11 +15,10 @@
  */
 package com.intellij.codeInsight.completion;
 
+import com.intellij.application.options.CodeStyle;
 import com.intellij.codeInsight.lookup.LookupElement;
-import com.intellij.lang.java.JavaLanguage;
 import com.intellij.openapi.util.Pair;
 import com.intellij.psi.*;
-import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
 import com.intellij.util.Consumer;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.containers.ContainerUtil;
@@ -101,12 +100,13 @@ class SlowerTypeConversions implements Runnable {
       final PsiType expectedType = parameters.getExpectedType();
       ChainedCallCompletion.addChains(element, baseItem, result, itemType, expectedType, parameters);
 
-      final String prefix = getItemText(object);
+      final PsiFile file = parameters.getParameters().getOriginalFile();
+      final String prefix = getItemText(file, object);
       if (prefix == null) return;
 
       FromArrayConversion.addConversions(element, prefix, itemType, result, qualifier, expectedType);
 
-      ToArrayConversion.addConversions(element, prefix, itemType, result, qualifier, expectedType);
+      ToArrayConversion.addConversions(file, element, prefix, itemType, result, qualifier, expectedType);
 
       ArrayMemberAccess.addMemberAccessors(element, prefix, itemType, qualifier, result, (PsiModifierListOwner)object, expectedType);
     }
@@ -115,15 +115,14 @@ class SlowerTypeConversions implements Runnable {
   }
 
   @Nullable
-  private static String getItemText(Object o) {
+  private static String getItemText(@NotNull PsiFile file, Object o) {
     if (o instanceof PsiMethod) {
       final PsiMethod method = (PsiMethod)o;
       final PsiType type = method.getReturnType();
       if (PsiType.VOID.equals(type) || PsiType.NULL.equals(type)) return null;
       if (!method.getParameterList().isEmpty()) return null;
       return method.getName() + "(" +
-             getSpace(CodeStyleSettingsManager.getSettings(method.getProject())
-                        .getCommonSettings(JavaLanguage.INSTANCE).SPACE_WITHIN_METHOD_CALL_PARENTHESES) + ")";
+             getSpace(CodeStyle.getLanguageSettings(file).SPACE_WITHIN_METHOD_CALL_PARENTHESES) + ")";
     }
     else if (o instanceof PsiVariable) {
       return ((PsiVariable)o).getName();

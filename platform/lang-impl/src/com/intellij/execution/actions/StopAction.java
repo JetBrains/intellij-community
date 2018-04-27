@@ -31,6 +31,10 @@ import com.intellij.openapi.ui.popup.*;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.reference.SoftReference;
+import com.intellij.ui.mac.touchbar.NSAutoreleaseLock;
+import com.intellij.ui.mac.touchbar.TBItemScrubber;
+import com.intellij.ui.mac.touchbar.TouchBar;
+import com.intellij.ui.mac.touchbar.TouchBarsManager;
 import com.intellij.ui.popup.list.GroupedItemsListRenderer;
 import com.intellij.util.IconUtil;
 import org.jetbrains.annotations.NotNull;
@@ -50,7 +54,8 @@ public class StopAction extends DumbAwareAction implements AnAction.TransparentU
   private static boolean isPlaceGlobal(AnActionEvent e) {
     return ActionPlaces.isMainMenuOrActionSearch(e.getPlace())
            || ActionPlaces.MAIN_TOOLBAR.equals(e.getPlace())
-           || ActionPlaces.NAVIGATION_BAR_TOOLBAR.equals(e.getPlace());
+           || ActionPlaces.NAVIGATION_BAR_TOOLBAR.equals(e.getPlace())
+           || ActionPlaces.TOUCHBAR_GENERAL.equals(e.getPlace());
   }
   @Override
   public void update(final AnActionEvent e) {
@@ -112,6 +117,12 @@ public class StopAction extends DumbAwareAction implements AnAction.TransparentU
         return;
       }
 
+      if (e.getPlace().equals(ActionPlaces.TOUCHBAR_GENERAL)) {
+        final TouchBar tb = createStopSelectTouchBar(stoppableDescriptors);
+        TouchBarsManager.showTempTouchBar(tb);
+        return;
+      }
+
       Pair<List<HandlerItem>, HandlerItem>
         handlerItems = getItemsList(stoppableDescriptors, getRecentlyStartedContentDescriptor(dataContext));
       if (handlerItems == null || handlerItems.first.isEmpty()) {
@@ -124,6 +135,7 @@ public class StopAction extends DumbAwareAction implements AnAction.TransparentU
           @Override
           void stop() {
             for (HandlerItem item : handlerItems.first) {
+              if(item == this) continue;
               item.stop();
             }
           }
@@ -264,6 +276,27 @@ public class StopAction extends DumbAwareAction implements AnAction.TransparentU
     return processHandler != null && !processHandler.isProcessTerminated()
            && (!processHandler.isProcessTerminating()
                || processHandler instanceof KillableProcess && ((KillableProcess)processHandler).canKillProcess());
+  }
+
+  private static TouchBar createStopSelectTouchBar(List<RunContentDescriptor> stoppableDescriptors) {
+    try (NSAutoreleaseLock lock = new NSAutoreleaseLock()) {
+      TouchBar result = new TouchBar("select_running_to_stop");
+      result.addButton(null, "Stop all", () -> {
+        for (RunContentDescriptor sd : stoppableDescriptors)
+          ExecutionManagerImpl.stopProcess(sd);
+        TouchBarsManager.closeTempTouchBar(result);
+      });
+      final TBItemScrubber stopScrubber = result.addScrubber();
+      List<TBItemScrubber.ItemData> scrubItems = new ArrayList<>();
+      for (RunContentDescriptor sd : stoppableDescriptors) {
+        scrubItems.add(new TBItemScrubber.ItemData(sd.getIcon(), sd.getDisplayName(), () -> {
+          ExecutionManagerImpl.stopProcess(sd);
+          TouchBarsManager.closeTempTouchBar(result);
+        }));
+      }
+      stopScrubber.setItems(scrubItems);
+      return result;
+    }
   }
 
   abstract static class HandlerItem {

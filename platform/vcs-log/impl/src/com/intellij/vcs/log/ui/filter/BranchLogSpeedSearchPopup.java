@@ -16,12 +16,24 @@
 package com.intellij.vcs.log.ui.filter;
 
 import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.ui.popup.ListPopupStep;
 import com.intellij.openapi.vcs.ui.FlatSpeedSearchPopup;
+import com.intellij.ui.popup.WizardPopup;
+import com.intellij.util.ui.JBDimension;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 public class BranchLogSpeedSearchPopup extends FlatSpeedSearchPopup {
   public BranchLogSpeedSearchPopup(@NotNull ActionGroup actionGroup, @NotNull DataContext dataContext) {
     super(null, new DefaultActionGroup(actionGroup, createSpeedSearchActionGroup(actionGroup)), dataContext, null, false);
+    setMinimumSize(new JBDimension(250, 0));
+  }
+
+  protected BranchLogSpeedSearchPopup(@Nullable WizardPopup parent,
+                                      @NotNull ListPopupStep step,
+                                      @NotNull DataContext context,
+                                      @Nullable Object value) {
+    super(parent, step, context, value);
   }
 
   @Override

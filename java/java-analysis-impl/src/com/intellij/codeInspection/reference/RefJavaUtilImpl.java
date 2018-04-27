@@ -236,7 +236,8 @@ public class RefJavaUtilImpl extends RefJavaUtil{
 
     if (refExpression instanceof PsiMethodReferenceExpression) {
       PsiType returnType = psiMethod.getReturnType();
-      if (!psiMethod.isConstructor() && !PsiType.VOID.equals(returnType)) {
+      if (!psiMethod.isConstructor() && 
+          !PsiType.VOID.equals(LambdaUtil.getFunctionalInterfaceReturnType((PsiFunctionalExpression)refExpression))) {
         refMethod.setReturnValueUsed(true);
         addTypeReference(psiFrom, returnType, refFrom.getRefManager());
       }
@@ -257,7 +258,9 @@ public class RefJavaUtilImpl extends RefJavaUtil{
     if (call != null) {
       PsiType returnType = psiMethod.getReturnType();
       if (!psiMethod.isConstructor() && !PsiType.VOID.equals(returnType)) {
-        if (!(call.getParent() instanceof PsiExpressionStatement)) {
+        PsiElement parent = call.getParent();
+        if (!(parent instanceof PsiExpressionStatement) && 
+            !(parent instanceof PsiLambdaExpression && PsiType.VOID.equals(LambdaUtil.getFunctionalInterfaceReturnType((PsiFunctionalExpression)parent)))) {
           refMethod.setReturnValueUsed(true);
         }
 

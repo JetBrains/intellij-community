@@ -10,6 +10,7 @@ import java.util.ArrayDeque;
 import java.util.Queue;
 import java.util.Set;
 import java.util.function.Function;
+import java.util.function.Predicate;
 
 import static com.intellij.lang.jvm.util.JvmUtil.resolveClass;
 import static com.intellij.lang.jvm.util.JvmUtil.resolveClasses;
@@ -17,6 +18,15 @@ import static com.intellij.lang.jvm.util.JvmUtil.resolveClasses;
 public class JvmHierarchyUtil {
 
   private JvmHierarchyUtil() {}
+
+  public static boolean testSupers(@NotNull JvmClass start, boolean skipStart, @NotNull Predicate<JvmClass> predicate) {
+    Boolean result = traverseSupers(start, skipStart, it -> predicate.test(it) ? Boolean.TRUE : null);
+    return result != null && result;
+  }
+
+  public static <R> R traverseSupers(@NotNull JvmClass start, @NotNull Function<? super JvmClass, R> f) {
+    return traverseSupers(start, false, f);
+  }
 
   /**
    * Traverses class tree in BFS order applying the function to each superclass.
@@ -34,10 +44,15 @@ public class JvmHierarchyUtil {
    * @param <R>   type of the result
    * @return first non-null result or null
    */
-  public static <R> R traverseSupers(@NotNull JvmClass start, @NotNull Function<? super JvmClass, R> f) {
+  public static <R> R traverseSupers(@NotNull JvmClass start, boolean skipStart, @NotNull Function<? super JvmClass, R> f) {
     // TODO implement method returning Stream<JvmClass>
     final Queue<JvmClass> queue = new ArrayDeque<>();
-    queue.offer(start);
+    if (skipStart) {
+      queueSupers(queue, start);
+    }
+    else {
+      queue.offer(start);
+    }
 
     final Set<JvmClass> visited = new THashSet<>();
     while (!queue.isEmpty()) {

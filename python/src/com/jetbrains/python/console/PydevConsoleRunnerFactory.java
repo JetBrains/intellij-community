@@ -67,7 +67,7 @@ public class PydevConsoleRunnerFactory extends PythonConsoleRunnerFactory {
       if (runner instanceof PydevConsoleRunnerImpl) {
         ((PydevConsoleRunnerImpl)runner).setConsoleTitle(title);
       }
-      runner.run();
+      runner.run(true);
     };
 
     return createConsoleRunner(project, sdk, workingDir, envs, PyConsoleType.PYTHON, settingsProvider, rerunAction, setupFragment);

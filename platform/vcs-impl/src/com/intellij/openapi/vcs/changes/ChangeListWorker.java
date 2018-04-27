@@ -246,7 +246,9 @@ public class ChangeListWorker {
 
   @NotNull
   public List<LocalChangeList> getChangeLists() {
-    return ContainerUtil.map(myLists, this::toChangeList);
+    List<LocalChangeList> lists = ContainerUtil.map(myLists, this::toChangeList);
+    ContainerUtil.sort(lists, ChangesUtil.CHANGELIST_COMPARATOR);
+    return lists;
   }
 
   public int getChangeListsNumber() {
@@ -443,7 +445,7 @@ public class ChangeListWorker {
 
   public boolean setReadOnly(@NotNull String name, boolean value) {
     ListData list = getDataByName(name);
-    if (list == null || list.isReadOnly) return false;
+    if (list == null) return false;
 
     list.isReadOnly = value;
 
@@ -630,7 +632,7 @@ public class ChangeListWorker {
 
         ListData newList = null;
         if (oldList == null) {
-          if (updatedWorker.myPartialChangeTrackers.isEmpty()) {
+          if (updatedWorker.getChangeTrackerFor(change) == null) {
             LOG.error("Change mapping not found");
           }
         }
@@ -992,10 +994,7 @@ public class ChangeListWorker {
                                        @NotNull List<Change> addedChanges) {
       OpenTHashSet<Change> changesBeforeUpdate = myChangesBeforeUpdateMap.get(list.id);
 
-      Set<Change> listChanges = new HashSet<>();
-      myWorker.myChangeMappings.forEach((change, mappedList) -> {
-        if (mappedList == list) listChanges.add(change);
-      });
+      Set<Change> listChanges = new HashSet<>(myWorker.getChangesIn(list));
 
       for (Change newChange : listChanges) {
         Change oldChange = findOldChange(changesBeforeUpdate, newChange);
@@ -1085,6 +1084,12 @@ public class ChangeListWorker {
     }
 
     public void addChangeToCorrespondingList(@NotNull Change change, AbstractVcs vcs) {
+      ListData listData = guessListForChange(change);
+      addChangeToList(listData, change, vcs);
+    }
+
+    @Nullable
+    private ListData guessListForChange(@NotNull Change change) {
       if (LOG.isDebugEnabled()) {
         final String path = ChangesUtil.getFilePath(change).getPath();
         LOG.debug("[addChangeToCorrespondingList] for change " + path + " type: " + change.getType() +
@@ -1097,25 +1102,33 @@ public class ChangeListWorker {
           if (LOG.isDebugEnabled()) {
             LOG.debug("[addChangeToCorrespondingList] matched: " + list.name);
           }
-          addChangeToList(list, change, vcs);
-          return;
+          return list;
         }
+      }
+
+      ContentRevision revision = change.getAfterRevision();
+      if (revision != null && myWorker.myPartialChangeTrackers.get(revision.getFile()) != null) {
+        LOG.debug("[addChangeToCorrespondingList] partial tracker found");
+        return null;
       }
 
       if (LOG.isDebugEnabled()) {
         LOG.debug("[addChangeToCorrespondingList] added to default list");
       }
-      addChangeToList(myWorker.myDefault, change, vcs);
+      return myWorker.myDefault;
     }
 
-    private void addChangeToList(@NotNull ListData list, @NotNull Change change, AbstractVcs vcs) {
+    private void addChangeToList(@Nullable ListData list, @NotNull Change change, AbstractVcs vcs) {
       if (myWorker.myIdx.getChanges().contains(change)) {
         LOG.warn(String.format("Multiple equal changes added: %s", change));
         return;
       }
 
       myWorker.myIdx.changeAdded(change, vcs);
-      myWorker.putChangeMapping(change, list);
+      if (list != null) {
+        myWorker.putChangeMapping(change, list);
+      }
+      myWorker.myReadOnlyChangesCache = null;
     }
 
     public void removeRegisteredChangeFor(@Nullable FilePath filePath) {

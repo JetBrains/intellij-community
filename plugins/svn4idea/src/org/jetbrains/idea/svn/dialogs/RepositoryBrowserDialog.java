@@ -1,4 +1,4 @@
-// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.svn.dialogs;
 
 import com.intellij.CommonBundle;
@@ -385,10 +385,10 @@ public class RepositoryBrowserDialog extends DialogWrapper {
       final AddRepositoryLocationDialog dialog = new AddRepositoryLocationDialog(myBrowserComponent.getProject(), settings.getTypedUrlsListCopy());
       dialog.show();
       if (dialog.getExitCode() == DialogWrapper.OK_EXIT_CODE) {
-        final String url = dialog.getSelected();
-        if (url != null && url.length() > 0) {
-          settings.addTypedUrl(url);
-          settings.addCheckoutURL(url);
+        Url url = dialog.getSelected();
+        if (url != null) {
+          settings.addTypedUrl(url.toDecodedString());
+          settings.addCheckoutURL(url.toDecodedString());
           myBrowserComponent.addURL(url);
         }
       }
@@ -419,13 +419,13 @@ public class RepositoryBrowserDialog extends DialogWrapper {
       if (node == null || (! (node.getParent() instanceof RepositoryTreeRootNode))) {
         return;
       }
-      final String oldUrl = node.getURL().toString();
+      Url oldUrl = node.getURL();
       final SvnApplicationSettings settings = SvnApplicationSettings.getInstance();
       final AddRepositoryLocationDialog dialog =
         new AddRepositoryLocationDialog(myBrowserComponent.getProject(), settings.getTypedUrlsListCopy()) {
         @Override
         protected String initText() {
-          return oldUrl;
+          return oldUrl.toString();
         }
 
         @Override
@@ -435,11 +435,11 @@ public class RepositoryBrowserDialog extends DialogWrapper {
       };
       dialog.show();
       if (dialog.getExitCode() == DialogWrapper.OK_EXIT_CODE) {
-        final String url = dialog.getSelected();
-        if (url != null && url.length() > 0) {
-          settings.addTypedUrl(url);
-          settings.removeCheckoutURL(oldUrl);
-          settings.addCheckoutURL(url);
+        Url url = dialog.getSelected();
+        if (url != null) {
+          settings.addTypedUrl(url.toDecodedString());
+          settings.removeCheckoutURL(oldUrl.toString());
+          settings.addCheckoutURL(url.toDecodedString());
 
           myBrowserComponent.removeURL(oldUrl);
           myBrowserComponent.addURL(url);
@@ -476,7 +476,7 @@ public class RepositoryBrowserDialog extends DialogWrapper {
           return;
         }
         SvnApplicationSettings.getInstance().removeCheckoutURL(url.toString());
-        myBrowserComponent.removeURL(url.toString());
+        myBrowserComponent.removeURL(url);
       }
     }
   }

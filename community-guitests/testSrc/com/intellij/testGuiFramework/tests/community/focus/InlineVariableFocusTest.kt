@@ -44,7 +44,7 @@ public class Test {
 
   @Test
   fun testInlineVariableFocus() {
-    CommunityProjectCreator.createCommandLineProject()
+    CommunityProjectCreator.importCommandLineAppAndOpenMain()
     Pause.pause(1000)
     CommunityProjectCreator.createJavaClass(pasteCode, "Test")
     ideFrame {

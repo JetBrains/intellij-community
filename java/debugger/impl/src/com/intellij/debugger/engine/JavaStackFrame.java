@@ -142,6 +142,13 @@ public class JavaStackFrame extends XStackFrame implements JVMStackFrameInfoProv
         buildVariablesThreadAction(getFrameDebuggerContext(getDebuggerContext()), children, node);
         node.addChildren(children, true);
       }
+
+      @Override
+      protected void commandCancelled() {
+        if (!node.isObsolete()) {
+          node.addChildren(XValueChildrenList.EMPTY, true);
+        }
+      }
     });
   }
 
@@ -198,7 +205,15 @@ public class JavaStackFrame extends XStackFrame implements JVMStackFrameInfoProv
       // add last method return value if any
       final Pair<Method, Value> methodValuePair = debugProcess.getLastExecutedMethod();
       if (methodValuePair != null && myDescriptor.getUiIndex() == 0) {
-        ValueDescriptorImpl returnValueDescriptor = myNodeManager.getMethodReturnValueDescriptor(myDescriptor, methodValuePair.getFirst(), methodValuePair.getSecond());
+        Value returnValue = methodValuePair.getSecond();
+        // try to keep the value as early as possible
+        try {
+          DebuggerUtilsEx.keep(returnValue, evaluationContext);
+        }
+        catch (ObjectCollectedException ignored) {
+        }
+        ValueDescriptorImpl returnValueDescriptor =
+          myNodeManager.getMethodReturnValueDescriptor(myDescriptor, methodValuePair.getFirst(), returnValue);
         children.add(JavaValue.create(returnValueDescriptor, evaluationContext, myNodeManager));
       }
       // add context exceptions

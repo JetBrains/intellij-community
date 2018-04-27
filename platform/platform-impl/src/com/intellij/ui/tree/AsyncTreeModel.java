@@ -31,6 +31,7 @@ import java.util.function.ToIntFunction;
 
 import static java.util.Collections.emptyList;
 import static java.util.Collections.singletonList;
+import static java.util.stream.Collectors.toList;
 import static org.jetbrains.concurrency.Promises.rejectedPromise;
 
 /**
@@ -255,7 +256,7 @@ public final class AsyncTreeModel extends AbstractTreeModel implements Identifia
     };
     if (allowLoading) {
       // start visiting on the background thread to ensure that root node is already invalidated
-      processor.background.invokeLater(() -> onValidThread(() -> promiseRootEntry().onSuccess(walker::start).rejected(walker::setError)));
+      processor.background.invokeLater(() -> onValidThread(() -> promiseRootEntry().onSuccess(walker::start).onError(walker::setError)));
     }
     else {
       onValidThread(() -> walker.start(tree.root));
@@ -478,6 +479,7 @@ public final class AsyncTreeModel extends AbstractTreeModel implements Identifia
       }
 
       if (root != null && loaded != null && root.object.equals(loaded.object)) {
+        tree.fixEqualButNotSame(root, loaded.object);
         LOG.debug("same root: ", root.object);
         if (!root.isLoadingRequired()) processor.process(new CmdGetChildren("Update root children", root, true));
         tree.queue.done(this, root);
@@ -613,6 +615,7 @@ public final class AsyncTreeModel extends AbstractTreeModel implements Identifia
           list.add(child);
         }
         else {
+          tree.fixEqualButNotSame(found, child.object);
           list.add(found);
           if (found.leaf) {
             if (!child.leaf) {
@@ -672,7 +675,7 @@ public final class AsyncTreeModel extends AbstractTreeModel implements Identifia
 
       if (!reload.isEmpty()) {
         for (Node child : newChildren) {
-          if (!child.isLoadingRequired() && reload.contains(child.object)) {
+          if (reload.contains(child.object)) {
             processor.process(new CmdGetChildren("Update children recursively", child, true));
           }
         }
@@ -762,12 +765,22 @@ public final class AsyncTreeModel extends AbstractTreeModel implements Identifia
         }
       }
     }
+
+    private void fixEqualButNotSame(@NotNull Node node, @NotNull Object object) {
+      if (object == node.object) return;
+      // always use new instance of user's object, because
+      // some trees provide equal nodes with different behavior
+      map.remove(node.object);
+      node.updatePaths(node.object, object);
+      node.object = object;
+      map.put(object, node); // update key
+    }
   }
 
   private static final class Node {
     private final CommandQueue<CmdGetChildren> queue = new CommandQueue<>();
     private final Set<TreePath> paths = new SmartHashSet<>();
-    private final Object object;
+    private volatile Object object;
     private volatile boolean leaf;
     private volatile List<Node> children;
     private volatile Node loading;
@@ -855,6 +868,34 @@ public final class AsyncTreeModel extends AbstractTreeModel implements Identifia
         parent.paths.forEach(path -> removePath(path.pathByAddingChild(object)));
         tree.removeEmpty(this);
       }
+    }
+
+    private void updatePaths(@NotNull Object oldObject, @NotNull Object newObject) {
+      if (paths.stream().anyMatch(path -> contains(path, oldObject))) {
+        // replace instance of user's object in all internal maps to avoid memory leaks
+        List<TreePath> updated = paths.stream().map(path -> update(path, oldObject, newObject)).collect(toList());
+        paths.clear();
+        paths.addAll(updated);
+        forEachChildExceptLoading(child -> child.updatePaths(oldObject, newObject));
+      }
+    }
+
+    private static TreePath update(@NotNull TreePath path, @NotNull Object oldObject, @NotNull Object newObject) {
+      if (!contains(path, oldObject)) return path;
+      LOG.debug("update path: ", path);
+      Object[] objects = TreePathUtil.convertTreePathToArray(path);
+      for (int i = 0; i < objects.length; i++) {
+        if (oldObject == objects[i]) objects[i] = newObject;
+      }
+      return TreePathUtil.convertArrayToTreePath(objects);
+    }
+
+    private static boolean contains(@NotNull TreePath path, @NotNull Object object) {
+      while (object != path.getLastPathComponent()) {
+        path = path.getParentPath();
+        if (path == null) return false;
+      }
+      return true;
     }
   }
 

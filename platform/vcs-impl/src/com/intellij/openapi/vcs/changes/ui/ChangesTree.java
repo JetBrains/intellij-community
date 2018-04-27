@@ -83,6 +83,8 @@ public abstract class ChangesTree extends Tree implements DataProvider {
   @Nullable private Runnable myInclusionListener;
   @NotNull private final CopyProvider myTreeCopyProvider;
 
+  private boolean myModelUpdateInProgress;
+
   public ChangesTree(@NotNull Project project,
                      boolean showCheckboxes,
                      boolean highlightProblems) {
@@ -92,7 +94,6 @@ public abstract class ChangesTree extends Tree implements DataProvider {
     myShowCheckboxes = showCheckboxes;
     myCheckboxWidth = new JCheckBox().getPreferredSize().width;
 
-    setHorizontalAutoScrollingEnabled(false);
     setRootVisible(false);
     setShowsRootHandles(true);
     setOpaque(false);
@@ -263,24 +264,34 @@ public abstract class ChangesTree extends Tree implements DataProvider {
   public abstract void rebuildTree();
 
   protected void updateTreeModel(@NotNull DefaultTreeModel model) {
-    ApplicationManager.getApplication().assertIsDispatchThread();
+    myModelUpdateInProgress = true;
+    try {
+      ApplicationManager.getApplication().assertIsDispatchThread();
 
-    TreeState state = null;
-    if (myKeepTreeState) {
-      state = TreeState.createOn(this, getRoot());
-    }
+      TreeState state = null;
+      if (myKeepTreeState) {
+        state = TreeState.createOn(this, getRoot());
+      }
 
-    setModel(model);
-    myIsModelFlat = isCurrentModelFlat();
-    setChildIndent(myGroupingSupport.isNone() && myIsModelFlat);
+      setModel(model);
+      myIsModelFlat = isCurrentModelFlat();
+      setChildIndent(myGroupingSupport.isNone() && myIsModelFlat);
 
-    if (myKeepTreeState) {
-      //noinspection ConstantConditions
-      state.applyTo(this, getRoot());
+      if (myKeepTreeState) {
+        //noinspection ConstantConditions
+        state.applyTo(this, getRoot());
+      }
+      else {
+        resetTreeState();
+      }
     }
-    else {
-      resetTreeState();
+    finally {
+      myModelUpdateInProgress = false;
     }
+  }
+
+  public boolean isModelUpdateInProgress() {
+    return myModelUpdateInProgress;
   }
 
   private void resetTreeState() {

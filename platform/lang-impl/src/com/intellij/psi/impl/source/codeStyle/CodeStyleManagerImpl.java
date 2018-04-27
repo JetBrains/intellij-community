@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package com.intellij.psi.impl.source.codeStyle;
 
@@ -97,7 +83,7 @@ public class CodeStyleManagerImpl extends CodeStyleManager implements Formatting
     }
 
     ASTNode treeElement = element.getNode();
-    final PsiElement formatted = new CodeFormatterFacade(getSettings(), element.getLanguage()).processElement(treeElement).getPsi();
+    final PsiElement formatted = new CodeFormatterFacade(getSettings(), element.getLanguage(), canChangeWhiteSpacesOnly).processElement(treeElement).getPsi();
     if (!canChangeWhiteSpacesOnly) {
       return postProcessElement(formatted);
     }
@@ -396,7 +382,13 @@ public class CodeStyleManagerImpl extends CodeStyleManager implements Formatting
   @Override
   @Nullable
   public String getLineIndent(@NotNull PsiFile file, int offset) {
-    return new CodeStyleManagerRunnable<String>(this, FormattingMode.ADJUST_INDENT) {
+    return getLineIndent(file, offset, FormattingMode.ADJUST_INDENT);
+  }
+
+  @Override
+  @Nullable
+  public String getLineIndent(@NotNull PsiFile file, int offset, FormattingMode mode) {
+    return new CodeStyleManagerRunnable<String>(this, mode) {
       @Override
       protected boolean useDocumentBaseFormattingModel() {
         return false;
@@ -577,7 +569,7 @@ public class CodeStyleManagerImpl extends CodeStyleManager implements Formatting
 
   @Override
   public Indent getIndent(String text, FileType fileType) {
-    int indent = IndentHelperImpl.getIndent(myProject, fileType, text, true);
+    int indent = IndentHelperImpl.getIndent(CodeStyle.getSettings(myProject).getIndentOptions(fileType), text, true);
     int indentLevel = indent / IndentHelperImpl.INDENT_FACTOR;
     int spaceCount = indent - indentLevel * IndentHelperImpl.INDENT_FACTOR;
     return new IndentImpl(getSettings(), indentLevel, spaceCount, fileType);

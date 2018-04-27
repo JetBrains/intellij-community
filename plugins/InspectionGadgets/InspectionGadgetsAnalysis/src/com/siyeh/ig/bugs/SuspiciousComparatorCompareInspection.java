@@ -104,7 +104,7 @@ public class SuspiciousComparatorCompareInspection extends BaseInspection {
           List<? extends MethodContract> contracts = ControlFlowAnalyzer.getMethodCallContracts(method, soleCall);
           if (contracts.size() == 1) {
             MethodContract contract = contracts.get(0);
-            if (contract.isTrivial() && contract.getReturnValue() == MethodContract.ValueConstraint.THROW_EXCEPTION) {
+            if (contract.isTrivial() && contract.getReturnValue().isFail()) {
               return;
             }
           }
@@ -130,8 +130,8 @@ public class SuspiciousComparatorCompareInspection extends BaseInspection {
         @Override
         protected DfaMemoryState createMemoryState() {
           DfaMemoryState state = super.createMemoryState();
-          DfaVariableValue var1 = getFactory().getVarFactory().createVariableValue(parameters[0], false);
-          DfaVariableValue var2 = getFactory().getVarFactory().createVariableValue(parameters[1], false);
+          DfaVariableValue var1 = getFactory().getVarFactory().createVariableValue(parameters[0]);
+          DfaVariableValue var2 = getFactory().getVarFactory().createVariableValue(parameters[1]);
           DfaValue condition = getFactory().createCondition(var1, DfaRelationValue.RelationType.EQ, var2);
           state.applyCondition(condition);
           return state;

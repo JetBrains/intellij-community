@@ -1,17 +1,18 @@
 // Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInspection.lambda;
 
-import com.intellij.codeInspection.AbstractBaseJavaLocalInspectionTool;
-import com.intellij.codeInspection.LocalQuickFix;
-import com.intellij.codeInspection.ProblemDescriptor;
-import com.intellij.codeInspection.ProblemsHolder;
+import com.intellij.codeInspection.*;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
+import com.intellij.psi.util.PsiUtil;
 import com.siyeh.ig.psiutils.CommentTracker;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
+
+import java.util.Arrays;
+import java.util.Collections;
 
 public class RedundantLambdaParameterTypeInspection extends AbstractBaseJavaLocalInspectionTool {
   public static final Logger LOG = Logger.getInstance(RedundantLambdaParameterTypeInspection.class);
@@ -37,6 +38,8 @@ public class RedundantLambdaParameterTypeInspection extends AbstractBaseJavaLoca
     final PsiParameter[] parameters = parameterList.getParameters();
     for (PsiParameter parameter : parameters) {
       if (parameter.getTypeElement() == null) return false;
+      if (!PsiUtil.isLanguageLevel11OrHigher(parameterList) && 
+          AnonymousCanBeLambdaInspection.hasRuntimeAnnotations(parameter, Collections.emptySet())) return false;
     }
     if (parameters.length == 0) return false;
     final PsiType functionalInterfaceType = expression.getFunctionalInterfaceType();
@@ -68,6 +71,16 @@ public class RedundantLambdaParameterTypeInspection extends AbstractBaseJavaLoca
   private static void removeTypes(PsiLambdaExpression lambdaExpression) {
     if (lambdaExpression != null) {
       final PsiParameter[] parameters = lambdaExpression.getParameterList().getParameters();
+      if (Arrays.stream(parameters).anyMatch(parameter -> parameter.hasModifierProperty(PsiModifier.FINAL) || 
+                                                          AnonymousCanBeLambdaInspection.hasRuntimeAnnotations(parameter,Collections.emptySet()))) {
+        for (PsiParameter parameter : parameters) {
+          PsiTypeElement element = parameter.getTypeElement();
+          if (element != null) {
+            new CommentTracker().replaceAndRestoreComments(element, PsiKeyword.VAR);
+          }
+        }
+        return;
+      }
       final String text;
       if (parameters.length == 1) {
         text = parameters[0].getName();

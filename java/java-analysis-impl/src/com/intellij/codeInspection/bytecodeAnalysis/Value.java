@@ -16,12 +16,13 @@
 package com.intellij.codeInspection.bytecodeAnalysis;
 
 import com.intellij.codeInspection.bytecodeAnalysis.asm.ASMUtils;
-import com.intellij.codeInspection.dataFlow.MethodContract;
+import com.intellij.codeInspection.dataFlow.ContractReturnValue;
+import com.intellij.codeInspection.dataFlow.StandardMethodContract;
 import org.jetbrains.org.objectweb.asm.Type;
 
 import java.util.stream.Stream;
 
-enum Value {
+enum Value implements Result {
   Bot, NotNull, Null, True, False, Fail, Pure, Top;
 
   static Stream<Value> typeValues(Type type) {
@@ -33,14 +34,24 @@ enum Value {
     return Stream.empty();
   }
 
-  MethodContract.ValueConstraint toValueConstraint() {
+  ContractReturnValue toReturnValue() {
     switch (this) {
-      case False: return MethodContract.ValueConstraint.FALSE_VALUE;
-      case True: return MethodContract.ValueConstraint.TRUE_VALUE;
-      case NotNull: return MethodContract.ValueConstraint.NOT_NULL_VALUE;
-      case Null: return MethodContract.ValueConstraint.NULL_VALUE;
-      case Fail: return MethodContract.ValueConstraint.THROW_EXCEPTION;
-      default: return MethodContract.ValueConstraint.ANY_VALUE;
+      case False: return ContractReturnValue.returnFalse();
+      case True: return ContractReturnValue.returnTrue();
+      case NotNull: return ContractReturnValue.returnNotNull();
+      case Null: return ContractReturnValue.returnNull();
+      case Fail: return ContractReturnValue.fail();
+      default: return ContractReturnValue.returnAny();
+    }
+  }
+
+  StandardMethodContract.ValueConstraint toValueConstraint() {
+    switch (this) {
+      case False: return StandardMethodContract.ValueConstraint.FALSE_VALUE;
+      case True: return StandardMethodContract.ValueConstraint.TRUE_VALUE;
+      case NotNull: return StandardMethodContract.ValueConstraint.NOT_NULL_VALUE;
+      case Null: return StandardMethodContract.ValueConstraint.NULL_VALUE;
+      default: return StandardMethodContract.ValueConstraint.ANY_VALUE;
     }
   }
 }

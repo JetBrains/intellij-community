@@ -172,7 +172,7 @@ public class JUnit4AnnotatedMethodInJUnit3TestCaseInspection extends JUnit4Annot
   }
 
   private static void addAnnotationIfNotPresent(PsiModifierList modifierList, String qualifiedAnnotationName) {
-    if (modifierList.findAnnotation(qualifiedAnnotationName) != null) {
+    if (modifierList.hasAnnotation(qualifiedAnnotationName)) {
       return;
     }
     final PsiAnnotation annotation = modifierList.addAnnotation(qualifiedAnnotationName);

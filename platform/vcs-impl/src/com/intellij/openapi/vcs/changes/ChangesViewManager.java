@@ -50,6 +50,7 @@ import javax.swing.*;
 import javax.swing.event.TreeSelectionEvent;
 import javax.swing.event.TreeSelectionListener;
 import javax.swing.tree.DefaultMutableTreeNode;
+import javax.swing.tree.DefaultTreeModel;
 import javax.swing.tree.TreePath;
 import java.awt.*;
 import java.awt.event.InputEvent;
@@ -94,6 +95,7 @@ public class ChangesViewManager implements ChangesViewI, ProjectComponent, Persi
   @NotNull private final TreeSelectionListener myTsl;
   @NotNull private final PropertyChangeListener myGroupingChangeListener;
   private MyChangeViewContent myContent;
+  private boolean myModelUpdateInProgress;
 
   @NotNull
   public static ChangesViewI getInstance(@NotNull Project project) {
@@ -121,7 +123,8 @@ public class ChangesViewManager implements ChangesViewI, ProjectComponent, Persi
             LOG.debug(message);
           }
         }
-        ApplicationManager.getApplication().invokeLater(() -> updatePreview());
+        boolean fromModelRefresh = myModelUpdateInProgress;
+        ApplicationManager.getApplication().invokeLater(() -> updatePreview(fromModelRefresh));
       }
     };
     myGroupingChangeListener = e -> {
@@ -142,7 +145,7 @@ public class ChangesViewManager implements ChangesViewI, ProjectComponent, Persi
     scheduleRefresh();
     myProject.getMessageBus().connect().subscribe(RemoteRevisionsCache.REMOTE_VERSION_CHANGED,
                                                   () -> ApplicationManager.getApplication().invokeLater(() -> refreshView(), ModalityState.NON_MODAL, myProject.getDisposed()));
-    updatePreview();
+    updatePreview(false);
   }
 
   @Override
@@ -285,16 +288,21 @@ public class ChangesViewManager implements ChangesViewI, ProjectComponent, Persi
     if (myState.myShowIgnored) {
       treeModelBuilder.setIgnored(changeListManager.getIgnoredFiles(), changeListManager.isIgnoredInUpdateMode());
     }
-    myView.updateModel(
-      treeModelBuilder.build()
-    );
+    DefaultTreeModel newModel = treeModelBuilder.build();
 
-    updatePreview();
+    myModelUpdateInProgress = true;
+    try {
+      myView.updateModel(newModel);
+    }
+    finally {
+      myModelUpdateInProgress = false;
+    }
+    updatePreview(true);
   }
 
-  private void updatePreview() {
+  private void updatePreview(boolean fromModelRefresh) {
     if (mySplitterComponent != null) {
-      mySplitterComponent.updatePreview();
+      mySplitterComponent.updatePreview(fromModelRefresh);
     }
   }
 

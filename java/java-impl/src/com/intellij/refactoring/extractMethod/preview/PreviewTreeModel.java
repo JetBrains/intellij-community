@@ -3,6 +3,7 @@ package com.intellij.refactoring.extractMethod.preview;
 
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiMethod;
+import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.refactoring.extractMethod.ExtractMethodProcessor;
 import com.intellij.refactoring.extractMethod.ParametrizedDuplicates;
 import com.intellij.refactoring.util.duplicates.Match;
@@ -23,6 +24,7 @@ import java.util.List;
 class PreviewTreeModel extends DefaultTreeModel {
   private final DefaultMutableTreeNode myDuplicatesGroup;
   private final DefaultMutableTreeNode myMethodGroup;
+  private final PatternNode myPatternNode;
   private boolean myValid;
 
   public PreviewTreeModel(@NotNull ExtractMethodProcessor processor) {
@@ -30,19 +32,21 @@ class PreviewTreeModel extends DefaultTreeModel {
     setValidImpl(true);
     DefaultMutableTreeNode root = getRoot();
 
-    myMethodGroup = new DefaultMutableTreeNode("Method to extract");
+    myMethodGroup = new DefaultMutableTreeNode(RefactoringBundle.message("refactoring.extract.method.preview.group.method"));
     root.add(myMethodGroup);
     PsiMethod emptyMethod = processor.generateEmptyMethod(processor.getMethodName(), processor.getTargetClass());
     myMethodGroup.add(new MethodNode(emptyMethod)); // will be replaced in updateMethod()
 
-    DefaultMutableTreeNode originalGroup = new DefaultMutableTreeNode("Original code fragment");
+    DefaultMutableTreeNode originalGroup =
+      new DefaultMutableTreeNode(RefactoringBundle.message("refactoring.extract.method.preview.group.original"));
     root.add(originalGroup);
     PsiElement[] elements = processor.getElements();
-    originalGroup.add(new PatternNode(elements));
+    myPatternNode = new PatternNode(elements);
+    originalGroup.add(myPatternNode);
 
     List<Match> duplicates = getDuplicates(processor);
     if (!ContainerUtil.isEmpty(duplicates)) {
-      myDuplicatesGroup = new DefaultMutableTreeNode("Duplicate code fragments");
+      myDuplicatesGroup = new DefaultMutableTreeNode(RefactoringBundle.message("refactoring.extract.method.preview.group.duplicates"));
       root.add(myDuplicatesGroup);
       for (Match duplicate : duplicates) {
         myDuplicatesGroup.add(new DuplicateNode(duplicate));
@@ -58,12 +62,16 @@ class PreviewTreeModel extends DefaultTreeModel {
     return (DefaultMutableTreeNode)super.getRoot();
   }
 
-  void updateMethod(PsiMethod method) {
+  @NotNull
+  MethodNode updateMethod(PsiMethod method) {
     myMethodGroup.removeAllChildren();
-    myMethodGroup.add(new MethodNode(method));
+    MethodNode methodNode = new MethodNode(method);
+    myMethodGroup.add(methodNode);
     reload(myMethodGroup);
+    return methodNode;
   }
 
+  @NotNull
   public List<DuplicateNode> getEnabledDuplicates() {
     if (myDuplicatesGroup != null && myDuplicatesGroup.getChildCount() != 0) {
       List<DuplicateNode> duplicates = new ArrayList<>();
@@ -81,6 +89,7 @@ class PreviewTreeModel extends DefaultTreeModel {
     return Collections.emptyList();
   }
 
+  @NotNull
   public List<DuplicateNode> getAllDuplicates() {
     if (myDuplicatesGroup != null && myDuplicatesGroup.getChildCount() != 0) {
       List<DuplicateNode> duplicates = new ArrayList<>();
@@ -93,6 +102,11 @@ class PreviewTreeModel extends DefaultTreeModel {
       return duplicates;
     }
     return Collections.emptyList();
+  }
+
+  @NotNull
+  public PatternNode getPatternNode() {
+    return myPatternNode;
   }
 
   public synchronized boolean isValid() {

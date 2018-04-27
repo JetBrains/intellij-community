@@ -1,28 +1,14 @@
-/*
- * Copyright 2000-2014 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.ui;
 
 import com.intellij.icons.AllIcons;
 import com.intellij.openapi.options.OptionsBundle;
 import com.intellij.openapi.project.Project;
+import com.intellij.ui.IdeUICustomization;
 import com.intellij.ui.RelativeFont;
 import com.intellij.ui.components.labels.LinkLabel;
 import com.intellij.ui.components.labels.LinkListener;
 import com.intellij.ui.components.panels.NonOpaquePanel;
-import java.util.HashMap;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.PlatformColors;
 import org.jetbrains.annotations.NotNull;
@@ -33,6 +19,7 @@ import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
+import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
 
@@ -122,9 +109,10 @@ class Banner extends NonOpaquePanel implements PropertyChangeListener{
   public void forProject(Project project) {
     if (project != null) {
       myProjectIcon.setVisible(true);
-      myProjectIcon.setText(OptionsBundle.message(project.isDefault()
-                                                  ? "configurable.default.project.tooltip"
-                                                  : "configurable.current.project.tooltip"));
+      String projectConceptName = IdeUICustomization.getInstance().getProjectConceptName();
+      myProjectIcon.setText(project.isDefault()
+                            ? OptionsBundle.message("configurable.default.project.tooltip", projectConceptName)
+                            : OptionsBundle.message("configurable.current.project.tooltip", projectConceptName));
     } else {
       myProjectIcon.setVisible(false);
     }

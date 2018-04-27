@@ -19,7 +19,6 @@
  */
 package org.jetbrains.java.generate.view;
 
-import com.intellij.openapi.application.Result;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
@@ -30,17 +29,14 @@ import com.intellij.openapi.fileTypes.FileTypes;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.options.UnnamedConfigurable;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.ui.ex.MultiLineLabel;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiFileFactory;
 import com.intellij.psi.PsiType;
-import com.intellij.ui.ScrollPaneFactory;
+import com.intellij.psi.codeStyle.JavaCodeStyleSettings;
 import com.intellij.util.LocalTimeCounter;
-import com.intellij.util.ui.JBUI;
-import org.jetbrains.annotations.NotNull;
 import org.jetbrains.java.generate.element.ClassElement;
 import org.jetbrains.java.generate.element.FieldElement;
 import org.jetbrains.java.generate.element.GenerationHelper;
@@ -81,7 +77,7 @@ public class GenerateTemplateConfigurable implements UnnamedConfigurable{
             map.put("field", TemplatesManager.createElementType(project, FieldElement.class));
           }
           map.put("helper", TemplatesManager.createElementType(project, GenerationHelper.class));
-          map.put("settings", PsiType.NULL);
+          map.put("settings", TemplatesManager.createElementType(project, JavaCodeStyleSettings.class));
           map.putAll(contextMap);
           availableImplicits.addAll(map.keySet());
           file.getViewProvider().putUserData(TemplatesManager.TEMPLATE_IMPLICITS, map);

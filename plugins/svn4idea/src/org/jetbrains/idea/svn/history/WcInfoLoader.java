@@ -1,7 +1,6 @@
-// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.svn.history;
 
-import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.vcs.RepositoryLocation;
 import com.intellij.util.containers.ContainerUtil;
@@ -20,6 +19,8 @@ import org.jetbrains.idea.svn.dialogs.WCInfoWithBranches;
 import java.io.File;
 import java.util.Collections;
 import java.util.List;
+
+import static java.util.Comparator.comparing;
 
 public class WcInfoLoader {
 
@@ -78,32 +79,30 @@ public class WcInfoLoader {
       SvnBranchConfigurationManager.getInstance(myVcs.getProject()).get(rootUrlInfo.getVirtualFile());
     Ref<WCInfoWithBranches.Branch> workingCopyBranch = Ref.create();
     List<WCInfoWithBranches.Branch> branches = ContainerUtil.newArrayList();
-    String url = info.getUrl().toString();
 
-    // TODO: Probably could utilize SvnBranchConfigurationNew.UrlListener and SvnBranchConfigurationNew.iterateUrls() behavior
-    String trunkUrl = configuration.getTrunkUrl();
-    if (trunkUrl != null) {
-      add(url, trunkUrl, branches, workingCopyBranch);
+    Url trunk = configuration.getTrunk();
+    if (trunk != null) {
+      add(info.getUrl(), trunk, branches, workingCopyBranch);
     }
 
-    for (String branchUrl : configuration.getBranchUrls()) {
+    for (Url branchUrl : configuration.getBranchLocations()) {
       for (SvnBranchItem branchItem : configuration.getBranches(branchUrl)) {
-        add(url, branchItem.getUrl(), branches, workingCopyBranch);
+        add(info.getUrl(), branchItem.getUrl(), branches, workingCopyBranch);
       }
     }
 
-    Collections.sort(branches, (o1, o2) -> Comparing.compare(o1.getUrl(), o2.getUrl()));
+    Collections.sort(branches, comparing(branch -> branch.getUrl().toDecodedString()));
 
     return new WCInfoWithBranches(info, branches, rootUrlInfo.getRoot(), workingCopyBranch.get());
   }
 
-  private static void add(@NotNull String url,
-                          @NotNull String branchUrl,
+  private static void add(@NotNull Url url,
+                          @NotNull Url branchUrl,
                           @NotNull List<WCInfoWithBranches.Branch> branches,
                           @NotNull Ref<WCInfoWithBranches.Branch> workingCopyBranch) {
     WCInfoWithBranches.Branch branch = new WCInfoWithBranches.Branch(branchUrl);
 
-    if (!Url.isAncestor(branchUrl, url)) {
+    if (!SvnUtil.isAncestor(branchUrl, url)) {
       branches.add(branch);
     }
     else {

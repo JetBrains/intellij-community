@@ -3,7 +3,7 @@ package com.jetbrains.jsonSchema.impl;
 
 import com.google.gson.Gson;
 import com.google.gson.JsonParseException;
-import com.intellij.json.psi.JsonObject;
+import com.intellij.json.psi.JsonContainer;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.util.Pair;
@@ -28,8 +28,10 @@ import java.util.stream.Collectors;
 public class JsonSchemaObject {
   @NonNls public static final String DEFINITIONS = "definitions";
   @NonNls public static final String PROPERTIES = "properties";
+  @NonNls public static final String ITEMS = "items";
+  @NonNls public static final String ADDITIONAL_ITEMS = "additionalItems";
   @NonNls public static final String X_INTELLIJ_HTML_DESCRIPTION = "x-intellij-html-description";
-  @NotNull private final JsonObject myJsonObject;
+  @NotNull private final JsonContainer myJsonObject;
   @Nullable private Map<String, JsonSchemaObject> myDefinitionsMap;
   @NotNull private Map<String, JsonSchemaObject> myProperties;
 
@@ -51,18 +53,22 @@ public class JsonSchemaObject {
   @Nullable private Number myMultipleOf;
   @Nullable private Number myMaximum;
   private boolean myExclusiveMaximum;
+  @Nullable private Number myExclusiveMaximumNumber;
   @Nullable private Number myMinimum;
   private boolean myExclusiveMinimum;
+  @Nullable private Number myExclusiveMinimumNumber;
   @Nullable private Integer myMaxLength;
   @Nullable private Integer myMinLength;
 
   @Nullable private Boolean myAdditionalPropertiesAllowed;
   @Nullable private JsonSchemaObject myAdditionalPropertiesSchema;
+  @Nullable private JsonSchemaObject myPropertyNamesSchema;
 
   @Nullable private Boolean myAdditionalItemsAllowed;
   @Nullable private JsonSchemaObject myAdditionalItemsSchema;
 
   @Nullable private JsonSchemaObject myItemsSchema;
+  @Nullable private JsonSchemaObject myContainsSchema;
   @Nullable private List<JsonSchemaObject> myItemsSchemaList;
 
   @Nullable private Integer myMaxItems;
@@ -83,9 +89,12 @@ public class JsonSchemaObject {
   @Nullable private List<JsonSchemaObject> myAnyOf;
   @Nullable private List<JsonSchemaObject> myOneOf;
   @Nullable private JsonSchemaObject myNot;
+  @Nullable private JsonSchemaObject myIf;
+  @Nullable private JsonSchemaObject myThen;
+  @Nullable private JsonSchemaObject myElse;
   private boolean myShouldValidateAgainstJSType;
 
-  public JsonSchemaObject(@NotNull JsonObject object) {
+  public JsonSchemaObject(@NotNull JsonContainer object) {
     myJsonObject = object;
     myProperties = new HashMap<>();
   }
@@ -93,8 +102,7 @@ public class JsonSchemaObject {
   // peer pointer is not merged!
   public void mergeValues(@NotNull JsonSchemaObject other) {
     // we do not copy id, schema
-
-    myProperties.putAll(other.myProperties);
+    mergeProperties(this, other);
     myDefinitionsMap = copyMap(myDefinitionsMap, other.myDefinitionsMap);
     final Map<String, JsonSchemaObject> map = copyMap(myPatternProperties == null ? null : myPatternProperties.mySchemasMap,
                                                       other.myPatternProperties == null ? null : other.myPatternProperties.mySchemasMap);
@@ -117,17 +125,21 @@ public class JsonSchemaObject {
     myTypeVariants = copyList(myTypeVariants, other.myTypeVariants);
     if (other.myMultipleOf != null) myMultipleOf = other.myMultipleOf;
     if (other.myMaximum != null) myMaximum = other.myMaximum;
+    if (other.myExclusiveMaximumNumber != null) myExclusiveMaximumNumber = other.myExclusiveMaximumNumber;
     myExclusiveMaximum |= other.myExclusiveMaximum;
     if (other.myMinimum != null) myMinimum = other.myMinimum;
+    if (other.myExclusiveMinimumNumber != null) myExclusiveMinimumNumber = other.myExclusiveMinimumNumber;
     myExclusiveMinimum |= other.myExclusiveMinimum;
     if (other.myMaxLength != null) myMaxLength = other.myMaxLength;
     if (other.myMinLength != null) myMinLength = other.myMinLength;
     if (other.myPattern != null) myPattern = other.myPattern;
     if (other.myAdditionalPropertiesAllowed != null) myAdditionalPropertiesAllowed = other.myAdditionalPropertiesAllowed;
     if (other.myAdditionalPropertiesSchema != null) myAdditionalPropertiesSchema = other.myAdditionalPropertiesSchema;
+    if (other.myPropertyNamesSchema != null) myPropertyNamesSchema = other.myPropertyNamesSchema;
     if (other.myAdditionalItemsAllowed != null) myAdditionalItemsAllowed = other.myAdditionalItemsAllowed;
     if (other.myAdditionalItemsSchema != null) myAdditionalItemsSchema = other.myAdditionalItemsSchema;
     if (other.myItemsSchema != null) myItemsSchema = other.myItemsSchema;
+    if (other.myContainsSchema != null) myContainsSchema = other.myContainsSchema;
     myItemsSchemaList = copyList(myItemsSchemaList, other.myItemsSchemaList);
     if (other.myMaxItems != null) myMaxItems = other.myMaxItems;
     if (other.myMinItems != null) myMinItems = other.myMinItems;
@@ -142,7 +154,24 @@ public class JsonSchemaObject {
     myAnyOf = copyList(myAnyOf, other.myAnyOf);
     myOneOf = copyList(myOneOf, other.myOneOf);
     if (other.myNot != null) myNot = other.myNot;
+    if (other.myIf != null) myIf = other.myIf;
+    if (other.myThen != null) myThen = other.myThen;
+    if (other.myElse != null) myElse = other.myElse;
     myShouldValidateAgainstJSType |= other.myShouldValidateAgainstJSType;
+  }
+
+  private static void mergeProperties(@NotNull JsonSchemaObject thisObject, @NotNull JsonSchemaObject otherObject) {
+    for (Map.Entry<String, JsonSchemaObject> prop: otherObject.myProperties.entrySet()) {
+      String key = prop.getKey();
+      JsonSchemaObject otherProp = prop.getValue();
+      if (!thisObject.myProperties.containsKey(key)) {
+        thisObject.myProperties.put(key, otherProp);
+      }
+      else {
+        JsonSchemaObject existingProp = thisObject.myProperties.get(key);
+        thisObject.myProperties.put(key, JsonSchemaVariantsTreeBuilder.merge(existingProp, otherProp, otherProp));
+      }
+    }
   }
 
   public void shouldValidateAgainstJSType() {
@@ -175,7 +204,7 @@ public class JsonSchemaObject {
   }
 
   @NotNull
-  public JsonObject getJsonObject() {
+  public JsonContainer getJsonObject() {
     return myJsonObject;
   }
 
@@ -195,6 +224,10 @@ public class JsonSchemaObject {
 
   public void setProperties(@NotNull Map<String, JsonSchemaObject> properties) {
     myProperties = properties;
+  }
+
+  public boolean hasPatternProperties() {
+    return myPatternProperties != null;
   }
 
   public void setPatternProperties(@NotNull Map<String, JsonSchemaObject> patternProperties) {
@@ -230,6 +263,24 @@ public class JsonSchemaObject {
 
   public boolean isExclusiveMaximum() {
     return myExclusiveMaximum;
+  }
+
+  @Nullable
+  public Number getExclusiveMaximumNumber() {
+    return myExclusiveMaximumNumber;
+  }
+
+  public void setExclusiveMaximumNumber(@Nullable Number exclusiveMaximumNumber) {
+    myExclusiveMaximumNumber = exclusiveMaximumNumber;
+  }
+
+  @Nullable
+  public Number getExclusiveMinimumNumber() {
+    return myExclusiveMinimumNumber;
+  }
+
+  public void setExclusiveMinimumNumber(@Nullable Number exclusiveMinimumNumber) {
+    myExclusiveMinimumNumber = exclusiveMinimumNumber;
   }
 
   public void setExclusiveMaximum(boolean exclusiveMaximum) {
@@ -290,6 +341,15 @@ public class JsonSchemaObject {
   }
 
   @Nullable
+  public JsonSchemaObject getPropertyNamesSchema() {
+    return myPropertyNamesSchema;
+  }
+
+  public void setPropertyNamesSchema(@Nullable JsonSchemaObject propertyNamesSchema) {
+    myPropertyNamesSchema = propertyNamesSchema;
+  }
+
+  @Nullable
   public JsonSchemaObject getAdditionalPropertiesSchema() {
     return myAdditionalPropertiesSchema;
   }
@@ -323,6 +383,15 @@ public class JsonSchemaObject {
 
   public void setItemsSchema(@Nullable JsonSchemaObject itemsSchema) {
     myItemsSchema = itemsSchema;
+  }
+
+  @Nullable
+  public JsonSchemaObject getContainsSchema() {
+    return myContainsSchema;
+  }
+
+  public void setContainsSchema(@Nullable JsonSchemaObject containsSchema) {
+    myContainsSchema = containsSchema;
   }
 
   @Nullable
@@ -451,6 +520,33 @@ public class JsonSchemaObject {
   }
 
   @Nullable
+  public JsonSchemaObject getIf() {
+    return myIf;
+  }
+
+  public void setIf(@Nullable JsonSchemaObject anIf) {
+    myIf = anIf;
+  }
+
+  @Nullable
+  public JsonSchemaObject getThen() {
+    return myThen;
+  }
+
+  public void setThen(@Nullable JsonSchemaObject then) {
+    myThen = then;
+  }
+
+  @Nullable
+  public JsonSchemaObject getElse() {
+    return myElse;
+  }
+
+  public void setElse(@Nullable JsonSchemaObject anElse) {
+    myElse = anElse;
+  }
+
+  @Nullable
   public List<JsonSchemaType> getTypeVariants() {
     return myTypeVariants;
   }
@@ -557,7 +653,7 @@ public class JsonSchemaObject {
   }
 
   @Nullable
-  public Map<JsonObject, String> getInvalidPatternProperties() {
+  public Map<JsonContainer, String> getInvalidPatternProperties() {
     if (myPatternProperties != null) {
       final Map<String, String> patterns = myPatternProperties.getInvalidPatterns();
 
@@ -597,10 +693,40 @@ public class JsonSchemaObject {
         current = current.getProperties().get(parts.get(++i));
         continue;
       }
-
+      if (ITEMS.equals(part)) {
+        if (i == (parts.size() - 1)) {
+          current = current.getItemsSchema();
+        }
+        else {
+          //noinspection AssignmentToForLoopParameter
+          Integer next = tryParseInt(parts.get(++i));
+          List<JsonSchemaObject> itemsSchemaList = current.getItemsSchemaList();
+          if (itemsSchemaList != null && next != null && next < itemsSchemaList.size()) {
+            current = itemsSchemaList.get(next);
+          }
+        }
+        continue;
+      }
+      if (ADDITIONAL_ITEMS.equals(part)) {
+        if (i == (parts.size() - 1)) {
+          current = current.getAdditionalItemsSchema();
+        }
+        continue;
+      }
+      
       current = current.getDefinitionsMap() == null ? null : current.getDefinitionsMap().get(part);
     }
     return current;
+  }
+
+  @Nullable
+  private static Integer tryParseInt(String s) {
+    try {
+      return Integer.parseInt(s);
+    }
+    catch (Exception __) {
+      return null;
+    }
   }
 
   @Override

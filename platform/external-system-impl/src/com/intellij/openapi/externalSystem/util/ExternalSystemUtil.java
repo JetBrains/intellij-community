@@ -400,7 +400,7 @@ public class ExternalSystemUtil {
       localSettings.getProjectSyncType().get(externalProjectPath) == PREVIEW ? IMPORT : RE_IMPORT;
     localSettings.getProjectSyncType().put(externalProjectPath, syncType);
 
-    final ExternalSystemResolveProjectTask myTask =
+    final ExternalSystemResolveProjectTask resolveProjectTask =
       new ExternalSystemResolveProjectTask(externalSystemId, project, externalProjectPath, vmOptions, arguments, isPreviewMode);
 
     final TaskUnderProgress refreshProjectStructureTask = new TaskUnderProgress() {
@@ -423,7 +423,7 @@ public class ExternalSystemUtil {
         ExternalSystemProcessingManager processingManager = ServiceManager.getService(ExternalSystemProcessingManager.class);
         if (processingManager.findTask(ExternalSystemTaskType.RESOLVE_PROJECT, externalSystemId, externalProjectPath) != null) {
           if (callback != null) {
-            callback.onFailure(myTask.getId(), ExternalSystemBundle.message("error.resolve.already.running", externalProjectPath), null);
+            callback.onFailure(resolveProjectTask.getId(), ExternalSystemBundle.message("error.resolve.already.running", externalProjectPath), null);
           }
           return;
         }
@@ -438,7 +438,7 @@ public class ExternalSystemUtil {
           return;
         }
 
-        final ExternalSystemProcessHandler processHandler = new ExternalSystemProcessHandler(myTask, projectName + " import") {
+        final ExternalSystemProcessHandler processHandler = new ExternalSystemProcessHandler(resolveProjectTask, projectName + " import") {
           @Override
           protected void destroyProcessImpl() {
             cancelImport();
@@ -447,10 +447,10 @@ public class ExternalSystemUtil {
         };
 
         final ExternalSystemExecutionConsoleManager<ExternalSystemRunConfiguration, ExecutionConsole, ProcessHandler>
-          consoleManager = getConsoleManagerFor(myTask);
+          consoleManager = getConsoleManagerFor(resolveProjectTask);
 
         final ExecutionConsole consoleView =
-          consoleManager.attachExecutionConsole(project, myTask, null, processHandler);
+          consoleManager.attachExecutionConsole(project, resolveProjectTask, null, processHandler);
         if (consoleView != null) {
           Disposer.register(project, consoleView);
         }
@@ -537,11 +537,13 @@ public class ExternalSystemUtil {
             }
           }
         };
-        myTask.execute(indicator, ArrayUtil.prepend(taskListener, ExternalSystemTaskNotificationListener.EP_NAME.getExtensions()));
+        final long startTS = System.currentTimeMillis();
+        resolveProjectTask.execute(indicator, ArrayUtil.prepend(taskListener, ExternalSystemTaskNotificationListener.EP_NAME.getExtensions()));
+        LOG.info("External project [" + externalProjectPath + "] resolution task executed in " + (System.currentTimeMillis() - startTS) + " ms.");
         if (project.isDisposed()) return;
 
         try {
-          final Throwable error = myTask.getError();
+          final Throwable error = resolveProjectTask.getError();
           if (error == null) {
             if (callback != null) {
               final ExternalProjectInfo externalProjectData = ProjectDataManagerImpl.getInstance()
@@ -551,7 +553,7 @@ public class ExternalSystemUtil {
                 if (externalProject != null && importSpec.shouldCreateDirectoriesForEmptyContentRoots()) {
                   externalProject.putUserData(ContentRootDataService.CREATE_EMPTY_DIRECTORIES, Boolean.TRUE);
                 }
-                callback.onSuccess(myTask.getId(), externalProject);
+                callback.onSuccess(resolveProjectTask.getId(), externalProject);
               }
             }
             if (!isPreviewMode) {
@@ -571,7 +573,7 @@ public class ExternalSystemUtil {
           }
 
           if (callback != null) {
-            callback.onFailure(myTask.getId(), message, extractDetails(error));
+            callback.onFailure(resolveProjectTask.getId(), message, extractDetails(error));
           }
         }
         finally {
@@ -602,13 +604,13 @@ public class ExternalSystemUtil {
           String message = "Sync finish event has not been received";
           LOG.warn(message, exception);
           ServiceManager.getService(project, SyncViewManager.class).onEvent(
-            new FinishBuildEventImpl(myTask.getId(), null, System.currentTimeMillis(), "sync failed",
+            new FinishBuildEventImpl(resolveProjectTask.getId(), null, System.currentTimeMillis(), "sync failed",
                                      new FailureResultImpl(new Exception(message, exception))));
         }
       }
 
       private void cancelImport() {
-        myTask.cancel(ExternalSystemTaskNotificationListener.EP_NAME.getExtensions());
+        resolveProjectTask.cancel(ExternalSystemTaskNotificationListener.EP_NAME.getExtensions());
       }
     };
 

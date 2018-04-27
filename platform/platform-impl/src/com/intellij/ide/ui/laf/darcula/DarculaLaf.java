@@ -386,7 +386,7 @@ public class DarculaLaf extends BasicLookAndFeel {
       return SYSTEM;
     }
 
-    if (key.endsWith("Insets")) {
+    if (key.endsWith("Insets") || key.endsWith("padding")) {
       return parseInsets(value);
     } else if (key.endsWith("Border") || key.endsWith("border")) {
 
@@ -401,6 +401,8 @@ public class DarculaLaf extends BasicLookAndFeel {
       }
     } else if (key.endsWith("Size")) {
       return parseSize(value);
+    } else if (key.endsWith("Width")) {
+      return getInteger(value);
     } else {
       final Color color = parseColor(value);
       final Integer invVal = getInteger(value);

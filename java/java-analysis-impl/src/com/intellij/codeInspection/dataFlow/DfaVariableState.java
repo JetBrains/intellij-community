@@ -100,6 +100,7 @@ class DfaVariableState {
     return withFacts(myFactMap.with(type, value));
   }
 
+  @NotNull
   <T> DfaVariableState withoutFact(DfaFactType<T> type) {
     return withFact(type, null);
   }

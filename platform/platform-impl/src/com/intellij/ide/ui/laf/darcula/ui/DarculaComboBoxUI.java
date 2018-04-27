@@ -57,6 +57,10 @@ public class DarculaComboBoxUI extends BasicComboBoxUI implements Border, ErrorB
   @Override
   protected void installDefaults() {
     super.installDefaults();
+    installDarculaDefaults();
+  }
+
+  protected void installDarculaDefaults() {
     comboBox.setBorder(this);
   }
 
@@ -109,9 +113,9 @@ public class DarculaComboBoxUI extends BasicComboBoxUI implements Border, ErrorB
           g2.setRenderingHint(RenderingHints.KEY_STROKE_CONTROL, RenderingHints.VALUE_STROKE_NORMALIZE);
           g2.translate(r.x, r.y);
 
-          float bw = bw();
-          float lw = lw(g2);
-          float arc = arc() - bw - lw;
+          float bw = BW.getFloat();
+          float lw = LW.getFloat();
+          float arc = COMPONENT_ARC.getFloat() - bw - lw;
 
           Path2D innerShape = new Path2D.Float();
           innerShape.moveTo(lw, bw + lw);
@@ -127,7 +131,7 @@ public class DarculaComboBoxUI extends BasicComboBoxUI implements Border, ErrorB
 
           // Paint vertical line
           g2.setColor(getArrowButtonFillColor(getOutlineColor(comboBox.isEnabled())));
-          g2.fill(new Rectangle2D.Float(0, bw + lw, lw(g2), r.height - (bw + lw) * 2));
+          g2.fill(new Rectangle2D.Float(0, bw + lw, LW.getFloat(), r.height - (bw + lw) * 2));
 
           g2.setColor(new JBColor(Gray._255, comboBox.isEnabled() ? getForeground() : getOutlineColor(comboBox.isEnabled())));
           g2.fill(getArrowShape(this));
@@ -153,7 +157,7 @@ public class DarculaComboBoxUI extends BasicComboBoxUI implements Border, ErrorB
   @NotNull
   static Dimension getArrowButtonPreferredSize(@Nullable JComboBox comboBox) {
     Insets i = comboBox != null ? comboBox.getInsets() : getDefaultComboBoxInsets();
-    return new Dimension(JBUI.scale(16) + i.left, JBUI.scale(22) + i.top + i.bottom);
+    return new Dimension(JBUI.scale(16) + i.left, MINIMUM_HEIGHT.get() + i.top + i.bottom);
   }
 
   static Shape getArrowShape(Component button) {
@@ -176,7 +180,7 @@ public class DarculaComboBoxUI extends BasicComboBoxUI implements Border, ErrorB
 
   @NotNull
   private static JBInsets getDefaultComboBoxInsets() {
-    return JBUI.insets(4, 8, 4, 4);
+    return JBUI.insets(3);
   }
 
   @Override
@@ -201,15 +205,14 @@ public class DarculaComboBoxUI extends BasicComboBoxUI implements Border, ErrorB
       g2.setRenderingHint(RenderingHints.KEY_STROKE_CONTROL, RenderingHints.VALUE_STROKE_NORMALIZE);
       g2.translate(r.x, r.y);
 
-      float bw = bw();
-      float arc = arc();
+      float bw = BW.getFloat();
+      float arc = COMPONENT_ARC.getFloat();
 
       boolean editable = editor != null && comboBox.isEditable();
       Color background = editable && comboBox.isEnabled() ? editor.getBackground() : UIUtil.getPanelBackground();
       g2.setColor(background);
 
-      Shape innerShape = new RoundRectangle2D.Float(bw, bw, r.width - bw * 2, r.height - bw * 2, arc, arc);
-      g2.fill(innerShape);
+      g2.fill(new RoundRectangle2D.Float(bw, bw, r.width - bw * 2, r.height - bw * 2, arc, arc));
     } finally {
       g2.dispose();
     }
@@ -316,9 +319,7 @@ public class DarculaComboBoxUI extends BasicComboBoxUI implements Border, ErrorB
 
   @Override
   public void paintBorder(Component c, Graphics g, int x, int y, int width, int height) {
-    if (comboBox == null || arrowButton == null) {
-      return; //NPE on LaF change
-    }
+    if (!(c instanceof JComponent)) return;
 
     Graphics2D g2 = (Graphics2D)g.create();
     try {
@@ -331,9 +332,9 @@ public class DarculaComboBoxUI extends BasicComboBoxUI implements Border, ErrorB
 
       g2.translate(r.x, r.y);
 
-      float lw = lw(g2);
-      float bw = bw();
-      float arc = arc();
+      float lw = LW.getFloat();
+      float bw = BW.getFloat();
+      float arc = COMPONENT_ARC.getFloat();
 
       Path2D border = new Path2D.Float(Path2D.WIND_EVEN_ODD);
       border.append(new RoundRectangle2D.Float(bw, bw, r.width - bw * 2, r.height - bw * 2, arc, arc), false);
@@ -388,8 +389,8 @@ public class DarculaComboBoxUI extends BasicComboBoxUI implements Border, ErrorB
     Insets i = getInsets();
     Dimension abSize = arrowButton.getPreferredSize();
 
-    int editorHeight = editor != null ? editor.getPreferredSize().height + i.top + i.bottom : 0;
-    int height = Math.max(Math.max(editorHeight, Math.max(abSize.height, d.height)), JBUI.scale(22) + i.top + i.bottom);
+    int editorHeight = editor != null && comboBox.isEditable() ? editor.getPreferredSize().height + i.top + i.bottom : 0;
+    int height = Math.max(Math.max(editorHeight, Math.max(abSize.height, d.height)), MINIMUM_HEIGHT.get() + i.top + i.bottom);
     int width = Math.max(d.width, abSize.width + JBUI.scale(10));
 
     return new Dimension(width, height);
@@ -504,6 +505,13 @@ public class DarculaComboBoxUI extends BasicComboBoxUI implements Border, ErrorB
     }
   }
 
+  protected Rectangle rectangleForCurrentValue() {
+    Rectangle rect = super.rectangleForCurrentValue();
+    JBInsets.removeFrom(rect, padding);
+    rect.width += !comboBox.isEditable() ? padding.right : 0;
+    return rect;
+  }
+
   // Wide popup that uses preferred size
   protected static class CustomComboPopup extends BasicComboPopup {
     public CustomComboPopup(JComboBox combo) {
@@ -514,10 +522,10 @@ public class DarculaComboBoxUI extends BasicComboBoxUI implements Border, ErrorB
     public void show(Component invoker, int x, int y) {
       if (comboBox instanceof ComboBoxWithWidePopup) {
         Dimension popupSize = comboBox.getSize();
-        Dimension prefSize = comboBox.getPreferredSize();
+        int minPopupWidth = ((ComboBoxWithWidePopup)comboBox).getMinimumPopupWidth();
         Insets insets = getInsets();
 
-        popupSize.width = Math.max(popupSize.width, prefSize.width);
+        popupSize.width = Math.max(popupSize.width, minPopupWidth);
         popupSize.setSize(popupSize.width - (insets.right + insets.left), getPopupHeightForRowCount(comboBox.getMaximumRowCount()));
 
         scroller.setMaximumSize(popupSize);

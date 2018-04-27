@@ -1,24 +1,11 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.java.compiler;
 
 import com.intellij.JavaTestUtil;
 import com.intellij.codeInsight.daemon.DaemonAnalyzerTestCase;
 import com.intellij.compiler.CompilerConfiguration;
 import com.intellij.compiler.CompilerReferenceService;
+import com.intellij.find.findUsages.JavaFindUsagesHandlerFactory;
 import com.intellij.lang.injection.InjectedLanguageManager;
 import com.intellij.openapi.compiler.options.ExcludeEntryDescription;
 import com.intellij.openapi.compiler.options.ExcludesConfiguration;
@@ -172,6 +159,17 @@ public class CompilerReferencesFindUsagesTest extends DaemonAnalyzerTestCase {
     Arrays.stream(findClass("Foo").findMethodsByName("bar", false)).forEach((m) -> assertSize(2, searchReferences(m)));
   }
 
+  public void testImplicitToStringSearch() {
+    configureByFiles(getName(), getName() + "/Foo.java", getName() + "/A.java", getName() + "/B.java");
+    Arrays.stream(findClass("FooImpl").findMethodsByName("toString", false)).forEach((m) -> assertEquals(2, searchUsages(m)));
+    Arrays.stream(findClass("Foo").findMethodsByName("toString", false)).forEach((m) -> assertEquals(2, searchUsages(m)));
+    Arrays.stream(myJavaFacade.findClass(CommonClassNames.JAVA_LANG_OBJECT).findMethodsByName("toString", false)).forEach((m) -> assertEquals(2, searchUsages(m)));
+    myCompilerTester.rebuild();
+    Arrays.stream(findClass("FooImpl").findMethodsByName("toString", false)).forEach((m) -> assertEquals(2, searchUsages(m)));
+    Arrays.stream(findClass("Foo").findMethodsByName("toString", false)).forEach((m) -> assertEquals(2, searchUsages(m)));
+    Arrays.stream(myJavaFacade.findClass(CommonClassNames.JAVA_LANG_OBJECT).findMethodsByName("toString", false)).forEach((m) -> assertEquals(2, searchUsages(m)));
+  }
+
   private void doTestRunnableFindUsagesWithExcludesConfiguration(@NotNull Consumer<ExcludesConfiguration> excludesConfigurationPatcher,
                                                                  int expectedUsagesCount,
                                                                  String... testFiles) {
@@ -185,6 +183,16 @@ public class CompilerReferencesFindUsagesTest extends DaemonAnalyzerTestCase {
     } finally {
       excludesConfiguration.removeAllExcludeEntryDescriptions();
     }
+  }
+
+  private int searchUsages(@NotNull PsiMethod method) {
+    JavaFindUsagesHandlerFactory factory = JavaFindUsagesHandlerFactory.getInstance(getProject());
+    int[] count = {0};
+    factory.createFindUsagesHandler(method, false).processElementUsages(method, info -> {
+      count[0]++;
+      return true;
+    }, factory.getFindMethodOptions());
+    return count[0];
   }
 
   private Collection<PsiReference> searchReferences(@NotNull PsiElement element) {

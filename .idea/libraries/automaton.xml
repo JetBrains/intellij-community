@@ -1,9 +1,12 @@
 <component name="libraryTable">
-  <library name="automaton">
+  <library name="automaton" type="repository">
+    <properties maven-id="dk.brics:automaton:1.12-1" />
     <CLASSES>
-      <root url="jar://$PROJECT_DIR$/lib/automaton.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/dk/brics/automaton/1.12-1/automaton-1.12-1.jar!/" />
     </CLASSES>
     <JAVADOC />
-    <SOURCES />
+    <SOURCES>
+      <root url="jar://$MAVEN_REPOSITORY$/dk/brics/automaton/1.12-1/automaton-1.12-1-sources.jar!/" />
+    </SOURCES>
   </library>
 </component>

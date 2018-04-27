@@ -29,7 +29,7 @@ import java.beans.PropertyChangeListener;
 import java.util.ArrayList;
 import java.util.List;
 
-class DocumentWindowImpl extends com.intellij.injected.editor.DocumentWindowImpl implements Disposable, DocumentWindow, DocumentEx {
+class DocumentWindowImpl extends UserDataHolderBase implements Disposable, DocumentWindow, DocumentEx {
   private static final Logger LOG = Logger.getInstance("#com.intellij.injected.editor.DocumentWindowImpl");
   private final DocumentEx myDelegate;
   private final boolean myOneLine;
@@ -775,7 +775,7 @@ class DocumentWindowImpl extends com.intellij.injected.editor.DocumentWindowImpl
   // result[i] == "" means delete
   // result[i] == string means replace
   @NotNull
-  public String[] calculateMinEditSequence(String newText) {
+  String[] calculateMinEditSequence(String newText) {
     synchronized (myLock) {
       String[] result = new String[myShreds.size()];
       String hostText = myDelegate.getText();
@@ -915,7 +915,7 @@ class DocumentWindowImpl extends com.intellij.injected.editor.DocumentWindowImpl
     }
   }
 
-  public void setShreds(@NotNull Place shreds) {
+  void setShreds(@NotNull Place shreds) {
     synchronized (myLock) {
       myShreds.dispose();
       myShreds = shreds;
@@ -923,7 +923,7 @@ class DocumentWindowImpl extends com.intellij.injected.editor.DocumentWindowImpl
   }
 
   @NotNull
-  public Place getShreds() {
+  Place getShreds() {
     synchronized (myLock) {
       return myShreds;
     }

@@ -46,7 +46,7 @@ public enum RectanglePainter implements RegionPainter<Integer> {
       if (draw != null) {
         int sw = 1; // stroke width
         int dw = sw + sw;
-        FILL.paint(g, x + sw, y + sw, width - dw, height - dw, arc - dw);
+        FILL.paint(g, x + sw, y + sw, width - dw, height - dw, arc > dw ? arc - dw : 0);
       }
       else {
         FILL.paint(g, x, y, width, height, arc);

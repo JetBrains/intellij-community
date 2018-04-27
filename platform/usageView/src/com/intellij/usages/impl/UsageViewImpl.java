@@ -1,6 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.usages.impl;
 
 import com.intellij.find.FindManager;
@@ -76,10 +74,7 @@ import java.awt.*;
 import java.awt.event.*;
 import java.util.*;
 import java.util.List;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.Future;
-import java.util.concurrent.ScheduledFuture;
-import java.util.concurrent.TimeUnit;
+import java.util.concurrent.*;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -197,7 +192,6 @@ public class UsageViewImpl implements UsageViewEx {
           myTree = new Tree(myModel) {
             {
               ToolTipManager.sharedInstance().registerComponent(this);
-              setHorizontalAutoScrollingEnabled(false);
             }
 
             @Override
@@ -655,7 +649,7 @@ public class UsageViewImpl implements UsageViewEx {
             usage.highlightInEditor();
           }
           else if (node.isLeaf()) {
-            Navigatable navigatable = getNavigatableForNode(node);
+            Navigatable navigatable = getNavigatableForNode(node, !myPresentation.isReplaceMode());
             if (navigatable != null && navigatable.canNavigate()) {
               navigatable.navigate(false);
             }
@@ -852,7 +846,7 @@ public class UsageViewImpl implements UsageViewEx {
     if (description == null) {
       description = "Show find usages settings dialog";
     }
-    return new AnAction("Settings...", description, AllIcons.General.ProjectSettings) {
+    return new AnAction("Settings...", description, AllIcons.General.GearPlain) {
       {
         KeyboardShortcut shortcut = configurableUsageTarget == null ? getShowUsagesWithSettingsShortcut() : configurableUsageTarget.getShortcut();
         if (shortcut != null) {
@@ -938,21 +932,17 @@ public class UsageViewImpl implements UsageViewEx {
         ((MergeableUsage)usage).reset();
       }
     }
-    appendUsagesInBulk(allUsages);
-    if (myTree != null) {
-      excludeUsages(excludedUsages.toArray(Usage.EMPTY_ARRAY));
-    }
+    //noinspection SSBasedInspection
+    appendUsagesInBulk(allUsages).thenRun(()-> SwingUtilities.invokeLater(() -> {
+      if (isDisposed) return;
+      if (myTree != null) {
+        excludeUsages(excludedUsages.toArray(Usage.EMPTY_ARRAY));
+        restoreUsageExpandState(states);
+        updateImmediately();
+      }}));
     if (myCentralPanel != null) {
       setupCentralPanel();
     }
-    //noinspection SSBasedInspection
-    SwingUtilities.invokeLater(() -> {
-      if (isDisposed) return;
-      if (myTree != null) {
-        restoreUsageExpandState(states);
-        updateImmediately();
-      }
-    });
   }
 
   private void captureUsagesExpandState(@NotNull TreePath pathFrom, @NotNull Collection<UsageState> states) {
@@ -1159,13 +1149,23 @@ public class UsageViewImpl implements UsageViewEx {
     }
   }
 
+  @NotNull
   @Override
-  public void appendUsagesInBulk(@NotNull Collection<Usage> usages) {
+  public CompletableFuture<?> appendUsagesInBulk(@NotNull Collection<Usage> usages) {
+    CompletableFuture<Object> result = new CompletableFuture<>();
     addUpdateRequest(ApplicationManager.getApplication().executeOnPooledThread(() -> ReadAction.run(() -> {
-      for (Usage usage : usages) {
-        doAppendUsage(usage);
+      try {
+        for (Usage usage : usages) {
+          doAppendUsage(usage);
+        }
+        result.complete(null);
+      }
+      catch (Exception e) {
+        result.completeExceptionally(e);
+        throw e;
       }
     })));
+    return result;
   }
 
   public UsageNode doAppendUsage(@NotNull Usage usage) {
@@ -1712,11 +1712,26 @@ public class UsageViewImpl implements UsageViewEx {
   }
 
   @Nullable
-  private static Navigatable getNavigatableForNode(@NotNull DefaultMutableTreeNode node) {
+  private static Navigatable getNavigatableForNode(@NotNull DefaultMutableTreeNode node, boolean allowRequestFocus) {
     Object userObject = node.getUserObject();
     if (userObject instanceof Navigatable) {
       final Navigatable navigatable = (Navigatable)userObject;
-      return navigatable.canNavigate() ? navigatable : null;
+      return navigatable.canNavigate() ? new Navigatable() {
+        @Override
+        public void navigate(boolean requestFocus) {
+          navigatable.navigate(allowRequestFocus && requestFocus);
+        }
+
+        @Override
+        public boolean canNavigate() {
+          return navigatable.canNavigate();
+        }
+
+        @Override
+        public boolean canNavigateToSource() {
+          return navigatable.canNavigateToSource();
+        }
+      } : null;
     }
     return null;
   }
@@ -1755,7 +1770,7 @@ public class UsageViewImpl implements UsageViewEx {
         protected Navigatable createDescriptorForNode(DefaultMutableTreeNode node) {
           if (node.getChildCount() > 0) return null;
           if (node instanceof Node && ((Node)node).isExcluded()) return null;
-          return getNavigatableForNode(node);
+          return getNavigatableForNode(node, !myPresentation.isReplaceMode());
         }
 
         @Override

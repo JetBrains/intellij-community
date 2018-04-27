@@ -20,6 +20,7 @@ import com.intellij.ide.actions.ImportModuleAction;
 import com.intellij.ide.util.newProjectWizard.AddModuleWizard;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.actionSystem.Presentation;
 import com.intellij.openapi.externalSystem.ExternalSystemManager;
 import com.intellij.openapi.externalSystem.model.ExternalSystemDataKeys;
 import com.intellij.openapi.externalSystem.model.ProjectSystemId;
@@ -43,14 +44,22 @@ public class AttachExternalProjectAction extends AnAction {
 
   @Override
   public void update(AnActionEvent e) {
+    Presentation presentation = e.getPresentation();
+    // todo [Vlad, IDEA-187835]: provide java subsystem independent implementation
+    if (!ExternalSystemApiUtil.isJavaCompatibleIde()) {
+      presentation.setVisible(false);
+      presentation.setEnabled(false);
+      return;
+    }
+
     ProjectSystemId externalSystemId = ExternalSystemDataKeys.EXTERNAL_SYSTEM_ID.getData(e.getDataContext());
     if (externalSystemId != null) {
       String name = externalSystemId.getReadableName();
-      e.getPresentation().setText(ExternalSystemBundle.message("action.attach.external.project.text", name));
-      e.getPresentation().setDescription(ExternalSystemBundle.message("action.attach.external.project.description", name));
+      presentation.setText(ExternalSystemBundle.message("action.attach.external.project.text", name));
+      presentation.setDescription(ExternalSystemBundle.message("action.attach.external.project.description", name));
     }
-    
-    e.getPresentation().setIcon(SystemInfoRt.isMac ? AllIcons.ToolbarDecorator.Mac.Add : AllIcons.ToolbarDecorator.Add);
+
+    presentation.setIcon(AllIcons.General.Add);
   }
 
   @Override

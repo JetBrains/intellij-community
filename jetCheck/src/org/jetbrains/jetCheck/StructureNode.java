@@ -137,14 +137,14 @@ class StructureNode extends StructureElement {
     return false;
   }
 
-  private void findChildrenWithGenerator(@NotNull Generator<?> generator, List<StructureNode> result) {
+  private void findChildrenWithGenerator(int generatorHash, List<StructureNode> result) {
     for (StructureElement child : children) {
       if (child instanceof StructureNode) {
-        Generator<?> childGen = child.id.generator;
-        if (childGen != null && generator.getGeneratorFunction().equals(childGen.getGeneratorFunction())) {
+        Integer childGen = child.id.generatorHash;
+        if (childGen != null && generatorHash == childGen.intValue()) {
           result.add((StructureNode)child);
         } else {
-          ((StructureNode)child).findChildrenWithGenerator(generator, result);
+          ((StructureNode)child).findChildrenWithGenerator(generatorHash, result);
         }
       }
     }
@@ -152,9 +152,9 @@ class StructureNode extends StructureElement {
 
   @Nullable
   private ShrinkStep shrinkRecursion() {
-    if (id.generator != null) {
+    if (id.generatorHash != null) {
       List<StructureNode> sameGeneratorChildren = new ArrayList<>();
-      findChildrenWithGenerator(id.generator, sameGeneratorChildren);
+      findChildrenWithGenerator(id.generatorHash, sameGeneratorChildren);
       return tryReplacing(sameGeneratorChildren, 0);
     }
     

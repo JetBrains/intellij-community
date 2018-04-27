@@ -16,7 +16,11 @@
 package com.intellij.codeInspection.dataFlow;
 
 import com.intellij.codeInspection.dataFlow.value.DfaPsiType;
-import com.intellij.psi.*;
+import com.intellij.psi.LambdaUtil;
+import com.intellij.psi.PsiIntersectionType;
+import com.intellij.psi.PsiPrimitiveType;
+import com.intellij.psi.PsiType;
+import com.intellij.psi.util.InheritanceUtil;
 import com.intellij.util.containers.ContainerUtil;
 import one.util.streamex.EntryStream;
 import one.util.streamex.StreamEx;
@@ -46,11 +50,11 @@ public final class TypeConstraint {
   }
 
   @NotNull
-  public String getPresentationText(PsiType type) {
+  public String getPresentationText(@Nullable PsiType type) {
     Set<DfaPsiType> instanceOfTypes = myInstanceofValues;
-    if (type instanceof PsiClassType) {
+    if (type != null) {
       instanceOfTypes = StreamEx.of(instanceOfTypes)
-                                .removeBy(DfaPsiType::getPsiType, ((PsiClassType)type).rawType())
+                                .removeBy(DfaPsiType::getPsiType, DfaPsiType.normalizeType(type))
                                 .toSet();
     }
     return EntryStream.of("instanceof ", instanceOfTypes,
@@ -166,9 +170,9 @@ public final class TypeConstraint {
     if (that.myNotInstanceofValues.containsAll(myNotInstanceofValues) && that.myInstanceofValues.containsAll(myInstanceofValues)) {
       return true;
     }
-    if (this.myNotInstanceofValues.isEmpty() && that.myNotInstanceofValues.isEmpty() && this.myInstanceofValues.size() == 1) {
-      DfaPsiType type = this.myInstanceofValues.iterator().next();
-      return that.myInstanceofValues.stream().allMatch(type::isAssignableFrom);
+    if (this.myNotInstanceofValues.isEmpty() && that.myNotInstanceofValues.isEmpty()) {
+      return that.myInstanceofValues.stream().allMatch(
+        thatType -> this.myInstanceofValues.stream().allMatch(thisType -> thisType.isAssignableFrom(thatType)));
     }
     return false;
   }
@@ -177,29 +181,27 @@ public final class TypeConstraint {
   public TypeConstraint union(@NotNull TypeConstraint other) {
     if(isSuperStateOf(other)) return this;
     if(other.isSuperStateOf(this)) return other;
-    Set<DfaPsiType> leftTypes = new HashSet<>(this.myInstanceofValues);
-    Set<DfaPsiType> leftNotTypes = new HashSet<>(this.myNotInstanceofValues);
-    Set<DfaPsiType> rightTypes = new HashSet<>(other.myInstanceofValues);
-    Set<DfaPsiType> rightNotTypes = new HashSet<>(other.myNotInstanceofValues);
-    filter(leftTypes, rightTypes, rightNotTypes);
-    filter(rightTypes, leftTypes, leftNotTypes);
-    TypeConstraint left = create(leftTypes, leftNotTypes);
-    TypeConstraint right = create(rightTypes, rightNotTypes);
-    if(left.isSuperStateOf(right)) return left;
-    if(right.isSuperStateOf(left)) return right;
-    return null;
+    Set<DfaPsiType> notTypes = new HashSet<>(this.myNotInstanceofValues);
+    notTypes.retainAll(other.myNotInstanceofValues);
+    Set<DfaPsiType> instanceOfTypes;
+    if (this.myInstanceofValues.containsAll(other.myInstanceofValues)) {
+      instanceOfTypes = other.myInstanceofValues;
+    } else if (other.myInstanceofValues.containsAll(this.myInstanceofValues)) {
+      instanceOfTypes = this.myInstanceofValues;
+    } else {
+      instanceOfTypes = withSuper(this.myInstanceofValues);
+      instanceOfTypes.retainAll(withSuper(other.myInstanceofValues));
+    }
+    TypeConstraint constraint = StreamEx.of(instanceOfTypes).foldLeft(EMPTY, TypeConstraint::withInstanceofValue);
+    return StreamEx.of(notTypes).foldLeft(constraint, TypeConstraint::withNotInstanceofValue);
   }
 
-  private static void filter(Set<DfaPsiType> leftTypes, Set<DfaPsiType> rightTypes, Set<DfaPsiType> rightNotTypes) {
-    Set<DfaPsiType> addTypes = new HashSet<>();
-    for (Iterator<DfaPsiType> iterator = leftTypes.iterator(); iterator.hasNext(); ) {
-      DfaPsiType type = iterator.next();
-      if(rightNotTypes.remove(type)) {
-        iterator.remove();
-        StreamEx.of(rightTypes).filter(t -> t.isAssignableFrom(type)).into(addTypes);
-      }
+  private static Set<DfaPsiType> withSuper(Set<DfaPsiType> instanceofValues) {
+    Set<DfaPsiType> result = new HashSet<>(instanceofValues);
+    for (DfaPsiType type : instanceofValues) {
+      InheritanceUtil.processSuperTypes(type.getPsiType(), false, t -> result.add(type.getFactory().createDfaType(t)));
     }
-    leftTypes.addAll(addTypes);
+    return result;
   }
 
   @NotNull

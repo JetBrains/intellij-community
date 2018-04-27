@@ -1,4 +1,4 @@
-// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 @file:JvmName("JvmElementActionFactories")
 
 package com.intellij.lang.jvm.actions
@@ -44,8 +44,5 @@ fun createModifierActions(target: JvmModifiersOwner, request: MemberRequest.Modi
   }
 }
 
-fun createPropertyActions(target: JvmClass, request: MemberRequest.Property): List<IntentionAction> {
-  return createActions {
-    it.createAddPropertyActions(target, request)
-  }
-}
+fun createAddFieldActions(target: JvmClass, request: CreateFieldRequest): List<IntentionAction> =
+  createActions { it.createAddFieldActions(target, request) }

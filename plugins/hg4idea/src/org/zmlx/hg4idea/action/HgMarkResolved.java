@@ -15,8 +15,7 @@ package org.zmlx.hg4idea.action;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.FileStatus;
-import com.intellij.openapi.vcs.FileStatusManager;
-import com.intellij.openapi.vcs.VcsException;
+import com.intellij.openapi.vcs.changes.ChangeListManager;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.vcsUtil.VcsUtil;
 import org.zmlx.hg4idea.HgVcs;
@@ -27,8 +26,8 @@ import java.util.List;
 public class HgMarkResolved extends HgAbstractFilesAction {
 
   protected boolean isEnabled(Project project, HgVcs vcs, VirtualFile file) {
-    final FileStatus fileStatus = FileStatusManager.getInstance(project).getStatus(file);
-    return fileStatus != null && FileStatus.MERGED_WITH_CONFLICTS.equals(fileStatus);
+    final FileStatus fileStatus = ChangeListManager.getInstance(project).getStatus(file);
+    return FileStatus.MERGED_WITH_CONFLICTS.equals(fileStatus);
   }
 
   protected void batchPerform(Project project, HgVcs activeVcs,

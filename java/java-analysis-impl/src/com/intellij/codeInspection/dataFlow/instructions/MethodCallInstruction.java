@@ -24,9 +24,7 @@ import com.siyeh.ig.callMatcher.CallMatcher;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.List;
+import java.util.*;
 
 
 public class MethodCallInstruction extends Instruction {
@@ -116,7 +114,7 @@ public class MethodCallInstruction extends Instruction {
       myArgRequiredNullability = EMPTY_NULLNESS_ARRAY;
     }
 
-    myShouldFlushFields = !(call instanceof PsiNewExpression && myType != null && myType.getArrayDimensions() > 0) && !isPureCall();
+    myShouldFlushFields = !(call instanceof PsiNewExpression && myType != null && myType.getArrayDimensions() > 0 || isPureCall());
     myPrecalculatedReturnValue = precalculatedReturnValue;
     myReturnNullability = call instanceof PsiNewExpression ? Nullness.NOT_NULL : DfaPsiUtil.getElementNullability(myType, myTargetMethod);
   }
@@ -198,9 +196,24 @@ public class MethodCallInstruction extends Instruction {
   }
 
   private boolean isPureCall() {
-    if (myTargetMethod == null) return false;
-    return ControlFlowAnalyzer.isPure(myTargetMethod) ||
-           Arrays.stream(SpecialField.values()).anyMatch(sf -> sf.isMyAccessor(myTargetMethod));
+    if (myTargetMethod != null) {
+      return ControlFlowAnalyzer.isPure(myTargetMethod) || SpecialField.findSpecialField(myTargetMethod) != null;
+    }
+    if (!(myContext instanceof PsiNewExpression)) return false;
+    PsiNewExpression newExpression = (PsiNewExpression)myContext;
+    if (newExpression.getArgumentList() == null || !newExpression.getArgumentList().isEmpty()) return false;
+    PsiJavaCodeReferenceElement classReference = newExpression.getClassReference();
+    if (classReference == null) return false;
+    PsiClass clazz = ObjectUtils.tryCast(classReference.resolve(), PsiClass.class);
+    if (clazz == null) return false;
+    Set<PsiClass> visited = new HashSet<>();
+    while (true) {
+      for (PsiMethod ctor : clazz.getConstructors()) {
+        if(ctor.getParameterList().isEmpty()) return ControlFlowAnalyzer.isPure(ctor);
+      }
+      clazz = clazz.getSuperClass();
+      if (clazz == null || !visited.add(clazz)) return false;
+    }
   }
 
   @Nullable

@@ -55,7 +55,8 @@ class PyDunderSlotsInspection : PyInspection() {
     private fun processSlot(pyClass: PyClass, slot: PyStringLiteralExpression) {
       val name = slot.stringValue
 
-      if (pyClass.findClassAttribute(name, false, myTypeEvalContext) != null) {
+      val classAttribute = pyClass.findClassAttribute(name, false, myTypeEvalContext)
+      if (classAttribute != null && classAttribute.hasAssignedValue()) {
         registerProblem(slot, "'$name' in __slots__ conflicts with class variable")
       }
     }

@@ -294,7 +294,6 @@ public class ExtensionsAreaImpl implements ExtensionsArea {
                                       @NotNull PluginDescriptor descriptor,
                                       @NotNull ExtensionPoint.Kind kind) {
     if (hasExtensionPoint(extensionPointName)) {
-      if (extensionPointName.equals("org.jetbrains.uast.uastLanguagePlugin")) return;
       final String message =
         "Duplicate registration for EP: " + extensionPointName + ": original plugin " + getExtensionPoint(extensionPointName).getDescriptor().getPluginId() +
         ", new plugin " + descriptor.getPluginId();
@@ -373,6 +372,11 @@ public class ExtensionsAreaImpl implements ExtensionsArea {
   @Override
   public boolean hasExtensionPoint(@NotNull String extensionPointName) {
     return myExtensionPoints.containsKey(extensionPointName);
+  }
+
+  @Override
+  public boolean hasExtensionPoint(@NotNull ExtensionPointName<?> extensionPointName) {
+    return hasExtensionPoint(extensionPointName.getName());
   }
 
   void removeAllComponents(@NotNull Set<ExtensionComponentAdapter> extensionAdapters) {

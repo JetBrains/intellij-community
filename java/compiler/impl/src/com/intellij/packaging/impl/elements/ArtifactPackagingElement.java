@@ -64,6 +64,7 @@ public class ArtifactPackagingElement extends ComplexPackagingElement<ArtifactPa
     return null;
   }
 
+  @NotNull
   @Override
   public List<? extends Generator> computeAntInstructions(@NotNull PackagingElementResolvingContext resolvingContext, @NotNull AntCopyInstructionCreator creator,
                                                           @NotNull ArtifactAntGenerationContext generationContext,
@@ -79,6 +80,7 @@ public class ArtifactPackagingElement extends ComplexPackagingElement<ArtifactPa
     return Collections.emptyList();
   }
 
+  @NotNull
   public PackagingElementPresentation createPresentation(@NotNull ArtifactEditorContext context) {
     return new DelegatedPackagingElementPresentation(new ArtifactElementPresentation(myArtifactPointer, context));
   }

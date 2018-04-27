@@ -128,9 +128,9 @@ public class PyTargetExpressionImpl extends PyBaseElementImpl<PyTargetExpression
         // imported via __all__
         return null;
       }
-      final PyType pyType = PyReferenceExpressionImpl.getReferenceTypeFromProviders(this, context, null);
+      final Ref<PyType> pyType = PyReferenceExpressionImpl.getReferenceTypeFromProviders(this, context, null);
       if (pyType != null) {
-        return pyType;
+        return pyType.get();
       }
       PyType type = getTypeFromDocString();
       if (type != null) {
@@ -705,8 +705,9 @@ public class PyTargetExpressionImpl extends PyBaseElementImpl<PyTargetExpression
       @Override
       public String getLocationString() {
         final PyClass containingClass = getContainingClass();
-        if (containingClass != null) {
-          return "(" + containingClass.getName() + " in " + getPackageForFile(getContainingFile()) + ")";
+        final String packageForFile = getPackageForFile(getContainingFile());
+        if (containingClass != null && packageForFile != null) {
+          return String.format("(%s in %s)", containingClass.getName(), packageForFile);
         }
         return super.getLocationString();
       }

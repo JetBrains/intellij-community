@@ -559,7 +559,8 @@ public class UnusedDeclarationInspectionBase extends GlobalInspectionTool {
     CodeScanner codeScanner = new CodeScanner();
 
     // Cleanup previous reachability information.
-    context.getRefManager().iterate(new RefJavaVisitor() {
+    RefManager refManager = context.getRefManager();
+    refManager.iterate(new RefJavaVisitor() {
       @Override
       public void visitElement(@NotNull RefEntity refEntity) {
         if (refEntity instanceof RefJavaElementImpl) {
@@ -571,7 +572,7 @@ public class UnusedDeclarationInspectionBase extends GlobalInspectionTool {
     });
 
 
-    for (RefElement entry : getEntryPointsManager(context).getEntryPoints()) {
+    for (RefElement entry : getEntryPointsManager(context).getEntryPoints(refManager)) {
       entry.accept(codeScanner);
     }
 

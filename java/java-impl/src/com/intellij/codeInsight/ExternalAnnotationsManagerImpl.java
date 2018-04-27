@@ -202,7 +202,6 @@ public class ExternalAnnotationsManagerImpl extends ReadableExternalAnnotationsM
         }
         annotateExternally(listOwner, annotationFQName, annotationsXml, fromFile, value, externalName);
       }
-      ;
     });
     return true;
   }
@@ -681,7 +680,7 @@ public class ExternalAnnotationsManagerImpl extends ReadableExternalAnnotationsM
   @Nullable
   @VisibleForTesting
   public static XmlFile createAnnotationsXml(@NotNull VirtualFile root, @NonNls @NotNull String packageName, PsiManager manager) {
-    final String[] dirs = packageName.split("[\\.]");
+    final String[] dirs = packageName.split("\\.");
     for (String dir : dirs) {
       if (dir.isEmpty()) break;
       VirtualFile subdir = root.findChild(dir);
@@ -734,6 +733,11 @@ public class ExternalAnnotationsManagerImpl extends ReadableExternalAnnotationsM
 
   public static boolean areExternalAnnotationsApplicable(@NotNull PsiModifierListOwner owner) {
     if (!owner.isPhysical()) return false;
+    if (owner instanceof PsiLocalVariable) return false;
+    if (owner instanceof PsiParameter) {
+      PsiElement parent = owner.getParent();
+      if (parent == null || !(parent.getParent() instanceof PsiMethod)) return false;
+    }
     if (!owner.getManager().isInProject(owner)) return true;
     return JavaCodeStyleSettings.getInstance(owner.getContainingFile()).USE_EXTERNAL_ANNOTATIONS;
   }

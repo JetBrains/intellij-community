@@ -169,6 +169,7 @@ public class InvalidPropertyKeyInspection extends AbstractBaseJavaLocalInspectio
 
     private void checkLocalVariable(@NotNull PsiLocalVariable variable, PsiReferenceExpression expression) {
       PsiCodeBlock block = PsiTreeUtil.getParentOfType(variable, PsiCodeBlock.class);
+      if (block == null) return;
       final PsiElement[] defs = DefUseUtil.getDefs(block, variable, expression);
       for (PsiElement def : defs) {
         if(def instanceof PsiLocalVariable) {

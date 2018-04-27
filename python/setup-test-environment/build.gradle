@@ -86,8 +86,8 @@ envs {
 
   createPython("py35_django20_full",
                "3.5.4",
-               ["ipython==2.1", "django==2.0", "behave", "jinja2", "tox>=2.0", "nose", "pytest", "django-nose"],
-               "python3.4\npython3\nipython\nipython200\nskeletons\ndjango\nbehave\ntox\njinja2\npython34\npackaging\npytest\nnose\ndjango-nose",
+               ["ipython==2.1", "django==2.0", "behave", "jinja2", "tox>=2.0", "nose", "pytest", "django-nose", "behave-django"],
+               "python3.4\npython3\nipython\nipython200\nskeletons\ndjango\nbehave\ntox\njinja2\npython34\npackaging\npytest\nnose\ndjango-nose\nbehave-django\ndjango20",
                true)
 
   // Mostly for tox
@@ -104,10 +104,25 @@ envs {
                true)
 
   if (Os.isFamily(Os.FAMILY_UNIX)) {
-    createPython("pyqt_env", "2.7.13", [condaPackage("pyqt=5.6.0")], "pyqt5", false, true)
+    createPython("pyqt_env", "3.5.4", ["pyqt5==5.10.1"], "pyqt5", true)
   }
 
-  createPython("django_latest", "3.5.3", ["django"], "python3.5\ndjango", true)
+  createPython("django_latest", "3.5.3", ["django", "behave-django", "behave"], "python3.5\ndjango\ndjango20\nbehave\nbehave-django\ndjango20", true)
+
+  if (Os.isFamily(Os.FAMILY_WINDOWS)) { // Only windows needs ironPython
+
+    ironpython "ironpython", "32" // For some reason x64 is buggy and leads to StackOverflow when called with ensurepip
+
+    project.tasks.create("Misc for ironpython") { //"Misc" will be launched by "build"
+      shouldRunAfter 'build_envs'
+
+      doLast {
+        def file = Paths.get(bootstrapDirectory.toString(), "ironpython", "tags.txt").toFile()
+        file.createNewFile()
+        file.write("iron")
+      }
+    }
+  }
 }
 
 /**

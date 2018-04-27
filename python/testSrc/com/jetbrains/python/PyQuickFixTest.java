@@ -301,6 +301,16 @@ public class PyQuickFixTest extends PyTestCase {
     doInspectionTest(PyChainedComparisonsInspection.class, "Simplify chained comparison", true, true);
   }
 
+  // PY-24942
+  public void testChainedComparison8() {
+    doInspectionTest(PyChainedComparisonsInspection.class, "Simplify chained comparison", true, true);
+  }
+
+  // PY-29121
+  public void testChainedComparison9() {
+    doInspectionTest(PyChainedComparisonsInspection.class, "Simplify chained comparison", true, true);
+  }
+
   // PY-1362, PY-2585
   public void testStatementEffect() {
     doInspectionTest(PyStatementEffectInspection.class, PyBundle.message("QFIX.statement.effect"), true, true);

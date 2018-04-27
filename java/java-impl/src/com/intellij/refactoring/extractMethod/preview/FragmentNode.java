@@ -7,6 +7,7 @@ import com.intellij.openapi.util.TextRange;
 import com.intellij.pom.Navigatable;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiFile;
 import com.intellij.usageView.UsageInfo;
 import com.intellij.usageView.UsageTreeColors;
 import com.intellij.usageView.UsageTreeColorsScheme;
@@ -30,7 +31,7 @@ abstract class FragmentNode extends DefaultMutableTreeNode implements Comparable
   private boolean myValid = true;
 
   protected FragmentNode(@NotNull PsiElement start, @NotNull PsiElement end, @NotNull ExtractableFragment fragment) {
-    myTextChunks = createTextChunks(start, end);
+    myTextChunks = createTextChunks(start);
     myLineNumberChunk = createNumberChunk(start, end);
     myOffset = start.getTextRange().getStartOffset();
     myFragment = fragment;
@@ -45,11 +46,13 @@ abstract class FragmentNode extends DefaultMutableTreeNode implements Comparable
     return myLineNumberChunk;
   }
 
-  protected TextChunk[] createTextChunks(@NotNull PsiElement start, @NotNull PsiElement end) {
-    UsageInfo2UsageAdapter usageStartAdapter = new UsageInfo2UsageAdapter(new UsageInfo(start));
-    String text = start.getText();
-    return ChunkExtractor.getExtractor(start.getContainingFile())
-                         .createTextChunks(usageStartAdapter, text, 0, text.length(), false, new ArrayList<>());
+  @NotNull
+  protected TextChunk[] createTextChunks(@NotNull PsiElement element) {
+    UsageInfo2UsageAdapter usageAdapter = new UsageInfo2UsageAdapter(new UsageInfo(element));
+    PsiFile file = element.getContainingFile();
+    TextRange range = element.getTextRange();
+    return ChunkExtractor.getExtractor(file)
+                  .createTextChunks(usageAdapter, file.getText(), range.getStartOffset(), range.getEndOffset(), false, new ArrayList<>());
   }
 
   private static TextChunk createNumberChunk(@NotNull PsiElement start, @NotNull PsiElement end) {
@@ -59,7 +62,7 @@ abstract class FragmentNode extends DefaultMutableTreeNode implements Comparable
       int endLine = getLineNumber(document, end.getTextRange().getEndOffset()) + 1;
       String lineText = startLine == endLine ? Integer.toString(startLine) : startLine + ".." + endLine;
       EditorColorsScheme colorsScheme = UsageTreeColorsScheme.getInstance().getScheme();
-      return new TextChunk(colorsScheme.getAttributes(UsageTreeColors.USAGE_LOCATION), lineText + " ");
+      return new TextChunk(colorsScheme.getAttributes(UsageTreeColors.USAGE_LOCATION), lineText + "  ");
     }
     return null;
   }

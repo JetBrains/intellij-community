@@ -216,7 +216,12 @@ public class PyKnownDecoratorUtil {
 
   public static boolean hasUnknownOrChangingReturnTypeDecorator(@NotNull PyDecoratable decoratable, @NotNull TypeEvalContext context) {
     final List<KnownDecorator> decorators = getKnownDecorators(decoratable, context);
-    return !allDecoratorsAreKnown(decoratable, decorators) || decorators.contains(UNITTEST_MOCK_PATCH);
+
+    if (!allDecoratorsAreKnown(decoratable, decorators)) {
+      return true;
+    }
+
+    return ContainerUtil.exists(decorators, d -> d == UNITTEST_MOCK_PATCH || d == CONTEXTLIB_CONTEXTMANAGER);
   }
 
   public static boolean hasUnknownOrUpdatingAttributesDecorator(@NotNull PyDecoratable decoratable, @NotNull TypeEvalContext context) {

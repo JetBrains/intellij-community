@@ -1,15 +1,15 @@
-<svg id="Layer_1" data-name="Layer 1" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32">
+<svg id="Layer_1" data-name="Layer 1" xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 32 32">
   <title>idl@2x</title>
   <g>
-    <rect x="2" y="18" width="30" height="14" fill="#b99bf8" opacity="0.5"/>
-    <path d="M20,20h1.75759v8.39944h5.25648V30H20V20Z" fill="#231f20" opacity="0.6"/>
+    <rect x="2" y="18" width="30" height="14" fill="#b99bf8" opacity="0.7"/>
+    <path d="M20,20h1.75759v8.39944h5.25648V30H20Z" fill="#231f20" opacity="0.7"/>
     <g>
       <g>
-        <polygon points="12 0 4 8 12 8 12 0" fill="#9aa7b0" opacity="0.7" style="isolation: isolate"/>
-        <polygon points="14 0 14 8 14 10 12 10 4 10 4 16 26 16 26 0 14 0" fill="#9aa7b0" opacity="0.7" style="isolation: isolate"/>
+        <polygon points="14 2 6 10 14 10 14 2" fill="#9aa7b0" opacity="0.8" style="isolation: isolate"/>
+        <polygon points="16 2 16 10 16 12 14 12 6 12 6 16 26 16 26 2 16 2" fill="#9aa7b0" opacity="0.8" style="isolation: isolate"/>
       </g>
-      <path d="M10,20h3.2992A4.68763,4.68763,0,0,1,18,24.9715v0.02908A4.71131,4.71131,0,0,1,13.2992,30H10V20Zm1.55493,1.60056v6.79888H13.2992A3.078,3.078,0,0,0,16.37,25.0285V25.00058a3.10281,3.10281,0,0,0-3.07075-3.4H11.55493Z" fill="#231f20" opacity="0.6"/>
-      <path d="M6,20H7.75759V30H6V20Z" fill="#231f20" opacity="0.6"/>
+      <path d="M6,20H7.75759V30H6Z" fill="#231f20" opacity="0.7"/>
+      <path d="M10,20h3.2992A4.68763,4.68763,0,0,1,18,24.9715v.02908A4.71132,4.71132,0,0,1,13.2992,30H10Zm1.55493,1.60056v6.79888H13.2992A3.078,3.078,0,0,0,16.37,25.0285v-.02792a3.1028,3.1028,0,0,0-3.07075-3.4Z" fill="#231f20" opacity="0.7"/>
     </g>
   </g>
 </svg>

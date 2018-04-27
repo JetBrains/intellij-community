@@ -17,7 +17,7 @@
     <group id="CoverageMenu">
       <action id="SwitchCoverage" class="com.intellij.coverage.actions.SwitchCoverageSuiteAction" text="Show Co_verage Data..."/>
       <action id="GenerateCoverageReport" class="com.intellij.coverage.actions.GenerateCoverageReportAction"
-              text="_Generate Coverage Report..." icon="AllIcons.Actions.Export"/>
+              text="_Generate Coverage Report..." icon="AllIcons.ToolbarDecorator.Export"/>
       <action id="HideCoverage" class="com.intellij.coverage.actions.HideCoverageInfoAction"/>
       <separator/>
     </group>

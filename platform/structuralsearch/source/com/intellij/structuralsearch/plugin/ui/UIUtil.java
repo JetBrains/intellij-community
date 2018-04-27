@@ -44,7 +44,7 @@ public class UIUtil {
   @NonNls private static final String SS_GROUP = "structuralsearchgroup";
 
   public static final NotificationGroup SSR_NOTIFICATION_GROUP =
-    NotificationGroup.toolWindowGroup(SSRBundle.message("structural.search.title") + 2, ToolWindowId.FIND);
+    NotificationGroup.toolWindowGroup(SSRBundle.message("structural.search.title"), ToolWindowId.FIND);
 
   @NotNull
   public static Editor createEditor(Document doc, final Project project, boolean editable, @Nullable TemplateContextType contextType) {
@@ -91,7 +91,7 @@ public class UIUtil {
     return editor;
   }
 
-  public static JComponent createOptionLine(JComponent[] options) {
+  public static JComponent createOptionLine(JComponent... options) {
     JPanel tmp = new JPanel();
 
     tmp.setLayout(new BoxLayout(tmp, BoxLayout.X_AXIS));
@@ -104,10 +104,6 @@ public class UIUtil {
     tmp.add(Box.createHorizontalGlue());
 
     return tmp;
-  }
-
-  public static JComponent createOptionLine(JComponent option) {
-    return createOptionLine(new JComponent[]{option});
   }
 
   public static void setContent(final Editor editor, String text) {
@@ -186,6 +182,7 @@ public class UIUtil {
         label.setText(SSRBundle.message("complete.match.variable.tooltip.message",
                                         SubstitutionShortInfoHandler.getShortParamString(constraint)));
         IdeTooltipManager.getInstance().show(tooltip, true);
+        configuration.setCurrentVariableName(Configuration.CONTEXT_VAR_NAME);
       }
 
       @Override

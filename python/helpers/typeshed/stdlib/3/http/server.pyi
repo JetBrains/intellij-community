@@ -1,8 +1,12 @@
 # Stubs for http.server (Python 3.4)
 
+import sys
 from typing import Any, BinaryIO, Dict, List, Mapping, Optional, Tuple, Union
 import socketserver
 import email.message
+
+if sys.version_info >= (3, 7):
+    from builtins import _PathLike
 
 class HTTPServer(socketserver.TCPServer):
     server_name = ...  # type: str
@@ -53,8 +57,12 @@ class BaseHTTPRequestHandler:
 
 class SimpleHTTPRequestHandler(BaseHTTPRequestHandler):
     extensions_map = ...  # type: Dict[str, str]
-    def __init__(self, request: bytes, client_address: Tuple[str, int],
-                 server: socketserver.BaseServer) -> None: ...
+    if sys.version_info >= (3, 7):
+        def __init__(self, request: bytes, client_address: Tuple[str, int],
+                     server: socketserver.BaseServer, directory: Optional[Union[str, _PathLike[str]]]) -> None: ...
+    else:
+        def __init__(self, request: bytes, client_address: Tuple[str, int],
+                     server: socketserver.BaseServer) -> None: ...
     def do_GET(self) -> None: ...
     def do_HEAD(self) -> None: ...
 

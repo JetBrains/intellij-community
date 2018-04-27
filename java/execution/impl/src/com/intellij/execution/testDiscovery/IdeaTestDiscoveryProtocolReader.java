@@ -47,6 +47,36 @@ class IdeaTestDiscoveryProtocolReader implements TestDiscoveryProtocolReader, Te
   }
 
   @Override
+  public ClassMetadataReader createClassMetadataReader() {
+    return new ClassMetadataReader() {
+      @Override
+      public void classStarted(int i) {
+
+      }
+
+      @Override
+      public void file(int i) {
+
+      }
+
+      @Override
+      public void method(int i, byte[] bytes) {
+
+      }
+
+      @Override
+      public void classFinished(int i) {
+
+      }
+
+      @Override
+      public void finished() {
+
+      }
+    };
+  }
+
+  @Override
   public NameEnumeratorReader createNameEnumeratorReader() {
     return this;
   }

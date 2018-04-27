@@ -56,9 +56,8 @@ class JavaChangeSignatureUsageSearcher {
 
   public UsageInfo[] findUsages() {
     ArrayList<UsageInfo> result = new ArrayList<>();
-    final PsiElement element = myChangeInfo.getMethod();
-    if (element instanceof PsiMethod) {
-      final PsiMethod method = (PsiMethod)element;
+    final PsiMethod method = myChangeInfo.getMethod();
+    if (method != null) {
 
       findSimpleUsages(method, result);
 

@@ -125,38 +125,33 @@ public class GitMergeProvider implements MergeProvider2 {
         GitFileRevision current = new GitFileRevision(myProject, path, new GitRevisionNumber(":" + yoursRevision(root)));
         GitFileRevision last = new GitFileRevision(myProject, path, new GitRevisionNumber(":" + theirsRevision(root)));
         try {
+          mergeData.ORIGINAL = original.getContent();
+        }
+        catch (Exception ex) {
+          /// unable to load original revision, use the current instead
+          /// This could happen in case if rebasing.
           try {
-            mergeData.ORIGINAL = original.getContent();
+            mergeData.ORIGINAL = file.contentsToByteArray();
           }
-          catch (Exception ex) {
-            /// unable to load original revision, use the current instead
-            /// This could happen in case if rebasing.
-            try {
-              mergeData.ORIGINAL = file.contentsToByteArray();
-            }
-            catch (IOException e) {
-              LOG.error(e);
-              mergeData.ORIGINAL = ArrayUtil.EMPTY_BYTE_ARRAY;
-            }
+          catch (IOException e) {
+            LOG.error(e);
+            mergeData.ORIGINAL = ArrayUtil.EMPTY_BYTE_ARRAY;
           }
-          mergeData.CURRENT = loadRevisionCatchingErrors(current);
-          mergeData.LAST = loadRevisionCatchingErrors(last);
-
-          // TODO: can be done once for a root
-          mergeData.CURRENT_REVISION_NUMBER = findCurrentRevisionNumber(root);
-          mergeData.LAST_REVISION_NUMBER = findLastRevisionNumber(root);
-          mergeData.ORIGINAL_REVISION_NUMBER = findOriginalRevisionNumber(root, mergeData.CURRENT_REVISION_NUMBER, mergeData.LAST_REVISION_NUMBER);
-
-
-          Trinity<String, String, String> blobs = getAffectedBlobs(root, file);
-
-          mergeData.CURRENT_FILE_PATH = getBlobPathInRevision(root, file, blobs.getFirst(), mergeData.CURRENT_REVISION_NUMBER);
-          mergeData.ORIGINAL_FILE_PATH = getBlobPathInRevision(root, file, blobs.getSecond(), mergeData.ORIGINAL_REVISION_NUMBER);
-          mergeData.LAST_FILE_PATH = getBlobPathInRevision(root, file, blobs.getThird(), mergeData.LAST_REVISION_NUMBER);
         }
-        catch (IOException e) {
-          throw new IllegalStateException("Failed to load file content", e);
-        }
+        mergeData.CURRENT = loadRevisionCatchingErrors(current);
+        mergeData.LAST = loadRevisionCatchingErrors(last);
+
+        // TODO: can be done once for a root
+        mergeData.CURRENT_REVISION_NUMBER = findCurrentRevisionNumber(root);
+        mergeData.LAST_REVISION_NUMBER = findLastRevisionNumber(root);
+        mergeData.ORIGINAL_REVISION_NUMBER = findOriginalRevisionNumber(root, mergeData.CURRENT_REVISION_NUMBER, mergeData.LAST_REVISION_NUMBER);
+
+
+        Trinity<String, String, String> blobs = getAffectedBlobs(root, file);
+
+        mergeData.CURRENT_FILE_PATH = getBlobPathInRevision(root, file, blobs.getFirst(), mergeData.CURRENT_REVISION_NUMBER);
+        mergeData.ORIGINAL_FILE_PATH = getBlobPathInRevision(root, file, blobs.getSecond(), mergeData.ORIGINAL_REVISION_NUMBER);
+        mergeData.LAST_FILE_PATH = getBlobPathInRevision(root, file, blobs.getThird(), mergeData.LAST_REVISION_NUMBER);
       }
     };
     VcsUtil.runVcsProcessWithProgress(runnable, GitBundle.message("merge.load.files"), false, myProject);
@@ -356,7 +351,7 @@ public class GitMergeProvider implements MergeProvider2 {
     }
   }
 
-  private static byte[] loadRevisionCatchingErrors(@NotNull GitFileRevision revision) throws VcsException, IOException {
+  private static byte[] loadRevisionCatchingErrors(@NotNull GitFileRevision revision) throws VcsException {
     try {
       return revision.getContent();
     } catch (VcsException e) {

@@ -250,10 +250,13 @@ public class MethodParameterInfoHandler implements ParameterInfoHandlerWithTabAc
   }
 
   private static boolean isIncompatibleParameterCount(@NotNull PsiMethod method, int numberOfParameters) {
+    int limit = JavaMethodCallElement.getCompletionHintsLimit();
     int originalNumberOfParameters = method.getParameterList().getParametersCount();
     return PsiImplUtil.isVarArgs(method) 
-           ? originalNumberOfParameters > 2 && numberOfParameters < originalNumberOfParameters - 1 
-           : originalNumberOfParameters != numberOfParameters && !(originalNumberOfParameters == 1 && numberOfParameters == 0);
+           ? originalNumberOfParameters > 2 &&
+             numberOfParameters < Math.min(limit, originalNumberOfParameters) - 1 && !(limit == 1 && numberOfParameters == 0)
+           : (originalNumberOfParameters < numberOfParameters || numberOfParameters < Math.min(limit, originalNumberOfParameters)) &&
+             !(Math.min(limit, originalNumberOfParameters) == 1 && numberOfParameters == 0);
   }
 
   @Override
@@ -774,8 +777,10 @@ public class MethodParameterInfoHandler implements ParameterInfoHandlerWithTabAc
         context.setUIComponentEnabled(false);
         return;
       }
+      PsiElement parameterOwner = context.getParameterOwner();
+      PsiCall call = parameterOwner instanceof PsiExpressionList ? getCall((PsiExpressionList)parameterOwner) : null;
 
-      updateMethodPresentation(method, getCandidateInfoSubstitutor(context.getParameterOwner(), info, false), context);
+      updateMethodPresentation(method, getCandidateInfoSubstitutor(parameterOwner, info, call != null && call.resolveMethod() == method), context);
     }
     else {
       updateMethodPresentation((PsiMethod)p, null, context);

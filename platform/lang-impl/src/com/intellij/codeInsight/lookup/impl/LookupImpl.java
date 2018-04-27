@@ -525,40 +525,49 @@ public class LookupImpl extends LightweightHint implements LookupEx, Disposable,
   }
 
   protected void insertLookupString(LookupElement item, final int prefix) {
-    final String lookupString = getCaseCorrectedLookupString(item);
+    insertLookupString(myProject, getTopLevelEditor(), item, itemMatcher(item), itemPattern(item), prefix);
+  }
 
-    final Editor hostEditor = getTopLevelEditor();
+  public static void insertLookupString(final Project project,
+                                        Editor editor, LookupElement item,
+                                        PrefixMatcher matcher, String itemPattern, final int prefixLength) {
+    final String lookupString = getCaseCorrectedLookupString(item, matcher, itemPattern);
+
+    final Editor hostEditor = editor;
     hostEditor.getCaretModel().runForEachCaret(new CaretAction() {
       @Override
       public void perform(Caret caret) {
         EditorModificationUtil.deleteSelectedText(hostEditor);
         final int caretOffset = hostEditor.getCaretModel().getOffset();
 
-        int offset = insertLookupInDocumentWindowIfNeeded(caretOffset, prefix, lookupString);
+        int offset = insertLookupInDocumentWindowIfNeeded(project, editor, caretOffset, prefixLength, lookupString);
         hostEditor.getCaretModel().moveToOffset(offset);
         hostEditor.getSelectionModel().removeSelection();
       }
     });
 
-    myEditor.getScrollingModel().scrollToCaret(ScrollType.RELATIVE);
+    editor.getScrollingModel().scrollToCaret(ScrollType.RELATIVE);
   }
 
-  private int insertLookupInDocumentWindowIfNeeded(int caretOffset, int prefix, String lookupString) {
-    DocumentWindow document = getInjectedDocument(caretOffset);
-    if (document == null) return insertLookupInDocument(caretOffset, myEditor.getDocument(), prefix, lookupString);
-    PsiFile file = PsiDocumentManager.getInstance(myProject).getPsiFile(document);
+  private static int insertLookupInDocumentWindowIfNeeded(Project project,
+                                                          Editor editor, int caretOffset,
+                                                          int prefix,
+                                                          String lookupString) {
+    DocumentWindow document = getInjectedDocument(project, editor, caretOffset);
+    if (document == null) return insertLookupInDocument(caretOffset, editor.getDocument(), prefix, lookupString);
+    PsiFile file = PsiDocumentManager.getInstance(project).getPsiFile(document);
     int offset = document.hostToInjected(caretOffset);
     int lookupStart = Math.min(offset, Math.max(offset - prefix, 0));
     int diff = -1;
     if (file != null) {
-      List<TextRange> ranges = InjectedLanguageManager.getInstance(myProject)
+      List<TextRange> ranges = InjectedLanguageManager.getInstance(project)
         .intersectWithAllEditableFragments(file, TextRange.create(lookupStart, offset));
       if (!ranges.isEmpty()) {
         diff = ranges.get(0).getStartOffset() - lookupStart;
         if (ranges.size() == 1 && diff == 0) diff = -1;
       }
     }
-    if (diff == -1) return insertLookupInDocument(caretOffset, myEditor.getDocument(), prefix, lookupString);
+    if (diff == -1) return insertLookupInDocument(caretOffset, editor.getDocument(), prefix, lookupString);
     return document.injectedToHost(
       insertLookupInDocument(offset, document, prefix - diff, diff == 0 ? lookupString : lookupString.substring(diff))
     );
@@ -574,15 +583,14 @@ public class LookupImpl extends LightweightHint implements LookupEx, Disposable,
     return lookupStart + lookupString.length();
   }
 
-  private String getCaseCorrectedLookupString(LookupElement item) {
+  private static String getCaseCorrectedLookupString(LookupElement item, PrefixMatcher prefixMatcher, String prefix) {
     String lookupString = item.getLookupString();
     if (item.isCaseSensitive()) {
       return lookupString;
     }
 
-    final String prefix = itemPattern(item);
     final int length = prefix.length();
-    if (length == 0 || !itemMatcher(item).prefixMatches(prefix)) return lookupString;
+    if (length == 0 || !prefixMatcher.prefixMatches(prefix)) return lookupString;
     boolean isAllLower = true;
     boolean isAllUpper = true;
     boolean sameCase = true;
@@ -859,67 +867,6 @@ public class LookupImpl extends LightweightHint implements LookupEx, Disposable,
     myPreview.updatePreview(currentItem);
   }
 
-  public boolean fillInCommonPrefix(boolean explicitlyInvoked) {
-    if (explicitlyInvoked) {
-      setFocusDegree(FocusDegree.FOCUSED);
-    }
-
-    if (explicitlyInvoked && myCalculating) return false;
-    if (!explicitlyInvoked && mySelectionTouched) return false;
-
-    ListModel listModel = getListModel();
-    if (listModel.getSize() <= 1) return false;
-
-    if (listModel.getSize() == 0) return false;
-
-    final LookupElement firstItem = (LookupElement)listModel.getElementAt(0);
-    if (listModel.getSize() == 1 && firstItem instanceof EmptyLookupItem) return false;
-
-    final PrefixMatcher firstItemMatcher = itemMatcher(firstItem);
-    final String oldPrefix = firstItemMatcher.getPrefix();
-    final String presentPrefix = oldPrefix + getAdditionalPrefix();
-    String commonPrefix = getCaseCorrectedLookupString(firstItem);
-
-    for (int i = 1; i < listModel.getSize(); i++) {
-      LookupElement item = (LookupElement)listModel.getElementAt(i);
-      if (item instanceof EmptyLookupItem) return false;
-      if (!oldPrefix.equals(itemMatcher(item).getPrefix())) return false;
-
-      final String lookupString = getCaseCorrectedLookupString(item);
-      final int length = Math.min(commonPrefix.length(), lookupString.length());
-      if (length < commonPrefix.length()) {
-        commonPrefix = commonPrefix.substring(0, length);
-      }
-
-      for (int j = 0; j < length; j++) {
-        if (commonPrefix.charAt(j) != lookupString.charAt(j)) {
-          commonPrefix = lookupString.substring(0, j);
-          break;
-        }
-      }
-
-      if (commonPrefix.length() == 0 || commonPrefix.length() < presentPrefix.length()) {
-        return false;
-      }
-    }
-
-    if (commonPrefix.equals(presentPrefix)) {
-      return false;
-    }
-
-    for (int i = 0; i < listModel.getSize(); i++) {
-      LookupElement item = (LookupElement)listModel.getElementAt(i);
-      if (!itemMatcher(item).cloneWithPrefix(commonPrefix).prefixMatches(item)) {
-        return false;
-      }
-    }
-
-    myOffsets.setInitialPrefix(presentPrefix, explicitlyInvoked);
-
-    replacePrefix(presentPrefix, commonPrefix);
-    return true;
-  }
-
   public void replacePrefix(final String presentPrefix, final String newPrefix) {
     if (!performGuardedChange(() -> {
       EditorModificationUtil.deleteSelectedText(myEditor);
@@ -965,11 +912,11 @@ public class LookupImpl extends LightweightHint implements LookupEx, Disposable,
   }
 
   @Nullable
-  private DocumentWindow getInjectedDocument(int offset) {
-    PsiFile hostFile = PsiDocumentManager.getInstance(myProject).getPsiFile(myEditor.getDocument());
+  private static DocumentWindow getInjectedDocument(Project project, Editor editor, int offset) {
+    PsiFile hostFile = PsiDocumentManager.getInstance(project).getPsiFile(editor.getDocument());
     if (hostFile != null) {
       // inspired by com.intellij.codeInsight.editorActions.TypedHandler.injectedEditorIfCharTypedIsSignificant()
-      List<DocumentWindow> injected = InjectedLanguageManager.getInstance(myProject).getCachedInjectedDocumentsInRange(hostFile, TextRange.create(offset, offset));
+      List<DocumentWindow> injected = InjectedLanguageManager.getInstance(project).getCachedInjectedDocumentsInRange(hostFile, TextRange.create(offset, offset));
       for (DocumentWindow documentWindow : injected ) {
         if (documentWindow.isValid() && documentWindow.containsRange(offset, offset)) {
           return documentWindow;
@@ -982,7 +929,7 @@ public class LookupImpl extends LightweightHint implements LookupEx, Disposable,
   @Override
   @NotNull 
   public Editor getEditor() {
-    DocumentWindow documentWindow = getInjectedDocument(myEditor.getCaretModel().getOffset());
+    DocumentWindow documentWindow = getInjectedDocument(myProject, myEditor, myEditor.getCaretModel().getOffset());
     if (documentWindow != null) {
       PsiFile injectedFile = PsiDocumentManager.getInstance(myProject).getPsiFile(documentWindow);
       return InjectedLanguageUtil.getInjectedEditorForInjectedFile(myEditor, injectedFile);

@@ -22,7 +22,6 @@ package com.intellij.psi.impl.source.codeStyle;
 import com.intellij.formatting.Block;
 import com.intellij.lang.ASTNode;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiFile;
@@ -59,7 +58,8 @@ public class PsiBasedFormatterModelWithShiftIndentInside extends PsiBasedFormatt
 
   private TextRange shiftIndentInsideWithPsi(ASTNode node, final TextRange textRange, final int shift) {
     if (node != null && node.getTextRange().equals(textRange) && ShiftIndentInsideHelper.mayShiftIndentInside(node)) {
-      return new ShiftIndentInsideHelper(StdFileTypes.JAVA, myProject).shiftIndentInside(node, shift).getTextRange();
+      PsiFile file = node.getPsi().getContainingFile();
+      return new ShiftIndentInsideHelper(file).shiftIndentInside(node, shift).getTextRange();
     } else {
       return textRange;
     }

@@ -77,9 +77,6 @@ public abstract class NewVirtualFile extends VirtualFile implements VirtualFileW
   @Nullable @Deprecated
   public NewVirtualFile findChildById(int id) {return null;}
 
-  @Nullable @Deprecated
-  public NewVirtualFile findChildByIdIfCached(int id) {return null;}
-
   @Override
   public void refresh(final boolean asynchronous, final boolean recursive, final Runnable postRunnable) {
     RefreshQueue.getInstance().refresh(asynchronous, recursive, postRunnable, this);

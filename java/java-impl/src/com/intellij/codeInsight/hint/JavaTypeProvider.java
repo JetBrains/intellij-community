@@ -15,6 +15,7 @@
  */
 package com.intellij.codeInsight.hint;
 
+import com.intellij.codeInsight.documentation.DocumentationComponent;
 import com.intellij.codeInspection.dataFlow.CommonDataflow;
 import com.intellij.codeInspection.dataFlow.DfaFactMap;
 import com.intellij.codeInspection.dataFlow.DfaFactType;
@@ -22,7 +23,9 @@ import com.intellij.lang.ExpressionTypeProvider;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiUtil;
+import com.intellij.ui.ColorUtil;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
 
@@ -87,12 +90,15 @@ public class JavaTypeProvider extends ExpressionTypeProvider<PsiExpression> {
            : "<table>" + makeHtmlRow("Type", basicTypeEscaped) + advancedTypeInfo + "</table>";
   }
 
-  private static <T> String formatFact(DfaFactType<T> factType, T value, PsiType type) {
+  private static <T> String formatFact(@NotNull DfaFactType<T> factType, @NotNull T value, @Nullable PsiType type) {
     String presentationText = factType.getPresentationText(value, type);
     return presentationText.isEmpty() ? "" : makeHtmlRow(factType.getName(), StringUtil.escapeXml(presentationText));
   }
 
   private static String makeHtmlRow(String titleText, String contentHtml) {
-    return "<tr><td align='right' valign='top'><strong>" + StringUtil.escapeXml(titleText) + ":</strong></td><td>" + contentHtml + "</td></tr>";
+    String titleCell = "<td align='left' valign='top' style='color:" +
+                       ColorUtil.toHtmlColor(DocumentationComponent.SECTION_COLOR) + "'>" + StringUtil.escapeXml(titleText) + ":</td>";
+    String contentCell = "<td>" + contentHtml + "</td>";
+    return "<tr>" + titleCell + contentCell + "</tr>";
   }
 }

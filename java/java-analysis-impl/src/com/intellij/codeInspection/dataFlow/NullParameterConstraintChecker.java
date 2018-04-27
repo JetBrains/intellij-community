@@ -98,7 +98,7 @@ class NullParameterConstraintChecker extends DataFlowRunner {
     if (instruction instanceof ReturnInstruction && !((ReturnInstruction)instruction).isViaException()) {
       DfaMemoryState memState = instructionState.getMemoryState();
       for (PsiParameter parameter : myPossiblyViolatedParameters.toArray(PsiParameter.EMPTY_ARRAY)) {
-        final DfaVariableValue dfaVar = getFactory().getVarFactory().createVariableValue(parameter, false);
+        final DfaVariableValue dfaVar = getFactory().getVarFactory().createVariableValue(parameter);
         if (memState.isNotNull(dfaVar)) {
           myParametersWithSuccessfulExecutionInNotNullState.add(parameter);
         }
@@ -122,7 +122,7 @@ class NullParameterConstraintChecker extends DataFlowRunner {
     protected MyDfaMemoryState(DfaValueFactory factory) {
       super(factory);
       for (PsiParameter parameter : myPossiblyViolatedParameters) {
-        setVariableState(getFactory().getVarFactory().createVariableValue(parameter, false),
+        setVariableState(getFactory().getVarFactory().createVariableValue(parameter),
                          new DfaVariableState(DfaFactMap.EMPTY.with(DfaFactType.CAN_BE_NULL, true)));
       }
     }

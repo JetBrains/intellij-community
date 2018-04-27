@@ -188,7 +188,7 @@ public class PyConsoleTask extends PyExecutionFixtureTestTask {
       }
     });
 
-    consoleRunner.run();
+    consoleRunner.run(true);
 
     waitFor(myConsoleInitSemaphore);
 

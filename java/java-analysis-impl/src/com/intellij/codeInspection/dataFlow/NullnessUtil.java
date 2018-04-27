@@ -4,6 +4,7 @@ package com.intellij.codeInspection.dataFlow;
 import com.intellij.codeInsight.JavaPsiEquivalenceUtil;
 import com.intellij.codeInsight.daemon.ImplicitUsageProvider;
 import com.intellij.codeInsight.daemon.impl.analysis.JavaGenericsUtil;
+import com.intellij.codeInspection.dataFlow.value.DfaExpressionFactory;
 import com.intellij.codeInspection.dataFlow.value.DfaVariableValue;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.psi.*;
@@ -25,11 +26,15 @@ import java.util.List;
 public class NullnessUtil {
 
   static Boolean calcCanBeNull(DfaVariableValue value) {
+    if (value.getSource() instanceof DfaExpressionFactory.ThisSource) {
+      return false;
+    }
     PsiModifierListOwner var = value.getPsiVariable();
     Nullness nullability = DfaPsiUtil.getElementNullabilityIgnoringParameterInference(value.getVariableType(), var);
     if (nullability != Nullness.UNKNOWN) {
       return toBoolean(nullability);
     }
+    if (var == null) return null;
 
     Nullness defaultNullability = value.getFactory().suggestNullabilityForNonAnnotatedMember(var);
 

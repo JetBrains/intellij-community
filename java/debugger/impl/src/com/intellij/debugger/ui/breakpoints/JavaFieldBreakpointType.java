@@ -52,6 +52,12 @@ public class JavaFieldBreakpointType extends JavaLineBreakpointTypeBase<JavaFiel
 
   @NotNull
   @Override
+  public Icon getSuspendNoneIcon() {
+    return AllIcons.Debugger.Db_no_suspend_field_breakpoint;
+  }
+
+  @NotNull
+  @Override
   public Icon getMutedEnabledIcon() {
     return AllIcons.Debugger.Db_muted_field_breakpoint;
   }
@@ -60,6 +66,12 @@ public class JavaFieldBreakpointType extends JavaLineBreakpointTypeBase<JavaFiel
   @Override
   public Icon getMutedDisabledIcon() {
     return AllIcons.Debugger.Db_muted_disabled_field_breakpoint;
+  }
+
+  @NotNull
+  @Override
+  public Icon getPendingIcon() {
+    return AllIcons.Debugger.Db_pending_field_breakpoint;
   }
 
   //@Override
@@ -169,5 +181,10 @@ public class JavaFieldBreakpointType extends JavaLineBreakpointTypeBase<JavaFiel
   @Override
   public boolean canBeHitInOtherPlaces() {
     return true;
+  }
+
+  @Override
+  public boolean canPutAt(@NotNull VirtualFile file, int line, @NotNull Project project) {
+    return canPutAtElement(file, line, project, (element, document) -> element instanceof PsiField);
   }
 }

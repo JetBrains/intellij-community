@@ -7,8 +7,9 @@ import com.intellij.testFramework.LightVirtualFile;
 import org.jetbrains.annotations.NotNull;
 
 /**
- * @deprecated Use {@link VirtualFileWindow} instead. to be removed in IDEA 2018.1
+ * @deprecated Use {@link VirtualFileWindow} instead. To be removed in IDEA 2018.1
  */
+@Deprecated
 public abstract class VirtualFileWindowImpl extends LightVirtualFile implements VirtualFileWindow {
   public VirtualFileWindowImpl(@NotNull String name,
                                Language language,
@@ -19,6 +20,7 @@ public abstract class VirtualFileWindowImpl extends LightVirtualFile implements 
   /**
    * @deprecated Use {@link VirtualFileWindow#getDelegate()} instead. to be removed in IDEA 2018.1
    */
+  @Deprecated
   @NotNull
   @Override
   public VirtualFile getDelegate() {

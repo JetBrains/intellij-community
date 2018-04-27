@@ -40,7 +40,7 @@ object UpdateInstaller {
     val patchName = "${product}-${from}-${to}-patch${jdk}-${patch.osSuffix}.jar"
 
     val baseUrl = patchesUrl
-    val url = URL(URL(if (baseUrl.endsWith('/')) baseUrl else baseUrl + '/'), patchName)
+    val url = URL(URL(if (baseUrl.endsWith('/')) baseUrl else "${baseUrl}/"), patchName)
     val patchFile = File(getTempDir(), "patch.jar")
     HttpRequests.request(url.toString()).gzip(false).forceHttps(forceHttps).saveToFile(patchFile, indicator)
     return patchFile
@@ -56,7 +56,7 @@ object UpdateInstaller {
     val readyToInstall = mutableListOf<PluginDownloader>()
     for (downloader in downloaders) {
       try {
-        if (downloader.pluginId !in disabledToUpdate && downloader.prepareToInstall(indicator) && downloader.descriptor != null) {
+        if (downloader.pluginId !in disabledToUpdate && downloader.prepareToInstall(indicator)) {
           readyToInstall += downloader
         }
         indicator.checkCanceled()

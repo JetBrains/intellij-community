@@ -389,7 +389,7 @@ public class EditorMarkupModelImpl extends MarkupModelImpl implements EditorMark
   }
 
   @Override
-  public void setErrorStripeRenderer(@NotNull ErrorStripeRenderer renderer) {
+  public void setErrorStripeRenderer(@Nullable ErrorStripeRenderer renderer) {
     assertIsDispatchThread();
     if (myErrorStripeRenderer instanceof Disposable) {
       Disposer.dispose((Disposable)myErrorStripeRenderer);

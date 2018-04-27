@@ -17,10 +17,8 @@ package com.jetbrains.python.inspections;
 
 import com.intellij.codeInspection.LocalInspectionToolSession;
 import com.intellij.codeInspection.ProblemsHolder;
-import com.intellij.openapi.util.Pair;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiElementVisitor;
-import java.util.HashMap;
 import com.jetbrains.python.PyBundle;
 import com.jetbrains.python.inspections.quickfix.PyCreatePropertyQuickFix;
 import com.jetbrains.python.psi.*;
@@ -35,16 +33,12 @@ import org.jetbrains.annotations.NotNull;
  * User: dcheryasov
  */
 public class PyPropertyAccessInspection extends PyInspection {
+
   @Nls
   @NotNull
   @Override
   public String getDisplayName() {
     return PyBundle.message("INSP.NAME.property.access");
-  }
-
-  @Override
-  public boolean isEnabledByDefault() {
-    return true;
   }
 
   @NotNull
@@ -53,10 +47,9 @@ public class PyPropertyAccessInspection extends PyInspection {
     return new Visitor(holder, session);
   }
 
-  public static class Visitor extends PyInspectionVisitor {
-    private final HashMap<Pair<PyClass, String>, Property> myPropertyCache = new HashMap<>();
+  private static class Visitor extends PyInspectionVisitor {
 
-    public Visitor(@NotNull final ProblemsHolder holder, LocalInspectionToolSession session) {
+    public Visitor(@NotNull ProblemsHolder holder, @NotNull LocalInspectionToolSession session) {
       super(holder, session);
     }
 
@@ -80,15 +73,7 @@ public class PyPropertyAccessInspection extends PyInspection {
           final PyClass cls = ((PyClassType)type).getPyClass();
           final String name = node.getName();
           if (name != null) {
-            final Pair<PyClass, String> key = Pair.create(cls, name);
-            final Property property;
-            if (myPropertyCache.containsKey(key)) {
-              property = myPropertyCache.get(key);
-            }
-            else {
-              property = cls.findProperty(name, true, myTypeEvalContext);
-            }
-            myPropertyCache.put(key, property); // we store nulls, too, to know that a property does not exist
+            final Property property = cls.findProperty(name, true, myTypeEvalContext);
             if (property != null) {
               final AccessDirection dir = AccessDirection.of(node);
               checkAccessor(node, name, dir, property);
@@ -104,7 +89,10 @@ public class PyPropertyAccessInspection extends PyInspection {
       }
     }
 
-    private void checkAccessor(PyExpression node, String name, AccessDirection dir, Property property) {
+    private void checkAccessor(@NotNull PyExpression node,
+                               @NotNull String name,
+                               @NotNull AccessDirection dir,
+                               @NotNull Property property) {
       final Maybe<PyCallable> accessor = property.getByDirection(dir);
       if (accessor.isDefined() && accessor.value() == null) {
         final String message;

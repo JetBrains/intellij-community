@@ -229,7 +229,12 @@ public class ExecutionUtil {
     return getLiveIndicator(base, 13, 13);
   }
 
+  @SuppressWarnings("UseJBColor")
   public static Icon getLiveIndicator(@Nullable final Icon base, int emptyIconWidth, int emptyIconHeight) {
+    return getIndicator(base, emptyIconWidth, emptyIconHeight, Color.GREEN);
+  }
+
+  public static Icon getIndicator(@Nullable final Icon base, int emptyIconWidth, int emptyIconHeight, Color color) {
     return new LayeredIcon(base, new Icon() {
       @SuppressWarnings("UseJBColor")
       @Override
@@ -238,7 +243,7 @@ public class ExecutionUtil {
         Graphics2D g2d = (Graphics2D)g.create();
         try {
           GraphicsUtil.setupAAPainting(g2d);
-          g2d.setColor(Color.GREEN);
+          g2d.setColor(color);
           Ellipse2D.Double shape =
             new Ellipse2D.Double(x + getIconWidth() - iSize, y + getIconHeight() - iSize, iSize, iSize);
           g2d.fill(shape);

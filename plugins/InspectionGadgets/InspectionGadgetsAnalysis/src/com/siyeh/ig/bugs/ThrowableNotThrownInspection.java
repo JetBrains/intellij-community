@@ -16,7 +16,6 @@
 package com.siyeh.ig.bugs;
 
 import com.intellij.codeInspection.dataFlow.ControlFlowAnalyzer;
-import com.intellij.codeInspection.dataFlow.MethodContract;
 import com.intellij.codeInspection.dataFlow.StandardMethodContract;
 import com.intellij.psi.*;
 import com.intellij.psi.search.searches.ReferencesSearch;
@@ -113,7 +112,7 @@ public class ThrowableNotThrownInspection extends BaseInspection {
       List<StandardMethodContract> contracts = ControlFlowAnalyzer.getMethodContracts(method);
       if (contracts.size() == 1) {
         StandardMethodContract contract = contracts.get(0);
-        if (contract.isTrivial() && contract.getReturnValue() == MethodContract.ValueConstraint.THROW_EXCEPTION) {
+        if (contract.isTrivial() && contract.getReturnValue().isFail()) {
           return;
         }
       }

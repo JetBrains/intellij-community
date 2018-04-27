@@ -33,7 +33,7 @@ import java.util.List;
 public class RedundantTypeArgsInspection extends GenericsInspectionToolBase {
   private static final Logger LOG = Logger.getInstance("#com.intellij.codeInspection.miscGenerics.RedundantTypeArgsInspection");
 
-  private final static LocalQuickFix ourQuickFixAction = new MyQuickFixAction();
+  private static final LocalQuickFix ourQuickFixAction = new MyQuickFixAction();
   public static final String SHORT_NAME = "RedundantTypeArguments";
 
   @Override
@@ -136,7 +136,7 @@ public class RedundantTypeArgsInspection extends GenericsInspectionToolBase {
     final PsiTypeElement qualifierTypeElement = expression.getQualifierType();
     if (qualifierTypeElement != null) {
       final PsiType psiType = qualifierTypeElement.getType();
-      if (psiType instanceof PsiClassType && !(((PsiClassType)psiType).isRaw())) {
+      if (psiType instanceof PsiClassType && !((PsiClassType)psiType).isRaw()) {
         PsiClass aClass = ((PsiClassType)psiType).resolve();
         if (aClass == null) return;
         final JavaResolveResult result = expression.advancedResolve(false);
@@ -164,7 +164,7 @@ public class RedundantTypeArgsInspection extends GenericsInspectionToolBase {
         PsiTypeParameter[] typeParameters = resolve instanceof PsiClass ? PsiTypeParameter.EMPTY_ARRAY : ((PsiMethod)resolve).getTypeParameters();
         if (typeParameters.length == 0 ||
             typeParameters.length == typeArguments.length && 
-            PsiDiamondTypeUtil.areTypeArgumentsRedundant(typeArguments, expression, false, ((PsiMethod)resolve), typeParameters)) {
+            PsiDiamondTypeUtil.areTypeArgumentsRedundant(typeArguments, expression, false, (PsiMethod)resolve, typeParameters)) {
           String key = typeParameters.length == 0 ? "inspection.redundant.type.no.generics.method.reference.problem.descriptor"
                                                   : "inspection.redundant.type.problem.descriptor";
           final ProblemDescriptor descriptor =

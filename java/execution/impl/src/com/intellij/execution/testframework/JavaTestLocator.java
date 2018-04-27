@@ -84,7 +84,7 @@ public class JavaTestLocator implements SMTestLocator {
       for (Location location : locations) {
         PsiElement element = location.getPsiElement();
         if (element instanceof PsiMethod) {
-          if (metainfo.equals(ClassUtil.getVMParametersMethodSignature((PsiMethod)element))) {
+          if (StringUtil.equalsIgnoreWhitespaces(metainfo, ClassUtil.getVMParametersMethodSignature((PsiMethod)element))) {
             return Collections.singletonList(location);
           }
         }

@@ -2,6 +2,8 @@ package com.jetbrains.env.python.dotNet;
 
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.projectRoots.Sdk;
+import com.jetbrains.TestEnv;
+import com.jetbrains.env.EnvTestTagsRequired;
 import com.jetbrains.env.PyEnvTestCase;
 import com.jetbrains.python.psi.PyFile;
 import com.jetbrains.python.sdk.InvalidSdkException;
@@ -17,16 +19,13 @@ import java.io.IOException;
  *
  * @author Ilya.Kazakevich
  */
+@EnvTestTagsRequired(tags = "iron", skipOnOSes = {TestEnv.LINUX, TestEnv.MAC})
 public final class PyIronPythonTest extends PyEnvTestCase {
 
   /**
    * IronPython tag
    */
   static final String IRON_TAG = "iron";
-
-  public PyIronPythonTest() {
-    super(IRON_TAG);
-  }
 
   /**
    * Tests skeleton generation

@@ -1,51 +1,79 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ui.layout
 
-import com.intellij.CommonBundle
-import com.intellij.ide.BrowserUtil
+import com.intellij.ide.ui.laf.darcula.DarculaLaf
+import com.intellij.openapi.util.SystemInfoRt
 import com.intellij.testFramework.runInEdtAndWait
-import com.intellij.ui.components.CheckBox
 import com.intellij.ui.components.dialog
-import javax.swing.JPasswordField
-import javax.swing.JTextField
+import com.intellij.util.io.write
+import com.intellij.util.ui.UIUtil
+import net.miginfocom.layout.LayoutUtil
+import net.miginfocom.swing.MigLayout
+import java.awt.Dimension
+import java.awt.GraphicsEnvironment
+import java.nio.file.Paths
+import javax.swing.JComboBox
+import javax.swing.UIManager
+import javax.swing.plaf.metal.MetalLookAndFeel
 
 object MigLayoutTestApp {
   @JvmStatic
   fun main(args: Array<String>) {
-//    LayoutUtil.setGlobalDebugMillis(1000)
+    val isDebugEnabled = true
+//    val isDebugEnabled = false
+    @Suppress("ConstantConditionIf")
+    if (isDebugEnabled) {
+      LayoutUtil.setGlobalDebugMillis(1000)
+    }
 
     runInEdtAndWait {
-      val passwordField = JPasswordField()
-//      val panel = panel {
-//        noteRow("Profiler requires access to the kernel-level API.\nEnter the sudo password to allow this. ")
-//        row("Sudo password:") { passwordField() }
-//        row { CheckBox(CommonBundle.message("checkbox.remember.password"), true)() }
-//      }
+      UIManager.setLookAndFeel(MetalLookAndFeel())
+//      UIManager.setLookAndFeel(IntelliJLaf())
+      UIManager.setLookAndFeel(DarculaLaf())
 
-      val panel = panel {
-        noteRow("Login to JetBrains Account to get notified\nwhen the submitted exceptions are fixed.")
-        row("Username:") { JTextField()(growPolicy = GrowPolicy.SHORT_TEXT) }
-        row("Password:") { passwordField() }
-        row {
-          CheckBox(CommonBundle.message("checkbox.remember.password"))()
-          right {
-            link("Forgot password?") {
-              BrowserUtil.browse("https://account.jetbrains.com/forgot-password?username=")
-            }
-          }
-        }
-        noteRow("""Do not have an account? <a href="https://account.jetbrains.com/login?signup">Sign Up</a>""")
-      }
-      dialog(
-        title = "Access Required",
+//      val panel = visualPaddingsPanelOnlyButton()
+//      val panel = visualPaddingsPanelOnlyComboBox()
+//      val panel = alignFieldsInTheNestedGrid()
+      val panel = labelRowShouldNotGrow()
+//      val panel = cellPanel()
+//      val panel = visualPaddingsPanel()
+
+      val editableCombobox = JComboBox<String>(arrayOf("one", "two"))
+      editableCombobox.isEditable = true
+
+//      val panel = JPanel(VerticalFlowLayout())
+//      panel.add(JComboBox<String>(arrayOf("one", "two")))
+//      panel.add(editableCombobox)
+
+      val dialog = dialog(
+        title = "",
         panel = panel,
-        focusedComponent = passwordField,
+        resizable = true,
         okActionEnabled = false
       ) {
         return@dialog null
       }
-        .showAndGet()
-    }
+
+      panel.preferredSize = Dimension(50, 50)
+      if (panel.layout is MigLayout) {
+        Paths.get(System.getProperty("user.home"), "layout-dump.yml").write(serializeLayout(panel, isIncludeCellBounds = false))
+      }
+
+      val screenDevices = GraphicsEnvironment.getLocalGraphicsEnvironment().screenDevices
+      if (SystemInfoRt.isMac && screenDevices != null && screenDevices.size > 1) {
+        // use not-Retina
+        for (screenDevice in screenDevices) {
+          if (!UIUtil.isRetina(screenDevice)) {
+            val screenBounds = screenDevice.defaultConfiguration.bounds
+            dialog.setLocation(screenBounds.x, (screenBounds.height - dialog.preferredSize.height) / 2)
+            dialog.window.setLocation(screenBounds.x, (screenBounds.height - dialog.preferredSize.height) / 2)
+            break
+          }
+        }
+      }
+
+//      dialog.toFront()
+      dialog.showAndGet()
 
 //    val frame = JFrame()
 //    frame.defaultCloseOperation = JFrame.EXIT_ON_CLOSE
@@ -57,6 +85,6 @@ object MigLayoutTestApp {
 //    frame.minimumSize = Dimension(512, 256)
 //    frame.isVisible = true
 //
-//    System.out.println(configurationToJson(panel, panel.layout as MigLayout, false))
+    }
   }
 }

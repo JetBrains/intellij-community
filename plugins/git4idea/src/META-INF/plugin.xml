@@ -58,10 +58,10 @@
     <group id="GitRepositoryActions">
       <action id="Git.Branches" class="git4idea.ui.branch.GitBranchesAction" text="_Branches..." icon="VcsLogIcons.Branch"/>
       <action id="Git.Tag" class="git4idea.actions.GitTag" text="Tag..."/>
-      <action id="Git.Merge" class="git4idea.actions.GitMerge" text="Merge Changes..." icon="AllIcons.Vcs.MergeSourcesTree"/>
+      <action id="Git.Merge" class="git4idea.actions.GitMerge" text="Merge Changes..." icon="AllIcons.Actions.ShowAsTree"/>
       <action id="Git.Stash" class="git4idea.actions.GitStash" text="Stash Changes..."/>
       <action id="Git.Unstash" class="git4idea.actions.GitUnstash" text="UnStash Changes..."/>
-      <action id="Git.Reset" class="git4idea.actions.GitResetHead" text="Reset HEAD..." icon="AllIcons.Actions.Reset"/>
+      <action id="Git.Reset" class="git4idea.actions.GitResetHead" text="Reset HEAD..." icon="AllIcons.Actions.Rollback"/>
       <separator/>
       <action id="Git.Configure.Remotes" class="git4idea.remote.GitConfigureRemotesAction" text="Remotes..." />
       <action id="Git.Clone" class="git4idea.actions.GitCloneAction" text="Clone..." />
@@ -107,7 +107,7 @@
             description="Create new branch starting from the selected commit"/>
     <action class="git4idea.actions.GitCreateTagAction" id="Git.CreateNewTag" text="New Tag..."
             description="Create new tag pointing to this commit"/>
-    <action id="Git.Reset.In.Log" class="git4idea.reset.GitResetAction" text="Reset Current Branch to Here..." icon="AllIcons.Actions.Reset"/>
+    <action id="Git.Reset.In.Log" class="git4idea.reset.GitResetAction" text="Reset Current Branch to Here..." icon="AllIcons.Actions.Rollback"/>
     <action id="Git.Revert.In.Log" class="git4idea.revert.GitRevertAction" text="Revert"
             description="Produce a new commit, which reverts the changes made in the original commit"/>
     <action id="Git.Uncommit" class="git4idea.reset.GitUncommitAction" text="Undo Commit..."

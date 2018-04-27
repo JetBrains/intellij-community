@@ -1516,4 +1516,14 @@ println A.<caret>name
 ''', PsiMethod
     assert property.containingClass.qualifiedName == 'java.lang.Class'
   }
+
+  void "test don't resolve to field in method call"() {
+    resolveByText '''\
+class Fff {
+  List<String> testThis = [""]
+  def usage() { <caret>testThis(1) }
+  def testThis(a) {}
+}
+''', GrMethod
+  }
 }

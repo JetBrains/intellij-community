@@ -311,25 +311,7 @@ public class ManualArrayCopyInspection extends BaseInspection {
       if (!plusOne) {
         return commentTracker.text(expression, ParenthesesUtils.ADDITIVE_PRECEDENCE);
       }
-      if (expression instanceof PsiBinaryExpression) {
-        final PsiBinaryExpression binaryExpression = (PsiBinaryExpression)expression;
-        final IElementType tokenType = binaryExpression.getOperationTokenType();
-        if (tokenType == JavaTokenType.MINUS) {
-          final PsiExpression rhs = binaryExpression.getROperand();
-          if (ExpressionUtils.isOne(rhs)) {
-            return commentTracker.text(binaryExpression.getLOperand());
-          }
-        }
-      }
-      else if (expression instanceof PsiLiteralExpression) {
-        final PsiLiteralExpression literalExpression = (PsiLiteralExpression)expression;
-        final Object value = literalExpression.getValue();
-        if (value instanceof Integer) {
-          final Integer integer = (Integer)value;
-          return String.valueOf(integer.intValue() + 1);
-        }
-      }
-      return commentTracker.text(expression, ParenthesesUtils.ADDITIVE_PRECEDENCE) + "+1";
+      return JavaPsiMathUtil.add(expression, 1, commentTracker);
     }
 
     @NonNls

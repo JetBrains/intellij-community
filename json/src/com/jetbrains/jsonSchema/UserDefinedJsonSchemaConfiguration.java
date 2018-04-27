@@ -30,6 +30,7 @@ import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.xmlb.annotations.Tag;
 import com.intellij.util.xmlb.annotations.Transient;
 import com.jetbrains.jsonSchema.impl.JsonSchemaObject;
+import com.jetbrains.jsonSchema.impl.JsonSchemaVersion;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -51,6 +52,7 @@ public class UserDefinedJsonSchemaConfiguration {
 
   public String name;
   public String relativePathToSchema;
+  public JsonSchemaVersion schemaVersion = JsonSchemaVersion.SCHEMA_4;
   public boolean applicationLevel;
   public List<Item> patterns = new SmartList<>();
   @Transient
@@ -66,10 +68,14 @@ public class UserDefinedJsonSchemaConfiguration {
   public UserDefinedJsonSchemaConfiguration() {
   }
 
-  public UserDefinedJsonSchemaConfiguration(@NotNull String name, @NotNull String relativePathToSchema,
-                                            boolean applicationLevel, @Nullable List<Item> patterns) {
+  public UserDefinedJsonSchemaConfiguration(@NotNull String name,
+                                            JsonSchemaVersion schemaVersion,
+                                            @NotNull String relativePathToSchema,
+                                            boolean applicationLevel,
+                                            @Nullable List<Item> patterns) {
     this.name = name;
     this.relativePathToSchema = relativePathToSchema;
+    this.schemaVersion = schemaVersion;
     this.applicationLevel = applicationLevel;
     setPatterns(patterns);
   }
@@ -84,6 +90,14 @@ public class UserDefinedJsonSchemaConfiguration {
 
   public String getRelativePathToSchema() {
     return relativePathToSchema;
+  }
+
+  public JsonSchemaVersion getSchemaVersion() {
+    return schemaVersion;
+  }
+
+  public void setSchemaVersion(JsonSchemaVersion schemaVersion) {
+    this.schemaVersion = schemaVersion;
   }
 
   public void setRelativePathToSchema(String relativePathToSchema) {
@@ -106,6 +120,10 @@ public class UserDefinedJsonSchemaConfiguration {
     this.patterns.clear();
     if (patterns != null) this.patterns.addAll(patterns);
     Collections.sort(this.patterns, ITEM_COMPARATOR);
+    myCalculatedPatterns.drop();
+  }
+
+  public void refreshPatterns() {
     myCalculatedPatterns.drop();
   }
 
@@ -164,6 +182,7 @@ public class UserDefinedJsonSchemaConfiguration {
     UserDefinedJsonSchemaConfiguration info = (UserDefinedJsonSchemaConfiguration)o;
 
     if (applicationLevel != info.applicationLevel) return false;
+    if (schemaVersion != info.schemaVersion) return false;
     if (name != null ? !name.equals(info.name) : info.name != null) return false;
     if (relativePathToSchema != null
         ? !relativePathToSchema.equals(info.relativePathToSchema)
@@ -182,6 +201,7 @@ public class UserDefinedJsonSchemaConfiguration {
     result = 31 * result + (relativePathToSchema != null ? relativePathToSchema.hashCode() : 0);
     result = 31 * result + (applicationLevel ? 1 : 0);
     result = 31 * result + (patterns != null ? patterns.hashCode() : 0);
+    result = 31 * result + schemaVersion.hashCode();
     return result;
   }
 

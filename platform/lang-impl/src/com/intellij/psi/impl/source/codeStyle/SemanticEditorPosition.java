@@ -30,6 +30,8 @@ import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.function.Predicate;
 
+import static java.lang.Integer.min;
+
 /**
  * @author Rustam Vishnyakov
  */
@@ -176,6 +178,7 @@ public class SemanticEditorPosition {
       }
       if (rightParenthesis.equals(map(myIterator.getTokenType()))) {
         moveBeforeParentheses(leftParenthesis, rightParenthesis);
+        continue;
       }
       else if (leftParenthesis.equals(map(myIterator.getTokenType()))) {
         break; 
@@ -304,7 +307,11 @@ public class SemanticEditorPosition {
 
   @Override
   public String toString() {
-    return myIterator.getTokenType().toString();
+    return myIterator.atEnd() 
+       ? "atEnd"
+       : myIterator.getTokenType().toString() 
+         + "=>" 
+         + getChars().subSequence(getStartOffset(), min(getStartOffset() + 255, getChars().length()));
   }
 
   public SemanticEditorPosition copy() {

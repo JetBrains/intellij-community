@@ -3442,4 +3442,67 @@ class JavaFormatterTest : AbstractJavaFormatterTest() {
       "}"
     )
   }
+
+  /**
+   * See IDEA-98552, IDEA-175560
+   */
+  fun testParenthesesIndentation() {
+    doTextTest(
+"""
+package com.company;
+
+import java.util.Arrays;
+import java.util.List;
+
+class Test {
+
+void foo(boolean bool1, boolean bool2) {
+List<String> list = Arrays.asList(
+"a", "b", "c"
+);
+ // IDEA-98552
+for (
+String s : list
+) {
+System.out.println(s);
+}
+ // IDEA-175560
+if (bool1
+&& bool2
+) { // Indented at continuation indent level
+ // do stuff
+}
+}
+}
+""",
+
+"""
+package com.company;
+
+import java.util.Arrays;
+import java.util.List;
+
+class Test {
+
+    void foo(boolean bool1, boolean bool2) {
+        List<String> list = Arrays.asList(
+                "a", "b", "c"
+        );
+        // IDEA-98552
+        for (
+                String s : list
+        ) {
+            System.out.println(s);
+        }
+        // IDEA-175560
+        if (bool1
+                && bool2
+        ) { // Indented at continuation indent level
+            // do stuff
+        }
+    }
+}
+"""
+    )
+  }
 }

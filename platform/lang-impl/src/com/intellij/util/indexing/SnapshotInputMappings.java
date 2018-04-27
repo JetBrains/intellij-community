@@ -258,14 +258,14 @@ public class SnapshotInputMappings<Key, Value, Input> {
                                      new DataExternalizer<String>() {
                                        @Override
                                        public void save(@NotNull DataOutput out, String value) throws IOException {
-                                         out.write((byte[])CompressionUtil.compressCharSequence(value, Charset.defaultCharset()));
+                                         out.write((byte[])CompressionUtil.compressStringRawBytes(value));
                                        }
 
                                        @Override
                                        public String read(@NotNull DataInput in) throws IOException {
                                          byte[] b = new byte[((InputStream)in).available()];
                                          in.readFully(b);
-                                         return (String)CompressionUtil.uncompressCharSequence(b, Charset.defaultCharset());
+                                         return (String)CompressionUtil.uncompressStringRawBytes(b);
                                        }
                                      }, 4096);
     }

@@ -1,6 +1,7 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInsight.completion;
 
+import com.intellij.application.options.CodeStyle;
 import com.intellij.application.options.editor.WebEditorOptions;
 import com.intellij.codeInsight.TailType;
 import com.intellij.codeInsight.daemon.impl.quickfix.EmptyExpression;
@@ -30,7 +31,6 @@ import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
-import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
 import com.intellij.psi.formatter.xml.HtmlCodeStyleSettings;
 import com.intellij.psi.formatter.xml.XmlCodeStyleSettings;
 import com.intellij.psi.html.HtmlTag;
@@ -88,7 +88,7 @@ public class XmlTagInsertHandler implements InsertHandler<LookupElement> {
 
       int caretOffset = editor.getCaretModel().getOffset();
 
-      PsiElement otherTag = PsiTreeUtil.getParentOfType(context.getFile().findElementAt(caretOffset), XmlTag.class);
+      XmlTag otherTag = PsiTreeUtil.getParentOfType(context.getFile().findElementAt(caretOffset), XmlTag.class);
 
       PsiElement endTagStart = XmlUtil.getTokenOfType(otherTag, XmlTokenType.XML_END_TAG_START);
 
@@ -103,7 +103,7 @@ public class XmlTagInsertHandler implements InsertHandler<LookupElement> {
           int eOffset = sibling.getTextRange().getEndOffset();
 
           editor.getDocument().deleteString(sOffset, eOffset);
-          editor.getDocument().insertString(sOffset, ((XmlTag)otherTag).getName());
+          editor.getDocument().insertString(sOffset, otherTag.getName());
         }
       }
 
@@ -303,7 +303,7 @@ public class XmlTagInsertHandler implements InsertHandler<LookupElement> {
 
   @NotNull
   private static String closeTag(XmlTag tag) {
-    CodeStyleSettings settings = CodeStyleSettingsManager.getSettings(tag.getProject());
+    CodeStyleSettings settings = CodeStyle.getSettings(tag.getContainingFile());
     boolean html = HtmlUtil.isHtmlTag(tag);
     boolean needsSpace = (html && settings.getCustomSettings(HtmlCodeStyleSettings.class).HTML_SPACE_INSIDE_EMPTY_TAG) ||
                          (!html && settings.getCustomSettings(XmlCodeStyleSettings.class).XML_SPACE_INSIDE_EMPTY_TAG);

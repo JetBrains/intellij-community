@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.plugins;
 
 import com.intellij.openapi.application.ex.PathManagerEx;
@@ -38,18 +24,27 @@ public class PluginDescriptorTest {
 
   @Test
   public void testDescriptorLoading() {
-    File file = new File(getTestDataPath(), "asp.jar");
-    assertTrue(file + " not exist", file.exists());
-    IdeaPluginDescriptorImpl descriptor = PluginManagerCore.loadDescriptor(file, PluginManagerCore.PLUGIN_XML);
+    IdeaPluginDescriptorImpl descriptor = loadDescriptor("asp.jar");
     assertNotNull(descriptor);
+    assertEquals("com.jetbrains.plugins.asp", descriptor.getPluginId().getIdString());
+    assertEquals("ASP", descriptor.getName());
   }
 
   @Test
-  public void testInvalidFileDescriptor() {
-    File file = new File(getTestDataPath(), "malformed");
-    assertTrue(file + " not exist", file.exists());
-    IdeaPluginDescriptorImpl descriptor = PluginManagerCore.loadDescriptor(file, PluginManagerCore.PLUGIN_XML);
-    assertNull(descriptor);
+  public void testOptionalDescriptors() {
+    IdeaPluginDescriptorImpl descriptor = loadDescriptor("family");
+    assertNotNull(descriptor);
+    assertEquals(1, descriptor.getOptionalDescriptors().size());
+  }
+
+  @Test
+  public void testMalformedDescriptor() {
+    assertNull(loadDescriptor("malformed"));
+  }
+
+  @Test
+  public void testAnonymousDescriptor() {
+    assertNull(loadDescriptor("anonymous"));
   }
 
   @Test
@@ -58,6 +53,20 @@ public class PluginDescriptorTest {
       new File(getTestDataPath(), "duplicate1.jar").toURI().toURL(),
       new File(getTestDataPath(), "duplicate2.jar").toURI().toURL()};
     assertEquals(1, PluginManagerCore.testLoadDescriptorsFromClassPath(new URLClassLoader(urls, null)).size());
+  }
+
+  @Test
+  public void testPluginNameAsId() {
+    IdeaPluginDescriptorImpl descriptor = loadDescriptor("noId");
+    assertNotNull(descriptor);
+    assertEquals(descriptor.getName(), descriptor.getPluginId().getIdString());
+  }
+
+  @Test
+  public void testPluginIdAsName() {
+    IdeaPluginDescriptorImpl descriptor = loadDescriptor("noName");
+    assertNotNull(descriptor);
+    assertEquals(descriptor.getPluginId().getIdString(), descriptor.getName());
   }
 
   @Test
@@ -113,5 +122,17 @@ public class PluginDescriptorTest {
 
     ClassLoader loader4 = new TestLoader("jar:", "/jar spaces.jar!/");
     assertEquals(1, PluginManagerCore.testLoadDescriptorsFromClassPath(loader4).size());
+  }
+
+  private static IdeaPluginDescriptorImpl loadDescriptor(String dirName) {
+    try {
+      File dir = new File(getTestDataPath(), dirName);
+      assertTrue(dir + " does not exist", dir.exists());
+      return PluginManagerCore.loadDescriptor(dir, PluginManagerCore.PLUGIN_XML);
+    }
+    catch (AssertionError e) {
+      assertTrue(e.getMessage(), e.getMessage().contains("Problems found loading plugins"));
+      return null;
+    }
   }
 }

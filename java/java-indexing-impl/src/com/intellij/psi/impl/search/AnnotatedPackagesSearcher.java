@@ -25,7 +25,7 @@ public class AnnotatedPackagesSearcher implements QueryExecutor<PsiPackage, Anno
   private static final Logger LOG = Logger.getInstance("#com.intellij.psi.impl.search.AnnotatedPackagesSearcher");
 
   @Override
-  public boolean execute(@NotNull final AnnotatedPackagesSearch.Parameters p, @NotNull final Processor<PsiPackage> consumer) {
+  public boolean execute(@NotNull final AnnotatedPackagesSearch.Parameters p, @NotNull final Processor<? super PsiPackage> consumer) {
     final PsiClass annClass = p.getAnnotationClass();
     assert annClass.isAnnotationType() : "Annotation type should be passed to annotated packages search";
 

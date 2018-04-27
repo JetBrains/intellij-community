@@ -96,7 +96,7 @@ public class TestMethodGradleConfigurationProducer extends GradleTestRunConfigur
 
     final String scriptParameters = configuration.getSettings().getScriptParameters() + ' ';
     final String testFilter = createTestFilter(containingClass, psiMethod);
-    return scriptParameters.contains(testFilter);
+    return testFilter != null && scriptParameters.contains(testFilter);
   }
 
   @Override

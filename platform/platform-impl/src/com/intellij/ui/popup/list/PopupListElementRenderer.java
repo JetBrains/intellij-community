@@ -9,7 +9,9 @@ import com.intellij.openapi.keymap.KeymapUtil;
 import com.intellij.openapi.ui.popup.ListItemDescriptorAdapter;
 import com.intellij.openapi.ui.popup.ListPopupStep;
 import com.intellij.openapi.ui.popup.ListPopupStepEx;
+import com.intellij.openapi.ui.popup.MnemonicNavigationFilter;
 import com.intellij.openapi.ui.popup.util.BaseListPopupStep;
+import com.intellij.openapi.util.Comparing;
 import com.intellij.ui.ColorUtil;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.ui.JBUI;
@@ -20,7 +22,7 @@ import javax.swing.*;
 import java.awt.*;
 
 public class PopupListElementRenderer<E> extends GroupedItemsListRenderer<E> {
-  private final ListPopupImpl myPopup;
+  protected final ListPopupImpl myPopup;
   private JLabel myShortcutLabel;
 
   public PopupListElementRenderer(final ListPopupImpl aPopup) {
@@ -67,7 +69,7 @@ public class PopupListElementRenderer<E> extends GroupedItemsListRenderer<E> {
     createLabel();
     panel.add(myTextLabel, BorderLayout.CENTER);
     myShortcutLabel = new JLabel();
-    myShortcutLabel.setBorder(JBUI.Borders.empty(0, 0, 0, 3));
+    myShortcutLabel.setBorder(JBUI.Borders.emptyRight(3));
     Color color = UIManager.getColor("MenuItem.acceleratorForeground");
     myShortcutLabel.setForeground(color);
     panel.add(myShortcutLabel, BorderLayout.EAST);
@@ -79,15 +81,23 @@ public class PopupListElementRenderer<E> extends GroupedItemsListRenderer<E> {
     ListPopupStep<Object> step = myPopup.getListStep();
     boolean isSelectable = step.isSelectable(value);
     myTextLabel.setEnabled(isSelectable);
-    if (!isSelected && step instanceof BaseListPopupStep) {
-      Color bg = ((BaseListPopupStep)step).getBackgroundFor(value);
-      Color fg = ((BaseListPopupStep)step).getForegroundFor(value);
-      if (fg != null) myTextLabel.setForeground(fg);
-      if (bg != null) UIUtil.setBackgroundRecursively(myComponent, bg);
+    if (step instanceof BaseListPopupStep) {
+      Color bg = ((BaseListPopupStep<E>)step).getBackgroundFor(value);
+      Color fg = ((BaseListPopupStep<E>)step).getForegroundFor(value);
+      if (!isSelected && fg != null) myTextLabel.setForeground(fg);
+      if (!isSelected && bg != null) UIUtil.setBackgroundRecursively(myComponent, bg);
+      if (bg != null && mySeparatorComponent.isVisible() && myCurrentIndex > 0) {
+        E prevValue = list.getModel().getElementAt(myCurrentIndex - 1);
+        // separator between 2 colored items shall get color too
+        if (Comparing.equal(bg, ((BaseListPopupStep<E>)step).getBackgroundFor(prevValue))) {
+          myRendererComponent.setBackground(bg);
+        }
+      }
     }
 
     if (step.isMnemonicsNavigationEnabled()) {
-      final int pos = step.getMnemonicNavigationFilter().getMnemonicPos(value);
+      MnemonicNavigationFilter<Object> filter = step.getMnemonicNavigationFilter();
+      int pos = filter == null ? -1 : filter.getMnemonicPos(value);
       if (pos != -1) {
         String text = myTextLabel.getText();
         text = text.substring(0, pos) + text.substring(pos + 1);

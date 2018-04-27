@@ -1,6 +1,4 @@
-/*
- * Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.compiler.backwardRefs;
 
 import com.intellij.compiler.CompilerDirectHierarchyInfo;
@@ -164,12 +162,29 @@ public class CompilerReferenceServiceImpl extends CompilerReferenceServiceEx imp
 
     try {
       return CachedValuesManager.getCachedValue(element,
-                                                () -> CachedValueProvider.Result.create(calculateScopeWithoutReferences(element),
-                                                                                        PsiModificationTracker.MODIFICATION_COUNT,
-                                                                                        this));
+                                                () -> CachedValueProvider.Result.create(buildScopeWithoutReferences(getReferentFileIds(element)),
+                                                  PsiModificationTracker.MODIFICATION_COUNT,
+                                                  this));
     }
-    catch (RuntimeException e) {
-      return onException(e, "scope without code references");
+    catch (RuntimeException e1) {
+      return onException(e1, "scope without code references");
+    }
+  }
+
+  @Nullable
+  @Override
+  public GlobalSearchScope getScopeWithoutImplicitToStringCodeReferences(@NotNull PsiElement aClass) {
+    if (!isServiceEnabledFor(aClass)) return null;
+
+    try {
+      return CachedValuesManager.getCachedValue(aClass,
+                                                () -> CachedValueProvider.Result.create(
+                                                  buildScopeWithoutReferences(getReferentFileIdsViaImplicitToString(aClass)),
+                                                  PsiModificationTracker.MODIFICATION_COUNT,
+                                                  this));
+    }
+    catch (RuntimeException e1) {
+      return onException(e1, "scope without implicit toString references");
     }
   }
 
@@ -213,7 +228,7 @@ public class CompilerReferenceServiceImpl extends CompilerReferenceServiceEx imp
                                                                          @SignatureData.IteratorKind byte iteratorKind,
                                                                          @NotNull ChainCompletionContext context) {
     try {
-      myReadDataLock.lock();
+      if (!myReadDataLock.tryLock()) return Collections.emptySortedSet();
       try {
         if (myReader == null) throw new ReferenceIndexUnavailableException();
         final int type = myReader.getNameEnumerator().tryEnumerate(rawReturnType);
@@ -256,7 +271,7 @@ public class CompilerReferenceServiceImpl extends CompilerReferenceServiceEx imp
   public ChainOpAndOccurrences<TypeCast> getMostUsedTypeCast(@NotNull String operandQName)
     throws ReferenceIndexUnavailableException {
     try {
-      myReadDataLock.lock();
+      if (!myReadDataLock.tryLock()) return null;
       try {
         if (myReader == null) throw new ReferenceIndexUnavailableException();
         int nameId = getNameId(operandQName);
@@ -286,7 +301,7 @@ public class CompilerReferenceServiceImpl extends CompilerReferenceServiceEx imp
   public LightRef.LightClassHierarchyElementDef mayCallOfTypeCast(@NotNull LightRef.JavaLightMethodRef method, int probabilityThreshold)
     throws ReferenceIndexUnavailableException {
     try {
-      myReadDataLock.lock();
+      if (!myReadDataLock.tryLock()) return null;
       try {
         if (myReader == null) throw new ReferenceIndexUnavailableException();
         final TIntHashSet ids = myReader.getAllContainingFileIds(method);
@@ -316,7 +331,7 @@ public class CompilerReferenceServiceImpl extends CompilerReferenceServiceEx imp
   @Override
   public boolean mayHappen(@NotNull LightRef qualifier, @NotNull LightRef base, int probabilityThreshold) {
     try {
-      myReadDataLock.lock();
+      if (!myReadDataLock.tryLock()) return false;
       try {
         if (myReader == null) throw new ReferenceIndexUnavailableException();
         final TIntHashSet ids1 = myReader.getAllContainingFileIds(qualifier);
@@ -342,7 +357,7 @@ public class CompilerReferenceServiceImpl extends CompilerReferenceServiceEx imp
   @Override
   public String getName(int idx) throws ReferenceIndexUnavailableException {
     try {
-      myReadDataLock.lock();
+      if (!myReadDataLock.tryLock()) throw new ReferenceIndexUnavailableException();
       try {
         if (myReader == null) throw new ReferenceIndexUnavailableException();
         return myReader.getNameEnumerator().getName(idx);
@@ -359,7 +374,7 @@ public class CompilerReferenceServiceImpl extends CompilerReferenceServiceEx imp
   @Override
   public int getNameId(@NotNull String name) throws ReferenceIndexUnavailableException {
     try {
-      myReadDataLock.lock();
+      if (!myReadDataLock.tryLock()) return 0;
       try {
         if (myReader == null) throw new ReferenceIndexUnavailableException();
         int id;
@@ -381,7 +396,7 @@ public class CompilerReferenceServiceImpl extends CompilerReferenceServiceEx imp
   @Override
   public LightRef.LightClassHierarchyElementDef[] getDirectInheritors(@NotNull LightRef.LightClassHierarchyElementDef baseClass) throws ReferenceIndexUnavailableException {
     try {
-      myReadDataLock.lock();
+      if (!myReadDataLock.tryLock()) return LightRef.LightClassHierarchyElementDef.EMPTY_ARRAY;
       try {
         if (myReader == null) throw new ReferenceIndexUnavailableException();
         return myReader.getDirectInheritors(baseClass);
@@ -398,7 +413,7 @@ public class CompilerReferenceServiceImpl extends CompilerReferenceServiceEx imp
   @Override
   public int getInheritorCount(@NotNull LightRef.LightClassHierarchyElementDef baseClass) throws ReferenceIndexUnavailableException {
     try {
-      myReadDataLock.lock();
+      if (!myReadDataLock.tryLock()) return -1;
       try {
         if (myReader == null) throw new ReferenceIndexUnavailableException();
         LightRef.NamedLightRef[] hierarchy = myReader.getHierarchy(baseClass, false, true, -1);
@@ -425,7 +440,7 @@ public class CompilerReferenceServiceImpl extends CompilerReferenceServiceEx imp
     final CompilerElementInfo searchElementInfo = asCompilerElements(element, false, false);
     if (searchElementInfo == null) return null;
 
-    myReadDataLock.lock();
+    if (!myReadDataLock.tryLock()) return null;
     try {
       if (myReader == null) return null;
       try {
@@ -503,7 +518,7 @@ public class CompilerReferenceServiceImpl extends CompilerReferenceServiceEx imp
     if (searchElementInfo == null) return null;
     LightRef searchElement = searchElementInfo.searchElements[0];
 
-    myReadDataLock.lock();
+    if (!myReadDataLock.tryLock()) return null;
     try {
       if (myReader == null) return null;
       try {
@@ -518,8 +533,7 @@ public class CompilerReferenceServiceImpl extends CompilerReferenceServiceEx imp
   }
 
   @Nullable
-  private GlobalSearchScope calculateScopeWithoutReferences(@NotNull PsiElement element) {
-    TIntHashSet referentFileIds = getReferentFileIds(element);
+  private GlobalSearchScope buildScopeWithoutReferences(@Nullable TIntHashSet referentFileIds) {
     if (referentFileIds == null) return null;
 
     return getScopeRestrictedByFileTypes(new ScopeWithoutReferencesOnCompilation(referentFileIds, myProjectFileIndex).intersectWith(notScope(
@@ -529,23 +543,35 @@ public class CompilerReferenceServiceImpl extends CompilerReferenceServiceEx imp
 
   @Nullable
   private TIntHashSet getReferentFileIds(@NotNull PsiElement element) {
-    final CompilerElementInfo compilerElementInfo = asCompilerElements(element, true, true);
+    return getReferentFileIds(element, true, (ref, elementPlace) -> myReader.findReferentFileIds(ref, elementPlace == ElementPlace.SRC));
+  }
+
+  @Nullable
+  private TIntHashSet getReferentFileIdsViaImplicitToString(@NotNull PsiElement element) {
+    return getReferentFileIds(element, false, (ref, elementPlace) -> myReader.findFileIdsWithImplicitToString(ref));
+  }
+
+  @Nullable
+  private TIntHashSet getReferentFileIds(@NotNull PsiElement element,
+                                         boolean buildHierarchyForLibraryElements,
+                                         @NotNull ReferentFileSearcher referentFileSearcher) {
+    final CompilerElementInfo compilerElementInfo = asCompilerElements(element, buildHierarchyForLibraryElements, true);
     if (compilerElementInfo == null) return null;
 
-    myReadDataLock.lock();
+    if (!myReadDataLock.tryLock()) return null;
     try {
       if (myReader == null) return null;
       TIntHashSet referentFileIds = new TIntHashSet();
       for (LightRef ref : compilerElementInfo.searchElements) {
         try {
-          final TIntHashSet referents = myReader.findReferentFileIds(ref, compilerElementInfo.place == ElementPlace.SRC);
+          final TIntHashSet referents = referentFileSearcher.findReferentFiles(ref, compilerElementInfo.place);
           if (referents == null) return null;
           referentFileIds.addAll(referents.toArray());
         }
         catch (StorageException e) {
           throw new RuntimeException(e);
         }
-         }
+      }
       return referentFileIds;
 
     } finally {
@@ -557,7 +583,7 @@ public class CompilerReferenceServiceImpl extends CompilerReferenceServiceEx imp
   private CompilerElementInfo asCompilerElements(@NotNull PsiElement psiElement,
                                                  boolean buildHierarchyForLibraryElements,
                                                  boolean checkNotDirty) {
-    myReadDataLock.lock();
+    if (!myReadDataLock.tryLock()) return null;
     try {
       if (myReader == null) return null;
       VirtualFile file = PsiUtilCore.getVirtualFile(psiElement);
@@ -774,9 +800,9 @@ public class CompilerReferenceServiceImpl extends CompilerReferenceServiceEx imp
     return myDirtyScopeHolder;
   }
 
-  @NotNull
+  @Nullable
   public CompilerReferenceFindUsagesTestInfo getTestFindUsages(@NotNull PsiElement element) {
-    myReadDataLock.lock();
+    if (!myReadDataLock.tryLock()) return null;
     try {
       final TIntHashSet referentFileIds = getReferentFileIds(element);
       final DirtyScopeTestInfo dirtyScopeInfo = myDirtyScopeHolder.getState();
@@ -786,9 +812,9 @@ public class CompilerReferenceServiceImpl extends CompilerReferenceServiceEx imp
     }
   }
 
-  @NotNull
+  @Nullable
   public CompilerReferenceHierarchyTestInfo getTestHierarchy(@NotNull PsiNamedElement element, @NotNull GlobalSearchScope scope, @NotNull FileType fileType) {
-    myReadDataLock.lock();
+    if (!myReadDataLock.tryLock()) return null;
     try {
       final CompilerHierarchyInfoImpl hierarchyInfo = getHierarchyInfo(element, scope, fileType, CompilerHierarchySearchType.DIRECT_INHERITOR);
       final DirtyScopeTestInfo dirtyScopeInfo = myDirtyScopeHolder.getState();
@@ -798,9 +824,9 @@ public class CompilerReferenceServiceImpl extends CompilerReferenceServiceEx imp
     }
   }
 
-  @NotNull
+  @Nullable
   public CompilerReferenceHierarchyTestInfo getTestFunExpressions(@NotNull PsiNamedElement element, @NotNull GlobalSearchScope scope, @NotNull FileType fileType) {
-    myReadDataLock.lock();
+    if (!myReadDataLock.tryLock()) return null;
     try {
       final CompilerHierarchyInfoImpl hierarchyInfo = getHierarchyInfo(element, scope, fileType, CompilerHierarchySearchType.FUNCTIONAL_EXPRESSION);
       final DirtyScopeTestInfo dirtyScopeInfo = myDirtyScopeHolder.getState();
@@ -846,5 +872,11 @@ public class CompilerReferenceServiceImpl extends CompilerReferenceServiceEx imp
   private enum IndexOpenReason {
     COMPILATION_FINISHED,
     UP_TO_DATE_CACHE
+  }
+
+  @FunctionalInterface
+  private interface ReferentFileSearcher {
+    @Nullable
+    TIntHashSet findReferentFiles(@NotNull LightRef ref, @NotNull ElementPlace place) throws StorageException;
   }
 }

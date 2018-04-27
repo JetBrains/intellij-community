@@ -42,7 +42,7 @@ class GradleArtifactsContributor : GradleMethodContextContributor {
     val methodName = if (methodCallInfo.isNotEmpty()) methodCallInfo[0] else null
     if (methodName != null && place is GrReferenceExpression && psiElement().inside(artifactsClosure).accepts(place)) {
       val text = place.text
-      if (!methodCallInfo.contains(text) && place is GrReferenceExpression) {
+      if (!methodCallInfo.contains(text)) {
         val myPsi = GrLightField(text, JAVA_LANG_OBJECT, place)
         processor.execute(myPsi, state)
         return false
@@ -67,7 +67,8 @@ class GradleArtifactsContributor : GradleMethodContextContributor {
                                       place: PsiElement): Boolean {
     val name = ResolveUtil.getNameHint(processor) ?: return true
     val groovyPsiManager = GroovyPsiManager.getInstance(place.project)
-    val artifactHandlerClass = JavaPsiFacade.getInstance(place.project).findClass(GRADLE_API_ARTIFACT_HANDLER, place.resolveScope) ?: return true
+    val artifactHandlerClass = JavaPsiFacade.getInstance(place.project).findClass(GRADLE_API_ARTIFACT_HANDLER, place.resolveScope)
+                               ?: return true
 
     val call = PsiTreeUtil.getParentOfType(place, GrMethodCall::class.java) ?: return true
     val returnClass = groovyPsiManager.createTypeByFQClassName(GRADLE_API_PUBLISH_ARTIFACT, place.resolveScope) ?: return true

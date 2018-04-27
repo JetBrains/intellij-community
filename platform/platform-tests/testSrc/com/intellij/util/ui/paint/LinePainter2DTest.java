@@ -15,6 +15,7 @@ import java.util.EnumSet;
 
 import static com.intellij.util.ui.JBUI.ScaleType.PIX_SCALE;
 import static com.intellij.util.ui.JBUI.scale;
+import static com.intellij.util.ui.TestScaleHelper.overrideJreHiDPIEnabled;
 
 /**
  * Tests the {@link LinePainter2D} painting.
@@ -35,13 +36,13 @@ public class LinePainter2DTest extends AbstractPainter2DTest {
     JBUI.setUserScaleFactor(1);
 
     overrideJreHiDPIEnabled(false);
-    supplyGraphics(1, 1, 1, this::testAlign);
+    supplyGraphics(1, 1, 1, LinePainter2DTest::testAlign);
 
     overrideJreHiDPIEnabled(true);
-    supplyGraphics(2, 1, 1, this::testAlign);
+    supplyGraphics(2, 1, 1, LinePainter2DTest::testAlign);
   }
 
-  private Void testAlign(Graphics2D g) {
+  private static Void testAlign(Graphics2D g) {
     double scale = JBUI.ScaleContext.create(g).getScale(PIX_SCALE);
     String msg = "LinePainter2D.align is incorrect (JreHiDPIEnabled: " + UIUtil.isJreHiDPIEnabled() + "; scale: " + scale + ")";
     double delta = 0.000001;
@@ -100,7 +101,7 @@ public class LinePainter2DTest extends AbstractPainter2DTest {
     return null;
   }
 
-  private void paintLines(Graphics2D g, StrokeType type, float trX, float trY) {
+  private static void paintLines(Graphics2D g, StrokeType type, float trX, float trY) {
     g.translate(scale(trX), scale(trY));
     Object aa = RenderingHints.VALUE_ANTIALIAS_ON;
     paintLine(g, 0, 0, 0, 0, type, 1, aa); // a dot
@@ -114,11 +115,12 @@ public class LinePainter2DTest extends AbstractPainter2DTest {
     paintLine(g, -2, -2, -LINE_LEN, -LINE_LEN, type, 1, aa);
   }
 
-  private void paintLine(Graphics2D g,
-                         double x1, double y1, double x2, double y2,
-                         StrokeType strokeType,
-                         double strokeWidth,
-                         Object valueAA)
+  @SuppressWarnings("SameParameterValue")
+  private static void paintLine(Graphics2D g,
+                                double x1, double y1, double x2, double y2,
+                                StrokeType strokeType,
+                                double strokeWidth,
+                                Object valueAA)
   {
     strokeWidth = scale((float)strokeWidth);
     x1 = scale((float)x1);
@@ -135,7 +137,7 @@ public class LinePainter2DTest extends AbstractPainter2DTest {
 
   @Override
   protected String getGoldenImageName() {
-    return "LinePainter2D";
+    return "gold_LinePainter2D";
   }
 
   @Override

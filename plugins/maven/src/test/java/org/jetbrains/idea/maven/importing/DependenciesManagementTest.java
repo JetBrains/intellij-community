@@ -117,7 +117,7 @@ public class DependenciesManagementTest extends MavenImportingTestCase {
                                           "    <artifactId>junit</artifactId>" +
                                           "  </dependency>" +
                                           "</dependencies>");
-    importProjects(bom, project);
+    importProjectsWithErrors(bom, project);
     assertModules("bom", "project");
 
     // reset embedders and try to resolve project from scratch in specific order - imported one goes first

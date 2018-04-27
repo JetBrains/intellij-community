@@ -1,11 +1,10 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.xdebugger.impl.breakpoints;
 
 import com.intellij.openapi.util.MultiValuesMap;
 import com.intellij.util.EventDispatcher;
 import com.intellij.util.SmartList;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.xdebugger.breakpoints.XBreakpoint;
 import com.intellij.xdebugger.breakpoints.XBreakpointListener;
 import gnu.trove.THashMap;
@@ -58,7 +57,8 @@ public class XDependentBreakpointManager {
     mySlave2Info.clear();
     myMaster2Info.clear();
     Map<String, XBreakpointBase<?,?,?>> id2Breakpoint = new HashMap<>();
-    for (XBreakpointBase<?,?,?> breakpoint : myBreakpointManager.getAllBreakpoints()) {
+    XBreakpointBase<?, ?, ?>[] allBreakpoints = myBreakpointManager.getAllBreakpoints();
+    for (XBreakpointBase<?,?,?> breakpoint : allBreakpoints) {
       XBreakpointDependencyState state = breakpoint.getDependencyState();
       if (state != null) {
         String id = state.getId();
@@ -68,7 +68,7 @@ public class XDependentBreakpointManager {
       }
     }
 
-    for (XBreakpointBase<?, ?, ?> breakpoint : myBreakpointManager.getAllBreakpoints()) {
+    for (XBreakpointBase<?, ?, ?> breakpoint : allBreakpoints) {
       XBreakpointDependencyState state = breakpoint.getDependencyState();
       if (state != null) {
         String masterId = state.getMasterBreakpointId();
@@ -174,6 +174,30 @@ public class XDependentBreakpointManager {
       myMasterBreakpoint = masterBreakpoint;
       myLeaveEnabled = leaveEnabled;
       mySlaveBreakpoint = slaveBreakpoint;
+    }
+  }
+
+  class DependenciesData {
+    private final Collection<XDependentBreakpointInfo> myDependencies = new SmartList<>();
+    private final XBreakpointBase myBreakpoint;
+
+    public DependenciesData(XBreakpointBase breakpoint) {
+      myBreakpoint = breakpoint;
+      ContainerUtil.addIfNotNull(myDependencies, mySlave2Info.get(breakpoint));
+      Collection<XDependentBreakpointInfo> infos = myMaster2Info.get(breakpoint);
+      if (infos != null) {
+        myDependencies.addAll(infos);
+      }
+    }
+
+    void restore(XBreakpointBase breakpoint) {
+      myDependencies.forEach(d -> addDependency(replaceSelf(d.myMasterBreakpoint, breakpoint),
+                                                replaceSelf(d.mySlaveBreakpoint, breakpoint),
+                                                d.myLeaveEnabled));
+    }
+
+    private XBreakpointBase replaceSelf(XBreakpointBase breakpoint, XBreakpointBase self) {
+      return breakpoint == myBreakpoint ? self : breakpoint;
     }
   }
 }

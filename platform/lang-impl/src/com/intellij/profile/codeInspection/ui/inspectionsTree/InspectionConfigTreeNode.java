@@ -1,4 +1,4 @@
-// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.profile.codeInspection.ui.inspectionsTree;
 
 import com.intellij.codeInsight.daemon.HighlightDisplayKey;
@@ -13,6 +13,7 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.tree.DefaultMutableTreeNode;
 import javax.swing.tree.TreeNode;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 import java.util.Set;
@@ -118,7 +119,7 @@ public abstract class InspectionConfigTreeNode extends DefaultMutableTreeNode {
     updateUpHierarchy(Collections.singletonList(node));
   }
 
-  public static void updateUpHierarchy(List<? extends InspectionConfigTreeNode> nodes) {
+  public static void updateUpHierarchy(Collection<? extends InspectionConfigTreeNode> nodes) {
     Queue<InspectionConfigTreeNode> q = new Queue<>(nodes.size());
     Set<InspectionConfigTreeNode> alreadyUpdated = new THashSet<>();
     for (InspectionConfigTreeNode node : nodes) {

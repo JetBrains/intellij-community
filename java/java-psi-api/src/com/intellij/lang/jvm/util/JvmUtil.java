@@ -10,7 +10,7 @@ import org.jetbrains.annotations.Nullable;
 
 import static com.intellij.util.containers.ContainerUtil.mapNotNull;
 
-class JvmUtil {
+public class JvmUtil {
 
   private JvmUtil() {}
 
@@ -21,7 +21,7 @@ class JvmUtil {
 
   @Contract("null -> null")
   @Nullable
-  static JvmClass resolveClass(@Nullable JvmReferenceType type) {
+  public static JvmClass resolveClass(@Nullable JvmReferenceType type) {
     if (type == null) return null;
     JvmTypeDeclaration resolved = type.resolve();
     return resolved instanceof JvmClass ? (JvmClass)resolved : null;

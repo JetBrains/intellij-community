@@ -44,6 +44,7 @@ import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.List;
 import java.util.Objects;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -423,7 +424,7 @@ public class DebugProcessEvents extends DebugProcessImpl {
     preprocessEvent(suspendContext, thread);
 
     //noinspection HardCodedStringLiteral
-    RequestHint hint = (RequestHint)event.request().getProperty("hint");
+    RequestHint hint = getRequestHint(event);
 
     deleteStepRequests(event.thread());
 
@@ -467,6 +468,10 @@ public class DebugProcessEvents extends DebugProcessImpl {
         }
       }
     }
+  }
+
+  private static RequestHint getRequestHint(Event event) {
+    return (RequestHint)event.request().getProperty("hint");
   }
 
   private void processLocatableEvent(final SuspendContextImpl suspendContext, final LocatableEvent event) {
@@ -529,6 +534,24 @@ public class DebugProcessEvents extends DebugProcessImpl {
               }
             }
           });
+        }
+
+        // special check for smart step into with this breakpoint inside the expressions
+        EventSet eventSet = suspendContext.getEventSet();
+        if (eventSet != null && eventSet.size() > 1) {
+          List<StepEvent> stepEvents = StreamEx.of(eventSet).select(StepEvent.class).toList();
+          if (!stepEvents.isEmpty()) {
+            resumePreferred = resumePreferred ||
+                              stepEvents.stream()
+                                        .map(DebugProcessEvents::getRequestHint)
+                                        .allMatch(h -> {
+                                          if (h != null) {
+                                            Integer depth = h.checkCurrentPosition(suspendContext);
+                                            return depth != null && depth != RequestHint.STOP;
+                                          }
+                                          return false;
+                                        });
+          }
         }
 
         if(!requestHit || resumePreferred) {

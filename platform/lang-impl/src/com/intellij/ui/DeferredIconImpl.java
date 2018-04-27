@@ -91,6 +91,7 @@ public class DeferredIconImpl<T> extends CachingScalableJBIcon<DeferredIconImpl<
     return new DeferredIconImpl<>(this);
   }
 
+  @NotNull
   @Override
   public Icon scale(float scale) {
     if (getScale() != scale && myDelegateIcon instanceof ScalableIcon) {

@@ -68,7 +68,6 @@ import com.intellij.vcs.log.util.VcsUserUtil;
 import com.intellij.vcsUtil.VcsFileUtil;
 import com.intellij.vcsUtil.VcsUtil;
 import git4idea.GitUserRegistry;
-import git4idea.GitVcs;
 import git4idea.branch.GitBranchUtil;
 import git4idea.changes.GitChangeUtils;
 import git4idea.commands.Git;
@@ -484,14 +483,16 @@ public class GitCheckinEnvironment implements CheckinEnvironment {
   }
 
   private static void reset(@NotNull Project project, @NotNull VirtualFile root, @NotNull Collection<Change> changes) throws VcsException {
-    Set<FilePath> paths = new HashSet<>();
-    paths.addAll(mapNotNull(changes, ChangesUtil::getAfterPath));
-    paths.addAll(mapNotNull(changes, ChangesUtil::getBeforePath));
+    Set<FilePath> allPaths = new HashSet<>();
+    allPaths.addAll(mapNotNull(changes, ChangesUtil::getAfterPath));
+    allPaths.addAll(mapNotNull(changes, ChangesUtil::getBeforePath));
 
-    GitLineHandler handler = new GitLineHandler(project, root, GitCommand.RESET);
-    handler.endOptions();
-    handler.addRelativePaths(paths);
-    Git.getInstance().runCommand(handler).getOutputOrThrow();
+    for (List<String> paths : VcsFileUtil.chunkPaths(root, allPaths)) {
+      GitLineHandler handler = new GitLineHandler(project, root, GitCommand.RESET);
+      handler.endOptions();
+      handler.addParameters(paths);
+      Git.getInstance().runCommand(handler).getOutputOrThrow();
+    }
   }
 
   public List<VcsException> commit(List<Change> changes, String preparedComment) {
@@ -844,7 +845,6 @@ public class GitCheckinEnvironment implements CheckinEnvironment {
 
   public class GitCheckinOptions implements CheckinChangeListSpecificComponent, RefreshableOnComponent  {
 
-    @NotNull private final GitVcs myVcs;
     @NotNull private final CheckinProjectPanel myCheckinProjectPanel;
     @NotNull private final JPanel myPanel;
     @NotNull private final EditorTextField myAuthorField;
@@ -856,7 +856,6 @@ public class GitCheckinEnvironment implements CheckinEnvironment {
 
 
     GitCheckinOptions(@NotNull Project project, @NotNull CheckinProjectPanel panel) {
-      myVcs = GitVcs.getInstance(project);
       myCheckinProjectPanel = panel;
       myAuthorField = createTextField(project, getAuthors(project));
       myAuthorField.addFocusListener(new FocusAdapter() {
@@ -956,7 +955,7 @@ public class GitCheckinEnvironment implements CheckinEnvironment {
         h.addParameters("--max-count=1");
         h.addParameters("--encoding=UTF-8");
         String formatPattern;
-        if (GitVersionSpecialty.STARTED_USING_RAW_BODY_IN_FORMAT.existsIn(myVcs.getVersion())) {
+        if (GitVersionSpecialty.STARTED_USING_RAW_BODY_IN_FORMAT.existsIn(myProject)) {
           formatPattern = "%B";
         }
         else {

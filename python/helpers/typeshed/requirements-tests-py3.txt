@@ -1,5 +1,5 @@
 git+https://github.com/python/mypy.git@master
 typed-ast>=1.0.4
-flake8==3.3.0
-flake8-bugbear>=17.3.0
-flake8-pyi>=17.1.0
+flake8==3.5.0
+flake8-bugbear==18.2.0
+flake8-pyi>=18.3.1

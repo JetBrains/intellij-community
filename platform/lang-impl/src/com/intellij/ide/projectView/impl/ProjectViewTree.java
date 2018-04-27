@@ -9,6 +9,7 @@ import com.intellij.ide.util.treeView.NodeDescriptor;
 import com.intellij.ide.util.treeView.NodeRenderer;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.newvfs.VfsPresentationUtil;
 import com.intellij.psi.PsiDirectory;
@@ -27,6 +28,7 @@ import javax.swing.tree.DefaultMutableTreeNode;
 import javax.swing.tree.TreeModel;
 import javax.swing.tree.TreePath;
 import java.awt.*;
+import java.util.ArrayDeque;
 
 /**
  * @author Konstantin Bulenkov
@@ -71,13 +73,10 @@ public class ProjectViewTree extends DnDAwareTree {
     int count = super.getToggleClickCount();
     TreePath path = getSelectionPath();
     if (path != null) {
-      Object object = TreeUtil.getUserObject(path.getLastPathComponent());
-      if (object instanceof NodeDescriptor) {
-        NodeDescriptor descriptor = (NodeDescriptor)object;
-        if (!descriptor.expandOnDoubleClick()) {
-          LOG.info("getToggleClickCount: -1 for " + descriptor.getClass().getName());
-          return -1;
-        }
+      NodeDescriptor descriptor = TreeUtil.getUserObject(NodeDescriptor.class, path.getLastPathComponent());
+      if (descriptor != null && !descriptor.expandOnDoubleClick()) {
+        LOG.info("getToggleClickCount: -1 for " + descriptor.getClass().getName());
+        return -1;
       }
     }
     return count;
@@ -164,5 +163,23 @@ public class ProjectViewTree extends DnDAwareTree {
       }
     }
     return color == null ? null : ColorUtil.softer(color);
+  }
+
+  @Override
+  public void collapsePath(TreePath path) {
+    int row = Registry.is("async.project.view.collapse.tree.path.recursively") ? getRowForPath(path) : -1;
+    if (row < 0) {
+      super.collapsePath(path);
+    }
+    else {
+      ArrayDeque<TreePath> deque = new ArrayDeque<>();
+      deque.addFirst(path);
+      while (++row < getRowCount()) {
+        TreePath next = getPathForRow(row);
+        if (!path.isDescendant(next)) break;
+        if (isExpanded(next)) deque.addFirst(next);
+      }
+      deque.forEach(super::collapsePath);
+    }
   }
 }

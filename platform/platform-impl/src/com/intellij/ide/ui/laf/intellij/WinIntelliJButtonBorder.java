@@ -27,7 +27,7 @@ public class WinIntelliJButtonBorder implements Border, UIResource {
     AbstractButton b = (AbstractButton)c;
     Rectangle outerRect = new Rectangle(x, y, width, height);
     try {
-      JBInsets.removeFrom(outerRect, getOuterInsets());
+      JBInsets.removeFrom(outerRect, b.getInsets());
 
       g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
       g2.setRenderingHint(RenderingHints.KEY_STROKE_CONTROL, RenderingHints.VALUE_STROKE_NORMALIZE);
@@ -64,11 +64,6 @@ public class WinIntelliJButtonBorder implements Border, UIResource {
       Color borderColor = (Color)b.getClientProperty("JButton.borderColor");
       return borderColor != null ? borderColor : UIManager.getColor("Button.intellij.native.borderColor");
     }
-  }
-
-  @NotNull
-  public JBInsets getOuterInsets() {
-    return JBUI.insets(1);
   }
 
   protected boolean isWideBorder(@NotNull AbstractButton b) {

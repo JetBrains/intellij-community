@@ -10,6 +10,7 @@ import gnu.trove.THashSet;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.jps.ModuleChunk;
+import org.jetbrains.jps.ProjectPaths;
 import org.jetbrains.jps.builders.BuildRootIndex;
 import org.jetbrains.jps.builders.BuildTarget;
 import org.jetbrains.jps.builders.BuildTargetIndex;
@@ -27,6 +28,8 @@ import org.jetbrains.jps.model.JpsProject;
 import org.jetbrains.jps.model.java.JavaModuleIndex;
 import org.jetbrains.jps.model.java.JpsJavaExtensionService;
 import org.jetbrains.jps.model.java.JpsJavaSdkType;
+import org.jetbrains.jps.model.java.compiler.JpsJavaCompilerConfiguration;
+import org.jetbrains.jps.model.java.compiler.ProcessorConfigProfile;
 import org.jetbrains.jps.model.library.JpsTypedLibrary;
 import org.jetbrains.jps.model.library.sdk.JpsSdk;
 import org.jetbrains.jps.model.library.sdk.JpsSdkReference;
@@ -252,8 +255,21 @@ public class JavaBuilderUtil {
                   FSOperations.markDirtyIfNotDeleted(context, markDirtyRound, file);
                 }
               }
+              
+              if (targetsToMark == null || !targetsToMark.contains(chunk.representativeTarget())) {
+                // additionally check whether annotation-processor generated files from this chunk are affected
+                if (containsProcessorGeneratedFiles(chunk, newlyAffectedFiles)) {
+                  // If among affected files are those processor-generated, then we need to re-generate them before compiling.
+                  // To achieve this, we need to recompile the whole chunk which will cause processors to re-generated these affected files
+                  if (targetsToMark == null) {
+                    targetsToMark = new THashSet<>(); // lazy init
+                  }
+                  targetsToMark.addAll(chunk.getTargets());
+                }
+              }
+
+              boolean currentChunkAfected = false;
               if (targetsToMark != null) {
-                boolean currentChunkAfected = false;
                 for (ModuleBuildTarget target : targetsToMark) {
                   if (chunk.getTargets().contains(target)) {
                     currentChunkAfected = true;
@@ -272,7 +288,7 @@ public class JavaBuilderUtil {
                   FSOperations.markDirty(context, markDirtyRound, chunk, null);
                 }
               }
-              additionalPassRequired = compilingIncrementally && moduleBasedFilter.containsFilesFromCurrentTargetChunk(newlyAffectedFiles);
+              additionalPassRequired = compilingIncrementally && (currentChunkAfected || moduleBasedFilter.containsFilesFromCurrentTargetChunk(newlyAffectedFiles));
             }
           }
           else {
@@ -329,6 +345,26 @@ public class JavaBuilderUtil {
     finally {
       context.processMessage(new ProgressMessage("")); // clean progress messages
     }
+  }
+
+  private static boolean containsProcessorGeneratedFiles(ModuleChunk chunk, Collection<File> files) {
+    final JpsModule module = chunk.representativeTarget().getModule();
+    final JpsJavaCompilerConfiguration compilerConfig = JpsJavaExtensionService.getInstance().getCompilerConfiguration(module.getProject());
+    assert compilerConfig != null;
+    final ProcessorConfigProfile profile = compilerConfig.getAnnotationProcessingProfile(module);
+    if (!profile.isEnabled()) {
+      return false;
+    }
+    final File outputDir = ProjectPaths.getAnnotationProcessorGeneratedSourcesOutputDir(module, chunk.containsTests(), profile);
+    if (outputDir == null) {
+      return false;
+    }
+    for (File file : files) {
+      if (FileUtil.isAncestor(outputDir, file, true)) {
+        return true;
+      }
+    }
+    return false;
   }
 
   @Nullable

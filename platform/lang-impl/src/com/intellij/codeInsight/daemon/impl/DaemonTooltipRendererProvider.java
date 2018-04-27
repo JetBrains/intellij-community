@@ -31,7 +31,7 @@ import javax.swing.*;
 import java.util.Collection;
 import java.util.List;
 
-class DaemonTooltipRendererProvider implements ErrorStripTooltipRendererProvider {
+public class DaemonTooltipRendererProvider implements ErrorStripTooltipRendererProvider {
   @NonNls private static final String END_MARKER = "<!-- end marker -->";
   private final Project myProject;
 
@@ -74,7 +74,7 @@ class DaemonTooltipRendererProvider implements ErrorStripTooltipRendererProvider
       });
       final HighlightInfoComposite composite = HighlightInfoComposite.create(infos);
       String toolTip = composite.getToolTip();
-      MyRenderer myRenderer = new MyRenderer(toolTip == null ? null : UIUtil.convertSpace2Nbsp(toolTip), new Object[]{highlighters});
+      MyRenderer myRenderer = new MyRenderer(toolTip, new Object[]{highlighters});
       if (bigRenderer != null) {
         myRenderer.addBelow(bigRenderer.getText());
       }

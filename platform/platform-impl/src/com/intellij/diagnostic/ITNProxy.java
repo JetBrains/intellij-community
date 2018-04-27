@@ -11,9 +11,7 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ApplicationNamesInfo;
 import com.intellij.openapi.application.ex.ApplicationInfoEx;
 import com.intellij.openapi.diagnostic.Attachment;
-import com.intellij.openapi.progress.EmptyProgressIndicator;
 import com.intellij.openapi.progress.ProgressIndicator;
-import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.updateSettings.impl.UpdateSettings;
@@ -96,7 +94,7 @@ class ITNProxy {
     }
 
     String _login = login, _password = password;
-    Task.Backgroundable task = new Task.Backgroundable(project, DiagnosticBundle.message("title.submitting.error.report")) {
+    new Task.Backgroundable(project, DiagnosticBundle.message("title.submitting.error.report")) {
       @Override
       public void run(@NotNull ProgressIndicator indicator) {
         try {
@@ -106,14 +104,7 @@ class ITNProxy {
           onError.consume(ex);
         }
       }
-    };
-
-    if (project == null) {
-      task.run(new EmptyProgressIndicator());
-    }
-    else {
-      ProgressManager.getInstance().run(task);
-    }
+    }.queue();
   }
 
   static @NotNull String getBrowseUrl(int threadId) {

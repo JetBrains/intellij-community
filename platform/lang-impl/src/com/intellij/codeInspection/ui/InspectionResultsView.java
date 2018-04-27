@@ -194,9 +194,11 @@ public class InspectionResultsView extends JPanel implements Disposable, DataPro
   }
 
   void profileChanged() {
-    myTree.revalidate();
-    myTree.repaint();
-    syncRightPanel();
+    UIUtil.invokeLaterIfNeeded(() -> {
+      myTree.revalidate();
+      myTree.repaint();
+      syncRightPanel();
+    });
   }
 
   private void initTreeListeners() {

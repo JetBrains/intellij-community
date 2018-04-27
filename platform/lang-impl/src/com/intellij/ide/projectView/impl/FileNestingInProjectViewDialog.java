@@ -1,22 +1,16 @@
-// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.projectView.impl;
 
-import com.intellij.icons.AllIcons;
 import com.intellij.ide.IdeBundle;
 import com.intellij.ide.projectView.impl.ProjectViewFileNestingService.NestingRule;
-import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.ValidationInfo;
-import com.intellij.ui.DumbAwareActionButton;
 import com.intellij.ui.ToolbarDecorator;
 import com.intellij.ui.components.JBCheckBox;
 import com.intellij.ui.table.TableView;
 import com.intellij.util.Consumer;
-import com.intellij.util.ui.ColumnInfo;
-import com.intellij.util.ui.ElementProducer;
-import com.intellij.util.ui.ListTableModel;
-import com.intellij.util.ui.UIUtil;
+import com.intellij.util.ui.*;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -45,7 +39,7 @@ public class FileNestingInProjectViewDialog extends DialogWrapper {
     super(project);
     setTitle(IdeBundle.message("file.nesting.dialog.title"));
 
-    myUseNestingRulesCheckBox = new JBCheckBox(IdeBundle.message("use.file.nesting.rules.checkbox"));
+    myUseNestingRulesCheckBox = new JBCheckBox(IdeBundle.message("file.nesting.feature.enabled.checkbox"));
     myUseNestingRulesCheckBox.addActionListener(new ActionListener() {
       @Override
       public void actionPerformed(ActionEvent e) {
@@ -66,7 +60,8 @@ public class FileNestingInProjectViewDialog extends DialogWrapper {
 
   @Override
   protected JComponent createCenterPanel() {
-    final JPanel mainPanel = new JPanel(new BorderLayout());
+    final JPanel mainPanel = new JPanel(new BorderLayout(0, JBUI.scale(16)));
+    mainPanel.setBorder(JBUI.Borders.emptyTop(8)); // Resulting indent will be 16 = 8 (default) + 8 (set here)
     mainPanel.add(myUseNestingRulesCheckBox, BorderLayout.NORTH);
     mainPanel.add(myRulesPanel, BorderLayout.CENTER);
     return mainPanel;
@@ -86,24 +81,21 @@ public class FileNestingInProjectViewDialog extends DialogWrapper {
                                            return new NestingRule();
                                          }
                                        })
-        .disableUpDownActions()
-        .addExtraAction(
-          new DumbAwareActionButton(IdeBundle.message("file.nesting.use.default.ruleset"), AllIcons.Actions.Reset_to_default) {
-            @Override
-            public void actionPerformed(AnActionEvent e) {
-              final List<NestingRule> rules = new ArrayList<>();
-              for (NestingRule rule : ProjectViewFileNestingService.DEFAULT_NESTING_RULES) {
-                rules.add(new NestingRule(rule.getParentFileSuffix(), rule.getChildFileSuffix()));
-              }
-              table.getListTableModel().setItems(rules);
-            }
-          });
-    return toolbarDecorator.createPanel();
+                      .disableUpDownActions();
+    return UI.PanelFactory.panel(toolbarDecorator.createPanel())
+                          .withLabel(IdeBundle.message("file.nesting.table.title")).moveLabelOnTop()
+                          .resizeY(true)
+                          .createPanel();
   }
 
   private static TableView<NestingRule> createTable() {
     ListTableModel<NestingRule> model = new ListTableModel<>(
       new ColumnInfo<NestingRule, String>("Parent file suffix") {
+        @Override
+        public int getWidth(JTable table) {
+          return JBUI.scale(125);
+        }
+
         @Override
         public boolean isCellEditable(NestingRule rule) {
           return true;
@@ -142,6 +134,20 @@ public class FileNestingInProjectViewDialog extends DialogWrapper {
     return table;
   }
 
+  @NotNull
+  @Override
+  protected Action[] createLeftSideActions() {
+    return new Action[]{new DialogWrapperAction(IdeBundle.message("file.nesting.reset.to.default.button")) {
+      @Override
+      protected void doAction(ActionEvent e) {
+        final List<NestingRule> rules = new ArrayList<>();
+        for (NestingRule rule : ProjectViewFileNestingService.DEFAULT_NESTING_RULES) {
+          rules.add(new NestingRule(rule.getParentFileSuffix(), rule.getChildFileSuffix()));
+        }
+        myTable.getListTableModel().setItems(rules);
+      }
+    }};
+  }
 
   @NotNull
   @Override

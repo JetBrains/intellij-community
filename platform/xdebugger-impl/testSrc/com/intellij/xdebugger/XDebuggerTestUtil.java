@@ -13,6 +13,7 @@ import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.testFramework.UsefulTestCase;
+import com.intellij.util.SmartList;
 import com.intellij.util.concurrency.FutureResult;
 import com.intellij.util.ui.TextTransferable;
 import com.intellij.util.ui.UIUtil;
@@ -21,10 +22,12 @@ import com.intellij.xdebugger.evaluation.XDebuggerEvaluator;
 import com.intellij.xdebugger.frame.*;
 import com.intellij.xdebugger.impl.XDebugSessionImpl;
 import com.intellij.xdebugger.impl.XDebuggerUtilImpl;
+import com.intellij.xdebugger.impl.XSourcePositionImpl;
 import com.intellij.xdebugger.impl.breakpoints.XBreakpointUtil;
 import com.intellij.xdebugger.impl.breakpoints.XExpressionImpl;
 import com.intellij.xdebugger.impl.breakpoints.XLineBreakpointImpl;
 import com.intellij.xdebugger.impl.frame.XStackFrameContainerEx;
+import one.util.streamex.StreamEx;
 import org.intellij.lang.annotations.Language;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -39,6 +42,8 @@ import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Semaphore;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
+import java.util.function.BiFunction;
+import java.util.stream.Collectors;
 
 import static org.junit.Assert.*;
 
@@ -58,8 +63,19 @@ public class XDebuggerTestUtil {
     XBreakpointManager manager = XDebuggerManager.getInstance(project).getBreakpointManager();
     XLineBreakpointImpl breakpoint = ReadAction.compute(() -> (XLineBreakpointImpl)manager.findBreakpointAtLine(type, file, line));
     assertNotNull(breakpoint);
-    assertEquals(validity ? AllIcons.Debugger.Db_verified_breakpoint : AllIcons.Debugger.Db_invalid_breakpoint, breakpoint.getIcon());
+    assertEquals(validity ? AllIcons.Debugger.Db_set_breakpoint : AllIcons.Debugger.Db_invalid_breakpoint, breakpoint.getIcon());
     assertEquals(errorMessage, breakpoint.getErrorMessage());
+  }
+
+  @Nullable
+  public static Promise<List<? extends XLineBreakpointType.XLineBreakpointVariant>>
+  computeLineBreakpointVariants(Project project, VirtualFile file, int line) {
+    return ReadAction.compute(() -> {
+      List<XLineBreakpointType> types = StreamEx.of(XDebuggerUtil.getInstance().getLineBreakpointTypes())
+                                                .filter(type -> type.canPutAt(file, line, project))
+                                                .collect(Collectors.toCollection(SmartList::new));
+      return XDebuggerUtilImpl.getLineBreakpointVariants(project, types, XSourcePositionImpl.create(file, line));
+    });
   }
 
   @Nullable
@@ -86,21 +102,17 @@ public class XDebuggerTestUtil {
       XBreakpointType.EXTENSION_POINT_NAME.findExtension(typeClass), properties));
   }
 
-  public static void removeBreakpoint(final Project project, final XBreakpoint<?> breakpoint) {
-    WriteAction.runAndWait(() -> XDebuggerManager.getInstance(project).getBreakpointManager().removeBreakpoint(breakpoint));
-  }
-
   public static void removeBreakpoint(@NotNull final Project project,
                                       @NotNull final VirtualFile file,
                                       final int line) {
-    final XBreakpointManager breakpointManager = XDebuggerManager.getInstance(project).getBreakpointManager();
-    XLineBreakpoint breakpoint = ReadAction.compute(() -> {
-      final XLineBreakpointType<?> breakpointType =
-        ((XDebuggerUtilImpl)XDebuggerUtil.getInstance()).getBreakpointTypeByPosition(project, file, line);
-      return breakpointManager.findBreakpointAtLine(breakpointType, file, line);
+    XBreakpointManager breakpointManager = XDebuggerManager.getInstance(project).getBreakpointManager();
+    WriteAction.runAndWait(() -> {
+      XLineBreakpoint<?> breakpoint = Arrays.stream(XDebuggerUtil.getInstance().getLineBreakpointTypes())
+                                            .map(t -> breakpointManager.findBreakpointAtLine(t, file, line))
+                                            .findFirst().orElse(null);
+      assertNotNull(breakpoint);
+      breakpointManager.removeBreakpoint(breakpoint);
     });
-    assertNotNull(breakpoint);
-    removeBreakpoint(project, breakpoint);
   }
 
   public static void assertPosition(XSourcePosition pos, VirtualFile file, int line) throws IOException {
@@ -122,9 +134,13 @@ public class XDebuggerTestUtil {
   }
 
   public static Pair<List<XExecutionStack>, String> collectThreadsWithErrors(@NotNull XDebugSession session) {
+    return collectThreadsWithErrors(session, XDebuggerTestUtil::waitFor);
+  }
+
+  public static Pair<List<XExecutionStack>, String> collectThreadsWithErrors(@NotNull XDebugSession session, @NotNull BiFunction<Semaphore, Long, Boolean> waitFunction) {
     XTestExecutionStackContainer container = new XTestExecutionStackContainer();
     session.getSuspendContext().computeExecutionStacks(container);
-    return container.waitFor(TIMEOUT_MS);
+    return container.waitFor(TIMEOUT_MS, waitFunction);
   }
 
   public static List<XStackFrame> collectFrames(@NotNull XDebugSession session) {
@@ -146,13 +162,21 @@ public class XDebuggerTestUtil {
   }
 
   public static List<XStackFrame> collectFrames(XExecutionStack thread, long timeout) {
-    return collectFramesWithError(thread, timeout).first;
+    return collectFrames(thread, timeout, XDebuggerTestUtil::waitFor);
+  }
+
+  public static List<XStackFrame> collectFrames(XExecutionStack thread, long timeout, BiFunction<Semaphore, Long, Boolean> waitFunction) {
+    return collectFramesWithError(thread, timeout, waitFunction).first;
   }
 
   public static Pair<List<XStackFrame>, String> collectFramesWithError(XExecutionStack thread, long timeout) {
+    return collectFramesWithError(thread, timeout, XDebuggerTestUtil::waitFor);
+  }
+
+  public static Pair<List<XStackFrame>, String> collectFramesWithError(XExecutionStack thread, long timeout, BiFunction<Semaphore, Long, Boolean> waitFunction) {
     XTestStackFrameContainer container = new XTestStackFrameContainer();
     thread.computeStackFrames(0, container);
-    return container.waitFor(timeout);
+    return container.waitFor(timeout, waitFunction);
   }
 
   public static Pair<List<XStackFrame>, XStackFrame> collectFramesWithSelected(@NotNull XDebugSession session, long timeout) {
@@ -160,9 +184,13 @@ public class XDebuggerTestUtil {
   }
 
   public static Pair<List<XStackFrame>, XStackFrame> collectFramesWithSelected(XExecutionStack thread, long timeout) {
+    return collectFramesWithSelected(thread, timeout, XDebuggerTestUtil::waitFor);
+  }
+
+  public static Pair<List<XStackFrame>, XStackFrame> collectFramesWithSelected(XExecutionStack thread, long timeout, BiFunction<Semaphore, Long, Boolean> waitFunction) {
     XTestStackFrameContainer container = new XTestStackFrameContainer();
     thread.computeStackFrames(0, container);
-    List<XStackFrame> all = container.waitFor(timeout).first;
+    List<XStackFrame> all = container.waitFor(timeout, waitFunction).first;
     return Pair.create(all, container.frameToSelect);
   }
 
@@ -175,31 +203,50 @@ public class XDebuggerTestUtil {
   }
 
   public static List<XValue> collectChildren(XValueContainer value) {
+    return collectChildren(value, XDebuggerTestUtil::waitFor);
+  }
+
+  public static List<XValue> collectChildren(XValueContainer value, BiFunction<Semaphore, Long, Boolean> waitFunction) {
     XTestCompositeNode container = new XTestCompositeNode();
     value.computeChildren(container);
-    return container.waitFor(TIMEOUT_MS).first;
+
+    return container.waitFor(TIMEOUT_MS, waitFunction).first;
   }
 
   public static Pair<XValue, String> evaluate(XDebugSession session, XExpression expression) {
     return evaluate(session, expression, TIMEOUT_MS);
   }
 
+  public static Pair<XValue, String> evaluate(XDebugSession session, XExpression expression, BiFunction<Semaphore, Long, Boolean> waitFunction) {
+    return evaluate(session, expression, TIMEOUT_MS, waitFunction);
+  }
+
   public static Pair<XValue, String> evaluate(XDebugSession session, String expression) {
-    return evaluate(session, XExpressionImpl.fromText(expression), TIMEOUT_MS);
+    return evaluate(session, expression, XDebuggerTestUtil::waitFor);
+  }
+  public static Pair<XValue, String> evaluate(XDebugSession session, String expression, BiFunction<Semaphore, Long, Boolean> waitFunction) {
+    return evaluate(session, XExpressionImpl.fromText(expression), TIMEOUT_MS, waitFunction);
   }
 
   public static Pair<XValue, String> evaluate(XDebugSession session, String expression, long timeout) {
-    return evaluate(session, XExpressionImpl.fromText(expression), timeout);
+    return evaluate(session, expression, timeout, XDebuggerTestUtil::waitFor);
+  }
+  public static Pair<XValue, String> evaluate(XDebugSession session, String expression, long timeout, BiFunction<Semaphore, Long, Boolean> waitFunction) {
+    return evaluate(session, XExpressionImpl.fromText(expression), timeout, waitFunction);
   }
 
   private static Pair<XValue, String> evaluate(XDebugSession session, XExpression expression, long timeout) {
+    return evaluate(session, expression, timeout, XDebuggerTestUtil::waitFor);
+  }
+
+  private static Pair<XValue, String> evaluate(XDebugSession session, XExpression expression, long timeout, BiFunction<Semaphore, Long, Boolean> waitFunction) {
     XStackFrame frame = session.getCurrentStackFrame();
     assertNotNull(frame);
     XDebuggerEvaluator evaluator = frame.getEvaluator();
     assertNotNull(evaluator);
     XTestEvaluationCallback callback = new XTestEvaluationCallback();
     evaluator.evaluate(expression, callback, session.getCurrentPosition());
-    return callback.waitFor(timeout);
+    return callback.waitFor(timeout, waitFunction);
   }
 
   public static void waitForSwing() throws InterruptedException {
@@ -226,16 +273,22 @@ public class XDebuggerTestUtil {
   }
 
   public static XTestValueNode computePresentation(@NotNull XValue value) {
-    return computePresentation(value, TIMEOUT_MS);
+    return computePresentation(value, XDebuggerTestUtil::waitFor);
+  }
+  public static XTestValueNode computePresentation(@NotNull XValue value, BiFunction<Semaphore, Long, Boolean> waitFunction) {
+    return computePresentation(value, TIMEOUT_MS, waitFunction);
   }
 
   public static XTestValueNode computePresentation(XValue value, long timeout) {
+    return computePresentation(value, timeout, XDebuggerTestUtil::waitFor);
+  }
+  public static XTestValueNode computePresentation(XValue value, long timeout, BiFunction<Semaphore, Long, Boolean> waitFunction) {
     XTestValueNode node = new XTestValueNode();
     if (value instanceof XNamedValue) {
       node.myName = ((XNamedValue)value).getName();
     }
     value.computePresentation(node, XValuePlace.TREE);
-    node.waitFor(timeout);
+    node.waitFor(timeout, waitFunction);
     return node;
   }
 
@@ -244,7 +297,16 @@ public class XDebuggerTestUtil {
                                     @Nullable String type,
                                     @Nullable String value,
                                     @Nullable Boolean hasChildren) {
-    XTestValueNode node = computePresentation(var);
+    assertVariable(var, name, type, value, hasChildren, XDebuggerTestUtil::waitFor);
+  }
+
+  public static void assertVariable(XValue var,
+                                    @Nullable String name,
+                                    @Nullable String type,
+                                    @Nullable String value,
+                                    @Nullable Boolean hasChildren,
+                                    BiFunction<Semaphore, Long, Boolean> waitFunction) {
+    XTestValueNode node = computePresentation(var, waitFunction);
 
     if (name != null) assertEquals(name, node.myName);
     if (type != null) assertEquals(type, node.myType);
@@ -299,7 +361,16 @@ public class XDebuggerTestUtil {
                                                 @Nullable String type,
                                                 @Nullable @Language("RegExp") String valuePattern,
                                                 @Nullable Boolean hasChildren) {
-    XTestValueNode node = computePresentation(var);
+    assertVariableValueMatches(var, name, type, valuePattern, hasChildren, XDebuggerTestUtil::waitFor);
+  }
+
+  public static void assertVariableValueMatches(@NotNull XValue var,
+                                                @Nullable String name,
+                                                @Nullable String type,
+                                                @Nullable @Language("RegExp") String valuePattern,
+                                                @Nullable Boolean hasChildren,
+                                                BiFunction<Semaphore, Long, Boolean> waitFunction) {
+    XTestValueNode node = computePresentation(var, waitFunction);
     if (name != null) assertEquals(name, node.myName);
     if (type != null) assertEquals(type, node.myType);
     if (valuePattern != null) {
@@ -317,7 +388,14 @@ public class XDebuggerTestUtil {
   public static void assertVariableTypeMatches(@NotNull XValue var,
                                                @Nullable String name,
                                                @Nullable @Language("RegExp") String typePattern) {
-    XTestValueNode node = computePresentation(var);
+    assertVariableTypeMatches(var, name, typePattern, XDebuggerTestUtil::waitFor);
+  }
+
+  public static void assertVariableTypeMatches(@NotNull XValue var,
+                                               @Nullable String name,
+                                               @Nullable @Language("RegExp") String typePattern,
+                                               @NotNull BiFunction<Semaphore, Long, Boolean> waitFunction) {
+    XTestValueNode node = computePresentation(var, waitFunction);
     if (name != null) {
       assertEquals(name, node.myName);
     }
@@ -328,7 +406,13 @@ public class XDebuggerTestUtil {
 
   public static void assertVariableFullValue(@NotNull XValue var,
                                              @Nullable String value) throws Exception {
-    XTestValueNode node = computePresentation(var);
+    assertVariableFullValue(var, value, XDebuggerTestUtil::waitFor);
+  }
+
+  public static void assertVariableFullValue(@NotNull XValue var,
+                                             @Nullable String value,
+                                             @NotNull BiFunction<Semaphore, Long, Boolean> waitFunction) throws Exception {
+    XTestValueNode node = computePresentation(var, waitFunction);
 
     if (value == null) {
       assertNull("full value evaluator should be null", node.myFullValueEvaluator);

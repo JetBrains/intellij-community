@@ -1,5 +1,5 @@
 import sys
-from typing import Any, Awaitable, Callable, Generator, Iterable, List, Optional, Tuple
+from typing import Any, Awaitable, Callable, Generator, Iterable, List, Optional, Tuple, Union
 
 from . import coroutines
 from . import events
@@ -23,7 +23,7 @@ class LimitOverrunError(Exception):
 @coroutines.coroutine
 def open_connection(
     host: str = ...,
-    port: int = ...,
+    port: Union[int, str] = ...,
     *,
     loop: Optional[events.AbstractEventLoop] = ...,
     limit: int = ...,
@@ -33,8 +33,8 @@ def open_connection(
 @coroutines.coroutine
 def start_server(
     client_connected_cb: _ClientConnectedCallback,
-    host: str = ...,
-    port: int = ...,
+    host: Optional[str] = ...,
+    port: Optional[Union[int, str]] = ...,
     *,
     loop: Optional[events.AbstractEventLoop] = ...,
     limit: int = ...,
@@ -56,7 +56,7 @@ if sys.platform != 'win32':
         client_connected_cb: _ClientConnectedCallback,
         path: str = ...,
         *,
-        loop: int = ...,
+        loop: Optional[events.AbstractEventLoop] = ...,
         limit: int = ...,
         **kwds: Any) -> Generator[Any, None, events.AbstractServer]: ...
 

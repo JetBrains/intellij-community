@@ -57,6 +57,7 @@ import com.intellij.ui.ComponentWithMnemonics;
 import com.intellij.ui.KeyStrokeAdapter;
 import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.ui.components.JBOptionButton;
+import com.intellij.ui.mac.touchbar.TouchBarsManager;
 import com.intellij.ui.popup.list.ListPopupImpl;
 import com.intellij.ui.speedSearch.SpeedSearchSupply;
 import com.intellij.util.Alarm;
@@ -145,6 +146,8 @@ public final class IdeKeyEventDispatcher implements Disposable {
       return false;
     }
 
+    TouchBarsManager.onKeyEvent(e);
+
     // http://www.jetbrains.net/jira/browse/IDEADEV-12372
     if (e.getKeyCode() == KeyEvent.VK_CONTROL) {
       if (e.getID() == KeyEvent.KEY_PRESSED) {
@@ -184,7 +187,6 @@ public final class IdeKeyEventDispatcher implements Disposable {
         // It is needed to ignore ENTER KEY_TYPED events which sometimes can reach editor when an action
         // is invoked from main menu via Enter key.
         setState(KeyState.STATE_PROCESSED);
-        setPressedWasProcessed(true);
         return false;
       }
     }
@@ -568,9 +570,12 @@ public final class IdeKeyEventDispatcher implements Disposable {
       DataContext ctx = actionEvent.getDataContext();
       if (action instanceof ActionGroup && !((ActionGroup)action).canBePerformed(ctx)) {
         ActionGroup group = (ActionGroup)action;
-        JBPopupFactory.getInstance()
-          .createActionGroupPopup(group.getTemplatePresentation().getText(), group, ctx, JBPopupFactory.ActionSelectionAid.SPEEDSEARCH, false)
-          .showInBestPositionFor(ctx);
+        String groupId = ActionManager.getInstance().getId(action);
+        JBPopupFactory.getInstance().createActionGroupPopup(
+          group.getTemplatePresentation().getText(), group, ctx,
+          JBPopupFactory.ActionSelectionAid.SPEEDSEARCH,
+          false, null, -1, null, ActionPlaces.getActionGroupPopupPlace(groupId))
+                      .showInBestPositionFor(ctx);
       }
       else {
         ActionUtil.performActionDumbAware(action, actionEvent);
@@ -798,7 +803,7 @@ public final class IdeKeyEventDispatcher implements Disposable {
     setPressedWasProcessed(false);
   }
 
-  private boolean isPressedWasProcessed() {
+  public boolean isPressedWasProcessed() {
     return myPressedWasProcessed;
   }
 

@@ -3,6 +3,7 @@
 !define PYTHON_VERSIONS 4
 !define CUSTOM_SILENT_CONFIG 1
 
+Var internetConnection
 ${StrTok}
 
 Function customPreInstallActions
@@ -12,13 +13,15 @@ deletePythonFileInfo:
 getPythonFileInfo:
   inetc::get "https://www.jetbrains.com/updates/python.txt" "$TEMP\python.txt"
   ${LineSum} "$TEMP\python.txt" $R0
-  IfErrors cantOpenFile
+  IfErrors removePythonChoice
   StrCmp $R0 ${PYTHON_VERSIONS} getPythonInfo
-cantOpenFile:
-  MessageBox MB_OK|MB_ICONEXCLAMATION "python.txt is not exist. Python will not be downloaded." /SD IDOK
 removePythonChoice:
-  !insertmacro INSTALLOPTIONS_WRITE "Desktop.ini" "Field 6" "Flags" "DISABLED"
-  !insertmacro INSTALLOPTIONS_WRITE "Desktop.ini" "Field 7" "Flags" "DISABLED"
+  !insertmacro INSTALLOPTIONS_WRITE "Desktop.ini" "Field 6" "Type" "Label"
+  !insertmacro INSTALLOPTIONS_WRITE "Desktop.ini" "Field 6" "Text" "No internet connection. Python won't be downloaded."
+  !insertmacro INSTALLOPTIONS_WRITE "Desktop.ini" "Field 6" "Right" "-1"
+  !insertmacro INSTALLOPTIONS_WRITE "Desktop.ini" "Field 7" "Type" "Label"
+  !insertmacro INSTALLOPTIONS_WRITE "Desktop.ini" "Field 7" "Text" ""
+  !insertmacro INSTALLOPTIONS_WRITE "Desktop.ini" "Field 7" "Left" "-1"
   goto done
 getPythonInfo:
   Call getPythonInfo
@@ -118,13 +121,15 @@ FunctionEnd
 
 
 Function customInstallActions
+  StrCpy $internetConnection "Yes"
   ${LineSum} "$TEMP\python.txt" $R0
   IfErrors cantOpenFile
 ; info about 2 and 3 version of python
   StrCmp $R0 ${PYTHON_VERSIONS} getPythonInfo
 cantOpenFile:
-  MessageBox MB_OK|MB_ICONEXCLAMATION "python.txt is invalid. Python will not be downloaded." /SD IDOK
-  goto skip_python_download
+  StrCpy $internetConnection "No"
+;  MessageBox MB_OK|MB_ICONEXCLAMATION "python.txt is invalid. Python will not be downloaded." /SD IDOK
+  goto check_python
 getPythonInfo:  
   Call getPythonInfo
   StrCmp $0 "Error" skip_python_download
@@ -154,6 +159,7 @@ installation_for_all_users:
 verefy_python_launcher:
   IfFileExists $1python.exe python_exists get_python
 get_python:
+  StrCmp $internetConnection "No" skip_python_download
   CreateDirectory "$INSTDIR\python"
   inetc::get "$R3" "$INSTDIR\python\python_$R8" /END
   Pop $0
@@ -205,7 +211,6 @@ getPythonInfo:
   ${StrTok} $R1 $4 " " "2" "1"
   goto done
 cantOpenFile:
-  MessageBox MB_OK|MB_ICONEXCLAMATION "python.txt is not exist. Python will not be downloaded." /SD IDOK
   StrCpy $0 "Error"
 done:
 FunctionEnd

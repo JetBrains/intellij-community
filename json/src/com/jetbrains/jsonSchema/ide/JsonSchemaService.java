@@ -8,11 +8,14 @@ import com.intellij.openapi.util.ModificationTracker;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiFile;
 import com.jetbrains.jsonSchema.extension.JsonSchemaFileProvider;
+import com.jetbrains.jsonSchema.extension.JsonSchemaInfo;
 import com.jetbrains.jsonSchema.impl.JsonSchemaObject;
+import com.jetbrains.jsonSchema.impl.JsonSchemaVersion;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Collection;
+import java.util.List;
 
 public interface JsonSchemaService {
   class Impl {
@@ -28,8 +31,18 @@ public interface JsonSchemaService {
 
   boolean isSchemaFile(@NotNull VirtualFile file);
 
+  @Nullable
+  JsonSchemaVersion getSchemaVersion(@NotNull VirtualFile file);
+
   @NotNull
   Collection<VirtualFile> getSchemaFilesForFile(@NotNull VirtualFile file);
+
+  void registerRemoteUpdateCallback(Runnable callback);
+  void unregisterRemoteUpdateCallback(Runnable callback);
+  void registerResetAction(Runnable action);
+  void unregisterResetAction(Runnable action);
+
+  void triggerUpdateRemote();
 
   @Nullable
   JsonSchemaObject getSchemaObject(@NotNull VirtualFile file);
@@ -38,7 +51,7 @@ public interface JsonSchemaService {
   JsonSchemaObject getSchemaObjectForSchemaFile(@NotNull VirtualFile schemaFile);
 
   @Nullable
-  VirtualFile findSchemaFileByReference(@NotNull String reference, VirtualFile referent);
+  VirtualFile findSchemaFileByReference(@NotNull String reference, @Nullable VirtualFile referent);
 
   @Nullable
   JsonSchemaFileProvider getSchemaProvider(@NotNull final VirtualFile schemaFile);
@@ -46,6 +59,8 @@ public interface JsonSchemaService {
   void reset();
 
   ModificationTracker getAnySchemaChangeTracker();
+
+  List<JsonSchemaInfo> getAllUserVisibleSchemas();
 
   @NotNull
   static String normalizeId(@NotNull String id) {

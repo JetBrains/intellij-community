@@ -58,8 +58,8 @@ public class GradleClassFinderTest extends GradleImportingTestCase {
                   "}");
     assertModules("multiproject",
                   "app", "app_main", "app_test",
-                  "buildSrc", "buildSrc_main", "buildSrc_test");
-    Module buildSrcModule = getModule("buildSrc_main");
+                  "multiproject_buildSrc", "multiproject_buildSrc_main", "multiproject_buildSrc_test");
+    Module buildSrcModule = getModule("multiproject_buildSrc_main");
     assertNotNull(buildSrcModule);
     ApplicationManager.getApplication().runReadAction(() -> {
       PsiClass[] appClasses = JavaPsiFacade.getInstance(myProject).findClasses("App", GlobalSearchScope.allScope(myProject));

@@ -51,7 +51,8 @@ public abstract class StubBase<T extends PsiElement> extends ObjectStubBase<Stub
     return myStubList.findChildStubByType(id, elementType);
   }
 
-  public void setPsi(@NotNull final T psi) {
+  public void setPsi(@NotNull T psi) {
+    assert myPsi == null || myPsi == psi;
     myPsi = psi;
   }
 

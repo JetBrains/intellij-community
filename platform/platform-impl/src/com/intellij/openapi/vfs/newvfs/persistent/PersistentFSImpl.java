@@ -15,7 +15,6 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectLocator;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.LowMemoryWatcher;
-import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.ShutDownTracker;
 import com.intellij.openapi.util.io.*;
 import com.intellij.openapi.util.text.StringUtil;
@@ -1057,38 +1056,13 @@ public class PersistentFSImpl extends PersistentFS implements ApplicationCompone
   @Override
   @Nullable
   public NewVirtualFile findFileById(final int id) {
-    return findFileById(id, false);
+    VirtualFileSystemEntry cached = myIdToDirCache.get(id);
+    return cached != null ? cached : FSRecords.findFileById(id, myIdToDirCache);
   }
 
   @Override
   public NewVirtualFile findFileByIdIfCached(final int id) {
-    return findFileById(id, true);
-  }
-
-  @Nullable
-  private VirtualFileSystemEntry findFileById(int id, boolean cachedOnly) {
-    VirtualFileSystemEntry cached = myIdToDirCache.get(id);
-    if (cached != null) return cached;
-
-    Pair<TIntArrayList, VirtualFileSystemEntry> pair = FSRecords.getParents(id, myIdToDirCache);
-    TIntArrayList parents = pair.getFirst();
-    VirtualFileSystemEntry cachedDir = pair.getSecond();
-    if (cachedDir == null) return null;
-    VirtualFileSystemEntry result = cachedDir;
-
-    for (int i=parents.size() - 2; i>=0; i--) {
-      if (!(result instanceof VirtualDirectoryImpl)) {
-        return null;
-      }
-      int parentId = parents.get(i);
-      result = ((VirtualDirectoryImpl)result).findChildById(parentId, cachedOnly);
-      if (result instanceof VirtualDirectoryImpl) {
-        VirtualFileSystemEntry old = myIdToDirCache.putIfAbsent(parentId, result);
-        if (old != null) result = old;
-      }
-    }
-
-    return result;
+    return VfsData.hasLoadedFile(id) ? findFileById(id) : null;
   }
 
   @Override

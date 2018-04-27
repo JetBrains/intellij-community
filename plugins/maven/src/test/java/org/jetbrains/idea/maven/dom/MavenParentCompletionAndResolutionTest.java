@@ -272,38 +272,41 @@ public class MavenParentCompletionAndResolutionTest extends MavenDomWithIndicesT
   }
 
   public void testHighlightingAbsentGroupId() {
-    importProject("<groupId>test</groupId>" +
-                  "<artifactId>project</artifactId>" +
-                  "<version>1</version>" +
+    createProjectPom("<groupId>test</groupId>" +
+                     "<artifactId>project</artifactId>" +
+                     "<version>1</version>" +
 
-                  "<<error descr=\"'groupId' child tag should be defined\">parent</error>>" +
-                  "  <artifactId><error>junit</error></artifactId>" +
-                  "  <version><error>4.0</error></version>" +
-                  "</parent>");
+                     "<<error descr=\"'groupId' child tag should be defined\">parent</error>>" +
+                     "  <artifactId><error>junit</error></artifactId>" +
+                     "  <version><error>4.0</error></version>" +
+                     "</parent>");
+    importProjectWithErrors(true);
     checkHighlighting();
   }
 
   public void testHighlightingAbsentArtifactId() {
-    importProject("<groupId>test</groupId>" +
-                  "<artifactId>project</artifactId>" +
-                  "<version>1</version>" +
+    createProjectPom("<groupId>test</groupId>" +
+                     "<artifactId>project</artifactId>" +
+                     "<version>1</version>" +
 
-                  "<<error descr=\"'artifactId' child tag should be defined\">parent</error>>" +
-                  "  <groupId>junit</groupId>" +
-                  "  <version><error>4.0</error></version>" +
-                  "</parent>");
+                     "<<error descr=\"'artifactId' child tag should be defined\">parent</error>>" +
+                     "  <groupId>junit</groupId>" +
+                     "  <version><error>4.0</error></version>" +
+                     "</parent>");
+    importProjectWithErrors(true);
     checkHighlighting();
   }
 
   public void testHighlightingAbsentVersion() {
-    importProject("<groupId>test</groupId>" +
-                  "<artifactId>project</artifactId>" +
-                  "<version>1</version>" +
+    createProjectPom("<groupId>test</groupId>" +
+                     "<artifactId>project</artifactId>" +
+                     "<version>1</version>" +
 
-                  "<<error descr=\"'version' child tag should be defined\">parent</error>>" +
-                  "  <groupId>junit</groupId>" +
-                  "  <artifactId>junit</artifactId>" +
-                  "</parent>");
+                     "<<error descr=\"'version' child tag should be defined\">parent</error>>" +
+                     "  <groupId>junit</groupId>" +
+                     "  <artifactId>junit</artifactId>" +
+                     "</parent>");
+    importProjectWithErrors(true);
     checkHighlighting();
   }
 

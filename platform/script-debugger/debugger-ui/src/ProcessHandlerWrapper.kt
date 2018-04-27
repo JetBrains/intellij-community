@@ -50,8 +50,8 @@ class ProcessHandlerWrapper(private val debugProcess: XDebugProcess, private val
     }
 
     debugProcess.stopAsync()
-      .done { stopProcess(destroy) }
-      .rejected {
+      .onSuccess() { stopProcess(destroy) }
+      .onError {
         try {
           LOG.error(it)
         }

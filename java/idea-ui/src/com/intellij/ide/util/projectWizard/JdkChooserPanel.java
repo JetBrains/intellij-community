@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2015 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.util.projectWizard;
 
 import com.intellij.ide.IdeBundle;
@@ -25,15 +11,13 @@ import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.projectRoots.SdkType;
 import com.intellij.openapi.projectRoots.ui.ProjectJdksEditor;
 import com.intellij.openapi.roots.ProjectRootManager;
+import com.intellij.openapi.roots.ui.OrderEntryAppearanceService;
 import com.intellij.openapi.roots.ui.configuration.ProjectStructureConfigurable;
 import com.intellij.openapi.roots.ui.configuration.projectRoot.ProjectSdksModel;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.wm.ex.WindowManagerEx;
-import com.intellij.ui.ClickListener;
-import com.intellij.ui.DoubleClickListener;
-import com.intellij.ui.ScrollPaneFactory;
-import com.intellij.ui.ScrollingUtil;
+import com.intellij.ui.*;
 import com.intellij.ui.components.JBList;
 import com.intellij.util.ArrayUtil;
 import gnu.trove.TIntArrayList;
@@ -52,25 +36,26 @@ import java.util.HashSet;
 import java.util.Set;
 
 public class JdkChooserPanel extends JPanel {
-  private JList myList = null;
-  private DefaultListModel myListModel = null;
+  private final @Nullable Project myProject;
+  private final DefaultListModel<Sdk> myListModel;
+  private final JList<Sdk> myList;
   private Sdk myCurrentJdk;
-  @Nullable private final Project myProject;
   private SdkType[] myAllowedJdkTypes = null;
 
   public JdkChooserPanel(@Nullable final Project project) {
     super(new BorderLayout());
     myProject = project;
-    myListModel = new DefaultListModel();
-    myList = new JBList(myListModel);
+    myListModel = new DefaultListModel<>();
+    myList = new JBList<>(myListModel);
     myList.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
-    myList.setCellRenderer(new ProjectJdkListRenderer());
-
-    myList.addListSelectionListener(new ListSelectionListener() {
-      public void valueChanged(ListSelectionEvent e) {
-        myCurrentJdk = (Sdk)myList.getSelectedValue();
+    myList.setCellRenderer(new ColoredListCellRenderer<Sdk>() {
+      @Override
+      protected void customizeCellRenderer(@NotNull JList<? extends Sdk> list, Sdk value, int index, boolean selected, boolean hasFocus) {
+        OrderEntryAppearanceService.getInstance().forJdk(value, false, selected, true).customize(this);
       }
     });
+
+    myList.addListSelectionListener(e -> myCurrentJdk = myList.getSelectedValue());
     new ClickListener() {
       @Override
       public boolean onClick(@NotNull MouseEvent e, int clickCount) {
@@ -108,7 +93,7 @@ public class JdkChooserPanel extends JPanel {
   }
 
   public void editJdkTable() {
-    ProjectJdksEditor editor = new ProjectJdksEditor((Sdk)myList.getSelectedValue(),
+    ProjectJdksEditor editor = new ProjectJdksEditor(myList.getSelectedValue(),
                                                      myProject != null ? myProject : ProjectManager.getInstance().getDefaultProject(),
                                                      myList);
     if (editor.showAndGet()) {
@@ -128,7 +113,7 @@ public class JdkChooserPanel extends JPanel {
     if (selectedJdk != null) {
       TIntArrayList list = new TIntArrayList();
       for (int i = 0; i < myListModel.size(); i++) {
-        final Sdk jdk = (Sdk)myListModel.getElementAt(i);
+        Sdk jdk = myListModel.getElementAt(i);
         if (Comparing.strEqual(jdk.getName(), selectedJdk.getName())){
           list.add(i);
         }
@@ -150,7 +135,7 @@ public class JdkChooserPanel extends JPanel {
       }
     }
 
-    myCurrentJdk = (Sdk)myList.getSelectedValue();
+    myCurrentJdk = myList.getSelectedValue();
   }
 
   public JList getPreferredFocusedComponent() {
@@ -297,6 +282,4 @@ public class JdkChooserPanel extends JPanel {
       }
     }
   }
-
-
 }

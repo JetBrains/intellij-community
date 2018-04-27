@@ -108,8 +108,8 @@ public class InferredAnnotationsManagerImpl extends InferredAnnotationsManager {
     if (!(owner instanceof PsiMethodImpl)) return null;
     PsiMethodImpl method = (PsiMethodImpl)owner;
     PsiModifierList modifiers = (method).getModifierList();
-    if (modifiers.findAnnotation(Mutability.UNMODIFIABLE_ANNOTATION) != null ||
-        modifiers.findAnnotation(Mutability.UNMODIFIABLE_VIEW_ANNOTATION) != null) {
+    if (modifiers.hasAnnotation(Mutability.UNMODIFIABLE_ANNOTATION) ||
+        modifiers.hasAnnotation(Mutability.UNMODIFIABLE_VIEW_ANNOTATION)) {
       return null;
     }
     return JavaSourceInference.inferMutability(method).asAnnotation(myProject);
@@ -117,7 +117,7 @@ public class InferredAnnotationsManagerImpl extends InferredAnnotationsManager {
 
   @Nullable
   private PsiAnnotation getInferredContractAnnotation(PsiMethodImpl method) {
-    if (method.getModifierList().findAnnotation(ORG_JETBRAINS_ANNOTATIONS_CONTRACT) != null) {
+    if (method.getModifierList().hasAnnotation(ORG_JETBRAINS_ANNOTATIONS_CONTRACT)) {
       return null;
     }
 

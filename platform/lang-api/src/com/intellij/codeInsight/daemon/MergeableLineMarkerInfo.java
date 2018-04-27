@@ -22,7 +22,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
-import java.awt.event.MouseEvent;
 import java.util.*;
 
 /**
@@ -71,22 +70,12 @@ public abstract class MergeableLineMarkerInfo<T extends PsiElement> extends Line
     return updatePass;
   }
 
-  public boolean configurePopupAndRenderer(@NotNull IPopupChooserBuilder builder,
-                                           @NotNull JBList list,
-                                           @NotNull List<MergeableLineMarkerInfo> markers) {
-    return false;
-  }
-
-  /**
-   * @deprecated use {@link #configurePopupAndRenderer(IPopupChooserBuilder, JBList, List)}
-   */
   @Deprecated
   public boolean configurePopupAndRenderer(@NotNull PopupChooserBuilder builder,
                                            @NotNull JBList list,
                                            @NotNull List<MergeableLineMarkerInfo> markers) {
     return false;
   }
-
 
   @NotNull
   public static List<LineMarkerInfo<PsiElement>> merge(@NotNull List<MergeableLineMarkerInfo> markers) {
@@ -139,39 +128,36 @@ public abstract class MergeableLineMarkerInfo<T extends PsiElement> extends Line
     }
 
     private static GutterIconNavigationHandler<PsiElement> getCommonNavigationHandler(@NotNull final List<MergeableLineMarkerInfo> markers) {
-      return new GutterIconNavigationHandler<PsiElement>() {
-        @Override
-        public void navigate(final MouseEvent e, PsiElement elt) {
-          final List<LineMarkerInfo> infos = new ArrayList<>(markers);
-          Collections.sort(infos, Comparator.comparingInt(o -> o.startOffset));
-          //list.setFixedCellHeight(UIUtil.LIST_FIXED_CELL_HEIGHT); // TODO[jetzajac]: do we need it?
-          IPopupChooserBuilder<LineMarkerInfo> builder = JBPopupFactory.getInstance().createPopupChooserBuilder(infos);
-          builder.setRenderer(new SelectionAwareListCellRenderer<>(dom -> {
-            Icon icon = null;
-            final GutterIconRenderer renderer = ((LineMarkerInfo)dom).createGutterRenderer();
-            if (renderer != null) {
-              icon = renderer.getIcon();
-            }
-            PsiElement element = ((LineMarkerInfo)dom).getElement();
-            assert element != null;
-            final String elementPresentation =
-              dom instanceof MergeableLineMarkerInfo
-              ? ((MergeableLineMarkerInfo)dom).getElementPresentation(element)
-              : element.getText();
-            String text = StringUtil.first(elementPresentation, 100, true).replace('\n', ' ');
+      return (e, elt) -> {
+        final List<LineMarkerInfo> infos = new ArrayList<>(markers);
+        Collections.sort(infos, Comparator.comparingInt(o -> o.startOffset));
+        //list.setFixedCellHeight(UIUtil.LIST_FIXED_CELL_HEIGHT); // TODO[jetzajac]: do we need it?
+        IPopupChooserBuilder<LineMarkerInfo> builder = JBPopupFactory.getInstance().createPopupChooserBuilder(infos);
+        builder.setRenderer(new SelectionAwareListCellRenderer<>(dom -> {
+          Icon icon = null;
+          final GutterIconRenderer renderer = ((LineMarkerInfo)dom).createGutterRenderer();
+          if (renderer != null) {
+            icon = renderer.getIcon();
+          }
+          PsiElement element = ((LineMarkerInfo)dom).getElement();
+          assert element != null;
+          final String elementPresentation =
+            dom instanceof MergeableLineMarkerInfo
+            ? ((MergeableLineMarkerInfo)dom).getElementPresentation(element)
+            : element.getText();
+          String text = StringUtil.first(elementPresentation, 100, true).replace('\n', ' ');
 
-            final JBLabel label = new JBLabel(text, icon, SwingConstants.LEFT);
-            label.setBorder(JBUI.Borders.empty(2));
-            return label;
-          }));
-          builder.setItemChosenCallback((value) -> {
-            final GutterIconNavigationHandler handler = value.getNavigationHandler();
-            if (handler != null) {
-              //noinspection unchecked
-              handler.navigate(e, value.getElement());
-            }
-          }).createPopup().show(new RelativePoint(e));
-        }
+          final JBLabel label = new JBLabel(text, icon, SwingConstants.LEFT);
+          label.setBorder(JBUI.Borders.empty(2));
+          return label;
+        }));
+        builder.setItemChosenCallback(value -> {
+          final GutterIconNavigationHandler handler = value.getNavigationHandler();
+          if (handler != null) {
+            //noinspection unchecked
+            handler.navigate(e, value.getElement());
+          }
+        }).createPopup().show(new RelativePoint(e));
       };
     }
   }

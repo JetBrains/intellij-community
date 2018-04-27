@@ -1,0 +1,1 @@
+deprecated: export.png -> /toolbarDecorator/export.svg; to be removed in IDEA 2020 - use AllIcons.ToolbarDecorator.Export

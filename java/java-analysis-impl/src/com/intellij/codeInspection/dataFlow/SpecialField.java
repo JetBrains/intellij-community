@@ -3,32 +3,34 @@ package com.intellij.codeInspection.dataFlow;
 
 import com.intellij.codeInspection.dataFlow.rangeSet.LongRangeSet;
 import com.intellij.codeInspection.dataFlow.value.*;
-import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
-import com.intellij.psi.util.InheritanceUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.siyeh.ig.psiutils.ExpressionUtils;
 import com.siyeh.ig.psiutils.MethodUtils;
+import one.util.streamex.StreamEx;
+import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Arrays;
 import java.util.List;
 
-import static com.intellij.codeInspection.dataFlow.MethodContract.ValueConstraint.*;
+import static com.intellij.codeInspection.dataFlow.ContractReturnValue.returnFalse;
+import static com.intellij.codeInspection.dataFlow.ContractReturnValue.returnTrue;
+import static com.intellij.codeInspection.dataFlow.StandardMethodContract.ValueConstraint.NULL_VALUE;
 
 /**
  * Represents a method which is handled as a field in DFA.
  *
  * @author Tagir Valeev
  */
-public enum SpecialField {
+public enum SpecialField implements DfaVariableSource {
   ARRAY_LENGTH(null, "length", true, LongRangeSet.indexRange()) {
     @Override
-    public boolean isMyAccessor(PsiModifierListOwner accessor) {
-      return accessor instanceof PsiField && "length".equals(((PsiField)accessor).getName()) &&
+    boolean isMyAccessor(PsiMember accessor) {
+      return accessor instanceof PsiField && "length".equals(accessor.getName()) &&
              JavaPsiFacade.getElementFactory(accessor.getProject()).getArrayClass(PsiUtil.getLanguageLevel(accessor)) ==
-             ((PsiField)accessor).getContainingClass();
+             accessor.getContainingClass();
     }
 
     @Override
@@ -50,20 +52,6 @@ public enum SpecialField {
         }
       }
       return null;
-    }
-
-    @Nullable
-    @Override
-    PsiModifierListOwner getCanonicalOwner(@Nullable PsiModifierListOwner qualifier, @Nullable PsiClass psiClass) {
-      if (qualifier == null) return null;
-      PsiClass arrayClass = JavaPsiFacade.getElementFactory(qualifier.getProject())
-        .getArrayClass(PsiUtil.getLanguageLevel(qualifier));
-      return arrayClass.findFieldByName("length", false);
-    }
-
-    @Override
-    public String toString() {
-      return "Array.length";
     }
   },
   STRING_LENGTH(CommonClassNames.JAVA_LANG_STRING, "length", true, LongRangeSet.indexRange()) {
@@ -96,7 +84,8 @@ public enum SpecialField {
     myRange = range;
   }
 
-  public boolean isFinal() {
+  @Override
+  public boolean isStable() {
     return myFinal;
   }
 
@@ -114,27 +103,20 @@ public enum SpecialField {
    * @param accessor accessor to test to test
    * @return true if supplied accessor can be used to read this special field
    */
-  public boolean isMyAccessor(PsiModifierListOwner accessor) {
+  boolean isMyAccessor(PsiMember accessor) {
     return accessor instanceof PsiMethod && MethodUtils.methodMatches((PsiMethod)accessor, myClassName, null, myMethodName);
   }
 
   /**
-   * Returns a canonical accessor which can be used to read this special field
-   *
-   * @param qualifier a qualifier accessor (if known)
-   * @param psiClass a class for which the canonical method should be resolved
-   * @return a canonical accessor representing this special field or null if cannot be determined.
+   * Finds a special field which corresponds to given accessor (method or field)
+   * @param accessor accessor to find a special field for
+   * @return found special field or null if accessor cannot be used to access a special field
    */
+  @Contract("null -> null")
   @Nullable
-  PsiModifierListOwner getCanonicalOwner(@Nullable PsiModifierListOwner qualifier, @Nullable PsiClass psiClass) {
-    if (psiClass == null) return null;
-    if (!myClassName.equals(psiClass.getQualifiedName())) {
-      PsiClass myClass = JavaPsiFacade.getInstance(psiClass.getProject()).findClass(myClassName, psiClass.getResolveScope());
-      if (!InheritanceUtil.isInheritorOrSelf(psiClass, myClass, true)) return null;
-      psiClass = myClass;
-    }
-    PsiMethod[] methods = psiClass.findMethodsByName(myMethodName, false);
-    return methods.length == 1 ? methods[0] : null;
+  public static SpecialField findSpecialField(PsiElement accessor) {
+    if (!(accessor instanceof PsiMember)) return null;
+    return StreamEx.of(values()).findFirst(sf -> sf.isMyAccessor((PsiMember)accessor)).orElse(null);
   }
 
   /**
@@ -160,11 +142,7 @@ public enum SpecialField {
           }
         }
       }
-      PsiModifierListOwner owner =
-        getCanonicalOwner(psiVariable, PsiUtil.resolveClassInClassTypeOnly(variableValue.getVariableType()));
-      if (owner != null) {
-        return factory.getVarFactory().createVariableValue(owner, PsiType.INT, false, variableValue);
-      }
+      return factory.getVarFactory().createVariableValue(this, PsiType.INT, variableValue);
     }
     if(qualifier instanceof DfaConstValue) {
       Object obj = ((DfaConstValue)qualifier).getValue();
@@ -192,19 +170,19 @@ public enum SpecialField {
   public List<MethodContract> getEmptyContracts() {
     ContractValue thisValue = ContractValue.qualifier().specialField(this);
     return Arrays
-      .asList(MethodContract.singleConditionContract(thisValue, DfaRelationValue.RelationType.EQ, ContractValue.zero(), TRUE_VALUE),
-              MethodContract.trivialContract(FALSE_VALUE));
+      .asList(MethodContract.singleConditionContract(thisValue, DfaRelationValue.RelationType.EQ, ContractValue.zero(), returnTrue()),
+              MethodContract.trivialContract(returnFalse()));
   }
 
   public List<MethodContract> getEqualsContracts() {
-    return Arrays.asList(new StandardMethodContract(new MethodContract.ValueConstraint[]{NULL_VALUE}, FALSE_VALUE),
+    return Arrays.asList(new StandardMethodContract(new StandardMethodContract.ValueConstraint[]{NULL_VALUE}, returnFalse()),
                          MethodContract.singleConditionContract(
                            ContractValue.qualifier().specialField(this), DfaRelationValue.RelationType.NE,
-                           ContractValue.argument(0).specialField(this), FALSE_VALUE));
+                           ContractValue.argument(0).specialField(this), returnFalse()));
   }
 
   @Override
   public String toString() {
-    return StringUtil.getShortName(myClassName)+"."+myMethodName+"()";
+    return myMethodName;
   }
 }

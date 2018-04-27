@@ -1,6 +1,4 @@
-/*
- * Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package com.intellij.execution.impl;
 
@@ -1392,30 +1390,6 @@ public class ConsoleViewImpl extends JPanel implements ConsoleView, ObservableCo
       @Override
       protected Editor getEditor(AnActionEvent e) {
         return myEditor;
-      }
-
-      @Override
-      public void setSelected(AnActionEvent e, final boolean state) {
-        super.setSelected(e, state);
-        if (myEditor == null) {
-          return;
-        }
-
-        final String placeholder = myCommandLineFolding.getPlaceholder(0);
-        final FoldingModel model = myEditor.getFoldingModel();
-        final int firstLineEnd = myEditor.getDocument().getLineEndOffset(0);
-        model.runBatchFoldingOperation(() -> {
-          FoldRegion[] regions = model.getAllFoldRegions();
-          if (regions.length > 0 && regions[0].getStartOffset() == 0 && regions[0].getEndOffset() == firstLineEnd) {
-            model.removeFoldRegion(regions[0]);
-          }
-          if (placeholder != null) {
-            FoldRegion region = model.addFoldRegion(0, firstLineEnd, placeholder);
-            if (region != null) {
-              region.setExpanded(false);
-            }
-          }
-        });
       }
     };
     final AnAction autoScrollToTheEndAction = new ScrollToTheEndToolbarAction(myEditor);

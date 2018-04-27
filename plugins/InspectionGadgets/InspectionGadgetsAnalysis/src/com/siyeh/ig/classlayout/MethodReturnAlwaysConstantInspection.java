@@ -41,7 +41,8 @@ public class MethodReturnAlwaysConstantInspection extends BaseGlobalInspection {
   @Override
   public CommonProblemDescriptor[] checkElement(
     @NotNull RefEntity refEntity, @NotNull AnalysisScope scope, @NotNull InspectionManager manager,
-    @NotNull GlobalInspectionContext globalContext) {
+    @NotNull GlobalInspectionContext globalContext,
+    @NotNull ProblemDescriptionsProcessor processor) {
     if (!(refEntity instanceof RefMethod)) {
       return null;
     }
@@ -69,19 +70,18 @@ public class MethodReturnAlwaysConstantInspection extends BaseGlobalInspection {
         return null;
       }
     }
-    final List<ProblemDescriptor> out = new ArrayList<>();
     for (RefMethod siblingRefMethod : allScopeInheritors) {
       final PsiMethod siblingMethod = (PsiMethod)siblingRefMethod.getElement();
       final PsiIdentifier identifier = siblingMethod.getNameIdentifier();
       if (identifier == null) {
         continue;
       }
-      out.add(manager.createProblemDescriptor(identifier,
-                                              InspectionGadgetsBundle.message(
-                                                "method.return.always.constant.problem.descriptor"), false, null,
-                                              ProblemHighlightType.GENERIC_ERROR_OR_WARNING));
+      processor.addProblemElement(siblingRefMethod, manager.createProblemDescriptor(identifier,
+                                                                                    InspectionGadgetsBundle.message(
+                                                                                      "method.return.always.constant.problem.descriptor"), false, null,
+                                                                                    ProblemHighlightType.GENERIC_ERROR_OR_WARNING));
     }
-    return out.toArray(ProblemDescriptor.EMPTY_ARRAY);
+    return null;
   }
 
   private static boolean alwaysReturnsConstant(PsiMethod method) {

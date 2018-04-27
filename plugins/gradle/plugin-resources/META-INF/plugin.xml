@@ -1,4 +1,4 @@
-<idea-plugin url="https://www.jetbrains.com/help/idea/gradle.html">
+<idea-plugin url="https://www.jetbrains.com/help/idea/gradle.html" xmlns:xi="http://www.w3.org/2001/XInclude">
   <name>Gradle</name>
   <id>org.jetbrains.plugins.gradle</id>
   <vendor>JetBrains</vendor>
@@ -21,10 +21,12 @@
   </description>
 
   <depends>com.intellij.modules.lang</depends>
-  <depends optional="true" config-file="gradle-java-integration.xml">com.intellij.modules.java</depends>
-  <depends optional="true" config-file="gradle-maven-integration.xml">org.jetbrains.idea.maven</depends>
-  <depends optional="true" config-file="gradle-coverage-integration.xml">com.intellij.modules.coverage</depends>
-  <depends optional="true" config-file="gradle-groovy-integration.xml">org.intellij.groovy</depends>
+  <xi:include href="/META-INF/ExternalBuildSystemsSupport.xml" xpointer="xpointer(/idea-plugin/*)">
+    <xi:fallback/>
+  </xi:include>
+  <xi:include href="/META-INF/gradle-java-integration.xml" xpointer="xpointer(/idea-plugin/*)">
+    <xi:fallback/>
+  </xi:include>
 
   <resource-bundle>i18n.GradleBundle</resource-bundle>
 
@@ -60,8 +62,6 @@
     <stacktrace.fold substring="at org.jetbrains.plugins.gradle."/>
     <stacktrace.fold substring="at com.intellij.openapi.externalSystem."/>
 
-    <testActionProvider implementation="org.jetbrains.plugins.gradle.execution.test.runner.OpenGradleTestResultActionProvider"/>
-
     <externalSystemExecutionConsoleManager implementation="org.jetbrains.plugins.gradle.execution.GradleExecutionConsoleManager"
                                            id="gradle"/>
 
@@ -85,6 +85,7 @@
     <externalProjectDataService implementation="org.jetbrains.plugins.gradle.service.project.data.CompositeBuildDataService"/>
     <externalProjectDataService implementation="org.jetbrains.plugins.gradle.service.project.data.GradleExtensionsDataService"/>
     <externalProjectDataService implementation="org.jetbrains.plugins.gradle.service.project.data.ExternalProjectDataService"/>
+    <externalProjectDataService implementation="org.jetbrains.plugins.gradle.service.project.data.PerformanceTraceDataService"/>
     <externalSystemViewContributor implementation="org.jetbrains.plugins.gradle.service.project.view.GradleViewContributor"/>
     <externalProjectStructureCustomizer implementation="org.jetbrains.plugins.gradle.service.project.GradleProjectStructureCustomizer"/>
     <externalSystemNotificationExtension implementation="org.jetbrains.plugins.gradle.service.notification.GradleNotificationExtension" order="last"/>

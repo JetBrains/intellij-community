@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.application;
 
 import com.intellij.openapi.project.DumbService;
@@ -30,7 +16,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
  * automatically wrap the implementation code into a read action. During indexing, query executors that don't implement {@link com.intellij.openapi.project.DumbAware}
  * (but need to be run in a read action), are delayed until indexing is complete, given that search parameters implement {@link DumbAwareSearchParameters}.
  * <p/>
- * Besides, {@link #processQuery(Object, Processor)} doesn't require to return a boolean value and thus it's harder to cancel the whole search
+ * Besides, {@link #processQuery(Object, Processor)} doesn't require to return a boolean value and thus it's harder to stop the whole search
  * by accidentally returning false.
  * 
  * @see Application#runReadAction(Computable) 
@@ -56,7 +42,7 @@ public abstract class QueryExecutorBase<Result, Params> implements QueryExecutor
   }
 
   @Override
-  public final boolean execute(@NotNull final Params queryParameters, @NotNull final Processor<Result> consumer) {
+  public final boolean execute(@NotNull final Params queryParameters, @NotNull final Processor<? super Result> consumer) {
     final AtomicBoolean toContinue = new AtomicBoolean(true);
     final Processor<Result> wrapper = result -> {
       if (!toContinue.get()) {
@@ -97,5 +83,5 @@ public abstract class QueryExecutorBase<Result, Params> implements QueryExecutor
   /**
    * Find some results according to queryParameters and feed them to consumer. If consumer returns false, stop.
    */
-  public abstract void processQuery(@NotNull Params queryParameters, @NotNull Processor<Result> consumer);
+  public abstract void processQuery(@NotNull Params queryParameters, @NotNull Processor<? super Result> consumer);
 }

@@ -13,6 +13,8 @@ import org.jetbrains.annotations.Nullable;
 
 public abstract class StringBasedPostfixTemplate extends PostfixTemplateWithExpressionSelector {
 
+  public static final String EXPR = "expr";
+
   /**
    * @deprecated use {@link #StringBasedPostfixTemplate(String, String, PostfixTemplateExpressionSelector, PostfixTemplateProvider)}
    */
@@ -53,7 +55,7 @@ public abstract class StringBasedPostfixTemplate extends PostfixTemplateWithExpr
 
 
     Template template = createTemplate(manager, templateString);
-    template.addVariable("expr", new TextExpression(expr.getText()), false);
+    template.addVariable(EXPR, new TextExpression(expr.getText()), false);
     setVariables(template, expr);
     manager.startTemplate(editor, template);
   }

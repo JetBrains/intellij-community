@@ -8,8 +8,8 @@ import com.intellij.codeInsight.NullableNotNullManager;
 import com.intellij.codeInsight.daemon.GroupNames;
 import com.intellij.codeInsight.intention.AddAnnotationPsiFix;
 import com.intellij.codeInspection.*;
-import com.intellij.codeInspection.dataFlow.MethodContract.ValueConstraint;
 import com.intellij.codeInspection.dataFlow.NullabilityProblemKind.NullabilityProblem;
+import com.intellij.codeInspection.dataFlow.StandardMethodContract.ValueConstraint;
 import com.intellij.codeInspection.dataFlow.fix.RedundantInstanceofFix;
 import com.intellij.codeInspection.dataFlow.fix.ReplaceWithConstantValueFix;
 import com.intellij.codeInspection.dataFlow.fix.ReplaceWithObjectsEqualsFix;
@@ -31,6 +31,7 @@ import com.intellij.psi.util.PsiUtil;
 import com.intellij.psi.util.TypeConversionUtil;
 import com.intellij.util.*;
 import com.intellij.util.containers.ContainerUtil;
+import com.siyeh.ig.fixes.EqualsToEqualityFix;
 import com.siyeh.ig.psiutils.*;
 import one.util.streamex.IntStreamEx;
 import one.util.streamex.StreamEx;
@@ -87,12 +88,38 @@ public class DataFlowInspectionBase extends AbstractBaseJavaLocalInspectionTool 
       @Override
       public void visitClass(PsiClass aClass) {
         if (aClass instanceof PsiTypeParameter) return;
-        analyzeCodeBlock(aClass, holder);
+        if (PsiUtil.isLocalOrAnonymousClass(aClass) && !(aClass instanceof PsiEnumConstantInitializer)) return;
+
+        final StandardDataFlowRunner runner = new StandardDataFlowRunner(TREAT_UNKNOWN_MEMBERS_AS_NULLABLE, aClass);
+        DataFlowInstructionVisitor visitor =
+          analyzeDfaWithNestedClosures(aClass, holder, runner, Collections.singletonList(runner.createMemoryState()));
+        List<DfaMemoryState> states = visitor.getEndOfInitializerStates();
+        for (PsiMethod method : aClass.getConstructors()) {
+          List<DfaMemoryState> initialStates;
+          PsiMethodCallExpression call = JavaPsiConstructorUtil.findThisOrSuperCallInConstructor(method);
+          if (JavaPsiConstructorUtil.isChainedConstructorCall(call) || (call == null && DfaUtil.hasImplicitImpureSuperCall(aClass, method))) {
+            initialStates = Collections.singletonList(runner.createMemoryState());
+          } else {
+            initialStates = StreamEx.of(states).map(DfaMemoryState::createCopy).toList();
+          }
+          analyzeMethod(method, runner, initialStates);
+        }
       }
 
       @Override
       public void visitMethod(PsiMethod method) {
-        analyzeCodeBlock(method.getBody(), holder);
+        if (method.isConstructor()) return;
+        final StandardDataFlowRunner runner = new StandardDataFlowRunner(TREAT_UNKNOWN_MEMBERS_AS_NULLABLE, method.getBody());
+        analyzeMethod(method, runner, Collections.singletonList(runner.createMemoryState()));
+      }
+
+      private void analyzeMethod(PsiMethod method, StandardDataFlowRunner runner, List<DfaMemoryState> initialStates) {
+        PsiCodeBlock scope = method.getBody();
+        if (scope == null) return;
+        PsiClass containingClass = PsiTreeUtil.getParentOfType(method, PsiClass.class);
+        if (containingClass != null && PsiUtil.isLocalOrAnonymousClass(containingClass) && !(containingClass instanceof PsiEnumConstantInitializer)) return;
+
+        analyzeDfaWithNestedClosures(scope, holder, runner, initialStates);
         analyzeNullLiteralMethodArguments(method, holder);
       }
 
@@ -160,20 +187,10 @@ public class DataFlowInspectionBase extends AbstractBaseJavaLocalInspectionTool 
     }
   }
 
-  private void analyzeCodeBlock(@Nullable final PsiElement scope, ProblemsHolder holder) {
-    if (scope == null) return;
-
-    PsiClass containingClass = PsiTreeUtil.getNonStrictParentOfType(scope, PsiClass.class);
-    if (containingClass != null && PsiUtil.isLocalOrAnonymousClass(containingClass) && !(containingClass instanceof PsiEnumConstantInitializer)) return;
-
-    final StandardDataFlowRunner dfaRunner = new StandardDataFlowRunner(TREAT_UNKNOWN_MEMBERS_AS_NULLABLE, scope);
-    analyzeDfaWithNestedClosures(scope, holder, dfaRunner, Collections.singletonList(dfaRunner.createMemoryState()));
-  }
-
-  private void analyzeDfaWithNestedClosures(PsiElement scope,
-                                            ProblemsHolder holder,
-                                            StandardDataFlowRunner dfaRunner,
-                                            Collection<? extends DfaMemoryState> initialStates) {
+  private DataFlowInstructionVisitor analyzeDfaWithNestedClosures(PsiElement scope,
+                                                                  ProblemsHolder holder,
+                                                                  StandardDataFlowRunner dfaRunner,
+                                                                  Collection<? extends DfaMemoryState> initialStates) {
     final DataFlowInstructionVisitor visitor = new DataFlowInstructionVisitor();
     final RunnerResult rc = dfaRunner.analyzeMethod(scope, visitor, IGNORE_ASSERT_STATEMENTS, initialStates);
     if (rc == RunnerResult.OK) {
@@ -194,6 +211,7 @@ public class DataFlowInspectionBase extends AbstractBaseJavaLocalInspectionTool 
         holder.registerProblem(name, message, ProblemHighlightType.WEAK_WARNING);
       }
     }
+    return visitor;
   }
 
   @NotNull
@@ -620,7 +638,7 @@ public class DataFlowInspectionBase extends AbstractBaseJavaLocalInspectionTool 
                                           BranchingInstruction instruction) {
     PsiElement psiAnchor = instruction.getPsiAnchor();
     if (instruction instanceof InstanceofInstruction && visitor.isInstanceofRedundant((InstanceofInstruction)instruction)) {
-      if (visitor.canBeNull((BinopInstruction)instruction)) {
+      if (visitor.canBeNull((InstanceofInstruction)instruction)) {
         holder.registerProblem(psiAnchor,
                                InspectionsBundle.message("dataflow.message.redundant.instanceof"),
                                new RedundantInstanceofFix());
@@ -682,11 +700,21 @@ public class DataFlowInspectionBase extends AbstractBaseJavaLocalInspectionTool 
         fixes.add(new SetInspectionOptionFix(this, "DONT_REPORT_TRUE_ASSERT_STATEMENTS",
                                              InspectionsBundle.message("inspection.data.flow.turn.off.true.asserts.quickfix"), true));
       }
+      ContainerUtil.addIfNotNull(fixes, createReplaceWithNullCheckFix(psiAnchor, evaluatesToTrue));
       String message = InspectionsBundle.message(isAtRHSOfBooleanAnd(psiAnchor) ?
                                                  "dataflow.message.constant.condition.when.reached" :
                                                  "dataflow.message.constant.condition", Boolean.toString(evaluatesToTrue));
       holder.registerProblem(psiAnchor, message, fixes.toArray(LocalQuickFix.EMPTY_ARRAY));
     }
+  }
+
+  private static LocalQuickFix createReplaceWithNullCheckFix(PsiElement psiAnchor, boolean evaluatesToTrue) {
+    if (evaluatesToTrue) return null;
+    if (!(psiAnchor instanceof PsiMethodCallExpression) || !MethodCallUtils.isEqualsCall((PsiMethodCallExpression)psiAnchor)) return null;
+    PsiExpression arg = ArrayUtil.getFirstElement(((PsiMethodCallExpression)psiAnchor).getArgumentList().getExpressions());
+    if (!ExpressionUtils.isNullLiteral(arg)) return null;
+    PsiElement parent = PsiUtil.skipParenthesizedExprUp(psiAnchor.getParent());
+    return new EqualsToEqualityFix(parent instanceof PsiExpression && BoolUtils.isNegation((PsiExpression)parent));
   }
 
   protected LocalQuickFix[] createConditionalAssignmentFixes(boolean evaluatesToTrue, PsiAssignmentExpression parent, final boolean onTheFly) {
@@ -811,9 +839,9 @@ public class DataFlowInspectionBase extends AbstractBaseJavaLocalInspectionTool 
           if (method != null) {
             List<StandardMethodContract> contracts = ControlFlowAnalyzer.getMethodContracts(method);
             return contracts.stream().anyMatch(
-              smc -> smc.getReturnValue() == ValueConstraint.THROW_EXCEPTION &&
-                     IntStreamEx.ofIndices(smc.arguments)
-                                .allMatch(idx -> smc.arguments[idx] == (idx == index ? wantedConstraint : ValueConstraint.ANY_VALUE)));
+              smc -> smc.getReturnValue().isFail() &&
+                     IntStreamEx.range(smc.getParameterCount())
+                                .allMatch(idx -> smc.getParameterConstraint(idx) == (idx == index ? wantedConstraint : ValueConstraint.ANY_VALUE)));
           }
         }
       }

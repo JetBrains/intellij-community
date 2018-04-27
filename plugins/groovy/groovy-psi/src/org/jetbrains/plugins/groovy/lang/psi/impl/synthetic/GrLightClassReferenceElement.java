@@ -111,11 +111,13 @@ public class GrLightClassReferenceElement extends LightElement implements GrCode
     return "light reference element";
   }
 
+  @NotNull
   @Override
   public PsiElement getElement() {
     return this;
   }
 
+  @NotNull
   @Override
   public TextRange getRangeInElement() {
     return new TextRange(0, getTextLength());

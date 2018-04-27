@@ -41,10 +41,12 @@ class SelfReference implements PsiReference {
     this(element, target, 0);
   }
 
+  @NotNull
   public PsiElement getElement() {
     return myValue;
   }
 
+  @NotNull
   public TextRange getRangeInElement() {
     return TextRange.from(1 + myStartOffset, myValue.getTextLength() - (2 + myStartOffset));
   }

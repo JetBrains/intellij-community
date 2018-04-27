@@ -23,6 +23,7 @@ import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.FileTypeManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.PathUtil;
 import org.jetbrains.annotations.NotNull;
@@ -43,7 +44,8 @@ public class ScratchUtil {
    * @see ScratchFileService
    */
   public static boolean isScratch(@Nullable VirtualFile file) {
-    return file != null && file.getFileType() == ScratchFileType.INSTANCE;
+    RootType rootType = RootType.forFile(file);
+    return rootType != null && !rootType.isHidden();
   }
 
   public static void updateFileExtension(@NotNull Project project, @Nullable VirtualFile file) throws IOException {
@@ -60,9 +62,9 @@ public class ScratchUtil {
     String ext = actual.getDefaultExtension();
     if (StringUtil.isEmpty(ext)) return;
 
-    String newName = PathUtil.makeFileName(file.getNameWithoutExtension(), ext);
     VirtualFile parent = file.getParent();
-    newName = parent != null && parent.findChild(newName) != null ? PathUtil.makeFileName(file.getName(), ext) : newName;
+    String newName = parent != null ? VfsUtil.getNextAvailableName(parent, file.getNameWithoutExtension(), ext) :
+                     PathUtil.makeFileName(file.getNameWithoutExtension(), ext);
     file.rename(ScratchUtil.class, newName);
   }
 

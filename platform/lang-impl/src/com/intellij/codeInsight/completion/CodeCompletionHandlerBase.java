@@ -46,6 +46,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
 
+import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
 
@@ -249,14 +250,12 @@ public class CodeCompletionHandlerBase {
     if (indicator.blockingWaitForFinish(ourAutoInsertItemTimeout)) {
       try {
         indicator.getLookup().refreshUi(true, false);
+        completionFinished(indicator, hasModifiers);
       }
-      catch (Exception e) {
+      catch (Throwable e) {
         CompletionServiceImpl.setCompletionPhase(CompletionPhase.NoCompletion);
         LOG.error(e);
-        return;
       }
-
-      completionFinished(indicator, hasModifiers);
       return;
     }
 
@@ -387,25 +386,39 @@ public class CodeCompletionHandlerBase {
     WatchingInsertionContext context = null;
     try {
       StatisticsUpdate update = StatisticsUpdate.collectStatisticChanges(item);
-      context = insertItemHonorBlockSelection(indicator, item, completionChar, items, update);
+      context = insertItemHonorBlockSelection(indicator, item, completionChar, update);
       update.trackStatistics(context);
     }
     finally {
       afterItemInsertion(indicator, context == null ? null : context.getLaterRunnable());
     }
-
   }
 
-  private static WatchingInsertionContext insertItemHonorBlockSelection(CompletionProgressIndicator indicator,
+  public void handleCompletionElementSelected(CompletionParameters parameters,
+                                              @NotNull LookupElement item,
+                                              char completionChar) {
+    WatchingInsertionContext context = null;
+    try {
+      StatisticsUpdate update = StatisticsUpdate.collectStatisticChanges(item);
+      context = insertItemHonorBlockSelection((CompletionProcessEx) parameters.getProcess(), item, completionChar, update);
+      update.trackStatistics(context);
+    }
+    finally {
+      if (context != null && context.getLaterRunnable() != null) {
+        context.getLaterRunnable().run();
+      }
+    }
+  }
+
+  private static WatchingInsertionContext insertItemHonorBlockSelection(CompletionProcessEx indicator,
                                                                         LookupElement item,
                                                                         char completionChar,
-                                                                        List<LookupElement> items,
                                                                         StatisticsUpdate update) {
     final Editor editor = indicator.getEditor();
 
     final int caretOffset = indicator.getCaret().getOffset();
     final int idEndOffset = indicator.getOffsetMap().containsOffset(CompletionInitializationContext.IDENTIFIER_END_OFFSET) ?
-                            indicator.getIdentifierEndOffset() :
+                            indicator.getOffsetMap().getOffset(CompletionInitializationContext.IDENTIFIER_END_OFFSET) :
                             CompletionInitializationContext.calcDefaultIdentifierEnd(editor, caretOffset);
     final int idEndOffsetDelta = idEndOffset - caretOffset;
 
@@ -426,7 +439,7 @@ public class CodeCompletionHandlerBase {
           if (idEnd > targetEditor.getDocument().getTextLength()) {
             idEnd = targetCaretOffset; // no replacement by Tab when offsets gone wrong for some reason
           }
-          WatchingInsertionContext currentContext = insertItem(indicator, item, completionChar, items, update,
+          WatchingInsertionContext currentContext = insertItem(indicator.getLookup(), item, completionChar, update,
                                                                                     targetEditor, targetFile,
                                                                                     targetCaretOffset, idEnd,
                                                                                     targetOffsets.getOffsets());
@@ -435,18 +448,19 @@ public class CodeCompletionHandlerBase {
 
         private OffsetsInFile findInjectedOffsetsIfAny(Caret caret) {
           if (!wasInjected) return topLevelOffsets;
-          
-          PsiDocumentManager.getInstance(indicator.getProject()).commitDocument(hostEditor.getDocument());
+
+          PsiDocumentManager.getInstance(topLevelOffsets.getFile().getProject()).commitDocument(hostEditor.getDocument());
           return topLevelOffsets.toInjectedIfAny(caret.getOffset());
         }
       });
       context = lastContext.get();
     } else {
-      context = insertItem(indicator, item, completionChar, items, update, editor, PsiUtilBase.getPsiFileInEditor(editor, indicator.getProject()), caretOffset,
+      PsiFile psiFile = PsiUtilBase.getPsiFileInEditor(editor, indicator.getProject());
+      context = insertItem(indicator.getLookup(), item, completionChar, update, editor, psiFile, caretOffset,
                            idEndOffset, indicator.getOffsetMap());
     }
     if (context.shouldAddCompletionChar()) {
-      WriteAction.run(() -> addCompletionChar(context, item, editor, indicator, completionChar));
+      WriteAction.run(() -> addCompletionChar(context, item, editor, completionChar));
     }
     return context;
   }
@@ -472,15 +486,15 @@ public class CodeCompletionHandlerBase {
     }
   }
 
-  private static WatchingInsertionContext insertItem(final CompletionProgressIndicator indicator,
-                                                                          final LookupElement item,
-                                                                          final char completionChar,
-                                                                          List<LookupElement> items,
-                                                                          final StatisticsUpdate update,
-                                                                          final Editor editor,
-                                                                          final PsiFile psiFile,
-                                                                          final int caretOffset,
-                                                                          final int idEndOffset, final OffsetMap offsetMap) {
+  private static WatchingInsertionContext insertItem(@Nullable final Lookup lookup,
+                                                     final LookupElement item,
+                                                     final char completionChar,
+                                                     final StatisticsUpdate update,
+                                                     final Editor editor,
+                                                     final PsiFile psiFile,
+                                                     final int caretOffset,
+                                                     final int idEndOffset,
+                                                     final OffsetMap offsetMap) {
     editor.getCaretModel().moveToOffset(caretOffset);
     int initialStartOffset = Math.max(0, caretOffset - item.getLookupString().length());
 
@@ -488,7 +502,9 @@ public class CodeCompletionHandlerBase {
     offsetMap.addOffset(CompletionInitializationContext.SELECTION_END_OFFSET, caretOffset);
     offsetMap.addOffset(CompletionInitializationContext.IDENTIFIER_END_OFFSET, idEndOffset);
 
-    WatchingInsertionContext context = new WatchingInsertionContext(offsetMap, psiFile, completionChar, items, editor);
+    WatchingInsertionContext context = new WatchingInsertionContext(offsetMap, psiFile, completionChar,
+                                                                    lookup != null ? lookup.getItems() : Collections.emptyList(),
+                                                                    editor);
     ApplicationManager.getApplication().runWriteAction(() -> {
       try {
         if (caretOffset < idEndOffset && completionChar == Lookup.REPLACE_SELECT_CHAR) {
@@ -498,7 +514,7 @@ public class CodeCompletionHandlerBase {
         assert context.getStartOffset() >= 0 : "stale startOffset: was " + initialStartOffset + "; selEnd=" + caretOffset + "; idEnd=" + idEndOffset + "; file=" + context.getFile();
         assert context.getTailOffset() >= 0 : "stale tail: was " + initialStartOffset + "; selEnd=" + caretOffset + "; idEnd=" + idEndOffset + "; file=" + context.getFile();
 
-        Project project = indicator.getProject();
+        Project project = psiFile.getProject();
         if (item.requiresCommittedDocuments()) {
           PsiDocumentManager.getInstance(project).commitAllDocuments();
         }
@@ -511,13 +527,15 @@ public class CodeCompletionHandlerBase {
 
       EditorModificationUtil.scrollToCaret(editor);
     });
-    update.addSparedChars(indicator, item, context);
+    if (lookup != null) {
+      update.addSparedChars(lookup, item, context);
+    }
     return context;
   }
 
   private static void addCompletionChar(WatchingInsertionContext context,
                                         LookupElement item,
-                                        Editor editor, CompletionProgressIndicator indicator, char completionChar) {
+                                        Editor editor, char completionChar) {
     if (!context.getOffsetMap().containsOffset(InsertionContext.TAIL_OFFSET)) {
       LOG.info("tailOffset<0 after inserting " + item + " of " + item.getClass() + "; invalidated at: " + context.invalidateTrace + "\n--------");
     }
@@ -528,7 +546,7 @@ public class CodeCompletionHandlerBase {
       context.getEditor().getCaretModel().moveToOffset(context.getTailOffset());
     }
     if (context.getCompletionChar() == Lookup.COMPLETE_STATEMENT_SELECT_CHAR) {
-      Language language = PsiUtilBase.getLanguageInEditor(editor, indicator.getProject());
+      Language language = PsiUtilBase.getLanguageInEditor(editor, context.getFile().getProject());
       if (language != null) {
         for (SmartEnterProcessor processor : SmartEnterProcessors.INSTANCE.allForLanguage(language)) {
           if (processor.processAfterCompletion(editor, context.getFile())) break;

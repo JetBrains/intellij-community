@@ -5,6 +5,7 @@ import com.intellij.debugger.DebuggerBundle;
 import com.intellij.debugger.DebuggerManagerEx;
 import com.intellij.debugger.engine.DebuggerManagerThreadImpl;
 import com.intellij.debugger.engine.events.DebuggerCommandImpl;
+import com.intellij.ide.actions.ActionsCollector;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.AbstractProjectComponent;
 import com.intellij.openapi.project.Project;
@@ -14,11 +15,11 @@ import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
-import java.util.HashMap;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.File;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -198,5 +199,6 @@ public class HotSwapManager extends AbstractProjectComponent {
 
     reloadClassesProgress.setTitle(DebuggerBundle.message("progress.hotswap.reloading"));
     reloadClassesCommand.run();
+    ActionsCollector.getInstance().record("Reload Classes");
   }
 }

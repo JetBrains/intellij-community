@@ -36,7 +36,7 @@ public abstract class PsiReferenceBase<T extends PsiElement> implements PsiRefer
    * @param rangeInElement range relatively to the element's start offset
    * @param soft soft
    */
-  public PsiReferenceBase(T element, TextRange rangeInElement, boolean soft) {
+  public PsiReferenceBase(@NotNull T element, TextRange rangeInElement, boolean soft) {
     myElement = element;
     myRangeInElement = rangeInElement;
     mySoft = soft;
@@ -46,7 +46,7 @@ public abstract class PsiReferenceBase<T extends PsiElement> implements PsiRefer
    * @param element PSI element
    * @param rangeInElement range relatively to the element's start offset
    */
-  public PsiReferenceBase(T element, TextRange rangeInElement) {
+  public PsiReferenceBase(@NotNull T element, TextRange rangeInElement) {
     this(element);
     myRangeInElement = rangeInElement;
   }
@@ -56,7 +56,7 @@ public abstract class PsiReferenceBase<T extends PsiElement> implements PsiRefer
    * @param element PSI element
    * @param soft soft
    */
-  public PsiReferenceBase(T element, boolean soft) {
+  public PsiReferenceBase(@NotNull T element, boolean soft) {
     myElement = element;
     mySoft = soft;
   }
@@ -87,11 +87,13 @@ public abstract class PsiReferenceBase<T extends PsiElement> implements PsiRefer
     }
   }
 
+  @NotNull
   @Override
   public T getElement() {
     return myElement;
   }
 
+  @NotNull
   @Override
   public TextRange getRangeInElement() {
     if (myRangeInElement == null) {

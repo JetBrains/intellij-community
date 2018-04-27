@@ -98,7 +98,7 @@ public class CompletionProgressIndicator extends ProgressIndicatorBase implement
   };
   private final Semaphore myFreezeSemaphore = new Semaphore(1);
   private final Semaphore myFinishSemaphore = new Semaphore(1);
-  private final OffsetMap myOffsetMap;
+  @NotNull private final OffsetMap myOffsetMap;
   private final Set<Pair<Integer, ElementPattern<String>>> myRestartingPrefixConditions = ContainerUtil.newConcurrentSet();
   private final LookupAdapter myLookupListener = new LookupAdapter() {
     @Override
@@ -125,7 +125,7 @@ public class CompletionProgressIndicator extends ProgressIndicatorBase implement
   private final Object myLock = new String("CompletionProgressIndicator");
 
   CompletionProgressIndicator(Editor editor, @NotNull Caret caret, int invocationCount,
-                              CodeCompletionHandlerBase handler, OffsetMap offsetMap, OffsetsInFile hostOffsets,
+                              CodeCompletionHandlerBase handler, @NotNull OffsetMap offsetMap, @NotNull OffsetsInFile hostOffsets,
                               boolean hasModifiers, LookupImpl lookup) {
     myEditor = editor;
     myCaret = caret;
@@ -174,11 +174,13 @@ public class CompletionProgressIndicator extends ProgressIndicatorBase implement
     myHandler.lookupItemSelected(this, lookupItem, completionChar, myLookup.getItems());
   }
 
+  @NotNull
   @SuppressWarnings("WeakerAccess")
   public OffsetMap getOffsetMap() {
     return myOffsetMap;
   }
 
+  @NotNull
   @Override
   public OffsetsInFile getHostOffsets() {
     return myHostOffsets;
@@ -621,12 +623,14 @@ public class CompletionProgressIndicator extends ProgressIndicatorBase implement
     return reused ? Math.max(myInvocationCount + 1, 2) : invocation;
   }
 
+  @NotNull
   public Editor getEditor() {
     return myEditor;
   }
 
+  @Override
   @NotNull
-  Caret getCaret() {
+  public Caret getCaret() {
     return myCaret;
   }
 

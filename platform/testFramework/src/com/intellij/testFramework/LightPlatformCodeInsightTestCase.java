@@ -20,6 +20,7 @@ import com.intellij.codeInsight.highlighting.HighlightUsagesHandler;
 import com.intellij.ide.DataManager;
 import com.intellij.injected.editor.DocumentWindow;
 import com.intellij.injected.editor.EditorWindow;
+import com.intellij.injected.editor.VirtualFileWindow;
 import com.intellij.lang.injection.InjectedLanguageManager;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.DataContext;
@@ -277,12 +278,14 @@ public abstract class LightPlatformCodeInsightTestCase extends LightPlatformTest
       if (!editorWindowRef.isNull()) {
         myEditor = editorWindowRef.get();
         myFile = editorWindowRef.get().getInjectedFile();
+        myVFile = myFile.getVirtualFile();
       }
     }
   }
 
   private static void deleteVFile() throws IOException {
     if (myVFile != null) {
+      if (myVFile instanceof VirtualFileWindow) myVFile = ((VirtualFileWindow)myVFile).getDelegate();
       WriteAction.run(() -> {
         // avoid messing with invalid files, in case someone calls configureXXX() several times
         PsiDocumentManager.getInstance(ourProject).commitAllDocuments();
@@ -686,7 +689,7 @@ public abstract class LightPlatformCodeInsightTestCase extends LightPlatformTest
    * @see FileBasedTestCaseHelperEx
    * @Parameterized.Parameter fields are injected on parameterized test creation.
    */
-  @Parameterized.Parameter(0)
+  @Parameterized.Parameter()
   public String myFileSuffix;
 
   /**
@@ -698,7 +701,7 @@ public abstract class LightPlatformCodeInsightTestCase extends LightPlatformTest
   public String myTestDataPath;
 
   @Parameterized.Parameters(name = "{0}")
-  public static List<Object[]> params() throws Throwable {
+  public static List<Object[]> params() {
     return Collections.emptyList();
   }
 

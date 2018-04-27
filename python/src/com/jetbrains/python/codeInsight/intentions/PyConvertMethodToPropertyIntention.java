@@ -23,16 +23,14 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.usageView.UsageInfo;
-import com.intellij.util.ArrayUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.containers.ContainerUtil;
 import com.jetbrains.python.PyBundle;
+import com.jetbrains.python.PyNames;
 import com.jetbrains.python.psi.*;
 import com.jetbrains.python.refactoring.PyRefactoringUtil;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
-import java.util.ArrayList;
 import java.util.List;
 
 public class PyConvertMethodToPropertyIntention extends PyBaseIntentionAction {
@@ -92,18 +90,8 @@ public class PyConvertMethodToPropertyIntention extends PyBaseIntentionAction {
 
     if (!prepareForWrite(file, usages)) return;
 
-    final PyDecoratorList problemDecoratorList = problemFunction.getDecoratorList();
-    List<String> decoTexts = new ArrayList<>();
-    decoTexts.add("@property");
-    if (problemDecoratorList != null) {
-      final PyDecorator[] decorators = problemDecoratorList.getDecorators();
-      for (PyDecorator deco : decorators) {
-        decoTexts.add(deco.getText());
-      }
-    }
-
     WriteAction.run(() -> {
-      ensureDecoratorList(problemFunction, problemDecoratorList, decoTexts);
+      PyUtil.addDecorator(problemFunction, "@" + PyNames.PROPERTY);
       deleteUsages(usages);
     });
   }
@@ -113,18 +101,6 @@ public class PyConvertMethodToPropertyIntention extends PyBaseIntentionAction {
     toWrite.addAll(ContainerUtil.mapNotNull(usages, UsageInfo::getElement));
     if (!FileModificationService.getInstance().preparePsiElementsForWrite(toWrite)) return false;
     return true;
-  }
-
-  private static void ensureDecoratorList(PyFunction problemFunction, @Nullable PyDecoratorList problemDecoratorList, List<String> decoTexts) {
-    PyElementGenerator generator = PyElementGenerator.getInstance(problemFunction.getProject());
-    PyDecoratorList decoratorList = generator.createDecoratorList(ArrayUtil.toStringArray(decoTexts));
-
-    if (problemDecoratorList != null) {
-      problemDecoratorList.replace(decoratorList);
-    }
-    else {
-      problemFunction.addBefore(decoratorList, problemFunction.getFirstChild());
-    }
   }
 
   private static void deleteUsages(List<UsageInfo> usages) {

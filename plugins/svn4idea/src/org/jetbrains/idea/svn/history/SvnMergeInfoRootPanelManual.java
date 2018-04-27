@@ -1,4 +1,4 @@
-// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.svn.history;
 
 import com.intellij.openapi.project.Project;
@@ -42,7 +42,7 @@ public class SvnMergeInfoRootPanelManual {
   @NotNull private final Runnable myListener;
   private boolean myOnlyOneRoot;
   @NotNull private WCInfoWithBranches myInfo;
-  @NotNull private final Map<String, String> myBranchToLocal;
+  @NotNull private final Map<Url, String> myBranchToLocal;
   private WCInfoWithBranches.Branch mySelectedBranch;
 
   public SvnMergeInfoRootPanelManual(@NotNull Project project,
@@ -173,7 +173,7 @@ public class SvnMergeInfoRootPanelManual {
   }
 
   @Nullable
-  private static String getLocal(@NotNull String url, @Nullable String localPath) {
+  private static String getLocal(@NotNull Url url, @Nullable String localPath) {
     String result = null;
     Set<String> paths = SvnBranchMapperManager.getInstance().get(url);
 
@@ -185,7 +185,7 @@ public class SvnMergeInfoRootPanelManual {
   }
 
   // always assign to local area here
-  private void calculateBranchPathByBranch(@Nullable String url, @Nullable String localPath) {
+  private void calculateBranchPathByBranch(@Nullable Url url, @Nullable String localPath) {
     final String local = url == null ? null : getLocal(url, localPath == null ? myBranchToLocal.get(url) : localPath);
     if (local == null) {
       myLocalArea.setForeground(JBColor.RED);

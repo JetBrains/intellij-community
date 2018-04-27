@@ -1,4 +1,3 @@
-from contextlib import contextmanager
 from typing import (
     Any,
     Callable,
@@ -7,9 +6,13 @@ from typing import (
     IO,
     List,
     Optional,
+    overload,
     Tuple,
     TypeVar,
 )
+
+from click.types import _ConvertibleType
+from click._termui_impl import ProgressBar as _ProgressBar
 
 
 def hidden_prompt_func(prompt: str) -> str:
@@ -30,7 +33,7 @@ def prompt(
     default: Optional[str] = ...,
     hide_input: bool = ...,
     confirmation_prompt: bool = ...,
-    type: Optional[Any] = ...,
+    type: Optional[_ConvertibleType] = ...,
     value_proc: Optional[Callable[[Optional[str]], Any]] = ...,
     prompt_suffix: str = ...,
     show_default: bool = ...,
@@ -60,10 +63,9 @@ def echo_via_pager(text: str, color: Optional[bool] = ...) -> None:
 
 _T = TypeVar('_T')
 
-
-@contextmanager
+@overload
 def progressbar(
-    iterable: Optional[Iterable[_T]] = ...,
+    iterable: Iterable[_T],
     length: Optional[int] = ...,
     label: Optional[str] = ...,
     show_eta: bool = ...,
@@ -77,9 +79,27 @@ def progressbar(
     width: int = ...,
     file: Optional[IO] = ...,
     color: Optional[bool] = ...,
-) -> Generator[_T, None, None]:
+) -> _ProgressBar[_T]:
     ...
 
+@overload
+def progressbar(
+    iterable: None = ...,
+    length: Optional[int] = ...,
+    label: Optional[str] = ...,
+    show_eta: bool = ...,
+    show_percent: Optional[bool] = ...,
+    show_pos: bool = ...,
+    item_show_func: Optional[Callable[[_T], str]] = ...,
+    fill_char: str = ...,
+    empty_char: str = ...,
+    bar_template: str = ...,
+    info_sep: str = ...,
+    width: int = ...,
+    file: Optional[IO] = ...,
+    color: Optional[bool] = ...,
+) -> _ProgressBar[int]:
+    ...
 
 def clear() -> None:
     ...

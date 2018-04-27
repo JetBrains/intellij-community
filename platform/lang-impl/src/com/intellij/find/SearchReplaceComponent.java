@@ -15,6 +15,7 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.impl.EditorHeaderComponent;
 import com.intellij.openapi.keymap.KeymapUtil;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.ui.Splitter;
 import com.intellij.openapi.util.BooleanGetter;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.text.StringUtil;
@@ -138,6 +139,7 @@ public class SearchReplaceComponent extends EditorHeaderComponent implements Dat
     Wrapper searchToolbarWrapper1 = new NonOpaquePanel(new BorderLayout());
     searchToolbarWrapper1.add(mySearchActionsToolbar1, BorderLayout.WEST);
     mySearchActionsToolbar2 = createSearchToolbar2(searchToolbar2Actions);
+    mySearchActionsToolbar2.setForceShowFirstComponent(true);
     Wrapper searchToolbarWrapper2 = new Wrapper(mySearchActionsToolbar2);
     mySearchActionsToolbar2.setBorder(JBUI.Borders.emptyLeft(16));
     JPanel searchPair = new NonOpaquePanel(new BorderLayout()).setVerticalSizeReferent(mySearchFieldWrapper);
@@ -147,6 +149,7 @@ public class SearchReplaceComponent extends EditorHeaderComponent implements Dat
     myReplaceActionsToolbar1 = createReplaceToolbar1(replaceToolbar1Actions);
     Wrapper replaceToolbarWrapper1 = new Wrapper(myReplaceActionsToolbar1).setVerticalSizeReferent(myReplaceFieldWrapper);
     myReplaceActionsToolbar2 = createReplaceToolbar2(replaceToolbar2Actions);
+    myReplaceActionsToolbar2.setForceShowFirstComponent(true);
     Wrapper replaceToolbarWrapper2 = new Wrapper(myReplaceActionsToolbar2).setVerticalSizeReferent(myReplaceFieldWrapper);
     myReplaceActionsToolbar2.setBorder(JBUI.Borders.emptyLeft(16));
     myReplaceToolbarWrapper = new NonOpaquePanel(new BorderLayout());
@@ -167,7 +170,14 @@ public class SearchReplaceComponent extends EditorHeaderComponent implements Dat
     closeLabel.setToolTipText("Close search bar (Escape)");
     searchPair.add(new Wrapper.North(closeLabel), BorderLayout.EAST);
 
-    myRightPanel = new NonOpaquePanel(new BorderLayout());
+    myRightPanel = new NonOpaquePanel(new BorderLayout()) {
+      @Override
+      public Dimension getMinimumSize() {
+        Dimension size = super.getMinimumSize();
+        size.width += JBUI.scale(16);//looks like hack but we need this extra space in case of lack of width
+        return size;
+      }
+    };
     myRightPanel.add(searchPair, BorderLayout.NORTH);
     myRightPanel.add(myReplaceToolbarWrapper, BorderLayout.CENTER);
 
@@ -176,6 +186,7 @@ public class SearchReplaceComponent extends EditorHeaderComponent implements Dat
     splitter.setFirstComponent(myLeftPanel);
     splitter.setSecondComponent(myRightPanel);
     splitter.setHonorComponentsMinimumSize(true);
+    splitter.setLackOfSpaceStrategy(Splitter.LackOfSpaceStrategy.HONOR_THE_SECOND_MIN_SIZE);
     splitter.setAndLoadSplitterProportionKey("FindSplitterProportion");
     splitter.setOpaque(false);
     splitter.getDivider().setOpaque(false);
@@ -418,10 +429,10 @@ public class SearchReplaceComponent extends EditorHeaderComponent implements Dat
     if (oldComponent != null) return false;
     final MyTextComponentWrapper wrapper = search ? mySearchFieldWrapper : myReplaceFieldWrapper;
 
-    final JTextComponent textComponent;
+    final JTextArea textComponent;
       SearchTextArea textArea = new SearchTextArea(search);
       textComponent = textArea.getTextArea();
-      ((JTextArea)textComponent).setRows(isMultiline() ? 2 : 1);
+      textComponent.setRows(isMultiline() ? 2 : 1);
 
     wrapper.setContent(textArea);
 

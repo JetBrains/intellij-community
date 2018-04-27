@@ -21,12 +21,12 @@ import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.util.PsiUtilCore;
+import com.intellij.util.JavaPsiConstructorUtil;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.InspectionGadgetsFix;
 import com.siyeh.ig.psiutils.ControlFlowUtils;
-import com.siyeh.ig.psiutils.ExpressionUtils;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -144,7 +144,7 @@ public class ImplicitCallToSuperInspection extends BaseInspection {
         (PsiExpressionStatement)statement;
       final PsiExpression expression =
         expressionStatement.getExpression();
-      return ExpressionUtils.isConstructorInvocation(expression);
+      return JavaPsiConstructorUtil.isConstructorCall(expression);
     }
   }
 }

@@ -5,7 +5,6 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.psi.*;
 import com.intellij.psi.util.ClassUtil;
 import com.intellij.refactoring.extractMethodObject.ItemToReplaceDescriptor;
-import com.intellij.refactoring.extractMethodObject.PsiReflectionAccessUtil;
 import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -49,7 +48,7 @@ public class ConstructorReflectionAccessor extends ReflectionAccessorBase<Constr
     String returnType = PsiReflectionAccessUtil.getAccessibleReturnType(descriptor.psiClass);
     PsiExpressionList argumentList = descriptor.newExpression.getArgumentList();
     if (className == null || argumentList == null || returnType == null) {
-      LOG.debug("expression is incomplete");
+      LOG.warn("code is incomplete: " + descriptor.newExpression);
       return;
     }
 
@@ -87,8 +86,9 @@ public class ConstructorReflectionAccessor extends ReflectionAccessorBase<Constr
       }
       else {
         PsiJavaCodeReferenceElement classReference = expression.getClassReference();
-        if (classReference instanceof PsiClass && !PsiReflectionAccessUtil.isAccessible((PsiClass)classReference)) {
-          return new ConstructorDescriptor(expression, null, (PsiClass)classReference);
+        PsiElement referent = classReference != null ? classReference.resolve() : null;
+        if (referent instanceof PsiClass && !PsiReflectionAccessUtil.isAccessible((PsiClass)referent)) {
+          return new ConstructorDescriptor(expression, null, (PsiClass)referent);
         }
       }
 

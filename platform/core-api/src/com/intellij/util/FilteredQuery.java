@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package com.intellij.util;
 
@@ -45,14 +31,14 @@ public class FilteredQuery<T> implements Query<T> {
   }
 
   @Override
-  public boolean forEach(@NotNull final Processor<T> consumer) {
+  public boolean forEach(@NotNull final Processor<? super T> consumer) {
     myOriginal.forEach(new MyProcessor(consumer));
     return true;
   }
 
   @NotNull
   @Override
-  public AsyncFuture<Boolean> forEachAsync(@NotNull Processor<T> consumer) {
+  public AsyncFuture<Boolean> forEachAsync(@NotNull Processor<? super T> consumer) {
     return myOriginal.forEachAsync(new MyProcessor(consumer));
   }
 
@@ -78,9 +64,9 @@ public class FilteredQuery<T> implements Query<T> {
   }
 
   private class MyProcessor implements Processor<T> {
-    private final Processor<T> myConsumer;
+    private final Processor<? super T> myConsumer;
 
-    public MyProcessor(@NotNull Processor<T> consumer) {
+    public MyProcessor(@NotNull Processor<? super T> consumer) {
       myConsumer = consumer;
     }
 

@@ -9,7 +9,7 @@
 
     <action id="RunConfiguration" class="com.intellij.execution.actions.RunConfigurationsComboBoxAction"/>
     <action id="ChooseRunConfiguration" class="com.intellij.execution.actions.ChooseRunConfigurationPopupAction" text="Run..." description="Choose and run configuration" icon="AllIcons.Toolwindows.ToolWindowRun"/>
-    <action id="ChooseDebugConfiguration" class="com.intellij.execution.actions.ChooseDebugConfigurationPopupAction" text="Debug..." description="Choose and debug configuration" icon="AllIcons.General.Debug"/>
+    <action id="ChooseDebugConfiguration" class="com.intellij.execution.actions.ChooseDebugConfigurationPopupAction" text="Debug..." description="Choose and debug configuration" icon="AllIcons.Actions.StartDebugger"/>
 
     <group id="RunContextGroup" popup="false">
       <!-- A dynamic group filled with executor actions -->
@@ -40,13 +40,15 @@
     <action id="ShowIntentionActions" class="com.intellij.codeInsight.intention.actions.ShowIntentionActionsAction"/>
 
     <action id="TogglePopupHints" class="com.intellij.codeInsight.daemon.impl.TogglePopupHintsAction"/>
-    <action id="FindModal" class="com.intellij.openapi.editor.actions.FindAction" icon="AllIcons.Actions.Menu_find"/>
+    <action id="FindModal" class="com.intellij.openapi.editor.actions.FindAction" icon="AllIcons.Actions.Find"/>
 
     <action id="CodeInspection.OnEditor" class="com.intellij.codeInspection.actions.CodeInspectionOnEditorAction"/>
 
     <action id="ActivateNavBar" class="com.intellij.ide.navigationToolbar.ActivateNavigationBarAction" popup="true"/>
 
     <action id="EditorIndentLineOrSelection" class="com.intellij.openapi.editor.actions.IndentLineOrSelectionAction"/>
+
+    <action id="BraceOrQuoteOut" class="com.intellij.codeInsight.editorActions.BraceOrQuoteOutAction"/>
 
     <group id="CodeInsightEditorActions">
       <reference ref="LookupActions"/>
@@ -397,17 +399,13 @@
 
     <group id="WeighingNewGroup" class="com.intellij.ide.actions.WeighingNewActionGroup"/>
 
-    <!-- Toolbar -->
-    <!--
-    <group id="ToolbarNewElement">
-      <action id="NewElementToolbarAction" class="com.intellij.ide.actions.NewElementToolbarAction" icon="/general/add.png"/>
-      <add-to-group group-id="MainToolBar" anchor="first"/>
-    </group>
-    -->
-    <action id="RevealIn" class="com.intellij.ide.actions.RevealFileAction">
-      <add-to-group group-id="RunContextPopupGroup" anchor="last"/>
-    </action>
+    <group id="RevealGroup">
+      <action id="RevealIn" class="com.intellij.ide.actions.RevealFileAction"/>
 
+      <add-to-group group-id="RunContextPopupGroup" anchor="last"/>
+    </group>
+
+    <!-- Toolbar -->
     <group id="ToolbarFindGroup">
       <add-to-group group-id="MainToolBar" relative-to-action="Back" anchor="before"/>
     </group>
@@ -517,6 +515,11 @@
       <reference ref="ExternalToolsGroup"/>
       <separator/>
       <reference ref="ProjectViewPopupMenuSettingsGroup"/>
+      <group id="RemoveBom.Group">
+        <action id="RemoveBom" class="com.intellij.openapi.editor.actions.RemoveBomAction"/>
+        <add-to-group group-id="FileMenu" anchor="after" relative-to-action="ChangeFileEncodingAction"/>
+        <add-to-group group-id="EditorPopupMenu" anchor="after" relative-to-action="ChangeFileEncodingAction"/>
+      </group>
     </group>
 
     <group id="NavbarPopupMenu">
@@ -708,6 +711,7 @@
       <action id="ShowExecutionPoint" class="com.intellij.xdebugger.impl.actions.ShowExecutionPointAction"
               icon="AllIcons.Debugger.ShowCurrentFrame"/>
       <separator/>
+      <action id="Debugger.RestoreBreakpoint" class="com.intellij.xdebugger.impl.actions.RestoreBreakpointAction"/>
       <action id="ToggleLineBreakpoint" class="com.intellij.xdebugger.impl.actions.ToggleLineBreakpointAction"/>
       <action id="ToggleTemporaryLineBreakpoint" class="com.intellij.xdebugger.impl.actions.ToggleTemporaryLineBreakpointAction"/>
       <action id="ToggleBreakpointEnabled" class="com.intellij.xdebugger.impl.actions.ToggleBreakpointEnabledAction"/>
@@ -733,7 +737,7 @@
 
       <action id="Debugger.Tree.EvaluateInConsole" class="com.intellij.xdebugger.impl.ui.tree.actions.EvaluateInConsoleFromTreeAction"/>
 
-      <action id="XDebugger.NewWatch" class="com.intellij.xdebugger.impl.frame.actions.XNewWatchAction" icon="AllIcons.Debugger.NewWatch"/>
+      <action id="XDebugger.NewWatch" class="com.intellij.xdebugger.impl.frame.actions.XNewWatchAction" icon="AllIcons.General.Add"/>
       <action id="XDebugger.EditWatch" class="com.intellij.xdebugger.impl.frame.actions.XEditWatchAction" use-shortcut-of="XDebugger.SetValue"/>
       <action id="XDebugger.CopyWatch" class="com.intellij.xdebugger.impl.frame.actions.XCopyWatchAction" icon="AllIcons.Actions.Copy"
               text="Duplicate Watch" use-shortcut-of="EditorDuplicate"/>
@@ -742,7 +746,7 @@
       <action id="XDebugger.MoveWatchUp" class="com.intellij.xdebugger.impl.frame.actions.XMoveWatchUp" use-shortcut-of="MethodUp"/>
       <action id="XDebugger.MoveWatchDown" class="com.intellij.xdebugger.impl.frame.actions.XMoveWatchDown" use-shortcut-of="MethodDown"/>
       <action id="XDebugger.SwitchWatchesInVariables" class="com.intellij.xdebugger.impl.frame.actions.XSwitchWatchesInVariables"
-              icon="AllIcons.Debugger.Watches"/>
+              icon="AllIcons.Debugger.Watch"/>
       <action id="XDebugger.RemoveAllWatches" class="com.intellij.xdebugger.impl.frame.actions.XRemoveAllWatchesAction"/>
       <action id="XDebugger.MuteBreakpoints" class="com.intellij.xdebugger.impl.actions.MuteBreakpointAction"
               icon="AllIcons.Debugger.MuteBreakpoints"/>
@@ -852,7 +856,7 @@
       <reference ref="EditorToggleUseSoftWraps"/>
     </group>
 
-    <group id="XDebugger.Settings" icon="AllIcons.General.SecondaryGroup" popup="true">
+    <group id="XDebugger.Settings" icon="AllIcons.General.GearPlain" popup="true">
       <action id="XDebugger.Inline" class="com.intellij.xdebugger.impl.actions.UseInlineDebuggerAction"/>
       <separator/>
       <reference ref="XDebugger.ToggleSortValues"/>

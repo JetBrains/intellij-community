@@ -106,7 +106,7 @@ public final class DfaFactMap {
    */
   @Nullable
   public <T> DfaFactMap intersect(@NotNull DfaFactType<T> type, @Nullable T value) {
-    if (value == null) return this;
+    if (value == null || type.isUnknown(value)) return this;
     T curFact = get(type);
     if (curFact == null) return with(type, value);
     T newFact = type.intersectFacts(curFact, value);

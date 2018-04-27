@@ -4,6 +4,7 @@ package org.jetbrains.plugins.gradle.service.settings;
 import com.intellij.ide.util.projectWizard.WizardContext;
 import com.intellij.openapi.actionSystem.CustomShortcutSet;
 import com.intellij.openapi.application.ApplicationBundle;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.externalSystem.model.settings.LocationSettingType;
 import com.intellij.openapi.externalSystem.service.execution.ExternalSystemJdkUtil;
@@ -120,6 +121,10 @@ public class IdeaGradleProjectSettingsControlBuilder implements GradleProjectSet
   @Nullable
   private JBCheckBox myStoreExternallyCheckBox;
   private boolean dropStoreExternallyCheckBox;
+
+  @SuppressWarnings("FieldCanBeLocal") // do not shift UI on the hide/show action, see IdeaGradleProjectSettingsControlBuilder.showUi
+  @Nullable
+  private JPanel myGradleJdkPanel;
 
   public IdeaGradleProjectSettingsControlBuilder(@NotNull GradleProjectSettings initialSettings) {
     myInstallationManager = ServiceManager.getService(GradleInstallationManager.class);
@@ -290,9 +295,9 @@ public class IdeaGradleProjectSettingsControlBuilder implements GradleProjectSet
       myGradleJdkComboBox = new ExternalSystemJdkComboBox().withoutJre();
 
       content.add(myGradleJdkLabel, ExternalSystemUiUtil.getLabelConstraints(indentLevel));
-      JPanel gradleJdkPanel = new JPanel(new BorderLayout(SystemInfo.isMac ? 0 : 2, 0));
-      gradleJdkPanel.setFocusable(false);
-      gradleJdkPanel.add(myGradleJdkComboBox, BorderLayout.CENTER);
+      myGradleJdkPanel = new JPanel(new BorderLayout(SystemInfo.isMac ? 0 : 2, 0));
+      myGradleJdkPanel.setFocusable(false);
+      myGradleJdkPanel.add(myGradleJdkComboBox, BorderLayout.CENTER);
       myGradleJdkSetUpButton = new FixedSizeButton(myGradleJdkComboBox);
       myGradleJdkSetUpButton.setToolTipText(UIBundle.message("component.with.browse.button.browse.button.tooltip.text"));
       // FixedSizeButton isn't focusable but it should be selectable via keyboard.
@@ -307,8 +312,8 @@ public class IdeaGradleProjectSettingsControlBuilder implements GradleProjectSet
         myGradleJdkSetUpButton.setFocusable(true);
         myGradleJdkSetUpButton.getAccessibleContext().setAccessibleName(ApplicationBundle.message("button.new"));
       }
-      gradleJdkPanel.add(myGradleJdkSetUpButton, BorderLayout.EAST);
-      content.add(gradleJdkPanel, ExternalSystemUiUtil.getFillLineConstraints(0));
+      myGradleJdkPanel.add(myGradleJdkSetUpButton, BorderLayout.EAST);
+      content.add(myGradleJdkPanel, ExternalSystemUiUtil.getFillLineConstraints(0));
     }
     return this;
   }
@@ -356,7 +361,7 @@ public class IdeaGradleProjectSettingsControlBuilder implements GradleProjectSet
 
   @Override
   public boolean validate(GradleProjectSettings settings) throws ConfigurationException {
-    if(myGradleJdkComboBox != null) {
+    if(myGradleJdkComboBox != null && !ApplicationManager.getApplication().isUnitTestMode()) {
       Sdk selectedJdk = myGradleJdkComboBox.getSelectedJdk();
       if(selectedJdk == null) {
         throw new ConfigurationException(GradleBundle.message("gradle.jvm.undefined"));

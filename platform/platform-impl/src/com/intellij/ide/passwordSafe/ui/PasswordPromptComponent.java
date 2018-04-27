@@ -44,7 +44,7 @@ public class PasswordPromptComponent {
     myIconLabel.setText("");
     myIconLabel.setIcon(Messages.getWarningIcon());
     JTextPane messageField = Messages.configureMessagePaneUi(new JTextPane(), message, UIUtil.FontSize.SMALL);
-    myMessagePanel.add(Messages.wrapToScrollPaneIfNeeded(messageField, 0, 4), BorderLayout.CENTER);
+    myMessagePanel.add(Messages.wrapToScrollPaneIfNeeded(messageField, 80, 4), BorderLayout.CENTER);
 
     if (memoryOnly) {
       myRememberCheckBox.setVisible(false);

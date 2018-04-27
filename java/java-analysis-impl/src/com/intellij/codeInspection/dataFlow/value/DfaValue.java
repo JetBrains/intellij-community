@@ -42,6 +42,7 @@ public abstract class DfaValue {
    */
   public DfaValue union(DfaValue other) {
     if(this == other) return this;
+    if(this == DfaUnknownValue.getInstance() || other == DfaUnknownValue.getInstance()) return DfaUnknownValue.getInstance();
     return myFactory.getFactFactory().createValue(DfaFactMap.fromDfaValue(this).union(DfaFactMap.fromDfaValue(other)));
   }
 

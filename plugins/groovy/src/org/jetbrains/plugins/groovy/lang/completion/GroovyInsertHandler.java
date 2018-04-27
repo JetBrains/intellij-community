@@ -28,7 +28,6 @@ import com.intellij.openapi.editor.CaretModel;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.psi.*;
-import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
 import com.intellij.psi.codeStyle.CommonCodeStyleSettings;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.text.CharArrayUtil;
@@ -181,8 +180,7 @@ public class GroovyInsertHandler implements InsertHandler<LookupElement> {
   }
 
   private static boolean isSpaceBeforeClosure(PsiFile file) {
-    return CodeStyleSettingsManager.getSettings(file.getProject())
-      .getCustomSettings(GroovyCodeStyleSettings.class).SPACE_BEFORE_CLOSURE_LBRACE;
+    return GroovyCodeStyleSettings.getInstance(file).SPACE_BEFORE_CLOSURE_LBRACE;
   }
 
   private static boolean isAnnotationNameValuePair(Object obj, PsiElement parent) {

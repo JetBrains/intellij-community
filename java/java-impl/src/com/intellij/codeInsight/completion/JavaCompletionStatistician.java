@@ -24,6 +24,7 @@ import com.intellij.psi.statistics.JavaStatisticsManager;
 import com.intellij.psi.statistics.StatisticsInfo;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import static com.intellij.patterns.PsiJavaPatterns.psiElement;
@@ -35,7 +36,7 @@ public class JavaCompletionStatistician extends CompletionStatistician{
   private static final ElementPattern<PsiElement> SUPER_CALL = psiElement().afterLeaf(psiElement().withText(".").afterLeaf(PsiKeyword.SUPER));
 
   @Override
-  public StatisticsInfo serialize(final LookupElement element, final CompletionLocation location) {
+  public StatisticsInfo serialize(@NotNull final LookupElement element, @NotNull final CompletionLocation location) {
     Object o = element.getObject();
 
     if (o instanceof PsiLocalVariable || o instanceof PsiParameter || 

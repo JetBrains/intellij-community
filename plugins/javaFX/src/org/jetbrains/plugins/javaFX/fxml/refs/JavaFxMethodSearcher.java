@@ -1,21 +1,6 @@
-/*
- * Copyright 2000-2013 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.javaFX.fxml.refs;
 
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Ref;
@@ -27,7 +12,6 @@ import com.intellij.psi.search.LocalSearchScope;
 import com.intellij.psi.search.SearchScope;
 import com.intellij.psi.search.UsageSearchContext;
 import com.intellij.psi.search.searches.ReferencesSearch;
-import com.intellij.psi.util.PropertyUtil;
 import com.intellij.psi.util.PropertyUtilBase;
 import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.psi.xml.XmlAttribute;
@@ -46,7 +30,7 @@ import org.jetbrains.plugins.javaFX.refactoring.JavaFxPropertyElement;
 public class JavaFxMethodSearcher implements QueryExecutor<PsiReference, ReferencesSearch.SearchParameters> {
   @Override
   public boolean execute(@NotNull final ReferencesSearch.SearchParameters queryParameters,
-                         @NotNull final Processor<PsiReference> consumer) {
+                         @NotNull final Processor<? super PsiReference> consumer) {
     final PsiElement elementToSearch = queryParameters.getElementToSearch();
     if (elementToSearch instanceof PsiMethod) {
       searchMethod((PsiMethod)elementToSearch, queryParameters, consumer);
@@ -63,7 +47,7 @@ public class JavaFxMethodSearcher implements QueryExecutor<PsiReference, Referen
   }
 
   private static void searchMethod(@NotNull PsiMethod psiMethod, @NotNull ReferencesSearch.SearchParameters queryParameters,
-                                   @NotNull Processor<PsiReference> consumer) {
+                                   @NotNull Processor<? super PsiReference> consumer) {
     final Project project = PsiUtilCore.getProjectInReadAction(psiMethod);
     final SearchScope scope =
       ReadAction.compute(queryParameters::getEffectiveSearchScope);
@@ -95,15 +79,14 @@ public class JavaFxMethodSearcher implements QueryExecutor<PsiReference, Referen
       if (ArrayUtil.isEmpty(filteredFiles)) return;
 
       final GlobalSearchScope filteredScope = GlobalSearchScope.filesScope(project, ContainerUtil.newHashSet(filteredFiles));
-      ApplicationManager.getApplication().runReadAction(
-        (Runnable)() -> CacheManager.SERVICE.getInstance(project).processFilesWithWord(
-          file -> searchMethodInFile(psiMethod, file, consumer), propertyName, UsageSearchContext.IN_PLAIN_TEXT, filteredScope, true));
+      ReadAction.run(() -> CacheManager.SERVICE.getInstance(project).processFilesWithWord(
+        file -> searchMethodInFile(psiMethod, file, consumer), propertyName, UsageSearchContext.IN_PLAIN_TEXT, filteredScope, true));
     }
   }
 
   private static boolean searchMethodInFile(@NotNull PsiMethod psiMethod,
                                             @NotNull PsiFile file,
-                                            @NotNull Processor<PsiReference> consumer) {
+                                            @NotNull Processor<? super PsiReference> consumer) {
     final Ref<Boolean> stopped = new Ref<>(false);
     file.accept(new XmlRecursiveElementVisitor() {
       @Override

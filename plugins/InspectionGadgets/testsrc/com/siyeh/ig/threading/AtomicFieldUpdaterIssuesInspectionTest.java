@@ -155,6 +155,23 @@ public class AtomicFieldUpdaterIssuesInspectionTest extends LightInspectionTestC
            "}");
   }
 
+  public void testAccessibleAnonymousCtor() {
+    doTest("import java.util.concurrent.atomic.AtomicIntegerFieldUpdater;\n" +
+           "\n" +
+           "class Test {\n" +
+           "  private volatile int field;\n" +
+           "\n" +
+           "  static class Holder {\n" +
+           "    Holder(AtomicIntegerFieldUpdater<Test> obj) {}\n" +
+           "  }\n" +
+           "\n" +
+           "  void test() {\n" +
+           "    new Holder(AtomicIntegerFieldUpdater.newUpdater(Test.class, \"field\"));\n" +
+           "    new Holder(AtomicIntegerFieldUpdater.newUpdater(Test.class, \"field\")) {};\n" +
+           "  }\n" +
+           "}");
+  }
+
   public void testAvoidNPE() {
     doTest("import java.util.concurrent.atomic.AtomicReferenceFieldUpdater;\n" +
            "class Z</*!Cyclic inheritance involving 'T'*//*!*/T extends T> {\n" +

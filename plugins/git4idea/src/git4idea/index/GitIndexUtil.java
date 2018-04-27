@@ -28,6 +28,7 @@ import com.intellij.vcsUtil.VcsFileUtil;
 import com.intellij.vcsUtil.VcsUtil;
 import git4idea.GitUtil;
 import git4idea.commands.*;
+import git4idea.config.GitVersionSpecialty;
 import git4idea.repo.GitRepository;
 import git4idea.util.StringScanner;
 import org.jetbrains.annotations.NotNull;
@@ -132,8 +133,12 @@ public class GitIndexUtil {
     String path = VcsFileUtil.relativePath(repository.getRoot(), filePath);
 
     GitLineHandler h = new GitLineHandler(repository.getProject(), repository.getRoot(), GitCommand.UPDATE_INDEX);
-    h.setSilent(true);
-    h.addParameters("--cacheinfo", mode + "," + blobHash.asString() + "," + path);
+    if (GitVersionSpecialty.CACHEINFO_SUPPORTS_SINGLE_PARAMETER_FORM.existsIn(repository)) {
+      h.addParameters("--cacheinfo", mode + "," + blobHash.asString() + "," + path);
+    }
+    else {
+      h.addParameters("--cacheinfo", mode, blobHash.asString(), path);
+    }
     h.endOptions();
     Git.getInstance().runCommandWithoutCollectingOutput(h).getOutputOrThrow();
   }

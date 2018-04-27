@@ -17,15 +17,13 @@ import com.intellij.execution.runners.ExecutionEnvironment;
 import com.intellij.execution.runners.ExecutionEnvironmentBuilder;
 import com.intellij.execution.testframework.TestSearchScope;
 import com.intellij.execution.testframework.sm.runner.SMTRunnerConsoleProperties;
+import com.intellij.execution.util.JavaParametersUtil;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.options.SettingsEditor;
 import com.intellij.openapi.options.SettingsEditorGroup;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Comparing;
-import com.intellij.openapi.util.DefaultJDOMExternalizer;
-import com.intellij.openapi.util.InvalidDataException;
-import com.intellij.openapi.util.WriteExternalException;
+import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
@@ -37,6 +35,7 @@ import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.jps.model.serialization.PathMacroUtil;
 
 import java.util.*;
 
@@ -106,7 +105,7 @@ public class JUnitConfiguration extends JavaTestConfigurationBase {
       restoreOriginalModule(originalModule);
     }
   };
-  
+
   final RefactoringListeners.Accessor<PsiClass> myCategory = new RefactoringListeners.Accessor<PsiClass>() {
     @Override
     public void setName(@NotNull final String qualifiedName) {
@@ -128,6 +127,10 @@ public class JUnitConfiguration extends JavaTestConfigurationBase {
 
   public JUnitConfiguration(final String name, final Project project, ConfigurationFactory configurationFactory) {
     this(name, project, new Data(), configurationFactory);
+  }
+
+  public JUnitConfiguration(final String name, final Project project) {
+    this(name, project, new Data(), JUnitConfigurationType.getInstance().getConfigurationFactories()[0]);
   }
 
   protected JUnitConfiguration(final String name, final Project project, final Data data, ConfigurationFactory configurationFactory) {
@@ -213,7 +216,7 @@ public class JUnitConfiguration extends JavaTestConfigurationBase {
 
   @Override
   public void setVMParameters(@Nullable String value) {
-    myData.setVMParameters(value);
+    myData.setVMParameters(StringUtil.nullize(value));
   }
 
   @Override
@@ -321,8 +324,18 @@ public class JUnitConfiguration extends JavaTestConfigurationBase {
   }
 
   @Override
+  public String getTestType() {
+    return getPersistentData().TEST_OBJECT;
+  }
+
+  @Override
   public TestSearchScope getTestSearchScope() {
     return getPersistentData().getScope();
+  }
+
+  @Override
+  public void setSearchScope(TestSearchScope searchScope) {
+    getPersistentData().setScope(searchScope);
   }
 
   public void beFromSourcePosition(PsiLocation<PsiMethod> sourceLocation) {
@@ -434,9 +447,9 @@ public class JUnitConfiguration extends JavaTestConfigurationBase {
   public void writeExternal(@NotNull final Element element) throws WriteExternalException {
     super.writeExternal(element);
     JavaRunConfigurationExtensionManager.getInstance().writeExternal(this, element);
-    DefaultJDOMExternalizer.writeExternal(this, element);
+    DefaultJDOMExternalizer.writeExternal(this, element, JavaParametersUtil.getFilter(this));
     final Data persistentData = getPersistentData();
-    DefaultJDOMExternalizer.writeExternal(persistentData, element);
+    DefaultJDOMExternalizer.writeExternal(persistentData, element, new DifferenceFilter<>(persistentData, new Data()));
 
     if (!persistentData.getEnvs().isEmpty()) {
       EnvironmentVariablesComponent.writeExternal(element, persistentData.getEnvs());
@@ -456,13 +469,16 @@ public class JUnitConfiguration extends JavaTestConfigurationBase {
       element.addContent(categoryNameElement);
     }
 
-    final Element patternsElement = new Element(PATTERNS_EL_NAME);
-    for (String o : persistentData.getPatterns()) {
-      final Element patternElement = new Element(PATTERN_EL_NAME);
-      patternElement.setAttribute(TEST_CLASS_ATT_NAME, o);
-      patternsElement.addContent(patternElement);
+    if (!persistentData.getPatterns().isEmpty()) {
+      final Element patternsElement = new Element(PATTERNS_EL_NAME);
+      for (String o : persistentData.getPatterns()) {
+        final Element patternElement = new Element(PATTERN_EL_NAME);
+        patternElement.setAttribute(TEST_CLASS_ATT_NAME, o);
+        patternsElement.addContent(patternElement);
+      }
+      element.addContent(patternsElement);
     }
-    element.addContent(patternsElement);
+
     final String forkMode = getForkMode();
     if (!forkMode.equals("none")) {
       final Element forkModeElement = new Element("fork_mode");
@@ -562,9 +578,9 @@ public class JUnitConfiguration extends JavaTestConfigurationBase {
     private String[] UNIQUE_ID = ArrayUtil.EMPTY_STRING_ARRAY;
     private String TAGS;
     public String TEST_OBJECT = TEST_CLASS;
-    public String VM_PARAMETERS;
+    public String VM_PARAMETERS = "-ea";
     public String PARAMETERS;
-    public String WORKING_DIRECTORY;
+    public String WORKING_DIRECTORY = PathMacroUtil.MODULE_WORKING_DIR;
     public boolean PASS_PARENT_ENVS = true;
     public TestSearchScope.Wrapper TEST_SEARCH_SCOPE = new TestSearchScope.Wrapper();
     private String DIR_NAME;
@@ -771,11 +787,7 @@ public class JUnitConfiguration extends JavaTestConfigurationBase {
     }
 
     public String getPatternPresentation() {
-      final List<String> enabledTests = new ArrayList<>();
-      for (String pattern : myPattern) {
-        enabledTests.add(pattern);
-      }
-      return StringUtil.join(enabledTests, "||");
+      return StringUtil.join(myPattern, "||");
     }
 
     public TestObject getTestObject(@NotNull JUnitConfiguration configuration) {

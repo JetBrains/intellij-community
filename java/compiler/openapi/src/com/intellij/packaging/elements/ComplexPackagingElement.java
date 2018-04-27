@@ -32,6 +32,7 @@ public abstract class ComplexPackagingElement<S> extends PackagingElement<S> {
     super(type);
   }
 
+  @NotNull
   @Override
   public List<? extends Generator> computeAntInstructions(@NotNull PackagingElementResolvingContext resolvingContext, @NotNull AntCopyInstructionCreator creator,
                                                           @NotNull ArtifactAntGenerationContext generationContext,

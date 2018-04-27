@@ -1,6 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package com.intellij.xdebugger.breakpoints;
 
@@ -90,12 +88,13 @@ public abstract class XLineBreakpointType<P extends XBreakpointProperties> exten
   }
 
   public Icon getTemporaryIcon() {
-    return AllIcons.Debugger.Db_temporary_breakpoint;
+    return AllIcons.Debugger.Db_set_breakpoint;
   }
 
   /**
-   * Priority is considered when several breakpoint types can be set on the same code line,
+   * Priority is considered when several breakpoint types can be set inside a folded code block,
    * in this case we choose type with the highest priority
+   * Also it affects types sorting in various places
    */
   public int getPriority() {
     return 0;
@@ -141,6 +140,10 @@ public abstract class XLineBreakpointType<P extends XBreakpointProperties> exten
 
     @Nullable
     public abstract P createProperties();
+
+    public final XLineBreakpointType<P> getType() {
+      return XLineBreakpointType.this;
+    }
   }
 
   public class XLineBreakpointAllVariant extends XLineBreakpointVariant {

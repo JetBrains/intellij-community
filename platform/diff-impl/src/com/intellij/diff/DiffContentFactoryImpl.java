@@ -486,6 +486,9 @@ public class DiffContentFactoryImpl extends DiffContentFactoryEx {
     if (UnknownFileType.INSTANCE.equals(fileType)) {
       return guessCharsetFromContent(content) == null;
     }
+    if (fileType instanceof UIBasedFileType) {
+      return true;
+    }
     return fileType.isBinary();
   }
 

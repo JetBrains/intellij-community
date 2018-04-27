@@ -439,9 +439,8 @@ public final class HttpRequests {
   }
 
   private static <T> T process(RequestBuilderImpl builder, RequestProcessor<T> processor) throws IOException {
-    LOG.assertTrue(ApplicationManager.getApplication() == null ||
-                   ApplicationManager.getApplication().isUnitTestMode() ||
-                   !ApplicationManager.getApplication().isReadAccessAllowed(),
+    Application app = ApplicationManager.getApplication();
+    LOG.assertTrue(app == null || app.isUnitTestMode() || app.isHeadlessEnvironment() || !app.isReadAccessAllowed(),
                    "Network shouldn't be accessed in EDT or inside read action");
 
     ClassLoader contextLoader = Thread.currentThread().getContextClassLoader();
@@ -490,11 +489,12 @@ public final class HttpRequests {
   }
 
   private static URLConnection openConnection(RequestBuilderImpl builder, RequestImpl request) throws IOException {
+    if (builder.myForceHttps && StringUtil.startsWith(request.myUrl, "http:")) {
+      request.myUrl = "https:" + request.myUrl.substring(5);
+    }
+
     for (int i = 0; i < builder.myRedirectLimit; i++) {
       String url = request.myUrl;
-      if (builder.myForceHttps && StringUtil.startsWith(url, "http:")) {
-        request.myUrl = url = "https:" + url.substring(5);
-      }
 
       final URLConnection connection;
       if (!builder.myUseProxy) {

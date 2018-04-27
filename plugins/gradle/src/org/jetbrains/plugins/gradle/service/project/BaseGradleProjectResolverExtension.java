@@ -27,6 +27,7 @@ import com.intellij.openapi.externalSystem.model.ProjectKeys;
 import com.intellij.openapi.externalSystem.model.project.*;
 import com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskId;
 import com.intellij.openapi.externalSystem.model.task.TaskData;
+import com.intellij.openapi.externalSystem.rt.execution.ForkedDebuggerConfiguration;
 import com.intellij.openapi.externalSystem.service.notification.ExternalSystemNotificationManager;
 import com.intellij.openapi.externalSystem.service.notification.NotificationCategory;
 import com.intellij.openapi.externalSystem.service.notification.NotificationData;
@@ -57,7 +58,6 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.gradle.model.*;
-import org.jetbrains.plugins.gradle.model.data.BuildScriptClasspathData;
 import org.jetbrains.plugins.gradle.model.data.GradleSourceSetData;
 import org.jetbrains.plugins.gradle.service.project.data.ExternalProjectDataService;
 import org.jetbrains.plugins.gradle.service.project.data.GradleExtensionsDataService;
@@ -78,7 +78,6 @@ import static com.intellij.openapi.util.Pair.pair;
 import static org.jetbrains.plugins.gradle.service.project.GradleProjectResolver.CONFIGURATION_ARTIFACTS;
 import static org.jetbrains.plugins.gradle.service.project.GradleProjectResolver.MODULES_OUTPUTS;
 import static org.jetbrains.plugins.gradle.service.project.GradleProjectResolverUtil.*;
-import static org.jetbrains.plugins.gradle.service.task.GradleTaskManager.getForkedDebuggerSetup;
 
 /**
  * {@link BaseGradleProjectResolverExtension} provides base implementation of Gradle project resolver.
@@ -673,9 +672,9 @@ public class BaseGradleProjectResolverExtension implements GradleProjectResolver
                                     @Nullable String jvmAgentSetup,
                                     @NotNull Consumer<String> initScriptConsumer) {
     if (!StringUtil.isEmpty(jvmAgentSetup)) {
-      int debugPort = getForkedDebuggerSetup(jvmAgentSetup);
-      if (debugPort != -1) {
-        setupDebugForAllJvmForkedTasks(initScriptConsumer, debugPort);
+      ForkedDebuggerConfiguration forkedDebuggerSetup = ForkedDebuggerConfiguration.parse(jvmAgentSetup);
+      if (forkedDebuggerSetup != null) {
+        setupDebugForAllJvmForkedTasks(initScriptConsumer, forkedDebuggerSetup.getForkSocketPort());
       }
       else {
         final String names = "[\"" + StringUtil.join(taskNames, "\", \"") + "\"]";
@@ -704,6 +703,10 @@ public class BaseGradleProjectResolverExtension implements GradleProjectResolver
       "  }",
       "}",
       "gradle.taskGraph.beforeTask { Task task ->",
+      " if (task instanceof org.gradle.api.tasks.testing.Test) {",
+      "  task.maxParallelForks = 1",
+      "  task.forkEvery = 0",
+      " }",
       " if (task instanceof JavaForkOptions) {",
       "  def jvmArgs = task.jvmArgs.findAll{!it?.startsWith('-agentlib:jdwp') && !it?.startsWith('-Xrunjdwp')}",
       "  jvmArgs << com.intellij.openapi.externalSystem.rt.execution.ForkedDebuggerHelper.setupDebugger(task.path, " + debugPort + ")",

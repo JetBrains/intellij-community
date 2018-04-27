@@ -47,18 +47,8 @@ public class TypeEvalContext {
 
   private final Map<PyTypedElement, PyType> myEvaluated = new HashMap<>();
   private final Map<PyCallable, PyType> myEvaluatedReturn = new HashMap<>();
-  private final ThreadLocal<Set<PyTypedElement>> myEvaluating = new ThreadLocal<Set<PyTypedElement>>() {
-    @Override
-    protected Set<PyTypedElement> initialValue() {
-      return new HashSet<>();
-    }
-  };
-  private final ThreadLocal<Set<PyCallable>> myEvaluatingReturn = new ThreadLocal<Set<PyCallable>>() {
-    @Override
-    protected Set<PyCallable> initialValue() {
-      return new HashSet<>();
-    }
-  };
+  private final ThreadLocal<Set<PyTypedElement>> myEvaluating = ThreadLocal.withInitial(HashSet::new);
+  private final ThreadLocal<Set<PyCallable>> myEvaluatingReturn = ThreadLocal.withInitial(HashSet::new);
 
   private TypeEvalContext(boolean allowDataFlow, boolean allowStubToAST, boolean allowCallContext, @Nullable PsiFile origin) {
     myConstraints = new TypeEvalConstraints(allowDataFlow, allowStubToAST, allowCallContext, origin);
@@ -254,7 +244,7 @@ public class TypeEvalContext {
   }
 
   /**
-   * @return context constraints (see {@link com.jetbrains.python.psi.types.TypeEvalConstraints}
+   * @return context constraints (see {@link TypeEvalConstraints}
    */
   @NotNull
   TypeEvalConstraints getConstraints() {

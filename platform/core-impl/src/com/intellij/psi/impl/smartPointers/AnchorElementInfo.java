@@ -33,7 +33,7 @@ import org.jetbrains.annotations.Nullable;
 class AnchorElementInfo extends SelfElementInfo {
   private volatile long myStubElementTypeAndId; // stubId in the lower 32 bits; stubElementTypeIndex in the high 32 bits packed together for atomicity
 
-  AnchorElementInfo(@NotNull PsiElement anchor, @NotNull PsiFile containingFile, Identikit.ByAnchor identikit) {
+  AnchorElementInfo(@NotNull PsiElement anchor, @NotNull PsiFile containingFile, @NotNull Identikit.ByAnchor identikit) {
     super(ProperTextRange.create(anchor.getTextRange()), identikit, containingFile, false);
     myStubElementTypeAndId = pack(-1, null);
   }
@@ -49,7 +49,7 @@ class AnchorElementInfo extends SelfElementInfo {
     assert !(anchor instanceof PsiFile) : "FileElementInfo must be used for file: "+anchor;
   }
 
-  private static long pack(int stubId, IStubElementType stubElementType) {
+  private static long pack(int stubId, @Nullable IStubElementType stubElementType) {
     short index = stubElementType == null ? 0 : stubElementType.getIndex();
     assert index >= 0 : "Unregistered token types not allowed here: " + stubElementType;
     return ((long)stubId) | ((long)index << 32);
@@ -76,8 +76,7 @@ class AnchorElementInfo extends SelfElementInfo {
   }
 
   @Override
-  public boolean pointsToTheSameElementAs(@NotNull final SmartPointerElementInfo other,
-                                          @NotNull SmartPointerManagerImpl manager) {
+  public boolean pointsToTheSameElementAs(@NotNull final SmartPointerElementInfo other, @NotNull SmartPointerManagerImpl manager) {
     if (other instanceof AnchorElementInfo) {
       if (!getVirtualFile().equals(other.getVirtualFile())) return false;
 
@@ -102,7 +101,7 @@ class AnchorElementInfo extends SelfElementInfo {
     super.fastenBelt(manager);
   }
 
-  private void switchToTree(SmartPointerManagerImpl manager) {
+  private void switchToTree(@NotNull SmartPointerManagerImpl manager) {
     PsiElement element = restoreElement(manager);
     SmartPointerTracker tracker = manager.getTracker(getVirtualFile());
     if (element != null && tracker != null) {

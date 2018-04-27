@@ -84,7 +84,7 @@ public class GotoActionItemProvider implements ChooseByNameItemProvider {
     JBIterable<MatchedValue> wrappers = JBIterable.from(actionIds)
       .filterMap(myActionManager::getAction)
       .transform(action -> {
-        ActionWrapper wrapper = new ActionWrapper(action, myModel.myActionGroups.get(action), MatchMode.NAME, context, myModel);
+        ActionWrapper wrapper = wrapAnAction(action, context);
         return new MatchedValue(wrapper, pattern) {
           @NotNull
           @Override
@@ -96,7 +96,7 @@ public class GotoActionItemProvider implements ChooseByNameItemProvider {
     return processItems(pattern, wrappers, consumer);
   }
 
-  private static boolean processTopHits(String pattern, Processor<MatchedValue> consumer, DataContext dataContext) {
+  private boolean processTopHits(String pattern, Processor<MatchedValue> consumer, DataContext dataContext) {
     Project project = CommonDataKeys.PROJECT.getData(dataContext);
     final CollectConsumer<Object> collector = new CollectConsumer<>();
     for (SearchTopHitProvider provider : SearchTopHitProvider.EP_NAME.getExtensions()) {
@@ -110,7 +110,10 @@ public class GotoActionItemProvider implements ChooseByNameItemProvider {
       provider.consumeTopHits(pattern, collector, project);
     }
     Collection<Object> result = collector.getResult();
-    return processItems(pattern, JBIterable.from(result).filter(Comparable.class), consumer);
+    JBIterable<Comparable> wrappers = JBIterable.from(result)
+      .transform(object -> object instanceof AnAction ? wrapAnAction(((AnAction)object), dataContext) : object)
+      .filter(Comparable.class);
+    return processItems(pattern, wrappers, consumer);
   }
 
   private boolean processOptions(String pattern, Processor<MatchedValue> consumer, DataContext dataContext) {
@@ -200,6 +203,11 @@ public class GotoActionItemProvider implements ChooseByNameItemProvider {
         return new ActionWrapper(intentionAction, intentionText, MatchMode.INTENTION, dataContext, myModel);
       });
     return processItems(pattern, intentions, consumer);
+  }
+
+  @NotNull
+  private ActionWrapper wrapAnAction(@NotNull AnAction action, DataContext dataContext) {
+    return new ActionWrapper(action, myModel.myActionGroups.get(action), MatchMode.NAME, dataContext, myModel);
   }
 
   private final static Logger LOG = Logger.getInstance(GotoActionItemProvider.class);

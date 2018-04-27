@@ -250,6 +250,13 @@ public class IntroduceConstantHandler extends BaseExpressionToFieldHandler {
     }
 
     @Override
+    public void visitMethodReferenceExpression(PsiMethodReferenceExpression expression) {
+      if (!PsiMethodReferenceUtil.isResolvedBySecondSearch(expression)) {
+        super.visitMethodReferenceExpression(expression);
+      }
+    }
+
+    @Override
     public void visitCallExpression(PsiCallExpression callExpression) {
       super.visitCallExpression(callExpression);
       if (!myCheckThrowables) return;

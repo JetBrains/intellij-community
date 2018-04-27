@@ -74,7 +74,7 @@ class UnusedParametersInspection extends GlobalJavaBatchInspectionTool {
   protected boolean queryExternalUsagesRequests(@NotNull final RefManager manager, @NotNull final GlobalJavaInspectionContext globalContext,
                                                 @NotNull final ProblemDescriptionsProcessor processor) {
     final Project project = manager.getProject();
-    for (RefElement entryPoint : globalContext.getEntryPointsManager(manager).getEntryPoints()) {
+    for (RefElement entryPoint : globalContext.getEntryPointsManager(manager).getEntryPoints(manager)) {
       processor.ignoreElement(entryPoint);
     }
 

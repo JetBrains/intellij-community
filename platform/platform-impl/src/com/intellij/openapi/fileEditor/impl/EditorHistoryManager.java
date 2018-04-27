@@ -1,53 +1,31 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.fileEditor.impl;
 
 import com.intellij.ide.ui.UISettings;
 import com.intellij.ide.ui.UISettingsListener;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.components.PersistentStateComponent;
-import com.intellij.openapi.components.State;
-import com.intellij.openapi.components.Storage;
-import com.intellij.openapi.components.StoragePathMacros;
+import com.intellij.openapi.components.*;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileEditor.*;
 import com.intellij.openapi.fileEditor.ex.FileEditorManagerEx;
 import com.intellij.openapi.progress.ProcessCanceledException;
-import com.intellij.openapi.project.DumbAwareRunnable;
+import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.startup.StartupManager;
-import com.intellij.openapi.util.Comparing;
-import com.intellij.openapi.util.InvalidDataException;
+import com.intellij.openapi.startup.StartupActivity;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.util.ArrayUtilRt;
-import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.messages.MessageBusConnection;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.TestOnly;
 
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.LinkedHashSet;
-import java.util.List;
+import java.util.*;
 
 @State(name = "editorHistoryManager", storages = @Storage(StoragePathMacros.WORKSPACE_FILE))
 public final class EditorHistoryManager implements PersistentStateComponent<Element>, Disposable {
@@ -56,7 +34,7 @@ public final class EditorHistoryManager implements PersistentStateComponent<Elem
   private final Project myProject;
 
   public static EditorHistoryManager getInstance(@NotNull Project project){
-    return project.getComponent(EditorHistoryManager.class);
+    return ServiceManager.getService(project, EditorHistoryManager.class);
   }
 
   /**
@@ -71,7 +49,7 @@ public final class EditorHistoryManager implements PersistentStateComponent<Elem
 
     connection.subscribe(UISettingsListener.TOPIC, uiSettings -> trimToSize());
 
-    connection.subscribe(FileEditorManagerListener.Before.FILE_EDITOR_MANAGER, new FileEditorManagerListener.Before.Adapter() {
+    connection.subscribe(FileEditorManagerListener.Before.FILE_EDITOR_MANAGER, new FileEditorManagerListener.Before() {
       @Override
       public void beforeFileClosed(@NotNull FileEditorManager source, @NotNull VirtualFile file) {
         updateHistoryEntry(file, false);
@@ -80,16 +58,20 @@ public final class EditorHistoryManager implements PersistentStateComponent<Elem
     connection.subscribe(FileEditorManagerListener.FILE_EDITOR_MANAGER, new MyEditorManagerListener());
   }
 
-  private synchronized void addEntry(HistoryEntry entry) {
-    myEntriesList.add(entry);
+  static class EditorHistoryManagerStartUpActivity implements DumbAware, StartupActivity {
+    @Override
+    public void runActivity(@NotNull Project project) {
+      getInstance(project);
+    }
   }
 
-  private synchronized void removeEntry(HistoryEntry entry) {
-    boolean removed = myEntriesList.remove(entry);
-    if (removed) entry.destroy();
+  private synchronized void removeEntry(@NotNull HistoryEntry entry) {
+    if (myEntriesList.remove(entry)) {
+      entry.destroy();
+    }
   }
 
-  private synchronized void moveOnTop(HistoryEntry entry) {
+  private synchronized void moveOnTop(@NotNull HistoryEntry entry) {
     myEntriesList.remove(entry);
     myEntriesList.add(entry);
   }
@@ -97,13 +79,12 @@ public final class EditorHistoryManager implements PersistentStateComponent<Elem
   /**
    * Makes file most recent one
    */
-  private void fileOpenedImpl(@NotNull final VirtualFile file,
-                              @Nullable final FileEditor fallbackEditor,
-                              @Nullable FileEditorProvider fallbackProvider)
-  {
+  private void fileOpenedImpl(@NotNull VirtualFile file, @Nullable FileEditor fallbackEditor, @Nullable FileEditorProvider fallbackProvider) {
     ApplicationManager.getApplication().assertIsDispatchThread();
     // don't add files that cannot be found via VFM (light & etc.)
-    if (VirtualFileManager.getInstance().findFileByUrl(file.getUrl()) == null) return;
+    if (VirtualFileManager.getInstance().findFileByUrl(file.getUrl()) == null) {
+      return;
+    }
 
     final FileEditorManagerEx editorManager = FileEditorManagerEx.getInstanceEx(myProject);
 
@@ -127,14 +108,14 @@ public final class EditorHistoryManager implements PersistentStateComponent<Elem
     LOG.assertTrue(selectedProviderIndex != -1, "Can't find " + selectedEditor + " among " + Arrays.asList(editors));
 
     final HistoryEntry entry = getEntry(file);
-    if(entry != null){
+    if (entry != null) {
       moveOnTop(entry);
     }
     else {
-      final FileEditorState[] states=new FileEditorState[editors.length];
-      final FileEditorProvider[] providers=new FileEditorProvider[editors.length];
+      final FileEditorState[] states = new FileEditorState[editors.length];
+      final FileEditorProvider[] providers = new FileEditorProvider[editors.length];
       for (int i = states.length - 1; i >= 0; i--) {
-        final FileEditorProvider provider = oldProviders [i];
+        final FileEditorProvider provider = oldProviders[i];
         LOG.assertTrue(provider != null);
         providers[i] = provider;
         FileEditor editor = editors[i];
@@ -142,7 +123,10 @@ public final class EditorHistoryManager implements PersistentStateComponent<Elem
           states[i] = editor.getState(FileEditorStateLevel.FULL);
         }
       }
-      addEntry(HistoryEntry.createHeavy(myProject, file, providers, states, providers[selectedProviderIndex]));
+      //noinspection SynchronizeOnThis
+      synchronized (this) {
+        myEntriesList.add(HistoryEntry.createHeavy(myProject, file, providers, states, providers[selectedProviderIndex]));
+      }
       trimToSize();
     }
   }
@@ -214,10 +198,11 @@ public final class EditorHistoryManager implements PersistentStateComponent<Elem
   }
 
   /**
-   * @return array of valid files that are in the history, oldest first. May contain duplicates.
+   * @return array of valid files that are in the history, oldest first.
    */
-  public synchronized VirtualFile[] getFiles(){
-    final List<VirtualFile> result = new ArrayList<>(myEntriesList.size());
+  @NotNull
+  public synchronized VirtualFile[] getFiles() {
+    List<VirtualFile> result = new ArrayList<>(myEntriesList.size());
     for (HistoryEntry entry : myEntriesList) {
       VirtualFile file = entry.getFile();
       if (file != null) result.add(file);
@@ -225,22 +210,40 @@ public final class EditorHistoryManager implements PersistentStateComponent<Elem
     return VfsUtilCore.toVirtualFileArray(result);
   }
 
+  @TestOnly
+  public synchronized void removeAllFiles() {
+    for (HistoryEntry entry : myEntriesList) {
+      entry.destroy();
+    }
+    myEntriesList.clear();
+  }
+
   /**
    * @return a set of valid files that are in the history, oldest first.
    */
-  public LinkedHashSet<VirtualFile> getFileSet() {
-    LinkedHashSet<VirtualFile> result = ContainerUtil.newLinkedHashSet();
-    for (VirtualFile file : getFiles()) {
-      // if the file occurs several times in the history, only its last occurrence counts
-      result.remove(file);
-      result.add(file);
+  @NotNull
+  public synchronized List<VirtualFile> getFileList() {
+    List<VirtualFile> result = new ArrayList<>();
+    for (HistoryEntry entry : myEntriesList) {
+      VirtualFile file = entry.getFile();
+      if (file != null) {
+        result.add(file);
+      }
     }
     return result;
   }
 
+  @NotNull
+  @Deprecated
+  public synchronized LinkedHashSet<VirtualFile> getFileSet() {
+    return new LinkedHashSet<>(getFileList());
+  }
+
   public synchronized boolean hasBeenOpen(@NotNull VirtualFile f) {
     for (HistoryEntry each : myEntriesList) {
-      if (Comparing.equal(each.getFile(), f)) return true;
+      if (f.equals(each.getFile())) {
+        return true;
+      }
     }
     return false;
   }
@@ -287,34 +290,36 @@ public final class EditorHistoryManager implements PersistentStateComponent<Elem
    * If total number of files in history more then {@code UISettings.RECENT_FILES_LIMIT}
    * then removes the oldest ones to fit the history to new size.
    */
-  private synchronized void trimToSize(){
+  private synchronized void trimToSize() {
     final int limit = UISettings.getInstance().getRecentFilesLimit() + 1;
-    while(myEntriesList.size()>limit){
+    while (myEntriesList.size() > limit) {
       HistoryEntry removed = myEntriesList.remove(0);
       removed.destroy();
     }
   }
 
   @Override
-  public void loadState(@NotNull Element element) {
-    // we have to delay xml processing because history entries require EditorStates to be created
-    // which is done via corresponding EditorProviders, those are not accessible before their
-    // is initComponent() called
-    final Element state = element.clone();
-    StartupManager.getInstance(myProject).runWhenProjectIsInitialized((DumbAwareRunnable)() -> {
-      for (Element e : state.getChildren(HistoryEntry.TAG)) {
-        try {
-          addEntry(HistoryEntry.createHeavy(myProject, e));
-        }
-        catch (InvalidDataException | ProcessCanceledException e1) {
-          // OK here
-        }
-        catch (Exception anyException) {
-          LOG.error(anyException);
-        }
+  public synchronized void loadState(@NotNull Element state) {
+    myEntriesList.clear();
+    // backward compatibility - previously entry maybe duplicated
+    Map<String, Element> fileToElement = new LinkedHashMap<>();
+    for (Element e : state.getChildren(HistoryEntry.TAG)) {
+      String file = e.getAttributeValue(HistoryEntry.FILE_ATTR);
+      fileToElement.remove(file);
+      // last is the winner
+      fileToElement.put(file, e);
+    }
+
+    for (Element e : fileToElement.values()) {
+      try {
+        myEntriesList.add(HistoryEntry.createHeavy(myProject, e));
       }
-      trimToSize();
-    });
+      catch (ProcessCanceledException ignored) {
+      }
+      catch (Exception anyException) {
+        LOG.error(anyException);
+      }
+    }
   }
 
   @Override

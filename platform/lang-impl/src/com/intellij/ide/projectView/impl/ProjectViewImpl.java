@@ -66,6 +66,7 @@ import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.ui.AutoScrollFromSourceHandler;
 import com.intellij.ui.AutoScrollToSourceHandler;
 import com.intellij.ui.GuiUtils;
+import com.intellij.ui.IdeUICustomization;
 import com.intellij.ui.content.Content;
 import com.intellij.ui.content.ContentManager;
 import com.intellij.ui.content.ContentManagerAdapter;
@@ -203,14 +204,7 @@ public class ProjectViewImpl extends ProjectView implements PersistentStateCompo
 
     myDataProvider = new MyPanel();
     myDataProvider.add(myPanel, BorderLayout.CENTER);
-    myCopyPasteDelegator = new CopyPasteDelegator(myProject, myPanel) {
-      @Override
-      @NotNull
-      protected PsiElement[] getSelectedElements() {
-        final AbstractProjectViewPane viewPane = getCurrentProjectViewPane();
-        return viewPane == null ? PsiElement.EMPTY_ARRAY : viewPane.getSelectedPSIElements();
-      }
-    };
+    myCopyPasteDelegator = new CopyPasteDelegator(myProject, myPanel);
     myAutoScrollToSourceHandler = new AutoScrollToSourceHandler() {
       @Override
       protected boolean isAutoScrollMode() {
@@ -255,7 +249,7 @@ public class ProjectViewImpl extends ProjectView implements PersistentStateCompo
   @NotNull
   @Override
   public String getName() {
-    return "Project";
+    return IdeUICustomization.getInstance().getProjectViewTitle();
   }
 
   @NotNull
@@ -319,7 +313,8 @@ public class ProjectViewImpl extends ProjectView implements PersistentStateCompo
     @Override
     public void update(AnActionEvent e) {
       AbstractProjectViewPane pane = getProjectViewPaneById(myId);
-      e.getPresentation().setText(pane.getTitle() + (mySubId != null ? (" - " + pane.getPresentableSubIdName(mySubId)) : ""));
+      e.getPresentation().setText(mySubId != null ? pane.getPresentableSubIdName(mySubId) : pane.getTitle());
+      e.getPresentation().setIcon(mySubId != null ? pane.getPresentableSubIdIcon(mySubId) : pane.getIcon());
     }
 
     @Override
@@ -811,9 +806,8 @@ public class ProjectViewImpl extends ProjectView implements PersistentStateCompo
     if (path == null) {
       return null;
     }
-    Object userObject = TreeUtil.getUserObject(path.getLastPathComponent());
-    if (userObject instanceof ProjectViewNode) {
-      ProjectViewNode descriptor = (ProjectViewNode)userObject;
+    ProjectViewNode descriptor = TreeUtil.getUserObject(ProjectViewNode.class, path.getLastPathComponent());
+    if (descriptor != null) {
       Object element = descriptor.getValue();
       if (element instanceof PsiElement) {
         PsiElement psiElement = (PsiElement)element;
@@ -1180,7 +1174,7 @@ public class ProjectViewImpl extends ProjectView implements PersistentStateCompo
         }
         PsiDirectory directory = ((PsiDirectoryNode)userObject).getValue();
         VirtualFile virtualFile = directory.getVirtualFile();
-        Module module = (Module)((AbstractTreeNode)TreeUtil.getUserObject(parent.getParentPath().getLastPathComponent())).getValue();
+        Module module = (Module)(TreeUtil.getUserObject(AbstractTreeNode.class, parent.getParentPath().getLastPathComponent())).getValue();
 
         if (module == null) return null;
         ModuleFileIndex index = ModuleRootManager.getInstance(module).getFileIndex();
@@ -1829,10 +1823,8 @@ public class ProjectViewImpl extends ProjectView implements PersistentStateCompo
         if (selectionPaths != null) {
           selectedElements = new ArrayList<>();
           for (TreePath path : selectionPaths) {
-            final Object userObject = TreeUtil.getUserObject(path.getLastPathComponent());
-            if (userObject instanceof NodeDescriptor) {
-              selectedElements.add(((NodeDescriptor)userObject).getElement());
-            }
+            NodeDescriptor descriptor = TreeUtil.getUserObject(NodeDescriptor.class, path.getLastPathComponent());
+            if (descriptor != null) selectedElements.add(descriptor.getElement());
           }
         }
       }

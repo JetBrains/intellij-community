@@ -194,7 +194,7 @@ public abstract class LookupActionHandler extends EditorActionHandler {
 
     @Override
     protected void executeInLookup(final LookupImpl lookup, DataContext context, Caret caret) {
-      if (!lookup.isCompletion()) {
+      if (!lookup.isCompletion() || lookup.isLookupDisposed()) {
         myOriginalHandler.execute(lookup.getEditor(), caret, context);
         return;
       }
@@ -214,6 +214,10 @@ public abstract class LookupActionHandler extends EditorActionHandler {
     @Override
     protected void executeInLookup(LookupImpl lookup, DataContext context, final Caret caret) {
       final Editor editor = lookup.getEditor();
+      if (lookup.isLookupDisposed()) {
+        myOriginalHandler.execute(lookup.getEditor(), caret, context);
+        return;
+      }
       final int offset = editor.getCaretModel().getOffset();
       final CharSequence seq = editor.getDocument().getCharsSequence();
       if (seq.length() <= offset || !lookup.isCompletion()) {

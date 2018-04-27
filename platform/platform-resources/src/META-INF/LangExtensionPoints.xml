@@ -277,6 +277,8 @@
     <extensionPoint name="generatedSourcesFilter" interface="com.intellij.openapi.roots.GeneratedSourcesFilter"/>
     <extensionPoint name="outOfSourcesChecker" interface="com.intellij.openapi.projectRoots.OutOfSourcesChecker"/>
 
+    <extensionPoint name="gotoActionAliasMatcher"
+                    interface="com.intellij.ide.util.gotoByName.GotoActionAliasMatcher"/>
     <extensionPoint name="gotoClassContributor"
                     interface="com.intellij.navigation.ChooseByNameContributor"/>
     <extensionPoint name="gotoSymbolContributor"
@@ -288,6 +290,19 @@
     <extensionPoint name="searchEverywhereContributor" interface="com.intellij.ide.actions.SearchEverywhereContributor"/>
 
     <extensionPoint name="gotoRelatedProvider" interface="com.intellij.navigation.GotoRelatedProvider"/>
+
+    <extensionPoint name="runAnything.runConfigurationProvider"
+                    interface="com.intellij.ide.actions.runAnything.RunAnythingRunConfigurationProvider"/>
+
+    <extensionPoint name="runAnything.activityProvider"
+                    interface="com.intellij.ide.actions.runAnything.activity.RunAnythingActivityProvider"/>
+
+    <extensionPoint name="runAnything.commandHandler" interface="com.intellij.ide.actions.runAnything.handlers.RunAnythingCommandHandler"/>
+
+    <extensionPoint name="runAnything.group" interface="com.intellij.ide.actions.runAnything.groups.RunAnythingGroup"/>
+
+    <extensionPoint name="runAnything.commandCustomizer"
+                    interface="com.intellij.ide.actions.runAnything.commands.RunAnythingCommandCustomizer"/>
 
     <extensionPoint name="projectExtension" interface="com.intellij.openapi.roots.ProjectExtension" area="IDEA_PROJECT"/>
     <extensionPoint name="roots.watchedRootsProvider" interface="com.intellij.openapi.roots.WatchedRootsProvider" area="IDEA_PROJECT"/>
@@ -541,6 +556,11 @@
       <with attribute="implementationClass" implements="com.intellij.codeInsight.hint.ImplementationTextSelectioner"/>
     </extensionPoint>
 
+    <extensionPoint name="lang.implementationTextProcessor"
+                    beanClass="com.intellij.lang.LanguageExtensionPoint">
+      <with attribute="implementationClass" implements="com.intellij.codeInsight.hint.ImplementationTextProcessor"/>
+    </extensionPoint>
+
     <extensionPoint name="lang.lineWrapStrategy"
                     beanClass="com.intellij.lang.LanguageExtensionPoint">
       <with attribute="implementationClass" implements="com.intellij.openapi.editor.LineWrapPositionStrategy"/>
@@ -622,6 +642,8 @@
     <extensionPoint name="modelScopeItemPresenter" interface="com.intellij.analysis.dialog.ModelScopeItemPresenter" />
 
     <extensionPoint name="qualifiedNameProvider" interface="com.intellij.ide.actions.QualifiedNameProvider"/>
+    <extensionPoint name="virtualFileQualifiedNameProvider"
+                    interface="com.intellij.ide.actions.CopyReferenceAction$VirtualFileQualifiedNameProvider"/>
 
     <extensionPoint name="completionData"
                     beanClass="com.intellij.codeInsight.completion.CompletionDataEP"/>

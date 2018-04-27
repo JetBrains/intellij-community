@@ -59,6 +59,7 @@ public class DiffApplication extends DiffApplicationBase {
 
     DiffRequest request;
     if (files.size() == 3) {
+      files = replaceNullsWithEmptyFile(files);
       request = DiffRequestFactory.getInstance().createFromFiles(project, files.get(0), files.get(2), files.get(1));
     }
     else {

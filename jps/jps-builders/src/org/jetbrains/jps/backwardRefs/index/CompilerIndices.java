@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.jps.backwardRefs.index;
 
 import com.intellij.openapi.util.io.DataInputOutputUtilRt;
@@ -37,20 +23,55 @@ import java.util.List;
 
 public class CompilerIndices {
   //TODO manage version separately
-  public final static int VERSION = 6;
+  public final static int VERSION = 7;
 
   public final static IndexId<LightRef, Integer> BACK_USAGES = IndexId.create("back.refs");
   public final static IndexId<LightRef, Collection<LightRef>> BACK_HIERARCHY = IndexId.create("back.hierarchy");
   public final static IndexId<LightRef, Void> BACK_CLASS_DEF = IndexId.create("back.class.def");
   public final static IndexId<SignatureData, Collection<LightRef>> BACK_MEMBER_SIGN = IndexId.create("back.member.sign");
   public final static IndexId<LightRef, Collection<LightRef>> BACK_CAST = IndexId.create("back.cast");
+  public final static IndexId<LightRef, Void> IMPLICIT_TO_STRING = IndexId.create("implicit.to.string");
 
   public static List<IndexExtension<?, ?, CompiledFileData>> getIndices() {
     return Arrays.asList(createBackwardClassDefinitionExtension(),
                          createBackwardUsagesExtension(),
                          createBackwardHierarchyExtension(),
                          createBackwardSignatureExtension(),
-                         createBackwardCastExtension());
+                         createBackwardCastExtension(),
+                         createImplicitToStringExtension());
+  }
+
+  private static IndexExtension<LightRef, Void, CompiledFileData> createImplicitToStringExtension() {
+    return new IndexExtension<LightRef, Void, CompiledFileData>() {
+      @NotNull
+      @Override
+      public IndexId<LightRef, Void> getName() {
+        return IMPLICIT_TO_STRING;
+      }
+
+      @NotNull
+      @Override
+      public DataIndexer<LightRef, Void, CompiledFileData> getIndexer() {
+        return CompiledFileData::getImplicitToString;
+      }
+
+      @NotNull
+      @Override
+      public KeyDescriptor<LightRef> getKeyDescriptor() {
+        return LightRefDescriptor.INSTANCE;
+      }
+
+      @NotNull
+      @Override
+      public DataExternalizer<Void> getValueExternalizer() {
+        return VoidDataExternalizer.INSTANCE;
+      }
+
+      @Override
+      public int getVersion() {
+        return 0;
+      }
+    };
   }
 
   private static IndexExtension<LightRef, Collection<LightRef>, CompiledFileData> createBackwardCastExtension() {

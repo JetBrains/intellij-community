@@ -24,6 +24,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 class ClsElementInfo extends SmartPointerElementInfo {
+  @NotNull
   private final PsiAnchor.StubIndexReference myStubIndexReference;
 
   ClsElementInfo(@NotNull PsiAnchor.StubIndexReference stubReference) {
@@ -41,12 +42,12 @@ class ClsElementInfo extends SmartPointerElementInfo {
   }
 
   @Override
-  boolean pointsToTheSameElementAs(@NotNull SmartPointerElementInfo other,
-                                   @NotNull SmartPointerManagerImpl manager) {
+  boolean pointsToTheSameElementAs(@NotNull SmartPointerElementInfo other, @NotNull SmartPointerManagerImpl manager) {
     return other instanceof ClsElementInfo && myStubIndexReference.equals(((ClsElementInfo)other).myStubIndexReference);
   }
 
   @Override
+  @NotNull
   VirtualFile getVirtualFile() {
     return myStubIndexReference.getVirtualFile();
   }
