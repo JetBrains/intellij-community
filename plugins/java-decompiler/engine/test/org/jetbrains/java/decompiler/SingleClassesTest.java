@@ -23,7 +23,8 @@ public class SingleClassesTest {
   public void setUp() throws IOException {
     fixture = new DecompilerTestFixture();
     fixture.setUp(IFernflowerPreferences.BYTECODE_SOURCE_MAPPING, "1",
-                  IFernflowerPreferences.DUMP_ORIGINAL_LINES, "1");
+                  IFernflowerPreferences.DUMP_ORIGINAL_LINES, "1",
+                  IFernflowerPreferences.FAIL_ON_INVALID_BYTECODE, "0");
   }
 
   @After

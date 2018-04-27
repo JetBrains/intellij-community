@@ -4,6 +4,7 @@ package org.jetbrains.java.decompiler.modules.decompiler.exps;
 import org.jetbrains.java.decompiler.code.CodeConstants;
 import org.jetbrains.java.decompiler.main.ClassesProcessor.ClassNode;
 import org.jetbrains.java.decompiler.main.DecompilerContext;
+import org.jetbrains.java.decompiler.main.extern.IFernflowerPreferences;
 import org.jetbrains.java.decompiler.main.rels.ClassWrapper;
 import org.jetbrains.java.decompiler.main.rels.MethodWrapper;
 import org.jetbrains.java.decompiler.modules.decompiler.vars.VarVersionPair;
@@ -25,7 +26,7 @@ public class ExprUtil {
     if (wrapper != null) {
       // own class
       MethodWrapper methodWrapper = wrapper.getMethodWrapper(CodeConstants.INIT_NAME, descriptor);
-      if (methodWrapper == null) {
+      if (methodWrapper == null && !DecompilerContext.getOption(IFernflowerPreferences.FAIL_ON_INVALID_BYTECODE)) {
         return null;
       }
       mask = methodWrapper.synthParameters;
