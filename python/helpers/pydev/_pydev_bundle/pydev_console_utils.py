@@ -1,11 +1,12 @@
 import os
 import sys
 import traceback
+
+from _pydev_bundle._pydev_calltip_util import get_description
 from _pydev_bundle.pydev_imports import xmlrpclib, _queue, Exec
-from  _pydev_bundle._pydev_calltip_util import get_description
 from _pydev_imps._pydev_saved_modules import thread
+from _pydevd_bundle import pydevd_thrift
 from _pydevd_bundle import pydevd_vars
-from _pydevd_bundle import pydevd_xml
 from _pydevd_bundle.pydevd_constants import IS_JYTHON, dict_iter_items, NEXT_VALUE_SEPARATOR
 
 try:
@@ -120,8 +121,11 @@ class StdIn(BaseStdIn):
     def readline(self, *args, **kwargs):
         # Ok, callback into the client to get the new input
         try:
-            server = xmlrpclib.Server('http://%s:%s' % (self.host, self.client_port))
-            requested_input = server.RequestInput()
+            # @alexander todo uncomment - temporary stub
+            # @alexander todo use backward direction of present connection
+            # server = xmlrpclib.Server('http://%s:%s' % (self.host, self.client_port))
+            # requested_input = server.RequestInput()
+            requested_input = 'this is test input\n'
             if not requested_input:
                 return '\n'  # Yes, a readline must return something (otherwise we can get an EOFError on the input() call).
             return requested_input
@@ -233,6 +237,7 @@ class BaseInterpreterInterface:
 
     def create_std_in(self, debugger=None, original_std_in=None):
         if debugger is None:
+            # @alexander todo fix `StdIn.readline()`
             return StdIn(self, self.host, self.client_port, original_stdin=original_std_in)
         else:
             return DebugConsoleStdIn(dbg=debugger, original_stdin=original_std_in)
@@ -450,6 +455,7 @@ class BaseInterpreterInterface:
 
     def get_server(self):
         if getattr(self, 'host', None) is not None:
+            # @alexander todo deprecate and use the other side of the connection
             return xmlrpclib.Server('http://%s:%s' % (self.host, self.client_port))
         else:
             return None
@@ -472,17 +478,14 @@ class BaseInterpreterInterface:
             return True
 
     def getFrame(self):
-        xml = StringIO.StringIO()
         hidden_ns = self.get_ipython_hidden_vars_dict()
-        xml.write("<xml>")
-        xml.write(pydevd_xml.frame_vars_to_xml(self.get_namespace(), hidden_ns))
-        xml.write("</xml>")
-
-        return xml.getvalue()
+        return pydevd_thrift.frame_vars_to_struct(self.get_namespace(), hidden_ns)
 
     def getVariable(self, attributes):
-        xml = StringIO.StringIO()
-        xml.write("<xml>")
+        # @alexander todo replace xml with thrift object
+        debug_values = []
+        # xml = StringIO.StringIO()
+        # xml.write("<xml>")
         val_dict = pydevd_vars.resolve_compound_var_object_fields(self.get_namespace(), attributes)
         if val_dict is None:
             val_dict = {}
@@ -490,25 +493,33 @@ class BaseInterpreterInterface:
         keys = val_dict.keys()
         for k in keys:
             val = val_dict[k]
-            evaluate_full_value = pydevd_xml.should_evaluate_full_value(val)
-            xml.write(pydevd_vars.var_to_xml(val, k, evaluate_full_value=evaluate_full_value))
+            # evaluate_full_value = pydevd_xml.should_evaluate_full_value(val)
+            # xml.write(pydevd_vars.var_to_xml(val, k, evaluate_full_value=evaluate_full_value))
+            evaluate_full_value = pydevd_thrift.should_evaluate_full_value(val)
+            debug_values.append(pydevd_thrift.var_to_struct(val, k, evaluate_full_value=evaluate_full_value))
 
-        xml.write("</xml>")
-
-        return xml.getvalue()
+        # xml.write("</xml>")
+        #
+        # return xml.getvalue()
+        return debug_values
 
     def getArray(self, attr, roffset, coffset, rows, cols, format):
         name = attr.split("\t")[-1]
         array = pydevd_vars.eval_in_context(name, self.get_namespace(), self.get_namespace())
-        return pydevd_vars.table_like_struct_to_xml(array, name, roffset, coffset, rows, cols, format)
+        # return pydevd_vars.table_like_struct_to_xml(array, name, roffset, coffset, rows, cols, format)
+        return pydevd_vars.table_like_struct_to_thrift_struct(array, name, roffset, coffset, rows, cols, format)
 
     def evaluate(self, expression):
-        xml = StringIO.StringIO()
-        xml.write("<xml>")
+        # returns `DebugValue` of evaluated expression
+
+        # @alexander todo replace xml with thrift object
+        # xml = StringIO.StringIO()
+        # xml.write("<xml>")
         result = pydevd_vars.eval_in_context(expression, self.get_namespace(), self.get_namespace())
-        xml.write(pydevd_vars.var_to_xml(result, expression))
-        xml.write("</xml>")
-        return xml.getvalue()
+        # xml.write(pydevd_vars.var_to_xml(result, expression))
+        # xml.write("</xml>")
+        # return xml.getvalue()
+        return pydevd_thrift.var_to_struct(result, expression)
 
     def getCompletions(self, text, act_tok):
         try:
@@ -547,7 +558,9 @@ class BaseInterpreterInterface:
                 var_object = pydevd_vars.eval_in_context(name, frame_variables, frame_variables)
                 var_objects.append((var_object, name))
 
+        # @alexander todo completely rework `GetValueAsyncThreadConsole`
         from _pydevd_bundle.pydevd_comm import GetValueAsyncThreadConsole
+        # @alexander here `self.get_server()` is `frame_accessor` parameter with
         t = GetValueAsyncThreadConsole(self.get_server(), seq, var_objects)
         t.start()
 
