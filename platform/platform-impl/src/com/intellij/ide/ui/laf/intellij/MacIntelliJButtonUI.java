@@ -17,6 +17,7 @@ import java.awt.geom.RoundRectangle2D;
 
 import static com.intellij.ide.ui.laf.intellij.MacIntelliJTextBorder.ARC;
 import static com.intellij.ide.ui.laf.intellij.MacIntelliJTextBorder.LW;
+import static com.intellij.ide.ui.laf.intellij.MacIntelliJTextBorder.MINIMUM_HEIGHT;
 
 /**
  * @author Konstantin Bulenkov
@@ -120,6 +121,10 @@ public class MacIntelliJButtonUI extends DarculaButtonUI {
                            Math.max(HORIZONTAL_PADDING.get() * 2 + prefSize.width, MINIMUM_BUTTON_WIDTH.get() + i.left + i.right),
                            Math.max(prefSize.height, getMinimumHeight() + i.top + i.bottom));
     }
+  }
+
+  protected int getMinimumHeight() {
+    return MINIMUM_HEIGHT.get();
   }
 
   @Override
