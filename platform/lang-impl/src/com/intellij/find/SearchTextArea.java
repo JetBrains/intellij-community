@@ -524,7 +524,7 @@ public class SearchTextArea extends NonOpaquePanel implements PropertyChangeList
 
     @Override
     String getLayoutConstraints() {
-      Insets i = SystemInfo.isMac ? JBUI.insets(3) : JBUI.insets(2);
+      Insets i = SystemInfo.isLinux ? JBUI.insets(2) : JBUI.insets(3);
       return "flowx, ins " + i.top + " " + i.left + " " + i.bottom + " " + i.right + ", gapx " + JBUI.scale(3);
     }
 
