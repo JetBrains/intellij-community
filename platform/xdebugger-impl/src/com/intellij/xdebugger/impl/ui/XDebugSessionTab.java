@@ -289,7 +289,6 @@ public class XDebugSessionTab extends DebuggerSessionTabBase {
     leftToolbar.addSeparator();
 
     leftToolbar.add(PinToolwindowTabAction.getPinAction());
-    leftToolbar.add(new CloseAction(myEnvironment != null ? myEnvironment.getExecutor() : debugExecutor, myRunContentDescriptor, myProject));
 
     DefaultActionGroup topToolbar = new DefaultActionGroup();
     topToolbar.addAll(getCustomizedActionGroup(XDebuggerActions.TOOL_WINDOW_TOP_TOOLBAR_GROUP));
