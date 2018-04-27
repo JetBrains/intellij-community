@@ -904,21 +904,21 @@ public class AllIcons {
   }
 
   public static class Graph {
-    public static final Icon ActualZoom = IconLoader.getIcon("/graph/actualZoom.png"); // 16x16
+    public static final Icon ActualZoom = IconLoader.getIcon("/graph/actualZoom.svg"); // 16x16
 
     /** @deprecated to be removed in IDEA 2020 - use AllIcons.ToolbarDecorator.Export */
     @SuppressWarnings("unused")
     @Deprecated
     public static final Icon Export = IconLoader.getIcon("/toolbarDecorator/export.svg"); // 16x16
-    public static final Icon FitContent = IconLoader.getIcon("/graph/fitContent.png"); // 16x16
+    public static final Icon FitContent = IconLoader.getIcon("/graph/fitContent.svg"); // 16x16
     public static final Icon Grid = IconLoader.getIcon("/graph/grid.png"); // 16x16
-    public static final Icon Layout = IconLoader.getIcon("/graph/layout.png"); // 16x16
+    public static final Icon Layout = IconLoader.getIcon("/graph/layout.svg"); // 16x16
     public static final Icon NodeSelectionMode = IconLoader.getIcon("/graph/nodeSelectionMode.png"); // 16x16
     public static final Icon Print = IconLoader.getIcon("/graph/print.svg"); // 16x16
     public static final Icon PrintPreview = IconLoader.getIcon("/graph/printPreview.png"); // 16x16
     public static final Icon SnapToGrid = IconLoader.getIcon("/graph/snapToGrid.png"); // 16x16
-    public static final Icon ZoomIn = IconLoader.getIcon("/graph/zoomIn.png"); // 16x16
-    public static final Icon ZoomOut = IconLoader.getIcon("/graph/zoomOut.png"); // 16x16
+    public static final Icon ZoomIn = IconLoader.getIcon("/graph/zoomIn.svg"); // 16x16
+    public static final Icon ZoomOut = IconLoader.getIcon("/graph/zoomOut.svg"); // 16x16
 
   }
 
