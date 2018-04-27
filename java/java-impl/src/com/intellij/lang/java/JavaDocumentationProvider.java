@@ -6,6 +6,7 @@ import com.intellij.codeInsight.CodeInsightSettings;
 import com.intellij.codeInsight.completion.CompletionMemory;
 import com.intellij.codeInsight.documentation.DocumentationManagerProtocol;
 import com.intellij.codeInsight.documentation.PlatformDocumentationUtil;
+import com.intellij.codeInsight.documentation.QuickDocUtil;
 import com.intellij.codeInsight.editorActions.CodeDocumentationUtil;
 import com.intellij.codeInsight.javadoc.JavaDocExternalFilter;
 import com.intellij.codeInsight.javadoc.JavaDocInfoGenerator;
@@ -65,6 +66,12 @@ public class JavaDocumentationProvider extends DocumentationProviderEx implement
 
   @Override
   public String getQuickNavigateInfo(PsiElement element, PsiElement originalElement) {
+    return QuickDocUtil.inferLinkFromFullDocumentation(this, element, originalElement,
+                                                       getQuickNavigationInfoInner(element, originalElement));
+  }
+
+  @Nullable
+  private static String getQuickNavigationInfoInner(PsiElement element, PsiElement originalElement) {
     if (element instanceof PsiClass) {
       return generateClassInfo((PsiClass)element);
     }
