@@ -25,7 +25,7 @@ object DarculaUiTestApp {
   }
 }
 
-object MigLayoutTestApp {
+object IntelliJUiTestApp {
   @JvmStatic
   fun main(args: Array<String>) {
     run(IntelliJLaf())
