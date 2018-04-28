@@ -41,10 +41,7 @@ import com.intellij.util.containers.MultiMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.Collection;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 
 import static com.intellij.util.containers.ContainerUtil.map2Array;
 
@@ -99,13 +96,6 @@ public class ProjectDataManagerImpl implements ProjectDataManager {
 
     MultiMap<Key<?>, DataNode<?>> grouped = ExternalSystemApiUtil.recursiveGroup(nodes);
 
-    // run data services for empty data list to process orphan data clean-up
-    for (Key<?> key : myServices.getValue().keySet()) {
-      if (!grouped.containsKey(key)) {
-        grouped.getModifiable(key);
-      }
-    }
-
     final Collection<DataNode<?>> projects = grouped.get(ProjectKeys.PROJECT);
     // only one project(can be multi-module project) expected for per single import
     assert projects.size() == 1 || projects.isEmpty();
@@ -142,26 +132,28 @@ public class ProjectDataManagerImpl implements ProjectDataManager {
 
     long allStartTime = System.currentTimeMillis();
     try {
-      final Set<Map.Entry<Key<?>, Collection<DataNode<?>>>> entries = grouped.entrySet();
+      final Set<Key<?>> allKeys = new HashSet(grouped.keySet());
+      allKeys.addAll(myServices.getValue().keySet());
+
       final ProgressIndicator indicator = ProgressManager.getInstance().getProgressIndicator();
       if (indicator != null) {
         indicator.setIndeterminate(false);
       }
-      final int size = entries.size();
+      final int size = allKeys.size();
       int count = 0;
       List<Runnable> postImportTasks = ContainerUtil.newSmartList();
-      for (Map.Entry<Key<?>, Collection<DataNode<?>>> entry : entries) {
+      for (Key<?> key : allKeys) {
         if (indicator != null) {
           String message = ExternalSystemBundle.message(
             "progress.update.text", projectSystemId != null ? projectSystemId.getReadableName() : "",
-            "Refresh " + getReadableText(entry.getKey()));
+            "Refresh " + getReadableText(key));
           indicator.setText(message);
           indicator.setFraction((double)count++ / size);
         }
         long startTime = System.currentTimeMillis();
-        doImportData(entry.getKey(), entry.getValue(), projectData, project, modelsProvider,
+        doImportData(key, grouped.get(key), projectData, project, modelsProvider,
                      postImportTasks, onSuccessImportTasks, onFailureImportTasks);
-        trace.logPerformance("Data import by " + entry.getKey().toString(), System.currentTimeMillis() - startTime);
+        trace.logPerformance("Data import by " + key.toString(), System.currentTimeMillis() - startTime);
       }
 
       for (Runnable postImportTask : postImportTasks) {
