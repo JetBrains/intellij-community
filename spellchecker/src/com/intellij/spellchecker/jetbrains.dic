@@ -26,6 +26,7 @@ asyncable
 atomikos
 attr
 attlist
+attrs
 auth
 authid
 autoboxing
