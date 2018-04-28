@@ -86,7 +86,7 @@
     <completion.contributor language="Python"
                             implementationClass="com.jetbrains.python.codeInsight.completion.PyStructuralTypeAttributesCompletionContributor"/>
     <completion.contributor language="Python"
-                            implementationClass="com.jetbrains.python.codeInsight.completion.PyDataclassPostInitCompletionContributor"/>
+                            implementationClass="com.jetbrains.python.codeInsight.completion.PyDataclassCompletionContributor"/>
 
     <completion.contributor language="Python"
                             implementationClass="com.jetbrains.python.codeInsight.completion.PyStringFormatCompletionContributor" />
@@ -721,9 +721,9 @@
     <pyClassMembersProvider implementation="com.jetbrains.python.codeInsight.stdlib.PyStdlibClassMembersProvider"/>
     <typeProvider implementation="com.jetbrains.python.codeInsight.stdlib.PyStdlibTypeProvider"/>
     <typeProvider implementation="com.jetbrains.python.testing.pyTestFixtures.PyTextFixtureTypeProvider"/>
-    <typeProvider implementation="com.jetbrains.python.codeInsight.stdlib.PyDataclassesTypeProvider"/>
-    <typeProvider implementation="com.jetbrains.python.codeInsight.stdlib.PyNamedTuplesTypeProvider"/>
-    <typeProvider implementation="com.jetbrains.python.codeInsight.stdlib.PyNamedTuplesOverridingTypeProvider"/>
+    <typeProvider implementation="com.jetbrains.python.codeInsight.stdlib.PyDataclassTypeProvider"/>
+    <typeProvider implementation="com.jetbrains.python.codeInsight.stdlib.PyNamedTupleTypeProvider"/>
+    <typeProvider implementation="com.jetbrains.python.codeInsight.stdlib.PyNamedTupleOverridingTypeProvider"/>
     <typeProvider implementation="com.jetbrains.python.psi.types.PyCollectionTypeByModificationsProvider"/>
     <pyModuleMembersProvider implementation="com.jetbrains.python.codeInsight.stdlib.PyStdlibModuleMembersProvider"/>
     <pyModuleMembersProvider implementation="com.jetbrains.python.codeInsight.stdlib.PyStdlibOverridingModuleMembersProvider"/>

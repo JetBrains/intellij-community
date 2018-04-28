@@ -22,7 +22,7 @@ import java.util.stream.Collectors
 private typealias NTFields = LinkedHashMap<String, PyNamedTupleType.FieldTypeAndDefaultValue>
 private typealias ImmutableNTFields = Map<String, PyNamedTupleType.FieldTypeAndDefaultValue>
 
-class PyNamedTuplesTypeProvider : PyTypeProviderBase() {
+class PyNamedTupleTypeProvider : PyTypeProviderBase() {
 
   override fun getReferenceType(referenceTarget: PsiElement, context: TypeEvalContext, anchor: PsiElement?): Ref<PyType>? {
     return PyTypeUtil.notNullToRef(getNamedTupleTypeForResolvedCallee(referenceTarget, context, anchor))

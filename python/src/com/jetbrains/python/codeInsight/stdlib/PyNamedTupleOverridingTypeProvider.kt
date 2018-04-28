@@ -23,11 +23,11 @@ import com.jetbrains.python.psi.types.PyTypeProviderBase
 import com.jetbrains.python.psi.types.PyTypeUtil
 import com.jetbrains.python.psi.types.TypeEvalContext
 
-class PyNamedTuplesOverridingTypeProvider : PyTypeProviderBase(), PyOverridingTypeProvider {
+class PyNamedTupleOverridingTypeProvider : PyTypeProviderBase(), PyOverridingTypeProvider {
 
   override fun getReferenceType(referenceTarget: PsiElement, context: TypeEvalContext, anchor: PsiElement?): Ref<PyType>? {
-    val type = PyNamedTuplesTypeProvider.getNamedTupleTypeForResolvedCallee(referenceTarget, context, anchor)
-               ?: PyNamedTuplesTypeProvider.getNamedTupleReplaceType(referenceTarget, context, anchor)
+    val type = PyNamedTupleTypeProvider.getNamedTupleTypeForResolvedCallee(referenceTarget, context, anchor)
+               ?: PyNamedTupleTypeProvider.getNamedTupleReplaceType(referenceTarget, context, anchor)
 
     return PyTypeUtil.notNullToRef(type)
   }

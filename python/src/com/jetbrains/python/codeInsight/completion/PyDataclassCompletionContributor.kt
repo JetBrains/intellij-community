@@ -19,7 +19,7 @@ import com.jetbrains.python.psi.PySubscriptionExpression
 import com.jetbrains.python.psi.PyTargetExpression
 import com.jetbrains.python.psi.types.PyClassType
 
-class PyDataclassPostInitCompletionContributor : CompletionContributor() {
+class PyDataclassCompletionContributor : CompletionContributor() {
 
   override fun handleAutoCompletionPossibility(context: AutoCompletionContext): AutoCompletionDecision = autoInsertSingleItem(context)
 
