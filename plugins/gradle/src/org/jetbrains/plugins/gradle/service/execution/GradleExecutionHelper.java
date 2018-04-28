@@ -526,7 +526,14 @@ public class GradleExecutionHelper {
   private static String getToolingExtensionsJarPaths(@NotNull Set<Class> toolingExtensionClasses) {
     final Set<String> jarPaths = ContainerUtil.map2SetNotNull(toolingExtensionClasses, aClass -> {
       String path = PathManager.getJarPathForClass(aClass);
-      return path == null ? null : PathUtil.getCanonicalPath(path);
+      if (path != null) {
+        if (FileUtil.getNameWithoutExtension(path).equals("gradle-api-" + GradleVersion.current().getBaseVersion())) {
+          LOG.warn("The gradle api jar shouldn't be added to the gradle daemon classpath: {" + aClass + "," + path + "}");
+          return null;
+        }
+        return PathUtil.getCanonicalPath(path);
+      }
+      return null;
     });
     StringBuilder buf = new StringBuilder();
     buf.append('[');
