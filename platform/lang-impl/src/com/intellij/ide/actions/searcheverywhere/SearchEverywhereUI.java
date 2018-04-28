@@ -3,14 +3,38 @@ package com.intellij.ide.actions.searcheverywhere;
 
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.IdeBundle;
+import com.intellij.ide.IdeEventQueue;
+import com.intellij.ide.actions.SearchEverywhereAction;
 import com.intellij.ide.ui.UISettings;
+import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.actionSystem.ex.AnActionListener;
 import com.intellij.openapi.actionSystem.impl.ActionButton;
+import com.intellij.openapi.actionSystem.impl.ActionToolbarImpl;
+import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.editor.actions.TextComponentEditorAction;
+import com.intellij.openapi.progress.ProcessCanceledException;
+import com.intellij.openapi.progress.ProgressIndicator;
+import com.intellij.openapi.progress.util.ProgressIndicatorBase;
+import com.intellij.openapi.project.DumbService;
+import com.intellij.openapi.project.Project;
+import com.intellij.openapi.ui.popup.ComponentPopupBuilder;
+import com.intellij.openapi.ui.popup.JBPopup;
+import com.intellij.openapi.ui.popup.JBPopupFactory;
+import com.intellij.openapi.util.ActionCallback;
+import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.*;
+import com.intellij.ui.awt.RelativePoint;
 import com.intellij.ui.components.JBCheckBox;
+import com.intellij.ui.components.JBList;
+import com.intellij.ui.components.JBScrollPane;
 import com.intellij.ui.components.fields.ExtendableTextField;
+import com.intellij.util.Alarm;
 import com.intellij.util.ui.DialogUtil;
 import com.intellij.util.ui.JBUI;
+import com.intellij.util.ui.StatusText;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.components.BorderLayoutPanel;
 import org.jetbrains.annotations.NotNull;
@@ -18,6 +42,7 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import javax.swing.border.Border;
+import javax.swing.event.DocumentEvent;
 import java.awt.*;
 import java.awt.event.KeyAdapter;
 import java.awt.event.KeyEvent;
@@ -26,21 +51,45 @@ import java.awt.event.MouseEvent;
 import java.util.ArrayList;
 import java.util.List;
 
+import static com.intellij.ide.actions.SearchEverywhereAction.SEARCH_EVERYWHERE_POPUP;
+
 /**
  * @author Konstantin Bulenkov
  * @author Mikhail.Sokolov
  */
 public class SearchEverywhereUI extends BorderLayoutPanel {
+  private static final Logger LOG = Logger.getInstance(SearchEverywhereUI.class);
+  public static final int ELEMENTS_LIMIT = 15;
+
+  private final List<SearchEverywhereContributor> allContributors;
+  private final Project myProject;
+
+  private boolean myShown;
+
   private SETab mySelectedTab;
   private final JTextField mySearchField;
   private final JCheckBox myNonProjectCB;
   private final List<SETab> myTabs = new ArrayList<>();
 
+  private JBPopup myPopup;
+  private final JBList<Object> myList = new JBList<>();
+
+  private CalcThread myCalcThread;
+  private volatile ActionCallback myCurrentWorker = ActionCallback.DONE;
+  private int myCalcThreadRestartRequestId = 0;
+  private final Object myWorkerRestartRequestLock = new Object();
+  private final Alarm myAlarm = new Alarm(Alarm.ThreadToUse.SWING_THREAD, ApplicationManager.getApplication());
+
   // todo remove second param #UX-1
-  public SearchEverywhereUI(List<SearchEverywhereContributor> contributors, @Nullable SearchEverywhereContributor selected) {
+  public SearchEverywhereUI(Project project,
+                            List<SearchEverywhereContributor> contributors,
+                            @Nullable SearchEverywhereContributor selected) {
+    myProject = project;
     withMinimumWidth(670);
     withPreferredWidth(670);
     setBackground(JBUI.CurrentTheme.SearchEverywhere.dialogBackground());
+
+    allContributors = contributors;
 
     myNonProjectCB = new JBCheckBox();
     myNonProjectCB.setOpaque(false);
@@ -82,6 +131,11 @@ public class SearchEverywhereUI extends BorderLayoutPanel {
   public void clear() {
     mySearchField.setText("");
     myNonProjectCB.setSelected(false);
+  }
+
+  public void setShown(boolean shown) {
+    myShown = shown;
+    //todo cancel all threads #UX-1
   }
 
   private void switchToNextTab() {
@@ -156,6 +210,13 @@ public class SearchEverywhereUI extends BorderLayoutPanel {
           switchToNextTab();
           e.consume();
         }
+      }
+    });
+
+    searchField.getDocument().addDocumentListener(new DocumentAdapter() {
+      @Override
+      protected void textChanged(DocumentEvent e) {
+          rebuildList(searchField.getText());
       }
     });
 
@@ -261,5 +322,337 @@ public class SearchEverywhereUI extends BorderLayoutPanel {
              ? JBUI.CurrentTheme.SearchEverywhere.selectedTabColor()
              : super.getBackground();
     }
+  }
+
+  private void rebuildList(final String pattern) {
+    assert EventQueue.isDispatchThread() : "Must be EDT";
+    if (myCalcThread != null && !myCurrentWorker.isProcessed()) {
+      myCurrentWorker = myCalcThread.cancel();
+    }
+    if (myCalcThread != null && !myCalcThread.isCanceled()) {
+      myCalcThread.cancel();
+    }
+
+    //assert project != null;
+    //myRenderer.myProject = project;
+    synchronized (myWorkerRestartRequestLock) { // this lock together with RestartRequestId should be enough to prevent two CalcThreads running at the same time
+      final int currentRestartRequest = ++myCalcThreadRestartRequestId;
+      myCurrentWorker.doWhenProcessed(() -> {
+        synchronized (myWorkerRestartRequestLock) {
+          if (currentRestartRequest != myCalcThreadRestartRequestId) {
+            return;
+          }
+          myCalcThread = new CalcThread(myProject, pattern, false);
+
+          myCurrentWorker = myCalcThread.start();
+        }
+      });
+    }
+  }
+
+  @SuppressWarnings("Duplicates") //todo remove suppress #UX-1
+  private class CalcThread implements Runnable {
+    private final Project project;
+    private final String pattern;
+    private final ProgressIndicator myProgressIndicator = new ProgressIndicatorBase();
+    private final ActionCallback myDone = new ActionCallback();
+    private final SearchEverywhereAction.SearchListModel myListModel;
+    private final ArrayList<VirtualFile> myAlreadyAddedFiles = new ArrayList<>();
+    private final ArrayList<AnAction> myAlreadyAddedActions = new ArrayList<>();
+
+
+    public CalcThread(Project project, String pattern, boolean reuseModel) {
+      this.project = project;
+      this.pattern = pattern;
+      myListModel = reuseModel ? (SearchEverywhereAction.SearchListModel) myList.getModel() : new SearchEverywhereAction.SearchListModel();
+    }
+
+    @Override
+    public void run() {
+      try {
+        check();
+
+        //noinspection SSBasedInspection
+        SwingUtilities.invokeLater(() -> {
+          // this line must be called on EDT to avoid context switch at clear().append("text") Don't touch. Ask [kb]
+          myList.getEmptyText().setText("Searching...");
+
+          if (myList.getModel() instanceof SearchEverywhereAction.SearchListModel) {
+            //noinspection unchecked
+            myAlarm.cancelAllRequests();
+            myAlarm.addRequest(() -> {
+              if (!myDone.isRejected()) {
+                myList.setModel(myListModel);
+                updatePopup();
+              }
+            }, 50);
+          } else {
+            myList.setModel(myListModel);
+          }
+        });
+
+        //if (pattern.trim().length() == 0) {
+        //  buildModelFromRecentFiles();
+        //  //updatePopup();
+        //  return;
+        //}
+
+        //checkModelsUpToDate();              check();
+        //buildTopHit(pattern);               check();
+
+        if (!pattern.startsWith("#")) {
+          //buildRecentFiles(pattern);
+          //check();
+
+          SearchEverywhereContributor selectedContributor = getSelectedContributor();
+          if (selectedContributor != null) {
+            runReadAction(() -> addContributorItems(selectedContributor, true), true);
+          } else {
+            for (SearchEverywhereContributor contributor : allContributors) {
+              runReadAction(() -> addContributorItems(contributor, false), true);
+            }
+          }
+
+          //runReadAction(() -> buildStructure(pattern), true);
+          //updatePopup();
+          //check();
+          //buildToolWindows(pattern);
+          //check();
+          //updatePopup();
+          //check();
+          //
+          //checkModelsUpToDate();
+          //runReadAction(() -> buildRunConfigurations(pattern), true);
+          //runReadAction(() -> buildClasses(pattern), true);
+          //runReadAction(() -> buildFiles(pattern), false);
+          //runReadAction(() -> buildSymbols(pattern), true);
+          //
+          //buildActionsAndSettings(pattern);
+          //
+          //updatePopup();
+
+        }
+        updatePopup();
+      }
+      catch (ProcessCanceledException ignore) {
+        myDone.setRejected();
+      }
+      catch (Exception e) {
+        LOG.error(e);
+        myDone.setRejected();
+      }
+      finally {
+        if (!isCanceled()) {
+          //noinspection SSBasedInspection
+          SwingUtilities.invokeLater(() -> myList.getEmptyText().setText(StatusText.DEFAULT_EMPTY_TEXT));
+          updatePopup();
+        }
+        if (!myDone.isProcessed()) {
+          myDone.setDone();
+        }
+      }
+    }
+
+    private void addContributorItems(SearchEverywhereContributor contributor, boolean exclusiveContributor) {
+      SearchEverywhereContributor.ContributorSearchResult
+        results = contributor.search(project, pattern, isUseNonProjectItems(), myProgressIndicator, ELEMENTS_LIMIT);
+      if (!results.isEmpty()) {
+        SwingUtilities.invokeLater(() -> {
+          if (isCanceled()) return;
+
+          if (!exclusiveContributor) {
+            myListModel.titleIndex.classes = myListModel.size();
+          }
+          for (Object item : results.getItems()) {
+            myListModel.addElement(item);
+          }
+          if (!exclusiveContributor) {
+            myListModel.moreIndex.classes = results.hasMoreItems() ? myListModel.size() - 1 : -1;
+          }
+        });
+      }
+    }
+
+    private void runReadAction(Runnable action, boolean checkDumb) {
+      if (!checkDumb || !DumbService.getInstance(project).isDumb()) {
+        ApplicationManager.getApplication().runReadAction(action);
+        updatePopup();
+      }
+    }
+
+    protected void check() {
+      myProgressIndicator.checkCanceled();
+      if (myDone.isRejected()) throw new ProcessCanceledException();
+      if (!myShown) throw new ProcessCanceledException();
+      assert myCalcThread == this : "There are two CalcThreads running before one of them was cancelled";
+    }
+
+    private boolean isCanceled() {
+      return myProgressIndicator.isCanceled() || myDone.isRejected();
+    }
+
+    @SuppressWarnings("SSBasedInspection")
+    private void updatePopup() {
+      check();
+      SwingUtilities.invokeLater(new Runnable() {
+        @Override
+        public void run() {
+          myListModel.update();
+          myList.revalidate();
+          myList.repaint();
+
+          //myRenderer.recalculateWidth();
+          if (!myShown) {
+            return;
+          }
+          if (myPopup == null || !myPopup.isVisible()) {
+            ScrollingUtil.installActions(myList, getSearchField());
+            JBScrollPane content = new JBScrollPane(myList) {
+              {
+                if (UIUtil.isUnderDarcula()) {
+                  setBorder(null);
+                }
+              }
+              @Override
+              public Dimension getPreferredSize() {
+                Dimension size = super.getPreferredSize();
+                Dimension listSize = myList.getPreferredSize();
+                if (size.height > listSize.height || myList.getModel().getSize() == 0) {
+                  size.height = Math.max(JBUI.scale(30), listSize.height);
+                }
+
+                if (size.width < getWidth()) {
+                  size.width = getWidth();
+                }
+
+                return size;
+              }
+            };
+            content.setHorizontalScrollBarPolicy(ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER);
+            content.setMinimumSize(new Dimension(getWidth(), 30));
+            final ComponentPopupBuilder builder = JBPopupFactory.getInstance()
+                                                                .createComponentPopupBuilder(content, null);
+            myPopup = builder
+              .setRequestFocus(false)
+              .setCancelKeyEnabled(false)
+              .setResizable(true)
+              .setCancelCallback(() -> {
+                final AWTEvent event = IdeEventQueue.getInstance().getTrueCurrentEvent();
+                if (event instanceof MouseEvent) {
+                  final Component comp = ((MouseEvent)event).getComponent();
+                  if (UIUtil.getWindow(comp) == UIUtil.getWindow(SearchEverywhereUI.this)) {
+                    return false;
+                  }
+                }
+                //final boolean canClose = balloon == null || balloon.isDisposed() || (!getSearchField().hasFocus() && !mySkipFocusGain);
+                //if (canClose) {
+                //  PropertiesComponent.getInstance().setValue("search.everywhere.max.popup.width", Math.max(content.getWidth(), JBUI.scale(600)), JBUI.scale(600));
+                //}
+                return true;
+              })
+              .setShowShadow(false)
+              .setShowBorder(false)
+              .createPopup();
+            project.putUserData(SEARCH_EVERYWHERE_POPUP, myPopup);
+            //myPopup.setMinimumSize(new Dimension(myBalloon.getSize().width, 30));
+            myPopup.getContent().setBorder(null);
+            Disposer.register(myPopup, new Disposable() {
+              @Override
+              public void dispose() {
+                project.putUserData(SEARCH_EVERYWHERE_POPUP, null);
+                ApplicationManager.getApplication().executeOnPooledThread(() -> {
+                  //noinspection SSBasedInspection
+                  SwingUtilities.invokeLater(() -> ActionToolbarImpl.updateAllToolbarsImmediately());
+                });
+              }
+            });
+            updateResultsPopupBounds();
+            myPopup.show(new RelativePoint(SearchEverywhereUI.this, new Point(0, getHeight())));
+
+            ActionManager.getInstance().addAnActionListener(new AnActionListener.Adapter() {
+              @Override
+              public void beforeActionPerformed(AnAction action, DataContext dataContext, AnActionEvent event) {
+                if (action instanceof TextComponentEditorAction) {
+                  return;
+                }
+                if (myPopup!=null) {
+                  myPopup.cancel();
+                }
+              }
+            }, myPopup);
+          }
+          else {
+            myList.revalidate();
+            myList.repaint();
+          }
+          ScrollingUtil.ensureSelectionExists(myList);
+          if (myList.getModel().getSize() > 0) {
+            updateResultsPopupBounds();
+          }
+        }
+      });
+    }
+
+    public ActionCallback cancel() {
+      myProgressIndicator.cancel();
+      //myDone.setRejected();
+      return myDone;
+    }
+
+    //public ActionCallback insert(final int index, final SearchEverywhereAction.WidgetID id) {
+    //  ApplicationManager.getApplication().executeOnPooledThread(() -> runReadAction(() -> {
+    //    try {
+    //
+    //      check();
+    //      SwingUtilities.invokeLater(() -> {
+    //        try {
+    //          int shift = 0;
+    //          int i = index+1;
+    //          for (Object o : result) {
+    //            //noinspection unchecked
+    //            myListModel.insertElementAt(o, i);
+    //            shift++;
+    //            i++;
+    //          }
+    //          SearchEverywhereAction.MoreIndex moreIndex = myListModel.moreIndex;
+    //          myListModel.titleIndex.shift(index, shift);
+    //          moreIndex.shift(index, shift);
+    //
+    //          if (!result.needMore) {
+    //            switch (id) {
+    //              case CLASSES: moreIndex.classes = -1; break;
+    //              case FILES: moreIndex.files = -1; break;
+    //              case ACTIONS: moreIndex.actions = -1; break;
+    //              case SETTINGS: moreIndex.settings = -1; break;
+    //              case SYMBOLS: moreIndex.symbols = -1; break;
+    //              case RUN_CONFIGURATIONS: moreIndex.runConfigurations = -1; break;
+    //            }
+    //          }
+    //          ScrollingUtil.selectItem(myList, index);
+    //          myDone.setDone();
+    //        }
+    //        catch (Exception e) {
+    //          myDone.setRejected();
+    //        }
+    //      });
+    //    }
+    //    catch (Exception e) {
+    //      myDone.setRejected();
+    //    }
+    //  }, true));
+    //  return myDone;
+    //}
+
+    public ActionCallback start() {
+      ApplicationManager.getApplication().executeOnPooledThread(this);
+      return myDone;
+    }
+  }
+
+  private void updateResultsPopupBounds() {
+    int height = myList.getPreferredSize().height + 2;
+    int width = getWidth();
+    myPopup.setSize(JBUI.size(width, height));
+
   }
 }
