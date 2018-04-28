@@ -3,12 +3,13 @@ package com.intellij.ide.ui.laf.intellij;
 
 import com.intellij.ide.ui.laf.darcula.ui.DarculaPasswordFieldUI;
 import com.intellij.util.ui.JBInsets;
-import com.intellij.util.ui.JBUI;
 
 import javax.swing.*;
 import javax.swing.plaf.ComponentUI;
 import javax.swing.text.JTextComponent;
 import java.awt.*;
+
+import static com.intellij.ide.ui.laf.intellij.MacIntelliJTextBorder.MINIMUM_HEIGHT;
 
 /**
  * @author Konstantin Bulenkov
@@ -44,10 +45,8 @@ public class MacIntelliJPasswordFieldUI extends DarculaPasswordFieldUI {
     }
   }
 
-  protected Dimension updatePreferredSize(Dimension size) {
-    Insets i = getComponent().getInsets();
-    size.height = Math.max(size.height, JBUI.scale(21) + i.top + i.bottom);
-    JBInsets.addTo(size, getComponent().getMargin());
-    return size;
+  @Override
+  protected int getMinimumHeight() {
+    return MINIMUM_HEIGHT.get();
   }
 }

@@ -18,6 +18,8 @@ import java.awt.event.FocusEvent;
 import java.awt.event.FocusListener;
 import java.awt.geom.Rectangle2D;
 
+import static com.intellij.ide.ui.laf.darcula.DarculaUIUtil.MINIMUM_HEIGHT;
+
 /**
  * @author Konstantin Bulenkov
  */
@@ -61,9 +63,13 @@ public class DarculaPasswordFieldUI extends BasicPasswordFieldUI {
 
   protected Dimension updatePreferredSize(Dimension size) {
     Insets i = getComponent().getInsets();
-    size.height = Math.max(size.height, JBUI.scale(20) + i.top + i.bottom);
+    size.height = Math.max(size.height, getMinimumHeight() + i.top + i.bottom);
     JBInsets.addTo(size, getComponent().getMargin());
     return size;
+  }
+
+  protected int getMinimumHeight() {
+    return MINIMUM_HEIGHT.get();
   }
 
   @Override
