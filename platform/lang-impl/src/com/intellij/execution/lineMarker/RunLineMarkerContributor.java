@@ -81,7 +81,7 @@ public abstract class RunLineMarkerContributor {
     return getTestStateIcon(state, isClass);
   }
 
-  protected static Icon getTestStateIcon(TestStateStorage.Record state, boolean isClass) {
+  protected static Icon getTestStateIcon(@Nullable TestStateStorage.Record state, boolean isClass) {
     if (state != null) {
       TestStateInfo.Magnitude magnitude = TestIconMapper.getMagnitude(state.magnitude);
       if (magnitude != null) {
