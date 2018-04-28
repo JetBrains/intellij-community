@@ -10,6 +10,7 @@
       <get src="@{fromUrl}"
            dest="@{toFile}" />
       <local name="baseUrl"/>
+      <fixcrlf file="@{toFile}"/>
       <property name="baseUrl" value="@{fromUrl}" />
       <script language="javascript"><![CDATA[
         var url = new java.net.URL(project.getProperty("baseUrl"));
