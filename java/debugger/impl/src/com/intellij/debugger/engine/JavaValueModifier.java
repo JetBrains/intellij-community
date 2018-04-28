@@ -112,7 +112,7 @@ public abstract class JavaValueModifier extends XValueModifier {
     if (value != null) {
       if (varType instanceof PrimitiveType) {
         if (!(value instanceof PrimitiveValue)) {
-          value = (Value)new UnBoxingEvaluator(new IdentityEvaluator(value)).evaluate(context);
+          value = (Value)UnBoxingEvaluator.unbox(value, context);
         }
       }
       else if (varType instanceof ReferenceType) {
