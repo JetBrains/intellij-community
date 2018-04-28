@@ -140,6 +140,7 @@ public class HgVcs extends AbstractVcs<CommittedChangeList> {
     myCloseBranchExecutor = new HgCloseBranchExecutor(checkinEnvironment);
   }
 
+  @NotNull
   public String getDisplayName() {
     return DISPLAY_NAME;
   }

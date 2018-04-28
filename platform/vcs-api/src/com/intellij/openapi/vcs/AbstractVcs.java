@@ -96,6 +96,7 @@ public abstract class AbstractVcs<ComList extends CommittedChangeList> extends S
     return myName;
   }
 
+  @NotNull
   @NonNls
   public abstract String getDisplayName();
 
