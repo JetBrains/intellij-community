@@ -90,6 +90,7 @@ class PyDataclassInspection : PyInspection() {
               ?.also { processAttrsPostInitDefinition(it, dataclassParameters) }
 
             processAttrsDefaultThroughDecorator(node)
+            processAttrsInitializersAndValidators(node)
           }
 
           PyNamedTupleInspection.inspectFieldsOrder(
@@ -359,6 +360,41 @@ class PyDataclassInspection : PyInspection() {
             }
         }
       }
+    }
+
+    private fun processAttrsInitializersAndValidators(cls: PyClass) {
+      cls.visitMethods(
+        { method ->
+          val decorators = method.decoratorList?.decorators
+
+          if (decorators != null) {
+            decorators
+              .asSequence()
+              .mapNotNull { it.qualifiedName }
+              .filter { it.componentCount == 2 }
+              .mapNotNull { it.lastComponent }
+              .forEach {
+                val expectedParameters = when (it) {
+                  "default" -> 1
+                  "validator" -> 3
+                  else -> return@forEach
+                }
+
+                val actualParameters = method.parameterList
+                if (actualParameters.parameters.size != expectedParameters) {
+                  val message = "'${method.name}' should take only $expectedParameters parameter" +
+                                if (expectedParameters > 1) "s" else ""
+
+                  registerProblem(actualParameters, message, ProblemHighlightType.GENERIC_ERROR)
+                }
+              }
+          }
+
+          true
+        },
+        false,
+        myTypeEvalContext
+      )
     }
 
     private fun processAsInitVar(field: PyTargetExpression, postInit: PyFunction?): PyTargetExpression? {
