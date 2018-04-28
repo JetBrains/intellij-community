@@ -9,6 +9,8 @@ import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.vcs.changes.Change;
 import com.intellij.openapi.vcs.changes.ChangeViewDiffRequestProcessor;
 import com.intellij.openapi.vcs.changes.ui.ChangesTree;
+import com.intellij.ui.IdeBorderFactory;
+import com.intellij.ui.SideBorder;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.tree.TreeUtil;
 import org.jetbrains.annotations.NotNull;
@@ -24,7 +26,13 @@ class VcsLogChangeProcessor extends ChangeViewDiffRequestProcessor {
   public VcsLogChangeProcessor(@NotNull Project project, @NotNull VcsLogChangesBrowser browser, @NotNull Disposable disposable) {
     super(project, DiffPlaces.VCS_LOG_VIEW);
     myBrowser = browser;
+    myContentPanel.setBorder(IdeBorderFactory.createBorder(SideBorder.TOP));
     Disposer.register(disposable, this);
+  }
+
+  @NotNull
+  public com.intellij.ui.components.panels.Wrapper getToolbarWrapper() {
+    return myToolbarWrapper;
   }
 
   @NotNull
