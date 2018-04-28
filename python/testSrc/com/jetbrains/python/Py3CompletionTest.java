@@ -354,6 +354,14 @@ public class Py3CompletionTest extends PyTestCase {
     );
   }
 
+  // PY-26354
+  public void testAttrsValidatorParameters() {
+    final String testName = getTestName(true);
+    myFixture.configureByFile(testName + ".py");
+    myFixture.completeBasicAllCarets(null);
+    myFixture.checkResultByFile(testName + ".after.py");
+  }
+
   //PY-28332
   public void testImportNamespacePackageInMultipleRoots() {
     doMultiFileTest(Arrays.asList("root1/src", "root2/src"));

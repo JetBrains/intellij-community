@@ -4,11 +4,17 @@
 package com.jetbrains.python.codeInsight.completion
 
 import com.intellij.codeInsight.completion.*
+import com.intellij.codeInsight.lookup.LookupElementBuilder
+import com.intellij.icons.AllIcons
 import com.intellij.patterns.PlatformPatterns
+import com.intellij.psi.util.PsiTreeUtil
 import com.intellij.util.ProcessingContext
 import com.jetbrains.extensions.python.afterDefInMethod
+import com.jetbrains.extensions.python.inParameterList
 import com.jetbrains.python.PyNames
 import com.jetbrains.python.codeInsight.stdlib.*
+import com.jetbrains.python.psi.PyParameter
+import com.jetbrains.python.psi.PyParameterList
 import com.jetbrains.python.psi.PySubscriptionExpression
 import com.jetbrains.python.psi.PyTargetExpression
 import com.jetbrains.python.psi.types.PyClassType
@@ -18,10 +24,11 @@ class PyDataclassPostInitCompletionContributor : CompletionContributor() {
   override fun handleAutoCompletionPossibility(context: AutoCompletionContext): AutoCompletionDecision = autoInsertSingleItem(context)
 
   init {
-    extend(CompletionType.BASIC, PlatformPatterns.psiElement().afterDefInMethod(), MyCompletionProvider)
+    extend(CompletionType.BASIC, PlatformPatterns.psiElement().afterDefInMethod(), PostInitProvider)
+    extend(CompletionType.BASIC, PlatformPatterns.psiElement().inParameterList(), AttrsValidatorParameterProvider)
   }
 
-  private object MyCompletionProvider : CompletionProvider<CompletionParameters>() {
+  private object PostInitProvider : CompletionProvider<CompletionParameters>() {
 
     override fun addCompletions(parameters: CompletionParameters, context: ProcessingContext?, result: CompletionResultSet) {
       val cls = parameters.getPyClass() ?: return
@@ -55,6 +62,28 @@ class PyDataclassPostInitCompletionContributor : CompletionContributor() {
       }
       else if (dataclassParameters.type == PyDataclassParameters.Type.ATTRS) {
         addMethodToResult(result, cls, typeEvalContext, DUNDER_ATTRS_POST_INIT)
+      }
+    }
+  }
+
+  private object AttrsValidatorParameterProvider : CompletionProvider<CompletionParameters>() {
+
+    override fun addCompletions(parameters: CompletionParameters, context: ProcessingContext?, result: CompletionResultSet) {
+      val cls = parameters.getPyClass() ?: return
+
+      val parameterList = PsiTreeUtil.getParentOfType(parameters.position, PyParameterList::class.java) ?: return
+      val parameter = PsiTreeUtil.getParentOfType(parameters.position, PyParameter::class.java) ?: return
+
+      val index = parameterList.parameters.indexOf(parameter)
+      if (index != 1 && index != 2) return
+
+      val decorators = parameterList.containingFunction?.decoratorList ?: return
+      if (decorators.decorators.none { it.qualifiedName?.endsWith("validator") == true }) return
+
+      val typeEvalContext = parameters.getTypeEvalContext()
+
+      if (parseDataclassParameters(cls, typeEvalContext)?.type == PyDataclassParameters.Type.ATTRS) {
+        result.addElement(LookupElementBuilder.create(if (index == 1) "attribute" else "value").withIcon(AllIcons.Nodes.Parameter))
       }
     }
   }
