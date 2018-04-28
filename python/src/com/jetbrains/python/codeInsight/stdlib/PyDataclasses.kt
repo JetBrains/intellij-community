@@ -101,7 +101,7 @@ private class PyDataclassParametersBuilder(private val type: PyDataclassParamete
   private var init = DEFAULT_INIT
   private var repr = DEFAULT_REPR
   private var eq = DEFAULT_EQ
-  private var order = DEFAULT_ORDER
+  private var order = if (type == PyDataclassParameters.Type.ATTRS) DEFAULT_EQ else DEFAULT_ORDER
   private var unsafeHash = DEFAULT_UNSAFE_HASH
   private var frozen = DEFAULT_FROZEN
 

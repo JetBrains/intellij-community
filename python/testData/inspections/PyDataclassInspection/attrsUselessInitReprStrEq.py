@@ -46,6 +46,14 @@ class B2:
     def <warning descr="'__init__' is ignored if the class already defines 'init' parameter">__init__</warning>(self):
         print("ok")
 
+
+@attr.dataclass
+class C1:
+    c: int = 1
+
+    def <warning descr="'__eq__' is ignored if the class already defines 'cmp' parameter">__eq__</warning>(self, other):
+        return "eq1"
+
 print(repr(A()))
 print(str(A()))
 print(A() == A())
