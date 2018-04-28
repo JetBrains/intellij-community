@@ -31,6 +31,7 @@ import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.fileTypes.LanguageFileType;
+import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.io.FileUtil;
@@ -178,7 +179,7 @@ public class ScratchProjectViewPane extends ProjectViewPane {
     return !isScratchesMergedIntoProjectTab();
   }
 
-  public static class MyStructureProvider implements TreeStructureProvider {
+  public static class MyStructureProvider implements TreeStructureProvider, DumbAware {
     @NotNull
     @Override
     public Collection<AbstractTreeNode> modify(@NotNull AbstractTreeNode parent,
