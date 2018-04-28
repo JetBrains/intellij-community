@@ -98,8 +98,12 @@ class PyDataclassInspection : PyInspection() {
             { !PyTypingTypeProvider.isClassVar(it, myTypeEvalContext) },
             {
               val fieldStub = PyDataclassFieldStubImpl.create(it)
+
               if (fieldStub != null) {
-                fieldStub.hasDefault() || fieldStub.hasDefaultFactory()
+                fieldStub.hasDefault() ||
+                fieldStub.hasDefaultFactory() ||
+                dataclassParameters.type == PyDataclassParameters.Type.ATTRS &&
+                node.methods.any { m -> m.decoratorList?.findDecorator("${it.name}.default") != null }
               }
               else {
                 it.hasAssignedValue()

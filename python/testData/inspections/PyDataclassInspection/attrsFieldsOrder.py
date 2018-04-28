@@ -38,3 +38,13 @@ class B2:
 class B3:
     <error descr="Fields with a default value must come after any fields without a default.">a</error>: int = attr.ib(default=attr.Factory(int))
     b: int = attr.ib()
+
+
+@attr.s
+class C1:
+    <error descr="Fields with a default value must come after any fields without a default.">x</error> = attr.ib()
+    y = attr.ib()
+
+    @x.default
+    def name_does_not_matter(self):
+        return 1
