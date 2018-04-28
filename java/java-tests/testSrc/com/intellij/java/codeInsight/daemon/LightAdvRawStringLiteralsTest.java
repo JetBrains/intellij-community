@@ -40,9 +40,7 @@ public class LightAdvRawStringLiteralsTest extends LightCodeInsightFixtureTestCa
   public void testStringToRawTransformation() { doTestIntention(QuickFixBundle.message("convert.to.raw.string.text")); }
   public void testStringToRawTransformationWithWrongSeparators() { doTestIntention(QuickFixBundle.message("convert.to.raw.string.text")); }
 
-  public void testStringToRawTransformationLeadingTics() {
-    doTestIntention(QuickFixBundle.message("convert.to.raw.string.text"));
-  }
+  public void testStringToRawTransformationLeadingTics() { doTestIntention(QuickFixBundle.message("convert.to.raw.string.text")); }
 
   public void testStringToRawTransformationOnlyTics() {
     myFixture.configureByFile(getTestName(false) + ".java");
@@ -51,6 +49,12 @@ public class LightAdvRawStringLiteralsTest extends LightCodeInsightFixtureTestCa
 
   public void testStringToRawTransformationWithTicsInside() {
     doTestIntention(QuickFixBundle.message("convert.to.raw.string.text"));
+  }
+
+  public void testSplitRawStringLiteral() { doTestIntention("Split raw string literal"); }
+  public void testSplitRawStringLiteralDisabledOnTic() {
+    myFixture.configureByFile(getTestName(false) + ".java");
+    assertEmpty(myFixture.filterAvailableIntentions("Split raw string literal"));
   }
 
   public void testPasteInRawStringLiteral() {
