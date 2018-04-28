@@ -460,6 +460,7 @@ public class LocalVariablesUtil {
       if (shouldVisit(section)) {
         myIndexStack.push(myCurrentSlotIndex);
         try {
+          appendName(section.getParameter());
           super.visitCatchSection(section);
         }
         finally {
