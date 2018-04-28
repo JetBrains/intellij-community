@@ -418,6 +418,12 @@ public class SvnVcs extends AbstractVcs<CommittedChangeList> {
     return VCS_DISPLAY_NAME;
   }
 
+  @NotNull
+  @Override
+  public String getShortName() {
+    return "SVN";
+  }
+
   @Override
   public Configurable getConfigurable() {
     return null;

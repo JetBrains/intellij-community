@@ -144,6 +144,12 @@ public class HgVcs extends AbstractVcs<CommittedChangeList> {
     return DISPLAY_NAME;
   }
 
+  @NotNull
+  @Override
+  public String getShortName() {
+    return "Hg";
+  }
+
   public Configurable getConfigurable() {
     return new HgProjectConfigurable(myProject, globalSettings, projectSettings);
   }
