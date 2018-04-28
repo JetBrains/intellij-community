@@ -33,8 +33,8 @@ import java.util.*;
 public class JavaI18nUtil extends I18nUtil {
   public static final PropertyCreationHandler DEFAULT_PROPERTY_CREATION_HANDLER = new PropertyCreationHandler() {
     @Override
-    public void createProperty(final Project project, final Collection<PropertiesFile> propertiesFiles, final String key, final String value,
-                               final PsiExpression[] parameters) throws IncorrectOperationException {
+    public void createProperty(@NotNull final Project project, @NotNull final Collection<PropertiesFile> propertiesFiles, @NotNull final String key, @NotNull final String value,
+                               @NotNull final PsiExpression[] parameters) throws IncorrectOperationException {
       I18nUtil.createProperty(project, propertiesFiles, key, value, true);
     }
   };
