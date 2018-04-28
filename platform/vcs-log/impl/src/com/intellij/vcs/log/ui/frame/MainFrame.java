@@ -59,7 +59,9 @@ import static com.intellij.util.ObjectUtils.chooseNotNull;
 
 public class MainFrame extends JPanel implements DataProvider, Disposable {
   private static final String HELP_ID = "reference.changesToolWindow.log";
-  private static final String PREVIEW_DIFF_SPLITTER_PROPORTION = "LogMainFrame.DIFF_DETAILS_SPLITTER_PROPORTION";
+  private static final String DIFF_SPLITTER_PROPORTION = "vcs.log.diff.splitter.proportion";
+  private static final String DETAILS_SPLITTER_PROPORTION = "vcs.log.details.splitter.proportion";
+  private static final String CHANGES_SPLITTER_PROPORTION = "vcs.log.changes.splitter.proportion";
 
   @NotNull private final VcsLogData myLogData;
   @NotNull private final AbstractVcsLogUi myUi;
@@ -111,13 +113,13 @@ public class MainFrame extends JPanel implements DataProvider, Disposable {
     myChangesLoadingPane = new JBLoadingPanel(new BorderLayout(), this, ProgressWindow.DEFAULT_PROGRESS_DIALOG_POSTPONE_TIME_MILLIS);
     myChangesLoadingPane.add(myChangesBrowser);
 
-    myDetailsSplitter = new OnePixelSplitter(true, "vcs.log.details.splitter.proportion", 0.7f);
+    myDetailsSplitter = new OnePixelSplitter(true, DETAILS_SPLITTER_PROPORTION, 0.7f);
     myDetailsSplitter.setFirstComponent(myChangesLoadingPane);
     setupDetailsSplitter(myUiProperties.get(CommonUiProperties.SHOW_DETAILS));
 
 
     VcsLogChangeProcessor changeProcessor = new VcsLogChangeProcessor(logData.getProject(), myChangesBrowser, this);
-    myPreviewDiffSplitter = new PreviewDiffSplitterComponent(myDetailsSplitter, changeProcessor, PREVIEW_DIFF_SPLITTER_PROPORTION,
+    myPreviewDiffSplitter = new PreviewDiffSplitterComponent(myDetailsSplitter, changeProcessor, DIFF_SPLITTER_PROPORTION,
                                                              myUiProperties.get(CommonUiProperties.SHOW_DIFF_PREVIEW));
 
     Runnable changesListener = () -> {
@@ -146,7 +148,7 @@ public class MainFrame extends JPanel implements DataProvider, Disposable {
     toolbarsAndTable.add(VcsLogUiUtil.installProgress(VcsLogUiUtil.setupScrolledGraph(myGraphTable, SideBorder.TOP),
                                                       myLogData, this), BorderLayout.CENTER);
 
-    myChangesBrowserSplitter = new OnePixelSplitter(false, "vcs.log.changes.splitter.proportion", 0.7f);
+    myChangesBrowserSplitter = new OnePixelSplitter(false, CHANGES_SPLITTER_PROPORTION, 0.7f);
     myChangesBrowserSplitter.setFirstComponent(toolbarsAndTable);
     myChangesBrowserSplitter.setSecondComponent(myPreviewDiffSplitter);
 
