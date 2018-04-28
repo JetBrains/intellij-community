@@ -444,7 +444,7 @@ public class JavaSpacePropertyProcessor extends JavaElementVisitor {
     }
     else if (myRole1 == ChildRole.CLASS) {
       if (myRole2 == ChildRole.RBRACE) {
-        myResult = Spacing.createSpacing(0, Integer.MAX_VALUE, 1, mySettings.KEEP_LINE_BREAKS, mySettings.KEEP_BLANK_LINES_BEFORE_RBRACE);
+        myResult = Spacing.createSpacing(0, Integer.MAX_VALUE, getLineBreaksBeforeClassEnd(), mySettings.KEEP_LINE_BREAKS, mySettings.KEEP_BLANK_LINES_BEFORE_RBRACE);
       }
       else {
         int blankLines = mySettings.BLANK_LINES_AROUND_CLASS + 1;
@@ -485,7 +485,9 @@ public class JavaSpacePropertyProcessor extends JavaElementVisitor {
         }
       }
       else if (myRole2 == ChildRole.RBRACE) {
-        myResult = Spacing.createSpacing(0, Integer.MAX_VALUE, 1, mySettings.KEEP_LINE_BREAKS, mySettings.KEEP_BLANK_LINES_BEFORE_RBRACE);
+        myResult = Spacing.createSpacing(0, Integer.MAX_VALUE,
+                                         getLineBreaksBeforeClassEnd(),
+                                         mySettings.KEEP_LINE_BREAKS, mySettings.KEEP_BLANK_LINES_BEFORE_RBRACE);
       }
       else {
         int blankLines = getLinesAroundField() + 1;
@@ -523,6 +525,10 @@ public class JavaSpacePropertyProcessor extends JavaElementVisitor {
     }
   }
 
+  private int getLineBreaksBeforeClassEnd() {
+    return myParent instanceof PsiAnonymousClass ? 1 : mySettings.BLANK_LINES_BEFORE_CLASS_END + 1;
+  }
+
   /**
    * Initializes {@link #myResult} property with {@link Spacing} which {@code 'min line feeds'} property is defined
    * from {@link CommonCodeStyleSettings#BLANK_LINES_AROUND_CLASS} value.
@@ -555,7 +561,8 @@ public class JavaSpacePropertyProcessor extends JavaElementVisitor {
         myResult = Spacing.createSpacing(0, 0, blankLines, mySettings.KEEP_LINE_BREAKS, mySettings.KEEP_BLANK_LINES_IN_DECLARATIONS);
       }
       if (myRole2 == ChildRole.RBRACE) {
-        myResult = Spacing.createSpacing(0, Integer.MAX_VALUE, 1, mySettings.KEEP_LINE_BREAKS, mySettings.KEEP_BLANK_LINES_BEFORE_RBRACE);
+        myResult = Spacing.createSpacing(0, Integer.MAX_VALUE, getLineBreaksBeforeClassEnd(),
+                                         mySettings.KEEP_LINE_BREAKS, mySettings.KEEP_BLANK_LINES_BEFORE_RBRACE);
       }
       else {
         int blankLines = getLinesAroundMethod() + 1;
