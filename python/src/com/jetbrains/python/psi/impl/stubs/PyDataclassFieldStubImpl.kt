@@ -8,6 +8,7 @@ import com.intellij.psi.stubs.StubOutputStream
 import com.intellij.psi.util.QualifiedName
 import com.jetbrains.python.codeInsight.stdlib.PyDataclassParameters
 import com.jetbrains.python.psi.PyCallExpression
+import com.jetbrains.python.psi.PyExpression
 import com.jetbrains.python.psi.PyReferenceExpression
 import com.jetbrains.python.psi.PyTargetExpression
 import com.jetbrains.python.psi.impl.PyEvaluator
@@ -62,23 +63,34 @@ class PyDataclassFieldStubImpl private constructor(private val calleeName: Quali
       val initValue = PyEvaluator().evaluate(call.getKeywordArgument("init")) as? Boolean ?: true
 
       if (type == PyDataclassParameters.Type.STD) {
-        val hasDefault = call.getKeywordArgument("default") != null
-        val hasDefaultFactory = call.getKeywordArgument("default_factory") != null
+        val missing = QualifiedName.fromComponents("dataclasses", "MISSING")
+
+        val hasDefault = existsAndDoesNotResolveTo(call.getKeywordArgument("default"), missing)
+        val hasDefaultFactory = existsAndDoesNotResolveTo(call.getKeywordArgument("default_factory"), missing)
 
         return Triple(hasDefault, hasDefaultFactory, initValue)
       }
       else if (type == PyDataclassParameters.Type.ATTRS) {
-        val default = call.getKeywordArgument("default") ?: return Triple(false, false, initValue)
+        val default = call.getKeywordArgument("default")
 
-        val callee = (default as? PyCallExpression)?.callee as? PyReferenceExpression
-        val hasDefaultFactory =
-          callee != null &&
-          QualifiedName.fromComponents("attr", "Factory") in PyResolveUtil.resolveImportedElementQNameLocally(callee)
+        if (existsAndDoesNotResolveTo(default, QualifiedName.fromComponents("attr", "NOTHING"))) {
+          val callee = (default as? PyCallExpression)?.callee as? PyReferenceExpression
+          val hasDefaultFactory =
+            callee != null &&
+            QualifiedName.fromComponents("attr", "Factory") in PyResolveUtil.resolveImportedElementQNameLocally(callee)
 
-        return Triple(!hasDefaultFactory, hasDefaultFactory, initValue)
+          return Triple(!hasDefaultFactory, hasDefaultFactory, initValue)
+        }
+
+        return Triple(false, false, initValue)
       }
 
       return null
+    }
+
+    private fun existsAndDoesNotResolveTo(expression: PyExpression?, qualifiedName: QualifiedName): Boolean {
+      return expression != null &&
+             (expression !is PyReferenceExpression || !PyResolveUtil.resolveImportedElementQNameLocally(expression).contains(qualifiedName))
     }
   }
 

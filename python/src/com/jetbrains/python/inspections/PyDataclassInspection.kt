@@ -8,6 +8,7 @@ import com.intellij.codeInspection.ProblemHighlightType
 import com.intellij.codeInspection.ProblemsHolder
 import com.intellij.psi.PsiElementVisitor
 import com.intellij.psi.PsiNameIdentifierOwner
+import com.intellij.psi.util.QualifiedName
 import com.intellij.util.containers.ContainerUtil
 import com.jetbrains.python.PyNames
 import com.jetbrains.python.codeInsight.stdlib.*
@@ -17,6 +18,7 @@ import com.jetbrains.python.psi.impl.PyCallExpressionHelper
 import com.jetbrains.python.psi.impl.PyEvaluator
 import com.jetbrains.python.psi.impl.stubs.PyDataclassFieldStubImpl
 import com.jetbrains.python.psi.resolve.PyResolveContext
+import com.jetbrains.python.psi.resolve.PyResolveUtil
 import com.jetbrains.python.psi.types.*
 
 class PyDataclassInspection : PyInspection() {
@@ -107,7 +109,14 @@ class PyDataclassInspection : PyInspection() {
                 node.methods.any { m -> m.decoratorList?.findDecorator("${it.name}.default") != null }
               }
               else {
-                it.hasAssignedValue()
+                val assignedValue = it.findAssignedValue()
+
+                val nothing = QualifiedName.fromComponents("attr", "NOTHING")
+                val missing = QualifiedName.fromComponents("dataclasses", "MISSING")
+
+                assignedValue != null &&
+                (assignedValue !is PyReferenceExpression ||
+                 !PyResolveUtil.resolveImportedElementQNameLocally(assignedValue).any { it == nothing || it == missing })
               }
             }
           )

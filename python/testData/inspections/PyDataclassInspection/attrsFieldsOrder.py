@@ -48,3 +48,15 @@ class C1:
     @x.default
     def name_does_not_matter(self):
         return 1
+
+
+@attr.dataclass
+class D1:
+    x: int = attr.NOTHING
+    y: int
+
+
+@attr.dataclass
+class D2:
+    x: int = attr.ib(default=attr.NOTHING)
+    y: int
