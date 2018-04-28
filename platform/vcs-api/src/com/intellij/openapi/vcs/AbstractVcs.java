@@ -96,13 +96,17 @@ public abstract class AbstractVcs<ComList extends CommittedChangeList> extends S
     return myName;
   }
 
+  /**
+   * Returns the name of the VCS as it should be displayed in the UI.
+   * @see #getShortName()
+   */
   @NotNull
   @NonNls
   public abstract String getDisplayName();
 
   /**
    * Returns the short or abbreviated name of this VCS, which name can be used in those places in the UI where the space is limited.
-   * (e.g. it can be "SVN" for Subversion or "hg" for Mercurial).<br/><br/>
+   * (e.g. it can be "SVN" for Subversion or "Hg" for Mercurial).<br/><br/>
    * By default returns the same as {@link #getDisplayName()}.
    */
   @NotNull
