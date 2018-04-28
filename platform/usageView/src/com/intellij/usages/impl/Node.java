@@ -67,6 +67,8 @@ public abstract class Node extends DefaultMutableTreeNode {
   protected abstract boolean isDataReadOnly();
   protected abstract boolean isDataExcluded();
 
+  protected void updateCachedPresentation() {}
+
   @NotNull
   protected abstract String getText(@NotNull UsageView view);
 
@@ -98,6 +100,7 @@ public abstract class Node extends DefaultMutableTreeNode {
     boolean isDataValid = isDataValid();
     boolean isReadOnly = isDataReadOnly();
     String text = getText(view);
+    updateCachedPresentation();
     doUpdate(edtNodeChangedQueue, isDataValid, isReadOnly, text);
   }
 

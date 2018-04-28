@@ -49,14 +49,15 @@ class UsageViewTreeCellRenderer extends ColoredTreeCellRenderer {
   private static final SimpleTextAttributes ourNumberOfUsagesAttribute = SimpleTextAttributes.fromTextAttributes(ourColorsScheme.getAttributes(UsageTreeColors.NUMBER_OF_USAGES));
   private static final SimpleTextAttributes ourInvalidAttributesDarcula = new SimpleTextAttributes(null, DarculaColors.RED, null, ourInvalidAttributes.getStyle());
   private static final Insets STANDARD_IPAD_NOWIFI = new Insets(1, 2, 1, 2);
+  private static final TextChunk[] ourLoadingText = {new TextChunk(SimpleTextAttributes.GRAY_ATTRIBUTES.toTextAttributes(), "loading...")};
   private boolean myRowBoundsCalled;
 
   private final UsageViewPresentation myPresentation;
-  private final UsageView myView;
+  private final UsageViewImpl myView;
   private boolean myCalculated;
   private int myRowHeight = AllIcons.Nodes.AbstractClass.getIconHeight()+2;
 
-  UsageViewTreeCellRenderer(@NotNull UsageView view) {
+  UsageViewTreeCellRenderer(@NotNull UsageViewImpl view) {
     myView = view;
     myPresentation = view.getPresentation();
   }
@@ -150,7 +151,16 @@ class UsageViewTreeCellRenderer extends ColoredTreeCellRenderer {
         }
 
         if (node.isValid()) {
-          TextChunk[] text = node.getUsage().getPresentation().getText();
+          TextChunk[] text = node.getUsage().getPresentation().getCachedText();
+          if (text == null) {
+            // either:
+            //   1. the node was never updated yet
+            //   2. the usage presentation have dropped the cached text by itself
+            //      (i.e. it was stored by a soft reference and was gc-ed).
+            //  In either case, `myView.updateLater()` will eventually re-update the visible nodes.
+            text = ourLoadingText;
+            myView.updateLater();
+          }
           for (int i = 0; i < text.length; i++) {
             TextChunk textChunk = text[i];
             SimpleTextAttributes simples = textChunk.getSimpleAttributesIgnoreBackground();

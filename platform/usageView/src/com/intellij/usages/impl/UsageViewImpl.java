@@ -1419,7 +1419,7 @@ public class UsageViewImpl implements UsageViewEx {
     }
   }
 
-  private void updateLater() {
+  void updateLater() {
     myUpdateAlarm.cancelAllRequests();
     myUpdateAlarm.addRequest(() -> {
       if (myProject.isDisposed()) return;
