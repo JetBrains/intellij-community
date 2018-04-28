@@ -145,7 +145,7 @@ public class JsonSchemaStatusWidget {
 
       if (schemaFile instanceof HttpVirtualFile) {
         RemoteFileInfo info = ((HttpVirtualFile)schemaFile).getFileInfo();
-        if (info == null) return getDownloadErrorState();
+        if (info == null) return getDownloadErrorState(null);
 
         //noinspection EnumSwitchStatementWhichMissesCases
         switch (info.getState()) {
@@ -175,7 +175,7 @@ public class JsonSchemaStatusWidget {
             });
             return new MyWidgetState("Download is scheduled or in progress", "Downloading JSON schema", false);
           case ERROR_OCCURRED:
-            return getDownloadErrorState();
+            return getDownloadErrorState(info.getErrorMessage());
         }
       }
 
@@ -242,8 +242,9 @@ public class JsonSchemaStatusWidget {
     }
 
     @NotNull
-    private WidgetState getDownloadErrorState() {
-      MyWidgetState state = new MyWidgetState("Error downloading schema", "JSON schema error", true);
+    private WidgetState getDownloadErrorState(@Nullable String message) {
+      MyWidgetState state = new MyWidgetState("Error downloading schema" + (message == null ? "" : (": <br/>" + message)),
+                                              "JSON schema error", true);
       state.setWarning(true);
       return state;
     }
