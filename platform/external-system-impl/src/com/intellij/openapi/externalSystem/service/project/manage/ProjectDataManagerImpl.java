@@ -99,6 +99,13 @@ public class ProjectDataManagerImpl implements ProjectDataManager {
 
     MultiMap<Key<?>, DataNode<?>> grouped = ExternalSystemApiUtil.recursiveGroup(nodes);
 
+    // run data services for empty data list to process orphan data clean-up
+    for (Key<?> key : myServices.getValue().keySet()) {
+      if (!grouped.containsKey(key)) {
+        grouped.getModifiable(key);
+      }
+    }
+
     final Collection<DataNode<?>> projects = grouped.get(ProjectKeys.PROJECT);
     // only one project(can be multi-module project) expected for per single import
     assert projects.size() == 1 || projects.isEmpty();
