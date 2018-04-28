@@ -71,8 +71,8 @@ public class SearchEverywhereUI extends BorderLayoutPanel {
   private final JCheckBox myNonProjectCB;
   private final List<SETab> myTabs = new ArrayList<>();
 
-  private JBPopup myPopup;
-  private final JBList<Object> myList = new JBList<>();
+  private JBPopup myResultsPopup;
+  private final JBList<Object> myResultsList = new JBList<>();
 
   private CalcThread myCalcThread;
   private volatile ActionCallback myCurrentWorker = ActionCallback.DONE;
@@ -364,7 +364,7 @@ public class SearchEverywhereUI extends BorderLayoutPanel {
     public CalcThread(Project project, String pattern, boolean reuseModel) {
       this.project = project;
       this.pattern = pattern;
-      myListModel = reuseModel ? (SearchEverywhereAction.SearchListModel) myList.getModel() : new SearchEverywhereAction.SearchListModel();
+      myListModel = reuseModel ? (SearchEverywhereAction.SearchListModel) myResultsList.getModel() : new SearchEverywhereAction.SearchListModel();
     }
 
     @Override
@@ -375,19 +375,19 @@ public class SearchEverywhereUI extends BorderLayoutPanel {
         //noinspection SSBasedInspection
         SwingUtilities.invokeLater(() -> {
           // this line must be called on EDT to avoid context switch at clear().append("text") Don't touch. Ask [kb]
-          myList.getEmptyText().setText("Searching...");
+          myResultsList.getEmptyText().setText("Searching...");
 
-          if (myList.getModel() instanceof SearchEverywhereAction.SearchListModel) {
+          if (myResultsList.getModel() instanceof SearchEverywhereAction.SearchListModel) {
             //noinspection unchecked
             myAlarm.cancelAllRequests();
             myAlarm.addRequest(() -> {
               if (!myDone.isRejected()) {
-                myList.setModel(myListModel);
+                myResultsList.setModel(myListModel);
                 updatePopup();
               }
             }, 50);
           } else {
-            myList.setModel(myListModel);
+            myResultsList.setModel(myListModel);
           }
         });
 
@@ -444,7 +444,7 @@ public class SearchEverywhereUI extends BorderLayoutPanel {
       finally {
         if (!isCanceled()) {
           //noinspection SSBasedInspection
-          SwingUtilities.invokeLater(() -> myList.getEmptyText().setText(StatusText.DEFAULT_EMPTY_TEXT));
+          SwingUtilities.invokeLater(() -> myResultsList.getEmptyText().setText(StatusText.DEFAULT_EMPTY_TEXT));
           updatePopup();
         }
         if (!myDone.isProcessed()) {
@@ -498,16 +498,16 @@ public class SearchEverywhereUI extends BorderLayoutPanel {
         @Override
         public void run() {
           myListModel.update();
-          myList.revalidate();
-          myList.repaint();
+          myResultsList.revalidate();
+          myResultsList.repaint();
 
           //myRenderer.recalculateWidth();
           if (!myShown) {
             return;
           }
-          if (myPopup == null || !myPopup.isVisible()) {
-            ScrollingUtil.installActions(myList, getSearchField());
-            JBScrollPane content = new JBScrollPane(myList) {
+          if (myResultsPopup == null || !myResultsPopup.isVisible()) {
+            ScrollingUtil.installActions(myResultsList, getSearchField());
+            JBScrollPane content = new JBScrollPane(myResultsList) {
               {
                 if (UIUtil.isUnderDarcula()) {
                   setBorder(null);
@@ -516,8 +516,8 @@ public class SearchEverywhereUI extends BorderLayoutPanel {
               @Override
               public Dimension getPreferredSize() {
                 Dimension size = super.getPreferredSize();
-                Dimension listSize = myList.getPreferredSize();
-                if (size.height > listSize.height || myList.getModel().getSize() == 0) {
+                Dimension listSize = myResultsList.getPreferredSize();
+                if (size.height > listSize.height || myResultsList.getModel().getSize() == 0) {
                   size.height = Math.max(JBUI.scale(30), listSize.height);
                 }
 
@@ -532,7 +532,7 @@ public class SearchEverywhereUI extends BorderLayoutPanel {
             content.setMinimumSize(new Dimension(getWidth(), 30));
             final ComponentPopupBuilder builder = JBPopupFactory.getInstance()
                                                                 .createComponentPopupBuilder(content, null);
-            myPopup = builder
+            myResultsPopup = builder
               .setRequestFocus(false)
               .setCancelKeyEnabled(false)
               .setResizable(true)
@@ -553,10 +553,10 @@ public class SearchEverywhereUI extends BorderLayoutPanel {
               .setShowShadow(false)
               .setShowBorder(false)
               .createPopup();
-            project.putUserData(SEARCH_EVERYWHERE_POPUP, myPopup);
-            //myPopup.setMinimumSize(new Dimension(myBalloon.getSize().width, 30));
-            myPopup.getContent().setBorder(null);
-            Disposer.register(myPopup, new Disposable() {
+            project.putUserData(SEARCH_EVERYWHERE_POPUP, myResultsPopup);
+            //myResultsPopup.setMinimumSize(new Dimension(myBalloon.getSize().width, 30));
+            myResultsPopup.getContent().setBorder(null);
+            Disposer.register(myResultsPopup, new Disposable() {
               @Override
               public void dispose() {
                 project.putUserData(SEARCH_EVERYWHERE_POPUP, null);
@@ -567,7 +567,7 @@ public class SearchEverywhereUI extends BorderLayoutPanel {
               }
             });
             updateResultsPopupBounds();
-            myPopup.show(new RelativePoint(SearchEverywhereUI.this, new Point(0, getHeight())));
+            myResultsPopup.show(new RelativePoint(SearchEverywhereUI.this, new Point(0, getHeight())));
 
             ActionManager.getInstance().addAnActionListener(new AnActionListener.Adapter() {
               @Override
@@ -575,18 +575,18 @@ public class SearchEverywhereUI extends BorderLayoutPanel {
                 if (action instanceof TextComponentEditorAction) {
                   return;
                 }
-                if (myPopup!=null) {
-                  myPopup.cancel();
+                if (myResultsPopup != null) {
+                  myResultsPopup.cancel();
                 }
               }
-            }, myPopup);
+            }, myResultsPopup);
           }
           else {
-            myList.revalidate();
-            myList.repaint();
+            myResultsList.revalidate();
+            myResultsList.repaint();
           }
-          ScrollingUtil.ensureSelectionExists(myList);
-          if (myList.getModel().getSize() > 0) {
+          ScrollingUtil.ensureSelectionExists(myResultsList);
+          if (myResultsList.getModel().getSize() > 0) {
             updateResultsPopupBounds();
           }
         }
@@ -628,7 +628,7 @@ public class SearchEverywhereUI extends BorderLayoutPanel {
     //              case RUN_CONFIGURATIONS: moreIndex.runConfigurations = -1; break;
     //            }
     //          }
-    //          ScrollingUtil.selectItem(myList, index);
+    //          ScrollingUtil.selectItem(myResultsList, index);
     //          myDone.setDone();
     //        }
     //        catch (Exception e) {
@@ -650,9 +650,9 @@ public class SearchEverywhereUI extends BorderLayoutPanel {
   }
 
   private void updateResultsPopupBounds() {
-    int height = myList.getPreferredSize().height + 2;
+    int height = myResultsList.getPreferredSize().height + 2;
     int width = getWidth();
-    myPopup.setSize(JBUI.size(width, height));
+    myResultsPopup.setSize(JBUI.size(width, height));
 
   }
 }
