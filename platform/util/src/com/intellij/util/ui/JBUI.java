@@ -998,9 +998,9 @@ public class JBUI {
      * Creates a context based on the comp's system scale and sticks to it via the {@link #update()} method.
      */
     @NotNull
-    public static ScaleContext create(@NotNull Component comp) {
+    public static ScaleContext create(@Nullable Component comp) {
       final ScaleContext ctx = new ScaleContext(SYS_SCALE.of(sysScale(comp)));
-      ctx.compRef = new WeakReference<Component>(comp);
+      if (comp != null) ctx.compRef = new WeakReference<Component>(comp);
       return ctx;
     }
 
