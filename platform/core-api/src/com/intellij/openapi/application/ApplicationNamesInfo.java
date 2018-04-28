@@ -41,6 +41,7 @@ public class ApplicationNamesInfo {
   private final String myEditionName;
   private final String myScriptName;
   private final String myDefaultLauncherName;
+  private final String myMotto;
 
   private static class ApplicationNamesInfoHolder {
     private static final ApplicationNamesInfo ourInstance = new ApplicationNamesInfo();
@@ -63,6 +64,7 @@ public class ApplicationNamesInfo {
       myEditionName = names.getAttributeValue("edition");
       myScriptName = names.getAttributeValue("script");
       myDefaultLauncherName = names.getAttributeValue("default-launcher-name", myScriptName);
+      myMotto = names.getAttributeValue("motto", "The Drive to Develop");
     }
     catch (Exception e) {
       throw new RuntimeException("Cannot load resource: " + resource, e);
@@ -131,5 +133,12 @@ public class ApplicationNamesInfo {
    */
   public String getDefaultLauncherName() {
     return myDefaultLauncherName;
+  }
+
+  /**
+   * Returns motto of the product. Used as a comment for the command-line launcher.
+   */
+  public @NotNull String getMotto() {
+    return myMotto;
   }
 }
