@@ -948,6 +948,7 @@ public class PluginManagerConfigurableNew
 
     private final ShortcutSet mySelectAllKeys;
     private boolean myAllSelected;
+    private boolean myMixSelection;
 
     public MultiSelectionEventHandler() {
       clear();
@@ -966,7 +967,12 @@ public class PluginManagerConfigurableNew
               }
             }
             else if (event.isMetaDown()) {
-              // XXX
+              myMixSelection = true;
+              myAllSelected = false;
+              mySelectionIndex = index;
+              mySelectionLength = 1;
+              component.setSelection(component.getSelection() == SelectionType.SELECTION
+                                     ? SelectionType.NONE : SelectionType.SELECTION, true);
             }
             else {
               clearSelectionWithout(index);
@@ -976,16 +982,21 @@ public class PluginManagerConfigurableNew
           else if (SwingUtilities.isRightMouseButton(event)) {
             CellPluginComponent component = CellPluginComponent.get(event);
 
-            if (mySelectionLength == 0 || mySelectionLength == 1) {
-              int index = getIndex(component);
-              if (mySelectionLength == 0 || mySelectionIndex != index) {
-                clearSelectionWithout(index);
-                singleSelection(component, index);
+            if (myAllSelected || myMixSelection) {
+              int size = getSelection().size();
+              if (size == 0) {
+                singleSelection(component, getIndex(component));
               }
+              else if (size == 1) {
+                ensureMoveSingleSelection(component);
+              }
+            }
+            else if (mySelectionLength == 0 || mySelectionLength == 1) {
+              ensureMoveSingleSelection(component);
             }
 
             DefaultActionGroup group = new DefaultActionGroup();
-            component.createPopupMenu(group, mySelectionLength == 1 ? Collections.emptyList() : getSelection());
+            component.createPopupMenu(group, getEmptyOrMultiSelection());
             if (group.getChildrenCount() == 0) {
               return;
             }
@@ -1070,7 +1081,7 @@ public class PluginManagerConfigurableNew
           }
           else if (code == KeyEvent.VK_SPACE || code == KeyEvent.VK_ENTER || code == KeyEvent.VK_BACK_SPACE) {
             assert mySelectionLength != 0;
-            myComponents.get(mySelectionIndex).handleKeyAction(code, mySelectionLength == 1 ? Collections.emptyList() : getSelection());
+            myComponents.get(mySelectionIndex).handleKeyAction(code, getEmptyOrMultiSelection());
           }
         }
       };
@@ -1078,7 +1089,7 @@ public class PluginManagerConfigurableNew
       myFocusListener = new FocusAdapter() {
         @Override
         public void focusGained(FocusEvent event) {
-          if (mySelectionIndex >= 0 && mySelectionLength == 1) {
+          if (mySelectionIndex >= 0 && mySelectionLength == 1 && !myMixSelection) {
             CellPluginComponent component = CellPluginComponent.get(event);
             int index = getIndex(component);
             if (mySelectionIndex != index) {
@@ -1126,6 +1137,21 @@ public class PluginManagerConfigurableNew
     }
 
     @NotNull
+    private List<CellPluginComponent> getEmptyOrMultiSelection() {
+      List<CellPluginComponent> selection;
+      if (myAllSelected || myMixSelection) {
+        selection = getSelection();
+        if (selection.size() == 1) {
+          selection = Collections.emptyList();
+        }
+      }
+      else {
+        selection = mySelectionLength == 1 ? Collections.emptyList() : getSelection();
+      }
+      return selection;
+    }
+
+    @NotNull
     private List<CellPluginComponent> getSelection() {
       List<CellPluginComponent> selection = new ArrayList<>();
 
@@ -1145,6 +1171,8 @@ public class PluginManagerConfigurableNew
       myHoverIndex = -1;
       mySelectionIndex = -1;
       mySelectionLength = 0;
+      myAllSelected = false;
+      myMixSelection = false;
     }
 
     private void selectAll() {
@@ -1153,6 +1181,7 @@ public class PluginManagerConfigurableNew
       }
 
       myAllSelected = true;
+      myMixSelection = false;
       myHoverComponent = null;
       myHoverIndex = -1;
 
@@ -1184,7 +1213,7 @@ public class PluginManagerConfigurableNew
       else if (up) {
         if (mySelectionLength > 0) {
           if (mySelectionIndex + mySelectionLength - 1 > 0) {
-            clearAllSelection();
+            clearAllOrMixSelection();
             for (int i = 0; i < count && mySelectionIndex + mySelectionLength - 1 > 0; i++) {
               mySelectionLength--;
               if (mySelectionLength > 0) {
@@ -1203,7 +1232,7 @@ public class PluginManagerConfigurableNew
           }
         }
         else if (mySelectionIndex + mySelectionLength + 1 > 0) {
-          clearAllSelection();
+          clearAllOrMixSelection();
           for (int i = 0, index = mySelectionIndex + mySelectionLength + 1; i < count && index > 0; i++, index--) {
             mySelectionLength--;
             myComponents.get(index - 1).setSelection(SelectionType.SELECTION);
@@ -1213,7 +1242,7 @@ public class PluginManagerConfigurableNew
       // down
       else if (mySelectionLength > 0) {
         if (mySelectionIndex + mySelectionLength < myComponents.size()) {
-          clearAllSelection();
+          clearAllOrMixSelection();
           for (int i = 0, index = mySelectionIndex + mySelectionLength, size = myComponents.size();
                i < count && index < size;
                i++, index++) {
@@ -1223,7 +1252,7 @@ public class PluginManagerConfigurableNew
         }
       }
       else {
-        clearAllSelection();
+        clearAllOrMixSelection();
         for (int i = 0; i < count; i++) {
           mySelectionLength++;
           myComponents.get(mySelectionIndex + mySelectionLength).setSelection(SelectionType.NONE, true);
@@ -1245,11 +1274,18 @@ public class PluginManagerConfigurableNew
       return index;
     }
 
-    private void clearAllSelection() {
-      if (!myAllSelected) {
+    private void clearAllOrMixSelection() {
+      if (!myAllSelected && !myMixSelection) {
         return;
       }
+      if (myMixSelection && mySelectionIndex != -1) {
+        CellPluginComponent component = myComponents.get(mySelectionIndex);
+        if (component.getSelection() == SelectionType.NONE) {
+          component.setSelection(SelectionType.SELECTION);
+        }
+      }
       myAllSelected = false;
+      myMixSelection = false;
 
       int first;
       int last;
@@ -1279,6 +1315,7 @@ public class PluginManagerConfigurableNew
 
     private void clearSelectionWithout(int withoutIndex) {
       myAllSelected = false;
+      myMixSelection = false;
       for (int i = 0, size = myComponents.size(); i < size; i++) {
         if (i != withoutIndex) {
           CellPluginComponent component = myComponents.get(i);
@@ -1286,6 +1323,14 @@ public class PluginManagerConfigurableNew
             component.setSelection(SelectionType.NONE);
           }
         }
+      }
+    }
+
+    private void ensureMoveSingleSelection(CellPluginComponent component) {
+      int index = getIndex(component);
+      if (mySelectionLength == 0 || mySelectionIndex != index) {
+        clearSelectionWithout(index);
+        singleSelection(component, index);
       }
     }
 
