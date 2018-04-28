@@ -106,7 +106,7 @@ public abstract class JavaValueModifier extends XValueModifier {
     if (value instanceof DoubleValue) {
       double dValue = ((DoubleValue) value).doubleValue();
       if(varType instanceof FloatType && Float.MIN_VALUE <= dValue && dValue <= Float.MAX_VALUE){
-        value = context.getSuspendContext().getDebugProcess().getVirtualMachineProxy().mirrorOf((float)dValue);
+        value = context.getDebugProcess().getVirtualMachineProxy().mirrorOf((float)dValue);
       }
     }
     if (value != null) {
