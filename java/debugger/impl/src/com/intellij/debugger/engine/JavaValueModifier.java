@@ -24,6 +24,7 @@ import com.intellij.xdebugger.XExpression;
 import com.intellij.xdebugger.frame.XValueModifier;
 import com.sun.jdi.*;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import static com.intellij.psi.CommonClassNames.JAVA_LANG_STRING;
 
@@ -96,7 +97,7 @@ public abstract class JavaValueModifier extends XValueModifier {
     setValueImpl(expression, callback);
   }
 
-  protected static Value preprocessValue(EvaluationContextImpl context, Value value, Type varType) throws EvaluateException {
+  protected static Value preprocessValue(EvaluationContextImpl context, Value value, @NotNull Type varType) throws EvaluateException {
     if (value != null && JAVA_LANG_STRING.equals(varType.name()) && !(value instanceof StringReference)) {
       String v = DebuggerUtils.getValueAsString(context, value);
       if (v != null) {
@@ -129,11 +130,28 @@ public abstract class JavaValueModifier extends XValueModifier {
                                                                                           InvalidTypeException,
                                                                                           EvaluateException,
                                                                                           IncompatibleThreadStateException;
-    ReferenceType loadClass(EvaluationContextImpl evaluationContext, String className) throws EvaluateException,
-                                                                                            InvocationException,
-                                                                                            ClassNotLoadedException,
-                                                                                            IncompatibleThreadStateException,
-                                                                                            InvalidTypeException;
+
+    default ClassLoaderReference getClassLoader(EvaluationContextImpl evaluationContext) throws EvaluateException {
+      return evaluationContext.getClassLoader();
+    }
+
+    @Nullable
+    Type getLType() throws ClassNotLoadedException, EvaluateException;
+  }
+
+  @Nullable
+  private static ExpressionEvaluator tryDirectAssignment(@NotNull XExpression expression,
+                                                         @Nullable Type varType,
+                                                         @NotNull EvaluationContextImpl evaluationContext) {
+    if (varType instanceof LongType) {
+      try {
+        return new ExpressionEvaluatorImpl(new IdentityEvaluator(
+          evaluationContext.getDebugProcess().getVirtualMachineProxy().mirrorOf(Long.decode(expression.getExpression()))));
+      }
+      catch (NumberFormatException ignored) {
+      }
+    }
+    return null;
   }
 
   private static void setValue(ExpressionEvaluator evaluator, EvaluationContextImpl evaluationContext, SetValueRunnable setValueRunnable) throws EvaluateException {
@@ -158,7 +176,9 @@ public abstract class JavaValueModifier extends XValueModifier {
       }
       final ReferenceType refType;
       try {
-        refType = setValueRunnable.loadClass(evaluationContext, ex.className());
+        refType = evaluationContext.getDebugProcess().loadClass(evaluationContext,
+                                                                ex.className(),
+                                                                setValueRunnable.getClassLoader(evaluationContext));
         if (refType != null) {
           //try again
           setValue(evaluator, evaluationContext, setValueRunnable);
@@ -173,7 +193,10 @@ public abstract class JavaValueModifier extends XValueModifier {
     }
   }
 
-  protected void set(@NotNull final XExpression expression, final XModificationCallback callback, final DebuggerContextImpl debuggerContext, final SetValueRunnable setValueRunnable) {
+  protected void set(@NotNull final XExpression expression,
+                     final XModificationCallback callback,
+                     final DebuggerContextImpl debuggerContext,
+                     final SetValueRunnable setValueRunnable) {
     final ProgressWindow progressWindow = new ProgressWindow(true, debuggerContext.getProject());
     final EvaluationContextImpl evaluationContext = myJavaValue.getEvaluationContext();
 
@@ -185,16 +208,19 @@ public abstract class JavaValueModifier extends XValueModifier {
       public void threadAction(@NotNull SuspendContextImpl suspendContext) {
         ExpressionEvaluator evaluator;
         try {
-          Project project = evaluationContext.getProject();
-          SourcePosition position = ContextUtil.getSourcePosition(evaluationContext);
-          PsiElement context = ContextUtil.getContextElement(evaluationContext, position);
-          evaluator = DebuggerInvocationUtil.commitAndRunReadAction(project, new EvaluatingComputable<ExpressionEvaluator>() {
+          evaluator = tryDirectAssignment(expression, setValueRunnable.getLType(), evaluationContext);
+
+          if (evaluator == null) {
+            Project project = evaluationContext.getProject();
+            SourcePosition position = ContextUtil.getSourcePosition(evaluationContext);
+            PsiElement context = ContextUtil.getContextElement(evaluationContext, position);
+            evaluator = DebuggerInvocationUtil.commitAndRunReadAction(project, new EvaluatingComputable<ExpressionEvaluator>() {
               public ExpressionEvaluator compute() throws EvaluateException {
                 return EvaluatorBuilderImpl
                   .build(TextWithImportsImpl.fromXExpression(expression), context, position, project);
               }
             });
-
+          }
 
           setValue(evaluator, evaluationContext, new SetValueRunnable() {
             public void setValue(EvaluationContextImpl evaluationContext, Value newValue) throws ClassNotLoadedException,
@@ -207,17 +233,15 @@ public abstract class JavaValueModifier extends XValueModifier {
               }
             }
 
-            public ReferenceType loadClass(EvaluationContextImpl evaluationContext, String className) throws
-                                                                                                      InvocationException,
-                                                                                                      ClassNotLoadedException,
-                                                                                                      EvaluateException,
-                                                                                                      IncompatibleThreadStateException,
-                                                                                                      InvalidTypeException {
-              return setValueRunnable.loadClass(evaluationContext, className);
+            @Nullable
+            @Override
+            public Type getLType() throws EvaluateException, ClassNotLoadedException {
+              return setValueRunnable.getLType();
             }
           });
           callback.valueModified();
-        } catch (EvaluateException e) {
+        }
+        catch (EvaluateException | ClassNotLoadedException e) {
           callback.errorOccurred(e.getMessage());
         }
       }
