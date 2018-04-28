@@ -11,7 +11,6 @@ import com.intellij.openapi.ui.Splitter;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.vcs.VcsDataKeys;
 import com.intellij.openapi.vcs.changes.Change;
-import com.intellij.openapi.vcs.changes.PreviewDiffSplitterComponent;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.OnePixelSplitter;
 import com.intellij.ui.PopupHandler;
@@ -75,10 +74,11 @@ public class MainFrame extends JPanel implements DataProvider, Disposable {
   @NotNull private final JComponent myToolbar;
   @NotNull private final VcsLogChangesBrowser myChangesBrowser;
   @NotNull private final Splitter myChangesBrowserSplitter;
-  @NotNull private final PreviewDiffSplitterComponent myPreviewDiffSplitter;
+  @NotNull private final Splitter myPreviewDiffSplitter;
   @NotNull private final SearchTextField myTextFilter;
   @NotNull private final MainVcsLogUiProperties myUiProperties;
-  private final MyCommitSelectionListenerForDiff mySelectionListenerForDiff;
+  @NotNull private final MyCommitSelectionListenerForDiff mySelectionListenerForDiff;
+  @NotNull private final VcsLogChangeProcessor myPreviewDiff;
 
   public MainFrame(@NotNull VcsLogData logData,
                    @NotNull VcsLogUiImpl ui,
@@ -115,22 +115,18 @@ public class MainFrame extends JPanel implements DataProvider, Disposable {
 
     myDetailsSplitter = new OnePixelSplitter(true, DETAILS_SPLITTER_PROPORTION, 0.7f);
     myDetailsSplitter.setFirstComponent(myChangesLoadingPane);
-    setupDetailsSplitter(myUiProperties.get(CommonUiProperties.SHOW_DETAILS));
+    showDetails(myUiProperties.get(CommonUiProperties.SHOW_DETAILS));
 
+    myPreviewDiff = new VcsLogChangeProcessor(logData.getProject(), myChangesBrowser, this);
+    myPreviewDiffSplitter = new OnePixelSplitter(false, DIFF_SPLITTER_PROPORTION, 0.5f);
+    myPreviewDiffSplitter.setHonorComponentsMinimumSize(false);
+    myPreviewDiffSplitter.setFirstComponent(myDetailsSplitter);
+    showDiffPreview(myUiProperties.get(CommonUiProperties.SHOW_DIFF_PREVIEW));
 
-    VcsLogChangeProcessor changeProcessor = new VcsLogChangeProcessor(logData.getProject(), myChangesBrowser, this);
-    myPreviewDiffSplitter = new PreviewDiffSplitterComponent(myDetailsSplitter, changeProcessor, DIFF_SPLITTER_PROPORTION,
-                                                             myUiProperties.get(CommonUiProperties.SHOW_DIFF_PREVIEW));
-
-    Runnable changesListener = () -> {
-      ApplicationManager.getApplication().invokeLater(() -> {
-        // We do not have local changes here, so it's OK to always use `fromModelRefresh == false`
-        myPreviewDiffSplitter.updatePreview(false);
-      });
-    };
+    Runnable changesListener = () -> ApplicationManager.getApplication().invokeLater(
+      () -> myPreviewDiff.updatePreview(myUiProperties.get(CommonUiProperties.SHOW_DIFF_PREVIEW)));
     myChangesBrowser.getViewer().addSelectionListener(changesListener);
     myChangesBrowser.setModelUpdateListener(changesListener);
-
 
     mySelectionListenerForDiff = new MyCommitSelectionListenerForDiff();
     myGraphTable.getSelectionModel().addListSelectionListener(mySelectionListenerForDiff);
@@ -171,10 +167,6 @@ public class MainFrame extends JPanel implements DataProvider, Disposable {
   public void updateDataPack(@NotNull VisiblePack dataPack, boolean permGraphChanged) {
     myFilterUi.updateDataPack(dataPack);
     myGraphTable.updateDataPack(dataPack, permGraphChanged);
-  }
-
-  public void setupDetailsSplitter(boolean state) {
-    myDetailsSplitter.setSecondComponent(state ? myDetailsPanel : null);
   }
 
   @NotNull
@@ -283,7 +275,8 @@ public class MainFrame extends JPanel implements DataProvider, Disposable {
   }
 
   public void showDiffPreview(boolean state) {
-    myPreviewDiffSplitter.setDetailsOn(state);
+    myPreviewDiff.updatePreview(state);
+    myPreviewDiffSplitter.setSecondComponent(state ? myPreviewDiff.getComponent() : null);
   }
 
   @Override

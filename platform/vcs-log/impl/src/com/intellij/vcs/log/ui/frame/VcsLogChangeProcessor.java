@@ -52,6 +52,16 @@ class VcsLogChangeProcessor extends ChangeViewDiffRequestProcessor {
     }
   }
 
+  public void updatePreview(boolean state) {
+    // We do not have local changes here, so it's OK to always use `fromModelRefresh == false`
+    if (state) {
+      refresh(false);
+    }
+    else {
+      clear();
+    }
+  }
+
   private class MyChangeWrapper extends Wrapper {
     @NotNull private final Change myChange;
 
