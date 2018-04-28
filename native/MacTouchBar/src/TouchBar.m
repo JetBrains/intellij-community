@@ -8,13 +8,15 @@
 
 @implementation TouchBar
 
--(id)init:(NSString *)name jcreator:(createItem)jcreator {
+-(id)init:(NSString *)name jcreator:(createItem)jcreator customEscId:(NSString *)escId {
     self = [super init];
     if (self) {
         _jcreator = jcreator;
         self.name = name;
         self.touchBar = [[[NSTouchBar alloc] init] autorelease];
         self.touchBar.delegate = self;          // NOTE: delegate-property of NSTouchBar is weak
+        if (escId != nil && [escId length] > 0)
+            self.touchBar.escapeKeyReplacementItemIdentifier = escId;
     }
     return self;
 }
@@ -64,9 +66,9 @@ void selectItemsToShow(id touchBar, const char** ppIds, int count) {
     [edtPool release];
 }
 
-id createTouchBar(const char * name, createItem jcreator) {
+id createTouchBar(const char * name, createItem jcreator, const char * escId) {
     NSAutoreleasePool * edtPool = [[NSAutoreleasePool alloc] init];
-    TouchBar * result = [[TouchBar alloc] init:getString(name) jcreator:jcreator]; // creates non-autorelease obj to be owned by java-wrapper
+    TouchBar * result = [[TouchBar alloc] init:getString(name) jcreator:jcreator customEscId:getString(escId)]; // creates non-autorelease obj to be owned by java-wrapper
     [edtPool release];
     return result;
 }

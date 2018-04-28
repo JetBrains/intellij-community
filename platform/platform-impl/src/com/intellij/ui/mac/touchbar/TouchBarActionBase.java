@@ -28,8 +28,10 @@ public class TouchBarActionBase extends TouchBarProjectBase implements Execution
   private final TimerListener myTimerListener;
   private final Component myComponent;
 
-  public TouchBarActionBase(@NotNull String touchbarName, @NotNull Project project, Component component) {
-    super(touchbarName, project);
+  public TouchBarActionBase(@NotNull String touchbarName, @NotNull Project project, Component component) { this(touchbarName, project, component, false); }
+
+  public TouchBarActionBase(@NotNull String touchbarName, @NotNull Project project, Component component, boolean replaceEsc) {
+    super(touchbarName, project, replaceEsc);
 
     myComponent = component;
     myTimerListener = new TimerListener() {

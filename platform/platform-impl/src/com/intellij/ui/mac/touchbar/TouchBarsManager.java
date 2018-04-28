@@ -78,7 +78,7 @@ public class TouchBarsManager {
         }
         @Override
         public void onClosed(LightweightWindowEvent event) {
-          closeTempTouchBar(myPopupBar);
+          closeTouchBar(myPopupBar, true);
           myPopupBar = null;
         }
       }
@@ -160,11 +160,12 @@ public class TouchBarsManager {
     showTouchBar(container);
   }
 
-  synchronized public static void closeTempTouchBar(TouchBar tb) {
+  synchronized public static void closeTouchBar(TouchBar tb, boolean doRelease) {
     if (tb == null)
       return;
 
-    tb.release();
+    if (doRelease)
+      tb.release();
 
     if (ourTouchBarStack.isEmpty())
       return;
@@ -302,7 +303,7 @@ public class TouchBarsManager {
 
   private static TouchBar _createScrubberBarFromPopup(@NotNull ListPopupImpl listPopup) {
     try (NSAutoreleaseLock lock = new NSAutoreleaseLock()) {
-      final TouchBar result = new TouchBar("popup_scrubber_bar" + listPopup);
+      final TouchBar result = new TouchBar("popup_scrubber_bar" + listPopup, false);
 
       List<TBItemScrubber.ItemData> items = new ArrayList<>();
       @NotNull ListPopupStep listPopupStep = listPopup.getListStep();

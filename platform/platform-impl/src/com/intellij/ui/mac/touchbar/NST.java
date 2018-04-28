@@ -45,7 +45,7 @@ public class NST {
       if (lib != null) {
         // small check that loaded library works
         try {
-          final ID test = lib.createTouchBar("test", (uid) -> { return ID.NIL; });
+          final ID test = lib.createTouchBar("test", (uid) -> { return ID.NIL; }, null);
           if (test == null || test == ID.NIL) {
             LOG.error("Failed to create native touchbar object, result is null");
           } else {
@@ -70,9 +70,9 @@ public class NST {
 
   public static boolean isAvailable() { return ourNSTLibrary != null; }
 
-  public static ID createTouchBar(String name, NSTLibrary.ItemCreator creator) {
+  public static ID createTouchBar(String name, NSTLibrary.ItemCreator creator, String escID) {
     ApplicationManager.getApplication().assertIsDispatchThread();
-    return ourNSTLibrary.createTouchBar(name, creator);
+    return ourNSTLibrary.createTouchBar(name, creator, escID);
   }
 
   public static void releaseTouchBar(ID tbObj) {

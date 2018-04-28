@@ -11,7 +11,7 @@ import java.util.Arrays;
 import java.util.List;
 
 public interface NSTLibrary extends Library {
-  ID createTouchBar(String name, ItemCreator creator);
+  ID createTouchBar(String name, ItemCreator creator, String escId); // if defined escId => replace esc button with custom item
   void releaseTouchBar(ID tbObj);
   void setTouchBar(ID tbObj);
   void selectItemsToShow(ID tbObj, String[] ids, int count);

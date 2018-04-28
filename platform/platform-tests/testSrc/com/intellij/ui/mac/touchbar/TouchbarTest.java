@@ -16,15 +16,15 @@ public class TouchbarTest {
 
       final ID pool = Foundation.invoke("NSAutoreleasePool", "new");
       try {
-        final TouchBar testTB = new TouchBar("test");
+        final TouchBar testTB = new TouchBar("test", false);
         testTB.addSpacing(true);
         testTB.addButton(null, "test1", createPrintTextCallback("pressed test1 button"));
         testTB.addButton(null, "test2", createPrintTextCallback("pressed test2 button"));
         testTB.addSpacing(false);
         testTB.addButton(AllIcons.Toolwindows.ToolWindowRun, null, createPrintTextCallback("pressed image button"));
 
-        final TouchBar tapHoldTB = new TouchBar("test_popover_tap_and_hold");
-        final TouchBar expandTB = new TouchBar("test_configs_popover_expand");
+        final TouchBar tapHoldTB = new TouchBar("test_popover_tap_and_hold", false);
+        final TouchBar expandTB = new TouchBar("test_configs_popover_expand", false);
         final int configPopoverWidth = 143;
         testTB.addPopover(AllIcons.Toolwindows.ToolWindowBuild, "test-popover", configPopoverWidth, expandTB, tapHoldTB);
 
