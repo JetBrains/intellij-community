@@ -292,6 +292,7 @@ fun RenameDialog2.show() {
   }
 
   NoriaDialogs.instance.show(DialogProps(
+    project = project,
     title = RefactoringBundle.message("rename.title"),
     errorText = errorText,
     helpId = if (hasHelp) RenamePsiElementProcessor.forElement(psiElement).getHelpID(psiElement) else null,
