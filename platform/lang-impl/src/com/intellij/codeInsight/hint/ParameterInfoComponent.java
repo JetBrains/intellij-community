@@ -13,7 +13,6 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.keymap.KeymapUtil;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.TextRange;
-import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiElement;
 import com.intellij.ui.*;
 import com.intellij.util.Function;
@@ -29,7 +28,6 @@ import javax.swing.*;
 import javax.swing.border.Border;
 import java.awt.*;
 import java.util.*;
-import java.util.List;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -88,8 +86,7 @@ public class ParameterInfoComponent extends JPanel {
     super(new BorderLayout());
     myRequestFocus = requestFocus;
 
-    if (!ApplicationManager.getApplication().isUnitTestMode() &&
-        !ApplicationManager.getApplication().isHeadlessEnvironment()) {
+    if (!ApplicationManager.getApplication().isHeadlessEnvironment()) {
       JComponent editorComponent = editor.getComponent();
       JLayeredPane layeredPane = editorComponent.getRootPane().getLayeredPane();
       myWidthLimit = layeredPane.getWidth();
@@ -172,8 +169,7 @@ public class ParameterInfoComponent extends JPanel {
     private final boolean mySingleParameterInfo;
     private int i;
     private Function<String, String> myEscapeFunction;
-    private ParameterInfoController.Model result = new ParameterInfoController.Model();
-
+    
     public MyParameterContext(boolean singleParameterInfo) {
       mySingleParameterInfo = singleParameterInfo;
     }
@@ -186,29 +182,6 @@ public class ParameterInfoComponent extends JPanel {
                                                boolean strikeout,
                                                boolean isDisabledBeforeHighlight,
                                                Color background) {
-      List<String> split = StringUtil.split(text, ",", false);
-      StringBuilder plainLine = new StringBuilder();
-      ParameterInfoController.SignatureItem item = new ParameterInfoController.SignatureItem();
-      item.deprecated = strikeout;
-      item.disabled = isDisabled;
-
-      TextRange highlightRange = highlightStartOffset >=0 && highlightEndOffset >= highlightStartOffset ?
-                               new TextRange(highlightStartOffset, highlightEndOffset) :
-                               null;
-      for (int j = 0; j < split.size(); j++) {
-        String line = split.get(j);
-        int startOffset = plainLine.length();
-        item.startOffsets.add(startOffset);
-        plainLine.append(line);
-        int endOffset = plainLine.length();
-        item.endOffsets.add(endOffset);
-        if (highlightRange != null && highlightRange.intersects(new TextRange(startOffset, endOffset))) {
-          result.current = j;
-        }
-      }
-      item.text = plainLine.toString();
-      result.signatures.add(item);
-
       final String resultedText =
         myPanels[i].setup(text, myEscapeFunction, highlightStartOffset, highlightEndOffset, isDisabled, strikeout, isDisabledBeforeHighlight, background);
       myPanels[i].setBorder(isLastParameterOwner() || isSingleParameterInfo() ? EMPTY_BORDER : BOTTOM_BORDER);
@@ -223,7 +196,7 @@ public class ParameterInfoComponent extends JPanel {
 
     @Override
     public String setupUIComponentPresentation(final String[] texts, final EnumSet<Flag>[] flags, final Color background) {
-      final String resultedText = myPanels[i].setup(result, texts, myEscapeFunction, flags, background);
+      final String resultedText = myPanels[i].setup(texts, myEscapeFunction, flags, background);
       myPanels[i].setBorder(isLastParameterOwner() || isSingleParameterInfo() ? EMPTY_BORDER : BOTTOM_BORDER);
       return resultedText;
     }
@@ -279,7 +252,7 @@ public class ParameterInfoComponent extends JPanel {
     }
   }
 
-  public ParameterInfoController.Model update(boolean singleParameterInfo) {
+  public void update(boolean singleParameterInfo) {
     MyParameterContext context = new MyParameterContext(singleParameterInfo);
 
     for (int i = 0; i < myObjects.length; i++) {
@@ -297,7 +270,6 @@ public class ParameterInfoComponent extends JPanel {
     }
 
     if (myShortcutLabel != null) myShortcutLabel.setVisible(!singleParameterInfo);
-    return context.result;
   }
 
   public Object[] getObjects() {
@@ -416,8 +388,7 @@ public class ParameterInfoComponent extends JPanel {
       return escapeFunction == null ? line : escapeFunction.fun(line);
     }
 
-    public String setup(final ParameterInfoController.Model result,
-                        final String[] texts,
+    public String setup(final String[] texts,
                         Function<String, String> escapeFunction,
                         final EnumSet<ParameterInfoUIContextEx.Flag>[] flags,
                         final Color background) {
@@ -430,19 +401,13 @@ public class ParameterInfoComponent extends JPanel {
 
       Map<TextRange, ParameterInfoUIContextEx.Flag> flagsMap = new TreeMap<>(TEXT_RANGE_COMPARATOR);
 
-      ParameterInfoController.SignatureItem item = new ParameterInfoController.SignatureItem();
-      StringBuilder fullLine = new StringBuilder();
-      StringBuilder line = new StringBuilder();
+      String line = "";
       for (int i = 0; i < texts.length; i++) {
         String paramText = escapeString(texts[i], escapeFunction);
         if (paramText == null) break;
-        item.startOffsets.add(fullLine.length());
-        fullLine.append(texts[i]);
-        item.endOffsets.add(fullLine.length());
-        line.append(texts[i]);
+        line += texts[i];
         final EnumSet<ParameterInfoUIContextEx.Flag> flag = flags[i];
         if (flag.contains(ParameterInfoUIContextEx.Flag.HIGHLIGHT)) {
-          result.current = i;
           flagsMap.put(TextRange.create(curOffset, curOffset + paramText.trim().length()), ParameterInfoUIContextEx.Flag.HIGHLIGHT);
         }
 
@@ -457,20 +422,18 @@ public class ParameterInfoComponent extends JPanel {
         curOffset += paramText.length();
         if (line.length() >= 50) {
           final OneLineComponent component = new OneLineComponent();
-          buf.append(component.setup(escapeString(line.toString(), escapeFunction), flagsMap, background));
+          buf.append(component.setup(escapeString(line, escapeFunction), flagsMap, background));
           add(component, new GridBagConstraints(0, index, 1, 1, 1, 0, GridBagConstraints.WEST,
                                                                  GridBagConstraints.NONE, new Insets(0, 0, 0, 0), 0, 0));
           index += 1;
           flagsMap.clear();
           curOffset = 0;
-          line = new StringBuilder();
+          line = "";
           components.add(component);
         }
       }
-      item.text = fullLine.toString();
-      result.signatures.add(item);
       final OneLineComponent component = new OneLineComponent();
-      buf.append(component.setup(escapeString(line.toString(), escapeFunction), flagsMap, background));
+      buf.append(component.setup(escapeString(line, escapeFunction), flagsMap, background));
       add(component, new GridBagConstraints(0, index, 1, 1, 1, 0, GridBagConstraints.WEST,
                                             GridBagConstraints.NONE, new Insets(0, 0, 0, 0), 0, 0));
       components.add(component);
