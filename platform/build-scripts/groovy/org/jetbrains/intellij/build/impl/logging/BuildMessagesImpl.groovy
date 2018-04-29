@@ -124,6 +124,11 @@ class BuildMessagesImpl implements BuildMessages {
   }
 
   @Override
+  void setParameter(String parameterName, String value) {
+    processMessage(new LogMessage(LogMessage.Kind.SET_PARAMETER, "$parameterName=$value"))
+  }
+
+  @Override
   <V> V block(String blockName, Closure<V> body) {
     try {
       blockNames.push(blockName)

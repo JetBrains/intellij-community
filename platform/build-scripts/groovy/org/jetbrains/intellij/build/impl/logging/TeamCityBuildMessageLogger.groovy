@@ -60,6 +60,12 @@ class TeamCityBuildMessageLogger extends BuildMessageLogger {
         String value = escape(message.text.substring(index + 1))
         printTeamCityMessage("buildStatisticValue", false, "key='$key' value='$value'")
         break
+      case LogMessage.Kind.SET_PARAMETER:
+        int index = message.text.indexOf('=')
+        String name = escape(message.text.substring(0, index))
+        String value = escape(message.text.substring(index + 1))
+        printTeamCityMessage("setParameter", false, "name='$name' value='$value'")
+        break
       case LogMessage.Kind.COMPILATION_ERROR:
         int index = message.text.indexOf(':')
         String compiler = escape(message.text.substring(0, index))
