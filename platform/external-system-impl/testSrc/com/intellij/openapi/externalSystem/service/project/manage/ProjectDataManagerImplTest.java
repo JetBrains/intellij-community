@@ -1,13 +1,13 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.externalSystem.service.project.manage;
 
-import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.externalSystem.model.DataNode;
 import com.intellij.openapi.externalSystem.model.Key;
 import com.intellij.openapi.externalSystem.model.ProjectKeys;
 import com.intellij.openapi.externalSystem.model.ProjectSystemId;
 import com.intellij.openapi.externalSystem.model.project.ProjectData;
 import com.intellij.openapi.externalSystem.service.project.IdeModifiableModelsProvider;
+import com.intellij.openapi.externalSystem.util.Order;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Computable;
 import com.intellij.testFramework.PlatformTestCase;
@@ -21,24 +21,90 @@ import java.util.List;
 
 public class ProjectDataManagerImplTest extends PlatformTestCase {
 
-  public static final Key<Object> TEST_KEY = Key.create(Object.class, 0);
-
-  public void testDataServiceIsCalledIfNoNodes() throws Exception {
+  public void testDataServiceIsCalledIfNoNodes() {
     final List<String> callTrace = new ArrayList<>();
-    Extensions.getRootArea().getExtensionPoint(ProjectDataService.EP_NAME).registerExtension(new TestDataService(callTrace));
-    ProjectDataManagerImpl.getInstance().importData(
+
+    // use test constructor to avoid data services caching in the application component instance
+    new ProjectDataManagerImpl(new TestDataService(callTrace)).importData(
       Collections.singletonList(
         new DataNode<>(ProjectKeys.PROJECT, new ProjectData(ProjectSystemId.IDE,
-                                                                       "externalName",
-                                                                       "externalPath",
-                                                                       "linkedPath"), null)), myProject, true);
+                                                            "externalName",
+                                                            "externalPath",
+                                                            "linkedPath"), null)), myProject, true);
 
     assertContainsElements(callTrace, "computeOrphanData");
   }
 
-  static class TestDataService implements ProjectDataService {
+  public void testDataServiceKeyOrdering() {
+    final List<String> callTrace = new ArrayList<>();
 
-    private final List<String> myTrace;
+    // use test constructor to avoid data services caching in the application component instance
+    new ProjectDataManagerImpl(new RunAfterTestDataService(callTrace), new TestDataService(callTrace)).importData(
+      Collections.singletonList(
+        new DataNode<>(ProjectKeys.PROJECT, new ProjectData(ProjectSystemId.IDE,
+                                                            "externalName",
+                                                            "externalPath",
+                                                            "linkedPath"), null)), myProject, true);
+
+    assertOrderedEquals(callTrace,
+                        "importData",
+                        "computeOrphanData",
+                        "removeData",
+                        "importDataAfter",
+                        "computeOrphanDataAfter",
+                        "removeDataAfter");
+  }
+
+  @Order(1)
+  static class RunAfterTestDataService extends TestDataService {
+    static class MyObject {
+    }
+
+    static final Key<MyObject> RUN_AFTER_KEY = Key.create(MyObject.class, TEST_KEY.getProcessingWeight() + 1);
+
+    public RunAfterTestDataService(List<String> trace) {
+      super(trace);
+    }
+
+    @Override
+    public void removeData(@NotNull Computable toRemove,
+                           @NotNull Collection toIgnore,
+                           @NotNull ProjectData projectData,
+                           @NotNull Project project,
+                           @NotNull IdeModifiableModelsProvider modelsProvider) {
+      myTrace.add("removeDataAfter");
+    }
+
+    @NotNull
+    @Override
+    public Computable<Collection> computeOrphanData(@NotNull Collection toImport,
+                                                    @NotNull ProjectData projectData,
+                                                    @NotNull Project project,
+                                                    @NotNull IdeModifiableModelsProvider modelsProvider) {
+      myTrace.add("computeOrphanDataAfter");
+      return () -> Collections.emptyList();
+    }
+
+    @Override
+    public void importData(@NotNull Collection toImport,
+                           @Nullable ProjectData projectData,
+                           @NotNull Project project,
+                           @NotNull IdeModifiableModelsProvider modelsProvider) {
+      myTrace.add("importDataAfter");
+    }
+
+    @NotNull
+    @Override
+    public Key getTargetDataKey() {
+      return RUN_AFTER_KEY;
+    }
+  }
+
+  @Order(2)
+  static class TestDataService implements ProjectDataService {
+    public static final Key<Object> TEST_KEY = Key.create(Object.class, 0);
+
+    protected final List<String> myTrace;
 
     public TestDataService(List<String> trace) {
       myTrace = trace;

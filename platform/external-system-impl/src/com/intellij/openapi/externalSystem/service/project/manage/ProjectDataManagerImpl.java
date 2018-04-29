@@ -40,8 +40,10 @@ import com.intellij.util.containers.ContainerUtilRt;
 import com.intellij.util.containers.MultiMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.TestOnly;
 
 import java.util.*;
+import java.util.function.Supplier;
 
 import static com.intellij.util.containers.ContainerUtil.map2Array;
 
@@ -65,12 +67,21 @@ public class ProjectDataManagerImpl implements ProjectDataManager {
   }
 
   public ProjectDataManagerImpl() {
+    this(() -> ProjectDataService.EP_NAME.getExtensions());
+  }
+
+  @TestOnly
+  ProjectDataManagerImpl(ProjectDataService... dataServices) {
+    this(() -> dataServices);
+  }
+
+  private ProjectDataManagerImpl(Supplier<ProjectDataService[]> supplier) {
     myServices = new NotNullLazyValue<Map<Key<?>, List<ProjectDataService<?, ?>>>>() {
       @NotNull
       @Override
       protected Map<Key<?>, List<ProjectDataService<?, ?>>> compute() {
         Map<Key<?>, List<ProjectDataService<?, ?>>> result = ContainerUtilRt.newHashMap();
-        for (ProjectDataService<?, ?> service : ProjectDataService.EP_NAME.getExtensions()) {
+        for (ProjectDataService<?, ?> service : supplier.get()) {
           List<ProjectDataService<?, ?>> services = result.get(service.getTargetDataKey());
           if (services == null) {
             result.put(service.getTargetDataKey(), services = ContainerUtilRt.newArrayList());
@@ -132,7 +143,8 @@ public class ProjectDataManagerImpl implements ProjectDataManager {
 
     long allStartTime = System.currentTimeMillis();
     try {
-      final Set<Key<?>> allKeys = new HashSet(grouped.keySet());
+      // keep order of services execution
+      final Set<Key<?>> allKeys = new TreeSet(grouped.keySet());
       allKeys.addAll(myServices.getValue().keySet());
 
       final ProgressIndicator indicator = ProgressManager.getInstance().getProgressIndicator();
