@@ -76,24 +76,16 @@ class FileLoader extends Loader {
 
   @Override
   @Nullable
-  Resource getResource(final String name, boolean check) {
-    URL url = null;
-    File file = null;
-
+  Resource getResource(final String name) {
     try {
-      url = new URL(getBaseURL(), name);
+      URL url = new URL(getBaseURL(), name);
       if (!url.getFile().startsWith(getBaseURL().getFile())) return null;
-
-      file = new File(myRootDir, name.replace('/', File.separatorChar));
-      if (file.exists()) {     // check means we load or process resource so we check its existence via old way
+      File file = new File(myRootDir, name.replace('/', File.separatorChar));
+      if (file.exists()) {
         return new MyResource(url, file);
       }
     }
-    catch (Exception exception) {
-      if (!check && file != null && file.exists()) {
-        // we can not open the file if it is directory, Resource still can be created
-        return new MyResource(url, file);
-      }
+    catch (Exception ignore) {
     }
     return null;
   }
