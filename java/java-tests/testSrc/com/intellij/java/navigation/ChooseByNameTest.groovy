@@ -8,8 +8,6 @@ import com.intellij.ide.util.gotoByName.*
 import com.intellij.lang.java.JavaLanguage
 import com.intellij.openapi.application.ModalityState
 import com.intellij.psi.*
-import com.intellij.psi.search.GlobalSearchScope
-import com.intellij.psi.search.ProjectScope
 import com.intellij.testFramework.PlatformTestUtil
 import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase
 import com.intellij.util.Consumer
@@ -290,16 +288,10 @@ class Intf {
 
   void "test super method in jdk"() {
     def clazz = myFixture.addClass("package foo.bar; class Goo implements Runnable { public void run() {} }")
-    def ourRun = null
-    def sdkRun = null
-    def sdkRun2 = null
-    def sdkRun3 = null
-    runInEdtAndWait {
-      ourRun = clazz.methods[0]
-      sdkRun = ourRun.containingClass.interfaces[0].methods[0]
-      sdkRun2 = myFixture.javaFacade.findClass("java.security.PrivilegedAction").methods[0]
-      sdkRun3 = myFixture.javaFacade.findClass("java.security.PrivilegedExceptionAction").methods[0]
-    }
+    def ourRun = clazz.methods[0]
+    def sdkRun = ourRun.containingClass.interfaces[0].methods[0]
+    def sdkRun2 = myFixture.findClass("java.security.PrivilegedAction").methods[0]
+    def sdkRun3 = myFixture.findClass("java.security.PrivilegedExceptionAction").methods[0]
 
     def withLibs = filterJavaItems(gotoSymbol('run ', true))
     withLibs.remove(sdkRun2)
@@ -357,8 +349,7 @@ class Intf {
   }
 
   void "test out-of-project-content files"() {
-    def scope = ProjectScope.getAllScope(project)
-    def file = myFixture.javaFacade.findClass(CommonClassNames.JAVA_LANG_OBJECT, scope).containingFile
+    def file = myFixture.findClass(CommonClassNames.JAVA_LANG_OBJECT).containingFile
     def elements = gotoFile("Object.class", true)
     assert file in elements
   }
@@ -406,7 +397,7 @@ class Intf {
 
   void "test show longer suffix matches from jdk and shorter from project"() {
     def seq = addEmptyFile("langc/Sequence.java")
-    def charSeq = JavaPsiFacade.getInstance(project).findClass(CharSequence.name, GlobalSearchScope.allScope(project))
+    def charSeq = myFixture.findClass(CharSequence.name)
     assert gotoFile('langcsequence', false) == [charSeq.containingFile, seq]
   }
 
@@ -443,8 +434,36 @@ class Intf {
 
   void "test prefer fully matching module name"() {
     def module = myFixture.addFileToProject('module-info.java', 'module foo.bar {}')
-    def clazz = myFixture.addClass('package foo; class B { void bar() {}; void barX() {} }')
+    def clazz = myFixture.addClass('package foo; class B { void bar() {} void barX() {} }')
     assert gotoSymbol('foo.bar') == [(module as PsiJavaFile).moduleDeclaration, clazz.methods[0], clazz.methods[1]]
+  }
+
+  void "test allow name separators inside wildcard"() {
+    def clazz = myFixture.addClass('package foo; class X { void bar() {} }')
+    assert gotoSymbol('foo*bar') == [clazz.methods[0]]
+    assert gotoClass('foo*X') == [clazz]
+    assert gotoClass('X') == [clazz]
+    assert gotoClass('foo.*') == [clazz]
+  }
+
+  void "test prefer longer name vs qualifier matches"() {
+    def myInspection = myFixture.addClass('package ss; class MyInspection { }')
+    def ssBasedInspection = myFixture.addClass('package foo; class SSBasedInspection { }')
+    assert gotoClass('ss*inspection') == [ssBasedInspection, myInspection]
+  }
+
+  void "test show all same-named classes sorted by qname"() {
+    def aFoo = myFixture.addClass('package a; class Foo { }')
+    def bFoo = myFixture.addClass('package b; class Foo { }')
+    def fooBar = myFixture.addClass('package c; class FooBar { }')
+    assert gotoClass('Foo') == [aFoo, bFoo, fooBar]
+  }
+
+  void "test show prefix matches first when asterisk is in the middle"() {
+    def sb = myFixture.findClass(StringBuilder.name)
+    def asb = myFixture.findClass('java.lang.AbstractStringBuilder')
+    assert gotoClass('Str*Builder', true) == [sb, asb]
+    assert gotoClass('java.Str*Builder', true) == [sb, asb]
   }
 
   private List<Object> gotoClass(String text, boolean checkboxState = false) {
