@@ -2,7 +2,6 @@
 package com.intellij.vcs.log.ui.frame;
 
 import com.intellij.openapi.Disposable;
-import com.intellij.openapi.actionSystem.ActionGroup;
 import com.intellij.openapi.actionSystem.ActionManager;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.project.Project;
@@ -111,10 +110,19 @@ class VcsLogChangesBrowser extends ChangesBrowserBase implements Disposable {
   @NotNull
   @Override
   protected List<AnAction> createToolbarActions() {
-    List<AnAction> result = new ArrayList<>(super.createToolbarActions());
-    ActionGroup group = (ActionGroup)ActionManager.getInstance().getAction(VcsLogActionPlaces.CHANGES_BROWSER_ACTION_GROUP);
-    Collections.addAll(result, group.getChildren(null));
-    return result;
+    return ContainerUtil.append(
+      super.createToolbarActions(),
+      ActionManager.getInstance().getAction(VcsLogActionPlaces.CHANGES_BROWSER_TOOLBAR_ACTION_GROUP)
+    );
+  }
+
+  @NotNull
+  @Override
+  protected List<AnAction> createPopupMenuActions() {
+    return ContainerUtil.append(
+      super.createPopupMenuActions(),
+      ActionManager.getInstance().getAction(VcsLogActionPlaces.CHANGES_BROWSER_MENU_ACTION_GROUP)
+    );
   }
 
   public void resetSelectedDetails() {
