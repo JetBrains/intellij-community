@@ -90,6 +90,29 @@ class Impl extends Intf {
     assert !(impl.findMethodsByName('xxx1', false)[0] in elements)
   }
 
+  void "test goto symbol by Copy Reference result"() {
+    def methods = myFixture.addClass('''
+package pkg; 
+import java.util.*; 
+class Cls { 
+  void foo(int i) {} 
+  void bar(int j) {} 
+  void bar(boolean b) {} 
+  void bar(List<String> l) {} 
+}''').methods
+    assert gotoSymbol('pkg.Cls.foo') == [methods[0]]
+    assert gotoSymbol('pkg.Cls#foo') == [methods[0]]
+    assert gotoSymbol('pkg.Cls#foo(int)') == [methods[0]]
+
+    assert gotoSymbol('pkg.Cls.bar') as Set == methods[1..3] as Set
+    assert gotoSymbol('pkg.Cls#bar') as Set == methods[1..3] as Set
+    
+    assert gotoSymbol('pkg.Cls#bar(int)') == [methods[1]]
+    assert gotoSymbol('pkg.Cls#bar(boolean)') == [methods[2]]
+    assert gotoSymbol('pkg.Cls#bar(java.util.List)') == [methods[3]]
+    assert gotoSymbol('pkg.Cls#bar(java.util.List<java.lang.String>)') == [methods[3]]
+  }
+
   void "test disprefer underscore"() {
     def intf = myFixture.addClass("""
 class Intf {
