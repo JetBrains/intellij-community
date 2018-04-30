@@ -539,8 +539,8 @@ public class FileBasedIndexImpl extends FileBasedIndex implements BaseComponent,
     } catch (Throwable ignore) {}
   }
 
-  private void removeDataFromIndicesForFile(final int fileId) {
-    removeDataFromIndicesForFile(fileId, null);
+  private void removeDataFromIndicesForFile(int fileId) {
+    removeDataFromIndicesForFile(fileId, null); // removes transient file data from indices as well 
   }
 
   private void removeDataFromIndicesForFile(final int fileId,
@@ -2254,7 +2254,12 @@ public class FileBasedIndexImpl extends FileBasedIndex implements BaseComponent,
     for (VirtualFile file : myChangedFilesCollector.getAllFilesToUpdate()) {
       final int fileId = Math.abs(getIdMaskingNonIdBasedFile(file));
       if (!file.isValid()) {
-        removeDataFromIndicesForFile(fileId);
+        FileDocumentManager fileDocumentManager = FileDocumentManager.getInstance();
+        Document document = fileDocumentManager.getCachedDocument(file);
+        if (file instanceof DeletedVirtualFileStub) {
+          document = fileDocumentManager.getCachedDocument(((DeletedVirtualFileStub)file).getOriginalFile());
+        }
+        removeDataFromIndicesForFile(fileId, document);
         myChangedFilesCollector.removeFileIdFromFilesScheduledForUpdate(fileId);
       } else if (getIndexableSetForFile(file) == null) { // todo remove data from indices for removed
         myChangedFilesCollector.removeFileIdFromFilesScheduledForUpdate(fileId);
