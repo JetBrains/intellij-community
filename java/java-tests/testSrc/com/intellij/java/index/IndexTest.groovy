@@ -1025,19 +1025,4 @@ class IndexTest extends JavaCodeInsightFixtureTestCase {
       assertNotNull(findClass("Bar"))
     }
   }
-
-  void "test IDEA-188028" () {
-    def file = myFixture.addFileToProject('a.java', 'class Foo {}') as PsiJavaFileImpl
-    WriteCommandAction.runWriteCommandAction(project) {
-      def document = file.viewProvider.document
-      document.setText('')
-      PsiDocumentManager.getInstance(project).commitAllDocuments()
-      PsiManager.getInstance(project).reloadFromDisk(file)
-      document.setText('')
-      assert !findClass('Foo')
-      file.virtualFile.rename(this, 'a1.java')
-      PsiDocumentManager.getInstance(project).commitAllDocuments()
-      assert !findClass('Foo')
-    }
-  }
 }
