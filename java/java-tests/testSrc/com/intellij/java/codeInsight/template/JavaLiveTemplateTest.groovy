@@ -469,4 +469,19 @@ java.util.List<? extends Integer> list;
   private void checkResult() {
     myFixture.checkResultByFile(getTestName(false) + "-out.java")
   }
+
+  void "test suggest foreach parameter name based on the called method name"() {
+    myFixture.configureByText 'a.java', '''class A { Iterable<String> getCreatedTags() { }
+{
+  iter<caret>
+}}'''
+    myFixture.type('\tgetCreatedTags()\n')
+    myFixture.checkResult '''class A { Iterable<String> getCreatedTags() { }
+{
+    for (String createdTag : getCreatedTags()) {
+        
+    }
+}}'''
+
+  }
 }
