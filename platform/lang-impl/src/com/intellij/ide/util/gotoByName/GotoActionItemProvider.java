@@ -178,7 +178,7 @@ public class GotoActionItemProvider implements ChooseByNameItemProvider {
   private boolean processActions(String pattern, Processor<MatchedValue> consumer, DataContext dataContext) {
     Set<String> ids = ((ActionManagerImpl)myActionManager).getActionIds();
     JBIterable<AnAction> actions = JBIterable.from(ids).filterMap(myActionManager::getAction);
-    MinusculeMatcher matcher = NameUtil.buildMatcher("*" + pattern, NameUtil.MatchingCaseSensitivity.NONE);
+    MinusculeMatcher matcher = buildMatcher(pattern);
 
     QuickActionProvider provider = dataContext.getData(QuickActionProvider.KEY);
     if (provider != null) {
@@ -188,13 +188,18 @@ public class GotoActionItemProvider implements ChooseByNameItemProvider {
     JBIterable<ActionWrapper> actionWrappers = actions.unique().filterMap(action -> {
       MatchMode mode = myModel.actionMatches(pattern, matcher, action);
       if (mode == MatchMode.NONE) return null;
-      return new ActionWrapper(action, myModel.myActionGroups.get(action), mode, dataContext, myModel);
+      return new ActionWrapper(action, myModel.getAnyGroupPath(action), mode, dataContext, myModel);
     });
     return processItems(pattern, actionWrappers, consumer);
   }
 
+  @NotNull
+  static MinusculeMatcher buildMatcher(String pattern) {
+    return NameUtil.buildMatcher("*" + pattern, NameUtil.MatchingCaseSensitivity.NONE);
+  }
+
   private boolean processIntentions(String pattern, Processor<MatchedValue> consumer, DataContext dataContext) {
-    MinusculeMatcher matcher = NameUtil.buildMatcher("*" + pattern, NameUtil.MatchingCaseSensitivity.NONE);
+    MinusculeMatcher matcher = buildMatcher(pattern);
     Map<String, ApplyIntentionAction> intentionMap = myIntentions.getValue();
     JBIterable<ActionWrapper> intentions = JBIterable.from(intentionMap.keySet())
       .filterMap(intentionText -> {
@@ -207,7 +212,7 @@ public class GotoActionItemProvider implements ChooseByNameItemProvider {
 
   @NotNull
   private ActionWrapper wrapAnAction(@NotNull AnAction action, DataContext dataContext) {
-    return new ActionWrapper(action, myModel.myActionGroups.get(action), MatchMode.NAME, dataContext, myModel);
+    return new ActionWrapper(action, myModel.getAnyGroupPath(action), MatchMode.NAME, dataContext, myModel);
   }
 
   private final static Logger LOG = Logger.getInstance(GotoActionItemProvider.class);
