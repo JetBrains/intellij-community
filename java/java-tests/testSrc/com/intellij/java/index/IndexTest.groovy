@@ -58,7 +58,6 @@ import com.intellij.psi.impl.search.JavaNullMethodArgumentIndex
 import com.intellij.psi.impl.source.JavaFileElementType
 import com.intellij.psi.impl.source.PostprocessReformattingAspect
 import com.intellij.psi.impl.source.PsiFileWithStubSupport
-import com.intellij.psi.impl.source.PsiJavaFileImpl
 import com.intellij.psi.search.*
 import com.intellij.psi.stubs.SerializedStubTree
 import com.intellij.psi.stubs.StubIndex
@@ -84,7 +83,6 @@ import groovy.transform.CompileStatic
 import org.jetbrains.annotations.NotNull
 
 import java.util.concurrent.CountDownLatch
-
 /**
  * @author Eugene Zhuravlev
  * @since Dec 12, 2007
@@ -1037,21 +1035,6 @@ class IndexTest extends JavaCodeInsightFixtureTestCase {
 
       VfsUtil.saveText(file, fileText)
       assertNotNull(findClass("Bar"))
-    }
-  }
-
-  void "test IDEA-188028" () {
-    def file = myFixture.addFileToProject('a.java', 'class Foo {}') as PsiJavaFileImpl
-    WriteCommandAction.runWriteCommandAction(project) {
-      def document = file.viewProvider.document
-      document.setText('')
-      PsiDocumentManager.getInstance(project).commitAllDocuments()
-      PsiManager.getInstance(project).reloadFromDisk(file)
-      document.setText('')
-      assert !findClass('Foo')
-      file.virtualFile.rename(this, 'a1.java')
-      PsiDocumentManager.getInstance(project).commitAllDocuments()
-      assert !findClass('Foo')
     }
   }
 }
