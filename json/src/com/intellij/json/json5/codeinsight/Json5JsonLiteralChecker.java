@@ -9,7 +9,11 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiElement;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.regex.Pattern;
+
 public class Json5JsonLiteralChecker implements JsonLiteralChecker {
+  private static final Pattern VALID_HEX_ESCAPE = Pattern.compile("\\\\(x[0-9a-fA-F]{2})");
+  private static final Pattern INVALID_NUMERIC_ESCAPE = Pattern.compile("\\\\[1-9]");
   @Nullable
   @Override
   public String getErrorForNumericLiteral(String literalText) {
@@ -24,6 +28,15 @@ public class Json5JsonLiteralChecker implements JsonLiteralChecker {
         return null;
       }
     }
+
+    if (fragmentText.startsWith("\\x") && VALID_HEX_ESCAPE.matcher(fragmentText).matches()) {
+      return null;
+    }
+
+    if (!StandardJsonLiteralChecker.VALID_ESCAPE.matcher(fragmentText).matches() && !INVALID_NUMERIC_ESCAPE.matcher(fragmentText).matches()) {
+      return null;
+    }
+
     return StandardJsonLiteralChecker.getStringError(fragmentText);
   }
 

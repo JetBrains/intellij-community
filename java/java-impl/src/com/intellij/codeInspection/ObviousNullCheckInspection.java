@@ -5,6 +5,7 @@ import com.intellij.codeInsight.BlockUtils;
 import com.intellij.codeInspection.dataFlow.ControlFlowAnalyzer;
 import com.intellij.codeInspection.dataFlow.MethodContract;
 import com.intellij.codeInspection.dataFlow.StandardMethodContract;
+import com.intellij.codeInspection.dataFlow.StandardMethodContract.ValueConstraint;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
@@ -86,18 +87,17 @@ public class ObviousNullCheckInspection extends AbstractBaseJavaLocalInspectionT
       List<? extends MethodContract> contracts = ControlFlowAnalyzer.getMethodCallContracts(method, call);
       if (contracts.size() != 1) return null;
       StandardMethodContract contract = ObjectUtils.tryCast(contracts.get(0), StandardMethodContract.class);
-      if (contract == null || contract.getReturnValue() != MethodContract.ValueConstraint.THROW_EXCEPTION) return null;
-      MethodContract.ValueConstraint[] arguments = contract.arguments;
+      if (contract == null || !contract.getReturnValue().isFail()) return null;
       Integer nullIndex = null;
       boolean isNull = false;
-      for (int i = 0; i < arguments.length; i++) {
-        MethodContract.ValueConstraint argument = arguments[i];
-        if (argument == MethodContract.ValueConstraint.NULL_VALUE || argument == MethodContract.ValueConstraint.NOT_NULL_VALUE) {
+      for (int i = 0; i < contract.getParameterCount(); i++) {
+        ValueConstraint argument = contract.getParameterConstraint(i);
+        if (argument == ValueConstraint.NULL_VALUE || argument == ValueConstraint.NOT_NULL_VALUE) {
           if (nullIndex != null) return null;
           nullIndex = i;
-          isNull = argument == MethodContract.ValueConstraint.NOT_NULL_VALUE;
+          isNull = argument == ValueConstraint.NOT_NULL_VALUE;
         }
-        else if (argument != MethodContract.ValueConstraint.ANY_VALUE) {
+        else if (argument != ValueConstraint.ANY_VALUE) {
           return null;
         }
       }

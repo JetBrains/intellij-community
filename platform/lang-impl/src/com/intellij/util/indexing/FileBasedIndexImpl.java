@@ -540,14 +540,19 @@ public class FileBasedIndexImpl extends FileBasedIndex implements BaseComponent,
   }
 
   private void removeDataFromIndicesForFile(final int fileId) {
+    removeDataFromIndicesForFile(fileId, null);
+  }
+
+  private void removeDataFromIndicesForFile(final int fileId,
+                                            @Nullable Document document) {
     final List<ID<?, ?>> states = IndexingStamp.getNontrivialFileIndexedStates(fileId);
 
     if (!states.isEmpty()) {
-      ProgressManager.getInstance().executeNonCancelableSection(() -> removeFileDataFromIndices(states, fileId));
+      ProgressManager.getInstance().executeNonCancelableSection(() -> removeFileDataFromIndices(states, fileId, document));
     }
   }
 
-  private void removeFileDataFromIndices(@NotNull Collection<ID<?, ?>> affectedIndices, int inputId) {
+  private void removeFileDataFromIndices(@NotNull Collection<ID<?, ?>> affectedIndices, int inputId, @Nullable Document document) {
     Throwable unexpectedError = null;
     for (ID<?, ?> indexId : affectedIndices) {
       try {
@@ -564,8 +569,17 @@ public class FileBasedIndexImpl extends FileBasedIndex implements BaseComponent,
       }
     }
     IndexingStamp.flushCache(inputId);
+    if (document == null) removeTransientFileDataFromIndices(affectedIndices, inputId);
     if (unexpectedError != null) {
       LOG.error(unexpectedError);
+    }
+  }
+
+  private void removeTransientFileDataFromIndices(Collection<ID<?, ?>> indices, int inputId) {
+    for (ID<?, ?> indexId : indices) {
+      final MapReduceIndex index = (MapReduceIndex)myState.getIndex(indexId);
+      assert index != null;
+      index.removeTransientDataForFile(inputId);
     }
   }
 
@@ -1510,7 +1524,9 @@ public class FileBasedIndexImpl extends FileBasedIndex implements BaseComponent,
         content = new com.intellij.ide.caches.FileContent(file);
       }
       if (!file.isValid() || isTooLarge(file)) {
-        removeDataFromIndicesForFile(fileId);
+        VirtualFile originalFile = file instanceof DeletedVirtualFileStub ? ((DeletedVirtualFileStub)file).getOriginalFile() : file;
+        Document doc = originalFile != null ? FileDocumentManager.getInstance().getCachedDocument(originalFile) : null;
+        removeDataFromIndicesForFile(fileId, doc);
         if (file instanceof DeletedVirtualFileStub && ((DeletedVirtualFileStub)file).isResurrected()) {
           doIndexFileContent(project, new com.intellij.ide.caches.FileContent(((DeletedVirtualFileStub)file).getOriginalFile()));
         }

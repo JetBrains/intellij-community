@@ -28,8 +28,10 @@ import com.intellij.openapi.util.text.StringUtil
 import com.intellij.ui.JBCardLayout
 import com.intellij.ui.components.JBList
 import com.intellij.ui.popup.list.GroupedItemsListRenderer
+import com.intellij.util.ExceptionUtil
 import com.intellij.util.PlatformUtils
 import com.intellij.util.ui.JBUI
+import com.jetbrains.python.packaging.PyExecutionException
 import com.jetbrains.python.sdk.PreferredSdkComparator
 import com.jetbrains.python.sdk.PythonSdkType
 import com.jetbrains.python.sdk.add.PyAddSdkDialog.Companion.create
@@ -278,7 +280,13 @@ class PyAddSdkDialog private constructor(private val project: Project?,
       return
     }
     catch (e: Exception) {
-      Messages.showErrorDialog(e.localizedMessage, "Error")
+      val cause = ExceptionUtil.findCause(e, PyExecutionException::class.java)
+      if (cause == null) {
+        Messages.showErrorDialog(e.localizedMessage, "Error")
+      }
+      else {
+        showProcessExecutionErrorDialog(project, cause)
+      }
       return
     }
 

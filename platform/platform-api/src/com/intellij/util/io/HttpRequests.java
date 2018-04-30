@@ -565,7 +565,7 @@ public final class HttpRequests {
           url = connection.getHeaderField("Location");
           if (url != null) {
             if (idx >= PERMANENT_IDX) {
-              LOG.error("HTTP response " + responseCode + " for '" + request.myUrl + "'; should be updated to '" + url + "'");
+              LOG.warn("HTTP response " + responseCode + " for '" + request.myUrl + "'; should be updated to '" + url + "'");
             }
             request.myUrl = url;
             continue;

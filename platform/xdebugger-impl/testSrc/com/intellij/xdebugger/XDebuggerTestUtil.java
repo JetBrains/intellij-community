@@ -13,6 +13,7 @@ import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.testFramework.UsefulTestCase;
+import com.intellij.util.SmartList;
 import com.intellij.util.concurrency.FutureResult;
 import com.intellij.util.ui.TextTransferable;
 import com.intellij.util.ui.UIUtil;
@@ -21,10 +22,12 @@ import com.intellij.xdebugger.evaluation.XDebuggerEvaluator;
 import com.intellij.xdebugger.frame.*;
 import com.intellij.xdebugger.impl.XDebugSessionImpl;
 import com.intellij.xdebugger.impl.XDebuggerUtilImpl;
+import com.intellij.xdebugger.impl.XSourcePositionImpl;
 import com.intellij.xdebugger.impl.breakpoints.XBreakpointUtil;
 import com.intellij.xdebugger.impl.breakpoints.XExpressionImpl;
 import com.intellij.xdebugger.impl.breakpoints.XLineBreakpointImpl;
 import com.intellij.xdebugger.impl.frame.XStackFrameContainerEx;
+import one.util.streamex.StreamEx;
 import org.intellij.lang.annotations.Language;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -38,8 +41,9 @@ import java.util.List;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Semaphore;
 import java.util.concurrent.TimeUnit;
-import java.util.function.BiFunction;
 import java.util.concurrent.TimeoutException;
+import java.util.function.BiFunction;
+import java.util.stream.Collectors;
 
 import static org.junit.Assert.*;
 
@@ -61,6 +65,17 @@ public class XDebuggerTestUtil {
     assertNotNull(breakpoint);
     assertEquals(validity ? AllIcons.Debugger.Db_set_breakpoint : AllIcons.Debugger.Db_invalid_breakpoint, breakpoint.getIcon());
     assertEquals(errorMessage, breakpoint.getErrorMessage());
+  }
+
+  @Nullable
+  public static Promise<List<? extends XLineBreakpointType.XLineBreakpointVariant>>
+  computeLineBreakpointVariants(Project project, VirtualFile file, int line) {
+    return ReadAction.compute(() -> {
+      List<XLineBreakpointType> types = StreamEx.of(XDebuggerUtil.getInstance().getLineBreakpointTypes())
+                                                .filter(type -> type.canPutAt(file, line, project))
+                                                .collect(Collectors.toCollection(SmartList::new));
+      return XDebuggerUtilImpl.getLineBreakpointVariants(project, types, XSourcePositionImpl.create(file, line));
+    });
   }
 
   @Nullable

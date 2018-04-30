@@ -296,6 +296,16 @@ public class PyTypeChecker {
         }
       }
 
+      final PyType originalProtocolGenericType = StreamEx
+        .of(Extensions.getExtensions(PyTypeProvider.EP_NAME))
+        .map(provider -> provider.getGenericType(superClass, context.context))
+        .findFirst(Objects::nonNull)
+        .orElse(null);
+
+      // actual was matched against protocol definition above
+      // and here protocol usage is matched against its definition to update substitutions
+      match(expected, originalProtocolGenericType, context);
+
       return Optional.of(true);
     }
 

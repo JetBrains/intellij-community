@@ -34,5 +34,5 @@ public class GradleIcons {
   public static final Icon GradlePlugin = load("/icons/gradlePlugin.png"); // 16x16
   public static final Icon GradleSync = load("/icons/gradleSync.png"); // 16x16
   public static final Icon OfflineMode = load("/icons/offlineMode.png"); // 16x16
-  public static final Icon ToolWindowGradle = load("/icons/toolWindowGradle.png"); // 13x13
+  public static final Icon ToolWindowGradle = load("/icons/toolWindowGradle.svg"); // 13x13
 }

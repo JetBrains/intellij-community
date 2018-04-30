@@ -62,7 +62,7 @@ public class RawStringLiteralPasteProcessor implements PasteProvider {
     int ticsLength = PsiRawStringLiteralUtil.getLeadingTicsSequence(literalText);
     String quotes = literalText.substring(0, ticsLength);
     String additionalQuotes = PsiRawStringLiteralUtil.getAdditionalTics(text, quotes);
-    insertAtCaret(text, additionalQuotes, stringLiteral, editor, prefix, suffix);
+    insertAtCaret(StringUtil.convertLineSeparators(text), additionalQuotes, stringLiteral, editor, prefix, suffix);
   }
 
   @Override

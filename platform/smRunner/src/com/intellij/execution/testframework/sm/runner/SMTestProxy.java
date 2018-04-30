@@ -59,6 +59,7 @@ public class SMTestProxy extends AbstractTestProxy {
   private boolean myHasPassedTestsCached = false;
 
   private String myStacktrace;
+  private String myErrorMessage;
 
   private boolean myIsEmptyIsCached = false; // is used for separating unknown and unset values
   private boolean myIsEmpty = true;
@@ -136,6 +137,19 @@ public class SMTestProxy extends AbstractTestProxy {
 
   private void setStacktraceIfNotSet(@Nullable String stacktrace) {
     if (myStacktrace == null) myStacktrace = stacktrace;
+  }
+
+  @Nullable
+  public String getStacktrace() {
+    return myStacktrace;
+  }
+
+  public String getErrorMessage() {
+    return myErrorMessage;
+  }
+
+  public SMTestLocator getLocator() {
+    return myLocator;
   }
 
   public boolean isLeaf() {
@@ -412,6 +426,7 @@ public class SMTestProxy extends AbstractTestProxy {
 
   public void setTestFailed(@NotNull String localizedMessage, @Nullable String stackTrace, boolean testError) {
     setStacktraceIfNotSet(stackTrace);
+    myErrorMessage = localizedMessage;
     TestFailedState failedState = new TestFailedState(localizedMessage, stackTrace);
     if (myState instanceof TestComparisionFailedState) {
       CompoundTestFailedState states = new CompoundTestFailedState(localizedMessage, stackTrace);
@@ -458,6 +473,7 @@ public class SMTestProxy extends AbstractTestProxy {
                                                             @Nullable final String expectedFilePath,
                                                             @Nullable final String actualFilePath) {
     setStacktraceIfNotSet(stackTrace);
+    myErrorMessage = localizedMessage;
     final TestComparisionFailedState comparisionFailedState = new TestComparisionFailedState(localizedMessage, stackTrace, actualText, expectedText, expectedFilePath, actualFilePath);
     if (myState instanceof CompoundTestFailedState) {
       ((CompoundTestFailedState)myState).addFailure(comparisionFailedState);

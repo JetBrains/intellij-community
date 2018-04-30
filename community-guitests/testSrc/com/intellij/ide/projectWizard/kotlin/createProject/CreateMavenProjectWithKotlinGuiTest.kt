@@ -92,7 +92,7 @@ class CreateMavenProjectWithKotlinGuiTest : KotlinGuiTestCase() {
   }
 
   override fun isIdeFrameRun(): Boolean =
-    if (!KotlinTestProperties.isActualKotlinUsed() || (KotlinTestProperties.isArtifactPresentInConfigureDialog && !KotlinTestProperties.isArtifactOnlyInDevRep)) true
+    if (!KotlinTestProperties.isActualKotlinUsed() || (KotlinTestProperties.isArtifactPresentInConfigureDialog /*&& !KotlinTestProperties.isArtifactOnlyInDevRep*/)) true
     else {
       logInfo(
         "There is no maven archetype for the tested artifact ${KotlinTestProperties.kotlin_artifact_version}. This is not a bug, but the test '${testMethod.methodName}' is skipped (though marked as passed)")

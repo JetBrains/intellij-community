@@ -521,7 +521,7 @@ public class HighlightVisitorImpl extends JavaElementVisitor implements Highligh
     super.visitEnumConstant(enumConstant);
     if (!myHolder.hasErrorResults()) GenericsHighlightUtil.checkEnumConstantForConstructorProblems(enumConstant, myHolder, myJavaSdkVersion);
     if (!myHolder.hasErrorResults()) registerConstructorCall(enumConstant);
-    if (!myHolder.hasErrorResults()) myHolder.add(HighlightUtil.checkUnhandledExceptions(enumConstant, null));
+    if (!myHolder.hasErrorResults()) myHolder.add(HighlightUtil.checkUnhandledExceptions(enumConstant, enumConstant.getNameIdentifier().getTextRange()));
   }
 
   @Override
@@ -997,7 +997,8 @@ public class HighlightVisitorImpl extends JavaElementVisitor implements Highligh
   public void visitNewExpression(PsiNewExpression expression) {
     final PsiType type = expression.getType();
     final PsiClass aClass = PsiUtil.resolveClassInType(type);
-    myHolder.add(HighlightUtil.checkUnhandledExceptions(expression, null));
+    PsiJavaCodeReferenceElement classReference = expression.getClassReference();
+    myHolder.add(HighlightUtil.checkUnhandledExceptions(expression, classReference != null ? classReference.getTextRange() : null));
     if (!myHolder.hasErrorResults()) myHolder.add(HighlightClassUtil.checkAnonymousInheritFinal(expression));
     if (!myHolder.hasErrorResults()) myHolder.add(HighlightClassUtil.checkQualifiedNew(expression, type, aClass));
     if (!myHolder.hasErrorResults()) myHolder.add(HighlightClassUtil.checkCreateInnerClassFromStaticContext(expression, type, aClass));

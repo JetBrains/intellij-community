@@ -36,14 +36,14 @@ public interface RunConfiguration extends RunProfile, Cloneable {
    */
   @NotNull
   default ConfigurationType getType() {
-    return getFactory().getType();
+    ConfigurationFactory factory = getFactory();
+    return factory == null ? UnknownConfigurationType.INSTANCE : factory.getType();
   }
 
   /**
    * Returns the factory that has created the run configuration.
-   *
-   * @return the factory instance.
    */
+  @Nullable
   ConfigurationFactory getFactory();
 
   /**
@@ -66,8 +66,6 @@ public interface RunConfiguration extends RunProfile, Cloneable {
 
   /**
    * Returns the project in which the run configuration exists.
-   *
-   * @return the project instance.
    */
   Project getProject();
 
@@ -110,6 +108,15 @@ public interface RunConfiguration extends RunProfile, Cloneable {
   @Deprecated
   default int getUniqueID() {
     return System.identityHashCode(this);
+  }
+
+  /**
+   * Returns the unique identifier of the run configuration. Return null if not applicable.
+   * Used only for non-managed RC type.
+   */
+  @Nullable
+  default String getId() {
+    return null;
   }
 
   @NotNull

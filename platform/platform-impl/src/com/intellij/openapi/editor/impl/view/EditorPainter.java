@@ -1021,7 +1021,7 @@ public class EditorPainter implements TextDrawingCallback {
       int x = location.myPoint.x;
       int y = location.myPoint.y - topOverhang;
       int width = Math.max(location.myWidth, CARET_DIRECTION_MARK_SIZE);
-      myEditor.getContentComponent().repaintEditorComponent(x - width, y, width * 2, nominalLineHeight);
+      myEditor.getContentComponent().repaintEditorComponentExact(x - width, y, width * 2, nominalLineHeight);
     }
   }
 

@@ -27,7 +27,6 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.XmlRecursiveElementVisitor;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
-import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
 import com.intellij.psi.formatter.xml.HtmlCodeStyleSettings;
 import com.intellij.psi.impl.source.codeStyle.PostFormatProcessorHelper;
 import com.intellij.psi.impl.source.codeStyle.PreFormatProcessor;
@@ -45,7 +44,7 @@ public class HtmlQuotesFormatPreprocessor implements PreFormatProcessor {
     if (psiElement != null &&
         psiElement.isValid() &&
         psiElement.getLanguage().is(HTMLLanguage.INSTANCE)) {
-      CodeStyleSettings rootSettings = CodeStyleSettingsManager.getSettings(psiElement.getProject());
+      CodeStyleSettings rootSettings = CodeStyle.getSettings(psiElement.getContainingFile());
       HtmlCodeStyleSettings htmlSettings = rootSettings.getCustomSettings(HtmlCodeStyleSettings.class);
       CodeStyleSettings.QuoteStyle quoteStyle = htmlSettings.HTML_QUOTE_STYLE;
       if (quoteStyle != CodeStyleSettings.QuoteStyle.None && htmlSettings.HTML_ENFORCE_QUOTES) {

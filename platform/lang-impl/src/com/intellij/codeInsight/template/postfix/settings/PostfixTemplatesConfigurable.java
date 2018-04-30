@@ -10,15 +10,19 @@ import com.intellij.codeInsight.template.postfix.templates.PostfixTemplate;
 import com.intellij.codeInsight.template.postfix.templates.PostfixTemplateProvider;
 import com.intellij.codeInsight.template.postfix.templates.PostfixTemplatesUtils;
 import com.intellij.lang.LanguageExtensionPoint;
+import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.actionSystem.CommonShortcuts;
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.options.Configurable;
 import com.intellij.openapi.options.SearchableConfigurable;
 import com.intellij.openapi.ui.ComboBox;
 import com.intellij.openapi.util.Disposer;
+import com.intellij.ui.AnActionButton;
 import com.intellij.ui.GuiUtils;
 import com.intellij.ui.ToolbarDecorator;
 import com.intellij.ui.components.JBCheckBox;
 import com.intellij.util.Alarm;
+import com.intellij.util.PlatformIcons;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.MultiMap;
 import org.jetbrains.annotations.Nls;
@@ -101,10 +105,30 @@ public class PostfixTemplatesConfigurable implements SearchableConfigurable, Edi
                               .setEditActionUpdater(e -> myCheckboxTree.canEditSelectedTemplate())
                               .setEditAction(button -> myCheckboxTree.editSelectedTemplate())
                               .setRemoveActionUpdater(e -> myCheckboxTree.canRemoveSelectedTemplates())
-                              .setRemoveAction(button -> myCheckboxTree.removeSelectedTemplates()).createPanel());
+                              .setRemoveAction(button -> myCheckboxTree.removeSelectedTemplates())
+                              .addExtraAction(duplicateAction())
+                              .createPanel());
 
     myTemplatesTreeContainer.setLayout(new BorderLayout());
     myTemplatesTreeContainer.add(panel);
+  }
+
+  private AnActionButton duplicateAction() {
+    AnActionButton button = new AnActionButton("Duplicate", PlatformIcons.COPY_ICON) {
+      @Override
+      public void actionPerformed(@NotNull AnActionEvent e) {
+        if (myCheckboxTree != null) {
+          myCheckboxTree.duplicateSelectedTemplate();
+        }
+      }
+
+      @Override
+      public void updateButton(AnActionEvent e) {
+        e.getPresentation().setEnabled(myCheckboxTree != null && myCheckboxTree.canDuplicateSelectedTemplate());
+      }
+    };
+    button.registerCustomShortcutSet(CommonShortcuts.getDuplicate(), myCheckboxTree, myCheckboxTree);
+    return button;
   }
 
   private void resetDescriptionPanel() {

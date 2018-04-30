@@ -31,6 +31,7 @@ import com.intellij.psi.jsp.JspFile;
 import com.intellij.psi.search.EverythingGlobalScope;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.ui.LayeredIcon;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.xdebugger.XDebuggerUtil;
 import com.intellij.xdebugger.XSourcePosition;
@@ -74,15 +75,17 @@ public class LineBreakpoint<P extends JavaBreakpointProperties> extends Breakpoi
 
   @Override
   protected Icon getVerifiedIcon(boolean isMuted) {
-    if (isRemoveAfterHit()) {
-      return isMuted ? AllIcons.Debugger.Db_muted_breakpoint : AllIcons.Debugger.Db_set_breakpoint;
-    }
-    return isMuted? AllIcons.Debugger.Db_muted_breakpoint : AllIcons.Debugger.Db_set_breakpoint;
+    return null;
+    //if (isRemoveAfterHit()) {
+    //  return isMuted ? AllIcons.Debugger.Db_muted_breakpoint : AllIcons.Debugger.Db_set_breakpoint;
+    //}
+    //return isMuted? AllIcons.Debugger.Db_muted_breakpoint : AllIcons.Debugger.Db_set_breakpoint;
   }
 
   @Override
   protected Icon getVerifiedWarningsIcon(boolean isMuted) {
-    return isMuted? AllIcons.Debugger.Db_muted_verified_warning_breakpoint : AllIcons.Debugger.Db_verified_warning_breakpoint;
+    return new LayeredIcon(isMuted ? AllIcons.Debugger.Db_muted_breakpoint : AllIcons.Debugger.Db_set_breakpoint,
+                           AllIcons.General.WarningDecorator);
   }
 
   @Override

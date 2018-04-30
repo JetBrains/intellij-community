@@ -1502,9 +1502,4 @@ public class ApplicationImpl extends PlatformComponentManagerImpl implements App
     Disposer.register(disposable, () -> myDispatcher.getListeners().addAll(listeners));
   }
 
-  @NotNull
-  @Override
-  public AppUIExecutor createUIExecutor(@NotNull ModalityState modalityState) {
-    return new AppUIExecutorImpl(modalityState);
-  }
 }

@@ -8,6 +8,7 @@ import com.intellij.codeInsight.intention.IntentionActionDelegate;
 import com.intellij.codeInspection.QuickFix;
 import com.intellij.codeInspection.ex.QuickFixWrapper;
 import com.intellij.icons.AllIcons;
+import com.intellij.ide.impl.DataManagerImpl;
 import com.intellij.ide.ui.AntialiasingType;
 import com.intellij.ide.ui.UISettings;
 import com.intellij.notification.Notification;
@@ -18,6 +19,7 @@ import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.impl.ActionButton;
 import com.intellij.openapi.actionSystem.impl.ActionMenuItem;
+import com.intellij.openapi.actionSystem.impl.ActionToolbarImpl;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.ex.EditorGutterComponentEx;
 import com.intellij.openapi.project.DumbAware;
@@ -395,6 +397,10 @@ public class UiInspectorAction extends ToggleAction implements DumbAware {
         }
         if (component.isDoubleBuffered()) {
           append(", double-buffered", SimpleTextAttributes.GRAYED_ATTRIBUTES);
+        }
+        if (DataManagerImpl.getDataProviderEx(component) != null) {
+          append(", ", SimpleTextAttributes.GRAYED_ATTRIBUTES);
+          append("data-provider", SimpleTextAttributes.REGULAR_BOLD_ATTRIBUTES);
         }
         componentNode.setText(toString());
         setIcon(createColorIcon(component.getForeground(), component.getBackground()));
@@ -1518,6 +1524,11 @@ public class UiInspectorAction extends ToggleAction implements DumbAware {
           clickInfo.addAll(new InspectorTableModel(rendererComponent).myProperties);
           return clickInfo;
         }
+      }
+      if (component instanceof ActionToolbarImpl) {
+        clickInfo.add(new PropertyBean("Toolbar Place", ((ActionToolbarImpl)component).getPlace(), true));
+        clickInfo.add(new PropertyBean("Toolbar Group", ((ActionToolbarImpl)component).getGroupId(), true));
+        return clickInfo;
       }
       return null;
     }

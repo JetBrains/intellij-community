@@ -5,9 +5,11 @@ import com.intellij.openapi.actionSystem.ActionManager;
 import com.intellij.openapi.project.Project;
 import org.jetbrains.annotations.NotNull;
 
+import java.awt.*;
+
 public class TouchBarEditorCmdAlt extends TouchBarActionBase {
-  TouchBarEditorCmdAlt(@NotNull Project project) {
-    super("editor_cmd_alt", project);
+  TouchBarEditorCmdAlt(@NotNull Project project, Component component) {
+    super("editor_cmd_alt", project, component);
 
     addFlexibleSpacing();
     addAnActionButton(ActionManager.getInstance().getAction("SwitchCoverage"), false, TBItemAnActionButton.SHOWMODE_TEXT_ONLY);

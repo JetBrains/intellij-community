@@ -1,10 +1,14 @@
 <component name="libraryTable">
   <library name="commons-imaging" type="repository">
-    <properties include-transitive-deps="false" maven-id="org.apache.commons:commons-imaging:1.0-SNAPSHOT" />
+    <properties maven-id="org.jetbrains.intellij.deps:commons-imaging:1.0-RC-1"/>
     <CLASSES>
-      <root url="jar://$MAVEN_REPOSITORY$/org/apache/commons/commons-imaging/1.0-SNAPSHOT/commons-imaging-1.0-SNAPSHOT.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/intellij/deps/commons-imaging/1.0-RC-1/commons-imaging-1.0-RC-1.jar!/"/>
     </CLASSES>
-    <JAVADOC />
-    <SOURCES />
+    <JAVADOC>
+      <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/intellij/deps/commons-imaging/1.0-RC-1/commons-imaging-1.0-RC-1-javadoc.jar!/"/>
+    </JAVADOC>
+    <SOURCES>
+      <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/intellij/deps/commons-imaging/1.0-RC-1/commons-imaging-1.0-RC-1-sources.jar!/"/>
+    </SOURCES>
   </library>
 </component>

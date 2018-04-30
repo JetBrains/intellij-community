@@ -18,6 +18,7 @@ import com.intellij.find.FindUtil;
 import com.intellij.find.actions.CompositeActiveComponent;
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.DataManager;
+import com.intellij.ide.util.JavaAnonymousClassesHelper;
 import com.intellij.lang.Language;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
@@ -40,9 +41,7 @@ import com.intellij.openapi.vcs.VcsDataKeys;
 import com.intellij.openapi.vcs.changes.Change;
 import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
-import com.intellij.psi.util.ClassUtil;
-import com.intellij.psi.util.PsiTreeUtil;
-import com.intellij.psi.util.PsiUtilCore;
+import com.intellij.psi.util.*;
 import com.intellij.rt.coverage.testDiscovery.instrumentation.TestDiscoveryInstrumentationUtils;
 import com.intellij.uast.UastMetaLanguage;
 import com.intellij.ui.ActiveComponent;
@@ -100,16 +99,12 @@ public class ShowDiscoveredTestsAction extends AnAction {
   }
 
   private static void showDiscoveredTestsByPsi(AnActionEvent e, Project project, PsiMethod method) {
-    Couple<String> couple = getMethodQualifiedName(method);
-    PsiClass c = method.getContainingClass();
-    String fqn = couple != null ? couple.first : null;
-    if (fqn == null || c == null) return;
-    String methodName = couple.second;
-    String methodPresentationName = ClassUtil.extractClassName(fqn) + "." + methodName;
-
+    Couple<String> key = getMethodKey(method);
+    if (key == null) return;
     DataContext dataContext = DataManager.getInstance().getDataContext(e.getRequiredData(EDITOR).getContentComponent());
     FeatureUsageTracker.getInstance().triggerFeatureUsed("test.discovery");
-    showDiscoveredTests(project, dataContext, methodPresentationName, method);
+    String presentableName = PsiFormatUtil.formatMethod(method, PsiSubstitutor.EMPTY, PsiFormatUtilBase.SHOW_CONTAINING_CLASS | PsiFormatUtilBase.SHOW_NAME, 0);
+    showDiscoveredTests(project, dataContext, presentableName, method);
   }
 
   private static void showDiscoveredTestsByChanges(AnActionEvent e) {
@@ -200,7 +195,7 @@ public class ShowDiscoveredTestsAction extends AnAction {
 
     KeyStroke findUsageKeyStroke = findUsagesKeyStroke();
     String pinTooltip = "Open Find Usages Toolwindow" + (findUsageKeyStroke == null ? "" : " " + KeymapUtil.getKeystrokeText(findUsageKeyStroke));
-    ActiveComponent pinButton = createButton(pinTooltip, AllIcons.General.AutohideOff, pinActionListener);
+    ActiveComponent pinButton = createButton(pinTooltip, AllIcons.General.Pin_tab, pinActionListener);
 
     CompositeActiveComponent component = new CompositeActiveComponent(runButton, pinButton);
 
@@ -234,7 +229,7 @@ public class ShowDiscoveredTestsAction extends AnAction {
     GlobalSearchScope scope = GlobalSearchScope.projectScope(project);
     ApplicationManager.getApplication().executeOnPooledThread(() -> {
       for (PsiMethod method : methods) {
-        Couple<String> methodFqnName = ReadAction.compute(() -> getMethodQualifiedName(method));
+        Couple<String> methodFqnName = ReadAction.compute(() -> getMethodKey(method));
         if (methodFqnName == null) continue;
         String fqn = methodFqnName.first;
         String methodName = methodFqnName.second;
@@ -306,7 +301,7 @@ public class ShowDiscoveredTestsAction extends AnAction {
   }
 
   @Nullable
-  private static Couple<String> getMethodQualifiedName(@NotNull PsiMethod method) {
+  private static Couple<String> getMethodKey(@NotNull PsiMethod method) {
     PsiClass c = method.getContainingClass();
     String fqn = c != null ? getName(c) : null;
     return fqn == null ? null : Couple.of(fqn, methodSignature(method));
@@ -320,9 +315,13 @@ public class ShowDiscoveredTestsAction extends AnAction {
   }
 
   private static String getName(PsiClass c) {
-    StringBuilder buf = new StringBuilder();
-    ClassUtil.formatClassName(c, buf);
-    return buf.toString();
+    if (c instanceof PsiAnonymousClass) {
+      PsiClass containingClass = PsiTreeUtil.getParentOfType(c, PsiClass.class);
+      if (containingClass != null) {
+        return ClassUtil.getJVMClassName(containingClass) + JavaAnonymousClassesHelper.getName((PsiAnonymousClass)c);
+      }
+    }
+    return ClassUtil.getJVMClassName(c);
   }
 
   @Nullable

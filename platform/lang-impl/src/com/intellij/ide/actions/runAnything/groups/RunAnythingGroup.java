@@ -23,12 +23,14 @@ public abstract class RunAnythingGroup {
     ExtensionPointName.create("com.intellij.runAnything.group");
 
   /**
-   * {@link #myMoreIndex} is a group 'load more..' index in the main list.
+   * {@link #myMoreIndex} is a group's 'load more..' index in the main list.
+   * -1 means that group has all items loaded and no more 'load more..' placeholder
    */
   private volatile int myMoreIndex = -1;
 
   /**
-   * {@link #myTitleIndex} is an index of group title.
+   * {@link #myTitleIndex} is an index of group title in the main list.
+   * -1 means that group has zero elements and thus has no showing title
    */
   private volatile int myTitleIndex = -1;
 
@@ -97,14 +99,14 @@ public abstract class RunAnythingGroup {
   }
 
   /**
-   * Resets current group {@link #myMoreIndex}.
+   * Resets current group 'load more..' {@link #myMoreIndex} index.
    */
-  public void dropMoreIndex() {
+  public void resetMoreIndex() {
     myMoreIndex = -1;
   }
 
   /**
-   * Shifts {@link #myMoreIndex} starting from {@code baseIndex} to {@code shift}.
+   * Shifts {@link #myMoreIndex} for all groups starting from {@code baseIndex} by {@code shift}.
    */
   private static void shiftMoreIndex(int baseIndex, int shift) {
     Arrays.stream(EP_NAME.getExtensions()).filter(runAnythingGroup -> runAnythingGroup.myMoreIndex >= baseIndex)
@@ -112,20 +114,20 @@ public abstract class RunAnythingGroup {
   }
 
   /**
-   * Finds group title by {@code index}.
+   * Finds group title by {@code titleIndex}.
    *
-   * @return group title if {@code index} is equals to group {@link #myTitleIndex} and {@code null} if nothing found
+   * @return group title if {@code titleIndex} is equals to group {@link #myTitleIndex} and {@code null} if nothing found
    */
   @Nullable
-  public static String getTitle(int index) {
-    return Arrays.stream(EP_NAME.getExtensions()).filter(runAnythingGroup -> index == runAnythingGroup.myTitleIndex).findFirst()
+  public static String getTitle(int titleIndex) {
+    return Arrays.stream(EP_NAME.getExtensions()).filter(runAnythingGroup -> titleIndex == runAnythingGroup.myTitleIndex).findFirst()
                  .map(RunAnythingGroup::getTitle).orElse(null);
   }
 
   /**
    * Shifts {@link #myTitleIndex} starting from {@code baseIndex} to {@code shift}.
    */
-  private static void shift(int baseIndex, int shift) {
+  private static void shiftTitleIndex(int baseIndex, int shift) {
     Arrays.stream(EP_NAME.getExtensions())
           .filter(runAnythingGroup -> runAnythingGroup.myTitleIndex != -1 && runAnythingGroup.myTitleIndex > baseIndex)
           .forEach(runAnythingGroup -> runAnythingGroup.myTitleIndex += shift);
@@ -164,8 +166,8 @@ public abstract class RunAnythingGroup {
    * Finds matched by {@link #myMoreIndex} group.
    */
   @Nullable
-  public static RunAnythingGroup findRunAnythingGroup(int index) {
-    return Arrays.stream(EP_NAME.getExtensions()).filter(runAnythingGroup -> index == runAnythingGroup.myMoreIndex).findFirst()
+  public static RunAnythingGroup findGroupByMoreIndex(int moreIndex) {
+    return Arrays.stream(EP_NAME.getExtensions()).filter(runAnythingGroup -> moreIndex == runAnythingGroup.myMoreIndex).findFirst()
                  .orElse(null);
   }
 
@@ -180,7 +182,7 @@ public abstract class RunAnythingGroup {
    * Shifts {@link #myMoreIndex} and {@link #myTitleIndex} of all groups starting from {@code baseIndex} to {@code shift}.
    */
   public static void shiftIndexes(int baseIndex, int shift) {
-    shift(baseIndex, shift);
+    shiftTitleIndex(baseIndex, shift);
     shiftMoreIndex(baseIndex, shift);
   }
 

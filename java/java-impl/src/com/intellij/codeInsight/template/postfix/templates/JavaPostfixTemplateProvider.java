@@ -48,6 +48,8 @@ public class JavaPostfixTemplateProvider implements PostfixTemplateProvider {
     new ArgumentPostfixTemplate(this),
 
     new CastExpressionPostfixTemplate(),
+    new NewExpressionPostfixTemplate(),
+    new CastVarPostfixTemplate(),
     new ElseStatementPostfixTemplate(),
     new IfStatementPostfixTemplate(),
     new InstanceofExpressionPostfixTemplate(),
@@ -131,6 +133,7 @@ public class JavaPostfixTemplateProvider implements PostfixTemplateProvider {
         templateToEdit instanceof JavaEditablePostfixTemplate &&
         // cannot be editable until there is no UI for editing template variables    
         !(templateToEdit instanceof ForIndexedPostfixTemplate) &&
+        !(templateToEdit instanceof ForeachPostfixTemplate) &&
         !(templateToEdit instanceof ArgumentPostfixTemplate) &&
         !(templateToEdit instanceof OptionalPostfixTemplate)) {
       JavaPostfixTemplateEditor editor = new JavaPostfixTemplateEditor(this);

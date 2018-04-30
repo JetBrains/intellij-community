@@ -3,6 +3,6 @@
     <polygon id="db_exception_breakpoint-a" points="2.29 1.242 5.754 -.758 4.788 5.568 9.63 2.783 7.422 12.13 6.656 6.798 2.324 9.3"/>
   </defs>
   <g fill="none" fill-rule="evenodd">
-    <use fill="#F15E18" transform="rotate(30 5.96 5.686)" xlink:href="#db_exception_breakpoint-a"/>
+    <use fill="#DB5860" transform="rotate(30 5.96 5.686)" xlink:href="#db_exception_breakpoint-a"/>
   </g>
 </svg>

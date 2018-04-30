@@ -1194,7 +1194,7 @@ public final class TreeUtil {
 
       TreePath next = siblings.poll();
       if (next == null) {
-        assert siblings == stack.poll();
+        LOG.assertTrue(siblings == stack.poll());
         path = path.getParentPath();
       }
       else {
@@ -1213,7 +1213,7 @@ public final class TreeUtil {
         }
       }
     }
-    assert stack.isEmpty();
+    LOG.assertTrue(stack.isEmpty());
     return null;
   }
 

@@ -6,25 +6,12 @@ import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.vfs.StandardFileSystems
 import com.intellij.openapi.vfs.VfsUtilCore
 import com.intellij.openapi.vfs.VirtualFile
-import com.intellij.util.ArrayUtil
 import com.intellij.util.Url
 import com.intellij.util.Urls
 import com.intellij.util.containers.ObjectIntHashMap
 import com.intellij.util.containers.isNullOrEmpty
 import com.intellij.util.io.URLUtil
 import java.io.File
-
-inline fun SourceResolver(rawSources: List<String>, sourceContents: List<String?>?, urlCanonicalizer: (String) -> Url): SourceResolver {
-  return SourceResolver(rawSources, Array(rawSources.size) { urlCanonicalizer(rawSources[it]) }, sourceContents)
-}
-
-fun SourceResolver(rawSources: List<String>,
-                   trimFileScheme: Boolean,
-                   baseUrl: Url?,
-                   sourceContents: List<String?>?,
-                   baseUrlIsFile: Boolean = true): SourceResolver {
-  return SourceResolver(rawSources, sourceContents) { canonicalizeUrl(it, baseUrl, trimFileScheme, baseUrlIsFile) }
-}
 
 interface SourceFileResolver {
   /**
@@ -34,18 +21,32 @@ interface SourceFileResolver {
   fun resolve(rawSources: List<String>): Int = -1
 }
 
-class SourceResolver(private val rawSources: List<String>, val canonicalizedUrls: Array<Url>, private val sourceContents: List<String?>?) {
+class SourceResolver(private val rawSources: List<String>,
+                     private val sourceContents: List<String?>?,
+                     urlCanonicalizer: (String, String?) -> Url) {
   companion object {
     fun isAbsolute(path: String) = path.startsWith('/') || (SystemInfo.isWindows && (path.length > 2 && path[1] == ':'))
   }
 
-  private val canonicalizedUrlToSourceIndex: ObjectIntHashMap<Url> = if (SystemInfo.isFileSystemCaseSensitive) ObjectIntHashMap(rawSources.size) else ObjectIntHashMap(rawSources.size, Urls.caseInsensitiveUrlHashingStrategy)
-
-  init {
-    for (i in rawSources.indices) {
-      canonicalizedUrlToSourceIndex.put(canonicalizedUrls[i], i)
+  val canonicalizedUrls: Array<Url> by lazy { Array(rawSources.size) { urlCanonicalizer(rawSources[it], sourceContents?.get(it)) } }
+  private val canonicalizedUrlToSourceIndex: ObjectIntHashMap<Url> by lazy {
+    (
+      if (SystemInfo.isFileSystemCaseSensitive) ObjectIntHashMap(rawSources.size)
+      else ObjectIntHashMap(rawSources.size, Urls.caseInsensitiveUrlHashingStrategy)
+    ).also {
+      for (i in rawSources.indices) {
+        it.put(canonicalizedUrls[i], i)
+      }
     }
   }
+
+  constructor(rawSources: List<String>,
+              trimFileScheme: Boolean,
+              baseUrl: Url?,
+              sourceContents: List<String?>?,
+              baseUrlIsFile: Boolean = true)
+    : this(rawSources, sourceContents, { sourceUrl, _ -> canonicalizeUrl(sourceUrl, baseUrl, trimFileScheme, baseUrlIsFile) })
+
 
   fun getSource(entry: MappingEntry): Url? {
     val index = entry.source
@@ -68,7 +69,7 @@ class SourceResolver(private val rawSources: List<String>, val canonicalizedUrls
     return if (sourceIndex < 0 || sourceIndex >= sourceContents!!.size) null else sourceContents[sourceIndex]
   }
 
-  fun getSourceIndex(url: Url) = ArrayUtil.indexOf(canonicalizedUrls, url)
+  fun getSourceIndex(url: Url) = canonicalizedUrlToSourceIndex[url]
 
   fun getRawSource(entry: MappingEntry): String? {
     val index = entry.source

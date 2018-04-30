@@ -34,7 +34,7 @@ DOUBLE_QUOTED_STRING=\"([^\\\"\r\n]|\\[^\r\n]|\\{CRLF})*\"?
 SINGLE_QUOTED_STRING='([^\\'\r\n]|\\[^\r\n]|\\{CRLF})*'?
 JSON5_NUMBER=(\+|-)?(0|[1-9][0-9]*)?\.?([0-9]+)?([eE][+-]?[0-9]*)?
 HEX_DIGITS=({HEX_DIGIT})+
-HEX_INTEGER_LITERAL=0[Xx]({HEX_DIGITS})
+HEX_INTEGER_LITERAL=(\+|-)?0[Xx]({HEX_DIGITS})
 NUMBER={JSON5_NUMBER}|{HEX_INTEGER_LITERAL}|Infinity|-Infinity|\+Infinity|NaN|-NaN|\+NaN
 IDENTIFIER=[[:jletterdigit:]~!()*\-."/"@\^<>=]+
 

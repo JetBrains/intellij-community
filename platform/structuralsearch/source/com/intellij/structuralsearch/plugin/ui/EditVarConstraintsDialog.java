@@ -92,7 +92,7 @@ class EditVarConstraintsDialog extends DialogWrapper {
   private JPanel occurencePanel;
   private JPanel textConstraintsPanel;
   private JLabel myRegExHelpLabel;
-  private TextFieldWithAutoCompletionWithBrowseButton refererenceTargetTextField;
+  private TextFieldWithAutoCompletionWithBrowseButton referenceTargetTextField;
   private JPanel referenceTargetConstraints;
   private JBCheckBox invertReferenceTarget;
 
@@ -131,8 +131,8 @@ class EditVarConstraintsDialog extends DialogWrapper {
     final List<String> names = ConfigurationManager.getInstance(project).getAllConfigurationNames();
     withinTextField.setAutoCompletionItems(names);
     withinTextField.addActionListener(new SelectTemplateListener(project, withinTextField));
-    refererenceTargetTextField.setAutoCompletionItems(names);
-    refererenceTargetTextField.addActionListener(new SelectTemplateListener(project, refererenceTargetTextField));
+    referenceTargetTextField.setAutoCompletionItems(names);
+    referenceTargetTextField.addActionListener(new SelectTemplateListener(project, referenceTargetTextField));
 
     if (!variables.contains(Configuration.CONTEXT_VAR_NAME)) {
       variables.add(Configuration.CONTEXT_VAR_NAME);
@@ -310,7 +310,7 @@ class EditVarConstraintsDialog extends DialogWrapper {
     varInfo.setWithinConstraint(configuration != null || withinConstraint.isEmpty() ? withinConstraint : '"' + withinConstraint + '"');
     varInfo.setInvertWithinConstraint(invertWithin.isSelected());
 
-    final String referenceTargetConstraint = refererenceTargetTextField.getText().trim();
+    final String referenceTargetConstraint = referenceTargetTextField.getText().trim();
     final Configuration configuration2 = ConfigurationManager.getInstance(myProject).findConfigurationByName(referenceTargetConstraint);
     varInfo.setReferenceConstraint((configuration2 != null || referenceTargetConstraint.isEmpty())
                                    ? referenceTargetConstraint
@@ -372,7 +372,7 @@ class EditVarConstraintsDialog extends DialogWrapper {
 
       withinTextField.setText("");
       invertWithin.setSelected(false);
-      refererenceTargetTextField.setText("");
+      referenceTargetTextField.setText("");
       invertReferenceTarget.setSelected(false);
     } else {
       applyWithinTypeHierarchy.setSelected(varInfo.isWithinHierarchy());
@@ -403,7 +403,7 @@ class EditVarConstraintsDialog extends DialogWrapper {
 
       withinTextField.setText(StringUtil.unquoteString(varInfo.getWithinConstraint()));
       invertWithin.setSelected(varInfo.isInvertWithinConstraint());
-      refererenceTargetTextField.setText(StringUtil.unquoteString(varInfo.getReferenceConstraint()));
+      referenceTargetTextField.setText(StringUtil.unquoteString(varInfo.getReferenceConstraint()));
       invertReferenceTarget.setSelected(varInfo.isInvertReference());
     }
 
@@ -521,7 +521,7 @@ class EditVarConstraintsDialog extends DialogWrapper {
     myRegExHelpLabel = RegExHelpPopup.createRegExLink(SSRBundle.message("regular.expression.help.label"), regexp, LOG);
     myRegExHelpLabel.setBorder(BorderFactory.createEmptyBorder(0, 0, 0, 5));
     withinTextField = new TextFieldWithAutoCompletionWithBrowseButton(myProject);
-    refererenceTargetTextField = new TextFieldWithAutoCompletionWithBrowseButton(myProject);
+    referenceTargetTextField = new TextFieldWithAutoCompletionWithBrowseButton(myProject);
   }
 
   private EditorTextField createRegexComponent() {

@@ -44,10 +44,7 @@ public class JavaReferenceContributor extends PsiReferenceContributor{
     final PsiReferenceProvider filePathReferenceProvider = new FilePathReferenceProvider();
     registrar.registerReferenceProvider(PlatformPatterns.psiElement(PsiLiteralExpression.class).and(new FilterPattern(new ElementFilter() {
       public boolean isAcceptable(Object element, PsiElement context) {
-        PsiLiteralExpression literalExpression = (PsiLiteralExpression) context;
-        final Map<String, Object> annotationParams = new HashMap<>();
-        annotationParams.put(AnnotationUtil.PROPERTY_KEY_RESOURCE_BUNDLE_PARAMETER, null);
-        return !JavaI18nUtil.mustBePropertyKey(literalExpression, annotationParams);
+        return !JavaI18nUtil.mustBePropertyKey((PsiLiteralExpression) context, null);
       }
 
       public boolean isClassAcceptable(Class hintClass) {

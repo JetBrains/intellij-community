@@ -192,10 +192,10 @@ class GrPullUpDialog extends PullUpDialogBase<GrMemberInfoStorage, GrMemberInfo,
       if (myMemberInfoStorage.getExtending(currentSuperClass).contains(member.getMember())) return false;
       if (!currentSuperClass.isInterface()) return true;
 
-      PsiElement element = member.getMember();
+      GrMember element = member.getMember();
       if (element instanceof PsiClass && ((PsiClass) element).isInterface()) return true;
       if (element instanceof PsiField) {
-        return ((PsiModifierListOwner) element).hasModifierProperty(PsiModifier.STATIC);
+        return element.hasModifierProperty(PsiModifier.STATIC);
       }
       if (element instanceof PsiMethod) {
         if (currentSuperClass.isInterface()) {
@@ -204,7 +204,7 @@ class GrPullUpDialog extends PullUpDialogBase<GrMemberInfoStorage, GrMemberInfo,
           final PsiMethod superClassMethod = MethodSignatureUtil.findMethodBySignature(currentSuperClass, signature, false);
           if (superClassMethod != null) return false;
         }
-        return !((PsiModifierListOwner) element).hasModifierProperty(PsiModifier.STATIC);
+        return !element.hasModifierProperty(PsiModifier.STATIC);
       }
       return true;
     }

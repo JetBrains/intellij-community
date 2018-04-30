@@ -146,10 +146,11 @@ public class PsiNewExpressionImpl extends ExpressionPsiElement implements PsiNew
           ASTNode argumentList = PsiImplUtil.skipWhitespaceAndComments(classRef.getTreeNext());
           if (argumentList != null && argumentList.getElementType() == JavaElementType.EXPRESSION_LIST) {
             final JavaPsiFacade facade = JavaPsiFacade.getInstance(containingFile.getProject());
-            PsiType aClass = facade.getElementFactory().createType((PsiJavaCodeReferenceElement)SourceTreeToPsiMap.treeElementToPsi(classRef));
-            return facade.getResolveHelper().multiResolveConstructor((PsiClassType)aClass,
-                                                                      (PsiExpressionList)SourceTreeToPsiMap.treeElementToPsi(argumentList),
-                                                                      PsiNewExpressionImpl.this);
+            PsiClassType
+              aClass = facade.getElementFactory().createType((PsiJavaCodeReferenceElement)SourceTreeToPsiMap.treeElementToPsi(classRef));
+            return facade.getResolveHelper().multiResolveConstructor(aClass,
+                                                                     (PsiExpressionList)SourceTreeToPsiMap.treeElementToPsi(argumentList),
+                                                                     PsiNewExpressionImpl.this);
           }
         }
         else{
@@ -157,11 +158,11 @@ public class PsiNewExpressionImpl extends ExpressionPsiElement implements PsiNew
           if (anonymousClassElement != null) {
             final JavaPsiFacade facade = JavaPsiFacade.getInstance(containingFile.getProject());
             final PsiAnonymousClass anonymousClass = (PsiAnonymousClass)SourceTreeToPsiMap.treeElementToPsi(anonymousClassElement);
-            PsiType aClass = anonymousClass.getBaseClassType();
+            PsiClassType aClass = anonymousClass.getBaseClassType();
             ASTNode argumentList = anonymousClassElement.findChildByType(JavaElementType.EXPRESSION_LIST);
-            return facade.getResolveHelper().multiResolveConstructor((PsiClassType)aClass,
-                                                                      (PsiExpressionList)SourceTreeToPsiMap.treeElementToPsi(argumentList),
-                                                                      anonymousClass);
+            return facade.getResolveHelper().multiResolveConstructor(aClass,
+                                                                     (PsiExpressionList)SourceTreeToPsiMap.treeElementToPsi(argumentList),
+                                                                     anonymousClass);
           }
         }
         return JavaResolveResult.EMPTY_ARRAY;

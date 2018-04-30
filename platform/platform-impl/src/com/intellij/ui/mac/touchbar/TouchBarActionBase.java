@@ -18,25 +18,26 @@ import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.messages.MessageBus;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.List;
 import java.awt.*;
+import java.util.List;
 
 public class TouchBarActionBase extends TouchBarProjectBase implements ExecutionListener {
   private static final Logger LOG = Logger.getInstance(TouchBarActionBase.class);
 
   private final PresentationFactory myPresentationFactory = new PresentationFactory();
   private final TimerListener myTimerListener;
+  private final Component myComponent;
 
-  public TouchBarActionBase(@NotNull String touchbarName, @NotNull Project project) {
+  public TouchBarActionBase(@NotNull String touchbarName, @NotNull Project project, Component component) {
     super(touchbarName, project);
 
+    myComponent = component;
     myTimerListener = new TimerListener() {
       @Override
       public ModalityState getModalityState() { return ModalityState.current(); }
       @Override
       public void run() { _updateActionItems(); }
     };
-    ActionManager.getInstance().addTimerListener(500, myTimerListener);
 
     final MessageBus mb = project.getMessageBus();
     mb.connect().subscribe(ExecutionManager.EXECUTION_TOPIC, this);
@@ -45,11 +46,19 @@ public class TouchBarActionBase extends TouchBarProjectBase implements Execution
   @Override
   public void release() {
     super.release();
-    ActionManager.getInstance().removeTimerListener(myTimerListener);
+    ActionManager.getInstance().removeTransparentTimerListener(myTimerListener);
   }
 
+  @Override
+  public void onBeforeShow() {
+    _updateActionItems();
+    ActionManager.getInstance().addTransparentTimerListener(500/*delay param doesn't affect anything*/, myTimerListener);
+  }
+  @Override
+  public void onHide() { ActionManager.getInstance().removeTransparentTimerListener(myTimerListener); }
+
   TBItemAnActionButton addAnActionButton(String actId) {
-    return addAnActionButton(ActionManager.getInstance().getAction(actId), true, TBItemAnActionButton.SHOWMODE_IMAGE_ONLY, null, null);
+    return addAnActionButton(ActionManager.getInstance().getAction(actId), true, TBItemAnActionButton.SHOWMODE_IMAGE_ONLY, myComponent, null);
   }
 
   TBItemAnActionButton addAnActionButton(String actId, boolean hiddenWhenDisabled) {
@@ -58,11 +67,11 @@ public class TouchBarActionBase extends TouchBarProjectBase implements Execution
       LOG.error("can't find action by id: " + actId);
       return null;
     }
-    return addAnActionButton(act, hiddenWhenDisabled, TBItemAnActionButton.SHOWMODE_IMAGE_ONLY, null, null);
+    return addAnActionButton(act, hiddenWhenDisabled, TBItemAnActionButton.SHOWMODE_IMAGE_ONLY, myComponent, null);
   }
 
   TBItemAnActionButton addAnActionButton(AnAction act, boolean hiddenWhenDisabled, int showMode) {
-    return addAnActionButton(act, hiddenWhenDisabled, showMode, null, null);
+    return addAnActionButton(act, hiddenWhenDisabled, showMode, myComponent, null);
   }
 
   TBItemAnActionButton addAnActionButton(AnAction act, boolean hiddenWhenDisabled, int showMode, Component component, ModalityState modality) {
@@ -71,7 +80,7 @@ public class TouchBarActionBase extends TouchBarProjectBase implements Execution
       return null;
     }
 
-    final String uid = String.format("%s.anActionButton.%d", myName, myCounter++);
+    final String uid = String.format("%s.anActionButton.%d.%s", myName, myCounter++, ActionManager.getInstance().getId(act));
     final TBItemAnActionButton butt = new TBItemAnActionButton(uid, act, hiddenWhenDisabled, showMode, component, modality);
     myItems.add(butt);
     return butt;

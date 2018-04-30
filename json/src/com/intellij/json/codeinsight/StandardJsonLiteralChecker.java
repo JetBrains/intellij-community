@@ -9,7 +9,7 @@ import org.jetbrains.annotations.Nullable;
 import java.util.regex.Pattern;
 
 public class StandardJsonLiteralChecker implements JsonLiteralChecker {
-  private static final Pattern VALID_ESCAPE = Pattern.compile("\\\\([\"\\\\/bfnrt]|u[0-9a-fA-F]{4})");
+  public static final Pattern VALID_ESCAPE = Pattern.compile("\\\\([\"\\\\/bfnrt]|u[0-9a-fA-F]{4})");
   private static final Pattern VALID_NUMBER_LITERAL = Pattern.compile("-?(0|[1-9][0-9]*)(\\.[0-9]+)?([eE][+-]?[0-9]+)?");
   public static final String INF = "Infinity";
   public static final String MINUS_INF = "-Infinity";

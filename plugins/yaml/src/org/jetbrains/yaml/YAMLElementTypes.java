@@ -38,6 +38,11 @@ public interface YAMLElementTypes {
     YAMLTokenTypes.WHITESPACE,
     TokenType.WHITE_SPACE,
     YAMLTokenTypes.EOL,
+    YAMLTokenTypes.SCALAR_EOL,
     YAMLTokenTypes.INDENT,
     YAMLTokenTypes.COMMENT);
+
+  TokenSet EOL_ELEMENTS = TokenSet.create(
+    YAMLTokenTypes.EOL,
+    YAMLTokenTypes.SCALAR_EOL);
 }

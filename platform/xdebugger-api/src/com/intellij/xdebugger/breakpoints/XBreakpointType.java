@@ -5,7 +5,6 @@ package com.intellij.xdebugger.breakpoints;
 import com.intellij.icons.AllIcons;
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.project.Project;
-import com.intellij.xdebugger.XDebuggerBundle;
 import com.intellij.xdebugger.XSourcePosition;
 import com.intellij.xdebugger.breakpoints.ui.XBreakpointCustomPropertiesPanel;
 import com.intellij.xdebugger.breakpoints.ui.XBreakpointGroupingRule;
@@ -114,6 +113,14 @@ public abstract class XBreakpointType<B extends XBreakpoint<P>, P extends XBreak
   @NotNull
   public Icon getMutedDisabledIcon() {
     return AllIcons.Debugger.Db_muted_disabled_breakpoint;
+  }
+
+  /**
+   * @return the icon shown for a breakpoint which is scheduled but not yet set (validated, resolved) in the debugger engine
+   */
+  @Nullable
+  public Icon getPendingIcon() {
+    return null;
   }
 
   /**
@@ -235,10 +242,6 @@ public abstract class XBreakpointType<B extends XBreakpoint<P>, P extends XBreak
 
   public String getShortText(B breakpoint) {
     return getDisplayText(breakpoint);
-  }
-
-  public String getLogMessageLabelText() {
-    return XDebuggerBundle.message("xbreakpoints.log.message.label");
   }
 
   public interface XBreakpointCreator<P extends XBreakpointProperties> {

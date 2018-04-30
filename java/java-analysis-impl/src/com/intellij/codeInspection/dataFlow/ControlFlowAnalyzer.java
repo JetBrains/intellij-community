@@ -20,7 +20,6 @@ import com.intellij.codeInsight.ExceptionUtil;
 import com.intellij.codeInsight.daemon.ImplicitUsageProvider;
 import com.intellij.codeInsight.daemon.impl.UnusedSymbolUtil;
 import com.intellij.codeInspection.dataFlow.ControlFlow.ControlFlowOffset;
-import com.intellij.codeInspection.dataFlow.MethodContract.ValueConstraint;
 import com.intellij.codeInspection.dataFlow.Trap.InsideFinally;
 import com.intellij.codeInspection.dataFlow.Trap.TryCatch;
 import com.intellij.codeInspection.dataFlow.Trap.TryFinally;
@@ -1686,7 +1685,7 @@ public class ControlFlowAnalyzer extends JavaElementVisitor {
       anchor = expression;
     }
     addInstruction(instruction);
-    if (contracts.stream().anyMatch(c -> c.getReturnValue() == ValueConstraint.THROW_EXCEPTION)) {
+    if (contracts.stream().anyMatch(c -> c.getReturnValue().isFail())) {
       // if a contract resulted in 'fail', handle it
       addInstruction(new DupInstruction());
       addInstruction(new PushInstruction(myFactory.getConstFactory().getContractFail(), null));
@@ -1720,7 +1719,7 @@ public class ControlFlowAnalyzer extends JavaElementVisitor {
           try {
             final int paramCount = method.getParameterList().getParametersCount();
             List<StandardMethodContract> applicable = ContainerUtil.filter(StandardMethodContract.parseContract(text),
-                                                                           contract -> contract.arguments.length == paramCount);
+                                                                           contract -> contract.getParameterCount() == paramCount);
             return Result.create(applicable, contractAnno, method, PsiModificationTracker.JAVA_STRUCTURE_MODIFICATION_COUNT);
           }
           catch (Exception ignored) {

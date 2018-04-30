@@ -15,7 +15,6 @@
  */
 package org.jetbrains.intellij.build.images
 
-import com.intellij.idea.Bombed
 import com.intellij.openapi.application.PathManager
 import com.intellij.openapi.util.io.FileUtil
 import org.jetbrains.jps.model.JpsElementFactory
@@ -32,7 +31,6 @@ import org.junit.runners.Parameterized.Parameters
 import java.io.File
 import java.util.*
 
-@Bombed(user = "Sergey.Malenkov", year = 2018, month = Calendar.APRIL, day = 25)
 class CommunityImageResourcesSanityTest : ImageResourcesTestBase() {
   companion object {
     @JvmStatic
@@ -236,6 +234,6 @@ class FailedTest internal constructor(val module: String, val message: String, v
   internal constructor(module: JpsModule, message: String, file: File, details: String) :
     this(module.name, message, file.name, "${file.path}\n\n$details")
 
-  fun getTestName(): String = "'${module}' - $id - $message"
+  fun getTestName(): String = "'${module}' - $id - ${message.substringBefore('\n')}"
   fun getException(): Throwable = Exception("${message}\n\n$details".trim())
 }

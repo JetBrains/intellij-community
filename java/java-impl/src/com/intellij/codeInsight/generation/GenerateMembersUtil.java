@@ -719,7 +719,7 @@ public class GenerateMembersUtil {
 
     if (JavaCodeStyleSettings.getInstance(targetClass.getContainingFile()).INSERT_OVERRIDE_ANNOTATION) {
       PsiMethod superMethod = targetClass.findMethodBySignature(generated, true);
-      if (superMethod != null && superMethod.getContainingClass() != targetClass) {
+      if (superMethod != null && superMethod.getContainingClass() != targetClass && PsiUtil.isAccessible(superMethod, targetClass, null)) {
         OverrideImplementUtil.annotateOnOverrideImplement(generated, targetClass, superMethod, true);
       }
     }

@@ -71,7 +71,7 @@ public abstract class FileStructureTestBase extends CodeInsightFixtureTestCase {
       setSearchFilter(filter);
     }
     if (expandAll) {
-      TreeUtil.expandAll(myPopupFixture.getTree());
+      PlatformTestUtil.expandAll(myPopupFixture.getTree());
     }
     checkResult();
   }

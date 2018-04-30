@@ -24,7 +24,7 @@ import org.jetbrains.annotations.NotNull;
 public class ShowDetailsAction extends BooleanPropertyToggleAction {
 
   public ShowDetailsAction() {
-    super("Show Details", "Display details panel", AllIcons.Actions.Preview);
+    super("Show Details", "Display details panel", AllIcons.Actions.PreviewDetailsVertically);
   }
 
   @Override

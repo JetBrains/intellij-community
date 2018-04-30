@@ -127,7 +127,7 @@ public class SearchTextField extends JPanel {
       protected Rectangle getEmptyTextComponentBounds(Rectangle bounds) {
         if (isSearchControlUISupported()) {
           int offset = JBUI.scale(15);
-          Integer gap = (Integer)getClientProperty("JTextField.Search.Gap");
+          Integer gap = (Integer)getClientProperty("JTextField.Search.GapEmptyText");
           if (gap != null) {
             offset += gap;
           }

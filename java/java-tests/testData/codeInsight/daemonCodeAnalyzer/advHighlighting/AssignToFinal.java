@@ -216,3 +216,30 @@ class IncrementInUnreachableBranch {
     }
   }
 }
+class AssignmentInUnreachablePolyadic {
+  private final boolean b;
+  {
+    if (false && (b = false)) ;
+    if (true && (<error descr="Variable 'b' might already have been assigned to">b</error> = false)) ;
+  }
+
+  <error descr="Variable 'bb' might not have been initialized">private final boolean bb</error>;
+  {
+    if (false && (bb = false) && (<error descr="Variable 'bb' might already have been assigned to">bb</error> = true)) ;
+  }
+
+  private final boolean bbb;
+  {
+    if (false && (bbb = true)) {
+
+    } else {
+      <error descr="Variable 'bbb' might already have been assigned to">bbb</error> = false;
+    }
+  }
+
+  private final boolean bbbb;
+  {
+    if (false && (bbbb = false) && (bbbb = true)) ;
+    else if (true && (<error descr="Variable 'bbbb' might already have been assigned to">bbbb</error> = false)) ;
+  }
+}

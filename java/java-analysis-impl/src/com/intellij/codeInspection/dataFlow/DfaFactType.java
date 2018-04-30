@@ -114,7 +114,7 @@ public abstract class DfaFactType<T> extends Key<T> {
    * When its value is true, then optional is known to be present.
    * When its value is false, then optional is known to be empty (absent).
    */
-  public static final DfaFactType<Boolean> OPTIONAL_PRESENCE = new DfaFactType<Boolean>("Optional presense") {
+  public static final DfaFactType<Boolean> OPTIONAL_PRESENCE = new DfaFactType<Boolean>("Optional") {
 
     @NotNull
     @Override
@@ -183,7 +183,7 @@ public abstract class DfaFactType<T> extends Key<T> {
    * This fact represents a set of possible types of this value
    * {@link TypeConstraint#EMPTY} value is equivalent to absent fact (not constrained)
    */
-  public static final DfaFactType<TypeConstraint> TYPE_CONSTRAINT = new DfaFactType<TypeConstraint>("Type constraints") {
+  public static final DfaFactType<TypeConstraint> TYPE_CONSTRAINT = new DfaFactType<TypeConstraint>("Constraints") {
     @Override
     boolean isSuper(@Nullable TypeConstraint superFact, @Nullable TypeConstraint subFact) {
       return superFact == null || (subFact != null && superFact.isSuperStateOf(subFact));

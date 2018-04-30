@@ -31,10 +31,7 @@ import com.intellij.ui.*;
 import com.intellij.ui.awt.RelativePoint;
 import com.intellij.ui.components.JBLabel;
 import com.intellij.ui.speedSearch.SpeedSearch;
-import com.intellij.util.Alarm;
-import com.intellij.util.BooleanFunction;
-import com.intellij.util.IJSwingUtilities;
-import com.intellij.util.Processor;
+import com.intellij.util.*;
 import com.intellij.util.containers.WeakList;
 import com.intellij.util.ui.*;
 import com.intellij.util.ui.accessibility.AccessibleContextUtil;
@@ -273,7 +270,8 @@ public class AbstractPopup implements JBPopup {
       if (pinCallback != null) {
         myCaption.setButtonComponent(new InplaceButton(
           new IconButton("Open as Tool Window", 
-                         AllIcons.General.AutohideOff, AllIcons.General.AutohideOff, AllIcons.General.AutohideOffInactive),
+                         AllIcons.General.Pin_tab, AllIcons.General.Pin_tab,
+                         IconLoader.getDisabledIcon(AllIcons.General.Pin_tab)),
           e -> pinCallback.process(this)
         ), JBUI.Borders.empty(4));
       }
@@ -969,9 +967,8 @@ public class AbstractPopup implements JBPopup {
     window.setAutoRequestFocus(myRequestFocus);
 
     final String data = getUserData(String.class);
-    if (data != null) {
-      myContent.getRootPane().putClientProperty("SIMPLE_WINDOW", "SIMPLE_WINDOW".equals(data));
-    }
+    final boolean popupIsSimpleWindow = "TRUE".equals(getContent().getClientProperty("BookmarkPopup"));
+    myContent.getRootPane().putClientProperty("SIMPLE_WINDOW", "SIMPLE_WINDOW".equals(data) || popupIsSimpleWindow);
 
     myWindow = window;
     setMinimumSize(myMinSize);

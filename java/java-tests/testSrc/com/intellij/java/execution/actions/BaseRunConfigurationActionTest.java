@@ -5,7 +5,6 @@ import com.intellij.execution.actions.BaseRunConfigurationAction;
 import com.intellij.execution.application.ApplicationConfiguration;
 import com.intellij.execution.configurations.LocatableConfiguration;
 import com.intellij.execution.junit.JUnitConfiguration;
-import com.intellij.execution.junit.JUnitConfigurationType;
 import com.intellij.testFramework.LightIdeaTestCase;
 
 public class BaseRunConfigurationActionTest extends LightIdeaTestCase {
@@ -29,7 +28,7 @@ public class BaseRunConfigurationActionTest extends LightIdeaTestCase {
   }
 
   public void testRunTestMethodName() {
-    JUnitConfiguration configuration = new JUnitConfiguration(null, getProject(), JUnitConfigurationType.getInstance().getConfigurationFactories()[0]);
+    JUnitConfiguration configuration = new JUnitConfiguration(null, getProject());
     JUnitConfiguration.Data data = configuration.getPersistentData();
 
     data.MAIN_CLASS_NAME = "com.comp.ATestClass";

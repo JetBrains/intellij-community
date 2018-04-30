@@ -82,8 +82,9 @@ public class PyChangeSignatureDialog extends
     return PythonFileType.INSTANCE;
   }
 
+  @NotNull
   @Override
-  protected PyParameterTableModel createParametersInfoModel(PyMethodDescriptor method) {
+  protected PyParameterTableModel createParametersInfoModel(@NotNull PyMethodDescriptor method) {
     final PyParameterList parameterList = PsiTreeUtil.getChildOfType(method.getMethod(), PyParameterList.class);
     return new PyParameterTableModel(parameterList, myDefaultValueContext, myProject);
   }

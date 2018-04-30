@@ -41,7 +41,6 @@ import com.intellij.refactoring.util.DocCommentPolicy;
 import com.intellij.refactoring.util.RefactoringUtil;
 import com.intellij.refactoring.util.classMembers.MemberInfo;
 import com.intellij.util.IncorrectOperationException;
-import java.util.HashSet;
 import com.intellij.util.containers.MultiMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -291,7 +290,7 @@ public class JavaPushDownDelegate extends PushDownDelegate<MemberInfo, PsiMember
               }
             }
             PsiJavaCodeReferenceElement classRef = classType != null ? factory.createReferenceElementByType(classType) : factory.createClassReferenceElement(psiClass);
-            if (psiClass.isInterface()) {
+            if (psiClass.isInterface() && !targetClass.isInterface()) {
               targetClass.getImplementsList().add(classRef);
             } else {
               targetClass.getExtendsList().add(classRef);

@@ -1,6 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.execution.testframework.actions;
 
 import com.intellij.execution.ExecutionException;
@@ -283,12 +281,6 @@ public class AbstractRerunFailedTestsAction extends AnAction implements AnAction
     }
 
     @Override
-    @NotNull
-    public ConfigurationType getType() {
-      return myConfiguration.getType();
-    }
-
-    @Override
     public ConfigurationPerRunnerSettings createRunnerSettings(final ConfigurationInfoProvider provider) {
       return myConfiguration.createRunnerSettings(provider);
     }
@@ -303,8 +295,10 @@ public class AbstractRerunFailedTestsAction extends AnAction implements AnAction
       return myConfiguration.clone();
     }
 
+    @SuppressWarnings("deprecation")
     @Override
     public int getUniqueID() {
+      //noinspection deprecation
       return myConfiguration.getUniqueID();
     }
 

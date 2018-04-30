@@ -23,7 +23,7 @@ public class JsonEnterHandlingTest extends JsonTestCase {
   }
 
   public void testEnterMidObjectNoFollowing() {
-    doTest("{\"a\": {<caret>}", "{\"a\": {\n  \n}\n}");
+    doTest("{\"a\": {<caret>}}", "{\"a\": {\n  \n}}");
   }
 
   public void testEnterMidObjectWithFollowing() {

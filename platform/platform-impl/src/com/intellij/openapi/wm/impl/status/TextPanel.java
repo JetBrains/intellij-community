@@ -200,16 +200,20 @@ public class TextPanel extends JComponent implements Accessible {
     @Override
     protected void paintComponent(@NotNull final Graphics g) {
       super.paintComponent(g);
-      if (getText() != null) {
+      if (shouldPaintIconAndArrows() && getText() != null) {
         Rectangle r = getBounds();
         Insets insets = getInsets();
         Icon arrows = AllIcons.Ide.Statusbar_arrows;
-        arrows.paintIcon(this, g, r.width - insets.right - arrows.getIconWidth() - 1,
+        arrows.paintIcon(this, g, r.width - insets.right - arrows.getIconWidth() - 2,
                          r.height / 2 - arrows.getIconHeight() / 2);
         if (myIcon != null) {
           myIcon.paintIcon(this, g, insets.left - GAP - myIcon.getIconWidth(), r.height / 2 - myIcon.getIconHeight() / 2);
         }
       }
+    }
+
+    protected boolean shouldPaintIconAndArrows() {
+      return true;
     }
 
     @NotNull

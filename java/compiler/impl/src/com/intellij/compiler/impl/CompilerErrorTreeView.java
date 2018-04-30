@@ -35,15 +35,15 @@ public class CompilerErrorTreeView extends NewErrorTreeViewPanel {
 
   protected void fillRightToolbarGroup(DefaultActionGroup group) {
     super.fillRightToolbarGroup(group);
+    group.addSeparator();
     group.add(new CompilerPropertiesAction());
   }
 
   protected void addExtraPopupMenuActions(DefaultActionGroup group) {
-    group.add(new ExcludeFromCompileAction(myProject, this));
     group.addSeparator();
+    group.add(new ExcludeFromCompileAction(myProject, this));
     group.add(new SuppressJavacWarningsAction());
     group.add(new SuppressJavacWarningForClassAction());
-    group.addSeparator();
     ActionGroup popupGroup = (ActionGroup)ActionManager.getInstance().getAction(IdeActions.GROUP_COMPILER_ERROR_VIEW_POPUP);
     if (popupGroup != null) {
       for (AnAction action : popupGroup.getChildren(null)) {

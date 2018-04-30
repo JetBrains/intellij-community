@@ -84,9 +84,11 @@ public class JsonSchemaMappingsConfigurable extends MasterDetailsComponent imple
     return result;
   }
 
-  private void addProjectSchema() {
-    addCreatedMappings(new UserDefinedJsonSchemaConfiguration(createUniqueName(STUB_SCHEMA_NAME),
-                                                              JsonSchemaVersion.SCHEMA_4, "", false, null));
+  public UserDefinedJsonSchemaConfiguration addProjectSchema() {
+    UserDefinedJsonSchemaConfiguration configuration = new UserDefinedJsonSchemaConfiguration(createUniqueName(STUB_SCHEMA_NAME),
+                                                                                     JsonSchemaVersion.SCHEMA_4, "", false, null);
+    addCreatedMappings(configuration);
+    return configuration;
   }
 
   @SuppressWarnings("SameParameterValue")
@@ -246,6 +248,17 @@ public class JsonSchemaMappingsConfigurable extends MasterDetailsComponent imple
       Object o = children.nextElement();
       if (o instanceof MyNode && ((MyNode)o).getConfigurable() instanceof JsonSchemaConfigurable) {
         ((JsonSchemaConfigurable) ((MyNode)o).getConfigurable()).setError(myError);
+      }
+    }
+  }
+
+  public void selectInTree(UserDefinedJsonSchemaConfiguration configuration) {
+    final Enumeration children = myRoot.children();
+    while (children.hasMoreElements()) {
+      final MyNode node = (MyNode)children.nextElement();
+      JsonSchemaConfigurable configurable = (JsonSchemaConfigurable)node.getConfigurable();
+      if (Objects.equals(configurable.getUiSchema(), configuration)) {
+        selectNodeInTree(node);
       }
     }
   }

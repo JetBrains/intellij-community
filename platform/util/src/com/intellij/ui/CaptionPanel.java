@@ -99,4 +99,8 @@ public class CaptionPanel extends JPanel {
   public static Color getBorderColor(boolean isActive) {
     return JBUI.CurrentTheme.Popup.borderColor(isActive);
   }
+
+  protected boolean containsSettingsControls() {
+    return mySettingComponent != null;
+  }
 }

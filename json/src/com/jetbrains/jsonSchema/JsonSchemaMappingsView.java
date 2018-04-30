@@ -1,6 +1,7 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.jetbrains.jsonSchema;
 
+import com.intellij.icons.AllIcons;
 import com.intellij.json.JsonBundle;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.CommonShortcuts;
@@ -21,6 +22,8 @@ import com.intellij.openapi.util.Getter;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
+import com.intellij.openapi.vfs.VfsUtil;
+import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.*;
 import com.intellij.ui.components.JBLabel;
@@ -36,6 +39,8 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import javax.swing.event.DocumentEvent;
+import javax.swing.table.DefaultTableCellRenderer;
+import javax.swing.table.TableCellRenderer;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
@@ -79,7 +84,7 @@ public class JsonSchemaMappingsView implements Disposable {
 
   private void createUI(final Project project) {
     myProject = project;
-    myTableView = new TableView<>();
+    myTableView = new JsonMappingsTableView();
     myTableView.getTableHeader().setVisible(false);
     final ToolbarDecorator decorator = ToolbarDecorator.createDecorator(myTableView);
     final MyEditActionButtonRunnableImpl editAction = new MyEditActionButtonRunnableImpl(project);
@@ -98,7 +103,6 @@ public class JsonSchemaMappingsView implements Disposable {
     });
 
     JBTextField schemaFieldBacking = new JBTextField();
-    schemaFieldBacking.getEmptyText().setText("Please specify schema file or URL here");
     mySchemaField = new TextFieldWithBrowseButton(schemaFieldBacking);
     SwingHelper.installFileCompletionAndBrowseDialog(myProject, mySchemaField, JsonBundle.message("json.schema.add.schema.chooser.title"),
                                                      FileChooserDescriptorFactory.createSingleFileDescriptor());
@@ -199,19 +203,39 @@ public class JsonSchemaMappingsView implements Disposable {
   }
 
   private static ColumnInfo[] createColumns() {
-    return new ColumnInfo[] {
-      new ColumnInfo<UserDefinedJsonSchemaConfiguration.Item, String>("") {
-        @Nullable
-        @Override
-        public String valueOf(UserDefinedJsonSchemaConfiguration.Item item) {
-          return item.getPresentation();
-        }
-      }
-    };
+    return new ColumnInfo[] { new MappingItemColumnInfo() };
   }
 
   public JComponent getComponent() {
     return myComponent;
+  }
+
+  private static class MappingItemColumnInfo extends ColumnInfo<UserDefinedJsonSchemaConfiguration.Item, String> {
+    public MappingItemColumnInfo() {super("");}
+
+    @Nullable
+    @Override
+    public String valueOf(UserDefinedJsonSchemaConfiguration.Item item) {
+      return item.getPresentation();
+    }
+
+    @NotNull
+    @Override
+    public TableCellRenderer getRenderer(UserDefinedJsonSchemaConfiguration.Item item) {
+      return new DefaultTableCellRenderer() {
+        @Override
+        public Component getTableCellRendererComponent(JTable table,
+                                                       Object value,
+                                                       boolean isSelected,
+                                                       boolean hasFocus,
+                                                       int row,
+                                                       int column) {
+          JLabel label = (JLabel)super.getTableCellRendererComponent(table, value, isSelected, hasFocus, row, column);
+          label.setIcon(item.directory ? AllIcons.Nodes.Folder : item.pattern ? AllIcons.FileTypes.Unknown : AllIcons.FileTypes.Any_type);
+          return label;
+        }
+      };
+    }
   }
 
   private abstract class MyAddOrEditActionButtonRunnableBase implements AnActionButtonRunnable {
@@ -225,7 +249,6 @@ public class JsonSchemaMappingsView implements Disposable {
     public abstract void run(AnActionButton button);
 
     protected void doRun(@Nullable UserDefinedJsonSchemaConfiguration.Item currentItem, int selectedRow) {
-      assert currentItem == null || selectedRow != -1;
       final JBPanel panel = new JBPanel(new GridBagLayout());
       final GridBag bag = new GridBag();
 
@@ -399,7 +422,9 @@ public class JsonSchemaMappingsView implements Disposable {
     if (StringUtil.isEmptyOrSpaces(text)) return text;
     final File ioFile = new File(text);
     if (!ioFile.isAbsolute()) return text;
-    final String relativePath = FileUtil.getRelativePath(new File(project.getBasePath()), ioFile);
+    VirtualFile file = VfsUtil.findFileByIoFile(ioFile, false);
+    if (file == null) return text;
+    final String relativePath = VfsUtilCore.getRelativePath(file, project.getBaseDir());
     return relativePath == null ? text : relativePath;
   }
 
@@ -430,6 +455,28 @@ public class JsonSchemaMappingsView implements Disposable {
         return;
       }
       myLabel.setErrorText(null, null);
+    }
+  }
+
+  private class JsonMappingsTableView extends TableView<UserDefinedJsonSchemaConfiguration.Item> {
+    private final StatusText myEmptyText;
+
+    public JsonMappingsTableView() {
+      myEmptyText = new StatusText() {
+        @Override
+        protected boolean isStatusVisible() {
+          return isEmpty();
+        }
+      };
+      myEmptyText.setText("No schema mappings defined");
+      myEmptyText.appendSecondaryText("Add mapping for a file, folder or pattern", SimpleTextAttributes.LINK_ATTRIBUTES,
+                                      e -> new MyAddActionButtonRunnable(myProject).doRun(null, -1));
+    }
+
+    @NotNull
+    @Override
+    public StatusText getEmptyText() {
+      return myEmptyText;
     }
   }
 }

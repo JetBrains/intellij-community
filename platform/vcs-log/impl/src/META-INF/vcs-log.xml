@@ -54,9 +54,9 @@
             use-shortcut-of="Find"
             text="Go To Hash/Branch/Tag" description="Specify hash or name of a branch or a tag to navigate to the commit it points"/>
     <action class="com.intellij.vcs.log.ui.actions.VcsLogQuickSettingsActions" id="Vcs.Log.QuickSettings"
-            icon="VcsLogIcons.GearWithDropDown" text="Quick Settings" description="Quick Settings"/>
+            text="Quick Settings" description="Quick Settings"/>
     <action class="com.intellij.vcs.log.ui.actions.VcsLogTextFilterSettingsActions" id="Vcs.Log.QuickTextFilterSettings"
-            icon="VcsLogIcons.GearWithDropDown" text="Text Filter Settings" description="Text Filter Settings"/>
+            text="Text Filter Settings" description="Text Filter Settings"/>
     <action class="com.intellij.vcs.log.ui.actions.IntelliSortChooserToggleAction" id="Vcs.Log.IntelliSortChooser"/>
     <action class="com.intellij.vcs.log.ui.actions.VcsShowLogAction" id="Vcs.Show.Log" text="Show VCS Log">
       <add-to-group group-id="Vcs.Show.Toolwindow.Tab"/>
@@ -75,7 +75,6 @@
     </action>
     <group class="com.intellij.vcs.log.ui.actions.HighlightersActionGroup" id="Vcs.Log.HighlightersActionGroup"/>
     <action class="com.intellij.vcs.log.ui.actions.OpenAnotherLogTabAction" id="Vcs.Log.OpenAnotherTab"/>
-    <action class="com.intellij.vcs.log.ui.actions.CloseLogTabAction" id="Vcs.Log.CloseLogTabAction"/>
     <action class="com.intellij.vcs.log.ui.actions.RefreshLogAction" id="Vcs.Log.Refresh" use-shortcut-of="Refresh"/>
     <action class="com.intellij.vcs.log.ui.actions.ShowCommitTooltipAction" id="Vcs.Log.ShowTooltip"
             text="Show Commit Tooltip" description="Show tooltip for currently selected commit in the Log"
@@ -120,7 +119,6 @@
       <group id="Vcs.Log.Toolbar"/>
       <separator/>
       <reference ref="Vcs.Log.OpenAnotherTab"/>
-      <reference ref="Vcs.Log.CloseLogTabAction"/>
     </group>
     <group id="Vcs.Log.ContextMenu">
       <reference id="Vcs.CopyRevisionNumberAction"/>
@@ -143,18 +141,14 @@
       <reference id="VcsHistoryActionsGroup"/>
     </group>
     <group id="Vcs.FileHistory.Toolbar">
+      <reference id="Vcs.Log.Refresh"/>
       <reference id="Diff.ShowDiff"/>
-      <reference id="ChangesView.CreatePatchFromChanges"/>
-      <reference id="Vcs.Log.GetVersion"/>
-      <reference id="Vcs.Log.AnnotateRevisionAction"/>
       <reference id="Vcs.Log.ShowAllAffected"/>
-      <reference id="Vcs.CopyRevisionNumberAction"/>
-      <reference id="VcsHistoryActionsGroup"/>
       <separator/>
       <reference id="Vcs.Log.ShowOtherBranches"/>
-      <reference id="Vcs.Log.Refresh"/>
+      <separator/>
       <reference id="Vcs.Log.ShowDetailsAction"/>
-      <reference ref="Vcs.Log.CloseLogTabAction"/>
+      <separator/>
     </group>
 
     <group id="Log.KeymapGroup" text="Log">
@@ -181,7 +175,6 @@
       <separator/>
       <reference ref="Vcs.Log.Refresh"/>
       <reference ref="Vcs.Log.OpenAnotherTab"/>
-      <reference ref="Vcs.Log.CloseLogTabAction"/>
 
       <add-to-group group-id="Vcs.KeymapGroup"/>
     </group>
@@ -200,7 +193,6 @@
       <reference id="Vcs.Log.Refresh"/>
       <reference id="Vcs.Log.ShowDetailsAction"/>
       <reference id="VcsHistoryActionsGroup"/>
-      <reference ref="Vcs.Log.CloseLogTabAction"/>
 
       <add-to-group group-id="FileHistory.KeymapGroup"/>
     </group>

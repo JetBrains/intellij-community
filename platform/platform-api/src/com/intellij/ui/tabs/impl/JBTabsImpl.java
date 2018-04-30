@@ -2031,7 +2031,9 @@ public class JBTabsImpl extends JComponent
         imgG2d.dispose();
       }
 
-      UIUtil.drawImage(g2d, img, x, y, width, height, null);
+      UIUtil.drawImage(g2d, img,
+                       new Rectangle(x, y, width, height),
+                       new Rectangle(0, 0, width, height),null);
 
       label.setInactiveStateImage(img);
     }
@@ -2479,6 +2481,8 @@ public class JBTabsImpl extends JComponent
 
   @NotNull
   private ActionCallback removeTab(TabInfo info, @Nullable TabInfo forcedSelectionTransfer, boolean transferFocus, boolean isDropTarget) {
+    if (myPopupInfo == info) myPopupInfo = null;
+
     if (!isDropTarget) {
       if (info == null || !getTabs().contains(info)) return ActionCallback.DONE;
     }

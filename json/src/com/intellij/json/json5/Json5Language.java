@@ -11,7 +11,7 @@ public class Json5Language extends JsonLanguage {
   }
 
   @Override
-  public boolean acceptsStringNewlines() {
+  public boolean hasPermissiveStrings() {
     return true;
   }
 }

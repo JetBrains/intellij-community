@@ -39,10 +39,12 @@ public class ArchivePackagingElement extends CompositeElementWithManifest<Archiv
     myArchiveFileName = archiveFileName;
   }
 
+  @NotNull
   public PackagingElementPresentation createPresentation(@NotNull ArtifactEditorContext context) {
     return new ArchiveElementPresentation(this);
   }
 
+  @NotNull
   @Override
   public List<? extends Generator> computeAntInstructions(@NotNull PackagingElementResolvingContext resolvingContext, @NotNull AntCopyInstructionCreator creator,
                                                           @NotNull ArtifactAntGenerationContext generationContext,

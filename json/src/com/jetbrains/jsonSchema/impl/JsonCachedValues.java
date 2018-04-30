@@ -42,17 +42,6 @@ public class JsonCachedValues {
 
   private static final Key<CachedValue<String>> SCHEMA_URL_KEY = Key.create("JsonSchemaUrlCache");
   @Nullable
-  public static VirtualFile getSchemaFileFromSchemaProperty(@NotNull VirtualFile file, @NotNull Project project) {
-    String schemaUrl = getSchemaUrlFromSchemaProperty(file, project);
-
-    if (schemaUrl != null) {
-      VirtualFile virtualFile = JsonFileResolver.resolveSchemaByReference(file, schemaUrl);
-      if (virtualFile != null) return virtualFile;
-    }
-    return null;
-  }
-
-  @Nullable
   public static String getSchemaUrlFromSchemaProperty(@NotNull VirtualFile file,
                                                        @NotNull Project project) {
     PsiFile psiFile = resolveFile(file, project);
@@ -62,7 +51,7 @@ public class JsonCachedValues {
 
   private static PsiFile resolveFile(@NotNull VirtualFile file,
                                      @NotNull Project project) {
-    if (!file.isValid()) return null;
+    if (project.isDisposed() || !file.isValid()) return null;
     return PsiManager.getInstance(project).findFile(file);
   }
 
@@ -76,7 +65,7 @@ public class JsonCachedValues {
     if (schema == null) return null;
 
     JsonValue value = schema.getValue();
-    return value instanceof JsonStringLiteral ? StringUtil.trimEnd(((JsonStringLiteral)value).getValue(), "#") : null;
+    return value instanceof JsonStringLiteral ? ((JsonStringLiteral)value).getValue() : null;
   }
 
   private static final Key<CachedValue<String>> SCHEMA_ID_CACHE_KEY = Key.create("JsonSchemaIdCache");

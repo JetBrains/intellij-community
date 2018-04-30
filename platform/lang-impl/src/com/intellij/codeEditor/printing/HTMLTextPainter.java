@@ -319,7 +319,7 @@ public class HTMLTextPainter {
     htmlStyleManager.writeStyleTag(writer, myPrintLineNumbers);
     writer.write("</head>\n");
     EditorColorsScheme scheme = EditorColorsManager.getInstance().getGlobalScheme();
-    writer.write("<body bgcolor=\"#" + Integer.toString(scheme.getDefaultBackground().getRGB() & 0xFFFFFF, 16) + "\">\n");
+    writer.write("<body bgcolor=\"" + ColorUtil.toHtmlColor(scheme.getDefaultBackground()) + "\">\n");
     writer.write("<table CELLSPACING=0 CELLPADDING=5 COLS=1 WIDTH=\"100%\" BGCOLOR=\"#" + ColorUtil.toHex(new JBColor(Gray.xC0, Gray.x60)) + "\" >\n");
     writer.write("<tr><td><center>\n");
     writer.write("<font face=\"Arial, Helvetica\" color=\"#000000\">\n");

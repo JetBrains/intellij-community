@@ -1,4 +1,4 @@
-// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.svn.dialogs;
 
 import com.intellij.openapi.vfs.VirtualFile;
@@ -54,28 +54,25 @@ public class WCInfoWithBranches extends WCInfo {
   }
 
   public static class Branch {
+    @NotNull private final Url myUrl;
 
-    @NotNull private final String myName;
-    @NotNull private final String myUrl;
-
-    public Branch(@NotNull String url) {
-      myName = Url.tail(url);
+    public Branch(@NotNull Url url) {
       myUrl = url;
     }
 
     @NotNull
     public String getName() {
-      return myName;
+      return myUrl.getTail();
     }
 
     @NotNull
-    public String getUrl() {
+    public Url getUrl() {
       return myUrl;
     }
 
     @Override
     public String toString() {
-      return myName;
+      return getName();
     }
 
     @Override

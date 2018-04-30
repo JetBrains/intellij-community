@@ -59,6 +59,7 @@ class GuiTestRule : TestRule {
   private var myProjectPath: File? = null
     set
   private var myTestName: String = "undefined"
+  private var myTestShortName: String = "undefined"
   private var currentTestDateStart: Date = Date()
 
   private val myRuleChain = RuleChain.emptyRuleChain()
@@ -66,11 +67,17 @@ class GuiTestRule : TestRule {
     .around(myFatalErrorsFlusher)
     .around(IdeHandling())
     .around(ScreenshotOnFailure())
-    .around(Timeout(20, TimeUnit.MINUTES))!!
+
+  private val timeoutRule = Timeout(20, TimeUnit.MINUTES)
 
   override fun apply(base: Statement?, description: Description?): Statement {
     myTestName = "${description!!.className}#${description.methodName}"
-    return myRuleChain.apply(base, description)
+    myTestShortName = "${description.testClass.simpleName}#${description.methodName}"
+    //do not apply timeout rule if it is already applied to a test class
+    return if (description.testClass.fields.any { it.type == Timeout::class.java })
+      myRuleChain.apply(base, description)
+    else
+      myRuleChain.around(timeoutRule).apply(base, description)
   }
 
   fun robot(): Robot = myRobotTestRule.getRobot()
@@ -148,9 +155,11 @@ class GuiTestRule : TestRule {
 
       fun isFirstStep(): Boolean {
         return try {
-          val actionLinkFixture = ActionLinkFixture.findActionLinkByName(CREATE_NEW_PROJECT_ACTION_NAME, robot(), welcomeFrameFixture.target(), tenSec)
+          val actionLinkFixture = ActionLinkFixture.findActionLinkByName(CREATE_NEW_PROJECT_ACTION_NAME, robot(),
+                                                                         welcomeFrameFixture.target(), tenSec)
           actionLinkFixture.target().isShowing
-        } catch (componentLookupException: ComponentLookupException) {
+        }
+        catch (componentLookupException: ComponentLookupException) {
           false
         }
       }
@@ -175,14 +184,25 @@ class GuiTestRule : TestRule {
     private fun checkForModalDialogs(): List<AssertionError> {
       val errors = ArrayList<AssertionError>()
       // We close all modal dialogs left over, because they block the AWT thread and could trigger a deadlock in the next test.
-      var modalDialog: Dialog? = getActiveModalDialog()
-      while (modalDialog != null) {
-        robot().close(modalDialog)
-        errors.add(AssertionError("Modal dialog showing: ${modalDialog.javaClass.name} with title '${modalDialog.title}'"))
-        modalDialog = getActiveModalDialog()
+      val modalDialogsSet = Collections.newSetFromMap(WeakHashMap<Dialog, Boolean>());
+      try {
+        waitUntil("all modal dialogs will be closed", timeoutInSeconds = 10) {
+          val modalDialog: Dialog = getActiveModalDialog() ?: return@waitUntil true
+          if (modalDialogsSet.contains(modalDialog)) {
+            errors.add(AssertionError("Unable to close: ${modalDialog.javaClass.name} with title '${modalDialog.title}' by robot"))
+          }
+          else {
+            modalDialogsSet.add(modalDialog)
+            ScreenshotOnFailure.takeScreenshot("$myTestName.checkForModalDialogsFail")
+            robot().close(modalDialog)
+            errors.add(AssertionError("Modal dialog showing: ${modalDialog.javaClass.name} with title '${modalDialog.title}'"))
+            return@waitUntil false
+          }
+        }
       }
-      if (!errors.isEmpty())
-        ScreenshotOnFailure.takeScreenshot("$myTestName.checkForModalDialogsFail")
+      catch (timeoutError: WaitTimedOutError) {
+        errors.add(AssertionError("Modal dialogs closing exceeded timeout: ${timeoutError.message}"))
+      }
       return errors
     }
 
@@ -288,7 +308,7 @@ class GuiTestRule : TestRule {
     val toSelect = VfsUtil.findFileByIoFile(projectPath, false)
     Assert.assertNotNull(toSelect)
     doImportProject(toSelect!!)
-//TODO: add wait to open project
+    //TODO: add wait to open project
     return findIdeFrame(projectPath)
   }
 

@@ -283,6 +283,12 @@ public class CommonCodeStyleSettings {
 
   public int BLANK_LINES_AFTER_CLASS_HEADER = 0;
   public int BLANK_LINES_AFTER_ANONYMOUS_CLASS_HEADER = 0;
+
+  /**
+   * In Java-like languages specifies a number of blank lines before class closing brace '}'.
+   */
+  public int BLANK_LINES_BEFORE_CLASS_END = 0;
+
   //public int BLANK_LINES_BETWEEN_CASE_BLOCKS;
 
 

@@ -46,6 +46,7 @@ public class ModuleSourceItemGroup extends PackagingSourceItem {
     myModule = module;
   }
 
+  @NotNull
   @Override
   public SourceItemPresentation createPresentation(@NotNull ArtifactEditorContext context) {
     return new ModuleSourceItemPresentation(myModule, context);

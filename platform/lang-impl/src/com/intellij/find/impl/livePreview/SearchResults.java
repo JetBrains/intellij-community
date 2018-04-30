@@ -22,7 +22,6 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.concurrency.FutureResult;
 import com.intellij.util.containers.ContainerUtil;
-import java.util.HashSet;
 import com.intellij.util.containers.Stack;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
@@ -281,6 +280,7 @@ public class SearchResults implements DocumentListener {
       try {
         CharSequence bombedCharSequence = StringUtil.newBombedCharSequence(charSequence, 3000);
         result = findManager.findString(bombedCharSequence, offset, findModel, virtualFile);
+        ((StringUtil.BombedCharSequence)bombedCharSequence).defuse();
       }
       catch(PatternSyntaxException | ProcessCanceledException e) {
         result = null;

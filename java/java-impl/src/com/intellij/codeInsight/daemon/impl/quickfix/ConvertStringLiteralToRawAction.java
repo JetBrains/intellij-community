@@ -75,7 +75,7 @@ public class ConvertStringLiteralToRawAction implements IntentionAction, LowPrio
         String additionalQuotes = PsiRawStringLiteralUtil.getAdditionalTics(textTicsTrimmed, "`");
         PsiElementFactory elementFactory = JavaPsiFacade.getElementFactory(project);
         CodeStyleManager.getInstance(project).reformat(
-          elementToReplace.replace(elementFactory.createExpressionFromText(prefix + '`' + additionalQuotes + textTicsTrimmed + additionalQuotes + '`' + suffix, null)));
+          elementToReplace.replace(elementFactory.createExpressionFromText(prefix + '`' + additionalQuotes + StringUtil.convertLineSeparators(textTicsTrimmed) + additionalQuotes + '`' + suffix, null)));
       }
     }
   }

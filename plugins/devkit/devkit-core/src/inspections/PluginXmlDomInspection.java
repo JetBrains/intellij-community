@@ -296,9 +296,13 @@ public class PluginXmlDomInspection extends BasicDomElementsInspection<IdeaPlugi
                                  null, fix).highlightWholeElement();
           }
           else {
-            holder.createProblem(extension, ProblemHighlightType.GENERIC_ERROR_OR_WARNING,
-                                 DevKitBundle.message("inspections.plugin.xml.third.party.plugins.must.not.use.itnReporter"),
-                                 null, fix).highlightWholeElement();
+            Module module = plugin.getModule();
+            boolean inPlatformCode = module != null && module.getName().startsWith("intellij.platform.");
+            if (!inPlatformCode) {
+              holder.createProblem(extension, ProblemHighlightType.GENERIC_ERROR_OR_WARNING,
+                                   DevKitBundle.message("inspections.plugin.xml.third.party.plugins.must.not.use.itnReporter"),
+                                   null, fix).highlightWholeElement();
+            }
           }
         }
       }

@@ -259,7 +259,7 @@ class IconsClassGenerator(val projectHome: File, val util: JpsModule, val writeC
   }
 
   private fun append(answer: StringBuilder, text: String, level: Int) {
-    answer.append("  ".repeat(level))
+    if (text.isNotBlank()) answer.append("  ".repeat(level))
     answer.append(text).append("\n")
   }
 

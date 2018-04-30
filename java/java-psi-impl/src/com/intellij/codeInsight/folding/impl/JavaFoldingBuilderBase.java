@@ -819,10 +819,10 @@ public abstract class JavaFoldingBuilderBase extends CustomFoldingBuilder implem
   boolean fitsRightMargin(@NotNull PsiElement element, @NotNull Document document, int foldingStart, int foldingEnd, int collapsedLength) {
     final int beforeLength = foldingStart - document.getLineStartOffset(document.getLineNumber(foldingStart));
     final int afterLength = document.getLineEndOffset(document.getLineNumber(foldingEnd)) - foldingEnd;
-    return isBelowRightMargin(element.getProject(), beforeLength + collapsedLength + afterLength);
+    return isBelowRightMargin(element.getContainingFile(), beforeLength + collapsedLength + afterLength);
   }
 
-  protected abstract boolean isBelowRightMargin(@NotNull Project project, final int lineLength);
+  protected abstract boolean isBelowRightMargin(@NotNull PsiFile file, final int lineLength);
 
   @Override
   protected boolean isCustomFoldingCandidate(@NotNull ASTNode node) {

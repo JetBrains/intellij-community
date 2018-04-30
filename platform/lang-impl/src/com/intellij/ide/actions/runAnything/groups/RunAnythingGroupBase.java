@@ -14,14 +14,15 @@ public abstract class RunAnythingGroupBase extends RunAnythingGroup {
    * @param pattern         input search string
    * @param textToMatch     an item presentation text to be matched with
    * @param isInsertionMode if true gets {@link #getMaxItemsToInsert()} group items, else limits to {@link #getMaxInitialItems()}
+   * @param item            a new item that is conditionally added into the model
    * @return true if limit exceeded
    */
   boolean addToList(@NotNull RunAnythingSearchListModel model,
                     @NotNull SearchResult result,
                     @NotNull String pattern,
-                    @NotNull RunAnythingItem item,
                     @NotNull String textToMatch,
-                    boolean isInsertionMode) {
+                    boolean isInsertionMode,
+                    @NotNull RunAnythingItem item) {
     if (!model.contains(item) && NameUtil.buildMatcher("*" + pattern).build().matches(textToMatch)) {
       if (result.size() == (isInsertionMode ? getMaxItemsToInsert() : getMaxInitialItems())) {
         result.setNeedMore(true);

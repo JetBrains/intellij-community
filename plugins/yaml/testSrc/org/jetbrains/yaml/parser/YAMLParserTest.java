@@ -236,4 +236,8 @@ public class YAMLParserTest extends ParsingTestCase {
   public void testErrorInBlockScalarHeader() {
     doTest(true);
   }
+
+  public void testInlineMapWithBlockScalarValue()  {
+    doTest(true);
+  }
 }

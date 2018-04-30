@@ -33,8 +33,8 @@ import java.util.*;
 public class JavaI18nUtil extends I18nUtil {
   public static final PropertyCreationHandler DEFAULT_PROPERTY_CREATION_HANDLER = new PropertyCreationHandler() {
     @Override
-    public void createProperty(final Project project, final Collection<PropertiesFile> propertiesFiles, final String key, final String value,
-                               final PsiExpression[] parameters) throws IncorrectOperationException {
+    public void createProperty(@NotNull final Project project, @NotNull final Collection<PropertiesFile> propertiesFiles, @NotNull final String key, @NotNull final String value,
+                               @NotNull final PsiExpression[] parameters) throws IncorrectOperationException {
       I18nUtil.createProperty(project, propertiesFiles, key, value, true);
     }
   };
@@ -55,20 +55,21 @@ public class JavaI18nUtil extends I18nUtil {
   }
 
   public static boolean mustBePropertyKey(@NotNull PsiExpression expression,
-                                          @NotNull Map<String, Object> annotationAttributeValues) {
+                                          @Nullable Ref<PsiAnnotationMemberValue> resourceBundleRef) {
     final PsiElement parent = expression.getParent();
     if (parent instanceof PsiVariable) {
       final PsiAnnotation annotation = AnnotationUtil.findAnnotation((PsiVariable)parent, AnnotationUtil.PROPERTY_KEY);
       if (annotation != null) {
-        return processAnnotationAttributes(annotationAttributeValues, annotation);
+        processAnnotationAttributes(resourceBundleRef, annotation);
+        return true;
       }
     }
-    return isPassedToAnnotatedParam(expression, AnnotationUtil.PROPERTY_KEY, annotationAttributeValues, null);
+    return isPassedToAnnotatedParam(expression, AnnotationUtil.PROPERTY_KEY, resourceBundleRef, null);
   }
 
   static boolean isPassedToAnnotatedParam(@NotNull PsiExpression expression,
                                           final String annFqn,
-                                          @Nullable Map<String, Object> annotationAttributeValues,
+                                          @Nullable Ref<PsiAnnotationMemberValue> resourceBundleRef,
                                           @Nullable final Set<PsiModifierListOwner> nonNlsTargets) {
     expression = getTopLevelExpression(expression);
     final PsiElement parent = expression.getParent();
@@ -93,7 +94,7 @@ public class JavaI18nUtil extends I18nUtil {
 
     if (grParent instanceof PsiCall) {
       PsiMethod method = ((PsiCall)grParent).resolveMethod();
-      if (method != null && isMethodParameterAnnotatedWith(method, idx, null, annFqn, annotationAttributeValues, nonNlsTargets)) {
+      if (method != null && isMethodParameterAnnotatedWith(method, idx, null, annFqn, resourceBundleRef, nonNlsTargets)) {
         return true;
       }
     }
@@ -117,7 +118,7 @@ public class JavaI18nUtil extends I18nUtil {
                                                 final int idx,
                                                 @Nullable Collection<PsiMethod> processed,
                                                 final String annFqn,
-                                                @Nullable Map<String, Object> annotationAttributeValues,
+                                                @Nullable Ref<PsiAnnotationMemberValue> resourceBundleRef,
                                                 @Nullable final Set<PsiModifierListOwner> nonNlsTargets) {
     if (processed != null) {
       if (processed.contains(method)) return false;
@@ -146,7 +147,8 @@ public class JavaI18nUtil extends I18nUtil {
     }
     final PsiAnnotation annotation = AnnotationUtil.findAnnotation(param, annFqn);
     if (annotation != null) {
-      return processAnnotationAttributes(annotationAttributeValues, annotation);
+      processAnnotationAttributes(resourceBundleRef, annotation);
+      return true;
     }
     if (nonNlsTargets != null) {
       nonNlsTargets.add(param);
@@ -154,34 +156,32 @@ public class JavaI18nUtil extends I18nUtil {
 
     final PsiMethod[] superMethods = method.findSuperMethods();
     for (PsiMethod superMethod : superMethods) {
-      if (isMethodParameterAnnotatedWith(superMethod, idx, processed, annFqn, annotationAttributeValues, null)) return true;
+      if (isMethodParameterAnnotatedWith(superMethod, idx, processed, annFqn, resourceBundleRef, null)) return true;
     }
 
     return false;
   }
 
-  private static boolean processAnnotationAttributes(@Nullable Map<String, Object> annotationAttributeValues, @NotNull PsiAnnotation annotation) {
-    if (annotationAttributeValues != null) {
+  private static void processAnnotationAttributes(@Nullable Ref<PsiAnnotationMemberValue> resourceBundleRef, @NotNull PsiAnnotation annotation) {
+    if (resourceBundleRef != null) {
       final PsiAnnotationParameterList parameterList = annotation.getParameterList();
       final PsiNameValuePair[] attributes = parameterList.getAttributes();
       for (PsiNameValuePair attribute : attributes) {
         final String name = attribute.getName();
-        if (annotationAttributeValues.containsKey(name)) {
-          annotationAttributeValues.put(name, attribute.getValue());
+        if (AnnotationUtil.PROPERTY_KEY_RESOURCE_BUNDLE_PARAMETER.equals(name)) {
+          resourceBundleRef.set(attribute.getValue());
         }
       }
     }
-    return true;
   }
 
   static boolean isValidPropertyReference(@NotNull Project project,
                                           @NotNull PsiExpression expression,
                                           @NotNull String key,
                                           @NotNull Ref<String> outResourceBundle) {
-    final HashMap<String, Object> annotationAttributeValues = new HashMap<>();
-    annotationAttributeValues.put(AnnotationUtil.PROPERTY_KEY_RESOURCE_BUNDLE_PARAMETER, null);
-    if (mustBePropertyKey(expression, annotationAttributeValues)) {
-      final Object resourceBundleName = annotationAttributeValues.get(AnnotationUtil.PROPERTY_KEY_RESOURCE_BUNDLE_PARAMETER);
+    Ref<PsiAnnotationMemberValue> resourceBundleRef = Ref.create();
+    if (mustBePropertyKey(expression, resourceBundleRef)) {
+      final Object resourceBundleName = resourceBundleRef.get();
       if (!(resourceBundleName instanceof PsiExpression)) {
         return false;
       }

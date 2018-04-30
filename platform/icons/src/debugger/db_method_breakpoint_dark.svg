@@ -3,6 +3,6 @@
     <polygon id="db_method_breakpoint_dark-a" points="1.757 1.757 10.243 1.757 10.243 10.243 1.757 10.243"/>
   </defs>
   <g fill="none" fill-rule="evenodd">
-    <use fill="#C44923" transform="rotate(45 6 6)" xlink:href="#db_method_breakpoint_dark-a"/>
+    <use fill="#C75450" transform="rotate(45 6 6)" xlink:href="#db_method_breakpoint_dark-a"/>
   </g>
 </svg>

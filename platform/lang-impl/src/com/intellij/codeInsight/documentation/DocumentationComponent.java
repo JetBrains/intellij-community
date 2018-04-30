@@ -64,12 +64,10 @@ import com.intellij.ui.components.JBLayeredPane;
 import com.intellij.ui.components.JBScrollPane;
 import com.intellij.ui.popup.AbstractPopup;
 import com.intellij.ui.popup.PopupPositionManager;
+import com.intellij.util.ImageLoader;
 import com.intellij.util.Url;
 import com.intellij.util.Urls;
-import com.intellij.util.ui.GraphicsUtil;
-import com.intellij.util.ui.JBDimension;
-import com.intellij.util.ui.JBUI;
-import com.intellij.util.ui.UIUtil;
+import com.intellij.util.ui.*;
 import com.intellij.util.ui.accessibility.ScreenReader;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -102,6 +100,8 @@ public class DocumentationComponent extends JPanel implements Disposable, DataPr
   private static final Color DOCUMENTATION_COLOR = new JBColor(new Color(0xf7f7f7), new Color(0x46484a));
   static final JBColor BORDER_COLOR = new JBColor(new Color(0xadadad), new Color(0x616366));
   public static final ColorKey COLOR_KEY = ColorKey.createColorKey("DOCUMENTATION_COLOR", DOCUMENTATION_COLOR);
+
+  public static final Color SECTION_COLOR = Gray.get(0x90);
 
   private static final Highlighter.HighlightPainter LINK_HIGHLIGHTER = new LinkHighlighter();
   @NonNls private static final String DOCUMENTATION_TOPIC_ID = "reference.toolWindows.Documentation";
@@ -149,7 +149,8 @@ public class DocumentationComponent extends JPanel implements Disposable, DataPr
           LOG.warn(e);
         }
       }
-      return Toolkit.getDefaultToolkit().createImage(url);
+      Image image = ImageLoader.loadFromUrl(url);
+      return image != null ? ImageUtil.toBufferedImage(image) : Toolkit.getDefaultToolkit().createImage(url);
     }
   };
   private Runnable myToolwindowCallback;
@@ -582,7 +583,7 @@ public class DocumentationComponent extends JPanel implements Disposable, DataPr
     editorKit.getStyleSheet().addRule(".sections { padding: 0 9px 0 7px; border-spacing: 0; }");
     editorKit.getStyleSheet().addRule("tr { margin: 0 0 0 0; padding: 0 0 0 0; }");
     editorKit.getStyleSheet().addRule("td { margin: 2px 0 3.5px 0; padding: 0 0 0 0; }");
-    editorKit.getStyleSheet().addRule(".section { color: #909090; padding-right: 4px}");
+    editorKit.getStyleSheet().addRule(".section { color: " + ColorUtil.toHtmlColor(SECTION_COLOR) + "; padding-right: 4px}");
   }
 
   private static Color getLinkColor() {
@@ -1035,7 +1036,7 @@ public class DocumentationComponent extends JPanel implements Disposable, DataPr
       if (link != null) return link;
     }
 
-    return "<a href='external_doc'>External documentation " + title + "<icon src='AllIcons.Ide.External_link_arrow'></a></div>";
+    return "<a href='external_doc'>External documentation for `" + title + "`<icon src='AllIcons.Ide.External_link_arrow'></a></div>";
   }
 
   private static String getLink(String title, String url) {
@@ -1047,8 +1048,8 @@ public class DocumentationComponent extends JPanel implements Disposable, DataPr
 
     result.append("<a href='");
     result.append(url);
-    result.append("'>");
-    result.append(title.substring(4)).append(" on ").append(hostname);
+    result.append("'>`");
+    result.append(title).append("` on ").append(hostname);
     result.append("</a>");
     return result.toString();
   }
@@ -1204,7 +1205,6 @@ public class DocumentationComponent extends JPanel implements Disposable, DataPr
       presentation.setEnabled(!myBackStack.isEmpty());
       if (!isToolbar(e)) {
         presentation.setVisible(presentation.isEnabled());
-        presentation.setIcon(AllIcons.Actions.Left);
       }
     }
   }
@@ -1225,7 +1225,6 @@ public class DocumentationComponent extends JPanel implements Disposable, DataPr
       presentation.setEnabled(!myForwardStack.isEmpty());
       if (!isToolbar(e)) {
         presentation.setVisible(presentation.isEnabled());
-        presentation.setIcon(AllIcons.Actions.Right);
       }
     }
   }
@@ -1236,15 +1235,6 @@ public class DocumentationComponent extends JPanel implements Disposable, DataPr
       super(true);
       getTemplatePresentation().setIcon(AllIcons.Actions.EditSource);
       getTemplatePresentation().setText("Edit Source");
-    }
-
-    @Override
-    public void update(AnActionEvent e) {
-      super.update(e);
-      if (!isToolbar(e)) {
-        e.getPresentation().setIcon(AllIcons.General.Inline_edit);
-        e.getPresentation().setHoveredIcon(AllIcons.General.Inline_edit_hovered);
-      }
     }
 
     @Override
@@ -1275,7 +1265,7 @@ public class DocumentationComponent extends JPanel implements Disposable, DataPr
 
   private class ExternalDocAction extends AnAction implements HintManagerImpl.ActionToIgnore {
     private ExternalDocAction() {
-      super(CodeInsightBundle.message("javadoc.action.view.external"), null, AllIcons.Actions.Browser_externalJavaDoc);
+      super(CodeInsightBundle.message("javadoc.action.view.external"), null, AllIcons.Actions.PreviousOccurence);
       registerCustomShortcutSet(ActionManager.getInstance().getAction(IdeActions.ACTION_EXTERNAL_JAVADOC).getShortcutSet(), null);
     }
 

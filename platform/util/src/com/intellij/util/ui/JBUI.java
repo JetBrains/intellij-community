@@ -6,7 +6,6 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.ScalableIcon;
 import com.intellij.openapi.util.SystemInfo;
-import com.intellij.openapi.util.SystemInfoRt;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.ui.JBColor;
 import com.intellij.ui.border.CustomLineBorder;
@@ -43,7 +42,6 @@ public class JBUI {
   private static final Logger LOG = Logger.getInstance("#com.intellij.util.ui.JBUI");
 
   public static final String USER_SCALE_FACTOR_PROPERTY = "JBUI.userScaleFactor";
-  public static final String COMPENSATE_VISUAL_PADDING_KEY = "compensate.visual.padding";
 
   private static final PropertyChangeSupport PCS = new PropertyChangeSupport(new JBUI());
 
@@ -83,7 +81,7 @@ public class JBUI {
    * @see JBUI#isUsrHiDPI()
    * @see JBUI#isPixHiDPI(GraphicsConfiguration)
    * @see JBUI#isPixHiDPI(Graphics2D)
-   * @see UIUtil#drawImage(Graphics, Image, int, int, int, int, ImageObserver)
+   * @see UIUtil#drawImage(Graphics, Image, Rectangle, Rectangle, ImageObserver)
    * @see UIUtil#createImage(Graphics, int, int, int)
    * @see UIUtil#createImage(GraphicsConfiguration, int, int, int)
    * @see UIUtil#createImage(int, int, int)
@@ -1000,9 +998,9 @@ public class JBUI {
      * Creates a context based on the comp's system scale and sticks to it via the {@link #update()} method.
      */
     @NotNull
-    public static ScaleContext create(@NotNull Component comp) {
+    public static ScaleContext create(@Nullable Component comp) {
       final ScaleContext ctx = new ScaleContext(SYS_SCALE.of(sysScale(comp)));
-      ctx.compRef = new WeakReference<Component>(comp);
+      if (comp != null) ctx.compRef = new WeakReference<Component>(comp);
       return ctx;
     }
 
@@ -1528,8 +1526,8 @@ public class JBUI {
                : JBColor.namedColor("Popup.Header.inactiveBackground", 0xededed);
       }
 
-      public static int headerHeight() {
-        return scale(24);
+      public static int headerHeight(boolean hasControls) {
+        return hasControls ? scale(28) : scale(24);
       }
 
       public static Color borderColor(boolean active) {
@@ -1550,6 +1548,30 @@ public class JBUI {
         return scale(28);
       }
     }
+
+    public static class Focus {
+      private static final Color GRAPHITE_COLOR = new JBColor(new Color(0x8099979d, true), new Color(0x676869));
+
+      public static Color focusColor() {
+        return UIUtil.isGraphite() ? GRAPHITE_COLOR : JBColor.namedColor("Focus.borderColor", new JBColor(0x8ab2eb, 0x395d82));
+      }
+
+      public static Color defaultButtonColor() {
+        return UIUtil.isUnderDarcula() ? JBColor.namedColor("Focus.defaultButtonBorderColor", new JBColor(0x97c3f3, 0x43688c)) : focusColor();
+      }
+
+      public static Color errorColor(boolean active) {
+        return active ?
+               JBColor.namedColor("Focus.activeErrorBorderColor", new JBColor(0xe53e4d, 0x8b3c3c)) :
+               JBColor.namedColor("Focus.inactiveErrorBorderColor", new JBColor(0xebbcbc, 0x725252));
+      }
+
+      public static Color warningColor(boolean active) {
+        return active ?
+               JBColor.namedColor("Focus.activeWarningBorderColor", new JBColor(0xe2a53a, 0xac7920)) :
+               JBColor.namedColor("Focus.inactiveWarningBorderColor", new JBColor(0xffd385, 0x6e5324));
+      }
+    }
   }
 
 
@@ -1562,23 +1584,5 @@ public class JBUI {
   private static Icon getIcon(@NotNull String propertyName, @NotNull Icon defaultIcon) {
     Icon icon = UIManager.getIcon(propertyName);
     return icon == null ? defaultIcon : icon;
-  }
-
-  /**
-   * Temp method to not break IDEA LaF until changes are not reviewed.
-   *
-   * Correct input size is used now only for UI DSL.
-   */
-  public static boolean isUseCorrectInputHeight(@NotNull Component component) {
-    if (SystemInfoRt.isLinux) {
-      return false;
-    }
-
-    Container parent = component.getParent();
-    return !isCompensateVisualPaddingOnComponentLevel(parent instanceof JComboBox ? parent.getParent() : parent);
-  }
-
-  public static boolean isCompensateVisualPaddingOnComponentLevel(@Nullable Component parent) {
-    return SystemInfoRt.isLinux || !(parent instanceof JPanel && ((JPanel)parent).getClientProperty(COMPENSATE_VISUAL_PADDING_KEY) == Boolean.FALSE);
   }
 }

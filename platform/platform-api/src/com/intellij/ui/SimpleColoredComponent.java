@@ -662,10 +662,10 @@ public class SimpleColoredComponent extends JComponent implements Accessible, Co
 
     final int pos = builder.length();
     if (fgColor != null) {
-      builder.append("color:#").append(Integer.toString(fgColor.getRGB() & 0xFFFFFF, 16)).append(';');
+      builder.append("color:").append(ColorUtil.toHtmlColor(fgColor)).append(';');
     }
     if (bgColor != null) {
-      builder.append("background-color:#").append(Integer.toString(bgColor.getRGB() & 0xFFFFFF, 16)).append(';');
+      builder.append("background-color:").append(ColorUtil.toHtmlColor(bgColor)).append(';');
     }
     if ((style & SimpleTextAttributes.STYLE_BOLD) != 0) {
       builder.append("font-weight:bold;");

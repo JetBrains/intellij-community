@@ -51,6 +51,7 @@ public class JoinLinesTest extends LightCodeInsightTestCase {
   public void testAssignmentAndReassignmentWithCall() { doTest(); }
 
   public void testIfChain() { doTest(); }
+  public void testIfChainPolyadic() { doTest(); }
   public void testIfChainNoBraces() { doTest(); }
   public void testIfChainElse() { doTest(); }
 

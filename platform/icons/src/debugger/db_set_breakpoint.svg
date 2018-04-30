@@ -3,6 +3,6 @@
     <circle id="db_set_breakpoint-a" cx="6" cy="6" r="5"/>
   </defs>
   <g fill="none" fill-rule="evenodd">
-    <use fill="#F15E18" xlink:href="#db_set_breakpoint-a"/>
+    <use fill="#DB5860" xlink:href="#db_set_breakpoint-a"/>
   </g>
 </svg>

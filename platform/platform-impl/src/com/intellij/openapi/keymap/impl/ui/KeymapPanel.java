@@ -235,7 +235,7 @@ public class KeymapPanel extends JPanel implements SearchableConfigurable, Confi
     group.add(commonActionsManager.createExpandAllAction(treeExpander, myActionsTree.getTree()));
     group.add(commonActionsManager.createCollapseAllAction(treeExpander, myActionsTree.getTree()));
 
-    group.add(new AnAction("Edit Shortcut", "Edit Shortcut", AllIcons.ToolbarDecorator.Edit) {
+    group.add(new AnAction("Edit Shortcut", "Edit Shortcut", AllIcons.Actions.Edit) {
       {
         registerCustomShortcutSet(CommonShortcuts.ENTER, myActionsTree.getTree());
       }

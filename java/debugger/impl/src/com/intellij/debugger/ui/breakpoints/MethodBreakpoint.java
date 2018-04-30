@@ -36,6 +36,7 @@ import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.JDOMExternalizerUtil;
 import com.intellij.openapi.util.Key;
 import com.intellij.psi.*;
+import com.intellij.ui.LayeredIcon;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.MultiMap;
 import com.intellij.xdebugger.XDebuggerManager;
@@ -366,14 +367,15 @@ public class MethodBreakpoint extends BreakpointWithHighlighter<JavaMethodBreakp
     return AllIcons.Debugger.Db_invalid_breakpoint;
   }
 
-  @NotNull
+  @Override
   protected Icon getVerifiedIcon(boolean isMuted) {
-    return isMuted? AllIcons.Debugger.Db_muted_method_breakpoint : AllIcons.Debugger.Db_method_breakpoint;
+    return null; //return isMuted? AllIcons.Debugger.Db_muted_method_breakpoint : AllIcons.Debugger.Db_method_breakpoint;
   }
 
   @NotNull
   protected Icon getVerifiedWarningsIcon(boolean isMuted) {
-    return isMuted? AllIcons.Debugger.Db_muted_method_warning_breakpoint : AllIcons.Debugger.Db_method_warning_breakpoint;
+    return new LayeredIcon(isMuted ? AllIcons.Debugger.Db_muted_method_breakpoint : AllIcons.Debugger.Db_method_breakpoint,
+                           AllIcons.General.WarningDecorator);
   }
 
   public String getDisplayName() {

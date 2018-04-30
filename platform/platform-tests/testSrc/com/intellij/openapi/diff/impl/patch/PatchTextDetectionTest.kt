@@ -5,8 +5,11 @@ import com.intellij.openapi.fileEditor.impl.LoadTextUtil
 import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.testFramework.PlatformTestCase
 import com.intellij.testFramework.PlatformTestUtil
+import com.intellij.testFramework.TestDataFile
+import com.intellij.testFramework.TestDataPath
 import java.io.File
 
+@TestDataPath("\$CONTENT_ROOT/testData/diff/patchTextDetection/")
 class PatchTextDetectionTest : PlatformTestCase() {
   fun testClassicalContextDiff() {
     doTest(true)
@@ -33,7 +36,7 @@ class PatchTextDetectionTest : PlatformTestCase() {
   }
 
   private fun doTest(expected: Boolean) {
-    val testDataPath = PlatformTestUtil.getPlatformTestDataPath() + "diff/patchTextDetection/" + getTestName(true)
+    val testDataPath = getTestDir(getTestName(true))
     createTestProjectStructure(testDataPath)
     val patchPath = "$testDataPath/test.patch"
     val patchFile = LocalFileSystem.getInstance().refreshAndFindFileByPath(patchPath.replace(File.separatorChar, '/'))
@@ -41,5 +44,9 @@ class PatchTextDetectionTest : PlatformTestCase() {
     val patchContents = patchFile!!.contentsToByteArray()
     val patchText = LoadTextUtil.getTextByBinaryPresentation(patchContents, patchFile);
     assertEquals(expected, PatchReader.isPatchContent((patchText.toString())));
+  }
+
+  private fun getTestDir(@TestDataFile dirName: String): String {
+    return PlatformTestUtil.getPlatformTestDataPath() + "diff/patchTextDetection/" + dirName
   }
 }

@@ -45,7 +45,7 @@ public class JsonEnterHandler extends EnterHandlerDelegateAdapter {
     }
 
     JsonValue literal = ObjectUtils.tryCast(psiAtOffset.getParent(), JsonValue.class);
-    if (literal != null && (!(literal instanceof JsonStringLiteral) || !((JsonLanguage)language).acceptsStringNewlines())) {
+    if (literal != null && (!(literal instanceof JsonStringLiteral) || !((JsonLanguage)language).hasPermissiveStrings())) {
       handleJsonValue(literal, editor, caretOffsetRef);
     }
 
@@ -66,7 +66,7 @@ public class JsonEnterHandler extends EnterHandlerDelegateAdapter {
         prevSibling = prevSibling.getPrevSibling();
       }
 
-      if (prevSibling instanceof JsonProperty) {
+      if (prevSibling instanceof JsonProperty && ((JsonProperty)prevSibling).getValue() != null) {
         int offset = elementType == JsonElementTypes.COMMA ? nextSibling.getTextRange().getEndOffset() : prevSibling.getTextRange().getEndOffset();
         if (elementType == JsonElementTypes.R_CURLY) {
           editor.getDocument().insertString(offset, ",");

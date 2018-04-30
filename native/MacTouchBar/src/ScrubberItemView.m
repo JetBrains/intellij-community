@@ -6,7 +6,9 @@
 const int g_marginImgText = 3;
 const int g_marginBorders = 10;
 
-@interface ScrubberItemView()
+@interface ScrubberItemView() {
+    bool _isSelected;
+}
 @property (retain) NSImageView * imageView;
 @property (retain) NSTextField * textField;
 @end
@@ -16,9 +18,10 @@ const int g_marginBorders = 10;
 - (instancetype)initWithFrame:(NSRect)frameRect {
     self = [super initWithFrame:frameRect];
     if (self != nil) {
-
         self.textField = [[[NSTextField alloc] initWithFrame:NSZeroRect] autorelease];
         self.imageView = [[[NSImageView alloc] initWithFrame:NSZeroRect] autorelease];
+
+        _isSelected = false;
 
         self.textField.font = [NSFont systemFontOfSize: 0]; // If size is 0 then macOS will give you the proper font metrics for the NSTouchBar.
         self.textField.textColor = [NSColor alternateSelectedControlTextColor];
@@ -34,6 +37,12 @@ const int g_marginBorders = 10;
     return self;
 }
 
+- (void)setBackgroundSelected:(bool)selected {
+    _isSelected = selected;
+//    NSLog(@"set selected %s [%@]", selected ? "true" : "false", self);
+//    [self.view setNeedsDisplayInRect:self.bounds];
+}
+
 - (void)drawRect:(NSRect)dirtyRect {
     // NOTE: simple addSubview:NSButton (with img and text and rounded bezel style) doesn't works
     NSRect rect = NSMakeRect([self bounds].origin.x, [self bounds].origin.y, [self bounds].size.width, [self bounds].size.height);
@@ -41,7 +50,8 @@ const int g_marginBorders = 10;
     NSBezierPath * path = [NSBezierPath bezierPathWithRoundedRect:rect xRadius:5.0 yRadius:5.0];
     [path addClip];
 
-    [[NSColor controlColor] set];
+    NSColor * bg = _isSelected ? [NSColor selectedControlColor] : [NSColor controlColor];
+    [bg set];
     NSRectFill(rect);
 
     [super drawRect:dirtyRect];

@@ -23,17 +23,14 @@ class CreateKotlinMPProjectGuiTest : KotlinGuiTestCase() {
     editBuildGradle(
       kotlinVersion = kotlinVersion,
       isKotlinDslUsed = false,
-      kotlinKind = KotlinKind.Common,
-      projectName = *arrayOf(projectName)
+      kotlinKind = KotlinKind.Common
     )
 
-    shortcut(Modifier.CONTROL + Key.F4)
     if (setOfMPPModules.contains(KotlinKind.JVM)) {
-      editBuildGradle(kotlinVersion, false, KotlinKind.JVM, projectName, "$projectName-jvm")
-      shortcut(Modifier.CONTROL + Key.F4)
+      editBuildGradle(kotlinVersion, false, KotlinKind.JVM, "$projectName-jvm")
     }
     if (setOfMPPModules.contains(KotlinKind.JS)) {
-      editBuildGradle(kotlinVersion, false, KotlinKind.JS, projectName, "$projectName-js")
+      editBuildGradle(kotlinVersion, false, KotlinKind.JS, "$projectName-js")
     }
     gradleReimport()
     waitAMoment(extraTimeOut)
@@ -51,8 +48,8 @@ class CreateKotlinMPProjectGuiTest : KotlinGuiTestCase() {
         kotlinVersion,
         expectedJars
       )
-      checkFacetInOneModule(defaultFacetSettings[TargetPlatform.Common]!!, "$projectName(0)", "${projectName}_main", "Kotlin")
-      checkFacetInOneModule(defaultFacetSettings[TargetPlatform.Common]!!, "$projectName(0)", "${projectName}_test", "Kotlin")
+      checkFacetInOneModule(defaultFacetSettings[TargetPlatform.Common]!!, "$projectName", "${projectName}_main", "Kotlin")
+      checkFacetInOneModule(defaultFacetSettings[TargetPlatform.Common]!!, "$projectName", "${projectName}_test", "Kotlin")
       if (setOfMPPModules.contains(KotlinKind.JS)) {
         checkFacetInOneModule(defaultFacetSettings[TargetPlatform.JavaScript]!!, "${projectName}-js", "${projectName}-js_main", "Kotlin")
         checkFacetInOneModule(defaultFacetSettings[TargetPlatform.JavaScript]!!, "${projectName}-js", "${projectName}-js_test", "Kotlin")
@@ -63,6 +60,7 @@ class CreateKotlinMPProjectGuiTest : KotlinGuiTestCase() {
       }
     }
   }
+
   @Test
   @JvmName("kotlin_mpp_empty_root")
   fun createKotlinMppProjectEmptyRoot() {
@@ -81,16 +79,14 @@ class CreateKotlinMPProjectGuiTest : KotlinGuiTestCase() {
       kotlinVersion = kotlinVersion,
       isKotlinDslUsed = false,
       kotlinKind = KotlinKind.Common,
-      projectName = *arrayOf(projectName, "$projectName-common")
+      projectName = *arrayOf("$projectName-common")
     )
 
-    shortcut(Modifier.CONTROL + Key.F4)
     if (setOfMPPModules.contains(KotlinKind.JVM)) {
-      editBuildGradle(kotlinVersion, false, KotlinKind.JVM, projectName, "$projectName-jvm")
-      shortcut(Modifier.CONTROL + Key.F4)
+      editBuildGradle(kotlinVersion, false, KotlinKind.JVM,  "$projectName-jvm")
     }
     if (setOfMPPModules.contains(KotlinKind.JS)) {
-      editBuildGradle(kotlinVersion, false, KotlinKind.JS, projectName, "$projectName-js")
+      editBuildGradle(kotlinVersion, false, KotlinKind.JS,  "$projectName-js")
     }
     gradleReimport()
     waitAMoment(extraTimeOut)

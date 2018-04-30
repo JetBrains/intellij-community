@@ -62,13 +62,13 @@ public class RelaxedDirectInheritorChecker {
       String qName = psiClass.getQualifiedName();
       if (qName == null) {
         locals++;
-        if (locals > 1) return true;
+        if (locals > 1) break;
       } else {
         qNames.add(qName);
-        if (qNames.size() > 1) return true;
+        if (qNames.size() > 1) break;
       }
     }
-    return false;
+    return locals + qNames.size() > 1;
   }
 
   public boolean checkInheritance(@NotNull PsiClass inheritorCandidate) {

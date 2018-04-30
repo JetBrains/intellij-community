@@ -99,7 +99,7 @@ fun UElement.getContainingMethod() = getContainingUMethod()?.psi
 @Deprecated(message = "Useless function, will be removed in IDEA 2019.1", replaceWith = ReplaceWith("getContainingUClass()?.javaPsi"))
 fun UElement.getContainingClass() = getContainingUClass()?.psi
 
-@Deprecated(message = "Useless function, will be removed in IDEA 2019.1", replaceWith = ReplaceWith("getContainingUClass()?.javaPsi"))
+@Deprecated(message = "Useless function, will be removed in IDEA 2019.1", replaceWith = ReplaceWith("getContainingUVariable()?.javaPsi"))
 fun UElement.getContainingVariable() = getContainingUVariable()?.psi
 
 @Deprecated(message = "Useless function, will be removed in IDEA 2019.1",

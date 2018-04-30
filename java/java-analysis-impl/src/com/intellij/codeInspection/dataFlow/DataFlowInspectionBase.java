@@ -8,8 +8,8 @@ import com.intellij.codeInsight.NullableNotNullManager;
 import com.intellij.codeInsight.daemon.GroupNames;
 import com.intellij.codeInsight.intention.AddAnnotationPsiFix;
 import com.intellij.codeInspection.*;
-import com.intellij.codeInspection.dataFlow.MethodContract.ValueConstraint;
 import com.intellij.codeInspection.dataFlow.NullabilityProblemKind.NullabilityProblem;
+import com.intellij.codeInspection.dataFlow.StandardMethodContract.ValueConstraint;
 import com.intellij.codeInspection.dataFlow.fix.RedundantInstanceofFix;
 import com.intellij.codeInspection.dataFlow.fix.ReplaceWithConstantValueFix;
 import com.intellij.codeInspection.dataFlow.fix.ReplaceWithObjectsEqualsFix;
@@ -839,9 +839,9 @@ public class DataFlowInspectionBase extends AbstractBaseJavaLocalInspectionTool 
           if (method != null) {
             List<StandardMethodContract> contracts = ControlFlowAnalyzer.getMethodContracts(method);
             return contracts.stream().anyMatch(
-              smc -> smc.getReturnValue() == ValueConstraint.THROW_EXCEPTION &&
-                     IntStreamEx.ofIndices(smc.arguments)
-                                .allMatch(idx -> smc.arguments[idx] == (idx == index ? wantedConstraint : ValueConstraint.ANY_VALUE)));
+              smc -> smc.getReturnValue().isFail() &&
+                     IntStreamEx.range(smc.getParameterCount())
+                                .allMatch(idx -> smc.getParameterConstraint(idx) == (idx == index ? wantedConstraint : ValueConstraint.ANY_VALUE)));
           }
         }
       }

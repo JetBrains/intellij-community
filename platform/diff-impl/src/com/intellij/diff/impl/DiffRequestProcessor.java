@@ -92,7 +92,6 @@ public abstract class DiffRequestProcessor implements Disposable {
   @NotNull private final List<DiffTool> myToolOrder;
   @Nullable private final DiffTool myForcedDiffTool;
 
-  @NotNull private final OpenInEditorAction myOpenInEditorAction;
   @NotNull private final DefaultActionGroup myToolbarGroup;
   @NotNull private final DefaultActionGroup myPopupActionGroup;
 
@@ -160,8 +159,6 @@ public abstract class DiffRequestProcessor implements Disposable {
 
     myState = EmptyState.INSTANCE;
     myContentPanel.setContent(DiffUtil.createMessagePanel(((LoadingDiffRequest)myActiveRequest).getMessage()));
-
-    myOpenInEditorAction = new OpenInEditorAction(() -> onAfterNavigate());
   }
 
   //
@@ -354,6 +351,8 @@ public abstract class DiffRequestProcessor implements Disposable {
     return ContainerUtil.list(
       new MyPrevDifferenceAction(),
       new MyNextDifferenceAction(),
+      new MyOpenInEditorAction(),
+      Separator.getInstance(),
       new MyPrevChangeAction(),
       new MyNextChangeAction()
     );
@@ -430,7 +429,6 @@ public abstract class DiffRequestProcessor implements Disposable {
     myToolbarGroup.removeAll();
 
     List<AnAction> navigationActions = new ArrayList<>(getNavigationActions());
-    navigationActions.add(myOpenInEditorAction);
     navigationActions.add(new MyChangeDiffToolAction());
     DiffUtil.addActionBlock(myToolbarGroup,
                             navigationActions);
@@ -848,6 +846,13 @@ public abstract class DiffRequestProcessor implements Disposable {
   // Helpers
   //
 
+  protected class MyOpenInEditorAction extends OpenInEditorAction {
+    @Override
+    protected void onAfterEditorOpened() {
+      onAfterNavigate();
+    }
+  }
+
   private class MyPanel extends JBPanelWithEmptyText implements DataProvider {
     public MyPanel() {
       super(new BorderLayout());
@@ -872,7 +877,7 @@ public abstract class DiffRequestProcessor implements Disposable {
       }
 
       if (OpenInEditorAction.KEY.is(dataId)) {
-        return myOpenInEditorAction;
+        return new MyOpenInEditorAction();
       }
       else if (DiffDataKeys.DIFF_REQUEST.is(dataId)) {
         return myActiveRequest;

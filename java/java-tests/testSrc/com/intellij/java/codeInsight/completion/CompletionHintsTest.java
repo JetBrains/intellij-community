@@ -931,7 +931,7 @@ public class CompletionHintsTest extends AbstractParameterInfoTestCase {
                           "        <HINT text=\"value:\"/><caret>) } }");
   }
 
-  public void testGlobalStaticMethodCompletion() throws Exception {
+  public void testGlobalStaticMethodCompletion() {
     configureJava("class C { void m() { arraycop<caret> } }");
     complete();
     complete();
@@ -1103,6 +1103,33 @@ public class CompletionHintsTest extends AbstractParameterInfoTestCase {
     prev();
     waitForAllAsyncStuff();
     checkResultWithInlays("class C { void m() { String.format(<HINT text=\"format:\"/>\"a\"<caret><Hint text=\", args:\"/>) } }");
+  }
+
+  public void testBlacklistedHintsDoNotAppearWithCompletionHintsDisabled() throws Exception {
+    CodeInsightSettings.getInstance().SHOW_PARAMETER_NAME_HINTS_ON_COMPLETION = false;
+    configureJava("class C { \n" +
+                  "  void something() {}\n" +
+                  "  void some(int begin) {}\n" +
+                  "  void some(int begin, int end) {}\n" +
+                  "  void m() { som<caret> }\n" +
+                  "}");
+    complete("some(int begin)");
+    waitForAllAsyncStuff();
+    checkResultWithInlays("class C { \n" +
+                          "  void something() {}\n" +
+                          "  void some(int begin) {}\n" +
+                          "  void some(int begin, int end) {}\n" +
+                          "  void m() { some(<caret>); }\n" +
+                          "}");
+    type("0, 1");
+    home();
+    waitForAllAsyncStuff();
+    checkResultWithInlays("class C { \n" +
+                          "  void something() {}\n" +
+                          "  void some(int begin) {}\n" +
+                          "  void some(int begin, int end) {}\n" +
+                          "  <caret>void m() { some(0, 1); }\n" +
+                          "}");
   }
 
   private void checkResultWithInlays(String text) {

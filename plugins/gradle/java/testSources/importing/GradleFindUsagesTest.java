@@ -1,32 +1,23 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.gradle.importing;
 
-import com.intellij.find.FindManager;
-import com.intellij.find.findUsages.FindUsagesHandler;
-import com.intellij.find.findUsages.FindUsagesManager;
-import com.intellij.find.findUsages.FindUsagesOptions;
-import com.intellij.find.impl.FindManagerImpl;
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.module.Module;
-import com.intellij.openapi.progress.ProgressIndicator;
-import com.intellij.openapi.progress.ProgressManager;
-import com.intellij.openapi.progress.Task;
-import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.Trinity;
 import com.intellij.psi.JavaPsiFacade;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.search.GlobalSearchScope;
-import com.intellij.usageView.UsageInfo;
-import com.intellij.util.CommonProcessors;
-import org.jetbrains.annotations.NotNull;
+import org.gradle.initialization.BuildLayoutParameters;
+import org.gradle.wrapper.PathAssembler;
 import org.junit.Test;
 import org.junit.runners.Parameterized;
 
+import java.io.File;
 import java.io.IOException;
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.List;
 
 import static com.intellij.openapi.util.Pair.pair;
 
@@ -43,6 +34,15 @@ public class GradleFindUsagesTest extends GradleImportingTestCase {
   @Parameterized.Parameters(name = "with Gradle-{0}")
   public static Collection<Object[]> data() {
     return Arrays.asList(new Object[][]{{BASE_GRADLE_VERSION}});
+  }
+
+  @Override
+  protected void collectAllowedRoots(List<String> roots, PathAssembler.LocalDistribution distribution) {
+    File gradleUserHomeDir = new BuildLayoutParameters().getGradleUserHomeDir();
+    File generatedGradleJarsDir = new File(gradleUserHomeDir, "caches/" + gradleVersion + "/generated-gradle-jars");
+    roots.add(generatedGradleJarsDir.getPath());
+    File gradleDistLibDir = new File(distribution.getDistributionDir(), "gradle-" + gradleVersion + "/lib");
+    roots.add(gradleDistLibDir.getPath());
   }
 
   @Test
@@ -219,28 +219,6 @@ public class GradleFindUsagesTest extends GradleImportingTestCase {
   }
 
   private static void assertUsagesCount(int expectedUsagesCount, PsiElement resolved) throws Exception {
-    assertEquals(expectedUsagesCount, doFindUsages(resolved).size());
-  }
-
-  private static Collection<UsageInfo> doFindUsages(PsiElement resolved) throws Exception {
-    return ProgressManager.getInstance().run(new Task.WithResult<Collection<UsageInfo>, Exception>(resolved.getProject(), "", false) {
-      @Override
-      protected Collection<UsageInfo> compute(@NotNull ProgressIndicator indicator) {
-        return ApplicationManager.getApplication().runReadAction((Computable<Collection<UsageInfo>>)() -> {
-          FindUsagesManager findUsagesManager = ((FindManagerImpl)FindManager.getInstance(resolved.getProject())).getFindUsagesManager();
-          FindUsagesHandler handler = findUsagesManager.getFindUsagesHandler(resolved, false);
-          assertNotNull(handler);
-          final FindUsagesOptions options = handler.getFindUsagesOptions();
-          final CommonProcessors.CollectProcessor<UsageInfo> processor = new CommonProcessors.CollectProcessor<>();
-          for (PsiElement element : handler.getPrimaryElements()) {
-            handler.processElementUsages(element, processor, options);
-          }
-          for (PsiElement element : handler.getSecondaryElements()) {
-            handler.processElementUsages(element, processor, options);
-          }
-          return processor.getResults();
-        });
-      }
-    });
+    assertEquals(expectedUsagesCount, findUsages(resolved).size());
   }
 }

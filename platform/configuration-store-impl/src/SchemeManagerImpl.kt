@@ -213,25 +213,6 @@ class SchemeManagerImpl<T : Any, MUTABLE_SCHEME : T>(val fileSpec: String,
     }
   }
 
-  internal fun updateCurrentScheme(oldScheme: T?, newScheme: T? = null) {
-    if (activeScheme != null) {
-      return
-    }
-
-    if (oldScheme != activeScheme) {
-      val scheme = newScheme ?: schemes.firstOrNull()
-      currentPendingSchemeName = null
-      activeScheme = scheme
-      // must be equals by reference
-      if (oldScheme !== scheme) {
-        processor.onCurrentSchemeSwitched(oldScheme, scheme)
-      }
-    }
-    else if (newScheme != null) {
-      processPendingCurrentSchemeName(newScheme)
-    }
-  }
-
   override fun reload() {
     processor.beforeReloaded(this)
     // we must not remove non-persistent (e.g. predefined) schemes, because we cannot load it (obviously)
@@ -281,7 +262,7 @@ class SchemeManagerImpl<T : Any, MUTABLE_SCHEME : T>(val fileSpec: String,
         return true
       }
 
-      schemes.firstOrNull({ processor.getSchemeKey(it) == schemeName})?.let { existingScheme ->
+      schemes.firstOrNull { processor.getSchemeKey(it) == schemeName}?.let { existingScheme ->
         if (schemeListManager.readOnlyExternalizableSchemes.get(processor.getSchemeKey(existingScheme)) === existingScheme) {
           // so, bundled scheme is shadowed
           schemeListManager.removeFirstScheme(schemes, scheduleDelete = false) { it === existingScheme }

@@ -28,7 +28,7 @@ public class DocumentSettingsManager implements FileDocumentManagerListener {
 
   static {
     Map<String, String> map = new HashMap<>();
-    map.put("true", EditorSettingsExternalizable.STRIP_TRAILING_SPACES_WHOLE);
+    map.put("true", EditorSettingsExternalizable.STRIP_TRAILING_SPACES_CHANGED);
     map.put("false", EditorSettingsExternalizable.STRIP_TRAILING_SPACES_NONE);
     trimMap = Collections.unmodifiableMap(map);
   }

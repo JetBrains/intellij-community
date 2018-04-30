@@ -5,6 +5,7 @@ import com.intellij.codeInspection.ProblemsHolder;
 import com.intellij.json.JsonBundle;
 import com.intellij.json.JsonDialectUtil;
 import com.intellij.json.codeinsight.JsonStandardComplianceInspection;
+import com.intellij.json.json5.Json5Language;
 import com.intellij.json.psi.JsonLiteral;
 import com.intellij.json.psi.JsonPsiUtil;
 import com.intellij.json.psi.JsonReferenceExpression;
@@ -12,6 +13,8 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiElementVisitor;
 import org.jetbrains.annotations.NotNull;
+
+import javax.swing.*;
 
 public class Json5StandardComplianceInspection extends JsonStandardComplianceInspection {
 
@@ -23,8 +26,13 @@ public class Json5StandardComplianceInspection extends JsonStandardComplianceIns
   @NotNull
   @Override
   public PsiElementVisitor buildVisitor(@NotNull final ProblemsHolder holder, boolean isOnTheFly) {
-    if (JsonDialectUtil.isStandardJson(holder.getFile())) return PsiElementVisitor.EMPTY_VISITOR;
+    if (!(JsonDialectUtil.getLanguage(holder.getFile()) instanceof Json5Language)) return PsiElementVisitor.EMPTY_VISITOR;
     return new StandardJson5ValidatingElementVisitor(holder);
+  }
+
+  @Override
+  public JComponent createOptionsPanel() {
+    return null;
   }
 
   private class StandardJson5ValidatingElementVisitor extends StandardJsonValidatingElementVisitor {

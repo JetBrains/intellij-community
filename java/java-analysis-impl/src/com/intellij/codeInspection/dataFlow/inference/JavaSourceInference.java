@@ -2,6 +2,7 @@
 package com.intellij.codeInspection.dataFlow.inference;
 
 import com.intellij.codeInsight.NullableNotNullManager;
+import com.intellij.codeInspection.dataFlow.ContractReturnValue;
 import com.intellij.codeInspection.dataFlow.Mutability;
 import com.intellij.codeInspection.dataFlow.Nullness;
 import com.intellij.codeInspection.dataFlow.StandardMethodContract;
@@ -19,12 +20,11 @@ import com.intellij.util.containers.ContainerUtil;
 import com.siyeh.ig.psiutils.ClassUtils;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.Arrays;
 import java.util.BitSet;
 import java.util.Collections;
 import java.util.List;
 
-import static com.intellij.codeInspection.dataFlow.MethodContract.ValueConstraint.*;
+import static com.intellij.codeInspection.dataFlow.StandardMethodContract.ValueConstraint.NULL_VALUE;
 
 /**
  * A facade for all inference algorithms which work on Java source code (Light AST) and cache results in the index.
@@ -102,7 +102,7 @@ public class JavaSourceInference {
     }
 
     PsiType type = method.getReturnType();
-    if (type == null || ClassUtils.isImmutable(type)) {
+    if (type == null || ClassUtils.isImmutable(type, false)) {
       return Mutability.UNKNOWN;
     }
 
@@ -179,12 +179,12 @@ public class JavaSourceInference {
     if (hasContradictoryExplicitParameterNullity(method, contract)) return false;
     if (isReturnNullitySpecifiedExplicitly(method, contract)) return false;
     if (isContradictingExplicitNullableReturn(method, contract)) return false;
-    return contract.returnValue.isReturnTypeCompatible(returnType);
+    return contract.getReturnValue().isReturnTypeCompatible(returnType);
   }
 
   private static boolean hasContradictoryExplicitParameterNullity(@NotNull PsiMethod method, StandardMethodContract contract) {
-    for (int i = 0; i < contract.arguments.length; i++) {
-      if (contract.arguments[i] == NULL_VALUE && NullableNotNullManager.isNotNull(method.getParameterList().getParameters()[i])) {
+    for (int i = 0; i < contract.getParameterCount(); i++) {
+      if (contract.getParameterConstraint(i) == NULL_VALUE && NullableNotNullManager.isNotNull(method.getParameterList().getParameters()[i])) {
         return true;
       }
     }
@@ -192,13 +192,12 @@ public class JavaSourceInference {
   }
 
   private static boolean isContradictingExplicitNullableReturn(@NotNull PsiMethod method, StandardMethodContract contract) {
-    return contract.returnValue == NOT_NULL_VALUE &&
-           Arrays.stream(contract.arguments).allMatch(c -> c == ANY_VALUE) &&
+    return contract.getReturnValue().isNotNull() && contract.isTrivial() &&
            NullableNotNullManager.getInstance(method.getProject()).isNullable(method, false);
   }
 
   private static boolean isReturnNullitySpecifiedExplicitly(@NotNull PsiMethod method, StandardMethodContract contract) {
-    if (contract.returnValue != NOT_NULL_VALUE && contract.returnValue != NULL_VALUE) {
+    if (!contract.getReturnValue().isNotNull() && !contract.getReturnValue().isNull()) {
       return false; // spare expensive nullity check
     }
     return NullableNotNullManager.getInstance(method.getProject()).isNotNull(method, false);
@@ -207,8 +206,8 @@ public class JavaSourceInference {
   @NotNull
   private static List<StandardMethodContract> boxReturnValues(List<StandardMethodContract> contracts) {
     return ContainerUtil.mapNotNull(contracts, contract -> {
-      if (contract.returnValue == FALSE_VALUE || contract.returnValue == TRUE_VALUE) {
-        return new StandardMethodContract(contract.arguments, NOT_NULL_VALUE);
+      if (contract.getReturnValue().isBoolean()) {
+        return contract.withReturnValue(ContractReturnValue.returnNotNull());
       }
       return contract;
     });

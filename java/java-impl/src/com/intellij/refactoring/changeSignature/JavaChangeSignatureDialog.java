@@ -94,28 +94,30 @@ public class JavaChangeSignatureDialog extends ChangeSignatureDialogBase<Paramet
   private AnActionButton myPropExceptionsButton;
   private Tree myExceptionPropagationTree;
 
-  public JavaChangeSignatureDialog(Project project, PsiMethod method, boolean allowDelegation, PsiElement context) {
+  public JavaChangeSignatureDialog(@NotNull Project project, @NotNull PsiMethod method, boolean allowDelegation, PsiElement context) {
     this(project, new JavaMethodDescriptor(method), allowDelegation, context);
   }
 
-  protected JavaChangeSignatureDialog(Project project, JavaMethodDescriptor descriptor, boolean allowDelegation, PsiElement context) {
+  protected JavaChangeSignatureDialog(@NotNull Project project, @NotNull JavaMethodDescriptor descriptor, boolean allowDelegation, PsiElement context) {
     super(project, descriptor, allowDelegation, context);
   }
 
-  public static JavaChangeSignatureDialog createAndPreselectNew(final Project project,
-                                                              final PsiMethod method,
-                                                              final List<ParameterInfoImpl> parameterInfos,
-                                                              final boolean allowDelegation,
-                                                              final PsiReferenceExpression refExpr) {
+  @NotNull
+  public static JavaChangeSignatureDialog createAndPreselectNew(@NotNull Project project,
+                                                                @NotNull PsiMethod method,
+                                                                @NotNull List<ParameterInfoImpl> parameterInfos,
+                                                                final boolean allowDelegation,
+                                                                final PsiReferenceExpression refExpr) {
     return createAndPreselectNew(project, method, parameterInfos, allowDelegation, refExpr, null);
   }
 
-  public static JavaChangeSignatureDialog createAndPreselectNew(final Project project,
-                                                                final PsiMethod method,
-                                                                final List<ParameterInfoImpl> parameterInfos,
+  @NotNull
+  public static JavaChangeSignatureDialog createAndPreselectNew(@NotNull Project project,
+                                                                @NotNull PsiMethod method,
+                                                                @NotNull List<ParameterInfoImpl> parameterInfos,
                                                                 final boolean allowDelegation,
                                                                 final PsiReferenceExpression refExpr,
-                                                                final Consumer<List<ParameterInfoImpl>> callback) {
+                                                                @Nullable Consumer<List<ParameterInfoImpl>> callback) {
     return new JavaChangeSignatureDialog(project, method, allowDelegation, refExpr) {
       @Override
       protected int getSelectedIdx() {
@@ -248,8 +250,9 @@ public class JavaChangeSignatureDialog extends ChangeSignatureDialogBase<Paramet
     return StdFileTypes.JAVA;
   }
 
+  @NotNull
   @Override
-  protected JavaParameterTableModel createParametersInfoModel(JavaMethodDescriptor descriptor) {
+  protected JavaParameterTableModel createParametersInfoModel(@NotNull JavaMethodDescriptor descriptor) {
     final PsiParameterList parameterList = descriptor.getMethod().getParameterList();
     return new JavaParameterTableModel(parameterList, myDefaultValueContext, this);
   }

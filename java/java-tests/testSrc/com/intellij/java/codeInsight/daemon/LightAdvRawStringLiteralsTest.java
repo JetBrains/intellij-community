@@ -36,9 +36,8 @@ public class LightAdvRawStringLiteralsTest extends LightCodeInsightFixtureTestCa
     doTestIntention(QuickFixBundle.message("convert.to.string.text"));
   }
 
-  public void testStringToRawTransformation() {
-    doTestIntention(QuickFixBundle.message("convert.to.raw.string.text"));
-  }
+  public void testStringToRawTransformation() { doTestIntention(QuickFixBundle.message("convert.to.raw.string.text")); }
+  public void testStringToRawTransformationWithWrongSeparators() { doTestIntention(QuickFixBundle.message("convert.to.raw.string.text")); }
 
   public void testStringToRawTransformationLeadingTics() {
     doTestIntention(QuickFixBundle.message("convert.to.raw.string.text"));
@@ -55,6 +54,10 @@ public class LightAdvRawStringLiteralsTest extends LightCodeInsightFixtureTestCa
 
   public void testPasteInRawStringLiteral() {
     doTestPaste("class A {{String s = `q<caret>`;}}", "a\nb`\nc", "class A {{String s = ``qa\nb`\nc``;}}");
+  }
+
+  public void testPasteInRawStringLiteralWrongLineSeparator() {
+    doTestPaste("class A {{String s = `<caret>a`;}}", "\r", "class A {{String s = `\na`;}}");
   }
 
   public void testPasteInRawStringStaringWithTics() {

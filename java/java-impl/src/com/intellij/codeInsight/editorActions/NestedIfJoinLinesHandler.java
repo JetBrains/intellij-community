@@ -57,8 +57,8 @@ public class NestedIfJoinLinesHandler implements JoinLinesHandlerDelegate {
     String childConditionText = ParenthesesUtils.getText(ct.markUnchanged(innerCondition), ParenthesesUtils.OR_PRECEDENCE);
     String parentConditionText = ParenthesesUtils.getText(ct.markUnchanged(outerCondition), ParenthesesUtils.OR_PRECEDENCE);
 
-    PsiBinaryExpression newCondition = (PsiBinaryExpression)ct.replace(outerCondition, parentConditionText + "&&" + childConditionText);
+    PsiElement newCondition = ct.replace(outerCondition, parentConditionText + "&&" + childConditionText);
     ct.replaceAndRestoreComments(outerIf.getThenBranch(), innerIf.getThenBranch());
-    return newCondition.getOperationSign().getTextRange().getStartOffset();
+    return newCondition.getTextRange().getStartOffset() + parentConditionText.length() + 1;
   }
 }

@@ -5,6 +5,7 @@ import com.intellij.openapi.application.ApplicationInfo;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.components.*;
 import com.intellij.openapi.updateSettings.UpdateStrategyCustomization;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.net.NetUtils;
 import org.jetbrains.annotations.NotNull;
@@ -31,7 +32,7 @@ public class UpdateSettings implements PersistentStateComponent<UpdateOptions>, 
     return ServiceManager.getService(UpdateSettings.class);
   }
 
-  private final String myPackageManager = System.getProperty("ide.no.platform.update");
+  private final String myPackageManager = StringUtil.nullize(System.getProperty("ide.no.platform.update"), true);
   private UpdateOptions myState = new UpdateOptions();
 
   public boolean isPlatformUpdateEnabled() {
@@ -150,6 +151,14 @@ public class UpdateSettings implements PersistentStateComponent<UpdateOptions>, 
 
   public boolean canUseSecureConnection() {
     return myState.isUseSecureConnection() && NetUtils.isSniEnabled();
+  }
+
+  public boolean isThirdPartyPluginsAllowed() {
+    return myState.isThirdPartyPluginsAllowed();
+  }
+
+  public void setThirdPartyPluginsAllowed(boolean value) {
+    myState.setThirdPartyPluginsAllowed(value);
   }
 
   //<editor-fold desc="Deprecated stuff.">

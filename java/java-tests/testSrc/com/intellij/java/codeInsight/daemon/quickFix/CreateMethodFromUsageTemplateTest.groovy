@@ -1,6 +1,8 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.java.codeInsight.daemon.quickFix
 
+
+import com.intellij.codeInsight.ExpectedTypesProvider
 import com.intellij.codeInsight.daemon.quickFix.LightQuickFixTestCase
 import com.intellij.codeInsight.lookup.LookupManager
 import com.intellij.codeInsight.template.impl.TemplateManagerImpl
@@ -9,9 +11,7 @@ import com.intellij.openapi.actionSystem.DataContext
 import com.intellij.openapi.actionSystem.IdeActions
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.editor.actionSystem.EditorActionManager
-import com.intellij.psi.PsiDocumentManager
-import com.intellij.psi.PsiMethod
-import com.intellij.psi.PsiModifier
+import com.intellij.psi.*
 import com.intellij.psi.codeStyle.JavaCodeStyleSettings
 import com.intellij.psi.util.PsiTreeUtil
 
@@ -280,5 +280,19 @@ public class InvalidClass {
         return foo;
     }
 '''
+  }
+
+  void 'test deepest super methods are included in expected info when available'() {
+    configureFromFileText 'a.java', '''\
+class A {
+  {
+    new A().get<caret>Bar().toString();
+  }
+}
+'''
+    def expr = PsiTreeUtil.getParentOfType(file.findElementAt(editor.caretModel.offset), PsiExpression.class)
+
+    def types = ExpectedTypesProvider.getExpectedTypes(expr, false)
+    assertNotNull(types.find {it.defaultType.equalsToText(CommonClassNames.JAVA_LANG_OBJECT)})
   }
 }

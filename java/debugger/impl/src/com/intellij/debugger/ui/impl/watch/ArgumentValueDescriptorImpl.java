@@ -21,6 +21,7 @@ import com.intellij.xdebugger.XExpression;
 import com.intellij.xdebugger.frame.XValueModifier;
 import com.sun.jdi.*;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 public class ArgumentValueDescriptorImpl extends ValueDescriptorImpl{
   private final DecompiledLocalVariable myVariable;
@@ -82,13 +83,10 @@ public class ArgumentValueDescriptorImpl extends ValueDescriptorImpl{
               update(debuggerContext);
             }
 
-            public ReferenceType loadClass(EvaluationContextImpl evaluationContext, String className) throws InvocationException,
-                                                                                                             ClassNotLoadedException,
-                                                                                                             IncompatibleThreadStateException,
-                                                                                                             InvalidTypeException,
-                                                                                                             EvaluateException {
-              return evaluationContext.getDebugProcess().loadClass(evaluationContext, className,
-                                                                   evaluationContext.getClassLoader());
+            @Nullable
+            @Override
+            public Type getLType() {
+              return null;
             }
           });
         }

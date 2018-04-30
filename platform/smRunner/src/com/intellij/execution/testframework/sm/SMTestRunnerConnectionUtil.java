@@ -245,6 +245,12 @@ public class SMTestRunnerConnectionUtil {
         return Collections.emptyList();
       }
     }
+
+    @NotNull
+    @Override
+    public List<Location> getLocation(@NotNull String stacktraceLine, @NotNull Project project, @NotNull GlobalSearchScope scope) {
+      return myLocator.getLocation(stacktraceLine, project, scope);
+    }
   }
 
   /** @deprecated use {@link #createConsole(String, TestConsoleProperties)} (to be removed in IDEA 17) */

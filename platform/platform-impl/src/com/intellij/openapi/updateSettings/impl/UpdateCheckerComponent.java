@@ -1,34 +1,16 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.updateSettings.impl;
 
 import com.intellij.ide.AppLifecycleListener;
 import com.intellij.ide.IdeBundle;
-import com.intellij.notification.Notification;
-import com.intellij.notification.NotificationListener;
 import com.intellij.notification.NotificationType;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationInfo;
 import com.intellij.openapi.application.ConfigImportHelper;
-import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.application.ex.ApplicationInfoEx;
 import com.intellij.openapi.components.ApplicationComponent;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.options.ShowSettingsUtil;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.updateSettings.UpdateStrategyCustomization;
@@ -39,8 +21,6 @@ import com.intellij.openapi.util.Ref;
 import com.intellij.util.Alarm;
 import com.intellij.util.text.DateFormatUtil;
 import org.jetbrains.annotations.NotNull;
-
-import javax.swing.event.HyperlinkEvent;
 
 import static java.lang.Math.max;
 
@@ -61,7 +41,7 @@ public class UpdateCheckerComponent implements Disposable, ApplicationComponent 
 
     mySettings = settings;
     updateDefaultChannel();
-    checkSecureConnection(app);
+    checkSecureConnection();
     scheduleOnStartCheck(app);
     cleanupPatch();
   }
@@ -87,19 +67,11 @@ public class UpdateCheckerComponent implements Disposable, ApplicationComponent 
     }
   }
 
-  private void checkSecureConnection(Application app) {
+  private void checkSecureConnection() {
     if (mySettings.isSecureConnection() && !mySettings.canUseSecureConnection()) {
-      mySettings.setSecureConnection(false);
-
       String title = IdeBundle.message("update.notifications.title");
       String message = IdeBundle.message("update.sni.disabled.message");
-      UpdateChecker.NOTIFICATIONS.createNotification(title, message, NotificationType.WARNING, new NotificationListener.Adapter() {
-          @Override
-          protected void hyperlinkActivated(@NotNull Notification notification, @NotNull HyperlinkEvent e) {
-            notification.expire();
-            app.invokeLater(() -> ShowSettingsUtil.getInstance().showSettingsDialog(null, UpdateSettingsConfigurable.class), ModalityState.NON_MODAL);
-          }
-        }).notify(null);
+      UpdateChecker.NOTIFICATIONS.createNotification(title, message, NotificationType.WARNING, null).notify(null);
     }
   }
 

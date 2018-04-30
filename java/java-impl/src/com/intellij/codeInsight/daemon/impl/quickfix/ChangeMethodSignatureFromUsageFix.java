@@ -39,6 +39,7 @@ import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.psi.codeStyle.SuggestedNameInfo;
 import com.intellij.psi.codeStyle.VariableKind;
 import com.intellij.psi.impl.source.resolve.graphInference.PsiPolyExpressionUtil;
+import com.intellij.psi.util.PsiTypesUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.psi.util.TypeConversionUtil;
 import com.intellij.refactoring.RefactoringBundle;
@@ -183,15 +184,15 @@ public class ChangeMethodSignatureFromUsageFix implements IntentionAction/*, Hig
     }
   }
 
-  public static List<ParameterInfoImpl> performChange(final Project project,
-                                                      final Editor editor,
-                                                      final PsiFile file,
-                                                      final PsiMethod method,
-                                                      final int minUsagesNumber,
-                                                      final ParameterInfoImpl[] newParametersInfo,
-                                                      final boolean changeAllUsages,
-                                                      final boolean allowDelegation,
-                                                      @Nullable final Consumer<List<ParameterInfoImpl>> callback) {
+  static List<ParameterInfoImpl> performChange(@NotNull Project project,
+                                               final Editor editor,
+                                               final PsiFile file,
+                                               @NotNull PsiMethod method,
+                                               final int minUsagesNumber,
+                                               final ParameterInfoImpl[] newParametersInfo,
+                                               final boolean changeAllUsages,
+                                               final boolean allowDelegation,
+                                               @Nullable final Consumer<List<ParameterInfoImpl>> callback) {
     if (!FileModificationService.getInstance().prepareFileForWrite(method.getContainingFile())) return null;
     final FindUsagesManager findUsagesManager = ((FindManagerImpl)FindManager.getInstance(project)).getFindUsagesManager();
     final FindUsagesHandler handler = findUsagesManager.getFindUsagesHandler(method, false);
@@ -339,6 +340,7 @@ public class ChangeMethodSignatureFromUsageFix implements IntentionAction/*, Hig
           if (exprType instanceof PsiDisjunctionType) {
             exprType = ((PsiDisjunctionType)exprType).getLeastUpperBound();
           }
+          if (!PsiTypesUtil.allTypeParametersResolved(myTargetMethod, exprType)) return null;
           final ParameterInfoImpl changedParameterInfo = new ParameterInfoImpl(i, parameter.getName(), exprType);
           result.add(changedParameterInfo);
           changedParams.add(changedParameterInfo);

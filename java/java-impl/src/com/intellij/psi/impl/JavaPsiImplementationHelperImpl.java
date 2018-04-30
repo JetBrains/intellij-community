@@ -21,6 +21,7 @@ import com.intellij.openapi.roots.impl.LibraryScopeCache;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.vfs.jrt.JrtFileSystem;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
@@ -40,6 +41,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
 import java.util.function.Function;
+import java.util.function.Predicate;
 import java.util.stream.Stream;
 
 /**
@@ -103,6 +105,7 @@ public class JavaPsiImplementationHelperImpl extends JavaPsiImplementationHelper
   @Override
   public PsiElement getClsFileNavigationElement(@NotNull PsiJavaFile clsFile) {
     Function<VirtualFile, VirtualFile> finder = null;
+    Predicate<PsiFile> filter = null;
 
     PsiClass[] classes = clsFile.getClasses();
     if (classes.length > 0) {
@@ -110,39 +113,42 @@ public class JavaPsiImplementationHelperImpl extends JavaPsiImplementationHelper
       String packageName = clsFile.getPackageName();
       String relativePath = packageName.isEmpty() ? sourceFileName : packageName.replace('.', '/') + '/' + sourceFileName;
       finder = root -> root.findFileByRelativePath(relativePath);
+      filter = PsiClassOwner.class::isInstance;
     }
     else {
       PsiJavaModule module = clsFile.getModuleDeclaration();
       if (module != null) {
         String moduleName = module.getName();
-        finder = root -> moduleName.equals(root.getName()) ? root.findChild(PsiJavaModule.MODULE_INFO_FILE) : null;
+        finder = root -> !JrtFileSystem.isModuleRoot(root) || moduleName.equals(root.getName()) ? root.findChild(PsiJavaModule.MODULE_INFO_FILE) : null;
+        filter = psi -> {
+          PsiJavaModule candidate = psi instanceof PsiJavaFile ? ((PsiJavaFile)psi).getModuleDeclaration() : null;
+          return candidate != null && moduleName.equals(candidate.getName());
+        };
       }
     }
 
     if (finder == null) return clsFile;
 
-    ProjectFileIndex index = ProjectFileIndex.SERVICE.getInstance(clsFile.getProject());
-    return findSourceRoots(index, clsFile.getContainingFile().getVirtualFile())
+    return findSourceRoots(clsFile.getContainingFile().getVirtualFile())
       .map(finder)
       .filter(source -> source != null && source.isValid())
-      .map(clsFile.getManager()::findFile)
-      .filter(PsiClassOwner.class::isInstance)
+      .map(PsiManager.getInstance(myProject)::findFile)
+      .filter(filter)
       .findFirst()
       .orElse(clsFile);
   }
 
-  @NotNull
-  private Stream<VirtualFile> findSourceRoots(@NotNull ProjectFileIndex index, @NotNull VirtualFile virtualFile) {
-    Stream<VirtualFile> rootsByProjectModel = index.getOrderEntriesForFile(virtualFile).stream()
+  private Stream<VirtualFile> findSourceRoots(VirtualFile file) {
+    Stream<VirtualFile> modelRoots = ProjectFileIndex.SERVICE.getInstance(myProject).getOrderEntriesForFile(file).stream()
       .filter(entry -> entry instanceof LibraryOrSdkOrderEntry && entry.isValid())
       .flatMap(entry -> Stream.of(entry.getFiles(OrderRootType.SOURCES)));
 
-    Stream<VirtualFile> syntheticLibraryRoots = Stream.of(Extensions.getExtensions(AdditionalLibraryRootsProvider.EP_NAME))
+    Stream<VirtualFile> synthRoots = Stream.of(Extensions.getExtensions(AdditionalLibraryRootsProvider.EP_NAME))
       .flatMap(provider -> provider.getAdditionalProjectLibraries(myProject).stream())
-      .filter(syntheticLibrary -> syntheticLibrary.contains(virtualFile, false, true))
-      .flatMap(lib -> lib.getSourceRoots().stream());
+      .filter(library -> library.contains(file, false, true))
+      .flatMap(library -> library.getSourceRoots().stream());
 
-    return Stream.concat(rootsByProjectModel, syntheticLibraryRoots);
+    return Stream.concat(modelRoots, synthRoots);
   }
 
   @NotNull

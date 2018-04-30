@@ -1,0 +1,13 @@
+<html>
+<body>
+This inspection reports type casts which could be removed if the variable type is narrowed to the cast type. Example:
+<pre>
+  Object x = "  string  ";
+  System.out.println(((String)x).trim());
+</pre>
+Here changing the type of <b>x</b> to <b>String</b> will make the cast redundant. The suggested quick-fix updates variable type and
+removes all redundant casts on that variable.
+<!-- tooltip end -->
+<p><small>New in 2018.2</small></p>
+</body>
+</html>

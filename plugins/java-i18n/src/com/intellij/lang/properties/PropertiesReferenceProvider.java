@@ -18,6 +18,7 @@ package com.intellij.lang.properties;
 import com.intellij.codeInsight.AnnotationUtil;
 import com.intellij.codeInspection.i18n.JavaI18nUtil;
 import com.intellij.lang.properties.references.PropertyReference;
+import com.intellij.openapi.util.Ref;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.source.jsp.jspXml.JspXmlTagBase;
 import com.intellij.psi.templateLanguages.OuterLanguageElement;
@@ -65,11 +66,10 @@ public class PropertiesReferenceProvider extends PsiReferenceProvider {
       PsiLiteralExpression literalExpression = (PsiLiteralExpression)element;
       value = literalExpression.getValue();
 
-      final Map<String, Object> annotationParams = new HashMap<>();
-      annotationParams.put(AnnotationUtil.PROPERTY_KEY_RESOURCE_BUNDLE_PARAMETER, null);
-      if (JavaI18nUtil.mustBePropertyKey(literalExpression, annotationParams)) {
+      final Ref<PsiAnnotationMemberValue> resourceBundleValue = Ref.create();
+      if (JavaI18nUtil.mustBePropertyKey(literalExpression, resourceBundleValue)) {
         soft = false;
-        final Object resourceBundleName = annotationParams.get(AnnotationUtil.PROPERTY_KEY_RESOURCE_BUNDLE_PARAMETER);
+        PsiAnnotationMemberValue resourceBundleName = resourceBundleValue.get();
         if (resourceBundleName instanceof PsiExpression) {
           PsiExpression expr = (PsiExpression)resourceBundleName;
           final Object bundleValue = JavaPsiFacade.getInstance(expr.getProject()).getConstantEvaluationHelper().computeConstantExpression(expr);

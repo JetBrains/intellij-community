@@ -199,6 +199,12 @@
     <callHierarchyProvider language="JAVA" implementationClass="com.intellij.ide.hierarchy.call.JavaCallHierarchyProvider"/>
     <runLineMarkerContributor language="JAVA" order="after applicationRunLineMarkerProvider"
                               implementationClass="com.intellij.testIntegration.TestRunLineMarkerProvider"/>
+    <projectService serviceImplementation="com.intellij.testIntegration.TestFailedLineManager"/>
+    <localInspection groupPath="Java" language="JAVA" shortName="TestFailedLine"
+                     enabledByDefault="true" level="ERROR"
+                     groupBundle="messages.InspectionsBundle" groupKey="group.names.junit.issues"
+                     displayName="Highlight problem line in test"
+                     implementationClass="com.intellij.execution.testframework.TestFailedLineInspection"/>
     <testGenerator language="JAVA" implementationClass="com.intellij.testIntegration.createTest.JavaTestGenerator" />
     <testCreator language="JAVA" implementationClass="com.intellij.testIntegration.JavaTestCreator"/>
     <testFinder implementation="com.intellij.testIntegration.JavaTestFinder"/>
@@ -553,6 +559,11 @@
                      bundle="messages.InspectionsBundle"
                      key="inspection.redundant.explicit.close"
                      implementationClass="com.intellij.codeInspection.RedundantExplicitCloseInspection"/>
+    <localInspection groupPath="Java,Java language level migration aids" language="JAVA" shortName="WrapperTypeMayBePrimitive"
+                     groupBundle="messages.InspectionsBundle"
+                     groupKey="group.names.declaration.redundancy" enabledByDefault="true" level="WARNING"
+                     displayName="Wrapper type may be primitive"
+                     implementationClass="com.intellij.codeInspection.WrapperTypeMayBePrimitiveInspection"/>
     <localInspection groupPath="Java" language="JAVA" shortName="RedundantLambdaParameterType"
                      groupBundle="messages.InspectionsBundle"
                      groupKey="group.names.declaration.redundancy" enabledByDefault="true" level="INFORMATION"
@@ -768,6 +779,11 @@
                      enabledByDefault="true" level="WARNING"
                      key="inspection.undeclared.service.usage.name" bundle="messages.InspectionsBundle"
                      implementationClass="com.intellij.codeInspection.java19api.Java9UndeclaredServiceUsageInspection"/>
+    <localInspection groupPath="Java" language="JAVA" shortName="CastCanBeRemovedNarrowingVariableType"
+                     groupBundle="messages.InspectionsBundle" groupKey="group.names.verbose.or.redundant.code.constructs"
+                     enabledByDefault="true" level="WARNING"
+                     key="inspection.cast.can.be.removed.narrowing.variable.type.name" bundle="messages.InspectionsBundle"
+                     implementationClass="com.intellij.codeInspection.redundantCast.CastCanBeRemovedNarrowingVariableTypeInspection"/>
     <localInspection groupPath="Java" language="JAVA" shortName="RedundantComparatorComparing"
                      groupBundle="messages.InspectionsBundle" groupKey="group.names.verbose.or.redundant.code.constructs"
                      enabledByDefault="true" level="WARNING"
@@ -778,6 +794,11 @@
                      enabledByDefault="true" level="WARNING"
                      key="inspection.suspicious.list.remove.display.name" bundle="messages.InspectionsBundle"
                      implementationClass="com.intellij.codeInspection.SuspiciousListRemoveInLoopInspection"/>
+    <localInspection groupPath="Java" language="JAVA" shortName="ClassGetClass"
+                     groupBundle="messages.InspectionsBundle" groupKey="group.names.probable.bugs"
+                     enabledByDefault="true" level="WARNING"
+                     key="inspection.class.getclass.display.name" bundle="messages.InspectionsBundle"
+                     implementationClass="com.intellij.codeInspection.ClassGetClassInspection"/>
     <localInspection groupPath="Java,Java language level migration aids" language="JAVA" shortName="FoldExpressionIntoStream"
                      groupBundle="messages.InspectionsBundle" groupKey="group.names.language.level.specific.issues.and.migration.aids8"
                      enabledByDefault="true" level="INFORMATION"
@@ -912,16 +933,12 @@
                         serviceImplementation="com.intellij.psi.impl.file.PsiPackageImplementationHelperImpl"/>
     <projectService serviceInterface="com.intellij.codeInsight.ExternalAnnotationsManager"
                     serviceImplementation="com.intellij.codeInsight.ExternalAnnotationsManagerImpl"/>
-    <projectService serviceInterface="com.intellij.codeInsight.InferredAnnotationsManager"
-                    serviceImplementation="com.intellij.codeInsight.InferredAnnotationsManagerImpl"/>
     <projectService serviceImplementation="com.intellij.refactoring.extractMethod.preview.ExtractMethodPreviewManager"/>
     <diff.DiffExtension implementation="com.intellij.refactoring.extractMethod.preview.ExtractMethodDiffViewerCustomizer"/>
     <projectService serviceInterface="com.intellij.openapi.roots.CompilerProjectExtension"
                     serviceImplementation="com.intellij.openapi.roots.impl.CompilerProjectExtensionImpl"/>
     <projectExtension implementation="com.intellij.openapi.roots.impl.CompilerProjectExtensionImpl$MyProjectExtension"/>
     <roots.watchedRootsProvider implementation="com.intellij.openapi.roots.impl.CompilerProjectExtensionImpl$MyWatchedRootsProvider"/>
-
-    <moduleExtension implementation="com.intellij.openapi.roots.impl.JavaModuleExternalPathsImpl"/>
 
     <orderRootType implementation="com.intellij.openapi.roots.AnnotationOrderRootType"/>
     <orderRootType implementation="com.intellij.openapi.roots.JavadocOrderRootType"/>

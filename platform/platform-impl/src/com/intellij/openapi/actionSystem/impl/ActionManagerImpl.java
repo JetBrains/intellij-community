@@ -116,7 +116,7 @@ public final class ActionManagerImpl extends ActionManagerEx implements Disposab
   private final List<ActionPopupMenuListener> myActionPopupMenuListeners = ContainerUtil.createLockFreeCopyOnWriteList();
   private final KeymapManagerEx myKeymapManager;
   private final DataManager myDataManager;
-  private final List<ActionPopupMenuImpl> myPopups = new ArrayList<>();
+  private final List<Object> myPopups = new ArrayList<>();
   private final Map<AnAction, DataContext> myQueuedNotifications = new LinkedHashMap<>();
   private final Map<AnAction, AnActionEvent> myQueuedNotificationsEvents = new LinkedHashMap<>();
   private MyTimer myTimer;
@@ -1069,20 +1069,20 @@ public final class ActionManagerImpl extends ActionManagerEx implements Disposab
     return ArrayUtilRt.toStringArray(myPlugin2Id.get(pluginName));
   }
 
-  public void addActionPopup(final ActionPopupMenuImpl menu) {
+  public void addActionPopup(final Object menu) {
     boolean added = myPopups.add(menu);
-    if (added) {
+    if (added && menu instanceof ActionPopupMenu) {
       for (ActionPopupMenuListener listener : myActionPopupMenuListeners) {
-        listener.actionPopupMenuCreated(menu);
+        listener.actionPopupMenuCreated((ActionPopupMenu)menu);
       }
     }
   }
 
-  public void removeActionPopup(final ActionPopupMenuImpl menu) {
+  public void removeActionPopup(final Object menu) {
     final boolean removed = myPopups.remove(menu);
-    if (removed) {
+    if (removed && menu instanceof ActionPopupMenu) {
       for (ActionPopupMenuListener listener : myActionPopupMenuListeners) {
-        listener.actionPopupMenuReleased(menu);
+        listener.actionPopupMenuReleased((ActionPopupMenu)menu);
       }
     }
     if (removed && myPopups.isEmpty()) {
@@ -1094,14 +1094,16 @@ public final class ActionManagerImpl extends ActionManagerEx implements Disposab
   public void queueActionPerformedEvent(final AnAction action, DataContext context, AnActionEvent event) {
     if (!myPopups.isEmpty()) {
       myQueuedNotifications.put(action, context);
-    } else {
+    }
+    else {
       fireAfterActionPerformed(action, context, event);
     }
   }
 
   public boolean isToolWindowContextMenuVisible() {
-    for (ActionPopupMenuImpl popup : myPopups) {
-      if (popup.isToolWindowContextMenu()) {
+    for (Object popup : myPopups) {
+      if (popup instanceof ActionPopupMenuImpl &&
+          ((ActionPopupMenuImpl)popup).isToolWindowContextMenu()) {
         return true;
       }
     }

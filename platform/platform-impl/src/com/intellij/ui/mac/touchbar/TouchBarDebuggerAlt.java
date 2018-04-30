@@ -4,11 +4,12 @@ package com.intellij.ui.mac.touchbar;
 import com.intellij.openapi.project.Project;
 import org.jetbrains.annotations.NotNull;
 
-public class TouchBarDebuggerAlt extends TouchBarActionBase {
-  public TouchBarDebuggerAlt(@NotNull Project project) {
-    super("debugger_alt", project);
+import java.awt.*;
 
-    addAnActionButton("ViewBreakpoints", false);
+public class TouchBarDebuggerAlt extends TouchBarActionBase {
+  public TouchBarDebuggerAlt(@NotNull Project project, Component component) {
+    super("debugger_alt", project, component);
+
     addFlexibleSpacing();
     addAnActionButton("ViewBreakpoints", false);
     addSpacing(true);

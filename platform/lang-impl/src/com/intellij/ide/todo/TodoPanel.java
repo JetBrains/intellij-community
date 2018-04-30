@@ -162,18 +162,9 @@ abstract class TodoPanel extends SimpleToolWindowPanel implements OccurenceNavig
 
     JPanel toolBarPanel = new JPanel(new GridLayout());
 
-    DefaultActionGroup leftGroup = new DefaultActionGroup();
-    leftGroup.add(new PreviousOccurenceToolbarAction(myOccurenceNavigator));
-    leftGroup.add(new NextOccurenceToolbarAction(myOccurenceNavigator));
-    toolBarPanel.add(
-      ActionManager.getInstance().createActionToolbar(ActionPlaces.TODO_VIEW_TOOLBAR, leftGroup, false).getComponent());
-
-    DefaultActionGroup rightGroup = new DefaultActionGroup();
-    AnAction expandAllAction = CommonActionsManager.getInstance().createExpandAllAction(myTreeExpander, this);
-    rightGroup.add(expandAllAction);
-
-    AnAction collapseAllAction = CommonActionsManager.getInstance().createCollapseAllAction(myTreeExpander, this);
-    rightGroup.add(collapseAllAction);
+    DefaultActionGroup toolbarGroup = new DefaultActionGroup();
+    toolbarGroup.add(new PreviousOccurenceToolbarAction(myOccurenceNavigator));
+    toolbarGroup.add(new NextOccurenceToolbarAction(myOccurenceNavigator));
 
     if (!myCurrentFileMode) {
       MyShowModulesAction showModulesAction = new MyShowModulesAction();
@@ -181,31 +172,31 @@ abstract class TodoPanel extends SimpleToolWindowPanel implements OccurenceNavig
         new CustomShortcutSet(
           KeyStroke.getKeyStroke(KeyEvent.VK_M, SystemInfo.isMac ? InputEvent.META_MASK : InputEvent.CTRL_MASK)),
         myTree);
-      rightGroup.add(showModulesAction);
+      toolbarGroup.add(showModulesAction);
       MyShowPackagesAction showPackagesAction = new MyShowPackagesAction();
       showPackagesAction.registerCustomShortcutSet(
         new CustomShortcutSet(
           KeyStroke.getKeyStroke(KeyEvent.VK_P, SystemInfo.isMac ? InputEvent.META_MASK : InputEvent.CTRL_MASK)),
         myTree);
-      rightGroup.add(showPackagesAction);
+      toolbarGroup.add(showPackagesAction);
 
       MyFlattenPackagesAction flattenPackagesAction = new MyFlattenPackagesAction();
       flattenPackagesAction.registerCustomShortcutSet(
         new CustomShortcutSet(
           KeyStroke.getKeyStroke(KeyEvent.VK_F, SystemInfo.isMac ? InputEvent.META_MASK : InputEvent.CTRL_MASK)),
         myTree);
-      rightGroup.add(flattenPackagesAction);
+      toolbarGroup.add(flattenPackagesAction);
     }
 
     MyAutoScrollToSourceHandler autoScrollToSourceHandler = new MyAutoScrollToSourceHandler();
     autoScrollToSourceHandler.install(myTree);
-    rightGroup.add(autoScrollToSourceHandler.createToggleAction());
+    toolbarGroup.add(autoScrollToSourceHandler.createToggleAction());
 
     SetTodoFilterAction setTodoFilterAction = new SetTodoFilterAction(myProject, mySettings, todoFilter -> setTodoFilter(todoFilter));
-    rightGroup.add(setTodoFilterAction);
-    rightGroup.add(new MyPreviewAction());
+    toolbarGroup.add(setTodoFilterAction);
+    toolbarGroup.add(new MyPreviewAction());
     toolBarPanel.add(
-      ActionManager.getInstance().createActionToolbar(ActionPlaces.TODO_VIEW_TOOLBAR, rightGroup, false).getComponent());
+      ActionManager.getInstance().createActionToolbar(ActionPlaces.TODO_VIEW_TOOLBAR, toolbarGroup, false).getComponent());
 
     setToolbar(toolBarPanel);
   }

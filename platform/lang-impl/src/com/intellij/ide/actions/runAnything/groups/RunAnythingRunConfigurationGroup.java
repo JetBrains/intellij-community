@@ -43,7 +43,7 @@ public abstract class RunAnythingRunConfigurationGroup extends RunAnythingGroupB
       if (!isTemporary(wrapper)) continue;
 
       RunAnythingRunConfigurationItem runConfigurationItem = new RunAnythingRunConfigurationItem(wrapper);
-      if (addToList(model, result, pattern, runConfigurationItem, runConfigurationItem.getText(), isInsertionMode)) break;
+      if (addToList(model, result, pattern, runConfigurationItem.getText(), isInsertionMode, runConfigurationItem)) break;
       cancellationChecker.run();
     }
 

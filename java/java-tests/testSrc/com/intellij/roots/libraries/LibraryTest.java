@@ -32,6 +32,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.roots.ModuleRootManagerTestCase;
 import com.intellij.testFramework.PsiTestUtil;
 import com.intellij.util.CommonProcessors;
+import com.intellij.util.containers.ContainerUtil;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
 
@@ -158,6 +159,77 @@ public class LibraryTest extends ModuleRootManagerTestCase {
     createLibrary("a", null, null);
     ((LibraryTableBase)getLibraryTable()).loadState(new Element("component").addContent(new Element("library").setAttribute("name", "b")));
     assertEquals("b", assertOneElement(getLibraryTable().getLibraries()).getName());
+  }
+
+  public void testReloadLibraryTableWithoutChanges() {
+    ((LibraryTableBase)getLibraryTable()).loadState(new Element("component"));
+    createLibrary("a", null, null);
+    ((LibraryTableBase)getLibraryTable()).loadState(new Element("component").addContent(new Element("library").setAttribute("name", "a")));
+    assertEquals("a", assertOneElement(getLibraryTable().getLibraries()).getName());
+  }
+
+  public void testNonCommittedLibraryIsDisposed() {
+    LibraryTable table = getLibraryTable();
+    LibraryTable.ModifiableModel model = table.getModifiableModel();
+    Library library = model.createLibrary("a");
+    model.removeLibrary(library);
+    commit(model);
+    assertEmpty(table.getLibraries());
+  }
+
+  public void testMergeAddRemoveChanges() {
+    Library a = createLibrary("a", null, null);
+    LibraryTable table = getLibraryTable();
+
+    LibraryTable.ModifiableModel model1 = table.getModifiableModel();
+    model1.removeLibrary(a);
+
+    LibraryTable.ModifiableModel model2 = table.getModifiableModel();
+    model2.createLibrary("b");
+    commit(model1);
+    commit(model2);
+
+    assertAllLibrariesAreNotDisposed();
+    assertEquals("b", assertOneElement(table.getLibraries()).getName());
+  }
+
+  public void testMergeAddAddChanges() {
+    createLibrary("a", null, null);
+    LibraryTable table = getLibraryTable();
+
+    LibraryTable.ModifiableModel model1 = table.getModifiableModel();
+    model1.createLibrary("b");
+
+    LibraryTable.ModifiableModel model2 = table.getModifiableModel();
+    model2.createLibrary("c");
+    commit(model1);
+    commit(model2);
+
+    assertAllLibrariesAreNotDisposed();
+    assertSameElements(ContainerUtil.map(table.getLibraries(), Library::getName), "a", "b", "c");
+  }
+
+  public void testMergeRemoveRemoveChanges() {
+    Library a = createLibrary("a", null, null);
+    Library b = createLibrary("b", null, null);
+    LibraryTable table = getLibraryTable();
+
+    LibraryTable.ModifiableModel model1 = table.getModifiableModel();
+    model1.removeLibrary(a);
+
+    LibraryTable.ModifiableModel model2 = table.getModifiableModel();
+    model2.removeLibrary(b);
+    commit(model1);
+    commit(model2);
+
+    assertAllLibrariesAreNotDisposed();
+    assertEmpty(table.getLibraries());
+  }
+
+  private void assertAllLibrariesAreNotDisposed() {
+    for (Library library : getLibraryTable().getLibraries()) {
+      assertEmpty(library.getUrls(OrderRootType.CLASSES));
+    }
   }
 
   public void testResolveDependencyToRenamedLibrary() {

@@ -47,8 +47,9 @@ public abstract class RunAnythingItem<T> {
 
   /**
    * Sends statistic if current item action is being executed
+   * @param dataContext Use {@link DataContext} to extract focus owner component, original action event, working directory, module and project
    */
-  protected void triggerUsage() {}
+  protected void triggerUsage(@NotNull DataContext dataContext) {}
 
   /**
    * Executes specific action on choosing current item in the list
@@ -56,6 +57,6 @@ public abstract class RunAnythingItem<T> {
    * @param dataContext Use {@link DataContext} to extract focus owner component, original action event, working directory, module and project
    */
   public void run(@NotNull DataContext dataContext) {
-    triggerUsage();
+    triggerUsage(dataContext);
   }
 }

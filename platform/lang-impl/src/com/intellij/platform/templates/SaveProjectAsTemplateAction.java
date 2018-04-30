@@ -299,7 +299,7 @@ public class SaveProjectAsTemplateAction extends AnAction {
   private static String getRelativePath(PathMacroManager pathMacroManager, VirtualFile moduleRoot) {
     String path = pathMacroManager.collapsePath(moduleRoot.getPath());
     path = StringUtil.trimStart(path, "$" + PathMacroUtil.PROJECT_DIR_MACRO_NAME + "$");
-    path = StringUtil.trimStart(path, "$" + PathMacroUtil.MODULE_DIR_MACRO_NAME + "$");
+    path = StringUtil.trimStart(path, PathMacroUtil.DEPRECATED_MODULE_DIR);
     path = StringUtil.trimStart(path, "/");
     return path;
   }

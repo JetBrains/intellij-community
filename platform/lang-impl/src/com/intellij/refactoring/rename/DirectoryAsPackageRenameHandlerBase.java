@@ -73,9 +73,9 @@ public abstract class DirectoryAsPackageRenameHandlerBase<T extends PsiDirectory
 
   @Override
   public boolean isAvailableOnDataContext(@NotNull final DataContext dataContext) {
-    PsiElement directory = adjustForRename(dataContext, PsiElementRenameHandler.getElement(dataContext));
+    PsiDirectory directory = adjustForRename(dataContext, PsiElementRenameHandler.getElement(dataContext));
     if (directory != null) {
-      final VirtualFile virtualFile = ((PsiDirectory)directory).getVirtualFile();
+      final VirtualFile virtualFile = directory.getVirtualFile();
       final Project project = directory.getProject();
       if (Comparing.equal(project.getBaseDir(), virtualFile)) return false;
       if (ProjectRootManager.getInstance(project).getFileIndex().isInContent(virtualFile)) {

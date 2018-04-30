@@ -5,6 +5,7 @@ import com.intellij.codeInsight.template.Template;
 import com.intellij.codeInsight.template.TemplateManager;
 import com.intellij.lang.Language;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.application.impl.ApplicationImpl;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.fileTypes.FileType;
@@ -300,8 +301,7 @@ public class Replacer {
 
       StructuralSearchProfile profile = StructuralSearchUtil.getProfileByFileType(fileType);
       assert profile != null;
-      profile.checkReplacementPattern(project, options);
-
+      ReadAction.run(() -> profile.checkReplacementPattern(project, options));
     } catch (IncorrectOperationException ex) {
       throw new MalformedPatternException(SSRBundle.message("incorrect.pattern.message"));
     }

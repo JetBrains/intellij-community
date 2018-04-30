@@ -70,6 +70,7 @@ public class DefaultRawTypedHandler implements TypedActionHandlerEx {
         commandProcessorEx.finishCommand(myCurrentCommandToken, null);
         myCurrentCommandToken = null;
       }
+      myInOuterCommand = false;
     }
   }
 

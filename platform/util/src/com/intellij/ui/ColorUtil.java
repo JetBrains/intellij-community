@@ -26,7 +26,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.awt.*;
-import java.lang.annotation.Annotation;
 
 /**
  * @author max
@@ -163,6 +162,10 @@ public class ColorUtil {
     return (R.length() < 2 ? "0" : "") + R + (G.length() < 2 ? "0" : "") + G + (B.length() < 2 ? "0" : "") + B;
   }
 
+  public static String toHtmlColor(@NotNull final Color c) {
+    return "#"+toHex(c);
+  }
+
   /**
    * Return Color object from string. The following formats are allowed:
    * {@code #abc123},
@@ -201,9 +204,8 @@ public class ColorUtil {
 
   @Nullable
   public static Color getColor(@NotNull Class<?> cls) {
-    final Annotation annotation = cls.getAnnotation(Colored.class);
-    if (annotation instanceof Colored) {
-      final Colored colored = (Colored)annotation;
+    final Colored colored = cls.getAnnotation(Colored.class);
+    if (colored != null) {
       return fromHex(UIUtil.isUnderDarcula() ? colored.darkVariant() : colored.color(), null);
     }
     return null;

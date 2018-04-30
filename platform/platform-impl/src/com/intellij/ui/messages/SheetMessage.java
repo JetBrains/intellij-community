@@ -8,6 +8,7 @@ import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.application.impl.LaterInvocator;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.ui.DialogWrapper;
+import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.ui.Gray;
 import com.intellij.ui.JBColor;
@@ -143,7 +144,7 @@ class SheetMessage implements Disposable {
     }
 
     LaterInvocator.enterModal(myWindow);
-    final TouchBar tb = createModalMsgDlgTouchBar(buttons);
+    final TouchBar tb = createModalMsgDlgTouchBar(buttons, defaultButton);
     TouchBarsManager.showTempTouchBar(tb);
     myWindow.setVisible(true);
     TouchBarsManager.closeTempTouchBar(tb);
@@ -170,7 +171,7 @@ class SheetMessage implements Disposable {
     myWindow.dispose();
   }
 
-  private TouchBar createModalMsgDlgTouchBar(String[] buttons) {
+  private TouchBar createModalMsgDlgTouchBar(String[] buttons, String defaultButton) {
     if (!TouchBarsManager.isTouchBarAvailable())
       return null;
 
@@ -179,7 +180,7 @@ class SheetMessage implements Disposable {
       final ModalityState ms = LaterInvocator.getCurrentModalityState();
       for (String sb: buttons) {
         final NSTLibrary.Action act = () -> ApplicationManager.getApplication().invokeLater(()->myController.setResultAndStartClose(sb), ms);
-        result.addButton(null, sb, act);
+        result.addButton(null, sb, act, Comparing.equal(sb, defaultButton) ? NSTLibrary.BUTTON_FLAG_COLORED : 0);
       }
       return result;
     }

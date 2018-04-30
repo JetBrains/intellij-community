@@ -89,5 +89,33 @@ public class JsonSchemaProjectSelfProviderFactory implements JsonSchemaProviderF
     public SchemaType getSchemaType() {
       return SchemaType.schema;
     }
+
+    @Nullable
+    @Override
+    public String getRemoteSource() {
+      switch (myFileName) {
+        case SCHEMA_JSON_FILE_NAME:
+          return "http://json-schema.org/draft-04/schema";
+        case SCHEMA06_JSON_FILE_NAME:
+          return "http://json-schema.org/draft-06/schema";
+        case SCHEMA07_JSON_FILE_NAME:
+          return "http://json-schema.org/draft-07/schema";
+      }
+      return null;
+    }
+
+    @NotNull
+    @Override
+    public String getPresentableName() {
+      switch (myFileName) {
+        case SCHEMA_JSON_FILE_NAME:
+          return "JSON schema v4";
+        case SCHEMA06_JSON_FILE_NAME:
+          return "JSON schema v6";
+        case SCHEMA07_JSON_FILE_NAME:
+          return "JSON schema v7";
+      }
+      return getName();
+    }
   }
 }

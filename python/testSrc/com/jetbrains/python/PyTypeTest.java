@@ -3218,6 +3218,32 @@ public class PyTypeTest extends PyTestCase {
     );
   }
 
+  // PY-13750
+  public void testBuiltinRound() {
+    doTest("float", "expr = round(1)");
+    doTest("float", "expr = round(1, 1)");
+
+    doTest("float", "expr = round(1.1)");
+    doTest("float", "expr = round(1.1, 1)");
+
+    doTest("float", "expr = round(True)");
+    doTest("float", "expr = round(True, 1)");
+  }
+
+  // PY-28227
+  public void testTypeVarTargetAST() {
+    doTest("T",
+           "from typing import TypeVar\n" +
+           "expr = TypeVar('T')");
+  }
+
+  // PY-28227
+  public void testTypeVarTargetStub() {
+    doMultiFileTest("T",
+                    "from a import T\n" +
+                    "expr = T");
+  }
+
   private static List<TypeEvalContext> getTypeEvalContexts(@NotNull PyExpression element) {
     return ImmutableList.of(TypeEvalContext.codeAnalysis(element.getProject(), element.getContainingFile()).withTracing(),
                             TypeEvalContext.userInitiated(element.getProject(), element.getContainingFile()).withTracing());

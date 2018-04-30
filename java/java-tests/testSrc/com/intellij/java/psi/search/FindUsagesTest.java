@@ -173,6 +173,20 @@ public class FindUsagesTest extends PsiTestCase{
     }
   }
 
+  public void testImplicitToString() {
+    PsiClass aClass = myJavaFacade.findClass("Foo");
+    assertNotNull(aClass);
+    PsiMethod toString = assertOneElement(aClass.findMethodsByName("toString", false));
+
+    JavaFindUsagesHandlerFactory factory = JavaFindUsagesHandlerFactory.getInstance(myProject);
+    int[] count = {0};
+    factory.createFindUsagesHandler(toString, false).processElementUsages(toString, info -> {
+      count[0]++;
+      return true;
+    }, factory.getFindMethodOptions());
+    assertEquals(1, count[0]);
+  }
+
   public static void doTest(PsiElement element, String[] fileNames, int[] starts, int[] ends) {
     final ArrayList<PsiFile> filesList = new ArrayList<>();
     final IntArrayList startsList = new IntArrayList();

@@ -231,7 +231,7 @@ public class EditorComponentImpl extends JTextComponent implements Scrollable, D
         UISettings.setupAntialiasing(gg);
       }
       gg.setRenderingHint(RenderingHints.KEY_FRACTIONALMETRICS, myEditor.myFractionalMetricsHintValue);
-      AffineTransform origTx = PaintUtil.alignTxToInt(gg, true, false, RoundingMode.CEIL);
+      AffineTransform origTx = PaintUtil.alignTxToInt(gg, PaintUtil.insets2offset(getInsets()), true, false, RoundingMode.CEIL);
       myEditor.paint(gg);
       if (origTx != null) gg.setTransform(origTx);
     }
@@ -242,6 +242,10 @@ public class EditorComponentImpl extends JTextComponent implements Scrollable, D
 
   public void repaintEditorComponent() {
     repaint();
+  }
+
+  public void repaintEditorComponentExact(int x, int y, int width, int height) {
+    repaint(x, y, width, height);
   }
 
   public void repaintEditorComponent(int x, int y, int width, int height) {

@@ -15,7 +15,7 @@ class GithubAccountsStatisticsCollector internal constructor(private val account
 
   override fun getUsages(): Set<UsageDescriptor> {
     val hasAccountsWithNonDefaultHost = accountManager.accounts.any {
-      StringUtil.equalsIgnoreCase(it.server.host, GithubApiUtil.DEFAULT_GITHUB_HOST)
+      !StringUtil.equalsIgnoreCase(it.server.host, GithubApiUtil.DEFAULT_GITHUB_HOST)
     }
 
     return setOf(getCountingUsage("github.accounts.count", accountManager.accounts.size, listOf(0, 1, 2)),

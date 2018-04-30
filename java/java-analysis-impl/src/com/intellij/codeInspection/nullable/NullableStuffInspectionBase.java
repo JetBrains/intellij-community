@@ -14,9 +14,12 @@ import com.intellij.codeInspection.dataFlow.Nullness;
 import com.intellij.codeInspection.dataFlow.instructions.MethodCallInstruction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.roots.GeneratedSourcesFilter;
 import com.intellij.openapi.util.Couple;
 import com.intellij.openapi.util.WriteExternalException;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.psi.codeStyle.VariableKind;
@@ -844,33 +847,26 @@ public class NullableStuffInspectionBase extends AbstractBaseJavaLocalInspection
         hasAnnotatedParameter |= parameterAnnotated[i];
       }
       if (hasAnnotatedParameter || annotated.isDeclaredNotNull && !hasInheritableNotNull(method)) {
-        PsiManager manager = method.getManager();
         final String defaultNotNull = nullableManager.getDefaultNotNull();
         final boolean superMethodApplicable = AnnotationUtil.isAnnotatingApplicable(method, defaultNotNull);
         PsiMethod[] overridings =
           OverridingMethodsSearch.search(method).toArray(PsiMethod.EMPTY_ARRAY);
         boolean methodQuickFixSuggested = false;
         for (PsiMethod overriding : overridings) {
-          if (!manager.isInProject(overriding)) continue;
+          if (shouldSkipOverriderAsGenerated(overriding)) continue;
 
-          final boolean applicable = AnnotationUtil.isAnnotatingApplicable(overriding, defaultNotNull);
-          boolean ableToAddNotNullAnnotation = AddAnnotationPsiFix.isAvailable(overriding, defaultNotNull);
           if (!methodQuickFixSuggested
               && annotated.isDeclaredNotNull
               && !isNotNullNotInferred(overriding, false, false)
               && (isNullableNotInferred(overriding, false) || !isNullableNotInferred(overriding, true))
-              && ableToAddNotNullAnnotation) {
+              && AddAnnotationPsiFix.isAvailable(overriding, defaultNotNull)) {
             PsiIdentifier identifier = method.getNameIdentifier();//load tree
             PsiAnnotation annotation = AnnotationUtil.findAnnotation(method, nullableManager.getNotNulls());
             final String[] annotationsToRemove = ArrayUtil.toStringArray(nullableManager.getNullables());
 
-            final LocalQuickFix fix;
-            if (applicable) {
-              fix = new MyAnnotateMethodFix(defaultNotNull, annotationsToRemove);
-            }
-            else {
-              fix = superMethodApplicable ? null : createChangeDefaultNotNullFix(nullableManager, method);
-            }
+            LocalQuickFix fix = AnnotationUtil.isAnnotatingApplicable(overriding, defaultNotNull)
+                                ? new MyAnnotateMethodFix(defaultNotNull, annotationsToRemove)
+                                : superMethodApplicable ? null : createChangeDefaultNotNullFix(nullableManager, method);
 
             PsiElement psiElement = annotation;
             if (!annotation.isPhysical()) {
@@ -882,12 +878,15 @@ public class NullableStuffInspectionBase extends AbstractBaseJavaLocalInspection
                                    fix);
             methodQuickFixSuggested = true;
           }
-          if (hasAnnotatedParameter && ableToAddNotNullAnnotation) {
+          if (hasAnnotatedParameter) {
             PsiParameter[] psiParameters = overriding.getParameterList().getParameters();
             for (int i = 0; i < psiParameters.length; i++) {
               if (parameterQuickFixSuggested[i]) continue;
               PsiParameter parameter = psiParameters[i];
-              if (parameterAnnotated[i] && !isNotNullNotInferred(parameter, false, false) && !isNullableNotInferred(parameter, false)) {
+              if (parameterAnnotated[i] && 
+                  !isNotNullNotInferred(parameter, false, false) &&
+                  !isNullableNotInferred(parameter, false) &&
+                  AddAnnotationPsiFix.isAvailable(parameter, defaultNotNull)) {
                 PsiIdentifier identifier = parameters[i].getNameIdentifier(); //be sure that corresponding tree element available
                 PsiAnnotation annotation = AnnotationUtil.findAnnotation(parameters[i], nullableManager.getNotNulls());
                 PsiElement psiElement = annotation;
@@ -895,13 +894,13 @@ public class NullableStuffInspectionBase extends AbstractBaseJavaLocalInspection
                   psiElement = identifier;
                   if (psiElement == null) continue;
                 }
+                LocalQuickFix fix = AnnotationUtil.isAnnotatingApplicable(parameter, defaultNotNull)
+                                    ? new AnnotateOverriddenMethodParameterFix(defaultNotNull, nullableManager.getDefaultNullable())
+                                    : createChangeDefaultNotNullFix(nullableManager, parameters[i]);
                 holder.registerProblem(psiElement,
                                        InspectionsBundle.message("nullable.stuff.problems.overridden.method.parameters.are.not.annotated"),
                                        ProblemHighlightType.GENERIC_ERROR_OR_WARNING,
-                                       !applicable
-                                       ? createChangeDefaultNotNullFix(nullableManager, parameters[i])
-                                       : new AnnotateOverriddenMethodParameterFix(defaultNotNull,
-                                                                                  nullableManager.getDefaultNullable()));
+                                       fix);
                 parameterQuickFixSuggested[i] = true;
               }
             }
@@ -909,6 +908,14 @@ public class NullableStuffInspectionBase extends AbstractBaseJavaLocalInspection
         }
       }
     }
+  }
+
+  public static boolean shouldSkipOverriderAsGenerated(PsiMethod overriding) {
+    if (Registry.is("idea.report.nullity.missing.in.generated.overriders")) return false;
+    
+    PsiFile file = overriding.getContainingFile();
+    VirtualFile virtualFile = file != null ? file.getVirtualFile() : null;
+    return virtualFile != null && GeneratedSourcesFilter.isGeneratedSourceByAnyFilter(virtualFile, overriding.getProject());
   }
 
   private static boolean isNotNullNotInferred(@NotNull PsiModifierListOwner owner, boolean checkBases, boolean skipExternal) {

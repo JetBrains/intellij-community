@@ -8,7 +8,6 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.PairProcessor;
 import com.jetbrains.jsonSchema.JsonSchemaMappingsProjectConfiguration;
 import com.jetbrains.jsonSchema.UserDefinedJsonSchemaConfiguration;
-import com.jetbrains.jsonSchema.ide.JsonSchemaService;
 import com.jetbrains.jsonSchema.impl.JsonSchemaVersion;
 import com.jetbrains.jsonSchema.remote.JsonFileResolver;
 import org.jetbrains.annotations.NotNull;
@@ -99,8 +98,7 @@ public class JsonSchemaUserDefinedProviderFactory implements JsonSchemaProviderF
     @Override
     public boolean isAvailable(@NotNull VirtualFile file) {
       //noinspection SimplifiableIfStatement
-      if (myPatterns.isEmpty() || file.isDirectory() || !file.isValid() || getSchemaFile() == null ||
-          JsonSchemaService.Impl.get(myProject).isSchemaFile(file)) return false;
+      if (myPatterns.isEmpty() || file.isDirectory() || !file.isValid() || getSchemaFile() == null) return false;
       return myPatterns.stream().anyMatch(processor -> processor.process(myProject, file));
     }
 
@@ -120,6 +118,12 @@ public class JsonSchemaUserDefinedProviderFactory implements JsonSchemaProviderF
       int result = myName.hashCode();
       result = 31 * result + FileUtil.pathHashCode(myFile);
       return result;
+    }
+
+    @Nullable
+    @Override
+    public String getRemoteSource() {
+      return isHttpPath(myFile) ? myFile : null;
     }
   }
 }

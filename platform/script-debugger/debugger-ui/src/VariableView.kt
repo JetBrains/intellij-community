@@ -178,7 +178,7 @@ class VariableView(override val variableName: String, private val variable: Vari
     }
 
     if (hasIndexedProperties == hasNamedProperties || additionalProperties != null) {
-      all(promises).processed(node) { node.addChildren(XValueChildrenList.EMPTY, true) }
+      promises.all().processed(node) { node.addChildren(XValueChildrenList.EMPTY, true) }
     }
   }
 

@@ -38,10 +38,6 @@ public abstract class StackingPopupDispatcher implements IdePopupEventDispatcher
 
   public abstract void eventDispatched(AWTEvent event);
 
-  protected abstract boolean dispatchMouseEvent(AWTEvent event);
-
-  protected abstract JBPopup findPopup();
-
   public abstract boolean dispatchKeyEvent(KeyEvent e);
 
   public abstract boolean requestFocus();

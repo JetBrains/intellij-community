@@ -18,9 +18,11 @@ package com.siyeh.ig.controlflow;
 import com.intellij.codeInsight.intention.LowPriorityAction;
 import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.codeInspection.SetInspectionOptionFix;
+import com.intellij.codeInspection.dataFlow.ContractReturnValue;
 import com.intellij.codeInspection.dataFlow.ControlFlowAnalyzer;
 import com.intellij.codeInspection.dataFlow.MethodContract;
 import com.intellij.codeInspection.dataFlow.StandardMethodContract;
+import com.intellij.codeInspection.dataFlow.StandardMethodContract.ValueConstraint;
 import com.intellij.codeInspection.ui.SingleCheckboxOptionsPanel;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Iconable;
@@ -267,15 +269,15 @@ public class PointlessNullCheckInspection extends BaseInspection {
       List<? extends MethodContract> contracts = ControlFlowAnalyzer.getMethodCallContracts(method, call);
       if (contracts.isEmpty()) return null;
       StandardMethodContract contract = tryCast(contracts.get(0), StandardMethodContract.class);
-      if (contract == null || contract.getReturnValue() != MethodContract.ValueConstraint.FALSE_VALUE) return null;
-      MethodContract.ValueConstraint[] arguments = contract.arguments;
+      if (contract == null || !contract.getReturnValue().equals(ContractReturnValue.returnFalse())) return null;
       int idx = -1;
-      for (int i = 0; i < arguments.length; i++) {
-        if (arguments[i] == MethodContract.ValueConstraint.NULL_VALUE) {
+      for (int i = 0; i < contract.getParameterCount(); i++) {
+        ValueConstraint constraint = contract.getParameterConstraint(i);
+        if (constraint == ValueConstraint.NULL_VALUE) {
           if (idx != -1) return null;
           idx = i;
         }
-        else if (arguments[i] != MethodContract.ValueConstraint.ANY_VALUE) {
+        else if (constraint != ValueConstraint.ANY_VALUE) {
           return null;
         }
       }

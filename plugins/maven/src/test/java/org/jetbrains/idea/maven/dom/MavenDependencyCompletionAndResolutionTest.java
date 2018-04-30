@@ -153,6 +153,7 @@ public class MavenDependencyCompletionAndResolutionTest extends MavenDomWithIndi
     createProjectPom("<groupId>project-group</groupId>" +
                      "<artifactId>project</artifactId>" +
                      "<version>1</version>" +
+                     "<packaging>pom</packaging>" +
 
                      "<modules>" +
                      " <module>m1</module>" +
@@ -189,6 +190,7 @@ public class MavenDependencyCompletionAndResolutionTest extends MavenDomWithIndi
     createProjectPom("<groupId>test</groupId>" +
                      "<artifactId>project</artifactId>" +
                      "<version>1</version>" +
+                     "<packaging>pom</packaging>" +
 
                      "<properties>" +
                      "  <module1Name>module1</module1Name>" +
@@ -249,6 +251,7 @@ public class MavenDependencyCompletionAndResolutionTest extends MavenDomWithIndi
     createProjectPom("<groupId>test</groupId>" +
                      "<artifactId>project</artifactId>" +
                      "<version>1</version>" +
+                     "<packaging>pom</packaging>" +
 
                      "<modules>" +
                      " <module>m1</module>" +

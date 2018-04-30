@@ -15,10 +15,7 @@
  */
 package com.intellij.psi.formatter.java;
 
-import com.intellij.formatting.Alignment;
-import com.intellij.formatting.Block;
-import com.intellij.formatting.Indent;
-import com.intellij.formatting.Wrap;
+import com.intellij.formatting.*;
 import com.intellij.lang.ASTNode;
 import com.intellij.openapi.util.Condition;
 import com.intellij.psi.formatter.FormatterUtil;
@@ -50,7 +47,7 @@ public class ChildrenBlocksBuilder {
       Indent indent = myConfig.getIndent(type);
       Wrap wrap = myConfig.getWrap(type);
 
-      blocks.add(factory.createBlock(child, indent, alignment, wrap));
+      blocks.add(factory.createBlock(child, indent, alignment, wrap, factory.getFormattingMode()));
     }
 
     return blocks;
@@ -69,6 +66,7 @@ public class ChildrenBlocksBuilder {
     private Alignment myDefaultAlignment;
     private Indent myDefaultIndent;
     private Wrap myDefaultWrap;
+    private FormattingMode myFormattingMode;
 
     public ChildrenBlocksBuilder createBuilder() {
       return new ChildrenBlocksBuilder(this);
@@ -140,5 +138,13 @@ public class ChildrenBlocksBuilder {
       return this;
     }
 
+    public FormattingMode getFormattingMode() {
+      return myFormattingMode;
+    }
+
+    public Config setFormattingMode(FormattingMode formattingMode) {
+      myFormattingMode = formattingMode;
+      return this;
+    }
   }
 }

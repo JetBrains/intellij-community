@@ -31,6 +31,7 @@ import com.intellij.openapi.roots.*;
 import com.intellij.openapi.ui.LabeledComponent;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.JarFileSystem;
@@ -53,7 +54,9 @@ import com.intellij.util.containers.ContainerUtilRt;
 import junit.framework.TestCase;
 import org.jdom.Element;
 
-import java.io.*;
+import java.io.File;
+import java.io.IOException;
+import java.io.PrintStream;
 import java.util.*;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -141,7 +144,7 @@ public class ConfigurationsTest extends BaseConfigurationTestCase {
     PsiClass testA = findTestA(getModule1());
     JUnitConfiguration configuration = createConfiguration(testA);
     JavaParameters parameters = checkCanRun(configuration);
-    assertEquals("[-Didea.test.cyclic.buffer.size=1048576]", parameters.getVMParametersList().toString());
+    assertEquals("[-ea, -Didea.test.cyclic.buffer.size=1048576]", parameters.getVMParametersList().toString());
     final SegmentedOutputStream notifications = new SegmentedOutputStream(System.out);
     assertTrue(JUnitStarter.checkVersion(parameters.getProgramParametersList().getArray(),
                                          new PrintStream(notifications)));
@@ -186,15 +189,14 @@ public class ConfigurationsTest extends BaseConfigurationTestCase {
     Module module1 = getModule1();
     PsiClass psiClass = findTestA(module1);
 
-    JUnitConfiguration configuration =
-      new JUnitConfiguration("", myProject, JUnitConfigurationType.getInstance().getConfigurationFactories()[0]);
+    JUnitConfiguration configuration = new JUnitConfiguration("", myProject);
     configuration.getPersistentData().TEST_OBJECT = JUnitConfiguration.TEST_DIRECTORY;
     configuration.getPersistentData().setDirName(psiClass.getContainingFile().getContainingDirectory().getVirtualFile().getParent().getPath());
     configuration.setModule(module1);
     JavaParameters parameters = checkCanRun(configuration);
     String filePath = ContainerUtil.find(parameters.getProgramParametersList().getArray(),
                                          value -> StringUtil.startsWithChar(value, '@') && !StringUtil.startsWith(value, "@w@")).substring(1);
-    List<String> lines = readLinesFrom(new File(filePath));
+    List<String> lines = FileUtilRt.loadLines(new File(filePath));
     lines.remove(0);
     Assertion.compareUnordered(
       //category, filters, classNames...
@@ -209,8 +211,7 @@ public class ConfigurationsTest extends BaseConfigurationTestCase {
 
   public void testRunAllInPackageWhenPackageIsEmptyInModule() throws ExecutionException {
     assignJdk(getModule2());
-    JUnitConfiguration configuration =
-      new JUnitConfiguration("", myProject, JUnitConfigurationType.getInstance().getConfigurationFactories()[0]);
+    JUnitConfiguration configuration = new JUnitConfiguration("", myProject);
     configuration.getPersistentData().TEST_OBJECT = JUnitConfiguration.TEST_PACKAGE;
     configuration.getPersistentData().PACKAGE_NAME = "test2";
     configuration.getPersistentData().setScope(TestSearchScope.WHOLE_PROJECT);
@@ -320,20 +321,20 @@ public class ConfigurationsTest extends BaseConfigurationTestCase {
     ApplicationConfiguration applicationConfiguration = createConfiguration(findClass(module4, "Application"));
     JavaParameters parameters = checkCanRun(applicationConfiguration);
     String classPath = parameters.getClassPath().getPathsString();
-    checkDoesNotContain(classPath, testOuput);
-    checkContains(classPath, output);
+    assertThat(classPath).doesNotContain(testOuput);
+    assertThat(classPath).contains(output);
 
     JUnitConfiguration junitConfiguration =
       createJUnitConfiguration(findClass(module4, "TestApplication"), TestInClassConfigurationProducer.class, new MapDataContext());
     parameters = checkCanRun(junitConfiguration);
     classPath = parameters.getClassPath().getPathsString();
-    checkContains(classPath, testOuput);
-    checkContains(classPath, output);
+    assertThat(classPath).contains(testOuput);
+    assertThat(classPath).contains(output);
 
     applicationConfiguration.setMainClassName(junitConfiguration.getPersistentData().getMainClassName());
     classPath = checkCanRun(applicationConfiguration).getClassPath().getPathsString();
-    checkContains(classPath, testOuput);
-    checkContains(classPath, output);
+    assertThat(classPath).contains(testOuput);
+    assertThat(classPath).contains(output);
   }
 
   public void testSameTestAndCommonOutput() throws ExecutionException {
@@ -347,11 +348,11 @@ public class ConfigurationsTest extends BaseConfigurationTestCase {
 
     RunConfiguration configuration = createConfiguration(findClass(module, "Application"));
     JavaParameters javaParameters = checkCanRun(configuration);
-    checkContains(javaParameters.getClassPath().getPathsString(), output);
+    assertThat(javaParameters.getClassPath().getPathsString()).contains(output);
 
     configuration = createConfiguration(findClass(module, "TestApplication"));
     javaParameters = checkCanRun(configuration);
-    checkContains(javaParameters.getClassPath().getPathsString(), output);
+    assertThat(javaParameters.getClassPath().getPathsString()).contains(output);
   }
 
   public void testCreatingApplicationConfiguration() throws ConfigurationException {
@@ -443,8 +444,8 @@ public class ConfigurationsTest extends BaseConfigurationTestCase {
     assertEquals(-1, classPath.indexOf(JarFileSystem.PROTOCOL_PREFIX));
     assertEquals(-1, classPath.indexOf(LocalFileSystem.PROTOCOL_PREFIX));
     for (int i = 0; i < 4; i++) {
-      checkContains(classPath, outputs[i][0]);
-      checkContains(classPath, outputs[i][1]);
+      assertThat(classPath).contains(outputs[i][0]);
+      assertThat(classPath).contains(outputs[i][1]);
     }
   }
 
@@ -565,7 +566,7 @@ public class ConfigurationsTest extends BaseConfigurationTestCase {
       configuration.checkConfiguration();
     }
     catch (RuntimeConfigurationException e) {
-      assertTrue(e.getLocalizedMessage().startsWith(reasonBeginning));
+      assertThat(e.getLocalizedMessage()).startsWith(reasonBeginning);
       return;
     }
 
@@ -598,8 +599,7 @@ public class ConfigurationsTest extends BaseConfigurationTestCase {
   }
 
   private JUnitConfiguration createConfiguration(PsiPackage psiPackage, Module module) {
-    JUnitConfiguration configuration =
-      new JUnitConfiguration("", myProject, JUnitConfigurationType.getInstance().getConfigurationFactories()[0]);
+    JUnitConfiguration configuration = new JUnitConfiguration("", myProject);
     configuration.getPersistentData().TEST_OBJECT = JUnitConfiguration.TEST_PACKAGE;
     configuration.getPersistentData().PACKAGE_NAME = psiPackage.getQualifiedName();
     configuration.getPersistentData().setScope(TestSearchScope.WHOLE_PROJECT);
@@ -611,37 +611,15 @@ public class ConfigurationsTest extends BaseConfigurationTestCase {
     return findClass(module, "test1.TestA");
   }
 
-  private static List<String> readLinesFrom(File file) throws IOException {
-    if (!file.exists()) file.createNewFile();
-    ArrayList<String> result = new ArrayList<>();
-    BufferedReader reader = new BufferedReader(new InputStreamReader(new FileInputStream(file)));
-    try {
-      String line;
-      while ((line = reader.readLine()) != null) result.add(line);
-      return result;
-    }
-    finally {
-      reader.close();
-    }
-  }
-
   private static List<String> extractAllInPackageTests(JavaParameters parameters, PsiPackage psiPackage)
     throws IOException {
     String filePath = ContainerUtil.find(parameters.getProgramParametersList().getArray(),
                                          value -> StringUtil.startsWithChar(value, '@') && !StringUtil.startsWith(value, "@w@")).substring(1);
-    List<String> lines = readLinesFrom(new File(filePath));
+    List<String> lines = FileUtilRt.loadLines(new File(filePath));
     assertEquals(psiPackage.getQualifiedName(), lines.get(0));
     //lines.remove(0);
     lines.remove(0);
     return lines;
-  }
-
-  private static void checkContains(String string, String fragment) {
-    assertTrue(fragment + " in " + string, string.contains(fragment));
-  }
-
-  private static void checkDoesNotContain(String string, String fragment) {
-    assertFalse(fragment + " in " + string, string.contains(fragment));
   }
 
   @Override

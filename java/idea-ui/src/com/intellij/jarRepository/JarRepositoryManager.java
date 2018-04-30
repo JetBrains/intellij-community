@@ -51,6 +51,8 @@ import org.eclipse.aether.transfer.TransferCancelledException;
 import org.eclipse.aether.version.Version;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.concurrency.AsyncPromise;
+import org.jetbrains.concurrency.Promise;
 import org.jetbrains.idea.maven.aether.ArtifactKind;
 import org.jetbrains.idea.maven.aether.ArtifactRepositoryManager;
 import org.jetbrains.idea.maven.aether.ProgressConsumer;
@@ -64,7 +66,8 @@ import java.io.IOException;
 import java.util.*;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Future;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Consumer;
 import java.util.function.Function;
@@ -148,11 +151,11 @@ public class JarRepositoryManager {
       repoPath = new File(expanded);
       if (repoPath.exists()) {
         try {
-          ourLocalRepositoryPath = repoPath.getCanonicalFile();
+          repoPath = repoPath.getCanonicalFile();
         }
-        catch (IOException e) {
-          ourLocalRepositoryPath = repoPath;
+        catch (IOException ignored) {
         }
+        ourLocalRepositoryPath = repoPath;
         return repoPath;
       }
     }
@@ -213,9 +216,9 @@ public class JarRepositoryManager {
           }
           return submitBackgroundJob(
             project, "Resolving Maven dependencies...", newOrderRootResolveJob(libDescriptor, kinds, repositories, copyTo)
-          ).get();
+          ).blockingGet(10, TimeUnit.MINUTES);
         }
-        catch (InterruptedException | ExecutionException e) {
+        catch (TimeoutException | ExecutionException e) {
           LOG.info(e);
         }
       }
@@ -223,13 +226,12 @@ public class JarRepositoryManager {
     return Collections.emptyList();
   }
 
-  public static void loadDependenciesAsync(@NotNull Project project,
-                                           RepositoryLibraryProperties libraryProps,
-                                           boolean loadSources,
-                                           boolean loadJavadoc,
-                                           @Nullable List<RemoteRepositoryDescription> repos,
-                                           @Nullable String copyTo,
-                                           Consumer<Collection<OrderRoot>> resultProcessor) {
+  public static Promise<List<OrderRoot>> loadDependenciesAsync(@NotNull Project project,
+                                                               RepositoryLibraryProperties libraryProps,
+                                                               boolean loadSources,
+                                                               boolean loadJavadoc,
+                                                               @Nullable List<RemoteRepositoryDescription> repos,
+                                                               @Nullable String copyTo) {
     final EnumSet<ArtifactKind> kinds = EnumSet.of(ArtifactKind.ARTIFACT);
     if (loadSources) {
       kinds.add(ArtifactKind.SOURCES);
@@ -237,23 +239,23 @@ public class JarRepositoryManager {
     if (loadJavadoc) {
       kinds.add(ArtifactKind.JAVADOC);
     }
-    loadDependenciesAsync(
+    return loadDependenciesAsync(
       project,
       libraryProps.getRepositoryLibraryDescriptor(),
-      kinds, repos, copyTo, resultProcessor
+      kinds, repos, copyTo
     );
   }
   
-  public static void loadDependenciesAsync(@NotNull Project project, JpsMavenRepositoryLibraryDescriptor desc, final Set<ArtifactKind> artifactKinds, @Nullable List<RemoteRepositoryDescription> repos, @Nullable String copyTo, Consumer<Collection<OrderRoot>> resultProcessor) {
+  public static Promise<List<OrderRoot>> loadDependenciesAsync(@NotNull Project project,
+                                                               JpsMavenRepositoryLibraryDescriptor desc,
+                                                               final Set<ArtifactKind> artifactKinds,
+                                                               @Nullable List<RemoteRepositoryDescription> repos,
+                                                               @Nullable String copyTo) {
     if (repos == null || repos.isEmpty()) {
       repos = RemoteRepositoriesConfiguration.getInstance(project).getRepositories();
     }
-    submitBackgroundJob(
-      project, "Resolving Maven dependencies...", newOrderRootResolveJob(desc, artifactKinds, repos, copyTo).andThen(
-        roots -> {
-          resultProcessor.accept(roots);
-          return roots;
-        })
+    return submitBackgroundJob(
+      project, "Resolving Maven dependencies...", newOrderRootResolveJob(desc, artifactKinds, repos, copyTo)
     );
   }
 
@@ -269,7 +271,7 @@ public class JarRepositoryManager {
   }
 
   @NotNull
-  public static Future<Collection<String>> getAvailableVersions(Project project, RepositoryLibraryDescription libraryDescription) {
+  public static Promise<Collection<String>> getAvailableVersions(Project project, RepositoryLibraryDescription libraryDescription) {
     final List<RemoteRepositoryDescription> repos = RemoteRepositoriesConfiguration.getInstance(project).getRepositories();
     return submitBackgroundJob(project, "Looking up available versions for " + libraryDescription.getDisplayName(), new VersionResolveJob(libraryDescription, repos));
   }
@@ -382,24 +384,27 @@ public class JarRepositoryManager {
     return result.get();
   }
 
-  private static <T> Future<T> submitBackgroundJob(@Nullable final Project project, final String title, final Function<ProgressIndicator, T> job){
+  private static <T> Promise<T> submitBackgroundJob(@Nullable final Project project, final String title, final Function<ProgressIndicator, T> job){
     final ModalityState startModality = ModalityState.defaultModalityState();
-    return JobExecutor.INSTANCE.submit(() -> {
+    AsyncPromise<T> promise = new AsyncPromise<>();
+    JobExecutor.INSTANCE.submit(() -> {
       try {
         ourTasksInProgress.incrementAndGet();
         final ProgressIndicator indicator = new EmptyProgressIndicator(startModality);
-        return ProgressManager.getInstance().runProcess(() -> job.apply(indicator), indicator);
+        T result = ProgressManager.getInstance().runProcess(() -> job.apply(indicator), indicator);
+        promise.setResult(result);
       }
-      catch (ProcessCanceledException ignored){
+      catch (ProcessCanceledException ignored) {
       }
       catch (Throwable e) {
         LOG.info(e);
+        promise.setError(e);
       }
       finally {
         ourTasksInProgress.decrementAndGet();
       }
-      return null;
     });
+    return promise;
   }
 
   private static Collection<String> lookupVersionsImpl(final String groupId, final String artifactId, ArtifactRepositoryManager manager) throws Exception {
@@ -464,12 +469,12 @@ public class JarRepositoryManager {
     protected abstract T getDefaultResult();
   }
 
-  private static Function<ProgressIndicator, Collection<OrderRoot>> newOrderRootResolveJob(@NotNull JpsMavenRepositoryLibraryDescriptor desc, @NotNull Set<ArtifactKind> kinds, @NotNull Collection<RemoteRepositoryDescription> repositories, @Nullable String copyTo) {
+  private static Function<ProgressIndicator, List<OrderRoot>> newOrderRootResolveJob(@NotNull JpsMavenRepositoryLibraryDescriptor desc, @NotNull Set<ArtifactKind> kinds, @NotNull Collection<RemoteRepositoryDescription> repositories, @Nullable String copyTo) {
     return new LibraryResolveJob(desc, kinds, repositories).andThen(
       resolved -> resolved.isEmpty() ? Collections.<OrderRoot>emptyList() : WriteAction.computeAndWait(() -> createRoots(resolved, copyTo)));
   }
 
-  private static Collection<OrderRoot> createRoots(@NotNull Collection<Artifact> artifacts, @Nullable String copyTo) {
+  private static List<OrderRoot> createRoots(@NotNull Collection<Artifact> artifacts, @Nullable String copyTo) {
     final List<OrderRoot> result = new ArrayList<>();
     final VirtualFileManager manager = VirtualFileManager.getInstance();
     for (Artifact each : artifacts) {

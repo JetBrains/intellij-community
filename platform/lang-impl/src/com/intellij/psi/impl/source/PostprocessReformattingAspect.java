@@ -51,7 +51,9 @@ import com.intellij.psi.impl.source.codeStyle.CodeEditUtil;
 import com.intellij.psi.impl.source.codeStyle.CodeFormatterFacade;
 import com.intellij.psi.impl.source.codeStyle.IndentHelperImpl;
 import com.intellij.psi.impl.source.tree.*;
+import com.intellij.util.Function;
 import com.intellij.util.LocalTimeCounter;
+import com.intellij.util.containers.JBIterable;
 import com.intellij.util.text.CharArrayUtil;
 import com.intellij.util.text.TextRangeUtil;
 import org.jetbrains.annotations.NonNls;
@@ -181,7 +183,7 @@ public class PostprocessReformattingAspect implements PomModelAspect {
         for (final ASTNode node : changeSet.getChangedElements()) {
           final TreeChange treeChange = changeSet.getChangesByElement(node);
           for (final ASTNode affectedChild : treeChange.getAffectedChildren()) {
-            checkForOuters(containingFile, (TreeElement)affectedChild);
+            scheduleReparseIfNeeded(containingFile, affectedChild);
 
             final ChangeInfo childChange = treeChange.getChangeByChild(affectedChild);
             switch (childChange.getChangeType()) {
@@ -208,10 +210,26 @@ public class PostprocessReformattingAspect implements PomModelAspect {
         }
       }
 
-      private void checkForOuters(PsiFile containingFile, TreeElement affectedChild) {
-        if (TreeUtil.containsOuterLanguageElements(affectedChild)) {
+      private void scheduleReparseIfNeeded(PsiFile containingFile, ASTNode affectedChild) {
+        if (changeMightBreakPsiTextConsistency(affectedChild)) {
           containingFile.putUserData(REPARSE_PENDING, true);
         }
+      }
+
+      private boolean changeMightBreakPsiTextConsistency(ASTNode node) {
+        return TreeUtil.containsOuterLanguageElements(node) || isRightAfterErrorElement(node);
+      }
+
+      private boolean isRightAfterErrorElement(ASTNode _node) {
+        Function<ASTNode, ASTNode> prevNode = node -> {
+          ASTNode prev = node.getTreePrev();
+          return prev != null ? TreeUtil.getLastChild(prev) : node.getTreeParent();
+        };
+        return JBIterable.generate(_node, prevNode)
+                         .skip(1)
+                         .takeWhile(e -> e instanceof PsiWhiteSpace || e.getTextLength() == 0)
+                         .filter(PsiErrorElement.class)
+                         .isNotEmpty();
       }
     });
   }
@@ -334,8 +352,6 @@ public class PostprocessReformattingAspect implements PomModelAspect {
       }
     }
 
-    reparseByTextIfNeeded(key, document);
-
     Collection<Disposable> toDispose = Collections.emptyList();
     try {
       // process all roots in viewProvider to find marked for reformat before elements and create appropriate range markers
@@ -362,6 +378,7 @@ public class PostprocessReformattingAspect implements PomModelAspect {
           CodeStyleManager codeStyleManager = CodeStyleManager.getInstance(myPsiManager.getProject());
           codeStyleManager.runWithDocCommentFormattingDisabled(
             viewProvider.getPsi(viewProvider.getBaseLanguage()), () -> normalizedAction.execute(viewProvider));
+          reparseByTextIfNeeded(key, document);
         }
       }
     }

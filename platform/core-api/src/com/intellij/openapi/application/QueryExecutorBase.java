@@ -16,7 +16,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
  * automatically wrap the implementation code into a read action. During indexing, query executors that don't implement {@link com.intellij.openapi.project.DumbAware}
  * (but need to be run in a read action), are delayed until indexing is complete, given that search parameters implement {@link DumbAwareSearchParameters}.
  * <p/>
- * Besides, {@link #processQuery(Object, Processor)} doesn't require to return a boolean value and thus it's harder to cancel the whole search
+ * Besides, {@link #processQuery(Object, Processor)} doesn't require to return a boolean value and thus it's harder to stop the whole search
  * by accidentally returning false.
  * 
  * @see Application#runReadAction(Computable) 
