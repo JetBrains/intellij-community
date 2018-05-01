@@ -272,6 +272,8 @@
 
     <group id="Vcs.CheckinProjectToolbar">
     </group>
+    <group id="Vcs.CheckinProjectMenu">
+    </group>
 
     <group id="UpdateActionGroup">
       <reference ref="EditSource"/>
