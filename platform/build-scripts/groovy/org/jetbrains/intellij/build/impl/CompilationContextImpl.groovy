@@ -348,9 +348,8 @@ class CompilationContextImpl implements CompilationContext {
   @Override
   void notifyArtifactBuilt(String artifactPath) {
     def file = new File(artifactPath)
-    def baseDir = new File(paths.projectHome)
     def artifactsDir = new File(paths.artifacts)
-    if (!FileUtil.isAncestor(baseDir, file, true)) {
+    if (!FileUtil.isAncestor(new File(paths.projectHome), file, true)) {
       messages.warning("Artifact '$artifactPath' is not under '$paths.projectHome', it won't be reported")
       return
     }
@@ -380,7 +379,7 @@ class CompilationContextImpl implements CompilationContext {
       }
     }
 
-    def relativePath = FileUtil.toSystemIndependentName(FileUtil.getRelativePath(baseDir, file))
+    def pathToReport = file.absolutePath
 
     def targetDirectoryPath = ""
     if (FileUtil.isAncestor(artifactsDir, file.parentFile, true)) {
@@ -391,9 +390,9 @@ class CompilationContextImpl implements CompilationContext {
       targetDirectoryPath = (targetDirectoryPath ? targetDirectoryPath + "/"  : "") + file.name
     }
     if (targetDirectoryPath) {
-      relativePath += "=>" + targetDirectoryPath
+      pathToReport += "=>" + targetDirectoryPath
     }
-    messages.artifactBuilt(relativePath)
+    messages.artifactBuilt(pathToReport)
   }
 
   private static String toCanonicalPath(String path) {
