@@ -33,6 +33,7 @@ public abstract class ChangesBrowserBase extends JPanel implements DataProvider 
   protected final ChangesTree myViewer;
 
   private final DefaultActionGroup myToolBarGroup = new DefaultActionGroup();
+  private final DefaultActionGroup myPopupMenuGroup = new DefaultActionGroup();
   private final ActionToolbar myToolbar;
   private final JScrollPane myViewerScrollPane;
   private final AnAction myShowDiffAction;
@@ -54,7 +55,7 @@ public abstract class ChangesBrowserBase extends JPanel implements DataProvider 
     myToolbar = ActionManager.getInstance().createActionToolbar("ChangesBrowser", toolbarGroups, true);
     myToolbar.setTargetComponent(this);
 
-    myViewer.installPopupHandler(myToolBarGroup);
+    myViewer.installPopupHandler(myPopupMenuGroup);
 
     myViewerScrollPane = ScrollPaneFactory.createScrollPane(myViewer);
 
@@ -83,6 +84,7 @@ public abstract class ChangesBrowserBase extends JPanel implements DataProvider 
 
 
     myToolBarGroup.addAll(createToolbarActions());
+    myPopupMenuGroup.addAll(createPopupMenuActions());
 
     myShowDiffAction.registerCustomShortcutSet(this, null);
   }
@@ -112,6 +114,13 @@ public abstract class ChangesBrowserBase extends JPanel implements DataProvider 
 
   @NotNull
   protected List<AnAction> createToolbarActions() {
+    return ContainerUtil.list(
+      myShowDiffAction
+    );
+  }
+
+  @NotNull
+  protected List<AnAction> createPopupMenuActions() {
     return ContainerUtil.list(
       myShowDiffAction
     );
