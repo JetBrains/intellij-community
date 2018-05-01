@@ -64,10 +64,7 @@ public class Simplify2DiamondInspectionsTest extends LightQuickFixParameterizedT
   }
 
   @Override
-  protected LanguageLevel getLanguageLevel() {
-    if (getTestName(false).endsWith("_1.7.java")){
-      return LanguageLevel.JDK_1_7;
-    }
+  protected LanguageLevel getDefaultLanguageLevel() {
     return LanguageLevel.JDK_1_8;
   }
 }
