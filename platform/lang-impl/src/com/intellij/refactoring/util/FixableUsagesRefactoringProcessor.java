@@ -18,7 +18,6 @@ package com.intellij.refactoring.util;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Ref;
-import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiElement;
 import com.intellij.refactoring.BaseRefactoringProcessor;
 import com.intellij.usageView.UsageInfo;
@@ -67,7 +66,7 @@ public abstract class FixableUsagesRefactoringProcessor extends BaseRefactoringP
     for (UsageInfo info : refUsages.get()) {
       final String conflict = ((FixableUsageInfo)info).getConflictMessage();
       if (conflict != null) {
-        conflicts.putValue(info.getElement(), StringUtil.escapeXml(conflict));
+        conflicts.putValue(info.getElement(), conflict);
       }
     }
   }
