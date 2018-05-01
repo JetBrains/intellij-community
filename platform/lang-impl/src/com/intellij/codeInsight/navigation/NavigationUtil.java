@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package com.intellij.codeInsight.navigation;
 
@@ -23,6 +9,7 @@ import com.intellij.navigation.GotoRelatedItem;
 import com.intellij.navigation.GotoRelatedProvider;
 import com.intellij.navigation.NavigationItem;
 import com.intellij.openapi.actionSystem.DataContext;
+import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.ex.MarkupModelEx;
 import com.intellij.openapi.editor.ex.util.EditorUtil;
@@ -177,12 +164,22 @@ public final class NavigationUtil {
       element.putUserData(FileEditorManager.USE_CURRENT_WINDOW, true);
     }
 
-    if (openAsNative || !activatePsiElementIfOpen(element, searchForOpen, requestFocus)) {
-      final NavigationItem navigationItem = (NavigationItem)element;
-      if (!navigationItem.canNavigate()) return false;
-      navigationItem.navigate(requestFocus);
-      return true;
-    }
+    Ref<Boolean> resultRef = new Ref<>();
+    boolean openAsNativeFinal = openAsNative;
+    // all navigation inside should be treated as a single operation, so that 'Back' action undoes it in one go
+    CommandProcessor.getInstance().executeCommand(element.getProject(), () -> {
+      if (openAsNativeFinal || !activatePsiElementIfOpen(element, searchForOpen, requestFocus)) {
+        final NavigationItem navigationItem = (NavigationItem)element;
+        if (!navigationItem.canNavigate()) {
+          resultRef.set(Boolean.FALSE);
+        }
+        else {
+          navigationItem.navigate(requestFocus);
+          resultRef.set(Boolean.TRUE);
+        }
+      }
+    }, "", null);
+    if (!resultRef.isNull()) return resultRef.get();
 
     element.putUserData(FileEditorManager.USE_CURRENT_WINDOW, null);
     return false;
