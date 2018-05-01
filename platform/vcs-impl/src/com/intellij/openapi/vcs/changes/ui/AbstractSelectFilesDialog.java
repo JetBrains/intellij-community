@@ -20,6 +20,7 @@ import com.intellij.CommonBundle;
 import com.intellij.openapi.actionSystem.ActionManager;
 import com.intellij.openapi.actionSystem.ActionToolbar;
 import com.intellij.openapi.actionSystem.DefaultActionGroup;
+import com.intellij.openapi.actionSystem.Separator;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.MultiLineLabelUI;
@@ -91,6 +92,8 @@ public abstract class AbstractSelectFilesDialog<T> extends DialogWrapper {
   @Nullable
   protected JComponent createCenterPanel() {
     DefaultActionGroup group = createToolbarActions();
+    group.add(Separator.getInstance());
+    group.add(ActionManager.getInstance().getAction(ChangesTree.GROUP_BY_ACTION_GROUP));
     ActionToolbar toolbar = ActionManager.getInstance().createActionToolbar("VcsSelectFilesDialog", group, true);
 
     TreeActionsToolbarPanel toolbarPanel = new TreeActionsToolbarPanel(toolbar, getFileList());

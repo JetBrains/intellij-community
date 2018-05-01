@@ -525,6 +525,8 @@ public class ApplyPatchDifferentiatedDialog extends DialogWrapper {
           }
         });
       }
+      group.add(Separator.getInstance());
+      group.add(ActionManager.getInstance().getAction(ChangesTree.GROUP_BY_ACTION_GROUP));
 
       final ActionToolbar toolbar = ActionManager.getInstance().createActionToolbar("APPLY_PATCH", group, true);
       TreeActionsToolbarPanel toolbarPanel = new TreeActionsToolbarPanel(toolbar, myChangesTreeList);

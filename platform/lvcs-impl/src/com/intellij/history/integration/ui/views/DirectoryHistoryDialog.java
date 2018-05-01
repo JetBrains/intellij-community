@@ -29,6 +29,7 @@ import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.vcs.changes.Change;
 import com.intellij.openapi.vcs.changes.actions.diff.ShowDiffAction;
 import com.intellij.openapi.vcs.changes.actions.diff.ShowDiffContext;
+import com.intellij.openapi.vcs.changes.ui.ChangesTree;
 import com.intellij.openapi.vcs.changes.ui.ChangesTreeImpl;
 import com.intellij.openapi.vcs.changes.ui.TreeActionsToolbarPanel;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -128,6 +129,8 @@ public class DirectoryHistoryDialog extends HistoryDialog<DirectoryHistoryDialog
     DefaultActionGroup result = new DefaultActionGroup();
     result.add(new ShowDifferenceAction());
     result.add(new RevertSelectionAction());
+    result.add(Separator.getInstance());
+    result.add(ActionManager.getInstance().getAction(ChangesTree.GROUP_BY_ACTION_GROUP));
     return result;
   }
 
