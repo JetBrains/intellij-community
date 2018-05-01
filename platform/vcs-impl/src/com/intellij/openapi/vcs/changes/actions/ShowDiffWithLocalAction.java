@@ -72,10 +72,8 @@ public class ShowDiffWithLocalAction extends AnAction implements DumbAware, AnAc
     Project project = e.getData(CommonDataKeys.PROJECT);
     ListSelection<Change> selection = e.getData(VcsDataKeys.CHANGES_SELECTION);
     boolean isInAir = CommittedChangesBrowserUseCase.IN_AIR.equals(CommittedChangesBrowserUseCase.DATA_KEY.getData(e.getDataContext()));
-    boolean isToolbar = "ChangesBrowser".equals(e.getPlace());
 
-    e.getPresentation().setEnabled(project != null && !isToolbar && selection != null && !isInAir && canShowDiff(selection.getList()));
-    e.getPresentation().setVisible(!isToolbar);
+    e.getPresentation().setEnabled(project != null && selection != null && !isInAir && canShowDiff(selection.getList()));
   }
 
   @Nullable
