@@ -21,10 +21,10 @@ import com.intellij.history.core.LocalHistoryFacade;
 import com.intellij.history.core.revisions.Difference;
 import com.intellij.history.integration.IdeaGateway;
 import com.intellij.history.integration.ui.models.DirectoryHistoryDialogModel;
+import com.intellij.icons.AllIcons;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.vcs.changes.Change;
 import com.intellij.openapi.vcs.changes.actions.diff.ShowDiffAction;
@@ -156,7 +156,7 @@ public class DirectoryHistoryDialog extends HistoryDialog<DirectoryHistoryDialog
 
   private class ShowDifferenceAction extends ActionOnSelection {
     public ShowDifferenceAction() {
-      super(message("action.show.difference"), "/actions/diff.png");
+      super(message("action.show.difference"), AllIcons.Actions.Diff);
     }
 
     @Override
@@ -185,7 +185,7 @@ public class DirectoryHistoryDialog extends HistoryDialog<DirectoryHistoryDialog
 
   private class RevertSelectionAction extends ActionOnSelection {
     public RevertSelectionAction() {
-      super(message("action.revert.selection"), "/actions/rollback.png");
+      super(message("action.revert.selection"), AllIcons.Actions.Rollback);
     }
 
     @Override
@@ -204,8 +204,8 @@ public class DirectoryHistoryDialog extends HistoryDialog<DirectoryHistoryDialog
   }
 
   private abstract class ActionOnSelection extends MyAction {
-    public ActionOnSelection(String name, String iconName) {
-      super(name, null, IconLoader.getIcon(iconName));
+    public ActionOnSelection(String name, Icon icon) {
+      super(name, null, icon);
     }
 
     @Override
