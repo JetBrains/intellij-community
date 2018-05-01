@@ -272,7 +272,7 @@ public class IdeErrorsDialog extends DialogWrapper implements MessagePoolListene
     myNoticeArea.addHyperlinkListener(BrowserHyperlinkListener.INSTANCE);
 
     JPanel decoratorPanel = new JPanel(new BorderLayout());
-    myNoticeDecorator = new HideableDecorator(decoratorPanel, DiagnosticBundle.message("error.dialog.notice.label"), false);
+    myNoticeDecorator = new NoticeDecorator(decoratorPanel);
     myNoticeDecorator.setContentComponent(myNoticeArea);
 
     JPanel commentPanel = new JPanel(new BorderLayout());
@@ -631,17 +631,6 @@ public class IdeErrorsDialog extends DialogWrapper implements MessagePoolListene
 
   /* UI components */
 
-  private static class AttachmentsList extends CheckBoxList<String> {
-    private void addItem(String item, boolean selected) {
-      super.addItem(item, item + "  ", selected);
-    }
-
-    @Override
-    protected boolean isEnabled(int index) {
-      return index > 0;
-    }
-  }
-
   private class BackAction extends AnAction implements DumbAware {
     public BackAction() {
       super("Previous", null, AllIcons.Actions.Back);
@@ -711,6 +700,35 @@ public class IdeErrorsDialog extends DialogWrapper implements MessagePoolListene
       AnActionEvent event = AnActionEvent.createFromAnAction(myAnalyze, null, ActionPlaces.UNKNOWN, ctx);
       myAnalyze.actionPerformed(event);
       doCancelAction();
+    }
+  }
+
+  private static class AttachmentsList extends CheckBoxList<String> {
+    private void addItem(String item, boolean selected) {
+      super.addItem(item, item + "  ", selected);
+    }
+
+    @Override
+    protected boolean isEnabled(int index) {
+      return index > 0;
+    }
+  }
+
+  private static class NoticeDecorator extends HideableDecorator {
+    private NoticeDecorator(JPanel panel) {
+      super(panel, "...", false);
+    }
+
+    @Override
+    protected void on() {
+      super.on();
+      setTitle(DiagnosticBundle.message("error.dialog.notice.label.expanded"));
+    }
+
+    @Override
+    protected void off() {
+      super.off();
+      setTitle(DiagnosticBundle.message("error.dialog.notice.label"));
     }
   }
 
