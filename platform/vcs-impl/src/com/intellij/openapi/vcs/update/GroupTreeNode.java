@@ -15,16 +15,15 @@
  */
 package com.intellij.openapi.vcs.update;
 
+import com.intellij.icons.AllIcons;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
-import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.search.scope.packageSet.NamedScopesHolder;
 import com.intellij.psi.search.scope.packageSet.PackageSetBase;
 import com.intellij.ui.SimpleTextAttributes;
-import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -70,8 +69,7 @@ public class GroupTreeNode extends AbstractTreeNode implements Disposable {
 
   @Override
   public Icon getIcon(boolean expanded) {
-    @NonNls String iconName = expanded ? "folderOpen" : "folder";
-    return IconLoader.getIcon("/nodes/" + iconName + ".png");
+    return AllIcons.Nodes.Folder;
   }
 
   @NotNull
