@@ -2387,7 +2387,7 @@
                      level="WARNING" implementationClass="com.siyeh.ig.style.TypeParameterExtendsObjectInspection"/>
     <localInspection groupPath="Java" language="JAVA" shortName="UnnecessarilyQualifiedInnerClassAccess" bundle="com.siyeh.InspectionGadgetsBundle"
                      key="unnecessarily.qualified.inner.class.access.display.name" groupBundle="messages.InspectionsBundle"
-                     groupKey="group.names.code.style.issues" enabledByDefault="false" level="WARNING" cleanupTool="true"
+                     groupKey="group.names.code.style.issues" enabledByDefault="true" level="INFORMATION" cleanupTool="true"
                      implementationClass="com.siyeh.ig.style.UnnecessarilyQualifiedInnerClassAccessInspection"/>
     <localInspection groupPath="Java" language="JAVA" shortName="UnnecessarilyQualifiedStaticUsage" bundle="com.siyeh.InspectionGadgetsBundle"
                      key="unnecessarily.qualified.static.usage.display.name" groupBundle="messages.InspectionsBundle"

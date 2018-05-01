@@ -105,7 +105,7 @@ public class UnnecessarilyQualifiedInnerClassAccessInspection extends BaseInspec
     return new UnnecessarilyQualifiedInnerClassAccessVisitor();
   }
 
-  private static boolean isReferenceToTarget(String referenceText, @NotNull PsiClass target, PsiElement context) {
+  static boolean isReferenceToTarget(String referenceText, @NotNull PsiClass target, PsiElement context) {
     final PsiJavaCodeReferenceElement reference =
       JavaPsiFacade.getElementFactory(target.getProject()).createReferenceFromText(referenceText, context);
     final JavaResolveResult[] results = reference.multiResolve(false);
@@ -151,13 +151,13 @@ public class UnnecessarilyQualifiedInnerClassAccessInspection extends BaseInspec
         return;
       }
       final PsiElement brace = referenceClass.getLBrace();
+      ProblemHighlightType highlightType = ProblemHighlightType.LIKE_UNUSED_SYMBOL;
       if (!referenceClass.equals(qualifierTarget) || brace != null && brace.getTextOffset() > reference.getTextOffset()) {
         if (ignoreReferencesNeedingImport &&
-            (PsiTreeUtil.isAncestor(referenceClass, qualifierTarget,
-                                    true) ||
-             !PsiTreeUtil.isAncestor(qualifierTarget,
-                                     referenceClass, true))) {
-          return;
+            (PsiTreeUtil.isAncestor(referenceClass, qualifierTarget, true) ||
+             !PsiTreeUtil.isAncestor(qualifierTarget, referenceClass, true))) {
+          if (!isOnTheFly()) return;
+          highlightType = ProblemHighlightType.INFORMATION;
         }
       }
       final PsiElement target = reference.resolve();
@@ -176,7 +176,7 @@ public class UnnecessarilyQualifiedInnerClassAccessInspection extends BaseInspec
       if (!isReferenceToTarget(shortName, aClass, reference)) {
         return;
       }
-      registerError(qualifier, ProblemHighlightType.LIKE_UNUSED_SYMBOL, aClass);
+      registerError(qualifier, highlightType, aClass);
     }
 
     @Override
