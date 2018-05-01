@@ -20,7 +20,7 @@ fun labelRowShouldNotGrow(): JPanel {
   }
 }
 
-fun makeSecondColumnSmaller(): JPanel {
+fun secondColumnSmallerPanel(): JPanel {
   val selectForkButton = JButton("Select Other Fork")
 
   val branchCombobox = ComboBox<String>()
@@ -36,10 +36,8 @@ fun makeSecondColumnSmaller(): JPanel {
       selectForkButton(growX)
     }
     row("Base branch:") {
-      cell {
-        branchCombobox(growX, pushX)
-        diffButton(growX)
-      }
+      branchCombobox(growX, pushX)
+      diffButton(growX)
     }
     row("Title:") { titleTextField() }
     row("Description:") {
@@ -68,6 +66,13 @@ fun visualPaddingsPanelOnlyComboBox(): JPanel {
 fun visualPaddingsPanelOnlyButton(): JPanel {
   return panel {
     row("Button:") { button("label", growX) {} }
+  }
+}
+
+@Suppress("unused")
+fun visualPaddingsPanelOnlyTextField(): JPanel {
+  return panel {
+    row("Text field:") { JTextField("text")() }
   }
 }
 

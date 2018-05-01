@@ -11,13 +11,13 @@
         <path d="M0 0 L0 14 L155 14 L155 0 Z"/>
       </clipPath>
       <clipPath clipPathUnits="userSpaceOnUse" id="2">
-        <path d="M0 0 L0 26 L256 26 L256 0 Z"/>
+        <path d="M0 0 L0 30 L256 30 L256 0 Z"/>
       </clipPath>
       <clipPath clipPathUnits="userSpaceOnUse" id="3">
-        <path d="M-1 -1 L-1 25 L255 25 L255 -1 Z"/>
+        <path d="M-1 -1 L-1 29 L255 29 L255 -1 Z"/>
       </clipPath>
       <clipPath clipPathUnits="userSpaceOnUse" id="4">
-        <path d="M0 0 L0 20 L254 20 L254 0 Z"/>
+        <path d="M0 0 L0 24 L254 24 L254 0 Z"/>
       </clipPath>
       <clipPath clipPathUnits="userSpaceOnUse" id="5">
         <path d="M0 0 L0 16 L110 16 L110 0 Z"/>
@@ -41,19 +41,19 @@
     <g fill="rgb(60,63,65)" font-size="13px" font-family="'.SF NS Text'" stroke="rgb(60,63,65)">
       <rect x="0" width="480" height="320" y="0" clip-path="url(#0)" stroke="none"/>
     </g>
-    <g fill="rgb(120,120,120)" text-rendering="geometricPrecision" font-size="11px" font-family="'.SF NS Text'" transform="translate(140,83)" stroke="rgb(120,120,120)">
+    <g fill="rgb(120,120,120)" text-rendering="geometricPrecision" font-size="11px" font-family="'.SF NS Text'" transform="translate(140,87)" stroke="rgb(120,120,120)">
       <text x="0" xml:space="preserve" y="11" clip-path="url(#1)" stroke="none">Stored using weak encryption.</text>
     </g>
     <g fill="rgb(60,63,65)" font-size="13px" font-family="'.SF NS Text'" transform="translate(136,54)" stroke="rgb(60,63,65)">
-      <rect x="0" width="256" height="26" y="0" clip-path="url(#2)" stroke="none"/>
+      <rect x="0" width="256" height="30" y="0" clip-path="url(#2)" stroke="none"/>
     </g>
     <g fill="rgb(69,73,74)" text-rendering="optimizeLegibility" font-size="13px" font-family="'.SF NS Text'" transform="translate(137,55)" stroke="rgb(69,73,74)">
-      <rect x="2" width="250" height="20" y="2" clip-path="url(#3)" stroke="none"/>
+      <rect x="2" width="250" height="24" y="2" clip-path="url(#3)" stroke="none"/>
     </g>
     <g fill="rgb(100,100,100)" text-rendering="optimizeLegibility" font-size="13px" font-family="'.SF NS Text'" transform="translate(137,55)" stroke="rgb(100,100,100)">
-      <path d="M2 2 L252 2 L252 22 L2 22 L2 2 ZM3 3 L251 3 L251 21 L3 21 L3 3 Z" fill-rule="evenodd" clip-path="url(#3)" stroke="none"/>
+      <path d="M2 2 L252 2 L252 26 L2 26 L2 2 ZM3 3 L251 3 L251 25 L3 25 L3 3 Z" fill-rule="evenodd" clip-path="url(#3)" stroke="none"/>
     </g>
-    <g fill="rgb(187,187,187)" font-size="13px" font-family="'.SF NS Text'" transform="translate(23,59)" stroke="rgb(187,187,187)">
+    <g fill="rgb(187,187,187)" font-size="13px" font-family="'.SF NS Text'" transform="translate(23,61)" stroke="rgb(187,187,187)">
       <text x="0" xml:space="preserve" y="13" clip-path="url(#5)" stroke="none">Master Password:</text>
     </g>
     <g fill="rgb(187,187,187)" font-size="13px" font-family="'.SF NS Text'" transform="translate(451,27)" stroke="rgb(187,187,187)">
