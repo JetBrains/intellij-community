@@ -217,7 +217,7 @@ public class IdeErrorsDialog extends DialogWrapper implements MessagePoolListene
       else {
         myAttachmentArea.setText(selectedMessage().getAllAttachments().get(index - 1).getDisplayText());
       }
-      myAttachmentArea.moveCaretPosition(0);
+      myAttachmentArea.setCaretPosition(0);
     });
     myAttachmentsList.setCheckBoxListListener((index, value) -> {
       if (index > 0) {
@@ -380,19 +380,22 @@ public class IdeErrorsDialog extends DialogWrapper implements MessagePoolListene
     myMergedMessages.get(myIndex).forEach(m -> m.setRead(true));
     AbstractMessage message = selectedMessage();
     ErrorReportSubmitter submitter = getSubmitter(message.getThrowable());
+    boolean unsent = !(message.isSubmitted() || message.isSubmitting());
+    boolean canReport = unsent && submitter != null;
 
     updateLabels(message, submitter);
 
-    updateDetails(message);
+    updateDetails(message, canReport);
 
     if (myInternalMode) {
-      updateAssigneePanel(message, submitter);
+      updateAssigneePanel(message, submitter, unsent);
     }
 
     updateCredentialsPanel(submitter);
 
-    setOKActionEnabled(submitter != null && !(message.isSubmitted() || message.isSubmitting()));
-    setOKButtonText(submitter != null ? submitter.getReportActionText() : DiagnosticBundle.message("error.report.to.unknown.action"));
+    setOKActionEnabled(canReport);
+    setOKButtonText(submitter != null ? submitter.getReportActionText() : DiagnosticBundle.message("error.report.impossible.action"));
+    setOKButtonTooltip(submitter != null ? null : DiagnosticBundle.message("error.report.impossible.tooltip"));
   }
 
   private void updateLabels(AbstractMessage message, @Nullable ErrorReportSubmitter submitter) {
@@ -461,7 +464,7 @@ public class IdeErrorsDialog extends DialogWrapper implements MessagePoolListene
         myForeignPluginWarningLabel.setHyperlinkTarget("mailto:" + contactEmail);
       }
       else {
-        myForeignPluginWarningLabel.setText(DiagnosticBundle.message("error.dialog.foreign.plugin.warning"));
+        myForeignPluginWarningLabel.setHtmlText(DiagnosticBundle.message("error.dialog.foreign.plugin.warning"));
         myForeignPluginWarningLabel.setHyperlinkTarget(null);
       }
       myForeignPluginWarningLabel.setToolTipText(contactUrl);
@@ -482,10 +485,10 @@ public class IdeErrorsDialog extends DialogWrapper implements MessagePoolListene
     }
   }
 
-  private void updateDetails(AbstractMessage message) {
+  private void updateDetails(AbstractMessage message, boolean canReport) {
     myCommentArea.setText(message.getAdditionalInfo());
-    myCommentArea.setEnabled(!(message.isSubmitted() || message.isSubmitting()));
     myCommentArea.setCaretPosition(0);
+    myCommentArea.setEnabled(canReport);
 
     myAttachmentsList.clear();
     myAttachmentsList.addItem("stacktrace.txt", true);
@@ -493,12 +496,15 @@ public class IdeErrorsDialog extends DialogWrapper implements MessagePoolListene
       myAttachmentsList.addItem(attachment.getName(), myInternalMode || attachment.isIncluded());
     }
     myAttachmentsList.setSelectedIndex(0);
+    myAttachmentsList.setEnabled(canReport);
+
+    myAttachmentArea.setEnabled(canReport);
   }
 
-  private void updateAssigneePanel(AbstractMessage message, ErrorReportSubmitter submitter) {
+  private void updateAssigneePanel(AbstractMessage message, ErrorReportSubmitter submitter, boolean unsent) {
     if (submitter instanceof ITNReporter) {
       myAssigneePanel.setVisible(true);
-      myAssigneeCombo.setEnabled(!(message.isSubmitted() || message.isSubmitting()));
+      myAssigneeCombo.setEnabled(unsent);
       Integer assignee = message.getAssigneeId();
       if (assignee == null) {
         myAssigneeCombo.setSelectedIndex(-1);
