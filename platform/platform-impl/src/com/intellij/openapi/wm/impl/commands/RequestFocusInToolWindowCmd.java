@@ -39,7 +39,7 @@ public final class RequestFocusInToolWindowCmd extends FinalizableCommand {
 
   @Override
   public final void run() {
-    myToolWindow.getActivation().doWhenDone(() -> processRequestFocus());
+    processRequestFocus();
   }
 
   private void processRequestFocus() {

@@ -514,8 +514,6 @@ public final class ToolWindowManagerImpl extends ToolWindowManagerEx implements 
       toolWindow.setSplitMode(true, null);
     }
 
-    // ToolWindow activation is not needed anymore and should be removed in 2017
-    toolWindow.setActivation(new ActionCallback()).setDone();
     final DumbAwareRunnable runnable = () -> {
       if (toolWindow.isDisposed()) return;
 
@@ -864,7 +862,6 @@ public final class ToolWindowManagerImpl extends ToolWindowManagerEx implements 
       }
     }
     else if (isStackEnabled()) {
-
       // first of all we have to find tool window that was located at the same side and
       // was hidden.
 
@@ -1806,7 +1803,6 @@ public final class ToolWindowManagerImpl extends ToolWindowManagerEx implements 
                               @Nullable final ToolWindowAnchor anchor,
                               @Nullable final ToolWindowType type,
                               @Nullable final Rectangle floatingBounds) {
-
     final WindowInfoImpl info = getInfo(toolWindow.getId());
     if (info.isWasRead()) return;
 
@@ -1830,7 +1826,6 @@ public final class ToolWindowManagerImpl extends ToolWindowManagerEx implements 
     }
     toolWindow.setContentUiType(type, null);
   }
-
 
   void stretchWidth(@NotNull ToolWindowImpl toolWindow, int value) {
     myToolWindowsPane.stretchWidth(toolWindow, value);
