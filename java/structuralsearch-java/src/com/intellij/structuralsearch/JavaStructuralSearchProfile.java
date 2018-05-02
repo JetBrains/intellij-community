@@ -531,7 +531,7 @@ public class JavaStructuralSearchProfile extends StructuralSearchProfile {
       }
       if (parent == myCurrent) {
         // search for expression, type, annotation or symbol
-        if ("';' expected".equals(errorDescription)) {
+        if ("';' expected".equals(errorDescription)  && element.getNextSibling() == null) {
           // expression
           return;
         }
