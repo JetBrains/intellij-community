@@ -24,13 +24,13 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
-class EditorActionPlan implements ActionPlan {
+public class EditorActionPlan implements ActionPlan {
   private ImmutableCharSequence myText;
   private final Editor myEditor;
   private int myCaretOffset;
   private final List<Replacement> myReplacements = new ArrayList<>();
 
-  EditorActionPlan(@NotNull Editor editor) {
+  public EditorActionPlan(@NotNull Editor editor) {
     myEditor = editor;
     myText = (ImmutableCharSequence)editor.getDocument().getImmutableCharSequence();
     myCaretOffset = editor.getCaretModel().getOffset();

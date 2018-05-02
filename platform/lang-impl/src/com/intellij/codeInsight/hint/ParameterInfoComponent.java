@@ -308,6 +308,10 @@ public class ParameterInfoComponent extends JPanel {
     myHighlighted = element;
   }
 
+  public static void main(String[] args) {
+    System.out.println("args = " + args);
+  }
+
   private class OneElementComponent extends JPanel {
     private OneLineComponent[] myOneLineComponents;
 
