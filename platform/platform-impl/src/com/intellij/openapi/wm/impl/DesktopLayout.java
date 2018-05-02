@@ -264,6 +264,7 @@ public final class DesktopLayout {
     myIdToInfo.clear();
     for (Element e : layoutElement.getChildren(WindowInfoImpl.TAG)) {
       WindowInfoImpl info = XmlSerializer.deserialize(e, WindowInfoImpl.class);
+      info.normalizeAfterRead();
       if (info.getId() == null) {
         LOG.warn("Skip invalid window info (no id): " + JDOMUtil.writeElement(e));
         continue;

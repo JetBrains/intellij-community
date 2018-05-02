@@ -9,7 +9,6 @@ import com.intellij.util.xmlb.annotations.Attribute
 import com.intellij.util.xmlb.annotations.Property
 import com.intellij.util.xmlb.annotations.Tag
 import com.intellij.util.xmlb.annotations.Transient
-import org.jdom.Element
 import java.awt.Rectangle
 
 private val LOG = logger<WindowInfoImpl>()
@@ -113,14 +112,10 @@ class WindowInfoImpl : Cloneable, WindowInfo, BaseState() {
   override val isSliding: Boolean
     get() = type == ToolWindowType.SLIDING
 
-  fun readExternal(element: Element) {
+  fun normalizeAfterRead() {
     isWasRead = true
 
-    try {
-      setTypeAndCheck(ToolWindowType.valueOf(element.getAttributeValue("type")))
-    }
-    catch (ignored: IllegalArgumentException) {
-    }
+    setTypeAndCheck(type)
 
     if (isVisible && !canActivateOnStart(id)) {
       isVisible = false
