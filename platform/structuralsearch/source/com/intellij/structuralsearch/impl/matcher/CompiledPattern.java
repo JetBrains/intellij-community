@@ -13,10 +13,13 @@ import com.intellij.structuralsearch.impl.matcher.handlers.MatchingHandler;
 import com.intellij.structuralsearch.impl.matcher.handlers.SimpleHandler;
 import com.intellij.structuralsearch.impl.matcher.handlers.SubstitutionHandler;
 import com.intellij.structuralsearch.impl.matcher.strategies.MatchingStrategy;
+import com.intellij.util.SmartList;
+import com.intellij.util.containers.MultiMap;
 import gnu.trove.THashMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 
@@ -26,6 +29,7 @@ import java.util.Map;
 public abstract class CompiledPattern {
   public static final Key<Object> HANDLER_KEY = Key.create("ss.handler");
   private final Map<Object, MatchingHandler> handlers = new THashMap<>();
+  private final MultiMap<String, PsiElement> variableNodes = MultiMap.createSmart();
   private SearchScope scope;
   private NodeIterator nodes;
   private MatchingStrategy strategy;
@@ -158,5 +162,15 @@ public abstract class CompiledPattern {
   @Nullable
   public String getAlternativeTextToMatch(PsiElement node, String previousText) {
     return null;
+  }
+
+  @NotNull
+  public List<PsiElement> getVariableNodes(@NotNull String name) {
+    final Collection<PsiElement> elements = variableNodes.get(name);
+    return elements instanceof List ? (List<PsiElement>)elements : new SmartList<>(elements);
+  }
+
+  public void putVariableNode(@NotNull String name, @NotNull PsiElement node) {
+    variableNodes.putValue(name, node);
   }
 }

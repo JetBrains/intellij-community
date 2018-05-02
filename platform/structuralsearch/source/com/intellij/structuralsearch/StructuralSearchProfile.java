@@ -211,7 +211,7 @@ public abstract class StructuralSearchProfile {
                                 int offset,
                                 ReplacementInfo replacementInfo) {
     if (info.getName().equals(match.getName())) {
-      String replacementString = match.getMatchImage();
+      final String replacementString;
       boolean removeSemicolon = false;
       if (match.hasChildren() && !match.isScopeMatch()) {
         // compound matches
@@ -237,6 +237,7 @@ public abstract class StructuralSearchProfile {
         if (info.isStatementContext()) {
           removeSemicolon = match.getMatch() instanceof PsiComment;
         }
+        replacementString = match.getMatchImage();
       }
 
       offset = Replacer.insertSubstitution(result, offset, info, replacementString);
@@ -279,5 +280,26 @@ public abstract class StructuralSearchProfile {
   @Contract("!null -> !null")
   public PsiElement getPresentableElement(PsiElement element) {
     return isIdentifier(element) ? element.getParent() : element;
+  }
+
+  /**
+   * Override this method to influence which UI controls are shown when editing the constraints of the specified variable.
+   *
+   * @param constraintName  the name of the constraint controls for which applicability is considered.
+   *  See {@link com.intellij.structuralsearch.plugin.ui.UIUtil} for predefined constraint names
+   * @param variableNode  the psi element corresponding to the current variable
+   * @param completePattern  true, if the current variableNode encompasses the complete pattern. The variableNode can also be null in this case.
+   * @param target  true, if the current variableNode is the target of the search
+   * @return true, if the requested constraint is applicable and the corresponding UI should be shown when editing the variable; false otherwise
+   */
+  public boolean isApplicableConstraint(String constraintName, @Nullable PsiElement variableNode, boolean completePattern, boolean target) {
+    switch (constraintName) {
+      case UIUtil.TEXT:
+      case UIUtil.MINIMUM_ZERO:
+        if (target) return false;
+      case UIUtil.MAXIMUM_UNLIMITED:
+      case UIUtil.REFERENCE: return !completePattern;
+    }
+    return false;
   }
 }
