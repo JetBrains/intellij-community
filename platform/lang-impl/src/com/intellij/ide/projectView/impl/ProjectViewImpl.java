@@ -74,10 +74,7 @@ import com.intellij.ui.content.ContentManagerAdapter;
 import com.intellij.ui.content.ContentManagerEvent;
 import com.intellij.ui.switcher.QuickActionProvider;
 import com.intellij.ui.tree.TreeVisitor;
-import com.intellij.util.ArrayUtil;
-import com.intellij.util.IJSwingUtilities;
-import com.intellij.util.PlatformIcons;
-import com.intellij.util.SmartList;
+import com.intellij.util.*;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.JBIterable;
 import com.intellij.util.messages.MessageBusConnection;
@@ -152,7 +149,7 @@ public class ProjectViewImpl extends ProjectView implements PersistentStateCompo
   private static final DataKey<ProjectViewImpl> DATA_KEY = DataKey.create("com.intellij.ide.projectView.impl.ProjectViewImpl");
 
   private DefaultActionGroup myActionGroup;
-  private String mySavedPaneId = ProjectViewPane.ID;
+  private String mySavedPaneId = getDefaultViewId();
   private String mySavedPaneSubId;
   @NonNls private static final String ELEMENT_NAVIGATOR = "navigator";
   @NonNls private static final String ELEMENT_PANES = "panes";
@@ -696,7 +693,7 @@ public class ProjectViewImpl extends ProjectView implements PersistentStateCompo
     collapseAllAction.getTemplatePresentation().setIcon(AllIcons.General.CollapseAll);
     collapseAllAction.getTemplatePresentation().setHoveredIcon(AllIcons.General.CollapseAllHover);
     titleActions.add(collapseAllAction);
-    getProjectViewPaneById(myCurrentViewId == null ? ProjectViewPane.ID : myCurrentViewId).addToolbarActions(myActionGroup);
+    getProjectViewPaneById(myCurrentViewId == null ? getDefaultViewId() : myCurrentViewId).addToolbarActions(myActionGroup);
 
     ToolWindowEx window = (ToolWindowEx)ToolWindowManager.getInstance(myProject).getToolWindow(ToolWindowId.PROJECT_VIEW);
     if (window != null) {
@@ -1390,7 +1387,7 @@ public class ProjectViewImpl extends ProjectView implements PersistentStateCompo
       mySavedPaneId = navigatorElement.getAttributeValue(ATTRIBUTE_CURRENT_VIEW);
       mySavedPaneSubId = navigatorElement.getAttributeValue(ATTRIBUTE_CURRENT_SUBVIEW);
       if (mySavedPaneId == null) {
-        mySavedPaneId = ProjectViewPane.ID;
+        mySavedPaneId = getDefaultViewId();
         mySavedPaneSubId = null;
       }
 
@@ -1417,6 +1414,17 @@ public class ProjectViewImpl extends ProjectView implements PersistentStateCompo
     Element panesElement = parentNode.getChild(ELEMENT_PANES);
     if (panesElement != null) {
       readPaneState(panesElement);
+    }
+  }
+
+  @NotNull
+  public static String getDefaultViewId() {
+    //noinspection SpellCheckingInspection
+    if (!"AndroidStudio".equals(PlatformUtils.getPlatformPrefix()) || Boolean.getBoolean("studio.projectview")) {
+      return ProjectViewPane.ID;
+    }
+    else {
+      return "AndroidView";
     }
   }
 
@@ -1452,7 +1460,7 @@ public class ProjectViewImpl extends ProjectView implements PersistentStateCompo
     AbstractProjectViewPane currentPane = getCurrentProjectViewPane();
     if (currentPane != null) {
       String subId = currentPane.getSubId();
-      if (subId != null || !currentPane.getId().equals(ProjectViewPane.ID)) {
+      if (subId != null || !currentPane.getId().equals(getDefaultViewId())) {
         navigatorElement.setAttribute(ATTRIBUTE_CURRENT_VIEW, currentPane.getId());
         if (subId != null) {
           navigatorElement.setAttribute(ATTRIBUTE_CURRENT_SUBVIEW, subId);
