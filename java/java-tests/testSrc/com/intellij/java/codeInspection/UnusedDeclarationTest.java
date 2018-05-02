@@ -69,6 +69,10 @@ public class UnusedDeclarationTest extends AbstractUnusedDeclarationTest {
     doTest();
   }
 
+  public void testAnnotationUsedInPackageInfo() {
+    doTest();
+  }
+
   public void testSuppress() {
     LanguageLevelProjectExtension.getInstance(getJavaFacade().getProject()).setLanguageLevel(LanguageLevel.JDK_1_5);
     doTest();
