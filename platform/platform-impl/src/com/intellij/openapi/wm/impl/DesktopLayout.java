@@ -81,10 +81,13 @@ public final class DesktopLayout {
     for (WindowInfoImpl otherInfo : layout.myIdToInfo.values()) {
       WindowInfoImpl oldInfo = old.get(otherInfo.getId());
       if (oldInfo == null) {
-        myIdToInfo.put(otherInfo.getId(), otherInfo.copy());
+        WindowInfoImpl newInfo = otherInfo.copy();
+        newInfo.setRegistered(otherInfo.isRegistered());
+        myIdToInfo.put(otherInfo.getId(), newInfo);
       }
       else {
         oldInfo.copyFrom(otherInfo);
+        oldInfo.setRegistered(otherInfo.isRegistered());
         myIdToInfo.put(otherInfo.getId(), oldInfo);
       }
     }
@@ -98,10 +101,6 @@ public final class DesktopLayout {
     normalizeOrder(getAllInfos(ToolWindowAnchor.BOTTOM));
     normalizeOrder(getAllInfos(ToolWindowAnchor.RIGHT));
 
-    invalidateCaches();
-  }
-
-  private void invalidateCaches() {
     myRegisteredInfos.drop();
   }
 
@@ -120,16 +119,20 @@ public final class DesktopLayout {
       info.setAnchor(anchor);
       info.setSplit(splitMode);
       myIdToInfo.put(id, info);
-      invalidateCaches();
     }
-    info.setRegistered(true);
+    if (!info.isRegistered()) {
+      info.setRegistered(true);
+      myRegisteredInfos.drop();
+    }
     return info;
   }
 
   final void unregister(@NotNull String id) {
     WindowInfoImpl info = myIdToInfo.get(id);
-    info.setRegistered(false);
-    invalidateCaches();
+    if (info.isRegistered()) {
+      info.setRegistered(false);
+      myRegisteredInfos.drop();
+    }
   }
 
   /**
@@ -147,8 +150,8 @@ public final class DesktopLayout {
 
   @Nullable
   final String getActiveId() {
-    for (WindowInfoImpl info : myIdToInfo.values()) {
-      if (info.isRegistered() && info.isActive()) {
+    for (WindowInfoImpl info : getInfos()) {
+      if (info.isActive()) {
         return info.getId();
       }
     }
@@ -253,7 +256,7 @@ public final class DesktopLayout {
       normalizeOrder(getAllInfos(newAnchor));
     }
 
-    invalidateCaches();
+    myRegisteredInfos.drop();
   }
 
   final void setSplitMode(@NotNull String id, boolean split) {
@@ -318,7 +321,7 @@ public final class DesktopLayout {
     private final Map<String, WindowInfoImpl> myIdToInfo = new THashMap<>();
 
     public MyStripeButtonComparator(@NotNull ToolWindowAnchor anchor) {
-      for (WindowInfoImpl info : DesktopLayout.this.myIdToInfo.values()) {
+      for (WindowInfoImpl info : getInfos()) {
         if (anchor == info.getAnchor()) {
           myIdToInfo.put(info.getId(), info.copy());
         }
