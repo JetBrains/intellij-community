@@ -1,14 +1,6 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.projectWizard.kotlin.model
 
-import com.intellij.openapi.application.ex.PathManagerEx
-import java.io.File
-
-val PATH_TO_TESTDATA = "/platform/kotlin-gui-tests/src/testData"
-
-val KOTLIN_PLUGIN_VERSION = "${KotlinTestProperties.kotlin_plugin_version_main}-${KotlinTestProperties.ide_tested}-${KotlinTestProperties.kotlin_plugin_version_micro}"
-val KOTLIN_PLUGIN_ZIP = "kotlin-plugin-$KOTLIN_PLUGIN_VERSION.zip"
-val KOTLIN_PLUGIN_INSTALL_PATH = KotlinTestProperties.kotlin_plugin_download_path + File.separator + KOTLIN_PLUGIN_ZIP
 const val KOTLIN_PLUGIN_NAME = "Kotlin"
 
 enum class KotlinKind { JVM, JS, Common }
