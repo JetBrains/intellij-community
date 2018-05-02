@@ -179,7 +179,6 @@ public class ThreadTracker {
 
   // true if somebody started new thread via "executeInPooledThread()" and then the thread is waiting for next task
   private static boolean isIdleApplicationPoolThread(@NotNull Thread thread, @NotNull StackTraceElement[] stackTrace) {
-    if (!isWellKnownOffender(thread)) return false;
     boolean insideTPEGetTask = Arrays.stream(stackTrace)
       .anyMatch(element -> element.getMethodName().equals("getTask")
                            && element.getClassName().equals("java.util.concurrent.ThreadPoolExecutor"));
