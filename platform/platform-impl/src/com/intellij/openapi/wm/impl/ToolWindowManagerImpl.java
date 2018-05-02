@@ -510,7 +510,7 @@ public final class ToolWindowManagerImpl extends ToolWindowManagerEx implements 
     }
 
     WindowInfoImpl info = getInfo(bean.id);
-    if (!info.isSplit() && bean.secondary && !info.wasRead()) {
+    if (!info.isSplit() && bean.secondary && !info.isWasRead()) {
       toolWindow.setSplitMode(true, null);
     }
 
@@ -1808,7 +1808,7 @@ public final class ToolWindowManagerImpl extends ToolWindowManagerEx implements 
                               @Nullable final Rectangle floatingBounds) {
 
     final WindowInfoImpl info = getInfo(toolWindow.getId());
-    if (info.wasRead()) return;
+    if (info.isWasRead()) return;
 
     if (floatingBounds != null) {
       info.setFloatingBounds(floatingBounds);
@@ -1825,7 +1825,9 @@ public final class ToolWindowManagerImpl extends ToolWindowManagerEx implements 
 
   void setDefaultContentUiType(@NotNull ToolWindowImpl toolWindow, @NotNull ToolWindowContentUiType type) {
     final WindowInfoImpl info = getInfo(toolWindow.getId());
-    if (info.wasRead()) return;
+    if (info.isWasRead()) {
+      return;
+    }
     toolWindow.setContentUiType(type, null);
   }
 

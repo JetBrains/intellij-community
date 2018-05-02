@@ -8,10 +8,21 @@ import com.intellij.util.xmlb.Converter
 import com.intellij.util.xmlb.annotations.Attribute
 import com.intellij.util.xmlb.annotations.Property
 import com.intellij.util.xmlb.annotations.Tag
+import com.intellij.util.xmlb.annotations.Transient
 import org.jdom.Element
 import java.awt.Rectangle
 
 private val LOG = logger<WindowInfoImpl>()
+
+private fun canActivateOnStart(id: String?): Boolean {
+  for (ep in ToolWindowEP.EP_NAME.extensions) {
+    if (id == ep.id) {
+      val factory = ep.toolWindowFactory
+      return !factory!!.isDoNotActivateOnStart
+    }
+  }
+  return true
+}
 
 @Suppress("EqualsOrHashCode")
 @Tag("window_info")
@@ -20,17 +31,10 @@ class WindowInfoImpl : Cloneable, WindowInfo, BaseState() {
   companion object {
     internal const val TAG = "window_info"
     const val DEFAULT_WEIGHT = 0.33f
-
-    private fun canActivateOnStart(id: String?): Boolean {
-      for (ep in ToolWindowEP.EP_NAME.extensions) {
-        if (id == ep.id) {
-          val factory = ep.toolWindowFactory
-          return !factory!!.isDoNotActivateOnStart
-        }
-      }
-      return true
-    }
   }
+
+  @get:Transient
+  var isRegistered = false
 
   override var isActive by property(false)
 
@@ -41,14 +45,13 @@ class WindowInfoImpl : Cloneable, WindowInfo, BaseState() {
   override var isAutoHide by property(false)
 
   /**
-   * Bounds of window in "floating" mode. It equals to `null` if
-   * floating bounds are undefined.
+   * Bounds of window in "floating" mode. It equals to `null` if floating bounds are undefined.
    */
   @get:Property(flat = true, style = Property.Style.ATTRIBUTE)
   override var floatingBounds by property<Rectangle?>()
 
   /**
-   * @return `ID` of the tool window
+   * ID of the tool window
    */
   var id by string()
 
@@ -88,11 +91,9 @@ class WindowInfoImpl : Cloneable, WindowInfo, BaseState() {
    */
   var order by property(-1)
 
-  private var wasRead: Boolean = false
-
-  init {
-    this.id = id
-  }
+  @get:Transient
+  var isWasRead: Boolean = false
+    private set
 
   fun copy(): WindowInfoImpl {
     val info = WindowInfoImpl()
@@ -113,7 +114,7 @@ class WindowInfoImpl : Cloneable, WindowInfo, BaseState() {
     get() = type == ToolWindowType.SLIDING
 
   fun readExternal(element: Element) {
-    wasRead = true
+    isWasRead = true
 
     try {
       setTypeAndCheck(ToolWindowType.valueOf(element.getAttributeValue("type")))
@@ -142,11 +143,7 @@ class WindowInfoImpl : Cloneable, WindowInfo, BaseState() {
     return anchor.hashCode() + id!!.hashCode() + type.hashCode() + order
   }
 
-  fun wasRead() = wasRead
-
-  override fun toString(): String {
-    return "id: $id, ${super.toString()}"
-  }
+  override fun toString() = "id: $id, ${super.toString()}"
 }
 
 private class ContentUiTypeConverter : Converter<ToolWindowContentUiType>() {
