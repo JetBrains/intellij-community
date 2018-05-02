@@ -237,8 +237,15 @@ public class JavaPushDownDelegate extends PushDownDelegate<MemberInfo, PsiMember
       }
       else if (member instanceof PsiMethod) {
         PsiMethod method = (PsiMethod)member;
-        PsiMethod methodBySignature = MethodSignatureUtil.findMethodBySuperSignature(targetClass, method.getSignature(substitutor), false);
-        if (methodBySignature == null) {
+        PsiMethod methodBySignature = MethodSignatureUtil.findMethodBySuperSignature(targetClass, method.getSignature(substitutor), true);
+        boolean pushMethodToClass = methodBySignature == null;
+        if (!pushMethodToClass) {
+          //non-abstract method inherited from super class
+          PsiClass containingClass = methodBySignature.getContainingClass();
+          pushMethodToClass = containingClass == sourceClass ||
+                              containingClass != targetClass && methodBySignature.hasModifierProperty(PsiModifier.ABSTRACT);
+        }
+        if (pushMethodToClass) {
           newMember = (PsiMethod)targetClass.add(method);
           final PsiMethod oldMethod = (PsiMethod)memberInfo.getMember();
           if (sourceClass.isInterface() && !targetClass.isInterface()) {
