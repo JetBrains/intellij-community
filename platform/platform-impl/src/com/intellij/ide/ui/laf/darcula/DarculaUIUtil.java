@@ -10,7 +10,6 @@ import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.ui.ComboBoxCompositeEditor;
 import com.intellij.ui.EditorTextField;
 import com.intellij.ui.Gray;
-import com.intellij.ui.JBColor;
 import com.intellij.ui.components.panels.Wrapper;
 import com.intellij.util.ui.*;
 import org.jetbrains.annotations.NotNull;
@@ -38,39 +37,32 @@ import static javax.swing.SwingConstants.WEST;
  * @author Konstantin Bulenkov
  */
 public class DarculaUIUtil {
-  @SuppressWarnings("UseJBColor")
-  private static final Color MAC_ACTIVE_ERROR_COLOR = new Color(0x80f53b3b, true);
-  private static final Color DEFAULT_ACTIVE_ERROR_COLOR = new JBColor(0xe53e4d, 0x8b3c3c);
-
-  @SuppressWarnings("UseJBColor")
-  private static final Color MAC_INACTIVE_ERROR_COLOR = new Color(0x80f7bcbc, true);
-  private static final Color DEFAULT_INACTIVE_ERROR_COLOR = new JBColor(0xebbcbc, 0x725252);
-
-  public static final Color ACTIVE_ERROR_COLOR = new JBColor(() -> UIUtil.isUnderDefaultMacTheme() ? MAC_ACTIVE_ERROR_COLOR : DEFAULT_ACTIVE_ERROR_COLOR);
-  public static final Color INACTIVE_ERROR_COLOR = new JBColor(() -> UIUtil.isUnderDefaultMacTheme() ? MAC_INACTIVE_ERROR_COLOR : DEFAULT_INACTIVE_ERROR_COLOR);
-
-  @SuppressWarnings("UseJBColor")
-  private static final Color MAC_ACTIVE_WARNING_COLOR = new Color(0x80e9ad43, true);
-  private static final Color DEFAULT_ACTIVE_WARNING_COLOR = new JBColor(0xe2a53a, 0xac7920);
-
-  @SuppressWarnings("UseJBColor")
-  private static final Color MAC_INACTIVE_WARNING_COLOR = new Color(0x80ffda99, true);
-  private static final Color DEFAULT_INACTIVE_WARNING_COLOR = new JBColor(0xffd385, 0x6e5324);
-
-  public static final Color ACTIVE_WARNING_COLOR = new JBColor(() -> UIUtil.isUnderDefaultMacTheme() ? MAC_ACTIVE_WARNING_COLOR : DEFAULT_ACTIVE_WARNING_COLOR);
-  public static final Color INACTIVE_WARNING_COLOR = new JBColor(() -> UIUtil.isUnderDefaultMacTheme() ? MAC_INACTIVE_WARNING_COLOR : DEFAULT_INACTIVE_WARNING_COLOR);
-
-
   public enum Outline {
     error {
       public void setGraphicsColor(Graphics2D g, boolean focused) {
-        g.setColor(focused ? ACTIVE_ERROR_COLOR : INACTIVE_ERROR_COLOR);
+        g.setColor(JBUI.CurrentTheme.Focus.errorColor(focused));
       }
     },
 
     warning {
       public void setGraphicsColor(Graphics2D g, boolean focused) {
-        g.setColor(focused ? ACTIVE_WARNING_COLOR: INACTIVE_WARNING_COLOR);
+        g.setColor(JBUI.CurrentTheme.Focus.warningColor(focused));
+      }
+    },
+
+    defaultButton {
+      public void setGraphicsColor(Graphics2D g, boolean focused) {
+        if (focused) {
+          g.setColor(JBUI.CurrentTheme.Focus.defaultButtonColor());
+        }
+      }
+    },
+
+    focus {
+      public void setGraphicsColor(Graphics2D g, boolean focused) {
+        if (focused) {
+          g.setColor(JBUI.CurrentTheme.Focus.focusColor());
+        }
       }
     };
 
@@ -92,7 +84,7 @@ public class DarculaUIUtil {
   }
 
   public static void paintFocusOval(Graphics2D g, float x, float y, float width, float height) {
-    g.setPaint(JBUI.CurrentTheme.focusBorderColor());
+    Outline.focus.setGraphicsColor(g, true);
 
     float blw = BW.getFloat() + LW.getFloat();
     Path2D shape = new Path2D.Float(Path2D.WIND_EVEN_ODD);
@@ -111,17 +103,13 @@ public class DarculaUIUtil {
     doPaint(g, width, height, arc, symmetric);
   }
 
-  public static void paintFocusBorder(Graphics2D g, int width, int height, int arc, boolean symmetric) {
-    paintFocusBorder(g, width, height, (float)arc, symmetric);
-  }
-
   public static void paintFocusBorder(Graphics2D g, int width, int height, float arc, boolean symmetric) {
-    g.setPaint(JBUI.CurrentTheme.focusBorderColor());
+    Outline.focus.setGraphicsColor(g, true);
     doPaint(g, width, height, arc, symmetric);
   }
 
   @SuppressWarnings("SuspiciousNameCombination")
-  private static void doPaint(Graphics2D g, int width, int height, float arc, boolean symmetric) {
+  public static void doPaint(Graphics2D g, int width, int height, float arc, boolean symmetric) {
     float bw = UIUtil.isUnderDefaultMacTheme() ? JBUI.scale(3) : BW.getFloat();
     float lw = UIUtil.isUnderDefaultMacTheme() ? JBUI.scale(UIUtil.isRetina(g) ? 0.5f : 1.0f) : LW.getFloat();
 

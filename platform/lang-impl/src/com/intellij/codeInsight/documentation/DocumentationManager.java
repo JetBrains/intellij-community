@@ -1218,6 +1218,7 @@ public class DocumentationManager extends DockablePopupManager<DocumentationComp
          "<p><span class='grayed'>Size:</span> " + StringUtil.formatFileSize(attr.size()) +
          "<p><span class='grayed'>Type:</span> " + typeName + (type.isBinary() || typeName.equals(languageName) ? "" : " (" + languageName + ")") +
          "<p><span class='grayed'>Modified:</span> " + DateFormatUtil.formatDateTime(attr.lastModifiedTime().toMillis()) +
-         "<p><span class='grayed'>Created:</span> " + DateFormatUtil.formatDateTime(attr.creationTime().toMillis());
+         "<p><span class='grayed'>Created:</span> " + DateFormatUtil.formatDateTime(attr.creationTime().toMillis()) +
+         (withUrl ? DocumentationMarkup.CONTENT_END : "");
   }
 }

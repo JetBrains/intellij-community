@@ -118,7 +118,7 @@ public class GotoClassAction extends GotoActionBase implements DumbAware {
 
       if (file != null && popup.getMemberPattern() != null) {
         NavigationUtil.activateFileWithPsiElement(psiElement, !popup.isOpenInCurrentWindowRequested());
-        Navigatable member = findMember(popup.getMemberPattern(), psiElement, file);
+        Navigatable member = findMember(popup.getMemberPattern(), popup.getTrimmedText(), psiElement, file);
         if (member != null) {
           member.navigate(true);
         }
@@ -132,7 +132,7 @@ public class GotoClassAction extends GotoActionBase implements DumbAware {
   }
 
   @Nullable
-  private static Navigatable findMember(String pattern, PsiElement psiElement, VirtualFile file) {
+  private static Navigatable findMember(String memberPattern, String fullPattern, PsiElement psiElement, VirtualFile file) {
     final PsiStructureViewFactory factory = LanguageStructureViewBuilder.INSTANCE.forLanguage(psiElement.getLanguage());
     final StructureViewBuilder builder = factory == null ? null : factory.getStructureViewBuilder(psiElement.getContainingFile());
     final FileEditor[] editors = FileEditorManager.getInstance(psiElement.getProject()).getEditors(file);
@@ -146,11 +146,18 @@ public class GotoClassAction extends GotoActionBase implements DumbAware {
       if (element == null) {
         return null;
       }
-      final MinusculeMatcher matcher = NameUtil.buildMatcher(pattern).build();
+      
+      MinusculeMatcher matcher = NameUtil.buildMatcher(memberPattern).build();
       int max = Integer.MIN_VALUE;
       Object target = null;
       for (TreeElement treeElement : element.getChildren()) {
         if (treeElement instanceof StructureViewTreeElement) {
+          Object value = ((StructureViewTreeElement)treeElement).getValue();
+          if (value instanceof PsiElement && value instanceof Navigatable &&
+              fullPattern.equals(CopyReferenceAction.elementToFqn((PsiElement)value))) {
+            return (Navigatable)value;
+          }
+
           String presentableText = treeElement.getPresentation().getPresentableText();
           if (presentableText != null) {
             final int degree = matcher.matchingDegree(presentableText);

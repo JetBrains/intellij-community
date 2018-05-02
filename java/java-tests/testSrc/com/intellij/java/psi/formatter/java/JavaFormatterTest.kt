@@ -3505,4 +3505,100 @@ class Test {
 """
     )
   }
+
+  fun testBlankLinesBeforeClassEnd () {
+    AbstractJavaFormatterTest.getSettings().BLANK_LINES_BEFORE_CLASS_END = 2;
+    doTextTest(
+"""
+public class Test {
+
+    private int field1;
+    private int field2;
+
+    {
+        field1 = 2;
+    }
+
+    public void test() {
+        new Runnable() {
+            public void run() {
+            }
+        };
+    }
+}
+""",
+
+"""
+public class Test {
+
+    private int field1;
+    private int field2;
+
+    {
+        field1 = 2;
+    }
+
+    public void test() {
+        new Runnable() {
+            public void run() {
+            }
+        };
+    }
+
+
+}
+"""
+    )
+  }
+
+  fun testBlankLinesBeforeClassEnd_afterField () {
+    AbstractJavaFormatterTest.getSettings().BLANK_LINES_BEFORE_CLASS_END = 2;
+    doTextTest(
+"""
+public class Test {
+
+    private int field1;
+    private int field2;
+}
+""",
+
+"""
+public class Test {
+
+    private int field1;
+    private int field2;
+
+
+}
+"""
+    )
+  }
+
+
+  fun testBlankLinesBeforeClassEnd_afterInnerClass () {
+    AbstractJavaFormatterTest.getSettings().BLANK_LINES_BEFORE_CLASS_END = 2;
+    doTextTest(
+"""
+public class Test {
+
+    private class InnerTest {
+        private int f;
+    }
+}
+""",
+
+"""
+public class Test {
+
+    private class InnerTest {
+        private int f;
+
+
+    }
+
+
+}
+"""
+    )
+  }
 }

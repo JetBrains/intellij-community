@@ -5,7 +5,8 @@ package com.intellij.ide.errorTreeView;
 
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.*;
-import com.intellij.ide.actions.*;
+import com.intellij.ide.actions.CloseTabToolbarAction;
+import com.intellij.ide.actions.ExportToTextFileToolbarAction;
 import com.intellij.ide.errorTreeView.impl.ErrorTreeViewConfiguration;
 import com.intellij.ide.errorTreeView.impl.ErrorViewTextExporter;
 import com.intellij.openapi.actionSystem.*;
@@ -394,6 +395,7 @@ public class NewErrorTreeViewPanel extends JPanel implements DataProvider, Occur
       group.add(ActionManager.getInstance().getAction(IdeActions.ACTION_EDIT_SOURCE));
     }
     group.add(ActionManager.getInstance().getAction(IdeActions.ACTION_COPY));
+    group.add(myAutoScrollToSourceHandler.createToggleAction());
     addExtraPopupMenuActions(group);
     group.addSeparator();
     group.add(new ExportToTextFileToolbarAction(myExporterToTextFile));

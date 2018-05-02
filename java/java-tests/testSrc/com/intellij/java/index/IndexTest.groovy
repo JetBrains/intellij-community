@@ -402,6 +402,20 @@ class IndexTest extends JavaCodeInsightFixtureTestCase {
     assert !findClass("Foo")
   }
 
+  void "test plain text file type in stubs" () {
+    def vFile = myFixture.addFileToProject("Foo.java", "class Bar {}").virtualFile
+    assert findClass("Bar")
+    final Document document = FileDocumentManager.getInstance().getDocument(vFile)
+    document.setText("class Foo {}")
+    PsiDocumentManager.getInstance(project).commitAllDocuments()
+    assert findClass("Foo")
+    assert !findClass("Bar")
+
+    vFile.rename(null, "Foo1")
+    assert !findClass("Foo")
+    assert !findClass("Bar")
+  }
+
   void "test changing a file without psi makes the document committed and updates index"() {
     def psiFile = myFixture.addFileToProject("Foo.java", "class Foo {}")
     def vFile = psiFile.virtualFile
@@ -1023,21 +1037,6 @@ class IndexTest extends JavaCodeInsightFixtureTestCase {
 
       VfsUtil.saveText(file, fileText)
       assertNotNull(findClass("Bar"))
-    }
-  }
-
-  void "test IDEA-188028" () {
-    def file = myFixture.addFileToProject('a.java', 'class Foo {}') as PsiJavaFileImpl
-    WriteCommandAction.runWriteCommandAction(project) {
-      def document = file.viewProvider.document
-      document.setText('')
-      PsiDocumentManager.getInstance(project).commitAllDocuments()
-      PsiManager.getInstance(project).reloadFromDisk(file)
-      document.setText('')
-      assert !findClass('Foo')
-      file.virtualFile.rename(this, 'a1.java')
-      PsiDocumentManager.getInstance(project).commitAllDocuments()
-      assert !findClass('Foo')
     }
   }
 }

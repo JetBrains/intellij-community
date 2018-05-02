@@ -415,7 +415,7 @@ public class ShowIntentionsPass extends TextEditorHighlightingPass {
               super.registerProblem(problemDescriptor);
               if (problemDescriptor instanceof ProblemDescriptorBase) {
                 final TextRange range = ((ProblemDescriptorBase)problemDescriptor).getTextRange();
-                if (range != null && range.contains(offset)) {
+                if (range != null && range.containsOffset(offset)) {
                   final QuickFix[] fixes = problemDescriptor.getFixes();
                   if (fixes != null) {
                     for (int k = 0; k < fixes.length; k++) {

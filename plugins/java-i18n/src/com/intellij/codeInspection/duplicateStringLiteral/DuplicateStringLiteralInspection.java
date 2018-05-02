@@ -204,7 +204,7 @@ public class DuplicateStringLiteralInspection extends BaseLocalInspectionTool {
   }
 
   private boolean shouldCheck(@NotNull PsiLiteralExpression expression) {
-    if (IGNORE_PROPERTY_KEYS && JavaI18nUtil.mustBePropertyKey(expression, new THashMap<>())) return false;
+    if (IGNORE_PROPERTY_KEYS && JavaI18nUtil.mustBePropertyKey(expression, null)) return false;
     return !SuppressManager.isSuppressedInspectionName(expression);
   }
 

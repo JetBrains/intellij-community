@@ -12,6 +12,7 @@ import com.intellij.openapi.application.ApplicationInfo;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ApplicationNamesInfo;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.CatchingConsumer;
@@ -251,10 +252,10 @@ public class PyPIPackageUtil {
   }
 
   @Nullable
-  private String getLatestPackageVersionFromPyPI(@NotNull String packageName) throws IOException {
+  private String getLatestPackageVersionFromPyPI(@NotNull Project project, @NotNull String packageName) throws IOException {
     LOG.debug("Requesting the latest PyPI version for the package " + packageName);
     final List<String> versions = getPackageVersionsFromPyPI(packageName, true);
-    return ContainerUtil.getFirstItem(versions);
+    return PyPackagingSettings.getInstance(project).selectLatestVersion(versions);
   }
 
   /**
@@ -278,20 +279,20 @@ public class PyPIPackageUtil {
   }
 
   @Nullable
-  private String getLatestPackageVersionFromAdditionalRepositories(@NotNull String packageName) throws IOException {
+  private String getLatestPackageVersionFromAdditionalRepositories(@NotNull Project project, @NotNull String packageName) throws IOException {
     final List<String> versions = getPackageVersionsFromAdditionalRepositories(packageName);
-    return ContainerUtil.getFirstItem(versions);
+    return PyPackagingSettings.getInstance(project).selectLatestVersion(versions);
   }
 
   @Nullable
-  public String fetchLatestPackageVersion(@NotNull String packageName) throws IOException {
+  public String fetchLatestPackageVersion(@NotNull Project project, @NotNull String packageName) throws IOException {
     String version = null;
     // Package is on PyPI not a, say, some system package on Ubuntu
     if (PyPIPackageCache.getInstance().containsPackage(packageName)) {
-      version = getLatestPackageVersionFromPyPI(packageName);
+      version = getLatestPackageVersionFromPyPI(project, packageName);
     }
     if (!PyPackageService.getInstance().additionalRepositories.isEmpty()) {
-      final String extraVersion = getLatestPackageVersionFromAdditionalRepositories(packageName);
+      final String extraVersion = getLatestPackageVersionFromAdditionalRepositories(project, packageName);
       if (extraVersion != null) {
         version = extraVersion;
       }

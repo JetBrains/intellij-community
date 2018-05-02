@@ -4,7 +4,6 @@ package com.intellij.util.ui
 import com.intellij.icons.AllIcons
 import com.intellij.openapi.util.IconLoader
 import gnu.trove.THashMap
-import org.jetbrains.annotations.NotNull
 import javax.swing.Icon
 
 /**
@@ -15,7 +14,6 @@ object IconCache {
 
   @JvmStatic
   @JvmOverloads
-  @NotNull
   fun getIcon(name: String, selected: Boolean = false, focused: Boolean = false, enabled: Boolean = true, editable: Boolean = false, pressed: Boolean = false, findIfNotInCache: Boolean = true): Icon {
     var key = name
     if (editable) key += "Editable"
@@ -43,7 +41,7 @@ object IconCache {
       icon = IconLoader.findIcon("/com/intellij/ide/ui/laf/icons/$key.png", IconCache::class.java, true)
       cache[key] = icon
     }
-    return if (icon != null) icon else AllIcons.Actions.Stub
+    return icon ?: AllIcons.Actions.Stub
   }
 
   @JvmStatic

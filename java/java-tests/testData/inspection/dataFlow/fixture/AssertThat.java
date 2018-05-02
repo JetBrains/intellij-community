@@ -34,7 +34,7 @@ class Contracts {
     if(<warning descr="Condition 'b' is always 'true'">b</warning>) {
       System.out.println("always");
     }
-    <warning descr="The call to 'assertThat' always fails, according to its method contracts">assertThat</warning>("b is not true", <warning descr="Value 'b' is always 'true'">b</warning>, not(is(true)));
+    <warning descr="The call to 'assertThat' always fails, according to its method contracts">assertThat</warning>("b is not true", <weak_warning descr="Value 'b' is always 'true'">b</weak_warning>, not(is(true)));
   }
 
   private void checkFalse(boolean b) {

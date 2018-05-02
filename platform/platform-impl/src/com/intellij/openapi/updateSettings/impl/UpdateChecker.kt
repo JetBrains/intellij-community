@@ -450,7 +450,7 @@ object UpdateChecker {
     addUpdateRequestParameter("uid", PermanentInstallationID.get())
     addUpdateRequestParameter("os", SystemInfo.OS_NAME + ' ' + SystemInfo.OS_VERSION)
     if (packageManagerName != null) {
-      addUpdateRequestParameter(packageManagerName, "")
+      addUpdateRequestParameter("manager", packageManagerName)
     }
     if (ApplicationInfoEx.getInstanceEx().isEAP) {
       addUpdateRequestParameter("eap", "")

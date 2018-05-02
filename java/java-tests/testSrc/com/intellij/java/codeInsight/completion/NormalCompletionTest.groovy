@@ -1850,4 +1850,6 @@ class Bar {{
     doTest('\n')
   }
 
+  void testSuggestGetInstanceMethodName() { doTest() }
+
 }

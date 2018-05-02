@@ -114,7 +114,7 @@ internal class MigLayoutBuilder(val spacing: SpacingConfiguration) : LayoutBuild
 
     // if constraint specified only for rows 0 and 1, MigLayout will use constraint 1 for any rows with index 1+ (see LayoutUtil.getIndexSafe - use last element if index > size)
     val rowConstraints = AC()
-    rowConstraints.align("top")
+    rowConstraints.align("baseline")
 
     var isLayoutInsetsAdjusted = false
     container.layout = object : MigLayout(lc, columnConstraints, rowConstraints) {

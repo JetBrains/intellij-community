@@ -539,6 +539,7 @@ public class DataFlowInspectionBase extends AbstractBaseJavaLocalInspectionTool 
       }
 
       holder.registerProblem(ref, "Value <code>#ref</code> #loc is always '" + presentableName + "'",
+                             ProblemHighlightType.WEAK_WARNING,
                              fixes.toArray(LocalQuickFix.EMPTY_ARRAY));
     }
   }

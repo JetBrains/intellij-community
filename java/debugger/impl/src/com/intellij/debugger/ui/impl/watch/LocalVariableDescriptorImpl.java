@@ -116,17 +116,14 @@ public class LocalVariableDescriptorImpl extends ValueDescriptorImpl implements 
             public void setValue(EvaluationContextImpl evaluationContext, Value newValue) throws ClassNotLoadedException,
                                                                                                  InvalidTypeException,
                                                                                                  EvaluateException {
-              debuggerContext.getFrameProxy().setValue(local, preprocessValue(evaluationContext, newValue, local.getType()));
+              debuggerContext.getFrameProxy().setValue(local, preprocessValue(evaluationContext, newValue, getLType()));
               update(debuggerContext);
             }
 
-            public ReferenceType loadClass(EvaluationContextImpl evaluationContext, String className) throws InvocationException,
-                                                                                                             ClassNotLoadedException,
-                                                                                                             IncompatibleThreadStateException,
-                                                                                                             InvalidTypeException,
-                                                                                                             EvaluateException {
-              return evaluationContext.getDebugProcess().loadClass(evaluationContext, className,
-                                                                   evaluationContext.getClassLoader());
+            @NotNull
+            @Override
+            public Type getLType() throws EvaluateException, ClassNotLoadedException {
+              return local.getType();
             }
           });
         }

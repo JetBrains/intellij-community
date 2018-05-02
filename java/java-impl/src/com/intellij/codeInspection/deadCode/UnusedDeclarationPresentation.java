@@ -3,6 +3,7 @@
  */
 package com.intellij.codeInspection.deadCode;
 
+import com.intellij.codeInsight.daemon.impl.HighlightInfoType;
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.codeInspection.*;
 import com.intellij.codeInspection.ex.*;
@@ -169,8 +170,7 @@ public class UnusedDeclarationPresentation extends DefaultInspectionToolPresenta
       @NonNls Element problemClassElement = new Element(InspectionsBundle.message("inspection.export.results.problem.element.tag"));
 
       final HighlightSeverity severity = getSeverity(refElement);
-      final String attributeKey =
-        getTextAttributeKey(refElement.getRefManager().getProject(), severity, ProblemHighlightType.LIKE_UNUSED_SYMBOL);
+      final String attributeKey = HighlightInfoType.UNUSED_SYMBOL.getAttributesKey().getExternalName();
       problemClassElement.setAttribute("severity", severity.myName);
       problemClassElement.setAttribute("attribute_key", attributeKey);
 

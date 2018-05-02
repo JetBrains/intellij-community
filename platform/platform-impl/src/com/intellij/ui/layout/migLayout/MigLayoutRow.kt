@@ -12,7 +12,6 @@ import com.intellij.ui.components.Label
 import com.intellij.ui.layout.*
 import com.intellij.util.SmartList
 import net.miginfocom.layout.CC
-import net.miginfocom.layout.ConstraintParser
 import net.miginfocom.layout.PlatformDefaults
 import java.awt.Component
 import javax.swing.*
@@ -110,15 +109,15 @@ internal class MigLayoutRow(private val parent: MigLayoutRow?,
       }
     }
 
-    val row = MigLayoutRow(this, componentConstraints, builder, labeled = label != null, noGrid = noGrid,
-                           indent = indent + computeChildRowIndent(), buttonGroup = buttonGroup)
+    val row = MigLayoutRow(this, componentConstraints, builder,
+                           labeled = label != null,
+                           noGrid = noGrid,
+                           indent = indent + computeChildRowIndent(),
+                           buttonGroup = buttonGroup)
     subRows.add(row)
 
     if (label != null) {
-      val labelComponentConstraints = CC()
-      labelComponentConstraints.vertical.gapBefore = ConstraintParser.parseBoundSize("${spacing.labelColumnVerticalTopGap}px!", true, false)
-      componentConstraints.put(label, labelComponentConstraints)
-      row.addComponent(label, lazyOf(labelComponentConstraints))
+      row.addComponent(label)
     }
 
     return row
@@ -180,7 +179,7 @@ internal class MigLayoutRow(private val parent: MigLayoutRow?,
   }
 
   // separate method to avoid JComponent as a receiver
-  private fun addComponent(component: JComponent, cc: Lazy<CC>, gapLeft: Int = 0, growPolicy: GrowPolicy? = null, comment: String? = null) {
+  private fun addComponent(component: JComponent, cc: Lazy<CC> = lazy { CC() }, gapLeft: Int = 0, growPolicy: GrowPolicy? = null, comment: String? = null) {
     components.add(component)
 
     if (!shareCellWithPreviousComponentIfNeed(component, cc)) {
@@ -190,7 +189,7 @@ internal class MigLayoutRow(private val parent: MigLayoutRow?,
       }
     }
 
-    setVisualPaddingsAndLabelTopGapIfNeed(component)
+    setVisualPaddings(component)
 
     // (not yet clear is it true or just some strange gaps from another source) MigLayout compensate outer visual paddings, but if there are more than one component in the cell,
     // inner horizontal spacing will be not corrected (e.g. between combobox and button will be 7px horizontal gap in case of macOS IntelliJ LaF), as solution, we set horizontal gap for such components).
@@ -234,6 +233,16 @@ internal class MigLayoutRow(private val parent: MigLayoutRow?,
       }
     }
 
+    if (labeled && component is JScrollPane && component.viewport.view is JTextArea) {
+      val labelCC = componentConstraints.getOrPut(components.get(0)) { CC() }
+      labelCC.alignY("top")
+
+      val labelTop = component.border?.getBorderInsets(component)?.top ?: 0
+      if (labelTop != 0) {
+        labelCC.vertical.gapBefore = gapToBoundSize(labelTop, false)
+      }
+    }
+
     if (cc.isInitialized()) {
       componentConstraints.put(component, cc.value)
     }
@@ -262,7 +271,7 @@ internal class MigLayoutRow(private val parent: MigLayoutRow?,
     }
   }
 
-  private fun setVisualPaddingsAndLabelTopGapIfNeed(originalComponent: JComponent) {
+  private fun setVisualPaddings(originalComponent: JComponent) {
     if (!spacing.isCompensateVisualPaddings) {
       return
     }

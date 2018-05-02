@@ -2,12 +2,15 @@
 package com.intellij.ui.layout
 
 import com.intellij.CommonBundle
+import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory
 import com.intellij.openapi.ui.ComboBox
 import com.intellij.ui.JBIntSpinner
 import com.intellij.ui.components.CheckBox
 import com.intellij.ui.components.JBPasswordField
 import com.intellij.ui.components.RadioButton
+import com.intellij.ui.components.textFieldWithHistoryWithBrowseButton
 import java.awt.Dimension
+import java.awt.GridLayout
 import javax.swing.*
 
 fun labelRowShouldNotGrow(): JPanel {
@@ -17,7 +20,7 @@ fun labelRowShouldNotGrow(): JPanel {
   }
 }
 
-fun makeSecondColumnSmaller(): JPanel {
+fun secondColumnSmallerPanel(): JPanel {
   val selectForkButton = JButton("Select Other Fork")
 
   val branchCombobox = ComboBox<String>()
@@ -33,10 +36,8 @@ fun makeSecondColumnSmaller(): JPanel {
       selectForkButton(growX)
     }
     row("Base branch:") {
-      cell {
-        branchCombobox(growX, pushX)
-        diffButton(growX)
-      }
+      branchCombobox(growX, pushX)
+      diffButton(growX)
     }
     row("Title:") { titleTextField() }
     row("Description:") {
@@ -65,6 +66,13 @@ fun visualPaddingsPanelOnlyComboBox(): JPanel {
 fun visualPaddingsPanelOnlyButton(): JPanel {
   return panel {
     row("Button:") { button("label", growX) {} }
+  }
+}
+
+@Suppress("unused")
+fun visualPaddingsPanelOnlyTextField(): JPanel {
+  return panel {
+    row("Text field:") { JTextField("text")() }
   }
 }
 
@@ -143,4 +151,24 @@ fun cellPanel(): JPanel {
       scrollPane(JTextArea())
     }
   }
+}
+
+fun createLafTestPanel(): JPanel {
+  val spacing = createIntelliJSpacingConfiguration()
+  val panel = JPanel(GridLayout(0, 1, spacing.horizontalGap, spacing.verticalGap))
+  panel.add(JTextField("text"))
+  panel.add(JPasswordField("secret"))
+  panel.add(JComboBox<String>(arrayOf("one", "two")))
+
+  val field = JComboBox<String>(arrayOf("one", "two"))
+  field.isEditable = true
+  panel.add(field)
+
+  panel.add(JButton("label"))
+  panel.add(CheckBox("enabled"))
+  panel.add(JRadioButton("label"))
+  panel.add(JBIntSpinner(0, 0, 7))
+  panel.add(textFieldWithHistoryWithBrowseButton(null, "File", FileChooserDescriptorFactory.createSingleFileNoJarsDescriptor()))
+
+  return panel
 }

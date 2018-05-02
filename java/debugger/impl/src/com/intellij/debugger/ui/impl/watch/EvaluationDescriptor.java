@@ -144,18 +144,16 @@ public abstract class EvaluationDescriptor extends ValueDescriptorImpl {
           set(expression, callback, debuggerContext, new SetValueRunnable() {
             public void setValue(EvaluationContextImpl evaluationContext, Value newValue)
               throws ClassNotLoadedException, InvalidTypeException, EvaluateException {
-              final Modifier modifier = evaluationDescriptor.getModifier();
-              modifier.setValue(preprocessValue(evaluationContext, newValue, modifier.getExpectedType()));
+              //noinspection ConstantConditions
+              evaluationDescriptor.getModifier().setValue(preprocessValue(evaluationContext, newValue, getLType()));
               update(debuggerContext);
             }
 
-            public ReferenceType loadClass(EvaluationContextImpl evaluationContext, String className) throws InvocationException,
-                                                                                                      ClassNotLoadedException,
-                                                                                                      IncompatibleThreadStateException,
-                                                                                                      InvalidTypeException,
-                                                                                                      EvaluateException {
-              return evaluationContext.getDebugProcess().loadClass(evaluationContext, className,
-                                                                   evaluationContext.getClassLoader());
+            @NotNull
+            @Override
+            public Type getLType() throws EvaluateException, ClassNotLoadedException {
+              //noinspection ConstantConditions
+              return evaluationDescriptor.getModifier().getExpectedType();
             }
           });
         }

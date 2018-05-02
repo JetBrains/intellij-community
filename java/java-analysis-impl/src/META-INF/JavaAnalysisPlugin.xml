@@ -241,5 +241,9 @@
     <syntaxHighlighter id="java.class" key="CLASS" factoryClass="com.intellij.lang.java.JavaSyntaxHighlighterFactory"/>
     <lang.syntaxHighlighterFactory language="JAVA" implementationClass="com.intellij.lang.java.JavaSyntaxHighlighterFactory"/>
     <moduleExtension implementation="com.intellij.openapi.roots.impl.JavaModuleExternalPathsImpl"/>
+    <localInspection groupPath="Java,Java language level migration aids" language="JAVA" cleanupTool="true"
+                     enabledByDefault="true" level="WARNING" groupBundle="messages.InspectionsBundle" 
+                     groupKey="group.names.language.level.specific.issues.and.migration.aids11" bundle="messages.InspectionsBundle" shortName="RedundantBackticksAroundRawStringLiteral"
+                     implementationClass="com.intellij.codeInspection.RedundantBackticksAroundRawStringLiteralInspection" key="redundant.backticks.around.raw.string.literal.display.name"/>
   </extensions>
 </idea-plugin>

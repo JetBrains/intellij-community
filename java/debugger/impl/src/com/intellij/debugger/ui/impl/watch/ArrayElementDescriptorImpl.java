@@ -88,16 +88,19 @@ public class ArrayElementDescriptorImpl extends ValueDescriptorImpl implements A
           set(expression, callback, debuggerContext, new SetValueRunnable() {
             public void setValue(EvaluationContextImpl evaluationContext, Value newValue)
               throws ClassNotLoadedException, InvalidTypeException, EvaluateException {
-              array.setValue(elementDescriptor.getIndex(), preprocessValue(evaluationContext, newValue, arrType.componentType()));
+              array.setValue(elementDescriptor.getIndex(), preprocessValue(evaluationContext, newValue, getLType()));
               update(debuggerContext);
             }
 
-            public ReferenceType loadClass(EvaluationContextImpl evaluationContext, String className) throws InvocationException,
-                                                                                                             ClassNotLoadedException,
-                                                                                                             IncompatibleThreadStateException,
-                                                                                                             InvalidTypeException,
-                                                                                                             EvaluateException {
-              return evaluationContext.getDebugProcess().loadClass(evaluationContext, className, arrType.classLoader());
+            @Override
+            public ClassLoaderReference getClassLoader(EvaluationContextImpl evaluationContext) {
+              return arrType.classLoader();
+            }
+
+            @NotNull
+            @Override
+            public Type getLType() throws ClassNotLoadedException {
+              return arrType.componentType();
             }
           });
         }

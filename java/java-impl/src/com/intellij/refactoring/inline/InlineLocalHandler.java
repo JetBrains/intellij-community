@@ -151,7 +151,14 @@ public class InlineLocalHandler extends JavaInlineActionHandler {
     }
 
     List<PsiElement> refsToInlineList = new ArrayList<>();
-    Collections.addAll(refsToInlineList, DefUseUtil.getRefs(containerBlock, local, defToInline));
+    try {
+      Collections.addAll(refsToInlineList, DefUseUtil.getVariableRefs(containerBlock, local, defToInline));
+    }
+    catch (AnalysisCanceledException e) {
+       String message = RefactoringBundle.message("extract.method.control.flow.analysis.failed", localName);
+      CommonRefactoringUtil.showErrorHint(project, editor, message, REFACTORING_NAME, HelpID.INLINE_VARIABLE);
+      return;
+    }
     for (PsiElement innerClassUsage : innerClassUsages) {
       if (!refsToInlineList.contains(innerClassUsage)) {
         refsToInlineList.add(innerClassUsage);

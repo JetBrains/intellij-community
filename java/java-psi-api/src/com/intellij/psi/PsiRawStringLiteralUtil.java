@@ -2,6 +2,7 @@
 package com.intellij.psi;
 
 import com.intellij.openapi.util.text.StringUtil;
+import gnu.trove.TIntHashSet;
 
 public class PsiRawStringLiteralUtil {
   /**
@@ -48,4 +49,35 @@ public class PsiRawStringLiteralUtil {
     while (quotesLength < length && literalText.charAt(quotesLength) == '`') quotesLength++;
     return quotesLength - startIndex;
   }
+
+  /**
+   * For given raw string literal text (with backticks) returns minimal number of backticks required for string content
+   * @return number less than current number of backticks,
+   *         -1 otherwise
+   */
+  public static int getReducedNumberOfBackticks(String text) {
+    int leadingTicsSequence = getLeadingTicsSequence(text);
+    int trailingTicsSequence = getTrailingTicsSequence(text);
+    if (leadingTicsSequence == trailingTicsSequence && leadingTicsSequence > 1) {
+      int length = text.length() - trailingTicsSequence;
+      int idx = leadingTicsSequence;
+      TIntHashSet usedTicSequences = new TIntHashSet();
+      usedTicSequences.add(leadingTicsSequence);
+      while (idx < length) {
+        idx = text.indexOf("`", idx);
+        if (idx < 0) break;
+        int ticsSequence = getTicsSequence(text, length, idx);
+        usedTicSequences.add(ticsSequence);
+        idx += ticsSequence;
+      }
+
+      for (int i = 1; i < leadingTicsSequence; i++) {
+        if (!usedTicSequences.contains(i)) {
+          return i;
+        }
+      }
+    }
+    return -1;
+  }
+  
 }

@@ -263,7 +263,7 @@ public abstract class StructuralSearchProfile {
   }
 
   @Contract("null -> false")
-  public boolean isIdentifier(PsiElement element) {
+  public boolean isIdentifier(@Nullable PsiElement element) {
     return false;
   }
 

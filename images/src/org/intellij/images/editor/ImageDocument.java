@@ -18,7 +18,7 @@ package org.intellij.images.editor;
 import javax.swing.event.ChangeListener;
 import java.awt.*;
 import java.awt.image.BufferedImage;
-import java.util.function.Function;
+import java.util.function.BiFunction;
 
 /**
  * Image document to show or edit in {@link ImageEditor}.
@@ -30,7 +30,7 @@ public interface ImageDocument {
     /**
      * A scaled image provider.
      */
-    interface ScaledImageProvider extends Function<Double/* scale */, BufferedImage> {}
+    interface ScaledImageProvider extends BiFunction<Double/* scale */, Component, BufferedImage> {}
 
     /**
      * Return image for rendering

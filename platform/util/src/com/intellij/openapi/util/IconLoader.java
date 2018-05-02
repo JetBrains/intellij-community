@@ -217,19 +217,20 @@ public final class IconLoader {
   }
 
   @Nullable
-  private static URL findURL(@NotNull String path, @NotNull Class aClass) {
-    URL url = aClass.getResource(path);
+  private static URL findURL(@NotNull String path, @Nullable Object context) {
+    URL url;
+    if (context instanceof Class) {
+      url = ((Class)context).getResource(path);
+    }
+    else if (context instanceof ClassLoader) {
+      url = ((ClassLoader)context).getResource(path);
+    }
+    else {
+      LOG.warn("unexpected: " + context);
+      return null;
+    }
     if (url != null || !path.endsWith(".png")) return url;
-    url = aClass.getResource(path.substring(0, path.length() - 4) + ".svg");
-    if (url != null) LOG.info("replace '" + path + "' with '" + url + "'");
-    return url;
-  }
-
-  @Nullable
-  private static URL findURL(@NotNull String path, @NotNull ClassLoader loader) {
-    URL url = loader.getResource(path);
-    if (url != null || !path.endsWith(".png")) return url;
-    url = loader.getResource(path.substring(0, path.length() - 4) + ".svg");
+    url = findURL(path.substring(0, path.length() - 4) + ".svg", context);
     if (url != null) LOG.info("replace '" + path + "' with '" + url + "'");
     return url;
   }

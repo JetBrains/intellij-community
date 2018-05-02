@@ -18,6 +18,7 @@ package com.jetbrains.python.packaging.ui;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Sets;
 import com.intellij.execution.ExecutionException;
+import com.intellij.icons.AllIcons;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
@@ -192,7 +193,7 @@ public class PyInstalledPackagesPanel extends InstalledPackagesPanel {
   @Override
   @NotNull
   protected ToggleActionButton[] getExtraActions() {
-    return new ToggleActionButton[]{new ToggleActionButton("Use Conda Package Manager", PythonIcons.Python.Anaconda) {
+    final ToggleActionButton useCondaButton = new ToggleActionButton("Use Conda Package Manager", PythonIcons.Python.Anaconda) {
       @Override
       public boolean isSelected(AnActionEvent e) {
         final Sdk sdk = getSelectedSdk();
@@ -216,6 +217,21 @@ public class PyInstalledPackagesPanel extends InstalledPackagesPanel {
         final Sdk sdk = getSelectedSdk();
         return sdk != null && PythonSdkType.isConda(sdk);
       }
-    }};
+    };
+
+    final ToggleActionButton showEarlyReleasesButton = new ToggleActionButton("Show early releases", AllIcons.Actions.Show) {
+        @Override
+        public boolean isSelected(AnActionEvent e) {
+          return PyPackagingSettings.getInstance(myProject).earlyReleasesAsUpgrades;
+        }
+
+        @Override
+        public void setSelected(AnActionEvent e, boolean state) {
+          PyPackagingSettings.getInstance(myProject).earlyReleasesAsUpgrades = state;
+          updatePackages(myPackageManagementService);
+        }
+      };
+
+    return new ToggleActionButton[]{useCondaButton, showEarlyReleasesButton};
   }
 }

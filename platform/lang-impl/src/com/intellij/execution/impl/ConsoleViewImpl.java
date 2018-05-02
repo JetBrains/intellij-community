@@ -1511,6 +1511,11 @@ public class ConsoleViewImpl extends JPanel implements ConsoleView, ObservableCo
       if (text.length() < 1000) {
         return null;
       }
+
+      if (!myState.isCommandLine(text)) {
+        return null;
+      }
+      
       int index = 0;
       if (text.charAt(0) == '"') {
         index = text.indexOf('"', 1) + 1;
