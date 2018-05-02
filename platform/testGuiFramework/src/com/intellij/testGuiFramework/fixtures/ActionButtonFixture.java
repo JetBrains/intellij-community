@@ -89,8 +89,7 @@ public class ActionButtonFixture extends JComponentFixture<ActionButtonFixture, 
       public boolean test() {
         Collection<ActionButton> found = robot.finder().findAll(container, matcher);
         if (found.size() >= 1) {
-          ActionButton actionButton = getIfOnce(found, "Find ActionButton " + criteriaDescription);
-          if (actionButton == null) return false;
+          ActionButton actionButton = found.stream().findFirst().get();
           actionButtonRef.set(actionButton);
           return true;
         }
@@ -103,19 +102,6 @@ public class ActionButtonFixture extends JComponentFixture<ActionButtonFixture, 
       throw new ComponentLookupException("Failed to find Action button " + criteriaDescription);
     }
     return new ActionButtonFixture(robot, button);
-  }
-
-  @Nullable
-  private static ActionButton getIfOnce(@NotNull Collection<ActionButton> found, @Nullable String criteria) {
-    Stream<ActionButton> objectStream = found.stream();
-    if (found.size() > 1) {
-      throw new ComponentLookupException("Find more than one ActionButton component matched criteria " + criteria + ": "
-                                         + objectStream
-                                           .map(component -> Formatting.format((Component)component))
-                                           .collect(Collectors.joining(", ")));
-    }
-    Optional<ActionButton> buttonOptional = objectStream.findFirst();
-    return buttonOptional.orElse(null);
   }
 
   @NotNull
