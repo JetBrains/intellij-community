@@ -4,6 +4,7 @@ package com.intellij.openapi.wm.impl;
 import com.intellij.configurationStore.XmlSerializer;
 import com.intellij.ide.ui.UISettings;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.util.ClearableLazyValue;
 import com.intellij.openapi.util.JDOMUtil;
 import com.intellij.openapi.wm.ToolWindow;
 import com.intellij.openapi.wm.ToolWindowAnchor;
@@ -37,24 +38,36 @@ public final class DesktopLayout {
    *
    */
   private static final MyWindowInfoComparator ourWindowInfoComparator = new MyWindowInfoComparator();
-  /**
-   * Don't use this member directly. Get it only by {@code getInfos} method.
-   * It exists here only for optimization purposes. This member can be {@code null}
-   * if the cached data is invalid.
-   */
-  private List<WindowInfoImpl> myRegisteredInfos;
-  /**
-   * Don't use this member directly. Get it only by {@code getUnregisteredInfos} method.
-   * It exists here only for optimization purposes. This member can be {@code null}
-   * if the cached data is invalid.
-   */
-  private List<WindowInfoImpl> myUnregisteredInfos;
-  /**
-   * Don't use this member directly. Get it only by {@code getAllInfos} method.
-   * It exists here only for optimization purposes. This member can be {@code null}
-   * if the cached data is invalid.
-   */
-  private List<WindowInfoImpl> myAllInfos;
+
+  private final ClearableLazyValue<List<WindowInfoImpl>> myRegisteredInfos = new ClearableLazyValue<List<WindowInfoImpl>>() {
+    @NotNull
+    @Override
+    protected List<WindowInfoImpl> compute() {
+      if (myRegisteredId2Info.isEmpty()) {
+        return Collections.emptyList();
+      }
+      return new ArrayList<>(myRegisteredId2Info.values());
+    }
+  };
+
+  private final ClearableLazyValue<List<WindowInfoImpl>> myUnregisteredInfos = new ClearableLazyValue<List<WindowInfoImpl>>() {
+    @NotNull
+    @Override
+    protected List<WindowInfoImpl> compute() {
+      if (myUnregisteredId2Info.isEmpty()) {
+        return Collections.emptyList();
+      }
+      return new ArrayList<>(myUnregisteredId2Info.values());
+    }
+  };
+
+  private final ClearableLazyValue<List<WindowInfoImpl>> myAllInfos = new ClearableLazyValue<List<WindowInfoImpl>>() {
+    @NotNull
+    @Override
+    protected List<WindowInfoImpl> compute() {
+      return ContainerUtil.concat(getInfos(), getUnregisteredInfos());
+    }
+  };
 
   /**
    * Copies itself from the passed
@@ -76,15 +89,18 @@ public final class DesktopLayout {
         info.copyFrom(info1);
       }
     }
-    // invalidate caches
-    myRegisteredInfos = null;
-    myUnregisteredInfos = null;
-    myAllInfos = null;
+    invalidateCaches();
     // normalize orders
     normalizeOrder(getAllInfos(ToolWindowAnchor.TOP));
     normalizeOrder(getAllInfos(ToolWindowAnchor.LEFT));
     normalizeOrder(getAllInfos(ToolWindowAnchor.BOTTOM));
     normalizeOrder(getAllInfos(ToolWindowAnchor.RIGHT));
+  }
+
+  private void invalidateCaches() {
+    myRegisteredInfos.drop();
+    myUnregisteredInfos.drop();
+    myAllInfos.drop();
   }
 
   /**
@@ -108,20 +124,14 @@ public final class DesktopLayout {
       myUnregisteredId2Info.remove(id);
     }
     myRegisteredId2Info.put(id, info);
-    // invalidate caches
-    myRegisteredInfos = null;
-    myUnregisteredInfos = null;
-    myAllInfos = null;
+    invalidateCaches();
     return info;
   }
 
   final void unregister(@NotNull String id) {
     final WindowInfoImpl info = myRegisteredId2Info.remove(id).copy();
     myUnregisteredId2Info.put(id, info);
-    // invalidate caches
-    myRegisteredInfos = null;
-    myUnregisteredInfos = null;
-    myAllInfos = null;
+    invalidateCaches();
   }
 
   /**
@@ -152,13 +162,7 @@ public final class DesktopLayout {
    */
   @NotNull
   final List<WindowInfoImpl> getInfos() {
-    if (myRegisteredInfos == null) {
-      if (myRegisteredId2Info.isEmpty()) {
-        return Collections.emptyList();
-      }
-      myRegisteredInfos = new ArrayList<>(myRegisteredId2Info.values());
-    }
-    return myRegisteredInfos;
+    return myRegisteredInfos.getValue();
   }
 
   /**
@@ -166,13 +170,7 @@ public final class DesktopLayout {
    */
   @NotNull
   private List<WindowInfoImpl> getUnregisteredInfos() {
-    if (myUnregisteredInfos == null) {
-      if (myUnregisteredId2Info.isEmpty()) {
-        return Collections.emptyList();
-      }
-      myUnregisteredInfos = new ArrayList<>(myUnregisteredId2Info.values());
-    }
-    return myUnregisteredInfos;
+    return myUnregisteredInfos.getValue();
   }
 
   /**
@@ -180,10 +178,7 @@ public final class DesktopLayout {
    */
   @NotNull
   private List<WindowInfoImpl> getAllInfos() {
-    final List<WindowInfoImpl> registeredInfos = getInfos();
-    final List<WindowInfoImpl> unregisteredInfos = getUnregisteredInfos();
-    myAllInfos = ContainerUtil.concat(registeredInfos, unregisteredInfos);
-    return myAllInfos;
+    return myAllInfos.getValue();
   }
 
   /**
@@ -277,12 +272,11 @@ public final class DesktopLayout {
   }
 
   final void setSplitMode(@NotNull String id, boolean split) {
-    final WindowInfoImpl info = getInfo(id, true);
-    info.setSplit(split);
+    getInfo(id, true).setSplit(split);
   }
 
   public final void readExternal(@NotNull Element layoutElement) {
-    myUnregisteredInfos = null;
+    myUnregisteredInfos.drop();
     for (Element e : layoutElement.getChildren(WindowInfoImpl.TAG)) {
       WindowInfoImpl info = XmlSerializer.deserialize(e, WindowInfoImpl.class);
       if (info.getId() == null) {
