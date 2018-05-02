@@ -81,7 +81,7 @@ class WindowInfoImpl : Cloneable, WindowInfo, BaseState() {
   override var isSplit by property(false)
 
   @get:Attribute("content_ui", converter = ContentUiTypeConverter::class)
-  override var contentUiType: ToolWindowContentUiType by property(ToolWindowContentUiType.TABBED, { it == ToolWindowContentUiType.TABBED })
+  override var contentUiType: ToolWindowContentUiType by property(ToolWindowContentUiType.TABBED) { it == ToolWindowContentUiType.TABBED }
 
   /**
    * Defines order of tool window button inside the stripe.

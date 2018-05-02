@@ -244,12 +244,13 @@ public final class DesktopLayout {
    * @param newOrder  new order
    */
   final void setAnchor(@NotNull String id, @NotNull ToolWindowAnchor newAnchor, int newOrder) {
-    if (newOrder == -1) { // if order isn't defined then the window will the last in the stripe
+    if (newOrder == -1) {
+      // if order isn't defined then the window will the last in the stripe
       newOrder = getMaxOrder(newAnchor) + 1;
     }
     final WindowInfoImpl info = getInfo(id, true);
     final ToolWindowAnchor oldAnchor = info.getAnchor();
-    // Shift order to the right in the target stripe.
+    // shift order to the right in the target stripe
     final List<WindowInfoImpl> infos = getAllInfos(newAnchor);
     for (int i = infos.size() - 1; i > -1; i--) {
       final WindowInfoImpl info2 = infos.get(i);
@@ -260,7 +261,7 @@ public final class DesktopLayout {
     // "move" window into the target position
     info.setAnchor(newAnchor);
     info.setOrder(newOrder);
-    // Normalize orders in the source and target stripes
+    // normalize orders in the source and target stripes
     normalizeOrder(getAllInfos(oldAnchor));
     if (oldAnchor != newAnchor) {
       normalizeOrder(getAllInfos(newAnchor));
