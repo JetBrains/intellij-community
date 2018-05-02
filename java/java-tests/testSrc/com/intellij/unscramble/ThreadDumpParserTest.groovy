@@ -228,4 +228,44 @@ com.intellij.openapi.application.impl.ApplicationImpl.runWriteAction(Runnable) A
                                            'AWT-EventQueue-0 2017.3#IC-173.SNAPSHOT IDEA, eap:true, os:Linux 3.13.0-117-generic, java-version:JetBrains s.r.o 1.8.0_152-release-867-b1']
   }
 
+  void "test jstack -F format"() {
+    String text = '''
+Attaching to process ID 7370, please wait...
+Debugger attached successfully.
+Server compiler detected.
+JVM version is 25.161-b12
+Deadlock Detection:
+
+No deadlocks found.
+
+Thread 8393: (state = BLOCKED)
+ - sun.misc.Unsafe.park(boolean, long) @bci=0 (Compiled frame; information may be imprecise)
+ - java.util.concurrent.locks.LockSupport.parkNanos(java.lang.Object, long) @bci=63, line=215 (Compiled frame)
+ - java.util.concurrent.SynchronousQueue$TransferStack.awaitFulfill(java.util.concurrent.SynchronousQueue$TransferStack$SNode, boolean, long) @bci=283, line=460 (Compiled frame)
+ - java.util.concurrent.SynchronousQueue$TransferStack.transfer(java.lang.Object, boolean, long) @bci=175, line=362 (Compiled frame)
+ - java.util.concurrent.SynchronousQueue.poll(long, java.util.concurrent.TimeUnit) @bci=49, line=941 (Compiled frame)
+ - java.util.concurrent.ThreadPoolExecutor.getTask() @bci=247, line=1073 (Compiled frame)
+ - java.util.concurrent.ThreadPoolExecutor.runWorker(java.util.concurrent.ThreadPoolExecutor$Worker) @bci=74, line=1134 (Interpreted frame)
+ - java.util.concurrent.ThreadPoolExecutor$Worker.run() @bci=28, line=624 (Interpreted frame)
+ - java.lang.Thread.run() @bci=34, line=748 (Interpreted frame)
+
+
+Thread 7399: (state = IN_NATIVE)
+ - sun.awt.X11.XToolkit.$$YJP$$waitForEvents(long) @bci=0 (Compiled frame; information may be imprecise)
+ - sun.awt.X11.XToolkit.waitForEvents(long) @bci=14 (Compiled frame)
+ - sun.awt.X11.XToolkit.run(boolean) @bci=298, line=568 (Interpreted frame)
+ - sun.awt.X11.XToolkit.run() @bci=38, line=532 (Interpreted frame)
+ - java.lang.Thread.run() @bci=34, line=748 (Interpreted frame)
+
+
+Thread 7381: (state = BLOCKED)
+'''
+    def threads = ThreadDumpParser.parse(text)
+    assert threads.collect { it.name } == ['8393', '7399', '7381']
+    assert threads[0].stackTrace.contains('ThreadPoolExecutor')
+    assert threads[1].stackTrace.contains('XToolkit')
+    assert threads[2].emptyStackTrace
+    
+  }
+
 }

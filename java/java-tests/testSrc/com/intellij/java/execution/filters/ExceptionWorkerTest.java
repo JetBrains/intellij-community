@@ -21,7 +21,6 @@ import com.intellij.execution.filters.FilterMixin;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.EditorFactory;
 import com.intellij.openapi.util.TextRange;
-import com.intellij.openapi.util.Trinity;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase;
 
@@ -79,29 +78,29 @@ public class ExceptionWorkerTest extends LightCodeInsightFixtureTestCase {
   }
 
   public void testAnomalyParenthesisParsing() {
-    String[][] data = new String[][]{
-      {"at youtrack.jetbrains.com.Issue.IDEA_125137()(FooTest.groovy:2)\n", "youtrack.jetbrains.com.Issue", "IDEA_125137()",
-        "FooTest.groovy:2"},
-      {"at youtrack.jetbrains.com.Issue.IDEA_125137()Hmm(FooTest.groovy:2)\n", "youtrack.jetbrains.com.Issue", "IDEA_125137()Hmm",
-        "FooTest.groovy:2"},
-      {"p1.Cl.mee(p1.Cl.java:87) (A MESSAGE) IDEA-133794 (BUG START WITH 1)\n", "p1.Cl", "mee", "p1.Cl.java:87"}
-    };
-    for (String[] datum : data) {
-      assertParsed(datum[0], datum[1], datum[2], datum[3]);
-    }
+    assertParsed("at youtrack.jetbrains.com.Issue.IDEA_125137()(FooTest.groovy:2)\n", "youtrack.jetbrains.com.Issue", "IDEA_125137()", "FooTest.groovy", 2);
+    assertParsed("at youtrack.jetbrains.com.Issue.IDEA_125137()Hmm(FooTest.groovy:2)\n", "youtrack.jetbrains.com.Issue", "IDEA_125137()Hmm", "FooTest.groovy", 2);
+    assertParsed("p1.Cl.mee(p1.Cl.java:87) (A MESSAGE) IDEA-133794 (BUG START WITH 1)\n", "p1.Cl", "mee", "p1.Cl.java", 87);
   }
 
-  private static void assertParsed(String line, String className, String methodName, String fileLine) {
+  private static void assertParsed(String line, String className, String methodName, String fileName, int lineIndex) {
     assertTrue(line.endsWith("\n"));
-    Trinity<TextRange, TextRange, TextRange> trinity = ExceptionWorker.parseExceptionLine(line);
+    ExceptionWorker.ParsedLine trinity = ExceptionWorker.parseExceptionLine(line);
     assertNotNull(trinity);
-    assertEquals(className, trinity.first.subSequence(line));
-    assertEquals(methodName, trinity.second.subSequence(line));
-    assertEquals(fileLine, trinity.third.subSequence(line));
+    assertEquals(className, trinity.classFqnRange.subSequence(line));
+    assertEquals(methodName, trinity.methodNameRange.subSequence(line));
+    assertEquals(fileName, trinity.fileName);
+    assertEquals(lineIndex, trinity.lineNumber);
   }
 
   public void testYourKitFormat() {
     assertParsed("com.intellij.util.concurrency.Semaphore.waitFor(long) Semaphore.java:89\n",
-                 "com.intellij.util.concurrency.Semaphore", "waitFor", "Semaphore.java:89");
+                 "com.intellij.util.concurrency.Semaphore", "waitFor", "Semaphore.java", 89);
+  }
+
+  public void testForcedJstackFormat() {
+    assertParsed(" - java.lang.ref.ReferenceQueue.remove(long) @bci=151, line=143 (Compiled frame)\n",
+                 "java.lang.ref.ReferenceQueue", "remove", null, 143);
+
   }
 }
