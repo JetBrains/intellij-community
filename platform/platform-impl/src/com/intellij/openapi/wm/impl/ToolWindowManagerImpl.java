@@ -44,7 +44,6 @@ import com.intellij.util.Alarm;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.EventDispatcher;
 import com.intellij.util.ObjectUtils;
-import com.intellij.util.containers.JBIterable;
 import com.intellij.util.messages.MessageBusConnection;
 import com.intellij.util.ui.EdtInvocationManager;
 import com.intellij.util.ui.PositionTracker;
@@ -227,8 +226,7 @@ public final class ToolWindowManagerImpl extends ToolWindowManagerEx implements 
     getFocusManager().doWhenFocusSettlesDown(new ExpirableRunnable.ForProject(myProject) {
       @Override
       public void run() {
-        WindowInfoImpl[] infos = myLayout.getInfos();
-        for (WindowInfoImpl each : infos) {
+        for (WindowInfoImpl each : myLayout.getInfos()) {
           if (each.isVisible()) {
             ToolWindow tw = getToolWindow(each.getId());
             if (tw instanceof ToolWindowImpl) {
@@ -440,10 +438,16 @@ public final class ToolWindowManagerImpl extends ToolWindowManagerEx implements 
       myToolWindowsPane, UIUtil.NOT_IN_HIERARCHY_COMPONENTS, new Iterable<JComponent>() {
         @Override
         public Iterator<JComponent> iterator() {
-          return JBIterable.of(myLayout.getInfos())
-            .map(info -> (JComponent)getInternalDecorator(info.getId()))
-            .filter(decorator -> decorator.getParent() == null)
-            .iterator();
+          List<WindowInfoImpl> infos = myLayout.getInfos();
+          List<JComponent> result = new ArrayList<>(infos.size());
+          for (WindowInfoImpl info : infos) {
+            @SuppressWarnings("ConstantConditions")
+            JComponent decorator = getInternalDecorator(info.getId());
+            if (decorator.getParent() == null) {
+              result.add(decorator);
+            }
+          }
+          return result.iterator();
         }
       });
   }
@@ -602,8 +606,7 @@ public final class ToolWindowManagerImpl extends ToolWindowManagerEx implements 
   }
 
   private void deactivateWindows(@Nullable String idToIgnore, @NotNull List<FinalizableCommand> commandList) {
-    final WindowInfoImpl[] infos = myLayout.getInfos();
-    for (final WindowInfoImpl info : infos) {
+    for (final WindowInfoImpl info : myLayout.getInfos()) {
       if (idToIgnore != null && idToIgnore.equals(info.getId())) {
         continue;
       }
@@ -726,10 +729,10 @@ public final class ToolWindowManagerImpl extends ToolWindowManagerEx implements 
   @NotNull
   @Override
   public String[] getToolWindowIds() {
-    final WindowInfoImpl[] infos = myLayout.getInfos();
-    final String[] ids = ArrayUtil.newStringArray(infos.length);
-    for (int i = 0; i < infos.length; i++) {
-      ids[i] = infos[i].getId();
+    final List<WindowInfoImpl> infos = myLayout.getInfos();
+    final String[] ids = ArrayUtil.newStringArray(infos.size());
+    for (int i = 0; i < infos.size(); i++) {
+      ids[i] = infos.get(i).getId();
     }
     return ids;
   }
@@ -943,8 +946,7 @@ public final class ToolWindowManagerImpl extends ToolWindowManagerEx implements 
       // is docked and not auto-hide one). Therefore it's possible to restore the
       // hidden tool window when showing tool window will be closed.
 
-      final WindowInfoImpl[] infos = myLayout.getInfos();
-      for (final WindowInfoImpl info : infos) {
+      for (final WindowInfoImpl info : myLayout.getInfos()) {
         if (id.equals(info.getId())) {
           continue;
         }
@@ -1204,7 +1206,7 @@ public final class ToolWindowManagerImpl extends ToolWindowManagerEx implements 
     ApplicationManager.getApplication().assertIsDispatchThread();
     List<FinalizableCommand> commandList = new ArrayList<>();
     // hide tool window that are invisible or its info is not presented in new layout
-    final WindowInfoImpl[] currentInfos = myLayout.getInfos();
+    final List<WindowInfoImpl> currentInfos = myLayout.getInfos();
     for (final WindowInfoImpl currentInfo : currentInfos) {
       final WindowInfoImpl info = layout.getInfo(currentInfo.getId(), false);
       if (currentInfo.isVisible() && (info == null || !info.isVisible())) {
@@ -1463,8 +1465,7 @@ public final class ToolWindowManagerImpl extends ToolWindowManagerEx implements 
       myLayout.setAnchor(id, anchor, order);
       // update infos for all window. Actually we have to update only infos affected by
       // setAnchor method
-      final WindowInfoImpl[] infos = myLayout.getInfos();
-      for (WindowInfoImpl info1 : infos) {
+      for (WindowInfoImpl info1 : myLayout.getInfos()) {
         appendApplyWindowInfoCmd(info1, commandsList);
       }
       appendAddButtonCmd(getStripeButton(id), info, commandsList);
@@ -1476,8 +1477,7 @@ public final class ToolWindowManagerImpl extends ToolWindowManagerEx implements 
       myLayout.setAnchor(id, anchor, order);
       // update infos for all window. Actually we have to update only infos affected by
       // setAnchor method
-      final WindowInfoImpl[] infos = myLayout.getInfos();
-      for (WindowInfoImpl info1 : infos) {
+      for (WindowInfoImpl info1 : myLayout.getInfos()) {
         appendApplyWindowInfoCmd(info1, commandsList);
       }
       appendAddButtonCmd(getStripeButton(id), info, commandsList);
@@ -1538,8 +1538,7 @@ public final class ToolWindowManagerImpl extends ToolWindowManagerEx implements 
     if (wasActive || wasVisible) {
       hideToolWindow(id, false);
     }
-    final WindowInfoImpl[] infos = myLayout.getInfos();
-    for (WindowInfoImpl info1 : infos) {
+    for (WindowInfoImpl info1 : myLayout.getInfos()) {
       appendApplyWindowInfoCmd(info1, commandList);
     }
     if (wasVisible || wasActive) {
