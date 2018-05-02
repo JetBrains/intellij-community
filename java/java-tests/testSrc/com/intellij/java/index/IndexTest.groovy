@@ -402,6 +402,20 @@ class IndexTest extends JavaCodeInsightFixtureTestCase {
     assert !findClass("Foo")
   }
 
+  void "test plain text file type in stubs" () {
+    def vFile = myFixture.addFileToProject("Foo.java", "class Bar {}").virtualFile
+    assert findClass("Bar")
+    final Document document = FileDocumentManager.getInstance().getDocument(vFile)
+    document.setText("class Foo {}")
+    PsiDocumentManager.getInstance(project).commitAllDocuments()
+    assert findClass("Foo")
+    assert !findClass("Bar")
+
+    vFile.rename(null, "Foo1")
+    assert !findClass("Foo")
+    assert !findClass("Bar")
+  }
+
   void "test changing a file without psi makes the document committed and updates index"() {
     def psiFile = myFixture.addFileToProject("Foo.java", "class Foo {}")
     def vFile = psiFile.virtualFile
