@@ -19,6 +19,7 @@ import com.intellij.ui.JBColor
 import com.intellij.ui.components.JBLabel
 import com.intellij.ui.components.JBPasswordField
 import com.intellij.ui.components.JBTextField
+import com.intellij.ui.components.fields.ExtendableTextComponent
 import com.intellij.ui.components.fields.ExtendableTextField
 import com.intellij.ui.components.labels.LinkLabel
 import com.intellij.ui.components.panels.Wrapper
@@ -67,7 +68,7 @@ class GithubLoginDialog(private val project: Project,
 
   private var progressIndicator: ProgressIndicator? = null
   private val progressIcon = AnimatedIcon.Default()
-  private val progressExtension = ExtendableTextField.Extension({ progressIcon })
+  private val progressExtension = ExtendableTextComponent.Extension({ progressIcon })
 
   private lateinit var login: String
   private lateinit var token: String
