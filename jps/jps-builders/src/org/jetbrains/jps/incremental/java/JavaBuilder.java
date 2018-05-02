@@ -298,6 +298,7 @@ public class JavaBuilder extends ModuleLevelBuilder {
         context.processMessage(new ProgressMessage("Parsing java... [" + chunk.getPresentableShortName() + "]"));
 
         final int filesCount = files.size();
+        boolean compiledOk = true;
         if (filesCount > 0) {
           LOG.info("Compiling " + filesCount + " java files; module: " + chunkName + (chunk.containsTests() ? " (tests)" : ""));
           if (LOG.isDebugEnabled()) {
@@ -313,23 +314,23 @@ public class JavaBuilder extends ModuleLevelBuilder {
               LOG.debug("  " + file.getAbsolutePath());
             }
           }
-          boolean compiledOk = false;
           try {
             compiledOk = compileJava(context, chunk, files, classpath, platformCp, srcPath, diagnosticSink, outputSink, compilingTool, hasModules);
           }
           finally {
             filesWithErrors = diagnosticSink.getFilesWithErrors();
-            if (!compiledOk && diagnosticSink.getErrorCount() == 0) {
-              // unexpected exception occurred or compiler did not output any errors for some reason
-              diagnosticSink.report(new PlainMessageDiagnostic(Diagnostic.Kind.ERROR, "Compilation failed: internal java compiler error"));
-            }
-            if (diagnosticSink.getErrorCount() > 0) {
-              diagnosticSink.report(new JpsInfoDiagnostic("Errors occurred while compiling module '" + chunkName + "'"));
-            }
           }
         }
 
         context.checkCanceled();
+
+        if (!compiledOk && diagnosticSink.getErrorCount() == 0) {
+          // unexpected exception occurred or compiler did not output any errors for some reason
+          diagnosticSink.report(new PlainMessageDiagnostic(Diagnostic.Kind.ERROR, "Compilation failed: internal java compiler error"));
+        }
+        if (diagnosticSink.getErrorCount() > 0) {
+          diagnosticSink.report(new JpsInfoDiagnostic("Errors occurred while compiling module '" + chunkName + "'"));
+        }
 
         if (!Utils.PROCEED_ON_ERROR_KEY.get(context, Boolean.FALSE) && diagnosticSink.getErrorCount() > 0) {
           throw new StopBuildException(
