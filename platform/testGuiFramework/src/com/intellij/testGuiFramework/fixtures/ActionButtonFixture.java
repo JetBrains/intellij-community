@@ -24,7 +24,6 @@ import org.fest.swing.core.GenericTypeMatcher;
 import org.fest.swing.core.Robot;
 import org.fest.swing.edt.GuiQuery;
 import org.fest.swing.exception.ComponentLookupException;
-import org.fest.swing.format.Formatting;
 import org.fest.swing.timing.Condition;
 import org.fest.swing.timing.Pause;
 import org.fest.swing.timing.Timeout;
@@ -33,9 +32,6 @@ import org.jetbrains.annotations.Nullable;
 
 import java.awt.*;
 import java.util.Collection;
-import java.util.Optional;
-import java.util.stream.Collectors;
-import java.util.stream.Stream;
 
 import static com.intellij.testGuiFramework.framework.GuiTestUtil.SHORT_TIMEOUT;
 import static org.fest.swing.edt.GuiActionRunner.execute;
@@ -83,7 +79,7 @@ public class ActionButtonFixture extends JComponentFixture<ActionButtonFixture, 
                                                                        @NotNull GenericTypeMatcher<ActionButton> matcher,
                                                                        @NotNull String criteriaDescription,
                                                                        Timeout timeout) {
-    final Ref<ActionButton> actionButtonRef = new Ref<ActionButton>();
+    final Ref<ActionButton> actionButtonRef = new Ref<>();
     Pause.pause(new Condition("Find ActionButton " + criteriaDescription) {
       @Override
       public boolean test() {
@@ -111,16 +107,13 @@ public class ActionButtonFixture extends JComponentFixture<ActionButtonFixture, 
     return findByActionId(actionId, robot, container, SHORT_TIMEOUT);
   }
 
-  @NotNull
-  public ActionButtonFixture waitUntilEnabledAndShowing() {
+  public void waitUntilEnabledAndShowing() {
     Pause.pause(new Condition("wait for action to be enabled and showing") {
       @Override
       public boolean test() {
-        //noinspection ConstantConditions
         return execute(new GuiQuery<Boolean>() {
-          @Nullable
           @Override
-          protected Boolean executeInEDT() throws Throwable {
+          protected Boolean executeInEDT() {
             ActionButton target = target();
             if (target.getAction().getTemplatePresentation().isEnabledAndVisible()) {
               return target.isShowing() && target.isVisible() && target.isEnabled();
@@ -130,7 +123,6 @@ public class ActionButtonFixture extends JComponentFixture<ActionButtonFixture, 
         });
       }
     }, GuiTestUtil.LONG_TIMEOUT);
-    return this;
   }
 
   @NotNull
