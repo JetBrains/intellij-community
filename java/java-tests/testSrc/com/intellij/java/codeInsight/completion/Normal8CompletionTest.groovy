@@ -250,6 +250,8 @@ class Test88 {
     checkResultByFileName()
   }
 
+  void testCollectorsJoining() { doTest() }
+
   void testCollectorsToSet() {
     configureByTestName()
     selectItem(myItems.find { it.lookupString.contains('toSet') })
@@ -262,6 +264,8 @@ class Test88 {
     selectItem(myItems[1])
     checkResultByFileName()
   }
+
+  void testCollectorsJoiningInsideCollect() { doTest() }
 
   void testNoExplicitTypeArgsInTernary() {
     configureByTestName()
