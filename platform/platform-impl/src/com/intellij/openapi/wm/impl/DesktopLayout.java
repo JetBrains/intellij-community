@@ -11,7 +11,6 @@ import com.intellij.openapi.wm.ToolWindowAnchor;
 import com.intellij.util.containers.ContainerUtil;
 import gnu.trove.THashMap;
 import org.jdom.Element;
-import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -24,29 +23,27 @@ import static com.intellij.configurationStore.XmlSerializer.serialize;
  */
 public final class DesktopLayout {
   private static final Logger LOG = Logger.getInstance(DesktopLayout.class);
+  private static final Comparator<WindowInfoImpl> ourWindowInfoComparator = Comparator.comparingInt(WindowInfoImpl::getOrder);
+  static final String TAG = "layout";
 
-  @NonNls static final String TAG = "layout";
   /**
    * Map between {@code id}s and registered {@code WindowInfo}s.
    */
-  private final Map<String, WindowInfoImpl> myRegisteredId2Info = new HashMap<>();
+  private final Map<String, WindowInfoImpl> myRegisteredIdToInfo = new THashMap<>();
+
   /**
    * Map between {@code id}s and unregistered {@code WindowInfo}s.
    */
-  private final Map<String, WindowInfoImpl> myUnregisteredId2Info = new THashMap<>();
-  /**
-   *
-   */
-  private static final MyWindowInfoComparator ourWindowInfoComparator = new MyWindowInfoComparator();
+  private final Map<String, WindowInfoImpl> myUnregisteredIdToInfo = new THashMap<>();
 
   private final ClearableLazyValue<List<WindowInfoImpl>> myRegisteredInfos = new ClearableLazyValue<List<WindowInfoImpl>>() {
     @NotNull
     @Override
     protected List<WindowInfoImpl> compute() {
-      if (myRegisteredId2Info.isEmpty()) {
+      if (myRegisteredIdToInfo.isEmpty()) {
         return Collections.emptyList();
       }
-      return new ArrayList<>(myRegisteredId2Info.values());
+      return new ArrayList<>(myRegisteredIdToInfo.values());
     }
   };
 
@@ -54,10 +51,10 @@ public final class DesktopLayout {
     @NotNull
     @Override
     protected List<WindowInfoImpl> compute() {
-      if (myUnregisteredId2Info.isEmpty()) {
+      if (myUnregisteredIdToInfo.isEmpty()) {
         return Collections.emptyList();
       }
-      return new ArrayList<>(myUnregisteredId2Info.values());
+      return new ArrayList<>(myUnregisteredIdToInfo.values());
     }
   };
 
@@ -76,14 +73,14 @@ public final class DesktopLayout {
    */
   public final void copyFrom(@NotNull DesktopLayout layout) {
     for (WindowInfoImpl info1 : layout.getAllInfos()) {
-      WindowInfoImpl info = myRegisteredId2Info.get(info1.getId());
+      WindowInfoImpl info = myRegisteredIdToInfo.get(info1.getId());
       if (info != null) {
         info.copyFrom(info1);
         continue;
       }
-      info = myUnregisteredId2Info.get(info1.getId());
+      info = myUnregisteredIdToInfo.get(info1.getId());
       if (info == null) {
-        myUnregisteredId2Info.put(info1.getId(), info1.copy());
+        myUnregisteredIdToInfo.put(info1.getId(), info1.copy());
       }
       else {
         info.copyFrom(info1);
@@ -111,7 +108,7 @@ public final class DesktopLayout {
    * @param anchor the default tool window anchor.
    */
   final WindowInfoImpl register(@NotNull String id, @NotNull ToolWindowAnchor anchor, final boolean splitMode) {
-    WindowInfoImpl info = myUnregisteredId2Info.get(id);
+    WindowInfoImpl info = myUnregisteredIdToInfo.get(id);
     if (info == null) {
       // tool window is being registered first time
       info = new WindowInfoImpl();
@@ -121,16 +118,16 @@ public final class DesktopLayout {
     }
     else {
       // tool window has been already registered some time
-      myUnregisteredId2Info.remove(id);
+      myUnregisteredIdToInfo.remove(id);
     }
-    myRegisteredId2Info.put(id, info);
+    myRegisteredIdToInfo.put(id, info);
     invalidateCaches();
     return info;
   }
 
   final void unregister(@NotNull String id) {
-    final WindowInfoImpl info = myRegisteredId2Info.remove(id).copy();
-    myUnregisteredId2Info.put(id, info);
+    final WindowInfoImpl info = myRegisteredIdToInfo.remove(id).copy();
+    myUnregisteredIdToInfo.put(id, info);
     invalidateCaches();
   }
 
@@ -140,11 +137,11 @@ public final class DesktopLayout {
    *         value if and only if window with {@code id} is registered one.
    */
   final WindowInfoImpl getInfo(@NotNull String id, final boolean onlyRegistered) {
-    final WindowInfoImpl info = myRegisteredId2Info.get(id);
+    final WindowInfoImpl info = myRegisteredIdToInfo.get(id);
     if (onlyRegistered || info != null) {
       return info;
     }
-    return myUnregisteredId2Info.get(id);
+    return myUnregisteredIdToInfo.get(id);
   }
 
   @Nullable
@@ -209,16 +206,15 @@ public final class DesktopLayout {
   }
 
   final boolean isToolWindowRegistered(@NotNull String id) {
-    return myRegisteredId2Info.containsKey(id);
+    return myRegisteredIdToInfo.containsKey(id);
   }
 
   final boolean isToolWindowUnregistered(@NotNull String id) {
-    return myUnregisteredId2Info.containsKey(id);
+    return myUnregisteredIdToInfo.containsKey(id);
   }
 
   /**
-   * @return comparator which compares {@code StripeButtons} in the stripe with
-   *         specified {@code anchor}.
+   * @return comparator which compares {@code StripeButtons} in the stripe with specified {@code anchor}.
    */
   @NotNull
   final Comparator<StripeButton> comparator(@NotNull ToolWindowAnchor anchor) {
@@ -288,7 +284,7 @@ public final class DesktopLayout {
         // if order isn't defined then window's button will be the last one in the stripe
         info.setOrder(getMaxOrder(info.getAnchor()) + 1);
       }
-      myUnregisteredId2Info.put(info.getId(), info);
+      myUnregisteredIdToInfo.put(info.getId(), info);
     }
   }
 
@@ -327,13 +323,6 @@ public final class DesktopLayout {
       }
     }
     return ids;
-  }
-
-  private static final class MyWindowInfoComparator implements Comparator<WindowInfoImpl> {
-    @Override
-    public int compare(final WindowInfoImpl info1, final WindowInfoImpl info2) {
-      return info1.getOrder() - info2.getOrder();
-    }
   }
 
   private final class MyStripeButtonComparator implements Comparator<StripeButton> {
