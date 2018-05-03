@@ -22,7 +22,10 @@ import org.gradle.language.cpp.tasks.CppCompile;
 import org.gradle.language.nativeplatform.ComponentWithExecutable;
 import org.gradle.language.nativeplatform.internal.ConfigurableComponentWithExecutable;
 import org.gradle.nativeplatform.tasks.LinkExecutable;
-import org.gradle.nativeplatform.toolchain.*;
+import org.gradle.nativeplatform.toolchain.Clang;
+import org.gradle.nativeplatform.toolchain.Gcc;
+import org.gradle.nativeplatform.toolchain.NativeToolChain;
+import org.gradle.nativeplatform.toolchain.VisualCpp;
 import org.gradle.nativeplatform.toolchain.internal.NativeLanguageTools;
 import org.gradle.nativeplatform.toolchain.internal.PlatformToolProvider;
 import org.gradle.nativeplatform.toolchain.internal.ToolType;
@@ -71,7 +74,7 @@ public class CppModelBuilder implements ModelBuilderService {
         CppComponent cppComponent = (CppComponent)component;
         for (CppBinary cppBinary : cppComponent.getBinaries().get()) {
           if (cppCompilerExecutable == null) {
-            cppCompilerExecutable = findCppCompilerExecutable(cppBinary);
+            cppCompilerExecutable = findCppCompilerExecutable(project, cppBinary);
           }
 
           List<String> compilerArgs = new ArrayList<String>();
@@ -179,17 +182,17 @@ public class CppModelBuilder implements ModelBuilderService {
   }
 
   @Nullable
-  private static File findCppCompilerExecutable(CppBinary cppBinary) {
-    if (cppBinary instanceof ConfigurableComponentWithExecutable) {
-      PlatformToolProvider toolProvider = ((ConfigurableComponentWithExecutable)cppBinary).getPlatformToolProvider();
-      ToolSearchResult toolSearchResult = toolProvider.isToolAvailable(ToolType.CPP_COMPILER);
-      if (toolSearchResult.isAvailable()) {
-        if (toolSearchResult instanceof CommandLineToolSearchResult) {
-          return ((CommandLineToolSearchResult)toolSearchResult).getTool();
-        }
-        // dirty hack because of dummy implementation of org.gradle.nativeplatform.toolchain.internal.msvcpp.VisualCppPlatformToolProvider.isToolAvailable
-        if (toolProvider.getClass().getSimpleName().equals("VisualCppPlatformToolProvider")) {
-          try {
+  private static File findCppCompilerExecutable(Project project, CppBinary cppBinary) {
+    try {
+      if (cppBinary instanceof ConfigurableComponentWithExecutable) {
+        PlatformToolProvider toolProvider = ((ConfigurableComponentWithExecutable)cppBinary).getPlatformToolProvider();
+        ToolSearchResult toolSearchResult = toolProvider.isToolAvailable(ToolType.CPP_COMPILER);
+        if (toolSearchResult.isAvailable()) {
+          if (toolSearchResult instanceof CommandLineToolSearchResult) {
+            return ((CommandLineToolSearchResult)toolSearchResult).getTool();
+          }
+          // dirty hack because of dummy implementation of org.gradle.nativeplatform.toolchain.internal.msvcpp.VisualCppPlatformToolProvider.isToolAvailable
+          if (toolProvider.getClass().getSimpleName().equals("VisualCppPlatformToolProvider")) {
             Field visualCppField = toolProvider.getClass().getDeclaredField("visualCpp");
             visualCppField.setAccessible(true);
             Object visualCpp = visualCppField.get(toolProvider);
@@ -197,9 +200,15 @@ public class CppModelBuilder implements ModelBuilderService {
               return ((NativeLanguageTools)visualCpp).getCompilerExecutable();
             }
           }
-          catch (Exception ignore) {
-          }
         }
+      }
+    }
+    catch (Throwable e) {
+      if (GradleVersion.current().compareTo(GradleVersion.version("4.6")) < 0) {
+        project.getLogger().error("Unable to resolve compiler executable, try to update the gradle version");
+      }
+      else {
+        project.getLogger().error("Unable to resolve compiler executable", e);
       }
     }
 
