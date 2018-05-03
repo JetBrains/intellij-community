@@ -9,7 +9,7 @@
          copyrightForeground="cccccc" linkColor="ffffff"/>
   <icon size32="/PyCharmCore32.png" size16="/PyCharmCore16.png" ico="PyCharmCore.ico"/>
   <package code="__PACKAGE_CODE__"/>
-  <names product="PyCharm" edition="Community Edition" script="charm"/>
+  <names product="PyCharm" edition="Community Edition" script="charm" motto="Python IDE for Professional Developers"/>
 
   <welcome-screen logo-url="/PyCharmCoreWelcomeScreen.png"/>
   <customize-ide-wizard provider="com.jetbrains.python.PyCharmCustomizeIDEWizardStepsProvider"/>
