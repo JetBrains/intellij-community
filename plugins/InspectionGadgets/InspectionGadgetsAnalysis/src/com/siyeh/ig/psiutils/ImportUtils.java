@@ -75,7 +75,7 @@ public final class ImportUtils {
   }
 
   @Contract("_, null -> false")
-  private static boolean isInsideClassBody(@NotNull PsiElement element, @Nullable PsiClass outerClass) {
+  public static boolean isInsideClassBody(@NotNull PsiElement element, @Nullable PsiClass outerClass) {
     PsiElement brace = outerClass != null ? outerClass.getLBrace() : null;
     return brace != null && brace.getTextOffset() < element.getTextOffset();
   }
