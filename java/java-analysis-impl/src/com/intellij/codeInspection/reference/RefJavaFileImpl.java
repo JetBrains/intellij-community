@@ -41,20 +41,30 @@ public class RefJavaFileImpl extends RefFileImpl {
     if (file != null && PsiPackage.PACKAGE_INFO_FILE.equals(file.getName())) {
         PsiPackageStatement packageStatement = file.getPackageStatement();
         if (packageStatement != null) {
-          PsiModifierList annotationList = packageStatement.getAnnotationList();
-          if (annotationList != null) {
-            for (PsiAnnotation annotation : annotationList.getAnnotations()) {
-              PsiJavaCodeReferenceElement anno = annotation.getNameReferenceElement();
-              if (anno != null) {
-                PsiElement aClass = anno.resolve();
-                RefElement refClass = getRefManager().getReference(aClass);
-                if (refClass instanceof RefClassImpl) {
-                  addOutReference(refClass);
-                  ((RefJavaElementImpl)refClass).markReferenced(this, file, aClass, false, true, null);
-                }
+          packageStatement.accept(new JavaRecursiveElementWalkingVisitor() {
+            @Override
+            public void visitReferenceElement(PsiJavaCodeReferenceElement reference) {
+              super.visitReferenceElement(reference);
+              processReference(reference.resolve());
+            }
+
+            @Override
+            public void visitNameValuePair(PsiNameValuePair pair) {
+              super.visitNameValuePair(pair);
+              PsiReference reference = pair.getReference();
+              if (reference != null) {
+                processReference(reference.resolve());
               }
             }
-          }
+
+            private void processReference(PsiElement element) {
+              RefElement refElement = getRefManager().getReference(element);
+              if (refElement instanceof RefJavaElementImpl) {
+                addOutReference(refElement);
+                ((RefJavaElementImpl)refElement).markReferenced(RefJavaFileImpl.this, file, element, false, true, null);
+              }
+            }
+          });
         }
       }
     getRefManager().fireBuildReferences(this);
