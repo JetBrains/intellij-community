@@ -265,6 +265,12 @@ abstract class ProjectViewDropTarget implements DnDNativeTarget {
         Messages.showMessageDialog(myProject, "Move refactoring is not available while indexing is in progress", "Indexing", null);
         return;
       }
+
+      if (!myProject.isInitialized()) {
+        Messages.showMessageDialog(myProject, "Move refactoring is not available while project initialization is in progress", "Project Initialization", null);
+        return;
+      }
+
       Module module = getModule(target);
       final DataContext dataContext = DataManager.getInstance().getDataContext(myTree);
       PsiDocumentManager.getInstance(myProject).commitAllDocuments();
