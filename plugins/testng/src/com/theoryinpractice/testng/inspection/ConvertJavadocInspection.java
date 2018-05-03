@@ -2,7 +2,12 @@
 package com.theoryinpractice.testng.inspection;
 
 import com.intellij.CommonBundle;
-import com.intellij.codeInspection.*;
+import com.intellij.codeInsight.FileModificationService;
+import com.intellij.codeInspection.AbstractBaseJavaLocalInspectionTool;
+import com.intellij.codeInspection.LocalQuickFix;
+import com.intellij.codeInspection.ProblemDescriptor;
+import com.intellij.codeInspection.ProblemsHolder;
+import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
@@ -63,9 +68,19 @@ public class ConvertJavadocInspection extends AbstractBaseJavaLocalInspectionToo
       return DISPLAY_NAME;
     }
 
+    @Override
+    public boolean startInWriteAction() {
+      return false;
+    }
+
     public void applyFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
       final PsiDocTag tag = (PsiDocTag)descriptor.getPsiElement();
       if (!TestNGUtil.checkTestNGInClasspath(tag)) return;
+      if (!FileModificationService.getInstance().preparePsiElementsForWrite(tag)) return;
+      WriteAction.run(() -> doFix(project, tag));
+    }
+
+    private static void doFix(@NotNull Project project, PsiDocTag tag) {
       final PsiMember member = PsiTreeUtil.getParentOfType(tag, PsiMember.class);
       LOG.assertTrue(member != null);
       @NonNls String annotationName = StringUtil.capitalize(tag.getName().substring(TESTNG_PREFIX.length()));
