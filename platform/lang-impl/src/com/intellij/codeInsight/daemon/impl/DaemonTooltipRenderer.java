@@ -38,7 +38,7 @@ class DaemonTooltipRenderer extends LineTooltipRenderer {
   @Override
   protected boolean dressDescription(@NotNull final Editor editor) {
     final List<String> problems = StringUtil.split(UIUtil.getHtmlBody(new Html(myText).setKeepFont(true)), UIUtil.BORDER_LINE);
-    String text = "";
+    StringBuilder text = new StringBuilder();
     for (String problem : problems) {
       final String ref = getLinkRef(problem);
       if (ref != null) {
@@ -46,17 +46,22 @@ class DaemonTooltipRenderer extends LineTooltipRenderer {
         if (description != null) {
           description =
             InspectionNodeInfo.stripUIRefsFromInspectionDescription(UIUtil.getHtmlBody(new Html(description).setKeepFont(true)));
-          text += UIUtil.getHtmlBody(new Html(problem).setKeepFont(true)).replace(DaemonBundle.message("inspection.extended.description"),
-                                                                                  DaemonBundle.message("inspection.collapse.description")) +
-                  END_MARKER + "<p>" + description + UIUtil.BORDER_LINE;
+          text
+            .append(UIUtil.getHtmlBody(new Html(problem).setKeepFont(true)).replace(DaemonBundle.message("inspection.extended.description"),
+                                                                                    DaemonBundle
+                                                                                      .message("inspection.collapse.description")))
+            .append(END_MARKER)
+            .append("<p>")
+            .append(description)
+            .append(UIUtil.BORDER_LINE);
         }
       }
       else {
-        text += UIUtil.getHtmlBody(new Html(problem).setKeepFont(true)) + UIUtil.BORDER_LINE;
+        text.append(UIUtil.getHtmlBody(new Html(problem).setKeepFont(true))).append(UIUtil.BORDER_LINE);
       }
     }
-    if (!text.isEmpty()) { //otherwise do not change anything
-      myText = XmlStringUtil.wrapInHtml(StringUtil.trimEnd(text, UIUtil.BORDER_LINE));
+    if (text.length() > 0) { //otherwise do not change anything
+      myText = XmlStringUtil.wrapInHtml(StringUtil.trimEnd(text.toString(), UIUtil.BORDER_LINE));
       return true;
     }
     return false;
