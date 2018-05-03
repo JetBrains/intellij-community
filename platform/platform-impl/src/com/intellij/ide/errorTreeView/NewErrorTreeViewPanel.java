@@ -69,7 +69,6 @@ public class NewErrorTreeViewPanel extends JPanel implements DataProvider, Occur
   }
 
   private ActionToolbar myLeftToolbar;
-  private ActionToolbar myRightToolbar;
   private final TreeExpander myTreeExpander = new MyTreeExpander();
   private final ExporterToTextFile myExporterToTextFile;
   protected Project myProject;
@@ -614,7 +613,6 @@ public class NewErrorTreeViewPanel extends JPanel implements DataProvider, Occur
         stopProcess();
       }
       myLeftToolbar.updateActionsImmediately();
-      myRightToolbar.updateActionsImmediately();
     }
 
     @Override
