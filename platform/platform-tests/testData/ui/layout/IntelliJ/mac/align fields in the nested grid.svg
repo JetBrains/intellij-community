@@ -48,7 +48,7 @@
     <g fill="rgb(188,188,188)" text-rendering="optimizeLegibility" font-size="13px" font-family="'.SF NS Text'" transform="translate(139,54)" stroke="rgb(188,188,188)">
       <path d="M3 3 L253 3 L253 24 L3 24 L3 3 ZM4 4 L252 4 L252 23 L4 23 L4 4 Z" fill-rule="evenodd" clip-path="url(#2)" stroke="none"/>
     </g>
-    <g font-family="'.SF NS Text'" font-size="13px" transform="translate(26,60)">
+    <g font-family="'.SF NS Text'" font-size="13px" transform="translate(26,59)">
       <text x="0" xml:space="preserve" y="13" clip-path="url(#4)" stroke="none">Master Password:</text>
     </g>
     <g font-family="'.SF NS Text'" font-size="13px" transform="translate(451,29)">
@@ -63,7 +63,7 @@
     <g fill="rgb(188,188,188)" text-rendering="optimizeLegibility" font-size="13px" font-family="'.SF NS Text'" transform="translate(139,23)" stroke="rgb(188,188,188)">
       <path d="M3 3 L308 3 L308 24 L3 24 L3 3 ZM4 4 L307 4 L307 23 L4 23 L4 4 Z" fill-rule="evenodd" clip-path="url(#6)" stroke="none"/>
     </g>
-    <g font-family="'.SF NS Text'" font-size="13px" transform="translate(26,29)">
+    <g font-family="'.SF NS Text'" font-size="13px" transform="translate(26,28)">
       <text x="0" xml:space="preserve" y="13" clip-path="url(#8)" stroke="none">Database:</text>
     </g>
     <g fill="rgb(236,236,236)" font-size="13px" font-family="'.SF NS Text'" transform="translate(-3,-3)" stroke="rgb(236,236,236)">

@@ -10,6 +10,7 @@ import com.intellij.rt.execution.junit.FileComparisonFailure
 import com.intellij.testFramework.UsefulTestCase
 import com.intellij.testFramework.assertions.compareFileContent
 import com.intellij.ui.layout.*
+import com.intellij.ui.layout.migLayout.patched.*
 import com.intellij.util.SVGLoader
 import com.intellij.util.io.exists
 import com.intellij.util.io.inputStream
@@ -19,7 +20,6 @@ import com.intellij.util.ui.TestScaleHelper
 import com.intellij.util.ui.UIUtil
 import com.intellij.util.ui.paint.ImageComparator
 import io.netty.util.internal.SystemPropertyUtil
-import net.miginfocom.swing.MigLayout
 import org.junit.rules.ExternalResource
 import org.junit.rules.TestName
 import org.junit.runners.model.MultipleFailureException
