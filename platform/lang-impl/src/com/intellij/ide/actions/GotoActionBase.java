@@ -341,7 +341,7 @@ public abstract class GotoActionBase extends AnAction {
 
     SearchEverywhereManager seManager = SearchEverywhereManager.getInstance(evnt.getProject());
     if (seManager.isShown()) {
-      if (searchProviderID.equals(seManager.getShownContributor().getSearchProviderId())) {
+      if (searchProviderID.equals(seManager.getShownContributorID())) {
         seManager.setShowNonProjectItems(!seManager.isShowNonProjectItems());
       }
       else {

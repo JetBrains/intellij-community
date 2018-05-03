@@ -125,14 +125,14 @@ public class SearchEverywhereUI extends BorderLayoutPanel {
 
   public void switchToContributor(String contributorID) {
     SETab selectedTab = myTabs.stream()
-                       .filter(tab -> contributorID.equals(tab.getContributor().getSearchProviderId()))
+                       .filter(tab -> tab.getID().equals(contributorID))
                        .findAny()
                        .orElseThrow(() -> new IllegalArgumentException(String.format("Contributor %s is not supported", contributorID)));
     switchToTab(selectedTab);
   }
 
-  public SearchEverywhereContributor getSelectedContributor() {
-    return mySelectedTab.getContributor();
+  public String getSelectedContributorID() {
+    return mySelectedTab.getID();
   }
 
   public void clear() {
@@ -153,7 +153,9 @@ public class SearchEverywhereUI extends BorderLayoutPanel {
 
   private void switchToTab(SETab tab) {
     mySelectedTab = tab;
-    String text = tab.getContributor().includeNonProjectItemsText();
+    String text = tab.getContributor()
+      .map(SearchEverywhereContributor::includeNonProjectItemsText)
+      .orElse(IdeBundle.message("checkbox.include.non.project.items", IdeUICustomization.getInstance().getProjectConceptName()));
     if (text.indexOf(UIUtil.MNEMONIC) != -1) {
       DialogUtil.setTextWithMnemonic(myNonProjectCB, text);
     } else {
@@ -270,7 +272,7 @@ public class SearchEverywhereUI extends BorderLayoutPanel {
     JPanel contributorsPanel = new JPanel(new FlowLayout(FlowLayout.LEFT, 0, 0));
     contributorsPanel.setOpaque(false);
 
-    SETab allTab = new SETab(new AllSearchEverywhereContributor());
+    SETab allTab = new SETab(null);
     contributorsPanel.add(allTab);
     myTabs.add(allTab);
 
@@ -295,7 +297,7 @@ public class SearchEverywhereUI extends BorderLayoutPanel {
     private final SearchEverywhereContributor myContributor;
 
     public SETab(SearchEverywhereContributor contributor) {
-      super(contributor.getGroupName());
+      super(contributor == null ? IdeBundle.message("searcheverywhere.allelements.tab.name") : contributor.getGroupName());
       myContributor = contributor;
       Insets insets = JBUI.CurrentTheme.SearchEverywhere.tabInsets();
       setBorder(JBUI.Borders.empty(insets.top, insets.left, insets.bottom, insets.right));
@@ -307,8 +309,14 @@ public class SearchEverywhereUI extends BorderLayoutPanel {
       });
     }
 
-    public SearchEverywhereContributor getContributor() {
-      return myContributor;
+    public String getID() {
+      return getContributor()
+        .map(SearchEverywhereContributor::getSearchProviderId)
+        .orElse(SearchEverywhereContributor.ALL_CONTRIBUTORS_GROUP_ID);
+    }
+
+    public Optional<SearchEverywhereContributor> getContributor() {
+      return Optional.ofNullable(myContributor);
     }
 
     @Override
@@ -399,7 +407,7 @@ public class SearchEverywhereUI extends BorderLayoutPanel {
         });
 
         myResultsRanges.clear();
-        SearchEverywhereContributor selectedContributor = getSelectedContributor();
+        SearchEverywhereContributor selectedContributor = mySelectedTab.getContributor().orElse(null);
         if (selectedContributor != null) {
           runReadAction(() -> addContributorItems(selectedContributor, true), true);
         } else {

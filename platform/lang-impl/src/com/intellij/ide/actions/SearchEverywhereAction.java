@@ -16,7 +16,7 @@ import com.intellij.execution.runners.ProgramRunner;
 import com.intellij.featureStatistics.FeatureUsageTracker;
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.*;
-import com.intellij.ide.actions.searcheverywhere.AllSearchEverywhereContributor;
+import com.intellij.ide.actions.searcheverywhere.SearchEverywhereContributor;
 import com.intellij.ide.actions.searcheverywhere.SearchEverywhereManager;
 import com.intellij.ide.structureView.StructureView;
 import com.intellij.ide.structureView.StructureViewBuilder;
@@ -564,14 +564,14 @@ public class SearchEverywhereAction extends AnAction implements CustomComponentA
   public void actionPerformed(AnActionEvent e, MouseEvent me) {
     if (Registry.is("new.search.everywhere")) {
       //todo[mikhail.sokolov] show new UI
-      String searchProviderID = AllSearchEverywhereContributor.class.getSimpleName();
+      String searchProviderID = SearchEverywhereContributor.ALL_CONTRIBUTORS_GROUP_ID;
 
       FeatureUsageTracker.getInstance().triggerFeatureUsed(IdeActions.ACTION_SEARCH_EVERYWHERE);
       FeatureUsageTracker.getInstance().triggerFeatureUsed(IdeActions.ACTION_SEARCH_EVERYWHERE + "." + searchProviderID);
 
       SearchEverywhereManager seManager = SearchEverywhereManager.getInstance(e.getProject());
       if (seManager.isShown()) {
-        if (searchProviderID.equals(seManager.getShownContributor().getSearchProviderId())) {
+        if (searchProviderID.equals(seManager.getShownContributorID())) {
           seManager.setShowNonProjectItems(!seManager.isShowNonProjectItems());
         }
         else {

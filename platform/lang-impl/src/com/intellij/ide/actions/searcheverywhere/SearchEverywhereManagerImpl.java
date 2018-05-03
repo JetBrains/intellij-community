@@ -80,13 +80,13 @@ public class SearchEverywhereManagerImpl implements SearchEverywhereManager {
   }
 
   @Override
-  public SearchEverywhereContributor getShownContributor() {
-    return mySearchEverywhereUI.getSelectedContributor();
+  public String getShownContributorID() {
+    return mySearchEverywhereUI.getSelectedContributorID();
   }
 
   @Override
   public void setShownContributor(@NotNull String contributorID) {
-    if (!contributorID.equals(getShownContributor().getSearchProviderId())) {
+    if (!contributorID.equals(getShownContributorID())) {
       mySearchEverywhereUI.switchToContributor(contributorID);
     }
   }

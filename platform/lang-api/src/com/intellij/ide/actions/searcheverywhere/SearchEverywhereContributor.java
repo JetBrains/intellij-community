@@ -21,7 +21,11 @@ import java.util.stream.Collectors;
  * @author Konstantin Bulenkov
  */
 public interface SearchEverywhereContributor {
+
+  String ALL_CONTRIBUTORS_GROUP_ID = SearchEverywhereContributor.class.getSimpleName() + ".All";
+
   ExtensionPointName<SearchEverywhereContributor> EP_NAME = ExtensionPointName.create("com.intellij.searchEverywhereContributor");
+
   @NotNull
   String getSearchProviderId();
 

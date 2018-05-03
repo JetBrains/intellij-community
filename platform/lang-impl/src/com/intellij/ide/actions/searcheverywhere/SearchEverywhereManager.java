@@ -18,7 +18,7 @@ public interface SearchEverywhereManager {
 
   void show(@NotNull String selectedContributorID); //todo change to contributor??? UX-1
 
-  SearchEverywhereContributor getShownContributor();
+  String getShownContributorID();
 
   void setShownContributor(@NotNull String newSelectedContributorID); //todo change to contributor??? UX-1
 
