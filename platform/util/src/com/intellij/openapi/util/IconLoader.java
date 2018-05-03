@@ -611,13 +611,16 @@ public final class IconLoader {
     private class MyScaledIconsCache {
       private static final int SCALED_ICONS_CACHE_LIMIT = 5;
 
-      // Map {pixel scale -> icon}
-      private final Map<Double, SoftReference<ImageIcon>> scaledIconsCache = Collections.synchronizedMap(new LinkedHashMap<Double, SoftReference<ImageIcon>>(SCALED_ICONS_CACHE_LIMIT) {
+      private final Map<Couple<Double>, SoftReference<ImageIcon>> scaledIconsCache = Collections.synchronizedMap(new LinkedHashMap<Couple<Double>, SoftReference<ImageIcon>>(SCALED_ICONS_CACHE_LIMIT) {
         @Override
-        public boolean removeEldestEntry(Map.Entry<Double, SoftReference<ImageIcon>> entry) {
+        public boolean removeEldestEntry(Map.Entry<Couple<Double>, SoftReference<ImageIcon>> entry) {
           return size() > SCALED_ICONS_CACHE_LIMIT;
         }
       });
+
+      private Couple<Double> key(@NotNull ScaleContext ctx) {
+        return new Couple<Double>(ctx.getScale(USR_SCALE) * ctx.getScale(OBJ_SCALE), ctx.getScale(SYS_SCALE));
+      }
 
       /**
        * Retrieves the orig icon scaled by the provided scale.
@@ -626,7 +629,7 @@ public final class IconLoader {
         final ScaleContext ctx = scale == 1 ? getScaleContext() : (ScaleContext)getScaleContext().copy(); // not modifying this scale context
         if (scale != 1) ctx.update(OBJ_SCALE.of(scale));
 
-        ImageIcon icon = SoftReference.dereference(scaledIconsCache.get(ctx.getScale(PIX_SCALE)));
+        ImageIcon icon = SoftReference.dereference(scaledIconsCache.get(key(ctx)));
         if (icon != null) {
           return icon;
         }
@@ -645,7 +648,7 @@ public final class IconLoader {
         icon = checkIcon(image, myUrl);
 
         if (icon != null && icon.getIconWidth() * icon.getIconHeight() * 4 < ImageLoader.CACHED_IMAGE_MAX_SIZE) {
-          scaledIconsCache.put(ctx.getScale(PIX_SCALE), new SoftReference<ImageIcon>(icon));
+          scaledIconsCache.put(key(ctx), new SoftReference<ImageIcon>(icon));
         }
         return icon;
       }
