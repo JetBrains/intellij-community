@@ -5,7 +5,10 @@ import com.intellij.openapi.components.*
 import com.intellij.openapi.project.*
 import runtime.reactive.*
 
-@State(name = "CircletProjectSettings", storages = [Storage(StoragePathMacros.WORKSPACE_FILE)])
+@State(
+    name = "CircletProjectSettings",
+    storages = [Storage(value = "CircletClient.xml", roamingType = RoamingType.DISABLED)]
+)
 class CircletProjectSettings(private val project: Project) :
     ILifetimedComponent by LifetimedComponent(project),
     PersistentStateComponent<CircletProjectSettings.State> {
