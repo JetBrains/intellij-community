@@ -184,6 +184,7 @@ public class MethodSignatureUtil {
   }
 
   public static boolean isSuperMethod(@NotNull PsiMethod superMethodCandidate, @NotNull PsiMethod derivedMethod) {
+    if (superMethodCandidate.hasModifierProperty(PsiModifier.PRIVATE)) return false;
     PsiClass superClassCandidate = superMethodCandidate.getContainingClass();
     PsiClass derivedClass = derivedMethod.getContainingClass();
     if (derivedClass == null || superClassCandidate == null || derivedClass == superClassCandidate) return false;
