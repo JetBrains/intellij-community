@@ -6,6 +6,7 @@ import com.intellij.codeInspection.dataFlow.NullnessUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.tree.IElementType;
+import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiTypesUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.ArrayUtil;
@@ -53,33 +54,70 @@ public class WrapperTypeMayBePrimitiveInspection extends AbstractBaseJavaLocalIn
       public void visitLocalVariable(PsiLocalVariable variable) {
         if (!isBoxedType(variable.getType())) return;
         PsiExpression initializer = variable.getInitializer();
-        if (initializer != null && !isValidRvalue(initializer)) {
-          return;
-        }
+        UnboxingStatistics statistics = new UnboxingStatistics();
+        if (initializer != null && !statistics.checkExpression(initializer)) return;
+
         if (ExpressionUtils.isNullLiteral(variable.getInitializer())) return;
         PsiElement block = PsiUtil.getVariableCodeBlock(variable, null);
         if (block == null) return;
-        WrapperTypeCanBePrimitiveDetectingVisitor visitor = new WrapperTypeCanBePrimitiveDetectingVisitor(variable);
+        WrapperTypeCanBePrimitiveDetectingVisitor visitor = new WrapperTypeCanBePrimitiveDetectingVisitor(variable, statistics);
         block.accept(visitor);
-        if (visitor.myBoxingRequired || !visitor.myHasReferences) return;
+        if (visitor.myBoxingRequired ||
+            !visitor.myHasReferences ||
+            !visitor.myStatistics.primitiveReplacementReducesUnnecessaryOperationCount()) {
+          return;
+        }
         holder.registerProblem(variable.getTypeElement(), InspectionsBundle.message("inspection.wrapper.type.may.be.primitive.name"),
                                new ConvertWrapperTypeToPrimitive());
       }
     };
   }
 
-  private static boolean isValidRvalue(PsiExpression expression) {
-    return isNotNull(expression) || expression instanceof PsiMethodCallExpression && VALUE_OF.test((PsiMethodCallExpression)expression);
+  private static boolean isValueOfCall(PsiExpression expression) {
+    return expression instanceof PsiMethodCallExpression && VALUE_OF.test((PsiMethodCallExpression)expression);
+  }
+
+  private static class UnboxingStatistics {
+    private int myBoxedUnnecessaryOperationCount = 0;
+    private int myUnboxedUnnecessaryOperationCount = 0;
+
+    /**
+     * Check, whether expression passed as argument is suitable to be right part of assignment or initializer when variable will be primitive
+     * Also collect statistics if boxing needed or unboxing needed
+     *
+     * @return false if boxing is required anyway
+     */
+    boolean checkExpression(@NotNull PsiExpression expression) {
+      if (expression.getType() instanceof PsiPrimitiveType && !PsiType.NULL.equals(expression.getType())) {
+        myBoxedUnnecessaryOperationCount++;
+      }
+      else if (!isValueOfCall(expression)) {
+        if (NullnessUtil.getExpressionNullness(expression) != Nullness.NOT_NULL) { // not safe using with primitive
+          return false;
+        }
+        myUnboxedUnnecessaryOperationCount++;
+      }
+      return true;
+    }
+
+    boolean primitiveReplacementReducesUnnecessaryOperationCount() {
+      return myUnboxedUnnecessaryOperationCount < myBoxedUnnecessaryOperationCount;
+    }
   }
 
   private static class WrapperTypeCanBePrimitiveDetectingVisitor extends JavaRecursiveElementWalkingVisitor {
     private final PsiLocalVariable myVariable;
     boolean myBoxingRequired = false;
     boolean myHasReferences = false;
+    private final @NotNull UnboxingStatistics myStatistics;
 
-    public WrapperTypeCanBePrimitiveDetectingVisitor(PsiLocalVariable variable) {
+    public WrapperTypeCanBePrimitiveDetectingVisitor(PsiLocalVariable variable,
+                                                     @NotNull UnboxingStatistics statistics) {
       myVariable = variable;
+      myStatistics = statistics;
     }
+
+    private static final int IN_LOOP_ASSIGNMENT_OPERATION_MULTIPLIER = 10;
 
     @Override
     public void visitReferenceExpression(PsiReferenceExpression expression) {
@@ -102,41 +140,95 @@ public class WrapperTypeMayBePrimitiveInspection extends AbstractBaseJavaLocalIn
         PsiMethod method = callExpression.resolveMethod();
         if (method == null) return;
         PsiParameter[] parameters = method.getParameterList().getParameters();
-        int parameterIndex = parameters.length > argumentsIndex ? parameters.length - 1 : argumentsIndex;
+        int parameterIndex = parameters.length < argumentsIndex + 1 ? parameters.length - 1 : argumentsIndex;
         PsiParameter parameter = parameters[parameterIndex];
-        if (parameter.getType() instanceof PsiPrimitiveType) return;
-        boxingRequired();
+        PsiType type = parameter.getType();
+        if (type instanceof PsiPrimitiveType) {
+          myStatistics.myBoxedUnnecessaryOperationCount++;
+        }
+        else {
+          myStatistics.myUnboxedUnnecessaryOperationCount++;
+        }
       }
       else if (parent instanceof PsiAssignmentExpression) {
         PsiExpression rExpression = ((PsiAssignmentExpression)parent).getRExpression();
         if (rExpression == null) return;
-        if (isValidRvalue(rExpression)) {
-          return;
+        if (!myStatistics.checkExpression(rExpression)) {
+          boxingRequired();
         }
-        boxingRequired();
       }
       else if (parent instanceof PsiSynchronizedStatement) {
         boxingRequired();
       }
       else if (parent instanceof PsiBinaryExpression) {
-        PsiBinaryExpression binaryExpression = (PsiBinaryExpression)parent;
-        IElementType operationTokenType = binaryExpression.getOperationTokenType();
-        if (operationTokenType == JavaTokenType.EQEQ || operationTokenType == JavaTokenType.NE) {
-          PsiExpression other = ExpressionUtils.getOtherOperand(binaryExpression, myVariable);
-          if (other.getType() instanceof PsiPrimitiveType) return;
-          boxingRequired();
+        checkBinaryExpression((PsiBinaryExpression)parent);
+      }
+      else if (parent instanceof PsiReturnStatement) {
+        PsiMethod method = PsiTreeUtil.getParentOfType(parent, PsiMethod.class, false, PsiLambdaExpression.class);
+        if (method != null) {
+          PsiType returnType = method.getReturnType();
+          if (returnType != null) {
+            if (returnType instanceof PsiPrimitiveType) {
+              myStatistics.myBoxedUnnecessaryOperationCount++;
+            } else {
+              myStatistics.myUnboxedUnnecessaryOperationCount++;
+            }
+          }
         }
       }
     }
 
+    private void checkBinaryExpression(PsiBinaryExpression binaryExpression) {
+      IElementType operationTokenType = binaryExpression.getOperationTokenType();
+      PsiExpression other = ExpressionUtils.getOtherOperand(binaryExpression, myVariable);
+      PsiType type = other.getType();
+      if (operationTokenType == JavaTokenType.EQEQ || operationTokenType == JavaTokenType.NE) {
+        if (type instanceof PsiPrimitiveType && !PsiType.NULL.equals(type)) {
+          myStatistics.myBoxedUnnecessaryOperationCount++;
+        } else {
+          boxingRequired();
+          return;
+        }
+      }
+
+      int boxedUnnecessaryOpImpact = 0;
+      int unboxedUnnecessaryOpImpact = 0;
+      if (type instanceof PsiPrimitiveType) {
+        if (PsiType.NULL.equals(type)) {
+          boxingRequired();
+          return;
+        }
+        else {
+          if (ExpressionUtils.isCompoundAssignmentOperation(binaryExpression)) {
+            boxedUnnecessaryOpImpact += 2;
+          }
+        }
+      }
+      else if (NullnessUtil.getExpressionNullness(other) == Nullness.NOT_NULL) {
+        boxedUnnecessaryOpImpact += 3;
+        unboxedUnnecessaryOpImpact += 3;
+      }
+      else {
+        boxingRequired();
+        return;
+      }
+      PsiLoopStatement binopLoop =
+        PsiTreeUtil.getParentOfType(binaryExpression, PsiLoopStatement.class, false, PsiClass.class, PsiLambdaExpression.class);
+      PsiLoopStatement variableLoop =
+        PsiTreeUtil.getParentOfType(myVariable, PsiLoopStatement.class, false, PsiClass.class, PsiLambdaExpression.class);
+      if (binopLoop != null && binopLoop == variableLoop) {
+        boxedUnnecessaryOpImpact *= IN_LOOP_ASSIGNMENT_OPERATION_MULTIPLIER;
+        unboxedUnnecessaryOpImpact *= IN_LOOP_ASSIGNMENT_OPERATION_MULTIPLIER;
+      }
+      myStatistics.myBoxedUnnecessaryOperationCount += boxedUnnecessaryOpImpact;
+      myStatistics.myUnboxedUnnecessaryOperationCount += unboxedUnnecessaryOpImpact;
+    }
+
+    // Strong boxing requirement
     private void boxingRequired() {
       myBoxingRequired = true;
       stopWalking();
     }
-  }
-
-  private static boolean isNotNull(PsiExpression rExpression) {
-    return NullnessUtil.getExpressionNullness(rExpression) == Nullness.NOT_NULL;
   }
 
   private static boolean isBoxedType(@NotNull PsiType type) {
