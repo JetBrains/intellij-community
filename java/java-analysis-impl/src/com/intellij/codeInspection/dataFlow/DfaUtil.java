@@ -289,6 +289,66 @@ public class DfaUtil {
     return !ControlFlowAnalyzer.isPure((PsiMethod)superCtor);
   }
 
+  /**
+   * Returns a surrounding PSI element which should be analyzed via DFA
+   * (e.g. passed to {@link DataFlowRunner#analyzeMethodRecursively(PsiElement, StandardInstructionVisitor)}) to cover given expression.
+   *
+   * @param expression expression to cover
+   * @return a dataflow context; null if no applicable context found.
+   */
+  @Nullable
+  static PsiElement getDataflowContext(PsiExpression expression) {
+    PsiMember member = PsiTreeUtil.getParentOfType(expression, PsiMember.class);
+    if (member instanceof PsiField || member instanceof PsiClassInitializer) return member.getContainingClass();
+    if (member instanceof PsiMethod) {
+      return ((PsiMethod)member).isConstructor() ? member.getContainingClass() : ((PsiMethod)member).getBody();
+    }
+    return null;
+  }
+
+  /**
+   * Tries to evaluate boolean condition using dataflow analysis.
+   * Currently is limited to comparisons like {@code a > b} and constant expressions.
+   *
+   * @param condition condition to evaluate
+   * @return evaluated value or null if cannot be evaluated
+   */
+  @Nullable
+  public static Boolean evaluateCondition(@Nullable PsiExpression condition) {
+    condition = PsiUtil.skipParenthesizedExprDown(condition);
+    if (condition == null || !PsiType.BOOLEAN.equals(condition.getType())) return null;
+    Object o = ExpressionUtils.computeConstantExpression(condition);
+    if (o instanceof Boolean) return (Boolean)o;
+    if (!(condition instanceof PsiBinaryExpression)) return null;
+    PsiBinaryExpression binOp = (PsiBinaryExpression)condition;
+    PsiElement context = getDataflowContext(condition);
+    if (context == null) return null;
+    class MyVisitor extends StandardInstructionVisitor {
+      boolean myTrueReachable = false;
+      boolean myFalseReachable = false;
+
+      @Override
+      public DfaInstructionState[] visitBinop(BinopInstruction instruction, DataFlowRunner runner, DfaMemoryState memState) {
+        DfaInstructionState[] states = super.visitBinop(instruction, runner, memState);
+        if (instruction.getPsiAnchor() == binOp) {
+          myTrueReachable |= instruction.isTrueReachable();
+          myFalseReachable |= instruction.isFalseReachable();
+          if (myTrueReachable && myFalseReachable) {
+            runner.cancel();
+          }
+        }
+        return states;
+      }
+    }
+    MyVisitor visitor = new MyVisitor();
+    if (new DataFlowRunner().analyzeMethodRecursively(context, visitor) == RunnerResult.OK) {
+      if (visitor.myTrueReachable != visitor.myFalseReachable) {
+        return visitor.myTrueReachable;
+      }
+    }
+    return null;
+  }
+
   private static class ValuableInstructionVisitor extends StandardInstructionVisitor {
     final Map<PsiElement, PlaceResult> myResults = ContainerUtil.newHashMap();
 

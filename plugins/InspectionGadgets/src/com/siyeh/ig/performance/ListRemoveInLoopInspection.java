@@ -3,6 +3,7 @@ package com.siyeh.ig.performance;
 
 import com.intellij.codeInsight.PsiEquivalenceUtil;
 import com.intellij.codeInspection.*;
+import com.intellij.codeInspection.dataFlow.DfaUtil;
 import com.intellij.codeInspection.dataFlow.value.DfaRelationValue;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Couple;
@@ -145,6 +146,11 @@ public class ListRemoveInLoopInspection extends AbstractBaseJavaLocalInspectionT
       PsiIfStatement ifStatement = (PsiIfStatement)ct.replaceAndRestoreComments(loopStatement, replacement);
       ct = new CommentTracker();
       PsiExpression condition = ifStatement.getCondition();
+      if (Boolean.TRUE.equals(DfaUtil.evaluateCondition(condition))) {
+        PsiStatement nakedSubListClear = ControlFlowUtils.stripBraces(ifStatement.getThenBranch());
+        assert nakedSubListClear != null;
+        ct.replaceAndRestoreComments(ifStatement, ct.markUnchanged(nakedSubListClear));
+      }
       String simplified = JavaPsiMathUtil.simplifyComparison(condition, ct);
       if (simplified != null) {
         ct.replaceAndRestoreComments(condition, simplified);
