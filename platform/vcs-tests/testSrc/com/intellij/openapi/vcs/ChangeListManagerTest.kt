@@ -1,7 +1,9 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.vcs
 
+import com.intellij.openapi.application.runWriteAction
 import com.intellij.openapi.vcs.changes.Change
+import junit.framework.TestCase
 
 class ChangeListManagerTest : BaseChangeListsTest() {
   private val FILE_1 = "file1.txt"
@@ -37,5 +39,87 @@ class ChangeListManagerTest : BaseChangeListsTest() {
     setBaseVersion(FILE_2, "oldText")
     refreshCLM()
     assertEquals(2, clm.allChanges.size)
+    TestCase.assertTrue(clm.allChanges.all { it.type == Change.Type.DELETED })
+
+    removeBaseVersion(FILE_2)
+    setBaseVersion(FILE_1, "oldText", FILE_2)
+    addLocalFile(FILE_1, "text")
+    refreshCLM()
+    assertEquals(1, clm.allChanges.size)
+    assertEquals(Change.Type.MOVED, clm.allChanges.first().type)
+  }
+
+  fun `test new changes moved to default list`() {
+    createChangelist("Test")
+
+    val file = addLocalFile(FILE_1, "a_b_c_d_e")
+    setBaseVersion(FILE_1, "a_b1_c_d1_e")
+    refreshCLM()
+    file.assertAffectedChangeLists("Default")
+
+    setDefaultChangeList("Test")
+    setBaseVersion(FILE_2, "a_b1_c_d1_e")
+    refreshCLM()
+    FILE_1.toFilePath.assertAffectedChangeLists("Default")
+    FILE_2.toFilePath.assertAffectedChangeLists("Test")
+  }
+
+  fun `test modifications do not move files to default`() {
+    createChangelist("Test")
+
+    val file1 = addLocalFile(FILE_1, "a_b_c_d_e")
+    val file2 = addLocalFile(FILE_2, "a_b_c_d_e")
+    setBaseVersion(FILE_1, "a_b1_c_d1_e")
+    setBaseVersion(FILE_2, null)
+    refreshCLM()
+    file1.assertAffectedChangeLists("Default")
+    file2.assertAffectedChangeLists("Default")
+
+    setDefaultChangeList("Test")
+
+    runWriteAction {
+      file1.document.setText("New Text")
+      file2.document.setText("New Text")
+    }
+    refreshCLM()
+    file1.assertAffectedChangeLists("Default")
+    file2.assertAffectedChangeLists("Default")
+
+    setBaseVersion(FILE_1, "a_b1_c_d1_e_f_g")
+    refreshCLM()
+    file1.assertAffectedChangeLists("Default")
+    file2.assertAffectedChangeLists("Default")
+  }
+
+  fun `test renames do not move files to default`() {
+    createChangelist("Test")
+
+    setBaseVersion(FILE_1, "a_b1_c_d1_e")
+    refreshCLM()
+    FILE_1.toFilePath.assertAffectedChangeLists("Default")
+
+    setDefaultChangeList("Test")
+
+    val file1 = addLocalFile(FILE_1, "a_b_c_d_e")
+    refreshCLM()
+    FILE_1.toFilePath.assertAffectedChangeLists("Default")
+
+    runWriteAction {
+      file1.document.setText("New Text")
+    }
+    refreshCLM()
+    FILE_1.toFilePath.assertAffectedChangeLists("Default")
+
+    setBaseVersion(FILE_1, null)
+    refreshCLM()
+    FILE_1.toFilePath.assertAffectedChangeLists("Default")
+
+    setBaseVersion(FILE_1, "a_b1_c_d1_e_f_g", FILE_2)
+    refreshCLM()
+    FILE_1.toFilePath.assertAffectedChangeLists("Default")
+
+    removeLocalFile(FILE_1)
+    refreshCLM()
+    FILE_2.toFilePath.assertAffectedChangeLists("Default")
   }
 }

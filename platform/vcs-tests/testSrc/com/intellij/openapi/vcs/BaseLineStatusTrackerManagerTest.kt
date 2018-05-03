@@ -33,18 +33,13 @@ abstract class BaseLineStatusTrackerManagerTest : BaseChangeListsTest() {
 
   override fun tearDown() {
     RunAll()
-      .append(ThrowableRunnable { resetSettings() })
       .append(ThrowableRunnable { lstm.releaseAllTrackers() })
       .append(ThrowableRunnable { super.tearDown() })
       .run()
   }
 
-  override fun resetTestState() {
-    super.resetTestState()
-    resetSettings()
-  }
-
-  private fun resetSettings() {
+  override fun resetSettings() {
+    super.resetSettings()
     VcsApplicationSettings.getInstance().ENABLE_PARTIAL_CHANGELISTS = true
     VcsApplicationSettings.getInstance().SHOW_LST_GUTTER_MARKERS = true
     VcsApplicationSettings.getInstance().SHOW_WHITESPACES_IN_LST = true

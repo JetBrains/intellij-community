@@ -69,6 +69,7 @@ abstract class BaseChangeListsTest : LightPlatformTestCase() {
 
   override fun tearDown() {
     RunAll()
+      .append(ThrowableRunnable { resetSettings() })
       .append(ThrowableRunnable { resetChanges() })
       .append(ThrowableRunnable { resetChangelists() })
       .append(ThrowableRunnable { vcsManager.directoryMappings = emptyList() })
@@ -78,7 +79,12 @@ abstract class BaseChangeListsTest : LightPlatformTestCase() {
       .run()
   }
 
+  protected open fun resetSettings() {
+    arePartialChangelistsSupported = false
+  }
+
   protected open fun resetTestState() {
+    resetSettings()
     resetChanges()
     resetChangelists()
     resetTestRootContent()
@@ -129,19 +135,20 @@ abstract class BaseChangeListsTest : LightPlatformTestCase() {
   }
 
   protected fun setBaseVersion(name: String, baseContent: String?) {
-    val filePath = VcsUtil.getFilePath(testRoot, name)
+    setBaseVersion(name, baseContent, name)
+  }
 
+  protected fun setBaseVersion(name: String, baseContent: String?, oldName: String) {
     val contentRevision: ContentRevision? = when (baseContent) {
       null -> null
-      else -> SimpleContentRevision(parseInput(baseContent), filePath, baseContent)
+      else -> SimpleContentRevision(parseInput(baseContent), oldName.toFilePath, baseContent)
     }
 
-    changeProvider.changes[filePath] = contentRevision
+    changeProvider.changes[name.toFilePath] = contentRevision
   }
 
   protected fun removeBaseVersion(name: String) {
-    val filePath = VcsUtil.getFilePath(testRoot, name)
-    changeProvider.changes.remove(filePath)
+    changeProvider.changes.remove(name.toFilePath)
   }
 
   protected fun refreshCLM() {
@@ -152,11 +159,17 @@ abstract class BaseChangeListsTest : LightPlatformTestCase() {
   }
 
 
+  protected val String.toFilePath: FilePath get() = VcsUtil.getFilePath(testRoot, this)
   protected val VirtualFile.change: Change? get() = clm.getChange(this)
   protected val VirtualFile.document: Document get() = FileDocumentManager.getInstance().getDocument(this)!!
 
   protected fun VirtualFile.assertAffectedChangeLists(vararg expectedNames: String) {
     assertSameElements(clm.getChangeLists(this).map { it.name }, *expectedNames)
+  }
+
+  protected fun FilePath.assertAffectedChangeLists(vararg expectedNames: String) {
+    val change = clm.getChange(this)!!
+    assertSameElements(clm.getChangeLists(change).map { it.name }, *expectedNames)
   }
 
 
@@ -190,6 +203,7 @@ abstract class BaseChangeListsTest : LightPlatformTestCase() {
   }
 
   protected fun setDefaultChangeList(listName: String) {
+    assertContainsElements(changeListsNames(), listName)
     clm.setDefaultChangeList(listName)
   }
 
