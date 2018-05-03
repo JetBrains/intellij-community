@@ -5,16 +5,36 @@ import com.intellij.codeInspection.dataFlow.value.DfaConstValue;
 import com.intellij.codeInspection.dataFlow.value.DfaValue;
 import com.intellij.codeInspection.dataFlow.value.DfaValueFactory;
 import com.intellij.codeInspection.dataFlow.value.DfaVariableValue;
-import com.intellij.psi.PsiPrimitiveType;
-import com.intellij.psi.PsiType;
+import com.intellij.psi.*;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+
+import java.util.Objects;
+import java.util.function.Function;
+import java.util.stream.Stream;
 
 /**
  * Representation of {@link MethodContract} return value. It may represent the concrete value (e.g. "false") or pose some constraints
  * to the method return value (e.g. "!null").
  */
 public abstract class ContractReturnValue {
+  private static final int PARAMETER_ORDINAL_BASE = 10;
+  private static final int MAX_SUPPORTED_PARAMETER = 100;
+
+  private static final Function<PsiMethod, String> NOT_CONSTRUCTOR =
+    method -> method.isConstructor() ? "not applicable for constructor" : null;
+  private static final Function<PsiMethod, String> NOT_STATIC =
+    method -> method.hasModifierProperty(PsiModifier.STATIC) ? "not applicable for static method" : null;
+  private static final Function<PsiMethod, String> NOT_PRIMITIVE_RETURN =
+    method -> {
+      PsiType returnType = method.getReturnType();
+      return returnType instanceof PsiPrimitiveType
+             ? "not applicable for primitive return type '" + returnType.getPresentableText() + "'"
+             : null;
+    };
+  private static final Function<PsiMethod, String> BOOLEAN_RETURN =
+    method -> PsiType.BOOLEAN.equals(method.getReturnType()) ? null : "method return type must be 'boolean'";
+
   private final @NotNull String myName;
   private final int myOrdinal;
 
@@ -40,13 +60,33 @@ public abstract class ContractReturnValue {
   }
 
   /**
-   * Checks whether this return value makes sense for the supplied return type. E.g. "true" contract value makes sense for {@code boolean}
-   * return type, but does not make sense for {@code int} return type. This method can be used to check the contract correctness.
+   * Checks whether this return value makes sense for the specified method signature. The method body is not checked.
+   * E.g. "true" contract value makes sense for method returning {@code boolean}, but does not make sense for method returning {@code int}.
+   * This method can be used to check the contract correctness.
    *
-   * @param returnType return type to check
+   * @param method
+   * @return null if this contract return value makes sense for the supplied return type.
+   * Otherwise the human-readable error message is returned.
+   */
+  public final String getMethodCompatibilityProblem(PsiMethod method) {
+    return validators().map(fn -> fn.apply(method)).filter(Objects::nonNull).findFirst()
+                       .map(("Contract return value '" + this + "': ")::concat)
+                       .orElse(null);
+  }
+
+  /**
+   * Checks whether this return value makes sense for the specified method signature. The method body is not checked.
+   * E.g. "true" contract value makes sense for method returning {@code boolean}, but does not make sense for method returning {@code int}.
+   * This method can be used to check the contract correctness.
+   *
+   * @param method
    * @return true if this contract return value makes sense for the supplied return type.
    */
-  public abstract boolean isReturnTypeCompatible(@Nullable PsiType returnType);
+  public final boolean isMethodCompatible(PsiMethod method) {
+    return validators().map(fn -> fn.apply(method)).allMatch(Objects::isNull);
+  }
+
+  abstract Stream<Function<PsiMethod, String>> validators();
 
   /**
    * Converts this return value to the most suitable {@link DfaValue} which represents the same constraints.
@@ -119,8 +159,6 @@ public abstract class ContractReturnValue {
   public static ContractReturnValue valueOf(int ordinal) {
     switch (ordinal) {
       case 0:
-      default:
-        return returnAny();
       case 1:
         return returnNull();
       case 2:
@@ -131,6 +169,15 @@ public abstract class ContractReturnValue {
         return returnFalse();
       case 5:
         return fail();
+      case 6:
+        return returnNew();
+      case 7:
+        return returnThis();
+      default:
+        if (ordinal >= PARAMETER_ORDINAL_BASE && ordinal <= PARAMETER_ORDINAL_BASE + MAX_SUPPORTED_PARAMETER) {
+          return returnParameter(ordinal - PARAMETER_ORDINAL_BASE);
+        }
+        return returnAny();
     }
   }
 
@@ -157,6 +204,22 @@ public abstract class ContractReturnValue {
         return returnNull();
       case "!null":
         return returnNotNull();
+      case "new":
+        return returnNew();
+      case "this":
+        return returnThis();
+    }
+    if (value.startsWith("param")) {
+      String suffix = value.substring("param".length());
+      try {
+        int paramNumber = Integer.parseInt(suffix) - 1;
+        if (paramNumber >= 0 && paramNumber <= MAX_SUPPORTED_PARAMETER) {
+          return new ParameterReturnValue(paramNumber);
+        }
+      }
+      catch (NumberFormatException ignored) {
+        // unexpected non-integer suffix: ignore
+      }
     }
     return null;
   }
@@ -211,10 +274,35 @@ public abstract class ContractReturnValue {
     return NOT_NULL_VALUE;
   }
 
+  /**
+   * @return non-null new object return value
+   */
+  public static ContractReturnValue returnNew() {
+    return NEW_VALUE;
+  }
+
+  /**
+   * @return non-null "this" return value (qualifier)
+   */
+  public static ContractReturnValue returnThis() {
+    return THIS_VALUE;
+  }
+
+  /**
+   * @return non-null parameter return value (parameter number is zero-based)
+   */
+  public static ContractReturnValue returnParameter(int n) {
+    if (n < 0) {
+      throw new IllegalArgumentException("Negative parameter: " + n);
+    }
+    if (n > MAX_SUPPORTED_PARAMETER) return ANY_VALUE;
+    return new ParameterReturnValue(n);
+  }
+
   private static final ContractReturnValue ANY_VALUE = new ContractReturnValue("_", 0) {
     @Override
-    public boolean isReturnTypeCompatible(@Nullable PsiType returnType) {
-      return true;
+    Stream<Function<PsiMethod, String>> validators() {
+      return Stream.of(NOT_CONSTRUCTOR);
     }
 
     @Override
@@ -230,8 +318,8 @@ public abstract class ContractReturnValue {
 
   private static final ContractReturnValue FAIL_VALUE = new ContractReturnValue("fail", 5) {
     @Override
-    public boolean isReturnTypeCompatible(@Nullable PsiType returnType) {
-      return true;
+    Stream<Function<PsiMethod, String>> validators() {
+      return Stream.empty();
     }
 
     @Override
@@ -247,8 +335,8 @@ public abstract class ContractReturnValue {
 
   private static final ContractReturnValue NULL_VALUE = new ContractReturnValue("null", 1) {
     @Override
-    public boolean isReturnTypeCompatible(@Nullable PsiType returnType) {
-      return returnType != null && !(returnType instanceof PsiPrimitiveType);
+    Stream<Function<PsiMethod, String>> validators() {
+      return Stream.of(NOT_CONSTRUCTOR, NOT_PRIMITIVE_RETURN);
     }
 
     @Override
@@ -264,13 +352,56 @@ public abstract class ContractReturnValue {
 
   private static final ContractReturnValue NOT_NULL_VALUE = new ContractReturnValue("!null", 2) {
     @Override
-    public boolean isReturnTypeCompatible(@Nullable PsiType returnType) {
-      return returnType != null && !(returnType instanceof PsiPrimitiveType);
+    Stream<Function<PsiMethod, String>> validators() {
+      return Stream.of(NOT_CONSTRUCTOR, NOT_PRIMITIVE_RETURN);
     }
 
     @Override
     public boolean isNotNull() {
       return true;
+    }
+
+    @Override
+    public DfaValue toDfaValue(DfaValueFactory factory, DfaValue defaultValue) {
+      return factory.withFact(defaultValue, DfaFactType.CAN_BE_NULL, false);
+    }
+
+    @Override
+    public boolean isValueCompatible(DfaMemoryState state, DfaValue value) {
+      return !state.isNull(value);
+    }
+  };
+
+  private static final ContractReturnValue NEW_VALUE = new ContractReturnValue("new", 6) {
+    @Override
+    Stream<Function<PsiMethod, String>> validators() {
+      return Stream.of(NOT_CONSTRUCTOR, NOT_PRIMITIVE_RETURN);
+    }
+
+    @Override
+    public DfaValue toDfaValue(DfaValueFactory factory, DfaValue defaultValue) {
+      return factory.withFact(defaultValue, DfaFactType.CAN_BE_NULL, false);
+    }
+
+    @Override
+    public boolean isValueCompatible(DfaMemoryState state, DfaValue value) {
+      return !state.isNull(value);
+    }
+  };
+
+  private static final ContractReturnValue THIS_VALUE = new ContractReturnValue("this", 7) {
+    @Override
+    Stream<Function<PsiMethod, String>> validators() {
+      return Stream.of(NOT_CONSTRUCTOR, NOT_STATIC, NOT_PRIMITIVE_RETURN, method -> {
+        PsiType returnType = method.getReturnType();
+        if (returnType instanceof PsiClassType) {
+          PsiClass aClass = method.getContainingClass();
+          if (aClass != null && JavaPsiFacade.getElementFactory(method.getProject()).createType(aClass).isConvertibleFrom(returnType)) {
+            return null;
+          }
+        }
+        return "method return type should be compatible with method containing class";
+      });
     }
 
     @Override
@@ -305,8 +436,8 @@ public abstract class ContractReturnValue {
     }
 
     @Override
-    public boolean isReturnTypeCompatible(@Nullable PsiType returnType) {
-      return PsiType.BOOLEAN.equals(returnType);
+    Stream<Function<PsiMethod, String>> validators() {
+      return Stream.of(NOT_CONSTRUCTOR, BOOLEAN_RETURN);
     }
 
     @Override
@@ -323,6 +454,46 @@ public abstract class ContractReturnValue {
         Object constant = ((DfaConstValue)value).getValue();
         return Boolean.valueOf(myValue).equals(constant);
       }
+      return true;
+    }
+  }
+
+  private static class ParameterReturnValue extends ContractReturnValue {
+    private final int myParamNumber; // zero-based
+
+    public ParameterReturnValue(int n) {
+      super("param" + (n + 1), n + PARAMETER_ORDINAL_BASE);
+      myParamNumber = n;
+    }
+
+    @Override
+    Stream<Function<PsiMethod, String>> validators() {
+      return Stream.of(NOT_CONSTRUCTOR, method -> {
+        PsiParameter[] parameters = method.getParameterList().getParameters();
+        if (parameters.length <= myParamNumber) {
+          return "not applicable for method which has " + parameters.length +
+                 " parameter" + (parameters.length == 1 ? "" : "s");
+        }
+        PsiType parameterType = parameters[myParamNumber].getType();
+        PsiType returnType = method.getReturnType();
+        if (returnType != null && !returnType.isAssignableFrom(parameterType)) {
+          return "return type '" +
+                 returnType.getPresentableText() +
+                 "' must be assignable from parameter type '" +
+                 parameterType.getPresentableText() +
+                 "'";
+        }
+        return null;
+      });
+    }
+
+    @Override
+    public DfaValue toDfaValue(DfaValueFactory factory, DfaValue defaultValue) {
+      return defaultValue;
+    }
+
+    @Override
+    public boolean isValueCompatible(DfaMemoryState state, DfaValue value) {
       return true;
     }
   }

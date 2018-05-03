@@ -136,7 +136,8 @@ public final class StandardMethodContract extends MethodContract {
   private static ContractReturnValue parseReturnValue(String returnValueString) throws ParseException {
     ContractReturnValue returnValue = ContractReturnValue.valueOf(returnValueString);
     if (returnValue == null) {
-      throw new ParseException("Return value should be one of: null, !null, true, false, fail, _. Found: " + returnValueString);
+      throw new ParseException(
+        "Return value should be one of: null, !null, true, false, this, new, paramN, fail, _. Found: " + returnValueString);
     }
     return returnValue;
   }
