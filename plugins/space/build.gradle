@@ -26,6 +26,8 @@ dependencies {
     compile 'org.apache.commons:commons-io:1.3.2'
 }
 
+test { finalizedBy jacocoTestReport }
+
 intellij {
     version 'IC-173.4127.17'
     pluginName 'circlet-intellij-plugin'
