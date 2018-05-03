@@ -26,6 +26,12 @@
                              instance="circlet.settings.CircletConnectionConfigurable"/>
     </extensions>
 
+    <application-components>
+        <component>
+            <implementation-class>circlet.components.CircletApplicationComponent</implementation-class>
+        </component>
+    </application-components>
+
     <project-components>
         <component>
             <implementation-class>circlet.components.CircletConnectionComponent</implementation-class>
