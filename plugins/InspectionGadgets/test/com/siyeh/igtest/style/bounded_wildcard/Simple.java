@@ -113,6 +113,15 @@ public class Simple<T> {
       //buffer.append(" [...]\n");
     }
   }
+  ///////// recursive 2
+  public static boolean isBackpointerReference(Object expression, Processor<<warning descr="Can generalize to '? super Number'">Number</warning>> numberCond) {
+    if (expression instanceof Number) {
+      final String contents = expression.toString();
+      return isBackpointerReference(contents, numberCond);
+    }
+    return expression instanceof Number && numberCond.process((Number)expression);
+  }
+
 
   ///////// can't deduce anything - too general
   private static String findNonCodeAnnotation(Collection<String> annotationNames, Map<Collection<String>, String> map ) {
