@@ -9,13 +9,16 @@ import com.intellij.codeInsight.hint.LineTooltipRenderer;
 import com.intellij.codeInsight.hint.TooltipRenderer;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.ex.ErrorStripTooltipRendererProvider;
+import com.intellij.openapi.editor.ex.TooltipAction;
 import com.intellij.openapi.editor.impl.TrafficTooltipRenderer;
 import com.intellij.openapi.editor.markup.RangeHighlighter;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
 import gnu.trove.THashSet;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.Collection;
 import java.util.List;
@@ -81,6 +84,16 @@ public class DaemonTooltipRendererProvider implements ErrorStripTooltipRendererP
   @Override
   public TooltipRenderer calcTooltipRenderer(@NotNull final String text, final int width) {
     return new DaemonTooltipRenderer(text, width, new Object[]{text});
+  }
+
+  @NotNull
+  @Override
+  public TooltipRenderer calcTooltipRenderer(@NotNull String text, @Nullable TooltipAction action, int width) {
+    if (action != null || Registry.is("ide.tooltip.show.with.actions")) {
+      return new DaemonTooltipWithActionRenderer(text, action, width, new Object[]{text});
+    }
+    
+    return ErrorStripTooltipRendererProvider.super.calcTooltipRenderer(text, action, width);
   }
 
   @NotNull

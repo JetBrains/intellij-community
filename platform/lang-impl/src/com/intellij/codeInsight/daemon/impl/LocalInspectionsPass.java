@@ -502,10 +502,11 @@ public class LocalInspectionsPass extends ProgressableTextEditorHighlightingPass
     @NonNls String link = "";
     if (showToolDescription(toolWrapper)) {
       link = " <a "
-             + "href=\"#inspection/" + tool.getShortName() + "\""
+             + "href=\"#inspection/" + tool.getShortName() + "\" "
+             + "shortcut=\"" + myShortcutText + "\""
              + (UIUtil.isUnderDarcula() ? " color=\"7AB4C9\" " : "")
              + ">" + DaemonBundle.message("inspection.extended.description")
-             + "</a> " + myShortcutText;
+             + "</a> ";
     }
 
     @NonNls String tooltip = null;

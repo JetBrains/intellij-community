@@ -19,7 +19,7 @@ import javax.swing.*;
 import java.util.List;
 
 class DaemonTooltipRenderer extends LineTooltipRenderer {
-  @NonNls private static final String END_MARKER = "<!-- end marker -->";
+  @NonNls protected static final String END_MARKER = "<!-- end marker -->";
 
 
   public DaemonTooltipRenderer(final String text, Object[] comparable) {
@@ -31,13 +31,18 @@ class DaemonTooltipRenderer extends LineTooltipRenderer {
   }
 
   @Override
-  protected void onHide(final JComponent contentComponent) {
+  protected void onHide(@NotNull JComponent contentComponent) {
     ShowErrorDescriptionAction.rememberCurrentWidth(contentComponent.getWidth());
   }
 
+  @NotNull
   @Override
-  protected boolean dressDescription(@NotNull final Editor editor) {
-    final List<String> problems = StringUtil.split(UIUtil.getHtmlBody(new Html(myText).setKeepFont(true)), UIUtil.BORDER_LINE);
+  protected String dressDescription(@NotNull final Editor editor, @NotNull String tooltipText, boolean expand) {
+    if (!expand) {
+      return super.dressDescription(editor, tooltipText, false);
+    }
+
+    final List<String> problems = getProblems(tooltipText);
     StringBuilder text = new StringBuilder();
     for (String problem : problems) {
       final String ref = getLinkRef(problem);
@@ -47,9 +52,7 @@ class DaemonTooltipRenderer extends LineTooltipRenderer {
           description =
             InspectionNodeInfo.stripUIRefsFromInspectionDescription(UIUtil.getHtmlBody(new Html(description).setKeepFont(true)));
           text
-            .append(UIUtil.getHtmlBody(new Html(problem).setKeepFont(true)).replace(DaemonBundle.message("inspection.extended.description"),
-                                                                                    DaemonBundle
-                                                                                      .message("inspection.collapse.description")))
+            .append(getHtmlForProblemWithLink(problem))
             .append(END_MARKER)
             .append("<p>")
             .append(description)
@@ -61,14 +64,25 @@ class DaemonTooltipRenderer extends LineTooltipRenderer {
       }
     }
     if (text.length() > 0) { //otherwise do not change anything
-      myText = XmlStringUtil.wrapInHtml(StringUtil.trimEnd(text.toString(), UIUtil.BORDER_LINE));
-      return true;
+      return XmlStringUtil.wrapInHtml(StringUtil.trimEnd(text.toString(), UIUtil.BORDER_LINE));
     }
-    return false;
+    return super.dressDescription(editor, tooltipText, true);
+  }
+
+  @NotNull
+  protected List<String> getProblems(@NotNull String tooltipText) {
+    return StringUtil.split(UIUtil.getHtmlBody(new Html(tooltipText).setKeepFont(true)), UIUtil.BORDER_LINE);
+  }
+
+  @NotNull
+  protected String getHtmlForProblemWithLink(@NotNull String problem) {
+    Html html = new Html(problem).setKeepFont(true);
+    return UIUtil.getHtmlBody(html)
+                 .replace(DaemonBundle.message("inspection.extended.description"), DaemonBundle.message("inspection.collapse.description"));
   }
 
   @Nullable
-  private static String getLinkRef(@NonNls String text) {
+  protected static String getLinkRef(@NonNls String text) {
     final String linkWithRef = "<a href=\"";
     final int linkStartIdx = text.indexOf(linkWithRef);
     if (linkStartIdx >= 0) {
@@ -82,20 +96,7 @@ class DaemonTooltipRenderer extends LineTooltipRenderer {
   }
 
   @Override
-  protected void stripDescription() {
-    final List<String> problems = StringUtil.split(UIUtil.getHtmlBody(new Html(myText).setKeepFont(true)), UIUtil.BORDER_LINE);
-    StringBuilder text = new StringBuilder();
-    for (String rawProblem : problems) {
-      final String problem = StringUtil.split(rawProblem, END_MARKER).get(0);
-      text.append(UIUtil.getHtmlBody(new Html(problem).setKeepFont(true)).replace(DaemonBundle.message("inspection.collapse.description"),
-                                                                                  DaemonBundle.message("inspection.extended.description")))
-          .append(UIUtil.BORDER_LINE);
-    }
-    myText = XmlStringUtil.wrapInHtml(StringUtil.trimEnd(text.toString(), UIUtil.BORDER_LINE));
-  }
-
-  @Override
-  protected LineTooltipRenderer createRenderer(final String text, final int width) {
+  protected LineTooltipRenderer createRenderer(@NotNull String text, final int width) {
     return new DaemonTooltipRenderer(text, width, getEqualityObjects());
   }
 }
