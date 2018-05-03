@@ -124,7 +124,7 @@ class SvnBranchConfigurationManager(private val myProject: Project,
     else null
     val result = SvnBranchConfigurationNew().apply {
       // trunk url could be either decoded or encoded depending on the code flow
-      trunk = addUserInfo(persistedConfiguration.trunkUrl, true, userInfo)
+      trunk = persistedConfiguration.trunkUrl?.let { addUserInfo(it, true, userInfo) }
       isUserInfoInUrl = persistedConfiguration.isUserinfoInUrl
     }
 
