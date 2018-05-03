@@ -27,8 +27,8 @@ public class SplitRawStringIntentionAction extends PsiElementBaseIntentionAction
       return false;
     }
 
-    int leadingTicsSequence = PsiRawStringLiteralUtil.getLeadingTicsSequence(text);
-    int trailingTicsSequence = PsiRawStringLiteralUtil.getTrailingTicsSequence(text);
+    int leadingTicsSequence = PsiRawStringLiteralUtil.getLeadingTicksSequence(text);
+    int trailingTicsSequence = PsiRawStringLiteralUtil.getTrailingTicksSequence(text);
     if (leadingTicsSequence == trailingTicsSequence) {
       int offset = editor.getCaretModel().getOffset();
       int caretInTokenIdx = offset - token.getTextOffset();
@@ -60,7 +60,7 @@ public class SplitRawStringIntentionAction extends PsiElementBaseIntentionAction
       return;
     }
 
-    int ticsSequenceLength = PsiRawStringLiteralUtil.getLeadingTicsSequence(text);
+    int ticsSequenceLength = PsiRawStringLiteralUtil.getLeadingTicksSequence(text);
     String breakSequence = StringUtil.repeat("`", ticsSequenceLength);
 
     int offset = editor.getCaretModel().getOffset();

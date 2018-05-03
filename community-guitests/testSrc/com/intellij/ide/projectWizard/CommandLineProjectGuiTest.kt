@@ -21,16 +21,15 @@ import com.intellij.openapi.ui.MultiLineLabelUI
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.testGuiFramework.framework.RunWithIde
 import com.intellij.testGuiFramework.impl.GuiTestCase
-import com.intellij.testGuiFramework.impl.GuiTestUtilKt
 import com.intellij.testGuiFramework.launcher.ide.CommunityIde
+import com.intellij.testGuiFramework.tests.community.CommunityProjectCreator
 import org.junit.Assert.assertTrue
 import org.junit.Test
 
 @RunWithIde(CommunityIde::class)
 class CommandLineProjectGuiTest: GuiTestCase() {
 
-  val testProjectName = "test-cmd-template"
-  val codeText: String = """package com.company;
+  private val codeText: String = """package com.company;
 
 public class Main {
 
@@ -43,23 +42,8 @@ public class Main {
   @Test
   fun testProjectCreate() {
 
-    welcomeFrame {
-      actionLink("Create New Project").click()
-      dialog("New Project") {
-        jList("Java").clickItem("Java")
-        GuiTestUtilKt.waitProgressDialogUntilGone(robot(), "Loading Templates")
-        button("Next").click()
-        checkbox("Create project from template").click()
-        jList("Command Line App").clickItem("Command Line App")
-        button("Next").click()
-        typeText(testProjectName)
-        button("Finish").click()
-      }
-    }
+    CommunityProjectCreator.createCommandLineProject()
     ideFrame {
-      projectView {
-        path(project.name, "src", "com.company", "Main").doubleClick()
-      }
       editor {
         //wait until current file has appeared in current editor and set focus to editor
         moveTo(1)

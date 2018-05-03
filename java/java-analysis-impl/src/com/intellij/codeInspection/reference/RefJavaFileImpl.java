@@ -42,14 +42,16 @@ public class RefJavaFileImpl extends RefFileImpl {
         PsiPackageStatement packageStatement = file.getPackageStatement();
         if (packageStatement != null) {
           PsiModifierList annotationList = packageStatement.getAnnotationList();
-          for (PsiAnnotation annotation : annotationList.getAnnotations()) {
-            PsiJavaCodeReferenceElement anno = annotation.getNameReferenceElement();
-            if (anno != null) {
-              PsiElement aClass = anno.resolve();
-              RefElement refClass = getRefManager().getReference(aClass);
-              if (refClass instanceof RefClassImpl) {
-                addOutReference(refClass);
-                ((RefJavaElementImpl)refClass).markReferenced(this, file, aClass, false, true, null);
+          if (annotationList != null) {
+            for (PsiAnnotation annotation : annotationList.getAnnotations()) {
+              PsiJavaCodeReferenceElement anno = annotation.getNameReferenceElement();
+              if (anno != null) {
+                PsiElement aClass = anno.resolve();
+                RefElement refClass = getRefManager().getReference(aClass);
+                if (refClass instanceof RefClassImpl) {
+                  addOutReference(refClass);
+                  ((RefJavaElementImpl)refClass).markReferenced(this, file, aClass, false, true, null);
+                }
               }
             }
           }
