@@ -29,6 +29,6 @@ public final class RemoveBuildFileAction extends AnAction {
   }
 
   public void actionPerformed(AnActionEvent e) {
-    myAntExplorer.removeBuildFile();
+    myAntExplorer.removeSelectedBuildFiles();
   }
 }
