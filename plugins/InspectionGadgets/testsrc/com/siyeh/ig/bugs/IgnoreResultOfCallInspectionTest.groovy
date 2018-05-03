@@ -231,6 +231,27 @@ class C {
 """
   }
 
+  void testPureMethodReturningThis() {
+    doTest """
+import org.jetbrains.annotations.Contract;
+
+class Test {
+  boolean closed;
+  
+  @Contract(pure=true, value="->this")
+  Test validate() {
+    if(closed) throw new IllegalStateException();
+    return this;
+  }
+  
+  void test() {
+    validate();
+    System.out.println("ok");
+  }
+}
+"""
+  }
+
   void testPureMethodInVoidFunctionalExpression() {
     doTest """
 import org.jetbrains.annotations.Contract;

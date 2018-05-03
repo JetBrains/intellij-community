@@ -16,7 +16,9 @@
 package com.siyeh.ig.bugs;
 
 import com.intellij.codeInsight.AnnotationUtil;
+import com.intellij.codeInspection.dataFlow.ContractReturnValue;
 import com.intellij.codeInspection.dataFlow.ControlFlowAnalyzer;
+import com.intellij.codeInspection.dataFlow.MethodContract;
 import com.intellij.openapi.roots.ProjectFileIndex;
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.WriteExternalException;
@@ -41,6 +43,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Collections;
+import java.util.List;
 import java.util.Objects;
 import java.util.Set;
 
@@ -262,7 +265,17 @@ public class IgnoreResultOfCallInspectionBase extends BaseInspection {
       final boolean honorInferred = Registry.is("ide.ignore.call.result.inspection.honor.inferred.pure");
       if (!honorInferred && AnnotationUtil.isInferredAnnotation(anno)) return false;
       return Boolean.TRUE.equals(AnnotationUtil.getBooleanAttributeValue(anno, "pure")) &&
-             !SideEffectChecker.mayHaveExceptionalSideEffect(method);
+             !SideEffectChecker.mayHaveExceptionalSideEffect(method) &&
+             !hasTrivialReturnValue(method);
+    }
+
+    private boolean hasTrivialReturnValue(PsiMethod method) {
+      List<? extends MethodContract> contracts = ControlFlowAnalyzer.getMethodCallContracts(method, null);
+      return !contracts.isEmpty() &&
+             contracts.stream()
+                      .map(MethodContract::getReturnValue)
+                      .allMatch(returnValue -> returnValue.equals(ContractReturnValue.returnThis()) ||
+                                               returnValue instanceof ContractReturnValue.ParameterReturnValue);
     }
 
     private void registerMethodCallOrRefError(PsiExpression call, PsiClass aClass) {

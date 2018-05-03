@@ -458,12 +458,16 @@ public abstract class ContractReturnValue {
     }
   }
 
-  private static final class ParameterReturnValue extends ContractReturnValue {
+  public static final class ParameterReturnValue extends ContractReturnValue {
     private final int myParamNumber; // zero-based
 
     public ParameterReturnValue(int n) {
       super("param" + (n + 1), n + PARAMETER_ORDINAL_BASE);
       myParamNumber = n;
+    }
+
+    public int getParameterNumber() {
+      return myParamNumber;
     }
 
     @Override
