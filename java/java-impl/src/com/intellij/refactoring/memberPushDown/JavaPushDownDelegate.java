@@ -102,6 +102,10 @@ public class JavaPushDownDelegate extends PushDownDelegate<MemberInfo, PsiMember
         context = (PsiElement)newClassContext;
       }
     }
+    if (targetClass instanceof PsiAnonymousClass && 
+        toMove.stream().map(MemberInfoBase::getOverrides).anyMatch(Objects::nonNull)) {
+      conflicts.putValue(targetClass, "Unable to push implements to anonymous class");
+    }
     new PushDownConflicts((PsiClass)pushDownData.getSourceClass(), toMove.toArray(new MemberInfo[0]), conflicts)
       .checkTargetClassConflicts(targetClass, context);
   }
@@ -304,10 +308,11 @@ public class JavaPushDownDelegate extends PushDownDelegate<MemberInfo, PsiMember
               }
             }
             PsiJavaCodeReferenceElement classRef = classType != null ? factory.createReferenceElementByType(classType) : factory.createClassReferenceElement(psiClass);
-            if (psiClass.isInterface() && !targetClass.isInterface()) {
-              targetClass.getImplementsList().add(classRef);
-            } else {
-              targetClass.getExtendsList().add(classRef);
+            PsiReferenceList extendsImplementsList = psiClass.isInterface() && !targetClass.isInterface() 
+                                                     ? targetClass.getImplementsList() 
+                                                     : targetClass.getExtendsList();
+            if (extendsImplementsList != null) {
+              extendsImplementsList.add(classRef);
             }
           }
         }
