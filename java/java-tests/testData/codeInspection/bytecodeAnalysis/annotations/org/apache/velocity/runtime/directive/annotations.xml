@@ -152,6 +152,7 @@
     </item>
     <item name='org.apache.velocity.runtime.directive.Directive org.apache.velocity.runtime.directive.Scope makeScope(java.lang.Object)'>
         <annotation name='org.jetbrains.annotations.Contract'>
+            <val name="value" val="&quot;_-&gt;new&quot;"/>
             <val name="pure" val="true"/>
         </annotation>
         <annotation name='org.jetbrains.annotations.NotNull'/>
@@ -411,6 +412,11 @@
     </item>
     <item name='org.apache.velocity.runtime.directive.Macro java.lang.StringBuffer macroToString(java.lang.StringBuffer, java.lang.String[]) 1'>
         <annotation name='org.jetbrains.annotations.NotNull'/>
+    </item>
+    <item name='org.apache.velocity.runtime.directive.Macro java.lang.String[] getArgArray(org.apache.velocity.runtime.parser.node.Node, org.apache.velocity.runtime.RuntimeServices)'>
+        <annotation name='org.jetbrains.annotations.Contract'>
+            <val val="&quot;_,_-&gt;new&quot;"/>
+        </annotation>
     </item>
     <item name='org.apache.velocity.runtime.directive.Macro java.lang.String[] getArgArray(org.apache.velocity.runtime.parser.node.Node, org.apache.velocity.runtime.RuntimeServices) 0'>
         <annotation name='org.jetbrains.annotations.NotNull'/>

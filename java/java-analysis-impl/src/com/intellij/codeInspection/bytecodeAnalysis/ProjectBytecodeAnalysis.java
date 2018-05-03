@@ -16,7 +16,9 @@
 package com.intellij.codeInspection.bytecodeAnalysis;
 
 import com.intellij.codeInsight.AnnotationUtil;
+import com.intellij.codeInspection.dataFlow.ContractReturnValue;
 import com.intellij.codeInspection.dataFlow.ControlFlowAnalyzer;
+import com.intellij.codeInspection.dataFlow.StandardMethodContract;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProgressManager;
@@ -37,6 +39,7 @@ import com.intellij.util.containers.ConcurrentFactoryMap;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.Stack;
 import one.util.streamex.EntryStream;
+import one.util.streamex.IntStreamEx;
 import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -46,6 +49,7 @@ import java.io.IOException;
 import java.io.UncheckedIOException;
 import java.security.MessageDigest;
 import java.util.*;
+import java.util.function.Function;
 
 import static com.intellij.codeInspection.bytecodeAnalysis.Direction.*;
 
@@ -303,7 +307,7 @@ public class ProjectBytecodeAnalysis {
       final Solver outSolver = new Solver(new ELattice<>(Value.Bot, Value.Top), Value.Top);
       collectEquations(allKeys, outSolver);
       Map<EKey, Value> solutions = outSolver.solve();
-      BytecodeAnalysisConverter.addMethodAnnotations(solutions, result, key, arity);
+      addMethodAnnotations(solutions, result, key, arity);
     }
 
     if (nullableMethod) {
@@ -397,6 +401,146 @@ public class ProjectBytecodeAnalysis {
     annotation.putUserData(INFERRED_ANNOTATION, Boolean.TRUE);
     ((LightVirtualFile)annotation.getContainingFile().getViewProvider().getVirtualFile()).setWritable(false);
     return annotation;
+  }
+
+  BitSet findAlwaysNotNullParameters(@NotNull EKey methodKey, BitSet possiblyNotNullParameters) throws EquationsLimitException {
+    BitSet alwaysNotNullParameters = new BitSet();
+    if (possiblyNotNullParameters.cardinality() != 0) {
+      List<EKey> keys = IntStreamEx.of(possiblyNotNullParameters).mapToObj(idx -> methodKey.withDirection(new In(idx, false))).toList();
+      final Solver notNullSolver = new Solver(new ELattice<>(Value.NotNull, Value.Top), Value.Top);
+      collectEquations(keys, notNullSolver);
+
+      Map<EKey, Value> notNullSolutions = notNullSolver.solve();
+      alwaysNotNullParameters = IntStreamEx.of(possiblyNotNullParameters).filter(idx -> {
+        EKey key = methodKey.withDirection(new In(idx, false));
+        return notNullSolutions.get(key) == Value.NotNull || notNullSolutions.get(key.mkUnstable()) == Value.NotNull;
+      }).toBitSet();
+    }
+    return alwaysNotNullParameters;
+  }
+
+  /**
+   * Given `solution` of all dependencies of a method with the `methodKey`, converts this solution into annotations.
+   *
+   * @param solution solution of equations
+   * @param methodAnnotations annotations to which corresponding solutions should be added
+   * @param methodKey a primary key of a method being analyzed. not it is stable
+   * @param arity arity of this method (hint for constructing @Contract annotations)
+   */
+  private void addMethodAnnotations(@NotNull Map<EKey, Value> solution, @NotNull MethodAnnotations methodAnnotations, @NotNull EKey methodKey, int arity)
+    throws EquationsLimitException {
+    List<StandardMethodContract> contractClauses = new ArrayList<>();
+    Set<EKey> notNulls = methodAnnotations.notNulls;
+    Set<EKey> pures = methodAnnotations.pures;
+    Map<EKey, String> contracts = methodAnnotations.contractsValues;
+
+    ContractReturnValue fullReturnValue = methodAnnotations.returnValue.asContractReturnValue();
+    for (Map.Entry<EKey, Value> entry : solution.entrySet()) {
+      // NB: keys from Psi are always stable, so we need to stabilize keys from equations
+      Value value = entry.getValue();
+      if (value == Value.Top || value == Value.Bot || (value == Value.Fail && !pures.contains(methodKey))) {
+        continue;
+      }
+      EKey key = entry.getKey().mkStable();
+      Direction direction = key.getDirection();
+      EKey baseKey = key.mkBase();
+      if (!methodKey.equals(baseKey)) {
+        continue;
+      }
+      if (value == Value.NotNull && direction == Out) {
+        notNulls.add(methodKey);
+      }
+      else if (value == Value.Pure && direction == Pure) {
+        pures.add(methodKey);
+      }
+      else if (direction instanceof ParamValueBasedDirection) {
+        ContractReturnValue contractReturnValue =
+          fullReturnValue.equals(ContractReturnValue.returnAny()) ? value.toReturnValue() : fullReturnValue;
+        contractClauses.add(contractElement(arity, (ParamValueBasedDirection)direction, contractReturnValue));
+      }
+    }
+
+    Map<Boolean, List<StandardMethodContract>> partition =
+      StreamEx.of(contractClauses).partitioningBy(c -> c.getReturnValue().isFail());
+    List<StandardMethodContract> failingContracts = squashContracts(partition.get(true));
+    List<StandardMethodContract> nonFailingContracts = squashContracts(partition.get(false));
+    // Sometimes "null,_->!null;!null,_->!null" contracts are inferred for some reason
+    // They are squashed to "_,_->!null" which is better expressed as @NotNull annotation
+    if (nonFailingContracts.size() == 1) {
+      StandardMethodContract contract = nonFailingContracts.get(0);
+      if (contract.getReturnValue().isNotNull() && contract.isTrivial()) {
+        nonFailingContracts = Collections.emptyList();
+        notNulls.add(methodKey);
+      }
+    }
+    BitSet possiblyNotNullParameters = StreamEx.of(failingContracts, nonFailingContracts).flatCollection(Function.identity())
+                                               .flatMapToInt(smc -> IntStreamEx.range(smc.getParameterCount())
+                                                                               .filter(idx -> smc.getParameterConstraint(idx) ==
+                                                                                              StandardMethodContract.ValueConstraint.NOT_NULL_VALUE))
+                                               .toBitSet();
+    BitSet alwaysNotNullParameters = findAlwaysNotNullParameters(methodKey, possiblyNotNullParameters);
+    if (alwaysNotNullParameters.cardinality() != 0) {
+      for (List<StandardMethodContract> list : Arrays.asList(failingContracts, nonFailingContracts)) {
+        list.replaceAll(smc -> {
+          StandardMethodContract.ValueConstraint[] constraints =
+            smc.getConstraints().toArray(new StandardMethodContract.ValueConstraint[0]);
+          alwaysNotNullParameters.stream().forEach(idx -> constraints[idx] = StandardMethodContract.ValueConstraint.ANY_VALUE);
+          return new StandardMethodContract(constraints, smc.getReturnValue());
+        });
+      }
+    }
+
+    if (failingContracts.isEmpty() && nonFailingContracts.isEmpty() && !fullReturnValue.equals(ContractReturnValue.returnAny())) {
+      StandardMethodContract contract = new StandardMethodContract(StandardMethodContract.createConstraintArray(arity), fullReturnValue);
+      nonFailingContracts = Collections.singletonList(contract);
+    }
+    if (notNulls.contains(methodKey)) {
+      // filter contract clauses for @NotNull methods
+      nonFailingContracts = StreamEx.of(nonFailingContracts).removeBy(StandardMethodContract::getReturnValue,
+                                                                      ContractReturnValue.returnNotNull()).toList();
+    }
+    // Failing contracts go first
+    String result = StreamEx.of(failingContracts, nonFailingContracts)
+                            .flatMap(list -> list.stream()
+                                                 .map(Object::toString)
+                                                 .distinct()
+                                                 .map(str -> str.replace(" ", "")) // for compatibility with existing tests
+                                                 .sorted())
+                            .joining(";");
+    if (!result.isEmpty()) {
+      contracts.put(methodKey, '"' + result + '"');
+    }
+  }
+
+  @NotNull
+  private static List<StandardMethodContract> squashContracts(List<StandardMethodContract> contractClauses) {
+    // If there's a pair of contracts yielding the same value like "null,_->true", "!null,_->true"
+    // then trivial contract should be used like "_,_->true"
+    StandardMethodContract soleContract = StreamEx.ofPairs(contractClauses, (c1, c2) -> {
+      if (c1.getReturnValue() != c2.getReturnValue()) return null;
+      int idx = -1;
+      for (int i = 0; i < c1.getParameterCount(); i++) {
+        StandardMethodContract.ValueConstraint left = c1.getParameterConstraint(i);
+        StandardMethodContract.ValueConstraint right = c2.getParameterConstraint(i);
+        if (left == StandardMethodContract.ValueConstraint.ANY_VALUE && right == StandardMethodContract.ValueConstraint.ANY_VALUE) continue;
+        if (idx >= 0 || !right.canBeNegated() || left != right.negate()) return null;
+        idx = i;
+      }
+      return c1;
+    }).nonNull().findFirst().orElse(null);
+    if(soleContract != null) {
+      StandardMethodContract.ValueConstraint[] constraints = StandardMethodContract.createConstraintArray(soleContract.getParameterCount());
+      contractClauses = Collections.singletonList(new StandardMethodContract(constraints, soleContract.getReturnValue()));
+    }
+    return contractClauses;
+  }
+
+  private static StandardMethodContract contractElement(int arity,
+                                                        ParamValueBasedDirection inOut, ContractReturnValue returnValue) {
+    final StandardMethodContract.ValueConstraint[] constraints = new StandardMethodContract.ValueConstraint[arity];
+    Arrays.fill(constraints, StandardMethodContract.ValueConstraint.ANY_VALUE);
+    constraints[inOut.paramIndex] = inOut.inValue.toValueConstraint();
+    return new StandardMethodContract(constraints, returnValue);
   }
 
   static abstract class EquationProvider<T extends MemberDescriptor> {
@@ -508,6 +652,7 @@ class MethodAnnotations {
   final Set<EKey> pures = new HashSet<>(1);
   // @Contracts
   final Map<EKey, String> contractsValues = new HashMap<>();
+  DataValue returnValue = DataValue.UnknownDataValue1;
 }
 
 class ParameterAnnotations {

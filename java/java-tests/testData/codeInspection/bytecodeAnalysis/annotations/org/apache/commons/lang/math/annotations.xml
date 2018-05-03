@@ -321,12 +321,14 @@
     </item>
     <item name='org.apache.commons.lang.math.Fraction org.apache.commons.lang.math.Fraction getFraction(int, int)'>
         <annotation name='org.jetbrains.annotations.Contract'>
+            <val name="value" val="&quot;_,_-&gt;new&quot;"/>
             <val name="pure" val="true"/>
         </annotation>
         <annotation name='org.jetbrains.annotations.NotNull'/>
     </item>
     <item name='org.apache.commons.lang.math.Fraction org.apache.commons.lang.math.Fraction getFraction(int, int, int)'>
         <annotation name='org.jetbrains.annotations.Contract'>
+            <val name="value" val="&quot;_,_,_-&gt;new&quot;"/>
             <val name="pure" val="true"/>
         </annotation>
         <annotation name='org.jetbrains.annotations.NotNull'/>
@@ -341,6 +343,7 @@
     </item>
     <item name='org.apache.commons.lang.math.Fraction org.apache.commons.lang.math.Fraction invert()'>
         <annotation name='org.jetbrains.annotations.Contract'>
+            <val name="value" val="&quot;-&gt;new&quot;"/>
             <val name="pure" val="true"/>
         </annotation>
         <annotation name='org.jetbrains.annotations.NotNull'/>
@@ -355,6 +358,7 @@
     </item>
     <item name='org.apache.commons.lang.math.Fraction org.apache.commons.lang.math.Fraction negate()'>
         <annotation name='org.jetbrains.annotations.Contract'>
+            <val name="value" val="&quot;-&gt;new&quot;"/>
             <val name="pure" val="true"/>
         </annotation>
         <annotation name='org.jetbrains.annotations.NotNull'/>
@@ -532,6 +536,7 @@
     </item>
     <item name='org.apache.commons.lang.math.IntRange int[] toArray()'>
         <annotation name='org.jetbrains.annotations.Contract'>
+            <val name="value" val="&quot;-&gt;new&quot;"/>
             <val name="pure" val="true"/>
         </annotation>
     </item>
@@ -673,6 +678,7 @@
     </item>
     <item name='org.apache.commons.lang.math.LongRange long[] toArray()'>
         <annotation name='org.jetbrains.annotations.Contract'>
+            <val name="value" val="&quot;-&gt;new&quot;"/>
             <val name="pure" val="true"/>
         </annotation>
     </item>
