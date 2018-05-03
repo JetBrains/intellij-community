@@ -16,9 +16,12 @@ parts:
   common:
     plugin: dump
     source: dist.all
+    build-attributes: [no-patchelf]
   bins:
     plugin: dump
     source: dist.unix
+    build-attributes: [no-patchelf]
   jre:
     plugin: dump
     source: jre
+    build-attributes: [no-patchelf]
