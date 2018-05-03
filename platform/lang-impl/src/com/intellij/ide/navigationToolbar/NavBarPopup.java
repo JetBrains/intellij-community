@@ -30,7 +30,6 @@ import com.intellij.ui.awt.RelativePoint;
 import com.intellij.ui.components.JBList;
 import com.intellij.ui.popup.HintUpdateSupply;
 import com.intellij.ui.speedSearch.ListWithFilter;
-import com.intellij.util.ui.accessibility.AccessibleContextUtil;
 import com.intellij.util.containers.JBIterable;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.accessibility.AccessibleContextUtil;
