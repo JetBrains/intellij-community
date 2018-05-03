@@ -157,7 +157,7 @@ public class MethodSignatureUtil {
     return true;
   }
 
-  public static boolean areSignaturesEqualLightweight(@NotNull MethodSignature sig1, @NotNull MethodSignature sig2) {
+  private static boolean areSignaturesEqualLightweight(@NotNull MethodSignature sig1, @NotNull MethodSignature sig2) {
     final boolean isConstructor1 = sig1.isConstructor();
     final boolean isConstructor2 = sig2.isConstructor();
     if (isConstructor1 != isConstructor2) return false;
@@ -282,7 +282,7 @@ public class MethodSignatureUtil {
   }
 
   @NotNull
-  public static PsiMethod[] getOverloads(@NotNull PsiMethod method) {
+  private static PsiMethod[] getOverloads(@NotNull PsiMethod method) {
     PsiClass aClass = method.getContainingClass();
     if (aClass == null) return new PsiMethod[]{method};
     return aClass.findMethodsByName(method.getName(), false);
