@@ -335,54 +335,54 @@ public class DefUseUtil {
 
   @NotNull
   public static PsiElement[] getRefs(@NotNull PsiCodeBlock body, @NotNull PsiVariable def, @NotNull PsiElement ref) {
-    try {
-      return getVariableRefs(body, def, ref);
-    }
-    catch (AnalysisCanceledException e) {
-      return PsiElement.EMPTY_ARRAY;
-    }
+    return getRefs(body, def, ref, false);
   }
 
-  /**
-   * @throws AnalysisCanceledException when body contains syntax error
-   */
-  public static PsiElement[] getVariableRefs(@NotNull PsiCodeBlock body, @NotNull PsiVariable def, @NotNull PsiElement ref) throws AnalysisCanceledException {
-    RefsDefs refsDefs = new RefsDefs(body) {
-      @Override
-      protected int nNext(int index) {
-        return instructions.get(index).nNext();
-      }
-
-      @Override
-      protected int getNext(int index, int no) {
-        return instructions.get(index).getNext(index, no);
-      }
-
-      @Override
-      protected boolean defs() {
-        return false;
-      }
-
-      @Override
-      protected void processInstruction(@NotNull final Set<PsiElement> res, @NotNull final Instruction instruction, int index) {
-        if (instruction instanceof ReadVariableInstruction) {
-          ReadVariableInstruction instructionR = (ReadVariableInstruction)instruction;
-          if (instructionR.variable == def) {
-
-            final PsiElement element = flow.getElement(index);
-            element.accept(new JavaRecursiveElementWalkingVisitor() {
-              @Override
-              public void visitReferenceExpression(PsiReferenceExpression ref) {
-                if (ref.resolve() == def) {
-                  res.add(ref);
+  public static PsiElement[] getRefs(@NotNull PsiCodeBlock body, @NotNull PsiVariable def, @NotNull PsiElement ref, boolean rethrow) {
+    try {
+      RefsDefs refsDefs = new RefsDefs(body) {
+        @Override
+        protected int nNext(int index) {
+          return instructions.get(index).nNext();
+        }
+  
+        @Override
+        protected int getNext(int index, int no) {
+          return instructions.get(index).getNext(index, no);
+        }
+  
+        @Override
+        protected boolean defs() {
+          return false;
+        }
+  
+        @Override
+        protected void processInstruction(@NotNull final Set<PsiElement> res, @NotNull final Instruction instruction, int index) {
+          if (instruction instanceof ReadVariableInstruction) {
+            ReadVariableInstruction instructionR = (ReadVariableInstruction)instruction;
+            if (instructionR.variable == def) {
+  
+              final PsiElement element = flow.getElement(index);
+              element.accept(new JavaRecursiveElementWalkingVisitor() {
+                @Override
+                public void visitReferenceExpression(PsiReferenceExpression ref) {
+                  if (ref.resolve() == def) {
+                    res.add(ref);
+                  }
                 }
-              }
-            });
+              });
+            }
           }
         }
+      };
+      return refsDefs.get(def, ref);
+    }
+    catch (AnalysisCanceledException e) {
+      if (rethrow) {
+        ExceptionUtil.rethrowAllAsUnchecked(e);
       }
-    };
-    return refsDefs.get(def, ref);
+      return PsiElement.EMPTY_ARRAY;
+    }
   }
 
   private abstract static class RefsDefs {
