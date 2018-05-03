@@ -1,10 +1,7 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.execution.testframework;
 
-import com.intellij.codeInspection.LocalInspectionTool;
-import com.intellij.codeInspection.LocalQuickFix;
-import com.intellij.codeInspection.ProblemDescriptor;
-import com.intellij.codeInspection.ProblemsHolder;
+import com.intellij.codeInspection.*;
 import com.intellij.debugger.DebuggerManagerEx;
 import com.intellij.execution.*;
 import com.intellij.execution.actions.ConfigurationContext;
@@ -13,6 +10,7 @@ import com.intellij.execution.executors.DefaultRunExecutor;
 import com.intellij.execution.runners.ExecutionUtil;
 import com.intellij.execution.stacktrace.StackTraceLine;
 import com.intellij.openapi.editor.Document;
+import com.intellij.openapi.editor.colors.CodeInsightColors;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Iconable;
 import com.intellij.psi.*;
@@ -35,8 +33,13 @@ public class TestFailedLineInspection extends LocalInspectionTool {
         TestStateStorage.Record state = TestFailedLineManager.getInstance(call.getProject()).getFailedLineState(call);
         if (state == null) return;
 
-        holder.registerProblem(call, state.errorMessage, new DebugFailedTestFix(call, state.topStacktraceLine),
-                               new RunActionFix(call, DefaultRunExecutor.EXECUTOR_ID));
+        LocalQuickFix[] fixes = {new DebugFailedTestFix(call, state.topStacktraceLine),
+          new RunActionFix(call, DefaultRunExecutor.EXECUTOR_ID)};
+        ProblemDescriptor descriptor = InspectionManager.getInstance(call.getProject())
+                                                        .createProblemDescriptor(call, state.errorMessage, isOnTheFly, fixes,
+                                                                                 ProblemHighlightType.GENERIC_ERROR);
+        descriptor.setTextAttributes(CodeInsightColors.RUNTIME_PROBLEM);
+        holder.registerProblem(descriptor);
       }
     };
   }
