@@ -458,7 +458,7 @@ public abstract class ContractReturnValue {
     }
   }
 
-  private static class ParameterReturnValue extends ContractReturnValue {
+  private static final class ParameterReturnValue extends ContractReturnValue {
     private final int myParamNumber; // zero-based
 
     public ParameterReturnValue(int n) {
@@ -485,6 +485,11 @@ public abstract class ContractReturnValue {
         }
         return null;
       });
+    }
+
+    @Override
+    public boolean equals(Object obj) {
+      return this == obj || (obj instanceof ParameterReturnValue && ((ParameterReturnValue)obj).myParamNumber == myParamNumber);
     }
 
     @Override
