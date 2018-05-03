@@ -188,6 +188,7 @@ public class LineTooltipRenderer extends ComparableObject.Impl implements Toolti
       }
     });
 
+    
     hintManager.showEditorHint(hint, editor, p, HintManager.HIDE_BY_ANY_KEY |
                                                 HintManager.HIDE_BY_TEXT_CHANGE |
                                                 HintManager.HIDE_BY_OTHER_HINT |
