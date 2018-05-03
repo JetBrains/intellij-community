@@ -224,7 +224,7 @@ public class JavaStructuralSearchProfile extends StructuralSearchProfile {
 
   @Override
   public List<MatchPredicate> getCustomPredicates(MatchVariableConstraint constraint, String name, MatchOptions options) {
-    final List<MatchPredicate> result = new ArrayList<>(2);
+    final List<MatchPredicate> result = new SmartList<>();
 
     if (!StringUtil.isEmptyOrSpaces(constraint.getNameOfExprType())) {
       final MatchPredicate predicate = new ExprTypePredicate(
