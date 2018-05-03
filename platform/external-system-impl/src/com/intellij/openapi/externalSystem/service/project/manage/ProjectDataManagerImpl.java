@@ -132,7 +132,7 @@ public class ProjectDataManagerImpl implements ProjectDataManager {
       trace = (PerformanceTrace)traceNodes.iterator().next().getData();
     } else {
       trace = new PerformanceTrace();
-      grouped.putValue(PerformanceTrace.TRACE_NODE_KEY, new DataNode<>(PerformanceTrace.TRACE_NODE_KEY, trace, null));
+      grouped.put(PerformanceTrace.TRACE_NODE_KEY, Collections.singletonList(new DataNode<>(PerformanceTrace.TRACE_NODE_KEY, trace, null)));
     }
 
     long allStartTime = System.currentTimeMillis();
