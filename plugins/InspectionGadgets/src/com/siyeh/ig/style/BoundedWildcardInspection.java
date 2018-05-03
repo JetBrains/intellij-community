@@ -308,6 +308,9 @@ public class BoundedWildcardInspection extends AbstractBaseJavaLocalInspectionTo
         else {
           boolean canBeSuperT = isPassedToMethodWhichAlreadyAcceptsQuestionT(ref, superT, method);
           boolean canBeExtendsT = isPassedToMethodWhichAlreadyAcceptsQuestionT(ref, extendsT, method);
+          if (canBeExtendsT && canBeSuperT) {
+            return true; // ignore e.g. recursive call
+          }
           // otherwise it can be just "foo(Object)" to which anything can be passed - not very interesting
           if (canBeSuperT != canBeExtendsT || v[0] != Variance.NOVARIANT) {
             if (canBeSuperT && (v[0] == Variance.NOVARIANT || v[0] == Variance.CONTRAVARIANT)) {
@@ -319,6 +322,7 @@ public class BoundedWildcardInspection extends AbstractBaseJavaLocalInspectionTo
               return true;
             }
           }
+
           // some strange usage. do not highlight
           v[0] = Variance.INVARIANT;
         }
