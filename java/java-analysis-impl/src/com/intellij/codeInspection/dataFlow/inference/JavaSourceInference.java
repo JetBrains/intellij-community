@@ -20,13 +20,11 @@ import com.intellij.util.containers.ContainerUtil;
 import com.siyeh.ig.psiutils.ClassUtils;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.Arrays;
 import java.util.BitSet;
 import java.util.Collections;
 import java.util.List;
 
-import static com.intellij.codeInspection.dataFlow.MethodContract.ValueConstraint.ANY_VALUE;
-import static com.intellij.codeInspection.dataFlow.MethodContract.ValueConstraint.NULL_VALUE;
+import static com.intellij.codeInspection.dataFlow.StandardMethodContract.ValueConstraint.NULL_VALUE;
 
 /**
  * A facade for all inference algorithms which work on Java source code (Light AST) and cache results in the index.
@@ -185,8 +183,8 @@ public class JavaSourceInference {
   }
 
   private static boolean hasContradictoryExplicitParameterNullity(@NotNull PsiMethod method, StandardMethodContract contract) {
-    for (int i = 0; i < contract.arguments.length; i++) {
-      if (contract.arguments[i] == NULL_VALUE && NullableNotNullManager.isNotNull(method.getParameterList().getParameters()[i])) {
+    for (int i = 0; i < contract.getParameterCount(); i++) {
+      if (contract.getParameterConstraint(i) == NULL_VALUE && NullableNotNullManager.isNotNull(method.getParameterList().getParameters()[i])) {
         return true;
       }
     }
@@ -194,8 +192,7 @@ public class JavaSourceInference {
   }
 
   private static boolean isContradictingExplicitNullableReturn(@NotNull PsiMethod method, StandardMethodContract contract) {
-    return contract.getReturnValue().isNotNull() &&
-           Arrays.stream(contract.arguments).allMatch(c -> c == ANY_VALUE) &&
+    return contract.getReturnValue().isNotNull() && contract.isTrivial() &&
            NullableNotNullManager.getInstance(method.getProject()).isNullable(method, false);
   }
 
@@ -210,7 +207,7 @@ public class JavaSourceInference {
   private static List<StandardMethodContract> boxReturnValues(List<StandardMethodContract> contracts) {
     return ContainerUtil.mapNotNull(contracts, contract -> {
       if (contract.getReturnValue().isBoolean()) {
-        return new StandardMethodContract(contract.arguments, ContractReturnValue.returnNotNull());
+        return contract.withReturnValue(ContractReturnValue.returnNotNull());
       }
       return contract;
     });

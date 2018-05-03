@@ -19,8 +19,13 @@ package com.intellij.java.codeInspection;
 import com.intellij.JavaTestUtil;
 import com.intellij.codeInsight.NullableNotNullManager;
 import com.intellij.codeInspection.nullable.NullableStuffInspection;
+import com.intellij.openapi.extensions.Extensions;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.Sdk;
+import com.intellij.openapi.roots.GeneratedSourcesFilter;
 import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.util.registry.Registry;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.testFramework.IdeaTestUtil;
 import com.intellij.testFramework.LightProjectDescriptor;
 import com.intellij.testFramework.PsiTestUtil;
@@ -36,6 +41,13 @@ public class NullableStuffInspectionTest extends LightCodeInsightFixtureTestCase
     }
   };
   private NullableStuffInspection myInspection = new NullableStuffInspection();
+
+  private final GeneratedSourcesFilter myGeneratedSourcesFilter = new GeneratedSourcesFilter() {
+    @Override
+    public boolean isGeneratedSource(@NotNull VirtualFile file, @NotNull Project project) {
+      return file.getName().startsWith("Gen");
+    }
+  };
 
   @NotNull
   @Override
@@ -57,11 +69,13 @@ public class NullableStuffInspectionTest extends LightCodeInsightFixtureTestCase
   public void setUp() throws Exception {
     super.setUp();
     myInspection.REPORT_ANNOTATION_NOT_PROPAGATED_TO_OVERRIDERS = false;
+    Extensions.getRootArea().getExtensionPoint(GeneratedSourcesFilter.EP_NAME).registerExtension(myGeneratedSourcesFilter);
   }
 
   @Override
   protected void tearDown() throws Exception {
     myInspection = null;
+    Extensions.getRootArea().getExtensionPoint(GeneratedSourcesFilter.EP_NAME).unregisterExtension(myGeneratedSourcesFilter);
     super.tearDown();
   }
 
@@ -102,6 +116,13 @@ public class NullableStuffInspectionTest extends LightCodeInsightFixtureTestCase
   
   public void testOverriddenMethods() {
     myInspection.REPORT_ANNOTATION_NOT_PROPAGATED_TO_OVERRIDERS = true;
+    doTest();
+  }
+
+  public void testOverriddenMethodsInGeneratedCode() {
+    Registry.get("idea.report.nullity.missing.in.generated.overriders").setValue(false, getTestRootDisposable());
+    myInspection.REPORT_ANNOTATION_NOT_PROPAGATED_TO_OVERRIDERS = true;
+    myFixture.addClass("package foo; public class GenMyTestClass implements MyTestClass { String implementMe() {} }");
     doTest();
   }
 

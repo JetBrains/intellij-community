@@ -195,7 +195,7 @@ public class ShowDiscoveredTestsAction extends AnAction {
 
     KeyStroke findUsageKeyStroke = findUsagesKeyStroke();
     String pinTooltip = "Open Find Usages Toolwindow" + (findUsageKeyStroke == null ? "" : " " + KeymapUtil.getKeystrokeText(findUsageKeyStroke));
-    ActiveComponent pinButton = createButton(pinTooltip, AllIcons.General.AutohideOff, pinActionListener);
+    ActiveComponent pinButton = createButton(pinTooltip, AllIcons.General.Pin_tab, pinActionListener);
 
     CompositeActiveComponent component = new CompositeActiveComponent(runButton, pinButton);
 

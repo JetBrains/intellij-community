@@ -34,6 +34,13 @@ public class DeprecatedDuplicatesIconPathPatcher extends IconPathPatcher {
 
     ourDeprecatedIconsReplacements.put("/actions/menu_help.png", "AllIcons.Actions.Help");
     ourDeprecatedIconsReplacements.put("/actions/menu_help.svg", "AllIcons.Actions.Help");
+    ourDeprecatedIconsReplacements.put("/debugger/readHelp.png", "AllIcons.Actions.Help");
+    ourDeprecatedIconsReplacements.put("/debugger/readHelp.svg", "AllIcons.Actions.Help");
+
+    ourDeprecatedIconsReplacements.put("/general/openProject.png", "AllIcons.Actions.Menu_open");
+    ourDeprecatedIconsReplacements.put("/general/openProject.svg", "AllIcons.Actions.Menu_open");
+    ourDeprecatedIconsReplacements.put("/welcome/openProject.png", "AllIcons.Actions.Menu_open");
+    ourDeprecatedIconsReplacements.put("/welcome/openProject.svg", "AllIcons.Actions.Menu_open");
 
     ourDeprecatedIconsReplacements.put("/debugger/threadStates/io.png", "AllIcons.Actions.Menu_saveall");
     ourDeprecatedIconsReplacements.put("/debugger/threadStates/io.svg", "AllIcons.Actions.Menu_saveall");
@@ -80,6 +87,8 @@ public class DeprecatedDuplicatesIconPathPatcher extends IconPathPatcher {
     ourDeprecatedIconsReplacements.put("/actions/reset.png", "AllIcons.Actions.Rollback");
     ourDeprecatedIconsReplacements.put("/actions/reset.svg", "AllIcons.Actions.Rollback");
 
+    ourDeprecatedIconsReplacements.put("/general/recursive.png", "AllIcons.Actions.ShowAsTree");
+    ourDeprecatedIconsReplacements.put("/general/recursive.svg", "AllIcons.Actions.ShowAsTree");
     ourDeprecatedIconsReplacements.put("/vcs/mergeSourcesTree.png", "AllIcons.Actions.ShowAsTree");
     ourDeprecatedIconsReplacements.put("/vcs/mergeSourcesTree.svg", "AllIcons.Actions.ShowAsTree");
 
@@ -104,6 +113,9 @@ public class DeprecatedDuplicatesIconPathPatcher extends IconPathPatcher {
     ourDeprecatedIconsReplacements.put("/compiler/error.svg", "AllIcons.General.Error");
     ourDeprecatedIconsReplacements.put("/ide/errorSign.png", "AllIcons.General.Error");
     ourDeprecatedIconsReplacements.put("/ide/errorSign.svg", "AllIcons.General.Error");
+
+    ourDeprecatedIconsReplacements.put("/general/externalTools.png", "AllIcons.General.ExternalToolsSmall");
+    ourDeprecatedIconsReplacements.put("/general/externalTools.svg", "AllIcons.General.ExternalToolsSmall");
 
     ourDeprecatedIconsReplacements.put("/actions/filter_small.png", "AllIcons.General.Filter");
     ourDeprecatedIconsReplacements.put("/actions/filter_small.svg", "AllIcons.General.Filter");
@@ -137,6 +149,13 @@ public class DeprecatedDuplicatesIconPathPatcher extends IconPathPatcher {
     ourDeprecatedIconsReplacements.put("/debugger/threadStates/locked.png", "AllIcons.Debugger.MuteBreakpoints");
     ourDeprecatedIconsReplacements.put("/debugger/threadStates/locked.svg", "AllIcons.Debugger.MuteBreakpoints");
 
+    ourDeprecatedIconsReplacements.put("/general/autohideOff.png", "AllIcons.General.Pin_tab");
+    ourDeprecatedIconsReplacements.put("/general/autohideOff.svg", "AllIcons.General.Pin_tab");
+    ourDeprecatedIconsReplacements.put("/general/autohideOffInactive.png", "AllIcons.General.Pin_tab");
+    ourDeprecatedIconsReplacements.put("/general/autohideOffInactive.svg", "AllIcons.General.Pin_tab");
+    ourDeprecatedIconsReplacements.put("/general/autohideOffPressed.png", "AllIcons.General.Pin_tab");
+    ourDeprecatedIconsReplacements.put("/general/autohideOffPressed.svg", "AllIcons.General.Pin_tab");
+
     ourDeprecatedIconsReplacements.put("/actions/exclude.png", "AllIcons.General.Remove");
     ourDeprecatedIconsReplacements.put("/actions/exclude.svg", "AllIcons.General.Remove");
     ourDeprecatedIconsReplacements.put("/toolbarDecorator/remove.png", "AllIcons.General.Remove");
@@ -146,6 +165,8 @@ public class DeprecatedDuplicatesIconPathPatcher extends IconPathPatcher {
 
     ourDeprecatedIconsReplacements.put("/general/applicationSettings.png", "AllIcons.General.Settings");
     ourDeprecatedIconsReplacements.put("/general/applicationSettings.svg", "AllIcons.General.Settings");
+    ourDeprecatedIconsReplacements.put("/general/Configure.png", "AllIcons.General.Settings");
+    ourDeprecatedIconsReplacements.put("/general/Configure.svg", "AllIcons.General.Settings");
     ourDeprecatedIconsReplacements.put("/general/ideOptions.png", "AllIcons.General.Settings");
     ourDeprecatedIconsReplacements.put("/general/ideOptions.svg", "AllIcons.General.Settings");
     ourDeprecatedIconsReplacements.put("/vcs/customizeView.png", "AllIcons.General.Settings");
@@ -169,11 +190,27 @@ public class DeprecatedDuplicatesIconPathPatcher extends IconPathPatcher {
     ourDeprecatedIconsReplacements.put("/graph/export.png", "AllIcons.ToolbarDecorator.Export");
     ourDeprecatedIconsReplacements.put("/graph/export.svg", "AllIcons.ToolbarDecorator.Export");
 
+    ourDeprecatedIconsReplacements.put("/general/CreateNewProjectfromExistingFiles.png", "AllIcons.ToolbarDecorator.Import");
+    ourDeprecatedIconsReplacements.put("/general/CreateNewProjectfromExistingFiles.svg", "AllIcons.ToolbarDecorator.Import");
+    ourDeprecatedIconsReplacements.put("/general/importProject.png", "AllIcons.ToolbarDecorator.Import");
+    ourDeprecatedIconsReplacements.put("/general/importProject.svg", "AllIcons.ToolbarDecorator.Import");
+    ourDeprecatedIconsReplacements.put("/welcome/CreateNewProjectfromExistingFiles.png", "AllIcons.ToolbarDecorator.Import");
+    ourDeprecatedIconsReplacements.put("/welcome/CreateNewProjectfromExistingFiles.svg", "AllIcons.ToolbarDecorator.Import");
+    ourDeprecatedIconsReplacements.put("/welcome/importProject.png", "AllIcons.ToolbarDecorator.Import");
+    ourDeprecatedIconsReplacements.put("/welcome/importProject.svg", "AllIcons.ToolbarDecorator.Import");
+
 
     ourDeprecatedIconsReplacements.put("/general/toolWindowChanges.png", "AllIcons.Toolwindows.ToolWindowChanges");
     ourDeprecatedIconsReplacements.put("/general/toolWindowChanges.svg", "AllIcons.Toolwindows.ToolWindowChanges");
     ourDeprecatedIconsReplacements.put("/general/toolWindowDebugger.png", "AllIcons.Toolwindows.ToolWindowDebugger");
     ourDeprecatedIconsReplacements.put("/general/toolWindowDebugger.svg", "AllIcons.Toolwindows.ToolWindowDebugger");
+
+
+    ourDeprecatedIconsReplacements.put("/general/createNewProject.png", "AllIcons.Welcome.CreateNewProject");
+    ourDeprecatedIconsReplacements.put("/general/createNewProject.svg", "AllIcons.Welcome.CreateNewProject");
+
+    ourDeprecatedIconsReplacements.put("/general/getProjectfromVCS.png", "AllIcons.Welcome.FromVCS");
+    ourDeprecatedIconsReplacements.put("/general/getProjectfromVCS.svg", "AllIcons.Welcome.FromVCS");
   }
 
   @Nullable

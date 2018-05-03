@@ -20,8 +20,6 @@ import com.intellij.ide.ui.laf.darcula.ui.DarculaSpinnerBorder;
 import com.intellij.openapi.ui.ErrorBorderCapable;
 import com.intellij.util.ui.JBInsets;
 import com.intellij.util.ui.JBUI;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
@@ -53,11 +51,11 @@ public class WinIntelliJSpinnerBorder extends DarculaSpinnerBorder implements Er
         } else {
           g2.setColor(UIManager.getColor(hover ? "TextField.hoverBorderColor" : "TextField.borderColor"));
         }
-        JBInsets.removeFrom(r, JBUI.insets(1, 1, 1, WinIntelliJSpinnerUI.BUTTON_WIDTH - 1));
+        JBInsets.removeFrom(r, JBUI.insets(1, 1, 1, WinIntelliJSpinnerUI.BUTTON_WIDTH));
       } else {
         g2.setColor(UIManager.getColor("Button.intellij.native.borderColor"));
         g2.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, 0.35f));
-        JBInsets.removeFrom(r, JBUI.insets(1, 1, 1, WinIntelliJSpinnerUI.BUTTON_WIDTH - 1));
+        JBInsets.removeFrom(r, JBUI.insets(1, 1, 1, WinIntelliJSpinnerUI.BUTTON_WIDTH));
       }
 
       Path2D border = new Path2D.Float(Path2D.WIND_EVEN_ODD);
@@ -76,12 +74,6 @@ public class WinIntelliJSpinnerBorder extends DarculaSpinnerBorder implements Er
 
   @Override
   public Insets getBorderInsets(Component c) {
-    return new JBInsets(2, 2, 2, 2).asUIResource();
-  }
-
-  @Nullable
-  @Override
-  public Insets getVisualPaddings(@NotNull Component component) {
-    return JBUI.insets(1);
+    return JBUI.insets(1).asUIResource();
   }
 }

@@ -187,22 +187,6 @@ public class DefaultInspectionToolPresentation implements InspectionToolPresenta
     return getToolWrapper().getShortName();
   }
 
-  protected static String getTextAttributeKey(@NotNull Project project,
-                                              @NotNull HighlightSeverity severity,
-                                              @NotNull ProblemHighlightType highlightType) {
-    if (highlightType == ProblemHighlightType.LIKE_DEPRECATED) {
-      return HighlightInfoType.DEPRECATED.getAttributesKey().getExternalName();
-    }
-    if (highlightType == ProblemHighlightType.LIKE_UNKNOWN_SYMBOL && severity == HighlightSeverity.ERROR) {
-      return HighlightInfoType.WRONG_REF.getAttributesKey().getExternalName();
-    }
-    if (highlightType == ProblemHighlightType.LIKE_UNUSED_SYMBOL) {
-      return HighlightInfoType.UNUSED_SYMBOL.getAttributesKey().getExternalName();
-    }
-    SeverityRegistrar registrar = ProjectInspectionProfileManager.getInstance(project).getSeverityRegistrar();
-    return registrar.getHighlightInfoTypeBySeverity(severity).getAttributesKey().getExternalName();
-  }
-
   @Override
   @NotNull
   public InspectionToolWrapper getToolWrapper() {
@@ -373,12 +357,12 @@ public class DefaultInspectionToolPresentation implements InspectionToolPresenta
       final HighlightSeverity severity = InspectionToolPresentation.getSeverity(refEntity, psiElement, this);
 
       if (severity != null) {
-        ProblemHighlightType problemHighlightType = descriptor instanceof ProblemDescriptor
-                                                    ? ((ProblemDescriptor)descriptor).getHighlightType()
-                                                    : ProblemHighlightType.GENERIC_ERROR_OR_WARNING;
-        final String attributeKey = getTextAttributeKey(getRefManager().getProject(), severity, problemHighlightType);
-        problemClassElement.setAttribute("severity", severity.myName);
-        problemClassElement.setAttribute("attribute_key", attributeKey);
+        SeverityRegistrar severityRegistrar = myContext.getCurrentProfile().getProfileManager().getSeverityRegistrar();
+        HighlightInfoType type = descriptor instanceof ProblemDescriptor
+                                 ? ProblemDescriptorUtil.highlightTypeFromDescriptor((ProblemDescriptor)descriptor, severity, severityRegistrar)
+                                 : ProblemDescriptorUtil.getHighlightInfoType(ProblemHighlightType.GENERIC_ERROR_OR_WARNING, severity, severityRegistrar);
+        problemClassElement.setAttribute("severity", type.getSeverity(psiElement).getName());
+        problemClassElement.setAttribute("attribute_key", type.getAttributesKey().getExternalName());
       }
 
       element.addContent(problemClassElement);

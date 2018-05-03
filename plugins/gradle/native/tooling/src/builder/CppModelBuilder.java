@@ -20,14 +20,15 @@ import org.gradle.language.cpp.CppStaticLibrary;
 import org.gradle.language.cpp.plugins.CppBasePlugin;
 import org.gradle.language.cpp.tasks.CppCompile;
 import org.gradle.language.nativeplatform.ComponentWithExecutable;
+import org.gradle.language.nativeplatform.internal.ConfigurableComponentWithExecutable;
 import org.gradle.nativeplatform.tasks.LinkExecutable;
-import org.gradle.nativeplatform.toolchain.Clang;
-import org.gradle.nativeplatform.toolchain.Gcc;
-import org.gradle.nativeplatform.toolchain.NativeToolChain;
-import org.gradle.nativeplatform.toolchain.VisualCpp;
+import org.gradle.nativeplatform.toolchain.*;
+import org.gradle.nativeplatform.toolchain.internal.NativeLanguageTools;
+import org.gradle.nativeplatform.toolchain.internal.PlatformToolProvider;
 import org.gradle.nativeplatform.toolchain.internal.ToolType;
 import org.gradle.nativeplatform.toolchain.internal.tools.CommandLineToolSearchResult;
 import org.gradle.nativeplatform.toolchain.internal.tools.ToolSearchPath;
+import org.gradle.platform.base.internal.toolchain.ToolSearchResult;
 import org.gradle.util.GradleVersion;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -41,6 +42,7 @@ import org.jetbrains.plugins.gradle.tooling.ErrorMessageBuilder;
 import org.jetbrains.plugins.gradle.tooling.ModelBuilderService;
 
 import java.io.File;
+import java.lang.reflect.Field;
 import java.util.*;
 
 /**
@@ -178,6 +180,29 @@ public class CppModelBuilder implements ModelBuilderService {
 
   @Nullable
   private static File findCppCompilerExecutable(CppBinary cppBinary) {
+    if (cppBinary instanceof ConfigurableComponentWithExecutable) {
+      PlatformToolProvider toolProvider = ((ConfigurableComponentWithExecutable)cppBinary).getPlatformToolProvider();
+      ToolSearchResult toolSearchResult = toolProvider.isToolAvailable(ToolType.CPP_COMPILER);
+      if (toolSearchResult.isAvailable()) {
+        if (toolSearchResult instanceof CommandLineToolSearchResult) {
+          return ((CommandLineToolSearchResult)toolSearchResult).getTool();
+        }
+        // dirty hack because of dummy implementation of org.gradle.nativeplatform.toolchain.internal.msvcpp.VisualCppPlatformToolProvider.isToolAvailable
+        if (toolProvider.getClass().getSimpleName().equals("VisualCppPlatformToolProvider")) {
+          try {
+            Field visualCppField = toolProvider.getClass().getDeclaredField("visualCpp");
+            visualCppField.setAccessible(true);
+            Object visualCpp = visualCppField.get(toolProvider);
+            if (visualCpp instanceof NativeLanguageTools) {
+              return ((NativeLanguageTools)visualCpp).getCompilerExecutable();
+            }
+          }
+          catch (Exception ignore) {
+          }
+        }
+      }
+    }
+
     NativeToolChain toolChain = cppBinary.getToolChain();
     String exeName;
     if (toolChain instanceof Gcc) {

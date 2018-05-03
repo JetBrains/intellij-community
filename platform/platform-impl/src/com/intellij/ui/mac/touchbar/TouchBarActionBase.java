@@ -49,12 +49,13 @@ public class TouchBarActionBase extends TouchBarProjectBase implements Execution
     ActionManager.getInstance().removeTransparentTimerListener(myTimerListener);
   }
 
-  public void onShow() {
-    ActionManager.getInstance().addTransparentTimerListener(500, myTimerListener); // NOTE: delay param doesn't affect anything
+  @Override
+  public void onBeforeShow() {
+    _updateActionItems();
+    ActionManager.getInstance().addTransparentTimerListener(500/*delay param doesn't affect anything*/, myTimerListener);
   }
-  public void onHide() {
-    ActionManager.getInstance().removeTransparentTimerListener(myTimerListener);
-  }
+  @Override
+  public void onHide() { ActionManager.getInstance().removeTransparentTimerListener(myTimerListener); }
 
   TBItemAnActionButton addAnActionButton(String actId) {
     return addAnActionButton(ActionManager.getInstance().getAction(actId), true, TBItemAnActionButton.SHOWMODE_IMAGE_ONLY, myComponent, null);

@@ -1526,7 +1526,7 @@ public abstract class ChooseByNameBase implements ChooseByNameViewModel {
 
   private abstract class ShowFindUsagesAction extends DumbAwareAction {
     public ShowFindUsagesAction() {
-      super(ACTION_NAME, ACTION_NAME, AllIcons.General.AutohideOff);
+      super(ACTION_NAME, ACTION_NAME, AllIcons.General.Pin_tab);
     }
 
     @Override

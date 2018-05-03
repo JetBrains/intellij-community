@@ -184,7 +184,7 @@ public class TouchBarsManager {
 
     ourTouchBarStack.remove(bar);
     ourTouchBarStack.push(bar);
-    ourTouchBarChanger.updateTouchBar(bar.get());
+    _setBarContainer(bar);
   }
 
   synchronized public static void closeTouchBar(BarContainer tb) {
@@ -235,9 +235,9 @@ public class TouchBarsManager {
       if (myCurrentBar != null)
         myCurrentBar.onHide();
       myCurrentBar = myNextBar;
-      NST.setTouchBar(myCurrentBar);
       if (myCurrentBar != null)
-        myCurrentBar.onShow();
+        myCurrentBar.onBeforeShow();
+      NST.setTouchBar(myCurrentBar);
     }
   }
 

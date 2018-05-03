@@ -1,0 +1,2 @@
+@A
+package p;

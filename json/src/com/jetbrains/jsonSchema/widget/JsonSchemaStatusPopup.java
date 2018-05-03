@@ -21,7 +21,7 @@ public class JsonSchemaStatusPopup {
   static final JsonSchemaInfo ADD_MAPPING = new JsonSchemaInfo("") {
     @Override
     public String getDescription() {
-      return "Add Schema Mapping…";
+      return "New Schema Mapping…";
     }
   };
 

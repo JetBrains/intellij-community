@@ -23,6 +23,7 @@ import com.intellij.structuralsearch.impl.matcher.CompiledPattern;
 import com.intellij.structuralsearch.impl.matcher.MatcherImplUtil;
 import com.intellij.structuralsearch.impl.matcher.PatternTreeContext;
 import com.intellij.structuralsearch.impl.matcher.filters.LexicalNodesFilter;
+import com.intellij.structuralsearch.impl.matcher.handlers.DelegatingHandler;
 import com.intellij.structuralsearch.impl.matcher.handlers.MatchingHandler;
 import com.intellij.structuralsearch.impl.matcher.handlers.SubstitutionHandler;
 import com.intellij.structuralsearch.impl.matcher.predicates.*;
@@ -111,10 +112,15 @@ public class PatternCompiler {
 
   private static void checkForUnknownVariables(final CompiledPattern pattern, List<PsiElement> elements) {
     for (PsiElement element : elements) {
+      pattern.putVariableNode(Configuration.CONTEXT_VAR_NAME, element);
       element.accept(new PsiRecursiveElementWalkingVisitor() {
         @Override
         public void visitElement(PsiElement element) {
-          if (element.getUserData(CompiledPattern.HANDLER_KEY) != null) {
+          final Object userData = element.getUserData(CompiledPattern.HANDLER_KEY);
+          if (userData != null) {
+            if (userData instanceof SubstitutionHandler) {
+              pattern.putVariableNode(((SubstitutionHandler)userData).getName(), element);
+            }
             return;
           }
           super.visitElement(element);
@@ -131,9 +137,15 @@ public class PatternCompiler {
             }
             return;
           }
-          final MatchingHandler handler = pattern.getHandler(pattern.getTypedVarString(element));
+          MatchingHandler handler = pattern.getHandler(pattern.getTypedVarString(element));
           if (handler == null) {
             throw new MalformedPatternException();
+          }
+          if (handler instanceof DelegatingHandler) {
+            handler = ((DelegatingHandler)handler).getDelegate();
+          }
+          if (handler instanceof SubstitutionHandler){
+            pattern.putVariableNode(((SubstitutionHandler)handler).getName(), element);
           }
         }
       });
@@ -144,15 +156,9 @@ public class PatternCompiler {
   public static CompiledPattern getLastCompiledPattern(MatchOptions options) {
     synchronized (LOCK) {
       final CompiledPattern lastCompiledPattern = ourLastCompiledPattern == null ? null : ourLastCompiledPattern.get();
-      if (lastCompiledPattern == null || !options.equals(ourLastMatchOptions)) {
-        return null;
-      }
-      if (lastCompiledPattern.getScope() != null) {
-        if (!options.getScope().equals(lastCompiledPattern.getScope())) {
-          return null;
-        }
-      }
-      else if (options.getScope() instanceof GlobalSearchScope) {
+      if (lastCompiledPattern == null ||
+          !options.equals(ourLastMatchOptions) ||
+          options.getScope() instanceof GlobalSearchScope && options.getScope() != ourLastMatchOptions.getScope()) {
         return null;
       }
       return lastCompiledPattern;
@@ -506,7 +512,6 @@ public class PatternCompiler {
     buf.append(text.substring(prevOffset));
 
     PsiElement[] patternElements;
-
     try {
       patternElements = MatcherImplUtil.createTreeFromText(buf.toString(), PatternTreeContext.Block, options.getFileType(),
                                                            options.getDialect(), options.getPatternContext(), project, false);

@@ -51,7 +51,7 @@ public class JsonCachedValues {
 
   private static PsiFile resolveFile(@NotNull VirtualFile file,
                                      @NotNull Project project) {
-    if (!file.isValid()) return null;
+    if (project.isDisposed() || !file.isValid()) return null;
     return PsiManager.getInstance(project).findFile(file);
   }
 

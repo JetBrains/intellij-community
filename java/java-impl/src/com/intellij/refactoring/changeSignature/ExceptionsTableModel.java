@@ -19,6 +19,7 @@ import com.intellij.psi.*;
 import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.refactoring.util.CanonicalTypes;
 import com.intellij.util.ui.EditableModel;
+import org.jetbrains.annotations.NotNull;
 
 import javax.swing.table.AbstractTableModel;
 import java.util.ArrayList;
@@ -41,18 +42,21 @@ public class ExceptionsTableModel extends AbstractTableModel implements Editable
     return myExceptionInfos.toArray(new ThrownExceptionInfo[0]);
   }
 
+  @Override
   public void addRow() {
     myExceptionInfos.add(new JavaThrownExceptionInfo());
     myTypeCodeFragments.add(createParameterTypeCodeFragment("", myContext));
     fireTableRowsInserted(myTypeCodeFragments.size() - 1, myTypeCodeFragments.size() - 1);
   }
 
+  @Override
   public void removeRow(int index) {
     myExceptionInfos.remove(index);
     myTypeCodeFragments.remove(index);
     fireTableRowsDeleted(index, index);
   }
 
+  @Override
   public void exchangeRows(int index1, int index2) {
     Collections.swap(myExceptionInfos, index1, index2);
     Collections.swap(myTypeCodeFragments, index1, index2);
@@ -69,14 +73,17 @@ public class ExceptionsTableModel extends AbstractTableModel implements Editable
     return true;
   }
 
+  @Override
   public int getRowCount() {
     return myTypeCodeFragments.size();
   }
 
+  @Override
   public int getColumnCount() {
     return 1;
   }
 
+  @Override
   public Object getValueAt(int rowIndex, int columnIndex) {
     if (columnIndex == 0) {
       return myTypeCodeFragments.get(rowIndex);
@@ -85,6 +92,7 @@ public class ExceptionsTableModel extends AbstractTableModel implements Editable
     throw new IllegalArgumentException();
   }
 
+  @Override
   public String getColumnName(int column) {
     switch (column) {
       case 0:
@@ -94,6 +102,7 @@ public class ExceptionsTableModel extends AbstractTableModel implements Editable
     }
   }
 
+  @Override
   public boolean isCellEditable(int rowIndex, int columnIndex) {
     switch (columnIndex) {
       case 0:
@@ -117,15 +126,18 @@ public class ExceptionsTableModel extends AbstractTableModel implements Editable
     }
   }
 
-  public PsiTypeCodeFragment createParameterTypeCodeFragment(final String typeText, PsiElement context) {
+  @NotNull
+  private PsiTypeCodeFragment createParameterTypeCodeFragment(final String typeText, PsiElement context) {
     final JavaCodeFragmentFactory factory = JavaCodeFragmentFactory.getInstance(myContext.getProject());
     return factory.createTypeCodeFragment(typeText, context, true, JavaCodeFragmentFactory.ALLOW_ELLIPSIS);
   }
 
+  @NotNull
   public PsiTypeCodeFragment[] getTypeCodeFragments() {
     return myTypeCodeFragments.toArray(new PsiTypeCodeFragment[0]);
   }
 
+  @Override
   public void setValueAt(Object aValue, int rowIndex, int columnIndex) {
     super.setValueAt(aValue, rowIndex, columnIndex);
     fireTableCellUpdated(rowIndex, columnIndex);

@@ -61,7 +61,7 @@ public class Tree extends JTree implements ComponentWithEmptyText, ComponentWith
   private TreePath rollOverPath;
 
   public Tree() {
-    this(getDefaultTreeModel());
+    this(new DefaultMutableTreeNode());
   }
 
   public Tree(TreeNode root) {

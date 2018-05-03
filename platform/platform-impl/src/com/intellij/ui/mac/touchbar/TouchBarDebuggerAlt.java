@@ -10,7 +10,6 @@ public class TouchBarDebuggerAlt extends TouchBarActionBase {
   public TouchBarDebuggerAlt(@NotNull Project project, Component component) {
     super("debugger_alt", project, component);
 
-    addAnActionButton("ViewBreakpoints", false);
     addFlexibleSpacing();
     addAnActionButton("ViewBreakpoints", false);
     addSpacing(true);

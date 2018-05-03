@@ -135,8 +135,16 @@ public class PluginManagerConfigurableNew
         return size;
       }
     };
-    mySearchTextField.getTextEditor().putClientProperty("JTextField.Search.Gap", JBUI.scale(8));
-    mySearchTextField.getTextEditor().setBackground(MAIN_BG_COLOR);
+    mySearchTextField.setBorder(JBUI.Borders.customLine(new JBColor(0xC5C5C5, 0x515151)));
+
+    JBTextField editor = mySearchTextField.getTextEditor();
+    editor.putClientProperty("JTextField.Search.Gap", JBUI.scale(8 - 25));
+    editor.putClientProperty("JTextField.Search.GapEmptyText", JBUI.scale(8));
+    editor.putClientProperty("StatusVisibleFunction", (BooleanFunction<JBTextField>)field -> field.getText().isEmpty());
+    editor.setBorder(JBUI.Borders.empty(0, 25));
+    editor.getEmptyText().appendText("Search plugins");
+    editor.setOpaque(true);
+    editor.setBackground(MAIN_BG_COLOR);
   }
 
   @NotNull
@@ -184,12 +192,6 @@ public class PluginManagerConfigurableNew
       }
     });
 
-    JBTextField editor = mySearchTextField.getTextEditor();
-    editor.getEmptyText().appendText("Search plugins");
-    editor.putClientProperty("StatusVisibleFunction", (BooleanFunction<JBTextField>)field -> field.getText().isEmpty());
-    editor.setOpaque(true);
-    editor.setBorder(JBUI.Borders.empty(0, 25));
-    mySearchTextField.setBorder(JBUI.Borders.customLine(new JBColor(0xC5C5C5, 0x515151)));
     panel.add(mySearchTextField, BorderLayout.NORTH);
 
     myNameListener = (aSource, data) -> {
@@ -390,8 +392,7 @@ public class PluginManagerConfigurableNew
       if (list != null && list.size() >= groups.length * groupSize) {
         int index = 0;
         for (String name : groups) {
-          PluginsGroup group = new PluginsGroup();
-          group.title = name;
+          PluginsGroup group = new PluginsGroup(name);
           group.rightAction = new LinkLabel("Show All", null);
           for (int i = 0; i < groupSize; i++) {
             group.descriptors.add(list.get(index++));
@@ -413,8 +414,8 @@ public class PluginManagerConfigurableNew
     PluginsGroupComponent panel = new PluginsGroupComponent(new PluginsListLayout(), new MultiSelectionEventHandler(), listener, 1,
                                                             descriptor -> new ListPluginComponent(myPluginsModel, descriptor, null));
 
-    PluginsGroup downloaded = new PluginsGroup();
-    PluginsGroup bundled = new PluginsGroup();
+    PluginsGroup downloaded = new PluginsGroup("Downloaded");
+    PluginsGroup bundled = new PluginsGroup("Bundled");
 
     downloaded.descriptors.addAll(InstalledPluginsState.getInstance().getInstalledPlugins());
 
@@ -441,14 +442,15 @@ public class PluginManagerConfigurableNew
 
     if (!downloaded.descriptors.isEmpty()) {
       downloaded.sortByName();
-      downloaded.titleWithCount("Downloaded", downloadedEnabled);
+      downloaded.titleWithCount(downloadedEnabled); // XXX: set for trending page (update after install new plugin)
       panel.addGroup(downloaded);
+      myPluginsModel.addEnabledGroup(downloaded); // XXX: set for update page
     }
 
     bundled.sortByName();
-    bundled.titleWithCount("Bundled", bundledEnabled);
+    bundled.titleWithCount(bundledEnabled);
     panel.addGroup(bundled);
-    myPluginsModel.setEnabledGroup(bundled);
+    myPluginsModel.addEnabledGroup(bundled); // XXX: set for update page
 
     return createScrollPane(panel);
   }
@@ -465,7 +467,7 @@ public class PluginManagerConfigurableNew
       List<IdeaPluginDescriptor> list = RepositoryHelper.loadCachedPlugins();
 
       if (list != null) {
-        PluginsGroup group = new PluginsGroup();
+        PluginsGroup group = new PluginsGroup("Available Updates");
         group.rightAction = new LinkLabel("Update All", null);
 
         for (int i = list.size() - 1; i > 0; i--) {
@@ -480,7 +482,7 @@ public class PluginManagerConfigurableNew
 
         if (!group.descriptors.isEmpty()) {
           group.sortByName();
-          group.titleWithCount("Available Updates");
+          group.titleWithCount();
           panel.addGroup(group);
         }
       }
@@ -521,12 +523,13 @@ public class PluginManagerConfigurableNew
   }
 
   @NotNull
-  private static JComponent createScrollPane(JComponent panel) {
+  private static JComponent createScrollPane(@NotNull PluginsGroupComponent panel) {
     JBScrollPane pane = new JBScrollPane(panel);
     pane.setBorder(JBUI.Borders.empty());
     ApplicationManager.getApplication().invokeLater(() -> {
       pane.getHorizontalScrollBar().setValue(0);
       pane.getVerticalScrollBar().setValue(0);
+      panel.initialSelection();
     });
     return pane;
   }
@@ -896,15 +899,23 @@ public class PluginManagerConfigurableNew
         CellPluginComponent pluginComponent = myFunction.fun(descriptor);
         uiGroup.plugins.add(pluginComponent);
         add(pluginComponent);
+        myEventHandler.addCell(pluginComponent);
         pluginComponent.setListeners(myListener, myEventHandler);
       }
+    }
+
+    public void initialSelection() {
+      myEventHandler.initialSelection();
     }
   }
 
   private static class EventHandler {
     public static final EventHandler EMPTY = new EventHandler();
 
-    public void connect(@NotNull Container container) {
+    public void connect(@NotNull PluginsGroupComponent container) {
+    }
+
+    public void addCell(@NotNull CellPluginComponent component) {
     }
 
     public void add(@NotNull Component component) {
@@ -913,34 +924,82 @@ public class PluginManagerConfigurableNew
     public void addAll(@NotNull Component component) {
     }
 
+    public void initialSelection() {
+    }
+
     public void clear() {
     }
   }
 
   private static class MultiSelectionEventHandler extends EventHandler {
-    private Container myContainer;
+    private PluginsGroupComponent myContainer;
+    private PluginsListLayout myLayout;
+    private List<CellPluginComponent> myComponents;
 
     private CellPluginComponent myHoverComponent;
-    private CellPluginComponent mySelectionComponent;
+    private int myHoverIndex;
+
+    private int mySelectionIndex;
+    private int mySelectionLength;
 
     private final MouseAdapter myMouseHandler;
     private final KeyListener myKeyListener;
     private final FocusListener myFocusListener;
 
+    private final ShortcutSet mySelectAllKeys;
+    private boolean myAllSelected;
+    private boolean myMixSelection;
+
     public MultiSelectionEventHandler() {
+      clear();
+
       myMouseHandler = new MouseAdapter() {
         @Override
         public void mouseClicked(MouseEvent event) {
           if (SwingUtilities.isLeftMouseButton(event)) {
             CellPluginComponent component = CellPluginComponent.get(event);
-            if (component != mySelectionComponent) {
-              changeSelection(component);
+            int index = getIndex(component);
+
+            if (event.isShiftDown()) {
+              int end = mySelectionIndex + mySelectionLength + (mySelectionLength > 0 ? -1 : 1);
+              if (index != end) {
+                moveOrResizeSelection(index < end, false, Math.abs(end - index));
+              }
+            }
+            else if (event.isMetaDown()) {
+              myMixSelection = true;
+              myAllSelected = false;
+              mySelectionIndex = index;
+              mySelectionLength = 1;
+              component.setSelection(component.getSelection() == SelectionType.SELECTION
+                                     ? SelectionType.NONE : SelectionType.SELECTION, true);
+            }
+            else {
+              clearSelectionWithout(index);
+              singleSelection(component, index);
             }
           }
           else if (SwingUtilities.isRightMouseButton(event)) {
             CellPluginComponent component = CellPluginComponent.get(event);
+
+            if (myAllSelected || myMixSelection) {
+              int size = getSelection().size();
+              if (size == 0) {
+                singleSelection(component, getIndex(component));
+              }
+              else if (size == 1) {
+                ensureMoveSingleSelection(component);
+              }
+            }
+            else if (mySelectionLength == 0 || mySelectionLength == 1) {
+              ensureMoveSingleSelection(component);
+            }
+
             DefaultActionGroup group = new DefaultActionGroup();
-            component.createPopupMenu(group);
+            component.createPopupMenu(group, getSelection());
+            if (group.getChildrenCount() == 0) {
+              return;
+            }
 
             ActionPopupMenu popupMenu = ActionManager.getInstance().createActionPopupMenu(ActionPlaces.UNKNOWN, group);
             popupMenu.setTargetComponent(component);
@@ -951,54 +1010,82 @@ public class PluginManagerConfigurableNew
 
         @Override
         public void mouseExited(MouseEvent event) {
-          if (myHoverComponent != null) {
-            myHoverComponent.setSelection(SelectionType.NONE);
+          /*if (myHoverComponent != null) {
+            if (myHoverComponent.getSelection() == SelectionType.HOVER) {
+              myHoverComponent.setSelection(SelectionType.NONE);
+            }
             myHoverComponent = null;
-          }
+            myHoverIndex = -1;
+          }*/
         }
 
         @Override
         public void mouseMoved(MouseEvent event) {
-          if (myHoverComponent == null) {
+          /*if (myHoverComponent == null) {
             CellPluginComponent component = CellPluginComponent.get(event);
             if (component.getSelection() == SelectionType.NONE) {
               myHoverComponent = component;
+              myHoverIndex = getIndex(component);
               component.setSelection(SelectionType.HOVER);
             }
-          }
+          }*/
         }
       };
+
+      mySelectAllKeys = getShortcuts(IdeActions.ACTION_SELECT_ALL);
 
       myKeyListener = new KeyAdapter() {
         @Override
         public void keyPressed(KeyEvent event) {
           int code = event.getKeyCode();
-          if (code == KeyEvent.VK_HOME || code == KeyEvent.VK_END) {
-            CellPluginComponent component = CellPluginComponent.get(event);
+          int modifiers = event.getModifiers();
+          KeyboardShortcut shortcut = new KeyboardShortcut(KeyStroke.getKeyStroke(code, modifiers), null);
+
+          if (check(shortcut, mySelectAllKeys)) {
             event.consume();
-            assert component == mySelectionComponent : component + " : " + mySelectionComponent;
-            CellPluginComponent sibling = getLast(code == KeyEvent.VK_HOME);
-            if (sibling != null) {
-              changeSelection(sibling);
+            selectAll();
+            return;
+          }
+
+          if (code == KeyEvent.VK_HOME || code == KeyEvent.VK_END) {
+            if (myComponents.isEmpty()) {
+              return;
+            }
+            event.consume();
+            if (event.isShiftDown()) {
+              moveOrResizeSelection(code == KeyEvent.VK_HOME, false, 2 * myComponents.size());
+            }
+            else {
+              int index = code == KeyEvent.VK_HOME ? 0 : myComponents.size() - 1;
+              clearSelectionWithout(index);
+              singleSelection(index);
             }
           }
           else if (code == KeyEvent.VK_UP || code == KeyEvent.VK_DOWN) {
-            CellPluginComponent component = CellPluginComponent.get(event);
             event.consume();
-            assert component == mySelectionComponent : component + " : " + mySelectionComponent;
-            CellPluginComponent sibling = getSibling(component, code == KeyEvent.VK_DOWN);
-            if (sibling != null) {
-              changeSelection(sibling);
+            if (modifiers == 0) {
+              moveOrResizeSelection(code == KeyEvent.VK_UP, true, 1);
+            }
+            else if (modifiers == Event.SHIFT_MASK) {
+              moveOrResizeSelection(code == KeyEvent.VK_UP, false, 1);
             }
           }
           else if (code == KeyEvent.VK_PAGE_UP || code == KeyEvent.VK_PAGE_DOWN) {
-            // TODO
+            if (myComponents.isEmpty()) {
+              return;
+            }
+
+            event.consume();
+            int pageCount = myContainer.getVisibleRect().height / myLayout.myLineHeight;
+            moveOrResizeSelection(code == KeyEvent.VK_PAGE_UP, !event.isShiftDown(), pageCount);
           }
           else if (code == KeyEvent.VK_SPACE || code == KeyEvent.VK_ENTER || code == KeyEvent.VK_BACK_SPACE) {
-            CellPluginComponent component = CellPluginComponent.get(event);
-            event.consume();
-            assert component == mySelectionComponent : component + " : " + mySelectionComponent;
-            component.handleKeyAction(code);
+            assert mySelectionLength != 0;
+            CellPluginComponent component = myComponents.get(mySelectionIndex);
+            if (component.getSelection() != SelectionType.SELECTION) {
+              component.setSelection(SelectionType.SELECTION);
+            }
+            component.handleKeyAction(code, getSelection());
           }
         }
       };
@@ -1006,87 +1093,250 @@ public class PluginManagerConfigurableNew
       myFocusListener = new FocusAdapter() {
         @Override
         public void focusGained(FocusEvent event) {
-          CellPluginComponent component = CellPluginComponent.get(event);
-          if (component != mySelectionComponent) {
-            changeSelection(component);
+          if (mySelectionIndex >= 0 && mySelectionLength == 1 && !myMixSelection) {
+            CellPluginComponent component = CellPluginComponent.get(event);
+            int index = getIndex(component);
+            if (mySelectionIndex != index) {
+              clearSelectionWithout(index);
+              singleSelection(component, index);
+            }
           }
         }
       };
     }
 
+    @Nullable
+    private static ShortcutSet getShortcuts(@NotNull String id) {
+      AnAction action = ActionManager.getInstance().getAction(id);
+      return action == null ? null : action.getShortcutSet();
+    }
+
+    private static boolean check(@NotNull KeyboardShortcut shortcut, @Nullable ShortcutSet set) {
+      if (set != null) {
+        for (Shortcut test : set.getShortcuts()) {
+          if (test.isKeyboard() && shortcut.startsWith(test)) {
+            return true;
+          }
+        }
+      }
+      return false;
+    }
+
     @Override
-    public void connect(@NotNull Container container) {
+    public void connect(@NotNull PluginsGroupComponent container) {
       myContainer = container;
+      myLayout = (PluginsListLayout)container.getLayout();
+    }
+
+    @Override
+    public void addCell(@NotNull CellPluginComponent component) {
+      myComponents.add(component);
+    }
+
+    @Override
+    public void initialSelection() {
+      if (!myComponents.isEmpty()) {
+        singleSelection(0);
+      }
+    }
+
+    @NotNull
+    private List<CellPluginComponent> getSelection() {
+      List<CellPluginComponent> selection = new ArrayList<>();
+
+      for (CellPluginComponent component : myComponents) {
+        if (component.getSelection() == SelectionType.SELECTION) {
+          selection.add(component);
+        }
+      }
+
+      return selection;
     }
 
     @Override
     public void clear() {
-      myHoverComponent = mySelectionComponent = null;
+      myComponents = new ArrayList<>();
+      myHoverComponent = null;
+      myHoverIndex = -1;
+      mySelectionIndex = -1;
+      mySelectionLength = 0;
+      myAllSelected = false;
+      myMixSelection = false;
     }
 
-    @Nullable
-    private CellPluginComponent getLast(boolean first) {
-      int count = myContainer.getComponentCount();
+    private void selectAll() {
+      if (myAllSelected) {
+        return;
+      }
 
-      if (first) {
-        for (int i = 0; i < count; i++) {
-          Component component = myContainer.getComponent(i);
-          if (component instanceof CellPluginComponent) {
-            return (CellPluginComponent)component;
+      myAllSelected = true;
+      myMixSelection = false;
+      myHoverComponent = null;
+      myHoverIndex = -1;
+
+      for (CellPluginComponent component : myComponents) {
+        if (component.getSelection() != SelectionType.SELECTION) {
+          component.setSelection(SelectionType.SELECTION, false);
+        }
+      }
+    }
+
+    private void moveOrResizeSelection(boolean up, boolean singleSelection, int count) {
+      if (singleSelection) {
+        assert mySelectionLength != 0;
+        int index;
+        if (mySelectionLength > 0) {
+          index = up
+                  ? Math.max(mySelectionIndex + mySelectionLength - 1 - count, 0)
+                  : Math.min(mySelectionIndex + mySelectionLength - 1 + count, myComponents.size() - 1);
+        }
+        else {
+          index = up
+                  ? Math.max(mySelectionIndex + mySelectionLength + 1 - count, 0)
+                  : Math.min(mySelectionIndex + mySelectionLength + 1 + count, myComponents.size() - 1);
+        }
+        clearSelectionWithout(index);
+        singleSelection(index);
+      }
+      // multi selection
+      else if (up) {
+        if (mySelectionLength > 0) {
+          if (mySelectionIndex + mySelectionLength - 1 > 0) {
+            clearAllOrMixSelection();
+            for (int i = 0; i < count && mySelectionIndex + mySelectionLength - 1 > 0; i++) {
+              mySelectionLength--;
+              if (mySelectionLength > 0) {
+                myComponents.get(mySelectionIndex + mySelectionLength).setSelection(SelectionType.NONE, true);
+              }
+              if (mySelectionLength == 0) {
+                myComponents.get(mySelectionIndex - 1).setSelection(SelectionType.SELECTION);
+                mySelectionLength = -2;
+                int newCount = count - i - 1;
+                if (newCount > 0) {
+                  moveOrResizeSelection(true, false, newCount);
+                }
+                return;
+              }
+            }
+          }
+        }
+        else if (mySelectionIndex + mySelectionLength + 1 > 0) {
+          clearAllOrMixSelection();
+          for (int i = 0, index = mySelectionIndex + mySelectionLength + 1; i < count && index > 0; i++, index--) {
+            mySelectionLength--;
+            myComponents.get(index - 1).setSelection(SelectionType.SELECTION);
+          }
+        }
+      }
+      // down
+      else if (mySelectionLength > 0) {
+        if (mySelectionIndex + mySelectionLength < myComponents.size()) {
+          clearAllOrMixSelection();
+          for (int i = 0, index = mySelectionIndex + mySelectionLength, size = myComponents.size();
+               i < count && index < size;
+               i++, index++) {
+            myComponents.get(index).setSelection(SelectionType.SELECTION);
+            mySelectionLength++;
           }
         }
       }
       else {
-        for (int i = count - 1; i >= 0; i--) {
-          Component component = myContainer.getComponent(i);
-          if (component instanceof CellPluginComponent) {
-            return (CellPluginComponent)component;
+        clearAllOrMixSelection();
+        for (int i = 0; i < count; i++) {
+          mySelectionLength++;
+          myComponents.get(mySelectionIndex + mySelectionLength).setSelection(SelectionType.NONE, true);
+          if (mySelectionLength == -1) {
+            mySelectionLength = 1;
+            int newCount = count - i - 1;
+            if (newCount > 0) {
+              moveOrResizeSelection(false, false, newCount);
+            }
+            return;
           }
         }
       }
-
-      return null;
     }
 
-    @Nullable
-    private CellPluginComponent getSibling(@NotNull CellPluginComponent component, boolean next) {
-      int count = myContainer.getComponentCount();
+    private int getIndex(@NotNull CellPluginComponent component) {
+      int index = myComponents.indexOf(component);
+      assert index >= 0 : component;
+      return index;
+    }
 
-      for (int i = 0; i < count; i++) {
-        if (myContainer.getComponent(i) == component) {
-          if (next) {
-            for (int j = i + 1; j < count; j++) {
-              Component nextComponent = myContainer.getComponent(j);
-              if (nextComponent instanceof CellPluginComponent) {
-                return (CellPluginComponent)nextComponent;
-              }
-            }
-          }
-          else {
-            for (int j = i - 1; j >= 0; j--) {
-              Component nextComponent = myContainer.getComponent(j);
-              if (nextComponent instanceof CellPluginComponent) {
-                return (CellPluginComponent)nextComponent;
-              }
-            }
-          }
-          return null;
+    private void clearAllOrMixSelection() {
+      if (!myAllSelected && !myMixSelection) {
+        return;
+      }
+      if (myMixSelection && mySelectionIndex != -1) {
+        CellPluginComponent component = myComponents.get(mySelectionIndex);
+        if (component.getSelection() != SelectionType.SELECTION) {
+          component.setSelection(SelectionType.SELECTION);
         }
       }
+      myAllSelected = false;
+      myMixSelection = false;
 
-      return null;
+      int first;
+      int last;
+
+      if (mySelectionLength > 0) {
+        first = mySelectionIndex;
+        last = mySelectionIndex + mySelectionLength;
+      }
+      else {
+        first = mySelectionIndex + mySelectionLength + 1;
+        last = mySelectionIndex + 1;
+      }
+
+      for (int i = 0; i < first; i++) {
+        CellPluginComponent component = myComponents.get(i);
+        if (component.getSelection() == SelectionType.SELECTION) {
+          component.setSelection(SelectionType.NONE);
+        }
+      }
+      for (int i = last, size = myComponents.size(); i < size; i++) {
+        CellPluginComponent component = myComponents.get(i);
+        if (component.getSelection() == SelectionType.SELECTION) {
+          component.setSelection(SelectionType.NONE);
+        }
+      }
     }
 
-    private void changeSelection(@NotNull CellPluginComponent component) {
-      if (mySelectionComponent != null) {
-        mySelectionComponent.setSelection(SelectionType.NONE);
+    private void clearSelectionWithout(int withoutIndex) {
+      myAllSelected = false;
+      myMixSelection = false;
+      for (int i = 0, size = myComponents.size(); i < size; i++) {
+        if (i != withoutIndex) {
+          CellPluginComponent component = myComponents.get(i);
+          if (component.getSelection() == SelectionType.SELECTION) {
+            component.setSelection(SelectionType.NONE);
+          }
+        }
       }
-      if (component == myHoverComponent) {
+    }
+
+    private void ensureMoveSingleSelection(CellPluginComponent component) {
+      int index = getIndex(component);
+      if (mySelectionLength == 0 || mySelectionIndex != index) {
+        clearSelectionWithout(index);
+        singleSelection(component, index);
+      }
+    }
+
+    private void singleSelection(int index) {
+      singleSelection(myComponents.get(index), index);
+    }
+
+    private void singleSelection(@NotNull CellPluginComponent component, int index) {
+      mySelectionIndex = index;
+      mySelectionLength = 1;
+      if (myHoverIndex == index) {
         myHoverComponent = null;
+        myHoverIndex = -1;
       }
-
-      mySelectionComponent = component;
-      component.setSelection(SelectionType.SELECTION);
+      if (component.getSelection() != SelectionType.SELECTION) {
+        component.setSelection(SelectionType.SELECTION);
+      }
     }
 
     @Override
@@ -1297,17 +1547,41 @@ public class PluginManagerConfigurableNew
   }
 
   private static class PluginsGroup {
+    private final String myTitlePrefix;
     public String title;
     public JLabel titleLabel;
     public LinkLabel rightAction;
     public List<IdeaPluginDescriptor> descriptors = new ArrayList<>();
 
-    public void titleWithCount(@NotNull String text) {
-      title = text + " (" + descriptors.size() + ")";
+    public PluginsGroup(@NotNull String title) {
+      myTitlePrefix = title;
+      this.title = title;
     }
 
-    public void titleWithCount(@NotNull String text, int enabled) {
-      title = text + " (" + enabled + " of " + descriptors.size() + " enabled)";
+    public void titleWithCount() {
+      title = myTitlePrefix + " (" + descriptors.size() + ")";
+      updateTitle();
+    }
+
+    public void titleWithEnabled(@NotNull MyPluginModel pluginModel) {
+      int enabled = 0;
+      for (IdeaPluginDescriptor descriptor : descriptors) {
+        if (pluginModel.isEnabled(descriptor)) {
+          enabled++;
+        }
+      }
+      titleWithCount(enabled);
+    }
+
+    public void titleWithCount(int enabled) {
+      title = myTitlePrefix + " (" + enabled + " of " + descriptors.size() + " enabled)";
+      updateTitle();
+    }
+
+    private void updateTitle() {
+      if (titleLabel != null) {
+        titleLabel.setText(title);
+      }
     }
 
     public void sortByName() {
@@ -1400,16 +1674,24 @@ public class PluginManagerConfigurableNew
     private static final Color GRAY_COLOR = new JBColor(Gray._130, Gray._120);
 
     public void setSelection(@NotNull SelectionType type) {
+      setSelection(type, type == SelectionType.SELECTION);
+    }
+
+    public void setSelection(@NotNull SelectionType type, boolean scrollAndFocus) {
       mySelection = type;
 
-      JComponent parent = (JComponent)getParent();
-      if (parent != null && type == SelectionType.SELECTION) {
-        Rectangle bounds = getBounds();
-        if (!parent.getVisibleRect().contains(bounds)) {
-          parent.scrollRectToVisible(bounds);
-        }
+      if (scrollAndFocus) {
+        JComponent parent = (JComponent)getParent();
+        if (parent != null) {
+          Rectangle bounds = getBounds();
+          if (!parent.getVisibleRect().contains(bounds)) {
+            parent.scrollRectToVisible(bounds);
+          }
 
-        IdeFocusManager.getGlobalInstance().doWhenFocusSettlesDown(() -> IdeFocusManager.getGlobalInstance().requestFocus(this, true));
+          if (type == SelectionType.SELECTION) {
+            IdeFocusManager.getGlobalInstance().doWhenFocusSettlesDown(() -> IdeFocusManager.getGlobalInstance().requestFocus(this, true));
+          }
+        }
       }
 
       updateColors(GRAY_COLOR, type == SelectionType.NONE ? MAIN_BG_COLOR : HOVER_COLOR);
@@ -1444,10 +1726,10 @@ public class PluginManagerConfigurableNew
       myIconLabel.addMouseListener(myHoverNameListener);
     }
 
-    public void createPopupMenu(@NotNull DefaultActionGroup group) {
+    public void createPopupMenu(@NotNull DefaultActionGroup group, @NotNull List<CellPluginComponent> selection) {
     }
 
-    public void handleKeyAction(int keyCode) {
+    public void handleKeyAction(int keyCode, @NotNull List<CellPluginComponent> selection) {
     }
 
     @NotNull
@@ -1528,6 +1810,9 @@ public class PluginManagerConfigurableNew
       myPluginsModel = pluginsModel;
       pluginsModel.addComponent(this);
 
+      setFocusable(true);
+      myEnableDisableButton.setFocusable(false);
+
       setOpaque(true);
       setLayout(new BorderLayout(JBUI.scale(8), 0));
       setBorder(JBUI.Borders.empty(5, 10, 10, 10));
@@ -1564,6 +1849,7 @@ public class PluginManagerConfigurableNew
     private void createButtons(boolean update) {
       if (myPlugin instanceof IdeaPluginDescriptorImpl && ((IdeaPluginDescriptorImpl)myPlugin).isDeleted()) {
         myRestartButton = new RestartButton(myPluginsModel);
+        myRestartButton.setFocusable(false);
         myBaselinePanel.addButtonComponent(myRestartButton);
 
         myEnableDisableButton.setSelected(false);
@@ -1576,11 +1862,13 @@ public class PluginManagerConfigurableNew
         PluginId id = myPlugin.getPluginId();
         if (pluginsState.wasInstalled(id) || pluginsState.wasUpdated(id)) {
           myRestartButton = new RestartButton(myPluginsModel);
+          myRestartButton.setFocusable(false);
           myBaselinePanel.addButtonComponent(myRestartButton);
         }
 
         if (update) {
           myUpdateButton = new UpdateButton();
+          myUpdateButton.setFocusable(false);
           myBaselinePanel.addButtonComponent(myUpdateButton);
         }
 
@@ -1701,7 +1989,7 @@ public class PluginManagerConfigurableNew
       return myPluginsModel.getEnabledTitle(myPlugin);
     }
 
-    private boolean isEnabledState() {
+    public boolean isEnabledState() {
       return myPluginsModel.isEnabled(myPlugin);
     }
 
@@ -1720,6 +2008,7 @@ public class PluginManagerConfigurableNew
       }
       if (myRestartButton == null) {
         myRestartButton = new RestartButton(myPluginsModel);
+        myRestartButton.setFocusable(false);
         myBaselinePanel.addButtonComponent(myRestartButton);
         layout = true;
       }
@@ -1738,64 +2027,143 @@ public class PluginManagerConfigurableNew
     }
 
     @Override
-    public void createPopupMenu(@NotNull DefaultActionGroup group) {
-      if (myRestartButton != null) {
-        group.add(new ButtonAnAction(myRestartButton));
+    public void createPopupMenu(@NotNull DefaultActionGroup group, @NotNull List<CellPluginComponent> selection) {
+      boolean restart = true;
+      for (CellPluginComponent component : selection) {
+        if (((ListPluginComponent)component).myRestartButton == null) {
+          restart = false;
+          break;
+        }
       }
-      else if (myUpdateButton != null) {
-        group.add(new ButtonAnAction(myUpdateButton));
+      if (restart) {
+        group.add(new ButtonAnAction(((ListPluginComponent)selection.get(0)).myRestartButton));
       }
-      if (!myUninstalled) {
-        group.add(new MyAnAction(getEnabledTitle(), KeyEvent.VK_SPACE) {
-          @Override
-          public void actionPerformed(AnActionEvent e) {
-            myPluginsModel.changeEnableDisable(myPlugin);
-          }
-        });
+      else {
+        int size = selection.size();
+        JButton[] buttons = new JButton[size];
 
-        if (!myPlugin.isBundled()) {
-          group.addSeparator();
-          group.add(new MyAnAction("Uninstall", KeyEvent.VK_BACK_SPACE) {
-            @Override
-            public void actionPerformed(AnActionEvent e) {
-              myPluginsModel.doUninstall(ListPluginComponent.this, myPlugin, null);
-            }
-          });
+        for (int i = 0; i < size; i++) {
+          JButton button = ((ListPluginComponent)selection.get(i)).myUpdateButton;
+          if (button == null) {
+            buttons = null;
+            break;
+          }
+          buttons[i] = button;
+        }
+
+        // XXX: maybe create separate method for update several plugins
+        if (buttons != null) {
+          group.add(new ButtonAnAction(buttons));
+        }
+      }
+
+      Pair<Boolean, IdeaPluginDescriptor[]> result = getSelectionNewState(selection);
+      group.add(new MyAnAction(result.first ? "Enable" : "Disable", KeyEvent.VK_SPACE) {
+        @Override
+        public void actionPerformed(AnActionEvent e) {
+          myPluginsModel.changeEnableDisable(result.second, result.first);
+        }
+      });
+
+      for (CellPluginComponent component : selection) {
+        if (((ListPluginComponent)component).myUninstalled || component.myPlugin.isBundled()) {
+          return;
+        }
+      }
+
+      group.addSeparator();
+      group.add(new MyAnAction("Uninstall", KeyEvent.VK_BACK_SPACE) {
+        @Override
+        public void actionPerformed(AnActionEvent e) {
+          for (CellPluginComponent component : selection) {
+            // XXX: maybe create separate method for uninstall several plugins
+            myPluginsModel.doUninstall(component, component.myPlugin, null);
+          }
+        }
+      });
+    }
+
+    @Override
+    public void handleKeyAction(int keyCode, @NotNull List<CellPluginComponent> selection) {
+      if (keyCode == KeyEvent.VK_SPACE) {
+        if (selection.size() == 1) {
+          myPluginsModel.changeEnableDisable(selection.get(0).myPlugin);
+        }
+        else {
+          Pair<Boolean, IdeaPluginDescriptor[]> result = getSelectionNewState(selection);
+          myPluginsModel.changeEnableDisable(result.second, result.first);
+        }
+      }
+      else if (keyCode == KeyEvent.VK_ENTER) {
+        boolean restart = true;
+        for (CellPluginComponent component : selection) {
+          if (((ListPluginComponent)component).myRestartButton == null) {
+            restart = false;
+            break;
+          }
+        }
+        if (restart) {
+          ((ListPluginComponent)selection.get(0)).myRestartButton.doClick();
+          return;
+        }
+
+        for (CellPluginComponent component : selection) {
+          if (((ListPluginComponent)component).myUpdateButton == null) {
+            return;
+          }
+        }
+        for (CellPluginComponent component : selection) {
+          ((ListPluginComponent)component).myUpdateButton.doClick(); // XXX: maybe create separate method for update several plugins
+        }
+      }
+      else if (keyCode == KeyEvent.VK_BACK_SPACE) {
+        for (CellPluginComponent component : selection) {
+          if (((ListPluginComponent)component).myUninstalled || component.myPlugin.isBundled()) {
+            return;
+          }
+        }
+        for (CellPluginComponent component : selection) {
+          myPluginsModel.doUninstall(this, component.myPlugin, null); // XXX: maybe create separate method for uninstall several plugins
         }
       }
     }
 
-    @Override
-    public void handleKeyAction(int keyCode) {
-      if (keyCode == KeyEvent.VK_SPACE && !myUninstalled) {
-        myPluginsModel.changeEnableDisable(myPlugin);
-      }
-      else if (keyCode == KeyEvent.VK_ENTER) {
-        if (myRestartButton != null) {
-          myRestartButton.doClick();
-        }
-        else if (myUpdateButton != null) {
-          myUpdateButton.doClick();
+    @NotNull
+    private static Pair<Boolean, IdeaPluginDescriptor[]> getSelectionNewState(@NotNull List<CellPluginComponent> selection) {
+      boolean state = ((ListPluginComponent)selection.get(0)).isEnabledState();
+      boolean setTrue = false;
+
+      for (Iterator<CellPluginComponent> I = selection.listIterator(1); I.hasNext(); ) {
+        if (state != ((ListPluginComponent)I.next()).isEnabledState()) {
+          setTrue = true;
+          break;
         }
       }
-      else if (keyCode == KeyEvent.VK_BACK_SPACE && !myUninstalled && !myPlugin.isBundled()) {
-        myPluginsModel.doUninstall(this, myPlugin, null);
+
+      int size = selection.size();
+      IdeaPluginDescriptor[] plugins = new IdeaPluginDescriptor[size];
+      for (int i = 0; i < size; i++) {
+        plugins[i] = selection.get(i).myPlugin;
       }
+
+      return Pair.create(setTrue || !state, plugins);
     }
   }
 
   private static class ButtonAnAction extends AnAction {
-    private final JButton myButton;
+    private final JButton[] myButtons;
 
-    public ButtonAnAction(@NotNull JButton button) {
-      super(button.getText());
-      myButton = button;
+    public ButtonAnAction(@NotNull JButton... buttons) {
+      super(buttons[0].getText());
+      myButtons = buttons;
       setShortcutSet(CommonShortcuts.ENTER);
     }
 
     @Override
     public void actionPerformed(AnActionEvent e) {
-      myButton.doClick();
+      for (JButton button : myButtons) {
+        button.doClick();
+      }
     }
   }
 
@@ -2042,6 +2410,7 @@ public class PluginManagerConfigurableNew
       createMetricsPanel(centerPanel);
 
       myInstallButton = new InstallButton(false);
+      myInstallButton.setFocusable(false);
       add(myInstallButton);
 
       setOpaque(true);
@@ -2184,7 +2553,7 @@ public class PluginManagerConfigurableNew
     private JBOptionButton myEnableDisableUninstallButton;
 
     public DetailsPagePluginComponent(@NotNull IdeaPluginDescriptor plugin, boolean update) {
-      super(new BorderLayout(0, JBUI.scale(32)), mySearchTextField.getTextEditor().getBackground());
+      super(new BorderLayout(0, JBUI.scale(32)), MAIN_BG_COLOR);
       myPlugin = plugin;
 
       setBorder(JBUI.Borders.empty(15, 20, 0, 0));
@@ -2823,7 +3192,7 @@ public class PluginManagerConfigurableNew
     private final List<ListPluginComponent> myListComponents = new ArrayList<>();
     private final Map<String, ListPluginComponent> myListMap = new HashMap<>();
     private final Map<String, GridCellPluginComponent> myGridMap = new HashMap<>();
-    private PluginsGroup myEnabledGroup;
+    private final List<PluginsGroup> myEnabledGroups = new ArrayList<>();
 
     public boolean needRestart;
     public boolean createShutdownCallback = true;
@@ -2838,8 +3207,8 @@ public class PluginManagerConfigurableNew
       }
     }
 
-    public void setEnabledGroup(@NotNull PluginsGroup group) {
-      myEnabledGroup = group;
+    public void addEnabledGroup(@NotNull PluginsGroup group) {
+      myEnabledGroups.add(group);
     }
 
     public boolean isEnabled(@NotNull IdeaPluginDescriptor plugin) {
@@ -2853,19 +3222,21 @@ public class PluginManagerConfigurableNew
 
     public void changeEnableDisable(@NotNull IdeaPluginDescriptor plugin) {
       enableRows(new IdeaPluginDescriptor[]{plugin}, !isEnabled(plugin.getPluginId()));
+      updateAfterEnableDisable();
+    }
 
+    public void changeEnableDisable(@NotNull IdeaPluginDescriptor[] plugins, boolean state) {
+      enableRows(plugins, state);
+      updateAfterEnableDisable();
+    }
+
+    private void updateAfterEnableDisable() {
       for (ListPluginComponent component : myListComponents) {
         component.updateEnabledState();
       }
-
-      int enabled = 0;
-      for (IdeaPluginDescriptor descriptor : myEnabledGroup.descriptors) {
-        if (isEnabled(descriptor)) {
-          enabled++;
-        }
+      for (PluginsGroup group : myEnabledGroups) {
+        group.titleWithEnabled(this);
       }
-      myEnabledGroup.titleWithCount("Bundled", enabled);
-      myEnabledGroup.titleLabel.setText(myEnabledGroup.title);
     }
 
     public void doUninstall(@NotNull Component uiParent, @NotNull IdeaPluginDescriptor plugin, @Nullable Runnable update) {

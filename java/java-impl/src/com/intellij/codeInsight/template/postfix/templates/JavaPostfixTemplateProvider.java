@@ -48,6 +48,7 @@ public class JavaPostfixTemplateProvider implements PostfixTemplateProvider {
     new ArgumentPostfixTemplate(this),
 
     new CastExpressionPostfixTemplate(),
+    new NewExpressionPostfixTemplate(),
     new CastVarPostfixTemplate(),
     new ElseStatementPostfixTemplate(),
     new IfStatementPostfixTemplate(),

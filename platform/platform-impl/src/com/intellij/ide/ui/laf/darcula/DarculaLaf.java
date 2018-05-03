@@ -386,7 +386,7 @@ public class DarculaLaf extends BasicLookAndFeel {
       return SYSTEM;
     }
 
-    if (key.endsWith("Insets")) {
+    if (key.endsWith("Insets") || key.endsWith("padding")) {
       return parseInsets(value);
     } else if (key.endsWith("Border") || key.endsWith("border")) {
 

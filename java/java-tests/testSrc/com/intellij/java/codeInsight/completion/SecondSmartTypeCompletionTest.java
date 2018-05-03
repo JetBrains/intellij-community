@@ -22,7 +22,6 @@ import com.intellij.codeInsight.lookup.LookupElementPresentation;
 import com.intellij.codeInsight.lookup.LookupManager;
 import com.intellij.testFramework.PlatformTestUtil;
 import com.intellij.util.ThrowableRunnable;
-import org.jetbrains.annotations.NonNls;
 
 @SuppressWarnings({"ALL"})
 public class SecondSmartTypeCompletionTest extends LightFixtureCompletionTestCase {
@@ -180,13 +179,6 @@ public class SecondSmartTypeCompletionTest extends LightFixtureCompletionTestCas
     checkResult();
   }
 
-  protected void checkResultByFile(@NonNls final String filePath)  {
-    if (myItems != null) {
-      //System.out.println("items = " + Arrays.asList(myItems));
-    }
-    super.checkResultByFile(filePath);
-  }
-
   public void testChainDuplicationAfterInstanceof() {
     configure();
     assertStringItems("test.test", "toString");
@@ -228,13 +220,13 @@ public class SecondSmartTypeCompletionTest extends LightFixtureCompletionTestCas
     assertEquals("Collections.emptyMap", presentation.getItemText());
   }
 
-  protected void tearDown() throws Exception {
-    LookupManager.getInstance(getProject()).hideActiveLookup();
-    super.tearDown();
-  }
-
   public void testNoThisFieldsInDelegatingConstructorCall() {
     configure();
     assertOrderedEquals(myFixture.getLookupElementStrings(), "delegate.field", "x");
+  }
+
+  public void testPreferChainFieldSuggestionByExpectedName() {
+    configure();
+    myFixture.assertPreferredCompletionItems(0, "b.superclass", "b.b", "b.a");
   }
 }

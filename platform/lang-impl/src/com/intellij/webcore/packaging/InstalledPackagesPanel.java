@@ -64,7 +64,7 @@ public class InstalledPackagesPanel extends JPanel {
     myProject = project;
     myNotificationArea = area;
 
-    myPackagesTableModel = new DefaultTableModel(new String[]{"Package", "Version", "Latest"}, 0) {
+    myPackagesTableModel = new DefaultTableModel(new String[]{"Package", "Version", "Latest version"}, 0) {
       @Override
       public boolean isCellEditable(int i, int i1) {
         return false;
@@ -84,7 +84,7 @@ public class InstalledPackagesPanel extends JPanel {
     myPackagesTable.getTableHeader().setReorderingAllowed(false);
     new TableSpeedSearch(myPackagesTable);
 
-    myUpgradeButton = new AnActionButton("Upgrade", IconUtil.getMoveUpIcon()) {
+    myUpgradeButton = new AnActionButton("Upgrade", AllIcons.Actions.Download) {
       @Override
       public void actionPerformed(@NotNull AnActionEvent e) {
         upgradeAction();

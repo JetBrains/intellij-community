@@ -38,6 +38,7 @@ import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.SearchScope;
 import com.intellij.structuralsearch.*;
+import com.intellij.structuralsearch.impl.matcher.compiler.PatternCompiler;
 import com.intellij.structuralsearch.plugin.StructuralSearchPlugin;
 import com.intellij.ui.ComboboxSpeedSearch;
 import com.intellij.ui.IdeBorderFactory;
@@ -94,6 +95,7 @@ public class SearchDialog extends DialogWrapper {
   private String mySavedEditorText;
   private JPanel myContentPanel;
   private JComponent myEditorPanel;
+  private JButton myEditVariablesButton;
 
   public SearchDialog(SearchContext searchContext) {
     this(searchContext, true, true);
@@ -168,7 +170,10 @@ public class SearchDialog extends DialogWrapper {
     myAlarm.addRequest(() -> {
       try {
         final boolean valid = isValid();
-        ApplicationManager.getApplication().invokeLater(() -> getOKAction().setEnabled(valid));
+        ApplicationManager.getApplication().invokeLater(() -> {
+          myEditVariablesButton.setEnabled(PatternCompiler.getLastCompiledPattern(myConfiguration.getMatchOptions()) != null);
+          getOKAction().setEnabled(valid);
+        });
       }
       catch (ProcessCanceledException e) {
         throw e;
@@ -523,7 +528,7 @@ public class SearchDialog extends DialogWrapper {
     panel.add(Box.createHorizontalStrut(8));
 
     panel.add(
-      createJButtonForAction(
+      myEditVariablesButton = createJButtonForAction(
         new AbstractAction() {
           {
             putValue(NAME, SSRBundle.message("edit.variables.button"));
@@ -531,6 +536,10 @@ public class SearchDialog extends DialogWrapper {
 
           @Override
           public void actionPerformed(ActionEvent e) {
+            if (PatternCompiler.getLastCompiledPattern(myConfiguration.getMatchOptions()) == null) {
+              myEditVariablesButton.setEnabled(false);
+              return;
+            }
             new EditVarConstraintsDialog(
               searchContext.getProject(),
               myConfiguration,
@@ -561,6 +570,7 @@ public class SearchDialog extends DialogWrapper {
             Configuration[] configurations = dialog.getSelectedConfigurations();
             if (configurations.length == 1) {
               setSearchPattern(configurations[0]);
+              initiateValidation();
             }
           }
         }

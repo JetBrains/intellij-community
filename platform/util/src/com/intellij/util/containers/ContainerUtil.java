@@ -1989,11 +1989,12 @@ public class ContainerUtil extends ContainerUtilRt {
       return emptyArray;
     }
 
-    List<V> result = new ArrayList<V>(arr.length);
-    for (T t : arr) {
-      result.add(mapping.fun(t));
+    V[] result = emptyArray.length < arr.length ? Arrays.copyOf(emptyArray, arr.length) : emptyArray;
+
+    for (int i = 0; i < arr.length; i++) {
+      result[i] = mapping.fun(arr[i]);
     }
-    return result.toArray(emptyArray);
+    return result;
   }
 
   @NotNull

@@ -18,6 +18,8 @@ package com.intellij.util;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Couple;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.util.ui.ImageUtil;
+import com.intellij.util.ui.JBUI.ScaleContext;
 import org.apache.batik.anim.dom.*;
 import org.apache.batik.dom.AbstractDocument;
 import org.apache.batik.transcoder.SVGAbstractTranscoder;
@@ -33,12 +35,15 @@ import org.w3c.dom.Element;
 
 import java.awt.*;
 import java.awt.image.BufferedImage;
+import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.URISyntaxException;
 import java.net.URL;
 import java.util.ArrayList;
 import java.util.List;
+
+import static com.intellij.util.ui.JBUI.ScaleType.PIX_SCALE;
 
 /**
  * @author tav
@@ -145,6 +150,12 @@ public class SVGLoader {
     catch (TranscoderException ex) {
       throw new IOException(ex);
     }
+  }
+
+  public static <T extends BufferedImage> T loadHiDPI(@Nullable URL url, @NotNull InputStream stream , ScaleContext ctx) throws IOException {
+    BufferedImage image = (BufferedImage)load(url, stream, ctx.getScale(PIX_SCALE));
+    //noinspection unchecked
+    return (T)ImageUtil.ensureHiDPI(image, ctx);
   }
 
   public static Couple<Integer> loadInfo(@Nullable URL url, @NotNull InputStream stream , double scale) throws IOException {

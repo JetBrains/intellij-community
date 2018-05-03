@@ -22,6 +22,8 @@ import com.intellij.openapi.util.Getter;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
+import com.intellij.openapi.vfs.VfsUtil;
+import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.*;
 import com.intellij.ui.components.JBLabel;
@@ -420,7 +422,9 @@ public class JsonSchemaMappingsView implements Disposable {
     if (StringUtil.isEmptyOrSpaces(text)) return text;
     final File ioFile = new File(text);
     if (!ioFile.isAbsolute()) return text;
-    final String relativePath = FileUtil.getRelativePath(new File(project.getBasePath()), ioFile);
+    VirtualFile file = VfsUtil.findFileByIoFile(ioFile, false);
+    if (file == null) return text;
+    final String relativePath = VfsUtilCore.getRelativePath(file, project.getBaseDir());
     return relativePath == null ? text : relativePath;
   }
 

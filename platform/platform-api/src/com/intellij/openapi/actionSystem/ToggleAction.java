@@ -15,6 +15,7 @@
  */
 package com.intellij.openapi.actionSystem;
 
+import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -64,5 +65,9 @@ public abstract class ToggleAction extends AnAction implements Toggleable {
     boolean selected = isSelected(e);
     final Presentation presentation = e.getPresentation();
     presentation.putClientProperty(SELECTED_PROPERTY, selected);
+    if (e.isFromContextMenu() && !UIUtil.isUnderGTKLookAndFeel()) {
+      //force to show check marks instead of toggled icons in context menu
+      presentation.setIcon(null);
+    }
   }
 }

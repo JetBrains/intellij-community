@@ -184,15 +184,15 @@ public class ChangeMethodSignatureFromUsageFix implements IntentionAction/*, Hig
     }
   }
 
-  public static List<ParameterInfoImpl> performChange(final Project project,
-                                                      final Editor editor,
-                                                      final PsiFile file,
-                                                      final PsiMethod method,
-                                                      final int minUsagesNumber,
-                                                      final ParameterInfoImpl[] newParametersInfo,
-                                                      final boolean changeAllUsages,
-                                                      final boolean allowDelegation,
-                                                      @Nullable final Consumer<List<ParameterInfoImpl>> callback) {
+  static List<ParameterInfoImpl> performChange(@NotNull Project project,
+                                               final Editor editor,
+                                               final PsiFile file,
+                                               @NotNull PsiMethod method,
+                                               final int minUsagesNumber,
+                                               final ParameterInfoImpl[] newParametersInfo,
+                                               final boolean changeAllUsages,
+                                               final boolean allowDelegation,
+                                               @Nullable final Consumer<List<ParameterInfoImpl>> callback) {
     if (!FileModificationService.getInstance().prepareFileForWrite(method.getContainingFile())) return null;
     final FindUsagesManager findUsagesManager = ((FindManagerImpl)FindManager.getInstance(project)).getFindUsagesManager();
     final FindUsagesHandler handler = findUsagesManager.getFindUsagesHandler(method, false);

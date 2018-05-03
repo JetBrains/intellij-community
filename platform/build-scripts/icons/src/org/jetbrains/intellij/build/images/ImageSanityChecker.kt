@@ -28,8 +28,8 @@ abstract class ImageSanityCheckerBase(val projectHome: File, val ignoreSkipTag: 
   private val STUB_PNG_MD5 = "5a87124746c39b00aad480e92672eca0" // /actions/stub.svg - 16x16
 
   private val IMAGES_WITH_BOTH_SVG_AND_PNG = MultiMap.createSet<String, String>().apply {
-    putValue("intellij.platform.icons", "general/settings")
-    putValue("intellij.platform.icons", "actions/cross")
+    //putValue("intellij.platform.icons", "general/settings")
+    //putValue("intellij.platform.icons", "actions/cross")
   }
 
   fun check(module: JpsModule) {
@@ -130,12 +130,12 @@ abstract class ImageSanityCheckerBase(val projectHome: File, val ignoreSkipTag: 
       val notFoundImagesIds = imagesWithSvgAndPng.toMutableSet().apply {
         filteredImages.forEach { this.remove(it.id) }
       }
-      log(WARNING, "This icon should have both SVG and PNG versions, but was not found - " +
+      log(WARNING, "This icon should have both SVG and PNG versions, but was not found\n" +
                    "see ImageSanityCheckerBase.IMAGES_WITH_BOTH_SVG_AND_PNG", module,
           notFoundImagesIds.map { ImagePaths(it, module.sourceRoots.first()) })
     }
 
-    process(filteredImages, WARNING, "This icon should have both SVG and PNG versions - " +
+    process(filteredImages, WARNING, "This icon should have both SVG and PNG versions\n" +
                                      "see ImageSanityCheckerBase.IMAGES_WITH_BOTH_SVG_AND_PNG", module) { image ->
       val svgFiles = image.files.filter { ImageExtension.fromFile(it) == SVG }
       val pngFiles = image.files.filter { ImageExtension.fromFile(it) == PNG }

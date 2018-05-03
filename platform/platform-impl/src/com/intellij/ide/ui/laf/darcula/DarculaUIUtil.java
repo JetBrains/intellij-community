@@ -10,13 +10,10 @@ import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.ui.ComboBoxCompositeEditor;
 import com.intellij.ui.EditorTextField;
 import com.intellij.ui.Gray;
-import com.intellij.ui.JBColor;
 import com.intellij.ui.components.panels.Wrapper;
-import com.intellij.util.ui.JBInsets;
-import com.intellij.util.ui.JBUI;
-import com.intellij.util.ui.MacUIUtil;
-import com.intellij.util.ui.UIUtil;
+import com.intellij.util.ui.*;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import javax.swing.plaf.UIResource;
@@ -40,47 +37,32 @@ import static javax.swing.SwingConstants.WEST;
  * @author Konstantin Bulenkov
  */
 public class DarculaUIUtil {
-  public static final int DARCULA_INPUT_HEIGHT = 24;
-
-  @SuppressWarnings("UseJBColor")
-  private static final Color MAC_ACTIVE_ERROR_COLOR = new Color(0x80f53b3b, true);
-  private static final Color DEFAULT_ACTIVE_ERROR_COLOR = new JBColor(0xe53e4d, 0x8b3c3c);
-
-  @SuppressWarnings("UseJBColor")
-  private static final Color MAC_INACTIVE_ERROR_COLOR = new Color(0x80f7bcbc, true);
-  private static final Color DEFAULT_INACTIVE_ERROR_COLOR = new JBColor(0xebbcbc, 0x725252);
-
-  public static final Color ACTIVE_ERROR_COLOR = new JBColor(() -> UIUtil.isUnderDefaultMacTheme() ? MAC_ACTIVE_ERROR_COLOR : DEFAULT_ACTIVE_ERROR_COLOR);
-  public static final Color INACTIVE_ERROR_COLOR = new JBColor(() -> UIUtil.isUnderDefaultMacTheme() ? MAC_INACTIVE_ERROR_COLOR : DEFAULT_INACTIVE_ERROR_COLOR);
-
-  @SuppressWarnings("UseJBColor")
-  private static final Color MAC_ACTIVE_WARNING_COLOR = new Color(0x80e9ad43, true);
-  private static final Color DEFAULT_ACTIVE_WARNING_COLOR = new JBColor(0xe2a53a, 0xac7920);
-
-  @SuppressWarnings("UseJBColor")
-  private static final Color MAC_INACTIVE_WARNING_COLOR = new Color(0x80ffda99, true);
-  private static final Color DEFAULT_INACTIVE_WARNING_COLOR = new JBColor(0xffd385, 0x6e5324);
-
-  public static final Color ACTIVE_WARNING_COLOR = new JBColor(() -> UIUtil.isUnderDefaultMacTheme() ? MAC_ACTIVE_WARNING_COLOR : DEFAULT_ACTIVE_WARNING_COLOR);
-  public static final Color INACTIVE_WARNING_COLOR = new JBColor(() -> UIUtil.isUnderDefaultMacTheme() ? MAC_INACTIVE_WARNING_COLOR : DEFAULT_INACTIVE_WARNING_COLOR);
-
-  private static final Color REGULAR_COLOR = new JBColor(() -> {
-    Color c = UIManager.getColor("Focus.Color");
-    return c != null ? c : new JBColor(0x8ab2eb, 0x395d82); // TODO: move to JBUI. This is a temporary fix.
-  });
-
-  private static final Color GRAPHITE_COLOR = new JBColor(new Color(0x8099979d, true), new Color(0x676869));
-
   public enum Outline {
     error {
       public void setGraphicsColor(Graphics2D g, boolean focused) {
-        g.setColor(focused ? ACTIVE_ERROR_COLOR : INACTIVE_ERROR_COLOR);
+        g.setColor(JBUI.CurrentTheme.Focus.errorColor(focused));
       }
     },
 
     warning {
       public void setGraphicsColor(Graphics2D g, boolean focused) {
-        g.setColor(focused ? ACTIVE_WARNING_COLOR: INACTIVE_WARNING_COLOR);
+        g.setColor(JBUI.CurrentTheme.Focus.warningColor(focused));
+      }
+    },
+
+    defaultButton {
+      public void setGraphicsColor(Graphics2D g, boolean focused) {
+        if (focused) {
+          g.setColor(JBUI.CurrentTheme.Focus.defaultButtonColor());
+        }
+      }
+    },
+
+    focus {
+      public void setGraphicsColor(Graphics2D g, boolean focused) {
+        if (focused) {
+          g.setColor(JBUI.CurrentTheme.Focus.focusColor());
+        }
       }
     };
 
@@ -95,18 +77,18 @@ public class DarculaUIUtil {
     Graphics2D g2 = (Graphics2D)g.create();
     try {
       g2.translate(r.x, r.y);
-      paintFocusBorder(g2, r.width, r.height, arc(), true);
+      paintFocusBorder(g2, r.width, r.height, COMPONENT_ARC.getFloat(), true);
     } finally {
       g2.dispose();
     }
   }
 
   public static void paintFocusOval(Graphics2D g, float x, float y, float width, float height) {
-    g.setPaint(UIUtil.isGraphite() ? GRAPHITE_COLOR : REGULAR_COLOR);
+    Outline.focus.setGraphicsColor(g, true);
 
-    float blw = bw() + lw(g);
+    float blw = BW.getFloat() + LW.getFloat();
     Path2D shape = new Path2D.Float(Path2D.WIND_EVEN_ODD);
-    shape.append(new Ellipse2D.Float(x - blw, y - blw, width + blw*2, height + blw*2), false);
+    shape.append(new Ellipse2D.Float(x - blw, y - blw, width + blw * 2, height + blw * 2), false);
     shape.append(new Ellipse2D.Float(x, y, width, height), false);
     g.fill(shape);
   }
@@ -121,19 +103,15 @@ public class DarculaUIUtil {
     doPaint(g, width, height, arc, symmetric);
   }
 
-  public static void paintFocusBorder(Graphics2D g, int width, int height, int arc, boolean symmetric) {
-    paintFocusBorder(g, width, height, (float)arc, symmetric);
-  }
-
   public static void paintFocusBorder(Graphics2D g, int width, int height, float arc, boolean symmetric) {
-    g.setPaint(UIUtil.isGraphite() ? GRAPHITE_COLOR : REGULAR_COLOR);
+    Outline.focus.setGraphicsColor(g, true);
     doPaint(g, width, height, arc, symmetric);
   }
 
   @SuppressWarnings("SuspiciousNameCombination")
-  private static void doPaint(Graphics2D g, int width, int height, float arc, boolean symmetric) {
-    float bw = UIUtil.isUnderDefaultMacTheme() ? JBUI.scale(3) : bw();
-    float lw = UIUtil.isUnderDefaultMacTheme() ? JBUI.scale(UIUtil.isRetina(g) ? 0.5f : 1.0f) : lw(g);
+  public static void doPaint(Graphics2D g, int width, int height, float arc, boolean symmetric) {
+    float bw = UIUtil.isUnderDefaultMacTheme() ? JBUI.scale(3) : BW.getFloat();
+    float lw = UIUtil.isUnderDefaultMacTheme() ? JBUI.scale(UIUtil.isRetina(g) ? 0.5f : 1.0f) : LW.getFloat();
 
     g.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
     g.setRenderingHint(RenderingHints.KEY_STROKE_CONTROL, MacUIUtil.USE_QUARTZ ? RenderingHints.VALUE_STROKE_PURE : RenderingHints.VALUE_STROKE_NORMALIZE);
@@ -248,9 +226,7 @@ public class DarculaUIUtil {
 
     @Override
     public Insets getBorderInsets(Component c) {
-      return isComboBoxEditor(c) ?
-             JBUI.insets(1, 3, 2, 3).asUIResource() :
-             JBUI.insets(5, 8).asUIResource();
+      return isComboBoxEditor(c) ? JBUI.insets(2, 3).asUIResource() : JBUI.insets(5, 8).asUIResource();
     }
   }
 
@@ -352,6 +328,12 @@ public class DarculaUIUtil {
         return isComboBoxEditor(c) ? JBUI.insets(1, 6).asUIResource() : JBUI.insets(4, 6).asUIResource();
       }
     }
+
+    @Nullable
+    @Override
+    public Insets getVisualPaddings(@NotNull Component component) {
+      return JBUI.insets(1);
+    }
   }
 
   public static class MouseHoverPropertyTrigger extends MouseAdapter {
@@ -381,21 +363,48 @@ public class DarculaUIUtil {
     }
   }
 
+  public static final JBValue MINIMUM_HEIGHT = new JBValue.Float(24);
+  public static final JBValue LW = new JBValue.Float(1);
+  public static final JBValue BW = new JBValue.UIInteger("Border.width", 2);
+  public static final JBValue BUTTON_ARC = new JBValue.UIInteger("Button.arc", 6);
+  public static final JBValue COMPONENT_ARC = new JBValue.UIInteger("Component.arc", 5);
+
+  /**
+   * @Deprecated use LW.get() instead
+   */
   @SuppressWarnings("unused")
+  @Deprecated
   public static float lw(Graphics2D g2) {
     return JBUI.scale(1.0f);
   }
 
+  /**
+   * @Deprecated use BW.get() instead
+   */
+  @Deprecated
   public static float bw() {
-    return JBUI.scale(2);
+    return BW.getFloat();
   }
 
+  /**
+   * @Deprecated use COMPONENT_ARC.get() instead
+   */
+  @Deprecated
   public static float arc() {
-    return JBUI.scale(5.0f);
+    return COMPONENT_ARC.getFloat();
   }
 
+  /**
+   *
+   * @Deprecated use BUTTON_ARC.get() instead
+   */
+  @Deprecated
   public static float buttonArc() {
-    return JBUI.scale(JBUI.getInt("Button.arc", 0));
+    return BUTTON_ARC.get();
+  }
+
+  public static Insets paddings() {
+    return JBUI.insets(1);
   }
 
   public static Color getOutlineColor(boolean enabled) {
@@ -410,7 +419,11 @@ public class DarculaUIUtil {
     return color == null ? defaultColor : enabled ? color : getOutlineColor(false);
   }
 
-  public static boolean isEmpty(Dimension d) {
+  public static Dimension maximize(@Nullable Dimension s1, @NotNull Dimension s2) {
+    return isEmpty(s1) ? s2 : new Dimension(Math.max(s1.width, s2.width), Math.max(s1.height, s2.height));
+  }
+
+  private static boolean isEmpty(Dimension d) {
     return d == null || d.width == 0 && d.height == 0;
   }
 

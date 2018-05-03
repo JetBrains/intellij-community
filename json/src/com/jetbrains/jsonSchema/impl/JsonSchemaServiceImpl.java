@@ -206,7 +206,7 @@ public class JsonSchemaServiceImpl implements JsonSchemaService {
     return JsonCachedValues.getSchemaObject(replaceHttpFileWithBuiltinIfNeeded(schemaFile), myProject);
   }
 
-  private VirtualFile replaceHttpFileWithBuiltinIfNeeded(VirtualFile schemaFile) {
+  public VirtualFile replaceHttpFileWithBuiltinIfNeeded(VirtualFile schemaFile) {
     // this hack is needed to handle user-defined mappings via urls
     // we cannot perform that inside corresponding provider, because it leads to recursive component dependency
     // this way we're preventing http files when a built-in schema exists

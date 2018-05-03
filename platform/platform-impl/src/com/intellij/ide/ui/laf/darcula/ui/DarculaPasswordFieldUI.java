@@ -11,11 +11,14 @@ import com.intellij.util.ui.MacUIUtil;
 import javax.swing.*;
 import javax.swing.plaf.ComponentUI;
 import javax.swing.plaf.basic.BasicPasswordFieldUI;
+import javax.swing.text.Caret;
 import javax.swing.text.JTextComponent;
 import java.awt.*;
 import java.awt.event.FocusEvent;
 import java.awt.event.FocusListener;
 import java.awt.geom.Rectangle2D;
+
+import static com.intellij.ide.ui.laf.darcula.DarculaUIUtil.MINIMUM_HEIGHT;
 
 /**
  * @author Konstantin Bulenkov
@@ -55,9 +58,18 @@ public class DarculaPasswordFieldUI extends BasicPasswordFieldUI {
 
   @Override
   public Dimension getPreferredSize(JComponent c) {
-    Dimension size = super.getPreferredSize(c);
+    return updatePreferredSize(super.getPreferredSize(c));
+  }
+
+  protected Dimension updatePreferredSize(Dimension size) {
     Insets i = getComponent().getInsets();
-    return new Dimension(size.width, Math.max(size.height, JBUI.scale(JBUI.isCompensateVisualPaddingOnComponentLevel(c.getParent()) ? 20 : DarculaUIUtil.DARCULA_INPUT_HEIGHT) + i.top + i.bottom));
+    size.height = Math.max(size.height, getMinimumHeight() + i.top + i.bottom);
+    JBInsets.addTo(size, getComponent().getMargin());
+    return size;
+  }
+
+  protected int getMinimumHeight() {
+    return MINIMUM_HEIGHT.get();
   }
 
   @Override
@@ -85,7 +97,7 @@ public class DarculaPasswordFieldUI extends BasicPasswordFieldUI {
                             MacUIUtil.USE_QUARTZ ? RenderingHints.VALUE_STROKE_PURE : RenderingHints.VALUE_STROKE_NORMALIZE);
         g2.translate(r.x, r.y);
 
-        float bw = DarculaUIUtil.bw();
+        float bw = DarculaUIUtil.BW.getFloat();
 
         if (component.isEnabled() && component.isEditable()) {
           g2.setColor(component.getBackground());
@@ -99,11 +111,30 @@ public class DarculaPasswordFieldUI extends BasicPasswordFieldUI {
   }
 
   @Override
+  protected Rectangle getVisibleEditorRect() {
+    JTextComponent c = getComponent();
+    Rectangle bounds = new Rectangle(c.getSize());
+    JBInsets.removeFrom(bounds, c.getInsets());
+    JBInsets.removeFrom(bounds, c.getMargin());
+    return bounds;
+  }
+
+  @Override
+  public void installUI(JComponent c) {
+    super.installUI(c);
+    getComponent().setMargin(JBUI.insets(0, 5));
+  }
+
+  @Override
+  protected Caret createCaret() {
+    return new TextFieldWithPopupHandlerUI.MarginAwareCaret();
+  }
+
+  @Override
   protected void installDefaults() {
     super.installDefaults();
 
     JTextComponent component = getComponent();
-    // JBUI.isUseCorrectInputHeight cannot be used because `installDefaults` is called before add
     if (SystemInfoRt.isMac && SystemProperties.getBooleanProperty("idea.ui.set.password.echo.char", false)) {
       LookAndFeel.installProperty(component, "echoChar", '•');
     }

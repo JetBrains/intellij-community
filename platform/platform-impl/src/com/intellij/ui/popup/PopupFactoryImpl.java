@@ -33,7 +33,6 @@ import com.intellij.ui.ScrollPaneFactory;
 import com.intellij.ui.awt.RelativePoint;
 import com.intellij.ui.components.JBList;
 import com.intellij.ui.components.panels.NonOpaquePanel;
-import com.intellij.ui.mac.touchbar.TouchBarsManager;
 import com.intellij.ui.popup.list.ListPopupImpl;
 import com.intellij.ui.popup.mock.MockConfirmation;
 import com.intellij.ui.popup.tree.TreePopupImpl;
@@ -228,8 +227,6 @@ public class PopupFactoryImpl extends JBPopupFactory {
           ActionMenu.showDescriptionInStatusBar(true, myComponent, presentation.getDescription());
         }
       });
-
-      TouchBarsManager.attachPopupBar(this);
     }
 
     @NotNull

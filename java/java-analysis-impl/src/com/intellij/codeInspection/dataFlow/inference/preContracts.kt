@@ -4,10 +4,9 @@ package com.intellij.codeInspection.dataFlow.inference
 import com.intellij.codeInsight.NullableNotNullManager
 import com.intellij.codeInspection.dataFlow.ContractReturnValue
 import com.intellij.codeInspection.dataFlow.ControlFlowAnalyzer
-import com.intellij.codeInspection.dataFlow.MethodContract
-import com.intellij.codeInspection.dataFlow.MethodContract.ValueConstraint.ANY_VALUE
-import com.intellij.codeInspection.dataFlow.MethodContract.ValueConstraint.NULL_VALUE
 import com.intellij.codeInspection.dataFlow.StandardMethodContract
+import com.intellij.codeInspection.dataFlow.StandardMethodContract.ValueConstraint.ANY_VALUE
+import com.intellij.codeInspection.dataFlow.StandardMethodContract.ValueConstraint.NULL_VALUE
 import com.intellij.codeInspection.dataFlow.inference.ContractInferenceInterpreter.withConstraint
 import com.intellij.codeInspection.dataFlow.instructions.MethodCallInstruction
 import com.intellij.psi.*
@@ -54,10 +53,10 @@ internal data class DelegationContract(internal val expression: ExpressionRange,
                                              callArguments: Array<PsiExpression>,
                                              varArgCall: Boolean,
                                              targetContract: StandardMethodContract): StandardMethodContract? {
-    var answer: Array<MethodContract.ValueConstraint>? = emptyConstraints(callerMethod)
-    for (i in targetContract.arguments.indices) {
+    var answer: Array<StandardMethodContract.ValueConstraint>? = emptyConstraints(callerMethod)
+    for (i in 0 until targetContract.parameterCount) {
       if (i >= callArguments.size) return null
-      val argConstraint = targetContract.arguments[i]
+      val argConstraint = targetContract.getParameterConstraint(i)
       if (argConstraint != ANY_VALUE) {
         if (varArgCall && i >= targetParameters.size - 1) {
           if (argConstraint == NULL_VALUE) {
@@ -84,8 +83,9 @@ internal data class DelegationContract(internal val expression: ExpressionRange,
   private fun emptyConstraints(method: PsiMethod) = StandardMethodContract.createConstraintArray(
     method.parameterList.parametersCount)
 
-  private fun returnNotNull(mc: StandardMethodContract) = if (mc.returnValue.isFail) mc else StandardMethodContract(
-    mc.arguments, ContractReturnValue.returnNotNull())
+  private fun returnNotNull(mc: StandardMethodContract): StandardMethodContract {
+    return if (mc.returnValue.isFail) mc else mc.withReturnValue(ContractReturnValue.returnNotNull())
+  }
 
   private fun getLiteralConstraint(argument: PsiExpression) = when (argument) {
     is PsiLiteralExpression -> ContractInferenceInterpreter.getLiteralConstraint(
@@ -118,12 +118,12 @@ internal data class NegatingContract(internal val negated: PreContract) : PreCon
 
 private fun negateContract(c: StandardMethodContract): StandardMethodContract? {
   val ret = c.returnValue
-  return if (ret is ContractReturnValue.BooleanReturnValue) StandardMethodContract(c.arguments, ret.negate())
+  return if (ret is ContractReturnValue.BooleanReturnValue) c.withReturnValue(ret.negate())
   else null
 }
 
 @Suppress("EqualsOrHashCode")
-internal data class MethodCallContract(internal val call: ExpressionRange, internal val states: List<List<MethodContract.ValueConstraint>>) : PreContract {
+internal data class MethodCallContract(internal val call: ExpressionRange, internal val states: List<List<StandardMethodContract.ValueConstraint>>) : PreContract {
   override fun hashCode() = call.hashCode() * 31 + states.flatten().map { it.ordinal }.hashCode()
 
   override fun toContracts(method: PsiMethod, body: () -> PsiCodeBlock): List<StandardMethodContract> {

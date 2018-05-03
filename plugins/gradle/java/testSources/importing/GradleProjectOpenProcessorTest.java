@@ -13,6 +13,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.project.ProjectManagerListener;
 import com.intellij.openapi.project.impl.ProjectLifecycleListener;
+import com.intellij.openapi.projectRoots.JavaSdk;
 import com.intellij.openapi.projectRoots.ProjectJdkTable;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.projectRoots.impl.SdkConfigurationUtil;
@@ -80,6 +81,15 @@ public class GradleProjectOpenProcessorTest extends GradleImportingTestCase {
     }
     finally {
       super.tearDown();
+    }
+  }
+
+  @Override
+  protected void collectAllowedRoots(List<String> roots) {
+    super.collectAllowedRoots(roots);
+    for (String javaHome : JavaSdk.getInstance().suggestHomePaths()) {
+      roots.add(javaHome);
+      roots.addAll(collectRootsInside(javaHome));
     }
   }
 

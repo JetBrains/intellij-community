@@ -129,7 +129,7 @@ public class TouchBar implements NSTLibrary.ItemCreator {
     NST.selectItemsToShow(myNativePeer, ids, ids.length);
   }
 
-  public void onShow() {}
+  public void onBeforeShow() {}
   public void onHide() {}
 
   private TBItem findItem(String uid) {

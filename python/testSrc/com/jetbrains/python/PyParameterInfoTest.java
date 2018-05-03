@@ -782,6 +782,20 @@ public class PyParameterInfoTest extends LightMarkedTestCase {
     );
   }
 
+  // PY-28127
+  public void testInitializingTypeVar() {
+    runWithLanguageLevel(
+      LanguageLevel.PYTHON34,
+      () -> {
+        final int offset = loadTest(1).get("<arg1>").getTextOffset();
+
+        feignCtrlP(offset).check("name: str, *constraints: type, bound: type=..., covariant: bool=False, contravariant: bool=False",
+                                 new String[]{"name: str, "},
+                                 ArrayUtil.EMPTY_STRING_ARRAY);
+      }
+    );
+  }
+
   /**
    * Imitates pressing of Ctrl+P; fails if results are not as expected.
    * @param offset offset of 'cursor' where Ctrl+P is pressed.

@@ -173,7 +173,7 @@ public class GraphCommitCellRenderer extends TypeSafeTableCellRenderer<GraphComm
     @Override
     public void paintComponent(Graphics g) {
       // align the tx so that background painting (in super) and image drawing (below) be aligned by "y"
-      AffineTransform origTx = PaintUtil.alignTxToInt((Graphics2D)g, false, true, RoundingMode.CEIL);
+      AffineTransform origTx = PaintUtil.alignTxToInt((Graphics2D)g, PaintUtil.insets2offset(getInsets()), false, true, RoundingMode.CEIL);
       // expand the clip to the closest int rect so that it doesn't cut the image edges
       Shape origClip = PaintUtil.alignClipToInt((Graphics2D)g, false, true, RoundingMode.FLOOR, RoundingMode.CEIL);
       try {
