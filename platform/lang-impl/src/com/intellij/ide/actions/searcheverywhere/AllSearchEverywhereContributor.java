@@ -2,8 +2,12 @@
 package com.intellij.ide.actions.searcheverywhere;
 
 import com.intellij.ide.IdeBundle;
+import com.intellij.ide.util.NavigationItemListCellRenderer;
+import com.intellij.openapi.project.Project;
 import com.intellij.ui.IdeUICustomization;
 import org.jetbrains.annotations.NotNull;
+
+import javax.swing.*;
 
 public class AllSearchEverywhereContributor implements SearchEverywhereContributor {
 
@@ -27,5 +31,10 @@ public class AllSearchEverywhereContributor implements SearchEverywhereContribut
   @Override
   public String includeNonProjectItemsText() {
     return IdeBundle.message("checkbox.include.non.project.items", IdeUICustomization.getInstance().getProjectConceptName());
+  }
+
+  @Override
+  public ListCellRenderer getElementsRenderer(Project project) {
+    return new NavigationItemListCellRenderer();
   }
 }

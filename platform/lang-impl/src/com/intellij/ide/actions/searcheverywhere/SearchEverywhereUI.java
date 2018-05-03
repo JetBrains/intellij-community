@@ -24,7 +24,8 @@ import com.intellij.openapi.ui.popup.JBPopup;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.util.ActionCallback;
 import com.intellij.openapi.util.Disposer;
-import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.psi.codeStyle.MinusculeMatcher;
+import com.intellij.psi.codeStyle.NameUtil;
 import com.intellij.ui.*;
 import com.intellij.ui.awt.RelativePoint;
 import com.intellij.ui.components.JBCheckBox;
@@ -32,6 +33,8 @@ import com.intellij.ui.components.JBList;
 import com.intellij.ui.components.JBScrollPane;
 import com.intellij.ui.components.fields.ExtendableTextField;
 import com.intellij.util.Alarm;
+import com.intellij.util.Range;
+import com.intellij.util.text.MatcherHolder;
 import com.intellij.util.ui.DialogUtil;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.StatusText;
@@ -48,7 +51,7 @@ import java.awt.event.KeyAdapter;
 import java.awt.event.KeyEvent;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
-import java.util.ArrayList;
+import java.util.*;
 import java.util.List;
 
 import static com.intellij.ide.actions.SearchEverywhereAction.SEARCH_EVERYWHERE_POPUP;
@@ -73,6 +76,8 @@ public class SearchEverywhereUI extends BorderLayoutPanel {
 
   private JBPopup myResultsPopup;
   private final JBList<Object> myResultsList = new JBList<>();
+
+  private final Map<ResultsRange, SearchEverywhereContributor> myResultsRanges = new HashMap<>();
 
   private CalcThread myCalcThread;
   private volatile ActionCallback myCurrentWorker = ActionCallback.DONE;
@@ -102,6 +107,8 @@ public class SearchEverywhereUI extends BorderLayoutPanel {
     addToLeft(contributorsPanel);
     addToRight(settingsPanel);
     addToBottom(mySearchField);
+
+    myResultsList.setCellRenderer(new CompositeCellRenderer(myResultsRanges));
   }
 
   public JTextField getSearchField() {
@@ -333,6 +340,9 @@ public class SearchEverywhereUI extends BorderLayoutPanel {
       myCalcThread.cancel();
     }
 
+    MinusculeMatcher matcher = NameUtil.buildMatcher("*" + pattern, NameUtil.MatchingCaseSensitivity.NONE);
+    MatcherHolder.associateMatcher(myResultsList, matcher);
+
     //assert project != null;
     //myRenderer.myProject = project;
     synchronized (myWorkerRestartRequestLock) { // this lock together with RestartRequestId should be enough to prevent two CalcThreads running at the same time
@@ -356,10 +366,7 @@ public class SearchEverywhereUI extends BorderLayoutPanel {
     private final String pattern;
     private final ProgressIndicator myProgressIndicator = new ProgressIndicatorBase();
     private final ActionCallback myDone = new ActionCallback();
-    private final SearchEverywhereAction.SearchListModel myListModel;
-    private final ArrayList<VirtualFile> myAlreadyAddedFiles = new ArrayList<>();
-    private final ArrayList<AnAction> myAlreadyAddedActions = new ArrayList<>();
-
+    private final SearchEverywhereAction.SearchListModel myListModel; //todo use usual model #UX-1
 
     public CalcThread(Project project, String pattern, boolean reuseModel) {
       this.project = project;
@@ -391,46 +398,14 @@ public class SearchEverywhereUI extends BorderLayoutPanel {
           }
         });
 
-        //if (pattern.trim().length() == 0) {
-        //  buildModelFromRecentFiles();
-        //  //updatePopup();
-        //  return;
-        //}
-
-        //checkModelsUpToDate();              check();
-        //buildTopHit(pattern);               check();
-
-        if (!pattern.startsWith("#")) {
-          //buildRecentFiles(pattern);
-          //check();
-
-          SearchEverywhereContributor selectedContributor = getSelectedContributor();
-          if (selectedContributor != null) {
-            runReadAction(() -> addContributorItems(selectedContributor, true), true);
-          } else {
-            for (SearchEverywhereContributor contributor : allContributors) {
-              runReadAction(() -> addContributorItems(contributor, false), true);
-            }
+        myResultsRanges.clear();
+        SearchEverywhereContributor selectedContributor = getSelectedContributor();
+        if (selectedContributor != null) {
+          runReadAction(() -> addContributorItems(selectedContributor, true), true);
+        } else {
+          for (SearchEverywhereContributor contributor : allContributors) {
+            runReadAction(() -> addContributorItems(contributor, false), true);
           }
-
-          //runReadAction(() -> buildStructure(pattern), true);
-          //updatePopup();
-          //check();
-          //buildToolWindows(pattern);
-          //check();
-          //updatePopup();
-          //check();
-          //
-          //checkModelsUpToDate();
-          //runReadAction(() -> buildRunConfigurations(pattern), true);
-          //runReadAction(() -> buildClasses(pattern), true);
-          //runReadAction(() -> buildFiles(pattern), false);
-          //runReadAction(() -> buildSymbols(pattern), true);
-          //
-          //buildActionsAndSettings(pattern);
-          //
-          //updatePopup();
-
         }
         updatePopup();
       }
@@ -460,15 +435,17 @@ public class SearchEverywhereUI extends BorderLayoutPanel {
         SwingUtilities.invokeLater(() -> {
           if (isCanceled()) return;
 
-          if (!exclusiveContributor) {
-            myListModel.titleIndex.classes = myListModel.size();
-          }
+          int start = myListModel.getSize();
           for (Object item : results.getItems()) {
             myListModel.addElement(item);
           }
-          if (!exclusiveContributor) {
-            myListModel.moreIndex.classes = results.hasMoreItems() ? myListModel.size() - 1 : -1;
+          int end = myListModel.getSize() - 1;
+
+          if (results.hasMoreItems()) {
+            myListModel.addElement("more");
           }
+          ResultsRange range = results.hasMoreItems() ? new ResultsRange(start, end, end + 1) : new ResultsRange(start, end);
+          myResultsRanges.put(range, contributor);
         });
       }
     }
@@ -646,6 +623,88 @@ public class SearchEverywhereUI extends BorderLayoutPanel {
     public ActionCallback start() {
       ApplicationManager.getApplication().executeOnPooledThread(this);
       return myDone;
+    }
+  }
+
+  private class CompositeCellRenderer implements ListCellRenderer<Object> {
+
+    public CompositeCellRenderer(Map<ResultsRange, SearchEverywhereContributor> delegates) {
+      this.delegates = delegates;
+    }
+
+    private final Map<ResultsRange, SearchEverywhereContributor> delegates;
+
+    @Override
+    public Component getListCellRendererComponent(JList list, Object value, int index, boolean isSelected, boolean cellHasFocus) {
+      return getDelegate(index).getListCellRendererComponent(list, value, index, isSelected, cellHasFocus);
+    }
+
+    @NotNull
+    private ListCellRenderer<Object> getDelegate(int index) {
+      //is it "more item" ?
+      boolean isMoreElement = delegates.entrySet().stream()
+                                       .map(entry -> entry.getKey().getMoreElementIndex().orElse(null))
+                                       .filter(Objects::nonNull)
+                                       .anyMatch(i -> i.equals(index));
+
+      if (isMoreElement) {
+        return moreRenderer;
+      }
+
+      //look for delegate in ranges
+      ListCellRenderer delegate = delegates.entrySet().stream()
+                          .filter(entry -> entry.getKey().getElementsRange().isWithin(index, true))
+                          .findAny()
+                          .map(entry -> entry.getValue().getElementsRenderer(myProject))
+                          .orElse(null);
+
+
+      if (delegate == null) throw new IllegalStateException("Contributor for element is not specified");
+
+      return delegate;
+    }
+  }
+
+  private static class ResultsRange {
+    private final Range<Integer> elementsRange;
+    private final Integer moreElementIndex;
+
+    private ResultsRange(int from, int to, Integer moreIndex) {
+      elementsRange = new Range<>(from, to);
+      moreElementIndex = moreIndex;
+    }
+
+    public ResultsRange(int from, int to) {
+      this(from, to, null);
+    }
+
+    public Range<Integer> getElementsRange() {
+      return elementsRange;
+    }
+
+    public Optional<Integer> getMoreElementIndex() {
+      return Optional.ofNullable(moreElementIndex);
+    }
+  }
+
+  private static final MoreRenderer moreRenderer = new MoreRenderer();
+
+  public static class MoreRenderer extends JPanel implements ListCellRenderer<Object> {
+    final JLabel label = new JLabel("    ... more   ");
+
+    private MoreRenderer() {
+      super(new BorderLayout());
+      add(label, BorderLayout.CENTER);
+    }
+
+    @Override
+    public Component getListCellRendererComponent(JList<?> list, Object value, int index, boolean isSelected, boolean cellHasFocus) {
+      setBackground(UIUtil.getListBackground(isSelected));
+      label.setForeground(UIUtil.getLabelDisabledForeground());
+      label.setFont(UIUtil.getLabelFont().deriveFont(UIUtil.getFontSize(UIUtil.FontSize.SMALL)));
+      label.setBackground(UIUtil.getListBackground(isSelected));
+
+      return this;
     }
   }
 

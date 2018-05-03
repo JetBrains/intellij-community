@@ -8,14 +8,12 @@ import com.intellij.ide.util.gotoByName.ChooseByNamePopup;
 import com.intellij.ide.util.gotoByName.GotoFileModel;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiFile;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.ui.IdeUICustomization;
 import org.jetbrains.annotations.NotNull;
 
+import javax.swing.*;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -47,42 +45,35 @@ public class FileSearchEverywhereContributor implements SearchEverywhereContribu
 
   @Override
   public ContributorSearchResult search(Project project, String pattern, boolean everywhere, ProgressIndicator progressIndicator, int elementsLimit) {
-    final GlobalSearchScope scope = getProjectScope(project);
+    ChooseByNameModel mdl = createModel(project);
 
-    ChooseByNameModel mdl = new GotoFileModel(project){
+    ChooseByNamePopup popup = ChooseByNamePopup.createPopup(project, mdl, (PsiElement)null);
+    List<Object> items = new ArrayList<>();
+    boolean[] hasMore = {false}; //todo builder for  ContributorSearchResult #UX-1
+    popup.getProvider().filterElements(popup, pattern, everywhere,
+                                       progressIndicator, o -> {
+
+        if (o != null && !items.contains(o)) {
+          if (elementsLimit >= 0 && items.size() >= elementsLimit) {
+            hasMore[0] = true;
+            return false;
+          }
+          items.add(o);
+        }
+        return true;
+      });
+
+    return new ContributorSearchResult(items, hasMore[0]);
+  }
+
+  @NotNull
+  private GotoFileModel createModel(Project project) {
+    return new GotoFileModel(project){
       @Override
       public boolean isSlashlessMatchingEnabled() {
         return false;
       }
     };
-
-    ChooseByNamePopup popup = ChooseByNamePopup.createPopup(project, mdl, (PsiElement)null);
-    List<Object> items = new ArrayList<>();
-    boolean[] hasMore = {false}; //todo builder for  ContributorSearchResult #UX-1
-    popup.getProvider().filterElements(popup, pattern, true,
-                                       progressIndicator, o -> {
-        VirtualFile file = null;
-        if (o instanceof VirtualFile) {
-          file = (VirtualFile)o;
-        } else if (o instanceof PsiFile) {
-          file = ((PsiFile)o).getVirtualFile();
-        } else if (o instanceof PsiDirectory) {
-          file = ((PsiDirectory)o).getVirtualFile();
-        }
-        if (file != null
-            && !(pattern.indexOf(' ') != -1 && file.getName().indexOf(' ') == -1)
-            && (everywhere || scope.accept(file))
-            && !items.contains(file)) {
-          if (elementsLimit >= 0 && items.size() >= elementsLimit) {
-            hasMore[0] = true;
-            return false;
-          }
-          items.add(file);
-        }
-        return true;
-      });
-
-        return new ContributorSearchResult(items, hasMore[0]);
   }
 
   @NotNull
@@ -90,5 +81,10 @@ public class FileSearchEverywhereContributor implements SearchEverywhereContribu
     final GlobalSearchScope scope = SearchEverywhereClassifier.EP_Manager.getProjectScope(project);
     if (scope != null) return scope;
     return GlobalSearchScope.projectScope(project);
+  }
+
+  @Override
+  public ListCellRenderer getElementsRenderer(Project project) {
+    return createModel(project).getListCellRenderer();
   }
 }

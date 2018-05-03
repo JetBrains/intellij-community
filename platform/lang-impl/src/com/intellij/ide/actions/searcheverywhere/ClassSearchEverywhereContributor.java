@@ -3,6 +3,7 @@ package com.intellij.ide.actions.searcheverywhere;
 
 import com.intellij.ide.IdeBundle;
 import com.intellij.ide.actions.SearchEverywhereClassifier;
+import com.intellij.ide.util.NavigationItemListCellRenderer;
 import com.intellij.ide.util.gotoByName.ChooseByNameModel;
 import com.intellij.ide.util.gotoByName.ChooseByNamePopup;
 import com.intellij.ide.util.gotoByName.GotoClassModel2;
@@ -12,6 +13,7 @@ import com.intellij.psi.PsiElement;
 import com.intellij.ui.IdeUICustomization;
 import org.jetbrains.annotations.NotNull;
 
+import javax.swing.*;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -59,5 +61,10 @@ public class ClassSearchEverywhereContributor implements SearchEverywhereContrib
     });
 
     return new SearchEverywhereContributor.ContributorSearchResult(items, hasMore[0]);
+  }
+
+  @Override
+  public ListCellRenderer getElementsRenderer(Project project) {
+    return new NavigationItemListCellRenderer();
   }
 }

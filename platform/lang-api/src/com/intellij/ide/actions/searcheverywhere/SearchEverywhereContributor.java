@@ -10,6 +10,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.ui.IdeUICustomization;
 import org.jetbrains.annotations.NotNull;
 
+import javax.swing.*;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.Comparator;
@@ -40,6 +41,9 @@ public interface SearchEverywhereContributor {
   default List<Object> search(Project project, String pattern, boolean everywhere, ProgressIndicator progressIndicator) {
     return search(project, pattern, everywhere, progressIndicator, -1).getItems();
   }
+
+  //todo any way to listen project in contributor
+  ListCellRenderer getElementsRenderer(Project project);
 
   static List<SearchEverywhereContributor> getProvidersSorted() {
     return Arrays.stream(EP_NAME.getExtensions())

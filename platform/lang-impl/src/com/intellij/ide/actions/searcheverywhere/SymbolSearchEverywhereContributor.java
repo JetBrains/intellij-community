@@ -3,6 +3,7 @@ package com.intellij.ide.actions.searcheverywhere;
 
 import com.intellij.ide.IdeBundle;
 import com.intellij.ide.actions.SearchEverywhereClassifier;
+import com.intellij.ide.util.NavigationItemListCellRenderer;
 import com.intellij.ide.util.gotoByName.ChooseByNameItemProvider;
 import com.intellij.ide.util.gotoByName.ChooseByNameModel;
 import com.intellij.ide.util.gotoByName.ChooseByNamePopup;
@@ -16,6 +17,7 @@ import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.ui.IdeUICustomization;
 import org.jetbrains.annotations.NotNull;
 
+import javax.swing.*;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -88,5 +90,10 @@ public class SymbolSearchEverywhereContributor implements SearchEverywhereContri
     final GlobalSearchScope scope = SearchEverywhereClassifier.EP_Manager.getProjectScope(project);
     if (scope != null) return scope;
     return GlobalSearchScope.projectScope(project);
+  }
+
+  @Override
+  public ListCellRenderer getElementsRenderer(Project project) {
+    return new NavigationItemListCellRenderer();
   }
 }
