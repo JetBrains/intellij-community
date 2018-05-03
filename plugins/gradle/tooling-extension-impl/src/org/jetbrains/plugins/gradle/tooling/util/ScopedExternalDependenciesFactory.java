@@ -13,8 +13,10 @@ import org.gradle.api.component.Artifact;
 import org.gradle.api.internal.file.copy.CopySpecInternal;
 import org.gradle.api.tasks.SourceSetOutput;
 import org.gradle.api.tasks.bundling.AbstractArchiveTask;
+import org.gradle.internal.component.external.model.DefaultModuleComponentArtifactIdentifier;
 import org.gradle.internal.component.local.model.LocalComponentArtifactMetadata;
 import org.gradle.internal.component.local.model.PublishArtifactLocalArtifactMetadata;
+import org.gradle.internal.component.model.IvyArtifactName;
 import org.gradle.language.base.artifact.SourcesArtifact;
 import org.gradle.language.java.artifact.JavadocArtifact;
 import org.jetbrains.annotations.NotNull;
@@ -139,14 +141,20 @@ class ScopedExternalDependenciesFactory {
   private ExternalDependency createExternalLibraryDependency(@NotNull ResolvedArtifactResult artifact,
                                                              @Nullable Map<Class<? extends Artifact>, Set<ResolvedArtifactResult>> sourcesAndJavadocs) {
     ModuleComponentIdentifier id = (ModuleComponentIdentifier)artifact.getId().getComponentIdentifier();
+    final IvyArtifactName ivyName = ((DefaultModuleComponentArtifactIdentifier)artifact.getId()).getName();
+
+    String packaging = ivyName.getType() != null ? ivyName.getType() : "jar";
+    String classifier = ivyName.getClassifier();
     DefaultExternalLibraryDependency externalLibDep = new DefaultExternalLibraryDependency();
 
     externalLibDep.setName(id.getModule());
     externalLibDep.setGroup(id.getGroup());
     externalLibDep.setVersion(id.getVersion());
-
     externalLibDep.setFile(artifact.getFile());
     externalLibDep.setScope(myScope);
+
+    externalLibDep.setPackaging(packaging);
+    externalLibDep.setClassifier(classifier);
 
     File javadocFile = extractFile(JavadocArtifact.class, sourcesAndJavadocs);
     if (javadocFile != null) {
