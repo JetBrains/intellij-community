@@ -88,6 +88,10 @@ public class NST {
     ourNSTLibrary.selectItemsToShow(tbObj, ids, count);
   }
 
+  public static void setPrincipal(ID tbObj, String uid) {
+    ourNSTLibrary.setPrincipal(tbObj, uid);
+  }
+
   public static ID createButton(String uid,
                                 int buttWidth,
                                 int buttFlags,
@@ -115,6 +119,10 @@ public class NST {
                                   NSTLibrary.ScrubberItemData[] items,
                                   int count) {
     return ourNSTLibrary.createScrubber(uid, itemWidth, items, count);
+  }
+
+  public static ID createGroupItem(String uid, ID[] items, int count) {
+    return ourNSTLibrary.createGroupItem(uid, items, count);
   }
 
   public static void updateButton(ID buttonObj,

@@ -73,8 +73,25 @@ id createTouchBar(const char * name, createItem jcreator, const char * escId) {
     return result;
 }
 
+void setPrincipal(id tbobj, const char * uid) {
+    TouchBar * tb = (TouchBar *)tbobj; // TODO: check types
+    [tb.touchBar setPrincipalItemIdentifier:getString(uid)];
+}
+
 void releaseTouchBar(id tbobj) {
     [tbobj release];
+}
+
+id createGroupItem(const char * uid, id * items, int count) {
+    NSMutableArray *allItems = [NSMutableArray arrayWithCapacity:count];
+    for (int c = 0; c < count; ++c)
+        [allItems addObject:items[c]];
+
+    NSGroupTouchBarItem * result = [NSGroupTouchBarItem groupItemWithIdentifier:getString(uid) items:allItems];
+    // NOTE: should create non-autorelease object to be owned by java-wrapper
+    // the simplest way to create working NSGroupTouchBarItem with fixed item set is to call groupItemWithIdentifier, which creates autorelease object, so do retain..
+    [result retain];
+    return result;
 }
 
 void setTouchBar(id tb) {

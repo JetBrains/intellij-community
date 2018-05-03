@@ -92,6 +92,12 @@ public class TouchBar implements NSTLibrary.ItemCreator {
     return butt;
   }
 
+  public TBItemGroup addGroup(List<TBItem> items) {
+    final TBItemGroup group = new TBItemGroup(_genNewID("group"), items);
+    myItems.add(group);
+    return group;
+  }
+
   public TBItemPopover addPopover(Icon icon, String text, int width, TouchBar expandTB, TouchBar tapAndHoldTB) {
     final TBItemPopover popover = new TBItemPopover(_genNewID("popover"), icon, text, width, expandTB, tapAndHoldTB);
     myItems.add(popover);
@@ -130,6 +136,8 @@ public class TouchBar implements NSTLibrary.ItemCreator {
 
     NST.selectItemsToShow(myNativePeer, ids, ids.length);
   }
+
+  public void setPrincipal(@NotNull TBItem item) { NST.setPrincipal(myNativePeer, item.myUid); }
 
   public void onBeforeShow() {}
   public void onHide() {}

@@ -265,6 +265,8 @@ public class TouchBarsManager {
     try (NSAutoreleaseLock lock = new NSAutoreleaseLock()) {
       TouchBarActionBase result = new TouchBarActionBase("dialog_buttons", project, null);
       final ModalityState ms = LaterInvocator.getCurrentModalityState();
+
+      // 1. add option buttons (at left)
       for (JButton jb : jbuttons) {
         if (jb instanceof JBOptionButton) {
           JBOptionButton ob = (JBOptionButton)jb;
@@ -282,11 +284,24 @@ public class TouchBarsManager {
           if (ag.getChildrenCount() > 0)
             result.addActionGroupButtons(ag, ob, ms);
         }
+      }
 
+      // 2. add main buttons and make principal
+      final List<TBItem> groupButtons = new ArrayList<>();
+      for (JButton jb : jbuttons) {
+        // TODO: make correct processing for disabled buttons, add them and update state by timer
+        // NOTE: can be true: jb.getAction().isEnabled() && !jb.isEnabled()
         final NSTLibrary.Action act = () -> ApplicationManager.getApplication().invokeLater(() -> jb.doClick(), ms);
         final boolean isDefault = jb.getAction().getValue(DialogWrapper.DEFAULT_ACTION) != null;
-        result.addButton(null, jb.getText(), act, isDefault ? NSTLibrary.BUTTON_FLAG_COLORED : 0);
+        final TBItemButton butt = new TBItemButton(
+          "dialog_buttons_group_item_" + jbuttons.indexOf(jb),
+          null, DialogWrapper.extractMnemonic(jb.getText()).second, act, -1, isDefault ? NSTLibrary.BUTTON_FLAG_COLORED : 0
+          );
+        groupButtons.add(butt);
       }
+
+      final TBItemGroup gr = result.addGroup(groupButtons);
+      result.setPrincipal(gr);
 
       return result;
     }

@@ -15,6 +15,7 @@ public interface NSTLibrary extends Library {
   void releaseTouchBar(ID tbObj);
   void setTouchBar(ID tbObj);
   void selectItemsToShow(ID tbObj, String[] ids, int count);
+  void setPrincipal(ID tbObj, String uid);
 
   interface Action extends Callback {
     void execute();
@@ -44,6 +45,7 @@ public interface NSTLibrary extends Library {
   ID createButton(String uid, int buttWidth, int buttonFlags, String text, byte[] raster4ByteRGBA, int w, int h, Action action);
   ID createPopover(String uid, int itemWidth, String text, byte[] raster4ByteRGBA, int w, int h, ID tbObjExpand, ID tbObjTapAndHold);
   ID createScrubber(String uid, int itemWidth, ScrubberItemData[] items, int count);
+  ID createGroupItem(String uid, ID[] items, int count);
 
   int BUTTON_UPDATE_WIDTH   = 1;
   int BUTTON_UPDATE_FLAGS   = 1 << 1;
