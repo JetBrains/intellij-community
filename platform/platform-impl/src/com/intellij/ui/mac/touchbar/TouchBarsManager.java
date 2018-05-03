@@ -20,6 +20,7 @@ import com.intellij.openapi.ui.OptionAction;
 import com.intellij.openapi.ui.popup.JBPopupListener;
 import com.intellij.openapi.ui.popup.LightweightWindowEvent;
 import com.intellij.openapi.ui.popup.ListPopupStep;
+import com.intellij.openapi.ui.popup.MnemonicNavigationFilter;
 import com.intellij.openapi.wm.ex.ToolWindowManagerEx;
 import com.intellij.openapi.wm.ex.ToolWindowManagerListener;
 import com.intellij.ui.components.JBOptionButton;
@@ -338,7 +339,14 @@ public class TouchBarsManager {
       @NotNull ListPopupStep listPopupStep = listPopup.getListStep();
       for (Object obj : listPopupStep.getValues()) {
         final Icon ic = listPopupStep.getIconFor(obj);
-        final String txt = listPopupStep.getTextFor(obj);
+        String txt = listPopupStep.getTextFor(obj);
+
+        if (listPopupStep.isMnemonicsNavigationEnabled()) {
+          final MnemonicNavigationFilter<Object> filter = listPopupStep.getMnemonicNavigationFilter();
+          final int pos = filter == null ? -1 : filter.getMnemonicPos(obj);
+          if (pos != -1)
+            txt = txt.substring(0, pos) + txt.substring(pos + 1);
+        }
 
         final Runnable action = () -> {
           listPopup.getList().setSelectedValue(obj, false);
