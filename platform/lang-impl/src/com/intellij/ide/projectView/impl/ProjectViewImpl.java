@@ -152,8 +152,7 @@ public class ProjectViewImpl extends ProjectView implements PersistentStateCompo
   private static final DataKey<ProjectViewImpl> DATA_KEY = DataKey.create("com.intellij.ide.projectView.impl.ProjectViewImpl");
 
   private DefaultActionGroup myActionGroup;
-  // was ProjectViewPane.ID, but in Android Studio, we want the Android View to be the default
-  private String mySavedPaneId = getDefaultViewId();
+  private String mySavedPaneId = ProjectViewPane.ID;
   private String mySavedPaneSubId;
   @NonNls private static final String ELEMENT_NAVIGATOR = "navigator";
   @NonNls private static final String ELEMENT_PANES = "panes";
@@ -1391,8 +1390,7 @@ public class ProjectViewImpl extends ProjectView implements PersistentStateCompo
       mySavedPaneId = navigatorElement.getAttributeValue(ATTRIBUTE_CURRENT_VIEW);
       mySavedPaneSubId = navigatorElement.getAttributeValue(ATTRIBUTE_CURRENT_SUBVIEW);
       if (mySavedPaneId == null) {
-        // Android Studio: was ProjectViewPane.ID, but in Android Studio, we want the Android View to be the default
-        mySavedPaneId = getDefaultViewId();
+        mySavedPaneId = ProjectViewPane.ID;
         mySavedPaneSubId = null;
       }
 

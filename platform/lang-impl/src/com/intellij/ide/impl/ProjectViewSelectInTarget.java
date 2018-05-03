@@ -49,14 +49,7 @@ public abstract class ProjectViewSelectInTarget extends SelectInTargetPsiWrapper
 
   @Override
   protected final void select(final Object selector, final VirtualFile virtualFile, final boolean requestFocus) {
-    // Android Studio: fixes bug 260190. Take current viewId to use the same when showing selected file, instead of using
-    // ProjectViewPane.ID. Default value should honor studio.projectview, see b/67790043
-    ProjectView projectView = ProjectView.getInstance(myProject);
-    String viewId = ProjectView.getDefaultViewId();
-    if (projectView != null) {
-      viewId = projectView.getCurrentViewId();
-    }
-    select(myProject, selector, viewId, mySubId, virtualFile, requestFocus);
+    select(myProject, selector, getMinorViewId(), mySubId, virtualFile, requestFocus);
   }
 
   @NotNull
@@ -86,8 +79,7 @@ public abstract class ProjectViewSelectInTarget extends SelectInTargetPsiWrapper
     ActionCallback result = new ActionCallback();
     final Runnable runnable = () -> {
       Runnable r = () -> projectView.selectCB(toSelectSupplier.get(), virtualFile, requestFocus).notify(result);
-      // Android Studio: was ProjectViewPane.ID, but in Android Studio, we want the Android View to be the default
-      projectView.changeViewCB(ObjectUtils.chooseNotNull(viewId, ProjectView.getDefaultViewId()), subviewId).doWhenProcessed(r);
+      projectView.changeViewCB(ObjectUtils.chooseNotNull(viewId, ProjectViewPane.ID), subviewId).doWhenProcessed(r);
     };
 
     if (requestFocus) {
