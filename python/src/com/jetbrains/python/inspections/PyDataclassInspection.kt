@@ -356,6 +356,8 @@ class PyDataclassInspection : PyInspection() {
     }
 
     private fun processAttrsDefaultThroughDecorator(cls: PyClass) {
+      val initializers = mutableMapOf<String, MutableList<PyFunction>>()
+
       cls.methods.forEach { method ->
         val decorators = method.decoratorList?.decorators
 
@@ -366,15 +368,27 @@ class PyDataclassInspection : PyInspection() {
             .filter { it.componentCount == 2 && it.endsWith("default") }
             .mapNotNull { it.firstComponent }
             .firstOrNull()
-            ?.also {
-              cls.findClassAttribute(it, false, myTypeEvalContext)
-                ?.let { PyDataclassFieldStubImpl.create(it) }
-                ?.takeIf { it.hasDefault() || it.hasDefaultFactory() }
-                ?.apply {
+            ?.also { name ->
+              val attribute = cls.findClassAttribute(name, false, myTypeEvalContext)
+              if (attribute != null) {
+                initializers.computeIfAbsent(name, { _ -> mutableListOf() }).add(method)
+
+                val stub = PyDataclassFieldStubImpl.create(attribute)
+                if (stub != null && (stub.hasDefault() || stub.hasDefaultFactory())) {
                   registerProblem(method.nameIdentifier, "A default is set using 'attr.ib()'", ProblemHighlightType.GENERIC_ERROR)
                 }
+              }
             }
         }
+      }
+
+      initializers.values.forEach { sameAttrInitializers ->
+        val first = sameAttrInitializers[0]
+
+        sameAttrInitializers
+          .asSequence()
+          .drop(1)
+          .forEach { registerProblem(it.nameIdentifier, "A default is set using '${first.name}'", ProblemHighlightType.GENERIC_ERROR) }
       }
     }
 

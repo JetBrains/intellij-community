@@ -26,3 +26,16 @@ class B1:
     @x.default
     def __init_x__(self):
         return 1
+
+
+@attr.s
+class C1:
+    a = attr.ib()
+
+    @a.default
+    def init_a_1(self):
+        return 1
+
+    @a.default
+    def <error descr="A default is set using 'init_a_1'">init_a_2</error>(self):
+        return 2
