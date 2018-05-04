@@ -167,4 +167,31 @@ public class Simple<T> {
       public String toString() { return ""; }
     };
   }
+
+  ////////////// field assigned from method
+  class S {
+    Processor<S> myProcessor;
+
+    public S(Processor<<warning descr="Can generalize to '? super S'">S</warning>> myProcessor) {
+      this.myProcessor = myProcessor;
+    }
+
+    boolean foo() {
+      return myProcessor.process(null);
+    }
+  }
+
+  ////////////// field assigned from nethod but is used outside - can't fix
+  class S2 {
+    Processor<S2> myProcessor;
+
+    public S2(Processor<S2> myProcessor) {
+      this.myProcessor = myProcessor;
+    }
+
+    public Processor<S2> getProcessor() {
+      myProcessor.process(null);
+      return myProcessor;
+    }
+  }
 }
