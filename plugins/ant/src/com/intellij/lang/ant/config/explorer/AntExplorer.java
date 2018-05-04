@@ -43,7 +43,10 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiElement;
 import com.intellij.ui.*;
 import com.intellij.ui.treeStructure.Tree;
-import com.intellij.util.*;
+import com.intellij.util.EditSourceOnDoubleClickHandler;
+import com.intellij.util.Function;
+import com.intellij.util.IconUtil;
+import com.intellij.util.StringBuilderSpinAllocator;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.tree.TreeUtil;
@@ -301,7 +304,7 @@ public class AntExplorer extends SimpleToolWindowPanel implements DataProvider, 
     final AntBuildFileBase buildFile = getCurrentBuildFile();
     if (buildFile != null) {
       final TreePath[] paths = myTree.getSelectionPaths();
-      final String[] targets = getTargetNamesFromPaths(paths);
+      final List<String> targets = getTargetNamesFromPaths(paths);
       ExecutionHandler.runBuild(buildFile, targets, null, dataContext, Collections.emptyList(), AntBuildListener.NULL);
     }
   }
@@ -338,7 +341,7 @@ public class AntExplorer extends SimpleToolWindowPanel implements DataProvider, 
     return true;
   }
 
-  private static String[] getTargetNamesFromPaths(TreePath[] paths) {
+  private static List<String> getTargetNamesFromPaths(TreePath[] paths) {
     final List<String> targets = new ArrayList<>();
     for (final TreePath path : paths) {
       final Object userObject = ((DefaultMutableTreeNode)path.getLastPathComponent()).getUserObject();
@@ -353,7 +356,7 @@ public class AntExplorer extends SimpleToolWindowPanel implements DataProvider, 
         targets.add(target.getName());
       }
     }
-    return ArrayUtil.toStringArray(targets);
+    return targets;
   }
 
   private static AntBuildTarget[] getTargetObjectsFromPaths(TreePath[] paths) {
@@ -781,7 +784,7 @@ public class AntExplorer extends SimpleToolWindowPanel implements DataProvider, 
     @Override
     public void actionPerformed(AnActionEvent e) {
       final AntBuildFile buildFile = getCurrentBuildFile();
-      final String[] targets = getTargetNamesFromPaths(myTree.getSelectionPaths());
+      final List<String> targets = getTargetNamesFromPaths(myTree.getSelectionPaths());
       final ExecuteCompositeTargetEvent event = new ExecuteCompositeTargetEvent(targets);
       final SaveMetaTargetDialog dialog = new SaveMetaTargetDialog(myTree, event, AntConfigurationBase.getInstance(myProject), buildFile);
       dialog.setTitle(e.getPresentation().getText());
