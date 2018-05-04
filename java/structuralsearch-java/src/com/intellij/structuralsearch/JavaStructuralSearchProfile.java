@@ -494,7 +494,7 @@ public class JavaStructuralSearchProfile extends StructuralSearchProfile {
       }
 
       for (PsiNameValuePair pair : annotation.getParameterList().getAttributes()) {
-        for (PsiAnnotationMemberValue v : AnnotationUtil.flattenArray(pair.getValue())) {
+        for (PsiAnnotationMemberValue v : AnnotationUtil.arrayAttributeValues(pair.getValue())) {
           checkModifier(StringUtil.unquoteString(v.getText()));
         }
       }

@@ -32,7 +32,7 @@ public abstract class SignatureHintProcessor {
   static String[] buildOptions(PsiAnnotation anno) {
     PsiAnnotationMemberValue options = anno.findAttributeValue("options");
     ArrayList<String> result = ContainerUtil.newArrayList();
-    for (PsiAnnotationMemberValue initializer : AnnotationUtil.flattenArray(options)) {
+    for (PsiAnnotationMemberValue initializer : AnnotationUtil.arrayAttributeValues(options)) {
       if (initializer instanceof PsiLiteral) {
         Object value = ((PsiLiteral)initializer).getValue();
         if (value instanceof String) {

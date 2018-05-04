@@ -86,7 +86,7 @@ public class JavaSuppressionUtil {
     if (attributes.length == 0) {
       return Collections.emptyList();
     }
-    return ContainerUtil.mapNotNull(AnnotationUtil.flattenArray(attributes[0].getValue()),
+    return ContainerUtil.mapNotNull(AnnotationUtil.arrayAttributeValues(attributes[0].getValue()),
                                     JavaSuppressionUtil::getInspectionIdSuppressedInAnnotationAttribute);
   }
 

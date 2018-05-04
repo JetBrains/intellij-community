@@ -64,7 +64,7 @@ public class SuppressWarningsFoldingBuilder extends FoldingBuilderEx {
   }
 
   private static String getMemberValueText(PsiAnnotationMemberValue _memberValue) {
-    return StringUtil.join(AnnotationUtil.flattenArray(_memberValue), memberValue -> {
+    return StringUtil.join(AnnotationUtil.arrayAttributeValues(_memberValue), memberValue -> {
       if (memberValue instanceof PsiLiteral) {
         final Object o = ((PsiLiteral)memberValue).getValue();
         if (o != null) {

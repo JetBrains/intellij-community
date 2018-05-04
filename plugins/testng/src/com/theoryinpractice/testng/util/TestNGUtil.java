@@ -343,7 +343,7 @@ public class TestNGUtil {
   }
 
   private static Collection<String> extractValuesFromParameter(PsiAnnotationMemberValue value) {
-    return JBIterable.from(AnnotationUtil.flattenArray(value))
+    return JBIterable.from(AnnotationUtil.arrayAttributeValues(value))
                      .filter(PsiLiteralExpression.class)
                      .map(PsiLiteralExpression::getValue)
                      .filter(String.class)

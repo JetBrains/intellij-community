@@ -12,7 +12,7 @@ fun PsiAnnotation.findDeclaredDetachedValue(attributeName: String?): PsiAnnotati
 }
 
 internal fun <T : Any> PsiAnnotationMemberValue.getArrayValue(computeValue: (PsiAnnotationMemberValue) -> T?): List<T> {
-  return AnnotationUtil.flattenArray(this).mapNotNull(computeValue)
+  return AnnotationUtil.arrayAttributeValues(this).mapNotNull(computeValue)
 }
 
 fun PsiAnnotationMemberValue?.booleanValue() = (this as? PsiLiteral)?.value as? Boolean

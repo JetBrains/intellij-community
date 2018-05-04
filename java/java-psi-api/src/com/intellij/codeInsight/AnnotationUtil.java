@@ -683,7 +683,7 @@ public class AnnotationUtil {
   //</editor-fold>
 
   @NotNull
-  public static List<PsiAnnotationMemberValue> flattenArray(@Nullable PsiAnnotationMemberValue attributeValue) {
+  public static List<PsiAnnotationMemberValue> arrayAttributeValues(@Nullable PsiAnnotationMemberValue attributeValue) {
     if (attributeValue instanceof PsiArrayInitializerMemberValue) {
       return Arrays.asList(((PsiArrayInitializerMemberValue)attributeValue).getInitializers());
     }
