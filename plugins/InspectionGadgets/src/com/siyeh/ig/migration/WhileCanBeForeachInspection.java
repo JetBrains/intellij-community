@@ -54,7 +54,6 @@ public class WhileCanBeForeachInspection extends WhileCanBeForeachInspectionBase
 
     private static void replaceWhileWithForEach(@NotNull PsiWhileStatement whileStatement) {
       final PsiStatement body = whileStatement.getBody();
-      final PsiFile file = whileStatement.getContainingFile();
       if (body == null) {
         return;
       }
@@ -111,7 +110,7 @@ public class WhileCanBeForeachInspection extends WhileCanBeForeachInspectionBase
       }
       @NonNls final StringBuilder out = new StringBuilder();
       out.append("for(");
-      if (JavaCodeStyleSettings.getInstance(file).GENERATE_FINAL_PARAMETERS) {
+      if (JavaCodeStyleSettings.getInstance(whileStatement.getContainingFile()).GENERATE_FINAL_PARAMETERS) {
         out.append("final ");
       }
       out.append(iteratorContentType.getCanonicalText()).append(' ').append(contentVariableName).append(": ");
