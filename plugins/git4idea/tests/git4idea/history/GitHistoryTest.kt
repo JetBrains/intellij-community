@@ -18,8 +18,13 @@ package git4idea.history
 import com.intellij.dvcs.DvcsUtil
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.vcs.Executor
+import com.intellij.openapi.vcs.Executor.ourCurrentDir
 import com.intellij.openapi.vcs.Executor.touch
+import com.intellij.openapi.vcs.VcsException
 import com.intellij.openapi.vcs.history.VcsFileRevision
+import com.intellij.util.CollectConsumer
+import com.intellij.util.Consumer
+import com.intellij.util.ExceptionUtil
 import com.intellij.vcsUtil.VcsUtil
 import git4idea.GitFileRevision
 import git4idea.test.*
@@ -68,19 +73,74 @@ class GitHistoryTest : GitSingleRepoTest() {
     val vFile = VcsUtil.getVirtualFileWithRefresh(commits.first().file)
     TestCase.assertNotNull(vFile)
     val history = GitFileHistory.collectHistory(myProject, VcsUtil.getFilePath(vFile!!))
-    TestCase.assertEquals("History size doesn't match. Actual history: \n" + toReadable(history), commits.size, history.size)
-    TestCase.assertEquals("History is different.", toReadable(commits), toReadable(history))
+    assertSameHistory(commits, history)
+  }
+
+  @Throws(Exception::class)
+  fun `test history`() {
+    val commits = ArrayList<TestCommit>()
+
+    commits.add(add("a.txt", ourCurrentDir()))
+    commits.add(modify(commits.last().file))
+
+    commits.add(rename(commits.last().file, File(Executor.mkdir("dir"), "b.txt")))
+
+    for (i in 0..3) {
+      commits.add(modify(commits.last().file))
+    }
+
+    commits.reverse()
+
+    val history = GitFileHistory.collectHistory(myProject, VcsUtil.getFilePath(commits.first().file))
+    assertSameHistory(commits, history)
+  }
+
+  @Throws(Exception::class)
+  fun `test appendable history`() {
+    val commits = ArrayList<TestCommit>()
+
+    commits.add(add("a.txt", ourCurrentDir()))
+    commits.add(modify(commits.last().file))
+
+    commits.add(rename(commits.last().file, File(Executor.mkdir("dir"), "b.txt")))
+
+    for (i in 0..3) {
+      commits.add(modify(commits.last().file))
+    }
+
+    commits.reverse()
+
+    val history = ArrayList<GitFileRevision>()
+    GitFileHistory.loadHistory(myProject, VcsUtil.getFilePath(commits.first().file), repo.root, null, CollectConsumer(history),
+                               Consumer { exception: VcsException ->
+                                 TestCase.fail("No exception expected " + ExceptionUtil.getThrowableText(exception))
+                               })
+    assertSameHistory(commits, history)
+  }
+
+  private fun assertSameHistory(expected: List<TestCommit>, actual: List<VcsFileRevision>) {
+    TestCase.assertEquals("History size doesn't match. Actual history: \n" + toReadable(actual), expected.size, actual.size)
+    TestCase.assertEquals("History is different.", toReadable(expected), toReadable(actual))
   }
 
   private class TestCommit(val hash: String, val commitMessage: String, val file: File)
 
   private fun move(file: File, dir: File): TestCommit {
-    repo.mv(file.path, dir.path)
+    repo.mv(file, dir)
 
     val message = "Moved ${file.path} to ${dir.name}"
     repo.addCommit(message)
 
     return TestCommit(last(), message, File(dir, file.name))
+  }
+
+  private fun rename(file: File, newFile: File): TestCommit {
+    repo.mv(file, newFile)
+
+    val message = "Renamed ${file.path} to ${newFile.name}"
+    repo.addCommit(message)
+
+    return TestCommit(last(), message, newFile)
   }
 
   @Throws(IOException::class)

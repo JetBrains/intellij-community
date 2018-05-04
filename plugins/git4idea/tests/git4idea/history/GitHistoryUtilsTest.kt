@@ -16,13 +16,7 @@
 package git4idea.history
 
 import com.intellij.openapi.vcs.Executor.*
-import com.intellij.openapi.vcs.VcsException
-import com.intellij.openapi.vcs.history.VcsFileRevision
-import com.intellij.util.CollectConsumer
-import com.intellij.util.Consumer
-import com.intellij.util.ExceptionUtil
 import com.intellij.vcsUtil.VcsUtil.getFilePath
-import git4idea.GitFileRevision
 import git4idea.GitRevisionNumber
 import git4idea.test.*
 import junit.framework.TestCase
@@ -175,24 +169,6 @@ class GitHistoryUtilsTest : GitSingleRepoTest() {
   }
 
   @Throws(Exception::class)
-  fun testHistory() {
-    val revisions = GitFileHistory.collectHistory(myProject, getFilePath(bfile!!))
-    assertHistory(revisions)
-  }
-
-  @Throws(Exception::class)
-  fun testAppendableHistory() {
-    val revisions = ArrayList<GitFileRevision>(3)
-
-    GitFileHistory.loadHistory(myProject, getFilePath(bfile!!), repo.root, null, CollectConsumer(revisions),
-                               Consumer { exception: VcsException ->
-                                 TestCase.fail("No exception expected " + ExceptionUtil.getThrowableText(exception))
-                               })
-
-    assertHistory(revisions)
-  }
-
-  @Throws(Exception::class)
   fun testOnlyHashesHistory() {
     val history = GitHistoryUtils.onlyHashesHistory(myProject, getFilePath(bfile!!), projectRoot)
     TestCase.assertEquals(history.size, revisionsAfterRename!!.size)
@@ -202,35 +178,6 @@ class GitHistoryUtilsTest : GitSingleRepoTest() {
       TestCase.assertEquals(pair.first.toString(), revision.hash)
       TestCase.assertEquals(pair.second, revision.date)
     }
-  }
-
-  @Throws(VcsException::class)
-  private fun assertHistory(actualRevisions: List<VcsFileRevision>) {
-    TestCase.assertEquals("Incorrect number of commits in history", revisions!!.size, actualRevisions.size)
-    for (i in actualRevisions.indices) {
-      assertEqualRevisions(actualRevisions[i] as GitFileRevision, revisions!![i])
-    }
-  }
-
-  @Throws(VcsException::class)
-  private fun assertEqualRevisions(actual: GitFileRevision, expected: GitTestRevision) {
-    val actualRev = (actual.revisionNumber as GitRevisionNumber).rev
-    TestCase.assertEquals(expected.hash, actualRev)
-    TestCase.assertEquals(expected.date, (actual.revisionNumber as GitRevisionNumber).timestamp)
-    // TODO: whitespaces problem is known, remove convertWhitespaces... when it's fixed
-    TestCase.assertEquals(convertWhitespacesToSpacesAndRemoveDoubles(expected.commitMessage),
-                          convertWhitespacesToSpacesAndRemoveDoubles(actual.commitMessage!!))
-    TestCase.assertEquals(expected.authorName, actual.author)
-    TestCase.assertEquals(expected.authorEmail, actual.authorEmail)
-    TestCase.assertEquals(expected.committerName, actual.committerName)
-    TestCase.assertEquals(expected.committerEmail, actual.committerEmail)
-    TestCase.assertEquals(expected.branchName, actual.branchName)
-    TestCase.assertNotNull("No content in revision $actualRev", actual.content)
-    TestCase.assertEquals(String(expected.content), String(actual.content!!))
-  }
-
-  private fun convertWhitespacesToSpacesAndRemoveDoubles(s: String): String {
-    return s.replace("[\\s^ ]".toRegex(), " ").replace(" +".toRegex(), " ")
   }
 
   private fun timeStampToDate(timestamp: String): Date {
