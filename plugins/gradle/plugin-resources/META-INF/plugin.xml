@@ -60,6 +60,8 @@
     <stacktrace.fold substring="at org.jetbrains.plugins.gradle."/>
     <stacktrace.fold substring="at com.intellij.openapi.externalSystem."/>
 
+    <externalSystemOutputParserProvider implementation="org.jetbrains.plugins.gradle.execution.build.output.GradleOutputParserProvider"
+                                        id="gradle"/>
     <externalSystemExecutionConsoleManager implementation="org.jetbrains.plugins.gradle.execution.GradleExecutionConsoleManager"
                                            id="gradle"/>
 

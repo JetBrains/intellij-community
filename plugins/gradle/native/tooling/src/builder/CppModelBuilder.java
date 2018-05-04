@@ -9,6 +9,7 @@ import org.gradle.api.internal.file.FileCollectionInternal;
 import org.gradle.api.internal.file.FileCollectionVisitor;
 import org.gradle.api.internal.file.FileTreeInternal;
 import org.gradle.api.internal.file.collections.DirectoryFileTree;
+import org.gradle.api.plugins.PluginContainer;
 import org.gradle.api.provider.Provider;
 import org.gradle.api.tasks.util.PatternSet;
 import org.gradle.internal.impldep.org.apache.commons.lang.StringUtils;
@@ -18,6 +19,7 @@ import org.gradle.language.cpp.CppComponent;
 import org.gradle.language.cpp.CppSharedLibrary;
 import org.gradle.language.cpp.CppStaticLibrary;
 import org.gradle.language.cpp.plugins.CppBasePlugin;
+import org.gradle.language.cpp.plugins.CppPlugin;
 import org.gradle.language.cpp.tasks.CppCompile;
 import org.gradle.language.nativeplatform.ComponentWithExecutable;
 import org.gradle.language.nativeplatform.internal.ConfigurableComponentWithExecutable;
@@ -26,6 +28,7 @@ import org.gradle.nativeplatform.toolchain.Clang;
 import org.gradle.nativeplatform.toolchain.Gcc;
 import org.gradle.nativeplatform.toolchain.NativeToolChain;
 import org.gradle.nativeplatform.toolchain.VisualCpp;
+import org.gradle.nativeplatform.toolchain.internal.NativeLanguageTools;
 import org.gradle.nativeplatform.toolchain.internal.PlatformToolProvider;
 import org.gradle.nativeplatform.toolchain.internal.ToolType;
 import org.gradle.nativeplatform.toolchain.internal.tools.CommandLineToolSearchResult;
@@ -64,8 +67,15 @@ public class CppModelBuilder implements ModelBuilderService {
   @Nullable
   @Override
   public Object buildAll(final String modelName, final Project project) {
-    final CppBasePlugin cppPlugin = project.getPlugins().findPlugin(CppBasePlugin.class);
-    if (cppPlugin == null) return null;
+    PluginContainer pluginContainer = project.getPlugins();
+    if (!pluginContainer.hasPlugin(CppBasePlugin.class)) {
+      if (pluginContainer.hasPlugin(CppPlugin.class)) {
+        project.getLogger().error(
+          "[sync warning] The IDE doesn't support 'cpp' gradle plugin. " +
+          "Consider to use new gradle C++ plugins, see details at https://blog.gradle.org/introducing-the-new-cpp-plugins");
+      }
+      return null;
+    }
 
     final CppProjectImpl cppProject = new CppProjectImpl();
     for (SoftwareComponent component : project.getComponents()) {
@@ -183,6 +193,7 @@ public class CppModelBuilder implements ModelBuilderService {
 
   @Nullable
   private static File findCppCompilerExecutable(Project project, CppBinary cppBinary) {
+    Throwable t = null;
     try {
       if (cppBinary instanceof ConfigurableComponentWithExecutable) {
         PlatformToolProvider toolProvider = ((ConfigurableComponentWithExecutable)cppBinary).getPlatformToolProvider();
@@ -197,9 +208,9 @@ public class CppModelBuilder implements ModelBuilderService {
             visualCppField.setAccessible(true);
             Object visualCpp = visualCppField.get(toolProvider);
 
-            //if (visualCpp instanceof NativeLanguageTools) {
-            //  return ((NativeLanguageTools)visualCpp).getCompilerExecutable();
-            //}
+            if (visualCpp instanceof NativeLanguageTools) {
+              return ((NativeLanguageTools)visualCpp).getCompilerExecutable();
+            }
             Method getCompilerExecutable = visualCpp.getClass().getMethod("getCompilerExecutable");
             Object compilerExecutable = getCompilerExecutable.invoke(visualCpp);
             return (File)compilerExecutable;
@@ -208,36 +219,46 @@ public class CppModelBuilder implements ModelBuilderService {
       }
     }
     catch (Throwable e) {
-      if (GradleVersion.current().compareTo(GradleVersion.version("4.6")) < 0) {
-        project.getLogger().error("Unable to resolve compiler executable, try to update the gradle version");
+      t = e;
+    }
+
+    try {
+      NativeToolChain toolChain = cppBinary.getToolChain();
+      String exeName;
+      if (toolChain instanceof Gcc) {
+        exeName = "g++";
+      }
+      else if (toolChain instanceof Clang) {
+        exeName = "clang++";
+      }
+      else if (toolChain instanceof VisualCpp) {
+        exeName = "cl";
       }
       else {
-        project.getLogger().error("Unable to resolve compiler executable", e);
+        exeName = null;
+      }
+
+      if (exeName != null) {
+        ToolSearchPath toolSearchPath = new ToolSearchPath(OperatingSystem.current());
+        CommandLineToolSearchResult searchResult = toolSearchPath.locate(ToolType.CPP_COMPILER, exeName);
+        if (searchResult.isAvailable()) {
+          return searchResult.getTool();
+        }
+      }
+    }
+    catch (Throwable tt) {
+      project.getLogger().error("[sync error] Unable to resolve compiler executable", tt);
+    }
+
+    if (t != null) {
+      if (GradleVersion.current().getBaseVersion().compareTo(GradleVersion.version("4.6")) <= 0) {
+        project.getLogger().error("[sync error] Unable to resolve compiler executable, try to update the gradle version");
+      }
+      else {
+        project.getLogger().error("[sync error] Unable to resolve compiler executable", t);
       }
     }
 
-    NativeToolChain toolChain = cppBinary.getToolChain();
-    String exeName;
-    if (toolChain instanceof Gcc) {
-      exeName = "g++";
-    }
-    else if (toolChain instanceof Clang) {
-      exeName = "clang++";
-    }
-    else if (toolChain instanceof VisualCpp) {
-      exeName = "cl";
-    }
-    else {
-      exeName = null;
-    }
-
-    if (exeName != null) {
-      ToolSearchPath toolSearchPath = new ToolSearchPath(OperatingSystem.current());
-      CommandLineToolSearchResult searchResult = toolSearchPath.locate(ToolType.CPP_COMPILER, exeName);
-      if (searchResult.isAvailable()) {
-        return searchResult.getTool();
-      }
-    }
     return null;
   }
 
