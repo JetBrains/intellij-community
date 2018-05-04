@@ -588,76 +588,88 @@ public class DuplicatesFinder {
     final PsiExpression patternQualifier = pattern.getQualifierExpression();
     final PsiExpression candidateQualifier = candidate.getQualifierExpression();
     if (patternQualifier == null) {
-      PsiClass contextClass = PsiTreeUtil.getContextOfType(pattern, PsiClass.class);
-      if (candidateQualifier instanceof PsiReferenceExpression) {
-        final PsiElement resolved = ((PsiReferenceExpression)candidateQualifier).resolve();
-        if (resolved instanceof PsiClass &&
-            contextClass != null &&
-            InheritanceUtil.isInheritorOrSelf(contextClass, (PsiClass)resolved, true)) {
-          return true;
-        }
-      }
-      return contextClass != null && match.registerInstanceExpression(candidateQualifier, contextClass);
+      return matchUnqualifiedPatternReference(pattern, candidateQualifier, match);
     }
-    else {
-      if (candidateQualifier == null) {
-        if (patternQualifier instanceof PsiThisExpression) {
-          final PsiJavaCodeReferenceElement qualifier = ((PsiThisExpression)patternQualifier).getQualifier();
-          PsiElement contextClass = qualifier == null ? PsiTreeUtil.getContextOfType(pattern, PsiClass.class) : qualifier.resolve();
-          return contextClass instanceof PsiClass && match.registerInstanceExpression(candidate.getQualifierExpression(),
-                                                                                      (PsiClass)contextClass);
-        }
-        else {
-          final PsiType type = patternQualifier.getType();
-          PsiClass contextClass = type instanceof PsiClassType ? ((PsiClassType)type).resolve() : null;
-          try {
-            final Parameter parameter = patternQualifier.getUserData(PARAMETER);
-
-            if (parameter != null) {
-              final PsiClass thisClass = RefactoringChangeUtil.getThisClass(parameter.getVariable());
-
-              if (contextClass != null && InheritanceUtil.isInheritorOrSelf(thisClass, contextClass, true)) {
-                contextClass = thisClass;
-              }
-              final PsiClass thisCandidate = RefactoringChangeUtil.getThisClass(candidate);
-              if (thisCandidate != null && InheritanceUtil.isInheritorOrSelf(thisCandidate, contextClass, true)) {
-                contextClass = thisCandidate;
-              }
-              return contextClass != null &&
-                     !(contextClass instanceof PsiAnonymousClass) &&
-                     match.putParameter(parameter, RefactoringChangeUtil.createThisExpression(patternQualifier.getManager(), contextClass));
-            }
-            else if (patternQualifier instanceof PsiReferenceExpression) {
-              final PsiElement resolved = ((PsiReferenceExpression)patternQualifier).resolve();
-              if (resolved instanceof PsiClass) {
-                final PsiClass classContext = PsiTreeUtil.getContextOfType(candidate, PsiClass.class);
-                if (classContext != null && InheritanceUtil.isInheritorOrSelf(classContext, (PsiClass)resolved, true)) {
-                  return true;
-                }
-              }
-            }
-
-            return false;
-          }
-          catch (IncorrectOperationException e) {
-            LOG.error(e);
-          }
-        }
-      }
-      else {
-        if (patternQualifier instanceof PsiThisExpression && candidateQualifier instanceof PsiThisExpression) {
-          final PsiJavaCodeReferenceElement thisPatternQualifier = ((PsiThisExpression)patternQualifier).getQualifier();
-          final PsiElement patternContextClass =
-            thisPatternQualifier == null ? PsiTreeUtil.getContextOfType(patternQualifier, PsiClass.class) : thisPatternQualifier.resolve();
-          final PsiJavaCodeReferenceElement thisCandidateQualifier = ((PsiThisExpression)candidateQualifier).getQualifier();
-          final PsiElement candidateContextClass = thisCandidateQualifier == null
-                                                   ? PsiTreeUtil.getContextOfType(candidateQualifier, PsiClass.class)
-                                                   : thisCandidateQualifier.resolve();
-          return patternContextClass == candidateContextClass;
-        }
-      }
+    if (candidateQualifier == null) {
+      return matchUnqualifiedCandidateReference(patternQualifier, candidate, match);
+    }
+    if (patternQualifier instanceof PsiThisExpression && candidateQualifier instanceof PsiThisExpression) {
+      return matchThisQualifierReference((PsiThisExpression)patternQualifier, (PsiThisExpression)candidateQualifier);
     }
     return null;
+  }
+
+  private static boolean matchUnqualifiedPatternReference(@NotNull PsiReferenceExpression pattern,
+                                                          @Nullable PsiExpression candidateQualifier,
+                                                          @NotNull Match match) {
+    PsiClass contextClass = PsiTreeUtil.getContextOfType(pattern, PsiClass.class);
+    if (candidateQualifier instanceof PsiReferenceExpression) {
+      final PsiElement resolved = ((PsiReferenceExpression)candidateQualifier).resolve();
+      if (resolved instanceof PsiClass &&
+          contextClass != null &&
+          InheritanceUtil.isInheritorOrSelf(contextClass, (PsiClass)resolved, true)) {
+        return true;
+      }
+    }
+    return contextClass != null && match.registerInstanceExpression(candidateQualifier, contextClass);
+  }
+
+  private static boolean matchUnqualifiedCandidateReference(@NotNull PsiExpression patternQualifier,
+                                                            @NotNull PsiReferenceExpression candidate,
+                                                            @NotNull Match match) {
+    if (patternQualifier instanceof PsiThisExpression) {
+      final PsiJavaCodeReferenceElement qualifier = ((PsiThisExpression)patternQualifier).getQualifier();
+      PsiElement contextClass = qualifier == null ? PsiTreeUtil.getContextOfType(patternQualifier, PsiClass.class) : qualifier.resolve();
+      return contextClass instanceof PsiClass &&
+             match.registerInstanceExpression(candidate.getQualifierExpression(), (PsiClass)contextClass);
+    }
+    final PsiType type = patternQualifier.getType();
+    PsiClass contextClass = type instanceof PsiClassType ? ((PsiClassType)type).resolve() : null;
+    try {
+      final Parameter parameter = patternQualifier.getUserData(PARAMETER);
+
+      if (parameter != null) {
+        final PsiClass thisClass = RefactoringChangeUtil.getThisClass(parameter.getVariable());
+
+        if (contextClass != null && InheritanceUtil.isInheritorOrSelf(thisClass, contextClass, true)) {
+          contextClass = thisClass;
+        }
+        final PsiClass thisCandidate = RefactoringChangeUtil.getThisClass(candidate);
+        if (thisCandidate != null && InheritanceUtil.isInheritorOrSelf(thisCandidate, contextClass, true)) {
+          contextClass = thisCandidate;
+        }
+        return contextClass != null &&
+               !(contextClass instanceof PsiAnonymousClass) &&
+               match.putParameter(parameter, RefactoringChangeUtil.createThisExpression(patternQualifier.getManager(), contextClass));
+      }
+      else if (patternQualifier instanceof PsiReferenceExpression) {
+        final PsiElement resolved = ((PsiReferenceExpression)patternQualifier).resolve();
+        if (resolved instanceof PsiClass) {
+          final PsiClass classContext = PsiTreeUtil.getContextOfType(candidate, PsiClass.class);
+          if (classContext != null && InheritanceUtil.isInheritorOrSelf(classContext, (PsiClass)resolved, true)) {
+            return true;
+          }
+        }
+      }
+
+      return false;
+    }
+    catch (IncorrectOperationException e) {
+      LOG.error(e);
+    }
+    return false;
+  }
+
+  private static boolean matchThisQualifierReference(PsiThisExpression patternQualifier, PsiThisExpression candidateQualifier) {
+    final PsiJavaCodeReferenceElement thisPatternQualifier = patternQualifier.getQualifier();
+    final PsiElement patternContextClass = thisPatternQualifier == null
+                                           ? PsiTreeUtil.getContextOfType(patternQualifier, PsiClass.class)
+                                           : thisPatternQualifier.resolve();
+    final PsiJavaCodeReferenceElement thisCandidateQualifier = candidateQualifier.getQualifier();
+    final PsiElement candidateContextClass = thisCandidateQualifier == null
+                                             ? PsiTreeUtil.getContextOfType(candidateQualifier, PsiClass.class)
+                                             : thisCandidateQualifier.resolve();
+    return patternContextClass == candidateContextClass;
   }
 
   private static boolean matchThisExpression(@NotNull PsiThisExpression pattern, @NotNull PsiElement candidate, @NotNull Match match) {
