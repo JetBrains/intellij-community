@@ -26,7 +26,6 @@ import org.gradle.nativeplatform.toolchain.Clang;
 import org.gradle.nativeplatform.toolchain.Gcc;
 import org.gradle.nativeplatform.toolchain.NativeToolChain;
 import org.gradle.nativeplatform.toolchain.VisualCpp;
-import org.gradle.nativeplatform.toolchain.internal.NativeLanguageTools;
 import org.gradle.nativeplatform.toolchain.internal.PlatformToolProvider;
 import org.gradle.nativeplatform.toolchain.internal.ToolType;
 import org.gradle.nativeplatform.toolchain.internal.tools.CommandLineToolSearchResult;
@@ -46,6 +45,7 @@ import org.jetbrains.plugins.gradle.tooling.ModelBuilderService;
 
 import java.io.File;
 import java.lang.reflect.Field;
+import java.lang.reflect.Method;
 import java.util.*;
 
 /**
@@ -196,9 +196,13 @@ public class CppModelBuilder implements ModelBuilderService {
             Field visualCppField = toolProvider.getClass().getDeclaredField("visualCpp");
             visualCppField.setAccessible(true);
             Object visualCpp = visualCppField.get(toolProvider);
-            if (visualCpp instanceof NativeLanguageTools) {
-              return ((NativeLanguageTools)visualCpp).getCompilerExecutable();
-            }
+
+            //if (visualCpp instanceof NativeLanguageTools) {
+            //  return ((NativeLanguageTools)visualCpp).getCompilerExecutable();
+            //}
+            Method getCompilerExecutable = visualCpp.getClass().getMethod("getCompilerExecutable");
+            Object compilerExecutable = getCompilerExecutable.invoke(visualCpp);
+            return (File)compilerExecutable;
           }
         }
       }
