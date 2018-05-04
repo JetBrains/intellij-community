@@ -45,7 +45,6 @@ import org.jetbrains.plugins.gradle.tooling.ModelBuilderService;
 
 import java.io.File;
 import java.lang.reflect.Field;
-import java.lang.reflect.Method;
 import java.util.*;
 
 /**
@@ -213,7 +212,7 @@ public class CppModelBuilder implements ModelBuilderService {
 
   @Nullable
   private static File findCppCompilerExecutable(Project project, CppBinary cppBinary) {
-    Throwable t = null;
+    Throwable throwable = null;
     try {
       if (cppBinary instanceof ConfigurableComponentWithExecutable) {
         PlatformToolProvider toolProvider = ((ConfigurableComponentWithExecutable)cppBinary).getPlatformToolProvider();
@@ -231,54 +230,45 @@ public class CppModelBuilder implements ModelBuilderService {
             if (visualCpp instanceof NativeLanguageTools) {
               return ((NativeLanguageTools)visualCpp).getCompilerExecutable();
             }
-            Method getCompilerExecutable = visualCpp.getClass().getMethod("getCompilerExecutable");
-            Object compilerExecutable = getCompilerExecutable.invoke(visualCpp);
-            return (File)compilerExecutable;
           }
         }
       }
     }
-    catch (Throwable e) {
-      t = e;
+    catch (Throwable t) {
+      throwable = t;
     }
 
-    try {
-      NativeToolChain toolChain = cppBinary.getToolChain();
-      String exeName;
-      if (toolChain instanceof Gcc) {
-        exeName = "g++";
-      }
-      else if (toolChain instanceof Clang) {
-        exeName = "clang++";
-      }
-      else if (toolChain instanceof VisualCpp) {
-        exeName = "cl";
-      }
-      else {
-        exeName = null;
-      }
-
-      if (exeName != null) {
-        ToolSearchPath toolSearchPath = new ToolSearchPath(OperatingSystem.current());
-        CommandLineToolSearchResult searchResult = toolSearchPath.locate(ToolType.CPP_COMPILER, exeName);
-        if (searchResult.isAvailable()) {
-          return searchResult.getTool();
-        }
-      }
+    NativeToolChain toolChain = cppBinary.getToolChain();
+    String exeName;
+    if (toolChain instanceof Gcc) {
+      exeName = "g++";
     }
-    catch (Throwable tt) {
-      project.getLogger().error("[sync error] Unable to resolve compiler executable", tt);
+    else if (toolChain instanceof Clang) {
+      exeName = "clang++";
+    }
+    else if (toolChain instanceof VisualCpp) {
+      exeName = "cl";
+    }
+    else {
+      exeName = null;
     }
 
-    if (t != null) {
-      if (GradleVersion.current().getBaseVersion().compareTo(GradleVersion.version("4.6")) <= 0) {
-        project.getLogger().error("[sync error] Unable to resolve compiler executable, try to update the gradle version");
-      }
-      else {
-        project.getLogger().error("[sync error] Unable to resolve compiler executable", t);
+    if (exeName != null) {
+      ToolSearchPath toolSearchPath = new ToolSearchPath(OperatingSystem.current());
+      CommandLineToolSearchResult searchResult = toolSearchPath.locate(ToolType.CPP_COMPILER, exeName);
+      if (searchResult.isAvailable()) {
+        return searchResult.getTool();
       }
     }
 
+    if (GradleVersion.current().getBaseVersion().compareTo(GradleVersion.version("4.6")) <= 0) {
+      project.getLogger().error(
+        "[sync error] Unable to resolve compiler executable. " +
+        "The project uses '" + GradleVersion.current() + "' try to update the gradle version");
+    }
+    else {
+      project.getLogger().error("[sync error] Unable to resolve compiler executable", throwable);
+    }
     return null;
   }
 
