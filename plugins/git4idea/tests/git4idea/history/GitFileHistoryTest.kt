@@ -33,7 +33,7 @@ import java.io.File
 import java.io.IOException
 import java.util.*
 
-class GitHistoryTest : GitSingleRepoTest() {
+class GitFileHistoryTest : GitSingleRepoTest() {
 
   fun `test commit message with escape sequence`() {
     touch("a.txt")
