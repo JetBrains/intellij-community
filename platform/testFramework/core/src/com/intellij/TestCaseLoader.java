@@ -55,67 +55,74 @@ public class TestCaseLoader {
   
   public TestCaseLoader(String classFilterName, boolean forceLoadPerformanceTests) {
     myForceLoadPerformanceTests = forceLoadPerformanceTests;
+    TestClassesFilter testClassesFilter = calcTestClassFilter(classFilterName);
+    TestClassesFilter affectedTestsFilter = affectedTestsFilter();
+
+    myTestClassesFilter = new TestClassesFilter() {
+      @Override
+      public boolean matches(String className, @Nullable String moduleName) {
+        return testClassesFilter.matches(className, moduleName) &&
+               affectedTestsFilter.matches(className, moduleName);
+      }
+    };
+  }
+
+  private TestClassesFilter calcTestClassFilter(String classFilterName) {
     String patterns = getTestPatterns();
     if (!StringUtil.isEmpty(patterns)) {
-      myTestClassesFilter = new PatternListTestClassFilter(StringUtil.split(patterns, ";"));
-      System.out.println("Using patterns: [" + patterns +"]");
+      System.out.println("Using patterns: [" + patterns + "]");
+      return new PatternListTestClassFilter(StringUtil.split(patterns, ";"));
     }
-    else {
-      List<URL> groupingFileUrls = Collections.emptyList();
-      if (!StringUtil.isEmpty(classFilterName)) {
-        try {
-          groupingFileUrls = Collections.list(getClassLoader().getResources(classFilterName));
-        }
-        catch (IOException e) {
-          e.printStackTrace();
-        }
+    List<URL> groupingFileUrls = Collections.emptyList();
+    if (!StringUtil.isEmpty(classFilterName)) {
+      try {
+        groupingFileUrls = Collections.list(getClassLoader().getResources(classFilterName));
       }
-
-      List<String> testGroupNames = getTestGroups();
-      MultiMap<String, String> groups = MultiMap.createLinked();
-
-      for (URL fileUrl : groupingFileUrls) {
-        try {
-          InputStreamReader reader = new InputStreamReader(fileUrl.openStream());
-          try {
-            groups.putAllValues(GroupBasedTestClassFilter.readGroups(reader));
-          }
-          finally {
-            reader.close();
-          }
-        }
-        catch (IOException e) {
-          e.printStackTrace();
-          System.err.println("Failed to load test groups from " + fileUrl);
-        }
-      }
-
-      if (groups.isEmpty() || testGroupNames.contains(ALL_TESTS_GROUP)) {
-        System.out.println("Using all classes");
-        myTestClassesFilter = TestClassesFilter.ALL_CLASSES;
-      }
-      else {
-        System.out.println("Using test groups: " + testGroupNames);
-        myTestClassesFilter = new GroupBasedTestClassFilter(groups, testGroupNames);
+      catch (IOException e) {
+        e.printStackTrace();
       }
     }
+
+    List<String> testGroupNames = getTestGroups();
+    MultiMap<String, String> groups = MultiMap.createLinked();
+
+    for (URL fileUrl : groupingFileUrls) {
+      try {
+        InputStreamReader reader = new InputStreamReader(fileUrl.openStream());
+        try {
+          groups.putAllValues(GroupBasedTestClassFilter.readGroups(reader));
+        }
+        finally {
+          reader.close();
+        }
+      }
+      catch (IOException e) {
+        e.printStackTrace();
+        System.err.println("Failed to load test groups from " + fileUrl);
+      }
+    }
+
+    if (groups.isEmpty() || testGroupNames.contains(ALL_TESTS_GROUP)) {
+      System.out.println("Using all classes");
+      return TestClassesFilter.ALL_CLASSES;
+    }
+    System.out.println("Using test groups: " + testGroupNames);
+    return new GroupBasedTestClassFilter(groups, testGroupNames);
   }
 
   @Nullable
   private static String getTestPatterns() {
-    String affectedTestClasses = loadAffectedTestClassesPattern();
-    if (affectedTestClasses != null) return affectedTestClasses;
     return System.getProperty("intellij.build.test.patterns", System.getProperty("idea.test.patterns"));
   }
 
-  @Nullable
-  private static String loadAffectedTestClassesPattern() {
+  @NotNull
+  private static TestClassesFilter affectedTestsFilter() {
     if (RUN_ONLY_AFFECTED_TESTS) {
       File affectedTestClasses = new File(System.getProperty("idea.home.path"), "discoveredTestClasses.txt");
       if (affectedTestClasses.exists()) {
         System.out.println("Loading file with affected classes " + affectedTestClasses.getAbsolutePath());
         try {
-          return StringUtil.join(FileUtil.loadLines(affectedTestClasses), ";");
+          return new PatternListTestClassFilter(FileUtil.loadLines(affectedTestClasses));
         }
         catch (IOException e) {
           e.printStackTrace();
@@ -123,7 +130,7 @@ public class TestCaseLoader {
         }
       }
     }
-    return null;
+    return TestClassesFilter.ALL_CLASSES;
   }
 
   @NotNull
