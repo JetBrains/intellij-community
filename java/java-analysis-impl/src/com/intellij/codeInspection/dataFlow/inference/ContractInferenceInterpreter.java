@@ -142,8 +142,11 @@ class ContractInferenceInterpreter {
       }
     }
 
-    if (type == NEW_EXPRESSION || type == THIS_EXPRESSION) {
-      return asPreContracts(toContracts(states, returnNotNull()));
+    if (type == NEW_EXPRESSION) {
+      return asPreContracts(toContracts(states, returnNew()));
+    }
+    if (type == THIS_EXPRESSION) {
+      return asPreContracts(toContracts(states, returnThis()));
     }
     if (type == METHOD_CALL_EXPRESSION) {
       return singletonList(new MethodCallContract(ExpressionRange.create(expr, myBody.getStartOffset()),
@@ -159,13 +162,15 @@ class ContractInferenceInterpreter {
     if (paramIndex >= 0) {
       List<StandardMethodContract> result = ContainerUtil.newArrayList();
       for (ValueConstraint[] state : states) {
-        if (state[paramIndex] != ANY_VALUE) {
-          // the second 'o' reference in cases like: if (o != null) return o;
+        if (state[paramIndex] == TRUE_VALUE || state[paramIndex] == FALSE_VALUE || state[paramIndex] == NULL_VALUE) {
+          // like "if(x == null) return x": no need to refer to parameter
           result.add(new StandardMethodContract(state, state[paramIndex].asReturnValue()));
         } else if (JavaTokenType.BOOLEAN_KEYWORD == getPrimitiveParameterType(paramIndex)) {
           // if (boolValue) ...
           ContainerUtil.addIfNotNull(result, contractWithConstraint(state, paramIndex, TRUE_VALUE, returnTrue()));
           ContainerUtil.addIfNotNull(result, contractWithConstraint(state, paramIndex, FALSE_VALUE, returnFalse()));
+        } else {
+          result.add(new StandardMethodContract(state, returnParameter(paramIndex)));
         }
       }
       return asPreContracts(result);

@@ -37,4 +37,39 @@ class ContractReturnValues {
 
   @Nullable
   native String nullable();
+
+  void testNewGetter() {
+    Object x = getXyz();
+    if(<warning descr="Condition 'x != null' is always 'true'">x != null</warning>) {
+      System.out.println("always");
+    }
+  }
+
+  static Object getXyz() {
+    return new Object();
+  }
+
+  void testNullToEmpty(String s, String s1) {
+    if(nullToEmpty(s) != s) {
+      System.out.println(<warning descr="Condition 's == null' is always 'true'">s == null</warning>);
+    }
+    if(<warning descr="Condition 'nullToEmpty(s1) == null' is always 'false'">nullToEmpty(s1) == null</warning>) {
+      System.out.println("never");
+    }
+  }
+
+  static String nullToEmpty(@Nullable String s) {
+    return s == null ? "" : s;
+  }
+
+  void testNullToSomething() {
+    System.out.println(nullToSomething(nullable()).trim());
+    System.out.println(nullToEmpty(nullable()).trim());
+  }
+
+  static String nullToSomething(@Nullable String s) {
+    return s == null ? SOMETHING : s;
+  }
+
+  private static final String SOMETHING = "foo";
 }
