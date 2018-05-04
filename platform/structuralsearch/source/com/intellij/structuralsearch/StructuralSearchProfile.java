@@ -294,10 +294,10 @@ public abstract class StructuralSearchProfile {
    */
   public boolean isApplicableConstraint(String constraintName, @Nullable PsiElement variableNode, boolean completePattern, boolean target) {
     switch (constraintName) {
-      case UIUtil.TEXT:
       case UIUtil.MINIMUM_ZERO:
         if (target) return false;
       case UIUtil.MAXIMUM_UNLIMITED:
+      case UIUtil.TEXT:
       case UIUtil.REFERENCE: return !completePattern;
     }
     return false;

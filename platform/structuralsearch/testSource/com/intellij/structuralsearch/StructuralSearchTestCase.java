@@ -7,8 +7,13 @@ import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.roots.LanguageLevelProjectExtension;
 import com.intellij.openapi.util.io.FileUtilRt;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.CharsetToolkit;
 import com.intellij.pom.java.LanguageLevel;
+import com.intellij.psi.PsiElement;
+import com.intellij.structuralsearch.impl.matcher.CompiledPattern;
+import com.intellij.structuralsearch.impl.matcher.compiler.PatternCompiler;
+import com.intellij.structuralsearch.plugin.ui.UIUtil;
 
 import java.io.File;
 import java.io.IOException;
@@ -51,8 +56,31 @@ public abstract class StructuralSearchTestCase extends LightQuickFixTestCase {
     options.setFileType(patternFileType);
     options.setDialect(patternLanguage);
 
-    Matcher.validate(getProject(), options);
+    final String message = checkApplicableConstraints();
+    assertNull(message, message);
     return testMatcher.testFindMatches(in, options, true, sourceFileType, sourceExtension, physicalSourceFile);
+  }
+
+  public String checkApplicableConstraints() {
+    final CompiledPattern compiledPattern = PatternCompiler.compilePattern(getProject(), options);
+    final StructuralSearchProfile profile = StructuralSearchUtil.getProfileByFileType(options.getFileType());
+    assert profile != null;
+    for (String varName : options.getVariableConstraintNames()) {
+      final List<PsiElement> nodes = compiledPattern.getVariableNodes(varName);
+      final PsiElement node = nodes.size() == 1 ? nodes.get(0) : null;
+      final MatchVariableConstraint constraint = options.getVariableConstraint(varName);
+      final String constraintName;
+      if (!StringUtil.isEmpty(constraint.getRegExp())) {
+        constraintName = UIUtil.TEXT;
+      }
+      else { // todo check other constraints
+        constraintName = null;
+      }
+      if (constraintName != null && !profile.isApplicableConstraint(constraintName, node, false, constraint.isPartOfSearchResults())) {
+        return constraintName + " not applicable for " + varName;
+      }
+    }
+    return null;
   }
 
   protected List<MatchResult> findMatches(String in, String pattern, FileType patternFileType) {
