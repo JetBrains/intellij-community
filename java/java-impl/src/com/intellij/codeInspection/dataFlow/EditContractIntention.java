@@ -173,6 +173,7 @@ public class EditContractIntention extends BaseIntentionAction implements LowPri
 
     DialogBuilder builder = new DialogBuilder(project).setNorthPanel(panel).title("Edit Method Contract");
     builder.setPreferredFocusComponent(contractText);
+    builder.setHelpId("define_contract_dialog");
     return builder;
   }
 
