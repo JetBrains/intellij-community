@@ -20,6 +20,8 @@ import com.intellij.psi.PsiType;
 import com.intellij.util.Function;
 import org.jetbrains.annotations.NotNull;
 
+import java.util.OptionalInt;
+
 /**
  * @author Tagir Valeev
  */
@@ -38,8 +40,12 @@ public abstract class ContractValue {
     return false;
   }
 
-  public DfaCallArguments updateArgumentsOnFailedCondition(DfaCallArguments arguments) {
+  public DfaCallArguments updateArguments(DfaCallArguments arguments, boolean negated) {
     return arguments;
+  }
+
+  public OptionalInt getNullCheckedArgument(boolean equalToNull) {
+    return OptionalInt.empty();
   }
 
   public static ContractValue qualifier() {
@@ -106,22 +112,6 @@ public abstract class ContractValue {
       }
       DfaValue arg = arguments.myArguments[myIndex];
       return arg instanceof DfaBoxedValue ? ((DfaBoxedValue)arg).getWrappedValue() : arg;
-    }
-
-    DfaCallArguments makeNotNull(DfaCallArguments arguments) {
-      if (arguments.myArguments.length <= myIndex) {
-        return arguments;
-      }
-      DfaValue arg = arguments.myArguments[myIndex];
-      if (arg instanceof DfaFactMapValue) {
-        DfaValue newArg = ((DfaFactMapValue)arg).withFact(DfaFactType.CAN_BE_NULL, false);
-        if (newArg != arg) {
-          DfaValue[] newArguments = arguments.myArguments.clone();
-          newArguments[myIndex] = newArg;
-          return new DfaCallArguments(arguments.myQualifier, newArguments, arguments.myPure);
-        }
-      }
-      return arguments;
     }
 
     @Override
@@ -203,8 +193,25 @@ public abstract class ContractValue {
     }
 
     @Override
-    public DfaCallArguments updateArgumentsOnFailedCondition(DfaCallArguments arguments) {
-      if (myRelationType == DfaRelationValue.RelationType.EQ) {
+    public DfaCallArguments updateArguments(DfaCallArguments arguments, boolean negated) {
+      int index = getNullCheckedArgument(negated).orElse(-1);
+      if (index >= 0 && index < arguments.myArguments.length) {
+        DfaValue arg = arguments.myArguments[index];
+        if (arg instanceof DfaFactMapValue) {
+          DfaValue newArg = ((DfaFactMapValue)arg).withFact(DfaFactType.CAN_BE_NULL, false);
+          if (newArg != arg) {
+            DfaValue[] newArguments = arguments.myArguments.clone();
+            newArguments[index] = newArg;
+            return new DfaCallArguments(arguments.myQualifier, newArguments, arguments.myPure);
+          }
+        }
+      }
+      return arguments;
+    }
+
+    @Override
+    public OptionalInt getNullCheckedArgument(boolean equalToNull) {
+      if (myRelationType == DfaRelationValue.RelationType.equivalence(equalToNull)) {
         ContractValue notNull;
         if (myLeft == IndependentValue.NULL) {
           notNull = myRight;
@@ -213,13 +220,13 @@ public abstract class ContractValue {
           notNull = myLeft;
         }
         else {
-          return arguments;
+          return OptionalInt.empty();
         }
         if (notNull instanceof Argument) {
-          return ((Argument)notNull).makeNotNull(arguments);
+          return OptionalInt.of(((Argument)notNull).myIndex);
         }
       }
-      return arguments;
+      return OptionalInt.empty();
     }
 
     @Override

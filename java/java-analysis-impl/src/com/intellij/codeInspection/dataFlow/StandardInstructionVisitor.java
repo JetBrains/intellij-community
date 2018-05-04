@@ -485,6 +485,7 @@ public class StandardInstructionVisitor extends InstructionVisitor {
 
     for (CallState callState : states) {
       DfaMemoryState state = callState.myMemoryState;
+      DfaCallArguments arguments = callState.myCallArguments;
       for (ContractValue contractValue : contract.getConditions()) {
         DfaValue condition = contractValue.makeDfaValue(factory, callState.myCallArguments);
         if (condition == null) {
@@ -492,16 +493,17 @@ public class StandardInstructionVisitor extends InstructionVisitor {
         }
         DfaMemoryState falseState = state.createCopy();
         if (falseState.applyContractCondition(condition.createNegated())) {
-          DfaCallArguments arguments = contractValue.updateArgumentsOnFailedCondition(callState.myCallArguments);
-          falseStates.add(new CallState(falseState, arguments));
+          DfaCallArguments falseArguments = contractValue.updateArguments(arguments, true);
+          falseStates.add(new CallState(falseState, falseArguments));
         }
         if (!state.applyContractCondition(condition)) {
           state = null;
           break;
         }
+        arguments = contractValue.updateArguments(arguments, false);
       }
       if(state != null) {
-        DfaValue returnValue = contract.getReturnValue().toDfaValue(factory, defaultResult, callState.myCallArguments);
+        DfaValue returnValue = contract.getReturnValue().toDfaValue(factory, defaultResult, arguments);
         state.push(returnValue);
         finalStates.add(state);
       }
