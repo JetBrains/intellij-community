@@ -1,6 +1,7 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ui
 
+import com.intellij.icons.AllIcons
 import com.intellij.openapi.application.ex.PathManagerEx
 import com.intellij.openapi.util.IconLoader
 import com.intellij.openapi.util.SystemInfoRt
@@ -16,7 +17,6 @@ import org.w3c.dom.Element
 import java.awt.Component
 import java.awt.GraphicsConfiguration
 import java.awt.Image
-import java.awt.image.BufferedImage
 import java.io.StringWriter
 import java.nio.file.Path
 import java.nio.file.Paths
@@ -47,18 +47,20 @@ internal class SvgRenderer(val svgFileDir: Path, private val deviceConfiguration
 
       private fun findImagePath(image: Image): String {
         fun isImage(iconWrapper: Icon): Boolean {
-          val thatImage = (iconWrapper as IconLoader.CachedImageIcon).doGetRealIcon()?.image
-          if (thatImage is BufferedImage) {
-            throw RuntimeException("BufferedImage - it seems it is scaled icon and so, cannot be matched, please investigate why scaled")
+          if (iconWrapper === AllIcons.Actions.Stub) {
+            return false
           }
+
+          val thatImage = (iconWrapper as IconLoader.CachedImageIcon).doGetRealIcon()?.image
           return thatImage === image
         }
 
         for (name in arrayOf("checkBox", "radio", "gear", "spinnerRight")) {
           val iconWrapper = when (name) {
-                              "gear" -> IconLoader.getIcon("/general/gear.png")
-                              else -> LafIconLookup.getIcon(name)
-                            }
+            "gear" -> IconLoader.getIcon("/general/gear.png")
+            else -> LafIconLookup.getIcon(name)
+          }
+
           if (isImage(iconWrapper)) {
             return getIconRelativePath(iconWrapper.toString())
           }
@@ -80,7 +82,7 @@ internal class SvgRenderer(val svgFileDir: Path, private val deviceConfiguration
       override fun handleError(error: SVGGraphics2DRuntimeException) = throw error
     }
 
-    class PrefixInfo() {
+    class PrefixInfo {
       var currentId = 0
     }
 

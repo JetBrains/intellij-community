@@ -20,7 +20,7 @@
         <path d="M0 0 L0 16 L139 16 L139 0 Z"/>
       </clipPath>
       <clipPath clipPathUnits="userSpaceOnUse" id="5">
-        <path d="M0 1 L0 18 L162 18 L162 1 Z"/>
+        <path d="M0 0 L0 18 L162 18 L162 0 Z"/>
       </clipPath>
       <clipPath clipPathUnits="userSpaceOnUse" id="6">
         <path d="M0 0 L0 16 L142 16 L142 0 Z"/>
@@ -44,10 +44,10 @@
     <g fill="rgb(187,187,187)" font-size="13px" font-family="'.SF NS Text'" transform="translate(0,30)" stroke="rgb(187,187,187)">
       <text x="0" xml:space="preserve" y="13" clip-path="url(#4)" stroke="none">Android module name:</text>
     </g>
-    <g fill="rgb(60,63,65)" font-size="13px" font-family="'.SF NS Text'" transform="translate(145,-1)" stroke="rgb(60,63,65)">
+    <g fill="rgb(60,63,65)" font-size="13px" font-family="'.SF NS Text'" transform="translate(145,0)" stroke="rgb(60,63,65)">
       <rect x="0" width="162" height="18" y="0" clip-path="url(#5)" stroke="none"/>
       <rect x="0" width="162" height="18" y="0" clip-path="url(#5)" stroke="none"/>
-      <image x="0" y="0" clip-path="url(#5)" width="18" xlink:href="../../../../../../platform-impl/src/com/intellij/ide/ui/laf/icons/darcula/checkBox.png" height="18" preserveAspectRatio="none"/>
+      <image x="0" y="0" clip-path="url(#5)" width="19" xlink:href="../../../../../../platform-impl/src/com/intellij/ide/ui/laf/icons/darcula/checkBox.svg" height="19" preserveAspectRatio="none"/>
       <text fill="rgb(187,187,187)" x="23" xml:space="preserve" y="14" clip-path="url(#5)" stroke="none">Android module name:</text>
     </g>
     <g fill="rgb(187,187,187)" font-size="13px" font-family="'.SF NS Text'" stroke="rgb(187,187,187)">

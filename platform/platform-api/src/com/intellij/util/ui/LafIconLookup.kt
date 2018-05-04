@@ -33,8 +33,7 @@ object LafIconLookup {
 
     key = dir + key
 
-    val icon: Icon? = IconLoader.findIcon("/com/intellij/ide/ui/laf/icons/$key.png", LafIconLookup::class.java, true)
-    return icon ?: AllIcons.Actions.Stub
+    return IconLoader.findIcon("/com/intellij/ide/ui/laf/icons/$key.png", LafIconLookup::class.java, true) ?: AllIcons.Actions.Stub
   }
 
   @JvmStatic
