@@ -32,42 +32,22 @@ class GitHistoryUtilsTest : GitSingleRepoTest() {
   private lateinit var afile: File
   private lateinit var bfile: File
   private lateinit var revisions: MutableList<GitTestRevision>
-  private lateinit var revisionsAfterRename: MutableList<GitTestRevision>
 
   @Throws(Exception::class)
   override fun setUp() {
     super.setUp()
 
     revisions = ArrayList(7)
-    revisionsAfterRename = ArrayList(4)
-
-    // 1. create a file
-    // 2. simple edit with a simple commit message
-    // 3. move & rename
-    // 4. make 4 edits with commit messages of different complexity
-    // (note: after rename, because some GitHistoryUtils methods don't follow renames).
-
-    val commitMessages = listOf("initial commit",
-                                "simple commit",
-                                "moved a.txt to dir/b.txt",
-                                "simple commit after rename",
-                                "commit with {%n} some [%ct] special <format:%H%at> characters including --pretty=tformat:%x00%x01%x00%H%x00%ct%x00%an%x20%x3C%ae%x3E%x00%cn%x20%x3C%ce%x3E%x00%x02%x00%s%x00%b%x00%x02%x01",
-                                "commit subject\n\ncommit body which is \n multilined.",
-                                "first line\nsecond line\nthird line\n\nfifth line\n\nseventh line & the end.")
-    val contents = listOf("initial content", "second content", "second content", // content is the same after rename
-                          "fourth content", "fifth content", "sixth content", "seventh content")
 
     // initial
-    var commitIndex = 0
-    afile = touch("a.txt", contents[commitIndex])
-    repo.addCommit(commitMessages[commitIndex])
-    commitIndex++
+    afile = touch("a.txt", "initial content")
+    var hash = repo.addCommit("initial commit")
+    revisions.add(GitTestRevision(hash, timeStampToDate(repo.lastAuthorTime()), afile))
 
     // modify
-    overwrite(afile, contents[commitIndex])
-    repo.addCommit(commitMessages[commitIndex])
-    val renameIndex = commitIndex
-    commitIndex++
+    overwrite(afile, "second content")
+    hash = repo.addCommit("simple commit")
+    revisions.add(GitTestRevision(hash, timeStampToDate(repo.lastAuthorTime()), afile))
 
     // mv to dir
     val dir = mkdir("dir")
@@ -75,31 +55,25 @@ class GitHistoryUtilsTest : GitSingleRepoTest() {
     TestCase.assertFalse("File $bfile shouldn't have existed", bfile.exists())
     repo.mv(afile, bfile)
     TestCase.assertTrue("File $bfile was not created by mv command", bfile.exists())
-    repo.commit(commitMessages[commitIndex])
-    commitIndex++
+    hash = repo.commit("moved a.txt to dir/b.txt")
+    revisions.add(GitTestRevision(hash, timeStampToDate(repo.lastAuthorTime()), bfile))
 
+
+    val messages = listOf("simple commit after rename",
+                          "commit with {%n} some [%ct] special <format:%H%at> characters including " +
+                          "--pretty=tformat:%x00%x01%x00%H%x00%ct%x00%an%x20%x3C%ae%x3E%x00%cn%x20%x3C%ce%x3E%x00%x02%x00%s%x00%b%x00%x02%x01",
+                          "commit subject\n\ncommit body which is \n multilined.",
+                          "first line\nsecond line\nthird line\n\nfifth line\n\nseventh line & the end.")
+    val contents = listOf("fourth content", "fifth content", "sixth content", "seventh content")
     // modifications
-    for (i in 0..3) {
-      overwrite(bfile, contents[commitIndex])
-      repo.addCommit(commitMessages[commitIndex])
-      commitIndex++
+    for (i in messages.indices) {
+      overwrite(bfile, contents[i])
+      hash = repo.addCommit(messages[i])
+      revisions.add(GitTestRevision(hash, timeStampToDate(repo.lastAuthorTime()), bfile))
     }
 
-    // Retrieve hashes and timestamps
-    val revisionStrings = repo.log("--pretty=format:%H#%at#%P", "-M").split("\n".toRegex()).dropLastWhile { it.isEmpty() }.toTypedArray()
-    TestCase.assertEquals("Incorrect number of revisions", commitMessages.size, revisionStrings.size)
+    revisions.reverse()
 
-    // newer revisions go first in the log output
-    for (i in 0 until revisionStrings.size) {
-      val details = revisionStrings[i].trim { it <= ' ' }.split("#".toRegex()).dropLastWhile { it.isEmpty() }.toTypedArray()
-      val revision = GitTestRevision(details[0], timeStampToDate(details[1]))
-      revisions.add(revision)
-      if (i < revisionStrings.size - 1 - renameIndex) {
-        revisionsAfterRename.add(revision)
-      }
-    }
-
-    TestCase.assertEquals("setUp failed", 5, revisionsAfterRename.size)
     cd(projectPath)
     updateChangeListManager()
   }
@@ -171,6 +145,7 @@ class GitHistoryUtilsTest : GitSingleRepoTest() {
   @Throws(Exception::class)
   fun testOnlyHashesHistory() {
     val history = GitHistoryUtils.onlyHashesHistory(myProject, getFilePath(bfile), projectRoot)
+    val revisionsAfterRename = revisions.filter { it.file == bfile }
     TestCase.assertEquals(history.size, revisionsAfterRename.size)
     val itAfterRename = revisionsAfterRename.iterator()
     for (pair in history) {
@@ -184,7 +159,7 @@ class GitHistoryUtilsTest : GitSingleRepoTest() {
     return Date(java.lang.Long.parseLong(timestamp) * 1000)
   }
 
-  private class GitTestRevision(internal val hash: String, internal val date: Date) {
+  private class GitTestRevision(internal val hash: String, internal val date: Date, internal val file: File) {
     override fun toString(): String {
       return hash
     }
