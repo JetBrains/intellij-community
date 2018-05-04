@@ -31,7 +31,7 @@ import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import java.awt.event.ActionEvent;
-import java.awt.event.KeyEvent;
+import java.awt.event.InputEvent;
 import java.util.ArrayDeque;
 import java.util.ArrayList;
 import java.util.List;
@@ -137,7 +137,7 @@ public class TouchBarsManager {
 
   public static boolean isTouchBarAvailable() { return NST.isAvailable(); }
 
-  public static void onKeyEvent(KeyEvent e) {
+  public static void onInputEvent(InputEvent e) {
     if (!isTouchBarAvailable())
       return;
 
