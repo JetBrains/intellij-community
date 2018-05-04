@@ -12,6 +12,7 @@ import com.intellij.openapi.actionSystem.impl.Utils;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.project.IndexNotReadyException;
 import com.intellij.openapi.project.Project;
 import com.intellij.ui.components.JBOptionButton;
 import com.intellij.util.containers.ContainerUtil;
@@ -124,7 +125,13 @@ public class TouchBarActionBase extends TouchBarProjectBase implements Execution
 
       final TBItemAnActionButton item = (TBItemAnActionButton)tbitem;
       final Presentation presentation = myPresentationFactory.getPresentation(item.getAnAction());
-      item.updateAnAction(presentation);
+
+      try {
+        item.updateAnAction(presentation);
+      } catch (IndexNotReadyException e1) {
+        presentation.setEnabled(false);
+        presentation.setVisible(false);
+      }
 
       if (item.isAutoVisibility()) {
         final boolean itemVisibilityChanged = item.updateVisibility(presentation);
