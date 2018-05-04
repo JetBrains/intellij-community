@@ -80,7 +80,7 @@ public abstract class DaemonCodeAnalyzer {
   }
 
   /**
-   * @deprecated Please use DaemonListener directly
+   * @deprecated Please use {@link DaemonListener} directly
    */
   public abstract static class DaemonListenerAdapter implements DaemonListener {
     @Override
