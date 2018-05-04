@@ -24,10 +24,7 @@ import org.gradle.language.cpp.tasks.CppCompile;
 import org.gradle.language.nativeplatform.ComponentWithExecutable;
 import org.gradle.language.nativeplatform.internal.ConfigurableComponentWithExecutable;
 import org.gradle.nativeplatform.tasks.LinkExecutable;
-import org.gradle.nativeplatform.toolchain.Clang;
-import org.gradle.nativeplatform.toolchain.Gcc;
-import org.gradle.nativeplatform.toolchain.NativeToolChain;
-import org.gradle.nativeplatform.toolchain.VisualCpp;
+import org.gradle.nativeplatform.toolchain.*;
 import org.gradle.nativeplatform.toolchain.internal.NativeLanguageTools;
 import org.gradle.nativeplatform.toolchain.internal.PlatformToolProvider;
 import org.gradle.nativeplatform.toolchain.internal.ToolType;
@@ -129,8 +126,9 @@ public class CppModelBuilder implements ModelBuilderService {
           // resolve compiler working dir as compiler executable file parent dir
           // https://github.com/gradle/gradle/blob/7422d5fc2e04d564dfd73bc539a37b62f8e2113a/subprojects/platform-native/src/main/java/org/gradle/nativeplatform/toolchain/internal/metadata/AbstractMetadataProvider.java#L61
           File compilerWorkingDir = cppCompilerExecutable == null ? null : cppCompilerExecutable.getParentFile();
+          String compileKind = getCompilerKind(cppBinary);
           CompilerDetails compilerDetails = new CompilerDetailsImpl(
-            compileTaskName, cppCompilerExecutable, compilerWorkingDir, compilerArgs, compileIncludePath, systemIncludes);
+            compileKind, compileTaskName, cppCompilerExecutable, compilerWorkingDir, compilerArgs, compileIncludePath, systemIncludes);
           LinkerDetails linkerDetails = new LinkerDetailsImpl(linkTaskName, executableFile);
           cppProject.addBinary(new CppBinaryImpl(baseName, variantName, sources, compilerDetails, linkerDetails, targetType));
         }
@@ -140,6 +138,28 @@ public class CppModelBuilder implements ModelBuilderService {
     }
 
     return cppProject;
+  }
+
+  @NotNull
+  private static String getCompilerKind(CppBinary cppBinary) {
+    final String compileKind;
+    NativeToolChain toolChain = cppBinary.getToolChain();
+    if (toolChain instanceof Clang) {
+      compileKind = "Clang";
+    }
+    else if (toolChain instanceof Gcc) {
+      compileKind = "GCC";
+    }
+    else if (toolChain instanceof VisualCpp) {
+      compileKind = "MSVC";
+    }
+    else if (toolChain instanceof Swiftc) {
+      compileKind = "Swiftc";
+    }
+    else {
+      compileKind = "Unknown";
+    }
+    return compileKind;
   }
 
   @Nullable

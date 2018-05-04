@@ -12,6 +12,8 @@ import java.util.Set;
 public interface CompilerDetails extends Serializable {
   String getCompileTaskName();
 
+  String getCompilerKind();
+
   Set<File> getIncludePath();
 
   Set<File> getSystemIncludes();
