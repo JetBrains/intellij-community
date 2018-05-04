@@ -2,6 +2,7 @@
 package com.intellij.codeInspection;
 
 import com.intellij.codeInsight.BlockUtils;
+import com.intellij.codeInspection.dataFlow.ContractReturnValue.ParameterReturnValue;
 import com.intellij.codeInspection.dataFlow.ControlFlowAnalyzer;
 import com.intellij.codeInspection.dataFlow.MethodContract;
 import com.intellij.codeInspection.dataFlow.StandardMethodContract;
@@ -11,7 +12,6 @@ import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.ObjectUtils;
-import com.siyeh.ig.callMatcher.CallMatcher;
 import com.siyeh.ig.psiutils.CommentTracker;
 import com.siyeh.ig.psiutils.ExpressionUtils;
 import com.siyeh.ig.psiutils.SideEffectChecker;
@@ -27,12 +27,6 @@ import java.util.List;
  * @author Tagir Valeev
  */
 public class ObviousNullCheckInspection extends AbstractBaseJavaLocalInspectionTool {
-  // Methods which are known to return the null-checked argument,
-  // so calling them is useless even if return value is used
-  private static final CallMatcher REQUIRE_NON_NULL_METHOD = CallMatcher.anyOf(
-    CallMatcher.staticCall("java.util.Objects", "requireNonNull"),
-    CallMatcher.staticCall("com.google.common.base.Preconditions", "checkNotNull"));
-
   @NotNull
   @Override
   public PsiElementVisitor buildVisitor(@NotNull ProblemsHolder holder, boolean isOnTheFly) {
@@ -41,7 +35,7 @@ public class ObviousNullCheckInspection extends AbstractBaseJavaLocalInspectionT
       public void visitMethodCallExpression(PsiMethodCallExpression call) {
         NullCheckParameter nullCheckParameter = NullCheckParameter.fromCall(call);
         if (nullCheckParameter == null) return;
-        if (!(call.getParent() instanceof PsiExpressionStatement) && !REQUIRE_NON_NULL_METHOD.test(call)) return;
+        if (!(call.getParent() instanceof PsiExpressionStatement || nullCheckParameter.myReturnsParameter)) return;
         PsiExpression[] args = call.getArgumentList().getExpressions();
         if (args.length <= nullCheckParameter.myIndex) return;
         PsiExpression nullArg = PsiUtil.skipParenthesizedExprDown(args[nullCheckParameter.myIndex]);
@@ -73,10 +67,12 @@ public class ObviousNullCheckInspection extends AbstractBaseJavaLocalInspectionT
   static class NullCheckParameter {
     int myIndex;
     boolean myNull;
+    boolean myReturnsParameter;
 
-    public NullCheckParameter(int index, boolean aNull) {
+    public NullCheckParameter(int index, boolean aNull, boolean returnsParameter) {
       myIndex = index;
       myNull = aNull;
+      myReturnsParameter = returnsParameter;
     }
 
     @Nullable
@@ -85,7 +81,7 @@ public class ObviousNullCheckInspection extends AbstractBaseJavaLocalInspectionT
       if (method == null) return null;
       if (!ControlFlowAnalyzer.isPure(method)) return null;
       List<? extends MethodContract> contracts = ControlFlowAnalyzer.getMethodCallContracts(method, call);
-      if (contracts.size() != 1) return null;
+      if (contracts.isEmpty() || contracts.size() > 2) return null;
       StandardMethodContract contract = ObjectUtils.tryCast(contracts.get(0), StandardMethodContract.class);
       if (contract == null || !contract.getReturnValue().isFail()) return null;
       Integer nullIndex = null;
@@ -101,7 +97,16 @@ public class ObviousNullCheckInspection extends AbstractBaseJavaLocalInspectionT
           return null;
         }
       }
-      return nullIndex == null ? null : new NullCheckParameter(nullIndex, isNull);
+      if (nullIndex == null) return null;
+      boolean returnsParameter = false;
+      if (contracts.size() == 2) {
+        MethodContract secondContract = contracts.get(1);
+        if (!secondContract.isTrivial()) return null;
+        ParameterReturnValue value = ObjectUtils.tryCast(secondContract.getReturnValue(), ParameterReturnValue.class);
+        if (value == null || value.getParameterNumber() != nullIndex) return null;
+        returnsParameter = true;
+      }
+      return new NullCheckParameter(nullIndex, isNull, returnsParameter);
     }
   }
 
