@@ -41,3 +41,12 @@ class Derived1(Base1):
     d: int = 1
 
 print(hash(Derived1()))
+
+
+@attr.s(frozen=True)
+class A3:
+
+    def <warning descr="'__hash__' is ignored if the class already defines 'cmp' and 'frozen' parameters">__hash__</warning>(self):
+        pass
+
+print(hash(A3()))

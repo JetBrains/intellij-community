@@ -335,6 +335,12 @@ class PyDataclassInspection : PyInspection() {
                           ProblemHighlightType.GENERIC_ERROR_OR_WARNING)
         }
       }
+
+      if (dataclassParameters.order && dataclassParameters.frozen && hashMethod != null) {
+        registerProblem(hashMethod?.nameIdentifier,
+                        "'${PyNames.HASH}' is ignored if the class already defines 'cmp' and 'frozen' parameters",
+                        ProblemHighlightType.GENERIC_ERROR_OR_WARNING)
+      }
     }
 
     private fun processDefaultFieldValue(field: PyTargetExpression) {
