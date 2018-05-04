@@ -212,7 +212,10 @@ class SmartPointerTracker {
       }
     }
 
-    pointer.cacheElement(pointer.doRestoreElement());
+    E actual = pointer.doRestoreElement();
+    if (actual != cachedElement) {
+      pointer.cacheElement(actual);
+    }
   }
 
   private static void storePointerReference(PointerReference[] references, int index, PointerReference ref) {
