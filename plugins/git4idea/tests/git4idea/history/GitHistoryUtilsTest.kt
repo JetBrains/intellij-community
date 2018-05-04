@@ -91,8 +91,7 @@ class GitHistoryUtilsTest : GitSingleRepoTest() {
     // newer revisions go first in the log output
     for (i in 0 until revisionStrings.size) {
       val details = revisionStrings[i].trim { it <= ' ' }.split("#".toRegex()).dropLastWhile { it.isEmpty() }.toTypedArray()
-      val revision = GitTestRevision(details[0], timeStampToDate(details[1]), commitMessages.asReversed()[i],
-                                     USER_NAME, USER_EMAIL, USER_NAME, USER_EMAIL, null, contents.asReversed()[i])
+      val revision = GitTestRevision(details[0], timeStampToDate(details[1]))
       revisions!!.add(revision)
       if (i < revisionStrings.size - 1 - renameIndex) {
         revisionsAfterRename!!.add(revision)
@@ -184,17 +183,7 @@ class GitHistoryUtilsTest : GitSingleRepoTest() {
     return Date(java.lang.Long.parseLong(timestamp) * 1000)
   }
 
-  private class GitTestRevision(internal val hash: String,
-                                internal val date: Date,
-                                internal val commitMessage: String,
-                                internal val authorName: String,
-                                internal val authorEmail: String,
-                                internal val committerName: String,
-                                internal val committerEmail: String,
-                                internal val branchName: String?,
-                                content: String) {
-    internal val content: ByteArray = content.toByteArray()
-
+  private class GitTestRevision(internal val hash: String, internal val date: Date) {
     override fun toString(): String {
       return hash
     }
