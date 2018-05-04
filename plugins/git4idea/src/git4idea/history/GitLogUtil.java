@@ -228,7 +228,7 @@ public class GitLogUtil {
 
     List<GitCommit> commits = ContainerUtil.newArrayList();
     try {
-      readFullDetails(project, root, commits::add, true, parameters);
+      readFullDetails(project, root, commits::add, true, true, parameters);
     }
     catch (VcsException e) {
       if (commits.isEmpty()) {
@@ -243,6 +243,7 @@ public class GitLogUtil {
                                      @NotNull VirtualFile root,
                                      @NotNull Consumer<? super GitCommit> commitConsumer,
                                      boolean includeRootChanges,
+                                     boolean preserverOrder,
                                      @NotNull String... parameters) throws VcsException {
     VcsLogObjectsFactory factory = getObjectsFactoryWithDisposeCheck(project);
     if (factory == null) {
@@ -250,13 +251,15 @@ public class GitLogUtil {
     }
 
     DiffRenameLimit renameLimit = DiffRenameLimit.REGISTRY;
-    GitLogRecordCollector recordCollector = new GitLogRecordCollector(project, root) {
-      @Override
-      public void consume(@NotNull List<GitLogRecord> records) {
-        assertCorrectNumberOfRecords(records);
-        commitConsumer.consume(createCommit(project, root, records, factory, renameLimit));
-      }
+
+    Consumer<List<GitLogRecord>> consumer = records -> {
+      assertCorrectNumberOfRecords(records);
+      commitConsumer.consume(createCommit(project, root, records, factory, renameLimit));
     };
+
+    GitLogRecordCollector recordCollector = preserverOrder ? new GitLogRecordCollector(project, root, consumer)
+                                                           : new GitLogUnorderedRecordCollector(project, root, consumer);
+
     readRecords(project, root, false, true, includeRootChanges, renameLimit, recordCollector, parameters);
     recordCollector.finish();
   }
@@ -344,13 +347,10 @@ public class GitLogUtil {
       return;
     }
 
-    GitLogRecordCollector recordCollector = new GitLogRecordCollector(project, root) {
-      @Override
-      public void consume(@NotNull List<GitLogRecord> records) {
-        assertCorrectNumberOfRecords(records);
-        commitConsumer.consume(createCommit(project, root, records, factory, renameLimit));
-      }
-    };
+    GitLogRecordCollector recordCollector = new GitLogUnorderedRecordCollector(project, root, records -> {
+      assertCorrectNumberOfRecords(records);
+      commitConsumer.consume(createCommit(project, root, records, factory, renameLimit));
+    });
     GitLineHandler handler = createGitHandler(project, root, createConfigParameters(true, includeRootChanges, renameLimit));
     sendHashesToStdin(vcs, hashes, handler);
 
