@@ -398,7 +398,7 @@
     </group>
 
     <group id="WeighingNewGroup" class="com.intellij.ide.actions.WeighingNewActionGroup"/>
-    <action id="AssociateWithFileType" class="com.intellij.ide.actions.AssociateFileTypeAction"/>
+    <reference ref="AssociateWithFileType"/>
 
     <group id="RevealGroup">
       <action id="RevealIn" class="com.intellij.ide.actions.RevealFileAction"/>
