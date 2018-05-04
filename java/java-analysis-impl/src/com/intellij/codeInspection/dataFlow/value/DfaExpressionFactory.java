@@ -38,6 +38,7 @@ import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.List;
 import java.util.Map;
 import java.util.regex.Pattern;
 
@@ -254,7 +255,7 @@ public class DfaExpressionFactory {
     }
     if (target instanceof PsiMethod) {
       PsiMethod method = (PsiMethod)target;
-      if (PropertyUtilBase.isSimplePropertyGetter(method) && ControlFlowAnalyzer.getMethodCallContracts(method, null).isEmpty()) {
+      if (PropertyUtilBase.isSimplePropertyGetter(method) && isContractAllowedForGetter(method)) {
         String qName = PsiUtil.getMemberQualifiedName(method);
         if (qName == null || !FALSE_GETTERS.value(qName)) {
           return new GetterSource(method);
@@ -263,12 +264,21 @@ public class DfaExpressionFactory {
       if (method.getParameterList().isEmpty()) {
         if ((ControlFlowAnalyzer.isPure(method) ||
             AnnotationUtil.findAnnotation(method.getContainingClass(), "javax.annotation.concurrent.Immutable") != null) &&
-            ControlFlowAnalyzer.getMethodCallContracts(method, null).isEmpty()) {
+            isContractAllowedForGetter(method)) {
           return new GetterSource(method);
         }
       }
     }
     return null;
+  }
+
+  private static boolean isContractAllowedForGetter(PsiMethod method) {
+    List<? extends MethodContract> contracts = ControlFlowAnalyzer.getMethodCallContracts(method, null);
+    if (contracts.size() == 1) {
+      MethodContract contract = contracts.get(0);
+      return contract.isTrivial() && contract.getReturnValue().equals(ContractReturnValue.returnNew());
+    }
+    return contracts.isEmpty();
   }
 
   @NotNull
