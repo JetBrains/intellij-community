@@ -3,8 +3,8 @@ package com.intellij.ide.ui.laf.intellij;
 
 import com.intellij.ide.ui.laf.darcula.ui.DarculaButtonUI;
 import com.intellij.ui.Gray;
-import com.intellij.util.ui.IconCache;
 import com.intellij.util.ui.JBUI;
+import com.intellij.util.ui.LafIconLookup;
 import com.intellij.util.ui.MacUIUtil;
 import com.intellij.util.ui.UIUtil;
 import sun.swing.SwingUtilities2;
@@ -15,9 +15,7 @@ import java.awt.*;
 import java.awt.geom.Path2D;
 import java.awt.geom.RoundRectangle2D;
 
-import static com.intellij.ide.ui.laf.intellij.MacIntelliJTextBorder.ARC;
-import static com.intellij.ide.ui.laf.intellij.MacIntelliJTextBorder.LW;
-import static com.intellij.ide.ui.laf.intellij.MacIntelliJTextBorder.MINIMUM_HEIGHT;
+import static com.intellij.ide.ui.laf.intellij.MacIntelliJTextBorder.*;
 
 /**
  * @author Konstantin Bulenkov
@@ -37,7 +35,7 @@ public class MacIntelliJButtonUI extends DarculaButtonUI {
     int w = c.getWidth();
     int h = c.getHeight();
     if (UIUtil.isHelpButton(c)) {
-      Icon icon = IconCache.getIcon("helpButton", false, c.hasFocus(), true);
+      Icon icon = LafIconLookup.getIcon("helpButton", false, c.hasFocus(), true);
       int x = (w - icon.getIconWidth()) / 2;
       int y = (h - icon.getIconHeight()) / 2;
       icon.paintIcon(c, g, x, y);
@@ -112,7 +110,7 @@ public class MacIntelliJButtonUI extends DarculaButtonUI {
   @Override
   protected Dimension getDarculaButtonSize(JComponent c, Dimension prefSize) {
     if (UIUtil.isHelpButton(c)) {
-      Icon icon = IconCache.getIcon("helpButton");
+      Icon icon = LafIconLookup.getIcon("helpButton");
       return new Dimension(icon.getIconWidth(), icon.getIconHeight());
     } else {
       Insets i = c.getInsets();

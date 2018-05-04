@@ -7,7 +7,7 @@ import com.intellij.openapi.util.SystemInfoRt
 import com.intellij.openapi.util.io.FileUtilRt
 import com.intellij.openapi.util.text.StringUtilRt
 import com.intellij.testFramework.assertions.Assertions.assertThat
-import com.intellij.util.ui.IconCache
+import com.intellij.util.ui.LafIconLookup
 import gnu.trove.THashMap
 import org.apache.batik.anim.dom.SVGDOMImplementation
 import org.apache.batik.dom.GenericDOMImplementation
@@ -57,14 +57,14 @@ internal class SvgRenderer(val svgFileDir: Path, private val deviceConfiguration
         for (name in arrayOf("checkBox", "radio", "gear", "spinnerRight")) {
           val iconWrapper = when (name) {
                               "gear" -> IconLoader.getIcon("/general/gear.png")
-                              else -> IconCache.getIcon(name, findIfNotInCache = false)
-                            } ?: continue
+                              else -> LafIconLookup.getIcon(name)
+                            }
           if (isImage(iconWrapper)) {
             return getIconRelativePath(iconWrapper.toString())
           }
         }
         for (name in arrayOf("checkBox", "radio")) {
-          val iconWrapper = IconCache.getIcon(name, selected = true, findIfNotInCache = false) ?: continue
+          val iconWrapper = LafIconLookup.getIcon(name, selected = true)
           if (isImage(iconWrapper)) {
             return getIconRelativePath(iconWrapper.toString())
           }

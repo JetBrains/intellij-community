@@ -3,18 +3,15 @@ package com.intellij.util.ui
 
 import com.intellij.icons.AllIcons
 import com.intellij.openapi.util.IconLoader
-import gnu.trove.THashMap
 import javax.swing.Icon
 
 /**
  * @author Konstantin Bulenkov
  */
-object IconCache {
-  private val cache = THashMap<String, Icon>()
-
+object LafIconLookup {
   @JvmStatic
   @JvmOverloads
-  fun getIcon(name: String, selected: Boolean = false, focused: Boolean = false, enabled: Boolean = true, editable: Boolean = false, pressed: Boolean = false, findIfNotInCache: Boolean = true): Icon {
+  fun getIcon(name: String, selected: Boolean = false, focused: Boolean = false, enabled: Boolean = true, editable: Boolean = false, pressed: Boolean = false): Icon {
     var key = name
     if (editable) key += "Editable"
     if (selected) key += "Selected"
@@ -36,11 +33,7 @@ object IconCache {
 
     key = dir + key
 
-    var icon: Icon? = cache[key]
-    if (icon == null && findIfNotInCache) {
-      icon = IconLoader.findIcon("/com/intellij/ide/ui/laf/icons/$key.png", IconCache::class.java, true)
-      cache[key] = icon
-    }
+    val icon: Icon? = IconLoader.findIcon("/com/intellij/ide/ui/laf/icons/$key.png", LafIconLookup::class.java, true)
     return icon ?: AllIcons.Actions.Stub
   }
 

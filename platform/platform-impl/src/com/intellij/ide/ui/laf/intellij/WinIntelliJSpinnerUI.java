@@ -2,9 +2,9 @@
 package com.intellij.ide.ui.laf.intellij;
 
 import com.intellij.ide.ui.laf.darcula.ui.DarculaSpinnerUI;
-import com.intellij.util.ui.IconCache;
 import com.intellij.util.ui.JBInsets;
 import com.intellij.util.ui.JBUI;
+import com.intellij.util.ui.LafIconLookup;
 import org.intellij.lang.annotations.MagicConstant;
 
 import javax.swing.*;
@@ -149,7 +149,7 @@ public class WinIntelliJSpinnerUI extends DarculaSpinnerUI {
           g2.fill(outerRect);
 
           // paint icon
-          Icon icon = IconCache.getIcon(iconName, false, false, isEnabled());
+          Icon icon = LafIconLookup.getIcon(iconName, false, false, isEnabled());
           icon.paintIcon(this, g2, scale(5), scale(3));
 
           // paint border
