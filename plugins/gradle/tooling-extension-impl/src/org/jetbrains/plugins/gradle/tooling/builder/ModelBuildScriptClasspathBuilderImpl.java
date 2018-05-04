@@ -28,9 +28,9 @@ import org.jetbrains.plugins.gradle.tooling.ModelBuilderService;
 import org.jetbrains.plugins.gradle.tooling.internal.BuildScriptClasspathModelImpl;
 import org.jetbrains.plugins.gradle.tooling.internal.ClasspathEntryModelImpl;
 import org.jetbrains.plugins.gradle.tooling.util.ArtifactsCollectionResolver;
-import org.jetbrains.plugins.gradle.tooling.util.DependencyResolverImpl;
 import org.jetbrains.plugins.gradle.tooling.util.DependencyTraverser;
 import org.jetbrains.plugins.gradle.tooling.util.SourceSetCachedFinder;
+import org.jetbrains.plugins.gradle.tooling.util.resolve.DependencyResolverImpl;
 
 import java.io.File;
 import java.util.*;

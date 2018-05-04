@@ -18,6 +18,8 @@ import org.gradle.language.java.artifact.JavadocArtifact;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.gradle.model.ExternalDependency;
+import org.jetbrains.plugins.gradle.tooling.util.resolve.DependencyResolverImpl;
+import org.jetbrains.plugins.gradle.tooling.util.resolve.ExternalDepsResolutionResult;
 
 import java.util.*;
 
@@ -49,7 +51,7 @@ public class ArtifactsCollectionResolver extends DependencyResolverImpl implemen
   }
 
   @Override
-  Collection<ExternalDependency> resolveDependencies(@Nullable String configurationName, @Nullable String scope) {
+  public Collection<ExternalDependency> resolveDependencies(@Nullable String configurationName, @Nullable String scope) {
     if (configurationName == null) {
       return EMPTY;
     }
