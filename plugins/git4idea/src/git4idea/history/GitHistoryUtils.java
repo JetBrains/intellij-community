@@ -237,7 +237,7 @@ public class GitHistoryUtils {
   @NotNull
   public static List<GitCommit> history(@NotNull Project project, @NotNull VirtualFile root, String... parameters)
     throws VcsException {
-    final VcsLogObjectsFactory factory = GitLogUtil.getObjectsFactoryWithDisposeCheck(project);
+    VcsLogObjectsFactory factory = GitLogUtil.getObjectsFactoryWithDisposeCheck(project);
     if (factory == null) {
       return Collections.emptyList();
     }
@@ -258,7 +258,7 @@ public class GitHistoryUtils {
                                  @NotNull VirtualFile root,
                                  @NotNull Consumer<? super GitCommit> commitConsumer,
                                  @NotNull String... parameters) throws VcsException {
-    GitLogUtil.readFullDetails(project, root, commitConsumer, true, parameters);
+    GitLogUtil.readFullDetails(project, root, commitConsumer, true, true, parameters);
   }
 
   public static long getAuthorTime(@NotNull Project project, @NotNull FilePath path, @NotNull String commitsId) throws VcsException {
