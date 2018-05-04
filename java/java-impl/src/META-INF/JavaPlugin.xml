@@ -1203,5 +1203,9 @@
     <java.error.fix errorCode="lambda.variable.must.be.final"
                     implementationClass="com.intellij.codeInsight.daemon.impl.quickfix.VariableAccessFromInnerClassJava10Fix"
     />
+    <intentionAction>
+      <className>com.intellij.codeInsight.intention.impl.ChangeUIDAction</className>
+      <category>Serialization</category>
+    </intentionAction>
   </extensions>
 </idea-plugin>
