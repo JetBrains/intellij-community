@@ -264,18 +264,17 @@ public class StandardInstructionVisitor extends InstructionVisitor {
         }
       }
     }
-    return new DfaCallArguments(qualifier, arguments);
+    return new DfaCallArguments(qualifier, arguments, ControlFlowAnalyzer.isPure(method));
   }
 
   private static Stream<DfaValue> possibleReturnValues(DfaCallArguments callArguments,
                                                        DfaMemoryState state,
                                                        List<? extends MethodContract> contracts,
                                                        DfaValueFactory factory, DfaValue defaultResult) {
-    LinkedHashSet<DfaMemoryState> currentStates = ContainerUtil.newLinkedHashSet(state.createClosureState());
+    Set<CallState> currentStates = Collections.singleton(new CallState(state.createClosureState(), callArguments));
     Set<DfaMemoryState> finalStates = ContainerUtil.newLinkedHashSet();
     for (MethodContract contract : contracts) {
-      DfaValue result = contract.getReturnValue().toDfaValue(factory, defaultResult);
-      currentStates = addContractResults(callArguments, contract, currentStates, factory, finalStates, result);
+      currentStates = addContractResults(contract, currentStates, factory, finalStates, defaultResult);
     }
     return StreamEx.of(finalStates).map(DfaMemoryState::peek)
       .append(currentStates.isEmpty() ? StreamEx.empty() : StreamEx.of(defaultResult)).distinct();
@@ -312,25 +311,24 @@ public class StandardInstructionVisitor extends InstructionVisitor {
     if (finalStates.isEmpty()) {
       DfaCallArguments callArguments = popCall(instruction, runner, memState, true);
 
-      LinkedHashSet<DfaMemoryState> currentStates = ContainerUtil.newLinkedHashSet(memState);
-      DfaValue resultValue = getMethodResultValue(instruction, callArguments.myQualifier, memState, runner.getFactory());
+      Set<CallState> currentStates = Collections.singleton(new CallState(memState, callArguments));
+      DfaValue defaultResult = getMethodResultValue(instruction, callArguments.myQualifier, memState, runner.getFactory());
       if (callArguments.myArguments != null) {
         for (MethodContract contract : instruction.getContracts()) {
-          DfaValue returnValue = contract.getReturnValue().toDfaValue(runner.getFactory(), resultValue);
-          currentStates = addContractResults(callArguments, contract, currentStates, runner.getFactory(), finalStates, returnValue);
+          currentStates = addContractResults(contract, currentStates, runner.getFactory(), finalStates, defaultResult);
           if (currentStates.size() + finalStates.size() > DataFlowRunner.MAX_STATES_PER_BRANCH) {
             if (LOG.isDebugEnabled()) {
               LOG.debug("Too complex contract on " + instruction.getContext() + ", skipping contract processing");
             }
             finalStates.clear();
-            currentStates = ContainerUtil.newLinkedHashSet(memState);
+            currentStates = Collections.singleton(new CallState(memState, callArguments));
             break;
           }
         }
       }
-      for (DfaMemoryState state : currentStates) {
-        state.push(resultValue);
-        finalStates.add(state);
+      for (CallState callState : currentStates) {
+        callState.myMemoryState.push(defaultResult);
+        finalStates.add(callState.myMemoryState);
       }
     }
 
@@ -369,7 +367,7 @@ public class StandardInstructionVisitor extends InstructionVisitor {
     MutationSignature sig = MutationSignature.fromMethod(method);
     DfaValue[] argValues = popCallArguments(instruction, runner, memState, contractOnly, sig);
     final DfaValue qualifier = popQualifier(instruction, memState, sig);
-    return new DfaCallArguments(qualifier, argValues);
+    return new DfaCallArguments(qualifier, argValues, !instruction.shouldFlushFields());
   }
 
   @Nullable
@@ -446,35 +444,56 @@ public class StandardInstructionVisitor extends InstructionVisitor {
     return value;
   }
 
-  private static LinkedHashSet<DfaMemoryState> addContractResults(DfaCallArguments callArguments,
-                                                                  MethodContract contract,
-                                                                  LinkedHashSet<DfaMemoryState> states,
-                                                                  DfaValueFactory factory,
-                                                                  Set<DfaMemoryState> finalStates,
-                                                                  DfaValue returnValue) {
-    List<DfaValue> conditions = ContainerUtil.map(contract.getConditions(), cv -> cv.makeDfaValue(factory, callArguments));
-    if (StreamEx.of(conditions).allMatch(factory.getConstFactory().getTrue()::equals)) {
-      for (DfaMemoryState state : states) {
-        state.push(returnValue);
-        finalStates.add(state);
+  private static final class CallState {
+    @NotNull final DfaMemoryState myMemoryState;
+    @NotNull final DfaCallArguments myCallArguments;
+
+    private CallState(@NotNull DfaMemoryState state, @NotNull DfaCallArguments arguments) {
+      myMemoryState = state;
+      myCallArguments = arguments;
+    }
+
+    @Override
+    public boolean equals(Object o) {
+      if (this == o) return true;
+      if (!(o instanceof CallState)) return false;
+      CallState that = (CallState)o;
+      return myMemoryState.equals(that.myMemoryState) && myCallArguments.equals(that.myCallArguments);
+    }
+
+    @Override
+    public int hashCode() {
+      return 31 * myMemoryState.hashCode() + myCallArguments.hashCode();
+    }
+  }
+
+  private static Set<CallState> addContractResults(MethodContract contract,
+                                                   Set<CallState> states,
+                                                   DfaValueFactory factory,
+                                                   Set<DfaMemoryState> finalStates,
+                                                   DfaValue defaultResult) {
+    if(contract.isTrivial()) {
+      for (CallState callState : states) {
+        DfaValue returnValue = contract.getReturnValue().toDfaValue(factory, defaultResult, callState.myCallArguments);
+        callState.myMemoryState.push(returnValue);
+        finalStates.add(callState.myMemoryState);
       }
-      return new LinkedHashSet<>();
-    }
-    if (StreamEx.of(conditions).has(factory.getConstFactory().getFalse())) {
-      return states;
+      return Collections.emptySet();
     }
 
-    LinkedHashSet<DfaMemoryState> falseStates = ContainerUtil.newLinkedHashSet();
-    LinkedHashSet<DfaMemoryState> trueStates = ContainerUtil.newLinkedHashSet();
+    Set<CallState> falseStates = new LinkedHashSet<>();
 
-    for (DfaMemoryState state : states) {
-      for (DfaValue condition : conditions) {
+    for (CallState callState : states) {
+      DfaMemoryState state = callState.myMemoryState;
+      for (ContractValue contractValue : contract.getConditions()) {
+        DfaValue condition = contractValue.makeDfaValue(factory, callState.myCallArguments);
         if (condition == null) {
           condition = DfaUnknownValue.getInstance();
         }
         DfaMemoryState falseState = state.createCopy();
         if (falseState.applyContractCondition(condition.createNegated())) {
-          falseStates.add(falseState);
+          DfaCallArguments arguments = contractValue.updateArgumentsOnFailedCondition(callState.myCallArguments);
+          falseStates.add(new CallState(falseState, arguments));
         }
         if (!state.applyContractCondition(condition)) {
           state = null;
@@ -482,15 +501,12 @@ public class StandardInstructionVisitor extends InstructionVisitor {
         }
       }
       if(state != null) {
-        trueStates.add(state);
+        DfaValue returnValue = contract.getReturnValue().toDfaValue(factory, defaultResult, callState.myCallArguments);
+        state.push(returnValue);
+        finalStates.add(state);
       }
     }
 
-    for (DfaMemoryState state : trueStates) {
-      state.push(returnValue);
-      finalStates.add(state);
-    }
-    
     return falseStates;
   }
 

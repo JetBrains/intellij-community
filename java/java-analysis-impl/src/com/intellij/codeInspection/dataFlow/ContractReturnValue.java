@@ -1,10 +1,7 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInspection.dataFlow;
 
-import com.intellij.codeInspection.dataFlow.value.DfaConstValue;
-import com.intellij.codeInspection.dataFlow.value.DfaValue;
-import com.intellij.codeInspection.dataFlow.value.DfaValueFactory;
-import com.intellij.codeInspection.dataFlow.value.DfaVariableValue;
+import com.intellij.codeInspection.dataFlow.value.*;
 import com.intellij.psi.*;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -93,9 +90,10 @@ public abstract class ContractReturnValue {
    *
    * @param factory a {@link DfaValueFactory} which can be used to create new values if necessary
    * @param defaultValue a default method return type value in the absence of the contracts (may contain method type information)
+   * @param arguments arguments passed
    * @return a value which represents the constraints of this contract return value.
    */
-  public abstract DfaValue toDfaValue(DfaValueFactory factory, DfaValue defaultValue);
+  public abstract DfaValue toDfaValue(DfaValueFactory factory, DfaValue defaultValue, DfaCallArguments arguments);
 
   /**
    * Returns true if the supplied {@link DfaValue} could be compatible with this return value. If false is returned, then
@@ -306,7 +304,7 @@ public abstract class ContractReturnValue {
     }
 
     @Override
-    public DfaValue toDfaValue(DfaValueFactory factory, DfaValue defaultValue) {
+    public DfaValue toDfaValue(DfaValueFactory factory, DfaValue defaultValue, DfaCallArguments arguments) {
       return defaultValue;
     }
 
@@ -323,7 +321,7 @@ public abstract class ContractReturnValue {
     }
 
     @Override
-    public DfaValue toDfaValue(DfaValueFactory factory, DfaValue defaultValue) {
+    public DfaValue toDfaValue(DfaValueFactory factory, DfaValue defaultValue, DfaCallArguments arguments) {
       return factory.getConstFactory().getContractFail();
     }
 
@@ -340,7 +338,7 @@ public abstract class ContractReturnValue {
     }
 
     @Override
-    public DfaValue toDfaValue(DfaValueFactory factory, DfaValue defaultValue) {
+    public DfaValue toDfaValue(DfaValueFactory factory, DfaValue defaultValue, DfaCallArguments arguments) {
       return factory.getConstFactory().getNull();
     }
 
@@ -362,7 +360,7 @@ public abstract class ContractReturnValue {
     }
 
     @Override
-    public DfaValue toDfaValue(DfaValueFactory factory, DfaValue defaultValue) {
+    public DfaValue toDfaValue(DfaValueFactory factory, DfaValue defaultValue, DfaCallArguments arguments) {
       return factory.withFact(defaultValue, DfaFactType.CAN_BE_NULL, false);
     }
 
@@ -379,8 +377,18 @@ public abstract class ContractReturnValue {
     }
 
     @Override
-    public DfaValue toDfaValue(DfaValueFactory factory, DfaValue defaultValue) {
-      return factory.withFact(defaultValue, DfaFactType.CAN_BE_NULL, false);
+    public DfaValue toDfaValue(DfaValueFactory factory, DfaValue defaultValue, DfaCallArguments arguments) {
+      DfaValue value = factory.withFact(defaultValue, DfaFactType.CAN_BE_NULL, false);
+      if (arguments.myPure) {
+        boolean unmodifiableView =
+          value instanceof DfaFactMapValue && ((DfaFactMapValue)value).get(DfaFactType.MUTABILITY) == Mutability.UNMODIFIABLE_VIEW;
+        // Unmodifiable view methods like Collections.unmodifiableList create new object, but their special field "size" is
+        // actually a delegate, so we cannot trust it if the original value is not local
+        if (!unmodifiableView) {
+          value = factory.withFact(value, DfaFactType.LOCALITY, true);
+        }
+      }
+      return value;
     }
 
     @Override
@@ -405,7 +413,9 @@ public abstract class ContractReturnValue {
     }
 
     @Override
-    public DfaValue toDfaValue(DfaValueFactory factory, DfaValue defaultValue) {
+    public DfaValue toDfaValue(DfaValueFactory factory, DfaValue defaultValue, DfaCallArguments arguments) {
+      DfaValue qualifier = arguments.myQualifier;
+      if (qualifier != null && qualifier != DfaUnknownValue.getInstance()) return qualifier;
       return factory.withFact(defaultValue, DfaFactType.CAN_BE_NULL, false);
     }
 
@@ -441,7 +451,7 @@ public abstract class ContractReturnValue {
     }
 
     @Override
-    public DfaValue toDfaValue(DfaValueFactory factory, DfaValue defaultValue) {
+    public DfaValue toDfaValue(DfaValueFactory factory, DfaValue defaultValue, DfaCallArguments arguments) {
       return factory.getBoolean(myValue);
     }
 
@@ -497,7 +507,11 @@ public abstract class ContractReturnValue {
     }
 
     @Override
-    public DfaValue toDfaValue(DfaValueFactory factory, DfaValue defaultValue) {
+    public DfaValue toDfaValue(DfaValueFactory factory, DfaValue defaultValue, DfaCallArguments arguments) {
+      if (arguments.myArguments != null && arguments.myArguments.length > myParamNumber) {
+        DfaValue argument = arguments.myArguments[myParamNumber];
+        if (argument != null && argument != DfaUnknownValue.getInstance()) return argument;
+      }
       return defaultValue;
     }
 

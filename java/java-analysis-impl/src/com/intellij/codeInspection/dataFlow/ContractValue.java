@@ -38,6 +38,10 @@ public abstract class ContractValue {
     return false;
   }
 
+  public DfaCallArguments updateArgumentsOnFailedCondition(DfaCallArguments arguments) {
+    return arguments;
+  }
+
   public static ContractValue qualifier() {
     return Qualifier.INSTANCE;
   }
@@ -100,10 +104,24 @@ public abstract class ContractValue {
       if (arguments.myArguments.length <= myIndex) {
         return DfaUnknownValue.getInstance();
       }
-      else {
-        DfaValue arg = arguments.myArguments[myIndex];
-        return arg instanceof DfaBoxedValue ? ((DfaBoxedValue)arg).getWrappedValue() : arg;
+      DfaValue arg = arguments.myArguments[myIndex];
+      return arg instanceof DfaBoxedValue ? ((DfaBoxedValue)arg).getWrappedValue() : arg;
+    }
+
+    DfaCallArguments makeNotNull(DfaCallArguments arguments) {
+      if (arguments.myArguments.length <= myIndex) {
+        return arguments;
       }
+      DfaValue arg = arguments.myArguments[myIndex];
+      if (arg instanceof DfaFactMapValue) {
+        DfaValue newArg = ((DfaFactMapValue)arg).withFact(DfaFactType.CAN_BE_NULL, false);
+        if (newArg != arg) {
+          DfaValue[] newArguments = arguments.myArguments.clone();
+          newArguments[myIndex] = newArg;
+          return new DfaCallArguments(arguments.myQualifier, newArguments, arguments.myPure);
+        }
+      }
+      return arguments;
     }
 
     @Override
@@ -182,6 +200,26 @@ public abstract class ContractValue {
         default:
           return false;
       }
+    }
+
+    @Override
+    public DfaCallArguments updateArgumentsOnFailedCondition(DfaCallArguments arguments) {
+      if (myRelationType == DfaRelationValue.RelationType.EQ) {
+        ContractValue notNull;
+        if (myLeft == IndependentValue.NULL) {
+          notNull = myRight;
+        }
+        else if (myRight == IndependentValue.NULL) {
+          notNull = myLeft;
+        }
+        else {
+          return arguments;
+        }
+        if (notNull instanceof Argument) {
+          return ((Argument)notNull).makeNotNull(arguments);
+        }
+      }
+      return arguments;
     }
 
     @Override

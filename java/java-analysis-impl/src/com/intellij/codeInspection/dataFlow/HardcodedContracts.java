@@ -74,7 +74,7 @@ public class HardcodedContracts {
               ContractProvider.single(() -> new StandardMethodContract(new ValueConstraint[0], fail())))
     .register(anyOf(staticCall("com.google.common.base.Preconditions", "checkNotNull"),
                     staticCall(JAVA_UTIL_OBJECTS, "requireNonNull")),
-              (call, cnt) -> cnt > 0 ? failIfNull(0, cnt) : null)
+              (call, cnt) -> cnt > 0 ? failIfNull(0, cnt, true) : null)
     .register(staticCall("com.google.common.base.Preconditions", "checkArgument", "checkState"),
               (call, cnt) -> {
                 if (cnt == 0) return null;
@@ -256,7 +256,7 @@ public class HardcodedContracts {
       return Collections.singletonList(new StandardMethodContract(constraints, fail()));
     }
     if ("assertNotNull".equals(methodName)) {
-      return failIfNull(checkedParam, paramCount);
+      return failIfNull(checkedParam, paramCount, false);
     }
     return Collections.emptyList();
   }
@@ -320,7 +320,7 @@ public class HardcodedContracts {
         }
       }
       if (args.length == 1 && hasNotNullChainCall(call)) {
-        return failIfNull(0, 1);
+        return failIfNull(0, 1, false);
       }
     }
     return Collections.emptyList();
@@ -339,10 +339,14 @@ public class HardcodedContracts {
   }
 
   @NotNull
-  private static List<MethodContract> failIfNull(int argIndex, int argCount) {
+  private static List<MethodContract> failIfNull(int argIndex, int argCount, boolean returnArg) {
     ValueConstraint[] constraints = createConstraintArray(argCount);
     constraints[argIndex] = NULL_VALUE;
-    return Collections.singletonList(new StandardMethodContract(constraints, fail()));
+    StandardMethodContract failContract = new StandardMethodContract(constraints, fail());
+    if (returnArg) {
+      return Arrays.asList(failContract, new StandardMethodContract(createConstraintArray(argCount), returnParameter(argIndex)));
+    }
+    return Collections.singletonList(failContract);
   }
 
   public static boolean isHardcodedPure(PsiMethod method) {
