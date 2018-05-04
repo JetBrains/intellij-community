@@ -554,6 +554,13 @@ public class ExternalSystemUtil {
               ServiceManager.getService(project, SyncViewManager.class).onEvent(buildEvent);
             }
           }
+
+          @Override
+          public void onEnd(@NotNull ExternalSystemTaskId id) {
+            if (buildOutputInstantReader != null) {
+              buildOutputInstantReader.close();
+            }
+          }
         };
         final long startTS = System.currentTimeMillis();
         resolveProjectTask.execute(indicator, ArrayUtil.prepend(taskListener, ExternalSystemTaskNotificationListener.EP_NAME.getExtensions()));
