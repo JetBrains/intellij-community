@@ -118,6 +118,7 @@ public class TestCaseLoader {
   @NotNull
   private static TestClassesFilter affectedTestsFilter() {
     if (RUN_ONLY_AFFECTED_TESTS) {
+      System.out.println("Trying to load affected tests.");
       File affectedTestClasses = new File(System.getProperty("idea.home.path"), "discoveredTestClasses.txt");
       if (affectedTestClasses.exists()) {
         System.out.println("Loading file with affected classes " + affectedTestClasses.getAbsolutePath());
@@ -130,6 +131,7 @@ public class TestCaseLoader {
         }
       }
     }
+    System.out.println("No affected tests were found, will run with the standard test filter.");
     return TestClassesFilter.ALL_CLASSES;
   }
 
