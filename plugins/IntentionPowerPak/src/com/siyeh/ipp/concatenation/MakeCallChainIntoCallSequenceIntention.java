@@ -18,8 +18,6 @@ package com.siyeh.ipp.concatenation;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleManager;
-import com.intellij.psi.codeStyle.CodeStyleSettings;
-import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
 import com.intellij.psi.codeStyle.JavaCodeStyleSettings;
 import com.intellij.util.ObjectUtils;
 import com.siyeh.ig.psiutils.CommentTracker;
@@ -93,9 +91,7 @@ public class MakeCallChainIntoCallSequenceIntention extends Intention {
         else {
           targetText = "x";
           showRenameTemplate = true;
-          final Project project = element.getProject();
-          final CodeStyleSettings codeStyleSettings = CodeStyleSettingsManager.getSettings(project);
-          if (codeStyleSettings.getCustomSettings(JavaCodeStyleSettings.class).GENERATE_FINAL_LOCALS) {
+          if (JavaCodeStyleSettings.getInstance(element.getContainingFile()).GENERATE_FINAL_LOCALS) {
             firstStatement = "final " + rootType.getCanonicalText() + ' ' + targetText + '=' + root.getText() + ';';
           }
           else {
@@ -128,9 +124,7 @@ public class MakeCallChainIntoCallSequenceIntention extends Intention {
           }
           targetText = "x";
           showRenameTemplate = true;
-          final Project project = element.getProject();
-          final CodeStyleSettings codeStyleSettings = CodeStyleSettingsManager.getSettings(project);
-          if (codeStyleSettings.getCustomSettings(JavaCodeStyleSettings.class).GENERATE_FINAL_LOCALS) {
+          if (JavaCodeStyleSettings.getInstance(element.getContainingFile()).GENERATE_FINAL_LOCALS) {
             firstStatement = "final " + rootType.getCanonicalText() + " x=" + root.getText() + ';';
           }
           else {

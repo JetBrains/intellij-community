@@ -15,6 +15,7 @@
  */
 package com.siyeh.ig.style;
 
+import com.intellij.application.options.CodeStyle;
 import com.intellij.codeInspection.CleanupLocalInspectionTool;
 import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.codeInspection.ProblemHighlightType;
@@ -25,7 +26,6 @@ import com.intellij.openapi.wm.WindowManager;
 import com.intellij.profile.codeInspection.InspectionProjectProfileManager;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
-import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
 import com.intellij.psi.codeStyle.JavaCodeStyleSettings;
 import com.intellij.psi.impl.source.codeStyle.ImportHelper;
 import com.intellij.psi.javadoc.PsiDocComment;
@@ -177,8 +177,7 @@ public class UnnecessaryFullyQualifiedNameInspection extends BaseInspection impl
         if ("package-info.java".equals(file.getName())) {
           return;
         }
-        final CodeStyleSettings styleSettings = CodeStyleSettingsManager.getSettings(reference.getProject());
-        final JavaCodeStyleSettings javaSettings = styleSettings.getCustomSettings(JavaCodeStyleSettings.class);
+        final JavaCodeStyleSettings javaSettings = JavaCodeStyleSettings.getInstance(reference.getContainingFile());
         if (javaSettings.useFqNamesInJavadocAlways()) {
           return;
         }
@@ -234,7 +233,7 @@ public class UnnecessaryFullyQualifiedNameInspection extends BaseInspection impl
       if (!(target instanceof PsiClass)) {
         return;
       }
-      final CodeStyleSettings styleSettings = CodeStyleSettingsManager.getSettings(reference.getProject());
+      final CodeStyleSettings styleSettings = CodeStyle.getSettings(reference.getContainingFile());
       final PsiDocComment containingComment = PsiTreeUtil.getParentOfType(reference, PsiDocComment.class);
       boolean reportAsInformationInsideJavadoc = false;
       if (containingComment != null) {
