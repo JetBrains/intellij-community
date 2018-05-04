@@ -291,7 +291,7 @@ public class DependencyResolverImpl implements DependencyResolver {
     boolean checkCompileOnlyDeps = compileClasspathConfiguration != null && !originCompileConfiguration.getResolvedConfiguration().hasError();
 
     for (ExternalDependency dep : new DependencyTraverser(compileDependencies)) {
-      final Collection<File> resolvedFiles = resolve(dep);
+      final Collection<File> resolvedFiles = getFiles(dep);
       resolvedMap.put(resolvedFiles, dep);
 
       // since version 3.4 compileOnly no longer extends compile
@@ -316,7 +316,7 @@ public class DependencyResolverImpl implements DependencyResolver {
     Multimap<Object, ExternalDependency> resolvedRuntimeMap = ArrayListMultimap.create();
 
     for (ExternalDependency dep : new DependencyTraverser(runtimeDependencies)) {
-      Collection<ExternalDependency> dependencies = resolvedMap.get(resolve(dep));
+      Collection<ExternalDependency> dependencies = resolvedMap.get(getFiles(dep));
       if (dependencies != null && !dependencies.isEmpty() && dep.getDependencies().isEmpty()) {
         runtimeDependencies.remove(dep);
         ((AbstractExternalDependency)dep).setScope(compileScope);
@@ -328,7 +328,7 @@ public class DependencyResolverImpl implements DependencyResolver {
         if (dependencies != null && !dependencies.isEmpty()) {
           ((AbstractExternalDependency)dep).setScope(compileScope);
         }
-        resolvedRuntimeMap.put(resolve(dep), dep);
+        resolvedRuntimeMap.put(getFiles(dep), dep);
       }
     }
 
@@ -549,7 +549,7 @@ public class DependencyResolverImpl implements DependencyResolver {
     final Set<Configuration> providedConfigurations = new LinkedHashSet<Configuration>();
     resolvedMap = ArrayListMultimap.create();
     for (ExternalDependency dep : new DependencyTraverser(result)) {
-      resolvedMap.put(resolve(dep), dep);
+      resolvedMap.put(getFiles(dep), dep);
     }
 
     if (sourceSet.getName().equals("main") && myProject.getPlugins().findPlugin(WarPlugin.class) != null) {
@@ -579,7 +579,7 @@ public class DependencyResolverImpl implements DependencyResolver {
         for (Configuration configuration : ideaPluginProvidedConfigurations) {
           Collection<ExternalDependency> providedDependencies = resolveDependencies(configuration, providedScope).getExternalDeps();
           for(ExternalDependency it : new DependencyTraverser(providedDependencies)) {
-            resolvedMap.put(resolve(it), it);
+            resolvedMap.put(getFiles(it), it);
           }
           result.addAll(providedDependencies);
         }
@@ -589,7 +589,7 @@ public class DependencyResolverImpl implements DependencyResolver {
     for (Configuration cfg : providedConfigurations) {
       Collection<ExternalDependency> providedDependencies = resolveDependencies(cfg, providedScope).getExternalDeps();
       for (ExternalDependency dep : new DependencyTraverser(providedDependencies)) {
-        Collection<ExternalDependency> dependencies = resolvedMap.get(resolve(dep));
+        Collection<ExternalDependency> dependencies = resolvedMap.get(getFiles(dep));
         if (!dependencies.isEmpty()) {
           if (dep.getDependencies().isEmpty()) {
             providedDependencies.remove(dep);
@@ -598,7 +598,7 @@ public class DependencyResolverImpl implements DependencyResolver {
             ((AbstractExternalDependency)depForScope).setScope(providedScope);
           }
         } else {
-          resolvedMap.put(resolve(dep), dep);
+          resolvedMap.put(getFiles(dep), dep);
         }
       }
       result.addAll(providedDependencies);
@@ -653,7 +653,7 @@ public class DependencyResolverImpl implements DependencyResolver {
   }
 
   @NotNull
-  static Collection<File> resolve(ExternalDependency dependency) {
+  static Collection<File> getFiles(ExternalDependency dependency) {
     if (dependency instanceof ExternalLibraryDependency) {
       return Collections.singleton(((ExternalLibraryDependency)dependency).getFile());
     } else if (dependency instanceof FileCollectionDependency) {
