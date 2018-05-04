@@ -1,5 +1,6 @@
 package circlet.actions
 
+import circlet.app.*
 import circlet.client.*
 import circlet.components.*
 import circlet.platform.client.*
@@ -14,8 +15,11 @@ private val log = KLoggers.logger("plugin/TestCircletAction.kt")
 
 class TestCircletAction : AnAction() {
     override fun update(e: AnActionEvent) {
+        val loginModel = e.project?.connection?.loginModel
+
         e.presentation.isEnabledAndVisible =
-            e.project?.connection?.loginModel?.client?.connectionStatus?.value == ConnectionStatus.CONNECTED
+            loginModel?.meSession?.value is MeSession.Connected &&
+            loginModel.client.connectionStatus.value == ConnectionStatus.CONNECTED
     }
 
     override fun actionPerformed(e: AnActionEvent) {
