@@ -3,11 +3,10 @@
  */
 package com.jetbrains.python.codeInsight.stdlib
 
-import com.jetbrains.python.psi.PyClass
-import com.jetbrains.python.psi.PyExpression
-import com.jetbrains.python.psi.PyKnownDecoratorUtil
+import com.intellij.psi.PsiElement
+import com.jetbrains.python.PyNames
+import com.jetbrains.python.psi.*
 import com.jetbrains.python.psi.PyKnownDecoratorUtil.KnownDecorator
-import com.jetbrains.python.psi.PyUtil
 import com.jetbrains.python.psi.impl.PyEvaluator
 import com.jetbrains.python.psi.resolve.PyResolveContext
 import com.jetbrains.python.psi.types.TypeEvalContext
@@ -47,7 +46,7 @@ private fun parseDataclassParameters(cls: PyClass,
       if (type != null) {
         for (mapping in decorator.multiMapArguments(PyResolveContext.noImplicits().withTypeEvalContext(context))) {
           if (mapping.unmappedArguments.isEmpty() && mapping.unmappedParameters.isEmpty()) {
-            val builder = PyDataclassParametersBuilder(type)
+            val builder = PyDataclassParametersBuilder(type, knownDecorator, cls)
 
             mapping
               .mappedParameters
@@ -87,7 +86,9 @@ data class PyDataclassParameters(val init: Boolean,
   }
 }
 
-private class PyDataclassParametersBuilder(private val type: PyDataclassParameters.Type) {
+private class PyDataclassParametersBuilder(private val type: PyDataclassParameters.Type,
+                                           decorator: KnownDecorator,
+                                           anchor: PsiElement) {
 
   companion object {
     private const val DEFAULT_INIT = true
@@ -113,6 +114,14 @@ private class PyDataclassParametersBuilder(private val type: PyDataclassParamete
   private var frozenArgument: PyExpression? = null
 
   private val others = mutableMapOf<String, PyExpression>()
+
+  init {
+    if (type == PyDataclassParameters.Type.ATTRS && decorator == KnownDecorator.ATTR_DATACLASS) {
+      PyElementGenerator.getInstance(anchor.project)
+        .createExpressionFromText(LanguageLevel.forElement(anchor), PyNames.TRUE)
+        .also { others["auto_attribs"] = it }
+    }
+  }
 
   fun update(name: String?, argument: PyExpression?) {
     val value = PyUtil.peelArgument(argument)

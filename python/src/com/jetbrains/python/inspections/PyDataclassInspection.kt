@@ -93,6 +93,7 @@ class PyDataclassInspection : PyInspection() {
 
             processAttrsDefaultThroughDecorator(node)
             processAttrsInitializersAndValidators(node)
+            processAttrsAutoAttribs(node, dataclassParameters)
           }
 
           PyNamedTupleInspection.inspectFieldsOrder(
@@ -410,6 +411,18 @@ class PyDataclassInspection : PyInspection() {
         false,
         myTypeEvalContext
       )
+    }
+
+    private fun processAttrsAutoAttribs(cls: PyClass, dataclassParameters: PyDataclassParameters) {
+      if (PyEvaluator.evaluateAsBoolean(PyUtil.peelArgument(dataclassParameters.others["auto_attribs"]), false)) {
+        cls.processClassLevelDeclarations { element, _ ->
+          if (element is PyTargetExpression && element.annotation == null && PyDataclassFieldStubImpl.create(element) != null) {
+            registerProblem(element, "Attribute '${element.name}' lacks a type annotation", ProblemHighlightType.GENERIC_ERROR)
+          }
+
+          true
+        }
+      }
     }
 
     private fun processAsInitVar(field: PyTargetExpression, postInit: PyFunction?): PyTargetExpression? {
