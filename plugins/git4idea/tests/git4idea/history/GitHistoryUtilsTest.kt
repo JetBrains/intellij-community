@@ -321,7 +321,7 @@ class GitHistoryUtilsTest : GitSingleRepoTest() {
     TestCase.assertEquals(expected.committerName, actual.committerName)
     TestCase.assertEquals(expected.committerEmail, actual.committerEmail)
     TestCase.assertEquals(expected.branchName, actual.branchName)
-    TestCase.assertNotNull("No content in revision " + actualRev, actual.content)
+    TestCase.assertNotNull("No content in revision $actualRev", actual.content)
     TestCase.assertEquals(String(expected.content), String(actual.content!!))
   }
 
