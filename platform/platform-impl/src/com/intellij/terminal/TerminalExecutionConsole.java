@@ -41,6 +41,7 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import java.awt.*;
 import java.io.IOException;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 /**
  * @author traff
@@ -49,6 +50,7 @@ public class TerminalExecutionConsole implements ConsoleView {
   private JBTerminalWidget myTerminalWidget;
   private final Project myProject;
   private final AppendableTerminalDataStream myDataStream;
+  private final AtomicBoolean myAttachedToProcess = new AtomicBoolean(false);
 
   private final TerminalKeyEncoder myKeyEncoder = new TerminalKeyEncoder();
 
@@ -56,7 +58,7 @@ public class TerminalExecutionConsole implements ConsoleView {
     myKeyEncoder.setAutoNewLine(true);
   }
 
-  public TerminalExecutionConsole(@NotNull Project project, @NotNull ProcessHandler processHandler) {
+  public TerminalExecutionConsole(@NotNull Project project, @Nullable ProcessHandler processHandler) {
     myProject = project;
     final JBTerminalSystemSettingsProviderBase provider = new JBTerminalSystemSettingsProviderBase() {
       @Override
@@ -84,41 +86,9 @@ public class TerminalExecutionConsole implements ConsoleView {
       }
     };
     Disposer.register(myTerminalWidget, provider);
-
-    TerminalSession session = myTerminalWidget
-      .createTerminalSession(
-        new ProcessHandlerTtyConnector(processHandler, EncodingProjectManager.getInstance(project).getDefaultCharset()));
-
-    processHandler.addProcessListener(new ProcessAdapter() {
-      @Override
-      public void startNotified(@NotNull ProcessEvent event) {
-        session.start();
-      }
-
-      @Override
-      public void onTextAvailable(@NotNull ProcessEvent event, @NotNull Key outputType) {
-        try {
-          ConsoleViewContentType contentType = null;
-          if (outputType != ProcessOutputTypes.STDOUT) {
-            contentType = ConsoleViewContentType.getConsoleViewType(outputType);
-          }
-
-          printText(event.getText(), contentType);
-
-          if (outputType == ProcessOutputTypes.SYSTEM) {
-            myDataStream.append('\r');
-          }
-        }
-        catch (IOException e) {
-          // pass
-        }
-      }
-
-      @Override
-      public void processTerminated(@NotNull ProcessEvent event) {
-        myTerminalWidget.getTerminalPanel().setCursorVisible(false);
-      }
-    });
+    if (processHandler != null) {
+      attachToProcess(processHandler);
+    }
   }
 
   private void printText(@NotNull String text, @Nullable ConsoleViewContentType contentType) throws IOException {
@@ -158,6 +128,57 @@ public class TerminalExecutionConsole implements ConsoleView {
 
   @Override
   public void attachToProcess(ProcessHandler processHandler) {
+    if (processHandler != null) {
+      attachToProcess(processHandler, true);
+    }
+  }
+
+  /**
+   * @param processHandler        ProcessHandler instance wrapping underlying PtyProcess
+   * @param attachToProcessOutput true if process output should be printed in the console,
+   *                              false if output printing is managed externally, e.g. by testing
+   *                              console {@link com.intellij.execution.testframework.ui.BaseTestsOutputConsoleView}
+   */
+  protected final void attachToProcess(@NotNull ProcessHandler processHandler, boolean attachToProcessOutput) {
+    if (!myAttachedToProcess.compareAndSet(false, true)) {
+      return;
+    }
+    TerminalSession session = myTerminalWidget
+      .createTerminalSession(
+        new ProcessHandlerTtyConnector(processHandler, EncodingProjectManager.getInstance(myProject).getDefaultCharset()));
+
+    processHandler.addProcessListener(new ProcessAdapter() {
+      @Override
+      public void startNotified(@NotNull ProcessEvent event) {
+        session.start();
+      }
+
+      @Override
+      public void onTextAvailable(@NotNull ProcessEvent event, @NotNull Key outputType) {
+        if (attachToProcessOutput) {
+          try {
+            ConsoleViewContentType contentType = null;
+            if (outputType != ProcessOutputTypes.STDOUT) {
+              contentType = ConsoleViewContentType.getConsoleViewType(outputType);
+            }
+
+            printText(event.getText(), contentType);
+
+            if (outputType == ProcessOutputTypes.SYSTEM) {
+              myDataStream.append('\r');
+            }
+          }
+          catch (IOException e) {
+            // pass
+          }
+        }
+      }
+
+      @Override
+      public void processTerminated(@NotNull ProcessEvent event) {
+        myTerminalWidget.getTerminalPanel().setCursorVisible(false);
+      }
+    });
   }
 
   @Override
