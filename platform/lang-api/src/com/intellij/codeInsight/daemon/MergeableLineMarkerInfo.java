@@ -58,11 +58,13 @@ public abstract class MergeableLineMarkerInfo<T extends PsiElement> extends Line
   }
 
 
+  @NotNull
   public GutterIconRenderer.Alignment getCommonIconAlignment(@NotNull List<MergeableLineMarkerInfo> infos) {
     return GutterIconRenderer.Alignment.LEFT;
   }
 
-  public String getElementPresentation(PsiElement element) {
+  @NotNull
+  public String getElementPresentation(@NotNull PsiElement element) {
     return element.getText();
   }
 
@@ -117,7 +119,8 @@ public abstract class MergeableLineMarkerInfo<T extends PsiElement> extends Line
             template.getCommonIconAlignment(markers));
     }
 
-    private static TextRange getCommonTextRange(List<MergeableLineMarkerInfo> markers) {
+    @NotNull
+    private static TextRange getCommonTextRange(@NotNull List<MergeableLineMarkerInfo> markers) {
       int startOffset = Integer.MAX_VALUE;
       int endOffset = Integer.MIN_VALUE;
       for (MergeableLineMarkerInfo marker : markers) {
@@ -127,6 +130,7 @@ public abstract class MergeableLineMarkerInfo<T extends PsiElement> extends Line
       return TextRange.create(startOffset, endOffset);
     }
 
+    @NotNull
     private static GutterIconNavigationHandler<PsiElement> getCommonNavigationHandler(@NotNull final List<MergeableLineMarkerInfo> markers) {
       return (e, elt) -> {
         final List<LineMarkerInfo> infos = new ArrayList<>(markers);
