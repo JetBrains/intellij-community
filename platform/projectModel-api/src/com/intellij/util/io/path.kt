@@ -17,7 +17,12 @@ fun Path.exists() = Files.exists(this)
 fun Path.createDirectories(): Path {
   // symlink or existing regular file - Java SDK do this check, but with as `isDirectory(dir, LinkOption.NOFOLLOW_LINKS)`, i.e. links are not checked
   if (!Files.isDirectory(this)) {
-    doCreateDirectories(toAbsolutePath())
+    try {
+      doCreateDirectories(toAbsolutePath())
+    }
+    catch (ignored: FileAlreadyExistsException) {
+      // toAbsolutePath can return resolved path or file exists now
+    }
   }
   return this
 }
