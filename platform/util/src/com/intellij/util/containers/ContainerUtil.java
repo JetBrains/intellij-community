@@ -1569,6 +1569,24 @@ public class ContainerUtil extends ContainerUtilRt {
   }
 
   /**
+   * Returns the only item from the collection or null if collection is empty or contains more than one item
+   *
+   * @param items collection to get the item from
+   * @param <T> type of collection element
+   * @return the only collection element or null
+   */
+  @Nullable
+  @Contract(pure=true)
+  public static <T> T getOnlyItem(@Nullable final Collection<T> items) {
+    return getOnlyItem(items, null);
+  }
+
+  @Contract(pure=true)
+  public static <T> T getOnlyItem(@Nullable final Collection<T> items, @Nullable final T defaultResult) {
+    return items == null || items.size() != 1 ? defaultResult : items.iterator().next();
+  }
+
+  /**
    * The main difference from {@code subList} is that {@code getFirstItems} does not
    * throw any exceptions, even if maxItems is greater than size of the list
    *
