@@ -19,7 +19,6 @@ import com.intellij.codeInsight.PsiEquivalenceUtil;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
-import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.*;
@@ -32,14 +31,10 @@ import com.intellij.psi.util.PsiUtil;
 import com.intellij.psi.util.TypeConversionUtil;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.IncorrectOperationException;
-import java.util.HashMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 /**
  * @author dsl
@@ -98,8 +93,8 @@ public final class Match {
   }
 
 
-  public boolean putParameter(Pair<PsiVariable, PsiType> parameter, PsiElement value) {
-    final PsiVariable psiVariable = parameter.first;
+  public boolean putParameter(DuplicatesFinder.Parameter parameter, PsiElement value) {
+    final PsiVariable psiVariable = parameter.getVariable();
 
     if (myDeclarationCorrespondence.get(psiVariable) == null) {
       final boolean [] valueDependsOnReplacedScope = new boolean[1];
@@ -125,7 +120,7 @@ public final class Match {
     final boolean isVararg = psiVariable instanceof PsiParameter && ((PsiParameter)psiVariable).isVarArgs();
     if (!(value instanceof PsiExpression)) return false;
     final PsiType type = ((PsiExpression)value).getType();
-    final PsiType parameterType = parameter.second;
+    final PsiType parameterType = parameter.getType();
     if (type == null) return false;
     if (currentValue == null) {
       if (parameterType instanceof PsiClassType && ((PsiClassType)parameterType).resolve() instanceof PsiTypeParameter) {
