@@ -634,7 +634,7 @@ public class SearchEverywhereUI extends BorderLayoutPanel {
     }
   }
 
-  private class CompositeCellRenderer implements ListCellRenderer<Object> {
+  private class CompositeCellRenderer implements ListCellRenderer {
 
     public CompositeCellRenderer(Map<ResultsRange, SearchEverywhereContributor> delegates) {
       this.delegates = delegates;
@@ -644,32 +644,33 @@ public class SearchEverywhereUI extends BorderLayoutPanel {
 
     @Override
     public Component getListCellRendererComponent(JList list, Object value, int index, boolean isSelected, boolean cellHasFocus) {
-      return getDelegate(index).getListCellRendererComponent(list, value, index, isSelected, cellHasFocus);
+      if (isMoreElement(index)) {
+        return moreRenderer.getListCellRendererComponent(list, value, index, isSelected, cellHasFocus);
+      }
+
+      Map.Entry<ResultsRange, SearchEverywhereContributor> delegateEntry = delegates.entrySet().stream()
+               .filter(entry -> entry.getKey().getElementsRange()
+               .isWithin(index, true))
+               .findAny()
+               .orElseThrow(() -> new IllegalStateException("Contributor for element is not specified"));
+
+      SearchEverywhereContributor contributor = delegateEntry.getValue();
+      Component component = contributor.getElementsRenderer(myProject)
+                                       .getListCellRendererComponent(list, value, index, isSelected, cellHasFocus);
+      int rangeStart = delegateEntry.getKey().getElementsRange().getFrom();
+      boolean allGroupSelected = SearchEverywhereContributor.ALL_CONTRIBUTORS_GROUP_ID.equals(getSelectedContributorID());
+      if (allGroupSelected && rangeStart == index) {
+        return groupTitleRenderer.withDisplayedData(contributor.getGroupName(), component);
+      }
+
+      return component;
     }
 
-    @NotNull
-    private ListCellRenderer<Object> getDelegate(int index) {
-      //is it "more item" ?
-      boolean isMoreElement = delegates.entrySet().stream()
+    private boolean isMoreElement(int index) {
+      return delegates.entrySet().stream()
                                        .map(entry -> entry.getKey().getMoreElementIndex().orElse(null))
                                        .filter(Objects::nonNull)
                                        .anyMatch(i -> i.equals(index));
-
-      if (isMoreElement) {
-        return moreRenderer;
-      }
-
-      //look for delegate in ranges
-      ListCellRenderer delegate = delegates.entrySet().stream()
-                          .filter(entry -> entry.getKey().getElementsRange().isWithin(index, true))
-                          .findAny()
-                          .map(entry -> entry.getValue().getElementsRenderer(myProject))
-                          .orElse(null);
-
-
-      if (delegate == null) throw new IllegalStateException("Contributor for element is not specified");
-
-      return delegate;
     }
   }
 
@@ -698,28 +699,65 @@ public class SearchEverywhereUI extends BorderLayoutPanel {
   private static final MoreRenderer moreRenderer = new MoreRenderer();
 
   public static class MoreRenderer extends JPanel implements ListCellRenderer<Object> {
-    final JLabel label = new JLabel("    ... more   ");
+    final JLabel label;
 
     private MoreRenderer() {
       super(new BorderLayout());
+      label = groupInfoLabel("    ... more   ");
       add(label, BorderLayout.CENTER);
     }
 
     @Override
     public Component getListCellRendererComponent(JList<?> list, Object value, int index, boolean isSelected, boolean cellHasFocus) {
       setBackground(UIUtil.getListBackground(isSelected));
-      label.setForeground(UIUtil.getLabelDisabledForeground());
-      label.setFont(UIUtil.getLabelFont().deriveFont(UIUtil.getFontSize(UIUtil.FontSize.SMALL)));
-      label.setBackground(UIUtil.getListBackground(isSelected));
-
       return this;
     }
+  }
+
+  private static final GroupTitleRenderer groupTitleRenderer = new GroupTitleRenderer();
+
+  public static class GroupTitleRenderer extends JPanel {
+
+    private final JLabel titleLabel;
+    private final BorderLayout myLayout = new BorderLayout();
+
+    public GroupTitleRenderer() {
+      setLayout(myLayout);
+      setBackground(UIUtil.getListBackground(false));
+      titleLabel = groupInfoLabel("Group");
+      SeparatorComponent separatorComponent = new SeparatorComponent(titleLabel.getPreferredSize().height / 2, UIUtil.getLabelDisabledForeground(), null);
+
+
+      JPanel topPanel = JBUI.Panels.simplePanel(5, 0)
+                                           .addToCenter(separatorComponent)
+                                           .addToLeft(titleLabel)
+                                           .withBorder(JBUI.Borders.empty())
+                                           .withBackground(UIUtil.getListBackground());
+      add(topPanel, BorderLayout.NORTH);
+    }
+
+    public GroupTitleRenderer withDisplayedData(String title, Component itemContent) {
+      titleLabel.setText(title);
+      Component prevContent = myLayout.getLayoutComponent(BorderLayout.CENTER);
+      if (prevContent != null) {
+        remove(prevContent);
+      }
+      add(itemContent, BorderLayout.CENTER);
+      return this;
+    }
+  }
+
+  private static JLabel groupInfoLabel(String text) {
+    JLabel label = new JLabel(text);
+    label.setForeground(UIUtil.getLabelDisabledForeground());
+    label.setFont(UIUtil.getLabelFont().deriveFont(UIUtil.getFontSize(UIUtil.FontSize.SMALL)));
+    label.setOpaque(false);
+    return label;
   }
 
   private void updateResultsPopupBounds() {
     int height = myResultsList.getPreferredSize().height + 2;
     int width = getWidth();
     myResultsPopup.setSize(JBUI.size(width, height));
-
   }
 }
