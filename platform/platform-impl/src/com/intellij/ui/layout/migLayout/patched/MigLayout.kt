@@ -37,9 +37,7 @@ import gnu.trove.THashMap
 import net.miginfocom.layout.*
 import java.awt.*
 import java.awt.event.ActionListener
-import java.util.*
 import javax.swing.*
-import javax.swing.Timer
 
 /** A very flexible layout manager.
  * Read the documentation that came with this layout manager for information on usage.
@@ -49,7 +47,7 @@ open class MigLayout @JvmOverloads constructor(val layoutConstraints: LC = LC(),
   private var cacheParentW: ContainerWrapper? = null
 
   @Transient
-  private val ccMap = THashMap<ComponentWrapper, CC>()
+  private val componentWrapperToConstraints = THashMap<ComponentWrapper, CC>()
   @Transient
   private var debugTimer: Timer? = null
 
@@ -62,18 +60,14 @@ open class MigLayout @JvmOverloads constructor(val layoutConstraints: LC = LC(),
   @Transient
   private var lastInvalidSize: Dimension? = null
   @Transient
-  private var lastWasInvalid = false  // Added in 3.7.1. May have regressions
+  private var lastWasInvalid = false
   @Transient
   private var lastParentSize: Dimension? = null
 
   @Transient
   private var dirty = true
 
-  /** Returns the current debugging state.
-   * @return The current debugging state.
-   */
-  private val isDebugEnabled: Boolean
-    get() = debugTimer != null
+  var isDebugEnabled = false
 
   private val debugMillis: Int
     get() {
@@ -83,61 +77,42 @@ open class MigLayout @JvmOverloads constructor(val layoutConstraints: LC = LC(),
 
   private var lastSize: Long = 0
 
-  private fun setComponentConstraintsImpl(comp: Component, constraints: Any) {
-    val parent = comp.parent
-    synchronized(if (parent != null) parent.treeLock else Any()) {
-      // 3.7.2. No sync if not added to a hierarchy. Defeats a NPE.
-      val cw = SwingComponentWrapper(comp as JComponent)
-      if (constraints is CC) {
-        ccMap[cw] = constraints
-      }
-      else {
-        throw IllegalArgumentException("Constraint must be ComponentConstraint: " + constraints.javaClass.toString())
-      }
-
-      dirty = true
+  private fun stopDebug() {
+    if (debugTimer != null) {
+      debugTimer!!.stop()
+      debugTimer = null
     }
   }
 
   /** Sets the debugging state for this layout manager instance. If debug is turned on a timer will repaint the last laid out parent
    * with debug information on top.
    *
-   *
    * Red fill and dashed red outline is used to indicate occupied cells in the grid. Blue dashed outline indicate
    * component bounds set.
    *
-   *
    * Note that debug can also be set on the layout constraints. There it will be persisted. The value set here will not. See the class
    * JavaDocs for information.
-   * @param parentW The parent to set debug for.
-   * @param b `true` means debug is turned on.
+   * @param parentWrapper The parent to set debug for.
    */
-  private fun setDebug(parentW: ComponentWrapper?, b: Boolean) {
-    if (!b || !(debugTimer == null || debugTimer!!.delay != debugMillis)) {
-      if (!b && debugTimer != null) {
-        debugTimer!!.stop()
-        debugTimer = null
-      }
+  private fun startDebug(parentWrapper: ComponentWrapper?) {
+    if (debugTimer?.delay == debugMillis) {
       return
     }
 
-    if (debugTimer != null) {
-      debugTimer!!.stop()
-    }
-
+    debugTimer?.stop()
 
     debugTimer = Timer(debugMillis, ActionListener {
       val grid = grid
       if (grid != null && (grid.container.component as Component).isShowing) {
         grid.paintDebug()
-        return@ActionListener
       }
-
-      debugTimer!!.stop()
-      debugTimer = null
+      else {
+        debugTimer!!.stop()
+        debugTimer = null
+      }
     })
 
-    val parent = parentW?.parent?.component as? Component
+    val parent = parentWrapper?.parent?.component as? Component
     if (parent != null) {
       SwingUtilities.invokeLater {
         val p = parent.parent ?: return@invokeLater
@@ -158,83 +133,67 @@ open class MigLayout @JvmOverloads constructor(val layoutConstraints: LC = LC(),
   /** Check if something has changed and if so recreate it to the cached objects.
    * @param parent The parent that is the target for this layout manager.
    */
-  private fun checkCache(parent: Container?) {
-    if (parent == null) {
-      return
-    }
-
+  private fun checkCache(parent: Container) {
     if (dirty) {
       grid = null
     }
 
-    cleanConstraintMaps(parent)
+    componentWrapperToConstraints.retainEntries { wrapper, _ -> (wrapper as SwingComponentWrapper).component.parent === parent }
 
-    // Check if the grid is valid
+    // check if the grid is valid
     val mc = PlatformDefaults.getModCount()
     if (lastModCount != mc) {
       grid = null
       lastModCount = mc
     }
 
-    if (!parent.isValid) {
-      if (!lastWasInvalid) {
-        lastWasInvalid = true
-
-        var hash = 0
-        var resetLastInvalidOnParent = false // Added in 3.7.3 to resolve a timing regression introduced in 3.7.1
-        for (wrapper in ccMap.keys) {
-          val component = wrapper.component
-          if (component is JTextArea || component is JEditorPane)
-            resetLastInvalidOnParent = true
-
-          hash = hash xor wrapper.layoutHashCode
-          hash += 285134905
-        }
-        if (resetLastInvalidOnParent) {
-          resetLastInvalidOnParent(parent)
-        }
-
-        if (hash != lastHash) {
-          grid = null
-          lastHash = hash
-        }
-
-        val ps = parent.size
-        if (lastInvalidSize == null || lastInvalidSize != ps) {
-          grid = null
-          lastInvalidSize = ps
-        }
-      }
-    }
-    else {
+    if (parent.isValid) {
       lastWasInvalid = false
+    }
+    else if (!lastWasInvalid) {
+      lastWasInvalid = true
+
+      var hash = 0
+      var resetLastInvalidOnParent = false // Added in 3.7.3 to resolve a timing regression introduced in 3.7.1
+      for (wrapper in componentWrapperToConstraints.keys) {
+        val component = wrapper.component
+        if (component is JTextArea || component is JEditorPane) {
+          resetLastInvalidOnParent = true
+        }
+
+        hash = hash xor wrapper.layoutHashCode
+        hash += 285134905
+      }
+      if (resetLastInvalidOnParent) {
+        resetLastInvalidOnParent(parent)
+      }
+
+      if (hash != lastHash) {
+        grid = null
+        lastHash = hash
+      }
+
+      val ps = parent.size
+      if (lastInvalidSize == null || lastInvalidSize != ps) {
+        grid = null
+        lastInvalidSize = ps
+      }
     }
 
     val par = checkParent(parent)
 
-    setDebug(par, debugMillis > 0)
+    if (debugMillis > 0) {
+      startDebug(par)
+    }
+    else {
+      stopDebug()
+    }
 
     if (grid == null) {
-      grid = Grid(par!!, layoutConstraints, rowConstraints, columnConstraints, ccMap, null)
+      grid = Grid(par!!, layoutConstraints, rowConstraints, columnConstraints, componentWrapperToConstraints, null)
     }
 
     dirty = false
-  }
-
-  /** Checks so all components in ccMap actually exist in the parent's collection. Removes
-   * any references that don't.
-   * @param parent The parent to compare ccMap against. Never null.
-   */
-  private fun cleanConstraintMaps(parent: Container) {
-    val parentCompSet = HashSet(Arrays.asList(*parent.components))
-
-    val it = ccMap.entries.iterator()
-    while (it.hasNext()) {
-      val c = it.next().key.component as Component
-      if (!parentCompSet.contains(c)) {
-        it.remove()
-      }
-    }
   }
 
   /**
@@ -268,13 +227,13 @@ open class MigLayout @JvmOverloads constructor(val layoutConstraints: LC = LC(),
     synchronized(parent.treeLock) {
       checkCache(parent)
 
-      val i = parent.insets
-      val b = intArrayOf(i.left, i.top, parent.width - i.left - i.right, parent.height - i.top - i.bottom)
-
-      if (grid!!.layout(b, layoutConstraints.alignX, layoutConstraints.alignY, isDebugEnabled)) {
+      val insets = parent.insets
+      val bounds = intArrayOf(insets.left, insets.top, parent.width - insets.left - insets.right, parent.height - insets.top - insets.bottom)
+      val isDebugEnabled = isDebugEnabled || debugMillis > 0
+      if (grid!!.layout(bounds, layoutConstraints.alignX, layoutConstraints.alignY, isDebugEnabled)) {
         grid = null
         checkCache(parent)
-        grid!!.layout(b, layoutConstraints.alignX, layoutConstraints.alignY, isDebugEnabled)
+        grid!!.layout(bounds, layoutConstraints.alignX, layoutConstraints.alignY, isDebugEnabled)
       }
 
       val newSize = grid!!.height[1] + (grid!!.width[1].toLong() shl 32)
@@ -301,23 +260,20 @@ open class MigLayout @JvmOverloads constructor(val layoutConstraints: LC = LC(),
   private fun adjustWindowSize(parent: ContainerWrapper?) {
     val wBounds = layoutConstraints.packWidth
     val hBounds = layoutConstraints.packHeight
-
     if (wBounds === BoundSize.NULL_SIZE && hBounds === BoundSize.NULL_SIZE) {
       return
     }
 
-    val packable = getPackable(parent!!.component as Component)
-    if (packable == null) {
-      return
-    }
+    val packable = getPackable(parent!!.component as Component) ?: return
 
     val pc = parent.component as Component
 
-    var c: Container? = pc as? Container ?: pc.parent
+    var c = pc as? Container ?: pc.parent
     while (c != null) {
       val layout = c.layout
-      if (layout is BoxLayout || layout is OverlayLayout)
+      if (layout is BoxLayout || layout is OverlayLayout) {
         (layout as LayoutManager2).invalidateLayout(c)
+      }
       c = c.parent
     }
 
@@ -339,24 +295,27 @@ open class MigLayout @JvmOverloads constructor(val layoutConstraints: LC = LC(),
       SwingUtilities.convertPointFromScreen(popPoint, invoker)
       packable.show(invoker, popPoint.x, popPoint.y)
 
-      packable.preferredSize = null // Reset preferred size so we don't read it again.
-
+      // reset preferred size so we don't read it again.
+      packable.preferredSize = null
     }
     else {
       packable.setBounds(x, y, targetW, targetH)
     }
   }
 
-  /** Returns a high level window or popup to pack, if any.
-   * @return May be null.
+  /**
+   * Returns a high level window or popup to pack, if any.
    */
   private fun getPackable(comp: Component): Container? {
     val popup = findType(JPopupMenu::class.java, comp)
-    if (popup != null) { // Lightweight/HeavyWeight popup must be handled separately
+    if (popup != null) {
+      // Lightweight/HeavyWeight popup must be handled separately
       var popupComp: Container? = popup
       while (popupComp != null) {
-        if (popupComp.javaClass.name.contains("HeavyWeightWindow"))
-          return popupComp // Return the heavy weight window for normal processing
+        if (popupComp.javaClass.name.contains("HeavyWeightWindow")) {
+          // return the heavy weight window for normal processing
+          return popupComp
+        }
         popupComp = popupComp.parent
       }
       return popup // Return the JPopup.
@@ -382,8 +341,8 @@ open class MigLayout @JvmOverloads constructor(val layoutConstraints: LC = LC(),
 
   fun getComponentConstraints(): Map<Component, CC> {
     val result = THashMap<Component, CC>()
-    for (entry in ccMap) {
-      result.put(entry.key.component as Component, entry.value)
+    for (entry in componentWrapperToConstraints) {
+      result.put((entry.key as SwingComponentWrapper).component, entry.value)
     }
     return result
   }
@@ -397,7 +356,7 @@ open class MigLayout @JvmOverloads constructor(val layoutConstraints: LC = LC(),
   override fun preferredLayoutSize(parent: Container): Dimension {
     synchronized(parent.treeLock) {
       if (lastParentSize == null || parent.size != lastParentSize) {
-        for (wrapper in ccMap.keys) {
+        for (wrapper in componentWrapperToConstraints.keys) {
           if (wrapper.contentBias != -1) {
             layoutContainer(parent)
             break
@@ -420,33 +379,37 @@ open class MigLayout @JvmOverloads constructor(val layoutConstraints: LC = LC(),
     val grid = grid
     val w = LayoutUtil.getSizeSafe(grid?.width, sizeType) + i.left + i.right
     val h = LayoutUtil.getSizeSafe(grid?.height, sizeType) + i.top + i.bottom
-
     return Dimension(w, h)
   }
 
   override fun getLayoutAlignmentX(parent: Container): Float {
-    val lc = layoutConstraints
-    return (if (lc.alignX != null) lc.alignX.getPixels(1f, checkParent(parent), null) else 0).toFloat()
+    val alignX = layoutConstraints.alignX ?: return 0f
+    return alignX.getPixels(1f, checkParent(parent), null).toFloat()
   }
 
   override fun getLayoutAlignmentY(parent: Container): Float {
-    val lc = layoutConstraints
-    return (if (lc.alignY != null) lc.alignY.getPixels(1f, checkParent(parent), null) else 0).toFloat()
+    val alignY = layoutConstraints.alignY ?: return 0f
+    return alignY.getPixels(1f, checkParent(parent), null).toFloat()
   }
 
   override fun addLayoutComponent(s: String, comp: Component) {
     addLayoutComponent(comp, s)
   }
 
-  override fun addLayoutComponent(comp: Component, constraints: Any) {
+  override fun addLayoutComponent(comp: Component, constraints: Any?) {
     synchronized(comp.parent.treeLock) {
-      setComponentConstraintsImpl(comp, constraints)
+      val componentWrapper = SwingComponentWrapper(comp as JComponent)
+      if (constraints != null) {
+        componentWrapperToConstraints.put(componentWrapper, constraints as CC)
+      }
+
+      dirty = true
     }
   }
 
   override fun removeLayoutComponent(comp: Component) {
     synchronized(comp.parent.treeLock) {
-      ccMap.remove(SwingComponentWrapper(comp as JComponent))
+      componentWrapperToConstraints.remove(SwingComponentWrapper(comp as JComponent))
       // to clear references
       grid = null
     }

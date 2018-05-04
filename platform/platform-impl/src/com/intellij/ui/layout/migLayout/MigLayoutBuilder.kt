@@ -6,8 +6,6 @@ import com.intellij.ui.layout.*
 import com.intellij.ui.layout.migLayout.patched.*
 import com.intellij.util.containers.ContainerUtil
 import net.miginfocom.layout.*
-import net.miginfocom.layout.PlatformDefaults.VISUAL_PADDING_PROPERTY
-import net.miginfocom.layout.PlatformDefaults.setDefaultVisualPadding
 import java.awt.Component
 import java.awt.Container
 import javax.swing.ButtonGroup
@@ -15,47 +13,6 @@ import javax.swing.JDialog
 import javax.swing.JLabel
 
 internal class MigLayoutBuilder(val spacing: SpacingConfiguration) : LayoutBuilderImpl {
-  companion object {
-    init {
-      // unset incorrect for our LaF values (todo add ability to provide own provider to MigLayout)
-      setDefaultVisualPadding("Button.$VISUAL_PADDING_PROPERTY", null)
-      setDefaultVisualPadding("Button.icon.$VISUAL_PADDING_PROPERTY", null)
-      setDefaultVisualPadding("Button.square.$VISUAL_PADDING_PROPERTY", null)
-      setDefaultVisualPadding("Button.square.icon.$VISUAL_PADDING_PROPERTY", null)
-      setDefaultVisualPadding("Button.gradient.$VISUAL_PADDING_PROPERTY", null)
-      setDefaultVisualPadding("Button.gradient.icon.$VISUAL_PADDING_PROPERTY", null)
-      setDefaultVisualPadding("Button.bevel.$VISUAL_PADDING_PROPERTY", null)
-      setDefaultVisualPadding("Button.bevel.icon.$VISUAL_PADDING_PROPERTY", null)
-      setDefaultVisualPadding("Button.textured.$VISUAL_PADDING_PROPERTY", null)
-      setDefaultVisualPadding("Button.textured.icon.$VISUAL_PADDING_PROPERTY", null)
-      setDefaultVisualPadding("Button.roundRect.$VISUAL_PADDING_PROPERTY", null)
-      setDefaultVisualPadding("Button.roundRect.icon.$VISUAL_PADDING_PROPERTY", null)
-      setDefaultVisualPadding("Button.recessed.$VISUAL_PADDING_PROPERTY", null)
-      setDefaultVisualPadding("Button.recessed.icon.$VISUAL_PADDING_PROPERTY", null)
-      setDefaultVisualPadding("Button.help.$VISUAL_PADDING_PROPERTY", null)
-      setDefaultVisualPadding("Button.help.icon.$VISUAL_PADDING_PROPERTY", null)
-
-      PlatformDefaults.setDefaultVisualPadding("ComboBox.$VISUAL_PADDING_PROPERTY", null)
-      PlatformDefaults.setDefaultVisualPadding("ComboBox.isPopDown.$VISUAL_PADDING_PROPERTY", null)
-      PlatformDefaults.setDefaultVisualPadding("ComboBox.isSquare.$VISUAL_PADDING_PROPERTY", null)
-
-      PlatformDefaults.setDefaultVisualPadding("ComboBox.editable.$VISUAL_PADDING_PROPERTY", null)
-      PlatformDefaults.setDefaultVisualPadding("ComboBox.editable.isSquare.$VISUAL_PADDING_PROPERTY", null)
-
-      PlatformDefaults.setDefaultVisualPadding("TextField.$VISUAL_PADDING_PROPERTY", null)
-      PlatformDefaults.setDefaultVisualPadding("TabbedPane.$VISUAL_PADDING_PROPERTY", null)
-
-      PlatformDefaults.setDefaultVisualPadding("Spinner.$VISUAL_PADDING_PROPERTY", null)
-
-      PlatformDefaults.setDefaultVisualPadding("RadioButton.$VISUAL_PADDING_PROPERTY", null)
-      PlatformDefaults.setDefaultVisualPadding("RadioButton.small.$VISUAL_PADDING_PROPERTY", null)
-      PlatformDefaults.setDefaultVisualPadding("RadioButton.mini.$VISUAL_PADDING_PROPERTY", null)
-      PlatformDefaults.setDefaultVisualPadding("CheckBox.$VISUAL_PADDING_PROPERTY", null)
-      PlatformDefaults.setDefaultVisualPadding("CheckBox.small.$VISUAL_PADDING_PROPERTY", null)
-      PlatformDefaults.setDefaultVisualPadding("CheckBox.mini.$VISUAL_PADDING_PROPERTY", null)
-    }
-  }
-
   /**
    * Map of component to constraints shared among rows (since components are unique)
    */
@@ -84,10 +41,6 @@ internal class MigLayoutBuilder(val spacing: SpacingConfiguration) : LayoutBuild
   }
 
   override fun build(container: Container, layoutConstraints: Array<out LCFlags>) {
-//    if (spacing.isCompensateVisualPaddings) {
-//      (container as JComponent).putClientProperty(JBUI.COMPENSATE_VISUAL_PADDING_KEY, false)
-//    }
-
     val lc = createLayoutConstraints()
     lc.gridGapY = gapToBoundSize(spacing.verticalGap, false)
     if (layoutConstraints.isEmpty()) {
