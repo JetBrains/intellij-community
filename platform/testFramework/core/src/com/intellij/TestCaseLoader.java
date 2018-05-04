@@ -52,7 +52,7 @@ public class TestCaseLoader {
   public TestCaseLoader(String classFilterName) {
     this(classFilterName, false);
   }
-  
+
   public TestCaseLoader(String classFilterName, boolean forceLoadPerformanceTests) {
     myForceLoadPerformanceTests = forceLoadPerformanceTests;
     TestClassesFilter testClassesFilter = calcTestClassFilter(classFilterName);
@@ -147,14 +147,14 @@ public class TestCaseLoader {
   }
 
   void addFirstTest(Class aClass) {
-    assert myFirstTestClass == null : "already added: "+aClass;
-    assert shouldAddTestCase(aClass, null, false) : "not a test: "+aClass;
+    assert myFirstTestClass == null : "already added: " + aClass;
+    assert shouldAddTestCase(aClass, null, false) : "not a test: " + aClass;
     myFirstTestClass = aClass;
   }
 
   void addLastTest(Class aClass) {
-    assert myLastTestClass == null : "already added: "+aClass;
-    assert shouldAddTestCase(aClass, null, false) : "not a test: "+aClass;
+    assert myLastTestClass == null : "already added: " + aClass;
+    assert shouldAddTestCase(aClass, null, false) : "not a test: " + aClass;
     myLastTestClass = aClass;
   }
 
@@ -171,7 +171,8 @@ public class TestCaseLoader {
         return true;
       }
     }
-    catch (NoSuchMethodException ignored) { }
+    catch (NoSuchMethodException ignored) {
+    }
 
     return TestFrameworkUtil.isJUnit4TestClass(testCaseClass);
   }
@@ -188,7 +189,7 @@ public class TestCaseLoader {
     if (bombedAnnotation == null) return false;
     return !TestFrameworkUtil.bombExplodes(bombedAnnotation);
   }
-  
+
   public void loadTestCases(final String moduleName, final Collection<String> classNamesIterator) {
     for (String className : classNamesIterator) {
       try {
@@ -224,7 +225,8 @@ public class TestCaseLoader {
       try {
         return FileUtil.loadLines(filePath);
       }
-      catch (IOException ignored) { }
+      catch (IOException ignored) {
+      }
     }
 
     return Collections.emptyList();
@@ -273,7 +275,7 @@ public class TestCaseLoader {
     List<Class> result = new ArrayList<>(myClassList.size());
     result.addAll(myClassList);
     Collections.sort(result, Comparator.comparingInt(TestCaseLoader::getRank));
-    
+
     if (myFirstTestClass != null) {
       result.add(0, myFirstTestClass);
     }
@@ -297,7 +299,7 @@ public class TestCaseLoader {
   }
 
   static boolean shouldIncludePerformanceTestCase(Class aClass) {
-    return isIncludingPerformanceTestsRun() || isPerformanceTestsRun() || !isPerformanceTest(null,aClass);
+    return isIncludingPerformanceTestsRun() || isPerformanceTestsRun() || !isPerformanceTest(null, aClass);
   }
 
   static boolean isPerformanceTest(String methodName, Class aClass) {
@@ -320,9 +322,9 @@ public class TestCaseLoader {
       clearClasses();
     }
     long after = System.currentTimeMillis();
-    
-    String message = "Number of test classes found: " + getClasses().size() 
-                      + " time to load: " + (after - before) / 1000 + "s.";
+
+    String message = "Number of test classes found: " + getClasses().size()
+                     + " time to load: " + (after - before) / 1000 + "s.";
     System.out.println(message);
     TeamCityLogger.info(message);
   }
