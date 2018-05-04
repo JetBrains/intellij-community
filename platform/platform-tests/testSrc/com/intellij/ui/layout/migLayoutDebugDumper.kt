@@ -4,9 +4,9 @@ package com.intellij.ui.layout
 import com.intellij.configurationStore.serialize
 import com.intellij.ui.dumpComponentBounds
 import com.intellij.ui.getComponentKey
+import com.intellij.ui.layout.migLayout.patched.*
 import com.intellij.util.xmlb.SkipDefaultsSerializationFilter
 import net.miginfocom.layout.*
-import net.miginfocom.swing.MigLayout
 import org.yaml.snakeyaml.DumperOptions
 import org.yaml.snakeyaml.Yaml
 import org.yaml.snakeyaml.introspector.Property
@@ -93,8 +93,9 @@ internal fun serializeLayout(component: Container, isIncludeCellBounds: Boolean 
   val layout = component.layout as MigLayout
 
   val componentConstrains = LinkedHashMap<String, Any>()
+  val componentToConstraints = layout.getComponentConstraints()
   for ((index, c) in component.components.withIndex()) {
-    componentConstrains.put(getComponentKey(c, index), layout.getComponentConstraints(c))
+    componentConstrains.put(getComponentKey(c, index), componentToConstraints.get(c)!!)
   }
 
   val dumperOptions = DumperOptions()

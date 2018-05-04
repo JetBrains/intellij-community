@@ -3,11 +3,11 @@ package com.intellij.ui.layout.migLayout
 
 import com.intellij.ui.components.noteComponent
 import com.intellij.ui.layout.*
+import com.intellij.ui.layout.migLayout.patched.*
 import com.intellij.util.containers.ContainerUtil
 import net.miginfocom.layout.*
 import net.miginfocom.layout.PlatformDefaults.VISUAL_PADDING_PROPERTY
 import net.miginfocom.layout.PlatformDefaults.setDefaultVisualPadding
-import net.miginfocom.swing.MigLayout
 import java.awt.Component
 import java.awt.Container
 import javax.swing.ButtonGroup
@@ -88,10 +88,8 @@ internal class MigLayoutBuilder(val spacing: SpacingConfiguration) : LayoutBuild
 //      (container as JComponent).putClientProperty(JBUI.COMPENSATE_VISUAL_PADDING_KEY, false)
 //    }
 
-    val lc = LC()
-    lc.gridGapX = gapToBoundSize(0, true)
+    val lc = createLayoutConstraints()
     lc.gridGapY = gapToBoundSize(spacing.verticalGap, false)
-    lc.insets("0px")
     if (layoutConstraints.isEmpty()) {
       lc.fillX()
       // not fillY because it leads to enormously large cells - we use cc `push` in addition to cc `grow` as a more robust and easy solution
@@ -203,6 +201,13 @@ internal class MigLayoutBuilder(val spacing: SpacingConfiguration) : LayoutBuild
 internal fun gapToBoundSize(value: Int, isHorizontal: Boolean): BoundSize {
   val unitValue = createUnitValue(value, isHorizontal)
   return BoundSize(unitValue, unitValue, null, false, null)
+}
+
+fun createLayoutConstraints(): LC {
+  val lc = LC()
+  lc.gridGapX = gapToBoundSize(0, true)
+  lc.insets("0px")
+  return lc
 }
 
 private fun createUnitValue(value: Int, isHorizontal: Boolean): UnitValue {

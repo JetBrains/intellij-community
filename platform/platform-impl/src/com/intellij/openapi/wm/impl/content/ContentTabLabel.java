@@ -107,7 +107,9 @@ class ContentTabLabel extends BaseLabel {
   protected final boolean mouseOverIcon(AdditionalIcon icon) {
     if (!isHovered() || !icon.getAvailable()) return false;
 
-    Point point = MouseInfo.getPointerInfo().getLocation();
+    PointerInfo info = MouseInfo.getPointerInfo();
+    if (info == null) return false;
+    Point point = info.getLocation();
     SwingUtilities.convertPointFromScreen(point, this);
     return icon.contains(point);
   }

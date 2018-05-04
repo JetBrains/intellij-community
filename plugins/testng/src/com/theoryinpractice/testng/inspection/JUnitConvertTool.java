@@ -1,7 +1,9 @@
 // Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.theoryinpractice.testng.inspection;
 
+import com.intellij.codeInsight.FileModificationService;
 import com.intellij.codeInspection.*;
+import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.pom.java.LanguageLevel;
@@ -11,7 +13,6 @@ import com.intellij.psi.util.PsiElementFilter;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.refactoring.typeMigration.TypeConversionDescriptor;
 import com.intellij.util.IncorrectOperationException;
-import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
 import com.theoryinpractice.testng.util.TestNGUtil;
 import org.jetbrains.annotations.NonNls;
@@ -80,15 +81,24 @@ public class JUnitConvertTool extends AbstractBaseJavaLocalInspectionTool {
       return QUICKFIX_NAME;
     }
 
+    @Override
+    public boolean startInWriteAction() {
+      return false;
+    }
+
     public void applyFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
       final PsiClass psiClass = PsiTreeUtil.getParentOfType(descriptor.getPsiElement(), PsiClass.class);
-      if (!TestNGUtil.checkTestNGInClasspath(psiClass)) return;
+      if (psiClass == null || !TestNGUtil.checkTestNGInClasspath(psiClass)) return;
+      if (!FileModificationService.getInstance().preparePsiElementsForWrite(psiClass)) return;
+      WriteAction.run(() -> doFix(project, psiClass));
+    }
+
+    private static void doFix(@NotNull Project project, PsiClass psiClass) {
       try {
         final PsiManager manager = PsiManager.getInstance(project);
         final PsiElementFactory factory = JavaPsiFacade.getInstance(manager.getProject()).getElementFactory();
         final PsiJavaFile javaFile = (PsiJavaFile)psiClass.getContainingFile();
 
-        final List<PsiElement> convertedElements = new SmartList<>();
 
         for (PsiMethod method : psiClass.getMethods()) {
           final PsiMethodCallExpression[] methodCalls = getTestCaseCalls(method);
@@ -102,9 +112,9 @@ public class JUnitConvertTool extends AbstractBaseJavaLocalInspectionTool {
             }
             else {
               if (TestNGUtil.containsJunitAnnotations(method)) {
-                convertedElements.addAll(convertJunitAnnotations(factory, method));
+                convertJunitAnnotations(factory, method);
               } else {
-                convertedElements.add(addMethodAnnotations(factory, method));
+                addMethodAnnotations(factory, method);
               }
             }
           }
@@ -150,7 +160,7 @@ public class JUnitConvertTool extends AbstractBaseJavaLocalInspectionTool {
                 replaceTemplate = "org.testng.Assert." + replaceMethodWildCard + "($actual$, $expected$ " + (hasMessage ? ", $msg$" : "") + ")";
               }
             }
-            convertedElements.add(TypeConversionDescriptor.replaceExpression(methodCall, searchTemplate, replaceTemplate));
+            TypeConversionDescriptor.replaceExpression(methodCall, searchTemplate, replaceTemplate);
           }
         }
         final PsiClass superClass = psiClass.getSuperClass();

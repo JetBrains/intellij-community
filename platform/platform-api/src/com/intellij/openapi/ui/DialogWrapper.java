@@ -1499,6 +1499,10 @@ public abstract class DialogWrapper {
     myOKAction.putValue(Action.MNEMONIC_KEY, c);
   }
 
+  protected final void setOKButtonTooltip(String text) {
+    myOKAction.putValue(Action.SHORT_DESCRIPTION, text);
+  }
+
   /**
    * @return the help identifier or null if no help is available.
    */

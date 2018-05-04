@@ -23,6 +23,7 @@ import com.intellij.util.ui.accessibility.ScreenReader;
 import org.intellij.lang.annotations.JdkConstants;
 import org.intellij.lang.annotations.Language;
 import org.jetbrains.annotations.*;
+import sun.awt.HeadlessToolkit;
 import sun.java2d.SunGraphicsEnvironment;
 
 import javax.sound.sampled.AudioInputStream;
@@ -2901,13 +2902,42 @@ public class UIUtil {
           }
         });
         pane.addHyperlinkListener(myHyperlinkListener);
+
+        List<LinkController> listeners1 = filterLinkControllerListeners(pane.getMouseListeners());
+        List<LinkController> listeners2 = filterLinkControllerListeners(pane.getMouseMotionListeners());
+        if (listeners1.size() == 1 && listeners1.equals(listeners2)) {
+          LinkController oldLinkController = listeners1.get(0);
+          pane.removeMouseListener(oldLinkController);
+          pane.removeMouseMotionListener(oldLinkController);
+          MouseExitSupportLinkController newLinkController = new MouseExitSupportLinkController();
+          pane.addMouseListener(newLinkController);
+          pane.addMouseMotionListener(newLinkController);
+        }
       }
+    }
+
+    @NotNull
+    private static List<LinkController> filterLinkControllerListeners(@NotNull Object[] listeners) {
+      return ContainerUtil.mapNotNull(listeners, new Function<Object, LinkController>() {
+        @Override
+        public LinkController fun(Object o) {
+          return ObjectUtils.tryCast(o, LinkController.class);
+        }
+      });
     }
 
     @Override
     public void deinstall(JEditorPane c) {
       c.removeHyperlinkListener(myHyperlinkListener);
       super.deinstall(c);
+    }
+  }
+
+  // Workaround for https://bugs.openjdk.java.net/browse/JDK-8202529
+  private static class MouseExitSupportLinkController extends HTMLEditorKit.LinkController {
+    @Override
+    public void mouseExited(MouseEvent e) {
+      mouseMoved(new MouseEvent(e.getComponent(), e.getID(), e.getWhen(), e.getModifiersEx(), -1, -1, e.getClickCount(), e.isPopupTrigger(), e.getButton()));
     }
   }
 
@@ -3330,6 +3360,7 @@ public class UIUtil {
   public static void fixFormattedField(JFormattedTextField field) {
     if (SystemInfo.isMac) {
       final Toolkit toolkit = Toolkit.getDefaultToolkit();
+      if (toolkit instanceof HeadlessToolkit) return;
       final int commandKeyMask = toolkit.getMenuShortcutKeyMask();
       final InputMap inputMap = field.getInputMap();
       final KeyStroke copyKeyStroke = KeyStroke.getKeyStroke(KeyEvent.VK_C, commandKeyMask);

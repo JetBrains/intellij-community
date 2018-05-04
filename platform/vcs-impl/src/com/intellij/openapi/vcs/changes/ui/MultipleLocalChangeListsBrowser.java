@@ -110,7 +110,18 @@ public class MultipleLocalChangeListsBrowser extends CommitDialogChangesBrowser 
   @NotNull
   @Override
   protected List<AnAction> createToolbarActions() {
-    List<AnAction> result = new ArrayList<>(super.createToolbarActions());
+    return ContainerUtil.append(
+      super.createToolbarActions(),
+      new RollbackDialogAction(),
+      ActionManager.getInstance().getAction("ChangesView.Refresh"),
+      ActionManager.getInstance().getAction("Vcs.CheckinProjectToolbar")
+    );
+  }
+
+  @NotNull
+  @Override
+  protected List<AnAction> createPopupMenuActions() {
+    List<AnAction> result = new ArrayList<>(super.createPopupMenuActions());
 
     result.add(ActionManager.getInstance().getAction("ChangesView.Refresh"));
 
@@ -136,7 +147,7 @@ public class MultipleLocalChangeListsBrowser extends CommitDialogChangesBrowser 
     editSourceAction.registerCustomShortcutSet(CommonShortcuts.getEditSource(), this);
     result.add(editSourceAction);
 
-    result.add(ActionManager.getInstance().getAction("Vcs.CheckinProjectToolbar"));
+    result.add(ActionManager.getInstance().getAction("Vcs.CheckinProjectMenu"));
     return result;
   }
 

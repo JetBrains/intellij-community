@@ -20,8 +20,10 @@ import com.intellij.util.ui.UIUtil
 import git4idea.DialogManager
 import git4idea.repo.GitRemote
 import git4idea.repo.GitRepository
+import org.jetbrains.plugins.github.api.GithubServerPath
 import org.jetbrains.plugins.github.authentication.GithubAuthenticationManager
 import org.jetbrains.plugins.github.authentication.accounts.GithubAccount
+import org.jetbrains.plugins.github.util.GithubAccountsMigrationHelper
 import org.jetbrains.plugins.github.util.GithubGitHelper
 import javax.swing.Icon
 import javax.swing.JComponent
@@ -44,7 +46,8 @@ abstract class LegacySingleAccountActionGroup(text: String?, description: String
       return
     }
 
-    if (getAccountsForRemotes(project, gitRepository).isEmpty()) {
+    if (getAccountsForRemotes(project, gitRepository).isEmpty()
+        && service<GithubAccountsMigrationHelper>().getOldServer()?.let { getRemote(it, gitRepository) } == null) {
       e.presentation.isEnabledAndVisible = false
       return
     }
@@ -62,7 +65,9 @@ abstract class LegacySingleAccountActionGroup(text: String?, description: String
     if (gitRepository == null) return
     gitRepository.update()
 
+    if (!service<GithubAccountsMigrationHelper>().migrate(project)) return
     val accounts = getAccountsForRemotes(project, gitRepository)
+    // can happen if migration was cancelled
     if (accounts.isEmpty()) return
     val account = if (accounts.size == 1) accounts.first()
     else {
@@ -80,14 +85,14 @@ abstract class LegacySingleAccountActionGroup(text: String?, description: String
   private fun getAccountsForRemotes(project: Project, repository: GitRepository): List<GithubAccount> {
     val authenticationManager = service<GithubAuthenticationManager>()
     val defaultAccount = authenticationManager.getDefaultAccount(project)
-    return if (defaultAccount != null && getRemote(defaultAccount, repository) != null)
+    return if (defaultAccount != null && getRemote(defaultAccount.server, repository) != null)
       listOf(defaultAccount)
     else {
-      authenticationManager.getAccounts().filter { getRemote(it, repository) != null }
+      authenticationManager.getAccounts().filter { getRemote(it.server, repository) != null }
     }
   }
 
-  protected abstract fun getRemote(account: GithubAccount, repository: GitRepository): Pair<GitRemote, String>?
+  protected abstract fun getRemote(server: GithubServerPath, repository: GitRepository): Pair<GitRemote, String>?
 }
 
 private class ChooseAccountDialog(project: Project, accounts: List<GithubAccount>) : DialogWrapper(project) {

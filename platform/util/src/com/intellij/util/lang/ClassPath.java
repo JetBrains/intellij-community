@@ -36,8 +36,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 import java.util.jar.Attributes;
 
 public class ClassPath {
-  private static final ResourceStringLoaderIterator ourCheckedIterator = new ResourceStringLoaderIterator(true);
-  private static final ResourceStringLoaderIterator ourUncheckedIterator = new ResourceStringLoaderIterator(false);
+  private static final ResourceStringLoaderIterator ourResourceIterator = new ResourceStringLoaderIterator();
   private static final LoaderCollector ourLoaderCollector = new LoaderCollector();
 
   private final Stack<URL> myUrls = new Stack<URL>();
@@ -98,7 +97,7 @@ public class ClassPath {
   }
 
   @Nullable
-  public Resource getResource(String s, boolean flag) {
+  public Resource getResource(String s) {
     final long started = startTiming();
     try {
       int i;
@@ -106,7 +105,7 @@ public class ClassPath {
         boolean allUrlsWereProcessed = myAllUrlsWereProcessed;
         i = allUrlsWereProcessed ? 0 : myLastLoaderProcessed.get();
 
-        Resource prevResource = myCache.iterateLoaders(s, flag ? ourCheckedIterator : ourUncheckedIterator, s, this);
+        Resource prevResource = myCache.iterateLoaders(s, ourResourceIterator, s, this);
         if (prevResource != null || allUrlsWereProcessed) return prevResource;
       }
       else {
@@ -120,7 +119,7 @@ public class ClassPath {
         if (myCanUseCache) {
           if (!myCache.loaderHasName(s, shortName, loader)) continue;
         }
-        Resource resource = loader.getResource(s, flag);
+        Resource resource = loader.getResource(s);
         if (resource != null) {
           return resource;
         }
@@ -133,8 +132,8 @@ public class ClassPath {
     return null;
   }
 
-  public Enumeration<URL> getResources(final String name, final boolean check) {
-    return new MyEnumeration(name, check);
+  public Enumeration<URL> getResources(final String name) {
+    return new MyEnumeration(name);
   }
 
   @Nullable
@@ -266,13 +265,11 @@ public class ClassPath {
     private Resource myRes;
     private final String myName;
     private final String myShortName;
-    private final boolean myCheck;
     private final List<Loader> myLoaders;
 
-    public MyEnumeration(String name, boolean check) {
+    public MyEnumeration(String name) {
       myName = name;
       myShortName = ClasspathCache.transformName(name);
-      myCheck = check;
       List<Loader> loaders = null;
 
       if (myCanUseCache && myAllUrlsWereProcessed) {
@@ -304,14 +301,14 @@ public class ClassPath {
               myRes = null;
               continue;
             }
-            myRes = loader.getResource(myName, myCheck);
+            myRes = loader.getResource(myName);
             if (myRes != null) return true;
           }
         }
         else {
           while ((loader = getLoader(myIndex++)) != null) {
             if (myCanUseCache && !myCache.loaderHasName(myName, myShortName, loader)) continue;
-            myRes = loader.getResource(myName, myCheck);
+            myRes = loader.getResource(myName);
             if (myRes != null) return true;
           }
         }
@@ -342,16 +339,10 @@ public class ClassPath {
   }
 
   private static class ResourceStringLoaderIterator extends ClasspathCache.LoaderIterator<Resource, String, ClassPath> {
-    private final boolean myFlag;
-
-    private ResourceStringLoaderIterator(boolean flag) {
-      myFlag = flag;
-    }
-
     @Override
     Resource process(Loader loader, String s, ClassPath classPath) {
       if (!classPath.myCache.loaderHasName(s, ClasspathCache.transformName(s), loader)) return null;
-      Resource resource = loader.getResource(s, myFlag);
+      Resource resource = loader.getResource(s);
       if (resource != null) printOrder(loader, s, resource);
       return resource;
     }

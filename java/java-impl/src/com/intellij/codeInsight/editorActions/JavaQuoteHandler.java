@@ -102,9 +102,9 @@ public class JavaQuoteHandler extends SimpleTokenSetQuoteHandler implements Java
   public CharSequence getClosingQuote(HighlighterIterator iterator, int offset) {
     if (iterator.getTokenType() == JavaTokenType.RAW_STRING_LITERAL) {
       CharSequence text = iterator.getDocument().getImmutableCharSequence();
-      int leadingTicsSequence = PsiRawStringLiteralUtil.getLeadingTicsSequence(text.subSequence(iterator.getStart(), offset));
+      int leadingTicsSequence = PsiRawStringLiteralUtil.getLeadingTicksSequence(text.subSequence(iterator.getStart(), offset));
       if (isOpeningQuote(iterator, offset - leadingTicsSequence)) {
-        int closingSequence = PsiRawStringLiteralUtil.getLeadingTicsSequence(text.subSequence(offset, iterator.getEnd()));
+        int closingSequence = PsiRawStringLiteralUtil.getLeadingTicksSequence(text.subSequence(offset, iterator.getEnd()));
         if (closingSequence + 1 == leadingTicsSequence) {
           return "`";
         }

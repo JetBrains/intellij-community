@@ -42,7 +42,6 @@ import com.intellij.xdebugger.frame.XValueMarkerProvider;
 import com.intellij.xdebugger.impl.breakpoints.*;
 import com.intellij.xdebugger.impl.evaluate.XDebuggerEditorLinePainter;
 import com.intellij.xdebugger.impl.evaluate.quick.common.ValueLookupManager;
-import com.intellij.xdebugger.impl.frame.XStackFrameEx;
 import com.intellij.xdebugger.impl.frame.XValueMarkers;
 import com.intellij.xdebugger.impl.frame.XWatchesViewImpl;
 import com.intellij.xdebugger.impl.settings.XDebuggerSettingManagerImpl;
@@ -574,9 +573,7 @@ public class XDebugSessionImpl implements XDebugSession {
     // allowed only for the active session
     if (myDebuggerManager.getCurrentSession() == this) {
       boolean isTopFrame = isTopFrameSelected();
-      if (myCurrentStackFrame instanceof XStackFrameEx) {
-        ((XStackFrameEx)myCurrentStackFrame).beforeUpdateExecutionPosition();
-      }
+
       myDebuggerManager.updateExecutionPoint(getCurrentPosition(), !isTopFrame, getPositionIconRenderer(isTopFrame));
     }
   }
@@ -608,11 +605,12 @@ public class XDebugSessionImpl implements XDebugSession {
     myCurrentExecutionStack = executionStack;
     myCurrentStackFrame = frame;
     myIsTopFrame = isTopFrame;
-    activateSession();
 
     if (frameChanged) {
       myDispatcher.getMulticaster().stackFrameChanged();
     }
+
+    activateSession();
   }
 
   void activateSession() {

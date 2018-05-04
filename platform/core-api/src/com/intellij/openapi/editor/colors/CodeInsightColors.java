@@ -22,6 +22,7 @@ public interface CodeInsightColors {
   TextAttributesKey WARNINGS_ATTRIBUTES = TextAttributesKey.createTextAttributesKey("WARNING_ATTRIBUTES");
   TextAttributesKey GENERIC_SERVER_ERROR_OR_WARNING = TextAttributesKey.createTextAttributesKey("GENERIC_SERVER_ERROR_OR_WARNING");
   TextAttributesKey DUPLICATE_FROM_SERVER = TextAttributesKey.createTextAttributesKey("DUPLICATE_FROM_SERVER");
+  TextAttributesKey RUNTIME_PROBLEM = TextAttributesKey.createTextAttributesKey("RUNTIME_PROBLEM");
   /**
    * use #WEAK_WARNING_ATTRIBUTES instead
    */

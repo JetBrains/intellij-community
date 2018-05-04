@@ -17,7 +17,7 @@
 package com.intellij.codeInspection.reference;
 
 import com.intellij.openapi.module.ModuleUtilCore;
-import com.intellij.psi.PsiJavaFile;
+import com.intellij.psi.*;
 
 public class RefJavaFileImpl extends RefFileImpl {
   private final RefModule myRefModule;
@@ -37,6 +37,36 @@ public class RefJavaFileImpl extends RefFileImpl {
 
   @Override
   public void buildReferences() {
+    PsiJavaFile file = (PsiJavaFile)getElement();
+    if (file != null && PsiPackage.PACKAGE_INFO_FILE.equals(file.getName())) {
+        PsiPackageStatement packageStatement = file.getPackageStatement();
+        if (packageStatement != null) {
+          packageStatement.accept(new JavaRecursiveElementWalkingVisitor() {
+            @Override
+            public void visitReferenceElement(PsiJavaCodeReferenceElement reference) {
+              super.visitReferenceElement(reference);
+              processReference(reference.resolve());
+            }
+
+            @Override
+            public void visitNameValuePair(PsiNameValuePair pair) {
+              super.visitNameValuePair(pair);
+              PsiReference reference = pair.getReference();
+              if (reference != null) {
+                processReference(reference.resolve());
+              }
+            }
+
+            private void processReference(PsiElement element) {
+              RefElement refElement = getRefManager().getReference(element);
+              if (refElement instanceof RefJavaElementImpl) {
+                addOutReference(refElement);
+                ((RefJavaElementImpl)refElement).markReferenced(RefJavaFileImpl.this, file, element, false, true, null);
+              }
+            }
+          });
+        }
+      }
     getRefManager().fireBuildReferences(this);
   }
 

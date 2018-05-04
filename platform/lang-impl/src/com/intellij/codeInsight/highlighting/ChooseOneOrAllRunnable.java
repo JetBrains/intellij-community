@@ -71,10 +71,10 @@ public abstract class ChooseOneOrAllRunnable<T extends PsiElement> implements Ru
         .setSelectionMode(ListSelectionModel.SINGLE_SELECTION)
         .setItemChosenCallback((selectedValue) -> {
           if (selectedValue.equals(selectAll)) {
-            selected((T[])ArrayUtil.toObjectArray(selectedValue.getClass(), selectedValue));
+            selected(myClasses);
           }
           else {
-            selected(myClasses);
+            selected((T[])ArrayUtil.toObjectArray(selectedValue.getClass(), selectedValue));
           }
         })
         .setTitle(myTitle);

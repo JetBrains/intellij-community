@@ -38,7 +38,7 @@ public class ProcessOutputType extends Key {
 
   public ProcessOutputType(@NotNull String name, @NotNull ProcessOutputType streamType) {
     super(name);
-    myStreamType = streamType;
+    myStreamType = streamType.getBaseOutputType();
   }
 
   ProcessOutputType(@NotNull String name) {

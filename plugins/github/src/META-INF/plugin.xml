@@ -26,12 +26,12 @@
     <applicationService serviceImplementation="org.jetbrains.plugins.github.api.GithubApiTaskExecutor"/>
     <applicationService serviceImplementation="org.jetbrains.plugins.github.authentication.accounts.GithubAccountInformationProvider"/>
     <applicationService serviceImplementation="org.jetbrains.plugins.github.util.GithubGitHelper"/>
+    <applicationService serviceImplementation="org.jetbrains.plugins.github.util.GithubAccountsMigrationHelper"/>
     <projectService serviceInterface="org.jetbrains.plugins.github.util.GithubProjectSettings"
                     serviceImplementation="org.jetbrains.plugins.github.util.GithubProjectSettings"/>
     <projectService serviceImplementation="org.jetbrains.plugins.github.authentication.accounts.GithubProjectDefaultAccountHolder"/>
     <vcsAnnotationGutterActionProvider implementation="org.jetbrains.plugins.github.extensions.GithubAnnotationGutterActionProvider"/>
     <projectConfigurable parentId="project.propVCSSupport.Mappings" instance="org.jetbrains.plugins.github.ui.GithubSettingsConfigurable"/>
-    <postStartupActivity implementation="org.jetbrains.plugins.github.util.GithubAccountsMigrationHelper"/>
     <statistics.applicationUsagesCollector
         implementation="org.jetbrains.plugins.github.authentication.accounts.GithubAccountsStatisticsCollector"/>
   </extensions>

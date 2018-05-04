@@ -5,6 +5,8 @@ package com.intellij.openapi.vcs.changes;
 import com.intellij.diff.util.DiffPlaces;
 import com.intellij.diff.util.DiffUtil;
 import com.intellij.icons.AllIcons;
+import com.intellij.ide.CommonActionsManager;
+import com.intellij.ide.DefaultTreeExpander;
 import com.intellij.ide.dnd.DnDEvent;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.ApplicationManager;
@@ -12,7 +14,6 @@ import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.components.*;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.DumbAware;
-import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.SimpleToolWindowPanel;
 import com.intellij.openapi.util.Disposer;
@@ -144,8 +145,12 @@ public class ChangesViewManager implements ChangesViewI, ProjectComponent, Persi
     myContent.setCloseable(false);
     myContentManager.addContent(myContent);
 
-    myContentManager.addToolWindowTitleAction(new MyExpandAllToolbarAction(panel));
-    myContentManager.addToolWindowTitleAction(new MyCollapseAllToolbarAction(panel));
+
+    MyTreeExpander expander = new MyTreeExpander();
+    AnAction expandAll = CommonActionsManager.getInstance().createExpandAllHeaderAction(expander, myView);
+    AnAction collapseAll = CommonActionsManager.getInstance().createCollapseAllHeaderAction(expander, myView);
+    myContentManager.addToolWindowTitleAction(expandAll);
+    myContentManager.addToolWindowTitleAction(collapseAll);
 
     scheduleRefresh();
     myProject.getMessageBus().connect().subscribe(RemoteRevisionsCache.REMOTE_VERSION_CHANGED,
@@ -442,47 +447,24 @@ public class ChangesViewManager implements ChangesViewI, ProjectComponent, Persi
     }
   }
 
-  private class MyExpandAllToolbarAction extends DumbAwareAction {
-    public MyExpandAllToolbarAction(@NotNull JComponent panel) {
-      copyFrom(ActionManager.getInstance().getAction(IdeActions.ACTION_EXPAND_ALL));
-      getTemplatePresentation().setIcon(AllIcons.General.ExpandAll);
-      getTemplatePresentation().setHoveredIcon(AllIcons.General.ExpandAllHover);
-      registerCustomShortcutSet(panel, null);
+  private class MyTreeExpander extends DefaultTreeExpander {
+    public MyTreeExpander() {
+      super(myView);
     }
 
-    public final void actionPerformed(AnActionEvent e) {
-      TreeUtil.expandAll(myView);
+    @Override
+    public boolean isVisible(AnActionEvent event) {
+      ToolWindow toolWindow = event.getData(PlatformDataKeys.TOOL_WINDOW);
+      return toolWindow != null && toolWindow.getContentManager().getSelectedContent() == myContent;
     }
 
-    public final void update(AnActionEvent event) {
-      boolean isEnabled = areExpandCollapseActionsEnabled(event);
-      event.getPresentation().setEnabledAndVisible(isEnabled);
-    }
-  }
-
-  private class MyCollapseAllToolbarAction extends DumbAwareAction {
-    public MyCollapseAllToolbarAction(@NotNull JComponent panel) {
-      copyFrom(ActionManager.getInstance().getAction(IdeActions.ACTION_COLLAPSE_ALL));
-      getTemplatePresentation().setIcon(AllIcons.General.CollapseAll);
-      getTemplatePresentation().setHoveredIcon(AllIcons.General.CollapseAllHover);
-      registerCustomShortcutSet(getShortcutSet(), panel);
-    }
-
-    public final void update(AnActionEvent event) {
-      boolean isEnabled = areExpandCollapseActionsEnabled(event);
-      event.getPresentation().setEnabledAndVisible(isEnabled);
-    }
-
-    public final void actionPerformed(AnActionEvent e) {
+    @Override
+    public void collapseAll() {
       TreeUtil.collapseAll(myView, 2);
       TreeUtil.expand(myView, 1);
     }
   }
 
-  private boolean areExpandCollapseActionsEnabled(AnActionEvent event) {
-    ToolWindow toolWindow = event.getData(PlatformDataKeys.TOOL_WINDOW);
-    return toolWindow != null && toolWindow.getContentManager().getSelectedContent() == myContent;
-  }
 
   private class ToggleShowIgnoredAction extends ToggleAction implements DumbAware {
     public ToggleShowIgnoredAction() {

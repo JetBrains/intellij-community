@@ -266,6 +266,7 @@
     <scopeTreeExpander implementation="com.intellij.ide.scopeView.ClassesScopeTreeStructureExpander"/>
     <gotoSymbolContributor implementation="com.intellij.ide.util.gotoByName.JavaModuleNavigationContributor"/>
     <gotoSymbolContributor implementation="com.intellij.ide.util.gotoByName.DefaultSymbolNavigationContributor"/>
+    <gotoSymbolContributor implementation="com.intellij.ide.util.gotoByName.DefaultSymbolNavigationContributor$JavadocSeparatorContributor"/>
     <gotoClassContributor implementation="com.intellij.ide.util.gotoByName.DefaultClassNavigationContributor"/>
     <targetElementEvaluator language="JAVA" implementationClass="com.intellij.codeInsight.JavaTargetElementEvaluator"/>
     <targetElementUtilExtender implementation="com.intellij.codeInsight.JavaTargetElementEvaluator"/>
@@ -984,6 +985,10 @@
     </intentionAction>
     <intentionAction>
       <className>com.intellij.codeInsight.intention.impl.BreakStringOnLineBreaksIntentionAction</className>
+      <category>Java/Strings</category>
+    </intentionAction>
+    <intentionAction>
+      <className>com.intellij.codeInsight.intention.impl.SplitRawStringIntentionAction</className>
       <category>Java/Strings</category>
     </intentionAction>
     <intentionAction>

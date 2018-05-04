@@ -23,10 +23,7 @@ import com.intellij.psi.javadoc.PsiDocComment;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.util.*;
 import com.intellij.refactoring.util.RefactoringUtil;
-import com.intellij.util.ArrayUtil;
-import com.intellij.util.Function;
-import com.intellij.util.IncorrectOperationException;
-import com.intellij.util.VisibilityUtil;
+import com.intellij.util.*;
 import com.intellij.util.text.UniqueNameGenerator;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
@@ -371,7 +368,7 @@ public class GenerateMembersUtil {
                                                           @NotNull PsiTypeParameter typeParameter,
                                                           final @NotNull PsiSubstitutor substitutor,
                                                           @NotNull final PsiMethod sourceMethod) {
-    final PsiElement copy = (typeParameter instanceof PsiCompiledElement ? ((PsiCompiledElement)typeParameter).getMirror() : typeParameter).copy();
+    final PsiElement copy = ObjectUtils.notNull(typeParameter instanceof PsiCompiledElement ? ((PsiCompiledElement)typeParameter).getMirror() : typeParameter, typeParameter).copy();
     final Map<PsiElement, PsiElement> replacementMap = new HashMap<>();
     copy.accept(new JavaRecursiveElementVisitor() {
       @Override

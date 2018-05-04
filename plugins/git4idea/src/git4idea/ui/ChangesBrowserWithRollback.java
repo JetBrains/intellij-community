@@ -56,6 +56,14 @@ public class ChangesBrowserWithRollback extends ChangesBrowserBase implements Di
     );
   }
 
+  @NotNull
+  @Override
+  protected List<AnAction> createPopupMenuActions() {
+    return ContainerUtil.append(
+      super.createPopupMenuActions(),
+      new RollbackDialogAction()
+    );
+  }
 
   @NotNull
   @Override

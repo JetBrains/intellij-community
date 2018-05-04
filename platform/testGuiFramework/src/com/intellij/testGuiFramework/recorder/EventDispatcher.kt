@@ -69,10 +69,9 @@ object EventDispatcher {
   fun processMouseEvent(event: MouseEvent) {
     if (isMainFrame(event.component)) return
     when(event.id) {
-      MOUSE_CLICKED -> { processClick(event) }
+      MOUSE_PRESSED -> { processClick(event) }
       MOUSE_DRAGGED -> { SelectionProcessor.processDragging(event) }
       MOUSE_RELEASED -> { SelectionProcessor.stopDragging(event) }
-      MOUSE_PRESSED -> { if (event.component?.javaClass?.canonicalName == "javax.swing.Popup.HeavyWeightWindow") processClick(event) } //clicks are consumed for popups, so let's process MOUSE_PRESSED event GUI-79
     }
   }
 

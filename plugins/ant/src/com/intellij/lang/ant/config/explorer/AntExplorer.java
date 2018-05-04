@@ -248,11 +248,34 @@ public class AntExplorer extends SimpleToolWindowPanel implements DataProvider, 
     });
   }
 
+  public void removeSelectedBuildFiles() {
+    final Collection<AntBuildFileBase> files = getSelectedBuildFiles();
+    if (!files.isEmpty()) {
+      if (files.size() == 1) {
+        removeBuildFile(files.iterator().next());
+      }
+      else {
+        final int result = Messages.showYesNoDialog(
+          myProject, "Do you want to remove references to " +files.size() + " build files?", AntBundle.message("confirm.remove.dialog.title"), Messages.getQuestionIcon()
+        );
+        if (result == Messages.YES) {
+          for (AntBuildFileBase file : files) {
+            myConfig.removeBuildFile(file);
+          }
+        }
+      }
+    }
+  }
+
   public void removeBuildFile() {
     final AntBuildFile buildFile = getCurrentBuildFile();
     if (buildFile == null) {
       return;
     }
+    removeBuildFile(buildFile);
+  }
+
+  private void removeBuildFile(AntBuildFile buildFile) {
     final String fileName = buildFile.getPresentableUrl();
     final int result = Messages.showYesNoDialog(myProject, AntBundle.message("remove.the.reference.to.file.confirmation.text", fileName),
                                                 AntBundle.message("confirm.remove.dialog.title"), Messages.getQuestionIcon());
@@ -351,6 +374,33 @@ public class AntExplorer extends SimpleToolWindowPanel implements DataProvider, 
   private AntBuildFileBase getCurrentBuildFile() {
     final AntBuildFileNodeDescriptor descriptor = getCurrentBuildFileNodeDescriptor();
     return (AntBuildFileBase)((descriptor == null) ? null : descriptor.getBuildFile());
+  }
+
+  @NotNull
+  private Collection<AntBuildFileBase> getSelectedBuildFiles() {
+    if (myTree == null) {
+      return Collections.emptyList();
+    }
+    final TreePath[] paths = myTree.getSelectionPaths();
+    if (paths == null) {
+      return Collections.emptyList();
+    }
+    final Set<AntBuildFileBase> result  = new HashSet<>();
+    for (TreePath path : paths) {
+      DefaultMutableTreeNode node = (DefaultMutableTreeNode)path.getLastPathComponent();
+      while (node != null) {
+        final Object userObject = node.getUserObject();
+        if (userObject instanceof AntBuildFileNodeDescriptor) {
+          final AntBuildFileBase file = (AntBuildFileBase)((AntBuildFileNodeDescriptor)userObject).getBuildFile();
+          if (file != null) {
+            result.add(file);
+          }
+          break;
+        }
+        node = (DefaultMutableTreeNode)node.getParent();
+      }
+    }
+    return result;
   }
 
   @Nullable
@@ -543,7 +593,7 @@ public class AntExplorer extends SimpleToolWindowPanel implements DataProvider, 
 
     @Override
     public void actionPerformed(AnActionEvent e) {
-      removeBuildFile();
+      removeSelectedBuildFiles();
     }
 
     @Override

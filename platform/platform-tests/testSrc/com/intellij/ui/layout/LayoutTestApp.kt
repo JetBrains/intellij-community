@@ -3,19 +3,21 @@ package com.intellij.ui.layout
 
 import com.intellij.ide.ui.laf.IntelliJLaf
 import com.intellij.ide.ui.laf.darcula.DarculaLaf
+import com.intellij.openapi.ui.DialogWrapper
 import com.intellij.openapi.util.SystemInfoRt
 import com.intellij.testFramework.runInEdtAndWait
 import com.intellij.ui.components.dialog
+import com.intellij.ui.layout.migLayout.*
 import com.intellij.util.io.write
 import com.intellij.util.ui.UIUtil
+import net.miginfocom.layout.AC
 import net.miginfocom.layout.LayoutUtil
 import net.miginfocom.swing.MigLayout
 import java.awt.Dimension
 import java.awt.GraphicsEnvironment
+import java.awt.Point
 import java.nio.file.Paths
-import javax.swing.JComboBox
-import javax.swing.LookAndFeel
-import javax.swing.UIManager
+import javax.swing.*
 import javax.swing.plaf.metal.MetalLookAndFeel
 
 object DarculaUiTestApp {
@@ -47,30 +49,12 @@ private fun run(laf: LookAndFeel) {
 
     //      val panel = visualPaddingsPanelOnlyButton()
     //      val panel = visualPaddingsPanelOnlyComboBox()
-    //      val panel = alignFieldsInTheNestedGrid()
+//          val panel = alignFieldsInTheNestedGrid()
+//          val panel = visualPaddingsPanelOnlyTextField()
     //      val panel = labelRowShouldNotGrow()
     //      val panel = cellPanel()
           val panel = visualPaddingsPanel()
 //    val panel = createLafTestPanel()
-
-//    val jTextArea = JTextArea("wefwg w wgw")
-//    jTextArea.rows = 3
-//    val panel = UI.PanelFactory
-//      .panel(JBScrollPane(jTextArea))
-//      .withLabel("Foo")
-//      .createPanel()
-
-//    val panel = UI.PanelFactory
-//      .panel(JTextField("wfgw"))
-//      .withLabel("Foo")
-//      .createPanel()
-
-    val editableCombobox = JComboBox<String>(arrayOf("one", "two"))
-    editableCombobox.isEditable = true
-
-    //      val panel = JPanel(VerticalFlowLayout())
-    //      panel.add(JComboBox<String>(arrayOf("one", "two")))
-    //      panel.add(editableCombobox)
 
     val dialog = dialog(
       title = "",
@@ -86,31 +70,35 @@ private fun run(laf: LookAndFeel) {
       Paths.get(System.getProperty("user.home"), "layout-dump.yml").write(serializeLayout(panel, isIncludeCellBounds = false))
     }
 
-    val screenDevices = GraphicsEnvironment.getLocalGraphicsEnvironment().screenDevices
-    if (SystemInfoRt.isMac && screenDevices != null && screenDevices.size > 1) {
-      // use not-Retina
-      for (screenDevice in screenDevices) {
-        if (!UIUtil.isRetina(screenDevice)) {
-          val screenBounds = screenDevice.defaultConfiguration.bounds
-          dialog.setLocation(screenBounds.x, (screenBounds.height - dialog.preferredSize.height) / 2)
-          dialog.window.setLocation(screenBounds.x, (screenBounds.height - dialog.preferredSize.height) / 2)
-          break
-        }
+    moveToNotRetinaScreen(dialog)
+    dialog.show()
+  }
+}
+
+@Suppress("unused")
+fun simplePanel() {
+  val panel = JPanel(MigLayout(createLayoutConstraints().insets("3px"), AC(), AC().align("baseline")))
+
+  panel.add(JLabel("text"))
+  val component = JTextField("text")
+  //val ff = component.getBaseline(40, 21)
+  panel.add(component)
+}
+
+private fun moveToNotRetinaScreen(dialog: DialogWrapper) {
+  val screenDevices = GraphicsEnvironment.getLocalGraphicsEnvironment().screenDevices
+  if (!SystemInfoRt.isMac || screenDevices == null || screenDevices.size <= 1) {
+    return
+  }
+
+  for (screenDevice in screenDevices) {
+    if (!UIUtil.isRetina(screenDevice)) {
+      val screenBounds = screenDevice.defaultConfiguration.bounds
+      dialog.setInitialLocationCallback {
+        val preferredSize = dialog.preferredSize
+        Point(screenBounds.x + ((screenBounds.width - preferredSize.width) / 2), (screenBounds.height - preferredSize.height) / 2)
       }
+      break
     }
-
-    //      dialog.toFront()
-    dialog.showAndGet()
-
-    //    val frame = JFrame()
-    //    frame.defaultCloseOperation = JFrame.EXIT_ON_CLOSE
-    //    frame.contentPane.add(panel, BorderLayout.CENTER)
-    //    frame.contentPane.background = Color.WHITE
-    //    frame.background = Color.WHITE
-    //    frame.pack()
-    //    frame.setLocationRelativeTo(null)
-    //    frame.minimumSize = Dimension(512, 256)
-    //    frame.isVisible = true
-    //
   }
 }

@@ -17,8 +17,8 @@ import com.intellij.openapi.util.Disposer
 import com.intellij.ui.AnimatedIcon
 import com.intellij.ui.JBColor
 import com.intellij.ui.components.JBLabel
-import com.intellij.ui.components.JBPasswordField
 import com.intellij.ui.components.JBTextField
+import com.intellij.ui.components.fields.ExtendableTextComponent
 import com.intellij.ui.components.fields.ExtendableTextField
 import com.intellij.ui.components.labels.LinkLabel
 import com.intellij.ui.components.panels.Wrapper
@@ -38,39 +38,35 @@ import org.jetbrains.plugins.github.ui.util.Validator
 import org.jetbrains.plugins.github.util.GithubUtil
 import java.awt.Cursor
 import java.net.UnknownHostException
-import javax.swing.JComponent
-import javax.swing.JEditorPane
-import javax.swing.JPanel
-import javax.swing.JTextField
+import javax.swing.*
 import javax.swing.event.HyperlinkEvent
 import javax.swing.text.html.HTMLEditorKit
 
-class GithubLoginDialog(private val project: Project,
-                        private val isAccountUnique: (name: String, server: GithubServerPath) -> Boolean,
-                        parent: JComponent? = null,
-                        title: String = "Log In to Github",
-                        host: String = GithubApiUtil.DEFAULT_GITHUB_HOST,
-                        editableHost: Boolean = true,
-                        login: String = "",
-                        private val tokenNote: String = GithubUtil.DEFAULT_TOKEN_NOTE)
+class GithubLoginDialog @JvmOverloads constructor(private val project: Project,
+                                                  parent: JComponent? = null,
+                                                  private val isAccountUnique: (name: String, server: GithubServerPath) -> Boolean = { _, _ -> true },
+                                                  title: String = "Log In to Github",
+                                                  private val message: String? = null)
   : DialogWrapper(project, parent, false, IdeModalityType.PROJECT) {
 
-  private val serverTextField = ExtendableTextField(host).apply { isEditable = editableHost }
+  private val serverTextField = ExtendableTextField(GithubApiUtil.DEFAULT_GITHUB_HOST)
   private var centerPanel = Wrapper()
 
   private var southAdditionalPanel = Wrapper().apply { JBUI.Borders.emptyRight(UIUtil.DEFAULT_HGAP) }
 
-  private var passwordUi = LoginPasswordCredentialsUI(login)
+  private var passwordUi = LoginPasswordCredentialsUI()
   private var tokenUi = TokenCredentialsUI()
 
   private lateinit var currentUi: CredentialsUI
 
   private var progressIndicator: ProgressIndicator? = null
   private val progressIcon = AnimatedIcon.Default()
-  private val progressExtension = ExtendableTextField.Extension({ progressIcon })
+  private val progressExtension = ExtendableTextComponent.Extension({ progressIcon })
 
   private lateinit var login: String
   private lateinit var token: String
+
+  var tokenNote = GithubUtil.DEFAULT_TOKEN_NOTE
   private var tokenAcquisitionError: ValidationInfo? = null
 
   init {
@@ -79,6 +75,36 @@ class GithubLoginDialog(private val project: Project,
     applyUi(passwordUi)
     init()
     Disposer.register(disposable, Disposable { progressIndicator?.cancel() })
+  }
+
+  @JvmOverloads
+  fun withServer(path: String, editable: Boolean = true): GithubLoginDialog {
+    serverTextField.apply {
+      text = path
+      isEditable = editable
+    }
+    return this
+  }
+
+  @JvmOverloads
+  fun withCredentials(login: String? = null, password: String? = null): GithubLoginDialog {
+    if (login != null) passwordUi.setLogin(login)
+    if (password != null) passwordUi.setPassword(password)
+    applyUi(passwordUi)
+    return this
+  }
+
+  @JvmOverloads
+  fun withToken(token: String? = null): GithubLoginDialog {
+    if (token != null) tokenUi.setToken(token)
+    applyUi(tokenUi)
+    return this
+  }
+
+  fun withError(exception: Throwable): GithubLoginDialog {
+    tokenAcquisitionError = currentUi.handleAcquireError(exception)
+    startTrackingValidation()
+    return this
   }
 
   fun getServer(): GithubServerPath = GithubServerPath.from(serverTextField.text)
@@ -124,6 +150,20 @@ class GithubLoginDialog(private val project: Project,
     currentUi.setBusy(busy)
   }
 
+  override fun createNorthPanel(): JComponent? {
+    return message?.let {
+      JTextArea().apply {
+        font = UIUtil.getLabelFont()
+        text = it
+        isEditable = false
+        isFocusable = false
+        isOpaque = false
+        border = JBUI.Borders.emptyBottom(UIUtil.DEFAULT_VGAP * 2)
+        margin = JBUI.emptyInsets()
+      }
+    }
+  }
+
   override fun createSouthAdditionalPanel() = southAdditionalPanel
   override fun createCenterPanel() = centerPanel
   override fun getPreferredFocusedComponent() = currentUi.getPreferredFocus()
@@ -158,9 +198,9 @@ class GithubLoginDialog(private val project: Project,
     }
   }
 
-  private inner class LoginPasswordCredentialsUI(login: String) : CredentialsUI() {
-    private val loginTextField = JBTextField(login)
-    private val passwordField = JBPasswordField()
+  private inner class LoginPasswordCredentialsUI : CredentialsUI() {
+    private val loginTextField = JBTextField()
+    private val passwordField = JPasswordField()
     private val contextHelp = JEditorPane()
 
     init {
@@ -170,7 +210,7 @@ class GithubLoginDialog(private val project: Project,
         //language=CSS
         (editorKit as HTMLEditorKit).styleSheet.addRule("a {color: rgb(${linkColor.red}, ${linkColor.green}, ${linkColor.blue})}")
         //language=HTML
-        text = "<html>Login and Password are not saved and used only to <br>acquire Github token. <a href=''>Enter token</a></html>"
+        text = "<html>Password is not saved and used only to <br>acquire Github token. <a href=''>Enter token</a></html>"
         addHyperlinkListener { e ->
           if (e.eventType == HyperlinkEvent.EventType.ACTIVATED) {
             applyUi(tokenUi)
@@ -187,6 +227,14 @@ class GithubLoginDialog(private val project: Project,
         margin = JBUI.emptyInsets()
         foreground = JBColor.GRAY
       }
+    }
+
+    fun setLogin(login: String) {
+      loginTextField.text = login
+    }
+
+    fun setPassword(password: String) {
+      passwordField.text = password
     }
 
     override fun getPanel() = grid()
@@ -233,6 +281,10 @@ class GithubLoginDialog(private val project: Project,
   private inner class TokenCredentialsUI : CredentialsUI() {
     private val tokenTextField = JBTextField()
     private val switchUiLink = LinkLabel.create("Log In with Username", { applyUi(passwordUi) })
+
+    fun setToken(token: String) {
+      tokenTextField.text = token
+    }
 
     override fun getPanel() = grid()
       .add(panel(serverTextField).withLabel("Server:"))

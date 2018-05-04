@@ -1,11 +1,15 @@
 // Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.theoryinpractice.testng.inspection;
 
-import com.intellij.CommonBundle;
-import com.intellij.codeInspection.*;
+import com.intellij.codeInsight.FileModificationService;
+import com.intellij.codeInspection.AbstractBaseJavaLocalInspectionTool;
+import com.intellij.codeInspection.LocalQuickFix;
+import com.intellij.codeInspection.ProblemDescriptor;
+import com.intellij.codeInspection.ProblemsHolder;
+import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
@@ -63,21 +67,27 @@ public class ConvertJavadocInspection extends AbstractBaseJavaLocalInspectionToo
       return DISPLAY_NAME;
     }
 
+    @Override
+    public boolean startInWriteAction() {
+      return false;
+    }
+
     public void applyFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
       final PsiDocTag tag = (PsiDocTag)descriptor.getPsiElement();
       if (!TestNGUtil.checkTestNGInClasspath(tag)) return;
+      if (!FileModificationService.getInstance().preparePsiElementsForWrite(tag)) return;
+      WriteAction.run(() -> doFix(project, tag));
+    }
+
+    private static void doFix(@NotNull Project project, PsiDocTag tag) {
       final PsiMember member = PsiTreeUtil.getParentOfType(tag, PsiMember.class);
       LOG.assertTrue(member != null);
-      @NonNls String annotationName = StringUtil.capitalize(tag.getName().substring(TESTNG_PREFIX.length()));
-      int dash = annotationName.indexOf('-');
-      if (dash > -1) {
-        annotationName =
-          annotationName.substring(0, dash) + Character.toUpperCase(annotationName.charAt(dash + 1)) + annotationName.substring(dash + 2);
-      }
-      annotationName = "org.testng.annotations." + annotationName;
-      final StringBuffer annotationText = new StringBuffer("@");
+      @NonNls String annotationName = getFQAnnotationName(tag);
+      final StringBuilder annotationText = new StringBuilder("@");
       annotationText.append(annotationName);
-      final PsiClass annotationClass = JavaPsiFacade.getInstance(member.getProject()).findClass(annotationName, member.getResolveScope());
+      final PsiClass annotationClass = DumbService.getInstance(project)
+                                                  .computeWithAlternativeResolveEnabled(() -> JavaPsiFacade.getInstance(member.getProject())
+                                                                                                           .findClass(annotationName, member.getResolveScope()));
       PsiElement[] dataElements = tag.getDataElements();
       if (dataElements.length > 1) {
         annotationText.append('(');
@@ -132,9 +142,10 @@ public class ConvertJavadocInspection extends AbstractBaseJavaLocalInspectionToo
       }
 
       try {
-        final PsiElement inserted = member.getModifierList().addBefore(
-          JavaPsiFacade.getInstance(tag.getProject()).getElementFactory().createAnnotationFromText(annotationText.toString(), member),
-          member.getModifierList().getFirstChild());
+        PsiModifierList modifierList = member.getModifierList();
+        PsiAnnotation annotation =
+          JavaPsiFacade.getInstance(tag.getProject()).getElementFactory().createAnnotationFromText(annotationText.toString(), member);
+        final PsiElement inserted = modifierList.addBefore(annotation, modifierList.getFirstChild());
         JavaCodeStyleManager.getInstance(project).shortenClassReferences(inserted);
 
 
@@ -155,8 +166,19 @@ public class ConvertJavadocInspection extends AbstractBaseJavaLocalInspectionToo
         docComment.delete();
       }
       catch (IncorrectOperationException e) {
-        Messages.showErrorDialog(project, e.getMessage(), CommonBundle.getErrorTitle());
+        LOG.error(e);
       }
+    }
+
+    private static String getFQAnnotationName(PsiDocTag tag) {
+      @NonNls String annotationName = StringUtil.capitalize(tag.getName().substring(TESTNG_PREFIX.length()));
+      int dash = annotationName.indexOf('-');
+      if (dash > -1) {
+        annotationName =
+          annotationName.substring(0, dash) + Character.toUpperCase(annotationName.charAt(dash + 1)) + annotationName.substring(dash + 2);
+      }
+      annotationName = "org.testng.annotations." + annotationName;
+      return annotationName;
     }
   }
 
