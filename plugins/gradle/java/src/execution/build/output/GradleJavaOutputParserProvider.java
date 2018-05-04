@@ -23,7 +23,7 @@ public class GradleJavaOutputParserProvider implements ExternalSystemOutputParse
 
   @Override
   public List<BuildOutputParser> getBuildOutputParsers(ExternalSystemTask task) {
-    // use javac, kotlinc output parsers for the sync to handle the compilation output of the 'buildSrc' sources
+    // use javac, kotlinc output parsers for the sync tasks also to handle the compilation output of the 'buildSrc' sources
     return ContainerUtil.list(new JavacOutputParser(), new KotlincOutputParser());
   }
 }
