@@ -87,10 +87,10 @@ public class ManualArrayCopyInspection extends BaseInspection {
       }
       PsiIfStatement ifStatement = (PsiIfStatement)commentTracker.replaceAndRestoreComments(forStatement, newExpression);
       if (Boolean.TRUE.equals(DfaUtil.evaluateCondition(ifStatement.getCondition())))  {
-        PsiStatement nakedSubListClear = ControlFlowUtils.stripBraces(ifStatement.getThenBranch());
-        assert nakedSubListClear != null;
+        PsiStatement copyStatement = ControlFlowUtils.stripBraces(ifStatement.getThenBranch());
+        assert copyStatement != null;
         CommentTracker ct = new CommentTracker();
-        ct.replaceAndRestoreComments(ifStatement, ct.markUnchanged(nakedSubListClear));
+        ct.replaceAndRestoreComments(ifStatement, ct.markUnchanged(copyStatement));
       }
     }
 
