@@ -20,7 +20,6 @@ import com.intellij.ide.util.SuperMethodWarningUtil;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Condition;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.source.PsiClassReferenceType;
 import com.intellij.psi.search.LocalSearchScope;
@@ -56,33 +55,25 @@ public class BoundedWildcardInspection extends AbstractBaseJavaLocalInspectionTo
   @NotNull
   @Override
   public PsiElementVisitor buildVisitor(@NotNull ProblemsHolder holder, boolean isOnTheFly, @NotNull LocalInspectionToolSession session) {
-    return new CoVarianceVisitor(holder, isOnTheFly);
-  }
-
-  private static class CoVarianceVisitor extends JavaElementVisitor {
-    private final ProblemsHolder myHolder;
-    private final boolean myIsOnTheFly;
-
-    CoVarianceVisitor(ProblemsHolder holder, boolean isOnTheFly) {
-      myHolder = holder;
-      myIsOnTheFly = isOnTheFly;
-    }
-
-    @Override
-    public void visitTypeElement(PsiTypeElement typeElement) {
-      VarianceCandidate candidate = VarianceCandidate.findVarianceCandidate(typeElement);
-      if (candidate == null) return;
-      PsiClassReferenceType extendsT = suggestMethodParameterType(candidate, true);
-      PsiClassReferenceType superT = suggestMethodParameterType(candidate, false);
-      Variance variance = checkParameterVarianceInMethodBody(candidate.methodParameter, candidate.method, candidate.typeParameter,
-                                                             extendsT, superT);
-      if (variance == Variance.CONTRAVARIANT && makesSenseToSuper(candidate)) {
-        myHolder.registerProblem(typeElement, InspectionGadgetsBundle.message("bounded.wildcard.contravariant.descriptor"), new ReplaceWithQuestionTFix(isOverriddenOrOverrides(candidate.method), false));
+    return new JavaElementVisitor() {
+      @Override
+      public void visitTypeElement(PsiTypeElement typeElement) {
+        VarianceCandidate candidate = VarianceCandidate.findVarianceCandidate(typeElement);
+        if (candidate == null) return;
+        PsiClassReferenceType extendsT = suggestMethodParameterType(candidate, true);
+        PsiClassReferenceType superT = suggestMethodParameterType(candidate, false);
+        Variance variance = checkParameterVarianceInMethodBody(candidate.methodParameter, candidate.method, candidate.typeParameter,
+                                                               extendsT, superT);
+        if (variance == Variance.CONTRAVARIANT && makesSenseToSuper(candidate)) {
+          holder.registerProblem(typeElement, InspectionGadgetsBundle.message("bounded.wildcard.contravariant.descriptor"),
+                                 new ReplaceWithQuestionTFix(isOverriddenOrOverrides(candidate.method), false));
+        }
+        if (variance == Variance.COVARIANT && makesSenseToExtend(candidate)) {
+          holder.registerProblem(typeElement, InspectionGadgetsBundle.message("bounded.wildcard.covariant.descriptor"),
+                                 new ReplaceWithQuestionTFix(isOverriddenOrOverrides(candidate.method), true));
+        }
       }
-      if (variance == Variance.COVARIANT && makesSenseToExtend(candidate)) {
-        myHolder.registerProblem(typeElement, InspectionGadgetsBundle.message("bounded.wildcard.covariant.descriptor"), new ReplaceWithQuestionTFix(isOverriddenOrOverrides(candidate.method), true));
-      }
-    }
+    };
   }
 
   private static boolean makesSenseToExtend(VarianceCandidate candidate) {
@@ -343,14 +334,30 @@ public class BoundedWildcardInspection extends AbstractBaseJavaLocalInspectionTo
     PsiElement parent = PsiUtil.skipParenthesizedExprUp(refElement.getParent());
     if (!(parent instanceof PsiExpressionList)) return false;
     List<PsiExpression> exprs = Arrays.asList(((PsiExpressionList)parent).getExpressions());
-    int index = ContainerUtil.indexOf(exprs, (Condition<PsiExpression>)(PsiExpression e) -> PsiTreeUtil.isAncestor(e, refElement, false));
+    int index = ContainerUtil.indexOf(exprs, (PsiExpression e) -> PsiTreeUtil.isAncestor(e, refElement, false));
     if (index == -1) return false;
     PsiElement parent2 = parent.getParent();
-    if (!(parent2 instanceof PsiCallExpression)) return false;
-    JavaResolveResult result = ((PsiCallExpression)parent2).resolveMethodGenerics();
-    PsiMethod method = (PsiMethod)result.getElement();
-    if (method == null) return false;
-    if (method.getManager().areElementsEquivalent(method, myself)) return true; // recursive call
+    JavaResolveResult result;
+    if (parent2 instanceof PsiAnonymousClass) {
+      PsiElement newExpression = parent2.getParent();
+      if (newExpression instanceof PsiCall) {
+        result = ((PsiCall)newExpression).resolveMethodGenerics();
+      }
+      else {
+        return false;
+      }
+    }
+    else if (parent2 instanceof PsiCallExpression) {
+      result = ((PsiCallExpression)parent2).resolveMethodGenerics();
+    }
+    else {
+      return false;
+    }
+    PsiElement resolved = result.getElement();
+    if (!(resolved instanceof PsiMethod)) return false;
+    PsiMethod method = (PsiMethod)resolved;
+    if (method.getManager().areElementsEquivalent(method, myself)
+        || MethodSignatureUtil.isSuperMethod(method, myself)) return true; // recursive call or super.foo() call
     PsiParameter[] parameters = method.getParameterList().getParameters();
     if (parameters.length == 0 || parameters.length <= index && !method.isVarArgs()) return false;
     PsiParameter parameter = parameters[Math.min(index, parameters.length - 1)];
