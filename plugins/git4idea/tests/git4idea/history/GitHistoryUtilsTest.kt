@@ -17,6 +17,7 @@ package git4idea.history
 
 import com.intellij.dvcs.DvcsUtil.getShortHash
 import com.intellij.openapi.util.io.FileUtil
+import com.intellij.openapi.vcs.Executor
 import com.intellij.openapi.vcs.Executor.*
 import com.intellij.openapi.vcs.VcsException
 import com.intellij.openapi.vcs.history.VcsFileRevision
@@ -39,8 +40,6 @@ import java.util.*
  * (see #convertWhitespacesToSpacesAndRemoveDoubles).
  */
 class GitHistoryUtilsTest : GitSingleRepoTest() {
-  private val NAME = "PostHighlightingPass.java"
-
   private var bfile: File? = null
   private var revisions: MutableList<GitTestRevision>? = null
   private var revisionsAfterRename: MutableList<GitTestRevision>? = null
@@ -125,65 +124,58 @@ class GitHistoryUtilsTest : GitSingleRepoTest() {
   fun testCyclicRename() {
     val commits = ArrayList<TestCommit>()
 
-    val source = mkdir("source")
-    val initialFile = touch("source/" + NAME, "Initial content")
-    val initMessage = "Created PostHighlightingPass.java in source"
-    repo.addCommit(initMessage)
-    val hash = this.last()
-    commits.add(TestCommit(hash, initMessage, initialFile.path))
+    commits.add(add("PostHighlightingPass.java", Executor.mkdir("source")))
+    commits.add(modify(commits.last().file))
 
-    var filePath = initialFile.path
+    commits.add(move(commits.last().file, Executor.mkdir("codeInside-impl")))
+    commits.add(modify(commits.last().file))
 
-    commits.add(modify(filePath))
+    commits.add(move(commits.last().file, Executor.mkdir("codeInside")))
+    commits.add(modify(commits.last().file))
 
-    var commit = move(filePath, mkdir("codeInside-impl"), "Moved from source to codeInside-impl")
-    filePath = commit.path
-    commits.add(commit)
-    commits.add(modify(filePath))
+    commits.add(move(commits.last().file, Executor.mkdir("lang-impl")))
+    commits.add(modify(commits.last().file))
 
-    commit = move(filePath, mkdir("codeInside"), "Moved from codeInside-impl to codeInside")
-    filePath = commit.path
-    commits.add(commit)
-    commits.add(modify(filePath))
+    commits.add(move(commits.last().file, child("source")))
+    commits.add(modify(commits.last().file))
 
-    commit = move(filePath, mkdir("lang-impl"), "Moved from codeInside to lang-impl")
-    filePath = commit.path
-    commits.add(commit)
-    commits.add(modify(filePath))
-
-    commit = move(filePath, source, "Moved from lang-impl back to source")
-    filePath = commit.path
-    commits.add(commit)
-    commits.add(modify(filePath))
-
-    commit = move(filePath, mkdir("java"), "Moved from source to java")
-    filePath = commit.path
-    commits.add(commit)
-    commits.add(modify(filePath))
+    commits.add(move(commits.last().file, Executor.mkdir("java")))
+    commits.add(modify(commits.last().file))
 
     commits.reverse()
 
-    val vFile = VcsUtil.getVirtualFileWithRefresh(File(filePath))
+    val vFile = VcsUtil.getVirtualFileWithRefresh(commits.first().file)
     TestCase.assertNotNull(vFile)
-    val history = GitFileHistory.collectHistory(myProject, getFilePath(vFile!!))
+    val history = GitFileHistory.collectHistory(myProject, VcsUtil.getFilePath(vFile!!))
     TestCase.assertEquals("History size doesn't match. Actual history: \n" + toReadable(history), commits.size, history.size)
     TestCase.assertEquals("History is different.", toReadable(commits), toReadable(history))
   }
 
-  private class TestCommit(val hash: String, val commitMessage: String, val path: String)
+  private class TestCommit(val hash: String, val commitMessage: String, val file: File)
 
-  private fun move(file: String, dir: File, message: String): TestCommit {
-    repo.mv(file, dir.path)
+  private fun move(file: File, dir: File): TestCommit {
+    repo.mv(file.path, dir.path)
+
+    val message = "Moved ${file.path} to ${dir.name}"
     repo.addCommit(message)
 
-    return TestCommit(last(), message, File(dir, NAME).path)
+    return TestCommit(last(), message, File(dir, file.name))
   }
 
   @Throws(IOException::class)
-  private fun modify(file: String): TestCommit {
-    FileUtil.appendToFile(File(file), "Modified")
+  private fun modify(file: File): TestCommit {
+    FileUtil.appendToFile(file, "Modified")
 
-    val message = "Modified " + NAME
+    val message = "Modified ${file.path}"
+    repo.addCommit(message)
+
+    return TestCommit(last(), message, file)
+  }
+
+  private fun add(fileName: String, dir: File): TestCommit {
+    val file = touch(File(dir, fileName).path, "Initial content")
+
+    val message = "Created $fileName in ${dir.name}"
     repo.addCommit(message)
 
     return TestCommit(last(), message, file)
@@ -204,7 +196,7 @@ class GitHistoryUtilsTest : GitSingleRepoTest() {
     val maxSubjectLength = history.map { it.commitMessage.length }.max() ?: 0
     val sb = StringBuilder()
     for (commit in history) {
-      val relPath = FileUtil.getRelativePath(File(projectPath), File(commit.path))
+      val relPath = FileUtil.getRelativePath(File(projectPath), commit.file)
       sb.append(String.format("%s  %-" + maxSubjectLength + "s  %s%n", getShortHash(commit.hash), commit.commitMessage, relPath))
     }
     return sb.toString()
