@@ -80,6 +80,7 @@ import com.jetbrains.python.debugger.PyDebugRunner;
 import com.jetbrains.python.debugger.PyDebugValue;
 import com.jetbrains.python.debugger.PyVariableViewSettings;
 import com.jetbrains.python.debugger.settings.PyDebuggerSettings;
+import com.jetbrains.python.remote.PyRemotePathMapper;
 import com.jetbrains.python.remote.PyRemoteSdkAdditionalDataBase;
 import com.jetbrains.python.remote.PythonRemoteInterpreterManager;
 import com.jetbrains.python.run.PythonCommandLineState;
@@ -110,6 +111,7 @@ public class PydevConsoleRunnerImpl implements PydevConsoleRunner {
   public static final String WORKING_DIR_AND_PYTHON_PATHS = "WORKING_DIR_AND_PYTHON_PATHS";
   public static final String CONSOLE_START_COMMAND = "import sys; print('Python %s on %s' % (sys.version, sys.platform))\n" +
                                                      "sys.path.extend([" + WORKING_DIR_AND_PYTHON_PATHS + "])\n";
+  public static final String STARTED_BY_RUNNER = "startedByRunner";
   private static final Logger LOG = Logger.getInstance(PydevConsoleRunnerImpl.class.getName());
   @SuppressWarnings("SpellCheckingInspection")
   public static final String PYDEV_PYDEVCONSOLE_PY = "pydev/pydevconsole.py";
@@ -128,9 +130,8 @@ public class PydevConsoleRunnerImpl implements PydevConsoleRunner {
   private final PyConsoleType myConsoleType;
   @NotNull private final Map<String, String> myEnvironmentVariables;
   private String myCommandLine;
-  @NotNull private final PyConsoleOptions.PyConsoleSettings myConsoleSettings;
-  private String[] myStatementsToExecute = ArrayUtil.EMPTY_STRING_ARRAY;
-  private boolean myEnableAfterConnection = true;
+  @NotNull protected final PyConsoleOptions.PyConsoleSettings myConsoleSettings;
+  private final String[] myStatementsToExecute;
 
 
   private static final long HANDSHAKE_TIMEOUT = 60000;
@@ -160,10 +161,6 @@ public class PydevConsoleRunnerImpl implements PydevConsoleRunner {
 
   public void setConsoleTitle(String consoleTitle) {
     myConsoleTitle = consoleTitle;
-  }
-
-  public void setEnableAfterConnection(boolean enableAfterConnection) {
-    myEnableAfterConnection = enableAfterConnection;
   }
 
   private List<AnAction> fillToolBarActions(final DefaultActionGroup toolbarActions,
@@ -324,6 +321,7 @@ public class PydevConsoleRunnerImpl implements PydevConsoleRunner {
   protected void showContentDescriptor(RunContentDescriptor contentDescriptor) {
     ToolWindow toolwindow = PythonConsoleToolWindow.getToolWindow(myProject);
     if (toolwindow != null) {
+      toolwindow.getComponent().putClientProperty(STARTED_BY_RUNNER, "true");
       PythonConsoleToolWindow.getInstance(myProject).init(toolwindow, contentDescriptor);
     }
     else {
@@ -355,31 +353,37 @@ public class PydevConsoleRunnerImpl implements PydevConsoleRunner {
                                                  @NotNull final Map<String, String> environmentVariables,
                                                  @Nullable String workingDir,
                                                  @NotNull int[] ports) {
-    return doCreateConsoleCmdLine(sdk, environmentVariables, workingDir, ports, PythonHelper.CONSOLE);
+    return doCreateConsoleCmdLine(sdk, environmentVariables, workingDir, ports);
+  }
+
+  protected PythonConsoleRunParams createConsoleRunParams(@Nullable String workingDir,
+                                                          @NotNull Sdk sdk,
+                                                          @NotNull Map<String, String> environmentVariables) {
+    return new PythonConsoleRunParams(myConsoleSettings, workingDir, sdk, environmentVariables);
   }
 
   @NotNull
   protected GeneralCommandLine doCreateConsoleCmdLine(@NotNull Sdk sdk,
                                                       @NotNull Map<String, String> environmentVariables,
                                                       @Nullable String workingDir,
-                                                      @NotNull int[] ports,
-                                                      PythonHelper helper) {
+                                                      @NotNull int[] ports) {
+    final PythonConsoleRunParams runParams = createConsoleRunParams(workingDir, sdk, environmentVariables);
+
     GeneralCommandLine cmd =
-      PythonCommandLineState.createPythonCommandLine(myProject, new PythonConsoleRunParams(myConsoleSettings, workingDir, sdk,
-                                                                                           environmentVariables), false,
+      PythonCommandLineState.createPythonCommandLine(myProject, runParams, false,
                                                      PtyCommandLine.isEnabled() && !SystemInfo.isWindows);
     cmd.withWorkDirectory(myWorkingDir);
 
     ParamsGroup exeGroup = cmd.getParametersList().getParamsGroup(PythonCommandLineState.GROUP_EXE_OPTIONS);
-    if (exeGroup != null && !myConsoleSettings.getInterpreterOptions().isEmpty()) {
-      exeGroup.addParametersString(myConsoleSettings.getInterpreterOptions());
+    if (exeGroup != null && !runParams.getInterpreterOptions().isEmpty()) {
+      exeGroup.addParametersString(runParams.getInterpreterOptions());
     }
 
     ParamsGroup group = cmd.getParametersList().getParamsGroup(PythonCommandLineState.GROUP_SCRIPT);
     if (group == null) {
       group = cmd.getParametersList().addParamsGroup(PythonCommandLineState.GROUP_SCRIPT);
     }
-    helper.addToGroup(group, cmd);
+    PythonHelper.CONSOLE.addToGroup(group, cmd);
 
     for (int port : ports) {
       group.addParameter(String.valueOf(port));
@@ -399,14 +403,13 @@ public class PydevConsoleRunnerImpl implements PydevConsoleRunner {
   private Process createProcess(@NotNull GeneralCommandLine generalCommandLine) throws ExecutionException {
     if (PySdkUtil.isRemote(mySdk)) {
       PythonRemoteInterpreterManager manager = PythonRemoteInterpreterManager.getInstance();
-      if (manager != null) {
+      PyRemoteSdkAdditionalDataBase data = (PyRemoteSdkAdditionalDataBase)mySdk.getSdkAdditionalData();
+      final PyRemotePathMapper pathMapper = PydevConsoleRunner.getPathMapper(myProject, mySdk, myConsoleSettings);
+      if (manager != null && data != null && pathMapper != null) {
         UsageTrigger.trigger(CONSOLE_FEATURE + ".remote");
-
-        PyRemoteSdkAdditionalDataBase data = (PyRemoteSdkAdditionalDataBase)mySdk.getSdkAdditionalData();
-
         RemoteConsoleProcessData remoteConsoleProcessData =
           PythonConsoleRemoteProcessCreatorKt.createRemoteConsoleProcess(generalCommandLine,
-                                                                         PydevConsoleRunner.getPathMapper(myProject, mySdk, myConsoleSettings),
+                                                                         pathMapper,
                                                                          myProject, data, getRunnerFileFromHelpers(),
                                                                          myPorts[0], myPorts[1]);
         myRemoteConsoleProcessData = remoteConsoleProcessData;
@@ -562,7 +565,7 @@ public class PydevConsoleRunnerImpl implements PydevConsoleRunner {
         @Override
         protected List<String> getActiveConsoles(@NotNull String consoleTitle) {
           PythonConsoleToolWindow toolWindow = PythonConsoleToolWindow.getInstance(myProject);
-          if (toolWindow != null && toolWindow.getToolWindow() != null) {
+          if (toolWindow != null && toolWindow.isInitialized() && toolWindow.getToolWindow() != null) {
             return Lists.newArrayList(toolWindow.getToolWindow().getContentManager().getContents()).stream().map(c -> c.getDisplayName())
               .collect(
                 Collectors.toList());
@@ -607,9 +610,7 @@ public class PydevConsoleRunnerImpl implements PydevConsoleRunner {
           }
         });
 
-        if (myEnableAfterConnection) {
-          enableConsoleExecuteAction();
-        }
+        enableConsoleExecuteAction();
 
         if (statements2execute.length == 1 && statements2execute[0].isEmpty()) {
           statements2execute[0] = "\t";
@@ -890,7 +891,7 @@ public class PydevConsoleRunnerImpl implements PydevConsoleRunner {
     }
 
     @Override
-    public void update(AnActionEvent e) {
+    public void update(@NotNull AnActionEvent e) {
       if (mySession != null) {
         e.getPresentation().setEnabled(false);
       }
@@ -932,16 +933,19 @@ public class PydevConsoleRunnerImpl implements PydevConsoleRunner {
 
     @Override
     public void actionPerformed(AnActionEvent e) {
-      PydevConsoleRunner runner =
-        PythonConsoleRunnerFactory.getInstance().createConsoleRunner(e.getData(CommonDataKeys.PROJECT), e.getData(LangDataKeys.MODULE));
-      runner.run(true);
+      final Project project = e.getData(CommonDataKeys.PROJECT);
+      if (project != null) {
+        PydevConsoleRunner runner =
+          PythonConsoleRunnerFactory.getInstance().createConsoleRunner(project, e.getData(LangDataKeys.MODULE));
+        runner.run(true);
+      }
     }
   }
 
   private XDebugSession connectToDebugger() throws ExecutionException {
     final ServerSocket serverSocket = PythonCommandLineState.createServerSocket();
 
-    final XDebugSession session = XDebuggerManager.getInstance(myProject).
+    return XDebuggerManager.getInstance(myProject).
       startSessionAndShowTab("Python Console Debugger", PythonIcons.Python.Python, null, true, new XDebugProcessStarter() {
         @NotNull
         public XDebugProcess start(@NotNull final XDebugSession session) {
@@ -985,8 +989,6 @@ public class PydevConsoleRunnerImpl implements PydevConsoleRunner {
           return consoleDebugProcess;
         }
       });
-
-    return session;
   }
 
   @Override

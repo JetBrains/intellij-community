@@ -30,8 +30,13 @@ FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR
 OTHER DEALINGS IN THE SOFTWARE.
 """
 
-import sys
 import os
+import shlex
+import sys
+
+from _pydev_bundle import pydev_imports
+from pydevd_file_utils import get_fullname, rPath
+
 
 # The following classes and functions are mainly intended to be used from
 # an interactive Python session
@@ -96,9 +101,13 @@ class UserModuleDeleter:
 __umd__ = None
 
 _get_globals_callback = None
+
+
 def _set_globals_function(get_globals):
     global _get_globals_callback
     _get_globals_callback = get_globals
+
+
 def _get_globals():
     """Return current Python interpreter globals namespace"""
     if _get_globals_callback is not None:
@@ -120,10 +129,9 @@ def _get_globals():
         else:
             # Python interpreter
             return namespace
-        return namespace
 
 
-def runfile(filename, args=None, wdir=None, namespace=None):
+def runfile(filename, args=None, wdir=None, is_module=False, global_vars=None):
     """
     Run filename
     args: command line arguments (string)
@@ -134,6 +142,7 @@ def runfile(filename, args=None, wdir=None, namespace=None):
             filename = filename.decode('utf-8')
     except (UnicodeError, TypeError):
         pass
+
     global __umd__
     if os.environ.get("PYDEV_UMD_ENABLED", "").lower() == "true":
         if __umd__ is None:
@@ -144,19 +153,35 @@ def runfile(filename, args=None, wdir=None, namespace=None):
         else:
             verbose = os.environ.get("PYDEV_UMD_VERBOSE", "").lower() == "true"
             __umd__.run(verbose=verbose)
-    if args is not None and not isinstance(args, basestring):
-        raise TypeError("expected a character buffer object")
-    if namespace is None:
-        namespace = _get_globals()
-    if '__file__' in namespace:
-        old_file = namespace['__file__']
+
+    if global_vars is None:
+        global_vars = _get_globals()
+    if '__file__' in global_vars:
+        old_file = global_vars['__file__']
     else:
         old_file = None
-    namespace['__file__'] = filename
+    local_vars = global_vars
+
+    module_name = None
+    entry_point_fn = None
+    if is_module:
+        file, _, entry_point_fn = filename.partition(':')
+        module_name = file
+        filename = get_fullname(file)
+        if filename is None:
+            sys.stderr.write("No module named %s\n" % file)
+            return
+    else:
+        # The file being run must be in the pythonpath (even if it was not before)
+        sys.path.insert(0, os.path.split(rPath(filename))[0])
+
+    global_vars['__file__'] = filename
+
     sys.argv = [filename]
     if args is not None:
-        for arg in args.split():
+        for arg in shlex.split(args):
             sys.argv.append(arg)
+
     if wdir is not None:
         try:
             if hasattr(wdir, 'decode'):
@@ -164,9 +189,27 @@ def runfile(filename, args=None, wdir=None, namespace=None):
         except (UnicodeError, TypeError):
             pass
         os.chdir(wdir)
-    execfile(filename, namespace)
+
+    if not is_module:
+        pydev_imports.execfile(filename, global_vars, local_vars)  # execute the script
+    else:
+        # treat ':' as a seperator between module and entry point function
+        # if there is no entry point we run we same as with -m switch. Otherwise we perform
+        # an import and execute the entry point
+        if entry_point_fn:
+            mod = __import__(module_name, level=0, fromlist=[entry_point_fn], globals=global_vars, locals=local_vars)
+            func = getattr(mod, entry_point_fn)
+            func()
+        else:
+            # Run with the -m switch
+            import runpy
+            if hasattr(runpy, '_run_module_as_main'):
+                runpy._run_module_as_main(module_name)
+            else:
+                runpy.run_module(module_name)
+
     sys.argv = ['']
     if old_file is None:
-        del namespace['__file__']
+        del global_vars['__file__']
     else:
-        namespace['__file__'] = old_file
+        global_vars['__file__'] = old_file
