@@ -14,7 +14,7 @@ layoutConstraints:
   - {horizontal: true, unit: 0, value: 0.0}
 rowConstraints:
   constraints:
-  - align: {horizontal: false, unit: 6, value: 0.0}
+  - align: {horizontal: false, unit: -1, value: 0.0}
   - {}
   - gapAfter:
       max: &id003 {horizontal: true, value: 6.0}
@@ -42,53 +42,43 @@ componentConstrains:
       gapBefore:
         min: &id006 {horizontal: true, value: 17.0}
         preferred: *id006
-    vertical:
-      gapBefore:
-        max: &id007 {horizontal: false, value: 3.0}
-        min: *id007
-        preferred: *id007
   'JTextField #2':
     horizontal: {grow: 100.0}
     split: 2
   'JLabel #3':
     horizontal:
       gapBefore:
-        min: &id008 {horizontal: true, value: 4.0}
-        preferred: *id008
+        min: &id007 {horizontal: true, value: 4.0}
+        preferred: *id007
     spanX: 2097051
     wrap: true
   'Master Password:':
     horizontal:
       gapBefore:
-        min: &id009 {horizontal: true, value: 17.0}
-        preferred: *id009
-    vertical:
-      gapBefore:
-        max: &id010 {horizontal: false, value: 3.0}
-        min: *id010
-        preferred: *id010
+        min: &id008 {horizontal: true, value: 17.0}
+        preferred: *id008
   'JBPasswordField #5': {spanX: 2097051, wrap: true}
   Stored using weak encryption.:
     horizontal:
       gapBefore:
-        min: &id011 {horizontal: true, value: 1.0}
-        preferred: *id011
+        min: &id009 {horizontal: true, value: 1.0}
+        preferred: *id009
     skip: 1
     spanX: 2097051
     wrap: true
 cellBounds:
-- [0, 0, 480, 22]
-- [0, 32, 109, 22]
-- [115, 32, 357, 22]
-- [115, 32, 357, 22]
-- [0, 64, 109, 23]
-- [115, 64, 365, 23]
-- [115, 93, 365, 16]
+- [0, 0, 480, 16]
+- [0, 26, 109, 22]
+- [115, 26, 357, 22]
+- [115, 26, 357, 22]
+- [0, 58, 109, 22]
+- [115, 58, 365, 22]
+- [115, 86, 365, 16]
 componentBounds:
-  In KeePass: [0, -1, 72, 24]
-  'Database:': [17, 35, 51, 16]
-  'JTextField #2': [114, 31, 334, 24]
-  'JLabel #3': [451, 35, 21, 16]
-  'Master Password:': [17, 67, 92, 16]
-  'JBPasswordField #5': [114, 63, 252, 25]
-  Stored using weak encryption.: [116, 93, 159, 16]
+  In KeePass: [-1, -1, 73, 18]
+  'Database:': [17, 29, 51, 16]
+  'JTextField #2': [114, 25, 334, 24]
+  'JLabel #3': [451, 29, 21, 16]
+  'Master Password:': [17, 60, 92, 16]
+  'JBPasswordField #5': [114, 57, 252, 24]
+  Stored using weak encryption.: [116, 86, 159, 16]

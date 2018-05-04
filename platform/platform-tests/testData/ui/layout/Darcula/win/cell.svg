@@ -24,10 +24,10 @@
         <path d="M-1 2 L-1 29 L77 29 L77 2 Z"/>
       </clipPath>
       <clipPath clipPathUnits="userSpaceOnUse" id="5">
-        <path d="M0 3 L0 30 L41 30 L41 3 Z"/>
+        <path d="M0 3 L0 30 L40 30 L40 3 Z"/>
       </clipPath>
       <clipPath clipPathUnits="userSpaceOnUse" id="6">
-        <path d="M-1 2 L-1 29 L40 29 L40 2 Z"/>
+        <path d="M-1 2 L-1 29 L39 29 L39 2 Z"/>
       </clipPath>
       <clipPath clipPathUnits="userSpaceOnUse" id="7">
         <path d="M0 0 L0 22 L29 22 L29 0 Z"/>
@@ -48,34 +48,34 @@
       <rect x="479" width="1" height="254" y="0" clip-path="url(#1)" stroke="none"/>
       <rect x="0" width="480" height="1" y="253" clip-path="url(#1)" stroke="none"/>
     </g>
-    <g fill="rgb(120,120,120)" text-rendering="geometricPrecision" font-family="'Segoe UI'" transform="translate(66,30)" stroke="rgb(120,120,120)">
+    <g fill="rgb(120,120,120)" text-rendering="geometricPrecision" font-family="'Segoe UI'" transform="translate(69,30)" stroke="rgb(120,120,120)">
       <text x="0" xml:space="preserve" y="13" clip-path="url(#2)" stroke="none">Use File -&gt; Settings Repository... to configure</text>
     </g>
-    <g fill="rgb(60,63,65)" font-family="'Segoe UI'" transform="translate(105,-3)" stroke="rgb(60,63,65)">
+    <g fill="rgb(60,63,65)" font-family="'Segoe UI'" transform="translate(104,-3)" stroke="rgb(60,63,65)">
       <rect x="0" width="78" height="30" y="0" clip-path="url(#3)" stroke="none"/>
     </g>
-    <g fill="url(#linearGradient0)" text-rendering="optimizeLegibility" font-family="'Segoe UI'" transform="translate(106,-2)" stroke="url(#linearGradient0)">
+    <g fill="url(#linearGradient0)" text-rendering="optimizeLegibility" font-family="'Segoe UI'" transform="translate(105,-2)" stroke="url(#linearGradient0)">
       <rect x="2" y="2" clip-path="url(#4)" width="72" rx="3" ry="3" height="24" stroke="none"/>
     </g>
-    <g fill="rgb(187,187,187)" font-family="'Segoe UI'" transform="translate(105,-3)" stroke="rgb(187,187,187)">
+    <g fill="rgb(187,187,187)" font-family="'Segoe UI'" transform="translate(104,-3)" stroke="rgb(187,187,187)">
       <text x="23" xml:space="preserve" y="20" clip-path="url(#3)" stroke="none">Delete</text>
     </g>
-    <g fill="rgb(54,54,54)" text-rendering="optimizeLegibility" font-family="'Segoe UI'" transform="translate(106,-2)" stroke="rgb(54,54,54)">
+    <g fill="rgb(54,54,54)" text-rendering="optimizeLegibility" font-family="'Segoe UI'" transform="translate(105,-2)" stroke="rgb(54,54,54)">
       <rect x="2" y="26" clip-path="url(#4)" width="72" height="2" opacity="0.5" stroke="none"/>
       <path fill="rgb(94,96,96)" d="M2 5 L2 23 C2 24.6569 3.3431 26 5 26 L71 26 C72.6569 26 74 24.6569 74 23 L74 5 C74 3.3431 72.6569 2 71 2 L5 2 C3.3431 2 2 3.3431 2 5 ZM3 5.5 L3 22.5 C3 23.8807 4.1193 25 5.5 25 L70.5 25 C71.8807 25 73 23.8807 73 22.5 L73 5.5 C73 4.1193 71.8807 3 70.5 3 L5.5 3 C4.1193 3 3 4.1193 3 5.5 Z" clip-path="url(#4)" fill-rule="evenodd" stroke="none"/>
     </g>
     <g fill="rgb(60,63,65)" font-family="'Segoe UI'" transform="translate(62,-3)" stroke="rgb(60,63,65)">
-      <rect x="0" width="41" height="30" y="0" clip-path="url(#5)" stroke="none"/>
-      <rect x="0" width="41" height="30" y="0" clip-path="url(#5)" stroke="none"/>
+      <rect x="0" width="40" height="30" y="0" clip-path="url(#5)" stroke="none"/>
+      <rect x="0" width="40" height="30" y="0" clip-path="url(#5)" stroke="none"/>
     </g>
     <g fill="rgb(60,63,65)" text-rendering="optimizeLegibility" font-family="'Segoe UI'" transform="translate(63,-2)" stroke="rgb(60,63,65)">
-      <rect x="2" y="2" clip-path="url(#6)" width="35" rx="2.5" ry="2.5" height="24" stroke="none"/>
+      <rect x="2" y="2" clip-path="url(#6)" width="34" rx="2.5" ry="2.5" height="24" stroke="none"/>
     </g>
     <g fill="rgb(60,63,65)" font-family="'Segoe UI'" transform="translate(70,1)" stroke="rgb(60,63,65)">
       <rect x="0" width="29" height="22" y="0" clip-path="url(#7)" stroke="none"/>
     </g>
     <g fill="rgb(100,100,100)" text-rendering="optimizeLegibility" font-family="'Segoe UI'" transform="translate(63,-2)" stroke="rgb(100,100,100)">
-      <path d="M2 4.5 L2 23.5 C2 24.8807 3.1193 26 4.5 26 L34.5 26 C35.8807 26 37 24.8807 37 23.5 L37 4.5 C37 3.1193 35.8807 2 34.5 2 L4.5 2 C3.1193 2 2 3.1193 2 4.5 ZM3 5 L3 23 C3 24.1046 3.8954 25 5 25 L34 25 C35.1046 25 36 24.1046 36 23 L36 5 C36 3.8954 35.1046 3 34 3 L5 3 C3.8954 3 3 3.8954 3 5 Z" fill-rule="evenodd" clip-path="url(#6)" stroke="none"/>
+      <path d="M2 4.5 L2 23.5 C2 24.8807 3.1193 26 4.5 26 L33.5 26 C34.8807 26 36 24.8807 36 23.5 L36 4.5 C36 3.1193 34.8807 2 33.5 2 L4.5 2 C3.1193 2 2 3.1193 2 4.5 ZM3 5 L3 23 C3 24.1046 3.8954 25 5 25 L33 25 C34.1046 25 35 24.1046 35 23 L35 5 C35 3.8954 34.1046 3 33 3 L5 3 C3.8954 3 3 3.8954 3 5 Z" fill-rule="evenodd" clip-path="url(#6)" stroke="none"/>
     </g>
     <g fill="rgb(187,187,187)" font-family="'Segoe UI'" transform="translate(0,4)" stroke="rgb(187,187,187)">
       <text x="0" xml:space="preserve" y="13" clip-path="url(#8)" stroke="none">Repository:</text>

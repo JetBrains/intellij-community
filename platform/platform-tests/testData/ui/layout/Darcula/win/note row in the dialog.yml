@@ -14,7 +14,7 @@ layoutConstraints:
   - {horizontal: true, unit: 0, value: 0.0}
 rowConstraints:
   constraints:
-  - align: {horizontal: false, unit: 6, value: 0.0}
+  - align: {horizontal: false, unit: -1, value: 0.0}
     noGrid: true
   - {}
   - {}
@@ -44,34 +44,29 @@ componentConstrains:
         min: &id006 {horizontal: false, value: 10.0}
         preferred: *id006
     wrap: true
-  'Sudo password:':
-    vertical:
-      gapBefore:
-        max: &id007 {horizontal: false, value: 4.0}
-        min: *id007
-        preferred: *id007
+  'Sudo password:': {}
   'JPasswordField #2': {spanX: 2097051, wrap: true}
   !!binary "G1JlbWVtYmVy": {skip: 1, spanX: 2097051, wrap: true}
   'SimpleColoredComponent #4':
     spanX: 2097051
     vertical:
       gapAfter:
-        min: &id008 {horizontal: false, value: 20.0}
-        preferred: *id008
+        min: &id007 {horizontal: false, value: 20.0}
+        preferred: *id007
       gapBefore:
-        min: &id009 {horizontal: false, value: 12.0}
-        preferred: *id009
+        min: &id008 {horizontal: false, value: 12.0}
+        preferred: *id008
     wrap: true
 cellBounds:
 - [0, 0, 480, 62]
-- [0, 72, 83, 25]
-- [89, 72, 391, 25]
-- [89, 107, 391, 24]
-- [0, 141, 480, 52]
+- [0, 72, 83, 24]
+- [89, 72, 391, 24]
+- [89, 106, 391, 13]
+- [0, 129, 480, 52]
 componentBounds:
   Profiler requires access to the kernel-level API. Enter the sudo password to allow this.: [
     0, 10, 242, 32]
-  'Sudo password:': [0, 76, 83, 16]
-  'JPasswordField #2': [87, 71, 254, 28]
-  !!binary "G1JlbWVtYmVy": [87, 107, 89, 24]
-  'SimpleColoredComponent #4': [0, 153, 271, 20]
+  'Sudo password:': [0, 75, 83, 16]
+  'JPasswordField #2': [86, 69, 256, 30]
+  !!binary "G1JlbWVtYmVy": [86, 104, 89, 18]
+  'SimpleColoredComponent #4': [0, 141, 271, 20]
