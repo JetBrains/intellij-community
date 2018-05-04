@@ -3,7 +3,6 @@ package circlet.runtime
 import com.intellij.openapi.application.*
 import kotlinx.coroutines.experimental.*
 import runtime.*
-import sun.management.snmp.jvminstr.JvmThreadInstanceEntryImpl.ThreadStateMap.Byte0.*
 import java.util.concurrent.*
 import kotlin.coroutines.experimental.*
 
