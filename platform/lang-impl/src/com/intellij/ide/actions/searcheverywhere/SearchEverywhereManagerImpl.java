@@ -57,6 +57,7 @@ public class SearchEverywhereManagerImpl implements SearchEverywhereManager {
                                 })
                                 .addUserData("SIMPLE_WINDOW")
                                 .createPopup();
+      mySearchEverywhereUI.setSearchFinishedHandler(() -> myBalloon.cancel());
 
       AnAction escape = ActionManager.getInstance().getAction("EditorEscape");
       DumbAwareAction.create(__ -> myBalloon.cancel())

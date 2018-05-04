@@ -2334,6 +2334,7 @@ public class SearchEverywhereAction extends AnAction implements CustomComponentA
     }
   }
 
+  //todo return private (same for other) #UX-1
   public static class MoreIndex {
     public volatile int classes = -1;
     public volatile int files = -1;

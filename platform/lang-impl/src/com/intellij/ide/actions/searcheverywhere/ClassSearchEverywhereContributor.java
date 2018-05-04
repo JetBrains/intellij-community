@@ -1,6 +1,7 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.actions.searcheverywhere;
 
+import com.intellij.codeInsight.navigation.NavigationUtil;
 import com.intellij.ide.IdeBundle;
 import com.intellij.ide.actions.SearchEverywhereClassifier;
 import com.intellij.ide.util.NavigationItemListCellRenderer;
@@ -66,5 +67,12 @@ public class ClassSearchEverywhereContributor implements SearchEverywhereContrib
   @Override
   public ListCellRenderer getElementsRenderer(Project project) {
     return new NavigationItemListCellRenderer();
+  }
+
+  @Override
+  public void processSelectedItem(Object selected) {
+    if (selected instanceof PsiElement) {
+      NavigationUtil.activateFileWithPsiElement((PsiElement) selected, true);
+    }
   }
 }

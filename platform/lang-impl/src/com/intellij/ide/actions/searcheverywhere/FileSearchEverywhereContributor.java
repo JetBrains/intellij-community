@@ -1,15 +1,14 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.actions.searcheverywhere;
 
+import com.intellij.codeInsight.navigation.NavigationUtil;
 import com.intellij.ide.IdeBundle;
-import com.intellij.ide.actions.SearchEverywhereClassifier;
 import com.intellij.ide.util.gotoByName.ChooseByNameModel;
 import com.intellij.ide.util.gotoByName.ChooseByNamePopup;
 import com.intellij.ide.util.gotoByName.GotoFileModel;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiElement;
-import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.ui.IdeUICustomization;
 import org.jetbrains.annotations.NotNull;
 
@@ -76,15 +75,16 @@ public class FileSearchEverywhereContributor implements SearchEverywhereContribu
     };
   }
 
-  @NotNull
-  private static GlobalSearchScope getProjectScope(@NotNull Project project) {
-    final GlobalSearchScope scope = SearchEverywhereClassifier.EP_Manager.getProjectScope(project);
-    if (scope != null) return scope;
-    return GlobalSearchScope.projectScope(project);
-  }
-
   @Override
   public ListCellRenderer getElementsRenderer(Project project) {
     return createModel(project).getListCellRenderer();
+  }
+
+  @Override
+  public void processSelectedItem(Object selected) {
+    //todo maybe another elements types
+    if (selected instanceof PsiElement) {
+      NavigationUtil.activateFileWithPsiElement((PsiElement) selected, true);
+    }
   }
 }

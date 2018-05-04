@@ -85,6 +85,8 @@ public class SearchEverywhereUI extends BorderLayoutPanel {
   private final Object myWorkerRestartRequestLock = new Object();
   private final Alarm myAlarm = new Alarm(Alarm.ThreadToUse.SWING_THREAD, ApplicationManager.getApplication());
 
+  private Runnable searchFinishedHandler = () -> {};
+
   // todo remove second param #UX-1
   public SearchEverywhereUI(Project project,
                             List<SearchEverywhereContributor> contributors,
@@ -108,7 +110,8 @@ public class SearchEverywhereUI extends BorderLayoutPanel {
     addToRight(settingsPanel);
     addToBottom(mySearchField);
 
-    myResultsList.setCellRenderer(new CompositeCellRenderer(myResultsRanges));
+    myResultsList.setCellRenderer(new CompositeCellRenderer());
+    initListActions();
   }
 
   public JTextField getSearchField() {
@@ -129,6 +132,10 @@ public class SearchEverywhereUI extends BorderLayoutPanel {
                        .findAny()
                        .orElseThrow(() -> new IllegalArgumentException(String.format("Contributor %s is not supported", contributorID)));
     switchToTab(selectedTab);
+  }
+
+  public void setSearchFinishedHandler(@NotNull Runnable searchFinishedHandler) {
+    this.searchFinishedHandler = searchFinishedHandler;
   }
 
   public String getSelectedContributorID() {
@@ -365,6 +372,55 @@ public class SearchEverywhereUI extends BorderLayoutPanel {
           myCurrentWorker = myCalcThread.start();
         }
       });
+    }
+  }
+
+  private void initListActions() {
+    myResultsList.addMouseListener(new MouseAdapter() {
+      @Override
+      public void mouseClicked(MouseEvent e) {
+        e.consume();
+        final int i = myResultsList.locationToIndex(e.getPoint());
+        if (i != -1) {
+          ApplicationManager.getApplication().invokeLater(() -> {
+            myResultsList.setSelectedIndex(i);
+            elementSelected(i);
+          });
+        }
+      }
+    });
+
+  }
+
+  private void elementSelected(int i) {
+    Map.Entry<ResultsRange, SearchEverywhereContributor> entry = myResultsRanges.entrySet().stream()
+         .filter(e -> e.getKey().containsIndex(i))
+         .findAny()
+         .orElseThrow(() -> new IllegalStateException("Contributor for element is not specified"));
+
+    Boolean isMoreElement = entry.getKey().getMoreElementIndex().map(moreIndex -> moreIndex.equals(i)).orElse(false);
+    if (isMoreElement) {
+      showMoreElements(entry.getValue());
+    } else {
+      gotoSelectedItem(entry.getValue());
+    }
+  }
+
+  private void showMoreElements(SearchEverywhereContributor contributor) {
+
+  }
+
+  private void gotoSelectedItem(SearchEverywhereContributor contributor) {
+    Object value = myResultsList.getSelectedValue();
+    stopSearching();
+    searchFinishedHandler.run();
+    contributor.processSelectedItem(value);
+  }
+
+  private void stopSearching() {
+    myAlarm.cancelAllRequests();
+    if (myCalcThread != null && !myCalcThread.isCanceled()) {
+      myCalcThread.cancel();
     }
   }
 
@@ -634,13 +690,7 @@ public class SearchEverywhereUI extends BorderLayoutPanel {
     }
   }
 
-  private class CompositeCellRenderer implements ListCellRenderer {
-
-    public CompositeCellRenderer(Map<ResultsRange, SearchEverywhereContributor> delegates) {
-      this.delegates = delegates;
-    }
-
-    private final Map<ResultsRange, SearchEverywhereContributor> delegates;
+  private  class CompositeCellRenderer implements ListCellRenderer {
 
     @Override
     public Component getListCellRendererComponent(JList list, Object value, int index, boolean isSelected, boolean cellHasFocus) {
@@ -648,7 +698,7 @@ public class SearchEverywhereUI extends BorderLayoutPanel {
         return moreRenderer.getListCellRendererComponent(list, value, index, isSelected, cellHasFocus);
       }
 
-      Map.Entry<ResultsRange, SearchEverywhereContributor> delegateEntry = delegates.entrySet().stream()
+      Map.Entry<ResultsRange, SearchEverywhereContributor> delegateEntry = myResultsRanges.entrySet().stream()
                .filter(entry -> entry.getKey().getElementsRange()
                .isWithin(index, true))
                .findAny()
@@ -667,10 +717,10 @@ public class SearchEverywhereUI extends BorderLayoutPanel {
     }
 
     private boolean isMoreElement(int index) {
-      return delegates.entrySet().stream()
-                                       .map(entry -> entry.getKey().getMoreElementIndex().orElse(null))
-                                       .filter(Objects::nonNull)
-                                       .anyMatch(i -> i.equals(index));
+      return myResultsRanges.entrySet().stream()
+                            .map(entry -> entry.getKey().getMoreElementIndex().orElse(null))
+                            .filter(Objects::nonNull)
+                            .anyMatch(i -> i.equals(index));
     }
   }
 
@@ -693,6 +743,10 @@ public class SearchEverywhereUI extends BorderLayoutPanel {
 
     public Optional<Integer> getMoreElementIndex() {
       return Optional.ofNullable(moreElementIndex);
+    }
+
+    public boolean containsIndex(int i) {
+      return elementsRange.isWithin(i, true) || (moreElementIndex != null && moreElementIndex.equals(i));
     }
   }
 

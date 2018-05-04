@@ -20,6 +20,7 @@ import java.util.stream.Collectors;
 /**
  * @author Konstantin Bulenkov
  */
+//todo generic? #UX-1
 public interface SearchEverywhereContributor {
 
   String ALL_CONTRIBUTORS_GROUP_ID = SearchEverywhereContributor.class.getSimpleName() + ".All";
@@ -45,6 +46,8 @@ public interface SearchEverywhereContributor {
   default List<Object> search(Project project, String pattern, boolean everywhere, ProgressIndicator progressIndicator) {
     return search(project, pattern, everywhere, progressIndicator, -1).getItems();
   }
+
+  void processSelectedItem(Object selected);
 
   //todo any way to listen project in contributor
   ListCellRenderer getElementsRenderer(Project project);
