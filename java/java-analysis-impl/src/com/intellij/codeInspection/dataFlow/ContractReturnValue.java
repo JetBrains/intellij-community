@@ -378,6 +378,7 @@ public abstract class ContractReturnValue {
 
     @Override
     public DfaValue toDfaValue(DfaValueFactory factory, DfaValue defaultValue, DfaCallArguments arguments) {
+      if (defaultValue instanceof DfaVariableValue) return defaultValue;
       DfaValue value = factory.withFact(defaultValue, DfaFactType.CAN_BE_NULL, false);
       if (arguments.myPure) {
         boolean unmodifiableView =
@@ -436,6 +437,10 @@ public abstract class ContractReturnValue {
     private BooleanReturnValue(boolean value, int ordinal) {
       super(String.valueOf(value), ordinal);
       myValue = value;
+    }
+
+    public boolean getValue() {
+      return myValue;
     }
 
     /**

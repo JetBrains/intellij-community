@@ -3,15 +3,15 @@ package com.intellij.codeInspection;
 
 import com.intellij.codeInsight.BlockUtils;
 import com.intellij.codeInspection.dataFlow.ContractReturnValue.ParameterReturnValue;
+import com.intellij.codeInspection.dataFlow.ContractValue;
 import com.intellij.codeInspection.dataFlow.ControlFlowAnalyzer;
 import com.intellij.codeInspection.dataFlow.MethodContract;
-import com.intellij.codeInspection.dataFlow.StandardMethodContract;
-import com.intellij.codeInspection.dataFlow.StandardMethodContract.ValueConstraint;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.ObjectUtils;
+import com.intellij.util.containers.ContainerUtil;
 import com.siyeh.ig.psiutils.CommentTracker;
 import com.siyeh.ig.psiutils.ExpressionUtils;
 import com.siyeh.ig.psiutils.SideEffectChecker;
@@ -82,26 +82,28 @@ public class ObviousNullCheckInspection extends AbstractBaseJavaLocalInspectionT
       if (!ControlFlowAnalyzer.isPure(method)) return null;
       List<? extends MethodContract> contracts = ControlFlowAnalyzer.getMethodCallContracts(method, call);
       if (contracts.isEmpty() || contracts.size() > 2) return null;
-      StandardMethodContract contract = ObjectUtils.tryCast(contracts.get(0), StandardMethodContract.class);
+
+      MethodContract contract = contracts.get(0);
       if (contract == null || !contract.getReturnValue().isFail()) return null;
-      Integer nullIndex = null;
+      ContractValue condition = ContainerUtil.getOnlyItem(contract.getConditions());
+      if (condition == null) return null;
       boolean isNull = false;
-      for (int i = 0; i < contract.getParameterCount(); i++) {
-        ValueConstraint argument = contract.getParameterConstraint(i);
-        if (argument == ValueConstraint.NULL_VALUE || argument == ValueConstraint.NOT_NULL_VALUE) {
-          if (nullIndex != null) return null;
-          nullIndex = i;
-          isNull = argument == ValueConstraint.NOT_NULL_VALUE;
-        }
-        else if (argument != ValueConstraint.ANY_VALUE) {
-          return null;
-        }
+      int nullIndex = condition.getNullCheckedArgument(true).orElse(-1);
+      if (nullIndex == -1) {
+        isNull = true;
+        nullIndex = condition.getNullCheckedArgument(false).orElse(-1);
+        if (nullIndex == -1) return null;
       }
-      if (nullIndex == null) return null;
+
       boolean returnsParameter = false;
       if (contracts.size() == 2) {
         MethodContract secondContract = contracts.get(1);
-        if (!secondContract.isTrivial()) return null;
+        if (!secondContract.isTrivial()) {
+          ContractValue secondCondition = ContainerUtil.getOnlyItem(secondContract.getConditions());
+          if (secondCondition == null || secondCondition.getNullCheckedArgument(isNull).orElse(-1) != nullIndex) {
+            return null;
+          }
+        }
         ParameterReturnValue value = ObjectUtils.tryCast(secondContract.getReturnValue(), ParameterReturnValue.class);
         if (value == null || value.getParameterNumber() != nullIndex) return null;
         returnsParameter = true;
