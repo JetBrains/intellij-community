@@ -10,7 +10,9 @@ if (DEFINED ENV{BUILD_NUMBER})
 else()
   set(BUILD_NUMBER 9999)
 endif()
+
 string(TIMESTAMP YEAR "%Y")
+
 if(CMAKE_GENERATOR_PLATFORM STREQUAL "x64")
   set(FILE_NAME "fsnotifier64")
 else()
