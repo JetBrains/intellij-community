@@ -28,6 +28,8 @@ public class TouchBar implements NSTLibrary.ItemCreator {
     myNativePeer = NST.createTouchBar(touchbarName, this, myCustomEsc != null ? myCustomEsc.myUid : null);
   }
 
+  public boolean isManualClose() { return myCustomEsc != null; }
+
   @Override
   public String toString() { return myName + "_" + myNativePeer; }
 

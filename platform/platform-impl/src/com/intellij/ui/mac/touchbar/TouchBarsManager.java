@@ -55,13 +55,11 @@ public class TouchBarsManager {
 
       @Override
       public void focusGained(Editor editor) {
-        if (!hasTemporary())
-          showTouchBar(myEditorBar);
+        _elevateTouchBar(myEditorBar);
       }
       @Override
       public void focusLost(Editor editor) {
-        if (!hasTemporary())
-          closeTouchBar(myEditorBar);
+        closeTouchBar(myEditorBar);
       }
     });
   }
@@ -116,12 +114,14 @@ public class TouchBarsManager {
           public void stateChanged() {
             final String activeId = twm.getActiveToolWindowId();
             if (activeId != null && activeId.equals("Debug")) {
+              // TODO:
+              // 1. check whether some debug session is running
+              // 2. stateChanged can be skipped sometimes when user clicks debug tool-window, need check by focus events or fix stateChanged-subscription
               if (myDebuggerBar == null) {
                 myDebuggerBar = ProjectBarsStorage.instance(project).createBarContainer(ProjectBarsStorage.DEBUGGER, twm.getToolWindow(activeId).getComponent());
               }
               showTouchBar(myDebuggerBar);
-            } else
-              closeTouchBar(myDebuggerBar);
+            }
           }
         });
       }
@@ -145,10 +145,6 @@ public class TouchBarsManager {
       ourCurrentKeyMask = e.getModifiersEx();
       _setBarContainer(ourTouchBarStack.peek());
     }
-  }
-
-  synchronized public static boolean hasTemporary() {
-    return ourTouchBarStack.stream().anyMatch((bc)->bc.isTemporary());
   }
 
   synchronized public static void showTempTouchBar(TouchBar tb) {
@@ -186,6 +182,24 @@ public class TouchBarsManager {
     ourTouchBarStack.remove(bar);
     ourTouchBarStack.push(bar);
     _setBarContainer(bar);
+  }
+
+  synchronized private static void _elevateTouchBar(@NotNull BarContainer bar) {
+    final BarContainer top = ourTouchBarStack.peek();
+    if (top == bar)
+      return;
+
+    final boolean preserveTop = top != null && (top.isTemporary() || top.get().isManualClose());
+    if (preserveTop) {
+      ourTouchBarStack.remove(bar);
+      ourTouchBarStack.remove(top);
+      ourTouchBarStack.push(bar);
+      ourTouchBarStack.push(top);
+    } else {
+      ourTouchBarStack.remove(bar);
+      ourTouchBarStack.push(bar);
+      _setBarContainer(bar);
+    }
   }
 
   synchronized public static void closeTouchBar(BarContainer tb) {
