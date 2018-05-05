@@ -23,11 +23,14 @@ import com.intellij.execution.process.ProcessHandler;
 import com.intellij.execution.process.ProcessOutputTypes;
 import com.intellij.execution.ui.ConsoleView;
 import com.intellij.execution.ui.ConsoleViewContentType;
+import com.intellij.execution.ui.ObservableConsoleView;
+import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.vfs.encoding.EncodingProjectManager;
+import com.intellij.util.ObjectUtils;
 import com.jediterm.terminal.HyperlinkStyle;
 import com.jediterm.terminal.TerminalKeyEncoder;
 import com.jediterm.terminal.TerminalStarter;
@@ -41,16 +44,21 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import java.awt.*;
 import java.io.IOException;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.List;
+import java.util.concurrent.CopyOnWriteArraySet;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 /**
  * @author traff
  */
-public class TerminalExecutionConsole implements ConsoleView {
+public class TerminalExecutionConsole implements ConsoleView, ObservableConsoleView {
   private JBTerminalWidget myTerminalWidget;
   private final Project myProject;
   private final AppendableTerminalDataStream myDataStream;
   private final AtomicBoolean myAttachedToProcess = new AtomicBoolean(false);
+  private final Collection<ChangeListener> myChangeListeners = new CopyOnWriteArraySet<>();
 
   private final TerminalKeyEncoder myKeyEncoder = new TerminalKeyEncoder();
 
@@ -101,6 +109,13 @@ public class TerminalExecutionConsole implements ConsoleView {
     if (contentType != null) {
       myDataStream.append((char)CharUtils.ESC + "[39m"); //restore color
     }
+    fireContentAdded(ObjectUtils.notNull(contentType, ConsoleViewContentType.NORMAL_OUTPUT));
+  }
+
+  @Override
+  public void addChangeListener(@NotNull ChangeListener listener, @NotNull Disposable parent) {
+    myChangeListeners.add(listener);
+    Disposer.register(parent, () -> myChangeListeners.remove(listener));
   }
 
   private static String encodeColor(Color color) {
@@ -115,6 +130,14 @@ public class TerminalExecutionConsole implements ConsoleView {
   @Override
   public void print(@NotNull String text, @NotNull ConsoleViewContentType contentType) {
     myTerminalWidget.getTerminal().writeCharacters(text);
+    fireContentAdded(contentType);
+  }
+
+  private void fireContentAdded(@NotNull ConsoleViewContentType contentType) {
+    List<ConsoleViewContentType> contentTypes = Collections.singletonList(contentType);
+    for (ChangeListener listener : myChangeListeners) {
+      listener.contentAdded(contentTypes);
+    }
   }
 
   @Override
@@ -137,7 +160,7 @@ public class TerminalExecutionConsole implements ConsoleView {
    * @param processHandler        ProcessHandler instance wrapping underlying PtyProcess
    * @param attachToProcessOutput true if process output should be printed in the console,
    *                              false if output printing is managed externally, e.g. by testing
-   *                              console {@link com.intellij.execution.testframework.ui.BaseTestsOutputConsoleView}
+   *                              console {@code com.intellij.execution.testframework.ui.BaseTestsOutputConsoleView}
    */
   protected final void attachToProcess(@NotNull ProcessHandler processHandler, boolean attachToProcessOutput) {
     if (!myAttachedToProcess.compareAndSet(false, true)) {
