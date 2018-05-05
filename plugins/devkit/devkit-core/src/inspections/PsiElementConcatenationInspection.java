@@ -19,9 +19,6 @@ import org.jetbrains.annotations.Nullable;
 import java.util.HashSet;
 import java.util.Set;
 
-/**
- * @author Tagir Valeev
- */
 public class PsiElementConcatenationInspection extends AbstractBaseJavaLocalInspectionTool {
   @NotNull
   @Override

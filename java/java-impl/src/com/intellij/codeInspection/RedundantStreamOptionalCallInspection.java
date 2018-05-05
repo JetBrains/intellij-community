@@ -24,9 +24,6 @@ import java.util.function.Predicate;
 import static com.intellij.util.ObjectUtils.tryCast;
 import static com.siyeh.ig.psiutils.StreamApiUtil.findSubsequentCall;
 
-/**
- * @author Tagir Valeev
- */
 public class RedundantStreamOptionalCallInspection extends AbstractBaseJavaLocalInspectionTool {
   private static final Logger LOG = Logger.getInstance(RedundantStreamOptionalCallInspection.class);
   private static final Set<String> INTERESTING_NAMES =

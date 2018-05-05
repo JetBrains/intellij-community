@@ -35,9 +35,6 @@ import static com.intellij.psi.CommonClassNames.*;
 import static com.siyeh.ig.callMatcher.CallMatcher.instanceCall;
 import static com.siyeh.ig.callMatcher.CallMatcher.staticCall;
 
-/**
- * @author Tagir Valeev
- */
 public class CustomMethodHandlers {
   interface CustomMethodHandler {
     List<DfaMemoryState> handle(DfaCallArguments callArguments, DfaMemoryState memState, DfaValueFactory factory);

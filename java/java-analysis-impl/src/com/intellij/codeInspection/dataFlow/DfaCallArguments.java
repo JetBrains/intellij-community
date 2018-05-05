@@ -20,9 +20,6 @@ import com.intellij.codeInspection.dataFlow.value.DfaValue;
 import java.util.Arrays;
 import java.util.Objects;
 
-/**
- * @author Tagir Valeev
- */
 /* package */ final class DfaCallArguments {
   final DfaValue myQualifier;
   final DfaValue[] myArguments;

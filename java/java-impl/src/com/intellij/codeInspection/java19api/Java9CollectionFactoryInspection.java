@@ -42,9 +42,6 @@ import java.util.function.Function;
 
 import static com.intellij.util.ObjectUtils.tryCast;
 
-/**
- * @author Tagir Valeev
- */
 public class Java9CollectionFactoryInspection extends BaseLocalInspectionTool {
   private static final CallMatcher UNMODIFIABLE_SET =
     CallMatcher.staticCall(CommonClassNames.JAVA_UTIL_COLLECTIONS, "unmodifiableSet").parameterCount(1);

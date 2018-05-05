@@ -26,9 +26,6 @@ import java.util.regex.Pattern;
 import static com.intellij.util.ObjectUtils.tryCast;
 
 
-/**
- * @author Tagir Valeev
- */
 public class SimplifyOptionalCallChainsInspection extends AbstractBaseJavaLocalInspectionTool {
   private static final CallMatcher OPTIONAL_OR_ELSE =
     CallMatcher.instanceCall(CommonClassNames.JAVA_UTIL_OPTIONAL, "orElse").parameterCount(1);

@@ -20,9 +20,6 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 
-/**
- * @author Tagir Valeev
- */
 public class OptionalAssignedToNullInspection extends AbstractBaseJavaLocalInspectionTool {
   public boolean WARN_ON_COMPARISON = true;
 

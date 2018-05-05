@@ -22,9 +22,6 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.OptionalInt;
 
-/**
- * @author Tagir Valeev
- */
 public abstract class ContractValue {
   // package private to avoid uncontrolled implementations
   ContractValue() {

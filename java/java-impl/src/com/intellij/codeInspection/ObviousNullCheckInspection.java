@@ -23,9 +23,6 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
 
-/**
- * @author Tagir Valeev
- */
 public class ObviousNullCheckInspection extends AbstractBaseJavaLocalInspectionTool {
   @NotNull
   @Override

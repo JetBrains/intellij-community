@@ -8,9 +8,6 @@ import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.testFramework.IdeaTestUtil;
 import org.jetbrains.annotations.NotNull;
 
-/**
- * @author Tagir Valeev
- */
 public class CastCanBeRemovedNarrowingVariableTypeInspectionTest extends LightQuickFixParameterizedTestCase {
   @NotNull
   @Override
