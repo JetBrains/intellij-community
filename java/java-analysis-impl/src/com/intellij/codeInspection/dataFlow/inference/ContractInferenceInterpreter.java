@@ -9,6 +9,7 @@ import com.intellij.lang.LighterASTNode;
 import com.intellij.psi.JavaTokenType;
 import com.intellij.psi.impl.source.JavaLightTreeUtil;
 import com.intellij.psi.impl.source.tree.ElementType;
+import com.intellij.psi.impl.source.tree.RecursiveLighterASTNodeWalkingVisitor;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
@@ -54,7 +55,16 @@ class ContractInferenceInterpreter {
       if (result != null) return result;
     }
 
-    return visitStatements(singletonList(StandardMethodContract.createConstraintArray(getParameters().size())), statements);
+    List<PreContract> contracts =
+      visitStatements(singletonList(StandardMethodContract.createConstraintArray(getParameters().size())), statements);
+    if (contracts.isEmpty()) {
+      ContractReturnValue value = getDefaultReturnValue(statements);
+      if (!value.isFail() && !value.equals(returnAny())) {
+        contracts = singletonList(
+          new KnownContract(new StandardMethodContract(StandardMethodContract.createConstraintArray(getParameters().size()), value)));
+      }
+    }
+    return contracts;
   }
 
   @Nullable
@@ -100,6 +110,60 @@ class ContractInferenceInterpreter {
 
   private boolean isNegationExpression(@Nullable LighterASTNode expression) {
     return expression != null && expression.getTokenType() == PREFIX_EXPRESSION && firstChildOfType(myTree, expression, JavaTokenType.EXCL) != null;
+  }
+
+  private ContractReturnValue getDefaultReturnValue(List<LighterASTNode> statements) {
+    class ReturnValueVisitor extends RecursiveLighterASTNodeWalkingVisitor {
+      public ContractReturnValue returnValue = fail();
+
+      ReturnValueVisitor() {
+        super(myTree);
+      }
+
+      @Override
+      public void visitNode(@NotNull LighterASTNode element) {
+        IElementType type = element.getTokenType();
+        if (type == CLASS || type == LAMBDA_EXPRESSION || ElementType.EXPRESSION_BIT_SET.contains(type)) return;
+        if (returnValue.equals(returnAny())) {
+          return;
+        }
+        if (type == RETURN_STATEMENT) {
+          LighterASTNode expression = findExpressionChild(myTree, element);
+          ContractReturnValue newReturnValue = expressionToReturnValue(expression);
+          if (returnValue.isFail()) {
+            returnValue = newReturnValue;
+          }
+          else if (!returnValue.equals(newReturnValue)) {
+            returnValue = returnAny();
+          }
+        }
+        super.visitNode(element);
+      }
+
+      @NotNull
+      private ContractReturnValue expressionToReturnValue(LighterASTNode expression) {
+        if (expression == null) return returnAny();
+        IElementType type = expression.getTokenType();
+        if (type == NEW_EXPRESSION) {
+          return returnNew();
+        }
+        if (type == THIS_EXPRESSION) {
+          return returnThis();
+        }
+        if (type == REFERENCE_EXPRESSION) {
+          int paramIndex = resolveParameter(expression);
+          if (paramIndex >= 0) {
+            return returnParameter(paramIndex);
+          }
+        }
+        return returnAny();
+      }
+    }
+    ReturnValueVisitor visitor = new ReturnValueVisitor();
+    for (LighterASTNode statement : statements) {
+      visitor.visitNode(statement);
+    }
+    return visitor.returnValue;
   }
 
   @NotNull

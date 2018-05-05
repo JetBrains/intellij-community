@@ -599,6 +599,16 @@ class Foo {{
     assert c == ['!null, _, _ -> param1', 'null, !null, _ -> param2', 'null, null, _ -> param3']
   }
 
+  void "test param check"() {
+    def c = inferContracts("""
+public static int atLeast(int min, int actual, String varName) {
+    if (actual < min) throw new IllegalArgumentException('\\\\'' + varName + " must be at least " + min + ": " + actual);
+    return actual;
+  }
+""")
+    assert c == ['_, _, _ -> param2']
+  }
+
   private String inferContract(String method) {
     return assertOneElement(inferContracts(method))
   }
