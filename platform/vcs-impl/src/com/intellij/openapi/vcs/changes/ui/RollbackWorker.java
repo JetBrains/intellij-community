@@ -203,7 +203,9 @@ public class RollbackWorker {
       }
 
       doRefresh(myProject, changesToRefresh);
-      AbstractVcsHelper.getInstance(myProject).showErrors(myExceptions, myOperationName);
+      if (!myExceptions.isEmpty()) {
+        AbstractVcsHelper.getInstance(myProject).showErrors(myExceptions, myOperationName);
+      }
     }
 
     private void doRefresh(final Project project, final List<? extends Change> changesToRefresh) {
