@@ -19,6 +19,7 @@ import com.intellij.codeInsight.AnnotationUtil;
 import com.intellij.codeInspection.dataFlow.ContractReturnValue;
 import com.intellij.codeInspection.dataFlow.ControlFlowAnalyzer;
 import com.intellij.codeInspection.dataFlow.StandardMethodContract;
+import com.intellij.codeInspection.dataFlow.StandardMethodContract.ValueConstraint;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProgressManager;
@@ -473,42 +474,44 @@ public class ProjectBytecodeAnalysis {
         notNulls.add(methodKey);
       }
     }
-    BitSet possiblyNotNullParameters = StreamEx.of(failingContracts, nonFailingContracts).flatCollection(Function.identity())
-                                               .flatMapToInt(smc -> IntStreamEx.range(smc.getParameterCount())
-                                                                               .filter(idx -> smc.getParameterConstraint(idx) ==
-                                                                                              StandardMethodContract.ValueConstraint.NOT_NULL_VALUE))
-                                               .toBitSet();
-    BitSet alwaysNotNullParameters = findAlwaysNotNullParameters(methodKey, possiblyNotNullParameters);
-    if (alwaysNotNullParameters.cardinality() != 0) {
-      for (List<StandardMethodContract> list : Arrays.asList(failingContracts, nonFailingContracts)) {
-        list.replaceAll(smc -> {
-          StandardMethodContract.ValueConstraint[] constraints =
-            smc.getConstraints().toArray(new StandardMethodContract.ValueConstraint[0]);
-          alwaysNotNullParameters.stream().forEach(idx -> constraints[idx] = StandardMethodContract.ValueConstraint.ANY_VALUE);
-          return new StandardMethodContract(constraints, smc.getReturnValue());
-        });
-      }
-    }
+    List<StandardMethodContract> allContracts = StreamEx.of(failingContracts, nonFailingContracts).toFlatList(Function.identity());
+    removeConstraintFromNonNullParameter(methodKey, allContracts);
 
-    if (failingContracts.isEmpty() && nonFailingContracts.isEmpty() && !fullReturnValue.equals(ContractReturnValue.returnAny())) {
+    if (allContracts.isEmpty() && !fullReturnValue.equals(ContractReturnValue.returnAny())) {
       StandardMethodContract contract = new StandardMethodContract(StandardMethodContract.createConstraintArray(arity), fullReturnValue);
-      nonFailingContracts = Collections.singletonList(contract);
+      allContracts.add(contract);
     }
     if (notNulls.contains(methodKey)) {
       // filter contract clauses for @NotNull methods
-      nonFailingContracts = StreamEx.of(nonFailingContracts).removeBy(StandardMethodContract::getReturnValue,
-                                                                      ContractReturnValue.returnNotNull()).toList();
+      allContracts.removeIf(smc -> smc.getReturnValue().equals(ContractReturnValue.returnNotNull()));
     }
     // Failing contracts go first
-    String result = StreamEx.of(failingContracts, nonFailingContracts)
-                            .flatMap(list -> list.stream()
-                                                 .map(Object::toString)
-                                                 .distinct()
-                                                 .map(str -> str.replace(" ", "")) // for compatibility with existing tests
-                                                 .sorted())
+    String result = StreamEx.of(allContracts)
+                            .sorted(Comparator.comparingInt((StandardMethodContract smc) -> smc.getReturnValue().isFail() ? 0 : 1)
+                                              .thenComparing(StandardMethodContract::toString))
+                            .map(Object::toString)
+                            .distinct()
+                            .map(str -> str.replace(" ", "")) // for compatibility with existing tests
                             .joining(";");
     if (!result.isEmpty()) {
       contracts.put(methodKey, '"' + result + '"');
+    }
+  }
+
+  private void removeConstraintFromNonNullParameter(@NotNull EKey methodKey,
+                                                    List<StandardMethodContract> allContracts) throws EquationsLimitException {
+    BitSet possiblyNotNullParameters = StreamEx.of(allContracts)
+                                               .flatMapToInt(
+                                                 smc -> IntStreamEx.range(smc.getParameterCount())
+                                                                   .filter(idx -> smc.getParameterConstraint(idx) == ValueConstraint.NOT_NULL_VALUE))
+                                               .toBitSet();
+    BitSet alwaysNotNullParameters = findAlwaysNotNullParameters(methodKey, possiblyNotNullParameters);
+    if (alwaysNotNullParameters.cardinality() != 0) {
+      allContracts.replaceAll(smc -> {
+        ValueConstraint[] constraints = smc.getConstraints().toArray(new ValueConstraint[0]);
+        alwaysNotNullParameters.stream().forEach(idx -> constraints[idx] = ValueConstraint.ANY_VALUE);
+        return new StandardMethodContract(constraints, smc.getReturnValue());
+      });
     }
   }
 
@@ -520,16 +523,16 @@ public class ProjectBytecodeAnalysis {
       if (c1.getReturnValue() != c2.getReturnValue()) return null;
       int idx = -1;
       for (int i = 0; i < c1.getParameterCount(); i++) {
-        StandardMethodContract.ValueConstraint left = c1.getParameterConstraint(i);
-        StandardMethodContract.ValueConstraint right = c2.getParameterConstraint(i);
-        if (left == StandardMethodContract.ValueConstraint.ANY_VALUE && right == StandardMethodContract.ValueConstraint.ANY_VALUE) continue;
+        ValueConstraint left = c1.getParameterConstraint(i);
+        ValueConstraint right = c2.getParameterConstraint(i);
+        if (left == ValueConstraint.ANY_VALUE && right == ValueConstraint.ANY_VALUE) continue;
         if (idx >= 0 || !right.canBeNegated() || left != right.negate()) return null;
         idx = i;
       }
       return c1;
     }).nonNull().findFirst().orElse(null);
     if(soleContract != null) {
-      StandardMethodContract.ValueConstraint[] constraints = StandardMethodContract.createConstraintArray(soleContract.getParameterCount());
+      ValueConstraint[] constraints = StandardMethodContract.createConstraintArray(soleContract.getParameterCount());
       contractClauses = Collections.singletonList(new StandardMethodContract(constraints, soleContract.getReturnValue()));
     }
     return contractClauses;
@@ -537,8 +540,8 @@ public class ProjectBytecodeAnalysis {
 
   private static StandardMethodContract contractElement(int arity,
                                                         ParamValueBasedDirection inOut, ContractReturnValue returnValue) {
-    final StandardMethodContract.ValueConstraint[] constraints = new StandardMethodContract.ValueConstraint[arity];
-    Arrays.fill(constraints, StandardMethodContract.ValueConstraint.ANY_VALUE);
+    final ValueConstraint[] constraints = new ValueConstraint[arity];
+    Arrays.fill(constraints, ValueConstraint.ANY_VALUE);
     constraints[inOut.paramIndex] = inOut.inValue.toValueConstraint();
     return new StandardMethodContract(constraints, returnValue);
   }
@@ -549,7 +552,7 @@ public class ProjectBytecodeAnalysis {
 
     EquationProvider(Project project) {
       myProject = project;
-      project.getMessageBus().connect().subscribe(PsiModificationTracker.TOPIC, () -> myEquationCache.clear());
+      project.getMessageBus().connect().subscribe(PsiModificationTracker.TOPIC, myEquationCache::clear);
     }
 
     abstract EKey adaptKey(@NotNull EKey key, MessageDigest messageDigest);
