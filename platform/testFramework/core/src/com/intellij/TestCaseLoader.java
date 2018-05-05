@@ -58,13 +58,8 @@ public class TestCaseLoader {
     TestClassesFilter testClassesFilter = calcTestClassFilter(classFilterName);
     TestClassesFilter affectedTestsFilter = affectedTestsFilter();
 
-    myTestClassesFilter = new TestClassesFilter() {
-      @Override
-      public boolean matches(String className, @Nullable String moduleName) {
-        return testClassesFilter.matches(className, moduleName) &&
-               affectedTestsFilter.matches(className, moduleName);
-      }
-    };
+    myTestClassesFilter = new TestClassesFilter.And(testClassesFilter, affectedTestsFilter);
+    System.out.println(myTestClassesFilter.toString());
   }
 
   private TestClassesFilter calcTestClassFilter(String classFilterName) {
