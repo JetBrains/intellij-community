@@ -143,10 +143,9 @@ public class NavBarModel {
     return ObjectUtils.chooseNotNull(projectGrandChild, ObjectUtils.chooseNotNull(projectChild, project));
   }
 
-  protected void updateModel(final PsiElement psiElement) {
-
+  public static Set<VirtualFile> collectRoots(Project project, PsiElement psiElement) {
     final Set<VirtualFile> roots = new HashSet<>();
-    final ProjectRootManager projectRootManager = ProjectRootManager.getInstance(myProject);
+    final ProjectRootManager projectRootManager = ProjectRootManager.getInstance(project);
     final ProjectFileIndex projectFileIndex = projectRootManager.getFileIndex();
 
     for (VirtualFile root : projectRootManager.getContentRoots()) {
@@ -164,9 +163,12 @@ public class NavBarModel {
         }
       }
     }
+    return roots;
+  }
 
+  protected void updateModel(final PsiElement psiElement) {
+    Set<VirtualFile> roots = collectRoots(myProject, psiElement);
     List<Object> updatedModel = ReadAction.compute(() -> isValid(psiElement) ? myBuilder.createModel(psiElement, roots) : Collections.emptyList());
-
     setModel(ContainerUtil.reverse(updatedModel));
   }
 
