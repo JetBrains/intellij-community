@@ -302,4 +302,15 @@ public abstract class StructuralSearchProfile {
     }
     return false;
   }
+
+  public final boolean isApplicableConstraint(String constraintName, List<PsiElement> nodes, boolean completePattern, boolean target) {
+    if (nodes.isEmpty()) {
+      return isApplicableConstraint(constraintName, (PsiElement)null, completePattern, target);
+    }
+    boolean result = true;
+    for (PsiElement node : nodes) {
+      result &= isApplicableConstraint(constraintName, node, completePattern, target);
+    }
+    return result;
+  }
 }

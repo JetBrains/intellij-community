@@ -116,11 +116,7 @@ public class PatternCompiler {
       element.accept(new PsiRecursiveElementWalkingVisitor() {
         @Override
         public void visitElement(PsiElement element) {
-          final Object userData = element.getUserData(CompiledPattern.HANDLER_KEY);
-          if (userData != null) {
-            if (userData instanceof SubstitutionHandler) {
-              pattern.putVariableNode(((SubstitutionHandler)userData).getName(), element);
-            }
+          if (element.getUserData(CompiledPattern.HANDLER_KEY) != null) {
             return;
           }
           super.visitElement(element);
@@ -137,10 +133,24 @@ public class PatternCompiler {
             }
             return;
           }
-          MatchingHandler handler = pattern.getHandler(pattern.getTypedVarString(element));
+          final MatchingHandler handler = pattern.getHandler(pattern.getTypedVarString(element));
           if (handler == null) {
             throw new MalformedPatternException();
           }
+        }
+      });
+      element.accept(new PsiRecursiveElementWalkingVisitor() {
+        @Override
+        public void visitElement(PsiElement element) {
+          collectNode(element, element.getUserData(CompiledPattern.HANDLER_KEY));
+          super.visitElement(element);
+
+          if (element instanceof LeafElement) {
+            collectNode(element, pattern.getHandler(pattern.getTypedVarString(element)));
+          }
+        }
+
+        private void collectNode(PsiElement element, Object handler) {
           if (handler instanceof DelegatingHandler) {
             handler = ((DelegatingHandler)handler).getDelegate();
           }

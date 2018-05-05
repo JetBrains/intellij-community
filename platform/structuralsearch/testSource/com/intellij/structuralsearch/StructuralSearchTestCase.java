@@ -14,6 +14,7 @@ import com.intellij.psi.PsiElement;
 import com.intellij.structuralsearch.impl.matcher.CompiledPattern;
 import com.intellij.structuralsearch.impl.matcher.compiler.PatternCompiler;
 import com.intellij.structuralsearch.plugin.ui.UIUtil;
+import com.intellij.util.SmartList;
 
 import java.io.File;
 import java.io.IOException;
@@ -67,17 +68,19 @@ public abstract class StructuralSearchTestCase extends LightQuickFixTestCase {
     assert profile != null;
     for (String varName : options.getVariableConstraintNames()) {
       final List<PsiElement> nodes = compiledPattern.getVariableNodes(varName);
-      final PsiElement node = nodes.size() == 1 ? nodes.get(0) : null;
       final MatchVariableConstraint constraint = options.getVariableConstraint(varName);
-      final String constraintName;
+      final List<String> usedConstraints = new SmartList<>();
       if (!StringUtil.isEmpty(constraint.getRegExp())) {
-        constraintName = UIUtil.TEXT;
+        usedConstraints.add(UIUtil.TEXT);
       }
-      else { // todo check other constraints
-        constraintName = null;
+      if (constraint.getMinCount() == 0) {
+        usedConstraints.add(UIUtil.MINIMUM_ZERO);
       }
-      if (constraintName != null && !profile.isApplicableConstraint(constraintName, node, false, constraint.isPartOfSearchResults())) {
-        return constraintName + " not applicable for " + varName;
+      // todo check other constraints
+      for (String usedConstraint : usedConstraints) {
+        if (!profile.isApplicableConstraint(usedConstraint, nodes, false, constraint.isPartOfSearchResults())) {
+          return usedConstraint + " not applicable for " + varName;
+        }
       }
     }
     return null;

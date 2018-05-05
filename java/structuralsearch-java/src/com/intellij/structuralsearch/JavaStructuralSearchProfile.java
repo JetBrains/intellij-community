@@ -21,6 +21,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.source.JavaDummyHolder;
 import com.intellij.psi.javadoc.PsiDocComment;
+import com.intellij.psi.javadoc.PsiDocToken;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.psi.util.PsiUtilCore;
@@ -856,10 +857,11 @@ public class JavaStructuralSearchProfile extends StructuralSearchProfile {
         }
         return variableNode != null && variableNode.getParent() instanceof PsiExpression;
       case UIUtil.MINIMUM_ZERO:
-        if (target) return false;
-        return isApplicableCount(variableNode, false);
+        if (target || variableNode == null) return false;
+        return isApplicableMinCount(variableNode) || isApplicableMinMaxCount(variableNode);
       case UIUtil.MAXIMUM_UNLIMITED:
-        return isApplicableCount(variableNode, true);
+        if (variableNode == null) return false;
+        return isApplicableMaxCount(variableNode) || isApplicableMinMaxCount(variableNode);
       case UIUtil.REFERENCE:
         if (completePattern || variableNode == null) return false;
         if (variableNode instanceof PsiLiteralExpression && ((PsiLiteralExpression)variableNode).getValue() instanceof String) return true;
@@ -869,59 +871,83 @@ public class JavaStructuralSearchProfile extends StructuralSearchProfile {
     }
   }
 
-  private static boolean isApplicableCount(@Nullable PsiElement variableNode, boolean max) {
-    if (variableNode != null) {
-      final PsiElement parent = variableNode.getParent();
-      if (max && parent instanceof PsiLocalVariable) {
-        final PsiLocalVariable localVariable = (PsiLocalVariable)parent;
-        if (localVariable instanceof PsiResourceVariable) return false;
-        if (localVariable.getTypeElement().isInferredType()) return false;
-        return true;
+  private static boolean isApplicableMinCount(@NotNull PsiElement variableNode) {
+    final PsiElement parent = variableNode.getParent();
+    if (parent instanceof PsiBreakStatement) return true;
+    if (parent instanceof PsiContinueStatement) return true;
+
+    final PsiElement grandParent = parent.getParent();
+    if (grandParent instanceof PsiReferenceList) return true;
+    if (parent instanceof PsiReferenceExpression) {
+      if (grandParent instanceof PsiReferenceExpression) return true;
+      if (grandParent instanceof PsiReturnStatement) return true;
+      if (grandParent instanceof PsiAssertStatement) return ((PsiAssertStatement)grandParent).getAssertDescription() == parent;
+      if (grandParent instanceof PsiNameValuePair) return ((PsiNameValuePair)grandParent).getValue() == parent;
+    }
+    if (grandParent instanceof PsiVariable) {
+      return ((PsiVariable)grandParent).getInitializer() == parent;
+    }
+    if (grandParent instanceof PsiNewExpression) {
+      return ((PsiNewExpression)grandParent).getArrayInitializer() != null;
+    }
+    if (grandParent instanceof PsiExpressionStatement && hasSemicolon(grandParent)) {
+      final PsiElement greatGrandParent = grandParent.getParent();
+      return !(greatGrandParent instanceof PsiCodeBlock) ||
+             !(greatGrandParent.getParent() instanceof JavaDummyHolder) ||
+             PsiTreeUtil.getChildrenOfAnyType(greatGrandParent, PsiStatement.class, PsiComment.class).size() > 1;
+    }
+    return false;
+  }
+
+  private static boolean isApplicableMaxCount(@NotNull PsiElement variableNode) {
+    final PsiElement parent = variableNode.getParent();
+    if (parent instanceof PsiLocalVariable) {
+      final PsiLocalVariable localVariable = (PsiLocalVariable)parent;
+      if (localVariable instanceof PsiResourceVariable) return false;
+      if (localVariable.getTypeElement().isInferredType()) return false;
+      return true;
+    }
+    if (parent instanceof PsiField) return true;
+
+    final PsiElement grandParent = parent.getParent();
+    if (grandParent instanceof PsiPolyadicExpression) return true;
+    if (grandParent instanceof PsiExpressionStatement && hasSemicolon(grandParent)) return true;
+    if (grandParent instanceof PsiReferenceList) {
+      final PsiReferenceList referenceList = (PsiReferenceList)grandParent;
+      final PsiElement greatGrandParent = referenceList.getParent();
+      return !(greatGrandParent instanceof PsiClass) || ((PsiClass)greatGrandParent).getExtendsList() != referenceList;
+    }
+    return false;
+  }
+
+  private static boolean isApplicableMinMaxCount(@NotNull PsiElement variableNode) {
+    if (variableNode instanceof PsiDocToken) return true;
+    final PsiElement parent = variableNode.getParent();
+    if (parent instanceof PsiMember && !(parent instanceof PsiTypeParameter)) {
+      final PsiMember member = (PsiMember)parent;
+      final PsiClass aClass = member.getContainingClass();
+      if (aClass == null) {
+        return false;
       }
-      else if (max && parent instanceof PsiField) {
-        return true;
-      }
-      if (parent instanceof PsiMember && !(parent instanceof PsiTypeParameter)) {
-        final PsiMember member = (PsiMember)parent;
-        final PsiClass aClass = member.getContainingClass();
-        if (aClass == null) {
-          return false;
-        }
-        final String name = aClass.getName();
-        return name != null && !"_Dummy_".equals(name);
-      }
-      final PsiElement grandParent = parent.getParent();
-      if (!max && parent instanceof PsiReferenceExpression && grandParent instanceof PsiReferenceExpression) {
-        return true;
-      }
-      if (grandParent instanceof PsiAnnotation && !(grandParent.getParent().getNextSibling() instanceof PsiErrorElement)) {
-        return true;
-      }
-      if (grandParent instanceof PsiExpressionStatement && hasSemicolon(grandParent)) {
-        if (max) {
-          return true;
-        }
-        else {
-          final PsiElement greatGrandParent = grandParent.getParent();
-          return !(greatGrandParent instanceof PsiCodeBlock) || !(greatGrandParent.getParent() instanceof JavaDummyHolder);
-        }
-      }
-      if (!max && grandParent instanceof PsiVariable &&
-          PsiTreeUtil.isAncestor(((PsiVariable)grandParent).getInitializer(), variableNode, true)) {
-        return true;
-      }
-      if (grandParent instanceof PsiReferenceList) {
-        if (!max) return true;
-        final PsiReferenceList referenceList = (PsiReferenceList)grandParent;
-        final PsiElement greatGrandParent = referenceList.getParent();
-        return !(greatGrandParent instanceof PsiClass) || ((PsiClass)greatGrandParent).getExtendsList() != referenceList;
-      }
-      if (grandParent instanceof PsiParameterList || grandParent instanceof PsiExpressionList ||
-          grandParent instanceof PsiTypeParameterList || grandParent instanceof PsiResourceList) {
-        return true;
-      }
-      if (grandParent instanceof PsiTypeElement && grandParent.getParent() instanceof PsiReferenceParameterList) return true;
-      if (grandParent instanceof PsiPolyadicExpression && max) return true;
+      final String name = aClass.getName();
+      return name != null && !"_Dummy_".equals(name);
+    }
+    final PsiElement grandParent = parent.getParent();
+    if (grandParent instanceof PsiAnnotation && !(grandParent.getParent().getNextSibling() instanceof PsiErrorElement)) {
+      return true;
+    }
+    if (grandParent instanceof PsiParameterList || grandParent instanceof PsiExpressionList ||
+        grandParent instanceof PsiTypeParameterList || grandParent instanceof PsiResourceList ||
+        grandParent instanceof PsiArrayInitializerExpression) {
+      return true;
+    }
+    if (grandParent instanceof PsiTypeElement) {
+      final PsiElement greatGrandParent = grandParent.getParent();
+      if (greatGrandParent instanceof PsiReferenceParameterList || greatGrandParent instanceof PsiClass) return true;
+    }
+    if (grandParent instanceof PsiAnnotationParameterList && parent instanceof PsiNameValuePair) {
+      final PsiNameValuePair nameValuePair = (PsiNameValuePair)parent;
+      return nameValuePair.getNameIdentifier() == variableNode;
     }
     return false;
   }
