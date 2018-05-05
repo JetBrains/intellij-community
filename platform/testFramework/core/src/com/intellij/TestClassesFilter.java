@@ -16,6 +16,11 @@ public abstract class TestClassesFilter {
     public boolean matches(String className, String moduleName) {
       return true;
     }
+
+    @Override
+    public String toString() {
+      return "ALL_CLASSES";
+    }
   };
 
   public abstract boolean matches(String className, @Nullable String moduleName);
