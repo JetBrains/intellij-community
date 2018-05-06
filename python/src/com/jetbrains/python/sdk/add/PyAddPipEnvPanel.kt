@@ -1,24 +1,16 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.jetbrains.python.sdk.add
 
-import com.intellij.execution.ExecutionException
-import com.intellij.openapi.progress.ProgressIndicator
-import com.intellij.openapi.progress.Task
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.ui.ComboBox
 import com.intellij.openapi.ui.ValidationInfo
-import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.vfs.StandardFileSystems
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.ui.components.JBCheckBox
-import com.intellij.util.PathUtil
 import com.intellij.util.ui.FormBuilder
 import com.jetbrains.python.psi.LanguageLevel
-import com.jetbrains.python.sdk.PythonSdkType
-import com.jetbrains.python.sdk.associateWithProject
 import com.jetbrains.python.sdk.associatedProjectPath
-import com.jetbrains.python.sdk.createSdkByGenerateTask
 import com.jetbrains.python.sdk.flavors.*
 import java.awt.BorderLayout
 import javax.swing.Icon
@@ -68,22 +60,9 @@ class PyAddPipEnvPanel(private val project: Project?,
   }
 
   override fun getOrCreateSdk(): Sdk? {
-    // TODO: Pass a module here for selecting the proper Pipfile?
-    val path = projectPath ?: return null
-    val task = object : Task.WithResult<String, ExecutionException>(project, "Configuring Pipenv Environment", true) {
-      override fun compute(indicator: ProgressIndicator): String {
-        indicator.isIndeterminate = true
-        val pipEnv = setupPipEnv(FileUtil.toSystemDependentName(path),
-                                 selectedLanguageLevel,
-                                 installPackagesCheckBox.isSelected)
-        return PythonSdkType.getPythonExecutable(pipEnv) ?: FileUtil.join(pipEnv, "bin", "python")
-      }
-    }
-    val suggestedName = "Pipenv (${PathUtil.getFileName(path)})"
-    return createSdkByGenerateTask(task, existingSdks, null, path, suggestedName)?.apply {
-      isPipEnv = true
-      associateWithProject(project, newProjectPath != null)
-    }
+    // TODO: Pass a module here for selecting the proper Pipfile
+    return setupPipEnvSdkUnderProgress(project, null, existingSdks, newProjectPath,
+                                       selectedLanguageLevel, installPackagesCheckBox.isSelected)
   }
 
   override fun validateAll(): List<ValidationInfo> =
