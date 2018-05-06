@@ -67,7 +67,8 @@ fun detectCondaEnvs(project: Project?, existingSdks: List<Sdk>): List<PyDetected
 fun createSdkByGenerateTask(generateSdkHomePath: Task.WithResult<String, ExecutionException>,
                             existingSdks: List<Sdk>,
                             baseSdk: Sdk?,
-                            associatedProjectPath: String?): Sdk? {
+                            associatedProjectPath: String?,
+                            suggestedSdkName: String?): Sdk? {
   val homeFile = try {
     val homePath = ProgressManager.getInstance().run(generateSdkHomePath)
     StandardFileSystems.local().refreshAndFindFileByPath(homePath) ?:
@@ -78,7 +79,7 @@ fun createSdkByGenerateTask(generateSdkHomePath: Task.WithResult<String, Executi
     PackagesNotificationPanel.showError("Failed to Create Interpreter", description)
     return null
   }
-  val suggestedName = suggestAssociatedSdkName(homeFile.path, associatedProjectPath)
+  val suggestedName = suggestedSdkName ?: suggestAssociatedSdkName(homeFile.path, associatedProjectPath)
   return SdkConfigurationUtil.setupSdk(existingSdks.toTypedArray(), homeFile,
                                        PythonSdkType.getInstance(),
                                        false, null, suggestedName) ?: return null
@@ -186,7 +187,7 @@ private fun Sdk.containsProjectName(project: Project?): Boolean {
   return path.contains(name, true)
 }
 
-private fun Sdk.getOrCreateAdditionalData(): PythonSdkAdditionalData {
+fun Sdk.getOrCreateAdditionalData(): PythonSdkAdditionalData {
   val existingData = sdkAdditionalData as? PythonSdkAdditionalData
   if (existingData != null) return existingData
   val newData = PythonSdkAdditionalData(PythonSdkFlavor.getFlavor(homePath))

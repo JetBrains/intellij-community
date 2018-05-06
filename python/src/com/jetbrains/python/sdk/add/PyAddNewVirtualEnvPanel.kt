@@ -107,7 +107,7 @@ class PyAddNewVirtualEnvPanel(private val project: Project?,
     }
     val shared = makeSharedField.isSelected
     val associatedPath = if (!shared) newProjectPath ?: project?.basePath else null
-    val sdk = createSdkByGenerateTask(task, existingSdks, baseSdkField.selectedSdk, associatedPath) ?: return null
+    val sdk = createSdkByGenerateTask(task, existingSdks, baseSdkField.selectedSdk, associatedPath, null) ?: return null
     if (!shared) {
       sdk.associateWithProject(project, newProjectPath != null)
     }
