@@ -515,7 +515,15 @@ public abstract class ContractReturnValue {
     public DfaValue toDfaValue(DfaValueFactory factory, DfaValue defaultValue, DfaCallArguments arguments) {
       if (arguments.myArguments != null && arguments.myArguments.length > myParamNumber) {
         DfaValue argument = arguments.myArguments[myParamNumber];
-        if (argument != null && argument != DfaUnknownValue.getInstance()) return argument;
+        if (argument != null && argument != DfaUnknownValue.getInstance()) {
+          if (defaultValue instanceof DfaFactMapValue && argument instanceof DfaFactMapValue) {
+            DfaFactMap intersection = ((DfaFactMapValue)defaultValue).getFacts().intersect(((DfaFactMapValue)argument).getFacts());
+            if (intersection != null) {
+              return factory.getFactFactory().createValue(intersection);
+            }
+          }
+          return argument;
+        }
       }
       return defaultValue;
     }
