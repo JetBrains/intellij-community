@@ -73,6 +73,7 @@ class PyAddSdkDialog private constructor(private val project: Project?,
       .filter { it.sdkType is PythonSdkType && !PythonSdkType.isInvalid(it) }
       .sortedWith(PreferredSdkComparator())
     val panels = arrayListOf<PyAddSdkView>(createVirtualEnvPanel(project, sdks, newProjectPath),
+                                           createPipEnvPanel(),
                                            createAnacondaPanel(project),
                                            PyAddSystemWideInterpreterPanel(existingSdks))
     val extendedPanels = PyAddSdkProvider.EP_NAME.extensions
@@ -228,6 +229,10 @@ class PyAddSdkDialog private constructor(private val project: Project?,
                         PyAddExistingCondaEnvPanel(project, existingSdks, newProjectPath))
       .filterNotNull()
     return PyAddSdkGroupPanel("Conda environment", PythonIcons.Python.Anaconda, panels, panels[0])
+  }
+
+  private fun createPipEnvPanel(): PyAddSdkPanel {
+    return PyAddPipEnvPanel(project, existingSdks, newProjectPath)
   }
 
   /**

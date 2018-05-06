@@ -47,6 +47,7 @@ public class PythonSdkAdditionalData implements SdkAdditionalData {
   @NonNls private static final String PATHS_REMOVED_BY_USER_ROOT = "PATHS_REMOVED_BY_USER_ROOT";
   @NonNls private static final String PATH_REMOVED_BY_USER = "PATH_REMOVED_BY_USER";
   @NonNls private static final String ASSOCIATED_PROJECT_PATH = "ASSOCIATED_PROJECT_PATH";
+  @NonNls private static final String IS_PIPENV = "IS_PIPENV";
 
   private final VirtualFilePointerContainer myAddedPaths;
   private final VirtualFilePointerContainer myExcludedPaths;
@@ -54,6 +55,7 @@ public class PythonSdkAdditionalData implements SdkAdditionalData {
   private final PythonSdkFlavor myFlavor;
   private String myAssociatedProjectPath;
   private boolean myAssociateWithNewProject;
+  private boolean myIsPipEnv;
 
   public PythonSdkAdditionalData(@Nullable PythonSdkFlavor flavor) {
     myFlavor = flavor;
@@ -112,12 +114,26 @@ public class PythonSdkAdditionalData implements SdkAdditionalData {
     }
   }
 
+  public boolean isPipEnv() {
+    return myIsPipEnv;
+  }
+
+  public void setPipEnv(boolean pipEnv) {
+    myIsPipEnv = pipEnv;
+  }
+
   public void save(@NotNull final Element rootElement) {
     savePaths(rootElement, myAddedPaths, PATHS_ADDED_BY_USER_ROOT, PATH_ADDED_BY_USER);
     savePaths(rootElement, myExcludedPaths, PATHS_REMOVED_BY_USER_ROOT, PATH_REMOVED_BY_USER);
 
     if (myAssociatedProjectPath != null) {
       rootElement.setAttribute(ASSOCIATED_PROJECT_PATH, myAssociatedProjectPath);
+      // XXX: We have to persist the pipenv flag since pipenv is no different from a regular
+      // virtualenv and currently we want to handle pipenvs differently. Consider adding an SDK
+      // extension mechanism for that
+      if (myIsPipEnv) {
+        rootElement.setAttribute(IS_PIPENV, "true");
+      }
     }
   }
 
@@ -148,6 +164,7 @@ public class PythonSdkAdditionalData implements SdkAdditionalData {
     collectPaths(JDOMExternalizer.loadStringsList(element, PATHS_REMOVED_BY_USER_ROOT, PATH_REMOVED_BY_USER),myExcludedPaths);
     if (element != null) {
       data.setAssociatedProjectPath(element.getAttributeValue(ASSOCIATED_PROJECT_PATH));
+      data.setPipEnv("true".equals(element.getAttributeValue(IS_PIPENV)));
     }
   }
 
