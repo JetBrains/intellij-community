@@ -241,8 +241,7 @@ public class ConsoleViewUtil {
     if (keys.length == 0) {
       return ConsoleViewContentType.NORMAL_OUTPUT;
     }
-    Key key = ColorCache.keys.get(Arrays.asList(keys));
-    return ConsoleViewContentType.getConsoleViewType(ObjectUtils.notNull(key, ProcessOutputTypes.STDOUT));
+    return ConsoleViewContentType.getConsoleViewType(ColorCache.keys.get(Arrays.asList(keys)));
   }
 
   public static void printAsFileType(@NotNull ConsoleView console, @NotNull String text, @NotNull FileType fileType) {
