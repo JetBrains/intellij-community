@@ -1,18 +1,33 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.jetbrains.python.sdk.flavors
 
+import com.intellij.codeInspection.LocalQuickFix
+import com.intellij.codeInspection.ProblemDescriptor
+import com.intellij.execution.ExecutionException
 import com.intellij.execution.RunCanceledByUserException
 import com.intellij.execution.configurations.GeneralCommandLine
 import com.intellij.execution.configurations.PathEnvironmentVariableUtil
 import com.intellij.execution.process.CapturingProcessHandler
 import com.intellij.execution.process.ProcessOutput
+import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.module.Module
+import com.intellij.openapi.module.ModuleUtilCore
+import com.intellij.openapi.options.ConfigurationException
+import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.progress.ProgressManager
+import com.intellij.openapi.progress.Task
+import com.intellij.openapi.project.Project
+import com.intellij.openapi.project.rootManager
 import com.intellij.openapi.projectRoots.Sdk
+import com.intellij.openapi.roots.ui.configuration.projectRoot.ProjectSdksModel
+import com.intellij.openapi.util.io.FileUtil
+import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.util.PathUtil
 import com.jetbrains.python.packaging.PyExecutionException
-import com.jetbrains.python.sdk.PythonSdkAdditionalData
-import com.jetbrains.python.sdk.getOrCreateAdditionalData
+import com.jetbrains.python.sdk.*
 import icons.PythonIcons
 import org.jetbrains.annotations.SystemDependent
+import org.jetbrains.jps.model.serialization.PathMacroUtil
 import java.io.File
 import javax.swing.Icon
 
@@ -21,8 +36,17 @@ import javax.swing.Icon
  */
 
 const val PIP_FILE: String = "Pipfile"
+
 // TODO: Provide a special icon for pipenv
 val PIPENV_ICON: Icon = PythonIcons.Python.PythonClosed
+
+/**
+ * The Pipfiles found in the content roots of the module.
+ */
+val Module.pipFiles: List<VirtualFile>
+  get() =
+    rootManager.contentRoots
+      .mapNotNull { it.findChild(PIP_FILE) }
 
 /**
  * Tells if the SDK was added as a pipenv.
@@ -38,6 +62,41 @@ var Sdk.isPipEnv: Boolean
  */
 fun getPipEnvExecutable(): File? =
   PathEnvironmentVariableUtil.findInPath("pipenv")
+
+/**
+ * Sets up the pipenv environment under the modal progress window.
+ *
+ * The pipenv is associated with the first valid object from this list:
+ *
+ * 1. New project specified by [newProjectPath]
+ * 2. Existing module specified by [module]
+ * 3. Existing project specified by [project]
+ *
+ * @return the SDK for pipenv, not stored in the SDK table yet.
+ */
+fun setupPipEnvSdkUnderProgress(project: Project?,
+                                module: Module?,
+                                existingSdks: List<Sdk>,
+                                newProjectPath: String?,
+                                python: String?,
+                                installPackages: Boolean): Sdk? {
+  val projectPath = newProjectPath ?:
+                    module?.basePath ?:
+                    project?.basePath ?:
+                    return null
+  val task = object : Task.WithResult<String, ExecutionException>(project, "Setting Up Pipenv Environment", true) {
+    override fun compute(indicator: ProgressIndicator): String {
+      indicator.isIndeterminate = true
+      val pipEnv = setupPipEnv(FileUtil.toSystemDependentName(projectPath), python, installPackages)
+      return PythonSdkType.getPythonExecutable(pipEnv) ?: FileUtil.join(pipEnv, "bin", "python")
+    }
+  }
+  val suggestedName = "Pipenv (${PathUtil.getFileName(projectPath)})"
+  return createSdkByGenerateTask(task, existingSdks, null, projectPath, suggestedName)?.apply {
+    isPipEnv = true
+    associateWithProject(project, newProjectPath != null)
+  }
+}
 
 /**
  * Sets up the pipenv environment for the specified project path.
@@ -64,7 +123,7 @@ fun setupPipEnv(projectPath: @SystemDependent String, python: String?, installPa
  */
 fun runPipEnv(projectPath: @SystemDependent String, vararg args: String): String {
   val executable = getPipEnvExecutable()?.path ?:
-                   throw PyExecutionException("Cannot find pipenv", "pipenv", emptyList(), ProcessOutput())
+                   throw PyExecutionException("Cannot find Pipenv", "pipenv", emptyList(), ProcessOutput())
 
   val command = listOf(executable) + args
   val commandLine = GeneralCommandLine(command).withWorkDirectory(projectPath)
@@ -74,6 +133,7 @@ fun runPipEnv(projectPath: @SystemDependent String, vararg args: String): String
     handler.runProcessWithProgressIndicator(indicator)
   }
   else {
+    // TODO: Show the output at the progress dialog
     handler.runProcess()
   }
   with(result) {
@@ -81,9 +141,61 @@ fun runPipEnv(projectPath: @SystemDependent String, vararg args: String): String
       isCancelled ->
         throw RunCanceledByUserException()
       exitCode != 0 ->
-        throw PyExecutionException("Cannot run Python from pipenv", executable, args.asList(),
+        throw PyExecutionException("Cannot run Python from Pipenv", executable, args.asList(),
                                    stdout, stderr, exitCode, emptyList())
       else -> stdout
     }
   }
 }
+
+/**
+ * A quick-fix for setting up the pipenv for the module of the current PSI element.
+ */
+class UsePipEnvQuickFix : LocalQuickFix {
+  companion object {
+    fun isApplicable(module: Module): Boolean = module.pipFiles.any()
+
+    fun setUpPipEnv(project: Project, module: Module) {
+      if (project.isDisposed || module.isDisposed) {
+        return
+      }
+      val sdksModel = ProjectSdksModel().apply {
+        reset(project)
+      }
+      val existingSdks = sdksModel.sdks.filter { it.sdkType is PythonSdkType }
+      // XXX: Should we show an error message on exceptions and on null?
+      val newSdk = setupPipEnvSdkUnderProgress(project, module, existingSdks, null, null, false) ?: return
+      val existingSdk = existingSdks.find { it.isPipEnv && it.homePath == newSdk.homePath }
+      val sdk = existingSdk ?: newSdk
+      if (sdk == newSdk) {
+        sdksModel.addSdk(newSdk)
+        try {
+          sdksModel.apply()
+        }
+        catch (e: ConfigurationException) {
+          // XXX: Should we show a meaningful error message here?
+        }
+      }
+      project.pythonSdk = sdk
+      module.pythonSdk = sdk
+
+    }
+  }
+
+  override fun getFamilyName() = "Use Pipenv interpreter"
+
+  override fun applyFix(project: Project, descriptor: ProblemDescriptor) {
+    val element = descriptor.psiElement ?: return
+    val module = ModuleUtilCore.findModuleForPsiElement(element) ?: return
+    // Invoke the setup later to escape the write action of the quick fix in order to show the modal progress dialog
+    ApplicationManager.getApplication().invokeLater {
+      setUpPipEnv(project, module)
+    }
+  }
+}
+
+/**
+ * Returns the directory with the module file taking into account .idea/.
+ */
+private val Module.basePath: String?
+  get() = PathMacroUtil.getModuleDir(moduleFilePath)

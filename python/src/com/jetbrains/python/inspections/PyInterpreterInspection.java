@@ -30,9 +30,13 @@ import com.jetbrains.python.PyBundle;
 import com.jetbrains.python.psi.LanguageLevel;
 import com.jetbrains.python.psi.PyFile;
 import com.jetbrains.python.sdk.PythonSdkType;
+import com.jetbrains.python.sdk.flavors.UsePipEnvQuickFix;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+
+import java.util.ArrayList;
+import java.util.List;
 
 public class PyInterpreterInspection extends PyInspection {
 
@@ -66,23 +70,30 @@ public class PyInterpreterInspection extends PyInspection {
       final boolean pyCharm = PlatformUtils.isPyCharm();
 
       final String interpreterOwner = pyCharm ? "project" : "module";
-      final LocalQuickFix[] fixes = pyCharm ? new LocalQuickFix[]{new ConfigureInterpreterFix()} : LocalQuickFix.EMPTY_ARRAY;
+      final List<LocalQuickFix> fixes = new ArrayList<>();
+      if (pyCharm) {
+        if (UsePipEnvQuickFix.Companion.isApplicable(module)) {
+          fixes.add(new UsePipEnvQuickFix());
+        }
+        fixes.add(new ConfigureInterpreterFix());
+      }
+
       final String product = pyCharm ? "PyCharm" : "Python plugin";
 
       final Sdk sdk = PythonSdkType.findPythonSdk(module);
 
       if (sdk == null) {
-        registerProblem(node, "No Python interpreter configured for the " + interpreterOwner, fixes);
+        registerProblem(node, "No Python interpreter configured for the " + interpreterOwner, fixes.toArray(LocalQuickFix.EMPTY_ARRAY));
       }
       else if (PythonSdkType.isInvalid(sdk)) {
-        registerProblem(node, "Invalid Python interpreter selected for the " + interpreterOwner, fixes);
+        registerProblem(node, "Invalid Python interpreter selected for the " + interpreterOwner, fixes.toArray(LocalQuickFix.EMPTY_ARRAY));
       }
       else {
         final LanguageLevel languageLevel = PythonSdkType.getLanguageLevelForSdk(sdk);
         if (!LanguageLevel.SUPPORTED_LEVELS.contains(languageLevel)) {
           registerProblem(node,
                           "Python " + languageLevel + " has reached its end-of-life and is no longer supported by " + product,
-                          fixes);
+                          fixes.toArray(LocalQuickFix.EMPTY_ARRAY));
         }
       }
     }

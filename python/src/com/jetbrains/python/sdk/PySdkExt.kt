@@ -17,11 +17,14 @@ package com.jetbrains.python.sdk
 
 import com.intellij.execution.ExecutionException
 import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.module.Module
 import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.progress.Task
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.projectRoots.impl.SdkConfigurationUtil
+import com.intellij.openapi.roots.ModuleRootModificationUtil
+import com.intellij.openapi.roots.ProjectRootManager
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.vfs.StandardFileSystems
 import com.intellij.util.PathUtil
@@ -127,6 +130,24 @@ fun PyDetectedSdk.setupAssociated(existingSdks: List<Sdk>, associatedProjectPath
   val suggestedName = homePath?.let { suggestAssociatedSdkName(it, associatedProjectPath) }
   return SdkConfigurationUtil.setupSdk(existingSdks.toTypedArray(), homeDir, PythonSdkType.getInstance(), false, null, suggestedName)
 }
+
+var Module.pythonSdk: Sdk?
+  get() = PythonSdkType.findPythonSdk(this)
+  set(value) = ModuleRootModificationUtil.setModuleSdk(this, value)
+
+var Project.pythonSdk: Sdk?
+  get() {
+    val sdk = ProjectRootManager.getInstance(this).projectSdk
+    return when (sdk?.sdkType) {
+      is PythonSdkType -> sdk
+      else -> null
+    }
+  }
+  set(value) {
+    ApplicationManager.getApplication().runWriteAction {
+      ProjectRootManager.getInstance(this).projectSdk = value
+    }
+  }
 
 private fun suggestAssociatedSdkName(sdkHome: String, associatedPath: String?): String? {
   val baseSdkName = PythonSdkType.suggestBaseSdkName(sdkHome) ?: return null
