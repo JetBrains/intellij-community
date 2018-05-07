@@ -24,14 +24,16 @@ class RepositoryChangesBrowserNode(repository: Repository) : ChangesBrowserNode<
   override fun render(renderer: ChangesBrowserNodeRenderer, selected: Boolean, expanded: Boolean, hasFocus: Boolean) {
     renderer.icon = ColorIcon(ICON_SIZE, getBackgroundColor(colorManager.getRootColor(getUserObject().root)))
     renderer.append(" $textPresentation", REGULAR_ATTRIBUTES)
-    val localBranch = getUserObject().currentBranchName
-    if (localBranch != null) {
-      renderer.append(" ($localBranch", REGULAR_ATTRIBUTES)
-      val remoteBranch = getUserObject().currentRemoteBranchName
-      if (remoteBranch != null) {
-        renderer.append(" ${UIUtil.rightArrow()} $remoteBranch")
+    if (renderer.isShowingLocalChanges) {
+      val localBranch = getUserObject().currentBranchName
+      if (localBranch != null) {
+        renderer.append(" ($localBranch", REGULAR_ATTRIBUTES)
+        val remoteBranch = getUserObject().currentRemoteBranchName
+        if (remoteBranch != null) {
+          renderer.append(" ${UIUtil.rightArrow()} $remoteBranch")
+        }
+        renderer.append(")")
       }
-      renderer.append(")")
     }
     appendCount(renderer)
   }
