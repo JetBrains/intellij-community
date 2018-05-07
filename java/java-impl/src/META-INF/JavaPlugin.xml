@@ -560,7 +560,7 @@
                      bundle="messages.InspectionsBundle"
                      key="inspection.redundant.explicit.close"
                      implementationClass="com.intellij.codeInspection.RedundantExplicitCloseInspection"/>
-    <localInspection groupPath="Java,Java language level migration aids" language="JAVA" shortName="WrapperTypeMayBePrimitive"
+    <localInspection groupPath="Java" language="JAVA" shortName="WrapperTypeMayBePrimitive"
                      groupBundle="messages.InspectionsBundle"
                      groupKey="group.names.declaration.redundancy" enabledByDefault="true" level="WARNING"
                      displayName="Wrapper type may be primitive"
