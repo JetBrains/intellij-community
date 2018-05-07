@@ -91,6 +91,7 @@ public class MatchPatchPaths {
       String afterName = patch.getAfterName();
       final String[] strings = afterName != null ? afterName.replace('\\', '/').split("/") : ArrayUtil.EMPTY_STRING_ARRAY;
       FileBaseMatch best = null;
+      boolean bestIsUnique = true;
       for (int i = strings.length - 2; i >= 0; --i) {
         final String name = strings[i];
         final Collection<VirtualFile> files = findFilesFromIndex(directoryDetector, name);
@@ -101,12 +102,17 @@ public class MatchPatchPaths {
             if (match != null && match.score < i) {
               if (best == null || isBetterMatch(match, best)) {
                 best = match;
+                bestIsUnique = true;
+              }
+              else if (!match.file.equals(best.file) &&
+                       !isBetterMatch(best, match)) {
+                bestIsUnique = false;
               }
             }
           }
         }
       }
-      if (best != null) {
+      if (best != null && bestIsUnique) {
         final AbstractFilePatchInProgress patchInProgress = createPatchInProgress(patch, best.file);
         if (patchInProgress == null) break;
         processStipUp(patchInProgress, best.score);
