@@ -83,7 +83,7 @@ public class ExtractedParameter {
     return type.getCanonicalText();
   }
 
-  private void addUsages(ExtractableExpressionPart patternPart) {
+  public void addUsages(ExtractableExpressionPart patternPart) {
     myPatternUsages.add(patternPart.getUsage());
   }
 

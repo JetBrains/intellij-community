@@ -749,6 +749,18 @@ public class ExtractMethodObjectProcessor extends BaseRefactoringProcessor {
     }
 
     @Override
+    protected void initDuplicates() {
+      myDuplicates = Optional.ofNullable(getExactDuplicatesFinder())
+                             .map(finder -> finder.findDuplicates(myTargetClass))
+                             .orElse(new ArrayList<>());
+    }
+
+    @Override
+    public boolean initParametrizedDuplicates(boolean showDialog) {
+      return false;
+    }
+
+    @Override
     protected boolean insertNotNullCheckIfPossible() {
       return false;
     }

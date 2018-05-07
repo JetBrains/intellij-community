@@ -164,4 +164,13 @@ public class ExtractableExpressionPart {
   public PsiExpression getUsage() {
     return myUsage;
   }
+
+  @NotNull
+  public static ExtractableExpressionPart fromUsage(@NotNull PsiExpression usage, @NotNull PsiType type) {
+    PsiType usageType;
+    //noinspection AssertWithSideEffects
+    assert (usageType = usage.getType()) == null || type.isAssignableFrom(usageType)
+      : "expected " + type.getCanonicalText() + ", got " + usageType.getCanonicalText();
+    return new ExtractableExpressionPart(usage, null, null, type);
+  }
 }
