@@ -93,7 +93,7 @@ public final class StripeButton extends AnchoredButton implements ActionListener
   }
 
   private void init() {
-    setFocusable(false);
+    setFocusable(true);
     setBackground(ourBackgroundColor);
     final Border border = JBUI.Borders.empty(5, 5, 0, 5);
     setBorder(border);
