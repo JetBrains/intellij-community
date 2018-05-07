@@ -76,6 +76,9 @@ public abstract class StructuralSearchTestCase extends LightQuickFixTestCase {
       if (constraint.getMinCount() == 0) {
         usedConstraints.add(UIUtil.MINIMUM_ZERO);
       }
+      if (constraint.getMaxCount() > 1) {
+        usedConstraints.add(UIUtil.MAXIMUM_UNLIMITED);
+      }
       // todo check other constraints
       for (String usedConstraint : usedConstraints) {
         if (!profile.isApplicableConstraint(usedConstraint, nodes, false, constraint.isPartOfSearchResults())) {
