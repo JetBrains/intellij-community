@@ -18,6 +18,7 @@ package com.jetbrains.python.sdk.add
 import com.intellij.execution.ExecutionException
 import com.intellij.openapi.application.WriteAction
 import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory
+import com.intellij.openapi.module.Module
 import com.intellij.openapi.module.ModuleUtil
 import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.progress.Task
@@ -46,6 +47,7 @@ import javax.swing.event.DocumentEvent
  * @author vlan
  */
 class PyAddNewVirtualEnvPanel(private val project: Project?,
+                              private val module: Module?,
                               private val existingSdks: List<Sdk>,
                               newProjectPath: String?) : PyAddNewEnvPanel() {
   override val envName: String = "Virtualenv"
@@ -106,10 +108,10 @@ class PyAddNewVirtualEnvPanel(private val project: Project?,
       }
     }
     val shared = makeSharedField.isSelected
-    val associatedPath = if (!shared) newProjectPath ?: project?.basePath else null
+    val associatedPath = if (!shared) projectBasePath else null
     val sdk = createSdkByGenerateTask(task, existingSdks, baseSdkField.selectedSdk, associatedPath, null) ?: return null
     if (!shared) {
-      sdk.associateWithProject(project, newProjectPath != null)
+      sdk.associateWithModule(module, newProjectPath != null)
     }
     excludeDirectoryFromProject(root, project)
     with(PySdkSettings.instance) {
@@ -148,7 +150,7 @@ class PyAddNewVirtualEnvPanel(private val project: Project?,
   }
 
   private val projectBasePath: @SystemIndependent String
-    get() = newProjectPath ?: project?.basePath ?: userHome
+    get() = newProjectPath ?: module?.basePath ?: project?.basePath ?: userHome
 
   private val userHome: @SystemIndependent String
     get() = FileUtil.toSystemIndependentName(SystemProperties.getUserHome())

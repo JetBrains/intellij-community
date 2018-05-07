@@ -230,7 +230,7 @@ public class PythonSdkDetailsDialog extends DialogWrapper {
     Sdk projectSdk = getSdk();
     final List<Sdk> notAssociatedWithOtherProjects = StreamEx
       .of(allPythonSdks)
-      .filter(sdk -> !PySdkExtKt.isAssociatedWithAnotherProject(sdk, myProject))
+      .filter(sdk -> !PySdkExtKt.isAssociatedWithAnotherModule(sdk, myModule))
       .toList();
 
     final List<Sdk> pythonSdks = myHideOtherProjectVirtualenvs ? notAssociatedWithOtherProjects : allPythonSdks;
@@ -256,7 +256,7 @@ public class PythonSdkDetailsDialog extends DialogWrapper {
 
   private void addSdk(AnActionButton button) {
     PythonSdkDetailsStep
-      .show(myProject, myProjectSdksModel.getSdks(), null, myMainPanel, button.getPreferredPopupPoint().getScreenPoint(),
+      .show(myProject, myModule, myProjectSdksModel.getSdks(), null, myMainPanel, button.getPreferredPopupPoint().getScreenPoint(),
             null, sdk -> addCreatedSdk(sdk, true));
   }
 
@@ -339,11 +339,14 @@ public class PythonSdkDetailsDialog extends DialogWrapper {
       additionalData = new PythonSdkAdditionalData(PythonSdkFlavor.getFlavor(modificator.getHomePath()));
       modificator.setSdkAdditionalData(additionalData);
     }
-    if (isAssociated && myProject != null) {
-      additionalData.associateWithProject(myProject);
+    if (isAssociated && myModule != null) {
+      additionalData.associateWithModule(myModule);
+    }
+    else if (isAssociated && myProject != null) {
+      additionalData.setAssociatedModulePath(myProject.getBasePath());
     }
     else {
-      additionalData.setAssociatedProjectPath(null);
+      additionalData.resetAssociatedModulePath();
     }
   }
 

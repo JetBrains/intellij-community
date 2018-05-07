@@ -27,9 +27,9 @@ class PyAddNewEnvironmentPanel(existingSdks: List<Sdk>, newProjectPath: String?,
       }
     }
 
-  private val panels = listOf(PyAddNewVirtualEnvPanel(null, existingSdks, newProjectPath),
-                              PyAddPipEnvPanel(null, existingSdks, newProjectPath),
-                              PyAddNewCondaEnvPanel(null, existingSdks, newProjectPath))
+  private val panels = listOf(PyAddNewVirtualEnvPanel(null, null, existingSdks, newProjectPath),
+                              PyAddPipEnvPanel(null, null, existingSdks, newProjectPath),
+                              PyAddNewCondaEnvPanel(null, null, existingSdks, newProjectPath))
 
   var selectedPanel: PyAddNewEnvPanel = panels.find { it.envName == preferredType ?: PySdkSettings.instance.preferredEnvironmentType } ?: panels[0]
 

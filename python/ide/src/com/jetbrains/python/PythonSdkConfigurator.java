@@ -75,7 +75,7 @@ public class PythonSdkConfigurator implements DirectoryProjectConfigurator {
           additionalData = new PythonSdkAdditionalData(PythonSdkFlavor.getFlavor(virtualEnvSdk.getHomePath()));
           ((ProjectJdkImpl)virtualEnvSdk).setSdkAdditionalData(additionalData);
         }
-        ((PythonSdkAdditionalData) additionalData).associateWithProject(project);
+        ((PythonSdkAdditionalData) additionalData).setAssociatedModulePath(project.getBasePath());
         return;
       }
       return;
