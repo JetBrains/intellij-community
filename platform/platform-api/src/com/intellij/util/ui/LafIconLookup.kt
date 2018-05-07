@@ -12,6 +12,11 @@ object LafIconLookup {
   @JvmStatic
   @JvmOverloads
   fun getIcon(name: String, selected: Boolean = false, focused: Boolean = false, enabled: Boolean = true, editable: Boolean = false, pressed: Boolean = false): Icon {
+    return findIcon(name, selected = selected, focused = focused, enabled = enabled, editable = editable, pressed = pressed, isThrowErrorIfNotFound = true)
+           ?: AllIcons.Actions.Stub
+  }
+
+  fun findIcon(name: String, selected: Boolean = false, focused: Boolean = false, enabled: Boolean = true, editable: Boolean = false, pressed: Boolean = false, isThrowErrorIfNotFound: Boolean = false): Icon? {
     var key = name
     if (editable) key += "Editable"
     if (selected) key += "Selected"
@@ -32,8 +37,7 @@ object LafIconLookup {
     }
 
     key = dir + key
-
-    return IconLoader.findIcon("/com/intellij/ide/ui/laf/icons/$key.png", LafIconLookup::class.java, true) ?: AllIcons.Actions.Stub
+    return IconLoader.findIcon("/com/intellij/ide/ui/laf/icons/$key.png", LafIconLookup::class.java, true, isThrowErrorIfNotFound)
   }
 
   @JvmStatic
