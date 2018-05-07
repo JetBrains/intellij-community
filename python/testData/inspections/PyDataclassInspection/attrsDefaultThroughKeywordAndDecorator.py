@@ -39,3 +39,12 @@ class C1:
     @a.default
     def <error descr="A default is set using 'init_a_1'">init_a_2</error>(self):
         return 2
+
+
+@attr.s
+class D1:
+    a = attr.ib(factory=list)
+
+    @a.default
+    def <error descr="A default is set using 'attr.ib()'">init_a</error>(self):
+        return 1

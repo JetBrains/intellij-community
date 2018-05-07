@@ -6,6 +6,7 @@ package com.jetbrains.python.psi.impl.stubs
 import com.intellij.psi.stubs.StubInputStream
 import com.intellij.psi.stubs.StubOutputStream
 import com.intellij.psi.util.QualifiedName
+import com.jetbrains.python.PyNames
 import com.jetbrains.python.codeInsight.stdlib.PyDataclassParameters
 import com.jetbrains.python.psi.PyCallExpression
 import com.jetbrains.python.psi.PyExpression
@@ -60,7 +61,7 @@ class PyDataclassFieldStubImpl private constructor(private val calleeName: Quali
     }
 
     private fun analyzeArguments(call: PyCallExpression, type: PyDataclassParameters.Type): Triple<Boolean, Boolean, Boolean>? {
-      val initValue = PyEvaluator().evaluate(call.getKeywordArgument("init")) as? Boolean ?: true
+      val initValue = PyEvaluator.evaluateAsBoolean(call.getKeywordArgument("init")) ?: true
 
       if (type == PyDataclassParameters.Type.STD) {
         val missing = QualifiedName.fromComponents("dataclasses", "MISSING")
@@ -72,17 +73,18 @@ class PyDataclassFieldStubImpl private constructor(private val calleeName: Quali
       }
       else if (type == PyDataclassParameters.Type.ATTRS) {
         val default = call.getKeywordArgument("default")
+        val hasFactory = call.getKeywordArgument("factory").let { it != null && it.text != PyNames.NONE }
 
         if (existsAndDoesNotResolveTo(default, QualifiedName.fromComponents("attr", "NOTHING"))) {
           val callee = (default as? PyCallExpression)?.callee as? PyReferenceExpression
-          val hasDefaultFactory =
+          val hasFactoryInDefault =
             callee != null &&
             QualifiedName.fromComponents("attr", "Factory") in PyResolveUtil.resolveImportedElementQNameLocally(callee)
 
-          return Triple(!hasDefaultFactory, hasDefaultFactory, initValue)
+          return Triple(!hasFactoryInDefault, hasFactory || hasFactoryInDefault, initValue)
         }
 
-        return Triple(false, false, initValue)
+        return Triple(false, hasFactory, initValue)
       }
 
       return null

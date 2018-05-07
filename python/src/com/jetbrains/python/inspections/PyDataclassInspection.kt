@@ -98,6 +98,7 @@ class PyDataclassInspection : PyInspection() {
             processAttrsDefaultThroughDecorator(node)
             processAttrsInitializersAndValidators(node)
             processAttrsAutoAttribs(node, dataclassParameters)
+            processAttrIbFunctionCalls(node)
           }
 
           PyNamedTupleInspection.inspectFieldsOrder(
@@ -440,6 +441,38 @@ class PyDataclassInspection : PyInspection() {
 
           true
         }
+      }
+    }
+
+    private fun processAttrIbFunctionCalls(cls: PyClass) {
+      cls.processClassLevelDeclarations { element, _ ->
+        if (element is PyTargetExpression) {
+          val call = element.findAssignedValue() as? PyCallExpression
+          val stub = PyDataclassFieldStubImpl.create(element)
+
+          if (call != null && stub != null) {
+            if (stub.hasDefaultFactory()) {
+              if (stub.hasDefault()) {
+                registerProblem(call.argumentList, "Cannot specify both 'default' and 'factory'", ProblemHighlightType.GENERIC_ERROR)
+              }
+              else {
+                // at least covers the following case: `attr.ib(default=attr.Factory(...), factory=...)`
+
+                val default = call.getKeywordArgument("default")
+                val factory = call.getKeywordArgument("factory")
+                val nothing = QualifiedName.fromComponents("attr", "NOTHING")
+
+                if (default != null &&
+                    factory != null &&
+                    !(default is PyReferenceExpression && PyResolveUtil.resolveImportedElementQNameLocally(default).contains(nothing))) {
+                  registerProblem(call.argumentList, "Cannot specify both 'default' and 'factory'", ProblemHighlightType.GENERIC_ERROR)
+                }
+              }
+            }
+          }
+        }
+
+        true
       }
     }
 
