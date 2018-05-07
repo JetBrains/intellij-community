@@ -63,16 +63,8 @@ public class AttachmentFactory {
       return new Attachment(path, contentStream, MessageFormat.format(BIG_FILE_MESSAGE_PATTERN, path));
     } else {
       byte[] bytes = getBytes(contentStream);
-      final String displayText = isBinary ? "[File is binary]" : getText(bytes);
+      final String displayText = isBinary ? "[File is binary]" : new String(bytes, CharsetToolkit.UTF8_CHARSET);
       return new Attachment(path, bytes, displayText);
-    }
-  }
-
-  private static String getText(byte[] bytes) {
-    try {
-      return new String(bytes, CharsetToolkit.UTF8_CHARSET);
-    } catch (Throwable t) {
-      return "[Binary content]";
     }
   }
 
