@@ -20,7 +20,7 @@ import com.intellij.codeInsight.ExceptionUtil;
 import com.intellij.codeInsight.daemon.impl.analysis.JavaHighlightUtil;
 import com.intellij.codeInsight.daemon.impl.quickfix.RemoveUnusedVariableUtil;
 import com.intellij.codeInsight.generation.surroundWith.SurroundWithUtil;
-import com.intellij.codeInspection.dataFlow.ControlFlowAnalyzer;
+import com.intellij.codeInspection.dataFlow.JavaMethodContractUtil;
 import com.intellij.lang.StdLanguages;
 import com.intellij.lang.java.JavaLanguage;
 import com.intellij.openapi.application.ApplicationManager;
@@ -1103,7 +1103,7 @@ public class JavaChangeSignatureUsageProcessor implements ChangeSignatureUsagePr
     }
 
     private static void checkContract(MultiMap<PsiElement, String> conflictDescriptions, PsiMethod method) {
-      PsiAnnotation contract = ControlFlowAnalyzer.findContractAnnotation(method);
+      PsiAnnotation contract = JavaMethodContractUtil.findContractAnnotation(method);
       if (contract != null && !AnnotationUtil.isInferredAnnotation(contract)) {
         conflictDescriptions.putValue(method, "@Contract annotation will have to be changed manually");
       }

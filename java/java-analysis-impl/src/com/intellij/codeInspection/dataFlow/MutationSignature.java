@@ -126,7 +126,7 @@ public class MutationSignature {
         catch (IllegalArgumentException ignored) { }
       }
     }
-    if(ControlFlowAnalyzer.isPure(method)) {
+    if(JavaMethodContractUtil.isPure(method)) {
       return PURE;
     }
     return UNKNOWN;

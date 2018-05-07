@@ -5,7 +5,7 @@ import com.intellij.codeInsight.BlockUtils;
 import com.intellij.codeInspection.dataFlow.ContractReturnValue;
 import com.intellij.codeInspection.dataFlow.ContractReturnValue.ParameterReturnValue;
 import com.intellij.codeInspection.dataFlow.ContractValue;
-import com.intellij.codeInspection.dataFlow.ControlFlowAnalyzer;
+import com.intellij.codeInspection.dataFlow.JavaMethodContractUtil;
 import com.intellij.codeInspection.dataFlow.MethodContract;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
@@ -76,8 +76,8 @@ public class ObviousNullCheckInspection extends AbstractBaseJavaLocalInspectionT
     static NullCheckParameter fromCall(PsiMethodCallExpression call) {
       PsiMethod method = call.resolveMethod();
       if (method == null) return null;
-      if (!ControlFlowAnalyzer.isPure(method)) return null;
-      List<? extends MethodContract> contracts = ControlFlowAnalyzer.getMethodCallContracts(method, call);
+      if (!JavaMethodContractUtil.isPure(method)) return null;
+      List<? extends MethodContract> contracts = JavaMethodContractUtil.getMethodCallContracts(method, call);
       if (contracts.isEmpty() || contracts.size() > 2) return null;
 
       MethodContract contract = contracts.get(0);
@@ -94,7 +94,7 @@ public class ObviousNullCheckInspection extends AbstractBaseJavaLocalInspectionT
 
       boolean returnsParameter = false;
       if (contracts.size() == 2) {
-        ContractReturnValue returnValue = MethodContract.getNonFailingReturnValue(contracts);
+        ContractReturnValue returnValue = JavaMethodContractUtil.getNonFailingReturnValue(contracts);
         if (returnValue instanceof ParameterReturnValue && ((ParameterReturnValue)returnValue).getParameterNumber() == nullIndex) {
           returnsParameter = true;
         } else {

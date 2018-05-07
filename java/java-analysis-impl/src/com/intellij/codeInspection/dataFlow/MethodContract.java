@@ -17,7 +17,6 @@ package com.intellij.codeInspection.dataFlow;
 
 import com.intellij.codeInspection.dataFlow.value.DfaRelationValue.RelationType;
 
-import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
@@ -88,31 +87,5 @@ public abstract class MethodContract {
         return Collections.singletonList(condition);
       }
     };
-  }
-
-  /**
-   * Returns the common return value of the method assuming that it does not fail
-   *
-   * @param contracts method contracts
-   * @return common return value or null if there's no common return value
-   */
-  public static ContractReturnValue getNonFailingReturnValue(List<? extends MethodContract> contracts) {
-    List<ContractValue> failConditions = new ArrayList<>();
-    for (MethodContract contract : contracts) {
-      List<ContractValue> conditions = contract.getConditions();
-      if (conditions.isEmpty() || conditions.stream().allMatch(c -> failConditions.stream().anyMatch(c::isExclusive))) {
-        return contract.getReturnValue();
-      }
-      if (contract.getReturnValue().isFail()) {
-        // support "null, _ -> fail; !null, _ -> this", but do not support more complex cases like "null, true -> fail; !null, false -> this"
-        if (conditions.size() == 1) {
-          failConditions.add(conditions.get(0));
-        }
-      }
-      else {
-        break;
-      }
-    }
-    return null;
   }
 }

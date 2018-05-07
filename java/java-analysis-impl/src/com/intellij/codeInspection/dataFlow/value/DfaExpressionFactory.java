@@ -262,7 +262,7 @@ public class DfaExpressionFactory {
         }
       }
       if (method.getParameterList().isEmpty()) {
-        if ((ControlFlowAnalyzer.isPure(method) ||
+        if ((JavaMethodContractUtil.isPure(method) ||
             AnnotationUtil.findAnnotation(method.getContainingClass(), "javax.annotation.concurrent.Immutable") != null) &&
             isContractAllowedForGetter(method)) {
           return new GetterSource(method);
@@ -273,7 +273,7 @@ public class DfaExpressionFactory {
   }
 
   private static boolean isContractAllowedForGetter(PsiMethod method) {
-    List<? extends MethodContract> contracts = ControlFlowAnalyzer.getMethodCallContracts(method, null);
+    List<? extends MethodContract> contracts = JavaMethodContractUtil.getMethodCallContracts(method, null);
     if (contracts.size() == 1) {
       MethodContract contract = contracts.get(0);
       return contract.isTrivial() && contract.getReturnValue().equals(ContractReturnValue.returnNew());
