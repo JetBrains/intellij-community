@@ -7,22 +7,22 @@ import com.intellij.codeInspection.dataFlow.StandardMethodContract.ValueConstrai
 import com.intellij.lang.LighterAST;
 import com.intellij.lang.LighterASTNode;
 import com.intellij.psi.JavaTokenType;
-import com.intellij.psi.impl.source.JavaLightTreeUtil;
 import com.intellij.psi.impl.source.tree.ElementType;
 import com.intellij.psi.impl.source.tree.RecursiveLighterASTNodeWalkingVisitor;
 import com.intellij.psi.tree.IElementType;
+import com.intellij.psi.tree.TokenSet;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.BitSet;
 import java.util.List;
 
 import static com.intellij.codeInspection.dataFlow.ContractReturnValue.*;
 import static com.intellij.codeInspection.dataFlow.StandardMethodContract.ValueConstraint.*;
-import static com.intellij.psi.impl.source.JavaLightTreeUtil.findExpressionChild;
-import static com.intellij.psi.impl.source.JavaLightTreeUtil.getExpressionChildren;
+import static com.intellij.psi.impl.source.JavaLightTreeUtil.*;
 import static com.intellij.psi.impl.source.tree.JavaElementType.*;
 import static com.intellij.psi.impl.source.tree.LightTreeUtil.firstChildOfType;
 import static com.intellij.psi.impl.source.tree.LightTreeUtil.getChildrenOfType;
@@ -30,6 +30,7 @@ import static java.util.Collections.emptyList;
 import static java.util.Collections.singletonList;
 
 class ContractInferenceInterpreter {
+  private static final TokenSet UNARY_INCREMENT_DECREMENT = TokenSet.create(JavaTokenType.PLUSPLUS, JavaTokenType.MINUSMINUS);
   private final LighterAST myTree;
   private final LighterASTNode myMethod;
   private final LighterASTNode myBody;
@@ -116,6 +117,8 @@ class ContractInferenceInterpreter {
     class ReturnValueVisitor extends RecursiveLighterASTNodeWalkingVisitor {
       public ContractReturnValue returnValue = fail();
 
+      private BitSet assignedParameters;
+
       ReturnValueVisitor() {
         super(myTree);
       }
@@ -123,9 +126,23 @@ class ContractInferenceInterpreter {
       @Override
       public void visitNode(@NotNull LighterASTNode element) {
         IElementType type = element.getTokenType();
-        if (type == CLASS || type == LAMBDA_EXPRESSION || ElementType.EXPRESSION_BIT_SET.contains(type)) return;
+        if (type == CLASS || type == LAMBDA_EXPRESSION) return;
         if (returnValue.equals(returnAny())) {
           return;
+        }
+        if (type == ASSIGNMENT_EXPRESSION || type == POSTFIX_EXPRESSION ||
+            (type == PREFIX_EXPRESSION && firstChildOfType(myTree, element, UNARY_INCREMENT_DECREMENT) != null)) {
+          LighterASTNode expression = skipParenthesesCastsDown(myTree, findExpressionChild(myTree, element));
+          int paramIndex = resolveParameter(expression);
+          if (paramIndex >= 0) {
+            if (assignedParameters == null) {
+              assignedParameters = new BitSet();
+            }
+            assignedParameters.set(paramIndex);
+            if (returnValue.equals(returnParameter(paramIndex))) {
+              returnValue = returnAny();
+            }
+          }
         }
         if (type == RETURN_STATEMENT) {
           LighterASTNode expression = findExpressionChild(myTree, element);
@@ -142,6 +159,7 @@ class ContractInferenceInterpreter {
 
       @NotNull
       private ContractReturnValue expressionToReturnValue(LighterASTNode expression) {
+        expression = skipParenthesesDown(myTree, expression);
         if (expression == null) return returnAny();
         IElementType type = expression.getTokenType();
         if (type == NEW_EXPRESSION) {
@@ -152,7 +170,7 @@ class ContractInferenceInterpreter {
         }
         if (type == REFERENCE_EXPRESSION) {
           int paramIndex = resolveParameter(expression);
-          if (paramIndex >= 0) {
+          if (paramIndex >= 0 && (assignedParameters == null || !assignedParameters.get(paramIndex))) {
             return returnParameter(paramIndex);
           }
         }
@@ -429,12 +447,12 @@ class ContractInferenceInterpreter {
 
   private int resolveParameter(@Nullable LighterASTNode expr) {
     if (expr != null && expr.getTokenType() == REFERENCE_EXPRESSION && findExpressionChild(myTree, expr) == null) {
-      String name = JavaLightTreeUtil.getNameIdentifierText(myTree, expr);
+      String name = getNameIdentifierText(myTree, expr);
       if (name == null) return -1;
 
       List<LighterASTNode> parameters = getParameters();
       for (int i = 0; i < parameters.size(); i++) {
-        if (name.equals(JavaLightTreeUtil.getNameIdentifierText(myTree, parameters.get(i)))) {
+        if (name.equals(getNameIdentifierText(myTree, parameters.get(i)))) {
           return i;
         }
       }

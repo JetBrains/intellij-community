@@ -609,6 +609,39 @@ public static int atLeast(int min, int actual, String varName) {
     assert c == ['_, _, _ -> param2']
   }
 
+  void "test param reassigned"() {
+    def c = inferContracts("""
+public static int atLeast(int min, int actual, String varName) {
+    if (actual < min) throw new IllegalArgumentException('\\\\'' + varName + " must be at least " + min + ": " + actual);
+    actual+=1;
+    return actual;
+  }
+""")
+    assert c == []
+  }
+
+  void "test param incremented"() {
+    def c = inferContracts("""
+public static int atLeast(int min, int actual, String varName) {
+    if (actual < min) throw new IllegalArgumentException('\\\\'' + varName + " must be at least " + min + ": " + actual);
+    System.out.println(++actual);
+    return actual;
+  }
+""")
+    assert c == []
+  }
+
+  void "test param unary minus"() {
+    def c = inferContracts("""
+public static int atLeast(int min, int actual, String varName) {
+    if (actual < min) throw new IllegalArgumentException('\\\\'' + varName + " must be at least " + min + ": " + actual);
+    System.out.println(-actual);
+    return actual;
+  }
+""")
+    assert c == ['_, _, _ -> param2']
+  }
+
   private String inferContract(String method) {
     return assertOneElement(inferContracts(method))
   }
