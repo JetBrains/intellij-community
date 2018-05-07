@@ -176,7 +176,7 @@ private fun suggestAssociatedSdkName(sdkHome: String, associatedPath: String?): 
 val File.isNotEmptyDirectory: Boolean
   get() = exists() && isDirectory && list()?.isEmpty()?.not() ?: false
 
-private val Sdk.isSystemWide: Boolean
+val Sdk.isSystemWide: Boolean
   get() = !PythonSdkType.isRemote(this) && !PythonSdkType.isVirtualEnv(
     this) && !PythonSdkType.isCondaVirtualEnv(this)
 
