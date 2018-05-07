@@ -225,8 +225,8 @@ public class StandardInstructionVisitor extends InstructionVisitor {
     if (sam == null || PsiType.VOID.equals(sam.getReturnType())) return;
     JavaResolveResult resolveResult = methodRef.advancedResolve(false);
     PsiMethod method = ObjectUtils.tryCast(resolveResult.getElement(), PsiMethod.class);
-    if (method == null || !ControlFlowAnalyzer.isPure(method)) return;
-    List<? extends MethodContract> contracts = ControlFlowAnalyzer.getMethodCallContracts(method, null);
+    if (method == null || !JavaMethodContractUtil.isPure(method)) return;
+    List<? extends MethodContract> contracts = JavaMethodContractUtil.getMethodCallContracts(method, null);
     PsiSubstitutor substitutor = resolveResult.getSubstitutor();
     DfaCallArguments callArguments = getMethodReferenceCallArguments(methodRef, qualifier, runner, sam, method, substitutor);
     dereference(state, callArguments.myQualifier, NullabilityProblemKind.callMethodRefNPE.problem(methodRef));
@@ -264,7 +264,7 @@ public class StandardInstructionVisitor extends InstructionVisitor {
         }
       }
     }
-    return new DfaCallArguments(qualifier, arguments, ControlFlowAnalyzer.isPure(method));
+    return new DfaCallArguments(qualifier, arguments, JavaMethodContractUtil.isPure(method));
   }
 
   private static Stream<DfaValue> possibleReturnValues(DfaCallArguments callArguments,

@@ -17,7 +17,6 @@
 package com.intellij.refactoring.extractMethod;
 
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Pair;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.psi.codeStyle.VariableKind;
@@ -334,7 +333,7 @@ public class InputVariables {
           }
         }
         if (!myFoldingAvailable || !myFolding.annotateWithParameter(data, reference)) {
-          reference.putUserData(DuplicatesFinder.PARAMETER, Pair.create(data.variable, type));
+          reference.putUserData(DuplicatesFinder.PARAMETER, new DuplicatesFinder.Parameter(data.variable, type));
         }
       }
     }

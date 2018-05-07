@@ -838,7 +838,7 @@ public class DataFlowInspectionBase extends AbstractBaseJavaLocalInspectionTool 
         if (call != null) {
           PsiMethod method = call.resolveMethod();
           if (method != null) {
-            List<StandardMethodContract> contracts = ControlFlowAnalyzer.getMethodContracts(method);
+            List<StandardMethodContract> contracts = JavaMethodContractUtil.getMethodContracts(method);
             return contracts.stream().anyMatch(
               smc -> smc.getReturnValue().isFail() &&
                      IntStreamEx.range(smc.getParameterCount())

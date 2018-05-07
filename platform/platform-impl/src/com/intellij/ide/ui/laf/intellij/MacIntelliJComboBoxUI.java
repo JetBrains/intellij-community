@@ -40,7 +40,9 @@ public class MacIntelliJComboBoxUI extends DarculaComboBoxUI {
     comboBox.setOpaque(false);
   }
 
-  @Override
+  protected void uninstallDarculaDefaults() {}
+
+    @Override
   protected JButton createArrowButton() {
     Color bg = comboBox.getBackground();
     Color fg = comboBox.getForeground();
@@ -60,7 +62,6 @@ public class MacIntelliJComboBoxUI extends DarculaComboBoxUI {
 
       @Override
       public Dimension getPreferredSize() {
-        Icon icon = LafIconLookup.getIcon("comboRight", false, false, comboBox.isEnabled(), comboBox.isEditable());
         return new Dimension(DEFAULT_ICON.getIconWidth(), DEFAULT_ICON.getIconHeight());
       }
     };

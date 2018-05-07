@@ -17,7 +17,7 @@ package com.siyeh.ig.bugs;
 
 import com.intellij.codeInsight.AnnotationUtil;
 import com.intellij.codeInspection.dataFlow.ContractReturnValue;
-import com.intellij.codeInspection.dataFlow.ControlFlowAnalyzer;
+import com.intellij.codeInspection.dataFlow.JavaMethodContractUtil;
 import com.intellij.codeInspection.dataFlow.MethodContract;
 import com.intellij.openapi.roots.ProjectFileIndex;
 import com.intellij.openapi.util.InvalidDataException;
@@ -260,7 +260,7 @@ public class IgnoreResultOfCallInspectionBase extends BaseInspection {
     }
 
     private boolean isPureMethod(PsiMethod method) {
-      final PsiAnnotation anno = ControlFlowAnalyzer.findContractAnnotation(method);
+      final PsiAnnotation anno = JavaMethodContractUtil.findContractAnnotation(method);
       if (anno == null) return false;
       final boolean honorInferred = Registry.is("ide.ignore.call.result.inspection.honor.inferred.pure");
       if (!honorInferred && AnnotationUtil.isInferredAnnotation(anno)) return false;
@@ -270,7 +270,7 @@ public class IgnoreResultOfCallInspectionBase extends BaseInspection {
     }
 
     private boolean hasTrivialReturnValue(PsiMethod method) {
-      List<? extends MethodContract> contracts = ControlFlowAnalyzer.getMethodCallContracts(method, null);
+      List<? extends MethodContract> contracts = JavaMethodContractUtil.getMethodCallContracts(method, null);
       return !contracts.isEmpty() &&
              contracts.stream()
                       .map(MethodContract::getReturnValue)
