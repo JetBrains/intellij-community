@@ -18,7 +18,7 @@ class DockedModeGuiTest : GuiTestCase() {
   }
 
   @Test
-  fun testDockerMode() {
+  fun testDockedMode() {
     CommunityProjectCreator.importCommandLineAppAndOpenMain()
     ideFrame {
       if (!projectView.isVisible) projectView.activate()
