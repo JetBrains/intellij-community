@@ -6,10 +6,7 @@ import com.intellij.openapi.ui.ValidationInfo
 import com.intellij.ui.ColoredListCellRenderer
 import com.intellij.util.ui.FormBuilder
 import com.jetbrains.python.sdk.PySdkSettings
-import com.jetbrains.python.sdk.add.PyAddNewCondaEnvPanel
-import com.jetbrains.python.sdk.add.PyAddNewEnvPanel
-import com.jetbrains.python.sdk.add.PyAddNewVirtualEnvPanel
-import com.jetbrains.python.sdk.add.PyAddSdkPanel
+import com.jetbrains.python.sdk.add.*
 import java.awt.BorderLayout
 import java.awt.event.ItemEvent
 import javax.swing.JComboBox
@@ -31,6 +28,7 @@ class PyAddNewEnvironmentPanel(existingSdks: List<Sdk>, newProjectPath: String?,
     }
 
   private val panels = listOf(PyAddNewVirtualEnvPanel(null, existingSdks, newProjectPath),
+                              PyAddPipEnvPanel(null, existingSdks, newProjectPath),
                               PyAddNewCondaEnvPanel(null, existingSdks, newProjectPath))
 
   var selectedPanel: PyAddNewEnvPanel = panels.find { it.envName == preferredType ?: PySdkSettings.instance.preferredEnvironmentType } ?: panels[0]

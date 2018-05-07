@@ -34,6 +34,7 @@ class PyAddPipEnvPanel(private val project: Project?,
   private val languageLevelsField: JComboBox<String>
   private val installPackagesCheckBox = JBCheckBox("Install packages from Pipfile").apply {
     isEnabled = projectPipFile != null
+    isVisible = newProjectPath != null
   }
 
   init {
