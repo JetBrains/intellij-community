@@ -17,40 +17,28 @@ package com.intellij.stats.completion
 
 
 import com.intellij.codeInsight.lookup.LookupElement
-import com.intellij.codeInsight.lookup.LookupElementPresentation
 import com.intellij.codeInsight.lookup.impl.LookupImpl
+import com.intellij.completion.tracker.LookupElementPositionTracker
 import com.intellij.ide.plugins.PluginManager
-import com.intellij.lang.Language
-import com.intellij.psi.util.PsiUtilCore
-import com.intellij.stats.events.completion.*
-
-
-interface CompletionEventLogger {
-    fun log(event: LogEvent)
-}
+import com.intellij.stats.completion.events.*
+import com.intellij.stats.personalization.UserFactorsManager
 
 
 class CompletionFileLogger(private val installationUID: String,
                            private val completionUID: String,
                            private val eventLogger: CompletionEventLogger) : CompletionLogger() {
 
-    val elementToId = mutableMapOf<String, Int>()
-
-    private fun LookupElement.toIdString(): String {
-        val p = LookupElementPresentation()
-        renderElement(p)
-        return "${p.itemText} ${p.tailText} ${p.typeText}"
-    }
+    private val elementToId = mutableMapOf<String, Int>()
 
     private fun registerElement(item: LookupElement): Int {
-        val itemString = item.toIdString()
+        val itemString = item.idString()
         val newId = elementToId.size
         elementToId[itemString] = newId
         return newId
     }
 
     private fun getElementId(item: LookupElement): Int? {
-        val itemString = item.toIdString()
+        val itemString = item.idString()
         return elementToId[itemString]
     }
 
@@ -83,35 +71,25 @@ class CompletionFileLogger(private val installationUID: String,
             LookupEntryInfo(id, it.lookupString.length, relevanceMap)
         }
 
-        val language = getLanguage(lookup)
+        val language = lookup.language()
 
         val ideVersion = PluginManager.BUILD_NUMBER ?: "ideVersion"
         val pluginVersion = calcPluginVersion() ?: "pluginVersion"
-        val mlRankingVersion: String = "NONE"
+        val mlRankingVersion = "NONE"
+
+        val userFactors = lookup.getUserData(UserFactorsManager.USER_FACTORS_KEY) ?: emptyMap()
 
         val event = CompletionStartedEvent(
                 ideVersion, pluginVersion, mlRankingVersion,
                 installationUID, completionUID,
                 language?.displayName,
                 isExperimentPerformed, experimentVersion,
-                lookupEntryInfos, selectedPosition = 0)
-        
+                lookupEntryInfos, userFactors, selectedPosition = 0)
+
         event.isOneLineMode = lookup.editor.isOneLineMode
+        event.fillCompletionParameters()
 
         eventLogger.log(event)
-    }
-
-    private fun calcPluginVersion(): String? {
-        val className = CompletionStartedEvent::class.java.name
-        val id = PluginManager.getPluginByClassName(className)
-        val plugin = PluginManager.getPlugin(id)
-        return plugin?.version
-    }
-    
-    private fun getLanguage(lookup: LookupImpl): Language? {
-        val file = lookup.psiFile ?: return null
-        val offset = lookup.editor.caretModel.offset
-        return  PsiUtilCore.getLanguageAtOffset(file, offset)
     }
 
     override fun customMessage(message: String) {
@@ -127,6 +105,8 @@ class CompletionFileLogger(private val installationUID: String,
         val currentPosition = lookupItems.indexOf(lookup.currentItem)
 
         val event = TypeEvent(installationUID, completionUID, ids, newItems, currentPosition)
+        event.fillCompletionParameters()
+
         eventLogger.log(event)
     }
 
@@ -134,10 +114,12 @@ class CompletionFileLogger(private val installationUID: String,
         val lookupItems = lookup.items
         
         val newInfos = getRecentlyAddedLookupItems(lookupItems).toLookupInfos(lookup)
-        val ids = if (newInfos.isNotEmpty()) lookupItems.map { getElementId(it)!! } else emptyList<Int>()
+        val ids = if (newInfos.isNotEmpty()) lookupItems.map { getElementId(it)!! } else emptyList()
         val currentPosition = lookupItems.indexOf(lookup.currentItem)
 
         val event = DownPressedEvent(installationUID, completionUID, ids, newInfos, currentPosition)
+        event.fillCompletionParameters()
+
         eventLogger.log(event)
     }
 
@@ -145,10 +127,12 @@ class CompletionFileLogger(private val installationUID: String,
         val lookupItems = lookup.items
         
         val newInfos = getRecentlyAddedLookupItems(lookupItems).toLookupInfos(lookup)
-        val ids = if (newInfos.isNotEmpty()) lookupItems.map { getElementId(it)!! } else emptyList<Int>()
+        val ids = if (newInfos.isNotEmpty()) lookupItems.map { getElementId(it)!! } else emptyList()
         val currentPosition = lookupItems.indexOf(lookup.currentItem)
 
         val event = UpPressedEvent(installationUID, completionUID, ids, newInfos, currentPosition)
+        event.fillCompletionParameters()
+
         eventLogger.log(event)
     }
 
@@ -158,24 +142,45 @@ class CompletionFileLogger(private val installationUID: String,
     }
 
     override fun itemSelectedByTyping(lookup: LookupImpl) {
-        val current = lookup.currentItem
-        val id = if (current != null) getElementId(current)!! else -1
-        
-        val event = TypedSelectEvent(installationUID, completionUID, id)
+        val newCompletionElements = getRecentlyAddedLookupItems(lookup.items).toLookupInfos(lookup)
+        val id = currentItemInfo(lookup).id
+
+        val history = lookup.itemsHistory()
+        val completionList = lookup.items.toLookupInfos(lookup)
+
+        val event = TypedSelectEvent(installationUID, completionUID, newCompletionElements, id, completionList, history)
+        event.fillCompletionParameters()
+
         eventLogger.log(event)
     }
 
     override fun itemSelectedCompletionFinished(lookup: LookupImpl) {
-        val current = lookup.currentItem
-        
-        val (index, id) = if (current != null) {
-            lookup.items.indexOf(current) to (getElementId(current) ?: -1)
-        } else {
-            -1 to -1
-        }
-        
-        val event = ExplicitSelectEvent(installationUID, completionUID, emptyList(), emptyList(), index, id)
+        val newCompletionItems = getRecentlyAddedLookupItems(lookup.items).toLookupInfos(lookup)
+        val (index, id) = currentItemInfo(lookup)
+
+        val history = lookup.itemsHistory()
+        val completionList = lookup.items.toLookupInfos(lookup)
+
+        val event = ExplicitSelectEvent(installationUID, completionUID, newCompletionItems, index, id, completionList, history)
+        event.fillCompletionParameters()
+
         eventLogger.log(event)
+    }
+
+    private fun currentItemInfo(lookup: LookupImpl): CurrentElementInfo {
+        val current = lookup.currentItem
+        return if (current != null) {
+            val index = lookup.items.indexOf(current)
+            val id = getElementId(current)!!
+            CurrentElementInfo(index, id)
+        } else {
+            CurrentElementInfo(-1, -1)
+        }
+    }
+
+    private fun LookupImpl.itemsHistory(): Map<Int, ElementPositionHistory> {
+        val positionTracker = LookupElementPositionTracker.getInstance()
+        return items.map { getElementId(it)!! to positionTracker.positionsHistory(this, it).let { ElementPositionHistory(it) } }.toMap()
     }
     
     override fun afterBackspacePressed(lookup: LookupImpl) {
@@ -186,7 +191,31 @@ class CompletionFileLogger(private val installationUID: String,
         val currentPosition = lookupItems.indexOf(lookup.currentItem)
 
         val event = BackspaceEvent(installationUID, completionUID, ids, newInfos, currentPosition)
+        event.fillCompletionParameters()
+
         eventLogger.log(event)
     }
 
+}
+
+
+private class CurrentElementInfo(val index: Int, val id: Int) {
+    operator fun component1() = index
+    operator fun component2() = id
+}
+
+
+private fun calcPluginVersion(): String? {
+    val className = CompletionStartedEvent::class.java.name
+    val id = PluginManager.getPluginByClassName(className)
+    val plugin = PluginManager.getPlugin(id)
+    return plugin?.version
+}
+
+
+private fun LookupStateLogData.fillCompletionParameters() {
+    val params = CompletionUtil.getCurrentCompletionParameters()
+
+    originalCompletionType = params?.completionType?.toString() ?: ""
+    originalInvokationCount = params?.invocationCount ?: -1
 }

@@ -1,0 +1,58 @@
+{
+  "accessible": [
+    "NORMAL",
+    "UNDEFINED",
+    "DEPRECATED",
+    "INACCESSIBLE"
+  ],
+  "expectedType": [
+    "normal",
+    "expected",
+    "UNDEFINED",
+    "ofDefaultType",
+    "maybeExpected",
+    "unexpected"
+  ],
+  "kind": [
+    "classNameOrGlobalStatic",
+    "normal",
+    "suitableClass",
+    "UNDEFINED",
+    "variable",
+    "expectedTypeVariable",
+    "expectedTypeMethod",
+    "expectedTypeConstant",
+    "probableKeyword",
+    "collectionFactory",
+    "funExpr",
+    "improbableKeyword",
+    "annoMethod",
+    "qualifiedWithField",
+    "qualifiedWithGetter",
+    "unlikelyClass",
+    "superMethodParameters",
+    "expectedTypeArgument"
+  ],
+  "prox_groovyReferenceListWeigher": [
+    "unknown",
+    "UNDEFINED"
+  ],
+  "prox_javaInheritance": [
+    "true",
+    "null",
+    "false",
+    "UNDEFINED"
+  ],
+  "prox_referenceList": [
+    "unknown",
+    "inapplicable",
+    "applicableByKind",
+    "UNDEFINED"
+  ],
+  "recursion": [
+    "delegation",
+    "recursive",
+    "UNDEFINED",
+    "normal"
+  ]
+}
