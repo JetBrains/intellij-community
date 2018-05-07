@@ -100,7 +100,7 @@ public class JavaQuoteHandler extends SimpleTokenSetQuoteHandler implements Java
   }
 
   @Override
-  public void insertClosingQuote(Editor editor, int offset, CharSequence closingQuote) {
+  public void insertClosingQuote(@NotNull Editor editor, int offset, @NotNull CharSequence closingQuote) {
     editor.getDocument().insertString(offset, " " + closingQuote);
     editor.getSelectionModel().setSelection(offset, offset + 1);
   }

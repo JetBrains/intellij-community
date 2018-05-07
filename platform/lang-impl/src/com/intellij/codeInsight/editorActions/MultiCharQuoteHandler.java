@@ -19,7 +19,7 @@ public interface MultiCharQuoteHandler extends QuoteHandler {
   /**
    * Should insert <code>closingQuote</code> returned from {@link #getClosingQuote(HighlighterIterator, int)} in the document. 
    */
-  default void insertClosingQuote(Editor editor, int offset, CharSequence closingQuote) {
+  default void insertClosingQuote(@NotNull Editor editor, int offset, @NotNull CharSequence closingQuote) {
     editor.getDocument().insertString(offset, closingQuote);
   }
 }
