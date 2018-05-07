@@ -41,7 +41,6 @@ import java.util.Collection;
 import java.util.Iterator;
 import java.util.List;
 
-import static com.intellij.openapi.vcs.changes.patch.AutoMatchStrategy.processStipUp;
 import static com.intellij.util.containers.ContainerUtil.mapNotNull;
 
 public class MatchPatchPaths {
@@ -320,5 +319,11 @@ public class MatchPatchPaths {
     if (patch instanceof ShelvedBinaryFilePatch) return new ShelvedBinaryFilePatchInProgress((ShelvedBinaryFilePatch)patch, null, dir);
     if (patch instanceof BinaryFilePatch) return new BinaryFilePatchInProgress((BinaryFilePatch)patch, null, dir);
     return null;
+  }
+
+  private static void processStipUp(AbstractFilePatchInProgress patchInProgress, int num) {
+    for (int i = 0; i < num; i++) {
+      patchInProgress.up();
+    }
   }
 }
