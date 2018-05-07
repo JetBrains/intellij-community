@@ -2426,6 +2426,11 @@ public class StructuralSearchTest extends StructuralSearchTestCase {
       findMatchesCount(source, "'_exp // asdf");
       fail("malformed pattern warning expected");
     } catch (MalformedPatternException ignored) {}
+
+    try {
+      findMatchesCount(source, "<'_E extends '_T>");
+      fail("don't hide malformed patterns");
+    } catch (MalformedPatternException ignored) {}
   }
 
   public void testNotApplicableConstraints() {

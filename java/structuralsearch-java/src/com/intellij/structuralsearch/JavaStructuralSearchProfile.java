@@ -318,7 +318,6 @@ public class JavaStructuralSearchProfile extends StructuralSearchProfile {
       assert startChild != null;
       final List<PsiElement> result = new SmartList<>();
       for (PsiElement element = startChild.getNextSibling(); element != endChild && element != null; element = element.getNextSibling()) {
-        if (element instanceof PsiErrorElement) continue;
         result.add(element);
       }
 
