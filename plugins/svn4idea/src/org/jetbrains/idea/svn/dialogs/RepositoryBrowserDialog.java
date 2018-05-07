@@ -425,7 +425,7 @@ public class RepositoryBrowserDialog extends DialogWrapper {
         new AddRepositoryLocationDialog(myBrowserComponent.getProject(), settings.getTypedUrlsListCopy()) {
         @Override
         protected String initText() {
-          return oldUrl.toString();
+          return oldUrl.toDecodedString();
         }
 
         @Override
