@@ -71,7 +71,7 @@
     <localInspection language="XML" shortName="PluginXmlValidity" displayName="Plugin.xml Validity" applyToDialects="false"
                      groupKey="inspections.group.name" enabledByDefault="true" level="ERROR"
                      implementationClass="org.jetbrains.idea.devkit.inspections.PluginXmlDomInspection"/>
-    <localInspection language="JAVA" shortName="ComponentNotRegistered"
+    <localInspection language="JVM" shortName="ComponentNotRegistered"
                      key="inspections.component.not.registered.name" groupKey="inspections.group.name" enabledByDefault="true"
                      level="WARNING" implementationClass="org.jetbrains.idea.devkit.inspections.ComponentNotRegisteredInspection"/>
     <localInspection language="JAVA" shortName="InspectionDescriptionNotFoundInspection" displayName="Inspection Description Checker"
