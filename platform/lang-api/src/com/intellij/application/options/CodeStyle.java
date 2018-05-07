@@ -254,4 +254,14 @@ public class CodeStyle {
     }
   }
 
+  /**
+   * @param project The project to check.
+   * @return {@code true} if the project uses its own project code style, {@code false} if global (application-level) code style settings
+   *         are used.
+   */
+  public static boolean usesOwnSettings(@NotNull Project project) {
+    //noinspection deprecation
+    return CodeStyleSettingsManager.getInstance(project).USE_PER_PROJECT_SETTINGS;
+  }
+
 }
