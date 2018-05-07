@@ -5,6 +5,7 @@ import com.intellij.lang.Language;
 import com.intellij.lang.LanguageExtensionPoint;
 import com.intellij.lang.MetaLanguage;
 import com.intellij.lang.jvm.source.JvmDeclarationSearcher;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.ExtensionPoint;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.extensions.ExtensionsArea;
@@ -19,6 +20,8 @@ import java.util.stream.Collectors;
  * @since 2018.2
  */
 public class JvmMetaLanguage extends MetaLanguage {
+
+  private static final Logger LOG = Logger.getInstance(JvmMetaLanguage.class);
 
   private final Set<String> supportedLanguages;
 
@@ -36,11 +39,12 @@ public class JvmMetaLanguage extends MetaLanguage {
     }
     else {
       supportedLanguages = Collections.emptySet();
+      LOG.warn("'JvmMetaLanguage' requested but no implementations of 'JvmDeclarationSearcher' EP were found in the 'rootArea'");
     }
   }
 
   @Override
   public boolean matchesLanguage(@NotNull Language language) {
-    return supportedLanguages.contains(language.getID());
+    return language instanceof JvmLanguage || supportedLanguages.contains(language.getID());
   }
 }
