@@ -294,12 +294,23 @@ public abstract class StructuralSearchProfile {
    */
   public boolean isApplicableConstraint(String constraintName, @Nullable PsiElement variableNode, boolean completePattern, boolean target) {
     switch (constraintName) {
-      case UIUtil.TEXT:
       case UIUtil.MINIMUM_ZERO:
         if (target) return false;
       case UIUtil.MAXIMUM_UNLIMITED:
+      case UIUtil.TEXT:
       case UIUtil.REFERENCE: return !completePattern;
     }
     return false;
+  }
+
+  public final boolean isApplicableConstraint(String constraintName, List<PsiElement> nodes, boolean completePattern, boolean target) {
+    if (nodes.isEmpty()) {
+      return isApplicableConstraint(constraintName, (PsiElement)null, completePattern, target);
+    }
+    boolean result = true;
+    for (PsiElement node : nodes) {
+      result &= isApplicableConstraint(constraintName, node, completePattern, target);
+    }
+    return result;
   }
 }

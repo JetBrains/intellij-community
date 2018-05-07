@@ -68,14 +68,6 @@ public class MatchOptions implements JDOMExternalizable {
     variableConstraints.put(constraint.getName(), constraint);
   }
 
-  public boolean hasVariableConstraints() {
-    return !variableConstraints.isEmpty();
-  }
-
-  public void clearVariableConstraints() {
-    variableConstraints.clear();
-  }
-
   public void retainVariableConstraints(Collection<String> names) {
     if (variableConstraints.isEmpty()) {
       return;
@@ -140,6 +132,7 @@ public class MatchOptions implements JDOMExternalizable {
   }
 
   public void fillSearchCriteria(String criteria) {
+    if (!variableConstraints.isEmpty()) variableConstraints.clear();
     StringToConstraintsTransformer.transformCriteria(criteria, this);
   }
 

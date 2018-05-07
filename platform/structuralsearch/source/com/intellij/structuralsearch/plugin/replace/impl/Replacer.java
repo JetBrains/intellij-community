@@ -75,7 +75,6 @@ public class Replacer {
     replaceOptions.setReplacement(by);
 
     final MatchOptions matchOptions = replaceOptions.getMatchOptions();
-    matchOptions.clearVariableConstraints();
     matchOptions.fillSearchCriteria(what);
 
     Matcher.validate(project, matchOptions);

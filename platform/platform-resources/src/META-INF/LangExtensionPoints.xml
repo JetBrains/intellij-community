@@ -287,7 +287,8 @@
                     interface="com.intellij.navigation.ChooseByNameContributor"/>
     <extensionPoint name="anonymousElementProvider"
                     interface="com.intellij.navigation.AnonymousElementProvider"/>
-    <extensionPoint name="searchEverywhereContributor" interface="com.intellij.ide.actions.SearchEverywhereContributor"/>
+    <extensionPoint name="searchEverywhereContributor"
+                    interface="com.intellij.ide.actions.searcheverywhere.SearchEverywhereContributor"/>
 
     <extensionPoint name="gotoRelatedProvider" interface="com.intellij.navigation.GotoRelatedProvider"/>
 
@@ -399,6 +400,7 @@
     <extensionPoint name="stubIndex" interface="com.intellij.psi.stubs.StubIndexExtension"/>
     <extensionPoint name="indexedRootsProvider" interface="com.intellij.util.indexing.IndexableSetContributor"/>
     <extensionPoint name="include.provider" interface="com.intellij.psi.impl.include.FileIncludeProvider"/>
+    <extensionPoint name="globalIndexFilter" interface="com.intellij.util.indexing.GlobalIndexFilter"/>
 
     <extensionPoint name="refactoring.copyHandler" interface="com.intellij.refactoring.copy.CopyHandlerDelegate"/>
     <extensionPoint name="refactoring.moveHandler" interface="com.intellij.refactoring.move.MoveHandlerDelegate"/>

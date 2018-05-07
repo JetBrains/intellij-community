@@ -2,7 +2,9 @@
 package com.intellij.util.ui
 
 import com.intellij.icons.AllIcons
+import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.util.IconLoader
+import com.intellij.util.ThreeState
 import javax.swing.Icon
 
 /**
@@ -12,6 +14,11 @@ object LafIconLookup {
   @JvmStatic
   @JvmOverloads
   fun getIcon(name: String, selected: Boolean = false, focused: Boolean = false, enabled: Boolean = true, editable: Boolean = false, pressed: Boolean = false): Icon {
+    return findIcon(name, selected = selected, focused = focused, enabled = enabled, editable = editable, pressed = pressed)
+           ?: AllIcons.Actions.Stub
+  }
+
+  fun findIcon(name: String, selected: Boolean = false, focused: Boolean = false, enabled: Boolean = true, editable: Boolean = false, pressed: Boolean = false, isThrowErrorIfNotFound: ThreeState = ThreeState.UNSURE): Icon? {
     var key = name
     if (editable) key += "Editable"
     if (selected) key += "Selected"
@@ -32,8 +39,17 @@ object LafIconLookup {
     }
 
     key = dir + key
+    @Suppress("DEPRECATION")
+    return IconLoader.findIcon("/com/intellij/ide/ui/laf/icons/$key.png", LafIconLookup::class.java, resolveIsThrowErrorIfNotFound(isThrowErrorIfNotFound))
+  }
 
-    return IconLoader.findIcon("/com/intellij/ide/ui/laf/icons/$key.png", LafIconLookup::class.java, true) ?: AllIcons.Actions.Stub
+  private fun resolveIsThrowErrorIfNotFound(value: ThreeState): Boolean {
+    if (value != ThreeState.UNSURE) {
+      return value == ThreeState.YES
+    }
+
+    val app = ApplicationManager.getApplication()
+    return app.isUnitTestMode || app.isInternal
   }
 
   @JvmStatic
