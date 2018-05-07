@@ -2,6 +2,7 @@
 package com.intellij.codeInspection;
 
 import com.intellij.codeInsight.BlockUtils;
+import com.intellij.codeInspection.dataFlow.ContractReturnValue;
 import com.intellij.codeInspection.dataFlow.ContractReturnValue.ParameterReturnValue;
 import com.intellij.codeInspection.dataFlow.ContractValue;
 import com.intellij.codeInspection.dataFlow.ControlFlowAnalyzer;
@@ -10,7 +11,6 @@ import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
-import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
 import com.siyeh.ig.psiutils.CommentTracker;
 import com.siyeh.ig.psiutils.ExpressionUtils;
@@ -94,16 +94,12 @@ public class ObviousNullCheckInspection extends AbstractBaseJavaLocalInspectionT
 
       boolean returnsParameter = false;
       if (contracts.size() == 2) {
-        MethodContract secondContract = contracts.get(1);
-        if (!secondContract.isTrivial()) {
-          ContractValue secondCondition = ContainerUtil.getOnlyItem(secondContract.getConditions());
-          if (secondCondition == null || secondCondition.getNullCheckedArgument(isNull).orElse(-1) != nullIndex) {
-            return null;
-          }
+        ContractReturnValue returnValue = MethodContract.getNonFailingReturnValue(contracts);
+        if (returnValue instanceof ParameterReturnValue && ((ParameterReturnValue)returnValue).getParameterNumber() == nullIndex) {
+          returnsParameter = true;
+        } else {
+          return null;
         }
-        ParameterReturnValue value = ObjectUtils.tryCast(secondContract.getReturnValue(), ParameterReturnValue.class);
-        if (value == null || value.getParameterNumber() != nullIndex) return null;
-        returnsParameter = true;
       }
       return new NullCheckParameter(nullIndex, isNull, returnsParameter);
     }
