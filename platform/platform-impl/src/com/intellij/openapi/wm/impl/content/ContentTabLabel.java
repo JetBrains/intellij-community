@@ -205,18 +205,9 @@ class ContentTabLabel extends BaseLabel {
   }
 
   public void update() {
+    setHorizontalAlignment(SwingConstants.LEFT);
     if (!myLayout.isToDrawTabs()) {
-      setHorizontalAlignment(SwingConstants.LEFT);
       setBorder(null);
-    }
-    else {
-      if (additionalIcons.stream().anyMatch(icon -> icon.getAvailable())) {
-        setHorizontalAlignment(SwingConstants.LEFT);
-      }
-      else {
-        setHorizontalAlignment(SwingConstants.CENTER);
-        setBorder(JBUI.Borders.empty(0, 12));
-      }
     }
 
     updateTextAndIcon(myContent, isSelected());
