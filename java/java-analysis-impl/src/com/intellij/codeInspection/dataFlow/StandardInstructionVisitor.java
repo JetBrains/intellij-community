@@ -271,7 +271,7 @@ public class StandardInstructionVisitor extends InstructionVisitor {
                                                        DfaMemoryState state,
                                                        List<? extends MethodContract> contracts,
                                                        DfaValueFactory factory, DfaValue defaultResult) {
-    Set<CallState> currentStates = Collections.singleton(new CallState(state.createClosureState(), callArguments));
+    Set<DfaCallState> currentStates = Collections.singleton(new DfaCallState(state.createClosureState(), callArguments));
     Set<DfaMemoryState> finalStates = ContainerUtil.newLinkedHashSet();
     for (MethodContract contract : contracts) {
       currentStates = addContractResults(contract, currentStates, factory, finalStates, defaultResult);
@@ -311,7 +311,7 @@ public class StandardInstructionVisitor extends InstructionVisitor {
     if (finalStates.isEmpty()) {
       DfaCallArguments callArguments = popCall(instruction, runner, memState, true);
 
-      Set<CallState> currentStates = Collections.singleton(new CallState(memState, callArguments));
+      Set<DfaCallState> currentStates = Collections.singleton(new DfaCallState(memState, callArguments));
       DfaValue defaultResult = getMethodResultValue(instruction, callArguments.myQualifier, memState, runner.getFactory());
       if (callArguments.myArguments != null) {
         for (MethodContract contract : instruction.getContracts()) {
@@ -321,12 +321,12 @@ public class StandardInstructionVisitor extends InstructionVisitor {
               LOG.debug("Too complex contract on " + instruction.getContext() + ", skipping contract processing");
             }
             finalStates.clear();
-            currentStates = Collections.singleton(new CallState(memState, callArguments));
+            currentStates = Collections.singleton(new DfaCallState(memState, callArguments));
             break;
           }
         }
       }
-      for (CallState callState : currentStates) {
+      for (DfaCallState callState : currentStates) {
         callState.myMemoryState.push(defaultResult);
         finalStates.add(callState.myMemoryState);
       }
@@ -444,46 +444,23 @@ public class StandardInstructionVisitor extends InstructionVisitor {
     return value;
   }
 
-  private static final class CallState {
-    @NotNull final DfaMemoryState myMemoryState;
-    @NotNull final DfaCallArguments myCallArguments;
-
-    private CallState(@NotNull DfaMemoryState state, @NotNull DfaCallArguments arguments) {
-      myMemoryState = state;
-      myCallArguments = arguments;
-    }
-
-    @Override
-    public boolean equals(Object o) {
-      if (this == o) return true;
-      if (!(o instanceof CallState)) return false;
-      CallState that = (CallState)o;
-      return myMemoryState.equals(that.myMemoryState) && myCallArguments.equals(that.myCallArguments);
-    }
-
-    @Override
-    public int hashCode() {
-      return 31 * myMemoryState.hashCode() + myCallArguments.hashCode();
-    }
-  }
-
-  private static Set<CallState> addContractResults(MethodContract contract,
-                                                   Set<CallState> states,
-                                                   DfaValueFactory factory,
-                                                   Set<DfaMemoryState> finalStates,
-                                                   DfaValue defaultResult) {
+  private static Set<DfaCallState> addContractResults(MethodContract contract,
+                                                      Set<DfaCallState> states,
+                                                      DfaValueFactory factory,
+                                                      Set<DfaMemoryState> finalStates,
+                                                      DfaValue defaultResult) {
     if(contract.isTrivial()) {
-      for (CallState callState : states) {
-        DfaValue returnValue = contract.getReturnValue().toDfaValue(factory, defaultResult, callState.myCallArguments);
-        callState.myMemoryState.push(returnValue);
+      for (DfaCallState callState : states) {
+        DfaValue result = contract.getReturnValue().getDfaValue(factory, defaultResult, callState);;
+        callState.myMemoryState.push(result);
         finalStates.add(callState.myMemoryState);
       }
       return Collections.emptySet();
     }
 
-    Set<CallState> falseStates = new LinkedHashSet<>();
+    Set<DfaCallState> falseStates = new LinkedHashSet<>();
 
-    for (CallState callState : states) {
+    for (DfaCallState callState : states) {
       DfaMemoryState state = callState.myMemoryState;
       DfaCallArguments arguments = callState.myCallArguments;
       for (ContractValue contractValue : contract.getConditions()) {
@@ -494,7 +471,7 @@ public class StandardInstructionVisitor extends InstructionVisitor {
         DfaMemoryState falseState = state.createCopy();
         if (falseState.applyContractCondition(condition.createNegated())) {
           DfaCallArguments falseArguments = contractValue.updateArguments(arguments, true);
-          falseStates.add(new CallState(falseState, falseArguments));
+          falseStates.add(new DfaCallState(falseState, falseArguments));
         }
         if (!state.applyContractCondition(condition)) {
           state = null;
@@ -503,8 +480,8 @@ public class StandardInstructionVisitor extends InstructionVisitor {
         arguments = contractValue.updateArguments(arguments, false);
       }
       if(state != null) {
-        DfaValue returnValue = contract.getReturnValue().toDfaValue(factory, defaultResult, arguments);
-        state.push(returnValue);
+        DfaValue result = contract.getReturnValue().getDfaValue(factory, defaultResult, new DfaCallState(state, arguments));
+        state.push(result);
         finalStates.add(state);
       }
     }

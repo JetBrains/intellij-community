@@ -2,6 +2,7 @@
 package com.intellij.codeInspection.dataFlow;
 
 import com.intellij.codeInspection.dataFlow.value.*;
+import com.intellij.openapi.util.Pair;
 import com.intellij.psi.*;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -85,15 +86,33 @@ public abstract class ContractReturnValue {
 
   abstract Stream<Function<PsiMethod, String>> validators();
 
+  static DfaValue merge(DfaValue defaultValue, DfaValue newValue, DfaMemoryState memState) {
+    if (defaultValue == null || defaultValue == DfaUnknownValue.getInstance()) return newValue;
+    if (newValue == null || newValue == DfaUnknownValue.getInstance()) return defaultValue;
+    if (defaultValue instanceof DfaFactMapValue) {
+      DfaFactMap defaultFacts = ((DfaFactMapValue)defaultValue).getFacts();
+      if (newValue instanceof DfaFactMapValue) {
+        DfaFactMap intersection = defaultFacts.intersect(((DfaFactMapValue)newValue).getFacts());
+        if (intersection != null) {
+          return defaultValue.getFactory().getFactFactory().createValue(intersection);
+        }
+      }
+      if (newValue instanceof DfaVariableValue) {
+        defaultFacts.facts(Pair::create).forEach(fact -> memState.applyFact(newValue, fact.getFirst(), fact.getSecond()));
+      }
+    }
+    return newValue;
+  }
+
   /**
    * Converts this return value to the most suitable {@link DfaValue} which represents the same constraints.
    *
    * @param factory a {@link DfaValueFactory} which can be used to create new values if necessary
    * @param defaultValue a default method return type value in the absence of the contracts (may contain method type information)
-   * @param arguments arguments passed
+   * @param callState call state
    * @return a value which represents the constraints of this contract return value.
    */
-  public abstract DfaValue toDfaValue(DfaValueFactory factory, DfaValue defaultValue, DfaCallArguments arguments);
+  public abstract DfaValue getDfaValue(DfaValueFactory factory, DfaValue defaultValue, DfaCallState callState);
 
   /**
    * Returns true if the supplied {@link DfaValue} could be compatible with this return value. If false is returned, then
@@ -304,7 +323,7 @@ public abstract class ContractReturnValue {
     }
 
     @Override
-    public DfaValue toDfaValue(DfaValueFactory factory, DfaValue defaultValue, DfaCallArguments arguments) {
+    public DfaValue getDfaValue(DfaValueFactory factory, DfaValue defaultValue, DfaCallState callState) {
       return defaultValue;
     }
 
@@ -321,7 +340,7 @@ public abstract class ContractReturnValue {
     }
 
     @Override
-    public DfaValue toDfaValue(DfaValueFactory factory, DfaValue defaultValue, DfaCallArguments arguments) {
+    public DfaValue getDfaValue(DfaValueFactory factory, DfaValue defaultValue, DfaCallState callState) {
       return factory.getConstFactory().getContractFail();
     }
 
@@ -338,7 +357,7 @@ public abstract class ContractReturnValue {
     }
 
     @Override
-    public DfaValue toDfaValue(DfaValueFactory factory, DfaValue defaultValue, DfaCallArguments arguments) {
+    public DfaValue getDfaValue(DfaValueFactory factory, DfaValue defaultValue, DfaCallState callState) {
       return factory.getConstFactory().getNull();
     }
 
@@ -360,7 +379,11 @@ public abstract class ContractReturnValue {
     }
 
     @Override
-    public DfaValue toDfaValue(DfaValueFactory factory, DfaValue defaultValue, DfaCallArguments arguments) {
+    public DfaValue getDfaValue(DfaValueFactory factory, DfaValue defaultValue, DfaCallState callState) {
+      if (defaultValue instanceof DfaVariableValue) {
+        callState.myMemoryState.forceVariableFact((DfaVariableValue)defaultValue, DfaFactType.CAN_BE_NULL, false);
+        return defaultValue;
+      }
       return factory.withFact(defaultValue, DfaFactType.CAN_BE_NULL, false);
     }
 
@@ -377,10 +400,13 @@ public abstract class ContractReturnValue {
     }
 
     @Override
-    public DfaValue toDfaValue(DfaValueFactory factory, DfaValue defaultValue, DfaCallArguments arguments) {
-      if (defaultValue instanceof DfaVariableValue) return defaultValue;
+    public DfaValue getDfaValue(DfaValueFactory factory, DfaValue defaultValue, DfaCallState callState) {
+      if (defaultValue instanceof DfaVariableValue) {
+        callState.myMemoryState.forceVariableFact((DfaVariableValue)defaultValue, DfaFactType.CAN_BE_NULL, false);
+        return defaultValue;
+      }
       DfaValue value = factory.withFact(defaultValue, DfaFactType.CAN_BE_NULL, false);
-      if (arguments.myPure) {
+      if (callState.myCallArguments.myPure) {
         boolean unmodifiableView =
           value instanceof DfaFactMapValue && ((DfaFactMapValue)value).get(DfaFactType.MUTABILITY) == Mutability.UNMODIFIABLE_VIEW;
         // Unmodifiable view methods like Collections.unmodifiableList create new object, but their special field "size" is
@@ -414,9 +440,11 @@ public abstract class ContractReturnValue {
     }
 
     @Override
-    public DfaValue toDfaValue(DfaValueFactory factory, DfaValue defaultValue, DfaCallArguments arguments) {
-      DfaValue qualifier = arguments.myQualifier;
-      if (qualifier != null && qualifier != DfaUnknownValue.getInstance()) return qualifier;
+    public DfaValue getDfaValue(DfaValueFactory factory, DfaValue defaultValue, DfaCallState callState) {
+      DfaValue qualifier = callState.myCallArguments.myQualifier;
+      if (qualifier != null && qualifier != DfaUnknownValue.getInstance()) {
+        return merge(defaultValue, qualifier, callState.myMemoryState);
+      }
       return factory.withFact(defaultValue, DfaFactType.CAN_BE_NULL, false);
     }
 
@@ -456,7 +484,7 @@ public abstract class ContractReturnValue {
     }
 
     @Override
-    public DfaValue toDfaValue(DfaValueFactory factory, DfaValue defaultValue, DfaCallArguments arguments) {
+    public DfaValue getDfaValue(DfaValueFactory factory, DfaValue defaultValue, DfaCallState callState) {
       return factory.getBoolean(myValue);
     }
 
@@ -512,18 +540,10 @@ public abstract class ContractReturnValue {
     }
 
     @Override
-    public DfaValue toDfaValue(DfaValueFactory factory, DfaValue defaultValue, DfaCallArguments arguments) {
-      if (arguments.myArguments != null && arguments.myArguments.length > myParamNumber) {
-        DfaValue argument = arguments.myArguments[myParamNumber];
-        if (argument != null && argument != DfaUnknownValue.getInstance()) {
-          if (defaultValue instanceof DfaFactMapValue && argument instanceof DfaFactMapValue) {
-            DfaFactMap intersection = ((DfaFactMapValue)defaultValue).getFacts().intersect(((DfaFactMapValue)argument).getFacts());
-            if (intersection != null) {
-              return factory.getFactFactory().createValue(intersection);
-            }
-          }
-          return argument;
-        }
+    public DfaValue getDfaValue(DfaValueFactory factory, DfaValue defaultValue, DfaCallState callState) {
+      if (callState.myCallArguments.myArguments != null && callState.myCallArguments.myArguments.length > myParamNumber) {
+        DfaValue argument = callState.myCallArguments.myArguments[myParamNumber];
+        return merge(defaultValue, argument, callState.myMemoryState);
       }
       return defaultValue;
     }

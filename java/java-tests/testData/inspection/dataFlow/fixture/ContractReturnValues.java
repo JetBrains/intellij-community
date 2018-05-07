@@ -72,4 +72,27 @@ class ContractReturnValues {
   }
 
   private static final String SOMETHING = "foo";
+
+  void testCheckString() {
+    String s2 = nullable();
+    checkString(s2);
+    if (<warning descr="Condition 's2 == null' is always 'false'">s2 == null</warning>) {
+      System.out.println("impossible");
+    }
+    String s = nullable();
+    if (<warning descr="Condition 'checkString(s) == null' is always 'false'">checkString(s) == null</warning>) {
+      System.out.println("impossible");
+    }
+  }
+
+  // inferred contract: "_ -> param1"
+  // we should respect "notnull" even if we cannot infer failing contract
+  @NotNull
+  static String checkString(@Nullable String s) {
+    check(s); // probably does a null-check
+    return s;
+  }
+
+  @Contract("null -> fail")
+  native static void check(@Nullable String s);
 }
