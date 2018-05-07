@@ -154,7 +154,8 @@ class GitFileHistoryTest : GitSingleRepoTest() {
   }
 
   private fun add(fileName: String, dir: File): TestCommit {
-    val file = touch(File(dir, fileName).path, "Initial content")
+    val relativePath = dir.relativeTo(ourCurrentDir()).path
+    val file = touch("$relativePath/$fileName", "Initial content")
 
     val message = "Created $fileName in ${dir.name}"
     repo.addCommit(message)
