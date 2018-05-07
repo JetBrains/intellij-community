@@ -172,7 +172,7 @@ public class SearchEverywhereUI extends BorderLayoutPanel {
     }
     myNonProjectCB.setSelected(false);
     repaint();
-    rebuildList(mySearchField != null ? mySearchField.getText() : "");
+    rebuildList();
   }
 
   private JTextField createSearchField() {
@@ -330,7 +330,7 @@ public class SearchEverywhereUI extends BorderLayoutPanel {
     }
   }
 
-  private void rebuildList(final String pattern) {
+  private void rebuildList() {
     assert EventQueue.isDispatchThread() : "Must be EDT";
     if (myCalcThread != null && !myCurrentWorker.isProcessed()) {
       myCurrentWorker = myCalcThread.cancel();
@@ -338,6 +338,8 @@ public class SearchEverywhereUI extends BorderLayoutPanel {
     if (myCalcThread != null && !myCalcThread.isCanceled()) {
       myCalcThread.cancel();
     }
+
+    String pattern = mySearchField != null ? mySearchField.getText() : "";
 
     MinusculeMatcher matcher = NameUtil.buildMatcher("*" + pattern, NameUtil.MatchingCaseSensitivity.NONE);
     MatcherHolder.associateMatcher(myResultsList, matcher);
@@ -377,9 +379,11 @@ public class SearchEverywhereUI extends BorderLayoutPanel {
     mySearchField.getDocument().addDocumentListener(new DocumentAdapter() {
       @Override
       protected void textChanged(DocumentEvent e) {
-        rebuildList(mySearchField.getText());
+        rebuildList();
       }
     });
+
+    myNonProjectCB.addItemListener(e -> rebuildList());
 
     myResultsList.addMouseListener(new MouseAdapter() {
       @Override
@@ -470,10 +474,10 @@ public class SearchEverywhereUI extends BorderLayoutPanel {
         myResultsRanges.clear();
         SearchEverywhereContributor selectedContributor = mySelectedTab.getContributor().orElse(null);
         if (selectedContributor != null) {
-          runReadAction(() -> addContributorItems(selectedContributor, true), true);
+          runReadAction(() -> addContributorItems(selectedContributor), true);
         } else {
           for (SearchEverywhereContributor contributor : allContributors) {
-            runReadAction(() -> addContributorItems(contributor, false), true);
+            runReadAction(() -> addContributorItems(contributor), true);
           }
         }
         updatePopup();
@@ -497,7 +501,7 @@ public class SearchEverywhereUI extends BorderLayoutPanel {
       }
     }
 
-    private void addContributorItems(SearchEverywhereContributor contributor, boolean exclusiveContributor) {
+    private void addContributorItems(SearchEverywhereContributor contributor) {
       SearchEverywhereContributor.ContributorSearchResult
         results = contributor.search(project, pattern, isUseNonProjectItems(), myProgressIndicator, ELEMENTS_LIMIT);
       if (!results.isEmpty()) {
