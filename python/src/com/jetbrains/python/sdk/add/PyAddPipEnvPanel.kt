@@ -93,7 +93,7 @@ class PyAddPipEnvPanel(private val project: Project?,
 
   private fun updateInstallPackagesCheckBox() {
     selectedModule?.let {
-      installPackagesCheckBox.isEnabled = it.pipFiles.isNotEmpty()
+      installPackagesCheckBox.isEnabled = it.pipFile != null
     }
   }
 
