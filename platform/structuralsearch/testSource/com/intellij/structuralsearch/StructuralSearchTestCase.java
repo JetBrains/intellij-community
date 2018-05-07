@@ -73,13 +73,24 @@ public abstract class StructuralSearchTestCase extends LightQuickFixTestCase {
       if (!StringUtil.isEmpty(constraint.getRegExp())) {
         usedConstraints.add(UIUtil.TEXT);
       }
+      if (constraint.isWithinHierarchy()) {
+        usedConstraints.add(UIUtil.TEXT_HIERARCHY);
+      }
       if (constraint.getMinCount() == 0) {
         usedConstraints.add(UIUtil.MINIMUM_ZERO);
       }
       if (constraint.getMaxCount() > 1) {
         usedConstraints.add(UIUtil.MAXIMUM_UNLIMITED);
       }
-      // todo check other constraints
+      if (!StringUtil.isEmpty(constraint.getNameOfExprType())) {
+        usedConstraints.add(UIUtil.TYPE);
+      }
+      if (!StringUtil.isEmpty(constraint.getNameOfFormalArgType())) {
+        usedConstraints.add(UIUtil.EXPECTED_TYPE);
+      }
+      if (!StringUtil.isEmpty(constraint.getReferenceConstraint())) {
+        usedConstraints.add(UIUtil.REFERENCE);
+      }
       for (String usedConstraint : usedConstraints) {
         if (!profile.isApplicableConstraint(usedConstraint, nodes, false, constraint.isPartOfSearchResults())) {
           return usedConstraint + " not applicable for " + varName;

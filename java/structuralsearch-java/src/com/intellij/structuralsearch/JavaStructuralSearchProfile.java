@@ -833,10 +833,13 @@ public class JavaStructuralSearchProfile extends StructuralSearchProfile {
       case UIUtil.TEXT_HIERARCHY:
         if (variableNode != null) {
           final PsiElement parent = variableNode.getParent();
-          if (parent instanceof PsiJavaCodeReferenceElement && parent.getParent() instanceof PsiTypeElement ||
-            parent instanceof PsiClass) {
-            return true;
+          if (parent instanceof PsiJavaCodeReferenceElement) {
+            final PsiElement grandParent = parent.getParent();
+            if (grandParent instanceof PsiTypeElement || grandParent instanceof PsiReferenceList ||
+                grandParent instanceof PsiReferenceExpression) return true;
           }
+          else if (parent instanceof PsiClass) return true;
+          else if (isMemberSurroundedByClass(parent)) return true;
         }
         return false;
       case UIUtil.EXPECTED_TYPE:
@@ -923,15 +926,7 @@ public class JavaStructuralSearchProfile extends StructuralSearchProfile {
   private static boolean isApplicableMinMaxCount(@NotNull PsiElement variableNode) {
     if (variableNode instanceof PsiDocToken) return true;
     final PsiElement parent = variableNode.getParent();
-    if (parent instanceof PsiMember && !(parent instanceof PsiTypeParameter)) {
-      final PsiMember member = (PsiMember)parent;
-      final PsiClass aClass = member.getContainingClass();
-      if (aClass == null) {
-        return false;
-      }
-      final String name = aClass.getName();
-      return name != null && !"_Dummy_".equals(name);
-    }
+    if (isMemberSurroundedByClass(parent)) return true;
     final PsiElement grandParent = parent.getParent();
     if (grandParent instanceof PsiCatchSection && parent instanceof PsiParameter) return true;
     if (grandParent instanceof PsiAnnotation && !(grandParent.getParent().getNextSibling() instanceof PsiErrorElement)) return true;
@@ -948,6 +943,19 @@ public class JavaStructuralSearchProfile extends StructuralSearchProfile {
       return ((PsiNameValuePair)parent).getNameIdentifier() == variableNode;
     }
     return false;
+  }
+
+  private static boolean isMemberSurroundedByClass(PsiElement parent) {
+    if (!(parent instanceof PsiMember) || parent instanceof PsiTypeParameter) {
+      return false;
+    }
+    final PsiMember member = (PsiMember)parent;
+    final PsiClass aClass = member.getContainingClass();
+    if (aClass == null) {
+      return false;
+    }
+    final String name = aClass.getName();
+    return name != null && !"_Dummy_".equals(name);
   }
 
   private static boolean hasSemicolon(PsiElement element) {

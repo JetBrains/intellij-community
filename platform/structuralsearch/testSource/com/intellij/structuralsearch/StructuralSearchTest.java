@@ -474,7 +474,7 @@ public class StructuralSearchTest extends StructuralSearchTestCase {
                 "}";
     assertEquals("match literal contents", 1, findMatchesCount(s2, "\"'String:[regex( alpha )]\""));
     assertEquals("negate match literal contents", 2, findMatchesCount(s2, "\"'String:[!regex( alpha )]\""));
-    assertEquals("match literal contents and all types", 1, findMatchesCount(s2, "\"'String:[regex( alpha ) && exprtype( .* )]\""));
+    assertEquals("match literal contents combined with other constraint", 1, findMatchesCount(s2, "\"'String:[regex( alpha ) && script( true )]\""));
 
     String s3 = "class A {" +
                 "  int i = 0x20;" +
