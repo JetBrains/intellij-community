@@ -11,19 +11,22 @@ import java.util.Set;
  * @author peter
  */
 class CheckerFrameworkNullityUtil {
-  static boolean isCheckerDefault(boolean nullable, PsiAnnotation.TargetType[] types, PsiAnnotation anno) {
+  private static final String DEFAULT_QUALIFIER = "org.checkerframework.framework.qual.DefaultQualifier";
+  private static final String DEFAULT_QUALIFIERS = "org.checkerframework.framework.qual.DefaultQualifiers";
+
+  static boolean isCheckerDefault(PsiAnnotation anno, boolean nullable, PsiAnnotation.TargetType[] types) {
     String qName = anno.getQualifiedName();
-    if ("org.checkerframework.framework.qual.DefaultQualifier".equals(qName)) {
+    if (DEFAULT_QUALIFIER.equals(qName)) {
       PsiAnnotationMemberValue value = anno.findAttributeValue(PsiAnnotation.DEFAULT_REFERENCED_METHOD_NAME);
       return value instanceof PsiClassObjectAccessExpression &&
              isNullityAnnotationReference(nullable, (PsiClassObjectAccessExpression)value) &&
              hasAppropriateTarget(types, anno.findAttributeValue("locations"));
     }
     
-    if ("org.checkerframework.framework.qual.DefaultQualifiers".equals(qName)) {
+    if (DEFAULT_QUALIFIERS.equals(qName)) {
       PsiAnnotationMemberValue value = anno.findAttributeValue(PsiAnnotation.DEFAULT_REFERENCED_METHOD_NAME);
       for (PsiAnnotationMemberValue initializer : AnnotationUtil.arrayAttributeValues(value)) {
-        if (initializer instanceof PsiAnnotation && isCheckerDefault(nullable, types, (PsiAnnotation)initializer)) {
+        if (initializer instanceof PsiAnnotation && isCheckerDefault((PsiAnnotation)initializer, nullable, types)) {
           return true;
         }
       }
