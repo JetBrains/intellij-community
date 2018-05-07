@@ -37,10 +37,7 @@ public class AttachmentFactory {
         return createAttachment(file.getPresentableUrl(), inputStream, isBinary, isBigFile);
       }
     } catch (IOException e) {
-      final String errorMessage = MessageFormat.format(ERROR_MESSAGE_PATTERN, e.getMessage());
-
-      LOG.warn("Unable to create Attachment from " + file + ": " + e.getMessage(), e);
-      return new Attachment(file.getPath(), errorMessage);
+      return handleException(e, file.getName(), file.getPath());
     }
   }
 
@@ -50,11 +47,15 @@ public class AttachmentFactory {
         return createAttachment(file.getPath(), inputStream, isBinary, file.length() > BIG_FILE_THRESHOLD_BYTES);
       }
     } catch (IOException e) {
-      final String errorMessage = MessageFormat.format(ERROR_MESSAGE_PATTERN, e.getMessage());
-
-      LOG.warn("Unable to create Attachment from " + file + ": " + e.getMessage(), e);
-      return new Attachment(file.getPath(), errorMessage);
+      return handleException(e, file.getName(), file.getPath());
     }
+  }
+
+  private static Attachment handleException(Throwable t, String name, String moniker) {
+    final String errorMessage = MessageFormat.format(ERROR_MESSAGE_PATTERN, t.getMessage());
+
+    LOG.warn("Unable to create Attachment from " + moniker + ": " + t.getMessage(), t);
+    return new Attachment(name, errorMessage);
   }
 
   private static Attachment createAttachment(@NotNull String path, InputStream contentStream, boolean isBinary, boolean isBigFile) {
