@@ -348,11 +348,11 @@ public abstract class NullableNotNullManager {
   }
 
   private static boolean isNullabilityDefault(@NotNull PsiAnnotation annotation, boolean nullable, PsiAnnotation.TargetType[] placeTargetTypes, boolean superPackage) {
-    if (!superPackage && isJsr305Default(nullable, placeTargetTypes, annotation)) return true;
-    return CheckerFrameworkNullityUtil.isCheckerDefault(nullable, placeTargetTypes, annotation);
+    if (!superPackage && isJsr305Default(annotation, nullable, placeTargetTypes)) return true;
+    return CheckerFrameworkNullityUtil.isCheckerDefault(annotation, nullable, placeTargetTypes);
   }
 
-  private static boolean isJsr305Default(boolean nullable, PsiAnnotation.TargetType[] placeTargetTypes, PsiAnnotation annotation) {
+  private static boolean isJsr305Default(PsiAnnotation annotation, boolean nullable, PsiAnnotation.TargetType[] placeTargetTypes) {
     PsiJavaCodeReferenceElement element = annotation.getNameReferenceElement();
     PsiElement declaration = element == null ? null : element.resolve();
     if (!(declaration instanceof PsiClass)) return false;
