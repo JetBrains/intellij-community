@@ -275,4 +275,8 @@ public void testConvertToObjectStream() {
     myFixture.assertPreferredCompletionItems(2, "SortedMap", "NavigableMap", "TreeMap", "ConcurrentNavigableMap", "ConcurrentSkipListMap");
   }
 
+  public void testConsiderClassProximityForClassLiterals() {
+    configureByTestName();
+    myFixture.assertPreferredCompletionItems(0, "String.class");
+  }
 }
