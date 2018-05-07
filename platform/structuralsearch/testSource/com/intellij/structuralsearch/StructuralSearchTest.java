@@ -2035,7 +2035,6 @@ public class StructuralSearchTest extends StructuralSearchTestCase {
 
     results.clear();
 
-    options.clearVariableConstraints();
     options.fillSearchCriteria("try  { '_st*; } catch('Type:Type2 '_t) { '_st2*; }");
 
     for(PsiVariable var:vars) {
@@ -2433,7 +2432,6 @@ public class StructuralSearchTest extends StructuralSearchTestCase {
     options.fillSearchCriteria("class A extends '_B* {}");
     assertEquals("MAXIMUM UNLIMITED not applicable for B", checkApplicableConstraints());
 
-    options.clearVariableConstraints();
     options.fillSearchCriteria("'_a?.'_b?");
     assertEquals("MINIMUM ZERO not applicable for b", checkApplicableConstraints());
   }

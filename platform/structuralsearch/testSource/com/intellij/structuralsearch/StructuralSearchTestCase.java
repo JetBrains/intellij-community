@@ -52,7 +52,6 @@ public abstract class StructuralSearchTestCase extends LightQuickFixTestCase {
                                           FileType sourceFileType,
                                           String sourceExtension,
                                           boolean physicalSourceFile) {
-    options.clearVariableConstraints();
     options.fillSearchCriteria(pattern);
     options.setFileType(patternFileType);
     options.setDialect(patternLanguage);
