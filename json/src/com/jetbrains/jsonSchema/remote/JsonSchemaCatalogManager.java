@@ -50,6 +50,11 @@ public class JsonSchemaCatalogManager {
   @Nullable
   public VirtualFile getSchemaFileForFile(@NotNull VirtualFile file) {
     if (!myIsEnabled.get()) return null;
+    for (JsonSchemaCatalogExclusion exclusion : JsonSchemaCatalogExclusion.EP_NAME.getExtensions()) {
+      if (exclusion.isExcluded(file)) {
+        return null;
+      }
+    }
 
     String name = file.getName();
     if (myResolvedMappings.containsKey(name)) {
