@@ -12,12 +12,12 @@ import com.intellij.execution.process.ProcessOutput
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.module.ModuleUtilCore
-import com.intellij.openapi.options.ConfigurationException
 import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.progress.Task
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.projectRoots.Sdk
+import com.intellij.openapi.projectRoots.impl.SdkConfigurationUtil
 import com.intellij.openapi.roots.ui.configuration.projectRoot.ProjectSdksModel
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.vfs.VirtualFile
@@ -175,17 +175,10 @@ class UsePipEnvQuickFix : LocalQuickFix {
       val existingSdk = existingSdks.find { it.isPipEnv && it.homePath == newSdk.homePath }
       val sdk = existingSdk ?: newSdk
       if (sdk == newSdk) {
-        sdksModel.addSdk(newSdk)
-        try {
-          sdksModel.apply()
-        }
-        catch (e: ConfigurationException) {
-          // XXX: Should we show a meaningful error message here?
-        }
+        SdkConfigurationUtil.addSdk(newSdk)
       }
       project.pythonSdk = sdk
       module.pythonSdk = sdk
-
     }
   }
 
