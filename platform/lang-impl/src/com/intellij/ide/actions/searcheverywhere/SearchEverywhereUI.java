@@ -212,10 +212,7 @@ public class SearchEverywhereUI extends BorderLayoutPanel {
 
     //todo gap between icon and text #UX-1
     Insets insets = JBUI.CurrentTheme.SearchEverywhere.searchFieldInsets();
-    Border border = JBUI.Borders.merge(
-      JBUI.Borders.empty(insets.top, searchExtension.getPreferredSpace() + insets.left, insets.bottom, hintExtension.getPreferredSpace() + insets.right),
-      IdeBorderFactory.createBorder(JBUI.CurrentTheme.SearchEverywhere.searchFieldBorderColor(), SideBorder.BOTTOM | SideBorder.TOP),
-      true);
+    Border border = JBUI.Borders.empty(insets.top, insets.left, insets.bottom, insets.right);
     searchField.setBorder(border);
     searchField.setBackground(JBUI.CurrentTheme.SearchEverywhere.searchFieldBackground());
     searchField.setFocusTraversalKeysEnabled(false);
