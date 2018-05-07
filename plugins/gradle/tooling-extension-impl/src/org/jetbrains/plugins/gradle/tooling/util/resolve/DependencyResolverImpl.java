@@ -6,14 +6,8 @@ package org.jetbrains.plugins.gradle.tooling.util.resolve;
 import org.gradle.api.Project;
 import org.gradle.api.Task;
 import org.gradle.api.artifacts.*;
-import org.gradle.api.artifacts.component.ComponentIdentifier;
 import org.gradle.api.artifacts.component.ModuleComponentIdentifier;
 import org.gradle.api.artifacts.component.ProjectComponentIdentifier;
-import org.gradle.api.artifacts.dsl.DependencyHandler;
-import org.gradle.api.artifacts.result.ComponentArtifactsResult;
-import org.gradle.api.artifacts.result.ResolutionResult;
-import org.gradle.api.component.Artifact;
-import org.gradle.api.component.Component;
 import org.gradle.api.plugins.WarPlugin;
 import org.gradle.api.specs.Specs;
 import org.gradle.api.tasks.SourceSet;
@@ -24,9 +18,6 @@ import org.gradle.internal.impldep.com.google.common.base.Predicate;
 import org.gradle.internal.impldep.com.google.common.collect.ArrayListMultimap;
 import org.gradle.internal.impldep.com.google.common.collect.Lists;
 import org.gradle.internal.impldep.com.google.common.collect.Multimap;
-import org.gradle.internal.impldep.com.google.common.collect.Sets;
-import org.gradle.language.base.artifact.SourcesArtifact;
-import org.gradle.language.java.artifact.JavadocArtifact;
 import org.gradle.plugins.ide.idea.IdeaPlugin;
 import org.gradle.util.GUtil;
 import org.gradle.util.GradleVersion;
@@ -111,130 +102,39 @@ public class DependencyResolverImpl implements DependencyResolver {
   }
 
   public ExternalDepsResolutionResult resolveDependencies(@Nullable Configuration configuration, @Nullable String scope) {
-    if (configuration == null) {
+    if (configuration == null
+        || configuration.getAllDependencies().isEmpty()) {
       return ExternalDepsResolutionResult.EMPTY;
     }
 
-    if (configuration.getAllDependencies().isEmpty()) {
-      return ExternalDepsResolutionResult.EMPTY;
-    }
-
-    final Collection<ExternalDependency> result = new LinkedHashSet<ExternalDependency>();
-
-    final List<File> resolvedFileDependencies = new ArrayList<File>();
+    final ExternalDepsResolutionResult result;
 
     if (!myIsPreview && isArtifactResolutionQuerySupported) {
-      Class<? extends Component> jvmLibrary = null;
-      try {
-        jvmLibrary = (Class<? extends Component>)Class.forName("org.gradle.jvm.JvmLibrary");
-      }
-      catch (ClassNotFoundException ignored) {
-      }
-      if (jvmLibrary == null) {
-        try {
-          jvmLibrary = (Class<? extends Component>)Class.forName("org.gradle.runtime.jvm.JvmLibrary");
-        }
-        catch (ClassNotFoundException ignored) {
-        }
-      }
-
-      if (jvmLibrary != null) {
-        List<Class<? extends Artifact>> artifactTypes = new ArrayList<Class<? extends Artifact>>();
-
-        if (myDownloadSources) { artifactTypes.add(SourcesArtifact.class); }
-        if (myDownloadJavadoc) { artifactTypes.add(JavadocArtifact.class); }
-
-
-        Set<ResolvedArtifact> resolvedArtifacts =
-          configuration.getResolvedConfiguration().getLenientConfiguration().getArtifacts(Specs.SATISFIES_ALL);
-
-        Multimap<ModuleVersionIdentifier, ResolvedArtifact> artifactMap = ArrayListMultimap.create();
-
-        for (ResolvedArtifact artifact : resolvedArtifacts) {
-          artifactMap.put(artifact.getModuleVersion().getId(), artifact);
-        }
-
-
-        boolean isBuildScriptConfiguration = myProject.getBuildscript().getConfigurations().contains(configuration);
-        //noinspection GroovyAssignabilityCheck
-        DependencyHandler dependencyHandler = isBuildScriptConfiguration ? myProject.getBuildscript().getDependencies() : myProject.getDependencies();
-
-        List<ComponentIdentifier> components = new ArrayList<ComponentIdentifier>();
-        for (ResolvedArtifact artifact : resolvedArtifacts) {
-          if (!isProjectDependencyArtifact(artifact)) {
-            components.add(toComponentIdentifier(artifact.getModuleVersion().getId()));
-          }
-        }
-
-        Set<ComponentArtifactsResult> componentResults = dependencyHandler.createArtifactResolutionQuery()
-          .forComponents(components)
-          .withArtifacts(jvmLibrary, artifactTypes.toArray(new Class[0]))
-          .execute()
-          .getResolvedComponents();
-
-        Map<ComponentIdentifier, ComponentArtifactsResult> componentResultsMap =
-          new HashMap<ComponentIdentifier, ComponentArtifactsResult>();
-
-        for (ComponentArtifactsResult artifactsResult : componentResults) {
-          componentResultsMap.put(artifactsResult.getId(), artifactsResult);
-        }
-
-        Set<Configuration> processedConfigurations = new HashSet<Configuration>();
-        Multimap<ModuleComponentIdentifier, ProjectDependency> configurationProjectDependencies =
-          projectDeps(configuration, ArrayListMultimap.<ModuleComponentIdentifier, ProjectDependency>create(), processedConfigurations);
-
-        ResolutionResult resolutionResult = configuration.getIncoming().getResolutionResult();
-        if(!configuration.getResolvedConfiguration().hasError()) {
-          Set<File> fileDeps = new LinkedHashSet<File>(configuration.getIncoming().getFiles().getFiles());
-
-          for (ResolvedArtifact artifact : artifactMap.values()) {
-            fileDeps.remove(artifact.getFile());
-          }
-
-          for (ProjectDependency dep : configurationProjectDependencies.values()) {
-            Set<File> depFiles = getTargetConfiguration(dep).getAllArtifacts().getFiles().getFiles();
-            final Set<File> intersection = new HashSet<File>(Sets.intersection(fileDeps, depFiles));
-            if (!intersection.isEmpty()) {
-              DefaultFileCollectionDependency fileCollectionDependency = new DefaultFileCollectionDependency(intersection);
-              fileCollectionDependency.setScope(scope);
-              result.add(fileCollectionDependency);
-              fileDeps.removeAll(intersection);
-            }
-          }
-
-          for (File file : fileDeps) {
-            DefaultFileCollectionDependency fileCollectionDependency = new DefaultFileCollectionDependency(Collections.singleton(file));
-            fileCollectionDependency.setScope(scope);
-            result.add(fileCollectionDependency);
-          }
-        }
-
-        DependencyResultsTransformer dependencyResultsTransformer =
-          new DependencyResultsTransformer(myProject, mySourceSetFinder, artifactMap, componentResultsMap, configurationProjectDependencies, scope);
-        result.addAll(dependencyResultsTransformer.transform(resolutionResult.getRoot().getDependencies()));
-
-        resolvedFileDependencies.addAll(dependencyResultsTransformer.resolvedDepsFiles);
-      }
+      result = new ArtifactQueryResolver(configuration, scope, myProject, myDownloadJavadoc, myDownloadSources, mySourceSetFinder).resolve();
+    } else {
+      result = new ExternalDepsResolutionResult(findDependencies(configuration, configuration.getAllDependencies(), scope),
+                                                new ArrayList<File>());
     }
 
-    if (myIsPreview || !isArtifactResolutionQuerySupported) {
-      Set<ExternalDependency> projectDependencies = findDependencies(configuration, configuration.getAllDependencies(), scope);
-      result.addAll(projectDependencies);
-    }
     Set<ExternalDependency> fileDependencies = findAllFileDependencies(configuration.getAllDependencies(), scope);
-    // TODO investigate resolvedFileDependencies content
-    fileDependencies.removeAll(resolvedFileDependencies);
-    result.addAll(fileDependencies);
-
-    return new ExternalDepsResolutionResult(new ArrayList<ExternalDependency>(result), resolvedFileDependencies);
+    result.getExternalDeps().addAll(fileDependencies);
+    return result;
   }
 
-  Multimap<ModuleComponentIdentifier, ProjectDependency> projectDeps(Configuration conf,
-                                                                     Multimap<ModuleComponentIdentifier, ProjectDependency> map,
-                                                                     Set<Configuration> processedConfigurations) {
+
+  protected static Multimap<ModuleComponentIdentifier, ProjectDependency> collectProjectDeps(@NotNull final Configuration configuration) {
+    return projectDeps(configuration,
+                       ArrayListMultimap.<ModuleComponentIdentifier, ProjectDependency>create(),
+                       new HashSet<Configuration>());
+  }
+
+  private static Multimap<ModuleComponentIdentifier, ProjectDependency> projectDeps(Configuration conf,
+                                                                                    Multimap<ModuleComponentIdentifier, ProjectDependency> map,
+                                                                                    Set<Configuration> processedConfigurations) {
     if(!processedConfigurations.add(conf)) {
       return map;
     }
+
     for (Dependency dep : conf.getIncoming().getDependencies()) {
       if (dep instanceof ProjectDependency) {
         map.put(toComponentIdentifier(dep.getGroup(), dep.getName(), dep.getVersion()), (ProjectDependency)dep);
@@ -841,10 +741,9 @@ public class DependencyResolverImpl implements DependencyResolver {
     return result;
   }
 
-  private Set<ExternalDependency> findDependencies(
-    Configuration configuration,
-    Collection<Dependency> dependencies,
-    String scope) {
+  private Set<ExternalDependency> findDependencies(@NotNull final  Configuration configuration,
+                                                   @NotNull final  Collection<Dependency> dependencies,
+                                                   @NotNull final String scope) {
     Set<ExternalDependency> result = new LinkedHashSet<ExternalDependency>();
 
     Set<ResolvedArtifact> resolvedArtifacts = myIsPreview ? new HashSet<ResolvedArtifact>() :
@@ -871,7 +770,7 @@ public class DependencyResolverImpl implements DependencyResolver {
           projectDependency.setConfigurationName(targetConfiguration.getName());
           Set<File> artifacts = targetConfiguration.getAllArtifacts().getFiles().getFiles();
           projectDependency.setProjectDependencyArtifacts(artifacts);
-          setProjectDependencyArtifactsSources(projectDependency, artifacts, mySourceSetFinder);
+          projectDependency.setProjectDependencyArtifactsSources(findArtifactSources(artifacts, mySourceSetFinder));
 
           result.add(projectDependency);
         } else if (it != null) {
@@ -929,9 +828,8 @@ public class DependencyResolverImpl implements DependencyResolver {
   }
 
 
-  public static void setProjectDependencyArtifactsSources(DefaultExternalProjectDependency projectDependency,
-                                                           Collection<File> artifactFiles,
-                                                           SourceSetCachedFinder sourceSetFinder) {
+  @NotNull
+  public static List<File> findArtifactSources(Collection<File> artifactFiles, SourceSetCachedFinder sourceSetFinder) {
     List<File> artifactSources = new ArrayList<File>();
     for (File artifactFile : artifactFiles) {
       SourceSet sourceSet = sourceSetFinder.findByArtifact(artifactFile.getPath());
@@ -939,7 +837,7 @@ public class DependencyResolverImpl implements DependencyResolver {
         artifactSources.addAll(sourceSet.getAllJava().getSrcDirs());
       }
     }
-    projectDependency.setProjectDependencyArtifactsSources(artifactSources);
+    return artifactSources;
   }
 
   public static boolean isProjectDependencyArtifact(ResolvedArtifact artifact) {
