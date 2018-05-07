@@ -877,8 +877,7 @@ public class RepositoryBrowserDialog extends DialogWrapper {
         return;
       }
       Url url = node.getURL();
-      AbstractVcsHelper.getInstance(myProject).showChangesBrowser(myVCS.getCommittedChangesProvider(),
-                                                                  new SvnRepositoryLocation(url.toString()),
+      AbstractVcsHelper.getInstance(myProject).showChangesBrowser(myVCS.getCommittedChangesProvider(), new SvnRepositoryLocation(url),
                                                                   "Changes in " + url.toString(), null);
     }
 
