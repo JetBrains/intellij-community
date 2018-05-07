@@ -42,6 +42,9 @@ fun <T> invokeAndWaitIfNeed(modalityState: ModalityState? = null, runnable: () -
       return result as T
     }
   }
+  else if (app.isDispatchThread) {
+    return runnable()
+  }
   else {
     var result: T? = null
     app.invokeAndWait({ result = runnable() }, modalityState ?: ModalityState.defaultModalityState())
