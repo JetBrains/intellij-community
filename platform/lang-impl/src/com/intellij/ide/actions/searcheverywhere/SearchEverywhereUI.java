@@ -366,6 +366,10 @@ public class SearchEverywhereUI extends BorderLayoutPanel {
           switchToNextTab();
           e.consume();
         }
+
+        if (e.getKeyCode() == KeyEvent.VK_ENTER) {
+          elementSelected(myResultsList.getSelectedIndex(), e.getModifiers());
+        }
       }
     });
 
@@ -385,20 +389,19 @@ public class SearchEverywhereUI extends BorderLayoutPanel {
     myResultsList.addMouseListener(new MouseAdapter() {
       @Override
       public void mouseClicked(MouseEvent e) {
-        e.consume();
-        final int i = myResultsList.locationToIndex(e.getPoint());
-        if (i != -1) {
-          ApplicationManager.getApplication().invokeLater(() -> {
+        if (e.getButton() == MouseEvent.BUTTON1) {
+          e.consume();
+          final int i = myResultsList.locationToIndex(e.getPoint());
+          if (i != -1) {
             myResultsList.setSelectedIndex(i);
-            elementSelected(i);
-          });
+            elementSelected(i, e.getModifiers());
+          }
         }
       }
     });
-
   }
 
-  private void elementSelected(int i) {
+  private void elementSelected(int i, int modifiers) {
     Map.Entry<ResultsRange, SearchEverywhereContributor> entry = myResultsRanges.entrySet().stream()
          .filter(e -> e.getKey().containsIndex(i))
          .findAny()
@@ -408,7 +411,7 @@ public class SearchEverywhereUI extends BorderLayoutPanel {
     if (isMoreElement) {
       showMoreElements(entry.getValue());
     } else {
-      gotoSelectedItem(entry.getValue());
+      gotoSelectedItem(entry.getValue(), modifiers);
     }
   }
 
@@ -416,11 +419,11 @@ public class SearchEverywhereUI extends BorderLayoutPanel {
 
   }
 
-  private void gotoSelectedItem(SearchEverywhereContributor contributor) {
+  private void gotoSelectedItem(SearchEverywhereContributor contributor, int modifiers) {
     Object value = myResultsList.getSelectedValue();
     stopSearching();
     searchFinishedHandler.run();
-    contributor.processSelectedItem(value);
+    contributor.processSelectedItem(value, modifiers);
   }
 
   private void stopSearching() {
