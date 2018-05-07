@@ -21,12 +21,14 @@ import com.intellij.openapi.module.Module
 import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.progress.Task
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.project.rootManager
 import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.projectRoots.impl.SdkConfigurationUtil
 import com.intellij.openapi.roots.ModuleRootModificationUtil
 import com.intellij.openapi.roots.ProjectRootManager
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.vfs.StandardFileSystems
+import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.util.PathUtil
 import com.intellij.webcore.packaging.PackagesNotificationPanel
 import com.jetbrains.python.packaging.ui.PyPackageManagementService
@@ -61,11 +63,11 @@ fun detectSystemWideSdks(existingSdks: List<Sdk>): List<PyDetectedSdk> {
     .toList()
 }
 
-fun detectVirtualEnvs(project: Project?, existingSdks: List<Sdk>): List<PyDetectedSdk> =
-  filterSuggestedPaths(VirtualEnvSdkFlavor.INSTANCE.suggestHomePaths(), existingSdks, project)
+fun detectVirtualEnvs(module: Module?, existingSdks: List<Sdk>): List<PyDetectedSdk> =
+  filterSuggestedPaths(VirtualEnvSdkFlavor.INSTANCE.suggestHomePaths(), existingSdks, module)
 
-fun detectCondaEnvs(project: Project?, existingSdks: List<Sdk>): List<PyDetectedSdk> =
-  filterSuggestedPaths(CondaEnvSdkFlavor.INSTANCE.suggestHomePaths(), existingSdks, project)
+fun detectCondaEnvs(module: Module?, existingSdks: List<Sdk>): List<PyDetectedSdk> =
+  filterSuggestedPaths(CondaEnvSdkFlavor.INSTANCE.suggestHomePaths(), existingSdks, module)
 
 fun createSdkByGenerateTask(generateSdkHomePath: Task.WithResult<String, ExecutionException>,
                             existingSdks: List<Sdk>,
@@ -88,30 +90,30 @@ fun createSdkByGenerateTask(generateSdkHomePath: Task.WithResult<String, Executi
                                        false, null, suggestedName) ?: return null
 }
 
-fun Sdk.associateWithProject(project: Project?, isNewProject: Boolean) {
+fun Sdk.associateWithModule(module: Module?, isNewProject: Boolean) {
   getOrCreateAdditionalData().apply {
     when {
       isNewProject -> associateWithNewProject()
-      project != null -> associateWithProject(project)
+      module != null -> associateWithModule(module)
     }
   }
 }
 
-fun Sdk.isAssociatedWithProject(project: Project?): Boolean {
-  val basePath = project?.basePath
-  val associatedPath = associatedProjectPath
+fun Sdk.isAssociatedWithModule(module: Module?): Boolean {
+  val basePath = module?.basePath
+  val associatedPath = associatedModulePath
   if (basePath != null && associatedPath == basePath) return true
-  if (isAssociatedWithAnotherProject(project)) return false
-  return isLocatedInsideProject(project) || containsProjectName(project)
+  if (isAssociatedWithAnotherModule(module)) return false
+  return isLocatedInsideModule(module) || containsModuleName(module)
 }
 
-fun Sdk.isAssociatedWithAnotherProject(project: Project?): Boolean {
-  val basePath = project?.basePath ?: return false
-  val associatedPath = associatedProjectPath ?: return false
+fun Sdk.isAssociatedWithAnotherModule(module: Module?): Boolean {
+  val basePath = module?.basePath ?: return false
+  val associatedPath = associatedModulePath ?: return false
   return basePath != associatedPath
 }
 
-val Sdk.associatedProjectPath: String?
+val Sdk.associatedModulePath: String?
   // TODO: Support .project associations
   get() = associatedPathFromAdditionalData /*?: associatedPathFromDotProject*/
 
@@ -125,9 +127,9 @@ fun PyDetectedSdk.setup(existingSdks: List<Sdk>): Sdk? {
   return SdkConfigurationUtil.setupSdk(existingSdks.toTypedArray(), homeDir, PythonSdkType.getInstance(), false, null, null)
 }
 
-fun PyDetectedSdk.setupAssociated(existingSdks: List<Sdk>, associatedProjectPath: String?): Sdk? {
+fun PyDetectedSdk.setupAssociated(existingSdks: List<Sdk>, associatedModulePath: String?): Sdk? {
   val homeDir = homeDirectory ?: return null
-  val suggestedName = homePath?.let { suggestAssociatedSdkName(it, associatedProjectPath) }
+  val suggestedName = homePath?.let { suggestAssociatedSdkName(it, associatedModulePath) }
   return SdkConfigurationUtil.setupSdk(existingSdks.toTypedArray(), homeDir, PythonSdkType.getInstance(), false, null, suggestedName)
 }
 
@@ -148,6 +150,13 @@ var Project.pythonSdk: Sdk?
       ProjectRootManager.getInstance(this).projectSdk = value
     }
   }
+
+val Module.baseDir: VirtualFile?
+  get() = rootManager.contentRoots.firstOrNull()
+
+val Module.basePath: String?
+  get() = baseDir?.path
+
 
 private fun suggestAssociatedSdkName(sdkHome: String, associatedPath: String?): String? {
   val baseSdkName = PythonSdkType.suggestBaseSdkName(sdkHome) ?: return null
@@ -186,11 +195,11 @@ private val Sdk.associatedPathFromDotProject: String?
   }
 
 private val Sdk.associatedPathFromAdditionalData: String?
-  get() = (sdkAdditionalData as? PythonSdkAdditionalData)?.associatedProjectPath
+  get() = (sdkAdditionalData as? PythonSdkAdditionalData)?.associatedModulePath
 
-private fun Sdk.isLocatedInsideProject(project: Project?): Boolean {
+private fun Sdk.isLocatedInsideModule(module: Module?): Boolean {
   val homePath = homePath ?: return false
-  val basePath = project?.basePath ?: return false
+  val basePath = module?.basePath ?: return false
   return FileUtil.isAncestor(basePath, homePath, true)
 }
 
@@ -202,9 +211,9 @@ private val PyDetectedSdk.guessedLanguageLevel: LanguageLevel?
     return LanguageLevel.fromPythonVersion(versionString)
   }
 
-private fun Sdk.containsProjectName(project: Project?): Boolean {
+private fun Sdk.containsModuleName(module: Module?): Boolean {
   val path = homePath ?: return false
-  val name = project?.name ?: return false
+  val name = module?.name ?: return false
   return path.contains(name, true)
 }
 
@@ -220,14 +229,14 @@ fun Sdk.getOrCreateAdditionalData(): PythonSdkAdditionalData {
 
 private fun filterSuggestedPaths(suggestedPaths: MutableCollection<String>,
                                  existingSdks: List<Sdk>,
-                                 project: Project?): List<PyDetectedSdk> {
+                                 module: Module?): List<PyDetectedSdk> {
   val existingPaths = existingSdks.map { it.homePath }.toSet()
   return suggestedPaths
     .asSequence()
     .filterNot { it in existingPaths }
     .distinct()
     .map { PyDetectedSdk(it) }
-    .sortedWith(compareBy<PyDetectedSdk>({ it.isAssociatedWithProject(project) },
+    .sortedWith(compareBy<PyDetectedSdk>({ it.isAssociatedWithModule(module) },
                                          { it.homePath }).reversed())
     .toList()
 }

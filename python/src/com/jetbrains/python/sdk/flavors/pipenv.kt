@@ -27,7 +27,6 @@ import com.jetbrains.python.packaging.PyExecutionException
 import com.jetbrains.python.sdk.*
 import icons.PythonIcons
 import org.jetbrains.annotations.SystemDependent
-import org.jetbrains.jps.model.serialization.PathMacroUtil
 import java.io.File
 import javax.swing.Icon
 
@@ -94,7 +93,7 @@ fun setupPipEnvSdkUnderProgress(project: Project?,
   val suggestedName = "Pipenv (${PathUtil.getFileName(projectPath)})"
   return createSdkByGenerateTask(task, existingSdks, null, projectPath, suggestedName)?.apply {
     isPipEnv = true
-    associateWithProject(project, newProjectPath != null)
+    associateWithModule(module, newProjectPath != null)
   }
 }
 
@@ -193,9 +192,3 @@ class UsePipEnvQuickFix : LocalQuickFix {
     }
   }
 }
-
-/**
- * Returns the directory with the module file taking into account .idea/.
- */
-private val Module.basePath: String?
-  get() = PathMacroUtil.getModuleDir(moduleFilePath)

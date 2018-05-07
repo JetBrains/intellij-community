@@ -75,11 +75,9 @@ public class PythonGenerateProjectCallback<T> extends AbstractNewProjectStep.Abs
       for (Sdk s : sdks) {
         final SdkAdditionalData additionalData = s.getSdkAdditionalData();
         if (additionalData instanceof PythonSdkAdditionalData) {
-          ((PythonSdkAdditionalData)additionalData).reassociateWithCreatedProject(newProject);
+          ((PythonSdkAdditionalData)additionalData).reAssociateWithCreatedProject(newProject);
         }
       }
-    }
-    if (generator instanceof PythonProjectGenerator) {
       ((PythonProjectGenerator)generator).afterProjectGenerated(newProject);
     }
   }
