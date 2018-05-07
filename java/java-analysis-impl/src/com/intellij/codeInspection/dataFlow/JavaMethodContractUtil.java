@@ -3,12 +3,15 @@ package com.intellij.codeInspection.dataFlow;
 
 import com.intellij.codeInsight.AnnotationUtil;
 import com.intellij.psi.PsiAnnotation;
+import com.intellij.psi.PsiExpression;
 import com.intellij.psi.PsiMethod;
 import com.intellij.psi.PsiMethodCallExpression;
 import com.intellij.psi.util.CachedValueProvider;
 import com.intellij.psi.util.CachedValuesManager;
 import com.intellij.psi.util.PsiModificationTracker;
 import com.intellij.util.containers.ContainerUtil;
+import com.siyeh.ig.psiutils.ExpressionUtils;
+import com.siyeh.ig.psiutils.MethodCallUtils;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -115,6 +118,34 @@ public class JavaMethodContractUtil {
       else {
         break;
       }
+    }
+    return null;
+  }
+
+  /**
+   * For given method call find the returned expression if the method is known to return always the same parameter or its qualifier
+   * (unless fail).
+   *
+   * @param call call to analyze
+   * @return the expression which is always returned by this method if it completes successfully,
+   * null if method may return something less trivial or its contract is unknown.
+   */
+  public static PsiExpression findReturnedValue(PsiMethodCallExpression call) {
+    if (call == null) return null;
+    PsiMethod method = call.resolveMethod();
+    if (method == null) return null;
+    List<? extends MethodContract> contracts = getMethodCallContracts(method, call);
+    ContractReturnValue returnValue = getNonFailingReturnValue(contracts);
+    if (returnValue == null) return null;
+    if (returnValue.equals(ContractReturnValue.returnThis())) {
+      return ExpressionUtils.getQualifierOrThis(call.getMethodExpression());
+    }
+    if (returnValue instanceof ContractReturnValue.ParameterReturnValue) {
+      int number = ((ContractReturnValue.ParameterReturnValue)returnValue).getParameterNumber();
+      PsiExpression[] args = call.getArgumentList().getExpressions();
+      if (args.length <= number) return null;
+      if (args.length == number + 1 && MethodCallUtils.isVarArgCall(call)) return null;
+      return args[number];
     }
     return null;
   }
