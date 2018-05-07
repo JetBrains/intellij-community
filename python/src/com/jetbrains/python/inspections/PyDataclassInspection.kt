@@ -26,8 +26,12 @@ class PyDataclassInspection : PyInspection() {
   companion object {
     private val ORDER_OPERATORS = setOf("__lt__", "__le__", "__gt__", "__ge__")
     private val DATACLASSES_HELPERS = setOf("dataclasses.fields", "dataclasses.asdict", "dataclasses.astuple", "dataclasses.replace")
-    private val ATTRS_HELPERS =
-      setOf("attr.__init__.fields", "attr.__init__.asdict", "attr.__init__.astuple", "attr.__init__.assoc", "attr.__init__.evolve")
+    private val ATTRS_HELPERS = setOf("attr.__init__.fields",
+                                      "attr.__init__.fields_dict",
+                                      "attr.__init__.asdict",
+                                      "attr.__init__.astuple",
+                                      "attr.__init__.assoc",
+                                      "attr.__init__.evolve")
   }
 
   override fun buildVisitor(holder: ProblemsHolder,
@@ -522,7 +526,7 @@ class PyDataclassInspection : PyInspection() {
     private fun processHelperAttrsArgument(argument: PyExpression?, calleeQName: String) {
       if (argument == null) return
 
-      val instance = calleeQName != "attr.__init__.fields"
+      val instance = calleeQName != "attr.__init__.fields" && calleeQName != "attr.__init__.fields_dict"
 
       if (isNotExpectedDataclass(myTypeEvalContext.getType(argument), PyDataclassParameters.Type.ATTRS, !instance, instance)) {
         val presentableCalleeQName = calleeQName.replaceFirst(".__init__.", ".")
