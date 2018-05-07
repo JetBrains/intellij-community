@@ -937,7 +937,6 @@ public class PluginManagerConfigurableNew
     private List<CellPluginComponent> myComponents;
 
     private CellPluginComponent myHoverComponent;
-    private int myHoverIndex;
 
     private int mySelectionIndex;
     private int mySelectionLength;
@@ -1010,25 +1009,23 @@ public class PluginManagerConfigurableNew
 
         @Override
         public void mouseExited(MouseEvent event) {
-          /*if (myHoverComponent != null) {
+          if (myHoverComponent != null) {
             if (myHoverComponent.getSelection() == SelectionType.HOVER) {
               myHoverComponent.setSelection(SelectionType.NONE);
             }
             myHoverComponent = null;
-            myHoverIndex = -1;
-          }*/
+          }
         }
 
         @Override
         public void mouseMoved(MouseEvent event) {
-          /*if (myHoverComponent == null) {
+          if (myHoverComponent == null) {
             CellPluginComponent component = CellPluginComponent.get(event);
             if (component.getSelection() == SelectionType.NONE) {
               myHoverComponent = component;
-              myHoverIndex = getIndex(component);
               component.setSelection(SelectionType.HOVER);
             }
-          }*/
+          }
         }
       };
 
@@ -1157,7 +1154,6 @@ public class PluginManagerConfigurableNew
     public void clear() {
       myComponents = new ArrayList<>();
       myHoverComponent = null;
-      myHoverIndex = -1;
       mySelectionIndex = -1;
       mySelectionLength = 0;
       myAllSelected = false;
@@ -1172,7 +1168,6 @@ public class PluginManagerConfigurableNew
       myAllSelected = true;
       myMixSelection = false;
       myHoverComponent = null;
-      myHoverIndex = -1;
 
       for (CellPluginComponent component : myComponents) {
         if (component.getSelection() != SelectionType.SELECTION) {
@@ -1330,9 +1325,8 @@ public class PluginManagerConfigurableNew
     private void singleSelection(@NotNull CellPluginComponent component, int index) {
       mySelectionIndex = index;
       mySelectionLength = 1;
-      if (myHoverIndex == index) {
+      if (myHoverComponent == component) {
         myHoverComponent = null;
-        myHoverIndex = -1;
       }
       if (component.getSelection() != SelectionType.SELECTION) {
         component.setSelection(SelectionType.SELECTION);
