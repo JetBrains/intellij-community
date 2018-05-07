@@ -150,6 +150,7 @@ fun Path.writeChild(relativePath: String, data: ByteArray) = resolve(relativePat
 
 fun Path.writeChild(relativePath: String, data: String) = writeChild(relativePath, data.toByteArray())
 
+@JvmOverloads
 fun Path.write(data: ByteArray, offset: Int = 0, size: Int = data.size): Path {
   outputStream().use { it.write(data, offset, size) }
   return this
