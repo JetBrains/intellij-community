@@ -34,11 +34,11 @@ import static com.intellij.credentialStore.CredentialAttributesKt.*;
 
 /**
  * <p>Handles "ask username" and "ask password" requests from Git:
- *    shows authentication dialog in the GUI, waits for user input and returns the credentials supplied by the user.</p>
+ * shows authentication dialog in the GUI, waits for user input and returns the credentials supplied by the user.</p>
  * <p>If user cancels the dialog, empty string is returned.</p>
  * <p>If no username is specified in the URL, Git queries for the username and for the password consecutively.
- *    In this case to avoid showing dialogs twice, the component asks for both credentials at once,
- *    and remembers the password to provide it to the Git process during the next request without requiring user interaction.</p>
+ * In this case to avoid showing dialogs twice, the component asks for both credentials at once,
+ * and remembers the password to provide it to the Git process during the next request without requiring user interaction.</p>
  * <p>New instance of the GitAskPassGuiHandler should be created for each session, i. e. for each remote operation call.</p>
  *
  * @author Kirill Likhodedov
@@ -51,7 +51,6 @@ class GitHttpGuiAuthenticator implements GitHttpAuthenticator {
   @NotNull private final Project myProject;
   @NotNull private final String myTitle;
   @NotNull private final Collection<String> myUrlsFromCommand;
-  private final boolean myIgnoreAuthenticationRequest;
 
   @Nullable private String myPassword;
   @Nullable private String myPasswordKey;
@@ -65,12 +64,10 @@ class GitHttpGuiAuthenticator implements GitHttpAuthenticator {
 
   GitHttpGuiAuthenticator(@NotNull Project project,
                           @NotNull GitCommand command,
-                          @NotNull Collection<String> url,
-                          boolean ignoreAuthenticationRequest) {
+                          @NotNull Collection<String> url) {
     myProject = project;
     myTitle = "Git " + StringUtil.capitalize(command.name());
     myUrlsFromCommand = url;
-    myIgnoreAuthenticationRequest = ignoreAuthenticationRequest;
   }
 
   @Override
@@ -80,7 +77,7 @@ class GitHttpGuiAuthenticator implements GitHttpAuthenticator {
     if (myPassword != null) {  // already asked in askUsername
       return myPassword;
     }
-    if (myWasCancelled || myIgnoreAuthenticationRequest) { // already pressed cancel in askUsername or force ignore authentication
+    if (myWasCancelled) { // already pressed cancel in askUsername or force ignore authentication
       return "";
     }
     myUnifiedUrl = getUnifiedUrl(url);
@@ -129,8 +126,6 @@ class GitHttpGuiAuthenticator implements GitHttpAuthenticator {
   @Override
   @NotNull
   public String askUsername(@NotNull String url) {
-    if (myIgnoreAuthenticationRequest) return "";
-
     myUnifiedUrl = getUnifiedUrl(url);
     Pair<GitHttpAuthDataProvider, AuthData> authData = findBestAuthData(getUnifiedUrl(url));
     String login = null;

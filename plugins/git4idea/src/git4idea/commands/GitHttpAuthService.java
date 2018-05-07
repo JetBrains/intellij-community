@@ -70,4 +70,33 @@ public abstract class GitHttpAuthService extends GitXmlRpcHandlerService<GitHttp
     }
   }
 
+  /**
+   * NOOP handler providing empty values for credentials
+   */
+  protected static final GitHttpAuthenticator STUB_AUTHENTICATOR = new GitHttpAuthenticator() {
+    @NotNull
+    @Override
+    public String askPassword(@NotNull String url) {
+      return "";
+    }
+
+    @NotNull
+    @Override
+    public String askUsername(@NotNull String url) {
+      return "";
+    }
+
+    @Override
+    public void saveAuthData() {
+    }
+
+    @Override
+    public void forgetPassword() {
+    }
+
+    @Override
+    public boolean wasCancelled() {
+      return false;
+    }
+  };
 }
