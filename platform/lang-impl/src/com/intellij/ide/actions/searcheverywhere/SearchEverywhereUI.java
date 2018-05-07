@@ -8,15 +8,14 @@ import com.intellij.ide.actions.SearchEverywhereAction;
 import com.intellij.ide.ui.UISettings;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
-import com.intellij.openapi.actionSystem.ex.AnActionListener;
 import com.intellij.openapi.actionSystem.impl.ActionButton;
 import com.intellij.openapi.actionSystem.impl.ActionToolbarImpl;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.editor.actions.TextComponentEditorAction;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.util.ProgressIndicatorBase;
+import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.popup.ComponentPopupBuilder;
@@ -111,7 +110,8 @@ public class SearchEverywhereUI extends BorderLayoutPanel {
     addToBottom(mySearchField);
 
     myResultsList.setCellRenderer(new CompositeCellRenderer());
-    initListActions();
+
+    initSearchActions();
   }
 
   public JTextField getSearchField() {
@@ -172,6 +172,7 @@ public class SearchEverywhereUI extends BorderLayoutPanel {
     }
     myNonProjectCB.setSelected(false);
     repaint();
+    rebuildList(mySearchField != null ? mySearchField.getText() : "");
   }
 
   private JTextField createSearchField() {
@@ -217,24 +218,7 @@ public class SearchEverywhereUI extends BorderLayoutPanel {
       true);
     searchField.setBorder(border);
     searchField.setBackground(JBUI.CurrentTheme.SearchEverywhere.searchFieldBackground());
-
     searchField.setFocusTraversalKeysEnabled(false);
-    searchField.addKeyListener(new KeyAdapter() {
-      @Override
-      public void keyPressed(KeyEvent e) {
-        if (e.getKeyCode() == KeyEvent.VK_TAB && e.getModifiers() == 0) {
-          switchToNextTab();
-          e.consume();
-        }
-      }
-    });
-
-    searchField.getDocument().addDocumentListener(new DocumentAdapter() {
-      @Override
-      protected void textChanged(DocumentEvent e) {
-          rebuildList(searchField.getText());
-      }
-    });
 
     return searchField;
   }
@@ -375,7 +359,28 @@ public class SearchEverywhereUI extends BorderLayoutPanel {
     }
   }
 
-  private void initListActions() {
+  private void initSearchActions() {
+    mySearchField.addKeyListener(new KeyAdapter() {
+      @Override
+      public void keyPressed(KeyEvent e) {
+        if (e.getKeyCode() == KeyEvent.VK_TAB && e.getModifiers() == 0) {
+          switchToNextTab();
+          e.consume();
+        }
+      }
+    });
+
+    AnAction escape = ActionManager.getInstance().getAction("EditorEscape");
+    DumbAwareAction.create(__ -> searchFinishedHandler.run())
+                   .registerCustomShortcutSet(escape == null ? CommonShortcuts.ESCAPE : escape.getShortcutSet(), this);
+
+    mySearchField.getDocument().addDocumentListener(new DocumentAdapter() {
+      @Override
+      protected void textChanged(DocumentEvent e) {
+        rebuildList(mySearchField.getText());
+      }
+    });
+
     myResultsList.addMouseListener(new MouseAdapter() {
       @Override
       public void mouseClicked(MouseEvent e) {
@@ -610,17 +615,17 @@ public class SearchEverywhereUI extends BorderLayoutPanel {
             updateResultsPopupBounds();
             myResultsPopup.show(new RelativePoint(SearchEverywhereUI.this, new Point(0, getHeight())));
 
-            ActionManager.getInstance().addAnActionListener(new AnActionListener.Adapter() {
-              @Override
-              public void beforeActionPerformed(AnAction action, DataContext dataContext, AnActionEvent event) {
-                if (action instanceof TextComponentEditorAction) {
-                  return;
-                }
-                if (myResultsPopup != null) {
-                  myResultsPopup.cancel();
-                }
-              }
-            }, myResultsPopup);
+            //ActionManager.getInstance().addAnActionListener(new AnActionListener.Adapter() {
+            //  @Override
+            //  public void beforeActionPerformed(AnAction action, DataContext dataContext, AnActionEvent event) {
+            //    if (action instanceof TextComponentEditorAction) {
+            //      return;
+            //    }
+            //    if (myResultsPopup != null) {
+            //      myResultsPopup.cancel();
+            //    }
+            //  }
+            //}, myResultsPopup);
           }
           else {
             myResultsList.revalidate();

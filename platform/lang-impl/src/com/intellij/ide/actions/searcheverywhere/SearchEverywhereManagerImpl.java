@@ -2,8 +2,6 @@
 package com.intellij.ide.actions.searcheverywhere;
 
 import com.intellij.ide.ui.UISettings;
-import com.intellij.openapi.actionSystem.*;
-import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.popup.JBPopup;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
@@ -58,11 +56,6 @@ public class SearchEverywhereManagerImpl implements SearchEverywhereManager {
                                 .addUserData("SIMPLE_WINDOW")
                                 .createPopup();
       mySearchEverywhereUI.setSearchFinishedHandler(() -> myBalloon.cancel());
-
-      AnAction escape = ActionManager.getInstance().getAction("EditorEscape");
-      DumbAwareAction.create(__ -> myBalloon.cancel())
-                     .registerCustomShortcutSet(escape == null ? CommonShortcuts.ESCAPE : escape.getShortcutSet(),
-                                                myBalloon.getContent(), myBalloon);
 
       RelativePoint showingPoint = calculateShowingPoint();
       if (showingPoint != null) {
