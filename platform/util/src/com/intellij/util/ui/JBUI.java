@@ -1587,6 +1587,33 @@ public class JBUI {
                JBColor.namedColor("Focus.inactiveWarningBorderColor", new JBColor(0xffd385, 0x6e5324));
       }
     }
+
+    //todo #UX-1 maybe move to popup
+    public static class SearchEverywhere {
+      public static Color dialogBackground() {
+        return JBColor.namedColor("SearchEverywhere.Dialog.background", 0xf2f2f2);
+      }
+
+      public static Insets tabInsets() {
+        return insets(0, 12);
+      }
+
+      public static Color selectedTabColor() {
+        return JBColor.namedColor("SearchEverywhere.Tab.selected.background", 0xdedede);
+      }
+
+      public static Color searchFieldBackground() {
+        return JBColor.namedColor("SearchEverywhere.SearchField.background", 0xffffff);
+      }
+
+      public static Color searchFieldBorderColor() {
+        return JBColor.namedColor("SearchEverywhere.SearchField.Border.color", 0xbdbdbd);
+      }
+
+      public static Insets searchFieldInsets() {
+        return insets(0, 12, 0, 10);
+      }
+    }
   }
 
 
