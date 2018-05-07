@@ -11,6 +11,7 @@ import com.intellij.openapi.util.Ref
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.platform.DirectoryProjectConfigurator
 import com.jetbrains.python.sdk.*
+import com.jetbrains.python.sdk.flavors.detectAndSetupPipEnv
 
 /**
  * @author vlan
@@ -61,6 +62,12 @@ class PythonSdkConfigurator : DirectoryProjectConfigurator {
       SdkConfigurationUtil.addSdk(newSdk)
       newSdk.associateWithModule(module, false)
       SdkConfigurationUtil.setDirectoryProjectSdk(project, newSdk)
+      return
+    }
+
+    detectAndSetupPipEnv(project, module, existingSdks)?.let {
+      SdkConfigurationUtil.addSdk(it)
+      SdkConfigurationUtil.setDirectoryProjectSdk(project, it)
       return
     }
 

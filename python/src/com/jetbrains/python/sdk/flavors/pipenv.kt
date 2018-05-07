@@ -17,7 +17,6 @@ import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.progress.Task
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.project.rootManager
 import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.roots.ui.configuration.projectRoot.ProjectSdksModel
 import com.intellij.openapi.util.io.FileUtil
@@ -40,12 +39,11 @@ const val PIP_FILE: String = "Pipfile"
 val PIPENV_ICON: Icon = PythonIcons.Python.PythonClosed
 
 /**
- * The Pipfiles found in the content roots of the module.
+ * The Pipfile found in the main content root of the module.
  */
-val Module.pipFiles: List<VirtualFile>
+val Module.pipFile: VirtualFile?
   get() =
-    rootManager.contentRoots
-      .mapNotNull { it.findChild(PIP_FILE) }
+    baseDir?.findChild(PIP_FILE)
 
 /**
  * Tells if the SDK was added as a pipenv.
@@ -148,11 +146,21 @@ fun runPipEnv(projectPath: @SystemDependent String, vararg args: String): String
 }
 
 /**
+ * Detects and sets up pipenv SDK for a module with Pipfile.
+ */
+fun detectAndSetupPipEnv(project: Project?, module: Module?, existingSdks: List<Sdk>): Sdk? {
+  if (module?.pipFile == null || getPipEnvExecutable() == null) {
+    return null
+  }
+  return setupPipEnvSdkUnderProgress(project, module, existingSdks, null, null, false)
+}
+
+/**
  * A quick-fix for setting up the pipenv for the module of the current PSI element.
  */
 class UsePipEnvQuickFix : LocalQuickFix {
   companion object {
-    fun isApplicable(module: Module): Boolean = module.pipFiles.any()
+    fun isApplicable(module: Module): Boolean = module.pipFile != null
 
     fun setUpPipEnv(project: Project, module: Module) {
       if (project.isDisposed || module.isDisposed) {
