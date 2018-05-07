@@ -412,4 +412,10 @@ public class DeferredIconImpl<T> extends CachingScalableJBIcon<DeferredIconImpl<
   public String toString() {
     return "Deferred. Base=" + myScaledDelegateIcon;
   }
+
+  @SuppressWarnings("unused") // used in OnAir
+  @NotNull
+  public Icon getDelegateIcon() {
+    return myDelegateIcon;
+  }
 }
