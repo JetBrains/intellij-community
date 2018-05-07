@@ -518,6 +518,12 @@ public class JBUI {
   }
 
   @NotNull
+  public static JBInsets insets(String propName, JBInsets defaultValue) {
+    JBInsets i = (JBInsets)UIManager.getInsets(propName);
+    return i != null ? i : defaultValue;
+  }
+
+  @NotNull
   public static JBInsets insets(int topBottom, int leftRight) {
     return insets(topBottom, leftRight, topBottom, leftRight);
   }

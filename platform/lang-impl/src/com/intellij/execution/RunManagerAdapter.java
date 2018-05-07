@@ -16,7 +16,7 @@
 package com.intellij.execution;
 
 /**
- * @deprecated Please use RunManagerListener directly
+ * @deprecated Please use {@link RunManagerListener} instead
  */
 @Deprecated
 public abstract class RunManagerAdapter implements RunManagerListener {

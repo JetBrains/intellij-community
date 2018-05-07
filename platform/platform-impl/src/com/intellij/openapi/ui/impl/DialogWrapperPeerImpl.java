@@ -256,7 +256,7 @@ public class DialogWrapperPeerImpl extends DialogWrapperPeer {
         }
       });
 
-      TouchBarsManager.closeTempTouchBar(myTouchBar);
+      TouchBarsManager.closeTouchBar(myTouchBar, true);
     };
 
     UIUtil.invokeLaterIfNeeded(disposer);

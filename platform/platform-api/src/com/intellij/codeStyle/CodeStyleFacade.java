@@ -75,7 +75,7 @@ public abstract class CodeStyleFacade {
   }
 
   /**
-   * @deprecated Use CodeStyle.getIndentSize(psiFile) instead.
+   * @deprecated Use {@link com.intellij.application.options.CodeStyle#getIndentSize(com.intellij.psi.PsiFile)} instead.
    */
   public abstract int getIndentSize(FileType fileType);
 

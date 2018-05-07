@@ -13,9 +13,6 @@ import java.util.Set;
 import java.util.function.Predicate;
 import java.util.stream.Stream;
 
-/**
- * @author Tagir Valeev
- */
 public class ConstructionUtils {
   private static final Set<String> GUAVA_UTILITY_CLASSES =
     ContainerUtil.set("com.google.common.collect.Maps", "com.google.common.collect.Lists", "com.google.common.collect.Sets");

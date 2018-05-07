@@ -1239,4 +1239,16 @@ public class ExpressionUtils {
       return true;
     });
   }
+
+  public static boolean isCompoundAssignmentOperation(@NotNull PsiBinaryExpression binExpr) {
+    IElementType tokenType = binExpr.getOperationTokenType();
+    return tokenType == JavaTokenType.PLUSEQ ||
+           tokenType == JavaTokenType.MINUSEQ ||
+           tokenType == JavaTokenType.ASTERISKEQ ||
+           tokenType == JavaTokenType.DIVEQ ||
+           tokenType == JavaTokenType.ANDEQ ||
+           tokenType == JavaTokenType.OREQ ||
+           tokenType == JavaTokenType.PERCEQ ||
+           tokenType == JavaTokenType.XOREQ;
+  }
 }

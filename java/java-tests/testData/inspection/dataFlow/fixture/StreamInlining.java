@@ -141,7 +141,7 @@ public class StreamInlining {
   static class MyClass {
     @Nullable
     static String nullableFunction(String s) {
-      return s;
+      return s.isEmpty() ? null : s;
     }
 
     static String functionThatDoesNotAcceptNull(@NotNull String s) {

@@ -143,9 +143,16 @@ public class CreateDesktopEntryAction extends DumbAwareAction {
     }
     execPath = StringUtil.wrapWithDoubleQuote(execPath);
 
-    String name = ApplicationNamesInfo.getInstance().getFullProductNameWithEdition();
+    ApplicationNamesInfo names = ApplicationNamesInfo.getInstance();
+
+    String name = names.getFullProductNameWithEdition();
+    String comment = names.getMotto();
     String wmClass = AppUIUtil.getFrameClass();
-    Map<String, String> vars = newHashMap(pair("$NAME$", name), pair("$SCRIPT$", execPath), pair("$ICON$", iconPath), pair("$WM_CLASS$", wmClass));
+    Map<String, String> vars = newHashMap(pair("$NAME$", name),
+                                          pair("$SCRIPT$", execPath),
+                                          pair("$ICON$", iconPath),
+                                          pair("$COMMENT$", comment),
+                                          pair("$WM_CLASS$", wmClass));
     String content = ExecUtil.loadTemplate(CreateDesktopEntryAction.class.getClassLoader(), "entry.desktop", vars);
     File entryFile = new File(FileUtil.getTempDirectory(), wmClass + ".desktop");
     FileUtil.writeToFile(entryFile, content);

@@ -681,4 +681,12 @@ public class AnnotationUtil {
     return flags;
   }
   //</editor-fold>
+
+  @NotNull
+  public static List<PsiAnnotationMemberValue> arrayAttributeValues(@Nullable PsiAnnotationMemberValue attributeValue) {
+    if (attributeValue instanceof PsiArrayInitializerMemberValue) {
+      return Arrays.asList(((PsiArrayInitializerMemberValue)attributeValue).getInitializers());
+    }
+    return ContainerUtil.createMaybeSingletonList(attributeValue);
+  }
 }

@@ -15,11 +15,9 @@
  */
 package com.intellij.openapi.actionSystem.impl;
 
-import com.intellij.ide.DataManager;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.ex.ActionUtil;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.application.impl.LaterInvocator;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.project.DumbService;
@@ -28,7 +26,6 @@ import com.intellij.openapi.util.ActionCallback;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -226,7 +223,7 @@ public class Utils{
         else {
           boolean hideDisabledChildren = hideDisabled || actionGroup instanceof CompactActionGroup;
           expandActionGroup(isInModalContext, (ActionGroup)child, list, presentationFactory, context, place, actionManager, false,
-                            hideDisabledChildren);
+                            hideDisabledChildren, isContextMenuAction, isToolbarAction);
         }
       }
       else if (child instanceof Separator) {

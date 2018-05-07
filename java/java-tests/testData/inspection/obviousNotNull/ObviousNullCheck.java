@@ -20,6 +20,8 @@ abstract class ObviousNullCheck {
 
     String s = Objects.requireNonNull(<warning descr="Useless null-check: literal is never null">" x "</warning>);
     String s1 = trim(" x ");
+
+    System.out.println(inferred(<warning descr="Useless null-check: literal is never null">"foo"</warning>));
   }
 
   @Contract(value="null -> fail", pure=true)
@@ -37,4 +39,8 @@ abstract class ObviousNullCheck {
     if(obj != null) throw new NullPointerException(msg);
   }
 
+  static String inferred(String str) {
+    if(str == null) throw new IllegalArgumentException();
+    return str;
+  }
 }

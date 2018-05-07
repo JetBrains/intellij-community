@@ -23,7 +23,8 @@ public class PathMacroUtil {
 
   @NonNls public static final String MODULE_DIR_MACRO_NAME = "MODULE_DIR";
   public static final String DEPRECATED_MODULE_DIR = "$" + MODULE_DIR_MACRO_NAME + "$";
-  public static final String MODULE_WORKING_DIR = "$MODULE_WORKING_DIR$";
+  public static final String MODULE_WORKING_DIR_NAME = "MODULE_WORKING_DIR";
+  public static final String MODULE_WORKING_DIR = "$" + MODULE_WORKING_DIR_NAME + "$";
 
   @NonNls public static final String DIRECTORY_STORE_NAME = ".idea";
   @NonNls public static final String APPLICATION_HOME_DIR = "APPLICATION_HOME_DIR";

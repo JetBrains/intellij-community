@@ -27,9 +27,6 @@ import org.jetbrains.annotations.NotNull;
 import java.util.Arrays;
 import java.util.List;
 
-/**
- * @author Tagir Valeev
- */
 public class EqualsOnSuspiciousObjectInspection extends BaseInspection {
   private final List<String> myClasses =
     Arrays.asList(CommonClassNames.JAVA_LANG_STRING_BUILDER, CommonClassNames.JAVA_LANG_STRING_BUFFER);

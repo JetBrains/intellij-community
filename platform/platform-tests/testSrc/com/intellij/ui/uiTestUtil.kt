@@ -10,6 +10,7 @@ import com.intellij.rt.execution.junit.FileComparisonFailure
 import com.intellij.testFramework.UsefulTestCase
 import com.intellij.testFramework.assertions.compareFileContent
 import com.intellij.ui.layout.*
+import com.intellij.ui.layout.migLayout.patched.*
 import com.intellij.util.SVGLoader
 import com.intellij.util.io.exists
 import com.intellij.util.io.inputStream
@@ -19,7 +20,6 @@ import com.intellij.util.ui.TestScaleHelper
 import com.intellij.util.ui.UIUtil
 import com.intellij.util.ui.paint.ImageComparator
 import io.netty.util.internal.SystemPropertyUtil
-import net.miginfocom.swing.MigLayout
 import org.junit.rules.ExternalResource
 import org.junit.rules.TestName
 import org.junit.runners.model.MultipleFailureException
@@ -130,7 +130,23 @@ internal fun compareSvgSnapshot(snapshotFile: Path, newData: String, isUpdateSna
 
   val uri = snapshotFile.toUri().toURL()
 
-  val old = snapshotFile.inputStream().use { SVGLoader.load(uri, it, 1.0) } as BufferedImage
+  fun updateSnapshot() {
+    System.out.println("UPDATED snapshot ${snapshotFile.fileName}")
+    snapshotFile.write(newData)
+  }
+
+  val old = try {
+    snapshotFile.inputStream().use { SVGLoader.load(uri, it, 1.0) } as BufferedImage
+  }
+  catch (e: Exception) {
+    if (isUpdateSnapshots) {
+      updateSnapshot()
+      return
+    }
+
+    throw e
+  }
+
   val new = newData.byteInputStream().use { SVGLoader.load(uri, it, 1.0) } as BufferedImage
   val imageMismatchError = StringBuilder("images mismatch: ")
   if (ImageComparator(ImageComparator.AASmootherComparator(0.1, 0.1, Color(0, 0, 0, 0))).compare(old, new, imageMismatchError)) {
@@ -142,8 +158,7 @@ internal fun compareSvgSnapshot(snapshotFile: Path, newData: String, isUpdateSna
   }
   catch (e: FileComparisonFailure) {
     if (isUpdateSnapshots) {
-      System.out.println("UPDATED snapshot ${snapshotFile.fileName}")
-      snapshotFile.write(newData)
+      updateSnapshot()
       return
     }
     else {

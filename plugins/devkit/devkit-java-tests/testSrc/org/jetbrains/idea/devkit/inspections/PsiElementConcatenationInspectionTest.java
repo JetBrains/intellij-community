@@ -20,28 +20,20 @@ import com.intellij.codeInspection.LocalInspectionTool;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.idea.devkit.DevkitJavaTestsUtil;
 
-import java.io.IOException;
-import java.io.UncheckedIOException;
-
 public class PsiElementConcatenationInspectionTest extends LightQuickFixParameterizedTestCase {
   @Override
   protected void beforeActionStarted(String testName, String contents) {
-    try {
-      createAndSaveFile("com/intellij/psi/PsiElement.java",
-                        "package com.intellij.psi;interface PsiElement {}");
-      createAndSaveFile("com/intellij/psi/PsiExpression.java",
-                        "package com.intellij.psi;interface PsiExpression extends PsiElement {}");
-      createAndSaveFile("com/intellij/psi/PsiType.java",
-                        "package com.intellij.psi;interface PsiType {}");
-      createAndSaveFile("com/intellij/psi/PsiElementFactory.java",
-                        "package com.intellij.psi;\n" +
-                        "interface PsiElementFactory {\n" +
-                        "PsiExpression createExpressionFromText(String str, PsiElement context);\n" +
-                        "}");
-    }
-    catch (IOException e) {
-      throw new UncheckedIOException(e);
-    }
+    createAndSaveFile("com/intellij/psi/PsiElement.java",
+                      "package com.intellij.psi;interface PsiElement {}");
+    createAndSaveFile("com/intellij/psi/PsiExpression.java",
+                      "package com.intellij.psi;interface PsiExpression extends PsiElement {}");
+    createAndSaveFile("com/intellij/psi/PsiType.java",
+                      "package com.intellij.psi;interface PsiType {}");
+    createAndSaveFile("com/intellij/psi/PsiElementFactory.java",
+                      "package com.intellij.psi;\n" +
+                      "interface PsiElementFactory {\n" +
+                      "PsiExpression createExpressionFromText(String str, PsiElement context);\n" +
+                      "}");
     super.beforeActionStarted(testName, contents);
   }
 

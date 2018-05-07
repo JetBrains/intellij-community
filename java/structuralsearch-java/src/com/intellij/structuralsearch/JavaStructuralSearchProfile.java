@@ -1,6 +1,7 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.structuralsearch;
 
+import com.intellij.codeInsight.AnnotationUtil;
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
 import com.intellij.codeInsight.template.JavaCodeContextType;
 import com.intellij.codeInsight.template.TemplateContextType;
@@ -224,7 +225,7 @@ public class JavaStructuralSearchProfile extends StructuralSearchProfile {
 
   @Override
   public List<MatchPredicate> getCustomPredicates(MatchVariableConstraint constraint, String name, MatchOptions options) {
-    final List<MatchPredicate> result = new ArrayList<>(2);
+    final List<MatchPredicate> result = new SmartList<>();
 
     if (!StringUtil.isEmptyOrSpaces(constraint.getNameOfExprType())) {
       final MatchPredicate predicate = new ExprTypePredicate(
@@ -492,18 +493,9 @@ public class JavaStructuralSearchProfile extends StructuralSearchProfile {
         return;
       }
 
-      for(PsiNameValuePair pair:annotation.getParameterList().getAttributes()) {
-        final PsiAnnotationMemberValue value = pair.getValue();
-
-        if (value instanceof PsiArrayInitializerMemberValue) {
-          for(PsiAnnotationMemberValue v:((PsiArrayInitializerMemberValue)value).getInitializers()) {
-            final String name = StringUtil.unquoteString(v.getText());
-            checkModifier(name);
-          }
-
-        } else if (value != null) {
-          final String name = StringUtil.unquoteString(value.getText());
-          checkModifier(name);
+      for (PsiNameValuePair pair : annotation.getParameterList().getAttributes()) {
+        for (PsiAnnotationMemberValue v : AnnotationUtil.arrayAttributeValues(pair.getValue())) {
+          checkModifier(StringUtil.unquoteString(v.getText()));
         }
       }
     }

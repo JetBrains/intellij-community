@@ -108,6 +108,10 @@ public class PushDownTest extends LightRefactoringTestCase {
     doTestImplements(true, true);
   }
 
+  public void testPassingImplementsToAnonymous() {
+    doTestImplements(false, true);
+  }
+
   public void testInterfaceVisibilityInClass() {
     doTest();
   }

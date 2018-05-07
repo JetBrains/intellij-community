@@ -3,8 +3,8 @@ package com.intellij.ide.ui.laf.intellij;
 
 import com.intellij.ide.ui.laf.darcula.ui.DarculaSpinnerUI;
 import com.intellij.util.ui.EmptyIcon;
-import com.intellij.util.ui.IconCache;
 import com.intellij.util.ui.JBUI;
+import com.intellij.util.ui.LafIconLookup;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
@@ -19,7 +19,7 @@ import static com.intellij.ide.ui.laf.darcula.DarculaUIUtil.maximize;
  * @author Konstantin Bulenkov
  */
 public class MacIntelliJSpinnerUI extends DarculaSpinnerUI {
-  private static final Icon DEFAULT_ICON = EmptyIcon.create(IconCache.getIcon("spinnerRight"));
+  private static final Icon DEFAULT_ICON = EmptyIcon.create(LafIconLookup.getIcon("spinnerRight"));
 
   @SuppressWarnings({"MethodOverridesStaticMethodOfSuperclass", "UnusedDeclaration"})
   public static ComponentUI createUI(JComponent c) {
@@ -54,7 +54,7 @@ public class MacIntelliJSpinnerUI extends DarculaSpinnerUI {
       g2.fill(rect);
     }
 
-    Icon icon = IconCache.getIcon("spinnerRight", false, false, c.isEnabled());
+    Icon icon = LafIconLookup.getIcon("spinnerRight", false, false, c.isEnabled());
     icon.paintIcon(c, g, x, i.top);
   }
 

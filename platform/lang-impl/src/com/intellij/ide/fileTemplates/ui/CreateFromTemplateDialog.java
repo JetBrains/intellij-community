@@ -132,7 +132,8 @@ public class CreateFromTemplateDialog extends DialogWrapper {
         newName = mkDirs.newName;
         directory = mkDirs.directory;
       }
-      myCreatedElement = FileTemplateUtil.createFromTemplate(myTemplate, newName, myAttrPanel.getProperties(myDefaultProperties), directory);
+      Properties properties = myAttrPanel.getProperties(myDefaultProperties);
+      myCreatedElement = FileTemplateUtil.createFromTemplate(myTemplate, newName, properties, directory);
     }
     catch (Exception e) {
       showErrorDialog(e);

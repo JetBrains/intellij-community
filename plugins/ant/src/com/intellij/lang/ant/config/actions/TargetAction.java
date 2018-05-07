@@ -25,18 +25,18 @@ import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.Presentation;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
-import com.intellij.util.ArrayUtil;
 
 import java.util.Collections;
+import java.util.List;
 
 public final class TargetAction extends DumbAwareAction {
   public static final String DEFAULT_TARGET_NAME = AntBundle.message("ant.target.name.default.target");
 
   private final String myBuildName;
-  private final String[] myTargets;
+  private final List<String> myTargets;
   private final String myDebugString;
   
-  public TargetAction(final AntBuildFile buildFile, final String displayName, final String[] targets, final String description) {
+  public TargetAction(final AntBuildFile buildFile, final String displayName, final List<String> targets, final String description) {
     Presentation templatePresentation = getTemplatePresentation();
     templatePresentation.setText(displayName, false);
     templatePresentation.setDescription(description);
@@ -58,7 +58,7 @@ public final class TargetAction extends DumbAwareAction {
     for (final AntBuildFile buildFile : AntConfiguration.getInstance(project).getBuildFileList()) {
       final String name = buildFile.getPresentableName();
       if (name != null && myBuildName.equals(name)) {
-        String[] targets = myTargets.length == 1 && DEFAULT_TARGET_NAME.equals(myTargets[0]) ? ArrayUtil.EMPTY_STRING_ARRAY : myTargets;
+        final List<String> targets = myTargets.size() == 1 && DEFAULT_TARGET_NAME.equals(myTargets.iterator().next()) ? Collections.emptyList() : myTargets;
         ExecutionHandler.runBuild((AntBuildFileBase)buildFile, targets, null, e.getDataContext(), Collections.emptyList(), AntBuildListener.NULL);
         return;
       }

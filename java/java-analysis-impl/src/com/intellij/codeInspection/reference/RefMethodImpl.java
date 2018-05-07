@@ -295,7 +295,10 @@ public class RefMethodImpl extends RefJavaElementImpl implements RefMethod {
     refUtil.addTypeReference(method, method.getReturnType(), getRefManager(), this);
 
     for (RefParameter parameter : getParameters()) {
-      refUtil.setIsFinal(parameter, parameter.getElement().hasModifierProperty(PsiModifier.FINAL));
+      PsiParameter psiParameter = parameter.getElement();
+      if (psiParameter != null) {
+        refUtil.setIsFinal(parameter, psiParameter.hasModifierProperty(PsiModifier.FINAL));
+      }
     }
 
     getRefManager().fireBuildReferences(this);

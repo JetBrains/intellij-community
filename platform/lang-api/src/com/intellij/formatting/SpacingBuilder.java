@@ -180,7 +180,7 @@ public class SpacingBuilder {
 
   /**
    * @param codeStyleSettings
-   * @deprecated Use other constructors!
+   * @deprecated Use {@link #SpacingBuilder(CodeStyleSettings, Language)} or {@link #SpacingBuilder(CommonCodeStyleSettings)} instead
    */
   @SuppressWarnings("unused")
   @Deprecated

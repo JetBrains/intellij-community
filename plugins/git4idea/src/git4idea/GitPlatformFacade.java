@@ -25,21 +25,18 @@ import org.jetbrains.annotations.NotNull;
 /**
  * @deprecated Use direct instance or ServiceManager methods to access platform structures.
  */
-@SuppressWarnings("DeprecatedIsStillUsed")
 @Deprecated
 public interface GitPlatformFacade {
 
   /**
    * @deprecated To remove in IDEA 2017. Use {@link ChangeListManager#getInstance(Project)}.
    */
-  @SuppressWarnings("unused")
   @Deprecated
   ChangeListManagerEx getChangeListManager(@NotNull Project project);
 
   /**
    * @deprecated To remove in IDEA 2017. Use {@link VfsUtil#markDirtyAndRefresh(boolean, boolean, boolean, VirtualFile...)}.
    */
-  @SuppressWarnings("unused")
   @Deprecated
   void hardRefresh(@NotNull VirtualFile root);
 }

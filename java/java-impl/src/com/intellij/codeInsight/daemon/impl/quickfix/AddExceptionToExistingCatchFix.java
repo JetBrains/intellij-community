@@ -132,9 +132,7 @@ public class AddExceptionToExistingCatchFix extends PsiElementBaseIntentionActio
 
     @Nullable
     static Context from(@NotNull PsiElement element) {
-      if (!PsiUtil.isLanguageLevel7OrHigher(element)) {
-        return null;
-      }
+      if (!element.isValid() || !PsiUtil.isLanguageLevel7OrHigher(element)) return null;
       List<PsiClassType> unhandledExceptions = new ArrayList<>(ExceptionUtil.getOwnUnhandledExceptions(element));
       if (unhandledExceptions.isEmpty()) return null;
       boolean containsInCatchOrFinally = containsInCatchOrFinally(element);

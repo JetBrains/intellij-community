@@ -5,8 +5,8 @@ import com.intellij.ide.ui.laf.darcula.ui.DarculaComboBoxUI;
 import com.intellij.ui.Gray;
 import com.intellij.util.IconUtil;
 import com.intellij.util.ui.EmptyIcon;
-import com.intellij.util.ui.IconCache;
 import com.intellij.util.ui.JBUI;
+import com.intellij.util.ui.LafIconLookup;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.components.BorderLayoutPanel;
 import org.jetbrains.annotations.NotNull;
@@ -29,7 +29,7 @@ import static com.intellij.ide.ui.laf.intellij.MacIntelliJTextBorder.BW;
  * @author Konstantin Bulenkov
  */
 public class MacIntelliJComboBoxUI extends DarculaComboBoxUI {
-  private static final Icon DEFAULT_ICON = EmptyIcon.create(IconCache.getIcon("comboRight", false, false, true, true));
+  private static final Icon DEFAULT_ICON = EmptyIcon.create(LafIconLookup.getIcon("comboRight", false, false, true, true));
 
   @SuppressWarnings({"MethodOverridesStaticMethodOfSuperclass", "UnusedDeclaration"})
   public static ComponentUI createUI(JComponent c) {
@@ -40,7 +40,9 @@ public class MacIntelliJComboBoxUI extends DarculaComboBoxUI {
     comboBox.setOpaque(false);
   }
 
-  @Override
+  protected void uninstallDarculaDefaults() {}
+
+    @Override
   protected JButton createArrowButton() {
     Color bg = comboBox.getBackground();
     Color fg = comboBox.getForeground();
@@ -49,7 +51,7 @@ public class MacIntelliJComboBoxUI extends DarculaComboBoxUI {
       public void paint(Graphics g) {
         if (!UIUtil.isUnderDefaultMacTheme()) return; // Paint events may still arrive after UI switch until entire UI is updated.
 
-        Icon icon = IconCache.getIcon("comboRight", false, false, comboBox.isEnabled(), comboBox.isEditable());
+        Icon icon = LafIconLookup.getIcon("comboRight", false, false, comboBox.isEnabled(), comboBox.isEditable());
         if (getWidth() > icon.getIconWidth() || getHeight() > icon.getIconHeight()) {
           Image image = IconUtil.toImage(icon);
           UIUtil.drawImage(g, image, new Rectangle(0, 0, getWidth(), getHeight()), null);

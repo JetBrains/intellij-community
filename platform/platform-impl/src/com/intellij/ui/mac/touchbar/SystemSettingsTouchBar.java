@@ -20,12 +20,6 @@ public class SystemSettingsTouchBar {
   private static final String ourDefaultsDomain = "com.apple.touchbar.agent";
   private static final String ourDefaultsNode = "PresentationModePerApp";
   private static final String ourDefaultsValue = "functionKeys";
-  private static final String ourApplicationId;
-
-  static {
-    // TODO: obtain "OS X Application identifier' via platform api
-    ourApplicationId = ApplicationInfoImpl.getInstanceEx().isEAP() ? "com.jetbrains.intellij-EAP" : "com.jetbrains.intellij";
-  }
 
   static boolean isTouchBarServerRunning() {
     final GeneralCommandLine cmdLine = new GeneralCommandLine("pgrep", ourTBServerProcessName);
@@ -42,7 +36,7 @@ public class SystemSettingsTouchBar {
     final ID defaults = Foundation.invoke("NSUserDefaults", "standardUserDefaults");
     final ID domain = Foundation.invoke(defaults, "persistentDomainForName:", Foundation.nsString(ourDefaultsDomain));
     final ID node = Foundation.invoke(domain, "objectForKey:", Foundation.nsString(ourDefaultsNode));
-    final ID val = Foundation.invoke(node, "objectForKey:", Foundation.nsString(ourApplicationId));
+    final ID val = Foundation.invoke(node, "objectForKey:", Foundation.nsString(_getAppId()));
     final String sval = Foundation.toStringViaUTF8(val);
     return sval != null && sval.equals(ourDefaultsValue);
   }
@@ -51,7 +45,7 @@ public class SystemSettingsTouchBar {
     final ID defaults = Foundation.invoke("NSUserDefaults", "standardUserDefaults");
     final ID domain = Foundation.invoke(defaults, "persistentDomainForName:", Foundation.nsString(ourDefaultsDomain));
     final ID node = Foundation.invoke(domain, "objectForKey:", Foundation.nsString(ourDefaultsNode));
-    final ID nsVal = Foundation.invoke(node, "objectForKey:", Foundation.nsString(ourApplicationId));
+    final ID nsVal = Foundation.invoke(node, "objectForKey:", Foundation.nsString(_getAppId()));
     final String sval = Foundation.toStringViaUTF8(nsVal);
     final boolean settingEnabled = sval != null && sval.equals(ourDefaultsValue);
     if (val == settingEnabled)
@@ -60,9 +54,9 @@ public class SystemSettingsTouchBar {
     final ID mdomain = Foundation.invoke(domain, "mutableCopy");
     final ID mnode = Foundation.invoke(node, "mutableCopy");
     if (val)
-      Foundation.invoke(mnode, "setObject:forKey:", Foundation.nsString(ourDefaultsValue), Foundation.nsString(ourApplicationId));
+      Foundation.invoke(mnode, "setObject:forKey:", Foundation.nsString(ourDefaultsValue), Foundation.nsString(_getAppId()));
     else
-      Foundation.invoke(mnode, "removeObjectForKey:", Foundation.nsString(ourApplicationId));
+      Foundation.invoke(mnode, "removeObjectForKey:", Foundation.nsString(_getAppId()));
     Foundation.invoke(mdomain, "setObject:forKey:", mnode, Foundation.nsString(ourDefaultsNode));
     Foundation.invoke(defaults, "setPersistentDomain:forName:", mdomain, Foundation.nsString(ourDefaultsDomain));
 
@@ -73,5 +67,10 @@ public class SystemSettingsTouchBar {
     } catch (IOException e) {
       LOG.error(e);
     }
+  }
+
+  private static String _getAppId() {
+    // TODO: obtain "OS X Application identifier' via platform api
+    return ApplicationInfoImpl.getInstanceEx().isEAP() ? "com.jetbrains.intellij-EAP" : "com.jetbrains.intellij";
   }
 }

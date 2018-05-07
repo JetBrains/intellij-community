@@ -6,9 +6,6 @@ import com.intellij.codeInspection.ClassGetClassInspection;
 import com.intellij.codeInspection.LocalInspectionTool;
 import org.jetbrains.annotations.NotNull;
 
-/**
- * @author Tagir Valeev
- */
 public class ClassGetClassInspectionTest extends LightQuickFixParameterizedTestCase {
   @NotNull
   @Override

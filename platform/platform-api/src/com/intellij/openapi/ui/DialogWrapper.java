@@ -772,7 +772,7 @@ public abstract class DialogWrapper {
   }
 
   @NotNull
-  private static Pair<Integer, String> extractMnemonic(@Nullable String text) {
+  public static Pair<Integer, String> extractMnemonic(@Nullable String text) {
     if (text == null) return Pair.create(0, null);
 
     int mnemonic = 0;

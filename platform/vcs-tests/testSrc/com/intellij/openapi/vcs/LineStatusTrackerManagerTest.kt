@@ -2,7 +2,7 @@
 package com.intellij.openapi.vcs
 
 import com.intellij.idea.Bombed
-import com.intellij.openapi.vcs.changes.Change
+import com.intellij.openapi.application.runWriteAction
 import com.intellij.openapi.vcs.ex.PartialLocalLineStatusTracker
 import com.intellij.openapi.vcs.ex.SimpleLocalLineStatusTracker
 import java.util.*
@@ -10,38 +10,6 @@ import java.util.*
 class LineStatusTrackerManagerTest : BaseLineStatusTrackerManagerTest() {
   private val FILE_1 = "file1.txt"
   private val FILE_2 = "file2.txt"
-
-  fun `test mock changes`() {
-    setBaseVersion(FILE_1, "oldText")
-    refreshCLM()
-    assertEquals(1, clm.allChanges.size)
-    assertEquals(Change.Type.DELETED, clm.allChanges.first().type)
-
-    addLocalFile(FILE_1, "text")
-    setBaseVersion(FILE_1, null)
-    refreshCLM()
-    assertEquals(1, clm.allChanges.size)
-    assertEquals(Change.Type.NEW, clm.allChanges.first().type)
-
-    setBaseVersion(FILE_1, "oldText")
-    refreshCLM()
-    assertEquals(1, clm.allChanges.size)
-    assertEquals(Change.Type.MODIFICATION, clm.allChanges.first().type)
-
-    removeLocalFile(FILE_1)
-    refreshCLM()
-    assertEquals(1, clm.allChanges.size)
-    assertEquals(Change.Type.DELETED, clm.allChanges.first().type)
-
-    removeBaseVersion(FILE_1)
-    refreshCLM()
-    assertEquals(0, clm.allChanges.size)
-
-    setBaseVersion(FILE_1, "oldText")
-    setBaseVersion(FILE_2, "oldText")
-    refreshCLM()
-    assertEquals(2, clm.allChanges.size)
-  }
 
   fun `test partial tracker lifecycle - editor for unchanged file`() {
     createChangelist("Test")
@@ -784,5 +752,73 @@ class LineStatusTrackerManagerTest : BaseLineStatusTrackerManagerTest() {
 
     assertNull(file.tracker)
     file.assertAffectedChangeLists("Default")
+  }
+
+  fun `test file rename - no partial changes`() {
+    createChangelist("Test")
+
+    val file = addLocalFile(FILE_1, "a_b_c_d_e")
+    setBaseVersion(FILE_1, "a_b_c_d_e2")
+    refreshCLM()
+    file.moveAllChangesTo("Test")
+    file.assertAffectedChangeLists("Test")
+
+    runWriteAction {
+      file.rename(this, FILE_2)
+    }
+    setBaseVersion(FILE_2, "a_b_c_d_e2", FILE_1)
+    refreshCLM()
+    file.assertAffectedChangeLists("Test")
+  }
+
+  @Bombed(year = 2018, month = Calendar.JUNE, day = 1, user = "Aleksey.Pivovarov")
+  fun `test file rename - with partial changes`() {
+    createChangelist("Test")
+
+    val file = addLocalFile(FILE_1, "a_b_c_d_e")
+    setBaseVersion(FILE_1, "a_b_c_d_e2")
+    refreshCLM()
+    file.moveAllChangesTo("Test")
+    runCommand { file.document.replaceString(0, 1, "a2") }
+    FILE_1.toFilePath.assertAffectedChangeLists("Test", "Default")
+
+    runWriteAction {
+      file.rename(this, FILE_2)
+    }
+    setBaseVersion(FILE_2, "a_b_c_d_e2", FILE_1)
+    refreshCLM()
+    FILE_2.toFilePath.assertAffectedChangeLists("Test", "Default")
+  }
+
+  @Bombed(year = 2018, month = Calendar.JUNE, day = 1, user = "Aleksey.Pivovarov")
+  fun `test file rename - with partial changes, try release tracker during CLM refresh`() {
+    createChangelist("Test")
+
+    val file = addLocalFile(FILE_1, "a_b_c_d_e")
+    setBaseVersion(FILE_1, "a_b_c_d_e2")
+    refreshCLM()
+    file.moveAllChangesTo("Test")
+    runCommand { file.document.replaceString(0, 1, "a2") }
+    FILE_1.toFilePath.assertAffectedChangeLists("Test", "Default")
+
+    runWriteAction {
+      file.rename(this, FILE_2)
+    }
+    setBaseVersion(FILE_2, "a_b_c_d_e2", FILE_1)
+
+    changeProvider.awaitAndBlockRefresh().use {
+      file.withOpenedEditor {
+        lstm.waitUntilBaseContentsLoaded()
+        releaseUnneededTrackers()
+
+        FILE_1.toFilePath.assertAffectedChangeLists("Test", "Default")
+      }
+    }
+
+    clm.waitUntilRefreshed()
+    lstm.waitUntilBaseContentsLoaded()
+    releaseUnneededTrackers()
+
+    FILE_2.toFilePath.assertAffectedChangeLists("Test", "Default")
   }
 }

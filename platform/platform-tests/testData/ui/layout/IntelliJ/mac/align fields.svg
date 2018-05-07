@@ -41,7 +41,7 @@
     <g fill="rgb(188,188,188)" text-rendering="optimizeLegibility" font-size="13px" font-family="'.SF NS Text'" transform="translate(145,23)" stroke="rgb(188,188,188)">
       <path d="M3 3 L335 3 L335 24 L3 24 L3 3 ZM4 4 L334 4 L334 23 L4 23 L4 4 Z" fill-rule="evenodd" clip-path="url(#1)" stroke="none"/>
     </g>
-    <g font-family="'.SF NS Text'" font-size="13px" transform="translate(0,29)">
+    <g font-family="'.SF NS Text'" font-size="13px" transform="translate(0,28)">
       <text x="0" xml:space="preserve" y="13" clip-path="url(#4)" stroke="none">Android module name:</text>
     </g>
     <g fill="rgb(29,29,29)" font-size="13px" font-family="'.SF NS Text'" transform="translate(144,-3)" stroke="rgb(29,29,29)">

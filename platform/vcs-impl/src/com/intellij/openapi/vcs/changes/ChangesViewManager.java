@@ -275,6 +275,11 @@ public class ChangesViewManager implements ChangesViewI, ProjectComponent, Persi
     }
   }
 
+  public void refreshImmediately() {
+    myRepaintAlarm.cancelAllRequests();
+    refreshView();
+  }
+
   private void refreshView() {
     if (myDisposed || !myProject.isInitialized() || ApplicationManager.getApplication().isUnitTestMode()) return;
     if (!ProjectLevelVcsManager.getInstance(myProject).hasActiveVcss()) return;

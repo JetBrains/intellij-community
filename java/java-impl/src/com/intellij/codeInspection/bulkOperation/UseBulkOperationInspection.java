@@ -21,9 +21,6 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import java.util.regex.Pattern;
 
-/**
- * @author Tagir Valeev
- */
 public class UseBulkOperationInspection extends AbstractBaseJavaLocalInspectionTool {
   private static final Pattern FOR_EACH_METHOD = Pattern.compile("forEach(Ordered)?");
 

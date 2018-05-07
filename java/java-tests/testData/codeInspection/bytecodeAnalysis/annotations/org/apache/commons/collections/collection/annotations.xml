@@ -24,6 +24,7 @@
     </item>
     <item name='org.apache.commons.collections.collection.AbstractCollectionDecorator java.util.Iterator iterator()'>
         <annotation name='org.jetbrains.annotations.Contract'>
+            <val name="value" val="&quot;-&gt;new&quot;"/>
             <val name="pure" val="true"/>
         </annotation>
     </item>
@@ -52,6 +53,11 @@
     <item name='org.apache.commons.collections.collection.CompositeCollection boolean removeAll(java.util.Collection) 0'>
         <annotation name='org.jetbrains.annotations.NotNull'/>
     </item>
+    <item name='org.apache.commons.collections.collection.CompositeCollection java.lang.Object[] toArray()'>
+        <annotation name='org.jetbrains.annotations.Contract'>
+            <val val="&quot;-&gt;new&quot;"/>
+        </annotation>
+    </item>
     <item name='org.apache.commons.collections.collection.CompositeCollection java.lang.Object[] toArray(java.lang.Object[]) 0'>
         <annotation name='org.jetbrains.annotations.NotNull'/>
     </item>
@@ -61,6 +67,9 @@
         </annotation>
     </item>
     <item name='org.apache.commons.collections.collection.CompositeCollection java.util.Collection toCollection()'>
+        <annotation name='org.jetbrains.annotations.Contract'>
+            <val val="&quot;-&gt;new&quot;"/>
+        </annotation>
         <annotation name='org.jetbrains.annotations.NotNull'/>
     </item>
     <item name='org.apache.commons.collections.collection.CompositeCollection void addComposited(java.util.Collection[]) 0'>
@@ -76,6 +85,9 @@
         <annotation name='org.jetbrains.annotations.NotNull'/>
     </item>
     <item name='org.apache.commons.collections.collection.PredicatedCollection java.util.Collection decorate(java.util.Collection, org.apache.commons.collections.Predicate)'>
+        <annotation name='org.jetbrains.annotations.Contract'>
+            <val val="&quot;_,_-&gt;new&quot;"/>
+        </annotation>
         <annotation name='org.jetbrains.annotations.NotNull'/>
     </item>
     <item name='org.apache.commons.collections.collection.PredicatedCollection java.util.Collection decorate(java.util.Collection, org.apache.commons.collections.Predicate) 0'>
@@ -107,6 +119,7 @@
     </item>
     <item name='org.apache.commons.collections.collection.SynchronizedCollection java.util.Collection decorate(java.util.Collection)'>
         <annotation name='org.jetbrains.annotations.Contract'>
+            <val name="value" val="&quot;_-&gt;new&quot;"/>
             <val name="pure" val="true"/>
         </annotation>
         <annotation name='org.jetbrains.annotations.NotNull'/>
@@ -116,6 +129,7 @@
     </item>
     <item name='org.apache.commons.collections.collection.SynchronizedCollection java.util.Iterator iterator()'>
         <annotation name='org.jetbrains.annotations.Contract'>
+            <val name="value" val="&quot;-&gt;new&quot;"/>
             <val name="pure" val="true"/>
         </annotation>
     </item>
@@ -132,6 +146,7 @@
     </item>
     <item name='org.apache.commons.collections.collection.TransformedCollection java.util.Collection decorate(java.util.Collection, org.apache.commons.collections.Transformer)'>
         <annotation name='org.jetbrains.annotations.Contract'>
+            <val name="value" val="&quot;_,_-&gt;new&quot;"/>
             <val name="pure" val="true"/>
         </annotation>
         <annotation name='org.jetbrains.annotations.NotNull'/>
@@ -142,6 +157,11 @@
     <item name='org.apache.commons.collections.collection.TransformedCollection java.util.Collection decorate(java.util.Collection, org.apache.commons.collections.Transformer) 1'>
         <annotation name='org.jetbrains.annotations.NotNull'/>
     </item>
+    <item name='org.apache.commons.collections.collection.TransformedCollection java.util.Collection transform(java.util.Collection)'>
+        <annotation name='org.jetbrains.annotations.Contract'>
+            <val val="&quot;_-&gt;new&quot;"/>
+        </annotation>
+    </item>
     <item name='org.apache.commons.collections.collection.TransformedCollection java.util.Collection transform(java.util.Collection) 0'>
         <annotation name='org.jetbrains.annotations.NotNull'/>
     </item>
@@ -151,6 +171,9 @@
         </annotation>
     </item>
     <item name='org.apache.commons.collections.collection.TypedCollection java.util.Collection decorate(java.util.Collection, java.lang.Class)'>
+        <annotation name='org.jetbrains.annotations.Contract'>
+            <val val="&quot;_,_-&gt;new&quot;"/>
+        </annotation>
         <annotation name='org.jetbrains.annotations.NotNull'/>
     </item>
     <item name='org.apache.commons.collections.collection.TypedCollection java.util.Collection decorate(java.util.Collection, java.lang.Class) 0'>
@@ -214,6 +237,7 @@
     </item>
     <item name='org.apache.commons.collections.collection.UnmodifiableBoundedCollection org.apache.commons.collections.BoundedCollection decorate(org.apache.commons.collections.BoundedCollection)'>
         <annotation name='org.jetbrains.annotations.Contract'>
+            <val name="value" val="&quot;_-&gt;new&quot;"/>
             <val name="pure" val="true"/>
         </annotation>
         <annotation name='org.jetbrains.annotations.NotNull'/>
@@ -223,6 +247,7 @@
     </item>
     <item name='org.apache.commons.collections.collection.UnmodifiableBoundedCollection org.apache.commons.collections.BoundedCollection decorateUsing(java.util.Collection)'>
         <annotation name='org.jetbrains.annotations.Contract'>
+            <val name="value" val="&quot;_-&gt;new&quot;"/>
             <val name="pure" val="true"/>
         </annotation>
         <annotation name='org.jetbrains.annotations.NotNull'/>

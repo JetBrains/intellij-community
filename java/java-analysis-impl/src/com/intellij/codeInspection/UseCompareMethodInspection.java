@@ -26,9 +26,6 @@ import java.util.Map;
 
 import static com.intellij.util.ObjectUtils.tryCast;
 
-/**
- * @author Tagir Valeev
- */
 public class UseCompareMethodInspection extends AbstractBaseJavaLocalInspectionTool {
   @NotNull
   @Override

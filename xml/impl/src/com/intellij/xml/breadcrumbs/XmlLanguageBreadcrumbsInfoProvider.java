@@ -41,6 +41,11 @@ public class XmlLanguageBreadcrumbsInfoProvider extends BreadcrumbsInfoProvider 
   @Override
   @NotNull
   public String getElementInfo(@NotNull final PsiElement e) {
+    return getInfo(e);
+  }
+
+  @NotNull
+  public static String getInfo(@NotNull PsiElement e) {
     final XmlTag tag = (XmlTag)e;
     final boolean addHtmlInfo = e.getContainingFile().getLanguage() != XMLLanguage.INSTANCE;
     return addHtmlInfo ? HtmlUtil.getTagPresentation(tag) : tag.getName();
@@ -49,7 +54,11 @@ public class XmlLanguageBreadcrumbsInfoProvider extends BreadcrumbsInfoProvider 
   @Override
   @Nullable
   public String getElementTooltip(@NotNull final PsiElement e) {
-    final XmlTag tag = (XmlTag)e;
+    return getTooltip((XmlTag)e);
+  }
+
+  @NotNull
+  public static String getTooltip(@NotNull XmlTag tag) {
     final StringBuilder result = new StringBuilder("&lt;");
     result.append(tag.getName());
     final XmlAttribute[] attributes = tag.getAttributes();

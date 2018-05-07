@@ -6,9 +6,6 @@ import com.intellij.codeInspection.ConditionalCanBeOptionalInspection;
 import com.intellij.codeInspection.LocalInspectionTool;
 import org.jetbrains.annotations.NotNull;
 
-/**
- * @author Tagir Valeev
- */
 public class ConditionalCanBeOptionalInspectionTest extends LightQuickFixParameterizedTestCase {
   @NotNull
   @Override

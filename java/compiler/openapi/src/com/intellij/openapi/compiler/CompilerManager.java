@@ -252,19 +252,19 @@ public abstract class CompilerManager {
                                    @Nullable Runnable onTaskFinished);
 
   /**
-   * @deprecated Use CompilerTopics.COMPILATION_STATUS
+   * @deprecated Use {@link CompilerTopics#COMPILATION_STATUS} instead
    */
   @Deprecated
   public abstract void addCompilationStatusListener(@NotNull CompilationStatusListener listener);
 
   /**
-   * @deprecated Use CompilerTopics.COMPILATION_STATUS
+   * @deprecated Use {@link CompilerTopics#COMPILATION_STATUS} instead
    */
   @Deprecated
   public abstract void addCompilationStatusListener(@NotNull CompilationStatusListener listener, @NotNull Disposable parentDisposable);
 
   /**
-   * @deprecated Use CompilerTopics.COMPILATION_STATUS
+   * @deprecated Use {@link CompilerTopics#COMPILATION_STATUS} instead
    */
   @Deprecated
   public abstract void removeCompilationStatusListener(@NotNull CompilationStatusListener listener);

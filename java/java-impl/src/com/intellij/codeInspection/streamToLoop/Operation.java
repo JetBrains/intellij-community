@@ -29,9 +29,6 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.function.Consumer;
 
-/**
- * @author Tagir Valeev
- */
 abstract class Operation {
   boolean changesVariable() {
     return false;

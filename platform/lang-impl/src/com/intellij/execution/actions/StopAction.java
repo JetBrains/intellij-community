@@ -280,18 +280,18 @@ public class StopAction extends DumbAwareAction implements AnAction.TransparentU
 
   private static TouchBar createStopSelectTouchBar(List<RunContentDescriptor> stoppableDescriptors) {
     try (NSAutoreleaseLock lock = new NSAutoreleaseLock()) {
-      TouchBar result = new TouchBar("select_running_to_stop");
+      TouchBar result = new TouchBar("select_running_to_stop", false);
       result.addButton(null, "Stop all", () -> {
         for (RunContentDescriptor sd : stoppableDescriptors)
           ExecutionManagerImpl.stopProcess(sd);
-        TouchBarsManager.closeTempTouchBar(result);
+        TouchBarsManager.closeTouchBar(result, true);
       });
       final TBItemScrubber stopScrubber = result.addScrubber();
       List<TBItemScrubber.ItemData> scrubItems = new ArrayList<>();
       for (RunContentDescriptor sd : stoppableDescriptors) {
         scrubItems.add(new TBItemScrubber.ItemData(sd.getIcon(), sd.getDisplayName(), () -> {
           ExecutionManagerImpl.stopProcess(sd);
-          TouchBarsManager.closeTempTouchBar(result);
+          TouchBarsManager.closeTouchBar(result, true);
         }));
       }
       stopScrubber.setItems(scrubItems);

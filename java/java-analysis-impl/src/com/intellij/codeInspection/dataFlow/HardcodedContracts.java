@@ -35,6 +35,7 @@ import java.util.List;
 import java.util.function.Supplier;
 
 import static com.intellij.codeInspection.dataFlow.ContractReturnValue.*;
+import static com.intellij.codeInspection.dataFlow.MethodContract.trivialContract;
 import static com.intellij.codeInspection.dataFlow.StandardMethodContract.ValueConstraint.*;
 import static com.intellij.codeInspection.dataFlow.StandardMethodContract.createConstraintArray;
 import static com.intellij.psi.CommonClassNames.*;
@@ -74,7 +75,7 @@ public class HardcodedContracts {
               ContractProvider.single(() -> new StandardMethodContract(new ValueConstraint[0], fail())))
     .register(anyOf(staticCall("com.google.common.base.Preconditions", "checkNotNull"),
                     staticCall(JAVA_UTIL_OBJECTS, "requireNonNull")),
-              (call, cnt) -> cnt > 0 ? failIfNull(0, cnt) : null)
+              (call, cnt) -> cnt > 0 ? failIfNull(0, cnt, true) : null)
     .register(staticCall("com.google.common.base.Preconditions", "checkArgument", "checkState"),
               (call, cnt) -> {
                 if (cnt == 0) return null;
@@ -124,7 +125,17 @@ public class HardcodedContracts {
     .register(instanceCall("java.util.Queue", "peek", "poll").parameterCount(0),
               (call, paramCount) -> Arrays.asList(MethodContract.singleConditionContract(
                 ContractValue.qualifier().specialField(SpecialField.COLLECTION_SIZE), RelationType.EQ,
-                ContractValue.zero(), returnNull()), MethodContract.trivialContract(returnAny())));
+                ContractValue.zero(), returnNull()), trivialContract(returnAny())))
+    .register(anyOf(staticCall(JAVA_LANG_MATH, "max").parameterTypes("int", "int"),
+                    staticCall(JAVA_LANG_MATH, "max").parameterTypes("long", "long"),
+                    staticCall(JAVA_LANG_INTEGER, "max").parameterTypes("int", "int"),
+                    staticCall(JAVA_LANG_LONG, "max").parameterTypes("long", "long")),
+              (call, paramCount) -> mathMinMax(true))
+    .register(anyOf(staticCall(JAVA_LANG_MATH, "min").parameterTypes("int", "int"),
+                    staticCall(JAVA_LANG_MATH, "min").parameterTypes("long", "long"),
+                    staticCall(JAVA_LANG_INTEGER, "min").parameterTypes("int", "int"),
+                    staticCall(JAVA_LANG_LONG, "min").parameterTypes("long", "long")),
+              (call, paramCount) -> mathMinMax(false));
 
   public static List<MethodContract> getHardcodedContracts(@NotNull PsiMethod method, @Nullable PsiMethodCallExpression call) {
     PsiClass owner = method.getContainingClass();
@@ -168,10 +179,10 @@ public class HardcodedContracts {
     }
     else if (TypeUtils.isOptional(owner)) {
       if (DfaOptionalSupport.isOptionalGetMethodName(methodName) || "orElseThrow".equals(methodName)) {
-        return Arrays.asList(optionalAbsentContract(fail()), MethodContract.trivialContract(returnNotNull()));
+        return Arrays.asList(optionalAbsentContract(fail()), trivialContract(returnNotNull()));
       }
       else if ("isPresent".equals(methodName)) {
-        return Arrays.asList(optionalAbsentContract(returnFalse()), MethodContract.trivialContract(returnTrue()));
+        return Arrays.asList(optionalAbsentContract(returnFalse()), trivialContract(returnTrue()));
       }
     }
     else if (MethodUtils.isEquals(method)) {
@@ -209,6 +220,12 @@ public class HardcodedContracts {
   static MethodContract specialFieldRangeContract(int index, RelationType type, SpecialField specialField) {
     return MethodContract.singleConditionContract(ContractValue.argument(index), type.getNegated(),
                                                   ContractValue.qualifier().specialField(specialField), fail());
+  }
+
+  static List<MethodContract> mathMinMax(boolean isMax) {
+    return Arrays.asList(MethodContract.singleConditionContract(
+      ContractValue.argument(0), isMax ? RelationType.GT : RelationType.LT, ContractValue.argument(1), returnParameter(0)),
+                         trivialContract(returnParameter(1)));
   }
 
   private static boolean isJunit(String className) {
@@ -256,7 +273,7 @@ public class HardcodedContracts {
       return Collections.singletonList(new StandardMethodContract(constraints, fail()));
     }
     if ("assertNotNull".equals(methodName)) {
-      return failIfNull(checkedParam, paramCount);
+      return failIfNull(checkedParam, paramCount, false);
     }
     return Collections.emptyList();
   }
@@ -320,7 +337,7 @@ public class HardcodedContracts {
         }
       }
       if (args.length == 1 && hasNotNullChainCall(call)) {
-        return failIfNull(0, 1);
+        return failIfNull(0, 1, false);
       }
     }
     return Collections.emptyList();
@@ -339,10 +356,14 @@ public class HardcodedContracts {
   }
 
   @NotNull
-  private static List<MethodContract> failIfNull(int argIndex, int argCount) {
+  private static List<MethodContract> failIfNull(int argIndex, int argCount, boolean returnArg) {
     ValueConstraint[] constraints = createConstraintArray(argCount);
     constraints[argIndex] = NULL_VALUE;
-    return Collections.singletonList(new StandardMethodContract(constraints, fail()));
+    StandardMethodContract failContract = new StandardMethodContract(constraints, fail());
+    if (returnArg) {
+      return Arrays.asList(failContract, new StandardMethodContract(createConstraintArray(argCount), returnParameter(argIndex)));
+    }
+    return Collections.singletonList(failContract);
   }
 
   public static boolean isHardcodedPure(PsiMethod method) {

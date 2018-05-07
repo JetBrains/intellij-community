@@ -41,6 +41,7 @@ import org.jetbrains.plugins.github.api.requests.GithubGistRequest.FileContent;
 import org.jetbrains.plugins.github.authentication.GithubAuthenticationManager;
 import org.jetbrains.plugins.github.authentication.accounts.GithubAccount;
 import org.jetbrains.plugins.github.ui.GithubCreateGistDialog;
+import org.jetbrains.plugins.github.util.GithubAccountsMigrationHelper;
 import org.jetbrains.plugins.github.util.GithubNotifications;
 import org.jetbrains.plugins.github.util.GithubSettings;
 import org.jetbrains.plugins.github.util.GithubUtil;
@@ -102,6 +103,7 @@ public class GithubCreateGistAction extends DumbAwareAction {
                                        @Nullable final Editor editor,
                                        @Nullable final VirtualFile file,
                                        @Nullable final VirtualFile[] files) {
+    if (!GithubAccountsMigrationHelper.getInstance().migrate(project)) return;
     GithubAuthenticationManager authManager = GithubAuthenticationManager.getInstance();
     if (!authManager.ensureHasAccounts(project)) return;
 

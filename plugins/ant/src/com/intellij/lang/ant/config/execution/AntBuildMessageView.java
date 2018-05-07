@@ -96,7 +96,7 @@ public final class AntBuildMessageView extends JPanel implements DataProvider, O
   private final JPanel myContentPanel;
   private final CardLayout myCardLayout;
   private AntBuildFileBase myBuildFile;
-  private final String[] myTargets;
+  private final List<String> myTargets;
   private final List<BuildFileProperty> myAdditionalProperties;
   private int myPriorityThreshold = PRIORITY_BRIEF;
   private volatile int myErrorCount;
@@ -147,7 +147,7 @@ public final class AntBuildMessageView extends JPanel implements DataProvider, O
   };
   @NonNls public static final String FILE_PREFIX = "file:";
 
-  private AntBuildMessageView(Project project, AntBuildFileBase buildFile, String[] targets, List<BuildFileProperty> additionalProperties) {
+  private AntBuildMessageView(Project project, AntBuildFileBase buildFile, List<String> targets, List<BuildFileProperty> additionalProperties) {
     super(new BorderLayout(2, 0));
     myProject = project;
     myBuildFile = buildFile;
@@ -243,7 +243,7 @@ public final class AntBuildMessageView extends JPanel implements DataProvider, O
    * @return can be null if user cancelled operation
    */
   @Nullable
-  public static AntBuildMessageView openBuildMessageView(Project project, AntBuildFileBase buildFile, String[] targets, List<BuildFileProperty> additionalProperties) {
+  public static AntBuildMessageView openBuildMessageView(Project project, AntBuildFileBase buildFile, List<String> targets, List<BuildFileProperty> additionalProperties) {
     final VirtualFile antFile = buildFile.getVirtualFile();
     if (!LOG.assertTrue(antFile != null)) {
       return null;
@@ -779,7 +779,7 @@ public final class AntBuildMessageView extends JPanel implements DataProvider, O
     }
   }
 
-  public String[] getTargets() {
+  public List<String> getTargets() {
     return myTargets;
   }
 

@@ -56,7 +56,7 @@
                   <text resource-bundle="messages/ApplicationBundle" key="editbox.auto.complete"/>
                 </properties>
               </component>
-              <grid id="f8961" layout-manager="GridLayoutManager" row-count="2" column-count="1" same-size-horizontally="false" same-size-vertically="false" hgap="-1" vgap="0">
+              <grid id="f8961" layout-manager="GridLayoutManager" row-count="1" column-count="1" same-size-horizontally="false" same-size-vertically="false" hgap="-1" vgap="0">
                 <margin top="0" left="0" bottom="0" right="0"/>
                 <constraints>
                   <grid row="8" column="0" row-span="1" col-span="1" vsize-policy="3" hsize-policy="3" anchor="0" fill="3" indent="0" use-parent-layout="false"/>
@@ -64,16 +64,6 @@
                 <properties/>
                 <border type="none"/>
                 <children>
-                  <component id="b0975" class="com.intellij.ui.components.JBLabel" binding="myDocComment">
-                    <constraints>
-                      <grid row="1" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="0" anchor="9" fill="0" indent="2" use-parent-layout="false"/>
-                    </constraints>
-                    <properties>
-                      <componentStyle value="SMALL"/>
-                      <enabled value="true"/>
-                      <text value="Only for explicitly invoked completion"/>
-                    </properties>
-                  </component>
                   <grid id="52549" layout-manager="GridBagLayout">
                     <constraints>
                       <grid row="0" column="0" row-span="1" col-span="1" vsize-policy="3" hsize-policy="3" anchor="0" fill="3" indent="0" use-parent-layout="false"/>

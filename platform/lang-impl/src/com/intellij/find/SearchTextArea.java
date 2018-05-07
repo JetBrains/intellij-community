@@ -493,7 +493,7 @@ public class SearchTextArea extends NonOpaquePanel implements PropertyChangeList
 
     @Override
     Icon getShowHistoryIcon() {
-      return IconCache.getIcon("searchFieldWithHistory");
+      return LafIconLookup.getIcon("searchFieldWithHistory");
     }
 
     @Override
@@ -547,7 +547,7 @@ public class SearchTextArea extends NonOpaquePanel implements PropertyChangeList
     Icon getShowHistoryIcon() {
       Icon searchIcon = UIManager.getIcon("TextField.darcula.searchWithHistory.icon");
       if (searchIcon == null) {
-        searchIcon = IconCache.getIcon("searchWithHistory");
+        searchIcon = LafIconLookup.getIcon("searchWithHistory");
       }
       return searchIcon;
     }
@@ -556,7 +556,7 @@ public class SearchTextArea extends NonOpaquePanel implements PropertyChangeList
     Icon getClearIcon() {
       Icon clearIcon = UIManager.getIcon("TextField.darcula.clear.icon");
       if (clearIcon == null) {
-        clearIcon = IconCache.getIcon("clear");
+        clearIcon = LafIconLookup.getIcon("clear");
       }
       return clearIcon;
     }

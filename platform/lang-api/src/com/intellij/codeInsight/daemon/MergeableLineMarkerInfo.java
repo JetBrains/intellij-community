@@ -1,6 +1,7 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInsight.daemon;
 
+import com.intellij.ide.IdeBundle;
 import com.intellij.openapi.editor.markup.GutterIconRenderer;
 import com.intellij.openapi.ui.popup.IPopupChooserBuilder;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
@@ -58,11 +59,13 @@ public abstract class MergeableLineMarkerInfo<T extends PsiElement> extends Line
   }
 
 
+  @NotNull
   public GutterIconRenderer.Alignment getCommonIconAlignment(@NotNull List<MergeableLineMarkerInfo> infos) {
     return GutterIconRenderer.Alignment.LEFT;
   }
 
-  public String getElementPresentation(PsiElement element) {
+  @NotNull
+  public String getElementPresentation(@NotNull PsiElement element) {
     return element.getText();
   }
 
@@ -117,7 +120,8 @@ public abstract class MergeableLineMarkerInfo<T extends PsiElement> extends Line
             template.getCommonIconAlignment(markers));
     }
 
-    private static TextRange getCommonTextRange(List<MergeableLineMarkerInfo> markers) {
+    @NotNull
+    private static TextRange getCommonTextRange(@NotNull List<MergeableLineMarkerInfo> markers) {
       int startOffset = Integer.MAX_VALUE;
       int endOffset = Integer.MIN_VALUE;
       for (MergeableLineMarkerInfo marker : markers) {
@@ -127,6 +131,7 @@ public abstract class MergeableLineMarkerInfo<T extends PsiElement> extends Line
       return TextRange.create(startOffset, endOffset);
     }
 
+    @NotNull
     private static GutterIconNavigationHandler<PsiElement> getCommonNavigationHandler(@NotNull final List<MergeableLineMarkerInfo> markers) {
       return (e, elt) -> {
         final List<LineMarkerInfo> infos = new ArrayList<>(markers);
@@ -140,11 +145,16 @@ public abstract class MergeableLineMarkerInfo<T extends PsiElement> extends Line
             icon = renderer.getIcon();
           }
           PsiElement element = ((LineMarkerInfo)dom).getElement();
-          assert element != null;
-          final String elementPresentation =
-            dom instanceof MergeableLineMarkerInfo
-            ? ((MergeableLineMarkerInfo)dom).getElementPresentation(element)
-            : element.getText();
+          final String elementPresentation;
+          if (element == null) {
+            elementPresentation = IdeBundle.message("node.structureview.invalid");
+          }
+          else if (dom instanceof MergeableLineMarkerInfo) {
+            elementPresentation = ((MergeableLineMarkerInfo)dom).getElementPresentation(element);
+          }
+          else {
+            elementPresentation = element.getText();
+          }
           String text = StringUtil.first(elementPresentation, 100, true).replace('\n', ' ');
 
           final JBLabel label = new JBLabel(text, icon, SwingConstants.LEFT);

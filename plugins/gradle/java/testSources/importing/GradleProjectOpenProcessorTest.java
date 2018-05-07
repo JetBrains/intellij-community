@@ -18,6 +18,7 @@ import com.intellij.openapi.projectRoots.ProjectJdkTable;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.projectRoots.impl.SdkConfigurationUtil;
 import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.profile.codeInspection.InspectionProfileManager;
 import com.intellij.profile.codeInspection.ProjectInspectionProfileManager;
@@ -31,6 +32,7 @@ import org.jetbrains.plugins.gradle.util.GradleConstants;
 import org.junit.Test;
 import org.junit.runners.Parameterized;
 
+import java.io.File;
 import java.io.IOException;
 import java.util.Arrays;
 import java.util.Collection;
@@ -60,6 +62,7 @@ public class GradleProjectOpenProcessorTest extends GradleImportingTestCase {
   @Override
   public void setUp() throws Exception {
     super.setUp();
+    removedSdks.clear();
     WriteAction.runAndWait(() -> {
       for (Sdk sdk : ProjectJdkTable.getInstance().getAllJdks()) {
         if (GRADLE_JDK_NAME.equals(sdk.getName())) continue;
@@ -73,6 +76,9 @@ public class GradleProjectOpenProcessorTest extends GradleImportingTestCase {
   public void tearDown() throws Exception {
     try {
       WriteAction.runAndWait(() -> {
+        Arrays.stream(ProjectJdkTable.getInstance().getAllJdks())
+              .filter(sdk -> !GRADLE_JDK_NAME.equals(sdk.getName()))
+              .forEach(ProjectJdkTable.getInstance()::removeJdk);
         for (Sdk sdk : removedSdks) {
           SdkConfigurationUtil.addSdk(sdk);
         }
@@ -183,6 +189,7 @@ public class GradleProjectOpenProcessorTest extends GradleImportingTestCase {
                          "    <version value=\"1.0\" />\n" +
                          "  </settings>\n" +
                          "</component>");
+    FileUtil.copyDir(new File(getProjectPath(), "gradle"), new File(getProjectPath(), "foo/gradle"));
 
     // run forceLoadSchemes before project startup activities
     // because one of them can define default inspection profile and forceLoadSchemes will do nothing later

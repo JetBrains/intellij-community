@@ -12,6 +12,7 @@ import org.jetbrains.plugins.github.api.GithubApiUtil;
 import org.jetbrains.plugins.github.api.data.GithubRepo;
 import org.jetbrains.plugins.github.authentication.GithubAuthenticationManager;
 import org.jetbrains.plugins.github.authentication.accounts.GithubAccount;
+import org.jetbrains.plugins.github.util.GithubAccountsMigrationHelper;
 import org.jetbrains.plugins.github.util.GithubGitHelper;
 import org.jetbrains.plugins.github.util.GithubUtil;
 
@@ -47,7 +48,8 @@ public class GithubRepositoryHostingService extends GitRepositoryHostingService 
 
       @Override
       public boolean enable() {
-        return myAuthenticationManager.requestNewAccount(project) != null;
+        if (!GithubAccountsMigrationHelper.getInstance().migrate(project)) return false;
+        return myAuthenticationManager.ensureHasAccounts(project);
       }
 
       @NotNull

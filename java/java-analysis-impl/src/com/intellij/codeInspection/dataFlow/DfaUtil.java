@@ -214,7 +214,7 @@ public class DfaUtil {
                                                  !PsiUtil.isAccessedForWriting((PsiExpression)e) ||
                                                  !ExpressionUtils.isReferenceTo((PsiExpression)e, target));
     Predicate<PsiElement> hasSideEffectCall = element -> !PsiTreeUtil.findChildrenOfType(element, PsiMethodCallExpression.class).stream()
-      .map(PsiMethodCallExpression::resolveMethod).allMatch(method -> method != null && ControlFlowAnalyzer.isPure(method));
+      .map(PsiMethodCallExpression::resolveMethod).allMatch(method -> method != null && JavaMethodContractUtil.isPure(method));
     for (PsiClassInitializer initializer : initializers) {
       if (initializer.hasModifierProperty(PsiModifier.STATIC) != target.hasModifierProperty(PsiModifier.STATIC)) continue;
       if (!isFinal && hasSideEffectCall.test(initializer)) {
@@ -286,7 +286,7 @@ public class DfaUtil {
     if (superClass == null) return false;
     PsiElement superCtor = JavaResolveUtil.resolveImaginarySuperCallInThisPlace(constructor, constructor.getProject(), superClass);
     if (!(superCtor instanceof PsiMethod)) return false;
-    return !ControlFlowAnalyzer.isPure((PsiMethod)superCtor);
+    return !JavaMethodContractUtil.isPure((PsiMethod)superCtor);
   }
 
   /**

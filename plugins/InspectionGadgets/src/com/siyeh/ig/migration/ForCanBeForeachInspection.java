@@ -301,10 +301,7 @@ public class ForCanBeForeachInspection extends ForCanBeForeachInspectionBase {
           contentVariableName = createNewVariableName(forStatement,
                                                       contentType, null);
         }
-        final Project project = forStatement.getProject();
-        final CodeStyleSettings codeStyleSettings =
-          CodeStyleSettingsManager.getSettings(project);
-        if (codeStyleSettings.getCustomSettings(JavaCodeStyleSettings.class).GENERATE_FINAL_LOCALS) {
+        if (JavaCodeStyleSettings.getInstance(forStatement.getContainingFile()).GENERATE_FINAL_LOCALS) {
           finalString = "final ";
         }
         else {
@@ -407,9 +404,7 @@ public class ForCanBeForeachInspection extends ForCanBeForeachInspectionBase {
         if (VariableAccessUtils.variableIsAssigned(variable, forStatement)) {
           final String collectionName = arrayReference.getReferenceName();
           contentVariableName = createNewVariableName(forStatement, componentType, collectionName);
-          final Project project = forStatement.getProject();
-          final CodeStyleSettings codeStyleSettings = CodeStyleSettingsManager.getSettings(project);
-          if (codeStyleSettings.getCustomSettings(JavaCodeStyleSettings.class).GENERATE_FINAL_LOCALS) {
+          if (JavaCodeStyleSettings.getInstance(forStatement.getContainingFile()).GENERATE_FINAL_LOCALS) {
             finalString = "final ";
           }
           else {
@@ -431,9 +426,7 @@ public class ForCanBeForeachInspection extends ForCanBeForeachInspectionBase {
       else {
         final String collectionName = arrayReference.getReferenceName();
         contentVariableName = createNewVariableName(forStatement, componentType, collectionName);
-        final Project project = forStatement.getProject();
-        final CodeStyleSettings codeStyleSettings = CodeStyleSettingsManager.getSettings(project);
-        if (codeStyleSettings.getCustomSettings(JavaCodeStyleSettings.class).GENERATE_FINAL_LOCALS) {
+        if (JavaCodeStyleSettings.getInstance(forStatement.getContainingFile()).GENERATE_FINAL_LOCALS) {
           finalString = "final ";
         }
         else {

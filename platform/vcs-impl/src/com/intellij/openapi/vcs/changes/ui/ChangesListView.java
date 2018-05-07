@@ -28,6 +28,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
+import javax.swing.tree.DefaultMutableTreeNode;
 import javax.swing.tree.DefaultTreeModel;
 import javax.swing.tree.TreePath;
 import java.awt.*;
@@ -361,6 +362,18 @@ public class ChangesListView extends Tree implements TypeSafeDataProvider, DnDAw
   @NotNull
   public Stream<Change> getChanges() {
     return getRoot().getObjectsUnderStream(Change.class);
+  }
+
+  @Nullable
+  public List<Change> getAllChangesFromSameChangelist(@NotNull Change change) {
+    DefaultMutableTreeNode node = TreeUtil.findNodeWithObject(getRoot(), change);
+    while (node != null) {
+      if (node instanceof ChangesBrowserChangeListNode) {
+        return ((ChangesBrowserChangeListNode)node).getAllChangesUnder();
+      }
+      node = (DefaultMutableTreeNode)node.getParent();
+    }
+    return null;
   }
 
   @NotNull

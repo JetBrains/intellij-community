@@ -33,9 +33,6 @@ import org.jetbrains.annotations.Nullable;
 
 import static com.intellij.util.ObjectUtils.tryCast;
 
-/**
- * @author Tagir Valeev
- */
 public interface ChainCallExtractor {
   ExtensionPointName<ChainCallExtractor> KEY = ExtensionPointName.create("com.intellij.java.refactoring.chainCallExtractor");
 

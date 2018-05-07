@@ -29,16 +29,16 @@
     <g fill="rgb(60,63,65)" font-size="13px" font-family="'.SF NS Text'" stroke="rgb(60,63,65)">
       <rect x="0" width="480" height="320" y="0" clip-path="url(#0)" stroke="none"/>
     </g>
-    <g fill="rgb(60,63,65)" font-size="13px" font-family="'.SF NS Text'" transform="translate(0,140)" stroke="rgb(60,63,65)">
+    <g fill="rgb(60,63,65)" font-size="13px" font-family="'.SF NS Text'" transform="translate(0,141)" stroke="rgb(60,63,65)">
       <rect x="0" width="316" height="20" y="0" clip-path="url(#1)" stroke="none"/>
       <text fill="rgb(187,187,187)" x="3" xml:space="preserve" y="15" clip-path="url(#1)" stroke="none">Should be an empty row above as a gap. </text>
       <text fill="rgb(88,157,246)" x="258" xml:space="preserve" y="15" clip-path="url(#1)" stroke="none">Click me</text>
       <text fill="rgb(187,187,187)" x="309" xml:space="preserve" y="15" clip-path="url(#1)" stroke="none">.</text>
     </g>
-    <g fill="rgb(60,63,65)" font-size="13px" font-family="'.SF NS Text'" transform="translate(103,103)" stroke="rgb(60,63,65)">
+    <g fill="rgb(60,63,65)" font-size="13px" font-family="'.SF NS Text'" transform="translate(103,104)" stroke="rgb(60,63,65)">
       <rect x="0" width="91" height="18" y="0" clip-path="url(#2)" stroke="none"/>
       <rect x="0" width="91" height="18" y="0" clip-path="url(#2)" stroke="none"/>
-      <image x="0" y="0" clip-path="url(#2)" width="18" xlink:href="../../../../../../platform-impl/src/com/intellij/ide/ui/laf/icons/darcula/checkBoxSelected.png" height="18" preserveAspectRatio="none"/>
+      <image x="0" y="0" clip-path="url(#2)" width="19" xlink:href="../../../../../../platform-impl/src/com/intellij/ide/ui/laf/icons/darcula/checkBoxSelected.svg" height="19" preserveAspectRatio="none"/>
       <text fill="rgb(187,187,187)" x="23" xml:space="preserve" y="14" clip-path="url(#2)" stroke="none">&amp;Remember</text>
     </g>
     <g fill="rgb(60,63,65)" font-size="13px" font-family="'.SF NS Text'" transform="translate(103,69)" stroke="rgb(60,63,65)">

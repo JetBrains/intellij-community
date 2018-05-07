@@ -190,6 +190,7 @@ class LinuxDistributionBuilder extends OsSpecificDistributionBuilder {
           filter(token: "NAME", value: productName)
           filter(token: "ICON", value: "\${SNAP}/bin/${buildContext.productProperties.baseFileName}.png")
           filter(token: "SCRIPT", value: customizer.snapName)
+          filter(token: "COMMENT", value: buildContext.applicationInfo.motto)
           filter(token: "WM_CLASS", value: getFrameClass())
         }
       }

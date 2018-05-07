@@ -4,7 +4,6 @@ package com.intellij.ui.layout.migLayout
 import com.intellij.CommonBundle
 import com.intellij.icons.AllIcons
 import com.intellij.ide.ui.laf.VisualPaddingsProvider
-import com.intellij.openapi.ui.ComponentWithBrowseButton
 import com.intellij.openapi.ui.OnePixelDivider
 import com.intellij.openapi.ui.panel.ComponentPanelBuilder
 import com.intellij.ui.SeparatorComponent
@@ -12,7 +11,6 @@ import com.intellij.ui.components.Label
 import com.intellij.ui.layout.*
 import com.intellij.util.SmartList
 import net.miginfocom.layout.CC
-import net.miginfocom.layout.PlatformDefaults
 import java.awt.Component
 import javax.swing.*
 import javax.swing.border.LineBorder
@@ -189,7 +187,9 @@ internal class MigLayoutRow(private val parent: MigLayoutRow?,
       }
     }
 
-    setVisualPaddings(component)
+    if (labeled && components.size == 2 && component.border is LineBorder) {
+      componentConstraints.get(components.first())?.vertical?.gapBefore = builder.defaultComponentConstraintCreator.vertical1pxGap
+    }
 
     // (not yet clear is it true or just some strange gaps from another source) MigLayout compensate outer visual paddings, but if there are more than one component in the cell,
     // inner horizontal spacing will be not corrected (e.g. between combobox and button will be 7px horizontal gap in case of macOS IntelliJ LaF), as solution, we set horizontal gap for such components).
@@ -269,40 +269,6 @@ internal class MigLayoutRow(private val parent: MigLayoutRow?,
       // set default grow if not yet defined
       builder.columnConstraints.grow(100f, columnIndex)
     }
-  }
-
-  private fun setVisualPaddings(originalComponent: JComponent) {
-    if (!spacing.isCompensateVisualPaddings) {
-      return
-    }
-
-    val component = if (originalComponent is ComponentWithBrowseButton<*>) {
-      originalComponent.childComponent
-    }
-    else {
-      originalComponent
-    }
-
-    val border = component.border ?: return
-    if (border is LineBorder) {
-      if (labeled && components.size == 2) {
-        componentConstraints.get(components.first())?.vertical?.gapBefore = builder.defaultComponentConstraintCreator.vertical1pxGap
-      }
-      return
-    }
-
-    val paddings = if (border is VisualPaddingsProvider) {
-      border.getVisualPaddings(originalComponent) ?: return
-    }
-    else {
-      border.getBorderInsets(component) ?: return
-    }
-
-    if (paddings.top == 0 && paddings.left == 0 && paddings.bottom == 0 && paddings.right == 0) {
-      return
-    }
-
-    originalComponent.putClientProperty(PlatformDefaults.VISUAL_PADDING_PROPERTY, intArrayOf(paddings.top, paddings.left, paddings.bottom, paddings.right))
   }
 
   private fun shareCellWithPreviousComponentIfNeed(component: JComponent, componentCC: Lazy<CC>): Boolean {

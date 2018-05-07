@@ -76,9 +76,9 @@ cellBounds:
 - [142, 84, 338, 14]
 componentBounds:
   In KeePass: [-3, -3, 92, 22]
-  'Database:': [26, 29, 61, 16]
+  'Database:': [26, 28, 61, 16]
   'JTextField #2': [139, 23, 311, 27]
   'JLabel #3': [451, 29, 21, 16]
-  'Master Password:': [26, 60, 110, 16]
+  'Master Password:': [26, 59, 110, 16]
   'JBPasswordField #5': [139, 54, 256, 27]
   Stored using weak encryption.: [143, 84, 155, 14]

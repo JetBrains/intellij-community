@@ -15,9 +15,6 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.stream.Stream;
 
-/**
- * @author Tagir Valeev
- */
 public class ExcessiveLambdaUsageInspection extends AbstractBaseJavaLocalInspectionTool {
 
   @NotNull

@@ -1,10 +1,14 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.java.codeInsight.navigation;
 
+import com.intellij.codeInsight.daemon.impl.HighlightInfo;
 import com.intellij.execution.TestStateStorage;
 import com.intellij.execution.testframework.JavaTestLocator;
 import com.intellij.execution.testframework.sm.runner.states.TestStateInfo;
 import com.intellij.execution.testframework.sm.runner.ui.TestStackTraceParser;
+import com.intellij.lang.annotation.HighlightSeverity;
+import com.intellij.openapi.editor.markup.EffectType;
+import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiMethod;
 import com.intellij.psi.PsiMethodCallExpression;
@@ -15,6 +19,7 @@ import com.intellij.execution.testframework.TestFailedLineInspection;
 import com.intellij.testIntegration.TestFailedLineManager;
 
 import java.util.Date;
+import java.util.List;
 
 public class FailedLineTest extends LightCodeInsightFixtureTestCase {
 
@@ -35,6 +40,11 @@ public class FailedLineTest extends LightCodeInsightFixtureTestCase {
     configure();
     myFixture.enableInspections(new TestFailedLineInspection());
     myFixture.testHighlighting();
+    List<HighlightInfo> infos = myFixture.doHighlighting(HighlightSeverity.ERROR);
+    assertEquals(1, infos.size());
+    TextAttributes attributes = infos.get(0).forcedTextAttributes;
+    assertNotNull(attributes);
+    assertEquals(EffectType.BOLD_DOTTED_LINE, attributes.getEffectType());
   }
 
   public void testTopStacktraceLine() {

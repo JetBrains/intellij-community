@@ -36,7 +36,7 @@ class GithubAuthenticationManager internal constructor(private val accountManage
     fun isAccountUnique(name: String, server: GithubServerPath) =
       accountManager.accounts.none { it.name == name && it.server == server }
 
-    val dialog = GithubLoginDialog(project, ::isAccountUnique)
+    val dialog = GithubLoginDialog(project, null, ::isAccountUnique)
     DialogManager.show(dialog)
     if (dialog.isOK) {
       val account = GithubAccount(dialog.getLogin(), dialog.getServer())

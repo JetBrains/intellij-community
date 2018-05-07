@@ -16,7 +16,6 @@
 package com.intellij.lang.ant.config.actions;
 
 import com.intellij.lang.ant.config.*;
-import com.intellij.lang.ant.config.impl.MetaTarget;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
@@ -25,6 +24,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.Set;
 
@@ -63,8 +63,9 @@ public final class AntBuildGroup extends ActionGroup implements DumbAware {
     final AntBuildModelBase model = (AntBuildModelBase)buildFile.getModel();
     if (model.getDefaultTargetName() != null) {
       DefaultActionGroup subgroup = new DefaultActionGroup();
-      subgroup.add(getOrCreateAction(buildFile, TargetAction.DEFAULT_TARGET_NAME, new String[]{TargetAction.DEFAULT_TARGET_NAME}, null,
-                                     model.getDefaultTargetActionId()));
+      subgroup.add(getOrCreateAction(
+        buildFile, TargetAction.DEFAULT_TARGET_NAME, Collections.singletonList(TargetAction.DEFAULT_TARGET_NAME), null, model.getDefaultTargetActionId())
+      );
       group.add(subgroup);
     }
 
@@ -89,9 +90,9 @@ public final class AntBuildGroup extends ActionGroup implements DumbAware {
         continue;
       }
       addedTargetNames.add(displayName);
-      final String[] targetsToRun = (target instanceof MetaTarget) ? ((MetaTarget)target).getTargetNames() : new String[]{displayName};
-      subgroup.add(getOrCreateAction(buildFile, displayName, targetsToRun, target.getNotEmptyDescription(),
-                                     ((AntBuildTargetBase)target).getActionId()));
+      subgroup.add(getOrCreateAction(
+        buildFile, displayName, target.getTargetNames(), target.getNotEmptyDescription(), ((AntBuildTargetBase)target).getActionId()
+      ));
     }
     if (subgroup.getChildrenCount() > 0) {
       group.add(subgroup);
@@ -100,7 +101,7 @@ public final class AntBuildGroup extends ActionGroup implements DumbAware {
 
   private static AnAction getOrCreateAction(final AntBuildFile buildFile,
                                             final String displayName,
-                                            final String[] targets,
+                                            final List<String> targets,
                                             final String targetDescription,
                                             final String actionId) {
     AnAction action = null;
