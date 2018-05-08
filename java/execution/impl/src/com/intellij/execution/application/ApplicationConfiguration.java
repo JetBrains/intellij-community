@@ -31,8 +31,7 @@ import java.util.Map;
 import java.util.Objects;
 
 public class ApplicationConfiguration extends ModuleBasedConfiguration<JavaRunConfigurationModule>
-  implements CommonJavaRunConfigurationParameters, ConfigurationWithCommandLineShortener, SingleClassConfiguration, ScopeBasedConfiguration,
-             RefactoringListenerProvider {
+  implements CommonJavaRunConfigurationParameters, ConfigurationWithCommandLineShortener, SingleClassConfiguration, RefactoringListenerProvider {
 
   /* deprecated, but 3rd-party used variables */
   @Deprecated public String MAIN_CLASS_NAME;
@@ -80,7 +79,7 @@ public class ApplicationConfiguration extends ModuleBasedConfiguration<JavaRunCo
 
   @Override
   public RunProfileState getState(@NotNull final Executor executor, @NotNull final ExecutionEnvironment env) throws ExecutionException {
-    final JavaCommandLineState state = new ApplicationCommandLineState<>(this, env);
+    final JavaCommandLineState state = new JavaApplicationCommandLineState<>(this, env);
     JavaRunConfigurationModule module = getConfigurationModule();
     state.setConsoleBuilder(TextConsoleBuilderFactory.getInstance().createBuilder(getProject(), module.getSearchScope()));
     return state;
@@ -260,7 +259,6 @@ public class ApplicationConfiguration extends ModuleBasedConfiguration<JavaRunCo
     }
   }
 
-  @Override
   public boolean isProvidedScopeIncluded() {
     return getOptions().getIncludeProvidedScope();
   }
@@ -330,13 +328,14 @@ public class ApplicationConfiguration extends ModuleBasedConfiguration<JavaRunCo
     getOptions().setSwingInspectorEnabled(value);
   }
 
-  /**
-   * @deprecated Use {@link ApplicationCommandLineState} instead.
-   */
-  @Deprecated
   public static class JavaApplicationCommandLineState<T extends ApplicationConfiguration> extends ApplicationCommandLineState<T> {
     public JavaApplicationCommandLineState(@NotNull final T configuration, final ExecutionEnvironment environment) {
       super(configuration, environment);
+    }
+
+    @Override
+    protected boolean isProvidedScopeIncluded() {
+      return myConfiguration.isProvidedScopeIncluded();
     }
   }
 }

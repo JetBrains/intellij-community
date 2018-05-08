@@ -6,7 +6,6 @@ import com.intellij.debugger.settings.DebuggerSettings;
 import com.intellij.execution.CommonJavaRunConfigurationParameters;
 import com.intellij.execution.ConfigurationWithCommandLineShortener;
 import com.intellij.execution.ExecutionException;
-import com.intellij.execution.ScopeBasedConfiguration;
 import com.intellij.execution.configurations.GeneralCommandLine;
 import com.intellij.execution.configurations.JavaParameters;
 import com.intellij.execution.configurations.JavaRunConfigurationModule;
@@ -26,11 +25,10 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.Map;
 
-public class ApplicationCommandLineState<T extends
+public abstract class ApplicationCommandLineState<T extends
   ModuleBasedConfiguration<JavaRunConfigurationModule> &
   CommonJavaRunConfigurationParameters &
-  ConfigurationWithCommandLineShortener &
-  ScopeBasedConfiguration> extends BaseJavaApplicationCommandLineState<T> {
+  ConfigurationWithCommandLineShortener> extends BaseJavaApplicationCommandLineState<T> {
 
   public ApplicationCommandLineState(@NotNull final T configuration, final ExecutionEnvironment environment) {
     super(environment, configuration);
@@ -47,7 +45,7 @@ public class ApplicationCommandLineState<T extends
     if (module.getModule() != null) {
       DumbService.getInstance(module.getProject()).runWithAlternativeResolveEnabled(() -> {
         int classPathType = JavaParametersUtil.getClasspathType(module, myConfiguration.getRunClass(), false,
-                                                                myConfiguration.isProvidedScopeIncluded());
+                                                                isProvidedScopeIncluded());
         JavaParametersUtil.configureModule(module, params, classPathType, jreHome);
       });
     }
@@ -96,4 +94,6 @@ public class ApplicationCommandLineState<T extends
       }
     }
   }
+
+  protected abstract boolean isProvidedScopeIncluded();
 }
