@@ -11,6 +11,7 @@ import com.intellij.execution.ExecutionBundle;
 import com.intellij.execution.ExecutionException;
 import com.intellij.execution.Executor;
 import com.intellij.execution.JavaRunConfigurationExtensionManager;
+import com.intellij.execution.application.ApplicationCommandLineState;
 import com.intellij.execution.application.ApplicationConfiguration;
 import com.intellij.execution.configurations.*;
 import com.intellij.execution.filters.TextConsoleBuilderFactory;
@@ -57,7 +58,7 @@ public class JavaScratchConfiguration extends ApplicationConfiguration {
 
   @Override
   public RunProfileState getState(@NotNull Executor executor, @NotNull ExecutionEnvironment env) throws ExecutionException {
-    final JavaCommandLineState state = new JavaApplicationCommandLineState<JavaScratchConfiguration>(this, env) {
+    final JavaCommandLineState state = new ApplicationCommandLineState<JavaScratchConfiguration>(this, env) {
       @Override
       protected void setupJavaParameters(JavaParameters params) throws ExecutionException {
         super.setupJavaParameters(params);
