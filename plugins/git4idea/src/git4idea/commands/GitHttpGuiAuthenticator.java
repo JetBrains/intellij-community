@@ -2,35 +2,30 @@
 package git4idea.commands;
 
 import com.intellij.credentialStore.CredentialAttributes;
-import com.intellij.credentialStore.CredentialPromptDialog;
-import com.intellij.credentialStore.CredentialRequestResult;
+import com.intellij.credentialStore.CredentialAttributesKt;
 import com.intellij.credentialStore.Credentials;
+import com.intellij.dvcs.DvcsRememberedInputs;
 import com.intellij.ide.passwordSafe.PasswordSafe;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Couple;
-import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.AuthData;
 import com.intellij.util.ObjectUtils;
-import com.intellij.util.ThreeState;
 import com.intellij.util.UriUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.io.URLUtil;
-import com.intellij.vcsUtil.AuthDialog;
 import git4idea.remote.GitHttpAuthDataProvider;
 import git4idea.remote.GitRememberedInputs;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.Arrays;
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
-
-import static com.intellij.credentialStore.CredentialAttributesKt.*;
 
 /**
  * <p>Handles "ask username" and "ask password" requests from Git:
@@ -39,7 +34,9 @@ import static com.intellij.credentialStore.CredentialAttributesKt.*;
  * <p>If no username is specified in the URL, Git queries for the username and for the password consecutively.
  * In this case to avoid showing dialogs twice, the component asks for both credentials at once,
  * and remembers the password to provide it to the Git process during the next request without requiring user interaction.</p>
- * <p>New instance of the GitAskPassGuiHandler should be created for each session, i. e. for each remote operation call.</p>
+ * <p>New instance of the  {@link GitHttpGuiAuthenticator} should be created for each session, i. e. for each remote operation call.</p>
+ * <p>
+ * git version <=1.7.7 does not provide url for methods (method parameter will be a blank line)
  *
  * @author Kirill Likhodedov
  */
@@ -47,262 +44,382 @@ class GitHttpGuiAuthenticator implements GitHttpAuthenticator {
 
   private static final Logger LOG = Logger.getInstance(GitHttpGuiAuthenticator.class);
   private static final Class<GitHttpAuthenticator> PASS_REQUESTER = GitHttpAuthenticator.class;
+  public static final String HTTP_SCHEME_URL_PREFIX = "http" + URLUtil.SCHEME_SEPARATOR;
 
   @NotNull private final Project myProject;
-  @NotNull private final String myTitle;
-  @NotNull private final Collection<String> myUrlsFromCommand;
+  @Nullable private final String myPresetUrl; //taken from GitHandler, used if git does not provide url
 
-  @Nullable private String myPassword;
-  @Nullable private String myPasswordKey;
-  @Nullable private String myUnifiedUrl;
-  @Nullable private String myLogin;
+  private String myUnifiedUrl = null; //remote url with http schema and no username
+  private String myPassword = null;
 
-  private ThreeState myIsMemoryOnly = ThreeState.UNSURE;
-
-  @Nullable private GitHttpAuthDataProvider myDataProvider;
-  private boolean myWasCancelled;
+  @NotNull private final PasswordSafeProvider myPasswordSafeProvider;
+  @NotNull private final DialogProvider myDialogProvider;
+  @NotNull private AuthDataProvider myCurrentProvider;
 
   GitHttpGuiAuthenticator(@NotNull Project project,
                           @NotNull GitCommand command,
-                          @NotNull Collection<String> url) {
+                          @NotNull Collection<String> urls) {
     myProject = project;
-    myTitle = "Git " + StringUtil.capitalize(command.name());
-    myUrlsFromCommand = url;
+    myPresetUrl = findFirstHttpUrl(urls);
+
+    myPasswordSafeProvider = new PasswordSafeProvider(GitRememberedInputs.getInstance(), PasswordSafe.getInstance());
+    myDialogProvider = new DialogProvider(myProject, myPasswordSafeProvider);
+    myCurrentProvider = myPasswordSafeProvider;
   }
 
+  @Nullable
+  private static String findFirstHttpUrl(@NotNull Collection<String> urls) {
+    return ContainerUtil.find(urls, url -> UriUtil.splitScheme(url).getFirst().startsWith("http"));
+  }
+
+  /**
+   * At this point either {@link #myPassword} is filled in {@link #askUsername(String)} or username is contained in url
+   */
   @Override
   @NotNull
   public String askPassword(@NotNull String url) {
-    LOG.debug("askPassword. url=" + url + ", passwordKnown=" + (myPassword != null) + ", wasCancelled=" + myWasCancelled);
-    if (myPassword != null) {  // already asked in askUsername
-      return myPassword;
-    }
-    if (myWasCancelled) { // already pressed cancel in askUsername or force ignore authentication
+    if (wasCancelled()) {
+      LOG.debug("askPassword. url=" + url + ", cancelled in askUsername");
       return "";
-    }
-    myUnifiedUrl = getUnifiedUrl(url);
-    Pair<GitHttpAuthDataProvider, AuthData> authData = findBestAuthData(getUnifiedUrl(url));
-    if (authData != null && authData.second.getPassword() != null) {
-      String password = authData.second.getPassword();
-      myDataProvider = authData.first;
-      myPassword = password;
-      LOG.debug("askPassword. dataProvider=" + getCurrentDataProviderName() + ", unifiedUrl= " + getUnifiedUrl(url) +
-                ", login=" + authData.second.getLogin() + ", passwordKnown=true");
-      myIsMemoryOnly = ThreeState.UNSURE;
-      return password;
     }
 
-    myPasswordKey = getUnifiedUrl(url);
-    CredentialRequestResult result = CredentialPromptDialog.askCredentials(myProject,
-                                                                           myTitle, "Password for " + getDisplayableUrl(url),
-                                                                           credentialAttributes(myPasswordKey), false);
-    String password = result == null ? null : result.getCredentials().getPasswordAsString();
-    LOG.debug("askPassword. Password was asked and returned: " + (password == null ? "NULL" : password.isEmpty() ? "EMPTY" : "NOT EMPTY"));
-    if (password == null) {
-      myWasCancelled = true;
+    if (myPassword != null) {
+      LOG.debug("askPassword. Data already filled in askUsername.");
+      return ObjectUtils.assertNotNull(myPassword);
+    }
+
+    Couple<String> usernameAndUrl = splitToUsernameAndUnifiedUrl(getRequiredUrl(url));
+    myUnifiedUrl = usernameAndUrl.second;
+    LOG.debug("askPassword. gitUrl=" + url + ", unifiedUrl=" + myUnifiedUrl);
+
+    String login = usernameAndUrl.first;
+    if (login == null) {
+      LOG.warn("askPassword. Could not find username");
       return "";
     }
-    myIsMemoryOnly = ThreeState.fromBoolean(result.isRemember());
-    myPassword = password;
-    myDataProvider = new BaseGitAuthDataProvider() {
-      @Override
-      public AuthData getAuthData(@NotNull String url) {
-        return new AuthData(StringUtil.notNullize(getUsername(url)), myPassword);
+    String password = null;
+    for (AuthDataProvider delegate : getProviders()) {
+      AuthData data = delegate.getDataForUser(myUnifiedUrl, login);
+      if (data != null && data.getPassword() != null) {
+        password = data.getPassword();
+        myCurrentProvider = delegate;
+        break;
       }
-    };
-    return password;
-  }
-
-  @NotNull
-  private static CredentialAttributes credentialAttributes(@NotNull String key) {
-    return new CredentialAttributes(generateServiceName("Git HTTP", key), key, PASS_REQUESTER);
-  }
-
-  @NotNull
-  private static CredentialAttributes oldCredentialAttributes(@NotNull String key) {
-    return CredentialAttributes(PASS_REQUESTER, key);
+    }
+    LOG.debug("askPassword. provider=" + myCurrentProvider.getName() + ", login=" + login + ", passwordKnown=" + (password != null));
+    return StringUtil.notNullize(password);
   }
 
   @Override
   @NotNull
   public String askUsername(@NotNull String url) {
-    myUnifiedUrl = getUnifiedUrl(url);
-    Pair<GitHttpAuthDataProvider, AuthData> authData = findBestAuthData(getUnifiedUrl(url));
+    myUnifiedUrl = splitToUsernameAndUnifiedUrl(getRequiredUrl(url)).second;
+    LOG.debug("askUsername. gitUrl=" + url + ", unifiedUrl=" + myUnifiedUrl);
+
     String login = null;
     String password = null;
-    if (authData != null) {
-      login = authData.second.getLogin();
-      password = authData.second.getPassword();
-      myDataProvider = authData.first;
+    for (AuthDataProvider provider : getProviders()) {
+      AuthData data = provider.getData(myUnifiedUrl, login);
+      if (data != null) {
+        if (login == null) {
+          login = data.getLogin();
+          myCurrentProvider = provider;
+        }
+        if (data.getPassword() != null) {
+          login = data.getLogin();
+          password = data.getPassword();
+          myCurrentProvider = provider;
+          break;
+        }
+      }
     }
-    LOG.debug("askUsername. dataProvider=" + getCurrentDataProviderName() + ", unifiedUrl= " + getUnifiedUrl(url) +
-              ", login=" + login + ", passwordKnown=" + (password != null));
-    if (login != null && password != null) {
-      myPassword = password;
-      myIsMemoryOnly = ThreeState.UNSURE;
-      return login;
-    }
-
-    AuthDialog dialog = showAuthDialog(getDisplayableUrl(url), login);
-    LOG.debug("askUsername. Showed dialog:" + (dialog == null ? "NULL" : dialog.isOK() ? "OK" : "Cancel"));
-    if (dialog == null || !dialog.isOK()) {
-      myWasCancelled = true;
-      return "";
-    }
-
-    // remember values to store in the database afterwards, if authentication succeeds
-    myPassword = dialog.getPassword();
-    myLogin = dialog.getUsername();
-    myIsMemoryOnly = ThreeState.fromBoolean(!dialog.isRememberPassword());
-    myPasswordKey = makeKey(myUnifiedUrl, myLogin);
-
-    return myLogin;
+    LOG.debug("askUsername. provider=" + myCurrentProvider.getName() + ", login=" + login + ", passwordKnown=" + (password != null));
+    if (login != null && password != null) myPassword = password;
+    return StringUtil.notNullize(login);
   }
 
-  @Nullable
-  private AuthDialog showAuthDialog(final String url, final String login) {
-    final Ref<AuthDialog> dialog = Ref.create();
-    ApplicationManager.getApplication().invokeAndWait(() -> {
-      dialog.set(new AuthDialog(myProject, myTitle, "Enter credentials for " + url, login, null, true));
-      dialog.get().show();
-    }, ModalityState.any());
-    return dialog.get();
+  @NotNull
+  private List<AuthDataProvider> getProviders() {
+    List<AuthDataProvider> delegates = new ArrayList<>();
+    delegates.add(myPasswordSafeProvider);
+    delegates.addAll(ContainerUtil.map(GitHttpAuthDataProvider.EP_NAME.getExtensions(),
+                                       (provider) -> new ExtensionAdapterProvider(myProject, provider)));
+    delegates.add(myDialogProvider);
+    return delegates;
   }
 
   @Override
   public void saveAuthData() {
-    // save login and url
-    if (myUnifiedUrl != null && myLogin != null) {
-      GitRememberedInputs.getInstance().addUrl(myUnifiedUrl, myLogin);
-    }
+    if (myUnifiedUrl == null) return;
 
-    // save password
-    if (myIsMemoryOnly != ThreeState.UNSURE && myPasswordKey != null && myPassword != null) {
-      Credentials credentials = new Credentials(myPasswordKey, myPassword);
-      PasswordSafe.getInstance().set(credentialAttributes(myPasswordKey), credentials, myIsMemoryOnly.toBoolean());
-    }
+    LOG.debug("saveAuthData. provider=" + myCurrentProvider.getName() + ", unifiedUrl=" + myUnifiedUrl);
+    myCurrentProvider.onAuthSuccess(myUnifiedUrl);
   }
 
   @Override
   public void forgetPassword() {
-    LOG.debug("forgetPassword. dataProvider=" + getCurrentDataProviderName() + ", unifiedUrl=" + myUnifiedUrl);
-    if (myDataProvider != null && myUnifiedUrl != null) {
-      myDataProvider.forgetPassword(myUnifiedUrl);
-    }
-  }
+    if (myUnifiedUrl == null) return;
 
-  @Nullable
-  private String getCurrentDataProviderName() {
-    return myDataProvider == null ? null : myDataProvider.getClass().getName();
+    LOG.debug("forgetPassword. provider=" + myCurrentProvider.getName() + ", unifiedUrl=" + myUnifiedUrl);
+    myCurrentProvider.onAuthFailure(myUnifiedUrl);
   }
 
   @Override
   public boolean wasCancelled() {
-    return myWasCancelled;
-  }
-
-  /**
-   * Get the URL to display to the user in the authentication dialog.
-   */
-  @NotNull
-  private String getDisplayableUrl(@Nullable String urlFromGit) {
-    return !StringUtil.isEmptyOrSpaces(urlFromGit) ? urlFromGit : findPresetHttpUrl();
+    return myDialogProvider.isCancelled();
   }
 
   /**
    * Get the URL to be used as the authentication data identifier in the password safe and the settings.
+   * git <=1.7.7 does not provide url so we have to pass it via handler
    */
   @NotNull
-  private String getUnifiedUrl(@Nullable String urlFromGit) {
-    return changeHttpsToHttp(StringUtil.isEmptyOrSpaces(urlFromGit) ? findPresetHttpUrl() : urlFromGit);
-  }
-
-  @NotNull
-  private String findPresetHttpUrl() {
-    return ObjectUtils.chooseNotNull(ContainerUtil.find(myUrlsFromCommand, url -> {
-      String scheme = UriUtil.splitScheme(url).getFirst();
-      return scheme.startsWith("http");
-    }), ContainerUtil.getFirstItem(myUrlsFromCommand));
+  private String getRequiredUrl(@Nullable String urlFromGit) {
+    if (urlFromGit != null && !StringUtil.isEmptyOrSpaces(urlFromGit)) {
+      return urlFromGit;
+    }
+    else {
+      if (myPresetUrl == null) throw new IllegalStateException("Invalid remote urls in handler");
+      return myPresetUrl;
+    }
   }
 
   /**
-   * If the url scheme is HTTPS, store it as HTTP in the database, not to make user enter and remember same credentials twice.
+   * Split url to a pair of username and http-schemed url without username
+   *
+   * @return nullable username and non-nullable url
    */
   @NotNull
-  private static String changeHttpsToHttp(@NotNull String url) {
-    String prefix = "https";
-    if (url.startsWith(prefix)) {
-      return "http" + url.substring(prefix.length());
+  private static Couple<String> splitToUsernameAndUnifiedUrl(@NotNull String url) {
+    if (StringUtil.isEmptyOrSpaces(url)) return Couple.of(null, url);
+
+    Couple<String> couple = UriUtil.splitScheme(url);
+    String urlWithoutScheme = couple.second;
+    if (StringUtil.isEmptyOrSpaces(urlWithoutScheme)) return Couple.of(null, url);
+
+    int i = urlWithoutScheme.indexOf('@');
+    if (i <= 0) {
+      return Couple.of(null, HTTP_SCHEME_URL_PREFIX + urlWithoutScheme);
     }
-    return url;
+    else {
+      return Couple.of(urlWithoutScheme.substring(0, i), HTTP_SCHEME_URL_PREFIX + urlWithoutScheme.substring(i + 1));
+    }
   }
 
-  // return the first that knows username + password; otherwise return the first that knows just the username
-  @Nullable
-  private Pair<GitHttpAuthDataProvider, AuthData> findBestAuthData(@NotNull String url) {
-    Pair<GitHttpAuthDataProvider, AuthData> candidate = null;
-    for (GitHttpAuthDataProvider provider : getProviders()) {
-      AuthData data = provider.getAuthData(myProject, url);
-      if (data != null) {
-        Pair<GitHttpAuthDataProvider, AuthData> pair = Pair.create(provider, data);
-        if (data.getPassword() != null) {
-          return pair;
-        }
-        if (candidate == null) {
-          candidate = pair;
-        }
-      }
-    }
-    return candidate;
-  }
+  private interface AuthDataProvider {
+    @NotNull
+    String getName();
 
-  @NotNull
-  private List<GitHttpAuthDataProvider> getProviders() {
-    List<GitHttpAuthDataProvider> providers = ContainerUtil.newArrayList();
-    providers.add(new BaseGitAuthDataProvider() {
-      @Override
-      public AuthData getAuthData(@NotNull String url) {
-        String userName = getUsername(url);
-        String key = makeKey(url, userName);
-        Credentials credentials = getAndMigrateCredentials(oldCredentialAttributes(key), credentialAttributes(key));
-        return new AuthData(StringUtil.notNullize(userName), credentials == null ? null : credentials.getPasswordAsString());
-      }
-    });
-    providers.addAll(Arrays.asList(GitHttpAuthDataProvider.EP_NAME.getExtensions()));
-    return providers;
-  }
-
-  /**
-   * Makes the password database key for the URL: inserts the login after the scheme: http://login@url.
-   */
-  @NotNull
-  private static String makeKey(@NotNull String url, @Nullable String login) {
-    if (login == null) {
-      return url;
-    }
-    Couple<String> pair = UriUtil.splitScheme(url);
-    String scheme = pair.getFirst();
-    if (!StringUtil.isEmpty(scheme)) {
-      return scheme + URLUtil.SCHEME_SEPARATOR + login + "@" + pair.getSecond();
-    }
-    return login + "@" + url;
-  }
-
-  private abstract class BaseGitAuthDataProvider implements GitHttpAuthDataProvider {
     @Nullable
-    protected final String getUsername(@NotNull String url) {
-      return GitRememberedInputs.getInstance().getUserNameForUrl(url);
+    AuthData getData(@NotNull String url, @Nullable String login);
+
+    @Nullable
+    AuthData getDataForUser(@NotNull String url, @NotNull String login);
+
+    void onAuthSuccess(@NotNull String url);
+
+    void onAuthFailure(@NotNull String url);
+  }
+
+  private static class ExtensionAdapterProvider implements AuthDataProvider {
+    @NotNull private final Project myProject;
+    @NotNull private final GitHttpAuthDataProvider myDelegate;
+
+    public ExtensionAdapterProvider(@NotNull Project project, @NotNull GitHttpAuthDataProvider provider) {
+      myProject = project;
+      myDelegate = provider;
+    }
+
+    @NotNull
+    @Override
+    public String getName() {
+      return myDelegate.getClass().getName();
     }
 
     @Override
-    public final void forgetPassword(@NotNull String url) {
-      myPassword = null;
-      myIsMemoryOnly = ThreeState.UNSURE;
-      // clear in any case from PasswordSafe otherwise we get loop askPassword -> from password safe -> forgetPassword -> askPassword -> from password safe
-      String key = myPasswordKey == null ? makeKey(url, getUsername(url)) : myPasswordKey;
+    public AuthData getData(@NotNull String url, @Nullable String suggestedLogin) {
+      return myDelegate.getAuthData(myProject, url);
+    }
+
+    @Override
+    public AuthData getDataForUser(@NotNull String url, @NotNull String login) {
+      return myDelegate.getAuthData(myProject, url, login);
+    }
+
+    @Override
+    public void onAuthSuccess(@NotNull String url) {}
+
+    @Override
+    public void onAuthFailure(@NotNull String url) {
+       myDelegate.forgetPassword(url);
+    }
+  }
+
+  private static class DialogProvider implements AuthDataProvider {
+    @NotNull private final Project myProject;
+    @NotNull private final PasswordSafeProvider myPasswordSafeDelegate;
+    private boolean myCancelled;
+
+    public DialogProvider(@NotNull Project project, @NotNull PasswordSafeProvider passwordSafeDelegate) {
+      myProject = project;
+      myPasswordSafeDelegate = passwordSafeDelegate;
+    }
+
+    @NotNull
+    @Override
+    public String getName() {
+      return "Dialog";
+    }
+
+    @Override
+    @Nullable
+    public AuthData getData(@NotNull String url, @Nullable String login) {
+      return getDataFromDialog(url, login, true);
+    }
+
+    @Override
+    @Nullable
+    public AuthData getDataForUser(@NotNull String url, @NotNull String login) {
+      return getDataFromDialog(url, login, false);
+    }
+
+    @Override
+    public void onAuthSuccess(@NotNull String url) {
+      myPasswordSafeDelegate.onAuthSuccess(url);
+    }
+
+    @Override
+    public void onAuthFailure(@NotNull String url) {
+      myPasswordSafeDelegate.onAuthFailure(url);
+    }
+
+    @Nullable
+    private AuthData getDataFromDialog(@NotNull String url, @Nullable String username, boolean editableUsername) {
+
+
+      GitHttpLoginDialog dialog = showAuthDialog(UriUtil.splitScheme(url).second, username, editableUsername);
+      LOG.debug("Showed dialog:" + (dialog.isOK() ? "OK" : "Cancel"));
+      if (!dialog.isOK()) {
+        myCancelled = true;
+        return null;
+      }
+
+      myPasswordSafeDelegate.setSavePassword(dialog.getRememberPassword());
+      AuthData authData = new AuthData(dialog.getUsername(), dialog.getPassword());
+      myPasswordSafeDelegate.setData(authData);
+      return authData;
+    }
+
+    @NotNull
+    private GitHttpLoginDialog showAuthDialog(@NotNull String url, @Nullable String username, boolean editableUsername) {
+      Ref<GitHttpLoginDialog> dialog = Ref.create();
+      ApplicationManager.getApplication().invokeAndWait(() -> {
+        dialog.set(new GitHttpLoginDialog(myProject, url, myPasswordSafeDelegate.isRemembering(), username, editableUsername));
+        git4idea.DialogManager.show(dialog.get());
+      }, ModalityState.any());
+      return dialog.get();
+    }
+
+    public boolean isCancelled() {
+      return myCancelled;
+    }
+  }
+
+  private static class PasswordSafeProvider implements AuthDataProvider {
+    @NotNull private final DvcsRememberedInputs myRememberedInputs;
+    @NotNull private final PasswordSafe myPasswordSafe;
+
+    private AuthData myData;
+
+    private boolean mySavePassword = false;
+
+    public PasswordSafeProvider(@NotNull DvcsRememberedInputs gitRememberedInputs, @NotNull PasswordSafe passwordSafe) {
+      myRememberedInputs = gitRememberedInputs;
+      myPasswordSafe = passwordSafe;
+    }
+
+    @NotNull
+    @Override
+    public String getName() {
+      return "Password Safe";
+    }
+
+    @Override
+    @Nullable
+    public AuthData getData(@NotNull String url, @Nullable String login) {
+      if (login == null) {
+        String rememberedLogin = myRememberedInputs.getUserNameForUrl(url);
+        if (rememberedLogin == null) {
+          return null;
+        }
+        return getDataForUser(url, rememberedLogin);
+      }
+      return getDataForUser(url, login);
+    }
+
+    @Override
+    @Nullable
+    public AuthData getDataForUser(@NotNull String url, @NotNull String login) {
+      String key = makeKey(url, login);
+      Credentials credentials = CredentialAttributesKt.getAndMigrateCredentials(oldCredentialAttributes(key), credentialAttributes(key));
+      String password = StringUtil.nullize(credentials == null ? null : credentials.getPasswordAsString());
+      return new AuthData(login, password);
+    }
+
+    @Override
+    public void onAuthSuccess(@NotNull String url) {
+      if (myData == null || myData.getPassword() == null) return;
+      myRememberedInputs.addUrl(url, myData.getLogin());
+      String key = makeKey(url, myData.getLogin());
+      Credentials credentials = new Credentials(key, myData.getPassword());
+      myPasswordSafe.set(credentialAttributes(key), credentials, !mySavePassword);
+    }
+
+    @Override
+    public void onAuthFailure(@NotNull String url) {
+      if (myData == null) return;
+      String key = makeKey(url, myData.getLogin());
       CredentialAttributes attributes = credentialAttributes(key);
       LOG.debug("forgetPassword. key=" + attributes.getUserName());
-      PasswordSafe.getInstance().set(attributes, null);
+      myPasswordSafe.set(attributes, null);
+    }
+
+    public void setData(@NotNull AuthData data) {
+      myData = data;
+    }
+
+    public void setSavePassword(boolean savePassword) {
+      mySavePassword = savePassword;
+    }
+
+    public boolean isRemembering() {
+      return !myPasswordSafe.isMemoryOnly();
+    }
+
+    @NotNull
+    private static CredentialAttributes credentialAttributes(@NotNull String key) {
+      return new CredentialAttributes(CredentialAttributesKt.generateServiceName("Git HTTP", key), key, PASS_REQUESTER);
+    }
+
+    @NotNull
+    private static CredentialAttributes oldCredentialAttributes(@NotNull String key) {
+      return CredentialAttributesKt.CredentialAttributes(PASS_REQUESTER, key);
+    }
+
+    /**
+     * Makes the password database key for the URL: inserts the login after the scheme: http://login@url.
+     */
+    @NotNull
+    private static String makeKey(@NotNull String url, @Nullable String login) {
+      if (login == null) {
+        return url;
+      }
+      Couple<String> pair = UriUtil.splitScheme(url);
+      String scheme = pair.getFirst();
+      if (!StringUtil.isEmpty(scheme)) {
+        return scheme + URLUtil.SCHEME_SEPARATOR + login + "@" + pair.getSecond();
+      }
+      return login + "@" + url;
     }
   }
 }

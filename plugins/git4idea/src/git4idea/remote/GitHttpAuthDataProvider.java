@@ -32,6 +32,11 @@ public interface GitHttpAuthDataProvider {
   ExtensionPointName<GitHttpAuthDataProvider> EP_NAME = ExtensionPointName.create("Git4Idea.GitHttpAuthDataProvider");
 
   @Nullable
+  default AuthData getAuthData(@NotNull Project project, @NotNull String url, @NotNull String login) {
+    return getAuthData(project, url);
+  }
+
+  @Nullable
   default AuthData getAuthData(@NotNull Project project, @NotNull String url) {
     return getAuthData(url);
   }
