@@ -2338,14 +2338,14 @@ public class SearchEverywhereAction extends AnAction implements CustomComponentA
   }
 
   //todo return private (same for other) #UX-1
-  public static class MoreIndex {
-    public volatile int classes = -1;
-    public volatile int files = -1;
-    public volatile int actions = -1;
-    public volatile int settings = -1;
-    public volatile int symbols = -1;
-    public volatile int runConfigurations = -1;
-    public volatile int structure = -1;
+  static class MoreIndex {
+    volatile int classes = -1;
+    volatile int files = -1;
+    volatile int actions = -1;
+    volatile int settings = -1;
+    volatile int symbols = -1;
+    volatile int runConfigurations = -1;
+    volatile int structure = -1;
 
     public void shift(int index, int shift) {
       if (runConfigurations >= index) runConfigurations += shift;
@@ -2358,17 +2358,17 @@ public class SearchEverywhereAction extends AnAction implements CustomComponentA
     }
   }
 
-  public static class TitleIndex {
-    public volatile int topHit = -1;
-    public volatile int recentFiles = -1;
-    public volatile int runConfigurations = -1;
-    public volatile int classes = -1;
-    public volatile int structure = -1;
-    public volatile int files = -1;
-    public volatile int actions = -1;
-    public volatile int settings = -1;
-    public volatile int toolWindows = -1;
-    public volatile int symbols = -1;
+  static class TitleIndex {
+    volatile int topHit = -1;
+    volatile int recentFiles = -1;
+    volatile int runConfigurations = -1;
+    volatile int classes = -1;
+    volatile int structure = -1;
+    volatile int files = -1;
+    volatile int actions = -1;
+    volatile int settings = -1;
+    volatile int toolWindows = -1;
+    volatile int symbols = -1;
 
     final String gotoClassTitle;
     final String gotoFileTitle;
@@ -2441,7 +2441,7 @@ public class SearchEverywhereAction extends AnAction implements CustomComponentA
     }
   }
 
-  private static class SearchResult extends ArrayList<Object> {
+  static class SearchResult extends ArrayList<Object> {
     boolean needMore;
   }
 
@@ -2450,10 +2450,10 @@ public class SearchEverywhereAction extends AnAction implements CustomComponentA
     @SuppressWarnings("UseOfObsoleteCollectionType")
     Vector myDelegate;
 
-    public volatile TitleIndex titleIndex = new TitleIndex();
-    public volatile MoreIndex moreIndex = new MoreIndex();
+    volatile TitleIndex titleIndex = new TitleIndex();
+    volatile MoreIndex moreIndex = new MoreIndex();
 
-    public SearchListModel() {
+    private SearchListModel() {
       super();
       myDelegate = ReflectionUtil.getField(DefaultListModel.class, this, Vector.class, "delegate");
     }
@@ -2508,7 +2508,7 @@ public class SearchEverywhereAction extends AnAction implements CustomComponentA
     }
   }
 
-  public static class More extends JPanel {
+  static class More extends JPanel {
     static final More instance = new More();
     final JLabel label = new JLabel("    ... more   ");
 
@@ -2540,10 +2540,10 @@ public class SearchEverywhereAction extends AnAction implements CustomComponentA
       .withBackground(UIUtil.getListBackground());
   }
 
-  public enum HistoryType {PSI, FILE, SETTING, ACTION, RUN_CONFIGURATION}
+  private enum HistoryType {PSI, FILE, SETTING, ACTION, RUN_CONFIGURATION}
 
   @Nullable
-  public static HistoryType parseHistoryType(@Nullable String name) {
+  private static HistoryType parseHistoryType(@Nullable String name) {
     try {
       return HistoryType.valueOf(name);
     } catch (Exception e) {
@@ -2552,7 +2552,7 @@ public class SearchEverywhereAction extends AnAction implements CustomComponentA
   }
 
   //todo history maybe unnecessary #UX-1
-  public static class HistoryItem {
+  private static class HistoryItem {
     final String pattern, type, fqn;
 
     private HistoryItem(String pattern, String type, String fqn) {

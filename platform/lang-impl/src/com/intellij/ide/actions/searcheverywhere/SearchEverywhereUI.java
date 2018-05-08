@@ -762,7 +762,7 @@ public class SearchEverywhereUI extends BorderLayoutPanel {
       int startIndex;
       int endIndex;
       if (insertPoint < 0) {
-        //no items of this contributor
+        // no items of this contributor
         startIndex = listElements.size();
         listElements.addAll(pairsToAdd);
         if (hasMore) {
@@ -770,6 +770,7 @@ public class SearchEverywhereUI extends BorderLayoutPanel {
         }
         endIndex = listElements.size() - 1;
       } else {
+        // contributor elements already exists in list
         if (isMoreElement(insertPoint)) {
           listElements.remove(insertPoint);
         } else {
