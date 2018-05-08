@@ -129,11 +129,7 @@ public class EditorTestFixture {
       return false;
     }
 
-    managerEx.fireBeforeActionPerformed(action, dataContext, event);
-
-    ActionUtil.performActionDumbAware(action, event);
-
-    managerEx.fireAfterActionPerformed(action, dataContext, event);
+    ActionUtil.performActionDumbAwareWithCallbacks(action, event, dataContext);
     return true;
   }
 
