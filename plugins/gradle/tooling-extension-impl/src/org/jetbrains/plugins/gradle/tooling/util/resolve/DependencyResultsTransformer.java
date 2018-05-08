@@ -176,7 +176,6 @@ class DependencyResultsTransformer {
     final ExternalDependency dependency;
 
     if (DependencyResolverImpl.isProjectDependencyArtifact(artifact)) {
-
       final String projectPath = ((ProjectComponentIdentifier)artifact.getId().getComponentIdentifier()).getProjectPath();
       dependency = createExternalProjectDep(moduleVersionId,
                                             selectionReason,

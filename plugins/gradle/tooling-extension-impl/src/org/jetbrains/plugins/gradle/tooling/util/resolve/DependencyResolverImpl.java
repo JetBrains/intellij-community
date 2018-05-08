@@ -19,7 +19,6 @@ import org.gradle.internal.impldep.com.google.common.collect.ArrayListMultimap;
 import org.gradle.internal.impldep.com.google.common.collect.Lists;
 import org.gradle.internal.impldep.com.google.common.collect.Multimap;
 import org.gradle.plugins.ide.idea.IdeaPlugin;
-import org.gradle.util.GUtil;
 import org.gradle.util.GradleVersion;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -50,7 +49,7 @@ import static org.gradle.internal.impldep.com.google.common.collect.Iterables.fi
 public class DependencyResolverImpl implements DependencyResolver {
 
   private static final boolean is4OrBetter = GradleVersion.current().getBaseVersion().compareTo(GradleVersion.version("4.0")) >= 0;
-  private static final boolean isJavaLibraryPluginSupported = is4OrBetter ||
+  static final boolean isJavaLibraryPluginSupported = is4OrBetter ||
                                                               (GradleVersion.current().compareTo(GradleVersion.version("3.4")) >= 0);
   private static final boolean isDependencySubstitutionsSupported = isJavaLibraryPluginSupported ||
                                                                     (GradleVersion.current().compareTo(GradleVersion.version("2.5")) > 0);
@@ -63,6 +62,7 @@ public class DependencyResolverImpl implements DependencyResolver {
   private final boolean myDownloadJavadoc;
   private final boolean myDownloadSources;
   private final SourceSetCachedFinder mySourceSetFinder;
+  public static final String PROVIDED_SCOPE = "PROVIDED";
 
   @SuppressWarnings("GroovyUnusedDeclaration")
   public DependencyResolverImpl(@NotNull Project project, boolean isPreview) {
@@ -157,103 +157,244 @@ public class DependencyResolverImpl implements DependencyResolver {
     Collection<ExternalDependency> result = new ArrayList<ExternalDependency>();
 
     // resolve compile dependencies
-    boolean isMainSourceSet = sourceSet.getName().equals(SourceSet.MAIN_SOURCE_SET_NAME);
-    String deprecatedCompileConfigurationName = isMainSourceSet ? "compile" : GUtil.toCamelCase(sourceSet.getName()) + "Compile";
-    Configuration deprecatedCompileConfiguration = myProject.getConfigurations().findByName(deprecatedCompileConfigurationName);
-    String compileConfigurationName = sourceSet.getCompileConfigurationName();
-    Configuration compileClasspathConfiguration = myProject.getConfigurations().findByName(compileConfigurationName + "Classpath");
-    Configuration originCompileConfiguration = myProject.getConfigurations().findByName(compileConfigurationName);
-    Configuration compileConfiguration = compileClasspathConfiguration != null ? compileClasspathConfiguration : originCompileConfiguration;
-    Configuration compileOnlyConfiguration =
-      isJavaLibraryPluginSupported ? myProject.getConfigurations().findByName(sourceSet.getCompileOnlyConfigurationName()) : null;
-
-    String compileScope = "COMPILE";
-    ExternalDepsResolutionResult externalDepsResolutionResult = resolveDependencies(compileConfiguration, compileScope);
-    Collection<ExternalDependency> compileDependencies = externalDepsResolutionResult.getExternalDeps();
-    Collection<File> resolvedCompileFileDependencies = externalDepsResolutionResult.getResolvedFiles();
+    CompileDependenciesProvider compileDependenciesProvider = new CompileDependenciesProvider(sourceSet, myProject).resolve(this);
+    Collection<ExternalDependency> compileDependencies = compileDependenciesProvider.getDependencies();
 
     // resolve runtime dependencies
-    String runtimeConfigurationName = sourceSet.getRuntimeConfigurationName();
-    Configuration runtimeClasspathConfiguration = myProject.getConfigurations().findByName(runtimeConfigurationName + "Classpath");
-    Configuration originRuntimeConfiguration = myProject.getConfigurations().findByName(runtimeConfigurationName);
-    Configuration runtimeConfiguration = runtimeClasspathConfiguration != null ? runtimeClasspathConfiguration : originRuntimeConfiguration;
+    RuntimeDependenciesProvider runtimeDependenciesProvider = new RuntimeDependenciesProvider(sourceSet, myProject).resolve(this);
+    Collection<ExternalDependency> runtimeDependencies = runtimeDependenciesProvider.getDependencies();
 
-    String runtimeScope = "RUNTIME";
-    externalDepsResolutionResult = resolveDependencies(runtimeConfiguration, runtimeScope);
-    Collection<ExternalDependency> runtimeDependencies = externalDepsResolutionResult.getExternalDeps();
-    Collection<File> resolvedRuntimeFileDependencies = externalDepsResolutionResult.getResolvedFiles();
+    Multimap<Object, ExternalDependency> filesToDependenciesMap =
+      collectCompileDependencies(compileDependenciesProvider, runtimeDependenciesProvider);
 
-
-    String providedScope = "PROVIDED";
-    Multimap<Object, ExternalDependency> resolvedMap = ArrayListMultimap.create();
-
-    boolean checkCompileOnlyDeps = compileClasspathConfiguration != null && !originCompileConfiguration.getResolvedConfiguration().hasError();
-
-    for (ExternalDependency dep : new DependencyTraverser(compileDependencies)) {
-      final Collection<File> resolvedFiles = getFiles(dep);
-      resolvedMap.put(resolvedFiles, dep);
-
-      // since version 3.4 compileOnly no longer extends compile
-      // so, we can use compileOnly configuration for the check
-      if (isJavaLibraryPluginSupported) {
-        if (compileOnlyConfiguration != null && containsAll(compileOnlyConfiguration, resolvedFiles)) {
-          // deprecated 'compile' configuration still can be used
-          if (deprecatedCompileConfiguration == null || !containsAll(deprecatedCompileConfiguration, resolvedFiles)) {
-            ((AbstractExternalDependency)dep).setScope(providedScope);
-          }
-        }
-      }
-      else {
-        if (checkCompileOnlyDeps && ! containsAll(originCompileConfiguration, resolvedFiles) &&
-            !containsAll(runtimeConfiguration, resolvedFiles)) {
-          ((AbstractExternalDependency)dep).setScope(providedScope);
-        }
-      }
-    }
-
-
-    Multimap<Object, ExternalDependency> resolvedRuntimeMap = ArrayListMultimap.create();
-
-    for (ExternalDependency dep : new DependencyTraverser(runtimeDependencies)) {
-      Collection<ExternalDependency> dependencies = resolvedMap.get(getFiles(dep));
-      if (dependencies != null && !dependencies.isEmpty() && dep.getDependencies().isEmpty()) {
-        runtimeDependencies.remove(dep);
-        ((AbstractExternalDependency)dep).setScope(compileScope);
-        for (ExternalDependency dependency : dependencies) {
-          ((AbstractExternalDependency)dependency).setScope(compileScope);
-        }
-      }
-      else {
-        if (dependencies != null && !dependencies.isEmpty()) {
-          ((AbstractExternalDependency)dep).setScope(compileScope);
-        }
-        resolvedRuntimeMap.put(getFiles(dep), dep);
-      }
-    }
-
-    resolvedMap.putAll(resolvedRuntimeMap);
+    filterCompileDepsFromRuntime(runtimeDependencies, filesToDependenciesMap);
 
     result.addAll(compileDependencies);
     result.addAll(runtimeDependencies);
 
-
     result = Lists.newArrayList(filter(result, not(isNull())));
 
+
     // merge file dependencies
-    List<String> jvmLanguages = Lists.newArrayList("Java", "Groovy", "Scala");
+    Set<File> compileClasspathFiles = getCompileClasspathFiles(sourceSet, "Java", "Groovy", "Scala");
+    Map<File, Integer> compileClasspathOrder = addIterationOrder(compileClasspathFiles);
+
+    Set<File> runtimeClasspathFiles = getRuntimeClasspathFiles(sourceSet);
+    Map<File, Integer> runtimeClasspathOrder = addIterationOrder(runtimeClasspathFiles);
+
+    runtimeClasspathFiles.removeAll(compileClasspathFiles);
+    runtimeClasspathFiles.removeAll(sourceSet.getOutput().getFiles());
+    compileClasspathFiles.removeAll(sourceSet.getOutput().getFiles());
+
+    Multimap<String, File> resolvedDependenciesMap = ArrayListMultimap.create();
+    resolvedDependenciesMap.putAll(CompileDependenciesProvider.SCOPE, compileDependenciesProvider.getFiles());
+    resolvedDependenciesMap.putAll(RuntimeDependenciesProvider.SCOPE, runtimeDependenciesProvider.getFiles());
+    Project rootProject = myProject.getRootProject();
+
+    for (ExternalDependency dependency : new DependencyTraverser(result)) {
+      updateDependencyOrder(compileClasspathOrder, runtimeClasspathOrder, dependency);
+
+      resolvedDependenciesMap.putAll(dependency.getScope(), getFiles(dependency));
+
+      if (dependency instanceof ExternalProjectDependency) {
+        ExternalProjectDependency projectDependency = (ExternalProjectDependency)dependency;
+        Project project = rootProject.findProject(projectDependency.getProjectPath());
+        SourceSet mainSourceSet;
+        if ((mainSourceSet = findSourceSet(project, "main")) != null) {
+          result.addAll(collectSourceSetOutputDirsAsSingleEntryLibraries(mainSourceSet, runtimeClasspathOrder, dependency.getScope()));
+        }
+      }
+    }
+
+    // remove processed files
+    compileClasspathFiles.removeAll(resolvedDependenciesMap.get(CompileDependenciesProvider.SCOPE));
+    compileClasspathFiles.removeAll(resolvedDependenciesMap.get(PROVIDED_SCOPE));
+
+    runtimeClasspathFiles.removeAll(resolvedDependenciesMap.get(RuntimeDependenciesProvider.SCOPE));
+    runtimeClasspathFiles.removeAll(resolvedDependenciesMap.get(CompileDependenciesProvider.SCOPE));
+    runtimeClasspathFiles.removeAll(resolvedDependenciesMap.get(PROVIDED_SCOPE));
+
+    // try to map to libraries
+    Collection<ExternalDependency> fileDependencies = new ArrayList<ExternalDependency>();
+    fileDependencies.addAll(createLibraryDependenciesForFiles(compileClasspathFiles, CompileDependenciesProvider.SCOPE));
+    fileDependencies.addAll(createLibraryDependenciesForFiles(runtimeClasspathFiles, RuntimeDependenciesProvider.SCOPE));
+
+    for (ExternalDependency dependency : fileDependencies) {
+      updateDependencyOrder(compileClasspathOrder, runtimeClasspathOrder, dependency);
+    }
+
+    result.addAll(fileDependencies);
+
+    result.addAll(createFileCollectionDependencies(compileClasspathFiles, compileClasspathOrder, CompileDependenciesProvider.SCOPE));
+    result.addAll(createFileCollectionDependencies(runtimeClasspathFiles, runtimeClasspathOrder, RuntimeDependenciesProvider.SCOPE));
+
+    result.addAll(collectSourceSetOutputDirsAsSingleEntryLibraries(sourceSet, runtimeClasspathOrder, RuntimeDependenciesProvider.SCOPE));
+
+    filesToDependenciesMap = collectProvidedDependencies(sourceSet, result);
+
+    return removeDuplicates(filesToDependenciesMap, result);
+  }
+
+  @NotNull
+  public Multimap<Object, ExternalDependency> collectProvidedDependencies(@NotNull SourceSet sourceSet,
+                                                                          @NotNull Collection<ExternalDependency> result) {
+    Multimap<Object, ExternalDependency> filesToDependenciesMap;// handle provided dependencies
+    final Set<Configuration> providedConfigurations = new LinkedHashSet<Configuration>();
+    filesToDependenciesMap = ArrayListMultimap.create();
+    for (ExternalDependency dep : new DependencyTraverser(result)) {
+      filesToDependenciesMap.put(getFiles(dep), dep);
+    }
+
+    if (sourceSet.getName().equals("main") && myProject.getPlugins().findPlugin(WarPlugin.class) != null) {
+      providedConfigurations.add(myProject.getConfigurations().findByName("providedCompile"));
+      providedConfigurations.add(myProject.getConfigurations().findByName("providedRuntime"));
+    }
+
+    final IdeaPlugin ideaPlugin = myProject.getPlugins().findPlugin(IdeaPlugin.class);
+
+    if (ideaPlugin != null) {
+      Map<String, Map<String, Collection<Configuration>>> scopes = ideaPlugin.getModel().getModule().getScopes();
+      Map<String, Collection<Configuration>> providedPlusScopes = scopes.get(PROVIDED_SCOPE);
+
+      if (providedPlusScopes != null && providedPlusScopes.get("plus") != null) {
+        Iterable<Configuration> ideaPluginProvidedConfigurations = filter(providedPlusScopes.get("plus"), new Predicate<Configuration>() {
+          @Override
+
+          public boolean apply(Configuration cfg) {
+            // filter default 'compileClasspath' for slight optimization since it has been already processed as compile dependencies
+            return !cfg.getName().equals("compileClasspath")
+                   // since gradle 3.4 'idea' plugin PROVIDED scope.plus contains 'providedCompile' and 'providedRuntime' configurations
+                   // see https://github.com/gradle/gradle/commit/c46897ae840c5ebb32946009c83d861ee194ab96#diff-0fa13ec419e839ef2d355b7feb88b815R432
+                   && !providedConfigurations.contains(cfg);
+          }
+        });
+
+        for (Configuration configuration : ideaPluginProvidedConfigurations) {
+          Collection<ExternalDependency> providedDependencies = resolveDependencies(configuration, PROVIDED_SCOPE).getExternalDeps();
+          for(ExternalDependency it : new DependencyTraverser(providedDependencies)) {
+            filesToDependenciesMap.put(getFiles(it), it);
+          }
+          result.addAll(providedDependencies);
+        }
+      }
+    }
+
+    for (Configuration cfg : providedConfigurations) {
+      Collection<ExternalDependency> providedDependencies = resolveDependencies(cfg, PROVIDED_SCOPE).getExternalDeps();
+      for (ExternalDependency dep : new DependencyTraverser(providedDependencies)) {
+        Collection<ExternalDependency> dependencies = filesToDependenciesMap.get(getFiles(dep));
+        if (!dependencies.isEmpty()) {
+          if (dep.getDependencies().isEmpty()) {
+            providedDependencies.remove(dep);
+          }
+          for (ExternalDependency depForScope: dependencies) {
+            ((AbstractExternalDependency)depForScope).setScope(PROVIDED_SCOPE);
+          }
+        } else {
+          filesToDependenciesMap.put(getFiles(dep), dep);
+        }
+      }
+      result.addAll(providedDependencies);
+    }
+    return filesToDependenciesMap;
+  }
+
+  public void updateDependencyOrder(Map<File, Integer> compileClasspathOrder,
+                                      Map<File, Integer> runtimeClasspathOrder,
+                                      ExternalDependency dependency) {
+    String scope = dependency.getScope();
+    Map<File, Integer> classpathOrderMap = scope == CompileDependenciesProvider.SCOPE ? compileClasspathOrder :
+                                           scope == RuntimeDependenciesProvider.SCOPE ? runtimeClasspathOrder : null;
+    final Collection<File> depFiles = getFiles(dependency);
+    int order = getOrder(classpathOrderMap, depFiles);
+    if (dependency instanceof AbstractExternalDependency) {
+      ((AbstractExternalDependency)dependency).setClasspathOrder(order);
+    }
+  }
+
+  @NotNull
+  private Collection<ExternalDependency> createFileCollectionDependencies(@NotNull final Set<File> files,
+                                                                          @NotNull final Map<File, Integer> classPathOrder,
+                                                                          @Nullable final String scope) {
+    final List<ExternalDependency> result = new ArrayList<ExternalDependency>();
+    if (files.isEmpty()) {
+      return result;
+    }
+
+    final DefaultFileCollectionDependency fileCollectionDependency = new DefaultFileCollectionDependency(files);
+    fileCollectionDependency.setScope(scope);
+    fileCollectionDependency.setClasspathOrder(getOrder(classPathOrder, files));
+
+    result.add(fileCollectionDependency);
+
+    for (File file : files) {
+      SourceSet outputDirSourceSet = mySourceSetFinder.findByArtifact(file.getPath());
+      if (outputDirSourceSet != null) {
+        result.addAll(
+          collectSourceSetOutputDirsAsSingleEntryLibraries(outputDirSourceSet,
+                                                           classPathOrder,
+                                                           scope));
+      }
+    }
+
+    return result;
+  }
+
+
+  public SourceSet findSourceSet(@Nullable final Project project,
+                                 @NotNull final String name) {
+    if (project == null) {
+      return null;
+    }
+
+    if (project.hasProperty("sourceSets")
+        && (project.property("sourceSets") instanceof SourceSetContainer)) {
+      return ((SourceSetContainer)project.property("sourceSets")).findByName(name);
+    }
+    return null;
+  }
+
+
+  public int getOrder(@Nullable Map<File, Integer> classpathOrderMap,
+                      @NotNull Collection<File> files) {
+    int order = -1;
+    for (File file : files) {
+      if (classpathOrderMap != null) {
+        Integer fileOrder = classpathOrderMap.get(file);
+        if (fileOrder != null && (order == -1 || fileOrder < order)) {
+          order = fileOrder;
+        }
+        if (order == 0) break;
+      }
+    }
+    return order;
+  }
+
+  @NotNull
+  public Map<File, Integer> addIterationOrder(Set<File> files) {
+    int order = 0;
+    Map<File, Integer> fileToOrder = new LinkedHashMap<File, Integer>();
+    for (File file : files) {
+      fileToOrder.put(file, order++);
+    }
+    return fileToOrder;
+  }
+
+  @NotNull
+  public Set<File> getCompileClasspathFiles(@NotNull SourceSet sourceSet, String... languages) {
+    List<String> jvmLanguages = Lists.newArrayList(languages);
     final String sourceSetCompileTaskPrefix = sourceSet.getName() == "main" ? "" : sourceSet.getName();
 
-    List<String> compileTasks = Lists.transform(jvmLanguages, new Function<String, String>() {
+    List<String> compileTaskNames = Lists.transform(jvmLanguages, new Function<String, String>() {
       @Override
       public String apply(String s) {
         return "compile" + capitalize(sourceSetCompileTaskPrefix) + s;
       }
     });
 
-    Map<File, Integer> compileClasspathOrder = new LinkedHashMap<File, Integer>();
     Set<File> compileClasspathFiles = new LinkedHashSet<File>();
 
-    for (String task : compileTasks) {
+    for (String task : compileTaskNames) {
       Task compileTask = myProject.getTasks().findByName(task);
       if (compileTask instanceof AbstractCompile) {
         try {
@@ -272,238 +413,90 @@ public class DependencyResolverImpl implements DependencyResolver {
     } catch (Exception e) {
       // ignore
     }
+    return compileClasspathFiles;
+  }
 
-    int order = 0;
-    for (File file : compileClasspathFiles) {
-      compileClasspathOrder.put(file, order++);
-    }
-
-    Map<File, Integer> runtimeClasspathOrder = new LinkedHashMap<File, Integer>();
-    order = 0;
-    Set<File> runtimeClasspathFiles = new LinkedHashSet<File>();
+  public Set<File> getRuntimeClasspathFiles(@NotNull SourceSet sourceSet) {
+    Set<File> result = new LinkedHashSet<File>();
     try {
-      Set<File> files = sourceSet.getRuntimeClasspath().getFiles();
-      for (File file : files) {
-        runtimeClasspathOrder.put(file, order++);
-      }
-      runtimeClasspathFiles.addAll(files);
+      result.addAll(sourceSet.getRuntimeClasspath().getFiles());
     } catch (Exception e) {
       // ignore
     }
+    return result;
+  }
 
-    runtimeClasspathFiles.removeAll(compileClasspathFiles);
-    runtimeClasspathFiles.removeAll(sourceSet.getOutput().getFiles());
-    compileClasspathFiles.removeAll(sourceSet.getOutput().getFiles());
+  @NotNull
+  public Multimap<Object, ExternalDependency> collectCompileDependencies(CompileDependenciesProvider compileDependenciesProvider,
+                                                                         RuntimeDependenciesProvider runtimeDependenciesProvider) {
+    Multimap<Object, ExternalDependency> filesToDependenciesMap = ArrayListMultimap.create();
+    Collection<ExternalDependency> compileDependencies = compileDependenciesProvider.getDependencies();
 
-    Multimap<String, File> resolvedDependenciesMap = ArrayListMultimap.create();
-    resolvedDependenciesMap.putAll(compileScope, resolvedCompileFileDependencies);
-    resolvedDependenciesMap.putAll(runtimeScope, resolvedRuntimeFileDependencies);
-    Project rootProject = myProject.getRootProject();
+    for (ExternalDependency dep : new DependencyTraverser(compileDependencies)) {
+      final Collection<File> resolvedFiles = getFiles(dep);
+      filesToDependenciesMap.put(resolvedFiles, dep);
 
-    for (ExternalDependency dependency : new DependencyTraverser(result)) {
-      String scope = dependency.getScope();
-      order = -1;
-      if (dependency instanceof ExternalProjectDependency) {
-        ExternalProjectDependency projectDependency = (ExternalProjectDependency)dependency;
+      markAsProvidedIfNeeded(compileDependenciesProvider,
+                             runtimeDependenciesProvider,
+                             (AbstractExternalDependency)dep);
+    }
+    return filesToDependenciesMap;
+  }
 
-        Project project = rootProject.findProject(projectDependency.getProjectPath());
-        if (project != null) {
-          Configuration configuration = project.getConfigurations().findByName(projectDependency.getConfigurationName());
+  @NotNull
+  public Multimap<Object, ExternalDependency> filterCompileDepsFromRuntime(Collection<ExternalDependency> runtimeDependencies,
+                                                                           Multimap<Object, ExternalDependency> filesToCompileDependenciesMap) {
+    Multimap<Object, ExternalDependency> resolvedRuntimeMap = ArrayListMultimap.create();
 
-          if (configuration != null) {
-            for (File file : configuration.getAllArtifacts().getFiles().getFiles()) {
-              resolvedDependenciesMap.put(scope, file);
-              Map<File, Integer> classpathOrderMap = scope == compileScope ? compileClasspathOrder :
-                                                     scope == runtimeScope ? runtimeClasspathOrder : null;
-              if (classpathOrderMap != null) {
-                Integer fileOrder = classpathOrderMap.get(file);
-                if (fileOrder != null && (order == -1 || fileOrder < order)) {
-                  order = fileOrder;
-                }
-              }
-            }
-          }
+    for (ExternalDependency dep : new DependencyTraverser(runtimeDependencies)) {
+      final Collection<File> resolvedFiles = getFiles(dep);
 
-          //noinspection GrUnresolvedAccess
-          if (project.hasProperty("sourceSets")
-              && (project.property("sourceSets") instanceof SourceSetContainer)
-              && ((SourceSetContainer)project.property("sourceSets")).findByName("main") != null) {
-            //noinspection GrUnresolvedAccess
-            addSourceSetOutputDirsAsSingleEntryLibraries(result,
-                                                         ((SourceSetContainer)project.property("sourceSets")).findByName("main"),
-                                                         runtimeClasspathOrder, scope);
-          }
-        }
-      } else if (dependency instanceof ExternalLibraryDependency) {
-        final File file = ((ExternalLibraryDependency)dependency).getFile();
-        resolvedDependenciesMap.put(scope, file);
-        Map<File, Integer> classpathOrderMap = scope == compileScope ? compileClasspathOrder :
-                                               scope == runtimeScope ? runtimeClasspathOrder : null;
-        if (classpathOrderMap != null) {
-          Integer fileOrder = classpathOrderMap.get(file);
-          order = fileOrder != null ? fileOrder : -1;
-        }
-      } else if (dependency instanceof FileCollectionDependency) {
-        for (File file : ((FileCollectionDependency)dependency).getFiles()) {
-          resolvedDependenciesMap.put(scope, file);
-          Map<File, Integer> classpathOrderMap = scope == compileScope ? compileClasspathOrder :
-                                                 scope == runtimeScope ? runtimeClasspathOrder : null;
-          if (classpathOrderMap != null) {
-            Integer fileOrder = classpathOrderMap.get(file);
-            if (fileOrder != null && (order == -1 || fileOrder < order)) {
-              order = fileOrder;
-            }
-            if (order == 0) break;
-          }
+      Collection<ExternalDependency> dependencies = filesToCompileDependenciesMap.get(resolvedFiles);
+      final boolean hasCompileDependencies = dependencies != null && !dependencies.isEmpty();
+
+      if (hasCompileDependencies && dep.getDependencies().isEmpty()) {
+        runtimeDependencies.remove(dep);
+        for (ExternalDependency dependency : dependencies) {
+          ((AbstractExternalDependency)dependency).setScope(CompileDependenciesProvider.SCOPE);
         }
       }
-
-      if (dependency instanceof AbstractExternalDependency) {
-        ((AbstractExternalDependency)dependency).setClasspathOrder(order);
+      else {
+        if (hasCompileDependencies) {
+          ((AbstractExternalDependency)dep).setScope(CompileDependenciesProvider.SCOPE);
+        }
+        resolvedRuntimeMap.put(resolvedFiles, dep);
       }
     }
+    return resolvedRuntimeMap;
+  }
 
-    compileClasspathFiles.removeAll(resolvedDependenciesMap.get(compileScope));
-    compileClasspathFiles.removeAll(resolvedDependenciesMap.get(providedScope));
-    runtimeClasspathFiles.removeAll(resolvedDependenciesMap.get(runtimeScope));
-    runtimeClasspathFiles.removeAll(resolvedDependenciesMap.get(compileScope));
-    runtimeClasspathFiles.removeAll(resolvedDependenciesMap.get(providedScope));
 
-    Collection<ExternalDependency> fileDependencies = new ArrayList<ExternalDependency>();
-    mapFileDependencies(runtimeClasspathFiles, runtimeScope, fileDependencies);
-    mapFileDependencies(compileClasspathFiles, compileScope, fileDependencies);
+  public void markAsProvidedIfNeeded(@NotNull final CompileDependenciesProvider compileDependenciesProvider,
+                                     @NotNull final RuntimeDependenciesProvider runtimeDependenciesProvider,
+                                     @NotNull final AbstractExternalDependency dep) {
+    Collection<File> resolvedFiles = getFiles(dep);
+    Configuration compileOnlyConfiguration = compileDependenciesProvider.getCompileOnlyConfiguration();
+    Configuration deprecatedCompileConfiguration = compileDependenciesProvider.getDeprecatedCompileConfiguration();
+    Configuration compileConfiguration = compileDependenciesProvider.getCompileConfiguration();
 
-    for (ExternalDependency dependency : fileDependencies) {
-      String scope = dependency.getScope();
-      order = -1;
-      if (dependency instanceof ExternalLibraryDependency) {
-        Map<File, Integer> classpathOrderMap = scope == compileScope ? compileClasspathOrder :
-                                               scope == runtimeScope ? runtimeClasspathOrder : null;
-        if (classpathOrderMap != null) {
-          Integer fileOrder = classpathOrderMap.get(((ExternalLibraryDependency)dependency).getFile());
-          order = fileOrder != null ? fileOrder : -1;
-        }
-      }
-      if (dependency instanceof AbstractExternalDependency) {
-        ((AbstractExternalDependency)dependency).setClasspathOrder(order);
-      }
-    }
-
-    result.addAll(fileDependencies);
-
-    if (!compileClasspathFiles.isEmpty()) {
-      final DefaultFileCollectionDependency compileClasspathFilesDependency = new DefaultFileCollectionDependency(compileClasspathFiles);
-      compileClasspathFilesDependency.setScope(compileScope);
-
-      order = -1;
-
-      for (File file : compileClasspathFiles) {
-        Integer fileOrder = compileClasspathOrder.get(file);
-        if (fileOrder != null && (order == -1 || fileOrder < order)) {
-          order = fileOrder;
-        }
-        if (order == 0) break;
-      }
-
-      if (order != -1) {
-        compileClasspathFilesDependency.setClasspathOrder(order);
-      }
-
-      result.add(compileClasspathFilesDependency);
-      for (File file : compileClasspathFiles) {
-        SourceSet outputDirSourceSet = mySourceSetFinder.findByArtifact(file.getPath());
-        if(outputDirSourceSet != null) {
-          addSourceSetOutputDirsAsSingleEntryLibraries(result, outputDirSourceSet, compileClasspathOrder, compileScope);
+    boolean checkCompileOnlyDeps = compileDependenciesProvider.getCompileClasspathConfiguration() != null && !compileConfiguration.getResolvedConfiguration().hasError();
+    // since version 3.4 compileOnly no longer extends compile
+    // so, we can use compileOnly configuration for the check
+    if (isJavaLibraryPluginSupported) {
+      if (compileOnlyConfiguration != null && containsAll(compileOnlyConfiguration, resolvedFiles)) {
+        // deprecated 'compile' configuration still can be used
+        if (deprecatedCompileConfiguration == null || !containsAll(deprecatedCompileConfiguration, resolvedFiles)) {
+          dep.setScope(PROVIDED_SCOPE);
         }
       }
     }
-
-    if (!runtimeClasspathFiles.isEmpty()) {
-      final DefaultFileCollectionDependency runtimeClasspathFilesDependency = new DefaultFileCollectionDependency(runtimeClasspathFiles);
-      runtimeClasspathFilesDependency.setScope(runtimeScope);
-
-      order = -1;
-      for (File file : runtimeClasspathFiles) {
-        Integer fileOrder = runtimeClasspathOrder.get(file);
-        if (fileOrder != null && (order == -1 || fileOrder < order)) {
-          order = fileOrder;
-        }
-        if (order == 0) break;
-      }
-
-      runtimeClasspathFilesDependency.setClasspathOrder(order);
-      result.add(runtimeClasspathFilesDependency);
-
-      for (File file : runtimeClasspathFiles) {
-        SourceSet outputDirSourceSet = mySourceSetFinder.findByArtifact(file.getPath());
-        if (outputDirSourceSet != null) {
-          addSourceSetOutputDirsAsSingleEntryLibraries(result, outputDirSourceSet, runtimeClasspathOrder, runtimeScope);
-        }
+    else {
+      if (checkCompileOnlyDeps
+          && !containsAll(compileConfiguration, resolvedFiles)
+          && !containsAll(runtimeDependenciesProvider.getConfiguration(), resolvedFiles)) {
+        dep.setScope(PROVIDED_SCOPE);
       }
     }
-
-    addSourceSetOutputDirsAsSingleEntryLibraries(result, sourceSet, runtimeClasspathOrder, runtimeScope);
-
-    // handle provided dependencies
-    final Set<Configuration> providedConfigurations = new LinkedHashSet<Configuration>();
-    resolvedMap = ArrayListMultimap.create();
-    for (ExternalDependency dep : new DependencyTraverser(result)) {
-      resolvedMap.put(getFiles(dep), dep);
-    }
-
-    if (sourceSet.getName().equals("main") && myProject.getPlugins().findPlugin(WarPlugin.class) != null) {
-      providedConfigurations.add(myProject.getConfigurations().findByName("providedCompile"));
-      providedConfigurations.add(myProject.getConfigurations().findByName("providedRuntime"));
-    }
-
-    final IdeaPlugin ideaPlugin = myProject.getPlugins().findPlugin(IdeaPlugin.class);
-
-    if (ideaPlugin != null) {
-      Map<String, Map<String, Collection<Configuration>>> scopes = ideaPlugin.getModel().getModule().getScopes();
-      Map<String, Collection<Configuration>> providedPlusScopes = scopes.get(providedScope);
-
-      if (providedPlusScopes != null && providedPlusScopes.get("plus") != null) {
-        Iterable<Configuration> ideaPluginProvidedConfigurations = filter(providedPlusScopes.get("plus"), new Predicate<Configuration>() {
-          @Override
-
-          public boolean apply(Configuration cfg) {
-            // filter default 'compileClasspath' for slight optimization since it has been already processed as compile dependencies
-            return !cfg.getName().equals("compileClasspath")
-                   // since gradle 3.4 'idea' plugin PROVIDED scope.plus contains 'providedCompile' and 'providedRuntime' configurations
-                   // see https://github.com/gradle/gradle/commit/c46897ae840c5ebb32946009c83d861ee194ab96#diff-0fa13ec419e839ef2d355b7feb88b815R432
-                   && !providedConfigurations.contains(cfg);
-          }
-        });
-
-        for (Configuration configuration : ideaPluginProvidedConfigurations) {
-          Collection<ExternalDependency> providedDependencies = resolveDependencies(configuration, providedScope).getExternalDeps();
-          for(ExternalDependency it : new DependencyTraverser(providedDependencies)) {
-            resolvedMap.put(getFiles(it), it);
-          }
-          result.addAll(providedDependencies);
-        }
-      }
-    }
-
-    for (Configuration cfg : providedConfigurations) {
-      Collection<ExternalDependency> providedDependencies = resolveDependencies(cfg, providedScope).getExternalDeps();
-      for (ExternalDependency dep : new DependencyTraverser(providedDependencies)) {
-        Collection<ExternalDependency> dependencies = resolvedMap.get(getFiles(dep));
-        if (!dependencies.isEmpty()) {
-          if (dep.getDependencies().isEmpty()) {
-            providedDependencies.remove(dep);
-          }
-          for (ExternalDependency depForScope: dependencies) {
-            ((AbstractExternalDependency)depForScope).setScope(providedScope);
-          }
-        } else {
-          resolvedMap.put(getFiles(dep), dep);
-        }
-      }
-      result.addAll(providedDependencies);
-    }
-
-    return removeDuplicates(resolvedMap, result);
   }
 
   private static List<ExternalDependency> removeDuplicates(Multimap<Object, ExternalDependency> resolvedMap, Collection<ExternalDependency> result) {
@@ -518,7 +511,7 @@ public class DependencyResolverImpl implements DependencyResolver {
           toRemove.add(dep);
           if (dep.getScope().equals("COMPILE")) {
             isCompileScope = true;
-          } else if (dep.getScope().equals("PROVIDED")) {
+          } else if (dep.getScope().equals(PROVIDED_SCOPE)) {
             isProvidedScope = true;
           }
         }
@@ -540,7 +533,7 @@ public class DependencyResolverImpl implements DependencyResolver {
             if (isCompileScope) {
               ((AbstractExternalDependency)retainedDependency).setScope("COMPILE");
             } else if (isProvidedScope) {
-              ((AbstractExternalDependency)retainedDependency).setScope("PROVIDED");
+              ((AbstractExternalDependency)retainedDependency).setScope(PROVIDED_SCOPE);
             }
           }
         }
@@ -565,19 +558,20 @@ public class DependencyResolverImpl implements DependencyResolver {
     return Collections.emptySet();
   }
 
-  private static void addSourceSetOutputDirsAsSingleEntryLibraries(
-    Collection<ExternalDependency> dependencies,
-    SourceSet sourceSet,
-    Map<File, Integer> classpathOrder,
-    String scope) {
+  private static Collection<ExternalDependency> collectSourceSetOutputDirsAsSingleEntryLibraries(
+    @NotNull final SourceSet sourceSet,
+    @NotNull final Map<File, Integer> classpathOrder,
+    @Nullable final String scope) {
+    @NotNull final Collection<ExternalDependency> result = new LinkedHashSet<ExternalDependency>();
     Set<File> runtimeOutputDirs = sourceSet.getOutput().getDirs().getFiles();
     for (File dir : runtimeOutputDirs) {
       DefaultFileCollectionDependency runtimeOutputDirsDependency = new DefaultFileCollectionDependency(Collections.singleton(dir));
       runtimeOutputDirsDependency.setScope(scope);
       Integer fileOrder = classpathOrder.get(dir);
       runtimeOutputDirsDependency.setClasspathOrder(fileOrder != null ? fileOrder : -1);
-      dependencies.add(runtimeOutputDirsDependency);
+      result.add(runtimeOutputDirsDependency);
     }
+    return result;
   }
 
 
@@ -650,13 +644,16 @@ public class DependencyResolverImpl implements DependencyResolver {
     return null;
   }
 
-  void mapFileDependencies(Set<File> fileDependencies, String scope, Collection<ExternalDependency> dependencies) {
+  Collection<ExternalDependency> createLibraryDependenciesForFiles(@NotNull final Set<File> fileDependencies,
+                                                                   @Nullable final String scope) {
+    Collection<ExternalDependency> result = new LinkedHashSet<ExternalDependency>();
+
     File modules2Dir = new File(myProject.getGradle().getGradleUserHomeDir(), "caches/modules-2/files-2.1");
     List<File> toRemove = new ArrayList<File>();
     for (File file : fileDependencies) {
       ExternalLibraryDependency libraryDependency = resolveLibraryByPath(file, modules2Dir, scope);
       if (libraryDependency != null) {
-        dependencies.add(libraryDependency);
+        result.add(libraryDependency);
         toRemove.add(file);
       } else {
         //noinspection GrUnresolvedAccess
@@ -669,13 +666,13 @@ public class DependencyResolverImpl implements DependencyResolver {
           defLD.setSource(sourcesFile);
           defLD.setScope(scope);
 
-          dependencies.add(libraryDependency);
+          result.add(libraryDependency);
           toRemove.add(file);
         }
       }
     }
-
     fileDependencies.removeAll(toRemove);
+    return result;
   }
 
   @NotNull
