@@ -4,6 +4,7 @@
 package com.jetbrains.python.codeInsight.stdlib
 
 import com.intellij.openapi.util.Ref
+import com.intellij.psi.util.PsiTreeUtil
 import com.jetbrains.python.codeInsight.typing.PyTypingTypeProvider
 import com.jetbrains.python.psi.*
 import com.jetbrains.python.psi.impl.PyCallExpressionNavigator
@@ -41,8 +42,19 @@ class PyDataclassTypeProvider : PyTypeProviderBase() {
 
     return PyUtil.filterTopPriorityResults(resolveResults)
       .asSequence()
-      .filterIsInstance<PyClass>()
-      .map { getDataclassTypeForClass(it, context) }
+      .map {
+        when {
+          it is PyClass -> getDataclassTypeForClass(it, context)
+          it is PyParameter && it.isSelf -> {
+            PsiTreeUtil.getParentOfType(it, PyFunction::class.java)
+              ?.takeIf { it.modifier == PyFunction.Modifier.CLASSMETHOD }
+              ?.let {
+                it.containingClass?.let { getDataclassTypeForClass(it, context) }
+              }
+          }
+          else -> null
+        }
+      }
       .firstOrNull { it != null }
   }
 
