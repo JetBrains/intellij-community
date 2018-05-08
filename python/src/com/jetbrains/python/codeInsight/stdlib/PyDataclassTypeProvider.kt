@@ -108,7 +108,7 @@ class PyDataclassTypeProvider : PyTypeProviderBase() {
       .mapNotNull { fieldToParameter(cls, it, dataclassParameters.type, ellipsis, context) }
       .toList()
 
-    return PyCallableTypeImpl(parameters, context.getType(cls))
+    return PyCallableTypeImpl(parameters, context.getType(cls)?.let { if (it is PyInstantiableType<*>) it.toInstance() else it })
   }
 
   private fun fieldToParameter(cls: PyClass,

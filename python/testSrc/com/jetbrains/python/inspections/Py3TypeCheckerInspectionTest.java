@@ -297,6 +297,11 @@ public class Py3TypeCheckerInspectionTest extends PyInspectionTestCase {
     runWithLanguageLevel(LanguageLevel.PYTHON37, () -> super.doMultiFileTest());
   }
 
+  // PY-28442
+  public void testDataclassClsCallType() {
+    runWithLanguageLevel(LanguageLevel.PYTHON37, () -> super.doMultiFileTest());
+  }
+
   // PY-26354
   public void testInitializingAttrs() {
     doTestByText("import attr\n" +
