@@ -37,7 +37,7 @@ public class MarkAsPlainTextAction extends DumbAwareAction {
         .filter(file -> isApplicableFor(file) && !typeManager.isMarkedAsPlainText(file));
     boolean enabled = e.getProject() != null && !selectedFiles.isEmpty();
     e.getPresentation().setEnabledAndVisible(enabled);
-    e.getPresentation().setIcon(EnforcedPlainTextFileTypeFactory.ENFORCED_PLAIN_TEXT_ICON_2);
+    e.getPresentation().setIcon(EnforcedPlainTextFileTypeFactory.getEnforcedPlainTextIcon());
   }
     
 }
