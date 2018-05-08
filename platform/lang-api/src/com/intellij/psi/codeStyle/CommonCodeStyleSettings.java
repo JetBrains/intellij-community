@@ -1037,7 +1037,7 @@ public class CommonCodeStyleSettings {
       myFileIndentOptionsProvider = provider;
     }
 
-    void associateWithDocument(@NotNull Document document) {
+    public void associateWithDocument(@NotNull Document document) {
       document.putUserData(INDENT_OPTIONS_KEY, this);
     }
 
