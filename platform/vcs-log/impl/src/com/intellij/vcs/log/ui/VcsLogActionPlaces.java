@@ -35,9 +35,9 @@ public class VcsLogActionPlaces {
 
   // action ids
   public static final String VCS_LOG_INTELLI_SORT_ACTION = "Vcs.Log.IntelliSortChooser";
-  public static final String VCS_LOG_QUICK_SETTINGS_ACTION = "Vcs.Log.QuickSettings";
   public static final String VCS_LOG_TEXT_FILTER_SETTINGS_ACTION = "Vcs.Log.QuickTextFilterSettings";
   public static final String VCS_LOG_FOCUS_TEXT_FILTER = "Vcs.Log.FocusTextFilter";
   public static final String VCS_LOG_SHOW_DIFF_ACTION = "Diff.ShowDiff";
   public static final String CHECKIN_PROJECT_ACTION = "CheckinProject";
+  public static final String VCS_LOG_GO_TO_HASH_OR_REF_ACTION = "Vcs.Log.GoToRef";
 }

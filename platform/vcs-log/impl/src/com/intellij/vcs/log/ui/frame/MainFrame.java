@@ -206,15 +206,16 @@ public class MainFrame extends JPanel implements DataProvider, Disposable {
     textFilter.setVerticalSizeReferent(toolbar.getComponent());
     textFilter.setBorder(JBUI.Borders.emptyLeft(5));
 
-    ActionToolbar settings =
-      createActionsToolbar(new DefaultActionGroup(ActionManager.getInstance().getAction(VcsLogActionPlaces.VCS_LOG_QUICK_SETTINGS_ACTION)));
-    settings.setReservePlaceAutoPopupIcon(false);
-    settings.setLayoutPolicy(ActionToolbar.NOWRAP_LAYOUT_POLICY);
+    ActionToolbar goToHashOrRefAction =
+      createActionsToolbar(
+        new DefaultActionGroup(ActionManager.getInstance().getAction(VcsLogActionPlaces.VCS_LOG_GO_TO_HASH_OR_REF_ACTION)));
+    goToHashOrRefAction.setReservePlaceAutoPopupIcon(false);
+    goToHashOrRefAction.setLayoutPolicy(ActionToolbar.NOWRAP_LAYOUT_POLICY);
 
     JPanel panel = new JPanel(new MigLayout("ins 0, fill", "[left]0[left, fill]push[right]", "center"));
     panel.add(textFilter);
     panel.add(toolbar.getComponent());
-    panel.add(settings.getComponent());
+    panel.add(goToHashOrRefAction.getComponent());
     return panel;
   }
 
