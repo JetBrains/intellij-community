@@ -23,6 +23,7 @@ import com.intellij.psi.impl.source.resolve.graphInference.InferenceVariable;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.PsiSearchScopeUtil;
 import com.intellij.psi.util.*;
+import com.intellij.util.ArrayUtil;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -128,9 +129,23 @@ public class JavaClassSupersImpl extends JavaClassSupers {
       if (outerMap.containsKey(parameter) || innerMap.containsKey(parameter)) {
         PsiType innerType = inner.substitute(parameter);
         PsiClass paramCandidate = PsiCapturedWildcardType.isCapture() ? PsiUtil.resolveClassInClassTypeOnly(innerType) : null;
-        PsiType targetType = paramCandidate instanceof PsiTypeParameter && paramCandidate != parameter
-                             ? outer.substituteWithBoundsPromotion((PsiTypeParameter)paramCandidate)
-                             : outer.substitute(innerType);
+        PsiType targetType;
+        if (paramCandidate instanceof PsiTypeParameter && paramCandidate != parameter) {
+          targetType = outer.substituteWithBoundsPromotion((PsiTypeParameter)paramCandidate);
+          if (targetType != null && innerType.getAnnotations().length > 0) {
+            PsiAnnotation[] typeAnnotations = targetType.getAnnotations();
+            targetType = targetType.annotate(new TypeAnnotationProvider() {
+              @NotNull
+              @Override
+              public PsiAnnotation[] getAnnotations() {
+                return ArrayUtil.mergeArrays(innerType.getAnnotations(), typeAnnotations);
+              }
+            });
+          }
+        }
+        else {
+          targetType = outer.substitute(innerType);
+        }
         answer = answer.put(parameter, targetType);
       }
     }
