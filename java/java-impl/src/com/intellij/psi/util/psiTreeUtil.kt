@@ -17,6 +17,7 @@ fun <T : PsiElement> PsiElement.parentsOfType(clazz: Class<out T>): Sequence<T> 
 
 fun PsiElement.parents(): Sequence<PsiElement> = generateSequence(this) { it.parent }
 
+fun PsiElement.strictParents(): Sequence<PsiElement> = parents().drop(1)
 
 inline fun <reified T : PsiElement> PsiElement.contextOfType(): T? = contextOfType(T::class)
 
