@@ -29,29 +29,32 @@ import java.util.*;
 class DependencyResultsTransformer {
   private final Project myProject;
   private final SourceSetCachedFinder mySourceSetFinder;
-  Multimap<ModuleVersionIdentifier, ResolvedArtifact> artifactMap;
-  Map<ComponentIdentifier, ComponentArtifactsResult> componentResultsMap;
-  Multimap<ModuleComponentIdentifier, ProjectDependency> configurationProjectDependencies;
-  String scope;
-  Set<File> resolvedDepsFiles = new HashSet<File>();
+  private final Multimap<ModuleVersionIdentifier, ResolvedArtifact> myArtifactMap;
+  private final Map<ComponentIdentifier, ComponentArtifactsResult> myAuxiliaryArtifactsMap;
+  private final Multimap<ModuleComponentIdentifier, ProjectDependency> myConfigurationProjectDependencies;
+  private final String myScope;
+  private final Set<File> resolvedDepsFiles = new HashSet<File>();
 
-  DependencyResultsTransformer(Project project,
-                               SourceSetCachedFinder sourceSetFinder,
-                               Multimap<ModuleVersionIdentifier, ResolvedArtifact> artifactMap,
-                               Map<ComponentIdentifier, ComponentArtifactsResult> componentResultsMap,
-                               Multimap<ModuleComponentIdentifier, ProjectDependency> configurationProjectDependencies,
-                               String scope) {
+  DependencyResultsTransformer(@NotNull final Project project,
+                               @NotNull final SourceSetCachedFinder sourceSetFinder,
+                               @NotNull final Multimap<ModuleVersionIdentifier, ResolvedArtifact> artifactMap,
+                               @NotNull final Map<ComponentIdentifier, ComponentArtifactsResult> componentResultsMap,
+                               @NotNull final Multimap<ModuleComponentIdentifier, ProjectDependency> configurationProjectDependencies,
+                               @Nullable final String scope) {
     myProject = project;
     mySourceSetFinder = sourceSetFinder;
 
-    this.artifactMap = artifactMap;
-    this.componentResultsMap = componentResultsMap;
-    this.configurationProjectDependencies = configurationProjectDependencies;
-    this.scope = scope;
+    myArtifactMap = artifactMap;
+    myAuxiliaryArtifactsMap = componentResultsMap;
+    myConfigurationProjectDependencies = configurationProjectDependencies;
+    myScope = scope;
   }
 
+  public Set<File> getResolvedDepsFiles() {
+    return resolvedDepsFiles;
+  }
 
-  Set<ExternalDependency> transform(Collection<? extends DependencyResult> gradleDependencies) {
+  Set<ExternalDependency> buildExternalDependencies(Collection<? extends DependencyResult> gradleDependencies) {
     Set<DependencyResult> handledDependencyResults = new HashSet<DependencyResult>();
     Set<ExternalDependency> result = new LinkedHashSet<ExternalDependency>();
 
@@ -59,11 +62,11 @@ class DependencyResultsTransformer {
       // dependency cycles check
       if (handledDependencyResults.add(gradleDep)) {
         if (gradleDep instanceof ResolvedDependencyResult) {
-          result.addAll(transformDependencyResult((ResolvedDependencyResult)gradleDep));
+          result.addAll(buildExternalDependencies((ResolvedDependencyResult)gradleDep));
         }
 
         if (gradleDep instanceof UnresolvedDependencyResult) {
-          result.addAll(transformDependencyResult((UnresolvedDependencyResult)gradleDep));
+          result.addAll(buildExternalDependencies((UnresolvedDependencyResult)gradleDep));
         }
       }
     }
@@ -71,7 +74,7 @@ class DependencyResultsTransformer {
     return result;
   }
 
-  private Set<ExternalDependency> transformDependencyResult(UnresolvedDependencyResult unresolvedGradleDep) {
+  private Set<ExternalDependency> buildExternalDependencies(UnresolvedDependencyResult unresolvedGradleDep) {
     ComponentSelector attempted = unresolvedGradleDep.getAttempted();
     if (attempted instanceof ModuleComponentSelector) {
       final ModuleComponentSelector attemptedMCSelector = (ModuleComponentSelector)attempted;
@@ -82,11 +85,12 @@ class DependencyResultsTransformer {
   }
 
 
-  private Set<ExternalDependency> transformDependencyResult(ResolvedDependencyResult resolvedGradleDep) {
+  private Set<ExternalDependency> buildExternalDependencies(ResolvedDependencyResult resolvedGradleDep) {
     Set<ExternalDependency> result = new LinkedHashSet<ExternalDependency>();
+
     ResolvedComponentResult componentResult = resolvedGradleDep.getSelected();
     ComponentSelector componentSelector = resolvedGradleDep.getRequested();
-    final ModuleVersionIdentifier moduleVersionId = componentResult.getModuleVersion();
+    ModuleVersionIdentifier moduleVersionId = componentResult.getModuleVersion();
     ModuleComponentIdentifier componentIdentifier = DependencyResolverImpl.toComponentIdentifier(moduleVersionId);
     String selectionReason = componentResult.getSelectionReason().getDescription();
 
@@ -97,7 +101,7 @@ class DependencyResultsTransformer {
 
       final Collection<Configuration> dependencyConfigurations =
         getProjectDepsConfigurations(selector.getProjectPath(),
-                                     configurationProjectDependencies.get(componentIdentifier));
+                                     myConfigurationProjectDependencies.get(componentIdentifier));
 
       if (dependencyConfigurations.isEmpty()) {
         resolveFromArtifacts = true;
@@ -114,9 +118,9 @@ class DependencyResultsTransformer {
     }
 
     if (componentSelector instanceof ModuleComponentSelector || resolveFromArtifacts) {
-      Collection<ResolvedArtifact> artifacts = artifactMap.get(moduleVersionId);
+      Collection<ResolvedArtifact> artifacts = myArtifactMap.get(moduleVersionId);
 
-      final Set<ExternalDependency> transitiveDeps = transform(componentResult.getDependencies());
+      final Set<ExternalDependency> transitiveDeps = buildExternalDependencies(componentResult.getDependencies());
       if (artifacts != null && artifacts.isEmpty()) {
         result.addAll(transitiveDeps);
       }
@@ -182,7 +186,7 @@ class DependencyResultsTransformer {
       DefaultExternalProjectDependency projectDependency = (DefaultExternalProjectDependency)dependency;
 
       List<File> files = new ArrayList<File>();
-      for (ResolvedArtifact resolvedArtifact : artifactMap.get(moduleVersionId)) {
+      for (ResolvedArtifact resolvedArtifact : myArtifactMap.get(moduleVersionId)) {
         files.add(resolvedArtifact.getFile());
       }
 
@@ -198,7 +202,7 @@ class DependencyResultsTransformer {
       libraryDependency.setClassifier(classifier);
       libraryDependency.setFile(artifact.getFile());
 
-      ComponentArtifactsResult artifactsResult = componentResultsMap.get(componentIdentifier);
+      ComponentArtifactsResult artifactsResult = myAuxiliaryArtifactsMap.get(componentIdentifier);
       if (artifactsResult != null) {
         ResolvedArtifactResult sourcesResult = findMatchingArtifact(artifact, artifactsResult, SourcesArtifact.class);
         if (sourcesResult != null) {
@@ -216,36 +220,36 @@ class DependencyResultsTransformer {
 
   private void processProjectDependencyConfiguration(@NotNull final ResolvedDependencyResult resolvedGradleDep,
                                                      @NotNull final Set<ExternalDependency> result,
-                                                     @NotNull final ResolvedComponentResult componentResult,
+                                                     @NotNull final ResolvedComponentResult resolvedComponent,
                                                      @NotNull final Configuration projectDepConfiguration,
-                                                     @NotNull final DefaultExternalProjectDependency dependency) {
+                                                     @NotNull final DefaultExternalProjectDependency externalDependency) {
     Set<File> artifactsFiles = projectDepConfiguration.getAllArtifacts().getFiles().getFiles();
-    dependency.setProjectDependencyArtifacts(artifactsFiles);
-    dependency.setProjectDependencyArtifactsSources(DependencyResolverImpl.findArtifactSources(artifactsFiles, mySourceSetFinder));
-    resolvedDepsFiles.addAll(dependency.getProjectDependencyArtifacts());
+    externalDependency.setProjectDependencyArtifacts(artifactsFiles);
+    externalDependency.setProjectDependencyArtifactsSources(DependencyResolverImpl.findArtifactSources(artifactsFiles, mySourceSetFinder));
+    resolvedDepsFiles.addAll(externalDependency.getProjectDependencyArtifacts());
 
     if (projectDepConfiguration.getArtifacts().size() == 1) {
       PublishArtifact publishArtifact = projectDepConfiguration.getAllArtifacts().iterator().next();
-      dependency.setClassifier(publishArtifact.getClassifier());
-      dependency.setPackaging(publishArtifact.getExtension() != null ? publishArtifact.getExtension() : "jar");
+      externalDependency.setClassifier(publishArtifact.getClassifier());
+      externalDependency.setPackaging(publishArtifact.getExtension() != null ? publishArtifact.getExtension() : "jar");
     }
 
-    if (!componentResult.equals(resolvedGradleDep.getFrom())) {
-      dependency.getDependencies().addAll(transform(componentResult.getDependencies()));
+    if (!resolvedComponent.equals(resolvedGradleDep.getFrom())) {
+      externalDependency.getDependencies().addAll(buildExternalDependencies(resolvedComponent.getDependencies()));
     }
-    result.add(dependency);
+    result.add(externalDependency);
 
     if (!projectDepConfiguration.getName().equals(Dependency.DEFAULT_CONFIGURATION)) {
       List<File> configurationSources = new ArrayList<File>();
       PublishArtifactSet artifacts = projectDepConfiguration.getArtifacts();
 
       if (artifacts != null && !artifacts.isEmpty()) {
-        configurationSources.addAll(collectSourcesOfDependencyConfiguration(artifacts));
+        configurationSources.addAll(collectSourcesOfPublishedArtifacts(artifacts));
       }
 
       if (!configurationSources.isEmpty()) {
         final DefaultFileCollectionDependency fileCollectionDependency = new DefaultFileCollectionDependency(configurationSources);
-        fileCollectionDependency.setScope(scope);
+        fileCollectionDependency.setScope(myScope);
         result.add(fileCollectionDependency);
         resolvedDepsFiles.addAll(configurationSources);
       }
@@ -253,7 +257,7 @@ class DependencyResultsTransformer {
   }
 
   @NotNull
-  private List<File> collectSourcesOfDependencyConfiguration(@NotNull final PublishArtifactSet artifacts) {
+  private List<File> collectSourcesOfPublishedArtifacts(@NotNull final PublishArtifactSet artifacts) {
     final List<File> files = new ArrayList<File>();
 
     PublishArtifact artifact = artifacts.iterator().next();
@@ -301,7 +305,7 @@ class DependencyResultsTransformer {
     dDep.setGroup(moduleVersionId.getGroup());
     dDep.setVersion(moduleVersionId.getVersion());
     dDep.setSelectionReason(selectionReason);
-    dDep.setScope(scope);
+    dDep.setScope(myScope);
     return dDep;
   }
 
@@ -314,7 +318,7 @@ class DependencyResultsTransformer {
     dependency.setName(moduleVersionId.getName());
     dependency.setGroup(moduleVersionId.getGroup());
     dependency.setVersion(moduleVersionId.getVersion());
-    dependency.setScope(scope);
+    dependency.setScope(myScope);
     dependency.setSelectionReason(selectionReason);
     dependency.setProjectPath(projectPath);
     dependency.setConfigurationName(configurationName);
@@ -328,7 +332,7 @@ class DependencyResultsTransformer {
     dependency.setName(attemptedMCSelector.getModule());
     dependency.setGroup(attemptedMCSelector.getGroup());
     dependency.setVersion(attemptedMCSelector.getVersion());
-    dependency.setScope(scope);
+    dependency.setScope(myScope);
     dependency.setFailureMessage(message);
     return dependency;
   }

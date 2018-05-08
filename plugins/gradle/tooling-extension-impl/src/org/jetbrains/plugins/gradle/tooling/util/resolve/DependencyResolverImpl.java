@@ -102,8 +102,7 @@ public class DependencyResolverImpl implements DependencyResolver {
   }
 
   public ExternalDepsResolutionResult resolveDependencies(@Nullable Configuration configuration, @Nullable String scope) {
-    if (configuration == null
-        || configuration.getAllDependencies().isEmpty()) {
+    if (configuration == null || configuration.getAllDependencies().isEmpty()) {
       return ExternalDepsResolutionResult.EMPTY;
     }
 
@@ -743,7 +742,7 @@ public class DependencyResolverImpl implements DependencyResolver {
 
   private Set<ExternalDependency> findDependencies(@NotNull final  Configuration configuration,
                                                    @NotNull final  Collection<Dependency> dependencies,
-                                                   @NotNull final String scope) {
+                                                   @Nullable final String scope) {
     Set<ExternalDependency> result = new LinkedHashSet<ExternalDependency>();
 
     Set<ResolvedArtifact> resolvedArtifacts = myIsPreview ? new HashSet<ResolvedArtifact>() :

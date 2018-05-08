@@ -37,7 +37,7 @@ class ArtifactQueryResolver {
   private final SourceSetCachedFinder mySourceSetFinder;
 
   public ArtifactQueryResolver(@NotNull final Configuration configuration,
-                               @NotNull final String scope,
+                               @Nullable final String scope,
                                @NotNull final Project project,
                                final boolean downloadJavadoc,
                                final boolean downloadSources,
@@ -65,8 +65,8 @@ class ArtifactQueryResolver {
 
     final Multimap<ModuleVersionIdentifier, ResolvedArtifact> artifactMap =
       groupByModuleVersionId(resolvedArtifacts);
-    final Map<ComponentIdentifier, ComponentArtifactsResult> componentResultsMap =
-      getComponentIdToArtifactResultMap(jvmLibrary, resolvedArtifacts);
+    final Map<ComponentIdentifier, ComponentArtifactsResult> auxiliaryArtifactsMap =
+      buildAuxiliaryArtifactsMap(jvmLibrary, resolvedArtifacts);
 
     final Multimap<ModuleComponentIdentifier, ProjectDependency> configurationProjectDependencies =
       DependencyResolverImpl.collectProjectDeps(myConfiguration);
@@ -78,15 +78,15 @@ class ArtifactQueryResolver {
     DependencyResultsTransformer dependencyResultsTransformer =
       new DependencyResultsTransformer(myProject, mySourceSetFinder,
                                        artifactMap,
-                                       componentResultsMap,
+                                       auxiliaryArtifactsMap,
                                        configurationProjectDependencies,
                                        myScope);
 
     ResolutionResult resolutionResult = myConfiguration.getIncoming().getResolutionResult();
-    extDependencies.addAll(dependencyResultsTransformer.transform(resolutionResult.getRoot().getDependencies()));
+    extDependencies.addAll(dependencyResultsTransformer.buildExternalDependencies(resolutionResult.getRoot().getDependencies()));
 
     return new ExternalDepsResolutionResult(extDependencies,
-                                            new ArrayList<File>(dependencyResultsTransformer.resolvedDepsFiles));
+                                            new ArrayList<File>(dependencyResultsTransformer.getResolvedDepsFiles()));
   }
 
   @NotNull
@@ -100,8 +100,8 @@ class ArtifactQueryResolver {
   }
 
   @NotNull
-  public Map<ComponentIdentifier, ComponentArtifactsResult> getComponentIdToArtifactResultMap(@NotNull final Class<? extends Component> jvmLibrary,
-                                                                                              @NotNull final Set<ResolvedArtifact> resolvedArtifacts) {
+  public Map<ComponentIdentifier, ComponentArtifactsResult> buildAuxiliaryArtifactsMap(@NotNull final Class<? extends Component> jvmLibrary,
+                                                                                       @NotNull final Set<ResolvedArtifact> resolvedArtifacts) {
     List<ComponentIdentifier> components = new ArrayList<ComponentIdentifier>();
     for (ResolvedArtifact artifact : resolvedArtifacts) {
       final ModuleVersionIdentifier moduleVersionId = artifact.getModuleVersion().getId();
