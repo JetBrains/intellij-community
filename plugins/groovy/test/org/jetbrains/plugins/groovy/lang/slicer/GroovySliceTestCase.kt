@@ -19,10 +19,11 @@ import com.intellij.analysis.AnalysisScope
 import com.intellij.codeInsight.daemon.DaemonAnalyzerTestCase
 import com.intellij.psi.PsiDocumentManager
 import com.intellij.psi.PsiManager
-import com.intellij.slicer.*
+import com.intellij.slicer.LanguageSlicing
+import com.intellij.slicer.SliceAnalysisParams
+import com.intellij.slicer.SliceHandler
+import com.intellij.slicer.SliceTestUtil
 import com.intellij.testFramework.UsefulTestCase
-import com.intellij.util.containers.IntArrayList
-import gnu.trove.TIntObjectHashMap
 import org.jetbrains.plugins.groovy.util.TestUtils
 
 abstract class GroovySliceTestCase(private val isDataFlowToThis: Boolean) : DaemonAnalyzerTestCase() {
@@ -51,8 +52,7 @@ abstract class GroovySliceTestCase(private val isDataFlowToThis: Boolean) : Daem
     psiDocumentManager.commitAllDocuments()
 
     val element = SliceHandler(isDataFlowToThis).getExpressionAtCaret(editor, file)!!
-    val flownOffsets = TIntObjectHashMap<IntArrayList>()
-    SliceTestUtil.calcRealOffsets(element, sliceUsageName2Offset, flownOffsets)
+    val tree = SliceTestUtil.buildTree(element, sliceUsageName2Offset)
 
     val errors = highlightErrors()
     UsefulTestCase.assertEmpty(errors)
@@ -62,6 +62,6 @@ abstract class GroovySliceTestCase(private val isDataFlowToThis: Boolean) : Daem
       dataFlowToThis = isDataFlowToThis
     }
     val usage = LanguageSlicing.getProvider(element)!!.createRootUsage(element, params)
-    SliceTestUtil.checkUsages(usage, flownOffsets)
+    SliceTestUtil.checkUsages(usage, tree)
   }
 }
