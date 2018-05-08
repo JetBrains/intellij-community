@@ -28,6 +28,7 @@ import com.intellij.xdebugger.XSourcePosition;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import javax.swing.*;
 import java.awt.*;
 import java.util.EventObject;
 
@@ -43,6 +44,8 @@ public abstract class XDebugView implements Disposable {
   public XDebugView() {
     myClearAlarm = new SingleAlarm(() -> clear(), VIEW_CLEAR_DELAY, this);
   }
+
+  abstract JComponent getDefaultFocusedComponent();
 
   protected final void requestClear() {
     myClearAlarm.cancelAndRequest();

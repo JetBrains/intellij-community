@@ -78,11 +78,11 @@ class JavaCommentingStrategy extends JavaIntentionPolicy {
                                      intentionText.startsWith("Move comment to separate line") || //merge comments on same line
                                      intentionText.startsWith("Remove redundant arguments to call") || //removes arg with all comments inside
                                      intentionText.startsWith("Convert to 'enum'") || //removes constructor with javadoc?
-                                     intentionText.startsWith("Replace 'switch' with 'if'") || //todo IDEA-113518
                                      intentionText.startsWith("Remove redundant constructor") ||
                                      intentionText.startsWith("Remove block marker comments") ||
                                      intentionText.startsWith("Remove redundant method") ||
                                      intentionText.startsWith("Delete unnecessary import") ||
+                                     intentionText.startsWith("Delete empty class initializer") ||
                                      intentionText.startsWith("Replace with 'throws Exception'") ||
                                      intentionText.startsWith("Replace unicode escape with character") ||
                                      intentionText.startsWith("Remove 'serialVersionUID' field") ||

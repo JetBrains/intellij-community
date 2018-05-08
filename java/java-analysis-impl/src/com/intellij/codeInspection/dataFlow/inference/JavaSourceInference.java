@@ -167,7 +167,7 @@ public class JavaSourceInference {
     if (returnType != null && !(returnType instanceof PsiPrimitiveType)) {
       contracts = boxReturnValues(contracts);
     }
-    List<StandardMethodContract> compatible = ContainerUtil.filter(contracts, contract -> isContractCompatibleWithMethod(method, returnType, contract));
+    List<StandardMethodContract> compatible = ContainerUtil.filter(contracts, contract -> isContractCompatibleWithMethod(method, contract));
     if (compatible.size() > MAX_CONTRACT_COUNT) {
       LOG.debug("Too many contracts for " + PsiUtil.getMemberQualifiedName(method) + ", shrinking the list");
       return compatible.subList(0, MAX_CONTRACT_COUNT);
@@ -175,11 +175,11 @@ public class JavaSourceInference {
     return compatible;
   }
 
-  private static boolean isContractCompatibleWithMethod(@NotNull PsiMethod method, PsiType returnType, StandardMethodContract contract) {
+  private static boolean isContractCompatibleWithMethod(@NotNull PsiMethod method, StandardMethodContract contract) {
     if (hasContradictoryExplicitParameterNullity(method, contract)) return false;
     if (isReturnNullitySpecifiedExplicitly(method, contract)) return false;
     if (isContradictingExplicitNullableReturn(method, contract)) return false;
-    return contract.getReturnValue().isReturnTypeCompatible(returnType);
+    return contract.getReturnValue().isMethodCompatible(method);
   }
 
   private static boolean hasContradictoryExplicitParameterNullity(@NotNull PsiMethod method, StandardMethodContract contract) {

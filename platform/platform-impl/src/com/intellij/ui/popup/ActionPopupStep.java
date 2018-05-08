@@ -2,6 +2,7 @@
 package com.intellij.ui.popup;
 
 import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.actionSystem.ex.ActionManagerEx;
 import com.intellij.openapi.actionSystem.ex.ActionUtil;
 import com.intellij.openapi.ui.popup.*;
 import com.intellij.openapi.util.Condition;
@@ -197,7 +198,10 @@ public class ActionPopupStep implements ListPopupStepEx<PopupFactoryImpl.ActionI
       ActionManager.getInstance(), modifiers);
     event.setInjectedContext(action.isInInjectedContext());
     if (ActionUtil.lastUpdateAndCheckDumb(action, event, false)) {
+      final ActionManagerEx manager = ActionManagerEx.getInstanceEx();
+      manager.fireBeforeActionPerformed(action, dataContext, event);
       ActionUtil.performActionDumbAware(action, event);
+      manager.fireAfterActionPerformed(action, dataContext, event);
     }
   }
 

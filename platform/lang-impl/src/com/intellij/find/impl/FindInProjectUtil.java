@@ -363,7 +363,12 @@ public class FindInProjectUtil {
     presentation.setUsageTypeFilteringAvailable(true);
     if (findModel.isReplaceState() && findModel.isRegularExpressions()) {
       presentation.setSearchPattern(findModel.compileRegExp());
-      presentation.setReplacePattern(Pattern.compile(findModel.getStringToReplace()));
+      try {
+        presentation.setReplacePattern(Pattern.compile(findModel.getStringToReplace()));
+      }
+      catch (Exception e) {
+        presentation.setReplacePattern(null);
+      }
     } else {
       presentation.setSearchPattern(null);
       presentation.setReplacePattern(null);

@@ -36,10 +36,12 @@ public abstract class NullableNotNullManager {
     NULLABLE,
     JAVAX_ANNOTATION_NULLABLE,
     "javax.annotation.CheckForNull",
-    "javax.validation.constraints.NotNull",
     "edu.umd.cs.findbugs.annotations.Nullable",
     "android.support.annotation.Nullable",
-    "androidx.annotation.Nullable"
+    "androidx.annotation.Nullable",
+    "org.checkerframework.checker.nullness.qual.Nullable",
+    "org.checkerframework.checker.nullness.compatqual.NullableDecl",
+    "org.checkerframework.checker.nullness.compatqual.NullableType"
   };
 
   public NullableNotNullManager(Project project) {
@@ -112,7 +114,7 @@ public abstract class NullableNotNullManager {
 
   public boolean isContainerAnnotation(@NotNull PsiAnnotation anno) {
     PsiAnnotation.TargetType[] acceptAnyTarget = PsiAnnotation.TargetType.values();
-    return isNullabilityDefault(anno, true, acceptAnyTarget) || isNullabilityDefault(anno, false, acceptAnyTarget);
+    return isNullabilityDefault(anno, true, acceptAnyTarget, false) || isNullabilityDefault(anno, false, acceptAnyTarget, false);
   }
 
   public void setDefaultNullable(@NotNull String defaultNullable) {
@@ -304,7 +306,7 @@ public abstract class NullableNotNullManager {
     PsiElement element = owner.getParent();
     while (element != null) {
       if (element instanceof PsiModifierListOwner) {
-        PsiAnnotation annotation = getNullabilityDefault((PsiModifierListOwner)element, nullable, placeTargetTypes);
+        PsiAnnotation annotation = getNullabilityDefault((PsiModifierListOwner)element, nullable, placeTargetTypes, false);
         if (annotation != null) {
           return annotation;
         }
@@ -312,8 +314,8 @@ public abstract class NullableNotNullManager {
 
       if (element instanceof PsiClassOwner) {
         String packageName = ((PsiClassOwner)element).getPackageName();
-        PsiPackage psiPackage = JavaPsiFacade.getInstance(element.getProject()).findPackage(packageName);
-        return psiPackage == null ? null : getNullabilityDefault(psiPackage, nullable, placeTargetTypes);
+        return findNullabilityDefaultOnPackage(nullable, placeTargetTypes,
+                                               JavaPsiFacade.getInstance(element.getProject()).findPackage(packageName));
       }
 
       element = element.getContext();
@@ -321,18 +323,36 @@ public abstract class NullableNotNullManager {
     return null;
   }
 
-  private static PsiAnnotation getNullabilityDefault(@NotNull PsiModifierListOwner container, boolean nullable, PsiAnnotation.TargetType[] placeTargetTypes) {
+  private static PsiAnnotation findNullabilityDefaultOnPackage(boolean nullable,
+                                                               PsiAnnotation.TargetType[] placeTargetTypes,
+                                                               @Nullable PsiPackage psiPackage) {
+    boolean superPackage = false;
+    while (psiPackage != null) {
+      PsiAnnotation onPkg = getNullabilityDefault(psiPackage, nullable, placeTargetTypes, superPackage);
+      if (onPkg != null) return onPkg;
+      superPackage = true;
+      psiPackage = psiPackage.getParentPackage();
+    }
+    return null;
+  }
+
+  private static PsiAnnotation getNullabilityDefault(@NotNull PsiModifierListOwner container, boolean nullable, PsiAnnotation.TargetType[] placeTargetTypes, boolean superPackage) {
     PsiModifierList modifierList = container.getModifierList();
     if (modifierList == null) return null;
     for (PsiAnnotation annotation : modifierList.getAnnotations()) {
-      if (isNullabilityDefault(annotation, nullable, placeTargetTypes)) {
+      if (isNullabilityDefault(annotation, nullable, placeTargetTypes, superPackage)) {
         return annotation;
       }
     }
     return null;
   }
 
-  private static boolean isNullabilityDefault(@NotNull PsiAnnotation annotation, boolean nullable, PsiAnnotation.TargetType[] placeTargetTypes) {
+  private static boolean isNullabilityDefault(@NotNull PsiAnnotation annotation, boolean nullable, PsiAnnotation.TargetType[] placeTargetTypes, boolean superPackage) {
+    if (!superPackage && isJsr305Default(annotation, nullable, placeTargetTypes)) return true;
+    return CheckerFrameworkNullityUtil.isCheckerDefault(annotation, nullable, placeTargetTypes);
+  }
+
+  private static boolean isJsr305Default(PsiAnnotation annotation, boolean nullable, PsiAnnotation.TargetType[] placeTargetTypes) {
     PsiJavaCodeReferenceElement element = annotation.getNameReferenceElement();
     PsiElement declaration = element == null ? null : element.resolve();
     if (!(declaration instanceof PsiClass)) return false;

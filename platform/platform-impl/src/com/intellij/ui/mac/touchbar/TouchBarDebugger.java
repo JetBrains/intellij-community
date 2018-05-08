@@ -10,7 +10,7 @@ import java.awt.*;
 
 public class TouchBarDebugger extends TouchBarActionBase {
   TouchBarDebugger(@NotNull Project project, Component component) {
-    super("debugger", project, component);
+    super("debugger", project, component, true);
 
     addButton(AllIcons.Actions.Restart, null, new PlatformAction(IdeActions.ACTION_RERUN));
     addAnActionButton("Pause");

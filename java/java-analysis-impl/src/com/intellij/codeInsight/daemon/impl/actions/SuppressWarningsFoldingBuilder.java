@@ -16,6 +16,7 @@
 
 package com.intellij.codeInsight.daemon.impl.actions;
 
+import com.intellij.codeInsight.AnnotationUtil;
 import com.intellij.codeInsight.folding.JavaCodeFoldingSettings;
 import com.intellij.lang.ASTNode;
 import com.intellij.lang.folding.FoldingBuilderEx;
@@ -62,18 +63,16 @@ public class SuppressWarningsFoldingBuilder extends FoldingBuilderEx {
     return element.getText();
   }
 
-  private static String getMemberValueText(PsiAnnotationMemberValue memberValue) {
-    if (memberValue instanceof PsiArrayInitializerMemberValue) {
-      final PsiAnnotationMemberValue[] initializers = ((PsiArrayInitializerMemberValue)memberValue).getInitializers();
-      return StringUtil.join(initializers, psiAnnotationMemberValue -> getMemberValueText(psiAnnotationMemberValue), ", ");
-    }
-    if (memberValue instanceof PsiLiteral) {
-      final Object o = ((PsiLiteral)memberValue).getValue();
-      if (o != null) {
-        return o.toString();
+  private static String getMemberValueText(PsiAnnotationMemberValue _memberValue) {
+    return StringUtil.join(AnnotationUtil.arrayAttributeValues(_memberValue), memberValue -> {
+      if (memberValue instanceof PsiLiteral) {
+        final Object o = ((PsiLiteral)memberValue).getValue();
+        if (o != null) {
+          return o.toString();
+        }
       }
-    }
-    return memberValue != null ? memberValue.getText() : "";
+      return memberValue != null ? memberValue.getText() : "";
+    }, ", ");
   }
 
 

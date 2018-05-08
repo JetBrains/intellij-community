@@ -43,7 +43,7 @@ public class JsonSchemaMappingsProjectConfiguration implements PersistentStateCo
         if (pattern.pattern || pattern.directory) continue;
         String path = pattern.path.replace('\\', '/');
         VirtualFile relativeFile = VfsUtil.findRelativeFile(projectBaseDir, StringUtil.split(path, "/").toArray(ArrayUtil.EMPTY_STRING_ARRAY));
-        if (Objects.equals(relativeFile, file)) {
+        if (Objects.equals(relativeFile, file) || file.getUrl().equals(path)) {
           return configuration;
         }
       }

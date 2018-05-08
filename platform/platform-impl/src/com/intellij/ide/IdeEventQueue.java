@@ -41,6 +41,7 @@ import com.intellij.openapi.wm.IdeFrame;
 import com.intellij.openapi.wm.WindowManager;
 import com.intellij.openapi.wm.ex.WindowManagerEx;
 import com.intellij.openapi.wm.impl.FocusManagerImpl;
+import com.intellij.ui.mac.touchbar.TouchBarsManager;
 import com.intellij.util.Alarm;
 import com.intellij.util.ReflectionUtil;
 import com.intellij.util.concurrency.AppExecutorUtil;
@@ -674,6 +675,9 @@ public class IdeEventQueue extends EventQueue {
 
       return;
     }
+
+    if (e instanceof InputEvent)
+      TouchBarsManager.onInputEvent((InputEvent)e);
 
     if (dispatchByCustomDispatchers(e)) return;
 

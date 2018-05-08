@@ -17,7 +17,6 @@ package com.intellij.refactoring.extractMethod;
 
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Pair;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.psi.codeStyle.SuggestedNameInfo;
@@ -294,8 +293,8 @@ public class ParametrizedDuplicates {
       for (ExtractedParameter matchedParameter : matchedParameters) {
         PsiLocalVariable localVariable = patternUsageToParameter.get(matchedParameter.myPattern.getUsage());
         LOG.assertTrue(localVariable != null, "match local variable");
-        boolean ok = match.putParameter(Pair.createNonNull(localVariable, matchedParameter.myType),
-                                        matchedParameter.myCandidate.getUsage());
+        DuplicatesFinder.Parameter parameter = new DuplicatesFinder.Parameter(localVariable, matchedParameter.myType);
+        boolean ok = match.putParameter(parameter, matchedParameter.myCandidate.getUsage());
         LOG.assertTrue(ok, "put match parameter");
       }
     }

@@ -405,10 +405,6 @@ public class CompletionProgressIndicator extends ProgressIndicatorBase implement
     return true;
   }
 
-  int getIdentifierEndOffset() {
-    return myOffsetMap.getOffset(CompletionInitializationContext.IDENTIFIER_END_OFFSET);
-  }
-
   void addItem(CompletionResult item) {
     if (!isRunning()) return;
     ProgressManager.checkCanceled();
@@ -595,7 +591,7 @@ public class CompletionProgressIndicator extends ProgressIndicatorBase implement
       final List<LookupElement> items = myLookup.getItems();
 
       for (LookupElement item : items) {
-        if (!myLookup.itemPattern(item).equals(item.getLookupString())) {
+        if (!isAlreadyInTheEditor(item)) {
           return false;
         }
 
@@ -610,6 +606,14 @@ public class CompletionProgressIndicator extends ProgressIndicatorBase implement
       return true;
     }
     return false;
+  }
+
+  private boolean isAlreadyInTheEditor(LookupElement item) {
+    Editor editor = myLookup.getEditor();
+    int start = editor.getCaretModel().getOffset() - myLookup.itemPattern(item).length();
+    Document document = editor.getDocument();
+    return start >= 0 && StringUtil.startsWith(document.getImmutableCharSequence().subSequence(start, document.getTextLength()),
+                                               item.getLookupString());
   }
 
   void restorePrefix(@NotNull Runnable customRestore) {

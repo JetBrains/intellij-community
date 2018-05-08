@@ -361,7 +361,7 @@ public class RefManagerImpl extends RefManager {
     myOfflineView = true;
   }
 
-  boolean isOfflineView() {
+  public boolean isOfflineView() {
     return myOfflineView;
   }
   

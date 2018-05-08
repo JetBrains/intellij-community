@@ -4,6 +4,7 @@ package git4idea.config;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.components.ServiceManager;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
@@ -23,6 +24,7 @@ import org.jetbrains.annotations.Nullable;
 import java.io.File;
 import java.text.ParseException;
 import java.util.Collections;
+import java.util.Objects;
 
 /**
  * Manager for "current git executable".
@@ -32,6 +34,8 @@ public class GitExecutableManager {
   public static GitExecutableManager getInstance() {
     return ServiceManager.getService(GitExecutableManager.class);
   }
+
+  private static final Logger LOG = Logger.getInstance(GitExecutableManager.class);
 
   @NotNull private final GitVcsApplicationSettings myApplicationSettings;
   @NotNull private final AtomicNotNullLazyValue<String> myDetectedExecutable;
@@ -50,14 +54,20 @@ public class GitExecutableManager {
   }
 
   private static GitVersion doGetGitVersion(@NotNull String pathToGit) throws VcsException, ParseException {
+    LOG.debug("Acquiring git version for " + pathToGit);
     GitLineHandler handler = new GitLineHandler(null,
                                                 new File("."),
                                                 pathToGit,
                                                 GitCommand.VERSION,
                                                 Collections.emptyList());
     handler.setPreValidateExecutable(false);
+    handler.setSilent(false);
+    handler.setStdoutSuppressed(false);
     GitCommandResult result = Git.getInstance().runCommand(handler);
-    return GitVersion.parse(result.getOutputOrThrow());
+    String rawResult = result.getOutputOrThrow();
+    GitVersion version = GitVersion.parse(rawResult);
+    LOG.info("Git version for " + pathToGit + " : " + version.getPresentation());
+    return version;
   }
 
   @NotNull

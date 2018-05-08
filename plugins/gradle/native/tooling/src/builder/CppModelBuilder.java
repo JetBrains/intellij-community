@@ -9,6 +9,7 @@ import org.gradle.api.internal.file.FileCollectionInternal;
 import org.gradle.api.internal.file.FileCollectionVisitor;
 import org.gradle.api.internal.file.FileTreeInternal;
 import org.gradle.api.internal.file.collections.DirectoryFileTree;
+import org.gradle.api.plugins.PluginContainer;
 import org.gradle.api.provider.Provider;
 import org.gradle.api.tasks.util.PatternSet;
 import org.gradle.internal.impldep.org.apache.commons.lang.StringUtils;
@@ -18,14 +19,12 @@ import org.gradle.language.cpp.CppComponent;
 import org.gradle.language.cpp.CppSharedLibrary;
 import org.gradle.language.cpp.CppStaticLibrary;
 import org.gradle.language.cpp.plugins.CppBasePlugin;
+import org.gradle.language.cpp.plugins.CppPlugin;
 import org.gradle.language.cpp.tasks.CppCompile;
 import org.gradle.language.nativeplatform.ComponentWithExecutable;
 import org.gradle.language.nativeplatform.internal.ConfigurableComponentWithExecutable;
 import org.gradle.nativeplatform.tasks.LinkExecutable;
-import org.gradle.nativeplatform.toolchain.Clang;
-import org.gradle.nativeplatform.toolchain.Gcc;
-import org.gradle.nativeplatform.toolchain.NativeToolChain;
-import org.gradle.nativeplatform.toolchain.VisualCpp;
+import org.gradle.nativeplatform.toolchain.*;
 import org.gradle.nativeplatform.toolchain.internal.NativeLanguageTools;
 import org.gradle.nativeplatform.toolchain.internal.PlatformToolProvider;
 import org.gradle.nativeplatform.toolchain.internal.ToolType;
@@ -64,8 +63,15 @@ public class CppModelBuilder implements ModelBuilderService {
   @Nullable
   @Override
   public Object buildAll(final String modelName, final Project project) {
-    final CppBasePlugin cppPlugin = project.getPlugins().findPlugin(CppBasePlugin.class);
-    if (cppPlugin == null) return null;
+    PluginContainer pluginContainer = project.getPlugins();
+    if (!pluginContainer.hasPlugin(CppBasePlugin.class)) {
+      if (pluginContainer.hasPlugin(CppPlugin.class)) {
+        project.getLogger().error(
+          "[sync warning] The IDE doesn't support 'cpp' gradle plugin. " +
+          "Consider to use new gradle C++ plugins, see details at https://blog.gradle.org/introducing-the-new-cpp-plugins");
+      }
+      return null;
+    }
 
     final CppProjectImpl cppProject = new CppProjectImpl();
     for (SoftwareComponent component : project.getComponents()) {
@@ -119,8 +125,9 @@ public class CppModelBuilder implements ModelBuilderService {
           // resolve compiler working dir as compiler executable file parent dir
           // https://github.com/gradle/gradle/blob/7422d5fc2e04d564dfd73bc539a37b62f8e2113a/subprojects/platform-native/src/main/java/org/gradle/nativeplatform/toolchain/internal/metadata/AbstractMetadataProvider.java#L61
           File compilerWorkingDir = cppCompilerExecutable == null ? null : cppCompilerExecutable.getParentFile();
+          String compileKind = getCompilerKind(cppBinary);
           CompilerDetails compilerDetails = new CompilerDetailsImpl(
-            compileTaskName, cppCompilerExecutable, compilerWorkingDir, compilerArgs, compileIncludePath, systemIncludes);
+            compileKind, compileTaskName, cppCompilerExecutable, compilerWorkingDir, compilerArgs, compileIncludePath, systemIncludes);
           LinkerDetails linkerDetails = new LinkerDetailsImpl(linkTaskName, executableFile);
           cppProject.addBinary(new CppBinaryImpl(baseName, variantName, sources, compilerDetails, linkerDetails, targetType));
         }
@@ -130,6 +137,28 @@ public class CppModelBuilder implements ModelBuilderService {
     }
 
     return cppProject;
+  }
+
+  @NotNull
+  private static String getCompilerKind(CppBinary cppBinary) {
+    final String compileKind;
+    NativeToolChain toolChain = cppBinary.getToolChain();
+    if (toolChain instanceof Clang) {
+      compileKind = "Clang";
+    }
+    else if (toolChain instanceof Gcc) {
+      compileKind = "GCC";
+    }
+    else if (toolChain instanceof VisualCpp) {
+      compileKind = "MSVC";
+    }
+    else if (toolChain instanceof Swiftc) {
+      compileKind = "Swiftc";
+    }
+    else {
+      compileKind = "Unknown";
+    }
+    return compileKind;
   }
 
   @Nullable
@@ -183,6 +212,7 @@ public class CppModelBuilder implements ModelBuilderService {
 
   @Nullable
   private static File findCppCompilerExecutable(Project project, CppBinary cppBinary) {
+    Throwable throwable = null;
     try {
       if (cppBinary instanceof ConfigurableComponentWithExecutable) {
         PlatformToolProvider toolProvider = ((ConfigurableComponentWithExecutable)cppBinary).getPlatformToolProvider();
@@ -196,6 +226,7 @@ public class CppModelBuilder implements ModelBuilderService {
             Field visualCppField = toolProvider.getClass().getDeclaredField("visualCpp");
             visualCppField.setAccessible(true);
             Object visualCpp = visualCppField.get(toolProvider);
+
             if (visualCpp instanceof NativeLanguageTools) {
               return ((NativeLanguageTools)visualCpp).getCompilerExecutable();
             }
@@ -203,13 +234,8 @@ public class CppModelBuilder implements ModelBuilderService {
         }
       }
     }
-    catch (Throwable e) {
-      if (GradleVersion.current().compareTo(GradleVersion.version("4.6")) < 0) {
-        project.getLogger().error("Unable to resolve compiler executable, try to update the gradle version");
-      }
-      else {
-        project.getLogger().error("Unable to resolve compiler executable", e);
-      }
+    catch (Throwable t) {
+      throwable = t;
     }
 
     NativeToolChain toolChain = cppBinary.getToolChain();
@@ -233,6 +259,15 @@ public class CppModelBuilder implements ModelBuilderService {
       if (searchResult.isAvailable()) {
         return searchResult.getTool();
       }
+    }
+
+    if (GradleVersion.current().getBaseVersion().compareTo(GradleVersion.version("4.6")) <= 0) {
+      project.getLogger().error(
+        "[sync error] Unable to resolve compiler executable. " +
+        "The project uses '" + GradleVersion.current() + "' try to update the gradle version");
+    }
+    else {
+      project.getLogger().error("[sync error] Unable to resolve compiler executable", throwable);
     }
     return null;
   }

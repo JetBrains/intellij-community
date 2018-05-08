@@ -30,9 +30,6 @@ import org.jetbrains.annotations.Nullable;
 
 import static com.intellij.codeInsight.PsiEquivalenceUtil.areElementsEquivalent;
 
-/**
- * @author Tagir Valeev
- */
 public class OptionalIsPresentInspection extends AbstractBaseJavaLocalInspectionTool {
   private static final Logger LOG = Logger.getInstance(OptionalIsPresentInspection.class);
 

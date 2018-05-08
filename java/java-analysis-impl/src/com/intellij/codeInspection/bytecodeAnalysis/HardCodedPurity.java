@@ -17,6 +17,7 @@ package com.intellij.codeInspection.bytecodeAnalysis;
 
 import com.intellij.openapi.util.Couple;
 import com.intellij.openapi.util.registry.Registry;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.org.objectweb.asm.tree.FieldInsnNode;
 
@@ -73,7 +74,7 @@ class HardCodedPurity {
       return new Effects(isBuilderChainCall(method) ? DataValue.ThisDataValue : DataValue.UnknownDataValue1, thisChange);
     }
     else if (isPureMethod(method)) {
-      return new Effects(DataValue.LocalDataValue, Collections.emptySet());
+      return new Effects(getReturnValueForPureMethod(method), Collections.emptySet());
     }
     else {
       Set<EffectQuantum> effects = solutions.get(method);
@@ -91,6 +92,14 @@ class HardCodedPurity {
     // (only final classes j.l.StringBuilder and j.l.StringBuffer extend package-private j.l.AbstractStringBuilder)
     return (method.internalClassName.equals("java/lang/StringBuilder") || method.internalClassName.equals("java/lang/StringBuffer")) &&
            method.methodName.startsWith("append");
+  }
+
+  DataValue getReturnValueForPureMethod(Member method) {
+    String type = StringUtil.substringAfter(method.methodDesc, ")");
+    if (type != null && (type.length() == 1 || type.equals("Ljava/lang/String;") || type.equals("Ljava/lang/Class;"))) {
+      return DataValue.UnknownDataValue1;
+    }
+    return DataValue.LocalDataValue;
   }
 
   boolean isPureMethod(Member method) {

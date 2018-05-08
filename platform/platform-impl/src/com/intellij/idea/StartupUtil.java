@@ -101,6 +101,7 @@ public class StartupUtil {
 
     // avoiding "log4j:WARN No appenders could be found"
     System.setProperty("log4j.defaultInitOverride", "true");
+    System.setProperty("com.jetbrains.suppressWindowRaise", "true");
     try {
       org.apache.log4j.Logger root = org.apache.log4j.Logger.getRootLogger();
       if (!root.getAllAppenders().hasMoreElements()) {

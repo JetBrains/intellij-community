@@ -21,11 +21,11 @@ import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.editor.colors.TextAttributesKey;
 import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.util.Key;
-import java.util.HashMap;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Collection;
+import java.util.HashMap;
 import java.util.Map;
 
 /**
@@ -101,8 +101,9 @@ public class ConsoleViewContentType {
     ourRegisteredTypes.put(processOutputType, attributes);
   }
 
-  public static synchronized ConsoleViewContentType getConsoleViewType(final Key processOutputType) {
-    return ourRegisteredTypes.getOrDefault(processOutputType, SYSTEM_OUTPUT);
+  @NotNull
+  public static synchronized ConsoleViewContentType getConsoleViewType(@NotNull Key processOutputType) {
+    return ourRegisteredTypes.getOrDefault(processOutputType, NORMAL_OUTPUT);
   }
 
   public static synchronized Collection<ConsoleViewContentType> getRegisteredTypes() {

@@ -26,6 +26,7 @@ import com.intellij.rt.execution.junit.FileComparisonFailure;
 import com.intellij.testFramework.IdeaTestUtil;
 import com.intellij.testFramework.PsiTestUtil;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.ui.UIUtil;
 import org.intellij.lang.annotations.Flow;
 
 import java.io.File;
@@ -186,7 +187,7 @@ public class JavaDocInfoGeneratorTest extends CodeInsightTestCase {
 
     docInfo = new JavaDocumentationProvider().getQuickNavigateInfo(field, field);
     assertNotNull(docInfo);
-    assertEquals(exampleHtmlFileText(getTestName(true) + "_quick"), replaceEnvironmentDependentContent(docInfo));
+    assertEquals(exampleHtmlFileText(getTestName(true) + "_quick"), replaceEnvironmentDependentContent(UIUtil.getHtmlBody(docInfo)));
   }
 
   public void testClickableFieldReference() throws Exception {
@@ -218,7 +219,7 @@ public class JavaDocInfoGeneratorTest extends CodeInsightTestCase {
 
     String docInfo = new JavaDocumentationProvider().getQuickNavigateInfo(superClass, referenceElement);
     assertNotNull(docInfo);
-    assertFileTextEquals(docInfo);
+    assertFileTextEquals(UIUtil.getHtmlBody(docInfo));
   }
 
   void assertFileTextEquals(String docInfo) throws IOException {

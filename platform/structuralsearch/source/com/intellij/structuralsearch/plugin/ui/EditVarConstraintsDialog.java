@@ -336,14 +336,13 @@ class EditVarConstraintsDialog extends DialogWrapper {
       return;
     } else {
       final List<PsiElement> nodes = myCompiledPattern.getVariableNodes(varName);
-      final PsiElement node = nodes.size() == 1 ? nodes.get(0) : null;
       final boolean completePattern = Configuration.CONTEXT_VAR_NAME.equals(varName);
 
-      final boolean text = myProfile.isApplicableConstraint(UIUtil.TEXT, node, completePattern, false);
+      final boolean text = myProfile.isApplicableConstraint(UIUtil.TEXT, nodes, completePattern, false);
       textConstraintsPanel.setVisible(text);
-      applyWithinTypeHierarchy.setVisible(text && myProfile.isApplicableConstraint(UIUtil.TEXT_HIERARCHY, node, completePattern, false));
-      final boolean minZero = myProfile.isApplicableConstraint(UIUtil.MINIMUM_ZERO, node, completePattern, false);
-      final boolean maxUnlimited = myProfile.isApplicableConstraint(UIUtil.MAXIMUM_UNLIMITED, node, completePattern, false);
+      applyWithinTypeHierarchy.setVisible(text && myProfile.isApplicableConstraint(UIUtil.TEXT_HIERARCHY, nodes, completePattern, false));
+      final boolean minZero = myProfile.isApplicableConstraint(UIUtil.MINIMUM_ZERO, nodes, completePattern, false);
+      final boolean maxUnlimited = myProfile.isApplicableConstraint(UIUtil.MAXIMUM_UNLIMITED, nodes, completePattern, false);
       if (minZero || maxUnlimited) {
         occurencePanel.setVisible(true);
         minoccurs.setMinValue(minZero ? 0 : 1);
@@ -356,11 +355,11 @@ class EditVarConstraintsDialog extends DialogWrapper {
       else {
         occurencePanel.setVisible(false);
       }
-      final boolean typeComponent = myProfile.isApplicableConstraint(UIUtil.TYPE, node, completePattern, false);
+      final boolean typeComponent = myProfile.isApplicableConstraint(UIUtil.TYPE, nodes, completePattern, false);
       expressionConstraints.setVisible(typeComponent);
-      expectedTypeConstraints.setVisible(typeComponent && myProfile.isApplicableConstraint(UIUtil.EXPECTED_TYPE, node, completePattern,
-                                                                                           false));
-      referenceTargetConstraints.setVisible(myProfile.isApplicableConstraint(UIUtil.REFERENCE, node, completePattern, false));
+      expectedTypeConstraints.setVisible(typeComponent &&
+                                         myProfile.isApplicableConstraint(UIUtil.EXPECTED_TYPE, nodes, completePattern, false));
+      referenceTargetConstraints.setVisible(myProfile.isApplicableConstraint(UIUtil.REFERENCE, nodes, completePattern, false));
       containedInConstraints.setVisible(completePattern);
       scriptConstraints.setVisible(Registry.is("ssr.enable.script.constraint.on.all.variables") || completePattern);
 

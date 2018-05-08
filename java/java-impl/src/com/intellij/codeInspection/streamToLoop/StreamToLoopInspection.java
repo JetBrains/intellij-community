@@ -42,9 +42,6 @@ import java.util.*;
 
 import static com.intellij.codeInspection.streamToLoop.Operation.FlatMapOperation;
 
-/**
- * @author Tagir Valeev
- */
 public class StreamToLoopInspection extends AbstractBaseJavaLocalInspectionTool {
   private static final Logger LOG = Logger.getInstance(StreamToLoopInspection.class);
 

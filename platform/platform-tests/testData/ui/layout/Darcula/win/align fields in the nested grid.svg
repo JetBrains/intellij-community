@@ -11,13 +11,13 @@
         <path d="M0 0 L0 16 L159 16 L159 0 Z"/>
       </clipPath>
       <clipPath clipPathUnits="userSpaceOnUse" id="2">
-        <path d="M0 0 L0 28 L254 28 L254 0 Z"/>
+        <path d="M0 0 L0 30 L256 30 L256 0 Z"/>
       </clipPath>
       <clipPath clipPathUnits="userSpaceOnUse" id="3">
-        <path d="M-1 -1 L-1 27 L253 27 L253 -1 Z"/>
+        <path d="M-1 -1 L-1 29 L255 29 L255 -1 Z"/>
       </clipPath>
       <clipPath clipPathUnits="userSpaceOnUse" id="4">
-        <path d="M0 0 L0 24 L246 24 L246 0 Z"/>
+        <path d="M0 0 L0 24 L254 24 L254 0 Z"/>
       </clipPath>
       <clipPath clipPathUnits="userSpaceOnUse" id="5">
         <path d="M0 0 L0 16 L92 16 L92 0 Z"/>
@@ -26,56 +26,56 @@
         <path d="M0 0 L0 16 L21 16 L21 0 Z"/>
       </clipPath>
       <clipPath clipPathUnits="userSpaceOnUse" id="7">
-        <path d="M0 0 L0 28 L332 28 L332 0 Z"/>
+        <path d="M0 0 L0 30 L332 30 L332 0 Z"/>
       </clipPath>
       <clipPath clipPathUnits="userSpaceOnUse" id="8">
-        <path d="M-1 -1 L-1 27 L331 27 L331 -1 Z"/>
+        <path d="M-1 -1 L-1 29 L331 29 L331 -1 Z"/>
       </clipPath>
       <clipPath clipPathUnits="userSpaceOnUse" id="9">
         <path d="M0 0 L0 16 L51 16 L51 0 Z"/>
       </clipPath>
       <clipPath clipPathUnits="userSpaceOnUse" id="10">
-        <path d="M2 0 L2 24 L78 24 L78 0 Z"/>
+        <path d="M2 2 L2 19 L78 19 L78 2 Z"/>
       </clipPath>
     </defs>
     <g fill="rgb(60,63,65)" font-family="'Segoe UI'" stroke="rgb(60,63,65)">
       <rect x="0" width="480" height="320" y="0" clip-path="url(#0)" stroke="none"/>
     </g>
-    <g fill="rgb(120,120,120)" text-rendering="geometricPrecision" font-family="'Segoe UI'" transform="translate(120,99)" stroke="rgb(120,120,120)">
+    <g fill="rgb(120,120,120)" text-rendering="geometricPrecision" font-family="'Segoe UI'" transform="translate(122,89)" stroke="rgb(120,120,120)">
       <text x="0" xml:space="preserve" y="13" clip-path="url(#1)" stroke="none">Stored using weak encryption.</text>
     </g>
-    <g fill="rgb(60,63,65)" font-family="monospace" transform="translate(117,67)" stroke="rgb(60,63,65)">
-      <rect x="0" width="254" height="28" y="0" clip-path="url(#2)" stroke="none"/>
+    <g fill="rgb(60,63,65)" font-family="monospace" transform="translate(118,56)" stroke="rgb(60,63,65)">
+      <rect x="0" width="256" height="30" y="0" clip-path="url(#2)" stroke="none"/>
     </g>
-    <g fill="rgb(69,73,74)" text-rendering="optimizeLegibility" font-family="monospace" transform="translate(118,68)" stroke="rgb(69,73,74)">
-      <rect x="2" width="248" height="22" y="2" clip-path="url(#3)" stroke="none"/>
+    <g fill="rgb(69,73,74)" text-rendering="optimizeLegibility" font-family="monospace" transform="translate(119,57)" stroke="rgb(69,73,74)">
+      <rect x="2" width="250" height="24" y="2" clip-path="url(#3)" stroke="none"/>
     </g>
-    <g fill="rgb(100,100,100)" text-rendering="optimizeLegibility" font-family="monospace" transform="translate(117,67)" stroke="rgb(100,100,100)">
-      <path d="M2 2 L252 2 L252 26 L2 26 L2 2 ZM3 3 L251 3 L251 25 L3 25 L3 3 Z" fill-rule="evenodd" clip-path="url(#2)" stroke="none"/>
+    <g fill="rgb(100,100,100)" text-rendering="optimizeLegibility" font-family="monospace" transform="translate(119,57)" stroke="rgb(100,100,100)">
+      <path d="M2 2 L252 2 L252 26 L2 26 L2 2 ZM3 3 L251 3 L251 25 L3 25 L3 3 Z" fill-rule="evenodd" clip-path="url(#3)" stroke="none"/>
     </g>
-    <g fill="rgb(187,187,187)" font-family="'Segoe UI'" transform="translate(21,72)" stroke="rgb(187,187,187)">
+    <g fill="rgb(187,187,187)" font-family="'Segoe UI'" transform="translate(23,62)" stroke="rgb(187,187,187)">
       <text x="0" xml:space="preserve" y="13" clip-path="url(#5)" stroke="none">Master Password:</text>
     </g>
-    <g fill="rgb(187,187,187)" font-family="'Segoe UI'" transform="translate(451,38)" stroke="rgb(187,187,187)">
+    <g fill="rgb(187,187,187)" font-family="'Segoe UI'" transform="translate(451,29)" stroke="rgb(187,187,187)">
       <image x="0" y="0" clip-path="url(#6)" width="21" xlink:href="../../../../../../icons/src/general/gear.png" height="16" preserveAspectRatio="none"/>
     </g>
-    <g fill="rgb(60,63,65)" font-family="'Segoe UI'" transform="translate(117,32)" stroke="rgb(60,63,65)">
-      <rect x="0" width="332" height="28" y="0" clip-path="url(#7)" stroke="none"/>
+    <g fill="rgb(60,63,65)" font-family="'Segoe UI'" transform="translate(118,22)" stroke="rgb(60,63,65)">
+      <rect x="0" width="332" height="30" y="0" clip-path="url(#7)" stroke="none"/>
     </g>
-    <g fill="rgb(69,73,74)" text-rendering="optimizeLegibility" font-family="'Segoe UI'" transform="translate(118,33)" stroke="rgb(69,73,74)">
-      <rect x="2" y="2" clip-path="url(#8)" width="326" rx="0" ry="0" height="22" stroke="none"/>
+    <g fill="rgb(69,73,74)" text-rendering="optimizeLegibility" font-family="'Segoe UI'" transform="translate(119,23)" stroke="rgb(69,73,74)">
+      <rect x="2" y="2" clip-path="url(#8)" width="326" rx="0" ry="0" height="24" stroke="none"/>
     </g>
-    <g fill="rgb(100,100,100)" text-rendering="optimizeLegibility" font-family="'Segoe UI'" transform="translate(117,32)" stroke="rgb(100,100,100)">
-      <path d="M2 2 L330 2 L330 26 L2 26 L2 2 ZM3 3 L329 3 L329 25 L3 25 L3 3 Z" fill-rule="evenodd" clip-path="url(#7)" stroke="none"/>
+    <g fill="rgb(100,100,100)" text-rendering="optimizeLegibility" font-family="'Segoe UI'" transform="translate(119,23)" stroke="rgb(100,100,100)">
+      <path d="M2 2 L328 2 L328 26 L2 26 L2 2 ZM3 3 L327 3 L327 25 L3 25 L3 3 Z" fill-rule="evenodd" clip-path="url(#8)" stroke="none"/>
     </g>
-    <g fill="rgb(187,187,187)" font-family="'Segoe UI'" transform="translate(21,38)" stroke="rgb(187,187,187)">
+    <g fill="rgb(187,187,187)" font-family="'Segoe UI'" transform="translate(23,29)" stroke="rgb(187,187,187)">
       <text x="0" xml:space="preserve" y="13" clip-path="url(#9)" stroke="none">Database:</text>
     </g>
-    <g fill="rgb(60,63,65)" font-family="'Segoe UI'" transform="translate(-2,0)" stroke="rgb(60,63,65)">
-      <rect x="0" width="78" height="24" y="0" clip-path="url(#10)" stroke="none"/>
-      <rect x="0" width="78" height="24" y="0" clip-path="url(#10)" stroke="none"/>
-      <image x="0" y="3" clip-path="url(#10)" width="19" xlink:href="../../../../../../platform-impl/src/com/intellij/ide/ui/laf/icons/darcula/radio.png" height="19" preserveAspectRatio="none"/>
-      <text fill="rgb(187,187,187)" x="23" xml:space="preserve" y="17" clip-path="url(#10)" stroke="none">In KeePass</text>
+    <g fill="rgb(60,63,65)" font-family="'Segoe UI'" transform="translate(-2,-2)" stroke="rgb(60,63,65)">
+      <rect x="0" width="78" height="19" y="0" clip-path="url(#10)" stroke="none"/>
+      <rect x="0" width="78" height="19" y="0" clip-path="url(#10)" stroke="none"/>
+      <image x="0" y="0" clip-path="url(#10)" width="19" xlink:href="../../../../../../platform-impl/src/com/intellij/ide/ui/laf/icons/darcula/radio.svg" height="19" preserveAspectRatio="none"/>
+      <text fill="rgb(187,187,187)" x="23" xml:space="preserve" y="14" clip-path="url(#10)" stroke="none">In KeePass</text>
     </g>
   </g>
 </svg>

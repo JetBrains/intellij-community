@@ -816,7 +816,6 @@ public class UsageViewImpl implements UsageViewEx {
     return new AnAction[] {
       canShowSettings() ? showSettings() : null,
       ActionManager.getInstance().getAction("UsageView.Rerun"),
-      new CloseAction(),
       ActionManager.getInstance().getAction(IdeActions.ACTION_PIN_ACTIVE_TAB),
       createRecentFindUsagesAction(),
       expandAllAction,
@@ -1040,19 +1039,6 @@ public class UsageViewImpl implements UsageViewEx {
   @Override
   public void associateProgress(@NotNull ProgressIndicator indicator) {
     associatedProgress = indicator;
-  }
-
-  private class CloseAction extends CloseTabToolbarAction {
-    @Override
-    public void update(AnActionEvent e) {
-      super.update(e);
-      e.getPresentation().setVisible(myContent != null);
-    }
-
-    @Override
-    public void actionPerformed(AnActionEvent e) {
-      close();
-    }
   }
 
   private class MergeDupLines extends RuleAction {

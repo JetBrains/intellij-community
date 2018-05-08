@@ -72,7 +72,7 @@ public class EditContractIntention extends BaseIntentionAction implements LowPri
   public boolean isAvailable(@NotNull Project project, Editor editor, PsiFile file) {
     final PsiMethod method = getTargetMethod(editor, file);
     if (method != null) {
-      boolean hasContract = ControlFlowAnalyzer.findContractAnnotation(method) != null;
+      boolean hasContract = JavaMethodContractUtil.findContractAnnotation(method) != null;
       setText(hasContract ? "Edit method contract of '" + method.getName() + "'" : "Add method contract to '" + method.getName() + "'");
       return true;
     }
@@ -173,6 +173,7 @@ public class EditContractIntention extends BaseIntentionAction implements LowPri
 
     DialogBuilder builder = new DialogBuilder(project).setNorthPanel(panel).title("Edit Method Contract");
     builder.setPreferredFocusComponent(contractText);
+    builder.setHelpId("define_contract_dialog");
     return builder;
   }
 
@@ -186,11 +187,11 @@ public class EditContractIntention extends BaseIntentionAction implements LowPri
   private static void updateContract(PsiMethod method, String contract, boolean pure, String mutates) {
     Project project = method.getProject();
     ExternalAnnotationsManager manager = ExternalAnnotationsManager.getInstance(project);
-    manager.deannotate(method, ControlFlowAnalyzer.ORG_JETBRAINS_ANNOTATIONS_CONTRACT);
+    manager.deannotate(method, JavaMethodContractUtil.ORG_JETBRAINS_ANNOTATIONS_CONTRACT);
     PsiAnnotation mockAnno = InferredAnnotationsManagerImpl.createContractAnnotation(project, pure, contract, mutates);
     if (mockAnno != null) {
       try {
-        manager.annotateExternally(method, ControlFlowAnalyzer.ORG_JETBRAINS_ANNOTATIONS_CONTRACT, method.getContainingFile(),
+        manager.annotateExternally(method, JavaMethodContractUtil.ORG_JETBRAINS_ANNOTATIONS_CONTRACT, method.getContainingFile(),
                                    mockAnno.getParameterList().getAttributes());
       }
       catch (ExternalAnnotationsManager.CanceledConfigurationException ignored) {}

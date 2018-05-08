@@ -122,6 +122,17 @@ public class Simple<T> {
     return expression instanceof Number && numberCond.process((Number)expression);
   }
 
+  //////////// recursive with super
+  class Refactor {
+    public void substituteElementToRename(String element, Processor<String> renameCallback) {}
+  }
+  class RefactorImpl extends Refactor {
+    @Override
+    public void substituteElementToRename(String element, Processor<<warning descr="Can generalize to '? super String'">String</warning>> renameCallback) {
+      renameCallback.process(element);
+      super.substituteElementToRename(element, renameCallback);
+    }
+  }
 
   ///////// can't deduce anything - too general
   private static String findNonCodeAnnotation(Collection<String> annotationNames, Map<Collection<String>, String> map ) {
@@ -142,5 +153,45 @@ public class Simple<T> {
   public static void lightTreeToBuffer(final FlyweightCapableTreeStructure<Runnable> tree) {
     Ref<Runnable[]> kids = new Ref<>(null);
     int numKids = tree.getChildren(null, kids);
+  }
+
+
+  ////////////// call to anonymous
+  class InplaceButton {
+    InplaceButton(Processor<? super Number> p) {
+    }
+  }
+  public void foooo(Processor<<warning descr="Can generalize to '? super Number'">Number</warning>> pass) {
+    Object myButton = new InplaceButton(pass) {
+      @Override
+      public String toString() { return ""; }
+    };
+  }
+
+  ////////////// field assigned from method
+  class S {
+    Processor<S> myProcessor;
+
+    public S(Processor<<warning descr="Can generalize to '? super S'">S</warning>> myProcessor) {
+      this.myProcessor = myProcessor;
+    }
+
+    boolean foo() {
+      return myProcessor.process(null);
+    }
+  }
+
+  ////////////// field assigned from nethod but is used outside - can't fix
+  class S2 {
+    Processor<S2> myProcessor;
+
+    public S2(Processor<S2> myProcessor) {
+      this.myProcessor = myProcessor;
+    }
+
+    public Processor<S2> getProcessor() {
+      myProcessor.process(null);
+      return myProcessor;
+    }
   }
 }

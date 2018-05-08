@@ -274,7 +274,8 @@ public abstract class VirtualFile extends UserDataHolderBase implements Modifica
   /**
    * Checks whether this {@code VirtualFile} is valid. File can be invalidated either by deleting it or one of its
    * parents with {@link #delete} method or by an external change.
-   * If file is not valid only {@link #equals}, {@link #hashCode} and methods from
+   * If file is not valid only {@link #equals}, {@link #hashCode}, 
+   * {@link #getName()}, {@link #getPath()}, {@link #getUrl()}, {@link #getPresentableUrl()} and methods from
    * {@link UserDataHolder} can be called for it. Using any other methods for an invalid {@link VirtualFile} instance
    * produce unpredictable results.
    *

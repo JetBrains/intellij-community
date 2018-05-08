@@ -18,9 +18,6 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.function.Predicate;
 
-/**
- * @author Tagir Valeev
- */
 public class Java8ArraySetAllInspection extends AbstractBaseJavaLocalInspectionTool {
   private static final Logger LOG = Logger.getInstance(Java8ArraySetAllInspection.class);
 

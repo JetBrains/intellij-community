@@ -293,12 +293,15 @@ public class MemberChooser<T extends ClassMember> extends DialogWrapper implemen
 
   protected void customizeOptionsPanel() {
     if (myInsertOverrideAnnotationCheckbox != null && myIsInsertOverrideVisible) {
-      CodeStyleSettings styleSettings = CodeStyleSettingsManager.getInstance(myProject).getCurrentSettings();
-      myInsertOverrideAnnotationCheckbox.setSelected(styleSettings.INSERT_OVERRIDE_ANNOTATION);
+      myInsertOverrideAnnotationCheckbox.setSelected(isInsertOverrideAnnotationSelected());
     }
     if (myCopyJavadocCheckbox != null) {
       myCopyJavadocCheckbox.setSelected(PropertiesComponent.getInstance().isTrueValue(PROP_COPYJAVADOC));
     }
+  }
+
+  protected boolean isInsertOverrideAnnotationSelected() {
+    return false;
   }
 
   @Override

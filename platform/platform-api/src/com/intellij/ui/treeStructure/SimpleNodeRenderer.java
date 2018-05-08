@@ -18,7 +18,7 @@ package com.intellij.ui.treeStructure;
 import com.intellij.ide.util.treeView.NodeRenderer;
 
 /**
- * @deprecated Use NodeRenderer instead
+ * @deprecated Use {@link NodeRenderer} instead
  */
 public class SimpleNodeRenderer extends NodeRenderer {
 

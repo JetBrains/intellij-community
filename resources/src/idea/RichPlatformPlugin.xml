@@ -6,6 +6,7 @@
   <module value="com.intellij.modules.vcs"/>
   <module value="com.intellij.modules.xdebugger"/>
   <module value="com.intellij.modules.xml"/>
+  <module value="com.intellij.modules.externalSystem"/>
 
   <xi:include href="/componentSets/IdeaComponents.xml" xpointer="xpointer(/idea-plugin/*)"/>
   <xi:include href="/idea/RichPlatformActions.xml" xpointer="xpointer(/idea-plugin/*)"/>

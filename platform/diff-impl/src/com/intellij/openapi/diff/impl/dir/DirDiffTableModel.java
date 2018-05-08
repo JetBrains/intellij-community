@@ -417,6 +417,7 @@ public class DirDiffTableModel extends AbstractTableModel implements DirDiffMode
       final DiffElement[] children = element.getChildren();
       for (DiffElement child : children) {
         if (!myUpdating.get()) return;
+        text.set(prepareText(child.getPath()));
         BiMap<String, String> replacing = mySourceToReplacingTarget.get(root.getPath());
         String replacementName = replacing != null ? source ? replacing.get(child.getName()) : replacing.inverse().get(child.getName()) : null;
         final DTree el = root.addChild(child, source, replacementName);

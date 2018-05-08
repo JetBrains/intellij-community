@@ -20,9 +20,6 @@ import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-/**
- * @author Tagir Valeev
- */
 public class Java8CollectionRemoveIfInspection extends AbstractBaseJavaLocalInspectionTool {
   @NotNull
   @Override

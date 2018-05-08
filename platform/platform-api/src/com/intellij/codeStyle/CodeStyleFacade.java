@@ -75,7 +75,7 @@ public abstract class CodeStyleFacade {
   }
 
   /**
-   * @deprecated Use CodeStyle.getIndentSize(psiFile) instead.
+   * @deprecated Use {@link com.intellij.application.options.CodeStyle#getIndentSize(com.intellij.psi.PsiFile)} instead.
    */
   public abstract int getIndentSize(FileType fileType);
 
@@ -105,8 +105,6 @@ public abstract class CodeStyleFacade {
    *             {@code CodeStyle.getSettings(Project)} if there is no {@code PsiFile}
    */
   public abstract String getLineSeparator();
-
-  public abstract boolean projectUsesOwnSettings();
 
   public abstract boolean isUnsuitableCodeStyleConfigurable(Configurable c);
 }

@@ -71,4 +71,8 @@ public class ChangesBrowserNodeRenderer extends ColoredTreeCellRenderer {
     Icon icon = isDirectory ? PlatformIcons.FOLDER_ICON : fileType.getIcon();
     setIcon(icon);
   }
+
+  public boolean isShowingLocalChanges() {
+    return myHighlightProblems;
+  }
 }

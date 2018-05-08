@@ -38,7 +38,7 @@
         <keyboard-shortcut keymap="$default" first-keystroke="alt shift B"/>
       </action>
       <action id="tasks.analyze.stacktrace" class="com.intellij.tasks.actions.AnalyzeTaskStacktraceAction"
-              text="Analyze _Stacktrace From Task..."/>
+              text="Analyze _Stack Trace From Task..."/>
       <separator/>
       <action id="tasks.configure.servers" class="com.intellij.tasks.actions.ConfigureServersAction" text="Configure Servers..."/>
     </group>

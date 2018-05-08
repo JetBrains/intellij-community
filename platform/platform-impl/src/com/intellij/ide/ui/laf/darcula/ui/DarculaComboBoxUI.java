@@ -60,8 +60,18 @@ public class DarculaComboBoxUI extends BasicComboBoxUI implements Border, ErrorB
     installDarculaDefaults();
   }
 
+  @Override
+  protected void uninstallDefaults() {
+    super.uninstallDefaults();
+    uninstallDarculaDefaults();
+  }
+
   protected void installDarculaDefaults() {
     comboBox.setBorder(this);
+  }
+
+  protected void uninstallDarculaDefaults() {
+    comboBox.setBorder(null);
   }
 
   @Override protected void installListeners() {

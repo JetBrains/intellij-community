@@ -27,15 +27,19 @@ import java.util.List;
  * @author Tagir Valeev
  */
 public abstract class MethodContract {
-  // package private to avoid uncontrolled implementations
-  MethodContract() {
+  private final ContractReturnValue myReturnValue;
 
+  // package private to avoid uncontrolled implementations
+  MethodContract(ContractReturnValue returnValue) {
+    myReturnValue = returnValue;
   }
 
   /**
    * @return a value the method will return if the contract conditions fulfill
    */
-  public abstract ContractReturnValue getReturnValue();
+  public ContractReturnValue getReturnValue() {
+    return myReturnValue;
+  }
 
   /**
    * @return true if this contract result does not depend on arguments
@@ -54,12 +58,7 @@ public abstract class MethodContract {
   }
 
   public static MethodContract trivialContract(ContractReturnValue value) {
-    return new MethodContract() {
-      @Override
-      public ContractReturnValue getReturnValue() {
-        return value;
-      }
-
+    return new MethodContract(value) {
       @Override
       String getArgumentsPresentation() {
         return "(any)";
@@ -77,12 +76,7 @@ public abstract class MethodContract {
                                                        ContractValue right,
                                                        ContractReturnValue returnValue) {
     ContractValue condition = ContractValue.condition(left, relationType, right);
-    return new MethodContract() {
-      @Override
-      public ContractReturnValue getReturnValue() {
-        return returnValue;
-      }
-
+    return new MethodContract(returnValue) {
       @Override
       String getArgumentsPresentation() {
         return condition.toString();

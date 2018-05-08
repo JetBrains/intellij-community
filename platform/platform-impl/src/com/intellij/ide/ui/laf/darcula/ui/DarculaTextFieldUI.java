@@ -32,12 +32,12 @@ public class DarculaTextFieldUI extends TextFieldWithPopupHandlerUI {
 
   @Override
   protected Icon getSearchIcon(boolean hovered, boolean clickable) {
-    return IconCache.getIcon(clickable ? "searchWithHistory" : "search");
+    return LafIconLookup.getIcon(clickable ? "searchWithHistory" : "search");
   }
 
   @Override
   protected Icon getClearIcon(boolean hovered, boolean clickable) {
-    return !clickable ? null : IconCache.getIcon("clear");
+    return !clickable ? null : LafIconLookup.getIcon("clear");
   }
 
   @Override

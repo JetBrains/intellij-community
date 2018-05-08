@@ -2,7 +2,7 @@
 package com.intellij.codeInspection.dataFlow.inference
 
 import com.intellij.codeInsight.NullableNotNullManager
-import com.intellij.codeInspection.dataFlow.ControlFlowAnalyzer
+import com.intellij.codeInspection.dataFlow.JavaMethodContractUtil
 import com.intellij.codeInspection.dataFlow.Mutability
 import com.intellij.codeInspection.dataFlow.Nullness
 import com.intellij.lang.LighterASTNode
@@ -48,7 +48,7 @@ data class PurityInferenceResult(internal val mutatedRefs: List<ExpressionRange>
     if (singleCall == null) return true
 
     val called = (singleCall.restoreExpression(body()) as PsiCall).resolveMethod()
-    return called != null && ControlFlowAnalyzer.isPure(called)
+    return called != null && JavaMethodContractUtil.isPure(called)
   }
 
   private fun isLocalVarReference(expression: PsiExpression?, scope: PsiMethod): Boolean {

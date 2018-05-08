@@ -21,7 +21,7 @@ import com.intellij.ui.components.JBCheckBoxMenuItem;
 import com.intellij.ui.plaf.beg.BegMenuItemUI;
 import com.intellij.ui.plaf.gtk.GtkMenuItemUI;
 import com.intellij.util.ui.EmptyIcon;
-import com.intellij.util.ui.IconCache;
+import com.intellij.util.ui.LafIconLookup;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -219,9 +219,9 @@ public class ActionMenuItem extends JBCheckBoxMenuItem {
       }
       else if (!(getUI() instanceof GtkMenuItemUI)) {
         if (myToggled) {
-          setIcon(IconCache.getIcon("checkmark"));
-          setSelectedIcon(IconCache.getSelectedIcon("checkmark"));
-          setDisabledIcon(IconCache.getDisabledIcon("checkmark"));
+          setIcon(LafIconLookup.getIcon("checkmark"));
+          setSelectedIcon(LafIconLookup.getSelectedIcon("checkmark"));
+          setDisabledIcon(LafIconLookup.getDisabledIcon("checkmark"));
         }
         else {
           setIcon(EmptyIcon.ICON_16);

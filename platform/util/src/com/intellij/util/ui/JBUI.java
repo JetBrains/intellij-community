@@ -518,6 +518,12 @@ public class JBUI {
   }
 
   @NotNull
+  public static JBInsets insets(String propName, JBInsets defaultValue) {
+    JBInsets i = (JBInsets)UIManager.getInsets(propName);
+    return i != null ? i : defaultValue;
+  }
+
+  @NotNull
   public static JBInsets insets(int topBottom, int leftRight) {
     return insets(topBottom, leftRight, topBottom, leftRight);
   }
@@ -1477,6 +1483,15 @@ public class JBUI {
         return font;
       }
 
+      public static float overrideHeaderFontSizeOffset() {
+        Object offset = UIManager.get("ToolWindow.overridden.header.font.size.offset");
+        if (offset instanceof Integer) {
+          return ((Integer)offset).floatValue();
+        }
+
+        return 0;
+      }
+
       @NotNull
       public static Color hoveredIconBackground() {
         return JBColor.namedColor("ToolWindow.header.closeButton.background", 0xB9B9B9);
@@ -1570,6 +1585,33 @@ public class JBUI {
         return active ?
                JBColor.namedColor("Focus.activeWarningBorderColor", new JBColor(0xe2a53a, 0xac7920)) :
                JBColor.namedColor("Focus.inactiveWarningBorderColor", new JBColor(0xffd385, 0x6e5324));
+      }
+    }
+
+    //todo #UX-1 maybe move to popup
+    public static class SearchEverywhere {
+      public static Color dialogBackground() {
+        return JBColor.namedColor("SearchEverywhere.Dialog.background", 0xf2f2f2);
+      }
+
+      public static Insets tabInsets() {
+        return insets(0, 12);
+      }
+
+      public static Color selectedTabColor() {
+        return JBColor.namedColor("SearchEverywhere.Tab.selected.background", 0xdedede);
+      }
+
+      public static Color searchFieldBackground() {
+        return JBColor.namedColor("SearchEverywhere.SearchField.background", 0xffffff);
+      }
+
+      public static Color searchFieldBorderColor() {
+        return JBColor.namedColor("SearchEverywhere.SearchField.Border.color", 0xbdbdbd);
+      }
+
+      public static Insets searchFieldInsets() {
+        return insets(0, 12, 0, 10);
       }
     }
   }

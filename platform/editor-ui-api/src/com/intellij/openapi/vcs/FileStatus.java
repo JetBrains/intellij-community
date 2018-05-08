@@ -24,7 +24,7 @@ import java.awt.*;
 @SuppressWarnings("UseJBColor")
 public interface FileStatus {
   /**
-   * @deprecated Use FileStatus.getColor() instead
+   * @deprecated Use {@link FileStatus#getColor} instead
    */
   @Deprecated Color COLOR_NOT_CHANGED = null; // deliberately null, do not use hardcoded Color.BLACK
   @Deprecated Color COLOR_NOT_CHANGED_RECURSIVE = new Color(138, 164, 200);

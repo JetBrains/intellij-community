@@ -135,11 +135,6 @@ public class UsageContextDataflowToPanel extends UsageContextPanelBase {
       }
 
       @Override
-      public boolean isToShowCloseButton() {
-        return false;
-      }
-
-      @Override
       public boolean isAutoScroll() {
         return false;
       }

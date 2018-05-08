@@ -937,7 +937,6 @@ public class PluginManagerConfigurableNew
     private List<CellPluginComponent> myComponents;
 
     private CellPluginComponent myHoverComponent;
-    private int myHoverIndex;
 
     private int mySelectionIndex;
     private int mySelectionLength;
@@ -1010,25 +1009,23 @@ public class PluginManagerConfigurableNew
 
         @Override
         public void mouseExited(MouseEvent event) {
-          /*if (myHoverComponent != null) {
+          if (myHoverComponent != null) {
             if (myHoverComponent.getSelection() == SelectionType.HOVER) {
               myHoverComponent.setSelection(SelectionType.NONE);
             }
             myHoverComponent = null;
-            myHoverIndex = -1;
-          }*/
+          }
         }
 
         @Override
         public void mouseMoved(MouseEvent event) {
-          /*if (myHoverComponent == null) {
+          if (myHoverComponent == null) {
             CellPluginComponent component = CellPluginComponent.get(event);
             if (component.getSelection() == SelectionType.NONE) {
               myHoverComponent = component;
-              myHoverIndex = getIndex(component);
               component.setSelection(SelectionType.HOVER);
             }
-          }*/
+          }
         }
       };
 
@@ -1157,7 +1154,6 @@ public class PluginManagerConfigurableNew
     public void clear() {
       myComponents = new ArrayList<>();
       myHoverComponent = null;
-      myHoverIndex = -1;
       mySelectionIndex = -1;
       mySelectionLength = 0;
       myAllSelected = false;
@@ -1172,7 +1168,6 @@ public class PluginManagerConfigurableNew
       myAllSelected = true;
       myMixSelection = false;
       myHoverComponent = null;
-      myHoverIndex = -1;
 
       for (CellPluginComponent component : myComponents) {
         if (component.getSelection() != SelectionType.SELECTION) {
@@ -1330,9 +1325,8 @@ public class PluginManagerConfigurableNew
     private void singleSelection(@NotNull CellPluginComponent component, int index) {
       mySelectionIndex = index;
       mySelectionLength = 1;
-      if (myHoverIndex == index) {
+      if (myHoverComponent == component) {
         myHoverComponent = null;
-        myHoverIndex = -1;
       }
       if (component.getSelection() != SelectionType.SELECTION) {
         component.setSelection(SelectionType.SELECTION);
@@ -1622,8 +1616,7 @@ public class PluginManagerConfigurableNew
     }
 
     protected void updateIcon(boolean errors, boolean disabled) {
-      boolean jb = myPlugin.isBundled() || PluginManagerMain.isDevelopedByJetBrains(myPlugin);
-      myIconLabel.setIcon(PluginLogoInfo.getIcon(false, jb, errors, disabled));
+      myIconLabel.setIcon(PluginLogoInfo.getIcon(false, isJBPlugin(myPlugin), errors, disabled));
     }
 
     protected void addDescriptionComponent(@NotNull JPanel parent, @Nullable String description, @NotNull LineFunction function) {
@@ -1847,6 +1840,8 @@ public class PluginManagerConfigurableNew
     }
 
     private void createButtons(boolean update) {
+      myEnableDisableButton.setOpaque(false);
+
       if (myPlugin instanceof IdeaPluginDescriptorImpl && ((IdeaPluginDescriptorImpl)myPlugin).isDeleted()) {
         myRestartButton = new RestartButton(myPluginsModel);
         myRestartButton.setFocusable(false);
@@ -1936,7 +1931,7 @@ public class PluginManagerConfigurableNew
     }
 
     public void updateErrors() {
-      boolean errors = PluginManagerCore.isIncompatible(myPlugin) || myPluginsModel.hasProblematicDependencies(myPlugin.getPluginId());
+      boolean errors = myPluginsModel.hasErrors(myPlugin);
 
       updateIcon(errors, !myPluginsModel.isEnabled(myPlugin));
 
@@ -2658,8 +2653,8 @@ public class PluginManagerConfigurableNew
       header.setBorder(JBUI.Borders.emptyRight(20));
       add(header, BorderLayout.NORTH);
 
-      boolean jb = PluginManagerMain.isDevelopedByJetBrains(myPlugin);
-      boolean errors = PluginManagerCore.isIncompatible(myPlugin) || myPluginsModel.hasProblematicDependencies(myPlugin.getPluginId());
+      boolean jb = isJBPlugin(myPlugin);
+      boolean errors = myPluginsModel.hasErrors(myPlugin);
 
       myIconLabel = new JLabel(PluginLogoInfo.getIcon(true, jb, errors, false));
       myIconLabel.setDisabledIcon(PluginLogoInfo.getIcon(true, jb, errors, true));
@@ -2724,7 +2719,7 @@ public class PluginManagerConfigurableNew
     }
 
     private void createErrorPanel(@NotNull JPanel centerPanel) {
-      if (PluginManagerCore.isIncompatible(myPlugin) || myPluginsModel.hasProblematicDependencies(myPlugin.getPluginId())) {
+      if (myPluginsModel.hasErrors(myPlugin)) {
         JPanel errorPanel = new NonOpaquePanel(new HorizontalLayout(JBUI.scale(8)));
         errorPanel.setBorder(JBUI.Borders.emptyTop(15));
         centerPanel.add(errorPanel);
@@ -2888,7 +2883,7 @@ public class PluginManagerConfigurableNew
     @Override
     protected void paintComponent(Graphics g) {
       //noinspection UseJBColor
-      g.setColor(myUnderline ? new Color(myColor.getRed(), myColor.getGreen(), myColor.getBlue(), 200) : myColor);
+      g.setColor(myUnderline ? new Color(myColor.getRed(), myColor.getGreen(), myColor.getBlue(), 178) : myColor);
       g.fillRect(0, 0, getWidth(), getHeight());
       super.paintComponent(g);
     }
@@ -3277,6 +3272,14 @@ public class PluginManagerConfigurableNew
         component.updateErrors();
       }
     }
+
+    public boolean hasErrors(@NotNull IdeaPluginDescriptor plugin) {
+      return PluginManagerCore.isIncompatible(plugin) || hasProblematicDependencies(plugin.getPluginId());
+    }
+  }
+
+  private static boolean isJBPlugin(@NotNull IdeaPluginDescriptor plugin) {
+    return plugin.isBundled() || PluginManagerMain.isDevelopedByJetBrains(plugin);
   }
 
   @Nullable
@@ -3349,54 +3352,62 @@ public class PluginManagerConfigurableNew
   }
 
   private static final class PluginLogoInfo {
-    private static final LayeredIcon PluginLogoJB_40 = new LayeredIcon(2);
-    private static final LayeredIcon PluginLogoError_40 = new LayeredIcon(2);
-    private static final LayeredIcon PluginLogoJBError_40 = new LayeredIcon(3);
+    private static LayeredIcon PluginLogoJB_40;
+    private static LayeredIcon PluginLogoError_40;
+    private static LayeredIcon PluginLogoJBError_40;
 
-    private static final LayeredIcon PluginLogoDisabledJB_40 = new LayeredIcon(2);
-    private static final LayeredIcon PluginLogoDisabledError_40 = new LayeredIcon(2);
-    private static final LayeredIcon PluginLogoDisabledJBError_40 = new LayeredIcon(3);
+    private static LayeredIcon PluginLogoDisabledJB_40;
+    private static LayeredIcon PluginLogoDisabledError_40;
+    private static LayeredIcon PluginLogoDisabledJBError_40;
 
-    private static final LayeredIcon PluginLogoJB_80 = new LayeredIcon(2);
-    private static final LayeredIcon PluginLogoError_80 = new LayeredIcon(2);
-    private static final LayeredIcon PluginLogoJBError_80 = new LayeredIcon(3);
+    private static LayeredIcon PluginLogoJB_80;
+    private static LayeredIcon PluginLogoError_80;
+    private static LayeredIcon PluginLogoJBError_80;
 
-    private static final LayeredIcon PluginLogoDisabledJB_80 = new LayeredIcon(2);
-    private static final LayeredIcon PluginLogoDisabledError_80 = new LayeredIcon(2);
-    private static final LayeredIcon PluginLogoDisabledJBError_80 = new LayeredIcon(3);
+    private static LayeredIcon PluginLogoDisabledJB_80;
+    private static LayeredIcon PluginLogoDisabledError_80;
+    private static LayeredIcon PluginLogoDisabledJBError_80;
+
+    private static boolean myCreateIcons = true;
 
     static {
-      createIcons();
-      LafManager.getInstance().addLafManagerListener(source -> createIcons());
+      LafManager.getInstance().addLafManagerListener(source -> myCreateIcons = true);
     }
 
     private static void createIcons() {
-      setSouthEast(PluginLogoJB_40, AllIcons.Plugins.PluginLogo_40, AllIcons.Plugins.ModifierJBLogo);
-      setSouthWest(PluginLogoError_40, AllIcons.Plugins.PluginLogo_40, AllIcons.Plugins.ModifierInvalid);
-      setSouthEastWest(PluginLogoJBError_40, AllIcons.Plugins.PluginLogo_40, AllIcons.Plugins.ModifierJBLogo,
+      if (!myCreateIcons) {
+        return;
+      }
+      myCreateIcons = false;
+
+      setSouthEast(PluginLogoJB_40 = new LayeredIcon(2), AllIcons.Plugins.PluginLogo_40, AllIcons.Plugins.ModifierJBLogo);
+      setSouthWest(PluginLogoError_40 = new LayeredIcon(2), AllIcons.Plugins.PluginLogo_40, AllIcons.Plugins.ModifierInvalid);
+      setSouthEastWest(PluginLogoJBError_40 = new LayeredIcon(3), AllIcons.Plugins.PluginLogo_40, AllIcons.Plugins.ModifierJBLogo,
                        AllIcons.Plugins.ModifierInvalid);
 
       Icon disabledJBLogo = IconLoader.getDisabledIcon(AllIcons.Plugins.ModifierJBLogo);
       assert disabledJBLogo != null;
 
-      setSouthEast(PluginLogoDisabledJB_40, AllIcons.Plugins.PluginLogoDisabled_40, disabledJBLogo);
-      setSouthWest(PluginLogoDisabledError_40, AllIcons.Plugins.PluginLogoDisabled_40, AllIcons.Plugins.ModifierInvalid);
-      setSouthEastWest(PluginLogoDisabledJBError_40, AllIcons.Plugins.PluginLogoDisabled_40, disabledJBLogo,
+      setSouthEast(PluginLogoDisabledJB_40 = new LayeredIcon(2), AllIcons.Plugins.PluginLogoDisabled_40, disabledJBLogo);
+      setSouthWest(PluginLogoDisabledError_40 = new LayeredIcon(2), AllIcons.Plugins.PluginLogoDisabled_40,
+                   AllIcons.Plugins.ModifierInvalid);
+      setSouthEastWest(PluginLogoDisabledJBError_40 = new LayeredIcon(3), AllIcons.Plugins.PluginLogoDisabled_40, disabledJBLogo,
                        AllIcons.Plugins.ModifierInvalid);
 
       Icon jbLogo2x = IconUtil.scale(AllIcons.Plugins.ModifierJBLogo, 2);
       Icon errorLogo2x = IconUtil.scale(AllIcons.Plugins.ModifierInvalid, 2);
 
-      setSouthEast(PluginLogoJB_80, AllIcons.Plugins.PluginLogo_80, jbLogo2x);
-      setSouthWest(PluginLogoError_80, AllIcons.Plugins.PluginLogo_80, errorLogo2x);
-      setSouthEastWest(PluginLogoJBError_80, AllIcons.Plugins.PluginLogo_80, jbLogo2x, errorLogo2x);
+      setSouthEast(PluginLogoJB_80 = new LayeredIcon(2), AllIcons.Plugins.PluginLogo_80, jbLogo2x);
+      setSouthWest(PluginLogoError_80 = new LayeredIcon(2), AllIcons.Plugins.PluginLogo_80, errorLogo2x);
+      setSouthEastWest(PluginLogoJBError_80 = new LayeredIcon(3), AllIcons.Plugins.PluginLogo_80, jbLogo2x, errorLogo2x);
 
       Icon disabledJBLogo2x = IconLoader.getDisabledIcon(jbLogo2x);
       assert disabledJBLogo2x != null;
 
-      setSouthEast(PluginLogoDisabledJB_80, AllIcons.Plugins.PluginLogoDisabled_80, disabledJBLogo2x);
-      setSouthWest(PluginLogoDisabledError_80, AllIcons.Plugins.PluginLogoDisabled_80, errorLogo2x);
-      setSouthEastWest(PluginLogoDisabledJBError_80, AllIcons.Plugins.PluginLogoDisabled_80, disabledJBLogo2x, errorLogo2x);
+      setSouthEast(PluginLogoDisabledJB_80 = new LayeredIcon(2), AllIcons.Plugins.PluginLogoDisabled_80, disabledJBLogo2x);
+      setSouthWest(PluginLogoDisabledError_80 = new LayeredIcon(2), AllIcons.Plugins.PluginLogoDisabled_80, errorLogo2x);
+      setSouthEastWest(PluginLogoDisabledJBError_80 = new LayeredIcon(3), AllIcons.Plugins.PluginLogoDisabled_80, disabledJBLogo2x,
+                       errorLogo2x);
     }
 
     private static void setSouthEast(@NotNull LayeredIcon layeredIcon, @NotNull Icon main, @NotNull Icon southEast) {
@@ -3420,6 +3431,8 @@ public class PluginManagerConfigurableNew
 
     @NotNull
     public static Icon getIcon(boolean big, boolean jb, boolean error, boolean disabled) {
+      createIcons();
+
       if (jb && !error) {
         if (big) {
           return disabled ? PluginLogoDisabledJB_80 : PluginLogoJB_80;

@@ -2,9 +2,9 @@
 package com.intellij.ide.ui.laf.darcula.ui;
 
 import com.intellij.util.ui.EmptyIcon;
-import com.intellij.util.ui.IconCache;
 import com.intellij.util.ui.JBInsets;
 import com.intellij.util.ui.JBUI;
+import com.intellij.util.ui.LafIconLookup;
 import sun.swing.SwingUtilities2;
 
 import javax.swing.*;
@@ -69,7 +69,7 @@ public class DarculaRadioButtonUI extends MetalRadioButtonUI {
   }
 
   protected void paintIcon(JComponent c, Graphics2D g, Rectangle viewRect, Rectangle iconRect) {
-    Icon icon = IconCache.getIcon("radio", ((AbstractButton)c).isSelected(), c.hasFocus(), c.isEnabled());
+    Icon icon = LafIconLookup.getIcon("radio", ((AbstractButton)c).isSelected(), c.hasFocus(), c.isEnabled());
     icon.paintIcon(c, g, iconRect.x, iconRect.y);
   }
 

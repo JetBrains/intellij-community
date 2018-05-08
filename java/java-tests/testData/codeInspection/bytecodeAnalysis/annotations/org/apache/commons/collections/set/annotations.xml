@@ -94,6 +94,7 @@
     </item>
     <item name='org.apache.commons.collections.set.ListOrderedSet java.util.Iterator iterator()'>
         <annotation name='org.jetbrains.annotations.Contract'>
+            <val name="value" val="&quot;-&gt;new&quot;"/>
             <val name="pure" val="true"/>
         </annotation>
         <annotation name='org.jetbrains.annotations.NotNull'/>
@@ -104,18 +105,27 @@
         </annotation>
     </item>
     <item name='org.apache.commons.collections.set.ListOrderedSet org.apache.commons.collections.set.ListOrderedSet decorate(java.util.List)'>
+        <annotation name='org.jetbrains.annotations.Contract'>
+            <val val="&quot;_-&gt;new&quot;"/>
+        </annotation>
         <annotation name='org.jetbrains.annotations.NotNull'/>
     </item>
     <item name='org.apache.commons.collections.set.ListOrderedSet org.apache.commons.collections.set.ListOrderedSet decorate(java.util.List) 0'>
         <annotation name='org.jetbrains.annotations.NotNull'/>
     </item>
     <item name='org.apache.commons.collections.set.ListOrderedSet org.apache.commons.collections.set.ListOrderedSet decorate(java.util.Set)'>
+        <annotation name='org.jetbrains.annotations.Contract'>
+            <val val="&quot;_-&gt;new&quot;"/>
+        </annotation>
         <annotation name='org.jetbrains.annotations.NotNull'/>
     </item>
     <item name='org.apache.commons.collections.set.ListOrderedSet org.apache.commons.collections.set.ListOrderedSet decorate(java.util.Set) 0'>
         <annotation name='org.jetbrains.annotations.NotNull'/>
     </item>
     <item name='org.apache.commons.collections.set.ListOrderedSet org.apache.commons.collections.set.ListOrderedSet decorate(java.util.Set, java.util.List)'>
+        <annotation name='org.jetbrains.annotations.Contract'>
+            <val val="&quot;_,_-&gt;new&quot;"/>
+        </annotation>
         <annotation name='org.jetbrains.annotations.NotNull'/>
     </item>
     <item name='org.apache.commons.collections.set.ListOrderedSet org.apache.commons.collections.set.ListOrderedSet decorate(java.util.Set, java.util.List) 0'>
@@ -140,8 +150,14 @@
     <item name='org.apache.commons.collections.set.MapBackedSet boolean addAll(java.util.Collection) 0'>
         <annotation name='org.jetbrains.annotations.NotNull'/>
     </item>
+    <item name='org.apache.commons.collections.set.MapBackedSet java.util.Iterator iterator()'>
+        <annotation name='org.jetbrains.annotations.Contract'>
+            <val val="&quot;-&gt;new&quot;"/>
+        </annotation>
+    </item>
     <item name='org.apache.commons.collections.set.MapBackedSet java.util.Set decorate(java.util.Map)'>
         <annotation name='org.jetbrains.annotations.Contract'>
+            <val name="value" val="&quot;_-&gt;new&quot;"/>
             <val name="pure" val="true"/>
         </annotation>
         <annotation name='org.jetbrains.annotations.NotNull'/>
@@ -151,6 +167,7 @@
     </item>
     <item name='org.apache.commons.collections.set.MapBackedSet java.util.Set decorate(java.util.Map, java.lang.Object)'>
         <annotation name='org.jetbrains.annotations.Contract'>
+            <val name="value" val="&quot;_,_-&gt;new&quot;"/>
             <val name="pure" val="true"/>
         </annotation>
         <annotation name='org.jetbrains.annotations.NotNull'/>
@@ -165,6 +182,9 @@
         <annotation name='org.jetbrains.annotations.NotNull'/>
     </item>
     <item name='org.apache.commons.collections.set.PredicatedSet java.util.Set decorate(java.util.Set, org.apache.commons.collections.Predicate)'>
+        <annotation name='org.jetbrains.annotations.Contract'>
+            <val val="&quot;_,_-&gt;new&quot;"/>
+        </annotation>
         <annotation name='org.jetbrains.annotations.NotNull'/>
     </item>
     <item name='org.apache.commons.collections.set.PredicatedSet java.util.Set decorate(java.util.Set, org.apache.commons.collections.Predicate) 0'>
@@ -180,6 +200,9 @@
         <annotation name='org.jetbrains.annotations.NotNull'/>
     </item>
     <item name='org.apache.commons.collections.set.PredicatedSortedSet java.util.SortedSet decorate(java.util.SortedSet, org.apache.commons.collections.Predicate)'>
+        <annotation name='org.jetbrains.annotations.Contract'>
+            <val val="&quot;_,_-&gt;new&quot;"/>
+        </annotation>
         <annotation name='org.jetbrains.annotations.NotNull'/>
     </item>
     <item name='org.apache.commons.collections.set.PredicatedSortedSet java.util.SortedSet decorate(java.util.SortedSet, org.apache.commons.collections.Predicate) 0'>
@@ -189,12 +212,21 @@
         <annotation name='org.jetbrains.annotations.NotNull'/>
     </item>
     <item name='org.apache.commons.collections.set.PredicatedSortedSet java.util.SortedSet headSet(java.lang.Object)'>
+        <annotation name='org.jetbrains.annotations.Contract'>
+            <val val="&quot;_-&gt;new&quot;"/>
+        </annotation>
         <annotation name='org.jetbrains.annotations.NotNull'/>
     </item>
     <item name='org.apache.commons.collections.set.PredicatedSortedSet java.util.SortedSet subSet(java.lang.Object, java.lang.Object)'>
+        <annotation name='org.jetbrains.annotations.Contract'>
+            <val val="&quot;_,_-&gt;new&quot;"/>
+        </annotation>
         <annotation name='org.jetbrains.annotations.NotNull'/>
     </item>
     <item name='org.apache.commons.collections.set.PredicatedSortedSet java.util.SortedSet tailSet(java.lang.Object)'>
+        <annotation name='org.jetbrains.annotations.Contract'>
+            <val val="&quot;_-&gt;new&quot;"/>
+        </annotation>
         <annotation name='org.jetbrains.annotations.NotNull'/>
     </item>
     <item name='org.apache.commons.collections.set.SynchronizedSet SynchronizedSet(java.util.Set)'>
@@ -215,6 +247,7 @@
     </item>
     <item name='org.apache.commons.collections.set.SynchronizedSet java.util.Set decorate(java.util.Set)'>
         <annotation name='org.jetbrains.annotations.Contract'>
+            <val name="value" val="&quot;_-&gt;new&quot;"/>
             <val name="pure" val="true"/>
         </annotation>
         <annotation name='org.jetbrains.annotations.NotNull'/>
@@ -245,6 +278,7 @@
     </item>
     <item name='org.apache.commons.collections.set.SynchronizedSortedSet java.util.SortedSet decorate(java.util.SortedSet)'>
         <annotation name='org.jetbrains.annotations.Contract'>
+            <val name="value" val="&quot;_-&gt;new&quot;"/>
             <val name="pure" val="true"/>
         </annotation>
         <annotation name='org.jetbrains.annotations.NotNull'/>
@@ -258,12 +292,21 @@
         </annotation>
     </item>
     <item name='org.apache.commons.collections.set.SynchronizedSortedSet java.util.SortedSet headSet(java.lang.Object)'>
+        <annotation name='org.jetbrains.annotations.Contract'>
+            <val val="&quot;_-&gt;new&quot;"/>
+        </annotation>
         <annotation name='org.jetbrains.annotations.NotNull'/>
     </item>
     <item name='org.apache.commons.collections.set.SynchronizedSortedSet java.util.SortedSet subSet(java.lang.Object, java.lang.Object)'>
+        <annotation name='org.jetbrains.annotations.Contract'>
+            <val val="&quot;_,_-&gt;new&quot;"/>
+        </annotation>
         <annotation name='org.jetbrains.annotations.NotNull'/>
     </item>
     <item name='org.apache.commons.collections.set.SynchronizedSortedSet java.util.SortedSet tailSet(java.lang.Object)'>
+        <annotation name='org.jetbrains.annotations.Contract'>
+            <val val="&quot;_-&gt;new&quot;"/>
+        </annotation>
         <annotation name='org.jetbrains.annotations.NotNull'/>
     </item>
     <item name='org.apache.commons.collections.set.TransformedSet TransformedSet(java.util.Set, org.apache.commons.collections.Transformer)'>
@@ -279,6 +322,7 @@
     </item>
     <item name='org.apache.commons.collections.set.TransformedSet java.util.Set decorate(java.util.Set, org.apache.commons.collections.Transformer)'>
         <annotation name='org.jetbrains.annotations.Contract'>
+            <val name="value" val="&quot;_,_-&gt;new&quot;"/>
             <val name="pure" val="true"/>
         </annotation>
         <annotation name='org.jetbrains.annotations.NotNull'/>
@@ -302,6 +346,7 @@
     </item>
     <item name='org.apache.commons.collections.set.TransformedSortedSet java.util.SortedSet decorate(java.util.SortedSet, org.apache.commons.collections.Transformer)'>
         <annotation name='org.jetbrains.annotations.Contract'>
+            <val name="value" val="&quot;_,_-&gt;new&quot;"/>
             <val name="pure" val="true"/>
         </annotation>
         <annotation name='org.jetbrains.annotations.NotNull'/>
@@ -318,12 +363,21 @@
         </annotation>
     </item>
     <item name='org.apache.commons.collections.set.TransformedSortedSet java.util.SortedSet headSet(java.lang.Object)'>
+        <annotation name='org.jetbrains.annotations.Contract'>
+            <val val="&quot;_-&gt;new&quot;"/>
+        </annotation>
         <annotation name='org.jetbrains.annotations.NotNull'/>
     </item>
     <item name='org.apache.commons.collections.set.TransformedSortedSet java.util.SortedSet subSet(java.lang.Object, java.lang.Object)'>
+        <annotation name='org.jetbrains.annotations.Contract'>
+            <val val="&quot;_,_-&gt;new&quot;"/>
+        </annotation>
         <annotation name='org.jetbrains.annotations.NotNull'/>
     </item>
     <item name='org.apache.commons.collections.set.TransformedSortedSet java.util.SortedSet tailSet(java.lang.Object)'>
+        <annotation name='org.jetbrains.annotations.Contract'>
+            <val val="&quot;_-&gt;new&quot;"/>
+        </annotation>
         <annotation name='org.jetbrains.annotations.NotNull'/>
     </item>
     <item name='org.apache.commons.collections.set.TypedSet TypedSet()'>
@@ -332,6 +386,9 @@
         </annotation>
     </item>
     <item name='org.apache.commons.collections.set.TypedSet java.util.Set decorate(java.util.Set, java.lang.Class)'>
+        <annotation name='org.jetbrains.annotations.Contract'>
+            <val val="&quot;_,_-&gt;new&quot;"/>
+        </annotation>
         <annotation name='org.jetbrains.annotations.NotNull'/>
     </item>
     <item name='org.apache.commons.collections.set.TypedSet java.util.Set decorate(java.util.Set, java.lang.Class) 0'>
@@ -346,6 +403,9 @@
         </annotation>
     </item>
     <item name='org.apache.commons.collections.set.TypedSortedSet java.util.SortedSet decorate(java.util.SortedSet, java.lang.Class)'>
+        <annotation name='org.jetbrains.annotations.Contract'>
+            <val val="&quot;_,_-&gt;new&quot;"/>
+        </annotation>
         <annotation name='org.jetbrains.annotations.NotNull'/>
     </item>
     <item name='org.apache.commons.collections.set.TypedSortedSet java.util.SortedSet decorate(java.util.SortedSet, java.lang.Class) 0'>
@@ -485,12 +545,21 @@
         <annotation name='org.jetbrains.annotations.NotNull'/>
     </item>
     <item name='org.apache.commons.collections.set.UnmodifiableSortedSet java.util.SortedSet headSet(java.lang.Object)'>
+        <annotation name='org.jetbrains.annotations.Contract'>
+            <val val="&quot;_-&gt;new&quot;"/>
+        </annotation>
         <annotation name='org.jetbrains.annotations.NotNull'/>
     </item>
     <item name='org.apache.commons.collections.set.UnmodifiableSortedSet java.util.SortedSet subSet(java.lang.Object, java.lang.Object)'>
+        <annotation name='org.jetbrains.annotations.Contract'>
+            <val val="&quot;_,_-&gt;new&quot;"/>
+        </annotation>
         <annotation name='org.jetbrains.annotations.NotNull'/>
     </item>
     <item name='org.apache.commons.collections.set.UnmodifiableSortedSet java.util.SortedSet tailSet(java.lang.Object)'>
+        <annotation name='org.jetbrains.annotations.Contract'>
+            <val val="&quot;_-&gt;new&quot;"/>
+        </annotation>
         <annotation name='org.jetbrains.annotations.NotNull'/>
     </item>
     <item name='org.apache.commons.collections.set.UnmodifiableSortedSet void clear()'>

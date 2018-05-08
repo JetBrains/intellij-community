@@ -28,9 +28,6 @@ import java.util.Locale;
 import static com.siyeh.ig.psiutils.Java8MigrationUtils.*;
 import static com.siyeh.ig.psiutils.Java8MigrationUtils.MapCheckCondition.fromConditional;
 
-/**
- * @author Tagir Valeev
- */
 public class Java8MapApiInspection extends AbstractBaseJavaLocalInspectionTool {
   private static final Logger LOG = Logger.getInstance(Java8MapApiInspection.class);
   public static final String SHORT_NAME = "Java8MapApi";
