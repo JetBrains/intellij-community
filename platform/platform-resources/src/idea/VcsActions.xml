@@ -147,7 +147,7 @@
       <action id="ChangesView.AddUnversioned.From.Dialog" class="com.intellij.openapi.vcs.changes.actions.ScheduleForAdditionAction"
               icon="AllIcons.General.Add" use-shortcut-of="ChangesView.AddUnversioned" />
       <reference ref="ChangesView.Move"/>
-      <action id="ChangesView.DeleteUnversioned.From.Dialog" class="com.intellij.openapi.vcs.changes.actions.DeleteUnversionedFilesAction"/>
+      <reference ref="ChangesView.DeleteUnversioned"/>
       <reference ref="ChangesView.Ignore"/>
     </group>
 
@@ -411,7 +411,6 @@
       <reference ref="ChangesView.Edit"/>
       <reference ref="ChangesView.Rename"/>
       <reference ref="ChangesView.AddUnversioned.From.Dialog"/>
-      <reference ref="ChangesView.DeleteUnversioned.From.Dialog"/>
       <separator/>
       <reference ref="CommittedChanges.Refresh"/>
       <reference ref="CommittedChanges.Filter"/>
