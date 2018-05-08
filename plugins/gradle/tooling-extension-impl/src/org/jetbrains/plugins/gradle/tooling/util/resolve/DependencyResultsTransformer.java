@@ -38,14 +38,14 @@ class DependencyResultsTransformer {
   DependencyResultsTransformer(@NotNull final Project project,
                                @NotNull final SourceSetCachedFinder sourceSetFinder,
                                @NotNull final Multimap<ModuleVersionIdentifier, ResolvedArtifact> artifactMap,
-                               @NotNull final Map<ComponentIdentifier, ComponentArtifactsResult> componentResultsMap,
+                               @NotNull final Map<ComponentIdentifier, ComponentArtifactsResult> auxiliaryArtifactsMap,
                                @NotNull final Multimap<ModuleComponentIdentifier, ProjectDependency> configurationProjectDependencies,
                                @Nullable final String scope) {
     myProject = project;
     mySourceSetFinder = sourceSetFinder;
 
     myArtifactMap = artifactMap;
-    myAuxiliaryArtifactsMap = componentResultsMap;
+    myAuxiliaryArtifactsMap = auxiliaryArtifactsMap;
     myConfigurationProjectDependencies = configurationProjectDependencies;
     myScope = scope;
   }

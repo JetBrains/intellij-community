@@ -64,7 +64,8 @@ public class ArtifactsCollectionResolver extends DependencyResolverImpl implemen
   }
 
   @Override
-  public ExternalDepsResolutionResult resolveDependencies(@Nullable Configuration configuration, @Nullable String scope) {
+  public ExternalDepsResolutionResult resolveDependencies(@Nullable Configuration configuration,
+                                                          @Nullable String scope) {
     if (configuration == null) {
       return ExternalDepsResolutionResult.EMPTY;
     }
@@ -85,6 +86,8 @@ public class ArtifactsCollectionResolver extends DependencyResolverImpl implemen
       Iterables.filter(configuration.getIncoming().getResolutionResult().getRoot().getDependencies(), UnresolvedDependencyResult.class);
 
     ScopedExternalDependenciesFactory factory = new ScopedExternalDependenciesFactory(myProject, scope);
+
+
 
     externalDeps.addAll(factory.processResolvedArtifacts(resolvedArtifacts, sourcesAndJavadocs));
     externalDeps.addAll(factory.processUnresolvedDeps(unresolvedDependencies));
