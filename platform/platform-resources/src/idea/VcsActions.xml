@@ -120,8 +120,7 @@
       <reference ref="Diff.ShowDiff"/>
       <reference ref="EditSource"/>
       <separator/>
-      <action id="ChangesView.DeleteUnversioned" class="com.intellij.openapi.vcs.changes.actions.DeleteUnversionedFilesAction"
-              icon="AllIcons.Actions.Cancel"/>
+      <action id="ChangesView.DeleteUnversioned" class="com.intellij.openapi.vcs.changes.actions.DeleteUnversionedFilesAction"/>
       <action id="ChangesView.AddUnversioned" class="com.intellij.openapi.vcs.changes.actions.ScheduleForAdditionAction">
         <keyboard-shortcut first-keystroke="control alt A" keymap="$default"/>
       </action>
