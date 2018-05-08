@@ -1690,7 +1690,7 @@ class EditorGutterComponentImpl extends EditorGutterComponentEx implements Mouse
     AnActionEvent actionEvent = AnActionEvent.createFromAnAction(action, e, place, context);
     action.update(actionEvent);
     if (actionEvent.getPresentation().isEnabledAndVisible()) {
-      ActionUtil.performActionDumbAware(action, actionEvent);
+      ActionUtil.performActionDumbAwareWithCallbacks(action, actionEvent, context);
     }
   }
 
