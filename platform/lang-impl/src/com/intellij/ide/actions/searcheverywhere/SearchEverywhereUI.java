@@ -4,7 +4,6 @@ package com.intellij.ide.actions.searcheverywhere;
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.IdeBundle;
 import com.intellij.ide.IdeEventQueue;
-import com.intellij.ide.actions.SearchEverywhereAction;
 import com.intellij.ide.ui.UISettings;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
@@ -75,8 +74,7 @@ public class SearchEverywhereUI extends BorderLayoutPanel {
 
   private JBPopup myResultsPopup;
   private final JBList<Object> myResultsList = new JBList<>();
-
-  private final Map<ResultsRange, SearchEverywhereContributor> myResultsRanges = new HashMap<>();
+  private final SearchListModel myListModel = new SearchListModel();
 
   private CalcThread myCalcThread;
   private volatile ActionCallback myCurrentWorker = ActionCallback.DONE;
@@ -109,6 +107,7 @@ public class SearchEverywhereUI extends BorderLayoutPanel {
     addToRight(settingsPanel);
     addToBottom(mySearchField);
 
+    myResultsList.setModel(myListModel);
     myResultsList.setCellRenderer(new CompositeCellRenderer());
 
     initSearchActions();
@@ -212,10 +211,7 @@ public class SearchEverywhereUI extends BorderLayoutPanel {
 
     //todo gap between icon and text #UX-1
     Insets insets = JBUI.CurrentTheme.SearchEverywhere.searchFieldInsets();
-    Border border = JBUI.Borders.merge(
-      JBUI.Borders.empty(insets.top, searchExtension.getPreferredSpace() + insets.left, insets.bottom, hintExtension.getPreferredSpace() + insets.right),
-      IdeBorderFactory.createBorder(JBUI.CurrentTheme.SearchEverywhere.searchFieldBorderColor(), SideBorder.BOTTOM | SideBorder.TOP),
-      true);
+    Border border = JBUI.Borders.empty(insets.top, insets.left, insets.bottom, insets.right);
     searchField.setBorder(border);
     searchField.setBackground(JBUI.CurrentTheme.SearchEverywhere.searchFieldBackground());
     searchField.setFocusTraversalKeysEnabled(false);
@@ -353,7 +349,7 @@ public class SearchEverywhereUI extends BorderLayoutPanel {
           if (currentRestartRequest != myCalcThreadRestartRequestId) {
             return;
           }
-          myCalcThread = new CalcThread(myProject, pattern, false);
+          myCalcThread = new CalcThread(myProject, pattern);
 
           myCurrentWorker = myCalcThread.start();
         }
@@ -368,6 +364,10 @@ public class SearchEverywhereUI extends BorderLayoutPanel {
         if (e.getKeyCode() == KeyEvent.VK_TAB && e.getModifiers() == 0) {
           switchToNextTab();
           e.consume();
+        }
+
+        if (e.getKeyCode() == KeyEvent.VK_ENTER) {
+          elementSelected(myResultsList.getSelectedIndex(), e.getModifiers());
         }
       }
     });
@@ -388,30 +388,24 @@ public class SearchEverywhereUI extends BorderLayoutPanel {
     myResultsList.addMouseListener(new MouseAdapter() {
       @Override
       public void mouseClicked(MouseEvent e) {
-        e.consume();
-        final int i = myResultsList.locationToIndex(e.getPoint());
-        if (i != -1) {
-          ApplicationManager.getApplication().invokeLater(() -> {
+        if (e.getButton() == MouseEvent.BUTTON1) {
+          e.consume();
+          final int i = myResultsList.locationToIndex(e.getPoint());
+          if (i != -1) {
             myResultsList.setSelectedIndex(i);
-            elementSelected(i);
-          });
+            elementSelected(i, e.getModifiers());
+          }
         }
       }
     });
-
   }
 
-  private void elementSelected(int i) {
-    Map.Entry<ResultsRange, SearchEverywhereContributor> entry = myResultsRanges.entrySet().stream()
-         .filter(e -> e.getKey().containsIndex(i))
-         .findAny()
-         .orElseThrow(() -> new IllegalStateException("Contributor for element is not specified"));
-
-    Boolean isMoreElement = entry.getKey().getMoreElementIndex().map(moreIndex -> moreIndex.equals(i)).orElse(false);
-    if (isMoreElement) {
-      showMoreElements(entry.getValue());
+  private void elementSelected(int i, int modifiers) {
+    SearchEverywhereContributor contributor = myListModel.getContributorForIndex(i);
+    if (myListModel.isMoreElement(i)) {
+      showMoreElements(contributor);
     } else {
-      gotoSelectedItem(entry.getValue());
+      gotoSelectedItem(myListModel.getElementAt(i), contributor, modifiers);
     }
   }
 
@@ -419,11 +413,10 @@ public class SearchEverywhereUI extends BorderLayoutPanel {
 
   }
 
-  private void gotoSelectedItem(SearchEverywhereContributor contributor) {
-    Object value = myResultsList.getSelectedValue();
+  private void gotoSelectedItem(Object value, SearchEverywhereContributor contributor, int modifiers) {
     stopSearching();
     searchFinishedHandler.run();
-    contributor.processSelectedItem(value);
+    contributor.processSelectedItem(value, modifiers);
   }
 
   private void stopSearching() {
@@ -439,12 +432,10 @@ public class SearchEverywhereUI extends BorderLayoutPanel {
     private final String pattern;
     private final ProgressIndicator myProgressIndicator = new ProgressIndicatorBase();
     private final ActionCallback myDone = new ActionCallback();
-    private final SearchEverywhereAction.SearchListModel myListModel; //todo use usual model #UX-1
 
-    public CalcThread(Project project, String pattern, boolean reuseModel) {
+    public CalcThread(Project project, String pattern) {
       this.project = project;
       this.pattern = pattern;
-      myListModel = reuseModel ? (SearchEverywhereAction.SearchListModel) myResultsList.getModel() : new SearchEverywhereAction.SearchListModel();
     }
 
     @Override
@@ -456,22 +447,24 @@ public class SearchEverywhereUI extends BorderLayoutPanel {
         SwingUtilities.invokeLater(() -> {
           // this line must be called on EDT to avoid context switch at clear().append("text") Don't touch. Ask [kb]
           myResultsList.getEmptyText().setText("Searching...");
+          myAlarm.cancelAllRequests();
 
-          if (myResultsList.getModel() instanceof SearchEverywhereAction.SearchListModel) {
-            //noinspection unchecked
-            myAlarm.cancelAllRequests();
-            myAlarm.addRequest(() -> {
-              if (!myDone.isRejected()) {
-                myResultsList.setModel(myListModel);
-                updatePopup();
-              }
-            }, 50);
-          } else {
-            myResultsList.setModel(myListModel);
-          }
+        //  if (myResultsList.getModel() instanceof SearchEverywhereAction.SearchListModel) {
+        //    //noinspection unchecked
+        //    myAlarm.cancelAllRequests();
+        //    myAlarm.addRequest(() -> {
+        //      if (!myDone.isRejected()) {
+        //        myResultsList.setModel(myListModel);
+        //        updatePopup();
+        //      }
+        //    }, 50);
+        //  } else {
+        //    myResultsList.setModel(myListModel);
+        //  }
+
         });
 
-        myResultsRanges.clear();
+        myListModel.clear();
         SearchEverywhereContributor selectedContributor = mySelectedTab.getContributor().orElse(null);
         if (selectedContributor != null) {
           runReadAction(() -> addContributorItems(selectedContributor), true);
@@ -506,19 +499,9 @@ public class SearchEverywhereUI extends BorderLayoutPanel {
         results = contributor.search(project, pattern, isUseNonProjectItems(), myProgressIndicator, ELEMENTS_LIMIT);
       if (!results.isEmpty()) {
         SwingUtilities.invokeLater(() -> {
-          if (isCanceled()) return;
-
-          int start = myListModel.getSize();
-          for (Object item : results.getItems()) {
-            myListModel.addElement(item);
+          if (!isCanceled()) {
+            myListModel.addElements(results.getItems(), contributor, results.hasMoreItems());
           }
-          int end = myListModel.getSize() - 1;
-
-          if (results.hasMoreItems()) {
-            myListModel.addElement("more");
-          }
-          ResultsRange range = results.hasMoreItems() ? new ResultsRange(start, end, end + 1) : new ResultsRange(start, end);
-          myResultsRanges.put(range, contributor);
         });
       }
     }
@@ -547,7 +530,6 @@ public class SearchEverywhereUI extends BorderLayoutPanel {
       SwingUtilities.invokeLater(new Runnable() {
         @Override
         public void run() {
-          myListModel.update();
           myResultsList.revalidate();
           myResultsList.repaint();
 
@@ -699,37 +681,24 @@ public class SearchEverywhereUI extends BorderLayoutPanel {
     }
   }
 
-  private  class CompositeCellRenderer implements ListCellRenderer {
+  private class CompositeCellRenderer implements ListCellRenderer {
 
     @Override
     public Component getListCellRendererComponent(JList list, Object value, int index, boolean isSelected, boolean cellHasFocus) {
-      if (isMoreElement(index)) {
+      if (myListModel.isMoreElement(index)) {
         return moreRenderer.getListCellRendererComponent(list, value, index, isSelected, cellHasFocus);
       }
 
-      Map.Entry<ResultsRange, SearchEverywhereContributor> delegateEntry = myResultsRanges.entrySet().stream()
-               .filter(entry -> entry.getKey().getElementsRange()
-               .isWithin(index, true))
-               .findAny()
-               .orElseThrow(() -> new IllegalStateException("Contributor for element is not specified"));
-
-      SearchEverywhereContributor contributor = delegateEntry.getValue();
+      SearchEverywhereContributor contributor = myListModel.getContributorForIndex(index);
       Component component = contributor.getElementsRenderer(myProject)
                                        .getListCellRendererComponent(list, value, index, isSelected, cellHasFocus);
-      int rangeStart = delegateEntry.getKey().getElementsRange().getFrom();
+
       boolean allGroupSelected = SearchEverywhereContributor.ALL_CONTRIBUTORS_GROUP_ID.equals(getSelectedContributorID());
-      if (allGroupSelected && rangeStart == index) {
+      if (allGroupSelected && myListModel.isGroupFirstItem(index)) {
         return groupTitleRenderer.withDisplayedData(contributor.getGroupName(), component);
       }
 
       return component;
-    }
-
-    private boolean isMoreElement(int index) {
-      return myResultsRanges.entrySet().stream()
-                            .map(entry -> entry.getKey().getMoreElementIndex().orElse(null))
-                            .filter(Objects::nonNull)
-                            .anyMatch(i -> i.equals(index));
     }
   }
 
@@ -808,6 +777,51 @@ public class SearchEverywhereUI extends BorderLayoutPanel {
       add(itemContent, BorderLayout.CENTER);
       return this;
     }
+  }
+
+  private static class SearchListModel extends DefaultListModel<Object> {
+
+    private static final Object MORE_ELEMENT = new Object();
+
+    private final Map<ResultsRange, SearchEverywhereContributor> myResultsRanges = new HashMap<>();
+
+    public void addElements(List<Object> items, SearchEverywhereContributor contributor, boolean hasMore) {
+      if (items.isEmpty()) {
+        return;
+      }
+
+      int start = getSize();
+      int end = start + items.size() - 1;
+      ResultsRange range = new ResultsRange(start, end, hasMore ? end + 1 : null);
+      myResultsRanges.put(range, contributor);
+      items.forEach(this::addElement);
+      if (hasMore) {
+        addElement(MORE_ELEMENT);
+      }
+    }
+
+    @Override
+    public void clear() {
+      super.clear();
+      myResultsRanges.clear();
+    }
+
+    public boolean isMoreElement(int index) {
+      return get(index) == MORE_ELEMENT;
+    }
+
+    public SearchEverywhereContributor getContributorForIndex(int index) {
+      return myResultsRanges.entrySet().stream()
+                     .filter(entry -> entry.getKey().containsIndex(index))
+                     .map(Map.Entry::getValue)
+                     .findAny()
+                     .orElseThrow(() -> new IllegalStateException("Contributor for element is not specified"));
+    }
+
+    public boolean isGroupFirstItem(int index) {
+      return myResultsRanges.keySet().stream().anyMatch(range -> range.getElementsRange().getFrom().equals(index));
+    }
+
   }
 
   private static JLabel groupInfoLabel(String text) {

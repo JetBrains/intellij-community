@@ -47,7 +47,8 @@ public interface SearchEverywhereContributor {
     return search(project, pattern, everywhere, progressIndicator, -1).getItems();
   }
 
-  void processSelectedItem(Object selected);
+  //todo return boolean #UX-1
+  void processSelectedItem(Object selected, int modifiers);
 
   //todo any way to listen project in contributor
   ListCellRenderer getElementsRenderer(Project project);

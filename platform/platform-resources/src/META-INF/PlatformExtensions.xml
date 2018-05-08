@@ -85,6 +85,10 @@
                         serviceImplementation="com.intellij.ui.TreeUIHelperImpl"/>
     <applicationService serviceInterface="com.intellij.ui.ExpandableItemsHandlerFactory"
                         serviceImplementation="com.intellij.ui.ExpandTipHandlerFactoryImpl"/>
+    <applicationService
+        serviceInterface="com.intellij.openapi.ui.messages.MessagesService"
+        serviceImplementation="com.intellij.ui.messages.MessagesServiceImpl"/>
+
 
     <applicationService serviceInterface="com.intellij.openapi.diff.DiffRequestFactory"
                         serviceImplementation="com.intellij.openapi.diff.impl.mergeTool.DiffRequestFactoryImpl"/>

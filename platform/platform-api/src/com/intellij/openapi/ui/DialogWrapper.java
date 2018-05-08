@@ -1324,7 +1324,7 @@ public abstract class DialogWrapper {
   }
 
   @NotNull
-  LayoutManager createRootLayout() {
+  protected LayoutManager createRootLayout() {
     return new BorderLayout();
   }
 

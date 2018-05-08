@@ -2441,12 +2441,12 @@ public class SearchEverywhereAction extends AnAction implements CustomComponentA
     }
   }
 
-  public static class SearchResult extends ArrayList<Object> {
+  private static class SearchResult extends ArrayList<Object> {
     boolean needMore;
   }
 
   @SuppressWarnings("unchecked")
-  public static class SearchListModel extends DefaultListModel<Object> {
+  private static class SearchListModel extends DefaultListModel<Object> {
     @SuppressWarnings("UseOfObsoleteCollectionType")
     Vector myDelegate;
 

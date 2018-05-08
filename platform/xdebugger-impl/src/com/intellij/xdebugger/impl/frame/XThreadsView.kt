@@ -21,7 +21,7 @@ class XThreadsView(val project: Project, session: XDebugSessionImpl) : XDebugVie
   private fun getTree() = treePanel.tree
   fun getPanel() = treePanel.mainPanel
 
-  public override fun getDefaultFocusedComponent() =  treePanel.tree
+  fun getDefaultFocusedComponent() =  treePanel.tree
 
   override fun clear() {
     DebuggerUIUtil.invokeLater {

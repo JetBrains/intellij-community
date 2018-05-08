@@ -60,7 +60,7 @@ public class AbstractProgressIndicatorBase extends UserDataHolderBase implements
   private Stack<String> myText2Stack;
   private volatile int myNonCancelableCount;
 
-  protected ProgressIndicator myModalityProgress;
+  ProgressIndicator myModalityProgress;
   private volatile ModalityState myModalityState = ModalityState.NON_MODAL;
 
   @Override
@@ -97,11 +97,11 @@ public class AbstractProgressIndicatorBase extends UserDataHolderBase implements
     stopSystemActivity();
   }
 
-  protected void startSystemActivity() {
+  private void startSystemActivity() {
     myMacActivity = myShouldStartActivity ? MacUtil.wakeUpNeo(toString()) : null;
   }
 
-  protected void stopSystemActivity() {
+  void stopSystemActivity() {
     if (myMacActivity != null) {
       synchronized (myMacActivity) {
         MacUtil.matrixHasYou(myMacActivity);

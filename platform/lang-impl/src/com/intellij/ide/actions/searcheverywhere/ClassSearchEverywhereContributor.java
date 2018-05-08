@@ -15,6 +15,7 @@ import com.intellij.ui.IdeUICustomization;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
+import java.awt.event.InputEvent;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -70,9 +71,9 @@ public class ClassSearchEverywhereContributor implements SearchEverywhereContrib
   }
 
   @Override
-  public void processSelectedItem(Object selected) {
+  public void processSelectedItem(Object selected, int modifiers) {
     if (selected instanceof PsiElement) {
-      NavigationUtil.activateFileWithPsiElement((PsiElement) selected, true);
+      NavigationUtil.activateFileWithPsiElement((PsiElement) selected, (modifiers & InputEvent.SHIFT_MASK) != 0);
     }
   }
 }

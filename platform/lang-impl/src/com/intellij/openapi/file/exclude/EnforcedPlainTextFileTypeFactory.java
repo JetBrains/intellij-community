@@ -19,17 +19,17 @@ import javax.swing.*;
  */
 public class EnforcedPlainTextFileTypeFactory extends FileTypeFactory {
   /**
-   * @deprecated use {@link #ENFORCED_PLAIN_TEXT_ICON_2} instead 
+   * @deprecated use {@link #getEnforcedPlainTextIcon()} instead 
    */
   public static final LayeredIcon ENFORCED_PLAIN_TEXT_ICON = new LayeredIcon();
+  public static final String ENFORCED_PLAIN_TEXT = "Enforced Plain Text";
 
-  public static final Icon ENFORCED_PLAIN_TEXT_ICON_2 = new IconLoader.LazyIcon() {
+  private static final Icon ENFORCED_PLAIN_TEXT_LAZY_ICON = new IconLoader.LazyIcon() {
     @Override
     protected Icon compute() {
       return new LayeredIcon(AllIcons.FileTypes.Text, PlatformIcons.EXCLUDED_FROM_COMPILE_ICON);
     }
   };
-  public static final String ENFORCED_PLAIN_TEXT = "Enforced Plain Text";
 
   private final FileTypeIdentifiableByVirtualFile myFileType;
 
@@ -61,7 +61,7 @@ public class EnforcedPlainTextFileTypeFactory extends FileTypeFactory {
 
       @Override
       public Icon getIcon() {
-        return ENFORCED_PLAIN_TEXT_ICON_2;
+        return ENFORCED_PLAIN_TEXT_LAZY_ICON;
       }
 
       @Override
@@ -79,6 +79,11 @@ public class EnforcedPlainTextFileTypeFactory extends FileTypeFactory {
         return null;
       }
     };
+  }
+
+  @NotNull
+  public static Icon getEnforcedPlainTextIcon() {
+    return ENFORCED_PLAIN_TEXT_LAZY_ICON;
   }
 
   @Override
