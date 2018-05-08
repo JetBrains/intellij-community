@@ -93,7 +93,7 @@ public class JsonSchemaServiceImpl implements JsonSchemaService {
   @Nullable
   public VirtualFile findSchemaFileByReference(@NotNull String reference, @Nullable VirtualFile referent) {
     final Optional<VirtualFile> optional = findBuiltInSchemaByReference(reference);
-    return optional.orElseGet(() -> JsonFileResolver.resolveSchemaByReference(referent, JsonSchemaService.normalizeId(reference)));
+    return optional.orElseGet(() -> JsonFileResolver.resolveSchemaByReference(referent, JsonSchemaService.normalizeId(reference), myProject));
   }
 
   private Optional<VirtualFile> findBuiltInSchemaByReference(@NotNull String reference) {
