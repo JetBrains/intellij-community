@@ -581,15 +581,21 @@ public class ToolWindowManagerImpl extends ToolWindowManagerEx implements Persis
     myDispatcher.removeListener(listener);
   }
 
+  void execute(@NotNull List<FinalizableCommand> commandList) {
+    execute(commandList, true);
+  }
+
   /**
    * This is helper method. It delegated its functionality to the WindowManager.
    * Before delegating it fires state changed.
    */
-  public void execute(@NotNull List<FinalizableCommand> commandList) {
-    for (FinalizableCommand each : commandList) {
-      if (each.willChangeState()) {
-        fireStateChanged();
-        break;
+  private void execute(@NotNull List<FinalizableCommand> commandList, boolean isFireStateChangedEvent) {
+    if (isFireStateChangedEvent) {
+      for (FinalizableCommand each : commandList) {
+        if (each.willChangeState()) {
+          fireStateChanged();
+          break;
+        }
       }
     }
 
@@ -1152,9 +1158,12 @@ public class ToolWindowManagerImpl extends ToolWindowManagerEx implements Persis
     mySideStack.remove(id);
     appendRemoveButtonCmd(id, commandsList);
     appendApplyWindowInfoCmd(info, commandsList);
-    execute(commandsList);
-    // Remove all references on tool window and save its last properties
+
+    execute(commandsList, false);
     assert toolWindow != null;
+    myProject.getMessageBus().syncPublisher(ToolWindowManagerListener.TOPIC).toolWindowUnregistered(id, toolWindow);
+
+    // Remove all references on tool window and save its last properties
     toolWindow.removePropertyChangeListener(myToolWindowPropertyChangeListener);
 
     // Destroy stripe button

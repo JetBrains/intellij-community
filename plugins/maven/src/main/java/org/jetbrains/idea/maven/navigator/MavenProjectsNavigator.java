@@ -247,7 +247,7 @@ public class MavenProjectsNavigator extends MavenSimpleProjectComponent implemen
     contentManager.addContent(content);
     contentManager.setSelectedContent(content, false);
 
-    myProject.getMessageBus().connect().subscribe(ToolWindowManagerListener.TOPIC, new ToolWindowManagerListener() {
+    myProject.getMessageBus().connect(content).subscribe(ToolWindowManagerListener.TOPIC, new ToolWindowManagerListener() {
       boolean wasVisible = false;
 
       @Override
