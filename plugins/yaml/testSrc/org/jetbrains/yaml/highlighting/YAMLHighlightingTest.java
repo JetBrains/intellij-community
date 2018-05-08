@@ -3,6 +3,7 @@ package org.jetbrains.yaml.highlighting;
 
 import com.intellij.openapi.application.ex.PathManagerEx;
 import com.intellij.testFramework.fixtures.LightPlatformCodeInsightFixtureTestCase;
+import org.jetbrains.yaml.inspections.YAMLUnresolvedAliasInspection;
 
 public class YAMLHighlightingTest extends LightPlatformCodeInsightFixtureTestCase {
   @Override
@@ -19,6 +20,11 @@ public class YAMLHighlightingTest extends LightPlatformCodeInsightFixtureTestCas
   }
 
   public void testMultipleTagsError() {
+    doTest();
+  }
+
+  public void testUnresolvedAlias() {
+    myFixture.enableInspections(YAMLUnresolvedAliasInspection.class);
     doTest();
   }
 

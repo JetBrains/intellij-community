@@ -32,6 +32,11 @@
     <renameInputValidator implementation="org.jetbrains.yaml.resolve.YAMLAnchorRenameInputValidator" order="first"/>
     <lang.refactoringSupport language="yaml" implementationClass="org.jetbrains.yaml.resolve.YAMLRefactoringSupportProvider"/>
     <renamePsiElementProcessor implementation="org.jetbrains.yaml.resolve.YAMLRenamePsiElementProcessor"/>
+    <localInspection language="yaml" bundle="messages.YAMLBundle"
+                     shortName="YAMLUnresolvedAlias"
+                     key="inspections.unresolved.alias.name" level="ERROR"
+                     groupKey="inspections.group.name" enabledByDefault="true"
+                     implementationClass="org.jetbrains.yaml.inspections.YAMLUnresolvedAliasInspection"/>
 
   </extensions>
   
