@@ -63,7 +63,7 @@ public class NST {
     else if (!isRegistryKeyEnabled)
       LOG.info("registry key '" + ourRegistryKeyTouchbar + "' is disabled, skip nst loading");
     else
-      LOG.warn("touchbar-server isn't running, skip nst loading");
+      LOG.info("touchbar-server isn't running, skip nst loading");
 
     ourNSTLibrary = lib;
   }
