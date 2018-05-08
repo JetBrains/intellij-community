@@ -197,11 +197,6 @@ public final class DesktopLayout {
     return info != null && info.isRegistered();
   }
 
-  final boolean isToolWindowUnregistered(@NotNull String id) {
-    WindowInfoImpl info = myIdToInfo.get(id);
-    return info != null && !info.isRegistered();
-  }
-
   /**
    * @return comparator which compares {@code StripeButtons} in the stripe with specified {@code anchor}.
    */

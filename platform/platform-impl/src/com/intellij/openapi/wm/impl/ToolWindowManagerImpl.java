@@ -73,7 +73,7 @@ import java.util.function.Predicate;
   defaultStateAsResource = true,
   storages = @Storage(value = StoragePathMacros.WORKSPACE_FILE, roamingType = RoamingType.DISABLED)
 )
-public final class ToolWindowManagerImpl extends ToolWindowManagerEx implements PersistentStateComponent<Element>, Disposable {
+public class ToolWindowManagerImpl extends ToolWindowManagerEx implements PersistentStateComponent<Element>, Disposable {
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.wm.impl.ToolWindowManagerImpl");
 
   private final Project myProject;
@@ -409,7 +409,7 @@ public final class ToolWindowManagerImpl extends ToolWindowManagerEx implements 
       unregisterToolWindow(id);
     }
 
-    assert myId2StripeButton.isEmpty();
+    LOG.assertTrue(myId2StripeButton.isEmpty(), myId2StripeButton);
   }
 
   @TestOnly
@@ -1557,7 +1557,7 @@ public final class ToolWindowManagerImpl extends ToolWindowManagerEx implements 
     myProject.getMessageBus().syncPublisher(ToolWindowManagerListener.TOPIC).toolWindowRegistered(id);
   }
 
-  private void fireStateChanged() {
+  protected void fireStateChanged() {
     myProject.getMessageBus().syncPublisher(ToolWindowManagerListener.TOPIC).stateChanged();
   }
 
