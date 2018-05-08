@@ -1,7 +1,6 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInspection;
 
-import com.google.common.collect.ImmutableSet;
 import com.intellij.codeInspection.ui.SingleCheckboxOptionsPanel;
 import com.intellij.codeInspection.util.OptionalUtil;
 import com.intellij.openapi.diagnostic.Logger;
@@ -61,8 +60,6 @@ public class RedundantStreamOptionalCallInspection extends AbstractBaseJavaLocal
   private static final CallMatcher UNORDERED_COLLECTORS = anyOf(COLLECTOR_TO_MAP, COLLECTOR_TO_SET);
   private static final Predicate<PsiMethodCallExpression> UNORDERED_COLLECTOR =
     UNORDERED_COLLECTORS.or(RedundantStreamOptionalCallInspection::isUnorderedToCollection);
-  private static final Set<String> SET_CLASSES =
-    ImmutableSet.of(CommonClassNames.JAVA_UTIL_HASH_SET, "java.util.LinkedHashSet", "java.util.TreeSet");
   private static final CallMatcher STREAM_OF_SINGLE =
     anyOf(
       staticCall(CommonClassNames.JAVA_UTIL_STREAM_STREAM, "of").parameterTypes("T"),
@@ -222,7 +219,7 @@ public class RedundantStreamOptionalCallInspection extends AbstractBaseJavaLocal
   static boolean isToCollectionSet(PsiMethodCallExpression call) {
     if (!COLLECTOR_TO_COLLECTION.test(call)) return false;
     PsiClass aClass = FunctionalExpressionUtils.getClassOfDefaultConstructorFunction(call.getArgumentList().getExpressions()[0]);
-    return aClass != null && SET_CLASSES.contains(aClass.getQualifiedName());
+    return InheritanceUtil.isInheritor(aClass, CommonClassNames.JAVA_UTIL_SET);
   }
 
   @NotNull
