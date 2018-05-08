@@ -42,7 +42,6 @@ import com.intellij.ui.ColorUtil;
 import com.intellij.ui.awt.RelativePoint;
 import com.intellij.util.Alarm;
 import com.intellij.util.ArrayUtil;
-import com.intellij.util.EventDispatcher;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.messages.MessageBusConnection;
 import com.intellij.util.ui.EdtInvocationManager;
@@ -803,6 +802,7 @@ public final class ToolWindowManagerImpl extends ToolWindowManagerEx implements 
 
   @Override
   @Nullable
+  // cannot be ToolWindowEx because of backward compatibility
   public ToolWindow getToolWindow(@Nullable String id) {
     if (id == null || !myLayout.isToolWindowRegistered(id)) {
       return null;
@@ -1063,8 +1063,7 @@ public final class ToolWindowManagerImpl extends ToolWindowManagerEx implements 
       LOG.debug("enter: installToolWindow(" + id + "," + component + "," + anchor + "\")");
     }
     ApplicationManager.getApplication().assertIsDispatchThread();
-    boolean known = myLayout.isToolWindowUnregistered(id);
-    if (myLayout.isToolWindowRegistered(id)) {
+    if (myLayout.isToolWindowUnregistered(id)) {
       throw new IllegalArgumentException("window with id=\"" + id + "\" is already registered");
     }
 
@@ -1073,9 +1072,7 @@ public final class ToolWindowManagerImpl extends ToolWindowManagerEx implements 
     final boolean wasVisible = info.isVisible();
     info.setActive(false);
     info.setVisible(false);
-    if (!known) {
-      info.setShowStripeButton(shouldBeAvailable);
-    }
+    info.setShowStripeButton(shouldBeAvailable);
 
     // Create decorator
 
@@ -1125,11 +1122,11 @@ public final class ToolWindowManagerImpl extends ToolWindowManagerEx implements 
       LOG.debug("enter: unregisterToolWindow(" + id + ")");
     }
     ApplicationManager.getApplication().assertIsDispatchThread();
-    if (!myLayout.isToolWindowRegistered(id)) {
+    WindowInfoImpl info = myLayout.getInfo(id, false);
+    if (info == null || !info.isRegistered()) {
       return;
     }
 
-    final WindowInfoImpl info = getRegisteredInfoOrLogError(id);
     final ToolWindowEx toolWindow = (ToolWindowEx)getToolWindow(id);
 
     // Remove decorator and tool button from the screen
