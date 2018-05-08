@@ -15,11 +15,14 @@
  */
 package com.intellij.vcs.log.ui.actions;
 
+import com.intellij.icons.AllIcons;
+import com.intellij.ui.LayeredIcon;
 import com.intellij.vcs.log.ui.VcsLogActionPlaces;
 
-public class VcsLogQuickSettingsActions extends VcsLogGearActionGroup {
+public class VcsLogPresentationActions extends VcsLogToolbarPopupActionGroup {
+  private static final LayeredIcon EyeWithDropDown = new LayeredIcon(AllIcons.Actions.Show, AllIcons.General.Dropdown);
 
-  public VcsLogQuickSettingsActions() {
-    super(VcsLogActionPlaces.SETTINGS_ACTION_GROUP);
+  public VcsLogPresentationActions() {
+    super(VcsLogActionPlaces.PRESENTATION_SETTINGS_ACTION_GROUP, EyeWithDropDown);
   }
 }

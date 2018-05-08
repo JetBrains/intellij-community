@@ -15,7 +15,6 @@
  */
 package com.intellij.vcs.log.ui.actions;
 
-import com.intellij.icons.AllIcons.General;
 import com.intellij.openapi.actionSystem.ActionButtonComponent;
 import com.intellij.openapi.actionSystem.ActionManager;
 import com.intellij.openapi.actionSystem.AnActionEvent;
@@ -24,22 +23,21 @@ import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.ui.popup.ListPopup;
-import com.intellij.ui.LayeredIcon;
 import com.intellij.vcs.log.VcsLogDataKeys;
 import com.intellij.vcs.log.VcsLogUi;
 import com.intellij.vcs.log.ui.VcsLogActionPlaces;
 import org.jetbrains.annotations.NotNull;
 
+import javax.swing.*;
 import java.awt.*;
 
-public class VcsLogGearActionGroup extends DumbAwareAction {
-  public static final LayeredIcon GearWithDropDown = new LayeredIcon(General.GearPlain, General.Dropdown);
-
+public abstract class VcsLogToolbarPopupActionGroup extends DumbAwareAction {
   @NotNull
   private final String myActionGroup;
 
-  public VcsLogGearActionGroup(@NotNull String group) {
+  public VcsLogToolbarPopupActionGroup(@NotNull String group, @NotNull Icon icon) {
     myActionGroup = group;
+    getTemplatePresentation().setIcon(icon);
   }
 
   @Override
@@ -47,8 +45,9 @@ public class VcsLogGearActionGroup extends DumbAwareAction {
     DefaultActionGroup group = new DefaultActionGroup(ActionManager.getInstance().getAction(myActionGroup));
 
     ListPopup popup = JBPopupFactory.getInstance()
-      .createActionGroupPopup(null, group, e.getDataContext(), JBPopupFactory.ActionSelectionAid.MNEMONICS, true,
-                              VcsLogActionPlaces.VCS_LOG_GEAR_POPUP_PLACE);
+                                    .createActionGroupPopup(null, group, e.getDataContext(), JBPopupFactory.ActionSelectionAid.MNEMONICS,
+                                                            true,
+                                                            VcsLogActionPlaces.VCS_LOG_TOOLBAR_POPUP_PLACE);
     Component component = e.getInputEvent().getComponent();
     if (component instanceof ActionButtonComponent) {
       popup.showUnderneathOf(component);
@@ -62,7 +61,6 @@ public class VcsLogGearActionGroup extends DumbAwareAction {
   public void update(@NotNull AnActionEvent e) {
     Project project = e.getProject();
     VcsLogUi logUi = e.getData(VcsLogDataKeys.VCS_LOG_UI);
-    e.getPresentation().setIcon(GearWithDropDown);
     e.getPresentation().setEnabledAndVisible(project != null && logUi != null);
   }
 }

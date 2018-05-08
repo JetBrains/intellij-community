@@ -19,7 +19,7 @@ public class VcsLogActionPlaces {
   // action groups
   public static final String POPUP_ACTION_GROUP = "Vcs.Log.ContextMenu";
   public static final String TOOLBAR_ACTION_GROUP = "Vcs.Log.Toolbar.Internal";
-  public static final String SETTINGS_ACTION_GROUP = "Vcs.Log.Settings";
+  public static final String PRESENTATION_SETTINGS_ACTION_GROUP = "Vcs.Log.PresentationSettings";
   public static final String TEXT_FILTER_SETTINGS_ACTION_GROUP = "Vcs.Log.TextFilterSettings";
   public static final String FILE_HISTORY_TOOLBAR_ACTION_GROUP = "Vcs.FileHistory.Toolbar";
   public static final String HISTORY_POPUP_ACTION_GROUP = "Vcs.FileHistory.ContextMenu";
@@ -31,7 +31,7 @@ public class VcsLogActionPlaces {
   public static final String VCS_LOG_TOOLBAR_PLACE = "Vcs.Log.Toolbar";
   public static final String VCS_HISTORY_PLACE = "Vcs.FileHistory.ContextMenu";
   public static final String VCS_HISTORY_TOOLBAR_PLACE = "Vcs.FileHistory.Toolbar";
-  public static final String VCS_LOG_GEAR_POPUP_PLACE = "Vcs.Log.Gear.Popup";
+  public static final String VCS_LOG_TOOLBAR_POPUP_PLACE = "Vcs.Log.Toolbar.Popup";
 
   // action ids
   public static final String VCS_LOG_INTELLI_SORT_ACTION = "Vcs.Log.IntelliSortChooser";
