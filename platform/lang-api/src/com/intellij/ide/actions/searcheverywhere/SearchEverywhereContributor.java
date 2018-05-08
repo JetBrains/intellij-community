@@ -58,26 +58,4 @@ public interface SearchEverywhereContributor {
       .sorted(Comparator.comparingInt(SearchEverywhereContributor::getSortWeight))
       .collect(Collectors.toList());
   }
-
-  class ContributorSearchResult {
-    private final List<Object> items;
-    private final boolean hasMoreItems;
-
-    public ContributorSearchResult(List<Object> items, boolean hasMoreItems) {
-      this.items = items;
-      this.hasMoreItems = hasMoreItems;
-    }
-
-    public List<Object> getItems() {
-      return items;
-    }
-
-    public boolean hasMoreItems() {
-      return hasMoreItems;
-    }
-
-    public boolean isEmpty() {
-      return items.isEmpty();
-    }
-  }
 }
