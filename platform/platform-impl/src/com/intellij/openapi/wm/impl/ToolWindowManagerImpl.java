@@ -698,9 +698,19 @@ public final class ToolWindowManagerImpl extends ToolWindowManagerEx implements 
    * @throws IllegalStateException if tool window isn't installed.
    */
   private void checkId(@NotNull String id) {
-    if (!myLayout.isToolWindowRegistered(id)) {
-      throw new IllegalStateException("window with id=\"" + id + "\" isn't registered");
+    getRegisteredInfoOrLogError(id);
+  }
+
+  @NotNull
+  private WindowInfoImpl getRegisteredInfoOrLogError(@NotNull String id) {
+    WindowInfoImpl info = myLayout.getInfo(id, false);
+    if (info == null) {
+      throw new IllegalThreadStateException("window with id=\"" + id + "\" is unknown");
     }
+    else if (!info.isRegistered()) {
+      LOG.error("window with id=\"" + id + "\" isn't registered");
+    }
+    return info;
   }
 
   /**
@@ -828,8 +838,7 @@ public final class ToolWindowManagerImpl extends ToolWindowManagerEx implements 
   public void hideToolWindow(@NotNull String id, final boolean hideSide, final boolean moveFocus) {
     ApplicationManager.getApplication().assertIsDispatchThread();
 
-    checkId(id);
-    final WindowInfoImpl info = getInfo(id);
+    final WindowInfoImpl info = getRegisteredInfoOrLogError(id);
     if (!info.isVisible()) {
       return;
     }
@@ -1285,7 +1294,6 @@ public final class ToolWindowManagerImpl extends ToolWindowManagerEx implements 
                               @Nullable final HyperlinkListener listener) {
     checkId(toolWindowId);
 
-
     Balloon existing = myWindow2Balloon.get(toolWindowId);
     if (existing != null) {
       existing.hide();
@@ -1426,8 +1434,7 @@ public final class ToolWindowManagerImpl extends ToolWindowManagerEx implements 
 
   @NotNull
   ToolWindowAnchor getToolWindowAnchor(@NotNull String id) {
-    checkId(id);
-    return getInfo(id).getAnchor();
+    return getRegisteredInfoOrLogError(id).getAnchor();
   }
 
   void setToolWindowAnchor(@NotNull String id, @NotNull ToolWindowAnchor anchor) {
@@ -1446,8 +1453,7 @@ public final class ToolWindowManagerImpl extends ToolWindowManagerEx implements 
                                        @NotNull ToolWindowAnchor anchor,
                                        final int order,
                                        @NotNull List<FinalizableCommand> commandsList) {
-    checkId(id);
-    final WindowInfoImpl info = getInfo(id);
+    final WindowInfoImpl info = getRegisteredInfoOrLogError(id);
     if (anchor == info.getAnchor() && order == info.getOrder()) {
       return;
     }
@@ -1482,15 +1488,13 @@ public final class ToolWindowManagerImpl extends ToolWindowManagerEx implements 
 
   boolean isSplitMode(@NotNull String id) {
     ApplicationManager.getApplication().assertIsDispatchThread();
-    checkId(id);
-    return getInfo(id).isSplit();
+    return getRegisteredInfoOrLogError(id).isSplit();
   }
 
   @NotNull
   ToolWindowContentUiType getContentUiType(@NotNull String id) {
     ApplicationManager.getApplication().assertIsDispatchThread();
-    checkId(id);
-    return getInfo(id).getContentUiType();
+    return getRegisteredInfoOrLogError(id).getContentUiType();
   }
 
   void setSideTool(@NotNull String id, boolean isSide) {
@@ -1500,8 +1504,7 @@ public final class ToolWindowManagerImpl extends ToolWindowManagerEx implements 
   }
 
   void setContentUiType(@NotNull String id, @NotNull ToolWindowContentUiType type) {
-    checkId(id);
-    WindowInfoImpl info = getInfo(id);
+    WindowInfoImpl info = getRegisteredInfoOrLogError(id);
     info.setContentUiType(type);
     List<FinalizableCommand> commandList = new ArrayList<>();
     appendApplyWindowInfoCmd(info, commandList);
@@ -1516,8 +1519,7 @@ public final class ToolWindowManagerImpl extends ToolWindowManagerEx implements 
   }
 
   private void setSplitModeImpl(@NotNull String id, final boolean isSplit, @NotNull List<FinalizableCommand> commandList) {
-    checkId(id);
-    final WindowInfoImpl info = getInfo(id);
+    final WindowInfoImpl info = getRegisteredInfoOrLogError(id);
     if (isSplit == info.isSplit()) {
       return;
     }
@@ -1544,13 +1546,11 @@ public final class ToolWindowManagerImpl extends ToolWindowManagerEx implements 
 
   ToolWindowType getToolWindowInternalType(@NotNull String id) {
     ApplicationManager.getApplication().assertIsDispatchThread();
-    checkId(id);
-    return getInfo(id).getInternalType();
+    return getRegisteredInfoOrLogError(id).getInternalType();
   }
 
   ToolWindowType getToolWindowType(@NotNull String id) {
-    checkId(id);
-    return getInfo(id).getType();
+    return getRegisteredInfoOrLogError(id).getType();
   }
 
   private void fireToolWindowRegistered(@NotNull String id) {
@@ -1563,19 +1563,16 @@ public final class ToolWindowManagerImpl extends ToolWindowManagerEx implements 
 
   boolean isToolWindowActive(@NotNull String id) {
     ApplicationManager.getApplication().assertIsDispatchThread();
-    checkId(id);
-    return getInfo(id).isActive();
+    return getRegisteredInfoOrLogError(id).isActive();
   }
 
   boolean isToolWindowAutoHide(@NotNull String id) {
     ApplicationManager.getApplication().assertIsDispatchThread();
-    checkId(id);
-    return getInfo(id).isAutoHide();
+    return getRegisteredInfoOrLogError(id).isAutoHide();
   }
 
   boolean isToolWindowVisible(@NotNull String id) {
-    checkId(id);
-    return getInfo(id).isVisible();
+    return getRegisteredInfoOrLogError(id).isVisible();
   }
 
   void setToolWindowAutoHide(@NotNull String id, final boolean autoHide) {
@@ -1586,8 +1583,7 @@ public final class ToolWindowManagerImpl extends ToolWindowManagerEx implements 
   }
 
   private void setToolWindowAutoHideImpl(@NotNull String id, final boolean autoHide, @NotNull List<FinalizableCommand> commandsList) {
-    checkId(id);
-    final WindowInfoImpl info = getInfo(id);
+    final WindowInfoImpl info = getRegisteredInfoOrLogError(id);
     if (info.isAutoHide() == autoHide) {
       return;
     }
@@ -1607,8 +1603,7 @@ public final class ToolWindowManagerImpl extends ToolWindowManagerEx implements 
   }
 
   private void setToolWindowTypeImpl(@NotNull String id, @NotNull ToolWindowType type, @NotNull List<FinalizableCommand> commandsList) {
-    checkId(id);
-    final WindowInfoImpl info = getInfo(id);
+    final WindowInfoImpl info = getRegisteredInfoOrLogError(id);
     if (info.getType() == type) {
       return;
     }
@@ -2265,8 +2260,7 @@ public final class ToolWindowManagerImpl extends ToolWindowManagerEx implements 
   }
 
   void setShowStripeButton(@NotNull String id, boolean visibleOnPanel) {
-    checkId(id);
-    WindowInfoImpl info = getInfo(id);
+    WindowInfoImpl info = getRegisteredInfoOrLogError(id);
     if (visibleOnPanel == info.isShowStripeButton()) {
       return;
     }
