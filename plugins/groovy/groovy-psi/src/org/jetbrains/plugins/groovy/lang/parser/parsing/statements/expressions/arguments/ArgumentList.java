@@ -1,22 +1,8 @@
-/*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
-
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.groovy.lang.parser.parsing.statements.expressions.arguments;
 
 import com.intellij.lang.PsiBuilder;
+import com.intellij.lang.parser.GeneratedParserUtilBase.Parser;
 import com.intellij.openapi.util.Pair;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.tree.TokenSet;
@@ -50,14 +36,17 @@ public class ArgumentList {
                                                                    GroovyTokenTypes.kTRY, GroovyTokenTypes.kVOLATILE,
                                                                    GroovyTokenTypes.kWHILE);
 
-
   public static void parseArgumentList(PsiBuilder builder, IElementType closingBrace, GroovyParser parser) {
-    boolean hasFirstArg = argumentParse(builder, parser);
+    parseArgumentList(builder, 0, closingBrace, (b, l) -> argumentParse(b, parser));
+  }
+
+  public static boolean parseArgumentList(PsiBuilder builder, int level, IElementType closingBrace, Parser argumentParser) {
+    boolean hasFirstArg = argumentParser.parse(builder, level + 1);
     if (!hasFirstArg) {
       if (!closingBrace.equals(builder.getTokenType())) {
         builder.error(GroovyBundle.message("expression.expected"));
       }
-      if (GroovyTokenTypes.mRCURLY.equals(builder.getTokenType())) return;
+      if (GroovyTokenTypes.mRCURLY.equals(builder.getTokenType())) return true;
 
       if (!GroovyTokenTypes.mCOMMA.equals(builder.getTokenType()) &&
               !closingBrace.equals(builder.getTokenType())) {
@@ -74,14 +63,14 @@ public class ArgumentList {
       }
       ParserUtils.getToken(builder, GroovyTokenTypes.mNLS);
       if (hasErrors && CONTROL_KEYWORDS.contains(builder.getTokenType())) {
-        return;
+        return true;
       }
-      if (!argumentParse(builder, parser)) {
+      if (!argumentParser.parse(builder, level + 1)) {
         if (!closingBrace.equals(builder.getTokenType())) {
           builder.error(GroovyBundle.message("expression.expected"));
           hasErrors = true;
         }
-        if (GroovyTokenTypes.mRCURLY.equals(builder.getTokenType())) return;
+        if (GroovyTokenTypes.mRCURLY.equals(builder.getTokenType())) return true;
 
         if (!GroovyTokenTypes.mCOMMA.equals(builder.getTokenType()) &&
                 !closingBrace.equals(builder.getTokenType())) {
@@ -92,6 +81,7 @@ public class ArgumentList {
     }
 
     ParserUtils.getToken(builder, GroovyTokenTypes.mNLS);
+    return true;
   }
 
   /**
