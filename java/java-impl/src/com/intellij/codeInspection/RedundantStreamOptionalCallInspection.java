@@ -1,6 +1,7 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInspection;
 
+import com.google.common.collect.ImmutableSet;
 import com.intellij.codeInspection.ui.SingleCheckboxOptionsPanel;
 import com.intellij.codeInspection.util.OptionalUtil;
 import com.intellij.openapi.diagnostic.Logger;
@@ -18,6 +19,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
+import java.util.Objects;
 import java.util.Set;
 import java.util.function.Predicate;
 
@@ -39,10 +41,14 @@ public class RedundantStreamOptionalCallInspection extends AbstractBaseJavaLocal
 
   private static final CallMatcher COLLECTOR_TO_SET =
     CallMatcher.staticCall(CommonClassNames.JAVA_UTIL_STREAM_COLLECTORS, "toSet", "toUnmodifiableSet").parameterCount(0);
+  private static final CallMatcher COLLECTOR_TO_COLLECTION =
+    CallMatcher.staticCall(CommonClassNames.JAVA_UTIL_STREAM_COLLECTORS, "toCollection").parameterCount(1);
   private static final CallMatcher COLLECTOR_TO_MAP =
     CallMatcher.staticCall(CommonClassNames.JAVA_UTIL_STREAM_COLLECTORS, "toMap", "toUnmodifiableMap").parameterTypes(
       CommonClassNames.JAVA_UTIL_FUNCTION_FUNCTION, CommonClassNames.JAVA_UTIL_FUNCTION_FUNCTION);
   private static final CallMatcher UNORDERED_COLLECTORS = CallMatcher.anyOf(COLLECTOR_TO_MAP, COLLECTOR_TO_SET);
+  private static final Set<String> SET_CLASSES =
+    ImmutableSet.of(CommonClassNames.JAVA_UTIL_HASH_SET, "java.util.LinkedHashSet", "java.util.TreeSet");
 
   @SuppressWarnings("PublicField")
   public boolean USELESS_BOXING_IN_STREAM_MAP = true;
@@ -106,8 +112,10 @@ public class RedundantStreamOptionalCallInspection extends AbstractBaseJavaLocal
             break;
           case "sorted":
             if (args.length <= 1) {
+              Predicate<PsiMethodCallExpression> unorderedCollector =
+                UNORDERED_COLLECTORS.or(RedundantStreamOptionalCallInspection::isUnorderedToCollection);
               PsiMethodCallExpression furtherCall =
-                findSubsequentCall(call, CALLS_MAKING_SORT_USELESS::contains, UNORDERED_COLLECTORS, CALLS_KEEPING_SORT_ORDER::contains);
+                findSubsequentCall(call, CALLS_MAKING_SORT_USELESS::contains, unorderedCollector, CALLS_KEEPING_SORT_ORDER::contains);
               if (furtherCall != null) {
                 register(call, InspectionsBundle.message("inspection.redundant.stream.optional.call.explanation.sorted",
                                                          furtherCall.getMethodExpression().getReferenceName()));
@@ -121,7 +129,9 @@ public class RedundantStreamOptionalCallInspection extends AbstractBaseJavaLocal
               if (furtherCall != null && furtherCall.getArgumentList().isEmpty()) {
                 register(furtherCall, InspectionsBundle.message("inspection.redundant.stream.optional.call.explanation.distinct"));
               }
-              if (findSubsequentCall(call, c -> false, COLLECTOR_TO_SET,
+              Predicate<PsiMethodCallExpression> setCollector =
+                COLLECTOR_TO_SET.or(RedundantStreamOptionalCallInspection::isToCollectionSet);
+              if (findSubsequentCall(call, c -> false, setCollector,
                                      ContainerUtil.set("unordered", "parallel", "sequential", "sorted")::contains) != null) {
                 register(call, InspectionsBundle.message("inspection.redundant.stream.optional.call.explanation.distinct.set"));
               }
@@ -159,6 +169,18 @@ public class RedundantStreamOptionalCallInspection extends AbstractBaseJavaLocal
                                new RemoveCallFix(methodName));
       }
     };
+  }
+
+  static boolean isUnorderedToCollection(PsiMethodCallExpression call) {
+    if (!COLLECTOR_TO_COLLECTION.test(call)) return false;
+    PsiClass aClass = FunctionalExpressionUtils.getClassOfDefaultConstructorFunction(call.getArgumentList().getExpressions()[0]);
+    return aClass != null && CommonClassNames.JAVA_UTIL_HASH_SET.equals(aClass.getQualifiedName());
+  }
+
+  static boolean isToCollectionSet(PsiMethodCallExpression call) {
+    if (!COLLECTOR_TO_COLLECTION.test(call)) return false;
+    PsiClass aClass = FunctionalExpressionUtils.getClassOfDefaultConstructorFunction(call.getArgumentList().getExpressions()[0]);
+    return aClass != null && SET_CLASSES.contains(aClass.getQualifiedName());
   }
 
   @NotNull
@@ -215,7 +237,7 @@ public class RedundantStreamOptionalCallInspection extends AbstractBaseJavaLocal
       primitiveCandidate = list.getParameters()[0].getType();
     }
     if (!(primitiveCandidate instanceof PsiPrimitiveType)) return false;
-    return ((PsiPrimitiveType)primitiveCandidate).getBoxedTypeName().equals(aClass.getQualifiedName());
+    return Objects.equals(((PsiPrimitiveType)primitiveCandidate).getBoxedTypeName(), aClass.getQualifiedName());
   }
 
   static boolean isTruePredicate(PsiExpression expression) {

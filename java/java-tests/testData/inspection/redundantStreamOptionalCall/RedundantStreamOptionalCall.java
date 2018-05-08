@@ -51,5 +51,11 @@ public class RedundantStreamOptionalCall {
     List<String> list2 = collection.stream().sorted().collect(Collectors.toList());
     Map<Integer, String> map1 = collection.stream().<warning descr="Redundant 'sorted' call: subsequent 'toMap' call makes sorting useless">sorted()</warning>.collect(Collectors.toMap(Integer::valueOf, x -> x));
     Map<Integer, String> map2 = collection.stream().sorted().collect(Collectors.toMap(Integer::valueOf, x -> x, (a,b) ->a, LinkedHashMap::new));
+    Set<String> set5 = collection.stream().<warning descr="Redundant 'sorted' call: subsequent 'toCollection' call makes sorting useless">sorted()</warning>.collect(Collectors.toCollection(HashSet::new));
+    Set<String> set6 = collection.stream().<warning descr="Redundant 'sorted' call: subsequent 'toCollection' call makes sorting useless">sorted()</warning>.collect(Collectors.toCollection(() -> new HashSet<>()));
+    Set<String> set6a = collection.stream().sorted().collect(Collectors.toCollection(() -> new LinkedHashSet<>()));
+    Set<String> set7 = collection.stream().<warning descr="Redundant 'distinct' call: elements will be distinct anyways when collected to the Set">distinct()</warning>.collect(Collectors.toCollection(HashSet::new));
+    Set<String> set8 = collection.stream().<warning descr="Redundant 'distinct' call: elements will be distinct anyways when collected to the Set">distinct()</warning>.collect(Collectors.toCollection(() -> new HashSet<>()));
+    Set<String> set8a = collection.stream().<warning descr="Redundant 'distinct' call: elements will be distinct anyways when collected to the Set">distinct()</warning>.collect(Collectors.toCollection(() -> new LinkedHashSet<>()));
   }
 }
