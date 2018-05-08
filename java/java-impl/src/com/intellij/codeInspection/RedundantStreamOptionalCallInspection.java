@@ -8,8 +8,10 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.*;
+import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.psi.util.InheritanceUtil;
 import com.intellij.psi.util.PsiUtil;
+import com.intellij.util.ArrayUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.siyeh.ig.callMatcher.CallMatcher;
 import com.siyeh.ig.psiutils.*;
@@ -47,6 +49,8 @@ public class RedundantStreamOptionalCallInspection extends AbstractBaseJavaLocal
     CallMatcher.staticCall(CommonClassNames.JAVA_UTIL_STREAM_COLLECTORS, "toMap", "toUnmodifiableMap").parameterTypes(
       CommonClassNames.JAVA_UTIL_FUNCTION_FUNCTION, CommonClassNames.JAVA_UTIL_FUNCTION_FUNCTION);
   private static final CallMatcher UNORDERED_COLLECTORS = CallMatcher.anyOf(COLLECTOR_TO_MAP, COLLECTOR_TO_SET);
+  private static final Predicate<PsiMethodCallExpression> UNORDERED_COLLECTOR =
+    UNORDERED_COLLECTORS.or(RedundantStreamOptionalCallInspection::isUnorderedToCollection);
   private static final Set<String> SET_CLASSES =
     ImmutableSet.of(CommonClassNames.JAVA_UTIL_HASH_SET, "java.util.LinkedHashSet", "java.util.TreeSet");
 
@@ -112,13 +116,16 @@ public class RedundantStreamOptionalCallInspection extends AbstractBaseJavaLocal
             break;
           case "sorted":
             if (args.length <= 1) {
-              Predicate<PsiMethodCallExpression> unorderedCollector =
-                UNORDERED_COLLECTORS.or(RedundantStreamOptionalCallInspection::isUnorderedToCollection);
               PsiMethodCallExpression furtherCall =
-                findSubsequentCall(call, CALLS_MAKING_SORT_USELESS::contains, unorderedCollector, CALLS_KEEPING_SORT_ORDER::contains);
+                findSubsequentCall(call, CALLS_MAKING_SORT_USELESS::contains, UNORDERED_COLLECTOR, CALLS_KEEPING_SORT_ORDER::contains);
               if (furtherCall != null) {
-                register(call, InspectionsBundle.message("inspection.redundant.stream.optional.call.explanation.sorted",
-                                                         furtherCall.getMethodExpression().getReferenceName()));
+                String furtherCallName = furtherCall.getMethodExpression().getReferenceName();
+                LocalQuickFix additionalFix = null;
+                if ("toSet".equals(furtherCallName) || "toCollection".equals(furtherCallName)) {
+                  additionalFix = new CollectToOrderedSetFix();
+                }
+                register(call, InspectionsBundle.message("inspection.redundant.stream.optional.call.explanation.sorted", furtherCallName),
+                         additionalFix);
               }
             }
             break;
@@ -159,14 +166,14 @@ public class RedundantStreamOptionalCallInspection extends AbstractBaseJavaLocal
         }
       }
 
-      private void register(PsiMethodCallExpression call, String explanation) {
+      private void register(PsiMethodCallExpression call, String explanation, LocalQuickFix... additionalFixes) {
         String methodName = call.getMethodExpression().getReferenceName();
         String message = InspectionsBundle.message("inspection.redundant.stream.optional.call.message", methodName);
         if (explanation != null) {
           message += ": " + explanation;
         }
         holder.registerProblem(call, message, ProblemHighlightType.LIKE_UNUSED_SYMBOL, getRange(call),
-                               new RemoveCallFix(methodName));
+                               ArrayUtil.prepend(new RemoveCallFix(methodName), additionalFixes));
       }
     };
   }
@@ -276,6 +283,28 @@ public class RedundantStreamOptionalCallInspection extends AbstractBaseJavaLocal
       if (qualifier == null) return;
       CommentTracker ct = new CommentTracker();
       ct.replaceAndRestoreComments(call, ct.markUnchanged(qualifier));
+    }
+  }
+
+  private static class CollectToOrderedSetFix implements LocalQuickFix {
+    @Nls(capitalization = Nls.Capitalization.Sentence)
+    @NotNull
+    @Override
+    public String getFamilyName() {
+      return "Collect to 'LinkedHashSet'";
+    }
+
+    @Override
+    public void applyFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
+      PsiMethodCallExpression sortCall = tryCast(descriptor.getStartElement(), PsiMethodCallExpression.class);
+      if (sortCall == null) return;
+      PsiMethodCallExpression collector =
+        findSubsequentCall(sortCall, c -> false, UNORDERED_COLLECTOR, CALLS_KEEPING_SORT_ORDER::contains);
+      if (collector == null) return;
+      CommentTracker ct = new CommentTracker();
+      String replacementText = CommonClassNames.JAVA_UTIL_STREAM_COLLECTORS + ".toCollection(java.util.LinkedHashSet::new)";
+      PsiElement result = ct.replaceAndRestoreComments(collector, replacementText);
+      JavaCodeStyleManager.getInstance(project).shortenClassReferences(result);
     }
   }
 }
