@@ -1070,7 +1070,8 @@ public final class ToolWindowManagerImpl extends ToolWindowManagerEx implements 
       LOG.debug("enter: installToolWindow(" + id + "," + component + "," + anchor + "\")");
     }
     ApplicationManager.getApplication().assertIsDispatchThread();
-    if (myLayout.isToolWindowUnregistered(id)) {
+    WindowInfoImpl existingInfo = myLayout.getInfo(id, false);
+    if (existingInfo != null && existingInfo.isRegistered()) {
       throw new IllegalArgumentException("window with id=\"" + id + "\" is already registered");
     }
 
@@ -1079,7 +1080,10 @@ public final class ToolWindowManagerImpl extends ToolWindowManagerEx implements 
     final boolean wasVisible = info.isVisible();
     info.setActive(false);
     info.setVisible(false);
-    info.setShowStripeButton(shouldBeAvailable);
+    if (existingInfo == null) {
+      // set only if info is new (newly created) to not reset user configured value
+      info.setShowStripeButton(shouldBeAvailable);
+    }
 
     // Create decorator
 
