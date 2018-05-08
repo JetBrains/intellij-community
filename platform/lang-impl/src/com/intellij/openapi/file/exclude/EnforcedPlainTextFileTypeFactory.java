@@ -1,24 +1,11 @@
-/*
- * Copyright 2000-2015 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.file.exclude;
 
 import com.intellij.icons.AllIcons;
 import com.intellij.openapi.fileTypes.FileTypeConsumer;
 import com.intellij.openapi.fileTypes.FileTypeFactory;
 import com.intellij.openapi.fileTypes.ex.FileTypeIdentifiableByVirtualFile;
+import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.LayeredIcon;
 import com.intellij.util.PlatformIcons;
@@ -31,13 +18,18 @@ import javax.swing.*;
  * @author Rustam Vishnyakov
  */
 public class EnforcedPlainTextFileTypeFactory extends FileTypeFactory {
-  public static final LayeredIcon ENFORCED_PLAIN_TEXT_ICON = new LayeredIcon(2);
+  /**
+   * @deprecated use {@link #getEnforcedPlainTextIcon()} instead 
+   */
+  public static final LayeredIcon ENFORCED_PLAIN_TEXT_ICON = new LayeredIcon();
   public static final String ENFORCED_PLAIN_TEXT = "Enforced Plain Text";
 
-  static {
-    ENFORCED_PLAIN_TEXT_ICON.setIcon(AllIcons.FileTypes.Text, 0);
-    ENFORCED_PLAIN_TEXT_ICON.setIcon(PlatformIcons.EXCLUDED_FROM_COMPILE_ICON, 1);
-  }
+  private static final Icon ENFORCED_PLAIN_TEXT_LAZY_ICON = new IconLoader.LazyIcon() {
+    @Override
+    protected Icon compute() {
+      return new LayeredIcon(AllIcons.FileTypes.Text, PlatformIcons.EXCLUDED_FROM_COMPILE_ICON);
+    }
+  };
 
   private final FileTypeIdentifiableByVirtualFile myFileType;
 
@@ -69,7 +61,7 @@ public class EnforcedPlainTextFileTypeFactory extends FileTypeFactory {
 
       @Override
       public Icon getIcon() {
-        return ENFORCED_PLAIN_TEXT_ICON;
+        return ENFORCED_PLAIN_TEXT_LAZY_ICON;
       }
 
       @Override
@@ -87,6 +79,11 @@ public class EnforcedPlainTextFileTypeFactory extends FileTypeFactory {
         return null;
       }
     };
+  }
+
+  @NotNull
+  public static Icon getEnforcedPlainTextIcon() {
+    return ENFORCED_PLAIN_TEXT_LAZY_ICON;
   }
 
   @Override

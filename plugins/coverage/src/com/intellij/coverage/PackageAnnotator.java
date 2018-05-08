@@ -32,10 +32,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.util.PsiUtilCore;
-import com.intellij.rt.coverage.data.ClassData;
-import com.intellij.rt.coverage.data.LineCoverage;
-import com.intellij.rt.coverage.data.LineData;
-import com.intellij.rt.coverage.data.ProjectData;
+import com.intellij.rt.coverage.data.*;
 import com.intellij.util.containers.SmartHashSet;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -93,6 +90,9 @@ public class PackageAnnotator {
     public int totalLineCount;
 
     public abstract int getCoveredLineCount();
+
+    public int coveredBranchCount;
+    public int totalBranchCount;
   }
 
   public static class ClassCoverageInfo extends SummaryCoverageInfo {
@@ -124,6 +124,8 @@ public class PackageAnnotator {
       coveredLineCount += info.getCoveredLineCount();
       coveredMethodCount += info.coveredMethodCount;
       totalMethodCount += info.totalMethodCount;
+      totalBranchCount += info.totalBranchCount;
+      coveredBranchCount += info.coveredBranchCount;
     }
   }
 
@@ -309,6 +311,8 @@ public class PackageAnnotator {
             parentDir.coveredLineCount += coverageInfo.coveredLineCount;
             parentDir.totalMethodCount += coverageInfo.totalMethodCount;
             parentDir.coveredMethodCount += coverageInfo.coveredMethodCount;
+            parentDir.totalBranchCount += coverageInfo.totalBranchCount;
+            parentDir.coveredBranchCount += coverageInfo.coveredBranchCount;
           }
         }
       }
@@ -455,6 +459,11 @@ public class PackageAnnotator {
           }
           toplevelClassCoverageInfo.totalLineCount++;
           packageCoverageInfo.totalLineCount++;
+          BranchData branchData = lineData.getBranchData();
+          if (branchData != null) {
+            toplevelClassCoverageInfo.totalBranchCount += branchData.getTotalBranches();
+            toplevelClassCoverageInfo.coveredBranchCount += branchData.getCoveredBranches();
+          }
         }
       }
       boolean touchedClass = false;
@@ -485,6 +494,8 @@ public class PackageAnnotator {
         packageCoverageInfo.coveredLineCount += toplevelClassCoverageInfo.partiallyCoveredLineCount;
         packageCoverageInfo.coveredMethodCount += toplevelClassCoverageInfo.coveredMethodCount;
         packageCoverageInfo.totalMethodCount += toplevelClassCoverageInfo.totalMethodCount;
+        packageCoverageInfo.coveredBranchCount += toplevelClassCoverageInfo.coveredBranchCount;
+        packageCoverageInfo.totalBranchCount += toplevelClassCoverageInfo.totalBranchCount;
       }
       else {
         LOG.debug("Did not find any method signatures in " + classFile.getName());
@@ -506,6 +517,9 @@ public class PackageAnnotator {
 
     classCoverageInfo.totalMethodCount += toplevelClassCoverageInfo.totalMethodCount;
     classCoverageInfo.coveredMethodCount += toplevelClassCoverageInfo.coveredMethodCount;
+
+    classCoverageInfo.totalBranchCount += toplevelClassCoverageInfo.totalBranchCount;
+    classCoverageInfo.coveredBranchCount += toplevelClassCoverageInfo.coveredBranchCount;
     if (toplevelClassCoverageInfo.getCoveredLineCount() > 0) {
       classCoverageInfo.coveredClassCount++;
     }

@@ -753,11 +753,7 @@ public class SimplifyStreamApiCallChainsInspection extends AbstractBaseJavaLocal
 
     @Nullable
     private static String getCollectionClass(PsiMethodCallExpression call) {
-      PsiMethodReferenceExpression methodRef = tryCast(call.getArgumentList().getExpressions()[0], PsiMethodReferenceExpression.class);
-      if (methodRef == null || !methodRef.isConstructor()) return null;
-      PsiMethod ctor = tryCast(methodRef.resolve(), PsiMethod.class);
-      if (ctor == null || !ctor.getParameterList().isEmpty()) return null;
-      PsiClass aClass = ctor.getContainingClass();
+      PsiClass aClass = FunctionalExpressionUtils.getClassOfDefaultConstructorFunction(call.getArgumentList().getExpressions()[0]);
       return ConstructionUtils.isCollectionWithCopyConstructor(aClass) ? aClass.getQualifiedName() : null;
     }
   }

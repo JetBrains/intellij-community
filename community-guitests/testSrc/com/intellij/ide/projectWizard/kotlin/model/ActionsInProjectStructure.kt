@@ -5,15 +5,17 @@ import com.intellij.testGuiFramework.fixtures.extended.ExtendedTreeFixture
 import com.intellij.testGuiFramework.impl.GuiTestCase
 import com.intellij.testGuiFramework.util.*
 
+const val localTimeout = 2L // default timeout is 2 minutes and it's too big for most of tasks here
+
 // Attention: it's supposed that Project Structure dialog is open both before the function
 // executed and after
 fun KotlinGuiTestCase.checkFacetInOneModule(expectedFacet: FacetStructure, vararg path: String){
   dialog("Project Structure", needToKeepDialog = true){
     logUIStep("Click Modules")
-    jList("Modules").clickItem("Modules")
+    jList("Modules", localTimeout).clickItem("Modules")
 
     try {
-      jTree(path[0]).selectWithKeyboard(this@checkFacetInOneModule, *path)
+      jTree(path[0], timeout = localTimeout).selectWithKeyboard(this@checkFacetInOneModule, *path)
       logUIStep("Check facet for module `${path.joinToString(" -> ")}`")
       checkFacetState(expectedFacet)
     }
@@ -47,7 +49,7 @@ fun KotlinGuiTestCase.checkLibrariesFromMavenGradle(buildSystem: BuildSystem,
                                                     expectedJars: Collection<String>){
   if(buildSystem == BuildSystem.IDEA) return
   dialog("Project Structure", needToKeepDialog = true){
-    val tabs = jList("Libraries")
+    val tabs = jList("Libraries", timeout = localTimeout)
     logUIStep("Click Libraries")
     tabs.clickItem("Libraries")
     expectedJars
@@ -61,7 +63,7 @@ fun KotlinGuiTestCase.checkLibrariesFromMavenGradle(buildSystem: BuildSystem,
 fun KotlinGuiTestCase.checkLibrariesFromIDEA(expectedLibName: String,
                                              expectedJars: Collection<String>){
   dialog("Project Structure", needToKeepDialog = true){
-    val tabs = jList("Libraries")
+    val tabs = jList("Libraries", timeout = localTimeout)
     logUIStep("Click Libraries")
     tabs.clickItem("Libraries")
     logTestStep("Check that Kotlin libraries are added")

@@ -1483,6 +1483,15 @@ public class JBUI {
         return font;
       }
 
+      public static float overrideHeaderFontSizeOffset() {
+        Object offset = UIManager.get("ToolWindow.overridden.header.font.size.offset");
+        if (offset instanceof Integer) {
+          return ((Integer)offset).floatValue();
+        }
+
+        return 0;
+      }
+
       @NotNull
       public static Color hoveredIconBackground() {
         return JBColor.namedColor("ToolWindow.header.closeButton.background", 0xB9B9B9);

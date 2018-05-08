@@ -130,7 +130,9 @@ public class JavaMethodContractUtil {
    * @return the expression which is always returned by this method if it completes successfully,
    * null if method may return something less trivial or its contract is unknown.
    */
-  public static PsiExpression findReturnedValue(PsiMethodCallExpression call) {
+  @Nullable
+  @Contract("null -> null")
+  public static PsiExpression findReturnedValue(@Nullable PsiMethodCallExpression call) {
     if (call == null) return null;
     PsiMethod method = call.resolveMethod();
     if (method == null) return null;

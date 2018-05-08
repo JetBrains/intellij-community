@@ -719,17 +719,21 @@ open class GuiTestCase {
 
   private fun Long.toFestTimeout(): Timeout = if (this == 0L) timeout(50, TimeUnit.MILLISECONDS) else timeout(this, TimeUnit.SECONDS)
 
-
   private fun jTreePath(container: Container, timeout: Long, vararg pathStrings: String): ExtendedTreeFixture {
     val myTree: JTree?
     val pathList = pathStrings.toList()
-    myTree = if (pathList.isEmpty()) {
-      waitUntilFound(guiTestRule.robot(), container, typeMatcher(JTree::class.java) { true }, timeout.toFestTimeout())
+    try {
+      myTree = if (pathList.isEmpty()) {
+        waitUntilFound(guiTestRule.robot(), container, typeMatcher(JTree::class.java) { true }, timeout.toFestTimeout())
+      }
+      else {
+        waitUntilFound(guiTestRule.robot(), container,
+                       typeMatcher(JTree::class.java) { ExtendedTreeFixture(guiTestRule.robot(), it).hasPath(pathList) },
+                       timeout.toFestTimeout())
+      }
     }
-    else {
-      waitUntilFound(guiTestRule.robot(), container,
-                     typeMatcher(JTree::class.java) { ExtendedTreeFixture(guiTestRule.robot(), it).hasPath(pathList) },
-                     timeout.toFestTimeout())
+    catch (e: WaitTimedOutError){
+      throw ComponentLookupException("""JTree "${if (pathStrings.isNotEmpty()) "by path $pathStrings" else ""}"""")
     }
     return ExtendedTreeFixture(guiTestRule.robot(), myTree)
   }

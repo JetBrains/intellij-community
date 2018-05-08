@@ -108,6 +108,7 @@ public final class IfsUtil {
             SVGLoader.load(url.get(), new ByteArrayInputStream(content), 1.0f);
           }
           catch (Throwable t) {
+            file.putUserData(IMAGE_PROVIDER_REF_KEY, null);
             LOG.warn(url.get() + " " + t.getMessage());
             return false;
           }

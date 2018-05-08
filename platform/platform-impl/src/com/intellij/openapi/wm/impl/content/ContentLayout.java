@@ -57,23 +57,12 @@ abstract class ContentLayout {
 
   protected void updateIdLabel(BaseLabel label) {
     String title = myUi.myWindow.getStripeTitle();
-    Border border = JBUI.Borders.empty(0, 2, 0, 8);
-    if (myUi.myManager.getContentCount() != 1) {
+    if (myUi.myManager.getContentCount() != 1 || myUi.myManager.canCloseContents()) {
       title += ":";
     }
-    else {
-      final String text = myUi.myManager.getContent(0).getDisplayName();
-      if (text != null && text.trim().length() > 0) {
-        if (myUi.myManager.canCloseContents()) {
-          title += ":";
-        }
-        title += " ";
-        border = JBUI.Borders.emptyLeft(2);
-      }
-    }
     label.setText(title);
-    label.setBorder(border);
 
+    label.setBorder(JBUI.Borders.empty(0, 2, 0, 7));
     label.setVisible(shouldShowId());
   }
 
