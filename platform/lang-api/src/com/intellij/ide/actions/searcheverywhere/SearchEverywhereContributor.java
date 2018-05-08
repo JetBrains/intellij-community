@@ -50,7 +50,6 @@ public interface SearchEverywhereContributor {
   //todo return boolean #UX-1
   void processSelectedItem(Object selected, int modifiers);
 
-  //todo any way to listen project in contributor
   ListCellRenderer getElementsRenderer(Project project);
 
   static List<SearchEverywhereContributor> getProvidersSorted() {

@@ -2337,7 +2337,6 @@ public class SearchEverywhereAction extends AnAction implements CustomComponentA
     }
   }
 
-  //todo return private (same for other) #UX-1
   static class MoreIndex {
     volatile int classes = -1;
     volatile int files = -1;
@@ -2551,7 +2550,6 @@ public class SearchEverywhereAction extends AnAction implements CustomComponentA
     }
   }
 
-  //todo history maybe unnecessary #UX-1
   private static class HistoryItem {
     final String pattern, type, fqn;
 
