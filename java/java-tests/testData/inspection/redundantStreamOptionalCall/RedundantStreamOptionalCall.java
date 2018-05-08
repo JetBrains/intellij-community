@@ -37,7 +37,7 @@ public class RedundantStreamOptionalCall {
       .filter(x -> x > 0).distinct().sequential().forEach(System.out::println);
     Stream.of(0, 100).map(x -> x*2).<warning descr="Redundant 'sequential' call: there's subsequent 'parallel' call which overrides this call">sequential()</warning>
       .filter(x -> x > 0).limit(10).parallel().forEach(System.out::println);
-    Stream.of("xyz").parallel().sorted().collect(Collectors.toList()).stream().sequential().forEach(System.out::println);
+    Stream.of("xyz").parallel().<warning descr="Redundant 'sorted' call: stream contains at most one element">sorted()</warning>.collect(Collectors.toList()).stream().sequential().forEach(System.out::println);
 
     IntStream.range(0, 100).unordered().filter(x -> x > 50).<warning descr="Redundant 'unordered' call: there already was an 'unordered' call in the chain">unordered()</warning>.forEach(System.out::println);
     IntStream.range(0, 100).unordered().filter(x -> x > 50).sorted().unordered().forEach(System.out::println);
@@ -57,5 +57,11 @@ public class RedundantStreamOptionalCall {
     Set<String> set7 = collection.stream().<warning descr="Redundant 'distinct' call: elements will be distinct anyways when collected to the Set">distinct()</warning>.collect(Collectors.toCollection(HashSet::new));
     Set<String> set8 = collection.stream().<warning descr="Redundant 'distinct' call: elements will be distinct anyways when collected to the Set">distinct()</warning>.collect(Collectors.toCollection(() -> new HashSet<>()));
     Set<String> set8a = collection.stream().<warning descr="Redundant 'distinct' call: elements will be distinct anyways when collected to the Set">distinct()</warning>.collect(Collectors.toCollection(() -> new LinkedHashSet<>()));
+
+    IntStream.of(123).mapToObj(String::valueOf).<warning descr="Redundant 'sorted' call: stream contains at most one element">sorted()</warning>;
+    LongStream.of(123).filter(x -> x > 0).mapToObj(String::valueOf).<warning descr="Redundant 'distinct' call: stream contains at most one element">distinct()</warning>;
+    LongStream.of(123).filter(x -> x > 0).mapToObj(String::valueOf).flatMap(x -> Stream.of(x, x+x)).distinct();
+    Stream.of("foo").flatMap(x -> Stream.of(x, x)).parallel();
+    Stream.of("foo").flatMap(x -> Stream.of(x, x)).<warning descr="Redundant 'parallel' call: stream created from single element will not be parallelized">parallel()</warning>.forEach(System.out::println);
   }
 }
