@@ -15,8 +15,8 @@ import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.openapi.wm.ToolWindowAnchor;
 import com.intellij.openapi.wm.ex.ToolWindowEx;
-import com.intellij.openapi.wm.ex.ToolWindowManagerAdapter;
 import com.intellij.openapi.wm.ex.ToolWindowManagerEx;
+import com.intellij.openapi.wm.ex.ToolWindowManagerListener;
 import com.intellij.ui.content.Content;
 import com.intellij.ui.content.ContentFactory;
 import com.intellij.ui.content.ContentManager;
@@ -247,7 +247,7 @@ public class MavenProjectsNavigator extends MavenSimpleProjectComponent implemen
     contentManager.addContent(content);
     contentManager.setSelectedContent(content, false);
 
-    final ToolWindowManagerAdapter listener = new ToolWindowManagerAdapter() {
+    myProject.getMessageBus().connect().subscribe(ToolWindowManagerListener.TOPIC, new ToolWindowManagerListener() {
       boolean wasVisible = false;
 
       @Override
@@ -260,8 +260,7 @@ public class MavenProjectsNavigator extends MavenSimpleProjectComponent implemen
         scheduleStructureUpdate();
         wasVisible = true;
       }
-    };
-    manager.addToolWindowManagerListener(listener, myProject);
+    });
 
     ActionManager actionManager = ActionManager.getInstance();
 

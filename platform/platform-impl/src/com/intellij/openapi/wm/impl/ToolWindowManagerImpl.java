@@ -42,6 +42,7 @@ import com.intellij.ui.ColorUtil;
 import com.intellij.ui.awt.RelativePoint;
 import com.intellij.util.Alarm;
 import com.intellij.util.ArrayUtil;
+import com.intellij.util.EventDispatcher;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.messages.MessageBusConnection;
 import com.intellij.util.ui.EdtInvocationManager;
@@ -142,6 +143,9 @@ public final class ToolWindowManagerImpl extends ToolWindowManagerEx implements 
     }, project);
 
     MessageBusConnection busConnection = project.getMessageBus().connect();
+
+    busConnection.subscribe(ToolWindowManagerListener.TOPIC, myDispatcher.getMulticaster());
+
     busConnection.subscribe(ProjectManager.TOPIC, new ProjectManagerListener() {
       @Override
       public void projectOpened(Project project) {
@@ -559,16 +563,19 @@ public final class ToolWindowManagerImpl extends ToolWindowManagerEx implements 
     myFrame = null;
   }
 
+  @SuppressWarnings("deprecation")
   @Override
   public void addToolWindowManagerListener(@NotNull ToolWindowManagerListener listener) {
     myDispatcher.addListener(listener);
   }
 
+  @SuppressWarnings("deprecation")
   @Override
   public void addToolWindowManagerListener(@NotNull ToolWindowManagerListener listener, @NotNull Disposable parentDisposable) {
-    myDispatcher.addListener(listener, parentDisposable);
+    myProject.getMessageBus().connect(parentDisposable).subscribe(ToolWindowManagerListener.TOPIC, listener);
   }
 
+  @SuppressWarnings("deprecation")
   @Override
   public void removeToolWindowManagerListener(@NotNull ToolWindowManagerListener listener) {
     myDispatcher.removeListener(listener);
@@ -1543,11 +1550,11 @@ public final class ToolWindowManagerImpl extends ToolWindowManagerEx implements 
   }
 
   private void fireToolWindowRegistered(@NotNull String id) {
-    myDispatcher.getMulticaster().toolWindowRegistered(id);
+    myProject.getMessageBus().syncPublisher(ToolWindowManagerListener.TOPIC).toolWindowRegistered(id);
   }
 
   private void fireStateChanged() {
-    myDispatcher.getMulticaster().stateChanged();
+    myProject.getMessageBus().syncPublisher(ToolWindowManagerListener.TOPIC).stateChanged();
   }
 
   boolean isToolWindowActive(@NotNull String id) {
