@@ -55,8 +55,10 @@ public class GradleFindUsagesTest extends GradleImportingTestCase {
                                             "include ':app'");
 
     createProjectSubFile("buildSrc/src/main/groovy/org/buildsrc/BuildSrcClass.groovy", "package org.buildsrc;\n" +
-                                                                                       "public class BuildSrcClass {}");
-    createProjectSubFile("app/build.gradle", "def foo = new org.buildsrc.BuildSrcClass()");
+                                                                                       "public class BuildSrcClass {" +
+                                                                                       "   public String sayHello() { 'Hello!' }" +
+                                                                                       "}");
+    createProjectSubFile("app/build.gradle", "def foo = new org.buildsrc.BuildSrcClass().sayHello()");
 
     importProject();
     assertModules("multiproject", "app",
