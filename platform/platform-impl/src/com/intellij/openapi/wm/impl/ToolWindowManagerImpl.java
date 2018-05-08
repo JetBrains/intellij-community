@@ -73,7 +73,7 @@ import java.util.function.Predicate;
   defaultStateAsResource = true,
   storages = @Storage(value = StoragePathMacros.WORKSPACE_FILE, roamingType = RoamingType.DISABLED)
 )
-public final class ToolWindowManagerImpl extends ToolWindowManagerEx implements PersistentStateComponent<Element>, Disposable {
+public class ToolWindowManagerImpl extends ToolWindowManagerEx implements PersistentStateComponent<Element>, Disposable {
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.wm.impl.ToolWindowManagerImpl");
 
   private final Project myProject;
@@ -143,6 +143,9 @@ public final class ToolWindowManagerImpl extends ToolWindowManagerEx implements 
     }, project);
 
     MessageBusConnection busConnection = project.getMessageBus().connect();
+
+    busConnection.subscribe(ToolWindowManagerListener.TOPIC, myDispatcher.getMulticaster());
+
     busConnection.subscribe(ProjectManager.TOPIC, new ProjectManagerListener() {
       @Override
       public void projectOpened(Project project) {
@@ -406,7 +409,7 @@ public final class ToolWindowManagerImpl extends ToolWindowManagerEx implements 
       unregisterToolWindow(id);
     }
 
-    assert myId2StripeButton.isEmpty();
+    LOG.assertTrue(myId2StripeButton.isEmpty(), myId2StripeButton);
   }
 
   @TestOnly
@@ -560,16 +563,19 @@ public final class ToolWindowManagerImpl extends ToolWindowManagerEx implements 
     myFrame = null;
   }
 
+  @SuppressWarnings("deprecation")
   @Override
   public void addToolWindowManagerListener(@NotNull ToolWindowManagerListener listener) {
     myDispatcher.addListener(listener);
   }
 
+  @SuppressWarnings("deprecation")
   @Override
   public void addToolWindowManagerListener(@NotNull ToolWindowManagerListener listener, @NotNull Disposable parentDisposable) {
-    myDispatcher.addListener(listener, parentDisposable);
+    myProject.getMessageBus().connect(parentDisposable).subscribe(ToolWindowManagerListener.TOPIC, listener);
   }
 
+  @SuppressWarnings("deprecation")
   @Override
   public void removeToolWindowManagerListener(@NotNull ToolWindowManagerListener listener) {
     myDispatcher.removeListener(listener);
@@ -803,6 +809,7 @@ public final class ToolWindowManagerImpl extends ToolWindowManagerEx implements 
 
   @Override
   @Nullable
+  // cannot be ToolWindowEx because of backward compatibility
   public ToolWindow getToolWindow(@Nullable String id) {
     if (id == null || !myLayout.isToolWindowRegistered(id)) {
       return null;
@@ -1063,8 +1070,8 @@ public final class ToolWindowManagerImpl extends ToolWindowManagerEx implements 
       LOG.debug("enter: installToolWindow(" + id + "," + component + "," + anchor + "\")");
     }
     ApplicationManager.getApplication().assertIsDispatchThread();
-    boolean known = myLayout.isToolWindowUnregistered(id);
-    if (myLayout.isToolWindowRegistered(id)) {
+    WindowInfoImpl existingInfo = myLayout.getInfo(id, false);
+    if (existingInfo != null && existingInfo.isRegistered()) {
       throw new IllegalArgumentException("window with id=\"" + id + "\" is already registered");
     }
 
@@ -1073,7 +1080,8 @@ public final class ToolWindowManagerImpl extends ToolWindowManagerEx implements 
     final boolean wasVisible = info.isVisible();
     info.setActive(false);
     info.setVisible(false);
-    if (!known) {
+    if (existingInfo == null) {
+      // set only if info is new (newly created) to not reset user configured value
       info.setShowStripeButton(shouldBeAvailable);
     }
 
@@ -1125,11 +1133,11 @@ public final class ToolWindowManagerImpl extends ToolWindowManagerEx implements 
       LOG.debug("enter: unregisterToolWindow(" + id + ")");
     }
     ApplicationManager.getApplication().assertIsDispatchThread();
-    if (!myLayout.isToolWindowRegistered(id)) {
+    WindowInfoImpl info = myLayout.getInfo(id, false);
+    if (info == null || !info.isRegistered()) {
       return;
     }
 
-    final WindowInfoImpl info = getRegisteredInfoOrLogError(id);
     final ToolWindowEx toolWindow = (ToolWindowEx)getToolWindow(id);
 
     // Remove decorator and tool button from the screen
@@ -1546,11 +1554,11 @@ public final class ToolWindowManagerImpl extends ToolWindowManagerEx implements 
   }
 
   private void fireToolWindowRegistered(@NotNull String id) {
-    myDispatcher.getMulticaster().toolWindowRegistered(id);
+    myProject.getMessageBus().syncPublisher(ToolWindowManagerListener.TOPIC).toolWindowRegistered(id);
   }
 
-  private void fireStateChanged() {
-    myDispatcher.getMulticaster().stateChanged();
+  protected void fireStateChanged() {
+    myProject.getMessageBus().syncPublisher(ToolWindowManagerListener.TOPIC).stateChanged();
   }
 
   boolean isToolWindowActive(@NotNull String id) {
