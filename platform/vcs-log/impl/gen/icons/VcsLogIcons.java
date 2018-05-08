@@ -24,6 +24,5 @@ public class VcsLogIcons {
     public static final Icon Dots_5 = load("/icons/process/dots_5.png"); // 16x16
 
   }
-  public static final Icon ShowHideLongEdges = load("/icons/ShowHideLongEdges.png"); // 16x16
   public static final Icon ShowOtherBranches = load("/icons/ShowOtherBranches.png"); // 16x16
 }

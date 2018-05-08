@@ -102,6 +102,7 @@
       <reference id="Vcs.Log.ShowRootsColumnAction"/>
       <reference id="Vcs.Log.CompactReferencesView"/>
       <reference id="Vcs.Log.ShowTagNames"/>
+      <reference id="Vcs.Log.ShowLongEdges"/>
       <separator/>
       <reference id="Vcs.Log.CollapseAll"/>
       <reference id="Vcs.Log.ExpandAll"/>
@@ -114,7 +115,6 @@
       <reference id="Vcs.Log.MatchCaseAction"/>
     </group>
     <group id="Vcs.Log.Toolbar.Internal">
-      <reference id="Vcs.Log.ShowLongEdges"/>
       <reference id="Vcs.Log.Refresh"/>
       <group id="Vcs.Log.Toolbar"/>
       <reference id="Vcs.Log.QuickSettings"/>
