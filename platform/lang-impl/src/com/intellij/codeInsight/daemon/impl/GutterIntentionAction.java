@@ -40,8 +40,6 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
-import static com.intellij.util.containers.ContainerUtil.ar;
-
 /**
  * @author Dmitry Avdeev
  */
@@ -105,14 +103,15 @@ class GutterIntentionAction extends AbstractIntentionAction implements Comparabl
 
   private static void addActions(@NotNull Project project,
                                  @NotNull RangeHighlighterEx info,
-                                 @NotNull List<HighlightInfo.IntentionActionDescriptor> descriptors,
+                                 @NotNull List<? super HighlightInfo.IntentionActionDescriptor> descriptors,
                                  @NotNull AnActionEvent event) {
     final GutterIconRenderer r = info.getGutterIconRenderer();
     if (r == null || DumbService.isDumb(project) && !DumbService.isDumbAware(r)) {
       return;
     }
     List<HighlightInfo.IntentionActionDescriptor> list = new ArrayList<>();
-    for (AnAction action : ar(r.getClickAction(), r.getMiddleButtonClickAction(), r.getRightButtonClickAction(), r.getPopupMenuActions())) {
+    for (AnAction action : new AnAction[]{r.getClickAction(), r.getMiddleButtonClickAction(), r.getRightButtonClickAction(),
+      r.getPopupMenuActions()}) {
       if (action != null) {
         addActions(action, list, r, 0, event);
       }
@@ -130,7 +129,7 @@ class GutterIntentionAction extends AbstractIntentionAction implements Comparabl
   }
 
   private static void addActions(@NotNull AnAction action,
-                                 @NotNull List<HighlightInfo.IntentionActionDescriptor> descriptors,
+                                 @NotNull List<? super HighlightInfo.IntentionActionDescriptor> descriptors,
                                  @NotNull GutterIconRenderer renderer,
                                  int order,
                                  @NotNull AnActionEvent event) {

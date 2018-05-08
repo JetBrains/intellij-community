@@ -80,15 +80,8 @@ public abstract class DaemonCodeAnalyzer {
   }
 
   /**
-   * @deprecated Please use {@link DaemonListener} directly
+   * @deprecated Use {@link DaemonListener} instead
    */
   public abstract static class DaemonListenerAdapter implements DaemonListener {
-    @Override
-    public void daemonFinished() {
-    }
-
-    @Override
-    public void daemonCancelEventOccurred(@NotNull String reason) {
-    }
   }
 }

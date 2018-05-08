@@ -33,7 +33,6 @@ import com.intellij.openapi.fileTypes.SyntaxHighlighterFactory;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
-import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.ProperTextRange;
@@ -239,7 +238,7 @@ public class InjectedGeneralHighlightingPass extends GeneralHighlightingPass {
     }
 
     HighlightInfoHolder holder = createInfoHolder(injectedPsi);
-    runHighlightVisitorsForInjected(injectedPsi, holder, progress);
+    runHighlightVisitorsForInjected(injectedPsi, holder);
     for (int i = 0; i < holder.size(); i++) {
       HighlightInfo info = holder.get(i);
       final int startOffset = documentWindow.injectedToHost(info.startOffset);
@@ -302,7 +301,7 @@ public class InjectedGeneralHighlightingPass extends GeneralHighlightingPass {
                                       @NotNull DocumentWindow documentWindow,
                                       @NotNull InjectedLanguageManager injectedLanguageManager,
                                       @Nullable TextRange fixedTextRange,
-                                      @NotNull Collection<HighlightInfo> out) {
+                                      @NotNull Collection<? super HighlightInfo> out) {
     ProperTextRange textRange = new ProperTextRange(info.startOffset, info.endOffset);
     List<TextRange> editables = injectedLanguageManager.intersectWithAllEditableFragments(injectedPsi, textRange);
     for (TextRange editable : editables) {
@@ -357,8 +356,7 @@ public class InjectedGeneralHighlightingPass extends GeneralHighlightingPass {
   }
 
   private void runHighlightVisitorsForInjected(@NotNull PsiFile injectedPsi,
-                                               @NotNull final HighlightInfoHolder holder,
-                                               @NotNull final ProgressIndicator progress) {
+                                               @NotNull final HighlightInfoHolder holder) {
     HighlightVisitor[] filtered = getHighlightVisitors(injectedPsi);
     try {
       final List<PsiElement> elements = CollectHighlightsUtil.getElementsInRange(injectedPsi, 0, injectedPsi.getTextLength());

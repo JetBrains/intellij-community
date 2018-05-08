@@ -924,7 +924,7 @@ public class UIUtil {
   }
 
   /**
-   * @deprecated Use {@link LinePainter2D#paint(Graphics, double, double, double, double)} instead.
+   * @deprecated Use {@link LinePainter2D#paint(java.awt.Graphics2D, double, double, double, double)} instead.
    */
   @Deprecated
   public static void drawLine(Graphics g, int x1, int y1, int x2, int y2) {

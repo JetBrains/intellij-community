@@ -35,13 +35,11 @@ import com.intellij.util.ui.GraphicsUtil;
 
 import javax.swing.*;
 import java.awt.*;
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
 
 public class DaemonEditorPopup extends PopupHandler {
   private final PsiFile myPsiFile;
 
-  public DaemonEditorPopup(final PsiFile psiFile) {
+  DaemonEditorPopup(final PsiFile psiFile) {
     myPsiFile = psiFile;
   }
 
@@ -49,22 +47,13 @@ public class DaemonEditorPopup extends PopupHandler {
   public void invokePopup(final Component comp, final int x, final int y) {
     if (ApplicationManager.getApplication() == null) return;
     final JRadioButtonMenuItem errorsFirst = createRadioButtonMenuItem(EditorBundle.message("errors.panel.go.to.errors.first.radio"));
-    errorsFirst.addActionListener(new ActionListener() {
-      @Override
-      public void actionPerformed(ActionEvent e) {
-        DaemonCodeAnalyzerSettings.getInstance().NEXT_ERROR_ACTION_GOES_TO_ERRORS_FIRST = errorsFirst.isSelected();
-      }
-    });
+    errorsFirst.addActionListener(
+      __ -> DaemonCodeAnalyzerSettings.getInstance().NEXT_ERROR_ACTION_GOES_TO_ERRORS_FIRST = errorsFirst.isSelected());
     final JPopupMenu popupMenu = new JBPopupMenu();
     popupMenu.add(errorsFirst);
 
     final JRadioButtonMenuItem next = createRadioButtonMenuItem(EditorBundle.message("errors.panel.go.to.next.error.warning.radio"));
-    next.addActionListener(new ActionListener() {
-      @Override
-      public void actionPerformed(ActionEvent e) {
-        DaemonCodeAnalyzerSettings.getInstance().NEXT_ERROR_ACTION_GOES_TO_ERRORS_FIRST = !next.isSelected();
-      }
-    });
+    next.addActionListener(__ -> DaemonCodeAnalyzerSettings.getInstance().NEXT_ERROR_ACTION_GOES_TO_ERRORS_FIRST = !next.isSelected());
     popupMenu.add(next);
 
     ButtonGroup group = new ButtonGroup();
@@ -78,27 +67,21 @@ public class DaemonEditorPopup extends PopupHandler {
     final boolean isErrorsFirst = DaemonCodeAnalyzerSettings.getInstance().NEXT_ERROR_ACTION_GOES_TO_ERRORS_FIRST;
     errorsFirst.setSelected(isErrorsFirst);
     next.setSelected(!isErrorsFirst);
-    hLevel.addActionListener(new ActionListener() {
-      @Override
-      public void actionPerformed(ActionEvent e) {
-        final PsiFile psiFile = myPsiFile;
-        if (psiFile == null) return;
-        final HectorComponent component = new HectorComponent(psiFile);
-        final Dimension dimension = component.getPreferredSize();
-        Point point = new Point(x, y);
-        component.showComponent(new RelativePoint(comp, new Point(point.x - dimension.width, point.y)));
-      }
+    hLevel.addActionListener(__ -> {
+      final PsiFile psiFile = myPsiFile;
+      if (psiFile == null) return;
+      final HectorComponent component = new HectorComponent(psiFile);
+      final Dimension dimension = component.getPreferredSize();
+      Point point = new Point(x, y);
+      component.showComponent(new RelativePoint(comp, new Point(point.x - dimension.width, point.y)));
     });
 
     final JBCheckboxMenuItem previewCheckbox = new JBCheckboxMenuItem(IdeBundle.message("checkbox.show.editor.preview.popup"), UISettings.getInstance().getShowEditorToolTip());
     popupMenu.addSeparator();
     popupMenu.add(previewCheckbox);
-    previewCheckbox.addActionListener(new ActionListener() {
-      @Override
-      public void actionPerformed(ActionEvent e) {
-        UISettings.getInstance().setShowEditorToolTip(previewCheckbox.isSelected());
-        UISettings.getInstance().fireUISettingsChanged();
-      }
+    previewCheckbox.addActionListener(__ -> {
+      UISettings.getInstance().setShowEditorToolTip(previewCheckbox.isSelected());
+      UISettings.getInstance().fireUISettingsChanged();
     });
 
     PsiFile file = myPsiFile;

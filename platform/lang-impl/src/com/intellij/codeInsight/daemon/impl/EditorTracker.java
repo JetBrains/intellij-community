@@ -81,12 +81,7 @@ public class EditorTracker extends AbstractProjectComponent {
 
     final MyEditorFactoryListener myEditorFactoryListener = new MyEditorFactoryListener();
     myEditorFactory.addEditorFactoryListener(myEditorFactoryListener,myProject);
-    Disposer.register(myProject, new Disposable() {
-      @Override
-      public void dispose() {
-        myEditorFactoryListener.executeOnRelease(null);
-      }
-    });
+    Disposer.register(myProject, () -> myEditorFactoryListener.executeOnRelease(null));
   }
 
   @Override
@@ -254,12 +249,7 @@ public class EditorTracker extends AbstractProjectComponent {
       final JComponent component = editor.getComponent();
       final JComponent contentComponent = editor.getContentComponent();
 
-      final HierarchyListener hierarchyListener = new HierarchyListener() {
-        @Override
-        public void hierarchyChanged(@NotNull HierarchyEvent e) {
-          registerEditor(editor);
-        }
-      };
+      final HierarchyListener hierarchyListener = __ -> registerEditor(editor);
       component.addHierarchyListener(hierarchyListener);
 
       final FocusListener focusListener = new FocusListener() {
