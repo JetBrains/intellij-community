@@ -312,7 +312,7 @@ public class PsiTreeUtil {
    * @param strict  if false the {@code element} is also included in the search.
    * @param classes element types to search for.
    * @param <T>     type to cast found elements to.
-   * @return first found element, or {@code null} if nothing found.
+   * @return {@code Collection<T>} of all found elements, or empty {@code List<T>} if nothing found.
    */
   @SafeVarargs
   @NotNull
