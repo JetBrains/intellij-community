@@ -56,9 +56,7 @@ class GitHttpGuiAuthenticator implements GitHttpAuthenticator {
   @NotNull private final DialogProvider myDialogProvider;
   @NotNull private AuthDataProvider myCurrentProvider;
 
-  GitHttpGuiAuthenticator(@NotNull Project project,
-                          @NotNull GitCommand command,
-                          @NotNull Collection<String> urls) {
+  GitHttpGuiAuthenticator(@NotNull Project project, @NotNull Collection<String> urls) {
     myProject = project;
     myPresetUrl = findFirstHttpUrl(urls);
 
