@@ -48,14 +48,6 @@ java_library(
 
 # managed by go/iml_to_build
 java_library(
-    name = "easymock-tools",
-    visibility = ["//visibility:public"],
-    exports = ["//prebuilts/tools/common/easymock-tools:easymock-3.1"],
-    runtime_deps = ["//prebuilts/tools/common/easymock-tools:easymock-3.1"],
-)
-
-# managed by go/iml_to_build
-java_library(
     name = "mockito",
     visibility = ["//visibility:public"],
     # do not sort: must match IML order
