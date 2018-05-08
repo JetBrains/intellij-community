@@ -82,9 +82,9 @@
                              implementationClass="com.intellij.json.psi.JsonStringLiteralManipulator"/>
     <projectService serviceImplementation="com.jetbrains.jsonSchema.JsonSchemaMappingsProjectConfiguration"/>
     <projectService serviceImplementation="com.jetbrains.jsonSchema.JsonSchemaCatalogProjectConfiguration"/>
-    <projectConfigurable groupId="preferences.externalResources" id="settings.json.schema" displayName="JSON Schema"
+    <projectConfigurable groupId="preferences.externalResources" id="settings.json.schema" displayName="JSON Schema Mappings"
                          instance="com.jetbrains.jsonSchema.JsonSchemaMappingsConfigurable" nonDefaultProject="true"/>
-    <projectConfigurable groupId="preferences.externalResources" id="settings.json.schema.catalog" displayName="JSON Schema Catalog"
+    <projectConfigurable groupId="preferences.externalResources" id="settings.json.schema.catalog" displayName="Remote JSON Schemas"
                          instance="com.jetbrains.jsonSchema.JsonSchemaCatalogConfigurable" nonDefaultProject="true"/>
     <projectService serviceInterface="com.jetbrains.jsonSchema.ide.JsonSchemaService"
                     serviceImplementation="com.jetbrains.jsonSchema.impl.JsonSchemaServiceImpl"/>

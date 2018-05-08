@@ -159,7 +159,7 @@ class JsonSchemaInfoPopupStep extends BaseListPopupStep<JsonSchemaInfo> {
     else {
       configuration.addConfiguration(new UserDefinedJsonSchemaConfiguration(selectedValue.getDescription(),
                                                                             selectedValue.getSchemaVersion(),
-                                                                            selectedValue.getUrl(),
+                                                                            selectedValue.getUrl(project),
                                                                             false,
                                                                             Collections.singletonList(item)));
     }

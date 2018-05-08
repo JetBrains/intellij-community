@@ -176,7 +176,7 @@ public class FocusDebuggerAction extends AnAction implements DumbAware {
             if (previousFocusGraphics != null) previousFocusGraphics.dispose();
           }
         }
-        drawOnGraphics(g -> {
+        Util.drawOnActiveFrameGraphics(g -> {
           g.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
           g.setColor(myApplicationState.getColor());
           g.fillOval(5,5, 10, 10);
@@ -206,7 +206,7 @@ public class FocusDebuggerAction extends AnAction implements DumbAware {
           default:
             break;
         }
-        drawOnGraphics(g -> {
+        Util.drawOnActiveFrameGraphics(g -> {
           g.setColor(myApplicationState.getColor());
           g.fillOval(5,5, 10, 10);
           g.setColor(JBColor.black);
@@ -216,7 +216,7 @@ public class FocusDebuggerAction extends AnAction implements DumbAware {
           g.fillOval(5,5, 10, 10);
         });
         Arrays.stream(Window.getOwnerlessWindows()).
-          filter(window -> window != null && window instanceof RootPaneContainer).
+          filter(window -> window instanceof RootPaneContainer).
           map(window -> (RootPaneContainer)window).
           filter(f -> f.getRootPane() != null).
           filter(window -> window.getRootPane() != null).
@@ -232,27 +232,6 @@ public class FocusDebuggerAction extends AnAction implements DumbAware {
             }
           });
       }
-    }
-
-    private void drawOnGraphics(Consumer<Graphics2D> consumer) {
-      Arrays.stream(Frame.getFrames()).
-        filter(window -> window != null && window instanceof RootPaneContainer).
-        map(window -> (RootPaneContainer)window).
-        filter(w -> w instanceof JFrame).
-        filter(f -> f.getRootPane() != null).
-        filter(f -> f.getGlassPane() != null).
-        filter(window -> window.getRootPane() != null).
-        map(window -> (window).getGlassPane()).
-        map(jGlassPane -> jGlassPane.getGraphics()).
-        filter(g -> g != null).
-        forEach(graphics -> {
-          Graphics glassPaneGraphics = graphics.create();
-          try {
-            consumer.accept((Graphics2D)glassPaneGraphics);
-          } finally {
-            glassPaneGraphics.dispose();
-          }
-        });
     }
   }
 }

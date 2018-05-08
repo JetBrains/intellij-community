@@ -88,6 +88,7 @@ class JavaCommentingStrategy extends JavaIntentionPolicy {
                                      intentionText.startsWith("Remove 'serialVersionUID' field") ||
                                      intentionText.startsWith("Remove unnecessary") ||
                                      intentionText.startsWith("Remove 'try-finally' block") ||
+                                     intentionText.startsWith("Qualify with outer class") || // may change links in javadoc
                                      intentionText.contains("'ordering inconsistent with equals'") || //javadoc will be changed
                                      intentionText.matches("Simplify '.*' to .*") ||
                                      intentionText.matches("Move '.*' to Javadoc ''@throws'' tag") ||

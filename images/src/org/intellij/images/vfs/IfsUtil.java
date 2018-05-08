@@ -83,6 +83,7 @@ public final class IfsUtil {
     if (loadedTimeStamp == null || loadedTimeStamp.longValue() != file.getTimeStamp() || SoftReference.dereference(imageProviderRef) == null) {
       try {
         final byte[] content = file.contentsToByteArray();
+        file.putUserData(IMAGE_PROVIDER_REF_KEY, null);
 
         if (ICO_FORMAT.equalsIgnoreCase(file.getExtension())) {
           try {
@@ -108,7 +109,6 @@ public final class IfsUtil {
             SVGLoader.load(url.get(), new ByteArrayInputStream(content), 1.0f);
           }
           catch (Throwable t) {
-            file.putUserData(IMAGE_PROVIDER_REF_KEY, null);
             LOG.warn(url.get() + " " + t.getMessage());
             return false;
           }

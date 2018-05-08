@@ -1,7 +1,11 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.jetbrains.jsonSchema.extension;
 
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.vfs.VfsUtilCore;
+import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.vfs.impl.http.HttpVirtualFile;
 import com.jetbrains.jsonSchema.impl.JsonSchemaVersion;
 import org.jetbrains.annotations.NotNull;
 
@@ -23,8 +27,25 @@ public class JsonSchemaInfo {
     return myProvider;
   }
 
-  public String getUrl() {
-    return myProvider != null ? myProvider.getRemoteSource() : myUrl;
+  public String getUrl(Project project) {
+    if (myProvider != null) {
+      String remoteSource = myProvider.getRemoteSource();
+      if (remoteSource != null) {
+        return remoteSource;
+      }
+
+      VirtualFile schemaFile = myProvider.getSchemaFile();
+      if (schemaFile == null) return "";
+
+      if (schemaFile instanceof HttpVirtualFile) {
+        return schemaFile.getUrl();
+      }
+
+      return VfsUtilCore.getRelativePath(schemaFile, project.getBaseDir());
+    }
+    else {
+      return myUrl;
+    }
   }
 
   public String getDescription() {

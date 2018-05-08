@@ -65,6 +65,7 @@ public class PotemkinProgress extends ProgressWindow implements PingProgress {
     return Objects.requireNonNull(super.getDialog());
   }
 
+  @Override
   public void interact() {
     if (ApplicationManager.getApplication().isDispatchThread()) {
       long now = System.currentTimeMillis();
@@ -90,7 +91,7 @@ public class PotemkinProgress extends ProgressWindow implements PingProgress {
     }
   }
 
-  private long myLastShouldDispatchCheck = 0;
+  private long myLastShouldDispatchCheck;
   private boolean shouldDispatchAwtEvents(long now) {
     if (now == myLastShouldDispatchCheck) return false;
 
@@ -98,7 +99,7 @@ public class PotemkinProgress extends ProgressWindow implements PingProgress {
     return getDialog().getPanel().isShowing();
   }
 
-  private void dispatchInputEvent(InputEvent e) {
+  private void dispatchInputEvent(@NotNull InputEvent e) {
     if (isCancellationEvent(e)) {
       cancel();
       return;

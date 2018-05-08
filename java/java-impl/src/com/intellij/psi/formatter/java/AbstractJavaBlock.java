@@ -48,6 +48,7 @@ import java.util.Map;
 import static com.intellij.psi.formatter.java.JavaFormatterUtil.getWrapType;
 import static com.intellij.psi.formatter.java.MultipleFieldDeclarationHelper.findLastFieldInGroup;
 
+@SuppressWarnings("BoundedWildcard")
 public abstract class AbstractJavaBlock extends AbstractBlock implements JavaBlock, ReservedWrapsProvider {
   private static final Logger LOG = Logger.getInstance("#com.intellij.psi.formatter.java.AbstractJavaBlock");
 
@@ -644,6 +645,15 @@ public abstract class AbstractJavaBlock extends AbstractBlock implements JavaBlo
     return null;
   }
 
+  private static boolean isAfterErrorElement(@NotNull ASTNode currNode) {
+    ASTNode prev = currNode.getTreePrev();
+    while (prev != null && (prev instanceof PsiWhiteSpace || prev.getTextLength() == 0)) {
+      if (prev instanceof PsiErrorElement) return true;
+      prev = prev.getTreePrev();
+    }
+    return false;
+  }
+
   private static boolean isInsideMethodCall(@NotNull PsiElement element) {
     PsiElement e = element.getParent();
     int parentsVisited = 0;
@@ -936,22 +946,26 @@ public abstract class AbstractJavaBlock extends AbstractBlock implements JavaBlo
     setChildIndent(internalIndent);
     setChildAlignment(alignmentStrategy.getAlignment(null));
 
-    boolean isAfterIncomplete = false;
 
     ASTNode prev = child;
-    boolean afterAnonymousClass = false;
     while (child != null) {
-      isAfterIncomplete = isAfterIncomplete || child.getElementType() == TokenType.ERROR_ELEMENT ||
-                          child.getElementType() == JavaElementType.EMPTY_EXPRESSION;
       if (!FormatterUtil.containsWhiteSpacesOnly(child) && child.getTextLength() > 0) {
         if (child.getElementType() == from) {
           result.add(createJavaBlock(child, mySettings, myJavaSettings, externalIndent, null, bracketAlignment, myFormattingMode));
         }
         else if (child.getElementType() == to) {
+          boolean isAfterIncomplete = isAfterErrorElement(child);
+          Indent parenIndent = isAfterIncomplete ? internalIndent : externalIndent;
+          Alignment parenAlignment =  isAfterIncomplete ? alignmentStrategy.getAlignment(null) : bracketAlignment;
+          ChildAttributes attributes = getDelegateAttributes(result);
+          if (attributes != null) {
+            parenIndent = attributes.getChildIndent();
+            parenAlignment = attributes.getAlignment();
+          }
           Block block = createJavaBlock(child, mySettings, myJavaSettings,
-                                        isAfterIncomplete && !afterAnonymousClass ? internalIndent : externalIndent,
+                                        parenIndent,
                                         null,
-                                        isAfterIncomplete ? alignmentStrategy.getAlignment(null) : bracketAlignment, myFormattingMode);
+                                        parenAlignment, myFormattingMode);
           result.add(block);
           return child;
         }
@@ -962,10 +976,6 @@ public abstract class AbstractJavaBlock extends AbstractBlock implements JavaBlo
           if (to == null) {//process only one statement
             return child;
           }
-        }
-        isAfterIncomplete = false;
-        if (child.getElementType() != JavaTokenType.COMMA) {
-          afterAnonymousClass = isAnonymousClass(child);
         }
       }
       prev = child;

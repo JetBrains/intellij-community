@@ -585,7 +585,7 @@ public class PydevConsoleRunnerImpl implements PydevConsoleRunner {
     final List<AnAction> actions = fillToolBarActions(toolbarActions, contentDescriptor);
     registerActionShortcuts(actions, myConsoleView.getConsoleEditor().getComponent());
     registerActionShortcuts(actions, panel);
-    getConsoleView().addConsoleFolding(false);
+    getConsoleView().addConsoleFolding(false, false);
 
     showContentDescriptor(contentDescriptor);
   }

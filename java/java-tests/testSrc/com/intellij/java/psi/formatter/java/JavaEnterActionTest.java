@@ -477,4 +477,51 @@ public class JavaEnterActionTest extends AbstractEnterActionTestCase {
       "}"
     );
   }
+
+  public void testIdea115696() throws IOException {
+    doTextTest(
+      "java",
+
+      "class T {\n" +
+      "    private void someMethod() {\n" +
+      "        System.out.println(\"foo\" +<caret>);\n" +
+      "    }\n" +
+      "\n" +
+      "}",
+
+      "class T {\n" +
+      "    private void someMethod() {\n" +
+      "        System.out.println(\"foo\" +\n" +
+      "                <caret>);\n" +
+      "    }\n" +
+      "\n" +
+      "}"
+    );
+  }
+
+  public void testIdea115696_Aligned() throws IOException {
+    CodeStyleSettings settings = getCodeStyleSettings();
+    CommonCodeStyleSettings javaSettings = settings.getCommonSettings(JavaLanguage.INSTANCE);
+    javaSettings.ALIGN_MULTILINE_BINARY_OPERATION = true;
+    setCodeStyleSettings(settings);
+
+    doTextTest(
+      "java",
+
+      "class T {\n" +
+      "    private void someMethod() {\n" +
+      "        System.out.println(\"foo\" +<caret>);\n" +
+      "    }\n" +
+      "\n" +
+      "}",
+
+      "class T {\n" +
+      "    private void someMethod() {\n" +
+      "        System.out.println(\"foo\" +\n" +
+      "                           <caret>);\n" +
+      "    }\n" +
+      "\n" +
+      "}"
+    );
+  }
 }

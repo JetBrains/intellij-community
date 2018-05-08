@@ -35,7 +35,7 @@ public class IgnoredViewDialog extends SpecificFilesViewDialog {
   @Override
   protected void addCustomActions(@NotNull DefaultActionGroup group) {
     AnAction deleteAction =
-      EmptyAction.registerWithShortcutSet("ChangesView.DeleteUnversioned.From.Dialog", CommonShortcuts.getDelete(), myView);
+      EmptyAction.registerWithShortcutSet("ChangesView.DeleteUnversioned", CommonShortcuts.getDelete(), myView);
     group.add(deleteAction);
     myView.setMenuActions(new DefaultActionGroup(deleteAction));
   }

@@ -16,6 +16,7 @@
 package com.intellij.coverage.view;
 
 import com.intellij.coverage.*;
+import com.intellij.execution.configurations.RunConfigurationBase;
 import com.intellij.execution.configurations.coverage.JavaCoverageEnabledConfiguration;
 import com.intellij.ide.util.treeView.AbstractTreeNode;
 import com.intellij.openapi.application.ReadAction;
@@ -285,14 +286,30 @@ public class JavaCoverageViewExtension extends CoverageViewExtension {
     infos.add(new PercentageCoverageColumnInfo(1, "Class, %", mySuitesBundle, myStateBean)); 
     infos.add(new PercentageCoverageColumnInfo(2, "Method, %", mySuitesBundle, myStateBean));
     infos.add(new PercentageCoverageColumnInfo(3, "Line, %", mySuitesBundle, myStateBean));
-    JavaCoverageEnabledConfiguration coverageEnabledConfiguration = JavaCoverageEnabledConfiguration.getFrom(mySuitesBundle.getRunConfiguration());
-    if (coverageEnabledConfiguration != null) {
-      CoverageRunner coverageRunner = coverageEnabledConfiguration.getCoverageRunner();
-      if (coverageRunner instanceof JavaCoverageRunner && ((JavaCoverageRunner)coverageRunner).isBranchInfoAvailable(coverageEnabledConfiguration.isSampling())) {
-        infos.add(new PercentageCoverageColumnInfo(4, "Branch, %", mySuitesBundle, myStateBean));
+    RunConfigurationBase runConfiguration = mySuitesBundle.getRunConfiguration();
+    if (runConfiguration != null) {
+      JavaCoverageEnabledConfiguration coverageEnabledConfiguration = JavaCoverageEnabledConfiguration.getFrom(runConfiguration);
+      if (coverageEnabledConfiguration != null) {
+        isBranchColumnAvailable(infos, coverageEnabledConfiguration.getCoverageRunner(), coverageEnabledConfiguration.isSampling());
+      }
+    }
+    else {
+      for (CoverageSuite suite : mySuitesBundle.getSuites()) {
+        CoverageRunner runner = suite.getRunner();
+        if (isBranchColumnAvailable(infos, runner, true)) {
+          break;
+        }
       }
     }
     return infos.toArray(ColumnInfo.EMPTY_ARRAY);
+  }
+
+  private boolean isBranchColumnAvailable(ArrayList<? super ColumnInfo> infos, CoverageRunner coverageRunner, boolean sampling) {
+    if (coverageRunner instanceof JavaCoverageRunner && ((JavaCoverageRunner)coverageRunner).isBranchInfoAvailable(sampling)) {
+      infos.add(new PercentageCoverageColumnInfo(4, "Branch, %", mySuitesBundle, myStateBean));
+      return true;
+    }
+    return false;
   }
 
   private boolean isInCoverageScope(PsiElement element) {

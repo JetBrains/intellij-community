@@ -1288,6 +1288,9 @@ public class ActionToolbarImpl extends JPanel implements ActionToolbar, QuickAct
       super(place, actionGroup, horizontal, false, dataManager, actionManager, keymapManager, true);
       myActionManager.addAnActionListener(this);
       myParent = parent;
+      if (myParent != null) {
+        setBorder(myParent.getBorder());
+      }
     }
 
     @Override

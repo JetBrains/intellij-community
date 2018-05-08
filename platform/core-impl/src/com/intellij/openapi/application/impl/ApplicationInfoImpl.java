@@ -47,8 +47,8 @@ public class ApplicationInfoImpl extends ApplicationInfoEx {
   private String myShortCompanyName;
   private String myCompanyUrl = "https://www.jetbrains.com/";
   private Color myProgressColor;
-  @SuppressWarnings("UseJBColor") private Color myCopyrightForeground = Color.black;
-  @SuppressWarnings("UseJBColor") private Color myAboutForeground = Color.black;
+  private Color myCopyrightForeground = JBColor.BLACK;
+  private Color myAboutForeground = JBColor.BLACK;
   private Color myAboutLinkColor;
   private String myProgressTailIconName;
   private Icon myProgressTailIcon;
@@ -730,9 +730,13 @@ public class ApplicationInfoImpl extends ApplicationInfoEx {
       myAboutImageUrl = aboutLogoElement.getAttributeValue(ATTRIBUTE_URL);
 
       String v = aboutLogoElement.getAttributeValue(ATTRIBUTE_ABOUT_FOREGROUND_COLOR);
-      myAboutForeground = v != null ? parseColor(v) : JBColor.BLACK;
+      if (v != null) {
+        myAboutForeground = parseColor(v);
+      }
       v = aboutLogoElement.getAttributeValue(ATTRIBUTE_ABOUT_COPYRIGHT_FOREGROUND_COLOR);
-      myCopyrightForeground = v != null ? parseColor(v) : JBColor.BLACK;
+      if (v != null) {
+        myCopyrightForeground = parseColor(v);
+      }
 
       String c = aboutLogoElement.getAttributeValue(ATTRIBUTE_ABOUT_LINK_COLOR);
       if (c != null) {
