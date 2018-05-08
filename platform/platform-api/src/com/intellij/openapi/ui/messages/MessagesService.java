@@ -91,10 +91,7 @@ public interface MessagesService {
                           Function<String, List<String>> parser,
                           Function<List<String>, String> lineJoiner);
 
-  class SERVICE {
-    public static MessagesService getInstance() {
+  static MessagesService getInstance() {
       return ServiceManager.getService(MessagesService.class);
     }
-  }
-
 }

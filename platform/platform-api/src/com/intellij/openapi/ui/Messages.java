@@ -200,7 +200,7 @@ public class Messages {
     if (isApplicationInUnitTestOrHeadless()) {
       return ourTestImplementation.show(message);
     }
-    return MessagesService.SERVICE.getInstance()
+    return MessagesService.getInstance()
       .showMessageDialog(project, null, message, title, options, defaultOptionIndex, -1, icon, doNotAskOption, false);
   }
 
@@ -214,7 +214,7 @@ public class Messages {
                                           int defaultOptionIndex,
                                           @Nullable Icon icon,
                                           @Nullable DialogWrapper.DoNotAskOption doNotAskOption) {
-    return MessagesService.SERVICE.getInstance()
+    return MessagesService.getInstance()
       .showMessageDialog(project, null, message, title, options, defaultOptionIndex, -1, icon, doNotAskOption, true);
   }
 
@@ -240,7 +240,7 @@ public class Messages {
     if (isApplicationInUnitTestOrHeadless()) {
       return ourTestImplementation.show(message);
     }
-    return MessagesService.SERVICE.getInstance()
+    return MessagesService.getInstance()
       .showMoreInfoMessageDialog(project, message, title, moreInfo, options, defaultOptionIndex, focusedOptionIndex, icon);
   }
 
@@ -258,7 +258,7 @@ public class Messages {
       return ourTestImplementation.show(message);
     }
     else {
-      return MessagesService.SERVICE.getInstance().showMessageDialog(null, parent, message, title, options, defaultOptionIndex, -1, icon, null, false);
+      return MessagesService.getInstance().showMessageDialog(null, parent, message, title, options, defaultOptionIndex, -1, icon, null, false);
     }
   }
 
@@ -280,7 +280,7 @@ public class Messages {
     if (isApplicationInUnitTestOrHeadless()) {
       return ourTestImplementation.show(message);
     }
-    return MessagesService.SERVICE.getInstance()
+    return MessagesService.getInstance()
       .showMessageDialog(null, null, message, title, options, defaultOptionIndex, focusedOptionIndex, icon, doNotAskOption, false);
   }
 
@@ -761,7 +761,7 @@ public class Messages {
       return ourTestImplementation.show(message);
     }
     else {
-      return MessagesService.SERVICE.getInstance()
+      return MessagesService.getInstance()
         .showTwoStepConfirmationDialog(message, title, options, checkboxText, checked, defaultOptionIndex, focusedOptionIndex, icon,
                                        exitFunc);
     }
@@ -1071,7 +1071,7 @@ public class Messages {
       return ourTestInputImplementation.show(message, validator);
     }
 
-    return MessagesService.SERVICE.getInstance().showPasswordDialog(project, message, title, icon, validator);
+    return MessagesService.getInstance().showPasswordDialog(project, message, title, icon, validator);
   }
 
   /**
@@ -1118,7 +1118,7 @@ public class Messages {
       return ourTestInputImplementation.show(message, validator);
     }
     else {
-      return MessagesService.SERVICE.getInstance().showInputDialog(project, null, message, title, icon, initialValue, validator, null, null);
+      return MessagesService.getInstance().showInputDialog(project, null, message, title, icon, initialValue, validator, null, null);
     }
   }
 
@@ -1147,7 +1147,7 @@ public class Messages {
       return ourTestInputImplementation.show(message, validator);
     }
     else {
-      return MessagesService.SERVICE.getInstance().showInputDialog(project, null, message, title, icon, initialValue, validator, selection, comment);
+      return MessagesService.getInstance().showInputDialog(project, null, message, title, icon, initialValue, validator, selection, comment);
     }
   }
 
@@ -1162,7 +1162,7 @@ public class Messages {
       return ourTestInputImplementation.show(message, validator);
     }
     else {
-      return MessagesService.SERVICE.getInstance().showInputDialog(null, parent, message, title, icon, initialValue, validator, null, null);
+      return MessagesService.getInstance().showInputDialog(null, parent, message, title, icon, initialValue, validator, null, null);
     }
   }
 
@@ -1182,7 +1182,7 @@ public class Messages {
       return ourTestInputImplementation.show(message, validator);
     }
     else {
-      return MessagesService.SERVICE.getInstance().showInputDialog(null, null, message, title, icon, initialValue, validator, null, null);
+      return MessagesService.getInstance().showInputDialog(null, null, message, title, icon, initialValue, validator, null, null);
     }
   }
 
@@ -1196,7 +1196,7 @@ public class Messages {
     if (isApplicationInUnitTestOrHeadless()) {
       return ourTestInputImplementation.show(message, validator);
     }
-    return MessagesService.SERVICE.getInstance().showMultilineInputDialog(project, message, title, initialValue, icon, validator);
+    return MessagesService.getInstance().showMultilineInputDialog(project, message, title, initialValue, icon, validator);
   }
 
   @NotNull
@@ -1212,7 +1212,7 @@ public class Messages {
       return new Pair<>(ourTestInputImplementation.show(message), checked);
     }
     else {
-      return MessagesService.SERVICE.getInstance()
+      return MessagesService.getInstance()
         .showInputDialogWithCheckBox(message, title, checkboxText, checked, checkboxEnabled, icon, initialValue, validator);
     }
   }
@@ -1228,7 +1228,7 @@ public class Messages {
       return ourTestInputImplementation.show(message, validator);
     }
     else {
-      return MessagesService.SERVICE.getInstance().showEditableChooseDialog(message, title, icon, values, initialValue, validator);
+      return MessagesService.getInstance().showEditableChooseDialog(message, title, icon, values, initialValue, validator);
     }
   }
 
@@ -1245,7 +1245,7 @@ public class Messages {
       return ourTestImplementation.show(message);
     }
     else {
-      return MessagesService.SERVICE.getInstance().showChooseDialog(null, null, message, title, values, initialValue, icon);
+      return MessagesService.getInstance().showChooseDialog(null, null, message, title, values, initialValue, icon);
     }
   }
 
@@ -1263,7 +1263,7 @@ public class Messages {
       return ourTestImplementation.show(message);
     }
     else {
-      return MessagesService.SERVICE.getInstance().showChooseDialog(null, parent, message, title, values, initialValue, icon);
+      return MessagesService.getInstance().showChooseDialog(null, parent, message, title, values, initialValue, icon);
     }
   }
 
@@ -1282,7 +1282,7 @@ public class Messages {
       return ourTestImplementation.show(message);
     }
     else {
-      return MessagesService.SERVICE.getInstance().showChooseDialog(project, null, message, title, values, initialValue, icon);
+      return MessagesService.getInstance().showChooseDialog(project, null, message, title, values, initialValue, icon);
     }
   }
 
@@ -1361,7 +1361,7 @@ public class Messages {
       ourTestImplementation.show(title);
     }
     else {
-      MessagesService.SERVICE.getInstance().showTextAreaDialog(textField, title, dimensionServiceKey, parser, lineJoiner);
+      MessagesService.getInstance().showTextAreaDialog(textField, title, dimensionServiceKey, parser, lineJoiner);
     }
   }
 
