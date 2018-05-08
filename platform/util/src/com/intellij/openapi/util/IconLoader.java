@@ -168,26 +168,16 @@ public final class IconLoader {
    */
   @Nullable
   public static Icon findIcon(@NotNull final String path, @NotNull final Class aClass) {
-    //noinspection deprecation
-    return findIcon(path, aClass, false, STRICT);
+    return findIcon(path, aClass, false);
   }
 
-  /**
-   * @deprecated Use {@link #findIcon(String, Class)}
-   */
   @Nullable
-  @Deprecated
   public static Icon findIcon(@NotNull String path, @NotNull final Class aClass, boolean computeNow) {
     return findIcon(path, aClass, computeNow, STRICT);
   }
 
-  /**
-   * @deprecated Use {@link #findIcon(String, Class)}
-   */
-  @SuppressWarnings("DeprecatedIsStillUsed")
   @Nullable
-  @Deprecated
-  public static Icon findIcon(@NotNull String path, @NotNull Class aClass, @SuppressWarnings("unused") boolean unused, boolean strict) {
+  public static Icon findIcon(@NotNull String path, @NotNull Class aClass, boolean computeNow, boolean strict) {
     String originalPath = path;
     Pair<String, Class> patchedPath = patchPath(path);
     path = patchedPath.first;

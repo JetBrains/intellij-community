@@ -398,8 +398,7 @@ public class FileBasedIndexImpl extends FileBasedIndex implements BaseComponent,
 
         state.registerIndex(name,
                             createIndex(extension, new MemoryIndexStorage<>(storage, name)),
-                            file -> file instanceof VirtualFileWithId && inputFilter.acceptInput(file) &&
-                                    !GlobalIndexFilter.isExcludedFromIndexViaFilters(file, name),
+                            file -> file instanceof VirtualFileWithId && inputFilter.acceptInput(file),
                             version,
                             addedTypes);
         break;

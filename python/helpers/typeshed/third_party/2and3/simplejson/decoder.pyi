@@ -1,4 +1,4 @@
-from typing import Any, Match
+from typing import Match
 
 class JSONDecoder(object):
     def __init__(self, **kwargs): ...

@@ -1,6 +1,5 @@
 package com.intellij.coverage;
 
-import com.intellij.execution.JavaExecutionUtil;
 import com.intellij.execution.configurations.ModuleBasedConfiguration;
 import com.intellij.execution.configurations.RunConfigurationBase;
 import com.intellij.execution.configurations.SimpleJavaParameters;
@@ -13,10 +12,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.CompilerModuleExtension;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.VfsUtilCore;
-import com.intellij.rt.coverage.data.ClassData;
-import com.intellij.rt.coverage.data.LineCoverage;
-import com.intellij.rt.coverage.data.LineData;
-import com.intellij.rt.coverage.data.ProjectData;
+import com.intellij.rt.coverage.data.*;
 import com.intellij.util.PathUtil;
 import org.jacoco.agent.rt.RT;
 import org.jacoco.core.analysis.*;
@@ -139,20 +135,29 @@ public class JaCoCoCoverageRunner extends JavaCoverageRunner {
           final ILine methodLine = method.getLine(i);
           final int methodLineStatus = methodLine.getStatus();
           if (methodLineStatus == ICounter.EMPTY) continue;
-          final LineData lineData = new LineData(i , desc) {
-            @Override
-            public int getStatus() {
-              switch (methodLineStatus) {
-                case ICounter.FULLY_COVERED:
-                  return LineCoverage.FULL;
-                case ICounter.PARTLY_COVERED:
-                  return LineCoverage.PARTIAL;
-                default:
-                  return LineCoverage.NONE;
-              }
-            }
-          };
+          final LineData lineData = new LineData(i , desc);
+          switch (methodLineStatus) {
+            case ICounter.FULLY_COVERED:
+              lineData.setStatus(LineCoverage.FULL);
+            case ICounter.PARTLY_COVERED:
+              lineData.setStatus(LineCoverage.PARTIAL);
+            default:
+              lineData.setStatus(LineCoverage.NONE);
+          }
+
           lineData.setHits(methodLineStatus == ICounter.FULLY_COVERED || methodLineStatus == ICounter.PARTLY_COVERED ? 1 : 0);
+          ICounter branchCounter = methodLine.getBranchCounter();
+          int coveredCount = branchCounter.getCoveredCount();
+          for (int b = 0; b < branchCounter.getTotalCount(); b++) {
+            JumpData jump = lineData.addJump(b);
+            if (coveredCount-- > 0) {
+              jump.setTrueHits(1);
+              jump.setFalseHits(1);
+            }
+          }
+
+          classData.registerMethodSignature(lineData);
+          lineData.fillArrays();
           lines[i] = lineData;
         }
       }
@@ -171,6 +176,11 @@ public class JaCoCoCoverageRunner extends JavaCoverageRunner {
     argument.append("destfile=").append(sessionDataFilePath);
     argument.append(",append=false");
     javaParameters.getVMParametersList().add(argument.toString());
+  }
+
+  @Override
+  public boolean isBranchInfoAvailable(boolean sampling) {
+    return true;
   }
 
 

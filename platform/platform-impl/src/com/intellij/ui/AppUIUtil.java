@@ -405,7 +405,10 @@ public class AppUIUtil {
       @Override
       protected Action[] createActions() {
         if (consents.size() > 1) {
-          return super.createActions();
+          Action[] actions = super.createActions();
+          setOKButtonText("Save");
+          setCancelButtonText("Skip");
+          return actions;
         }
         setOKButtonText(consents.iterator().next().getName());
         return new Action[]{getOKAction(), new DialogWrapperAction("Don't send") {

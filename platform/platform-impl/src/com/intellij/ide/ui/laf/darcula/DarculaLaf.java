@@ -362,7 +362,7 @@ public class DarculaLaf extends BasicLookAndFeel {
     }
 
     if (value.endsWith(".png") || value.endsWith(".svg")) {
-      Icon icon = IconLoader.findIcon(value, DarculaLaf.class);
+      Icon icon = IconLoader.findIcon(value, DarculaLaf.class, true);
       if (icon != null) {
         return icon;
       }

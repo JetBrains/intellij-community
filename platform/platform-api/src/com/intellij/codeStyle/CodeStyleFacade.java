@@ -106,7 +106,5 @@ public abstract class CodeStyleFacade {
    */
   public abstract String getLineSeparator();
 
-  public abstract boolean projectUsesOwnSettings();
-
   public abstract boolean isUnsuitableCodeStyleConfigurable(Configurable c);
 }
