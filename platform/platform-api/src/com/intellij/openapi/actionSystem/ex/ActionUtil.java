@@ -212,6 +212,13 @@ public class ActionUtil {
     return true;
   }
 
+  public static void performActionDumbAwareWithCallbacks(AnAction action, AnActionEvent e, DataContext context) {
+    final ActionManagerEx manager = ActionManagerEx.getInstanceEx();
+    manager.fireBeforeActionPerformed(action, context, e);
+    performActionDumbAware(action, e);
+    manager.fireAfterActionPerformed(action, context, e);
+  }
+
   public static void performActionDumbAware(AnAction action, AnActionEvent e) {
     Runnable runnable = new Runnable() {
       @Override
