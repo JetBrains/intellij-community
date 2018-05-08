@@ -43,6 +43,7 @@ import com.intellij.util.DisposeAwareRunnable;
 import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.MultiMap;
+import com.intellij.util.messages.MessageBusConnection;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -159,7 +160,8 @@ public class ExternalProjectsViewImpl extends SimpleToolWindowPanel implements D
     Disposer.register(myProject, this);
     initTree();
 
-    myProject.getMessageBus().connect().subscribe(ToolWindowManagerListener.TOPIC, new ToolWindowManagerListener() {
+    MessageBusConnection busConnection = myProject.getMessageBus().connect(this);
+    busConnection.subscribe(ToolWindowManagerListener.TOPIC, new ToolWindowManagerListener() {
       boolean wasVisible = false;
 
       @Override
@@ -199,7 +201,7 @@ public class ExternalProjectsViewImpl extends SimpleToolWindowPanel implements D
       }
     });
 
-    myProject.getMessageBus().connect(this).subscribe(RunManagerListener.TOPIC, new RunManagerListener() {
+    busConnection.subscribe(RunManagerListener.TOPIC, new RunManagerListener() {
       private void changed() {
         scheduleStructureRequest(() -> {
           assert myStructure != null;
