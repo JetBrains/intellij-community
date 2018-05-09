@@ -9,10 +9,13 @@ import com.intellij.notification.Notifications;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.DataContext;
+import com.intellij.openapi.ui.Messages;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-public abstract class RunAnythingNotifiableActivityProviderBase implements RunAnythingActivityProvider {
+import static com.intellij.ide.actions.runAnything.RunAnythingUtil.fetchProject;
+
+public abstract class RunAnythingNotifiableActivityProviderBase<V> implements RunAnythingParametrizedExecutionProvider<V> {
   private static final String RUN_ANYTHING_GROUP_ID = IdeBundle.message("run.anything.custom.activity.notification.group.id");
 
   /**
@@ -59,12 +62,14 @@ public abstract class RunAnythingNotifiableActivityProviderBase implements RunAn
    * @return true if succeed, false is failed
    */
   @Override
-  public boolean runActivity(@NotNull DataContext dataContext, @NotNull String pattern) {
+  public void execute(@NotNull DataContext dataContext, @NotNull String pattern) {
     if (runNotificationProduceActivity(dataContext, pattern)) {
       getNotificationCallback(dataContext, pattern).run();
-      return true;
     }
-    return false;
+    else {
+      Messages.showWarningDialog(fetchProject(dataContext), IdeBundle.message("run.anything.notification.warning.content", pattern),
+                                 IdeBundle.message("run.anything.notification.warning.title"));
+    }
   }
 
   private Runnable getNotificationCallback(@NotNull DataContext dataContext, @NotNull String commandLine) {
