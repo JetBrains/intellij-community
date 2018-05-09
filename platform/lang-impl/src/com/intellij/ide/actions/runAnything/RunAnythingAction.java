@@ -57,10 +57,7 @@ import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.ui.popup.ComponentPopupBuilder;
 import com.intellij.openapi.ui.popup.JBPopup;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
-import com.intellij.openapi.util.ActionCallback;
-import com.intellij.openapi.util.Disposer;
-import com.intellij.openapi.util.Key;
-import com.intellij.openapi.util.SystemInfo;
+import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -94,12 +91,15 @@ import javax.swing.event.ListSelectionListener;
 import javax.swing.plaf.TextUI;
 import java.awt.*;
 import java.awt.event.*;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.stream.Collectors;
 
 import static com.intellij.ide.actions.runAnything.RunAnythingIconHandler.*;
+import static com.intellij.ide.actions.runAnything.RunAnythingUtil.UNDEFINED_COMMAND_ICON;
 import static com.intellij.ide.actions.runAnything.activity.RunAnythingCompletionProvider.getCompletionProviders;
 import static com.intellij.openapi.wm.IdeFocusManager.getGlobalInstance;
 
@@ -107,11 +107,13 @@ import static com.intellij.openapi.wm.IdeFocusManager.getGlobalInstance;
 public class RunAnythingAction extends AnAction implements CustomComponentAction, DumbAware, DataProvider {
   public static final String RUN_ANYTHING_HISTORY_KEY = "RunAnythingHistoryKey";
   public static final int SEARCH_FIELD_COLUMNS = 25;
-  public static final Icon UNKNOWN_CONFIGURATION_ICON = AllIcons.Actions.Run_anything;
+  public static final int UNKNOWN_CONFIGURATION_CODE = System.identityHashCode("UNKNOWN_CONFIGURATION_CODE");
   public static final AtomicBoolean SHIFT_IS_PRESSED = new AtomicBoolean(false);
   public static final AtomicBoolean ALT_IS_PRESSED = new AtomicBoolean(false);
   public static final Key<JBPopup> RUN_ANYTHING_POPUP = new Key<>("RunAnythingPopup");
   public static final String RUN_ANYTHING_ACTION_ID = "RunAnything";
+  public static final DataKey<AnActionEvent> RUN_ANYTHING_EVENT_KEY = DataKey.create("RUN_ANYTHING_EVENT_KEY");
+  public static final DataKey<Component> FOCUS_COMPONENT_KEY_NAME = DataKey.create("FOCUS_COMPONENT_KEY_NAME");
   public static final DataKey<Executor> EXECUTOR_KEY = DataKey.create("EXECUTOR_KEY");
   static final String RUN_ANYTHING = "RunAnything";
 
@@ -141,12 +143,28 @@ public class RunAnythingAction extends AnAction implements CustomComponentAction
   private RunAnythingHistoryItem myHistoryItem;
   private JLabel myAdComponent;
   private DataContext myDataContext;
+  private static final NotNullLazyValue<Map<Integer, Icon>> ourIconsMap;
   private JLabel myTextFieldTitle;
   private boolean myIsItemSelected;
   private String myLastInputText = null;
 
   static {
     ModifierKeyDoubleClickHandler.getInstance().registerAction(RUN_ANYTHING_ACTION_ID, KeyEvent.VK_CONTROL, -1, false);
+
+    ourIconsMap = new NotNullLazyValue<Map<Integer, Icon>>() {
+      @NotNull
+      @Override
+      protected Map<Integer, Icon> compute() {
+        Map<Integer, Icon> map = ContainerUtil.newHashMap();
+        map.put(UNKNOWN_CONFIGURATION_CODE, UNDEFINED_COMMAND_ICON);
+
+        map.putAll(Arrays.stream(RunAnythingActivityProvider.EP_NAME.getExtensions()).collect(Collectors.toMap(
+          activityProvider -> System.identityHashCode(activityProvider),
+          activityProvider -> AllIcons.Actions.Run_anything)));
+
+        return map;
+      }
+    };
 
     IdeEventQueue.getInstance().addPostprocessor(event -> {
       if (event instanceof KeyEvent) {
@@ -331,7 +349,7 @@ public class RunAnythingAction extends AnAction implements CustomComponentAction
   }
 
   private static boolean isHelpMode(@NotNull String pattern) {
-    return pattern.startsWith(HELP_PLACEHOLDER);
+    return HELP_PLACEHOLDER.equals(pattern);
   }
 
   private void clearSelection() {
@@ -376,6 +394,7 @@ public class RunAnythingAction extends AnAction implements CustomComponentAction
     if (pattern.isEmpty() && index == -1) return;
 
     final Project project = getProject();
+    final Module module = getModule();
 
     final RunAnythingSearchListModel model = getSearchingModel(myList);
     if (index != -1 && model != null && isMoreItem(index)) {
@@ -410,7 +429,7 @@ public class RunAnythingAction extends AnAction implements CustomComponentAction
 
     Runnable onDone = null;
     try {
-      DataContext dataContext = createDataContext(myDataContext, ALT_IS_PRESSED.get());
+      DataContext dataContext = createDataContext(myDataContext, getWorkDirectory(module, ALT_IS_PRESSED.get()), null);
       if (SHIFT_IS_PRESSED.get()) {
         RunAnythingUtil.triggerShiftStatistics(dataContext);
       }
@@ -426,9 +445,18 @@ public class RunAnythingAction extends AnAction implements CustomComponentAction
   }
 
   @NotNull
-  private DataContext createDataContext(@NotNull DataContext parentDataContext, boolean isAltPressed) {
-    Map<String, Object> map = ContainerUtil.newHashMap();
-    map.put(CommonDataKeys.VIRTUAL_FILE.getName(), getWorkDirectory(getModule(), isAltPressed));
+  private static DataContext createDataContext(@NotNull DataContext parentDataContext,
+                                               @Nullable VirtualFile directory,
+                                               @Nullable AnActionEvent event) {
+    HashMap<String, Object> map = ContainerUtil.newHashMap();
+    if (directory != null) {
+      map.put(CommonDataKeys.VIRTUAL_FILE.getName(), directory);
+    }
+
+    if (event != null) {
+      map.put(RUN_ANYTHING_EVENT_KEY.getName(), event);
+    }
+
     map.put(EXECUTOR_KEY.getName(), getExecutor());
 
     return SimpleDataContext.getSimpleContext(map, parentDataContext);
@@ -436,14 +464,14 @@ public class RunAnythingAction extends AnAction implements CustomComponentAction
 
   @NotNull
   private Project getProject() {
-    final Project project = CommonDataKeys.PROJECT.getData(myActionEvent.getDataContext());
+    final Project project = CommonDataKeys.PROJECT.getData(DataManager.getInstance().getDataContext(getField().getTextEditor()));
     assert project != null;
     return project;
   }
 
   @Nullable
   private Module getModule() {
-    Module module = myActionEvent.getData(LangDataKeys.MODULE);
+    Module module = (Module)myDataContext.getData(LangDataKeys.MODULE.getName());
     if (module != null) {
       return module;
     }
@@ -585,7 +613,7 @@ public class RunAnythingAction extends AnAction implements CustomComponentAction
 
     HashMap<String, Object> dataMap = ContainerUtil.newHashMap();
     dataMap.put(CommonDataKeys.PROJECT.getName(), project);
-    dataMap.put(LangDataKeys.MODULE.getName(), getModule());
+    dataMap.put(RUN_ANYTHING_EVENT_KEY.getName(), myActionEvent);
     myDataContext = SimpleDataContext.getSimpleContext(dataMap, e.getDataContext());
 
     if (myPopupField != null) {
@@ -596,7 +624,7 @@ public class RunAnythingAction extends AnAction implements CustomComponentAction
     myPopupField.getTextEditor().setFont(EditorUtil.getEditorFont().deriveFont(18f));
 
     JBTextField myTextField = myPopupField.getTextEditor();
-    myTextField.putClientProperty(MATCHED_PROVIDER_PROPERTY, UNKNOWN_CONFIGURATION_ICON);
+    myTextField.putClientProperty(MATCHED_PROVIDER_PROPERTY, UNKNOWN_CONFIGURATION_CODE);
 
     setHandleMatchedConfiguration();
 
@@ -699,8 +727,8 @@ public class RunAnythingAction extends AnAction implements CustomComponentAction
         String lastInput = myTextField.getText();
         myIsItemSelected = true;
 
-        if (isMoreItem(myList.getSelectedIndex())) {
-          myTextField.setText(myLastInputText != null ? myLastInputText : "");
+        if (isMoreItem(myList.getSelectedIndex()) && myLastInputText != null) {
+          myTextField.setText(myLastInputText);
           return;
         }
 
@@ -766,25 +794,17 @@ public class RunAnythingAction extends AnAction implements CustomComponentAction
     JBTextField textField = myPopupField.getTextEditor();
     String pattern = textField.getText();
 
-    DataContext dataContext = createDataContext(myDataContext, isAltPressed);
+    DataContext dataContext = createDataContext(myDataContext, getWorkDirectory(getModule(), isAltPressed), null);
     RunAnythingActivityProvider provider = RunAnythingActivityProvider.findMatchedProvider(dataContext, pattern);
 
-    if (!(provider instanceof RunAnythingParametrizedExecutionProvider)) {
-      return;
-    }
+    if (provider instanceof RunAnythingParametrizedExecutionProvider) {
+      Object value = ((RunAnythingParametrizedExecutionProvider)provider).findMatchingValue(dataContext, pattern);
 
-    Object value = ((RunAnythingParametrizedExecutionProvider)provider).findMatchingValue(dataContext, pattern);
-
-    if (value == null) {
-      return;
+      if (value != null) {
+        //noinspection unchecked
+        textField.putClientProperty(MATCHED_PROVIDER_PROPERTY, ((RunAnythingParametrizedExecutionProvider)provider).getIcon(value));
+      }
     }
-    //noinspection unchecked
-    Icon icon = ((RunAnythingParametrizedExecutionProvider)provider).getIcon(value);
-    if (icon == null) {
-      return;
-    }
-
-    textField.putClientProperty(MATCHED_PROVIDER_PROPERTY, icon);
   }
 
   private void updateAdText(@NotNull DataContext dataContext) {
@@ -1400,16 +1420,16 @@ public class RunAnythingAction extends AnAction implements CustomComponentAction
     @Override
     protected boolean customSetupUIAndTextField(@NotNull TextFieldWithProcessing textField, @NotNull Consumer<TextUI> uiConsumer) {
       if (UIUtil.isUnderDarcula()) {
-        uiConsumer.consume(new MyDarcula());
+        uiConsumer.consume(new MyDarcula(ourIconsMap));
         textField.setBorder(new DarculaTextBorder());
       }
       else {
         if (SystemInfo.isMac) {
-          uiConsumer.consume(new MyMacUI());
+          uiConsumer.consume(new MyMacUI(ourIconsMap));
           textField.setBorder(new MacIntelliJTextBorder());
         }
         else {
-          uiConsumer.consume(new MyWinUI());
+          uiConsumer.consume(new MyWinUI(ourIconsMap));
           textField.setBorder(new WinIntelliJTextBorder());
         }
       }
