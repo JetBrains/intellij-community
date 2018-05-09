@@ -20,27 +20,27 @@ import java.util.Map;
 
 class RunAnythingIconHandler implements PropertyChangeListener {
   private static final String FOREGROUND_PROPERTY = "foreground";
-  protected static final String MATCHED_CONFIGURATION_PROPERTY = "JTextField.match";
+  protected static final String MATCHED_PROVIDER_PROPERTY = "JTextField.match";
 
-  private final NotNullLazyValue<Map<String, Icon>> myIconsMap;
+  private final NotNullLazyValue<Map<Integer, Icon>> myIconsMap;
   private final Consumer<ExtendableTextComponent.Extension> myConsumer;
   private final JTextComponent myComponent;
 
-  public RunAnythingIconHandler(@NotNull NotNullLazyValue<Map<String, Icon>> iconsMap,
+  public RunAnythingIconHandler(@NotNull NotNullLazyValue<Map<Integer, Icon>> iconsMap,
                                 @NotNull Consumer<ExtendableTextComponent.Extension> consumer,
                                 @NotNull JTextComponent component) {
     myIconsMap = iconsMap;
     myConsumer = consumer;
     myComponent = component;
 
-    setConfigurationIcon(component.getClientProperty(MATCHED_CONFIGURATION_PROPERTY));
+    setConfigurationIcon(component.getClientProperty(MATCHED_PROVIDER_PROPERTY));
   }
 
   @Override
   public void propertyChange(PropertyChangeEvent event) {
     if (myComponent == null) return;
 
-    if (MATCHED_CONFIGURATION_PROPERTY.equals(event.getPropertyName())) {
+    if (MATCHED_PROVIDER_PROPERTY.equals(event.getPropertyName())) {
       setConfigurationIcon(event.getNewValue());
     }
     else if (FOREGROUND_PROPERTY.equals(event.getPropertyName())) {
@@ -51,12 +51,12 @@ class RunAnythingIconHandler implements PropertyChangeListener {
   }
 
   private void setConfigurationIcon(Object variant) {
-    if (!(variant instanceof String)) return;
+    if (!(variant instanceof Integer)) return;
 
-    myConsumer.consume(new RunConfigurationTypeExtension(((String)variant)));
+    myConsumer.consume(new RunConfigurationTypeExtension(((Integer)variant)));
   }
 
-  private static void installIconListeners(@NotNull NotNullLazyValue<Map<String, Icon>> iconsMap,
+  private static void installIconListeners(@NotNull NotNullLazyValue<Map<Integer, Icon>> iconsMap,
                                            @NotNull Consumer<ExtendableTextComponent.Extension> extensionConsumer,
                                            @NotNull JTextComponent component) {
     RunAnythingIconHandler handler = new RunAnythingIconHandler(iconsMap, extensionConsumer, component);
@@ -64,9 +64,9 @@ class RunAnythingIconHandler implements PropertyChangeListener {
   }
 
   public static class MyDarcula extends DarculaTextFieldUI {
-    private final NotNullLazyValue<Map<String, Icon>> myIconsMap;
+    private final NotNullLazyValue<Map<Integer, Icon>> myIconsMap;
 
-    public MyDarcula(NotNullLazyValue<Map<String, Icon>> map) {
+    public MyDarcula(NotNullLazyValue<Map<Integer, Icon>> map) {
       myIconsMap = map;
     }
 
@@ -88,9 +88,9 @@ class RunAnythingIconHandler implements PropertyChangeListener {
   }
 
   public static class MyMacUI extends MacIntelliJTextFieldUI {
-    private final NotNullLazyValue<Map<String, Icon>> myIconsMap;
+    private final NotNullLazyValue<Map<Integer, Icon>> myIconsMap;
 
-    public MyMacUI(NotNullLazyValue<Map<String, Icon>> map) {
+    public MyMacUI(NotNullLazyValue<Map<Integer, Icon>> map) {
       myIconsMap = map;
     }
 
@@ -112,9 +112,9 @@ class RunAnythingIconHandler implements PropertyChangeListener {
   }
 
   public static class MyWinUI extends WinIntelliJTextFieldUI {
-    private final NotNullLazyValue<Map<String, Icon>> myIconsMap;
+    private final NotNullLazyValue<Map<Integer, Icon>> myIconsMap;
 
-    public MyWinUI(NotNullLazyValue<Map<String, Icon>> map) {
+    public MyWinUI(NotNullLazyValue<Map<Integer, Icon>> map) {
       myIconsMap = map;
     }
 
@@ -136,9 +136,9 @@ class RunAnythingIconHandler implements PropertyChangeListener {
   }
 
   private class RunConfigurationTypeExtension implements ExtendableTextComponent.Extension {
-    private final String myVariant;
+    private final Integer myVariant;
 
-    public RunConfigurationTypeExtension(String variant) {myVariant = variant;}
+    public RunConfigurationTypeExtension(Integer variant) {myVariant = variant;}
 
     @Override
     public Icon getIcon(boolean hovered) {
@@ -152,7 +152,7 @@ class RunAnythingIconHandler implements PropertyChangeListener {
 
     @Override
     public String toString() {
-      return MATCHED_CONFIGURATION_PROPERTY;
+      return MATCHED_PROVIDER_PROPERTY;
     }
   }
 
