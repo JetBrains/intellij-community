@@ -1,11 +1,9 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.actions.runAnything;
 
-import com.intellij.icons.AllIcons;
 import com.intellij.ide.ui.laf.darcula.ui.DarculaTextFieldUI;
 import com.intellij.ide.ui.laf.intellij.MacIntelliJTextFieldUI;
 import com.intellij.ide.ui.laf.intellij.WinIntelliJTextFieldUI;
-import com.intellij.openapi.util.NotNullLazyValue;
 import com.intellij.ui.components.fields.ExtendableTextComponent;
 import com.intellij.util.Consumer;
 import com.intellij.util.ui.EmptyIcon;
@@ -16,20 +14,15 @@ import javax.swing.*;
 import javax.swing.text.JTextComponent;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
-import java.util.Map;
 
 class RunAnythingIconHandler implements PropertyChangeListener {
   private static final String FOREGROUND_PROPERTY = "foreground";
   protected static final String MATCHED_PROVIDER_PROPERTY = "JTextField.match";
 
-  private final NotNullLazyValue<Map<Integer, Icon>> myIconsMap;
   private final Consumer<ExtendableTextComponent.Extension> myConsumer;
   private final JTextComponent myComponent;
 
-  public RunAnythingIconHandler(@NotNull NotNullLazyValue<Map<Integer, Icon>> iconsMap,
-                                @NotNull Consumer<ExtendableTextComponent.Extension> consumer,
-                                @NotNull JTextComponent component) {
-    myIconsMap = iconsMap;
+  public RunAnythingIconHandler(@NotNull Consumer<ExtendableTextComponent.Extension> consumer, @NotNull JTextComponent component) {
     myConsumer = consumer;
     myComponent = component;
 
@@ -51,25 +44,18 @@ class RunAnythingIconHandler implements PropertyChangeListener {
   }
 
   private void setConfigurationIcon(Object variant) {
-    if (!(variant instanceof Integer)) return;
+    if (!(variant instanceof Icon)) return;
 
-    myConsumer.consume(new RunConfigurationTypeExtension(((Integer)variant)));
+    myConsumer.consume(new RunConfigurationTypeExtension((Icon)variant));
   }
 
-  private static void installIconListeners(@NotNull NotNullLazyValue<Map<Integer, Icon>> iconsMap,
-                                           @NotNull Consumer<ExtendableTextComponent.Extension> extensionConsumer,
+  private static void installIconListeners(@NotNull Consumer<ExtendableTextComponent.Extension> extensionConsumer,
                                            @NotNull JTextComponent component) {
-    RunAnythingIconHandler handler = new RunAnythingIconHandler(iconsMap, extensionConsumer, component);
+    RunAnythingIconHandler handler = new RunAnythingIconHandler(extensionConsumer, component);
     component.addPropertyChangeListener(handler);
   }
 
   public static class MyDarcula extends DarculaTextFieldUI {
-    private final NotNullLazyValue<Map<Integer, Icon>> myIconsMap;
-
-    public MyDarcula(NotNullLazyValue<Map<Integer, Icon>> map) {
-      myIconsMap = map;
-    }
-
     @Override
     protected Icon getSearchIcon(boolean hovered, boolean clickable) {
       return EmptyIcon.ICON_0;
@@ -83,17 +69,11 @@ class RunAnythingIconHandler implements PropertyChangeListener {
     @Override
     protected void installListeners() {
       super.installListeners();
-      installIconListeners(myIconsMap, this::addExtension, getComponent());
+      installIconListeners(this::addExtension, getComponent());
     }
   }
 
   public static class MyMacUI extends MacIntelliJTextFieldUI {
-    private final NotNullLazyValue<Map<Integer, Icon>> myIconsMap;
-
-    public MyMacUI(NotNullLazyValue<Map<Integer, Icon>> map) {
-      myIconsMap = map;
-    }
-
     @Override
     protected Icon getSearchIcon(boolean hovered, boolean clickable) {
       return EmptyIcon.ICON_0;
@@ -107,17 +87,11 @@ class RunAnythingIconHandler implements PropertyChangeListener {
     @Override
     protected void installListeners() {
       super.installListeners();
-      installIconListeners(myIconsMap, this::addExtension, getComponent());
+      installIconListeners(this::addExtension, getComponent());
     }
   }
 
   public static class MyWinUI extends WinIntelliJTextFieldUI {
-    private final NotNullLazyValue<Map<Integer, Icon>> myIconsMap;
-
-    public MyWinUI(NotNullLazyValue<Map<Integer, Icon>> map) {
-      myIconsMap = map;
-    }
-
     @Override
     protected Icon getSearchIcon(boolean hovered, boolean clickable) {
       return EmptyIcon.ICON_0;
@@ -131,18 +105,20 @@ class RunAnythingIconHandler implements PropertyChangeListener {
     @Override
     public void installListeners() {
       super.installListeners();
-      installIconListeners(myIconsMap, this::addExtension, getComponent());
+      installIconListeners(this::addExtension, getComponent());
     }
   }
 
-  private class RunConfigurationTypeExtension implements ExtendableTextComponent.Extension {
-    private final Integer myVariant;
+  private static class RunConfigurationTypeExtension implements ExtendableTextComponent.Extension {
+    private final Icon myVariant;
 
-    public RunConfigurationTypeExtension(Integer variant) {myVariant = variant;}
+    public RunConfigurationTypeExtension(Icon variant) {
+      myVariant = variant;
+    }
 
     @Override
     public Icon getIcon(boolean hovered) {
-      return myIconsMap.getValue().getOrDefault(myVariant, AllIcons.RunConfigurations.Unknown);
+      return myVariant;
     }
 
     @Override
@@ -155,7 +131,6 @@ class RunAnythingIconHandler implements PropertyChangeListener {
       return MATCHED_PROVIDER_PROPERTY;
     }
   }
-
 }
 
 
