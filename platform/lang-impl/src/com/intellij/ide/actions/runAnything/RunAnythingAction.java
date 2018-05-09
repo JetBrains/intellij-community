@@ -96,6 +96,7 @@ import java.awt.*;
 import java.awt.event.*;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 import static com.intellij.ide.actions.runAnything.RunAnythingIconHandler.*;
@@ -111,7 +112,6 @@ public class RunAnythingAction extends AnAction implements CustomComponentAction
   public static final AtomicBoolean ALT_IS_PRESSED = new AtomicBoolean(false);
   public static final Key<JBPopup> RUN_ANYTHING_POPUP = new Key<>("RunAnythingPopup");
   public static final String RUN_ANYTHING_ACTION_ID = "RunAnything";
-  public static final DataKey<AnActionEvent> RUN_ANYTHING_EVENT_KEY = DataKey.create("RUN_ANYTHING_EVENT_KEY");
   public static final DataKey<Executor> EXECUTOR_KEY = DataKey.create("EXECUTOR_KEY");
   static final String RUN_ANYTHING = "RunAnything";
 
@@ -376,7 +376,6 @@ public class RunAnythingAction extends AnAction implements CustomComponentAction
     if (pattern.isEmpty() && index == -1) return;
 
     final Project project = getProject();
-    final Module module = getModule();
 
     final RunAnythingSearchListModel model = getSearchingModel(myList);
     if (index != -1 && model != null && isMoreItem(index)) {
@@ -411,7 +410,7 @@ public class RunAnythingAction extends AnAction implements CustomComponentAction
 
     Runnable onDone = null;
     try {
-      DataContext dataContext = createDataContext(myDataContext, getWorkDirectory(module, ALT_IS_PRESSED.get()));
+      DataContext dataContext = createDataContext(myDataContext, ALT_IS_PRESSED.get());
       if (SHIFT_IS_PRESSED.get()) {
         RunAnythingUtil.triggerShiftStatistics(dataContext);
       }
@@ -427,12 +426,9 @@ public class RunAnythingAction extends AnAction implements CustomComponentAction
   }
 
   @NotNull
-  private static DataContext createDataContext(@NotNull DataContext parentDataContext, @Nullable VirtualFile directory) {
-    HashMap<String, Object> map = ContainerUtil.newHashMap();
-    if (directory != null) {
-      map.put(CommonDataKeys.VIRTUAL_FILE.getName(), directory);
-    }
-
+  private DataContext createDataContext(@NotNull DataContext parentDataContext, boolean isAltPressed) {
+    Map<String, Object> map = ContainerUtil.newHashMap();
+    map.put(CommonDataKeys.VIRTUAL_FILE.getName(), getWorkDirectory(getModule(), isAltPressed));
     map.put(EXECUTOR_KEY.getName(), getExecutor());
 
     return SimpleDataContext.getSimpleContext(map, parentDataContext);
@@ -440,14 +436,14 @@ public class RunAnythingAction extends AnAction implements CustomComponentAction
 
   @NotNull
   private Project getProject() {
-    final Project project = CommonDataKeys.PROJECT.getData(DataManager.getInstance().getDataContext(getField().getTextEditor()));
+    final Project project = CommonDataKeys.PROJECT.getData(myActionEvent.getDataContext());
     assert project != null;
     return project;
   }
 
   @Nullable
   private Module getModule() {
-    Module module = (Module)myDataContext.getData(LangDataKeys.MODULE.getName());
+    Module module = myActionEvent.getData(LangDataKeys.MODULE);
     if (module != null) {
       return module;
     }
@@ -589,7 +585,7 @@ public class RunAnythingAction extends AnAction implements CustomComponentAction
 
     HashMap<String, Object> dataMap = ContainerUtil.newHashMap();
     dataMap.put(CommonDataKeys.PROJECT.getName(), project);
-    dataMap.put(RUN_ANYTHING_EVENT_KEY.getName(), myActionEvent);
+    dataMap.put(LangDataKeys.MODULE.getName(), getModule());
     myDataContext = SimpleDataContext.getSimpleContext(dataMap, e.getDataContext());
 
     if (myPopupField != null) {
@@ -770,7 +766,7 @@ public class RunAnythingAction extends AnAction implements CustomComponentAction
     JBTextField textField = myPopupField.getTextEditor();
     String pattern = textField.getText();
 
-    DataContext dataContext = createDataContext(myDataContext, getWorkDirectory(getModule(), isAltPressed));
+    DataContext dataContext = createDataContext(myDataContext, isAltPressed);
     RunAnythingActivityProvider provider = RunAnythingActivityProvider.findMatchedProvider(dataContext, pattern);
 
     if (!(provider instanceof RunAnythingParametrizedExecutionProvider)) {
