@@ -4,10 +4,6 @@
       <root url="jar://$PROJECT_DIR$/../../prebuilts/studio/layoutlib/data/layoutlib.jar!/" />
     </CLASSES>
     <JAVADOC />
-    <SOURCES>
-      <root url="file://$PROJECT_DIR$/../../frameworks/base/tools/layoutlib/bridge/src" />
-      <root url="file://$PROJECT_DIR$/../../frameworks/base/core/java" />
-      <root url="file://$PROJECT_DIR$/../../frameworks/base/graphics/java" />
-    </SOURCES>
+    <SOURCES />
   </library>
 </component>
