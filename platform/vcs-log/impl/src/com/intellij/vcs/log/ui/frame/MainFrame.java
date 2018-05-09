@@ -57,7 +57,6 @@ import static com.intellij.openapi.vfs.VfsUtilCore.toVirtualFileArray;
 import static com.intellij.util.ObjectUtils.chooseNotNull;
 
 public class MainFrame extends JPanel implements DataProvider, Disposable {
-  private static final String HELP_ID = "reference.changesToolWindow.log";
   private static final String DIFF_SPLITTER_PROPORTION = "vcs.log.diff.splitter.proportion";
   private static final String DETAILS_SPLITTER_PROPORTION = "vcs.log.details.splitter.proportion";
   private static final String CHANGES_SPLITTER_PROPORTION = "vcs.log.changes.splitter.proportion";
@@ -241,9 +240,6 @@ public class MainFrame extends JPanel implements DataProvider, Disposable {
       List<VcsFullCommitDetails> details = myLog.getSelectedDetails();
       if (details.size() > VcsLogUtil.MAX_SELECTED_COMMITS) return null;
       return ContainerUtil.map2Array(details, CommittedChangeListForRevision.class, VcsLogUtil::createCommittedChangeList);
-    }
-    else if (PlatformDataKeys.HELP_ID.is(dataId)) {
-      return HELP_ID;
     }
     else if (VcsLogInternalDataKeys.LOG_UI_PROPERTIES.is(dataId)) {
       return myUiProperties;

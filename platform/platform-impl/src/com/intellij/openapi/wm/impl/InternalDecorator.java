@@ -4,6 +4,7 @@
 package com.intellij.openapi.wm.impl;
 
 import com.intellij.icons.AllIcons;
+import com.intellij.ide.DataManager;
 import com.intellij.ide.actions.ContextHelpAction;
 import com.intellij.ide.actions.ResizeToolWindowAction;
 import com.intellij.ide.actions.ToggleToolbarAction;
@@ -441,7 +442,8 @@ public final class InternalDecorator extends JPanel implements Queryable, DataPr
           return id;
         }
 
-        return super.getHelpId(dataContext);
+        DataContext context = content != null ? DataManager.getInstance().getDataContext(content.getComponent()) : dataContext;
+        return super.getHelpId(context);
       }
 
       @Override

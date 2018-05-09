@@ -107,8 +107,6 @@
       <reference id="Vcs.Log.CollapseAll"/>
       <reference id="Vcs.Log.ExpandAll"/>
       <reference id="Vcs.Log.HighlightersActionGroup"/>
-      <separator/>
-      <reference id="ContextHelp"/>
     </group>
     <group id="Vcs.Log.TextFilterSettings">
       <reference id="Vcs.Log.EnableFilterByRegexAction"/>
