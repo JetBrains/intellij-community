@@ -15,6 +15,7 @@ import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.ComboBox;
 import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.vcs.VcsBundle;
 import com.intellij.openapi.vcs.VcsConfiguration;
 import com.intellij.openapi.vcs.VcsDataKeys;
@@ -87,6 +88,13 @@ public class MultipleLocalChangeListsBrowser extends CommitDialogChangesBrowser 
 
     myChangeList = ChangeListManager.getInstance(project).getDefaultChangeList();
     myChangeListChooser = new ChangeListChooser();
+
+    if (Registry.is("vcs.skip.single.default.changelist")) {
+      List<LocalChangeList> allChangeLists = ChangeListManager.getInstance(project).getChangeLists();
+      if (allChangeLists.size() == 1 && LocalChangeList.DEFAULT_NAME.equals(allChangeLists.get(0).getName())) {
+        myChangeListChooser.setVisible(false);
+      }
+    }
 
     ChangeListManager.getInstance(myProject).addChangeListListener(new MyChangeListListener(), this);
     init();
