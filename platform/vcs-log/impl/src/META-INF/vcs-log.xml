@@ -126,6 +126,8 @@
     <group id="Vcs.Log.ChangesBrowser.Toolbar">
       <reference id="Vcs.RepositoryChangesBrowserToolbar"/>
       <separator/>
+      <reference id="ChangesView.GroupBy"/>
+      <separator/>
       <reference id="Vcs.Log.ShowDetailsAction"/>
       <reference id="Vcs.Log.ShowDiffPreview"/>
     </group>
