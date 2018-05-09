@@ -210,6 +210,12 @@ public class StringToConstraintsTransformer {
     final int length = criteria.length();
 
     char ch = criteria.charAt(index);
+    if (ch == '!') {
+      constraint.setInvertRegExp(true);
+      ++index;
+      if (index >= length) throw new MalformedPatternException(SSRBundle.message("error.expected.condition", Character.valueOf(ch)));
+      ch = criteria.charAt(index);
+    }
     if (ch == '+' || ch == '*') {
       // this is type axis navigation relation
       switch(ch) {

@@ -1932,6 +1932,13 @@ public class StructuralSearchTest extends StructuralSearchTestCase {
                  "}}";
     assertEquals("Find anonymous class in hierarchy", 2, findMatchesCount(in2, "new '_X:*A () {}"));
     assertEquals("Find new expression in hierarchy", 3, findMatchesCount(in2, "new '_X:*A ()"));
+    assertEquals("Find anonymous class in hierarchy negated", 1, findMatchesCount(in2, "new '_X:!*A () {}"));
+
+    String in3 = "class A {}" +
+                 "class B extends A {}" +
+                 "class C extends B {}" +
+                 "class D extends Object {}";
+    assertEquals("Find in hierarchy negated on class identifier", 1, findMatchesCount(in3, "class '_X:!*A {}"));
   }
 
   public void testFindTryWithoutProperFinally() {

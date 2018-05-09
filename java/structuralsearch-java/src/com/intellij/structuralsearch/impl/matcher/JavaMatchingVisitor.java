@@ -882,26 +882,21 @@ public class JavaMatchingVisitor extends JavaElementVisitor {
       }
     }
 
-    // is type2 is (strict) subtype of type
-    final NodeIterator node = new HierarchyNodeIterator(matchElement, includeClasses, includeInterfaces);
-
+    final NodeIterator nodes = new HierarchyNodeIterator(matchElement, includeClasses, includeInterfaces);
     if (handler.isStrictSubtype()) {
-      node.advance();
+      nodes.advance();
     }
 
-    final boolean notPredicate = handler.getPredicate() instanceof NotPredicate;
-    while (node.hasNext() && !handler.validate(node.current(), 0, -1, myMatchingVisitor.getMatchContext())) {
-      if (notPredicate) return false;
-      node.advance();
+    final boolean negated = handler.getPredicate() instanceof NotPredicate;
+    while (nodes.hasNext() && negated == handler.validate(nodes.current(), 0, -1, myMatchingVisitor.getMatchContext())) {
+      nodes.advance();
     }
 
-    if (node.hasNext()) {
-      handler.addResult(matchElement, 0, -1, myMatchingVisitor.getMatchContext());
-      return true;
-    }
-    else {
+    if (negated == nodes.hasNext()) {
       return false;
     }
+    handler.addResult(matchElement, 0, -1, myMatchingVisitor.getMatchContext());
+    return true;
   }
 
   @Override
