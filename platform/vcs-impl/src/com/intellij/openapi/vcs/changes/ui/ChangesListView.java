@@ -203,15 +203,6 @@ public class ChangesListView extends Tree implements TypeSafeDataProvider, DnDAw
     else if (key == PlatformDataKeys.HELP_ID) {
       sink.put(PlatformDataKeys.HELP_ID, HELP_ID);
     }
-    else if (key == VcsDataKeys.CHANGES_IN_LIST_KEY) {
-      final TreePath selectionPath = getSelectionPath();
-      if (selectionPath != null && selectionPath.getPathCount() > 1) {
-        ChangesBrowserNode<?> firstNode = (ChangesBrowserNode)selectionPath.getPathComponent(1);
-        if (firstNode instanceof ChangesBrowserChangeListNode) {
-          sink.put(VcsDataKeys.CHANGES_IN_LIST_KEY, firstNode.getAllChangesUnder());
-        }
-      }
-    }
     else if (key == ChangesGroupingSupport.KEY) {
       sink.put(ChangesGroupingSupport.KEY, myGroupingSupport);
     }
