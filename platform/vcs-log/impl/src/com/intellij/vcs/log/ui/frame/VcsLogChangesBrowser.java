@@ -126,7 +126,7 @@ class VcsLogChangesBrowser extends ChangesBrowserBase implements Disposable {
   protected List<AnAction> createPopupMenuActions() {
     return ContainerUtil.append(
       super.createPopupMenuActions(),
-      ActionManager.getInstance().getAction(VcsLogActionPlaces.CHANGES_BROWSER_MENU_ACTION_GROUP)
+      ActionManager.getInstance().getAction(VcsLogActionPlaces.CHANGES_BROWSER_POPUP_ACTION_GROUP)
     );
   }
 
