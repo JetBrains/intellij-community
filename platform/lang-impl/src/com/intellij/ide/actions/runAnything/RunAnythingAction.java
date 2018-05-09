@@ -12,10 +12,16 @@ import com.intellij.ide.DataManager;
 import com.intellij.ide.IdeBundle;
 import com.intellij.ide.IdeEventQueue;
 import com.intellij.ide.IdeTooltipManager;
+import com.intellij.ide.actions.runAnything.activity.RunAnythingActivityProvider;
+import com.intellij.ide.actions.runAnything.activity.RunAnythingParametrizedExecutionProvider;
+import com.intellij.ide.actions.runAnything.groups.RunAnythingCompletionProviderGroup;
 import com.intellij.ide.actions.runAnything.groups.RunAnythingGroup;
-import com.intellij.ide.actions.runAnything.items.RunAnythingActionItem;
-import com.intellij.ide.actions.runAnything.items.RunAnythingCommandItem;
+import com.intellij.ide.actions.runAnything.groups.RunAnythingHelpGroup;
+import com.intellij.ide.actions.runAnything.groups.RunAnythingRecentGroup;
 import com.intellij.ide.actions.runAnything.items.RunAnythingItem;
+import com.intellij.ide.actions.runAnything.ui.RunAnythingHelpListModel;
+import com.intellij.ide.actions.runAnything.ui.RunAnythingMainListModel;
+import com.intellij.ide.actions.runAnything.ui.RunAnythingScrollingUtil;
 import com.intellij.ide.ui.UISettings;
 import com.intellij.ide.ui.laf.darcula.ui.DarculaTextBorder;
 import com.intellij.ide.ui.laf.intellij.MacIntelliJTextBorder;
@@ -85,20 +91,23 @@ import javax.swing.event.ListSelectionListener;
 import javax.swing.plaf.TextUI;
 import java.awt.*;
 import java.awt.event.*;
-import java.util.*;
+import java.util.Arrays;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.stream.Collectors;
 
 import static com.intellij.ide.actions.runAnything.RunAnythingIconHandler.*;
-import static com.intellij.ide.actions.runAnything.RunAnythingRunConfigurationItem.RUN_ANYTHING_RUN_CONFIGURATION_AD_TEXT;
-import static com.intellij.ide.actions.runAnything.items.RunAnythingCommandItem.UNDEFINED_COMMAND_ICON;
+import static com.intellij.ide.actions.runAnything.RunAnythingUtil.UNDEFINED_COMMAND_ICON;
+import static com.intellij.ide.actions.runAnything.activity.RunAnythingCompletionProvider.getCompletionProviders;
 import static com.intellij.openapi.wm.IdeFocusManager.getGlobalInstance;
 
 @SuppressWarnings("FieldAccessedSynchronizedAndUnsynchronized")
 public class RunAnythingAction extends AnAction implements CustomComponentAction, DumbAware, DataProvider {
   public static final String RUN_ANYTHING_HISTORY_KEY = "RunAnythingHistoryKey";
   public static final int SEARCH_FIELD_COLUMNS = 25;
-  public static final String UNKNOWN_CONFIGURATION = "UNKNOWN_CONFIGURATION";
+  public static final int UNKNOWN_CONFIGURATION_CODE = System.identityHashCode("UNKNOWN_CONFIGURATION_CODE");
   public static final AtomicBoolean SHIFT_IS_PRESSED = new AtomicBoolean(false);
   public static final AtomicBoolean ALT_IS_PRESSED = new AtomicBoolean(false);
   public static final Key<JBPopup> RUN_ANYTHING_POPUP = new Key<>("RunAnythingPopup");
@@ -108,10 +117,10 @@ public class RunAnythingAction extends AnAction implements CustomComponentAction
   public static final DataKey<Executor> EXECUTOR_KEY = DataKey.create("EXECUTOR_KEY");
   static final String RUN_ANYTHING = "RunAnything";
 
-  private static final int MAX_RUN_ANYTHING_HISTORY = 50;
   private static final Logger LOG = Logger.getInstance(RunAnythingAction.class);
   private static final Border RENDERER_BORDER = JBUI.Borders.empty(1, 0);
   private static final Icon RUN_ANYTHING_POPPED_ICON = new PoppedIcon(AllIcons.Actions.Run_anything, 16, 16);
+  private static final String HELP_PLACEHOLDER = "?";
   private RunAnythingAction.MyListRenderer myRenderer;
   private MySearchTextField myPopupField;
   private JBPopup myPopup;
@@ -134,7 +143,7 @@ public class RunAnythingAction extends AnAction implements CustomComponentAction
   private RunAnythingHistoryItem myHistoryItem;
   private JLabel myAdComponent;
   private DataContext myDataContext;
-  private static final NotNullLazyValue<Map<String, Icon>> ourIconsMap;
+  private static final NotNullLazyValue<Map<Integer, Icon>> ourIconsMap;
   private JLabel myTextFieldTitle;
   private boolean myIsItemSelected;
   private String myLastInputText = null;
@@ -142,16 +151,16 @@ public class RunAnythingAction extends AnAction implements CustomComponentAction
   static {
     ModifierKeyDoubleClickHandler.getInstance().registerAction(RUN_ANYTHING_ACTION_ID, KeyEvent.VK_CONTROL, -1, false);
 
-    ourIconsMap = new NotNullLazyValue<Map<String, Icon>>() {
+    ourIconsMap = new NotNullLazyValue<Map<Integer, Icon>>() {
       @NotNull
       @Override
-      protected Map<String, Icon> compute() {
-        Map<String, Icon> map = ContainerUtil.newHashMap();
-        map.put(UNKNOWN_CONFIGURATION, UNDEFINED_COMMAND_ICON);
+      protected Map<Integer, Icon> compute() {
+        Map<Integer, Icon> map = ContainerUtil.newHashMap();
+        map.put(UNKNOWN_CONFIGURATION_CODE, UNDEFINED_COMMAND_ICON);
 
-        for (RunAnythingRunConfigurationProvider provider : RunAnythingRunConfigurationProvider.EP_NAME.getExtensions()) {
-          map.put(provider.getConfigurationFactory().getName(), provider.getConfigurationFactory().getIcon());
-        }
+        map.putAll(Arrays.stream(RunAnythingActivityProvider.EP_NAME.getExtensions()).collect(Collectors.toMap(
+          activityProvider -> System.identityHashCode(activityProvider),
+          activityProvider -> AllIcons.Actions.Run_anything)));
 
         return map;
       }
@@ -225,7 +234,7 @@ public class RunAnythingAction extends AnAction implements CustomComponentAction
 
   private void updateComponents() {
     //noinspection unchecked
-    myList = new JBList(new RunAnythingSearchListModel()) {
+    myList = new JBList(new RunAnythingMainListModel()) {
       int lastKnownHeight = JBUI.scale(30);
 
       @Override
@@ -339,6 +348,10 @@ public class RunAnythingAction extends AnAction implements CustomComponentAction
     });
   }
 
+  private static boolean isHelpMode(@NotNull String pattern) {
+    return HELP_PLACEHOLDER.equals(pattern);
+  }
+
   private void clearSelection() {
     myList.getSelectionModel().clearSelection();
   }
@@ -383,29 +396,23 @@ public class RunAnythingAction extends AnAction implements CustomComponentAction
     final Project project = getProject();
     final Module module = getModule();
 
-    if (index != -1) {
+    final RunAnythingSearchListModel model = getSearchingModel(myList);
+    if (index != -1 && model != null && isMoreItem(index)) {
+      RunAnythingGroup group = model.findGroupByMoreIndex(index);
 
-      final RunAnythingSearchListModel model = getSearchingModel(myList);
-      if (model != null) {
-        if (isMoreItem(index)) {
-          RunAnythingGroup group = RunAnythingGroup.findGroupByMoreIndex(index);
+      if (group != null) {
+        myCurrentWorker.doWhenProcessed(() -> {
+          myCalcThread = new CalcThread(project, pattern, true);
+          myPopupActualWidth = 0;
+          model.triggerMoreStatistics(project, group);
+          myCurrentWorker = myCalcThread.insert(index, group);
+        });
 
-          if (group != null) {
-            myCurrentWorker.doWhenProcessed(() -> {
-              myCalcThread = new CalcThread(project, pattern, true);
-              myPopupActualWidth = 0;
-              RunAnythingUtil.triggerMoreStatistics(project, group);
-              myCurrentWorker = myCalcThread.insert(index, group);
-            });
-
-            return;
-          }
-        }
+        return;
       }
     }
 
     final Object value = myList.getSelectedValue();
-    saveHistory(project, pattern, value);
     IdeFocusManager focusManager = IdeFocusManager.findInstanceByComponent(getField().getTextEditor());
     if (myPopup != null && myPopup.isVisible()) {
       myPopup.cancel();
@@ -416,23 +423,17 @@ public class RunAnythingAction extends AnAction implements CustomComponentAction
       return;
     }
 
-    RunAnythingUtil.triggerExecCategoryStatistics(project, index);
+    if (model != null) {
+      model.triggerExecCategoryStatistics(project, index);
+    }
 
     Runnable onDone = null;
     try {
-      if (value instanceof RunAnythingRunConfigurationItem || value instanceof RunAnythingActionItem) {
-        runOnFocusSettlesDown(project, (RunAnythingItem)value, focusManager);
-        return;
+      DataContext dataContext = createDataContext(myDataContext, getWorkDirectory(module, ALT_IS_PRESSED.get()), null);
+      if (SHIFT_IS_PRESSED.get()) {
+        RunAnythingUtil.triggerShiftStatistics(dataContext);
       }
-      VirtualFile directory = getWorkDirectory(module, ALT_IS_PRESSED.get());
-      DataContext dataContext = createDataContext(myDataContext, directory, null, null);
-      if (value instanceof RunAnythingCommandItem) {
-        onDone = () -> ((RunAnythingCommandItem)value).run(dataContext);
-      }
-      else if (value == null) {
-        onDone = () -> RunAnythingUtil.runOrCreateRunConfiguration(dataContext, pattern, directory);
-        return;
-      }
+      onDone = () -> RunAnythingActivityProvider.executeMatched(dataContext, pattern);
     }
     finally {
       final ActionCallback callback = onPopupFocusLost();
@@ -443,22 +444,9 @@ public class RunAnythingAction extends AnAction implements CustomComponentAction
     focusManager.requestDefaultFocus(true);
   }
 
-  private void runOnFocusSettlesDown(@NotNull Project project, @NotNull RunAnythingItem value, @NotNull IdeFocusManager focusManager) {
-    focusManager.requestDefaultFocus(true);
-    final Component comp = myContextComponent;
-    final AnActionEvent event = myActionEvent;
-    IdeFocusManager.getInstance(project).doWhenFocusSettlesDown(() -> {
-      Component c = comp;
-      if (c == null) c = KeyboardFocusManager.getCurrentKeyboardFocusManager().getFocusOwner();
-
-      value.run(createDataContext(myDataContext, null, c, event));
-    });
-  }
-
   @NotNull
   private static DataContext createDataContext(@NotNull DataContext parentDataContext,
                                                @Nullable VirtualFile directory,
-                                               @Nullable Component focusOwner,
                                                @Nullable AnActionEvent event) {
     HashMap<String, Object> map = ContainerUtil.newHashMap();
     if (directory != null) {
@@ -470,10 +458,6 @@ public class RunAnythingAction extends AnAction implements CustomComponentAction
     }
 
     map.put(EXECUTOR_KEY.getName(), getExecutor());
-
-    if (focusOwner != null) {
-      map.put(FOCUS_COMPONENT_KEY_NAME.getName(), focusOwner);
-    }
 
     return SimpleDataContext.getSimpleContext(map, parentDataContext);
   }
@@ -550,7 +534,8 @@ public class RunAnythingAction extends AnAction implements CustomComponentAction
   }
 
   private boolean isMoreItem(int index) {
-    return getSearchingModel(myList) != null && RunAnythingGroup.isMoreIndex(index);
+    RunAnythingSearchListModel model = getSearchingModel(myList);
+    return model != null && model.isMoreIndex(index);
   }
 
   @Nullable
@@ -639,7 +624,7 @@ public class RunAnythingAction extends AnAction implements CustomComponentAction
     myPopupField.getTextEditor().setFont(EditorUtil.getEditorFont().deriveFont(18f));
 
     JBTextField myTextField = myPopupField.getTextEditor();
-    myTextField.putClientProperty(MATCHED_CONFIGURATION_PROPERTY, UNKNOWN_CONFIGURATION);
+    myTextField.putClientProperty(MATCHED_PROVIDER_PROPERTY, UNKNOWN_CONFIGURATION_CODE);
 
     setHandleMatchedConfiguration();
 
@@ -734,10 +719,10 @@ public class RunAnythingAction extends AnAction implements CustomComponentAction
     myList.addListSelectionListener(new ListSelectionListener() {
       @Override
       public void valueChanged(ListSelectionEvent e) {
-        updateAdText();
+        updateAdText(myDataContext);
 
         Object selectedValue = myList.getSelectedValue();
-        if (selectedValue == null || getSearchingModel(myList) == null) return;
+        if (selectedValue == null || (myList.getModel() instanceof RunAnythingSettingsModel)) return;
 
         String lastInput = myTextField.getText();
         myIsItemSelected = true;
@@ -747,7 +732,7 @@ public class RunAnythingAction extends AnAction implements CustomComponentAction
           return;
         }
 
-        myTextField.setText(selectedValue instanceof RunAnythingItem ? ((RunAnythingItem)selectedValue).getText() : myLastInputText);
+        myTextField.setText(selectedValue instanceof RunAnythingItem ? ((RunAnythingItem)selectedValue).getCommand() : myLastInputText);
 
         if (myLastInputText == null) myLastInputText = lastInput;
       }
@@ -809,33 +794,44 @@ public class RunAnythingAction extends AnAction implements CustomComponentAction
     JBTextField textField = myPopupField.getTextEditor();
     String pattern = textField.getText();
 
-    RunAnythingRunConfigurationProvider provider =
-      RunAnythingRunConfigurationProvider.findMatchedProvider(getProject(), pattern, getWorkDirectory(getModule(), isAltPressed));
-    String name = provider != null ? provider.getConfigurationFactory().getName() : null;
+    DataContext dataContext = createDataContext(myDataContext, getWorkDirectory(getModule(), isAltPressed), null);
+    RunAnythingActivityProvider provider = RunAnythingActivityProvider.findMatchedProvider(dataContext, pattern);
 
-    if (name != null) {
-      textField.putClientProperty(MATCHED_CONFIGURATION_PROPERTY, name);
-      setAdText(RUN_ANYTHING_RUN_CONFIGURATION_AD_TEXT);
-    }
-    else {
-      textField.putClientProperty(MATCHED_CONFIGURATION_PROPERTY, UNKNOWN_CONFIGURATION);
+    if (provider instanceof RunAnythingParametrizedExecutionProvider) {
+      Object value = ((RunAnythingParametrizedExecutionProvider)provider).findMatchingValue(dataContext, pattern);
+
+      if (value != null) {
+        //noinspection unchecked
+        textField.putClientProperty(MATCHED_PROVIDER_PROPERTY, ((RunAnythingParametrizedExecutionProvider)provider).getIcon(value));
+      }
     }
   }
 
-  private void updateAdText() {
+  private void updateAdText(@NotNull DataContext dataContext) {
     Object value = myList.getSelectedValue();
 
     if (value instanceof RunAnythingItem) {
-      setAdText(((RunAnythingItem)value).getAdText());
+      RunAnythingActivityProvider provider =
+        RunAnythingActivityProvider.findMatchedProvider(dataContext, ((RunAnythingItem)value).getCommand());
+      if (provider != null) {
+        String adText = provider.getAdText();
+        if (adText != null) {
+          setAdText(adText);
+        }
+      }
     }
   }
 
   private void showSettings() {
     myPopupField.setText("");
     final RunAnythingSettingsModel model = new RunAnythingSettingsModel();
-    Arrays.stream(RunAnythingGroup.EP_NAME.getExtensions()).map(
-      group -> new RunAnythingSEOption(getProject(), IdeBundle.message("run.anything.group.settings.title", group.getTitle()),
-                                       group.getVisibilityKey())).forEach(model::addElement);
+
+    getCompletionProviders()
+      .stream()
+      .map(provider -> new RunAnythingSEOption(getProject(),
+                                               IdeBundle.message("run.anything.group.settings.title", provider.getGroupTitle()),
+                                               provider.getId()))
+      .forEach(model::addElement);
 
     if (myCalcThread != null && !myCurrentWorker.isProcessed()) {
       myCurrentWorker = myCalcThread.cancel();
@@ -847,47 +843,6 @@ public class RunAnythingAction extends AnAction implements CustomComponentAction
       myList.setModel(model);
       updatePopupBounds();
     });
-  }
-
-  private static void saveHistory(Project project, String text, Object value) {
-    if (project == null || project.isDisposed() || !project.isInitialized()) {
-      return;
-    }
-    HistoryType type = null;
-    String fqn = null;
-    if (value instanceof RunAnythingActionItem) {
-      type = HistoryType.ACTION;
-      fqn = ActionManager.getInstance().getId(((RunAnythingActionItem)value).getValue());
-    }
-    else if (value instanceof RunAnythingRunConfigurationItem) {
-      type = HistoryType.RUN_CONFIGURATION;
-      fqn = ((RunAnythingRunConfigurationItem)value).getText();
-    }
-
-    final PropertiesComponent storage = PropertiesComponent.getInstance(project);
-    final String[] values = storage.getValues(RUN_ANYTHING_HISTORY_KEY);
-    List<RunAnythingHistoryItem> history = new ArrayList<>();
-    if (values != null) {
-      for (String s : values) {
-        final String[] split = s.split("\t");
-        if (split.length != 3 || text.equals(split[0])) {
-          continue;
-        }
-        if (!StringUtil.isEmpty(split[0])) {
-          history.add(new RunAnythingHistoryItem(split[0], split[1], split[2]));
-        }
-      }
-    }
-    history.add(0, new RunAnythingHistoryItem(text, type == null ? null : type.name(), fqn));
-
-    if (history.size() > MAX_RUN_ANYTHING_HISTORY) {
-      history = history.subList(0, MAX_RUN_ANYTHING_HISTORY);
-    }
-    final String[] newValues = new String[history.size()];
-    for (int i = 0; i < newValues.length; i++) {
-      newValues[i] = history.get(i).toString();
-    }
-    storage.setValues(RUN_ANYTHING_HISTORY_KEY, newValues);
   }
 
   private void initSearchActions(@NotNull JBPopup balloon, @NotNull MySearchTextField searchTextField) {
@@ -917,12 +872,12 @@ public class RunAnythingAction extends AnAction implements CustomComponentAction
 
       Object selectedValue = myList.getSelectedValue();
       int index = myList.getSelectedIndex();
-      if (!(selectedValue instanceof RunAnythingCommandItem) || isMoreItem(index)) return;
+      if (!(selectedValue instanceof RunAnythingItem) || isMoreItem(index)) return;
 
-      RunAnythingCache.getInstance(getProject()).getState().getCommands().remove(((RunAnythingCommandItem)selectedValue).getText());
+      RunAnythingCache.getInstance(getProject()).getState().getCommands().remove(((RunAnythingItem)selectedValue).getCommand());
 
       model.remove(index);
-      RunAnythingGroup.shiftIndexes(index, -1);
+      model.shiftIndexes(index, -1);
       if (model.size() > 0) ScrollingUtil.selectItem(myList, index < model.size() ? index : index - 1);
 
       //noinspection SSBasedInspection
@@ -1019,7 +974,7 @@ public class RunAnythingAction extends AnAction implements CustomComponentAction
       myMainPanel.removeAll();
       RunAnythingSearchListModel model = getSearchingModel(myList);
       if (model != null) {
-        String title = RunAnythingGroup.getTitle(index);
+        String title = model.getTitle(index);
         if (title != null) {
           myTitle.setText(title);
           myMainPanel.add(RunAnythingUtil.createTitle(" " + title), BorderLayout.NORTH);
@@ -1053,7 +1008,7 @@ public class RunAnythingAction extends AnAction implements CustomComponentAction
       myTitle.setFont(RunAnythingUtil.getTitleFont());
       int index = 0;
       while (index < model.getSize()) {
-        String title = RunAnythingGroup.getTitle(index);
+        String title = model.getTitle(index);
         if (title != null) {
           myTitle.setText(title);
         }
@@ -1072,14 +1027,15 @@ public class RunAnythingAction extends AnAction implements CustomComponentAction
     private final ProgressIndicator myProgressIndicator = new ProgressIndicatorBase();
     private final ActionCallback myDone = new ActionCallback();
     @NotNull private final RunAnythingSearchListModel myListModel;
-    @Nullable private final Module myModule;
 
     public CalcThread(@NotNull Project project, @NotNull String pattern, boolean reuseModel) {
       myProject = project;
-      myModule = getModule();
       myPattern = pattern;
       RunAnythingSearchListModel model = getSearchingModel(myList);
-      myListModel = reuseModel ? model != null ? model : new RunAnythingSearchListModel() : new RunAnythingSearchListModel();
+
+      myListModel = reuseModel && model != null
+                    ? model
+                    : isHelpMode(pattern) ? new RunAnythingHelpListModel() : new RunAnythingMainListModel();
     }
 
     @Override
@@ -1112,6 +1068,11 @@ public class RunAnythingAction extends AnAction implements CustomComponentAction
           return;
         }
 
+        if (isHelpMode(myPopupField.getText())) {
+          buildHelpGroups();
+          return;
+        }
+
         check();
         buildGroups(false);
       }
@@ -1139,6 +1100,15 @@ public class RunAnythingAction extends AnAction implements CustomComponentAction
       updatePopup();
     }
 
+    private void buildHelpGroups() {
+      RunAnythingHelpGroup.HELP_GROUPS.forEach(group -> {
+        group.collectItems(myDataContext, myListModel, trimHelpPattern(), () -> check());
+        check();
+      });
+
+      updatePopup();
+    }
+
     private void runReadAction(@NotNull Runnable action) {
       if (!DumbService.getInstance(myProject).isDumb()) {
         ApplicationManager.getApplication().runReadAction(action);
@@ -1154,13 +1124,26 @@ public class RunAnythingAction extends AnAction implements CustomComponentAction
     }
 
     private void buildAllGroups(@NotNull String pattern, @NotNull Runnable checkCancellation, boolean isRecent) {
-      Condition<RunAnythingGroup> recent = isRecent ? ((group) -> group.shouldBeShownInitially()) : Condition.TRUE;
-      Arrays.stream(RunAnythingGroup.EP_NAME.getExtensions())
-            .filter(group -> recent.value(group))
-            .forEach(runAnythingGroup -> {
-              runReadAction(() -> runAnythingGroup.collectItems(myProject, myModule, myListModel, pattern, checkCancellation));
-              checkCancellation.run();
-            });
+      if (isRecent) {
+        RunAnythingRecentGroup.INSTANCE.collectItems(myDataContext, myListModel, pattern, checkCancellation);
+      }
+      else {
+        buildCompletionGroups(pattern, checkCancellation);
+      }
+    }
+
+    private void buildCompletionGroups(@NotNull String pattern, @NotNull Runnable checkCancellation) {
+      LOG.assertTrue(myListModel instanceof RunAnythingMainListModel);
+
+      ((RunAnythingMainListModel)myListModel)
+        .getMainListGroups()
+        .stream()
+        .filter(group -> !(group instanceof RunAnythingCompletionProviderGroup) ||
+                         ((RunAnythingCompletionProviderGroup)group).isVisible(myDataContext))
+        .forEach(group -> {
+          runReadAction(() -> group.collectItems(myDataContext, myListModel, pattern, checkCancellation));
+          checkCancellation.run();
+        });
     }
 
     private boolean isCanceled() {
@@ -1293,7 +1276,7 @@ public class RunAnythingAction extends AnAction implements CustomComponentAction
     public ActionCallback insert(final int index, @NotNull RunAnythingGroup group) {
       ApplicationManager.getApplication().executeOnPooledThread(() -> runReadAction(() -> {
         try {
-          RunAnythingGroup.SearchResult result = group.getVisibleItems(myProject, myModule, myListModel, myPattern, true, this::check);
+          RunAnythingGroup.SearchResult result = group.getItems(myDataContext, myListModel, trimHelpPattern(), true, this::check);
 
           check();
           SwingUtilities.invokeLater(() -> {
@@ -1307,7 +1290,7 @@ public class RunAnythingAction extends AnAction implements CustomComponentAction
                 i++;
               }
 
-              RunAnythingGroup.shiftIndexes(index, shift);
+              myListModel.shiftIndexes(index, shift);
               if (!result.isNeedMore()) {
                 group.resetMoreIndex();
               }
@@ -1326,6 +1309,11 @@ public class RunAnythingAction extends AnAction implements CustomComponentAction
         }
       }));
       return myDone;
+    }
+
+    @NotNull
+    public String trimHelpPattern() {
+      return isHelpMode(myPattern) ? myPattern.substring(HELP_PLACEHOLDER.length()) : myPattern;
     }
 
     public ActionCallback start() {
@@ -1416,8 +1404,6 @@ public class RunAnythingAction extends AnAction implements CustomComponentAction
       }
     }
   }
-
-  private enum HistoryType {PSI, FILE, SETTING, ACTION, RUN_CONFIGURATION}
 
   static class MySearchTextField extends SearchTextField implements DataProvider, Disposable {
     public MySearchTextField() {

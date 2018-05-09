@@ -1,6 +1,7 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.actions.runAnything.activity;
 
+import com.intellij.ide.actions.runAnything.RunAnythingCache;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.module.Module;
@@ -9,16 +10,18 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Arrays;
+import java.util.List;
+
+import static com.intellij.ide.actions.runAnything.RunAnythingUtil.fetchProject;
 
 /**
  * This class provides ability to run an arbitrary activity for matched 'Run Anything' input text
  */
 public interface RunAnythingActivityProvider {
-  ExtensionPointName<RunAnythingActivityProvider> EP_NAME =
-    ExtensionPointName.create("com.intellij.runAnything.activityProvider");
+  ExtensionPointName<RunAnythingActivityProvider> EP_NAME = ExtensionPointName.create("com.intellij.runAnything.executionProvider");
 
   /**
-   * If {@code pattern} is matched than an arbitrary activity {@link #runActivity(DataContext, String)} will be executed
+   * If {@code pattern} is matched than an arbitrary activity {@link #execute(DataContext, String)} will be executed
    *
    * @param dataContext 'Run Anything' action {@code dataContext}, may retrieve {@link Project} and {@link Module} from here
    * @param pattern     'Run Anything' search bar input text
@@ -33,7 +36,12 @@ public interface RunAnythingActivityProvider {
    * @param pattern     'Run Anything' search bar input text
    * @return true if succeed, false is failed
    */
-  boolean runActivity(@NotNull DataContext dataContext, @NotNull String pattern);
+  void execute(@NotNull DataContext dataContext, @NotNull String pattern);
+
+  @Nullable
+  default String getAdText() {
+    return null;
+  }
 
   /**
    * Finds provider that matches {@code pattern}
@@ -44,5 +52,16 @@ public interface RunAnythingActivityProvider {
   @Nullable
   static RunAnythingActivityProvider findMatchedProvider(@NotNull DataContext dataContext, @NotNull String pattern) {
     return Arrays.stream(EP_NAME.getExtensions()).filter(provider -> provider.isMatching(dataContext, pattern)).findFirst().orElse(null);
+  }
+
+  static void executeMatched(@NotNull DataContext dataContext, @NotNull String pattern) {
+    RunAnythingActivityProvider matchedProvider = findMatchedProvider(dataContext, pattern);
+    if (matchedProvider != null) {
+      matchedProvider.execute(dataContext, pattern);
+
+      List<String> commands = RunAnythingCache.getInstance(fetchProject(dataContext)).getState().getCommands();
+      commands.remove(pattern);
+      commands.add(pattern);
+    }
   }
 }
