@@ -23,7 +23,7 @@ class DefaultChangesGroupingPolicy(val project: Project, val model: DefaultTreeM
         it.markAsHelperNode()
 
         model.insertNodeInto(it, subtreeRoot, subtreeRoot.childCount)
-        CONFLICTS_NODE_CACHE[subtreeRoot] = it
+        CONFLICTS_NODE_CACHE[cachingRoot] = it
         TreeModelBuilder.IS_CACHING_ROOT.set(it, true)
       }
     }
