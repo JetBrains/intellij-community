@@ -497,7 +497,6 @@ public class AbstractVcsHelperImpl extends AbstractVcsHelper {
     final MultipleFileMergeDialog fileMergeDialog = new MultipleFileMergeDialog(myProject, files, provider, mergeDialogCustomizer);
     AppIcon.getInstance().requestAttention(myProject, true);
     fileMergeDialog.show();
-    provider.mergeDone(files);
     return fileMergeDialog.getProcessedFiles();
   }
 
