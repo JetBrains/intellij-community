@@ -125,7 +125,7 @@ public class TreeModelBuilder {
                                                       @NotNull ChangesGroupingPolicyFactory grouping,
                                                       @NotNull Collection<? extends ChangeList> changeLists) {
     return new TreeModelBuilder(project, grouping)
-      .setChangeLists(changeLists)
+      .setChangeLists(changeLists, false)
       .build();
   }
 
@@ -179,20 +179,30 @@ public class TreeModelBuilder {
   }
 
   @NotNull
-  public TreeModelBuilder setChangeLists(@NotNull Collection<? extends ChangeList> changeLists) {
+  public TreeModelBuilder setChangeLists(@NotNull Collection<? extends ChangeList> changeLists, boolean skipSingleDefaultChangeList) {
     final RemoteRevisionsCache revisionsCache = RemoteRevisionsCache.getInstance(myProject);
+    boolean skipChangeListNode = skipSingleDefaultChangeList && changeLists.size() == 1 &&
+                                 LocalChangeList.DEFAULT_NAME.equals(changeLists.iterator().next().getName());
     for (ChangeList list : changeLists) {
       List<Change> changes = sorted(list.getChanges(), CHANGE_COMPARATOR);
       ChangeListRemoteState listRemoteState = new ChangeListRemoteState(changes.size());
-      ChangesBrowserChangeListNode listNode = new ChangesBrowserChangeListNode(myProject, list, listRemoteState);
-      listNode.markAsHelperNode();
 
-      myModel.insertNodeInto(listNode, myRoot, 0);
+      ChangesBrowserNode changesParent;
+      if (!skipChangeListNode) {
+        ChangesBrowserChangeListNode listNode = new ChangesBrowserChangeListNode(myProject, list, listRemoteState);
+        listNode.markAsHelperNode();
+
+        myModel.insertNodeInto(listNode, myRoot, 0);
+        changesParent = listNode;
+      }
+      else {
+        changesParent = myRoot;
+      }
 
       for (int i = 0; i < changes.size(); i++) {
         Change change = changes.get(i);
         RemoteStatusChangeNodeDecorator decorator = new RemoteStatusChangeNodeDecorator(revisionsCache, listRemoteState, i);
-        insertChangeNode(change, listNode, createChangeNode(change, decorator));
+        insertChangeNode(change, changesParent, createChangeNode(change, decorator));
       }
     }
     return this;
