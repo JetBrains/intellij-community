@@ -32,7 +32,7 @@ public class SMTRunnerConsoleTest extends BaseSMTRunnerTestCase {
     private MyConsoleView(final TestConsoleProperties consoleProperties) {
       super(consoleProperties);
 
-      myTestsOutputConsolePrinter = new TestsOutputConsolePrinter(MyConsoleView.this, consoleProperties, null) {
+      myTestsOutputConsolePrinter = new TestsOutputConsolePrinter(this, consoleProperties, null) {
         @Override
         public void print(final String text, final ConsoleViewContentType contentType) {
           myMockResettablePrinter.print(text, contentType);
