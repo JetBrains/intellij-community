@@ -124,8 +124,16 @@ public class TreeModelBuilder {
   public static DefaultTreeModel buildFromChangeLists(@NotNull Project project,
                                                       @NotNull ChangesGroupingPolicyFactory grouping,
                                                       @NotNull Collection<? extends ChangeList> changeLists) {
+    return buildFromChangeLists(project, grouping, changeLists, false);
+  }
+
+  @NotNull
+  public static DefaultTreeModel buildFromChangeLists(@NotNull Project project,
+                                                      @NotNull ChangesGroupingPolicyFactory grouping,
+                                                      @NotNull Collection<? extends ChangeList> changeLists,
+                                                      boolean skipSingleDefaultChangelist) {
     return new TreeModelBuilder(project, grouping)
-      .setChangeLists(changeLists, false)
+      .setChangeLists(changeLists, skipSingleDefaultChangelist)
       .build();
   }
 
