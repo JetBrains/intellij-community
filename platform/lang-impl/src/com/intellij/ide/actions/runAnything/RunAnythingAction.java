@@ -331,7 +331,7 @@ public class RunAnythingAction extends AnAction implements CustomComponentAction
   }
 
   private static boolean isHelpMode(@NotNull String pattern) {
-    return HELP_PLACEHOLDER.equals(pattern);
+    return pattern.startsWith(HELP_PLACEHOLDER);
   }
 
   private void clearSelection() {
