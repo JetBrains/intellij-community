@@ -35,6 +35,7 @@ public class VcsLogActionPlaces {
 
   // action ids
   public static final String VCS_LOG_INTELLI_SORT_ACTION = "Vcs.Log.IntelliSortChooser";
+  public static final String VCS_LOG_PRESENTATION_SETTINGS_ACTION = "Vcs.Log.QuickPresentationSettings";
   public static final String VCS_LOG_TEXT_FILTER_SETTINGS_ACTION = "Vcs.Log.QuickTextFilterSettings";
   public static final String VCS_LOG_FOCUS_TEXT_FILTER = "Vcs.Log.FocusTextFilter";
   public static final String VCS_LOG_SHOW_DIFF_ACTION = "Diff.ShowDiff";

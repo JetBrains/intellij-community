@@ -181,23 +181,25 @@ public class MainFrame extends JPanel implements DataProvider, Disposable {
 
   private JComponent createActionsToolbar() {
     DefaultActionGroup toolbarGroup = new DefaultActionGroup();
-    toolbarGroup.add(ActionManager.getInstance().getAction(VcsLogActionPlaces.TOOLBAR_ACTION_GROUP));
-
+    toolbarGroup.copyFromGroup((DefaultActionGroup)ActionManager.getInstance().getAction(VcsLogActionPlaces.TOOLBAR_ACTION_GROUP));
+    if (BekUtil.isBekEnabled()) {
+      Constraints constraint = new Constraints(Anchor.BEFORE, VcsLogActionPlaces.VCS_LOG_PRESENTATION_SETTINGS_ACTION);
+      if (BekUtil.isLinearBekEnabled()) {
+        toolbarGroup.add(new IntelliSortChooserPopupAction(), constraint);
+        // can not register both of the actions in xml file, choosing to register an action for the "outer world"
+        // I can of course if linear bek is enabled replace the action on start but why bother
+      }
+      else {
+        toolbarGroup.add(ActionManager.getInstance().getAction(VcsLogActionPlaces.VCS_LOG_INTELLI_SORT_ACTION),
+                         constraint);
+      }
+    }
+    
     DefaultActionGroup mainGroup = new DefaultActionGroup();
     mainGroup.add(ActionManager.getInstance().getAction(VcsLogActionPlaces.VCS_LOG_TEXT_FILTER_SETTINGS_ACTION));
     mainGroup.add(new Separator());
     mainGroup.add(myFilterUi.createActionGroup());
     mainGroup.addSeparator();
-    if (BekUtil.isBekEnabled()) {
-      if (BekUtil.isLinearBekEnabled()) {
-        mainGroup.add(new IntelliSortChooserPopupAction());
-        // can not register both of the actions in xml file, choosing to register an action for the "outer world"
-        // I can of course if linear bek is enabled replace the action on start but why bother
-      }
-      else {
-        mainGroup.add(ActionManager.getInstance().getAction(VcsLogActionPlaces.VCS_LOG_INTELLI_SORT_ACTION));
-      }
-    }
     mainGroup.add(toolbarGroup);
     ActionToolbar toolbar = createActionsToolbar(mainGroup);
 
