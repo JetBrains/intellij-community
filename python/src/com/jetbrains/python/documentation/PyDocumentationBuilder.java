@@ -16,6 +16,7 @@
 package com.jetbrains.python.documentation;
 
 import com.intellij.lang.ASTNode;
+import com.intellij.lang.documentation.DocumentationMarkup;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.Sdk;
@@ -101,7 +102,7 @@ public class PyDocumentationBuilder {
     }
 
     if (elementDefinition instanceof PyDocStringOwner) {
-      buildFromDocstring(elementDefinition, isProperty);
+      buildFromDocstring(((PyDocStringOwner)elementDefinition), isProperty);
     }
     else if (isAttribute()) {
       buildFromAttributeDoc();
@@ -281,10 +282,11 @@ public class PyDocumentationBuilder {
     return accessorKind;
   }
 
-  private void buildFromDocstring(@NotNull final PsiElement elementDefinition, boolean isProperty) {
+  private void buildFromDocstring(@NotNull final PyDocStringOwner elementDefinition, boolean isProperty) {
     PyClass pyClass = null;
-    final PyStringLiteralExpression docStringExpression = getEffectiveDocStringExpression((PyDocStringOwner)elementDefinition);
+    final PyStringLiteralExpression docStringExpression = getEffectiveDocStringExpression(elementDefinition);
     final TypeEvalContext context = TypeEvalContext.userInitiated(elementDefinition.getProject(), elementDefinition.getContainingFile());
+    myBody.addItem(DocumentationMarkup.DEFINITION_START);
 
     if (elementDefinition instanceof PyClass) {
       pyClass = (PyClass)elementDefinition;
@@ -311,9 +313,12 @@ public class PyDocumentationBuilder {
     else if (elementDefinition instanceof PyFile) {
       addModulePath((PyFile)elementDefinition);
     }
+
+    myBody.addItem(DocumentationMarkup.DEFINITION_END);
     if (docStringExpression != null) {
-      myBody.addItem(BR);
+      myBody.addItem(DocumentationMarkup.CONTENT_START);
       addFormattedDocString(myElement, docStringExpression.getStringValue(), myBody, myEpilog);
+      myBody.addItem(DocumentationMarkup.CONTENT_END);
     }
   }
 

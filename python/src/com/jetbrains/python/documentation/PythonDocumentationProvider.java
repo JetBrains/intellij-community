@@ -33,6 +33,7 @@ import com.jetbrains.python.psi.impl.PyBuiltinCache;
 import com.jetbrains.python.psi.impl.PyClassImpl;
 import com.jetbrains.python.psi.resolve.PyResolveContext;
 import com.jetbrains.python.psi.resolve.QualifiedNameFinder;
+import com.jetbrains.python.psi.types.PyCallableParameter;
 import com.jetbrains.python.psi.types.PyType;
 import com.jetbrains.python.psi.types.TypeEvalContext;
 import com.jetbrains.python.pyi.PyiFile;
@@ -54,8 +55,7 @@ import java.util.List;
 import java.util.Optional;
 import java.util.function.Function;
 
-import static com.jetbrains.python.documentation.DocumentationBuilderKit.ESCAPE_ONLY;
-import static com.jetbrains.python.documentation.DocumentationBuilderKit.TO_ONE_LINE_AND_ESCAPE;
+import static com.jetbrains.python.documentation.DocumentationBuilderKit.*;
 
 /**
  * Provides quick docs for classes, methods, and functions.
@@ -142,22 +142,49 @@ public class PythonDocumentationProvider extends AbstractDocumentationProvider i
                                                 @NotNull Function<String, String> escapedNameMapper,
                                                 @NotNull Function<String, String> escaper,
                                                 @NotNull TypeEvalContext context) {
-    final List<PyFunction> overloads = PyiUtil.getOverloads(function, context);
-    if (!overloads.isEmpty()) return describeOverload(function, overloads, escapedNameMapper, escaper, context);
 
-    final ChainIterable<String> result = new ChainIterable<>();
-    final String name = function.getName();
+    final ChainIterable<String> result = describeFunctionWithTypes(function, context);
 
-    result
-      .addItem(escaper.apply("def "))
-      .addItem(escapedNameMapper.apply(escaper.apply(name)))
-      .addItem(escaper.apply(PyUtil.getReadableRepr(function.getParameterList(), false)));
-
-    if (!PyNames.INIT.equals(name)) {
-      result.addItem(escaper.apply("\nInferred type: "));
-      describeTypeWithLinks(context.getType(function), context, function, result);
+    if (!PyiUtil.isOverload(function, context)) {
+      final List<PyFunction> overloads = PyiUtil.getOverloads(function, context);
+      if (!overloads.isEmpty()) {
+        result.addItem("\nPossible types:\n");
+        boolean first = true;
+        for (PyFunction overload : overloads) {
+          if (!first) {
+            result.addItem(BR);
+          }
+          result.addItem(escaper.apply("\u2022")); // &bull; -- bullet point
+          describeTypeWithLinks(context.getType(overload), context, function, result);
+          first = false;
+        }
+      }
     }
 
+    return result;
+
+    //if (!PyNames.INIT.equals(name)) {
+    //  result.addItem(escaper.apply("\nInferred type: "));
+    //  describeTypeWithLinks(context.getType(function), context, function, result);
+    //}
+  }
+
+  @NotNull
+  private static ChainIterable<String> describeFunctionWithTypes(@NotNull PyFunction function, @NotNull TypeEvalContext context) {
+    final ChainIterable<String> result = new ChainIterable<>();
+    // TODO wrapping of long signatures
+    result.addItem("def ").addItem(WRAP_IN_BOLD.apply(function.getName())).addItem("(");
+    boolean first = true;
+    for (PyCallableParameter parameter : function.getParameters(context)) {
+      if (!first) {
+        result.addItem(", ");
+      }
+      result.addItem(parameter.getName()).addItem(":");
+      describeTypeWithLinks(parameter.getType(context), context, function, result);
+      first = false;
+    }
+    result.addItem(") -> ");
+    describeTypeWithLinks(context.getReturnType(function), context, function, result);
     return result;
   }
 
