@@ -360,7 +360,7 @@ public class JavaMatchingVisitor extends JavaElementVisitor {
     final PsiElement classReference = clazz.getBaseClassReference();
     final boolean isTypedVar = myMatchingVisitor.getMatchContext().getPattern().isTypedVar(classReference);
 
-    if (myMatchingVisitor.setResult((myMatchingVisitor.match(clazz.getBaseClassReference(), clazz2.getBaseClassReference()) || isTypedVar) &&
+    if (myMatchingVisitor.setResult((isTypedVar || myMatchingVisitor.match(clazz.getBaseClassReference(), clazz2.getBaseClassReference())) &&
                                     myMatchingVisitor.matchSons(clazz.getArgumentList(), clazz2.getArgumentList()) &&
                                     compareClasses(clazz, clazz2)) && isTypedVar) {
       myMatchingVisitor.setResult(matchType(classReference, clazz2.getBaseClassReference()));
