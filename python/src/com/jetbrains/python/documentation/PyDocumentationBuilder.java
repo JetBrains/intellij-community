@@ -16,6 +16,7 @@
 package com.jetbrains.python.documentation;
 
 import com.intellij.lang.ASTNode;
+import com.intellij.lang.documentation.DocumentationMarkup;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.Sdk;
@@ -83,7 +84,7 @@ public class PyDocumentationBuilder {
     myBody = new ChainIterable<>();
     myEpilog = new ChainIterable<>();
 
-    myResult.add(myProlog).addWith(TagCode, myBody).add(myEpilog); // pre-assemble; then add stuff to individual cats as needed
+    myResult.add(myProlog).add(myBody).add(myEpilog); // pre-assemble; then add stuff to individual cats as needed
     myResult = wrapInTag("html", wrapInTag("body", myResult));
     myReassignmentChain = new ChainIterable<>();
   }
@@ -101,7 +102,7 @@ public class PyDocumentationBuilder {
     }
 
     if (elementDefinition instanceof PyDocStringOwner) {
-      buildFromDocstring(elementDefinition, isProperty);
+      buildFromDocstring(((PyDocStringOwner)elementDefinition), isProperty);
     }
     else if (isAttribute()) {
       buildFromAttributeDoc();
@@ -232,7 +233,8 @@ public class PyDocumentationBuilder {
     final AccessDirection direction = AccessDirection.of((PyElement)outerElement);
     final Maybe<PyCallable> accessor = property.getByDirection(direction);
     myProlog.addItem("property ").addWith(TagBold, $().addWith(TagCode, $(elementName)))
-      .addItem(" of ").add(PythonDocumentationProvider.describeClass(cls, Function.identity(), TO_ONE_LINE_AND_ESCAPE, true, true, context));
+            .addItem(" of ")
+            .add(PythonDocumentationProvider.describeClass(cls, Function.identity(), TO_ONE_LINE_AND_ESCAPE, true, true, context));
     if (accessor.isDefined() && property.getDoc() != null) {
       myBody.addItem(": ").addItem(property.getDoc()).addItem(BR);
     }
@@ -281,23 +283,31 @@ public class PyDocumentationBuilder {
     return accessorKind;
   }
 
-  private void buildFromDocstring(@NotNull final PsiElement elementDefinition, boolean isProperty) {
+  private void buildFromDocstring(@NotNull final PyDocStringOwner elementDefinition, boolean isProperty) {
     PyClass pyClass = null;
-    final PyStringLiteralExpression docStringExpression = getEffectiveDocStringExpression((PyDocStringOwner)elementDefinition);
+    final PyFunction pyFunction;
+    final PyStringLiteralExpression docStringExpression = getEffectiveDocStringExpression(elementDefinition);
+    ChainIterable<String> content = new ChainIterable<>();
+    if (docStringExpression != null) {
+      content = formatDocString(myElement, docStringExpression.getStringValue());
+    }
     final TypeEvalContext context = TypeEvalContext.userInitiated(elementDefinition.getProject(), elementDefinition.getContainingFile());
+    myBody.addItem(DocumentationMarkup.DEFINITION_START);
 
     if (elementDefinition instanceof PyClass) {
       pyClass = (PyClass)elementDefinition;
       myBody.add(PythonDocumentationProvider.describeDecorators(pyClass, WRAP_IN_ITALIC, ESCAPE_AND_SAVE_NEW_LINES_AND_SPACES, BR, BR));
-      myBody.add(PythonDocumentationProvider.describeClass(pyClass, WRAP_IN_BOLD, ESCAPE_AND_SAVE_NEW_LINES_AND_SPACES, false, true, context));
+      myBody
+        .add(PythonDocumentationProvider.describeClass(pyClass, WRAP_IN_BOLD, ESCAPE_AND_SAVE_NEW_LINES_AND_SPACES, false, true, context));
     }
     else if (elementDefinition instanceof PyFunction) {
-      final PyFunction pyFunction = (PyFunction)elementDefinition;
+      pyFunction = (PyFunction)elementDefinition;
       if (!isProperty) {
         pyClass = pyFunction.getContainingClass();
         if (pyClass != null) {
           myBody
-            .addWith(TagSmall, PythonDocumentationProvider.describeClass(pyClass, Function.identity(), TO_ONE_LINE_AND_ESCAPE, true, true, context))
+            .addWith(TagSmall,
+                     PythonDocumentationProvider.describeClass(pyClass, Function.identity(), TO_ONE_LINE_AND_ESCAPE, true, true, context))
             .addItem(BR)
             .addItem(BR);
         }
@@ -305,15 +315,18 @@ public class PyDocumentationBuilder {
       myBody.add(PythonDocumentationProvider.describeDecorators(pyFunction, WRAP_IN_ITALIC, ESCAPE_AND_SAVE_NEW_LINES_AND_SPACES, BR, BR));
       myBody.add(PythonDocumentationProvider.describeFunction(pyFunction, WRAP_IN_BOLD, ESCAPE_AND_SAVE_NEW_LINES_AND_SPACES, context));
       if (docStringExpression == null) {
-        addInheritedDocString(pyFunction, pyClass);
+        content = addInheritedDocString(pyFunction, pyClass);
       }
     }
     else if (elementDefinition instanceof PyFile) {
       addModulePath((PyFile)elementDefinition);
     }
-    if (docStringExpression != null) {
-      myBody.addItem(BR);
-      addFormattedDocString(myElement, docStringExpression.getStringValue(), myBody, myEpilog);
+
+    myBody.addItem(DocumentationMarkup.DEFINITION_END);
+    if (content != null && !content.isEmpty()) {
+      myBody.addItem(DocumentationMarkup.CONTENT_START);
+      myBody.add(content);
+      myBody.addItem(DocumentationMarkup.CONTENT_END);
     }
   }
 
@@ -361,11 +374,11 @@ public class PyDocumentationBuilder {
     return resolveResult.isImplicit() ? null : resolveResult.getElement();
   }
 
-  private void addInheritedDocString(@NotNull final PyFunction pyFunction, @Nullable final PyClass pyClass) {
-    boolean notFound = true;
+  @Nullable
+  private static ChainIterable<String> addInheritedDocString(@NotNull final PyFunction pyFunction, @Nullable final PyClass pyClass) {
     final String methodName = pyFunction.getName();
     if (pyClass == null || methodName == null) {
-      return;
+      return null;
     }
     final boolean isConstructor = PyNames.INIT.equals(methodName);
     Iterable<PyClass> classes = pyClass.getAncestorClasses(null);
@@ -390,7 +403,8 @@ public class PyDocumentationBuilder {
       if (docstringElement != null) {
         final String inheritedDoc = docstringElement.getStringValue();
         if (inheritedDoc.length() > 1) {
-          myEpilog.addItem(BR).addItem(BR);
+          ChainIterable<String> result = new ChainIterable<>();
+          result.addItem(BR).addItem(BR);
           final String ancestorName = ancestor.getName();
           final String ancestorQualifiedName = ancestor.getQualifiedName();
           final TypeEvalContext context = TypeEvalContext.userInitiated(pyFunction.getProject(), pyFunction.getContainingFile());
@@ -401,33 +415,29 @@ public class PyDocumentationBuilder {
                                         ? PyDocumentationLink.toPossibleClass(ancestorName, ancestorQualifiedName, pyClass, context)
                                         : null;
           if (isFromClass) {
-            myEpilog.addItem(PyBundle.message("QDOC.copied.from.class.$0", ancestorLink));
+            result.addItem(PyBundle.message("QDOC.copied.from.class.$0", ancestorLink));
           }
           else {
-            myEpilog.addItem(PyBundle.message("QDOC.copied.from.$0.$1", ancestorLink, methodName));
+            result.addItem(PyBundle.message("QDOC.copied.from.$0.$1", ancestorLink, methodName));
           }
-          myEpilog.addItem(BR).addItem(BR);
-          final ChainIterable<String> formatted = new ChainIterable<>();
-          final ChainIterable<String> unformatted = new ChainIterable<>();
-          addFormattedDocString(pyFunction, inheritedDoc, formatted, unformatted);
-          myEpilog.addWith(TagCode, formatted).add(unformatted);
-          notFound = false;
-          break;
+          result.addItem(BR).addItem(BR);
+          result.add(formatDocString(pyFunction, inheritedDoc));
+          return result;
         }
       }
     }
 
-    if (notFound) {
-      // above could have not worked because inheritance is not searched down to 'object'.
-      // for well-known methods, copy built-in doc string.
-      // TODO: also handle predefined __xxx__ that are not part of 'object'.
-      if (PyNames.UNDERSCORED_ATTRIBUTES.contains(methodName)) {
-        addPredefinedMethodDoc(pyFunction, methodName);
-      }
+    // above could have not worked because inheritance is not searched down to 'object'.
+    // for well-known methods, copy built-in doc string.
+    // TODO: also handle predefined __xxx__ that are not part of 'object'.
+    if (PyNames.UNDERSCORED_ATTRIBUTES.contains(methodName)) {
+      return addPredefinedMethodDoc(pyFunction, methodName);
     }
+    return null;
   }
 
-  private void addPredefinedMethodDoc(PyFunction fun, String methodName) {
+  @Nullable
+  private static ChainIterable<String> addPredefinedMethodDoc(@NotNull PyFunction fun, @NotNull String methodName) {
     final PyClassType objectType = PyBuiltinCache.getInstance(fun).getObjectType(); // old- and new-style classes share the __xxx__ stuff
     if (objectType != null) {
       final PyClass objectClass = objectType.getPyClass();
@@ -436,29 +446,28 @@ public class PyDocumentationBuilder {
         final PyStringLiteralExpression predefinedDocstring = getEffectiveDocStringExpression(predefinedMethod);
         final String predefinedDoc = predefinedDocstring != null ? predefinedDocstring.getStringValue() : null;
         if (predefinedDoc != null && predefinedDoc.length() > 1) { // only a real-looking doc string counts
-          addFormattedDocString(fun, predefinedDoc, myBody, myBody);
-          myEpilog.addItem(BR).addItem(BR).addItem(PyBundle.message("QDOC.copied.from.builtin"));
+          ChainIterable<String> result = formatDocString(fun, predefinedDoc);
+          result.addItem(BR).addItem(BR).addItem(PyBundle.message("QDOC.copied.from.builtin"));
+          return result;
         }
       }
     }
+    return null;
   }
 
-  private static void addFormattedDocString(@NotNull PsiElement element,
-                                            @NotNull String docstring,
-                                            @NotNull ChainIterable<String> formattedOutput,
-                                            @NotNull ChainIterable<String> unformattedOutput) {
+  @NotNull
+  private static ChainIterable<String> formatDocString(@NotNull PsiElement element, @NotNull String docstring) {
     final Project project = element.getProject();
 
     final List<String> formatted = PyStructuredDocstringFormatter.formatDocstring(element, docstring);
     if (formatted != null) {
-      unformattedOutput.add(formatted);
-      return;
+      return new ChainIterable<>(formatted);
     }
 
     boolean isFirstLine;
-    final List<String> result = new ArrayList<>();
     final String[] lines = removeCommonIndentation(docstring);
 
+    final ChainIterable<String> result = new ChainIterable<>();
     // reconstruct back, dropping first empty fragment as needed
     isFirstLine = true;
     final int tabSize = CodeStyleSettingsManager.getSettings(project).getTabSize(PythonFileType.INSTANCE);
@@ -468,7 +477,7 @@ public class PyDocumentationBuilder {
         isFirstLine = false;
       }
       else {
-        result.add(BR);
+        result.addItem(BR);
       }
       int leadingTabs = 0;
       while (leadingTabs < line.length() && line.charAt(leadingTabs) == '\t') {
@@ -477,9 +486,9 @@ public class PyDocumentationBuilder {
       if (leadingTabs > 0) {
         line = StringUtil.repeatSymbol(' ', tabSize * leadingTabs) + line.substring(leadingTabs);
       }
-      result.add(combUp(line));
+      result.addItem(combUp(line));
     }
-    formattedOutput.add(result);
+    return result;
   }
 
   /**
@@ -537,7 +546,7 @@ public class PyDocumentationBuilder {
 
     final String docString = PyPsiUtils.strValue(getEffectiveDocStringExpression((PyTargetExpression)myElement));
     if (docString != null) {
-      addFormattedDocString(myElement, docString, myBody, myEpilog);
+      myBody.add(formatDocString(myElement, docString));
     }
   }
 
@@ -589,7 +598,7 @@ public class PyDocumentationBuilder {
       QualifiedName name = QualifiedNameFinder.findShortestImportableQName(followed);
       if (name != null) {
         myProlog.add($("Module "))
-          .addWith(TagBold, $(ObjectUtils.chooseNotNull(QualifiedNameFinder.canonizeQualifiedName(name, null), name).toString()));
+                .addWith(TagBold, $(ObjectUtils.chooseNotNull(QualifiedNameFinder.canonizeQualifiedName(name, null), name).toString()));
       }
       else {
         String path = file.getPath();
