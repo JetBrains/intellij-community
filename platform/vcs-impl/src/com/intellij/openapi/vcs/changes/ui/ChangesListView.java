@@ -8,6 +8,7 @@ import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.fileChooser.actions.VirtualFileDeleteProvider;
 import com.intellij.openapi.fileEditor.OpenFileDescriptor;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.FileStatus;
 import com.intellij.openapi.vcs.VcsDataKeys;
@@ -370,6 +371,9 @@ public class ChangesListView extends Tree implements TypeSafeDataProvider, DnDAw
     while (node != null) {
       if (node instanceof ChangesBrowserChangeListNode) {
         return ((ChangesBrowserChangeListNode)node).getAllChangesUnder();
+      }
+      if (node == getRoot() && Registry.is("vcs.skip.single.default.changelist")) {
+        return getRoot().getAllChangesUnder();
       }
       node = (DefaultMutableTreeNode)node.getParent();
     }
