@@ -5,7 +5,6 @@ import com.intellij.execution.ExecutionException;
 import com.intellij.execution.Executor;
 import com.intellij.execution.configurations.GeneralCommandLine;
 import com.intellij.execution.runners.ExecutionEnvironmentBuilder;
-import com.intellij.icons.AllIcons;
 import com.intellij.ide.IdeBundle;
 import com.intellij.ide.actions.runAnything.RunAnythingAction;
 import com.intellij.ide.actions.runAnything.RunAnythingCache;
@@ -22,7 +21,6 @@ import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
 import java.util.Collection;
 
 import static com.intellij.ide.actions.runAnything.RunAnythingUtil.AD_CONTEXT_TEXT;
@@ -72,11 +70,5 @@ public abstract class RunAnythingCommandExecutionProviderBase implements RunAnyt
   @Override
   public String getAdText() {
     return AD_CONTEXT_TEXT + ", " + AD_DEBUG_TEXT + ", " + AD_DELETE_COMMAND_TEXT;
-  }
-
-  @Nullable
-  @Override
-  public Icon getIcon(@NotNull RunAnythingStringValue value) {
-    return AllIcons.Actions.Run_anything;
   }
 }

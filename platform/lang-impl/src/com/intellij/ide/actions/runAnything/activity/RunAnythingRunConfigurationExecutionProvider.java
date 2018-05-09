@@ -19,11 +19,7 @@ public abstract class RunAnythingRunConfigurationExecutionProvider
   @NotNull
   @Override
   public String getTextAsParameter(@NotNull ChooseRunConfigurationPopup.ItemWrapper value) {
-    Object runConfiguration = value.getValue();
-    if (!(runConfiguration instanceof RunnerAndConfigurationSettings)) {
-      return value.getText();
-    }
-    return ((RunnerAndConfigurationSettings)runConfiguration).getName();
+    return value.getText();
   }
 
   public void execute(@NotNull DataContext dataContext, @NotNull ChooseRunConfigurationPopup.ItemWrapper wrapper) {
