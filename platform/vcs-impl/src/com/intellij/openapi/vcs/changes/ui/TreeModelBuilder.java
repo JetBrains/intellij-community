@@ -189,8 +189,7 @@ public class TreeModelBuilder {
   @NotNull
   public TreeModelBuilder setChangeLists(@NotNull Collection<? extends ChangeList> changeLists, boolean skipSingleDefaultChangeList) {
     final RemoteRevisionsCache revisionsCache = RemoteRevisionsCache.getInstance(myProject);
-    boolean skipChangeListNode = skipSingleDefaultChangeList && changeLists.size() == 1 &&
-                                 LocalChangeList.DEFAULT_NAME.equals(changeLists.iterator().next().getName());
+    boolean skipChangeListNode = skipSingleDefaultChangeList && isSingleBlankChangeList(changeLists);
     for (ChangeList list : changeLists) {
       List<Change> changes = sorted(list.getChanges(), CHANGE_COMPARATOR);
       ChangeListRemoteState listRemoteState = new ChangeListRemoteState(changes.size());
@@ -214,6 +213,13 @@ public class TreeModelBuilder {
       }
     }
     return this;
+  }
+
+  private static boolean isSingleBlankChangeList(Collection<? extends ChangeList> lists) {
+    if (lists.size() != 1) return false;
+    ChangeList single = lists.iterator().next();
+    if (!(single instanceof LocalChangeList)) return false;
+    return ((LocalChangeList) single).isBlank();
   }
 
   protected ChangesBrowserNode createChangeNode(Change change, ChangeNodeDecorator decorator) {

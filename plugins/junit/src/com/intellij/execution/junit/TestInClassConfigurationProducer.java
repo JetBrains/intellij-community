@@ -44,7 +44,8 @@ public class TestInClassConfigurationProducer extends JUnitConfigurationProducer
 
   @Override
   public boolean isConfigurationFromContext(JUnitConfiguration configuration, ConfigurationContext context) {
-    if (UniqueIdConfigurationProducer.getNodeIds(context) != null) return false;
+    String[] nodeIds = UniqueIdConfigurationProducer.getNodeIds(context);
+    if (nodeIds != null && nodeIds.length > 0) return false;
     return super.isConfigurationFromContext(configuration, context);
   }
 

@@ -91,7 +91,7 @@ public class MultipleLocalChangeListsBrowser extends CommitDialogChangesBrowser 
 
     if (Registry.is("vcs.skip.single.default.changelist")) {
       List<LocalChangeList> allChangeLists = ChangeListManager.getInstance(project).getChangeLists();
-      if (allChangeLists.size() == 1 && LocalChangeList.DEFAULT_NAME.equals(allChangeLists.get(0).getName())) {
+      if (allChangeLists.size() == 1 && allChangeLists.get(0).isBlank()) {
         myChangeListChooser.setVisible(false);
       }
     }

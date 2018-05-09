@@ -71,6 +71,10 @@ public abstract class EditorAction extends AnAction implements DumbAware {
   public final void actionPerformed(AnActionEvent e) {
     DataContext dataContext = e.getDataContext();
     Editor editor = getEditor(dataContext);
+    if (this instanceof LatencyAwareEditorAction && editor != null) {
+      String actionId = ActionManager.getInstance().getId(this);
+      LatencyRecorder.getInstance().recordLatencyAwareAction(editor, actionId, e);
+    }
     actionPerformed(editor, dataContext);
   }
 

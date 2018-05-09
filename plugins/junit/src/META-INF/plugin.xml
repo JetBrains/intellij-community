@@ -92,6 +92,11 @@
                      groupBundle="messages.InspectionsBundle" groupKey="group.names.junit.issues" enabledByDefault="true" level="WARNING"
                      implementationClass="com.intellij.execution.junit.codeInsight.JUnit5MalformedRepeatedTestInspection"/>
 
+    <localInspection groupPath="Java" language="JVM" shortName="JUnit5MalformedNestedClass" bundle="com.siyeh.InspectionGadgetsBundle"
+                     key="junit5.nested.test.display.name"
+                     groupBundle="messages.InspectionsBundle" groupKey="group.names.junit.issues" enabledByDefault="true" level="WARNING"
+                     implementationClass="com.intellij.execution.junit.codeInsight.JUnit5MalformedNestedClassInspection"/>
+
     <runDashboardContributor implementation="com.intellij.execution.junit.JUnitRunDashboardContributor"/>
   </extensions>
 

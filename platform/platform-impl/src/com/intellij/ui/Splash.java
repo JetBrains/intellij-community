@@ -173,15 +173,11 @@ public class Splash extends JDialog implements StartupProgress {
 
         g.setFont(UIUtil.getFontWithFallback(font));
         g.setColor(textColor);
-        int offsetX = uiScale(15);
-        int offsetY;
-        if (info instanceof ApplicationInfoImpl) {
-          offsetX = Math.max(offsetX, uiScale(((ApplicationInfoImpl)info).getProgressX()));
-          offsetY = ((ApplicationInfoImpl)info).getLicenseOffsetY();
-        } else {
+        if (!(info instanceof ApplicationInfoImpl)) {
           return false;
         }
-
+        int offsetX = Math.max(uiScale(15), uiScale(((ApplicationInfoImpl)info).getProgressX()));
+        int offsetY = ((ApplicationInfoImpl)info).getLicenseOffsetY();
         g.drawString(licensedToMessage, x + offsetX, y + height - uiScale(offsetY));
         if (licenseRestrictionsMessages.size() > 0) {
           g.drawString(licenseRestrictionsMessages.get(0), x + offsetX, y + height - uiScale(offsetY - 16));
