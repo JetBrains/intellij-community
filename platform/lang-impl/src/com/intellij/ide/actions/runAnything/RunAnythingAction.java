@@ -703,8 +703,8 @@ public class RunAnythingAction extends AnAction implements CustomComponentAction
         String lastInput = myTextField.getText();
         myIsItemSelected = true;
 
-        if (isMoreItem(myList.getSelectedIndex()) && myLastInputText != null) {
-          myTextField.setText(myLastInputText);
+        if (isMoreItem(myList.getSelectedIndex())) {
+          myTextField.setText(myLastInputText != null ? myLastInputText : "");
           return;
         }
 
