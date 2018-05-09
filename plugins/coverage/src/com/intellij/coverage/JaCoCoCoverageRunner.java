@@ -11,6 +11,7 @@ import com.intellij.openapi.module.ModuleUtilCore;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.CompilerModuleExtension;
 import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.rt.coverage.data.*;
 import com.intellij.util.PathUtil;
@@ -166,8 +167,23 @@ public class JaCoCoCoverageRunner extends JavaCoverageRunner {
   }
 
 
-  public void appendCoverageArgument(final String sessionDataFilePath, final String[] patterns, final SimpleJavaParameters javaParameters,
-                                     final boolean collectLineInfo, final boolean isSampling) {
+  @Override
+  public void appendCoverageArgument(String sessionDataFilePath,
+                                     @Nullable String[] patterns,
+                                     SimpleJavaParameters parameters,
+                                     boolean collectLineInfo,
+                                     boolean isSampling) {
+    appendCoverageArgument(sessionDataFilePath, patterns, null, parameters, collectLineInfo, isSampling, null);
+  }
+
+  @Override
+  public void appendCoverageArgument(String sessionDataFilePath,
+                                     @Nullable String[] patterns,
+                                     String[] excludePatterns,
+                                     SimpleJavaParameters javaParameters,
+                                     boolean collectLineInfo,
+                                     boolean isSampling,
+                                     String sourceMapPath) {
     StringBuilder argument = new StringBuilder("-javaagent:");
     final String agentPath = handleSpacesInAgentPath(PathUtil.getJarPathForClass(RT.class));
     if (agentPath == null) return;
@@ -175,6 +191,12 @@ public class JaCoCoCoverageRunner extends JavaCoverageRunner {
     argument.append("=");
     argument.append("destfile=").append(sessionDataFilePath);
     argument.append(",append=false");
+    if (patterns != null) {
+      argument.append(",includes=").append(StringUtil.join(patterns, ":"));
+    }
+    if (excludePatterns != null) {
+      argument.append(",excludes=").append(StringUtil.join(excludePatterns, ":"));
+    }
     javaParameters.getVMParametersList().add(argument.toString());
   }
 
