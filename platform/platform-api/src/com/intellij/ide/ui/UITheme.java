@@ -1,14 +1,13 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.ui;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.ColorUtil;
 import com.intellij.util.ui.JBDimension;
 import com.intellij.util.ui.JBInsets;
 import org.jetbrains.annotations.NotNull;
-import org.json.JSONObject;
-import org.json.JSONTokener;
 
 import javax.swing.*;
 import javax.swing.plaf.BorderUIResource;
@@ -25,30 +24,29 @@ import java.util.Map;
  */
 public class UITheme {
   private Map<String, Object> myProperties;
-  private final String myName;
-  private final boolean myDark;
+  private String name;
+  private boolean dark;
+  private String author;
+  private Map<String, Object> ui;
+  private Map<String, Object> icons;
 
-  private UITheme(String name, boolean dark) {
-    myName = name;
-    myDark = dark;
+  private UITheme() {
   }
 
   public String getName() {
-    return myName;
+    return name;
   }
 
   public boolean isDark() {
-    return myDark;
+    return dark;
+  }
+
+  public String getAuthor() {
+    return author;
   }
 
   public static UITheme loadFromJson(InputStream stream) throws IOException {
-    JSONObject json = new JSONObject(new JSONTokener(stream));
-    String name = json.getString("name");
-    boolean dark = json.getBoolean("dark");
-    UITheme theme = new UITheme(name, dark);
-    theme.myProperties = json.getJSONObject("UI").toMap();
-
-    return theme;
+    return new ObjectMapper().readValue(stream, UITheme.class);
   }
 
   public void applyProperties(UIDefaults defaults) {
@@ -131,10 +129,36 @@ public class UITheme {
   }
 
 
-
   //public static void main(String[] args) throws IOException {
-  //  try (FileInputStream stream = new FileInputStream("/Users/kb/Library/Preferences/IntelliJIdea2018.2/scratches/scratch.json")) {
+  //  try (FileInputStream stream = new FileInputStream("C:\\IDEA\\community\\platform\\platform-api\\src\\com\\intellij\\ide\\ui\\example.theme.json")) {
   //    loadFromJson(stream);
   //  }
   //}
+
+  //json deserialization methods
+
+  @SuppressWarnings("unused")
+  private void setName(String name) {
+    this.name = name;
+  }
+
+  @SuppressWarnings("unused")
+  private void setDark(boolean dark) {
+    this.dark = dark;
+  }
+
+  @SuppressWarnings("unused")
+  private void setAuthor(String author) {
+    this.author = author;
+  }
+
+  @SuppressWarnings("unused")
+  private void setUi(Map<String, Object> ui) {
+    this.ui = ui;
+  }
+
+  @SuppressWarnings("unused")
+  private void setIcons(Map<String, Object> icons) {
+    this.icons = icons;
+  }
 }
