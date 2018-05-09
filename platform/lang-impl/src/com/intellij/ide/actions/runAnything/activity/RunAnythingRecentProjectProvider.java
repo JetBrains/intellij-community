@@ -1,0 +1,37 @@
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+package com.intellij.ide.actions.runAnything.activity;
+
+import com.intellij.ide.IdeBundle;
+import com.intellij.ide.RecentProjectsManager;
+import com.intellij.openapi.actionSystem.AnAction;
+import com.intellij.openapi.actionSystem.DataContext;
+import org.jetbrains.annotations.NotNull;
+
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.stream.Collectors;
+
+public class RunAnythingRecentProjectProvider extends RunAnythingActionCompletionRecentProvider<AnAction> {
+  @NotNull
+  @Override
+  public Collection<AnAction> getValues(@NotNull DataContext dataContext) {
+    return Arrays.stream(RecentProjectsManager.getInstance().getRecentProjectsActions(false)).collect(Collectors.toList());
+  }
+
+  @NotNull
+  public String getGroupTitle() {
+    return IdeBundle.message("run.anything.recent.project.completion.group.title");
+  }
+
+  @NotNull
+  @Override
+  public String getHelpCommandPlaceholder() {
+    return IdeBundle.message("run.anything.recent.project.command.placeholder");
+  }
+
+  @NotNull
+  @Override
+  public String getCommandPrefix() {
+    return "open";
+  }
+}
