@@ -13,7 +13,25 @@
     <orderEntry type="module" module-name="intellij.platform.testFramework" scope="TEST" />
     <orderEntry type="library" scope="TEST" name="JUnit4" level="project" />
     <orderEntry type="library" scope="TEST" name="assertJ" level="project" />
-    <orderEntry type="library" name="javaxdelta" level="project" />
-    <orderEntry type="library" scope="RUNTIME" name="fastutil" level="project" />
+    <orderEntry type="module-library">
+      <library name="javaxdelta" type="repository">
+        <properties maven-id="com.nothome:javaxdelta:2.0.1" />
+        <CLASSES>
+          <root url="jar://$MAVEN_REPOSITORY$/com/nothome/javaxdelta/2.0.1/javaxdelta-2.0.1.jar!/" />
+        </CLASSES>
+        <JAVADOC />
+        <SOURCES />
+      </library>
+    </orderEntry>
+    <orderEntry type="module-library" scope="RUNTIME">
+      <library name="fastutil" type="repository">
+        <properties maven-id="it.unimi.dsi:fastutil:7.2.1" />
+        <CLASSES>
+          <root url="jar://$MAVEN_REPOSITORY$/it/unimi/dsi/fastutil/7.2.1/fastutil-7.2.1.jar!/" />
+        </CLASSES>
+        <JAVADOC />
+        <SOURCES />
+      </library>
+    </orderEntry>
   </component>
 </module>

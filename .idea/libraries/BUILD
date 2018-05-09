@@ -1162,22 +1162,6 @@ java_library(
 
 # managed by go/iml_to_build
 java_library(
-    name = "javaxdelta",
-    visibility = ["//visibility:public"],
-    exports = ["//prebuilts/tools/common/m2/repository/com/nothome/javaxdelta/2.0.1:jar"],
-    runtime_deps = ["//prebuilts/tools/common/m2/repository/com/nothome/javaxdelta/2.0.1:jar"],
-)
-
-# managed by go/iml_to_build
-java_library(
-    name = "fastutil",
-    visibility = ["//visibility:public"],
-    exports = ["//prebuilts/tools/common/m2/repository/it/unimi/dsi/fastutil/7.2.1:jar"],
-    runtime_deps = ["//prebuilts/tools/common/m2/repository/it/unimi/dsi/fastutil/7.2.1:jar"],
-)
-
-# managed by go/iml_to_build
-java_library(
     name = "lz4-java",
     visibility = ["//visibility:public"],
     exports = ["//tools/idea/lib:lz4-java-1.3"],
