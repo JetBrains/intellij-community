@@ -61,7 +61,7 @@ public class ChangesListView extends Tree implements TypeSafeDataProvider, DnDAw
 
   public ChangesListView(@NotNull Project project) {
     myProject = project;
-    myGroupingSupport = new ChangesGroupingSupport(myProject, this);
+    myGroupingSupport = new ChangesGroupingSupport(myProject, this, true);
 
     setModel(TreeModelBuilder.buildEmpty(project));
 
