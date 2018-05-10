@@ -6,13 +6,16 @@ import com.intellij.codeInspection.ProblemHighlightType
 import com.intellij.codeInspection.ProblemsHolder
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiElementVisitor
+import com.intellij.psi.PsiErrorElement
 import com.jetbrains.python.PyBundle
 import com.jetbrains.python.inspections.PyInspection
 import com.jetbrains.python.psi.PyFunction
 import com.jetbrains.python.psi.PyParameter
 
-
-class PyParametrizedArgumentInspection : PyInspection() {
+/**
+ * Check that all parameters from parametrize decorator are declared by function
+ */
+class PyTestParametrizedInspection : PyInspection() {
   override fun buildVisitor(holder: ProblemsHolder,
                             isOnTheFly: Boolean,
                             session: LocalInspectionToolSession) = object : PsiElementVisitor() {
@@ -24,7 +27,11 @@ class PyParametrizedArgumentInspection : PyInspection() {
           val diff = requiredParameters.minus(declaredParameters)
           if (diff.isNotEmpty()) {
             // Some params are not declared
-            holder.registerProblem(element, "Following arguments are not declared but provided by decorator: $diff",
+            val problemSource = element.parameterList.lastChild ?: element.parameterList
+            if(problemSource is PsiErrorElement) {
+              return // Error element can't be passed to registerProblem
+            }
+            holder.registerProblem(problemSource, "Following arguments are not declared but provided by decorator: $diff",
                                    ProblemHighlightType.GENERIC_ERROR_OR_WARNING)
           }
         }

@@ -3,6 +3,7 @@ package com.jetbrains.python.testing.pyTestFixtures
 
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.module.ModuleUtilCore
+import com.intellij.psi.search.GlobalSearchScope
 import com.intellij.psi.stubs.StubIndex
 import com.intellij.psi.util.PsiTreeUtil
 import com.intellij.util.ThreeState
@@ -24,7 +25,12 @@ internal fun getFixture(element: PyNamedParameter, typeEvalContext: TypeEvalCont
   if (!isTestElement(func, ThreeState.NO, typeEvalContext)) {
     return null
   }
-  return getFixtures(module).firstOrNull { o -> o.name == element.name }
+  return getFixtures(module)
+    .filter { o -> o.name == element.name }
+    .sortedBy {
+      ModuleUtilCore.findModuleForPsiElement(it) != module
+    }
+    .firstOrNull()
 }
 
 /**
@@ -36,11 +42,12 @@ internal fun hasFixture(element: PyNamedParameter, typeEvalContext: TypeEvalCont
  * @return Boolean is function decorated as fixture
  */
 internal fun PyFunction.isFixture() = decoratorList?.findDecorator(decoratorName) != null
+
 /**
  * @return List<PyFunction> all py.test fixtures in project
  */
 internal fun getFixtures(module: Module) =
   StubIndex.getElements(PyDecoratorStubIndex.KEY, decoratorName, module.project,
-                               module.moduleContentScope,
-                               PyDecorator::class.java).mapNotNull(PyDecorator::getTarget)
+                        GlobalSearchScope.union(arrayOf(module.moduleContentScope, GlobalSearchScope.moduleRuntimeScope(module, true))),
+                        PyDecorator::class.java).mapNotNull(PyDecorator::getTarget)
 

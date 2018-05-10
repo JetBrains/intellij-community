@@ -5,7 +5,10 @@ import com.intellij.psi.PsiElement
 import com.jetbrains.python.inspections.PyInspectionExtension
 import com.jetbrains.python.psi.PyNamedParameter
 
-class PyParametrizedInspectionExtension : PyInspectionExtension() {
+/**
+ * EP to skip "unused" inspection
+ */
+class PyTestParametrizedInspectionExtension : PyInspectionExtension() {
 
   override fun ignoreUnused(local: PsiElement) = local is PyNamedParameter && local.isParametrized()
 

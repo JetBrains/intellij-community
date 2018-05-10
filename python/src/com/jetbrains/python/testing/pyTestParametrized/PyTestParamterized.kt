@@ -17,8 +17,6 @@ fun PyNamedParameter.isParametrized() = PsiTreeUtil.getParentOfType(this, PyFunc
                                           ?.contains(name)
                                         ?: false
 
-//TODO: Add inspection that checks all parameters are declared
-
 /**
  * @return List<String> if test function decorated with parametrize -- return parameter names
  */
