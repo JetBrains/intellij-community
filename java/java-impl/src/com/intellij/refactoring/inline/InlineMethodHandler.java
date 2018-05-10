@@ -17,7 +17,7 @@
 package com.intellij.refactoring.inline;
 
 import com.intellij.codeInsight.TargetElementUtil;
-import com.intellij.lang.StdLanguages;
+import com.intellij.lang.java.JavaLanguage;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.ReadonlyStatusHandler;
@@ -37,7 +37,7 @@ class InlineMethodHandler extends JavaInlineActionHandler {
   }
 
   public boolean canInlineElement(PsiElement element) {
-    return element instanceof PsiMethod && element.getNavigationElement() instanceof PsiMethod && element.getLanguage() == StdLanguages.JAVA;
+    return element instanceof PsiMethod && element.getNavigationElement() instanceof PsiMethod && element.getLanguage() == JavaLanguage.INSTANCE;
   }
 
   public void inlineElement(final Project project, Editor editor, PsiElement element) {
@@ -61,7 +61,7 @@ class InlineMethodHandler extends JavaInlineActionHandler {
     PsiReference reference = editor != null ? TargetElementUtil.findReference(editor, editor.getCaretModel().getOffset()) : null;
     if (reference != null) {
       final PsiElement refElement = reference.getElement();
-      if (refElement != null && !isEnabledForLanguage(refElement.getLanguage())) {
+      if (!isEnabledForLanguage(refElement.getLanguage())) {
         String message = RefactoringBundle
           .message("refactoring.is.not.supported.for.language", "Inline of Java method", refElement.getLanguage().getDisplayName());
         CommonRefactoringUtil.showErrorHint(project, editor, message, REFACTORING_NAME, HelpID.INLINE_METHOD);

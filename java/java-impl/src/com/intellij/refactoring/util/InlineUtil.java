@@ -323,11 +323,18 @@ public class InlineUtil {
       return TailCallType.Return;
     }
     if (callParent instanceof PsiExpressionStatement) {
-      PsiStatement callStatement = (PsiStatement)callParent;
-      PsiMethod callerMethod = PsiTreeUtil.getParentOfType(callStatement, PsiMethod.class);
-      if (callerMethod != null) {
-        final PsiStatement[] psiStatements = callerMethod.getBody().getStatements();
-        return psiStatements.length > 0 && callStatement == psiStatements [psiStatements.length-1] ? TailCallType.Simple : TailCallType.None;
+      PsiStatement curElement = (PsiStatement)callParent;
+      while (true) {
+        if (PsiTreeUtil.getNextSiblingOfType(curElement, PsiStatement.class) != null) return TailCallType.None;
+        PsiElement parent = curElement.getParent();
+        if (parent instanceof PsiCodeBlock) {
+          PsiElement blockParent = parent.getParent();
+          if (blockParent instanceof PsiMethod || blockParent instanceof PsiLambdaExpression) return TailCallType.Simple;
+          if (!(blockParent instanceof PsiBlockStatement)) return TailCallType.None;
+          parent = blockParent.getParent();
+        }
+        if (!(parent instanceof PsiLabeledStatement) && !(parent instanceof PsiIfStatement)) return TailCallType.None;
+        curElement = (PsiStatement)parent;
       }
     }
     return TailCallType.None;
