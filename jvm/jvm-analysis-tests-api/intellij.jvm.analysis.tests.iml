@@ -7,5 +7,7 @@
     </content>
     <orderEntry type="inheritedJdk" />
     <orderEntry type="sourceFolder" forTests="false" />
+    <orderEntry type="module" module-name="intellij.jvm.analysis.impl" exported="" />
+    <orderEntry type="module" module-name="intellij.java.testFramework" exported="" />
   </component>
 </module>

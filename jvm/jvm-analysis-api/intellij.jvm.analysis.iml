@@ -7,5 +7,9 @@
     </content>
     <orderEntry type="inheritedJdk" />
     <orderEntry type="sourceFolder" forTests="false" />
+    <orderEntry type="module" module-name="intellij.platform.uast" exported="" />
+    <orderEntry type="module" module-name="intellij.java.psi" exported="" />
+    <orderEntry type="module" module-name="intellij.platform.analysis" exported="" />
+    <orderEntry type="module" module-name="intellij.java.impl" exported="" />
   </component>
 </module>

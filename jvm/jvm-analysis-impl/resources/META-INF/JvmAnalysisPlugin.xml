@@ -1,0 +1,5 @@
+<idea-plugin>
+  <resource-bundle>com.intellij.jvm.analysis.JvmAnalysisBundle</resource-bundle>
+  <extensions defaultExtensionNs="com.intellij">
+  </extensions>
+</idea-plugin>
