@@ -456,7 +456,7 @@ public class BoundedWildcardInspection extends AbstractBaseJavaLocalInspectionTo
     if (!(parent instanceof PsiAssignmentExpression) || ((PsiAssignmentExpression)parent).getOperationTokenType() != JavaTokenType.EQ) return null;
     PsiExpression r = ((PsiAssignmentExpression)parent).getRExpression();
     if (!PsiTreeUtil.isAncestor(r, refElement, false)) return null;
-    PsiExpression l = ((PsiAssignmentExpression)parent).getLExpression();
+    PsiExpression l = PsiUtil.skipParenthesizedExprDown(((PsiAssignmentExpression)parent).getLExpression());
     if (!(l instanceof PsiReferenceExpression)) return null;
     PsiReferenceExpression lExpression = (PsiReferenceExpression)l;
     PsiExpression lQualifier = lExpression.getQualifierExpression();
