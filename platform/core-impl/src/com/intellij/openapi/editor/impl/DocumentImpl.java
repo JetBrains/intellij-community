@@ -48,6 +48,9 @@ import org.jetbrains.annotations.TestOnly;
 
 import java.beans.PropertyChangeListener;
 import java.beans.PropertyChangeSupport;
+import java.lang.ref.Reference;
+import java.lang.ref.ReferenceQueue;
+import java.lang.ref.WeakReference;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -135,6 +138,47 @@ public class DocumentImpl extends UserDataHolderBase implements DocumentEx {
     setCyclicBufferSize(0);
     setModificationStamp(LocalTimeCounter.currentTime());
     myAssertThreading = !forUseInNonAWTThread;
+  }
+
+  static final Key<Reference<RangeMarkerTree<RangeMarkerEx>>> RANGE_MARKERS_KEY = Key.create("RANGE_MARKERS_KEY");
+  static final Key<Reference<RangeMarkerTree<RangeMarkerEx>>> PERSISTENT_RANGE_MARKERS_KEY = Key.create("PERSISTENT_RANGE_MARKERS_KEY");
+  public void documentCreatedFrom(@NotNull VirtualFile f) {
+    processQueue();
+    getSaveRMTree(f, RANGE_MARKERS_KEY, myRangeMarkers);
+    getSaveRMTree(f, PERSISTENT_RANGE_MARKERS_KEY, myPersistentRangeMarkers);
+  }
+
+  private void getSaveRMTree(@NotNull VirtualFile f,
+                             @NotNull Key<Reference<RangeMarkerTree<RangeMarkerEx>>> key, @NotNull RangeMarkerTree<RangeMarkerEx> tree) {
+    Reference<RangeMarkerTree<RangeMarkerEx>>
+      ref = ((UserDataHolderEx)f).putUserDataIfAbsent(key, new RMTreeReference(tree, f));
+    RangeMarkerTree<RangeMarkerEx> from = ref.get();
+    if (from == tree || from == null) {
+      return;
+    }
+    from.processAll(r ->{
+      if (r.isValid()) {
+        registerRangeMarker(r, r.getStartOffset(), r.getEndOffset(), r.isGreedyToLeft(), r.isGreedyToRight(), 0);
+      }
+      return true;
+    });
+  }
+
+  private static class RMTreeReference extends WeakReference<RangeMarkerTree<RangeMarkerEx>> {
+    @NotNull private final VirtualFile virtualFile;
+
+    RMTreeReference(@NotNull RangeMarkerTree<RangeMarkerEx> referent, @NotNull VirtualFile virtualFile) {
+      super(referent, copyableInfoQueue);
+      this.virtualFile = virtualFile;
+    }
+  }
+  private static final ReferenceQueue<RangeMarkerTree<RangeMarkerEx>> copyableInfoQueue = new ReferenceQueue<>();
+  static void processQueue() {
+    RMTreeReference ref;
+    while ((ref = (RMTreeReference)copyableInfoQueue.poll()) != null) {
+      ref.virtualFile.replace(RANGE_MARKERS_KEY, ref, null);
+      ref.virtualFile.replace(PERSISTENT_RANGE_MARKERS_KEY, ref, null);
+    }
   }
 
   public boolean setAcceptSlashR(boolean accept) {
