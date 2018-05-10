@@ -484,6 +484,7 @@ fun KotlinGuiTestCase.checkKotlinLibInProject(projectPath: String,
 fun KotlinGuiTestCase.closeProject() {
   ideFrame {
     logUIStep("Close the project")
+    waitAMoment()
     closeProject()
   }
   // TODO: change to conditional pause until ide is closed
