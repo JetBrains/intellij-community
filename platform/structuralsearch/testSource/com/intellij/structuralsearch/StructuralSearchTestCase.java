@@ -56,12 +56,12 @@ public abstract class StructuralSearchTestCase extends LightQuickFixTestCase {
     options.setFileType(patternFileType);
     options.setDialect(patternLanguage);
 
-    final String message = checkApplicableConstraints();
+    final String message = checkApplicableConstraints(options);
     assertNull(message, message);
     return testMatcher.testFindMatches(in, options, true, sourceFileType, sourceExtension, physicalSourceFile);
   }
 
-  public String checkApplicableConstraints() {
+  public static String checkApplicableConstraints(MatchOptions options) {
     final CompiledPattern compiledPattern = PatternCompiler.compilePattern(getProject(), options, true);
     final StructuralSearchProfile profile = StructuralSearchUtil.getProfileByFileType(options.getFileType());
     assert profile != null;

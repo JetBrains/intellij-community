@@ -33,6 +33,10 @@ public abstract class StructuralReplaceTestCase extends LightQuickFixTestCase {
   }
 
   protected String replace(String in, String what, String by, boolean sourceIsFile) {
+    final MatchOptions matchOptions = this.options.getMatchOptions();
+    matchOptions.fillSearchCriteria(what);
+    final String message = StructuralSearchTestCase.checkApplicableConstraints(matchOptions);
+    assertNull(message, message);
     return Replacer.testReplace(in, what, by, this.options, getProject(), sourceIsFile);
   }
 }

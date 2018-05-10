@@ -2453,10 +2453,10 @@ public class StructuralSearchTest extends StructuralSearchTestCase {
 
   public void testNotApplicableConstraints() {
     options.fillSearchCriteria("class A extends '_B* {}");
-    assertEquals("MAXIMUM UNLIMITED not applicable for B", checkApplicableConstraints());
+    assertEquals("MAXIMUM UNLIMITED not applicable for B", checkApplicableConstraints(options));
 
     options.fillSearchCriteria("'_a?.'_b?");
-    assertEquals("MINIMUM ZERO not applicable for b", checkApplicableConstraints());
+    assertEquals("MINIMUM ZERO not applicable for b", checkApplicableConstraints(options));
   }
 
   public void testFindInnerClass() {

@@ -889,7 +889,7 @@ public class StructuralReplaceTest extends StructuralReplaceTestCase {
                  "}\n" +
                  "}";
     String s14 = "class '_Class extends Thread {\n" +
-                 "  '_Class('_ParameterType* '_ParameterName*) {\n" +
+                 "  '_Class('_ParameterType '_ParameterName*) {\n" +
                  "\t  super (CustomThreadGroup.getThreadGroup(), '_superarg* );\n" +
                  "    '_Statement*;\n" +
                  "  }\n" +

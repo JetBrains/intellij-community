@@ -881,6 +881,9 @@ public class JavaStructuralSearchProfile extends StructuralSearchProfile {
 
     final PsiElement grandParent = parent.getParent();
     if (grandParent instanceof PsiReferenceList) return true;
+    if (grandParent instanceof PsiPolyadicExpression) {
+      return ((PsiPolyadicExpression)grandParent).getOperands().length > 2;
+    }
     if (parent instanceof PsiReferenceExpression) {
       if (grandParent instanceof PsiReferenceExpression) return true;
       if (grandParent instanceof PsiReturnStatement) return true;
