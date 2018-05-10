@@ -20,7 +20,7 @@ import com.intellij.stats.experiment.ExperimentDecision
 import com.intellij.stats.network.service.RequestService
 import com.intellij.stats.sender.StatisticSender
 import com.intellij.stats.storage.UniqueFilesProvider
-import com.nhaarman.mockito_kotlin.mock
+import org.mockito.Mockito
 import java.io.File
 
 
@@ -35,7 +35,7 @@ internal class TestExperimentDecision: ExperimentDecision {
 internal class TestRequestService : RequestService() {
 
     companion object {
-        var mock: RequestService = mock()
+        var mock: RequestService = Mockito.mock(RequestService::class.java)
     }
 
     override fun post(url: String, params: Map<String, String>) = mock.post(url, params)

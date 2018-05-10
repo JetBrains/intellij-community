@@ -1,6 +1,6 @@
 package com.intellij.stats.ngram.lang
 
-import com.intellij.ide.highlighter.JavaFileType
+//import com.intellij.ide.highlighter.JavaFileType
 import com.intellij.lang.ASTNode
 import com.intellij.lang.Language
 import com.intellij.openapi.fileTypes.FileType
@@ -12,7 +12,7 @@ class JavaElementProvider : AbstractNGramElementProvider() {
 
     override fun getSupportedFileTypes(): Set<FileType> {
         if (Language.getRegisteredLanguages().find { "Java".equals(it.displayName, ignoreCase = true) } != null) {
-            return setOf(JavaFileType.INSTANCE)
+//            return setOf(JavaFileType.INSTANCE)
         }
 
         return emptySet()

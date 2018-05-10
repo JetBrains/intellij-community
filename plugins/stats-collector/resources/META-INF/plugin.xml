@@ -1,35 +1,16 @@
 <idea-plugin>
   <id>com.intellij.stats.completion</id>
-  <name>Completion Stats Collector</name>
-  <version>0.1.1</version>
+  <name>Completion Stats Collector (EAP)</name>
+  <version>1</version>
   <vendor email="vitaliy.bibaev@jetbrains.com" url="http://www.jetbrains.com">JetBrains</vendor>
 
   <description><![CDATA[
       This plugin collects data about your usage of code completion, anonymises and sends it to us.
       Note, the plugin doesn't send any of your personal data or code. All we send is just numbers
       calculated based on your completion usage patterns.
-      <p>
-      Ever since 0.1.0, the plugin builds an index with frequencies of all 2-3-4-5 grams over the AST of the project
-      source code files. This can increase the indexing time of the source code and is disabled by default. The plugin
-      will ask for permission for each opened project. If you change your mind and want to forbid the indexing, please
-      switch off the "Enable NGram indexing for completion" option (Help - Find Action...). As usual, no source code
-      or personal data will be collected.
     ]]></description>
 
   <change-notes><![CDATA[
-        0.1.1 <br>
-        <ul>
-            <li> Fix a deadlock (IDEA-190432) </li>
-        </ul>
-        0.1.0 <br>
-        <ul>
-            <li> Collect AST n-gram frequencies for each lookup items. </li>
-        </ul>
-        0.0.538 <br>
-        <ul>
-            <li> Collect data to discover long-term patterns in completion usage. </li>
-        </ul>
-
     ]]>
   </change-notes>
 
@@ -45,7 +26,7 @@
 
   <extensions defaultExtensionNs="com.intellij">
 
-    <stats.ngram.ngramElementProvider implementation="com.intellij.stats.ngram.lang.JavaElementProvider"/>
+    <!--<stats.ngram.ngramElementProvider implementation="com.intellij.stats.ngram.lang.JavaElementProvider"/>-->
 
     <applicationService serviceInterface="com.intellij.stats.completion.CompletionLoggerProvider"
                         serviceImplementation="com.intellij.stats.completion.CompletionFileLoggerProvider">

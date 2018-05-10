@@ -15,10 +15,9 @@
  */
 package com.intellij.sorting
 
-import com.jetbrains.completion.feature.FeatureManager
 import com.intellij.openapi.components.ApplicationComponent
 import com.intellij.openapi.components.ServiceManager
-import com.jetbrains.completion.ranker.CompletionRanker
+import com.jetbrains.completion.feature.FeatureManager
 import com.jetbrains.completion.feature.Transformer
 
 
@@ -42,11 +41,12 @@ class FeatureTransformerProvider(featureManager: FeatureManager) : ApplicationCo
 class MLRanker(provider: FeatureTransformerProvider) : Ranker {
 
     private val featureTransformer = provider.featureTransformer
-    private val ranker = CompletionRanker()
+    //    private val ranker = CompletionRanker()
 
     override fun rank(relevance: Map<String, Any>, userFactors: Map<String, Any?>): Double {
         val featureArray = featureTransformer.featureArray(relevance, userFactors)
-        return ranker.rank(featureArray)
+        //        return ranker.rank(featureArray)
+        return 0.0;
     }
 
 }

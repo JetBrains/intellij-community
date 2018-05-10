@@ -27,16 +27,14 @@ import com.intellij.openapi.extensions.ExtensionPointName
 import com.intellij.openapi.extensions.Extensions
 import com.intellij.openapi.extensions.LoadingOrder
 import com.intellij.psi.WeigherExtensionPoint
-import com.intellij.stats.experiment.WebServiceStatusProvider
 import com.intellij.stats.experiment.WebServiceStatus
+import com.intellij.stats.experiment.WebServiceStatusProvider
 import com.intellij.stats.network.service.RequestService
 import com.intellij.stats.network.service.ResponseData
 import com.jetbrains.completion.feature.impl.FeatureUtils
-import com.nhaarman.mockito_kotlin.any
-import com.nhaarman.mockito_kotlin.mock
 import org.assertj.core.api.Assertions
-import org.mockito.ArgumentMatchers.anyMap
-import org.mockito.ArgumentMatchers.anyString
+import org.mockito.ArgumentMatchers.*
+import org.mockito.Mockito
 import java.io.File
 
 
@@ -56,18 +54,16 @@ object WebServiceMock {
 
     fun mockRequestService(performExperiment: Boolean): RequestService {
         val response = ResponseData(200, status(performExperiment))
-        return mock {
-            on { get(anyString()) }.thenAnswer {
+        return Mockito.mock(RequestService::class.java).apply {
+            Mockito.`when`(get(anyString())).thenAnswer {
                 val url = it.arguments.first() as String
                 if (url == WebServiceStatusProvider.STATUS_URL) response else throw NOT_SUPPOSED_TO_BE_CALLED
             }
-            on { post(anyString(), anyMap()) }.thenThrow(NOT_SUPPOSED_TO_BE_CALLED)
-            on { postZipped(anyString(), any()) }.thenThrow(NOT_SUPPOSED_TO_BE_CALLED)
-            on { post(anyString(), any<File>()) }.thenThrow(NOT_SUPPOSED_TO_BE_CALLED)
+            Mockito.`when`(post(anyString(), anyMap())).thenThrow(NOT_SUPPOSED_TO_BE_CALLED)
+            Mockito.`when`(postZipped(anyString(), any())).thenThrow(NOT_SUPPOSED_TO_BE_CALLED)
+            Mockito.`when`(post(anyString(), any<File>())).thenThrow(NOT_SUPPOSED_TO_BE_CALLED)
         }
     }
-
-
 }
 
 
