@@ -3,6 +3,7 @@ package com.intellij.openapi.externalSystem.service;
 
 import com.intellij.CommonBundle;
 import com.intellij.configurationStore.StorageUtilKt;
+import com.intellij.core.JavaCoreBundle;
 import com.intellij.debugger.ui.DebuggerView;
 import com.intellij.execution.DefaultExecutionResult;
 import com.intellij.execution.ExecutionException;
@@ -127,6 +128,7 @@ public class RemoteExternalSystemCommunicationManager implements ExternalSystemC
         ContainerUtil.addIfNotNull(classPath, PathUtil.getJarPathForClass(ExternalSystemTaskNotificationListener.class));
         ContainerUtil.addIfNotNull(classPath, PathUtil.getJarPathForClass(StdModuleTypes.class));
         ContainerUtil.addIfNotNull(classPath, PathUtil.getJarPathForClass(JavaModuleType.class));
+        ExternalSystemApiUtil.addBundle(params.getClassPath(), "messages.JavaCoreBundle", JavaCoreBundle.class);
         ContainerUtil.addIfNotNull(classPath, PathUtil.getJarPathForClass(ModuleType.class));
         ContainerUtil.addIfNotNull(classPath, PathUtil.getJarPathForClass(EmptyModuleType.class));
         ContainerUtil.addIfNotNull(classPath, PathUtil.getJarPathForClass(LanguageLevel.class));
