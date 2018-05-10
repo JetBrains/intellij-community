@@ -2,6 +2,8 @@
 package com.intellij.ide.projectWizard.kotlin.model
 
 import com.intellij.testGuiFramework.impl.GuiTestCase
+import com.intellij.testGuiFramework.impl.LogActionsDuringTest
+import com.intellij.testGuiFramework.impl.ScreenshotsDuringTest
 import com.intellij.testGuiFramework.util.logEndTest
 import com.intellij.testGuiFramework.util.logStartTest
 import org.hamcrest.Matcher
@@ -17,6 +19,14 @@ open class KotlinGuiTestCase : GuiTestCase() {
   @Rule
   @JvmField
   val testMethod = TestName()
+
+  @Rule
+  @JvmField
+  val screenshotsDuringTest = ScreenshotsDuringTest()
+
+  @Rule
+  @JvmField
+  val logActionsDuringTest = LogActionsDuringTest()
 
   @get:Rule
   val testRootPath: TemporaryFolder by lazy {
