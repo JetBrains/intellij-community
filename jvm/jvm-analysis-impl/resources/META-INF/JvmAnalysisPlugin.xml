@@ -1,5 +1,8 @@
 <idea-plugin>
   <resource-bundle>com.intellij.jvm.analysis.JvmAnalysisBundle</resource-bundle>
   <extensions defaultExtensionNs="com.intellij">
+    <localInspection language="UAST" shortName="UnstableApiUsage" displayName="Unstable API usage"
+                     groupKey="inspections.group.name" enabledByDefault="true" level="WARNING"
+                     implementationClass="com.intellij.codeInspection.UnstableApiUsageInspection"/>
   </extensions>
 </idea-plugin>

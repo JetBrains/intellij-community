@@ -182,10 +182,6 @@
                      groupKey="inspections.group.name"
                      enabledByDefault="true" level="ERROR"
                      implementationClass="org.jetbrains.idea.devkit.inspections.PresentationAnnotationInspection"/>
-    <localInspection language="UAST" shortName="UnstableApiUsage" displayName="Unstable API usage"
-                     groupKey="inspections.group.name" enabledByDefault="true" level="WARNING"
-                     implementationClass="org.jetbrains.idea.devkit.inspections.UnstableApiUsageInspection"/>
-
 
     <moduleConfigurationEditorProvider implementation="org.jetbrains.idea.devkit.module.PluginModuleEditorsProvider"/>
     <implicitUsageProvider implementation="org.jetbrains.idea.devkit.inspections.DevKitImplicitUsageProvider"/>
