@@ -79,7 +79,8 @@ fun KotlinGuiTestCase.checkInProjectStructure(actions: KotlinGuiTestCase.()->Uni
   logTestStep("Check structure of gradle project")
   ideFrame {
     waitAMoment()
-    invokeMainMenu("ShowProjectStructureSettings")
+//    invokeMainMenu("ShowProjectStructureSettings")
+    shortcut(Modifier.CONTROL + Modifier.SHIFT + Modifier.ALT + Key.S)
     dialog("Project Structure") {
       try {
         actions()
