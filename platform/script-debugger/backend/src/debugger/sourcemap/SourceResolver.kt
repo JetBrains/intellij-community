@@ -170,13 +170,14 @@ fun canonicalizeUrl(url: String, baseUrl: Url?, trimFileScheme: Boolean, baseUrl
 
 fun doCanonicalize(url: String, baseUrl: Url, baseUrlIsFile: Boolean, asLocalFileIfAbsoluteAndExists: Boolean): Url {
   val path = canonicalizePath(url, baseUrl, baseUrlIsFile)
-  if (baseUrl.scheme == null && baseUrl.isInLocalFileSystem) {
+  if ((baseUrl.scheme == null && baseUrl.isInLocalFileSystem) ||
+      asLocalFileIfAbsoluteAndExists && SourceResolver.isAbsolute(path) && File(path).exists()) {
+    // file:///home/user/foo.js.map, foo.ts -> /home/user/foo.ts (baseUrl is in local fs)
+    // http://localhost/home/user/foo.js.map, foo.ts -> /home/user/foo.ts (File(path) exists)
     return Urls.newLocalFileUrl(path)
   }
-  else if (asLocalFileIfAbsoluteAndExists && SourceResolver.isAbsolute(path)) {
-    return if (File(path).exists()) Urls.newLocalFileUrl(path) else Urls.parse(url, false) ?: Urls.newUri(null, url)
-  }
   else {
+    // new url from path and baseUrl's scheme and authority
     val split = path.split('?', limit = 2)
     return Urls.newUrl(baseUrl.scheme!!, baseUrl.authority!!, split[0], if (split.size > 1) '?' + split[1] else null)
   }
