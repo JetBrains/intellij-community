@@ -128,22 +128,20 @@ private fun doConnect(bootstrap: Bootstrap,
       return ConnectToChannelResult(channel)
     }
     catch (e: IOException) {
-      if (stopCondition.value(null)) {
-        return ConnectToChannelResult()
-      }
-      else if (maxAttemptCount == -1) {
-        sleep(300)?.let {
-          return ConnectToChannelResult(it)
+      when {
+        stopCondition.value(null) -> return ConnectToChannelResult()
+        maxAttemptCount == -1 -> {
+          sleep(300)?.let {
+            return ConnectToChannelResult(it)
+          }
+          attemptCount++
         }
-        attemptCount++
-      }
-      else if (++attemptCount < maxAttemptCount) {
-        sleep(attemptCount * NettyUtil.MIN_START_TIME)?.let {
-          return ConnectToChannelResult(it)
+        ++attemptCount < maxAttemptCount -> {
+          sleep(attemptCount * NettyUtil.MIN_START_TIME)?.let {
+            return ConnectToChannelResult(it)
+          }
         }
-      }
-      else {
-        return ConnectToChannelResult(e)
+        else -> return ConnectToChannelResult(e)
       }
     }
   }
@@ -305,6 +303,7 @@ fun ByteBuf.readUtf8(): String = toString(Charsets.UTF_8)
 
 fun ByteBuf.writeUtf8(data: CharSequence) = writeCharSequence(data, Charsets.UTF_8)
 
+@Suppress("FunctionName")
 fun MultiThreadEventLoopGroup(workerCount: Int, threadFactory: ThreadFactory): MultithreadEventLoopGroup {
   if (SystemInfo.isMacOSSierra && SystemProperties.getBooleanProperty("native.net.io", false)) {
     try {
@@ -318,6 +317,7 @@ fun MultiThreadEventLoopGroup(workerCount: Int, threadFactory: ThreadFactory): M
   return NioEventLoopGroup(workerCount, threadFactory)
 }
 
+@Suppress("FunctionName")
 fun MultiThreadEventLoopGroup(workerCount: Int): MultithreadEventLoopGroup {
   if (SystemInfo.isMacOSSierra && SystemProperties.getBooleanProperty("native.net.io", false)) {
     try {

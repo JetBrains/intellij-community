@@ -14,10 +14,7 @@ import com.intellij.openapi.application.ex.ApplicationInfoEx;
 import com.intellij.openapi.application.impl.ApplicationImpl;
 import com.intellij.openapi.extensions.PluginDescriptor;
 import com.intellij.openapi.extensions.PluginId;
-import com.intellij.openapi.options.Configurable;
-import com.intellij.openapi.options.ConfigurationException;
-import com.intellij.openapi.options.OptionalConfigurable;
-import com.intellij.openapi.options.SearchableConfigurable;
+import com.intellij.openapi.options.*;
 import com.intellij.openapi.options.newEditor.SettingsDialog;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.ui.DialogWrapper;
@@ -174,13 +171,9 @@ public class PluginManagerConfigurableNew
     actions.add(new DumbAwareAction("Manage Plugin Repositories...") {
       @Override
       public void actionPerformed(AnActionEvent e) {
-        // TODO: Auto-generated method stub
-      }
-    });
-    actions.add(new DumbAwareAction("Install Plugin from Disk...") {
-      @Override
-      public void actionPerformed(AnActionEvent e) {
-        // TODO: Auto-generated method stub
+        if (ShowSettingsUtil.getInstance().editConfigurable(panel, new PluginHostsConfigurable())) {
+          // TODO: Auto-generated method stub
+        }
       }
     });
     actions.add(new DumbAwareAction(IdeBundle.message("button.http.proxy.settings")) {
@@ -189,6 +182,13 @@ public class PluginManagerConfigurableNew
         if (HttpConfigurable.editConfigurable(panel)) {
           // TODO: Auto-generated method stub
         }
+      }
+    });
+    actions.addSeparator();
+    actions.add(new DumbAwareAction("Install Plugin from Disk...") {
+      @Override
+      public void actionPerformed(AnActionEvent e) {
+        InstalledPluginsManagerMain.chooseAndInstall(myPluginsModel, pair -> myPluginsModel.appendOrUpdateDescriptor(pair.second), panel);
       }
     });
 
@@ -446,6 +446,8 @@ public class PluginManagerConfigurableNew
       panel.addGroup(downloaded);
       myPluginsModel.addEnabledGroup(downloaded); // XXX: set for update page
     }
+
+    myPluginsModel.setDownloadedGroup(panel, downloaded);
 
     bundled.sortByName();
     bundled.titleWithCount(bundledEnabled);
@@ -876,9 +878,18 @@ public class PluginManagerConfigurableNew
       removeAll();
     }
 
+    public void setSelection(@NotNull CellPluginComponent component) {
+      myEventHandler.setSelection(component);
+    }
+
     public void addGroup(@NotNull PluginsGroup group) {
+      addGroup(group, false);
+    }
+
+    public void addGroup(@NotNull PluginsGroup group, boolean top) {
       UIPluginGroup uiGroup = new UIPluginGroup();
-      myGroups.add(uiGroup);
+      group.ui = uiGroup;
+      myGroups.add(top ? 0 : myGroups.size(), uiGroup);
 
       OpaquePanel panel = new OpaquePanel(new BorderLayout(), new JBColor(0xF7F7F7, 0x3D3F41));
       panel.setBorder(JBUI.Borders.empty(4, 13));
@@ -892,16 +903,56 @@ public class PluginManagerConfigurableNew
         panel.add(group.rightAction, BorderLayout.EAST);
       }
 
-      add(panel);
+      add(panel, top ? 0 : -1);
       uiGroup.panel = panel;
+
+      int index = top ? 1 : -1;
 
       for (IdeaPluginDescriptor descriptor : group.descriptors) {
         CellPluginComponent pluginComponent = myFunction.fun(descriptor);
         uiGroup.plugins.add(pluginComponent);
-        add(pluginComponent);
-        myEventHandler.addCell(pluginComponent);
+        add(pluginComponent, index);
+        myEventHandler.addCell(pluginComponent, index);
         pluginComponent.setListeners(myListener, myEventHandler);
+        if (top) {
+          index++;
+        }
       }
+    }
+
+    public void addToGroup(@NotNull PluginsGroup group, @NotNull IdeaPluginDescriptor descriptor) {
+      int index = group.addWithIndex(descriptor);
+      CellPluginComponent anchor = null;
+      int uiIndex = -1;
+
+      if (index == group.ui.plugins.size()) {
+        int groupIndex = myGroups.indexOf(group.ui);
+        if (groupIndex < myGroups.size() - 1) {
+          UIPluginGroup nextGroup = myGroups.get(groupIndex + 1);
+          anchor = nextGroup.plugins.get(0);
+          uiIndex = getComponentIndex(nextGroup.panel);
+        }
+      }
+      else {
+        anchor = group.ui.plugins.get(index);
+        uiIndex = getComponentIndex(anchor);
+      }
+
+      CellPluginComponent pluginComponent = myFunction.fun(descriptor);
+      group.ui.plugins.add(index, pluginComponent);
+      add(pluginComponent, uiIndex);
+      myEventHandler.addCell(pluginComponent, anchor);
+      pluginComponent.setListeners(myListener, myEventHandler);
+    }
+
+    private int getComponentIndex(@NotNull Component component) {
+      int components = getComponentCount();
+      for (int i = 0; i < components; i++) {
+        if (getComponent(i) == component) {
+          return i;
+        }
+      }
+      return -1;
     }
 
     public void initialSelection() {
@@ -915,7 +966,10 @@ public class PluginManagerConfigurableNew
     public void connect(@NotNull PluginsGroupComponent container) {
     }
 
-    public void addCell(@NotNull CellPluginComponent component) {
+    public void addCell(@NotNull CellPluginComponent component, int index) {
+    }
+
+    public void addCell(@NotNull CellPluginComponent component, @Nullable CellPluginComponent anchor) {
     }
 
     public void add(@NotNull Component component) {
@@ -925,6 +979,9 @@ public class PluginManagerConfigurableNew
     }
 
     public void initialSelection() {
+    }
+
+    public void setSelection(@NotNull CellPluginComponent component) {
     }
 
     public void clear() {
@@ -1126,8 +1183,23 @@ public class PluginManagerConfigurableNew
     }
 
     @Override
-    public void addCell(@NotNull CellPluginComponent component) {
-      myComponents.add(component);
+    public void addCell(@NotNull CellPluginComponent component, int index) {
+      if (index == -1) {
+        myComponents.add(component);
+      }
+      else {
+        myComponents.add(index, component);
+      }
+    }
+
+    @Override
+    public void addCell(@NotNull CellPluginComponent component, @Nullable CellPluginComponent anchor) {
+      if (anchor == null) {
+        myComponents.add(component);
+      }
+      else {
+        myComponents.add(myComponents.indexOf(anchor), component);
+      }
     }
 
     @Override
@@ -1316,6 +1388,12 @@ public class PluginManagerConfigurableNew
         clearSelectionWithout(index);
         singleSelection(component, index);
       }
+    }
+
+    @Override
+    public void setSelection(@NotNull CellPluginComponent component) {
+      clearSelectionWithout(-1);
+      singleSelection(component, getIndex(component));
     }
 
     private void singleSelection(int index) {
@@ -1545,7 +1623,8 @@ public class PluginManagerConfigurableNew
     public String title;
     public JLabel titleLabel;
     public LinkLabel rightAction;
-    public List<IdeaPluginDescriptor> descriptors = new ArrayList<>();
+    public final List<IdeaPluginDescriptor> descriptors = new ArrayList<>();
+    public UIPluginGroup ui;
 
     public PluginsGroup(@NotNull String title) {
       myTitlePrefix = title;
@@ -1576,6 +1655,12 @@ public class PluginManagerConfigurableNew
       if (titleLabel != null) {
         titleLabel.setText(title);
       }
+    }
+
+    public int addWithIndex(@NotNull IdeaPluginDescriptor descriptor) {
+      descriptors.add(descriptor);
+      sortByName();
+      return descriptors.indexOf(descriptor);
     }
 
     public void sortByName() {
@@ -3188,6 +3273,8 @@ public class PluginManagerConfigurableNew
     private final Map<String, ListPluginComponent> myListMap = new HashMap<>();
     private final Map<String, GridCellPluginComponent> myGridMap = new HashMap<>();
     private final List<PluginsGroup> myEnabledGroups = new ArrayList<>();
+    private PluginsGroupComponent myDownloadedPanel;
+    private PluginsGroup myDownloaded;
 
     public boolean needRestart;
     public boolean createShutdownCallback = true;
@@ -3204,6 +3291,37 @@ public class PluginManagerConfigurableNew
 
     public void addEnabledGroup(@NotNull PluginsGroup group) {
       myEnabledGroups.add(group);
+    }
+
+    public void setDownloadedGroup(@NotNull PluginsGroupComponent panel, @NotNull PluginsGroup downloaded) {
+      myDownloadedPanel = panel;
+      myDownloaded = downloaded;
+    }
+
+    @Override
+    public void appendOrUpdateDescriptor(@NotNull IdeaPluginDescriptor descriptor) {
+      super.appendOrUpdateDescriptor(descriptor);
+      needRestart = true;
+      if (myDownloaded == null) {
+        return;
+      }
+
+      if (myDownloaded.ui == null) {
+        myDownloaded.descriptors.add(descriptor);
+        myDownloaded.titleWithEnabled(this);
+
+        myDownloadedPanel.addGroup(myDownloaded, true);
+        myDownloadedPanel.setSelection(myDownloaded.ui.plugins.get(0));
+        myDownloadedPanel.doLayout();
+
+        addEnabledGroup(myDownloaded);
+      }
+      else {
+        myDownloadedPanel.addToGroup(myDownloaded, descriptor);
+        myDownloaded.titleWithEnabled(this);
+        myDownloadedPanel.setSelection(myDownloaded.ui.plugins.get(myDownloaded.descriptors.indexOf(descriptor)));
+        myDownloadedPanel.doLayout();
+      }
     }
 
     public boolean isEnabled(@NotNull IdeaPluginDescriptor plugin) {

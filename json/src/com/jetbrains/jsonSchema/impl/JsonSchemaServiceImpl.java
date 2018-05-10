@@ -93,7 +93,7 @@ public class JsonSchemaServiceImpl implements JsonSchemaService {
   @Nullable
   public VirtualFile findSchemaFileByReference(@NotNull String reference, @Nullable VirtualFile referent) {
     final Optional<VirtualFile> optional = findBuiltInSchemaByReference(reference);
-    return optional.orElseGet(() -> JsonFileResolver.resolveSchemaByReference(referent, JsonSchemaService.normalizeId(reference)));
+    return optional.orElseGet(() -> JsonFileResolver.resolveSchemaByReference(referent, JsonSchemaService.normalizeId(reference), myProject));
   }
 
   private Optional<VirtualFile> findBuiltInSchemaByReference(@NotNull String reference) {
@@ -181,10 +181,15 @@ public class JsonSchemaServiceImpl implements JsonSchemaService {
     List<JsonSchemaInfo> results = ContainerUtil.newArrayListWithCapacity(schemas.size() + providers.size());
     Set<String> processedRemotes = ContainerUtil.newHashSet();
     for (JsonSchemaFileProvider provider: providers) {
-      if (provider.isUserVisible()
-          && provider.getRemoteSource() != null  /*currently we're unable to handle providers without URLs properly*/
-          && processedRemotes.add(provider.getRemoteSource())) {
-        results.add(new JsonSchemaInfo(provider));
+      if (provider.isUserVisible()) {
+        if (provider.getRemoteSource() != null) {
+          if (processedRemotes.add(provider.getRemoteSource())) {
+            results.add(new JsonSchemaInfo(provider));
+          }
+        }
+        else {
+          results.add(new JsonSchemaInfo(provider));
+        }
       }
     }
 

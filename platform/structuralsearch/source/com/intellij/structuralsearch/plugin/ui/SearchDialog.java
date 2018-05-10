@@ -170,8 +170,9 @@ public class SearchDialog extends DialogWrapper {
     myAlarm.addRequest(() -> {
       try {
         final boolean valid = isValid();
+        final boolean compiled = isCompiled();
         ApplicationManager.getApplication().invokeLater(() -> {
-          myEditVariablesButton.setEnabled(PatternCompiler.getLastCompiledPattern(myConfiguration.getMatchOptions()) != null);
+          myEditVariablesButton.setEnabled(compiled);
           getOKAction().setEnabled(valid);
         });
       }
@@ -182,6 +183,14 @@ public class SearchDialog extends DialogWrapper {
         Logger.getInstance(SearchDialog.class).error(e);
       }
     }, 250);
+  }
+
+  private boolean isCompiled() {
+    try {
+      return PatternCompiler.compilePattern(getProject(), myConfiguration.getMatchOptions(), false) != null;
+    } catch (MalformedPatternException e) {
+      return false;
+    }
   }
 
   protected void buildOptions(JPanel searchOptions) {
@@ -536,10 +545,6 @@ public class SearchDialog extends DialogWrapper {
 
           @Override
           public void actionPerformed(ActionEvent e) {
-            if (PatternCompiler.getLastCompiledPattern(myConfiguration.getMatchOptions()) == null) {
-              myEditVariablesButton.setEnabled(false);
-              return;
-            }
             new EditVarConstraintsDialog(
               searchContext.getProject(),
               myConfiguration,

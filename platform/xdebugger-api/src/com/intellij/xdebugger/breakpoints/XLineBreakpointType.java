@@ -83,8 +83,9 @@ public abstract class XLineBreakpointType<P extends XBreakpointProperties> exten
     return null;
   }
 
+  // Preserved for API compatibility
   public List<? extends AnAction> getAdditionalPopupMenuActions(@NotNull XLineBreakpoint<P> breakpoint, @Nullable XDebugSession currentSession) {
-    return Collections.emptyList();
+    return super.getAdditionalPopupMenuActions(breakpoint, currentSession);
   }
 
   public Icon getTemporaryIcon() {

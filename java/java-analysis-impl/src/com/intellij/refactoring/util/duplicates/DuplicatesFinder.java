@@ -48,7 +48,7 @@ public class DuplicatesFinder {
   private final List<PsiElement> myPatternAsList;
   private boolean myMultipleExitPoints;
   @Nullable private final ReturnValue myReturnValue;
-  private final boolean myWithExtractedParameters;
+  private final MatchType myMatchType;
   private final Set<PsiVariable> myEffectivelyLocal;
   private ComplexityHolder myPatternComplexityHolder;
   private ComplexityHolder myCandidateComplexityHolder;
@@ -57,7 +57,7 @@ public class DuplicatesFinder {
                           InputVariables parameters,
                           @Nullable ReturnValue returnValue,
                           @NotNull List<? extends PsiVariable> outputParameters,
-                          boolean withExtractedParameters,
+                          @NotNull MatchType matchType,
                           @Nullable Set<PsiVariable> effectivelyLocal) {
     myReturnValue = returnValue;
     LOG.assertTrue(pattern.length > 0);
@@ -65,7 +65,7 @@ public class DuplicatesFinder {
     myPatternAsList = Arrays.asList(myPattern);
     myParameters = parameters;
     myOutputParameters = outputParameters;
-    myWithExtractedParameters = withExtractedParameters;
+    myMatchType = matchType;
     myEffectivelyLocal = effectivelyLocal != null ? effectivelyLocal : Collections.emptySet();
 
     final PsiElement codeFragment = ControlFlowUtil.findCodeFragment(pattern[0]);
@@ -101,7 +101,7 @@ public class DuplicatesFinder {
                           InputVariables parameters,
                           @Nullable ReturnValue returnValue,
                           @NotNull List<? extends PsiVariable> outputParameters) {
-    this(pattern, parameters, returnValue, outputParameters, false, null);
+    this(pattern, parameters, returnValue, outputParameters, MatchType.EXACT, null);
   }
 
   public DuplicatesFinder(final PsiElement[] pattern,
@@ -435,10 +435,16 @@ public class DuplicatesFinder {
   @Nullable
   private Boolean matchParameter(@NotNull PsiElement pattern, @NotNull PsiElement candidate, @NotNull Match match) {
     final Parameter parameter = pattern.getUserData(PARAMETER);
-    if (parameter == null || myWithExtractedParameters && !parameter.isReferencedBy(pattern)) {
+    if (parameter == null || myMatchType == MatchType.EXACT && parameter.isFolded()) {
       return null;
     }
-    return match.putParameter(parameter, candidate);
+    if (!match.putParameter(parameter, candidate)) {
+      return false;
+    }
+    if (parameter.isFolded() && pattern instanceof PsiExpression && candidate instanceof PsiExpression) {
+      match.putFoldedExpressionMapping(parameter, (PsiExpression)pattern, (PsiExpression)candidate);
+    }
+    return true;
   }
 
   @Nullable
@@ -721,7 +727,7 @@ public class DuplicatesFinder {
 
   private boolean matchExtractableExpression(@Nullable PsiElement pattern, @Nullable PsiElement candidate,
                                              @NotNull List<PsiElement> candidates, @NotNull Match match) {
-    if (!myWithExtractedParameters || !(pattern instanceof PsiExpression) || !(candidate instanceof PsiExpression)) {
+    if (myMatchType == MatchType.EXACT || !(pattern instanceof PsiExpression) || !(candidate instanceof PsiExpression)) {
       return false;
     }
 
@@ -751,7 +757,7 @@ public class DuplicatesFinder {
   }
 
   private boolean matchExtractableVariable(@NotNull PsiElement pattern, @NotNull PsiElement candidate, @NotNull Match match) {
-    if (!myWithExtractedParameters || !(pattern instanceof PsiReferenceExpression) || !(candidate instanceof PsiReferenceExpression)) {
+    if (myMatchType == MatchType.EXACT || !(pattern instanceof PsiReferenceExpression) || !(candidate instanceof PsiReferenceExpression)) {
       return false;
     }
     if (myPattern.length == 1 && myPattern[0] == pattern) {
@@ -931,10 +937,16 @@ public class DuplicatesFinder {
   public static class Parameter {
     private final PsiVariable myVariable;
     private final PsiType myType;
+    private final boolean myFolded;
 
     public Parameter(@Nullable PsiVariable variable, @Nullable PsiType type) {
+      this(variable, type, false);
+    }
+
+    public Parameter(@Nullable PsiVariable variable, @Nullable PsiType type, boolean folded) {
       myVariable = variable;
       myType = type;
+      myFolded = folded;
     }
 
     public PsiVariable getVariable() {
@@ -945,8 +957,29 @@ public class DuplicatesFinder {
       return myType;
     }
 
-    public boolean isReferencedBy(@Nullable PsiElement pattern) {
-      return myVariable != null && pattern instanceof PsiReferenceExpression && ((PsiReferenceExpression)pattern).resolve() == myVariable;
+    public boolean isFolded() {
+      return myFolded;
+    }
+
+    public String toString() {
+      return myVariable + ", " + myType + (myFolded ? ", folded" : "");
+    }
+
+    @Override
+    public boolean equals(Object o) {
+      if (this == o) return true;
+      if (!(o instanceof Parameter)) return false;
+      Parameter p = (Parameter)o;
+      return Objects.equals(myVariable, p.myVariable) &&
+             Objects.equals(myType, p.myType) &&
+             myFolded == p.myFolded;
+    }
+
+    @Override
+    public int hashCode() {
+      return Objects.hash(myVariable, myType, myFolded);
     }
   }
+
+  public enum MatchType {EXACT, PARAMETRIZED, FOLDED}
 }

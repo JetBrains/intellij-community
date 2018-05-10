@@ -29,7 +29,6 @@ import java.util.List;
 
 public abstract class RecursiveLighterASTNodeWalkingVisitor extends LighterASTNodeVisitor {
   @NotNull private final LighterAST ast;
-  private final Stack<IndexedLighterASTNode[]> childrenStack = new Stack<>();
   private final Stack<IndexedLighterASTNode> parentStack = new Stack<>();
 
   // wrapper around LighterASTNode which remembers its position in parents' children list for performance
@@ -68,7 +67,6 @@ public abstract class RecursiveLighterASTNodeWalkingVisitor extends LighterASTNo
           indexedChildren[i-1].next = indexedNode;
         }
       }
-      childrenStack.push(indexedChildren);
       parentStack.push(element);
       return children.isEmpty() ? null : indexedChildren[0];
     }
@@ -88,7 +86,6 @@ public abstract class RecursiveLighterASTNodeWalkingVisitor extends LighterASTNo
         RecursiveLighterASTNodeWalkingVisitor.this.elementFinished(element.node);
 
         if (parentStack.peek() == element) { // getFirstChild returned nothing. otherwise getFirstChild() was not called, i.e. super.visitNode() was not called i.e. just ignore
-          childrenStack.pop();
           parentStack.pop();
         }
       }

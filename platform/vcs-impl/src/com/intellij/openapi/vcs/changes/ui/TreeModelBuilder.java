@@ -124,8 +124,16 @@ public class TreeModelBuilder {
   public static DefaultTreeModel buildFromChangeLists(@NotNull Project project,
                                                       @NotNull ChangesGroupingPolicyFactory grouping,
                                                       @NotNull Collection<? extends ChangeList> changeLists) {
+    return buildFromChangeLists(project, grouping, changeLists, false);
+  }
+
+  @NotNull
+  public static DefaultTreeModel buildFromChangeLists(@NotNull Project project,
+                                                      @NotNull ChangesGroupingPolicyFactory grouping,
+                                                      @NotNull Collection<? extends ChangeList> changeLists,
+                                                      boolean skipSingleDefaultChangelist) {
     return new TreeModelBuilder(project, grouping)
-      .setChangeLists(changeLists)
+      .setChangeLists(changeLists, skipSingleDefaultChangelist)
       .build();
   }
 
@@ -179,23 +187,39 @@ public class TreeModelBuilder {
   }
 
   @NotNull
-  public TreeModelBuilder setChangeLists(@NotNull Collection<? extends ChangeList> changeLists) {
+  public TreeModelBuilder setChangeLists(@NotNull Collection<? extends ChangeList> changeLists, boolean skipSingleDefaultChangeList) {
     final RemoteRevisionsCache revisionsCache = RemoteRevisionsCache.getInstance(myProject);
+    boolean skipChangeListNode = skipSingleDefaultChangeList && isSingleBlankChangeList(changeLists);
     for (ChangeList list : changeLists) {
       List<Change> changes = sorted(list.getChanges(), CHANGE_COMPARATOR);
       ChangeListRemoteState listRemoteState = new ChangeListRemoteState(changes.size());
-      ChangesBrowserChangeListNode listNode = new ChangesBrowserChangeListNode(myProject, list, listRemoteState);
-      listNode.markAsHelperNode();
 
-      myModel.insertNodeInto(listNode, myRoot, 0);
+      ChangesBrowserNode changesParent;
+      if (!skipChangeListNode) {
+        ChangesBrowserChangeListNode listNode = new ChangesBrowserChangeListNode(myProject, list, listRemoteState);
+        listNode.markAsHelperNode();
+
+        myModel.insertNodeInto(listNode, myRoot, 0);
+        changesParent = listNode;
+      }
+      else {
+        changesParent = myRoot;
+      }
 
       for (int i = 0; i < changes.size(); i++) {
         Change change = changes.get(i);
         RemoteStatusChangeNodeDecorator decorator = new RemoteStatusChangeNodeDecorator(revisionsCache, listRemoteState, i);
-        insertChangeNode(change, listNode, createChangeNode(change, decorator));
+        insertChangeNode(change, changesParent, createChangeNode(change, decorator));
       }
     }
     return this;
+  }
+
+  private static boolean isSingleBlankChangeList(Collection<? extends ChangeList> lists) {
+    if (lists.size() != 1) return false;
+    ChangeList single = lists.iterator().next();
+    if (!(single instanceof LocalChangeList)) return false;
+    return ((LocalChangeList) single).isBlank();
   }
 
   protected ChangesBrowserNode createChangeNode(Change change, ChangeNodeDecorator decorator) {

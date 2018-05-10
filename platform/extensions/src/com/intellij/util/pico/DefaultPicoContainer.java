@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.util.pico;
 
 import com.intellij.openapi.extensions.AreaPicoContainer;
@@ -38,7 +24,7 @@ public class DefaultPicoContainer implements AreaPicoContainer {
   private final Map<Object, ComponentAdapter> componentKeyToAdapterCache = ContainerUtil.newConcurrentMap();
   private final LinkedHashSetWrapper<ComponentAdapter> componentAdapters = new LinkedHashSetWrapper<>();
   private final Map<String, ComponentAdapter> classNameToAdapter = ContainerUtil.newConcurrentMap();
-  private final AtomicReference<FList<ComponentAdapter>> nonAssignableComponentAdapters = new AtomicReference<>(FList.<ComponentAdapter>emptyList());
+  private final AtomicReference<FList<ComponentAdapter>> nonAssignableComponentAdapters = new AtomicReference<>(FList.emptyList());
 
   public DefaultPicoContainer(@Nullable PicoContainer parent) {
     this.parent = parent == null ? null : ImmutablePicoContainerProxyFactory.newProxyInstance(parent);
@@ -197,6 +183,27 @@ public class DefaultPicoContainer implements AreaPicoContainer {
       }
     }
     return result;
+  }
+
+  public interface LazyComponentAdapter {
+    boolean isComponentInstantiated();
+  }
+
+  @Nullable
+  public <T> T getComponentInstanceIfInstantiated(@NotNull String componentKey) {
+    ComponentAdapter adapter = getFromCache(componentKey);
+    if (!(adapter instanceof LazyComponentAdapter)) {
+      //noinspection unchecked
+      return (T)getComponentInstance(componentKey);
+    }
+
+    if (((LazyComponentAdapter)adapter).isComponentInstantiated()) {
+      //noinspection unchecked
+      return (T)getLocalInstance(adapter);
+    }
+    else {
+      return null;
+    }
   }
 
   @Override

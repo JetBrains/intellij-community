@@ -113,7 +113,6 @@
       <configurable id="diff.external" displayName="External Diff Tools"
                     instance="com.intellij.diff.settings.ExternalDiffSettingsConfigurable"/>
     </applicationConfigurable>
-    <statistics.usagesCollector implementation="com.intellij.diff.statistics.DiffUsagesCollector"/>
     <colorAndFontPanelFactory implementation="com.intellij.openapi.diff.impl.settings.DiffColorsPageFactory"/>
     <colorAndFontDescriptorProvider implementation="com.intellij.openapi.diff.impl.settings.DiffColorsPageFactory"/>
     <getDataRule key="diff_navigatable_array" implementationClass="com.intellij.diff.actions.impl.DiffNavigatableArrayRule"/>
@@ -147,6 +146,8 @@
                         serviceImplementation="com.intellij.codeInsight.hint.TooltipController"/>
     <applicationService serviceInterface="com.intellij.openapi.editor.actionSystem.EditorActionManager"
                         serviceImplementation="com.intellij.openapi.editor.impl.EditorActionManagerImpl"/>
+    <applicationService serviceInterface="com.intellij.openapi.editor.actionSystem.LatencyRecorder"
+                        serviceImplementation="com.intellij.internal.performance.LatencyRecorderImpl"/>
 
     <applicationService serviceInterface="com.intellij.openapi.updateSettings.impl.UpdateSettings"
                         serviceImplementation="com.intellij.openapi.updateSettings.impl.UpdateSettings"/>
@@ -423,6 +424,7 @@
     <statistics.applicationUsagesCollector implementation="com.intellij.internal.statistic.collectors.fus.ui.ShortcutUsagesCollector"/>
     <statistics.applicationUsagesCollector implementation="com.intellij.internal.statistic.collectors.fus.ui.UiInfoUsageCollector"/>
     <statistics.applicationUsagesCollector implementation="com.intellij.internal.statistic.collectors.fus.ui.A11YUsagesCollector"/>
+    <statistics.applicationUsagesCollector implementation="com.intellij.diff.statistics.DiffUsagesCollector"/>
 
     <statistics.usagesCollector implementation="com.intellij.internal.statistic.collectors.legacy.productivity.LegacyProductivityFeaturesUsageCollector"/>
     <statistics.usagesCollector implementation="com.intellij.internal.statistic.collectors.legacy.plugins.LegacyDisabledPluginsUsagesCollector"/>

@@ -1,9 +1,9 @@
 <component name="libraryTable">
   <library name="Slf4j" type="repository">
-    <properties maven-id="org.slf4j:slf4j-log4j12:1.7.10" />
+    <properties maven-id="org.slf4j:slf4j-log4j12:1.7.25" />
     <CLASSES>
-      <root url="jar://$MAVEN_REPOSITORY$/org/slf4j/slf4j-log4j12/1.7.10/slf4j-log4j12-1.7.10.jar!/" />
-      <root url="jar://$MAVEN_REPOSITORY$/org/slf4j/slf4j-api/1.7.10/slf4j-api-1.7.10.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/org/slf4j/slf4j-log4j12/1.7.25/slf4j-log4j12-1.7.25.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/org/slf4j/slf4j-api/1.7.25/slf4j-api-1.7.25.jar!/" />
       <root url="jar://$MAVEN_REPOSITORY$/log4j/log4j/1.2.17/log4j-1.2.17.jar!/" />
     </CLASSES>
     <JAVADOC />

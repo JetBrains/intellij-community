@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2012 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.svn;
 
 import com.intellij.openapi.util.Comparing;
@@ -58,7 +44,7 @@ public class SvnCommittedViewTest extends Svn17TestCase {
     final CommittedChangesProvider<SvnChangeList,ChangeBrowserSettings> committedChangesProvider = vcs.getCommittedChangesProvider();
     final List<SvnChangeList> changeListList =
       committedChangesProvider.getCommittedChanges(committedChangesProvider.createDefaultSettings(),
-                                                   new SvnRepositoryLocation(myRepoUrl), 0);
+                                                   new SvnRepositoryLocation(myRepositoryUrl), 0);
     checkList(changeListList, 1, new Data[] {new Data(absPath(f11), FileStatus.ADDED, null),
       new Data(absPath(f12), FileStatus.ADDED, null), new Data(absPath(d1), FileStatus.ADDED, null)});
   }
@@ -90,7 +76,7 @@ public class SvnCommittedViewTest extends Svn17TestCase {
     final CommittedChangesProvider<SvnChangeList,ChangeBrowserSettings> committedChangesProvider = vcs.getCommittedChangesProvider();
     final List<SvnChangeList> changeListList =
       committedChangesProvider.getCommittedChanges(committedChangesProvider.createDefaultSettings(),
-                                                   new SvnRepositoryLocation(myRepoUrl), 0);
+                                                   new SvnRepositoryLocation(myRepositoryUrl), 0);
     checkList(changeListList, 2, new Data[] {new Data(absPath(f11), FileStatus.DELETED, null)});
     checkList(changeListList, 3, new Data[] {new Data(absPath(d1), FileStatus.DELETED, null)});
   }
@@ -122,7 +108,7 @@ public class SvnCommittedViewTest extends Svn17TestCase {
     final CommittedChangesProvider<SvnChangeList,ChangeBrowserSettings> committedChangesProvider = vcs.getCommittedChangesProvider();
     final List<SvnChangeList> changeListList =
       committedChangesProvider.getCommittedChanges(committedChangesProvider.createDefaultSettings(),
-                                                   new SvnRepositoryLocation(myRepoUrl), 0);
+                                                   new SvnRepositoryLocation(myRepositoryUrl), 0);
     checkList(changeListList, 2, new Data[] {new Data(absPath(d1), FileStatus.MODIFIED, "- replaced")});
   }
 
@@ -151,7 +137,7 @@ public class SvnCommittedViewTest extends Svn17TestCase {
     final CommittedChangesProvider<SvnChangeList,ChangeBrowserSettings> committedChangesProvider = vcs.getCommittedChangesProvider();
     final List<SvnChangeList> changeListList =
       committedChangesProvider.getCommittedChanges(committedChangesProvider.createDefaultSettings(),
-                                                   new SvnRepositoryLocation(myRepoUrl), 0);
+                                                   new SvnRepositoryLocation(myRepositoryUrl), 0);
     checkList(changeListList, 2, new Data[] {new Data(absPath(d1), FileStatus.MODIFIED, "- moved from .." + File.separatorChar + "d1")});
   }
 
@@ -183,7 +169,7 @@ public class SvnCommittedViewTest extends Svn17TestCase {
     final CommittedChangesProvider<SvnChangeList,ChangeBrowserSettings> committedChangesProvider = vcs.getCommittedChangesProvider();
     final List<SvnChangeList> changeListList =
       committedChangesProvider.getCommittedChanges(committedChangesProvider.createDefaultSettings(),
-                                                   new SvnRepositoryLocation(myRepoUrl), 0);
+                                                   new SvnRepositoryLocation(myRepositoryUrl), 0);
     checkList(changeListList, 2, new Data[] {new Data(absPath(d1), FileStatus.MODIFIED, "- moved from .." + File.separatorChar + "d1"),
       new Data(absPath(f11), FileStatus.MODIFIED, "- moved from " + oldF11Path)});
   }
@@ -208,7 +194,7 @@ public class SvnCommittedViewTest extends Svn17TestCase {
     final CommittedChangesProvider<SvnChangeList,ChangeBrowserSettings> committedChangesProvider = vcs.getCommittedChangesProvider();
     final List<SvnChangeList> changeListList =
       committedChangesProvider.getCommittedChanges(committedChangesProvider.createDefaultSettings(),
-                                                   new SvnRepositoryLocation(myRepoUrl + "/branch"), 0);
+                                                   new SvnRepositoryLocation(myRepositoryUrl.appendPath("branch", false)), 0);
     checkList(changeListList, 2, new Data[] {new Data(new File(myWorkingCopyDir.getPath(), "branch").getAbsolutePath(), FileStatus.ADDED, "- copied from /trunk")});
   }
 
@@ -238,7 +224,7 @@ public class SvnCommittedViewTest extends Svn17TestCase {
     final CommittedChangesProvider<SvnChangeList,ChangeBrowserSettings> committedChangesProvider = vcs.getCommittedChangesProvider();
     final List<SvnChangeList> changeListList =
       committedChangesProvider.getCommittedChanges(committedChangesProvider.createDefaultSettings(),
-                                                   new SvnRepositoryLocation(myRepoUrl + "/branch"), 0);
+                                                   new SvnRepositoryLocation(myRepositoryUrl.appendPath("branch", false)), 0);
     checkList(changeListList, 2, new Data[] {new Data(new File(myWorkingCopyDir.getPath(), "branch").getAbsolutePath(), FileStatus.ADDED, "- copied from /trunk"),
       new Data(new File(myWorkingCopyDir.getPath(), "branch/folder").getAbsolutePath(), FileStatus.MODIFIED, "- copied from /trunk/folder")});
   }

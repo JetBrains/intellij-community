@@ -79,13 +79,19 @@ public class FunctionalExpressionUtils {
   @Nullable
   public static PsiClass getClassOfDefaultConstructorFunction(PsiExpression expression) {
     expression = PsiUtil.skipParenthesizedExprDown(expression);
-    PsiReference classRef = null;
     if (expression instanceof PsiMethodReferenceExpression) {
       PsiMethodReferenceExpression methodRef = (PsiMethodReferenceExpression)expression;
       if (!methodRef.isConstructor()) return null;
       PsiMethod method = LambdaUtil.getFunctionalInterfaceMethod(methodRef.getFunctionalInterfaceType());
       if (method == null || !method.getParameterList().isEmpty()) return null;
-      classRef = ObjectUtils.tryCast(methodRef.getQualifier(), PsiReference.class);
+      PsiTypeElement type = methodRef.getQualifierType();
+      if (type == null) {
+        if (methodRef.getQualifier() instanceof PsiReference) {
+          return ObjectUtils.tryCast(((PsiReference)methodRef.getQualifier()).resolve(), PsiClass.class);
+        }
+        return null;
+      }
+      return PsiUtil.resolveClassInClassTypeOnly(type.getType());
     }
     if (expression instanceof PsiLambdaExpression) {
       PsiLambdaExpression lambda = (PsiLambdaExpression)expression;
@@ -95,8 +101,9 @@ public class FunctionalExpressionUtils {
       PsiNewExpression newExpression = (PsiNewExpression)body;
       PsiExpressionList args = newExpression.getArgumentList();
       if (args == null || !args.isEmpty() || newExpression.getAnonymousClass() != null) return null;
-      classRef = newExpression.getClassReference();
+      PsiReference classRef = newExpression.getClassReference();
+      return classRef == null ? null : ObjectUtils.tryCast(classRef.resolve(), PsiClass.class);
     }
-    return classRef == null ? null : ObjectUtils.tryCast(classRef.resolve(), PsiClass.class);
+    return null;
   }
 }

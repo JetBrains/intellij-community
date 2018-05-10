@@ -16,6 +16,7 @@
 package com.siyeh.ig.resources;
 
 import com.intellij.codeInspection.ProblemDescriptor;
+import com.intellij.codeInspection.dataFlow.JavaMethodContractUtil;
 import com.intellij.codeInspection.resources.ImplicitResourceCloser;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.project.Project;
@@ -70,7 +71,7 @@ public class AutoCloseableResourceInspectionBase extends ResourceInspection {
       .finishDefault();
   }
 
-  CallMatcher STREAM_HOLDING_RESOURCE = CallMatcher.staticCall("java.nio.file.Files",  "lines", "walk", "list", "find");
+  CallMatcher STREAM_HOLDING_RESOURCE = CallMatcher.staticCall("java.nio.file.Files", "lines", "walk", "list", "find");
 
   @Nls
   @NotNull
@@ -188,6 +189,15 @@ public class AutoCloseableResourceInspectionBase extends ResourceInspection {
       if (ignoreFromMethodCall || myMethodMatcher.matches(expression) || isSafelyClosedResource(expression)) {
         return;
       }
+      PsiExpression returnedValue = JavaMethodContractUtil.findReturnedValue(expression);
+      PsiExpression[] arguments = expression.getArgumentList().getExpressions();
+      PsiExpression qualifier = expression.getMethodExpression().getQualifierExpression();
+      if (qualifier == returnedValue) return;
+      for (PsiExpression argument : arguments) {
+        if (returnedValue == argument) {
+          return;
+        }
+      }
       registerMethodCallError(expression, expression.getType(), !isStreamHoldingResource(expression));
     }
 
@@ -215,10 +225,10 @@ public class AutoCloseableResourceInspectionBase extends ResourceInspection {
       }
       if (CLOSE.test(ExpressionUtils.getCallForQualifier(expression))) return true;
       final PsiVariable variable = ResourceInspection.getVariable(expression);
-      if(variable instanceof PsiResourceVariable || isResourceEscapingFromMethod(variable, expression)) return true;
+      if (variable instanceof PsiResourceVariable || isResourceEscapingFromMethod(variable, expression)) return true;
       if (variable == null) return false;
       return StreamEx.of(Extensions.getExtensions(ImplicitResourceCloser.EP_NAME))
-              .anyMatch(closer -> closer.isSafelyClosed(variable));
+                     .anyMatch(closer -> closer.isSafelyClosed(variable));
     }
   }
 }

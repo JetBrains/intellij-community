@@ -67,6 +67,7 @@
     <action class="com.intellij.vcs.log.ui.actions.ExpandGraphAction" id="Vcs.Log.ExpandAll"/>
     <action class="com.intellij.vcs.log.ui.actions.ShowLongEdgesAction" id="Vcs.Log.ShowLongEdges"/>
     <action class="com.intellij.vcs.log.ui.actions.ShowDetailsAction" id="Vcs.Log.ShowDetailsAction"/>
+    <action class="com.intellij.vcs.log.ui.actions.ShowDiffPreviewAction" id="Vcs.Log.ShowDiffPreview"/>
     <action class="com.intellij.vcs.log.ui.actions.ShowChangesFromParentsAction" id="Vcs.Log.ShowChangesFromParents"/>
     <action class="com.intellij.vcs.log.ui.actions.ShowRootsColumnAction" id="Vcs.Log.ShowRootsColumnAction"/>
     <action class="com.intellij.vcs.log.ui.actions.FocusTextFilterAction" id="Vcs.Log.FocusTextFilter">
@@ -128,8 +129,9 @@
       <reference id="Vcs.RepositoryChangesBrowserToolbar"/>
       <separator/>
       <reference id="Vcs.Log.ShowDetailsAction"/>
+      <reference id="Vcs.Log.ShowDiffPreview"/>
     </group>
-    <group id="Vcs.Log.ChangesBrowser.Menu">
+    <group id="Vcs.Log.ChangesBrowser.Popup">
       <reference id="Vcs.RepositoryChangesBrowserMenu"/>
       <reference id="Vcs.Log.ShowChangesFromParents"/>
     </group>
@@ -176,6 +178,7 @@
       <separator/>
       <reference ref="Vcs.Log.ShowDetailsAction"/>
       <reference ref="Vcs.Log.ShowChangesFromParents"/>
+      <reference ref="Vcs.Log.ShowDiffPreview"/>
       <separator/>
       <reference ref="Vcs.Log.Refresh"/>
       <reference ref="Vcs.Log.OpenAnotherTab"/>

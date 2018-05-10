@@ -189,7 +189,7 @@ public class JsonSchemaStatusWidget {
       if (provider != null) {
         String providerName = provider.getPresentableName();
         String shortName = StringUtil.trimEnd(StringUtil.trimEnd(providerName, ".json"), "-schema");
-        String name = shortName.startsWith("JSON Schema") ? shortName : (JSON_SCHEMA_BAR + shortName);
+        String name = shortName.startsWith("JSON schema") ? shortName : (JSON_SCHEMA_BAR + shortName);
         String kind = provider.getSchemaType() == SchemaType.embeddedSchema || provider.getSchemaType() == SchemaType.schema ? " (bundled)" : "";
         return new MyWidgetState(JSON_SCHEMA_TOOLTIP + providerName + kind, name, true);
       }

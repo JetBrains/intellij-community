@@ -3,7 +3,6 @@ package org.jetbrains.idea.svn.update;
 
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.options.ConfigurationException;
-import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.TextFieldWithBrowseButton;
 import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.wm.IdeFocusManager;
@@ -82,12 +81,17 @@ public class SvnUpdateRootOptionsPanel implements SvnPanel{
     });
 
     myRevisionText.addActionListener(e -> {
-      final Project project = vcs.getProject();
       // todo check whether ok; rather shoudl be used if checkbox is turned on
-      final SvnRepositoryLocation location = new SvnRepositoryLocation(myURLText.getText());
-      final SvnChangeList repositoryVersion = SvnSelectRevisionUtil.chooseCommittedChangeList(project, location, myRoot.getVirtualFile());
-      if (repositoryVersion != null) {
-        myRevisionText.setText(String.valueOf(repositoryVersion.getNumber()));
+      try {
+        SvnRepositoryLocation location = new SvnRepositoryLocation(createUrl(myURLText.getText(), false));
+        SvnChangeList repositoryVersion =
+          SvnSelectRevisionUtil.chooseCommittedChangeList(vcs.getProject(), location, myRoot.getVirtualFile());
+        if (repositoryVersion != null) {
+          myRevisionText.setText(String.valueOf(repositoryVersion.getNumber()));
+        }
+      }
+      catch (SvnBindException ex) {
+        showErrorDialog(myVcs.getProject(), ex.getMessage(), message("error.cannot.load.revisions"));
       }
     });
 

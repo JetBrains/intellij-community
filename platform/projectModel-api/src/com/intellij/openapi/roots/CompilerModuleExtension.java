@@ -6,6 +6,11 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.pointers.VirtualFilePointer;
 import org.jetbrains.annotations.Nullable;
 
+/**
+ * Provides access to Java-specific settings of a module (output paths for production and test classes).
+ *
+ * @see com.intellij.openapi.roots.CompilerProjectExtension
+ */
 public abstract class CompilerModuleExtension extends ModuleExtension {
   public static final String PRODUCTION = "production";
   public static final String TEST = "test";

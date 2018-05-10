@@ -48,8 +48,9 @@ import java.util.concurrent.atomic.AtomicBoolean;
  */
 public class PyPackageManagerImpl extends PyPackageManager {
 
-  private static final String SETUPTOOLS_VERSION = "28.8.0";
-  private static final String PIP_VERSION = "9.0.1";
+  private static final String SETUPTOOLS_VERSION = "39.0.1";
+  private static final String SETUPTOOLS_VERSION_26 = "36.8.0";
+  private static final String PIP_VERSION = "9.0.3";
   private static final String VIRTUALENV_VERSION = "15.1.0";
 
   private static final int ERROR_NO_SETUPTOOLS = 3;
@@ -92,8 +93,9 @@ public class PyPackageManagerImpl extends PyPackageManager {
                                    "Upgrade your project interpreter to Python " + LanguageLevel.PYTHON26 + " or newer");
     }
 
+    final boolean py26 = languageLevel == LanguageLevel.PYTHON26;
     if (!refreshAndCheckForSetuptools()) {
-      installManagement(PyPackageUtil.SETUPTOOLS + "-" + SETUPTOOLS_VERSION);
+      installManagement(PyPackageUtil.SETUPTOOLS + "-" + (py26 ? SETUPTOOLS_VERSION_26 : SETUPTOOLS_VERSION));
     }
     if (PyPackageUtil.findPackage(refreshAndGetPackages(false), PyPackageUtil.PIP) == null) {
       installManagement(PyPackageUtil.PIP + "-" + PIP_VERSION);

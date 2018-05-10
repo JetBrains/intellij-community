@@ -15,6 +15,7 @@ import com.intellij.ui.IdeUICustomization;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
+import java.awt.event.InputEvent;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -44,7 +45,7 @@ public class ClassSearchEverywhereContributor implements SearchEverywhereContrib
     return 100;
   }
 
-  public SearchEverywhereContributor.ContributorSearchResult search(Project project, String pattern, boolean everywhere, ProgressIndicator progressIndicator, int elementsLimit) {
+  public ContributorSearchResult search(Project project, String pattern, boolean everywhere, ProgressIndicator progressIndicator, int elementsLimit) {
     ChooseByNameModel mdl = new GotoClassModel2(project);
     ChooseByNamePopup popup = ChooseByNamePopup.createPopup(project, mdl, (PsiElement)null);
     List<Object> items = new ArrayList<>();
@@ -61,7 +62,7 @@ public class ClassSearchEverywhereContributor implements SearchEverywhereContrib
       return true;
     });
 
-    return new SearchEverywhereContributor.ContributorSearchResult(items, hasMore[0]);
+    return new ContributorSearchResult(items, hasMore[0]);
   }
 
   @Override
@@ -70,9 +71,9 @@ public class ClassSearchEverywhereContributor implements SearchEverywhereContrib
   }
 
   @Override
-  public void processSelectedItem(Object selected) {
+  public void processSelectedItem(Object selected, int modifiers) {
     if (selected instanceof PsiElement) {
-      NavigationUtil.activateFileWithPsiElement((PsiElement) selected, true);
+      NavigationUtil.activateFileWithPsiElement((PsiElement) selected, (modifiers & InputEvent.SHIFT_MASK) != 0);
     }
   }
 }

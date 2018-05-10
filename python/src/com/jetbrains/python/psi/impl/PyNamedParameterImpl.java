@@ -20,9 +20,13 @@ import com.intellij.navigation.ItemPresentation;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.util.Ref;
 import com.intellij.psi.*;
+import com.intellij.psi.impl.source.resolve.reference.ReferenceProvidersRegistry;
 import com.intellij.psi.search.LocalSearchScope;
 import com.intellij.psi.search.SearchScope;
 import com.intellij.psi.stubs.IStubElementType;
+import com.intellij.psi.util.CachedValueProvider;
+import com.intellij.psi.util.CachedValuesManager;
+import com.intellij.psi.util.PsiModificationTracker;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.PlatformIcons;
@@ -60,6 +64,14 @@ public class PyNamedParameterImpl extends PyBaseElementImpl<PyNamedParameterStub
 
   public PyNamedParameterImpl(final PyNamedParameterStub stub, IStubElementType nodeType) {
     super(stub, nodeType);
+  }
+
+  @NotNull
+  @Override
+  public final PsiReference[] getReferences() {
+    return CachedValuesManager.getCachedValue(this, () -> CachedValueProvider.Result.create(
+      ReferenceProvidersRegistry.getReferencesFromProviders(this, PsiReferenceService.Hints.NO_HINTS),
+      PsiModificationTracker.MODIFICATION_COUNT));
   }
 
   @Nullable

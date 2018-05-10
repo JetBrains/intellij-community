@@ -36,7 +36,7 @@ public class UnversionedViewDialog extends SpecificFilesViewDialog {
   protected void addCustomActions(@NotNull DefaultActionGroup group) {
     registerUnversionedActionsShortcuts(myView);
 
-    EmptyAction.registerWithShortcutSet("ChangesView.DeleteUnversioned.From.Dialog", CommonShortcuts.getDelete(), myView);
+    EmptyAction.registerWithShortcutSet("ChangesView.DeleteUnversioned", CommonShortcuts.getDelete(), myView);
 
     group.add(getUnversionedActionGroup());
     final DefaultActionGroup secondGroup = new DefaultActionGroup();

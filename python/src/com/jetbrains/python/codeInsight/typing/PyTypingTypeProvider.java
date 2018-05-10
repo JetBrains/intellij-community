@@ -1345,16 +1345,6 @@ public class PyTypingTypeProvider extends PyTypeProviderBase {
     return asyncGenerator != null ? new PyCollectionTypeImpl(asyncGenerator, false, Arrays.asList(elementType, null)) : null;
   }
 
-  /**
-   * @deprecated Use {@link PyTypingTypeProvider#coroutineOrGeneratorElementType(PyType)} instead.
-   * This method will be removed in 2018.2.
-   */
-  @Nullable
-  @Deprecated
-  public static Ref<PyType> coroutineOrGeneratorElementType(@Nullable PyType coroutineOrGeneratorType, @NotNull TypeEvalContext context) {
-    return coroutineOrGeneratorElementType(coroutineOrGeneratorType);
-  }
-
   @Nullable
   public static Ref<PyType> coroutineOrGeneratorElementType(@Nullable PyType coroutineOrGeneratorType) {
     final PyCollectionType genericType = as(coroutineOrGeneratorType, PyCollectionType.class);

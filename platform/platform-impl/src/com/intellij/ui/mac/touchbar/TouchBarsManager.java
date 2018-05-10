@@ -52,7 +52,7 @@ public class TouchBarsManager {
       return;
 
     editor.addFocusListener(new FocusChangeListener() {
-      private BarContainer myEditorBar = ProjectBarsStorage.instance(proj).createBarContainer(ProjectBarsStorage.EDITOR, editor.getContentComponent());
+      private final BarContainer myEditorBar = ProjectBarsStorage.instance(proj).createBarContainer(ProjectBarsStorage.EDITOR, editor.getContentComponent());
 
       @Override
       public void focusGained(Editor editor) {
@@ -105,21 +105,20 @@ public class TouchBarsManager {
         myGeneralBar = ProjectBarsStorage.instance(project).createBarContainer(ProjectBarsStorage.GENERAL, null);
         showTouchBar(myGeneralBar);
 
-        final ToolWindowManagerEx twm = ToolWindowManagerEx.getInstanceEx(project);
-        twm.addToolWindowManagerListener(new ToolWindowManagerListener() {
+        project.getMessageBus().connect().subscribe(ToolWindowManagerListener.TOPIC, new ToolWindowManagerListener() {
           private BarContainer myDebuggerBar;
 
           @Override
-          public void toolWindowRegistered(@NotNull String id) {}
-          @Override
           public void stateChanged() {
+            final ToolWindowManagerEx twm = ToolWindowManagerEx.getInstanceEx(project);
             final String activeId = twm.getActiveToolWindowId();
             if (activeId != null && activeId.equals("Debug")) {
               // TODO:
               // 1. check whether some debug session is running
               // 2. stateChanged can be skipped sometimes when user clicks debug tool-window, need check by focus events or fix stateChanged-subscription
               if (myDebuggerBar == null) {
-                myDebuggerBar = ProjectBarsStorage.instance(project).createBarContainer(ProjectBarsStorage.DEBUGGER, twm.getToolWindow(activeId).getComponent());
+                myDebuggerBar = ProjectBarsStorage.instance(project).createBarContainer(ProjectBarsStorage.DEBUGGER,
+                                                                                        twm.getToolWindow(activeId).getComponent());
               }
               showTouchBar(myDebuggerBar);
             }

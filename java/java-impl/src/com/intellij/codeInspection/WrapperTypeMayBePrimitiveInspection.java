@@ -3,6 +3,7 @@ package com.intellij.codeInspection;
 
 import com.intellij.codeInspection.dataFlow.Nullness;
 import com.intellij.codeInspection.dataFlow.NullnessUtil;
+import com.intellij.lang.jvm.types.JvmPrimitiveTypeKind;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.tree.IElementType;
@@ -24,15 +25,7 @@ import static com.intellij.util.ObjectUtils.tryCast;
 public class WrapperTypeMayBePrimitiveInspection extends AbstractBaseJavaLocalInspectionTool {
   private static final CallMatcher TO_STRING = CallMatcher.instanceCall(CommonClassNames.JAVA_LANG_OBJECT, "toString");
   private static final CallMatcher HASH_CODE = CallMatcher.instanceCall(CommonClassNames.JAVA_LANG_OBJECT, "hashCode");
-  private static final CallMatcher VALUE_OF = CallMatcher.anyOf(
-    CallMatcher.staticCall(CommonClassNames.JAVA_LANG_INTEGER, "valueOf").parameterTypes(CommonClassNames.JAVA_LANG_STRING),
-    CallMatcher.staticCall(CommonClassNames.JAVA_LANG_LONG, "valueOf").parameterTypes(CommonClassNames.JAVA_LANG_STRING),
-    CallMatcher.staticCall(CommonClassNames.JAVA_LANG_BOOLEAN, "valueOf").parameterTypes(CommonClassNames.JAVA_LANG_STRING),
-    CallMatcher.staticCall(CommonClassNames.JAVA_LANG_FLOAT, "valueOf").parameterTypes(CommonClassNames.JAVA_LANG_STRING),
-    CallMatcher.staticCall(CommonClassNames.JAVA_LANG_DOUBLE, "valueOf").parameterTypes(CommonClassNames.JAVA_LANG_STRING),
-    CallMatcher.staticCall(CommonClassNames.JAVA_LANG_SHORT, "valueOf").parameterTypes(CommonClassNames.JAVA_LANG_STRING),
-    CallMatcher.staticCall(CommonClassNames.JAVA_LANG_BYTE, "valueOf").parameterTypes(CommonClassNames.JAVA_LANG_STRING)
-  );
+  private static final CallMatcher VALUE_OF = getValueOfMatcher();
 
   private static final Map<String, String> ourReplacementMap = new HashMap<>();
 
@@ -44,6 +37,16 @@ public class WrapperTypeMayBePrimitiveInspection extends AbstractBaseJavaLocalIn
     ourReplacementMap.put(CommonClassNames.JAVA_LANG_DOUBLE, "parseDouble");
     ourReplacementMap.put(CommonClassNames.JAVA_LANG_SHORT, "parseShort");
     ourReplacementMap.put(CommonClassNames.JAVA_LANG_BYTE, "parseByte");
+  }
+
+  static CallMatcher getValueOfMatcher() {
+    CallMatcher[] matchers = JvmPrimitiveTypeKind.getBoxedFqns()
+                                                 .stream()
+                                             .filter(fqn -> !fqn.equals(CommonClassNames.JAVA_LANG_CHARACTER))
+                                             .map(fqn -> CallMatcher.staticCall(fqn, "valueOf")
+                                                                  .parameterTypes(CommonClassNames.JAVA_LANG_STRING))
+                                             .toArray(size -> new CallMatcher[size]);
+    return CallMatcher.anyOf(matchers);
   }
 
   @NotNull

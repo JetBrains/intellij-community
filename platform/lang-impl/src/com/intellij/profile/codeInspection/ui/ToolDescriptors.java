@@ -5,6 +5,7 @@ import com.intellij.codeInspection.ex.Descriptor;
 import com.intellij.codeInspection.ex.InspectionProfileModifiableModel;
 import com.intellij.codeInspection.ex.ScopeToolState;
 import com.intellij.openapi.project.Project;
+import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
@@ -50,7 +51,7 @@ public class ToolDescriptors {
 
   @NotNull
   public Stream<Descriptor> getDescriptors() {
-    return Stream.concat(Stream.of(getDefaultDescriptor()), getNonDefaultDescriptors().stream());
+    return StreamEx.of(getNonDefaultDescriptors()).prepend(getDefaultDescriptor());
   }
 
   @NotNull

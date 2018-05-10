@@ -5,7 +5,9 @@ import com.intellij.openapi.actionSystem.ActionGroup;
 import com.intellij.openapi.actionSystem.ActionManager;
 import com.intellij.openapi.actionSystem.ActionToolbar;
 import com.intellij.openapi.actionSystem.DefaultActionGroup;
+import com.intellij.util.ObjectUtils;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
@@ -15,19 +17,19 @@ public class TreeActionsToolbarPanel extends JPanel {
     this(toolbar.getComponent(), tree);
   }
 
-  public TreeActionsToolbarPanel(@NotNull ActionToolbar toolbar, @NotNull ActionGroup group) {
-    this(toolbar.getComponent(), group);
+  public TreeActionsToolbarPanel(@NotNull ActionToolbar toolbar, @NotNull ActionGroup group, @Nullable JComponent targetComponent) {
+    this(toolbar.getComponent(), group, targetComponent);
   }
 
   public TreeActionsToolbarPanel(@NotNull Component toolbarComponent, @NotNull ChangesTree tree) {
-    this(toolbarComponent, createTreeActions(tree));
+    this(toolbarComponent, createTreeActions(tree), tree);
   }
 
-  public TreeActionsToolbarPanel(@NotNull Component toolbarComponent, @NotNull ActionGroup group) {
+  public TreeActionsToolbarPanel(@NotNull Component toolbarComponent, @NotNull ActionGroup group, @Nullable JComponent targetComponent) {
     super(new BorderLayout());
 
     ActionToolbar additionalToolbar = ActionManager.getInstance().createActionToolbar("TreeActionsToolbar", group, true);
-    additionalToolbar.setTargetComponent(this);
+    additionalToolbar.setTargetComponent(ObjectUtils.notNull(targetComponent, this));
     additionalToolbar.setReservePlaceAutoPopupIcon(false);
 
     add(toolbarComponent, BorderLayout.CENTER);

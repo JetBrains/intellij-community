@@ -28,8 +28,8 @@ import org.jetbrains.annotations.NotNull;
 import javax.swing.*;
 import java.util.List;
 
-public class EditorNotificationActions {
-  public static void collectDescriptorsForEditor(@NotNull Editor editor, @NotNull List<HighlightInfo.IntentionActionDescriptor> descriptors) {
+class EditorNotificationActions {
+  static void collectDescriptorsForEditor(@NotNull Editor editor, @NotNull List<? super HighlightInfo.IntentionActionDescriptor> descriptors) {
     Project project = editor.getProject();
     if (project == null) return;
     FileEditorManager fileEditorManager = FileEditorManager.getInstance(project);

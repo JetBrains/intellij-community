@@ -78,6 +78,7 @@ fun KotlinGuiTestCase.checkLibrariesFromIDEA(expectedLibName: String,
 fun KotlinGuiTestCase.checkInProjectStructure(actions: KotlinGuiTestCase.()->Unit) {
   logTestStep("Check structure of gradle project")
   ideFrame {
+    waitAMoment()
     invokeMainMenu("ShowProjectStructureSettings")
     dialog("Project Structure") {
       try {

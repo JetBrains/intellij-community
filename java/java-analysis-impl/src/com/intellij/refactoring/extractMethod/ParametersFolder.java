@@ -353,7 +353,7 @@ public class ParametersFolder {
     if (psiExpression != null) {
       final PsiExpression expression = findEquivalent(psiExpression, element);
       if (expression != null) {
-        expression.putUserData(DuplicatesFinder.PARAMETER, new DuplicatesFinder.Parameter(data.variable, expression.getType()));
+        expression.putUserData(DuplicatesFinder.PARAMETER, new DuplicatesFinder.Parameter(data.variable, expression.getType(), true));
         return true;
       }
     }
