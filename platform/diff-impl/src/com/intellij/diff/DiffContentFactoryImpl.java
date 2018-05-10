@@ -139,6 +139,12 @@ public class DiffContentFactoryImpl extends DiffContentFactoryEx {
 
   @NotNull
   @Override
+  public DocumentContent createEditable(@Nullable Project project, @NotNull String text, @Nullable FileType fileType) {
+    return createImpl(project, text, fileType, null, null, false, false);
+  }
+
+  @NotNull
+  @Override
   public DocumentContent create(@NotNull Document document, @Nullable DocumentContent referent) {
     return create(null, document, referent);
   }
