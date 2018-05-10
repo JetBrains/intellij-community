@@ -1,6 +1,7 @@
 // Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.externalSystem.service;
 
+import com.fasterxml.jackson.core.JsonFactory;
 import com.intellij.CommonBundle;
 import com.intellij.configurationStore.StorageUtilKt;
 import com.intellij.core.JavaCoreBundle;
@@ -52,6 +53,8 @@ import kotlin.Unit;
 import kotlin.reflect.full.NoSuchPropertyException;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.nustaq.serialization.FSTConfiguration;
+import org.objenesis.Objenesis;
 
 import java.io.File;
 import java.rmi.RemoteException;
@@ -142,6 +145,11 @@ public class RemoteExternalSystemCommunicationManager implements ExternalSystemC
         // external-system-rt.jar
         ContainerUtil.addIfNotNull(classPath, PathUtil.getJarPathForClass(ExternalSystemException.class));
         ExternalSystemApiUtil.addBundle(params.getClassPath(), "messages.CommonBundle", CommonBundle.class);
+        // com.intellij.openapi.externalSystem.model.FSTSerializer dependencies
+        ContainerUtilRt.addIfNotNull(classPath, PathUtil.getJarPathForClass(FSTConfiguration.class));
+        ContainerUtilRt.addIfNotNull(classPath, PathUtil.getJarPathForClass(JsonFactory.class));
+        ContainerUtilRt.addIfNotNull(classPath, PathUtil.getJarPathForClass(Objenesis.class));
+
         params.getClassPath().addAll(classPath);
 
         params.setMainClass(MAIN_CLASS_NAME);
