@@ -322,7 +322,7 @@ public class BoundedWildcardInspection extends AbstractBaseJavaLocalInspectionTo
       if (PsiTreeUtil.isAncestor(ignoreUsagesIn, ref.getElement(), false)) return true;
       PsiMethod calledMethod = getMethodCallOnReference(ref);
       if (calledMethod == null) {
-        if (isInComparison(ref)) return true; // ignore "x == y"
+        if (isInPolyadicExpression(ref)) return true; // ignore "x == y"
         PsiField field = isAssignedToField(ref);
         if (field != null) {
           // check if e.g. "Processor<String> field" is used in "field.process(xxx)" only
@@ -406,7 +406,7 @@ public class BoundedWildcardInspection extends AbstractBaseJavaLocalInspectionTo
     return TypeConversionUtil.isAssignable(paramType, capturedSuggested);
   }
 
-  private static PsiMethod getMethodCallOnReference(PsiReference ref) {
+  private static PsiMethod getMethodCallOnReference(@NotNull PsiReference ref) {
     PsiElement refElement = ref.getElement();
     PsiElement parent = PsiUtil.skipParenthesizedExprUp(refElement.getParent());
     if (!(parent instanceof PsiReferenceExpression)) return null;
@@ -430,7 +430,7 @@ public class BoundedWildcardInspection extends AbstractBaseJavaLocalInspectionTo
     return null;
   }
 
-  private static boolean isIteratedValueInForeachExpression(PsiReference ref) {
+  private static boolean isIteratedValueInForeachExpression(@NotNull PsiReference ref) {
     PsiElement refElement = ref.getElement();
     PsiElement parent = PsiUtil.skipParenthesizedExprUp(refElement.getParent());
     if (!(parent instanceof PsiForeachStatement)) return false;
@@ -444,13 +444,13 @@ public class BoundedWildcardInspection extends AbstractBaseJavaLocalInspectionTo
     return aClass != null;
   }
 
-  private static boolean isInComparison(PsiReference ref) {
+  private static boolean isInPolyadicExpression(@NotNull PsiReference ref) {
     PsiElement refElement = ref.getElement();
     PsiElement parent = PsiUtil.skipParenthesizedExprUp(refElement.getParent());
     return parent instanceof PsiPolyadicExpression;
   }
 
-  private static PsiField isAssignedToField(PsiReference ref) {
+  private static PsiField isAssignedToField(@NotNull PsiReference ref) {
     PsiElement refElement = ref.getElement();
     PsiElement parent = PsiUtil.skipParenthesizedExprUp(refElement.getParent());
     if (!(parent instanceof PsiAssignmentExpression) || ((PsiAssignmentExpression)parent).getOperationTokenType() != JavaTokenType.EQ) return null;
