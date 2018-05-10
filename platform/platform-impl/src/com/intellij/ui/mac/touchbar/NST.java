@@ -21,18 +21,16 @@ import java.util.Map;
 public class NST {
   private static final Logger LOG = Logger.getInstance(NST.class);
   private static final String ourRegistryKeyTouchbar = "ide.mac.touchbar.use";
-  private static final String ourRegistryKeyDoCheckEnv = "ide.mac.touchbar.check.env";
   private static final NSTLibrary ourNSTLibrary; // NOTE: JNA is stateless (doesn't have any limitations of multi-threaded use)
 
   static {
     final boolean isSystemSupportTouchbar = SystemInfo.isMac && SystemInfo.isOsVersionAtLeast("10.12.2");
     final boolean isRegistryKeyEnabled = Registry.is(ourRegistryKeyTouchbar, false);
-    final boolean doCheckEnv = Registry.is(ourRegistryKeyDoCheckEnv, true);
     NSTLibrary lib = null;
     if (
       isSystemSupportTouchbar
       && isRegistryKeyEnabled
-      && (!doCheckEnv || SystemSettingsTouchBar.isTouchBarServerRunning())
+      && SystemSettingsTouchBar.isTouchBarServerRunning()
     ) {
       try {
         UrlClassLoader.loadPlatformLibrary("nst");
