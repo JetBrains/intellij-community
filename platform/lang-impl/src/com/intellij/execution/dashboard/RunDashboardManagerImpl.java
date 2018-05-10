@@ -51,7 +51,7 @@ import java.util.stream.Collectors;
 )
 public class RunDashboardManagerImpl implements RunDashboardManager, PersistentStateComponent<RunDashboardManagerImpl.State> {
   private static final float DEFAULT_CONTENT_PROPORTION = 0.3f;
-  @NonNls private static final String HELP_ID = "run-dashboard.spring.boot";
+  @NonNls private static final String HELP_ID = "run-dashboard.reference";
 
   @NotNull private final Project myProject;
   @NotNull private final ContentManager myContentManager;
