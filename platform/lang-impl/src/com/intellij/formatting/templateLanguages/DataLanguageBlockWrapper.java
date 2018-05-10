@@ -34,7 +34,7 @@ import java.util.Map;
 /**
  * @author Alexey Chmutov
  */
-public class DataLanguageBlockWrapper implements ASTBlock, IDataBlock {
+public class DataLanguageBlockWrapper implements ASTBlock, IDataBlock<TemplateLanguageBlock, DataLanguageBlockWrapper> {
   @NotNull private final Block myOriginal;
   @Nullable private final Language myLanguage;
   private List<Block> myBlocks;
@@ -179,12 +179,12 @@ public class DataLanguageBlockWrapper implements ASTBlock, IDataBlock {
   }
 
   @Override
-  public void addTlChild(@NotNull ITemplateBlock tlBlock) {
+  public void addTlChild(@NotNull TemplateLanguageBlock tlBlock) {
     assert myBlocks == null;
     if (myTlBlocks == null) {
       myTlBlocks = new ArrayList<>(5);
     }
-    myTlBlocks.add((TemplateLanguageBlock)tlBlock);
+    myTlBlocks.add(tlBlock);
     tlBlock.setParent(this);
   }
 
@@ -223,8 +223,8 @@ public class DataLanguageBlockWrapper implements ASTBlock, IDataBlock {
   }
 
   @Override
-  public void setRightHandSpacing(@NotNull IDataBlock rightHandWrapper, Spacing spacing) {
-    myRightHandWrapper = (DataLanguageBlockWrapper)rightHandWrapper;
+  public void setRightHandSpacing(@NotNull DataLanguageBlockWrapper rightHandWrapper, Spacing spacing) {
+    myRightHandWrapper = rightHandWrapper;
     mySpacing = spacing;
   }
 

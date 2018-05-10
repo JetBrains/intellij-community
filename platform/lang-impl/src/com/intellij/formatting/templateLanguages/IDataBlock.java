@@ -7,11 +7,11 @@ import com.intellij.formatting.Spacing;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-public interface IDataBlock extends BlockEx, Block, BlockWithParent {
-  void addTlChild(@NotNull ITemplateBlock tlBlock);
+public interface IDataBlock<TTemplateBlock extends ITemplateBlock<TDataBlock>, TDataBlock extends IDataBlock> extends BlockEx, Block, BlockWithParent {
+  void addTlChild(@NotNull TTemplateBlock tlBlock);
 
   @NotNull
   Block getOriginal();
 
-  void setRightHandSpacing(@NotNull IDataBlock rightHandWrapper, @Nullable Spacing spacing);
+  void setRightHandSpacing(@NotNull TDataBlock rightHandWrapper, @Nullable Spacing spacing);
 }

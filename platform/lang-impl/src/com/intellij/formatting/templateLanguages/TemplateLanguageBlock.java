@@ -31,7 +31,7 @@ import java.util.List;
 /**
  * @author Alexey Chmutov
  */
-public abstract class TemplateLanguageBlock extends AbstractBlock implements BlockWithParent, ITemplateBlock {
+public abstract class TemplateLanguageBlock extends AbstractBlock implements BlockWithParent, ITemplateBlock<DataLanguageBlockWrapper> {
   private final TemplateLanguageBlockFactory myBlockFactory;
   private final CodeStyleSettings mySettings;
   private List<DataLanguageBlockWrapper> myForeignChildren;
@@ -84,9 +84,9 @@ public abstract class TemplateLanguageBlock extends AbstractBlock implements Blo
     return (myForeignChildren == null || myForeignChildren.isEmpty());
   }
 
-  public void addForeignChild(@NotNull IDataBlock foreignChild) {
+  public void addForeignChild(@NotNull DataLanguageBlockWrapper foreignChild) {
     initForeignChildren();
-    myForeignChildren.add((DataLanguageBlockWrapper)foreignChild);
+    myForeignChildren.add(foreignChild);
   }
 
   private void initForeignChildren() {

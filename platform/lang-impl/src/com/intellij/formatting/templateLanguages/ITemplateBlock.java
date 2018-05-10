@@ -5,8 +5,8 @@ import com.intellij.formatting.Block;
 import com.intellij.openapi.util.TextRange;
 import org.jetbrains.annotations.NotNull;
 
-public interface ITemplateBlock extends Block, BlockWithParent {
-  void addForeignChild(@NotNull IDataBlock foreignChild);
+public interface ITemplateBlock<TDataBlock extends IDataBlock> extends Block, BlockWithParent {
+  void addForeignChild(@NotNull TDataBlock foreignChild);
 
   boolean isRequiredRange(@NotNull TextRange range);
 }
