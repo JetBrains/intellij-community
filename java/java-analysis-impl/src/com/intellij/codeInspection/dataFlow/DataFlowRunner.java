@@ -6,7 +6,9 @@ import com.intellij.codeInspection.dataFlow.instructions.*;
 import com.intellij.codeInspection.dataFlow.value.DfaValue;
 import com.intellij.codeInspection.dataFlow.value.DfaValueFactory;
 import com.intellij.codeInspection.dataFlow.value.DfaVariableValue;
+import com.intellij.openapi.diagnostic.Attachment;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.diagnostic.RuntimeExceptionWithAttachments;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.Ref;
@@ -258,7 +260,7 @@ public class DataFlowRunner {
       return RunnerResult.OK;
     }
     catch (ArrayIndexOutOfBoundsException | EmptyStackException e) {
-      LOG.error(psiBlock.getText(), e);
+      LOG.error(new RuntimeExceptionWithAttachments(e, new Attachment("method_body.txt", psiBlock.getText())));
       return RunnerResult.ABORTED;
     }
   }
