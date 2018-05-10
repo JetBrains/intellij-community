@@ -60,6 +60,7 @@ class DiffUsagesCollector : ApplicationUsagesCollector() {
     val toolOrder = settings.diffToolsOrder
     val defaultToolIndex = toolOrder.indexOf(SimpleDiffTool::class.java.canonicalName)
     val unifiedToolIndex = toolOrder.indexOf(UnifiedDiffTool::class.java.canonicalName)
-    return unifiedToolIndex != -1 && defaultToolIndex != -1 && unifiedToolIndex < defaultToolIndex
+    if (unifiedToolIndex == -1) return false
+    return defaultToolIndex == -1 || unifiedToolIndex < defaultToolIndex
   }
 }
