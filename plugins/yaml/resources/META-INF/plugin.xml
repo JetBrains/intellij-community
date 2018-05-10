@@ -37,6 +37,11 @@
                      key="inspections.unresolved.alias.name" level="ERROR"
                      groupKey="inspections.group.name" enabledByDefault="true"
                      implementationClass="org.jetbrains.yaml.inspections.YAMLUnresolvedAliasInspection"/>
+    <localInspection language="yaml" bundle="messages.YAMLBundle"
+                     shortName="YAMLRecursiveAlias"
+                     key="inspections.recursive.alias.name" level="ERROR"
+                     groupKey="inspections.group.name" enabledByDefault="true"
+                     implementationClass="org.jetbrains.yaml.inspections.YAMLRecursiveAliasInspection"/>
 
   </extensions>
   
