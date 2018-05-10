@@ -151,6 +151,8 @@
       <separator/>
       <reference id="Vcs.Log.ShowOtherBranches"/>
       <separator/>
+      <reference id="VcsHistoryActionsGroup.Toolbar"/>
+      <separator/>
       <reference id="Vcs.Log.ShowDetailsAction"/>
       <separator/>
     </group>
@@ -198,6 +200,7 @@
       <reference id="Vcs.Log.Refresh"/>
       <reference id="Vcs.Log.ShowDetailsAction"/>
       <reference id="VcsHistoryActionsGroup"/>
+      <reference id="VcsHistoryActionsGroup.Toolbar"/>
 
       <add-to-group group-id="FileHistory.KeymapGroup"/>
     </group>
