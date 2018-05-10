@@ -3,8 +3,8 @@ package com.intellij.util.ui;
 
 import com.intellij.openapi.util.ScalableIcon;
 import com.intellij.testFramework.PlatformTestUtil;
-import com.intellij.ui.LayeredIcon;
 import com.intellij.ui.RestoreScaleRule;
+import com.intellij.util.IconUtil;
 import com.intellij.util.ui.JBUI.ScaleContext;
 import org.junit.ClassRule;
 import org.junit.Test;
@@ -12,14 +12,9 @@ import org.junit.rules.ExternalResource;
 
 import javax.swing.*;
 
-import static com.intellij.util.ui.JBUI.ScaleType.PIX_SCALE;
+import static com.intellij.util.ui.JBUI.ScaleType.*;
 
-/**
- * Tests {@link com.intellij.ui.LayeredIcon} painting.
- *
- * @author tav
- */
-public class LayeredIconPaintTest extends CompositeIconPaintTestHelper {
+public class TextToIconPaintTest extends CompositeIconPaintTestHelper {
   @ClassRule
   public static final ExternalResource manageState = new RestoreScaleRule();
 
@@ -31,15 +26,14 @@ public class LayeredIconPaintTest extends CompositeIconPaintTestHelper {
 
   @Override
   protected ScalableIcon createCompositeIcon(Icon... cellIcons) {
-    LayeredIcon icon = new LayeredIcon(2);
-    icon.setIcon(cellIcons[0], 0);
-    icon.setIcon(cellIcons[1], 1, JBUI.scale(10), JBUI.scale(6));
-    return icon;
+    return (ScalableIcon)IconUtil.textToIcon("IDEA", new JPanel(), JBUI.scale(12));
   }
 
   @Override
   protected String getGoldImagePath(ScaleContext ctx) {
-    return PlatformTestUtil.getPlatformTestDataPath() + "ui/gold_LayeredIcon@" + (int)ctx.getScale(PIX_SCALE) + "x.png";
+    int usrScale = (int)(ctx.getScale(USR_SCALE) * ctx.getScale(OBJ_SCALE));
+    int sysScale = (int)(ctx.getScale(SYS_SCALE));
+    return PlatformTestUtil.getPlatformTestDataPath() + "ui/gold_TextIcon@" + usrScale + "x" + sysScale + "x.png";
   }
 
   @Override
@@ -49,9 +43,6 @@ public class LayeredIconPaintTest extends CompositeIconPaintTestHelper {
 
   @Override
   protected String[] getCellIconsPaths() {
-    return new String[] {
-      PlatformTestUtil.getPlatformTestDataPath() + "ui/db_set_breakpoint.png",
-      PlatformTestUtil.getPlatformTestDataPath() + "ui/question_badge.png"
-    };
+    return new String[] {}; // just pretends to be composite
   }
 }

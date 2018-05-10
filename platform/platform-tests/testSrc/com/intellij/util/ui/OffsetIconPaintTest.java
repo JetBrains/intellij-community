@@ -4,9 +4,12 @@ package com.intellij.util.ui;
 import com.intellij.openapi.util.ScalableIcon;
 import com.intellij.testFramework.PlatformTestUtil;
 import com.intellij.ui.OffsetIcon;
+import com.intellij.util.ui.JBUI.ScaleContext;
 import org.junit.Test;
 
 import javax.swing.*;
+
+import static com.intellij.util.ui.JBUI.ScaleType.PIX_SCALE;
 
 /**
  * Tests {@link com.intellij.ui.OffsetIcon} painting.
@@ -26,8 +29,8 @@ public class OffsetIconPaintTest extends CompositeIconPaintTestHelper {
   }
 
   @Override
-  protected String getGoldImagePath(int scale) {
-    return PlatformTestUtil.getPlatformTestDataPath() + "ui/gold_OffsetIcon@" + scale + "x.png";
+  protected String getGoldImagePath(ScaleContext ctx) {
+    return PlatformTestUtil.getPlatformTestDataPath() + "ui/gold_OffsetIcon@" + (int)ctx.getScale(PIX_SCALE) + "x.png";
   }
 
   @Override
