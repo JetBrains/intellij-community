@@ -435,9 +435,11 @@ public class SearchEverywhereUI extends BorderLayoutPanel {
   }
 
   private void gotoSelectedItem(Object value, SearchEverywhereContributor contributor, int modifiers) {
-    stopSearching();
-    searchFinishedHandler.run();
-    contributor.processSelectedItem(value, modifiers);
+    boolean closePopup = contributor.processSelectedItem(value, modifiers);
+    if (closePopup) {
+      stopSearching();
+      searchFinishedHandler.run();
+    }
   }
 
   private void stopSearching() {

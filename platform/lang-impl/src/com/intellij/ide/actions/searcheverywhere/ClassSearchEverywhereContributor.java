@@ -71,9 +71,11 @@ public class ClassSearchEverywhereContributor implements SearchEverywhereContrib
   }
 
   @Override
-  public void processSelectedItem(Object selected, int modifiers) {
+  public boolean processSelectedItem(Object selected, int modifiers) {
     if (selected instanceof PsiElement) {
       NavigationUtil.activateFileWithPsiElement((PsiElement) selected, (modifiers & InputEvent.SHIFT_MASK) != 0);
     }
+
+    return true;
   }
 }

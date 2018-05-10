@@ -47,8 +47,7 @@ public interface SearchEverywhereContributor {
     return search(project, pattern, everywhere, progressIndicator, -1).getItems();
   }
 
-  //todo return boolean #UX-1
-  void processSelectedItem(Object selected, int modifiers);
+  boolean processSelectedItem(Object selected, int modifiers);
 
   ListCellRenderer getElementsRenderer(Project project);
 

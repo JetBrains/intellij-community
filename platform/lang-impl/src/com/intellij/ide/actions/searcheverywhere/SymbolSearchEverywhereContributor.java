@@ -100,10 +100,12 @@ public class SymbolSearchEverywhereContributor implements SearchEverywhereContri
   }
 
   @Override
-  public void processSelectedItem(Object selected, int modifiers) {
+  public boolean processSelectedItem(Object selected, int modifiers) {
     //todo maybe another elements types
     if (selected instanceof PsiElement) {
       NavigationUtil.activateFileWithPsiElement((PsiElement) selected, (modifiers & InputEvent.SHIFT_MASK) != 0);
     }
+
+    return true;
   }
 }
