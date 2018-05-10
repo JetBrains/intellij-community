@@ -15,6 +15,7 @@ import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.ComboBox;
 import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.vcs.VcsBundle;
 import com.intellij.openapi.vcs.VcsConfiguration;
 import com.intellij.openapi.vcs.VcsDataKeys;
@@ -34,6 +35,7 @@ import com.intellij.ui.ColoredListCellRenderer;
 import com.intellij.ui.SimpleColoredComponent;
 import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.ThreeStateCheckBox.State;
 import com.intellij.util.ui.tree.WideSelectionTreeUI;
 import com.intellij.util.ui.update.MergingUpdateQueue;
@@ -88,6 +90,13 @@ public class MultipleLocalChangeListsBrowser extends CommitDialogChangesBrowser 
     myChangeList = ChangeListManager.getInstance(project).getDefaultChangeList();
     myChangeListChooser = new ChangeListChooser();
 
+    if (Registry.is("vcs.skip.single.default.changelist")) {
+      List<LocalChangeList> allChangeLists = ChangeListManager.getInstance(project).getChangeLists();
+      if (allChangeLists.size() == 1 && allChangeLists.get(0).isBlank()) {
+        myChangeListChooser.setVisible(false);
+      }
+    }
+
     ChangeListManager.getInstance(myProject).addChangeListListener(new MyChangeListListener(), this);
     init();
 
@@ -104,7 +113,8 @@ public class MultipleLocalChangeListsBrowser extends CommitDialogChangesBrowser 
   @Nullable
   @Override
   protected JComponent createHeaderPanel() {
-    return myChangeListChooser;
+    return JBUI.Panels.simplePanel(myChangeListChooser)
+                      .withBorder(JBUI.Borders.emptyLeft(6));
   }
 
   @NotNull

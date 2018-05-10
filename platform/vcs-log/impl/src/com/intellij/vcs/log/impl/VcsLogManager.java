@@ -20,7 +20,6 @@ import com.intellij.vcs.log.VcsLogRefresher;
 import com.intellij.vcs.log.data.VcsLogData;
 import com.intellij.vcs.log.data.VcsLogStorage;
 import com.intellij.vcs.log.ui.AbstractVcsLogUi;
-import com.intellij.vcs.log.ui.VcsLogColorManager;
 import com.intellij.vcs.log.ui.VcsLogColorManagerImpl;
 import com.intellij.vcs.log.ui.VcsLogUiImpl;
 import com.intellij.vcs.log.visible.VcsLogFilterer;
@@ -94,8 +93,13 @@ public class VcsLogManager implements Disposable {
   }
 
   @NotNull
-  public VcsLogUiImpl createLogUi(@NotNull String logId, @Nullable String contentTabName) {
-    return createLogUi(contentTabName, getMainLogUiFactory(logId));
+  public VcsLogTabsProperties getUiProperties() {
+    return myUiProperties;
+  }
+
+  @NotNull
+  public VcsLogUiImpl createLogUi(@NotNull String logId, boolean isToolWindowTab) {
+    return createLogUi(getMainLogUiFactory(logId), isToolWindowTab);
   }
 
   @NotNull
@@ -104,13 +108,12 @@ public class VcsLogManager implements Disposable {
   }
 
   @NotNull
-  public <U extends AbstractVcsLogUi> U createLogUi(@Nullable String contentTabName,
-                                                    @NotNull VcsLogUiFactory<U> factory) {
+  public <U extends AbstractVcsLogUi> U createLogUi(@NotNull VcsLogUiFactory<U> factory, boolean isToolWindowTab) {
     U ui = factory.createLogUi(myProject, myLogData);
 
     Disposable disposable;
-    if (contentTabName != null) {
-      disposable = myTabsLogRefresher.addTabToWatch(contentTabName, ui.getRefresher());
+    if (isToolWindowTab) {
+      disposable = myTabsLogRefresher.addTabToWatch(ui.getId(), ui.getRefresher());
     }
     else {
       disposable = myPostponableRefresher.addLogWindow(ui.getRefresher());
@@ -165,6 +168,7 @@ public class VcsLogManager implements Disposable {
     LOG.assertTrue(ApplicationManager.getApplication().isDispatchThread());
 
     myTabsLogRefresher.closeLogTabs();
+
     Disposer.dispose(myTabsLogRefresher);
     ApplicationManager.getApplication().executeOnPooledThread(() -> {
       Disposer.dispose(this);
@@ -235,7 +239,7 @@ public class VcsLogManager implements Disposable {
                                      new VcsLogFilterer(logData.getLogProviders(), logData.getStorage(),
                                                         logData.getTopCommitsCache(),
                                                         logData.getCommitDetailsGetter(), logData.getIndex()));
-      return new VcsLogUiImpl(logData, myColorManager, properties, refresher);
+      return new VcsLogUiImpl(myLogId, logData, myColorManager, properties, refresher);
     }
   }
 }

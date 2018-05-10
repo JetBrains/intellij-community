@@ -167,12 +167,6 @@ public class SvnUtil {
     }
   }
 
-  @Nullable
-  public static String getExactLocation(final SvnVcs vcs, File path) {
-    Info info = vcs.getInfo(path);
-    return info != null && info.getURL() != null ? info.getURL().toString() : null;
-  }
-
   @NotNull
   public static File[] toIoFiles(@NotNull VirtualFile[] files) {
     return map2Array(files, File.class, VfsUtilCore::virtualToIoFile);

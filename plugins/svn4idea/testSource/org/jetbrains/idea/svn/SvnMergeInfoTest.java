@@ -288,7 +288,7 @@ public class SvnMergeInfoTest extends Svn17TestCase {
   private List<SvnChangeList> getTrunkChangeLists() throws com.intellij.openapi.vcs.VcsException {
     final CommittedChangesProvider<SvnChangeList, ChangeBrowserSettings> provider = myVcs.getCommittedChangesProvider();
 
-    return provider.getCommittedChanges(provider.createDefaultSettings(), new SvnRepositoryLocation(myTrunkUrl), 0);
+    return provider.getCommittedChanges(provider.createDefaultSettings(), new SvnRepositoryLocation(parseUrl(myTrunkUrl, false)), 0);
   }
 
   private void importAndCheckOut(@NotNull File trunk) throws IOException {

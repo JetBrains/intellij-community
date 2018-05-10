@@ -1,18 +1,4 @@
-/*
- * Copyright 2006-2018 Bas Leijdekkers
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.siyeh.ig.style;
 
 import com.intellij.codeInspection.*;
@@ -336,7 +322,7 @@ public class BoundedWildcardInspection extends AbstractBaseJavaLocalInspectionTo
       if (PsiTreeUtil.isAncestor(ignoreUsagesIn, ref.getElement(), false)) return true;
       PsiMethod calledMethod = getMethodCallOnReference(ref);
       if (calledMethod == null) {
-        if (isInComparison(ref)) return true; // ignore "x == y"
+        if (isInPolyadicExpression(ref)) return true; // ignore "x == y"
         PsiField field = isAssignedToField(ref);
         if (field != null) {
           // check if e.g. "Processor<String> field" is used in "field.process(xxx)" only
@@ -420,7 +406,7 @@ public class BoundedWildcardInspection extends AbstractBaseJavaLocalInspectionTo
     return TypeConversionUtil.isAssignable(paramType, capturedSuggested);
   }
 
-  private static PsiMethod getMethodCallOnReference(PsiReference ref) {
+  private static PsiMethod getMethodCallOnReference(@NotNull PsiReference ref) {
     PsiElement refElement = ref.getElement();
     PsiElement parent = PsiUtil.skipParenthesizedExprUp(refElement.getParent());
     if (!(parent instanceof PsiReferenceExpression)) return null;
@@ -444,7 +430,7 @@ public class BoundedWildcardInspection extends AbstractBaseJavaLocalInspectionTo
     return null;
   }
 
-  private static boolean isIteratedValueInForeachExpression(PsiReference ref) {
+  private static boolean isIteratedValueInForeachExpression(@NotNull PsiReference ref) {
     PsiElement refElement = ref.getElement();
     PsiElement parent = PsiUtil.skipParenthesizedExprUp(refElement.getParent());
     if (!(parent instanceof PsiForeachStatement)) return false;
@@ -458,22 +444,22 @@ public class BoundedWildcardInspection extends AbstractBaseJavaLocalInspectionTo
     return aClass != null;
   }
 
-  private static boolean isInComparison(PsiReference ref) {
+  private static boolean isInPolyadicExpression(@NotNull PsiReference ref) {
     PsiElement refElement = ref.getElement();
     PsiElement parent = PsiUtil.skipParenthesizedExprUp(refElement.getParent());
     return parent instanceof PsiPolyadicExpression;
   }
 
-  private static PsiField isAssignedToField(PsiReference ref) {
+  private static PsiField isAssignedToField(@NotNull PsiReference ref) {
     PsiElement refElement = ref.getElement();
     PsiElement parent = PsiUtil.skipParenthesizedExprUp(refElement.getParent());
     if (!(parent instanceof PsiAssignmentExpression) || ((PsiAssignmentExpression)parent).getOperationTokenType() != JavaTokenType.EQ) return null;
     PsiExpression r = ((PsiAssignmentExpression)parent).getRExpression();
     if (!PsiTreeUtil.isAncestor(r, refElement, false)) return null;
-    PsiExpression l = ((PsiAssignmentExpression)parent).getLExpression();
+    PsiExpression l = PsiUtil.skipParenthesizedExprDown(((PsiAssignmentExpression)parent).getLExpression());
     if (!(l instanceof PsiReferenceExpression)) return null;
     PsiReferenceExpression lExpression = (PsiReferenceExpression)l;
-    PsiExpression lQualifier = lExpression.getQualifierExpression();
+    PsiExpression lQualifier = PsiUtil.skipParenthesizedExprDown(lExpression.getQualifierExpression());
     if (lQualifier != null && !(lQualifier instanceof PsiThisExpression)) return null;
     PsiElement field = lExpression.resolve();
     if (!(field instanceof PsiField)) return null;

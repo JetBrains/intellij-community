@@ -3,7 +3,6 @@
 package com.intellij.openapi.vcs.changes;
 
 import com.intellij.diff.util.DiffPlaces;
-import com.intellij.diff.util.DiffUtil;
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.CommonActionsManager;
 import com.intellij.ide.DefaultTreeExpander;
@@ -19,6 +18,7 @@ import com.intellij.openapi.ui.SimpleToolWindowPanel;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Factory;
 import com.intellij.openapi.util.SystemInfo;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.ProjectLevelVcsManager;
 import com.intellij.openapi.vcs.VcsBundle;
@@ -287,7 +287,7 @@ public class ChangesViewManager implements ChangesViewI, ProjectComponent, Persi
     ChangeListManagerImpl changeListManager = ChangeListManagerImpl.getInstanceImpl(myProject);
 
     TreeModelBuilder treeModelBuilder = new TreeModelBuilder(myProject, myView.getGrouping())
-      .setChangeLists(changeListManager.getChangeListsCopy())
+      .setChangeLists(changeListManager.getChangeListsCopy(), Registry.is("vcs.skip.single.default.changelist"))
       .setLocallyDeletedPaths(changeListManager.getDeletedFiles())
       .setModifiedWithoutEditing(changeListManager.getModifiedWithoutEditing())
       .setSwitchedFiles(changeListManager.getSwitchedFilesMap())
@@ -507,11 +507,6 @@ public class ChangesViewManager implements ChangesViewI, ProjectComponent, Persi
     public MyChangeProcessor(@NotNull Project project) {
       super(project, DiffPlaces.CHANGES_VIEW);
       Disposer.register(project, this);
-    }
-
-    @Override
-    public boolean isWindowFocused() {
-      return DiffUtil.isFocusedComponent(myProject, myContent.getComponent());
     }
 
     @NotNull

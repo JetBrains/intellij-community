@@ -89,7 +89,7 @@ public abstract class ChangesTree extends Tree implements DataProvider {
                      boolean highlightProblems) {
     super(ChangesBrowserNode.createRoot(project));
     myProject = project;
-    myGroupingSupport = new ChangesGroupingSupport(myProject, this);
+    myGroupingSupport = new ChangesGroupingSupport(myProject, this, highlightProblems);
     myShowCheckboxes = showCheckboxes;
     myCheckboxWidth = new JCheckBox().getPreferredSize().width;
 

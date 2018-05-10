@@ -1,11 +1,9 @@
 <html>
 <body>
-Reports method generic parameters which can be replaced with bounded wildcards.
+Reports generic method parameters that can use <a href="https://en.wikipedia.org/wiki/Wildcard_(Java)">bounded wildcards</a> in your API.
 <!-- tooltip end -->
-<br/>
-Tries to enforce a widely accepted principle of API design: use wildcards in the method signature.
 <p>
-  To quote <a href="https://en.wikipedia.org/wiki/Joshua_Bloch#Effective_Java">Josh Bloch</a> in "<b>Effective Java</b>" third Edition item 31:
+To quote <a href="https://en.wikipedia.org/wiki/Joshua_Bloch#Effective_Java">Josh Bloch</a> in "<b>Effective Java</b>" third Edition item 31:
 <hr>
 <h4>Use bounded wildcards to increase API flexibility.</h4>
 <i>
@@ -14,17 +12,14 @@ Remember the basic rule: producer-extends, consumer-super (PECS).
 And remember that all Comparables and Comparators are consumers.
 </i>
 <hr>
-
 <p>Example:
-
-  <code><pre>&lt;T&gt; void process(Consumer&lt;T&gt; consumer);</pre></code> should be replaced with:
-  <code><pre>&lt;T&gt; void process(Consumer&lt;? super T&gt; consumer);</pre></code>
-  This method signature is more flexible because it accepts more types.
+  <code><pre>void process(Consumer&lt;Number&gt; consumer);</pre></code> should be replaced with:
+  <code><pre>void process(Consumer&lt;? super Number&gt; consumer);</pre></code>
+  This method signature is more flexible because it accepts more types (not only Consumer&lt;Number&gt; but also Consumer&lt;Object&gt;).
 <p>
-
   Likewise, type parameters in covariant position:
-  <code><pre>&lt;T&gt; T produce(Producer&lt;T&gt; p);</pre></code>should be replaced with:
-  <code><pre>&lt;T&gt; T produce(Producer&lt;? extends T&gt; p);</pre></code>
+  <code><pre>T produce(Producer&lt;T&gt; p);</pre></code>should be replaced with:
+  <code><pre>T produce(Producer&lt;? extends T&gt; p);</pre></code>
 <p>
 
 </body>

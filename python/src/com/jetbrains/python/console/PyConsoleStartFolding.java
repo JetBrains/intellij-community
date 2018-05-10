@@ -15,6 +15,7 @@
  */
 package com.jetbrains.python.console;
 
+import com.google.common.collect.ImmutableList;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.FoldRegion;
 import com.intellij.openapi.editor.FoldingModel;
@@ -25,18 +26,24 @@ import com.intellij.util.DocumentUtil;
 import com.jetbrains.python.console.pydev.ConsoleCommunicationListener;
 import org.jetbrains.annotations.NotNull;
 
+import java.util.List;
+
 public class PyConsoleStartFolding implements ConsoleCommunicationListener, FoldingListener, DocumentListener {
   private final PythonConsoleView myConsoleView;
   private int myNumberOfCommandExecuted = 0;
   private int myNumberOfCommandToStop = 2;
   private boolean doNotAddFoldingAgain = false;
   private FoldRegion myStartFoldRegion;
+  private final boolean myAddOnce;
   private static final String DEFAULT_FOLDING_MESSAGE = "Python Console";
   private int myStartLineOffset = 0;
+  private final List<String> firstLinePrefix = ImmutableList.of("Python", "PyDev console");
+  private final List<String> lastLinePrefix = ImmutableList.of("IPython", "[", "PyDev console");
 
-  public PyConsoleStartFolding(PythonConsoleView consoleView) {
+  public PyConsoleStartFolding(PythonConsoleView consoleView, boolean addOnce) {
     super();
     myConsoleView = consoleView;
+    myAddOnce = addOnce;
   }
 
   public void setStartLineOffset(int startLineOffset) {
@@ -47,12 +54,16 @@ public class PyConsoleStartFolding implements ConsoleCommunicationListener, Fold
     myNumberOfCommandToStop = numberOfCommandToStop;
   }
 
-  @Override
-  public void documentChanged(DocumentEvent event) {
-    addFolding(event);
+  private int getStartDefaultValue() {
+    return myStartLineOffset;
   }
 
-  private void addFolding(DocumentEvent event) {
+  @Override
+  public void documentChanged(DocumentEvent event) {
+    addFolding();
+  }
+
+  private void addFolding() {
     Document document = myConsoleView.getEditor().getDocument();
     if (doNotAddFoldingAgain || document.getTextLength() == 0) {
       return;
@@ -63,32 +74,47 @@ public class PyConsoleStartFolding implements ConsoleCommunicationListener, Fold
     }
     FoldingModel foldingModel = myConsoleView.getEditor().getFoldingModel();
     foldingModel.runBatchFoldingOperation(() -> {
-      int start = myStartLineOffset;
-      int finish = document.getTextLength() - 1;
+      int start = getStartDefaultValue();
+      int startLine = 0;
+      int finish = start;
+      int finishLine = 0;
       String placeholderText = DEFAULT_FOLDING_MESSAGE;
       int firstLine = document.getLineNumber(myStartLineOffset);
       for (int line = firstLine; line < document.getLineCount(); line++) {
         String lineText = document.getText(DocumentUtil.getLineTextRange(document, line));
-        if (lineText.startsWith("Python")) {
-          if (start == myStartLineOffset) {
-            start = document.getLineStartOffset(line);
+        String prevLineText = null;
+        if (line > 0) {
+          prevLineText = document.getText(DocumentUtil.getLineTextRange(document, line - 1));
+        }
+        if (start == getStartDefaultValue()) {
+          for (String prefix : firstLinePrefix) {
+            if (lineText.startsWith(prefix)) {
+              start = document.getLineStartOffset(line);
+              startLine = line;
+              if (prefix.equals("Python")) {
+                placeholderText = lineText;
+              }
+              break;
+            }
           }
-          placeholderText = lineText;
-          break;
         }
-        if (lineText.startsWith("PyDev console")) {
-          start = document.getLineStartOffset(line);
+
+        if (!doNotAddFoldingAgain) {
+          for (String prefix : lastLinePrefix) {
+            if (lineText.startsWith(prefix) && (!prefix.equals("[") || (prefix.equals("[") && prevLineText.startsWith("Python")))) {
+              finish = document.getLineEndOffset(line);
+              finishLine = line;
+              doNotAddFoldingAgain = myAddOnce;
+              break;
+            }
+          }
         }
       }
-      String newFragment = event.getNewFragment().toString();
-      if (newFragment.startsWith("In[") || newFragment.startsWith(PyConsoleUtil.ORDINARY_PROMPT)) {
-        finish = event.getOffset() - 1;
-        doNotAddFoldingAgain = true;
-      }
+
       if (myStartFoldRegion != null) {
         foldingModel.removeFoldRegion(myStartFoldRegion);
       }
-      if (start > finish) return;
+      if ((start >= finish) || (startLine == finishLine)) return;
       FoldRegion foldRegion = foldingModel.addFoldRegion(start, finish, placeholderText);
       if (foldRegion != null) {
         foldRegion.setExpanded(false);

@@ -35,6 +35,7 @@ import com.intellij.psi.PsiElement;
 import com.intellij.ui.AppUIUtil;
 import com.intellij.ui.SimpleColoredComponent;
 import com.intellij.ui.classFilter.ClassFilter;
+import com.intellij.util.ArrayUtil;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.ThreeState;
 import com.intellij.xdebugger.XExpression;
@@ -327,6 +328,23 @@ public abstract class Breakpoint<P extends JavaBreakpointProperties> implements 
       createRequest(debugProcess);
       debugProcess.getVirtualMachineProxy().resume();
     }
+
+    StackFrameProxyImpl frame = context.getFrameProxy();
+    if (getProperties().isCALLER_FILTERS_ENABLED() && frame != null) {
+      StackFrameProxyImpl parentFrame = frame.threadProxy().frame(1);
+      if (parentFrame != null) {
+        Method method = parentFrame.location().method();
+        String name = method.declaringType().name() + "." + method.name();
+        String[] callerFilters = getProperties().getCallerFilters();
+        if (!ArrayUtil.isEmpty(callerFilters) && !ArrayUtil.contains(name, callerFilters)) {
+          return false;
+        }
+        if (ArrayUtil.contains(name, getProperties().getCallerExclusionFilters())) {
+          return false;
+        }
+      }
+    }
+
     if (isInstanceFiltersEnabled()) {
       Value value = context.computeThisObject();
       if (value != null) {  // non-static
@@ -348,7 +366,6 @@ public abstract class Breakpoint<P extends JavaBreakpointProperties> implements 
         return true;
       }
 
-      StackFrameProxyImpl frame = context.getFrameProxy();
       if (frame != null) {
         Location location = frame.location();
         if (location != null) {

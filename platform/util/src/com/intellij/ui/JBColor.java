@@ -20,8 +20,9 @@ import java.util.Map;
  */
 @SuppressWarnings("UseJBColor")
 public class JBColor extends Color {
-
-  private static volatile boolean DARK = UIUtil.isUnderDarcula();
+  private static class Lazy {
+    private static volatile boolean DARK = UIUtil.isUnderDarcula();
+  }
 
   private final Color darkColor;
   private final NotNullProducer<Color> func;
@@ -33,8 +34,6 @@ public class JBColor extends Color {
   public JBColor(@NotNull Color regular, @NotNull Color dark) {
     super(regular.getRGB(), regular.getAlpha() != 255);
     darkColor = dark;
-    //noinspection AssignmentToStaticFieldFromInstanceMethod
-    DARK = UIUtil.isUnderDarcula(); //Double check. Sometimes DARK != isDarcula() after dialogs appear on splash screen
     func = null;
   }
 
@@ -90,11 +89,11 @@ public class JBColor extends Color {
   }
 
   public static void setDark(boolean dark) {
-    DARK = dark;
+    Lazy.DARK = dark;
   }
 
   public static boolean isBright() {
-    return !DARK;
+    return !Lazy.DARK;
   }
 
   Color getDarkVariant() {
@@ -103,7 +102,7 @@ public class JBColor extends Color {
 
   @NotNull
   Color getColor() {
-    return func != null ? func.produce() : DARK ? getDarkVariant() : this;
+    return func != null ? func.produce() : Lazy.DARK ? getDarkVariant() : this;
   }
 
   @Override
@@ -252,12 +251,7 @@ public class JBColor extends Color {
   public static final JBColor blue = new JBColor(Color.blue, DarculaColors.BLUE);
   public static final JBColor BLUE = blue;
 
-  public static final JBColor white = new JBColor(Color.white, UIUtil.getListBackground()) {
-    @Override
-    Color getDarkVariant() {
-      return UIUtil.getListBackground();
-    }
-  };
+  public static final JBColor white = new JBColor(Color.white, background());
   public static final JBColor WHITE = white;
 
   public static final JBColor black = new JBColor(Color.black, foreground());

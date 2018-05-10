@@ -26,8 +26,8 @@ public class ErrorStripeUpdateManager {
   private final PsiDocumentManager myPsiDocumentManager;
 
   public ErrorStripeUpdateManager(Project project, PsiDocumentManager psiDocumentManager) {
-    this.myProject = project;
-    this.myPsiDocumentManager = psiDocumentManager;
+    myProject = project;
+    myPsiDocumentManager = psiDocumentManager;
   }
 
   @SuppressWarnings("WeakerAccess") // Used in Rider
@@ -37,8 +37,8 @@ public class ErrorStripeUpdateManager {
 
     PsiFile file = myPsiDocumentManager.getPsiFile(editor.getDocument());
     final EditorMarkupModel markup = (EditorMarkupModel) editor.getMarkupModel();
-    markup.setErrorPanelPopupHandler(createPopup(editor, file));
-    markup.setErrorStripTooltipRendererProvider(createTooltipRenderer(editor, file));
+    markup.setErrorPanelPopupHandler(createPopup(file));
+    markup.setErrorStripTooltipRendererProvider(createTooltipRenderer());
     markup.setMinMarkHeight(DaemonCodeAnalyzerSettings.getInstance().ERROR_STRIPE_MARK_MIN_HEIGHT);
     setOrRefreshErrorStripeRenderer(markup, file);
   }
@@ -64,12 +64,12 @@ public class ErrorStripeUpdateManager {
   }
 
   @NotNull
-  protected PopupHandler createPopup(@NotNull Editor editor, @Nullable PsiFile psiFile) {
+  private static PopupHandler createPopup(@Nullable PsiFile psiFile) {
     return new DaemonEditorPopup(psiFile);
   }
 
   @NotNull
-  protected ErrorStripTooltipRendererProvider createTooltipRenderer(@NotNull Editor editor, @Nullable PsiFile psiFile) {
+  private ErrorStripTooltipRendererProvider createTooltipRenderer() {
     return new DaemonTooltipRendererProvider(myProject);
   }
 

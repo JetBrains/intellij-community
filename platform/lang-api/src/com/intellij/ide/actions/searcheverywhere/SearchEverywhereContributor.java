@@ -47,36 +47,14 @@ public interface SearchEverywhereContributor {
     return search(project, pattern, everywhere, progressIndicator, -1).getItems();
   }
 
-  void processSelectedItem(Object selected);
+  //todo return boolean #UX-1
+  void processSelectedItem(Object selected, int modifiers);
 
-  //todo any way to listen project in contributor
   ListCellRenderer getElementsRenderer(Project project);
 
   static List<SearchEverywhereContributor> getProvidersSorted() {
     return Arrays.stream(EP_NAME.getExtensions())
       .sorted(Comparator.comparingInt(SearchEverywhereContributor::getSortWeight))
       .collect(Collectors.toList());
-  }
-
-  class ContributorSearchResult {
-    private final List<Object> items;
-    private final boolean hasMoreItems;
-
-    public ContributorSearchResult(List<Object> items, boolean hasMoreItems) {
-      this.items = items;
-      this.hasMoreItems = hasMoreItems;
-    }
-
-    public List<Object> getItems() {
-      return items;
-    }
-
-    public boolean hasMoreItems() {
-      return hasMoreItems;
-    }
-
-    public boolean isEmpty() {
-      return items.isEmpty();
-    }
   }
 }

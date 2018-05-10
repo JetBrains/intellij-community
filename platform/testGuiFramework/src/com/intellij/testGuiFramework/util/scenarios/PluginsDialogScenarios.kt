@@ -36,7 +36,7 @@ fun PluginsDialogScenarios.uninstallPlugin(pluginName: String) {
       else {
         pluginsDialogModel.pressCancel()
       }
-      message("IDE and Plugin Updates", timeout = 5L) { button("Postpone").click() }
+      dialog("IDE and Plugin Updates", timeout = 5L) { button("Postpone").click() }
     }
   }
 }
@@ -66,7 +66,7 @@ fun PluginsDialogScenarios.installPluginFromDisk(pluginFileName: String) {
       actionLink("Configure").click()
       popupClick("Plugins")
       pluginsDialogModel.installPluginFromDisk(pluginFileName)
-      message("IDE and Plugin Updates", timeout = 5L) { button("Postpone").click() }
+      dialog("IDE and Plugin Updates", timeout = 5L) { button("Postpone").click() }
     }
   }
 }

@@ -18,9 +18,7 @@ package com.intellij.refactoring.util.duplicates;
 import com.intellij.codeInsight.PsiEquivalenceUtil;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Comparing;
-import com.intellij.openapi.util.Ref;
-import com.intellij.openapi.util.TextRange;
+import com.intellij.openapi.util.*;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
@@ -44,13 +42,14 @@ public final class Match {
   private final PsiElement myMatchStart;
   private final PsiElement myMatchEnd;
   private final Map<PsiVariable, List<PsiElement>> myParameterValues = new HashMap<>();
-  private final Map<PsiVariable, ArrayList<PsiElement>> myParameterOccurrences = new HashMap<>();
+  private final Map<PsiVariable, List<PsiElement>> myParameterOccurrences = new HashMap<>();
   private final Map<PsiElement, PsiElement> myDeclarationCorrespondence = new HashMap<>();
   private ReturnValue myReturnValue;
   private Ref<PsiExpression> myInstanceExpression;
   final Map<PsiVariable, PsiType> myChangedParams = new HashMap<>();
   private final boolean myIgnoreParameterTypes;
   private final List<ExtractedParameter> myExtractedParameters = new ArrayList<>();
+  private final Map<DuplicatesFinder.Parameter, List<Pair.NonNull<PsiExpression, PsiExpression>>> myFoldedExpressionMappings = new HashMap<>();
 
   Match(PsiElement start, PsiElement end, boolean ignoreParameterTypes) {
     LOG.assertTrue(start.getParent() == end.getParent());
@@ -426,5 +425,16 @@ public final class Match {
   @NotNull
   public List<ExtractedParameter> getExtractedParameters() {
     return myExtractedParameters;
+  }
+
+  public void putFoldedExpressionMapping(@NotNull DuplicatesFinder.Parameter parameter,
+                                         @NotNull PsiExpression pattern,
+                                         @NotNull PsiExpression candidate) {
+    myFoldedExpressionMappings.computeIfAbsent(parameter, unused -> new ArrayList<>()).add(Pair.createNonNull(pattern, candidate));
+  }
+
+  @Nullable
+  public List<Pair.NonNull<PsiExpression, PsiExpression>> getFoldedExpressionMappings(@NotNull DuplicatesFinder.Parameter parameter) {
+    return myFoldedExpressionMappings.get(parameter);
   }
 }

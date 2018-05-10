@@ -25,7 +25,6 @@ import com.intellij.openapi.vcs.*;
 import com.intellij.openapi.vcs.changes.Change;
 import com.intellij.openapi.vcs.changes.ui.ChangeListViewerDialog;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.openapi.wm.ToolWindowManager;
 import com.intellij.ui.PopupHandler;
 import com.intellij.util.IconUtil;
 import com.intellij.util.WaitForProgressToShow;
@@ -37,7 +36,6 @@ import org.jetbrains.idea.svn.SvnApplicationSettings;
 import org.jetbrains.idea.svn.SvnBundle;
 import org.jetbrains.idea.svn.SvnUtil;
 import org.jetbrains.idea.svn.SvnVcs;
-import org.jetbrains.idea.svn.actions.BrowseRepositoryAction;
 import org.jetbrains.idea.svn.api.Revision;
 import org.jetbrains.idea.svn.api.Target;
 import org.jetbrains.idea.svn.api.Url;
@@ -61,6 +59,7 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 
+import static com.intellij.util.ArrayUtil.isEmpty;
 import static org.jetbrains.idea.svn.SvnUtil.createUrl;
 import static org.jetbrains.idea.svn.SvnUtil.getRelativeUrl;
 
@@ -159,16 +158,9 @@ public class RepositoryBrowserDialog extends DialogWrapper {
     }, browser);
     group.add(action);
 
-    if ((additionalActions != null) || (! horizontal)) {
+    if (!isEmpty(additionalActions)) {
       group.addSeparator();
-    }
-    if (additionalActions != null) {
-      for (AnAction anAction : additionalActions) {
-        group.add(anAction);
-      }
-    }
-    if (! horizontal) {
-      group.add(new CloseToolWindowAction());
+      group.addAll(additionalActions);
     }
     return ActionManager.getInstance().createActionToolbar(PLACE_TOOLBAR, group, horizontal).getComponent();
   }
@@ -425,7 +417,7 @@ public class RepositoryBrowserDialog extends DialogWrapper {
         new AddRepositoryLocationDialog(myBrowserComponent.getProject(), settings.getTypedUrlsListCopy()) {
         @Override
         protected String initText() {
-          return oldUrl.toString();
+          return oldUrl.toDecodedString();
         }
 
         @Override
@@ -885,8 +877,7 @@ public class RepositoryBrowserDialog extends DialogWrapper {
         return;
       }
       Url url = node.getURL();
-      AbstractVcsHelper.getInstance(myProject).showChangesBrowser(myVCS.getCommittedChangesProvider(),
-                                                                  new SvnRepositoryLocation(url.toString()),
+      AbstractVcsHelper.getInstance(myProject).showChangesBrowser(myVCS.getCommittedChangesProvider(), new SvnRepositoryLocation(url),
                                                                   "Changes in " + url.toString(), null);
     }
 
@@ -1088,20 +1079,5 @@ public class RepositoryBrowserDialog extends DialogWrapper {
       dlg.setTitle(title);
       dlg.show();
     });
-  }
-
-  private class CloseToolWindowAction extends AnAction {
-    public void actionPerformed(AnActionEvent e) {
-      disposeRepositoryBrowser();
-      Project p = e.getData(CommonDataKeys.PROJECT);
-      ToolWindowManager.getInstance(p).unregisterToolWindow(BrowseRepositoryAction.REPOSITORY_BROWSER_TOOLWINDOW);
-
-    }
-
-    public void update(AnActionEvent e) {
-      e.getPresentation().setText("Close");
-      e.getPresentation().setDescription("Close this tool window");
-      e.getPresentation().setIcon(AllIcons.Actions.Cancel);
-    }
   }
 }

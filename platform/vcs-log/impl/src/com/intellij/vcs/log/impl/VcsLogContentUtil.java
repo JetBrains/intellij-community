@@ -15,7 +15,6 @@
  */
 package com.intellij.vcs.log.impl;
 
-import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.MessageType;
 import com.intellij.openapi.util.Condition;
@@ -36,17 +35,32 @@ import com.intellij.vcs.log.ui.AbstractVcsLogUi;
 import com.intellij.vcs.log.ui.VcsLogPanel;
 import com.intellij.vcs.log.ui.VcsLogUiImpl;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.util.Arrays;
-import java.util.Collection;
-import java.util.List;
+import java.util.Set;
 
 /**
  * Utility methods to operate VCS Log tabs as {@link Content}s of the {@link ContentManager} of the VCS toolwindow.
  */
 public class VcsLogContentUtil {
-  private static final Logger LOG = Logger.getInstance(VcsLogContentUtil.class);
+
+  @Nullable
+  private static AbstractVcsLogUi getLogUi(@NotNull JComponent c) {
+    VcsLogPanel vcsLogPanel = null;
+    if (c instanceof VcsLogPanel) {
+      vcsLogPanel = (VcsLogPanel)c;
+    }
+    else if (c instanceof JPanel) {
+      vcsLogPanel = ContainerUtil.findInstance(c.getComponents(), VcsLogPanel.class);
+    }
+
+    if (vcsLogPanel != null) {
+      return vcsLogPanel.getUi();
+    }
+    return null;
+  }
 
   public static <U extends AbstractVcsLogUi> boolean findAndSelectContent(@NotNull Project project,
                                                                           @NotNull Class<U> clazz,
@@ -55,16 +69,8 @@ public class VcsLogContentUtil {
 
     ContentManager manager = toolWindow.getContentManager();
     JComponent component = ContentUtilEx.findContentComponent(manager, c -> {
-      VcsLogPanel vcsLogPanel = null;
-      if (c instanceof VcsLogPanel) {
-        vcsLogPanel = (VcsLogPanel)c;
-      }
-      else if (c instanceof JPanel) {
-        vcsLogPanel = ContainerUtil.findInstance(c.getComponents(), VcsLogPanel.class);
-      }
-
-      if (vcsLogPanel != null) {
-        AbstractVcsLogUi ui = vcsLogPanel.getUi();
+      AbstractVcsLogUi ui = getLogUi(c);
+      if (ui != null) {
         //noinspection unchecked
         return clazz.isInstance(ui) && condition.value((U)ui);
       }
@@ -80,40 +86,61 @@ public class VcsLogContentUtil {
     return findAndSelectContent(project, AbstractVcsLogUi.class, u -> u.equals(ui));
   }
 
-  public static void openAnotherLogTab(@NotNull VcsLogManager logManager, @NotNull Project project) {
-    ToolWindow toolWindow = ToolWindowManager.getInstance(project).getToolWindow(ToolWindowId.VCS);
-    String name = generateShortName(toolWindow);
-    openLogTab(project, logManager, VcsLogContentProvider.TAB_NAME, name, logManager.getMainLogUiFactory(name));
+  @Nullable
+  public static String getId(@NotNull Content content) {
+    AbstractVcsLogUi ui = getLogUi(content.getComponent());
+    if (ui == null) return null;
+    return ui.getId();
   }
 
   @NotNull
-  private static String generateShortName(@NotNull ToolWindow toolWindow) {
-    TabbedContent tabbedContent = ContentUtilEx.findTabbedContent(toolWindow.getContentManager(), VcsLogContentProvider.TAB_NAME);
+  public static String generateTabId(@NotNull Project project) {
+    Set<String> existingIds;
+
+    ContentManager contentManager = ToolWindowManager.getInstance(project).getToolWindow(ToolWindowId.VCS).getContentManager();
+    TabbedContent tabbedContent = ContentUtilEx.findTabbedContent(contentManager, VcsLogContentProvider.TAB_NAME);
     if (tabbedContent != null) {
-      return String.valueOf(tabbedContent.getTabs().size() + 1);
+      existingIds = ContainerUtil.map2SetNotNull(tabbedContent.getTabs(), pair -> {
+        AbstractVcsLogUi ui = getLogUi(pair.second);
+        if (ui == null) return null;
+        return ui.getId();
+      });
     }
     else {
-      List<Content> contents = ContainerUtil.filter(toolWindow.getContentManager().getContents(),
-                                                    content -> VcsLogContentProvider.TAB_NAME
-                                                      .equals(content.getUserData(Content.TAB_GROUP_NAME_KEY)));
-      return String.valueOf(contents.size() + 1);
+      existingIds = ContainerUtil.map2SetNotNull(Arrays.asList(contentManager.getContents()), content -> {
+        if (!VcsLogContentProvider.TAB_NAME.equals(content.getUserData(Content.TAB_GROUP_NAME_KEY))) return null;
+        return getId(content);
+      });
+    }
+
+    for (int i = 1; ; i++) {
+      String idString = Integer.toString(i);
+      if (!existingIds.contains(idString)) {
+        return idString;
+      }
     }
   }
 
   public static <U extends AbstractVcsLogUi> void openLogTab(@NotNull Project project, @NotNull VcsLogManager logManager,
                                                              @NotNull String tabGroupName, @NotNull String shortName,
-                                                             @NotNull VcsLogManager.VcsLogUiFactory<U> factory) {
+                                                             @NotNull VcsLogManager.VcsLogUiFactory<U> factory, boolean focus) {
+    U logUi = logManager.createLogUi(factory, true);
+
     ToolWindow toolWindow = ToolWindowManager.getInstance(project).getToolWindow(ToolWindowId.VCS);
-
-    String name = ContentUtilEx.getFullName(tabGroupName, shortName);
-
-    U logUi = logManager.createLogUi(name, factory);
-
     ContentUtilEx.addTabbedContent(toolWindow.getContentManager(),
-                                   new VcsLogPanel(logManager, logUi), tabGroupName, shortName, true, logUi);
-    toolWindow.activate(null);
-
+                                   new VcsLogPanel(logManager, logUi), tabGroupName, shortName, focus, logUi);
+    if (focus) toolWindow.activate(null);
     logManager.scheduleInitialization();
+  }
+
+  public static boolean closeLogTab(@NotNull ContentManager manager, @NotNull String tabId) {
+    return ContentUtilEx.closeContentTab(manager, c -> {
+      AbstractVcsLogUi ui = getLogUi(c);
+      if (ui != null) {
+        return ui.getId().equals(tabId);
+      }
+      return false;
+    });
   }
 
   public static void openMainLogAndExecute(@NotNull Project project, @NotNull Consumer<VcsLogUiImpl> consumer) {
@@ -142,13 +169,5 @@ public class VcsLogContentUtil {
       }
     }
     return false;
-  }
-
-  public static void closeLogTabs(@NotNull ToolWindow toolWindow, @NotNull Collection<String> tabs) {
-    for (String tabName : tabs) {
-      boolean closed = ContentUtilEx.closeContentTab(toolWindow.getContentManager(), tabName);
-      LOG.assertTrue(closed, "Could not find content component for tab " + tabName + "\nExisting content: " +
-                             Arrays.toString(toolWindow.getContentManager().getContents()) + "\nTabs to close: " + tabs);
-    }
   }
 }

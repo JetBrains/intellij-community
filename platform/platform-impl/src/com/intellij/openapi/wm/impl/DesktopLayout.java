@@ -9,6 +9,7 @@ import com.intellij.openapi.util.JDOMUtil;
 import com.intellij.openapi.wm.ToolWindow;
 import com.intellij.openapi.wm.ToolWindowAnchor;
 import gnu.trove.THashMap;
+import gnu.trove.THashSet;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -197,11 +198,6 @@ public final class DesktopLayout {
     return info != null && info.isRegistered();
   }
 
-  final boolean isToolWindowUnregistered(@NotNull String id) {
-    WindowInfoImpl info = myIdToInfo.get(id);
-    return info != null && !info.isRegistered();
-  }
-
   /**
    * @return comparator which compares {@code StripeButtons} in the stripe with specified {@code anchor}.
    */
@@ -264,6 +260,13 @@ public final class DesktopLayout {
   }
 
   public final void readExternal(@NotNull Element layoutElement) {
+    Set<String> registered = new THashSet<>();
+    for (WindowInfoImpl info : myIdToInfo.values()) {
+      if (info.isRegistered()) {
+        registered.add(info.getId());
+      }
+    }
+
     myIdToInfo.clear();
     for (Element e : layoutElement.getChildren(WindowInfoImpl.TAG)) {
       WindowInfoImpl info = XmlSerializer.deserialize(e, WindowInfoImpl.class);
@@ -271,6 +274,10 @@ public final class DesktopLayout {
       if (info.getId() == null) {
         LOG.warn("Skip invalid window info (no id): " + JDOMUtil.writeElement(e));
         continue;
+      }
+
+      if (registered.contains(info.getId())) {
+        info.setRegistered(true);
       }
 
       myIdToInfo.put(info.getId(), info);

@@ -4,7 +4,6 @@ package com.intellij.usages.impl;
 import com.intellij.find.FindManager;
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.*;
-import com.intellij.ide.actions.CloseTabToolbarAction;
 import com.intellij.ide.actions.exclusion.ExclusionHandler;
 import com.intellij.navigation.NavigationItem;
 import com.intellij.openapi.Disposable;
@@ -77,6 +76,8 @@ import java.util.List;
 import java.util.concurrent.*;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
+
+import com.intellij.util.containers.Queue;
 
 
 /**

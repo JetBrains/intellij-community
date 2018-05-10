@@ -18,6 +18,7 @@ package com.intellij.codeInspection.bytecodeAnalysis;
 import com.intellij.codeInspection.bytecodeAnalysis.asm.ASMUtils;
 import com.intellij.codeInspection.dataFlow.ContractReturnValue;
 import com.intellij.util.ArrayUtil;
+import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.org.objectweb.asm.Opcodes;
 import org.jetbrains.org.objectweb.asm.Type;
@@ -365,7 +366,7 @@ abstract class EffectQuantum {
 
     @Override
     Stream<EKey> dependencies() {
-      return Stream.concat(Stream.of(key), Stream.of(data).flatMap(DataValue::dependencies));
+      return StreamEx.of(data).flatMap(DataValue::dependencies).prepend(key);
     }
 
     @Override

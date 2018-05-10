@@ -16,7 +16,6 @@ import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.wm.*;
 import com.intellij.openapi.wm.ex.ToolWindowEx;
 import com.intellij.openapi.wm.ex.ToolWindowManagerEx;
-import com.intellij.openapi.wm.ex.ToolWindowManagerListener;
 import com.intellij.ui.content.*;
 import com.intellij.ui.content.impl.ContentImpl;
 import com.intellij.util.ArrayUtil;
@@ -193,20 +192,6 @@ public class ToolWindowHeadlessManagerImpl extends ToolWindowManagerEx {
 
   @Override
   public void initToolWindow(@NotNull ToolWindowEP bean) {
-
-  }
-
-  @Override
-  public void addToolWindowManagerListener(@NotNull ToolWindowManagerListener listener) {
-
-  }
-
-  @Override
-  public void addToolWindowManagerListener(@NotNull ToolWindowManagerListener listener, @NotNull Disposable parentDisposable) {
-  }
-
-  @Override
-  public void removeToolWindowManagerListener(@NotNull ToolWindowManagerListener listener) {
   }
 
   @Override

@@ -57,8 +57,8 @@ import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.*;
 import com.intellij.openapi.wm.ex.ToolWindowEx;
-import com.intellij.openapi.wm.ex.ToolWindowManagerAdapter;
 import com.intellij.openapi.wm.ex.ToolWindowManagerEx;
+import com.intellij.openapi.wm.ex.ToolWindowManagerListener;
 import com.intellij.openapi.wm.impl.content.ToolWindowContentUi;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.file.PsiDirectoryFactory;
@@ -213,7 +213,8 @@ public class ProjectViewImpl extends ProjectView implements PersistentStateCompo
         setAutoscrollToSource(state, myCurrentViewId);
       }
     };
-    toolWindowManager.addToolWindowManagerListener(new ToolWindowManagerAdapter(){
+
+    myConnection.subscribe(ToolWindowManagerListener.TOPIC, new ToolWindowManagerListener() {
       private boolean toolWindowVisible;
 
       @Override

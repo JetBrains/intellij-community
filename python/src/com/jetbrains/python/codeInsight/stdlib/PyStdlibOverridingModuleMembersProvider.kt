@@ -9,10 +9,11 @@ import com.jetbrains.python.codeInsight.PyCustomMember
 import com.jetbrains.python.psi.PyFile
 import com.jetbrains.python.psi.resolve.PyResolveContext
 import com.jetbrains.python.psi.types.PyOverridingModuleMembersProvider
+import com.jetbrains.python.psi.types.TypeEvalContext
 
 class PyStdlibOverridingModuleMembersProvider: PyOverridingModuleMembersProvider() {
 
-  override fun getMembersByQName(module: PyFile?, qName: String?) = emptyList<PyCustomMember>()
+  override fun getMembersByQName(module: PyFile, qName: String, context: TypeEvalContext) = emptyList<PyCustomMember>()
 
   override fun resolveMember(module: PyFile, name: String, resolveContext: PyResolveContext): PsiElement? {
     if (module.languageLevel.isPython2 &&

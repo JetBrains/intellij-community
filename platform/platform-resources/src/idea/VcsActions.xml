@@ -97,9 +97,11 @@
       <reference ref="ChangesView.Revert"/>
       <action id="ChangesView.Diff" class="com.intellij.diff.actions.ShowDiffAction" icon="AllIcons.Actions.Diff"
               use-shortcut-of="Diff.ShowDiff"/>
-      <group icon="AllIcons.Actions.Stub" popup="true">
+      <group icon="AllIcons.Vcs.Changelist" text="Changelists" popup="true">
         <action id="ChangesView.NewChangeList" class="com.intellij.openapi.vcs.changes.actions.AddChangeListAction"
                 icon="AllIcons.General.Add"/>
+        <action id="ChangesView.Rename" class="com.intellij.openapi.vcs.changes.actions.RenameChangeListAction"
+                icon="AllIcons.Actions.Edit"/>
         <action id="ChangesView.RemoveChangeList" class="com.intellij.openapi.vcs.changes.actions.RemoveChangeListAction"
                 icon="AllIcons.General.Remove"/>
         <action id="ChangesView.SetDefault" class="com.intellij.openapi.vcs.changes.actions.SetDefaultChangeListAction"
@@ -120,12 +122,11 @@
       <reference ref="Diff.ShowDiff"/>
       <reference ref="EditSource"/>
       <separator/>
-      <action id="ChangesView.DeleteUnversioned" class="com.intellij.openapi.vcs.changes.actions.DeleteUnversionedFilesAction"
-              icon="AllIcons.Actions.Cancel"/>
+      <action id="ChangesView.DeleteUnversioned" class="com.intellij.openapi.vcs.changes.actions.DeleteUnversionedFilesAction"/>
       <action id="ChangesView.AddUnversioned" class="com.intellij.openapi.vcs.changes.actions.ScheduleForAdditionAction">
         <keyboard-shortcut first-keystroke="control alt A" keymap="$default"/>
       </action>
-      <action id="ChangesView.Ignore" class="com.intellij.openapi.vcs.changes.actions.IgnoreUnversionedAction" icon="AllIcons.Actions.Properties"/>
+      <action id="ChangesView.Ignore" class="com.intellij.openapi.vcs.changes.actions.IgnoreUnversionedAction"/>
       <action id="ChangesView.RemoveDeleted" class="com.intellij.openapi.vcs.changes.actions.ScheduleForRemovalAction"
               icon="AllIcons.General.Remove"/>
       <action id="ChangesView.Edit" class="com.intellij.openapi.vcs.changes.actions.EditAction"/>
@@ -133,7 +134,7 @@
       <reference ref="ChangesView.NewChangeList"/>
       <reference ref="ChangesView.RemoveChangeList"/>
       <reference ref="ChangesView.SetDefault"/>
-      <action id="ChangesView.Rename" class="com.intellij.openapi.vcs.changes.actions.RenameChangeListAction"/>
+      <reference ref="ChangesView.Rename"/>
       <reference ref="ChangesView.CreatePatch"/>
       <action id="ChangesView.CreatePatchToClipboard" class="com.intellij.openapi.vcs.changes.actions.CreatePatchFromChangesAction$Clipboard"/>
       <reference ref="ChangesView.Shelve"/>
@@ -148,7 +149,7 @@
       <action id="ChangesView.AddUnversioned.From.Dialog" class="com.intellij.openapi.vcs.changes.actions.ScheduleForAdditionAction"
               icon="AllIcons.General.Add" use-shortcut-of="ChangesView.AddUnversioned" />
       <reference ref="ChangesView.Move"/>
-      <action id="ChangesView.DeleteUnversioned.From.Dialog" class="com.intellij.openapi.vcs.changes.actions.DeleteUnversionedFilesAction"/>
+      <reference ref="ChangesView.DeleteUnversioned"/>
       <reference ref="ChangesView.Ignore"/>
     </group>
 
@@ -268,10 +269,6 @@
     <group id="EditorGutterVcsPopupMenu">
       <reference ref="Annotate"/>
       <add-to-group group-id="EditorGutterPopupMenu" anchor="first"/>
-      <separator/>
-    </group>
-
-    <group id="Vcs.CheckinProjectPopup">
       <separator/>
     </group>
 
@@ -412,7 +409,6 @@
       <reference ref="ChangesView.Edit"/>
       <reference ref="ChangesView.Rename"/>
       <reference ref="ChangesView.AddUnversioned.From.Dialog"/>
-      <reference ref="ChangesView.DeleteUnversioned.From.Dialog"/>
       <separator/>
       <reference ref="CommittedChanges.Refresh"/>
       <reference ref="CommittedChanges.Filter"/>

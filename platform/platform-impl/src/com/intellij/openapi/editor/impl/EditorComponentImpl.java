@@ -219,6 +219,7 @@ public class EditorComponentImpl extends JTextComponent implements Scrollable, D
 
   @Override
   public void paintComponent(Graphics g) {
+    myEditor.measureTypingLatency();
     myApplication.editorPaintStart();
 
     try {

@@ -414,7 +414,7 @@ public class LocalInspectionsPass extends ProgressableTextEditorHighlightingPass
     }
   }, myProject.getDisposed());
 
-  private final Set<Pair<TextRange, String>> emptyActionRegistered = Collections.synchronizedSet(new THashSet<Pair<TextRange, String>>());
+  private final Set<Pair<TextRange, String>> emptyActionRegistered = Collections.synchronizedSet(new THashSet<>());
 
   private void addDescriptorIncrementally(@NotNull final ProblemDescriptor descriptor,
                                           @NotNull final LocalInspectionToolWrapper tool,

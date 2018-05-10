@@ -81,9 +81,7 @@
     </action>
     
     <group id="AddOptionDialogActionGroup">
-      <action id="Cvs.Ignore" class="com.intellij.cvsSupport2.actions.IgnoreFileAction">
-        <add-to-group group-id="Vcs.CheckinProjectPopup" anchor="last"/>
-      </action>
+      <action id="Cvs.Ignore" class="com.intellij.cvsSupport2.actions.IgnoreFileAction"/>
     </group>
 
     <group id="CvsActions" class="com.intellij.cvsSupport2.actions.Cvs2Group">

@@ -113,7 +113,7 @@ abstract class SpecificFilesViewDialog extends DialogWrapper {
     treeActions.add(cam.createExpandAllHeaderAction(expander, myView));
     treeActions.add(cam.createCollapseAllHeaderAction(expander, myView));
 
-    JPanel toolbarPanel = new TreeActionsToolbarPanel(actionToolbar, treeActions);
+    JPanel toolbarPanel = new TreeActionsToolbarPanel(actionToolbar, treeActions, myView);
 
     myPanel.add(toolbarPanel, BorderLayout.NORTH);
     myPanel.add(ScrollPaneFactory.createScrollPane(myView), BorderLayout.CENTER);

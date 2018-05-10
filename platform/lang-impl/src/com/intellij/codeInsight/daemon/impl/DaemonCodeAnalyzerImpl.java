@@ -404,7 +404,7 @@ public class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzerEx implements Pers
         throw new IllegalStateException("You must not perform PSI modifications from inside highlighting");
       });
     if (!canChangeDocument) {
-      myProject.getMessageBus().connect(disposable).subscribe(DaemonCodeAnalyzer.DAEMON_EVENT_TOPIC, new DaemonListenerAdapter() {
+      myProject.getMessageBus().connect(disposable).subscribe(DaemonCodeAnalyzer.DAEMON_EVENT_TOPIC, new DaemonListener() {
         @Override
         public void daemonCancelEventOccurred(@NotNull String reason) {
           throw new IllegalStateException("You must not cancel daemon inside highlighting test: "+reason);

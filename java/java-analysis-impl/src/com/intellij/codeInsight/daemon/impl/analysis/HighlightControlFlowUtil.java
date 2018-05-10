@@ -652,7 +652,8 @@ public class HighlightControlFlowUtil {
 
     if (!containingFile.getManager().areElementsEquivalent(enclosingCtrOrInitializer.getContainingClass(), field.getContainingClass())) return false;
     PsiExpression qualifierExpression = reference.getQualifierExpression();
-    return qualifierExpression == null || qualifierExpression instanceof PsiThisExpression;
+    return qualifierExpression == null || (qualifierExpression instanceof PsiThisExpression &&
+                                           ((PsiThisExpression)qualifierExpression).getQualifier() == null);
   }
 
 

@@ -230,6 +230,10 @@ operator fun Modifier.plus(key: Key): Shortcut {
   return Shortcut(hashSetOf(this), key)
 }
 
+operator fun Shortcut.plus(modifier: Modifier): Shortcut {
+  return Shortcut(hashSetOf(*this.modifiers.toTypedArray(), modifier), null)
+}
+
 operator fun Shortcut.plus(key: Key): Shortcut {
   if (this.key != null) throw Exception("Unable to merge shortcut with key ${this.key!!.name} and ${key.name}")
   return Shortcut(this.modifiers, key)

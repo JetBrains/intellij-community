@@ -3,7 +3,9 @@ package com.intellij.xdebugger.impl.breakpoints;
 
 import com.intellij.configurationStore.ComponentSerializationUtil;
 import com.intellij.icons.AllIcons;
+import com.intellij.openapi.actionSystem.ActionGroup;
 import com.intellij.openapi.actionSystem.AnAction;
+import com.intellij.openapi.actionSystem.DefaultActionGroup;
 import com.intellij.openapi.editor.markup.GutterDraggableObject;
 import com.intellij.openapi.editor.markup.GutterIconRenderer;
 import com.intellij.openapi.project.DumbAware;
@@ -41,7 +43,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
-import java.util.Collections;
 import java.util.List;
 
 /**
@@ -334,7 +335,7 @@ public class XBreakpointBase<Self extends XBreakpoint<P>, P extends XBreakpointP
   }
 
   protected List<? extends AnAction> getAdditionalPopupMenuActions(XDebugSession session) {
-    return Collections.emptyList();
+    return getType().getAdditionalPopupMenuActions((Self)this, session);
   }
 
   @NotNull
@@ -542,6 +543,12 @@ public class XBreakpointBase<Self extends XBreakpoint<P>, P extends XBreakpointP
     @Override
     public AnAction getRightButtonClickAction() {
       return new EditBreakpointAction.ContextAction(this, XBreakpointBase.this, DebuggerSupport.getDebuggerSupport(XDebuggerSupport.class));
+    }
+
+    @Nullable
+    @Override
+    public ActionGroup getPopupMenuActions() {
+      return new DefaultActionGroup(getAdditionalPopupMenuActions(getBreakpointManager().getDebuggerManager().getCurrentSession()));
     }
 
     @NotNull

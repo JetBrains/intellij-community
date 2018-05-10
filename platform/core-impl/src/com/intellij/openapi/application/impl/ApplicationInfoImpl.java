@@ -11,7 +11,6 @@ import com.intellij.openapi.util.BuildNumber;
 import com.intellij.openapi.util.JDOMUtil;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.SystemInfoRt;
-import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.JBColor;
 import com.intellij.util.ArrayUtil;
@@ -47,8 +46,8 @@ public class ApplicationInfoImpl extends ApplicationInfoEx {
   private String myShortCompanyName;
   private String myCompanyUrl = "https://www.jetbrains.com/";
   private Color myProgressColor;
-  @SuppressWarnings("UseJBColor") private Color myCopyrightForeground = Color.black;
-  @SuppressWarnings("UseJBColor") private Color myAboutForeground = Color.black;
+  private Color myCopyrightForeground = JBColor.BLACK;
+  private Color myAboutForeground = JBColor.BLACK;
   private Color myAboutLinkColor;
   private String myProgressTailIconName;
   private Icon myProgressTailIcon;
@@ -56,7 +55,7 @@ public class ApplicationInfoImpl extends ApplicationInfoEx {
   private int myProgressHeight = 2;
   private int myProgressX = 1;
   private int myProgressY = 350;
-  private int myLicenseOffsetY = Registry.is("ide.new.about") ? 85 : 30;
+  private int myLicenseOffsetY = 85;
   private String mySplashImageUrl;
   private String myAboutImageUrl;
   @SuppressWarnings("UseJBColor") private Color mySplashTextColor = new Color(0, 35, 135);  // idea blue
@@ -730,9 +729,13 @@ public class ApplicationInfoImpl extends ApplicationInfoEx {
       myAboutImageUrl = aboutLogoElement.getAttributeValue(ATTRIBUTE_URL);
 
       String v = aboutLogoElement.getAttributeValue(ATTRIBUTE_ABOUT_FOREGROUND_COLOR);
-      myAboutForeground = v != null ? parseColor(v) : JBColor.BLACK;
+      if (v != null) {
+        myAboutForeground = parseColor(v);
+      }
       v = aboutLogoElement.getAttributeValue(ATTRIBUTE_ABOUT_COPYRIGHT_FOREGROUND_COLOR);
-      myCopyrightForeground = v != null ? parseColor(v) : JBColor.BLACK;
+      if (v != null) {
+        myCopyrightForeground = parseColor(v);
+      }
 
       String c = aboutLogoElement.getAttributeValue(ATTRIBUTE_ABOUT_LINK_COLOR);
       if (c != null) {

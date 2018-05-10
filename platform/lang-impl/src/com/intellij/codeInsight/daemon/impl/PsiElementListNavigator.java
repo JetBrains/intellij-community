@@ -108,12 +108,12 @@ public class PsiElementListNavigator {
    * listUpdaterTask should be started after alarm is initialized so one-item popup won't blink
    */
   @Nullable
-  public static JBPopup navigateOrCreatePopup(@NotNull final NavigatablePsiElement[] targets,
-                                              final String title,
-                                              final String findUsagesTitle,
-                                              final ListCellRenderer listRenderer,
-                                              @Nullable final BackgroundUpdaterTask listUpdaterTask,
-                                              @NotNull final Consumer<Object[]> consumer) {
+  private static JBPopup navigateOrCreatePopup(@NotNull final NavigatablePsiElement[] targets,
+                                               final String title,
+                                               final String findUsagesTitle,
+                                               final ListCellRenderer listRenderer,
+                                               @Nullable final BackgroundUpdaterTask listUpdaterTask,
+                                               @NotNull final Consumer<Object[]> consumer) {
     if (targets.length == 0) return null;
     if (targets.length == 1 && (listUpdaterTask == null || listUpdaterTask.isFinished())) {
       consumer.consume(targets);
