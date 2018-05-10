@@ -17,10 +17,7 @@ package org.jetbrains.idea.maven.dom.references;
 
 import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.codeInsight.lookup.LookupElementBuilder;
-import com.intellij.codeInspection.DefaultXmlSuppressionProvider;
-import com.intellij.codeInspection.LocalQuickFix;
-import com.intellij.codeInspection.LocalQuickFixProvider;
-import com.intellij.codeInspection.ProblemDescriptor;
+import com.intellij.codeInspection.*;
 import com.intellij.lang.properties.IProperty;
 import com.intellij.lang.properties.PropertiesLanguage;
 import com.intellij.lang.properties.psi.PropertiesFile;
@@ -44,9 +41,9 @@ import com.intellij.xml.XmlElementDescriptor;
 import com.intellij.xml.XmlNSDescriptor;
 import gnu.trove.THashSet;
 import icons.MavenIcons;
-import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.idea.maven.dom.MavenDomBundle;
 import org.jetbrains.idea.maven.dom.MavenDomProjectProcessorUtils;
 import org.jetbrains.idea.maven.dom.MavenDomUtil;
 import org.jetbrains.idea.maven.dom.MavenSchemaProvider;
@@ -551,15 +548,7 @@ public class MavenPropertyPsiReference extends MavenPsiReference implements Loca
   @Nullable
   @Override
   public LocalQuickFix[] getQuickFixes() {
-
-    return new LocalQuickFix[] {new LocalQuickFix() {
-
-      @Nls(capitalization = Nls.Capitalization.Sentence)
-      @NotNull
-      @Override
-      public String getFamilyName() {
-        return "Ignore unresolved maven property";
-      }
+    return new LocalQuickFix[] {new LocalQuickFixBase(MavenDomBundle.message("fix.ignore.unresolved.maven.property")) {
 
       @Override
       public void applyFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
