@@ -24,6 +24,7 @@ import com.intellij.codeInsight.lookup.impl.LookupImpl
 import com.intellij.completion.enhancer.CompletionContributors
 import com.intellij.completion.enhancer.InvocationCountEnhancingContributor
 import com.intellij.ide.highlighter.JavaFileType
+import com.intellij.openapi.roots.ModuleRootModificationUtil
 import org.assertj.core.api.Assertions.assertThat
 
 class InvocationCountEnhancerTest : LightFixtureCompletionTestCase() {
@@ -42,6 +43,7 @@ class InvocationCountEnhancerTest : LightFixtureCompletionTestCase() {
     override fun setUp() {
         super.setUp()
 
+        ModuleRootModificationUtil.setModuleSdk(myFixture.module, null)
         TestContributor.isEnabled = true
         InvocationCountEnhancingContributor.isEnabledInTests = true
         beforeCharTyped = InvocationCountEnhancingContributor.RUN_COMPLETION_AFTER_CHARS

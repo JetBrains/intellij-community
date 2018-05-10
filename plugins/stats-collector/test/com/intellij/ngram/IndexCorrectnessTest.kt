@@ -2,8 +2,10 @@ package com.intellij.ngram
 
 import com.intellij.codeInsight.completion.LightFixtureCompletionTestCase
 import com.intellij.ide.highlighter.JavaFileType
+import com.intellij.openapi.extensions.Extensions
 import com.intellij.plugin.NGramIndexingProperty
 import com.intellij.psi.search.GlobalSearchScope
+import com.intellij.stats.ngram.NGramElementProvider
 import com.intellij.stats.ngram.NGramFileBasedIndex
 import com.intellij.util.indexing.FileBasedIndex
 import junit.framework.TestCase
@@ -37,6 +39,7 @@ class IndexCorrectnessTest : LightFixtureCompletionTestCase() {
     }
 
     fun testIndexContent() {
+        if (Extensions.getExtensions(NGramElementProvider.EP_NAME).isEmpty()) return // ngrams disabled
         val allKeys = FileBasedIndex.getInstance().getAllKeys(NGramFileBasedIndex.KEY, project!!)
         var counter = 0
         allKeys.forEach {

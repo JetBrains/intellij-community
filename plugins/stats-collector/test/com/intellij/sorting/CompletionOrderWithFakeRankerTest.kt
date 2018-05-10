@@ -26,6 +26,7 @@ import com.intellij.openapi.extensions.ExtensionPoint
 import com.intellij.openapi.extensions.ExtensionPointName
 import com.intellij.openapi.extensions.Extensions
 import com.intellij.openapi.extensions.LoadingOrder
+import com.intellij.openapi.roots.ModuleRootModificationUtil
 import com.intellij.psi.WeigherExtensionPoint
 import com.intellij.stats.experiment.WebServiceStatus
 import com.intellij.stats.experiment.WebServiceStatusProvider
@@ -60,8 +61,8 @@ object WebServiceMock {
                 if (url == WebServiceStatusProvider.STATUS_URL) response else throw NOT_SUPPOSED_TO_BE_CALLED
             }
             Mockito.`when`(post(anyString(), anyMap())).thenThrow(NOT_SUPPOSED_TO_BE_CALLED)
-            Mockito.`when`(postZipped(anyString(), any())).thenThrow(NOT_SUPPOSED_TO_BE_CALLED)
-            Mockito.`when`(post(anyString(), any<File>())).thenThrow(NOT_SUPPOSED_TO_BE_CALLED)
+            Mockito.`when`(postZipped(anyString(), any<File>() ?: File("."))).thenThrow(NOT_SUPPOSED_TO_BE_CALLED)
+            Mockito.`when`(post(anyString(), any<File>() ?: File("."))).thenThrow(NOT_SUPPOSED_TO_BE_CALLED)
         }
     }
 }
@@ -78,6 +79,7 @@ class CompletionOrderWithFakeRankerTest : LightFixtureCompletionTestCase() {
         ranker = Ranker.getInstance()
         fakeWeigherExt = fakeWeigher()
 
+        ModuleRootModificationUtil.setModuleSdk(myFixture.module, null)
         val name = ExtensionPointName<WeigherExtensionPoint>("com.intellij.weigher")
         point = Extensions.getRootArea().getExtensionPoint(name)
         point.registerExtension(fakeWeigherExt, LoadingOrder.before("templates"))
