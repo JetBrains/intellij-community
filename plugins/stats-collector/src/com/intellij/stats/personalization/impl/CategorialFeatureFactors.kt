@@ -52,8 +52,8 @@ class CategoryFeatureUpdater(private val knownCategories: Set<String>, factor: M
 }
 
 class CategoryRatio(feature: CatergorialFeature, private val categoryName: String)
-    : UserFactorBase<CategoryFeatureReader>("categoryFeature:${feature.name}$:categoryName",
-        UserFactorDescriptions.categoriealFeatureDescriptor(feature)) {
+    : UserFactorBase<CategoryFeatureReader>("categoryFeature:${feature.name}:${categoryName}",
+                                            UserFactorDescriptions.categoriealFeatureDescriptor(feature)) {
     override fun compute(reader: CategoryFeatureReader): String {
         return reader.calculateRatioByValue().getOrDefault(categoryName, -1.0).toString()
     }
