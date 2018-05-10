@@ -22,7 +22,7 @@ import com.intellij.openapi.components.State
 import com.intellij.openapi.components.Storage
 
 
-@State(name = "SortingTimeStatistics", storages=arrayOf(Storage("ml.sorting.time.stats.xml")))
+@State(name = "SortingTimeStatistics", storages= [(Storage("ml.sorting.time.stats.xml"))])
 class SortingTimeStatistics: PersistentStateComponent<TimingStatState> {
 
     private var statsState: TimingStatState = TimingStatState()

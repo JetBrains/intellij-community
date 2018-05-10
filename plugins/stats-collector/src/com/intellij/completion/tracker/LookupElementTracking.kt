@@ -30,7 +30,7 @@ interface LookupElementTracking {
   fun positionsHistory(element: LookupElement): List<StagePosition>
 
   companion object {
-    fun getInstance(): LookupElementTracking = service<LookupElementTracking>()
+    fun getInstance(): LookupElementTracking = service()
   }
 }
 
@@ -38,7 +38,7 @@ interface LookupElementTracking {
 private class UserDataLookupElementTracking : LookupElementTracking {
 
   override fun positionsHistory(element: LookupElement): List<StagePosition> {
-    element.putUserDataIfAbsent(KEY, mutableListOf<StagePosition>())
+    element.putUserDataIfAbsent(KEY, mutableListOf())
     return element.getUserData(KEY)!!
   }
 
@@ -46,7 +46,7 @@ private class UserDataLookupElementTracking : LookupElementTracking {
     private val KEY = Key.create<MutableList<StagePosition>>("lookup.element.position.history")
 
     fun addElementPosition(element: LookupElement, stagePosition: StagePosition) {
-      element.putUserDataIfAbsent(KEY, mutableListOf<StagePosition>())
+      element.putUserDataIfAbsent(KEY, mutableListOf())
       val positionHistory = element.getUserData(KEY)!!
       positionHistory.add(stagePosition)
     }

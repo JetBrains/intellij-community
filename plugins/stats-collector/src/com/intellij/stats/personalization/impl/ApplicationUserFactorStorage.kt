@@ -23,5 +23,5 @@ import com.intellij.openapi.components.Storage
 /**
  * @author Vitaliy.Bibaev
  */
-@State(name = "ApplicationUserFactors", storages = arrayOf(Storage("completion.factors.user.xml")))
+@State(name = "ApplicationUserFactors", storages = [(Storage("completion.factors.user.xml"))])
 class ApplicationUserFactorStorage : ApplicationComponent, UserFactorStorageBase()

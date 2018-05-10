@@ -44,14 +44,14 @@ class FirstContributorPreloader : PreloadingActivity() {
     }
 
     private fun addInvocationCountContributor(descriptor: IdeaPluginDescriptor) {
-        addContrubitor(descriptor, InvocationCountEnhancingContributor::class.java.name)
+        addContributor(descriptor, InvocationCountEnhancingContributor::class.java.name)
     }
 
     private fun addCustomWeigherContributor(descriptor: IdeaPluginDescriptor) {
-        addContrubitor(descriptor, NGramContributor::class.java.name)
+        addContributor(descriptor, NGramContributor::class.java.name)
     }
 
-    private fun addContrubitor(descriptor: IdeaPluginDescriptor, implClass: String) {
+    private fun addContributor(descriptor: IdeaPluginDescriptor, implClass: String) {
         CompletionContributorEP().apply {
             implementationClass = implClass
             language = "any"

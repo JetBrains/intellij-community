@@ -26,19 +26,19 @@ class FeatureManagerFactory: FeatureManager.Factory {
                 .map { (name, description) -> interpreter.binary(name, description, order) }
         val doubleFactors = FeatureReader.doubleFactors()
                 .map { (name, defaultValue) -> interpreter.double(name, defaultValue, order) }
-        val categorialFactors = FeatureReader.categoricalFactors()
-                .map { (name, categories) -> interpreter.categorial(name, categories, order) }
+        val categoricalFactors = FeatureReader.categoricalFactors()
+                .map { (name, categories) -> interpreter.categorical(name, categories, order) }
 
         val completionFactors = FeatureReader.completionFactors()
 
         val ignoredFactors = FeatureReader.ignoredFactors()
 
-        return MyFeatureManager(binaryFactors, doubleFactors, categorialFactors, ignoredFactors, completionFactors, order)
+        return MyFeatureManager(binaryFactors, doubleFactors, categoricalFactors, ignoredFactors, completionFactors, order)
     }
 
     private class MyFeatureManager(override val binaryFactors: List<BinaryFeature>,
                                    override val doubleFactors: List<DoubleFeature>,
-                                   override val categorialFactors: List<CatergorialFeature>,
+                                   override val categoricalFactors: List<CategoricalFeature>,
                                    override val ignoredFactors: Set<String>,
                                    override val completionFactors: CompletionFactors,
                                    override val featureOrder: Map<String, Int>) : FeatureManager {
@@ -47,7 +47,7 @@ class FeatureManagerFactory: FeatureManager.Factory {
         override fun allFeatures(): List<Feature> = ArrayList<Feature>().apply {
             addAll(binaryFactors)
             addAll(doubleFactors)
-            addAll(categorialFactors)
+            addAll(categoricalFactors)
         }
 
         override fun createTransformer(): Transformer {

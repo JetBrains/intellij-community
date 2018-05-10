@@ -16,12 +16,8 @@
 
 package com.jetbrains.completion.feature
 
-import com.jetbrains.completion.feature.BinaryFeature
-import com.jetbrains.completion.feature.CatergorialFeature
-import com.jetbrains.completion.feature.DoubleFeature
-
 interface FeatureInterpreter {
     fun binary(name: String, description: Map<String, Double>, order: Map<String, Int>): BinaryFeature
     fun double(name: String, defaultValue: Double, order: Map<String, Int>): DoubleFeature
-    fun categorial(name: String, categories: Set<String>, order: Map<String, Int>): CatergorialFeature
+    fun categorical(name: String, categories: Set<String>, order: Map<String, Int>): CategoricalFeature
 }

@@ -48,7 +48,7 @@ class TotalUsageCount : CompletionUsageFactorBase("totalCompletionCountInLastDay
 }
 
 abstract class CompletionUsageFactorBase(override val id: String) : UserFactor {
-    override final fun compute(storage: UserFactorStorage): String? =
+    final override fun compute(storage: UserFactorStorage): String? =
             compute(storage.getFactorReader(UserFactorDescriptions.COMPLETION_USAGE))?.toString()
 
     abstract fun compute(reader: CompletionUsageReader): Double?

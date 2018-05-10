@@ -28,7 +28,7 @@ internal fun LookupImpl.checkMlRanking(ranker: Ranker, prefix_length: Int) {
     val lookupElements = getRelevanceObjects(items, false)
 
     lookupElements.forEach { element, relevance ->
-        val oldOrder = relevance.firstOrNull() { it.first == FeatureUtils.BEFORE_ORDER }?.second?.toString()?.toInt()
+        val oldOrder = relevance.firstOrNull { it.first == FeatureUtils.BEFORE_ORDER }?.second?.toString()?.toInt()
                 ?: throw UnsupportedOperationException("Ranking failed")
         val weights: Map<String, Any> = FeatureUtils.prepareRevelanceMap(relevance.map { it.first to it.second },
                 oldOrder, prefix_length, element.lookupString.length)

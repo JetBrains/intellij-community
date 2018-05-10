@@ -16,8 +16,6 @@
 
 package com.jetbrains.completion.feature
 
-import com.jetbrains.completion.feature.Feature
-
 /**
  * @author Vitaliy.Bibaev
  */

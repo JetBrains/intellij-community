@@ -20,7 +20,7 @@ import com.intellij.stats.personalization.UserFactorBase
 import com.intellij.stats.personalization.UserFactorDescriptions
 import com.intellij.stats.personalization.UserFactorReaderBase
 import com.intellij.stats.personalization.UserFactorUpdaterBase
-import com.jetbrains.completion.feature.CatergorialFeature
+import com.jetbrains.completion.feature.CategoricalFeature
 import com.jetbrains.completion.feature.impl.FeatureUtils
 
 /**
@@ -51,17 +51,17 @@ class CategoryFeatureUpdater(private val knownCategories: Set<String>, factor: M
     }
 }
 
-class CategoryRatio(feature: CatergorialFeature, private val categoryName: String)
+class CategoryRatio(feature: CategoricalFeature, private val categoryName: String)
     : UserFactorBase<CategoryFeatureReader>("categoryFeature:${feature.name}:${categoryName}",
-                                            UserFactorDescriptions.categoriealFeatureDescriptor(feature)) {
+                                            UserFactorDescriptions.categoricalFeatureDescriptor(feature)) {
     override fun compute(reader: CategoryFeatureReader): String {
         return reader.calculateRatioByValue().getOrDefault(categoryName, -1.0).toString()
     }
 }
 
-class MostFrequentCategory(feature: CatergorialFeature)
+class MostFrequentCategory(feature: CategoricalFeature)
     : UserFactorBase<CategoryFeatureReader>("mostFrequentCategory:${feature.name}",
-        UserFactorDescriptions.categoriealFeatureDescriptor(feature)) {
+        UserFactorDescriptions.categoricalFeatureDescriptor(feature)) {
     override fun compute(reader: CategoryFeatureReader): String? {
         return reader.calculateRatioByValue().maxBy { it.value }?.key
     }

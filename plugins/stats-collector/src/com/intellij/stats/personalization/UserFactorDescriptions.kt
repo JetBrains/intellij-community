@@ -18,7 +18,7 @@ package com.intellij.stats.personalization
 
 import com.intellij.stats.personalization.impl.*
 import com.jetbrains.completion.feature.BinaryFeature
-import com.jetbrains.completion.feature.CatergorialFeature
+import com.jetbrains.completion.feature.CategoricalFeature
 import com.jetbrains.completion.feature.DoubleFeature
 
 /**
@@ -42,8 +42,8 @@ object UserFactorDescriptions {
         return Descriptor("doubleFeature:${feature.name}", ::DoubleFeatureUpdater, ::DoubleFeatureReader)
     }
 
-    fun categoriealFeatureDescriptor(feature: CatergorialFeature): Descriptor<CategoryFeatureUpdater, CategoryFeatureReader> {
-        return Descriptor("categorialFeature:${feature.name}",
+    fun categoricalFeatureDescriptor(feature: CategoricalFeature): Descriptor<CategoryFeatureUpdater, CategoryFeatureReader> {
+        return Descriptor("categoricalFeature:${feature.name}",
                 { CategoryFeatureUpdater(feature.categories, it) },
                 ::CategoryFeatureReader)
     }

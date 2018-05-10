@@ -34,7 +34,7 @@ class ModelMetadataTest {
         val featureIndex: Map<String, Feature> = mutableMapOf<String, Feature>().apply {
             manager.binaryFactors.forEach { put(it.name, it) }
             manager.doubleFactors.forEach { put(it.name, it) }
-            manager.categorialFactors.forEach { put(it.name, it) }
+            manager.categoricalFactors.forEach { put(it.name, it) }
         }
 
         for ((name, order) in manager.featureOrder) {
@@ -53,10 +53,10 @@ class ModelMetadataTest {
                         assertEquals(FeatureUtils.UNDEFINED, value)
                         assertEquals(order, feature.undefinedIndex)
                     }
-                    is CatergorialFeature -> {
+                    is CategoricalFeature -> {
                         when (value) {
                             FeatureUtils.UNDEFINED -> assertEquals(order, feature.undefinedIndex)
-                            FeatureUtils.OTHER -> assertEquals(order, feature.otherCatergoryIndex)
+                            FeatureUtils.OTHER -> assertEquals(order, feature.otherCategoryIndex)
                             else -> assertEquals(order, feature.indexByCategory(value))
                         }
                     }
@@ -69,7 +69,7 @@ class ModelMetadataTest {
                 when (feature) {
                     is BinaryFeature -> assertEquals(order, feature.index)
                     is DoubleFeature -> assertEquals(order, feature.index)
-                    is CatergorialFeature -> fail("categorial feature claims 'name=category' in feature order list")
+                    is CategoricalFeature -> fail("categorical feature claims 'name=category' in feature order list")
                     else -> fail("unknown feature type found: ${feature.javaClass.canonicalName}")
                 }
             }
@@ -82,7 +82,7 @@ class ModelMetadataTest {
         val featuresByName = mutableListOf<Feature>().apply {
             addAll(manager.binaryFactors)
             addAll(manager.doubleFactors)
-            addAll(manager.categorialFactors)
+            addAll(manager.categoricalFactors)
         }.groupBy { it.name }
 
         var failed = false
@@ -114,8 +114,8 @@ class ModelMetadataTest {
             revertedFeatureOrder.checkAndPut(feature.undefinedIndex, feature)
         }
 
-        for (feature in manager.categorialFactors) {
-            revertedFeatureOrder.checkAndPut(feature.otherCatergoryIndex, feature)
+        for (feature in manager.categoricalFactors) {
+            revertedFeatureOrder.checkAndPut(feature.otherCategoryIndex, feature)
             feature.categories.forEach {
                 revertedFeatureOrder.checkAndPut(feature.indexByCategory(it), feature)
             }

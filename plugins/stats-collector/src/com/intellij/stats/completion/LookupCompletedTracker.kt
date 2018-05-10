@@ -72,8 +72,8 @@ class LookupCompletedTracker : LookupAdapter() {
             }
         }
 
-        featureManager.categorialFactors.filter { !featureManager.isUserFeature(it.name) }.forEach { feature ->
-            UserFactorStorage.applyOnBoth(project, UserFactorDescriptions.categoriealFeatureDescriptor(feature))
+        featureManager.categoricalFactors.filter { !featureManager.isUserFeature(it.name) }.forEach { feature ->
+            UserFactorStorage.applyOnBoth(project, UserFactorDescriptions.categoricalFeatureDescriptor(feature))
             { updater ->
                 updater.update(featuresValues[feature.name])
             }
@@ -101,9 +101,9 @@ class LookupCompletedTracker : LookupAdapter() {
 
         if (prefixLength > 1) {
             val pattern = lookup.itemPattern(element)
-            val isMmemonicsUsed = !element.lookupString.startsWith(pattern)
+            val isMnemonicsUsed = !element.lookupString.startsWith(pattern)
             UserFactorStorage.applyOnBoth(lookup.project, UserFactorDescriptions.MNEMONICS_USAGE) { updater ->
-                updater.fireCompletionFinished(isMmemonicsUsed)
+                updater.fireCompletionFinished(isMnemonicsUsed)
             }
         }
     }

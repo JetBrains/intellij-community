@@ -25,7 +25,7 @@ import com.jetbrains.completion.feature.impl.FeatureReader
 interface FeatureManager {
     val binaryFactors: List<BinaryFeature>
     val doubleFactors: List<DoubleFeature>
-    val categorialFactors: List<CatergorialFeature>
+    val categoricalFactors: List<CategoricalFeature>
     val ignoredFactors: Set<String>
     val featureOrder: Map<String, Int>
 

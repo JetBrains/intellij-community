@@ -16,14 +16,14 @@
 
 package com.jetbrains.completion.feature.impl
 
-import com.jetbrains.completion.feature.CatergorialFeature
+import com.jetbrains.completion.feature.CategoricalFeature
 
-class CatergorialFeatureImpl(override val name: String,
+class CategoricalFeatureImpl(override val name: String,
                              override val undefinedIndex: Int,
-                             override val otherCatergoryIndex: Int,
+                             override val otherCategoryIndex: Int,
                              private val categoryToIndex: Map<String, Int>)
-    : CatergorialFeature {
-    override fun indexByCategory(category: String): Int = categoryToIndex[category] ?: otherCatergoryIndex
+    : CategoricalFeature {
+    override fun indexByCategory(category: String): Int = categoryToIndex[category] ?: otherCategoryIndex
 
     override val categories: Set<String> = categoryToIndex.keys
 
@@ -36,6 +36,6 @@ class CatergorialFeatureImpl(override val name: String,
     override fun setDefaults(featureArray: DoubleArray) {
         categories.forEach { featureArray[indexByCategory(it)] = 0.0 }
         featureArray[undefinedIndex] = 1.0
-        featureArray[otherCatergoryIndex] = 0.0
+        featureArray[otherCategoryIndex] = 0.0
     }
 }

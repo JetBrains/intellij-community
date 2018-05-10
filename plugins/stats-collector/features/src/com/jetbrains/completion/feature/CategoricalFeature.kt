@@ -16,15 +16,13 @@
 
 package com.jetbrains.completion.feature
 
-import com.jetbrains.completion.feature.Feature
-
 /**
  * @author Vitaliy.Bibaev
  */
-interface CatergorialFeature : Feature {
+interface CategoricalFeature : Feature {
     val categories: Set<String>
 
-    val otherCatergoryIndex: Int
+    val otherCategoryIndex: Int
 
     fun indexByCategory(category: String): Int
 }

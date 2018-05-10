@@ -23,7 +23,7 @@ import com.intellij.openapi.components.Storage
 import com.intellij.openapi.components.service
 import com.intellij.performance.IntervalCounter
 
-@State(name = "CompletionTimeStatistics", storages=arrayOf(Storage("completion.time.statistics")))
+@State(name = "CompletionTimeStatistics", storages= [(Storage("completion.time.statistics"))])
 class ContributorsTimeStatistics : PersistentStateComponent<CompletionTimeStats> {
 
     private val completionIntervals = HashMap<Language, IntervalCounter>()

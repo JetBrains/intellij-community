@@ -198,5 +198,5 @@ class PluginSettingsConfigurable : Configurable {
 private fun IntervalCounter.presentation(): List<String> {
     return intervals()
             .filter { it.count > 0 }
-            .map { ":: Inside ms interval [ ${it.intervalStart}, ${it.intervalEnd} ] happend ${it.count} times" }
+            .map { ":: Inside ms interval [ ${it.intervalStart}, ${it.intervalEnd} ] happened ${it.count} times" }
 }

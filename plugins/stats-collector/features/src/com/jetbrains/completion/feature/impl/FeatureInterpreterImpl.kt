@@ -18,7 +18,7 @@ package com.jetbrains.completion.feature.impl
 
 import com.jetbrains.completion.feature.BinaryFeature
 import com.jetbrains.completion.feature.BinaryFeature.BinaryValueDescriptor
-import com.jetbrains.completion.feature.CatergorialFeature
+import com.jetbrains.completion.feature.CategoricalFeature
 import com.jetbrains.completion.feature.DoubleFeature
 import com.jetbrains.completion.feature.FeatureInterpreter
 import com.jetbrains.completion.feature.ex.FeatureDefaultValueNotFound
@@ -39,11 +39,11 @@ class FeatureInterpreterImpl : FeatureInterpreter {
         return DoubleFeatureImpl(name, index, undefinedIndex, defaultValue)
     }
 
-    override fun categorial(name: String, categories: Set<String>, order: Map<String, Int>): CatergorialFeature {
+    override fun categorical(name: String, categories: Set<String>, order: Map<String, Int>): CategoricalFeature {
         val undefinedIndex = extractUndefinedIndex(name, order)
         val otherCategoryIndex = extractIndex(FeatureUtils.getOtherCategoryFeatureName(name), order)
         val categoryToIndex = categories.associate { it to extractIndex(combine(name, it), order) }
-        return CatergorialFeatureImpl(name, undefinedIndex, otherCategoryIndex, categoryToIndex)
+        return CategoricalFeatureImpl(name, undefinedIndex, otherCategoryIndex, categoryToIndex)
     }
 
     private fun extractIndex(name: String, order: Map<String, Int>): Int {

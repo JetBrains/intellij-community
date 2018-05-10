@@ -46,7 +46,7 @@ class MLRanker(provider: FeatureTransformerProvider) : Ranker {
     override fun rank(relevance: Map<String, Any>, userFactors: Map<String, Any?>): Double {
         val featureArray = featureTransformer.featureArray(relevance, userFactors)
         //        return ranker.rank(featureArray)
-        return 0.0;
+        return 0.0
     }
 
 }

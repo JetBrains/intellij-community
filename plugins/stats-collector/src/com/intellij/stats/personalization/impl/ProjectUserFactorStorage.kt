@@ -24,5 +24,5 @@ import com.intellij.openapi.components.StoragePathMacros
 /**
  * @author Vitaliy.Bibaev
  */
-@State(name = "ProjectUserFactors", storages = arrayOf(Storage(StoragePathMacros.WORKSPACE_FILE)))
+@State(name = "ProjectUserFactors", storages = [(Storage(StoragePathMacros.WORKSPACE_FILE))])
 class ProjectUserFactorStorage : ProjectComponent, UserFactorStorageBase()

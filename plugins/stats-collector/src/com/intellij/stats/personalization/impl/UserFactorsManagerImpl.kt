@@ -23,7 +23,7 @@ import com.intellij.openapi.diagnostic.Logger
 import com.intellij.stats.personalization.UserFactor
 import com.intellij.stats.personalization.UserFactorsManager
 import com.jetbrains.completion.feature.BinaryFeature
-import com.jetbrains.completion.feature.CatergorialFeature
+import com.jetbrains.completion.feature.CategoricalFeature
 import com.jetbrains.completion.feature.DoubleFeature
 import com.jetbrains.completion.feature.impl.FeatureUtils
 
@@ -64,7 +64,7 @@ class UserFactorsManagerImpl : UserFactorsManager, ProjectComponent {
         val featureManager = FeatureManagerImpl.getInstance()
         featureManager.binaryFactors.forEach(this::registerBinaryFeatureDerivedFactors)
         featureManager.doubleFactors.forEach(this::registerDoubleFeatureDerivedFactors)
-        featureManager.categorialFactors.forEach(this::registerCategorialFeatureDerivedFactors)
+        featureManager.categoricalFactors.forEach(this::registerCategoricalFeatureDerivedFactors)
     }
 
     private fun registerBinaryFeatureDerivedFactors(feature: BinaryFeature) {
@@ -80,7 +80,7 @@ class UserFactorsManagerImpl : UserFactorsManager, ProjectComponent {
         register(VarianceDoubleFeatureValue(feature))
     }
 
-    private fun registerCategorialFeatureDerivedFactors(feature: CatergorialFeature) {
+    private fun registerCategoricalFeatureDerivedFactors(feature: CategoricalFeature) {
         feature.categories.forEach { register(CategoryRatio(feature, it)) }
         register(CategoryRatio(feature, FeatureUtils.OTHER))
         register(MostFrequentCategory(feature))

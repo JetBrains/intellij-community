@@ -35,7 +35,7 @@ class UpdateExperimentStatusTest: LightFixtureCompletionTestCase() {
         doComplete()
 
         val lookup = myFixture.lookup as LookupImpl
-        assertThat(lookup.items).isNotEmpty()
+        assertThat(lookup.items).isNotEmpty
 
         lookup.checkMlRanking(Ranker.getInstance(), 1)
     }
@@ -47,7 +47,7 @@ class UpdateExperimentStatusTest: LightFixtureCompletionTestCase() {
         doComplete()
 
         val lookup = myFixture.lookup as LookupImpl
-        assertThat(lookup.items).isNotEmpty()
+        assertThat(lookup.items).isNotEmpty
 
         lookup.assertEachItemHasMlValue(FeatureUtils.NONE)
     }
