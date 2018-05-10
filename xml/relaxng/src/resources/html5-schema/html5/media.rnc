@@ -84,7 +84,7 @@ datatypes w = "http://whattf.org/datatype-draft"
 		&	video.attrs.height?
 		&	video.attrs.width?
 		&	video.attrs.playsinline?
-		&	common.attrs.aria.landmark.application?
+		&	common.attrs.aria.role.application?
 		)
 		video.attrs.poster =
 			attribute poster {
@@ -125,7 +125,7 @@ datatypes w = "http://whattf.org/datatype-draft"
 	audio.attrs =
 		(	common.attrs
 		&	media.attrs
-		&	common.attrs.aria.landmark.application?
+		&	common.attrs.aria.role.application?
 		)
 	audio.inner.flow =
 		(	media.source
