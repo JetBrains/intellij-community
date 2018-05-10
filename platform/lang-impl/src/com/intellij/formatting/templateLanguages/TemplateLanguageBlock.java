@@ -31,7 +31,7 @@ import java.util.List;
 /**
  * @author Alexey Chmutov
  */
-public abstract class TemplateLanguageBlock extends AbstractBlock implements BlockWithParent {
+public abstract class TemplateLanguageBlock extends AbstractBlock implements BlockWithParent, ITemplateBlock {
   private final TemplateLanguageBlockFactory myBlockFactory;
   private final CodeStyleSettings mySettings;
   private List<DataLanguageBlockWrapper> myForeignChildren;
@@ -69,9 +69,11 @@ public abstract class TemplateLanguageBlock extends AbstractBlock implements Blo
         tlChildren.add(childBlock);
       }
     }
-    final List<Block> children = (List<Block>)(myForeignChildren == null ? tlChildren : BlockUtil.mergeBlocks(tlChildren, myForeignChildren));
+    final List<Block> children = (List<Block>)(myForeignChildren == null
+                                               ? tlChildren
+                                               : TemplateLanguageBlockUtil.INSTANCE.mergeBlocks(tlChildren, myForeignChildren));
     //BlockUtil.printBlocks(getTextRange(), children);
-    return BlockUtil.setParent(children, this);
+    return AbstractBlockUtil.setParent(children, this);
   }
 
   protected boolean shouldBuildBlockFor(ASTNode childNode) {
@@ -82,14 +84,9 @@ public abstract class TemplateLanguageBlock extends AbstractBlock implements Blo
     return (myForeignChildren == null || myForeignChildren.isEmpty());
   }
 
-  void addForeignChild(@NotNull DataLanguageBlockWrapper foreignChild) {
+  public void addForeignChild(@NotNull IDataBlock foreignChild) {
     initForeignChildren();
-    myForeignChildren.add(foreignChild);
-  }
-
-  void addForeignChildren(List<DataLanguageBlockWrapper> foreignChildren) {
-    initForeignChildren();
-    myForeignChildren.addAll(foreignChildren);
+    myForeignChildren.add((DataLanguageBlockWrapper)foreignChild);
   }
 
   private void initForeignChildren() {
@@ -154,7 +151,7 @@ public abstract class TemplateLanguageBlock extends AbstractBlock implements Blo
    * @param range The range to check.
    * @return True by default.
    */
-  public boolean isRequiredRange(TextRange range) {
+  public boolean isRequiredRange(@NotNull TextRange range) {
     return true;
   }
 
