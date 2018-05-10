@@ -48,6 +48,9 @@ class InlineMethodHandler extends JavaInlineActionHandler {
       if (method.hasModifierProperty(PsiModifier.ABSTRACT)) {
         message = RefactoringBundle.message("refactoring.cannot.be.applied.to.abstract.methods", REFACTORING_NAME);
       }
+      else if (method.hasModifierProperty(PsiModifier.NATIVE)) {
+        message = RefactoringBundle.message("refactoring.cannot.be.applied.to.native.methods", REFACTORING_NAME);
+      }
       else {
         message = RefactoringBundle.message("refactoring.cannot.be.applied.no.sources.attached", REFACTORING_NAME);
       }
