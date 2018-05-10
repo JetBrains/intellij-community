@@ -1,22 +1,17 @@
 // Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.jetbrains.python;
 
-import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.openapi.vfs.VfsUtilCore;
-import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiElement;
-import com.intellij.testFramework.TestDataFile;
 import com.jetbrains.python.documentation.PyDocumentationSettings;
 import com.jetbrains.python.documentation.PythonDocumentationProvider;
 import com.jetbrains.python.documentation.docstrings.DocStringFormat;
 import com.jetbrains.python.fixtures.LightMarkedTestCase;
-import com.jetbrains.python.fixtures.PyTestCase;
 import com.jetbrains.python.psi.LanguageLevel;
 import com.jetbrains.python.psi.PyDocStringOwner;
 import com.jetbrains.python.psi.PyReferenceExpression;
 import com.jetbrains.python.psi.PyStringLiteralExpression;
+import org.jetbrains.annotations.NotNull;
 
-import java.io.IOException;
 import java.util.Map;
 
 /**
@@ -43,25 +38,8 @@ public class PyQuickDocTest extends LightMarkedTestCase {
     super.tearDown();
   }
 
-  private void checkByHTML(String text) {
-    assertNotNull(text);
-    checkByHTML(text, "/quickdoc/" + getTestName(false) + ".html");
-  }
-
-  private void checkByHTML(String text, @TestDataFile String filePath) {
-    final String fullPath = getTestDataPath() + filePath;
-    final VirtualFile virtualFile = PyTestCase.getVirtualFileByName(fullPath);
-    assertNotNull("file " + fullPath + " not found", virtualFile);
-
-    String loadedText;
-    try {
-      loadedText = VfsUtilCore.loadText(virtualFile);
-    }
-    catch (IOException e) {
-      throw new RuntimeException(e);
-    }
-    String fileText = StringUtil.convertLineSeparators(loadedText, "\n");
-    assertEquals(fileText.trim(), text.trim());
+  private void checkByHTML(@NotNull String text) {
+    assertSameLinesWithFile(getTestDataPath() + "/quickdoc/" + getTestName(false) + ".html", text);
   }
 
   @Override

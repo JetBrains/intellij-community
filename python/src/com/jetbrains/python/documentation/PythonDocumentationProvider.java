@@ -143,16 +143,16 @@ public class PythonDocumentationProvider extends AbstractDocumentationProvider i
                                                 @NotNull Function<String, String> escaper,
                                                 @NotNull TypeEvalContext context) {
 
-    final ChainIterable<String> result = describeFunctionWithTypes(function, context);
+    final ChainIterable<String> result = describeFunctionWithTypes(function, escaper, escapedNameMapper, context);
 
     if (!PyiUtil.isOverload(function, context)) {
       final List<PyFunction> overloads = PyiUtil.getOverloads(function, context);
       if (!overloads.isEmpty()) {
-        result.addItem("\nPossible types:\n");
+        result.addItem(escaper.apply("\nPossible types:\n"));
         boolean first = true;
         for (PyFunction overload : overloads) {
           if (!first) {
-            result.addItem(BR);
+            result.addItem(escaper.apply("\n"));
           }
           result.addItem(escaper.apply("\u2022")); // &bull; -- bullet point
           describeTypeWithLinks(context.getType(overload), context, function, result);
@@ -170,20 +170,23 @@ public class PythonDocumentationProvider extends AbstractDocumentationProvider i
   }
 
   @NotNull
-  private static ChainIterable<String> describeFunctionWithTypes(@NotNull PyFunction function, @NotNull TypeEvalContext context) {
+  private static ChainIterable<String> describeFunctionWithTypes(@NotNull PyFunction function,
+                                                                 @NotNull Function<String, String> escaper,
+                                                                 @NotNull Function<String, String> escapedNameMapper,
+                                                                 @NotNull TypeEvalContext context) {
     final ChainIterable<String> result = new ChainIterable<>();
     // TODO wrapping of long signatures
-    result.addItem("def ").addItem(WRAP_IN_BOLD.apply(function.getName())).addItem("(");
+    result.addItem(ESCAPE_AND_SAVE_NEW_LINES_AND_SPACES.apply("def ")).addItem(escapedNameMapper.apply(function.getName())).addItem("(");
     boolean first = true;
     for (PyCallableParameter parameter : function.getParameters(context)) {
       if (!first) {
-        result.addItem(", ");
+        result.addItem(ESCAPE_AND_SAVE_NEW_LINES_AND_SPACES.apply(", "));
       }
-      result.addItem(parameter.getName()).addItem(":");
+      result.addItem(parameter.getName()).addItem(ESCAPE_AND_SAVE_NEW_LINES_AND_SPACES.apply(": "));
       describeTypeWithLinks(parameter.getType(context), context, function, result);
       first = false;
     }
-    result.addItem(") -> ");
+    result.addItem(ESCAPE_AND_SAVE_NEW_LINES_AND_SPACES.apply(") -> "));
     describeTypeWithLinks(context.getReturnType(function), context, function, result);
     return result;
   }

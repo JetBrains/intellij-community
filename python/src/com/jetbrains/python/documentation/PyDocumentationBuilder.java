@@ -284,6 +284,7 @@ public class PyDocumentationBuilder {
 
   private void buildFromDocstring(@NotNull final PyDocStringOwner elementDefinition, boolean isProperty) {
     PyClass pyClass = null;
+    final PyFunction pyFunction;
     final PyStringLiteralExpression docStringExpression = getEffectiveDocStringExpression(elementDefinition);
     final TypeEvalContext context = TypeEvalContext.userInitiated(elementDefinition.getProject(), elementDefinition.getContainingFile());
     myBody.addItem(DocumentationMarkup.DEFINITION_START);
@@ -294,7 +295,7 @@ public class PyDocumentationBuilder {
       myBody.add(PythonDocumentationProvider.describeClass(pyClass, WRAP_IN_BOLD, ESCAPE_AND_SAVE_NEW_LINES_AND_SPACES, false, true, context));
     }
     else if (elementDefinition instanceof PyFunction) {
-      final PyFunction pyFunction = (PyFunction)elementDefinition;
+      pyFunction = (PyFunction)elementDefinition;
       if (!isProperty) {
         pyClass = pyFunction.getContainingClass();
         if (pyClass != null) {
@@ -315,11 +316,11 @@ public class PyDocumentationBuilder {
     }
 
     myBody.addItem(DocumentationMarkup.DEFINITION_END);
+    myBody.addItem(DocumentationMarkup.CONTENT_START);
     if (docStringExpression != null) {
-      myBody.addItem(DocumentationMarkup.CONTENT_START);
       addFormattedDocString(myElement, docStringExpression.getStringValue(), myBody, myEpilog);
-      myBody.addItem(DocumentationMarkup.CONTENT_END);
     }
+    myBody.addItem(DocumentationMarkup.CONTENT_END);
   }
 
   private boolean isAttribute() {
