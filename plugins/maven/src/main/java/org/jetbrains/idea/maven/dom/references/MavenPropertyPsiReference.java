@@ -324,12 +324,9 @@ public class MavenPropertyPsiReference extends MavenPsiReference implements Loca
   }
 
   private boolean schemaHasProperty(String schema, final String property) {
-    return processSchema(schema, new SchemaProcessor<Boolean>() {
-      @Nullable
-      public Boolean process(@NotNull String eachProperty, XmlElementDescriptor descriptor) {
-        if (eachProperty.equals(property)) return true;
-        return null;
-      }
+    return processSchema(schema, (eachProperty, descriptor) -> {
+      if (eachProperty.equals(property)) return true;
+      return null;
     }) != null;
   }
 
@@ -375,22 +372,16 @@ public class MavenPropertyPsiReference extends MavenPsiReference implements Loca
       result.add(LookupElementBuilder.create(TIMESTAMP_PROP).withIcon(MavenIcons.MavenLogo));
     }
 
-    processSchema(MavenSchemaProvider.MAVEN_PROJECT_SCHEMA_URL, new SchemaProcessor<Object>() {
-      @Override
-      public Object process(@NotNull String property, XmlElementDescriptor descriptor) {
-        if (property.startsWith("project.")) {
-          addVariant(result, property.substring("project.".length()), descriptor, prefix, MavenIcons.MavenLogo);
-        }
-        return null;
+    processSchema(MavenSchemaProvider.MAVEN_PROJECT_SCHEMA_URL, (property, descriptor) -> {
+      if (property.startsWith("project.")) {
+        addVariant(result, property.substring("project.".length()), descriptor, prefix, MavenIcons.MavenLogo);
       }
+      return null;
     });
 
-    processSchema(MavenSchemaProvider.MAVEN_SETTINGS_SCHEMA_URL, new SchemaProcessor<Object>(){
-      @Override
-      public Object process(@NotNull String property, XmlElementDescriptor descriptor) {
-        result.add(createLookupElement(descriptor, property, MavenIcons.MavenLogo));
-        return null;
-      }
+    processSchema(MavenSchemaProvider.MAVEN_SETTINGS_SCHEMA_URL, (property, descriptor) -> {
+      result.add(createLookupElement(descriptor, property, MavenIcons.MavenLogo));
+      return null;
     });
 
     collectPropertiesVariants(result, variants);
@@ -540,6 +531,7 @@ public class MavenPropertyPsiReference extends MavenPsiReference implements Loca
     return mySoft;
   }
 
+  @FunctionalInterface
   private interface SchemaProcessor<T> {
     @Nullable
     T process(@NotNull String property, XmlElementDescriptor descriptor);
