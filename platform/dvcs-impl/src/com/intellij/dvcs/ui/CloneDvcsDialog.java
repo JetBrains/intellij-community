@@ -253,6 +253,7 @@ public abstract class CloneDvcsDialog extends DialogWrapper {
     for (RepositoryHostingService service : repositoryHostingServices) {
       String serviceDisplayName = service.getServiceDisplayName();
       RepositoryListLoader loader = service.getRepositoryListLoader(myProject);
+      if(loader == null) continue;
       if (loader.isEnabled()) {
         enabledLoaders.put(serviceDisplayName, loader);
       }

@@ -3,11 +3,12 @@ package com.intellij.dvcs.hosting;
 
 import com.intellij.openapi.project.Project;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 public interface RepositoryHostingService {
   @NotNull
   String getServiceDisplayName();
 
-  @NotNull
-  RepositoryListLoader getRepositoryListLoader(@NotNull Project project);
+  @Nullable
+  default RepositoryListLoader getRepositoryListLoader(@NotNull Project project) {return null;}
 }
