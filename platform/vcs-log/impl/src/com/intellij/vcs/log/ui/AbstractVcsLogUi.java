@@ -129,9 +129,7 @@ public abstract class AbstractVcsLogUi implements VcsLogUi, Disposable {
   public abstract VcsLogUiProperties getProperties();
 
   @Nullable
-  public String getHelpId() {
-    return null;
-  }
+  public abstract String getHelpId();
 
   @NotNull
   public VisiblePackRefresher getRefresher() {
