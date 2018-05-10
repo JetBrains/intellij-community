@@ -18,6 +18,7 @@ package com.intellij.terminal;
 import com.intellij.execution.process.OSProcessHandler;
 import com.intellij.execution.process.ProcessHandler;
 import com.intellij.execution.process.UnixProcessManager;
+import com.intellij.openapi.util.SystemInfo;
 import com.jediterm.terminal.Questioner;
 import com.jediterm.terminal.TtyConnector;
 import com.pty4j.PtyProcess;
@@ -70,7 +71,9 @@ public class ProcessHandlerTtyConnector implements TtyConnector {
       if (myPtyProcess.isRunning()) {
         myPtyProcess.setWinSize(
           new WinSize(termSize.width, termSize.height, pixelSize.width, pixelSize.height));
-        UnixProcessManager.sendSignalToProcessTree(myPtyProcess.getPid(), SIGWINCH);
+        if (SystemInfo.isUnix) {
+          UnixProcessManager.sendSignalToProcessTree(myPtyProcess.getPid(), SIGWINCH);
+        }
       }
     }
   }
