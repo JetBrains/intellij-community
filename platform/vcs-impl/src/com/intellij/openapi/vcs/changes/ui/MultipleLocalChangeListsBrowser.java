@@ -35,6 +35,7 @@ import com.intellij.ui.ColoredListCellRenderer;
 import com.intellij.ui.SimpleColoredComponent;
 import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.ThreeStateCheckBox.State;
 import com.intellij.util.ui.tree.WideSelectionTreeUI;
 import com.intellij.util.ui.update.MergingUpdateQueue;
@@ -112,7 +113,8 @@ public class MultipleLocalChangeListsBrowser extends CommitDialogChangesBrowser 
   @Nullable
   @Override
   protected JComponent createHeaderPanel() {
-    return myChangeListChooser;
+    return JBUI.Panels.simplePanel(myChangeListChooser)
+                      .withBorder(JBUI.Borders.emptyLeft(6));
   }
 
   @NotNull
