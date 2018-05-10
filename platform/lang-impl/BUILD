@@ -67,6 +67,9 @@ iml_module(
         "//tools/idea/platform/diff-impl:intellij.platform.diff.impl[module]",
         "//tools/idea/platform/built-in-server-api:intellij.platform.builtInServer[module]",
         "//tools/idea/.idea/libraries:Groovy",
+        "//tools/idea/.idea/libraries:protobuf",
+        "//tools/idea/.idea/libraries:studio-analytics-proto",
+        "//tools/analytics-library/tracker:analytics-tracker[module]",
     ],
 )
 

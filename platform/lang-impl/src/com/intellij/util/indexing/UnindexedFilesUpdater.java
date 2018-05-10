@@ -15,6 +15,9 @@
  */
 package com.intellij.util.indexing;
 
+import com.android.tools.analytics.UsageTracker;
+import com.google.wireless.android.sdk.stats.AndroidStudioEvent;
+import com.google.wireless.android.sdk.stats.IntellijIndexingStats;
 import com.intellij.ProjectTopics;
 import com.intellij.diagnostic.PerformanceWatcher;
 import com.intellij.ide.IdeBundle;
@@ -107,7 +110,22 @@ public class UnindexedFilesUpdater extends DumbModeTask {
   }
 
   private void indexFiles(ProgressIndicator indicator, List<VirtualFile> files) {
+    // Android Studio: Code instrumented to log the number of files indexed and the duration of indexing.
+    final int fileCount = files.size();
+    long startTimeMs = System.currentTimeMillis();
     CacheUpdateRunner.processFiles(indicator, files, myProject, content -> myIndex.indexFileContent(myProject, content));
+    int durationMs = (int)(System.currentTimeMillis() - startTimeMs);
+    ApplicationManager.getApplication().executeOnPooledThread(
+      () -> UsageTracker.getInstance().log(
+        AndroidStudioEvent.newBuilder()
+                          .setKind(AndroidStudioEvent.EventKind.INTELLIJ_INDEXING_STATS)
+                          .setIntellijIndexingStats(
+                            IntellijIndexingStats.newBuilder()
+                                                 .setDurationMs(durationMs)
+                                                 .setFileCount(fileCount)
+                          )
+      )
+    );
   }
 
   @Override
