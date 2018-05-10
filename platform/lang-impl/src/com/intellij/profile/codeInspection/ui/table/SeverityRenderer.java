@@ -17,8 +17,8 @@ import com.intellij.profile.codeInspection.ui.SingleInspectionProfilePanel;
 import com.intellij.util.ui.ColorIcon;
 import com.intellij.util.ui.EmptyIcon;
 import com.intellij.util.ui.UIUtil;
+import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
@@ -51,7 +51,7 @@ public class SeverityRenderer extends ComboBoxTableRenderer<HighlightSeverity> {
   public static HighlightSeverity[] getSeverities(InspectionProfileImpl inspectionProfile) {
     Stream<HighlightSeverity>
       severities = LevelChooserAction.getSeverities(inspectionProfile.getProfileManager().getSeverityRegistrar()).stream();
-    return Stream.concat(severities, Stream.of(EDIT_SEVERITIES)).toArray(HighlightSeverity[]::new);
+    return StreamEx.of(severities).append(EDIT_SEVERITIES).toArray(HighlightSeverity.class);
   }
 
   public static Icon getIcon(@NotNull HighlightDisplayLevel level) {
