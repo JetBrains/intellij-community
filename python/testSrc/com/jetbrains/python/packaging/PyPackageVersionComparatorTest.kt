@@ -2,60 +2,58 @@
 package com.jetbrains.python.packaging
 
 import com.jetbrains.python.fixtures.PyTestCase
-import com.jetbrains.python.packaging.requirement.PyRequirementVersion
-import com.jetbrains.python.packaging.requirement.PyRequirementVersionNormalizer
 import one.util.streamex.StreamEx
 
 class PyPackageVersionComparatorTest : PyTestCase() {
 
   fun testEpoch() {
-    check(PyPackageVersion("0", "1.2.3"),
-          PyPackageVersion("0", "1.2.3"),
-          PyPackageVersion("1", "1.2.3"))
+    check(normalize("0!1.2.3"),
+          normalize("0!1.2.3"),
+          normalize("1!1.2.3"))
   }
 
   fun testSameLengthRelease() {
-    check(PyPackageVersion(release = "1.2"),
-          PyPackageVersion(release = "1.2"),
-          PyPackageVersion(release = "1.3"))
+    check(normalize("1.2"),
+          normalize("1.2"),
+          normalize("1.3"))
 
-    check(PyPackageVersion(release = "1.2.3"),
-          PyPackageVersion(release = "1.2.3"),
-          PyPackageVersion(release = "1.2.4"))
+    check(normalize("1.2.3"),
+          normalize("1.2.3"),
+          normalize("1.2.4"))
   }
 
   fun testDifferentLengthRelease() {
-    check(PyPackageVersion(release = "1.2"),
-          PyPackageVersion(release = "1.2.0"),
-          PyPackageVersion(release = "1.2.1"))
+    check(normalize("1.2"),
+          normalize("1.2.0"),
+          normalize("1.2.1"))
 
-    check(PyPackageVersion(release = "1.2.3"),
-          PyPackageVersion(release = "1.2.3.0"),
-          PyPackageVersion(release = "1.2.3.1"))
+    check(normalize("1.2.3"),
+          normalize("1.2.3.0"),
+          normalize("1.2.3.1"))
   }
 
   fun testPost() {
-    check(PyPackageVersion(release = "1.2", post = "post1"),
-          PyPackageVersion(release = "1.2", post = "post1"),
-          PyPackageVersion(release = "1.2", post = "post2"))
+    check(normalize("1.2.post1"),
+          normalize("1.2.post1"),
+          normalize("1.2.post2"))
   }
 
   fun testPre() {
-    check(PyPackageVersion(release = "1.2", pre = "a1"),
-          PyPackageVersion(release = "1.2", pre = "a1"),
-          PyPackageVersion(release = "1.2", pre = "a2"))
+    check(normalize("1.2a1"),
+          normalize("1.2a1"),
+          normalize("1.2a2"))
   }
 
   fun testDev() {
-    check(PyPackageVersion(release = "1.2", dev = "dev1"),
-          PyPackageVersion(release = "1.2", dev = "dev1"),
-          PyPackageVersion(release = "1.2", dev = "dev2"))
+    check(normalize("1.2.dev1"),
+          normalize("1.2.dev1"),
+          normalize("1.2.dev2"))
   }
 
   fun testLocal() {
-    check(PyPackageVersion(release = "1.2", local = "abc"),
-          PyPackageVersion(release = "1.2", local = "abc"),
-          PyPackageVersion(release = "1.2", local = "def"))
+    check(normalize("1.2+abc"),
+          normalize("1.2+abc"),
+          normalize("1.2+def"))
   }
 
   fun testSameReleaseOrder() {
@@ -71,7 +69,7 @@ class PyPackageVersionComparatorTest : PyTestCase() {
         normalize("1.0.c1.dev1"),
         normalize("1.0.c1"),
         normalize("1.0.c1.post1"),
-        PyPackageVersion(release = "1.0"),
+        normalize("1.0"),
         normalize("1.0.post1.dev1"),
         normalize("1.0.post1")
       )
@@ -91,7 +89,7 @@ class PyPackageVersionComparatorTest : PyTestCase() {
         normalize("1.0.c1.dev1"),
         normalize("1.0.c1"),
         normalize("1.0.c1.post1"),
-        PyPackageVersion(release = "1.0"),
+        normalize("1.0"),
         normalize("1.0.post1.dev1"),
         normalize("1.0.post1"),
 
@@ -105,7 +103,7 @@ class PyPackageVersionComparatorTest : PyTestCase() {
         normalize("2.0.c1.dev1"),
         normalize("2.0.c1"),
         normalize("2.0.c1.post1"),
-        PyPackageVersion(release = "2.0"),
+        normalize("2.0"),
         normalize("2.0.post1.dev1"),
         normalize("2.0.post1")
       )
@@ -113,7 +111,7 @@ class PyPackageVersionComparatorTest : PyTestCase() {
   }
 
   fun testCompatible() {
-    val pkg = PyPackageVersion(release = "1.*")
+    val pkg = normalize("1.*")
 
     listOf(
       normalize("1.0.dev1"),
@@ -126,16 +124,14 @@ class PyPackageVersionComparatorTest : PyTestCase() {
       normalize("1.0.c1.dev1"),
       normalize("1.0.c1"),
       normalize("1.0.c1.post1"),
-      PyPackageVersion(release = "1.0"),
+      normalize("1.0"),
       normalize("1.0.post1.dev1"),
       normalize("1.0.post1")
     )
       .forEach { check(it, pkg, true) }
   }
-  
-  private fun normalize(version: String) = PyRequirementVersionNormalizer.normalize(version)!!.toPkgVersion()
 
-  private fun PyRequirementVersion.toPkgVersion() = PyPackageVersion(epoch, release, pre, post, dev, local)
+  private fun normalize(version: String) = PyPackageVersionNormalizer.normalize(version)!!
 
   private fun check(less: PyPackageVersion, equal: PyPackageVersion, greater: PyPackageVersion) {
     check(less, equal, true)
@@ -155,17 +151,17 @@ class PyPackageVersionComparatorTest : PyTestCase() {
       assertFalse(message, pkg1 === pkg2)
 
       assertTrue(message, PyPackageVersionComparator.compare(pkg1, pkg2) == 0)
-      assertTrue(message, PyPackageVersionComparator.STR_COMPARATOR.compare(pkg1.toString(), pkg2.toString()) == 0)
+      assertTrue(message, PyPackageVersionComparator.STR_COMPARATOR.compare(pkg1.presentableText, pkg2.presentableText) == 0)
 
       assertTrue(message, PyPackageVersionComparator.compare(pkg2, pkg1) == 0)
-      assertTrue(message, PyPackageVersionComparator.STR_COMPARATOR.compare(pkg2.toString(), pkg1.toString()) == 0)
+      assertTrue(message, PyPackageVersionComparator.STR_COMPARATOR.compare(pkg2.presentableText, pkg1.presentableText) == 0)
     }
     else {
       assertTrue(message, PyPackageVersionComparator.compare(pkg1, pkg2) < 0)
-      assertTrue(message, PyPackageVersionComparator.STR_COMPARATOR.compare(pkg1.toString(), pkg2.toString()) < 0)
+      assertTrue(message, PyPackageVersionComparator.STR_COMPARATOR.compare(pkg1.presentableText, pkg2.presentableText) < 0)
 
       assertTrue(message, PyPackageVersionComparator.compare(pkg2, pkg1) > 0)
-      assertTrue(message, PyPackageVersionComparator.STR_COMPARATOR.compare(pkg2.toString(), pkg1.toString()) > 0)
+      assertTrue(message, PyPackageVersionComparator.STR_COMPARATOR.compare(pkg2.presentableText, pkg1.presentableText) > 0)
     }
   }
 }

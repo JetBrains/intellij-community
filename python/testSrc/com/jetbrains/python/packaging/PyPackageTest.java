@@ -40,7 +40,7 @@ public class PyPackageTest extends TestCase {
 
   @NotNull
   private static PyRequirement createRequirement(@NotNull String options) {
-    final PyRequirement requirement = PyPackageUtil.fix(PyRequirement.fromLine(options));
+    final PyRequirement requirement = PyRequirementParser.fromLine(options);
     assertNotNull(requirement);
     return requirement;
   }

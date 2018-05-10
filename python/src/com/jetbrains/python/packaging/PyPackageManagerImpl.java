@@ -174,7 +174,7 @@ public class PyPackageManagerImpl extends PyPackageManager {
 
   @Override
   public void install(@NotNull String requirementString) throws ExecutionException {
-    install(Collections.singletonList(PyRequirement.fromLine(requirementString)), Collections.emptyList());
+    install(Collections.singletonList(parseRequirement(requirementString)), Collections.emptyList());
   }
 
   @Override
@@ -391,10 +391,22 @@ public class PyPackageManagerImpl extends PyPackageManager {
       .orElseGet(() -> PyPackageUtil.findSetupPyRequires(module));
   }
 
+  @Nullable
+  @Override
+  public PyRequirement parseRequirement(@NotNull String line) {
+    return PyRequirementParser.fromLine(line);
+  }
+
   @NotNull
   @Override
   public List<PyRequirement> parseRequirements(@NotNull String text) {
-    return PyPackageUtil.fix(PyRequirement.fromText(text));
+    return PyRequirementParser.fromText(text);
+  }
+
+  @NotNull
+  @Override
+  public List<PyRequirement> parseRequirements(@NotNull VirtualFile file) {
+    return PyRequirementParser.fromFile(file);
   }
 
   //   public List<PyPackage> refreshAndGetPackagesIfNotInProgress(boolean alwaysRefresh) throws ExecutionException
@@ -547,7 +559,7 @@ public class PyPackageManagerImpl extends PyPackageManager {
   }
 
   @NotNull
-  private static List<PyPackage> parsePackagingToolOutput(@NotNull String s) throws ExecutionException {
+  private List<PyPackage> parsePackagingToolOutput(@NotNull String s) throws ExecutionException {
     final String[] lines = StringUtil.splitByLines(s);
     final List<PyPackage> packages = new ArrayList<>();
     for (String line : lines) {
@@ -562,7 +574,7 @@ public class PyPackageManagerImpl extends PyPackageManager {
       if (fields.size() >= 4) {
         final String requiresLine = fields.get(3);
         final String requiresSpec = StringUtil.join(StringUtil.split(requiresLine, ":"), "\n");
-        requirements.addAll(PyPackageUtil.fix(PyRequirement.fromText(requiresSpec)));
+        requirements.addAll(parseRequirements(requiresSpec));
       }
       if (!"Python".equals(name)) {
         packages.add(new PyPackage(name, version, location, requirements));

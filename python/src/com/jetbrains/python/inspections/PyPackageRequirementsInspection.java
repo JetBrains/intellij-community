@@ -108,7 +108,7 @@ public class PyPackageRequirementsInspection extends PyInspection {
                                        plural ? "are" : "is");
             final Set<String> unsatisfiedNames = new HashSet<>();
             for (PyRequirement req : unsatisfied) {
-              unsatisfiedNames.add(req.getFullName());
+              unsatisfiedNames.add(req.getName() + req.getExtras());
             }
             final List<LocalQuickFix> quickFixes = new ArrayList<>();
             quickFixes.add(new PyInstallRequirementsFix(null, module, sdk, unsatisfied));
@@ -484,7 +484,7 @@ public class PyPackageRequirementsInspection extends PyInspection {
           }
         }
       });
-      ui.install(Collections.singletonList(new PyRequirement(myPackageName)), Collections.emptyList());
+      ui.install(Collections.singletonList(PyRequirementsKt.pyRequirement(myPackageName)), Collections.emptyList());
     }
   }
 
