@@ -17,14 +17,14 @@ And remember that all Comparables and Comparators are consumers.
 
 <p>Example:
 
-  <code><pre>&lt;T&gt; void process(Consumer&lt;T&gt; consumer);</pre></code> should be replaced with:
-  <code><pre>&lt;T&gt; void process(Consumer&lt;? super T&gt; consumer);</pre></code>
-  This method signature is more flexible because it accepts more types.
+  <code><pre>void process(Consumer&lt;Number&gt; consumer);</pre></code> should be replaced with:
+  <code><pre>void process(Consumer&lt;? super Number&gt; consumer);</pre></code>
+  This method signature is more flexible because it accepts more types (not only Consumer&lt;Number&gt; but also Consumer&lt;Object&gt;).
 <p>
 
   Likewise, type parameters in covariant position:
-  <code><pre>&lt;T&gt; T produce(Producer&lt;T&gt; p);</pre></code>should be replaced with:
-  <code><pre>&lt;T&gt; T produce(Producer&lt;? extends T&gt; p);</pre></code>
+  <code><pre>T produce(Producer&lt;T&gt; p);</pre></code>should be replaced with:
+  <code><pre>T produce(Producer&lt;? extends T&gt; p);</pre></code>
 <p>
 
 </body>
