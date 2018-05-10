@@ -6,6 +6,17 @@ import java.util.function.*;
 import java.util.stream.*;
 
 public class StreamInlining {
+  public void testStreamTryFinally() {
+    try {
+
+    } finally {
+      Stream.of("x").map(a -> {
+        testStreamTryFinally();
+        return "bar";
+      }).count();
+    }
+  }
+
   void testNulls(List<String> list) {
     list.stream().filter(<warning descr="Passing 'null' argument to parameter annotated as @NotNull">null</warning>).forEach(System.out::println);
     list.stream().map(<warning descr="Passing 'null' argument to parameter annotated as @NotNull">null</warning>).forEach(System.out::println);

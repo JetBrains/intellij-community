@@ -814,7 +814,7 @@ public class ControlFlowAnalyzer extends JavaElementVisitor {
       }
 
       controlTransfer(new InstructionTransfer(getEndOffset(myInlinedBlockContext.myCodeBlock), getVariablesInside(
-        myInlinedBlockContext.myCodeBlock)), myTrapStack);
+        myInlinedBlockContext.myCodeBlock)), getTrapsInsideElement(myInlinedBlockContext.myCodeBlock));
     } else {
 
       if (returnValue != null) {
