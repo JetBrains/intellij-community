@@ -21,6 +21,10 @@ public abstract class PyInspectionExtension {
     return false;
   }
 
+  public boolean ignoreShadowed(@NotNull final PsiElement element) {
+    return false;
+  }
+
   public boolean ignoreMissingDocstring(PyDocStringOwner docStringOwner) {
     return false;
   }

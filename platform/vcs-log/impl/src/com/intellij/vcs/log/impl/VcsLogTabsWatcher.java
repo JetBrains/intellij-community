@@ -3,6 +3,7 @@ package com.intellij.vcs.log.impl;
 
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.changes.ui.ChangesViewContentManager;
 import com.intellij.openapi.wm.ToolWindow;
@@ -21,9 +22,13 @@ import org.jetbrains.annotations.Nullable;
 
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.List;
 
 public class VcsLogTabsWatcher implements Disposable {
   private static final String TOOLWINDOW_ID = ChangesViewContentManager.TOOLWINDOW_ID;
+  private static final Logger LOG = Logger.getInstance(VcsLogTabsWatcher.class);
 
   @NotNull private final PostponableLogRefresher myRefresher;
 
@@ -44,19 +49,19 @@ public class VcsLogTabsWatcher implements Disposable {
   }
 
   @Nullable
-  private String getSelectedTabName() {
+  private String getSelectedTabId() {
     if (myToolWindow != null && myToolWindow.isVisible()) {
       Content content = myToolWindow.getContentManager().getSelectedContent();
       if (content != null) {
-        return content.getTabName();
+        return VcsLogContentUtil.getId(content);
       }
     }
     return null;
   }
 
   @NotNull
-  public Disposable addTabToWatch(@NotNull String contentTabName, @NotNull VisiblePackRefresher refresher) {
-    return myRefresher.addLogWindow(new VcsLogTab(refresher, contentTabName));
+  public Disposable addTabToWatch(@NotNull String tabId, @NotNull VisiblePackRefresher refresher) {
+    return myRefresher.addLogWindow(new VcsLogTab(refresher, tabId));
   }
 
   private void installContentListener() {
@@ -84,13 +89,22 @@ public class VcsLogTabsWatcher implements Disposable {
 
   public void closeLogTabs() {
     if (myToolWindow != null) {
-      VcsLogContentUtil.closeLogTabs(myToolWindow,
-                                     StreamEx.of(myRefresher.getLogWindows())
-                                       .select(VcsLogTab.class)
-                                       .map(VcsLogTab::getTabName)
-                                       .filter(name -> !VcsLogContentProvider.TAB_NAME.equals(name))
-                                       .toList());
+      Collection<String> tabs = getTabs();
+      for (String tabId : tabs) {
+        boolean closed = VcsLogContentUtil.closeLogTab(myToolWindow.getContentManager(), tabId);
+        LOG.assertTrue(closed, "Could not find content component for tab " + tabId + "\nExisting content: " +
+                               Arrays.toString(myToolWindow.getContentManager().getContents()) + "\nTabs to close: " + tabs);
+      }
     }
+  }
+
+  @NotNull
+  private List<String> getTabs() {
+    return StreamEx.of(myRefresher.getLogWindows())
+                   .select(VcsLogTab.class)
+                   .map(VcsLogTab::getTabId)
+                   .filter(tabId -> !VcsLogTabsProperties.MAIN_LOG_ID.equals(tabId))
+                   .toList();
   }
 
   @Override
@@ -99,22 +113,22 @@ public class VcsLogTabsWatcher implements Disposable {
   }
 
   public class VcsLogTab extends PostponableLogRefresher.VcsLogWindow {
-    @NotNull private final String myTabName;
+    @NotNull private final String myTabId;
 
-    public VcsLogTab(@NotNull VisiblePackRefresher refresher, @NotNull String tabName) {
+    public VcsLogTab(@NotNull VisiblePackRefresher refresher, @NotNull String tabId) {
       super(refresher);
-      myTabName = tabName;
+      myTabId = tabId;
     }
 
     @Override
     public boolean isVisible() {
-      String selectedTab = getSelectedTabName();
-      return selectedTab != null && myTabName.equals(selectedTab);
+      String selectedTab = getSelectedTabId();
+      return selectedTab != null && myTabId.equals(selectedTab);
     }
 
     @NotNull
-    public String getTabName() {
-      return myTabName;
+    public String getTabId() {
+      return myTabId;
     }
   }
 
@@ -122,15 +136,15 @@ public class VcsLogTabsWatcher implements Disposable {
     implements ToolWindowManagerListener, PropertyChangeListener {
 
     private void selectionChanged() {
-      String tabName = getSelectedTabName();
-      if (tabName != null) {
-        selectionChanged(tabName);
+      String tabId = getSelectedTabId();
+      if (tabId != null) {
+        selectionChanged(tabId);
       }
     }
 
-    private void selectionChanged(String tabName) {
+    private void selectionChanged(@NotNull String tabId) {
       VcsLogWindow logWindow = ContainerUtil.find(myRefresher.getLogWindows(),
-                                                  window -> window instanceof VcsLogTab && ((VcsLogTab)window).myTabName.equals(tabName));
+                                                  window -> window instanceof VcsLogTab && ((VcsLogTab)window).myTabId.equals(tabId));
       if (logWindow != null) {
         myRefresher.refresherActivated(logWindow.getRefresher(), false);
       }
@@ -139,7 +153,10 @@ public class VcsLogTabsWatcher implements Disposable {
     @Override
     public void selectionChanged(ContentManagerEvent event) {
       if (ContentManagerEvent.ContentOperation.add.equals(event.getOperation())) {
-        selectionChanged(event.getContent().getTabName());
+        String tabId = VcsLogContentUtil.getId(event.getContent());
+        if (tabId != null) {
+          selectionChanged(tabId);
+        }
       }
     }
 
@@ -172,8 +189,8 @@ public class VcsLogTabsWatcher implements Disposable {
     }
 
     @Override
-    public void toolWindowRegistered(@NotNull String id) {
-      if (id.equals(TOOLWINDOW_ID)) {
+    public void toolWindowRegistered(@NotNull String toolWindowId) {
+      if (toolWindowId.equals(TOOLWINDOW_ID)) {
         installContentListener();
       }
     }

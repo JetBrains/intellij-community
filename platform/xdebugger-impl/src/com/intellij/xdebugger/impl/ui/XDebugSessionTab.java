@@ -10,7 +10,6 @@ import com.intellij.execution.runners.RunContentBuilder;
 import com.intellij.execution.ui.RunContentDescriptor;
 import com.intellij.execution.ui.RunContentManager;
 import com.intellij.execution.ui.RunnerLayoutUi;
-import com.intellij.execution.ui.actions.CloseAction;
 import com.intellij.execution.ui.layout.PlaceInGrid;
 import com.intellij.execution.ui.layout.impl.RunnerContentUi;
 import com.intellij.execution.ui.layout.impl.ViewImpl;

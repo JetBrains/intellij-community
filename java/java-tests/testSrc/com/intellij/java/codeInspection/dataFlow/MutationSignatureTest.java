@@ -13,7 +13,7 @@ public class MutationSignatureTest {
     MutationSignature sig = MutationSignature.parse("this");
     assertTrue(sig.mutatesThis());
     assertFalse(sig.mutatesArg(0));
-    sig = MutationSignature.parse("arg1 , arg2");
+    sig = MutationSignature.parse("param1 , param2");
     assertFalse(sig.mutatesThis());
     assertTrue(sig.mutatesArg(0));
     assertTrue(sig.mutatesArg(1));

@@ -416,7 +416,7 @@ public class MergeFromTheirsResolver extends BackgroundTaskGroup {
   private List<SvnChangeList> loadSvnChangeListsForPatch(@NotNull TreeConflictDescription description) throws VcsException {
     long max = description.getSourceRightVersion().getPegRevision();
     long min = description.getSourceLeftVersion().getPegRevision();
-    SvnRepositoryLocation location = new SvnRepositoryLocation(description.getSourceRightVersion().getRepositoryRoot().toString());
+    SvnRepositoryLocation location = new SvnRepositoryLocation(description.getSourceRightVersion().getRepositoryRoot());
     ChangeBrowserSettings settings = new ChangeBrowserSettings();
     settings.USE_CHANGE_BEFORE_FILTER = settings.USE_CHANGE_AFTER_FILTER = true;
     settings.CHANGE_BEFORE = String.valueOf(max);

@@ -157,16 +157,6 @@ public abstract class ComboBoxAction extends AnAction implements CustomComponent
       if (isSmallVariant() && !UIUtil.isUnderGTKLookAndFeel()) {
         setFont(JBUI.Fonts.label(11));
       }
-      addActionListener(
-        new ActionListener() {
-          @Override
-          public void actionPerformed(ActionEvent e) {
-            if (!myForcePressed) {
-              IdeFocusManager.getGlobalInstance().doWhenFocusSettlesDown(() -> showPopup());
-            }
-          }
-        }
-      );
 
       //noinspection HardCodedStringLiteral
       addMouseListener(new MouseAdapter() {
@@ -189,6 +179,13 @@ public abstract class ComboBoxAction extends AnAction implements CustomComponent
                                                e.getY()));
         }
       });
+    }
+
+    @Override
+    protected void fireActionPerformed(ActionEvent event) {
+      if (!myForcePressed) {
+        IdeFocusManager.getGlobalInstance().doWhenFocusSettlesDown(() -> showPopup());
+      }
     }
 
     @NotNull
@@ -307,7 +304,8 @@ public abstract class ComboBoxAction extends AnAction implements CustomComponent
     @Override
     public Dimension getPreferredSize() {
       Dimension prefSize = super.getPreferredSize();
-      int width = prefSize.width + getArrowIcon(isEnabled()).getIconWidth()
+      int width = prefSize.width
+                  + (myPresentation != null && isArrowVisible(myPresentation) ? getArrowIcon(isEnabled()).getIconWidth() : 0)
                   + (StringUtil.isNotEmpty(getText()) ? getIconTextGap() : 0)
                   + (UIUtil.isUnderWin10LookAndFeel() ? JBUI.scale(6) : 0);
 
@@ -334,12 +332,18 @@ public abstract class ComboBoxAction extends AnAction implements CustomComponent
     @Override
     public void paint(Graphics g) {
       super.paint(g);
-
+      if (!isArrowVisible(myPresentation)) {
+        return;
+      }
       Icon icon = getArrowIcon(isEnabled());
       int x = getWidth() - icon.getIconWidth() - getInsets().right - getMargin().right -
               (UIUtil.isUnderWin10LookAndFeel() ? JBUI.scale(3) : 0); // Different icons correction
 
       icon.paintIcon(null, g, x, (getHeight() - icon.getIconHeight()) / 2);
+    }
+
+    protected boolean isArrowVisible(@NotNull Presentation presentation) {
+      return true;
     }
 
     @Override public void updateUI() {

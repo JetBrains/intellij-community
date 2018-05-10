@@ -163,6 +163,9 @@ class TextDiffSettingsHolder : PersistentStateComponent<TextDiffSettingsHolder.S
     if (place == DiffPlaces.COMMIT_DIALOG) {
       settings.EXPAND_BY_DEFAULT = false
     }
+    if (place == DiffPlaces.VCS_LOG_VIEW) {
+      settings.EXPAND_BY_DEFAULT = false
+    }
     return settings
   }
 

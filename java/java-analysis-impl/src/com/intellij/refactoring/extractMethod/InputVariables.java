@@ -284,6 +284,10 @@ public class InputVariables {
     return inputVariables;
   }
 
+  @NotNull
+  public InputVariables copyWithoutFolding() {
+    return new InputVariables(myInitialParameters, myProject, myScope, false);
+  }
 
   public void appendCallArguments(VariableData data, StringBuilder buffer) {
     if (myFoldingAvailable) {
@@ -309,8 +313,9 @@ public class InputVariables {
   }
 
   public void annotateWithParameter(PsiJavaCodeReferenceElement reference) {
+    if (myInputVariables.isEmpty()) return;
+    final PsiElement element = reference.resolve();
     for (VariableData data : myInputVariables) {
-      final PsiElement element = reference.resolve();
       if (data.variable.equals(element)) {
         PsiType type = data.variable.getType();
         final PsiMethodCallExpression methodCallExpression = PsiTreeUtil.getParentOfType(reference, PsiMethodCallExpression.class);

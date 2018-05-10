@@ -435,7 +435,13 @@ public final class InternalDecorator extends JPanel implements Queryable, DataPr
             return helpId;
           }
         }
-        return myToolWindow.getHelpId();
+
+        String id = myToolWindow.getHelpId();
+        if (id != null) {
+          return id;
+        }
+
+        return super.getHelpId(dataContext);
       }
 
       @Override

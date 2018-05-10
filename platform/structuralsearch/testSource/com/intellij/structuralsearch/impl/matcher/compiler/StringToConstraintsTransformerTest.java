@@ -225,6 +225,16 @@ public class StringToConstraintsTransformerTest {
     assertEquals("List", constraint.getNameOfFormalArgType());
   }
 
+  @Test
+  public void testInvertShortcut() {
+    test("class '_X:!*A {}");
+    assertEquals("class $X$ {}", myOptions.getSearchPattern());
+    final MatchVariableConstraint constraint = myOptions.getVariableConstraint("X");
+    assertTrue(constraint.isInvertRegExp());
+    assertTrue(constraint.isWithinHierarchy());
+    assertEquals("A", constraint.getRegExp());
+  }
+
   @Test(expected = MalformedPatternException.class)
   public void testAmpersandsExpected() {
     test("'a:[regex(a) regex(b)]");

@@ -1921,6 +1921,24 @@ public class StructuralSearchTest extends StructuralSearchTestCase {
     assertEquals("Find class within type hierarchy with not, 2", 1,
                  findMatchesCount(s1, "class '_ extends '_Extends:[!regex( *A )]{}"));
     assertEquals("Search in hierarchy on class identifier", 2, findMatchesCount(s1, "class '_X:*B2 {}"));
+
+    String in2 = "class A {}" +
+                 "class B extends A {{" +
+                 "  new Object() {}" +
+                 "  new A() {}" +
+                 "  new B() {}" +
+                 "  new B();" +
+                 "  new Object();" +
+                 "}}";
+    assertEquals("Find anonymous class in hierarchy", 2, findMatchesCount(in2, "new '_X:*A () {}"));
+    assertEquals("Find new expression in hierarchy", 3, findMatchesCount(in2, "new '_X:*A ()"));
+    assertEquals("Find anonymous class in hierarchy negated", 1, findMatchesCount(in2, "new '_X:!*A () {}"));
+
+    String in3 = "class A {}" +
+                 "class B extends A {}" +
+                 "class C extends B {}" +
+                 "class D extends Object {}";
+    assertEquals("Find in hierarchy negated on class identifier", 1, findMatchesCount(in3, "class '_X:!*A {}"));
   }
 
   public void testFindTryWithoutProperFinally() {
@@ -2426,14 +2444,19 @@ public class StructuralSearchTest extends StructuralSearchTestCase {
       findMatchesCount(source, "'_exp // asdf");
       fail("malformed pattern warning expected");
     } catch (MalformedPatternException ignored) {}
+
+    try {
+      findMatchesCount(source, "<'_E extends '_T>");
+      fail("don't hide malformed patterns");
+    } catch (MalformedPatternException ignored) {}
   }
 
   public void testNotApplicableConstraints() {
     options.fillSearchCriteria("class A extends '_B* {}");
-    assertEquals("MAXIMUM UNLIMITED not applicable for B", checkApplicableConstraints());
+    assertEquals("MAXIMUM UNLIMITED not applicable for B", checkApplicableConstraints(options));
 
     options.fillSearchCriteria("'_a?.'_b?");
-    assertEquals("MINIMUM ZERO not applicable for b", checkApplicableConstraints());
+    assertEquals("MINIMUM ZERO not applicable for b", checkApplicableConstraints(options));
   }
 
   public void testFindInnerClass() {

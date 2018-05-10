@@ -11,7 +11,6 @@ import com.intellij.openapi.util.BuildNumber;
 import com.intellij.openapi.util.JDOMUtil;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.SystemInfoRt;
-import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.JBColor;
 import com.intellij.util.ArrayUtil;
@@ -56,7 +55,7 @@ public class ApplicationInfoImpl extends ApplicationInfoEx {
   private int myProgressHeight = 2;
   private int myProgressX = 1;
   private int myProgressY = 350;
-  private int myLicenseOffsetY = Registry.is("ide.new.about") ? 85 : 30;
+  private int myLicenseOffsetY = 85;
   private String mySplashImageUrl;
   private String myAboutImageUrl;
   @SuppressWarnings("UseJBColor") private Color mySplashTextColor = new Color(0, 35, 135);  // idea blue

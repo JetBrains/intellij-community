@@ -1,4 +1,4 @@
-// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.svn.history;
 
 import com.intellij.openapi.diagnostic.Logger;
@@ -69,7 +69,7 @@ public class SingleCommittedListProvider {
       revisionBefore = ((SvnRevisionNumber)number).getRevision();
       repositoryUrl = rootUrlInfo.getRepositoryUrl();
       svnRootUrl = rootUrlInfo.getUrl();
-      svnRootLocation = new SvnRepositoryLocation(rootUrlInfo.getUrl().toString());
+      svnRootLocation = new SvnRepositoryLocation(rootUrlInfo.getUrl());
       repositoryRelativeUrl = SvnUtil.ensureStartSlash(SvnUtil.join(
         SvnUtil.getRelativeUrl(repositoryUrl, svnRootUrl),
         SvnUtil.getRelativePath(rootUrlInfo.getPath(), file.getPath())));

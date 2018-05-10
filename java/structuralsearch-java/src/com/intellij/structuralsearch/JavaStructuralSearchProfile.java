@@ -318,7 +318,6 @@ public class JavaStructuralSearchProfile extends StructuralSearchProfile {
       assert startChild != null;
       final List<PsiElement> result = new SmartList<>();
       for (PsiElement element = startChild.getNextSibling(); element != endChild && element != null; element = element.getNextSibling()) {
-        if (element instanceof PsiErrorElement) continue;
         result.add(element);
       }
 
@@ -836,7 +835,8 @@ public class JavaStructuralSearchProfile extends StructuralSearchProfile {
           if (parent instanceof PsiJavaCodeReferenceElement) {
             final PsiElement grandParent = parent.getParent();
             if (grandParent instanceof PsiTypeElement || grandParent instanceof PsiReferenceList ||
-                grandParent instanceof PsiReferenceExpression) return true;
+                grandParent instanceof PsiReferenceExpression || grandParent instanceof PsiNewExpression ||
+                grandParent instanceof PsiAnonymousClass) return true;
           }
           else if (parent instanceof PsiClass) return true;
           else if (isMemberSurroundedByClass(parent)) return true;
@@ -881,6 +881,9 @@ public class JavaStructuralSearchProfile extends StructuralSearchProfile {
 
     final PsiElement grandParent = parent.getParent();
     if (grandParent instanceof PsiReferenceList) return true;
+    if (grandParent instanceof PsiPolyadicExpression) {
+      return ((PsiPolyadicExpression)grandParent).getOperands().length > 2;
+    }
     if (parent instanceof PsiReferenceExpression) {
       if (grandParent instanceof PsiReferenceExpression) return true;
       if (grandParent instanceof PsiReturnStatement) return true;

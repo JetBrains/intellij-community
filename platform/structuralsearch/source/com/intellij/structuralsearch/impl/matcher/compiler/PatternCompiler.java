@@ -51,21 +51,33 @@ public class PatternCompiler {
   private static final Object LOCK = new Object();
   private static SoftReference<CompiledPattern> ourLastCompiledPattern;
   private static MatchOptions ourLastMatchOptions;
+  private static boolean ourLastCompileSuccessful = true;
   private static CompileContext lastTestingContext;
 
-  public static CompiledPattern compilePattern(final Project project, final MatchOptions options)
-    throws MalformedPatternException, NoMatchFoundException, UnsupportedOperationException {
-    final CompiledPattern lastPattern = getLastCompiledPattern(options);
-    if (lastPattern != null) {
-      return lastPattern;
+  public static CompiledPattern compilePattern(Project project,MatchOptions options, boolean checkForErrors)
+    throws MalformedPatternException, NoMatchFoundException {
+    if (!checkForErrors) {
+      synchronized (LOCK) {
+        if (options.equals(ourLastMatchOptions) &&
+            (!(options.getScope() instanceof GlobalSearchScope) || options.getScope() == ourLastMatchOptions.getScope())) {
+          if (!ourLastCompileSuccessful) return null;
+          assert ourLastCompiledPattern != null;
+          final CompiledPattern lastCompiledPattern = ourLastCompiledPattern.get();
+          if (lastCompiledPattern != null) {
+            return lastCompiledPattern;
+          }
+        }
+      }
     }
     return !ApplicationManager.getApplication().isDispatchThread()
-           ? ReadAction.compute(() -> doCompilePattern(project, options))
-           : doCompilePattern(project, options);
+           ? ReadAction.compute(() -> doCompilePattern(project, options, checkForErrors))
+           : doCompilePattern(project, options, checkForErrors);
   }
 
   @NotNull
-  private static CompiledPattern doCompilePattern(Project project, MatchOptions options) {
+  private static CompiledPattern doCompilePattern(Project project, MatchOptions options, boolean checkForErrors)
+    throws MalformedPatternException, NoMatchFoundException {
+
     final StructuralSearchProfile profile = StructuralSearchUtil.getProfileByFileType(options.getFileType());
     assert profile != null : "no profile found for " + options.getFileType().getDescription();
     final CompiledPattern result = profile.createCompiledPattern();
@@ -78,23 +90,36 @@ public class PatternCompiler {
 
     try {
       final List<PsiElement> elements = compileByAllPrefixes(project, options, result, context, prefixes);
-
       final CompiledPattern pattern = context.getPattern();
-      checkForUnknownVariables(pattern, elements);
-      pattern.setNodes(elements);
-      synchronized (LOCK) {
-        ourLastMatchOptions = options.copy();
-        ourLastCompiledPattern = new SoftReference<>(result);
+      try {
+        checkForUnknownVariables(pattern, elements);
+        pattern.setNodes(elements);
+        synchronized (LOCK) {
+          ourLastMatchOptions = options.copy();
+          ourLastCompiledPattern = new SoftReference<>(result);
+          ourLastCompileSuccessful = true;
+        }
+      } catch (MalformedPatternException e) {
+        synchronized (LOCK) {
+          ourLastMatchOptions = options.copy();
+          ourLastCompiledPattern = null;
+          ourLastCompileSuccessful = false;
+        }
+        throw e;
       }
-      profile.checkSearchPattern(pattern);
-      optimizeScope(options, result, context);
+      if (checkForErrors) {
+        profile.checkSearchPattern(pattern);
+        optimizeScope(options, result, context);
+      }
       return result;
     } finally {
       context.clear();
     }
   }
 
-  private static void optimizeScope(MatchOptions options, CompiledPattern result, CompileContext context) {
+  private static void optimizeScope(MatchOptions options, CompiledPattern result, CompileContext context)
+    throws NoMatchFoundException {
+
     final OptimizingSearchHelper searchHelper = context.getSearchHelper();
     if (searchHelper.doOptimizing() && searchHelper.isScannedSomething()) {
       final List<PsiFile> filesToScan = new SmartList<>();
@@ -110,7 +135,9 @@ public class PatternCompiler {
     }
   }
 
-  private static void checkForUnknownVariables(final CompiledPattern pattern, List<PsiElement> elements) {
+  private static void checkForUnknownVariables(final CompiledPattern pattern, List<PsiElement> elements)
+    throws MalformedPatternException {
+
     for (PsiElement element : elements) {
       pattern.putVariableNode(Configuration.CONTEXT_VAR_NAME, element);
       element.accept(new PsiRecursiveElementWalkingVisitor() {
@@ -159,19 +186,6 @@ public class PatternCompiler {
           }
         }
       });
-    }
-  }
-
-  @Nullable
-  public static CompiledPattern getLastCompiledPattern(MatchOptions options) {
-    synchronized (LOCK) {
-      final CompiledPattern lastCompiledPattern = ourLastCompiledPattern == null ? null : ourLastCompiledPattern.get();
-      if (lastCompiledPattern == null ||
-          !options.equals(ourLastMatchOptions) ||
-          options.getScope() instanceof GlobalSearchScope && options.getScope() != ourLastMatchOptions.getScope()) {
-        return null;
-      }
-      return lastCompiledPattern;
     }
   }
 

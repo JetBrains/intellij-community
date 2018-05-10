@@ -58,7 +58,6 @@ public abstract class DaemonCodeAnalyzer {
      * @param fileEditors The list of files that will be analyzed during the current execution of the daemon.
      */
     default void daemonStarting(@NotNull Collection<FileEditor> fileEditors) {
-      daemonFinished();
     }
 
     /**
