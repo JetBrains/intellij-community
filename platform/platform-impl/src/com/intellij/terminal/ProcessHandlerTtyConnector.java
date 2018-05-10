@@ -17,6 +17,7 @@ package com.intellij.terminal;
 
 import com.intellij.execution.process.OSProcessHandler;
 import com.intellij.execution.process.ProcessHandler;
+import com.intellij.execution.process.UnixProcessManager;
 import com.jediterm.terminal.Questioner;
 import com.jediterm.terminal.TtyConnector;
 import com.pty4j.PtyProcess;
@@ -31,6 +32,8 @@ import java.nio.charset.Charset;
  * @author traff
  */
 public class ProcessHandlerTtyConnector implements TtyConnector {
+  private static final int SIGWINCH = 28;
+
   private final OSProcessHandler myProcessHandler;
   private final PtyProcess myPtyProcess;
   protected Charset myCharset;
@@ -67,6 +70,7 @@ public class ProcessHandlerTtyConnector implements TtyConnector {
       if (myPtyProcess.isRunning()) {
         myPtyProcess.setWinSize(
           new WinSize(termSize.width, termSize.height, pixelSize.width, pixelSize.height));
+        UnixProcessManager.sendSignalToProcessTree(myPtyProcess.getPid(), SIGWINCH);
       }
     }
   }
