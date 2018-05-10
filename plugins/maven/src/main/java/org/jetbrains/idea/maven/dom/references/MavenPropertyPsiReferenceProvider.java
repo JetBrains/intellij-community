@@ -15,6 +15,7 @@
  */
 package org.jetbrains.idea.maven.dom.references;
 
+import com.intellij.codeInspection.XmlSuppressionProvider;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -41,6 +42,7 @@ import java.util.regex.Matcher;
 
 public class MavenPropertyPsiReferenceProvider extends PsiReferenceProvider {
   public static final boolean SOFT_DEFAULT = false;
+  public static final String UNRESOLVED_MAVEN_PROPERTY_QUICKFIX_ID = "UnresolvedMavenProperty";
 
   @NotNull
   @Override
@@ -78,6 +80,8 @@ public class MavenPropertyPsiReferenceProvider extends PsiReferenceProvider {
     if (StringUtil.isEmptyOrSpaces(text)) return PsiReference.EMPTY_ARRAY;
 
     if (!isElementCanContainReference(element)) return PsiReference.EMPTY_ARRAY;
+
+    if (XmlSuppressionProvider.isSuppressed(element, UNRESOLVED_MAVEN_PROPERTY_QUICKFIX_ID)) return PsiReference.EMPTY_ARRAY;
 
     MavenProject mavenProject = null;
     XmlTag propertiesTag = null;
