@@ -1,4 +1,4 @@
-// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.wm.impl;
 
 import com.intellij.featureStatistics.FeatureUsageTracker;
@@ -9,8 +9,7 @@ import com.intellij.openapi.actionSystem.ActionGroup;
 import com.intellij.openapi.actionSystem.ActionManager;
 import com.intellij.openapi.actionSystem.ActionPlaces;
 import com.intellij.openapi.actionSystem.ActionPopupMenu;
-import com.intellij.openapi.keymap.Keymap;
-import com.intellij.openapi.keymap.KeymapManager;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.keymap.KeymapManagerListener;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.util.text.StringUtil;
@@ -51,11 +50,9 @@ public final class StripeButton extends AnchoredButton implements ActionListener
   private Stripe myLastStripe;
   private KeyEventDispatcher myDragKeyEventDispatcher;
   private boolean myDragCancelled = false;
-  private final StripeButton.MyKeymapListener myKeymapListener;
 
   StripeButton(@NotNull final InternalDecorator decorator, ToolWindowsPane pane) {
     myDecorator = decorator;
-    myKeymapListener = new MyKeymapListener();
     myPane = pane;
 
     init();
@@ -112,9 +109,8 @@ public final class StripeButton extends AnchoredButton implements ActionListener
         processDrag(e);
       }
     });
-    KeymapManager.getInstance().addKeymapManagerListener(myKeymapListener, this);
+    ApplicationManager.getApplication().getMessageBus().connect(this).subscribe(KeymapManagerListener.TOPIC, keymap -> updatePresentation());
   }
-
   
   public boolean isFirst() {
     return is(true);
@@ -358,13 +354,6 @@ public final class StripeButton extends AnchoredButton implements ActionListener
     @Override
     public void invokePopup(final Component component, final int x, final int y) {
       showPopup(component, x, y);
-    }
-  }
-
-  private final class MyKeymapListener implements KeymapManagerListener {
-    @Override
-    public void activeKeymapChanged(Keymap keymap) {
-      updatePresentation();
     }
   }
 

@@ -26,6 +26,8 @@ import java.awt.geom.Path2D;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 
+import static com.intellij.ide.ui.laf.darcula.DarculaUIUtil.MINIMUM_WIDTH;
+
 /**
  * @author Konstantin Bulenkov
  */
@@ -128,7 +130,7 @@ public class WinIntelliJComboBoxUI extends DarculaComboBoxUI {
       new Rectangle(i.left + buttonWidth, i.top, w - (i.left + i.right + buttonWidth), h - (i.top + i.bottom));
 
     JBInsets.removeFrom(rect, padding);
-    rect.width += !comboBox.isEditable() ? padding.right : 0;
+    rect.width += comboBox.isEditable() ? 0: padding.right;
     return rect;
   }
 
@@ -436,17 +438,17 @@ public class WinIntelliJComboBoxUI extends DarculaComboBoxUI {
     return JBUI.insets(1);
   }
 
-  protected Dimension  getSizeWithButton(Dimension d) {
+  @Override
+  protected Dimension  getSizeWithButton(Dimension size, Dimension editorSize) {
     ARROW_BUTTON_SIZE.update();
 
     Insets i = getInsets();
+    int editorHeight = editorSize != null ? editorSize.height + i.top + i.bottom + padding.top + padding.bottom: 0;
+    int editorWidth = editorSize != null ? editorSize.width + i.left + padding.left + padding.right : 0;
+    editorWidth = Math.max(editorWidth, MINIMUM_WIDTH.get() + i.left);
 
-    Dimension ePrefSize = editor != null ? editor.getPreferredSize() : null;
-    int editorHeight = ePrefSize != null ? ePrefSize.height + i.top + i.bottom + padding.top + padding.bottom: 0;
-    int editorWidth = ePrefSize != null ? ePrefSize.width + i.left + padding.left + padding.right : 0;
-
-    return new Dimension(Math.max(d.width, editorWidth + ARROW_BUTTON_SIZE.width),
-                         Math.max(ARROW_BUTTON_SIZE.height, editorHeight));
+    return new Dimension(Math.max(editorWidth + ARROW_BUTTON_SIZE.width, size.width + padding.left),
+                         Math.max(ARROW_BUTTON_SIZE.height, Math.max(editorHeight, size.height)));
   }
 
   @Override

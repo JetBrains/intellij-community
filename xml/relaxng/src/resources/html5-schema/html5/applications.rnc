@@ -100,13 +100,13 @@ datatypes w = "http://whattf.org/datatype-draft"
 		&	(	common.attrs.aria.implicit.dialog
 			|	common.attrs.aria.role.alert
 			|	common.attrs.aria.role.alertdialog
+			|	common.attrs.aria.role.application
 			|	common.attrs.aria.role.contentinfo
 			|	common.attrs.aria.role.dialog
 			|	common.attrs.aria.role.log
 			|	common.attrs.aria.role.marquee
 			|	common.attrs.aria.role.region
 			|	common.attrs.aria.role.status
-			|	common.attrs.aria.landmark.application
 			|	common.attrs.aria.landmark.document
 			|	common.attrs.aria.landmark.main
 			|	common.attrs.aria.landmark.search

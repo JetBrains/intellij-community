@@ -5,6 +5,7 @@ import com.intellij.configurationStore.LazySchemeProcessor
 import com.intellij.configurationStore.SchemeDataHolder
 import com.intellij.ide.WelcomeWizardUtil
 import com.intellij.openapi.Disposable
+import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.components.PersistentStateComponent
 import com.intellij.openapi.components.RoamingType
 import com.intellij.openapi.components.State
@@ -16,7 +17,6 @@ import com.intellij.openapi.options.SchemeManager
 import com.intellij.openapi.options.SchemeManagerFactory
 import com.intellij.openapi.util.Condition
 import com.intellij.openapi.util.Conditions
-import com.intellij.openapi.util.Disposer
 import com.intellij.ui.AppUIUtil
 import com.intellij.util.containers.ContainerUtil
 import com.intellij.util.containers.SmartHashSet
@@ -42,9 +42,7 @@ class KeymapManagerImpl(defaultKeymap: DefaultKeymap, factory: SchemeManagerFact
                                 attributeProvider: Function<String, String?>,
                                 isBundled: Boolean) = KeymapImpl(name, dataHolder)
       override fun onCurrentSchemeSwitched(oldScheme: Keymap?, newScheme: Keymap?) {
-        for (listener in listeners) {
-          listener.activeKeymapChanged(newScheme)
-        }
+        fireActiveKeymapChanged(newScheme)
       }
 
       override fun reloaded(schemeManager: SchemeManager<Keymap>, schemes: Collection<Keymap>) {
@@ -67,6 +65,13 @@ class KeymapManagerImpl(defaultKeymap: DefaultKeymap, factory: SchemeManagerFact
     schemeManager.loadSchemes()
 
     ourKeymapManagerInitialized = true
+  }
+
+  private fun fireActiveKeymapChanged(newScheme: Keymap?) {
+    ApplicationManager.getApplication().messageBus.syncPublisher(KeymapManagerListener.TOPIC).activeKeymapChanged(activeKeymap)
+    for (listener in listeners) {
+      listener.activeKeymapChanged(newScheme)
+    }
   }
 
   companion object {
@@ -143,11 +148,10 @@ class KeymapManagerImpl(defaultKeymap: DefaultKeymap, factory: SchemeManagerFact
     listeners.add(listener)
   }
 
-  @Suppress("DEPRECATION")
+  @Suppress("DEPRECATION", "OverridingDeprecatedMember")
   override fun addKeymapManagerListener(listener: KeymapManagerListener, parentDisposable: Disposable) {
     pollQueue()
-    listeners.add(listener)
-    Disposer.register(parentDisposable, Disposable { removeKeymapManagerListener(listener) })
+    ApplicationManager.getApplication().messageBus.connect(parentDisposable).subscribe(KeymapManagerListener.TOPIC, listener)
   }
 
   private fun pollQueue() {
@@ -162,7 +166,8 @@ class KeymapManagerImpl(defaultKeymap: DefaultKeymap, factory: SchemeManagerFact
 
   @Suppress("DEPRECATION")
   override fun addWeakListener(listener: KeymapManagerListener) {
-    addKeymapManagerListener(WeakKeymapManagerListener(this, listener))
+    pollQueue()
+    listeners.add(WeakKeymapManagerListener(this, listener))
   }
 
   override fun removeWeakListener(listenerToRemove: KeymapManagerListener) {

@@ -45,7 +45,7 @@ public class VisiblePackRefresherImpl implements VisiblePackRefresher, Disposabl
   private static final Logger LOG = Logger.getInstance(VisiblePackRefresherImpl.class);
 
   @NotNull private final SingleTaskController<Request, State> myTaskController;
-  @NotNull private final VcsLogFilterer myVisiblePackBuilder;
+  @NotNull private final VcsLogFilterer myVcsLogFilterer;
   @NotNull private final VcsLogData myLogData;
   @NotNull private final VcsLogIndex.IndexingFinishedListener myIndexingFinishedListener;
   @NotNull private final List<VisiblePackChangeListener> myVisiblePackChangeListeners = ContainerUtil.createLockFreeCopyOnWriteList();
@@ -63,9 +63,9 @@ public class VisiblePackRefresherImpl implements VisiblePackRefresher, Disposabl
                                   @NotNull VcsLogData logData,
                                   @NotNull VcsLogFilterCollection filters,
                                   @NotNull PermanentGraph.SortType sortType,
-                                  @NotNull VcsLogFilterer builder) {
+                                  @NotNull VcsLogFilterer filterer) {
     myLogData = logData;
-    myVisiblePackBuilder = builder;
+    myVcsLogFilterer = filterer;
     myState = new State(filters, sortType);
 
     myTaskController = new SingleTaskController<Request, State>(project, "visible", state -> {
@@ -236,8 +236,8 @@ public class VisiblePackRefresherImpl implements VisiblePackRefresher, Disposabl
           return refresh(state, filterRequest, moreCommitsRequests);
         }
         else if (!indexingRequests.isEmpty()) {
-          if (myVisiblePackBuilder.areFiltersAffectedByIndexing(state.getFilters(),
-                                                                ContainerUtil.map(indexingRequests, IndexingFinishedRequest::getRoot))) {
+          if (VcsLogFiltererImpl.areFiltersAffectedByIndexing(state.getFilters(),
+                                                              ContainerUtil.map(indexingRequests, IndexingFinishedRequest::getRoot))) {
             return refresh(state, filterRequest, moreCommitsRequests);
           }
         }
@@ -251,7 +251,7 @@ public class VisiblePackRefresherImpl implements VisiblePackRefresher, Disposabl
                           @NotNull List<MoreCommitsRequest> moreCommitsRequests) {
       DataPack dataPack = myLogData.getDataPack();
 
-      if (dataPack == DataPack.EMPTY && !myVisiblePackBuilder.canBuildFromEmpty()) {
+      if (dataPack == DataPack.EMPTY && !myVcsLogFilterer.canFilterEmptyPack(state.getFilters())) {
         // when filter is set during initialization, just remember filters
         // unless our builder can do something with an empty pack, for example in file history
         return state;
@@ -265,8 +265,8 @@ public class VisiblePackRefresherImpl implements VisiblePackRefresher, Disposabl
         state = state.withCommitCount(state.getCommitCount().next());
       }
 
-      Pair<VisiblePack, CommitCountStage> pair = myVisiblePackBuilder.filter(dataPack, state.getSortType(), state.getFilters(),
-                                                                             state.getCommitCount());
+      Pair<VisiblePack, CommitCountStage> pair = myVcsLogFilterer.filter(dataPack, state.getSortType(), state.getFilters(),
+                                                                         state.getCommitCount());
       return state.withVisiblePack(pair.first).withCommitCount(pair.second);
     }
   }

@@ -18,14 +18,17 @@ import com.intellij.psi.util.*;
 import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.refactoring.changeSignature.JavaChangeSignatureDialog;
 import com.intellij.refactoring.changeSignature.ParameterInfoImpl;
+import com.intellij.ui.components.JBCheckBox;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.psiutils.TypeUtils;
+import org.jdom.Element;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import javax.swing.*;
 import java.util.Arrays;
 import java.util.List;
 
@@ -33,6 +36,9 @@ import java.util.List;
  * {@code "void process(Processor<T> p)"  -> "void process(Processor<? super T> p)"}
  */
 public class BoundedWildcardInspection extends AbstractBaseJavaLocalInspectionTool {
+  @SuppressWarnings("WeakerAccess") public boolean REPORT_INVARIANT_CLASSES = true;
+  private JBCheckBox myReportInvariantClassesCB;
+  private JPanel myPanel;
 
   @Override
   @NotNull
@@ -48,6 +54,10 @@ public class BoundedWildcardInspection extends AbstractBaseJavaLocalInspectionTo
       public void visitTypeElement(PsiTypeElement typeElement) {
         VarianceCandidate candidate = VarianceCandidate.findVarianceCandidate(typeElement);
         if (candidate == null) return;
+        PsiTypeParameterListOwner owner = candidate.typeParameter.getOwner();
+        if (owner instanceof PsiClass && !REPORT_INVARIANT_CLASSES && getClassVariance((PsiClass)owner, candidate.typeParameter) == Variance.INVARIANT) {
+          return; // Nikolay despises List<? extends T>
+        }
         PsiClassReferenceType extendsT = suggestMethodParameterType(candidate, true);
         PsiClassReferenceType superT = suggestMethodParameterType(candidate, false);
         Variance variance = checkParameterVarianceInMethodBody(candidate.methodParameter, candidate.method, candidate.typeParameter,
@@ -358,7 +368,7 @@ public class BoundedWildcardInspection extends AbstractBaseJavaLocalInspectionTo
         }
       }
       else {
-        Variance mv = checkVarianceInMethodSignature(calledMethod, typeParameter);
+        Variance mv = getMethodSignatureVariance(calledMethod, typeParameter);
         v[0] = v[0].combine(mv);
       }
       return v[0] != Variance.INVARIANT;
@@ -456,10 +466,10 @@ public class BoundedWildcardInspection extends AbstractBaseJavaLocalInspectionTo
     if (!(parent instanceof PsiAssignmentExpression) || ((PsiAssignmentExpression)parent).getOperationTokenType() != JavaTokenType.EQ) return null;
     PsiExpression r = ((PsiAssignmentExpression)parent).getRExpression();
     if (!PsiTreeUtil.isAncestor(r, refElement, false)) return null;
-    PsiExpression l = ((PsiAssignmentExpression)parent).getLExpression();
+    PsiExpression l = PsiUtil.skipParenthesizedExprDown(((PsiAssignmentExpression)parent).getLExpression());
     if (!(l instanceof PsiReferenceExpression)) return null;
     PsiReferenceExpression lExpression = (PsiReferenceExpression)l;
-    PsiExpression lQualifier = lExpression.getQualifierExpression();
+    PsiExpression lQualifier = PsiUtil.skipParenthesizedExprDown(lExpression.getQualifierExpression());
     if (lQualifier != null && !(lQualifier instanceof PsiThisExpression)) return null;
     PsiElement field = lExpression.resolve();
     if (!(field instanceof PsiField)) return null;
@@ -468,7 +478,7 @@ public class BoundedWildcardInspection extends AbstractBaseJavaLocalInspectionTo
 
 
   @NotNull
-  private static Variance checkVarianceInMethodSignature(@NotNull PsiMethod method, @NotNull PsiTypeParameter typeParameter) {
+  private static Variance getMethodSignatureVariance(@NotNull PsiMethod method, @NotNull PsiTypeParameter typeParameter) {
     PsiTypeParameterListOwner owner = typeParameter.getOwner();
     PsiClass methodClass = method.getContainingClass();
     if (methodClass == null || !(owner instanceof PsiClass)) return Variance.INVARIANT;
@@ -484,23 +494,45 @@ public class BoundedWildcardInspection extends AbstractBaseJavaLocalInspectionTo
         return Variance.INVARIANT;
       }
     }
-    PsiType type = method.getReturnType();
+    PsiType returnType = method.getReturnType();
 
-    if (type != null && !TypeConversionUtil.isPrimitiveAndNotNullOrWrapper(type)) {
-      if (typeResolvesTo(type, typeParameter, superClassSubstitutor)) {
+    if (returnType != null && !TypeConversionUtil.isPrimitiveAndNotNullOrWrapper(returnType)) {
+      if (typeResolvesTo(returnType, typeParameter, superClassSubstitutor)) {
         r = r.combine(Variance.COVARIANT);
       }
-      else if (containsDeepIn(type, typeParameter, superClassSubstitutor)) {
+      else if (isComposeMethod(method, returnType, typeParameter, superClassSubstitutor)) {
+        // ignore
+      }
+      else if (containsDeepIn(returnType, typeParameter, superClassSubstitutor)) {
         r = Variance.INVARIANT;
       }
     }
     return r;
   }
 
-  private static boolean containsDeepIn(@NotNull PsiType type,
+  // java.util.Function contains "<V> Function<T, V> andThen(Function<? super R, ? extends V> after)" which doesn't preclude it to be contravariant on T
+  private static boolean isComposeMethod(@NotNull PsiMethod method,
+                                         @NotNull PsiType returnType,
+                                         @NotNull PsiTypeParameter typeParameter,
+                                         @NotNull PsiSubstitutor superClassSubstitutor) {
+    PsiClass containingClass = method.getContainingClass();
+    if (containingClass == null || !(returnType instanceof PsiClassType) || !containingClass.equals(((PsiClassType)returnType).resolve())) {
+      return false;
+    }
+    PsiTypeParameterListOwner typeParameterOwner = typeParameter.getOwner();
+    PsiTypeParameterList typeParameterList = typeParameterOwner == null ? null : typeParameterOwner.getTypeParameterList();
+    int index = typeParameterList == null ? -1 : typeParameterList.getTypeParameterIndex(typeParameter);
+
+    PsiType[] parameters = ((PsiClassType)returnType).getParameters();
+    if (index == -1 || parameters.length <= index) return false;
+    return typeResolvesTo(parameters[index], typeParameter, superClassSubstitutor);
+  }
+
+  private static boolean containsDeepIn(@NotNull PsiType rootType,
                                         @NotNull PsiTypeParameter parameter,
                                         @NotNull PsiSubstitutor superClassSubstitutor) {
-    return type.accept(new PsiTypeVisitor<Boolean>() {
+    return rootType.accept(new PsiTypeVisitor<Boolean>() {
+      boolean topLevel = true;
       @Nullable
       @Override
       public Boolean visitClassType(PsiClassType classType) {
@@ -528,5 +560,34 @@ public class BoundedWildcardInspection extends AbstractBaseJavaLocalInspectionTo
     if (!(substituted instanceof PsiClassType))  return false;
     PsiClassType.ClassResolveResult result = ((PsiClassType)substituted).resolveGenerics();
     return typeParameter.equals(result.getElement()) && result.getSubstitutor().equals(PsiSubstitutor.EMPTY);
+  }
+
+  @NotNull
+  private static Variance getClassVariance(@NotNull PsiClass aClass, @NotNull PsiTypeParameter typeParameter) {
+    Variance result = Variance.NOVARIANT;
+    for (PsiMethod method : aClass.getAllMethods()) {
+      PsiClass containingClass = method.getContainingClass();
+      if (containingClass == null ||
+          CommonClassNames.JAVA_LANG_OBJECT.equals(containingClass.getQualifiedName()) ||
+          method.hasModifierProperty(PsiModifier.STATIC)) {
+        continue;
+      }
+      result = result.combine(getMethodSignatureVariance(method, typeParameter));
+      if (result == Variance.INVARIANT) break;
+    }
+    return result;
+  }
+
+  @Nullable
+  @Override
+  public JComponent createOptionsPanel() {
+    myReportInvariantClassesCB.setSelected(REPORT_INVARIANT_CLASSES);
+    return myPanel;
+  }
+
+  @Override
+  public void readSettings(@NotNull Element node) {
+    super.readSettings(node);
+    myReportInvariantClassesCB.addItemListener(__ -> REPORT_INVARIANT_CLASSES = myReportInvariantClassesCB.isSelected());
   }
 }

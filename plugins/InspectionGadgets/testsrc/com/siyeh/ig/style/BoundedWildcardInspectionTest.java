@@ -29,7 +29,9 @@ public class BoundedWildcardInspectionTest extends LightInspectionTestCase {
 
       "package java.util.function;" +
       "public interface Function<T, R> {" +
-      "    R apply(T t);" +
+      "    R apply(T t);\n" +
+      "    default <V> Function<T, V> andThen(Function<? super R, ? extends V> after) { return null;    }\n" +
+      "    <V> Function<V, R> compose(Function<? super V, ? extends T> before) { return null;    }\n" +
       "}",
 
       "package java.util.function;\n" +
@@ -47,8 +49,15 @@ public class BoundedWildcardInspectionTest extends LightInspectionTestCase {
   @Nullable
   @Override
   protected InspectionProfileEntry getInspection() {
-    return new BoundedWildcardInspection();
+    BoundedWildcardInspection inspection = new BoundedWildcardInspection();
+    if (getTestName(false).contains("SwitchedOff")) {
+      inspection.REPORT_INVARIANT_CLASSES = false;
+    }
+    return inspection;
   }
 
   public void testSimple() { doTest(); }
+  public void testInvariantSwitchedOff() {
+    doTest();
+  }
 }

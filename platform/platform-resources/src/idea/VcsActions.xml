@@ -272,10 +272,6 @@
       <separator/>
     </group>
 
-    <group id="Vcs.CheckinProjectPopup">
-      <separator/>
-    </group>
-
     <group id="Vcs.CheckinProjectToolbar">
     </group>
     <group id="Vcs.CheckinProjectMenu">

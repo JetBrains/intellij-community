@@ -53,12 +53,6 @@ public class PyiModuleMembersProvider extends PyModuleMembersProvider {
   }
 
   @Override
-  protected Collection<PyCustomMember> getMembersByQName(PyFile module, String qName) {
-    // This method will be removed in 2018.2
-    return Collections.emptyList();
-  }
-
-  @Override
   @NotNull
   protected Collection<PyCustomMember> getMembersByQName(@NotNull PyFile module, @NotNull String qName, @NotNull TypeEvalContext context) {
     return Collections.emptyList();

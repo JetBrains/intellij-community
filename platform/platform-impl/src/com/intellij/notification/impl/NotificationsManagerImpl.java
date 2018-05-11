@@ -57,7 +57,9 @@ import javax.swing.event.HyperlinkListener;
 import javax.swing.plaf.ButtonUI;
 import javax.swing.plaf.ColorUIResource;
 import javax.swing.plaf.UIResource;
-import javax.swing.text.*;
+import javax.swing.text.AttributeSet;
+import javax.swing.text.BadLocationException;
+import javax.swing.text.DefaultCaret;
 import javax.swing.text.html.HTML;
 import javax.swing.text.html.HTMLDocument;
 import java.awt.*;
@@ -676,7 +678,7 @@ public class NotificationsManagerImpl extends NotificationsManager {
             if (isDarcula) {
               setBorder(new DarculaButtonPainter() {
                 @Override
-                public Color getBorderColor(Component button) {
+                public Paint getBorderPaint(Component button) {
                   return new ColorUIResource(0x717777);
                 }
               });

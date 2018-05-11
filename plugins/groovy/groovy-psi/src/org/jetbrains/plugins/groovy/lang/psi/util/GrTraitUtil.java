@@ -19,12 +19,14 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrField;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefinition;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod;
 import org.jetbrains.plugins.groovy.lang.psi.impl.GrAnnotationUtil;
 import org.jetbrains.plugins.groovy.lang.psi.impl.synthetic.GrLightField;
 import org.jetbrains.plugins.groovy.lang.resolve.GroovyTraitFieldsFileIndex;
 import org.jetbrains.plugins.groovy.lang.resolve.GroovyTraitFieldsFileIndex.TraitFieldDescriptor;
 import org.jetbrains.plugins.groovy.lang.resolve.GroovyTraitMethodsFileIndex;
 
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
@@ -50,11 +52,12 @@ public class GrTraitUtil {
 
   @Contract("null -> false")
   public static boolean isInterface(@Nullable PsiClass aClass) {
-    return aClass != null && aClass.isInterface() && !isTrait(aClass);
+    return aClass != null && aClass.isInterface() && !(aClass instanceof GrTypeDefinition && ((GrTypeDefinition)aClass).isTrait());
   }
 
   public static boolean isMethodAbstract(@NotNull PsiMethod method) {
-    return method.getModifierList().hasExplicitModifier(ABSTRACT) || isInterface(method.getContainingClass());
+    return method.getModifierList().hasExplicitModifier(ABSTRACT) ||
+           isInterface(method.getContainingClass()) && !method.hasModifierProperty(PsiModifier.DEFAULT);
   }
 
   public static List<PsiClass> getSelfTypeClasses(@NotNull PsiClass trait) {
@@ -94,7 +97,17 @@ public class GrTraitUtil {
   @Contract("null -> false")
   public static boolean isTrait(@Nullable PsiClass aClass) {
     return aClass instanceof GrTypeDefinition && ((GrTypeDefinition)aClass).isTrait() ||
-           aClass instanceof ClsClassImpl && aClass.isInterface() && AnnotationUtil.isAnnotated(aClass, GROOVY_TRAIT, 0);
+           aClass instanceof ClsClassImpl && aClass.isInterface() && AnnotationUtil.isAnnotated(aClass, GROOVY_TRAIT, 0) ||
+           getDefaultMethods(aClass).length != 0;
+
+  }
+
+  public static GrMethod[] getDefaultMethods(@Nullable PsiClass aClass) {
+    if ( !(aClass instanceof GrTypeDefinition) || !aClass.isInterface()) return GrMethod.EMPTY_ARRAY;
+    GrTypeDefinition grTypeDefinition = (GrTypeDefinition) aClass;
+    return Arrays.stream(grTypeDefinition.getCodeMethods())
+                 .filter(m -> m.getModifierList().hasExplicitModifier(PsiModifier.DEFAULT))
+                 .toArray(GrMethod[]::new);
   }
 
   @NotNull

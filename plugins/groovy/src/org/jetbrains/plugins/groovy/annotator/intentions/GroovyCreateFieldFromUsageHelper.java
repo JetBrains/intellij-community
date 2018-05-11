@@ -38,10 +38,10 @@ public class GroovyCreateFieldFromUsageHelper extends CreateFieldFromUsageHelper
                                     @NotNull PsiSubstitutor substitutor) {
     GrVariableDeclaration fieldDecl = (GrVariableDeclaration)f.getParent();
     GrField field = (GrField)fieldDecl.getVariables()[0];
+    Project project = field.getProject();
     fieldDecl = CodeInsightUtilCore.forcePsiPostprocessAndRestoreElement(fieldDecl);
     TemplateBuilderImpl builder = new TemplateBuilderImpl(fieldDecl);
 
-    Project project = field.getProject();
     GroovyPsiElementFactory factory = GroovyPsiElementFactory.getInstance(project);
 
     if (expectedTypes instanceof TypeConstraint[]) {

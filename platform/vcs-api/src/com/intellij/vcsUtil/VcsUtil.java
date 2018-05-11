@@ -39,7 +39,6 @@ import com.intellij.openapi.vcs.history.ShortVcsRevisionNumber;
 import com.intellij.openapi.vcs.history.VcsRevisionNumber;
 import com.intellij.openapi.vcs.roots.VcsRootDetector;
 import com.intellij.openapi.vfs.*;
-import com.intellij.openapi.vfs.newvfs.RefreshQueue;
 import com.intellij.openapi.wm.StatusBar;
 import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtilRt;
@@ -51,7 +50,6 @@ import java.io.File;
 import java.io.IOException;
 import java.util.*;
 
-import static com.intellij.openapi.application.ApplicationManager.getApplication;
 import static com.intellij.util.ObjectUtils.notNull;
 import static java.util.stream.Collectors.groupingBy;
 
@@ -80,19 +78,31 @@ public class VcsUtil {
     }
   }
 
+  /**
+   * @deprecated use the {@link VcsDirtyScopeManager} directly.
+   */
+  @Deprecated
   public static void markFileAsDirty(final Project project, final VirtualFile file) {
     VcsDirtyScopeManager.getInstance(project).fileDirty(file);
   }
 
+  /**
+   * @deprecated use the {@link VcsDirtyScopeManager} directly.
+   */
+  @Deprecated
   public static void markFileAsDirty(final Project project, final FilePath path) {
-      VcsDirtyScopeManager.getInstance(project).fileDirty(path);
+    VcsDirtyScopeManager.getInstance(project).fileDirty(path);
   }
 
   public static void markFileAsDirty(final Project project, final String path) {
     final FilePath filePath = VcsContextFactory.SERVICE.getInstance().createFilePathOn(new File(path));
-    markFileAsDirty( project, filePath );
+    VcsDirtyScopeManager.getInstance(project).fileDirty(filePath);
   }
 
+  /**
+   * @deprecated use the {@link VcsDirtyScopeManager} directly.
+   */
+  @Deprecated
   public static void refreshFiles(Project project, HashSet<FilePath> paths) {
     for (FilePath path : paths) {
       VirtualFile vFile = path.getVirtualFile();
@@ -128,9 +138,6 @@ public class VcsUtil {
     return getVcsFor(project, file) == host;
   }
 
-  //  NB: do not reduce this method to the method above since PLVcsMgr uses
-  //      different methods for computing its predicate (since FilePath can
-  //      refer to the deleted files).
   public static boolean isFileForVcs(FilePath path, Project project, AbstractVcs host) {
     return getVcsFor(project, path) == host;
   }
@@ -187,53 +194,6 @@ public class VcsUtil {
       }
       return result;
     });
-  }
-
-  public static void refreshFiles(final FilePath[] roots, final Runnable runnable) {
-    getApplication().assertIsDispatchThread();
-    refreshFiles(collectFilesToRefresh(roots), runnable);
-  }
-
-  public static void refreshFiles(final File[] roots, final Runnable runnable) {
-    getApplication().assertIsDispatchThread();
-    refreshFiles(collectFilesToRefresh(roots), runnable);
-  }
-
-  private static File[] collectFilesToRefresh(final FilePath[] roots) {
-    final File[] result = new File[roots.length];
-    for (int i = 0; i < roots.length; i++) {
-      result[i] = roots[i].getIOFile();
-    }
-    return result;
-  }
-
-  private static void refreshFiles(final List<VirtualFile> filesToRefresh, final Runnable runnable) {
-    RefreshQueue.getInstance().refresh(true, true, runnable, filesToRefresh);
-  }
-
-  private static List<VirtualFile> collectFilesToRefresh(final File[] roots) {
-    final ArrayList<VirtualFile> result = new ArrayList<>();
-    for (File root : roots) {
-      VirtualFile vFile = findFileFor(root);
-      if (vFile != null) {
-        result.add(vFile);
-      } else {
-        LOG.info("Failed to find VirtualFile for one of refresh roots: " + root.getAbsolutePath());
-      }
-    }
-    return result;
-  }
-
-  @Nullable
-  private static VirtualFile findFileFor(final File root) {
-    File current = root;
-    while (current != null) {
-      final VirtualFile vFile = LocalFileSystem.getInstance().findFileByIoFile(root);
-      if (vFile != null) return vFile;
-      current = current.getParentFile();
-    }
-
-    return null;
   }
 
   @Nullable
@@ -318,12 +278,7 @@ public class VcsUtil {
     return VcsContextFactory.SERVICE.getInstance().createFilePath(parent, fileName, isDirectory);
   }
 
-  /**
-   * Shows message in the status bar.
-   *
-   * @param project Current project component
-   * @param message information message
-   */
+  @Deprecated
   public static void showStatusMessage(@NotNull Project project, @Nullable String message) {
     SwingUtilities.invokeLater(() -> {
       if (project.isOpen()) {
@@ -372,17 +327,6 @@ public class VcsUtil {
     ContentRevision revB = change.getBeforeRevision();
     ContentRevision revA = change.getAfterRevision();
     return (revA != null && revA.getFile().isDirectory()) || (revB != null && revB.getFile().isDirectory());
-  }
-
-  /**
-   * Sort file paths so that paths under the same root are placed from the
-   * innermost to the outermost (closest to the root).
-   *
-   * @param files An array of file paths to be sorted. Sorting is done over the parameter.
-   * @return Sorted array of the file paths.
-   */
-  public static FilePath[] sortPathsFromInnermost(FilePath[] files) {
-    return sortPaths(files, -1);
   }
 
   /**
@@ -472,15 +416,10 @@ public class VcsUtil {
     return result;
   }
 
+  @Deprecated
   @Nullable
   public static VirtualFile waitForTheFile(@NotNull String path) {
-    Ref<VirtualFile> result = Ref.create();
-
-    getApplication().invokeAndWait(
-      () -> getApplication().runWriteAction(
-        () -> result.set(LocalFileSystem.getInstance().refreshAndFindFileByPath(path))));
-
-    return result.get();
+    return LocalFileSystem.getInstance().refreshAndFindFileByPath(path);
   }
 
   public static String getCanonicalLocalPath(String localPath) {
@@ -548,10 +487,6 @@ public class VcsUtil {
   }
 
   private static final String ANNO_ASPECT = "show.vcs.annotation.aspect.";
-  //public static boolean isAspectAvailableByDefault(LineAnnotationAspect aspect) {
-  //  if (aspect.getId() == null) return aspect.isShowByDefault();
-  //  return PropertiesComponent.getInstance().getBoolean(ANNO_ASPECT + aspect.getId(), aspect.isShowByDefault());
-  //}
 
   public static boolean isAspectAvailableByDefault(String id) {
     return isAspectAvailableByDefault(id, true);

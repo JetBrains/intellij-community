@@ -1,0 +1,34 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<form xmlns="http://www.intellij.com/uidesigner/form/" version="1" bind-to-class="com.siyeh.ig.style.BoundedWildcardInspection">
+  <grid id="27dc6" binding="myPanel" layout-manager="GridLayoutManager" row-count="2" column-count="1" same-size-horizontally="false" same-size-vertically="false" hgap="-1" vgap="-1">
+    <margin top="0" left="0" bottom="0" right="0"/>
+    <constraints>
+      <xy x="8" y="16" width="459" height="375"/>
+    </constraints>
+    <properties/>
+    <border type="none"/>
+    <children>
+      <component id="5c85" class="com.intellij.ui.components.JBCheckBox" binding="myReportInvariantClassesCB">
+        <constraints>
+          <grid row="0" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="0" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
+        </constraints>
+        <properties>
+          <text value="Report invariant classes"/>
+        </properties>
+      </component>
+      <component id="7086e" class="javax.swing.JEditorPane">
+        <constraints>
+          <grid row="1" column="0" row-span="1" col-span="1" vsize-policy="6" hsize-policy="6" anchor="0" fill="3" indent="0" use-parent-layout="false">
+            <preferred-size width="150" height="50"/>
+          </grid>
+        </constraints>
+        <properties>
+          <contentType value="text/html"/>
+          <editable value="false"/>
+          <enabled value="true"/>
+          <text value="&lt;html&gt;&#10;  &lt;head&gt;&#10;    &#10;  &lt;/head&gt;&#10;  &lt;body&gt;&#10;    &lt;b&gt;Invariant&lt;/b&gt; classes (e.g. &lt;code&gt;java.util.List&amp;lt;T&amp;gt;&lt;/code&gt;) are &#10;    classes that both accept values (via its &lt;code&gt;List.add(T)&lt;/code&gt; method) &#10;    and produce values (via its &lt;code&gt;T List.get()&lt;/code&gt; method). On the &#10;    other hand, &lt;b&gt;contravariant&lt;/b&gt; classes only receive values, e.g. &lt;code&gt;java.util.function.Consumer&amp;lt;T&amp;gt;&lt;/code&gt; &#10;    with the only method &lt;code&gt;accept(T)&lt;/code&gt;, and &lt;b&gt;covariant&lt;/b&gt; classes &#10;    only produce values, e.g. &lt;code&gt;java.util.function.Supplier&amp;lt;T&amp;gt;&lt;/code&gt; &#10;    with the only method &lt;code&gt;T get()&lt;/code&gt;. People and Nikolay in &#10;    particular are often OK with bounded wildcards in covariant/contravariant &#10;    classes but afraid of wildcards in invariant classes, e.g. &lt;code&gt;void &#10;    process(List&amp;lt;? extends T&amp;gt; l)&lt;/code&gt;. Turn this setting off to ignore &#10;    these invariant classes and leave them rigidly typed, e.g. &lt;code&gt;void &#10;    process(List&amp;lt;T&amp;gt; l)&lt;/code&gt;.&#10;  &lt;/body&gt;&#10;&lt;/html&gt;&#10;"/>
+        </properties>
+      </component>
+    </children>
+  </grid>
+</form>

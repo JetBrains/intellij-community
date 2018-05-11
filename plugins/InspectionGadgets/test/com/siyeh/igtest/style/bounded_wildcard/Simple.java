@@ -186,7 +186,7 @@ public class Simple<T> {
     Processor<S2> myProcessor;
 
     public S2(Processor<S2> myProcessor) {
-      this.myProcessor = myProcessor;
+      (this.myProcessor) = myProcessor;
     }
 
     public Processor<S2> getProcessor() {

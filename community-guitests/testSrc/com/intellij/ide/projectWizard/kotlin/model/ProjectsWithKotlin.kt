@@ -5,6 +5,7 @@ import com.intellij.openapi.application.PathManager
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.testGuiFramework.fixtures.JDialogFixture
 import com.intellij.testGuiFramework.util.*
+import org.fest.swing.exception.ComponentLookupException
 import org.fest.swing.fixture.JListFixture
 import org.fest.swing.timing.Pause
 import java.io.File
@@ -290,13 +291,17 @@ fun KotlinGuiTestCase.configureKotlinFromGradleMaven(logText: String,
   ideFrame {
     var counter = 0
     do {
-      logTestStep("$logText. Attempt #${counter + 1}")
-      invokeMainMenu(menuTitle)
-      result = configureKotlinFromGradleMavenSelectValues(dialogTitle, kotlinVersion, module)
-      counter++
-      waitAMoment()
+      try {
+        logTestStep("$logText. Attempt #${counter + 1}")
+        waitAMoment()
+        invokeMainMenu(menuTitle)
+        result = configureKotlinFromGradleMavenSelectValues(dialogTitle, kotlinVersion, module)
+        counter++
+      }
+      catch (e: ComponentLookupException) {}
     }
     while (!result && counter < maxAttempts)
+    waitAMoment()
   }
   assert(result) {"Version $kotlinVersion not found after $maxAttempts attempts"}
 }
@@ -479,6 +484,7 @@ fun KotlinGuiTestCase.checkKotlinLibInProject(projectPath: String,
 fun KotlinGuiTestCase.closeProject() {
   ideFrame {
     logUIStep("Close the project")
+    waitAMoment()
     closeProject()
   }
   // TODO: change to conditional pause until ide is closed
