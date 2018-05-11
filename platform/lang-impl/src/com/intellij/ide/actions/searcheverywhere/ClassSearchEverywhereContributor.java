@@ -45,6 +45,11 @@ public class ClassSearchEverywhereContributor implements SearchEverywhereContrib
     return 100;
   }
 
+  @Override
+  public boolean showInFindResults() {
+    return true;
+  }
+
   public ContributorSearchResult search(Project project, String pattern, boolean everywhere, ProgressIndicator progressIndicator, int elementsLimit) {
     ChooseByNameModel mdl = new GotoClassModel2(project);
     ChooseByNamePopup popup = ChooseByNamePopup.createPopup(project, mdl, (PsiElement)null);

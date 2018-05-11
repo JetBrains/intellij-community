@@ -83,7 +83,7 @@ public class SearchEverywhereUI extends BorderLayoutPanel {
 
   private JBPopup myResultsPopup;
   private final JBList<Object> myResultsList = new JBList<>();
-  private final SearchListModel myListModel = new SearchListModel();
+  private final SearchListModel myListModel = new SearchListModel(); //todo using in different threads? #UX-1
 
   private CalcThread myCalcThread;
   private volatile ActionCallback myCurrentWorker = ActionCallback.DONE;
@@ -753,14 +753,16 @@ public class SearchEverywhereUI extends BorderLayoutPanel {
     }
 
     //todo per contributor #UX-1
-    public Collection<Object> getFoundItems() {
-      return values().stream()
-                     .filter(o -> o != MORE_ELEMENT)
-                     .collect(Collectors.toList());
+    public Collection<Object> getFoundItems(SearchEverywhereContributor contributor) {
+      return listElements.stream()
+                         .filter(pair -> pair.second == contributor && pair.first != MORE_ELEMENT)
+                         .map(pair -> pair.getFirst())
+                         .collect(Collectors.toList());
     }
 
-    public boolean hasMoreElements() {
-      return values().contains(MORE_ELEMENT);
+    public boolean hasMoreElements(SearchEverywhereContributor contributor) {
+      return listElements.stream()
+        .anyMatch(pair -> pair.first == MORE_ELEMENT && pair.second == contributor);
     }
 
     public void addElements(List<Object> items, SearchEverywhereContributor contributor, boolean hasMore) {
@@ -859,9 +861,15 @@ public class SearchEverywhereUI extends BorderLayoutPanel {
     public void actionPerformed(AnActionEvent e) {
       stopSearching();
 
-      Collection<SearchEverywhereContributor> contributors = isAllTabSelected()
-                                                             ? allContributors
-                                                             : Collections.singleton(mySelectedTab.getContributor().get());
+      Collection<SearchEverywhereContributor> contributors = isAllTabSelected() ? allContributors : Collections.singleton(mySelectedTab.getContributor().get());
+      contributors = contributors.stream()
+                                 .filter(SearchEverywhereContributor::showInFindResults)
+                                 .collect(Collectors.toList());
+
+      if (contributors.isEmpty()) {
+        return;
+      }
+
       String contributorsString = contributors.stream()
                                    .map(SearchEverywhereContributor::getGroupName)
                                    .collect(Collectors.joining(", "));
@@ -875,20 +883,28 @@ public class SearchEverywhereUI extends BorderLayoutPanel {
       presentation.setTabName(tabCaptionText);
       presentation.setTabText(tabCaptionText);
 
-      Collection<Usage> usages = new ArrayList<>();
-      Collection<PsiElement> targets = new ArrayList<>();
+      Collection<Usage> usages = new LinkedHashSet<>();
+      Collection<PsiElement> targets = new LinkedHashSet<>();
 
-      Collection<Object> cached = myListModel.getFoundItems();
+      Collection<Object> cached = contributors.stream()
+                                              .flatMap(contributor -> myListModel.getFoundItems(contributor).stream())
+                                              .collect(Collectors.toList());
       fillUsages(cached, usages, targets);
 
-      if (myListModel.hasMoreElements()) {
+      Collection<SearchEverywhereContributor> contributorsForAdditionalSearch;
+      contributorsForAdditionalSearch = contributors.stream()
+                                                    .filter(contributor -> myListModel.hasMoreElements(contributor))
+                                                    .collect(Collectors.toList());
+
+      searchFinishedHandler.run();
+      if (!contributorsForAdditionalSearch.isEmpty()) {
         ProgressManager.getInstance().run(new Task.Modal(myProject, tabCaptionText, true) {
           private final ProgressIndicator progressIndicator = new ProgressIndicatorBase();
 
           @Override
           public void run(@NotNull ProgressIndicator indicator) {
             //todo some results cannot be shown in find window (Actions, etc.)
-            contributors.forEach(contributor -> {
+            contributorsForAdditionalSearch.forEach(contributor -> {
               if (!progressIndicator.isCanceled()) {
                 ApplicationManager.getApplication().runReadAction(() -> {
                   //todo overflow #UX-1

@@ -50,6 +50,11 @@ public class SymbolSearchEverywhereContributor implements SearchEverywhereContri
   }
 
   @Override
+  public boolean showInFindResults() {
+    return true;
+  }
+
+  @Override
   public ContributorSearchResult search(Project project,
                                         String pattern,
                                         boolean everywhere,

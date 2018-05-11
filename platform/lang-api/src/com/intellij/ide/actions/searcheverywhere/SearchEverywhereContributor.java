@@ -33,11 +33,11 @@ public interface SearchEverywhereContributor {
   @NotNull
   String getGroupName();
 
-  default String includeNonProjectItemsText() {
-    return IdeBundle.message("checkbox.include.non.project.items", IdeUICustomization.getInstance().getProjectConceptName());
-  }
+  String includeNonProjectItemsText();
 
   int getSortWeight();
+
+  boolean showInFindResults();
 
   default ContributorSearchResult search(Project project, String pattern, boolean everywhere, ProgressIndicator progressIndicator, int elementsLimit) {
     return new ContributorSearchResult(Collections.emptyList(), false);
