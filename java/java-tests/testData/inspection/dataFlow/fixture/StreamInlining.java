@@ -6,17 +6,6 @@ import java.util.function.*;
 import java.util.stream.*;
 
 public class StreamInlining {
-  public void testStreamTryFinally() {
-    try {
-
-    } finally {
-      Stream.of("x").map(a -> {
-        testStreamTryFinally();
-        return "bar";
-      }).count();
-    }
-  }
-
   void testNulls(List<String> list) {
     list.stream().filter(<warning descr="Passing 'null' argument to parameter annotated as @NotNull">null</warning>).forEach(System.out::println);
     list.stream().map(<warning descr="Passing 'null' argument to parameter annotated as @NotNull">null</warning>).forEach(System.out::println);
@@ -218,4 +207,32 @@ public class StreamInlining {
     Optional<String> res3 = Stream.of("foo", "bar", null).reduce((a, b) -> <warning descr="Function may return null, but it's not allowed here">b</warning>);
     Optional<String> res4 = Stream.of(null, "foo", "bar").reduce((a, b) -> b); // b is never null - ok
   }
+
+  public void testStreamTryFinally() {
+    try {
+
+    } finally {
+      Stream.of("x").map(a -> {
+        if(<warning descr="Condition 'a.equals(\"baz\")' is always 'false'">a.equals("baz")</warning>) {
+          System.out.println("impossible");
+        }
+        testStreamTryFinally();
+        return "bar";
+      }).count();
+    }
+  }
+
+  void testTryFinally2() {
+    try {
+    } finally {
+      try {
+        List<String> list = Stream.of("xyz").map(a -> {
+          testTryFinally2();
+          return "foo";
+        }).collect(Collectors.toList());
+      } catch (Exception e) {
+      }
+    }
+  }
+
 }
