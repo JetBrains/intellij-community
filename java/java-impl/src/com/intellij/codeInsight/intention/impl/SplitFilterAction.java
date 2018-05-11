@@ -84,8 +84,10 @@ public class SplitFilterAction extends PsiElementBaseIntentionAction {
       }
     }
 
-    originalLambdaExpressionBody.replace(getROperands(expression, token));
-    newFilterLambdaBody.replace(getLOperands(expression, token));
+    PsiExpression rOperands = getROperands(expression, token);
+    PsiExpression lOperands = getLOperands(expression, token);
+    originalLambdaExpressionBody.replace(rOperands);
+    newFilterLambdaBody.replace(lOperands);
     filterCallQualifier.replace(qualifierExpression);
     qualifierExpression.replace(newFilterCall);
   }
