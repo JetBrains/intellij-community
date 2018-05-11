@@ -154,7 +154,7 @@ public class PythonDocumentationProvider extends AbstractDocumentationProvider i
           if (!first) {
             result.addItem(escaper.apply("\n"));
           }
-          result.addItem(escaper.apply("\u2022")); // &bull; -- bullet point
+          result.addItem(escaper.apply("\u2022 ")); // &bull; -- bullet point
           describeTypeWithLinks(context.getType(overload), context, function, result);
           first = false;
         }
@@ -188,33 +188,6 @@ public class PythonDocumentationProvider extends AbstractDocumentationProvider i
     }
     result.addItem(ESCAPE_AND_SAVE_NEW_LINES_AND_SPACES.apply(") -> "));
     describeTypeWithLinks(context.getReturnType(function), context, function, result);
-    return result;
-  }
-
-  @NotNull
-  private static ChainIterable<String> describeOverload(@NotNull PyFunction function,
-                                                        @NotNull List<PyFunction> overloads,
-                                                        @NotNull Function<String, String> escapedNameMapper,
-                                                        @NotNull Function<String, String> escaper,
-                                                        @NotNull TypeEvalContext context) {
-    final ChainIterable<String> result = new ChainIterable<>();
-    final String name = function.getName();
-
-    result
-      .addItem(escaper.apply("def "))
-      .addItem(escapedNameMapper.apply(escaper.apply(name)))
-      .addItem(escaper.apply("\nPossible types:\n"));
-
-    boolean first = true;
-    for (PyFunction overload : overloads) {
-      if (!first) {
-        result.addItem(escaper.apply("\n"));
-      }
-      result.addItem(escaper.apply("\u2022 "));
-      describeTypeWithLinks(context.getType(overload), context, function, result);
-      first = false;
-    }
-
     return result;
   }
 
