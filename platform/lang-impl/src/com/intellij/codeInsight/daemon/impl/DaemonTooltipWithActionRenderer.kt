@@ -81,29 +81,17 @@ internal class DaemonTooltipWithActionRenderer(text: String?,
 
     return textToProcess.replace(extendMessage, "")
   }
-
-  override fun createMainPanel(editor: Editor, hintHint: HintHint, pane: JComponent): JComponent {
-
-    val grid = JPanel(GridBagLayout())
-    val gridBagConstraints = GridBagConstraints(0, 0, 1, 1, 0.0, 0.0, GridBagConstraints.CENTER, GridBagConstraints.HORIZONTAL,
-                                                JBUI.insetsLeft(1), 0, 0)
-    grid.add(pane, gridBagConstraints)
-    grid.background = hintHint.textBackground
-    grid.border = JBUI.Borders.empty()
-
-    return grid
-  }
-
+  
   override fun fillPanel(editor: Editor,
-                         grid: JComponent,
+                         grid: JPanel,
                          hint: LightweightHint,
                          hintHint: HintHint,
                          actions: ArrayList<AnAction>,
-                         expandCallback: TooltipReloader) {
-    super.fillPanel(editor, grid, hint, hintHint, actions, expandCallback)
-    if (grid !is JPanel) return
-
-    val settingsComponent = createSettingsComponent(hint, hintHint, expandCallback)
+                         tooltipReloader: TooltipReloader) {
+    super.fillPanel(editor, grid, hint, hintHint, actions, tooltipReloader)
+    if (grid !is JPanel || tooltipAction == null && !LineTooltipRenderer.isActiveHtml(myText!!)) return
+    
+    val settingsComponent = createSettingsComponent(hint, hintHint, tooltipReloader)
 
     val settingsConstraints = GridBagConstraints(1, 0, 1, 1, 0.0, 0.0, GridBagConstraints.NORTH, GridBagConstraints.HORIZONTAL,
                                                  JBUI.emptyInsets(), 0, 0)

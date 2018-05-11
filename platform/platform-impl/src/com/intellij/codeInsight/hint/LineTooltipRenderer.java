@@ -75,9 +75,8 @@ public class LineTooltipRenderer extends ComparableObject.Impl implements Toolti
   }
 
   @NotNull
-  protected JComponent createMainPanel(@NotNull final Editor editor,
-                                       @NotNull final HintHint hintHint,
-                                       @NotNull JComponent pane) {
+  protected JPanel createMainPanel(@NotNull final HintHint hintHint,
+                                   @NotNull JComponent pane) {
     JPanel grid = new JPanel(new GridBagLayout());
     GridBag bag = new GridBag().anchor(GridBagConstraints.CENTER)
                                .setDefaultFill(GridBagConstraints.HORIZONTAL);
@@ -134,7 +133,7 @@ public class LineTooltipRenderer extends ComparableObject.Impl implements Toolti
     }
 
     ArrayList<AnAction> actions = ContainerUtil.newArrayList();
-    JComponent component = createMainPanel(editor, hintHint, scrollPane);
+    JPanel component = createMainPanel(hintHint, scrollPane);
     final LightweightHint hint = new LightweightHint(component) {
 
       @Override
@@ -258,7 +257,7 @@ public class LineTooltipRenderer extends ComparableObject.Impl implements Toolti
   }
 
   protected void fillPanel(@NotNull Editor editor,
-                           @NotNull JComponent component,
+                           @NotNull JPanel component,
                            @NotNull LightweightHint hint,
                            @NotNull HintHint hintHint,
                            @NotNull ArrayList<AnAction> actions,
