@@ -22,6 +22,7 @@ import com.intellij.mocks.FakeRanker
 import com.intellij.mocks.TestRequestService
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.components.ServiceManager
+import com.intellij.openapi.roots.ModuleRootModificationUtil
 import com.intellij.stats.experiment.WebServiceStatus
 import com.intellij.testFramework.registerServiceInstance
 import org.assertj.core.api.Assertions.assertThat
@@ -55,6 +56,7 @@ class CompletionRerankingTest : LightFixtureCompletionTestCase() {
     override fun setUp() {
         super.setUp()
 
+        ModuleRootModificationUtil.setModuleSdk(myFixture.module, null)
         realRanker = ServiceManager.getService(Ranker::class.java)
         fakeRanker = FakeRanker()
         ApplicationManager.getApplication().registerServiceInstance(Ranker::class.java, fakeRanker)
