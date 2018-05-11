@@ -23,14 +23,14 @@ import java.awt.*
 import java.net.*
 import java.util.concurrent.*
 
-class CircletConnectionComponent(private val project: Project) :
+class CircletConnectionComponent(project: Project) :
     AbstractProjectComponent(project), Lifetimed by LifetimedOnDisposable(project)
 {
     var loginModel: LoginModel? = null
         private set
 
     init {
-        project.settings.serverUrl.view(lifetime) { urlLifetime, url ->
+        myProject.settings.serverUrl.view(lifetime) { urlLifetime, url ->
             loginModel?.stop()
             loginModel = null
 
@@ -73,7 +73,7 @@ class CircletConnectionComponent(private val project: Project) :
             XmlStringUtil.wrapInHtml("Failed to establish server connection. Will keep trying to reconnect.<br> <a href=\"switch-off\">Switch off</a>"),
             NotificationType.INFORMATION,
             { _, _ -> disable() }
-        ).notify(lifetime, project)
+        ).notify(lifetime, myProject)
     }
 
     private fun notifyDisconnected(lifetime: Lifetime) {
@@ -83,7 +83,7 @@ class CircletConnectionComponent(private val project: Project) :
             XmlStringUtil.wrapInHtml("Integration switched off.<br> <a href=\"switch-on\">Switch on</a>"),
             NotificationType.INFORMATION,
             { _, _ -> enable() }
-        ).notify(lifetime, project)
+        ).notify(lifetime, myProject)
     }
 
     private fun notifyConnected() {
@@ -93,15 +93,15 @@ class CircletConnectionComponent(private val project: Project) :
             XmlStringUtil.wrapInHtml("Signed in"),
             NotificationType.INFORMATION,
             null
-        ).notify(project)
+        ).notify(myProject)
     }
 
     private fun enable() {
-        ShowSettingsUtil.getInstance().showSettingsDialog(project, CircletConnectionConfigurable::class.java)
+        ShowSettingsUtil.getInstance().showSettingsDialog(myProject, CircletConnectionConfigurable::class.java)
     }
 
     private fun disable() {
-        project.settings.serverUrl.value = ""
+        myProject.settings.serverUrl.value = ""
     }
 
     private fun authCheckFailedNotification(lifetime: Lifetime) {
@@ -111,7 +111,7 @@ class CircletConnectionComponent(private val project: Project) :
             XmlStringUtil.wrapInHtml("Not authenticated.<br> <a href=\"sign-in\">Sign in</a>"),
             NotificationType.INFORMATION,
             { _, _ -> authenticate() }
-        ).notify(lifetime, project)
+        ).notify(lifetime, myProject)
     }
 
     private val seq = SequentialLifetimes(lifetime)
