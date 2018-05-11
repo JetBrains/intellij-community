@@ -89,6 +89,7 @@ public class ThreadTracker {
     wellKnownOffenders.add("Netty ");
     wellKnownOffenders.add("Reference Handler");
     wellKnownOffenders.add("RMI TCP Connection");
+    wellKnownOffenders.add("SeedGenerator Thread"); // Android Studio: for failures on remote bazel execution
     wellKnownOffenders.add("Signal Dispatcher");
     wellKnownOffenders.add("timer-int"); //serverImpl
     wellKnownOffenders.add("timer-sys"); //clientimpl
