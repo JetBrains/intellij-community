@@ -41,7 +41,7 @@ internal class DaemonTooltipWithActionRenderer(text: String?,
                                                private val fix: TooltipAction?,
                                                width: Int,
                                                comparable: Array<Any>) : DaemonTooltipRenderer(text, width, comparable) {
-  
+
 
   override fun dressDescription(editor: Editor, tooltipText: String, expand: Boolean): String {
     if (!LineTooltipRenderer.isActiveHtml(myText!!) || expand) {
@@ -64,8 +64,22 @@ internal class DaemonTooltipWithActionRenderer(text: String?,
   }
 
   override fun getHtmlForProblemWithLink(problem: String): String {
+    //remove "more... (keymap)" info
+
     val html = Html(problem).setKeepFont(true)
-    return UIUtil.getHtmlBody(html).replace(DaemonBundle.message("inspection.extended.description"), "")
+    val extendMessage = DaemonBundle.message("inspection.extended.description")
+    var textToProcess = UIUtil.getHtmlBody(html)
+    val indexOfMore = textToProcess.indexOf(extendMessage)
+    if (indexOfMore < 0) return textToProcess
+    val keymapStartIndex = textToProcess.indexOf("(", indexOfMore)
+    if (keymapStartIndex > 0) {
+      val keymapEndIndex = textToProcess.indexOf(")", keymapStartIndex)
+      if (keymapEndIndex > 0) {
+        textToProcess = textToProcess.substring(0, keymapStartIndex) + textToProcess.substring(keymapEndIndex + 1, textToProcess.length)
+      }
+    }
+
+    return textToProcess.replace(extendMessage, "")
   }
 
   override fun createMainPanel(editor: Editor, hintHint: HintHint, pane: JComponent): JComponent {
@@ -268,8 +282,6 @@ internal class DaemonTooltipWithActionRenderer(text: String?,
   }
 
 }
-
-
 
 
 fun createActionLabel(text: String, action: Runnable, background: Color): HyperlinkLabel {
