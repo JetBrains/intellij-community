@@ -16,19 +16,14 @@
 package com.intellij.xdebugger.attach;
 
 import com.intellij.execution.ExecutionException;
-import com.intellij.execution.configurations.GeneralCommandLine;
 import com.intellij.execution.process.ProcessInfo;
-import com.intellij.execution.process.ProcessOutput;
-import com.intellij.openapi.project.Project;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
-import java.io.InputStream;
 import java.util.List;
 
 /**
- * This interface represents environment (local or remote) required to attach debuggers
+ * This interface describes the host(local or remote), from which list of processes can be obtained
  */
 @ApiStatus.Experimental
 public interface XAttachHost {
@@ -36,5 +31,5 @@ public interface XAttachHost {
    * @return a list of running processes on this host
    */
   @NotNull
-  List<ProcessInfo> getProcessList(@NotNull Project project);
+  List<ProcessInfo> getProcessList() throws ExecutionException;
 }
