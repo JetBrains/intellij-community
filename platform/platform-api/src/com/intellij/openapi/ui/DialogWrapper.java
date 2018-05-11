@@ -675,7 +675,7 @@ public abstract class DialogWrapper {
   private final JBValue BASE_BUTTON_GAP = new JBValue.Float(UIUtil.isUnderWin10LookAndFeel() ? 8 : 12);
 
   @NotNull
-  protected JPanel createButtonsPanel(@NotNull List<? extends JButton> buttons) {
+  protected JPanel createButtonsPanel(@NotNull List<JButton> buttons) {
     JPanel buttonsPanel = new NonOpaquePanel();
     buttonsPanel.setLayout(new BoxLayout(buttonsPanel, BoxLayout.X_AXIS));
 
