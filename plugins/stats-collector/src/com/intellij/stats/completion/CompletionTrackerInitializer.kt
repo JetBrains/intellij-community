@@ -24,12 +24,12 @@ import com.intellij.openapi.components.ApplicationComponent
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.ProjectManager
 import com.intellij.openapi.project.ProjectManagerListener
-import com.intellij.stats.sender.isSendAllowed
-import com.intellij.stats.sender.isUnitTestMode
 import com.intellij.stats.experiment.WebServiceStatus
 import com.intellij.stats.personalization.UserFactorDescriptions
 import com.intellij.stats.personalization.UserFactorStorage
 import com.intellij.stats.personalization.UserFactorsManager
+import com.intellij.stats.sender.isSendAllowed
+import com.intellij.stats.sender.isUnitTestMode
 import java.beans.PropertyChangeListener
 
 
@@ -38,6 +38,7 @@ class CompletionTrackerInitializer(experimentHelper: WebServiceStatus): Applicat
         var isEnabledInTests = false
     }
 
+    private var loggingStrategy: LoggingStrategy = LogEachN(50)
     private val actionListener = LookupActionsListener()
 
     private val lookupTrackerInitializer = PropertyChangeListener {
@@ -64,16 +65,23 @@ class CompletionTrackerInitializer(experimentHelper: WebServiceStatus): Applicat
                 it.fireCompletionUsed()
             }
 
-            val tracker = actionsTracker(lookup, experimentHelper)
-            actionListener.listener = tracker
-            lookup.addLookupListener(tracker)
-            lookup.setPrefixChangeListener(tracker)
+            if (loggingStrategy.shouldBeLogged(lookup, experimentHelper)) {
+                val tracker = actionsTracker(lookup, experimentHelper)
+                actionListener.listener = tracker
+                lookup.addLookupListener(tracker)
+                lookup.setPrefixChangeListener(tracker)
+            }
 
             // setPrefixChangeListener has addPrefixChangeListener semantics
             lookup.setPrefixChangeListener(TimeBetweenTypingTracker(lookup.project))
             lookup.addLookupListener(LookupCompletedTracker())
             lookup.addLookupListener(LookupStartedTracker())
         }
+    }
+
+    @Suppress("unused")
+    fun setLoggingStrategy(strategy: LoggingStrategy) {
+        loggingStrategy = strategy
     }
 
     private fun actionsTracker(lookup: LookupImpl, experimentHelper: WebServiceStatus): CompletionActionsTracker {
