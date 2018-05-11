@@ -29,7 +29,7 @@ class CircletConnectionComponent(project: Project) :
     var loginModel: LoginModel? = null
         private set
 
-    init {
+    override fun initComponent() {
         myProject.settings.serverUrl.view(lifetime) { urlLifetime, url ->
             loginModel?.stop()
             loginModel = null
