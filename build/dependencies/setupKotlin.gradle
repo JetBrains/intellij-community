@@ -23,13 +23,20 @@ repositories {
 
 configurations {
   kotlinPlugin
+  kotlinPluginCidr
 }
 
 dependencies {
-  kotlinPlugin tc(buildTypeId: 'Kotlin_dev_CompilerAllPlugins', version: "${kotlinPluginBuildForKotlinNative.split('-')[0..2].join('-')}", artifactPath: "internal/kotlin-plugin-${kotlinPluginBuildForKotlinNative}.zip")
+  kotlinPlugin "com.jetbrains.plugins:org.jetbrains.kotlin:$kotlinPluginBuild@zip"
+  kotlinPluginCidr tc(buildTypeId: 'Kotlin_dev_CompilerAllPlugins', version: "${kotlinPluginBuildForKotlinNative.split('-')[0..2].join('-')}", artifactPath: "internal/kotlin-plugin-${kotlinPluginBuildForKotlinNative}.zip")
 }
 
-task setupKotlinPlugin(dependsOn: configurations.kotlinPlugin, type: Sync) {
+task setupKotlinPluginCidr(dependsOn: configurations.kotlinPluginCidr, type: Sync) {
+  from zipTree(configurations.kotlinPluginCidr.singleFile)
+  into "${project.buildDir}/kotlinCidr"
+}
+
+task setupKotlinPlugin(dependsOn: [configurations.kotlinPlugin, setupKotlinPluginCidr], type: Sync) {
   from zipTree(configurations.kotlinPlugin.singleFile)
   into "${project.buildDir}/kotlin"
 }
