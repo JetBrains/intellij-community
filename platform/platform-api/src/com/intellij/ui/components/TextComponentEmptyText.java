@@ -58,6 +58,9 @@ class TextComponentEmptyText extends StatusText {
 
   public void paintStatusText(Graphics g) {
     getComponent().setFont(myOwner.getFont());
+    if (!isVerticalFlow()) {
+      getSecondaryComponent().setFont(myOwner.getFont());
+    }
     paint(myOwner, g);
   }
 
@@ -72,8 +75,8 @@ class TextComponentEmptyText extends StatusText {
     Insets insets = myOwner.getInsets();
     int left = insets.left >> 1;
     int right = insets.right >> 1;
-    return new Rectangle(left, insets.top, 
-                         b.width - left - right, 
+    return new Rectangle(left, insets.top + insets.bottom,
+                         b.width - left - right,
                          b.height - insets.top - insets.bottom);
   }
 }
