@@ -23,36 +23,59 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
+import java.util.Comparator;
 
+/**
+ * This interface describes visualization of attach items
+ * @param <T> type of the child items (belonging to this group)
+ * (applicable both for {@link XAttachHost} and {@link ProcessInfo} items)
+ */
 @ApiStatus.Experimental
-public interface XAttachPresentationGroup<T> {
-  XAttachPresentationGroup<ProcessInfo> DEFAULT = new XDefaultLocalAttachGroup();
-
+public interface XAttachPresentationGroup<T> extends Comparator<T> {
+  /**
+   * Define order among neighboring groups (smaller at first)
+   */
   int getOrder();
 
   @NotNull
   String getGroupName();
 
   /**
-   * @param dataHolder you may put your specific data into the holder at previous step in method @{@link XAttachDebuggerProvider#getAvailableDebuggers}
-   *                   and use it for presentation
-   * @return an icon to be shown in popup menu for your item
+   * @deprecated Use {@link #getItemIcon(Project, Object, UserDataHolder)} (will be removed in 2018.2)
    */
   @NotNull
-  Icon getIcon(@NotNull Project project, @NotNull T info, @NotNull UserDataHolder dataHolder);
+  Icon getProcessIcon(@NotNull Project project, @NotNull T info, @NotNull UserDataHolder dataHolder);
 
   /**
-   * @param dataHolder you may put your specific data into the holder at previous step in method @{@link XAttachDebuggerProvider#getAvailableDebuggers}
+   * @param dataHolder you may put your specific data into the holder at previous step in {@link XAttachDebuggerProvider#getAvailableDebuggers}
    *                   and use it for presentation
-   * @return a text to be shown on your item
+   * @return an icon to be shown in popup menu for your item, described by info
    */
   @NotNull
-  String getItemDisplayText(@NotNull Project project, @NotNull T info, @NotNull UserDataHolder dataHolder);
+  default Icon getItemIcon(@NotNull Project project, @NotNull T info, @NotNull UserDataHolder dataHolder) {
+    return getProcessIcon(project, info, dataHolder);
+  }
 
   /**
-   * @param dataHolder you may put your specific data into the holder at previous step in method @{@link XAttachDebuggerProvider#getAvailableDebuggers}
+   * @deprecated Use {@link #getItemDisplayText(Project, Object, UserDataHolder)} (will be removed in 2018.2)
+   */
+  @NotNull
+  String getProcessDisplayText(@NotNull Project project, @NotNull T info, @NotNull UserDataHolder dataHolder);
+
+  /**
+   * @param dataHolder you may put your specific data into the holder at previous step in {@link XAttachDebuggerProvider#getAvailableDebuggers}
    *                   and use it for presentation
-   * @return a description of process to be shown in tooltip of your item
+   * @return a text to be shown on your item, described by info
+   */
+  @NotNull
+  default String getItemDisplayText(@NotNull Project project, @NotNull T info, @NotNull UserDataHolder dataHolder) {
+    return getProcessDisplayText(project, info, dataHolder);
+  }
+
+  /**
+   * @param dataHolder you may put your specific data into the holder at previous step in {@link XAttachDebuggerProvider#getAvailableDebuggers}
+   *                   and use it for presentation
+   * @return a description of process to be shown in tooltip of your item, described by info
    */
   @Nullable
   default String getItemDescription(@NotNull Project project, @NotNull T info, @NotNull UserDataHolder dataHolder) {
@@ -60,10 +83,14 @@ public interface XAttachPresentationGroup<T> {
   }
 
   /**
+   * @deprecated use {@link #compare(Object, Object)} (will be removed in 2018.2)
+   *
    * Specifies process order in your group
    *
-   * @param dataHolder you may put your specific data into the holder at previous step in method @{@link XAttachDebuggerProvider#getAvailableDebuggers}
+   * @param dataHolder you may put your specific data into the holder at previous step in {@link XAttachDebuggerProvider#getAvailableDebuggers}
    *                   and use it for comparison
    */
-  int compare(@NotNull Project project, @NotNull T a, @NotNull T b, @NotNull UserDataHolder dataHolder);
+  default int compare(@NotNull Project project, @NotNull T a, @NotNull T b, @NotNull UserDataHolder dataHolder) {
+    return compare(a, b);
+  }
 }

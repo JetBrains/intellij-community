@@ -28,6 +28,8 @@ import javax.swing.*;
  * @deprecated use {@link XAttachPresentationGroup} instead
  */
 public class XDefaultLocalAttachGroup implements XLocalAttachGroup {
+  public static final XDefaultLocalAttachGroup INSTANCE = new XDefaultLocalAttachGroup();
+
   @Override
   public int getOrder() {
     return 0;
@@ -41,7 +43,7 @@ public class XDefaultLocalAttachGroup implements XLocalAttachGroup {
 
   @NotNull
   @Override
-  public Icon getIcon(@NotNull Project project, @NotNull ProcessInfo info, @NotNull UserDataHolder dataHolder) {
+  public Icon getItemIcon(@NotNull Project project, @NotNull ProcessInfo info, @NotNull UserDataHolder dataHolder) {
     return getProcessIcon(project, info, dataHolder);
   }
 
@@ -65,10 +67,5 @@ public class XDefaultLocalAttachGroup implements XLocalAttachGroup {
   @NotNull
   public String getProcessDisplayText(@NotNull Project project, @NotNull ProcessInfo info, @NotNull UserDataHolder dataHolder) {
     return info.getExecutableDisplayName();
-  }
-
-  @Override
-  public int compare(@NotNull Project project, @NotNull ProcessInfo a, @NotNull ProcessInfo b, @NotNull UserDataHolder dataHolder) {
-    return a.getPid() - b.getPid();
   }
 }
