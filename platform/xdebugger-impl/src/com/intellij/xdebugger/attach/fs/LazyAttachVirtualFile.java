@@ -2,23 +2,17 @@
 package com.intellij.xdebugger.attach.fs;
 
 import com.intellij.testFramework.LightVirtualFile;
-import com.intellij.xdebugger.attach.fs.LazyAttachVirtualFS;
 import org.jetbrains.annotations.NotNull;
 
-import java.io.*;
+import java.io.File;
 
 class LazyAttachVirtualFile extends LightVirtualFile {
   private final String myRemotePath;
-  private final LazyAttachVirtualFS myVirtualFileSystem;
 
   public LazyAttachVirtualFile(String path,
-                               String content,
-                               @NotNull LazyAttachVirtualFS virtualFileSystem) {
-    super(new File(path).getName());
-
-    setContent(null, content, false);
+                               String content) {
+    super(new File(path).getName(), content);
     myRemotePath = path;
-    myVirtualFileSystem = virtualFileSystem;
 
     setWritable(false);
   }
@@ -33,6 +27,6 @@ class LazyAttachVirtualFile extends LightVirtualFile {
   @Override
   @NotNull
   public LazyAttachVirtualFS getFileSystem() {
-    return myVirtualFileSystem;
+    return LazyAttachVirtualFS.getInstance();
   }
 }
