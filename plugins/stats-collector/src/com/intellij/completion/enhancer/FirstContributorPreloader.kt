@@ -23,7 +23,6 @@ import com.intellij.openapi.application.PreloadingActivity
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.extensions.PluginId
 import com.intellij.openapi.progress.ProgressIndicator
-import com.intellij.stats.ngram.NGramContributor
 
 class FirstContributorPreloader : PreloadingActivity() {
     private companion object {
@@ -38,17 +37,13 @@ class FirstContributorPreloader : PreloadingActivity() {
         if (descriptor == null) {
             LOG.error("Plugin descriptor not found")
         } else {
-            addCustomWeigherContributor(descriptor)
 //            addInvocationCountContributor(descriptor) // disabled for a while
         }
     }
 
+    @Suppress("unused")
     private fun addInvocationCountContributor(descriptor: IdeaPluginDescriptor) {
         addContributor(descriptor, InvocationCountEnhancingContributor::class.java.name)
-    }
-
-    private fun addCustomWeigherContributor(descriptor: IdeaPluginDescriptor) {
-        addContributor(descriptor, NGramContributor::class.java.name)
     }
 
     private fun addContributor(descriptor: IdeaPluginDescriptor, implClass: String) {
