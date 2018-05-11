@@ -24,9 +24,8 @@ import java.net.*
 import java.util.concurrent.*
 
 class CircletConnectionComponent(private val project: Project) :
-    AbstractProjectComponent(project),
-    Lifetimed by LifetimedOnDisposable(project) {
-
+    AbstractProjectComponent(project), Lifetimed by LifetimedOnDisposable(project)
+{
     var loginModel: LoginModel? = null
         private set
 

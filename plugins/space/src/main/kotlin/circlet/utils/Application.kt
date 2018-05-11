@@ -8,16 +8,17 @@ import com.intellij.openapi.project.*
 import com.intellij.openapi.util.*
 import runtime.reactive.*
 
-@Suppress("unused")
-inline fun <reified T : Any> component(): T = application.getComponent()
 inline fun <reified T : Any> Project.component(): T = getComponent()
 
 inline fun <reified T : Any> ComponentManager.getComponent(): T =
-    this.getComponent(T::class.java) ?: throw Error("Component ${T::class.java} not found in container $this")
+    computeSafe { getComponent(T::class.java) } ?: throw Error("Component ${T::class.java} not found in container $this")
 
-@Suppress("unused")
-inline fun <reified T : Any> getService(): T = service<T>().checkService(application)
-inline fun <reified T : Any> Project.getService(): T = service<T>().checkService(this)
+inline fun <T : Any, C : ComponentManager> C.computeSafe(crossinline compute: C.() -> T?) : T? =
+    application.runReadAction(Computable {
+        if (isDisposed) null else compute()
+    })
+
+inline fun <reified T : Any> Project.getService(): T = computeSafe { service<T>() }.checkService(this)
 
 inline fun <reified T : Any> T?.checkService(container: Any): T =
     this ?: throw Error("Service ${T::class.java} not found in container $container")
