@@ -60,7 +60,6 @@ object WebServiceMock {
                 val url = it.arguments.first() as String
                 if (url == WebServiceStatusProvider.STATUS_URL) response else throw NOT_SUPPOSED_TO_BE_CALLED
             }
-            Mockito.`when`(post(anyString(), anyMap())).thenThrow(NOT_SUPPOSED_TO_BE_CALLED)
             Mockito.`when`(postZipped(anyString(), any<File>() ?: File("."))).thenThrow(NOT_SUPPOSED_TO_BE_CALLED)
             Mockito.`when`(post(anyString(), any<File>() ?: File("."))).thenThrow(NOT_SUPPOSED_TO_BE_CALLED)
         }

@@ -96,11 +96,6 @@ class Test {
                 Thread.sleep(1000)
                 ResponseData(200)
             }
-
-            `when`(post(ArgumentMatchers.anyString(), ArgumentMatchers.anyMap<String, String>())).then {
-                Thread.sleep(1000)
-                ResponseData(200)
-            }
         }
     }
 
