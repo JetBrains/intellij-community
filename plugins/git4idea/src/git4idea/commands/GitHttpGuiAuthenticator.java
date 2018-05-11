@@ -224,6 +224,8 @@ class GitHttpGuiAuthenticator implements GitHttpAuthenticator {
     @NotNull private final Project myProject;
     @NotNull private final GitHttpAuthDataProvider myDelegate;
 
+    private AuthData myData = null;
+
     public ExtensionAdapterProvider(@NotNull Project project, @NotNull GitHttpAuthDataProvider provider) {
       myProject = project;
       myDelegate = provider;
@@ -237,12 +239,12 @@ class GitHttpGuiAuthenticator implements GitHttpAuthenticator {
 
     @Override
     public AuthData getData(@NotNull String url, @Nullable String suggestedLogin) {
-      return myDelegate.getAuthData(myProject, url);
+      return (myData = myDelegate.getAuthData(myProject, url));
     }
 
     @Override
     public AuthData getDataForUser(@NotNull String url, @NotNull String login) {
-      return myDelegate.getAuthData(myProject, url, login);
+      return (myData = myDelegate.getAuthData(myProject, url, login));
     }
 
     @Override
@@ -250,7 +252,7 @@ class GitHttpGuiAuthenticator implements GitHttpAuthenticator {
 
     @Override
     public void onAuthFailure(@NotNull String url) {
-       myDelegate.forgetPassword(url);
+      if(myData != null)myDelegate.forgetPassword(url, myData);
     }
   }
 

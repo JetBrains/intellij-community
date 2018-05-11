@@ -47,6 +47,11 @@ public interface GitHttpAuthDataProvider {
     return null;
   }
 
-  void forgetPassword(@NotNull String url);
+  default void forgetPassword(@NotNull String url, @NotNull AuthData authData) {
+    //noinspection deprecation
+    forgetPassword(url);
+  }
 
+  @Deprecated
+  default void forgetPassword(@NotNull String url) {}
 }
