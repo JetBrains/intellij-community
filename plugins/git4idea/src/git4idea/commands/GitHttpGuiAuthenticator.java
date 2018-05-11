@@ -18,14 +18,15 @@ import com.intellij.util.ObjectUtils;
 import com.intellij.util.UriUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.io.URLUtil;
+import git4idea.DialogManager;
 import git4idea.remote.GitHttpAuthDataProvider;
+import git4idea.remote.InteractiveGitHttpAuthDataProvider;
 import git4idea.remote.GitRememberedInputs;
+import git4idea.remote.GitRepositoryHostingService;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.List;
+import java.util.*;
 
 /**
  * <p>Handles "ask username" and "ask password" requests from Git:
@@ -257,6 +258,7 @@ class GitHttpGuiAuthenticator implements GitHttpAuthenticator {
     @NotNull private final Project myProject;
     @NotNull private final PasswordSafeProvider myPasswordSafeDelegate;
     private boolean myCancelled;
+    private boolean myDataForSession = false;
 
     public DialogProvider(@NotNull Project project, @NotNull PasswordSafeProvider passwordSafeDelegate) {
       myProject = project;
@@ -266,7 +268,7 @@ class GitHttpGuiAuthenticator implements GitHttpAuthenticator {
     @NotNull
     @Override
     public String getName() {
-      return "Dialog";
+      return myDataForSession ? "Session Provider" : "Dialog";
     }
 
     @Override
@@ -283,23 +285,36 @@ class GitHttpGuiAuthenticator implements GitHttpAuthenticator {
 
     @Override
     public void onAuthSuccess(@NotNull String url) {
+      if (myDataForSession) return;
       myPasswordSafeDelegate.onAuthSuccess(url);
     }
 
     @Override
     public void onAuthFailure(@NotNull String url) {
+      if (myDataForSession) return;
       myPasswordSafeDelegate.onAuthFailure(url);
     }
 
     @Nullable
     private AuthData getDataFromDialog(@NotNull String url, @Nullable String username, boolean editableUsername) {
+Map<String, InteractiveGitHttpAuthDataProvider> providers = new HashMap<>();
+      for (GitRepositoryHostingService service : GitRepositoryHostingService.EP_NAME.getExtensions()) {
+        InteractiveGitHttpAuthDataProvider provider = editableUsername || username == null
+                                                  ? service.getInteractiveAuthDataProvider(myProject, url)
+                                                  : service.getInteractiveAuthDataProvider(myProject, url, username);
 
-
-      GitHttpLoginDialog dialog = showAuthDialog(UriUtil.splitScheme(url).second, username, editableUsername);
+        if (provider != null) providers.put(service.getServiceDisplayName(), provider);
+      }      GitHttpLoginDialog dialog = showAuthDialog(UriUtil.splitScheme(url).second, username, editableUsername, providers);
       LOG.debug("Showed dialog:" + (dialog.isOK() ? "OK" : "Cancel"));
       if (!dialog.isOK()) {
         myCancelled = true;
         return null;
+      }
+
+      AuthData sessionAuthData = dialog.getExternalAuthData();
+      if (sessionAuthData != null) {
+        myDataForSession = true;
+        return sessionAuthData;
       }
 
       myPasswordSafeDelegate.setSavePassword(dialog.getRememberPassword());
@@ -309,13 +324,19 @@ class GitHttpGuiAuthenticator implements GitHttpAuthenticator {
     }
 
     @NotNull
-    private GitHttpLoginDialog showAuthDialog(@NotNull String url, @Nullable String username, boolean editableUsername) {
-      Ref<GitHttpLoginDialog> dialog = Ref.create();
+    private GitHttpLoginDialog showAuthDialog(@NotNull String url,
+                                              @Nullable String username,
+                                              boolean editableUsername,
+                                              @NotNull Map<String, ? extends InteractiveGitHttpAuthDataProvider> interactiveProviders) {
+      Ref<GitHttpLoginDialog> dialogRef = Ref.create();
       ApplicationManager.getApplication().invokeAndWait(() -> {
-        dialog.set(new GitHttpLoginDialog(myProject, url, myPasswordSafeDelegate.isRemembering(), username, editableUsername));
-        git4idea.DialogManager.show(dialog.get());
+        GitHttpLoginDialog dialog =
+          new GitHttpLoginDialog(myProject, url, myPasswordSafeDelegate.isRemembering(), username, editableUsername);
+        dialog.setInteractiveDataProviders(interactiveProviders);
+        dialogRef.set(dialog);
+        DialogManager.show(dialog);
       }, ModalityState.any());
-      return dialog.get();
+      return dialogRef.get();
     }
 
     public boolean isCancelled() {

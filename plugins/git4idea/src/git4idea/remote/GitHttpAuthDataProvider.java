@@ -41,6 +41,7 @@ public interface GitHttpAuthDataProvider {
     return getAuthData(url);
   }
 
+  @Deprecated
   @Nullable
   default AuthData getAuthData(@NotNull String url) {
     return null;

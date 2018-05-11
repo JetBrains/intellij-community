@@ -5,12 +5,18 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.DialogWrapper
 import com.intellij.openapi.ui.ValidationInfo
 import com.intellij.ui.components.JBCheckBox
+import com.intellij.ui.components.JBOptionButton
 import com.intellij.ui.components.JBPasswordField
 import com.intellij.ui.components.JBTextField
+import com.intellij.ui.components.panels.Wrapper
+import com.intellij.util.AuthData
 import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.UI.PanelFactory.grid
 import com.intellij.util.ui.UI.PanelFactory.panel
 import com.intellij.util.ui.UIUtil
+import git4idea.remote.InteractiveGitHttpAuthDataProvider
+import java.awt.event.ActionEvent
+import javax.swing.AbstractAction
 import javax.swing.JComponent
 import javax.swing.JTextArea
 
@@ -34,6 +40,10 @@ class GitHttpLoginDialog @JvmOverloads constructor(project: Project,
   private val usernameField = JBTextField(username).apply { isEditable = editableUsername }
   private val passwordField = JBPasswordField()
   private val rememberCheckbox: JBCheckBox = JBCheckBox("Remember", allowRememberPassword).apply { isVisible = allowRememberPassword }
+  private val additionalProvidersButton: JBOptionButton = JBOptionButton(null, null).apply { isVisible = false }
+
+  var externalAuthData: AuthData? = null
+    private set
 
   init {
     title = "Git Login"
@@ -55,7 +65,36 @@ class GitHttpLoginDialog @JvmOverloads constructor(project: Project,
                          if (passwordField.password.isEmpty()) ValidationInfo("Password cannot be empty", passwordField) else null)
   }
 
+  override fun createSouthAdditionalPanel() = Wrapper(additionalProvidersButton)
+    .apply { border = JBUI.Borders.emptyRight(UIUtil.DEFAULT_HGAP) }
+
   override fun getPreferredFocusedComponent(): JComponent = if (usernameField.text.isBlank()) usernameField else passwordField
+
+  fun setInteractiveDataProviders(providers: Map<String, InteractiveGitHttpAuthDataProvider>) {
+    if (providers.isEmpty()) return
+
+    val actions: List<AbstractAction> = providers.map {
+      object : AbstractAction("Log In with ${it.key}...") {
+        override fun actionPerformed(e: ActionEvent?) {
+          val authData = it.value.getAuthData(this@GitHttpLoginDialog.rootPane)
+          if (authData != null) {
+            if (authData.password != null) {
+              externalAuthData = authData
+              this@GitHttpLoginDialog.close(0, true)
+            }
+            else {
+              usernameField.text = authData.login
+            }
+          }
+        }
+      }
+    }
+    additionalProvidersButton.action = actions.first()
+    if (actions.size > 1) {
+      additionalProvidersButton.options = actions.subList(1, actions.size).toTypedArray()
+    }
+    additionalProvidersButton.isVisible = true
+  }
 
   val username: String get() = usernameField.text
   val password: String get() = String(passwordField.password!!)
