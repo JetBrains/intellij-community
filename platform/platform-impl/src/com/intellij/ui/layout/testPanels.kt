@@ -158,9 +158,9 @@ fun createLafTestPanel(): JPanel {
   val panel = JPanel(GridLayout(0, 1, spacing.horizontalGap, spacing.verticalGap))
   panel.add(JTextField("text"))
   panel.add(JPasswordField("secret"))
-  panel.add(JComboBox<String>(arrayOf("one", "two")))
+  panel.add(ComboBox<String>(arrayOf("one", "two")))
 
-  val field = JComboBox<String>(arrayOf("one", "two"))
+  val field = ComboBox<String>(arrayOf("one", "two"))
   field.isEditable = true
   panel.add(field)
 
