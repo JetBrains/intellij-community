@@ -800,6 +800,7 @@ public class AllIcons {
     public static final Icon MoreTabs = IconLoader.getIcon("/general/moreTabs.png"); // 16x16
     public static final Icon Mouse = IconLoader.getIcon("/general/mouse.png"); // 32x32
     public static final Icon MouseShortcut = IconLoader.getIcon("/general/mouseShortcut.png"); // 13x13
+    public static final Icon Note = IconLoader.getIcon("/general/note.svg"); // 16x16
     public static final Icon NotificationError = IconLoader.getIcon("/general/notificationError.png"); // 24x24
     public static final Icon NotificationInfo = IconLoader.getIcon("/general/notificationInfo.png"); // 24x24
     public static final Icon NotificationWarning = IconLoader.getIcon("/general/notificationWarning.png"); // 24x24
@@ -1716,6 +1717,7 @@ public class AllIcons {
     public static final Icon NotFavoriteOnHover = IconLoader.getIcon("/vcs/notFavoriteOnHover.png"); // 16x16
     public static final Icon Patch = IconLoader.getIcon("/vcs/patch.png"); // 16x16
     public static final Icon Patch_applied = IconLoader.getIcon("/vcs/patch_applied.png"); // 16x16
+    public static final Icon Patch_file = IconLoader.getIcon("/vcs/patch_file.svg"); // 16x16
     public static final Icon Push = IconLoader.getIcon("/vcs/push.svg"); // 16x16
     public static final Icon Remove = IconLoader.getIcon("/vcs/remove.png"); // 16x16
     public static final Icon ResetStrip = IconLoader.getIcon("/vcs/resetStrip.png"); // 16x16
