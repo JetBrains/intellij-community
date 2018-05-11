@@ -38,7 +38,7 @@ class CompletionTrackerInitializer(experimentHelper: WebServiceStatus): Applicat
         var isEnabledInTests = false
     }
 
-    private var loggingStrategy: LoggingStrategy = LogEachN(50)
+  private var loggingStrategy: LoggingStrategy = LogEverything
     private val actionListener = LookupActionsListener()
 
     private val lookupTrackerInitializer = PropertyChangeListener {
