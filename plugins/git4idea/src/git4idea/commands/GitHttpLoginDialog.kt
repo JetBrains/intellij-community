@@ -39,7 +39,7 @@ class GitHttpLoginDialog @JvmOverloads constructor(project: Project,
   }
   private val usernameField = JBTextField(username).apply { isEditable = editableUsername }
   private val passwordField = JBPasswordField()
-  private val rememberCheckbox: JBCheckBox = JBCheckBox("Remember", allowRememberPassword).apply { isVisible = allowRememberPassword }
+  private val rememberCheckbox: JBCheckBox = JBCheckBox("Remember", false).apply { isVisible = allowRememberPassword }
   private val additionalProvidersButton: JBOptionButton = JBOptionButton(null, null).apply { isVisible = false }
 
   var externalAuthData: AuthData? = null
