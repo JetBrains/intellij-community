@@ -52,9 +52,4 @@ class PyLocalAttachGroup implements XLocalAttachGroup {
   public String getProcessDisplayText(@NotNull Project project, @NotNull ProcessInfo info, @NotNull UserDataHolder dataHolder) {
     return info.getArgs();
   }
-
-  @Override
-  public int compare(@NotNull Project project, @NotNull ProcessInfo a, @NotNull ProcessInfo b, @NotNull UserDataHolder dataHolder) {
-    return XLocalAttachGroup.DEFAULT.compare(project, a, b, dataHolder);
-  }
 }

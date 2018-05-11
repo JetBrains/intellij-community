@@ -15,13 +15,15 @@
  */
 package com.intellij.xdebugger.attach;
 
-import com.intellij.execution.process.ProcessInfo;
 import org.jetbrains.annotations.ApiStatus;
 
 /**
- * @deprecated use {@link XAttachPresentationGroup} instead
+ * @deprecated Use XAttachProcessPresentationGroup (will be removed in 2018.2)
  */
 @ApiStatus.Experimental
-public interface XLocalAttachGroup extends XAttachPresentationGroup<ProcessInfo> {
-  XLocalAttachGroup DEFAULT = new XDefaultLocalAttachGroup();
+public interface XLocalAttachGroup extends XAttachProcessPresentationGroup {
+  /**
+   * @deprecated will be removed in 2018.2
+   */
+  XAttachPresentationGroup DEFAULT = XDefaultLocalAttachGroup.INSTANCE;
 }
