@@ -65,6 +65,7 @@ import javax.swing.event.TreeModelEvent;
 import javax.swing.tree.TreeModel;
 import java.awt.event.ActionEvent;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Objects;
 import java.util.stream.Collectors;
@@ -174,7 +175,7 @@ public class ShowDiscoveredTestsAction extends AnAction {
     ActiveComponent runButton = createButton(RUN_ALL_ACTION_TEXT, AllIcons.Actions.Execute, () -> runAllDiscoveredTests(project, tree, ref, context, initTitle));
 
     Runnable pinActionListener = () -> {
-      UsageView view = FindUtil.showInUsageView(null, tree.getTestMethods(), initTitle, project);
+      UsageView view = FindUtil.showInUsageView(null, tree.getTestMethods(), param -> new TestMethodUsage(param), initTitle, project);
       if (view != null) {
         view.addButtonToLowerPane(new AbstractAction(RUN_ALL_ACTION_TEXT, AllIcons.Actions.Execute) {
           @Override
@@ -280,7 +281,12 @@ public class ShowDiscoveredTestsAction extends AnAction {
     Executor executor = DefaultRunExecutor.getRunExecutorInstance();
     Module targetModule = TestDiscoveryConfigurationProducer.detectTargetModule(tree.getContainingModules(), project);
     //first producer with results will be picked
-    PsiMethod[] testMethods = tree.getTestMethods();
+    PsiMethod[] testMethods = Arrays
+      .stream(tree.getTestMethods())
+      .map(DiscoveredTestsTreeModel.Node::getPointer)
+      .map(SmartPsiElementPointer::getElement)
+      .filter(Objects::nonNull)
+      .toArray(PsiMethod[]::new);
     StreamEx.of(getRunConfigurationProducers(project))
             .filter(producer -> producer.isApplicable(testMethods))
             .map((producer) -> producer.createProfile(testMethods, targetModule, context, title))
