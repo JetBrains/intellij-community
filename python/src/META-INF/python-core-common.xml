@@ -349,7 +349,7 @@
     <testCreator language="Python" implementationClass="com.jetbrains.python.codeInsight.testIntegration.PyTestCreator"/>
 
     <stubElementTypeHolder class="com.jetbrains.python.PyElementTypes"/>
-    <localInspection language="Python" shortName="PyTestParametrizedInspection" suppressId="PyTestParametrizedInspection"
+    <localInspection language="Python" shortName="PyTestParametrizedInspection" suppressId="PyTestParametrized"
                      bundle="com.jetbrains.python.PyBundle" key="INSP.NAME.pytest-parametrized" groupKey="INSP.GROUP.python"
                      enabledByDefault="true" level="WARNING"
                      implementationClass="com.jetbrains.python.testing.pyTestParametrized.PyTestParametrizedInspection"/>
