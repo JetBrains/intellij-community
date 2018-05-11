@@ -93,7 +93,7 @@ public class ParametrizedDuplicates {
     Map<PsiExpression, String> predefinedNames = foldParameters(originalProcessor, matches);
 
     ParametrizedDuplicates duplicates = new ParametrizedDuplicates(pattern, originalProcessor);
-    if (!duplicates.initMatches(matches)) {
+    if (!duplicates.initMatches(pattern, matches)) {
       return null;
     }
 
@@ -213,7 +213,7 @@ public class ParametrizedDuplicates {
     return (PsiMethodCallExpression)originalCall.replace(call);
   }
 
-  private boolean initMatches(@NotNull List<Match> matches) {
+  private boolean initMatches(@NotNull PsiElement[] pattern, @NotNull List<Match> matches) {
     if (myElements.length == 0) {
       return false;
     }
@@ -244,11 +244,23 @@ public class ParametrizedDuplicates {
       return false;
     }
 
+    Map<Match, Map<PsiExpression, PsiExpression>> expressionsMapping = new HashMap<>();
     for (ClusterOfUsages usages : myUsagesList) {
       for (Match match : myMatches) {
         ExtractedParameter parameter = usages.myParameters.get(match);
         if (parameter == null) {
-          parameter = usages.myParameter.mapPatternToItself(match);
+          Map<PsiExpression, PsiExpression> expressions =
+            expressionsMapping.computeIfAbsent(match, unused -> {
+              Map<PsiExpression, PsiExpression> result = new HashMap<>();
+              collectCopyMapping(pattern, match.getMatchElements(), usagesMap.keySet(), result, new HashMap<>());
+              return result;
+            });
+          PsiExpression candidateUsage = usages.myPatterns.stream().map(expressions::get).findAny().orElse(null);
+          LOG.assertTrue(candidateUsage != null, "candidateUsage shouldn't be null");
+
+          ExtractedParameter fromParameter = usages.myParameter;
+          parameter = fromParameter.copyWithCandidateUsage(candidateUsage);
+          match.addExtractedParameter(parameter);
           usages.putParameter(match, parameter);
         }
       }
@@ -558,9 +570,11 @@ public class ParametrizedDuplicates {
                                          @NotNull Set<PsiExpression> replaceablePatterns,
                                          @NotNull Map<PsiExpression, PsiExpression> expressions,
                                          @NotNull Map<PsiVariable, PsiVariable> variables) {
-    pattern = getFilteredElements(pattern);
-    copy = getFilteredElements(copy);
-    LOG.assertTrue(copy.length == pattern.length, "copy length");
+    pattern = DuplicatesFinder.getDeeplyFilteredElements(pattern);
+    copy = DuplicatesFinder.getDeeplyFilteredElements(copy);
+    if (copy.length != pattern.length) {
+      return; // it's an extracted parameter, so there's no need to go deeper
+    }
     for (int i = 0; i < pattern.length; i++) {
       collectCopyMapping(pattern[i], copy[i], replaceablePatterns, expressions, variables);
     }
