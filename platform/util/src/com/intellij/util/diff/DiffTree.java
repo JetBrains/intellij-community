@@ -120,8 +120,6 @@ public class DiffTree<OT, NT> {
       }
     }
     else {
-      final ShallowNodeComparator<OT, NT> comparator = myComparator;
-
       int minSize = Math.min(oldChildrenSize, newChildrenSize);
       int suffixLength = match(oldChildren, oldChildrenSize - 1, newChildren, newChildrenSize - 1, level, -1, minSize);
       // for equal size old and new children we have to compare one element less because it was already checked in (unsuccessful) suffix match
@@ -145,7 +143,7 @@ public class DiffTree<OT, NT> {
           NT newChild2 = newIndex < newChildrenSize - suffixLength - 1 ? newChildren[newIndex + 1] : null;
           NT newChild3 = newIndex < newChildrenSize - suffixLength - 2 ? newChildren[newIndex + 2] : null;
 
-          CompareResult c11 = looksEqual(comparator, oldChild1, newChild1);
+          CompareResult c11 = looksEqual(oldChild1, newChild1);
           if (c11 == CompareResult.EQUAL || c11 == CompareResult.DRILL_DOWN_NEEDED) {
             if (c11 == CompareResult.DRILL_DOWN_NEEDED) {
               build(oldChild1, newChild1, level + 1, consumer);
@@ -155,13 +153,13 @@ public class DiffTree<OT, NT> {
             continue;
           }
           if (c11 == CompareResult.TYPE_ONLY) {
-            CompareResult c21 = looksEqual(comparator, oldChild2, newChild1);
+            CompareResult c21 = looksEqual(oldChild2, newChild1);
             if (c21 == CompareResult.EQUAL || c21 == CompareResult.DRILL_DOWN_NEEDED) {
               consumer.nodeDeleted(oldNode, oldChild1);
               oldIndex++;
               continue;
             }
-            CompareResult c12 = looksEqual(comparator, oldChild1, newChild2);
+            CompareResult c12 = looksEqual(oldChild1, newChild2);
             if (c12 == CompareResult.EQUAL || c12 == CompareResult.DRILL_DOWN_NEEDED) {
               consumer.nodeInserted(oldNode, newChild1, newIndex);
               newIndex++;
@@ -173,14 +171,14 @@ public class DiffTree<OT, NT> {
             continue;
           }
 
-          CompareResult c12 = looksEqual(comparator, oldChild1, newChild2);
+          CompareResult c12 = looksEqual(oldChild1, newChild2);
           if (c12 == CompareResult.EQUAL || c12 == CompareResult.DRILL_DOWN_NEEDED) {
             consumer.nodeInserted(oldNode, newChild1, newIndex);
             newIndex++;
             continue;
           }
 
-          CompareResult c21 = looksEqual(comparator, oldChild2, newChild1);
+          CompareResult c21 = looksEqual(oldChild2, newChild1);
           if (c21 == CompareResult.EQUAL || c21 == CompareResult.DRILL_DOWN_NEEDED || c21 == CompareResult.TYPE_ONLY) {
             consumer.nodeDeleted(oldNode, oldChild1);
             oldIndex++;
@@ -207,7 +205,7 @@ public class DiffTree<OT, NT> {
           // check that maybe two children are inserted/deleted
           // (which frequently is a case when e.g. a PsiMethod inserted, the trailing PsiWhiteSpace is appended too)
           if (oldChild3 != null || newChild3 != null) {
-            CompareResult c13 = looksEqual(comparator, oldChild1, newChild3);
+            CompareResult c13 = looksEqual(oldChild1, newChild3);
             if (c13 == CompareResult.EQUAL || c13 == CompareResult.DRILL_DOWN_NEEDED || c13 == CompareResult.TYPE_ONLY) {
               consumer.nodeInserted(oldNode, newChild1, newIndex);
               newIndex++;
@@ -215,7 +213,7 @@ public class DiffTree<OT, NT> {
               newIndex++;
               continue;
             }
-            CompareResult c31 = looksEqual(comparator, oldChild3, newChild1);
+            CompareResult c31 = looksEqual(oldChild3, newChild1);
             if (c31 == CompareResult.EQUAL || c31 == CompareResult.DRILL_DOWN_NEEDED || c31 == CompareResult.TYPE_ONLY) {
               consumer.nodeDeleted(oldNode, oldChild1);
               consumer.nodeDeleted(oldNode, oldChild2);
@@ -228,7 +226,7 @@ public class DiffTree<OT, NT> {
           // last resort: maybe the last elements are more similar?
           OT oldLastChild = oldIndex < oldChildrenSize - suffixLength ? oldChildren[oldChildrenSize - suffixLength - 1] : null;
           NT newLastChild = newIndex < newChildrenSize - suffixLength ? newChildren[newChildrenSize - suffixLength - 1] : null;
-          CompareResult c = oldLastChild == null || newLastChild == null ? CompareResult.NOT_EQUAL : looksEqual(comparator, oldLastChild, newLastChild);
+          CompareResult c = oldLastChild == null || newLastChild == null ? CompareResult.NOT_EQUAL : looksEqual(oldLastChild, newLastChild);
           if (c == CompareResult.EQUAL || c == CompareResult.TYPE_ONLY || c == CompareResult.DRILL_DOWN_NEEDED) {
             if (c == CompareResult.DRILL_DOWN_NEEDED) {
               build(oldLastChild, newLastChild, level + 1, consumer);
@@ -266,7 +264,7 @@ public class DiffTree<OT, NT> {
       OT oldChild = oldChildren[oldIndex + delta];
       NT newChild = newChildren[newIndex + delta];
 
-      CompareResult c11 = looksEqual(myComparator, oldChild, newChild);
+      CompareResult c11 = looksEqual(oldChild, newChild);
 
       if (c11 == CompareResult.DRILL_DOWN_NEEDED) {
         c11 = textMatch(oldChild, newChild) ? build(oldChild, newChild, level + 1, DiffTree.<OT, NT>emptyConsumer()) : CompareResult.NOT_EQUAL;
@@ -290,12 +288,12 @@ public class DiffTree<OT, NT> {
   }
 
   @NotNull
-  private CompareResult looksEqual(@NotNull ShallowNodeComparator<OT, NT> comparator, OT oldChild1, NT newChild1) {
+  private CompareResult looksEqual(OT oldChild1, NT newChild1) {
     if (oldChild1 == null || newChild1 == null) {
       return oldChild1 == newChild1 ? CompareResult.EQUAL : CompareResult.NOT_EQUAL;
     }
-    if (!comparator.typesEqual(oldChild1, newChild1)) return CompareResult.NOT_EQUAL;
-    ThreeState ret = comparator.deepEqual(oldChild1, newChild1);
+    if (!myComparator.typesEqual(oldChild1, newChild1)) return CompareResult.NOT_EQUAL;
+    ThreeState ret = myComparator.deepEqual(oldChild1, newChild1);
     if (ret == ThreeState.YES) return CompareResult.EQUAL;
     if (ret == ThreeState.UNSURE) return CompareResult.DRILL_DOWN_NEEDED;
     return CompareResult.TYPE_ONLY;
