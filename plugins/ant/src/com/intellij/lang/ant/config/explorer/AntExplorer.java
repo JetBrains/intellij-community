@@ -1,6 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.lang.ant.config.explorer;
 
 import com.intellij.execution.ExecutionBundle;
@@ -46,7 +44,6 @@ import com.intellij.ui.treeStructure.Tree;
 import com.intellij.util.EditSourceOnDoubleClickHandler;
 import com.intellij.util.Function;
 import com.intellij.util.IconUtil;
-import com.intellij.util.StringBuilderSpinAllocator;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.tree.TreeUtil;
@@ -233,19 +230,14 @@ public class AntExplorer extends SimpleToolWindowPanel implements DataProvider, 
       }
       if (ignoredFiles.size() != 0) {
         String messageText;
-        final StringBuilder message = StringBuilderSpinAllocator.alloc();
-        try {
-          String separator = "";
-          for (final VirtualFile virtualFile : ignoredFiles) {
-            message.append(separator);
-            message.append(virtualFile.getPresentableUrl());
-            separator = "\n";
-          }
-          messageText = message.toString();
+        final StringBuilder message = new StringBuilder();
+        String separator = "";
+        for (final VirtualFile virtualFile : ignoredFiles) {
+          message.append(separator);
+          message.append(virtualFile.getPresentableUrl());
+          separator = "\n";
         }
-        finally {
-          StringBuilderSpinAllocator.dispose(message);
-        }
+        messageText = message.toString();
         Messages.showWarningDialog(myProject, messageText, AntBundle.message("cannot.add.ant.files.dialog.title"));
       }
     });
@@ -934,7 +926,7 @@ public class AntExplorer extends SimpleToolWindowPanel implements DataProvider, 
       final KeymapManagerEx keymapManager = KeymapManagerEx.getInstanceEx();
       final Keymap activeKeymap = keymapManager.getActiveKeymap();
       listenTo(activeKeymap);
-      keymapManager.addKeymapManagerListener(this, AntExplorer.this);
+      ApplicationManager.getApplication().getMessageBus().connect(AntExplorer.this).subscribe(KeymapManagerListener.TOPIC, this);
     }
 
     @Override
