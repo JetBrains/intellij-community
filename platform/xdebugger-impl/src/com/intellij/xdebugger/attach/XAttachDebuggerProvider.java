@@ -33,23 +33,22 @@ import java.util.List;
 public interface XAttachDebuggerProvider {
   ExtensionPointName<XAttachDebuggerProvider> EP = ExtensionPointName.create("com.intellij.xdebugger.attachDebuggerProvider");
 
-  static XAttachDebuggerProvider[] getAttachDebuggerProviders() {
-    List<XAttachDebuggerProvider> providersList = ContainerUtil.newArrayList(Extensions.getExtensions(EP));
-    List<XAttachDebuggerProvider> localProvidersList = ContainerUtil.newArrayList(Extensions.getExtensions(XLocalAttachDebuggerProvider.EP));
-
-    providersList.addAll(localProvidersList);
-
-    XAttachDebuggerProvider[] providers = new XAttachDebuggerProvider[providersList.size()];
-    return providersList.toArray(providers);
+  /**
+   * will be removed in 2018.2, right after {@link XLocalAttachDebuggerProvider}
+   */
+  @NotNull
+  static List<XAttachDebuggerProvider> getAttachDebuggerProviders() {
+    return ContainerUtil.concat(ContainerUtil.newArrayList(Extensions.getExtensions(EP)),
+                                ContainerUtil.newArrayList(Extensions.getExtensions(XLocalAttachDebuggerProvider.EP)));
   }
 
   /**
    * @return a group in which the supported processes should be visually organized.
-   * Return XAttachPresentationGroup.DEFAULT for a common process group.
+   * Return {@link XDefaultLocalAttachGroup} for a common process group.
    */
   @NotNull
   default XAttachPresentationGroup<ProcessInfo> getPresentationGroup() {
-    return XAttachPresentationGroup.DEFAULT;
+    return XDefaultLocalAttachGroup.INSTANCE;
   }
 
 
