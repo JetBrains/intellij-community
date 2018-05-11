@@ -137,6 +137,10 @@ public class AttachToProcessAction extends AnAction {
   }
 
   private static void doUpdateFirstInGroup(@NotNull List<? extends AttachItem> items) {
+    if(items.isEmpty()) {
+      return;
+    }
+
     items.get(0).makeFirstInGroup();
 
     for(int i = 1; i < items.size(); i++) {
@@ -263,10 +267,6 @@ public class AttachToProcessAction extends AnAction {
           currentItems.add(new AttachToProcessItem(group, false, host, process, new ArrayList<>(debuggers), project, dataHolder));
         }
       }
-    }
-
-    if (currentItems.isEmpty()) {
-      return currentItems;
     }
 
     Collections.sort(currentItems);
