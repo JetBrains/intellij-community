@@ -101,7 +101,14 @@ public class SystemHealthMonitor implements ApplicationComponent {
    */
   private static final Histogram myEventDurationsMs = new Histogram(1);
   /** Maximum freeze duration to record. Longer freeze durations are truncated to keep the size of the histogram bounded. */
-  private static final long MAX_EVENT_DURATION = 30 * 60 * 1000;
+  private static final long MAX_EVENT_DURATION_MS = 30 * 60 * 1000;
+  /**
+   * Histogram of write lock wait times, in milliseconds. Must be accessed from the EDT.
+   */
+  private static final Histogram myWriteLockWaitTimesMs = new Histogram(1);
+  /** Maximum freeze duration to record. Longer freeze durations are truncated to keep the size of the histogram bounded. */
+  private static final long MAX_WRITE_LOCK_WAIT_TIME_MS = 30 * 60 * 1000;
+
   private final ThreadDumpsDatabase myThreadDumpsDatabase = new ThreadDumpsDatabase(new File(PathManager.getTempPath(), "threads.dmp"));
 
   private static final Object ACTION_INVOCATIONS_LOCK = new Object();
@@ -116,7 +123,11 @@ public class SystemHealthMonitor implements ApplicationComponent {
   }
 
   public static void recordEventTime(int interval, long durationMs) {
-    myEventDurationsMs.recordValueWithCount(Math.min(durationMs, MAX_EVENT_DURATION), interval);
+    myEventDurationsMs.recordValueWithCount(Math.min(durationMs, MAX_EVENT_DURATION_MS), interval);
+  }
+
+  public static void recordWriteLockWaitTime(long durationMs) {
+    myWriteLockWaitTimesMs.recordValueWithCount(Math.min(durationMs, MAX_WRITE_LOCK_WAIT_TIME_MS), 1);
   }
 
   @Override
@@ -645,12 +656,14 @@ public class SystemHealthMonitor implements ApplicationComponent {
       StudioPerformanceStats.Builder statsProto =
         StudioPerformanceStats.newBuilder()
                               .setEventServiceTimeSamplePeriod(IdeEventQueue.EVENT_TIMING_INTERVAL)
-                              .setEventServiceTimeMs(HistogramUtil.toProto(myEventDurationsMs));
+                              .setEventServiceTimeMs(HistogramUtil.toProto(myEventDurationsMs))
+                              .setWriteLockWaitTimeMs(HistogramUtil.toProto(myWriteLockWaitTimesMs));
       UsageTracker.getInstance().log(AndroidStudioEvent.newBuilder()
                                                        .setCategory(EventCategory.STUDIO_UI)
                                                        .setKind(EventKind.STUDIO_PERFORMANCE_STATS)
                                                        .setStudioPerformanceStats(statsProto));
       myEventDurationsMs.reset();
+      myWriteLockWaitTimesMs.reset();
     });
   }
 

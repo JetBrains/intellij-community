@@ -1196,10 +1196,13 @@ public class ApplicationImpl extends PlatformComponentManagerImpl implements App
                                       .scheduleWithFixedDelay(() -> PerformanceWatcher.getInstance().dumpThreads("waiting", true),
                                                               ourDumpThreadsOnLongWriteActionWaiting,
                                                               ourDumpThreadsOnLongWriteActionWaiting, TimeUnit.MILLISECONDS);
-        long t = LOG.isDebugEnabled() ? System.currentTimeMillis() : 0;
+        // Android Studio: We removed the existing conditional logging code and replaced it with code that records lock wait times
+        // via SystemHealthMonitor.
+        long t = System.currentTimeMillis();
         myLock.writeLock();
+        long elapsed = System.currentTimeMillis() - t;
+        SystemHealthMonitor.recordWriteLockWaitTime(elapsed);
         if (LOG.isDebugEnabled()) {
-          long elapsed = System.currentTimeMillis() - t;
           if (elapsed != 0) {
             LOG.debug("Write action wait time: " + elapsed);
           }
