@@ -22,54 +22,19 @@ inline fun <reified T : Any> Project.getService(): T = service<T>().checkService
 inline fun <reified T : Any> T?.checkService(container: Any): T =
     this ?: throw Error("Service ${T::class.java} not found in container $container")
 
-@Suppress("unused")
-fun createApplicationLifetime(): Lifetime {
-    val result = Lifetime()
-    application.addApplicationListener(object : ApplicationAdapter() {
-        override fun applicationExiting() {
-            result.terminate()
-        }
-    })
-    return result
-}
-
 val application: Application
     get() = ApplicationManager.getApplication()
 
 fun Disposable.attachLifetime(): Lifetime {
-    val defComponent = Lifetime()
-    Disposer.register(this, Disposable { defComponent.terminate() })
-    return defComponent
+    val lifetime = Lifetime()
+
+    Disposer.register(this, Disposable { lifetime.terminate() })
+
+    return lifetime
 }
 
-interface ILifetimedComponent {
-    val componentLifetime: Lifetime
-}
-
-class LifetimedComponent(project: Project) : ILifetimedComponent {
-    private val lifetime: Lifetime = project.attachLifetime()
-    override val componentLifetime: Lifetime
-        get() = lifetime
-}
-
-interface ILifetimedApplicationComponent : Disposable {
-    val componentLifetime: Lifetime
-}
-
-@Suppress("unused")
-class LifetimedApplicationComponent : ILifetimedApplicationComponent {
-    private val lifetimeDefinition = Lifetime()
-
-    init {
-        Disposer.register(application, this)
-    }
-
-    override fun dispose() {
-        lifetimeDefinition.terminate()
-    }
-
-    override val componentLifetime: Lifetime
-        get() = lifetimeDefinition
+class LifetimedOnDisposable(disposable: Disposable) : Lifetimed {
+    override val lifetime: Lifetime = disposable.attachLifetime()
 }
 
 fun Notification.notify(lifetime: Lifetime, project: Project?) {

@@ -25,13 +25,13 @@ import java.util.concurrent.*
 
 class CircletConnectionComponent(private val project: Project) :
     AbstractProjectComponent(project),
-    ILifetimedComponent by LifetimedComponent(project) {
+    Lifetimed by LifetimedOnDisposable(project) {
 
     var loginModel: LoginModel? = null
         private set
 
     init {
-        project.settings.serverUrl.view(componentLifetime) { urlLifetime, url ->
+        project.settings.serverUrl.view(lifetime) { urlLifetime, url ->
             loginModel?.stop()
             loginModel = null
 
@@ -115,7 +115,7 @@ class CircletConnectionComponent(private val project: Project) :
         ).notify(lifetime, project)
     }
 
-    private val seq = SequentialLifetimes(componentLifetime)
+    private val seq = SequentialLifetimes(lifetime)
 
     fun authenticate() {
         loginModel?.let { model ->
