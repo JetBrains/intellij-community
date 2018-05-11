@@ -819,8 +819,11 @@ public class DfaMemoryStateImpl implements DfaMemoryState {
         DfaVariableValue dfaVar = (DfaVariableValue)dfaLeft;
         if (isUnknownState(dfaVar)) {
           if (relationType == RelationType.IS_NOT) {
+            DfaPsiType dfaType = dfaVar.getDfaType();
             TypeConstraint constraint = factValue.get(DfaFactType.TYPE_CONSTRAINT);
-            return constraint == null || constraint.withNotInstanceofValue(dfaVar.getDfaType()) != null;
+            if (dfaType != null && constraint != null) {
+              return constraint.getInstanceofValues().stream().noneMatch(type -> type.isAssignableFrom(dfaType));
+            }
           }
           return true;
         }
