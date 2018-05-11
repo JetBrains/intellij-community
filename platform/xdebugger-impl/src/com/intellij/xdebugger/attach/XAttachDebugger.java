@@ -21,6 +21,9 @@ import com.intellij.openapi.project.Project;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
+/**
+ * {@link XAttachDebugger} allows to attach to process with specified {@link ProcessInfo}
+ */
 @ApiStatus.Experimental
 public interface XAttachDebugger {
   @NotNull

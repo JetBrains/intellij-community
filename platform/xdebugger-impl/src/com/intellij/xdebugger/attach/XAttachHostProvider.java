@@ -16,7 +16,10 @@
 package com.intellij.xdebugger.attach;
 
 import com.intellij.openapi.extensions.ExtensionPointName;
+import com.intellij.openapi.project.Project;
 import org.jetbrains.annotations.ApiStatus;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
 
@@ -31,11 +34,13 @@ public interface XAttachHostProvider<T extends XAttachHost> {
   /**
    * @return the group to which all connections provided by this provider belong
    */
+  @NotNull
   XAttachPresentationGroup<? extends XAttachHost> getPresentationGroup();
 
   /**
-   * @return a list of connections of this type
+   * @return a list of connections of this type, which is characterized by the provider
    */
-  List<T> getAvailableHosts();
+  @NotNull
+  List<T> getAvailableHosts(@Nullable Project project);
 
 }
