@@ -36,7 +36,6 @@ import com.intellij.rt.coverage.data.*;
 import com.intellij.util.containers.SmartHashSet;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.jps.model.java.JavaModuleSourceRootTypes;
 import org.jetbrains.jps.model.java.JavaSourceRootType;
 
 import java.io.File;
@@ -69,15 +68,15 @@ public class PackageAnnotator {
   }
 
   public interface Annotator {
-    void annotateSourceDirectory(VirtualFile virtualFile, PackageCoverageInfo packageCoverageInfo, Module module);
+    default void annotateSourceDirectory(VirtualFile virtualFile, PackageCoverageInfo packageCoverageInfo, Module module) {}
 
-    void annotateTestDirectory(VirtualFile virtualFile, PackageCoverageInfo packageCoverageInfo, Module module);
+    default void annotateTestDirectory(VirtualFile virtualFile, PackageCoverageInfo packageCoverageInfo, Module module) {}
 
-    void annotatePackage(String packageQualifiedName, PackageCoverageInfo packageCoverageInfo);
+    default void annotatePackage(String packageQualifiedName, PackageCoverageInfo packageCoverageInfo){}
     
-    void annotatePackage(String packageQualifiedName, PackageCoverageInfo packageCoverageInfo, boolean flatten);
+    default void annotatePackage(String packageQualifiedName, PackageCoverageInfo packageCoverageInfo, boolean flatten) {}
 
-    void annotateClass(String classQualifiedName, ClassCoverageInfo classCoverageInfo);
+    default void annotateClass(String classQualifiedName, ClassCoverageInfo classCoverageInfo){}
   }
 
   public static abstract class SummaryCoverageInfo {
@@ -323,33 +322,30 @@ public class PackageAnnotator {
           final String toplevelClassSrcFQName = getSourceToplevelFQName(classFqVMName);
           final Ref<VirtualFile> containingFileRef = new Ref<>();
           final Ref<PsiClass> psiClassRef = new Ref<>();
-          final CoverageSuitesBundle suitesBundle = myCoverageManager.getCurrentSuitesBundle();
-          if (suitesBundle == null) continue;
           final Boolean isInSource = DumbService.getInstance(myProject).runReadActionInSmartMode(() -> {
             if (myProject.isDisposed()) return null;
             final PsiClass aClass =
               JavaPsiFacade.getInstance(myManager.getProject()).findClass(toplevelClassSrcFQName, GlobalSearchScope.moduleScope(module));
             if (aClass == null || !aClass.isValid()) return Boolean.FALSE;
             psiClassRef.set(aClass);
-            containingFileRef.set(PsiUtilCore.getVirtualFile(aClass.getNavigationElement()));
+            PsiElement element = aClass.getNavigationElement();
+            containingFileRef.set(PsiUtilCore.getVirtualFile(element));
             if (containingFileRef.isNull()) {
               LOG.info("No virtual file found for: " + aClass);
               return null;
             }
-            final ModuleFileIndex fileIndex = ModuleRootManager.getInstance(module).getFileIndex();
-            return fileIndex.isUnderSourceRootOfType(containingFileRef.get(), JavaModuleSourceRootTypes.SOURCES)
-                   && (bundle.isTrackTestFolders() || !fileIndex.isInTestSourceContent(containingFileRef.get()));
+            return bundle.getCoverageEngine().acceptedByFilters(element.getContainingFile(), bundle);
           });
           PackageCoverageInfo coverageInfoForClass = null;
           String classCoverageKey = classFqVMName.replace('/', '.');
           boolean ignoreClass = false;
           boolean keepWithoutSource = false;
           for (JavaCoverageEngineExtension extension : JavaCoverageEngineExtension.EP_NAME.getExtensions()) {
-            if (extension.ignoreCoverageForClass(suitesBundle, child)) {
+            if (extension.ignoreCoverageForClass(bundle, child)) {
               ignoreClass = true;
               break;
             }
-            if (extension.keepCoverageInfoForClassWithoutSource(suitesBundle, child)) {
+            if (extension.keepCoverageInfoForClassWithoutSource(bundle, child)) {
               keepWithoutSource = true;
             }
           }
