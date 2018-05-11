@@ -22,6 +22,7 @@ import java.awt.geom.RoundRectangle2D;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 
+import static com.intellij.ide.ui.laf.darcula.DarculaUIUtil.MINIMUM_WIDTH;
 import static com.intellij.ide.ui.laf.intellij.MacIntelliJTextBorder.ARC;
 import static com.intellij.ide.ui.laf.intellij.MacIntelliJTextBorder.BW;
 
@@ -70,16 +71,18 @@ public class MacIntelliJComboBoxUI extends DarculaComboBoxUI {
     return button;
   }
 
-  protected Dimension getSizeWithButton(Dimension d) {
+  @Override
+  protected Dimension getSizeWithButton(Dimension size, Dimension editorSize) {
     Insets i = comboBox.getInsets();
     int iconWidth = DEFAULT_ICON.getIconWidth() + i.right;
     int iconHeight = DEFAULT_ICON.getIconHeight() + i.top + i.bottom;
 
-    Dimension ePrefSize = editor != null ? editor.getPreferredSize() : null;
-    int editorHeight = ePrefSize != null ? ePrefSize.height + i.top + i.bottom + padding.top + padding.bottom: 0;
-    int editorWidth = ePrefSize != null ? ePrefSize.width + i.left + padding.left + padding.right : 0;
+    int editorHeight = editorSize != null ? editorSize.height + i.top + i.bottom + padding.top + padding.bottom: 0;
+    int editorWidth = editorSize != null ? editorSize.width + i.left + padding.left + padding.right : 0;
+    editorWidth = Math.max(editorWidth, MINIMUM_WIDTH.get() + i.left);
 
-    return new Dimension(Math.max(d.width, editorWidth + iconWidth), Math.max(iconHeight, editorHeight));
+    return new Dimension(Math.max(size.width + padding.left, editorWidth + iconWidth),
+                         Math.max(Math.max(iconHeight, size.height), editorHeight));
   }
 
   @Override

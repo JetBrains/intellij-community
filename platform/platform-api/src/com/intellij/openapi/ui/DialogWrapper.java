@@ -672,16 +672,20 @@ public abstract class DialogWrapper {
     return myCheckBoxDoNotShowDialog != null && myCheckBoxDoNotShowDialog.isVisible() ? myCheckBoxDoNotShowDialog : null;
   }
 
+  private final JBValue BASE_BUTTON_GAP = new JBValue.Float(UIUtil.isUnderWin10LookAndFeel() ? 8 : 12);
+
   @NotNull
-  protected JPanel createButtonsPanel(@NotNull List<JButton> buttons) {
-    int hgap = JBUI.scale(UIUtil.isUnderWin10LookAndFeel() ? 10 : 6);
+  protected JPanel createButtonsPanel(@NotNull List<? extends JButton> buttons) {
     JPanel buttonsPanel = new NonOpaquePanel();
     buttonsPanel.setLayout(new BoxLayout(buttonsPanel, BoxLayout.X_AXIS));
 
     for (int i = 0; i < buttons.size(); i++) {
-      buttonsPanel.add(buttons.get(i));
+      JComponent button = buttons.get(i);
+      Insets insets = button.getInsets();
+
+      buttonsPanel.add(button);
       if (i < buttons.size() - 1) {
-        buttonsPanel.add(Box.createRigidArea(JBUI.size(hgap, 0)));
+        buttonsPanel.add(Box.createRigidArea(new Dimension(BASE_BUTTON_GAP.get() - insets.left - insets.right, 0)));
       }
     }
 

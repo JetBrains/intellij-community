@@ -16,7 +16,6 @@
 package com.intellij.ide.ui.laf.darcula.ui;
 
 import com.intellij.ide.ui.laf.VisualPaddingsProvider;
-import com.intellij.ide.ui.laf.darcula.DarculaUIUtil;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.editor.ex.FocusChangeListener;
@@ -32,6 +31,9 @@ import javax.swing.*;
 import java.awt.*;
 import java.awt.geom.Path2D;
 import java.awt.geom.Rectangle2D;
+
+import static com.intellij.ide.ui.laf.darcula.DarculaUIUtil.Outline;
+import static com.intellij.ide.ui.laf.darcula.DarculaUIUtil.paintOutlineBorder;
 
 /**
  * @author Konstantin Bulenkov
@@ -89,19 +91,22 @@ public class DarculaEditorTextFieldBorder extends DarculaTextBorder implements V
       g2.setColor(c.getBackground());
       g2.fill(outer);
 
-      Path2D border = new Path2D.Float(Path2D.WIND_EVEN_ODD);
-      border.append(outer, false);
-      border.append(new Rectangle2D.Float(bw + lw, bw + lw, r.width - (bw + lw) * 2, r.height - (bw + lw) * 2), false);
-
-      g2.setColor(getOutlineColor(c.isEnabled()));
-      g2.fill(border);
-
       boolean hasFocus = editorTextField.getFocusTarget().hasFocus();
+
       Object op = editorTextField.getClientProperty("JComponent.outline");
       if (op != null) {
-        DarculaUIUtil.paintOutlineBorder(g2, r.width, r.height, 0, true, hasFocus, DarculaUIUtil.Outline.valueOf(op.toString()));
-      } else if (editorTextField.isEnabled() && editorTextField.isVisible() && hasFocus) {
-        DarculaUIUtil.paintFocusBorder(g2, r.width, r.height, 0, true);
+        paintOutlineBorder(g2, r.width, r.height, 0, true, hasFocus, Outline.valueOf(op.toString()));
+      } else if (editorTextField.isEnabled() && editorTextField.isVisible()) {
+        if (hasFocus) {
+          paintOutlineBorder(g2, r.width, r.height, 0, true, true, Outline.focus);
+        }
+
+        Path2D border = new Path2D.Float(Path2D.WIND_EVEN_ODD);
+        border.append(outer, false);
+        border.append(new Rectangle2D.Float(bw + lw, bw + lw, r.width - (bw + lw) * 2, r.height - (bw + lw) * 2), false);
+
+        g2.setColor(getOutlineColor(c.isEnabled(), hasFocus));
+        g2.fill(border);
       }
 
     } finally {
@@ -111,7 +116,7 @@ public class DarculaEditorTextFieldBorder extends DarculaTextBorder implements V
 
   @Override
   public Insets getBorderInsets(Component c) {
-    return isComboBoxEditor(c) ? JBUI.insets(2, 3).asUIResource() : JBUI.insets(7, 8).asUIResource();
+    return isComboBoxEditor(c) ? JBUI.insets(2, 3).asUIResource() : JBUI.insets(6, 8).asUIResource();
   }
 
   @Override
