@@ -7,17 +7,19 @@ import com.intellij.psi.*
 import com.intellij.util.ProcessingContext
 import com.jetbrains.python.BaseReference
 import com.jetbrains.python.psi.PyElementGenerator
-import com.jetbrains.python.psi.PyFunction
 import com.jetbrains.python.psi.PyNamedParameter
 import com.jetbrains.python.psi.PyParameter
 import com.jetbrains.python.psi.types.PyType
 import com.jetbrains.python.psi.types.PyTypeProviderBase
 import com.jetbrains.python.psi.types.TypeEvalContext
 
-private class PyTextFixtureReference(namedParameter: PyNamedParameter, fixture: PyFunction) : BaseReference(namedParameter) {
-  private val fixtureRef = SmartPointerManager.createPointer(fixture)
+private class PyTextFixtureReference(namedParameter: PyNamedParameter, fixture: PyTestFixture) : BaseReference(namedParameter) {
+  private val functionRef = SmartPointerManager.createPointer(fixture.function)
+  private val resolveRef = SmartPointerManager.createPointer(fixture.resolveTarget)
 
-  override fun resolve() = fixtureRef.element
+  override fun resolve() = resolveRef.element
+
+  fun getFunction() = functionRef.element
 
   override fun getVariants() = emptyArray<Any>()
 
@@ -31,7 +33,7 @@ private class PyTextFixtureReference(namedParameter: PyNamedParameter, fixture: 
 object PyTextFixtureTypeProvider : PyTypeProviderBase() {
   override fun getReferenceType(referenceTarget: PsiElement, context: TypeEvalContext, anchor: PsiElement?): Ref<PyType>? {
     val param = referenceTarget as? PyNamedParameter ?: return null
-    val fixtureFunc = param.references.filterIsInstance(PyTextFixtureReference::class.java).firstOrNull()?.resolve() ?: return null
+    val fixtureFunc = param.references.filterIsInstance(PyTextFixtureReference::class.java).firstOrNull()?.getFunction() ?: return null
     return context.getReturnType(fixtureFunc)?.let { Ref(it) }
 
   }
