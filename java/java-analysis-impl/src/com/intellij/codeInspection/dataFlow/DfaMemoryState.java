@@ -32,14 +32,14 @@ public interface DfaMemoryState {
   /**
    * Pops single value from the top of the stack and returns it
    * @return popped value
-   * @throws com.intellij.codeInspection.dataFlow.instructions.EmptyStackInstruction if stack is empty
+   * @throws java.util.EmptyStackException if stack is empty
    */
   @NotNull DfaValue pop();
 
   /**
    * Reads a value from the top of the stack without popping it
    * @return top of stack value
-   * @throws com.intellij.codeInspection.dataFlow.instructions.EmptyStackInstruction if stack is empty
+   * @throws java.util.EmptyStackException if stack is empty
    */
   @NotNull DfaValue peek();
 
@@ -58,7 +58,7 @@ public interface DfaMemoryState {
    *
    * @param type the type to cast to
    * @return true if cast is successful; false if top-of-stack value type is incompatible with supplied type
-   * @throws com.intellij.codeInspection.dataFlow.instructions.EmptyStackInstruction if stack is empty
+   * @throws java.util.EmptyStackException if stack is empty
    */
   boolean castTopOfStack(@NotNull DfaPsiType type);
 
