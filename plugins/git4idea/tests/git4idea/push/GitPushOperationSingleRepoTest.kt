@@ -35,7 +35,6 @@ import git4idea.update.GitRebaseOverMergeProblem
 import git4idea.update.GitUpdateResult
 import org.junit.Assume.assumeTrue
 import java.io.File
-import java.io.IOException
 import java.util.Collections.singletonMap
 import javax.swing.Action
 
@@ -146,13 +145,7 @@ class GitPushOperationSingleRepoTest : GitPushOperationBaseTest() {
                           updateMethod: UpdateMethod,
                           checkForRebaseOverMergeProblem: Boolean): GitUpdateResult {
         val updateResult = super.update(rootsToUpdate, updateMethod, checkForRebaseOverMergeProblem)
-        try {
-          pushCommitFromBro()
-        }
-        catch (e: IOException) {
-          throw RuntimeException(e)
-        }
-
+        pushCommitFromBro()
         return updateResult
       }
     }.execute()
@@ -180,16 +173,10 @@ class GitPushOperationSingleRepoTest : GitPushOperationBaseTest() {
                           updateMethod: UpdateMethod,
                           checkForRebaseOverMergeProblem: Boolean): GitUpdateResult {
         val updateResult = super.update(rootsToUpdate, updateMethod, checkForRebaseOverMergeProblem)
-        try {
-          if (!updateHappened) {
-            updateHappened = true
-            pushCommitFromBro()
-          }
+        if (!updateHappened) {
+          updateHappened = true
+          pushCommitFromBro()
         }
-        catch (e: IOException) {
-          throw RuntimeException(e)
-        }
-
         return updateResult
       }
     }.execute()
