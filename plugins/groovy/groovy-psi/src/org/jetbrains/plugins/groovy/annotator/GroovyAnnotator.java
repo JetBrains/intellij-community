@@ -1,6 +1,4 @@
-/*
- * Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package org.jetbrains.plugins.groovy.annotator;
 
@@ -579,9 +577,10 @@ public class GroovyAnnotator extends GroovyElementVisitor {
 
   @Override
   public void visitOpenBlock(@NotNull GrOpenBlock block) {
-    if (block.getParent() instanceof GrMethod) {
-      final GrMethod method = (GrMethod)block.getParent();
-      if (method.getModifierList().hasExplicitModifier(PsiModifier.ABSTRACT) || GrTraitUtil.isInterface(method.getContainingClass())) {
+    PsiElement blockParent = block.getParent();
+    if (blockParent instanceof GrMethod) {
+      final GrMethod method = (GrMethod)blockParent;
+      if (GrTraitUtil.isMethodAbstract(method)) {
         final Annotation annotation = myHolder.createErrorAnnotation(block, GroovyBundle.message("abstract.methods.must.not.have.body"));
         registerMakeAbstractMethodNotAbstractFix(annotation, method, true);
       }

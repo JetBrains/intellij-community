@@ -113,7 +113,7 @@ public interface TokenSets {
     kSTATIC,
     kTRANSIENT,
     kFINAL,
-    kABSTRACT,
+    kDEFAULT,
     kNATIVE,
     kSYNCHRONIZED,
     kSTRICTFP,

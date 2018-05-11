@@ -9,4 +9,24 @@ class A {
       System.out.println(b);
     }
   }
+
+  interface Base {
+    void doSmth();
+  }
+  interface Sub extends Base {}
+
+  private static void test(Base[] operands) {
+    operands[0].doSmth();
+    if (operands[0] instanceof Sub) {
+      System.out.println("possible");
+    }
+  }
+
+  private static void test2(Sub[] operands) {
+    operands[0].doSmth();
+    if (<warning descr="Condition 'operands[0] instanceof Base' is always 'true'">operands[0] instanceof Base</warning>) {
+      System.out.println("always");
+    }
+  }
+
 }

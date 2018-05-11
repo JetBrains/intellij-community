@@ -33,7 +33,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
 
-public class DfaVariableValue extends DfaValue {
+public final class DfaVariableValue extends DfaValue {
 
   public static class Factory {
     private final MultiMap<Trinity<Boolean,String,DfaVariableValue>,DfaVariableValue> myExistingVars = new MultiMap<>();

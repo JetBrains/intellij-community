@@ -14,6 +14,7 @@ import com.intellij.openapi.vcs.changes.ChangeList;
 import com.intellij.openapi.vcs.changes.ChangeListManager;
 import com.intellij.openapi.vcs.changes.LocalChangeList;
 import com.intellij.openapi.vcs.changes.ui.EditChangelistDialog;
+import com.intellij.util.ArrayUtil;
 import org.jetbrains.annotations.Nullable;
 
 public class RenameChangeListAction extends AnAction implements DumbAware {
@@ -40,7 +41,7 @@ public class RenameChangeListAction extends AnAction implements DumbAware {
     Project project = e.getProject();
     if (project == null) return null;
     ChangeList[] lists = e.getData(VcsDataKeys.CHANGE_LISTS);
-    if (lists != null && lists.length > 0) {
+    if (!ArrayUtil.isEmpty(lists)) {
       if (lists.length == 1) {
         return ChangeListManager.getInstance(project).findChangeList(lists[0].getName());
       }
@@ -54,7 +55,7 @@ public class RenameChangeListAction extends AnAction implements DumbAware {
       LocalChangeList cl = ChangeListManager.getInstance(project).getChangeList(change);
       if (result == null)
         result = cl;
-      else if (cl != null && cl != result)
+      else if (cl != null && !cl.equals(result))
         return null;
     }
     return result;
