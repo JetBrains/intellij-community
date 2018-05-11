@@ -39,7 +39,7 @@ class GithubAuthenticationManager internal constructor(private val accountManage
     val dialog = GithubLoginDialog(project, null, ::isAccountUnique)
     DialogManager.show(dialog)
     if (dialog.isOK) {
-      val account = GithubAccount(dialog.getLogin(), dialog.getServer())
+      val account = GithubAccountManager.createAccount(dialog.getLogin(), dialog.getServer())
       accountManager.accounts += account
       accountManager.updateAccountToken(account, dialog.getToken())
       return account
@@ -49,7 +49,7 @@ class GithubAuthenticationManager internal constructor(private val accountManage
 
   @TestOnly
   fun registerAccount(name: String, host: String, token: String): GithubAccount {
-    val account = GithubAccount(name, GithubServerPath.from(host))
+    val account = GithubAccountManager.createAccount(name, GithubServerPath.from(host))
     accountManager.accounts += account
     accountManager.updateAccountToken(account, token)
     return account

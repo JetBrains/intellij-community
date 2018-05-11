@@ -11,6 +11,7 @@ import com.intellij.openapi.components.State
 import com.intellij.openapi.components.Storage
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.util.messages.Topic
+import org.jetbrains.plugins.github.api.GithubServerPath
 import org.jetbrains.plugins.github.util.GithubUtil
 import kotlin.properties.Delegates.observable
 
@@ -59,6 +60,8 @@ internal class GithubAccountManager(private val passwordSafe: PasswordSafe) : Pe
     val ACCOUNT_REMOVED_TOPIC = Topic("GITHUB_ACCOUNT_REMOVED", AccountRemovedListener::class.java)
     @JvmStatic
     val ACCOUNT_TOKEN_CHANGED_TOPIC = Topic("GITHUB_ACCOUNT_TOKEN_CHANGED", AccountTokenChangedListener::class.java)
+
+    fun createAccount(name: String, server: GithubServerPath) = GithubAccount(name, server)
   }
 }
 
