@@ -73,7 +73,8 @@ public class GitHandlerAuthenticationManager implements AutoCloseable {
         String lowerCaseLine = line.toLowerCase();
         if (lowerCaseLine.contains("authentication failed") ||
             lowerCaseLine.contains("403 forbidden") ||
-            lowerCaseLine.contains("error: 400")) {
+            lowerCaseLine.contains("error: 400") ||
+            (lowerCaseLine.contains("fatal: repository") && lowerCaseLine.contains("not found"))) {
           LOG.debug("auth listener: auth failure detected: " + line);
           myHttpAuthFailed = true;
         }
