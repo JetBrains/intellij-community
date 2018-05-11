@@ -5,6 +5,7 @@ import com.intellij.ui.components.noteComponent
 import com.intellij.ui.layout.*
 import com.intellij.ui.layout.migLayout.patched.*
 import com.intellij.util.containers.ContainerUtil
+import com.intellij.util.ui.JBUI
 import net.miginfocom.layout.*
 import java.awt.Component
 import java.awt.Container
@@ -13,6 +14,37 @@ import javax.swing.JDialog
 import javax.swing.JLabel
 
 internal class MigLayoutBuilder(val spacing: SpacingConfiguration) : LayoutBuilderImpl {
+  companion object {
+    private var hRelatedGap = -1
+    private var vRelatedGap = -1
+
+    init {
+      JBUI.addPropertyChangeListener(JBUI.USER_SCALE_FACTOR_PROPERTY) {
+        updatePlatformDefaults()
+      }
+    }
+
+    private fun updatePlatformDefaults() {
+      if (hRelatedGap != -1 && vRelatedGap != -1) {
+        PlatformDefaults.setRelatedGap(createUnitValue(hRelatedGap, true), createUnitValue(vRelatedGap, false))
+      }
+    }
+
+    private fun setRelatedGap(h: Int, v: Int) {
+      if (hRelatedGap == h && vRelatedGap == v) {
+        return
+      }
+
+      hRelatedGap = h
+      vRelatedGap = v
+      updatePlatformDefaults()
+    }
+  }
+
+  init {
+    setRelatedGap(spacing.horizontalGap, spacing.verticalGap)
+  }
+
   /**
    * Map of component to constraints shared among rows (since components are unique)
    */
@@ -42,6 +74,7 @@ internal class MigLayoutBuilder(val spacing: SpacingConfiguration) : LayoutBuild
 
   override fun build(container: Container, layoutConstraints: Array<out LCFlags>) {
     val lc = createLayoutConstraints()
+
     lc.gridGapY = gapToBoundSize(spacing.verticalGap, false)
     if (layoutConstraints.isEmpty()) {
       lc.fillX()

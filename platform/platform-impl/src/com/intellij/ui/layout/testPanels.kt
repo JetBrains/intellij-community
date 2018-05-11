@@ -172,3 +172,17 @@ fun createLafTestPanel(): JPanel {
 
   return panel
 }
+
+fun withVerticalButtons(): JPanel {
+  return panel {
+    row {
+      scrollPane(JTextArea(), pushX)
+
+      cell(isVerticalFlow = true) {
+        button("Accept Yours") {}
+        button("Accept Theirs") {}
+        button("Merge ..") {}
+      }
+    }
+  }
+}

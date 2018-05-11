@@ -38,12 +38,12 @@ componentConstrains:
   'JPasswordField #3': {spanX: 2097051, wrap: true}
   'Combobox:': {}
   'JComboBox #5':
-    horizontal: {grow: 100.0}
+    horizontal: {grow: 1000.0}
     spanX: 2097051
     wrap: true
   'Combobox Editable:': {}
   'JComboBox #7':
-    horizontal: {grow: 100.0}
+    horizontal: {grow: 1000.0}
     spanX: 2097051
     wrap: true
   'Button:': {}
@@ -65,44 +65,18 @@ componentConstrains:
   'JTextField #19':
     horizontal: {grow: 100.0}
     split: 6
-  'JPasswordField #20':
-    horizontal:
-      gapBefore:
-        min: &id005 {horizontal: true, value: 8.0}
-        preferred: *id005
-      size:
-        max: &id006 {horizontal: true, value: 250.0}
-        min: *id006
-        preferred: *id006
+  'JPasswordField #20': {}
   'JComboBox #21':
-    horizontal:
-      gapBefore:
-        min: &id007 {horizontal: true, value: 8.0}
-        preferred: *id007
-      grow: 100.0
-  b:
-    horizontal:
-      gapBefore:
-        min: &id008 {horizontal: true, value: 8.0}
-        preferred: *id008
-  c:
-    horizontal:
-      gapBefore:
-        min: &id009 {horizontal: true, value: 8.0}
-        preferred: *id009
-  rb:
-    horizontal:
-      gapBefore:
-        min: &id010 {horizontal: true, value: 8.0}
-        preferred: *id010
-    spanX: 2097051
-    wrap: true
+    horizontal: {grow: 1000.0}
+  b: {}
+  c: {}
+  rb: {spanX: 2097051, wrap: true}
   'Scroll pane:':
     vertical:
       align: {horizontal: false, unit: 6, value: 0.0}
       gapBefore:
-        min: &id011 {horizontal: false, value: 1.0}
-        preferred: *id011
+        min: &id005 {horizontal: false, value: 1.0}
+        preferred: *id005
   'JBScrollPane #26':
     horizontal: {grow: 100.0}
     pushY: 100.0

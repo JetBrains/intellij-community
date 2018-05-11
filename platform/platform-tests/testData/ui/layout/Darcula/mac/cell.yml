@@ -37,18 +37,12 @@ columnConstraints:
 componentConstrains:
   'Repository:': {}
   'ComboBox #1': {split: 2}
-  Delete:
-    horizontal:
-      gapBefore:
-        min: &id006 {horizontal: true, value: 8.0}
-        preferred: *id006
-    spanX: 2097051
-    wrap: true
+  Delete: {spanX: 2097051, wrap: true}
   Use File -> Settings Repository... to configure:
     horizontal:
       gapBefore:
-        min: &id007 {horizontal: true, value: 4.0}
-        preferred: *id007
+        min: &id006 {horizontal: true, value: 4.0}
+        preferred: *id006
     skip: 1
     spanX: 2097051
     wrap: true

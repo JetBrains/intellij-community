@@ -23,9 +23,9 @@ private fun CC.apply(flags: Array<out CCFlags>): CC {
     //CCFlags.wrap -> isWrap = true
       CCFlags.grow -> grow()
       CCFlags.growX -> {
-        growX()
+        growX(1000f)
       }
-      CCFlags.growY -> growY()
+      CCFlags.growY -> growY(1000f)
 
     // If you have more than one component in a cell the alignment keywords will not work since the behavior would be indeterministic.
     // You can however accomplish the same thing by setting a gap before and/or after the components.
@@ -48,6 +48,8 @@ internal class DefaultComponentConstraintCreator(private val spacing: SpacingCon
   val vertical1pxGap: BoundSize = ConstraintParser.parseBoundSize("${JBUI.scale(1)}px!", true, false)
 
   val horizontalUnitSizeGap = gapToBoundSize(spacing.unitSize, true)
+
+  val horizontalGap = gapToBoundSize(spacing.horizontalGap, true)
 
   fun createComponentConstraints(cc: Lazy<CC>,
                                  component: Component,
