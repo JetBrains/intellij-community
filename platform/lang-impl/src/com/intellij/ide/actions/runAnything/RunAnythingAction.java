@@ -1,7 +1,6 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.actions.runAnything;
 
-import com.intellij.codeInsight.hint.HintUtil;
 import com.intellij.codeInsight.lookup.LookupManager;
 import com.intellij.execution.Executor;
 import com.intellij.execution.ExecutorRegistry;
@@ -141,7 +140,6 @@ public class RunAnythingAction extends AnAction implements CustomComponentAction
   @Nullable
   private VirtualFile myVirtualFile;
   private RunAnythingHistoryItem myHistoryItem;
-  private JLabel myAdComponent;
   private DataContext myDataContext;
   private JLabel myTextFieldTitle;
   private boolean myIsItemSelected;
@@ -698,10 +696,6 @@ public class RunAnythingAction extends AnAction implements CustomComponentAction
     panel.add(topPanel, BorderLayout.NORTH);
     panel.setBorder(JBUI.Borders.empty(3, 5, 4, 5));
 
-    myAdComponent = HintUtil.createAdComponent(RunAnythingUtil.AD_CONTEXT_TEXT, JBUI.Borders.empty(1, 5), SwingConstants.LEFT);
-
-    panel.add(myAdComponent, BorderLayout.SOUTH);
-
     myList.addListSelectionListener(new ListSelectionListener() {
       @Override
       public void valueChanged(ListSelectionEvent e) {
@@ -921,7 +915,7 @@ public class RunAnythingAction extends AnAction implements CustomComponentAction
 
 
   public void setAdText(@NotNull final String s) {
-    myAdComponent.setText(s);
+    myPopup.setAdText(s, SwingConstants.LEFT);
   }
 
   @NotNull
