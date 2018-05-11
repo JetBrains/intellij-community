@@ -38,7 +38,7 @@ import javax.swing.event.HyperlinkEvent
 
 
 internal class DaemonTooltipWithActionRenderer(text: String?,
-                                               private val fix: TooltipAction?,
+                                               private val tooltipAction: TooltipAction?,
                                                width: Int,
                                                comparable: Array<Any>) : DaemonTooltipRenderer(text, width, comparable) {
 
@@ -117,7 +117,7 @@ internal class DaemonTooltipWithActionRenderer(text: String?,
                             editor: Editor,
                             actions: ArrayList<AnAction>,
                             grid: JComponent) {
-    if (fix != null) {
+    if (tooltipAction != null) {
       val buttons = JPanel(FlowLayout(FlowLayout.CENTER, 0, 0))
       val wrapper = JPanel(BorderLayout())
       wrapper.background = hintHint.textBackground
@@ -128,18 +128,18 @@ internal class DaemonTooltipWithActionRenderer(text: String?,
       wrapper.add(buttons, BorderLayout.WEST)
       val runFixAction = Runnable {
         hint.hide()
-        fix.execute(editor)
+        tooltipAction.execute(editor)
       }
 
       val shortcutRunActionText = getKeymap(IdeActions.ACTION_RUN_INTENTION_ACTION)
       val shortcutShowAllActionsText = getKeymap(IdeActions.ACTION_SHOW_INTENTION_ACTIONS)
 
-      buttons.add(createActionLabel(fix.text, runFixAction, hintHint.textBackground))
+      buttons.add(createActionLabel(tooltipAction.text, runFixAction, hintHint.textBackground))
       buttons.add(createHint(shortcutRunActionText))
 
       val showAllFixes = Runnable {
         hint.hide()
-        fix.showAllActions(editor)
+        tooltipAction.showAllActions(editor)
       }
 
       val spacing = JBLabel("  ")
@@ -191,7 +191,7 @@ internal class DaemonTooltipWithActionRenderer(text: String?,
   }
 
   override fun createRenderer(text: String, width: Int): LineTooltipRenderer {
-    return DaemonTooltipWithActionRenderer(text, fix, width, equalityObjects)
+    return DaemonTooltipWithActionRenderer(text, tooltipAction, width, equalityObjects)
   }
 
   override fun canAutoHideOn(event: TooltipEvent): Boolean {
