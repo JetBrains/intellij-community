@@ -164,6 +164,7 @@ class AndroidStudioProperties extends BaseIdeaProperties {
       withModule("intellij.android.adt.ui.model", "adt-ui.jar")
       withModule("android.sdktools.repository")
       withModule("db-baseLibrary", "data-binding.jar")
+      withModule("db-baseLibrarySupport", "data-binding.jar")
       withModule("db-compilerCommon", "data-binding.jar")
       withModule("db-compiler", "data-binding.jar")
       withModule("android.sdktools.sdklib", "sdklib.jar")
