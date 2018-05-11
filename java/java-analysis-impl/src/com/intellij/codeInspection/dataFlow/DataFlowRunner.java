@@ -16,6 +16,7 @@ import com.intellij.openapi.util.registry.Registry;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
+import com.intellij.util.ArrayUtil;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.MultiMap;
@@ -140,8 +141,9 @@ public class DataFlowRunner {
                                    @NotNull InstructionVisitor visitor,
                                    boolean ignoreAssertions,
                                    @NotNull Collection<? extends DfaMemoryState> initialStates) {
+    ControlFlow flow = null;
     try {
-      final ControlFlow flow = new ControlFlowAnalyzer(myValueFactory, psiBlock, ignoreAssertions, myInlining).buildControlFlow();
+      flow = new ControlFlowAnalyzer(myValueFactory, psiBlock, ignoreAssertions, myInlining).buildControlFlow();
       if (flow == null) return RunnerResult.NOT_APPLICABLE;
       int[] loopNumber = LoopAnalyzer.calcInLoop(flow);
 
@@ -259,8 +261,12 @@ public class DataFlowRunner {
       LOG.trace("Analysis ok");
       return RunnerResult.OK;
     }
-    catch (ArrayIndexOutOfBoundsException | EmptyStackException e) {
-      LOG.error(new RuntimeExceptionWithAttachments(e, new Attachment("method_body.txt", psiBlock.getText())));
+    catch (RuntimeException e) {
+      Attachment[] attachments = {new Attachment("method_body.txt", psiBlock.getText())};
+      if (flow != null) {
+        attachments = ArrayUtil.append(attachments, new Attachment("flow.txt", flow.toString()));
+      }
+      LOG.error(new RuntimeExceptionWithAttachments(e, attachments));
       return RunnerResult.ABORTED;
     }
   }
