@@ -26,7 +26,7 @@ import java.io.File;
 import java.lang.reflect.Method;
 import java.util.*;
 
-class DependencyResultsTransformer {
+public class DependencyResultsTransformer {
   private final Project myProject;
   private final SourceSetCachedFinder mySourceSetFinder;
   private final Multimap<ModuleVersionIdentifier, ResolvedArtifact> myArtifactMap;
@@ -35,7 +35,7 @@ class DependencyResultsTransformer {
   private final String myScope;
   private final Set<File> resolvedDepsFiles = new HashSet<File>();
 
-  DependencyResultsTransformer(@NotNull final Project project,
+  public DependencyResultsTransformer(@NotNull final Project project,
                                @NotNull final SourceSetCachedFinder sourceSetFinder,
                                @NotNull final Multimap<ModuleVersionIdentifier, ResolvedArtifact> artifactMap,
                                @NotNull final Map<ComponentIdentifier, ComponentArtifactsResult> auxiliaryArtifactsMap,

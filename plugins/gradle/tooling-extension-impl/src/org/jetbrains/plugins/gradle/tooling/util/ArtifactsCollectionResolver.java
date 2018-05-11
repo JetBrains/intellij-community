@@ -27,22 +27,12 @@ public class ArtifactsCollectionResolver extends DependencyResolverImpl implemen
 
   private static final Collection<ExternalDependency> EMPTY = Collections.emptySet();
 
-  private final Project myProject;
-  private final boolean myDownloadJavadoc;
-  private final boolean myDownloadSources;
-
   public ArtifactsCollectionResolver(@NotNull Project project, boolean isPreview) {
     super(project, isPreview);
-    myProject = project;
-    myDownloadJavadoc = false;
-    myDownloadSources = false;
   }
 
   public ArtifactsCollectionResolver(@NotNull Project project, boolean isPreview, boolean downloadJavadoc, boolean downloadSources, SourceSetCachedFinder sourceSetCachedFinder) {
     super(project, isPreview, downloadJavadoc, downloadSources, sourceSetCachedFinder);
-    myProject = project;
-    myDownloadJavadoc = downloadJavadoc;
-    myDownloadSources = downloadSources;
   }
 
   @Override
@@ -86,8 +76,6 @@ public class ArtifactsCollectionResolver extends DependencyResolverImpl implemen
       Iterables.filter(configuration.getIncoming().getResolutionResult().getRoot().getDependencies(), UnresolvedDependencyResult.class);
 
     ScopedExternalDependenciesFactory factory = new ScopedExternalDependenciesFactory(myProject, scope);
-
-
 
     externalDeps.addAll(factory.processResolvedArtifacts(resolvedArtifacts, sourcesAndJavadocs));
     externalDeps.addAll(factory.processUnresolvedDeps(unresolvedDependencies));

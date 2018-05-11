@@ -57,11 +57,11 @@ public class DependencyResolverImpl implements DependencyResolver {
                                                                     (GradleVersion.current().compareTo(GradleVersion.version("2.0")) >= 0);
 
   @NotNull
-  private final Project myProject;
-  private final boolean myIsPreview;
-  private final boolean myDownloadJavadoc;
-  private final boolean myDownloadSources;
-  private final SourceSetCachedFinder mySourceSetFinder;
+  protected final Project myProject;
+  protected final boolean myIsPreview;
+  protected final boolean myDownloadJavadoc;
+  protected final boolean myDownloadSources;
+  protected final SourceSetCachedFinder mySourceSetFinder;
   public static final String PROVIDED_SCOPE = "PROVIDED";
 
   @SuppressWarnings("GroovyUnusedDeclaration")

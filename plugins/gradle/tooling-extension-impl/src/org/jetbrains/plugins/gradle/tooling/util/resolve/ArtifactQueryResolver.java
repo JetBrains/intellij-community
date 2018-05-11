@@ -140,7 +140,7 @@ class ArtifactQueryResolver {
     for (ProjectDependency dep : projectDepsToFilter) {
       Set<File> depFiles = DependencyResolverImpl.getTargetConfiguration(dep).getAllArtifacts().getFiles().getFiles();
 
-      final Set<File> intersection = new HashSet<File>(Sets.intersection(fileDeps, depFiles));
+      final Set<File> intersection = new LinkedHashSet<File>(Sets.intersection(fileDeps, depFiles));
       if (!intersection.isEmpty()) {
         DefaultFileCollectionDependency fileCollectionDependency = new DefaultFileCollectionDependency(intersection);
         fileCollectionDependency.setScope(myScope);
