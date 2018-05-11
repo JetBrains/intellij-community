@@ -870,12 +870,14 @@ public class SearchEverywhereUI extends BorderLayoutPanel {
         return;
       }
 
+      String searchText = getSearchPattern();
+      boolean everywhere = isUseNonProjectItems();
+
       String contributorsString = contributors.stream()
                                    .map(SearchEverywhereContributor::getGroupName)
                                    .collect(Collectors.joining(", "));
 
       UsageViewPresentation presentation = new UsageViewPresentation();
-      String searchText = getSearchPattern();
       String tabCaptionText = IdeBundle.message("searcheverywhere.found.matches.title", searchText, contributorsString);
       presentation.setCodeUsagesString(tabCaptionText);
       presentation.setUsagesInGeneratedCodeString(IdeBundle.message("searcheverywhere.found.matches.generated.code.title", searchText, contributorsString));
@@ -908,7 +910,7 @@ public class SearchEverywhereUI extends BorderLayoutPanel {
               if (!progressIndicator.isCanceled()) {
                 ApplicationManager.getApplication().runReadAction(() -> {
                   //todo overflow #UX-1
-                  List<Object> foundElements = contributor.search(myProject, searchText, isUseNonProjectItems(), progressIndicator);
+                  List<Object> foundElements = contributor.search(myProject, searchText, everywhere, progressIndicator);
                   fillUsages(foundElements, usages, targets);
                 });
               }
