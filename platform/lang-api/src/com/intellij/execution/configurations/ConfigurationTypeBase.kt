@@ -11,7 +11,7 @@ private val EMPTY_FACTORIES = arrayOf<ConfigurationFactory>()
 abstract class ConfigurationTypeBase protected constructor(private val id: String, private val displayName: String, description: String? = null, private val icon: Lazy<Icon>?) : ConfigurationType {
   companion object {
     @JvmStatic
-    protected fun lazyIcon(producer: () -> Icon): Lazy<Icon> {
+    fun lazyIcon(producer: () -> Icon): Lazy<Icon> {
       return lazy(LazyThreadSafetyMode.NONE, producer)
     }
   }
