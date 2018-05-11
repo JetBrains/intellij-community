@@ -54,9 +54,9 @@ public class GotoRelatedSymbolAction extends AnAction {
     final PsiElement element = getContextElement(dataContext);
     if (element == null) return;
 
-    // it's calculated in advance since NavigationUtil.collectRelatedItems since
-    // `NavigationUtil.collectRelatedItems` might be calculated under a cancellable progress,
-    // and we can't use the data context anymore, since it can't be reused between swing events
+    // it's calculated in advance because `NavigationUtil.collectRelatedItems` might be
+    // calculated under a cancellable progress, and we can't use the data context anymore,
+    // since it can't be reused between swing events
     RelativePoint popupLocation = JBPopupFactory.getInstance().guessBestPopupLocation(dataContext);
 
     List<GotoRelatedItem> items = NavigationUtil.collectRelatedItems(element, dataContext);
