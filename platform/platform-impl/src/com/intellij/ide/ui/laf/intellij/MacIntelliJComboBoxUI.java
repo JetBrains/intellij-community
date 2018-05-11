@@ -30,7 +30,8 @@ import static com.intellij.ide.ui.laf.intellij.MacIntelliJTextBorder.BW;
  * @author Konstantin Bulenkov
  */
 public class MacIntelliJComboBoxUI extends DarculaComboBoxUI {
-  private static final Icon DEFAULT_ICON = EmptyIcon.create(LafIconLookup.getIcon("comboRight", false, false, true, true));
+  private static final Icon ICON = EmptyIcon.create(LafIconLookup.getIcon("comboRight", false, false, true, false));
+  private static final Icon EDITABLE_ICON = EmptyIcon.create(LafIconLookup.getIcon("comboRight", false, false, true, true));
 
   @SuppressWarnings({"MethodOverridesStaticMethodOfSuperclass", "UnusedDeclaration"})
   public static ComponentUI createUI(JComponent c) {
@@ -63,7 +64,8 @@ public class MacIntelliJComboBoxUI extends DarculaComboBoxUI {
 
       @Override
       public Dimension getPreferredSize() {
-        return new Dimension(DEFAULT_ICON.getIconWidth(), DEFAULT_ICON.getIconHeight());
+        Icon icon = comboBox.isEditable() ? EDITABLE_ICON : ICON;
+        return new Dimension(icon.getIconWidth(), icon.getIconHeight());
       }
     };
     button.setBorder(BorderFactory.createEmptyBorder());
@@ -74,8 +76,9 @@ public class MacIntelliJComboBoxUI extends DarculaComboBoxUI {
   @Override
   protected Dimension getSizeWithButton(Dimension size, Dimension editorSize) {
     Insets i = comboBox.getInsets();
-    int iconWidth = DEFAULT_ICON.getIconWidth() + i.right;
-    int iconHeight = DEFAULT_ICON.getIconHeight() + i.top + i.bottom;
+    Icon icon = comboBox.isEditable() ? EDITABLE_ICON : ICON;
+    int iconWidth = icon.getIconWidth() + i.right;
+    int iconHeight = icon.getIconHeight() + i.top + i.bottom;
 
     int editorHeight = editorSize != null ? editorSize.height + i.top + i.bottom + padding.top + padding.bottom: 0;
     int editorWidth = editorSize != null ? editorSize.width + i.left + padding.left + padding.right : 0;
