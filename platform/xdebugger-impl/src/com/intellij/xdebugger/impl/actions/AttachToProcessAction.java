@@ -9,9 +9,13 @@ import com.intellij.execution.runners.ExecutionUtil;
 import com.intellij.icons.AllIcons;
 import com.intellij.internal.statistic.UsageTrigger;
 import com.intellij.internal.statistic.beans.ConvertUsagesUtil;
+import com.intellij.notification.Notification;
+import com.intellij.notification.NotificationType;
+import com.intellij.notification.Notifications;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.progress.EmptyProgressIndicator;
 import com.intellij.openapi.progress.PerformInBackgroundOption;
@@ -21,7 +25,6 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.popup.*;
 import com.intellij.openapi.ui.popup.util.BaseListPopupStep;
 import com.intellij.openapi.util.Key;
-import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.UserDataHolder;
 import com.intellij.openapi.util.UserDataHolderBase;
 import com.intellij.openapi.util.text.StringUtil;
@@ -30,22 +33,24 @@ import com.intellij.ui.popup.async.AsyncPopupStep;
 import com.intellij.ui.popup.list.ListPopupImpl;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.MultiMap;
-import com.intellij.util.containers.hash.LinkedHashMap;
 import com.intellij.util.ui.StatusText;
 import com.intellij.xdebugger.XDebuggerBundle;
 import com.intellij.xdebugger.attach.*;
 import org.intellij.lang.annotations.MagicConstant;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.TestOnly;
 
 import javax.swing.*;
 import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
 import java.awt.event.InputEvent;
 import java.util.*;
+import java.util.stream.Collectors;
 
 public class AttachToProcessAction extends AnAction {
-  private static final Key<LinkedHashMap<String, HistoryItem>> HISTORY_KEY = Key.create("AttachToProcessAction.HISTORY_KEY");
+  private static final Key<Map<XAttachHost, LinkedHashSet<RecentItem>>> RECENT_ITEMS_KEY = Key.create("AttachToProcessAction.RECENT_ITEMS_KEY");
+  private static final Logger LOG = Logger.getInstance(AttachToProcessAction.class);
 
   public AttachToProcessAction() {
     super(XDebuggerBundle.message("xdebugger.attach.action"),
@@ -102,7 +107,7 @@ public class AttachToProcessAction extends AnAction {
 
             if (item instanceof AttachHostItem) {
               AttachHostItem hostItem = (AttachHostItem)item;
-              String attachHostName = hostItem.myGroup.getItemDisplayText(project, hostItem.myInfo, hostItem.myDataHolder);
+              String attachHostName = hostItem.getText(project);
               attachHostName = StringUtil.shortenTextWithEllipsis(attachHostName, 50, 0);
 
               ((ListPopupImpl)popup).setCaption(XDebuggerBundle.message("xdebugger.attach.host.popup.title", attachHostName));
@@ -121,191 +126,218 @@ public class AttachToProcessAction extends AnAction {
 
   @NotNull
   private static List<AttachItem> getTopLevelItems(@NotNull ProgressIndicator indicator, @NotNull Project project) {
-    XAttachDebuggerProvider[] attachDebuggerProviders = XAttachDebuggerProvider.getAttachDebuggerProviders();
-
-    XAttachHostProvider[] attachHostProviders = Extensions.getExtensions(XAttachHostProvider.EP);
-
-    List<ProcessInfo> localAttachInfos = LocalAttachHost.INSTANCE.getProcessList(project);
-
-    List<AttachToProcessItem> localAttachToProcessItems = collectAttachItems(
-      project, LocalAttachHost.INSTANCE, localAttachInfos, indicator, attachDebuggerProviders
+    List<AttachToProcessItem> localAttachToProcessItems = collectAttachProcessItems(
+      project, LocalAttachHost.INSTANCE, indicator
     );
-    List<AttachItem> remoteAttachToProcessItems = collectRemotes(
-      project, attachHostProviders, attachDebuggerProviders
+    List<AttachItem> remoteAttachToProcessItems = collectAttachHostsItems(
+      project, indicator
     );
 
     return ContainerUtil.concat(remoteAttachToProcessItems, localAttachToProcessItems);
   }
 
+  private static void doUpdateFirstInGroup(@NotNull List<? extends AttachItem> items) {
+    items.get(0).makeFirstInGroup();
+
+    for(int i = 1; i < items.size(); i++) {
+      if(items.get(i).getGroup() != items.get(i - 1).getGroup()) {
+        items.get(i).makeFirstInGroup();
+      }
+    }
+  }
+
   @NotNull
-  public static List<AttachItem> collectRemotes(@NotNull final Project project,
-                                                @NotNull XAttachHostProvider[] hostProviders,
-                                                @NotNull XAttachDebuggerProvider... attachDebuggerProviders) {
-    MultiMap<XAttachPresentationGroup<XAttachHost>, Pair<XAttachHost, XAttachHostProvider>> groupWithItems = new MultiMap<>();
+  public static List<AttachItem> collectAttachHostsItems(@NotNull final Project project,
+                                                         @NotNull ProgressIndicator indicator) {
+
+    List<AttachItem> currentItems = ContainerUtil.newArrayList();
 
     UserDataHolderBase dataHolder = new UserDataHolderBase();
 
-    for (XAttachHostProvider hostProvider : hostProviders) {
+    for (XAttachHostProvider hostProvider : Extensions.getExtensions(XAttachHostProvider.EP)) {
+      indicator.checkCanceled();
       //noinspection unchecked
-      List<XAttachHost> settingsList = hostProvider.getAvailableHosts();
+      Set<XAttachHost> hosts = ContainerUtil.newHashSet(hostProvider.getAvailableHosts(project));
 
-      for (XAttachHost eachSettings : settingsList) {
-        groupWithItems.putValue(hostProvider.getPresentationGroup(), Pair.create(eachSettings, hostProvider));
+      for (XAttachHost host : hosts) {
+        //noinspection unchecked
+        currentItems.add(new AttachHostItem(hostProvider.getPresentationGroup(), false, host, project, dataHolder));
       }
     }
 
-    ArrayList<XAttachPresentationGroup<XAttachHost>> sortedGroups = new ArrayList<>(groupWithItems.keySet());
-    sortedGroups.sort(Comparator.comparingInt(XAttachPresentationGroup::getOrder));
+    //noinspection unchecked
+    Collections.sort(currentItems);
 
-    List<AttachItem> currentItems = new ArrayList<>();
-    for (final XAttachPresentationGroup<XAttachHost> eachGroup : sortedGroups) {
-
-      Set<Pair<XAttachHost, XAttachHostProvider>> sortedItems =
-        new TreeSet<>((o1, o2) -> eachGroup.compare(project, o1.first, o2.first, dataHolder));
-      sortedItems.addAll(groupWithItems.get(eachGroup));
-
-      boolean isFirst = true;
-      for (Pair<XAttachHost, XAttachHostProvider> eachItem : sortedItems) {
-        currentItems
-          .add(new AttachHostItem(eachGroup, isFirst, eachGroup.getGroupName(), eachItem.second, eachItem.first, project, dataHolder,
-                                  attachDebuggerProviders));
-        isFirst = false;
-      }
-    }
-
+    doUpdateFirstInGroup(currentItems);
     return currentItems;
   }
 
-  private static void addHistoryItems(@NotNull List<HistoryItem> history,
-                                      @NotNull List<AttachToProcessItem> currentItems,
-                                      @NotNull Project project,
-                                      @NotNull UserDataHolder dataHolder,
-                                      @NotNull List<AttachToProcessItem> result) {
-    for (int i = history.size() - 1; i >= 0; i--) {
-      HistoryItem eachHistoryItem = history.get(i);
-      for (AttachToProcessItem eachCurrentItem : currentItems) {
-        boolean isSuitableItem = eachHistoryItem.getGroup().equals(eachCurrentItem.getGroup()) &&
-                                 eachHistoryItem.getProcessInfo().getCommandLine()
-                                                .equals(eachCurrentItem.getProcessInfo().getCommandLine());
+  @NotNull
+  private static List<AttachToProcessItem> getRecentItems(@NotNull List<AttachToProcessItem> currentItems,
+                                                          @NotNull XAttachHost host,
+                                                          @NotNull Project project,
+                                                          @NotNull UserDataHolder dataHolder) {
+    final List<AttachToProcessItem> result = ContainerUtil.newArrayList();
+    final List<RecentItem> recentItems = getRecentItems(host, project);
+
+    for (int i = recentItems.size() - 1; i >= 0; i--) {
+      RecentItem recentItem = recentItems.get(i);
+      for (AttachToProcessItem currentItem : currentItems) {
+        boolean isSuitableItem = recentItem.getGroup().equals(currentItem.getGroup()) &&
+                                 recentItem.getProcessInfo().getCommandLine()
+                                           .equals(currentItem.getProcessInfo().getCommandLine());
 
         if (!isSuitableItem) continue;
 
-        List<XAttachDebugger> debuggers = eachCurrentItem.getDebuggers();
+        List<XAttachDebugger> debuggers = currentItem.getDebuggers();
         int selectedDebugger = -1;
         for (int j = 0; j < debuggers.size(); j++) {
-          XAttachDebugger eachDebugger = debuggers.get(j);
-          if (eachDebugger.getDebuggerDisplayName().equals(eachHistoryItem.getDebuggerName())) {
+          XAttachDebugger debugger = debuggers.get(j);
+          if (debugger.getDebuggerDisplayName().equals(recentItem.getDebuggerName())) {
             selectedDebugger = j;
             break;
           }
         }
         if (selectedDebugger == -1) continue;
 
-        result.add(new AttachToProcessItem(eachCurrentItem.getGroup(),
-                                           result.isEmpty(),
-                                           XDebuggerBundle.message("xdebugger.attach.toLocal.popup.recent"),
-                                           eachCurrentItem.getHost(),
-                                           eachCurrentItem.getProcessInfo(),
-                                           debuggers,
-                                           selectedDebugger,
-                                           project,
-                                           dataHolder));
+        result.add(AttachToProcessItem.createRecentAttachItem(currentItem, result.isEmpty(), debuggers, selectedDebugger, project,
+                                                              dataHolder));
       }
+    }
+    return result;
+  }
+
+  @NotNull
+  private static List<ProcessInfo> getProcessInfos(@NotNull XAttachHost host) {
+    try {
+      return host.getProcessList();
+    }
+    catch (ExecutionException e) {
+      Notifications.Bus.notify(new Notification("Attach to Process action",
+                                                XDebuggerBundle.message("xdebugger.attach.action.items.error.title"),
+                                                XDebuggerBundle.message("xdebugger.attach.action.items.error.message"),
+                                                NotificationType.WARNING));
+      LOG.warn("Error while getting attach items", e);
+
+      return Collections.emptyList();
     }
   }
 
   @NotNull
-  static List<AttachToProcessItem> collectAttachItems(@NotNull final Project project,
-                                                      @NotNull XAttachHost hostInfo,
-                                                      @NotNull List<ProcessInfo> processInfos,
-                                                      @NotNull ProgressIndicator indicator,
-                                                      @NotNull XAttachDebuggerProvider... providers) {
-    MultiMap<XAttachPresentationGroup<ProcessInfo>, Pair<ProcessInfo, ArrayList<XAttachDebugger>>> groupWithItems = new MultiMap<>();
+  private static List<XAttachDebuggerProvider> getProvidersApplicableForHost(@NotNull XAttachHost host) {
+    return XAttachDebuggerProvider.getAttachDebuggerProviders().stream().filter(provider -> provider.isAttachHostApplicable(host))
+                                  .collect(Collectors.toList());
+  }
 
+  @NotNull
+  static List<AttachToProcessItem> collectAttachProcessItems(@NotNull final Project project,
+                                                               @NotNull XAttachHost host,
+                                                               @NotNull ProgressIndicator indicator) {
+    return doCollectAttachProcessItems(project, host, getProcessInfos(host), indicator, getProvidersApplicableForHost(host));
+  }
+
+  @NotNull
+  static List<AttachToProcessItem> doCollectAttachProcessItems(@NotNull final Project project,
+                                                               @NotNull XAttachHost host,
+                                                               @NotNull List<ProcessInfo> processInfos,
+                                                               @NotNull ProgressIndicator indicator,
+                                                               @NotNull List<XAttachDebuggerProvider> providers) {
     UserDataHolderBase dataHolder = new UserDataHolderBase();
+
+    List<AttachToProcessItem> currentItems = ContainerUtil.newArrayList();
 
     for (ProcessInfo process : processInfos) {
 
       MultiMap<XAttachPresentationGroup<ProcessInfo>, XAttachDebugger> groupsWithDebuggers = new MultiMap<>();
 
-      for (XAttachDebuggerProvider eachProvider : providers) {
+      for (XAttachDebuggerProvider provider : providers) {
         indicator.checkCanceled();
-        if(eachProvider.isAttachHostApplicable(hostInfo)) {
-          groupsWithDebuggers.putValues(eachProvider.getPresentationGroup(),
-                                        eachProvider.getAvailableDebuggers(project, hostInfo, process, dataHolder));
-        }
+
+        groupsWithDebuggers.putValues(provider.getPresentationGroup(),
+                                        provider.getAvailableDebuggers(project, host, process, dataHolder));
       }
 
-      for (XAttachPresentationGroup<ProcessInfo> eachGroup : groupsWithDebuggers.keySet()) {
-        Collection<XAttachDebugger> debuggers = groupsWithDebuggers.get(eachGroup);
+      for (XAttachPresentationGroup<ProcessInfo> group : groupsWithDebuggers.keySet()) {
+        Collection<XAttachDebugger> debuggers = groupsWithDebuggers.get(group);
         if (!debuggers.isEmpty()) {
-          groupWithItems.putValue(eachGroup, Pair.create(process, new ArrayList<>(debuggers)));
+          currentItems.add(new AttachToProcessItem(group, false, host, process, new ArrayList<>(debuggers), project, dataHolder));
         }
       }
     }
 
-    ArrayList<XAttachPresentationGroup<ProcessInfo>> sortedGroups = new ArrayList<>(groupWithItems.keySet());
-    sortedGroups.sort(Comparator.comparingInt(XAttachPresentationGroup::getOrder));
-
-    List<AttachToProcessItem> currentItems = new ArrayList<>();
-    for (final XAttachPresentationGroup<ProcessInfo> eachGroup : sortedGroups) {
-      List<Pair<ProcessInfo, ArrayList<XAttachDebugger>>> sortedItems = new ArrayList<>(groupWithItems.get(eachGroup));
-      sortedItems.sort((a, b) -> eachGroup.compare(project,
-                                                   a.first,
-                                                   b.first,
-                                                   dataHolder));
-
-      boolean first = true;
-      for (Pair<ProcessInfo, ArrayList<XAttachDebugger>> eachItem : sortedItems) {
-        currentItems.add(new AttachToProcessItem(eachGroup, first, hostInfo, eachItem.first, eachItem.second, project, dataHolder));
-        first = false;
-      }
+    if (currentItems.isEmpty()) {
+      return currentItems;
     }
 
-    List<AttachToProcessItem> result = new ArrayList<>();
+    Collections.sort(currentItems);
 
-    addHistoryItems(getHistory(project), currentItems, project, dataHolder, result);
+    doUpdateFirstInGroup(currentItems);
+
+    List<AttachToProcessItem> result = getRecentItems(currentItems, host, project, dataHolder);
 
     result.addAll(currentItems);
     return result;
   }
 
-  public static void addToHistory(@NotNull Project project, @NotNull AttachToProcessItem item) {
-    LinkedHashMap<String, HistoryItem> history = project.getUserData(HISTORY_KEY);
-    if (history == null) {
-      project.putUserData(HISTORY_KEY, history = new LinkedHashMap<>());
+  public static void addToRecent(@NotNull Project project, @NotNull AttachToProcessItem item) {
+    Map<XAttachHost, LinkedHashSet<RecentItem>> recentItems = project.getUserData(RECENT_ITEMS_KEY);
+
+    if (recentItems == null) {
+      project.putUserData(RECENT_ITEMS_KEY, recentItems = ContainerUtil.newHashMap());
     }
-    ProcessInfo attachInfo = item.getProcessInfo();
-    String commandLine = attachInfo.getCommandLine();
-    history.remove(commandLine);
-    history.put(commandLine, new HistoryItem(item.getHost(), attachInfo, item.getGroup(),
-                                             item.getSelectedDebugger().getDebuggerDisplayName()));
-    while (history.size() > 4) {
-      history.remove(history.keySet().iterator().next());
+
+    XAttachHost host = item.getHost();
+
+    LinkedHashSet<RecentItem> hostRecentItems = recentItems.get(host);
+
+    if(hostRecentItems == null) {
+      recentItems.put(host, ContainerUtil.newLinkedHashSet());
+      hostRecentItems = recentItems.get(host);
+    }
+
+    final RecentItem newRecentItem = new RecentItem(host, item);
+
+    hostRecentItems.remove(newRecentItem);
+
+    hostRecentItems.add(newRecentItem);
+
+    while (hostRecentItems.size() > 4) {
+      hostRecentItems.remove(hostRecentItems.iterator().next());
     }
   }
 
   @NotNull
-  public static List<HistoryItem> getHistory(@NotNull Project project) {
-    LinkedHashMap<String, HistoryItem> history = project.getUserData(HISTORY_KEY);
-    return history == null ? Collections.emptyList()
-                           : Collections.unmodifiableList(new ArrayList<>(history.values()));
+  public static List<RecentItem> getRecentItems(XAttachHost host,
+                                                @NotNull Project project) {
+    Map<XAttachHost, LinkedHashSet<RecentItem>> recentItems = project.getUserData(RECENT_ITEMS_KEY);
+    return recentItems == null ? Collections.emptyList()
+                           : Collections.unmodifiableList(new ArrayList<>(recentItems.get(host)));
   }
 
-  public static class HistoryItem {
+  public static class RecentItem {
     @NotNull private final XAttachHost myHost;
     @NotNull private final ProcessInfo myProcessInfo;
     @NotNull private final XAttachPresentationGroup myGroup;
     @NotNull private final String myDebuggerName;
 
-    public HistoryItem(@NotNull XAttachHost host,
-                       @NotNull ProcessInfo item,
+    public RecentItem(@NotNull XAttachHost host,
+                      @NotNull AttachToProcessItem item) {
+      this(host, item.getProcessInfo(), item.getGroup(), item.getSelectedDebugger().getDebuggerDisplayName());
+    }
+
+    private RecentItem(@NotNull XAttachHost host,
+                       @NotNull ProcessInfo info,
                        @NotNull XAttachPresentationGroup group,
                        @NotNull String debuggerName) {
       myHost = host;
-      myProcessInfo = item;
+      myProcessInfo = info;
       myGroup = group;
       myDebuggerName = debuggerName;
+    }
+
+    @TestOnly
+    public static RecentItem createRecentItem(@NotNull XAttachHost host, @NotNull ProcessInfo info, @NotNull XAttachPresentationGroup group, @NotNull String debuggerName) {
+      return new RecentItem(host, info, group, debuggerName);
     }
 
     @NotNull
@@ -332,27 +364,29 @@ public class AttachToProcessAction extends AnAction {
     public boolean equals(Object o) {
       if (this == o) return true;
       if (o == null || getClass() != o.getClass()) return false;
-      HistoryItem item = (HistoryItem)o;
-      return Objects.equals(myHost, item.myHost) &&
-             Objects.equals(myProcessInfo, item.myProcessInfo) &&
-             Objects.equals(myGroup, item.myGroup) &&
-             Objects.equals(myDebuggerName, item.myDebuggerName);
+      RecentItem item = (RecentItem)o;
+      return Objects.equals(myProcessInfo.getCommandLine(), item.myProcessInfo.getCommandLine());
     }
 
     @Override
     public int hashCode() {
 
-      return Objects.hash(myHost, myProcessInfo, myGroup, myDebuggerName);
+      return Objects.hash(myProcessInfo.getCommandLine());
     }
   }
 
-  public static abstract class AttachItem<T> {
+  public static abstract class AttachItem<T> implements Comparable<AttachItem<T>> {
 
+    @NotNull
     XAttachPresentationGroup<T> myGroup;
     boolean myIsFirstInGroup;
+    @NotNull
     String myGroupName;
+    @NotNull
     Project myProject;
+    @NotNull
     UserDataHolder myDataHolder;
+    @NotNull
     T myInfo;
 
     public AttachItem(@NotNull XAttachPresentationGroup<T> group,
@@ -369,6 +403,10 @@ public class AttachToProcessAction extends AnAction {
       myGroupName = groupName;
     }
 
+    void makeFirstInGroup() {
+      myIsFirstInGroup = true;
+    }
+
     @NotNull
     XAttachPresentationGroup<T> getGroup() {
       return myGroup;
@@ -381,7 +419,7 @@ public class AttachToProcessAction extends AnAction {
 
     @Nullable
     Icon getIcon(@NotNull Project project) {
-      return myGroup.getIcon(project, myInfo, myDataHolder);
+      return myGroup.getItemIcon(project, myInfo, myDataHolder);
     }
 
     abstract boolean hasSubStep();
@@ -389,24 +427,27 @@ public class AttachToProcessAction extends AnAction {
     abstract String getText(@NotNull Project project);
 
     abstract List<AttachToProcessItem> getSubItems();
+
+    @Override
+    public int compareTo(AttachItem<T> compareItem) {
+      int groupDifference = myGroup.getOrder() - compareItem.getGroup().getOrder();
+
+      if(groupDifference != 0) {
+        return groupDifference;
+      }
+
+      return myGroup.compare(myInfo, compareItem.myInfo);
+    }
   }
 
   private static class AttachHostItem extends AttachItem<XAttachHost> {
 
-    @NotNull XAttachHostProvider myProvider;
-    @NotNull XAttachDebuggerProvider[] myAttachProviders;
-
     public AttachHostItem(@NotNull XAttachPresentationGroup<XAttachHost> group,
                           boolean isFirstInGroup,
-                          @NotNull String groupName,
-                          @NotNull XAttachHostProvider provider,
-                          @NotNull XAttachHost info,
+                          @NotNull XAttachHost host,
                           @NotNull Project project,
-                          @NotNull UserDataHolder dataHolder,
-                          @NotNull XAttachDebuggerProvider[] attachProviders) {
-      super(group, isFirstInGroup, groupName, info, project, dataHolder);
-      myProvider = provider;
-      myAttachProviders = attachProviders;
+                          @NotNull UserDataHolder dataHolder) {
+      super(group, isFirstInGroup, group.getGroupName(), host, project, dataHolder);
     }
 
     public boolean hasSubStep() {
@@ -426,9 +467,7 @@ public class AttachToProcessAction extends AnAction {
 
     @Override
     public List<AttachToProcessItem> getSubItems() {
-      List<ProcessInfo> processInfos = myInfo.getProcessList(myProject);
-
-      return collectAttachItems(myProject, myInfo, processInfos, new EmptyProgressIndicator(), myAttachProviders);
+      return collectAttachProcessItems(myProject, myInfo, new EmptyProgressIndicator());
     }
   }
 
@@ -473,6 +512,15 @@ public class AttachToProcessAction extends AnAction {
       else {
         mySubItems = Collections.emptyList();
       }
+    }
+
+    static AttachToProcessItem createRecentAttachItem(AttachToProcessItem item,
+                                                             boolean isFirstInGroup,
+                                                             List<XAttachDebugger> debuggers,
+                                                             int selectedDebugger,
+                                                             Project project, UserDataHolder dataHolder) {
+      return new AttachToProcessItem(item.getGroup(), isFirstInGroup, XDebuggerBundle.message("xdebugger.attach.toLocal.popup.recent"),
+                                     item.getHost(), item.getProcessInfo(), debuggers, selectedDebugger, project, dataHolder);
     }
 
     @NotNull
@@ -604,7 +652,7 @@ public class AttachToProcessAction extends AnAction {
       if (selectedValue instanceof AttachToProcessItem) {
         AttachToProcessItem attachToProcessItem = (AttachToProcessItem)selectedValue;
         if (finalChoice) {
-          addToHistory(myProject, attachToProcessItem);
+          addToRecent(myProject, attachToProcessItem);
           return doFinalStep(() -> attachToProcessItem.startDebugSession(myProject));
         }
         else {
@@ -616,7 +664,7 @@ public class AttachToProcessAction extends AnAction {
         AttachHostItem attachHostItem = (AttachHostItem)selectedValue;
         return new AsyncPopupStep() {
           @Override
-          public PopupStep call() throws Exception {
+          public PopupStep call() {
             List<AttachItem> attachItems = new ArrayList<>(attachHostItem.getSubItems());
             return new AttachListStep(attachItems, null, myProject);
           }
@@ -646,7 +694,7 @@ public class AttachToProcessAction extends AnAction {
 
       @Override
       public PopupStep onChosen(AttachToProcessItem selectedValue, boolean finalChoice) {
-        addToHistory(myProject, selectedValue);
+        addToRecent(myProject, selectedValue);
         return doFinalStep(() -> selectedValue.startDebugSession(myProject));
       }
     }
