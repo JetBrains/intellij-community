@@ -29,6 +29,10 @@ class CircletReviewsToolWindowFactory : ToolWindowFactory, DumbAware {
             }
         })
     }
+
+    companion object {
+        const val TOOL_WINDOW_ID = "Code reviews"
+    }
 }
 
 private fun Content.updateDisplayName() {
