@@ -2,10 +2,10 @@
 package com.intellij.ide.actions.searcheverywhere;
 
 import com.google.common.collect.Lists;
+import com.intellij.find.findUsages.PsiElement2UsageTargetAdapter;
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.IdeBundle;
 import com.intellij.ide.IdeEventQueue;
-import com.intellij.ide.ui.UISettings;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.impl.ActionButton;
@@ -14,6 +14,8 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
+import com.intellij.openapi.progress.ProgressManager;
+import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.progress.util.ProgressIndicatorBase;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.DumbService;
@@ -24,14 +26,18 @@ import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.util.ActionCallback;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Pair;
+import com.intellij.psi.PsiElement;
 import com.intellij.psi.codeStyle.MinusculeMatcher;
 import com.intellij.psi.codeStyle.NameUtil;
+import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.ui.*;
 import com.intellij.ui.awt.RelativePoint;
 import com.intellij.ui.components.JBCheckBox;
 import com.intellij.ui.components.JBList;
 import com.intellij.ui.components.JBScrollPane;
 import com.intellij.ui.components.fields.ExtendableTextField;
+import com.intellij.usageView.UsageInfo;
+import com.intellij.usages.*;
 import com.intellij.util.Alarm;
 import com.intellij.util.text.MatcherHolder;
 import com.intellij.util.ui.DialogUtil;
@@ -50,9 +56,8 @@ import java.awt.event.KeyAdapter;
 import java.awt.event.KeyEvent;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
-import java.util.ArrayList;
+import java.util.*;
 import java.util.List;
-import java.util.Optional;
 import java.util.stream.Collectors;
 
 import static com.intellij.ide.actions.SearchEverywhereAction.SEARCH_EVERYWHERE_POPUP;
@@ -237,17 +242,7 @@ public class SearchEverywhereUI extends BorderLayoutPanel {
     res.add(myNonProjectCB);
     res.add(Box.createHorizontalStrut(JBUI.scale(19)));
 
-    ToggleAction pinAction = new ToggleAction(null, null, AllIcons.General.AutohideOff) {
-      @Override
-      public boolean isSelected(AnActionEvent e) {
-        return UISettings.getInstance().getPinFindInPath();
-      }
-
-      @Override
-      public void setSelected(AnActionEvent e, boolean state) {
-        UISettings.getInstance().setPinFindInPath(state);
-      }
-    };
+    AnAction pinAction = new ShowInFindToolWindowAction();
     ActionButton pinButton = new ActionButton(pinAction, pinAction.getTemplatePresentation(), ActionPlaces.UNKNOWN, ActionToolbar.DEFAULT_MINIMUM_BUTTON_SIZE);
     res.add(pinButton);
     res.add(Box.createHorizontalStrut(JBUI.scale(10)));
@@ -344,7 +339,7 @@ public class SearchEverywhereUI extends BorderLayoutPanel {
       myCalcThread.cancel();
     }
 
-    String pattern = mySearchField != null ? mySearchField.getText() : "";
+    String pattern = getSearchPattern();
 
     MinusculeMatcher matcher = NameUtil.buildMatcher("*" + pattern, NameUtil.MatchingCaseSensitivity.NONE);
     MatcherHolder.associateMatcher(myResultsList, matcher);
@@ -366,6 +361,10 @@ public class SearchEverywhereUI extends BorderLayoutPanel {
     }
   }
 
+  private String getSearchPattern() {
+    return mySearchField != null ? mySearchField.getText() : "";
+  }
+
   private void initSearchActions() {
     mySearchField.addKeyListener(new KeyAdapter() {
       @Override
@@ -382,8 +381,10 @@ public class SearchEverywhereUI extends BorderLayoutPanel {
     });
 
     AnAction escape = ActionManager.getInstance().getAction("EditorEscape");
-    DumbAwareAction.create(__ -> searchFinishedHandler.run())
-                   .registerCustomShortcutSet(escape == null ? CommonShortcuts.ESCAPE : escape.getShortcutSet(), this);
+    DumbAwareAction.create(__ -> {
+      stopSearching();
+      searchFinishedHandler.run();
+    }).registerCustomShortcutSet(escape == null ? CommonShortcuts.ESCAPE : escape.getShortcutSet(), this);
 
     mySearchField.getDocument().addDocumentListener(new DocumentAdapter() {
       @Override
@@ -426,7 +427,7 @@ public class SearchEverywhereUI extends BorderLayoutPanel {
           if (currentRestartRequest != myCalcThreadRestartRequestId) {
             return;
           }
-          myCalcThread = new CalcThread(myProject, mySearchField.getText(), contributor);
+          myCalcThread = new CalcThread(myProject, getSearchPattern(), contributor);
 
           myCurrentWorker = myCalcThread.start();
         }
@@ -691,7 +692,7 @@ public class SearchEverywhereUI extends BorderLayoutPanel {
 
     private MoreRenderer() {
       super(new BorderLayout());
-      label = groupInfoLabel("    ... more   ");
+      label = groupInfoLabel("... more");
       add(label, BorderLayout.CENTER);
     }
 
@@ -749,6 +750,17 @@ public class SearchEverywhereUI extends BorderLayoutPanel {
     @Override
     public Object getElementAt(int index) {
       return listElements.get(index).first;
+    }
+
+    //todo per contributor #UX-1
+    public Collection<Object> getFoundItems() {
+      return values().stream()
+                     .filter(o -> o != MORE_ELEMENT)
+                     .collect(Collectors.toList());
+    }
+
+    public boolean hasMoreElements() {
+      return values().contains(MORE_ELEMENT);
     }
 
     public void addElements(List<Object> items, SearchEverywhereContributor contributor, boolean hasMore) {
@@ -833,6 +845,99 @@ public class SearchEverywhereUI extends BorderLayoutPanel {
     @NotNull
     private List<Object> values() {
       return Lists.transform(listElements, pair -> pair.getFirst());
+    }
+  }
+
+  private class ShowInFindToolWindowAction extends DumbAwareAction {
+
+    public ShowInFindToolWindowAction() {
+      super(IdeBundle.message("searcheverywhere.show.in.find.window.button.name"),
+        IdeBundle.message("searcheverywhere.show.in.find.window.button.name"), AllIcons.General.Pin_tab);
+    }
+
+    @Override
+    public void actionPerformed(AnActionEvent e) {
+      stopSearching();
+
+      Collection<SearchEverywhereContributor> contributors = isAllTabSelected()
+                                                             ? allContributors
+                                                             : Collections.singleton(mySelectedTab.getContributor().get());
+      String contributorsString = contributors.stream()
+                                   .map(SearchEverywhereContributor::getGroupName)
+                                   .collect(Collectors.joining(", "));
+
+      UsageViewPresentation presentation = new UsageViewPresentation();
+      String searchText = getSearchPattern();
+      String tabCaptionText = IdeBundle.message("searcheverywhere.found.matches.title", searchText, contributorsString);
+      presentation.setCodeUsagesString(tabCaptionText);
+      presentation.setUsagesInGeneratedCodeString(IdeBundle.message("searcheverywhere.found.matches.generated.code.title", searchText, contributorsString));
+      presentation.setTargetsNodeText(IdeBundle.message("searcheverywhere.found.targets.title", searchText, contributorsString));
+      presentation.setTabName(tabCaptionText);
+      presentation.setTabText(tabCaptionText);
+
+      Collection<Usage> usages = new ArrayList<>();
+      Collection<PsiElement> targets = new ArrayList<>();
+
+      Collection<Object> cached = myListModel.getFoundItems();
+      fillUsages(cached, usages, targets);
+
+      if (myListModel.hasMoreElements()) {
+        ProgressManager.getInstance().run(new Task.Modal(myProject, tabCaptionText, true) {
+          private final ProgressIndicator progressIndicator = new ProgressIndicatorBase();
+
+          @Override
+          public void run(@NotNull ProgressIndicator indicator) {
+            //todo some results cannot be shown in find window (Actions, etc.)
+            contributors.forEach(contributor -> {
+              if (!progressIndicator.isCanceled()) {
+                ApplicationManager.getApplication().runReadAction(() -> {
+                  //todo overflow #UX-1
+                  List<Object> foundElements = contributor.search(myProject, searchText, isUseNonProjectItems(), progressIndicator);
+                  fillUsages(foundElements, usages, targets);
+                });
+              }
+            });
+          }
+
+          @Override
+          public void onCancel() {
+            progressIndicator.cancel();
+          }
+
+          @Override
+          public void onSuccess() {
+            showInFindWindow(targets, usages, presentation);
+          }
+
+          @Override
+          public void onThrowable(@NotNull Throwable error) {
+            progressIndicator.cancel();
+          }
+        });
+      } else {
+        showInFindWindow(targets, usages, presentation);
+      }
+    }
+
+    private void fillUsages(Collection<Object> foundElements, Collection<Usage> usages, Collection<PsiElement> targets) {
+      foundElements.stream()
+                   .filter(o -> o instanceof PsiElement)
+                   .forEach(o -> {
+                     PsiElement element = (PsiElement)o;
+                     if (element.getTextRange() != null) {
+                       UsageInfo usageInfo = new UsageInfo(element);
+                       usages.add(new UsageInfo2UsageAdapter(usageInfo));
+                     }
+                     else {
+                       targets.add(element);
+                     }
+                   });
+    }
+
+    private void showInFindWindow(Collection<PsiElement> targets, Collection<Usage> usages, UsageViewPresentation presentation) {
+      UsageTarget[] targetsArray = targets.isEmpty() ? UsageTarget.EMPTY_ARRAY : PsiElement2UsageTargetAdapter.convert(PsiUtilCore.toPsiElementArray(targets));
+      Usage[] usagesArray = usages.toArray(Usage.EMPTY_ARRAY);
+      UsageViewManager.getInstance(myProject).showUsages(targetsArray, usagesArray, presentation);
     }
   }
 
