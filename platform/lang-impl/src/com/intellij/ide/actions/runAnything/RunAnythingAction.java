@@ -41,7 +41,6 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.actions.TextComponentEditorAction;
-import com.intellij.openapi.editor.ex.util.EditorUtil;
 import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.keymap.impl.ModifierKeyDoubleClickHandler;
 import com.intellij.openapi.module.Module;
@@ -75,10 +74,12 @@ import com.intellij.ui.components.panels.NonOpaquePanel;
 import com.intellij.ui.popup.AbstractPopup;
 import com.intellij.util.Alarm;
 import com.intellij.util.ArrayUtil;
+import com.intellij.util.BooleanFunction;
 import com.intellij.util.Consumer;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.EmptyIcon;
 import com.intellij.util.ui.JBUI;
+import com.intellij.util.ui.StatusText;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.components.BorderLayoutPanel;
 import org.jetbrains.annotations.NonNls;
@@ -119,6 +120,7 @@ public class RunAnythingAction extends AnAction implements CustomComponentAction
   private static final Border RENDERER_BORDER = JBUI.Borders.empty(1, 0);
   private static final Icon RUN_ANYTHING_POPPED_ICON = new PoppedIcon(AllIcons.Actions.Run_anything, 16, 16);
   private static final String HELP_PLACEHOLDER = "?";
+  private static final String ICON_GAP = "     ";
   private RunAnythingAction.MyListRenderer myRenderer;
   private MySearchTextField myPopupField;
   private JBPopup myPopup;
@@ -292,6 +294,13 @@ public class RunAnythingAction extends AnAction implements CustomComponentAction
 
             rebuildList(pattern);
           }
+
+          if (!isHelpMode(pattern)) {
+            adjustMainListEmptyText(myPopupField.getTextEditor());
+            return;
+          }
+
+          adjustEmptyText(myPopupField.getTextEditor(), field -> true, "", "Select command");
         }
       }
     });
@@ -328,6 +337,10 @@ public class RunAnythingAction extends AnAction implements CustomComponentAction
         onPopupFocusLost();
       }
     });
+  }
+
+  private static void adjustMainListEmptyText(@NotNull JBTextField editor) {
+    adjustEmptyText(editor, field -> field.getText().isEmpty(), "Run command or configuration", "Type \'?\' to see all commands");
   }
 
   private static boolean isHelpMode(@NotNull String pattern) {
@@ -593,16 +606,16 @@ public class RunAnythingAction extends AnAction implements CustomComponentAction
     }
     myPopupField = new MySearchTextField();
     myPopupField.setPreferredSize(new Dimension(500, 43));
-    myPopupField.getTextEditor().setFont(EditorUtil.getEditorFont().deriveFont(18f));
 
-    JBTextField myTextField = myPopupField.getTextEditor();
-    myTextField.putClientProperty(MATCHED_PROVIDER_PROPERTY, UNKNOWN_CONFIGURATION_ICON);
+    JBTextField textEditor = myPopupField.getTextEditor();
+    textEditor.setFont(UIUtil.getLabelFont().deriveFont(18f));
+    textEditor.putClientProperty(MATCHED_PROVIDER_PROPERTY, UNKNOWN_CONFIGURATION_ICON);
 
     setHandleMatchedConfiguration();
 
-    myTextField.setMinimumSize(new Dimension(500, 50));
+    adjustMainListEmptyText(textEditor);
 
-    myTextField.addKeyListener(new KeyAdapter() {
+    textEditor.addKeyListener(new KeyAdapter() {
       @Override
       public void keyPressed(KeyEvent e) {
         updateByModifierKeysEvent(e);
@@ -696,15 +709,15 @@ public class RunAnythingAction extends AnAction implements CustomComponentAction
         Object selectedValue = myList.getSelectedValue();
         if (selectedValue == null || (myList.getModel() instanceof RunAnythingSettingsModel)) return;
 
-        String lastInput = myTextField.getText();
+        String lastInput = textEditor.getText();
         myIsItemSelected = true;
 
         if (isMoreItem(myList.getSelectedIndex())) {
-          myTextField.setText(myLastInputText != null ? myLastInputText : "");
+          textEditor.setText(myLastInputText != null ? myLastInputText : "");
           return;
         }
 
-        myTextField.setText(selectedValue instanceof RunAnythingItem ? ((RunAnythingItem)selectedValue).getCommand() : myLastInputText);
+        textEditor.setText(selectedValue instanceof RunAnythingItem ? ((RunAnythingItem)selectedValue).getCommand() : myLastInputText);
 
         if (myLastInputText == null) myLastInputText = lastInput;
       }
@@ -751,6 +764,19 @@ public class RunAnythingAction extends AnAction implements CustomComponentAction
     IdeFocusManager focusManager = IdeFocusManager.getInstance(project);
     focusManager.requestFocus(editor, true);
     FeatureUsageTracker.getInstance().triggerFeatureUsed(RUN_ANYTHING);
+  }
+
+  public static void adjustEmptyText(@NotNull JBTextField textEditor,
+                                     @NotNull BooleanFunction<JBTextField> function,
+                                     @NotNull String leftText,
+                                     @NotNull String rightText) {
+
+    textEditor.putClientProperty("StatusVisibleFunction", function);
+    StatusText statusText = textEditor.getEmptyText();
+    statusText.setIsVerticalFlow(false);
+    statusText.setShowAboveCenter(false);
+    statusText.setText(ICON_GAP + leftText, SimpleTextAttributes.GRAYED_SMALL_ATTRIBUTES);
+    statusText.appendSecondaryText(rightText, SimpleTextAttributes.GRAYED_SMALL_ATTRIBUTES, null);
   }
 
   private void setHandleMatchedConfiguration() {
