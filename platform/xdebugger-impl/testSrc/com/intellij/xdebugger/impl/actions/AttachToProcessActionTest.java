@@ -26,6 +26,7 @@ import com.intellij.xdebugger.attach.*;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 
@@ -40,13 +41,13 @@ public class AttachToProcessActionTest extends PlatformTestCase {
   }
 
   @NotNull
-  private HistoryItem fixtureCreateHistoryItem(@NotNull ProcessInfo info, @NotNull XAttachPresentationGroup group, @NotNull String debuggerName) {
-    return new HistoryItem(LocalAttachHost.INSTANCE, info, group, debuggerName);
+  private RecentItem fixtureCreateHistoryItem(@NotNull ProcessInfo info, @NotNull XAttachPresentationGroup group, @NotNull String debuggerName) {
+    return RecentItem.createRecentItem(LocalAttachHost.INSTANCE, info, group, debuggerName);
   }
 
   private List<AttachToProcessItem> fixtureCollectAttachItems(ProcessInfo[] infos, @NotNull XAttachDebuggerProvider... providers) {
     List<ProcessInfo> infoList = ContainerUtil.newArrayList(infos);
-    return collectAttachItems(getProject(), LocalAttachHost.INSTANCE, infoList, DumbProgressIndicator.INSTANCE, providers);
+    return doCollectAttachProcessItems(getProject(), LocalAttachHost.INSTANCE, infoList, DumbProgressIndicator.INSTANCE, Arrays.asList(providers));
   }
 
   public void testCollectingAttachItems_Empty() {
@@ -69,8 +70,8 @@ public class AttachToProcessActionTest extends PlatformTestCase {
     assertItems("--------\n" +
                 "1 exec1: dbg1\n" +
                 "2 exec2: dbg2\n",
-                new TestDebuggerProvider(1, XLocalAttachGroup.DEFAULT, "dbg1"),
-                new TestDebuggerProvider(2, XLocalAttachGroup.DEFAULT, "dbg2"));
+                new TestDebuggerProvider(1, XDefaultLocalAttachGroup.INSTANCE, "dbg1"),
+                new TestDebuggerProvider(2, XDefaultLocalAttachGroup.INSTANCE, "dbg2"));
   }
 
   public void testCollectingAttachItems_SeveralDebuggers() {
@@ -163,7 +164,7 @@ public class AttachToProcessActionTest extends PlatformTestCase {
                 "2 exec2: dbg1\n" +
                 "    dbg1\n" +
                 "    dbg2\n",
-                new TestDebuggerProvider(XLocalAttachGroup.DEFAULT, "dbg1", "dbg2"),
+                new TestDebuggerProvider(XDefaultLocalAttachGroup.INSTANCE, "dbg1", "dbg2"),
                 new TestDebuggerProvider(new TestAttachGroup("", 1), "dbg1", "dbg2"));
   }
 
@@ -223,7 +224,7 @@ public class AttachToProcessActionTest extends PlatformTestCase {
                 "2 exec2: dbg1\n" +
                 "    dbg1\n" +
                 "    dbg2\n",
-                new TestDebuggerProvider(XLocalAttachGroup.DEFAULT, "dbg1", "dbg2"),
+                new TestDebuggerProvider(XDefaultLocalAttachGroup.INSTANCE, "dbg1", "dbg2"),
                 new TestDebuggerProvider(new TestAttachGroup("group1", 1), "dbg1", "dbg2"),
                 new TestDebuggerProvider(new TestAttachGroup("group2", -1), "dbg1", "dbg2"));
   }
@@ -234,7 +235,7 @@ public class AttachToProcessActionTest extends PlatformTestCase {
                 "2 exec2: dbg1\n",
                 new TestDebuggerProvider(new TestAttachGroup("group", 0) {
                   @Override
-                  public int compare(@NotNull Project project, @NotNull ProcessInfo a, @NotNull ProcessInfo b, @NotNull UserDataHolder dataHolder) {
+                  public int compare(@NotNull ProcessInfo a, @NotNull ProcessInfo b) {
                     return a.getPid() - b.getPid();
                   }
                 }, "dbg1"));
@@ -243,7 +244,7 @@ public class AttachToProcessActionTest extends PlatformTestCase {
                 "1 exec1: dbg1\n",
                 new TestDebuggerProvider(new TestAttachGroup("group", 0) {
                   @Override
-                  public int compare(@NotNull Project project, @NotNull ProcessInfo a, @NotNull ProcessInfo b, @NotNull UserDataHolder dataHolder) {
+                  public int compare(@NotNull ProcessInfo a, @NotNull ProcessInfo b) {
                     return b.getPid() - a.getPid();
                   }
                 }, "dbg1"));
@@ -271,40 +272,40 @@ public class AttachToProcessActionTest extends PlatformTestCase {
 
     List<XLocalAttachDebugger> debuggers = createDebuggers("gdb");
     UserDataHolderBase dataHolder = new UserDataHolderBase();
-    AttachToProcessItem item1 = fixtureCreateAttachToProcessItem(XLocalAttachGroup.DEFAULT, true, info1, debuggers, dataHolder);
-    AttachToProcessItem item2 = fixtureCreateAttachToProcessItem(XLocalAttachGroup.DEFAULT, true, info2, debuggers, dataHolder);
-    AttachToProcessItem item3 = fixtureCreateAttachToProcessItem(XLocalAttachGroup.DEFAULT, true, info3, debuggers, dataHolder);
-    AttachToProcessItem item4 = fixtureCreateAttachToProcessItem(XLocalAttachGroup.DEFAULT, true, info4, debuggers, dataHolder);
-    AttachToProcessItem item5 = fixtureCreateAttachToProcessItem(XLocalAttachGroup.DEFAULT, true, info5, debuggers, dataHolder);
+    AttachToProcessItem item1 = fixtureCreateAttachToProcessItem(XDefaultLocalAttachGroup.INSTANCE, true, info1, debuggers, dataHolder);
+    AttachToProcessItem item2 = fixtureCreateAttachToProcessItem(XDefaultLocalAttachGroup.INSTANCE, true, info2, debuggers, dataHolder);
+    AttachToProcessItem item3 = fixtureCreateAttachToProcessItem(XDefaultLocalAttachGroup.INSTANCE, true, info3, debuggers, dataHolder);
+    AttachToProcessItem item4 = fixtureCreateAttachToProcessItem(XDefaultLocalAttachGroup.INSTANCE, true, info4, debuggers, dataHolder);
+    AttachToProcessItem item5 = fixtureCreateAttachToProcessItem(XDefaultLocalAttachGroup.INSTANCE, true, info5, debuggers, dataHolder);
 
-    HistoryItem historyItem1 = fixtureCreateHistoryItem(info1, XLocalAttachGroup.DEFAULT, "gdb");
-    HistoryItem historyItem2 = fixtureCreateHistoryItem(info2, XLocalAttachGroup.DEFAULT, "gdb");
-    HistoryItem historyItem3 = fixtureCreateHistoryItem(info3, XLocalAttachGroup.DEFAULT, "gdb");
-    HistoryItem historyItem4 = fixtureCreateHistoryItem(info4, XLocalAttachGroup.DEFAULT, "gdb");
-    HistoryItem historyItem5 = fixtureCreateHistoryItem(info5, XLocalAttachGroup.DEFAULT, "gdb");
+    RecentItem recentItem1 = fixtureCreateHistoryItem(info1, XDefaultLocalAttachGroup.INSTANCE, "gdb");
+    RecentItem recentItem2 = fixtureCreateHistoryItem(info2, XDefaultLocalAttachGroup.INSTANCE, "gdb");
+    RecentItem recentItem3 = fixtureCreateHistoryItem(info3, XDefaultLocalAttachGroup.INSTANCE, "gdb");
+    RecentItem recentItem4 = fixtureCreateHistoryItem(info4, XDefaultLocalAttachGroup.INSTANCE, "gdb");
+    RecentItem recentItem5 = fixtureCreateHistoryItem(info5, XDefaultLocalAttachGroup.INSTANCE, "gdb");
 
     // empty
-    assertEmpty(getHistory(getProject()));
+    assertEmpty(getRecentItems(LocalAttachHost.INSTANCE, getProject()));
 
     // adding some items
-    addToHistory(getProject(), item1);
-    addToHistory(getProject(), item2);
+    addToRecent(getProject(), item1);
+    addToRecent(getProject(), item2);
 
-    assertOrderedEquals(getHistory(getProject()), historyItem1, historyItem2);
+    assertOrderedEquals(getRecentItems(LocalAttachHost.INSTANCE, getProject()), recentItem1, recentItem2);
 
-    addToHistory(getProject(), item3);
-    addToHistory(getProject(), item4);
+    addToRecent(getProject(), item3);
+    addToRecent(getProject(), item4);
 
-    assertOrderedEquals(getHistory(getProject()), historyItem1, historyItem2, historyItem3, historyItem4);
+    assertOrderedEquals(getRecentItems(LocalAttachHost.INSTANCE, getProject()), recentItem1, recentItem2, recentItem3, recentItem4);
 
     // limiting size to 4 items
-    addToHistory(getProject(), item5);
-    assertOrderedEquals(getHistory(getProject()), historyItem2, historyItem3, historyItem4, historyItem5);
+    addToRecent(getProject(), item5);
+    assertOrderedEquals(getRecentItems(LocalAttachHost.INSTANCE, getProject()), recentItem2, recentItem3, recentItem4, recentItem5);
 
     // popping up recent items
-    addToHistory(getProject(), item3);
-    addToHistory(getProject(), item2);
-    assertOrderedEquals(getHistory(getProject()), historyItem4, historyItem5, historyItem3, historyItem2);
+    addToRecent(getProject(), item3);
+    addToRecent(getProject(), item2);
+    assertOrderedEquals(getRecentItems(LocalAttachHost.INSTANCE, getProject()), recentItem4, recentItem5, recentItem3, recentItem2);
   }
 
   public void testHistory_UpdatingPreviousItems() {
@@ -318,13 +319,13 @@ public class AttachToProcessActionTest extends PlatformTestCase {
     AttachToProcessItem item1 = fixtureCreateAttachToProcessItem(group1, true, info1, createDebuggers("gdb1"), dataHolder);
     AttachToProcessItem item2 = fixtureCreateAttachToProcessItem(group2, true, info2, createDebuggers("gdb2"), dataHolder);
 
-    HistoryItem historyItem1 = fixtureCreateHistoryItem(info1, group1, "gdb1");
-    HistoryItem historyItem2 = fixtureCreateHistoryItem(info2, group2, "gdb2");
+    RecentItem recentItem1 = fixtureCreateHistoryItem(info1, group1, "gdb1");
+    RecentItem recentItem2 = fixtureCreateHistoryItem(info2, group2, "gdb2");
 
-    addToHistory(getProject(), item1);
-    assertOrderedEquals(getHistory(getProject()), historyItem1);
-    addToHistory(getProject(), item2);
-    assertOrderedEquals(getHistory(getProject()), historyItem2);
+    addToRecent(getProject(), item1);
+    assertOrderedEquals(getRecentItems(LocalAttachHost.INSTANCE, getProject()), recentItem1);
+    addToRecent(getProject(), item2);
+    assertOrderedEquals(getRecentItems(LocalAttachHost.INSTANCE, getProject()), recentItem2);
   }
 
   public void testHistoryGroup() {
@@ -340,7 +341,7 @@ public class AttachToProcessActionTest extends PlatformTestCase {
                                                         new TestDebuggerProvider(2, group2, debuggers2));
 
     // one item in history
-    addToHistory(getProject(), originalItems.get(0));
+    addToRecent(getProject(), originalItems.get(0));
     assertItems("----Recent----\n" +
                 "10 exec10: gdb1\n" +
                 "    gdb1\n" +
@@ -361,7 +362,7 @@ public class AttachToProcessActionTest extends PlatformTestCase {
                 new TestDebuggerProvider(20, group2, debuggers2));
 
     // several items in history
-    addToHistory(getProject(), originalItems.get(1));
+    addToRecent(getProject(), originalItems.get(1));
     assertItems("----Recent----\n" +
                 "20 exec20: gdb2\n" +
                 "    gdb2\n" +
@@ -385,7 +386,7 @@ public class AttachToProcessActionTest extends PlatformTestCase {
                 new TestDebuggerProvider(20, group2, debuggers2));
 
     // put most recent item on top
-    addToHistory(getProject(), originalItems.get(0));
+    addToRecent(getProject(), originalItems.get(0));
     assertItems("----Recent----\n" +
                 "10 exec10: gdb1\n" +
                 "    gdb1\n" +
@@ -409,8 +410,8 @@ public class AttachToProcessActionTest extends PlatformTestCase {
                 new TestDebuggerProvider(20, group2, debuggers2));
 
     // put debugger used in history item on top
-    addToHistory(getProject(), originalItems.get(0).getSubItems().get(1));
-    addToHistory(getProject(), originalItems.get(1).getSubItems().get(1));
+    addToRecent(getProject(), originalItems.get(0).getSubItems().get(1));
+    addToRecent(getProject(), originalItems.get(1).getSubItems().get(1));
     assertItems("----Recent----\n" +
                 "20 exec20: lldb2\n" +
                 "    gdb2\n" +
@@ -596,10 +597,6 @@ public class AttachToProcessActionTest extends PlatformTestCase {
     assertEquals(expected, printItems(fixtureCollectAttachItems(infos, providers)));
   }
 
-  private void assertItems(String expected, List<AttachToProcessItem> items) {
-    assertEquals(expected, printItems(items));
-  }
-
   private String printItems(List<AttachToProcessItem> items) {
     StringBuilder builder = new StringBuilder();
 
@@ -673,7 +670,7 @@ public class AttachToProcessActionTest extends PlatformTestCase {
     }
 
     public TestDebuggerProvider(String... names) {
-      this(XLocalAttachGroup.DEFAULT, names);
+      this(XDefaultLocalAttachGroup.INSTANCE, names);
     }
 
     @NotNull
