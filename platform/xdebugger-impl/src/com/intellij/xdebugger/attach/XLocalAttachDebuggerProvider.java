@@ -8,7 +8,6 @@ import com.intellij.openapi.util.UserDataHolder;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
 
 /**
@@ -29,7 +28,7 @@ public interface XLocalAttachDebuggerProvider extends XAttachDebuggerProvider {
    */
   @NotNull
   default XAttachPresentationGroup<ProcessInfo> getAttachGroup() {
-    return XLocalAttachGroup.DEFAULT;
+    return XDefaultLocalAttachGroup.INSTANCE;
   }
 
   @NotNull
@@ -49,10 +48,8 @@ public interface XLocalAttachDebuggerProvider extends XAttachDebuggerProvider {
                                                      @NotNull XAttachHost hostInfo,
                                                      @NotNull ProcessInfo process,
                                                      @NotNull UserDataHolder contextHolder) {
+    assert hostInfo instanceof LocalAttachHost;
 
-    if(hostInfo instanceof LocalAttachHost)
-      return new ArrayList<>(getAvailableDebuggers(project, process, contextHolder));
-    else
-      return Collections.emptyList();
+    return new ArrayList<>(getAvailableDebuggers(project, process, contextHolder));
   }
 }
