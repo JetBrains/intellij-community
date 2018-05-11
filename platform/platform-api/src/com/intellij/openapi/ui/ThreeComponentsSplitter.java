@@ -26,6 +26,7 @@ import com.intellij.ui.ClickListener;
 import com.intellij.ui.UIBundle;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
+import com.intellij.util.ui.accessibility.ScreenReader;
 import com.intellij.util.ui.update.Activatable;
 import com.intellij.util.ui.update.UiNotifyConnector;
 import org.jetbrains.annotations.NotNull;
@@ -166,8 +167,15 @@ public class ThreeComponentsSplitter extends JPanel implements Disposable {
       myFirstDivider.setBackground(bg);
       myLastDivider.setBackground(bg);
     }
-    setFocusCycleRoot(true);
-    setFocusTraversalPolicy(new MyFocusTraversalPolicy());
+    // Android Studio: Let the focus owner go in/out of this component, while ensuring the focus
+    // moves using the "Layout" policy when inside this component.
+    if (ScreenReader.isActive()) {
+      setFocusTraversalPolicyProvider(true);
+      setFocusTraversalPolicy(new LayoutFocusTraversalPolicy());
+    } else {
+      setFocusCycleRoot(true);
+      setFocusTraversalPolicy(new MyFocusTraversalPolicy());
+    }
     setOpaque(false);
     add(myFirstDivider);
     add(myLastDivider);

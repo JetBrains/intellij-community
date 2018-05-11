@@ -20,6 +20,7 @@ import com.intellij.ui.PopupHandler;
 import com.intellij.util.IconUtil;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
+import com.intellij.util.ui.accessibility.ScreenReader;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -93,7 +94,7 @@ public final class StripeButton extends AnchoredButton implements ActionListener
   }
 
   private void init() {
-    setFocusable(false);
+    setFocusable(ScreenReader.isActive()); // Android Studio: allow for focus for accessibility
     setBackground(ourBackgroundColor);
     final Border border = JBUI.Borders.empty(5, 5, 0, 5);
     setBorder(border);
