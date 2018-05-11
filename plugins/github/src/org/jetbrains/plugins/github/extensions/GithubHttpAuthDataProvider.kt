@@ -10,6 +10,7 @@ import git4idea.remote.GitHttpAuthDataProvider
 import org.jetbrains.plugins.github.authentication.GithubAuthenticationManager
 import org.jetbrains.plugins.github.authentication.accounts.GithubAccount
 import org.jetbrains.plugins.github.authentication.accounts.GithubAccountInformationProvider
+import org.jetbrains.plugins.github.exceptions.GithubAuthenticationException
 import java.io.IOException
 
 class GithubHttpAuthDataProvider(private val authenticationManager: GithubAuthenticationManager,
@@ -32,7 +33,13 @@ class GithubHttpAuthDataProvider(private val authenticationManager: GithubAuthen
 
   override fun getAuthData(project: Project, url: String, login: String): GithubAccountAuthData? {
     return getSuitableAccounts(project, url, login).singleOrNull()?.let {
-      GithubAccountAuthData(it, login, authenticationManager.getTokenForAccount(it))
+      try {
+        GithubAccountAuthData(it, login, authenticationManager.getTokenForAccount(it))
+      }
+      catch (e: GithubAuthenticationException) {
+        LOG.info(e)
+        null
+      }
     }
   }
 

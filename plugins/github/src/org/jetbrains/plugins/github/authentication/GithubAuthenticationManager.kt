@@ -24,6 +24,7 @@ class GithubAuthenticationManager internal constructor(private val accountManage
   @CalledInAny
   fun getAccounts(): Set<GithubAccount> = accountManager.accounts
 
+  @Throws(GithubAuthenticationException::class)
   @CalledInAny
   internal fun getTokenForAccount(account: GithubAccount): String {
     val token = accountManager.getTokenForAccount(account)
