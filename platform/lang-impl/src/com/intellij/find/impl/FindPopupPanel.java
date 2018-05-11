@@ -684,7 +684,7 @@ public class FindPopupPanel extends JBPanel implements FindUI {
       }
     };
     myResultsPreviewTable.getSelectionModel().addListSelectionListener(e -> {
-      if (e.getValueIsAdjusting()) return;
+      if (e.getValueIsAdjusting() || Disposer.isDisposed(myPreviewUpdater)) return;
       myPreviewUpdater.addRequest(updatePreviewRunnable, 50); //todo[vasya]: remove this dirty hack of updating preview panel after clicking on Replace button
     });
     DocumentAdapter documentAdapter = new DocumentAdapter() {
