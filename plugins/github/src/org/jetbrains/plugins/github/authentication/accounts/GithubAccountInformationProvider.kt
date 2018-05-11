@@ -3,9 +3,9 @@ package org.jetbrains.plugins.github.authentication.accounts
 
 import com.intellij.openapi.progress.ProgressIndicator
 import org.jetbrains.plugins.github.api.GithubApiTaskExecutor
-import org.jetbrains.plugins.github.api.GithubTask
 import org.jetbrains.plugins.github.api.GithubApiUtil
 import org.jetbrains.plugins.github.api.GithubServerPath
+import org.jetbrains.plugins.github.api.GithubTask
 import org.jetbrains.plugins.github.api.data.GithubUserDetailed
 import java.awt.Image
 import java.io.IOException
@@ -16,7 +16,9 @@ import javax.imageio.ImageIO
 //TODO: load image with GithubApiTaskExecutor
 class GithubAccountInformationProvider(private val apiTaskExecutor: GithubApiTaskExecutor) {
   @Throws(IOException::class)
-  fun getAccountInformationWithPicture(indicator: ProgressIndicator, server: GithubServerPath, token: String): Pair<GithubUserDetailed, Image> {
+  fun getAccountInformationWithPicture(indicator: ProgressIndicator,
+                                       server: GithubServerPath,
+                                       token: String): Pair<GithubUserDetailed, Image> {
     val details = GithubApiTaskExecutor.execute(indicator, server, token, GithubTask { c -> GithubApiUtil.getCurrentUser(c) })
     return details to ImageIO.read(URL(details.avatarUrl))
   }
@@ -31,4 +33,7 @@ class GithubAccountInformationProvider(private val apiTaskExecutor: GithubApiTas
   fun getAccountInformation(indicator: ProgressIndicator, account: GithubAccount): GithubUserDetailed {
     return apiTaskExecutor.execute(indicator, account, GithubTask { c -> GithubApiUtil.getCurrentUser(c) })
   }
+
+  @Throws(IOException::class)
+  fun getAccountUsername(indicator: ProgressIndicator, account: GithubAccount) = getAccountInformation(indicator, account).login
 }
