@@ -43,15 +43,16 @@ internal class FileHistoryFilterer(logData: VcsLogData) : VcsLogFilterer {
                                                   logData.commitDetailsGetter, index)
 
   override fun filter(dataPack: DataPack,
+                      oldVisiblePack: VisiblePack,
                       sortType: PermanentGraph.SortType,
                       filters: VcsLogFilterCollection,
                       commitCount: CommitCountStage): Pair<VisiblePack, CommitCountStage> {
     val filePath = getFilePath(filters)
     if (filePath == null || filePath.isDirectory) {
-      return vcsLogFilterer.filter(dataPack, sortType, filters, commitCount)
+      return vcsLogFilterer.filter(dataPack, oldVisiblePack, sortType, filters, commitCount)
     }
     val root = VcsLogUtil.getActualRoot(project, filePath)!!
-    return MyWorker(root, filePath, getHash(filters)).filter(dataPack, sortType, filters, commitCount)
+    return MyWorker(root, filePath, getHash(filters)).filter(dataPack, oldVisiblePack, sortType, filters, commitCount)
   }
 
   override fun canFilterEmptyPack(filters: VcsLogFilterCollection): Boolean {
@@ -63,13 +64,14 @@ internal class FileHistoryFilterer(logData: VcsLogData) : VcsLogFilterer {
                                            private val hash: Hash?) {
 
     fun filter(dataPack: DataPack,
+               oldVisiblePack: VisiblePack,
                sortType: PermanentGraph.SortType,
                filters: VcsLogFilterCollection,
                commitCount: CommitCountStage): Pair<VisiblePack, CommitCountStage> {
       val start = System.currentTimeMillis()
 
       if (index.isIndexed(root) && dataPack.isFull) {
-        val visiblePack = filterWithIndex(dataPack, sortType, filters)
+        val visiblePack = filterWithIndex(dataPack, oldVisiblePack, sortType, filters)
         LOG.debug(StopWatch.formatTime(System.currentTimeMillis() - start) + " for computing history for $filePath with index")
         if (checkNotEmpty(dataPack, visiblePack, true)) {
           return Pair(visiblePack, commitCount)
@@ -87,13 +89,13 @@ internal class FileHistoryFilterer(logData: VcsLogData) : VcsLogFilterer {
           }
           catch (e: VcsException) {
             LOG.error(e)
-            vcsLogFilterer.filter(dataPack, sortType, filters, commitCount)
+            vcsLogFilterer.filter(dataPack, oldVisiblePack, sortType, filters, commitCount)
           }
         }
       }
 
       LOG.warn("Could not find vcs or history provider for file $filePath")
-      return vcsLogFilterer.filter(dataPack, sortType, filters, commitCount)
+      return vcsLogFilterer.filter(dataPack, oldVisiblePack, sortType, filters, commitCount)
     }
 
     private fun checkNotEmpty(dataPack: DataPack, visiblePack: VisiblePack, withIndex: Boolean): Boolean {
@@ -157,6 +159,7 @@ internal class FileHistoryFilterer(logData: VcsLogData) : VcsLogFilterer {
     }
 
     private fun filterWithIndex(dataPack: DataPack,
+                                oldVisiblePack: VisiblePack,
                                 sortType: PermanentGraph.SortType,
                                 filters: VcsLogFilterCollection): VisiblePack {
       val matchingHeads = vcsLogFilterer.getMatchingHeads(dataPack.refsModel, setOf(root), filters)
