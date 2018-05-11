@@ -59,19 +59,19 @@ open class ControlTransferInstruction(val transfer: DfaControlTransferValue?) : 
 
   fun getPossibleTargetInstructions(allInstructions: Array<Instruction>) = getPossibleTargetIndices().map { allInstructions[it] }
 
-  override fun toString() = if (transfer == null) "RET" else "TRANSFER " + transfer.toString()
+  override fun toString() = if (transfer == null) "RET" else "TRANSFER $transfer"
 }
 
 sealed class Trap(val anchor: PsiElement) {
   class TryCatch(tryStatement: PsiTryStatement, val clauses: LinkedHashMap<PsiCatchSection, ControlFlow.ControlFlowOffset>)
     : Trap(tryStatement) {
-    override fun toString(): String = "TryCatch -> " + clauses.values
+    override fun toString(): String = "TryCatch -> ${clauses.values}"
   }
   class TryFinally(finallyBlock: PsiCodeBlock, val jumpOffset: ControlFlow.ControlFlowOffset): Trap(finallyBlock) {
-    override fun toString(): String = "TryFinally -> " + jumpOffset
+    override fun toString(): String = "TryFinally -> $jumpOffset"
   }
   class TwrFinally(resourceList: PsiResourceList, val jumpOffset: ControlFlow.ControlFlowOffset): Trap(resourceList) {
-    override fun toString(): String = "TwrFinally -> " + jumpOffset
+    override fun toString(): String = "TwrFinally -> $jumpOffset"
   }
   class InsideFinally(finallyBlock: PsiElement): Trap(finallyBlock) {
     override fun toString(): String = "InsideFinally"
