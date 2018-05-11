@@ -1633,7 +1633,7 @@ public class SimplifyStreamApiCallChainsInspection extends AbstractBaseJavaLocal
       String typeParametersText = typeParameters == null ? "" : ct.text(typeParameters);
       PsiElement result = ct.replaceAndRestoreComments(call, CommonClassNames.JAVA_UTIL_ARRAYS + "." + typeParametersText + "asList" +
                                                               ct.text(qualifierArgs) + ".contains(" + ct.text(value) + ")");
-      return JavaCodeStyleManager.getInstance(call.getProject()).shortenClassReferences(result);
+      return JavaCodeStyleManager.getInstance(result.getProject()).shortenClassReferences(result);
     }
 
     static CallHandler<CallChainSimplification> handler() {
