@@ -37,6 +37,16 @@ class LifetimedOnDisposable(disposable: Disposable) : Lifetimed {
     override val lifetime: Lifetime = disposable.attachLifetime()
 }
 
+interface LifetimedDisposable : Lifetimed, Disposable
+
+class SimpleLifetimedDisposable : LifetimedDisposable {
+    override val lifetime: Lifetime = Lifetime()
+
+    override fun dispose() {
+        lifetime.terminate()
+    }
+}
+
 fun Notification.notify(lifetime: Lifetime, project: Project?) {
     lifetime.add { expire() }
     Notifications.Bus.notify(this, project)
