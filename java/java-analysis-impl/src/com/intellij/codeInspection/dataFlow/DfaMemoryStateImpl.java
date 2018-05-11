@@ -670,12 +670,6 @@ public class DfaMemoryStateImpl implements DfaMemoryState {
     return true;
   }
 
-  <T> void setFact(DfaValue target, DfaFactType<T> factType, T fact) {
-    if (target instanceof DfaVariableValue && !isUnknownState(target)) {
-      setVariableState((DfaVariableValue)target, getVariableState((DfaVariableValue)target).withFact(factType, fact));
-    }
-  }
-
   private boolean applyFacts(DfaValue value, DfaFactMap facts) {
     if (value instanceof DfaVariableValue && !isUnknownState(value)) {
       DfaVariableState oldState = getVariableState((DfaVariableValue)value);
@@ -1213,7 +1207,7 @@ public class DfaMemoryStateImpl implements DfaMemoryState {
     return state;
   }
 
-  void forVariableStates(BiConsumer<DfaVariableValue, DfaVariableState> consumer) {
+  void forVariableStates(BiConsumer<? super DfaVariableValue, ? super DfaVariableState> consumer) {
     myVariableStates.forEach((value, state) -> {
       if (!isUnknownState(value)) {
         consumer.accept(value, state);

@@ -345,7 +345,9 @@ class StateMerger {
       DfaMemoryStateImpl getState() {
         if(myCommonEqualities != null) {
           myState.removeEquivalenceRelations(var);
-          myState.setFact(var, RANGE, myRange);
+          if (!myState.isUnknownState(var)) {
+            myState.setVariableState(var, myState.getVariableState(var).withFact(RANGE, myRange));
+          }
           for (EqualityFact equality : myCommonEqualities) {
             equality.applyTo(myState);
           }
