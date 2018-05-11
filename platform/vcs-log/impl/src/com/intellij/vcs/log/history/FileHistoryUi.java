@@ -10,12 +10,10 @@ import com.intellij.openapi.vcs.changes.ContentRevision;
 import com.intellij.openapi.vcs.history.VcsFileRevision;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.JBColor;
-import com.intellij.util.ObjectUtils;
 import com.intellij.util.PairFunction;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.vcs.log.*;
 import com.intellij.vcs.log.data.*;
-import com.intellij.vcs.log.data.index.IndexDataGetter;
 import com.intellij.vcs.log.impl.CommonUiProperties;
 import com.intellij.vcs.log.impl.VcsLogContentUtil;
 import com.intellij.vcs.log.impl.VcsLogUiProperties;
@@ -34,18 +32,20 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.awt.*;
+import java.util.Collections;
 import java.util.List;
-import java.util.*;
+import java.util.Objects;
+import java.util.Set;
 
 public class FileHistoryUi extends AbstractVcsLogUi {
   @NotNull private static final String HELP_ID = "reference.versionControl.toolwindow.history";
+  @NotNull private final FilePath myPath;
+  @NotNull private final VirtualFile myRoot;
+  @Nullable private final Hash myRevision;
+
   @NotNull private final FileHistoryUiProperties myUiProperties;
   @NotNull private final FileHistoryFilterUi myFilterUi;
-  @NotNull private final FilePath myPath;
-  @Nullable private final Hash myRevision;
-  @NotNull private final VirtualFile myRoot;
   @NotNull private final FileHistoryPanel myFileHistoryPanel;
-  @NotNull private final IndexDataGetter myIndexDataGetter;
   @NotNull private final Set<String> myHighlighterIds;
   @NotNull private final MyPropertiesChangeListener myPropertiesChangeListener;
 
@@ -57,13 +57,14 @@ public class FileHistoryUi extends AbstractVcsLogUi {
                        @Nullable Hash revision,
                        @NotNull VirtualFile root) {
     super(getFileHistoryLogId(path, revision), logData, manager, refresher);
+
+    myPath = path;
+    myRoot = root;
+    myRevision = revision;
+
     myUiProperties = uiProperties;
 
-    myIndexDataGetter = ObjectUtils.assertNotNull(logData.getIndex().getDataGetter());
-    myRevision = revision;
-    myRoot = root;
     myFilterUi = new FileHistoryFilterUi(path, revision, root, uiProperties);
-    myPath = path;
     myFileHistoryPanel = new FileHistoryPanel(this, logData, myVisiblePack, path);
 
     myHighlighterIds = myRevision == null
@@ -106,42 +107,25 @@ public class FileHistoryUi extends AbstractVcsLogUi {
   }
 
   @Nullable
-  public FilePath getPath(@NotNull VcsFullCommitDetails details) {
+  public FilePath getPathInCommit(@NotNull Hash hash) {
     if (myPath.isDirectory()) return myPath;
 
-    List<Change> changes = collectRelevantChanges(details);
-    for (Change change : changes) {
-      ContentRevision revision = change.getAfterRevision();
-      if (revision != null) {
-        return revision.getFile();
-      }
+    int commitIndex = myLogData.getStorage().getCommitIndex(hash, myRoot);
+    if (myVisiblePack instanceof FileHistoryVisiblePack) {
+      return ((FileHistoryVisiblePack)myVisiblePack).getFilePath(commitIndex);
     }
-
-    return null;// file was deleted
+    return myPath;
   }
 
   @NotNull
   public List<Change> collectRelevantChanges(@NotNull VcsFullCommitDetails details) {
-    Set<FilePath> fileNames = getFileNames(details);
+    FilePath filePath = getPathInCommit(details.getId());
+    if (filePath == null) return ContainerUtil.emptyList();
+    // todo deal with deleted files
     return FileHistoryUtil.collectRelevantChanges(details,
                                                   change -> myPath.isDirectory()
-                                                            ? FileHistoryUtil.affectsDirectories(change, fileNames)
-                                                            : FileHistoryUtil.affectsFiles(change, fileNames));
-  }
-
-  @NotNull
-  private Set<FilePath> getFileNames(@NotNull VcsFullCommitDetails details) {
-    int commitIndex = myLogData.getStorage().getCommitIndex(details.getId(), details.getRoot());
-    Set<FilePath> names;
-    if (myVisiblePack instanceof FileHistoryVisiblePack) {
-      Map<Integer, FilePath> namesData = ((FileHistoryVisiblePack)myVisiblePack).getNamesData();
-      names = Collections.singleton(namesData.get(commitIndex));
-    }
-    else {
-      names = myIndexDataGetter.getFileNames(myPath, commitIndex);
-    }
-    if (names.isEmpty()) return Collections.singleton(myPath);
-    return names;
+                                                            ? FileHistoryUtil.affectsDirectory(change, myPath)
+                                                            : FileHistoryUtil.affectsFile(change, filePath));
   }
 
   @Override

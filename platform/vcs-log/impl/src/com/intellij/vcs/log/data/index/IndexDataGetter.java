@@ -273,16 +273,6 @@ public class IndexDataGetter {
   }
 
   @NotNull
-  public Set<FilePath> getFileNames(@NotNull FilePath path, int commit) {
-    VirtualFile root = VcsLogUtil.getActualRoot(myProject, path);
-    if (myRoots.contains(root)) {
-      return Collections.singleton(path);
-    }
-
-    return Collections.emptySet();
-  }
-
-  @NotNull
   public TIntObjectHashMap<TIntObjectHashMap<VcsLogPathsIndex.ChangeKind>> getAffectedCommits(@NotNull FilePath path) {
     TIntObjectHashMap<TIntObjectHashMap<VcsLogPathsIndex.ChangeKind>> affectedCommits = new TIntObjectHashMap<>();
 

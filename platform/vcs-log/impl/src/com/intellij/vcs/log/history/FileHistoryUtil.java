@@ -20,7 +20,6 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.Collections;
 import java.util.List;
-import java.util.Set;
 
 import static com.intellij.util.ObjectUtils.chooseNotNull;
 import static com.intellij.util.ObjectUtils.notNull;
@@ -53,14 +52,13 @@ public class FileHistoryUtil {
     return Collections.emptyList();
   }
 
-
-  static boolean affectsFiles(@NotNull Change change, @NotNull Set<FilePath> files) {
+  static boolean affectsFile(@NotNull Change change, @NotNull FilePath file) {
     ContentRevision revision = notNull(chooseNotNull(change.getAfterRevision(), change.getBeforeRevision()));
-    return files.contains(revision.getFile());
+    return file.equals(revision.getFile());
   }
 
-  static boolean affectsDirectories(@NotNull Change change, @NotNull Set<FilePath> directories) {
+  static boolean affectsDirectory(@NotNull Change change, @NotNull FilePath directory) {
     FilePath file = notNull(chooseNotNull(change.getAfterRevision(), change.getBeforeRevision())).getFile();
-    return ContainerUtil.find(directories, dir -> VfsUtilCore.isAncestor(dir.getIOFile(), file.getIOFile(), false)) != null;
+    return VfsUtilCore.isAncestor(directory.getIOFile(), file.getIOFile(), false);
   }
 }

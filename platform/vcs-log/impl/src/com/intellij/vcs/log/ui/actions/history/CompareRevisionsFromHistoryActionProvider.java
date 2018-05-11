@@ -102,33 +102,30 @@ public class CompareRevisionsFromHistoryActionProvider implements AnActionExtens
     VcsLogUtil.triggerUsage(e);
 
     List<CommitId> commits = ui.getVcsLog().getSelectedCommits();
-    if (commits.size() != 1 && commits.size() != 2) return;
+    if (commits.size() == 2) {
+      VcsLogDiffHandler handler = e.getData(VcsLogInternalDataKeys.LOG_DIFF_HANDLER);
+      // this check is needed here since we may come on key event without performing proper checks
+      if (handler == null) return;
 
-    VcsLogDiffHandler handler = e.getData(VcsLogInternalDataKeys.LOG_DIFF_HANDLER);
-    // this check is needed here since we may come on key event without performing proper checks
-    if (commits.size() == 2 && handler == null) return;
+      CommitId newestId = commits.get(0);
+      CommitId olderId = commits.get(1);
+      notNull(handler).showDiff(olderId.getRoot(), ui.getPathInCommit(olderId.getHash()), olderId.getHash(),
+                                ui.getPathInCommit(newestId.getHash()), newestId.getHash());
+      return;
+    }
 
+    if (commits.size() != 1) return;
+    
     List<Integer> commitIds = ContainerUtil.map(commits, c -> ui.getLogData().getCommitIndex(c.getHash(), c.getRoot()));
     ui.getLogData().getCommitDetailsGetter().loadCommitsData(commitIds, details -> {
-      if (details.size() == 2) {
-        // we only need details here to get file names for each revision
-        // in order to fix this FileNamesData should be refactored
-        // so that it could return a single file path for each revision
-        VcsFullCommitDetails newestDetail = details.get(0);
-        VcsFullCommitDetails olderDetail = details.get(1);
-        notNull(handler).showDiff(olderDetail.getRoot(), ui.getPath(olderDetail), olderDetail.getId(),
-                                  ui.getPath(newestDetail), newestDetail.getId());
+      VcsFullCommitDetails detail = notNull(ContainerUtil.getFirstItem(details));
+      List<Change> changes = ui.collectRelevantChanges(detail);
+      if (filePath.isDirectory()) {
+        VcsDiffUtil.showChangesDialog(project, "Changes in " + detail.getId().toShortString() + " for " + filePath.getName(),
+                                      ContainerUtil.newArrayList(changes));
       }
-      else if (details.size() == 1) {
-        VcsFullCommitDetails detail = notNull(ContainerUtil.getFirstItem(details));
-        List<Change> changes = ui.collectRelevantChanges(detail);
-        if (filePath.isDirectory()) {
-          VcsDiffUtil.showChangesDialog(project, "Changes in " + detail.getId().toShortString() + " for " + filePath.getName(),
-                                        ContainerUtil.newArrayList(changes));
-        }
-        else {
-          ShowDiffAction.showDiffForChange(project, changes, 0, new ShowDiffContext());
-        }
+      else {
+        ShowDiffAction.showDiffForChange(project, changes, 0, new ShowDiffContext());
       }
     }, t -> VcsBalloonProblemNotifier.showOverChangesView(project, "Could not load selected commits: " + t.getMessage(),
                                                           MessageType.ERROR), null);

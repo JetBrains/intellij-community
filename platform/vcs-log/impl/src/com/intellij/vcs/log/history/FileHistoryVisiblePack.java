@@ -21,6 +21,7 @@ import com.intellij.vcs.log.data.DataPackBase;
 import com.intellij.vcs.log.graph.VisibleGraph;
 import com.intellij.vcs.log.visible.VisiblePack;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.Map;
 
@@ -36,8 +37,8 @@ public class FileHistoryVisiblePack extends VisiblePack {
     myNamesData = namesData;
   }
 
-  @NotNull
-  public Map<Integer, FilePath> getNamesData() {
-    return myNamesData;
+  @Nullable
+  public FilePath getFilePath(int commit) {
+    return myNamesData.get(commit);
   }
 }
