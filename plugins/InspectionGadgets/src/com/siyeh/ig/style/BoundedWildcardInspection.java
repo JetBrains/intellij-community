@@ -532,7 +532,6 @@ public class BoundedWildcardInspection extends AbstractBaseJavaLocalInspectionTo
                                         @NotNull PsiTypeParameter parameter,
                                         @NotNull PsiSubstitutor superClassSubstitutor) {
     return rootType.accept(new PsiTypeVisitor<Boolean>() {
-      boolean topLevel = true;
       @Nullable
       @Override
       public Boolean visitClassType(PsiClassType classType) {

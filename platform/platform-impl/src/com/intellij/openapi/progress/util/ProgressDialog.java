@@ -27,8 +27,6 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import javax.swing.border.Border;
 import java.awt.*;
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
 import java.awt.event.KeyEvent;
 import java.io.File;
 
@@ -115,19 +113,11 @@ class ProgressDialog implements Disposable {
     }
     myInnerPanel.setPreferredSize(new Dimension(SystemInfo.isMac ? 350 : JBUI.scale(450), -1));
 
-    myCancelButton.addActionListener(new ActionListener() {
-      @Override
-      public void actionPerformed(@NotNull ActionEvent e) {
-        doCancelAction();
-      }
-    });
+    myCancelButton.addActionListener(__ -> doCancelAction());
 
-    myCancelButton.registerKeyboardAction(new ActionListener() {
-      @Override
-      public void actionPerformed(@NotNull ActionEvent e) {
-        if (myCancelButton.isEnabled()) {
-          doCancelAction();
-        }
+    myCancelButton.registerKeyboardAction(__ -> {
+      if (myCancelButton.isEnabled()) {
+        doCancelAction();
       }
     }, KeyStroke.getKeyStroke(KeyEvent.VK_ESCAPE, 0), JComponent.WHEN_ANCESTOR_OF_FOCUSED_COMPONENT);
 
@@ -161,14 +151,6 @@ class ProgressDialog implements Disposable {
     return myPanel;
   }
 
-  void setShouldShowBackground(final boolean shouldShowBackground) {
-    myShouldShowBackground = shouldShowBackground;
-    SwingUtilities.invokeLater(() -> {
-      myBackgroundButton.setVisible(shouldShowBackground);
-      myPanel.revalidate();
-    });
-  }
-
   void changeCancelButtonText(String text) {
     myCancelButton.setText(text);
   }
@@ -195,7 +177,8 @@ class ProgressDialog implements Disposable {
 
     if (enable && !myProgressWindow.isCanceled()) {
       setCancelButtonEnabledASAP(true);
-    } else {
+    }
+    else {
       myDisableCancelAlarm.cancelAllRequests();
       myDisableCancelAlarm.addRequest(() -> setCancelButtonEnabledASAP(false), 500);
     }
@@ -212,15 +195,11 @@ class ProgressDialog implements Disposable {
     myCancelButton.setVisible(myProgressWindow.myShouldShowCancel);
 
     myBackgroundButton.setVisible(myShouldShowBackground);
-    myBackgroundButton.addActionListener(
-      new ActionListener() {
-        @Override
-        public void actionPerformed(@NotNull ActionEvent e) {
-          if (myShouldShowBackground) {
-            myProgressWindow.background();
-          }
-        }
+    myBackgroundButton.addActionListener(__ -> {
+      if (myShouldShowBackground) {
+        myProgressWindow.background();
       }
+     }
     );
   }
 
@@ -302,10 +281,6 @@ class ProgressDialog implements Disposable {
 
   private boolean isWriteActionProgress() {
     return myProgressWindow instanceof PotemkinProgress;
-  }
-
-  boolean wasShown() {
-    return myProgressWindow.isShowing();
   }
 
   private class MyDialogWrapper extends DialogWrapper {
