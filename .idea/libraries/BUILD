@@ -1064,8 +1064,8 @@ java_library(
 java_library(
     name = "commons-imaging",
     visibility = ["//visibility:public"],
-    exports = ["//prebuilts/tools/common/m2/repository/org/jetbrains/intellij/deps/commons-imaging/1.0-RC:jar"],
-    runtime_deps = ["//prebuilts/tools/common/m2/repository/org/jetbrains/intellij/deps/commons-imaging/1.0-RC:jar"],
+    exports = ["//prebuilts/tools/common/m2/repository/org/jetbrains/intellij/deps/commons-imaging/1.0-RC-1:jar"],
+    runtime_deps = ["//prebuilts/tools/common/m2/repository/org/jetbrains/intellij/deps/commons-imaging/1.0-RC-1:jar"],
 )
 
 # managed by go/iml_to_build
