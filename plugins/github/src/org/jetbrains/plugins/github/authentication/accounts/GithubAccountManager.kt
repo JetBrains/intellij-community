@@ -35,8 +35,11 @@ internal class GithubAccountManager(private val passwordSafe: PasswordSafe) : Pe
    * Add/update/remove Github OAuth token from application
    */
   fun updateAccountToken(account: GithubAccount, token: String?) {
-    passwordSafe.set(createCredentialAttributes(account.id), token?.let {createCredentials(account.id, it)})
+    passwordSafe.set(createCredentialAttributes(account.id), token?.let { createCredentials(account.id, it) })
     LOG.debug((if (token == null) "Cleared" else "Updated") + " OAuth token for account: $account")
+    ApplicationManager.getApplication()
+      .messageBus
+      .syncPublisher(ACCOUNT_TOKEN_CHANGED_TOPIC).tokenChanged(account)
   }
 
   /**
@@ -54,6 +57,8 @@ internal class GithubAccountManager(private val passwordSafe: PasswordSafe) : Pe
     private val LOG = Logger.getInstance(GithubAccountManager::class.java)
     @JvmStatic
     val ACCOUNT_REMOVED_TOPIC = Topic("GITHUB_ACCOUNT_REMOVED", AccountRemovedListener::class.java)
+    @JvmStatic
+    val ACCOUNT_TOKEN_CHANGED_TOPIC = Topic("GITHUB_ACCOUNT_TOKEN_CHANGED", AccountTokenChangedListener::class.java)
   }
 }
 
@@ -65,4 +70,8 @@ private fun createServiceName(accountId: String): String = generateServiceName(G
 
 interface AccountRemovedListener {
   fun accountRemoved(removedAccount: GithubAccount)
+}
+
+interface AccountTokenChangedListener {
+  fun tokenChanged(account: GithubAccount)
 }

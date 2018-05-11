@@ -13,14 +13,15 @@ import org.jetbrains.plugins.github.authentication.accounts.GithubAccountInforma
 import java.io.IOException
 
 class GithubHttpAuthDataProvider(private val authenticationManager: GithubAuthenticationManager,
-                                 private val accountInformationProvider: GithubAccountInformationProvider) : GitHttpAuthDataProvider {
+                                 private val accountInformationProvider: GithubAccountInformationProvider,
+                                 private val authenticationFailureManager: GithubAccountGitAuthenticationFailureManager) : GitHttpAuthDataProvider {
   private val LOG = logger<GithubHttpAuthDataProvider>()
 
-  override fun getAuthData(project: Project, url: String): AuthData? {
+  override fun getAuthData(project: Project, url: String): GithubAccountAuthData? {
     return getSuitableAccounts(project, url, null).singleOrNull()?.let {
       try {
         val username = accountInformationProvider.getAccountUsername(DumbProgressIndicator(), it)
-        AuthData(username, authenticationManager.getTokenForAccount(it))
+        GithubAccountAuthData(it, username, authenticationManager.getTokenForAccount(it))
       }
       catch (e: IOException) {
         LOG.info("Cannot load username for $it", e)
@@ -29,12 +30,22 @@ class GithubHttpAuthDataProvider(private val authenticationManager: GithubAuthen
     }
   }
 
-  override fun getAuthData(project: Project, url: String, login: String): AuthData? {
-    return getSuitableAccounts(project, url, login).singleOrNull()?.let { AuthData(login, authenticationManager.getTokenForAccount(it)) }
+  override fun getAuthData(project: Project, url: String, login: String): GithubAccountAuthData? {
+    return getSuitableAccounts(project, url, login).singleOrNull()?.let {
+      GithubAccountAuthData(it, login, authenticationManager.getTokenForAccount(it))
+    }
+  }
+
+  override fun forgetPassword(url: String, authData: AuthData) {
+    if (authData is GithubAccountAuthData) {
+      authenticationFailureManager.ignoreAccount(url, authData.account)
+    }
   }
 
   fun getSuitableAccounts(project: Project, url: String, login: String?): Set<GithubAccount> {
-    var potentialAccounts = authenticationManager.getAccounts().filter { it.server.matches(url) }
+    var potentialAccounts = authenticationManager.getAccounts()
+      .filter { it.server.matches(url) }
+      .filter { !authenticationFailureManager.isAccountIgnored(url, it) }
 
     if (login != null) {
       potentialAccounts = potentialAccounts.filter {
@@ -52,4 +63,8 @@ class GithubHttpAuthDataProvider(private val authenticationManager: GithubAuthen
     if (defaultAccount != null && potentialAccounts.contains(defaultAccount)) return setOf(defaultAccount)
     return potentialAccounts.toSet()
   }
+
+  class GithubAccountAuthData(val account: GithubAccount,
+                              login: String,
+                              password: String) : AuthData(login, password)
 }
