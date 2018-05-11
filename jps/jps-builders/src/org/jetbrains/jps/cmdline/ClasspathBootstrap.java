@@ -42,6 +42,15 @@ public class ClasspathBootstrap {
   private ClasspathBootstrap() {
   }
 
+  private static final Class<?>[] COMMON_REQUIRED_CLASSES = {
+    Message.class, // protobuf
+    NetUtil.class, // netty common
+    EventLoopGroup.class, // netty transport
+    AddressResolverGroup.class, // netty resolver
+    ByteBufAllocator.class, // netty buffer
+    ProtobufDecoder.class,  // netty codec
+  };
+
   public static List<String> getBuildProcessApplicationClasspath() {
     final Set<String> cp = ContainerUtil.newHashSet();
 
@@ -49,12 +58,11 @@ public class ClasspathBootstrap {
     cp.add(getResourcePath(ExternalJavacProcess.class));  // intellij.platform.jps.build.javac.rt part
 
     cp.addAll(PathManager.getUtilClassPath()); // intellij.platform.util
-    cp.add(getResourcePath(Message.class)); // protobuf
-    cp.add(getResourcePath(NetUtil.class)); // netty common
-    cp.add(getResourcePath(EventLoopGroup.class)); // netty transport
-    cp.add(getResourcePath(AddressResolverGroup.class)); // netty resolver
-    cp.add(getResourcePath(ByteBufAllocator.class)); // netty buffer
-    cp.add(getResourcePath(ProtobufDecoder.class)); // netty codec
+
+    for (Class<?> aClass : COMMON_REQUIRED_CLASSES) {
+      cp.add(getResourcePath(aClass));
+    }
+
     cp.add(getResourcePath(ClassWriter.class));  // asm
     cp.add(getResourcePath(ClassVisitor.class));  // asm-commons
     cp.add(getResourcePath(JpsModel.class));  // intellij.platform.jps.model
@@ -102,8 +110,10 @@ public class ClasspathBootstrap {
     for (String path : PathManager.getUtilClassPath()) {
       cp.add(new File(path));
     }
-    cp.add(getResourceFile(Message.class)); // protobuf
-    cp.add(getResourceFile(NetUtil.class)); // netty
+
+    for (Class<?> aClass : COMMON_REQUIRED_CLASSES) {
+      cp.add(getResourceFile(aClass));
+    }
 
     final Class<StandardJavaFileManager> optimizedFileManagerClass = OptimizedFileManagerUtil.getManagerClass();
     if (optimizedFileManagerClass != null) {
