@@ -31,6 +31,7 @@ import com.intellij.psi.util.CachedValueProvider.Result;
 import com.intellij.psi.util.CachedValuesManager;
 import com.intellij.psi.util.PsiModificationTracker;
 import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.util.IncorrectOperationException;
 import com.jetbrains.python.PyTokenTypes;
 import com.jetbrains.python.codeInsight.regexp.PythonVerboseRegexpLanguage;
 import com.jetbrains.python.lexer.PythonHighlightingLexer;
@@ -48,11 +49,12 @@ import java.util.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-public class PyStringLiteralExpressionImpl extends PyElementImpl implements PyStringLiteralExpression, RegExpLanguageHost, PsiLiteralValue {
+public class PyStringLiteralExpressionImpl extends PyElementImpl implements PyStringLiteralExpression, RegExpLanguageHost, PsiLiteralValue,
+                                                                            PsiNamedElement {
   private static final Logger LOG = Logger.getInstance(PyStringLiteralExpressionImpl.class);
   public static final Pattern PATTERN_ESCAPE = Pattern
-      .compile("\\\\(\n|\\\\|'|\"|a|b|f|n|r|t|v|([0-7]{1,3})|x([0-9a-fA-F]{1,2})" + "|N(\\{.*?\\})|u([0-9a-fA-F]{4})|U([0-9a-fA-F]{8}))");
-         //        -> 1                        ->   2      <-->     3          <-     ->   4     <-->    5      <-   ->  6           <-<-
+    .compile("\\\\(\n|\\\\|'|\"|a|b|f|n|r|t|v|([0-7]{1,3})|x([0-9a-fA-F]{1,2})" + "|N(\\{.*?\\})|u([0-9a-fA-F]{4})|U([0-9a-fA-F]{8}))");
+  //        -> 1                        ->   2      <-->     3          <-     ->   4     <-->    5      <-   ->  6           <-<-
 
   private enum EscapeRegexGroup {
     WHOLE_MATCH,
@@ -62,6 +64,17 @@ public class PyStringLiteralExpressionImpl extends PyElementImpl implements PySt
     UNICODE_NAMED,
     UNICODE_16BIT,
     UNICODE_32BIT
+  }
+
+  @Override
+  public PsiElement setName(@NotNull String name) throws IncorrectOperationException {
+    final PyStringLiteralExpression literal = PyElementGenerator.getInstance(getProject()).createStringLiteral(this, name);
+    return replace(literal);
+  }
+
+  @Override
+  public String getName() {
+    return getStringValue();
   }
 
   private static final Map<String, String> escapeMap = initializeEscapeMap();
@@ -312,7 +325,8 @@ public class PyStringLiteralExpressionImpl extends PyElementImpl implements PySt
       PyFile file = PsiTreeUtil.getParentOfType(this, PyFile.class);
       if (file != null) {
         IElementType type = PythonHighlightingLexer.convertStringType(getStringNodes().get(0).getElementType(), text,
-                                                LanguageLevel.forElement(this), file.hasImportFromFuture(FutureFeature.UNICODE_LITERALS));
+                                                                      LanguageLevel.forElement(this),
+                                                                      file.hasImportFromFuture(FutureFeature.UNICODE_LITERALS));
         if (PyTokenTypes.UNICODE_NODES.contains(type)) {
           return PyBuiltinCache.getInstance(this).getUnicodeType(LanguageLevel.forElement(this));
         }

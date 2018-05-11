@@ -16,7 +16,6 @@ public class RenameUnsupportedExpressionProcessor extends RenamePyElementProcess
   @Override
   public boolean canProcessElement(@NotNull PsiElement element) {
     return PsiTreeUtil.instanceOf(element, 
-                                  PyStringLiteralExpression.class,
                                   PyNumericLiteralExpression.class,
                                   PyListLiteralExpression.class,
                                   PyDictLiteralExpression.class,
