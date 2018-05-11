@@ -1198,6 +1198,7 @@
       <option name="BREAKPOINT_ATTRIBUTES">
         <value>
           <option name="BACKGROUND" value="3a2323" deuteranopia="42372b" protanopia="42372b"/>
+          <option name="ERROR_STRIPE_COLOR" value="664233" />
         </value>
       </option>
       <option name="COFFEESCRIPT.GLOBAL_VARIABLE">
