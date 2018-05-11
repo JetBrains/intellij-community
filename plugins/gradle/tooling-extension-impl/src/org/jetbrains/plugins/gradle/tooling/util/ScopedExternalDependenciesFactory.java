@@ -31,7 +31,8 @@ class ScopedExternalDependenciesFactory {
   @Nullable private final String myScope;
   private final Project myProject;
 
-  public ScopedExternalDependenciesFactory(@NotNull Project project, @Nullable String scope) {
+  public ScopedExternalDependenciesFactory(@NotNull Project project,
+                                           @Nullable String scope) {
     myScope = scope;
     myProject = project;
   }
@@ -76,6 +77,7 @@ class ScopedExternalDependenciesFactory {
 
   private ExternalDependency createProjectDependency(@NotNull ResolvedArtifactResult artifact) {
     ProjectComponentIdentifier id = (ProjectComponentIdentifier)artifact.getId().getComponentIdentifier();
+
     DefaultExternalProjectDependency projectDependency = new DefaultExternalProjectDependency();
     Project targetProject = myProject.getRootProject().findProject(id.getProjectPath());
 
@@ -83,14 +85,13 @@ class ScopedExternalDependenciesFactory {
     projectDependency.setGroup(targetProject.getGroup().toString());
     projectDependency.setVersion(targetProject.getVersion().toString());
     projectDependency.setProjectPath(id.getProjectPath());
-    projectDependency.setProjectDependencyArtifacts(Collections.singleton(artifact.getFile()));
     projectDependency.setScope(myScope);
+    projectDependency.setProjectDependencyArtifacts(Collections.singleton(artifact.getFile()));
 
-    projectDependency.setConfigurationName(artifact.getFile().getName());
 
     if (artifact.getId() instanceof PublishArtifactLocalArtifactMetadata) {
-
       LocalComponentArtifactMetadata artifactMetadata = (LocalComponentArtifactMetadata)artifact.getId();
+      projectDependency.setConfigurationName(artifactMetadata.getName().getClassifier());
 
       try {
         Field publishArtifactField = artifactMetadata.getClass().getField("publishArtifact");
@@ -115,7 +116,7 @@ class ScopedExternalDependenciesFactory {
     return projectDependency;
   }
 
-  private Set<File> collectSourceRootOutputs(CopySpecInternal spec) {
+  private static Set<File> collectSourceRootOutputs(CopySpecInternal spec) {
     Set<File> result = new LinkedHashSet<File>();
     final List<MetaMethod> sourcePathGetters =
       DefaultGroovyMethods.respondsTo(spec, "getSourcePaths", new Object[]{});
@@ -179,8 +180,8 @@ class ScopedExternalDependenciesFactory {
 
 
   @Nullable
-  private File extractFile(@NotNull Class<? extends Artifact> type,
-                           @Nullable Map<Class<? extends Artifact>, Set<ResolvedArtifactResult>> container) {
+  private static File extractFile(@NotNull Class<? extends Artifact> type,
+                                  @Nullable Map<Class<? extends Artifact>, Set<ResolvedArtifactResult>> container) {
     if (container == null) {
       return null;
     }
