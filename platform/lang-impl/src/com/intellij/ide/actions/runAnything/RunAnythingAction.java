@@ -300,7 +300,7 @@ public class RunAnythingAction extends AnAction implements CustomComponentAction
             return;
           }
 
-          adjustEmptyText(myPopupField.getTextEditor(), field -> true, "", "Select command");
+          adjustEmptyText(myPopupField.getTextEditor(), field -> true, "", IdeBundle.message("run.anything.help.list.empty.secondary.text"));
         }
       }
     });
@@ -340,7 +340,8 @@ public class RunAnythingAction extends AnAction implements CustomComponentAction
   }
 
   private static void adjustMainListEmptyText(@NotNull JBTextField editor) {
-    adjustEmptyText(editor, field -> field.getText().isEmpty(), "Run command or configuration", "Type \'?\' to see all commands");
+    adjustEmptyText(editor, field -> field.getText().isEmpty(), IdeBundle.message("run.anything.main.list.empty.primary.text"),
+                    IdeBundle.message("run.anything.main.list.empty.secondary.text"));
   }
 
   private static boolean isHelpMode(@NotNull String pattern) {
