@@ -86,6 +86,7 @@ public class ThreadTracker {
     "ObjectCleanerThread",
     "Reference Handler",
     "RMI TCP Connection",
+    "SeedGenerator Thread", // Android Studio: for failures on remote bazel execution
     "Signal Dispatcher",
     "timer-int", //serverIm,
     "timer-sys", //clientim,
