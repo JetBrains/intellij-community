@@ -1992,6 +1992,9 @@ public class FileBasedIndexImpl extends FileBasedIndex implements BaseComponent,
     }
 
     public void ensureUpToDate() {
+      if (!isUpToDateCheckEnabled()) {
+        return;
+      }
       //assert ApplicationManager.getApplication().isReadAccessAllowed() || ShutDownTracker.isShutdownHookRunning();
       waitUntilIndicesAreInitialized();
       
