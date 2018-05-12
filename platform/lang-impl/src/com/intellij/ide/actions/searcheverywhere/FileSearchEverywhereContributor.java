@@ -44,6 +44,11 @@ public class FileSearchEverywhereContributor implements SearchEverywhereContribu
   }
 
   @Override
+  public boolean showInFindResults() {
+    return true;
+  }
+
+  @Override
   public ContributorSearchResult search(Project project, String pattern, boolean everywhere, ProgressIndicator progressIndicator, int elementsLimit) {
     ChooseByNameModel mdl = createModel(project);
 
@@ -82,10 +87,12 @@ public class FileSearchEverywhereContributor implements SearchEverywhereContribu
   }
 
   @Override
-  public void processSelectedItem(Object selected, int modifiers) {
+  public boolean processSelectedItem(Object selected, int modifiers) {
     //todo maybe another elements types
     if (selected instanceof PsiElement) {
       NavigationUtil.activateFileWithPsiElement((PsiElement) selected, (modifiers & InputEvent.SHIFT_MASK) != 0);
     }
+
+    return true;
   }
 }

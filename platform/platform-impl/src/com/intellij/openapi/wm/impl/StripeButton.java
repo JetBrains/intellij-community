@@ -10,6 +10,7 @@ import com.intellij.openapi.actionSystem.ActionManager;
 import com.intellij.openapi.actionSystem.ActionPlaces;
 import com.intellij.openapi.actionSystem.ActionPopupMenu;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.keymap.Keymap;
 import com.intellij.openapi.keymap.KeymapManagerListener;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.util.text.StringUtil;
@@ -109,25 +110,30 @@ public final class StripeButton extends AnchoredButton implements ActionListener
         processDrag(e);
       }
     });
-    ApplicationManager.getApplication().getMessageBus().connect(this).subscribe(KeymapManagerListener.TOPIC, keymap -> updatePresentation());
+    ApplicationManager.getApplication().getMessageBus().connect(this).subscribe(KeymapManagerListener.TOPIC, new KeymapManagerListener() {
+      @Override
+      public void activeKeymapChanged(@Nullable Keymap keymap) {
+        updatePresentation();
+      }
+    });
   }
-  
+
   public boolean isFirst() {
     return is(true);
   }
-  
+
   public boolean isLast() {
     return is(false);
   }
-  
+
   public boolean isOppositeSide() {
     return getWindowInfo().isSplit();
   }
-  
+
   private boolean is(boolean first) {
     Container parent = getParent();
     if (parent == null) return false;
-    
+
     int max = first ? Integer.MAX_VALUE : 0;
     ToolWindowAnchor anchor = getAnchor();
     Component c = null;
@@ -148,8 +154,8 @@ public final class StripeButton extends AnchoredButton implements ActionListener
         }
       }
     }
-    
-    
+
+
     return c == this;
   }
 

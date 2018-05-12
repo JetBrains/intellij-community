@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.keymap.impl
 
 import com.intellij.configurationStore.SchemeDataHolder
@@ -348,9 +334,9 @@ open class KeymapImpl @JvmOverloads constructor(private var dataHolder: SchemeDa
     }
     return sortInRegistrationOrder(list)
   }
-  
+
   override fun getActionIds(firstKeyStroke: KeyStroke) = getActionIds(firstKeyStroke, { it.keystrokeToIds }, KeymapImpl::convertKeyStroke)
-  
+
   override fun getActionIds(firstKeyStroke: KeyStroke, secondKeyStroke: KeyStroke?): Array<String> {
     val ids = getActionIds(firstKeyStroke)
     var actualBindings: MutableList<String>? = null
@@ -400,7 +386,7 @@ open class KeymapImpl @JvmOverloads constructor(private var dataHolder: SchemeDa
     }
     while (true)
   }
-  
+
   override fun getActionIds(shortcut: MouseShortcut) = getActionIds(shortcut, { it.mouseShortcutToActionIds }, KeymapImpl::convertMouseShortcut)
 
   private fun <T> getActionIds(shortcut: T, shortcutToActionIds: (keymap: KeymapImpl) -> Map<T, MutableList<String>>, convertShortcut: (keymap: KeymapImpl, shortcut: T) -> T): Array<String> {
@@ -429,7 +415,7 @@ open class KeymapImpl @JvmOverloads constructor(private var dataHolder: SchemeDa
     }
     return sortInRegistrationOrder(list)
   }
-  
+
   fun isActionBound(actionId: String) = keymapManager.boundActions.contains(actionId)
 
   override fun getShortcuts(actionId: String?): Array<Shortcut> = getMutableShortcutList(actionId).let { if (it.isEmpty()) Shortcut.EMPTY_ARRAY else it.toTypedArray() }
@@ -672,6 +658,7 @@ open class KeymapImpl @JvmOverloads constructor(private var dataHolder: SchemeDa
   }
 
   private fun fireShortcutChanged(actionId: String) {
+    (keymapManager as? KeymapManagerImpl)?.fireShortcutChanged(this, actionId)
     for (listener in listeners) {
       listener.onShortcutChanged(actionId)
     }

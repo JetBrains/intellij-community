@@ -170,7 +170,6 @@ public interface ToolWindow extends BusyObject {
   void showContentPopup(InputEvent inputEvent);
 
   default void setHelpId(@NonNls String helpId) {
-
   }
 
   @Nullable

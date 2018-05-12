@@ -468,7 +468,7 @@ public class IconUtil {
     if (icon instanceof ScalableIcon) {
       if (icon instanceof ScaleContextAware) {
         //noinspection unchecked
-        ((ScaleContextAware<ScaleContext>)icon).updateScaleContext(ancestor != null ? ScaleContext.create(ancestor) : null);
+        ((ScaleContextAware)icon).updateScaleContext(ancestor != null ? ScaleContext.create(ancestor) : null);
       }
       return ((ScalableIcon)icon).scale(scale);
     }
@@ -493,8 +493,8 @@ public class IconUtil {
     float scale = JBUI.getFontScale(fontSize);
     if (icon instanceof ScalableIcon) {
       if (icon instanceof ScaleContextAware) {
+        ScaleContextAware ctxIcon = (ScaleContextAware)icon;
         //noinspection unchecked
-        ScaleContextAware<ScaleContext> ctxIcon = (ScaleContextAware)icon;
         ctxIcon.updateScaleContext(ancestor != null ? ScaleContext.create(ancestor) : null);
         // take into account the user scale of the icon
         double usrScale = ctxIcon.getScaleContext().getScale(USR_SCALE);

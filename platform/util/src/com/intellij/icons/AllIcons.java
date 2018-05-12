@@ -325,11 +325,7 @@ public class AllIcons {
     public static final Icon Db_dep_method_breakpoint = IconLoader.getIcon("/debugger/db_dep_method_breakpoint.svg"); // 12x12
     public static final Icon Db_disabled_breakpoint = IconLoader.getIcon("/debugger/db_disabled_breakpoint.svg"); // 12x12
     public static final Icon Db_disabled_breakpoint_process = IconLoader.getIcon("/debugger/db_disabled_breakpoint_process.svg"); // 16x16
-
-    /** @deprecated to be removed in IDEA 2020 - use AllIcons.Debugger.Db_exception_breakpoint */
-    @SuppressWarnings("unused")
-    @Deprecated
-    public static final Icon Db_disabled_exception_breakpoint = IconLoader.getIcon("/debugger/db_exception_breakpoint.svg"); // 12x12
+    public static final Icon Db_disabled_exception_breakpoint = IconLoader.getIcon("/debugger/db_disabled_exception_breakpoint.svg"); // 12x12
     public static final Icon Db_disabled_field_breakpoint = IconLoader.getIcon("/debugger/db_disabled_field_breakpoint.svg"); // 12x12
     public static final Icon Db_disabled_method_breakpoint = IconLoader.getIcon("/debugger/db_disabled_method_breakpoint.svg"); // 12x12
     public static final Icon Db_exception_breakpoint = IconLoader.getIcon("/debugger/db_exception_breakpoint.svg"); // 12x12
@@ -800,6 +796,7 @@ public class AllIcons {
     public static final Icon MoreTabs = IconLoader.getIcon("/general/moreTabs.png"); // 16x16
     public static final Icon Mouse = IconLoader.getIcon("/general/mouse.png"); // 32x32
     public static final Icon MouseShortcut = IconLoader.getIcon("/general/mouseShortcut.png"); // 13x13
+    public static final Icon Note = IconLoader.getIcon("/general/note.svg"); // 16x16
     public static final Icon NotificationError = IconLoader.getIcon("/general/notificationError.png"); // 24x24
     public static final Icon NotificationInfo = IconLoader.getIcon("/general/notificationInfo.png"); // 24x24
     public static final Icon NotificationWarning = IconLoader.getIcon("/general/notificationWarning.png"); // 24x24
@@ -1716,6 +1713,7 @@ public class AllIcons {
     public static final Icon NotFavoriteOnHover = IconLoader.getIcon("/vcs/notFavoriteOnHover.png"); // 16x16
     public static final Icon Patch = IconLoader.getIcon("/vcs/patch.png"); // 16x16
     public static final Icon Patch_applied = IconLoader.getIcon("/vcs/patch_applied.png"); // 16x16
+    public static final Icon Patch_file = IconLoader.getIcon("/vcs/patch_file.svg"); // 16x16
     public static final Icon Push = IconLoader.getIcon("/vcs/push.svg"); // 16x16
     public static final Icon Remove = IconLoader.getIcon("/vcs/remove.png"); // 16x16
     public static final Icon ResetStrip = IconLoader.getIcon("/vcs/resetStrip.png"); // 16x16

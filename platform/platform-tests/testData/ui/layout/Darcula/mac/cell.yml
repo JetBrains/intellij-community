@@ -66,7 +66,7 @@ cellBounds:
 - [0, 54, 480, 256]
 componentBounds:
   'Repository:': [0, 4, 70, 16]
-  'ComboBox #1': [73, -3, 41, 30]
-  Delete: [116, -3, 78, 30]
+  'ComboBox #1': [73, -3, 98, 30]
+  Delete: [173, -3, 78, 30]
   Use File -> Settings Repository... to configure: [80, 30, 233, 14]
   'JBScrollPane #4': [0, 54, 480, 256]

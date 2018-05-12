@@ -33,11 +33,11 @@ public interface SearchEverywhereContributor {
   @NotNull
   String getGroupName();
 
-  default String includeNonProjectItemsText() {
-    return IdeBundle.message("checkbox.include.non.project.items", IdeUICustomization.getInstance().getProjectConceptName());
-  }
+  String includeNonProjectItemsText();
 
   int getSortWeight();
+
+  boolean showInFindResults();
 
   default ContributorSearchResult search(Project project, String pattern, boolean everywhere, ProgressIndicator progressIndicator, int elementsLimit) {
     return new ContributorSearchResult(Collections.emptyList(), false);
@@ -47,8 +47,7 @@ public interface SearchEverywhereContributor {
     return search(project, pattern, everywhere, progressIndicator, -1).getItems();
   }
 
-  //todo return boolean #UX-1
-  void processSelectedItem(Object selected, int modifiers);
+  boolean processSelectedItem(Object selected, int modifiers);
 
   ListCellRenderer getElementsRenderer(Project project);
 

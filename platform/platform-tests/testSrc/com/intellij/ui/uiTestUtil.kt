@@ -12,6 +12,7 @@ import com.intellij.testFramework.assertions.compareFileContent
 import com.intellij.ui.layout.*
 import com.intellij.ui.layout.migLayout.patched.*
 import com.intellij.util.SVGLoader
+import com.intellij.util.SystemProperties
 import com.intellij.util.io.exists
 import com.intellij.util.io.inputStream
 import com.intellij.util.io.sanitizeFileName
@@ -19,7 +20,6 @@ import com.intellij.util.io.write
 import com.intellij.util.ui.TestScaleHelper
 import com.intellij.util.ui.UIUtil
 import com.intellij.util.ui.paint.ImageComparator
-import io.netty.util.internal.SystemPropertyUtil
 import org.junit.rules.ExternalResource
 import org.junit.rules.TestName
 import org.junit.runners.model.MultipleFailureException
@@ -38,7 +38,7 @@ import javax.swing.JLabel
 import javax.swing.UIManager
 import javax.swing.plaf.metal.MetalLookAndFeel
 
-internal val isUpdateSnapshotsGlobal by lazy { SystemPropertyUtil.getBoolean("test.update.snapshots", false) }
+internal val isUpdateSnapshotsGlobal by lazy { SystemProperties.getBooleanProperty("test.update.snapshots", false) }
 
 open class RequireHeadlessMode : ExternalResource() {
   override fun before() {

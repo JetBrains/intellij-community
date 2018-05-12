@@ -12,6 +12,7 @@ import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.fileEditor.FileEditor;
 import com.intellij.openapi.fileEditor.impl.text.FileDropHandler;
+import com.intellij.openapi.keymap.Keymap;
 import com.intellij.openapi.keymap.KeymapManagerListener;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
@@ -84,9 +85,12 @@ public class EditorsSplitters extends IdePanePanel implements UISettingsListener
       dockManager.register(dockable);
     }
 
-    ApplicationManager.getApplication().getMessageBus().connect(this).subscribe(KeymapManagerListener.TOPIC, keymap -> {
-      invalidate();
-      repaint();
+    ApplicationManager.getApplication().getMessageBus().connect(this).subscribe(KeymapManagerListener.TOPIC, new KeymapManagerListener() {
+      @Override
+      public void activeKeymapChanged(@Nullable Keymap keymap) {
+        invalidate();
+        repaint();
+      }
     });
   }
 

@@ -26,6 +26,8 @@ import com.intellij.execution.ui.ConsoleViewContentType;
 import com.intellij.execution.ui.ObservableConsoleView;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.AnAction;
+import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Key;
@@ -199,7 +201,12 @@ public class TerminalExecutionConsole implements ConsoleView, ObservableConsoleV
 
       @Override
       public void processTerminated(@NotNull ProcessEvent event) {
-        myTerminalWidget.getTerminalPanel().setCursorVisible(false);
+        ApplicationManager.getApplication().invokeLater(() -> {
+          JBTerminalWidget widget = myTerminalWidget;
+          if (widget != null) {
+            widget.getTerminalPanel().setCursorVisible(false);
+          }
+        }, ModalityState.any());
       }
     });
   }

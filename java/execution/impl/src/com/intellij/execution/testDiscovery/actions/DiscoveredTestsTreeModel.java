@@ -3,31 +3,35 @@ package com.intellij.execution.testDiscovery.actions;
 
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.util.Comparing;
-import com.intellij.psi.PsiClass;
-import com.intellij.psi.PsiMethod;
+import com.intellij.openapi.util.Iconable;
+import com.intellij.psi.*;
+import com.intellij.psi.util.PsiUtil;
 import com.intellij.ui.tree.BaseTreeModel;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.SmartList;
 import org.jetbrains.annotations.NotNull;
 
+import javax.swing.*;
 import java.util.*;
+import java.util.stream.Stream;
 
 class DiscoveredTestsTreeModel extends BaseTreeModel<Object> {
   private final Object myRoot = ObjectUtils.NULL;
 
-  private final List<PsiClass> myTestClasses = new SmartList<>();
-  private final Map<PsiClass, List<PsiMethod>> myTests = new HashMap<>();
+  private final List<Node<PsiClass>> myTestClasses = new SmartList<>();
+  private final Map<Node<PsiClass>, List<Node<PsiMethod>>> myTests = new HashMap<>();
 
   @Override
   public synchronized List<?> getChildren(Object parent) {
     if (parent == myRoot) return myTestClasses;
-    if (parent instanceof PsiClass) {
-      return myTests.get((PsiClass)parent);
+    if (parent instanceof Node<?> && ((Node)parent).isClass()) {
+      //noinspection unchecked
+      return myTests.get((Node<PsiClass>)parent);
     }
     return Collections.emptyList();
   }
 
-  public synchronized List<PsiClass> getTestClasses() {
+  synchronized List<Node<PsiClass>> getTestClasses() {
     return myTestClasses;
   }
 
@@ -36,7 +40,6 @@ class DiscoveredTestsTreeModel extends BaseTreeModel<Object> {
     return myRoot;
   }
 
-
   @Override
   public boolean isLeaf(Object object) {
     //TODO malenkov
@@ -44,34 +47,82 @@ class DiscoveredTestsTreeModel extends BaseTreeModel<Object> {
   }
 
   public synchronized void addTest(@NotNull PsiClass testClass, @NotNull PsiMethod testMethod) {
+    Node<PsiClass> classNode = ReadAction.compute(() -> new Node<>(testClass));
+    Node<PsiMethod> methodNode = ReadAction.compute(() -> new Node<>(testMethod));
+
     int idx = ReadAction.compute(() -> Collections.binarySearch(myTestClasses,
-                                                              testClass,
-                                                              Comparator.comparing((PsiClass c) -> c.getName()).thenComparing(c -> c.getQualifiedName())));
+                                                                classNode,
+                                                                Comparator.comparing((Node<PsiClass> c) -> c.getName()).thenComparing(c -> c.getPackageName())));
     if (idx < 0) {
       int insertIdx = -idx - 1;
-      myTestClasses.add(insertIdx, testClass);
-      List<PsiMethod> methods = new SmartList<>();
-      methods.add(testMethod);
-      myTests.put(testClass, methods);
+      myTestClasses.add(insertIdx, classNode);
+      List<Node<PsiMethod>> methods = new SmartList<>();
+      methods.add(methodNode);
+      myTests.put(classNode, methods);
+      return;
     }
 
-    List<PsiMethod> testMethods = myTests.get(testClass);
+    List<Node<PsiMethod>> testMethods = myTests.get(myTestClasses.get(idx));
     int methodIdx = ReadAction.compute(() -> Collections.binarySearch(testMethods,
-                                                                      testMethod,
+                                                                      methodNode,
                                                                       (o1, o2) -> Comparing.compare(o1.getName(), o2.getName())));
     if (methodIdx < 0) {
       methodIdx = -methodIdx - 1;
-      testMethods.add(methodIdx, testMethod);
+      testMethods.add(methodIdx, methodNode);
     }
 
     treeStructureChanged(null, null, null);
   }
 
-  public synchronized PsiMethod[] getTestMethods() {
-    return myTests.values().stream().flatMap(vs -> vs.stream()).toArray(PsiMethod[]::new);
+  @NotNull
+  synchronized DiscoveredTestsTreeModel.Node<PsiMethod>[] getTestMethods() {
+    //noinspection unchecked
+    return myTests
+      .values()
+      .stream()
+      .flatMap(vs -> vs.stream())
+      .toArray(DiscoveredTestsTreeModel.Node[]::new);
   }
 
   public synchronized int getTestCount() {
     return myTests.values().stream().mapToInt(ms -> ms.size()).sum();
+  }
+
+  static class Node<Psi extends PsiMember> {
+    @NotNull
+    private final SmartPsiElementPointer<Psi> myPointer;
+    private final boolean myClass;
+    private final String myName;
+    private final String myPackageName;
+    private final Icon myIcon;
+
+    private Node(@NotNull Psi psi) {
+      myPointer = SmartPointerManager.createPointer(psi);
+      myName = psi.getName();
+      myClass = psi instanceof PsiClass;
+      myPackageName = myClass ? PsiUtil.getPackageName((PsiClass)psi) : null;
+      myIcon = psi.getIcon(Iconable.ICON_FLAG_READ_STATUS);
+    }
+
+    @NotNull
+    SmartPsiElementPointer<Psi> getPointer() {
+      return myPointer;
+    }
+
+    boolean isClass() {
+      return myClass;
+    }
+
+    String getName() {
+      return myName;
+    }
+
+    String getPackageName() {
+      return myPackageName;
+    }
+
+    Icon getIcon() {
+      return myIcon;
+    }
   }
 }

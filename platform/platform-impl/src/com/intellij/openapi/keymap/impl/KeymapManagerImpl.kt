@@ -173,4 +173,8 @@ class KeymapManagerImpl(defaultKeymap: DefaultKeymap, factory: SchemeManagerFact
   override fun removeWeakListener(listenerToRemove: KeymapManagerListener) {
     listeners.removeAll { it is WeakKeymapManagerListener && it.isWrapped(listenerToRemove) }
   }
+
+  fun fireShortcutChanged(keymap: Keymap, actionId: String) {
+    ApplicationManager.getApplication().messageBus.syncPublisher(KeymapManagerListener.TOPIC).shortcutChanged(keymap, actionId)
+  }
 }

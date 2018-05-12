@@ -9,7 +9,6 @@
     <orderEntry type="sourceFolder" forTests="false" />
     <orderEntry type="module" module-name="intellij.platform.annotations.java5" />
     <orderEntry type="module" module-name="intellij.platform.util.rt" />
-    <orderEntry type="library" name="Netty" level="project" />
     <orderEntry type="library" name="Log4J" level="project" />
     <orderEntry type="library" name="protobuf" level="project" />
     <orderEntry type="module-library" scope="RUNTIME">
@@ -22,5 +21,6 @@
       </library>
     </orderEntry>
     <orderEntry type="library" name="Trove4j" level="project" />
+    <orderEntry type="library" name="netty-codec-http" level="project" />
   </component>
 </module>

@@ -121,7 +121,7 @@ public class ProjectStructureConfigurable implements SearchableConfigurable, Pla
     myProjectLibrariesConfig = projectLibrariesConfigurable;
     myGlobalLibrariesConfig = globalLibrariesConfigurable;
     myModulesConfig = moduleStructureConfigurable;
-    
+
     myProjectLibrariesConfig.init(myContext);
     myGlobalLibrariesConfig.init(myContext);
     myModulesConfig.init(myContext);
@@ -178,8 +178,8 @@ public class ProjectStructureConfigurable implements SearchableConfigurable, Pla
     };
 
     final DefaultActionGroup toolbarGroup = new DefaultActionGroup();
-    toolbarGroup.add(new BackAction(myComponent));
-    toolbarGroup.add(new ForwardAction(myComponent));
+    toolbarGroup.add(new BackAction(myComponent, myContext));
+    toolbarGroup.add(new ForwardAction(myComponent, myContext));
     final ActionToolbar toolbar = ActionManager.getInstance().createActionToolbar("ProjectStructure", toolbarGroup, true);
     toolbar.setTargetComponent(myComponent);
     myToolbarComponent = toolbar.getComponent();
