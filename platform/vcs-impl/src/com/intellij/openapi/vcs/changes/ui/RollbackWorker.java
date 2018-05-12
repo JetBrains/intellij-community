@@ -110,7 +110,7 @@ public class RollbackWorker {
       final Runnable rollbackAction = new MyRollbackRunnable(otherChanges, deleteLocallyAddedFiles, afterRefresh);
 
       if (ApplicationManager.getApplication().isDispatchThread() && !myInvokedFromModalContext) {
-        ProgressManager.getInstance().run(new Task.Backgroundable(myProject, myOperationName, true,
+        ProgressManager.getInstance().run(new Task.Backgroundable(myProject, myOperationName, false,
                                        new PerformInBackgroundOption() {
                                          @Override
                                          public boolean shouldStartInBackground() {
@@ -128,7 +128,7 @@ public class RollbackWorker {
           });
       }
       else if (myInvokedFromModalContext) {
-        ProgressManager.getInstance().run(new Task.Modal(myProject, myOperationName, true) {
+        ProgressManager.getInstance().run(new Task.Modal(myProject, myOperationName, false) {
             @Override
             public void run(@NotNull ProgressIndicator indicator) {
               rollbackAction.run();
@@ -180,7 +180,7 @@ public class RollbackWorker {
         doRun();
       }
       finally {
-        ChangesUtil.markInternalOperation(myChanges, false);        
+        ChangesUtil.markInternalOperation(myChanges, false);
       }
     }
 
@@ -221,9 +221,7 @@ public class RollbackWorker {
         myIndicator.setText(VcsBundle.message("progress.text.synchronizing.files"));
       }
 
-      ProgressManager.getInstance().executeNonCancelableSection(()->{
-        doRefresh(myProject, changesToRefresh);
-      });
+      doRefresh(myProject, changesToRefresh);
       AbstractVcsHelper.getInstance(myProject).showErrors(myExceptions, myOperationName);
     }
 
