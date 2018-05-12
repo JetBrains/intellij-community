@@ -342,9 +342,9 @@ public class BoundedWildcardInspection extends AbstractBaseJavaLocalInspectionTo
         if (field != null) {
           // check if e.g. "Processor<String> field" is used in "field.process(xxx)" only
           PsiElement ignoreUsagesInAssignment = PsiUtil.skipParenthesizedExprUp(ref.getElement().getParent());
-          PsiClass fieldClass = field.getContainingClass();
-          Variance fv = fieldClass == null ? Variance.INVARIANT :
-                        getVariance(field, new LocalSearchScope(fieldClass), ignoreUsagesInAssignment, containingMethod, typeParameter, extendsT, superT);
+          PsiFile fieldFile = field.getContainingFile();
+          Variance fv = fieldFile == null ? Variance.INVARIANT :
+                        getVariance(field, new LocalSearchScope(fieldFile), ignoreUsagesInAssignment, containingMethod, typeParameter, extendsT, superT);
           v[0] = v[0].combine(fv);
         }
         else if (isIteratedValueInForeachExpression(ref)) {
