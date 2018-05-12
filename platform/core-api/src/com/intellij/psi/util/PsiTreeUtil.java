@@ -336,6 +336,24 @@ public class PsiTreeUtil {
   }
 
   /**
+   * Recursive (depth first) search for all elements filtered by given {@code filter}.
+   *
+   * @param element a PSI element to start search from.
+   * @param filter element to search for.
+   * @param <T>     type to cast found elements to.
+   * @return {@code Collection<T>} of all found elements, or empty {@code List<T>} if nothing found.
+   */
+  @NotNull
+  private static <T extends PsiElement> Collection<T> findChildrenByFilter(@Nullable final PsiElement element,
+                                                                           @NotNull final PsiElementFilter filter) {
+    if (element == null) return ContainerUtil.emptyList();
+    PsiElementProcessor.CollectFilteredElements<T> processor =
+            new PsiElementProcessor.CollectFilteredElements<T>(filter);
+    PsiTreeUtil.processElements(element, processor);
+    return processor.getCollection();
+  }
+
+  /**
    * Non-recursive search for element of type T amongst given {@code element} children.
    *
    * @param element a PSI element to start search from.
