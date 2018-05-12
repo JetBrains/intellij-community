@@ -3001,4 +3001,25 @@ public class StructuralSearchTest extends StructuralSearchTestCase {
     assertEquals("find method throwing only RuntimeException", 2, findMatchesCount(s, "'_T '_m() throws '_RE:RuntimeException , '_Other{0,0};"));
     assertEquals("find method throwing RuntimeException and others", 1, findMatchesCount(s, "'_T '_m() throws '_RE:RuntimeException , '_Other{1,100};"));
   }
+
+  public void testMatchWildcards() {
+    final String in = "import java.util.List;" +
+                      "class X {" +
+                      "  List a;" +
+                      "  List<String> b;" +
+                      "  List<?> c;" +
+                      "  List<? extends Object> d;" +
+                      "  List<? extends Number> e;" +
+                      "  List<? extends Number> f;" +
+                      "  List<? extends Integer> g;" +
+                      "}";
+    assertEquals("List<?> should match List<? extends Object>", 2, findMatchesCount(in, "'_A<?>"));
+    assertEquals("List<? extends Object> should match List<?>", 2, findMatchesCount(in, "'_A<? extends Object>"));
+    assertEquals("should match wildcards with extends bound", 4, findMatchesCount(in, "'_A<? extends '_B>"));
+    assertEquals("should match wildcards with extends bound extending Number", 3, findMatchesCount(in, "'_A<? extends '_B:*Number >"));
+    assertEquals("should match wildcards with or without extends bound", 5, findMatchesCount(in, "'_A<? extends '_B?>"));
+    assertEquals("should match any generic type", 6, findMatchesCount(in, "'_A<'_B>"));
+    assertEquals("should match generic and raw types", 7, findMatchesCount(in, "List '_x;"));
+    assertEquals("should match generic and raw types 2", 7, findMatchesCount(in, "'_A:List <'_B? >"));
+  }
 }

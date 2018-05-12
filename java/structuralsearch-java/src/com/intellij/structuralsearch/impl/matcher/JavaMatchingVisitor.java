@@ -750,10 +750,30 @@ public class JavaMatchingVisitor extends JavaElementVisitor {
       matchedElement = ((PsiClass)matchedElement).getNameIdentifier();
     }
     else if (matchedElement instanceof PsiMethod && ((PsiMethod)matchedElement).hasTypeParameters()) {
-      typeParameters = ((PsiMethod)matchedType).getTypeParameters();
-      matchedElement = ((PsiMethod)matchedType).getNameIdentifier();
+      typeParameters = ((PsiMethod)matchedElement).getTypeParameters();
+      matchedElement = ((PsiMethod)matchedElement).getNameIdentifier();
     }
 
+    if (patternElement instanceof PsiTypeElement && matchedElement instanceof PsiTypeElement) {
+      final PsiType type1 = ((PsiTypeElement)patternElement).getType();
+      final PsiType type2 = ((PsiTypeElement)matchedElement).getType();
+      if (type1 instanceof PsiWildcardType && type2 instanceof PsiWildcardType) {
+        final PsiWildcardType wildcardType1 = (PsiWildcardType)type1;
+        final PsiWildcardType wildcardType2 = (PsiWildcardType)type2;
+        if (wildcardType1.equals(wildcardType2)) return true;
+        if (wildcardType1.isExtends() && (wildcardType2.isExtends() || !wildcardType2.isBounded())) {
+          if (wildcardType2.isExtends()) {
+            return myMatchingVisitor.match(patternElement.getLastChild(), matchedElement.getLastChild());
+          }
+          else if (!wildcardType2.isBounded()) {
+            return myMatchingVisitor.matchOptionally(patternElement.getLastChild(), null);
+          }
+        }
+        else if (wildcardType1.isSuper() && wildcardType2.isSuper()) {
+          return myMatchingVisitor.match(patternElement.getLastChild(), matchedElement.getLastChild());
+        }
+      }
+    }
     if (patternElement instanceof PsiJavaCodeReferenceElement) {
       final PsiJavaCodeReferenceElement referenceElement = (PsiJavaCodeReferenceElement)patternElement;
       final PsiReferenceParameterList list = referenceElement.getParameterList();
