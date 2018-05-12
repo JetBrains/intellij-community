@@ -240,14 +240,11 @@ public class FileBasedIndexImpl extends FileBasedIndex implements BaseComponent,
       @Override
       public void fileContentReloaded(@NotNull VirtualFile file, @NotNull Document document) {
         cleanupMemoryStorage(true);
-        //if (myState != null) {  // we might have psi different from document
-        //  clearUpToDateStateForPsiIndicesOfVirtualFile(file);
-        //}
       }
 
       @Override
       public void unsavedDocumentsDropped() {
-        cleanupMemoryStorage(false); // ?
+        cleanupMemoryStorage(false); 
       }
     });
 
@@ -1959,7 +1956,7 @@ public class FileBasedIndexImpl extends FileBasedIndex implements BaseComponent,
     public void before(@NotNull List<? extends VFileEvent> events) {
       for (VFileEvent event : events) {
         if (memoryStorageCleaningNeeded(event)) {
-          cleanupMemoryStorage(false); // ?
+          cleanupMemoryStorage(false);
           break;
         }
       }
