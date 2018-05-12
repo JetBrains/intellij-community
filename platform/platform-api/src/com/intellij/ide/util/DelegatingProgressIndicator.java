@@ -102,12 +102,10 @@ public class DelegatingProgressIndicator implements WrappedProgressIndicator, St
 
   @Override
   public void startNonCancelableSection() {
-    myIndicator.startNonCancelableSection();
   }
 
   @Override
   public void finishNonCancelableSection() {
-    myIndicator.finishNonCancelableSection();
   }
 
   @Override

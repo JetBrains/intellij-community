@@ -77,67 +77,69 @@ public class RollbackWorker {
                          boolean rollbackRangesExcludedFromCommit,
                          @Nullable Runnable afterVcsRefreshInAwt,
                          @Nullable String localHistoryActionName) {
-    ChangeListManagerImpl changeListManager = ChangeListManagerImpl.getInstanceImpl(myProject);
-    Collection<LocalChangeList> affectedChangelists = changeListManager.getAffectedLists(changes);
+    ProgressManager.getInstance().executeNonCancelableSection(()->{
+      ChangeListManagerImpl changeListManager = ChangeListManagerImpl.getInstanceImpl(myProject);
+      Collection<LocalChangeList> affectedChangelists = changeListManager.getAffectedLists(changes);
 
-    final LocalHistoryAction action = LocalHistory.getInstance().startAction(myOperationName);
+      final LocalHistoryAction action = LocalHistory.getInstance().startAction(myOperationName);
 
-    final Runnable afterRefresh = () -> {
-      action.finish();
-      LocalHistory.getInstance().putSystemLabel(myProject, notNull(localHistoryActionName, myOperationName), -1);
+      final Runnable afterRefresh = () -> {
+        action.finish();
+        LocalHistory.getInstance().putSystemLabel(myProject, notNull(localHistoryActionName, myOperationName), -1);
 
-      InvokeAfterUpdateMode updateMode = myInvokedFromModalContext ?
-                                         InvokeAfterUpdateMode.SYNCHRONOUS_CANCELLABLE :
-                                         InvokeAfterUpdateMode.SILENT;
-      changeListManager.invokeAfterUpdate(() -> {
-        for (LocalChangeList list : affectedChangelists) {
-          changeListManager.scheduleAutomaticEmptyChangeListDeletion(list);
-        }
-
-        if (afterVcsRefreshInAwt != null) {
-          afterVcsRefreshInAwt.run();
-        }
-      }, updateMode, "Refresh changelists after update", ModalityState.current());
-    };
-
-    List<Change> otherChanges = revertPartialChanges(changes, rollbackRangesExcludedFromCommit);
-    if (otherChanges.isEmpty()) {
-      WaitForProgressToShow.runOrInvokeLaterAboveProgress(afterRefresh, null, myProject);
-      return;
-    }
-
-    final Runnable rollbackAction = new MyRollbackRunnable(otherChanges, deleteLocallyAddedFiles, afterRefresh);
-
-    if (ApplicationManager.getApplication().isDispatchThread() && !myInvokedFromModalContext) {
-      ProgressManager.getInstance().run(new Task.Backgroundable(myProject, myOperationName, true,
-                                     new PerformInBackgroundOption() {
-                                       @Override
-                                       public boolean shouldStartInBackground() {
-                                         return VcsConfiguration.getInstance(myProject).PERFORM_ROLLBACK_IN_BACKGROUND;
-                                       }
-
-                                       @Override
-                                       public void processSentToBackground() {
-                                         VcsConfiguration.getInstance(myProject).PERFORM_ROLLBACK_IN_BACKGROUND = true;
-                                       }
-                                     }) {
-          public void run(@NotNull ProgressIndicator indicator) {
-            rollbackAction.run();
+        InvokeAfterUpdateMode updateMode = myInvokedFromModalContext ?
+                                           InvokeAfterUpdateMode.SYNCHRONOUS_CANCELLABLE :
+                                           InvokeAfterUpdateMode.SILENT;
+        changeListManager.invokeAfterUpdate(() -> {
+          for (LocalChangeList list : affectedChangelists) {
+            changeListManager.scheduleAutomaticEmptyChangeListDeletion(list);
           }
-        });
-    }
-    else if (myInvokedFromModalContext) {
-      ProgressManager.getInstance().run(new Task.Modal(myProject, myOperationName, true) {
-          @Override
-          public void run(@NotNull ProgressIndicator indicator) {
-            rollbackAction.run();
+
+          if (afterVcsRefreshInAwt != null) {
+            afterVcsRefreshInAwt.run();
           }
-        });
-    }
-    else {
-      rollbackAction.run();
-    }
-    changeListManager.showLocalChangesInvalidated();
+        }, updateMode, "Refresh changelists after update", ModalityState.current());
+      };
+
+      List<Change> otherChanges = revertPartialChanges(changes, rollbackRangesExcludedFromCommit);
+      if (otherChanges.isEmpty()) {
+        WaitForProgressToShow.runOrInvokeLaterAboveProgress(afterRefresh, null, myProject);
+        return;
+      }
+
+      final Runnable rollbackAction = new MyRollbackRunnable(otherChanges, deleteLocallyAddedFiles, afterRefresh);
+
+      if (ApplicationManager.getApplication().isDispatchThread() && !myInvokedFromModalContext) {
+        ProgressManager.getInstance().run(new Task.Backgroundable(myProject, myOperationName, true,
+                                       new PerformInBackgroundOption() {
+                                         @Override
+                                         public boolean shouldStartInBackground() {
+                                           return VcsConfiguration.getInstance(myProject).PERFORM_ROLLBACK_IN_BACKGROUND;
+                                         }
+
+                                         @Override
+                                         public void processSentToBackground() {
+                                           VcsConfiguration.getInstance(myProject).PERFORM_ROLLBACK_IN_BACKGROUND = true;
+                                         }
+                                       }) {
+            public void run(@NotNull ProgressIndicator indicator) {
+              rollbackAction.run();
+            }
+          });
+      }
+      else if (myInvokedFromModalContext) {
+        ProgressManager.getInstance().run(new Task.Modal(myProject, myOperationName, true) {
+            @Override
+            public void run(@NotNull ProgressIndicator indicator) {
+              rollbackAction.run();
+            }
+          });
+      }
+      else {
+        rollbackAction.run();
+      }
+      changeListManager.showLocalChangesInvalidated();
+    });
   }
 
   @NotNull
@@ -214,13 +216,14 @@ public class RollbackWorker {
       }
 
       if (myIndicator != null) {
-        myIndicator.startNonCancelableSection();
         myIndicator.setIndeterminate(true);
         myIndicator.setText2("");
         myIndicator.setText(VcsBundle.message("progress.text.synchronizing.files"));
       }
 
-      doRefresh(myProject, changesToRefresh);
+      ProgressManager.getInstance().executeNonCancelableSection(()->{
+        doRefresh(myProject, changesToRefresh);
+      });
       AbstractVcsHelper.getInstance(myProject).showErrors(myExceptions, myOperationName);
     }
 
