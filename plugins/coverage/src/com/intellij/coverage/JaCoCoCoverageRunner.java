@@ -52,7 +52,7 @@ public class JaCoCoCoverageRunner extends JavaCoverageRunner {
                             ? ((ModuleBasedConfiguration)configuration).getConfigurationModule().getModule() 
                             : null;
       
-        loadExecutionData(sessionDataFile, data, mainModule, project);
+        loadExecutionData(sessionDataFile, data, mainModule, project, baseCoverageSuite);
       }
     }
     catch (Exception e) {
@@ -65,9 +65,10 @@ public class JaCoCoCoverageRunner extends JavaCoverageRunner {
   private static void loadExecutionData(@NotNull final File sessionDataFile,
                                         ProjectData data,
                                         @Nullable Module mainModule,
-                                        @NotNull Project project) throws IOException {
+                                        @NotNull Project project, 
+                                        CoverageSuite suite) throws IOException {
     ExecFileLoader loader = new ExecFileLoader();
-    final CoverageBuilder coverageBuilder = getCoverageBuilder(sessionDataFile, mainModule, project, loader);
+    final CoverageBuilder coverageBuilder = getCoverageBuilder(sessionDataFile, mainModule, project, loader, (JavaCoverageSuite)suite);
 
     for (IClassCoverage classCoverage : coverageBuilder.getClasses()) {
       String className = classCoverage.getName();
@@ -116,8 +117,9 @@ public class JaCoCoCoverageRunner extends JavaCoverageRunner {
 
   private static CoverageBuilder getCoverageBuilder(@NotNull File sessionDataFile,
                                                     @Nullable Module mainModule,
-                                                    @NotNull Project project, 
-                                                    ExecFileLoader loader) throws IOException {
+                                                    @NotNull Project project,
+                                                    ExecFileLoader loader, 
+                                                    JavaCoverageSuite suite) throws IOException {
     loader.load(sessionDataFile);
 
     final CoverageBuilder coverageBuilder = new CoverageBuilder();
@@ -130,10 +132,15 @@ public class JaCoCoCoverageRunner extends JavaCoverageRunner {
         final String[] roots = compilerModuleExtension.getOutputRootUrls(true);
         for (String root : roots) {
           try {
-            String rootPath = VfsUtilCore.urlToPath(root);
-            Files.walkFileTree(Paths.get(new File(FileUtil.toSystemDependentName(rootPath)).toURI()), new SimpleFileVisitor<Path>() {
+            Path rootPath = Paths.get(new File(FileUtil.toSystemDependentName(VfsUtilCore.urlToPath(root))).toURI());
+            Files.walkFileTree(rootPath, new SimpleFileVisitor<Path>() {
               @Override
               public FileVisitResult visitFile(Path path, BasicFileAttributes attrs) throws IOException {
+                String vmClassName = rootPath.relativize(path).toString().replaceAll(File.separator, ".");
+                if (suite.isClassFiltered(vmClassName, suite.getExcludedClassNames()) ||
+                    !suite.isPackageFiltered(StringUtil.getPackageName(vmClassName))) {
+                  return FileVisitResult.CONTINUE;
+                }
                 File file = path.toFile();
                 try {
                   analyzer.analyzeAll(file);
@@ -216,7 +223,7 @@ public class JaCoCoCoverageRunner extends JavaCoverageRunner {
                     : null;
 
     ExecFileLoader loader = new ExecFileLoader();
-    CoverageBuilder coverageBuilder = getCoverageBuilder(coverageFile, module, project, loader);
+    CoverageBuilder coverageBuilder = getCoverageBuilder(coverageFile, module, project, loader, (JavaCoverageSuite)suite.getSuites()[0]);
 
     final IBundleCoverage bundleCoverage = coverageBuilder.getBundle(coverageFile.getName());
 

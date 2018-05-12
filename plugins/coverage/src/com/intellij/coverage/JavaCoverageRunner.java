@@ -95,16 +95,20 @@ public abstract class JavaCoverageRunner extends CoverageRunner {
       @Override
       public Collection<ClassInfo> getClasses() {
         final Collection<ClassInfo> classes = super.getClasses();
-        if (!suite.isTrackTestFolders()) {
+        JavaCoverageSuite javaCoverageSuite = (JavaCoverageSuite)suite.getSuites()[0];
+        if (!suite.isTrackTestFolders() || 
+            javaCoverageSuite.getExcludedClassNames().length > 0 || 
+            javaCoverageSuite.getExcludedPackageNames().length > 0) {
           final JavaPsiFacade psiFacade = JavaPsiFacade.getInstance(project);
-          final GlobalSearchScope productionScope = GlobalSearchScopesCore.projectProductionScope(project);
+          final GlobalSearchScope productionScope = !suite.isTrackTestFolders() ? GlobalSearchScopesCore.projectProductionScope(project) 
+                                                                                : GlobalSearchScope.projectScope(project);
           for (Iterator<ClassInfo> iterator = classes.iterator(); iterator.hasNext(); ) {
             final ClassInfo aClass = iterator.next();
             final PsiClass psiClass = DumbService.getInstance(project).runReadActionInSmartMode(() -> {
               if (project.isDisposed()) return null;
               return psiFacade.findClass(aClass.getFQName(), productionScope);
             });
-            if (psiClass == null) {
+            if (psiClass == null || !suite.getCoverageEngine().acceptedByFilters(psiClass.getContainingFile(), suite)) {
               iterator.remove();
             }
           }
