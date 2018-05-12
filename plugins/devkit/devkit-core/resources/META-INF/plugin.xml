@@ -208,9 +208,11 @@
     <stacktrace.fold substring="at com.intellij.testFramework.EdtTestUtil"/>
     <stacktrace.fold substring="at com.intellij.testFramework.UsefulTestCase"/>
     <stacktrace.fold substring="at com.intellij.testFramework.fixtures.impl.CodeInsightTestFixtureImpl.collectAndCheckHighlighting("/>
-    <stacktrace.fold substring="at com.intellij.testFramework.fixtures.impl.CodeInsightTestFixtureImpl.checkResultByFile("/>
+    <stacktrace.fold substring="at com.intellij.testFramework.fixtures.impl.CodeInsightTestFixtureImpl.checkResult"/>
     <stacktrace.fold substring="at com.intellij.testFramework.fixtures.impl.CodeInsightTestFixtureImpl.access$"/>
+    <stacktrace.fold substring="at com.intellij.testFramework.fixtures.impl.CodeInsightTestFixtureImpl.lambda$"/>
     <stacktrace.fold substring="at com.intellij.testFramework.fixtures.impl.CodeInsightTestFixtureImpl$"/>
+    <stacktrace.fold substring="at com.intellij.testFramework.fixtures.CodeInsightTestFixture$"/>
     <stacktrace.fold substring="at com.intellij.testFramework.LightPlatformTestCase"/>
     <stacktrace.fold substring="at com.intellij.testFramework.LightPlatformCodeInsightTestCase"/>
     <stacktrace.fold substring="at com.intellij.testFramework.PlatformTestCase"/>
