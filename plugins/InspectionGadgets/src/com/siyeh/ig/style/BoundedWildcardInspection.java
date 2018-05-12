@@ -37,8 +37,10 @@ import java.util.List;
  */
 public class BoundedWildcardInspection extends AbstractBaseJavaLocalInspectionTool {
   @SuppressWarnings("WeakerAccess") public boolean REPORT_INVARIANT_CLASSES = true;
+  @SuppressWarnings("WeakerAccess") public boolean REPORT_PRIVATE_METHODS = true;
   private JBCheckBox myReportInvariantClassesCB;
   private JPanel myPanel;
+  private JBCheckBox myReportPrivateMethodsCB;
 
   @Override
   @NotNull
@@ -57,6 +59,9 @@ public class BoundedWildcardInspection extends AbstractBaseJavaLocalInspectionTo
         PsiTypeParameterListOwner owner = candidate.typeParameter.getOwner();
         if (owner instanceof PsiClass && !REPORT_INVARIANT_CLASSES && getClassVariance((PsiClass)owner, candidate.typeParameter) == Variance.INVARIANT) {
           return; // Nikolay despises List<? extends T>
+        }
+        if (!REPORT_PRIVATE_METHODS && candidate.method.hasModifierProperty(PsiModifier.PRIVATE)) {
+          return; // somebody hates his precious private methods highlighted
         }
         PsiClassReferenceType extendsT = suggestMethodParameterType(candidate, true);
         PsiClassReferenceType superT = suggestMethodParameterType(candidate, false);
@@ -581,6 +586,7 @@ public class BoundedWildcardInspection extends AbstractBaseJavaLocalInspectionTo
   @Override
   public JComponent createOptionsPanel() {
     myReportInvariantClassesCB.setSelected(REPORT_INVARIANT_CLASSES);
+    myReportPrivateMethodsCB.setSelected(REPORT_PRIVATE_METHODS);
     return myPanel;
   }
 
@@ -588,5 +594,6 @@ public class BoundedWildcardInspection extends AbstractBaseJavaLocalInspectionTo
   public void readSettings(@NotNull Element node) {
     super.readSettings(node);
     myReportInvariantClassesCB.addItemListener(__ -> REPORT_INVARIANT_CLASSES = myReportInvariantClassesCB.isSelected());
+    myReportPrivateMethodsCB.addItemListener(__ -> REPORT_PRIVATE_METHODS = myReportPrivateMethodsCB.isSelected());
   }
 }
