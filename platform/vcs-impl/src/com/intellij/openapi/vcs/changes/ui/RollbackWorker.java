@@ -19,7 +19,10 @@ import com.intellij.history.LocalHistory;
 import com.intellij.history.LocalHistoryAction;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
-import com.intellij.openapi.progress.*;
+import com.intellij.openapi.progress.ProcessCanceledException;
+import com.intellij.openapi.progress.ProgressIndicator;
+import com.intellij.openapi.progress.ProgressManager;
+import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.io.FileUtil;
@@ -77,7 +80,7 @@ public class RollbackWorker {
                          boolean rollbackRangesExcludedFromCommit,
                          @Nullable Runnable afterVcsRefreshInAwt,
                          @Nullable String localHistoryActionName) {
-    ProgressManager.getInstance().executeNonCancelableSection(()->{
+    ProgressManager.getInstance().executeNonCancelableSection(() -> {
       ChangeListManagerImpl changeListManager = ChangeListManagerImpl.getInstanceImpl(myProject);
       Collection<LocalChangeList> affectedChangelists = changeListManager.getAffectedLists(changes);
 
@@ -111,29 +114,19 @@ public class RollbackWorker {
 
       if (ApplicationManager.getApplication().isDispatchThread() && !myInvokedFromModalContext) {
         ProgressManager.getInstance().run(new Task.Backgroundable(myProject, myOperationName, false,
-                                       new PerformInBackgroundOption() {
-                                         @Override
-                                         public boolean shouldStartInBackground() {
-                                           return VcsConfiguration.getInstance(myProject).PERFORM_ROLLBACK_IN_BACKGROUND;
-                                         }
-
-                                         @Override
-                                         public void processSentToBackground() {
-                                           VcsConfiguration.getInstance(myProject).PERFORM_ROLLBACK_IN_BACKGROUND = true;
-                                         }
-                                       }) {
-            public void run(@NotNull ProgressIndicator indicator) {
-              rollbackAction.run();
-            }
-          });
+                                                                  VcsConfiguration.getInstance(myProject).getRollbackOption()) {
+          public void run(@NotNull ProgressIndicator indicator) {
+            rollbackAction.run();
+          }
+        });
       }
       else if (myInvokedFromModalContext) {
         ProgressManager.getInstance().run(new Task.Modal(myProject, myOperationName, false) {
-            @Override
-            public void run(@NotNull ProgressIndicator indicator) {
-              rollbackAction.run();
-            }
-          });
+          @Override
+          public void run(@NotNull ProgressIndicator indicator) {
+            rollbackAction.run();
+          }
+        });
       }
       else {
         rollbackAction.run();
