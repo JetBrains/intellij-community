@@ -82,11 +82,12 @@ iml_module(
         "//tools/analytics-library/shared:analytics-shared[module]",
         "//tools/analytics-library/publisher:analytics-publisher[module]",
         "//tools/base/common:studio.android.sdktools.common[module]",
-        "//tools/analytics-library/protos:analytics-protos[module]",
         "//tools/idea/.idea/libraries:pty4j",
         "//tools/idea/.idea/libraries:StreamEx",
         "//tools/idea/.idea/libraries:jediterm-pty",
         "//tools/idea/.idea/libraries:kotlinx-coroutines-core",
         "//tools/idea/.idea/libraries:kotlinx-coroutines-jdk8",
+        "//tools/idea/.idea/libraries:protobuf",
+        "//tools/idea/.idea/libraries:studio-analytics-proto",
     ],
 )

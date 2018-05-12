@@ -134,7 +134,6 @@ iml_project(
         "//tools/adt/idea/wizard:intellij.android.wizard",
         "//tools/analytics-library/crash:analytics-crash",
         "//tools/analytics-library/inspector:analytics-inspector",
-        "//tools/analytics-library/protos:analytics-protos",
         "//tools/analytics-library/publisher:analytics-publisher",
         "//tools/analytics-library/shared:analytics-shared",
         "//tools/analytics-library/testing:android.sdktools.analytics-testing",

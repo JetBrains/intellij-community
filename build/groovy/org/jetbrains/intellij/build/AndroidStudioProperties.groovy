@@ -75,7 +75,6 @@ class AndroidStudioProperties extends BaseIdeaProperties {
     // Android Studio: include metrics libraries in $install/lib
     productLayout.additionalPlatformJars.putAll("google-analytics-library.jar",
                                                 "android.sdktools.android-annotations",
-                                                "analytics-protos",
                                                 "analytics-shared",
                                                 "analytics-tracker",
                                                 "analytics-publisher",
@@ -291,6 +290,12 @@ class AndroidStudioProperties extends BaseIdeaProperties {
       }
     }
 
+    // Analytics library
+    buildContext.ant.copy(todir: "$androidPluginLib") {
+      fileset(file: "$root/bazel-bin/tools/analytics-library/protos/src/main/proto/libstudio.proto.jar")
+    }
+
+    // Native debugger.
     buildContext.ant.copy(todir: "$targetDirectory/bin/lldb") {
       fileset(dir: "$root/prebuilts/tools/common/lldb")
     }

@@ -1195,3 +1195,11 @@ java_library(
     exports = ["//prebuilts/tools/common/m2/repository/commons-net/commons-net/3.3:jar"],
     runtime_deps = ["//prebuilts/tools/common/m2/repository/commons-net/commons-net/3.3:jar"],
 )
+
+# managed by go/iml_to_build
+java_library(
+    name = "studio-analytics-proto",
+    visibility = ["//visibility:public"],
+    exports = ["//tools/analytics-library/protos/src/main/proto:studio.proto"],
+    runtime_deps = ["//tools/analytics-library/protos/src/main/proto:studio.proto"],
+)

@@ -49,7 +49,6 @@
     <orderEntry type="module" module-name="analytics-shared" />
     <orderEntry type="module" module-name="analytics-publisher" />
     <orderEntry type="module" module-name="android.sdktools.common" />
-    <orderEntry type="module" module-name="analytics-protos" />
     <orderEntry type="library" name="pty4j" level="project" />
     <orderEntry type="module" module-name="intellij.platform.credentialStore" scope="RUNTIME" />
     <orderEntry type="library" exported="" name="StreamEx" level="project" />
@@ -57,5 +56,7 @@
     <orderEntry type="module" module-name="intellij.platform.tasks.impl" scope="RUNTIME" />
     <orderEntry type="library" name="kotlinx-coroutines-core" level="project" />
     <orderEntry type="library" name="kotlinx-coroutines-jdk8" level="project" />
+    <orderEntry type="library" name="protobuf" level="project" />
+    <orderEntry type="library" name="studio-analytics-proto" level="project" />
   </component>
 </module>

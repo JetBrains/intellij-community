@@ -330,7 +330,6 @@
       <module fileurl="file://$PROJECT_DIR$/../adt/idea/adt-testutils/adt-testutils.iml" filepath="$PROJECT_DIR$/../adt/idea/adt-testutils/adt-testutils.iml" />
       <module fileurl="file://$PROJECT_DIR$/../analytics-library/crash/analytics-crash.iml" filepath="$PROJECT_DIR$/../analytics-library/crash/analytics-crash.iml" />
       <module fileurl="file://$PROJECT_DIR$/../analytics-library/inspector/analytics-inspector.iml" filepath="$PROJECT_DIR$/../analytics-library/inspector/analytics-inspector.iml" />
-      <module fileurl="file://$PROJECT_DIR$/../analytics-library/protos/analytics-protos.iml" filepath="$PROJECT_DIR$/../analytics-library/protos/analytics-protos.iml" />
       <module fileurl="file://$PROJECT_DIR$/../analytics-library/publisher/analytics-publisher.iml" filepath="$PROJECT_DIR$/../analytics-library/publisher/analytics-publisher.iml" />
       <module fileurl="file://$PROJECT_DIR$/../analytics-library/shared/analytics-shared.iml" filepath="$PROJECT_DIR$/../analytics-library/shared/analytics-shared.iml" />
       <module fileurl="file://$PROJECT_DIR$/../analytics-library/tracker/analytics-tracker.iml" filepath="$PROJECT_DIR$/../analytics-library/tracker/analytics-tracker.iml" />

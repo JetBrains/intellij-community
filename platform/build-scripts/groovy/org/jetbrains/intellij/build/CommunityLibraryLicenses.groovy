@@ -29,7 +29,7 @@ class CommunityLibraryLicenses {
     new LibraryLicense(name: "Android Profiler", libraryName: "studio-profiler-grpc-1.0-jarjar", license: "Apache 2.0", url: "http://source.android.com/"),
     new LibraryLicense(name: "Android Analytics Shared", libraryName: "com.android.tools.analytics-library:shared:26.0.0", license: "Apache 2.0", url: "http://source.android.com/"),
     new LibraryLicense(name: "Android Analytics Tracker", libraryName: "com.android.tools.analytics-library:tracker:26.0.0", license: "Apache 2.0", url: "http://source.android.com/"),
-    new LibraryLicense(name: "Android Analytics Protos", libraryName: "analytics-protos", license: "Apache 2.0", url: "http://source.android.com/"),
+    new LibraryLicense(name: "Android Analytics Protos", libraryName: "studio_analytics_proto.jar", license: "Apache 2.0", url: "http://source.android.com/"),
     new LibraryLicense(name: "Android Baksmali", libraryName: "baksmali", license: "Apache 2.0", url: "http://source.android.com/"),
     new LibraryLicense(name: "Android Archive Patcher", libraryName: "archive-patcher", license: "Apache 2.0", url: "http://source.android.com/"),
     new LibraryLicense(name: "Android Aia Manifest Proto", libraryName: "aia-manifest-proto-1.0-jarjar.jar", license: "Apache 2.0", url: "http://source.android.com/"),
