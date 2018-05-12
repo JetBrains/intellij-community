@@ -51,14 +51,6 @@ public class HeavyProcessLatch {
   private HeavyProcessLatch() {
   }
 
-  /**
-   * @deprecated use {@link #processStarted(String)} instead
-   */
-  @Deprecated
-  public void processStarted() {
-    processStarted("");
-  }
-
   @NotNull
   public AccessToken processStarted(@NotNull final String operationName) {
     synchronized (myHeavyProcesses) {
