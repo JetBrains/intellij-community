@@ -251,15 +251,12 @@ public class FileBasedIndexImpl extends FileBasedIndex implements BaseComponent,
     connection.subscribe(AppTopics.FILE_DOCUMENT_SYNC, new FileDocumentManagerAdapter() {
       @Override
       public void fileContentReloaded(@NotNull VirtualFile file, @NotNull Document document) {
-        cleanupMemoryStorage();
-        if (myState != null) {  // we might have psi different from document
-          clearUpToDateStateForPsiIndicesOfVirtualFile(file);
-        }
+        cleanupMemoryStorage(true);
       }
 
       @Override
       public void unsavedDocumentsDropped() {
-        cleanupMemoryStorage();
+        cleanupMemoryStorage(false);
       }
     });
 
@@ -320,7 +317,9 @@ public class FileBasedIndexImpl extends FileBasedIndex implements BaseComponent,
   @Override
   public void requestReindex(@NotNull final VirtualFile file) {
     ((GistManagerImpl)GistManager.getInstance()).invalidateData();
-    myChangedFilesCollector.invalidateIndicesRecursively(file, true);
+    // this is the same vfs event handling sequence that is produces after events of FileContentUtilCore.reparseFiles
+    myChangedFilesCollector.invalidateIndicesRecursively(file, false);
+    myChangedFilesCollector.buildIndicesForFileRecursively(file, false);
     if (myInitialized) myChangedFilesCollector.ensureUpToDateAsync();
   }
 
@@ -564,6 +563,9 @@ public class FileBasedIndexImpl extends FileBasedIndex implements BaseComponent,
   }
 
   private void removeFileDataFromIndices(@NotNull Collection<ID<?, ?>> affectedIndices, int inputId, VirtualFile file) {
+    // document diff can depend on previous value that will be removed
+    removeTransientFileDataFromIndices(affectedIndices, inputId, file);
+    
     Throwable unexpectedError = null;
     for (ID<?, ?> indexId : affectedIndices) {
       try {
@@ -580,7 +582,7 @@ public class FileBasedIndexImpl extends FileBasedIndex implements BaseComponent,
       }
     }
     IndexingStamp.flushCache(inputId);
-    removeTransientFileDataFromIndices(affectedIndices, inputId, file);
+    
     if (unexpectedError != null) {
       LOG.error(unexpectedError);
     }
@@ -588,10 +590,19 @@ public class FileBasedIndexImpl extends FileBasedIndex implements BaseComponent,
 
   private void removeTransientFileDataFromIndices(Collection<ID<?, ?>> indices, int inputId, VirtualFile file) {
     for (ID<?, ?> indexId : indices) {
-      if (file.isValid() && getInputFilter(indexId).acceptInput(file)) continue;
       final MapReduceIndex index = (MapReduceIndex)myState.getIndex(indexId);
       assert index != null;
       index.removeTransientDataForFile(inputId);
+    }
+    
+    Document document = myFileDocumentManager.getCachedDocument(file);
+    if (document != null) {
+      myLastIndexedDocStamps.clearForDocument(document);
+      document.putUserData(ourFileContentKey, null);
+    }
+
+    if (!myUpToDateIndicesForUnsavedOrTransactedDocuments.isEmpty()) {
+      myUpToDateIndicesForUnsavedOrTransactedDocuments.clear();
     }
   }
 
@@ -1219,10 +1230,10 @@ public class FileBasedIndexImpl extends FileBasedIndex implements BaseComponent,
                                      final GlobalSearchScope filter,
                                      final VirtualFile restrictedFile) {
     if (myUpToDateIndicesForUnsavedOrTransactedDocuments.contains(indexId)) {
-      return; // no need to index unsaved docs
+      return; // no need to index unsaved docs        // todo: check scope ?
     }
 
-    Set<Document> documents = getUnsavedDocuments();
+    Collection<Document> documents = getUnsavedDocuments();
     boolean psiBasedIndex = myPsiDependentIndices.contains(indexId);
     if(psiBasedIndex) {
       Set<Document> transactedDocuments = getTransactedDocuments();
@@ -1232,6 +1243,16 @@ public class FileBasedIndexImpl extends FileBasedIndex implements BaseComponent,
       else if (!transactedDocuments.isEmpty()) {
         documents = new THashSet<>(documents);
         documents.addAll(transactedDocuments);
+      }
+      Document[] uncommittedDocuments = project != null ? PsiDocumentManager.getInstance(project).getUncommittedDocuments() : Document.EMPTY_ARRAY;
+      if (uncommittedDocuments.length > 0) {
+        List<Document> uncommittedDocumentsCollection = Arrays.asList(uncommittedDocuments);
+        if (documents.isEmpty()) documents = uncommittedDocumentsCollection;
+        else {
+          if (!(documents instanceof THashSet)) documents = new THashSet<>(documents);
+
+          documents.addAll(uncommittedDocumentsCollection);
+        }
       }
     }
 
@@ -1417,7 +1438,7 @@ public class FileBasedIndexImpl extends FileBasedIndex implements BaseComponent,
     }
   }
 
-  private void cleanupMemoryStorage() {
+  private void cleanupMemoryStorage(boolean skipPsiBasedIndices) {
     myLastIndexedDocStamps.clear();
     IndexConfiguration state = myState;
     if (state == null) {
@@ -1426,6 +1447,7 @@ public class FileBasedIndexImpl extends FileBasedIndex implements BaseComponent,
       return;
     }
     for (ID<?, ?> indexId : state.getIndexIDs()) {
+      if (skipPsiBasedIndices && myPsiDependentIndices.contains(indexId)) continue;
       final MapReduceIndex index = (MapReduceIndex)state.getIndex(indexId);
       assert index != null;
       final MemoryIndexStorage memStorage = (MemoryIndexStorage)index.getStorage();
@@ -1745,6 +1767,14 @@ public class FileBasedIndexImpl extends FileBasedIndex implements BaseComponent,
     return null;
   }
 
+  private void doTransientStateChangeForFile(int fileId, @NotNull VirtualFile file) {
+    waitUntilIndicesAreInitialized();
+    if (!clearUpToDateStateForPsiIndicesOfUnsavedDocuments(file, IndexingStamp.getNontrivialFileIndexedStates(fileId))) {
+      // change in persistent file
+      clearUpToDateStateForPsiIndicesOfVirtualFile(file);
+    }
+  }
+  
   private void doInvalidateIndicesForFile(int fileId, @NotNull VirtualFile file, boolean contentChanged) {
     waitUntilIndicesAreInitialized();
     cleanProcessedFlag(file);
@@ -1755,7 +1785,6 @@ public class FileBasedIndexImpl extends FileBasedIndex implements BaseComponent,
     if (contentChanged) {
       // only mark the file as outdated, reindex will be done lazily
       if (!fileIndexedStatesToUpdate.isEmpty()) {
-
         //noinspection ForLoopReplaceableByForEach
         for (int i = 0, size = nontrivialFileIndexedStates.size(); i < size; ++i) {
           final ID<?, ?> indexId = nontrivialFileIndexedStates.get(i);
@@ -1764,7 +1793,8 @@ public class FileBasedIndexImpl extends FileBasedIndex implements BaseComponent,
           }
         }
 
-        clearUpToDateStateForPsiIndicesOfUnsavedDocuments(file);
+        // transient index value can depend on disk value because former is diff to latter
+        removeTransientFileDataFromIndices(nontrivialFileIndexedStates, fileId, file);
 
         // the file is for sure not a dir and it was previously indexed by at least one index
         if (file.isValid()) {
@@ -1836,10 +1866,6 @@ public class FileBasedIndexImpl extends FileBasedIndex implements BaseComponent,
           if (scheduleForUpdate) {
             IndexingStamp.flushCache(finalFileId);
             myChangedFilesCollector.scheduleForUpdate(file);
-          }
-
-          if (!myUpToDateIndicesForUnsavedOrTransactedDocuments.isEmpty()) {
-            clearUpToDateStateForPsiIndicesOfUnsavedDocuments(file);
           }
         });
       }
@@ -1942,7 +1968,7 @@ public class FileBasedIndexImpl extends FileBasedIndex implements BaseComponent,
     public void before(@NotNull List<? extends VFileEvent> events) {
       for (VFileEvent event : events) {
         if (memoryStorageCleaningNeeded(event)) {
-          cleanupMemoryStorage();
+          cleanupMemoryStorage(false);
           break;
         }
       }
@@ -2023,6 +2049,7 @@ public class FileBasedIndexImpl extends FileBasedIndex implements BaseComponent,
             ProgressManager.getInstance().executeNonCancelableSection(() -> {
               int fileId = info.getFileId();
               VirtualFile file = info.getFile();
+              if (info.isTransientStateChanged()) FileBasedIndexImpl.this.doTransientStateChangeForFile(fileId, file);
               if (info.isBeforeContentChanged()) FileBasedIndexImpl.this.doInvalidateIndicesForFile(fileId, file, true);
               if (info.isContentChanged()) scheduleFileForIndexing(fileId, file, true);
               if (info.isFileRemoved()) FileBasedIndexImpl.this.doInvalidateIndicesForFile(fileId, file, false);
@@ -2060,21 +2087,21 @@ public class FileBasedIndexImpl extends FileBasedIndex implements BaseComponent,
     }
   }
 
-  private boolean clearUpToDateStateForPsiIndicesOfUnsavedDocuments(@NotNull VirtualFile file) {
+  private boolean clearUpToDateStateForPsiIndicesOfUnsavedDocuments(@NotNull VirtualFile file, Collection<ID<?, ?>> affectedIndices) {
+    if (!myUpToDateIndicesForUnsavedOrTransactedDocuments.isEmpty()) {
+      myUpToDateIndicesForUnsavedOrTransactedDocuments.clear();
+    }
+
     Document document = myFileDocumentManager.getCachedDocument(file);
 
-    if (document != null && myFileDocumentManager.isDocumentUnsaved(document)) {
-      if (!myUpToDateIndicesForUnsavedOrTransactedDocuments.isEmpty()) {
-        for (ID<?, ?> psiBackedIndex : myPsiDependentIndices) {
-          myUpToDateIndicesForUnsavedOrTransactedDocuments.remove(psiBackedIndex);
-        }
-      }
-
+    if (document != null && myFileDocumentManager.isDocumentUnsaved(document)) {   // will be reindexed in indexUnsavedDocuments
       myLastIndexedDocStamps.clearForDocument(document); // Q: non psi indices
       document.putUserData(ourFileContentKey, null);
 
       return true;
     }
+
+    removeTransientFileDataFromIndices(ContainerUtil.intersection(affectedIndices, myPsiDependentIndices), getFileId(file), file);
     return false;
   }
 
@@ -2228,12 +2255,10 @@ public class FileBasedIndexImpl extends FileBasedIndex implements BaseComponent,
           PsiFile file = event.getFile();
 
           if (file != null) {
-            waitUntilIndicesAreInitialized();
             VirtualFile virtualFile = file.getVirtualFile();
-
-            if (!clearUpToDateStateForPsiIndicesOfUnsavedDocuments(virtualFile)) {
-              // change in persistent file
-              clearUpToDateStateForPsiIndicesOfVirtualFile(virtualFile);
+            
+            if (virtualFile instanceof VirtualFileWithId) {
+              myChangedFilesCollector.myVfsEventsMerger.recordTransientStateChangeEvent(getFileId(virtualFile), virtualFile);
             }
           }
         }
