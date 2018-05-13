@@ -178,7 +178,7 @@ internal class DaemonTooltipWithActionRenderer(text: String?,
     return fixHint
   }
 
-  override fun createRenderer(text: String, width: Int): LineTooltipRenderer {
+  override fun createRenderer(text: String?, width: Int): LineTooltipRenderer {
     return DaemonTooltipWithActionRenderer(text, tooltipAction, width, equalityObjects)
   }
 
@@ -274,6 +274,7 @@ internal class DaemonTooltipWithActionRenderer(text: String?,
 
 fun createActionLabel(text: String, action: Runnable, background: Color): HyperlinkLabel {
   val label = HyperlinkLabel(text, background)
+  label.border = JBUI.Borders.empty()
   label.addHyperlinkListener(object : HyperlinkAdapter() {
     override fun hyperlinkActivated(e: HyperlinkEvent) {
       action.run()
