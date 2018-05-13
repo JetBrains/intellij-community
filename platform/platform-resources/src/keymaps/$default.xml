@@ -439,9 +439,6 @@
   <action id="ShowIntentionActions">
     <keyboard-shortcut first-keystroke="alt ENTER"/>
   </action>
-  <action id="RunErrorIntentionAction">
-    <keyboard-shortcut first-keystroke="alt shift ENTER"/>
-  </action>
   <action id="ExpandAllRegions">
     <keyboard-shortcut first-keystroke="control shift ADD"/>
     <keyboard-shortcut first-keystroke="control shift EQUALS"/>

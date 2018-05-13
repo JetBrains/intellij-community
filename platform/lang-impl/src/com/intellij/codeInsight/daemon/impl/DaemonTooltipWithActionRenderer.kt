@@ -30,13 +30,17 @@ import com.intellij.util.ui.Html
 import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.UIUtil
 import java.awt.*
+import java.awt.event.KeyEvent
 import java.awt.event.MouseEvent
 import java.util.*
 import javax.swing.JComponent
 import javax.swing.JPanel
+import javax.swing.KeyStroke
 import javax.swing.MenuSelectionManager
 import javax.swing.event.HyperlinkEvent
 
+
+val runActionCustomShortcutSet = CustomShortcutSet(KeyStroke.getKeyStroke(KeyEvent.VK_ENTER, KeyEvent.SHIFT_DOWN_MASK or KeyEvent.ALT_DOWN_MASK ))
 
 internal class DaemonTooltipWithActionRenderer(text: String?,
                                                private val tooltipAction: TooltipAction?,
@@ -90,7 +94,7 @@ internal class DaemonTooltipWithActionRenderer(text: String?,
                          actions: ArrayList<AnAction>,
                          tooltipReloader: TooltipReloader) {
     super.fillPanel(editor, grid, hint, hintHint, actions, tooltipReloader)
-    if (grid !is JPanel || tooltipAction == null && !LineTooltipRenderer.isActiveHtml(myText!!)) return
+    if (tooltipAction == null && !LineTooltipRenderer.isActiveHtml(myText!!)) return
 
     val settingsComponent = createSettingsComponent(hint, hintHint, tooltipReloader)
 
@@ -118,7 +122,7 @@ internal class DaemonTooltipWithActionRenderer(text: String?,
       tooltipAction.execute(editor)
     }
 
-    val shortcutRunActionText = getKeymap(IdeActions.ACTION_RUN_INTENTION_ACTION)
+    val shortcutRunActionText = KeymapUtil.getShortcutsText(runActionCustomShortcutSet.shortcuts)
     val shortcutShowAllActionsText = getKeymap(IdeActions.ACTION_SHOW_INTENTION_ACTIONS)
 
     val gridBag = GridBag()
@@ -142,7 +146,7 @@ internal class DaemonTooltipWithActionRenderer(text: String?,
       }
 
       init {
-        registerCustomShortcutSet(getActiveKeymapShortcuts(IdeActions.ACTION_RUN_INTENTION_ACTION), editor.contentComponent)
+        registerCustomShortcutSet(runActionCustomShortcutSet, editor.contentComponent)
       }
     })
 
