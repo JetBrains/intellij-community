@@ -1,6 +1,7 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ui.mac.touchbar;
 
+import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.SystemInfo;
@@ -24,11 +25,14 @@ public class NST {
   private static final NSTLibrary ourNSTLibrary; // NOTE: JNA is stateless (doesn't have any limitations of multi-threaded use)
 
   static {
+    final Application app = ApplicationManager.getApplication();
+    final boolean isUIPresented = app != null && !app.isHeadlessEnvironment() && !app.isUnitTestMode() && !app.isCommandLine();
     final boolean isSystemSupportTouchbar = SystemInfo.isMac && SystemInfo.isOsVersionAtLeast("10.12.2");
     final boolean isRegistryKeyEnabled = Registry.is(ourRegistryKeyTouchbar, false);
     NSTLibrary lib = null;
     if (
-      isSystemSupportTouchbar
+      isUIPresented
+      && isSystemSupportTouchbar
       && isRegistryKeyEnabled
       && SystemSettingsTouchBar.isTouchBarServerRunning()
     ) {
@@ -62,7 +66,9 @@ public class NST {
       } else {
         LOG.error("nst library wasn't loaded");
       }
-    } else if (!isSystemSupportTouchbar)
+    } else if (!isUIPresented)
+      LOG.debug("unit-test mode, skip nst loading");
+    else if (!isSystemSupportTouchbar)
       LOG.info("OS doesn't support touchbar, skip nst loading");
     else if (!isRegistryKeyEnabled)
       LOG.info("registry key '" + ourRegistryKeyTouchbar + "' is disabled, skip nst loading");
