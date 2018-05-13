@@ -291,6 +291,7 @@ public interface IdeActions {
 
   @NonNls String GROUP_ANALYZE = "AnalyzeMenu";
   @NonNls String ACTION_SHOW_ERROR_DESCRIPTION = "ShowErrorDescription";
+  @NonNls String ACTION_RUN_INTENTION_ACTION = "RunErrorIntentionAction";
 
   @NonNls String ACTION_EDITOR_DUPLICATE = "EditorDuplicate";
   @NonNls String ACTION_EDITOR_DUPLICATE_LINES = "EditorDuplicateLines";
