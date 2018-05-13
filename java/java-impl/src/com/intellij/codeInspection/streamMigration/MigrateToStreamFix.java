@@ -71,7 +71,7 @@ class MigrateToStreamFix implements LocalQuickFix {
     if (result == null) return;
     LambdaCanBeMethodReferenceInspection.replaceAllLambdasWithMethodReferences(result);
     PsiDiamondTypeUtil.removeRedundantTypeArguments(result);
-    result = SimplifyStreamApiCallChainsInspection.simplifyStreamExpressions(result);
+    result = SimplifyStreamApiCallChainsInspection.simplifyStreamExpressions(result, true);
     CodeStyleManager.getInstance(project).reformat(JavaCodeStyleManager.getInstance(project).shortenClassReferences(result));
   }
 }
