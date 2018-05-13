@@ -38,13 +38,17 @@ import com.jediterm.terminal.TerminalKeyEncoder;
 import com.jediterm.terminal.TerminalStarter;
 import com.jediterm.terminal.TtyConnector;
 import com.jediterm.terminal.model.JediTerminal;
+import com.jediterm.terminal.model.StyleState;
+import com.jediterm.terminal.model.TerminalTextBuffer;
 import com.jediterm.terminal.ui.TerminalSession;
+import com.jediterm.terminal.ui.settings.SettingsProvider;
 import com.jediterm.terminal.util.CharUtils;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
+import java.awt.event.KeyEvent;
 import java.io.IOException;
 import java.util.Collection;
 import java.util.Collections;
@@ -81,6 +85,30 @@ public class TerminalExecutionConsole implements ConsoleView, ObservableConsoleV
 
 
     myTerminalWidget = new JBTerminalWidget(project, 200, 24, provider, this) {
+      private final TerminalInputBuffer myInputBuffer = new TerminalInputBuffer(myTerminal);
+
+      @Override
+      protected JBTerminalPanel createTerminalPanel(@NotNull SettingsProvider settingsProvider,
+                                                    @NotNull StyleState styleState,
+                                                    @NotNull TerminalTextBuffer textBuffer) {
+        JBTerminalPanel panel = new JBTerminalPanel((JBTerminalSystemSettingsProviderBase)settingsProvider, textBuffer, styleState) {
+          @Override
+          public void initKeyHandler() {
+            setKeyListener(new TerminalKeyHandler() {
+              @Override
+              public void keyPressed(KeyEvent e) {
+                if (!myInputBuffer.keyPressed(e)) {
+                  super.keyPressed(e);
+                }
+              }
+            });
+          }
+        };
+
+        Disposer.register(this, panel);
+        return panel;
+      }
+
       @Override
       protected TerminalStarter createTerminalStarter(JediTerminal terminal, TtyConnector connector) {
         return new TerminalStarter(terminal, connector, myDataStream) {
@@ -91,6 +119,12 @@ public class TerminalExecutionConsole implements ConsoleView, ObservableConsoleV
             } else {
               return super.getCode(key, modifiers);
             }
+          }
+
+          @Override
+          public void sendString(String string) {
+            super.sendString(string);
+            myInputBuffer.inputStringSent(string); // supports copy-pasted text as well
           }
         };
       }
