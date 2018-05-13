@@ -11,7 +11,7 @@ import org.jetbrains.annotations.Nullable;
 
 
 /**
- * Provides
+ * Provides actions for error tooltips 
  *
  * @see com.intellij.codeInsight.daemon.impl.DaemonTooltipActionProvider
  */

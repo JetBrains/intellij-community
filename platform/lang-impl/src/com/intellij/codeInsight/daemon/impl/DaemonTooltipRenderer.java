@@ -96,7 +96,7 @@ class DaemonTooltipRenderer extends LineTooltipRenderer {
   }
 
   @Override
-  protected LineTooltipRenderer createRenderer(@NotNull String text, final int width) {
+  protected LineTooltipRenderer createRenderer(@Nullable String text, final int width) {
     return new DaemonTooltipRenderer(text, width, getEqualityObjects());
   }
 }
