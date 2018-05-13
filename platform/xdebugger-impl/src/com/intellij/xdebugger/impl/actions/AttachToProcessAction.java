@@ -62,7 +62,7 @@ public class AttachToProcessAction extends AnAction {
     super.update(e);
 
     Project project = getEventProject(e);
-    int attachDebuggerProvidersNumber = Extensions.getExtensions(XAttachDebuggerProvider.EP).length;
+    int attachDebuggerProvidersNumber = XAttachDebuggerProvider.getAttachDebuggerProviders().size();
     boolean enabled = project != null && attachDebuggerProvidersNumber > 0;
     e.getPresentation().setEnabledAndVisible(enabled);
   }
