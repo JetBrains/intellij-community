@@ -49,8 +49,6 @@ internal class DefaultComponentConstraintCreator(private val spacing: SpacingCon
 
   val horizontalUnitSizeGap = gapToBoundSize(spacing.unitSize, true)
 
-  val horizontalGap = gapToBoundSize(spacing.horizontalGap, true)
-
   fun createComponentConstraints(cc: Lazy<CC>,
                                  component: Component,
                                  gapLeft: Int = 0,

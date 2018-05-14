@@ -53,8 +53,8 @@ private fun run(laf: LookAndFeel) {
 //          val panel = visualPaddingsPanelOnlyTextField()
     //      val panel = labelRowShouldNotGrow()
     //      val panel = cellPanel()
-          val panel = visualPaddingsPanel()
-//          val panel = withVerticalButtons()
+//          val panel = visualPaddingsPanel()
+          val panel = withVerticalButtons()
 //    val panel = createLafTestPanel()
 
     val dialog = dialog(
