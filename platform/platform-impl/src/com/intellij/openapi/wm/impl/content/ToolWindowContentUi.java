@@ -101,10 +101,8 @@ public class ToolWindowContentUi extends JPanel implements ContentUI, PropertyCh
       });
 
     ApplicationManager.getApplication().getMessageBus().connect(this).subscribe(UISettingsListener.TOPIC, uiSettings -> {
-      getCurrentLayout().update();
-
-      revalidate();
-      repaint();
+        revalidate();
+        repaint();
     });
   }
 
