@@ -46,6 +46,9 @@ fun checkIcons(
     System.getProperty("teamcity.build.checkoutDir") ?: "."
   ).normalize().toAbsolutePath().toString() + "/"
   val newIcons = iconsFromCode.keys.size
+  val dumpInfo = dumpToFile(iconsFromCode.keys, "added", "dev_repo") +
+                 dumpToFile(added, "added", "icons_repo") +
+                 dumpToFile(modified, "modified", "icons_repo")
   val report = """
     |$iconsFromCodeSize icons are found in ${codeRepoDir.removePrefix(root)}
     | skipped ${skippedDirs.size} dirs
@@ -54,6 +57,7 @@ fun checkIcons(
     | ${added.size} new icons
     | ${modified.size} modified icons
     |${consistent.size} consistent icons in both repos
+    |$dumpInfo
     """.trimMargin()
   if (newIcons > 0 || added.size > 0 || modified.size > 0) {
     errorHandler.accept(report)
@@ -62,6 +66,16 @@ fun checkIcons(
     log(report)
   }
 }
+
+private fun dumpToFile(icons: Collection<String>, name: String, repo: String) =
+  if (icons.isNotEmpty()) {
+    val output = "${repo}_${name}.txt"
+    File(output).writeText(icons.joinToString(System.lineSeparator()))
+    "See $output${System.lineSeparator()}"
+  }
+  else {
+    ""
+  }
 
 private fun readIconsRepo(iconsRepoDir: String) =
   listGitObjects(findGitRepoRoot(iconsRepoDir), iconsRepoDir) {
