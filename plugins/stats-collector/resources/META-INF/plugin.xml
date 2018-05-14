@@ -1,6 +1,6 @@
 <idea-plugin>
   <id>com.intellij.stats.completion</id>
-  <name>Completion Stats Collector (EAP)</name>
+  <name>Completion Stats Collector</name>
   <version>1</version>
   <vendor email="vitaliy.bibaev@jetbrains.com" url="http://www.jetbrains.com">JetBrains</vendor>
 
@@ -21,10 +21,6 @@
 
     <applicationService serviceInterface="com.intellij.stats.completion.CompletionLoggerProvider"
                         serviceImplementation="com.intellij.stats.completion.CompletionFileLoggerProvider">
-    </applicationService>
-
-    <applicationService serviceInterface="com.intellij.stats.network.urls.UrlProvider"
-                        serviceImplementation="com.intellij.stats.network.urls.InternalUrlProvider">
     </applicationService>
 
     <applicationService serviceInterface="com.intellij.stats.storage.FilePathProvider"
