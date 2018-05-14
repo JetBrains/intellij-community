@@ -37,6 +37,9 @@ public class DeprecatedDuplicatesIconPathPatcher extends IconPathPatcher {
     ourDeprecatedIconsReplacements.put("/hierarchy/base.png", "AllIcons.Actions.Forward");
     ourDeprecatedIconsReplacements.put("/hierarchy/base.svg", "AllIcons.Actions.Forward");
 
+    ourDeprecatedIconsReplacements.put("/objectBrowser/showModules.png", "AllIcons.Actions.GroupByModule");
+    ourDeprecatedIconsReplacements.put("/objectBrowser/showModules.svg", "AllIcons.Actions.GroupByModule");
+
     ourDeprecatedIconsReplacements.put("/toolbar/folders.png", "AllIcons.Actions.GroupByPackage");
     ourDeprecatedIconsReplacements.put("/toolbar/folders.svg", "AllIcons.Actions.GroupByPackage");
 
