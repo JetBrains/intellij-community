@@ -170,6 +170,15 @@ public class PythonDocumentationProvider extends AbstractDocumentationProvider i
   }
 
   @NotNull
+  static ChainIterable<String> describeTarget(@NotNull PyTargetExpression target, @NotNull TypeEvalContext context) {
+    ChainIterable<String> result = new ChainIterable<>();
+    result.addItem(target.getName());
+    result.addItem(": ");
+    describeTypeWithLinks(context.getType(target), context, target, result);
+    return result;
+  }
+
+  @NotNull
   private static ChainIterable<String> describeFunctionWithTypes(@NotNull PyFunction function,
                                                                  @NotNull Function<String, String> escaper,
                                                                  @NotNull Function<String, String> escapedNameMapper,
