@@ -1292,16 +1292,20 @@ public abstract class DialogWrapper {
     JComponent centerSection = new JPanel(new BorderLayout());
     root.add(centerSection, BorderLayout.CENTER);
 
-    root.setBorder(createContentPaneBorder());
-
     final JComponent n = createNorthPanel();
     if (n != null) {
       centerSection.add(n, BorderLayout.NORTH);
     }
 
-    final JComponent c = createCenterPanel();
-    if (c != null) {
-      centerSection.add(c, BorderLayout.CENTER);
+    final JComponent centerPanel = createCenterPanel();
+    if (centerPanel != null) {
+      centerSection.add(centerPanel, BorderLayout.CENTER);
+    }
+
+    boolean isVisualPaddingCompensatedOnComponentLevel = centerPanel == null || centerPanel.getClientProperty("isVisualPaddingCompensatedOnComponentLevel") == null;
+    if (isVisualPaddingCompensatedOnComponentLevel) {
+      // see comment about visual paddings in the MigLayoutBuilder.build
+      root.setBorder(createContentPaneBorder());
     }
 
     final JPanel southSection = new JPanel(new BorderLayout());
@@ -1310,6 +1314,9 @@ public abstract class DialogWrapper {
     southSection.add(myErrorText, BorderLayout.CENTER);
     final JComponent south = createSouthPanel();
     if (south != null) {
+      if (!isVisualPaddingCompensatedOnComponentLevel) {
+        south.setBorder(JBUI.Borders.empty(0, 12, 8, 12));
+      }
       southSection.add(south, BorderLayout.SOUTH);
     }
 

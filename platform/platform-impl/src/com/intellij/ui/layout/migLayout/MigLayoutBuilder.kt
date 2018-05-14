@@ -10,6 +10,7 @@ import net.miginfocom.layout.*
 import java.awt.Component
 import java.awt.Container
 import javax.swing.ButtonGroup
+import javax.swing.JComponent
 import javax.swing.JDialog
 import javax.swing.JLabel
 
@@ -74,7 +75,6 @@ internal class MigLayoutBuilder(val spacing: SpacingConfiguration, val isUseMagi
 
   override fun build(container: Container, layoutConstraints: Array<out LCFlags>) {
     val lc = createLayoutConstraints()
-
     lc.gridGapY = gapToBoundSize(spacing.verticalGap, false)
     if (layoutConstraints.isEmpty()) {
       lc.fillX()
@@ -93,6 +93,7 @@ internal class MigLayoutBuilder(val spacing: SpacingConfiguration, val isUseMagi
     val rowConstraints = AC()
     rowConstraints.align(if (isUseMagic) "baseline" else "top")
 
+    (container as JComponent).putClientProperty("isVisualPaddingCompensatedOnComponentLevel", false)
     var isLayoutInsetsAdjusted = false
     container.layout = object : MigLayout(lc, columnConstraints, rowConstraints) {
       override fun layoutContainer(parent: Container) {
