@@ -185,6 +185,37 @@ public class DeprecatedDuplicatesIconPathPatcher extends IconPathPatcher {
     ourDeprecatedIconsReplacements.put("/nodes/treeOpen.svg", "AllIcons.Nodes.Folder");
 
 
+    ourDeprecatedIconsReplacements.put("/toolbarDecorator/mac/addBlankLine.png", "AllIcons.ToolbarDecorator.AddBlankLine");
+    ourDeprecatedIconsReplacements.put("/toolbarDecorator/mac/addBlankLine.svg", "AllIcons.ToolbarDecorator.AddBlankLine");
+
+    ourDeprecatedIconsReplacements.put("/toolbarDecorator/mac/addClass.png", "AllIcons.ToolbarDecorator.AddClass");
+    ourDeprecatedIconsReplacements.put("/toolbarDecorator/mac/addClass.svg", "AllIcons.ToolbarDecorator.AddClass");
+
+    ourDeprecatedIconsReplacements.put("/toolbarDecorator/addPackage.png", "AllIcons.ToolbarDecorator.AddFolder");
+    ourDeprecatedIconsReplacements.put("/toolbarDecorator/addPackage.svg", "AllIcons.ToolbarDecorator.AddFolder");
+    ourDeprecatedIconsReplacements.put("/toolbarDecorator/mac/addFolder.png", "AllIcons.ToolbarDecorator.AddFolder");
+    ourDeprecatedIconsReplacements.put("/toolbarDecorator/mac/addFolder.svg", "AllIcons.ToolbarDecorator.AddFolder");
+    ourDeprecatedIconsReplacements.put("/toolbarDecorator/mac/addPackage.png", "AllIcons.ToolbarDecorator.AddFolder");
+    ourDeprecatedIconsReplacements.put("/toolbarDecorator/mac/addPackage.svg", "AllIcons.ToolbarDecorator.AddFolder");
+
+    ourDeprecatedIconsReplacements.put("/toolbarDecorator/mac/addIcon.png", "AllIcons.ToolbarDecorator.AddIcon");
+    ourDeprecatedIconsReplacements.put("/toolbarDecorator/mac/addIcon.svg", "AllIcons.ToolbarDecorator.AddIcon");
+
+    ourDeprecatedIconsReplacements.put("/toolbarDecorator/mac/addJira.png", "AllIcons.ToolbarDecorator.AddJira");
+    ourDeprecatedIconsReplacements.put("/toolbarDecorator/mac/addJira.svg", "AllIcons.ToolbarDecorator.AddJira");
+
+    ourDeprecatedIconsReplacements.put("/toolbarDecorator/mac/addLink.png", "AllIcons.ToolbarDecorator.AddLink");
+    ourDeprecatedIconsReplacements.put("/toolbarDecorator/mac/addLink.svg", "AllIcons.ToolbarDecorator.AddLink");
+
+    ourDeprecatedIconsReplacements.put("/toolbarDecorator/mac/addPattern.png", "AllIcons.ToolbarDecorator.AddPattern");
+    ourDeprecatedIconsReplacements.put("/toolbarDecorator/mac/addPattern.svg", "AllIcons.ToolbarDecorator.AddPattern");
+
+    ourDeprecatedIconsReplacements.put("/toolbarDecorator/mac/addRemoteDatasource.png", "AllIcons.ToolbarDecorator.AddRemoteDatasource");
+    ourDeprecatedIconsReplacements.put("/toolbarDecorator/mac/addRemoteDatasource.svg", "AllIcons.ToolbarDecorator.AddRemoteDatasource");
+
+    ourDeprecatedIconsReplacements.put("/toolbarDecorator/mac/addYouTrack.png", "AllIcons.ToolbarDecorator.AddYouTrack");
+    ourDeprecatedIconsReplacements.put("/toolbarDecorator/mac/addYouTrack.svg", "AllIcons.ToolbarDecorator.AddYouTrack");
+
     ourDeprecatedIconsReplacements.put("/actions/export.png", "AllIcons.ToolbarDecorator.Export");
     ourDeprecatedIconsReplacements.put("/actions/export.svg", "AllIcons.ToolbarDecorator.Export");
     ourDeprecatedIconsReplacements.put("/graph/export.png", "AllIcons.ToolbarDecorator.Export");
