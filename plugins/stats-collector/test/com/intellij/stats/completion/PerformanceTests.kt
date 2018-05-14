@@ -93,7 +93,7 @@ class Test {
     private fun slowRequestService(): RequestService {
         return mock(RequestService::class.java).apply {
             `when`(postZipped(anyString(), any() ?: File("."))).then {
-                Thread.sleep(1000)
+                Thread.sleep(10000)
                 ResponseData(200)
             }
         }
