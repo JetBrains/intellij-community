@@ -52,10 +52,6 @@
                         serviceImplementation="com.intellij.stats.completion.PermanentInstallationIdProvider">
     </applicationService>
 
-    <applicationService serviceImplementation="com.intellij.sorting.SortingTimeStatistics"/>
-    <applicationService serviceImplementation="com.intellij.completion.enhancer.ContributorsTimeStatistics"/>
-
-
     <postStartupActivity implementation="com.intellij.plugin.NotificationManager"/>
 
     <applicationService serviceInterface="com.intellij.completion.tracker.LookupElementPositionTracker"
