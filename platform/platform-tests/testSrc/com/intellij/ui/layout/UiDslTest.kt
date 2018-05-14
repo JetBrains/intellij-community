@@ -84,6 +84,11 @@ class UiDslTest {
     doTest { visualPaddingsPanel() }
   }
 
+  @Test
+  fun `vertical buttons`() {
+    doTest { withVerticalButtons() }
+  }
+
   private fun doTest(panelCreator: () -> JPanel) {
     invokeAndWaitIfNeed {
       val panel = panelCreator()
