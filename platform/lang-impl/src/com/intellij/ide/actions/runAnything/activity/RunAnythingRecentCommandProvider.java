@@ -2,8 +2,6 @@
 package com.intellij.ide.actions.runAnything.activity;
 
 import com.intellij.ide.actions.runAnything.RunAnythingCache;
-import com.intellij.ide.actions.runAnything.items.RunAnythingItem;
-import com.intellij.ide.actions.runAnything.items.RunAnythingItemBase;
 import com.intellij.openapi.actionSystem.DataContext;
 import org.jetbrains.annotations.NotNull;
 
@@ -12,13 +10,7 @@ import java.util.Collection;
 import static com.intellij.ide.actions.runAnything.RunAnythingUtil.fetchProject;
 
 public class RunAnythingRecentCommandProvider extends RunAnythingCommandExecutionProviderBase
-  implements RunAnythingRecentProvider<String>, RunAnythingMultiParametrizedExecutionProvider<String> {
-
-  @NotNull
-  @Override
-  public RunAnythingItem getMainListItem(@NotNull DataContext dataContext, @NotNull String value) {
-    return new RunAnythingItemBase(value, getIcon(value));
-  }
+  implements RunAnythingMultiParametrizedExecutionProvider<String> {
 
   @NotNull
   @Override

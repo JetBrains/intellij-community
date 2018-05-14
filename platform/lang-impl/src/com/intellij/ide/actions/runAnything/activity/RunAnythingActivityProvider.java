@@ -2,6 +2,7 @@
 package com.intellij.ide.actions.runAnything.activity;
 
 import com.intellij.ide.actions.runAnything.RunAnythingCache;
+import com.intellij.ide.actions.runAnything.items.RunAnythingItem;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.module.Module;
@@ -46,6 +47,9 @@ public interface RunAnythingActivityProvider<V> {
   default String getAdText() {
     return null;
   }
+
+  @NotNull
+  RunAnythingItem getMainListItem(@NotNull DataContext dataContext, @NotNull V value);
 
   /**
    * Finds provider that matches {@code pattern}
