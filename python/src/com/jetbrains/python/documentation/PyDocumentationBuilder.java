@@ -32,13 +32,13 @@ import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.QualifiedName;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.ObjectUtils;
+import com.intellij.util.containers.FactoryMap;
 import com.jetbrains.python.*;
 import com.jetbrains.python.console.PyConsoleUtil;
 import com.jetbrains.python.documentation.docstrings.DocStringUtil;
 import com.jetbrains.python.documentation.docstrings.PyStructuredDocstringFormatter;
 import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.impl.PyBuiltinCache;
-import com.jetbrains.python.psi.impl.PyCallExpressionHelper;
 import com.jetbrains.python.psi.impl.PyPsiUtils;
 import com.jetbrains.python.psi.resolve.PyResolveContext;
 import com.jetbrains.python.psi.resolve.QualifiedNameFinder;
@@ -59,6 +59,7 @@ import java.io.FileReader;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 import java.util.function.Function;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -71,10 +72,12 @@ public class PyDocumentationBuilder {
   private ChainIterable<String> myResult;
   private final ChainIterable<String> myProlog;      // sequence for reassignment info, etc
   private final ChainIterable<String> myBody;        // sequence for doc string
+  private final ChainIterable<String> mySections;
   private final ChainIterable<String> myEpilog;      // sequence for doc "copied from" notices and such
 
+  private final Map<String, ChainIterable<String>> mySectionsMap = FactoryMap.create(item -> new ChainIterable<String>());
+
   private static final Pattern ourSpacesPattern = Pattern.compile("^\\s+");
-  private final ChainIterable<String> myReassignmentChain;
 
   public PyDocumentationBuilder(PsiElement element, PsiElement originalElement) {
     myElement = element;
@@ -82,11 +85,12 @@ public class PyDocumentationBuilder {
     myResult = new ChainIterable<>();
     myProlog = new ChainIterable<>();
     myBody = new ChainIterable<>();
+    mySections = new ChainIterable<>();
     myEpilog = new ChainIterable<>();
 
-    myResult.add(myProlog).add(myBody).add(myEpilog); // pre-assemble; then add stuff to individual cats as needed
+
+    myResult.add(myProlog).add(myBody).add(mySections).add(myEpilog); // pre-assemble; then add stuff to individual cats as needed
     myResult = wrapInTag("html", wrapInTag("body", myResult));
-    myReassignmentChain = new ChainIterable<>();
   }
 
   @Nullable
@@ -97,23 +101,11 @@ public class PyDocumentationBuilder {
     final PsiElement elementDefinition = resolveToDocStringOwner(context);
     final boolean isProperty = buildFromProperty(elementDefinition, outerElement, context);
 
-    if (myProlog.isEmpty() && !isProperty && !isAttribute()) {
-      myProlog.add(myReassignmentChain);
-    }
-
     if (elementDefinition instanceof PyDocStringOwner) {
       buildFromDocstring(((PyDocStringOwner)elementDefinition), isProperty);
     }
-    else if (isAttribute()) {
-      buildFromAttributeDoc();
-    }
     else if (elementDefinition instanceof PyNamedParameter) {
       buildFromParameter(context, outerElement, elementDefinition);
-    }
-    else if (elementDefinition != null && outerElement instanceof PyReferenceExpression) {
-      myBody.addItem(combUp("\nInferred type: "));
-      PythonDocumentationProvider
-        .describeTypeWithLinks(context.getType((PyReferenceExpression)outerElement), context, outerElement, myBody);
     }
 
     if (elementDefinition != null) {
@@ -131,6 +123,19 @@ public class PyDocumentationBuilder {
         buildForKeyword(documentationName);
       }
     }
+
+    if (!mySectionsMap.isEmpty()) {
+      mySections.addItem(DocumentationMarkup.SECTIONS_START);
+      for (Map.Entry<String, ChainIterable<String>> entry : mySectionsMap.entrySet()) {
+        mySections.addItem(DocumentationMarkup.SECTION_HEADER_START);
+        mySections.addItem(entry.getKey());
+        mySections.addItem(DocumentationMarkup.SECTION_SEPARATOR);
+        mySections.add(entry.getValue());
+        mySections.addItem(DocumentationMarkup.SECTION_END);
+      }
+      mySections.addItem(DocumentationMarkup.SECTIONS_END);
+    }
+
     final String url = PythonDocumentationProvider.getUrlFor(myElement, myOriginalElement, false);
     if (url != null) {
       myEpilog.addItem(BR);
@@ -321,6 +326,19 @@ public class PyDocumentationBuilder {
     else if (elementDefinition instanceof PyFile) {
       addModulePath((PyFile)elementDefinition);
     }
+    else if (elementDefinition instanceof PyTargetExpression) {
+      PyTargetExpression target = (PyTargetExpression)elementDefinition;
+      if (isAttribute()) {
+        final String type = PyUtil.isInstanceAttribute(target) ? "Instance attribute " : "Class attribute ";
+        myProlog
+          .addItem(type)
+          .addWith(TagBold, $().addWith(TagCode, $(elementDefinition.getName())))
+          .addItem(" of class ")
+          .addItem(PyDocumentationLink.toContainingClass(WRAP_IN_CODE.apply(target.getContainingClass().getName())))
+          .addItem(BR);
+      }
+      myBody.add(PythonDocumentationProvider.describeTarget(target, context));
+    }
 
     myBody.addItem(DocumentationMarkup.DEFINITION_END);
     if (content != null && !content.isEmpty()) {
@@ -337,31 +355,14 @@ public class PyDocumentationBuilder {
   @Nullable
   private PsiElement resolveToDocStringOwner(@NotNull TypeEvalContext context) {
     // here the ^Q target is already resolved; the resolved element may point to intermediate assignments
-    if (myElement instanceof PyTargetExpression) {
-      final String targetName = myElement.getText();
-      myReassignmentChain.addWith(TagSmall, $(PyBundle.message("QDOC.assigned.to.$0", targetName)).addItem(BR));
+    if (myElement instanceof PyTargetExpression && ((PyTargetExpression)myElement).getDocStringValue() == null) {
       final PyExpression assignedValue = ((PyTargetExpression)myElement).findAssignedValue();
       if (assignedValue instanceof PyReferenceExpression) {
         final PsiElement resolved = resolveWithoutImplicits((PyReferenceExpression)assignedValue, context);
-        if (resolved != null) {
+        if (resolved instanceof PyDocStringOwner) {
+          mySectionsMap.get(PyBundle.message("QDOC.assigned.to")).addWith(TagCode, $(((PyTargetExpression)myElement).getName()));
           return resolved;
         }
-      }
-      return assignedValue;
-    }
-    if (myElement instanceof PyReferenceExpression) {
-      myReassignmentChain.addWith(TagSmall, $(PyBundle.message("QDOC.assigned.to.$0", myElement.getText())).addItem(BR));
-      return resolveWithoutImplicits((PyReferenceExpression)myElement, context);
-    }
-    // it may be a call to a standard wrapper
-    if (myElement instanceof PyCallExpression) {
-      final PyCallExpression call = (PyCallExpression)myElement;
-      final Pair<String, PyFunction> wrapInfo = PyCallExpressionHelper.interpretAsModifierWrappingCall(call);
-      if (wrapInfo != null) {
-        final String wrapperName = wrapInfo.getFirst();
-        final PyFunction wrappedFunction = wrapInfo.getSecond();
-        myReassignmentChain.addWith(TagSmall, $(PyBundle.message("QDOC.wrapped.in.$0", wrapperName)).addItem(BR));
-        return wrappedFunction;
       }
     }
     return myElement;
@@ -531,23 +532,6 @@ public class PyDocumentationBuilder {
       desc = structuredDocString.getParamDescription(name);
     }
     return Pair.create(type, desc);
-  }
-
-  private void buildFromAttributeDoc() {
-    final PyClass cls = PsiTreeUtil.getParentOfType(myElement, PyClass.class);
-    assert cls != null;
-    final String type = PyUtil.isInstanceAttribute((PyExpression)myElement) ? "Instance attribute " : "Class attribute ";
-    myProlog
-      .addItem(type)
-      .addWith(TagBold, $().addWith(TagCode, $(((PyTargetExpression)myElement).getName())))
-      .addItem(" of class ")
-      .addItem(PyDocumentationLink.toContainingClass(WRAP_IN_CODE.apply(cls.getName())))
-      .addItem(BR);
-
-    final String docString = PyPsiUtils.strValue(getEffectiveDocStringExpression((PyTargetExpression)myElement));
-    if (docString != null) {
-      myBody.add(formatDocString(myElement, docString));
-    }
   }
 
   public static String[] removeCommonIndentation(@NotNull final String docstring) {
