@@ -27,6 +27,7 @@ import com.intellij.coverage.actions.HideCoverageInfoAction;
 import com.intellij.coverage.actions.ShowCoveringTestsAction;
 import com.intellij.icons.AllIcons;
 import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.application.ApplicationBundle;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.EditorFactory;
@@ -412,10 +413,11 @@ public class CoverageLineMarkerRenderer implements ActiveGutterRenderer, LineMar
 
     @Override
     public void actionPerformed(AnActionEvent e) {
+      final GeneralColorsPage colorsPage = new GeneralColorsPage();
+      String fullDisplayName = "Editor | " + ApplicationBundle.message("title.colors.and.fonts") + " | " + colorsPage.getDisplayName();
       final ColorAndFontOptions colorAndFontOptions = new ColorAndFontOptions(){
         @Override
         protected List<ColorAndFontPanelFactory> createPanelFactories() {
-          final GeneralColorsPage colorsPage = new GeneralColorsPage();
           final ColorAndFontPanelFactory panelFactory = new ColorAndFontPanelFactory() {
             @NotNull
             @Override
@@ -427,7 +429,7 @@ public class CoverageLineMarkerRenderer implements ActiveGutterRenderer, LineMar
             @NotNull
             @Override
             public String getPanelDisplayName() {
-              return "Editor | " + getDisplayName() + " | " + colorsPage.getDisplayName();
+              return fullDisplayName;
             }
           };
           return Collections.singletonList(panelFactory);
@@ -435,11 +437,12 @@ public class CoverageLineMarkerRenderer implements ActiveGutterRenderer, LineMar
       };
       final Configurable[] configurables = colorAndFontOptions.buildConfigurables();
       try {
+        NewColorAndFontPanel page = colorAndFontOptions.findPage(fullDisplayName);
         final SearchableConfigurable general = colorAndFontOptions.findSubConfigurable(GeneralColorsPage.class);
-        if (general != null) {
+        if (general != null && page != null) {
           final LineData lineData = getLineData(myLineNumber);
           ShowSettingsUtil.getInstance().editConfigurable(myEditor.getProject(), general,
-                                                          general.enableSearch(getAttributesKey(lineData).getExternalName()));
+                                                          () -> page.selectOptionByType(getAttributesKey(lineData).getExternalName()));
         }
       }
       finally {
