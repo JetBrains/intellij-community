@@ -22,10 +22,11 @@ import com.intellij.openapi.vcs.changes.ui.ChangesListView;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.NotNull;
 
-import javax.swing.*;
 import java.util.List;
 
 public class UnversionedViewDialog extends SpecificFilesViewDialog {
+  private static final String TOOLBAR_GROUP = "Unversioned.Files.Dialog";
+  private static final String POPUP_GROUP = "Unversioned.Files.Dialog.Popup";
 
   public UnversionedViewDialog(@NotNull Project project) {
     super(project, "Unversioned Files", ChangesListView.UNVERSIONED_FILES_DATA_KEY,
@@ -34,24 +35,25 @@ public class UnversionedViewDialog extends SpecificFilesViewDialog {
 
   @Override
   protected void addCustomActions(@NotNull DefaultActionGroup group) {
-    registerUnversionedActionsShortcuts(myView);
+    ActionGroup popupGroup = getUnversionedPopupGroup();
+    ActionGroup toolbarGroup = getUnversionedToolbarGroup();
 
+    ActionUtil.recursiveRegisterShortcutSet(popupGroup, myView, null);
     EmptyAction.registerWithShortcutSet("ChangesView.DeleteUnversioned", CommonShortcuts.getDelete(), myView);
 
-    group.add(getUnversionedActionGroup());
-    final DefaultActionGroup secondGroup = new DefaultActionGroup();
-    secondGroup.addAll(getUnversionedActionGroup());
+    group.add(toolbarGroup);
 
-    myView.setMenuActions(secondGroup);
+    myView.setMenuActions(popupGroup);
   }
 
   @NotNull
-  public static ActionGroup getUnversionedActionGroup() {
-    return (ActionGroup)ActionManager.getInstance().getAction("Unversioned.Files.Dialog");
+  public static ActionGroup getUnversionedToolbarGroup() {
+    return (ActionGroup)ActionManager.getInstance().getAction(TOOLBAR_GROUP);
   }
 
-  public static void registerUnversionedActionsShortcuts(@NotNull JComponent component) {
-    ActionUtil.recursiveRegisterShortcutSet(getUnversionedActionGroup(), component, null);
+  @NotNull
+  public static ActionGroup getUnversionedPopupGroup() {
+    return (ActionGroup)ActionManager.getInstance().getAction(POPUP_GROUP);
   }
 
   @NotNull

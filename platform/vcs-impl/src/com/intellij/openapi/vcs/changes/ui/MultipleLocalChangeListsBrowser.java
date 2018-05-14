@@ -7,6 +7,7 @@ import com.intellij.icons.AllIcons;
 import com.intellij.ide.DeleteProvider;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.actionSystem.ex.ActionUtil;
 import com.intellij.openapi.actionSystem.ex.CustomComponentAction;
 import com.intellij.openapi.actionSystem.ex.ThreeStateCheckboxAction;
 import com.intellij.openapi.diff.DiffBundle;
@@ -138,8 +139,9 @@ public class MultipleLocalChangeListsBrowser extends CommitDialogChangesBrowser 
       result.add(new ShowHideUnversionedFilesAction());
 
       // We do not add "Delete" key shortcut for deleting unversioned files as this shortcut is already used to uncheck checkboxes in the tree.
-      result.add(UnversionedViewDialog.getUnversionedActionGroup());
-      UnversionedViewDialog.registerUnversionedActionsShortcuts(myViewer);
+      ActionGroup unversionedGroup = UnversionedViewDialog.getUnversionedPopupGroup();
+      result.add(unversionedGroup);
+      ActionUtil.recursiveRegisterShortcutSet(unversionedGroup, myViewer, null);
     }
     else {
       // avoid duplicated actions on toolbar

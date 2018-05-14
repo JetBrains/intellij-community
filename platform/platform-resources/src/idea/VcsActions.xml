@@ -144,10 +144,16 @@
       <reference ref="VersionControlsGroup"/>
     </group>
 
-    <!-- There are alternative action presentations for the UnversionedViewDialog. Icon is the difference.  -->
+    <action id="ChangesView.AddUnversioned.From.Dialog" class="com.intellij.openapi.vcs.changes.actions.ScheduleForAdditionAction"
+            icon="AllIcons.General.Add" use-shortcut-of="ChangesView.AddUnversioned"/>
+
     <group id="Unversioned.Files.Dialog">
-      <action id="ChangesView.AddUnversioned.From.Dialog" class="com.intellij.openapi.vcs.changes.actions.ScheduleForAdditionAction"
-              icon="AllIcons.General.Add" use-shortcut-of="ChangesView.AddUnversioned" />
+      <reference ref="ChangesView.AddUnversioned.From.Dialog"/>
+      <reference ref="ChangesView.Move"/>
+      <reference ref="ChangesView.DeleteUnversioned"/>
+    </group>
+    <group id="Unversioned.Files.Dialog.Popup">
+      <reference ref="ChangesView.AddUnversioned.From.Dialog"/>
       <reference ref="ChangesView.Move"/>
       <reference ref="ChangesView.DeleteUnversioned"/>
       <reference ref="ChangesView.Ignore"/>
