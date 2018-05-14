@@ -29,7 +29,8 @@ public interface XLocalAttachGroup extends XAttachProcessPresentationGroup {
   /**
    * @deprecated will be removed in 2018.2
    */
-  XLocalAttachGroup DEFAULT = XDefaultLocalAttachGroup.INSTANCE;
+  @NotNull
+  XLocalAttachGroup DEFAULT = new XDefaultLocalAttachGroup();
 
   /**
    * @deprecated use {@link #compare(Object, Object)} (will be removed in 2018.2)
