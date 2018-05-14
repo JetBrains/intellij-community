@@ -25,6 +25,8 @@ public class ContractInspection extends AbstractBaseJavaLocalInspectionTool {
 
       @Override
       public void visitMethod(PsiMethod method) {
+        PsiAnnotation annotation = JavaMethodContractUtil.findContractAnnotation(method);
+        if (annotation == null || AnnotationUtil.isInferredAnnotation(annotation)) return;
         for (StandardMethodContract contract : JavaMethodContractUtil.getMethodContracts(method)) {
           Map<PsiElement, String> errors = ContractChecker.checkContractClause(method, contract);
           for (Map.Entry<PsiElement, String> entry : errors.entrySet()) {
