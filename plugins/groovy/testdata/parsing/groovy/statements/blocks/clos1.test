@@ -3,7 +3,7 @@
 Groovy script
   Compound Gstring
     PsiElement(Gstring begin)('"')
-    GrStringContentImpl(GString content element)
+    GrStringContentImpl(STRING_CONTENT)
       PsiElement(Gstring content)('Pre ')
     GString injection
       PsiElement($)('$')
@@ -34,6 +34,6 @@ Groovy script
         Literal
           PsiElement(Integer)('3')
         PsiElement(})('}')
-    GrStringContentImpl(GString content element)
+    GrStringContentImpl(STRING_CONTENT)
       PsiElement(Gstring content)(' ved')
     PsiElement(Gstring end)('"')

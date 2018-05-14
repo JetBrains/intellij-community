@@ -13,7 +13,7 @@ Groovy script
       Literal
         GroovyASTPsiElementImpl($/ regex literal)
           PsiElement($/ regex begin)('$/')
-          GrStringContentImpl(GString content element)
+          GrStringContentImpl(STRING_CONTENT)
             ASTWrapperPsiElement($/ regex content)
               <empty list>
           PsiErrorElement:Dollar slash ending expected

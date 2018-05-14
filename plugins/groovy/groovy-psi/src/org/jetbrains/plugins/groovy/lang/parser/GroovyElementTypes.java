@@ -137,7 +137,7 @@ public interface GroovyElementTypes {
   // GStrings
   IElementType GSTRING = new GroovyElementType("GString");
   IElementType GSTRING_INJECTION =new GroovyElementType("Gstring injection");
-  IElementType GSTRING_CONTENT = new GroovyElementType("GString content element");
+  IElementType GSTRING_CONTENT = new GroovyElementType("STRING_CONTENT");
 
 
   IElementType REGEX = new GroovyElementType("Regular expression");
