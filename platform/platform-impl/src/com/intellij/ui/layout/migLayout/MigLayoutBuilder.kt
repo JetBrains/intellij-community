@@ -13,7 +13,7 @@ import javax.swing.ButtonGroup
 import javax.swing.JDialog
 import javax.swing.JLabel
 
-internal class MigLayoutBuilder(val spacing: SpacingConfiguration) : LayoutBuilderImpl {
+internal class MigLayoutBuilder(val spacing: SpacingConfiguration, val isUseMagic: Boolean = true) : LayoutBuilderImpl {
   companion object {
     private var hRelatedGap = -1
     private var vRelatedGap = -1
@@ -92,13 +92,14 @@ internal class MigLayoutBuilder(val spacing: SpacingConfiguration) : LayoutBuild
       columnConstraints.gap("${spacing.labelColumnHorizontalGap}px!", 0)
     }
 
-    for (i in 1 until columnConstraints.count) {
+    // isUseMagic - for label we use labelColumnHorizontalGap, so, in magic mode do not set default gap between 0 and 1 columns
+    for (i in (if (isUseMagic) 1 else 0) until columnConstraints.count) {
       columnConstraints.gap("${spacing.horizontalGap}px!", i)
     }
 
     // if constraint specified only for rows 0 and 1, MigLayout will use constraint 1 for any rows with index 1+ (see LayoutUtil.getIndexSafe - use last element if index > size)
     val rowConstraints = AC()
-    rowConstraints.align("baseline")
+    rowConstraints.align(if (isUseMagic) "baseline" else "top")
 
     var isLayoutInsetsAdjusted = false
     container.layout = object : MigLayout(lc, columnConstraints, rowConstraints) {
@@ -202,6 +203,7 @@ private fun createUnitValue(value: Int, isHorizontal: Boolean): UnitValue {
 
 private fun LC.apply(flags: Array<out LCFlags>): LC {
   for (flag in flags) {
+    @Suppress("NON_EXHAUSTIVE_WHEN")
     when (flag) {
       LCFlags.noGrid -> isNoGrid = true
 

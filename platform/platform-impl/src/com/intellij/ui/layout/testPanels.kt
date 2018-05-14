@@ -174,14 +174,14 @@ fun createLafTestPanel(): JPanel {
 }
 
 fun withVerticalButtons(): JPanel {
-  return panel {
+  return panel(LCFlags.disableMagic) {
     row {
       scrollPane(JTextArea(), pushX)
 
       cell(isVerticalFlow = true) {
-        button("Accept Yours") {}
-        button("Accept Theirs") {}
-        button("Merge ..") {}
+        button("Accept Yours", growX) {}
+        button("Accept Theirs", growX) {}
+        button("Merge ...", growX) {}
       }
     }
   }

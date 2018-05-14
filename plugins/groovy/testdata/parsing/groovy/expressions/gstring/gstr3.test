@@ -8,7 +8,7 @@ Groovy script
     Command arguments
       Compound Gstring
         PsiElement(Gstring begin)('"""')
-        GrStringContentImpl(GString content element)
+        GrStringContentImpl(STRING_CONTENT)
           PsiElement(Gstring content)(' preved " " 42')
         PsiErrorElement:String end expected
           <empty list>

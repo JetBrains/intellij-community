@@ -137,8 +137,6 @@ internal class MigLayoutRow(private val parent: MigLayoutRow?,
         cc.split(components.size - firstComponentIndex)
         if (isVerticalFlow) {
           cc.flowY()
-          cc.growPrio(0)
-          cc.grow(0f)
         }
       }
     }
@@ -253,6 +251,11 @@ internal class MigLayoutRow(private val parent: MigLayoutRow?,
     // So - we just rely on MigLayout power and do not complicate our code
 
     // problem if we have component with push (e.g. ScrollPane) in a non-labeled row - to solve this problem (this label column starts to grow since latter component push cancel our push), we set noGrid if such component is the only in the row
+
+
+    if (!builder.isUseMagic) {
+      return
+    }
 
     // so - we set 0 (actually, default AC() created with a one column constraint set to default, so, for first column size is 0 anyway) for labeled column, 100 if no component with pushX and 1000 if there is component with pushX
     if (cc.isInitialized() && cc.value.pushX != null) {

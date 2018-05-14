@@ -67,8 +67,8 @@ Groovy script
               PsiElement(new line)('\n  ')
               PsiElement(})('}')
         PsiElement(,)(',')
+        PsiElement(new line)('\n\n  ')
         Enumeration constant
-          PsiElement(new line)('\n\n  ')
           Modifiers
             Annotation
               PsiElement(@)('@')

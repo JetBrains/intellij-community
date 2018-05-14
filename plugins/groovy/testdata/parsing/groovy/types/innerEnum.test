@@ -59,8 +59,8 @@ Groovy script
                 <empty list>
               PsiElement(identifier)('WEDNESDAY')
             PsiElement(,)(',')
+            PsiElement(new line)('\n     ')
             Enumeration constant
-              PsiElement(new line)('\n     ')
               Modifiers
                 <empty list>
               PsiElement(identifier)('THURSDAY')
