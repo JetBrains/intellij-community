@@ -7,6 +7,8 @@ import com.intellij.openapi.project.Project;
 import org.jetbrains.annotations.NotNull;
 
 public interface XLocalAttachDebugger extends XAttachDebugger {
+  @NotNull
+  String getDebuggerDisplayName();
 
   void attachDebugSession(@NotNull Project project,
                           @NotNull ProcessInfo info) throws ExecutionException;

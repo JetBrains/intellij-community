@@ -15,7 +15,11 @@
  */
 package com.intellij.xdebugger.attach;
 
+import com.intellij.execution.process.ProcessInfo;
+import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.UserDataHolder;
 import org.jetbrains.annotations.ApiStatus;
+import org.jetbrains.annotations.NotNull;
 
 /**
  * @deprecated Use XAttachProcessPresentationGroup (will be removed in 2018.2)
@@ -25,5 +29,12 @@ public interface XLocalAttachGroup extends XAttachProcessPresentationGroup {
   /**
    * @deprecated will be removed in 2018.2
    */
-  XAttachPresentationGroup DEFAULT = XDefaultLocalAttachGroup.INSTANCE;
+  XLocalAttachGroup DEFAULT = XDefaultLocalAttachGroup.INSTANCE;
+
+  /**
+   * @deprecated use {@link #compare(Object, Object)} (will be removed in 2018.2)
+   */
+  default int compare(@NotNull Project project, @NotNull ProcessInfo a, @NotNull ProcessInfo b, @NotNull UserDataHolder dataHolder) {
+    return compare(a, b);
+  }
 }
