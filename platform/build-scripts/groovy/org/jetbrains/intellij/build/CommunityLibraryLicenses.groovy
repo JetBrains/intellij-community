@@ -347,8 +347,6 @@ class CommunityLibraryLicenses {
                        licenseUrl: "http://slf4j.org/license.html"),
     new LibraryLicense(name: "SnakeYAML", libraryName: "snakeyaml", version: "1.21", license: "Apache 2.0",
                        licenseUrl: "http://www.apache.org/licenses/LICENSE-2.0", url: "https://bitbucket.org/asomov/snakeyaml"),
-    new LibraryLicense(name: "Snappy-Java", libraryName: "Snappy-Java", version: "0.5.1", license: "Apache 2.0",
-                       url: "https://github.com/dain/snappy", licenseUrl: "http://www.apache.org/licenses/LICENSE-2.0"),
     new LibraryLicense(name: "SnuggleTeX", version: "1.3 (with patches by JetBrains)", license: "BSD",
                        url: "http://snuggletex.sourceforge.net/", licenseUrl: "http://snuggletex.sourceforge.net/maven/license.html"),
     new LibraryLicense(name: "Sonatype Nexus Indexer Artifact", libraryName: "nexus-indexer-artifact-1.0.1.jar", version: "1.0.1",
