@@ -71,6 +71,45 @@ public class GenericPatchApplier {
     myAppliedInfo = new ArrayList<>();
   }
 
+  @Nullable
+  public static AppliedPatch apply(CharSequence text, List<PatchHunk> hunks) {
+    GenericPatchApplier applier = new GenericPatchApplier(text, hunks);
+    boolean success = applier.execute();
+
+    if (!success) return null;
+
+    return new AppliedPatch(applier.getAfter(), applier.getStatus());
+  }
+
+  @NotNull
+  public static AppliedSomehowPatch applySomehow(CharSequence text, List<PatchHunk> hunks) {
+    GenericPatchApplier applier = new GenericPatchApplier(text, hunks);
+    boolean success = applier.execute();
+
+    if (!success) applier.trySolveSomehow();
+
+    return new AppliedSomehowPatch(applier.getAfter(), applier.getStatus(), !success);
+  }
+
+  public static class AppliedPatch {
+    @NotNull public final String patchedText;
+    @NotNull public final ApplyPatchStatus status;
+
+    public AppliedPatch(@NotNull String patchedText, @NotNull ApplyPatchStatus status) {
+      this.patchedText = patchedText;
+      this.status = status;
+    }
+  }
+
+  public static class AppliedSomehowPatch extends AppliedPatch {
+    public final boolean isAppliedSomehow;
+
+    public AppliedSomehowPatch(@NotNull String text, @NotNull ApplyPatchStatus status, boolean isAppliedSomehow) {
+      super(text, status);
+      this.isAppliedSomehow = isAppliedSomehow;
+    }
+  }
+
   public ApplyPatchStatus getStatus() {
     if (! myNotExact.isEmpty()) {
       return ApplyPatchStatus.FAILURE;

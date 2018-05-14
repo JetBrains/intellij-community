@@ -16,6 +16,8 @@
 package com.intellij.openapi.diff.impl.patch;
 
 import com.intellij.openapi.diff.impl.patch.apply.GenericPatchApplier;
+import com.intellij.openapi.diff.impl.patch.apply.GenericPatchApplier.AppliedPatch;
+import com.intellij.openapi.diff.impl.patch.apply.GenericPatchApplier.AppliedSomehowPatch;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.vcs.changes.patch.AppliedTextPatch;
 import com.intellij.openapi.vcs.changes.patch.AppliedTextPatch.HunkStatus;
@@ -41,12 +43,10 @@ public class GenericApplyPatchTest extends PlatformTestCase {
     patchHunk.addLine(new PatchLine(PatchLine.Type.CONTEXT, "11"));
     patchHunk.addLine(new PatchLine(PatchLine.Type.CONTEXT, "12"));
 
-    final GenericPatchApplier gap = new GenericPatchApplier("0\nmmm\n2\n3\n4\n7\n8\n11\naaa", Collections.singletonList(patchHunk));
-    final boolean result = gap.execute();
-    Assert.assertTrue(result);
-    Assert.assertEquals(ApplyPatchStatus.SUCCESS, gap.getStatus());
-    final String after = gap.getAfter();
-    Assert.assertEquals("0\nmmm\n2\n5\n6\n9\n10\n11\naaa", after);
+    AppliedPatch result = GenericPatchApplier.apply("0\nmmm\n2\n3\n4\n7\n8\n11\naaa", Collections.singletonList(patchHunk));
+    Assert.assertNotNull(result);
+    Assert.assertEquals(ApplyPatchStatus.SUCCESS, result.status);
+    Assert.assertEquals("0\nmmm\n2\n5\n6\n9\n10\n11\naaa", result.patchedText);
   }
 
   public void testExchangedParts() {
@@ -66,12 +66,10 @@ public class GenericApplyPatchTest extends PlatformTestCase {
     patchHunk.addLine(new PatchLine(PatchLine.Type.CONTEXT, "9"));
     patchHunk.addLine(new PatchLine(PatchLine.Type.CONTEXT, "10"));
 
-    final GenericPatchApplier gap = new GenericPatchApplier("5\n6\n7\n8\n1\n2\n3\n4\n9\nextra line", Collections.singletonList(patchHunk));
-    final boolean result = gap.execute();
-    Assert.assertTrue(result);
-    Assert.assertEquals(ApplyPatchStatus.SUCCESS, gap.getStatus());
-    final String after = gap.getAfter();
-    Assert.assertEquals("5\n6a\n7a\n8\n1\n2a\n3a\n4\n9\nextra line", after);
+    AppliedPatch result = GenericPatchApplier.apply("5\n6\n7\n8\n1\n2\n3\n4\n9\nextra line", Collections.singletonList(patchHunk));
+    Assert.assertNotNull(result);
+    Assert.assertEquals(ApplyPatchStatus.SUCCESS, result.status);
+    Assert.assertEquals("5\n6a\n7a\n8\n1\n2a\n3a\n4\n9\nextra line", result.patchedText);
   }
 
   public void testDeleteAlmostOk() {
@@ -84,16 +82,10 @@ public class GenericApplyPatchTest extends PlatformTestCase {
     patchHunk.addLine(new PatchLine(PatchLine.Type.CONTEXT, "11"));
     patchHunk.addLine(new PatchLine(PatchLine.Type.CONTEXT, "12"));
 
-    final GenericPatchApplier gap = new GenericPatchApplier("0\nmmm\nfjsfsd\nqwhduhqwude\n\n2\n3\n4\n9\n8\n11\naaa", Collections.singletonList(patchHunk));
-    final boolean result = gap.execute();
-    Assert.assertFalse(result);
-    Assert.assertEquals(ApplyPatchStatus.FAILURE, gap.getStatus());
-
-    gap.trySolveSomehow();
-    Assert.assertEquals(ApplyPatchStatus.SUCCESS, gap.getStatus());
-
-    final String after = gap.getAfter();
-    Assert.assertEquals("0\nmmm\nfjsfsd\nqwhduhqwude\n\n2\n9\n8\n11\naaa", after);
+    AppliedSomehowPatch result = GenericPatchApplier.applySomehow("0\nmmm\nfjsfsd\nqwhduhqwude\n\n2\n3\n4\n9\n8\n11\naaa", Collections.singletonList(patchHunk));
+    Assert.assertTrue(result.isAppliedSomehow);
+    Assert.assertEquals(ApplyPatchStatus.SUCCESS, result.status);
+    Assert.assertEquals("0\nmmm\nfjsfsd\nqwhduhqwude\n\n2\n9\n8\n11\naaa", result.patchedText);
   }
 
   public void testInsertAlmostOk() {
@@ -106,16 +98,10 @@ public class GenericApplyPatchTest extends PlatformTestCase {
     patchHunk.addLine(new PatchLine(PatchLine.Type.CONTEXT, "11"));
     patchHunk.addLine(new PatchLine(PatchLine.Type.CONTEXT, "12"));
 
-    final GenericPatchApplier gap = new GenericPatchApplier("0\nmmm\nfjsfsd\nqwhduhqwude\n\n2\n9\n8\n11\naaa", Collections.singletonList(patchHunk));
-    final boolean result = gap.execute();
-    Assert.assertFalse(result);
-    Assert.assertEquals(ApplyPatchStatus.FAILURE, gap.getStatus());
-
-    gap.trySolveSomehow();
-    Assert.assertEquals(ApplyPatchStatus.SUCCESS, gap.getStatus());
-
-    final String after = gap.getAfter();
-    Assert.assertEquals("0\nmmm\nfjsfsd\nqwhduhqwude\n\n2\n3\n4\n5\n9\n8\n11\naaa", after);
+    AppliedSomehowPatch result = GenericPatchApplier.applySomehow("0\nmmm\nfjsfsd\nqwhduhqwude\n\n2\n9\n8\n11\naaa", Collections.singletonList(patchHunk));
+    Assert.assertTrue(result.isAppliedSomehow);
+    Assert.assertEquals(ApplyPatchStatus.SUCCESS, result.status);
+    Assert.assertEquals("0\nmmm\nfjsfsd\nqwhduhqwude\n\n2\n3\n4\n5\n9\n8\n11\naaa", result.patchedText);
   }
 
   public void testInsertAlmostOkAlreadyApplied() {
@@ -128,16 +114,10 @@ public class GenericApplyPatchTest extends PlatformTestCase {
     patchHunk.addLine(new PatchLine(PatchLine.Type.CONTEXT, "11"));
     patchHunk.addLine(new PatchLine(PatchLine.Type.CONTEXT, "12"));
 
-    final GenericPatchApplier gap = new GenericPatchApplier("0\nmmm\nfjsfsd\nqwhduhqwude\n\n2\n3\n4\n9\n8\n11\naaa", Collections.singletonList(patchHunk));
-    final boolean result = gap.execute();
-    Assert.assertFalse(result);
-    Assert.assertEquals(ApplyPatchStatus.FAILURE, gap.getStatus());
-
-    gap.trySolveSomehow();
-    Assert.assertEquals(ApplyPatchStatus.ALREADY_APPLIED, gap.getStatus());
-
-    final String after = gap.getAfter();
-    Assert.assertEquals("0\nmmm\nfjsfsd\nqwhduhqwude\n\n2\n3\n4\n5\n9\n8\n11\naaa", after);
+    AppliedSomehowPatch result = GenericPatchApplier.applySomehow("0\nmmm\nfjsfsd\nqwhduhqwude\n\n2\n3\n4\n9\n8\n11\naaa", Collections.singletonList(patchHunk));
+    Assert.assertTrue(result.isAppliedSomehow);
+    Assert.assertEquals(ApplyPatchStatus.ALREADY_APPLIED, result.status);
+    Assert.assertEquals("0\nmmm\nfjsfsd\nqwhduhqwude\n\n2\n3\n4\n5\n9\n8\n11\naaa", result.patchedText);
   }
 
   public void testChangeAlmostOk() {
@@ -152,16 +132,10 @@ public class GenericApplyPatchTest extends PlatformTestCase {
     patchHunk.addLine(new PatchLine(PatchLine.Type.CONTEXT, "11"));
     patchHunk.addLine(new PatchLine(PatchLine.Type.CONTEXT, "12"));
 
-    final GenericPatchApplier gap = new GenericPatchApplier("0\nmmm\nfjsfsd\nqwhduhqwude\n\n2\n3\n4\n9\n8\n11\naaa", Collections.singletonList(patchHunk));
-    final boolean result = gap.execute();
-    Assert.assertFalse(result);
-    Assert.assertEquals(ApplyPatchStatus.FAILURE, gap.getStatus());
-
-    gap.trySolveSomehow();
-    Assert.assertEquals(ApplyPatchStatus.SUCCESS, gap.getStatus());
-
-    final String after = gap.getAfter();
-    Assert.assertEquals("0\nmmm\nfjsfsd\nqwhduhqwude\n\n2\na\nb\n9\n8\n11\naaa", after);
+    AppliedSomehowPatch result = GenericPatchApplier.applySomehow("0\nmmm\nfjsfsd\nqwhduhqwude\n\n2\n3\n4\n9\n8\n11\naaa", Collections.singletonList(patchHunk));
+    Assert.assertTrue(result.isAppliedSomehow);
+    Assert.assertEquals(ApplyPatchStatus.SUCCESS, result.status);
+    Assert.assertEquals("0\nmmm\nfjsfsd\nqwhduhqwude\n\n2\na\nb\n9\n8\n11\naaa", result.patchedText);
   }
 
   public void testChangeAlmostOkAlreadyApplied() {
@@ -177,16 +151,10 @@ public class GenericApplyPatchTest extends PlatformTestCase {
     patchHunk.addLine(new PatchLine(PatchLine.Type.CONTEXT, "11"));
     patchHunk.addLine(new PatchLine(PatchLine.Type.CONTEXT, "12"));
 
-    final GenericPatchApplier gap = new GenericPatchApplier("0\nmmm\nfjsfsd\nqwhduhqwude\n\n2\na\n9\n8\n11\naaa", Collections.singletonList(patchHunk));
-    final boolean result = gap.execute();
-    Assert.assertFalse(result);
-    Assert.assertEquals(ApplyPatchStatus.FAILURE, gap.getStatus());
-
-    gap.trySolveSomehow();
-    Assert.assertEquals(ApplyPatchStatus.ALREADY_APPLIED, gap.getStatus());
-
-    final String after = gap.getAfter();
-    Assert.assertEquals("0\nmmm\nfjsfsd\nqwhduhqwude\n\n2\na\nb\nc\n9\n8\n11\naaa", after);
+    AppliedSomehowPatch result = GenericPatchApplier.applySomehow("0\nmmm\nfjsfsd\nqwhduhqwude\n\n2\na\n9\n8\n11\naaa", Collections.singletonList(patchHunk));
+    Assert.assertTrue(result.isAppliedSomehow);
+    Assert.assertEquals(ApplyPatchStatus.ALREADY_APPLIED, result.status);
+    Assert.assertEquals("0\nmmm\nfjsfsd\nqwhduhqwude\n\n2\na\nb\nc\n9\n8\n11\naaa", result.patchedText);
   }
 
   public void testChangeAlmostOkManySteps() {
@@ -211,17 +179,11 @@ public class GenericApplyPatchTest extends PlatformTestCase {
     patchHunk.addLine(new PatchLine(PatchLine.Type.CONTEXT, "11"));
     patchHunk.addLine(new PatchLine(PatchLine.Type.CONTEXT, "12"));
 
-    final GenericPatchApplier gap = new GenericPatchApplier("0\nmmm\nfjsfsd\nqwhduhqwude\n\n2\n-1\n4\n9\n8\n11" +
+    AppliedSomehowPatch result = GenericPatchApplier.applySomehow("0\nmmm\nfjsfsd\nqwhduhqwude\n\n2\n-1\n4\n9\n8\n11" +
                                                             "\naaa\n2\n-1\n-2\n-3", Collections.singletonList(patchHunk));
-    final boolean result = gap.execute();
-    Assert.assertFalse(result);
-    Assert.assertEquals(ApplyPatchStatus.FAILURE, gap.getStatus());
-
-    gap.trySolveSomehow();
-    Assert.assertEquals(ApplyPatchStatus.SUCCESS, gap.getStatus());
-
-    final String after = gap.getAfter();
-    Assert.assertEquals("0\nmmm\nfjsfsd\nqwhduhqwude\n\n2\n-1\n4\n9\n8\n11\naaa\n2\n-1a\n-2a\n-3a\n-3b\n-4a\n-4b\n", after);
+    Assert.assertTrue(result.isAppliedSomehow);
+    Assert.assertEquals(ApplyPatchStatus.SUCCESS, result.status);
+    Assert.assertEquals("0\nmmm\nfjsfsd\nqwhduhqwude\n\n2\n-1\n4\n9\n8\n11\naaa\n2\n-1a\n-2a\n-3a\n-3b\n-4a\n-4b\n", result.patchedText);
   }
 
   public void testFirstNewLine() {
@@ -230,29 +192,24 @@ public class GenericApplyPatchTest extends PlatformTestCase {
     patchHunk.addLine(new PatchLine(PatchLine.Type.CONTEXT, "1"));
     patchHunk.addLine(new PatchLine(PatchLine.Type.CONTEXT, "2"));
 
-    final GenericPatchApplier gap = new GenericPatchApplier("1\n2\n", Collections.singletonList(patchHunk));
-    final boolean result = gap.execute();
-    Assert.assertTrue(result);
-    Assert.assertEquals(ApplyPatchStatus.SUCCESS, gap.getStatus());
-
-    final String after = gap.getAfter();
-    Assert.assertEquals("\n1\n2\n", after);
+    AppliedPatch result = GenericPatchApplier.apply("1\n2\n", Collections.singletonList(patchHunk));
+    Assert.assertNotNull(result);
+    Assert.assertEquals(ApplyPatchStatus.SUCCESS, result.status);
+    Assert.assertEquals("\n1\n2\n", result.patchedText);
   }
 
-    public void testNewEmptyLine() {
+  public void testNewEmptyLine() {
     final PatchHunk patchHunk = new PatchHunk(1, 3, 1, 4);
     patchHunk.addLine(new PatchLine(PatchLine.Type.CONTEXT, "0"));
     patchHunk.addLine(new PatchLine(PatchLine.Type.ADD, ""));
     patchHunk.addLine(new PatchLine(PatchLine.Type.CONTEXT, "1"));
     patchHunk.addLine(new PatchLine(PatchLine.Type.CONTEXT, "2"));
 
-    final GenericPatchApplier gap = new GenericPatchApplier("0\n1\n2\n", Collections.singletonList(patchHunk));
-    final boolean result = gap.execute();
-    Assert.assertTrue(result);
-    Assert.assertEquals(ApplyPatchStatus.SUCCESS, gap.getStatus());
+    AppliedPatch result = GenericPatchApplier.apply("0\n1\n2\n", Collections.singletonList(patchHunk));
+    Assert.assertNotNull(result);
+    Assert.assertEquals(ApplyPatchStatus.SUCCESS, result.status);
 
-    final String after = gap.getAfter();
-    Assert.assertEquals("0\n\n1\n2\n", after);
+    Assert.assertEquals("0\n\n1\n2\n", result.patchedText);
   }
 
   public void testInsertionsIntoTransformationsCoinsidence() {
@@ -409,12 +366,9 @@ public class GenericApplyPatchTest extends PlatformTestCase {
     patchHunk.addLine(new PatchLine(PatchLine.Type.CONTEXT, "11"));
     patchHunk.addLine(new PatchLine(PatchLine.Type.CONTEXT, "12"));
 
-    final GenericPatchApplier gap = new GenericPatchApplier("0\n0\n0\n3\n4\n5\n\n\n5454\n5345\n2\n3\n4\n5\n543543", Collections.singletonList(patchHunk));
-    final boolean result = gap.execute();
-    Assert.assertTrue(result);
-
-    final String after = gap.getAfter();
-    Assert.assertEquals("0\n0\n0\n3\n4\n5\n\n\n5454\n5345\n2\na\nb\n543543", after);
+    AppliedPatch result = GenericPatchApplier.apply("0\n0\n0\n3\n4\n5\n\n\n5454\n5345\n2\n3\n4\n5\n543543", Collections.singletonList(patchHunk));
+    Assert.assertNotNull(result);
+    Assert.assertEquals("0\n0\n0\n3\n4\n5\n\n\n5454\n5345\n2\na\nb\n543543", result.patchedText);
   }
 
   public void testBetterContextMatch1() {
@@ -431,12 +385,9 @@ public class GenericApplyPatchTest extends PlatformTestCase {
     patchHunk.addLine(new PatchLine(PatchLine.Type.CONTEXT, "11"));
     patchHunk.addLine(new PatchLine(PatchLine.Type.CONTEXT, "543543"));
 
-    final GenericPatchApplier gap = new GenericPatchApplier("0\n0\n0\n3\n4\n5\n\n\n5454\n5345\n3\n4\n5\n11\n543543", Collections.singletonList(patchHunk));
-    final boolean result = gap.execute();
-    Assert.assertTrue(result);
-
-    final String after = gap.getAfter();
-    Assert.assertEquals("0\n0\n0\n3\n4\n5\n\n\n5454\n5345\na\nb\n11\n543543", after);
+    AppliedPatch result = GenericPatchApplier.apply("0\n0\n0\n3\n4\n5\n\n\n5454\n5345\n3\n4\n5\n11\n543543", Collections.singletonList(patchHunk));
+    Assert.assertNotNull(result);
+    Assert.assertEquals("0\n0\n0\n3\n4\n5\n\n\n5454\n5345\na\nb\n11\n543543", result.patchedText);
   }
 
   public void testBetterContextMatch2() {
@@ -453,12 +404,9 @@ public class GenericApplyPatchTest extends PlatformTestCase {
     patchHunk.addLine(new PatchLine(PatchLine.Type.CONTEXT, "11"));
     patchHunk.addLine(new PatchLine(PatchLine.Type.CONTEXT, "12"));
 
-    final GenericPatchApplier gap = new GenericPatchApplier("0\n0\n0\n2\n3\n4\n5\n\n\n5454\n5345\n2\n3\n4\n5\n11\n543543", Collections.singletonList(patchHunk));
-    final boolean result = gap.execute();
-    Assert.assertTrue(result);
-
-    final String after = gap.getAfter();
-    Assert.assertEquals("0\n0\n0\n2\n3\n4\n5\n\n\n5454\n5345\n2\na\nb\n11\n543543", after);
+    AppliedPatch result = GenericPatchApplier.apply("0\n0\n0\n2\n3\n4\n5\n\n\n5454\n5345\n2\n3\n4\n5\n11\n543543", Collections.singletonList(patchHunk));
+    Assert.assertNotNull(result);
+    Assert.assertEquals("0\n0\n0\n2\n3\n4\n5\n\n\n5454\n5345\n2\na\nb\n11\n543543", result.patchedText);
   }
 
   public void testFromSecondLineManySteps() {
@@ -483,17 +431,11 @@ public class GenericApplyPatchTest extends PlatformTestCase {
     patchHunk.addLine(new PatchLine(PatchLine.Type.CONTEXT, "11"));
     patchHunk.addLine(new PatchLine(PatchLine.Type.CONTEXT, "12"));
 
-    final GenericPatchApplier gap = new GenericPatchApplier("0\nmmm\nfjsfsd\nqwhduhqwude\n\n2\n-1\n4\n9\n8\n11" +
-                                                            "\naaa\n2\n-2\n-3", Collections.singletonList(patchHunk));
-    final boolean result = gap.execute();
-    Assert.assertFalse(result);
-    Assert.assertEquals(ApplyPatchStatus.FAILURE, gap.getStatus());
-
-    gap.trySolveSomehow();
-    Assert.assertEquals(ApplyPatchStatus.SUCCESS, gap.getStatus());
-
-    final String after = gap.getAfter();
-    Assert.assertEquals("0\nmmm\nfjsfsd\nqwhduhqwude\n\n2\n-1\n4\n9\n8\n11\naaa\n2\n-1a\n-2a\n-3a\n-3b\n-4a\n-4b\n", after);
+    AppliedSomehowPatch result = GenericPatchApplier.applySomehow("0\nmmm\nfjsfsd\nqwhduhqwude\n\n2\n-1\n4\n9\n8\n11" +
+                                                                  "\naaa\n2\n-2\n-3", Collections.singletonList(patchHunk));
+    Assert.assertTrue(result.isAppliedSomehow);
+    Assert.assertEquals(ApplyPatchStatus.SUCCESS, result.status);
+    Assert.assertEquals("0\nmmm\nfjsfsd\nqwhduhqwude\n\n2\n-1\n4\n9\n8\n11\naaa\n2\n-1a\n-2a\n-3a\n-3b\n-4a\n-4b\n", result.patchedText);
   }
 
   public void testFromSecondLineManySteps0() {
@@ -521,17 +463,11 @@ public class GenericApplyPatchTest extends PlatformTestCase {
     patchHunk.addLine(new PatchLine(PatchLine.Type.CONTEXT, "11"));
     patchHunk.addLine(new PatchLine(PatchLine.Type.CONTEXT, "12"));
 
-    final GenericPatchApplier gap = new GenericPatchApplier("0\nmmm\nfjsfsd\nqwhduhqwude\n\n2\n-1\n-1*\n4\n9\n8\n11" +
-                                                            "\naaa\n2\n-2\n-3\n-4", Collections.singletonList(patchHunk));
-    final boolean result = gap.execute();
-    Assert.assertFalse(result);
-    Assert.assertEquals(ApplyPatchStatus.FAILURE, gap.getStatus());
-
-    gap.trySolveSomehow();
-    Assert.assertEquals(ApplyPatchStatus.SUCCESS, gap.getStatus());
-
-    final String after = gap.getAfter();
-    Assert.assertEquals("0\nmmm\nfjsfsd\nqwhduhqwude\n\n2\n-1\n-1*\n4\n9\n8\n11\naaa\n2\n-1a\n-1a*\n-2a\n-3a\n-3b\n-4a\n-4b\n", after);
+    AppliedSomehowPatch result = GenericPatchApplier.applySomehow("0\nmmm\nfjsfsd\nqwhduhqwude\n\n2\n-1\n-1*\n4\n9\n8\n11" +
+                                                                  "\naaa\n2\n-2\n-3\n-4", Collections.singletonList(patchHunk));
+    Assert.assertTrue(result.isAppliedSomehow);
+    Assert.assertEquals(ApplyPatchStatus.SUCCESS, result.status);
+    Assert.assertEquals("0\nmmm\nfjsfsd\nqwhduhqwude\n\n2\n-1\n-1*\n4\n9\n8\n11\naaa\n2\n-1a\n-1a*\n-2a\n-3a\n-3b\n-4a\n-4b\n", result.patchedText);
   }
 
   public void testMoreInsertParts() {
@@ -548,12 +484,10 @@ public class GenericApplyPatchTest extends PlatformTestCase {
     patchHunk.addLine(new PatchLine(PatchLine.Type.CONTEXT, "9"));
     patchHunk.addLine(new PatchLine(PatchLine.Type.CONTEXT, "10"));
 
-    final GenericPatchApplier gap = new GenericPatchApplier("sdsad\nsdsad\n1c\n2c\n3c\n2r\n8\n9\n10\n", Collections.singletonList(patchHunk));
-    final boolean result = gap.execute();
-    Assert.assertTrue(result);
-    Assert.assertEquals(ApplyPatchStatus.SUCCESS, gap.getStatus());
-    final String after = gap.getAfter();
-    Assert.assertEquals("sdsad\nsdsad\n1c\n2c\n3c\n2r\n3a\n3c\n2r\n8\n9\n10\n", after);
+    AppliedPatch result = GenericPatchApplier.apply("sdsad\nsdsad\n1c\n2c\n3c\n2r\n8\n9\n10\n", Collections.singletonList(patchHunk));
+    Assert.assertNotNull(result);
+    Assert.assertEquals(ApplyPatchStatus.SUCCESS, result.status);
+    Assert.assertEquals("sdsad\nsdsad\n1c\n2c\n3c\n2r\n3a\n3c\n2r\n8\n9\n10\n", result.patchedText);
   }
 
   public void testMoreDeletionParts() {
@@ -570,12 +504,10 @@ public class GenericApplyPatchTest extends PlatformTestCase {
     patchHunk.addLine(new PatchLine(PatchLine.Type.CONTEXT, "9"));
     patchHunk.addLine(new PatchLine(PatchLine.Type.CONTEXT, "10"));
 
-    final GenericPatchApplier gap = new GenericPatchApplier("sdsad\nsdsad\n1c\n2c\n3c\n2r\n3a\n3c\n2r\n8\n9\n10\n", Collections.singletonList(patchHunk));
-    final boolean result = gap.execute();
-    Assert.assertTrue(result);
-    Assert.assertEquals(ApplyPatchStatus.SUCCESS, gap.getStatus());
-    final String after = gap.getAfter();
-    Assert.assertEquals("sdsad\nsdsad\n1c\n2c\n3c\n2r\n8\n9\n10\n", after);
+    AppliedPatch result = GenericPatchApplier.apply("sdsad\nsdsad\n1c\n2c\n3c\n2r\n3a\n3c\n2r\n8\n9\n10\n", Collections.singletonList(patchHunk));
+    Assert.assertNotNull(result);
+    Assert.assertEquals(ApplyPatchStatus.SUCCESS, result.status);
+    Assert.assertEquals("sdsad\nsdsad\n1c\n2c\n3c\n2r\n8\n9\n10\n", result.patchedText);
   }
 
   public void testDoesNotMatchInTheEnd() {
@@ -592,16 +524,10 @@ public class GenericApplyPatchTest extends PlatformTestCase {
     patchHunk.addLine(new PatchLine(PatchLine.Type.CONTEXT, "11"));
     patchHunk.addLine(new PatchLine(PatchLine.Type.CONTEXT, "12"));
 
-    final GenericPatchApplier gap = new GenericPatchApplier("0\nmmm\n2\n4\n7\n8\n11\naaa\n3\n3", Collections.singletonList(patchHunk));
-    final boolean result = gap.execute();
-    Assert.assertFalse(result);
-    Assert.assertEquals(ApplyPatchStatus.FAILURE, gap.getStatus());
-
-    gap.trySolveSomehow();
-
-    Assert.assertEquals(ApplyPatchStatus.SUCCESS, gap.getStatus());
-    final String after = gap.getAfter();
-    Assert.assertEquals("0\nmmm\n2\n4\n7\n8\n11\naaa\n5\n6\n", after);
+    AppliedSomehowPatch result = GenericPatchApplier.applySomehow("0\nmmm\n2\n4\n7\n8\n11\naaa\n3\n3", Collections.singletonList(patchHunk));
+    Assert.assertTrue(result.isAppliedSomehow);
+    Assert.assertEquals(ApplyPatchStatus.SUCCESS, result.status);
+    Assert.assertEquals("0\nmmm\n2\n4\n7\n8\n11\naaa\n5\n6\n", result.patchedText);
   }
 
   // actually didn't catch the previous version
@@ -620,16 +546,10 @@ public class GenericApplyPatchTest extends PlatformTestCase {
     patchHunk.addLine(new PatchLine(PatchLine.Type.CONTEXT, "11"));
     patchHunk.addLine(new PatchLine(PatchLine.Type.CONTEXT, "12"));
 
-    final GenericPatchApplier gap = new GenericPatchApplier("3-\n0\nmmm\n2\n4\n7\n8\n11\naaa", Collections.singletonList(patchHunk));
-    final boolean result = gap.execute();
-    Assert.assertFalse(result);
-    Assert.assertEquals(ApplyPatchStatus.FAILURE, gap.getStatus());
-
-    gap.trySolveSomehow();
-
-    Assert.assertEquals(ApplyPatchStatus.SUCCESS, gap.getStatus());
-    final String after = gap.getAfter();
-    Assert.assertEquals("5\n6\n0\nmmm\n2\n4\n7\n8\n11\naaa", after);
+    AppliedSomehowPatch result = GenericPatchApplier.applySomehow("3-\n0\nmmm\n2\n4\n7\n8\n11\naaa", Collections.singletonList(patchHunk));
+    Assert.assertTrue(result.isAppliedSomehow);
+    Assert.assertEquals(ApplyPatchStatus.SUCCESS, result.status);
+    Assert.assertEquals("5\n6\n0\nmmm\n2\n4\n7\n8\n11\naaa", result.patchedText);
   }
 
   public void testOneLineInsertion() {
@@ -638,14 +558,12 @@ public class GenericApplyPatchTest extends PlatformTestCase {
     line.setSuppressNewLine(true);
     patchHunk.addLine(line);
 
-    final GenericPatchApplier gap = new GenericPatchApplier("", Collections.singletonList(patchHunk));
-    final boolean result = gap.execute();
-    Assert.assertTrue(result);
-    Assert.assertEquals(ApplyPatchStatus.SUCCESS, gap.getStatus());
+    AppliedPatch result = GenericPatchApplier.apply("", Collections.singletonList(patchHunk));
+    Assert.assertNotNull(result);
+    Assert.assertEquals(ApplyPatchStatus.SUCCESS, result.status);
 
-    final String after = gap.getAfter();
     //this hunk would be applied as not bounded, it would be written at first, thus we will ignore no new line
-    Assert.assertEquals("5\n", after);
+    Assert.assertEquals("5\n", result.patchedText);
   }
 
   public void testOneLineBadInsertion() {
@@ -654,15 +572,9 @@ public class GenericApplyPatchTest extends PlatformTestCase {
     line.setSuppressNewLine(true);
     patchHunk.addLine(line);
 
-    final GenericPatchApplier gap = new GenericPatchApplier("7\n8\n5\n", Collections.singletonList(patchHunk));
-    final boolean result = gap.execute();
-    Assert.assertFalse(result);
-    Assert.assertEquals(ApplyPatchStatus.FAILURE, gap.getStatus());
-
-    gap.trySolveSomehow();
-
-    final String after = gap.getAfter();
-    Assert.assertEquals("5\n7\n8\n5\n", after);
+    AppliedSomehowPatch result = GenericPatchApplier.applySomehow("7\n8\n5\n", Collections.singletonList(patchHunk));
+    Assert.assertTrue(result.isAppliedSomehow);
+    Assert.assertEquals("5\n7\n8\n5\n", result.patchedText);
   }
 
   public void testConflict1() {
@@ -674,16 +586,10 @@ public class GenericApplyPatchTest extends PlatformTestCase {
     patchHunk.addLine(new PatchLine(PatchLine.Type.CONTEXT, "11"));
     patchHunk.addLine(new PatchLine(PatchLine.Type.CONTEXT, "12"));
 
-    final GenericPatchApplier gap = new GenericPatchApplier("1\n2\n3=*7\n11\n12", Collections.singletonList(patchHunk));
-    final boolean result = gap.execute();
-    Assert.assertFalse(result);
-    Assert.assertEquals(ApplyPatchStatus.FAILURE, gap.getStatus());
-
-    gap.trySolveSomehow();
-
-    Assert.assertEquals(ApplyPatchStatus.SUCCESS, gap.getStatus());
-    final String after = gap.getAfter();
-    Assert.assertEquals("1\n2\n5\n3=*7\n11\n12", after);
+    AppliedSomehowPatch result = GenericPatchApplier.applySomehow("1\n2\n3=*7\n11\n12", Collections.singletonList(patchHunk));
+    Assert.assertTrue(result.isAppliedSomehow);
+    Assert.assertEquals(ApplyPatchStatus.SUCCESS, result.status);
+    Assert.assertEquals("1\n2\n5\n3=*7\n11\n12", result.patchedText);
   }
 
   public void testAddAsFirst() {
@@ -820,12 +726,9 @@ public class GenericApplyPatchTest extends PlatformTestCase {
     patchHunk.addLine(new PatchLine(PatchLine.Type.CONTEXT, "c5"));
     patchHunk.addLine(new PatchLine(PatchLine.Type.CONTEXT, "c6"));
 
-    final GenericPatchApplier gap =
-      new GenericPatchApplier("c2\nc2\nc3\nc4\n\nc5\nc6\nw\nw\n\nAn\nw\n\n\n", Collections.singletonList(patchHunk));
-    gap.execute();
-    Assert.assertEquals(ApplyPatchStatus.SUCCESS, gap.getStatus());
-    final String after = gap.getAfter();
-    Assert.assertEquals("c2\nc2\nc3\na1\nc4\na2\na3\n\nc5\nc6\nw\nw\n\nAn\nw\n\n\n", after);
+    AppliedPatch result = GenericPatchApplier.apply("c2\nc2\nc3\nc4\n\nc5\nc6\nw\nw\n\nAn\nw\n\n\n", Collections.singletonList(patchHunk));
+    Assert.assertEquals(ApplyPatchStatus.SUCCESS, result.status);
+    Assert.assertEquals("c2\nc2\nc3\na1\nc4\na2\na3\n\nc5\nc6\nw\nw\n\nAn\nw\n\n\n", result.patchedText);
   }
 
   private static void checkAppliedPositions(int[] beforeAppliedExpected,
