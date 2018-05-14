@@ -730,6 +730,9 @@ public class DuplicatesFinder {
     if (myMatchType == MatchType.EXACT || !(pattern instanceof PsiExpression) || !(candidate instanceof PsiExpression)) {
       return false;
     }
+    if (myPattern.length == 1 && isSameExpression(myPattern[0], (PsiExpression)pattern)) {
+      return false;
+    }
 
     if (myPatternComplexityHolder == null) {
       myPatternComplexityHolder = new ComplexityHolder(myPatternAsList);
@@ -774,6 +777,16 @@ public class DuplicatesFinder {
     return match.putExtractedParameter(part1, part2);
   }
 
+  private static boolean isSameExpression(@NotNull PsiElement context, @NotNull PsiExpression expression) {
+    if (context instanceof PsiExpression) {
+      return PsiUtil.skipParenthesizedExprDown((PsiExpression)context) == PsiUtil.skipParenthesizedExprDown(expression);
+    }
+    if (context instanceof PsiDeclarationStatement) {
+      PsiElement parent = PsiUtil.skipParenthesizedExprUp(expression.getParent());
+      return parent instanceof PsiLocalVariable && parent.getParent() == context;
+    }
+    return false;
+  }
 
   private static boolean matchModifierList(PsiModifierList modifierList1, PsiModifierList modifierList2) {
     if (!(modifierList1.getParent() instanceof PsiLocalVariable)) {
