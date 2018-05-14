@@ -81,6 +81,11 @@ public class GitMergeProvider implements MergeProvider2 {
   }
 
   @NotNull
+  public Project getProject() {
+    return myProject;
+  }
+
+  @NotNull
   private static Set<VirtualFile> findReverseRoots(@NotNull Project project, @NotNull ReverseRequest reverseOrDetect) {
     Set<VirtualFile> reverseMap = ContainerUtil.newHashSet();
     for (GitRepository repository : GitUtil.getRepositoryManager(project).getRepositories()) {
