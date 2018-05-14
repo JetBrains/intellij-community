@@ -62,7 +62,7 @@ class AsyncProjectViewSupport {
     myStructureTreeModel.setComparator(comparator);
     myAsyncTreeModel = new AsyncTreeModel(myStructureTreeModel, true, parent);
     myAsyncTreeModel.setRootImmediately(myStructureTreeModel.getRootImmediately());
-    myChangeListener = new ProjectFileChangeListener(project, (module, file) -> {
+    myChangeListener = new ProjectFileChangeListener(myStructureTreeModel.getInvoker(), project, (module, file) -> {
       if (myFileRoots.add(file)) {
         myFileRoots.processLater(myStructureTreeModel.getInvoker(), roots -> roots.forEach(root -> updateByFile(root, true)));
       }
