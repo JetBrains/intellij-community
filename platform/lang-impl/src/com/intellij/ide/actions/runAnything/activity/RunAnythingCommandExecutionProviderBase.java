@@ -12,6 +12,8 @@ import com.intellij.ide.actions.runAnything.RunAnythingCache;
 import com.intellij.ide.actions.runAnything.RunAnythingUtil;
 import com.intellij.ide.actions.runAnything.commands.RunAnythingCommandCustomizer;
 import com.intellij.ide.actions.runAnything.execution.RunAnythingRunProfile;
+import com.intellij.ide.actions.runAnything.items.RunAnythingItem;
+import com.intellij.ide.actions.runAnything.items.RunAnythingItemBase;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.actionSystem.KeyboardShortcut;
@@ -84,5 +86,11 @@ public abstract class RunAnythingCommandExecutionProviderBase implements RunAnyt
   @Override
   public Icon getIcon(@NotNull String value) {
     return AllIcons.Actions.Run_anything;
+  }
+
+  @NotNull
+  @Override
+  public RunAnythingItem getMainListItem(@NotNull DataContext dataContext, @NotNull String value) {
+    return new RunAnythingItemBase(value, getIcon(value));
   }
 }

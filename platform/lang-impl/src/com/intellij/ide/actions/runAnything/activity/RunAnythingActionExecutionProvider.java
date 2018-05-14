@@ -18,8 +18,7 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 
-public abstract class RunAnythingActionExecutionProvider<V extends AnAction>
-  implements RunAnythingActivityProvider<V>, RunAnythingRecentProvider<V> {
+public abstract class RunAnythingActionExecutionProvider<V extends AnAction> implements RunAnythingActivityProvider<V> {
 
   @NotNull
   @Override

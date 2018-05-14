@@ -9,8 +9,7 @@ import org.jetbrains.annotations.NotNull;
 import java.util.List;
 import java.util.stream.Collectors;
 
-public interface RunAnythingCompletionProvider<V>
-  extends RunAnythingMultiParametrizedExecutionProvider<V>, RunAnythingMainListItemProvider<V> {
+public interface RunAnythingCompletionProvider<V> extends RunAnythingMultiParametrizedExecutionProvider<V> {
   @NotNull
   String getGroupTitle();
 
