@@ -35,7 +35,8 @@ import java.beans.PropertyChangeListener
 
 class CompletionTrackerInitializer(experimentHelper: WebServiceStatus): ApplicationComponent {
     companion object {
-        private const val SKIP_SESSIONS_BEFORE_LOG_IN_EAP = 50
+        // Log only 10% of all completion sessions
+        private const val SKIP_SESSIONS_BEFORE_LOG_IN_EAP = 10
         var isEnabledInTests = false
     }
 
