@@ -82,8 +82,7 @@ import static com.intellij.dvcs.DvcsUtil.getShortRepositoryName;
 import static com.intellij.openapi.ui.DialogWrapper.BALLOON_WARNING_BACKGROUND;
 import static com.intellij.openapi.ui.DialogWrapper.BALLOON_WARNING_BORDER;
 import static com.intellij.openapi.util.text.StringUtil.escapeXml;
-import static com.intellij.openapi.vcs.changes.ChangesUtil.getAfterPath;
-import static com.intellij.openapi.vcs.changes.ChangesUtil.getBeforePath;
+import static com.intellij.openapi.vcs.changes.ChangesUtil.*;
 import static com.intellij.util.ObjectUtils.assertNotNull;
 import static com.intellij.util.containers.ContainerUtil.*;
 import static com.intellij.vcs.log.util.VcsUserUtil.isSamePerson;
@@ -360,8 +359,8 @@ public class GitCheckinEnvironment implements CheckinEnvironment {
     List<FilePath> pathsToDelete = new ArrayList<>();
     for (Change change : partialChanges) {
       if (change.getType() == Change.Type.MOVED) {
-        ContentRevision beforeRevision = ObjectUtils.assertNotNull(change.getBeforeRevision());
-        pathsToDelete.add(beforeRevision.getFile());
+        FilePath beforePath = ObjectUtils.assertNotNull(getBeforePath(change));
+        pathsToDelete.add(beforePath);
       }
     }
     LOG.debug(String.format("Updating index for partial changes: removing: %s", pathsToDelete));
@@ -807,12 +806,8 @@ public class GitCheckinEnvironment implements CheckinEnvironment {
   private static Map<VirtualFile, Collection<Change>> sortChangesByGitRoot(@NotNull List<Change> changes, List<VcsException> exceptions) {
     Map<VirtualFile, Collection<Change>> result = new HashMap<>();
     for (Change change : changes) {
-      final ContentRevision afterRevision = change.getAfterRevision();
-      final ContentRevision beforeRevision = change.getBeforeRevision();
-      // nothing-to-nothing change cannot happen.
-      assert beforeRevision != null || afterRevision != null;
       // note that any path will work, because changes could happen within single vcs root
-      final FilePath filePath = afterRevision != null ? afterRevision.getFile() : beforeRevision.getFile();
+      final FilePath filePath = getFilePath(change);
       final VirtualFile vcsRoot;
       try {
         // the parent paths for calculating roots in order to account for submodules that contribute
