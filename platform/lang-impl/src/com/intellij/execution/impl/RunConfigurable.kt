@@ -1297,7 +1297,7 @@ open class RunConfigurable @JvmOverloads constructor(private val project: Projec
 
   private inner class MyCreateFolderAction : AnAction(ExecutionBundle.message("run.configuration.create.folder.text"),
                                                       ExecutionBundle.message("run.configuration.create.folder.description"),
-                                                      AllIcons.Nodes.Folder) {
+                                                      AllIcons.Actions.NewFolder) {
 
     override fun actionPerformed(e: AnActionEvent) {
       val type = selectedConfigurationType ?: return

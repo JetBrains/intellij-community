@@ -1,24 +1,9 @@
-/*
- * Copyright 2000-2009 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInsight.daemon.impl.quickfix;
 
 import com.intellij.codeInsight.daemon.QuickFixBundle;
 import com.intellij.codeInsight.generation.GenerateMembersUtil;
 import com.intellij.codeInspection.LocalQuickFixAndIntentionActionOnPsiElement;
-import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
@@ -36,15 +21,13 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class AddMethodFix extends LocalQuickFixAndIntentionActionOnPsiElement {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.codeInsight.daemon.impl.quickfix.AddMethodFix");
-
-  private final PsiMethod myMethodPrototype;
+  private final SmartPsiElementPointer<PsiMethod> myMethodPrototype;
   private final List<String> myExceptions = new ArrayList<>();
   private String myText;
 
   public AddMethodFix(@NotNull PsiMethod methodPrototype, @NotNull PsiClass implClass) {
     super(implClass);
-    myMethodPrototype = methodPrototype;
+    myMethodPrototype = SmartPointerManager.createPointer(methodPrototype);
     setText(QuickFixBundle.message("add.method.text", methodPrototype.getName(), implClass.getName()));
   }
 
@@ -53,22 +36,17 @@ public class AddMethodFix extends LocalQuickFixAndIntentionActionOnPsiElement {
     ContainerUtil.addAll(myExceptions, exceptions);
   }
 
+  @NotNull
   private static PsiMethod createMethod(final String methodText, final PsiClass implClass) {
-    try {
-      return JavaPsiFacade.getInstance(implClass.getProject()).getElementFactory().createMethodFromText(methodText, implClass);
-    }
-    catch (IncorrectOperationException e) {
-      LOG.error(e);
-      return null;
-    }
+    return JavaPsiFacade.getInstance(implClass.getProject()).getElementFactory().createMethodFromText(methodText, implClass);
   }
 
   private static PsiMethod reformat(Project project, PsiMethod result) throws IncorrectOperationException {
     CodeStyleManager codeStyleManager = CodeStyleManager.getInstance(project);
-    result = (PsiMethod) codeStyleManager.reformat(result);
+    result = (PsiMethod)codeStyleManager.reformat(result);
 
     JavaCodeStyleManager javaCodeStyleManager = JavaCodeStyleManager.getInstance(project);
-    result = (PsiMethod) javaCodeStyleManager.shortenClassReferences(result);
+    result = (PsiMethod)javaCodeStyleManager.shortenClassReferences(result);
     return result;
   }
 
@@ -95,11 +73,14 @@ public class AddMethodFix extends LocalQuickFixAndIntentionActionOnPsiElement {
                              @NotNull PsiElement endElement) {
     final PsiClass myClass = (PsiClass)startElement;
 
-    return myMethodPrototype.isValid() &&
+    PsiMethod methodPrototype = myMethodPrototype.getElement();
+
+    return methodPrototype != null &&
+           methodPrototype.isValid() &&
            myClass.getManager().isInProject(myClass) &&
            myText != null &&
-           MethodSignatureUtil.findMethodBySignature(myClass, myMethodPrototype, false) == null
-        ;
+           MethodSignatureUtil.findMethodBySignature(myClass, methodPrototype, false) == null
+      ;
   }
 
   @Override
@@ -108,13 +89,17 @@ public class AddMethodFix extends LocalQuickFixAndIntentionActionOnPsiElement {
                      @Nullable("is null when called from inspection") Editor editor,
                      @NotNull PsiElement startElement,
                      @NotNull PsiElement endElement) {
-    final PsiClass myClass = (PsiClass)startElement;
+    PsiMethod methodPrototype = myMethodPrototype.getElement();
+    if (methodPrototype == null) return;
+
+    PsiClass myClass = (PsiClass)startElement;
+
     PsiCodeBlock body;
-    if (myClass.isInterface() && (body = myMethodPrototype.getBody()) != null) body.delete();
+    if (myClass.isInterface() && (body = methodPrototype.getBody()) != null) body.delete();
     for (String exception : myExceptions) {
-      PsiUtil.addException(myMethodPrototype, exception);
+      PsiUtil.addException(methodPrototype, exception);
     }
-    PsiMethod method = (PsiMethod)myClass.add(myMethodPrototype);
+    PsiMethod method = (PsiMethod)myClass.add(methodPrototype);
     method = (PsiMethod)method.replace(reformat(project, method));
     postAddAction(file, editor, method);
   }
