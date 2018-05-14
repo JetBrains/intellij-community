@@ -16,10 +16,12 @@
 package git4idea.index;
 
 import com.intellij.execution.process.ProcessOutputTypes;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.VcsException;
+import com.intellij.openapi.vcs.history.VcsRevisionNumber;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.vcs.log.Hash;
@@ -41,7 +43,11 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 
+import static com.intellij.openapi.diagnostic.Logger.getInstance;
+
 public class GitIndexUtil {
+  private static final Logger LOG = getInstance(GitIndexUtil.class);
+
   private static final String EXECUTABLE_MODE = "100755";
   private static final String DEFAULT_MODE = "100644";
 
@@ -55,8 +61,9 @@ public class GitIndexUtil {
   @NotNull
   public static List<StagedFile> listStaged(@NotNull GitRepository repository, @NotNull Collection<FilePath> filePaths) throws VcsException {
     List<StagedFile> result = new ArrayList<>();
+    VirtualFile root = repository.getRoot();
 
-    GitLineHandler h = new GitLineHandler(repository.getProject(), repository.getRoot(), GitCommand.LS_FILES);
+    GitLineHandler h = new GitLineHandler(repository.getProject(), root, GitCommand.LS_FILES);
     h.addParameters("-s");
     h.endOptions();
     h.addRelativePaths(filePaths);
@@ -65,7 +72,7 @@ public class GitIndexUtil {
       @Override
       public void onLineAvailable(String line, Key outputType) {
         if (outputType != ProcessOutputTypes.STDOUT) return;
-        ContainerUtil.addIfNotNull(result, parseRecord(repository.getRoot(), line));
+        ContainerUtil.addIfNotNull(result, parseListFilesStagedRecord(root, line));
       }
     });
     Git.getInstance().runCommandWithoutCollectingOutput(h).getOutputOrThrow();
@@ -74,7 +81,40 @@ public class GitIndexUtil {
   }
 
   @Nullable
-  private static StagedFile parseRecord(@NotNull VirtualFile root, @NotNull String line) {
+  public static StagedFile listTree(@NotNull GitRepository repository,
+                                    @NotNull FilePath filePath,
+                                    @NotNull VcsRevisionNumber revision) throws VcsException {
+    List<StagedFile> result = listTree(repository, Collections.singleton(filePath), revision);
+    if (result.size() != 1) return null;
+    return result.get(0);
+  }
+
+  @NotNull
+  public static List<StagedFile> listTree(@NotNull GitRepository repository,
+                                          @NotNull Collection<FilePath> filePath,
+                                          @NotNull VcsRevisionNumber revision) throws VcsException {
+    List<StagedFile> result = new ArrayList<>();
+    VirtualFile root = repository.getRoot();
+
+    GitLineHandler h = new GitLineHandler(repository.getProject(), root, GitCommand.LS_TREE);
+    h.addParameters(revision.asString());
+    h.endOptions();
+    h.addRelativePaths(filePath);
+
+    h.addLineListener(new GitLineHandlerAdapter() {
+      @Override
+      public void onLineAvailable(String line, Key outputType) {
+        if (outputType != ProcessOutputTypes.STDOUT) return;
+        ContainerUtil.addIfNotNull(result, parseListTreeRecord(root, line));
+      }
+    });
+    Git.getInstance().runCommandWithoutCollectingOutput(h).getOutputOrThrow();
+
+    return result;
+  }
+
+  @Nullable
+  private static StagedFile parseListFilesStagedRecord(@NotNull VirtualFile root, @NotNull String line) {
     try {
       StringScanner s = new StringScanner(line);
       String permissions = s.spaceToken();
@@ -89,6 +129,28 @@ public class GitIndexUtil {
       return new StagedFile(path, hash, executable);
     }
     catch (VcsException e) {
+      LOG.warn(e);
+      return null;
+    }
+  }
+
+  @Nullable
+  public static StagedFile parseListTreeRecord(@NotNull VirtualFile root, @NotNull String line) {
+    try {
+      StringScanner s = new StringScanner(line);
+      String permissions = s.spaceToken();
+      String type = s.spaceToken();
+      String hash = s.tabToken();
+      String filePath = s.line();
+
+      if (!"blob".equals(type)) return null;
+
+      FilePath path = VcsUtil.getFilePath(root, GitUtil.unescapePath(filePath));
+      boolean executable = EXECUTABLE_MODE.equals(permissions);
+      return new StagedFile(path, hash, executable);
+    }
+    catch (VcsException e) {
+      LOG.warn(e);
       return null;
     }
   }
@@ -125,10 +187,10 @@ public class GitIndexUtil {
     return HashImpl.build(output.trim());
   }
 
-  private static void updateIndex(@NotNull GitRepository repository,
-                                  @NotNull FilePath filePath,
-                                  @NotNull Hash blobHash,
-                                  boolean isExecutable) throws VcsException {
+  public static void updateIndex(@NotNull GitRepository repository,
+                                 @NotNull FilePath filePath,
+                                 @NotNull Hash blobHash,
+                                 boolean isExecutable) throws VcsException {
     String mode = isExecutable ? EXECUTABLE_MODE : DEFAULT_MODE;
     String path = VcsFileUtil.relativePath(repository.getRoot(), filePath);
 
