@@ -63,9 +63,10 @@
   <target name="js_schemas">
     <get_schema fromUrl="http://json.schemastore.org/babelrc"
                 toFile="${idea.project.home}/plugins/JavaScriptLanguage/src/jsonSchemas/.babelrc-schema.json" />
-    <!-- stylelint schema is buggy - we modified it manually to get better results -->
-    <!--<get_schema fromUrl="http://json.schemastore.org/stylelintrc"
-                toFile="${idea.project.home}/plugins/JavaScriptLanguage/src/jsonSchemas/.stylelintrc-schema.json" />-->
+    <get_schema fromUrl="http://json.schemastore.org/stylelintrc"
+                toFile="${idea.project.home}/plugins/JavaScriptLanguage/src/jsonSchemas/.stylelintrc-schema.json" />
+    <replaceregexp file="${idea.project.home}/plugins/JavaScriptLanguage/src/jsonSchemas/.stylelintrc-schema.json"
+                   match="&quot;definitions&quot;" replace="&quot;id&quot;: &quot;http://json.schemastore.org/stylelintrc&quot;,${line.separator}&#9;&quot;definitions&quot;" />
     <get_schema fromUrl="http://json.schemastore.org/jsconfig"
                 toFile="${idea.project.home}/plugins/JavaScriptLanguage/src/jsonSchemas/jsconfig-schema.json" />
     <get_schema fromUrl="http://json.schemastore.org/tsconfig"
