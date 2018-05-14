@@ -8,25 +8,21 @@ import com.intellij.openapi.actionSystem.DataContext;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Collection;
-import java.util.stream.Collectors;
 
 import static com.intellij.ide.actions.runAnything.RunAnythingUtil.fetchProject;
 
 public class RunAnythingRecentCommandProvider extends RunAnythingCommandExecutionProviderBase
-  implements RunAnythingRecentProvider<RunAnythingStringValue>, RunAnythingMultiParametrizedExecutionProvider<RunAnythingStringValue> {
+  implements RunAnythingRecentProvider<String>, RunAnythingMultiParametrizedExecutionProvider<String> {
 
   @NotNull
   @Override
-  public RunAnythingItem getMainListItem(@NotNull DataContext dataContext, @NotNull RunAnythingStringValue value) {
-    return new RunAnythingItemBase(value.getDelegate(), getIcon(value));
+  public RunAnythingItem getMainListItem(@NotNull DataContext dataContext, @NotNull String value) {
+    return new RunAnythingItemBase(value, getIcon(value));
   }
 
   @NotNull
   @Override
-  public Collection<RunAnythingStringValue> getValues(@NotNull DataContext dataContext) {
-    return RunAnythingCache.getInstance(fetchProject(dataContext)).getState().getCommands()
-                           .stream()
-                           .map(value -> RunAnythingStringValue.create(value))
-                           .collect(Collectors.toList());
+  public Collection<String> getValues(@NotNull DataContext dataContext) {
+    return RunAnythingCache.getInstance(fetchProject(dataContext)).getState().getCommands();
   }
 }

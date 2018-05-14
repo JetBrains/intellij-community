@@ -7,10 +7,10 @@ import com.intellij.openapi.actionSystem.DataContext;
 import org.jetbrains.annotations.NotNull;
 
 public interface RunAnythingCompletionStringProvider
-  extends RunAnythingCompletionProvider<RunAnythingStringValue>, RunAnythingActivityProvider<RunAnythingStringValue> {
+  extends RunAnythingCompletionProvider<String>, RunAnythingActivityProvider<String> {
   @NotNull
   @Override
-  default RunAnythingItem getMainListItem(@NotNull DataContext dataContext, @NotNull RunAnythingStringValue value) {
+  default RunAnythingItem getMainListItem(@NotNull DataContext dataContext, @NotNull String value) {
     return new RunAnythingItemBase(getCommand(value), getIcon(value));
   }
 }
