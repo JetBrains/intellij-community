@@ -32,7 +32,7 @@ public abstract class RunAnythingMatchedRunConfigurationProvider extends RunAnyt
   public abstract ConfigurationFactory getConfigurationFactory();
 
   @Override
-  public Icon getIcon() {
+  public Icon getHelpIcon() {
     return getConfigurationFactory().getIcon();
   }
 }
