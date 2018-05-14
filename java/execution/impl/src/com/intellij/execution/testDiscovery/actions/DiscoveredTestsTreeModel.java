@@ -9,6 +9,7 @@ import com.intellij.psi.util.PsiUtil;
 import com.intellij.ui.tree.BaseTreeModel;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.SmartList;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -23,10 +24,10 @@ class DiscoveredTestsTreeModel extends BaseTreeModel<Object> {
 
   @Override
   public synchronized List<?> getChildren(Object parent) {
-    if (parent == myRoot) return myTestClasses;
+    if (parent == myRoot) return ContainerUtil.newArrayList(myTestClasses);
     if (parent instanceof Node<?> && ((Node)parent).isClass()) {
       //noinspection unchecked
-      return myTests.get((Node<PsiClass>)parent);
+      return ContainerUtil.newArrayList(myTests.get((Node<PsiClass>)parent));
     }
     return Collections.emptyList();
   }
