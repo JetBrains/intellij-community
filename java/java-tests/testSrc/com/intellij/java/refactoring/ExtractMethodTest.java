@@ -804,6 +804,10 @@ public class ExtractMethodTest extends LightCodeInsightTestCase {
     doDuplicatesTest();
   }
 
+  public void testSuggestChangeSignatureSameSubexpression() throws Exception {
+    doDuplicatesTest();
+  }
+
   public void testSuggestChangeSignaturePlusOneFolding() throws Exception {
     doDuplicatesTest();
   }

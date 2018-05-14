@@ -2600,6 +2600,14 @@ public class StructuralSearchTest extends StructuralSearchTestCase {
                  "     throw new RuntimeException(e);\n" +
                  "  } finally {}",
                  matches2.get(0).getMatchImage());
+
+    String pattern9 = "try { '_st1*; } catch ('_E '_e{0,0}) { '_St2*; }";
+    final List<MatchResult> matches3 = findMatches(source, pattern9, StdFileTypes.JAVA);
+    assertEquals(1, matches3.size());
+    assertEquals("Should find try without catch blocks",
+                 "try (InputStream in = new FileInputStream(\"tmp\")) {\n" +
+                 "  }",
+                 matches3.get(0).getMatchImage());
   }
 
   public void testFindAsserts() {

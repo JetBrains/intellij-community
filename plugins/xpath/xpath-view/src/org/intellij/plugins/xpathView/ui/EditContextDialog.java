@@ -437,7 +437,7 @@ public class EditContextDialog extends DialogWrapper {
       return null;
     }
 
-    public IntentionAction[] getUnresolvedNamespaceFixes(PsiReference reference, String localName) {
+    public IntentionAction[] getUnresolvedNamespaceFixes(@NotNull PsiReference reference, String localName) {
       return IntentionAction.EMPTY_ARRAY;
     }
 

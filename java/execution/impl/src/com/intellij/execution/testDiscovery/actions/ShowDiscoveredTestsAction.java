@@ -175,7 +175,13 @@ public class ShowDiscoveredTestsAction extends AnAction {
     ActiveComponent runButton = createButton(RUN_ALL_ACTION_TEXT, AllIcons.Actions.Execute, () -> runAllDiscoveredTests(project, tree, ref, context, initTitle));
 
     Runnable pinActionListener = () -> {
-      UsageView view = FindUtil.showInUsageView(null, tree.getTestMethods(), param -> new TestMethodUsage(param), initTitle, project);
+      UsageView view = FindUtil.showInUsageView(null, tree.getTestMethods(), param -> new TestMethodUsage(param), initTitle, p -> {
+        p.setCodeUsages(false); // don't show r/w, imports filtering actions
+        p.setUsagesWord("test");
+        p.setMergeDupLinesAvailable(false);
+        p.setUsageTypeFilteringAvailable(false);
+        p.setExcludeAvailable(false);
+      }, project);
       if (view != null) {
         view.addButtonToLowerPane(new AbstractAction(RUN_ALL_ACTION_TEXT, AllIcons.Actions.Execute) {
           @Override
@@ -183,10 +189,6 @@ public class ShowDiscoveredTestsAction extends AnAction {
             runAllDiscoveredTests(project, tree, ref, context, initTitle);
           }
         });
-        view.getPresentation().setUsagesWord("test");
-        view.getPresentation().setMergeDupLinesAvailable(false);
-        view.getPresentation().setUsageTypeFilteringAvailable(false);
-        view.getPresentation().setExcludeAvailable(false);
       }
       JBPopup popup = ref.get();
       if (popup != null) {

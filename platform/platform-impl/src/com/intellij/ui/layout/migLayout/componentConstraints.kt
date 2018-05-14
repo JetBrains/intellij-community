@@ -101,9 +101,7 @@ internal class DefaultComponentConstraintCreator(private val spacing: SpacingCon
         cc.value.growX()
       }
 
-      component is JScrollPane ||
-      (component is JPanel && component.componentCount == 1 && (component.getComponent(0) as? JComponent)?.getClientProperty(
-        ActionToolbar.ACTION_TOOLBAR_PROPERTY_KEY) != null) -> {
+      component is JScrollPane || component.isPanelWithToolbar() -> {
         // no need to use pushX - default pushX for cell is 100. avoid to configure more than need
         cc.value
           .grow()
@@ -126,4 +124,9 @@ internal class DefaultComponentConstraintCreator(private val spacing: SpacingCon
       GrowPolicy.MEDIUM_TEXT -> mediumTextSizeSpec
     }
   }
+}
+
+private fun Component.isPanelWithToolbar(): Boolean {
+  return this is JPanel && componentCount == 1 &&
+         (getComponent(0) as? JComponent)?.getClientProperty(ActionToolbar.ACTION_TOOLBAR_PROPERTY_KEY) != null
 }

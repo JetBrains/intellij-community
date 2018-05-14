@@ -942,7 +942,8 @@ public class JavaStructuralSearchProfile extends StructuralSearchProfile {
     if (grandParent instanceof PsiAnnotation && !(grandParent.getParent().getNextSibling() instanceof PsiErrorElement)) return true;
     if (grandParent instanceof PsiParameterList || grandParent instanceof PsiExpressionList ||
         grandParent instanceof PsiTypeParameterList || grandParent instanceof PsiResourceList ||
-        grandParent instanceof PsiArrayInitializerExpression || grandParent instanceof PsiArrayInitializerMemberValue) {
+        grandParent instanceof PsiResourceExpression || grandParent instanceof PsiArrayInitializerExpression ||
+        grandParent instanceof PsiArrayInitializerMemberValue) {
       return true;
     }
     if (grandParent instanceof PsiTypeElement) {

@@ -907,6 +907,11 @@ public class DuplicatesFinder {
   @NotNull
   public static PsiElement[] getFilteredChildren(@NotNull PsiElement element) {
     PsiElement[] children = element.getChildren();
+    return getDeeplyFilteredElements(children);
+  }
+
+  @NotNull
+  public static PsiElement[] getDeeplyFilteredElements(@NotNull PsiElement[] children) {
     ArrayList<PsiElement> array = new ArrayList<>();
     for (PsiElement child : children) {
       if (child instanceof PsiWhiteSpace || child instanceof PsiComment || child instanceof PsiEmptyStatement) {
