@@ -558,10 +558,9 @@ class BaseInterpreterInterface:
                 var_object = pydevd_vars.eval_in_context(name, frame_variables, frame_variables)
                 var_objects.append((var_object, name))
 
-        # @alexander todo completely rework `GetValueAsyncThreadConsole`
-        from _pydevd_bundle.pydevd_comm import GetValueAsyncThreadConsole
+        from _pydevd_bundle.pydevd_comm import ThriftGetValueAsyncThreadConsole
         # @alexander here `self.get_server()` is `frame_accessor` parameter with
-        t = GetValueAsyncThreadConsole(self.get_server(), seq, var_objects)
+        t = ThriftGetValueAsyncThreadConsole(self.get_server(), seq, var_objects)
         t.start()
 
     def changeVariable(self, attr, value):
