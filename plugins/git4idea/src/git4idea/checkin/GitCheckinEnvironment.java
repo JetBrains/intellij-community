@@ -36,10 +36,7 @@ import com.intellij.ui.GuiUtils;
 import com.intellij.ui.awt.RelativePoint;
 import com.intellij.ui.components.JBCheckBox;
 import com.intellij.ui.components.JBLabel;
-import com.intellij.util.FunctionUtil;
-import com.intellij.util.NullableFunction;
-import com.intellij.util.ObjectUtils;
-import com.intellij.util.PairConsumer;
+import com.intellij.util.*;
 import com.intellij.util.concurrency.FutureResult;
 import com.intellij.util.textCompletion.DefaultTextCompletionValueDescriptor;
 import com.intellij.util.textCompletion.TextCompletionProvider;
@@ -211,15 +208,7 @@ public class GitCheckinEnvironment implements CheckinEnvironment {
                                               @NotNull Collection<Change> rootChanges,
                                               @NotNull String message) {
     List<VcsException> exceptions = new ArrayList<>();
-
     VirtualFile root = repository.getRoot();
-    File messageFile;
-    try {
-      messageFile = createCommitMessageFile(myProject, root, message);
-    }
-    catch (IOException ex) {
-      return Collections.singletonList(new VcsException("Creation of commit message file failed", ex));
-    }
 
     try {
       // Stage partial changes
@@ -233,24 +222,30 @@ public class GitCheckinEnvironment implements CheckinEnvironment {
       changedWithIndex.addAll(caseOnlyRenameChanges);
 
       if (!changedWithIndex.isEmpty()) {
-        exceptions.addAll(commitUsingIndex(myProject, root, rootChanges, changedWithIndex, messageFile));
+        runWithMessageFile(myProject, root, message, messageFile -> {
+          exceptions.addAll(commitUsingIndex(myProject, root, rootChanges, changedWithIndex, messageFile));
+        });
         if (!exceptions.isEmpty()) return exceptions;
 
         callback.run();
       }
       else {
         try {
-          List<FilePath> files = ChangesUtil.getPaths(rootChanges);
-          commit(myProject, root, files, messageFile);
+          runWithMessageFile(myProject, root, message, messageFile -> {
+            List<FilePath> files = ChangesUtil.getPaths(rootChanges);
+            commit(myProject, root, files, messageFile);
+          });
         }
         catch (VcsException ex) {
           PartialOperation partialOperation = isMergeCommit(ex);
           if (partialOperation == PartialOperation.NONE) {
             throw ex;
           }
-          if (!mergeCommit(myProject, root, rootChanges, messageFile, exceptions, partialOperation)) {
-            throw ex;
-          }
+          runWithMessageFile(myProject, root, message, messageFile -> {
+            if (!mergeCommit(myProject, root, rootChanges, messageFile, exceptions, partialOperation)) {
+              throw ex;
+            }
+          });
         }
       }
 
@@ -258,11 +253,6 @@ public class GitCheckinEnvironment implements CheckinEnvironment {
     }
     catch (VcsException e) {
       exceptions.add(e);
-    }
-    finally {
-      if (!messageFile.delete()) {
-        LOG.warn("Failed to remove temporary file: " + messageFile);
-      }
     }
     return exceptions;
   }
@@ -684,9 +674,11 @@ public class GitCheckinEnvironment implements CheckinEnvironment {
    * @throws IOException if file cannot be created
    */
   @NotNull
-  public static File createCommitMessageFile(@NotNull Project project, @NotNull VirtualFile root, final String message) throws IOException {
+  public static File createCommitMessageFile(@NotNull Project project, @NotNull VirtualFile root, @NotNull String message)
+    throws IOException {
     // filter comment lines
     File file = FileUtil.createTempFile(GIT_COMMIT_MSG_FILE_PREFIX, GIT_COMMIT_MSG_FILE_EXT);
+    //noinspection SSBasedInspection
     file.deleteOnExit();
     @NonNls String encoding = GitConfigUtil.getCommitEncoding(project, root);
     Writer out = new OutputStreamWriter(new FileOutputStream(file), encoding);
@@ -697,6 +689,26 @@ public class GitCheckinEnvironment implements CheckinEnvironment {
       out.close();
     }
     return file;
+  }
+
+  private static void runWithMessageFile(@NotNull Project project, @NotNull VirtualFile root, @NotNull String message,
+                                         @NotNull ThrowableConsumer<File, VcsException> task) throws VcsException {
+    File messageFile;
+    try {
+      messageFile = createCommitMessageFile(project, root, message);
+    }
+    catch (IOException ex) {
+      throw new VcsException("Creation of commit message file failed", ex);
+    }
+
+    try {
+      task.consume(messageFile);
+    }
+    finally {
+      if (!messageFile.delete()) {
+        LOG.warn("Failed to remove temporary file: " + messageFile);
+      }
+    }
   }
 
   public List<VcsException> scheduleMissingFileForDeletion(List<FilePath> files) {
