@@ -32,7 +32,6 @@ import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.EmptyIterator;
 import com.intellij.util.containers.JBIterable;
 import com.intellij.util.containers.Predicate;
-import com.intellij.util.messages.MessageBusConnection;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -71,8 +70,6 @@ public class ToolWindowContentUi extends JPanel implements ContentUI, PropertyCh
   private ToolWindowContentUiType myType = ToolWindowContentUiType.TABBED;
 
   public Predicate<Point> isResizableArea = p -> true;
-  private MessageBusConnection myBusConnection =
-    ApplicationManager.getApplication().getMessageBus().connect();
 
   public ToolWindowContentUi(ToolWindowImpl window) {
     myWindow = window;
@@ -103,7 +100,7 @@ public class ToolWindowContentUi extends JPanel implements ContentUI, PropertyCh
         }
       });
 
-    myBusConnection.subscribe(UISettingsListener.TOPIC, uiSettings -> {
+    ApplicationManager.getApplication().getMessageBus().connect(this).subscribe(UISettingsListener.TOPIC, uiSettings -> {
       getCurrentLayout().update();
 
       revalidate();
@@ -293,7 +290,6 @@ public class ToolWindowContentUi extends JPanel implements ContentUI, PropertyCh
   }
 
   public void beforeDispose() {
-    myBusConnection.disconnect();
   }
 
   public boolean canChangeSelectionTo(@NotNull Content content, boolean implicit) {
