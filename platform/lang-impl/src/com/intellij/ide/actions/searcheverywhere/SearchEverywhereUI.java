@@ -520,8 +520,7 @@ public class SearchEverywhereUI extends BorderLayoutPanel {
     }
 
     private void addContributorItems(SearchEverywhereContributor contributor, int count) {
-      ContributorSearchResult
-        results = contributor.search(project, pattern, isUseNonProjectItems(), myProgressIndicator, count);
+      ContributorSearchResult<Object> results = contributor.search(project, pattern, isUseNonProjectItems(), myProgressIndicator, count);
       List<Object> itemsToAdd = results.getItems().stream()
                                        .filter(o -> !myListModel.contains(o))
                                        .collect(Collectors.toList());
