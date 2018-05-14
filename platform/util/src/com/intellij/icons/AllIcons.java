@@ -255,7 +255,11 @@ public class AllIcons {
     public static final Icon Gear = IconLoader.getIcon("/general/gearPlain.svg"); // 16x16
 
     public static class Mac {
-      public static final Icon AddNewSectionRule = IconLoader.getIcon("/codeStyle/mac/AddNewSectionRule.png"); // 16x16
+
+      /** @deprecated to be removed in IDEA 2020 - use AllIcons.CodeStyle.AddNewSectionRule */
+      @SuppressWarnings("unused")
+      @Deprecated
+      public static final Icon AddNewSectionRule = IconLoader.getIcon("/codeStyle/AddNewSectionRule.svg"); // 16x16
 
     }
 

@@ -104,6 +104,10 @@ public class DeprecatedDuplicatesIconPathPatcher extends IconPathPatcher {
     ourDeprecatedIconsReplacements.put("/general/debug.svg", "AllIcons.Actions.StartDebugger");
 
 
+    ourDeprecatedIconsReplacements.put("/codeStyle/mac/AddNewSectionRule.png", "AllIcons.CodeStyle.AddNewSectionRule");
+    ourDeprecatedIconsReplacements.put("/codeStyle/mac/AddNewSectionRule.svg", "AllIcons.CodeStyle.AddNewSectionRule");
+
+
     ourDeprecatedIconsReplacements.put("/debugger/watches.png", "AllIcons.Debugger.Watch");
     ourDeprecatedIconsReplacements.put("/debugger/watches.svg", "AllIcons.Debugger.Watch");
 
