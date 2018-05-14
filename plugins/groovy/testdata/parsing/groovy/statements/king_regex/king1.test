@@ -11,7 +11,7 @@ Groovy script
       PsiElement(=)('=')
       PsiWhiteSpace(' ')
       Literal
-        GroovyASTPsiElementImpl(regex literal)
+        GroovyASTPsiElementImpl(SLASHY_LITERAL)
           PsiElement(regex begin)('/')
           PsiElement(regex content)('I cost $$@$@$$')
           PsiElement(regex end)('/')

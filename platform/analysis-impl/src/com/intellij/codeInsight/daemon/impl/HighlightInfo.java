@@ -74,6 +74,7 @@ public class HighlightInfo implements Segment {
 
   @Nullable
   public List<Pair<IntentionActionDescriptor, TextRange>> quickFixActionRanges;
+  @Nullable
   public List<Pair<IntentionActionDescriptor, RangeMarker>> quickFixActionMarkers;
 
   private final GutterMark gutterIconRenderer;

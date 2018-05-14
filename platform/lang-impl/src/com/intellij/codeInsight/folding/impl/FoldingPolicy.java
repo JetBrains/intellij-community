@@ -34,7 +34,7 @@ public class FoldingPolicy {
   
   private FoldingPolicy() {}
 
-  public static boolean isCollapseByDefault(PsiElement element) {
+  static boolean isCollapseByDefault(@NotNull PsiElement element) {
     final Language lang = element.getLanguage();
     final FoldingBuilder foldingBuilder = LanguageFolding.INSTANCE.forLanguage(lang);
     try {

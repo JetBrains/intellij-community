@@ -30,7 +30,6 @@ public class ExternalSystemShortcutsManager implements Disposable {
   private static final String ACTION_ID_PREFIX = "ExternalSystem_";
   @NotNull
   private final Project myProject;
-  private ExternalSystemKeyMapListener myKeyMapListener;
   private final List<Listener> myListeners = ContainerUtil.createLockFreeCopyOnWriteList();
 
   public ExternalSystemShortcutsManager(@NotNull Project project) {
@@ -38,7 +37,17 @@ public class ExternalSystemShortcutsManager implements Disposable {
   }
 
   public void init() {
-    myKeyMapListener = new ExternalSystemKeyMapListener();
+    ApplicationManager.getApplication().getMessageBus().connect(this).subscribe(KeymapManagerListener.TOPIC, new KeymapManagerListener() {
+      @Override
+      public void activeKeymapChanged(Keymap keymap) {
+        fireShortcutsUpdated();
+      }
+
+      @Override
+      public void shortcutChanged(@NotNull Keymap keymap, @NotNull String actionId) {
+        fireShortcutsUpdated();
+      }
+    });
   }
 
   public String getActionId(@Nullable String projectPath, @Nullable String taskName) {
@@ -94,43 +103,6 @@ public class ExternalSystemShortcutsManager implements Disposable {
     void shortcutsUpdated();
   }
 
-  private class ExternalSystemKeyMapListener implements KeymapManagerListener, Keymap.Listener {
-    private Keymap myCurrentKeymap;
-
-    private ExternalSystemKeyMapListener() {
-      KeymapManager keymapManager = KeymapManager.getInstance();
-      if (keymapManager != null) {
-        listenTo(keymapManager.getActiveKeymap());
-        ApplicationManager.getApplication().getMessageBus().connect(ExternalSystemShortcutsManager.this).subscribe(KeymapManagerListener.TOPIC, this);
-      }
-    }
-
-    @Override
-    public void activeKeymapChanged(Keymap keymap) {
-      listenTo(keymap);
-      fireShortcutsUpdated();
-    }
-
-    private void listenTo(Keymap keymap) {
-      if (myCurrentKeymap != null) {
-        myCurrentKeymap.removeShortcutChangeListener(this);
-      }
-      myCurrentKeymap = keymap;
-      if (myCurrentKeymap != null) {
-        myCurrentKeymap.addShortcutChangeListener(this);
-      }
-    }
-
-    @Override
-    public void onShortcutChanged(String actionId) {
-      fireShortcutsUpdated();
-    }
-
-    private void stopListen() {
-      listenTo(null);
-    }
-  }
-
   public void scheduleKeymapUpdate(Collection<DataNode<TaskData>> taskData) {
     ExternalSystemKeymapExtension.updateActions(myProject, taskData);
   }
@@ -141,9 +113,6 @@ public class ExternalSystemShortcutsManager implements Disposable {
 
   @Override
   public void dispose() {
-    if (myKeyMapListener != null) {
-      myKeyMapListener.stopListen();
-    }
     ExternalSystemKeymapExtension.clearActions(myProject);
   }
 }

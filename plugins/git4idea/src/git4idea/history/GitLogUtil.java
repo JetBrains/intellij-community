@@ -232,7 +232,7 @@ public class GitLogUtil {
 
     List<GitCommit> commits = ContainerUtil.newArrayList();
     try {
-      readFullDetails(project, root, commits::add, true, parameters);
+      readFullDetails(project, root, commits::add, true, true, parameters);
     }
     catch (VcsException e) {
       if (commits.isEmpty()) {
@@ -247,11 +247,12 @@ public class GitLogUtil {
                                      @NotNull VirtualFile root,
                                      @NotNull Consumer<? super GitCommit> commitConsumer,
                                      boolean includeRootChanges,
+                                     boolean preserverOrder,
                                      @NotNull String... parameters) throws VcsException {
     DiffRenameLimit renameLimit = DiffRenameLimit.REGISTRY;
 
     GitLineHandler handler = createGitHandler(project, root, createConfigParameters(true, includeRootChanges, renameLimit));
-    readFullDetailsFromHandler(project, root, commitConsumer, renameLimit, handler, parameters);
+    readFullDetailsFromHandler(project, root, commitConsumer, renameLimit, handler, preserverOrder, parameters);
   }
 
   private static void readFullDetailsFromHandler(@NotNull Project project,
@@ -259,28 +260,29 @@ public class GitLogUtil {
                                                  @NotNull Consumer<? super GitCommit> commitConsumer,
                                                  @NotNull DiffRenameLimit renameLimit,
                                                  @NotNull GitLineHandler handler,
+                                                 boolean preserverOrder,
                                                  @NotNull String... parameters) throws VcsException {
     VcsLogObjectsFactory factory = getObjectsFactoryWithDisposeCheck(project);
     if (factory == null) {
       return;
     }
 
-    GitLogRecordCollector recordCollector = new GitLogRecordCollector(project, root) {
-      @Override
-      public void consume(@NotNull List<GitLogRecord> records) {
-        GitLogRecord firstRecord = notNull(getFirstItem(records));
-        String[] parents = firstRecord.getParentsHashes();
+    Consumer<List<GitLogRecord>> consumer = records -> {
+      GitLogRecord firstRecord = notNull(getFirstItem(records));
+      String[] parents = firstRecord.getParentsHashes();
 
-        LOG.assertTrue(parents.length == 0 || parents.length == records.size(), "Not enough records for commit " +
-                                                                                firstRecord.getHash() +
-                                                                                " expected " +
-                                                                                parents.length +
-                                                                                " records, but got " +
-                                                                                records.size());
+      LOG.assertTrue(parents.length == 0 || parents.length == records.size(), "Not enough records for commit " +
+                                                                              firstRecord.getHash() +
+                                                                              " expected " +
+                                                                              parents.length +
+                                                                              " records, but got " +
+                                                                              records.size());
 
-        commitConsumer.consume(createCommit(project, root, records, factory, renameLimit));
-      }
+      commitConsumer.consume(createCommit(project, root, records, factory, renameLimit));
     };
+
+    GitLogRecordCollector recordCollector = preserverOrder ? new GitLogRecordCollector(project, root, consumer)
+                                                           : new GitLogUnorderedRecordCollector(project, root, consumer);
 
     readRecordsFromHandler(project, root, false, true, recordCollector, handler, parameters);
     recordCollector.finish();
@@ -344,7 +346,7 @@ public class GitLogUtil {
     GitLineHandler handler = createGitHandler(project, root, createConfigParameters(true, includeRootChanges, renameLimit));
     sendHashesToStdin(vcs, hashes, handler);
 
-    readFullDetailsFromHandler(project, root, commitConsumer, renameLimit, handler, getNoWalkParameter(vcs), STDIN);
+    readFullDetailsFromHandler(project, root, commitConsumer, renameLimit, handler, false, getNoWalkParameter(vcs), STDIN);
   }
 
   public static void sendHashesToStdin(@NotNull GitVcs vcs, @NotNull Collection<String> hashes, @NotNull GitHandler handler) {

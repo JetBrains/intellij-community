@@ -7,12 +7,7 @@ import com.intellij.openapi.actionSystem.LangDataKeys;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleUtilCore;
 import com.intellij.openapi.ui.popup.util.PopupUtil;
-import com.intellij.openapi.util.Iconable;
-import com.intellij.psi.PsiClass;
-import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiMember;
-import com.intellij.psi.PsiMethod;
-import com.intellij.psi.util.PsiUtil;
+import com.intellij.psi.*;
 import com.intellij.ui.ColoredTreeCellRenderer;
 import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.ui.TreeUIHelper;
@@ -62,18 +57,18 @@ class DiscoveredTestsTree extends Tree implements DataProvider {
                                         boolean leaf,
                                         int row,
                                         boolean hasFocus) {
-        if (value instanceof PsiMember) {
-          PsiMember psi = (PsiMember)value;
-          setIcon(psi.getIcon(Iconable.ICON_FLAG_READ_STATUS));
-          String name = psi.getName();
+        if (value instanceof DiscoveredTestsTreeModel.Node) {
+          DiscoveredTestsTreeModel.Node node = (DiscoveredTestsTreeModel.Node)value;
+          setIcon(node.getIcon());
+          String name = node.getName();
           assert name != null;
           append(name);
-          if (psi instanceof PsiClass) {
-            String packageName = PsiUtil.getPackageName((PsiClass)psi);
+          if (node.isClass()) {
+            String packageName = node.getPackageName();
             if (packageName != null) {
               append(FontUtil.spaceAndThinSpace() + packageName, SimpleTextAttributes.GRAYED_ATTRIBUTES);
             }
-            int testMethodCount = myModel.getChildren(psi).size();
+            int testMethodCount = myModel.getChildren(value).size();
             append(" / " + (testMethodCount != 1 ? (testMethodCount + " tests") : "1 test"), SimpleTextAttributes.GRAYED_ATTRIBUTES);
           }
           SpeedSearchUtil.applySpeedSearchHighlighting(tree, this, true, false);
@@ -101,12 +96,15 @@ class DiscoveredTestsTree extends Tree implements DataProvider {
   @NotNull
   public Set<Module> getContainingModules() {
     return myModel.getTestClasses().stream()
-                  .map(element -> ModuleUtilCore.findModuleForPsiElement(element))
+                  .map(element -> {
+                    SmartPsiElementPointer<PsiClass> pointer = element.getPointer();
+                    return ModuleUtilCore.findModuleForFile(pointer.getVirtualFile(), pointer.getProject());
+                  })
                   .filter(module -> module != null)
                   .collect(Collectors.toSet());
   }
 
-  public PsiMethod[] getTestMethods() {
+  public DiscoveredTestsTreeModel.Node<PsiMethod>[] getTestMethods() {
     return myModel.getTestMethods();
   }
 

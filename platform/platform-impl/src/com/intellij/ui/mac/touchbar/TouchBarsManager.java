@@ -174,7 +174,10 @@ public class TouchBarsManager {
       ourTouchBarStack.removeIf(bc -> bc.isTemporary() && bc.get() == tb);
   }
 
-  synchronized public static void showTouchBar(@NotNull BarContainer bar) {
+  synchronized public static void showTouchBar(BarContainer bar) {
+    if (bar == null)
+      return;
+
     final BarContainer top = ourTouchBarStack.peek();
     if (top == bar)
       return;
@@ -184,7 +187,10 @@ public class TouchBarsManager {
     _setBarContainer(bar);
   }
 
-  synchronized private static void _elevateTouchBar(@NotNull BarContainer bar) {
+  synchronized private static void _elevateTouchBar(BarContainer bar) {
+    if (bar == null)
+      return;
+
     final BarContainer top = ourTouchBarStack.peek();
     if (top == bar)
       return;
@@ -282,7 +288,7 @@ public class TouchBarsManager {
           }
 
           if (ag.getChildrenCount() > 0)
-            result.addActionGroupButtons(ag, ob, ms);
+            result.addActionGroupButtons(ag, ob, ms, TBItemAnActionButton.SHOWMODE_TEXT_ONLY);
         }
       }
 

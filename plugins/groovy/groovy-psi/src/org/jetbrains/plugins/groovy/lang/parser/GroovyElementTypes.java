@@ -95,9 +95,9 @@ public interface GroovyElementTypes {
   IElementType RELATIONAL_EXPRESSION = new GroovyElementType("Relational expression");
   IElementType SHIFT_EXPRESSION = new GroovyElementType("Shift expression");
   IElementType RANGE_EXPRESSION = new GroovyElementType("Range expression");
-  IElementType COMPOSITE_LSHIFT_SIGN = new GroovyElementType("<<");
-  IElementType COMPOSITE_RSHIFT_SIGN = new GroovyElementType(">>");
-  IElementType COMPOSITE_TRIPLE_SHIFT_SIGN = new GroovyElementType(">>>");
+  IElementType COMPOSITE_LSHIFT_SIGN = new GroovyElementType("LEFT_SHIFT_SIGN");
+  IElementType COMPOSITE_RSHIFT_SIGN = new GroovyElementType("RIGHT_SHIFT_SIGN");
+  IElementType COMPOSITE_TRIPLE_SHIFT_SIGN = new GroovyElementType("RIGHT_SHIFT_UNSIGNED_SIGN");
   IElementType MORE_OR_EQUALS_SIGN = new GroovyElementType(">=");
   IElementType ADDITIVE_EXPRESSION = new GroovyElementType("Additive expression");
   IElementType MULTIPLICATIVE_EXPRESSION = new GroovyElementType("Multiplicative expression");
@@ -137,7 +137,7 @@ public interface GroovyElementTypes {
   // GStrings
   IElementType GSTRING = new GroovyElementType("GString");
   IElementType GSTRING_INJECTION =new GroovyElementType("Gstring injection");
-  IElementType GSTRING_CONTENT = new GroovyElementType("GString content element");
+  IElementType GSTRING_CONTENT = new GroovyElementType("STRING_CONTENT");
 
 
   IElementType REGEX = new GroovyElementType("Regular expression");

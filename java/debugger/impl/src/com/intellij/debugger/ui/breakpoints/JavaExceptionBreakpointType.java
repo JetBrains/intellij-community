@@ -40,7 +40,7 @@ public class JavaExceptionBreakpointType extends JavaBreakpointTypeBase<JavaExce
   @NotNull
   @Override
   public Icon getDisabledIcon() {
-    return AllIcons.Debugger.Db_exception_breakpoint;
+    return AllIcons.Debugger.Db_disabled_exception_breakpoint;
   }
 
   @NotNull

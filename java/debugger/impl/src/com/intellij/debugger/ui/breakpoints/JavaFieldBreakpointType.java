@@ -68,6 +68,12 @@ public class JavaFieldBreakpointType extends JavaLineBreakpointTypeBase<JavaFiel
 
   @NotNull
   @Override
+  public Icon getInactiveDependentIcon() {
+    return AllIcons.Debugger.Db_dep_field_breakpoint;
+  }
+
+  @NotNull
+  @Override
   public Icon getPendingIcon() {
     return AllIcons.Debugger.Db_pending_field_breakpoint;
   }

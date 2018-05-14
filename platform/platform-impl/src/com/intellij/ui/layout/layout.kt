@@ -17,7 +17,7 @@ import javax.swing.JPanel
  * `ToolbarDecorator` and `JBScrollPane` (use [Row.scrollPane]) components automatically have [Row.grow] and [Row.push].
  */
 inline fun panel(vararg constraints: LCFlags, title: String? = null, init: LayoutBuilder.() -> Unit): JPanel {
-  val builder = createLayoutBuilder()
+  val builder = createLayoutBuilder(isUseMagic = !constraints.contains(LCFlags.disableMagic))
   builder.init()
 
   val panel = Panel(title, layout = null)

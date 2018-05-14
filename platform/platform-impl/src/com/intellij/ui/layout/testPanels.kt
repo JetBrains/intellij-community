@@ -158,9 +158,9 @@ fun createLafTestPanel(): JPanel {
   val panel = JPanel(GridLayout(0, 1, spacing.horizontalGap, spacing.verticalGap))
   panel.add(JTextField("text"))
   panel.add(JPasswordField("secret"))
-  panel.add(JComboBox<String>(arrayOf("one", "two")))
+  panel.add(ComboBox<String>(arrayOf("one", "two")))
 
-  val field = JComboBox<String>(arrayOf("one", "two"))
+  val field = ComboBox<String>(arrayOf("one", "two"))
   field.isEditable = true
   panel.add(field)
 
@@ -171,4 +171,18 @@ fun createLafTestPanel(): JPanel {
   panel.add(textFieldWithHistoryWithBrowseButton(null, "File", FileChooserDescriptorFactory.createSingleFileNoJarsDescriptor()))
 
   return panel
+}
+
+fun withVerticalButtons(): JPanel {
+  return panel(LCFlags.disableMagic) {
+    row {
+      scrollPane(JTextArea(), pushX)
+
+      cell(isVerticalFlow = true) {
+        button("Accept Yours", growX) {}
+        button("Accept Theirs", growX) {}
+        button("Merge ...", growX) {}
+      }
+    }
+  }
 }

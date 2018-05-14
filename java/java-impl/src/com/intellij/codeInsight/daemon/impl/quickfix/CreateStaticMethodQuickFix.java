@@ -1,3 +1,4 @@
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInsight.daemon.impl.quickfix;
 
 import com.intellij.codeInsight.ExpectedTypeInfo;
@@ -9,29 +10,23 @@ import com.intellij.openapi.util.Pair;
 import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.util.PsiUtil;
-import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
 
 public class CreateStaticMethodQuickFix implements LocalQuickFix {
-  @NotNull
-  private final PsiClass targetClass;
-  @NotNull
-  private final String methodName;
-  @NotNull
-  private final List<String> types;
-
+  private final SmartPsiElementPointer<PsiClass> myTargetClass;
+  private final String myMethodName;
+  private final List<String> myTypes;
 
   public CreateStaticMethodQuickFix(@NotNull PsiClass aClass,
                                     @NotNull String name,
                                     @NotNull List<String> types) {
-    targetClass = aClass;
-    methodName = name;
-    this.types = types;
+    myTargetClass = SmartPointerManager.createPointer(aClass);
+    myMethodName = name;
+    myTypes = types;
   }
-
 
   @NotNull
   @Override
@@ -41,26 +36,29 @@ public class CreateStaticMethodQuickFix implements LocalQuickFix {
 
   @Override
   public void applyFix(@NotNull final Project project, @NotNull ProblemDescriptor descriptor) {
+    PsiClass targetClass = myTargetClass.getElement();
+
+    if (targetClass == null) return;
+
     boolean java8Interface = false;
     if (targetClass.isInterface()) {
       if (PsiUtil.isLanguageLevel8OrHigher(targetClass)) {
         java8Interface = true;
-      } else {
+      }
+      else {
         return;
       }
     }
 
-    PsiMethod method = CreateMethodFromUsageFix.createMethod(targetClass, null, null, methodName);
-    if (method == null) {
-      return;
-    }
+    PsiMethod method = CreateMethodFromUsageFix.createMethod(targetClass, null, null, myMethodName);
+    if (method == null) return;
 
     if (!java8Interface) {
       PsiUtil.setModifierProperty(method, PsiModifier.PUBLIC, true);
     }
     PsiUtil.setModifierProperty(method, PsiModifier.STATIC, true);
 
-    List<Pair<PsiExpression,PsiType>> args = ContainerUtil.map(types, s -> new Pair<PsiExpression, PsiType>(null, PsiType.getTypeByName(s, project, GlobalSearchScope.allScope(project))));
+    List<Pair<PsiExpression, PsiType>> args = ContainerUtil.map(myTypes, s -> new Pair<>(null, PsiType.getTypeByName(s, project, GlobalSearchScope.allScope(project))));
     CreateMethodFromUsageFix.doCreate(targetClass, method, false,
                                       args,
                                       PsiSubstitutor.UNKNOWN,

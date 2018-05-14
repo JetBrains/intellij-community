@@ -15,11 +15,14 @@
  */
 package com.intellij.vcs.log.ui.actions;
 
+import com.intellij.icons.AllIcons;
+import com.intellij.ui.LayeredIcon;
 import com.intellij.vcs.log.ui.VcsLogActionPlaces;
 
-public class VcsLogTextFilterSettingsActions extends VcsLogGearActionGroup {
+public class VcsLogTextFilterSettingsActions extends VcsLogToolbarPopupActionGroup {
+  private static final LayeredIcon GearWithDropDown = new LayeredIcon(AllIcons.General.GearPlain, AllIcons.General.Dropdown);
 
   public VcsLogTextFilterSettingsActions() {
-    super(VcsLogActionPlaces.TEXT_FILTER_SETTINGS_ACTION_GROUP);
+    super(VcsLogActionPlaces.TEXT_FILTER_SETTINGS_ACTION_GROUP, GearWithDropDown);
   }
 }

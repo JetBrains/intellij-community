@@ -15,7 +15,7 @@ Groovy script
       PsiElement(=)('=')
       PsiWhiteSpace(' ')
       Literal
-        GroovyASTPsiElementImpl(regex literal)
+        GroovyASTPsiElementImpl(SLASHY_LITERAL)
           PsiElement(regex begin)('/')
           PsiElement(regex content)('\nto be\nor\nnot to be\n')
           PsiElement(regex end)('/')

@@ -150,6 +150,13 @@ public class PaintUtil {
   }
 
   /**
+   * @see #alignToInt(double, ScaleContext, RoundingMode, ParityMode)
+   */
+  public static double alignToInt(double usrValue, @NotNull ScaleContext ctx) {
+    return alignToInt(usrValue, ctx, null, null);
+  }
+
+  /**
    * Converts the value from the user to the device space.
    *
    * @param usrValue the value in the user space

@@ -16,10 +16,7 @@
 package com.intellij.vcs.log.ui.actions;
 
 import com.intellij.vcs.log.ui.VcsLogUiImpl;
-import icons.VcsLogIcons;
 import org.jetbrains.annotations.NotNull;
-
-import javax.swing.*;
 
 public class ExpandGraphAction extends CollapseOrExpandGraphAction {
   @NotNull private static final String EXPAND = "Expand";
@@ -31,18 +28,6 @@ public class ExpandGraphAction extends CollapseOrExpandGraphAction {
   @Override
   protected void executeAction(@NotNull VcsLogUiImpl vcsLogUi) {
     vcsLogUi.expandAll();
-  }
-
-  @NotNull
-  @Override
-  protected Icon getMergesIcon() {
-    return VcsLogIcons.ExpandMerges;
-  }
-
-  @NotNull
-  @Override
-  protected Icon getBranchesIcon() {
-    return VcsLogIcons.ExpandMerges;
   }
 
   @NotNull

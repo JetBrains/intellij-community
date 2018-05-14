@@ -160,6 +160,7 @@
     <inspection_tool class="BooleanMethodIsAlwaysInverted" enabled="false" level="WARNING" enabled_by_default="false" />
     <inspection_tool class="BoundedWildcard" enabled="true" level="WARNING" enabled_by_default="true">
       <option name="REPORT_INVARIANT_CLASSES" value="false" />
+      <option name="REPORT_PRIVATE_METHODS" value="false" />
     </inspection_tool>
     <inspection_tool class="BpmnConfigDomInspection" enabled="false" level="ERROR" enabled_by_default="false" />
     <inspection_tool class="BuildoutUnresolvedPartInspection" enabled="false" level="WARNING" enabled_by_default="false" />

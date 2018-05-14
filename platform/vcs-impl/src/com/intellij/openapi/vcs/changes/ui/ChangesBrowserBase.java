@@ -47,12 +47,7 @@ public abstract class ChangesBrowserBase extends JPanel implements DataProvider 
     myProject = project;
     myViewer = createTreeList(project, showCheckboxes, highlightProblems);
 
-    DefaultActionGroup toolbarGroups = new DefaultActionGroup();
-    toolbarGroups.add(myToolBarGroup);
-    toolbarGroups.addSeparator();
-    toolbarGroups.add(ActionManager.getInstance().getAction(ChangesTree.GROUP_BY_ACTION_GROUP));
-
-    myToolbar = ActionManager.getInstance().createActionToolbar("ChangesBrowser", toolbarGroups, true);
+    myToolbar = ActionManager.getInstance().createActionToolbar("ChangesBrowser", myToolBarGroup, true);
     myToolbar.setTargetComponent(this);
 
     myViewer.installPopupHandler(myPopupMenuGroup);
@@ -85,6 +80,12 @@ public abstract class ChangesBrowserBase extends JPanel implements DataProvider 
 
     myToolBarGroup.addAll(createToolbarActions());
     myPopupMenuGroup.addAll(createPopupMenuActions());
+
+    AnAction groupByAction = ActionManager.getInstance().getAction(ChangesTree.GROUP_BY_ACTION_GROUP);
+    if (!ActionUtil.recursiveContainsAction(myToolBarGroup, groupByAction)) {
+      myToolBarGroup.addSeparator();
+      myToolBarGroup.add(groupByAction);
+    }
 
     myShowDiffAction.registerCustomShortcutSet(this, null);
   }

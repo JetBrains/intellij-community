@@ -11,9 +11,9 @@ Groovy script
       PsiElement(=)('=')
       PsiWhiteSpace(' ')
       Literal
-        GroovyASTPsiElementImpl($/ regex literal)
+        GroovyASTPsiElementImpl(DOLLAR_SLASHY_LITERAL)
           PsiElement($/ regex begin)('$/')
-          GrStringContentImpl(GString content element)
+          GrStringContentImpl(STRING_CONTENT)
             ASTWrapperPsiElement($/ regex content)
               <empty list>
           PsiErrorElement:Dollar slash ending expected

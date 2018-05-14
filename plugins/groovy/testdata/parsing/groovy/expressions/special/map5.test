@@ -7,14 +7,14 @@ Groovy script
       Argument label
         Compound Gstring
           PsiElement(Gstring begin)('"')
-          GrStringContentImpl(GString content element)
+          GrStringContentImpl(STRING_CONTENT)
             ASTWrapperPsiElement(Gstring content)
               <empty list>
           GString injection
             PsiElement($)('$')
             Reference expression
               PsiElement(identifier)('st')
-          GrStringContentImpl(GString content element)
+          GrStringContentImpl(STRING_CONTENT)
             PsiElement(Gstring content)(' aga')
           PsiElement(Gstring end)('"')
       PsiElement(:)(':')
@@ -24,14 +24,14 @@ Groovy script
     PsiWhiteSpace(' ')
     Compound Gstring
       PsiElement(Gstring begin)('"')
-      GrStringContentImpl(GString content element)
+      GrStringContentImpl(STRING_CONTENT)
         ASTWrapperPsiElement(Gstring content)
           <empty list>
       GString injection
         PsiElement($)('$')
         Reference expression
           PsiElement(identifier)('st')
-      GrStringContentImpl(GString content element)
+      GrStringContentImpl(STRING_CONTENT)
         PsiElement(Gstring content)(' nee')
       PsiElement(Gstring end)('"')
     PsiElement(])(']')

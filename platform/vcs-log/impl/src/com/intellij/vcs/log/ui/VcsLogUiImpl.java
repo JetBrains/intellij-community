@@ -21,11 +21,14 @@ import com.intellij.vcs.log.ui.table.GraphTableModel;
 import com.intellij.vcs.log.ui.table.VcsLogGraphTable;
 import com.intellij.vcs.log.visible.VisiblePackRefresher;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
 
 public class VcsLogUiImpl extends AbstractVcsLogUi {
+  private static final String HELP_ID = "reference.changesToolWindow.log";
+  
   @NotNull private final MainVcsLogUiProperties myUiProperties;
   @NotNull private final MainFrame myMainFrame;
   @NotNull private final MyVcsLogUiPropertiesListener myPropertiesListener;
@@ -141,6 +144,12 @@ public class VcsLogUiImpl extends AbstractVcsLogUi {
   @NotNull
   public MainVcsLogUiProperties getProperties() {
     return myUiProperties;
+  }
+
+  @Nullable
+  @Override
+  public String getHelpId() {
+    return HELP_ID;
   }
 
   @Override

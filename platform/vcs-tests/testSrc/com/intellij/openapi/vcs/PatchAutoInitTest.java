@@ -216,6 +216,21 @@ public class PatchAutoInitTest extends PlatformTestCase {
     checkPath(result, path, Collections.singletonList(root), StringUtil.split(prefix, "/").size());
   }
 
+  public void testFileAdditionWithMultipleSimilarModules() {
+    final VirtualFile root = myProject.getBaseDir();
+    PsiTestUtil.addContentRoot(myModule, root);
+    VfsTestUtil.createDir(root, "module-1/src/com/intellij/openapi/colors");
+    VfsTestUtil.createDir(root, "module-2/src/com/intellij/openapi/editor");
+    VfsTestUtil.createDir(root, "module-3/src/com/intellij/openapi/modules");
+    VfsTestUtil.createDir(root, "platform-tests/testSrc/com/intellij/openapi/editor");
+
+    TextFilePatch patch = createFileAddition("module-new/src/com/intellij/openapi/tests/SomeNewFile.java");
+
+    final MatchPatchPaths iterator = new MatchPatchPaths(myProject);
+    final List<AbstractFilePatchInProgress> result = iterator.execute(Collections.singletonList(patch));
+    checkPath(result, "module-new/src/com/intellij/openapi/tests/SomeNewFile.java", Collections.singletonList(root), 0);
+  }
+
   private static void checkPath(List<AbstractFilePatchInProgress> filePatchInProgresses, String path, List<VirtualFile> bases, int strip) {
     for (AbstractFilePatchInProgress patch : filePatchInProgresses) {
       if (bases.contains(patch.getBase()) && path.equals(patch.getCurrentPath()) && (patch.getCurrentStrip() == strip)) {

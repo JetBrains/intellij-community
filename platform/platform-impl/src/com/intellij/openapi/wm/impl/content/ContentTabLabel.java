@@ -4,9 +4,7 @@ package com.intellij.openapi.wm.impl.content;
 import com.intellij.ide.IdeTooltip;
 import com.intellij.ide.IdeTooltipManager;
 import com.intellij.ide.ui.UISettings;
-import com.intellij.ide.ui.UISettingsListener;
 import com.intellij.openapi.actionSystem.IdeActions;
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.keymap.KeymapManager;
 import com.intellij.openapi.keymap.KeymapUtil;
 import com.intellij.openapi.ui.popup.ActiveIcon;
@@ -15,7 +13,6 @@ import com.intellij.ui.Gray;
 import com.intellij.ui.content.Content;
 import com.intellij.ui.content.ContentManager;
 import com.intellij.util.ui.BaseButtonBehavior;
-import com.intellij.util.ui.JBEmptyBorder;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.TimedDeadzone;
 import org.jetbrains.annotations.NotNull;
@@ -30,7 +27,6 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
-import java.util.function.Function;
 import java.util.stream.Collectors;
 
 class ContentTabLabel extends BaseLabel {
@@ -155,11 +151,6 @@ class ContentTabLabel extends BaseLabel {
           repaint();
         }
       }
-    });
-
-    ApplicationManager.getApplication().getMessageBus().connect().subscribe(UISettingsListener.TOPIC, uiSettings -> {
-      revalidate();
-      repaint();
     });
   }
 

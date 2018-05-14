@@ -2,9 +2,15 @@
 package com.intellij.openapi.keymap;
 
 import com.intellij.util.messages.Topic;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 public interface KeymapManagerListener {
   Topic<KeymapManagerListener> TOPIC = new Topic<>("KeymapManagerListener", KeymapManagerListener.class);
 
-  void activeKeymapChanged(Keymap keymap);
+  default void activeKeymapChanged(@Nullable Keymap keymap) {
+  }
+
+  default void shortcutChanged(@NotNull Keymap keymap, @NotNull String actionId) {
+  }
 }

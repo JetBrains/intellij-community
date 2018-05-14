@@ -976,7 +976,7 @@ public class ControlFlowAnalyzer extends JavaElementVisitor {
   }
 
   private void addConditionalRuntimeThrow() {
-    if (myTrapStack.isEmpty()) {
+    if (!shouldHandleException()) {
       return;
     }
     
@@ -990,6 +990,15 @@ public class ControlFlowAnalyzer extends JavaElementVisitor {
     throwException(myError, null);
 
     ifNoException.setOffset(myCurrentFlow.getInstructionCount());
+  }
+
+  private boolean shouldHandleException() {
+    for (Trap trap : myTrapStack) {
+      if (trap instanceof TryCatch || trap instanceof TryFinally || trap instanceof TwrFinally) {
+        return true;
+      }
+    }
+    return false;
   }
 
   @Override
@@ -1700,7 +1709,7 @@ public class ControlFlowAnalyzer extends JavaElementVisitor {
       ifNotFail.setOffset(myCurrentFlow.getInstructionCount());
     }
 
-    if (!myTrapStack.isEmpty()) {
+    if (shouldHandleException()) {
       addMethodThrows(method, anchor);
     }
   }
@@ -1788,7 +1797,7 @@ public class ControlFlowAnalyzer extends JavaElementVisitor {
       addInstruction(new MethodCallInstruction(expression, null, constructor == null ? Collections.emptyList() : JavaMethodContractUtil
         .getMethodContracts(constructor)));
 
-      if (!myTrapStack.isEmpty()) {
+      if (shouldHandleException()) {
         addMethodThrows(constructor, expression);
       }
       setEmptyCollectionSize(expression);

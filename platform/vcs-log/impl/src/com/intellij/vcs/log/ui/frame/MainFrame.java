@@ -57,7 +57,6 @@ import static com.intellij.openapi.vfs.VfsUtilCore.toVirtualFileArray;
 import static com.intellij.util.ObjectUtils.chooseNotNull;
 
 public class MainFrame extends JPanel implements DataProvider, Disposable {
-  private static final String HELP_ID = "reference.changesToolWindow.log";
   private static final String DIFF_SPLITTER_PROPORTION = "vcs.log.diff.splitter.proportion";
   private static final String DETAILS_SPLITTER_PROPORTION = "vcs.log.details.splitter.proportion";
   private static final String CHANGES_SPLITTER_PROPORTION = "vcs.log.changes.splitter.proportion";
@@ -182,23 +181,25 @@ public class MainFrame extends JPanel implements DataProvider, Disposable {
 
   private JComponent createActionsToolbar() {
     DefaultActionGroup toolbarGroup = new DefaultActionGroup();
-    toolbarGroup.add(ActionManager.getInstance().getAction(VcsLogActionPlaces.TOOLBAR_ACTION_GROUP));
-
+    toolbarGroup.copyFromGroup((DefaultActionGroup)ActionManager.getInstance().getAction(VcsLogActionPlaces.TOOLBAR_ACTION_GROUP));
+    if (BekUtil.isBekEnabled()) {
+      Constraints constraint = new Constraints(Anchor.BEFORE, VcsLogActionPlaces.VCS_LOG_PRESENTATION_SETTINGS_ACTION);
+      if (BekUtil.isLinearBekEnabled()) {
+        toolbarGroup.add(new IntelliSortChooserPopupAction(), constraint);
+        // can not register both of the actions in xml file, choosing to register an action for the "outer world"
+        // I can of course if linear bek is enabled replace the action on start but why bother
+      }
+      else {
+        toolbarGroup.add(ActionManager.getInstance().getAction(VcsLogActionPlaces.VCS_LOG_INTELLI_SORT_ACTION),
+                         constraint);
+      }
+    }
+    
     DefaultActionGroup mainGroup = new DefaultActionGroup();
     mainGroup.add(ActionManager.getInstance().getAction(VcsLogActionPlaces.VCS_LOG_TEXT_FILTER_SETTINGS_ACTION));
     mainGroup.add(new Separator());
     mainGroup.add(myFilterUi.createActionGroup());
     mainGroup.addSeparator();
-    if (BekUtil.isBekEnabled()) {
-      if (BekUtil.isLinearBekEnabled()) {
-        mainGroup.add(new IntelliSortChooserPopupAction());
-        // can not register both of the actions in xml file, choosing to register an action for the "outer world"
-        // I can of course if linear bek is enabled replace the action on start but why bother
-      }
-      else {
-        mainGroup.add(ActionManager.getInstance().getAction(VcsLogActionPlaces.VCS_LOG_INTELLI_SORT_ACTION));
-      }
-    }
     mainGroup.add(toolbarGroup);
     ActionToolbar toolbar = createActionsToolbar(mainGroup);
 
@@ -206,15 +207,16 @@ public class MainFrame extends JPanel implements DataProvider, Disposable {
     textFilter.setVerticalSizeReferent(toolbar.getComponent());
     textFilter.setBorder(JBUI.Borders.emptyLeft(5));
 
-    ActionToolbar settings =
-      createActionsToolbar(new DefaultActionGroup(ActionManager.getInstance().getAction(VcsLogActionPlaces.VCS_LOG_QUICK_SETTINGS_ACTION)));
-    settings.setReservePlaceAutoPopupIcon(false);
-    settings.setLayoutPolicy(ActionToolbar.NOWRAP_LAYOUT_POLICY);
+    ActionToolbar goToHashOrRefAction =
+      createActionsToolbar(
+        new DefaultActionGroup(ActionManager.getInstance().getAction(VcsLogActionPlaces.VCS_LOG_GO_TO_HASH_OR_REF_ACTION)));
+    goToHashOrRefAction.setReservePlaceAutoPopupIcon(false);
+    goToHashOrRefAction.setLayoutPolicy(ActionToolbar.NOWRAP_LAYOUT_POLICY);
 
     JPanel panel = new JPanel(new MigLayout("ins 0, fill", "[left]0[left, fill]push[right]", "center"));
     panel.add(textFilter);
     panel.add(toolbar.getComponent());
-    panel.add(settings.getComponent());
+    panel.add(goToHashOrRefAction.getComponent());
     return panel;
   }
 
@@ -240,9 +242,6 @@ public class MainFrame extends JPanel implements DataProvider, Disposable {
       List<VcsFullCommitDetails> details = myLog.getSelectedDetails();
       if (details.size() > VcsLogUtil.MAX_SELECTED_COMMITS) return null;
       return ContainerUtil.map2Array(details, CommittedChangeListForRevision.class, VcsLogUtil::createCommittedChangeList);
-    }
-    else if (PlatformDataKeys.HELP_ID.is(dataId)) {
-      return HELP_ID;
     }
     else if (VcsLogInternalDataKeys.LOG_UI_PROPERTIES.is(dataId)) {
       return myUiProperties;

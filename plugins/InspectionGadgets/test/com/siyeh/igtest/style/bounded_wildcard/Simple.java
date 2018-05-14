@@ -29,7 +29,7 @@ public class Simple<T> {
     }
   }
 
-  boolean proper(Processor<? super T> processor) {
+  private boolean proper(Processor<? super T> processor) {
     return processor.process(null);
   }
 
@@ -39,7 +39,7 @@ public class Simple<T> {
     return f.apply(null);
   }
 
-  Number foo2(Function<?, <warning descr="Can generalize to '? extends Number'">Number</warning>> f) {
+  private Number foo2(Function<?, <warning descr="Can generalize to '? extends Number'">Number</warning>> f) {
     return ((f)).apply(null);
   }
 
@@ -84,7 +84,7 @@ public class Simple<T> {
 
 
   //////////////// asynch
-  void asynch(AsynchConsumer<<warning descr="Can generalize to '? super String'">String</warning>> asconsumer) {
+  private void asynch(AsynchConsumer<<warning descr="Can generalize to '? super String'">String</warning>> asconsumer) {
     asconsumer.consume("changeList");
     asconsumer.finished();
   }

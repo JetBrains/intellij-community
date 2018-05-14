@@ -94,7 +94,7 @@ static bool IsPathWatchable(const char *pathToWatch) {
     return watchable;
 }
 
-static void PrintUnwatcheableDrives(PrintBuffer *buffer, UINT32 unwatchable) {
+static void PrintUnwatchableDrives(PrintBuffer *buffer, UINT32 unwatchable) {
     for (int i = 0; i < ROOT_COUNT; i++) {
         if ((unwatchable & (1 << i)) != 0) {
             AppendString(buffer, watchDrive[i].rootPath);
@@ -103,7 +103,7 @@ static void PrintUnwatcheableDrives(PrintBuffer *buffer, UINT32 unwatchable) {
     }
 }
 
-static void PrintUnwatcheablePaths(PrintBuffer *buffer, UINT32 unwatchable) {
+static void PrintUnwatchablePaths(PrintBuffer *buffer, UINT32 unwatchable) {
     for (WatchRoot *root = firstWatchRoot; root; root = root->next) {
         const char *path = root->path;
         int drive = path[0] - 'A';
@@ -279,8 +279,8 @@ static void UpdateRoots(bool report) {
 
     PrintBuffer buffer = {NULL, 0};
     AppendString(&buffer, "UNWATCHEABLE\n");
-    PrintUnwatcheableDrives(&buffer, unwatchable);
-    PrintUnwatcheablePaths(&buffer, unwatchable);
+    PrintUnwatchableDrives(&buffer, unwatchable);
+    PrintUnwatchablePaths(&buffer, unwatchable);
     AppendString(&buffer, "#\nREMAP\n");
     PrintRemapForSubstDrives(&buffer);
     AppendString(&buffer, "#");

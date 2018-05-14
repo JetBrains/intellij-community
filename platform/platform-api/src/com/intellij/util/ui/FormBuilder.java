@@ -30,6 +30,9 @@ import static com.intellij.util.ui.UIUtil.DEFAULT_HGAP;
 import static com.intellij.util.ui.UIUtil.DEFAULT_VGAP;
 import static java.awt.GridBagConstraints.*;
 
+/**
+ * also consider using {@link UI.PanelFactory} for non-trivial forms  
+ */
 public class FormBuilder {
   private boolean myAlignLabelOnRight;
 

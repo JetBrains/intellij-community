@@ -524,7 +524,7 @@ public class EditorPainter implements TextDrawingCallback {
       if (bgColor == null && attrs.getBackgroundColor() != null) bgColor = attrs.getBackgroundColor();
       if (effectColor == null && attrs.getEffectColor() != null) {
         EffectType type = attrs.getEffectType();
-        if (type != null && type != EffectType.BOXED && type != EffectType.ROUNDED_BOX) {
+        if (type != null && type != EffectType.BOXED && type != EffectType.ROUNDED_BOX && type != EffectType.STRIKEOUT) {
           effectColor = attrs.getEffectColor();
           effectType = type;
         }

@@ -57,6 +57,12 @@ public class JavaMethodBreakpointType extends JavaLineBreakpointTypeBase<JavaMet
 
   @NotNull
   @Override
+  public Icon getInactiveDependentIcon() {
+    return AllIcons.Debugger.Db_dep_method_breakpoint;
+  }
+
+  @NotNull
+  @Override
   public Icon getPendingIcon() {
     return AllIcons.Debugger.Db_pending_method_breakpoint;
   }
