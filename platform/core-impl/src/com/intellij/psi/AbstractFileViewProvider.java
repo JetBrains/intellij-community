@@ -416,6 +416,9 @@ public abstract class AbstractFileViewProvider extends UserDataHolderBase implem
   }
 
   public final void registerAsCopy(@NotNull AbstractFileViewProvider copy) {
+    if (copy.getUserData(KNOWN_COPIES) != null) {
+      LOG.error("A view provider copy must be registered before it may have its own copies, to avoid cycles");
+    }
     Set<AbstractFileViewProvider> copies = getUserData(KNOWN_COPIES);
     if (copies == null) {
       copies = putUserDataIfAbsent(KNOWN_COPIES, Collections.newSetFromMap(ContainerUtil.createConcurrentWeakMap()));
