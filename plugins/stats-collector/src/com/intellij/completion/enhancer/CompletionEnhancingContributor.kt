@@ -19,10 +19,12 @@ package com.intellij.completion.enhancer
 import com.intellij.codeInsight.completion.*
 import com.intellij.codeInsight.completion.CompletionResult.wrap
 import com.intellij.codeInsight.completion.impl.CompletionSorterImpl
-import com.intellij.codeInsight.lookup.*
+import com.intellij.codeInsight.lookup.LookupElement
+import com.intellij.codeInsight.lookup.LookupManager
 import com.intellij.codeInsight.lookup.impl.LookupImpl
+import com.intellij.lang.Language
 import com.intellij.openapi.application.ApplicationManager
-import com.intellij.sorting.language
+import com.intellij.psi.util.PsiUtilCore
 import com.intellij.stats.completion.prefixLength
 
 
@@ -32,7 +34,7 @@ import com.intellij.stats.completion.prefixLength
  */
 class InvocationCountEnhancingContributor : CompletionContributor() {
     companion object {
-        private val MAX_INVOCATION_COUNT = 5
+        private const val MAX_INVOCATION_COUNT = 5
 
         var RUN_COMPLETION_AFTER_CHARS = 2
         var isEnabledInTests = false
@@ -88,4 +90,8 @@ class InvocationCountEnhancingContributor : CompletionContributor() {
         parameters.language()?.registerSecondCompletionContributorsTime(end - start)
     }
 
+    private fun CompletionParameters.language(): Language? {
+        val offset = editor.caretModel.offset
+        return PsiUtilCore.getLanguageAtOffset(originalFile, offset)
+    }
 }

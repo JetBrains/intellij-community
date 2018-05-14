@@ -48,16 +48,8 @@
                         testServiceImplementation="com.intellij.mocks.TestExperimentDecision">
     </applicationService>
 
-    <applicationService serviceInterface="com.intellij.sorting.Ranker"
-                        serviceImplementation="com.intellij.sorting.MLRanker">
-    </applicationService>
-
     <applicationService serviceInterface="com.intellij.stats.completion.InstallationIdProvider"
                         serviceImplementation="com.intellij.stats.completion.PermanentInstallationIdProvider">
-    </applicationService>
-
-    <applicationService serviceInterface="com.intellij.codeInsight.completion.CompletionFinalSorter$Factory"
-                        serviceImplementation="com.intellij.sorting.MLSorterFactory">
     </applicationService>
 
     <applicationService serviceImplementation="com.intellij.sorting.SortingTimeStatistics"/>
@@ -85,10 +77,6 @@
 
     <component>
       <implementation-class>com.intellij.stats.completion.CompletionTrackerInitializer</implementation-class>
-    </component>
-
-    <component>
-      <implementation-class>com.intellij.sorting.FeatureTransformerProvider</implementation-class>
     </component>
 
     <component>
