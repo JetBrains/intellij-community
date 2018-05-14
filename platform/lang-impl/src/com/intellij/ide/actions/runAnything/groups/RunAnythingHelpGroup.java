@@ -7,7 +7,6 @@ import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.extensions.ExtensionPointName;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.Arrays;
 import java.util.Collection;
 import java.util.Objects;
 import java.util.stream.Collectors;
@@ -15,7 +14,6 @@ import java.util.stream.Collectors;
 public abstract class RunAnythingHelpGroup<P extends RunAnythingActivityProvider>
   extends RunAnythingGroupBase {
   public static final ExtensionPointName<RunAnythingGroup> EP_NAME = ExtensionPointName.create("com.intellij.runAnything.helpGroup");
-  public static final Collection<RunAnythingGroup> HELP_GROUPS = Arrays.asList(EP_NAME.getExtensions());
 
   @NotNull
   public abstract Collection<P> getProviders();
