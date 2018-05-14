@@ -9,6 +9,7 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.Vector;
 
 @SuppressWarnings("unchecked")
@@ -22,19 +23,35 @@ public abstract class RunAnythingSearchListModel extends DefaultListModel {
     clearIndexes();
   }
 
-  protected abstract void clearIndexes();
+  @NotNull
+  protected abstract Collection<RunAnythingGroup> getGroups();
+
+  void clearIndexes() {
+    RunAnythingGroup.clearIndexes(getGroups());
+  }
 
   @Nullable
-  protected abstract RunAnythingGroup findGroupByMoreIndex(int index);
+  RunAnythingGroup findGroupByMoreIndex(int index) {
+    return RunAnythingGroup.findGroupByMoreIndex(getGroups(), index);
+  }
 
-  protected abstract void shiftIndexes(int baseIndex, int shift);
+  void shiftIndexes(int baseIndex, int shift) {
+    RunAnythingGroup.shiftIndexes(getGroups(), baseIndex, shift);
+  }
 
   @Nullable
-  protected abstract String getTitle(int titleIndex);
+  String getTitle(int titleIndex) {
+    return RunAnythingGroup.getTitle(getGroups(), titleIndex);
+  }
 
-  protected abstract int[] getAllIndexes();
+  int[] getAllIndexes() {
+    RunAnythingGroup.getAllIndexes(getGroups());
+    return new int[0];
+  }
 
-  protected abstract boolean isMoreIndex(int index);
+  boolean isMoreIndex(int index) {
+    return RunAnythingGroup.isMoreIndex(getGroups(), index);
+  }
 
   int next(int index) {
     int[] all = getAllIndexes();

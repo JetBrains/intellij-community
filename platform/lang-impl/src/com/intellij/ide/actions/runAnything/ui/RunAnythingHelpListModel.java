@@ -3,37 +3,16 @@ package com.intellij.ide.actions.runAnything.ui;
 
 import com.intellij.ide.actions.runAnything.RunAnythingSearchListModel;
 import com.intellij.ide.actions.runAnything.groups.RunAnythingGroup;
-import org.jetbrains.annotations.Nullable;
+import com.intellij.ide.actions.runAnything.groups.RunAnythingHelpGroup;
+import org.jetbrains.annotations.NotNull;
 
-import static com.intellij.ide.actions.runAnything.groups.RunAnythingHelpGroup.HELP_GROUPS;
+import java.util.Arrays;
+import java.util.Collection;
 
 public class RunAnythingHelpListModel extends RunAnythingSearchListModel {
+  @NotNull
   @Override
-  public void clearIndexes() {
-    RunAnythingGroup.clearIndexes(HELP_GROUPS);
-  }
-
-  @Nullable
-  public RunAnythingGroup findGroupByMoreIndex(int index) {
-    return RunAnythingGroup.findGroupByMoreIndex(HELP_GROUPS, index);
-  }
-
-  public void shiftIndexes(int baseIndex, int shift) {
-    RunAnythingGroup.shiftIndexes(HELP_GROUPS, baseIndex, shift);
-  }
-
-  @Nullable
-  public String getTitle(int titleIndex) {
-    return RunAnythingGroup.getTitle(HELP_GROUPS, titleIndex);
-  }
-
-  @Override
-  public int[] getAllIndexes() {
-    return RunAnythingGroup.getAllIndexes(HELP_GROUPS);
-  }
-
-  @Override
-  public boolean isMoreIndex(int index) {
-    return RunAnythingGroup.isMoreIndex(HELP_GROUPS, index);
+  protected Collection<RunAnythingGroup> getGroups() {
+    return Arrays.asList(RunAnythingHelpGroup.EP_NAME.getExtensions());
   }
 }
