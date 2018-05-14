@@ -9,14 +9,12 @@ import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 
-import static com.intellij.ide.actions.runAnything.RunAnythingUtil.fetchProject;
-
 /**
  * Implement this class if a particular run configuration should be created for matching input string.
  */
 public abstract class RunAnythingMatchedRunConfigurationProvider extends RunAnythingRunConfigurationExecutionProvider
   implements RunAnythingHelpProviderBase<ChooseRunConfigurationPopup.ItemWrapper>,
-             RunAnythingSingleParametrizedExecutionProvider<ChooseRunConfigurationPopup.ItemWrapper> {
+             RunAnythingActivityProvider<ChooseRunConfigurationPopup.ItemWrapper> {
   /**
    * Actual run configuration creation by {@code commandLine}
    *
@@ -36,11 +34,5 @@ public abstract class RunAnythingMatchedRunConfigurationProvider extends RunAnyt
   @Override
   public Icon getIcon() {
     return getConfigurationFactory().getIcon();
-  }
-
-  @NotNull
-  @Override
-  public ChooseRunConfigurationPopup.ItemWrapper getValue(@NotNull DataContext dataContext, @NotNull String pattern) {
-    return ChooseRunConfigurationPopup.ItemWrapper.wrap(fetchProject(dataContext), createConfiguration(dataContext, pattern));
   }
 }

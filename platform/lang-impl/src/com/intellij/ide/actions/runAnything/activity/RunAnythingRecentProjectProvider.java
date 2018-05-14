@@ -5,6 +5,7 @@ import com.intellij.ide.IdeBundle;
 import com.intellij.ide.RecentProjectsManager;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.DataContext;
+import com.intellij.util.ObjectUtils;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Arrays;
@@ -33,5 +34,12 @@ public class RunAnythingRecentProjectProvider extends RunAnythingActionCompletio
   @Override
   public String getCommandPrefix() {
     return "open";
+  }
+
+  @NotNull
+  @Override
+  public String getCommand(@NotNull AnAction value) {
+    return getCommandPrefix() + " " + ObjectUtils
+      .notNull(value.getTemplatePresentation().getText(), IdeBundle.message("run.anything.actions.undefined"));
   }
 }

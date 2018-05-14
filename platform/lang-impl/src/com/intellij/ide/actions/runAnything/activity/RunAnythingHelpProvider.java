@@ -9,7 +9,7 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 
-public interface RunAnythingHelpProvider<V> extends RunAnythingParametrizedExecutionProvider<V> {
+public interface RunAnythingHelpProvider<V> extends RunAnythingActivityProvider<V> {
   @NotNull
   RunAnythingItem getHelpItem(@NotNull DataContext dataContext);
 

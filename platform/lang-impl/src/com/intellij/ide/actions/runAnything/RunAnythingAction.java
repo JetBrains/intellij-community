@@ -12,7 +12,6 @@ import com.intellij.ide.IdeBundle;
 import com.intellij.ide.IdeEventQueue;
 import com.intellij.ide.IdeTooltipManager;
 import com.intellij.ide.actions.runAnything.activity.RunAnythingActivityProvider;
-import com.intellij.ide.actions.runAnything.activity.RunAnythingParametrizedExecutionProvider;
 import com.intellij.ide.actions.runAnything.groups.RunAnythingCompletionProviderGroup;
 import com.intellij.ide.actions.runAnything.groups.RunAnythingGroup;
 import com.intellij.ide.actions.runAnything.groups.RunAnythingHelpGroup;
@@ -298,7 +297,8 @@ public class RunAnythingAction extends AnAction implements CustomComponentAction
             return;
           }
 
-          adjustEmptyText(myPopupField.getTextEditor(), field -> true, "", IdeBundle.message("run.anything.help.list.empty.secondary.text"));
+          adjustEmptyText(myPopupField.getTextEditor(), field -> true, "",
+                          IdeBundle.message("run.anything.help.list.empty.secondary.text"));
         }
       }
     });
@@ -598,7 +598,7 @@ public class RunAnythingAction extends AnAction implements CustomComponentAction
     HashMap<String, Object> dataMap = ContainerUtil.newHashMap();
     dataMap.put(CommonDataKeys.PROJECT.getName(), project);
     dataMap.put(LangDataKeys.MODULE.getName(), getModule());
-    myDataContext = SimpleDataContext.getSimpleContext(dataMap, e.getDataContext());
+    myDataContext = createDataContext(SimpleDataContext.getSimpleContext(dataMap, e.getDataContext()), ALT_IS_PRESSED.get());
 
     if (myPopupField != null) {
       Disposer.dispose(myPopupField);
@@ -790,17 +790,17 @@ public class RunAnythingAction extends AnAction implements CustomComponentAction
     DataContext dataContext = createDataContext(myDataContext, isAltPressed);
     RunAnythingActivityProvider provider = RunAnythingActivityProvider.findMatchedProvider(dataContext, pattern);
 
-    if (!(provider instanceof RunAnythingParametrizedExecutionProvider)) {
+    if (provider == null) {
       return;
     }
 
-    Object value = ((RunAnythingParametrizedExecutionProvider)provider).findMatchingValue(dataContext, pattern);
+    Object value = provider.findMatchingValue(dataContext, pattern);
 
     if (value == null) {
       return;
     }
     //noinspection unchecked
-    Icon icon = ((RunAnythingParametrizedExecutionProvider)provider).getIcon(value);
+    Icon icon = provider.getIcon(value);
     if (icon == null) {
       return;
     }

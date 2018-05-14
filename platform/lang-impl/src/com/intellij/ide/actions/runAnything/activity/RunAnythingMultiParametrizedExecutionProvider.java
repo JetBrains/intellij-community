@@ -2,26 +2,18 @@
 package com.intellij.ide.actions.runAnything.activity;
 
 import com.intellij.openapi.actionSystem.DataContext;
+import com.intellij.openapi.util.text.StringUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Collection;
 
-public interface RunAnythingMultiParametrizedExecutionProvider<V> extends RunAnythingParametrizedExecutionProvider<V> {
+public interface RunAnythingMultiParametrizedExecutionProvider<V> extends RunAnythingActivityProvider<V> {
   @NotNull
   Collection<V> getValues(@NotNull DataContext dataContext);
 
-  @Override
-  default boolean isMatching(@NotNull DataContext dataContext, @NotNull String pattern) {
-    return findMatchingValue(dataContext, pattern) != null;
-  }
-
-  @Override
-  default void execute(@NotNull DataContext dataContext, @NotNull String pattern) {
-    V value = findMatchingValue(dataContext, pattern);
-    if (value != null) {
-      execute(dataContext, value);
-    }
+  default boolean isMatching(@NotNull DataContext dataContext, @NotNull String pattern, @NotNull V value) {
+    return StringUtil.equals(pattern, getCommand(value));
   }
 
   @Nullable

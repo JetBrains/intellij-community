@@ -4,5 +4,6 @@ package com.intellij.ide.actions.runAnything.activity;
 import com.intellij.openapi.actionSystem.AnAction;
 
 public abstract class RunAnythingActionCompletionRecentProvider<V extends AnAction> extends RunAnythingActionExecutionProvider<V>
-  implements RunAnythingMultiParametrizedExecutionProvider<V>, RunAnythingRecentProvider<V>, RunAnythingCompletionProvider<V> {
+  implements RunAnythingMultiParametrizedExecutionProvider<V>, RunAnythingRecentProvider<V>, RunAnythingCompletionProvider<V>,
+             RunAnythingHelpProviderBase<V> {
 }

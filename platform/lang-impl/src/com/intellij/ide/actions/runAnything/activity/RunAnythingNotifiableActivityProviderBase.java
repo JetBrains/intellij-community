@@ -15,23 +15,23 @@ import org.jetbrains.annotations.Nullable;
 
 import static com.intellij.ide.actions.runAnything.RunAnythingUtil.fetchProject;
 
-public abstract class RunAnythingNotifiableActivityProviderBase<V> implements RunAnythingParametrizedExecutionProvider<V> {
+public abstract class RunAnythingNotifiableActivityProviderBase<V> implements RunAnythingActivityProvider<V> {
   private static final String RUN_ANYTHING_GROUP_ID = IdeBundle.message("run.anything.custom.activity.notification.group.id");
 
   /**
    * Executes arbitrary activity if {@code pattern} is matched as {@link #isMatching(DataContext, String)}
    *
    * @param dataContext 'Run Anything' data context
-   * @param pattern     'Run Anything' search bar input text
+   * @param value       'Run Anything' search bar input text
    * @return true if succeed, false is failed
    */
-  protected abstract boolean runNotificationProduceActivity(@NotNull DataContext dataContext, @NotNull String pattern);
+  protected abstract boolean runNotificationProduceActivity(@NotNull DataContext dataContext, @NotNull V value);
 
   /**
-   * Creates rollback action for {@link #runNotificationProduceActivity(DataContext, String)}
+   * Creates rollback action for {@link #runNotificationProduceActivity(DataContext, Object)}
    *
    * @param dataContext 'Run Anything' data context
-   * @return rollback action for {@link #runNotificationProduceActivity(DataContext, String)}, null if isn't provided
+   * @return rollback action for {@link #runNotificationProduceActivity(DataContext, Object)}, null if isn't provided
    */
   @Nullable
   protected abstract Runnable getRollbackAction(@NotNull DataContext dataContext);
@@ -43,7 +43,7 @@ public abstract class RunAnythingNotifiableActivityProviderBase<V> implements Ru
    * @param pattern     'Run Anything' search bar input text
    */
   @NotNull
-  protected abstract String getNotificationTitle(@NotNull DataContext dataContext, @NotNull String pattern);
+  protected abstract String getNotificationTitle(@NotNull DataContext dataContext, @NotNull V value);
 
   /**
    * Creates post activity {@link Notification} content
@@ -52,7 +52,8 @@ public abstract class RunAnythingNotifiableActivityProviderBase<V> implements Ru
    * @param pattern     'Run Anything' search bar input text
    */
   @NotNull
-  protected abstract String getNotificationContent(@NotNull DataContext dataContext, @NotNull String pattern);
+  protected abstract String getNotificationContent(@NotNull DataContext dataContext, @NotNull V value);
+
 
   /**
    * Executes arbitrary activity in IDE and shows {@link Notification} with optional rollback action
@@ -62,24 +63,25 @@ public abstract class RunAnythingNotifiableActivityProviderBase<V> implements Ru
    * @return true if succeed, false is failed
    */
   @Override
-  public void execute(@NotNull DataContext dataContext, @NotNull String pattern) {
-    if (runNotificationProduceActivity(dataContext, pattern)) {
-      getNotificationCallback(dataContext, pattern).run();
+  public void execute(@NotNull DataContext dataContext, @NotNull V value) {
+    if (runNotificationProduceActivity(dataContext, value)) {
+      getNotificationCallback(dataContext, value).run();
     }
     else {
-      Messages.showWarningDialog(fetchProject(dataContext), IdeBundle.message("run.anything.notification.warning.content", pattern),
+      Messages.showWarningDialog(fetchProject(dataContext),
+                                 IdeBundle.message("run.anything.notification.warning.content", getCommand(value)),
                                  IdeBundle.message("run.anything.notification.warning.title"));
     }
   }
 
-  private Runnable getNotificationCallback(@NotNull DataContext dataContext, @NotNull String commandLine) {
+  private Runnable getNotificationCallback(@NotNull DataContext dataContext, @NotNull V value) {
     return () -> {
       Notification notification = new Notification(
         RUN_ANYTHING_GROUP_ID,
         AllIcons.Actions.Run_anything,
-        getNotificationTitle(dataContext, commandLine),
+        getNotificationTitle(dataContext, value),
         null,
-        getNotificationContent(dataContext, commandLine),
+        getNotificationContent(dataContext, value),
         NotificationType.INFORMATION,
         null
       );

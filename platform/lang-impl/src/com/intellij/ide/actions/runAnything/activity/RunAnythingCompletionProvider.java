@@ -10,7 +10,7 @@ import java.util.List;
 import java.util.stream.Collectors;
 
 public interface RunAnythingCompletionProvider<V>
-  extends RunAnythingMultiParametrizedExecutionProvider<V>, RunAnythingHelpProviderBase<V>, RunAnythingMainListItemProvider<V> {
+  extends RunAnythingMultiParametrizedExecutionProvider<V>, RunAnythingMainListItemProvider<V> {
   @NotNull
   String getGroupTitle();
 
