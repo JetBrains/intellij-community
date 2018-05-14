@@ -11,7 +11,6 @@ import com.intellij.diff.merge.MergeUtil
 import com.intellij.diff.util.DiffUtil
 import com.intellij.icons.AllIcons
 import com.intellij.ide.presentation.VirtualFilePresentation
-import com.intellij.openapi.actionSystem.*
 import com.intellij.openapi.command.WriteCommandAction.writeCommandAction
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.diff.impl.mergeTool.MergeVersion
@@ -66,9 +65,12 @@ open class MultipleFileMergeDialog2(
   private lateinit var acceptTheirsButton: JButton
   private lateinit var mergeButton: JButton
   private val tableModel = ListTreeTableModelOnColumns(DefaultMutableTreeNode(), createColumns())
-  private val binaryFiles = files.filter { it.fileType.isBinary || mergeProvider.isBinary(it) }
   private val projectManager = ProjectManagerEx.getInstanceEx()
   private var groupByDirectory = project?.let { VcsConfiguration.getInstance(it).GROUP_MULTIFILE_MERGE_BY_DIRECTORY } ?: false
+
+  private val comparator = compareBy<DefaultMutableTreeNode> {
+    (it.userObject as? VirtualFile)?.path ?: (it.userObject as String)
+  }
 
   private val virtualFileRenderer = object : ColoredTreeCellRenderer() {
     override fun customizeCellRenderer(tree: JTree,
@@ -90,9 +92,6 @@ open class MultipleFileMergeDialog2(
         is VirtualFile -> {
           icon = VirtualFilePresentation.getIcon(data)
           append(data.name, SimpleTextAttributes.REGULAR_ATTRIBUTES)
-          if (data in binaryFiles) {
-            append(" [${VcsBundle.message("multiple.file.merge.type.binary")}]", SimpleTextAttributes.REGULAR_ATTRIBUTES)
-          }
           if (!groupByDirectory) {
             val parent = data.parent
             if (parent != null) {
@@ -119,7 +118,7 @@ open class MultipleFileMergeDialog2(
     updateColumnSizes()
     updateTree()
     table.tree.selectionModel.addTreeSelectionListener { updateButtonState() }
-    table.selectionModel.setSelectionInterval(0, 0)
+    selectFirstFile()
     object : DoubleClickListener() {
       override fun onDoubleClick(event: MouseEvent): Boolean {
         showMergeDialog()
@@ -130,6 +129,15 @@ open class MultipleFileMergeDialog2(
     TableSpeedSearch(table, Convertor { (it as? VirtualFile)?.name })
   }
 
+  private fun selectFirstFile() {
+    if (!groupByDirectory) {
+      table.selectionModel.setSelectionInterval(0, 0)
+    }
+    else {
+      table.tree.selectionPath = TreeUtil.getFirstLeafNodePath(table.tree)
+    }
+  }
+
   override fun createCenterPanel(): JComponent {
     return panel(LCFlags.disableMagic) {
       val description = mergeDialogCustomizer.getMultipleFileMergeDescription(files)
@@ -137,10 +145,6 @@ open class MultipleFileMergeDialog2(
         row {
           label(description!!)
         }
-      }
-
-      row {
-        ActionManager.getInstance().createActionToolbar(ActionPlaces.UNKNOWN, createToolbarActionGroup(), true).component()
       }
 
       row {
@@ -175,6 +179,15 @@ open class MultipleFileMergeDialog2(
           }(growX)
         }
       }
+
+      row {
+        JCheckBox("Group files by directory").apply {
+          isSelected = groupByDirectory
+          addActionListener {
+            toggleGroupByDirectory(isSelected)
+          }
+        }()
+      }
     }
   }
 
@@ -205,16 +218,15 @@ open class MultipleFileMergeDialog2(
     }
   }
 
-  private fun createToolbarActionGroup() = DefaultActionGroup().apply {
-    add(object : ToggleAction("Group by Directory", "Group by Directory", AllIcons.Actions.GroupByPackage) {
-      override fun isSelected(e: AnActionEvent?) = groupByDirectory
-
-      override fun setSelected(e: AnActionEvent?, state: Boolean) {
-        groupByDirectory = state
-        project?.let { VcsConfiguration.getInstance(it).GROUP_MULTIFILE_MERGE_BY_DIRECTORY = groupByDirectory }
-        updateTree()
-      }
-    })
+  private fun toggleGroupByDirectory(state: Boolean) {
+    groupByDirectory = state
+    project?.let { VcsConfiguration.getInstance(it).GROUP_MULTIFILE_MERGE_BY_DIRECTORY = groupByDirectory }
+    val firstSelectedFile = getSelectedFiles().firstOrNull()
+    updateTree()
+    if (firstSelectedFile != null) {
+      val node = TreeUtil.findNodeWithObject(tableModel.root as DefaultMutableTreeNode, firstSelectedFile)
+      node?.let { TreeUtil.selectNode(table.tree, node) }
+    }
   }
 
   private fun updateTree() {
@@ -225,7 +237,7 @@ open class MultipleFileMergeDialog2(
       buildGroupedFileTree(root, commonAncestor)
     }
     else {
-      for (file in files) {
+      for (file in files.sortedBy { it.path }) {
         tableModel.insertNodeInto(DefaultMutableTreeNode(file, false), root, root.childCount)
       }
     }
@@ -247,7 +259,7 @@ open class MultipleFileMergeDialog2(
         val path = file.path.substring(0, nextIndex)
         val directoryNode = directoryNodes.getOrPut(path) {
           DefaultMutableTreeNode(path).also {
-            TreeUtil.insertNode(it, currentParentNode, tableModel, compareBy { it.userObject as String })
+            TreeUtil.insertNode(it, currentParentNode, tableModel, comparator)
           }
         }
         index = nextIndex + 1
@@ -256,7 +268,7 @@ open class MultipleFileMergeDialog2(
 
       TreeUtil.insertNode(
         DefaultMutableTreeNode(file, false), currentParentNode, tableModel,
-        compareBy { (it.userObject as VirtualFile).path }
+        comparator
       )
     }
 
@@ -269,7 +281,7 @@ open class MultipleFileMergeDialog2(
       if (child.userObject is String) {
         val parent = node.parent as DefaultMutableTreeNode
         tableModel.removeNodeFromParent(node)
-        TreeUtil.insertNode(child, parent, tableModel, compareBy { it.userObject as String })
+        TreeUtil.insertNode(child, parent, tableModel, comparator)
         collapseMiddlePaths(child)
       }
     }
