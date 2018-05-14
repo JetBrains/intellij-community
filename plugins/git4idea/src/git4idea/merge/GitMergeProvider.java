@@ -10,25 +10,25 @@ import com.intellij.openapi.util.Trinity;
 import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vcs.history.VcsRevisionNumber;
-import com.intellij.openapi.vcs.merge.MergeData;
-import com.intellij.openapi.vcs.merge.MergeProvider;
-import com.intellij.openapi.vcs.merge.MergeProvider2;
-import com.intellij.openapi.vcs.merge.MergeSession;
+import com.intellij.openapi.vcs.merge.*;
 import com.intellij.openapi.vfs.CharsetToolkit;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.ColumnInfo;
+import com.intellij.vcs.log.impl.HashImpl;
 import com.intellij.vcsUtil.VcsFileUtil;
 import com.intellij.vcsUtil.VcsRunnable;
 import com.intellij.vcsUtil.VcsUtil;
 import git4idea.GitFileRevision;
+import git4idea.GitLocalBranch;
 import git4idea.GitRevisionNumber;
 import git4idea.GitUtil;
 import git4idea.commands.*;
 import git4idea.history.GitHistoryUtils;
 import git4idea.i18n.GitBundle;
 import git4idea.repo.GitRepository;
+import git4idea.repo.GitRepositoryManager;
 import git4idea.util.GitFileUtils;
 import git4idea.util.StringScanner;
 import org.jetbrains.annotations.NotNull;
@@ -312,6 +312,32 @@ public class GitMergeProvider implements MergeProvider2 {
   }
 
   @Nullable
+  public String resolveMergeBranch(@NotNull VirtualFile file) {
+    GitRepository repository = GitRepositoryManager.getInstance(myProject).getRepositoryForFile(file);
+    if (repository == null) {
+      return null;
+    }
+    return resolveMergeBranch(repository);
+  }
+
+  @Nullable
+  private String resolveMergeBranch(GitRepository repository) {
+    GitRevisionNumber mergeHeadRevisionNumber;
+    try {
+      mergeHeadRevisionNumber = GitRevisionNumber.resolve(myProject, repository.getRoot(), MERGE_HEAD);
+    }
+    catch (VcsException e) {
+      return null;
+    }
+    Collection<GitLocalBranch>
+      localBranchesByHash = repository.getBranches().findLocalBranchesByHash(HashImpl.build(mergeHeadRevisionNumber.asString()));
+    if (localBranchesByHash.size() == 1) {
+      return localBranchesByHash.iterator().next().getName();
+    }
+    return null;
+  }
+
+  @Nullable
   private GitRevisionNumber readRevisionFromFile(@NotNull VirtualFile root, @NotNull File file) {
     if (!file.exists()) return null;
     String revision = DvcsUtil.tryLoadFileOrReturn(file, null, CharsetToolkit.UTF8);
@@ -398,6 +424,11 @@ public class GitMergeProvider implements MergeProvider2 {
     }
   }
 
+  @Override
+  public MergeDialogCustomizer createDefaultMergeDialogCustomizer() {
+    return new GitDefaultMergeDialogCustomizer(myProject, this);
+  }
+
   /**
    * The conflict descriptor
    */
@@ -419,11 +450,13 @@ public class GitMergeProvider implements MergeProvider2 {
    */
   private class MyMergeSession implements MergeSession {
     Map<VirtualFile, Conflict> myConflicts = new HashMap<>();
+    String mergeHeadBranchName;
 
     MyMergeSession(List<VirtualFile> filesToMerge) {
       // get conflict type by the file
       try {
-        for (Map.Entry<VirtualFile, List<VirtualFile>> e : GitUtil.sortFilesByGitRoot(filesToMerge).entrySet()) {
+        Map<VirtualFile, List<VirtualFile>> filesByRoot = GitUtil.sortFilesByGitRoot(filesToMerge);
+        for (Map.Entry<VirtualFile, List<VirtualFile>> e : filesByRoot.entrySet()) {
           Map<String, Conflict> cs = new HashMap<>();
           VirtualFile root = e.getKey();
           List<VirtualFile> files = e.getValue();
@@ -477,6 +510,13 @@ public class GitMergeProvider implements MergeProvider2 {
             myConflicts.put(f, c);
           }
         }
+        if (filesByRoot.size() == 1) {
+          VirtualFile root = filesByRoot.keySet().iterator().next();
+          GitRepository repo = GitRepositoryManager.getInstance(myProject).getRepositoryForRoot(root);
+          if (repo != null) {
+            mergeHeadBranchName = resolveMergeBranch(repo);
+          }
+        }
       }
       catch (VcsException ex) {
         throw new IllegalStateException("The git operation should not fail in this context", ex);
@@ -486,7 +526,7 @@ public class GitMergeProvider implements MergeProvider2 {
     @NotNull
     @Override
     public ColumnInfo[] getMergeInfoColumns() {
-      return new ColumnInfo[]{new StatusColumn(false), new StatusColumn(true)};
+      return new ColumnInfo[]{new StatusColumn(false, null), new StatusColumn(true, mergeHeadBranchName)};
     }
 
     @Override
@@ -576,8 +616,8 @@ public class GitMergeProvider implements MergeProvider2 {
        */
       private final boolean myIsTheirs;
 
-      public StatusColumn(boolean isTheirs) {
-        super(isTheirs ? GitBundle.message("merge.tool.column.theirs.status") : GitBundle.message("merge.tool.column.yours.status"));
+      public StatusColumn(boolean isTheirs, @Nullable String branchName) {
+        super(branchName != null ? branchName : (isTheirs ? GitBundle.message("merge.tool.column.theirs.status") : GitBundle.message("merge.tool.column.yours.status")));
         myIsTheirs = isTheirs;
       }
 

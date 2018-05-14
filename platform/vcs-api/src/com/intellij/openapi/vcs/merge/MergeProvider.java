@@ -25,4 +25,11 @@ public interface MergeProvider extends VcsProviderMarker {
    */
   default void mergeDone(@NotNull List<VirtualFile> files) {
   }
+
+  /**
+   * Creates a merge dialog customizer used when the default "Resolve conflicts" operation is invoked.
+   */
+  default MergeDialogCustomizer createDefaultMergeDialogCustomizer() {
+    return new MergeDialogCustomizer();
+  }
 }
