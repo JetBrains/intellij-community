@@ -35,7 +35,7 @@ import java.beans.PropertyChangeListener
 
 class CompletionTrackerInitializer(experimentHelper: WebServiceStatus): ApplicationComponent {
     companion object {
-      private const val SKIP_SESSIONS_BEFORE_LOG_IN_EAP = 50
+        private const val SKIP_SESSIONS_BEFORE_LOG_IN_EAP = 50
         var isEnabledInTests = false
     }
 
@@ -92,7 +92,7 @@ class CompletionTrackerInitializer(experimentHelper: WebServiceStatus): Applicat
 
     private fun shouldInitialize() = isSendAllowed() || isUnitTestMode()
 
-  private fun isEAP(): Boolean = ApplicationManager.getApplication().isEAP
+    private fun isEAP(): Boolean = ApplicationManager.getApplication().isEAP && !isUnitTestMode()
 
     override fun initComponent() {
         if (!shouldInitialize()) return
