@@ -939,9 +939,21 @@ public class AllIcons {
   }
 
   public static class Hierarchy {
-    public static final Icon Base = IconLoader.getIcon("/hierarchy/base.png"); // 16x16
-    public static final Icon Callee = IconLoader.getIcon("/hierarchy/callee.png"); // 16x16
-    public static final Icon Caller = IconLoader.getIcon("/hierarchy/caller.png"); // 16x16
+
+    /** @deprecated to be removed in IDEA 2020 - use AllIcons.Actions.Forward */
+    @SuppressWarnings("unused")
+    @Deprecated
+    public static final Icon Base = IconLoader.getIcon("/actions/forward.svg"); // 16x16
+
+    /** @deprecated to be removed in IDEA 2020 - use AllIcons.Hierarchy.Subtypes */
+    @SuppressWarnings("unused")
+    @Deprecated
+    public static final Icon Callee = IconLoader.getIcon("/hierarchy/subtypes.svg"); // 16x16
+
+    /** @deprecated to be removed in IDEA 2020 - use AllIcons.Hierarchy.Supertypes */
+    @SuppressWarnings("unused")
+    @Deprecated
+    public static final Icon Caller = IconLoader.getIcon("/hierarchy/supertypes.svg"); // 16x16
     public static final Icon Class = IconLoader.getIcon("/hierarchy/class.svg"); // 16x16
     public static final Icon MethodDefined = IconLoader.getIcon("/hierarchy/methodDefined.svg"); // 8x8
     public static final Icon MethodNotDefined = IconLoader.getIcon("/hierarchy/methodNotDefined.svg"); // 8x8

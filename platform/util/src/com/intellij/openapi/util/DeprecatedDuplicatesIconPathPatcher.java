@@ -34,6 +34,8 @@ public class DeprecatedDuplicatesIconPathPatcher extends IconPathPatcher {
 
     ourDeprecatedIconsReplacements.put("/actions/nextfile.png", "AllIcons.Actions.Forward");
     ourDeprecatedIconsReplacements.put("/actions/nextfile.svg", "AllIcons.Actions.Forward");
+    ourDeprecatedIconsReplacements.put("/hierarchy/base.png", "AllIcons.Actions.Forward");
+    ourDeprecatedIconsReplacements.put("/hierarchy/base.svg", "AllIcons.Actions.Forward");
 
     ourDeprecatedIconsReplacements.put("/toolbar/folders.png", "AllIcons.Actions.GroupByPackage");
     ourDeprecatedIconsReplacements.put("/toolbar/folders.svg", "AllIcons.Actions.GroupByPackage");
@@ -180,6 +182,13 @@ public class DeprecatedDuplicatesIconPathPatcher extends IconPathPatcher {
 
     ourDeprecatedIconsReplacements.put("/compiler/warning.png", "AllIcons.General.Warning");
     ourDeprecatedIconsReplacements.put("/compiler/warning.svg", "AllIcons.General.Warning");
+
+
+    ourDeprecatedIconsReplacements.put("/hierarchy/callee.png", "AllIcons.Hierarchy.Subtypes");
+    ourDeprecatedIconsReplacements.put("/hierarchy/callee.svg", "AllIcons.Hierarchy.Subtypes");
+
+    ourDeprecatedIconsReplacements.put("/hierarchy/caller.png", "AllIcons.Hierarchy.Supertypes");
+    ourDeprecatedIconsReplacements.put("/hierarchy/caller.svg", "AllIcons.Hierarchy.Supertypes");
 
 
     ourDeprecatedIconsReplacements.put("/general/packagesTab.png", "AllIcons.Nodes.CopyOfFolder");
