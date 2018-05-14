@@ -477,7 +477,9 @@ public class BoundedWildcardInspection extends AbstractBaseJavaLocalInspectionTo
     PsiExpression lQualifier = PsiUtil.skipParenthesizedExprDown(lExpression.getQualifierExpression());
     if (lQualifier != null && !(lQualifier instanceof PsiThisExpression)) return null;
     PsiElement field = lExpression.resolve();
-    if (!(field instanceof PsiField)) return null;
+    // too expensive to search for usages of public field otherwise
+    if (!(field instanceof PsiField) ||
+        !((PsiField)field).hasModifierProperty(PsiModifier.PRIVATE) && !((PsiField)field).hasModifierProperty(PsiModifier.PACKAGE_LOCAL)) return null;
     return (PsiField)field;
   }
 
