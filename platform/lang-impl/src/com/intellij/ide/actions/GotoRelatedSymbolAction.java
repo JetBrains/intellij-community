@@ -84,6 +84,11 @@ public class GotoRelatedSymbolAction extends AnAction {
     return NavigationUtil.collectRelatedItems(getContextElement(psiFile, editor), dataContext);
   }
 
+  @TestOnly
+  public static boolean isEnabled(@NotNull DataContext dataContext) {
+    return getContextElement(dataContext) != null;
+  }
+
   @Nullable
   private static PsiElement getContextElement(@NotNull DataContext dataContext) {
     PsiFile file = CommonDataKeys.PSI_FILE.getData(dataContext);
