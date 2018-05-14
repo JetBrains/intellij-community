@@ -2,6 +2,7 @@
 package com.intellij.ide.actions.runAnything.activity;
 
 import com.intellij.ide.actions.runAnything.RunAnythingCache;
+import com.intellij.ide.actions.runAnything.items.RunAnythingHelpItem;
 import com.intellij.ide.actions.runAnything.items.RunAnythingItem;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.extensions.ExtensionPointName;
@@ -30,7 +31,7 @@ public interface RunAnythingActivityProvider<V> {
    * Executes arbitrary activity in IDE if {@code pattern} is matched as {@link #isMatching(DataContext, String)}
    *
    * @param dataContext 'Run Anything' action {@code dataContext}, may retrieve {@link Project} and {@link Module} from here
-   * @param value     matching value
+   * @param value       matching value
    * @return true if succeed, false is failed
    */
   void execute(@NotNull DataContext dataContext, @NotNull V value);
@@ -50,6 +51,11 @@ public interface RunAnythingActivityProvider<V> {
 
   @NotNull
   RunAnythingItem getMainListItem(@NotNull DataContext dataContext, @NotNull V value);
+
+  @Nullable
+  default RunAnythingHelpItem getHelpItem(@NotNull DataContext dataContext) {
+    return null;
+  }
 
   /**
    * Finds provider that matches {@code pattern}
