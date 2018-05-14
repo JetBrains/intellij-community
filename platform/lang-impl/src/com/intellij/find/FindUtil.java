@@ -62,6 +62,7 @@ import com.intellij.ui.LightweightHint;
 import com.intellij.usageView.UsageInfo;
 import com.intellij.usages.*;
 import com.intellij.usages.impl.UsageViewImpl;
+import com.intellij.util.Consumer;
 import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.UIUtil;
@@ -909,12 +910,16 @@ public class FindUtil {
                                               @NotNull T[] targets,
                                               @NotNull Function<? super T, ? extends Usage> usageConverter,
                                               @NotNull String title,
+                                              @Nullable Consumer<? super UsageViewPresentation> presentationSetup,
                                               @NotNull final Project project) {
     if (targets.length == 0) return null;
     final UsageViewPresentation presentation = new UsageViewPresentation();
     presentation.setCodeUsagesString(title);
     presentation.setTabName(title);
     presentation.setTabText(title);
+    if (presentationSetup != null) {
+      presentationSetup.consume(presentation);
+    }
     UsageTarget[] usageTargets = sourceElement == null ? UsageTarget.EMPTY_ARRAY : new UsageTarget[]{new PsiElement2UsageTargetAdapter(sourceElement)};
 
     UsageView view = UsageViewManager.getInstance(project).showUsages(usageTargets, Usage.EMPTY_ARRAY, presentation);
@@ -953,7 +958,7 @@ public class FindUtil {
     return showInUsageView(sourceElement, pointers, p -> {
       PsiElement element = p.getElement();
       return element == null ? null : UsageInfoToUsageConverter.convert(primary, new UsageInfo(element));
-    }, title, project);
+    }, title, null, project);
   }
 
   /**
