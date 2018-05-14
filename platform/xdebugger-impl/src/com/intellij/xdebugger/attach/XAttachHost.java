@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,26 +15,21 @@
  */
 package com.intellij.xdebugger.attach;
 
+import com.intellij.execution.ExecutionException;
 import com.intellij.execution.process.ProcessInfo;
-import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.UserDataHolder;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
+import java.util.List;
+
 /**
- * @deprecated Use XAttachProcessPresentationGroup (will be removed in 2018.2)
+ * This interface describes the host(local or remote), from which list of processes can be obtained
  */
 @ApiStatus.Experimental
-public interface XLocalAttachGroup extends XAttachProcessPresentationGroup {
+public interface XAttachHost {
   /**
-   * @deprecated will be removed in 2018.2
+   * @return a list of running processes on this host
    */
-  XLocalAttachGroup DEFAULT = XDefaultLocalAttachGroup.INSTANCE;
-
-  /**
-   * @deprecated use {@link #compare(Object, Object)} (will be removed in 2018.2)
-   */
-  default int compare(@NotNull Project project, @NotNull ProcessInfo a, @NotNull ProcessInfo b, @NotNull UserDataHolder dataHolder) {
-    return compare(a, b);
-  }
+  @NotNull
+  List<ProcessInfo> getProcessList() throws ExecutionException;
 }
