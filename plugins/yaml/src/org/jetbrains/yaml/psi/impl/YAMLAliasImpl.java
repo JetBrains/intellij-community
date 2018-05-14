@@ -2,8 +2,12 @@
 package org.jetbrains.yaml.psi.impl;
 
 import com.intellij.lang.ASTNode;
+import com.intellij.psi.PsiElementVisitor;
+import com.intellij.psi.impl.source.tree.LeafPsiElement;
+import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.yaml.psi.YAMLAlias;
+import org.jetbrains.yaml.psi.YamlPsiElementVisitor;
 
 /** Current implementation consists of 2 nodes: star symbol and name identifier */
 public class YAMLAliasImpl extends YAMLValueImpl implements YAMLAlias {
@@ -14,5 +18,15 @@ public class YAMLAliasImpl extends YAMLValueImpl implements YAMLAlias {
   @Override
   public String toString() {
     return "YAML alias";
+  }
+
+  @Override
+  public void accept(@NotNull PsiElementVisitor visitor) {
+    if (visitor instanceof YamlPsiElementVisitor) {
+      ((YamlPsiElementVisitor)visitor).visitAlias(this);
+    }
+    else {
+      super.accept(visitor);
+    }
   }
 }
