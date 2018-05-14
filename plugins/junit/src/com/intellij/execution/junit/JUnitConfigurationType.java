@@ -66,7 +66,7 @@ public class JUnitConfigurationType implements ConfigurationType {
 
   @Override
   public boolean isDumbAware() {
-    return true;
+    return false;
   }
 
   @NotNull

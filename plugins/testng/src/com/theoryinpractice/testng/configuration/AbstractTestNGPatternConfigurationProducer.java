@@ -60,6 +60,7 @@ public abstract class AbstractTestNGPatternConfigurationProducer extends Abstrac
 
   @Override
   public boolean isConfigurationFromContext(TestNGConfiguration testNGConfiguration, ConfigurationContext context) {
+     if (!isApplicableTestType(testNGConfiguration.getTestType(), context)) return false;
     if (differentParamSet(testNGConfiguration, context.getLocation())) return false;
     return isConfiguredFromContext(context, testNGConfiguration.getPersistantData().getPatterns());
   }

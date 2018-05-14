@@ -136,7 +136,7 @@ public class SvnUpdateRootOptionsPanel implements SvnPanel{
       }
       else {
         try {
-          myURLText.setText(url.appendPath(branchRelativeUrl, true).toDecodedString());
+          myURLText.setText(url.appendPath(branchRelativeUrl, false).toDecodedString());
         }
         catch (SvnBindException e) {
           LOG.error(e);

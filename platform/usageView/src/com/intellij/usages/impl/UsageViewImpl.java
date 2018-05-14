@@ -25,10 +25,7 @@ import com.intellij.openapi.vfs.ReadonlyStatusHandler;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.pom.Navigatable;
-import com.intellij.psi.PsiDocumentManager;
-import com.intellij.psi.PsiInvalidElementAccessException;
-import com.intellij.psi.SmartPointerManager;
-import com.intellij.psi.SmartPsiElementPointer;
+import com.intellij.psi.*;
 import com.intellij.psi.impl.PsiDocumentManagerBase;
 import com.intellij.ui.*;
 import com.intellij.ui.components.JBLabel;
@@ -111,8 +108,8 @@ public class UsageViewImpl implements UsageViewEx {
   private volatile boolean myChangesDetected;
   public static final Comparator<Usage> USAGE_COMPARATOR = (o1, o2) -> {
     if (o1 == o2) return 0;
-    if (o1 == NULL_NODE) return -1;
-    if (o2 == NULL_NODE) return 1;
+    if (o1 == NullUsage.INSTANCE) return -1;
+    if (o2 == NullUsage.INSTANCE) return 1;
     if (o1 instanceof Comparable && o2 instanceof Comparable && o1.getClass() == o2.getClass()) {
       //noinspection unchecked
       final int selfcompared = ((Comparable<Usage>)o1).compareTo(o2);
@@ -1863,6 +1860,14 @@ public class UsageViewImpl implements UsageViewEx {
       }
       else if (key == PlatformDataKeys.COPY_PROVIDER) {
         sink.put(PlatformDataKeys.COPY_PROVIDER, myCopyProvider);
+      }
+      else if (key == LangDataKeys.PSI_ELEMENT_ARRAY) {
+        sink.put(LangDataKeys.PSI_ELEMENT_ARRAY, getSelectedUsages()
+          .stream()
+          .filter(u -> u instanceof PsiElementUsage)
+          .map(u -> ((PsiElementUsage)u).getElement())
+          .filter(Objects::nonNull)
+          .toArray(PsiElement.ARRAY_FACTORY::create));
       }
       else {
         // can arrive here outside EDT from usage view preview.

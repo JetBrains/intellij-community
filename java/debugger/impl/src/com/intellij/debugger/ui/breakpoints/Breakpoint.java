@@ -331,17 +331,15 @@ public abstract class Breakpoint<P extends JavaBreakpointProperties> implements 
 
     StackFrameProxyImpl frame = context.getFrameProxy();
     if (getProperties().isCALLER_FILTERS_ENABLED() && frame != null) {
-      StackFrameProxyImpl parentFrame = frame.threadProxy().frame(1);
-      if (parentFrame != null) {
-        Method method = parentFrame.location().method();
-        String name = method.declaringType().name() + "." + method.name();
-        String[] callerFilters = getProperties().getCallerFilters();
-        if (!ArrayUtil.isEmpty(callerFilters) && !ArrayUtil.contains(name, callerFilters)) {
-          return false;
-        }
-        if (ArrayUtil.contains(name, getProperties().getCallerExclusionFilters())) {
-          return false;
-        }
+      ThreadReferenceProxyImpl threadProxy = frame.threadProxy();
+      StackFrameProxyImpl parentFrame = threadProxy.frameCount() > 1 ? threadProxy.frame(1) : null;
+      String key = parentFrame != null ? DebuggerUtilsEx.methodKey(parentFrame.location().method()) : null;
+      String[] callerFilters = getProperties().getCallerFilters();
+      if (!ArrayUtil.isEmpty(callerFilters) && !ArrayUtil.contains(key, callerFilters)) {
+        return false;
+      }
+      if (ArrayUtil.contains(key, getProperties().getCallerExclusionFilters())) {
+        return false;
       }
     }
 

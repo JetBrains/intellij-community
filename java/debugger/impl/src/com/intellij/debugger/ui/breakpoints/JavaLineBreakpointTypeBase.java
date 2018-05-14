@@ -3,6 +3,7 @@ package com.intellij.debugger.ui.breakpoints;
 
 import com.intellij.debugger.engine.DebuggerUtils;
 import com.intellij.icons.AllIcons;
+import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.fileTypes.StdFileTypes;
@@ -12,6 +13,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.PairFunction;
+import com.intellij.xdebugger.XDebugSession;
 import com.intellij.xdebugger.XDebuggerUtil;
 import com.intellij.xdebugger.breakpoints.XLineBreakpoint;
 import com.intellij.xdebugger.breakpoints.XLineBreakpointType;
@@ -26,6 +28,7 @@ import org.jetbrains.java.debugger.breakpoints.JavaBreakpointFiltersPanel;
 import org.jetbrains.java.debugger.breakpoints.properties.JavaBreakpointProperties;
 
 import javax.swing.*;
+import java.util.List;
 
 /**
  * Base class for java line-connected exceptions (line, method, field)
@@ -126,5 +129,11 @@ public abstract class JavaLineBreakpointTypeBase<P extends JavaBreakpointPropert
       return res.get();
     }
     return false;
+  }
+
+  @Override
+  public List<? extends AnAction> getAdditionalPopupMenuActions(@NotNull XLineBreakpoint<P> breakpoint,
+                                                                @Nullable XDebugSession currentSession) {
+    return BreakpointIntentionAction.getIntentions(breakpoint, currentSession);
   }
 }

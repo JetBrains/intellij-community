@@ -40,7 +40,7 @@ public class FailedLineTest extends LightCodeInsightFixtureTestCase {
     configure();
     myFixture.enableInspections(new TestFailedLineInspection());
     myFixture.testHighlighting();
-    List<HighlightInfo> infos = myFixture.doHighlighting(HighlightSeverity.ERROR);
+    List<HighlightInfo> infos = myFixture.doHighlighting(HighlightSeverity.WARNING);
     assertEquals(1, infos.size());
     TextAttributes attributes = infos.get(0).forcedTextAttributes;
     assertNotNull(attributes);
@@ -56,7 +56,7 @@ public class FailedLineTest extends LightCodeInsightFixtureTestCase {
     myFixture.addClass("package junit.framework; public class TestCase {}");
     myFixture.configureByText("MainTest.java", "  public class MainTest extends junit.framework.TestCase {\n" +
                                                "    public void testFoo() {\n" +
-                                               "       <error descr=\"oops\">assertE<caret>quals()</error>;\n" +
+                                               "       <warning descr=\"oops\">assertE<caret>quals()</warning>;\n" +
                                                "       assertEquals();\n" +
                                                "    }\n" +
                                                "    public void assertEquals() {}\n" +

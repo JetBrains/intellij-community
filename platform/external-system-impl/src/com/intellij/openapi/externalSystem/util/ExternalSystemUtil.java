@@ -60,7 +60,6 @@ import com.intellij.openapi.externalSystem.importing.ImportSpec;
 import com.intellij.openapi.externalSystem.importing.ImportSpecBuilder;
 import com.intellij.openapi.externalSystem.model.*;
 import com.intellij.openapi.externalSystem.model.execution.ExternalSystemTaskExecutionSettings;
-import com.intellij.openapi.externalSystem.model.project.ModuleData;
 import com.intellij.openapi.externalSystem.model.project.ProjectData;
 import com.intellij.openapi.externalSystem.model.task.*;
 import com.intellij.openapi.externalSystem.model.task.event.*;
@@ -99,6 +98,7 @@ import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.StandardFileSystems;
+import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.ToolWindow;
 import com.intellij.openapi.wm.ToolWindowEP;
@@ -280,11 +280,9 @@ public class ExternalSystemUtil {
       return;
     }
 
-    final ProjectDataManager projectDataManager = ServiceManager.getService(ProjectDataManager.class);
-
     final ExternalProjectRefreshCallback callback;
     if (spec.getCallback() == null) {
-      callback = new MyMultiExternalProjectRefreshCallback(spec.getProject(), projectDataManager);
+      callback = new MyMultiExternalProjectRefreshCallback(spec.getProject());
     }
     else {
       callback = spec.getCallback();
@@ -603,6 +601,13 @@ public class ExternalSystemUtil {
         }
         finally {
           if (!isPreviewMode) {
+            boolean isNewProject = project.getUserData(ExternalSystemDataKeys.NEWLY_CREATED_PROJECT) == Boolean.TRUE;
+            if(isNewProject) {
+              VirtualFile virtualFile = VfsUtil.findFileByIoFile(projectFile, false);
+              if (virtualFile != null) {
+                VfsUtil.markDirtyAndRefresh(true, false, true, virtualFile);
+              }
+            }
             project.putUserData(ExternalSystemDataKeys.NEWLY_CREATED_PROJECT, null);
             project.putUserData(ExternalSystemDataKeys.NEWLY_IMPORTED_PROJECT, null);
           }
@@ -1173,16 +1178,10 @@ public class ExternalSystemUtil {
   }
 
   private static class MyMultiExternalProjectRefreshCallback implements ExternalProjectRefreshCallback {
-
-    @NotNull
-    private final Set<String> myExternalModulePaths;
     private final Project myProject;
-    private final ProjectDataManager myProjectDataManager;
 
-    public MyMultiExternalProjectRefreshCallback(Project project, ProjectDataManager projectDataManager) {
+    public MyMultiExternalProjectRefreshCallback(Project project) {
       myProject = project;
-      myProjectDataManager = projectDataManager;
-      myExternalModulePaths = ContainerUtilRt.newHashSet();
     }
 
     @Override
@@ -1190,12 +1189,7 @@ public class ExternalSystemUtil {
       if (externalProject == null) {
         return;
       }
-      Collection<DataNode<ModuleData>> moduleNodes = ExternalSystemApiUtil.findAllRecursively(externalProject, ProjectKeys.MODULE);
-      for (DataNode<ModuleData> node : moduleNodes) {
-        myExternalModulePaths.add(node.getData().getLinkedExternalProjectPath());
-      }
-
-      myProjectDataManager.importData(externalProject, myProject, true);
+      ServiceManager.getService(ProjectDataManager.class).importData(externalProject, myProject, true);
     }
   }
 }

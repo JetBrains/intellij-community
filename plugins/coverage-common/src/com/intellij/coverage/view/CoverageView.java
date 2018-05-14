@@ -37,6 +37,8 @@ import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import javax.swing.table.DefaultTableCellRenderer;
+import javax.swing.table.TableColumn;
+import javax.swing.table.TableColumnModel;
 import java.awt.*;
 import java.awt.event.*;
 
@@ -79,7 +81,10 @@ public class CoverageView extends BorderLayoutPanel implements DataProvider, Dis
       });
       emptyText.appendText(" to fix configuration settings.");
     }
-    myTable.getColumnModel().getColumn(0).setCellRenderer(new NodeDescriptorTableCellRenderer());
+    TableColumnModel columnModel = myTable.getColumnModel();
+    TableColumn nameColumn = columnModel.getColumn(0);
+    nameColumn.setCellRenderer(new NodeDescriptorTableCellRenderer());
+    nameColumn.setPreferredWidth(myStateBean.myElementSize);
     myTable.getTableHeader().setReorderingAllowed(false);
     JPanel centerPanel = JBUI.Panels.simplePanel()
       .addToCenter(ScrollPaneFactory.createScrollPane(myTable))
@@ -134,6 +139,10 @@ public class CoverageView extends BorderLayoutPanel implements DataProvider, Dis
     if (!myProject.isDisposed()) {
       CoverageDataManager.getInstance(myProject).chooseSuitesBundle(null);
     }
+  }
+
+  public void saveSize() {
+    myStateBean.myElementSize = myTable.getColumnModel().getColumn(0).getWidth();
   }
 
   private static ActionGroup createPopupGroup() {

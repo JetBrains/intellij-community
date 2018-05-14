@@ -52,7 +52,7 @@ import java.util.List;
 import java.util.regex.Pattern;
 
 public class LineBreakpoint<P extends JavaBreakpointProperties> extends BreakpointWithHighlighter<P> {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.debugger.ui.breakpoints.LineBreakpoint");
+  static final Logger LOG = Logger.getInstance(LineBreakpoint.class);
 
   public static final @NonNls Key<LineBreakpoint> CATEGORY = BreakpointCategory.lookup("line_breakpoints");
 

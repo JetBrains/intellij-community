@@ -98,7 +98,9 @@ internal class DefaultComponentConstraintCreator(private val spacing: SpacingCon
       }
 
       component is JTextComponent || component is SeparatorComponent || component is ComponentWithBrowseButton<*> -> {
-        cc.value.growX()
+        cc.value
+          .growX()
+//          .pushX()
       }
 
       component is JScrollPane || component.isPanelWithToolbar() -> {
