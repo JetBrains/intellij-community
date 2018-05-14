@@ -5,10 +5,19 @@ import com.intellij.openapi.project.Project;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+/**
+ * Represents a remote service that hosts VCS repositories, e.g GitHub, BitBucket
+ */
 public interface RepositoryHostingService {
+  /**
+   * @return service name that will be used in UI actions
+   */
   @NotNull
   String getServiceDisplayName();
 
+  /**
+   * @see RepositoryListLoader
+   */
   @Nullable
   default RepositoryListLoader getRepositoryListLoader(@NotNull Project project) {return null;}
 }
