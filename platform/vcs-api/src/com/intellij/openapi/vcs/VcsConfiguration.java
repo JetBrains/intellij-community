@@ -130,6 +130,7 @@ public final class VcsConfiguration implements PersistentStateComponent<VcsConfi
   public boolean UPDATE_GROUP_BY_CHANGELIST = false;
   public boolean UPDATE_FILTER_BY_SCOPE = false;
   public boolean SHOW_FILE_HISTORY_AS_TREE = false;
+  public boolean GROUP_MULTIFILE_MERGE_BY_DIRECTORY = false;
 
   private static final int MAX_STORED_MESSAGES = 25;
 
