@@ -24,21 +24,22 @@ import com.intellij.openapi.components.ApplicationComponent
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.ProjectManager
 import com.intellij.openapi.project.ProjectManagerListener
+import com.intellij.reporting.isSendAllowed
+import com.intellij.reporting.isUnitTestMode
 import com.intellij.stats.experiment.WebServiceStatus
 import com.intellij.stats.personalization.UserFactorDescriptions
 import com.intellij.stats.personalization.UserFactorStorage
 import com.intellij.stats.personalization.UserFactorsManager
-import com.intellij.stats.sender.isSendAllowed
-import com.intellij.stats.sender.isUnitTestMode
 import java.beans.PropertyChangeListener
 
 
 class CompletionTrackerInitializer(experimentHelper: WebServiceStatus): ApplicationComponent {
     companion object {
+      private const val SKIP_SESSIONS_BEFORE_LOG_IN_EAP = 50
         var isEnabledInTests = false
     }
 
-  private var loggingStrategy: LoggingStrategy = LogEverything
+  private var loggingStrategy: LoggingStrategy = if (isEAP()) LogEachN(SKIP_SESSIONS_BEFORE_LOG_IN_EAP) else LogAllSessions
     private val actionListener = LookupActionsListener()
 
     private val lookupTrackerInitializer = PropertyChangeListener {
@@ -90,6 +91,8 @@ class CompletionTrackerInitializer(experimentHelper: WebServiceStatus): Applicat
     }
 
     private fun shouldInitialize() = isSendAllowed() || isUnitTestMode()
+
+  private fun isEAP(): Boolean = ApplicationManager.getApplication().isEAP
 
     override fun initComponent() {
         if (!shouldInitialize()) return

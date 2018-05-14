@@ -11,7 +11,7 @@ interface LoggingStrategy {
   fun shouldBeLogged(lookup: LookupImpl, experimentHelper: WebServiceStatus): Boolean
 }
 
-object LogEverything : LoggingStrategy {
+object LogAllSessions : LoggingStrategy {
   override fun shouldBeLogged(lookup: LookupImpl, experimentHelper: WebServiceStatus): Boolean = true
 }
 

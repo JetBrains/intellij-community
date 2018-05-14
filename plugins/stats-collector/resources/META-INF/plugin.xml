@@ -71,7 +71,7 @@
 
     <applicationConfigurable provider="com.intellij.plugin.PluginSettingsConfigurableProvider"/>
 
-    <preloadingActivity implementation="com.intellij.completion.enhancer.FirstContributorPreloader" order="last"/>
+    <reporting.sendPermission implementation="com.intellij.reporting.AllowedOnlyInEAP"/>
   </extensions>
 
   <actions>
