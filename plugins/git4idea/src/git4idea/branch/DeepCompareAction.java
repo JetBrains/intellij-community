@@ -119,8 +119,8 @@ public class DeepCompareAction extends ToggleAction implements DumbAware {
       if (allRoots.isEmpty()) {
         allRoots = ContainerUtil.map2Set(ProjectLevelVcsManager.getInstance(project).getAllVcsRoots(), VcsRoot::getPath);
       }
-      e.getPresentation().setEnabled(hasGitRoots(project, allRoots));
-      e.getPresentation().setVisible(hasGitRoots(project, visibleRoots));
+      e.getPresentation().setEnabled(hasGitRoots(project, visibleRoots));
+      e.getPresentation().setVisible(hasGitRoots(project, allRoots));
     }
   }
 
