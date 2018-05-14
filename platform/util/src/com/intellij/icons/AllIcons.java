@@ -47,7 +47,11 @@ public class AllIcons {
     public static final Icon CreateFromUsage = IconLoader.getIcon("/actions/createFromUsage.png"); // 16x16
     public static final Icon CreatePatch = IconLoader.getIcon("/actions/createPatch.png"); // 16x16
     public static final Icon Cross = IconLoader.getIcon("/actions/cross.png"); // 12x12
-    public static final Icon Delete = IconLoader.getIcon("/actions/delete.png"); // 16x16
+
+    /** @deprecated to be removed in IDEA 2020 - use AllIcons.Actions.Cancel */
+    @SuppressWarnings("unused")
+    @Deprecated
+    public static final Icon Delete = IconLoader.getIcon("/actions/cancel.svg"); // 16x16
     public static final Icon DiagramDiff = IconLoader.getIcon("/actions/diagramDiff.png"); // 16x16
     public static final Icon Diff = IconLoader.getIcon("/actions/diff.svg"); // 16x16
     public static final Icon DiffPreview = IconLoader.getIcon("/actions/diffPreview.png"); // 16x16

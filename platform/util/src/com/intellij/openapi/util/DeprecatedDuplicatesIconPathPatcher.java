@@ -17,6 +17,9 @@ public class DeprecatedDuplicatesIconPathPatcher extends IconPathPatcher {
     ourDeprecatedIconsReplacements.put("/actions/prevfile.png", "AllIcons.Actions.Back");
     ourDeprecatedIconsReplacements.put("/actions/prevfile.svg", "AllIcons.Actions.Back");
 
+    ourDeprecatedIconsReplacements.put("/actions/delete.png", "AllIcons.Actions.Cancel");
+    ourDeprecatedIconsReplacements.put("/actions/delete.svg", "AllIcons.Actions.Cancel");
+
     ourDeprecatedIconsReplacements.put("/modules/edit.png", "AllIcons.Actions.Edit");
     ourDeprecatedIconsReplacements.put("/modules/edit.svg", "AllIcons.Actions.Edit");
     ourDeprecatedIconsReplacements.put("/toolbarDecorator/edit.png", "AllIcons.Actions.Edit");
