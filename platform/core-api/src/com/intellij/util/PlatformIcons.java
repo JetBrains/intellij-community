@@ -56,7 +56,7 @@ public interface PlatformIcons {
   Icon UI_FORM_ICON = AllIcons.FileTypes.UiForm;
   Icon JSP_ICON = AllIcons.FileTypes.Jsp;
   Icon SMALL_VCS_CONFIGURABLE = AllIcons.General.SmallConfigurableVcs;
-  Icon GROUP_BY_PACKAGES = AllIcons.Toolbar.Folders;
+  Icon GROUP_BY_PACKAGES = AllIcons.Actions.GroupByPackage;
   Icon ADD_ICON = IconUtil.getAddIcon();
   Icon DELETE_ICON = IconUtil.getRemoveIcon();
   Icon COPY_ICON = AllIcons.Actions.Copy;

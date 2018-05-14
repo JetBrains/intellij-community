@@ -1584,7 +1584,11 @@ public class AllIcons {
 
   public static class Toolbar {
     public static final Icon Filterdups = IconLoader.getIcon("/toolbar/filterdups.svg"); // 16x16
-    public static final Icon Folders = IconLoader.getIcon("/toolbar/folders.png"); // 16x16
+
+    /** @deprecated to be removed in IDEA 2020 - use AllIcons.Actions.GroupByPackage */
+    @SuppressWarnings("unused")
+    @Deprecated
+    public static final Icon Folders = IconLoader.getIcon("/actions/GroupByPackage.svg"); // 16x16
     public static final Icon Unknown = IconLoader.getIcon("/toolbar/unknown.png"); // 16x16
 
   }
