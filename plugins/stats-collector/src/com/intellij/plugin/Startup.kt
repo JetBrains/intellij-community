@@ -21,16 +21,17 @@ import com.intellij.notification.Notification
 import com.intellij.notification.NotificationType
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.startup.StartupActivity
+import com.intellij.reporting.isSendAllowed
 
 class NotificationManager : StartupActivity {
 
     companion object {
-        private val PLUGIN_NAME = "Completion Stats Collector"
-        private val MESSAGE_TEXT = 
+        private const val PLUGIN_NAME = "Completion Stats Collector"
+        private const val MESSAGE_TEXT =
                 "Data about your code completion usage will be anonymously reported. " +
                 "No personal data or code will be sent."
-        
-        private val MESSAGE_SHOWN_KEY = "completion.stats.allow.message.shown"
+
+        private const val MESSAGE_SHOWN_KEY = "completion.stats.allow.message.shown"
     }
     
     private fun isMessageShown() = PropertiesComponent.getInstance().getBoolean(MESSAGE_SHOWN_KEY, false)
@@ -38,7 +39,7 @@ class NotificationManager : StartupActivity {
     private fun setMessageShown(value: Boolean) = PropertiesComponent.getInstance().setValue(MESSAGE_SHOWN_KEY, value)
     
     override fun runActivity(project: Project) {
-        if (!isMessageShown()) {
+        if (!isMessageShown() && isSendAllowed()) {
             notify(project)
             setMessageShown(true)
         }
