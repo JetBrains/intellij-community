@@ -575,6 +575,11 @@
                      groupKey="group.names.performance.issues" enabledByDefault="true" level="WARNING"
                      implementationClass="com.intellij.codeInspection.ReplaceInefficientStreamCountInspection"
                      displayName="Replace inefficient Stream API call chains ending with count()"/>
+    <localInspection groupPath="Java" language="JAVA" shortName="StreamCanBePrimitive"
+                     groupBundle="messages.InspectionsBundle"
+                     groupKey="group.names.performance.issues" enabledByDefault="true" level="WARNING"
+                     implementationClass="com.intellij.codeInspection.StreamCanBePrimitiveInspection"
+                     displayName="Replace inefficient Stream API call chains ending with count()"/>
     <localInspection groupPath="Java,Java language level migration aids" language="JAVA" shortName="ComparatorCombinators"
                      groupBundle="messages.InspectionsBundle"
                      groupKey="group.names.language.level.specific.issues.and.migration.aids8" enabledByDefault="true" level="WARNING"
