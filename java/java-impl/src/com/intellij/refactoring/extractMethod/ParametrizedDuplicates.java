@@ -56,12 +56,12 @@ public class ParametrizedDuplicates {
   private ParametrizedDuplicates(@NotNull PsiElement[] pattern,
                                  @NotNull ExtractMethodProcessor originalProcessor) {
     pattern = getFilteredElements(pattern);
-    LOG.assertTrue(pattern.length != 0, "pattern length");
-    if (pattern[0] instanceof PsiStatement) {
+    PsiElement firstElement = pattern.length != 0 ? pattern[0] : null;
+    if (firstElement instanceof PsiStatement) {
       PsiElement[] copy = copyElements(pattern);
       myElements = wrapWithCodeBlock(copy, originalProcessor.getInputVariables());
     }
-    else if (pattern[0] instanceof PsiExpression) {
+    else if (firstElement instanceof PsiExpression) {
       PsiElement[] copy = copyElements(pattern);
       PsiExpression wrapped = wrapExpressionWithCodeBlock(copy, originalProcessor);
       myElements = wrapped != null ? new PsiElement[]{wrapped} : PsiElement.EMPTY_ARRAY;
@@ -580,13 +580,12 @@ public class ParametrizedDuplicates {
     }
   }
 
-  private static void collectCopyMapping(PsiElement pattern,
-                                         PsiElement copy,
-                                         Set<PsiExpression> replaceablePatterns,
-                                         Map<PsiExpression, PsiExpression> expressions,
-                                         Map<PsiVariable, PsiVariable> variables) {
+  private static void collectCopyMapping(@NotNull PsiElement pattern,
+                                         @NotNull PsiElement copy,
+                                         @NotNull Set<PsiExpression> replaceablePatterns,
+                                         @NotNull Map<PsiExpression, PsiExpression> expressions,
+                                         @NotNull Map<PsiVariable, PsiVariable> variables) {
     if (pattern == copy) return;
-    LOG.assertTrue(pattern != null && copy != null, "null in collectVariablesMapping");
     if (pattern instanceof PsiExpression && copy instanceof PsiExpression && replaceablePatterns.contains(pattern)) {
       expressions.put((PsiExpression)pattern, (PsiExpression)copy);
     }
