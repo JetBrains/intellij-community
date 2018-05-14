@@ -1,0 +1,122 @@
+switch (obj) {
+      case 1: return bar([param)
+      case 3: return bar([param]
+      case 2:
+        param = param.bar((foo):[bar:goo])
+        return param.foo
+    }
+-----
+Groovy script
+  Switch statement
+    PsiElement(switch)('switch')
+    PsiWhiteSpace(' ')
+    PsiElement(()('(')
+    Reference expression
+      PsiElement(identifier)('obj')
+    PsiElement())(')')
+    PsiWhiteSpace(' ')
+    PsiElement({)('{')
+    PsiWhiteSpace('\n      ')
+    Case section
+      Case label
+        PsiElement(case)('case')
+        PsiWhiteSpace(' ')
+        Literal
+          PsiElement(Integer)('1')
+        PsiElement(:)(':')
+      PsiWhiteSpace(' ')
+      RETURN statement
+        PsiElement(return)('return')
+        PsiWhiteSpace(' ')
+        Method call
+          Reference expression
+            PsiElement(identifier)('bar')
+          Arguments
+            PsiElement(()('(')
+            Generalized list
+              PsiElement([)('[')
+              Reference expression
+                PsiElement(identifier)('param')
+              PsiErrorElement:',' or ']' expected
+                <empty list>
+              PsiElement())(')')
+              PsiErrorElement:',' or ']' expected
+                <empty list>
+    PsiWhiteSpace('\n      ')
+    Case section
+      Case label
+        PsiElement(case)('case')
+        PsiWhiteSpace(' ')
+        Literal
+          PsiElement(Integer)('3')
+        PsiElement(:)(':')
+      PsiWhiteSpace(' ')
+      RETURN statement
+        PsiElement(return)('return')
+        PsiWhiteSpace(' ')
+        Method call
+          Reference expression
+            PsiElement(identifier)('bar')
+          Arguments
+            PsiElement(()('(')
+            Generalized list
+              PsiElement([)('[')
+              Reference expression
+                PsiElement(identifier)('param')
+              PsiElement(])(']')
+            PsiErrorElement:',' or ')' expected
+              <empty list>
+    PsiWhiteSpace('\n      ')
+    Case section
+      Case label
+        PsiElement(case)('case')
+        PsiWhiteSpace(' ')
+        Literal
+          PsiElement(Integer)('2')
+        PsiElement(:)(':')
+      PsiWhiteSpace('\n        ')
+      Assignment expression
+        Reference expression
+          PsiElement(identifier)('param')
+        PsiWhiteSpace(' ')
+        PsiElement(=)('=')
+        PsiWhiteSpace(' ')
+        Method call
+          Reference expression
+            Reference expression
+              PsiElement(identifier)('param')
+            PsiElement(.)('.')
+            PsiElement(identifier)('bar')
+          Arguments
+            PsiElement(()('(')
+            Named argument
+              Argument label
+                Parenthesized expression
+                  PsiElement(()('(')
+                  Reference expression
+                    PsiElement(identifier)('foo')
+                  PsiElement())(')')
+              PsiElement(:)(':')
+              Generalized list
+                PsiElement([)('[')
+                Named argument
+                  Argument label
+                    PsiElement(identifier)('bar')
+                  PsiElement(:)(':')
+                  Reference expression
+                    PsiElement(identifier)('goo')
+                PsiElement(])(']')
+            PsiElement())(')')
+      PsiErrorElement:';', '}' or new line expected
+        <empty list>
+      PsiWhiteSpace('\n        ')
+      RETURN statement
+        PsiElement(return)('return')
+        PsiWhiteSpace(' ')
+        Reference expression
+          Reference expression
+            PsiElement(identifier)('param')
+          PsiElement(.)('.')
+          PsiElement(identifier)('foo')
+    PsiWhiteSpace('\n    ')
+    PsiElement(})('}')
