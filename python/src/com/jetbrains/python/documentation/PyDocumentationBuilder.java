@@ -69,9 +69,9 @@ import static com.jetbrains.python.documentation.DocumentationBuilderKit.*;
 public class PyDocumentationBuilder {
   private final PsiElement myElement;
   private final PsiElement myOriginalElement;
-  private ChainIterable<String> myResult;
   private final ChainIterable<String> myProlog;      // sequence for reassignment info, etc
   private final ChainIterable<String> myBody;        // sequence for doc string
+  private final ChainIterable<String> myContent;
   private final ChainIterable<String> mySections;
   private final ChainIterable<String> myEpilog;      // sequence for doc "copied from" notices and such
 
@@ -82,15 +82,11 @@ public class PyDocumentationBuilder {
   public PyDocumentationBuilder(PsiElement element, PsiElement originalElement) {
     myElement = element;
     myOriginalElement = originalElement;
-    myResult = new ChainIterable<>();
     myProlog = new ChainIterable<>();
     myBody = new ChainIterable<>();
+    myContent = new ChainIterable<>();
     mySections = new ChainIterable<>();
     myEpilog = new ChainIterable<>();
-
-
-    myResult.add(myProlog).add(myBody).add(mySections).add(myEpilog); // pre-assemble; then add stuff to individual cats as needed
-    myResult = wrapInTag("html", wrapInTag("body", myResult));
   }
 
   @Nullable
@@ -144,11 +140,24 @@ public class PyDocumentationBuilder {
       myEpilog.addItem("<a href=\"").addItem(url).addItem("\">").addItem(url).addItem("</a>");
     }
 
-    if (myBody.isEmpty() && myEpilog.isEmpty()) {
+    if (myBody.isEmpty() && myContent.isEmpty() && myEpilog.isEmpty()) {
       return null; // got nothing substantial to say!
     }
     else {
-      return myResult.toString();
+      ChainIterable<String> result = new ChainIterable<>();
+      if (!myProlog.isEmpty() || !myBody.isEmpty()) {
+        result.addItem(DocumentationMarkup.DEFINITION_START)
+                .add(myProlog)
+                .add(myBody)
+                .addItem(DocumentationMarkup.DEFINITION_END);
+      }
+      if (!myContent.isEmpty()) {
+        result.addItem(DocumentationMarkup.CONTENT_START)
+              .add(myContent)
+              .addItem(DocumentationMarkup.CONTENT_END);
+      }
+      result.add(mySections).add(myEpilog); // pre-assemble; then add stuff to individual cats as needed
+      return wrapInTag("html", wrapInTag("body", result)).toString();
     }
   }
 
@@ -297,7 +306,6 @@ public class PyDocumentationBuilder {
       content = formatDocString(myElement, docStringExpression.getStringValue());
     }
     final TypeEvalContext context = TypeEvalContext.userInitiated(elementDefinition.getProject(), elementDefinition.getContainingFile());
-    myBody.addItem(DocumentationMarkup.DEFINITION_START);
 
     if (elementDefinition instanceof PyClass) {
       pyClass = (PyClass)elementDefinition;
@@ -340,11 +348,8 @@ public class PyDocumentationBuilder {
       myBody.add(PythonDocumentationProvider.describeTarget(target, context));
     }
 
-    myBody.addItem(DocumentationMarkup.DEFINITION_END);
     if (content != null && !content.isEmpty()) {
-      myBody.addItem(DocumentationMarkup.CONTENT_START);
-      myBody.add(content);
-      myBody.addItem(DocumentationMarkup.CONTENT_END);
+      myContent.add(content);
     }
   }
 
