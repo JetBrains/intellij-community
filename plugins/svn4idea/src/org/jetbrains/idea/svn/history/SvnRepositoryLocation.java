@@ -13,21 +13,24 @@ public class SvnRepositoryLocation implements RepositoryLocation {
 
   private final String myUrlValue;
   @Nullable private final Url myUrl;
+  @Nullable private final Url myRepositoryUrl;
   @Nullable private final FilePath myRoot;
 
   public SvnRepositoryLocation(final String url) {
     myUrl = null;
     myUrlValue = url;
+    myRepositoryUrl = null;
     myRoot = null;
   }
 
   public SvnRepositoryLocation(@NotNull Url url) {
-    this(url, null);
+    this(url, null, null);
   }
 
-  public SvnRepositoryLocation(@NotNull Url url, @Nullable FilePath root) {
+  public SvnRepositoryLocation(@NotNull Url url, @Nullable Url repositoryUrl, @Nullable FilePath root) {
     myUrl = url;
     myUrlValue = url.toString();
+    myRepositoryUrl = repositoryUrl;
     myRoot = root;
   }
 
@@ -58,6 +61,11 @@ public class SvnRepositoryLocation implements RepositoryLocation {
 
   @Override
   public void onAfterBatch() {
+  }
+
+  @Nullable
+  public Url getRepositoryUrl() {
+    return myRepositoryUrl;
   }
 
   @NotNull
