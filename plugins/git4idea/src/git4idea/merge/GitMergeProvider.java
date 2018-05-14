@@ -448,6 +448,7 @@ public class GitMergeProvider implements MergeProvider2 {
     return roots
       .stream()
       .map(root -> resolveMergeBranch(root))
+      .filter(branch -> branch != null)
       .collect(MoreCollectors.onlyOne())
       .orElse(null);
   }
@@ -458,6 +459,7 @@ public class GitMergeProvider implements MergeProvider2 {
       .stream()
       .map(root -> GitRepositoryManager.getInstance(myProject).getRepositoryForFile(root))
       .map(repo -> repo == null ? null : repo.getCurrentBranchName())
+      .filter(branch -> branch != null)
       .collect(MoreCollectors.onlyOne())
       .orElse(null);
   }
