@@ -14,7 +14,6 @@ import com.intellij.ide.IdeTooltipManager;
 import com.intellij.ide.actions.runAnything.activity.RunAnythingActivityProvider;
 import com.intellij.ide.actions.runAnything.groups.RunAnythingCompletionProviderGroup;
 import com.intellij.ide.actions.runAnything.groups.RunAnythingGroup;
-import com.intellij.ide.actions.runAnything.groups.RunAnythingHelpGroup;
 import com.intellij.ide.actions.runAnything.groups.RunAnythingRecentGroup;
 import com.intellij.ide.actions.runAnything.items.RunAnythingItem;
 import com.intellij.ide.actions.runAnything.ui.RunAnythingHelpListModel;
@@ -1070,7 +1069,7 @@ public class RunAnythingAction extends AnAction implements CustomComponentAction
         }
 
         if (isHelpMode(myPopupField.getText())) {
-          buildHelpGroups();
+          buildHelpGroups(myListModel);
           return;
         }
 
@@ -1101,8 +1100,8 @@ public class RunAnythingAction extends AnAction implements CustomComponentAction
       updatePopup();
     }
 
-    private void buildHelpGroups() {
-      RunAnythingHelpGroup.HELP_GROUPS.forEach(group -> {
+    private void buildHelpGroups(@NotNull RunAnythingSearchListModel listModel) {
+      listModel.getGroups().forEach(group -> {
         group.collectItems(myDataContext, myListModel, trimHelpPattern(), () -> check());
         check();
       });
@@ -1136,8 +1135,8 @@ public class RunAnythingAction extends AnAction implements CustomComponentAction
     private void buildCompletionGroups(@NotNull String pattern, @NotNull Runnable checkCancellation) {
       LOG.assertTrue(myListModel instanceof RunAnythingMainListModel);
 
-      ((RunAnythingMainListModel)myListModel)
-        .getMainListGroups()
+      myListModel
+        .getGroups()
         .stream()
         .filter(group -> !(group instanceof RunAnythingCompletionProviderGroup) ||
                          ((RunAnythingCompletionProviderGroup)group).isVisible(myDataContext))
