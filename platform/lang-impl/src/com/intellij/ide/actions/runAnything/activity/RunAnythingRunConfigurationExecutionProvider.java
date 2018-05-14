@@ -8,6 +8,7 @@ import com.intellij.execution.RunnerAndConfigurationSettings;
 import com.intellij.execution.actions.ChooseRunConfigurationPopup;
 import com.intellij.execution.runners.ExecutionUtil;
 import com.intellij.ide.actions.runAnything.RunAnythingRunConfigurationItem;
+import com.intellij.ide.actions.runAnything.items.RunAnythingItem;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.project.Project;
 import org.jetbrains.annotations.NotNull;
@@ -56,5 +57,11 @@ public abstract class RunAnythingRunConfigurationExecutionProvider
   @Override
   public String getAdText() {
     return RunAnythingRunConfigurationItem.RUN_CONFIGURATION_AD_TEXT;
+  }
+
+  @NotNull
+  @Override
+  public RunAnythingItem getMainListItem(@NotNull DataContext dataContext, @NotNull ChooseRunConfigurationPopup.ItemWrapper value) {
+    return new RunAnythingRunConfigurationItem(value, value.getIcon());
   }
 }

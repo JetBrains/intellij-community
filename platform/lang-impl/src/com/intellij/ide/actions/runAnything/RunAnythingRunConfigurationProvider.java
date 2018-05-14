@@ -7,9 +7,7 @@ import com.intellij.execution.actions.ChooseRunConfigurationPopup;
 import com.intellij.execution.actions.ExecutorProvider;
 import com.intellij.ide.IdeBundle;
 import com.intellij.ide.actions.runAnything.activity.RunAnythingCompletionProvider;
-import com.intellij.ide.actions.runAnything.activity.RunAnythingRecentProvider;
 import com.intellij.ide.actions.runAnything.activity.RunAnythingRunConfigurationExecutionProvider;
-import com.intellij.ide.actions.runAnything.items.RunAnythingItem;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.wm.ToolWindowId;
@@ -21,18 +19,11 @@ import java.util.Collection;
 import static com.intellij.ide.actions.runAnything.RunAnythingUtil.fetchProject;
 
 public class RunAnythingRunConfigurationProvider extends RunAnythingRunConfigurationExecutionProvider
-  implements RunAnythingRecentProvider<ChooseRunConfigurationPopup.ItemWrapper>,
-             RunAnythingCompletionProvider<ChooseRunConfigurationPopup.ItemWrapper> {
+  implements RunAnythingCompletionProvider<ChooseRunConfigurationPopup.ItemWrapper> {
   @NotNull
   @Override
   public Collection<ChooseRunConfigurationPopup.ItemWrapper> getValues(@NotNull DataContext dataContext) {
     return Arrays.asList(getWrappers(dataContext));
-  }
-
-  @NotNull
-  @Override
-  public RunAnythingItem getMainListItem(@NotNull DataContext dataContext, @NotNull ChooseRunConfigurationPopup.ItemWrapper value) {
-    return new RunAnythingRunConfigurationItem(value, value.getIcon());
   }
 
   @NotNull

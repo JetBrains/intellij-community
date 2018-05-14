@@ -3,20 +3,30 @@ package com.intellij.ide.actions.runAnything.activity;
 
 import com.intellij.ide.actions.runAnything.items.RunAnythingHelpItem;
 import com.intellij.openapi.actionSystem.DataContext;
-import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.util.ui.EmptyIcon;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
-public interface RunAnythingHelpProviderBase<V> extends RunAnythingHelpProvider<V> {
-  Logger LOG = Logger.getInstance(RunAnythingHelpProviderBase.class);
+import javax.swing.*;
 
-  @NotNull
+public interface RunAnythingHelpProviderBase<V> extends RunAnythingActivityProvider<V> {
+  @Nullable
   @Override
   default RunAnythingHelpItem getHelpItem(@NotNull DataContext dataContext) {
-    return new RunAnythingHelpItem(getHelpCommandPlaceholder(), getCommandPrefix(), getHelpDescription(), getIcon());
+    return new RunAnythingHelpItem(getHelpCommandPlaceholder(), getCommandPrefix(), getHelpDescription(), getHelpIcon());
+  }
+
+  @Nullable
+  default Icon getHelpIcon() {
+    return EmptyIcon.ICON_16;
+  }
+
+  @Nullable
+  default String getHelpDescription() {
+    return null;
   }
 
   @NotNull
-  @Override
   default String getHelpCommandPlaceholder() {
     return getCommandPrefix();
   }

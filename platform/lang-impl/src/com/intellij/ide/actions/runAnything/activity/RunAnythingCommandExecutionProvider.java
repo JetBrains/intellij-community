@@ -6,11 +6,11 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 public class RunAnythingCommandExecutionProvider extends RunAnythingCommandExecutionProviderBase
-  implements RunAnythingActivityProvider<RunAnythingStringValue> {
+  implements RunAnythingActivityProvider<String> {
 
   @Nullable
   @Override
-  public RunAnythingStringValue findMatchingValue(@NotNull DataContext dataContext, @NotNull String pattern) {
-    return RunAnythingStringValue.create(pattern);
+  public String findMatchingValue(@NotNull DataContext dataContext, @NotNull String pattern) {
+    return pattern;
   }
 }

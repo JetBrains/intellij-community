@@ -12,6 +12,8 @@ import com.intellij.ide.actions.runAnything.RunAnythingCache;
 import com.intellij.ide.actions.runAnything.RunAnythingUtil;
 import com.intellij.ide.actions.runAnything.commands.RunAnythingCommandCustomizer;
 import com.intellij.ide.actions.runAnything.execution.RunAnythingRunProfile;
+import com.intellij.ide.actions.runAnything.items.RunAnythingItem;
+import com.intellij.ide.actions.runAnything.items.RunAnythingItemBase;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.actionSystem.KeyboardShortcut;
@@ -28,17 +30,17 @@ import java.util.Collection;
 import static com.intellij.ide.actions.runAnything.RunAnythingUtil.AD_CONTEXT_TEXT;
 import static com.intellij.ide.actions.runAnything.RunAnythingUtil.AD_DEBUG_TEXT;
 
-public abstract class RunAnythingCommandExecutionProviderBase implements RunAnythingActivityProvider<RunAnythingStringValue> {
+public abstract class RunAnythingCommandExecutionProviderBase implements RunAnythingActivityProvider<String> {
   public final String AD_DELETE_COMMAND_TEXT =
     IdeBundle.message("run.anything.ad.command.delete", KeymapUtil.getShortcutText(KeyboardShortcut.fromString("shift BACK_SPACE")));
 
-  public void execute(@NotNull DataContext dataContext, @NotNull RunAnythingStringValue value) {
+  public void execute(@NotNull DataContext dataContext, @NotNull String value) {
     VirtualFile workDirectory = dataContext.getData(CommonDataKeys.VIRTUAL_FILE);
     Executor executor = dataContext.getData(RunAnythingAction.EXECUTOR_KEY);
     RunAnythingUtil.LOG.assertTrue(workDirectory != null);
     RunAnythingUtil.LOG.assertTrue(executor != null);
 
-    runCommand(workDirectory, value.getDelegate(), executor, dataContext);
+    runCommand(workDirectory, value, executor, dataContext);
   }
 
   public static void runCommand(@NotNull VirtualFile workDirectory,
@@ -76,13 +78,19 @@ public abstract class RunAnythingCommandExecutionProviderBase implements RunAnyt
 
   @NotNull
   @Override
-  public String getCommand(@NotNull RunAnythingStringValue value) {
-    return value.getDelegate();
+  public String getCommand(@NotNull String value) {
+    return value;
   }
 
   @Nullable
   @Override
-  public Icon getIcon(@NotNull RunAnythingStringValue value) {
+  public Icon getIcon(@NotNull String value) {
     return AllIcons.Actions.Run_anything;
+  }
+
+  @NotNull
+  @Override
+  public RunAnythingItem getMainListItem(@NotNull DataContext dataContext, @NotNull String value) {
+    return new RunAnythingItemBase(value, getIcon(value));
   }
 }
