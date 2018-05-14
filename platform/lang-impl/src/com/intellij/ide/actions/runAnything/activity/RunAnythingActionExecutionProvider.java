@@ -13,24 +13,18 @@ import com.intellij.openapi.actionSystem.ex.ActionManagerEx;
 import com.intellij.openapi.actionSystem.ex.ActionUtil;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.wm.IdeFocusManager;
-import com.intellij.util.ObjectUtils;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 
 public abstract class RunAnythingActionExecutionProvider<V extends AnAction>
-  implements RunAnythingParametrizedExecutionProvider<V>, RunAnythingRecentProvider<V> {
-
-  @NotNull
-  public String getTextAsParameter(@NotNull V value) {
-    return ObjectUtils.notNull(value.getTemplatePresentation().getText(), IdeBundle.message("run.anything.actions.undefined"));
-  }
+  implements RunAnythingActivityProvider<V>, RunAnythingRecentProvider<V> {
 
   @NotNull
   @Override
   public RunAnythingItem getMainListItem(@NotNull DataContext dataContext, @NotNull V value) {
-    return new RunAnythingActionItem<>(value, getFullCommand(value), value.getTemplatePresentation().getIcon());
+    return new RunAnythingActionItem<>(value, getCommand(value), value.getTemplatePresentation().getIcon());
   }
 
   @Override

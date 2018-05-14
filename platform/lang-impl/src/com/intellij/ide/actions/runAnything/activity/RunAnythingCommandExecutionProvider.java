@@ -3,17 +3,14 @@ package com.intellij.ide.actions.runAnything.activity;
 
 import com.intellij.openapi.actionSystem.DataContext;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 public class RunAnythingCommandExecutionProvider extends RunAnythingCommandExecutionProviderBase
-  implements RunAnythingSingleParametrizedExecutionProvider<RunAnythingStringValue> {
-  @NotNull
-  @Override
-  public RunAnythingStringValue getValue(@NotNull DataContext dataContext, @NotNull String pattern) {
-    return RunAnythingStringValue.create(pattern);
-  }
+  implements RunAnythingActivityProvider<RunAnythingStringValue> {
 
+  @Nullable
   @Override
-  public boolean isMatching(@NotNull DataContext dataContext, @NotNull String commandLine) {
-    return true;
+  public RunAnythingStringValue findMatchingValue(@NotNull DataContext dataContext, @NotNull String pattern) {
+    return RunAnythingStringValue.create(pattern);
   }
 }

@@ -12,19 +12,15 @@ public interface RunAnythingHelpProviderBase<V> extends RunAnythingHelpProvider<
   @NotNull
   @Override
   default RunAnythingHelpItem getHelpItem(@NotNull DataContext dataContext) {
-    return new RunAnythingHelpItem(getHelpCommandPlaceholder(), getCommand(), getHelpDescription(), getIcon());
+    return new RunAnythingHelpItem(getHelpCommandPlaceholder(), getCommandPrefix(), getHelpDescription(), getIcon());
   }
 
   @NotNull
   @Override
   default String getHelpCommandPlaceholder() {
-    return getCommand();
+    return getCommandPrefix();
   }
 
   @NotNull
-  default String getCommand() {
-    String commandPrefix = getCommandPrefix();
-    LOG.assertTrue(commandPrefix != null, "Command prefix cannot be null for a help item");
-    return commandPrefix;
-  }
+  String getCommandPrefix();
 }
