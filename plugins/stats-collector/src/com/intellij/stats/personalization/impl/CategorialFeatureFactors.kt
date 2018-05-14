@@ -52,7 +52,7 @@ class CategoryFeatureUpdater(private val knownCategories: Set<String>, factor: M
 }
 
 class CategoryRatio(feature: CategoricalFeature, private val categoryName: String)
-    : UserFactorBase<CategoryFeatureReader>("categoryFeature:${feature.name}:${categoryName}",
+    : UserFactorBase<CategoryFeatureReader>("cat:${feature.name}:${categoryName}",
                                             UserFactorDescriptions.categoricalFeatureDescriptor(feature)) {
     override fun compute(reader: CategoryFeatureReader): String {
         return reader.calculateRatioByValue().getOrDefault(categoryName, -1.0).toString()
@@ -60,7 +60,7 @@ class CategoryRatio(feature: CategoricalFeature, private val categoryName: Strin
 }
 
 class MostFrequentCategory(feature: CategoricalFeature)
-    : UserFactorBase<CategoryFeatureReader>("mostFrequentCategory:${feature.name}",
+    : UserFactorBase<CategoryFeatureReader>("mostFrequent:${feature.name}",
         UserFactorDescriptions.categoricalFeatureDescriptor(feature)) {
     override fun compute(reader: CategoryFeatureReader): String? {
         return reader.calculateRatioByValue().maxBy { it.value }?.key

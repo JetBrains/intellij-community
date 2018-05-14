@@ -43,7 +43,7 @@ class BinaryFeatureUpdater(factor: MutableDoubleFactor) : UserFactorUpdaterBase(
 }
 
 class BinaryValueRatio(feature: BinaryFeature, private val valueName: String)
-    : UserFactorBase<BinaryFeatureReader>("BinaryValueRatio:${feature.name}:$valueName",
+    : UserFactorBase<BinaryFeatureReader>("BinRatio:${feature.name}:$valueName",
         UserFactorDescriptions.binaryFeatureDescriptor(feature)) {
     override fun compute(reader: BinaryFeatureReader): String {
         return reader.calculateRatioByValue().getOrDefault(valueName, -1.0).toString()
