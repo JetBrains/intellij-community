@@ -60,7 +60,6 @@ import com.intellij.openapi.externalSystem.importing.ImportSpec;
 import com.intellij.openapi.externalSystem.importing.ImportSpecBuilder;
 import com.intellij.openapi.externalSystem.model.*;
 import com.intellij.openapi.externalSystem.model.execution.ExternalSystemTaskExecutionSettings;
-import com.intellij.openapi.externalSystem.model.project.ModuleData;
 import com.intellij.openapi.externalSystem.model.project.ProjectData;
 import com.intellij.openapi.externalSystem.model.task.*;
 import com.intellij.openapi.externalSystem.model.task.event.*;
@@ -1173,16 +1172,12 @@ public class ExternalSystemUtil {
   }
 
   private static class MyMultiExternalProjectRefreshCallback implements ExternalProjectRefreshCallback {
-
-    @NotNull
-    private final Set<String> myExternalModulePaths;
     private final Project myProject;
     private final ProjectDataManager myProjectDataManager;
 
     public MyMultiExternalProjectRefreshCallback(Project project, ProjectDataManager projectDataManager) {
       myProject = project;
       myProjectDataManager = projectDataManager;
-      myExternalModulePaths = ContainerUtilRt.newHashSet();
     }
 
     @Override
@@ -1190,11 +1185,6 @@ public class ExternalSystemUtil {
       if (externalProject == null) {
         return;
       }
-      Collection<DataNode<ModuleData>> moduleNodes = ExternalSystemApiUtil.findAllRecursively(externalProject, ProjectKeys.MODULE);
-      for (DataNode<ModuleData> node : moduleNodes) {
-        myExternalModulePaths.add(node.getData().getLinkedExternalProjectPath());
-      }
-
       myProjectDataManager.importData(externalProject, myProject, true);
     }
   }
