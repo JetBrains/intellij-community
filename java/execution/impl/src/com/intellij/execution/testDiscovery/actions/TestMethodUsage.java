@@ -2,6 +2,7 @@
 package com.intellij.execution.testDiscovery.actions;
 
 import com.intellij.ide.SelectInEditorManager;
+import com.intellij.openapi.actionSystem.DataProvider;
 import com.intellij.openapi.fileEditor.*;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleUtilCore;
@@ -11,9 +12,11 @@ import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiMethod;
 import com.intellij.ui.SimpleTextAttributes;
+import com.intellij.usageView.UsageInfo;
 import com.intellij.usages.TextChunk;
 import com.intellij.usages.Usage;
 import com.intellij.usages.UsagePresentation;
+import com.intellij.usages.UsageView;
 import com.intellij.usages.rules.PsiElementUsage;
 import com.intellij.usages.rules.UsageInFile;
 import com.intellij.usages.rules.UsageInModule;
@@ -21,8 +24,9 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
+import java.util.Collections;
 
-class TestMethodUsage implements Usage, UsageInFile, UsageInModule, PsiElementUsage {
+class TestMethodUsage implements Usage, UsageInFile, UsageInModule, PsiElementUsage, DataProvider {
   private final DiscoveredTestsTreeModel.Node<PsiMethod> myNode;
 
   TestMethodUsage(DiscoveredTestsTreeModel.Node<PsiMethod> node) {myNode = node;}
@@ -131,5 +135,13 @@ class TestMethodUsage implements Usage, UsageInFile, UsageInModule, PsiElementUs
   @Override
   public boolean isNonCodeUsage() {
     return false;
+  }
+
+  @Nullable
+  @Override
+  public Object getData(String dataId) {
+    if (!UsageView.USAGE_INFO_LIST_KEY.is(dataId)) return null;
+    PsiMethod method = getElement();
+    return method == null ? null : Collections.singletonList(new UsageInfo(method));
   }
 }
