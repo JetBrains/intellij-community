@@ -20,7 +20,6 @@ import com.intellij.openapi.vcs.VcsBundle;
 import com.intellij.openapi.vcs.VcsConfiguration;
 import com.intellij.openapi.vcs.VcsDataKeys;
 import com.intellij.openapi.vcs.changes.*;
-import com.intellij.openapi.vcs.changes.actions.MoveChangesToAnotherListAction;
 import com.intellij.openapi.vcs.changes.actions.RollbackDialogAction;
 import com.intellij.openapi.vcs.changes.actions.diff.UnversionedDiffRequestProducer;
 import com.intellij.openapi.vcs.changes.actions.diff.lst.LocalChangeListDiffTool;
@@ -166,8 +165,7 @@ public class MultipleLocalChangeListsBrowser extends CommitDialogChangesBrowser 
   protected List<AnAction> createDiffActions() {
     return ContainerUtil.append(
       super.createDiffActions(),
-      new ToggleChangeDiffAction(),
-      new MoveChangeDiffAction()
+      new ToggleChangeDiffAction()
     );
   }
 
@@ -453,23 +451,6 @@ public class MultipleLocalChangeListsBrowser extends CommitDialogChangesBrowser 
     @Override
     public void setSelected(@NotNull AnActionEvent e, boolean state) {
       setShowUnversioned(state);
-    }
-  }
-
-  private class MoveChangeDiffAction extends MoveChangesToAnotherListAction {
-    @Override
-    protected boolean isEnabled(@NotNull AnActionEvent e) {
-      return e.getData(VcsDataKeys.CURRENT_CHANGE) != null ||
-             e.getData(VcsDataKeys.CURRENT_UNVERSIONED) != null;
-    }
-
-    @Override
-    public void actionPerformed(@NotNull AnActionEvent e) {
-      Change change = e.getData(VcsDataKeys.CURRENT_CHANGE);
-      VirtualFile file = e.getData(VcsDataKeys.CURRENT_UNVERSIONED);
-      List<Change> changes = change == null ? Collections.emptyList() : Collections.singletonList(change);
-      List<VirtualFile> unversionedFiles = file == null ? Collections.emptyList() : Collections.singletonList(file);
-      askAndMove(myProject, changes, unversionedFiles);
     }
   }
 
