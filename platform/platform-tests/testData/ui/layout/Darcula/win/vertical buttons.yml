@@ -18,25 +18,36 @@ rowConstraints:
 columnConstraints:
   constraints:
   - gapAfter:
-      max: &id003 {horizontal: true, value: 6.0}
+      max: &id003 {horizontal: true, value: 8.0}
       min: *id003
       preferred: *id003
-    grow: 0.0
   - {}
   count: 2
 componentConstrains:
-  Create Android module: {}
-  'Android module name:': {}
-  'JTextField #3':
+  'JBScrollPane #0':
     horizontal: {grow: 100.0}
+    pushX: 100.0
+    pushY: 100.0
+    vertical: {grow: 100.0}
+  Accept Yours:
+    flowX: false
+    horizontal: {grow: 1000.0}
+    split: 3
+    vertical:
+      align: {horizontal: false, unit: 6, value: 0.0}
+  Accept Theirs:
+    horizontal: {grow: 1000.0}
+  Merge ...:
+    horizontal: {grow: 1000.0}
     spanX: 2097051
     wrap: true
 cellBounds:
-- [0, 0, 124, 16]
-- [130, 0, 350, 16]
-- [0, 26, 124, 22]
-- [130, 26, 350, 22]
+- [0, 0, 373, 310]
+- [381, 0, 99, 310]
+- [381, 0, 99, 310]
+- [381, 0, 99, 310]
 componentBounds:
-  Create Android module: [0, 0, 124, 16]
-  'Android module name:': [0, 29, 123, 16]
-  'JTextField #3': [129, 25, 352, 24]
+  'JBScrollPane #0': [0, 0, 373, 310]
+  Accept Yours: [378, -3, 105, 30]
+  Accept Theirs: [378, 31, 105, 30]
+  Merge ...: [378, 65, 105, 30]
