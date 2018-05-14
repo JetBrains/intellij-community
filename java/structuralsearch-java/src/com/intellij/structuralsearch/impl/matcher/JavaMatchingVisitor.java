@@ -1315,19 +1315,13 @@ public class JavaMatchingVisitor extends JavaElementVisitor {
     if (!context.getOptions().isLooseMatching() &&
         ((catches1.length == 0 && catches2.length != 0) ||
          (finally1 == null && finally2 != null) ||
-         (resourceList1 == null && resourceList2 != null)) ||
-        catches2.length < catches1.length
+         (resourceList1 == null && resourceList2 != null))
       ) {
       myMatchingVisitor.setResult(false);
     }
     else {
       final List<PsiElement> unmatchedElements = new SmartList<>();
-
       if (resourceList1 != null) {
-        if (resourceList2 == null) {
-          myMatchingVisitor.setResult(false);
-          return;
-        }
         final List<PsiResourceListElement> resources1 = PsiTreeUtil.getChildrenOfTypeAsList(resourceList1, PsiResourceListElement.class);
         final List<PsiResourceListElement> resources2 = PsiTreeUtil.getChildrenOfTypeAsList(resourceList2, PsiResourceListElement.class);
         if (!myMatchingVisitor.setResult(myMatchingVisitor.matchInAnyOrder(resources1.toArray(new PsiResourceListElement[0]),
@@ -1357,6 +1351,13 @@ public class JavaMatchingVisitor extends JavaElementVisitor {
         try2.putUserData(GlobalMatchingVisitor.UNMATCHED_ELEMENTS_KEY, unmatchedElements);
       }
     }
+  }
+
+  @Override
+  public void visitResourceExpression(PsiResourceExpression expression) {
+    final PsiElement other = myMatchingVisitor.getElement();
+    myMatchingVisitor.setResult(other instanceof PsiResourceExpression &&
+                                myMatchingVisitor.match(expression.getExpression(), ((PsiResourceExpression)other).getExpression()));
   }
 
   @Override
