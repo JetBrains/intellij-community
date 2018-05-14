@@ -75,11 +75,10 @@
     <get_schema fromUrl="http://json.schemastore.org/typings"
                 toFile="${idea.project.home}/plugins/JavaScriptLanguage/src/jsonSchemas/typings-schema.json" />
 
-    <!-- eslintrc schema is buggy - only manual updates -->
-    <!--<get_schema fromUrl="http://json.schemastore.org/eslintrc"
+    <get_schema fromUrl="http://json.schemastore.org/eslintrc"
                 toFile="${idea.project.home}/plugins/JavaScriptLanguage/src/jsonSchemas/.eslintrc-schema.json" />
     <replaceregexp file="${idea.project.home}/plugins/JavaScriptLanguage/src/jsonSchemas/.eslintrc-schema.json"
-                   match="&quot;definitions&quot;" replace="&quot;id&quot;: &quot;http://json.schemastore.org/eslintrc&quot;,${line.separator}  &quot;definitions&quot;" />-->
+                   match="&quot;definitions&quot;" replace="&quot;id&quot;: &quot;http://json.schemastore.org/eslintrc&quot;,${line.separator}  &quot;definitions&quot;" />
   </target>
 
   <target name="ALL">
