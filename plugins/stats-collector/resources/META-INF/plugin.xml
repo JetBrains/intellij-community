@@ -61,14 +61,8 @@
     <applicationService serviceInterface="com.intellij.completion.tracker.LookupElementPositionTracker"
                         serviceImplementation="com.intellij.completion.tracker.UserDataLookupElementPositionTracker"/>
 
-    <applicationConfigurable provider="com.intellij.plugin.PluginSettingsConfigurableProvider"/>
-
     <reporting.sendPermission implementation="com.intellij.reporting.AllowedOnlyInEAP"/>
   </extensions>
-
-  <actions>
-    <action class="com.intellij.plugin.ToggleManualMlSorting" id="ToggleManualMlSorting" internal="true"/>
-  </actions>
 
   <application-components>
     <component>
