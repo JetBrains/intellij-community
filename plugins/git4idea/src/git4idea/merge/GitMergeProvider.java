@@ -7,6 +7,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.Trinity;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vcs.history.VcsRevisionNumber;
@@ -31,6 +32,7 @@ import git4idea.repo.GitRepository;
 import git4idea.repo.GitRepositoryManager;
 import git4idea.util.GitFileUtils;
 import git4idea.util.StringScanner;
+import one.util.streamex.MoreCollectors;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -321,7 +323,7 @@ public class GitMergeProvider implements MergeProvider2 {
   }
 
   @Nullable
-  private String resolveMergeBranch(GitRepository repository) {
+  public String resolveMergeBranch(GitRepository repository) {
     GitRevisionNumber mergeHeadRevisionNumber;
     try {
       mergeHeadRevisionNumber = GitRevisionNumber.resolve(myProject, repository.getRoot(), MERGE_HEAD);
@@ -426,7 +428,33 @@ public class GitMergeProvider implements MergeProvider2 {
 
   @Override
   public MergeDialogCustomizer createDefaultMergeDialogCustomizer() {
-    return new GitDefaultMergeDialogCustomizer(myProject, this);
+    return new GitDefaultMergeDialogCustomizer(this);
+  }
+
+  private static String calcName(boolean isTheirs, @Nullable String branchName) {
+    String title = isTheirs ? GitBundle.message("merge.tool.column.theirs.status") : GitBundle.message("merge.tool.column.yours.status");
+    return branchName != null
+           ? title + " (" + StringUtil.shortenTextWithEllipsis(branchName, 15, 7, true) + ")"
+           : title;
+  }
+
+  @Nullable
+  public String getSingleMergeBranchName(Collection<VirtualFile> roots) {
+    return roots
+      .stream()
+      .map(root -> resolveMergeBranch(root))
+      .collect(MoreCollectors.onlyOne())
+      .orElse(null);
+  }
+
+  @Nullable
+  public String getSingleCurrentBranchName(Collection<VirtualFile> roots) {
+    return roots
+      .stream()
+      .map(root -> GitRepositoryManager.getInstance(myProject).getRepositoryForFile(root))
+      .map(repo -> repo == null ? null : repo.getCurrentBranchName())
+      .collect(MoreCollectors.onlyOne())
+      .orElse(null);
   }
 
   /**
@@ -450,6 +478,7 @@ public class GitMergeProvider implements MergeProvider2 {
    */
   private class MyMergeSession implements MergeSession {
     Map<VirtualFile, Conflict> myConflicts = new HashMap<>();
+    String currentBranchName;
     String mergeHeadBranchName;
 
     MyMergeSession(List<VirtualFile> filesToMerge) {
@@ -510,13 +539,8 @@ public class GitMergeProvider implements MergeProvider2 {
             myConflicts.put(f, c);
           }
         }
-        if (filesByRoot.size() == 1) {
-          VirtualFile root = filesByRoot.keySet().iterator().next();
-          GitRepository repo = GitRepositoryManager.getInstance(myProject).getRepositoryForRoot(root);
-          if (repo != null) {
-            mergeHeadBranchName = resolveMergeBranch(repo);
-          }
-        }
+        currentBranchName = getSingleCurrentBranchName(filesByRoot.keySet());
+        mergeHeadBranchName = getSingleMergeBranchName(filesByRoot.keySet());
       }
       catch (VcsException ex) {
         throw new IllegalStateException("The git operation should not fail in this context", ex);
@@ -526,7 +550,7 @@ public class GitMergeProvider implements MergeProvider2 {
     @NotNull
     @Override
     public ColumnInfo[] getMergeInfoColumns() {
-      return new ColumnInfo[]{new StatusColumn(false, null), new StatusColumn(true, mergeHeadBranchName)};
+      return new ColumnInfo[]{new StatusColumn(false, currentBranchName), new StatusColumn(true, mergeHeadBranchName)};
     }
 
     @Override
@@ -617,7 +641,7 @@ public class GitMergeProvider implements MergeProvider2 {
       private final boolean myIsTheirs;
 
       public StatusColumn(boolean isTheirs, @Nullable String branchName) {
-        super(branchName != null ? branchName : (isTheirs ? GitBundle.message("merge.tool.column.theirs.status") : GitBundle.message("merge.tool.column.yours.status")));
+        super(calcName(isTheirs, branchName));
         myIsTheirs = isTheirs;
       }
 

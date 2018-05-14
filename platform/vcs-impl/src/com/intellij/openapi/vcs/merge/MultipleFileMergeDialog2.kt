@@ -131,8 +131,8 @@ open class MultipleFileMergeDialog2(
   }
 
   override fun createCenterPanel(): JComponent {
-    return panel {
-      val description = mergeDialogCustomizer.getMultipleFileMergeDescription(processedFiles)
+    return panel(LCFlags.disableMagic) {
+      val description = mergeDialogCustomizer.getMultipleFileMergeDescription(files)
       if (!description.isNullOrBlank()) {
         row {
           label(description!!)
@@ -158,11 +158,11 @@ open class MultipleFileMergeDialog2(
           JButton("Accept Yours").also {
             it.addActionListener { acceptRevision(MergeSession.Resolution.AcceptedYours) }
             acceptYoursButton = it
-          }()
+          }(growX)
           JButton("Accept Theirs").also {
             it.addActionListener { acceptRevision(MergeSession.Resolution.AcceptedTheirs) }
             acceptTheirsButton = it
-          }()
+          }(growX)
           val mergeAction = object : AbstractAction() {
             override fun actionPerformed(e: ActionEvent) {
               showMergeDialog()
@@ -172,7 +172,7 @@ open class MultipleFileMergeDialog2(
           createJButtonForAction(mergeAction).also {
             it.text = "Merge..."
             mergeButton = it
-          }()
+          }(growX)
         }
       }
     }
@@ -199,7 +199,8 @@ open class MultipleFileMergeDialog2(
     for ((index, columnInfo) in tableModel.columns.withIndex()) {
       val column = table.columnModel.getColumn(index)
       columnInfo.maxStringValue?.let {
-        column.maxWidth = table.getFontMetrics(table.font).stringWidth(it) + columnInfo.additionalWidth
+        column.maxWidth = Math.max(table.getFontMetrics(table.font).stringWidth(it),
+                                   table.getFontMetrics(table.tableHeader.font).stringWidth(columnInfo.name)) + columnInfo.additionalWidth
       }
     }
   }
