@@ -4,10 +4,12 @@ package com.intellij.openapi.wm.impl.content;
 import com.intellij.ide.IdeEventQueue;
 import com.intellij.ide.actions.CloseAction;
 import com.intellij.ide.actions.ShowContentAction;
+import com.intellij.ide.ui.UISettingsListener;
 import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.impl.ActionManagerImpl;
 import com.intellij.openapi.actionSystem.impl.MenuItemPresentationFactory;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.ui.Splitter;
 import com.intellij.openapi.ui.ThreeComponentsSplitter;
@@ -30,6 +32,7 @@ import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.EmptyIterator;
 import com.intellij.util.containers.JBIterable;
 import com.intellij.util.containers.Predicate;
+import com.intellij.util.messages.MessageBusConnection;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -68,6 +71,8 @@ public class ToolWindowContentUi extends JPanel implements ContentUI, PropertyCh
   private ToolWindowContentUiType myType = ToolWindowContentUiType.TABBED;
 
   public Predicate<Point> isResizableArea = p -> true;
+  private MessageBusConnection myBusConnection =
+    ApplicationManager.getApplication().getMessageBus().connect();
 
   public ToolWindowContentUi(ToolWindowImpl window) {
     myWindow = window;
@@ -97,6 +102,13 @@ public class ToolWindowContentUi extends JPanel implements ContentUI, PropertyCh
             .iterator();
         }
       });
+
+    myBusConnection.subscribe(UISettingsListener.TOPIC, uiSettings -> {
+      getCurrentLayout().update();
+
+      revalidate();
+      repaint();
+    });
   }
 
   private boolean isResizeable() {
@@ -281,6 +293,7 @@ public class ToolWindowContentUi extends JPanel implements ContentUI, PropertyCh
   }
 
   public void beforeDispose() {
+    myBusConnection.disconnect();
   }
 
   public boolean canChangeSelectionTo(@NotNull Content content, boolean implicit) {
