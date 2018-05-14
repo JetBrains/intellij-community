@@ -29,6 +29,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.groovy.compiler.rt.GroovyRtConstants;
 import org.jetbrains.jps.ModuleChunk;
 import org.jetbrains.jps.cmdline.ClasspathBootstrap;
+import org.jetbrains.jps.incremental.CompileContext;
 import org.jetbrains.jps.incremental.ExternalProcessUtil;
 import org.jetbrains.jps.model.java.JpsJavaSdkType;
 import org.jetbrains.jps.model.library.sdk.JpsSdk;
@@ -56,9 +57,9 @@ class ForkedGroovyc implements GroovycFlavor {
   @Override
   public GroovycContinuation runGroovyc(Collection<String> compilationClassPath,
                                         boolean forStubs,
-                                        JpsGroovySettings settings,
+                                        CompileContext context,
                                         File tempFile,
-                                        final GroovycOutputParser parser)
+                                        final GroovycOutputParser parser, String byteCodeTargetLevel)
     throws Exception {
     List<String> classpath = new ArrayList<>();
     if (myOptimizeClassLoading) {
@@ -70,6 +71,8 @@ class ForkedGroovyc implements GroovycFlavor {
       classpath.addAll(compilationClassPath);
     }
 
+    JpsGroovySettings settings = JpsGroovycRunner.getGroovyCompilerSettings(context);
+    
     List<String> vmParams = ContainerUtilRt.newArrayList();
     vmParams.add("-Xmx" + System.getProperty("groovyc.heap.size", settings.heapSize) + "m");
     vmParams.add("-Dfile.encoding=" + System.getProperty("file.encoding"));
@@ -88,6 +91,10 @@ class ForkedGroovyc implements GroovycFlavor {
       vmParams.add("-D" + GroovycOutputParser.GRAPE_ROOT + "=" + grapeRoot);
     }
 
+    if (byteCodeTargetLevel != null) {
+      vmParams.add("-Dgroovy.target.bytecode=" + byteCodeTargetLevel);
+    }
+
     final List<String> cmd = ExternalProcessUtil.buildJavaCommandLine(
       getJavaExecutable(myChunk),
       "org.jetbrains.groovy.compiler.rt.GroovycRunner",
@@ -99,7 +106,7 @@ class ForkedGroovyc implements GroovycFlavor {
     ProcessHandler handler = new BaseOSProcessHandler(process, StringUtil.join(cmd, " "), null) {
       @NotNull
       @Override
-      protected Future<?> executeOnPooledThread(@NotNull Runnable task) {
+      public Future<?> executeTask(@NotNull Runnable task) {
         return SharedThreadPool.getInstance().executeOnPooledThread(task);
       }
 

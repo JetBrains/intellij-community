@@ -43,12 +43,18 @@ import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.vfs.VfsUtil
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.newvfs.impl.VfsRootAccess
+import com.intellij.pom.java.LanguageLevel
 import com.intellij.project.IntelliJProjectConfiguration
 import com.intellij.psi.PsiFile
+import com.intellij.testFramework.IdeaTestUtil
 import com.intellij.testFramework.PsiTestUtil
 import com.intellij.testFramework.TestLoggerFactory
 import groovy.transform.CompileStatic
 import org.jetbrains.annotations.NotNull
+import org.jetbrains.org.objectweb.asm.ClassReader
+import org.jetbrains.org.objectweb.asm.ClassVisitor
+import org.jetbrains.org.objectweb.asm.Opcodes
+
 /**
  * @author peter
  */
@@ -979,6 +985,32 @@ class BuildContextImpl extends BuildContext {
     myFixture.addClass('class Foo {}');
     myFixture.addFileToProject('a.groovy', 'import goo.Goo; class Bar { }')
     shouldFail { compileModule(myModule) }
+  }
+
+  void "test honor bytecode version"() {
+    IdeaTestUtil.setModuleLanguageLevel(myModule, LanguageLevel.JDK_1_8)
+    CompilerConfiguration.getInstance(project).setBytecodeTargetLevel(myModule, '1.8')
+
+    myFixture.addFileToProject('a.groovy', 'class Foo { }')
+    assertEmpty make()
+    assert getClassFileVersion('Foo') == Opcodes.V1_8
+
+    IdeaTestUtil.setModuleLanguageLevel(myModule, LanguageLevel.JDK_1_6)
+    CompilerConfiguration.getInstance(project).setBytecodeTargetLevel(myModule, '1.6')
+    assertEmpty rebuild()
+    assert getClassFileVersion('Foo') == Opcodes.V1_6
+  }
+
+  private int getClassFileVersion(String className) {
+    def classFile = findClassFile(className)
+    int version = -1
+    new ClassReader(classFile.contentsToByteArray()).accept(new ClassVisitor(Opcodes.ASM6) {
+      @Override
+      void visit(int v, int access, String name, String signature, String superName, String[] interfaces) {
+        version = v
+      }
+    }, 0)
+    return version
   }
 
   static class GroovycTest extends GroovyCompilerTest {
