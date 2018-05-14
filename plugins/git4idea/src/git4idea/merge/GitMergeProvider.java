@@ -328,6 +328,26 @@ public class GitMergeProvider implements MergeProvider2 {
   }
 
   @Nullable
+  public String resolveMergeBranchOrCherryPick(@NotNull VirtualFile file) {
+    GitRepository repository = GitRepositoryManager.getInstance(myProject).getRepositoryForFile(file);
+    if (repository == null) {
+      return null;
+    }
+    String mergeBranch = resolveMergeBranch(repository);
+    if (mergeBranch != null) {
+      return mergeBranch;
+    }
+
+    try {
+      GitRevisionNumber.resolve(myProject, repository.getRoot(), CHERRY_PICK_HEAD);
+      return "cherry-pick";
+    }
+    catch (VcsException e) {
+      return null;
+    }
+  }
+
+  @Nullable
   public String resolveMergeBranch(GitRepository repository) {
     GitRevisionNumber mergeHeadRevisionNumber;
     try {
@@ -447,7 +467,7 @@ public class GitMergeProvider implements MergeProvider2 {
   public String getSingleMergeBranchName(Collection<VirtualFile> roots) {
     return roots
       .stream()
-      .map(root -> resolveMergeBranch(root))
+      .map(root -> resolveMergeBranchOrCherryPick(root))
       .filter(branch -> branch != null)
       .collect(MoreCollectors.onlyOne())
       .orElse(null);
