@@ -52,7 +52,7 @@ class GithubChooseAccountDialog(project: Project?, parentComponent: JComponent?,
       }
     }
   }
-  private val setDefaultCheckBox: JBCheckBox? = if (allowDefault) JBCheckBox("Set as default account") else null
+  private val setDefaultCheckBox: JBCheckBox? = if (allowDefault) JBCheckBox("Set as default account for current project") else null
 
   init {
     this.title = title
