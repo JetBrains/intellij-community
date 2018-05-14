@@ -36,7 +36,10 @@ import com.intellij.ui.GuiUtils;
 import com.intellij.ui.awt.RelativePoint;
 import com.intellij.ui.components.JBCheckBox;
 import com.intellij.ui.components.JBLabel;
-import com.intellij.util.*;
+import com.intellij.util.FunctionUtil;
+import com.intellij.util.NullableFunction;
+import com.intellij.util.PairConsumer;
+import com.intellij.util.ThrowableConsumer;
 import com.intellij.util.concurrency.FutureResult;
 import com.intellij.util.textCompletion.DefaultTextCompletionValueDescriptor;
 import com.intellij.util.textCompletion.TextCompletionProvider;
@@ -50,6 +53,7 @@ import com.intellij.vcs.log.util.VcsUserUtil;
 import com.intellij.vcsUtil.VcsFileUtil;
 import com.intellij.vcsUtil.VcsUtil;
 import git4idea.GitUserRegistry;
+import git4idea.GitUtil;
 import git4idea.branch.GitBranchUtil;
 import git4idea.changes.GitChangeUtils;
 import git4idea.commands.Git;
@@ -186,7 +190,8 @@ public class GitCheckinEnvironment implements CheckinEnvironment {
     List<GitRepository> repositories = manager.sortByDependency(getRepositoriesFromRoots(manager, sortedChanges.keySet()));
     for (GitRepository repository : repositories) {
       Collection<Change> rootChanges = sortedChanges.get(repository.getRoot());
-      exceptions.addAll(commitRepository(repository, rootChanges, message));
+      List<CommitChange> toCommit = map(rootChanges, CommitChange::new);
+      exceptions.addAll(commitRepository(repository, toCommit, message));
     }
 
     if (myNextCommitIsPushed != null && myNextCommitIsPushed.booleanValue() && exceptions.isEmpty()) {
@@ -204,25 +209,25 @@ public class GitCheckinEnvironment implements CheckinEnvironment {
 
   @NotNull
   private List<VcsException> commitRepository(@NotNull GitRepository repository,
-                                              @NotNull Collection<Change> rootChanges,
+                                              @NotNull Collection<CommitChange> changes,
                                               @NotNull String message) {
     List<VcsException> exceptions = new ArrayList<>();
     VirtualFile root = repository.getRoot();
 
     try {
       // Stage partial changes
-      Pair<Runnable, List<Change>> partialAddResult = addPartialChangesToIndex(repository, rootChanges);
+      Pair<Runnable, List<CommitChange>> partialAddResult = addPartialChangesToIndex(repository, changes);
       Runnable callback = partialAddResult.first;
-      Set<Change> changedWithIndex = new HashSet<>(partialAddResult.second);
+      Set<CommitChange> changedWithIndex = new HashSet<>(partialAddResult.second);
 
       // Stage case-only renames
-      List<Change> caseOnlyRenameChanges = addCaseOnlyRenamesToIndex(repository, rootChanges, changedWithIndex, exceptions);
+      List<CommitChange> caseOnlyRenameChanges = addCaseOnlyRenamesToIndex(repository, changes, changedWithIndex, exceptions);
       if (!exceptions.isEmpty()) return exceptions;
       changedWithIndex.addAll(caseOnlyRenameChanges);
 
       if (!changedWithIndex.isEmpty()) {
         runWithMessageFile(myProject, root, message, messageFile -> {
-          exceptions.addAll(commitUsingIndex(myProject, root, rootChanges, changedWithIndex, messageFile));
+          exceptions.addAll(commitUsingIndex(myProject, root, changes, changedWithIndex, messageFile));
         });
         if (!exceptions.isEmpty()) return exceptions;
 
@@ -231,7 +236,7 @@ public class GitCheckinEnvironment implements CheckinEnvironment {
       else {
         try {
           runWithMessageFile(myProject, root, message, messageFile -> {
-            List<FilePath> files = ChangesUtil.getPaths(rootChanges);
+            List<FilePath> files = getPaths(changes);
             commit(myProject, root, files, messageFile);
           });
         }
@@ -241,7 +246,7 @@ public class GitCheckinEnvironment implements CheckinEnvironment {
             throw ex;
           }
           runWithMessageFile(myProject, root, message, messageFile -> {
-            if (!mergeCommit(myProject, root, rootChanges, messageFile, exceptions, partialOperation)) {
+            if (!mergeCommit(myProject, root, changes, messageFile, exceptions, partialOperation)) {
               throw ex;
             }
           });
@@ -259,30 +264,30 @@ public class GitCheckinEnvironment implements CheckinEnvironment {
   @NotNull
   private List<VcsException> commitUsingIndex(@NotNull Project project,
                                               @NotNull VirtualFile root,
-                                              @NotNull Collection<Change> rootChanges,
-                                              @NotNull Set<Change> changedWithIndex,
+                                              @NotNull Collection<CommitChange> rootChanges,
+                                              @NotNull Set<CommitChange> changedWithIndex,
                                               @NotNull File messageFile) {
     List<VcsException> exceptions = new ArrayList<>();
     try {
-      Set<FilePath> added = map2SetNotNull(rootChanges, ChangesUtil::getAfterPath);
-      Set<FilePath> removed = map2SetNotNull(rootChanges, ChangesUtil::getBeforePath);
+      Set<FilePath> added = map2SetNotNull(rootChanges, it -> it.afterPath);
+      Set<FilePath> removed = map2SetNotNull(rootChanges, it -> it.beforePath);
       removed.removeAll(added);
 
       String rootPath = root.getPath();
 
       // Check what is staged besides our changes
       Collection<Change> stagedChanges = GitChangeUtils.getStagedChanges(project, root);
-      LOG.debug("Found staged changes: " + getLogString(rootPath, stagedChanges));
+      LOG.debug("Found staged changes: " + GitUtil.getLogString(rootPath, stagedChanges));
 
       // Reset staged changes which are not selected for commit
       Collection<Change> excludedStagedChanges = filter(stagedChanges, change -> !added.contains(getAfterPath(change)) &&
                                                                                  !removed.contains(getBeforePath(change)));
       if (!excludedStagedChanges.isEmpty()) {
-        LOG.info("Staged changes excluded for commit: " + getLogString(rootPath, excludedStagedChanges));
+        LOG.info("Staged changes excluded for commit: " + GitUtil.getLogString(rootPath, excludedStagedChanges));
         reset(project, root, excludedStagedChanges);
       }
       try {
-        List<FilePath> alreadyHandledPaths = ChangesUtil.getPaths(changedWithIndex);
+        List<FilePath> alreadyHandledPaths = getPaths(changedWithIndex);
         // Stage what else is needed to commit
         Set<FilePath> toAdd = new HashSet<>(added);
         toAdd.removeAll(alreadyHandledPaths);
@@ -319,22 +324,22 @@ public class GitCheckinEnvironment implements CheckinEnvironment {
 
 
   @NotNull
-  private Pair<Runnable, List<Change>> addPartialChangesToIndex(@NotNull GitRepository repository,
-                                                                @NotNull Collection<Change> changes) throws VcsException {
-    Set<String> changelistIds = map2SetNotNull(changes, change -> {
-      return change instanceof ChangeListChange ? ((ChangeListChange)change).getChangeListId() : null;
-    });
+  private Pair<Runnable, List<CommitChange>> addPartialChangesToIndex(@NotNull GitRepository repository,
+                                                                      @NotNull Collection<CommitChange> changes) throws VcsException {
+    Set<String> changelistIds = map2SetNotNull(changes, change -> change.changelistId);
     if (changelistIds.isEmpty()) return Pair.create(EmptyRunnable.INSTANCE, emptyList());
     if (changelistIds.size() != 1) throw new VcsException("Can't commit changes from multiple changelists at once");
     String changelistId = changelistIds.iterator().next();
 
-    Pair<List<PartialCommitHelper>, List<Change>> result = computeAfterLSTManagerUpdate(repository.getProject(), () -> {
+    Pair<List<PartialCommitHelper>, List<CommitChange>> result = computeAfterLSTManagerUpdate(repository.getProject(), () -> {
       List<PartialCommitHelper> helpers = new ArrayList<>();
-      List<Change> partialChanges = new ArrayList<>();
+      List<CommitChange> partialChanges = new ArrayList<>();
 
-      for (Change change : changes) {
-        if (change instanceof ChangeListChange) {
-          PartialLocalLineStatusTracker tracker = PartialChangesUtil.getPartialTracker(myProject, change);
+      for (CommitChange change : changes) {
+        if (change.changelistId != null && change.virtualFile != null &&
+            change.beforePath != null && change.afterPath != null) {
+          PartialLocalLineStatusTracker tracker = PartialChangesUtil.getPartialTracker(myProject, change.virtualFile);
+
           if (tracker == null) continue;
           if (!tracker.isOperational()) {
             LOG.warn("Tracker is not operational for " + tracker.getVirtualFile().getPresentableUrl());
@@ -353,14 +358,13 @@ public class GitCheckinEnvironment implements CheckinEnvironment {
 
     if (result == null) throw new VcsException("Can't collect partial changes to commit");
     List<PartialCommitHelper> helpers = result.first;
-    List<Change> partialChanges = result.second;
+    List<CommitChange> partialChanges = result.second;
 
 
     List<FilePath> pathsToDelete = new ArrayList<>();
-    for (Change change : partialChanges) {
-      if (change.getType() == Change.Type.MOVED) {
-        FilePath beforePath = ObjectUtils.assertNotNull(getBeforePath(change));
-        pathsToDelete.add(beforePath);
+    for (CommitChange change : partialChanges) {
+      if (change.isMove()) {
+        pathsToDelete.add(assertNotNull(change.beforePath));
       }
     }
     LOG.debug(String.format("Updating index for partial changes: removing: %s", pathsToDelete));
@@ -369,13 +373,11 @@ public class GitCheckinEnvironment implements CheckinEnvironment {
 
     LOG.debug(String.format("Updating index for partial changes: changes: %s", partialChanges));
     for (int i = 0; i < partialChanges.size(); i++) {
-      Change change = partialChanges.get(i);
-      CurrentContentRevision revision = (CurrentContentRevision)change.getAfterRevision();
-      assert revision != null;
+      CommitChange change = partialChanges.get(i);
 
-      FilePath path = revision.getFile();
+      FilePath path = assertNotNull(change.afterPath);
       PartialCommitHelper helper = helpers.get(i);
-      VirtualFile file = revision.getVirtualFile();
+      VirtualFile file = change.virtualFile;
       if (file == null) throw new VcsException("Can't find file: " + path.getPath());
 
       GitIndexUtil.StagedFile stagedFile = getStagedFile(repository, change);
@@ -403,14 +405,15 @@ public class GitCheckinEnvironment implements CheckinEnvironment {
   }
 
   @Nullable
-  private static GitIndexUtil.StagedFile getStagedFile(@NotNull GitRepository repository, @NotNull Change change) throws VcsException {
-    FilePath bPath = getBeforePath(change);
+  private static GitIndexUtil.StagedFile getStagedFile(@NotNull GitRepository repository,
+                                                       @NotNull CommitChange change) throws VcsException {
+    FilePath bPath = change.beforePath;
     if (bPath != null) {
       GitIndexUtil.StagedFile file = GitIndexUtil.listStaged(repository, bPath);
       if (file != null) return file;
     }
 
-    FilePath aPath = getAfterPath(change);
+    FilePath aPath = change.afterPath;
     if (aPath != null) {
       GitIndexUtil.StagedFile file = GitIndexUtil.listStaged(repository, aPath);
       if (file != null) return file;
@@ -440,20 +443,20 @@ public class GitCheckinEnvironment implements CheckinEnvironment {
 
 
   @NotNull
-  private List<Change> addCaseOnlyRenamesToIndex(@NotNull GitRepository repository,
-                                                 @NotNull Collection<Change> changes,
-                                                 @NotNull Set<Change> alreadyProcessed,
-                                                 @NotNull List<VcsException> exceptions) {
+  private List<CommitChange> addCaseOnlyRenamesToIndex(@NotNull GitRepository repository,
+                                                       @NotNull Collection<CommitChange> changes,
+                                                       @NotNull Set<CommitChange> alreadyProcessed,
+                                                       @NotNull List<VcsException> exceptions) {
     if (SystemInfo.isFileSystemCaseSensitive) return Collections.emptyList();
 
-    List<Change> caseOnlyRenames = filter(changes, it -> !alreadyProcessed.contains(it) && isCaseOnlyRename(it));
+    List<CommitChange> caseOnlyRenames = filter(changes, it -> !alreadyProcessed.contains(it) && isCaseOnlyRename(it));
     if (caseOnlyRenames.isEmpty()) return caseOnlyRenames;
 
     LOG.info("Committing case only rename: " + getLogString(repository.getRoot().getPath(), caseOnlyRenames) +
              " in " + getShortRepositoryName(repository));
 
-    List<FilePath> pathsToAdd = map(caseOnlyRenames, ChangesUtil::getAfterPath);
-    List<FilePath> pathsToDelete = map(caseOnlyRenames, ChangesUtil::getBeforePath);
+    List<FilePath> pathsToAdd = map(caseOnlyRenames, it -> it.afterPath);
+    List<FilePath> pathsToDelete = map(caseOnlyRenames, it -> it.beforePath);
 
     LOG.debug(String.format("Updating index for case only changes: added: %s,\n removed: %s", pathsToAdd, pathsToDelete));
     updateIndex(myProject, repository.getRoot(), pathsToAdd, pathsToDelete, exceptions);
@@ -461,14 +464,33 @@ public class GitCheckinEnvironment implements CheckinEnvironment {
     return caseOnlyRenames;
   }
 
-  private static boolean isCaseOnlyRename(@NotNull Change change) {
+  private static boolean isCaseOnlyRename(@NotNull CommitChange change) {
     if (SystemInfo.isFileSystemCaseSensitive) return false;
-    if (change.getType() != Change.Type.MOVED) return false;
-    FilePath afterPath = assertNotNull(getAfterPath(change));
-    FilePath beforePath = assertNotNull(getBeforePath(change));
+    if (!change.isMove()) return false;
+    FilePath afterPath = assertNotNull(change.afterPath);
+    FilePath beforePath = assertNotNull(change.beforePath);
     return isCaseOnlyChange(beforePath.getPath(), afterPath.getPath());
   }
 
+  @NotNull
+  private static List<FilePath> getPaths(@NotNull Collection<CommitChange> changes) {
+    List<FilePath> files = new ArrayList<>();
+    for (CommitChange change : changes) {
+      if (CASE_SENSITIVE_FILE_PATH_HASHING_STRATEGY.equals(change.beforePath, change.afterPath)) {
+        addIfNotNull(files, change.beforePath);
+      }
+      else {
+        addIfNotNull(files, change.beforePath);
+        addIfNotNull(files, change.afterPath);
+      }
+    }
+    return files;
+  }
+
+  @NotNull
+  private static String getLogString(@NotNull String root, @NotNull Collection<CommitChange> changes) {
+    return GitUtil.getLogString(root, changes, it -> it.beforePath, it -> it.afterPath);
+  }
 
   private static void reset(@NotNull Project project, @NotNull VirtualFile root, @NotNull Collection<Change> changes) throws VcsException {
     Set<FilePath> allPaths = new HashSet<>();
@@ -502,12 +524,12 @@ public class GitCheckinEnvironment implements CheckinEnvironment {
    */
   private boolean mergeCommit(@NotNull Project project,
                               @NotNull VirtualFile root,
-                              @NotNull Collection<Change> rootChanges,
+                              @NotNull Collection<CommitChange> rootChanges,
                               @NotNull File messageFile,
                               @NotNull List<VcsException> exceptions,
                               @NotNull PartialOperation partialOperation) {
-    Set<FilePath> added = map2SetNotNull(rootChanges, ChangesUtil::getAfterPath);
-    Set<FilePath> removed = map2SetNotNull(rootChanges, ChangesUtil::getBeforePath);
+    Set<FilePath> added = map2SetNotNull(rootChanges, it -> it.afterPath);
+    Set<FilePath> removed = map2SetNotNull(rootChanges, it -> it.beforePath);
     removed.removeAll(added);
 
     HashSet<FilePath> realAdded = new HashSet<>();
@@ -1060,5 +1082,48 @@ public class GitCheckinEnvironment implements CheckinEnvironment {
 
   public void setSkipHooksForNextCommit(boolean skipHooksForNextCommit) {
     myNextCommitSkipHook = skipHooksForNextCommit;
+  }
+
+  private static class CommitChange {
+    @Nullable public final FilePath beforePath;
+    @Nullable public final FilePath afterPath;
+    @Nullable public final String changelistId;
+    @Nullable public final VirtualFile virtualFile;
+
+    public CommitChange(@NotNull Change change) {
+      this.beforePath = getBeforePath(change);
+      this.afterPath = getAfterPath(change);
+
+      if (change instanceof ChangeListChange) {
+        this.changelistId = ((ChangeListChange)change).getChangeListId();
+      }
+      else {
+        this.changelistId = null;
+      }
+
+      ContentRevision aRev = change.getAfterRevision();
+      if (aRev instanceof CurrentContentRevision) {
+        this.virtualFile = ((CurrentContentRevision)aRev).getVirtualFile();
+      }
+      else {
+        this.virtualFile = null;
+      }
+    }
+
+    public CommitChange(@Nullable FilePath beforePath,
+                        @Nullable FilePath afterPath,
+                        @Nullable String changelistId,
+                        @Nullable VirtualFile virtualFile) {
+      assert beforePath != null || afterPath != null;
+      this.beforePath = beforePath;
+      this.afterPath = afterPath;
+      this.changelistId = changelistId;
+      this.virtualFile = virtualFile;
+    }
+
+    public boolean isMove() {
+      if (beforePath == null || afterPath == null) return false;
+      return !CASE_SENSITIVE_FILE_PATH_HASHING_STRATEGY.equals(beforePath, afterPath);
+    }
   }
 }
