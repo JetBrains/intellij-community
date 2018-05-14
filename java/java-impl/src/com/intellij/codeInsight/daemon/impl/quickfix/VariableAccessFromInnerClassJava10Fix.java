@@ -4,7 +4,6 @@ package com.intellij.codeInsight.daemon.impl.quickfix;
 import com.intellij.codeInsight.FileModificationService;
 import com.intellij.codeInsight.daemon.QuickFixBundle;
 import com.intellij.codeInsight.intention.impl.BaseIntentionAction;
-import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
@@ -28,6 +27,7 @@ import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Objects;
 
+import static com.intellij.util.ObjectUtils.assertNotNull;
 import static com.intellij.util.ObjectUtils.tryCast;
 import static java.util.Collections.emptyList;
 
@@ -40,10 +40,10 @@ public class VariableAccessFromInnerClassJava10Fix extends BaseIntentionAction {
   };
   private static final LinkedHashSet<String> ourSuggestions = new LinkedHashSet<>(Arrays.asList(NAMES));
 
-  private final PsiElement myContext;
+  private final SmartPsiElementPointer<PsiElement> myContext;
 
   public VariableAccessFromInnerClassJava10Fix(PsiElement context) {
-    myContext = context;
+    myContext = SmartPointerManager.createPointer(context);
   }
 
   @Nls(capitalization = Nls.Capitalization.Sentence)
@@ -56,7 +56,7 @@ public class VariableAccessFromInnerClassJava10Fix extends BaseIntentionAction {
   @Override
   public boolean isAvailable(@NotNull Project project, Editor editor, PsiFile file) {
     if (!PsiUtil.isLanguageLevel10OrHigher(file)) return false;
-    if (!myContext.isValid()) return false;
+    if (myContext.getElement() == null) return false;
     PsiReferenceExpression reference = tryCast(myContext, PsiReferenceExpression.class);
     if (reference == null) return false;
     PsiLocalVariable variable = tryCast(reference.resolve(), PsiLocalVariable.class);
@@ -69,7 +69,7 @@ public class VariableAccessFromInnerClassJava10Fix extends BaseIntentionAction {
         (variable.getTypeElement().isInferredType() &&
          type instanceof PsiClassType &&
          ((PsiClassType)type).resolve() instanceof PsiAnonymousClass)
-      ) {
+    ) {
       return false;
     }
     setText(QuickFixBundle.message("convert.variable.to.field.in.anonymous.class.fix.name", name));
@@ -78,10 +78,12 @@ public class VariableAccessFromInnerClassJava10Fix extends BaseIntentionAction {
 
   @Override
   public void invoke(@NotNull Project project, Editor editor, PsiFile file) throws IncorrectOperationException {
-    if (!FileModificationService.getInstance().preparePsiElementsForWrite(myContext)) return;
+    PsiElement context = myContext.getElement();
+    assertNotNull(context);
+    if (!FileModificationService.getInstance().preparePsiElementsForWrite(context)) return;
     WriteCommandAction.runWriteCommandAction(project, () -> {
-      if (myContext instanceof PsiReferenceExpression && myContext.isValid()) {
-        PsiReferenceExpression referenceExpression = (PsiReferenceExpression)myContext;
+      if (context instanceof PsiReferenceExpression && context.isValid()) {
+        PsiReferenceExpression referenceExpression = (PsiReferenceExpression)context;
         PsiLocalVariable variable = tryCast(referenceExpression.resolve(), PsiLocalVariable.class);
         if (variable == null) return;
         PsiElementFactory factory = JavaPsiFacade.getElementFactory(project);
@@ -89,7 +91,7 @@ public class VariableAccessFromInnerClassJava10Fix extends BaseIntentionAction {
         final String variableText = getFieldText(variable, factory, initializer);
 
 
-        PsiLambdaExpression lambdaExpression = PsiTreeUtil.getParentOfType(myContext, PsiLambdaExpression.class);
+        PsiLambdaExpression lambdaExpression = PsiTreeUtil.getParentOfType(context, PsiLambdaExpression.class);
         if (lambdaExpression == null) return;
         DeclarationInfo declarationInfo = DeclarationInfo.findExistingAnonymousClass(variable);
 
@@ -254,19 +256,5 @@ public class VariableAccessFromInnerClassJava10Fix extends BaseIntentionAction {
   @Override
   public boolean startInWriteAction() {
     return true;
-  }
-
-  private static class StringLookupElement extends LookupElement {
-    private String lookupString;
-
-    public StringLookupElement(String lookupString) {
-      this.lookupString = lookupString;
-    }
-
-    @NotNull
-    @Override
-    public String getLookupString() {
-      return lookupString;
-    }
   }
 }
