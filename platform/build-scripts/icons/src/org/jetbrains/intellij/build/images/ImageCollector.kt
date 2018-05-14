@@ -51,8 +51,7 @@ internal class ImagePaths(val id: String,
 
   val used: Boolean get() = flags.used
   val deprecated: Boolean get() = flags.deprecation != null
-  val deprecationReplacement: String? get() = flags.deprecation?.replacement
-  val deprecationComment: String? get() = flags.deprecation?.comment
+  val deprecation: DeprecationData? get() = flags.deprecation
 }
 
 class ImageFlags(val skipped: Boolean,
@@ -61,7 +60,7 @@ class ImageFlags(val skipped: Boolean,
   constructor() : this(false, false, null)
 }
 
-class DeprecationData(val comment: String?, val replacement: String?)
+data class DeprecationData(val comment: String?, val replacement: String?, val replacementContextClazz: String?)
 
 
 internal class ImageCollector(val projectHome: File, val iconsOnly: Boolean = true, val ignoreSkipTag: Boolean = false) {
@@ -188,9 +187,12 @@ internal class ImageCollector(val projectHome: File, val iconsOnly: Boolean = tr
               val comment = StringUtil.nullize(value.substringAfter(";", "").trim())
               val valueWithoutComment = value.substringBefore(";")
               val pattern = valueWithoutComment.substringBefore("->").trim()
-              val replacement = StringUtil.nullize(valueWithoutComment.substringAfter("->", "").trim())
+              val replacementString = StringUtil.nullize(valueWithoutComment.substringAfter("->", "").trim())
+              val replacement = replacementString?.substringAfter('@')?.trim()
+              val replacementContextClazz = StringUtil.nullize(replacementString?.substringBefore('@', "")?.trim())
 
-              answer.deprecated += Pair(compilePattern(dir, root, pattern), DeprecationData(comment, replacement))
+              val deprecatedData = DeprecationData(comment, replacement, replacementContextClazz)
+              answer.deprecated += Pair(compilePattern(dir, root, pattern), deprecatedData)
             }),
             Pair("name:", { value -> }), // ignore directive for IconsClassGenerator
             Pair("#", { value -> }) // comment
@@ -269,16 +271,9 @@ private fun mergeImageFlags(flags1: ImageFlags,
 private fun mergeDeprecations(data1: DeprecationData?,
                               data2: DeprecationData?,
                               comment: String): DeprecationData? {
-  if (data1 == null) return data2;
-  if (data2 == null) return data1;
+  if (data1 == null) return data2
+  if (data2 == null) return data1
+  if (data1 == data2) return data1
 
-  return DeprecationData(mergeOptions(data1.comment, data2.comment,
-                                      "Different deprecation comments found for same icon: $comment"),
-                         mergeOptions(data1.replacement, data2.replacement,
-                                     "Different deprecation replacements found for same icon: $comment"))
-}
-
-private fun <T> mergeOptions(val1: T?, val2: T?, comment: String): T? {
-  if (val1 == null || val2 == null || val1 == val2) return val1 ?: val2
-  throw AssertionError("$comment\n$val1\n$val2")
+  throw AssertionError("Different deprecation statements found for icon: $comment\n$data1\n$data2")
 }

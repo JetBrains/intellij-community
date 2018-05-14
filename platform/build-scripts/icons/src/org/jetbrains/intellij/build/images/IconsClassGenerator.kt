@@ -146,6 +146,10 @@ class IconsClassGenerator(val projectHome: File, val util: JpsModule, val writeC
   }
 
   private fun generate(module: JpsModule, className: String, packageName: String, customLoad: Boolean, copyrightComment: String): String? {
+    val imageCollector = ImageCollector(projectHome, true)
+    val images = imageCollector.collect(module)
+    imageCollector.printUsedIconRobots()
+
     val answer = StringBuilder()
     answer.append(copyrightComment)
     append(answer, "package $packageName;\n", 0)
@@ -167,11 +171,16 @@ class IconsClassGenerator(val projectHome: File, val util: JpsModule, val writeC
       append(answer, "return IconLoader.getIcon(path, ${className}.class);", 2)
       append(answer, "}", 1)
       append(answer, "", 0)
+
+      val customExternalLoad = images.any { it.deprecation?.replacementContextClazz != null }
+      if (customExternalLoad) {
+        append(answer, "private static Icon load(String path, Class<?> clazz) {", 1)
+        append(answer, "return IconLoader.getIcon(path, clazz);", 2)
+        append(answer, "}", 1)
+        append(answer, "", 0)
+      }
     }
 
-    val imageCollector = ImageCollector(projectHome, true)
-    val images = imageCollector.collect(module)
-    imageCollector.printUsedIconRobots()
 
     val inners = StringBuilder()
     processIcons(images, inners, customLoad, 0)
@@ -212,8 +221,9 @@ class IconsClassGenerator(val projectHome: File, val util: JpsModule, val writeC
           val name = file.name
           val used = image.used
           val deprecated = image.deprecated
-          val deprecationComment = image.deprecationComment
-          val deprecationReplacement = image.deprecationReplacement
+          val deprecationComment = image.deprecation?.comment
+          val deprecationReplacement = image.deprecation?.replacement
+          val deprecationReplacementContextClazz = image.deprecation?.replacementContextClazz
 
           if (isIcon(file) || deprecationReplacement != null) {
             processedIcons++
@@ -237,21 +247,30 @@ class IconsClassGenerator(val projectHome: File, val util: JpsModule, val writeC
               if (!packagePrefix.isEmpty()) root_prefix = "/" + packagePrefix.replace('.', '/')
             }
 
-            val imageFile: File
-            if (deprecationReplacement != null) {
-              imageFile = File(sourceRoot.file, deprecationReplacement)
-              assert(isIcon(imageFile), { "Overriding icon should be valid: $name - ${imageFile.path}" })
+            if (deprecationReplacementContextClazz == null) {
+              val imageFile: File
+              if (deprecationReplacement != null) {
+                imageFile = File(sourceRoot.file, deprecationReplacement)
+                assert(isIcon(imageFile), { "Overriding icon should be valid: $name - ${imageFile.path}" })
+              }
+              else {
+                imageFile = file
+              }
+
+              val size = imageSize(imageFile) ?: error("Can't get icon size: $imageFile")
+              val method = if (customLoad) "load" else "IconLoader.getIcon"
+              val relativePath = root_prefix + "/" + FileUtil.getRelativePath(sourceRoot.file, imageFile)!!.replace('\\', '/')
+              append(answer,
+                     "public static final Icon ${iconName(name)} = $method(\"$relativePath\"); // ${size.width}x${size.height}",
+                     level)
             }
             else {
-              imageFile = file
+              val method = if (customLoad) "load" else "IconLoader.getIcon"
+              val relativePath = deprecationReplacement
+              append(answer,
+                     "public static final Icon ${iconName(name)} = $method(\"$relativePath\", ${deprecationReplacementContextClazz}.class);",
+                     level)
             }
-
-            val size = imageSize(imageFile) ?: error("Can't get icon size: $imageFile")
-            val method = if (customLoad) "load" else "IconLoader.getIcon"
-            val relativePath = root_prefix + "/" + FileUtil.getRelativePath(sourceRoot.file, imageFile)!!.replace('\\', '/')
-            append(answer,
-                   "public static final Icon ${iconName(name)} = $method(\"$relativePath\"); // ${size.width}x${size.height}",
-                   level)
           }
         }
       }
