@@ -19,7 +19,7 @@ Groovy script
         Unary expression
           PsiElement(~)('~')
           Literal
-            GroovyASTPsiElementImpl(regex literal)
+            GroovyASTPsiElementImpl(SLASHY_LITERAL)
               PsiElement(regex begin)('/')
               PsiElement(regex content)('....')
               PsiElement(regex end)('/')

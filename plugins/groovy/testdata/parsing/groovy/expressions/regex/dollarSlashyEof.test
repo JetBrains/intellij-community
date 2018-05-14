@@ -11,7 +11,7 @@ Groovy script
       PsiElement(=)('=')
       PsiWhiteSpace(' ')
       Literal
-        GroovyASTPsiElementImpl($/ regex literal)
+        GroovyASTPsiElementImpl(DOLLAR_SLASHY_LITERAL)
           PsiElement($/ regex begin)('$/')
           GrStringContentImpl(STRING_CONTENT)
             ASTWrapperPsiElement($/ regex content)
