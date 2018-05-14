@@ -88,7 +88,7 @@ class DiscoveredTestsTree extends Tree implements DataProvider {
     });
   }
 
-  public synchronized void addTest(@NotNull PsiClass testClass,
+  public void addTest(@NotNull PsiClass testClass,
                                    @NotNull PsiMethod testMethod) {
     myModel.addTest(testClass, testMethod);
   }
