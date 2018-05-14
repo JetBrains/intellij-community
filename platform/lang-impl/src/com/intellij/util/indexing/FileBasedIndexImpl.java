@@ -519,7 +519,7 @@ public class FileBasedIndexImpl extends FileBasedIndex implements BaseComponent,
       try {
         for(VirtualFile file:myChangedFilesCollector.getAllFilesToUpdate()) {
           if (!file.isValid()) {
-            removeDataFromIndicesForFile(Math.abs(getIdMaskingNonIdBasedFile(file)));
+            removeDataFromIndicesForFile(Math.abs(getIdMaskingNonIdBasedFile(file)), file);
           }
         }
         IndexingStamp.flushCaches();
@@ -556,15 +556,16 @@ public class FileBasedIndexImpl extends FileBasedIndex implements BaseComponent,
     } catch (Throwable ignore) {}
   }
 
-  private void removeDataFromIndicesForFile(final int fileId) {
+  private void removeDataFromIndicesForFile(final int fileId, VirtualFile file) {
+    VirtualFile originalFile = file instanceof DeletedVirtualFileStub ? ((DeletedVirtualFileStub)file).getOriginalFile() : file;
     final List<ID<?, ?>> states = IndexingStamp.getNontrivialFileIndexedStates(fileId);
 
     if (!states.isEmpty()) {
-      ProgressManager.getInstance().executeNonCancelableSection(() -> removeFileDataFromIndices(states, fileId));
+      ProgressManager.getInstance().executeNonCancelableSection(() -> removeFileDataFromIndices(states, fileId, originalFile));
     }
   }
 
-  private void removeFileDataFromIndices(@NotNull Collection<ID<?, ?>> affectedIndices, int inputId) {
+  private void removeFileDataFromIndices(@NotNull Collection<ID<?, ?>> affectedIndices, int inputId, VirtualFile file) {
     Throwable unexpectedError = null;
     for (ID<?, ?> indexId : affectedIndices) {
       try {
@@ -581,8 +582,18 @@ public class FileBasedIndexImpl extends FileBasedIndex implements BaseComponent,
       }
     }
     IndexingStamp.flushCache(inputId);
+    removeTransientFileDataFromIndices(affectedIndices, inputId, file);
     if (unexpectedError != null) {
       LOG.error(unexpectedError);
+    }
+  }
+
+  private void removeTransientFileDataFromIndices(Collection<ID<?, ?>> indices, int inputId, VirtualFile file) {
+    for (ID<?, ?> indexId : indices) {
+      if (file.isValid() && getInputFilter(indexId).acceptInput(file)) continue;
+      final MapReduceIndex index = (MapReduceIndex)myState.getIndex(indexId);
+      assert index != null;
+      index.removeTransientDataForFile(inputId);
     }
   }
 
@@ -1520,7 +1531,7 @@ public class FileBasedIndexImpl extends FileBasedIndex implements BaseComponent,
         content = new com.intellij.ide.caches.FileContent(file);
       }
       if (!file.isValid() || isTooLarge(file)) {
-        removeDataFromIndicesForFile(fileId);
+        removeDataFromIndicesForFile(fileId, file);
         if (file instanceof DeletedVirtualFileStub && ((DeletedVirtualFileStub)file).isResurrected()) {
           doIndexFileContent(project, new com.intellij.ide.caches.FileContent(((DeletedVirtualFileStub)file).getOriginalFile()));
         }
@@ -2251,7 +2262,7 @@ public class FileBasedIndexImpl extends FileBasedIndex implements BaseComponent,
     for (VirtualFile file : myChangedFilesCollector.getAllFilesToUpdate()) {
       final int fileId = Math.abs(getIdMaskingNonIdBasedFile(file));
       if (!file.isValid()) {
-        removeDataFromIndicesForFile(fileId);
+        removeDataFromIndicesForFile(fileId, file);
         myChangedFilesCollector.removeFileIdFromFilesScheduledForUpdate(fileId);
       } else if (getIndexableSetForFile(file) == null) { // todo remove data from indices for removed
         myChangedFilesCollector.removeFileIdFromFilesScheduledForUpdate(fileId);

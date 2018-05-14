@@ -115,6 +115,8 @@ public abstract class MapReduceIndex<Key,Value, Input> implements InvertedIndex<
     }
   }
 
+  public void removeTransientDataForFile(int inputId) {}
+  
   protected void doClear() throws StorageException, IOException {
     myStorage.clear();
     if (myForwardIndex != null) myForwardIndex.clear();

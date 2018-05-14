@@ -531,6 +531,11 @@ public class StubIndexImpl extends StubIndex implements PersistentStateComponent
     }
   }
 
+  public <K> void removeTransientDataForFile(StubIndexKey<K, ?> key, int inputId, Collection<K> keys) {
+    MyIndex<K> index = (MyIndex<K>)getAsyncState().myIndices.get(key);
+    index.removeTransientDataForKeys(inputId, keys);
+  }
+
   private boolean dropUnregisteredIndices(AsyncState state) {
     if (ApplicationManager.getApplication().isDisposed()) {
       return false;
