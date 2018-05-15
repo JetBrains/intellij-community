@@ -89,7 +89,6 @@ public abstract class ChangesTree extends Tree implements DataProvider {
                      boolean highlightProblems) {
     super(ChangesBrowserNode.createRoot(project));
     myProject = project;
-    myGroupingSupport = new ChangesGroupingSupport(myProject, this, false);
     myShowCheckboxes = showCheckboxes;
     myCheckboxWidth = new JCheckBox().getPreferredSize().width;
 
@@ -102,6 +101,20 @@ public abstract class ChangesTree extends Tree implements DataProvider {
     setCellRenderer(new MyTreeCellRenderer(nodeRenderer));
 
     new MyToggleSelectionAction().registerCustomShortcutSet(new CustomShortcutSet(KeyStroke.getKeyStroke(KeyEvent.VK_SPACE, 0)), this);
+    installEnterKeyHandler();
+    installDoubleClickHandler();
+    installTreeLinkHandler(nodeRenderer);
+    SmartExpander.installOn(this);
+
+    myGroupingSupport = installGroupingSupport();
+
+    String emptyText = StringUtil.capitalize(DiffBundle.message("diff.count.differences.status.text", 0));
+    setEmptyText(emptyText);
+
+    myTreeCopyProvider = new ChangesBrowserNodeCopyProvider(this);
+  }
+
+  protected void installEnterKeyHandler() {
     registerKeyboardAction(new ActionListener() {
       @Override
       public void actionPerformed(ActionEvent e) {
@@ -128,7 +141,9 @@ public abstract class ChangesTree extends Tree implements DataProvider {
         }
       }
     });
+  }
 
+  protected void installDoubleClickHandler() {
     new DoubleClickListener() {
       @Override
       protected boolean onDoubleClick(MouseEvent e) {
@@ -149,7 +164,9 @@ public abstract class ChangesTree extends Tree implements DataProvider {
         return true;
       }
     }.installOn(this);
+  }
 
+  protected void installTreeLinkHandler(@NotNull ChangesBrowserNodeRenderer nodeRenderer) {
     new TreeLinkMouseListener(nodeRenderer) {
       @Override
       protected int getRendererRelativeX(@NotNull MouseEvent e, @NotNull JTree tree, @NotNull TreePath path) {
@@ -165,17 +182,17 @@ public abstract class ChangesTree extends Tree implements DataProvider {
         }
       }
     }.installOn(this);
-    SmartExpander.installOn(this);
+  }
+
+  @NotNull
+  protected ChangesGroupingSupport installGroupingSupport() {
+    ChangesGroupingSupport result = new ChangesGroupingSupport(myProject, this, false);
 
     migrateShowFlattenSetting();
-    myGroupingSupport
-      .setGroupingKeysOrSkip(set(notNull(PropertiesComponent.getInstance(myProject).getValues(GROUPING_KEYS), DEFAULT_GROUPING_KEYS)));
-    myGroupingSupport.addPropertyChangeListener(e -> changeGrouping());
+    result.setGroupingKeysOrSkip(set(notNull(PropertiesComponent.getInstance(myProject).getValues(GROUPING_KEYS), DEFAULT_GROUPING_KEYS)));
+    result.addPropertyChangeListener(e -> changeGrouping());
 
-    String emptyText = StringUtil.capitalize(DiffBundle.message("diff.count.differences.status.text", 0));
-    setEmptyText(emptyText);
-
-    myTreeCopyProvider = new ChangesBrowserNodeCopyProvider(this);
+    return result;
   }
 
   private void migrateShowFlattenSetting() {
