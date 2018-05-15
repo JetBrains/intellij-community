@@ -149,19 +149,35 @@ public class ZipUtil {
     final Enumeration entries = zipFile.entries();
     while (entries.hasMoreElements()) {
       ZipEntry entry = (ZipEntry)entries.nextElement();
-      final File file = new File(outputDir, entry.getName());
-      if (filenameFilter == null || filenameFilter.accept(file.getParentFile(), file.getName())) {
+      final File file = createFileForEntry(outputDir, entry);
+      if (file != null && (filenameFilter == null || filenameFilter.accept(file.getParentFile(), file.getName()))) {
         doExtractEntry(entry, zipFile.getInputStream(entry), file, overwrite);
       }
     }
   }
 
-  public static void extractEntry(ZipEntry entry, final InputStream inputStream, File outputDir) throws IOException {
+  @Nullable
+  private static File createFileForEntry(@NotNull File outputDir, @NotNull ZipEntry entry) {
+    String name = entry.getName();
+    File result = new File(outputDir, name);
+    // we cannot use Path, but File doesn't provide Path.normalize,
+    // so, our FileUtil.toCanonicalPath is used to normalized (isAncestor uses it under the hood)
+    if (name.contains("..") && !FileUtil.isAncestor(outputDir, result, true)) {
+      LOG.warn("Skip invalid entry: " + name);
+      return null;
+    }
+    return result;
+  }
+
+  public static void extractEntry(@NotNull ZipEntry entry, @NotNull InputStream inputStream, @NotNull File outputDir) throws IOException {
     extractEntry(entry, inputStream, outputDir, true);
   }
 
   public static void extractEntry(@NotNull ZipEntry entry, @NotNull InputStream inputStream, @NotNull File outputDir, boolean isOverwrite) throws IOException {
-    doExtractEntry(entry, inputStream, new File(outputDir, entry.getName()), isOverwrite);
+    File outputFile = createFileForEntry(outputDir, entry);
+    if (outputFile != null) {
+      doExtractEntry(entry, inputStream, outputFile, isOverwrite);
+    }
   }
 
   private static void doExtractEntry(@NotNull ZipEntry entry, @NotNull InputStream inputStream, @NotNull File outputFile, boolean isOverwrite) throws IOException {
