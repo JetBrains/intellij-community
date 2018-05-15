@@ -20,7 +20,6 @@ import com.intellij.lang.documentation.DocumentationMarkup;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.Sdk;
-import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.LineTokenizer;
 import com.intellij.openapi.util.text.StringUtil;
@@ -45,7 +44,6 @@ import com.jetbrains.python.psi.resolve.QualifiedNameFinder;
 import com.jetbrains.python.psi.resolve.QualifiedResolveResult;
 import com.jetbrains.python.psi.resolve.RootVisitor;
 import com.jetbrains.python.psi.types.PyClassType;
-import com.jetbrains.python.psi.types.PyDynamicallyEvaluatedType;
 import com.jetbrains.python.psi.types.PyType;
 import com.jetbrains.python.psi.types.TypeEvalContext;
 import com.jetbrains.python.pyi.PyiUtil;
@@ -101,7 +99,7 @@ public class PyDocumentationBuilder {
       buildFromDocstring(((PyDocStringOwner)elementDefinition), isProperty);
     }
     else if (elementDefinition instanceof PyNamedParameter) {
-      buildFromParameter(context, outerElement, elementDefinition);
+      buildFromParameter((PyNamedParameter)elementDefinition, context);
     }
 
     if (elementDefinition != null) {
@@ -182,40 +180,28 @@ public class PyDocumentationBuilder {
     }
   }
 
-  private void buildFromParameter(@NotNull final TypeEvalContext context, @Nullable final PsiElement outerElement,
-                                  @NotNull final PsiElement elementDefinition) {
-    myBody.addItem(combUp("Parameter " + PyUtil.getReadableRepr(elementDefinition, false)));
-    final boolean typeFromDocstringAdded = addTypeAndDescriptionFromDocstring((PyNamedParameter)elementDefinition, context);
-    if (outerElement instanceof PyExpression) {
-      final PyType type = context.getType((PyExpression)outerElement);
-      if (type != null) {
-        String typeString = null;
-        if (type instanceof PyDynamicallyEvaluatedType) {
-          if (!typeFromDocstringAdded) {
-            typeString = "\nDynamically inferred type: ";
-          }
-        }
-        else {
-          if (outerElement.getReference() != null) {
-            final PsiElement target = outerElement.getReference().resolve();
+  private void buildFromParameter(@NotNull PyNamedParameter parameter, @NotNull TypeEvalContext context) {
+    final PyFunction func = PsiTreeUtil.getParentOfType(parameter, PyFunction.class, true, PyLambdaExpression.class);
+    final String funcName = func == null ? PyNames.UNNAMED_ELEMENT : func.getName();
+    myProlog
+      .addItem("Parameter ")
+      .addWith(TagBold, $().addWith(TagCode, $(parameter.getName())))
+      .addItem(" of ")
+      // TODO links to functions
+      .addWith(TagCode, $(funcName))
+      .addItem(BR);
 
-            if (target instanceof PyTargetExpression) {
-              final String targetName = ((PyTargetExpression)target).getName();
-              if (targetName != null && targetName.equals(((PyNamedParameter)elementDefinition).getName())) {
-                typeString = "\nReassigned value has type: ";
-              }
-            }
-          }
-        }
-        if (typeString == null && !typeFromDocstringAdded) {
-          typeString = "\nInferred type: ";
-        }
-        if (typeString != null) {
-          myBody.addItem(combUp(typeString));
-          PythonDocumentationProvider.describeTypeWithLinks(type, context, elementDefinition, myBody);
+    if (func != null) {
+      final PyStringLiteralExpression docString = getEffectiveDocStringExpression(func);
+      if (docString != null) {
+        final StructuredDocString structuredDocString = DocStringUtil.parse(docString.getStringValue());
+        final String description = structuredDocString.getParamDescription(parameter.getName());
+        if (StringUtil.isNotEmpty(description)) {
+          myContent.add($(description));
         }
       }
     }
+    myBody.add(PythonDocumentationProvider.describeParameter(parameter, context));
   }
 
   private boolean buildFromProperty(PsiElement elementDefinition, @Nullable final PsiElement outerElement,
@@ -480,48 +466,6 @@ public class PyDocumentationBuilder {
       result.addItem(combUp(line));
     }
     return result;
-  }
-
-  /**
-   * Adds type and description representation from function docstring
-   *
-   * @param parameter parameter of a function
-   * @param context   type evaluation context
-   * @return true if type from docstring was added
-   */
-  private boolean addTypeAndDescriptionFromDocstring(@NotNull PyNamedParameter parameter, @NotNull TypeEvalContext context) {
-    final PyFunction function = PsiTreeUtil.getParentOfType(parameter, PyFunction.class);
-    if (function != null) {
-      final String docString = PyPsiUtils.strValue(getEffectiveDocStringExpression(function));
-      final Pair<String, String> typeAndDescr = getTypeAndDescription(docString, parameter);
-
-      final String type = typeAndDescr.first;
-      final String description = typeAndDescr.second;
-
-      if (type != null) {
-        myBody.addItem(": ").addItem(PyDocumentationLink.toParameterPossibleClass(type, parameter, context));
-      }
-
-      if (description != null) {
-        myEpilog.addItem(BR).addItem(description);
-      }
-
-      return type != null;
-    }
-
-    return false;
-  }
-
-  private static Pair<String, String> getTypeAndDescription(@Nullable final String docString, @NotNull final PyNamedParameter followed) {
-    String type = null;
-    String desc = null;
-    if (docString != null) {
-      final StructuredDocString structuredDocString = DocStringUtil.parse(docString);
-      final String name = followed.getName();
-      type = structuredDocString.getParamType(name);
-      desc = structuredDocString.getParamDescription(name);
-    }
-    return Pair.create(type, desc);
   }
 
   public static String[] removeCommonIndentation(@NotNull final String docstring) {
