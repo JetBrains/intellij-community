@@ -15,22 +15,39 @@
  */
 package com.intellij.coverage.actions;
 
+import com.intellij.codeInsight.hint.HintManagerImpl;
 import com.intellij.coverage.CoverageDataManager;
-import com.intellij.coverage.CoverageSuitesBundle;
-import com.intellij.icons.AllIcons;
-import com.intellij.openapi.actionSystem.AnAction;
+import com.intellij.ide.DataManager;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
+import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.actionSystem.Presentation;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.roots.ui.configuration.actions.IconWithTextAction;
+import com.intellij.ui.components.labels.LinkLabel;
 
-public class HideCoverageInfoAction extends AnAction {
+import javax.swing.*;
+
+public class HideCoverageInfoAction extends IconWithTextAction {
   public HideCoverageInfoAction() {
-    super("&Hide Coverage Data", "Hide coverage data", AllIcons.Actions.Cancel);
+    super("Hide coverage", "Hide coverage data", null);
   }
 
   public void actionPerformed(final AnActionEvent e) {
     CoverageDataManager.getInstance(e.getData(CommonDataKeys.PROJECT)).chooseSuitesBundle(null);
+  }
+
+  @Override
+  public JComponent createCustomComponent(Presentation presentation) {
+    return new LinkLabel(presentation.getText(), null) {
+      @Override
+      public void doClick() {
+        DataContext dataContext = DataManager.getInstance().getDataContext(this);
+        Project project = CommonDataKeys.PROJECT.getData(dataContext);
+        CoverageDataManager.getInstance(project).chooseSuitesBundle(null);
+        HintManagerImpl.getInstanceImpl().hideAllHints();
+      }
+    };
   }
 
   @Override
@@ -40,9 +57,7 @@ public class HideCoverageInfoAction extends AnAction {
     presentation.setVisible(e.isFromActionToolbar());
     final Project project = e.getProject();
     if (project != null) {
-      final CoverageSuitesBundle suitesBundle = CoverageDataManager.getInstance(project).getCurrentSuitesBundle();
-      presentation.setEnabled(suitesBundle != null);
-      presentation.setVisible(suitesBundle != null);
+      presentation.setEnabledAndVisible(CoverageDataManager.getInstance(project).getCurrentSuitesBundle() != null);
     }
   }
 }
