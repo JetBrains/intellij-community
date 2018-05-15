@@ -1,7 +1,10 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.actions.runAnything;
 
-import com.intellij.ide.actions.runAnything.groups.*;
+import com.intellij.ide.actions.runAnything.groups.RunAnythingCompletionGroup;
+import com.intellij.ide.actions.runAnything.groups.RunAnythingGroup;
+import com.intellij.ide.actions.runAnything.groups.RunAnythingHelpGroup;
+import com.intellij.ide.actions.runAnything.groups.RunAnythingRecentGroup;
 import com.intellij.openapi.project.Project;
 import com.intellij.util.ReflectionUtil;
 import com.intellij.util.containers.ContainerUtil;
@@ -102,8 +105,7 @@ public abstract class RunAnythingSearchListModel extends DefaultListModel {
     @Override
     public Collection<RunAnythingGroup> getGroups() {
       Collection<RunAnythingGroup> groups = ContainerUtil.newArrayList(RunAnythingRecentGroup.INSTANCE);
-      groups.add(RunAnythingGeneralGroup.INSTANCE);
-      groups.addAll(RunAnythingCompletionProviderGroup.MAIN_GROUPS);
+      groups.addAll(RunAnythingCompletionGroup.MAIN_GROUPS);
       return groups;
     }
   }
