@@ -2,7 +2,10 @@
 package com.intellij.codeInspection.dataFlow.inference;
 
 import com.intellij.codeInsight.NullableNotNullManager;
-import com.intellij.codeInspection.dataFlow.*;
+import com.intellij.codeInspection.dataFlow.ContractReturnValue;
+import com.intellij.codeInspection.dataFlow.Mutability;
+import com.intellij.codeInspection.dataFlow.Nullness;
+import com.intellij.codeInspection.dataFlow.StandardMethodContract;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.RecursionManager;
 import com.intellij.psi.*;
@@ -15,13 +18,11 @@ import com.intellij.util.ArrayUtil;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
 import com.siyeh.ig.psiutils.ClassUtils;
-import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.BitSet;
 import java.util.Collections;
 import java.util.List;
-import java.util.Map;
 
 import static com.intellij.codeInspection.dataFlow.StandardMethodContract.ValueConstraint.NULL_VALUE;
 
@@ -132,13 +133,6 @@ public class JavaSourceInference {
       List<PreContract> preContracts = data == null ? Collections.emptyList() : data.getContracts();
       List<StandardMethodContract> result = RecursionManager.doPreventingRecursion(method, true, () -> postProcessContracts(method, data, preContracts));
       if (result == null) result = Collections.emptyList();
-      if (LOG.isDebugEnabled()) {
-        Map<StandardMethodContract, String> errors =
-          StreamEx.of(result).cross(c -> ContractChecker.checkContractClause(method, c, true).values().stream()).toMap();
-        if (!errors.isEmpty()) {
-          LOG.error("Inferred contracts for " + method + " do not pass contract checker: " + errors);
-        }
-      }
       return CachedValueProvider.Result.create(result, method, PsiModificationTracker.JAVA_STRUCTURE_MODIFICATION_COUNT);
     });
   }
