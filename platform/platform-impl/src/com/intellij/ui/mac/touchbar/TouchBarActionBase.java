@@ -1,12 +1,8 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ui.mac.touchbar;
 
-import com.intellij.execution.ExecutionListener;
-import com.intellij.execution.ExecutionManager;
 import com.intellij.execution.Executor;
 import com.intellij.execution.ExecutorRegistry;
-import com.intellij.execution.process.ProcessHandler;
-import com.intellij.execution.runners.ExecutionEnvironment;
 import com.intellij.ide.ui.customization.CustomActionsSchema;
 import com.intellij.ide.ui.customization.CustomisedActionGroup;
 import com.intellij.openapi.actionSystem.*;
@@ -17,7 +13,6 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.IndexNotReadyException;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.wm.ToolWindowId;
-import com.intellij.util.messages.MessageBus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -25,7 +20,7 @@ import java.awt.*;
 import java.util.HashMap;
 import java.util.Map;
 
-public class TouchBarActionBase extends TouchBarProjectBase implements ExecutionListener {
+public class TouchBarActionBase extends TouchBarProjectBase {
   private static final Logger LOG = Logger.getInstance(TouchBarActionBase.class);
   private static final String ourLargeSeparatorText = "type.big";
   private static final String ourFlexibleSeparatorText = "type.flexible";
@@ -60,11 +55,8 @@ public class TouchBarActionBase extends TouchBarProjectBase implements Execution
       @Override
       public ModalityState getModalityState() { return ModalityState.current(); }
       @Override
-      public void run() { _updateActionItems(); }
+      public void run() { updateActionItems(); }
     };
-
-    final MessageBus mb = project.getMessageBus();
-    mb.connect().subscribe(ExecutionManager.EXECUTION_TOPIC, this);
   }
 
   @Override
@@ -75,7 +67,7 @@ public class TouchBarActionBase extends TouchBarProjectBase implements Execution
 
   @Override
   public void onBeforeShow() {
-    _updateActionItems();
+    updateActionItems();
     ActionManager.getInstance().addTransparentTimerListener(500/*delay param doesn't affect anything*/, myTimerListener);
   }
   @Override
@@ -151,18 +143,7 @@ public class TouchBarActionBase extends TouchBarProjectBase implements Execution
     }, filter);
   }
 
-  @Override
-  public void processStarted(@NotNull String executorId, @NotNull ExecutionEnvironment env, @NotNull ProcessHandler handler) {
-    _updateActionItems();
-  }
-  @Override
-  public void processTerminated(@NotNull String executorId, @NotNull ExecutionEnvironment env, @NotNull ProcessHandler handler, int exitCode) {
-    ApplicationManager.getApplication().invokeLater(()->{
-      _updateActionItems();
-    });
-  }
-
-  protected void _updateActionItems() {
+  void updateActionItems() {
     ApplicationManager.getApplication().assertIsDispatchThread();
 
     boolean layoutChanged = false;

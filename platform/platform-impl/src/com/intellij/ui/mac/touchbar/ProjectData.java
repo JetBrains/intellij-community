@@ -1,10 +1,15 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ui.mac.touchbar;
 
+import com.intellij.execution.ExecutionListener;
+import com.intellij.execution.ExecutionManager;
+import com.intellij.execution.process.ProcessHandler;
+import com.intellij.execution.runners.ExecutionEnvironment;
 import com.intellij.openapi.actionSystem.ActionGroup;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.wm.ToolWindowId;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -12,20 +17,43 @@ import java.awt.*;
 import java.awt.event.InputEvent;
 import java.util.*;
 import java.util.List;
+import java.util.concurrent.atomic.AtomicInteger;
 
-public class ProjectBarsStorage {
-  private static final Logger LOG = Logger.getInstance(ProjectBarsStorage.class);
+class ProjectData {
+  private static final Logger LOG = Logger.getInstance(ProjectData.class);
 
-  public static final String GENERAL = "general";
-  public static final String DEBUGGER = "debugger";
+  public static final String DEFAULT = "default";
+  public static final String DEBUGGER = ToolWindowId.DEBUG;
   public static final String EDITOR = "editor";
-
-  private static final Map<Project, ProjectBarsStorage> ourInstances = new HashMap<>();
 
   private final @NotNull Project myProject;
   private final List<BarContainer> myBars = new ArrayList<>();
 
-  ProjectBarsStorage(@NotNull Project project) { myProject = project; }
+  private AtomicInteger myActiveDebugSessions = new AtomicInteger(0);
+
+  ProjectData(@NotNull Project project) {
+    myProject = project;
+
+    myProject.getMessageBus().connect().subscribe(ExecutionManager.EXECUTION_TOPIC, new ExecutionListener() {
+      @Override
+      public void processStarted(@NotNull String executorId, @NotNull ExecutionEnvironment env, @NotNull ProcessHandler handler) {
+        // System.out.println("processStarted: " + executorId);
+        if (executorId.equals(ToolWindowId.DEBUG))
+          myActiveDebugSessions.incrementAndGet();
+      }
+      @Override
+      public void processTerminated(@NotNull String executorId, @NotNull ExecutionEnvironment env, @NotNull ProcessHandler handler, int exitCode) {
+        // System.out.println("processTerminated: " + executorId);
+        if (executorId.equals(ToolWindowId.DEBUG)) {
+          final int val = myActiveDebugSessions.decrementAndGet();
+          if (val < 0) {
+            LOG.error("received 'processTerminated' when no process wasn't started");
+            myActiveDebugSessions.incrementAndGet();
+          }
+        }
+      }
+    });
+  }
 
   @Nullable BarContainer createBarContainer(@NotNull String type, Component component) {
     ApplicationManager.getApplication().assertIsDispatchThread();
@@ -33,17 +61,17 @@ public class ProjectBarsStorage {
     final String barId;
     final String touchBarName;
     final boolean replaceEsc;
-    if (type.equals(GENERAL)) {
+    if (type.equals(DEFAULT)) {
       barId = "Default";
-      touchBarName = "default_global";
+      touchBarName = barId;
       replaceEsc = false;
-    } else if (type.equals(DEBUGGER)) {
-      barId = "Debugger";
-      touchBarName = "debugger";
+    } else if (type.equals(ToolWindowId.DEBUG)) {
+      barId = "Debuggger";// NOTE: will be fixed in next commit
+      touchBarName = ToolWindowId.DEBUG;
       replaceEsc = true;
     } else if (type.equals(EDITOR)) {
-      barId = "Default";
-      touchBarName = "default_editor";
+      barId = "Editor";
+      touchBarName = barId;
       replaceEsc = false;
     } else {
       LOG.error("can't create touchbar, unknown context: " + type);
@@ -57,7 +85,7 @@ public class ProjectBarsStorage {
     }
 
     final MultiBarContainer container = new MultiBarContainer(new TouchBarActionBase(touchBarName, myProject, mainLayout, component, replaceEsc));
-    final Map<String, ActionGroup> alts = type.equals(GENERAL) ? null : TouchBarActionBase.getAltLayouts(mainLayout);
+    final Map<String, ActionGroup> alts = type.equals(DEFAULT) ? null : TouchBarActionBase.getAltLayouts(mainLayout);
     if (alts != null && !alts.isEmpty()) {
       for (String modId: alts.keySet()) {
         final long mask = _str2mask(modId);
@@ -79,16 +107,7 @@ public class ProjectBarsStorage {
     myBars.clear();
   }
 
-  static @NotNull ProjectBarsStorage instance(@NotNull Project project) {
-    ApplicationManager.getApplication().assertIsDispatchThread();
-
-    ProjectBarsStorage result = ourInstances.get(project);
-    if (result == null) {
-        result = new ProjectBarsStorage(project);
-        ourInstances.put(project, result);
-    }
-    return result;
-  }
+  int getDbgSessions() { return myActiveDebugSessions.get(); }
 
   private static long _str2mask(@NotNull String modifierId) {
     if (!modifierId.contains(".")) {
