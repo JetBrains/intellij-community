@@ -195,6 +195,9 @@ fun createLafTestPanel(): JPanel {
 fun withVerticalButtons(): JPanel {
   return panel {
     row {
+      label("<html>Merging branch <b>foo</b> into <b>bar</b>")
+    }
+    row {
       scrollPane(JTextArea(), pushX)
 
       cell(isVerticalFlow = true) {

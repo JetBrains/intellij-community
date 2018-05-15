@@ -24,7 +24,8 @@ columnConstraints:
   - {}
   count: 2
 componentConstrains:
-  'JBScrollPane #0':
+  Merging branch foo into bar: {spanX: 2097051, wrap: true}
+  'JBScrollPane #1':
     horizontal: {grow: 100.0}
     pushX: 100.0
     pushY: 100.0
@@ -42,12 +43,14 @@ componentConstrains:
     spanX: 2097051
     wrap: true
 cellBounds:
-- [0, 0, 359, 310]
-- [367, 0, 113, 310]
-- [367, 0, 113, 310]
-- [367, 0, 113, 310]
+- [0, 0, 480, 16]
+- [0, 26, 359, 284]
+- [367, 26, 113, 284]
+- [367, 26, 113, 284]
+- [367, 26, 113, 284]
 componentBounds:
-  'JBScrollPane #0': [0, 0, 359, 310]
-  Accept Yours: [364, -3, 119, 30]
-  Accept Theirs: [364, 31, 119, 30]
-  Merge ...: [364, 65, 119, 30]
+  Merging branch foo into bar: [0, 0, 176, 16]
+  'JBScrollPane #1': [0, 26, 359, 284]
+  Accept Yours: [364, 23, 119, 30]
+  Accept Theirs: [364, 57, 119, 30]
+  Merge ...: [364, 91, 119, 30]

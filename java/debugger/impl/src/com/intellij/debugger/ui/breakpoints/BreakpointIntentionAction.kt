@@ -10,6 +10,7 @@ import com.intellij.debugger.impl.PrioritizedTask
 import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.util.registry.Registry
+import com.intellij.openapi.util.text.StringUtil
 import com.intellij.ui.classFilter.ClassFilter
 import com.intellij.util.ArrayUtil
 import com.intellij.xdebugger.XDebugSession
@@ -24,7 +25,8 @@ import java.util.*
 internal abstract class BreakpointIntentionAction(protected val myBreakpoint: XBreakpoint<*>, text: String) : AnAction(text) {
 
   internal class AddCallerNotFilter(breakpoint: XBreakpoint<*>, private val myCaller: String) :
-    BreakpointIntentionAction(breakpoint, "Do not stop if caller is: $myCaller") {
+    BreakpointIntentionAction(breakpoint,
+                              "Do not stop if called from: ${StringUtil.getShortName(StringUtil.substringBefore(myCaller, "(")!!)}") {
 
     override fun actionPerformed(e: AnActionEvent) {
       with(myBreakpoint.properties as JavaBreakpointProperties<*>) {
@@ -37,7 +39,8 @@ internal abstract class BreakpointIntentionAction(protected val myBreakpoint: XB
   }
 
   internal class AddCallerFilter(breakpoint: XBreakpoint<*>, private val myCaller: String) :
-    BreakpointIntentionAction(breakpoint, "Stop only if caller is: $myCaller") {
+    BreakpointIntentionAction(breakpoint,
+                              "Stop only if called from: ${StringUtil.getShortName(StringUtil.substringBefore(myCaller, "(")!!)}") {
 
     override fun actionPerformed(e: AnActionEvent) {
       with(myBreakpoint.properties as JavaBreakpointProperties<*>) {
@@ -62,7 +65,7 @@ internal abstract class BreakpointIntentionAction(protected val myBreakpoint: XB
   }
 
   internal class AddClassFilter(breakpoint: XBreakpoint<*>, private val myClass: String) :
-    BreakpointIntentionAction(breakpoint, "Stop only in the class: $myClass") {
+    BreakpointIntentionAction(breakpoint, "Stop only in the class: ${StringUtil.getShortName(myClass)}") {
 
     override fun actionPerformed(e: AnActionEvent) {
       with(myBreakpoint.properties as JavaBreakpointProperties<*>) {
@@ -76,7 +79,7 @@ internal abstract class BreakpointIntentionAction(protected val myBreakpoint: XB
   }
 
   internal class AddClassNotFilter(breakpoint: XBreakpoint<*>, private val myClass: String) :
-    BreakpointIntentionAction(breakpoint, "Do not stop in the class: $myClass") {
+    BreakpointIntentionAction(breakpoint, "Do not stop in the class: ${StringUtil.getShortName(myClass)}") {
 
     override fun actionPerformed(e: AnActionEvent) {
       with(myBreakpoint.properties as JavaBreakpointProperties<*>) {
@@ -124,13 +127,13 @@ internal abstract class BreakpointIntentionAction(protected val myBreakpoint: XB
 
             val frameProxy = suspendContext.frameProxy
 
-            frameProxy?.thisObject()?.uniqueID()?.let {
-              res.add(AddInstanceFilter(breakpoint, it))
-            }
-
             frameProxy?.location()?.declaringType()?.name()?.let {
               res.add(AddClassFilter(breakpoint, it))
               res.add(AddClassNotFilter(breakpoint, it))
+            }
+
+            frameProxy?.thisObject()?.uniqueID()?.let {
+              res.add(AddInstanceFilter(breakpoint, it))
             }
           }
         })
