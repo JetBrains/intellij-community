@@ -389,7 +389,7 @@ public class ArtifactsStructureConfigurable extends BaseStructureConfigurable {
       if (o instanceof Artifact) {
         final Artifact selected = (Artifact)o;
         ModifiableArtifactModel artifactModel = myPackagingEditorContext.getOrCreateModifiableArtifactModel();
-        String suggestedName = ArtifactUtil.generateUniqueName(selected.getName(), artifactModel);
+        String suggestedName = ArtifactUtil.generateUniqueArtifactName(selected.getName(), artifactModel);
         final String newName = Messages.showInputDialog("Enter artifact name:",
                                                         "Copy Artifact",
                                                         COPY_ICON,
