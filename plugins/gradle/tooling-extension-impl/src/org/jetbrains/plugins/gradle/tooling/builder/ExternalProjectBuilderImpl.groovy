@@ -38,7 +38,6 @@ import org.jetbrains.annotations.Nullable
 import org.jetbrains.plugins.gradle.model.*
 import org.jetbrains.plugins.gradle.tooling.ErrorMessageBuilder
 import org.jetbrains.plugins.gradle.tooling.ModelBuilderService
-import org.jetbrains.plugins.gradle.tooling.util.ArtifactsCollectionResolver
 import org.jetbrains.plugins.gradle.tooling.util.SourceSetCachedFinder
 import org.jetbrains.plugins.gradle.tooling.util.resolve.DependencyResolverImpl
 
@@ -417,8 +416,7 @@ class ExternalProjectBuilderImpl implements ModelBuilderService {
       }
 
       if(resolveSourceSetDependencies) {
-        def dependencies = is4OrBetter ? new ArtifactsCollectionResolver(project, isPreview, downloadJavadoc, downloadSources, sourceSetFinder).resolveDependencies(sourceSet)
-          : new DependencyResolverImpl(project, isPreview, downloadJavadoc, downloadSources, sourceSetFinder).resolveDependencies(sourceSet)
+        def dependencies = new DependencyResolverImpl(project, isPreview, downloadJavadoc, downloadSources, sourceSetFinder).resolveDependencies(sourceSet)
         externalSourceSet.dependencies.addAll(dependencies)
       }
 
