@@ -307,11 +307,12 @@ public class AttachToProcessAction extends AnAction {
   }
 
   @NotNull
-  public static List<RecentItem> getRecentItems(XAttachHost host,
+  public static List<RecentItem> getRecentItems(@NotNull XAttachHost host,
                                                 @NotNull Project project) {
     Map<XAttachHost, LinkedHashSet<RecentItem>> recentItems = project.getUserData(RECENT_ITEMS_KEY);
-    return recentItems == null ? Collections.emptyList()
-                           : Collections.unmodifiableList(new ArrayList<>(recentItems.get(host)));
+    return recentItems == null || !recentItems.containsKey(host)
+           ? Collections.emptyList()
+           : Collections.unmodifiableList(new ArrayList<>(recentItems.get(host)));
   }
 
   public static class RecentItem {
