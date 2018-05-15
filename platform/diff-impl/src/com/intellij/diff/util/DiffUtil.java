@@ -685,7 +685,7 @@ public class DiffUtil {
 
   public static void runPreservingFocus(@NotNull FocusableContext context, @NotNull Runnable task) {
     boolean hadFocus = context.isFocusedInWindow();
-    if (hadFocus) KeyboardFocusManager.getCurrentKeyboardFocusManager().clearFocusOwner();
+//    if (hadFocus) KeyboardFocusManager.getCurrentKeyboardFocusManager().clearFocusOwner();
     task.run();
     if (hadFocus) context.requestFocusInWindow();
   }
