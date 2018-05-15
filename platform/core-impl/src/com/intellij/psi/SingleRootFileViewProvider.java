@@ -264,13 +264,4 @@ public class SingleRootFileViewProvider extends AbstractFileViewProvider impleme
     getManager().getFileManager().setViewProvider(getVirtualFile(), this);
   }
 
-  @Override
-  public final void markInvalidated() {
-    PsiFile psiFile = getCachedPsi(getBaseLanguage());
-    if (psiFile instanceof PsiFileEx) {
-      ((PsiFileEx)psiFile).markInvalidated();
-    }
-    super.markInvalidated();
-  }
-
 }
