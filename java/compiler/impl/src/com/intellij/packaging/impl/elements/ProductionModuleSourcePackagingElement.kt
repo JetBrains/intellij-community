@@ -30,10 +30,6 @@ class ProductionModuleSourcePackagingElement : ModulePackagingElementBase {
     return rootModel.getSourceRoots(JavaModuleSourceRootTypes.PRODUCTION)
   }
 
-  override fun getDirectoryAntProperty(generationContext: ArtifactAntGenerationContext): String? {
-    return null
-  }
-
   override fun createPresentation(context: ArtifactEditorContext): PackagingElementPresentation {
     return DelegatedPackagingElementPresentation(
       ModuleElementPresentation(myModulePointer, context, ProductionModuleSourceElementType.ELEMENT_TYPE))
