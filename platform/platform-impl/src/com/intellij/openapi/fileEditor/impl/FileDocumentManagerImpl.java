@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.fileEditor.impl;
 
 import com.intellij.AppTopics;
@@ -378,6 +364,7 @@ public class FileDocumentManagerImpl extends FileDocumentManager implements Virt
 
   private void doSaveDocument(@NotNull final Document document, boolean isExplicit) throws IOException, SaveVetoException {
     VirtualFile file = getFile(document);
+    if (LOG.isTraceEnabled()) LOG.trace("saving: " + file);
 
     if (file == null || file instanceof LightVirtualFile || file.isValid() && !isFileModified(file)) {
       removeFromUnsaved(document);
@@ -385,6 +372,7 @@ public class FileDocumentManagerImpl extends FileDocumentManager implements Virt
     }
 
     if (file.isValid() && needsRefresh(file)) {
+      LOG.trace("  refreshing...");
       file.refresh(false, false);
       if (!myUnsavedDocuments.contains(document)) return;
     }
@@ -393,7 +381,9 @@ public class FileDocumentManagerImpl extends FileDocumentManager implements Virt
       throw new SaveVetoException();
     }
 
+    LOG.trace("  writing...");
     WriteAction.run(() -> doSaveDocumentInWriteAction(document, file));
+    LOG.trace("  done");
   }
 
   private boolean maySaveDocument(VirtualFile file, Document document, boolean isExplicit) {
