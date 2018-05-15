@@ -828,9 +828,9 @@ public class DependencyResolverImpl implements DependencyResolver {
   public static List<File> findArtifactSources(Collection<File> artifactFiles, SourceSetCachedFinder sourceSetFinder) {
     List<File> artifactSources = new ArrayList<File>();
     for (File artifactFile : artifactFiles) {
-      SourceSet sourceSet = sourceSetFinder.findByArtifact(artifactFile.getPath());
-      if (sourceSet != null) {
-        artifactSources.addAll(sourceSet.getAllJava().getSrcDirs());
+      Set<File> sources = sourceSetFinder.findSourcesByArtifact(artifactFile.getPath());
+      if (sources != null) {
+        artifactSources.addAll(sources);
       }
     }
     return artifactSources;

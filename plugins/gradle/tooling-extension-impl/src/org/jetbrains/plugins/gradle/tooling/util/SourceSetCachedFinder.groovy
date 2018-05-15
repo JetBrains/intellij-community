@@ -33,6 +33,7 @@ import org.jetbrains.annotations.NotNull
 @CompileStatic
 class SourceSetCachedFinder {
   private final Map<String, SourceSet> myArtifactsMap
+  private final Map<String, Set<File>> mySourcesMap
 
   @SuppressWarnings("GrUnresolvedAccess")
   SourceSetCachedFinder(@NotNull Project project) {
@@ -44,6 +45,7 @@ class SourceSetCachedFinder {
       def cached = extraProperties.get(key)
       if (cached instanceof SourceSetCachedFinder) {
         myArtifactsMap = (cached as SourceSetCachedFinder).myArtifactsMap
+        mySourcesMap = (cached as SourceSetCachedFinder).mySourcesMap
         return
       }
     }
@@ -71,7 +73,20 @@ class SourceSetCachedFinder {
       }
 
     myArtifactsMap = Collections.unmodifiableMap(artifactsMap)
+    mySourcesMap = [:]
     extraProperties.set(key, this)
+  }
+
+  Set<File> findSourcesByArtifact(String path) {
+    def sources = mySourcesMap[path]
+    if (sources == null) {
+      def sourceSet = myArtifactsMap[path]
+      if (sourceSet != null) {
+        sources = sourceSet.getAllJava().getSrcDirs()
+        mySourcesMap[path] = sources
+      }
+    }
+    return sources
   }
 
   private static List<Project> exposeIncludedBuilds(Project project, List<Project> projects) {
