@@ -15,6 +15,7 @@ import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Computable;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.psi.tree.IElementType;
@@ -169,12 +170,23 @@ public class PythonDocumentationProvider extends AbstractDocumentationProvider i
     //}
   }
 
+  @SuppressWarnings("Duplicates")
   @NotNull
   static ChainIterable<String> describeTarget(@NotNull PyTargetExpression target, @NotNull TypeEvalContext context) {
-    ChainIterable<String> result = new ChainIterable<>();
-    result.addItem(target.getName());
+    final ChainIterable<String> result = new ChainIterable<>();
+    result.addItem(StringUtil.escapeXml(StringUtil.notNullize(target.getName())));
     result.addItem(": ");
     describeTypeWithLinks(context.getType(target), context, target, result);
+    return result;
+  }
+
+  @SuppressWarnings("Duplicates")
+  @NotNull
+  static ChainIterable<String> describeParameter(@NotNull PyNamedParameter parameter, @NotNull TypeEvalContext context) {
+    final ChainIterable<String> result = new ChainIterable<>();
+    result.addItem(StringUtil.escapeXml(StringUtil.notNullize(parameter.getName())));
+    result.addItem(": ");
+    describeTypeWithLinks(context.getType(parameter), context, parameter, result);
     return result;
   }
 
