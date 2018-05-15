@@ -66,11 +66,11 @@ class ProjectData {
       touchBarName = barId;
       replaceEsc = false;
     } else if (type.equals(ToolWindowId.DEBUG)) {
-      barId = "Debuggger";// NOTE: will be fixed in next commit
+      barId = ToolWindowId.DEBUG;
       touchBarName = ToolWindowId.DEBUG;
       replaceEsc = true;
     } else if (type.equals(EDITOR)) {
-      barId = "Editor";
+      barId = "Default";
       touchBarName = barId;
       replaceEsc = false;
     } else {
