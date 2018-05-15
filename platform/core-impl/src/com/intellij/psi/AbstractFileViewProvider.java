@@ -397,11 +397,20 @@ public abstract class AbstractFileViewProvider extends UserDataHolderBase implem
   @NotNull
   public abstract List<FileElement> getKnownTreeRoots();
 
-  public void markInvalidated() {
+  public final void markInvalidated() {
     if (myInvalidated) return;
 
+    invalidateCachedPsi();
     myInvalidated = true;
     invalidateCopies();
+  }
+
+  private void invalidateCachedPsi() {
+    for (PsiFile file : getCachedPsiFiles()) {
+      if (file instanceof PsiFileEx) {
+        ((PsiFileEx)file).markInvalidated();
+      }
+    }
   }
 
   private void invalidateCopies() {
@@ -416,6 +425,9 @@ public abstract class AbstractFileViewProvider extends UserDataHolderBase implem
   }
 
   public final void registerAsCopy(@NotNull AbstractFileViewProvider copy) {
+    if (copy.getUserData(KNOWN_COPIES) != null) {
+      LOG.error("A view provider copy must be registered before it may have its own copies, to avoid cycles");
+    }
     Set<AbstractFileViewProvider> copies = getUserData(KNOWN_COPIES);
     if (copies == null) {
       copies = putUserDataIfAbsent(KNOWN_COPIES, Collections.newSetFromMap(ContainerUtil.createConcurrentWeakMap()));

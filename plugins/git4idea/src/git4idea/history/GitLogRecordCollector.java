@@ -51,7 +51,8 @@ class GitLogRecordCollector implements Consumer<GitLogRecord> {
     myLastHash = record.getHash();
 
     myHashToRecord.putValue(record.getHash(), record);
-    if (record.getParentsHashes().length == myHashToRecord.get(record.getHash()).size()) {
+    String[] parents = record.getParentsHashes();
+    if (parents.length == 0 || parents.length == myHashToRecord.get(record.getHash()).size()) {
       processCollectedRecords();
     }
   }
