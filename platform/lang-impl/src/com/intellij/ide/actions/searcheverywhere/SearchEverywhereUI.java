@@ -115,9 +115,9 @@ public class SearchEverywhereUI extends BorderLayoutPanel {
     topPanel.setOpaque(false);
     topPanel.add(contributorsPanel, BorderLayout.WEST);
     topPanel.add(settingsPanel, BorderLayout.EAST);
+    topPanel.add(mySearchField, BorderLayout.SOUTH);
 
     addToTop(topPanel);
-    addToCenter(mySearchField);
 
     initSearchActions();
   }
@@ -312,7 +312,7 @@ public class SearchEverywhereUI extends BorderLayoutPanel {
 
     if (show && parent != this) {
       oldSize = getPreferredSize();
-      addToBottom(mySuggestionsPanel);
+      addToCenter(mySuggestionsPanel);
       newSize = getPreferredSize();
     } else if (!show && parent == this) {
       oldSize = getPreferredSize();
@@ -544,7 +544,12 @@ public class SearchEverywhereUI extends BorderLayoutPanel {
 
     private void resetList() {
       myAlarm.cancelAllRequests();
-      myListModel.clear();
+      SwingUtilities.invokeLater(() -> {
+        Dimension oldSize = getPreferredSize();
+        myListModel.clear();
+        Dimension newSize = getPreferredSize();
+        firePropertyChange("preferredSize", oldSize, newSize);
+      });
       SearchEverywhereContributor selectedContributor = mySelectedTab.getContributor().orElse(null);
       if (selectedContributor != null) {
         runReadAction(() -> addContributorItems(selectedContributor, SINGLE_CONTRIBUTOR_ELEMENTS_LIMIT), true);
