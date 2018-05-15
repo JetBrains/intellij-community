@@ -26,7 +26,7 @@ import java.util.Set;
 /**
 * @author peter
 */
-class ContractChecker extends DataFlowRunner {
+public class ContractChecker extends DataFlowRunner {
   private final PsiMethod myMethod;
   private final StandardMethodContract myContract;
   private final boolean myOwnContract;
@@ -42,7 +42,7 @@ class ContractChecker extends DataFlowRunner {
     myOwnContract = ownContract;
   }
 
-  static Map<PsiElement, String> checkContractClause(PsiMethod method, StandardMethodContract contract, boolean ownContract) {
+  public static Map<PsiElement, String> checkContractClause(PsiMethod method, StandardMethodContract contract, boolean ownContract) {
 
     PsiCodeBlock body = method.getBody();
     if (body == null) return Collections.emptyMap();

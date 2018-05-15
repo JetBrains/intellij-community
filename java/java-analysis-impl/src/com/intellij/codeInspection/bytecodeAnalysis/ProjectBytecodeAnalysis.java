@@ -16,6 +16,7 @@
 package com.intellij.codeInspection.bytecodeAnalysis;
 
 import com.intellij.codeInsight.AnnotationUtil;
+import com.intellij.codeInspection.dataFlow.ContractChecker;
 import com.intellij.codeInspection.dataFlow.ContractReturnValue;
 import com.intellij.codeInspection.dataFlow.JavaMethodContractUtil;
 import com.intellij.codeInspection.dataFlow.StandardMethodContract;
@@ -126,7 +127,7 @@ public class ProjectBytecodeAnalysis {
       if (listOwner instanceof PsiMethod) {
         ArrayList<EKey> allKeys = collectMethodKeys((PsiMethod)listOwner, primaryKey);
         MethodAnnotations methodAnnotations = loadMethodAnnotations((PsiMethod)listOwner, primaryKey, allKeys);
-        return toPsi(primaryKey, methodAnnotations);
+        return toPsi((PsiMethod)listOwner, primaryKey, methodAnnotations);
       } else if (listOwner instanceof PsiParameter) {
         ParameterAnnotations parameterAnnotations = loadParameterAnnotations(primaryKey);
         return toPsi(parameterAnnotations);
@@ -145,12 +146,13 @@ public class ProjectBytecodeAnalysis {
   /**
    * Converts inferred method annotations to Psi annotations
    *
+   * @param owner method to add annotations to
    * @param primaryKey primary compressed key for method
    * @param methodAnnotations inferred annotations
    * @return Psi annotations
    */
   @NotNull
-  private PsiAnnotation[] toPsi(EKey primaryKey, MethodAnnotations methodAnnotations) {
+  private PsiAnnotation[] toPsi(PsiMethod owner, EKey primaryKey, MethodAnnotations methodAnnotations) {
     boolean notNull = methodAnnotations.notNulls.contains(primaryKey);
     boolean nullable = methodAnnotations.nullables.contains(primaryKey);
     boolean pure = methodAnnotations.pures.contains(primaryKey);
@@ -158,7 +160,8 @@ public class ProjectBytecodeAnalysis {
     String contractPsiText = null;
 
     if (contractValues != null) {
-      contractPsiText = pure ? "value=" + contractValues + ",pure=true" : contractValues;
+      checkContracts(owner, contractValues);
+      contractPsiText = pure ? "value=\"" + contractValues + "\",pure=true" : '"'+contractValues+'"';
     } else if (pure) {
       contractPsiText = "pure=true";
     }
@@ -192,6 +195,22 @@ public class ProjectBytecodeAnalysis {
       };
     }
     return PsiAnnotation.EMPTY_ARRAY;
+  }
+
+  private static void checkContracts(PsiMethod owner, String contractValues) {
+    if (LOG.isDebugEnabled()) {
+      try {
+        List<StandardMethodContract> contracts = StandardMethodContract.parseContract(contractValues);
+        Map<StandardMethodContract, String> errors =
+          StreamEx.of(contracts).cross(c -> ContractChecker.checkContractClause(owner, c, true).values().stream()).toMap();
+        if (!errors.isEmpty()) {
+          LOG.error("Inferred contracts for " + owner + " do not pass contract checker: " + errors);
+        }
+      }
+      catch (StandardMethodContract.ParseException e) {
+        LOG.error("Inferred contracts for " + owner + " cannot be parsed back: " + contractValues, e);
+      }
+    }
   }
 
   /**
@@ -304,7 +323,7 @@ public class ProjectBytecodeAnalysis {
     collectEquations(Collections.singletonList(failureKey), failureSolver);
     if (failureSolver.solve().get(failureKey) == Value.Fail) {
       // Always failing method
-      result.contractsValues.put(key, StreamEx.constant("_", arity).joining(",", "\"", "->fail\""));
+      result.contractsValues.put(key, StreamEx.constant("_", arity).joining(",", "", "->fail"));
     } else {
       final Solver outSolver = new Solver(new ELattice<>(Value.Bot, Value.Top), Value.Top);
       collectEquations(allKeys, outSolver);
@@ -495,7 +514,7 @@ public class ProjectBytecodeAnalysis {
                             .map(str -> str.replace(" ", "")) // for compatibility with existing tests
                             .joining(";");
     if (!result.isEmpty()) {
-      contracts.put(methodKey, '"' + result + '"');
+      contracts.put(methodKey, result);
     }
   }
 
