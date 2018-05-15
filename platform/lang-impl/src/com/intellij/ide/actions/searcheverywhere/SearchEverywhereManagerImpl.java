@@ -5,6 +5,7 @@ import com.intellij.ide.ui.UISettings;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.popup.JBPopup;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
+import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.wm.WindowManager;
 import com.intellij.openapi.wm.impl.IdeFrameImpl;
 import com.intellij.ui.awt.RelativePoint;
@@ -15,6 +16,8 @@ import javax.swing.*;
 import java.awt.*;
 import java.util.List;
 
+import static com.intellij.ide.actions.SearchEverywhereAction.SEARCH_EVERYWHERE_POPUP;
+
 public class SearchEverywhereManagerImpl implements SearchEverywhereManager {
 
   private final Project myProject;
@@ -24,13 +27,14 @@ public class SearchEverywhereManagerImpl implements SearchEverywhereManager {
 
   public SearchEverywhereManagerImpl(Project project) {
     myProject = project;
-
-    //SearchEverywhereContributor selected = contributors.stream()
-    //                                                   .filter(contributor -> contributor.getSearchProviderId().equals(mySelectedProviderID))
-    //                                                   .findAny()
-    //                                                   .orElse(null);
     List<SearchEverywhereContributor> allContributors = SearchEverywhereContributor.getProvidersSorted();
     mySearchEverywhereUI = new SearchEverywhereUI(project, allContributors, null);
+    mySearchEverywhereUI.addPropertyChangeListener("preferredSize", evt -> {
+      if (myBalloon != null && !myBalloon.isDisposed()) {
+        myBalloon.pack(true, true);
+        //myBalloon.setSize(mySearchEverywhereUI.getSize())
+      }
+    });
   }
 
   @Override
@@ -56,6 +60,9 @@ public class SearchEverywhereManagerImpl implements SearchEverywhereManager {
                                 .addUserData("SIMPLE_WINDOW")
                                 .createPopup();
       mySearchEverywhereUI.setSearchFinishedHandler(() -> myBalloon.cancel());
+
+      myProject.putUserData(SEARCH_EVERYWHERE_POPUP, myBalloon);
+      Disposer.register(myBalloon, () -> myProject.putUserData(SEARCH_EVERYWHERE_POPUP, null));
 
       RelativePoint showingPoint = calculateShowingPoint();
       if (showingPoint != null) {
