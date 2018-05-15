@@ -346,7 +346,13 @@ Function ConfirmDesktopShortcut
     ${If} ${RunningX64}
       StrCpy $downloadJreX86 "0"
     ${Else}
+      ; download jre32
       StrCpy $downloadJreX86 "1"
+      !insertmacro INSTALLOPTIONS_WRITE "Desktop.ini" "Field 4" "Flags" "DISABLED"
+
+      ; create shortcut for launcher 32
+      !insertmacro INSTALLOPTIONS_WRITE "Desktop.ini" "Field 2" "State" "1"
+      !insertmacro INSTALLOPTIONS_WRITE "Desktop.ini" "Field 2" "Flags" "DISABLED"
     ${EndIf}
     !insertmacro INSTALLOPTIONS_WRITE "Desktop.ini" "Field 4" "Type" "checkbox"
     !insertmacro INSTALLOPTIONS_WRITE "Desktop.ini" "Field 4" "State" $downloadJreX86
