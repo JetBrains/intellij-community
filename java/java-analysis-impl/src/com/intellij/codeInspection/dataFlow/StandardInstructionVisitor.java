@@ -458,7 +458,7 @@ public class StandardInstructionVisitor extends InstructionVisitor {
       state.push(returnValue);
       finalStates.add(state);
     }
-    
+
     return falseStates;
   }
 
@@ -673,7 +673,7 @@ public class StandardInstructionVisitor extends InstructionVisitor {
       if (condition instanceof DfaConstValue && Boolean.FALSE.equals(((DfaConstValue)condition).getValue())) {
         continue;
       }
-      final DfaMemoryState copy = i == relations.length - 1 ? memState : memState.createCopy();
+      final DfaMemoryState copy = i == relations.length - 1 && !states.isEmpty() ? memState : memState.createCopy();
       if (copy.applyCondition(condition)) {
         boolean isTrue = relationType.isSubRelation(relation);
         copy.push(factory.getBoolean(isTrue));
@@ -688,6 +688,11 @@ public class StandardInstructionVisitor extends InstructionVisitor {
         }
         states.add(new DfaInstructionState(next, copy));
       }
+    }
+    if (states.isEmpty()) {
+      // Neither of relations could be applied: likely comparison with NaN; do not split the state in this case, just push false
+      memState.push(factory.getConstFactory().getFalse());
+      return nextInstruction(instruction, runner, memState);
     }
     myCanBeNullInInstanceof.add(instruction);
 
