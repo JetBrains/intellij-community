@@ -201,7 +201,7 @@ public class ChangesViewManager implements ChangesViewI, ProjectComponent, Persi
     ActionToolbar toolbar = ActionManager.getInstance().createActionToolbar(ActionPlaces.CHANGES_VIEW_TOOLBAR, group, false);
     toolbar.setTargetComponent(myView);
 
-    myView.setMenuActions((DefaultActionGroup)ActionManager.getInstance().getAction("ChangesViewPopupMenu"));
+    myView.installPopupHandler((DefaultActionGroup)ActionManager.getInstance().getAction("ChangesViewPopupMenu"));
     myView.getGroupingSupport().setGroupingKeysOrSkip(myState.groupingKeys);
 
     myProgressLabel = new JPanel(new BorderLayout());

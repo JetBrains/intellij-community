@@ -61,9 +61,13 @@ abstract class SpecificFilesViewDialog extends DialogWrapper {
       }
 
       @Override
-      protected void editSourceRegistration() {
-        EditSourceOnDoubleClickHandler.install(this, closer);
+      protected void installEnterKeyHandler() {
         EditSourceOnEnterKeyHandler.install(this, closer);
+      }
+
+      @Override
+      protected void installDoubleClickHandler() {
+        EditSourceOnDoubleClickHandler.install(this, closer);
       }
     };
     myChangeListManager = ChangeListManager.getInstance(project);

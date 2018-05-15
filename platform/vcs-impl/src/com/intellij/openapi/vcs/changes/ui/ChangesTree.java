@@ -48,6 +48,7 @@ import javax.swing.plaf.basic.BasicTreeUI;
 import javax.swing.tree.*;
 import java.awt.*;
 import java.awt.event.*;
+import java.beans.PropertyChangeListener;
 import java.util.*;
 import java.util.List;
 
@@ -231,6 +232,14 @@ public abstract class ChangesTree extends Tree implements DataProvider {
 
   public JComponent getPreferredFocusedComponent() {
     return this;
+  }
+
+  public void addGroupingChangeListener(@NotNull PropertyChangeListener listener) {
+    myGroupingSupport.addPropertyChangeListener(listener);
+  }
+
+  public void removeGroupingChangeListener(@NotNull PropertyChangeListener listener) {
+    myGroupingSupport.removePropertyChangeListener(listener);
   }
 
   @NotNull

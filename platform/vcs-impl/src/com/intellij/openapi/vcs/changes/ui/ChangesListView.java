@@ -1,7 +1,6 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.vcs.changes.ui;
 
-import com.intellij.ide.CopyProvider;
 import com.intellij.ide.dnd.DnDAware;
 import com.intellij.ide.util.treeView.TreeState;
 import com.intellij.openapi.actionSystem.*;
@@ -13,12 +12,8 @@ import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.FileStatus;
 import com.intellij.openapi.vcs.VcsDataKeys;
 import com.intellij.openapi.vcs.changes.*;
-import com.intellij.openapi.vcs.changes.issueLinks.TreeLinkMouseListener;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.PopupHandler;
-import com.intellij.ui.SmartExpander;
-import com.intellij.ui.TreeSpeedSearch;
-import com.intellij.ui.treeStructure.Tree;
 import com.intellij.util.EditSourceOnDoubleClickHandler;
 import com.intellij.util.EditSourceOnEnterKeyHandler;
 import com.intellij.util.containers.ContainerUtil;
@@ -34,7 +29,6 @@ import javax.swing.tree.DefaultTreeModel;
 import javax.swing.tree.TreePath;
 import java.awt.*;
 import java.awt.event.MouseEvent;
-import java.beans.PropertyChangeListener;
 import java.util.*;
 import java.util.List;
 import java.util.function.Predicate;
@@ -48,11 +42,7 @@ import static com.intellij.util.containers.UtilKt.stream;
 import static java.util.stream.Collectors.toList;
 
 // TODO: Check if we could extend DnDAwareTree here instead of directly implementing DnDAware
-public class ChangesListView extends Tree implements DataProvider, DnDAware {
-  private final Project myProject;
-  private final CopyProvider myCopyProvider;
-  @NotNull private final ChangesGroupingSupport myGroupingSupport;
-
+public class ChangesListView extends ChangesTree implements DataProvider, DnDAware {
   @NonNls public static final String HELP_ID = "ideaInterface.changes";
   @NonNls public static final DataKey<ChangesListView> DATA_KEY = DataKey.create("ChangeListView");
   @NonNls public static final DataKey<Stream<VirtualFile>> UNVERSIONED_FILES_DATA_KEY = DataKey.create("ChangeListView.UnversionedFiles");
@@ -61,50 +51,34 @@ public class ChangesListView extends Tree implements DataProvider, DnDAware {
   @NonNls public static final DataKey<List<LocallyDeletedChange>> LOCALLY_DELETED_CHANGES = DataKey.create("ChangeListView.LocallyDeletedChanges");
 
   public ChangesListView(@NotNull Project project) {
-    myProject = project;
-    myGroupingSupport = new ChangesGroupingSupport(myProject, this, true);
-
-    setModel(TreeModelBuilder.buildEmpty(project));
-
-    setShowsRootHandles(true);
-    setRootVisible(false);
+    super(project, false, true);
     setDragEnabled(true);
+  }
 
-    myCopyProvider = new ChangesBrowserNodeCopyProvider(this);
+  @Override
+  protected void installEnterKeyHandler() {
+    EditSourceOnEnterKeyHandler.install(this);
+  }
 
-    ChangesBrowserNodeRenderer renderer = new ChangesBrowserNodeRenderer(project, this::isShowFlatten, true);
-    setCellRenderer(renderer);
+  @Override
+  protected void installDoubleClickHandler() {
+    EditSourceOnDoubleClickHandler.install(this);
+  }
 
-    new TreeSpeedSearch(this, TO_TEXT_CONVERTER);
-    SmartExpander.installOn(this);
-    new TreeLinkMouseListener(renderer).installOn(this);
+  @NotNull
+  @Override
+  protected ChangesGroupingSupport installGroupingSupport() {
+    return new ChangesGroupingSupport(myProject, this, true);
+  }
+
+  @Override
+  public int getToggleClickCount() {
+    return 2;
   }
 
   @Override
   public DefaultTreeModel getModel() {
     return (DefaultTreeModel)super.getModel();
-  }
-
-  public void addGroupingChangeListener(@NotNull PropertyChangeListener listener) {
-    myGroupingSupport.addPropertyChangeListener(listener);
-  }
-
-  public void removeGroupingChangeListener(@NotNull PropertyChangeListener listener) {
-    myGroupingSupport.removePropertyChangeListener(listener);
-  }
-
-  @NotNull
-  public ChangesGroupingSupport getGroupingSupport() {
-    return myGroupingSupport;
-  }
-
-  @NotNull
-  public ChangesGroupingPolicyFactory getGrouping() {
-    return myGroupingSupport.getGrouping();
-  }
-
-  public boolean isShowFlatten() {
-    return !myGroupingSupport.isDirectory();
   }
 
   public void updateModel(@NotNull DefaultTreeModel newModel) {
@@ -116,6 +90,11 @@ public class ChangesListView extends Tree implements DataProvider, DnDAware {
     expandPath(new TreePath(newRoot.getPath()));
     state.applyTo(this, newRoot);
     expandDefaultChangeList(oldRoot, newRoot);
+  }
+
+  @Override
+  public void rebuildTree() {
+    // currently not used in ChangesListView code flow
   }
 
   private void expandDefaultChangeList(ChangesBrowserNode oldRoot, ChangesBrowserNode root) {
@@ -172,9 +151,6 @@ public class ChangesListView extends Tree implements DataProvider, DnDAware {
              ? new VirtualFileDeleteProvider()
              : null;
     }
-    if (PlatformDataKeys.COPY_PROVIDER.is(dataId)) {
-      return myCopyProvider;
-    }
     if (UNVERSIONED_FILES_DATA_KEY.is(dataId)) {
       return getSelectedUnversionedFiles();
     }
@@ -202,10 +178,7 @@ public class ChangesListView extends Tree implements DataProvider, DnDAware {
     if (PlatformDataKeys.HELP_ID.is(dataId)) {
       return HELP_ID;
     }
-    if (ChangesGroupingSupport.KEY.is(dataId)) {
-      return myGroupingSupport;
-    }
-    return null;
+    return super.getData(dataId);
   }
 
   @NotNull
@@ -347,11 +320,6 @@ public class ChangesListView extends Tree implements DataProvider, DnDAware {
   }
 
   @NotNull
-  public ChangesBrowserNode<?> getRoot() {
-    return (ChangesBrowserNode<?>)getModel().getRoot();
-  }
-
-  @NotNull
   public Stream<Change> getChanges() {
     return getRoot().getObjectsUnderStream(Change.class);
   }
@@ -384,14 +352,9 @@ public class ChangesListView extends Tree implements DataProvider, DnDAware {
       .distinct();
   }
 
-  public void setMenuActions(final ActionGroup menuGroup) {
-    PopupHandler.installPopupHandler(this, menuGroup, ActionPlaces.CHANGES_VIEW_POPUP, ActionManager.getInstance());
-    editSourceRegistration();
-  }
-
-  protected void editSourceRegistration() {
-    EditSourceOnDoubleClickHandler.install(this);
-    EditSourceOnEnterKeyHandler.install(this);
+  @Override
+  public void installPopupHandler(@NotNull ActionGroup group) {
+    PopupHandler.installPopupHandler(this, group, ActionPlaces.CHANGES_VIEW_POPUP, ActionManager.getInstance());
   }
 
   @Override
