@@ -7,8 +7,10 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.xdebugger.attach.EnvironmentAwareHost;
 import org.jetbrains.annotations.NotNull;
 
+import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.InputStreamReader;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -57,7 +59,9 @@ public abstract class UnixAttachOSHandler extends AttachOSHandler {
           LOGGER.warn(PTRACE_SCOPE_PATH + " file exists but you don't have permissions to read it.");
           return 3; // The strongest possible level
         }
-        final String fileContent = fileStream.toString();
+        final BufferedReader buf = new BufferedReader(new InputStreamReader(fileStream));
+
+        final String fileContent = buf.readLine();
         try (Scanner scanner = new Scanner(fileContent)) {
           return scanner.nextInt();
         }
