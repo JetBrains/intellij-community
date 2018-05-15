@@ -32,7 +32,6 @@ public class SearchEverywhereManagerImpl implements SearchEverywhereManager {
     mySearchEverywhereUI.addPropertyChangeListener("preferredSize", evt -> {
       if (myBalloon != null && !myBalloon.isDisposed()) {
         myBalloon.pack(true, true);
-        //myBalloon.setSize(mySearchEverywhereUI.getSize())
       }
     });
   }

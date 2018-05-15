@@ -125,6 +125,7 @@ public class SearchEverywhereUI extends BorderLayoutPanel {
   private JPanel createSuggestionsPanel() {
     JPanel pnl = new JPanel(new BorderLayout());
     pnl.setOpaque(false);
+    pnl.setBorder(JBUI.Borders.customLine(JBUI.CurrentTheme.SearchEverywhere.searchFieldBorderColor(), 1, 0, 0, 0));
 
     JScrollPane resultsScroll = new JBScrollPane(myResultsList);
     resultsScroll.setBorder(null);
@@ -246,8 +247,8 @@ public class SearchEverywhereUI extends BorderLayoutPanel {
     //todo gap between icon and text #UX-1
     Insets insets = JBUI.CurrentTheme.SearchEverywhere.searchFieldInsets();
     Border empty = JBUI.Borders.empty(insets.top, insets.left, insets.bottom, insets.right);
-    Border lines = JBUI.Borders.customLine(JBUI.CurrentTheme.SearchEverywhere.searchFieldBorderColor(), 1, 0, 1, 0);
-    searchField.setBorder(JBUI.Borders.merge(empty, lines, true));
+    Border topLine = JBUI.Borders.customLine(JBUI.CurrentTheme.SearchEverywhere.searchFieldBorderColor(), 1, 0, 0, 0);
+    searchField.setBorder(JBUI.Borders.merge(empty, topLine, true));
     searchField.setBackground(JBUI.CurrentTheme.SearchEverywhere.searchFieldBackground());
     searchField.setFocusTraversalKeysEnabled(false);
 
