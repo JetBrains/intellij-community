@@ -271,8 +271,6 @@ public class MultipleFileMergeDialog extends DialogWrapper {
   private void acceptFileRevision(@NotNull VirtualFile file, @NotNull MergeSession.Resolution resolution) throws Exception {
     if (myMergeSession != null && !myMergeSession.canMerge(file)) return;
 
-    if (myMergeSession != null && myMergeSession.acceptFileRevision(file, resolution)) return;
-
     if (!DiffUtil.makeWritable(myProject, file)) {
       throw new IOException("File is read-only: " + file.getPresentableName());
     }
