@@ -83,6 +83,8 @@ public class SearchEverywhereUI extends BorderLayoutPanel {
   private Runnable searchFinishedHandler = () -> {};
   private final JPanel mySuggestionsPanel;
 
+  private Dimension savedPreferredSize;
+
   // todo remove second param #UX-1
   public SearchEverywhereUI(Project project,
                             List<SearchEverywhereContributor> contributors,
@@ -517,8 +519,6 @@ public class SearchEverywhereUI extends BorderLayoutPanel {
         } else {
           showMore(contributorToExpand);
         }
-
-        updateSuggestionsList();
       }
       catch (ProcessCanceledException ignore) {
         myDone.setRejected();
@@ -531,7 +531,6 @@ public class SearchEverywhereUI extends BorderLayoutPanel {
         if (!isCanceled()) {
           //noinspection SSBasedInspection
           SwingUtilities.invokeLater(() -> myResultsList.getEmptyText().setText(StatusText.DEFAULT_EMPTY_TEXT));
-          updateSuggestionsList();
         }
         if (!myDone.isProcessed()) {
           myDone.setDone();
@@ -601,8 +600,10 @@ public class SearchEverywhereUI extends BorderLayoutPanel {
         myResultsList.revalidate();
         myResultsList.repaint();
         ScrollingUtil.ensureSelectionExists(myResultsList);
-        //todo save prev size to oldValue #UX-1
-        firePropertyChange("preferredSize", null, getPreferredSize());
+
+        Dimension oldPrefSize = savedPreferredSize;
+        savedPreferredSize = getPreferredSize();
+        firePropertyChange("preferredSize", oldPrefSize, savedPreferredSize);
       });
     }
 
@@ -705,7 +706,6 @@ public class SearchEverywhereUI extends BorderLayoutPanel {
       return listElements.get(index).first;
     }
 
-    //todo per contributor #UX-1
     public Collection<Object> getFoundItems(SearchEverywhereContributor contributor) {
       return listElements.stream()
                          .filter(pair -> pair.second == contributor && pair.first != MORE_ELEMENT)
@@ -858,7 +858,6 @@ public class SearchEverywhereUI extends BorderLayoutPanel {
 
           @Override
           public void run(@NotNull ProgressIndicator indicator) {
-            //todo some results cannot be shown in find window (Actions, etc.)
             contributorsForAdditionalSearch.forEach(contributor -> {
               if (!progressIndicator.isCanceled()) {
                 ApplicationManager.getApplication().runReadAction(() -> {
