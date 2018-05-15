@@ -30,7 +30,7 @@ class DiffEditorProvider : AsyncFileEditorProvider {
   override fun createEditorAsync(project: Project, file: VirtualFile): AsyncFileEditorProvider.Builder {
     val builder = (file as DiffVirtualFile).createProcessorAsync(project)
     return object : AsyncFileEditorProvider.Builder() {
-      override fun build(): FileEditor = DiffRequestProcessorEditor(project, file, builder.build())
+      override fun build() = DiffRequestProcessorEditor(project, file, builder.build())
     }
   }
 

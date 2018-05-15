@@ -22,6 +22,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.IdeBorderFactory;
 import com.intellij.ui.SideBorder;
 import com.intellij.ui.components.panels.Wrapper;
+import com.intellij.util.EventDispatcher;
 import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.vcs.log.CommitId;
@@ -72,7 +73,7 @@ public class VcsLogChangesBrowser extends ChangesBrowserBase implements Disposab
   @NotNull private final Map<CommitId, Set<Change>> myChangesToParents = ContainerUtil.newHashMap();
   @Nullable private Collection<FilePath> myAffectedPaths;
   @NotNull private final Wrapper myToolbarWrapper;
-  @Nullable private Runnable myModelUpdateListener;
+  @NotNull private final EventDispatcher<Listener> myDispatcher = EventDispatcher.create(Listener.class);
 
   VcsLogChangesBrowser(@NotNull Project project,
                        @NotNull MainVcsLogUiProperties uiProperties,
@@ -119,8 +120,8 @@ public class VcsLogChangesBrowser extends ChangesBrowserBase implements Disposab
     myToolbarWrapper.setVerticalSizeReferent(referent);
   }
 
-  public void setModelUpdateListener(@Nullable Runnable runnable) {
-    myModelUpdateListener = runnable;
+  public void addListener(@NotNull Listener listener, @NotNull Disposable disposable) {
+    myDispatcher.addListener(listener, disposable);
   }
 
   @Override
@@ -152,7 +153,7 @@ public class VcsLogChangesBrowser extends ChangesBrowserBase implements Disposab
     myRoots.clear();
     myViewer.setEmptyText("");
     myViewer.rebuildTree();
-    if (myModelUpdateListener != null) myModelUpdateListener.run();
+    myDispatcher.getMulticaster().onModelUpdated();
   }
 
   public void setAffectedPaths(@Nullable Collection<FilePath> paths) {
@@ -196,7 +197,7 @@ public class VcsLogChangesBrowser extends ChangesBrowserBase implements Disposab
     }
 
     myViewer.rebuildTree();
-    if (myModelUpdateListener != null) myModelUpdateListener.run();
+    myDispatcher.getMulticaster().onModelUpdated();
   }
 
   @NotNull
@@ -434,6 +435,10 @@ public class VcsLogChangesBrowser extends ChangesBrowserBase implements Disposab
       text += " " + StringUtil.shortenTextWithEllipsis(detail.getSubject(), 50, 0);
     }
     return text;
+  }
+
+  public interface Listener extends EventListener {
+    void onModelUpdated();
   }
 
   private static class RootTag {

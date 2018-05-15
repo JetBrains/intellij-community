@@ -17,10 +17,8 @@ package com.intellij.diff.editor
 
 import com.intellij.codeHighlighting.BackgroundEditorHighlighter
 import com.intellij.diff.impl.DiffRequestProcessor
-import com.intellij.openapi.fileEditor.FileEditor
-import com.intellij.openapi.fileEditor.FileEditorLocation
-import com.intellij.openapi.fileEditor.FileEditorState
-import com.intellij.openapi.fileEditor.FileEditorStateLevel
+import com.intellij.openapi.Disposable
+import com.intellij.openapi.fileEditor.*
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.UserDataHolderBase
@@ -35,7 +33,12 @@ class DiffRequestProcessorEditor(
 ) : UserDataHolderBase(), FileEditor {
 
   init {
-    Disposer.register(this, processor)
+    Disposer.register(this, Disposable {
+      Disposer.dispose(processor)
+    })
+    Disposer.register(processor, Disposable {
+      FileEditorManager.getInstance(project).closeFile(file)
+    })
   }
 
   override fun getComponent(): JComponent = processor.component
