@@ -8,6 +8,7 @@ import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.util.ObjectUtils;
 import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.Collection;
 import java.util.Objects;
@@ -48,9 +49,24 @@ public class RunAnythingCompletionProviderGroup<V, P extends RunAnythingProvider
 
   public static Collection<RunAnythingGroup> getAllGroups() {
     return StreamEx.of(RunAnythingProvider.EP_NAME.getExtensions())
-                   .map(provider -> provider.createCompletionGroup())
+                   .map(provider -> createCompletionGroup(provider))
                    .filter(Objects::nonNull)
                    .distinct()
                    .collect(Collectors.toList());
+  }
+
+  @Nullable
+  public static RunAnythingGroup createCompletionGroup(@NotNull RunAnythingProvider provider) {
+    String title = provider.getCompletionGroupTitle();
+    if (title == null) {
+      return null;
+    }
+
+    if (RunAnythingGeneralGroup.GENERAL_GROUP_TITLE.equals(title)) {
+      return RunAnythingGeneralGroup.INSTANCE;
+    }
+
+    //noinspection unchecked
+    return new RunAnythingCompletionProviderGroup(provider);
   }
 }

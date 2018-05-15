@@ -1,9 +1,6 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.actions.runAnything.activity;
 
-import com.intellij.ide.actions.runAnything.groups.RunAnythingCompletionProviderGroup;
-import com.intellij.ide.actions.runAnything.groups.RunAnythingGeneralGroup;
-import com.intellij.ide.actions.runAnything.groups.RunAnythingGroup;
 import com.intellij.ide.actions.runAnything.items.RunAnythingHelpItem;
 import com.intellij.ide.actions.runAnything.items.RunAnythingItem;
 import com.intellij.ide.actions.runAnything.items.RunAnythingItemBase;
@@ -26,13 +23,9 @@ public abstract class RunAnythingProviderBase<V> implements RunAnythingProvider<
     return ContainerUtil.emptyList();
   }
 
-  public boolean isMatching(@NotNull DataContext dataContext, @NotNull String pattern, @NotNull V value) {
-    return StringUtil.equals(pattern, getCommand(value));
-  }
-
   @Nullable
   public V findMatchingValue(@NotNull DataContext dataContext, @NotNull String pattern) {
-    return getValues(dataContext).stream().filter(value -> isMatching(dataContext, pattern, value)).findFirst().orElse(null);
+    return getValues(dataContext).stream().filter(value -> StringUtil.equals(pattern, getCommand(value))).findFirst().orElse(null);
   }
 
   @Nullable
@@ -75,24 +68,6 @@ public abstract class RunAnythingProviderBase<V> implements RunAnythingProvider<
   @Nullable
   public String getId() {
     return getCompletionGroupTitle();
-  }
-
-  /**
-   * Null means no completion
-   *
-   * @return
-   */
-  @Nullable
-  public RunAnythingGroup createCompletionGroup() {
-    if (RunAnythingGeneralGroup.GENERAL_GROUP_TITLE.equals(getCompletionGroupTitle())) {
-      return RunAnythingGeneralGroup.INSTANCE;
-    }
-
-    if (getCompletionGroupTitle() == null) {
-      return null;
-    }
-
-    return new RunAnythingCompletionProviderGroup<>(this);
   }
 
   @Nullable
