@@ -12,7 +12,8 @@ import com.intellij.ide.IdeBundle;
 import com.intellij.ide.IdeEventQueue;
 import com.intellij.ide.IdeTooltipManager;
 import com.intellij.ide.actions.runAnything.activity.RunAnythingProvider;
-import com.intellij.ide.actions.runAnything.groups.RunAnythingCompletionProviderGroup;
+import com.intellij.ide.actions.runAnything.groups.RunAnythingCompletionGroup;
+import com.intellij.ide.actions.runAnything.groups.RunAnythingGeneralGroup;
 import com.intellij.ide.actions.runAnything.groups.RunAnythingGroup;
 import com.intellij.ide.actions.runAnything.groups.RunAnythingRecentGroup;
 import com.intellij.ide.actions.runAnything.items.RunAnythingItem;
@@ -90,7 +91,6 @@ import javax.swing.event.ListSelectionListener;
 import javax.swing.plaf.TextUI;
 import java.awt.*;
 import java.awt.event.*;
-import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -823,13 +823,11 @@ public class RunAnythingAction extends AnAction implements CustomComponentAction
     myPopupField.setText("");
     final RunAnythingSettingsModel model = new RunAnythingSettingsModel();
 
-    Arrays.stream(RunAnythingProvider.EP_NAME.getExtensions())
-          .filter(provider -> provider.getId() != null)
-          .filter(provider -> provider.getCompletionGroupTitle() != null)
-      .map(provider -> new RunAnythingSEOption(getProject(),
-                                               IdeBundle.message("run.anything.group.settings.title", provider.getCompletionGroupTitle()),
-                                               provider.getId()))
-      .forEach(model::addElement);
+    RunAnythingCompletionGroup.createCompletionGroups()
+                              .stream()
+                              .map(group -> new RunAnythingSEOption(getProject(), IdeBundle
+                                .message("run.anything.group.settings.title", group.getTitle()), group.getTitle()))
+                              .forEach(model::addElement);
 
     if (myCalcThread != null && !myCurrentWorker.isProcessed()) {
       myCurrentWorker = myCalcThread.cancel();
@@ -1033,7 +1031,9 @@ public class RunAnythingAction extends AnAction implements CustomComponentAction
 
       myListModel = reuseModel && model != null
                     ? model
-                    : isHelpMode(pattern) ? new RunAnythingSearchListModel.RunAnythingHelpListModel() : new RunAnythingSearchListModel.RunAnythingMainListModel();
+                    : isHelpMode(pattern)
+                      ? new RunAnythingSearchListModel.RunAnythingHelpListModel()
+                      : new RunAnythingSearchListModel.RunAnythingMainListModel();
     }
 
     @Override
@@ -1136,8 +1136,8 @@ public class RunAnythingAction extends AnAction implements CustomComponentAction
       myListModel
         .getGroups()
         .stream()
-        .filter(group -> !(group instanceof RunAnythingCompletionProviderGroup) ||
-                         ((RunAnythingCompletionProviderGroup)group).isVisible(myDataContext))
+        .filter(group -> group instanceof RunAnythingCompletionGroup || group instanceof RunAnythingGeneralGroup)
+        .filter(group -> RunAnythingCache.getInstance(myProject).isGroupVisible(group.getTitle()))
         .forEach(group -> {
           runReadAction(() -> group.collectItems(myDataContext, myListModel, pattern, checkCancellation));
           checkCancellation.run();

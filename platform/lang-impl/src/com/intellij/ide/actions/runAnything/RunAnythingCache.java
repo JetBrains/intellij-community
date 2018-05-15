@@ -3,7 +3,7 @@ package com.intellij.ide.actions.runAnything;
 
 import com.intellij.execution.ExecutionException;
 import com.intellij.execution.configurations.GeneralCommandLine;
-import com.intellij.ide.actions.runAnything.activity.RunAnythingProviderBase;
+import com.intellij.ide.actions.runAnything.activity.RunAnythingProvider;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.*;
 import com.intellij.openapi.project.Project;
@@ -93,10 +93,10 @@ public class RunAnythingCache implements PersistentStateComponent<RunAnythingCac
   public static class State {
     @XMap(entryTagName = "visibility", keyAttributeName = "group", valueAttributeName = "flag")
     @NotNull private final Map<String, Boolean> myKeys =
-      StreamEx.of(RunAnythingProviderBase.EP_NAME.getExtensions())
-              .filter(provider -> provider.getId() !=null)
-              .distinct(provider -> provider.getId())
-              .collect(Collectors.toMap(group -> group.getId(), group -> true));
+      StreamEx.of(RunAnythingProvider.EP_NAME.getExtensions())
+              .filter(provider -> provider.getCompletionGroupTitle() != null)
+              .distinct(RunAnythingProvider::getCompletionGroupTitle)
+              .collect(Collectors.toMap(RunAnythingProvider::getCompletionGroupTitle, group -> true));
 
     @XCollection(elementName = "command")
     @NotNull private final List<String> myCommands = ContainerUtil.newArrayList();

@@ -55,19 +55,9 @@ public abstract class RunAnythingProviderBase<V> implements RunAnythingProvider<
     return new RunAnythingHelpItem(placeholder, commandPrefix, getHelpDescription(), getHelpIcon());
   }
 
-  /**
-   * Null means no completion
-   *
-   * @return
-   */
   @Nullable
   public String getCompletionGroupTitle() {
     return null;
-  }
-
-  @Nullable
-  public String getId() {
-    return getCompletionGroupTitle();
   }
 
   @Nullable

@@ -94,9 +94,6 @@ public interface RunAnythingProvider<V> {
   @Nullable
   String getCompletionGroupTitle();
 
-  @Nullable
-  String getId();
-
   /**
    * Finds provider that matches {@code pattern}
    *
