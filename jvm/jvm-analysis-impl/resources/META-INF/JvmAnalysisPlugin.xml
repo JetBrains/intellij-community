@@ -1,0 +1,8 @@
+<idea-plugin>
+  <extensions defaultExtensionNs="com.intellij">
+    <localInspection language="UAST" enabledByDefault="true" level="WARNING" shortName="UnstableApiUsage"
+                     groupBundle="com.intellij.jvm.analysis.JvmAnalysisBundle" bundle="com.intellij.jvm.analysis.JvmAnalysisBundle"
+                     groupKey="jvm.inspections.group.name" key="jvm.inspections.unstable.api.usage.display.name"
+                     implementationClass="com.intellij.codeInspection.UnstableApiUsageInspection"/>
+  </extensions>
+</idea-plugin>

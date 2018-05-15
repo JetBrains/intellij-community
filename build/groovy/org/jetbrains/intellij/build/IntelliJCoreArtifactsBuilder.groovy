@@ -43,6 +43,7 @@ class IntelliJCoreArtifactsBuilder {
     "intellij.xml.analysis",
     "intellij.xml.psi",
     "intellij.xml.structureView",
+    "intellij.jvm.analysis",
   ]
   private static final List<String> ANALYSIS_IMPL_MODULES = [
     "intellij.platform.analysis.impl",
@@ -56,6 +57,7 @@ class IntelliJCoreArtifactsBuilder {
     "intellij.xml.analysis.impl",
     "intellij.xml.psi.impl",
     "intellij.xml.structureView.impl",
+    "intellij.jvm.analysis.impl",
   ]
   private final BuildContext buildContext
 

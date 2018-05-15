@@ -18,5 +18,6 @@
     <orderEntry type="module" module-name="intellij.xml.dom" exported="" />
     <orderEntry type="module" module-name="intellij.xml.dom.impl" exported="" />
     <orderEntry type="module" module-name="intellij.java.compiler" exported="" />
+    <orderEntry type="module" module-name="intellij.jvm.analysis" exported="" />
   </component>
 </module>
