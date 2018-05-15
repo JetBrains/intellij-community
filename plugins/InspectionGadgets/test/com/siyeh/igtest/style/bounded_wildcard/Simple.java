@@ -194,4 +194,12 @@ public class Simple<T> {
       return myProcessor;
     }
   }
+
+  ///////// instanceof and cast
+  boolean castandinstanceof(Processor<<warning descr="Can generalize to '? super Number'">Number</warning>> p) {
+    if (p instanceof Number) return ((Number)p).intValue()==0;
+    if ((p) instanceof Number) return ((Number)(p)).intValue()==0;
+    return p.process(null);
+  }
+
 }
