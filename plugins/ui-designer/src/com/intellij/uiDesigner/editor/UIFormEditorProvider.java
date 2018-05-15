@@ -15,7 +15,6 @@ import com.intellij.testFramework.LightVirtualFile;
 import com.intellij.util.ArrayUtil;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 public final class UIFormEditorProvider implements FileEditorProvider, DumbAware {
   private static final Logger LOG = Logger.getInstance("#com.intellij.uiDesigner.editor.UIFormEditorProvider");
@@ -36,7 +35,7 @@ public final class UIFormEditorProvider implements FileEditorProvider, DumbAware
 
   @Override
   @NotNull
-  public FileEditorState readState(@Nullable Element element, @NotNull final Project project, @NotNull final VirtualFile file){
+  public FileEditorState readState(@NotNull Element element, @NotNull final Project project, @NotNull final VirtualFile file){
     //TODO[anton,vova] implement
     return new MyEditorState(-1, ArrayUtil.EMPTY_STRING_ARRAY);
   }

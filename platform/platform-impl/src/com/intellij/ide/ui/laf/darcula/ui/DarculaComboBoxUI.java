@@ -167,7 +167,8 @@ public class DarculaComboBoxUI extends BasicComboBoxUI implements Border, ErrorB
   @NotNull
   static Dimension getArrowButtonPreferredSize(@Nullable JComboBox comboBox) {
     Insets i = comboBox != null ? comboBox.getInsets() : getDefaultComboBoxInsets();
-    return new Dimension(ARROW_BUTTON_WIDTH.get() + i.left, MINIMUM_HEIGHT.get() + i.top + i.bottom);
+    int height = (isCompact(comboBox) ? COMPACT_HEIGHT.get() : MINIMUM_HEIGHT.get()) + i.top + i.bottom;
+    return new Dimension(ARROW_BUTTON_WIDTH.get() + i.left, height);
   }
 
   static Shape getArrowShape(Component button) {
@@ -396,12 +397,17 @@ public class DarculaComboBoxUI extends BasicComboBoxUI implements Border, ErrorB
     Insets i = getInsets();
     Dimension abSize = arrowButton.getPreferredSize();
 
+    if (isCompact(comboBox)) {
+      JBInsets.removeFrom(size, padding); // don't count paddings in compact mode
+    }
+
     int editorHeight = editorSize != null ? editorSize.height + i.top + i.bottom: 0;
     int editorWidth = editorSize != null ? editorSize.width + i.left + padding.left + padding.right : 0;
     editorWidth = Math.max(editorWidth, MINIMUM_WIDTH.get() + i.left);
 
     int width = Math.max(editorWidth + abSize.width, size.width + padding.left);
-    int height = Math.max(Math.max(editorHeight, Math.max(abSize.height, size.height)), MINIMUM_HEIGHT.get() + i.top + i.bottom);
+    int height = Math.max(Math.max(editorHeight, Math.max(abSize.height, size.height)),
+                          (isCompact(comboBox) ? COMPACT_HEIGHT.get() : MINIMUM_HEIGHT.get()) + i.top + i.bottom);
 
     return new Dimension(width, height);
   }
@@ -509,6 +515,8 @@ public class DarculaComboBoxUI extends BasicComboBoxUI implements Border, ErrorB
       if (eps.height < er.height) {
         int delta = (er.height - eps.height) / 2;
         er.y += delta;
+        er.height = eps.height;
+      } else {
         er.height = eps.height;
       }
       editor.setBounds(er);

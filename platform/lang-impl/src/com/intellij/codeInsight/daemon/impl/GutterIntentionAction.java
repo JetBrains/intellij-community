@@ -24,6 +24,7 @@ import javax.swing.*;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.concurrent.atomic.AtomicInteger;
 
 /**
  * @author Dmitry Avdeev
@@ -95,10 +96,11 @@ class GutterIntentionAction extends AbstractIntentionAction implements Comparabl
       return;
     }
     List<HighlightInfo.IntentionActionDescriptor> list = new ArrayList<>();
+    AtomicInteger order = new AtomicInteger();
     for (AnAction action : new AnAction[]{r.getClickAction(), r.getMiddleButtonClickAction(), r.getRightButtonClickAction(),
       r.getPopupMenuActions()}) {
       if (action != null) {
-        addActions(action, list, r, 0, event);
+        addActions(action, list, r, order, event);
       }
     }
     descriptors.addAll(list);
@@ -107,18 +109,17 @@ class GutterIntentionAction extends AbstractIntentionAction implements Comparabl
   private static void addActions(@NotNull AnAction action,
                                  @NotNull List<? super HighlightInfo.IntentionActionDescriptor> descriptors,
                                  @NotNull GutterIconRenderer renderer,
-                                 int order,
+                                 AtomicInteger order,
                                  @NotNull AnActionEvent event) {
     if (action instanceof ActionGroup) {
-      AnAction[] children = ((ActionGroup)action).getChildren(null);
-      for (int i = 0; i < children.length; i++) {
-        addActions(children[i], descriptors, renderer, i + order, event);
+      for (AnAction child : ((ActionGroup)action).getChildren(null)) {
+        addActions(child, descriptors, renderer, order, event);
       }
     }
     Icon icon = action.getTemplatePresentation().getIcon();
     if (icon == null) icon = renderer.getIcon();
     if (icon.getIconWidth() < 16) icon = IconUtil.toSize(icon, 16, 16);
-    final GutterIntentionAction gutterAction = new GutterIntentionAction(action, order, icon);
+    final GutterIntentionAction gutterAction = new GutterIntentionAction(action, order.getAndIncrement(), icon);
     if (!gutterAction.isAvailable(event)) return;
     descriptors.add(new HighlightInfo.IntentionActionDescriptor(gutterAction, Collections.emptyList(), null, icon) {
       @NotNull

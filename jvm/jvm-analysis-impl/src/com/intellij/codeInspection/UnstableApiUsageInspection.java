@@ -1,9 +1,7 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-package org.jetbrains.idea.devkit.inspections;
+package com.intellij.codeInspection;
 
-import com.intellij.codeInspection.LocalInspectionTool;
-import com.intellij.codeInspection.ProblemHighlightType;
-import com.intellij.codeInspection.ProblemsHolder;
+import com.intellij.analysis.JvmAnalysisBundle;
 import com.intellij.codeInspection.util.SpecialAnnotationsUtil;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.Project;
@@ -15,7 +13,6 @@ import com.intellij.psi.search.GlobalSearchScope;
 import com.siyeh.ig.ui.ExternalizableStringSet;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.idea.devkit.DevKitBundle;
 
 import javax.swing.*;
 import java.awt.*;
@@ -38,7 +35,7 @@ public class UnstableApiUsageInspection extends LocalInspectionTool {
     JPanel panel = new JPanel(new GridBagLayout());
     //TODO in add annotation window "Include non-project items" should be enabled by default
     JPanel annotationsListControl = SpecialAnnotationsUtil.createSpecialAnnotationsListControl(
-      unstableApiAnnotations, DevKitBundle.message("inspections.unstable.api.usage.annotations.list"));
+      unstableApiAnnotations, JvmAnalysisBundle.message("jvm.inspections.unstable.api.usage.annotations.list"));
     GridBagConstraints constraints = new GridBagConstraints();
     constraints.gridx = 0;
     constraints.gridy = 0;
@@ -78,7 +75,7 @@ public class UnstableApiUsageInspection extends LocalInspectionTool {
           for (String annotation : unstableApiAnnotations) {
             if (modifierListOwner.hasAnnotation(annotation)) {
               holder.registerProblem(reference,
-                                     DevKitBundle.message("inspections.unstable.api.usage.description", getReferenceText(reference)),
+                                     JvmAnalysisBundle.message("jvm.inspections.unstable.api.usage.description", getReferenceText(reference)),
                                      ProblemHighlightType.GENERIC_ERROR_OR_WARNING);
               return;
             }

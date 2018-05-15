@@ -1,3 +1,4 @@
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 import pkg.<warning descr="'ExperimentalClass' is marked unstable">ExperimentalClass</warning>;
 import static pkg.<warning descr="'ExperimentalClass' is marked unstable">ExperimentalClass</warning>.NON_EXPERIMENTAL_CONSTANT_IN_EXPERIMENTAL_CLASS;
 import static pkg.<warning descr="'ExperimentalClass' is marked unstable">ExperimentalClass</warning>.staticNonExperimentalMethodInExperimentalClass;

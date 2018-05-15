@@ -140,10 +140,9 @@
     </group>
 
     <group id="Git.Log.Toolbar">
-      <action id="Git.Log.DeepCompare" class="git4idea.branch.DeepCompareAction" text="Highlight Non-Picked Commits"
-              icon="Git4ideaIcons.DeepCompare"
+      <action id="Git.Log.DeepCompare" class="git4idea.branch.DeepCompareAction" text="Non-Picked Commits"
               description="Dims those commits which have equivalent changes in the current branch"/>
-      <add-to-group group-id="Vcs.Log.Toolbar" />
+      <add-to-group group-id="Vcs.Log.PresentationSettings" relative-to-action="Vcs.Log.HighlightersActionGroup" anchor="after"/>
     </group>
     
 
