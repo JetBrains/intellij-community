@@ -191,6 +191,7 @@ public class ZipUtil {
     }
   }
 
+  @SuppressWarnings("unused")
   public static boolean isZipContainsFolder(File zip) throws IOException {
     ZipFile zipFile = new ZipFile(zip);
     try {
@@ -214,6 +215,7 @@ public class ZipUtil {
     }
   }
 
+  @SuppressWarnings("unused")
   public static boolean isZipContainsEntry(File zip, String relativePath) throws IOException {
     ZipFile zipFile = new ZipFile(zip);
     try {
@@ -234,9 +236,9 @@ public class ZipUtil {
   }
 
   /*
-   * update an existing jar file. Adds/replace files specified in relpathToFile map
+   * update an existing jar file. Adds/replace files specified in relPathToFile map
    */
-  public static void update(InputStream in, OutputStream out, Map<String, File> relpathToFile) throws IOException {
+  public static void update(InputStream in, OutputStream out, Map<String, File> relPathToFile) throws IOException {
     ZipInputStream zis = new ZipInputStream(in);
     ZipOutputStream zos = new ZipOutputStream(out);
 
@@ -246,7 +248,7 @@ public class ZipUtil {
       while ((e = zis.getNextEntry()) != null) {
         String name = e.getName();
 
-        if (!relpathToFile.containsKey(name)) { // copy the old stuff
+        if (!relPathToFile.containsKey(name)) { // copy the old stuff
           // do our own compression
           ZipEntry e2 = new ZipEntry(name);
           e2.setMethod(e.getMethod());
@@ -261,16 +263,16 @@ public class ZipUtil {
           FileUtil.copy(zis, zos);
         }
         else { // replace with the new files
-          final File file = relpathToFile.get(name);
+          final File file = relPathToFile.get(name);
           //addFile(file, name, zos);
-          relpathToFile.remove(name);
+          relPathToFile.remove(name);
           addFileToZip(zos, file, name, null, null);
         }
       }
 
       // add the remaining new files
-      for (final String path : relpathToFile.keySet()) {
-        File file = relpathToFile.get(path);
+      for (final String path : relPathToFile.keySet()) {
+        File file = relPathToFile.get(path);
         addFileToZip(zos, file, path, null, null);
       }
     }
