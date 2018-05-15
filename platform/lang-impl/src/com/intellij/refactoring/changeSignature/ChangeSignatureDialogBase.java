@@ -363,7 +363,7 @@ public abstract class ChangeSignatureDialogBase<ParamInfo extends ParameterInfo,
     }
 
     myPropagateParamChangesButton =
-      new AnActionButton(RefactoringBundle.message("changeSignature.propagate.parameters.title"), null, AllIcons.Hierarchy.Caller) {
+      new AnActionButton(RefactoringBundle.message("changeSignature.propagate.parameters.title"), null, AllIcons.Hierarchy.Supertypes) {
         @Override
         public void actionPerformed(AnActionEvent e) {
           final Ref<CallerChooserBase<Method>> chooser = new Ref<>();

@@ -5,7 +5,7 @@ class Foo {
   @Contract(<warning descr="A contract clause must be in form arg1, ..., argN -> return-value">"a"</warning>)
   void malformedContract() {}
 
-  @Contract(<warning descr="Method takes 2 parameters, while contract clause number 1 expects 1">"null -> _"</warning>)
+  @Contract(<warning descr="Method takes 2 parameters, while contract clause 'null -> _' expects 1">"null -> _"</warning>)
   void wrongParameterCount(Object a, boolean b) {}
 
   @Contract(pure=true)
@@ -48,4 +48,10 @@ class Foo {
 
   @Contract(<warning descr="Return value should be one of: null, !null, true, false, this, new, paramN, fail, _. Found: foo">"->foo"</warning>)
   public native void invalidReturn();
+
+  @Contract(<warning descr="Contract clause 'true -> fail': parameter #1 has 'String' type (expected boolean)">"true -> fail"</warning>)
+  public native void invalidType(String s);
+
+  @Contract(<warning descr="Contract clause 'null -> fail': parameter #1 has primitive type 'int'">"null -> fail"</warning>)
+  public native void invalidType(int s);
 }

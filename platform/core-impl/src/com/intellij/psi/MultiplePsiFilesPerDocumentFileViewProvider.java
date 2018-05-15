@@ -208,11 +208,4 @@ public abstract class MultiplePsiFilesPerDocumentFileViewProvider extends Abstra
     super.contentsSynchronized();
   }
 
-  @Override
-  public final void markInvalidated() {
-    for (PsiFileImpl file : myRoots.values()) {
-      file.markInvalidated();
-    }
-    super.markInvalidated();
-  }
 }

@@ -216,7 +216,7 @@ public class JavaChangeSignatureDialog extends ChangeSignatureDialogBase<Paramet
     table.getSelectionModel().setSelectionInterval(0, 0);
     table.setSurrendersFocusOnKeystroke(true);
 
-    myPropExceptionsButton = new AnActionButton(RefactoringBundle.message("changeSignature.propagate.exceptions.title"), null, AllIcons.Hierarchy.Caller) {
+    myPropExceptionsButton = new AnActionButton(RefactoringBundle.message("changeSignature.propagate.exceptions.title"), null, AllIcons.Hierarchy.Supertypes) {
       @Override
       public void actionPerformed(AnActionEvent e) {
         final Ref<JavaCallerChooser> chooser = new Ref<>();

@@ -17,10 +17,7 @@ public class DarculaMenuBarBorder implements Border, UIResource {
   public void paintBorder(Component c, Graphics g, int x, int y, int w, int h) {
     g.translate(x, y);
     w--;h--;
-    g.setColor(UIManager.getColor("MenuBar.darcula.borderColor"));
-    UIUtil.drawLine(g, 0, h, w, h);
-    h--;
-    g.setColor(UIManager.getColor("MenuBar.darcula.borderShadowColor"));
+    g.setColor(JBUI.CurrentTheme.ToolWindow.headerBorderBackground());
     UIUtil.drawLine(g, 0, h, w, h);
     g.translate(-x, -y);
   }

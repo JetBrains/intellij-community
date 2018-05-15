@@ -24,13 +24,18 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.problems.WolfTheProblemSolver;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiManager;
-import com.intellij.ui.tree.*;
+import com.intellij.ui.tree.AsyncTreeModel;
+import com.intellij.ui.tree.RestoreSelectionListener;
+import com.intellij.ui.tree.StructureTreeModel;
+import com.intellij.ui.tree.TreeCollector;
+import com.intellij.ui.tree.TreeVisitor;
+import com.intellij.ui.tree.ProjectFileChangeListener;
 import com.intellij.util.SmartList;
 import com.intellij.util.messages.MessageBusConnection;
 import com.intellij.util.ui.tree.TreeUtil;
 import org.jetbrains.annotations.NotNull;
 
-import javax.swing.*;
+import javax.swing.JTree;
 import javax.swing.tree.DefaultMutableTreeNode;
 import javax.swing.tree.TreePath;
 import java.util.Collections;
@@ -43,6 +48,7 @@ import static com.intellij.openapi.vfs.VirtualFileManager.VFS_CHANGES;
 class AsyncProjectViewSupport {
   private static final Logger LOG = Logger.getInstance(AsyncProjectViewSupport.class);
   private final TreeCollector<VirtualFile> myFileRoots = TreeCollector.createFileRootsCollector();
+  private final ProjectFileChangeListener myChangeListener;
   private final StructureTreeModel myStructureTreeModel;
   private final AsyncTreeModel myAsyncTreeModel;
 
@@ -56,13 +62,14 @@ class AsyncProjectViewSupport {
     myStructureTreeModel.setComparator(comparator);
     myAsyncTreeModel = new AsyncTreeModel(myStructureTreeModel, true, parent);
     myAsyncTreeModel.setRootImmediately(myStructureTreeModel.getRootImmediately());
-    setModel(tree, myAsyncTreeModel);
-    MessageBusConnection connection = project.getMessageBus().connect(parent);
-    connection.subscribe(VFS_CHANGES, new ProjectFileChangeListener(project, (module, file) -> {
+    myChangeListener = new ProjectFileChangeListener(myStructureTreeModel.getInvoker(), project, (module, file) -> {
       if (myFileRoots.add(file)) {
         myFileRoots.processLater(myStructureTreeModel.getInvoker(), roots -> roots.forEach(root -> updateByFile(root, true)));
       }
-    }));
+    });
+    setModel(tree, myAsyncTreeModel);
+    MessageBusConnection connection = project.getMessageBus().connect(parent);
+    connection.subscribe(VFS_CHANGES, myChangeListener);
     connection.subscribe(ProjectTopics.PROJECT_ROOTS, new ModuleRootListener() {
       @Override
       public void rootsChanged(ModuleRootEvent event) {

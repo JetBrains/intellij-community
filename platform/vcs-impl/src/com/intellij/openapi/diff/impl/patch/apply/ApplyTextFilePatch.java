@@ -41,17 +41,17 @@ public class ApplyTextFilePatch extends ApplyFilePatchBase<TextFilePatch> {
   protected Result applyChange(final Project project, final VirtualFile fileToPatch, final FilePath pathBeforeRename, @Nullable final Getter<CharSequence> baseContents) throws IOException {
     byte[] fileContents = fileToPatch.contentsToByteArray();
     CharSequence text = LoadTextUtil.getTextByBinaryPresentation(fileContents, fileToPatch);
-    final GenericPatchApplier applier = new GenericPatchApplier(text, myPatch.getHunks());
-    if (applier.execute()) {
+
+    GenericPatchApplier.AppliedPatch appliedPatch = GenericPatchApplier.apply(text, myPatch.getHunks());
+    if (appliedPatch != null) {
       final Document document = FileDocumentManager.getInstance().getDocument(fileToPatch);
       if (document == null) {
         throw new IOException("Failed to set contents for updated file " + fileToPatch.getPath());
       }
-      document.setText(applier.getAfter());
+      document.setText(appliedPatch.patchedText);
       FileDocumentManager.getInstance().saveDocument(document);
-      return new Result(applier.getStatus());
+      return new Result(appliedPatch.status);
     }
-    applier.trySolveSomehow();
     return new Result(ApplyPatchStatus.FAILURE) {
       @Override
       public ApplyPatchForBaseRevisionTexts getMergeData() {

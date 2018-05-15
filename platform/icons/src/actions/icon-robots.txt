@@ -1,4 +1,5 @@
 deprecated: browser-externalJavaDoc.png -> /actions/previousOccurence.svg; to be removed in IDEA 2020 - use AllIcons.Actions.PreviousOccurence
+deprecated: delete.png -> /actions/cancel.svg; to be removed in IDEA 2020 - use AllIcons.Actions.Cancel
 deprecated: exclude.png -> /general/remove.svg; to be removed in IDEA 2020 - use AllIcons.General.Remove
 deprecated: export.png -> /toolbarDecorator/export.svg; to be removed in IDEA 2020 - use AllIcons.ToolbarDecorator.Export
 deprecated: fileStatus.png

@@ -570,6 +570,10 @@ public abstract class DebuggerUtilsEx extends DebuggerUtils {
     }
   }
 
+  public static String methodKey(Method m) {
+    return m.declaringType().name() + '.' + m.name() + m.signature();
+  }
+
   public static String methodNameWithArguments(Method m) {
     return m.name() + "(" + StringUtil.join(m.argumentTypeNames(), StringUtil::getShortName, ", ") + ")";
   }

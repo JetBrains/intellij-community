@@ -15,7 +15,6 @@
  */
 package com.intellij.openapi.vcs.changes.actions;
 
-import com.intellij.icons.AllIcons;
 import com.intellij.idea.ActionsBundle;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.project.DumbAware;
@@ -52,7 +51,7 @@ public class MoveChangesToAnotherListAction extends AnAction implements DumbAwar
   public MoveChangesToAnotherListAction() {
     super(ActionsBundle.actionText(IdeActions.MOVE_TO_ANOTHER_CHANGE_LIST),
           ActionsBundle.actionDescription(IdeActions.MOVE_TO_ANOTHER_CHANGE_LIST),
-          AllIcons.Actions.MoveToAnotherChangelist);
+          null);
   }
 
   public void update(@NotNull AnActionEvent e) {

@@ -21,8 +21,10 @@ import com.intellij.ui.components.textFieldWithHistoryWithBrowseButton
 import com.intellij.util.ui.UIUtil
 import java.awt.Component
 import java.awt.event.ActionEvent
+import java.awt.event.ActionListener
 import java.awt.event.MouseEvent
 import javax.swing.JButton
+import javax.swing.JCheckBox
 import javax.swing.JComponent
 import javax.swing.JLabel
 
@@ -64,6 +66,13 @@ abstract class Cell {
     val button = JButton(BundleBase.replaceMnemonicAmpersand(text))
     button.addActionListener(actionListener)
     button(*constraints)
+  }
+
+  fun checkBox(text: String, isSelected: Boolean = false, vararg constraints: CCFlags, actionListener: (event: ActionEvent, component: JCheckBox) -> Unit) {
+    val component = JCheckBox(text)
+    component.isSelected = isSelected
+    component.addActionListener(ActionListener { actionListener(it, component) })
+    component(*constraints)
   }
 
   fun textFieldWithBrowseButton(browseDialogTitle: String,

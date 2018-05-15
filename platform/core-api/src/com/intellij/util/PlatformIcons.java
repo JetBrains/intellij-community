@@ -22,7 +22,7 @@ public interface PlatformIcons {
   @NonNls String CLASS_ICON_PATH = "/nodes/class.png";
   Icon CLASS_ICON = AllIcons.Nodes.Class;
   Icon EXCEPTION_CLASS_ICON = AllIcons.Nodes.ExceptionClass;
-  Icon NEW_EXCEPTION = AllIcons.Hierarchy.Caller;
+  Icon NEW_EXCEPTION = AllIcons.Hierarchy.Supertypes;
   Icon ANONYMOUS_CLASS_ICON = AllIcons.Nodes.AnonymousClass;
   Icon ABSTRACT_CLASS_ICON = AllIcons.Nodes.AbstractClass;
   Icon ANNOTATION_TYPE_ICON = AllIcons.Nodes.Annotationtype;
@@ -45,7 +45,7 @@ public interface PlatformIcons {
   Icon VARIABLE_RW_ACCESS = AllIcons.Nodes.Rw_access;
   Icon CUSTOM_FILE_ICON = AllIcons.FileTypes.Custom;
   Icon PROPERTY_ICON = AllIcons.Nodes.Property;
-  Icon NEW_PARAMETER = AllIcons.Hierarchy.Caller;
+  Icon NEW_PARAMETER = AllIcons.Hierarchy.Supertypes;
   Icon ASPECT_ICON = AllIcons.Nodes.Aspect;
   Icon ADVICE_ICON = AllIcons.Nodes.Advice;
   Icon ERROR_INTRODUCTION_ICON = AllIcons.Nodes.ErrorIntroduction;
@@ -56,7 +56,7 @@ public interface PlatformIcons {
   Icon UI_FORM_ICON = AllIcons.FileTypes.UiForm;
   Icon JSP_ICON = AllIcons.FileTypes.Jsp;
   Icon SMALL_VCS_CONFIGURABLE = AllIcons.General.SmallConfigurableVcs;
-  Icon GROUP_BY_PACKAGES = AllIcons.Toolbar.Folders;
+  Icon GROUP_BY_PACKAGES = AllIcons.Actions.GroupByPackage;
   Icon ADD_ICON = IconUtil.getAddIcon();
   Icon DELETE_ICON = IconUtil.getRemoveIcon();
   Icon COPY_ICON = AllIcons.Actions.Copy;

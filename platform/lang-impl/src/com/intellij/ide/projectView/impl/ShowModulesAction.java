@@ -35,7 +35,7 @@ public abstract class ShowModulesAction extends ToggleAction {
 
   public ShowModulesAction(Project project) {
     super(IdeBundle.message("action.show.modules"), IdeBundle.message("action.description.show.modules"),
-          AllIcons.ObjectBrowser.ShowModules);
+          AllIcons.Actions.GroupByModule);
     myProject = project;
   }
 

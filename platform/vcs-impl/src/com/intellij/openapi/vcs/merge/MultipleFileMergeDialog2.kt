@@ -181,12 +181,9 @@ open class MultipleFileMergeDialog2(
       }
 
       row {
-        JCheckBox("Group files by directory").apply {
-          isSelected = groupByDirectory
-          addActionListener {
-            toggleGroupByDirectory(isSelected)
-          }
-        }()
+        checkBox("Group files by directory", groupByDirectory) { _, component ->
+          toggleGroupByDirectory(component.isSelected)
+        }
       }
     }
   }

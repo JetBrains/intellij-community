@@ -9,6 +9,7 @@ import com.intellij.psi.util.PsiUtil;
 import com.intellij.ui.tree.BaseTreeModel;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.SmartList;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -23,20 +24,20 @@ class DiscoveredTestsTreeModel extends BaseTreeModel<Object> {
 
   @Override
   public synchronized List<?> getChildren(Object parent) {
-    if (parent == myRoot) return myTestClasses;
+    if (parent == myRoot) return getTestClasses();
     if (parent instanceof Node<?> && ((Node)parent).isClass()) {
       //noinspection unchecked
-      return myTests.get((Node<PsiClass>)parent);
+      return ContainerUtil.newArrayList(myTests.get((Node<PsiClass>)parent));
     }
     return Collections.emptyList();
   }
 
   synchronized List<Node<PsiClass>> getTestClasses() {
-    return myTestClasses;
+    return ContainerUtil.newArrayList(myTestClasses);
   }
 
   @Override
-  public synchronized Object getRoot() {
+  public Object getRoot() {
     return myRoot;
   }
 
@@ -46,7 +47,7 @@ class DiscoveredTestsTreeModel extends BaseTreeModel<Object> {
     return myRoot != object && super.isLeaf(object);
   }
 
-  public synchronized void addTest(@NotNull PsiClass testClass, @NotNull PsiMethod testMethod) {
+  synchronized void addTest(@NotNull PsiClass testClass, @NotNull PsiMethod testMethod) {
     Node<PsiClass> classNode = ReadAction.compute(() -> new Node<>(testClass));
     Node<PsiMethod> methodNode = ReadAction.compute(() -> new Node<>(testMethod));
 
@@ -84,7 +85,7 @@ class DiscoveredTestsTreeModel extends BaseTreeModel<Object> {
       .toArray(DiscoveredTestsTreeModel.Node[]::new);
   }
 
-  public synchronized int getTestCount() {
+  synchronized int getTestCount() {
     return myTests.values().stream().mapToInt(ms -> ms.size()).sum();
   }
 

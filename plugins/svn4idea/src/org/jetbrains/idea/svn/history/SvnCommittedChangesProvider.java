@@ -89,7 +89,7 @@ public class SvnCommittedChangesProvider implements CachingCommittedChangesProvi
   public RepositoryLocation getLocationFor(@NotNull FilePath root) {
     Info info = myVcs.getInfo(root.getIOFile());
 
-    return info != null && info.getURL() != null ? new SvnRepositoryLocation(info.getURL(), root) : null;
+    return info != null && info.getURL() != null ? new SvnRepositoryLocation(info.getURL(), info.getRepositoryRootURL(), root) : null;
   }
 
   @Override

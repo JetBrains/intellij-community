@@ -4,14 +4,23 @@ package com.intellij.codeInspection.dataFlow;
 import com.intellij.codeInsight.AnnotationUtil;
 import com.intellij.codeInspection.AbstractBaseJavaLocalInspectionTool;
 import com.intellij.codeInspection.ProblemsHolder;
+import com.intellij.codeInspection.dataFlow.StandardMethodContract.ValueConstraint;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
+import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Stream;
+
+import static com.intellij.codeInspection.dataFlow.StandardMethodContract.ParseException;
+import static com.intellij.codeInspection.dataFlow.StandardMethodContract.parseContract;
 
 /**
  * @author peter
@@ -26,7 +35,9 @@ public class ContractInspection extends AbstractBaseJavaLocalInspectionTool {
       @Override
       public void visitMethod(PsiMethod method) {
         PsiAnnotation annotation = JavaMethodContractUtil.findContractAnnotation(method);
-        if (annotation == null || AnnotationUtil.isInferredAnnotation(annotation)) return;
+        if (annotation == null || (!ApplicationManager.getApplication().isInternal() && AnnotationUtil.isInferredAnnotation(annotation))) {
+          return;
+        }
         boolean ownContract = annotation.getOwner() == method.getModifierList();
         for (StandardMethodContract contract : JavaMethodContractUtil.getMethodContracts(method)) {
           Map<PsiElement, String> errors = ContractChecker.checkContractClause(method, contract, ownContract);
@@ -80,22 +91,109 @@ public class ContractInspection extends AbstractBaseJavaLocalInspectionTool {
   public static String checkContract(PsiMethod method, String text) {
     List<StandardMethodContract> contracts;
     try {
-      contracts = StandardMethodContract.parseContract(text);
+      contracts = parseContract(text);
     }
-    catch (StandardMethodContract.ParseException e) {
+    catch (ParseException e) {
       return e.getMessage();
     }
-    int paramCount = method.getParameterList().getParametersCount();
-    for (int i = 0; i < contracts.size(); i++) {
-      StandardMethodContract contract = contracts.get(i);
+    PsiParameter[] parameters = method.getParameterList().getParameters();
+    int paramCount = parameters.length;
+    List<Conditions> possibleConditions = Collections.singletonList(new Conditions(paramCount));
+    for (StandardMethodContract contract : contracts) {
       if (contract.getParameterCount() != paramCount) {
-        return "Method takes " + paramCount + " parameters, while contract clause number " + (i + 1) + " expects " + contract.getParameterCount();
+        return "Method takes " + paramCount + " parameters, " +
+               "while contract clause '" + contract + "' expects " + contract.getParameterCount();
+      }
+      for (int i = 0; i < parameters.length; i++) {
+        ValueConstraint constraint = contract.getParameterConstraint(i);
+        PsiType type = parameters[i].getType();
+        switch (constraint) {
+          case ANY_VALUE:
+            break;
+          case NULL_VALUE:
+          case NOT_NULL_VALUE:
+            if (type instanceof PsiPrimitiveType) {
+              return "Contract clause '"+contract+"': parameter #"+(i+1)+" has primitive type '"+type.getPresentableText()+"'";
+            }
+            break;
+          case TRUE_VALUE:
+          case FALSE_VALUE:
+            if (!PsiType.BOOLEAN.equals(type) && !type.equalsToText(CommonClassNames.JAVA_LANG_BOOLEAN)) {
+              return "Contract clause '"+contract+"': parameter #"+(i+1)+" has '"+type.getPresentableText()+"' type (expected boolean)";
+            }
+            break;
+        }
       }
       String problem = contract.getReturnValue().getMethodCompatibilityProblem(method);
       if (problem != null) {
         return problem;
       }
+      if (possibleConditions != null) {
+        if (possibleConditions.isEmpty()) {
+          return "Contract clause '" + contract + "' is unreachable: previous contracts cover all possible cases";
+        }
+        if (StreamEx.of(possibleConditions).allMatch(c -> c.fitContract(contract) == null)) {
+          return "Contract clause '" + contract + "' is never satisfied as its conditions are covered by previous contracts";
+        }
+        possibleConditions = StreamEx.of(possibleConditions).flatMap(c -> c.misfitContract(contract))
+                                     .limit(DataFlowRunner.MAX_STATES_PER_BRANCH).toList();
+        if (possibleConditions.size() >= DataFlowRunner.MAX_STATES_PER_BRANCH) {
+          possibleConditions = null;
+        }
+      }
     }
     return null;
+  }
+
+  private static final class Conditions {
+    private final List<ValueConstraint> myParameters;
+
+    Conditions(int paramCount) {
+      myParameters = StreamEx.constant(ValueConstraint.ANY_VALUE, paramCount).toList();
+    }
+
+    private Conditions(List<ValueConstraint> parameters) {
+      myParameters = parameters;
+    }
+
+    @Nullable
+    Conditions fitContract(StandardMethodContract contract) {
+      List<ValueConstraint> result = new ArrayList<>(myParameters);
+      assert contract.getParameterCount() == result.size();
+      for (int i = 0; i < result.size(); i++) {
+        ValueConstraint condition = result.get(i);
+        ValueConstraint constraint = contract.getParameterConstraint(i);
+        if (condition == constraint || condition == ValueConstraint.ANY_VALUE) {
+          result.set(i, constraint);
+        } else if (constraint == ValueConstraint.ANY_VALUE) {
+          result.set(i, condition);
+        }
+        else {
+          return null;
+        }
+      }
+      return new Conditions(result);
+    }
+
+    @NotNull
+    Stream<Conditions> misfitContract(StandardMethodContract contract) {
+      assert contract.getParameterCount() == myParameters.size();
+      List<ValueConstraint> constraints = contract.getConstraints();
+      List<ValueConstraint> template = StreamEx.constant(ValueConstraint.ANY_VALUE, myParameters.size()).toList();
+      List<StandardMethodContract> antiContracts = new ArrayList<>();
+      for (int i = 0; i < constraints.size(); i++) {
+        ValueConstraint constraint = constraints.get(i);
+        if (constraint == ValueConstraint.ANY_VALUE) continue;
+        template.set(i, constraint.negate());
+        antiContracts.add(new StandardMethodContract(template.toArray(new ValueConstraint[0]), ContractReturnValue.returnAny()));
+        template.set(i, constraint);
+      }
+      return StreamEx.of(antiContracts).map(this::fitContract).nonNull();
+    }
+
+    @Override
+    public String toString() {
+      return myParameters.toString();
+    }
   }
 }

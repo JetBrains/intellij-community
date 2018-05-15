@@ -1099,7 +1099,7 @@
     </action>
 
     <group id="TouchBar">
-      <group id="TouchBarDebugger">
+      <group id="TouchBarDebug" text="Debugger">
         <reference ref="Rerun"/>
         <reference ref="Pause"/>
         <reference ref="Resume"/>
@@ -1112,7 +1112,7 @@
         <reference ref="StepOut"/>
         <separator/>
         <reference ref="EvaluateExpression"/>
-        <group id="TouchBarDebugger_alt">
+        <group id="TouchBarDebug_alt" text="Debugger with Alt key">
           <separator/>
           <reference ref="ViewBreakpoints"/>
           <separator/>
@@ -1121,7 +1121,7 @@
           <reference ref="SmartStepInto"/>
           <reference ref="RunToCursor"/>
         </group>
-        <group id="TouchBarDebugger_cmd"/>
+        <group id="TouchBarDebug_cmd" text="Debugger with Cmd key"/>
       </group>
     </group>
   </actions>

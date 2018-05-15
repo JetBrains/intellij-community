@@ -12,7 +12,6 @@ import com.intellij.openapi.vfs.VirtualFile;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.ipnb.IpnbFileType;
 
 /**
@@ -35,9 +34,9 @@ public class IpnbEditorProvider implements FileEditorProvider, DumbAware {
 
   @NotNull
   @Override
-  public FileEditorState readState(@Nullable Element sourceElement, @NotNull Project project, @NotNull VirtualFile file) {
+  public FileEditorState readState(@NotNull Element sourceElement, @NotNull Project project, @NotNull VirtualFile file) {
     final IpnbEditorState state = new IpnbEditorState(-1, 0);
-    final Element child = sourceElement == null ? null : sourceElement.getChild(SELECTED_CELL);
+    final Element child = sourceElement.getChild(SELECTED_CELL);
     state.setSelectedIndex(child == null ? 0 : StringUtil.parseInt(child.getAttributeValue(ID), 0));
     return state;
   }

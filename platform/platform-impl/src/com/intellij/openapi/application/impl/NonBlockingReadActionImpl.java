@@ -139,7 +139,7 @@ class NonBlockingReadActionImpl<T> implements NonBlockingReadAction<T> {
 
     void safeTransferToEdt(T result, Pair<ModalityState, Consumer<T>> edtFinish, ProgressIndicator indicator) {
       if (Promises.isRejected(promise)) return;
-      
+
       Semaphore semaphore = new Semaphore(1);
       ApplicationManager.getApplication().invokeLater(() -> {
         if (checkObsolete()) {
@@ -147,13 +147,13 @@ class NonBlockingReadActionImpl<T> implements NonBlockingReadAction<T> {
           return;
         }
 
-        // complete the promise now to prevent write actions inside custom callback from cancelling it 
+        // complete the promise now to prevent write actions inside custom callback from cancelling it
         promise.setResult(result);
 
         // now background thread may release its read lock, and we continue on EDT, invoking custom callback
         semaphore.up();
 
-        if (Promises.isFulfilled(promise)) { // in case another thread managed to cancel it just before `setResult`
+        if (promise.isSucceeded()) { // in case another thread managed to cancel it just before `setResult`
           edtFinish.second.accept(result);
         }
       }, edtFinish.first);

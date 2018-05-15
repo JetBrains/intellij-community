@@ -40,15 +40,16 @@ target('default': 'Check icons in repositories') {
   }
   def repoArg = 'repos'
   def patternArg = 'skip.dirs.pattern'
+  def sync = 'sync'
   String[] repos = System.properties."$repoArg"?.toString()?.split(/,/) ?: []
   if (repos.length < 2) {
-    context.messages.error("Usage: -D$repoArg=<codeRepoDir>,<iconsRepoDir> [-D$patternArg=...]")
+    context.messages.error("Usage: -D$repoArg=<codeRepoDir>,<iconsRepoDir> [-D$patternArg=...] [-D$sync=false|true]")
     System.exit(1)
   }
   def skipDirsPattern = System.properties."$patternArg"?.toString() ?: null
   try {
-    Class.forName('org.jetbrains.intellij.build.images.sync.CheckIconsKt').checkIcons(
-      repos[0], repos[1], skipDirsPattern,
+    Class.forName('org.jetbrains.intellij.build.images.sync.CheckAndSyncIconsKt').checkAndSyncIcons(
+      repos[0], repos[1], skipDirsPattern, Boolean.parseBoolean(System.properties[sync] as String),
       { String msg -> msg.split(/\n/).each { context.messages.info(it) } },
       { String msg -> context.messages.buildStatus(msg); System.exit(1) }
     )

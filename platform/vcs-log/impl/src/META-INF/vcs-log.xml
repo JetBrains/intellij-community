@@ -136,14 +136,16 @@
       <reference id="Vcs.Log.ShowChangesFromParents"/>
     </group>
     <group id="Vcs.FileHistory.ContextMenu">
-      <reference id="Vcs.Log.OpenRepositoryVersion"/>
-      <reference id="Diff.ShowDiff"/>
-      <reference id="Vcs.ShowDiffWithLocal"/>
+      <reference id="Vcs.CopyRevisionNumberAction"/>
       <reference id="ChangesView.CreatePatchFromChanges"/>
+      <separator/>
+      <reference id="Diff.ShowDiff"/>
+      <reference id="Vcs.Log.ShowAllAffected"/>
+      <reference id="Vcs.ShowDiffWithLocal"/>
+      <separator/>
+      <reference id="Vcs.Log.OpenRepositoryVersion"/>
       <reference id="Vcs.Log.GetVersion"/>
       <reference id="Vcs.Log.AnnotateRevisionAction"/>
-      <reference id="Vcs.Log.ShowAllAffected"/>
-      <reference id="Vcs.CopyRevisionNumberAction"/>
       <reference id="VcsHistoryActionsGroup"/>
     </group>
     <group id="Vcs.FileHistory.Toolbar">

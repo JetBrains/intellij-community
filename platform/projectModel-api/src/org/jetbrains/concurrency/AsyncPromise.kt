@@ -23,7 +23,7 @@ open class AsyncPromise<T : Any?> : InternalPromiseUtil.BasePromise<T>(), Cancel
   private val valueRef = AtomicReference<PromiseValue<T>?>(null)
 
   override fun onSuccess(handler: Consumer<in T>): Promise<T> {
-    setHandler(doneRef, handler, State.FULFILLED)
+    setHandler(doneRef, handler, State.SUCCEEDED)
     return this
   }
 
@@ -93,7 +93,7 @@ open class AsyncPromise<T : Any?> : InternalPromiseUtil.BasePromise<T>(), Cancel
   }
 
   private fun addHandlers(done: Consumer<T>, rejected: Consumer<Throwable>) {
-    setHandler(doneRef, done, State.FULFILLED)
+    setHandler(doneRef, done, State.SUCCEEDED)
     setHandler(rejectedRef, rejected, State.REJECTED)
   }
 
@@ -226,7 +226,7 @@ open class AsyncPromise<T : Any?> : InternalPromiseUtil.BasePromise<T>(), Cancel
     val currentState = value.state
     if (currentState == targetState) {
       @Suppress("UNCHECKED_CAST")
-      newConsumer.accept(if (currentState == State.FULFILLED) value.result as C_T else value.error as C_T)
+      newConsumer.accept(if (currentState == State.SUCCEEDED) value.result as C_T else value.error as C_T)
     }
   }
 

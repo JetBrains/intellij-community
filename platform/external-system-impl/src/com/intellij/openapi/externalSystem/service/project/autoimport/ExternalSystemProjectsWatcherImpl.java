@@ -623,7 +623,12 @@ public class ExternalSystemProjectsWatcherImpl extends ExternalSystemTaskNotific
     }
 
     private boolean fileWasChanged(VirtualFile file, VFileEvent event) {
-      if (!file.isValid() || !(event instanceof VFileContentChangeEvent)) return true;
+      if (!file.isValid()) {
+        return true;
+      }
+      if (!(event instanceof VFileContentChangeEvent)) {
+        return false;
+      }
 
       Long newCrc = calculateCrc(file);
       file.putUserData(CRC_WITHOUT_SPACES_CURRENT, newCrc);
