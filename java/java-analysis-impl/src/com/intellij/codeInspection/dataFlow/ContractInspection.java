@@ -5,6 +5,7 @@ import com.intellij.codeInsight.AnnotationUtil;
 import com.intellij.codeInspection.AbstractBaseJavaLocalInspectionTool;
 import com.intellij.codeInspection.ProblemsHolder;
 import com.intellij.codeInspection.dataFlow.StandardMethodContract.ValueConstraint;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
@@ -34,7 +35,9 @@ public class ContractInspection extends AbstractBaseJavaLocalInspectionTool {
       @Override
       public void visitMethod(PsiMethod method) {
         PsiAnnotation annotation = JavaMethodContractUtil.findContractAnnotation(method);
-        if (annotation == null || AnnotationUtil.isInferredAnnotation(annotation)) return;
+        if (annotation == null || (!ApplicationManager.getApplication().isInternal() && AnnotationUtil.isInferredAnnotation(annotation))) {
+          return;
+        }
         boolean ownContract = annotation.getOwner() == method.getModifierList();
         for (StandardMethodContract contract : JavaMethodContractUtil.getMethodContracts(method)) {
           Map<PsiElement, String> errors = ContractChecker.checkContractClause(method, contract, ownContract);
