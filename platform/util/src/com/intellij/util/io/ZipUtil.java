@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2013 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.util.io;
 
 import com.intellij.openapi.diagnostic.Logger;
@@ -37,7 +23,6 @@ public class ZipUtil {
   private ZipUtil() {}
 
   public interface FileContentProcessor {
-
     FileContentProcessor STANDARD = new FileContentProcessor() {
       @Override
       public InputStream getContent(File file) throws IOException {
@@ -175,25 +160,33 @@ public class ZipUtil {
     extractEntry(entry, inputStream, outputDir, true);
   }
 
-  public static void extractEntry(ZipEntry entry, final InputStream inputStream, File outputDir, boolean overwrite) throws IOException {
+  public static void extractEntry(@NotNull ZipEntry entry, @NotNull InputStream inputStream, @NotNull File outputDir, boolean isOverwrite) throws IOException {
     final boolean isDirectory = entry.isDirectory();
-    final String relativeName = entry.getName();
-    final File file = new File(outputDir, relativeName);
-    if (file.exists() && !overwrite) return;
-
-    FileUtil.createParentDirs(file);
-    if (isDirectory) {
-      file.mkdir();
+    final File file = new File(outputDir, entry.getName());
+    if (file.exists()) {
+      if (!isOverwrite || isDirectory) {
+        return;
+      }
+    }
+    else if (isDirectory) {
+      //noinspection ResultOfMethodCallIgnored
+      file.mkdirs();
+      return;
     }
     else {
-      final BufferedInputStream is = new BufferedInputStream(inputStream);
-      final BufferedOutputStream os = new BufferedOutputStream(new FileOutputStream(file));
+      FileUtilRt.createParentDirs(file);
+    }
+
+    final FileOutputStream os = new FileOutputStream(file);
+    try {
+      FileUtilRt.copy(inputStream, os);
+    }
+    finally {
       try {
-        FileUtil.copy(is, os);
+        os.close();
       }
       finally {
-        os.close();
-        is.close();
+        inputStream.close();
       }
     }
   }
@@ -205,7 +198,7 @@ public class ZipUtil {
 
       while (en.hasMoreElements()) {
         ZipEntry zipEntry = (ZipEntry)en.nextElement();
-  
+
         // we do not necessarily get a separate entry for the subdirectory when the file
         // in the ZIP archive is placed in a subdirectory, so we need to check if the slash
         // is found anywhere in the path
@@ -287,8 +280,7 @@ public class ZipUtil {
     }
   }
 
-  @Nullable
-  public static File compressFile(@NotNull File srcFile, @NotNull File zipFile) throws IOException {
+  public static void compressFile(@NotNull File srcFile, @NotNull File zipFile) throws IOException {
     InputStream is = new FileInputStream(srcFile);
     try {
       ZipOutputStream os = new ZipOutputStream(new FileOutputStream(zipFile));
@@ -296,7 +288,6 @@ public class ZipUtil {
         os.putNextEntry(new ZipEntry(srcFile.getName()));
         FileUtilRt.copy(is, os);
         os.closeEntry();
-        return zipFile;
       }
       finally {
         os.close();
@@ -306,5 +297,4 @@ public class ZipUtil {
       is.close();
     }
   }
-
 }
