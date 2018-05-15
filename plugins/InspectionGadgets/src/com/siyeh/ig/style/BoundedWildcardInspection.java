@@ -20,6 +20,7 @@ import com.intellij.refactoring.changeSignature.JavaChangeSignatureDialog;
 import com.intellij.refactoring.changeSignature.ParameterInfoImpl;
 import com.intellij.ui.components.JBCheckBox;
 import com.intellij.util.ArrayUtil;
+import com.intellij.util.Processor;
 import com.intellij.util.containers.ContainerUtil;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.psiutils.TypeUtils;
@@ -63,6 +64,7 @@ public class BoundedWildcardInspection extends AbstractBaseJavaLocalInspectionTo
         if (!REPORT_PRIVATE_METHODS && candidate.method.hasModifierProperty(PsiModifier.PRIVATE)) {
           return; // somebody hates his precious private methods highlighted
         }
+        if (loneFreeTypeParameter(candidate, typeElement)) return;
         PsiClassReferenceType extendsT = suggestMethodParameterType(candidate, true);
         PsiClassReferenceType superT = suggestMethodParameterType(candidate, false);
         Variance variance = checkParameterVarianceInMethodBody(candidate.methodParameter, candidate.method, candidate.typeParameter,
@@ -77,6 +79,21 @@ public class BoundedWildcardInspection extends AbstractBaseJavaLocalInspectionTo
         }
       }
     };
+  }
+
+  // doesn't make sense to replace "<T> boolean lone(Processor<T> p)" with wildcard
+  private static boolean loneFreeTypeParameter(@NotNull VarianceCandidate candidate, @NotNull PsiTypeElement typeElementToInspect) {
+    if (!(candidate.type instanceof PsiClassType)) return false;
+    PsiClass aClass = ((PsiClassType)candidate.type).resolve();
+    if (!(aClass instanceof PsiTypeParameter)) return false;
+    // type parameter find usages is cheap
+    boolean[] first = {true};
+    return ReferencesSearch.search(aClass).forEach(r -> {
+      if (!first[0]) return false;
+      first[0] = false;
+      // the only usage must be in our type element we are currently inspecting
+      return r.getElement().getTextRange().getStartOffset() == typeElementToInspect.getTextRange().getStartOffset();
+    });
   }
 
   private static boolean makesSenseToExtend(VarianceCandidate candidate) {
@@ -146,7 +163,7 @@ public class BoundedWildcardInspection extends AbstractBaseJavaLocalInspectionTo
 
       // check that if there is a super method, then it's parameterized similarly.
       // otherwise, it would make no sense to wildcardize "new Function<List<T>, T>(){ T apply(List<T> param) {...} }"
-      // Oh, and make sure super methods are all modifyable, or it wouldn't make sense to report them
+      // Oh, and make sure super methods are all modifiable, or it wouldn't make sense to report them
       if (!
       SuperMethodsSearch.search(method, null, true, true).forEach((MethodSignatureBackedByPsiMethod superMethod)-> {
         ProgressManager.checkCanceled();

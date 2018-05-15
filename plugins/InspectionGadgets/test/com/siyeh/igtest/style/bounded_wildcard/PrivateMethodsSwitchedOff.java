@@ -13,7 +13,7 @@ public class PrivateMethodsSwitchedOff<T> {
   }
 
   ////////////// inferred from method call
-  public static <T, V> String map2Set(T[] collection, Function<? super T, <warning descr="Can generalize to '? extends V'">V</warning>> mapper) {
+  public static <T, V> String map2Set(T[] collection, Function<? super T, <warning descr="Can generalize to '? extends V'">V</warning>> mapper, V v) {
       return map2((mapper));
   }
   private static <T, V> String map2(Function<? super T, ? extends V> mapper) {
