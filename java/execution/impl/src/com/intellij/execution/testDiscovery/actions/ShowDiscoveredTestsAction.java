@@ -239,14 +239,15 @@ public class ShowDiscoveredTestsAction extends AnAction {
 
         for (TestDiscoveryConfigurationProducer producer : getRunConfigurationProducers(project)) {
           byte frameworkId = ((JavaTestConfigurationBase)producer.getConfigurationFactory().createTemplateConfiguration(project)).getTestFrameworkId();
-          TestDiscoveryProducer.consumeDiscoveredTests(project, fqn, methodName, frameworkId, (testClass, testMethod) -> {
+          TestDiscoveryProducer.consumeDiscoveredTests(project, fqn, methodName, frameworkId, (testClass, testMethod, parameter) -> {
             PsiMethod psiMethod = ReadAction.compute(() -> {
-              PsiClass cc = testClass == null ? null : ClassUtil.findPsiClass(PsiManager.getInstance(project), testClass, null, true, scope);
+              PsiClass cc = ClassUtil.findPsiClass(PsiManager.getInstance(project), testClass, null, true, scope);
               return cc == null ? null : ArrayUtil.getFirstElement(cc.findMethodsByName(testMethod, false));
             });
             if (psiMethod != null) {
-              tree.addTest(ReadAction.compute(() -> psiMethod.getContainingClass()), psiMethod);
+              tree.addTest(ReadAction.compute(() -> psiMethod.getContainingClass()), psiMethod, parameter);
             }
+            return true;
           });
         }
       }
