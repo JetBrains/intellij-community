@@ -297,7 +297,7 @@
     <extensionPoint name="gotoRelatedProvider" interface="com.intellij.navigation.GotoRelatedProvider"/>
 
     <extensionPoint name="runAnything.executionProvider"
-                    interface="com.intellij.ide.actions.runAnything.activity.RunAnythingActivityProvider"/>
+                    interface="com.intellij.ide.actions.runAnything.activity.RunAnythingProvider"/>
 
     <extensionPoint name="runAnything.commandHandler" interface="com.intellij.ide.actions.runAnything.handlers.RunAnythingCommandHandler"/>
 

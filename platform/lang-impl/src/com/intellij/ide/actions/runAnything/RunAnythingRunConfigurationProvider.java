@@ -6,7 +6,6 @@ import com.intellij.execution.ExecutorRegistry;
 import com.intellij.execution.actions.ChooseRunConfigurationPopup;
 import com.intellij.execution.actions.ExecutorProvider;
 import com.intellij.ide.IdeBundle;
-import com.intellij.ide.actions.runAnything.activity.RunAnythingCompletionProvider;
 import com.intellij.ide.actions.runAnything.activity.RunAnythingRunConfigurationExecutionProvider;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.project.Project;
@@ -18,8 +17,7 @@ import java.util.Collection;
 
 import static com.intellij.ide.actions.runAnything.RunAnythingUtil.fetchProject;
 
-public class RunAnythingRunConfigurationProvider extends RunAnythingRunConfigurationExecutionProvider
-  implements RunAnythingCompletionProvider<ChooseRunConfigurationPopup.ItemWrapper> {
+public class RunAnythingRunConfigurationProvider extends RunAnythingRunConfigurationExecutionProvider {
   @NotNull
   @Override
   public Collection<ChooseRunConfigurationPopup.ItemWrapper> getValues(@NotNull DataContext dataContext) {
@@ -28,7 +26,7 @@ public class RunAnythingRunConfigurationProvider extends RunAnythingRunConfigura
 
   @NotNull
   @Override
-  public String getGroupTitle() {
+  public String getCompletionGroupTitle() {
     return IdeBundle.message("run.anything.run.configurations.group.title");
   }
 

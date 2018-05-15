@@ -9,8 +9,7 @@ import java.util.Collection;
 
 import static com.intellij.ide.actions.runAnything.RunAnythingUtil.fetchProject;
 
-public class RunAnythingRecentCommandProvider extends RunAnythingCommandExecutionProviderBase
-  implements RunAnythingMultiParametrizedExecutionProvider<String> {
+public class RunAnythingRecentCommandProvider extends RunAnythingCommandExecutionProviderBase {
 
   @NotNull
   @Override

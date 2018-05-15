@@ -15,7 +15,7 @@ import org.jetbrains.annotations.Nullable;
 
 import static com.intellij.ide.actions.runAnything.RunAnythingUtil.fetchProject;
 
-public abstract class RunAnythingNotifiableActivityProviderBase<V> implements RunAnythingActivityProvider<V> {
+public abstract class RunAnythingNotifiableActivityProviderBase<V> extends RunAnythingProviderBase<V> {
   private static final String RUN_ANYTHING_GROUP_ID = IdeBundle.message("run.anything.custom.activity.notification.group.id");
 
   /**
