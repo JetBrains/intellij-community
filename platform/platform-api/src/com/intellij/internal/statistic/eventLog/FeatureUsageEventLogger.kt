@@ -40,7 +40,7 @@ fun getLogger(): FeatureUsageEventLogger {
     return FeatureUsageEmptyEventLogger()
   }
   else if (extensions.size > 1) {
-    LOG.warn("Too many php remote interpreter managers registered (" + Arrays.asList<FeatureUsageEventLogger>(*extensions) + ")")
+    LOG.warn("Too many feature usage loggers registered (" + Arrays.asList<FeatureUsageEventLogger>(*extensions) + ")")
   }
   return extensions[0]
 }
