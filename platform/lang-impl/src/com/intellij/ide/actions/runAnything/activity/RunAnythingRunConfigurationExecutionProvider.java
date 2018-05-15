@@ -20,7 +20,7 @@ import static com.intellij.ide.actions.runAnything.RunAnythingAction.EXECUTOR_KE
 import static com.intellij.ide.actions.runAnything.RunAnythingUtil.fetchProject;
 
 public abstract class RunAnythingRunConfigurationExecutionProvider
-  implements RunAnythingActivityProvider<ChooseRunConfigurationPopup.ItemWrapper> {
+  extends RunAnythingProviderBase<ChooseRunConfigurationPopup.ItemWrapper> {
 
   @NotNull
   @Override

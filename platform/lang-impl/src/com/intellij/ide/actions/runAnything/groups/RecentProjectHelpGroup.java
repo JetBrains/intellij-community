@@ -2,7 +2,7 @@
 package com.intellij.ide.actions.runAnything.groups;
 
 import com.intellij.ide.IdeBundle;
-import com.intellij.ide.actions.runAnything.activity.RunAnythingActivityProvider;
+import com.intellij.ide.actions.runAnything.activity.RunAnythingProvider;
 import com.intellij.ide.actions.runAnything.activity.RunAnythingRecentProjectProvider;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
@@ -18,7 +18,7 @@ public class RecentProjectHelpGroup extends RunAnythingHelpGroup {
 
   @NotNull
   @Override
-  public Collection<RunAnythingActivityProvider> getProviders() {
-    return ContainerUtil.immutableSingletonList(RunAnythingActivityProvider.EP_NAME.findExtension(RunAnythingRecentProjectProvider.class));
+  public Collection<RunAnythingProvider> getProviders() {
+    return ContainerUtil.immutableSingletonList(RunAnythingProvider.EP_NAME.findExtension(RunAnythingRecentProjectProvider.class));
   }
 }

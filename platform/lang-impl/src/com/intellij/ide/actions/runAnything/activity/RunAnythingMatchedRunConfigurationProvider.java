@@ -2,7 +2,6 @@
 package com.intellij.ide.actions.runAnything.activity;
 
 import com.intellij.execution.RunnerAndConfigurationSettings;
-import com.intellij.execution.actions.ChooseRunConfigurationPopup;
 import com.intellij.execution.configurations.ConfigurationFactory;
 import com.intellij.openapi.actionSystem.DataContext;
 import org.jetbrains.annotations.NotNull;
@@ -12,9 +11,7 @@ import javax.swing.*;
 /**
  * Implement this class if a particular run configuration should be created for matching input string.
  */
-public abstract class RunAnythingMatchedRunConfigurationProvider extends RunAnythingRunConfigurationExecutionProvider
-  implements RunAnythingHelpProviderBase<ChooseRunConfigurationPopup.ItemWrapper>,
-             RunAnythingActivityProvider<ChooseRunConfigurationPopup.ItemWrapper> {
+public abstract class RunAnythingMatchedRunConfigurationProvider extends RunAnythingRunConfigurationExecutionProvider {
   /**
    * Actual run configuration creation by {@code commandLine}
    *

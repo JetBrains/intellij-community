@@ -12,8 +12,7 @@ import java.util.Arrays;
 import java.util.Collection;
 import java.util.stream.Collectors;
 
-public class RunAnythingRecentProjectProvider extends RunAnythingActionExecutionProvider<AnAction>
-  implements RunAnythingCompletionProvider<AnAction> {
+public class RunAnythingRecentProjectProvider extends RunAnythingActionExecutionProvider<AnAction> {
   @NotNull
   @Override
   public Collection<AnAction> getValues(@NotNull DataContext dataContext) {
@@ -21,7 +20,7 @@ public class RunAnythingRecentProjectProvider extends RunAnythingActionExecution
   }
 
   @NotNull
-  public String getGroupTitle() {
+  public String getCompletionGroupTitle() {
     return IdeBundle.message("run.anything.recent.project.completion.group.title");
   }
 
@@ -33,14 +32,14 @@ public class RunAnythingRecentProjectProvider extends RunAnythingActionExecution
 
   @NotNull
   @Override
-  public String getCommandPrefix() {
+  public String getHelpCommand() {
     return "open";
   }
 
   @NotNull
   @Override
   public String getCommand(@NotNull AnAction value) {
-    return getCommandPrefix() + " " + ObjectUtils
+    return getHelpCommand() + " " + ObjectUtils
       .notNull(value.getTemplatePresentation().getText(), IdeBundle.message("run.anything.actions.undefined"));
   }
 }

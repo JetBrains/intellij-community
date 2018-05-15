@@ -12,8 +12,6 @@ import com.intellij.ide.actions.runAnything.RunAnythingCache;
 import com.intellij.ide.actions.runAnything.RunAnythingUtil;
 import com.intellij.ide.actions.runAnything.commands.RunAnythingCommandCustomizer;
 import com.intellij.ide.actions.runAnything.execution.RunAnythingRunProfile;
-import com.intellij.ide.actions.runAnything.items.RunAnythingItem;
-import com.intellij.ide.actions.runAnything.items.RunAnythingItemBase;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.actionSystem.KeyboardShortcut;
@@ -30,7 +28,7 @@ import java.util.Collection;
 import static com.intellij.ide.actions.runAnything.RunAnythingUtil.AD_CONTEXT_TEXT;
 import static com.intellij.ide.actions.runAnything.RunAnythingUtil.AD_DEBUG_TEXT;
 
-public abstract class RunAnythingCommandExecutionProviderBase implements RunAnythingActivityProvider<String> {
+public abstract class RunAnythingCommandExecutionProviderBase extends RunAnythingProviderBase<String> {
   public final String AD_DELETE_COMMAND_TEXT =
     IdeBundle.message("run.anything.ad.command.delete", KeymapUtil.getShortcutText(KeyboardShortcut.fromString("shift BACK_SPACE")));
 
@@ -86,11 +84,5 @@ public abstract class RunAnythingCommandExecutionProviderBase implements RunAnyt
   @Override
   public Icon getIcon(@NotNull String value) {
     return AllIcons.Actions.Run_anything;
-  }
-
-  @NotNull
-  @Override
-  public RunAnythingItem getMainListItem(@NotNull DataContext dataContext, @NotNull String value) {
-    return new RunAnythingItemBase(value, getIcon(value));
   }
 }

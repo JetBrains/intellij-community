@@ -11,13 +11,11 @@ import com.intellij.ide.DataManager;
 import com.intellij.ide.IdeBundle;
 import com.intellij.ide.IdeEventQueue;
 import com.intellij.ide.IdeTooltipManager;
-import com.intellij.ide.actions.runAnything.activity.RunAnythingActivityProvider;
+import com.intellij.ide.actions.runAnything.activity.RunAnythingProvider;
 import com.intellij.ide.actions.runAnything.groups.RunAnythingCompletionProviderGroup;
 import com.intellij.ide.actions.runAnything.groups.RunAnythingGroup;
 import com.intellij.ide.actions.runAnything.groups.RunAnythingRecentGroup;
 import com.intellij.ide.actions.runAnything.items.RunAnythingItem;
-import com.intellij.ide.actions.runAnything.ui.RunAnythingHelpListModel;
-import com.intellij.ide.actions.runAnything.ui.RunAnythingMainListModel;
 import com.intellij.ide.actions.runAnything.ui.RunAnythingScrollingUtil;
 import com.intellij.ide.ui.UISettings;
 import com.intellij.ide.ui.laf.darcula.ui.DarculaTextBorder;
@@ -92,13 +90,13 @@ import javax.swing.event.ListSelectionListener;
 import javax.swing.plaf.TextUI;
 import java.awt.*;
 import java.awt.event.*;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 import static com.intellij.ide.actions.runAnything.RunAnythingIconHandler.*;
-import static com.intellij.ide.actions.runAnything.activity.RunAnythingCompletionProvider.getCompletionProviders;
 import static com.intellij.openapi.wm.IdeFocusManager.getGlobalInstance;
 
 @SuppressWarnings("FieldAccessedSynchronizedAndUnsynchronized")
@@ -214,7 +212,7 @@ public class RunAnythingAction extends AnAction implements CustomComponentAction
 
   private void updateComponents() {
     //noinspection unchecked
-    myList = new JBList(new RunAnythingMainListModel()) {
+    myList = new JBList(new RunAnythingSearchListModel.RunAnythingMainListModel()) {
       int lastKnownHeight = JBUI.scale(30);
 
       @Override
@@ -425,7 +423,7 @@ public class RunAnythingAction extends AnAction implements CustomComponentAction
       if (SHIFT_IS_PRESSED.get()) {
         RunAnythingUtil.triggerShiftStatistics(dataContext);
       }
-      onDone = () -> RunAnythingActivityProvider.executeMatched(dataContext, pattern);
+      onDone = () -> RunAnythingProvider.executeMatched(dataContext, pattern);
     }
     finally {
       final ActionCallback callback = onPopupFocusLost();
@@ -787,7 +785,7 @@ public class RunAnythingAction extends AnAction implements CustomComponentAction
     String pattern = textField.getText();
 
     DataContext dataContext = createDataContext(myDataContext, isAltPressed);
-    RunAnythingActivityProvider provider = RunAnythingActivityProvider.findMatchedProvider(dataContext, pattern);
+    RunAnythingProvider provider = RunAnythingProvider.findMatchedProvider(dataContext, pattern);
 
     if (provider == null) {
       return;
@@ -811,8 +809,7 @@ public class RunAnythingAction extends AnAction implements CustomComponentAction
     Object value = myList.getSelectedValue();
 
     if (value instanceof RunAnythingItem) {
-      RunAnythingActivityProvider provider =
-        RunAnythingActivityProvider.findMatchedProvider(dataContext, ((RunAnythingItem)value).getCommand());
+      RunAnythingProvider provider = RunAnythingProvider.findMatchedProvider(dataContext, ((RunAnythingItem)value).getCommand());
       if (provider != null) {
         String adText = provider.getAdText();
         if (adText != null) {
@@ -826,10 +823,11 @@ public class RunAnythingAction extends AnAction implements CustomComponentAction
     myPopupField.setText("");
     final RunAnythingSettingsModel model = new RunAnythingSettingsModel();
 
-    getCompletionProviders()
-      .stream()
+    Arrays.stream(RunAnythingProvider.EP_NAME.getExtensions())
+          .filter(provider -> provider.getId() != null)
+          .filter(provider -> provider.getCompletionGroupTitle() != null)
       .map(provider -> new RunAnythingSEOption(getProject(),
-                                               IdeBundle.message("run.anything.group.settings.title", provider.getGroupTitle()),
+                                               IdeBundle.message("run.anything.group.settings.title", provider.getCompletionGroupTitle()),
                                                provider.getId()))
       .forEach(model::addElement);
 
@@ -1035,7 +1033,7 @@ public class RunAnythingAction extends AnAction implements CustomComponentAction
 
       myListModel = reuseModel && model != null
                     ? model
-                    : isHelpMode(pattern) ? new RunAnythingHelpListModel() : new RunAnythingMainListModel();
+                    : isHelpMode(pattern) ? new RunAnythingSearchListModel.RunAnythingHelpListModel() : new RunAnythingSearchListModel.RunAnythingMainListModel();
     }
 
     @Override
@@ -1133,7 +1131,7 @@ public class RunAnythingAction extends AnAction implements CustomComponentAction
     }
 
     private void buildCompletionGroups(@NotNull String pattern, @NotNull Runnable checkCancellation) {
-      LOG.assertTrue(myListModel instanceof RunAnythingMainListModel);
+      LOG.assertTrue(myListModel instanceof RunAnythingSearchListModel.RunAnythingMainListModel);
 
       myListModel
         .getGroups()
