@@ -320,6 +320,8 @@ class ExpressionsParsingTest extends GroovyParsingTestCase {
 
   void testreferences$ref9() throws Throwable { doTest() }
 
+  void testreferences$keywords() { doTest() }
+
   void testreferences$emptyTypeArgs() { doTest() }
 
   void testregex$chen() throws Throwable { doTest() }
@@ -487,6 +489,10 @@ class ExpressionsParsingTest extends GroovyParsingTestCase {
   void testtypecast$una6() throws Throwable { doTest() }
 
   void testtypecast$elvis() throws Throwable { doTest() }
+
+  void testtypecast$equality() { doTest() }
+
+  void testtypecast$parenthesized() { doTest() }
 
   void testtypecast$conditional() throws Throwable { doTest() }
 
