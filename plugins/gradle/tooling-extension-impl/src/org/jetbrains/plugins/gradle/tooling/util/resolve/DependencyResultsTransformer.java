@@ -34,6 +34,8 @@ public class DependencyResultsTransformer {
   private final Multimap<ModuleComponentIdentifier, ProjectDependency> myConfigurationProjectDependencies;
   private final String myScope;
   private final Set<File> resolvedDepsFiles = new HashSet<File>();
+  private final Map<ModuleVersionIdentifier, Set<ExternalDependency>> myResolvedDepsCache =
+    new HashMap<ModuleVersionIdentifier, Set<ExternalDependency>>();
 
   public DependencyResultsTransformer(@NotNull final Project project,
                                @NotNull final SourceSetCachedFinder sourceSetFinder,
@@ -96,6 +98,11 @@ public class DependencyResultsTransformer {
 
     boolean resolveFromArtifacts = false;
 
+    Set<ExternalDependency> cached = myResolvedDepsCache.get(moduleVersionId);
+    if (cached != null) {
+      return cached;
+    }
+
     if (componentSelector instanceof ProjectComponentSelector) {
       final ProjectComponentSelector selector = (ProjectComponentSelector)componentSelector;
 
@@ -140,6 +147,8 @@ public class DependencyResultsTransformer {
         }
       }
     }
+
+    myResolvedDepsCache.put(moduleVersionId, result);
 
     return result;
   }
