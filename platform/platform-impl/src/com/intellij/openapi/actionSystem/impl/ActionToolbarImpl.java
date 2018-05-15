@@ -18,6 +18,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.keymap.ex.KeymapManagerEx;
 import com.intellij.openapi.ui.popup.*;
 import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.openapi.wm.WindowManager;
 import com.intellij.openapi.wm.ex.WindowManagerEx;
@@ -427,6 +428,11 @@ public class ActionToolbarImpl extends JPanel implements ActionToolbar, QuickAct
       @Override
       protected HelpTooltip.Alignment getTooltipLocation() {
         return tooltipLocation();
+      }
+
+      @Override
+      protected Icon getFallbackIcon(boolean enabled) {
+        return enabled ? AllIcons.Toolbar.Unknown : IconLoader.getDisabledIcon(AllIcons.Toolbar.Unknown);
       }
     };
     actionButton.setLook(look);
