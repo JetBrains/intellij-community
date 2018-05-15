@@ -9,6 +9,7 @@ import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.impl.ActionButton;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.keymap.KeymapUtil;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
@@ -130,7 +131,10 @@ public class SearchEverywhereUI extends BorderLayoutPanel {
     resultsScroll.setHorizontalScrollBarPolicy(ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER);
     pnl.add(resultsScroll, BorderLayout.CENTER);
 
-    JLabel hintLabel = new JLabel("hint here");
+    String hint = IdeBundle.message("searcheverywhere.history.shortcuts.hint",
+                                    KeymapUtil.getKeystrokeText(SearchTextField.ALT_SHOW_HISTORY_KEYSTROKE),
+                                    KeymapUtil.getKeystrokeText(SearchTextField.SHOW_HISTORY_KEYSTROKE));
+    JLabel hintLabel = new JLabel(hint);
     hintLabel.setOpaque(false);
     hintLabel.setForeground(JBColor.GRAY);
     pnl.add(hintLabel, BorderLayout.SOUTH);

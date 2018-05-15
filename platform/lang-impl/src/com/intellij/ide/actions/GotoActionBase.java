@@ -17,6 +17,7 @@
 package com.intellij.ide.actions;
 
 import com.intellij.featureStatistics.FeatureUsageTracker;
+import com.intellij.ide.IdeBundle;
 import com.intellij.ide.IdeEventQueue;
 import com.intellij.ide.actions.searcheverywhere.SearchEverywhereManager;
 import com.intellij.ide.util.gotoByName.*;
@@ -247,10 +248,9 @@ public abstract class GotoActionBase extends AnAction {
     final ChooseByNameFilter<T> filter = callback.createFilter(popup);
 
     if (historyEnabled() && popup.getAdText() == null) {
-      popup.setAdText("Press " +
-                      KeymapUtil.getKeystrokeText(SearchTextField.ALT_SHOW_HISTORY_KEYSTROKE) + " or " +
-                      KeymapUtil.getKeystrokeText(SearchTextField.SHOW_HISTORY_KEYSTROKE) +
-                      " to navigate through the search history");
+      popup.setAdText(IdeBundle.message("searcheverywhere.history.shortcuts.hint",
+                                        KeymapUtil.getKeystrokeText(SearchTextField.ALT_SHOW_HISTORY_KEYSTROKE),
+                                        KeymapUtil.getKeystrokeText(SearchTextField.SHOW_HISTORY_KEYSTROKE)));
     }
 
     popup.invoke(new ChooseByNamePopupComponent.Callback() {
