@@ -151,7 +151,7 @@ public class ZipUtil {
       ZipEntry entry = (ZipEntry)entries.nextElement();
       final File file = new File(outputDir, entry.getName());
       if (filenameFilter == null || filenameFilter.accept(file.getParentFile(), file.getName())) {
-        extractEntry(entry, zipFile.getInputStream(entry), outputDir, overwrite);
+        doExtractEntry(entry, zipFile.getInputStream(entry), file, overwrite);
       }
     }
   }
@@ -161,23 +161,26 @@ public class ZipUtil {
   }
 
   public static void extractEntry(@NotNull ZipEntry entry, @NotNull InputStream inputStream, @NotNull File outputDir, boolean isOverwrite) throws IOException {
+    doExtractEntry(entry, inputStream, new File(outputDir, entry.getName()), isOverwrite);
+  }
+
+  private static void doExtractEntry(@NotNull ZipEntry entry, @NotNull InputStream inputStream, @NotNull File outputFile, boolean isOverwrite) throws IOException {
     final boolean isDirectory = entry.isDirectory();
-    final File file = new File(outputDir, entry.getName());
-    if (file.exists()) {
+    if (outputFile.exists()) {
       if (!isOverwrite || isDirectory) {
         return;
       }
     }
     else if (isDirectory) {
       //noinspection ResultOfMethodCallIgnored
-      file.mkdirs();
+      outputFile.mkdirs();
       return;
     }
     else {
-      FileUtilRt.createParentDirs(file);
+      FileUtilRt.createParentDirs(outputFile);
     }
 
-    final FileOutputStream os = new FileOutputStream(file);
+    final FileOutputStream os = new FileOutputStream(outputFile);
     try {
       FileUtilRt.copy(inputStream, os);
     }
