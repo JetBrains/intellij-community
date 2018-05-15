@@ -10,6 +10,7 @@ import com.intellij.debugger.impl.PrioritizedTask
 import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.util.registry.Registry
+import com.intellij.ui.classFilter.ClassFilter
 import com.intellij.util.ArrayUtil
 import com.intellij.xdebugger.XDebugSession
 import com.intellij.xdebugger.breakpoints.XBreakpoint
@@ -48,6 +49,46 @@ internal abstract class BreakpointIntentionAction(protected val myBreakpoint: XB
     }
   }
 
+  internal class AddInstanceFilter(breakpoint: XBreakpoint<*>, private val myInstance: Long) :
+    BreakpointIntentionAction(breakpoint, "Stop only in the current object") {
+
+    override fun actionPerformed(e: AnActionEvent) {
+      with(myBreakpoint.properties as JavaBreakpointProperties<*>) {
+        isINSTANCE_FILTERS_ENABLED = true
+        addInstanceFilter(myInstance)
+      }
+      (myBreakpoint as XBreakpointBase<*, *, *>).fireBreakpointChanged()
+    }
+  }
+
+  internal class AddClassFilter(breakpoint: XBreakpoint<*>, private val myClass: String) :
+    BreakpointIntentionAction(breakpoint, "Stop only in the class: $myClass") {
+
+    override fun actionPerformed(e: AnActionEvent) {
+      with(myBreakpoint.properties as JavaBreakpointProperties<*>) {
+        isCLASS_FILTERS_ENABLED = true
+        val classFilter = ClassFilter(myClass)
+        classFilters = ArrayUtil.append(classFilters, classFilter)
+        classExclusionFilters = ArrayUtil.remove(classExclusionFilters, classFilter)
+      }
+      (myBreakpoint as XBreakpointBase<*, *, *>).fireBreakpointChanged()
+    }
+  }
+
+  internal class AddClassNotFilter(breakpoint: XBreakpoint<*>, private val myClass: String) :
+    BreakpointIntentionAction(breakpoint, "Do not stop in the class: $myClass") {
+
+    override fun actionPerformed(e: AnActionEvent) {
+      with(myBreakpoint.properties as JavaBreakpointProperties<*>) {
+        isCLASS_FILTERS_ENABLED = true
+        val classFilter = ClassFilter(myClass)
+        classExclusionFilters = ArrayUtil.append(classExclusionFilters, classFilter)
+        classFilters = ArrayUtil.remove(classFilters, classFilter)
+      }
+      (myBreakpoint as XBreakpointBase<*, *, *>).fireBreakpointChanged()
+    }
+  }
+
   companion object {
     @JvmStatic
     fun getIntentions(breakpoint: XBreakpoint<*>, currentSession: XDebugSession?): List<AnAction> {
@@ -69,8 +110,8 @@ internal abstract class BreakpointIntentionAction(protected val myBreakpoint: XB
                     val method = DebuggerUtilsEx.getMethod(parentFrame.location())
                     if (method != null) {
                       val key = DebuggerUtilsEx.methodKey(parentFrame.location().method())
-                      res.add(BreakpointIntentionAction.AddCallerFilter(breakpoint, key))
-                      res.add(BreakpointIntentionAction.AddCallerNotFilter(breakpoint, key))
+                      res.add(AddCallerFilter(breakpoint, key))
+                      res.add(AddCallerNotFilter(breakpoint, key))
                     }
                   }
                 }
@@ -79,6 +120,17 @@ internal abstract class BreakpointIntentionAction(protected val myBreakpoint: XB
                 LineBreakpoint.LOG.warn(e)
               }
 
+            }
+
+            val frameProxy = suspendContext.frameProxy
+
+            frameProxy?.thisObject()?.uniqueID()?.let {
+              res.add(AddInstanceFilter(breakpoint, it))
+            }
+
+            frameProxy?.location()?.declaringType()?.name()?.let {
+              res.add(AddClassFilter(breakpoint, it))
+              res.add(AddClassNotFilter(breakpoint, it))
             }
           }
         })
