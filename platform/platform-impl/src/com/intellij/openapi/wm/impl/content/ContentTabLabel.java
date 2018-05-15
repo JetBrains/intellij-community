@@ -145,8 +145,10 @@ class ContentTabLabel extends BaseLabel {
     int textWidth = SwingUtilities2.stringWidth(this, fm, text);
     int prefWidth = iconWidth + textWidth;
 
-    if(prefWidth > MAX_WIDTH) {
-      int offset = MAX_WIDTH - iconWidth;
+    int maxWidth = getMaximumSize().width;
+
+    if(prefWidth > maxWidth) {
+      int offset = maxWidth - iconWidth;
       String s = SwingUtilities2.clipString(this, fm, txt, offset);
       super.setText(s);
       return;
