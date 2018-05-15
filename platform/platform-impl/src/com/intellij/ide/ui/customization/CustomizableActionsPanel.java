@@ -507,8 +507,20 @@ public class CustomizableActionsPanel {
   }
 
   private static boolean isToolbarAction(DefaultMutableTreeNode node) {
-    return node.getParent() != null && ((DefaultMutableTreeNode)node.getParent()).getUserObject() instanceof Group &&
-           ((Group)((DefaultMutableTreeNode)node.getParent()).getUserObject()).getName().equals(ActionsTreeUtil.MAIN_TOOLBAR);
+    TreeNode parent = node.getParent();
+    if (parent instanceof DefaultMutableTreeNode) {
+      Object userObject = ((DefaultMutableTreeNode)parent).getUserObject();
+      if (userObject instanceof Group) {
+        Group group = (Group)userObject;
+
+        String groupName = group.getName();
+        if (groupName.toLowerCase(Locale.ENGLISH).contains("toolbar")) return true;
+
+        String groupId = group.getId();
+        if (groupId != null && groupId.toLowerCase(Locale.ENGLISH).contains("toolbar")) return true;
+      }
+    }
+    return false;
   }
 
   @Nullable
