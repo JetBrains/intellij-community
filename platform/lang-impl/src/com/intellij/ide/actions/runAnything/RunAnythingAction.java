@@ -423,7 +423,7 @@ public class RunAnythingAction extends AnAction implements CustomComponentAction
       if (SHIFT_IS_PRESSED.get()) {
         RunAnythingUtil.triggerShiftStatistics(dataContext);
       }
-      onDone = () -> RunAnythingProvider.executeMatched(dataContext, pattern);
+      onDone = () -> RunAnythingUtil.executeMatched(dataContext, pattern);
     }
     finally {
       final ActionCallback callback = onPopupFocusLost();

@@ -5,6 +5,7 @@ import com.intellij.execution.Executor;
 import com.intellij.execution.ExecutorRegistry;
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.IdeBundle;
+import com.intellij.ide.actions.runAnything.activity.RunAnythingProvider;
 import com.intellij.ide.ui.search.OptionDescription;
 import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
@@ -37,6 +38,7 @@ import javax.swing.*;
 import javax.swing.border.Border;
 import java.awt.*;
 import java.util.Collection;
+import java.util.List;
 import java.util.Objects;
 
 import static com.intellij.ide.actions.runAnything.RunAnythingAction.EXECUTOR_KEY;
@@ -185,5 +187,19 @@ public class RunAnythingUtil {
   @NotNull
   public static Project fetchProject(@NotNull DataContext dataContext) {
     return ObjectUtils.assertNotNull(CommonDataKeys.PROJECT.getData(dataContext));
+  }
+
+  public static void executeMatched(@NotNull DataContext dataContext, @NotNull String pattern) {
+    List<String> commands = RunAnythingCache.getInstance(fetchProject(dataContext)).getState().getCommands();
+    for (RunAnythingProvider provider : RunAnythingProvider.EP_NAME.getExtensions()) {
+      Object value = provider.findMatchingValue(dataContext, pattern);
+      if (value != null) {
+        //noinspection unchecked
+        provider.execute(dataContext, value);
+        commands.remove(pattern);
+        commands.add(pattern);
+        break;
+      }
+    }
   }
 }
