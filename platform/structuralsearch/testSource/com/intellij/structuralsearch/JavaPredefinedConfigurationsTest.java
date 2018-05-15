@@ -87,6 +87,34 @@ public class JavaPredefinedConfigurationsTest extends StructuralSearchTestCase {
                        "  try (AutoCloseable ac = null) {}" +
                        "}}",
                        asList("try {} finally {}")));
+    testCases.put(SSRBundle.message("predefined.configuration.switch.with.branches"),
+                  pair("class X {{" +
+                       "  switch (1) {" +
+                       "    case 1:" +
+                       "      break;" +
+                       "    case 2:" +
+                       "      System.out.println();" +
+                       "    case 3:" +
+                       "    default:" +
+                       "  }" +
+                       "  switch (1) {" +
+                       "    case 1:" +
+                       "     break;" +
+                       "    case 2:" +
+                       "      System.out.println();" +
+                       "    case 3:" +
+                       "    case 4:" +
+                       "    default:" +
+                       "  }" +
+                       "}}",
+                       asList("switch (1) {" +
+                              "    case 1:" +
+                              "      break;" +
+                              "    case 2:" +
+                              "      System.out.println();" +
+                              "    case 3:" +
+                              "    default:" +
+                              "  }")));
   }
 
   public void testPredefinedConfigurations() {

@@ -890,6 +890,9 @@ public class JavaStructuralSearchProfile extends StructuralSearchProfile {
       if (grandParent instanceof PsiAssertStatement) return ((PsiAssertStatement)grandParent).getAssertDescription() == parent;
       if (grandParent instanceof PsiNameValuePair) return ((PsiNameValuePair)grandParent).getValue() == parent;
     }
+    if (grandParent instanceof PsiSwitchLabelStatement) {
+      return ((PsiSwitchLabelStatement)grandParent).getEnclosingSwitchStatement() != null;
+    }
     if (grandParent instanceof PsiVariable) {
       return ((PsiVariable)grandParent).getInitializer() == parent;
     }
@@ -924,6 +927,7 @@ public class JavaStructuralSearchProfile extends StructuralSearchProfile {
 
     final PsiElement grandParent = parent.getParent();
     if (grandParent instanceof PsiPolyadicExpression) return true;
+    if (grandParent instanceof PsiSwitchLabelStatement)  return true;
     if (grandParent instanceof PsiExpressionStatement && hasSemicolon(grandParent)) return true;
     if (grandParent instanceof PsiReferenceList) {
       final PsiElement greatGrandParent = grandParent.getParent();

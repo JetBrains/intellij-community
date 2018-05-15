@@ -2457,6 +2457,9 @@ public class StructuralSearchTest extends StructuralSearchTestCase {
 
     options.fillSearchCriteria("'_a?.'_b?");
     assertEquals("MINIMUM ZERO not applicable for b", checkApplicableConstraints(options));
+
+    options.fillSearchCriteria("case '_a* :");
+    assertEquals("MINIMUM ZERO not applicable for a", checkApplicableConstraints(options));
   }
 
   public void testFindInnerClass() {
@@ -3029,5 +3032,46 @@ public class StructuralSearchTest extends StructuralSearchTestCase {
     assertEquals("should match any generic type", 6, findMatchesCount(in, "'_A<'_B>"));
     assertEquals("should match generic and raw types", 7, findMatchesCount(in, "List '_x;"));
     assertEquals("should match generic and raw types 2", 7, findMatchesCount(in, "'_A:List <'_B? >"));
+  }
+
+  public void testSwitchStatements() {
+    final String in = "class X {" +
+                      "  void x(int i) {" +
+                      "    switch (i) {" +
+                      "      case 10:" +
+                      "        System.out.println(10);" +
+                      "    }" +
+                      "    switch (i) {" +
+                      "      case 1:" +
+                      "      default:" +
+                      "    }" +
+                      "    switch (i) {" +
+                      "      case 1:" +
+                      "      default:" +
+                      "    }" +
+                      "    switch (i) {" +
+                      "      case 1:" +
+                      "      case 2:" +
+                      "      default:" +
+                      "    }" +
+                      "  }" +
+                      "}";
+
+    assertEquals("Should find switch with one case", 1, findMatchesCount(in, "switch ('_a) {" +
+                                                                             "  case '_c :" +
+                                                                             "    '_st*;" +
+                                                                             "}"));
+    assertEquals("should find switch with 2 cases", 2, findMatchesCount(in, "switch ('_a) {" +
+                                                                            "  case '_c{2,2} :" +
+                                                                            "    '_st*;" +
+                                                                            "}"));
+    assertEquals("should find swith with one case and default", 2, findMatchesCount(in, "switch ('_a) {" +
+                                                                                        "  case '_c :" +
+                                                                                        "    '_st1*;" +
+                                                                                        "  default:" +
+                                                                                        "    '_st2*;" +
+                                                                                        "  }"));
+    assertEquals("should find defaults", 3, findMatchesCount(in, "default:"));
+    assertEquals("should find cases", 8, findMatchesCount(in, "case '_a :"));
   }
 }
