@@ -39,6 +39,7 @@ import static com.intellij.openapi.vcs.changes.ChangesUtil.getFiles;
 import static com.intellij.openapi.vcs.changes.ui.ChangesBrowserNode.*;
 import static com.intellij.util.containers.UtilKt.getIfSingle;
 import static com.intellij.util.containers.UtilKt.stream;
+import static com.intellij.vcsUtil.VcsUtil.isNonModalCommit;
 import static java.util.stream.Collectors.toList;
 
 // TODO: Check if we could extend DnDAwareTree here instead of directly implementing DnDAware
@@ -51,7 +52,7 @@ public class ChangesListView extends ChangesTree implements DataProvider, DnDAwa
   @NonNls public static final DataKey<List<LocallyDeletedChange>> LOCALLY_DELETED_CHANGES = DataKey.create("ChangeListView.LocallyDeletedChanges");
 
   public ChangesListView(@NotNull Project project) {
-    super(project, false, true);
+    super(project, isNonModalCommit(), true);
     setDragEnabled(true);
   }
 
