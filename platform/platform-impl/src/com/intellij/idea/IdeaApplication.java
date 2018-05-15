@@ -164,7 +164,6 @@ public class IdeaApplication {
     else {
       key = System.getProperty(ExtensionPoints.APPLICATION_STARTER);
     }
-
     if (key != null) {
       PluginManagerCore.getPlugins();
 

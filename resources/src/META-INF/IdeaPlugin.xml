@@ -18,7 +18,4 @@
 
   <module value="com.intellij.modules.idea"/>
   <module value="com.intellij.modules.idea.community"/>
-  <xi:include href="/META-INF/OnAirPlugin.xml" xpointer="xpointer(/idea-plugin/*)">
-    <xi:fallback/>
-  </xi:include>
 </idea-plugin>
