@@ -59,10 +59,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.arguments.GrArgument
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.arguments.GrNamedArgument;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrClosableBlock;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrOpenBlock;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.branch.GrBreakStatement;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.branch.GrContinueStatement;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.branch.GrFlowInterruptingStatement;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.branch.GrReturnStatement;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.branch.*;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.clauses.GrForInClause;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.*;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.literals.*;
@@ -87,6 +84,7 @@ import org.jetbrains.plugins.groovy.lang.resolve.ast.InheritConstructorContribut
 
 import java.util.*;
 
+import static com.intellij.util.ArrayUtil.contains;
 import static org.jetbrains.plugins.groovy.annotator.UtilKt.*;
 import static org.jetbrains.plugins.groovy.lang.resolve.ResolveUtil.findScriptField;
 import static org.jetbrains.plugins.groovy.lang.resolve.ResolveUtil.isFieldDeclaration;
@@ -1312,6 +1310,7 @@ public class GroovyAnnotator extends GroovyElementVisitor {
   }
 
   private static boolean isClosureAmbiguous(GrClosableBlock closure) {
+    if (mayBeAnonymousBody(closure)) return true;
     PsiElement place = closure;
     while (true) {
       PsiElement parent = place.getParent();
@@ -1321,6 +1320,27 @@ public class GroovyAnnotator extends GroovyElementVisitor {
       if (parent.getFirstChild() != place) return false;
       place = parent;
     }
+  }
+
+  private static boolean mayBeAnonymousBody(GrClosableBlock closure) {
+    final PsiElement parent = closure.getParent();
+    if (!(parent instanceof GrMethodCallExpression)) {
+      return false;
+    }
+    final GrMethodCallExpression callExpression = (GrMethodCallExpression)parent;
+    if (!(callExpression.getInvokedExpression() instanceof GrNewExpression)) {
+      return false;
+    }
+    if (!contains(closure, callExpression.getClosureArguments())) {
+      return false;
+    }
+    PsiElement run = callExpression.getParent();
+    while (run != null) {
+      if (run instanceof GrParenthesizedExpression) return false;
+      if (run instanceof GrReturnStatement || run instanceof GrAssertStatement || run instanceof GrThrowStatement) return true;
+      run = run.getParent();
+    }
+    return false;
   }
 
   @Override

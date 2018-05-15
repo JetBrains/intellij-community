@@ -176,6 +176,40 @@ class ExpressionsParsingTest extends GroovyParsingTestCase {
 //  public void testnew$new1() throws Throwable { doTest(); }
   void testanonymous$anonymous() throws Throwable { doTest() }
 
+  void testanonymous$anonymous1() throws Throwable { doTest() }
+
+  void testanonymous$anonymous2() throws Throwable { doTest() }
+
+  void testanonymous$anonymous3() throws Throwable { doTest() }
+
+  void testanonymous$anonymous4() throws Throwable { doTest() }
+
+  void testanonymous$anonymous5() throws Throwable { doTest() }
+
+  void testanonymous$anonymous6() throws Throwable { doTest() }
+
+  void testanonymous$anonymous7() throws Throwable { doTest() }
+
+  void testanonymous$anonymous8() throws Throwable { doTest() }
+
+  void testanonymous$anonymous9() throws Throwable { doTest() }
+
+  void testanonymous$anonymous10() throws Throwable { doTest() }
+
+  void testanonymous$anonymous11() throws Throwable { doTest() }
+
+  void testanonymous$anonymous12() throws Throwable { doTest() }
+
+  void testanonymous$anonymous13() throws Throwable { doTest() }
+
+  void testanonymous$anonymous14() throws Throwable { doTest() }
+
+  void testanonymous$anonymous15() throws Throwable { doTest() }
+
+  void testanonymous$anonymous16() throws Throwable { doTest() }
+
+  void testanonymous$anonymous17() throws Throwable { doTest() }
+
   void testnumbers() throws Throwable { doTest() }
 
   void testparenthed$exprInParenth() throws Throwable { doTest() }

@@ -1,0 +1,28 @@
+(baz = new Foo()
+{
+})
+-----
+Groovy script
+  Parenthesized expression
+    PsiElement(()('(')
+    Assignment expression
+      Reference expression
+        PsiElement(identifier)('baz')
+      PsiWhiteSpace(' ')
+      PsiElement(=)('=')
+      PsiWhiteSpace(' ')
+      NEW expression
+        PsiElement(new)('new')
+        PsiWhiteSpace(' ')
+        Anonymous class
+          Reference element
+            PsiElement(identifier)('Foo')
+          Arguments
+            PsiElement(()('(')
+            PsiElement())(')')
+          PsiWhiteSpace('\n')
+          Type definition body
+            PsiElement({)('{')
+            PsiWhiteSpace('\n')
+            PsiElement(})('}')
+    PsiElement())(')')
