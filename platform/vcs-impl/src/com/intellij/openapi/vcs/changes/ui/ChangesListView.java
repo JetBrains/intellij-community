@@ -48,7 +48,7 @@ import static com.intellij.util.containers.UtilKt.stream;
 import static java.util.stream.Collectors.toList;
 
 // TODO: Check if we could extend DnDAwareTree here instead of directly implementing DnDAware
-public class ChangesListView extends Tree implements TypeSafeDataProvider, DnDAware {
+public class ChangesListView extends Tree implements DataProvider, DnDAware {
   private final Project myProject;
   private final CopyProvider myCopyProvider;
   @NotNull private final ChangesGroupingSupport myGroupingSupport;
@@ -139,73 +139,73 @@ public class ChangesListView extends Tree implements TypeSafeDataProvider, DnDAw
     expandPath(new TreePath(new Object[]{root, defaultListNode}));
   }
 
+  @Nullable
   @Override
-  public void calcData(DataKey key, DataSink sink) {
-    if (key == DATA_KEY) {
-      sink.put(DATA_KEY, this);
+  public Object getData(String dataId) {
+    if (DATA_KEY.is(dataId)) {
+      return this;
     }
-    else if (key == VcsDataKeys.CHANGES) {
-      sink.put(VcsDataKeys.CHANGES, getSelectedChanges().toArray(Change[]::new));
+    if (VcsDataKeys.CHANGES.is(dataId)) {
+      return getSelectedChanges().toArray(Change[]::new);
     }
-    else if (key == VcsDataKeys.CHANGE_LEAD_SELECTION) {
-      sink.put(VcsDataKeys.CHANGE_LEAD_SELECTION, getLeadSelection().toArray(Change[]::new));
+    if (VcsDataKeys.CHANGE_LEAD_SELECTION.is(dataId)) {
+      return getLeadSelection().toArray(Change[]::new);
     }
-    else if (key == VcsDataKeys.CHANGE_LISTS) {
-      sink.put(VcsDataKeys.CHANGE_LISTS, getSelectedChangeLists().toArray(ChangeList[]::new));
+    if (VcsDataKeys.CHANGE_LISTS.is(dataId)) {
+      return getSelectedChangeLists().toArray(ChangeList[]::new);
     }
-    else if (key == CommonDataKeys.VIRTUAL_FILE_ARRAY) {
-      sink.put(CommonDataKeys.VIRTUAL_FILE_ARRAY, getSelectedFiles().toArray(VirtualFile[]::new));
+    if (CommonDataKeys.VIRTUAL_FILE_ARRAY.is(dataId)) {
+      return getSelectedFiles().toArray(VirtualFile[]::new);
     }
-    else if (key == VcsDataKeys.VIRTUAL_FILE_STREAM) {
-      sink.put(VcsDataKeys.VIRTUAL_FILE_STREAM, getSelectedFiles());
+    if (VcsDataKeys.VIRTUAL_FILE_STREAM.is(dataId)) {
+      return getSelectedFiles();
     }
-    else if (key == CommonDataKeys.NAVIGATABLE) {
+    if (CommonDataKeys.NAVIGATABLE.is(dataId)) {
       VirtualFile file = getIfSingle(getNavigatableFiles());
-      if (file != null && !file.isDirectory()) {
-        sink.put(CommonDataKeys.NAVIGATABLE, new OpenFileDescriptor(myProject, file, 0));
-      }
+      return file != null && !file.isDirectory() ? new OpenFileDescriptor(myProject, file, 0) : null;
     }
-    else if (key == CommonDataKeys.NAVIGATABLE_ARRAY) {
-      sink.put(CommonDataKeys.NAVIGATABLE_ARRAY, ChangesUtil.getNavigatableArray(myProject, getNavigatableFiles()));
+    if (CommonDataKeys.NAVIGATABLE_ARRAY.is(dataId)) {
+      return ChangesUtil.getNavigatableArray(myProject, getNavigatableFiles());
     }
-    else if (key == PlatformDataKeys.DELETE_ELEMENT_PROVIDER) {
-      if (getSelectionObjectsStream().anyMatch(userObject -> !(userObject instanceof ChangeList))) {
-        sink.put(PlatformDataKeys.DELETE_ELEMENT_PROVIDER, new VirtualFileDeleteProvider());
-      }
+    if (PlatformDataKeys.DELETE_ELEMENT_PROVIDER.is(dataId)) {
+      return getSelectionObjectsStream().anyMatch(userObject -> !(userObject instanceof ChangeList))
+             ? new VirtualFileDeleteProvider()
+             : null;
     }
-    else if (key == PlatformDataKeys.COPY_PROVIDER) {
-      sink.put(PlatformDataKeys.COPY_PROVIDER, myCopyProvider);
+    if (PlatformDataKeys.COPY_PROVIDER.is(dataId)) {
+      return myCopyProvider;
     }
-    else if (key == UNVERSIONED_FILES_DATA_KEY) {
-      sink.put(UNVERSIONED_FILES_DATA_KEY, getSelectedUnversionedFiles());
+    if (UNVERSIONED_FILES_DATA_KEY.is(dataId)) {
+      return getSelectedUnversionedFiles();
     }
-    else if (key == IGNORED_FILES_DATA_KEY) {
-      sink.put(IGNORED_FILES_DATA_KEY, getSelectedIgnoredFiles());
+    if (IGNORED_FILES_DATA_KEY.is(dataId)) {
+      return getSelectedIgnoredFiles();
     }
-    else if (key == VcsDataKeys.MODIFIED_WITHOUT_EDITING_DATA_KEY) {
-      sink.put(VcsDataKeys.MODIFIED_WITHOUT_EDITING_DATA_KEY, getSelectedModifiedWithoutEditing().collect(toList()));
+    if (VcsDataKeys.MODIFIED_WITHOUT_EDITING_DATA_KEY.is(dataId)) {
+      return getSelectedModifiedWithoutEditing().collect(toList());
     }
-    else if (key == LOCALLY_DELETED_CHANGES) {
-      sink.put(LOCALLY_DELETED_CHANGES, getSelectedLocallyDeletedChanges().collect(toList()));
+    if (LOCALLY_DELETED_CHANGES.is(dataId)) {
+      return getSelectedLocallyDeletedChanges().collect(toList());
     }
-    else if (key == MISSING_FILES_DATA_KEY) {
-      sink.put(MISSING_FILES_DATA_KEY, getSelectedMissingFiles().collect(toList()));
+    if (MISSING_FILES_DATA_KEY.is(dataId)) {
+      return getSelectedMissingFiles().collect(toList());
     }
-    else if (VcsDataKeys.HAVE_LOCALLY_DELETED == key) {
-      sink.put(VcsDataKeys.HAVE_LOCALLY_DELETED, getSelectedMissingFiles().findAny().isPresent());
+    if (VcsDataKeys.HAVE_LOCALLY_DELETED.is(dataId)) {
+      return getSelectedMissingFiles().findAny().isPresent();
     }
-    else if (VcsDataKeys.HAVE_MODIFIED_WITHOUT_EDITING == key) {
-      sink.put(VcsDataKeys.HAVE_MODIFIED_WITHOUT_EDITING, getSelectedModifiedWithoutEditing().findAny().isPresent());
+    if (VcsDataKeys.HAVE_MODIFIED_WITHOUT_EDITING.is(dataId)) {
+      return getSelectedModifiedWithoutEditing().findAny().isPresent();
     }
-    else if (VcsDataKeys.HAVE_SELECTED_CHANGES == key) {
-      sink.put(VcsDataKeys.HAVE_SELECTED_CHANGES, haveSelectedChanges());
+    if (VcsDataKeys.HAVE_SELECTED_CHANGES.is(dataId)) {
+      return haveSelectedChanges();
     }
-    else if (key == PlatformDataKeys.HELP_ID) {
-      sink.put(PlatformDataKeys.HELP_ID, HELP_ID);
+    if (PlatformDataKeys.HELP_ID.is(dataId)) {
+      return HELP_ID;
     }
-    else if (key == ChangesGroupingSupport.KEY) {
-      sink.put(ChangesGroupingSupport.KEY, myGroupingSupport);
+    if (ChangesGroupingSupport.KEY.is(dataId)) {
+      return myGroupingSupport;
     }
+    return null;
   }
 
   @NotNull
