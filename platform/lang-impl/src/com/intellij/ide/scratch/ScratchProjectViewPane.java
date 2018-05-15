@@ -170,6 +170,11 @@ public class ScratchProjectViewPane extends ProjectViewPane {
     return !isScratchesMergedIntoProjectTab();
   }
 
+  @NotNull
+  public static AbstractTreeNode createRootNode(@NotNull Project project, @NotNull ViewSettings settings) {
+    return new MyProjectNode(project, settings);
+  }
+
   public static class MyStructureProvider implements TreeStructureProvider, DumbAware {
     @NotNull
     @Override
@@ -178,7 +183,7 @@ public class ScratchProjectViewPane extends ProjectViewPane {
                                                ViewSettings settings) {
       Project project = parent instanceof ProjectViewProjectNode? parent.getProject() : null;
       if (project != null && isScratchesMergedIntoProjectTab()) {
-        children.add(new MyProjectNode(project, settings));
+        children.add(createRootNode(project, settings));
       }
       return children;
     }
@@ -198,7 +203,7 @@ public class ScratchProjectViewPane extends ProjectViewPane {
 
     @Override
     protected AbstractTreeNode createRoot(Project project, ViewSettings settings) {
-      return new MyProjectNode(project, settings);
+      return createRootNode(project, settings);
     }
 
     @Nullable
