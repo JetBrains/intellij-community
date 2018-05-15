@@ -32,12 +32,13 @@ import java.util.stream.Collectors;
 
 class ContentTabLabel extends BaseLabel {
   private final int MAX_WIDTH = JBUI.scale(300);
+  private final int DEFAULT_HORIZONTAL_INSET = JBUI.scale(12);
+  protected static final int ICONS_GAP = JBUI.scale(3);
+
   private final ActiveIcon closeIcon = new ActiveIcon(JBUI.CurrentTheme.ToolWindow.closeTabIcon(true),
                                                       JBUI.CurrentTheme.ToolWindow.closeTabIcon(false));
   private final Content myContent;
   private final TabContentLayout myLayout;
-
-  protected static final int ICONS_GAP = 3;
 
   private final List<AdditionalIcon> additionalIcons = new ArrayList<>();
   private String txt = null;
@@ -276,8 +277,8 @@ class ContentTabLabel extends BaseLabel {
     Map<Boolean, List<AdditionalIcon>> map =
       additionalIcons.stream().filter(icon -> icon.getAvailable()).collect(Collectors.groupingBy(icon -> icon.getAfterText()));
 
-    int right = 12;
-    int left = 12;
+    int right = DEFAULT_HORIZONTAL_INSET;
+    int left = DEFAULT_HORIZONTAL_INSET;
 
     int iconWidth = 0;
 
@@ -293,7 +294,7 @@ class ContentTabLabel extends BaseLabel {
     }
 
     if (map.get(true) != null) {
-      right = ICONS_GAP + 4;
+      right = ICONS_GAP + JBUI.scale(4);
 
       for (AdditionalIcon icon : map.get(true)) {
         iconWidth += icon.getIconWidth() + ICONS_GAP;
