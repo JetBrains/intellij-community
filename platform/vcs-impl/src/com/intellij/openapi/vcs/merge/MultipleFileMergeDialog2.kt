@@ -237,6 +237,8 @@ open class MultipleFileMergeDialog2(
   override fun getDimensionServiceKey(): String = "MultipleFileMergeDialog"
 
   private fun acceptRevision(resolution: MergeSession.Resolution) {
+    assert(resolution == MergeSession.Resolution.AcceptedYours || resolution == MergeSession.Resolution.AcceptedTheirs)
+
     FileDocumentManager.getInstance().saveAllDocuments()
     val files = getSelectedFiles()
     if (!beforeResolve(files)) {
@@ -244,10 +246,23 @@ open class MultipleFileMergeDialog2(
     }
 
     try {
-      for (file in files) {
-        acceptFileRevision(file, resolution)
-        checkMarkModifiedProject(file)
-        markFileProcessed(file, resolution)
+      if (mergeSession is MergeSessionEx) {
+        val supportedFiles = files.filter { file -> mergeSession.canMerge(file) }
+
+        mergeSession.acceptFilesRevisions(supportedFiles, resolution)
+
+        for (file in supportedFiles) {
+          checkMarkModifiedProject(file)
+        }
+
+        markFilesProcessed(supportedFiles, resolution)
+      }
+      else {
+        for (file in files) {
+          acceptFileRevision(file, resolution)
+          checkMarkModifiedProject(file)
+          markFileProcessed(file, resolution)
+        }
       }
     }
     catch (e: Exception) {
@@ -260,8 +275,6 @@ open class MultipleFileMergeDialog2(
 
   private fun acceptFileRevision(file: VirtualFile, resolution: MergeSession.Resolution) {
     if (mergeSession?.canMerge(file)  == false) return
-
-    if (mergeSession?.acceptFileRevision(file, resolution)  == true) return
 
     if (!DiffUtil.makeWritable(project, file)) {
       throw IOException("File is read-only: " + file.presentableName)
@@ -280,16 +293,27 @@ open class MultipleFileMergeDialog2(
     }
   }
 
-  private fun markFileProcessed(file: VirtualFile, resolution: MergeSession.Resolution) {
-    unresolvedFiles.remove(file)
-    if (mergeSession != null) {
-      mergeSession.conflictResolvedForFile(file, resolution)
+  private fun markFilesProcessed(files: List<VirtualFile>, resolution: MergeSession.Resolution) {
+    unresolvedFiles.removeAll(files)
+    if (mergeSession is MergeSessionEx) {
+      mergeSession.conflictResolvedForFiles(files, resolution)
+    }
+    else if (mergeSession != null) {
+      files.forEach {
+        mergeSession.conflictResolvedForFile(it, resolution)
+      }
     }
     else {
-      mergeProvider.conflictResolvedForFile(file)
+      files.forEach {
+        mergeProvider.conflictResolvedForFile(it)
+      }
     }
-    processedFiles.add(file)
-    VcsDirtyScopeManager.getInstance(project).fileDirty(file)
+    processedFiles.addAll(files)
+    VcsDirtyScopeManager.getInstance(project).filesDirty(files, emptyList())
+  }
+
+  private fun markFileProcessed(file: VirtualFile, resolution: MergeSession.Resolution) {
+    markFilesProcessed(listOf(file), resolution)
   }
 
   private fun updateModelFromFiles() {
