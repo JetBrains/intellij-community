@@ -2,7 +2,6 @@
 package com.intellij.ide.actions.runAnything.activity;
 
 import com.intellij.ide.actions.runAnything.RunAnythingCache;
-import com.intellij.ide.actions.runAnything.groups.RunAnythingGroup;
 import com.intellij.ide.actions.runAnything.items.RunAnythingItem;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.extensions.ExtensionPointName;
@@ -30,8 +29,6 @@ public interface RunAnythingProvider<V> {
   @NotNull
   Collection<V> getValues(@NotNull DataContext dataContext);
 
-  boolean isMatching(@NotNull DataContext dataContext, @NotNull String pattern, @NotNull V value);
-
   void execute(@NotNull DataContext dataContext, @NotNull V value);
 
   @Nullable
@@ -57,40 +54,8 @@ public interface RunAnythingProvider<V> {
   @Nullable
   String getId();
 
-  /**
-   * Null means no completion
-   *
-   * @return
-   */
-  @Nullable
-  RunAnythingGroup createCompletionGroup();
-
-  /**
-   * Help section
-   *
-   * @param dataContext
-   * @return
-   */
-
   @Nullable
   RunAnythingItem getHelpItem(@NotNull DataContext dataContext);
-
-  @Nullable
-  Icon getHelpIcon();
-
-  @Nullable
-  String getHelpDescription();
-
-  @Nullable
-  String getHelpCommandPlaceholder();
-
-  /**
-   * Null means no help command
-   *
-   * @return
-   */
-  @Nullable
-  String getHelpCommand();
 
   /**
    * Finds provider that matches {@code pattern}
