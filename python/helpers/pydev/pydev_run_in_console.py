@@ -4,12 +4,12 @@ Entry point module to run a file in the interactive console.
 import os
 import sys
 import traceback
-from pydevconsole import InterpreterInterface, process_exec_queue, start_console_server, init_mpl_in_console
-from _pydev_imps._pydev_saved_modules import threading, _queue
 
 from _pydev_bundle import pydev_imports
-from _pydevd_bundle.pydevd_utils import save_main_module
 from _pydev_bundle.pydev_console_utils import StdIn
+from _pydev_imps._pydev_saved_modules import threading, _queue
+from _pydevd_bundle.pydevd_utils import save_main_module
+from pydevconsole import InterpreterInterface, process_exec_queue, start_console_server, init_mpl_in_console
 from pydevd_file_utils import get_fullname
 
 
@@ -126,6 +126,8 @@ if __name__ == '__main__':
     sys.exit = skip_successful_exit
 
     connect_status_queue = _queue.Queue()
+    # ERROR `InterpreterInterface.__init__()` signature changed
+    # todo this method and file will be eliminated by Liza
     interpreter = InterpreterInterface(host, int(client_port), threading.currentThread(), connect_status_queue=connect_status_queue)
 
     server_thread = threading.Thread(target=start_console_server,
@@ -134,6 +136,8 @@ if __name__ == '__main__':
     server_thread.setDaemon(True)
     server_thread.start()
 
+    # ERROR `StdIn.__init__()` signature changed
+    # todo this method and file will be eliminated by Liza
     sys.stdin = StdIn(interpreter, host, client_port, sys.stdin)
 
     init_mpl_in_console(interpreter)

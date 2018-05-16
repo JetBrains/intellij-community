@@ -3,7 +3,7 @@ import sys
 import traceback
 
 from _pydev_bundle._pydev_calltip_util import get_description
-from _pydev_bundle.pydev_imports import xmlrpclib, _queue, Exec
+from _pydev_bundle.pydev_imports import _queue, Exec
 from _pydev_imps._pydev_saved_modules import thread
 from _pydevd_bundle import pydevd_thrift
 from _pydevd_bundle import pydevd_vars
@@ -112,20 +112,17 @@ class StdIn(BaseStdIn):
         Object to be added to stdin (to emulate it as non-blocking while the next line arrives)
     '''
 
-    def __init__(self, interpreter, host, client_port, original_stdin=sys.stdin):
+    def __init__(self, interpreter, rpc_client, original_stdin=sys.stdin):
         BaseStdIn.__init__(self, original_stdin)
         self.interpreter = interpreter
-        self.client_port = client_port
-        self.host = host
+        self.rpc_client = rpc_client
 
     def readline(self, *args, **kwargs):
         # Ok, callback into the client to get the new input
         try:
-            # @alexander todo uncomment - temporary stub
-            # @alexander todo use backward direction of present connection
             # server = xmlrpclib.Server('http://%s:%s' % (self.host, self.client_port))
             # requested_input = server.RequestInput()
-            requested_input = 'this is test input\n'
+            requested_input = self.rpc_client.RequestInput()
             if not requested_input:
                 return '\n'  # Yes, a readline must return something (otherwise we can get an EOFError on the input() call).
             return requested_input
@@ -181,7 +178,7 @@ class CodeFragment:
 # BaseInterpreterInterface
 # =======================================================================================================================
 class BaseInterpreterInterface:
-    def __init__(self, mainThread, connect_status_queue=None):
+    def __init__(self, mainThread, connect_status_queue=None, rpc_client=None):
         self.mainThread = mainThread
         self.interruptable = False
         self.exec_queue = _queue.Queue(0)
@@ -190,6 +187,8 @@ class BaseInterpreterInterface:
         self.connect_status_queue = connect_status_queue
         self.mpl_modules_for_patching = {}
         self.init_mpl_modules_for_patching()
+
+        self.rpc_client = rpc_client
 
     def build_banner(self):
         return 'print({0})\n'.format(repr(self.get_greeting_msg()))
@@ -238,7 +237,7 @@ class BaseInterpreterInterface:
     def create_std_in(self, debugger=None, original_std_in=None):
         if debugger is None:
             # @alexander todo fix `StdIn.readline()`
-            return StdIn(self, self.host, self.client_port, original_stdin=original_std_in)
+            return StdIn(self, self.rpc_client, original_stdin=original_std_in)
         else:
             return DebugConsoleStdIn(dbg=debugger, original_stdin=original_std_in)
 
@@ -454,9 +453,8 @@ class BaseInterpreterInterface:
         self.interruptable = True
 
     def get_server(self):
-        if getattr(self, 'host', None) is not None:
-            # @alexander todo deprecate and use the other side of the connection
-            return xmlrpclib.Server('http://%s:%s' % (self.host, self.client_port))
+        if getattr(self, 'rpc_client', None) is not None:
+            return self.rpc_client
         else:
             return None
 
