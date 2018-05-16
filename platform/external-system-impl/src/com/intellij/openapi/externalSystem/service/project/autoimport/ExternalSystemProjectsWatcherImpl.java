@@ -42,6 +42,7 @@ import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.*;
 import com.intellij.openapi.vfs.newvfs.events.VFileContentChangeEvent;
 import com.intellij.openapi.vfs.newvfs.events.VFileEvent;
@@ -559,9 +560,10 @@ public class ExternalSystemProjectsWatcherImpl extends ExternalSystemTaskNotific
     protected boolean isRelevant(String path) {
       if (!myKnownFiles.get(path).isEmpty()) return true;
 
+      String canonicalPath = FileUtil.toCanonicalPath(path);
       for (VirtualFilePointer pointer : myFilesPointers.keySet()) {
-        VirtualFile f = pointer.getFile();
-        if (f != null && FileUtil.pathsEqual(path, f.getPath())) {
+        String filePath = VfsUtilCore.urlToPath(pointer.getUrl());
+        if (StringUtil.isNotEmpty(filePath) && FileUtil.namesEqual(canonicalPath, FileUtil.toCanonicalPath(filePath))) {
           for (String projectPath : myFilesPointers.get(pointer)) {
             myKnownFiles.putValue(path, projectPath);
             myKnownAffectedFiles.putValue(projectPath, path);
