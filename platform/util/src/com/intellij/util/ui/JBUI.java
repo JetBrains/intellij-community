@@ -654,6 +654,11 @@ public class JBUI {
     public static JBFont toolbarFont() {
       return SystemInfo.isMac ? smallFont() : label();
     }
+
+    @NotNull
+    public static JBFont toolbarSmallComboBoxFont() {
+      return UIUtil.isUnderGTKLookAndFeel() ? label() : label(11);
+    }
   }
 
   private static final JBEmptyBorder SHARED_EMPTY_INSTANCE = new JBEmptyBorder(0);
