@@ -6,6 +6,7 @@ import com.intellij.execution.process.ProcessHandler
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.ui.popup.JBPopupFactory
 import com.intellij.openapi.util.Condition
+import com.intellij.openapi.util.Conditions
 import com.intellij.ui.ColoredListCellRenderer
 import com.intellij.util.containers.ContainerUtil
 import com.intellij.util.io.connectRetrying
@@ -85,7 +86,9 @@ abstract class RemoteVmConnection<VmT : Vm> : VmConnection<VmT>() {
 
   protected open fun doOpen(result: AsyncPromise<VmT>, address: InetSocketAddress, stopCondition: Condition<Void>?) {
     val maxAttemptCount = if (stopCondition == null) NettyUtil.DEFAULT_CONNECT_ATTEMPT_COUNT else -1
-    val connectResult = createBootstrap(address, result).connectRetrying(address, maxAttemptCount, stopCondition)
+    val resultRejected = Condition<Void> { result.state == Promise.State.REJECTED }
+    val combinedCondition = Conditions.or(stopCondition ?: Conditions.alwaysFalse(), resultRejected)
+    val connectResult = createBootstrap(address, result).connectRetrying(address, maxAttemptCount, combinedCondition)
     connectResult.handleError(Consumer { result.setError(it) })
     connectResult.handleThrowable(Consumer { result.setError(it) })
     val channel = connectResult.channel
