@@ -387,8 +387,8 @@ open class MultipleFileMergeDialog2(
     else {
       var selIndex = table.selectionModel.minSelectionIndex
       updateTree()
-      if (selIndex >= files.size) {
-        selIndex = files.size - 1
+      if (selIndex >= table.rowCount) {
+        selIndex = table.rowCount - 1
       }
       table.selectionModel.setSelectionInterval(selIndex, selIndex)
     }
