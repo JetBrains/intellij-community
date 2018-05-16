@@ -14,13 +14,12 @@ fun setupLowPriorityExecution(commandLine: GeneralCommandLine, executablePath: S
   }
   else {
     if (SystemInfo.isWindows) {
-      // TODO
+      commandLine.exePath = "cmd"
+      commandLine.addParameters("/c", "start", "/b", "/low", "/wait", GeneralCommandLine.inescapableQuote(""), executablePath)
     }
     else {
       commandLine.exePath = "/usr/bin/nice"
-      commandLine.addParameter("-n")
-      commandLine.addParameter("10")
-      commandLine.addParameter(executablePath)
+      commandLine.addParameters("-n", "10", executablePath)
     }
   }
 }
@@ -29,11 +28,8 @@ private fun canRunLowPriority(): Boolean {
   if (!Registry.`is`("ide.allow.low.priority.process")) {
     return false
   }
-  if (SystemInfo.isWindows) {
+  if (!SystemInfo.isWindows && !niceExists) {
     return false
-  }
-  else {
-    if (!niceExists) return false
   }
   return true
 }
