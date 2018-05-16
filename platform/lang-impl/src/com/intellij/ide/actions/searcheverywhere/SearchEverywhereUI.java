@@ -78,7 +78,7 @@ public class SearchEverywhereUI extends BorderLayoutPanel implements Disposable 
   private volatile ActionCallback myCurrentWorker = ActionCallback.DONE;
   private int myCalcThreadRestartRequestId = 0;
   private final Object myWorkerRestartRequestLock = new Object();
-  private final Alarm myAlarm = new Alarm(Alarm.ThreadToUse.SWING_THREAD, ApplicationManager.getApplication());
+  private final Alarm modelOperationsAlarm = new Alarm(Alarm.ThreadToUse.SWING_THREAD, ApplicationManager.getApplication());
 
   private Runnable searchFinishedHandler = () -> {};
   private final JPanel mySuggestionsPanel;
@@ -482,7 +482,7 @@ public class SearchEverywhereUI extends BorderLayoutPanel implements Disposable 
   }
 
   private void stopSearching() {
-    myAlarm.cancelAllRequests();
+    modelOperationsAlarm.cancelAllRequests();
     if (myCalcThread != null && !myCalcThread.isCanceled()) {
       myCalcThread.cancel();
     }
@@ -508,8 +508,7 @@ public class SearchEverywhereUI extends BorderLayoutPanel implements Disposable 
         check();
 
         // this line must be called on EDT to avoid context switch at clear().append("text") Don't touch. Ask [kb]
-        //noinspection SSBasedInspection
-        SwingUtilities.invokeLater(() -> myResultsList.getEmptyText().setText("Searching..."));
+        modelOperationsAlarm.addRequest(() -> myResultsList.getEmptyText().setText("Searching..."), 0);
 
         if (contributorToExpand == null) {
           resetList();
@@ -526,8 +525,7 @@ public class SearchEverywhereUI extends BorderLayoutPanel implements Disposable 
       }
       finally {
         if (!isCanceled()) {
-          //noinspection SSBasedInspection
-          SwingUtilities.invokeLater(() -> myResultsList.getEmptyText().setText(StatusText.DEFAULT_EMPTY_TEXT));
+          modelOperationsAlarm.addRequest(() -> myResultsList.getEmptyText().setText(StatusText.DEFAULT_EMPTY_TEXT), 0);
         }
         if (!myDone.isProcessed()) {
           myDone.setDone();
@@ -536,19 +534,22 @@ public class SearchEverywhereUI extends BorderLayoutPanel implements Disposable 
     }
 
     private void resetList() {
-      myAlarm.cancelAllRequests();
-      SwingUtilities.invokeLater(() -> {
+      modelOperationsAlarm.cancelAllRequests();
+      modelOperationsAlarm.addRequest(() -> {
         Dimension oldSize = getPreferredSize();
         myListModel.clear();
         Dimension newSize = getPreferredSize();
         firePropertyChange("preferredSize", oldSize, newSize);
-      });
+      }, 200);
+
       SearchEverywhereContributor selectedContributor = mySelectedTab.getContributor().orElse(null);
       if (selectedContributor != null) {
-        addContributorItems(selectedContributor, SINGLE_CONTRIBUTOR_ELEMENTS_LIMIT);
+        addContributorItems(selectedContributor, SINGLE_CONTRIBUTOR_ELEMENTS_LIMIT, true);
       } else {
+        boolean clearBefore = true;
         for (SearchEverywhereContributor contributor : allContributors) {
-          addContributorItems(contributor, MULTIPLE_CONTRIBUTORS_ELEMENTS_LIMIT);
+          addContributorItems(contributor, MULTIPLE_CONTRIBUTORS_ELEMENTS_LIMIT, clearBefore);
+          clearBefore = false;
         }
       }
     }
@@ -556,27 +557,36 @@ public class SearchEverywhereUI extends BorderLayoutPanel implements Disposable 
     private void showMore(SearchEverywhereContributor contributor) {
       int delta = isAllTabSelected() ? MULTIPLE_CONTRIBUTORS_ELEMENTS_LIMIT : SINGLE_CONTRIBUTOR_ELEMENTS_LIMIT;
       int size = myListModel.getItemsForContributor(contributor) + delta;
-      addContributorItems(contributor, size);
+      addContributorItems(contributor, size, false);
     }
 
-    private void addContributorItems(SearchEverywhereContributor contributor, int count) {
+    private void addContributorItems(SearchEverywhereContributor contributor, int count, boolean clearBefore) {
       if (!DumbService.getInstance(project).isDumb()) {
         ApplicationManager.getApplication().runReadAction(() -> {
           ContributorSearchResult<Object> results = contributor.search(project, pattern, isUseNonProjectItems(), myProgressIndicator, count);
-          List<Object> itemsToAdd = results.getItems().stream()
-                                           .filter(o -> !myListModel.contains(o))
-                                           .collect(Collectors.toList());
-          if (!itemsToAdd.isEmpty()) {
-            SwingUtilities.invokeLater(() -> {
-              if (!isCanceled()) {
-                Dimension oldSize = getPreferredSize();
-                myListModel.addElements(itemsToAdd, contributor, results.hasMoreItems());
-                ScrollingUtil.ensureSelectionExists(myResultsList);
-                //updateSuggestionsList();
-                firePropertyChange("preferredSize", oldSize, getPreferredSize());
-              }
-            });
+
+          if (clearBefore) {
+            modelOperationsAlarm.cancelAllRequests();
           }
+
+          modelOperationsAlarm.addRequest(() -> {
+            if (isCanceled()) {
+              return;
+            }
+
+            Dimension oldSize = getPreferredSize();
+            if (clearBefore) {
+              myListModel.clear();
+            }
+            List<Object> itemsToAdd = results.getItems().stream()
+                                             .filter(o -> !myListModel.contains(o))
+                                             .collect(Collectors.toList());
+            if (!itemsToAdd.isEmpty()) {
+              myListModel.addElements(itemsToAdd, contributor, results.hasMoreItems());
+              ScrollingUtil.ensureSelectionExists(myResultsList);
+            }
+            firePropertyChange("preferredSize", oldSize, getPreferredSize());
+          }, 0);
         });
       }
     }
