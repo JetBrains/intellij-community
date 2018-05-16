@@ -283,8 +283,8 @@ public class IdeErrorsDialog extends DialogWrapper implements MessagePoolListene
     JPanel attachmentsPanel = new JPanel(new BorderLayout(JBUI.scale(5), 0));
     attachmentsPanel.setBorder(JBUI.Borders.emptyTop(5));
     attachmentsPanel.add(attachmentsLabel, BorderLayout.NORTH);
-    attachmentsPanel.add(scrollPane(myAttachmentsList, 150, 400), BorderLayout.WEST);
-    attachmentsPanel.add(scrollPane(myAttachmentArea, 500, 400), BorderLayout.CENTER);
+    attachmentsPanel.add(scrollPane(myAttachmentsList, 150, 350), BorderLayout.WEST);
+    attachmentsPanel.add(scrollPane(myAttachmentArea, 500, 350), BorderLayout.CENTER);
 
     JPanel accountRow = new JPanel(new BorderLayout());
     if (myInternalMode) accountRow.add(myAssigneePanel, BorderLayout.WEST);
@@ -297,7 +297,7 @@ public class IdeErrorsDialog extends DialogWrapper implements MessagePoolListene
     bottomRow.add(myNoticePanel, BorderLayout.CENTER);
 
     JPanel rootPanel = new JPanel(new BorderLayout());
-    rootPanel.setPreferredSize(JBUI.size(600, 400));
+    rootPanel.setPreferredSize(JBUI.size(800, 400));
     rootPanel.add(commentPanel, BorderLayout.NORTH);
     rootPanel.add(attachmentsPanel, BorderLayout.CENTER);
     rootPanel.add(bottomRow, BorderLayout.SOUTH);
