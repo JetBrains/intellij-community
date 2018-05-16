@@ -51,7 +51,7 @@ class ArtifactQueryResolver {
   }
 
   public ExternalDepsResolutionResult resolve() {
-    final Collection<ExternalDependency> extDependencies = new ArrayList<ExternalDependency>();
+    final Collection<ExternalDependency> extDependencies = new LinkedHashSet<ExternalDependency>();
 
     Class<? extends Component> jvmLibrary = tryLoadingJvmLibraryClass();
 

@@ -7,15 +7,16 @@ import java.io.File;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.LinkedHashSet;
 
 public class ExternalDepsResolutionResult {
-  public static ExternalDepsResolutionResult
+  public static final ExternalDepsResolutionResult
     EMPTY = new ExternalDepsResolutionResult(Collections.<ExternalDependency>emptySet(), Collections.<File>emptySet());
   private final Collection<ExternalDependency> externalDeps;
   private final Collection<File> resolvedFiles;
 
   public ExternalDepsResolutionResult() {
-    externalDeps = new ArrayList<ExternalDependency>();
+    externalDeps = new LinkedHashSet<ExternalDependency>();
     resolvedFiles = new ArrayList<File>();
   }
 

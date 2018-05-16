@@ -16,6 +16,7 @@ import org.gradle.api.tasks.compile.AbstractCompile;
 import org.gradle.internal.impldep.com.google.common.base.Function;
 import org.gradle.internal.impldep.com.google.common.base.Predicate;
 import org.gradle.internal.impldep.com.google.common.collect.ArrayListMultimap;
+import org.gradle.internal.impldep.com.google.common.collect.HashMultimap;
 import org.gradle.internal.impldep.com.google.common.collect.Lists;
 import org.gradle.internal.impldep.com.google.common.collect.Multimap;
 import org.gradle.plugins.ide.idea.IdeaPlugin;
@@ -429,7 +430,7 @@ public class DependencyResolverImpl implements DependencyResolver {
   @NotNull
   public Multimap<Object, ExternalDependency> collectCompileDependencies(CompileDependenciesProvider compileDependenciesProvider,
                                                                          RuntimeDependenciesProvider runtimeDependenciesProvider) {
-    Multimap<Object, ExternalDependency> filesToDependenciesMap = ArrayListMultimap.create();
+    Multimap<Object, ExternalDependency> filesToDependenciesMap = HashMultimap.create();
     Collection<ExternalDependency> compileDependencies = compileDependenciesProvider.getDependencies();
 
     for (ExternalDependency dep : new DependencyTraverser(compileDependencies)) {
