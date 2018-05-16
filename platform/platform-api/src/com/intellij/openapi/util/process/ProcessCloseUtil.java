@@ -15,69 +15,21 @@
  */
 package com.intellij.openapi.util.process;
 
-import com.intellij.openapi.application.Application;
-import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.util.concurrency.Semaphore;
-
-import java.io.IOException;
-import java.util.concurrent.Future;
+import java.util.concurrent.TimeUnit;
 
 public class ProcessCloseUtil {
-  private static final long ourSynchronousWaitTimeout = 1000;
-  private static final long ourAsynchronousWaitTimeout = 30 * 1000;
 
-  private ProcessCloseUtil() {
-  }
-
-  public static void close(final Process process) {
+  public static void close(Process process) {
     if (!process.isAlive()) return;
-    
-    final Semaphore outerSemaphore = new Semaphore();
-    outerSemaphore.down();
 
-    final Application application = ApplicationManager.getApplication();
-    application.executeOnPooledThread(() -> {
-      try {
-        final Semaphore semaphore = new Semaphore();
-        semaphore.down();
-
-        final Runnable closeRunnable = () -> {
-          try {
-            closeProcessImpl(process);
-          }
-          finally {
-            semaphore.up();
-          }
-        };
-
-        final Future<?> innerFuture = application.executeOnPooledThread(closeRunnable);
-        semaphore.waitFor(ourAsynchronousWaitTimeout);
-        if ( ! (innerFuture.isDone() || innerFuture.isCancelled())) {
-          innerFuture.cancel(true); // will call interrupt()
-        }
+    try {
+      if (!process.waitFor(1, TimeUnit.SECONDS)) {
+        process.destroy();
       }
-      finally {
-        outerSemaphore.up();
-      }
-    });
-
-    // just wait
-    outerSemaphore.waitFor(ourSynchronousWaitTimeout);
+    }
+    catch (InterruptedException e) {
+      throw new RuntimeException(e);
+    }
   }
 
-  private static void closeProcessImpl(final Process process) {
-    try {
-      process.getOutputStream().close();
-    }
-    catch (IOException e) {/**/}
-    try {
-      process.getInputStream().close();
-    }
-    catch (IOException e) {/**/}
-    try {
-      process.getErrorStream().close();
-    }
-    catch (IOException e) {/**/}
-    process.destroy();
-  }
 }

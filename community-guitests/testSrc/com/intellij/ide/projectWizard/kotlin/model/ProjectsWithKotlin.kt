@@ -760,7 +760,6 @@ fun KotlinGuiTestCase.editBuildGradle(
   val fileName = projectFolder + innerPath + "/build.gradle${if (isKotlinDslUsed) ".kts" else ""}"
   logTestStep("Going to edit $fileName")
 
-  if (isKotlinDslUsed) changePluginsInBuildGradle(fileName, kotlinKind)
   if (KotlinTestProperties.isArtifactOnlyInDevRep) addDevRepositoryToBuildGradle(fileName, isKotlinDslUsed)
   if (!KotlinTestProperties.isArtifactPresentInConfigureDialog && KotlinTestProperties.kotlin_plugin_version_main != KotlinTestProperties.kotlin_artifact_version)
     changeKotlinVersionInBuildGradle(fileName, isKotlinDslUsed, kotlinVersion)

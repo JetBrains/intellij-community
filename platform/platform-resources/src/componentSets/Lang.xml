@@ -211,6 +211,7 @@
 
     <component>
       <implementation-class>com.intellij.facet.impl.ui.FacetDependentToolWindowManager</implementation-class>
+      <headless-implementation-class/>
     </component>
 
     <component>

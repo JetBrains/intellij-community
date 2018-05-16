@@ -180,7 +180,7 @@ public final class LanguageConsoleBuilder {
     return consoleView;
   }
 
-  private static class MyHelper extends LanguageConsoleImpl.Helper {
+  public static class MyHelper extends LanguageConsoleImpl.Helper {
     private final PairFunction<VirtualFile, Project, PsiFile> psiFileFactory;
 
     GutteredLanguageConsole console;
@@ -207,7 +207,7 @@ public final class LanguageConsoleBuilder {
     }
   }
 
-  private final static class GutteredLanguageConsole extends LanguageConsoleImpl {
+  public static class GutteredLanguageConsole extends LanguageConsoleImpl {
     private final GutterContentProvider gutterContentProvider;
 
     public GutteredLanguageConsole(@NotNull MyHelper helper, @Nullable GutterContentProvider gutterContentProvider) {
@@ -453,7 +453,7 @@ public final class LanguageConsoleBuilder {
     }
   }
 
-  private static class MyConsoleRootType extends ConsoleRootType {
+  public static class MyConsoleRootType extends ConsoleRootType {
     public MyConsoleRootType(String historyType) {
       super(historyType, null);
     }

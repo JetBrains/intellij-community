@@ -4,6 +4,9 @@ package com.intellij.ide.projectWizard.kotlin.model
 import com.intellij.testGuiFramework.fixtures.extended.ExtendedTreeFixture
 import com.intellij.testGuiFramework.impl.GuiTestCase
 import com.intellij.testGuiFramework.util.*
+import org.fest.swing.exception.WaitTimedOutError
+import java.awt.Dialog
+import java.awt.KeyboardFocusManager
 
 const val localTimeout = 2L // default timeout is 2 minutes and it's too big for most of tasks here
 
@@ -75,23 +78,49 @@ fun KotlinGuiTestCase.checkLibrariesFromIDEA(expectedLibName: String,
 }
 
 
-fun KotlinGuiTestCase.checkInProjectStructure(actions: KotlinGuiTestCase.()->Unit) {
+fun KotlinGuiTestCase.checkInProjectStructure(actions: KotlinGuiTestCase.() -> Unit) {
+  fun getActiveModalDialog(): Dialog? {
+    val activeWindow = KeyboardFocusManager.getCurrentKeyboardFocusManager().activeWindow
+    if (activeWindow is Dialog) {
+      if (activeWindow.modalityType == Dialog.ModalityType.APPLICATION_MODAL) {
+        return activeWindow
+      }
+    }
+    return null
+  }
   logTestStep("Check structure of gradle project")
   ideFrame {
-    waitAMoment()
-//    invokeMainMenu("ShowProjectStructureSettings")
-    shortcut(Modifier.CONTROL + Modifier.SHIFT + Modifier.ALT + Key.S)
-    dialog("Project Structure") {
+    val numberOfAttempts = 5
+    var isCorrectDialogOpen = false
+    for (currentAttempt in 0..numberOfAttempts){
+      waitAMoment()
+      //    invokeMainMenu("ShowProjectStructureSettings")
+      shortcut(Modifier.CONTROL + Modifier.SHIFT + Modifier.ALT + Key.S)
       try {
-        actions()
+        dialog("Project Structure") {
+          try {
+            isCorrectDialogOpen = true
+            actions()
+          }
+          catch (t: Throwable) {
+            throw t
+          }
+          finally {
+            logUIStep("Close Project Structure dialog with Cancel")
+            button("Cancel").click()
+          }
+        }
       }
-      catch (t: Throwable) {
-        throw t
+      catch (e: WaitTimedOutError) {
+        // no dialog or incorrect dialog is show
+        val activeDialog = getActiveModalDialog()
+        if (activeDialog != null) {
+          dialog(activeDialog.title) {
+            button("Cancel").click()
+          }
+        }
       }
-      finally {
-        logUIStep("Close Project Structure dialog with Cancel")
-        button("Cancel").click()
-      }
+      if(isCorrectDialogOpen) break
     }
   }
 }
