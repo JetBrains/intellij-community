@@ -3,9 +3,11 @@ package com.intellij.util.system
 
 import com.intellij.jna.JnaLoader
 import com.intellij.openapi.util.SystemInfo
+import com.intellij.openapi.util.io.FileUtil
 import com.sun.jna.Native
 import com.sun.jna.Structure
 import com.sun.jna.win32.StdCallLibrary
+import java.io.IOException
 
 enum class PowerStatus {
   UNKNOWN, AC_POWER, BATTERY
@@ -14,6 +16,7 @@ enum class PowerStatus {
 fun getPowerStatus(): PowerStatus {
   return when {
     SystemInfo.isWindows -> getWindowsPowerStatus()
+    SystemInfo.isLinux -> getLinuxPowerStatus()
     else -> PowerStatus.UNKNOWN
   }
 }
@@ -43,6 +46,21 @@ private interface Kernel32 : StdCallLibrary {
 }
 
 private val kernel32 by lazy { Native.loadLibrary("kernel32", Kernel32::class.java) }
+
+// https://github.com/Goles/Battery/blob/master/battery
+private fun getLinuxPowerStatus(): PowerStatus {
+  val file = batteryFilePath ?: return PowerStatus.UNKNOWN
+  try {
+    return if (FileUtil.loadFile(file) == "Discharging") PowerStatus.BATTERY else PowerStatus.AC_POWER
+  }
+  catch (e: IOException) {
+    return PowerStatus.UNKNOWN;
+  }
+}
+
+private val batteryFilePath by lazy {
+  FileUtil.findFirstThatExist("/sys/class/power_supply/BAT0/energy_now", "/sys/class/power_supply/BAT0/status")
+}
 
 fun main(args: Array<String>) {
   println("The current power status is ${getPowerStatus()}")
