@@ -301,6 +301,7 @@ public class MethodReferenceResolver implements ResolveCache.PolyVariantContextR
       final PsiMethod psiMethod = ((MethodCandidateInfo)conflict).getElement();
 
       final PsiSubstitutor substitutor = ((MethodCandidateInfo)conflict).getSubstitutor(false);
+      if (((MethodCandidateInfo)conflict).getInferenceErrorMessage() != null) return null;
       final PsiType[] parameterTypes = psiMethod.getSignature(substitutor).getParameterTypes();
 
       final boolean varargs = ((MethodCandidateInfo)conflict).isVarargs();
