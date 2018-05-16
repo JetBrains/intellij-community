@@ -51,7 +51,7 @@ private val kernel32 by lazy { Native.loadLibrary("kernel32", Kernel32::class.ja
 private fun getLinuxPowerStatus(): PowerStatus {
   val file = batteryFilePath ?: return PowerStatus.UNKNOWN
   try {
-    return if (FileUtil.loadFile(file) == "Discharging") PowerStatus.BATTERY else PowerStatus.AC_POWER
+    return if (FileUtil.loadFile(file).trim() == "Discharging") PowerStatus.BATTERY else PowerStatus.AC_POWER
   }
   catch (e: IOException) {
     return PowerStatus.UNKNOWN;
@@ -59,7 +59,7 @@ private fun getLinuxPowerStatus(): PowerStatus {
 }
 
 private val batteryFilePath by lazy {
-  FileUtil.findFirstThatExist("/sys/class/power_supply/BAT0/energy_now", "/sys/class/power_supply/BAT0/status")
+  FileUtil.findFirstThatExist("/sys/class/power_supply/BAT0/status")
 }
 
 fun main(args: Array<String>) {
