@@ -249,17 +249,17 @@ public class MatchPatchPaths {
       if (best == null) return;
       if (best instanceof TextFilePatchInProgress) {
         //only for text patches
-        int maxLines = -100;
+        int bestLines = -100;
         for (AbstractFilePatchInProgress variant : myVariants) {
-          TextFilePatchInProgress textFilePAch = (TextFilePatchInProgress)variant;
-          if (myUseProjectRootAsPredefinedBase && variantMatchedToProjectDir(textFilePAch)) {
-            best = textFilePAch;
+          TextFilePatchInProgress current = (TextFilePatchInProgress)variant;
+          if (myUseProjectRootAsPredefinedBase && variantMatchedToProjectDir(current)) {
+            best = current;
             break;
           }
-          final int lines = getMatchingLines(textFilePAch);
-          if (lines > maxLines) {
-            maxLines = lines;
-            best = textFilePAch;
+          final int currentLines = getMatchingLines(current);
+          if (currentLines > bestLines) {
+            bestLines = currentLines;
+            best = current;
           }
         }
         putSelected(result, myVariants, best);
