@@ -14,14 +14,7 @@ iml_module(
     # do not sort: must match IML order
     deps = [
         "//tools/idea/plugins/xpath/xslt-rt:intellij.xslt.debugger.rt[module]",
-        "//tools/idea/plugins/xslt-debugger/engine:lib/rmi-stubs",
+        "//tools/idea/plugins/xslt-debugger/engine/lib:rmi-stubs",
         "//tools/idea/.idea/libraries:Trove4j",
     ],
-)
-
-# managed by go/iml_to_build
-java_import(
-    name = "lib/rmi-stubs",
-    jars = ["lib/rmi-stubs.jar"],
-    visibility = ["//visibility:public"],
 )
