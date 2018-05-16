@@ -50,6 +50,13 @@ public class EditorTabOutTest extends AbstractParameterInfoTestCase {
     checkResult("class C { void m() { System.out.println(\"a\"<caret>); System.out.println(\"a\"<caret>); } }");
   }
 
+  public void testGeneric() {
+    configureJava("class C { Comparable<caret> }");
+    type("<String");
+    tabOut();
+    checkResult("class C { Comparable<String><caret> }");
+  }
+
   private void tabOut() {
     myFixture.performEditorAction(IdeActions.ACTION_BRACE_OR_QUOTE_OUT);
   }
