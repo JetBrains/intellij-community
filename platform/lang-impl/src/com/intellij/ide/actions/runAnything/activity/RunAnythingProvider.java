@@ -12,7 +12,12 @@ import java.util.Arrays;
 import java.util.Collection;
 
 /**
- * This class provides ability to run an arbitrary activity for matched 'Run Anything' input text
+ * This class provides ability to run an arbitrary activity for matched input text.
+ * <p>
+ * {@link RunAnythingProvider} operates with {@code V} that represents a value to be executed.
+ * E.g. {@code V} can be a run configuration, an action or a string command to be executed in console.
+ * <p>
+ * See {@link RunAnythingRunConfigurationExecutionProvider}, {@link RunAnythingCommandExecutionProviderBase} and others inheritors.
  */
 public interface RunAnythingProvider<V> {
   ExtensionPointName<RunAnythingProvider> EP_NAME = ExtensionPointName.create("com.intellij.runAnything.executionProvider");
