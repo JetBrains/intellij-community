@@ -2,7 +2,6 @@
 package com.intellij.codeInspection;
 
 import com.intellij.openapi.project.Project;
-import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
@@ -15,7 +14,7 @@ public class VariableTypeCanBeExplicitInspection extends AbstractBaseJavaLocalIn
   @NotNull
   @Override
   public PsiElementVisitor buildVisitor(@NotNull ProblemsHolder holder, boolean isOnTheFly) {
-    if (!PsiUtil.getLanguageLevel(holder.getFile()).isAtLeast(LanguageLevel.JDK_10)) {
+    if (!PsiUtil.isLanguageLevel10OrHigher(holder.getFile())) { //var won't be parsed as inferred type otherwise
       return PsiElementVisitor.EMPTY_VISITOR;
     }
     PsiElementFactory elementFactory = JavaPsiFacade.getElementFactory(holder.getProject());
