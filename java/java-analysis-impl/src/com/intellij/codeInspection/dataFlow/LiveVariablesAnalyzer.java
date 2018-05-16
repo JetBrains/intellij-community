@@ -68,7 +68,7 @@ public class LiveVariablesAnalyzer {
   }
 
   private List<Instruction> getSuccessors(Instruction ins) {
-    return IntStreamEx.of(LoopAnalyzer.getSuccessorIndices(ins.getIndex(), myInstructions)).mapToObj(i -> myInstructions[i]).toList();
+    return IntStreamEx.of(LoopAnalyzer.getSuccessorIndices(ins.getIndex(), myInstructions)).elements(myInstructions).toList();
   }
 
   private MultiMap<Instruction, Instruction> calcBackwardMap() {
