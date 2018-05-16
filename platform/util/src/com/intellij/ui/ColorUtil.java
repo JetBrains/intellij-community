@@ -57,28 +57,30 @@ public class ColorUtil {
     };
   }
 
+  @NotNull
   public static Color softer(@NotNull Color color) {
     if (color.getBlue() > 220 && color.getRed() > 220 && color.getGreen() > 220) return color;
     final float[] hsb = Color.RGBtoHSB(color.getRed(), color.getGreen(), color.getBlue(), null);
     return Color.getHSBColor(hsb[0], 0.6f * hsb[1], hsb[2]);
   }
 
+  @NotNull
   public static Color darker(@NotNull Color color, int tones) {
-    final float[] hsb = Color.RGBtoHSB(color.getRed(), color.getGreen(), color.getBlue(), null);
-    float brightness = hsb[2];
-    for (int i = 0; i < tones; i++) {
-      brightness = Math.max(0, brightness / 1.1F);
-      if (brightness == 0) break;
-    }
-    return Color.getHSBColor(hsb[0], hsb[1], brightness);
+    return hackBrightness(color, tones, 1 / 1.1F);
   }
 
+  @NotNull
   public static Color brighter(@NotNull Color color, int tones) {
+    return hackBrightness(color, tones, 1.1F);
+  }
+
+  @NotNull
+  private static Color hackBrightness(@NotNull Color color, int howMuch, float hackValue) {
     final float[] hsb = Color.RGBtoHSB(color.getRed(), color.getGreen(), color.getBlue(), null);
     float brightness = hsb[2];
-    for (int i = 0; i < tones; i++) {
-      brightness = Math.min(1, brightness * 1.1F);
-      if (brightness == 1) break;
+    for (int i = 0; i < howMuch; i++) {
+      brightness = Math.min(1, Math.max(0, brightness * hackValue));
+      if (brightness == 0 || brightness == 1) break;
     }
     return Color.getHSBColor(hsb[0], hsb[1], brightness);
   }
@@ -105,6 +107,7 @@ public class ColorUtil {
     return Color.getHSBColor(hsb[0], saturation, hsb[2]);
   }
 
+  @NotNull
   public static Color dimmer(@NotNull Color color) {
     float[] rgb = color.getRGBColorComponents(null);
 
@@ -118,19 +121,21 @@ public class ColorUtil {
     return n > 255 ? 255 : n < 0 ? 0 : n;
   }
 
-  public static Color shift(Color c, double d) {
+  @NotNull
+  public static Color shift(@NotNull Color c, double d) {
     return new Color(shift(c.getRed(), d), shift(c.getGreen(), d), shift(c.getBlue(), d), c.getAlpha());
   }
 
-  public static Color withAlpha(Color c, double a) {
+  @NotNull
+  public static Color withAlpha(@NotNull Color c, double a) {
     return toAlpha(c, (int)(255 * a));
   }
 
-  public static Color srcOver(Color c, Color b) {
+  @NotNull
+  static Color srcOver(@NotNull Color c, @NotNull Color b) {
     float [] rgba = new float[4];
-    float [] brgba = new float[4];
-
     rgba = c.getRGBComponents(rgba);
+    float[] brgba = new float[4];
     brgba = b.getRGBComponents(brgba);
     float dsta = 1.0f - rgba[3];
     // Applying SrcOver rule
@@ -139,22 +144,21 @@ public class ColorUtil {
                      rgba[2]*rgba[3] + dsta*brgba[2], 1.0f);
   }
 
-  public static Color withPreAlpha(Color c, double a) {
+  @NotNull
+  public static Color withPreAlpha(@NotNull Color c, double a) {
     float [] rgba = new float[4];
 
     rgba = withAlpha(c, a).getRGBComponents(rgba);
     return new Color(rgba[0]*rgba[3], rgba[1]*rgba[3], rgba[2]*rgba[3], 1.0f);
   }
 
-  public static Color toAlpha(Color color, int a) {
-    Color c = color != null ? color : Color.black;
+  @NotNull
+  public static Color toAlpha(@Nullable Color color, int a) {
+    Color c = color == null ? Color.black : color;
     return new Color(c.getRed(), c.getGreen(), c.getBlue(), a);
   }
 
-  public static Color withAlphaAdjustingDarkness(Color c, double d) {
-    return shift(withAlpha(c, d), d);
-  }
-
+  @NotNull
   public static String toHex(@NotNull final Color c) {
     final String R = Integer.toHexString(c.getRed());
     final String G = Integer.toHexString(c.getGreen());
@@ -162,6 +166,7 @@ public class ColorUtil {
     return (R.length() < 2 ? "0" : "") + R + (G.length() < 2 ? "0" : "") + G + (B.length() < 2 ? "0" : "") + B;
   }
 
+  @NotNull
   public static String toHtmlColor(@NotNull final Color c) {
     return "#"+toHex(c);
   }
@@ -176,7 +181,8 @@ public class ColorUtil {
    * @param str hex string
    * @return Color object
    */
-  public static Color fromHex(String str) {
+  @NotNull
+  public static Color fromHex(@NotNull String str) {
     str = StringUtil.trimStart(str, "#");
     if (str.length() == 3) {
       return new Color(
@@ -193,7 +199,7 @@ public class ColorUtil {
   }
 
   @Nullable
-  public static Color fromHex(String str, @Nullable Color defaultValue) {
+  public static Color fromHex(@NotNull String str, @Nullable Color defaultValue) {
     try {
       return fromHex(str);
     }
@@ -218,9 +224,9 @@ public class ColorUtil {
    * @param c color to check
    * @return dark or not
    */
-  public static boolean isDark(@NotNull final Color c) {
+  public static boolean isDark(@NotNull Color c) {
     // based on perceptional luminosity, see
-    return (1 - (0.299 * c.getRed() + 0.587 * c.getGreen() + 0.114 * c.getBlue()) / 255) >= 0.5;
+    return 1 - (0.299 * c.getRed() + 0.587 * c.getGreen() + 0.114 * c.getBlue()) / 255 >= 0.5;
   }
 
   @NotNull
