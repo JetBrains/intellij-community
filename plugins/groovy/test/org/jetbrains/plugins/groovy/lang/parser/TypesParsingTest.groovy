@@ -16,6 +16,8 @@ class TypesParsingTest extends GroovyParsingTestCase {
 
   void testAnn_def3() throws Throwable { doTest() }
 
+  void testIdentifierAfterAnnotationMethod() { doTest() }
+
   void testDefault1() throws Throwable { doTest() }
 
   void testDefault2() throws Throwable { doTest() }
@@ -50,6 +52,8 @@ class TypesParsingTest extends GroovyParsingTestCase {
 
   void testType9() throws Throwable { doTest() }
 
+  void testIdentifierInsteadOfImplements() { doTest() }
+
   void testInnerEnum() throws Throwable { doTest() }
 
   void testNewlineBeforeClassBrace() throws Throwable { doTest() }
@@ -79,4 +83,6 @@ class TypesParsingTest extends GroovyParsingTestCase {
   void testIncorrectParam3() { doTest() }
 
   void testEmptyTypeArgs() { doTest() }
+
+  void testIncompleteConstructor() { doTest() }
 }

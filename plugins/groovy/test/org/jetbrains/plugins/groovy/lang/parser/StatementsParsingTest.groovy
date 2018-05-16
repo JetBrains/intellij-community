@@ -219,6 +219,8 @@ class StatementsParsingTest extends GroovyParsingTestCase {
 
   void testSwitch$swit8() throws Throwable { doTest() }
 
+  void testSwitch$identifierWithin() { doTest() }
+
   void testSyn$syn1() throws Throwable { doTest() }
 
   void testTop_methods$method1() throws Throwable { doTest() }
@@ -260,6 +262,8 @@ class StatementsParsingTest extends GroovyParsingTestCase {
   void testTuples$tupleTypeErr() throws Throwable { doTest() }
 
   void testTuples$tupleWithoutDef() throws Throwable { doTest() }
+
+  void testTuples$tupleWithoutVariables() { doTest() }
 
   void testTypedef$classes$abstr() throws Throwable { doTest() }
 
@@ -414,4 +418,10 @@ class StatementsParsingTest extends GroovyParsingTestCase {
   void testIfRecovery() throws Throwable { doTest() }
 
   void testSemicolonsOnDifferentLines() throws Throwable { doTest() }
+
+  void testRecoverySameLine() { doTest() }
+
+  void testRecoveryNewLine() { doTest() }
+
+  void testRecoveryMissingSeparator() { doTest() }
 }

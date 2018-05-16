@@ -173,6 +173,9 @@ class ExpressionsParsingTest extends GroovyParsingTestCase {
   void testnew$arr_decl() throws Throwable { doTest() }
 
   void testnew$emptyTypeArgs() { doTest() }
+
+  void testnew$noArgumentList() { doTest() }
+
 //  public void testnew$new1() throws Throwable { doTest(); }
   void testanonymous$anonymous() throws Throwable { doTest() }
 
@@ -493,6 +496,8 @@ class ExpressionsParsingTest extends GroovyParsingTestCase {
   void testtypecast$equality() { doTest() }
 
   void testtypecast$parenthesized() { doTest() }
+
+  void testtypecast$noExpression() { doTest() }
 
   void testtypecast$conditional() throws Throwable { doTest() }
 
