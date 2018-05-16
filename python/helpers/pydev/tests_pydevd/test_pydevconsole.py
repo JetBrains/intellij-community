@@ -1,6 +1,7 @@
+import sys
 import threading
 import unittest
-import sys
+
 import pydevconsole
 from _pydev_bundle.pydev_imports import xmlrpclib, SimpleXMLRPCServer
 from _pydevd_bundle import pydevd_io
@@ -32,6 +33,7 @@ class Test(unittest.TestCase):
             time.sleep(.3)  #let's give it some time to start the threads
 
             from _pydev_bundle import pydev_localhost
+            # @alexander TODO `InterpreterInterface.__init__()` signature changed
             interpreter = pydevconsole.InterpreterInterface(pydev_localhost.get_localhost(), client_port, threading.currentThread())
 
             (result,) = interpreter.hello("Hello pydevconsole")
@@ -53,6 +55,7 @@ class Test(unittest.TestCase):
             from _pydev_bundle import pydev_localhost
             from _pydev_bundle.pydev_console_utils import CodeFragment
 
+            # @alexander TODO `InterpreterInterface.__init__()` signature changed
             interpreter = pydevconsole.InterpreterInterface(pydev_localhost.get_localhost(), client_port, threading.currentThread())
             sys.stdout = pydevd_io.IOBuf()
             interpreter.add_exec(CodeFragment('class Foo:\n    CONSTANT=1\n'))

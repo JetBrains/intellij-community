@@ -2,6 +2,8 @@
 Entry point module to start the interactive console.
 '''
 from _pydev_imps._pydev_saved_modules import thread
+from pydev_console.thrift_rpc import make_rpc_client, make_rpc_server
+
 start_new_thread = thread.start_new_thread
 
 try:
@@ -89,10 +91,8 @@ class InterpreterInterface(BaseInterpreterInterface):
         The methods in this class should be registered in the xml-rpc server.
     '''
 
-    def __init__(self, host, client_port, mainThread, connect_status_queue=None):
-        BaseInterpreterInterface.__init__(self, mainThread, connect_status_queue)
-        self.client_port = client_port
-        self.host = host
+    def __init__(self, mainThread, connect_status_queue=None, rpc_client=None):
+        BaseInterpreterInterface.__init__(self, mainThread, connect_status_queue, rpc_client)
         self.namespace = {}
         self.interpreter = InteractiveConsole(self.namespace)
         self._input_error_printed = False
@@ -334,9 +334,30 @@ def start_server(host, port, client_port, client_host = None):
     #note that this does not work in jython!!! (sys method can't be replaced).
     sys.exit = do_exit
 
-    interpreter = InterpreterInterface(client_host, client_port, threading.currentThread())
+    from pydev_console.thrift_communication import console_thrift
 
-    start_new_thread(start_console_server,(host, port, interpreter))
+    client_service = console_thrift.IDE
+
+    client, server_transport = make_rpc_client(client_service, client_host, client_port)
+
+    interpreter = InterpreterInterface(client_host, client_port, threading.currentThread(), client)
+
+    # start_new_thread(start_console_server,(host, port, interpreter))
+    # we do not need to start the server in a new thread because it does not need to accept a client connection, it already has it
+
+
+    # todo do we need the following:
+    # # Tell UMD the proper default namespace
+    # _set_globals_function(interpreter.get_namespace)
+
+    server_service = console_thrift.PythonConsole
+
+    # `InterpreterInterface` implements all methods required for the handler
+    server_handler = interpreter
+
+    server = make_rpc_server(server_transport, server_service, server_handler)
+    # todo as `server.serve()` is excessive we may want to get rid of `server` as `TThreadedServer`
+    server.serve()
 
     process_exec_queue(interpreter)
 

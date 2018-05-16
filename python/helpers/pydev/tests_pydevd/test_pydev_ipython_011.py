@@ -1,14 +1,16 @@
-import sys
-import unittest
-import threading
 import os
+import socket
+import sys
+import threading
+import time
+import unittest
+
+import pytest
+
+from _pydev_bundle.pydev_console_utils import StdIn
 from _pydev_bundle.pydev_imports import SimpleXMLRPCServer
 from _pydev_bundle.pydev_localhost import get_localhost
-from _pydev_bundle.pydev_console_utils import StdIn
-import socket
-import time
 from _pydevd_bundle import pydevd_io
-import pytest
 
 try:
     xrange
@@ -249,6 +251,7 @@ class TestRunningCode(TestBase):
 
         client_thread = start_client_thread(self.client_port)
         orig_stdin = sys.stdin
+        # @alexander TODO `StdIn.__init__()` signature changed
         sys.stdin = StdIn(self, get_localhost(), self.client_port)
         try:
             filename = 'made_up_file.py'
