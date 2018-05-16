@@ -290,11 +290,6 @@ class AndroidStudioProperties extends BaseIdeaProperties {
       }
     }
 
-    // Analytics library
-    buildContext.ant.copy(todir: "$androidPluginLib") {
-      fileset(file: "$root/bazel-bin/tools/analytics-library/protos/src/main/proto/libstudio.proto.jar")
-    }
-
     // Native debugger.
     buildContext.ant.copy(todir: "$targetDirectory/bin/lldb") {
       fileset(dir: "$root/prebuilts/tools/common/lldb")
