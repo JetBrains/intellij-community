@@ -95,7 +95,7 @@ public class GitLogUtil {
       return;
     }
 
-    GitLineHandler handler = createGitHandler(project, root, Collections.emptyList(), true);
+    GitLineHandler handler = createGitHandler(project, root, Collections.emptyList(), false);
     GitLogParser parser = new GitLogParser(project, GitLogParser.NameStatus.NONE, HASH, PARENTS, COMMIT_TIME,
                                            AUTHOR_NAME, AUTHOR_EMAIL, REF_NAMES);
     handler.setStdoutSuppressed(true);
@@ -236,7 +236,8 @@ public class GitLogUtil {
                                      @NotNull Consumer<? super GitCommit> commitConsumer,
                                      boolean includeRootChanges,
                                      boolean preserverOrder,
-                                     boolean lowPriorityProcess, @NotNull String... parameters) throws VcsException {
+                                     boolean lowPriorityProcess,
+                                     @NotNull String... parameters) throws VcsException {
     DiffRenameLimit renameLimit = DiffRenameLimit.REGISTRY;
 
     GitLineHandler handler = createGitHandler(project, root, createConfigParameters(true, includeRootChanges, renameLimit), lowPriorityProcess);
@@ -330,8 +331,10 @@ public class GitLogUtil {
                                               @NotNull Consumer<? super GitCommit> commitConsumer,
                                               @NotNull List<String> hashes,
                                               boolean includeRootChanges,
+                                              boolean lowPriorityProcess,
                                               @NotNull DiffRenameLimit renameLimit) throws VcsException {
-    GitLineHandler handler = createGitHandler(project, root, createConfigParameters(true, includeRootChanges, renameLimit), true);
+    GitLineHandler handler =
+      createGitHandler(project, root, createConfigParameters(true, includeRootChanges, renameLimit), lowPriorityProcess);
     sendHashesToStdin(vcs, hashes, handler);
 
     readFullDetailsFromHandler(project, root, commitConsumer, renameLimit, handler, false, getNoWalkParameter(vcs), STDIN);
