@@ -85,7 +85,7 @@ public abstract class UnixAttachOSHandler extends AttachOSHandler {
     commands.add("-c");
     commands.add(String.format(GET_PROCESS_USER, pid));
     try {
-      return myHost.getProcessOutput(new GeneralCommandLine(commands)).getStdout().equals(getenv("USER"));
+      return myHost.getProcessOutput(new GeneralCommandLine(commands)).getStdout().trim().equals(getenv("USER"));
     }
     catch (Exception e) {
       LOGGER.warn("Failed to compare users", e);
