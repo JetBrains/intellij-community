@@ -32,14 +32,20 @@ import java.util.*
 class DfaControlTransferValue(factory: DfaValueFactory,
                               val target: TransferTarget,
                               val traps: FList<Trap>) : DfaValue(factory) {
-  override fun toString() = target.toString() + " " + traps.toString()
+  override fun toString() = target.toString() + (if (traps.isEmpty()) "" else " $traps")
 }
 
 interface TransferTarget
-data class ExceptionTransfer(val throwable: DfaPsiType?) : TransferTarget
-data class InstructionTransfer(val offset: ControlFlow.ControlFlowOffset, val toFlush: List<DfaVariableValue>) : TransferTarget
+data class ExceptionTransfer(val throwable: DfaPsiType?) : TransferTarget {
+  override fun toString() = "Exception($throwable)"
+}
+data class InstructionTransfer(val offset: ControlFlow.ControlFlowOffset, val toFlush: List<DfaVariableValue>) : TransferTarget {
+  override fun toString(): String {
+    return "-> $offset" + (if (toFlush.isEmpty()) "" else "; flushing $toFlush")
+  }
+}
 object ReturnTransfer : TransferTarget {
-  override fun toString(): String = "ReturnTransfer"
+  override fun toString(): String = "Return"
 }
 
 open class ControlTransferInstruction(val transfer: DfaControlTransferValue?) : Instruction() {
@@ -59,7 +65,7 @@ open class ControlTransferInstruction(val transfer: DfaControlTransferValue?) : 
 
   fun getPossibleTargetInstructions(allInstructions: Array<Instruction>) = getPossibleTargetIndices().map { allInstructions[it] }
 
-  override fun toString() = if (transfer == null) "RET" else "TRANSFER $transfer"
+  override fun toString() = (if (transfer == null) "RET" else "TRANSFER $transfer")+" [TARGETS: "+getPossibleTargetIndices()+"]"
 }
 
 sealed class Trap(val anchor: PsiElement) {
