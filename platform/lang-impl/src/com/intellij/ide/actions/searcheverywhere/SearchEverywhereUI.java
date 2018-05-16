@@ -591,15 +591,6 @@ public class SearchEverywhereUI extends BorderLayoutPanel implements Disposable 
       return myProgressIndicator.isCanceled() || myDone.isRejected();
     }
 
-    @SuppressWarnings("SSBasedInspection")
-    private void updateSuggestionsList() {
-      myResultsList.revalidate();
-      myResultsList.repaint();
-      ScrollingUtil.ensureSelectionExists(myResultsList);
-
-
-    }
-
     public ActionCallback cancel() {
       myProgressIndicator.cancel();
       //myDone.setRejected();
