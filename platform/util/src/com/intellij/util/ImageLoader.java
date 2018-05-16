@@ -314,7 +314,6 @@ public class ImageLoader implements Serializable {
   public static final Component ourComponent = new Component() {
   };
 
-  @SuppressWarnings("UnusedReturnValue")
   private static boolean waitForImage(Image image) {
     if (image == null) return false;
     if (image.getWidth(null) > 0) return true;
