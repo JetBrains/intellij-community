@@ -45,8 +45,7 @@ public abstract class AttachOSHandler {
     }
 
     if(myEnvironment == null) {
-      final String envString = myHost.getProcessOutput(ENV_COMMAND_LINE).getStdout();
-      myEnvironment = EnvironmentUtil.parseEnv(envString);
+      myEnvironment = EnvironmentUtil.parseEnv(myHost.getProcessOutput(ENV_COMMAND_LINE).getStdout().split("\n"));
     }
 
     return myEnvironment.get(name);
