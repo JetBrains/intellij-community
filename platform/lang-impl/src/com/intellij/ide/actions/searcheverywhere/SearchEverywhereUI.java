@@ -83,8 +83,6 @@ public class SearchEverywhereUI extends BorderLayoutPanel implements Disposable 
   private Runnable searchFinishedHandler = () -> {};
   private final JPanel mySuggestionsPanel;
 
-  private Dimension savedPreferredSize;
-
   // todo remove second param #UX-1
   public SearchEverywhereUI(Project project,
                             List<SearchEverywhereContributor> contributors,
@@ -547,10 +545,10 @@ public class SearchEverywhereUI extends BorderLayoutPanel implements Disposable 
       });
       SearchEverywhereContributor selectedContributor = mySelectedTab.getContributor().orElse(null);
       if (selectedContributor != null) {
-        runReadAction(() -> addContributorItems(selectedContributor, SINGLE_CONTRIBUTOR_ELEMENTS_LIMIT), true);
+        addContributorItems(selectedContributor, SINGLE_CONTRIBUTOR_ELEMENTS_LIMIT);
       } else {
         for (SearchEverywhereContributor contributor : allContributors) {
-          runReadAction(() -> addContributorItems(contributor, MULTIPLE_CONTRIBUTORS_ELEMENTS_LIMIT), true);
+          addContributorItems(contributor, MULTIPLE_CONTRIBUTORS_ELEMENTS_LIMIT);
         }
       }
     }
@@ -558,27 +556,28 @@ public class SearchEverywhereUI extends BorderLayoutPanel implements Disposable 
     private void showMore(SearchEverywhereContributor contributor) {
       int delta = isAllTabSelected() ? MULTIPLE_CONTRIBUTORS_ELEMENTS_LIMIT : SINGLE_CONTRIBUTOR_ELEMENTS_LIMIT;
       int size = myListModel.getItemsForContributor(contributor) + delta;
-      runReadAction(() -> addContributorItems(contributor, size), true);
+      addContributorItems(contributor, size);
     }
 
     private void addContributorItems(SearchEverywhereContributor contributor, int count) {
-      ContributorSearchResult<Object> results = contributor.search(project, pattern, isUseNonProjectItems(), myProgressIndicator, count);
-      List<Object> itemsToAdd = results.getItems().stream()
-                                       .filter(o -> !myListModel.contains(o))
-                                       .collect(Collectors.toList());
-      if (!itemsToAdd.isEmpty()) {
-        SwingUtilities.invokeLater(() -> {
-          if (!isCanceled()) {
-            myListModel.addElements(itemsToAdd, contributor, results.hasMoreItems());
+      if (!DumbService.getInstance(project).isDumb()) {
+        ApplicationManager.getApplication().runReadAction(() -> {
+          ContributorSearchResult<Object> results = contributor.search(project, pattern, isUseNonProjectItems(), myProgressIndicator, count);
+          List<Object> itemsToAdd = results.getItems().stream()
+                                           .filter(o -> !myListModel.contains(o))
+                                           .collect(Collectors.toList());
+          if (!itemsToAdd.isEmpty()) {
+            SwingUtilities.invokeLater(() -> {
+              if (!isCanceled()) {
+                Dimension oldSize = getPreferredSize();
+                myListModel.addElements(itemsToAdd, contributor, results.hasMoreItems());
+                ScrollingUtil.ensureSelectionExists(myResultsList);
+                //updateSuggestionsList();
+                firePropertyChange("preferredSize", oldSize, getPreferredSize());
+              }
+            });
           }
         });
-      }
-    }
-
-    private void runReadAction(Runnable action, boolean checkDumb) {
-      if (!checkDumb || !DumbService.getInstance(project).isDumb()) {
-        ApplicationManager.getApplication().runReadAction(action);
-        updateSuggestionsList();
       }
     }
 
@@ -594,16 +593,11 @@ public class SearchEverywhereUI extends BorderLayoutPanel implements Disposable 
 
     @SuppressWarnings("SSBasedInspection")
     private void updateSuggestionsList() {
-      check();
-      SwingUtilities.invokeLater(() -> {
-        myResultsList.revalidate();
-        myResultsList.repaint();
-        ScrollingUtil.ensureSelectionExists(myResultsList);
+      myResultsList.revalidate();
+      myResultsList.repaint();
+      ScrollingUtil.ensureSelectionExists(myResultsList);
 
-        Dimension oldPrefSize = savedPreferredSize;
-        savedPreferredSize = getPreferredSize();
-        firePropertyChange("preferredSize", oldPrefSize, savedPreferredSize);
-      });
+
     }
 
     public ActionCallback cancel() {
