@@ -195,11 +195,12 @@ class GitBranchPopupActions {
 
     @Override
     public void actionPerformed(AnActionEvent e) {
-      // TODO autocomplete branches, tags.
-      // on type check ref validity, on OK check ref existence.
-      String reference = Messages
-        .showInputDialog(myProject, "Enter reference (branch, tag) name or commit hash:", "Checkout", null);
-      if (reference != null) {
+      // TODO: on type check ref validity, on OK check ref existence.
+
+      GitRefDialog dialog = new GitRefDialog(myProject, myRepositories, "Checkout",
+                                             "Enter reference (branch, tag) name or commit hash:");
+      if (dialog.showAndGet()) {
+        String reference = dialog.getReference();
         GitBrancher brancher = GitBrancher.getInstance(myProject);
         brancher.checkout(reference, true, myRepositories, null);
         reportUsage("git.branch.checkout.revision");
