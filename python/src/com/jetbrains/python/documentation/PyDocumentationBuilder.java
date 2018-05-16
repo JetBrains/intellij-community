@@ -236,7 +236,7 @@ public class PyDocumentationBuilder {
             .addItem(" of ")
             .add(PythonDocumentationProvider.describeClass(cls, Function.identity(), TO_ONE_LINE_AND_ESCAPE, true, true, context));
     if (accessor.isDefined() && property.getDoc() != null) {
-      myBody.addItem(": ").addItem(property.getDoc()).addItem(BR);
+      myContent.add(formatDocString(elementDefinition, property.getDoc()));
     }
     else {
       final PyCallable getter = property.getGetter().valueOrNull();
@@ -244,15 +244,11 @@ public class PyDocumentationBuilder {
         // not in getter, getter's doc comment may be useful
         final PyStringLiteralExpression docstring = getEffectiveDocStringExpression((PyFunction)getter);
         if (docstring != null) {
-          myProlog
-            .addItem(BR).addWith(TagItalic, $("Copied from getter:")).addItem(BR)
-            .addItem(docstring.getStringValue())
-          ;
+          mySectionsMap.get(PyBundle.message("QDOC.documentation.is.copied.from")).addItem("property getter");
+          myContent.add(formatDocString(elementDefinition, docstring.getStringValue()));
         }
       }
-      myBody.addItem(BR);
     }
-    myBody.addItem(BR);
     if (accessor.isDefined() && accessor.value() == null) elementDefinition = null;
     final String accessorKind = getAccessorKind(direction);
     if (elementDefinition != null) {

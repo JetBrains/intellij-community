@@ -6,10 +6,7 @@ import com.jetbrains.python.documentation.PyDocumentationSettings;
 import com.jetbrains.python.documentation.PythonDocumentationProvider;
 import com.jetbrains.python.documentation.docstrings.DocStringFormat;
 import com.jetbrains.python.fixtures.LightMarkedTestCase;
-import com.jetbrains.python.psi.LanguageLevel;
-import com.jetbrains.python.psi.PyDocStringOwner;
-import com.jetbrains.python.psi.PyReferenceExpression;
-import com.jetbrains.python.psi.PyStringLiteralExpression;
+import com.jetbrains.python.psi.*;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Map;
@@ -68,7 +65,8 @@ public class PyQuickDocTest extends LightMarkedTestCase {
     Map<String, PsiElement> marks = loadTest();
     final PsiElement originalElement = marks.get("<the_ref>");
     PsiElement referenceElement = originalElement.getParent(); // ident -> expr
-    final PsiElement docOwner = ((PyReferenceExpression)referenceElement).getReference().resolve();
+    assertInstanceOf(referenceElement, PyReferenceOwner.class);
+    final PsiElement docOwner = referenceElement.getReference().resolve();
     checkByHTML(myProvider.generateDoc(docOwner, originalElement));
   }
 
@@ -178,6 +176,10 @@ public class PyQuickDocTest extends LightMarkedTestCase {
   }
 
   public void testPropOldDeleter() {
+    checkHTMLOnly();
+  }
+
+  public void testPropDocstringOfGetter() {
     checkHTMLOnly();
   }
 
