@@ -20,7 +20,7 @@ private val skippedDirs = mutableSetOf<File>()
  * @param iconsRepoDir designers' git repo
  * @param skipDirsPattern dir name pattern to skip unnecessary icons
  */
-fun checkAndSyncIcons(
+fun checkIcons(
   devRepoDir: String, iconsRepoDir: String,
   skipDirsPattern: String?, doSync: Boolean = false,
   loggerImpl: Consumer<String> = Consumer { println(it) },
@@ -29,15 +29,15 @@ fun checkAndSyncIcons(
   logger = loggerImpl
   val icons = readIconsRepo(iconsRepoDir)
   val devIcons = readDevRepo(devRepoDir, skipDirsPattern)
-  val devIconsSize = devIcons.size
+  val devIconsBackup = HashMap(devIcons)
   val added = mutableListOf<String>()
   val modified = mutableListOf<String>()
   val consistent = mutableListOf<String>()
-  icons.forEach { icon, hash ->
+  icons.forEach { icon, gitObject ->
     if (!devIcons.containsKey(icon)) {
       added += icon
     }
-    else if (hash != devIcons[icon]) {
+    else if (gitObject.hash != devIcons[icon]?.hash) {
       modified += icon
     }
     else {
@@ -49,49 +49,38 @@ fun checkAndSyncIcons(
     System.getProperty("teamcity.build.checkoutDir") ?: "."
   ).normalize().toAbsolutePath().toString() + "/"
   val addedByDev = devIcons.keys
-  val dumpInfo = dumpToFile(addedByDev, "added", "dev_repo") +
-                 dumpToFile(added, "added", "icons_repo") +
-                 dumpToFile(modified, "modified", "icons_repo")
+  val modifiedByDev = modifiedByDev(modified, icons, devIconsBackup)
   val report = """
-    |$devIconsSize icons are found in ${devRepoDir.removePrefix(root)}
+    |${devIconsBackup.size} icons are found in ${devRepoDir.removePrefix(root)}
     | skipped ${skippedDirs.size} dirs
     | ${addedByDev.size} added icons
+    | ${modifiedByDev.size} modified icons
     |${icons.size} icons are found in ${iconsRepoDir.removePrefix(root)}
     | ${added.size} added icons
-    | ${modified.size} modified icons
+    | ${modified.size - modifiedByDev.size} modified icons
     |${consistent.size} consistent icons in both repos
-    |$dumpInfo
   """.trimMargin()
-  if (doSync && addedByDev.size > 0) doSync(addedByDev, File(iconsRepoDir), File(devRepoDir))
-  if (addedByDev.size > 0 || added.size > 0 || modified.size > 0) {
-    errorHandler.accept(report)
+  if (addedByDev.isEmpty() && modifiedByDev.isEmpty()) {
+    log(report)
+  }
+  else if (doSync) {
+    doSync(addedByDev, modifiedByDev, icons, devIconsBackup, iconsRepoDir)
+    log(report)
   }
   else {
     log(report)
+    errorHandler.accept(report)
   }
 }
 
-private fun doSync(icons: Collection<String>, iconsRepo: File, devRepo: File) {
-  try {
-    icons.forEach {
-      File(devRepo, it).copyTo(File(iconsRepo, it), overwrite = true)
-    }
-  }
-  catch (e: Exception) {
-    e.printStackTrace()
-    log(e.message ?: e.javaClass.canonicalName)
-  }
+private fun modifiedByDev(
+  modified: Collection<String>,
+  icons: Map<String, GitObject>,
+  devIcons: Map<String, GitObject>) = modified.filter {
+  val iconsRepoLatestChangeTime = icons[it]!!.let { latestChangeTime(it.file, it.repo) }
+  val devRepoLatestChangeTime = devIcons[it]!!.let { latestChangeTime(it.file, it.repo) }
+  iconsRepoLatestChangeTime < devRepoLatestChangeTime
 }
-
-private fun dumpToFile(icons: Collection<String>, name: String, repo: String) =
-  if (icons.isNotEmpty()) {
-    val output = "${repo}_${name}.txt"
-    File(output).writeText(icons.joinToString(System.lineSeparator()))
-    "See $output${System.lineSeparator()}"
-  }
-  else {
-    ""
-  }
 
 private fun readIconsRepo(iconsRepoDir: String) =
   listGitObjects(findGitRepoRoot(iconsRepoDir), iconsRepoDir) {
@@ -99,7 +88,7 @@ private fun readIconsRepo(iconsRepoDir: String) =
     isIcon(it)
   }
 
-private fun readDevRepo(devRepoDir: String, skipDirsPattern: String?): MutableMap<String, String> {
+private fun readDevRepo(devRepoDir: String, skipDirsPattern: String?): MutableMap<String, GitObject> {
   val devRepoRoot = findGitRepoRoot(devRepoDir)
   val testRoots = searchTestRoots(devRepoRoot.absolutePath)
   log("Found ${testRoots.size} test roots")
@@ -149,12 +138,9 @@ private fun isIcon(file: File): Boolean {
   return try {
     // image
     isImage(file) && imageSize(file)?.let { size ->
-      // square
-      size.height == size.width &&
-      (if (file.name.contains("@2x")) 64 else 32).let { pixels ->
-        // small
-        size.height <= pixels && size.width <= pixels
-      }
+      val pixels = if (file.name.contains("@2x")) 64 else 32
+      // small
+      size.height <= pixels && size.width <= pixels
     } ?: false
   }
   catch (e: Exception) {
