@@ -80,8 +80,6 @@ public abstract class UsefulTestCase extends TestCase {
   static {
     IdeaForkJoinWorkerThreadFactory.setupPoisonFactory();
     Logger.setFactory(TestLoggerFactory.class);
-    // avoid thread leak reported
-    SVGLoader.loadBatikInternalObscureHackEternalReferenceCollectingThread();
   }
   protected static final Logger LOG = Logger.getInstance(UsefulTestCase.class);
 

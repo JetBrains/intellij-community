@@ -61,10 +61,6 @@ public class SVGLoader {
   private final Size size;
   private BufferedImage img;
 
-  public static void loadBatikInternalObscureHackEternalReferenceCollectingThread() {
-    CleanerThread.getReferenceQueue();
-  }
-
   private static class Size {
     final float width;
     final float height;
