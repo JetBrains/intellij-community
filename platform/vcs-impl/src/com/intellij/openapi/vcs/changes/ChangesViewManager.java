@@ -189,7 +189,7 @@ public class ChangesViewManager implements ChangesViewI, ProjectComponent, Persi
     group.addSeparator();
     group.add(ActionManager.getInstance().getAction(GROUP_BY_ACTION_GROUP));
 
-    DefaultActionGroup ignoreGroup = new DefaultActionGroup(null, true);
+    DefaultActionGroup ignoreGroup = new DefaultActionGroup("Show Ignored Files", true);
     ignoreGroup.getTemplatePresentation().setIcon(AllIcons.Actions.Show);
     ignoreGroup.add(new ToggleShowIgnoredAction());
     ignoreGroup.add(new IgnoredSettingsAction());
