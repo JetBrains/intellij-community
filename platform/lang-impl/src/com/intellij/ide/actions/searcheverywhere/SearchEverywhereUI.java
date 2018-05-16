@@ -5,6 +5,7 @@ import com.google.common.collect.Lists;
 import com.intellij.find.findUsages.PsiElement2UsageTargetAdapter;
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.IdeBundle;
+import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.impl.ActionButton;
 import com.intellij.openapi.application.ApplicationManager;
@@ -57,7 +58,7 @@ import java.util.stream.Collectors;
  * @author Konstantin Bulenkov
  * @author Mikhail.Sokolov
  */
-public class SearchEverywhereUI extends BorderLayoutPanel {
+public class SearchEverywhereUI extends BorderLayoutPanel implements Disposable {
   private static final Logger LOG = Logger.getInstance(SearchEverywhereUI.class);
   public static final int SINGLE_CONTRIBUTOR_ELEMENTS_LIMIT = 15;
   public static final int MULTIPLE_CONTRIBUTORS_ELEMENTS_LIMIT = 8;
@@ -171,15 +172,15 @@ public class SearchEverywhereUI extends BorderLayoutPanel {
     return mySelectedTab.getID();
   }
 
-  public void clear() {
-    mySearchField.setText("");
-    myNonProjectCB.setSelected(false);
-  }
-
   //todo get rid of this method #UX-1
   public void setShown(boolean shown) {
     myShown = shown;
     //todo cancel all threads #UX-1
+  }
+
+  @Override
+  public void dispose() {
+    stopSearching();
   }
 
   private void switchToNextTab() {
@@ -650,7 +651,7 @@ public class SearchEverywhereUI extends BorderLayoutPanel {
     }
   }
 
-  private static final MoreRenderer moreRenderer = new MoreRenderer();
+  private final MoreRenderer moreRenderer = new MoreRenderer();
 
   public static class MoreRenderer extends JPanel implements ListCellRenderer<Object> {
     final JLabel label;
@@ -668,7 +669,7 @@ public class SearchEverywhereUI extends BorderLayoutPanel {
     }
   }
 
-  private static final GroupTitleRenderer groupTitleRenderer = new GroupTitleRenderer();
+  private final GroupTitleRenderer groupTitleRenderer = new GroupTitleRenderer();
 
   public static class GroupTitleRenderer extends JPanel {
 
