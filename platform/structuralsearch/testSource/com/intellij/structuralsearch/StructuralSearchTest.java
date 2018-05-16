@@ -988,11 +988,11 @@ public class StructuralSearchTest extends StructuralSearchTestCase {
     assertEquals("backtracking greedy regexp", 1, findMatchesCount(s89, "{ '_T*; '_T2*; }"));
     assertEquals("backtracking greedy regexp 2", 1, findMatchesCount(s89, " { '_T*; '_T2*; '_T3+; } "));
     assertEquals("backtracking greedy regexp 3", 0, findMatchesCount(s89, " { '_T+; '_T2+; '_T3+; '_T4+; } "));
-    assertEquals("counted regexp (with back tracking)", 1, findMatchesCount(s89, " { '_T{1,3}; '_T2{2}; } "));
+    assertEquals("counted regexp (with back tracking)", 1, findMatchesCount(s89, " { '_T{1,3}; '_T2{2,}; } "));
     assertEquals("nongreedy regexp (counted, with back tracking)", 1,
-                 findMatchesCount(s89, " { '_T{1}?; '_T2*?; '_T3+?; } "));
+                 findMatchesCount(s89, " { '_T{1,}?; '_T2*?; '_T3+?; } "));
     assertEquals("nongreedy regexp (counted, with back tracking) 2", 0,
-                 findMatchesCount(s89, " { '_T{1}?; '_T2{1,2}?; '_T3+?; '_T4+?; } "));
+                 findMatchesCount(s89, " { '_T{1,}?; '_T2{1,2}?; '_T3+?; '_T4+?; } "));
 
     String s1000 = "class A {\n" +
                    "      void _() {}\n" +
@@ -1356,7 +1356,7 @@ public class StructuralSearchTest extends StructuralSearchTestCase {
     try {
       findMatchesCount(s109, "'_:*[regex( I ) && ref2('T)] '_;");
       fail("implements navigation match in definition 2 with nested conditions - incorrect cond");
-    } catch(UnsupportedPatternException ignored) {}
+    } catch (MalformedPatternException ignored) {}
 
     final String s111 = "interface E {} class A implements E {} class B extends A { int f = 0; } class C extends B {} class D { void e() { C c; B b; A a;} }";
     final String s112 = "'_";
