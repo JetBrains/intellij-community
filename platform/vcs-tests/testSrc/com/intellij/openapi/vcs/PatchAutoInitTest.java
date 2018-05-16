@@ -253,6 +253,21 @@ public class PatchAutoInitTest extends PlatformTestCase {
     checkPath(result, ".idea/module.xml", Collections.singletonList(root), 0);
   }
 
+  public void testBinaryModificationWithMultipleSimilarModules() {
+    final VirtualFile root = myProject.getBaseDir();
+    PsiTestUtil.addContentRoot(myModule, root);
+    VfsTestUtil.createFile(root, "module-1/.idea/module.bin");
+    VfsTestUtil.createFile(root, "module-2/.idea/module.bin");
+    VfsTestUtil.createFile(root, "module-3/folder/.idea/module.bin");
+    VfsTestUtil.createFile(root, ".idea/module.bin");
+
+    final ShelvedBinaryFilePatch patch = createShelvedBinarySimplePatch(".idea/module.bin");
+
+    final MatchPatchPaths iterator = new MatchPatchPaths(myProject);
+    final List<AbstractFilePatchInProgress> result = iterator.execute(Collections.singletonList(patch));
+    checkPath(result, ".idea/module.bin", Collections.singletonList(root), 0);
+  }
+
   private static void checkPath(List<AbstractFilePatchInProgress> filePatchInProgresses, String path, List<VirtualFile> bases, int strip) {
     for (AbstractFilePatchInProgress patch : filePatchInProgresses) {
       if (bases.contains(patch.getBase()) && path.equals(patch.getCurrentPath()) && (patch.getCurrentStrip() == strip)) {

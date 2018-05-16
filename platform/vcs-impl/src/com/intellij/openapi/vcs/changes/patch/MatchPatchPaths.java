@@ -245,60 +245,89 @@ public class MatchPatchPaths {
     }
 
     public void findAndAddBestVariant(@NotNull MultiMap<VirtualFile, AbstractFilePatchInProgress> result) {
-      AbstractFilePatchInProgress best = ContainerUtil.getFirstItem(myVariants);
-      if (best == null) return;
-      if (best instanceof TextFilePatchInProgress) {
-        //only for text patches
-        int bestLines = -100;
-        boolean bestIsUnique = true;
-        AbstractFilePatchInProgress baseDirVariant = null;
+      AbstractFilePatchInProgress first = ContainerUtil.getFirstItem(myVariants);
+      if (first == null) return;
 
-        for (AbstractFilePatchInProgress variant : myVariants) {
-          TextFilePatchInProgress current = (TextFilePatchInProgress)variant;
-          if (myUseProjectRootAsPredefinedBase && variantMatchedToProjectDir(current)) {
-            best = current;
-            bestIsUnique = true;
-            break;
-          }
-
-          final int currentLines = getMatchingLines(current);
-          if (isBetterMatch(current, currentLines,
-                            best, bestLines)) {
-            bestLines = currentLines;
-            best = current;
-            bestIsUnique = true;
-          }
-          else if (!isBetterMatch(best, bestLines,
-                                  current, currentLines)) {
-            bestIsUnique = false;
-          }
-
-          if (baseDirVariant == null && myBaseDir.equals(current.getBase())) {
-            baseDirVariant = current;
-          }
+      AbstractFilePatchInProgress best = null;
+      if (first instanceof TextFilePatchInProgress) {
+        if (myUseProjectRootAsPredefinedBase) {
+          best = findBestByBaseDir();
         }
-
-        if (!bestIsUnique && baseDirVariant != null) {
-          best = baseDirVariant;
+        if (best == null) {
+          best = findBestByText();
         }
-        putSelected(result, myVariants, best);
       }
       else {
-        int stripCounter = Integer.MAX_VALUE;
-        for (AbstractFilePatchInProgress variant : myVariants) {
-          int currentStrip = variant.getCurrentStrip();
-          //the best variant if several match should be project based variant
-          if (variantMatchedToProjectDir(variant)) {
-            best = variant;
-            break;
-          }
-          else if (currentStrip < stripCounter) {
-            best = variant;
-            stripCounter = currentStrip;
-          }
+        best = findBestByBaseDir();
+        if (best == null) {
+          best = findBestByStrip();
         }
+      }
+
+      if (best != null) {
         putSelected(result, myVariants, best);
       }
+    }
+
+    @Nullable
+    private AbstractFilePatchInProgress findBestByBaseDir() {
+      for (AbstractFilePatchInProgress variant : myVariants) {
+        if (variantMatchedToProjectDir(variant)) {
+          return variant;
+        }
+      }
+      return null;
+    }
+
+    @Nullable
+    private AbstractFilePatchInProgress findBestByText() {
+      AbstractFilePatchInProgress best = null;
+      int bestLines = Integer.MIN_VALUE;
+      boolean bestIsUnique = true;
+
+      AbstractFilePatchInProgress baseDirVariant = null;
+
+      for (AbstractFilePatchInProgress variant : myVariants) {
+        TextFilePatchInProgress current = (TextFilePatchInProgress)variant;
+        final int currentLines = getMatchingLines(current);
+        if (best == null ||
+            isBetterMatch(current, currentLines,
+                          best, bestLines)) {
+          bestLines = currentLines;
+          best = current;
+          bestIsUnique = true;
+        }
+        else if (!isBetterMatch(best, bestLines,
+                                current, currentLines)) {
+          bestIsUnique = false;
+        }
+
+        if (baseDirVariant == null && myBaseDir.equals(current.getBase())) {
+          baseDirVariant = current;
+        }
+      }
+
+      if (!bestIsUnique && baseDirVariant != null) {
+        return baseDirVariant;
+      }
+
+      return best;
+    }
+
+    @Nullable
+    private AbstractFilePatchInProgress findBestByStrip() {
+      AbstractFilePatchInProgress best = null;
+      int bestStrip = Integer.MAX_VALUE;
+
+      for (AbstractFilePatchInProgress current : myVariants) {
+        int currentStrip = current.getCurrentStrip();
+        if (best == null ||
+            currentStrip < bestStrip) {
+          best = current;
+          bestStrip = currentStrip;
+        }
+      }
+      return best;
     }
   }
 
