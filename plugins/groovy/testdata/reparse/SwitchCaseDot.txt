@@ -112,7 +112,7 @@ Groovy script
               PsiElement(.)('.')
               PsiElement(new line)('\n      ')
               PsiElement(case)('case')
-          PsiErrorElement:';', '}' or new line expected
+          PsiErrorElement:';', new line or '}' expected, got '3'
             <empty list>
           PsiWhiteSpace(' ')
           Literal

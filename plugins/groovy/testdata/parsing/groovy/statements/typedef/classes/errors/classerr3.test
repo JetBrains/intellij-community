@@ -28,6 +28,6 @@ Groovy script
           <empty list>
         Implements clause
           <empty list>
-        PsiErrorElement:'{' expected
+        PsiErrorElement:'{' expected, got '}'
           <empty list>
       PsiElement(})('}')

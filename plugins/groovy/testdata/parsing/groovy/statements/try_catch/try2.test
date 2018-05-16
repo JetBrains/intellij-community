@@ -12,7 +12,7 @@ Groovy script
       Reference expression
         PsiElement(identifier)('foo')
       PsiElement(new line)('\n')
-      PsiErrorElement:'catch' without 'try'
+      PsiErrorElement:';', <statement> or new line expected, got 'catch'
         PsiElement(catch)('catch')
       PsiWhiteSpace(' ')
       Call expression
@@ -21,7 +21,7 @@ Groovy script
           PsiWhiteSpace(' ')
           Reference expression
             PsiElement(identifier)('Exception1')
-          PsiErrorElement:')' expected
+          PsiErrorElement:')' expected, got 'e1'
             <empty list>
         PsiWhiteSpace(' ')
         Command arguments
@@ -37,7 +37,7 @@ Groovy script
           <empty list>
         PsiElement(})('}')
       PsiElement(new line)('\n')
-      PsiErrorElement:'catch' without 'try'
+      PsiErrorElement:';', <statement> or new line expected, got 'catch'
         PsiElement(catch)('catch')
       PsiWhiteSpace(' ')
       Call expression
@@ -46,7 +46,7 @@ Groovy script
           PsiWhiteSpace(' ')
           Reference expression
             PsiElement(identifier)('Exception1')
-          PsiErrorElement:')' expected
+          PsiErrorElement:')' expected, got 'e2'
             <empty list>
         PsiWhiteSpace(' ')
         Command arguments
@@ -62,7 +62,7 @@ Groovy script
           <empty list>
         PsiElement(})('}')
       PsiElement(new line)('\n')
-      PsiErrorElement:'finally' without 'try'
+      PsiErrorElement:';', <statement> or new line expected, got 'finally'
         PsiElement(finally)('finally')
       Closable block
         PsiElement({)('{')
@@ -73,7 +73,7 @@ Groovy script
           PsiElement(identifier)('doNothing')
         PsiWhiteSpace(' ')
         PsiElement(})('}')
-      PsiErrorElement:'}' expected
+      PsiErrorElement:';', <statement>, new line or '}' expected
         <empty list>
     PsiErrorElement:'catch' or 'finally' expected
       <empty list>

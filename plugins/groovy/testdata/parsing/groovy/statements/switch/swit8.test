@@ -17,7 +17,7 @@ Groovy script
     Case section
       Case label
         PsiElement(case)('case')
-        PsiErrorElement:Expression expected
+        PsiErrorElement:<expression> expected, got ':'
           <empty list>
         PsiElement(:)(':')
       PsiElement(new line)('\n    ')

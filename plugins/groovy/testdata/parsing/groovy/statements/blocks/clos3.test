@@ -33,7 +33,7 @@ Groovy script
               PsiElement(Gstring begin)('"')
               GrStringContentImpl(STRING_CONTENT)
                 PsiElement(Gstring content)('bugaga')
-              PsiErrorElement:String end expected
+              PsiErrorElement:Gstring end expected
                 <empty list>
         PsiElement(new line)('\n ')
         Literal
@@ -42,7 +42,7 @@ Groovy script
     GrStringContentImpl(STRING_CONTENT)
       ASTWrapperPsiElement(Gstring content)
         <empty list>
-    PsiErrorElement:String end expected
+    PsiErrorElement:Gstring end expected
       <empty list>
   PsiElement(new line)('\n ')
   Call expression
@@ -54,5 +54,5 @@ Groovy script
         GrStringContentImpl(STRING_CONTENT)
           ASTWrapperPsiElement(Gstring content)
             <empty list>
-        PsiErrorElement:String end expected
+        PsiErrorElement:Gstring end expected
           <empty list>

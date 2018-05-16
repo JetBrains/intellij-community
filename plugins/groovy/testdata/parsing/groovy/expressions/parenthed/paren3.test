@@ -16,7 +16,7 @@ Groovy script
         PsiElement(()('(')
         Reference expression
           PsiElement(identifier)('doSomething')
-        PsiErrorElement:')' expected
+        PsiErrorElement:')' expected, got '2'
           <empty list>
       PsiWhiteSpace(' ')
       Literal

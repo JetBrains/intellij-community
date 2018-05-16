@@ -3,7 +3,7 @@ if expr1 expr2 else expr3
 Groovy script
   IF statement
     PsiElement(if)('if')
-    PsiErrorElement:'(' expected
+    PsiErrorElement:'(' expected, got 'expr1'
       <empty list>
   PsiWhiteSpace(' ')
   Call expression

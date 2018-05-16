@@ -76,5 +76,5 @@ Groovy script
           PsiElement(})('}')
       GrStringContentImpl(STRING_CONTENT)
         PsiElement(regex content)('\ni = 5')
-      PsiErrorElement:Regex ending expected
+      PsiErrorElement:regex end expected
         <empty list>

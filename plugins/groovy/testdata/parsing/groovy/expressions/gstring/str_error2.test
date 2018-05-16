@@ -13,7 +13,7 @@ Groovy script
       GrStringContentImpl(STRING_CONTENT)
         ASTWrapperPsiElement(Gstring content)
           <empty list>
-      PsiErrorElement:String end expected
+      PsiErrorElement:Gstring end expected
         <empty list>
   PsiElement(new line)('\n')
   Literal

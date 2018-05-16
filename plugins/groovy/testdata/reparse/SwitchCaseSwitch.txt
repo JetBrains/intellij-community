@@ -79,7 +79,7 @@ Groovy script
           PsiElement(new line)('\n      ')
           Switch statement
             PsiElement(switch)('switch')
-            PsiErrorElement:'(' expected
+            PsiErrorElement:'(' expected, got 'return'
               <empty list>
           PsiWhiteSpace(' ')
           RETURN statement

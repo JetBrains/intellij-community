@@ -21,7 +21,7 @@ Groovy script
         PsiElement(()('(')
         Reference expression
           PsiElement(identifier)('word')
-        PsiErrorElement:')' expected
+        PsiErrorElement:')' expected, got 'w'
           <empty list>
       PsiWhiteSpace(' ')
       Call expression
@@ -91,7 +91,7 @@ Groovy script
         PsiElement(()('(')
         Reference expression
           PsiElement(identifier)('word')
-        PsiErrorElement:')' expected
+        PsiErrorElement:')' expected, got 'w'
           <empty list>
       PsiWhiteSpace(' ')
       Call expression
