@@ -236,8 +236,8 @@ public class TextMergeViewer implements MergeTool.MergeViewer {
       group.add(diffGroup);
 
       group.add(new Separator("Apply non-conflicting changes:"));
-      group.add(new ApplyNonConflictsAction(ThreeSide.BASE, "All"));
       group.add(new ApplyNonConflictsAction(ThreeSide.LEFT, "Left"));
+      group.add(new ApplyNonConflictsAction(ThreeSide.BASE, "All"));
       group.add(new ApplyNonConflictsAction(ThreeSide.RIGHT, "Right"));
       group.add(new MagicResolvedConflictsAction());
 
@@ -1185,6 +1185,11 @@ public class TextMergeViewer implements MergeTool.MergeViewer {
 
       @Override
       public boolean displayTextInToolbar() {
+        return true;
+      }
+
+      @Override
+      public boolean useSmallerFontForTextInToolbar() {
         return true;
       }
     }
