@@ -289,8 +289,6 @@ class Bar {{
 
   void testExtendingOwnInner() { doTest() }
 
-  void testRegexInCommandArg() { doTest() }
-
   void testJUnitConvention() {
     myFixture.addClass("package junit.framework; public class TestCase {}")
     def inspection = new NewGroovyClassNamingConventionInspection()
@@ -2049,15 +2047,6 @@ class Target {
     private static void callMe() {}
 }
 ''')
-  }
-
-  void 'test no exception for @Field annotation without variable'() {
-    testHighlighting '''\
-import groovy.transform.Field
-
-@Field
-def (,<error descr="Identifier expected">)</error> = []
-'''
   }
 
   void 'test no SOE in index property assignment with generic function'() {
