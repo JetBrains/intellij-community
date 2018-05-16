@@ -33,6 +33,7 @@ import com.intellij.openapi.fileEditor.impl.LoadTextUtil;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.FileTypeRegistry;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.roots.FileIndexFacade;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.UserDataHolderBase;
 import com.intellij.openapi.vfs.NonPhysicalFileSystem;
@@ -95,6 +96,25 @@ public abstract class AbstractFileViewProvider extends UserDataHolderBase implem
     if (virtualFile instanceof VirtualFileWindow && !(this instanceof FreeThreadedFileViewProvider)) {
       throw new IllegalArgumentException("Must not create "+getClass()+" for injected file "+virtualFile+"; InjectedFileViewProvider must be used instead");
     }
+  }
+
+  final boolean shouldCreatePsi() {
+    if (isIgnored()) return false;
+
+    VirtualFile vFile = getVirtualFile();
+    if (isPhysical() && vFile.isInLocalFileSystem()) { // check directories consistency
+      VirtualFile parent = vFile.getParent();
+      if (parent == null) return false;
+      
+      PsiDirectory psiDir = getManager().findDirectory(parent);
+      if (psiDir == null) {
+        FileIndexFacade indexFacade = FileIndexFacade.getInstance(getManager().getProject());
+        if (!indexFacade.isInLibrarySource(vFile) && !indexFacade.isInLibraryClasses(vFile)) {
+          return false;
+        }
+      }
+    }
+    return true;
   }
 
   public static boolean isFreeThreaded(@NotNull FileViewProvider provider) {

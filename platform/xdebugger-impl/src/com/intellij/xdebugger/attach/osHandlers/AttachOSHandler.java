@@ -4,6 +4,7 @@ package com.intellij.xdebugger.attach.osHandlers;
 import com.intellij.execution.ExecutionException;
 import com.intellij.execution.configurations.GeneralCommandLine;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.util.SystemInfo;
 import com.intellij.util.EnvironmentUtil;
 import com.intellij.xdebugger.attach.EnvironmentAwareHost;
 import com.intellij.xdebugger.attach.LocalAttachHost;
@@ -73,7 +74,24 @@ public abstract class AttachOSHandler {
   }
 
   @NotNull
+  private static OSType localComputeOsType() {
+    if(SystemInfo.isLinux) {
+      return OSType.LINUX;
+    }
+
+    if(SystemInfo.isMac) {
+      return OSType.MACOSX;
+    }
+
+    return OSType.UNKNOWN;
+  }
+
+  @NotNull
   private static OSType computeOsType(@NotNull EnvironmentAwareHost host) throws ExecutionException {
+    if(host instanceof LocalAttachHost) {
+      return localComputeOsType();
+    }
+
     try {
       GeneralCommandLine getOsCommandLine = new GeneralCommandLine("uname", "-s");
       final String osString = host.getProcessOutput(getOsCommandLine).getStdout().trim();

@@ -27,9 +27,9 @@ import javax.swing.*;
 import java.util.Collections;
 
 class TestMethodUsage implements Usage, UsageInFile, UsageInModule, PsiElementUsage, DataProvider {
-  private final DiscoveredTestsTreeModel.Node<PsiMethod> myNode;
+  private final DiscoveredTestsTreeModel.Node.Method myNode;
 
-  TestMethodUsage(DiscoveredTestsTreeModel.Node<PsiMethod> node) {myNode = node;}
+  TestMethodUsage(DiscoveredTestsTreeModel.Node.Method node) {myNode = node;}
 
   @Override
   public VirtualFile getFile() {

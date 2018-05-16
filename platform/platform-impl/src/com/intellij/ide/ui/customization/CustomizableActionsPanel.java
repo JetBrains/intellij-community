@@ -151,7 +151,6 @@ public class CustomizableActionsPanel {
               if (o instanceof String) {
                 DefaultMutableTreeNode current = new DefaultMutableTreeNode(url.getComponent());
                 current.setParent((DefaultMutableTreeNode)node.getParent());
-                editToolbarIcon((String)o, current);
               }
             }
             ((DefaultTreeModel)myActionsTree.getModel()).reload();
@@ -315,24 +314,6 @@ public class CustomizableActionsPanel {
   private void addCustomizedAction(ActionUrl url) {
     mySelectedSchema.addAction(url);
     myRestoreAllDefaultButton.setEnabled(true);
-  }
-
-  private void editToolbarIcon(String actionId, DefaultMutableTreeNode node) {
-    final AnAction anAction = ActionManager.getInstance().getAction(actionId);
-    if (isToolbarAction(node) && anAction.getTemplatePresentation().getIcon() == null) {
-      final int exitCode = Messages.showOkCancelDialog(IdeBundle.message("error.adding.action.without.icon.to.toolbar"),
-                                                       IdeBundle.message("title.unable.to.add.action.without.icon.to.toolbar"),
-                                                       Messages.getInformationIcon());
-      if (exitCode == Messages.OK) {
-        mySelectedSchema.addIconCustomization(actionId, null);
-        anAction.getTemplatePresentation().setIcon(AllIcons.Toolbar.Unknown);
-        anAction.getTemplatePresentation().setDisabledIcon(IconLoader.getDisabledIcon(AllIcons.Toolbar.Unknown));
-        anAction.setDefaultIcon(false);
-        node.setUserObject(Pair.create(actionId, AllIcons.Toolbar.Unknown));
-        myActionsTree.repaint();
-        CustomActionsSchema.setCustomizationSchemaForCurrentProjects();
-      }
-    }
   }
 
   private void setButtonsDisabled() {
@@ -506,26 +487,6 @@ public class CustomizableActionsPanel {
     }
   }
 
-  private static boolean isToolbarAction(DefaultMutableTreeNode node) {
-    TreeNode parent = node.getParent();
-    while (parent != null) {
-      if (parent instanceof DefaultMutableTreeNode) {
-        Object userObject = ((DefaultMutableTreeNode)parent).getUserObject();
-        if (userObject instanceof Group) {
-          Group group = (Group)userObject;
-
-          String groupName = group.getName();
-          if (groupName.toLowerCase(Locale.ENGLISH).contains("toolbar")) return true;
-
-          String groupId = group.getId();
-          if (groupId != null && groupId.toLowerCase(Locale.ENGLISH).contains("toolbar")) return true;
-        }
-      }
-      parent = parent.getParent();
-    }
-    return false;
-  }
-
   @Nullable
   private static String getActionId(DefaultMutableTreeNode node) {
     return (String)(node.getUserObject() instanceof String ? node.getUserObject() :
@@ -568,7 +529,6 @@ public class CustomizableActionsPanel {
         mySelectedSchema.removeIconCustomization(actionId);
         final DefaultMutableTreeNode nodeOnToolbar = findNodeOnToolbar(actionId);
         if (nodeOnToolbar != null){
-          editToolbarIcon(actionId, nodeOnToolbar);
           node.setUserObject(nodeOnToolbar.getUserObject());
         }
       }
@@ -641,7 +601,6 @@ public class CustomizableActionsPanel {
           final Icon icon = (Icon)((Pair)userObject).second;
           action.getTemplatePresentation().setIcon(icon);
           action.setDefaultIcon(icon == null);
-          editToolbarIcon(actionId, myNode);
         }
         myActionsTree.repaint();
       }
@@ -746,7 +705,6 @@ public class CustomizableActionsPanel {
             Icon icon = (Icon)((Pair)userObject).second;
             action.getTemplatePresentation().setIcon(icon);
             action.setDefaultIcon(icon == null);
-            editToolbarIcon(actionId, mutableNode);
           }
         }
         return true;

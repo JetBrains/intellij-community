@@ -207,6 +207,10 @@ public class MakeMethodStaticTest extends LightRefactoringTestCase {
     doTest(false);
   }
 
+  public void testExpandMethodReference() {
+    doTest(true);
+  }
+
   public void testPreserveParametersAlignment() {
     doTest();
   }

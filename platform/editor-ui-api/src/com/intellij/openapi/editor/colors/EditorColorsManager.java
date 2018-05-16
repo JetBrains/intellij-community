@@ -18,10 +18,12 @@ package com.intellij.openapi.editor.colors;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.ServiceManager;
+import com.intellij.ui.ColorUtil;
 import com.intellij.util.messages.Topic;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
+import java.awt.*;
 import java.util.List;
 
 public abstract class EditorColorsManager {
@@ -80,5 +82,10 @@ public abstract class EditorColorsManager {
   @NotNull
   public EditorColorsScheme getSchemeForCurrentUITheme() {
     return getGlobalScheme();
+  }
+
+  public boolean isDarkEditor() {
+    Color bg = getGlobalScheme().getDefaultBackground();
+    return ColorUtil.isDark(bg);
   }
 }

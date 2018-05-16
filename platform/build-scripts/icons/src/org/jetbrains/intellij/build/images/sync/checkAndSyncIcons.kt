@@ -1,6 +1,8 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.intellij.build.images.sync
 
+import org.jetbrains.intellij.build.images.imageSize
+import org.jetbrains.intellij.build.images.isImage
 import org.jetbrains.jps.model.java.JavaResourceRootType
 import org.jetbrains.jps.model.java.JavaSourceRootType
 import org.jetbrains.jps.model.serialization.JpsSerializationManager
@@ -14,56 +16,70 @@ import java.util.function.Consumer
 private val skippedDirs = mutableSetOf<File>()
 
 /**
- * @param codeRepoDir git repo with code + icons
- * @param iconsRepoDir git repo with icons
+ * @param devRepoDir developers' git repo
+ * @param iconsRepoDir designers' git repo
  * @param skipDirsPattern dir name pattern to skip unnecessary icons
  */
-fun checkIcons(
-  codeRepoDir: String, iconsRepoDir: String, skipDirsPattern: String?,
+fun checkAndSyncIcons(
+  devRepoDir: String, iconsRepoDir: String,
+  skipDirsPattern: String?, doSync: Boolean = false,
   loggerImpl: Consumer<String> = Consumer { println(it) },
   errorHandler: Consumer<String> = Consumer { throw IllegalStateException(it) }
 ) {
   logger = loggerImpl
   val icons = readIconsRepo(iconsRepoDir)
-  val iconsFromCode = readCodeRepo(codeRepoDir, skipDirsPattern)
-  val iconsFromCodeSize = iconsFromCode.size
+  val devIcons = readDevRepo(devRepoDir, skipDirsPattern)
+  val devIconsSize = devIcons.size
   val added = mutableListOf<String>()
   val modified = mutableListOf<String>()
   val consistent = mutableListOf<String>()
   icons.forEach { icon, hash ->
-    if (!iconsFromCode.containsKey(icon)) {
+    if (!devIcons.containsKey(icon)) {
       added += icon
     }
-    else if (hash != iconsFromCode[icon]) {
+    else if (hash != devIcons[icon]) {
       modified += icon
     }
     else {
       consistent += icon
     }
-    iconsFromCode.remove(icon)
+    devIcons.remove(icon)
   }
   val root = Paths.get(
     System.getProperty("teamcity.build.checkoutDir") ?: "."
   ).normalize().toAbsolutePath().toString() + "/"
-  val newIcons = iconsFromCode.keys.size
-  val dumpInfo = dumpToFile(iconsFromCode.keys, "added", "dev_repo") +
+  val addedByDev = devIcons.keys
+  val dumpInfo = dumpToFile(addedByDev, "added", "dev_repo") +
                  dumpToFile(added, "added", "icons_repo") +
                  dumpToFile(modified, "modified", "icons_repo")
   val report = """
-    |$iconsFromCodeSize icons are found in ${codeRepoDir.removePrefix(root)}
+    |$devIconsSize icons are found in ${devRepoDir.removePrefix(root)}
     | skipped ${skippedDirs.size} dirs
-    | $newIcons new icons
+    | ${addedByDev.size} added icons
     |${icons.size} icons are found in ${iconsRepoDir.removePrefix(root)}
-    | ${added.size} new icons
+    | ${added.size} added icons
     | ${modified.size} modified icons
     |${consistent.size} consistent icons in both repos
     |$dumpInfo
-    """.trimMargin()
-  if (newIcons > 0 || added.size > 0 || modified.size > 0) {
+  """.trimMargin()
+  if (doSync && addedByDev.size > 0) doSync(addedByDev, File(iconsRepoDir), File(devRepoDir))
+  if (addedByDev.size > 0 || added.size > 0 || modified.size > 0) {
     errorHandler.accept(report)
   }
   else {
     log(report)
+  }
+}
+
+private fun doSync(icons: Collection<String>, iconsRepo: File, devRepo: File) {
+  try {
+    icons.forEach {
+      File(devRepo, it).copyTo(File(iconsRepo, it), overwrite = true)
+    }
+  }
+  catch (e: Exception) {
+    e.printStackTrace()
+    log(e.message ?: e.javaClass.canonicalName)
   }
 }
 
@@ -83,32 +99,32 @@ private fun readIconsRepo(iconsRepoDir: String) =
     isIcon(it)
   }
 
-private fun readCodeRepo(codeRepoDir: String, skipDirsPattern: String?): MutableMap<String, String> {
-  val codeRepoRoot = findGitRepoRoot(codeRepoDir)
-  val testRoots = searchTestRoots(codeRepoRoot.absolutePath)
+private fun readDevRepo(devRepoDir: String, skipDirsPattern: String?): MutableMap<String, String> {
+  val devRepoRoot = findGitRepoRoot(devRepoDir)
+  val testRoots = searchTestRoots(devRepoRoot.absolutePath)
   log("Found ${testRoots.size} test roots")
   if (skipDirsPattern != null) log("Using pattern $skipDirsPattern to skip dirs")
   val skipDirsRegex = skipDirsPattern?.toRegex()
-  val codeRepoIconFilter = { file: File ->
+  val devRepoIconFilter = { file: File ->
     // read icon hashes skipping test roots
     isIcon(file) && !inTestRoot(file, testRoots, skipDirsRegex)
   }
-  val codeRepoVcsRoots = vcsRoots(codeRepoRoot)
-  val iconsFromCode = if (codeRepoVcsRoots.size == 1
-                          && codeRepoVcsRoots.contains(codeRepoRoot)) {
-    // read icons from codeRepoRoot
-    listGitObjects(codeRepoRoot, codeRepoDir, codeRepoIconFilter)
+  val devRepoVcsRoots = vcsRoots(devRepoRoot)
+  val devIcons = if (devRepoVcsRoots.size == 1
+                     && devRepoVcsRoots.contains(devRepoRoot)) {
+    // read icons from devRepoRoot
+    listGitObjects(devRepoRoot, devRepoDir, devRepoIconFilter)
   }
   else {
-    // read icons from multiple repos in codeRepoRoot
-    listGitObjects(codeRepoRoot, codeRepoVcsRoots, codeRepoIconFilter)
+    // read icons from multiple repos in devRepoRoot
+    listGitObjects(devRepoRoot, devRepoVcsRoots, devRepoIconFilter)
   }
-  return iconsFromCode.toMutableMap()
+  return devIcons.toMutableMap()
 }
 
-private fun searchTestRoots(codeRepoDir: String) = try {
+private fun searchTestRoots(devRepoDir: String) = try {
   JpsSerializationManager.getInstance()
-    .loadModel(codeRepoDir, null)
+    .loadModel(devRepoDir, null)
     .project.modules.flatMap {
     it.getSourceRoots(JavaSourceRootType.TEST_SOURCE) +
     it.getSourceRoots(JavaResourceRootType.TEST_RESOURCE)
@@ -131,9 +147,15 @@ private fun isIcon(file: File): Boolean {
   val err = System.err
   System.setErr(mutedStream)
   return try {
-    org.jetbrains.intellij.build.images.isIcon(
-      file, if (file.name.contains("@2x")) 64 else 32
-    )
+    // image
+    isImage(file) && imageSize(file)?.let { size ->
+      // square
+      size.height == size.width &&
+      (if (file.name.contains("@2x")) 64 else 32).let { pixels ->
+        // small
+        size.height <= pixels && size.width <= pixels
+      }
+    } ?: false
   }
   catch (e: Exception) {
     log("WARNING: $file: ${e.message}")

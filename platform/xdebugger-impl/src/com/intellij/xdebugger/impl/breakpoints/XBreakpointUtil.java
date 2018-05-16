@@ -7,6 +7,7 @@ import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.FoldRegion;
 import com.intellij.openapi.editor.markup.GutterIconRenderer;
+import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.text.StringUtil;
@@ -17,6 +18,7 @@ import com.intellij.xdebugger.XDebuggerUtil;
 import com.intellij.xdebugger.XSourcePosition;
 import com.intellij.xdebugger.breakpoints.*;
 import com.intellij.xdebugger.impl.DebuggerSupport;
+import com.intellij.xdebugger.impl.XDebugSessionImpl;
 import com.intellij.xdebugger.impl.XDebuggerUtilImpl;
 import com.intellij.xdebugger.impl.XSourcePositionImpl;
 import com.intellij.xdebugger.impl.breakpoints.ui.BreakpointItem;
@@ -63,21 +65,34 @@ public class XBreakpointUtil {
     int offset = editor.getCaretModel().getOffset();
     Document editorDocument = editor.getDocument();
 
+    final int textLength = editorDocument.getTextLength();
+    if (offset > textLength) {
+      offset = textLength;
+    }
+
     DebuggerSupport[] debuggerSupports = DebuggerSupport.getDebuggerSupports();
     for (DebuggerSupport debuggerSupport : debuggerSupports) {
-      final BreakpointPanelProvider<?> provider = debuggerSupport.getBreakpointPanelProvider();
-
-      final int textLength = editor.getDocument().getTextLength();
-      if (offset > textLength) {
-        offset = textLength;
-      }
-
+      BreakpointPanelProvider<?> provider = debuggerSupport.getBreakpointPanelProvider();
       Object breakpoint = provider.findBreakpoint(project, editorDocument, offset);
       if (breakpoint != null) {
-        final GutterIconRenderer iconRenderer = provider.getBreakpointGutterIconRenderer(breakpoint);
-        return Pair.create(iconRenderer, breakpoint);
+        return Pair.create(provider.getBreakpointGutterIconRenderer(breakpoint), breakpoint);
       }
     }
+
+    XDebugSessionImpl session = (XDebugSessionImpl)XDebuggerManager.getInstance(project).getCurrentSession();
+    if (session != null) {
+      XBreakpoint<?> breakpoint = session.getActiveNonLineBreakpoint();
+      if (breakpoint != null) {
+        XSourcePosition position = session.getCurrentPosition();
+        if (position != null) {
+          if (position.getFile().equals(FileDocumentManager.getInstance().getFile(editorDocument)) &&
+              editorDocument.getLineNumber(offset) == position.getLine()) {
+            return Pair.create(((XBreakpointBase)breakpoint).createGutterIconRenderer(), breakpoint);
+          }
+        }
+      }
+    }
+
     return Pair.create(null, null);
   }
 

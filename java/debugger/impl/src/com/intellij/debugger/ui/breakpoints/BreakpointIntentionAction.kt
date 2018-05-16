@@ -104,6 +104,17 @@ internal abstract class BreakpointIntentionAction(protected val myBreakpoint: XB
           override fun getPriority() = PrioritizedTask.Priority.HIGH
 
           override fun threadAction(suspendContext: SuspendContextImpl) {
+            val frameProxy = suspendContext.frameProxy
+
+            frameProxy?.location()?.declaringType()?.name()?.let {
+              res.add(AddClassFilter(breakpoint, it))
+              res.add(AddClassNotFilter(breakpoint, it))
+            }
+
+            frameProxy?.thisObject()?.uniqueID()?.let {
+              res.add(AddInstanceFilter(breakpoint, it))
+            }
+
             if (Registry.`is`("debugger.breakpoints.caller.filter")) {
               try {
                 val thread = suspendContext.thread
@@ -123,17 +134,6 @@ internal abstract class BreakpointIntentionAction(protected val myBreakpoint: XB
                 LineBreakpoint.LOG.warn(e)
               }
 
-            }
-
-            val frameProxy = suspendContext.frameProxy
-
-            frameProxy?.location()?.declaringType()?.name()?.let {
-              res.add(AddClassFilter(breakpoint, it))
-              res.add(AddClassNotFilter(breakpoint, it))
-            }
-
-            frameProxy?.thisObject()?.uniqueID()?.let {
-              res.add(AddInstanceFilter(breakpoint, it))
             }
           }
         })

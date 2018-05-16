@@ -1802,7 +1802,7 @@ public class AllIcons {
   }
 
   public static class Webreferences {
-    public static final Icon Server = IconLoader.getIcon("/webreferences/server.png"); // 16x16
+    public static final Icon Server = IconLoader.getIcon("/webreferences/server.svg"); // 16x16
 
   }
 

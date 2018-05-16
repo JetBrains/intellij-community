@@ -25,6 +25,7 @@ import com.intellij.codeInspection.dataFlow.value.DfaVariableValue
 import com.intellij.psi.*
 import com.intellij.util.containers.FList
 import java.util.*
+import kotlin.collections.ArrayList
 
 /**
  * @author peter
@@ -32,47 +33,64 @@ import java.util.*
 class DfaControlTransferValue(factory: DfaValueFactory,
                               val target: TransferTarget,
                               val traps: FList<Trap>) : DfaValue(factory) {
-  override fun toString() = target.toString() + " " + traps.toString()
+  override fun toString() = target.toString() + (if (traps.isEmpty()) "" else " $traps")
 }
 
-interface TransferTarget
-data class ExceptionTransfer(val throwable: DfaPsiType?) : TransferTarget
-data class InstructionTransfer(val offset: ControlFlow.ControlFlowOffset, val toFlush: List<DfaVariableValue>) : TransferTarget
+interface TransferTarget {
+  fun getPossibleTargets() : Collection<Int> = emptyList()
+}
+data class ExceptionTransfer(val throwable: DfaPsiType?) : TransferTarget {
+  override fun toString() = "Exception($throwable)"
+}
+data class InstructionTransfer(val offset: ControlFlow.ControlFlowOffset, val toFlush: List<DfaVariableValue>) : TransferTarget {
+  override fun getPossibleTargets() = listOf(offset.instructionOffset)
+
+  override fun toString() = "-> $offset" + (if (toFlush.isEmpty()) "" else "; flushing $toFlush")
+}
+data class ExitFinallyTransfer(private val enterFinally: Trap.EnterFinally) : TransferTarget {
+  override fun getPossibleTargets() = enterFinally.backLinks.asIterable().flatMap { it.getPossibleTargetIndices() }
+    .filter { index -> index != enterFinally.jumpOffset.instructionOffset }.toSet()
+
+  override fun toString() = "ExitFinally"
+}
 object ReturnTransfer : TransferTarget {
-  override fun toString(): String = "ReturnTransfer"
+  override fun toString(): String = "Return"
 }
 
-open class ControlTransferInstruction(val transfer: DfaControlTransferValue?) : Instruction() {
+open class ControlTransferInstruction(val transfer: DfaControlTransferValue) : Instruction() {
+  init {
+    transfer.traps.forEach { trap -> trap.link(this) }
+  }
+
   override fun accept(runner: DataFlowRunner, state: DfaMemoryState, visitor: InstructionVisitor): Array<out DfaInstructionState> {
     return visitor.visitControlTransfer(this, runner, state)
   }
 
-  fun getPossibleTargetIndices() : List<Int> {
-    if (transfer == null) return emptyList()
-
-    val result = ArrayList(transfer.traps.flatMap(Trap::getPossibleTargets))
-    if (transfer.target is InstructionTransfer) {
-      result.add(transfer.target.offset.instructionOffset)
-    }
-    return result
-  }
+  fun getPossibleTargetIndices() = transfer.traps.flatMap(Trap::getPossibleTargets) + transfer.target.getPossibleTargets()
 
   fun getPossibleTargetInstructions(allInstructions: Array<Instruction>) = getPossibleTargetIndices().map { allInstructions[it] }
 
-  override fun toString() = if (transfer == null) "RET" else "TRANSFER $transfer"
+  override fun toString() = "TRANSFER $transfer [targets: ${getPossibleTargetIndices()}]"
 }
 
 sealed class Trap(val anchor: PsiElement) {
+  open fun link(instruction: ControlTransferInstruction) {}
+
   class TryCatch(tryStatement: PsiTryStatement, val clauses: LinkedHashMap<PsiCatchSection, ControlFlow.ControlFlowOffset>)
     : Trap(tryStatement) {
     override fun toString() = "TryCatch -> ${clauses.values}"
   }
-  class TryFinally(finallyBlock: PsiCodeBlock, val jumpOffset: ControlFlow.ControlFlowOffset): Trap(finallyBlock) {
-    override fun toString() = "TryFinally -> $jumpOffset"
+  abstract class EnterFinally(anchor: PsiElement, val jumpOffset: ControlFlow.ControlFlowOffset): Trap(anchor) {
+    internal val backLinks = ArrayList<ControlTransferInstruction>()
+
+    override fun link(instruction: ControlTransferInstruction) {
+      backLinks.add(instruction)
+    }
+
+    override fun toString() = "${javaClass.simpleName} -> $jumpOffset"
   }
-  class TwrFinally(resourceList: PsiResourceList, val jumpOffset: ControlFlow.ControlFlowOffset): Trap(resourceList) {
-    override fun toString() = "TwrFinally -> $jumpOffset"
-  }
+  class TryFinally(finallyBlock: PsiCodeBlock, jumpOffset: ControlFlow.ControlFlowOffset): EnterFinally(finallyBlock, jumpOffset)
+  class TwrFinally(resourceList: PsiResourceList, jumpOffset: ControlFlow.ControlFlowOffset): EnterFinally(resourceList, jumpOffset)
   class InsideFinally(finallyBlock: PsiElement): Trap(finallyBlock) {
     override fun toString() = "InsideFinally"
   }
@@ -83,8 +101,7 @@ sealed class Trap(val anchor: PsiElement) {
   internal fun getPossibleTargets(): Collection<Int> {
     return when (this) {
       is TryCatch -> clauses.values.map { it.instructionOffset }
-      is TryFinally -> listOf(jumpOffset.instructionOffset)
-      is TwrFinally -> listOf(jumpOffset.instructionOffset)
+      is EnterFinally -> listOf(jumpOffset.instructionOffset)
       else -> emptyList()
     }
   }
@@ -106,6 +123,7 @@ private class ControlTransferHandler(val state: DfaMemoryState, val runner: Data
         assert((state.pop() as DfaControlTransferValue).target === ReturnTransfer)
         iteration(tail)
       }
+      else -> throw InternalError("Impossible")
     }
   }
 

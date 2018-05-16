@@ -9,7 +9,6 @@ import com.intellij.execution.RunnerAndConfigurationSettings;
 import com.intellij.execution.configurations.RunConfigurationBase;
 import com.intellij.execution.impl.RunDialog;
 import com.intellij.icons.AllIcons;
-import com.intellij.ide.actions.CloseTabToolbarAction;
 import com.intellij.ide.util.treeView.AbstractTreeNode;
 import com.intellij.ide.util.treeView.NodeDescriptor;
 import com.intellij.openapi.Disposable;
@@ -162,12 +161,6 @@ public class CoverageView extends BorderLayoutPanel implements DataProvider, Dis
     installAutoScrollFromSource(actionGroup);
 
     actionGroup.add(ActionManager.getInstance().getAction("GenerateCoverageReport"));
-    actionGroup.add(new CloseTabToolbarAction() {
-      @Override
-      public void actionPerformed(AnActionEvent e) {
-        CoverageDataManager.getInstance(myProject).chooseSuitesBundle(null);
-      }
-    });
     return actionGroup;
   }
 

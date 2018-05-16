@@ -31,6 +31,7 @@ import org.apache.batik.transcoder.TranscoderException;
 import org.apache.batik.transcoder.TranscoderInput;
 import org.apache.batik.transcoder.TranscoderOutput;
 import org.apache.batik.transcoder.image.ImageTranscoder;
+import org.apache.batik.util.CleanerThread;
 import org.apache.batik.util.XMLResourceDescriptor;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -59,6 +60,10 @@ public class SVGLoader {
   private final TranscoderInput input;
   private final Size size;
   private BufferedImage img;
+
+  public static void loadBatikInternalObscureHackEternalReferenceCollectingThread() {
+    CleanerThread.getReferenceQueue();
+  }
 
   private static class Size {
     final float width;
