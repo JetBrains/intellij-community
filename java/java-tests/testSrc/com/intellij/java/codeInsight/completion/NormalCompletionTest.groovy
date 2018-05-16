@@ -1852,4 +1852,11 @@ class Bar {{
 
   void testSuggestGetInstanceMethodName() { doTest() }
 
+  void testTabOnNewInnerClass() {
+    configureByTestName()
+    lookup.currentItem = myFixture.lookupElements.find { it.lookupString.contains('Inner') }
+    myFixture.type('\t')
+    checkResult()
+  }
+
 }
