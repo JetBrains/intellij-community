@@ -250,17 +250,36 @@ public class MatchPatchPaths {
       if (best instanceof TextFilePatchInProgress) {
         //only for text patches
         int bestLines = -100;
+        boolean bestIsUnique = true;
+        AbstractFilePatchInProgress baseDirVariant = null;
+
         for (AbstractFilePatchInProgress variant : myVariants) {
           TextFilePatchInProgress current = (TextFilePatchInProgress)variant;
           if (myUseProjectRootAsPredefinedBase && variantMatchedToProjectDir(current)) {
             best = current;
+            bestIsUnique = true;
             break;
           }
+
           final int currentLines = getMatchingLines(current);
-          if (currentLines > bestLines) {
+          if (isBetterMatch(current, currentLines,
+                            best, bestLines)) {
             bestLines = currentLines;
             best = current;
+            bestIsUnique = true;
           }
+          else if (!isBetterMatch(best, bestLines,
+                                  current, currentLines)) {
+            bestIsUnique = false;
+          }
+
+          if (baseDirVariant == null && myBaseDir.equals(current.getBase())) {
+            baseDirVariant = current;
+          }
+        }
+
+        if (!bestIsUnique && baseDirVariant != null) {
+          best = baseDirVariant;
         }
         putSelected(result, myVariants, best);
       }
@@ -283,8 +302,14 @@ public class MatchPatchPaths {
     }
   }
 
+  private boolean isBetterMatch(@NotNull AbstractFilePatchInProgress match, int matchLines,
+                                @NotNull AbstractFilePatchInProgress best, int bestLines) {
+    return matchLines > bestLines ||
+           matchLines == bestLines && myBaseDir.equals(match.getBase());
+  }
+
   private boolean variantMatchedToProjectDir(@NotNull AbstractFilePatchInProgress variant) {
-    return variant.getCurrentStrip() == 0 && myProject.getBaseDir().equals(variant.getBase());
+    return variant.getCurrentStrip() == 0 && myBaseDir.equals(variant.getBase());
   }
 
   @Nullable
