@@ -1,22 +1,9 @@
-/*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package git4idea.commands;
 
 import com.intellij.execution.ExecutionException;
 import com.intellij.execution.configurations.GeneralCommandLine;
+import com.intellij.execution.configurations.LowPriorityProcessRunnerKt;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
@@ -56,6 +43,7 @@ public abstract class GitHandler {
   private static final Logger TIME_LOG = Logger.getInstance("#time." + GitHandler.class.getName());
 
   private final Project myProject;
+  @NotNull private final String myPathToExecutable;
   private final GitCommand myCommand;
 
   private boolean myPreValidateExecutable = true;
@@ -88,11 +76,27 @@ public abstract class GitHandler {
                        @NotNull File directory,
                        @NotNull GitCommand command,
                        @NotNull List<String> configParameters) {
+    this(project, directory, command, configParameters, false);
+  }
+
+  /**
+   * A constructor
+   *  @param project   a project
+   * @param directory a process directory
+   * @param command   a command to execute
+   * @param lowPriorityProcess
+   */
+  protected GitHandler(@NotNull Project project,
+                       @NotNull File directory,
+                       @NotNull GitCommand command,
+                       @NotNull List<String> configParameters,
+                       boolean lowPriorityProcess) {
     this(project,
          directory,
          GitExecutableManager.getInstance().getPathToGit(project),
          command,
-         configParameters);
+         configParameters,
+         lowPriorityProcess);
     myProgressParameterAllowed =
       GitVersionSpecialty.ABLE_TO_USE_PROGRESS_IN_REMOTE_COMMANDS.existsIn(project);
   }
@@ -108,31 +112,55 @@ public abstract class GitHandler {
                        @NotNull VirtualFile vcsRoot,
                        @NotNull GitCommand command,
                        @NotNull List<String> configParameters) {
-    this(project, VfsUtil.virtualToIoFile(vcsRoot), command, configParameters);
+    this(project, vcsRoot, command, configParameters, false);
+  }
+
+  /**
+   * A constructor
+   *  @param project a project
+   * @param vcsRoot a process directory
+   * @param command a command to execute
+   * @param lowPriorityProcess
+   */
+  protected GitHandler(@NotNull Project project,
+                       @NotNull VirtualFile vcsRoot,
+                       @NotNull GitCommand command,
+                       @NotNull List<String> configParameters,
+                       boolean lowPriorityProcess) {
+    this(project, VfsUtil.virtualToIoFile(vcsRoot), command, configParameters, lowPriorityProcess);
   }
 
   /**
    * A constructor for handler that can be run without project association
-   *
-   * @param project          optional project
+   *  @param project          optional project
    * @param directory        working directory
    * @param pathToExecutable path to git executable
    * @param command          git command to execute
    * @param configParameters list of config parameters to use for this git execution
+   * @param lowPriorityProcess if true, the git process is started with low priority
    */
   protected GitHandler(@Nullable Project project,
                        @NotNull File directory,
                        @NotNull String pathToExecutable,
                        @NotNull GitCommand command,
-                       @NotNull List<String> configParameters) {
+                       @NotNull List<String> configParameters,
+                       boolean lowPriorityProcess) {
     myProject = project;
     myVcs = project != null ? GitVcs.getInstance(project) : null;
+    myPathToExecutable = pathToExecutable;
     myCommand = command;
 
     myCommandLine = new GeneralCommandLine()
       .withWorkDirectory(directory)
-      .withExePath(pathToExecutable)
       .withCharset(CharsetToolkit.UTF8_CHARSET);
+
+    if (lowPriorityProcess) {
+      LowPriorityProcessRunnerKt.setupLowPriorityExecution(myCommandLine, pathToExecutable);
+    }
+    else {
+      myCommandLine.setExePath(pathToExecutable);
+    }
+
     for (String parameter : getConfigParameters(project, configParameters)) {
       myCommandLine.addParameters("-c", parameter);
     }
@@ -180,7 +208,7 @@ public abstract class GitHandler {
 
   @NotNull
   String getExecutablePath() {
-    return myCommandLine.getExePath();
+    return myPathToExecutable;
   }
 
   @NotNull
