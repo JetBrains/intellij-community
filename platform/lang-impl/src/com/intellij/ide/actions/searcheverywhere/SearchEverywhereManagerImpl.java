@@ -12,7 +12,6 @@ import com.intellij.ui.awt.RelativePoint;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 
-import javax.swing.*;
 import java.awt.*;
 import java.util.List;
 
@@ -45,10 +44,7 @@ public class SearchEverywhereManagerImpl implements SearchEverywhereManager {
                                 .setCancelOnClickOutside(true)
                                 .setRequestFocus(true)
                                 .setCancelKeyEnabled(false)
-                                .setCancelCallback(() -> {
-                                  mySearchEverywhereUI.setShown(false);
-                                  return true;
-                                })
+                                //.setCancelCallback(() -> true)
                                 .addUserData("SIMPLE_WINDOW")
                                 .createPopup();
       Disposer.register(myBalloon, mySearchEverywhereUI);
@@ -127,7 +123,6 @@ public class SearchEverywhereManagerImpl implements SearchEverywhereManager {
       }
     });
 
-    view.setShown(true);
     return view;
   }
 

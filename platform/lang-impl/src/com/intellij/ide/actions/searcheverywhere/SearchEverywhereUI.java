@@ -66,8 +66,6 @@ public class SearchEverywhereUI extends BorderLayoutPanel implements Disposable 
   private final List<SearchEverywhereContributor> allContributors;
   private final Project myProject;
 
-  private boolean myShown;
-
   private SETab mySelectedTab;
   private final JTextField mySearchField;
   private final JCheckBox myNonProjectCB;
@@ -170,12 +168,6 @@ public class SearchEverywhereUI extends BorderLayoutPanel implements Disposable 
 
   public String getSelectedContributorID() {
     return mySelectedTab.getID();
-  }
-
-  //todo get rid of this method #UX-1
-  public void setShown(boolean shown) {
-    myShown = shown;
-    //todo cancel all threads #UX-1
   }
 
   @Override
@@ -593,7 +585,6 @@ public class SearchEverywhereUI extends BorderLayoutPanel implements Disposable 
     protected void check() {
       myProgressIndicator.checkCanceled();
       if (myDone.isRejected()) throw new ProcessCanceledException();
-      if (!myShown) throw new ProcessCanceledException();
       assert myCalcThread == this : "There are two CalcThreads running before one of them was cancelled";
     }
 
@@ -605,10 +596,6 @@ public class SearchEverywhereUI extends BorderLayoutPanel implements Disposable 
     private void updateSuggestionsList() {
       check();
       SwingUtilities.invokeLater(() -> {
-        if (!myShown) {
-          return;
-        }
-
         myResultsList.revalidate();
         myResultsList.repaint();
         ScrollingUtil.ensureSelectionExists(myResultsList);
