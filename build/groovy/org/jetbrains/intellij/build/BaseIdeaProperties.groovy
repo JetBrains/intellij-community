@@ -45,8 +45,7 @@ abstract class BaseIdeaProperties extends ProductProperties {
     "intellij.vcs.git", "intellij.platform.remoteServers.git", "intellij.java.remoteServers.git", "intellij.vcs.svn", "intellij.vcs.hg", "intellij.vcs.github", "intellij.vcs.cvs",
     "intellij.groovy", "intellij.junit", "intellij.testng", "intellij.xpath", "intellij.xslt.debugger", "intellij.android.plugin", "intellij.javaFX.community",
     "intellij.java.i18n", "intellij.ant", "intellij.java.guiForms.designer", "intellij.java.byteCodeViewer", "intellij.java.coverage", "intellij.java.decompiler", "intellij.devkit", "intellij.eclipse",
-    "intellij.platform.langInjection", "intellij.java.langInjection", "intellij.xml.langInjection", "intellij.java.langInjection.jps", "intellij.java.debugger.streams", "intellij.android.smali",
-    "intellij.statsCollector"
+    "intellij.platform.langInjection", "intellij.java.langInjection", "intellij.xml.langInjection", "intellij.java.langInjection.jps", "intellij.java.debugger.streams", "intellij.android.smali"
   ]
 
   BaseIdeaProperties() {
