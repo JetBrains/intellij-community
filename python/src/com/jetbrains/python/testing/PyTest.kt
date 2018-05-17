@@ -58,10 +58,17 @@ class PyTestConfiguration(project: Project, factory: PyTestFactory)
 
   override fun isFrameworkInstalled() = VFSTestFrameworkListener.getInstance().isTestFrameworkInstalled(sdk, PyNames.PY_TEST)
 
+  override fun setMetaInfo(metaInfo: String) {
+    keywords = metaInfo
+  }
+
+  override fun isSameAsLocation(target: ConfigurationTarget, metainfo: String?): Boolean {
+    return super.isSameAsLocation(target, metainfo) && metainfo == keywords
+  }
 }
 
 object PyTestFactory : PyAbstractTestFactory<PyTestConfiguration>() {
   override fun createTemplateConfiguration(project: Project) = PyTestConfiguration(project, this)
 
-  override fun getName(): String =  PyTestFrameworkService.getSdkReadableNameByFramework(PyNames.PY_TEST)
+  override fun getName(): String = PyTestFrameworkService.getSdkReadableNameByFramework(PyNames.PY_TEST)
 }
