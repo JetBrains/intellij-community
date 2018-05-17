@@ -2,6 +2,7 @@
 package com.intellij.debugger.ui.breakpoints
 
 import com.intellij.debugger.engine.JavaDebugProcess
+import com.intellij.debugger.engine.JavaStackFrame
 import com.intellij.debugger.engine.SuspendContextImpl
 import com.intellij.debugger.engine.evaluation.EvaluateException
 import com.intellij.debugger.engine.events.DebuggerContextCommandImpl
@@ -98,24 +99,26 @@ internal abstract class BreakpointIntentionAction(protected val myBreakpoint: XB
       val process = currentSession?.debugProcess
       if (process is JavaDebugProcess) {
         val res = ArrayList<AnAction>()
-        val debugProcess = process.debuggerSession.process
-        debugProcess.managerThread.invokeAndWait(object : DebuggerContextCommandImpl(debugProcess.debuggerContext) {
 
-          override fun getPriority() = PrioritizedTask.Priority.HIGH
+        val currentStackFrame = currentSession.currentStackFrame
+        if (currentStackFrame is JavaStackFrame) {
+          currentStackFrame.descriptor.typeName?.let {
+            res.add(AddClassFilter(breakpoint, it))
+            res.add(AddClassNotFilter(breakpoint, it))
+          }
 
-          override fun threadAction(suspendContext: SuspendContextImpl) {
-            val frameProxy = suspendContext.frameProxy
+          currentStackFrame.descriptor.thisObject?.uniqueID()?.let {
+            res.add(AddInstanceFilter(breakpoint, it))
+          }
+        }
 
-            frameProxy?.location()?.declaringType()?.name()?.let {
-              res.add(AddClassFilter(breakpoint, it))
-              res.add(AddClassNotFilter(breakpoint, it))
-            }
+        if (Registry.`is`("debugger.breakpoints.caller.filter")) {
+          val debugProcess = process.debuggerSession.process
+          debugProcess.managerThread.invokeAndWait(object : DebuggerContextCommandImpl(debugProcess.debuggerContext) {
 
-            frameProxy?.thisObject()?.uniqueID()?.let {
-              res.add(AddInstanceFilter(breakpoint, it))
-            }
+            override fun getPriority() = PrioritizedTask.Priority.HIGH
 
-            if (Registry.`is`("debugger.breakpoints.caller.filter")) {
+            override fun threadAction(suspendContext: SuspendContextImpl) {
               try {
                 val thread = suspendContext.thread
                 if (thread != null && thread.frameCount() > 1) {
@@ -133,10 +136,9 @@ internal abstract class BreakpointIntentionAction(protected val myBreakpoint: XB
               catch (e: EvaluateException) {
                 LineBreakpoint.LOG.warn(e)
               }
-
             }
-          }
-        })
+          })
+        }
         return res
       }
       return emptyList()

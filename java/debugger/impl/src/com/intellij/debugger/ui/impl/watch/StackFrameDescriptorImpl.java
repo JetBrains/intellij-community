@@ -31,6 +31,7 @@ public class StackFrameDescriptorImpl extends NodeDescriptorImpl implements Stac
   private final StackFrameProxyImpl myFrame;
   private int myUiIndex;
   private String myName = null;
+  private String myTypeName = null;
   private Location myLocation;
   private MethodsTracker.MethodOccurrence myMethodOccurrence;
   private boolean myIsSynthetic;
@@ -121,6 +122,11 @@ public class StackFrameDescriptorImpl extends NodeDescriptorImpl implements Stac
     return myName;
   }
 
+  @Nullable
+  public String getTypeName() {
+    return myTypeName;
+  }
+
   @Override
   protected String calcRepresentation(EvaluationContextImpl context, DescriptorLabelListener descriptorLabelListener) throws EvaluateException {
     DebuggerManagerThreadImpl.assertIsManagerThread();
@@ -142,7 +148,8 @@ public class StackFrameDescriptorImpl extends NodeDescriptorImpl implements Stac
       String name;
       try {
         ReferenceType refType = myLocation.declaringType();
-        name = refType != null ? refType.name() : null;
+        myTypeName = refType != null ? refType.name() : null;
+        name = myTypeName;
       }
       catch (InternalError e) {
         name = e.toString();
