@@ -22,8 +22,10 @@ import com.intellij.openapi.module.EffectiveLanguageLevelUtil;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.roots.ExternalLibraryDescriptor;
 import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.util.ThreeState;
+import com.intellij.util.containers.ContainerUtil;
 import org.intellij.lang.annotations.Flow;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -45,7 +47,7 @@ public class JetBrainsAnnotationsExternalLibraryResolver extends ExternalLibrary
       if (annotationsJar.exists()) {
         return Collections.singletonList(FileUtil.toSystemIndependentName(annotationsJar.getAbsolutePath()));
       }
-      return getPathsToAnnotationsDirectoriesInDevelopmentMode("intellij.platform.annotations.java5");
+      return ContainerUtil.createMaybeSingletonList(getPathToJava5AnnotationsJarInDevelopmentMode());
     }
   };
 
@@ -57,16 +59,23 @@ public class JetBrainsAnnotationsExternalLibraryResolver extends ExternalLibrary
       if (annotationsJar.exists()) {
         return Collections.singletonList(FileUtil.toSystemIndependentName(annotationsJar.getAbsolutePath()));
       }
-      return getPathsToAnnotationsDirectoriesInDevelopmentMode("intellij.platform.annotations");
+      String annotationJava5JarPath = getPathToJava5AnnotationsJarInDevelopmentMode();
+      if (annotationJava5JarPath == null) return Collections.emptyList();
+      String annotationsJava8JarPath = StringUtil.replace(annotationJava5JarPath, "annotations-java5", "annotations");
+      if (!new File(annotationsJava8JarPath).exists()) {
+        return Collections.emptyList();
+      }
+      return Collections.singletonList(annotationsJava8JarPath);
     }
   };
 
-  @NotNull
-  private static List<String> getPathsToAnnotationsDirectoriesInDevelopmentMode(final String moduleName) {
-    final String annotationsRoot = PathManager.getJarPathForClass(Flow.class);
-    if (annotationsRoot == null) return Collections.emptyList();
-    return Arrays.asList(annotationsRoot, FileUtil.toSystemIndependentName(new File(new File(annotationsRoot).getParentFile(),
-                                                                                    moduleName).getAbsolutePath()));
+  @Nullable
+  private static String getPathToJava5AnnotationsJarInDevelopmentMode() {
+    String annotationsRoot = PathManager.getJarPathForClass(Flow.class);
+    if (annotationsRoot == null) return null;
+    File annotationsJar = new File(annotationsRoot);
+    if (annotationsJar.isFile()) return FileUtil.toSystemIndependentName(annotationsJar.getAbsolutePath());
+    return null;
   }
 
   @Nullable
