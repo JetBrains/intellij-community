@@ -1,23 +1,10 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 @file:JvmName("CredentialPromptDialog")
 package com.intellij.credentialStore
 
 import com.intellij.CommonBundle
 import com.intellij.ide.passwordSafe.PasswordSafe
+import com.intellij.ide.util.PropertiesComponent
 import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.application.invokeAndWaitIfNeed
 import com.intellij.openapi.project.Project
@@ -26,6 +13,7 @@ import com.intellij.ui.components.CheckBox
 import com.intellij.ui.components.dialog
 import com.intellij.ui.layout.*
 import com.intellij.util.text.nullize
+import javax.swing.JCheckBox
 import javax.swing.JPasswordField
 
 /**
@@ -43,7 +31,21 @@ fun askPassword(project: Project?,
                 attributes: CredentialAttributes,
                 resetPassword: Boolean = false,
                 error: String? = null): String? {
-  return askCredentials(project, dialogTitle, passwordFieldLabel, attributes, resetPassword = resetPassword, error = error)?.credentials?.getPasswordAsString()?.nullize() 
+  return askCredentials(project, dialogTitle, passwordFieldLabel, attributes, resetPassword = resetPassword, error = error)?.credentials?.getPasswordAsString()?.nullize()
+}
+
+internal object RememberCheckBoxState {
+  private const val key = "checkbox.remember.password"
+  private const val defaultValue = true
+
+  val isSelected: Boolean
+    get() {
+      return PropertiesComponent.getInstance().getBoolean(key, defaultValue)
+    }
+
+  fun update(component: JCheckBox) {
+    PropertiesComponent.getInstance().setValue(key, component.isSelected, defaultValue)
+  }
 }
 
 @JvmOverloads
@@ -51,7 +53,7 @@ fun askCredentials(project: Project?,
                    dialogTitle: String,
                    passwordFieldLabel: String,
                    attributes: CredentialAttributes,
-                   saveOnSuccess: Boolean = true,
+                   isSaveOnOk: Boolean = true,
                    checkExistingBeforeDialog: Boolean = true,
                    resetPassword: Boolean = false,
                    error: String? = null): CredentialRequestResult? {
@@ -72,7 +74,7 @@ fun askCredentials(project: Project?,
     }
     else {
       CheckBox(CommonBundle.message("checkbox.remember.password"),
-               selected = true,
+               selected = RememberCheckBoxState.isSelected,
                toolTip = "The password will be stored between application sessions.")
     }
 
@@ -85,18 +87,21 @@ fun askCredentials(project: Project?,
     }
 
     AppIcon.getInstance().requestAttention(project, true)
-    if (dialog(dialogTitle, project = project, panel = panel, focusedComponent = passwordField, errorText = error).showAndGet()) {
-      val isMemoryOnly = store.isMemoryOnly || !rememberCheckBox!!.isSelected
-      val credentials = Credentials(attributes.userName, passwordField.password.nullize())
-      if (saveOnSuccess) {
-        store.set(attributes, credentials, isMemoryOnly)
-        credentials.getPasswordAsString()
-      }
-      return@invokeAndWaitIfNeed CredentialRequestResult(credentials, isMemoryOnly, false)
+    if (!dialog(dialogTitle, project = project, panel = panel, focusedComponent = passwordField, errorText = error).showAndGet()) {
+      return@invokeAndWaitIfNeed null
     }
-    else {
-      null
+
+    if (rememberCheckBox != null) {
+      RememberCheckBoxState.update(rememberCheckBox)
     }
+
+    val isMemoryOnly = store.isMemoryOnly || !rememberCheckBox!!.isSelected
+    val credentials = Credentials(attributes.userName, passwordField.password.nullize())
+    if (isSaveOnOk) {
+      store.set(attributes, credentials, isMemoryOnly)
+      credentials.getPasswordAsString()
+    }
+    return@invokeAndWaitIfNeed CredentialRequestResult(credentials, isMemoryOnly, false)
   }
 }
 
