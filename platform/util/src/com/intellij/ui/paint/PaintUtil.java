@@ -48,6 +48,13 @@ public class PaintUtil {
       public int round(double value) {
         return (int)Math.round(value);
       }
+    },
+    /** Rounds with flooring .5 value */
+    ROUND_FLOOR_BIAS {
+      @Override
+      public int round(double value) {
+        return (int)Math.ceil(value - 0.5);
+      }
     };
 
     /**
