@@ -551,6 +551,14 @@ catch (ClassNotFoundException | <warning descr="Exception 'java.lang.NullPointer
 ''')
   }
 
+  void testTryWithoutCatchFinally() { doTest() }
+
+  void testVariableDeclarationTypeParameters() { doTest() }
+
+  void testAnnotationFieldWithoutType() { doTest() }
+
+  void testVariableDeclarationDuplicateModifiers() { doTest() }
+
   void testCompileStatic() {
     myFixture.addClass('''\
 package groovy.transform;

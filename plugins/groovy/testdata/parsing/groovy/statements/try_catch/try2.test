@@ -73,5 +73,3 @@ Groovy script
         PsiElement(})('}')
       PsiErrorElement:';', <statement>, new line or '}' expected
         <empty list>
-    PsiErrorElement:'catch' or 'finally' expected
-      <empty list>
