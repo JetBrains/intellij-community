@@ -150,21 +150,20 @@ public class ZipUtil {
     while (entries.hasMoreElements()) {
       ZipEntry entry = (ZipEntry)entries.nextElement();
       final File file = createFileForEntry(outputDir, entry);
-      if (file != null && (filenameFilter == null || filenameFilter.accept(file.getParentFile(), file.getName()))) {
+      if (filenameFilter == null || filenameFilter.accept(file.getParentFile(), file.getName())) {
         doExtractEntry(entry, zipFile.getInputStream(entry), file, overwrite);
       }
     }
   }
 
-  @Nullable
-  private static File createFileForEntry(@NotNull File outputDir, @NotNull ZipEntry entry) {
+  @NotNull
+  private static File createFileForEntry(@NotNull File outputDir, @NotNull ZipEntry entry) throws IOException {
     String name = entry.getName();
     File result = new File(outputDir, name);
     // we cannot use Path, but File doesn't provide Path.normalize,
     // so, our FileUtil.toCanonicalPath is used to normalized (isAncestor uses it under the hood)
     if (name.contains("..") && !FileUtil.isAncestor(outputDir, result, true)) {
-      LOG.warn("Skip invalid entry: " + name);
-      return null;
+      throw new IOException("Invalid entry name: " + name);
     }
     return result;
   }
@@ -175,9 +174,7 @@ public class ZipUtil {
 
   public static void extractEntry(@NotNull ZipEntry entry, @NotNull InputStream inputStream, @NotNull File outputDir, boolean isOverwrite) throws IOException {
     File outputFile = createFileForEntry(outputDir, entry);
-    if (outputFile != null) {
-      doExtractEntry(entry, inputStream, outputFile, isOverwrite);
-    }
+    doExtractEntry(entry, inputStream, outputFile, isOverwrite);
   }
 
   private static void doExtractEntry(@NotNull ZipEntry entry, @NotNull InputStream inputStream, @NotNull File outputFile, boolean isOverwrite) throws IOException {
