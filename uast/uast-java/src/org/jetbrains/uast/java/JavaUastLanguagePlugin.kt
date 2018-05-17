@@ -85,15 +85,12 @@ class JavaUastLanguagePlugin : UastLanguagePlugin {
   }
 
   override fun convertElement(element: PsiElement, parent: UElement?, requiredType: Class<out UElement>?): UElement? {
-    if (element !is PsiElement) return null
     return convertDeclaration(element, parent, requiredType) ?:
            JavaConverter.convertPsiElement(element, parent, requiredType)
   }
 
   override fun convertElementWithParent(element: PsiElement, requiredType: Class<out UElement>?): UElement? {
-    if (element !is PsiElement) return null
     if (element is PsiJavaFile) return requiredType.el<UFile> { JavaUFile(element, this) }
-    JavaConverter.getCached<UElement>(element)?.let { return it }
 
     return convertDeclaration(element, null, requiredType) ?:
            JavaConverter.convertPsiElement(element, null, requiredType)
@@ -106,10 +103,6 @@ class JavaUastLanguagePlugin : UastLanguagePlugin {
       return fun(): UElement? {
         return ctor(element as P, givenParent)
       }
-    }
-
-    element.getUserData(JAVA_CACHED_UELEMENT_KEY)?.let { ref ->
-      ref.get()?.let { return it }
     }
 
     return with(requiredType) {
@@ -143,13 +136,7 @@ internal inline fun <reified ActualT : UElement> Class<out UElement>?.expr(f: ()
   return if (this == null || isAssignableFrom(ActualT::class.java)) f() else null
 }
 
-private fun UElement?.toCallback() = if (this != null) fun(): UElement? { return this } else null
-
 internal object JavaConverter {
-  internal inline fun <reified T : UElement> getCached(element: PsiElement): T? {
-    return null
-    //todo
-  }
 
   internal tailrec fun unwrapElements(element: PsiElement?): PsiElement? = when (element) {
     is PsiExpressionStatement -> unwrapElements(element.parent)
@@ -164,7 +151,6 @@ internal object JavaConverter {
   internal fun convertPsiElement(el: PsiElement,
                                  givenParent: UElement?,
                                  requiredType: Class<out UElement>? = null): UElement? {
-    getCached<UElement>(el)?.let { return it }
 
     fun <P : PsiElement> build(ctor: (P, UElement?) -> UElement): () -> UElement? {
       return fun(): UElement? {
@@ -192,8 +178,7 @@ internal object JavaConverter {
     }
   }
 
-  internal fun convertBlock(block: PsiCodeBlock, parent: UElement?): UBlockExpression =
-    getCached(block) ?: JavaUCodeBlockExpression(block, parent)
+  internal fun convertBlock(block: PsiCodeBlock, parent: UElement?): UBlockExpression = JavaUCodeBlockExpression(block, parent)
 
   internal fun convertReference(reference: PsiJavaCodeReferenceElement,
                                 givenParent: UElement?,
@@ -212,8 +197,6 @@ internal object JavaConverter {
   internal fun convertExpression(el: PsiExpression,
                                  givenParent: UElement?,
                                  requiredType: Class<out UElement>? = null): UExpression? {
-    getCached<UExpression>(el)?.let { return it }
-
     fun <P : PsiElement> build(ctor: (P, UElement?) -> UExpression): () -> UExpression? {
       return fun(): UExpression? {
         return ctor(el as P, givenParent)
@@ -275,8 +258,6 @@ internal object JavaConverter {
   internal fun convertStatement(el: PsiStatement,
                                 givenParent: UElement?,
                                 requiredType: Class<out UElement>? = null): UExpression? {
-    getCached<UExpression>(el)?.let { return it }
-
     fun <P : PsiElement> build(ctor: (P, UElement?) -> UExpression): () -> UExpression? {
       return fun(): UExpression? {
         return ctor(el as P, givenParent)
