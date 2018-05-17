@@ -1,3 +1,4 @@
+# NB: posixpath.pyi, ntpath.pyi, and macpath.pyi must remain consistent!
 # Stubs for os.path
 # Ron Murawski <ron@horizonchess.com>
 

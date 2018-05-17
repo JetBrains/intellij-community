@@ -576,7 +576,7 @@ class socket:
 
 
 # ----- functions -----
-def create_connection(address: Tuple[str, int],
+def create_connection(address: Tuple[Optional[str], int],
                       timeout: float = ...,
                       source_address: Tuple[str, int] = ...) -> socket: ...
 

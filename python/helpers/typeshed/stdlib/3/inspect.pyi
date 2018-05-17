@@ -153,8 +153,8 @@ class Parameter:
 
 class BoundArguments:
     arguments = ...  # type: MutableMapping[str, Any]
-    args = ...  # Tuple[Any, ...]
-    kwargs = ...  # Dict[str, Any]
+    args = ...  # type: Tuple[Any, ...]
+    kwargs = ...  # type: Dict[str, Any]
     signature = ...  # type: Signature
 
     # Python 3.5+

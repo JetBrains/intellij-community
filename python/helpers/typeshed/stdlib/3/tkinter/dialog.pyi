@@ -1,5 +1,5 @@
-from tkinter import Widget
 from typing import Any, Mapping, Optional
+from tkinter import Widget
 
 DIALOG_ICON: str
 
