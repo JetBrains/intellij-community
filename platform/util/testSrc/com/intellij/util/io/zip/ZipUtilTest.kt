@@ -8,6 +8,7 @@ import com.intellij.util.io.ZipUtil
 import com.intellij.util.io.delete
 import org.junit.Test
 import java.io.File
+import java.io.IOException
 import java.nio.file.Paths
 
 class ZipUtilTest {
@@ -18,7 +19,14 @@ class ZipUtilTest {
 
     val tempDirectory = FileUtilRt.createTempDirectory("doNotGoOutside", null)
     try {
-      ZipUtil.extract(File(getTestDataPath(), "zip-slip.zip"), tempDirectory, null);
+      var errorThrown = false
+      try {
+        ZipUtil.extract(File(getTestDataPath(), "zip-slip.zip"), tempDirectory, null);
+      }
+      catch (e: IOException) {
+        errorThrown = true
+      }
+      assertThat(errorThrown).isTrue()
       assertThat(evilFile).doesNotExist()
     }
     finally {
