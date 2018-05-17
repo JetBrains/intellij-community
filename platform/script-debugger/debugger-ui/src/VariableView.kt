@@ -226,7 +226,7 @@ class VariableView(override val variableName: String, private val variable: Vari
 
     if (functionValue != null) {
       // we pass context as variable context instead of this variable value - we cannot watch function scopes variables, so, this variable name doesn't matter
-      node.addChildren(XValueChildrenList.bottomGroup(FunctionScopesValueGroup(functionValue, context)), isLastChildren)
+      node.addChildren(XValueChildrenList.bottomGroup(FunctionScopesValueGroup(functionValue, context)), isLastChildren && remainingChildren == null)
     }
   }
 

@@ -56,7 +56,7 @@ import java.util.Set;
 
 public class DeepComparator implements VcsLogHighlighter, Disposable {
   private static final Logger LOG = Logger.getInstance(DeepComparator.class);
-  public static final String HIGHLIGHTING_CANCELLED = "Highlighting Non-Picked Commits Cancelled";
+  private static final String HIGHLIGHTING_CANCELLED = "Highlighting of non-picked commits has been cancelled";
 
   @NotNull private final Project myProject;
   @NotNull private final GitRepositoryManager myRepositoryManager;

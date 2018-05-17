@@ -100,6 +100,7 @@ public class ThreadTracker {
     wellKnownOffenders.add("VM Periodic Task Thread");
     wellKnownOffenders.add("VM Thread");
     wellKnownOffenders.add("YJPAgent-Telemetry");
+    wellKnownOffenders.add("Batik CleanerThread");
 
     Application application = ApplicationManager.getApplication();
     // LeakHunter might be accessed first time after Application is already disposed (during test framework shutdown).    

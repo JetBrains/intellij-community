@@ -977,6 +977,7 @@ public class ActionToolbarImpl extends JPanel implements ActionToolbar, QuickAct
 
     private MySeparator(String text) {
       myText = text;
+      setFont(JBUI.Fonts.toolbarSmallComboBoxFont());
     }
 
     @Override

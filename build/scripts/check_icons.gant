@@ -48,7 +48,7 @@ target('default': 'Check icons in repositories') {
   }
   def skipDirsPattern = System.properties."$patternArg"?.toString() ?: null
   try {
-    Class.forName('org.jetbrains.intellij.build.images.sync.CheckAndSyncIconsKt').checkAndSyncIcons(
+    Class.forName('org.jetbrains.intellij.build.images.sync.CheckIconsKt').checkIcons(
       repos[0], repos[1], skipDirsPattern, Boolean.parseBoolean(System.properties[sync] as String),
       { String msg -> msg.split(/\n/).each { context.messages.info(it) } },
       { String msg -> context.messages.buildStatus(msg); System.exit(1) }

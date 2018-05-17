@@ -20,6 +20,7 @@ import com.intellij.codeInsight.ExpressionUtil;
 import com.intellij.codeInsight.NullableNotNullManager;
 import com.intellij.codeInsight.PsiEquivalenceUtil;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.*;
 import com.intellij.psi.search.searches.ReferencesSearch;
 import com.intellij.psi.tree.IElementType;
@@ -1065,7 +1066,7 @@ public class ExpressionUtils {
   }
 
   @Contract("null, _ -> false")
-  public static boolean isMatchingChildAlwaysExecuted(@Nullable PsiExpression root, @NotNull Predicate<PsiExpression> matcher) {
+  public static boolean isMatchingChildAlwaysExecuted(@Nullable PsiExpression root, @NotNull Predicate<? super PsiExpression> matcher) {
     if (root == null) return false;
     AtomicBoolean result = new AtomicBoolean(false);
     root.accept(new JavaRecursiveElementWalkingVisitor() {
@@ -1238,5 +1239,85 @@ public class ExpressionUtils {
       if (e instanceof PsiArrayAccessExpression) return false;
       return true;
     });
+  }
+
+  /**
+   * Tries to find the range inside the expression (relative to its start) which represents the given substring
+   * assuming the expression evaluates to String.
+   *
+   * @param expression expression to find the range in
+   * @param from start offset of substring in the String value of the expression
+   * @param to end offset of substring in the String value of the expression
+   * @return found range or null if cannot be found
+   */
+  @Nullable
+  @Contract(value = "null, _, _ -> null", pure = true)
+  public static TextRange findStringLiteralRange(PsiExpression expression, int from, int to) {
+    if (to < 0 || from > to) return null;
+    if (expression == null || !TypeUtils.isJavaLangString(expression.getType())) return null;
+    if (expression instanceof PsiLiteralExpression) {
+      String value = tryCast(((PsiLiteralExpression)expression).getValue(), String.class);
+      if (value == null || value.length() < from || value.length() < to) return null;
+      String text = expression.getText();
+      if (text.startsWith("`")) {
+        // raw-string
+        return new TextRange(1 + from, 1 + to);
+      }
+      if (text.startsWith("\"")) {
+        int curOffset = 0;
+        int mappedFrom = -1, mappedTo = -1;
+        int end = text.length() - 1;
+        int i = 1;
+        while (i <= end) {
+          if (curOffset == from) {
+            mappedFrom = i;
+          }
+          if (curOffset == to) {
+            mappedTo = i;
+            break;
+          }
+          if (i == end) break;
+          char c = text.charAt(i);
+          if (c == '\\') {
+            i++;
+            if (i == end) return null;
+            // like \u0020
+            if (text.charAt(i) == 'u') {
+              while (i < end && text.charAt(i) == 'u') i++;
+              i += 3;
+            }
+          }
+          curOffset++;
+          i++;
+        }
+        if (mappedFrom >= 0 && mappedTo >= 0) {
+          return new TextRange(mappedFrom, mappedTo);
+        }
+      }
+      return null;
+    }
+    if (expression instanceof PsiParenthesizedExpression) {
+      PsiExpression operand = ((PsiParenthesizedExpression)expression).getExpression();
+      TextRange range = findStringLiteralRange(operand, from, to);
+      return range == null ? null : range.shiftRight(operand.getStartOffsetInParent());
+    }
+    if (expression instanceof PsiPolyadicExpression) {
+      PsiPolyadicExpression concatenation = (PsiPolyadicExpression)expression;
+      if (concatenation.getOperationTokenType() != JavaTokenType.PLUS) return null;
+      PsiExpression[] operands = concatenation.getOperands();
+      for (PsiExpression operand : operands) {
+        Object constantValue = computeConstantExpression(operand);
+        if (constantValue == null) return null;
+        String stringValue = constantValue.toString();
+        if (from < stringValue.length()) {
+          if (to > stringValue.length()) return null;
+          TextRange range = findStringLiteralRange(operand, from, to);
+          return range == null ? null : range.shiftRight(operand.getStartOffsetInParent());
+        }
+        from -= stringValue.length();
+        to -= stringValue.length();
+      }
+    }
+    return null;
   }
 }

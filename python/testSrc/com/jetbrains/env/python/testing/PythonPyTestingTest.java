@@ -151,7 +151,7 @@ public final class PythonPyTestingTest extends PyEnvTestCase {
                               ".test_pytest_parametrized\n" +
                               "..test_eval\n" +
                               "...(three plus file-8)(-)\n" +
-                              "...((2)+(4)-6)(+)\n" +
+                              ((runner.getCurrentRerunStep() == 0) ? "...((2)+(4)-6)(+)\n" : "") +
                               "...( six times nine_-42)(-)\n", runner.getFormattedTestTree());
         }
       });
@@ -625,10 +625,8 @@ public final class PythonPyTestingTest extends PyEnvTestCase {
                                       @NotNull final String stderr,
                                       @NotNull final String all) {
         if (runner.getCurrentRerunStep() > 0) {
-          // We rerun all tests, since running parametrized tests is broken until
-          // https://github.com/JetBrains/teamcity-messages/issues/121
-          assertEquals(runner.getFormattedTestTree(), 7, runner.getAllTestsCount());
-          assertEquals(runner.getFormattedTestTree(), 3, runner.getPassedTestsCount());
+          assertEquals(runner.getFormattedTestTree(), 4, runner.getAllTestsCount());
+          assertEquals(runner.getFormattedTestTree(), 0, runner.getPassedTestsCount());
           assertEquals(runner.getFormattedTestTree(), 4, runner.getFailedTestsCount());
           return;
         }

@@ -16,13 +16,10 @@
 package org.jetbrains.jps.builders.java
 
 import org.jetbrains.jps.incremental.BuilderService
-import org.jetbrains.jps.incremental.ModuleLevelBuilder
-
-import java.util.Collections
 
 /**
  * @author nik
  */
-class MockPackageFacadeBuilderService : BuilderService() {
-  override fun createModuleLevelBuilders() = listOf(MockPackageFacadeGenerator())
+class TestBuildersService : BuilderService() {
+  override fun createModuleLevelBuilders() = listOf(MockPackageFacadeGenerator(), SkipMarkingSomeFilesAsDirtyBuilder())
 }

@@ -101,9 +101,10 @@ public abstract class TestDiscoveryConfigurationProducer extends JavaRunConfigur
     return detectTargetModule(survivedModules, project);
   }
 
-  public abstract boolean isApplicable(PsiMethod[] methods);
+  public abstract boolean isApplicable(@NotNull PsiMethod method);
 
-  public abstract RunProfileState createProfile(PsiMethod[] testMethods,
+  @NotNull
+  public abstract RunProfileState createProfile(@NotNull PsiMethod[] testMethods,
                                                 Module module,
                                                 RunConfiguration configuration,
                                                 ExecutionEnvironment environment);

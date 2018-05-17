@@ -19,6 +19,7 @@ import com.intellij.codeInsight.ChangeContextUtil;
 import com.intellij.codeInsight.generation.OverrideImplementUtil;
 import com.intellij.codeInsight.generation.PsiGenerationInfo;
 import com.intellij.codeInspection.ProblemDescriptor;
+import com.intellij.codeInspection.ProblemHighlightType;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
@@ -185,7 +186,12 @@ public class LambdaCanBeReplacedWithAnonymousInspection extends BaseInspection {
         PsiParameterList parameterList = lambdaExpression.getParameterList();
         PsiElement nextElement = PsiTreeUtil.skipWhitespacesAndCommentsForward(parameterList);
         if (PsiUtil.isJavaToken(nextElement, JavaTokenType.ARROW)) {
-          registerErrorAtRange(parameterList, nextElement);
+          if (PsiUtil.isLanguageLevel8OrHigher(nextElement)) {
+            registerErrorAtRange(parameterList, nextElement);
+          }
+          else {
+            registerError(lambdaExpression, ProblemHighlightType.ERROR);
+          }
         }
         else {
           registerError(parameterList);
@@ -246,7 +252,7 @@ public class LambdaCanBeReplacedWithAnonymousInspection extends BaseInspection {
     @Override
     protected void doFix(Project project, ProblemDescriptor descriptor) {
       final PsiElement element = descriptor.getStartElement();
-      final PsiElement parent = element.getParent();
+      final PsiElement parent = element instanceof PsiLambdaExpression ? element : element.getParent();
       if (parent instanceof PsiLambdaExpression) {
         LambdaCanBeReplacedWithAnonymousInspection.doFix(project, (PsiLambdaExpression)parent);
       }

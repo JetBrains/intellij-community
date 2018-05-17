@@ -38,6 +38,7 @@ import javax.swing.*;
 import javax.swing.Timer;
 import java.awt.event.ActionEvent;
 import java.awt.event.InputEvent;
+import java.awt.event.MouseWheelEvent;
 import java.util.*;
 
 public class TouchBarsManager {
@@ -173,6 +174,11 @@ public class TouchBarsManager {
 
   public static void onInputEvent(InputEvent e) {
     if (!isTouchBarAvailable())
+      return;
+
+    // NOTE: skip wheel-events, because scrolling by touchpad produces mouse-wheel events with pressed modifier, expamle:
+    // MouseWheelEvent[MOUSE_WHEEL,(890,571),absolute(0,0),button=0,modifiers=⇧,extModifiers=⇧,clickCount=0,scrollType=WHEEL_UNIT_SCROLL,scrollAmount=1,wheelRotation=0,preciseWheelRotation=0.1] on frame0
+    if (e instanceof MouseWheelEvent)
       return;
 
     if (ourCurrentKeyMask != e.getModifiersEx()) {

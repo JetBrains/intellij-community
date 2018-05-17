@@ -12,8 +12,10 @@ internal fun String.splitWithSpace(): List<String> = this.split(" ").filter { it
 
 internal fun String.splitWithTab(): List<String> = this.split("\t".toRegex())
 
-internal fun String.execute(workingDir: File?): String {
-  log("Executing command $this")
+internal fun String.execute(workingDir: String): String = execute(File(workingDir))
+
+internal fun String.execute(workingDir: File?, silent: Boolean = false): String {
+  if (!silent) log("Executing command $this")
   val start = System.currentTimeMillis()
   return try {
     val process = ProcessBuilder(*this.splitWithSpace().toTypedArray())
@@ -26,6 +28,18 @@ internal fun String.execute(workingDir: File?): String {
     output
   }
   finally {
-    log("Took ${System.currentTimeMillis() - start} ms")
+    if (!silent) log("Took ${System.currentTimeMillis() - start} ms")
   }
+}
+
+internal fun <T> List<T>.split(eachSize: Int): List<List<T>> {
+  if (this.size < eachSize) return listOf(this)
+  val result = mutableListOf<List<T>>()
+  var start = 0
+  while (start < this.size) {
+    val sub = this.subList(start, Math.min(start + eachSize, this.size))
+    if (!sub.isEmpty()) result += sub
+    start += eachSize
+  }
+  return result
 }

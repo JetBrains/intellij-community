@@ -32,6 +32,7 @@ import com.intellij.refactoring.changeSignature.ParameterInfoImpl;
 import com.intellij.refactoring.changeSignature.ThrownExceptionInfo;
 import com.intellij.refactoring.changeSignature.inCallers.JavaCallerChooser;
 import com.intellij.refactoring.util.CanonicalTypes;
+import com.intellij.refactoring.util.LambdaRefactoringUtil;
 import com.intellij.refactoring.util.RefactoringUtil;
 import com.intellij.refactoring.util.javadoc.MethodJavaDocHelper;
 import com.intellij.usageView.UsageInfo;
@@ -85,12 +86,10 @@ public class MakeMethodStaticProcessor extends MakeMethodOrClassStaticProcessor<
   @Override
   protected MultiMap<PsiElement, String> getConflictDescriptions(UsageInfo[] usages) {
     MultiMap<PsiElement, String> descriptions = super.getConflictDescriptions(usages);
-    if (mySettings.isMakeClassParameter() || mySettings.isMakeFieldParameters()) {
-      for (UsageInfo usage : usages) {
-        PsiElement element = usage.getElement();
-        if (element instanceof PsiMethodReferenceExpression) {
-          descriptions.putValue(element, "Method reference will be corrupted");
-        }
+    for (UsageInfo usage : usages) {
+      PsiElement element = usage.getElement();
+      if (element instanceof PsiMethodReferenceExpression && needLambdaConversion((PsiMethodReferenceExpression)element)) {
+        descriptions.putValue(element, "Method reference will be converted to lambda");
       }
     }
     return descriptions;
@@ -271,6 +270,15 @@ public class MakeMethodStaticProcessor extends MakeMethodOrClassStaticProcessor<
     if (!(element instanceof PsiReferenceExpression)) return;
 
     PsiReferenceExpression methodRef = (PsiReferenceExpression) element;
+    if (methodRef instanceof PsiMethodReferenceExpression && needLambdaConversion((PsiMethodReferenceExpression)methodRef)) {
+      PsiLambdaExpression lambdaExpression =
+        LambdaRefactoringUtil.convertMethodReferenceToLambda(((PsiMethodReferenceExpression)methodRef), true, true);
+      List<PsiExpression> returnExpressions = LambdaUtil.getReturnExpressions(lambdaExpression);
+      if (returnExpressions.size() != 1) return;
+      PsiExpression expression = returnExpressions.get(0);
+      if (!(expression instanceof PsiMethodCallExpression)) return;
+      methodRef = ((PsiMethodCallExpression)expression).getMethodExpression();
+    }
     PsiElement parent = methodRef.getParent();
 
     PsiExpression instanceRef;
@@ -349,6 +357,16 @@ public class MakeMethodStaticProcessor extends MakeMethodOrClassStaticProcessor<
     if (newQualifier != null) {
       methodRef.getQualifierExpression().replace(newQualifier);
     }
+  }
+
+  private boolean needLambdaConversion(PsiMethodReferenceExpression methodRef) {
+    if (mySettings.isMakeFieldParameters()) {
+      return true;
+    }
+    if (PsiMethodReferenceUtil.isResolvedBySecondSearch(methodRef)) {
+      return myMember.getParameters().length != 0 || !mySettings.isMakeClassParameter();
+    }
+    return mySettings.isMakeClassParameter();
   }
 
   protected void findExternalUsages(final ArrayList<UsageInfo> result) {

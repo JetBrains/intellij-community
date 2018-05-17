@@ -39,6 +39,7 @@
 
     <component>
       <implementation-class>com.intellij.codeInsight.preview.ImageOrColorPreviewManager</implementation-class>
+      <headless-implementation-class/>
     </component>
 
     <component>
