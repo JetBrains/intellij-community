@@ -480,7 +480,7 @@ public class DependencyResolverImpl implements DependencyResolver {
     Configuration deprecatedCompileConfiguration = compileDependenciesProvider.getDeprecatedCompileConfiguration();
     Configuration compileConfiguration = compileDependenciesProvider.getCompileConfiguration();
 
-    boolean checkCompileOnlyDeps = compileDependenciesProvider.getCompileClasspathConfiguration() != null && !compileConfiguration.getResolvedConfiguration().hasError();
+    boolean checkCompileOnlyDeps = compileDependenciesProvider.getCompileClasspathConfiguration() != null;
     // since version 3.4 compileOnly no longer extends compile
     // so, we can use compileOnly configuration for the check
     if (isJavaLibraryPluginSupported) {
