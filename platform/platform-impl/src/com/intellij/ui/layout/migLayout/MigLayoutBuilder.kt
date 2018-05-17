@@ -54,6 +54,8 @@ internal class MigLayoutBuilder(val spacing: SpacingConfiguration, val isUseMagi
 
   val defaultComponentConstraintCreator = DefaultComponentConstraintCreator(spacing)
 
+  // keep in mind - MigLayout always creates one more than need column constraints (i.e. for 2 will be 3)
+  // it doesn't lead to any issue.
   val columnConstraints = AC()
 
   override fun newRow(label: JLabel?, buttonGroup: ButtonGroup?, separated: Boolean): Row {
@@ -182,12 +184,13 @@ internal class MigLayoutBuilder(val spacing: SpacingConfiguration, val isUseMagi
     if (rootRow.subRows!!.any { it.isLabeledIncludingSubRows }) {
       // using columnConstraints instead of component gap allows easy debug (proper painting of debug grid)
       columnConstraints.gap("${spacing.labelColumnHorizontalGap}px!", 0)
+      columnConstraints.grow(0f, 0)
       startColumnIndexToApplyHorizontalGap = 1
     }
 
-    val gap = "${spacing.horizontalGap}px!"
-    for (i in startColumnIndexToApplyHorizontalGap until columnConstraints.count) {
-      columnConstraints.gap(gap, i)
+    val gapAfter = "${spacing.horizontalGap}px!"
+    for (i in startColumnIndexToApplyHorizontalGap until rootRow.columnIndexIncludingSubRows) {
+      columnConstraints.gap(gapAfter, i)
     }
   }
 }

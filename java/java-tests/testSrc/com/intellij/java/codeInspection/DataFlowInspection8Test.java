@@ -228,4 +228,5 @@ public class DataFlowInspection8Test extends DataFlowInspectionTestCase {
   public void testQueuePeek() { doTest(); }
   public void testForeachCollectionElement() { doTest(); }
   public void testContractReturnValues() { doTest(); }
+  public void testTryFinallySimple() { doTest(); }
 }

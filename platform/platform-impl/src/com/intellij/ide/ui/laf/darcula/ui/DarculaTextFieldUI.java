@@ -1,7 +1,6 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.ui.laf.darcula.ui;
 
-import com.intellij.ide.ui.laf.darcula.DarculaUIUtil;
 import com.intellij.util.ui.*;
 
 import javax.swing.*;
@@ -10,8 +9,7 @@ import javax.swing.text.JTextComponent;
 import java.awt.*;
 import java.awt.geom.RoundRectangle2D;
 
-import static com.intellij.ide.ui.laf.darcula.DarculaUIUtil.COMPONENT_ARC;
-import static com.intellij.ide.ui.laf.darcula.DarculaUIUtil.MINIMUM_HEIGHT;
+import static com.intellij.ide.ui.laf.darcula.DarculaUIUtil.*;
 
 /**
  * @author Konstantin Bulenkov
@@ -26,8 +24,9 @@ public class DarculaTextFieldUI extends TextFieldWithPopupHandlerUI {
   protected int getMinimumHeight(int textHeight) {
     Insets i = getComponent().getInsets();
     JComponent c = getComponent();
+    int minHeight = (isCompact(c) ? COMPACT_HEIGHT.get() : MINIMUM_HEIGHT.get()) + i.top + i.bottom;
     return DarculaEditorTextFieldBorder.isComboBoxEditor(c) || UIUtil.getParentOfType(JSpinner.class, c) != null ?
-              textHeight : MINIMUM_HEIGHT.get() + i.top + i.bottom;
+              textHeight : minHeight;
   }
 
   @Override
@@ -66,7 +65,7 @@ public class DarculaTextFieldUI extends TextFieldWithPopupHandlerUI {
   protected void paintDarculaBackground(Graphics g, JTextComponent component) {
     Graphics2D g2 = (Graphics2D)g.create();
     Rectangle r = new Rectangle(component.getSize());
-    JBInsets.removeFrom(r, DarculaUIUtil.paddings());
+    JBInsets.removeFrom(r, paddings());
 
     try {
       g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
@@ -89,10 +88,10 @@ public class DarculaTextFieldUI extends TextFieldWithPopupHandlerUI {
 
   @Override
   protected Insets getDefaultMargins() {
-    return JBUI.insets(2, 5);
+    return isCompact(getComponent()) ? JBUI.insets(0, 5) : JBUI.insets(2, 5);
   }
 
   protected float bw() {
-    return DarculaUIUtil.BW.getFloat();
+    return BW.getFloat();
   }
 }

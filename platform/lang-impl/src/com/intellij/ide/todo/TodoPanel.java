@@ -594,7 +594,7 @@ abstract class TodoPanel extends SimpleToolWindowPanel implements OccurenceNavig
 
   private final class MyShowModulesAction extends ToggleAction {
     MyShowModulesAction() {
-      super(IdeBundle.message("action.group.by.modules"), null, AllIcons.ObjectBrowser.ShowModules);
+      super(IdeBundle.message("action.group.by.modules"), null, AllIcons.Actions.GroupByModule);
     }
 
     @Override

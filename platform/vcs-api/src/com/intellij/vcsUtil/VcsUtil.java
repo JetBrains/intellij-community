@@ -278,6 +278,9 @@ public class VcsUtil {
     return VcsContextFactory.SERVICE.getInstance().createFilePath(parent, fileName, isDirectory);
   }
 
+  /**
+   * @deprecated use {@link StatusBar.Info#set(String, Project)} directly.
+   */
   @Deprecated
   public static void showStatusMessage(@NotNull Project project, @Nullable String message) {
     SwingUtilities.invokeLater(() -> {

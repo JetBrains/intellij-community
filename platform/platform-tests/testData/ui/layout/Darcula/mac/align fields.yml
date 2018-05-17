@@ -21,13 +21,9 @@ columnConstraints:
       max: &id003 {horizontal: true, value: 6.0}
       min: *id003
       preferred: *id003
-  - gapAfter:
-      max: &id004 {horizontal: true, value: 8.0}
-      min: *id004
-      preferred: *id004
-    grow: 100.0
+    grow: 0.0
   - {}
-  count: 3
+  count: 2
 componentConstrains:
   Create Android module: {}
   'Android module name:': {}

@@ -412,7 +412,7 @@ public class AbstractTreeWalkerTest {
     switch (walker.promise().getState()) {
       case PENDING:
         throw new IllegalStateException("not processed");
-      case FULFILLED:
+      case SUCCEEDED:
         if (!error) break;
         throw new IllegalStateException("not rejected");
       case REJECTED:

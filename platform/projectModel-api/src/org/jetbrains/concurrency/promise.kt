@@ -21,9 +21,6 @@ val Promise<*>.isRejected: Boolean
 val Promise<*>.isPending: Boolean
   get() = state == Promise.State.PENDING
 
-val Promise<*>.isFulfilled: Boolean
-  get() = state == Promise.State.FULFILLED
-
 private val REJECTED: Promise<*> by lazy { DonePromise<Any?>(InternalPromiseUtil.PromiseValue.createRejected(createError("rejected"))) }
 
 @Suppress("UNCHECKED_CAST")

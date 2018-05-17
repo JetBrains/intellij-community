@@ -231,8 +231,8 @@ public class DfaMemoryStateImpl implements DfaMemoryState {
 
   @Override
   public void emptyStack() {
-    myCachedHash = null;
     while (!myStack.isEmpty() && !(myStack.peek() instanceof DfaControlTransferValue)) {
+      myCachedHash = null;
       myStack.pop();
     }
   }

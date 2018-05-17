@@ -5,32 +5,28 @@ import com.intellij.ide.ui.UISettings;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.popup.JBPopup;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
+import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.wm.WindowManager;
 import com.intellij.openapi.wm.impl.IdeFrameImpl;
 import com.intellij.ui.awt.RelativePoint;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 
-import javax.swing.*;
 import java.awt.*;
 import java.util.List;
+
+import static com.intellij.ide.actions.SearchEverywhereAction.SEARCH_EVERYWHERE_POPUP;
 
 public class SearchEverywhereManagerImpl implements SearchEverywhereManager {
 
   private final Project myProject;
+  private final List<SearchEverywhereContributor> mySupportedContributors = SearchEverywhereContributor.getProvidersSorted();
 
   private JBPopup myBalloon; //todo appropriate names #UX-1
-  private final SearchEverywhereUI mySearchEverywhereUI;
+  private SearchEverywhereUI mySearchEverywhereUI;
 
   public SearchEverywhereManagerImpl(Project project) {
     myProject = project;
-
-    //SearchEverywhereContributor selected = contributors.stream()
-    //                                                   .filter(contributor -> contributor.getSearchProviderId().equals(mySelectedProviderID))
-    //                                                   .findAny()
-    //                                                   .orElse(null);
-    List<SearchEverywhereContributor> allContributors = SearchEverywhereContributor.getProvidersSorted();
-    mySearchEverywhereUI = new SearchEverywhereUI(project, allContributors, null);
   }
 
   @Override
@@ -39,23 +35,22 @@ public class SearchEverywhereManagerImpl implements SearchEverywhereManager {
       setShownContributor(selectedContributorID);
     }
     else {
-      mySearchEverywhereUI.setShown(true);
+      mySearchEverywhereUI = createView(myProject, mySupportedContributors);
       mySearchEverywhereUI.switchToContributor(selectedContributorID);
-      myBalloon = JBPopupFactory.getInstance().createComponentPopupBuilder(mySearchEverywhereUI, getSearchField())
+      myBalloon = JBPopupFactory.getInstance().createComponentPopupBuilder(mySearchEverywhereUI, mySearchEverywhereUI.getSearchField())
                                 .setProject(myProject)
                                 .setResizable(false)
                                 .setModalContext(false)
                                 .setCancelOnClickOutside(true)
                                 .setRequestFocus(true)
                                 .setCancelKeyEnabled(false)
-                                .setCancelCallback(() -> {
-                                  mySearchEverywhereUI.clear();
-                                  mySearchEverywhereUI.setShown(false);
-                                  return true;
-                                })
+                                //.setCancelCallback(() -> true)
                                 .addUserData("SIMPLE_WINDOW")
                                 .createPopup();
-      mySearchEverywhereUI.setSearchFinishedHandler(() -> myBalloon.cancel());
+      Disposer.register(myBalloon, mySearchEverywhereUI);
+
+      myProject.putUserData(SEARCH_EVERYWHERE_POPUP, myBalloon);
+      Disposer.register(myBalloon, () -> myProject.putUserData(SEARCH_EVERYWHERE_POPUP, null));
 
       RelativePoint showingPoint = calculateShowingPoint();
       if (showingPoint != null) {
@@ -65,7 +60,6 @@ public class SearchEverywhereManagerImpl implements SearchEverywhereManager {
         myBalloon.showInFocusCenter();
       }
     }
-
   }
 
   @Override
@@ -75,11 +69,13 @@ public class SearchEverywhereManagerImpl implements SearchEverywhereManager {
 
   @Override
   public String getShownContributorID() {
+    checkIsShown();
     return mySearchEverywhereUI.getSelectedContributorID();
   }
 
   @Override
   public void setShownContributor(@NotNull String contributorID) {
+    checkIsShown();
     if (!contributorID.equals(getShownContributorID())) {
       mySearchEverywhereUI.switchToContributor(contributorID);
     }
@@ -87,11 +83,13 @@ public class SearchEverywhereManagerImpl implements SearchEverywhereManager {
 
   @Override
   public boolean isShowNonProjectItems() {
+    checkIsShown();
     return mySearchEverywhereUI.isUseNonProjectItems();
   }
 
   @Override
   public void setShowNonProjectItems(boolean show) {
+    checkIsShown();
     mySearchEverywhereUI.setUseNonProjectItems(show);
   }
 
@@ -111,7 +109,26 @@ public class SearchEverywhereManagerImpl implements SearchEverywhereManager {
     return new RelativePoint(parent, new Point((parent.getSize().width - mySearchEverywhereUI.getPreferredSize().width) / 2, height));
   }
 
-  private JTextField getSearchField() {
-    return mySearchEverywhereUI.getSearchField();
+  private SearchEverywhereUI createView(Project project, List<SearchEverywhereContributor> allContributors) {
+    SearchEverywhereUI view = new SearchEverywhereUI(project, allContributors, null);
+    view.addPropertyChangeListener("preferredSize", evt -> {
+      if (isShown()) {
+        myBalloon.pack(true, true);
+      }
+    });
+
+    view.setSearchFinishedHandler(() -> {
+      if (isShown()) {
+        myBalloon.cancel();
+      }
+    });
+
+    return view;
+  }
+
+  private void checkIsShown() {
+    if (!isShown()) {
+      throw new IllegalStateException("Method should be called only when search popup is shown");
+    }
   }
 }

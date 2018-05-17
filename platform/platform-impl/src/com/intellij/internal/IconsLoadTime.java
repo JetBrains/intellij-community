@@ -56,7 +56,7 @@ public class IconsLoadTime extends DumbAwareAction {
     public final float averageTime;
     public final float medianTime;
 
-    private StatData(Type type, boolean startup, int totalTime, int averageTime, int medianTime, int count) {
+    private StatData(@NotNull Type type, boolean startup, int totalTime, int averageTime, int medianTime, int count) {
       this.type = type;
       this.startup = startup;
       this.count = count;
@@ -86,14 +86,15 @@ public class IconsLoadTime extends DumbAwareAction {
     log(measureStartupLoad, Type.SVG);
   }
 
-  private static void log(boolean measureStartupLoad, Type type) {
+  private static void log(boolean measureStartupLoad, @NotNull Type type) {
     StatData data = getStatData(measureStartupLoad, type);
     if (data != null) LOG.info(data.toString());
   }
 
-  public static @Nullable StatData getStatData(boolean measureStartupLoad, Type type) {
+  @Nullable
+  public static StatData getStatData(boolean measureStartupLoad, @NotNull Type type) {
     List<Integer> stats = getStats(type);
-    if (stats == null || stats.isEmpty()) return null;
+    if (stats.isEmpty()) return null;
 
     synchronized (stats) {
       int size = stats.size();
@@ -104,7 +105,7 @@ public class IconsLoadTime extends DumbAwareAction {
     }
   }
 
-  private static Image measure(LoadFunction func, Type type) throws IOException {
+  private static Image measure(@NotNull LoadFunction func, @NotNull Type type) throws IOException {
     List<Integer> stats = getStats(type);
     boolean measure = stats.size() < STATS_LIMIT;
     long t = measure ? System.nanoTime() : 0;
@@ -122,7 +123,8 @@ public class IconsLoadTime extends DumbAwareAction {
     return img;
   }
 
-  private static List<Integer> getStats(Type type) {
+  @NotNull
+  private static List<Integer> getStats(@NotNull Type type) {
     return type == Type.SVG ? statsSVG : statsPNG;
   }
 

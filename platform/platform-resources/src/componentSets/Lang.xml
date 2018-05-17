@@ -39,6 +39,7 @@
 
     <component>
       <implementation-class>com.intellij.codeInsight.preview.ImageOrColorPreviewManager</implementation-class>
+      <headless-implementation-class/>
     </component>
 
     <component>
@@ -211,6 +212,7 @@
 
     <component>
       <implementation-class>com.intellij.facet.impl.ui.FacetDependentToolWindowManager</implementation-class>
+      <headless-implementation-class/>
     </component>
 
     <component>

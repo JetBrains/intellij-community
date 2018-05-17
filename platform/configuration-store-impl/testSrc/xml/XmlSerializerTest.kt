@@ -17,7 +17,6 @@ import com.intellij.util.xmlb.annotations.*
 import junit.framework.TestCase
 import org.intellij.lang.annotations.Language
 import org.jdom.Element
-import org.junit.Assume.assumeTrue
 import org.junit.Test
 import org.junit.runner.RunWith
 import org.junit.runners.Suite
@@ -57,8 +56,9 @@ internal class XmlSerializerTest {
 
   @Test
   fun testClearBindingCache() {
-    assumeTrue(!UsefulTestCase.IS_UNDER_TEAMCITY)
-    clearBindingCache()
+    if (!UsefulTestCase.IS_UNDER_TEAMCITY) {
+      clearBindingCache()
+    }
   }
 
   @Test fun emptyBeanSerialization() {

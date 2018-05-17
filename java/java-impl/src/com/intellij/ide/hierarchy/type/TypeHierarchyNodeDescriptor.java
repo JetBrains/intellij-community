@@ -49,7 +49,7 @@ public final class TypeHierarchyNodeDescriptor extends HierarchyNodeDescriptor {
     if (changes && myIsBase) {
       final LayeredIcon icon = new LayeredIcon(2);
       icon.setIcon(getIcon(), 0);
-      icon.setIcon(AllIcons.Hierarchy.Base, 1, -AllIcons.Hierarchy.Base.getIconWidth() / 2, 0);
+      icon.setIcon(AllIcons.Actions.Forward, 1, -AllIcons.Actions.Forward.getIconWidth() / 2, 0);
       setIcon(icon);
     }
 

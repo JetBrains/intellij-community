@@ -28,57 +28,53 @@ columnConstraints:
       max: &id004 {horizontal: true, value: 6.0}
       min: *id004
       preferred: *id004
-  - gapAfter:
-      max: &id005 {horizontal: true, value: 8.0}
-      min: *id005
-      preferred: *id005
-    grow: 100.0
+    grow: 0.0
   - {}
-  count: 3
+  count: 2
 componentConstrains:
   In KeePass: {spanX: 2097051, wrap: true}
   'Database:':
     horizontal:
       gapBefore:
-        min: &id006 {horizontal: true, value: 23.0}
-        preferred: *id006
+        min: &id005 {horizontal: true, value: 23.0}
+        preferred: *id005
   'JTextField #2':
     horizontal: {grow: 100.0}
     split: 2
   'JLabel #3':
     horizontal:
       gapBefore:
-        min: &id007 {horizontal: true, value: 4.0}
-        preferred: *id007
+        min: &id006 {horizontal: true, value: 4.0}
+        preferred: *id006
     spanX: 2097051
     wrap: true
   'Master Password:':
     horizontal:
       gapBefore:
-        min: &id008 {horizontal: true, value: 23.0}
-        preferred: *id008
+        min: &id007 {horizontal: true, value: 23.0}
+        preferred: *id007
   'JBPasswordField #5': {spanX: 2097051, wrap: true}
   Stored using weak encryption.:
     horizontal:
       gapBefore:
-        min: &id009 {horizontal: true, value: 1.0}
-        preferred: *id009
+        min: &id008 {horizontal: true, value: 1.0}
+        preferred: *id008
     skip: 1
     spanX: 2097051
     wrap: true
 cellBounds:
 - [0, 0, 480, 15]
 - [0, 25, 133, 24]
-- [139, 25, 333, 24]
-- [139, 25, 333, 24]
+- [139, 25, 341, 24]
+- [139, 25, 341, 24]
 - [0, 59, 133, 24]
 - [139, 59, 341, 24]
 - [139, 89, 341, 14]
 componentBounds:
   In KeePass: [-2, -2, 90, 19]
   'Database:': [23, 29, 61, 16]
-  'JTextField #2': [136, 22, 314, 30]
-  'JLabel #3': [451, 29, 21, 16]
+  'JTextField #2': [136, 22, 322, 30]
+  'JLabel #3': [459, 29, 21, 16]
   'Master Password:': [23, 63, 110, 16]
   'JBPasswordField #5': [136, 56, 256, 30]
   Stored using weak encryption.: [140, 89, 155, 14]

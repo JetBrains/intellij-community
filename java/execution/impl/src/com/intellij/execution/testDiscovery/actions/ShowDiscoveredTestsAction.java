@@ -52,7 +52,6 @@ import com.intellij.util.PsiNavigateUtil;
 import com.intellij.util.ui.EdtInvocationManager;
 import com.intellij.util.ui.JBDimension;
 import com.intellij.util.ui.tree.TreeModelAdapter;
-import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.uast.UFile;
@@ -64,10 +63,7 @@ import javax.swing.*;
 import javax.swing.event.TreeModelEvent;
 import javax.swing.tree.TreeModel;
 import java.awt.event.ActionEvent;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
-import java.util.Objects;
+import java.util.*;
 import java.util.stream.Collectors;
 
 import static com.intellij.openapi.actionSystem.CommonDataKeys.EDITOR;
@@ -239,14 +235,15 @@ public class ShowDiscoveredTestsAction extends AnAction {
 
         for (TestDiscoveryConfigurationProducer producer : getRunConfigurationProducers(project)) {
           byte frameworkId = ((JavaTestConfigurationBase)producer.getConfigurationFactory().createTemplateConfiguration(project)).getTestFrameworkId();
-          TestDiscoveryProducer.consumeDiscoveredTests(project, fqn, methodName, frameworkId, (testClass, testMethod) -> {
+          TestDiscoveryProducer.consumeDiscoveredTests(project, fqn, methodName, frameworkId, (testClass, testMethod, parameter) -> {
             PsiMethod psiMethod = ReadAction.compute(() -> {
-              PsiClass cc = testClass == null ? null : ClassUtil.findPsiClass(PsiManager.getInstance(project), testClass, null, true, scope);
+              PsiClass cc = ClassUtil.findPsiClass(PsiManager.getInstance(project), testClass, null, true, scope);
               return cc == null ? null : ArrayUtil.getFirstElement(cc.findMethodsByName(testMethod, false));
             });
             if (psiMethod != null) {
-              tree.addTest(ReadAction.compute(() -> psiMethod.getContainingClass()), psiMethod);
+              tree.addTest(ReadAction.compute(() -> psiMethod.getContainingClass()), psiMethod, parameter);
             }
+            return true;
           });
         }
       }
@@ -289,23 +286,28 @@ public class ShowDiscoveredTestsAction extends AnAction {
       .map(SmartPsiElementPointer::getElement)
       .filter(Objects::nonNull)
       .toArray(PsiMethod[]::new);
-    StreamEx.of(getRunConfigurationProducers(project))
-            .filter(producer -> producer.isApplicable(testMethods))
-            .map((producer) -> producer.createProfile(testMethods, targetModule, context, title))
-            .findFirst()
-            .ifPresent(profile -> {
-              try {
-                ExecutionEnvironmentBuilder.create(project, executor, profile).buildAndExecute();
-              }
-              catch (ExecutionException e) {
-                ExecutionUtil.handleExecutionError(project, executor.getToolWindowId(), title, e);
-              }
 
-              JBPopup popup = ref.get();
-              if (popup != null) {
-                popup.cancel();
-              }
-            });
+    getRunConfigurationProducers(project)
+      .stream()
+      .map(producer -> new Object() {
+        TestDiscoveryConfigurationProducer myProducer = producer;
+        PsiMethod[] mySupportedTests = Arrays.stream(testMethods).filter(producer::isApplicable).toArray(PsiMethod.ARRAY_FACTORY::create);
+      })
+      .max(Comparator.comparingInt(p -> p.mySupportedTests.length))
+      .map(p -> p.myProducer.createProfile(p.mySupportedTests, targetModule, context, title))
+      .ifPresent(profile -> {
+        try {
+          ExecutionEnvironmentBuilder.create(project, executor, profile).buildAndExecute();
+        }
+        catch (ExecutionException e) {
+          ExecutionUtil.handleExecutionError(project, executor.getToolWindowId(), title, e);
+        }
+
+        JBPopup popup = ref.get();
+        if (popup != null) {
+          popup.cancel();
+        }
+      });
   }
 
   @Nullable

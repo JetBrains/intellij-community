@@ -1,6 +1,10 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ui.mac.touchbar;
 
+import com.intellij.execution.ExecutionListener;
+import com.intellij.execution.ExecutionManager;
+import com.intellij.execution.process.ProcessHandler;
+import com.intellij.execution.runners.ExecutionEnvironment;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.DefaultActionGroup;
@@ -21,6 +25,7 @@ import com.intellij.openapi.ui.popup.JBPopupListener;
 import com.intellij.openapi.ui.popup.LightweightWindowEvent;
 import com.intellij.openapi.ui.popup.ListPopupStep;
 import com.intellij.openapi.ui.popup.MnemonicNavigationFilter;
+import com.intellij.openapi.wm.ToolWindowId;
 import com.intellij.openapi.wm.ex.ToolWindowManagerEx;
 import com.intellij.openapi.wm.ex.ToolWindowManagerListener;
 import com.intellij.ui.components.JBOptionButton;
@@ -30,18 +35,20 @@ import com.intellij.ui.popup.list.ListPopupImpl;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
+import javax.swing.Timer;
 import java.awt.event.ActionEvent;
 import java.awt.event.InputEvent;
-import java.util.ArrayDeque;
-import java.util.ArrayList;
-import java.util.List;
+import java.awt.event.MouseWheelEvent;
+import java.util.*;
 
 public class TouchBarsManager {
   private final static boolean IS_LOGGING_ENABLED = false;
   private static final Logger LOG = Logger.getInstance(TouchBarsManager.class);
   private static final ArrayDeque<BarContainer> ourTouchBarStack = new ArrayDeque<>();
-  private static final ChangeScheduler ourTouchBarChanger = new ChangeScheduler();
+  private static final TouchBarHolder ourTouchBarHolder = new TouchBarHolder();
   private static long ourCurrentKeyMask;
+
+  private static final Map<Project, ProjectData> ourProjectData = new HashMap<>(); // NOTE: probably it is better to use api of UserDataHolder
 
   public static void attachEditorBar(EditorEx editor) {
     if (!isTouchBarAvailable())
@@ -52,7 +59,7 @@ public class TouchBarsManager {
       return;
 
     editor.addFocusListener(new FocusChangeListener() {
-      private final BarContainer myEditorBar = ProjectBarsStorage.instance(proj).createBarContainer(ProjectBarsStorage.EDITOR, editor.getContentComponent());
+      private final BarContainer myEditorBar = _getProjData(proj).createBarContainer(ProjectData.EDITOR, editor.getContentComponent());
 
       @Override
       public void focusGained(Editor editor) {
@@ -98,12 +105,14 @@ public class TouchBarsManager {
     Foundation.invoke(app, "setAutomaticCustomizeTouchBarMenuItemEnabled:", true);
 
     ApplicationManager.getApplication().getMessageBus().connect().subscribe(ProjectManager.TOPIC, new ProjectManagerListener() {
-      private BarContainer myGeneralBar;
+      private BarContainer myDefaultBar;
       @Override
       public void projectOpened(Project project) {
-        trace("opened project %s, set general touchbar", project);
-        myGeneralBar = ProjectBarsStorage.instance(project).createBarContainer(ProjectBarsStorage.GENERAL, null);
-        showTouchBar(myGeneralBar);
+        trace("opened project %s, set default touchbar", project);
+
+        final ProjectData pd = _getProjData(project);
+        myDefaultBar = pd.createBarContainer(ProjectData.DEFAULT, null);
+        showTouchBar(myDefaultBar);
 
         project.getMessageBus().connect().subscribe(ToolWindowManagerListener.TOPIC, new ToolWindowManagerListener() {
           private BarContainer myDebuggerBar;
@@ -112,24 +121,51 @@ public class TouchBarsManager {
           public void stateChanged() {
             final ToolWindowManagerEx twm = ToolWindowManagerEx.getInstanceEx(project);
             final String activeId = twm.getActiveToolWindowId();
-            if (activeId != null && activeId.equals("Debug")) {
-              // TODO:
-              // 1. check whether some debug session is running
-              // 2. stateChanged can be skipped sometimes when user clicks debug tool-window, need check by focus events or fix stateChanged-subscription
+            if (activeId != null && activeId.equals(ToolWindowId.DEBUG)) {
+              // System.out.println("stateChanged, dbgSessionsCount=" + pd.getDbgSessions());
+              if (pd.getDbgSessions() <= 0)
+                return;
+
+              // TODO: stateChanged can be skipped sometimes when user clicks debug tool-window, need check by focus events or fix stateChanged-subscription
               if (myDebuggerBar == null) {
-                myDebuggerBar = ProjectBarsStorage.instance(project).createBarContainer(ProjectBarsStorage.DEBUGGER,
-                                                                                        twm.getToolWindow(activeId).getComponent());
+                myDebuggerBar = pd.createBarContainer(ProjectData.DEBUGGER, twm.getToolWindow(activeId).getComponent());
               }
               showTouchBar(myDebuggerBar);
             }
+          }
+        });
+
+        project.getMessageBus().connect().subscribe(ExecutionManager.EXECUTION_TOPIC, new ExecutionListener() {
+          @Override
+          public void processStarted(@NotNull String executorId, @NotNull ExecutionEnvironment env, @NotNull ProcessHandler handler) { ourTouchBarHolder.updateCurrent(); }
+          @Override
+          public void processTerminated(@NotNull String executorId, @NotNull ExecutionEnvironment env, @NotNull ProcessHandler handler, int exitCode) {
+            final TouchBar curr;
+            final BarContainer top;
+            synchronized (TouchBarsManager.class) {
+              top = ourTouchBarStack.peek();
+              curr = top.get();
+              final boolean isDebugger = curr != null && curr.myName.startsWith(ToolWindowId.DEBUG);
+              if (isDebugger) {
+                if (executorId.equals(ToolWindowId.DEBUG)) {
+                  // System.out.println("processTerminated, dbgSessionsCount=" + pd.getDbgSessions());
+                  final boolean hasDebugSession = _hasAnyActiveSession(project, handler);
+                  if (!hasDebugSession || pd.getDbgSessions() <= 0)
+                    closeTouchBar(top);
+                }
+              }
+            }
+
+            if (curr instanceof TouchBarActionBase)
+              ApplicationManager.getApplication().invokeLater(() -> { ((TouchBarActionBase)curr).updateActionItems(); });
           }
         });
       }
       @Override
       public void projectClosed(Project project) {
         trace("closed project %s, hide touchbar", project);
-        closeTouchBar(myGeneralBar);
-        ProjectBarsStorage.instance(project).releaseAll();
+        closeTouchBar(myDefaultBar);
+        _getProjData(project).releaseAll();
       }
     });
   }
@@ -138,6 +174,11 @@ public class TouchBarsManager {
 
   public static void onInputEvent(InputEvent e) {
     if (!isTouchBarAvailable())
+      return;
+
+    // NOTE: skip wheel-events, because scrolling by touchpad produces mouse-wheel events with pressed modifier, expamle:
+    // MouseWheelEvent[MOUSE_WHEEL,(890,571),absolute(0,0),button=0,modifiers=⇧,extModifiers=⇧,clickCount=0,scrollType=WHEEL_UNIT_SCROLL,scrollAmount=1,wheelRotation=0,preciseWheelRotation=0.1] on frame0
+    if (e instanceof MouseWheelEvent)
       return;
 
     if (ourCurrentKeyMask != e.getModifiersEx()) {
@@ -223,21 +264,21 @@ public class TouchBarsManager {
 
   synchronized private static void _setBarContainer(BarContainer barContainer) {
     if (barContainer == null) {
-      ourTouchBarChanger.updateTouchBar(null);
+      ourTouchBarHolder.setTouchBar(null);
       return;
     }
 
     if (barContainer instanceof MultiBarContainer)
       ((MultiBarContainer)barContainer).selectBarByKeyMask(ourCurrentKeyMask);
 
-    ourTouchBarChanger.updateTouchBar(barContainer.get());
+    ourTouchBarHolder.setTouchBar(barContainer.get());
   }
 
-  private static class ChangeScheduler {
+  private static class TouchBarHolder {
     private TouchBar myCurrentBar;
     private TouchBar myNextBar;
 
-    synchronized void updateTouchBar(TouchBar bar) {
+    synchronized void setTouchBar(TouchBar bar) {
       // the usual event sequence "focus lost -> show underlay bar -> focus gained" produces annoying flicker
       // use slightly deferred update to skip "showing underlay bar"
       myNextBar = bar;
@@ -246,6 +287,11 @@ public class TouchBarsManager {
       });
       timer.setRepeats(false);
       timer.start();
+    }
+
+    synchronized void updateCurrent() {
+      if (myCurrentBar instanceof TouchBarActionBase)
+        ((TouchBarActionBase)myCurrentBar).updateActionItems();
     }
 
     synchronized private void _setNextTouchBar() {
@@ -372,5 +418,20 @@ public class TouchBarsManager {
     TempBarContainer(@NotNull TouchBar tb) { super(tb); }
     @Override
     public boolean isTemporary() { return true; }
+  }
+
+  private static boolean _hasAnyActiveSession(Project proj, ProcessHandler handler/*already terminated*/) {
+    final ProcessHandler[] processes = ExecutionManager.getInstance(proj).getRunningProcesses();
+    return Arrays.stream(processes).anyMatch(h -> h != null && h != handler && (!h.isProcessTerminated() && !h.isProcessTerminating()));
+  }
+
+  private static @NotNull ProjectData _getProjData(@NotNull Project project) {
+    ApplicationManager.getApplication().assertIsDispatchThread();
+    ProjectData result = ourProjectData.get(project);
+    if (result == null) {
+      result = new ProjectData(project);
+      ourProjectData.put(project, result);
+    }
+    return result;
   }
 }

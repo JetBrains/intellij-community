@@ -136,7 +136,7 @@ public class JaCoCoCoverageRunner extends JavaCoverageRunner {
             Files.walkFileTree(rootPath, new SimpleFileVisitor<Path>() {
               @Override
               public FileVisitResult visitFile(Path path, BasicFileAttributes attrs) throws IOException {
-                String vmClassName = rootPath.relativize(path).toString().replaceAll(File.separator, ".");
+                String vmClassName = rootPath.relativize(path).toString().replaceAll(StringUtil.escapeToRegexp(File.separator), ".");
                 if (suite.isClassFiltered(vmClassName, suite.getExcludedClassNames()) ||
                     !suite.isPackageFiltered(StringUtil.getPackageName(vmClassName))) {
                   return FileVisitResult.CONTINUE;

@@ -7,6 +7,7 @@ import com.intellij.icons.AllIcons;
 import com.intellij.ide.DeleteProvider;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.actionSystem.ex.ActionUtil;
 import com.intellij.openapi.actionSystem.ex.CustomComponentAction;
 import com.intellij.openapi.actionSystem.ex.ThreeStateCheckboxAction;
 import com.intellij.openapi.diff.DiffBundle;
@@ -20,7 +21,6 @@ import com.intellij.openapi.vcs.VcsBundle;
 import com.intellij.openapi.vcs.VcsConfiguration;
 import com.intellij.openapi.vcs.VcsDataKeys;
 import com.intellij.openapi.vcs.changes.*;
-import com.intellij.openapi.vcs.changes.actions.MoveChangesToAnotherListAction;
 import com.intellij.openapi.vcs.changes.actions.RollbackDialogAction;
 import com.intellij.openapi.vcs.changes.actions.diff.UnversionedDiffRequestProducer;
 import com.intellij.openapi.vcs.changes.actions.diff.lst.LocalChangeListDiffTool;
@@ -139,8 +139,9 @@ public class MultipleLocalChangeListsBrowser extends CommitDialogChangesBrowser 
       result.add(new ShowHideUnversionedFilesAction());
 
       // We do not add "Delete" key shortcut for deleting unversioned files as this shortcut is already used to uncheck checkboxes in the tree.
-      result.add(UnversionedViewDialog.getUnversionedActionGroup());
-      UnversionedViewDialog.registerUnversionedActionsShortcuts(myViewer);
+      ActionGroup unversionedGroup = UnversionedViewDialog.getUnversionedPopupGroup();
+      result.add(unversionedGroup);
+      ActionUtil.recursiveRegisterShortcutSet(unversionedGroup, myViewer, null);
     }
     else {
       // avoid duplicated actions on toolbar
@@ -166,8 +167,7 @@ public class MultipleLocalChangeListsBrowser extends CommitDialogChangesBrowser 
   protected List<AnAction> createDiffActions() {
     return ContainerUtil.append(
       super.createDiffActions(),
-      new ToggleChangeDiffAction(),
-      new MoveChangeDiffAction()
+      new ToggleChangeDiffAction()
     );
   }
 
@@ -453,23 +453,6 @@ public class MultipleLocalChangeListsBrowser extends CommitDialogChangesBrowser 
     @Override
     public void setSelected(@NotNull AnActionEvent e, boolean state) {
       setShowUnversioned(state);
-    }
-  }
-
-  private class MoveChangeDiffAction extends MoveChangesToAnotherListAction {
-    @Override
-    protected boolean isEnabled(@NotNull AnActionEvent e) {
-      return e.getData(VcsDataKeys.CURRENT_CHANGE) != null ||
-             e.getData(VcsDataKeys.CURRENT_UNVERSIONED) != null;
-    }
-
-    @Override
-    public void actionPerformed(@NotNull AnActionEvent e) {
-      Change change = e.getData(VcsDataKeys.CURRENT_CHANGE);
-      VirtualFile file = e.getData(VcsDataKeys.CURRENT_UNVERSIONED);
-      List<Change> changes = change == null ? Collections.emptyList() : Collections.singletonList(change);
-      List<VirtualFile> unversionedFiles = file == null ? Collections.emptyList() : Collections.singletonList(file);
-      askAndMove(myProject, changes, unversionedFiles);
     }
   }
 

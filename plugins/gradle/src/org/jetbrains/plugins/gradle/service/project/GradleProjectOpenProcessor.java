@@ -11,6 +11,7 @@ import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.externalSystem.ExternalSystemModulePropertyManager;
 import com.intellij.openapi.externalSystem.importing.ImportSpec;
 import com.intellij.openapi.externalSystem.importing.ImportSpecBuilder;
+import com.intellij.openapi.externalSystem.model.ExternalSystemDataKeys;
 import com.intellij.openapi.externalSystem.service.execution.ProgressExecutionMode;
 import com.intellij.openapi.externalSystem.service.project.manage.ExternalProjectsManagerImpl;
 import com.intellij.openapi.externalSystem.service.project.wizard.AbstractExternalModuleBuilder;
@@ -24,7 +25,6 @@ import com.intellij.openapi.module.ModuleType;
 import com.intellij.openapi.module.ModuleTypeManager;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.project.DumbService;
-import com.intellij.openapi.project.ExternalStorageConfigurationManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.project.ex.ProjectManagerEx;
@@ -49,7 +49,6 @@ import org.jetbrains.plugins.gradle.util.GradleConstants;
 import javax.swing.*;
 import java.util.Arrays;
 import java.util.Collection;
-import java.util.Set;
 
 /**
  * @author Vladislav.Soroka
@@ -128,6 +127,7 @@ public class GradleProjectOpenProcessor extends ProjectOpenProcessor {
         }
         ProjectUtil.updateLastProjectLocation(pathToOpen);
 
+        projectToOpen.putUserData(ExternalSystemDataKeys.NEWLY_IMPORTED_PROJECT, Boolean.TRUE);
         ProjectManagerEx.getInstanceEx().openProject(projectToOpen);
         return projectToOpen;
       }
@@ -171,7 +171,6 @@ public class GradleProjectOpenProcessor extends ProjectOpenProcessor {
             AbstractExternalSystemSettings settings = ExternalSystemApiUtil.getSettings(project, GradleConstants.SYSTEM_ID);
             //noinspection unchecked
             settings.linkProject(gradleProjectSettings);
-
 
             ImportSpec importSpec = new ImportSpecBuilder(project, GradleConstants.SYSTEM_ID)
               .use(ProgressExecutionMode.IN_BACKGROUND_ASYNC)

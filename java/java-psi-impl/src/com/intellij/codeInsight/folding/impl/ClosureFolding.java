@@ -45,12 +45,12 @@ class ClosureFolding {
   private final boolean myQuick;
 
   private ClosureFolding(@NotNull PsiAnonymousClass anonymousClass,
-                        @NotNull PsiNewExpression newExpression,
-                        boolean quick,
-                        @Nullable PsiClass baseClass,
-                        @NotNull JavaFoldingBuilderBase builder,
-                        @NotNull PsiMethod method,
-                        @NotNull PsiCodeBlock methodBody) {
+                         @NotNull PsiNewExpression newExpression,
+                         boolean quick,
+                         @Nullable PsiClass baseClass,
+                         @NotNull JavaFoldingBuilderBase builder,
+                         @NotNull PsiMethod method,
+                         @NotNull PsiCodeBlock methodBody) {
     myAnonymousClass = anonymousClass;
     myNewExpression = newExpression;
     myQuick = quick;
@@ -61,7 +61,7 @@ class ClosureFolding {
   }
 
   @Nullable
-  List<NamedFoldingDescriptor> process(Document document) {
+  List<NamedFoldingDescriptor> process(@NotNull Document document) {
     PsiJavaToken lbrace = methodBody.getLBrace();
     PsiJavaToken rbrace = methodBody.getRBrace();
     PsiElement classRBrace = myAnonymousClass.getRBrace();
@@ -82,15 +82,15 @@ class ClosureFolding {
     return createDescriptors(classRBrace, rangeStart, rangeEnd, header, "}");
   }
 
-  private static int trimStartSpaces(CharSequence seq, int rangeStart) {
+  private static int trimStartSpaces(@NotNull CharSequence seq, int rangeStart) {
     return CharArrayUtil.shiftForward(seq, rangeStart, " \n\t");
   }
 
-  private static int trimTailSpaces(CharSequence seq, int rangeEnd) {
+  private static int trimTailSpaces(@NotNull CharSequence seq, int rangeEnd) {
     return CharArrayUtil.shiftBackward(seq, rangeEnd - 1, " \n\t") + 1;
   }
 
-  private static int getContentRangeEnd(Document document, PsiJavaToken rbrace, PsiElement classRBrace) {
+  private static int getContentRangeEnd(@NotNull Document document, @NotNull PsiJavaToken rbrace, @NotNull PsiElement classRBrace) {
     CharSequence seq = document.getCharsSequence();
     int rangeEnd = rbrace.getTextRange().getStartOffset();
 
@@ -104,7 +104,7 @@ class ClosureFolding {
     return rangeEnd;
   }
 
-  private boolean showSingleLineFolding(Document document, String contents, String header) {
+  private boolean showSingleLineFolding(@NotNull Document document, @NotNull String contents, @NotNull String header) {
     return contents.indexOf('\n') < 0 &&
                       myBuilder.fitsRightMargin(myAnonymousClass, document, getClosureStartOffset(), getClosureEndOffset(), header.length() + contents.length() + 5);
   }
@@ -118,11 +118,11 @@ class ClosureFolding {
   }
 
   @Nullable
-  private List<NamedFoldingDescriptor> createDescriptors(PsiElement classRBrace,
+  private List<NamedFoldingDescriptor> createDescriptors(@NotNull PsiElement classRBrace,
                                                          int rangeStart,
                                                          int rangeEnd,
-                                                         String header,
-                                                         String footer) {
+                                                         @NotNull String header,
+                                                         @NotNull String footer) {
     if (rangeStart >= rangeEnd) return null;
 
     FoldingGroup group = FoldingGroup.newGroup("lambda");
@@ -135,7 +135,7 @@ class ClosureFolding {
   }
 
   @Nullable
-  private static String getClosureContents(int rangeStart, int rangeEnd, CharSequence seq) {
+  private static String getClosureContents(int rangeStart, int rangeEnd, @NotNull CharSequence seq) {
     int firstLineStart = CharArrayUtil.shiftForward(seq, rangeStart, " \t");
     if (firstLineStart < seq.length() - 1 && seq.charAt(firstLineStart) == '\n') firstLineStart++;
 
@@ -145,6 +145,7 @@ class ClosureFolding {
     return seq.subSequence(firstLineStart, lastLineEnd).toString();
   }
 
+  @NotNull
   private String getFoldingHeader() {
     String methodName = shouldShowMethodName() ? myMethod.getName() : "";
     String type = myQuick ? "" : getOptionalLambdaType();
@@ -153,7 +154,7 @@ class ClosureFolding {
   }
 
   @Nullable
-  static ClosureFolding prepare(PsiAnonymousClass anonymousClass, boolean quick, JavaFoldingBuilderBase builder) {
+  static ClosureFolding prepare(@NotNull PsiAnonymousClass anonymousClass, boolean quick, @NotNull JavaFoldingBuilderBase builder) {
     PsiElement parent = anonymousClass.getParent();
     if (parent instanceof PsiNewExpression && hasNoArguments((PsiNewExpression)parent)) {
       PsiClass baseClass = quick ? null : anonymousClass.getBaseClassType().resolve();
@@ -168,20 +169,16 @@ class ClosureFolding {
     return null;
   }
 
-  private static boolean hasNoArguments(PsiNewExpression expression) {
+  private static boolean hasNoArguments(@NotNull PsiNewExpression expression) {
     PsiExpressionList argumentList = expression.getArgumentList();
     return argumentList != null && argumentList.isEmpty();
   }
 
   private static boolean hasOnlyOneLambdaMethod(@NotNull PsiAnonymousClass anonymousClass, boolean checkResolve) {
     PsiField[] fields = anonymousClass.getFields();
-    if (fields.length != 0) {
-      if (fields.length == 1 && HighlightUtilBase.SERIAL_VERSION_UID_FIELD_NAME.equals(fields[0].getName()) &&
-          fields[0].hasModifierProperty(PsiModifier.STATIC)) {
-        //ok
-      } else {
-        return false;
-      }
+    if (fields.length != 0 && (fields.length != 1 || !HighlightUtilBase.SERIAL_VERSION_UID_FIELD_NAME.equals(fields[0].getName()) ||
+                               !fields[0].hasModifierProperty(PsiModifier.STATIC))) {
+      return false;
     }
     if (anonymousClass.getInitializers().length != 0 ||
         anonymousClass.getInnerClasses().length != 0 ||
@@ -208,13 +205,10 @@ class ClosureFolding {
   static boolean seemsLikeLambda(@Nullable PsiClass baseClass, @NotNull PsiElement context) {
     if (baseClass == null || !PsiUtil.hasDefaultConstructor(baseClass, true)) return false;
 
-    if (PsiUtil.isLanguageLevel8OrHigher(context) && LambdaUtil.isFunctionalClass(baseClass)) {
-      return false;
-    }
-
-    return true;
+    return !PsiUtil.isLanguageLevel8OrHigher(context) || !LambdaUtil.isFunctionalClass(baseClass);
   }
 
+  @NotNull
   private String getOptionalLambdaType() {
     if (myBuilder.shouldShowExplicitLambdaType(myAnonymousClass, myNewExpression)) {
       String baseClassName = ObjectUtils.assertNotNull(myAnonymousClass.getBaseClassType().resolve()).getName();
@@ -241,5 +235,4 @@ class ClosureFolding {
       return true;
     }
   }
-
 }

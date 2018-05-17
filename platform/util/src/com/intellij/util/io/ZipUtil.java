@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2013 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.util.io;
 
 import com.intellij.openapi.diagnostic.Logger;
@@ -37,7 +23,6 @@ public class ZipUtil {
   private ZipUtil() {}
 
   public interface FileContentProcessor {
-
     FileContentProcessor STANDARD = new FileContentProcessor() {
       @Override
       public InputStream getContent(File file) throws IOException {
@@ -164,40 +149,67 @@ public class ZipUtil {
     final Enumeration entries = zipFile.entries();
     while (entries.hasMoreElements()) {
       ZipEntry entry = (ZipEntry)entries.nextElement();
-      final File file = new File(outputDir, entry.getName());
+      final File file = createFileForEntry(outputDir, entry.getName());
       if (filenameFilter == null || filenameFilter.accept(file.getParentFile(), file.getName())) {
-        extractEntry(entry, zipFile.getInputStream(entry), outputDir, overwrite);
+        createFile(file, entry.isDirectory() ? null : zipFile.getInputStream(entry), overwrite);
       }
     }
   }
 
-  public static void extractEntry(ZipEntry entry, final InputStream inputStream, File outputDir) throws IOException {
-    extractEntry(entry, inputStream, outputDir, true);
+  @NotNull
+  public static File createFileForEntry(@NotNull File outputDir, @NotNull String entryName) throws IOException {
+    File result = new File(outputDir, entryName);
+    // we cannot use Path, but File doesn't provide Path.normalize,
+    // so, our FileUtil.toCanonicalPath is used to normalized (isAncestor uses it under the hood)
+    if (entryName.contains("..") && !FileUtil.isAncestor(outputDir, result, true)) {
+      throw new IOException("Invalid entry name: " + entryName);
+    }
+    return result;
   }
 
-  public static void extractEntry(ZipEntry entry, final InputStream inputStream, File outputDir, boolean overwrite) throws IOException {
-    final boolean isDirectory = entry.isDirectory();
-    final String relativeName = entry.getName();
-    final File file = new File(outputDir, relativeName);
-    if (file.exists() && !overwrite) return;
+  @NotNull
+  public static File extractEntry(@NotNull ZipEntry entry, @NotNull ZipFile zipFile, @NotNull File outputDir) throws IOException {
+    File outputFile = createFileForEntry(outputDir, entry.getName());
+    createFile(outputFile, entry.isDirectory() ? null : zipFile.getInputStream(entry), true);
+    return outputFile;
+  }
 
-    FileUtil.createParentDirs(file);
-    if (isDirectory) {
-      file.mkdir();
+  @SuppressWarnings("unused")
+  public static void extractEntry(@NotNull ZipEntry entry, @NotNull InputStream inputStream, @NotNull File outputDir, boolean isOverwrite) throws IOException {
+    File outputFile = createFileForEntry(outputDir, entry.getName());
+    createFile(outputFile, entry.isDirectory() ? null : inputStream, isOverwrite);
+  }
+
+  private static void createFile(@NotNull File outputFile, @Nullable InputStream inputStream, boolean isOverwrite) throws IOException {
+    if (outputFile.exists()) {
+      if (!isOverwrite || inputStream == null) {
+        return;
+      }
+    }
+    else if (inputStream == null) {
+      //noinspection ResultOfMethodCallIgnored
+      outputFile.mkdirs();
+      return;
     }
     else {
-      final BufferedInputStream is = new BufferedInputStream(inputStream);
-      final BufferedOutputStream os = new BufferedOutputStream(new FileOutputStream(file));
+      FileUtilRt.createParentDirs(outputFile);
+    }
+
+    final FileOutputStream os = new FileOutputStream(outputFile);
+    try {
+      FileUtilRt.copy(inputStream, os);
+    }
+    finally {
       try {
-        FileUtil.copy(is, os);
+        os.close();
       }
       finally {
-        os.close();
-        is.close();
+        inputStream.close();
       }
     }
   }
 
+  @SuppressWarnings("unused")
   public static boolean isZipContainsFolder(File zip) throws IOException {
     ZipFile zipFile = new ZipFile(zip);
     try {
@@ -205,7 +217,7 @@ public class ZipUtil {
 
       while (en.hasMoreElements()) {
         ZipEntry zipEntry = (ZipEntry)en.nextElement();
-  
+
         // we do not necessarily get a separate entry for the subdirectory when the file
         // in the ZIP archive is placed in a subdirectory, so we need to check if the slash
         // is found anywhere in the path
@@ -221,6 +233,7 @@ public class ZipUtil {
     }
   }
 
+  @SuppressWarnings("unused")
   public static boolean isZipContainsEntry(File zip, String relativePath) throws IOException {
     ZipFile zipFile = new ZipFile(zip);
     try {
@@ -241,9 +254,9 @@ public class ZipUtil {
   }
 
   /*
-   * update an existing jar file. Adds/replace files specified in relpathToFile map
+   * update an existing jar file. Adds/replace files specified in relPathToFile map
    */
-  public static void update(InputStream in, OutputStream out, Map<String, File> relpathToFile) throws IOException {
+  public static void update(InputStream in, OutputStream out, Map<String, File> relPathToFile) throws IOException {
     ZipInputStream zis = new ZipInputStream(in);
     ZipOutputStream zos = new ZipOutputStream(out);
 
@@ -253,7 +266,7 @@ public class ZipUtil {
       while ((e = zis.getNextEntry()) != null) {
         String name = e.getName();
 
-        if (!relpathToFile.containsKey(name)) { // copy the old stuff
+        if (!relPathToFile.containsKey(name)) { // copy the old stuff
           // do our own compression
           ZipEntry e2 = new ZipEntry(name);
           e2.setMethod(e.getMethod());
@@ -268,16 +281,16 @@ public class ZipUtil {
           FileUtil.copy(zis, zos);
         }
         else { // replace with the new files
-          final File file = relpathToFile.get(name);
+          final File file = relPathToFile.get(name);
           //addFile(file, name, zos);
-          relpathToFile.remove(name);
+          relPathToFile.remove(name);
           addFileToZip(zos, file, name, null, null);
         }
       }
 
       // add the remaining new files
-      for (final String path : relpathToFile.keySet()) {
-        File file = relpathToFile.get(path);
+      for (final String path : relPathToFile.keySet()) {
+        File file = relPathToFile.get(path);
         addFileToZip(zos, file, path, null, null);
       }
     }
@@ -287,8 +300,7 @@ public class ZipUtil {
     }
   }
 
-  @Nullable
-  public static File compressFile(@NotNull File srcFile, @NotNull File zipFile) throws IOException {
+  public static void compressFile(@NotNull File srcFile, @NotNull File zipFile) throws IOException {
     InputStream is = new FileInputStream(srcFile);
     try {
       ZipOutputStream os = new ZipOutputStream(new FileOutputStream(zipFile));
@@ -296,7 +308,6 @@ public class ZipUtil {
         os.putNextEntry(new ZipEntry(srcFile.getName()));
         FileUtilRt.copy(is, os);
         os.closeEntry();
-        return zipFile;
       }
       finally {
         os.close();
@@ -306,5 +317,4 @@ public class ZipUtil {
       is.close();
     }
   }
-
 }

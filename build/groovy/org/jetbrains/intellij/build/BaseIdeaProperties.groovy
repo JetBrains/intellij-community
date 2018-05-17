@@ -72,6 +72,7 @@ abstract class BaseIdeaProperties extends ProductProperties {
       layout.customize {
         def JAVA_RESOURCES_JAR = "java_resources_en.jar"
         withModule("intellij.java.analysis", JAVA_API_JAR, JAVA_RESOURCES_JAR)
+        withModule("intellij.jvm.analysis", JAVA_API_JAR, JAVA_RESOURCES_JAR)
         withModule("intellij.java.indexing", JAVA_API_JAR, JAVA_RESOURCES_JAR)
         withModule("intellij.java.psi", JAVA_API_JAR, JAVA_RESOURCES_JAR)
         withModule("intellij.java", JAVA_API_JAR, JAVA_RESOURCES_JAR)
@@ -80,6 +81,7 @@ abstract class BaseIdeaProperties extends ProductProperties {
         withModule("intellij.platform.uast", JAVA_API_JAR, JAVA_RESOURCES_JAR)
 
         withModule("intellij.java.analysis.impl", JAVA_IMPL_JAR, JAVA_RESOURCES_JAR)
+        withModule("intellij.jvm.analysis.impl", JAVA_IMPL_JAR, JAVA_RESOURCES_JAR)
         withModule("intellij.java.indexing.impl", JAVA_IMPL_JAR, JAVA_RESOURCES_JAR)
         withModule("intellij.java.psi.impl", JAVA_IMPL_JAR, JAVA_RESOURCES_JAR)
         withModule("intellij.java.impl", JAVA_IMPL_JAR, JAVA_RESOURCES_JAR)
