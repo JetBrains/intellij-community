@@ -78,7 +78,7 @@ public class SearchEverywhereUI extends BorderLayoutPanel implements Disposable 
   private volatile ActionCallback myCurrentWorker = ActionCallback.DONE;
   private int myCalcThreadRestartRequestId = 0;
   private final Object myWorkerRestartRequestLock = new Object();
-  private final Alarm modelOperationsAlarm = new Alarm(Alarm.ThreadToUse.SWING_THREAD, ApplicationManager.getApplication());
+  private final Alarm listOperationsAlarm = new Alarm(Alarm.ThreadToUse.SWING_THREAD, ApplicationManager.getApplication());
 
   private Runnable searchFinishedHandler = () -> {};
   private final JPanel mySuggestionsPanel;
@@ -491,7 +491,7 @@ public class SearchEverywhereUI extends BorderLayoutPanel implements Disposable 
   }
 
   private void stopSearching() {
-    modelOperationsAlarm.cancelAllRequests();
+    listOperationsAlarm.cancelAllRequests();
     if (myCalcThread != null && !myCalcThread.isCanceled()) {
       myCalcThread.cancel();
     }
@@ -516,9 +516,6 @@ public class SearchEverywhereUI extends BorderLayoutPanel implements Disposable 
       try {
         check();
 
-        // this line must be called on EDT to avoid context switch at clear().append("text") Don't touch. Ask [kb]
-        modelOperationsAlarm.addRequest(() -> myResultsList.getEmptyText().setText("Searching..."), 0);
-
         if (contributorToExpand == null) {
           resetList();
         } else {
@@ -534,7 +531,7 @@ public class SearchEverywhereUI extends BorderLayoutPanel implements Disposable 
       }
       finally {
         if (!isCanceled()) {
-          modelOperationsAlarm.addRequest(() -> myResultsList.getEmptyText().setText(StatusText.DEFAULT_EMPTY_TEXT), 0);
+          listOperationsAlarm.addRequest(() -> myResultsList.getEmptyText().setText(StatusText.DEFAULT_EMPTY_TEXT), 0);
         }
         if (!myDone.isProcessed()) {
           myDone.setDone();
@@ -543,9 +540,10 @@ public class SearchEverywhereUI extends BorderLayoutPanel implements Disposable 
     }
 
     private void resetList() {
-      modelOperationsAlarm.cancelAllRequests();
-      modelOperationsAlarm.addRequest(() -> {
+      listOperationsAlarm.cancelAllRequests();
+      listOperationsAlarm.addRequest(() -> {
         Dimension oldSize = getPreferredSize();
+        myResultsList.getEmptyText().setText("Searching...");
         myListModel.clear();
         Dimension newSize = getPreferredSize();
         firePropertyChange("preferredSize", oldSize, newSize);
@@ -575,10 +573,10 @@ public class SearchEverywhereUI extends BorderLayoutPanel implements Disposable 
           ContributorSearchResult<Object> results = contributor.search(project, pattern, isUseNonProjectItems(), myProgressIndicator, count);
 
           if (clearBefore) {
-            modelOperationsAlarm.cancelAllRequests();
+            listOperationsAlarm.cancelAllRequests();
           }
 
-          modelOperationsAlarm.addRequest(() -> {
+          listOperationsAlarm.addRequest(() -> {
             if (isCanceled()) {
               return;
             }
