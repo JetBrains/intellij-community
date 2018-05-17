@@ -85,9 +85,8 @@ Groovy script
               PsiElement(identifier)('home')
         PsiWhiteSpace('\n    ')
         PsiElement(identifier)('simplePlugins')
-      PsiErrorElement:';', '}' or new line expected
-        <empty list>
-      PsiElement(.)('.')
+      PsiErrorElement:<expression> expected, got '.'
+        PsiElement(.)('.')
       Method call
         Reference expression
           PsiElement(identifier)('each')

@@ -46,8 +46,6 @@ Groovy script
             <empty list>
       PsiWhiteSpace(' ')
       PsiElement(for)('for')
-      PsiErrorElement:';', '}' or new line expected
-        <empty list>
       PsiElement(new line)('\n\n  ')
       Class initializer
         Modifiers

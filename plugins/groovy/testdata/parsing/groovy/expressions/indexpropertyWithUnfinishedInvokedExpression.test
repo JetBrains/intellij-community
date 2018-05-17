@@ -3,19 +3,20 @@ Abc.findAll().
 -----
 Groovy script
   Property by index
-    Method call
-      Reference expression
+    Reference expression
+      Method call
         Reference expression
-          PsiElement(identifier)('Abc')
-        PsiElement(.)('.')
-        PsiElement(identifier)('findAll')
-      Arguments
-        PsiElement(()('(')
-        PsiElement())(')')
-    PsiElement(.)('.')
-    PsiElement(new line)('\n')
-    PsiErrorElement:Property selector expected
-      <empty list>
+          Reference expression
+            PsiElement(identifier)('Abc')
+          PsiElement(.)('.')
+          PsiElement(identifier)('findAll')
+        Arguments
+          PsiElement(()('(')
+          PsiElement())(')')
+      PsiElement(.)('.')
+      PsiElement(new line)('\n')
+      PsiErrorElement:<property selector> expected, got '['
+        <empty list>
     Arguments
       PsiElement([)('[')
       Reference expression

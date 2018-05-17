@@ -42,8 +42,8 @@ Groovy script
       Case label
         PsiElement(default)('default')
         PsiElement(:)(':')
-      PsiErrorElement:Statement expected
+      PsiWhiteSpace(' ')
+      PsiElement(new line)('\n')
+      PsiErrorElement:<statement> expected, got '}'
         <empty list>
-    PsiWhiteSpace(' ')
-    PsiElement(new line)('\n')
     PsiElement(})('}')

@@ -31,9 +31,8 @@ Groovy script
         Command arguments
           Reference expression
             PsiElement(identifier)('w')
-      PsiErrorElement:';', '}' or new line expected
-        <empty list>
-      PsiElement())(')')
+      PsiErrorElement:',' expected, got ')'
+        PsiElement())(')')
       PsiWhiteSpace(' ')
       Closable block
         PsiElement({)('{')

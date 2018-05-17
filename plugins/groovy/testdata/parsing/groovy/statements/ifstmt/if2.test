@@ -13,10 +13,8 @@ Groovy script
     Command arguments
       Reference expression
         PsiElement(identifier)('expr2')
-  PsiErrorElement:';' or new line expected
-    <empty list>
   PsiWhiteSpace(' ')
-  PsiErrorElement:'else' without 'if'
+  PsiErrorElement:',' expected, got 'else'
     PsiElement(else)('else')
   PsiWhiteSpace(' ')
   Reference expression

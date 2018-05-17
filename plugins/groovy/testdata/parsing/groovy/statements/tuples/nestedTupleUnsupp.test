@@ -19,22 +19,12 @@ Groovy script
         PsiElement())(')')
       PsiErrorElement:'=' expected, got ','
         <empty list>
-  PsiErrorElement:Unexpected symbol
-    PsiElement(,)(',')
-  PsiErrorElement:';' or new line expected
-    <empty list>
+  PsiElement(,)(',')
   Reference expression
     PsiElement(identifier)('c')
-  PsiErrorElement:';' or new line expected
-    <empty list>
-  PsiErrorElement:Unexpected symbol
+  PsiErrorElement:<expression> expected, got ')'
     PsiElement())(')')
-  PsiErrorElement:';' or new line expected
-    <empty list>
-  PsiErrorElement:Unexpected symbol
-    PsiElement(=)('=')
-  PsiErrorElement:';' or new line expected
-    <empty list>
+  PsiElement(=)('=')
   Generalized list
     PsiElement([)('[')
     Generalized list

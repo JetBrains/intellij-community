@@ -117,11 +117,8 @@ Groovy script
           PsiWhiteSpace(' ')
           Literal
             PsiElement(Integer)('3')
-          PsiErrorElement:';', '}' or new line expected
-            <empty list>
-          PsiElement(:)(':')
-          PsiErrorElement:Wrong statement
-            <empty list>
+          PsiErrorElement:<expression> expected, got ':'
+            PsiElement(:)(':')
           PsiElement(new line)('\n        ')
           RETURN statement
             PsiElement(return)('return')
