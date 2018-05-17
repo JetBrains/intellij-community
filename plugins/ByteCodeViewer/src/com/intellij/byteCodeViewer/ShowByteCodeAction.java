@@ -51,7 +51,7 @@ public class ShowByteCodeAction extends AnAction {
   @Override
   public void update(AnActionEvent e) {
     e.getPresentation().setEnabled(false);
-    e.getPresentation().setIcon(AllIcons.Toolwindows.Documentation);
+    e.getPresentation().setIcon(AllIcons.Actions.Preview);
     final Project project = e.getData(CommonDataKeys.PROJECT);
     if (project != null) {
       final PsiElement psiElement = getPsiElement(e.getDataContext(), project, e.getData(CommonDataKeys.EDITOR));

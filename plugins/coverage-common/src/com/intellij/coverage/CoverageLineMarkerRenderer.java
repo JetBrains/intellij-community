@@ -26,7 +26,9 @@ import com.intellij.codeInsight.hint.HintManagerImpl;
 import com.intellij.coverage.actions.HideCoverageInfoAction;
 import com.intellij.coverage.actions.ShowCoveringTestsAction;
 import com.intellij.icons.AllIcons;
+import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.application.ApplicationBundle;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.EditorFactory;
@@ -44,6 +46,7 @@ import com.intellij.openapi.options.SearchableConfigurable;
 import com.intellij.openapi.options.ShowSettingsUtil;
 import com.intellij.openapi.options.colors.pages.GeneralColorsPage;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Disposer;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
 import com.intellij.rt.coverage.data.LineCoverage;
@@ -167,7 +170,11 @@ public class CoverageLineMarkerRenderer implements ActiveGutterRenderer, LineMar
 
   private void showHint(final Editor editor, final Point point, final int lineNumber) {
     final JPanel panel = new JPanel(new BorderLayout());
-    panel.add(createActionsToolbar(editor, lineNumber), BorderLayout.NORTH);
+    Disposable unregisterActionsDisposable = new Disposable() {
+      @Override
+      public void dispose() { }
+    };
+    panel.add(createActionsToolbar(editor, lineNumber, unregisterActionsDisposable), BorderLayout.NORTH);
 
     final LineData lineData = getLineData(lineNumber);
     final EditorImpl uEditor;
@@ -186,6 +193,7 @@ public class CoverageLineMarkerRenderer implements ActiveGutterRenderer, LineMar
       @Override
       public void hide() {
         if (uEditor != null) EditorFactory.getInstance().releaseEditor(uEditor);
+        Disposer.dispose(unregisterActionsDisposable);
         super.hide();
 
       }
@@ -210,7 +218,7 @@ public class CoverageLineMarkerRenderer implements ActiveGutterRenderer, LineMar
     return myCoverageSuite.getCoverageEngine().generateBriefReport(editor, psiFile, lineNumber, lineStartOffset, lineEndOffset, lineData);
   }
 
-  protected JComponent createActionsToolbar(final Editor editor, final int lineNumber) {
+  protected JComponent createActionsToolbar(final Editor editor, final int lineNumber, Disposable parent) {
 
     final JComponent editorComponent = editor.getComponent();
 
@@ -223,6 +231,10 @@ public class CoverageLineMarkerRenderer implements ActiveGutterRenderer, LineMar
 
     prevAction.registerCustomShortcutSet(new CustomShortcutSet(KeyStroke.getKeyStroke(KeyEvent.VK_UP, InputEvent.ALT_MASK|InputEvent.SHIFT_MASK)), editorComponent);
     nextAction.registerCustomShortcutSet(new CustomShortcutSet(KeyStroke.getKeyStroke(KeyEvent.VK_DOWN, InputEvent.ALT_MASK|InputEvent.SHIFT_MASK)), editorComponent);
+    Disposer.register(parent, () -> {
+      prevAction.unregisterCustomShortcutSet(editorComponent);
+      nextAction.unregisterCustomShortcutSet(editorComponent);
+    });
 
     final LineData lineData = getLineData(lineNumber);
     if (myCoverageByTestApplicable) {
@@ -412,10 +424,11 @@ public class CoverageLineMarkerRenderer implements ActiveGutterRenderer, LineMar
 
     @Override
     public void actionPerformed(AnActionEvent e) {
+      final GeneralColorsPage colorsPage = new GeneralColorsPage();
+      String fullDisplayName = "Editor | " + ApplicationBundle.message("title.colors.and.fonts") + " | " + colorsPage.getDisplayName();
       final ColorAndFontOptions colorAndFontOptions = new ColorAndFontOptions(){
         @Override
         protected List<ColorAndFontPanelFactory> createPanelFactories() {
-          final GeneralColorsPage colorsPage = new GeneralColorsPage();
           final ColorAndFontPanelFactory panelFactory = new ColorAndFontPanelFactory() {
             @NotNull
             @Override
@@ -427,7 +440,7 @@ public class CoverageLineMarkerRenderer implements ActiveGutterRenderer, LineMar
             @NotNull
             @Override
             public String getPanelDisplayName() {
-              return "Editor | " + getDisplayName() + " | " + colorsPage.getDisplayName();
+              return fullDisplayName;
             }
           };
           return Collections.singletonList(panelFactory);
@@ -435,11 +448,12 @@ public class CoverageLineMarkerRenderer implements ActiveGutterRenderer, LineMar
       };
       final Configurable[] configurables = colorAndFontOptions.buildConfigurables();
       try {
+        NewColorAndFontPanel page = colorAndFontOptions.findPage(fullDisplayName);
         final SearchableConfigurable general = colorAndFontOptions.findSubConfigurable(GeneralColorsPage.class);
-        if (general != null) {
+        if (general != null && page != null) {
           final LineData lineData = getLineData(myLineNumber);
           ShowSettingsUtil.getInstance().editConfigurable(myEditor.getProject(), general,
-                                                          general.enableSearch(getAttributesKey(lineData).getExternalName()));
+                                                          () -> page.selectOptionByType(getAttributesKey(lineData).getExternalName()));
         }
       }
       finally {

@@ -451,7 +451,7 @@ public class StandardInstructionVisitor extends InstructionVisitor {
                                                       DfaValue defaultResult) {
     if(contract.isTrivial()) {
       for (DfaCallState callState : states) {
-        DfaValue result = contract.getReturnValue().getDfaValue(factory, defaultResult, callState);;
+        DfaValue result = contract.getReturnValue().getDfaValue(factory, defaultResult, callState);
         callState.myMemoryState.push(result);
         finalStates.add(callState.myMemoryState);
       }
@@ -666,14 +666,23 @@ public class StandardInstructionVisitor extends InstructionVisitor {
       RelationType relation = relations[i];
       DfaValue condition = factory.createCondition(dfaLeft, relation, dfaRight);
       if (condition instanceof DfaUnknownValue) return null;
-      if (condition instanceof DfaConstValue && Boolean.FALSE.equals(((DfaConstValue)condition).getValue())) {
-        continue;
+      if (condition instanceof DfaConstValue) {
+        Object value = ((DfaConstValue)condition).getValue();
+        if (Boolean.FALSE.equals(value)) continue;
+        if (Boolean.TRUE.equals(value)) {
+          return makeBooleanResultArray(instruction, runner, memState, relationType.isSubRelation(relation));
+        }
       }
-      final DfaMemoryState copy = i == relations.length - 1 ? memState : memState.createCopy();
+      final DfaMemoryState copy = i == relations.length - 1 && !states.isEmpty() ? memState : memState.createCopy();
       if (copy.applyCondition(condition)) {
         boolean isTrue = relationType.isSubRelation(relation);
         states.add(makeBooleanResult(instruction, runner, copy, ThreeState.fromBoolean(isTrue)));
       }
+    }
+    if (states.isEmpty()) {
+      // Neither of relations could be applied: likely comparison with NaN; do not split the state in this case, just push false
+      memState.push(factory.getConstFactory().getFalse());
+      return nextInstruction(instruction, runner, memState);
     }
 
     return states.toArray(DfaInstructionState.EMPTY_ARRAY);

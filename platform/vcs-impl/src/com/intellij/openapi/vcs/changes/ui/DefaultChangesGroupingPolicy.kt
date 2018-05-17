@@ -11,6 +11,12 @@ object NoneChangesGroupingPolicy : ChangesGroupingPolicy {
   override fun getParentNodeFor(nodePath: StaticFilePath, subtreeRoot: ChangesBrowserNode<*>): ChangesBrowserNode<*>? = null
 }
 
+object NoneChangesGroupingFactory : ChangesGroupingPolicyFactory() {
+  override fun createGroupingPolicy(model: DefaultTreeModel): ChangesGroupingPolicy {
+    return NoneChangesGroupingPolicy
+  }
+}
+
 class DefaultChangesGroupingPolicy(val project: Project, val model: DefaultTreeModel) : BaseChangesGroupingPolicy() {
   override fun getParentNodeFor(nodePath: StaticFilePath, subtreeRoot: ChangesBrowserNode<*>): ChangesBrowserNode<*>? {
     val vFile = nodePath.resolve() ?: return null

@@ -1774,6 +1774,7 @@ class Foo {
     myFixture.configureByText "a.java", "class Foo { { foo.<caret> } }"
     type 'b'
     assert myFixture.lookupElementStrings == ['bar']
+    assert LookupElementPresentation.renderElement(myFixture.lookupElements[0]).itemText == 'bar.'
     myFixture.type('\n')
     assert myFixture.editor.document.text.contains('foo.bar. ')
     joinAutopopup()

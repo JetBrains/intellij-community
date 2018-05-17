@@ -283,8 +283,8 @@ public class IdeErrorsDialog extends DialogWrapper implements MessagePoolListene
     JPanel attachmentsPanel = new JPanel(new BorderLayout(JBUI.scale(5), 0));
     attachmentsPanel.setBorder(JBUI.Borders.emptyTop(5));
     attachmentsPanel.add(attachmentsLabel, BorderLayout.NORTH);
-    attachmentsPanel.add(scrollPane(myAttachmentsList, 150, 400), BorderLayout.WEST);
-    attachmentsPanel.add(scrollPane(myAttachmentArea, 500, 400), BorderLayout.CENTER);
+    attachmentsPanel.add(scrollPane(myAttachmentsList, 150, 350), BorderLayout.WEST);
+    attachmentsPanel.add(scrollPane(myAttachmentArea, 500, 350), BorderLayout.CENTER);
 
     JPanel accountRow = new JPanel(new BorderLayout());
     if (myInternalMode) accountRow.add(myAssigneePanel, BorderLayout.WEST);
@@ -297,7 +297,7 @@ public class IdeErrorsDialog extends DialogWrapper implements MessagePoolListene
     bottomRow.add(myNoticePanel, BorderLayout.CENTER);
 
     JPanel rootPanel = new JPanel(new BorderLayout());
-    rootPanel.setPreferredSize(JBUI.size(600, 400));
+    rootPanel.setPreferredSize(JBUI.size(800, 400));
     rootPanel.add(commentPanel, BorderLayout.NORTH);
     rootPanel.add(attachmentsPanel, BorderLayout.CENTER);
     rootPanel.add(bottomRow, BorderLayout.SOUTH);
@@ -488,7 +488,7 @@ public class IdeErrorsDialog extends DialogWrapper implements MessagePoolListene
   private void updateDetails(AbstractMessage message, boolean canReport) {
     myCommentArea.setText(message.getAdditionalInfo());
     myCommentArea.setCaretPosition(0);
-    myCommentArea.setEnabled(canReport);
+    myCommentArea.setEditable(canReport);
 
     myAttachmentsList.clear();
     myAttachmentsList.addItem("stacktrace.txt", true);
@@ -496,9 +496,7 @@ public class IdeErrorsDialog extends DialogWrapper implements MessagePoolListene
       myAttachmentsList.addItem(attachment.getName(), myInternalMode || attachment.isIncluded());
     }
     myAttachmentsList.setSelectedIndex(0);
-    myAttachmentsList.setEnabled(canReport);
-
-    myAttachmentArea.setEnabled(canReport);
+    myAttachmentsList.setEditable(canReport);
   }
 
   private void updateAssigneePanel(AbstractMessage message, ErrorReportSubmitter submitter, boolean unsent) {
@@ -710,13 +708,19 @@ public class IdeErrorsDialog extends DialogWrapper implements MessagePoolListene
   }
 
   private static class AttachmentsList extends CheckBoxList<String> {
+    private boolean myEditable = true;
+
     private void addItem(String item, boolean selected) {
       super.addItem(item, item + "  ", selected);
     }
 
+    public void setEditable(boolean editable) {
+      myEditable = editable;
+    }
+
     @Override
     protected boolean isEnabled(int index) {
-      return index > 0;
+      return myEditable && index > 0;
     }
   }
 

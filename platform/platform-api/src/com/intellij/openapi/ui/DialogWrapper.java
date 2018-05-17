@@ -685,7 +685,8 @@ public abstract class DialogWrapper {
 
       buttonsPanel.add(button);
       if (i < buttons.size() - 1) {
-        buttonsPanel.add(Box.createRigidArea(new Dimension(BASE_BUTTON_GAP.get() - insets.left - insets.right, 0)));
+        int gap = UIUtil.isUnderDarcula() || UIUtil.isUnderIntelliJLaF() ? BASE_BUTTON_GAP.get() - insets.left - insets.right : JBUI.scale(8);
+        buttonsPanel.add(Box.createRigidArea(new Dimension(gap, 0)));
       }
     }
 

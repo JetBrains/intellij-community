@@ -906,28 +906,7 @@ public class JavaBuilder extends ModuleLevelBuilder {
     final int languageLevel = getLanguageLevel(chunk.representativeTarget().getModule());
     final int chunkSdkVersion = getChunkSdkVersion(chunk);
 
-    int bytecodeTarget = 0;
-    for (JpsModule module : chunk.getModules()) {
-      // use the lower possible target among modules that form the chunk
-      final int moduleTarget = JpsJavaSdkType.parseVersion(compilerConfiguration.getByteCodeTargetLevel(module.getName()));
-      if (moduleTarget > 0 && (bytecodeTarget == 0 || moduleTarget < bytecodeTarget)) {
-        bytecodeTarget = moduleTarget;
-      }
-    }
-    if (bytecodeTarget == 0) {
-      if (languageLevel > 0) {
-        // according to IDEA rule: if not specified explicitly, set target to be the same as source language level
-        bytecodeTarget = languageLevel;
-      }
-      else {
-        // last resort and backward compatibility:
-        // check if user explicitly defined bytecode target in additional compiler options
-        String value = USER_DEFINED_BYTECODE_TARGET.get(context);
-        if (value != null) {
-          bytecodeTarget = JpsJavaSdkType.parseVersion(value);
-        }
-      }
-    }
+    int bytecodeTarget = getModuleBytecodeTarget(context, chunk, compilerConfiguration, languageLevel);
 
     if (shouldUseReleaseOption(compilerConfiguration, compilerSdkVersion, chunkSdkVersion, bytecodeTarget)) {
       options.add("--release");
@@ -966,6 +945,36 @@ public class JavaBuilder extends ModuleLevelBuilder {
       options.add("-target");
       options.add(complianceOption(bytecodeTarget));
     }
+  }
+
+  public static int getModuleBytecodeTarget(CompileContext context, ModuleChunk chunk, JpsJavaCompilerConfiguration compilerConfiguration) {
+    return getModuleBytecodeTarget(context, chunk, compilerConfiguration, getLanguageLevel(chunk.representativeTarget().getModule()));
+  }
+  
+  private static int getModuleBytecodeTarget(CompileContext context, ModuleChunk chunk, JpsJavaCompilerConfiguration compilerConfiguration, int languageLevel) {
+    int bytecodeTarget = 0;
+    for (JpsModule module : chunk.getModules()) {
+      // use the lower possible target among modules that form the chunk
+      final int moduleTarget = JpsJavaSdkType.parseVersion(compilerConfiguration.getByteCodeTargetLevel(module.getName()));
+      if (moduleTarget > 0 && (bytecodeTarget == 0 || moduleTarget < bytecodeTarget)) {
+        bytecodeTarget = moduleTarget;
+      }
+    }
+    if (bytecodeTarget == 0) {
+      if (languageLevel > 0) {
+        // according to IDEA rule: if not specified explicitly, set target to be the same as source language level
+        bytecodeTarget = languageLevel;
+      }
+      else {
+        // last resort and backward compatibility:
+        // check if user explicitly defined bytecode target in additional compiler options
+        String value = USER_DEFINED_BYTECODE_TARGET.get(context);
+        if (value != null) {
+          bytecodeTarget = JpsJavaSdkType.parseVersion(value);
+        }
+      }
+    }
+    return bytecodeTarget;
   }
 
   private static String complianceOption(int major) {

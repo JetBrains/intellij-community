@@ -51,10 +51,12 @@ private fun run(laf: LookAndFeel) {
     //      val panel = visualPaddingsPanelOnlyComboBox()
 //          val panel = alignFieldsInTheNestedGrid()
 //          val panel = visualPaddingsPanelOnlyTextField()
+//          val panel = visualPaddingsPanelOnlyLabeledScrollPane()
     //      val panel = labelRowShouldNotGrow()
-    //      val panel = cellPanel()
-//          val panel = visualPaddingsPanel()
-          val panel = withVerticalButtons()
+//          val panel = cellPanel()
+//          val panel = alignFieldsInTheNestedGrid()
+          val panel = visualPaddingsPanel()
+//          val panel = withVerticalButtons()
 //    val panel = createLafTestPanel()
 
     val dialog = dialog(

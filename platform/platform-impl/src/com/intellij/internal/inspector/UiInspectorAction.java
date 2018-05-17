@@ -1009,7 +1009,11 @@ public class UiInspectorAction extends ToggleAction implements DumbAware {
     }
 
     @NotNull
-    private static String getTextDescription(@NotNull Border value) {
+    private static String getTextDescription(@Nullable Border value) {
+      if (value == null) {
+        return "null";
+      }
+
       StringBuilder sb = new StringBuilder();
       sb.append(getClassName(value));
 

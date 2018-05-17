@@ -10,7 +10,6 @@ import com.intellij.openapi.vfs.VirtualFile;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 /**
  * Should be registered via {@link #EP_FILE_EDITOR_PROVIDER}.
@@ -55,10 +54,9 @@ public interface FileEditorProvider {
 
   /**
    * Deserialize state from the specified {@code sourceElement}
-   * Use {@link FileEditorState#INSTANCE} as default implementation
    */
   @NotNull
-  default FileEditorState readState(@Nullable Element sourceElement, @NotNull Project project, @NotNull VirtualFile file) {
+  default FileEditorState readState(@NotNull Element sourceElement, @NotNull Project project, @NotNull VirtualFile file) {
     return FileEditorState.INSTANCE;
   }
 

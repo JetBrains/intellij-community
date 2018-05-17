@@ -519,8 +519,8 @@ public class JBUI {
 
   @NotNull
   public static JBInsets insets(String propName, JBInsets defaultValue) {
-    JBInsets i = (JBInsets)UIManager.getInsets(propName);
-    return i != null ? i : defaultValue;
+    Insets i = UIManager.getInsets(propName);
+    return i != null ? JBInsets.create(i) : defaultValue;
   }
 
   @NotNull
@@ -653,6 +653,11 @@ public class JBUI {
     @NotNull
     public static JBFont toolbarFont() {
       return SystemInfo.isMac ? smallFont() : label();
+    }
+
+    @NotNull
+    public static JBFont toolbarSmallComboBoxFont() {
+      return UIUtil.isUnderGTKLookAndFeel() ? label() : label(11);
     }
   }
 
@@ -1612,6 +1617,10 @@ public class JBUI {
 
       public static Insets searchFieldInsets() {
         return insets(0, 12, 0, 10);
+      }
+
+      public static int maxListHeght() {
+        return JBUI.scale(600);
       }
     }
   }

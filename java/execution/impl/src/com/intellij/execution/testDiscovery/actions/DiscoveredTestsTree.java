@@ -63,13 +63,19 @@ class DiscoveredTestsTree extends Tree implements DataProvider {
           String name = node.getName();
           assert name != null;
           append(name);
-          if (node.isClass()) {
-            String packageName = node.getPackageName();
+          if (node instanceof DiscoveredTestsTreeModel.Node.Clazz) {
+            String packageName = ((DiscoveredTestsTreeModel.Node.Clazz)node).getPackageName();
             if (packageName != null) {
               append(FontUtil.spaceAndThinSpace() + packageName, SimpleTextAttributes.GRAYED_ATTRIBUTES);
             }
             int testMethodCount = myModel.getChildren(value).size();
             append(" / " + (testMethodCount != 1 ? (testMethodCount + " tests") : "1 test"), SimpleTextAttributes.GRAYED_ATTRIBUTES);
+          }
+          else if (node instanceof DiscoveredTestsTreeModel.Node.Method) {
+            boolean isParametrized = !((DiscoveredTestsTreeModel.Node.Method)node).getParameters().isEmpty();
+            if (isParametrized) {
+              append(FontUtil.spaceAndThinSpace() + "parametrized", SimpleTextAttributes.GRAYED_ATTRIBUTES);
+            }
           }
           SpeedSearchUtil.applySpeedSearchHighlighting(tree, this, true, false);
         }
@@ -80,7 +86,7 @@ class DiscoveredTestsTree extends Tree implements DataProvider {
       boolean myAlreadyDone;
       @Override
       protected void process(TreeModelEvent event, EventType type) {
-        if (!myAlreadyDone && !myModel.getTestClasses().isEmpty()) {
+        if (!myAlreadyDone && myModel.getTestCount() != 0) {
           myAlreadyDone = true;
           EdtInvocationManager.getInstance().invokeLater(() -> TreeUtil.selectFirstNode(DiscoveredTestsTree.this));
         }
@@ -88,9 +94,10 @@ class DiscoveredTestsTree extends Tree implements DataProvider {
     });
   }
 
-  public synchronized void addTest(@NotNull PsiClass testClass,
-                                   @NotNull PsiMethod testMethod) {
-    myModel.addTest(testClass, testMethod);
+  public void addTest(@NotNull PsiClass testClass,
+                      @NotNull PsiMethod testMethod,
+                      @Nullable String parameter) {
+    myModel.addTest(testClass, testMethod, parameter);
   }
 
   @NotNull
@@ -104,7 +111,7 @@ class DiscoveredTestsTree extends Tree implements DataProvider {
                   .collect(Collectors.toSet());
   }
 
-  public DiscoveredTestsTreeModel.Node<PsiMethod>[] getTestMethods() {
+  DiscoveredTestsTreeModel.Node.Method[] getTestMethods() {
     return myModel.getTestMethods();
   }
 

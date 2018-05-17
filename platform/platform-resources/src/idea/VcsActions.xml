@@ -106,8 +106,7 @@
                 icon="AllIcons.General.Remove"/>
         <action id="ChangesView.SetDefault" class="com.intellij.openapi.vcs.changes.actions.SetDefaultChangeListAction"
                 icon="AllIcons.Actions.Submit1"/>
-        <action id="ChangesView.Move" class="com.intellij.openapi.vcs.changes.actions.MoveChangesToAnotherListAction"
-                icon="AllIcons.Actions.MoveToAnotherChangelist"/>
+        <action id="ChangesView.Move" class="com.intellij.openapi.vcs.changes.actions.MoveChangesToAnotherListAction"/>
       </group>
       <action id="ChangesView.ShelveSilently" class="com.intellij.openapi.vcs.changes.actions.ShelveSilentlyAction"
               text="Shelve Silently" description="Shelve changes to appropriate shelved changelists" icon="AllIcons.Vcs.ShelveSilent">
@@ -144,10 +143,15 @@
       <reference ref="VersionControlsGroup"/>
     </group>
 
-    <!-- There are alternative action presentations for the UnversionedViewDialog. Icon is the difference.  -->
+    <action id="ChangesView.AddUnversioned.From.Dialog" class="com.intellij.openapi.vcs.changes.actions.ScheduleForAdditionAction"
+            icon="AllIcons.General.Add" use-shortcut-of="ChangesView.AddUnversioned"/>
+
     <group id="Unversioned.Files.Dialog">
-      <action id="ChangesView.AddUnversioned.From.Dialog" class="com.intellij.openapi.vcs.changes.actions.ScheduleForAdditionAction"
-              icon="AllIcons.General.Add" use-shortcut-of="ChangesView.AddUnversioned" />
+      <reference ref="ChangesView.AddUnversioned.From.Dialog"/>
+      <reference ref="ChangesView.DeleteUnversioned"/>
+    </group>
+    <group id="Unversioned.Files.Dialog.Popup">
+      <reference ref="ChangesView.AddUnversioned.From.Dialog"/>
       <reference ref="ChangesView.Move"/>
       <reference ref="ChangesView.DeleteUnversioned"/>
       <reference ref="ChangesView.Ignore"/>
@@ -323,7 +327,7 @@
     </action>
 
     <action id="Vcs.RollbackChangedLines" class="com.intellij.openapi.vcs.ex.RollbackLineStatusAction" icon="AllIcons.Actions.Rollback"/>
-    <action id="Vcs.MoveChangedLinesToChangelist" class="com.intellij.openapi.vcs.ex.MoveChangesLineStatusAction" icon="AllIcons.Actions.MoveToAnotherChangelist"/>
+    <action id="Vcs.MoveChangedLinesToChangelist" class="com.intellij.openapi.vcs.ex.MoveChangesLineStatusAction"/>
     <action id="Vcs.Diff.ExcludeChangedLinesFromCommit" class="com.intellij.openapi.actionSystem.EmptyAction">
       <add-to-group group-id="Diff.KeymapGroup" relative-to-action="Diff.ResolveConflict" anchor="after"/>
     </action>

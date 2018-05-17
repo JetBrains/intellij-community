@@ -61,6 +61,7 @@ import javax.swing.*;
 import java.util.Arrays;
 import java.util.Objects;
 import java.util.function.Function;
+import java.util.regex.Pattern;
 import java.util.stream.Stream;
 
 public abstract class Breakpoint<P extends JavaBreakpointProperties> implements FilteredRequestor, ClassPrepareRequestor, OverheadProducer {
@@ -320,6 +321,23 @@ public abstract class Breakpoint<P extends JavaBreakpointProperties> implements 
     return Arrays.stream(getInstanceFilters()).anyMatch(instanceFilter -> instanceFilter.getId() == id);
   }
 
+  private static boolean methodMatchesFilters(@Nullable String key, String[] filters) {
+    if (key != null) {
+      for (String filter : filters) {
+        if (key.equals(filter)) {
+          return true;
+        }
+        if (!filter.contains("(") && key.startsWith(filter)) {
+          return true;
+        }
+        if (Pattern.matches(filter.replaceAll("\\.", "\\\\.").replaceAll("\\$", "\\\\\\$").replaceAll("\\*", ".*"), key)) {
+          return true;
+        }
+      }
+    }
+    return false;
+  }
+
   public boolean evaluateCondition(final EvaluationContextImpl context, LocatableEvent event) throws EvaluateException {
     DebugProcessImpl debugProcess = context.getDebugProcess();
     if (isCountFilterEnabled() && !isConditionEnabled()) {
@@ -331,17 +349,15 @@ public abstract class Breakpoint<P extends JavaBreakpointProperties> implements 
 
     StackFrameProxyImpl frame = context.getFrameProxy();
     if (getProperties().isCALLER_FILTERS_ENABLED() && frame != null) {
-      StackFrameProxyImpl parentFrame = frame.threadProxy().frame(1);
-      if (parentFrame != null) {
-        Method method = parentFrame.location().method();
-        String name = method.declaringType().name() + "." + method.name();
-        String[] callerFilters = getProperties().getCallerFilters();
-        if (!ArrayUtil.isEmpty(callerFilters) && !ArrayUtil.contains(name, callerFilters)) {
-          return false;
-        }
-        if (ArrayUtil.contains(name, getProperties().getCallerExclusionFilters())) {
-          return false;
-        }
+      ThreadReferenceProxyImpl threadProxy = frame.threadProxy();
+      StackFrameProxyImpl parentFrame = threadProxy.frameCount() > 1 ? threadProxy.frame(1) : null;
+      String key = parentFrame != null ? DebuggerUtilsEx.methodKey(parentFrame.location().method()) : null;
+      String[] callerFilters = getProperties().getCallerFilters();
+      if (!ArrayUtil.isEmpty(callerFilters) && !methodMatchesFilters(key, callerFilters)) {
+        return false;
+      }
+      if (methodMatchesFilters(key, getProperties().getCallerExclusionFilters())) {
+        return false;
       }
     }
 

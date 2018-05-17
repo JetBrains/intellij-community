@@ -77,7 +77,7 @@ public class InternalPromiseUtil {
 
     @NotNull
     public Promise.State getState() {
-      return error == null ? Promise.State.FULFILLED : Promise.State.REJECTED;
+      return error == null ? Promise.State.SUCCEEDED : Promise.State.REJECTED;
     }
 
     public boolean isCancelled() {

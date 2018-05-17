@@ -22,18 +22,24 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.ui.MessageType;
+import com.intellij.openapi.ui.popup.Balloon;
+import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vcs.VcsNotifier;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.ui.awt.RelativePoint;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.ui.JBPoint;
 import com.intellij.vcs.log.*;
 import com.intellij.vcs.log.data.VcsLogData;
 import com.intellij.vcs.log.impl.HashImpl;
-import com.intellij.vcs.log.util.VcsLogUtil;
+import com.intellij.vcs.log.ui.AbstractVcsLogUi;
 import com.intellij.vcs.log.ui.highlighters.MergeCommitsHighlighter;
 import com.intellij.vcs.log.ui.highlighters.VcsLogHighlighterFactory;
+import com.intellij.vcs.log.util.VcsLogUtil;
 import git4idea.GitBranch;
 import git4idea.commands.Git;
 import git4idea.commands.GitCommand;
@@ -44,11 +50,13 @@ import git4idea.repo.GitRepositoryManager;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.awt.*;
 import java.util.Map;
 import java.util.Set;
 
 public class DeepComparator implements VcsLogHighlighter, Disposable {
   private static final Logger LOG = Logger.getInstance(DeepComparator.class);
+  private static final String HIGHLIGHTING_CANCELLED = "Highlighting of non-picked commits has been cancelled";
 
   @NotNull private final Project myProject;
   @NotNull private final GitRepositoryManager myRepositoryManager;
@@ -143,6 +151,7 @@ public class DeepComparator implements VcsLogHighlighter, Disposable {
     String comparedBranch = myTask.myComparedBranch;
     if (!myTask.myComparedBranch.equals(VcsLogUtil.getSingleFilteredBranch(dataPack.getFilters(), dataPack.getRefs()))) {
       stopAndUnhighlight();
+      notifyHighlightingCancelled();
       return;
     }
 
@@ -161,6 +170,19 @@ public class DeepComparator implements VcsLogHighlighter, Disposable {
       else {
         removeHighlighting();
       }
+    }
+  }
+
+  private void notifyHighlightingCancelled() {
+    if (myUi instanceof AbstractVcsLogUi) {
+      Balloon balloon = JBPopupFactory.getInstance()
+                                      .createHtmlTextBalloonBuilder(HIGHLIGHTING_CANCELLED, null, MessageType.INFO.getPopupBackground(),
+                                                                    null)
+                                      .setFadeoutTime(5000)
+                                      .createBalloon();
+      Component component = ((AbstractVcsLogUi)myUi).getTable();
+      balloon.show(new RelativePoint(component, new JBPoint(component.getWidth() / 2, 0)), Balloon.Position.below);
+      Disposer.register(this, balloon);
     }
   }
 

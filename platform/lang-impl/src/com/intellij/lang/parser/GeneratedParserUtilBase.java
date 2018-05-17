@@ -554,7 +554,7 @@ public class GeneratedParserUtilBase {
                                          @Nullable Parser eatMore) {
     int initialPos = builder.rawTokenIndex();
     boolean willFail = !result && !pinned;
-    replace_variants_with_name_(state, frame, builder, result, pinned);
+    replace_variants_with_name_(state, frame, builder, elementType, result, pinned);
     int lastErrorPos = getLastVariantPos(state, initialPos);
     if (!state.suppressErrors && eatMore != null) {
       state.suppressErrors = true;
@@ -719,12 +719,13 @@ public class GeneratedParserUtilBase {
   private static void replace_variants_with_name_(ErrorState state,
                                                   Frame frame,
                                                   PsiBuilder builder,
+                                                  IElementType elementType,
                                                   boolean result,
                                                   boolean pinned) {
     int initialPos = builder.rawTokenIndex();
     boolean willFail = !result && !pinned;
     if (willFail && initialPos == frame.position && state.lastExpectedVariantPos == frame.position &&
-        frame.name != null && state.variants.size() - frame.variantCount > 1) {
+        frame.name != null && state.variants.size() >= frame.variantCount + (elementType == null ? 0 : 2)) {
       state.clearVariants(true, frame.variantCount);
       addVariantInner(state, initialPos, frame.name);
     }
@@ -756,7 +757,7 @@ public class GeneratedParserUtilBase {
   }
 
   private static int getLastVariantPos(ErrorState state, int defValue) {
-    return state.lastExpectedVariantPos < 0? defValue : state.lastExpectedVariantPos;
+    return state.lastExpectedVariantPos < 0 ? defValue : state.lastExpectedVariantPos;
   }
 
   private static boolean reportError(PsiBuilder builder,
@@ -765,12 +766,22 @@ public class GeneratedParserUtilBase {
                                      IElementType elementType,
                                      boolean force,
                                      boolean advance) {
-    String expectedText = state.getExpectedText(builder);
-    boolean notEmpty = isNotEmpty(expectedText);
-    if (!(force || notEmpty || advance)) return false;
+    int position = builder.rawTokenIndex();
+    StringBuilder sb = new StringBuilder();
+    state.appendExpected(sb, position, true);
+    boolean empty = sb.length() == 0;
+    if (!force && empty && !advance) return false;
 
-    String actual = "'" + first(notNullize(builder.getTokenText(), "null"), MAX_ERROR_TOKEN_TEXT, true) + "'";
-    String message = expectedText + (builder.eof() ? "unexpected end of file" : notEmpty ? "got " + actual : actual + " unexpected");
+    String actual = nullize(builder.getTokenText(), true);
+    if (actual == null) {
+      sb.append(empty ? "unmatched input" : " expected");
+    }
+    else {
+      if (!empty) sb.append(" expected, got ");
+      sb.append("'").append(first(actual, MAX_ERROR_TOKEN_TEXT, true)).append("'");
+      if (empty) sb.append(" unexpected");
+    }
+    String message = sb.toString();
     if (advance) {
       PsiBuilder.Marker mark = builder.mark();
       builder.advanceLexer();
@@ -947,16 +958,7 @@ public class GeneratedParserUtilBase {
       if (state.braces != null && state.braces.length == 0) state.braces = null;
     }
 
-    public String getExpectedText(PsiBuilder builder) {
-      int position = builder.rawTokenIndex();
-      StringBuilder sb = new StringBuilder();
-      if (addExpected(sb, position, true)) {
-        sb.append(" expected, ");
-      }
-      return sb.toString();
-    }
-
-    private boolean addExpected(StringBuilder sb, int position, boolean expected) {
+    public void appendExpected(@NotNull StringBuilder sb, int position, boolean expected) {
       MyList<Variant> list = expected ? variants : unexpected;
       String[] strings = new String[list.size()];
       long[] hashes = new long[strings.length];
@@ -995,7 +997,6 @@ public class GeneratedParserUtilBase {
         int idx = sb.lastIndexOf(", ");
         sb.replace(idx, idx + 1, " or");
       }
-      return count > 0;
     }
 
     public void clearVariants(Frame frame) {

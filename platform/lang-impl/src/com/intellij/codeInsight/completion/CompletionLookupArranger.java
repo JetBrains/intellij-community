@@ -3,6 +3,8 @@ package com.intellij.codeInsight.completion;
 
 import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.codeInsight.lookup.LookupElementPresentation;
+import com.intellij.codeInsight.lookup.WeighingContext;
+import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.Pair;
 import org.jetbrains.annotations.NotNull;
 
@@ -14,6 +16,9 @@ import java.util.List;
  * @author yole
  */
 public interface CompletionLookupArranger {
+  Key<WeighingContext> WEIGHING_CONTEXT = Key.create("WEIGHING_CONTEXT");
+  Key<Integer> PREFIX_CHANGES = Key.create("PREFIX_CHANGES");
+
   /**
    * Adds an element to be arranged.
    * @param presentation The presentation of the element (rendered with {@link LookupElement#renderElement(LookupElementPresentation)}
