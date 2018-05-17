@@ -98,7 +98,6 @@ public class ApplicationImpl extends PlatformComponentManagerImpl implements App
   private int myWriteStackBase;
   private volatile Thread myWriteActionThread;
 
-  private int myInEditorPaintCounter; // EDT only
   private final long myStartTime;
   @Nullable
   private Splash mySplash;
@@ -1371,15 +1370,6 @@ public class ApplicationImpl extends PlatformComponentManagerImpl implements App
         runnable.run();
       }
     });
-  }
-
-  public void editorPaintStart() {
-    myInEditorPaintCounter++;
-  }
-
-  public void editorPaintFinish() {
-    myInEditorPaintCounter--;
-    LOG.assertTrue(myInEditorPaintCounter >= 0);
   }
 
   @Override
