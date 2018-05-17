@@ -19,6 +19,7 @@ package com.intellij.plugin
 import com.intellij.ide.util.PropertiesComponent
 import com.intellij.notification.Notification
 import com.intellij.notification.NotificationType
+import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.startup.StartupActivity
 import com.intellij.reporting.isSendAllowed
@@ -31,6 +32,8 @@ class NotificationManager : StartupActivity {
                 "Data about your code completion usage will be anonymously reported. " +
                 "No personal data or code will be sent."
 
+        private const val MESSAGE_TEXT_EAP = "$MESSAGE_TEXT This is only enabled in EAP builds."
+
         private const val MESSAGE_SHOWN_KEY = "completion.stats.allow.message.shown"
     }
     
@@ -39,6 +42,7 @@ class NotificationManager : StartupActivity {
     private fun setMessageShown(value: Boolean) = PropertiesComponent.getInstance().setValue(MESSAGE_SHOWN_KEY, value)
     
     override fun runActivity(project: Project) {
+        // Show message in EAP build or if additional plugin installed
         if (!isMessageShown() && isSendAllowed()) {
             notify(project)
             setMessageShown(true)
@@ -46,7 +50,8 @@ class NotificationManager : StartupActivity {
     }
     
     private fun notify(project: Project) {
-        val notification = Notification(PLUGIN_NAME, PLUGIN_NAME, MESSAGE_TEXT, NotificationType.INFORMATION)
+        val messageText = if (ApplicationManager.getApplication().isEAP) MESSAGE_TEXT else MESSAGE_TEXT_EAP
+        val notification = Notification(PLUGIN_NAME, PLUGIN_NAME, messageText, NotificationType.INFORMATION)
         notification.notify(project)
     }
 
