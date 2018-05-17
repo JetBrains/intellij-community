@@ -234,7 +234,9 @@ public class XmlTagImpl extends XmlElementImpl implements XmlTag, HintedReferenc
   }
 
   @NotNull
-  protected Collection<PsiReference> createPrefixReferences(ASTNode startTagName, String prefix, TagNameReference tagRef) {
+  protected Collection<PsiReference> createPrefixReferences(@NotNull ASTNode startTagName, 
+                                                            @NotNull String prefix, 
+                                                            @NotNull TagNameReference tagRef) {
     return Collections.singleton(new SchemaPrefixReference(this, TextRange.from(startTagName.getStartOffset() - getStartOffset(), prefix.length()), prefix,
                                      tagRef));
   }
