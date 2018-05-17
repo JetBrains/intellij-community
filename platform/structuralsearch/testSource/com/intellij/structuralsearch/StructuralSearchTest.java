@@ -2700,20 +2700,32 @@ public class StructuralSearchTest extends StructuralSearchTestCase {
   public void testFindParameterizedMethodCalls() {
     String source = "interface Foo {" +
                     "  <T> T bar();" +
-                    "  <S, T> void bar2(S, T);" +
+                    "  <S, T> void bar2(S s, T t);" +
                     "}" +
                     "class X {" +
+                    "  <T> X(T t) {}" +
+                    "  X() {}" +
                     "  void x(Foo foo) {" +
                     "    foo.<String>bar();" +
                     "    foo.<Integer>bar();" +
                     "    String s = foo.bar();" +
                     "    foo.bar2(1, 2);" +
                     "  }" +
+                    "  void y(String s) {" +
+                    "    new <String>X();" +
+                    "    new <String>X();" +
+                    "    new X();" +
+                    "    new X(s);" +
+                    "  }" +
                     "}";
     assertEquals("find parameterized method calls 1", 1, findMatchesCount(source, "foo.<Integer>bar()"));
     assertEquals("find parameterized method calls 2", 2, findMatchesCount(source, "foo.<String>bar()"));
     assertEquals("find parameterized method calls 3", 3, findMatchesCount(source, "'_a.<'_b>'_c('_d*)"));
     assertEquals("find parameterized method calls 4", 4, findMatchesCount(source, "'_a.<'_b+>'_c('_d*)"));
+
+    assertEquals("find parameterized constructor calls 1", 2, findMatchesCount(source, "new <String>X()"));
+    assertEquals("find parameterized constructor calls 2", 1, findMatchesCount(source, "new <String>X(s)"));
+    assertEquals("find constructor calls 3", 3, findMatchesCount(source, "new X()"));
   }
 
   public void testFindDiamondTypes() {

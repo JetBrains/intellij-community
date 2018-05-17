@@ -978,7 +978,8 @@ public class JavaMatchingVisitor extends JavaElementVisitor {
       final PsiType type1 = new1.getType();
       final PsiType type2 = new2.getType();
       myMatchingVisitor.setResult(type1 != null && type2 != null && type1.getArrayDimensions() == type2.getArrayDimensions() &&
-                                  myMatchingVisitor.matchSons(new1.getArgumentList(), new2.getArgumentList()));
+                                  myMatchingVisitor.matchSons(new1.getArgumentList(), new2.getArgumentList()) &&
+                                  myMatchingVisitor.setResult(matchTypeParameters(new1, new2)));
     }
   }
 
@@ -1027,27 +1028,22 @@ public class JavaMatchingVisitor extends JavaElementVisitor {
     }
 
     if (!myMatchingVisitor.setResult(myMatchingVisitor.matchSons(mcall.getArgumentList(), mcall2.getArgumentList()))) return;
-    if (!myMatchingVisitor.setResult(matchTypeParameters(mcallRef1, mcallRef2))) return;
+    if (!myMatchingVisitor.setResult(matchTypeParameters(mcall, mcall2))) return;
     if (isTypedVar) {
       myMatchingVisitor.setResult(myMatchingVisitor.handleTypedElement(patternMethodName, mcallRef2.getReferenceNameElement()));
     }
   }
 
-  private boolean matchTypeParameters(PsiJavaCodeReferenceElement mcallRef1, PsiJavaCodeReferenceElement mcallRef2) {
-    final PsiReferenceParameterList patternParameterList = mcallRef1.getParameterList();
-    if (patternParameterList == null) {
-      return true;
-    }
+  private boolean matchTypeParameters(PsiCallExpression call1, PsiCallExpression call2) {
+    final PsiReferenceParameterList patternParameterList = call1.getTypeArgumentList();
     final PsiTypeElement[] patternTypeElements = patternParameterList.getTypeParameterElements();
     if (patternTypeElements.length == 0) {
       return true;
     }
-    PsiReferenceParameterList matchedParameterList = mcallRef2.getParameterList();
-    if (matchedParameterList == null) {
-      return false;
-    }
-    if (matchedParameterList.getFirstChild() == null) { // check inferred type parameters
-      final JavaResolveResult resolveResult = mcallRef2.advancedResolve(false);
+    PsiReferenceParameterList matchedParameterList = call2.getTypeArgumentList();
+    if (matchedParameterList.getFirstChild() == null && myMatchingVisitor.getMatchContext().getOptions().isLooseMatching()) {
+      // check inferred type parameters
+      final JavaResolveResult resolveResult = call2.resolveMethodGenerics();
       final PsiMethod targetMethod = (PsiMethod)resolveResult.getElement();
       if (targetMethod == null) {
         return false;
@@ -1064,7 +1060,7 @@ public class JavaMatchingVisitor extends JavaElementVisitor {
         if (type == null) {
           return false;
         }
-        final PsiTypeElement matchedTypeElement = JavaPsiFacade.getElementFactory(mcallRef1.getProject()).createTypeElement(type);
+        final PsiTypeElement matchedTypeElement = JavaPsiFacade.getElementFactory(call1.getProject()).createTypeElement(type);
         matchedParameterList.add(matchedTypeElement);
       }
     }
