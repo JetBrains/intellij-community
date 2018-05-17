@@ -105,7 +105,7 @@ class GitHttpGuiAuthenticator implements GitHttpAuthenticator {
       myWasCancelled = true;
       return "";
     }
-    myIsMemoryOnly = ThreeState.fromBoolean(result.isMemoryOnly());
+    myIsMemoryOnly = ThreeState.fromBoolean(result.isRemember());
     myPassword = password;
     myDataProvider = new BaseGitAuthDataProvider() {
       @Override

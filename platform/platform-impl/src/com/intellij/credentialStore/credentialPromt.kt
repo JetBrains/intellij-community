@@ -37,7 +37,7 @@ fun askPassword(project: Project?,
                         isCheckExistingBeforeDialog = true)?.credentials?.getPasswordAsString()?.nullize()
 }
 
-internal object RememberCheckBoxState {
+object RememberCheckBoxState {
   private const val key = "checkbox.remember.password"
   private const val defaultValue = true
 
@@ -66,27 +66,20 @@ fun askCredentials(project: Project?,
   }
   else if (isCheckExistingBeforeDialog) {
     store.get(attributes)?.let {
-      return CredentialRequestResult(it, false, true)
+      return CredentialRequestResult(it, false)
     }
   }
 
   return invokeAndWaitIfNeed(ModalityState.any()) {
     val passwordField = JPasswordField()
-    val rememberCheckBox = if (store.isMemoryOnly) {
-      null
-    }
-    else {
-      CheckBox(CommonBundle.message("checkbox.remember.password"),
-               selected = RememberCheckBoxState.isSelected,
-               toolTip = "The password will be stored between application sessions.")
-    }
+    val rememberCheckBox = CheckBox(CommonBundle.message("checkbox.remember.password"),
+                                    selected = RememberCheckBoxState.isSelected,
+                                    toolTip = "The password will be stored between application sessions.")
 
     val panel = panel {
       row { label(if (passwordFieldLabel.endsWith(":")) passwordFieldLabel else "$passwordFieldLabel:") }
       row { passwordField() }
-      rememberCheckBox?.let {
-        row { it() }
-      }
+      row { rememberCheckBox() }
     }
 
     AppIcon.getInstance().requestAttention(project, true)
@@ -94,18 +87,17 @@ fun askCredentials(project: Project?,
       return@invokeAndWaitIfNeed null
     }
 
-    if (rememberCheckBox != null) {
-      RememberCheckBoxState.update(rememberCheckBox)
-    }
+    RememberCheckBoxState.update(rememberCheckBox)
 
-    val isMemoryOnly = store.isMemoryOnly || !rememberCheckBox!!.isSelected
     val credentials = Credentials(attributes.userName, passwordField.password.nullize())
-    if (isSaveOnOk) {
-      store.set(attributes, credentials, isMemoryOnly)
+    if (isSaveOnOk && rememberCheckBox.isSelected) {
+      store.set(attributes, credentials)
       credentials.getPasswordAsString()
     }
-    return@invokeAndWaitIfNeed CredentialRequestResult(credentials, isMemoryOnly, false)
+
+    // for memory only store isRemember is true, because false doesn't matter
+    return@invokeAndWaitIfNeed CredentialRequestResult(credentials, isRemember = rememberCheckBox.isSelected)
   }
 }
 
-data class CredentialRequestResult(val credentials: Credentials, val isMemoryOnly: Boolean, val isSaved: Boolean)
+data class CredentialRequestResult(val credentials: Credentials, val isRemember: Boolean)
