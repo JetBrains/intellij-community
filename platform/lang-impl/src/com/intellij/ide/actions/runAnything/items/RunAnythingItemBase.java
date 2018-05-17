@@ -3,6 +3,8 @@ package com.intellij.ide.actions.runAnything.items;
 
 import com.intellij.ui.SimpleColoredComponent;
 import com.intellij.ui.SimpleTextAttributes;
+import com.intellij.util.ObjectUtils;
+import com.intellij.util.ui.EmptyIcon;
 import com.intellij.util.ui.JBUI;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -36,7 +38,7 @@ public class RunAnythingItemBase extends RunAnythingItem {
   }
 
   public void setupIcon(@NotNull SimpleColoredComponent component, @Nullable Icon icon) {
-    component.setIcon(icon);
+    component.setIcon(ObjectUtils.notNull(icon, EmptyIcon.ICON_16));
     component.setIconTextGap(5);
     component.setIpad(JBUI.insets(0, 10, 0, 0));
   }

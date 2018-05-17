@@ -30,7 +30,7 @@ public abstract class RunAnythingProviderBase<V> implements RunAnythingProvider<
 
   @Nullable
   public Icon getIcon(@NotNull V value) {
-    return EmptyIcon.ICON_16;
+    return null;
   }
 
   @Nullable
