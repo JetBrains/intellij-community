@@ -10,6 +10,7 @@ object PasswordSafePromptDialog {
   @Deprecated("Use {@link CredentialPromptDialog}",
               ReplaceWith("askPassword(project, title, message, CredentialAttributes(requestor, key), resetPassword, error)", "com.intellij.credentialStore.askPassword",
                                         "com.intellij.credentialStore.CredentialAttributes"))
+  @JvmStatic
   fun askPassword(project: Project?, title: String,
                   message: String,
                   requestor: Class<*>,
