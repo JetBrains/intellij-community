@@ -88,22 +88,24 @@ fun KotlinGuiTestCase.checkInProjectStructure(actions: KotlinGuiTestCase.() -> U
     }
     return null
   }
-  logTestStep("Check structure of gradle project")
+
+  val projectStructureTitle = "Project Structure"
+  logTestStep("Check structure of the project")
   ideFrame {
     val numberOfAttempts = 5
     var isCorrectDialogOpen = false
-    for (currentAttempt in 0..numberOfAttempts){
+    for (currentAttempt in 0..numberOfAttempts) {
       waitAMoment()
       //    invokeMainMenu("ShowProjectStructureSettings")
+      logUIStep("Call '$projectStructureTitle' dialog with Ctrl+Shift+Alt+S. Attempt ${currentAttempt + 1}")
       shortcut(Modifier.CONTROL + Modifier.SHIFT + Modifier.ALT + Key.S)
-      try {
-        dialog("Project Structure") {
+      val activeDialog = getActiveModalDialog()
+      logUIStep("Active dialog: ${activeDialog?.title}")
+      if (activeDialog?.title == projectStructureTitle) {
+        dialog(projectStructureTitle) {
           try {
             isCorrectDialogOpen = true
             actions()
-          }
-          catch (t: Throwable) {
-            throw t
           }
           finally {
             logUIStep("Close Project Structure dialog with Cancel")
@@ -111,16 +113,13 @@ fun KotlinGuiTestCase.checkInProjectStructure(actions: KotlinGuiTestCase.() -> U
           }
         }
       }
-      catch (e: WaitTimedOutError) {
-        // no dialog or incorrect dialog is show
-        val activeDialog = getActiveModalDialog()
+      else {
         if (activeDialog != null) {
-          dialog(activeDialog.title) {
-            button("Cancel").click()
-          }
+          logUIStep("Active dialog is incorrect, going to close it with Escape")
+          shortcut(Key.ESCAPE)
         }
       }
-      if(isCorrectDialogOpen) break
+      if (isCorrectDialogOpen) break
     }
   }
 }
