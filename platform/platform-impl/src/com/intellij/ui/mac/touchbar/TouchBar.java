@@ -24,7 +24,7 @@ public class TouchBar implements NSTLibrary.ItemCreator {
 
   public TouchBar(@NotNull String touchbarName, boolean replaceEsc) {
     myName = touchbarName;
-    myCustomEsc = replaceEsc ? new TBItemButton(_genNewID("esc"), AllIcons.Actions.Clear, null, this::_closeSelf) : null;
+    myCustomEsc = replaceEsc ? new TBItemButton(_genNewID("esc"), AllIcons.Actions.Cancel, null, this::_closeSelf) : null;
     myNativePeer = NST.createTouchBar(touchbarName, this, myCustomEsc != null ? myCustomEsc.myUid : null);
   }
 
