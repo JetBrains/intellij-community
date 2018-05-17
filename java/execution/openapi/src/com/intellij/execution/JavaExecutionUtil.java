@@ -41,7 +41,6 @@ import com.intellij.psi.util.PsiTreeUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
 import java.io.File;
 import java.io.FileFilter;
 import java.io.IOException;
@@ -55,22 +54,6 @@ public class JavaExecutionUtil {
   private static final Logger LOG = Logger.getInstance(JavaExecutionUtil.class);
 
   private JavaExecutionUtil() {
-  }
-
-  public static boolean executeRun(@NotNull final Project project, String contentName, Icon icon,
-                      final DataContext dataContext) throws ExecutionException {
-    return executeRun(project, contentName, icon, dataContext, null);
-  }
-
-  public static boolean executeRun(@NotNull final Project project, String contentName, Icon icon, DataContext dataContext, Filter[] filters) throws ExecutionException {
-    final JavaParameters cmdLine = JavaParameters.JAVA_PARAMETERS.getData(dataContext);
-    final DefaultRunProfile profile = new DefaultRunProfile(project, cmdLine, contentName, icon, filters);
-    ExecutionEnvironmentBuilder builder = ExecutionEnvironmentBuilder.createOrNull(project, DefaultRunExecutor.getRunExecutorInstance(), profile);
-    if (builder != null) {
-      builder.buildAndExecute();
-      return true;
-    }
-    return false;
   }
 
   public static Module findModule(final Module contextModule, final Set<String> patterns, final Project project, Condition<PsiClass> isTestMethod) {
@@ -98,48 +81,6 @@ public class JavaExecutionUtil {
       }
     }
     return null;
-  }
-
-  private static final class DefaultRunProfile implements RunProfile {
-    private final JavaParameters myParameters;
-    private final String myContentName;
-    private final Filter[] myFilters;
-    private final Project myProject;
-    private final Icon myIcon;
-
-    public DefaultRunProfile(final Project project, final JavaParameters parameters, final String contentName, final Icon icon, Filter[] filters) {
-      myProject = project;
-      myParameters = parameters;
-      myContentName = contentName;
-      myFilters = filters;
-      myIcon = icon;
-    }
-
-    @Override
-    public Icon getIcon() {
-      return myIcon;
-    }
-
-    @Override
-    public RunProfileState getState(@NotNull final Executor executor, @NotNull final ExecutionEnvironment env) {
-      final JavaCommandLineState state = new JavaCommandLineState(env) {
-        @Override
-        protected JavaParameters createJavaParameters() {
-          return myParameters;
-        }
-      };
-      final TextConsoleBuilder builder = TextConsoleBuilderFactory.getInstance().createBuilder(myProject);
-      if (myFilters != null) {
-        builder.filters(myFilters);
-      }
-      state.setConsoleBuilder(builder);
-      return state;
-    }
-
-    @Override
-    public String getName() {
-      return myContentName;
-    }
   }
 
   @Nullable
