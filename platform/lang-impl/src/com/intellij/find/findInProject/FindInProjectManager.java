@@ -78,13 +78,21 @@ public class FindInProjectManager {
     }
 
     findManager.showFindDialog(findModel, () -> {
-      findModel.setOpenInNewTabVisible(false);
-      if (isOpenInNewTabEnabled) {
-        FindSettings.getInstance().setShowResultsInSeparateView(findModel.isOpenInNewTab());
+      if (findModel.isReplaceState()) {
+        ReplaceInProjectManager.getInstance(myProject).replaceInPath(findModel);
+      } else {
+        findInPath(findModel);
       }
-      startFindInProject(findModel);
-      findModel.setOpenInNewTabVisible(false); //todo check it in both cases: dialog & popup
     });
+  }
+
+  public void findInPath(@NotNull FindModel findModel) {
+    findModel.setOpenInNewTabVisible(false);
+    if (findModel.isOpenInNewTabEnabled()) {
+      FindSettings.getInstance().setShowResultsInSeparateView(findModel.isOpenInNewTab());
+    }
+    startFindInProject(findModel);
+    findModel.setOpenInNewTabVisible(false);
   }
 
   @SuppressWarnings("WeakerAccess")
