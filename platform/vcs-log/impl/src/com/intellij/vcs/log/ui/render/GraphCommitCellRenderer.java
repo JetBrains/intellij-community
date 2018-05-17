@@ -176,27 +176,27 @@ public class GraphCommitCellRenderer extends TypeSafeTableCellRenderer<GraphComm
 
     @Override
     public void paintComponent(Graphics g) {
-      // align the tx so that background painting (in super) and image drawing (below) be aligned by "y"
-      AffineTransform origTx = PaintUtil.alignTxToInt((Graphics2D)g, PaintUtil.insets2offset(getInsets()), false, true, RoundingMode.CEIL);
-      // expand the clip to the closest int rect so that it doesn't cut the image edges
-      Shape origClip = PaintUtil.alignClipToInt((Graphics2D)g, false, true, RoundingMode.FLOOR, RoundingMode.CEIL);
+      super.paintComponent(g);
+
+      int graphImageWidth = myGraphImage.getWidth();
+
+      Graphics2D g2d = (Graphics2D)g;
+      if (!myReferencePainter.isLeftAligned()) {
+        int start = Math.max(graphImageWidth, getWidth() - myReferencePainter.getSize().width);
+        myReferencePainter.paint(g2d, start, 0, getHeight());
+      }
+      else {
+        myReferencePainter.paint(g2d, graphImageWidth, 0, getHeight());
+      }
+      // The image's origin (after the graphics translate is applied) is rounded by J2D with .5 coordinate ceil'd.
+      // This doesn't correspond to how the rectangle's origin is rounded, with .5 floor'd. As the result, there may be a gap
+      // b/w the background's top and the image's top (depending on the row number and the graphics translate). To avoid that,
+      // the graphics y-translate is aligned to int with .5-floor-bias.
+      AffineTransform origTx = PaintUtil.alignTxToInt(g2d, null, false, true, RoundingMode.ROUND_FLOOR_BIAS);
       try {
-        super.paintComponent(g);
-
-        int graphImageWidth = myGraphImage.getWidth();
-
-        if (!myReferencePainter.isLeftAligned()) {
-          int start = Math.max(graphImageWidth, getWidth() - myReferencePainter.getSize().width);
-          myReferencePainter.paint((Graphics2D)g, start, 0, getHeight());
-        }
-        else {
-          myReferencePainter.paint((Graphics2D)g, graphImageWidth, 0, getHeight());
-        }
-
         UIUtil.drawImage(g, myGraphImage.getImage(), 0, 0, null);
       } finally {
-        if (origClip != null) g.setClip(origClip);
-        if (origTx != null) ((Graphics2D)g).setTransform(origTx);
+        if (origTx != null) g2d.setTransform(origTx);
       }
     }
 
