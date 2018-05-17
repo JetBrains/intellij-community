@@ -9,7 +9,7 @@
     <orderEntry type="module" module-name="intellij.ant" />
     <orderEntry type="module" module-name="intellij.platform.boot" />
     <orderEntry type="module" module-name="intellij.platform.bootstrap" />
-    <orderEntry type="module" module-name="intellij.platform.annotations.java5" />
+    <orderEntry type="library" name="jetbrains-annotations-java5" level="project" />
     <orderEntry type="module" module-name="intellij.java.compiler.impl" />
     <orderEntry type="module" module-name="intellij.java.compiler" />
     <orderEntry type="module" module-name="intellij.java.debugger.impl" />
