@@ -8,6 +8,7 @@ import com.intellij.execution.process.ProcessIOExecutorService;
 import com.intellij.execution.process.ProcessOutputTypes;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.LineHandlerHelper;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -34,7 +35,6 @@ public class GitLineHandler extends GitTextHandler {
    * Line listeners
    */
   private final EventDispatcher<GitLineHandlerListener> myLineListeners = EventDispatcher.create(GitLineHandlerListener.class);
-  private boolean myWithMediator = true;
 
   /**
    * Remote url which require authentication
@@ -100,10 +100,6 @@ public class GitLineHandler extends GitTextHandler {
     myIgnoreAuthenticationRequest = ignoreAuthenticationRequest;
   }
 
-  public void setWithMediator(boolean value) {
-    myWithMediator = value;
-  }
-
   protected void processTerminated(final int exitCode) {}
 
   public void addLineListener(GitLineHandlerListener listener) {
@@ -148,7 +144,7 @@ public class GitLineHandler extends GitTextHandler {
 
   @Override
   protected ProcessHandler createProcess(@NotNull GeneralCommandLine commandLine) throws ExecutionException {
-    return new MyOSProcessHandler(commandLine, myWithMediator) {
+    return new MyOSProcessHandler(commandLine, myWithMediator && Registry.is("git.execute.with.mediator")) {
       @NotNull
       @Override
       protected BaseDataReader createOutputDataReader() {
