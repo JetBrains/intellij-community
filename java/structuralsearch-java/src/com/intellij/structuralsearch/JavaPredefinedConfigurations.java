@@ -184,6 +184,7 @@ class JavaPredefinedConfigurations {
       createSearchTemplateInfo(SSRBundle.message("predefined.configuration.variables.of.generic.types"),"'_Type <'_GenericArgument+>  'Var = '_Init?;", GENERICS_TYPE),
       createSearchTemplateInfo(SSRBundle.message("predefined.configuration.diamond.operators"), "new 'Class<>('_Argument*)", GENERICS_TYPE),
       createSearchTemplateInfo(SSRBundle.message("predefined.configuration.method.returns.bounded.wildcard"), "[script( \"!Method.hasModifierProperty(com.intellij.psi.PsiModifier.ABSTRACT)\" )]'_Type<? extends '_Bound> 'Method('_ParameterType '_Parameter*);", GENERICS_TYPE),
+      createSearchTemplateInfo(SSRBundle.message("predefined.configuration.generic.constructors"), "<'_TypeParameter+> 'Class('_ParameterType '_Parameter*) {\n  '_Statement*;\n}", GENERICS_TYPE),
 
       // Add comments and metadata
       createSearchTemplateInfo(SSRBundle.message("predefined.configuration.comments"),"/* 'CommentContent */", METADATA_TYPE),

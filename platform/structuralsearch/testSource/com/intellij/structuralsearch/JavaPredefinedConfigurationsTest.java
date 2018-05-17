@@ -151,6 +151,14 @@ public class JavaPredefinedConfigurationsTest extends StructuralSearchTestCase {
                        asList("List<? extends Number> one() {" +
                               "    return null;" +
                               "  }")));
+    testCases.put(SSRBundle.message("predefined.configuration.generic.constructors"),
+                  pair("class X<U> {" +
+                       "  X() {}" +
+                       "  <T> X(String s) {}" +
+                       "  <T extends U, V> X(int i) {}" +
+                       "}",
+                       asList("<T> X(String s) {}",
+                              "<T extends U, V> X(int i) {}")));
   }
 
   public void testPredefinedConfigurations() {
