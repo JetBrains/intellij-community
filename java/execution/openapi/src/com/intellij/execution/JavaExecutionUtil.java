@@ -31,7 +31,6 @@ import com.intellij.openapi.module.ModuleUtilCore;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Condition;
-import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.openapi.util.text.StringUtil;
@@ -244,39 +243,44 @@ public class JavaExecutionUtil {
       agentContainingDir = new File(agentPath).getParent();
     }
     if (agentContainingDir.contains(" ")) {
-      File dir = new File(PathManager.getSystemPath(), copyDirName);
-      if (dir.getAbsolutePath().contains(" ")) {
+      String res = tryCopy(agentContainingDir, new File(PathManager.getSystemPath(), copyDirName), fileFilter);
+      if (res == null) {
         try {
-          dir = FileUtil.createTempDirectory(copyDirName, "jars");
-          if (dir.getAbsolutePath().contains(" ")) {
+          res = tryCopy(agentContainingDir, FileUtil.createTempDirectory(copyDirName, "jars"), fileFilter);
+          if (res == null) {
             String message = "agent not used since the agent path contains spaces: " + agentContainingDir;
             if (agentPathPropertyKey != null) {
               message += "\nOne can move the agent libraries to a directory with no spaces in path and specify its path in idea.properties as " +
               agentPathPropertyKey + "=<path>";
             }
             LOG.info(message);
-            return null;
           }
         }
         catch (IOException e) {
           LOG.info(e);
-          return null;
         }
       }
-
-      try {
-        LOG.info("Agent jars were copied to " + dir.getPath());
-        if (fileFilter == null) {
-          fileFilter = pathname -> FileUtilRt.extensionEquals(pathname.getPath(), "jar");
-        }
-        FileUtil.copyDir(new File(agentContainingDir), dir, fileFilter);
-        return dir.getPath();
-      }
-      catch (IOException e) {
-        LOG.info(e);
-        return null;
-      }
+      return res;
     }
     return agentContainingDir;
+  }
+
+  @Nullable
+  private static String tryCopy(@NotNull String agentDir,
+                                @NotNull File targetDir,
+                                @Nullable FileFilter fileFilter) {
+    if (targetDir.getAbsolutePath().contains(" ")) return null;
+    try {
+      LOG.info("Agent jars were copied to " + targetDir.getPath());
+      if (fileFilter == null) {
+        fileFilter = pathname -> FileUtilRt.extensionEquals(pathname.getPath(), "jar");
+      }
+      FileUtil.copyDir(new File(agentDir), targetDir, fileFilter);
+      return targetDir.getPath();
+    }
+    catch (IOException e) {
+      LOG.info(e);
+      return null;
+    }
   }
 }
