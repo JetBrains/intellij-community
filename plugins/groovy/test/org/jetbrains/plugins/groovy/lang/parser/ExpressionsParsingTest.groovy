@@ -1,6 +1,8 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.groovy.lang.parser
 
+import com.intellij.idea.Bombed
+
 /**
  * @author peter
  */
@@ -68,6 +70,7 @@ class ExpressionsParsingTest extends GroovyParsingTestCase {
 
   void testclosures$closparam6() throws Throwable { doTest() }
 
+  @Bombed(month = 6, day = 10, user = "daniil", description = "highlight in annotator, update the test")
   void testclosures$final_error() throws Throwable { doTest() }
 
   void testclosures$param6() throws Throwable { doTest() }
@@ -213,6 +216,7 @@ class ExpressionsParsingTest extends GroovyParsingTestCase {
 
   void testanonymous$anonymous17() throws Throwable { doTest() }
 
+  @Bombed(month = 6, day = 10, user = "daniil", description = "highlight in annotator, update the test")
   void testnumbers() throws Throwable { doTest() }
 
   void testparenthed$exprInParenth() throws Throwable { doTest() }
@@ -578,6 +582,9 @@ class ExpressionsParsingTest extends GroovyParsingTestCase {
   void testcommandExpr$literalInvoked() { doTest() }
 
   void testDiamond() { doTest() }
+
+  @Bombed(month = 6, day = 10, user = "daniil")
+  void testDiamondErrors() { doTest() }
 
   void testpath$stringMethodCall1() { doTest() }
 
