@@ -13,30 +13,25 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.ide.passwordSafe.ui;
+package com.intellij.ide.passwordSafe.ui
 
-import com.intellij.credentialStore.CredentialPromptDialog;
-import com.intellij.openapi.project.Project;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
+import com.intellij.credentialStore.CredentialAttributes
+import com.intellij.credentialStore.askPassword
+import com.intellij.openapi.project.Project
 
-import static com.intellij.credentialStore.CredentialAttributesKt.CredentialAttributes;
-
-@Deprecated
-public class PasswordSafePromptDialog {
-  /**
-   * @deprecated Use {@link CredentialPromptDialog}
-   */
-  @Nullable
-  @Deprecated
-  public static String askPassword(@Nullable Project project,
-                                   String title,
-                                   String message,
-                                   @NotNull Class<?> requestor,
-                                   String key,
-                                   boolean resetPassword,
-                                   String error) {
-    return CredentialPromptDialog.askPassword(project, title, message, CredentialAttributes(requestor, key), resetPassword, error);
+@Deprecated("")
+object PasswordSafePromptDialog {
+  @Deprecated("Use {@link CredentialPromptDialog}",
+              ReplaceWith("askPassword(project, title, message, CredentialAttributes(requestor, key), resetPassword, error)", "com.intellij.credentialStore.askPassword",
+                                        "com.intellij.credentialStore.CredentialAttributes"))
+  fun askPassword(project: Project?,
+                  title: String,
+                  message: String,
+                  requestor: Class<*>,
+                  key: String,
+                  resetPassword: Boolean,
+                  error: String): String? {
+    return askPassword(project, title, message, CredentialAttributes(requestor, key), resetPassword, error)
   }
 }
 
