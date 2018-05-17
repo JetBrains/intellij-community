@@ -1613,6 +1613,10 @@ public class JBUI {
       public static Insets searchFieldInsets() {
         return insets(0, 12, 0, 10);
       }
+
+      public static int maxListHeght() {
+        return JBUI.scale(600);
+      }
     }
   }
 
