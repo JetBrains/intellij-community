@@ -66,12 +66,7 @@ public abstract class InstructionVisitor {
   @NotNull
   public DfaInstructionState[] visitControlTransfer(@NotNull ControlTransferInstruction controlTransferInstruction,
                                                     @NotNull DataFlowRunner runner, @NotNull DfaMemoryState state) {
-    DfaControlTransferValue transferValue = controlTransferInstruction.getTransfer();
-    if (transferValue.getTarget() instanceof ExitFinallyTransfer) {
-      transferValue = (DfaControlTransferValue)state.pop();
-    }
-    return new ControlTransferHandler(state, runner, transferValue.getTarget()).iteration(transferValue.getTraps())
-      .toArray(DfaInstructionState.EMPTY_ARRAY);
+    return controlTransferInstruction.getTransfer().dispatch(state, runner).toArray(DfaInstructionState.EMPTY_ARRAY);
   }
 
   public DfaInstructionState[] visitEndOfInitializer(EndOfInitializerInstruction instruction, DataFlowRunner runner, DfaMemoryState state) {

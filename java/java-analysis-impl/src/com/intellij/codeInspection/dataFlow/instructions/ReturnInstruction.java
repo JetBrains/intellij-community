@@ -16,7 +16,6 @@
 
 package com.intellij.codeInspection.dataFlow.instructions;
 
-import com.intellij.codeInspection.dataFlow.ControlTransferInstruction;
 import com.intellij.codeInspection.dataFlow.DfaControlTransferValue;
 import com.intellij.codeInspection.dataFlow.ExceptionTransfer;
 import com.intellij.psi.PsiElement;
