@@ -993,8 +993,12 @@ public class ControlFlowUtils {
    */
   public static boolean isReachable(@NotNull PsiStatement statement) {
     ControlFlow flow;
-    PsiCodeBlock block = PsiTreeUtil.getParentOfType(statement, PsiCodeBlock.class);
-    if (block == null) return true;
+    PsiElement block = statement;
+    do {
+      block = PsiTreeUtil.getParentOfType(block, PsiCodeBlock.class);
+      if (block == null) return true;
+    }
+    while (block.getParent() instanceof PsiSwitchStatement);
     try {
       flow = ControlFlowFactory.getInstance(statement.getProject())
         .getControlFlow(block, LocalsOrMyInstanceFieldsControlFlowPolicy.getInstance());
