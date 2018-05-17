@@ -1100,6 +1100,10 @@ public class AllIcons {
   public static class Javaee {
     public static final Icon Application_xml = IconLoader.getIcon("/javaee/application_xml.png"); // 16x16
     public static final Icon BuildOnFrameDeactivation = IconLoader.getIcon("/javaee/buildOnFrameDeactivation.png"); // 16x16
+
+    /** @deprecated to be removed in IDEA 2020 */
+    @SuppressWarnings("unused")
+    @Deprecated
     public static final Icon DataSourceImport = IconLoader.getIcon("/javaee/dataSourceImport.png"); // 16x16
     public static final Icon DbSchemaImportBig = IconLoader.getIcon("/javaee/dbSchemaImportBig.png"); // 32x32
     public static final Icon Ejb_jar_xml = IconLoader.getIcon("/javaee/ejb-jar_xml.png"); // 16x16
