@@ -151,7 +151,7 @@ public class ZipUtil {
       ZipEntry entry = (ZipEntry)entries.nextElement();
       final File file = createFileForEntry(outputDir, entry.getName());
       if (filenameFilter == null || filenameFilter.accept(file.getParentFile(), file.getName())) {
-        extractEntry(entry.isDirectory() ? null : zipFile.getInputStream(entry), file, overwrite);
+        createFile(file, entry.isDirectory() ? null : zipFile.getInputStream(entry), overwrite);
       }
     }
   }
@@ -167,16 +167,20 @@ public class ZipUtil {
     return result;
   }
 
-  public static void extractEntry(@NotNull ZipEntry entry, @NotNull InputStream inputStream, @NotNull File outputDir) throws IOException {
-    extractEntry(entry, inputStream, outputDir, true);
+  @NotNull
+  public static File extractEntry(@NotNull ZipEntry entry, @NotNull ZipFile zipFile, @NotNull File outputDir) throws IOException {
+    File outputFile = createFileForEntry(outputDir, entry.getName());
+    createFile(outputFile, entry.isDirectory() ? null : zipFile.getInputStream(entry), true);
+    return outputFile;
   }
 
+  @SuppressWarnings("unused")
   public static void extractEntry(@NotNull ZipEntry entry, @NotNull InputStream inputStream, @NotNull File outputDir, boolean isOverwrite) throws IOException {
     File outputFile = createFileForEntry(outputDir, entry.getName());
-    extractEntry(entry.isDirectory() ? null : inputStream, outputFile, isOverwrite);
+    createFile(outputFile, entry.isDirectory() ? null : inputStream, isOverwrite);
   }
 
-  public static void extractEntry(@Nullable InputStream inputStream, @NotNull File outputFile, boolean isOverwrite) throws IOException {
+  private static void createFile(@NotNull File outputFile, @Nullable InputStream inputStream, boolean isOverwrite) throws IOException {
     if (outputFile.exists()) {
       if (!isOverwrite || inputStream == null) {
         return;
