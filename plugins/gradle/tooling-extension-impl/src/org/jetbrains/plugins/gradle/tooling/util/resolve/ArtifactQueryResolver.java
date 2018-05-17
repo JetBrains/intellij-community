@@ -137,15 +137,17 @@ class ArtifactQueryResolver {
       fileDeps.remove(artifact.getFile());
     }
 
-    for (ProjectDependency dep : projectDepsToFilter) {
-      Set<File> depFiles = DependencyResolverImpl.getTargetConfiguration(dep).getAllArtifacts().getFiles().getFiles();
+    if (!fileDeps.isEmpty()) {
+      for (ProjectDependency dep : projectDepsToFilter) {
+        Set<File> depFiles = DependencyResolverImpl.getTargetConfiguration(dep).getAllArtifacts().getFiles().getFiles();
 
-      final Set<File> intersection = new LinkedHashSet<File>(Sets.intersection(fileDeps, depFiles));
-      if (!intersection.isEmpty()) {
-        DefaultFileCollectionDependency fileCollectionDependency = new DefaultFileCollectionDependency(intersection);
-        fileCollectionDependency.setScope(myScope);
-        result.add(fileCollectionDependency);
-        fileDeps.removeAll(intersection);
+        final Set<File> intersection = new LinkedHashSet<File>(Sets.intersection(fileDeps, depFiles));
+        if (!intersection.isEmpty()) {
+          DefaultFileCollectionDependency fileCollectionDependency = new DefaultFileCollectionDependency(intersection);
+          fileCollectionDependency.setScope(myScope);
+          result.add(fileCollectionDependency);
+          fileDeps.removeAll(intersection);
+        }
       }
     }
 
@@ -157,7 +159,6 @@ class ArtifactQueryResolver {
 
     return result;
   }
-
 
   @NotNull
   protected List<Class<? extends Artifact>> additionalArtifactsTypes() {
