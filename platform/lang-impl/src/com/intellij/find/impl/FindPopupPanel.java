@@ -744,15 +744,15 @@ public class FindPopupPanel extends JBPanel implements FindUI {
     myTitlePanel.add(myTitleLabel);
     myTitlePanel.add(myLoadingDecorator.getComponent(), "w 24, wmin 24");
     myTitlePanel.add(Box.createHorizontalGlue(), "growx, pushx");
-    int gap = JBUI.scale(16);
+    int gap = 16;
     JPanel regexpPanel = new JPanel(new BorderLayout(JBUI.scale(4), 0));
     regexpPanel.add(myCbRegularExpressions, BorderLayout.CENTER);
     regexpPanel.add(RegExHelpPopup.createRegExLink("<html><body><b>?</b></body></html>", myCbRegularExpressions, LOG), BorderLayout.EAST);
     AnAction[] actions = {
-      new DefaultCustomComponentAction(() -> JBUI.Borders.emptyRight(gap).wrap(myCbCaseSensitive)),
-      new DefaultCustomComponentAction(() -> JBUI.Borders.emptyRight(gap).wrap(myCbPreserveCase)),
-      new DefaultCustomComponentAction(() -> JBUI.Borders.emptyRight(gap).wrap(myCbWholeWordsOnly)),
-      new DefaultCustomComponentAction(() -> regexpPanel),
+      new DefaultCustomComponentAction(() -> myCbCaseSensitive),
+      new DefaultCustomComponentAction(() -> JBUI.Borders.emptyLeft(gap).wrap(myCbPreserveCase)),
+      new DefaultCustomComponentAction(() -> JBUI.Borders.emptyLeft(gap).wrap(myCbWholeWordsOnly)),
+      new DefaultCustomComponentAction(() -> JBUI.Borders.emptyLeft(gap).wrap(regexpPanel)),
     };
 
     @SuppressWarnings("InspectionUniqueToolbarId")

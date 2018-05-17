@@ -519,8 +519,8 @@ public class JBUI {
 
   @NotNull
   public static JBInsets insets(String propName, JBInsets defaultValue) {
-    JBInsets i = (JBInsets)UIManager.getInsets(propName);
-    return i != null ? i : defaultValue;
+    Insets i = UIManager.getInsets(propName);
+    return i != null ? JBInsets.create(i) : defaultValue;
   }
 
   @NotNull
