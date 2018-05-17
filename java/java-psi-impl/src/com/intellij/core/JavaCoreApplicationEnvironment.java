@@ -60,7 +60,7 @@ public class JavaCoreApplicationEnvironment extends CoreApplicationEnvironment {
   }
 
   public JavaCoreApplicationEnvironment(@NotNull Disposable parentDisposable, boolean unitTestMode) {
-    super(parentDisposable, unitTestMode);
+    super(parentDisposable, unitTestMode, false);
 
     registerFileType(JavaClassFileType.INSTANCE, "class");
     registerFileType(JavaFileType.INSTANCE, "java");

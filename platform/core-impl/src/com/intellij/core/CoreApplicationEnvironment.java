@@ -74,14 +74,16 @@ public class CoreApplicationEnvironment {
   private final VirtualFileSystem myJrtFileSystem;
   @NotNull private final Disposable myParentDisposable;
   private final boolean myUnitTestMode;
+  private final boolean myIsOnAir;
 
-  public CoreApplicationEnvironment(@NotNull Disposable parentDisposable) {
-    this(parentDisposable, true);
+  public CoreApplicationEnvironment(@NotNull Disposable parentDisposable, boolean isOnAir) {
+    this(parentDisposable, true, isOnAir);
   }
 
-  public CoreApplicationEnvironment(@NotNull Disposable parentDisposable, boolean unitTestMode) {
+  public CoreApplicationEnvironment(@NotNull Disposable parentDisposable, boolean unitTestMode, boolean isOnAir) {
     myParentDisposable = parentDisposable;
     myUnitTestMode = unitTestMode;
+    myIsOnAir = isOnAir;
 
     myFileTypeRegistry = new CoreFileTypeRegistry();
 
@@ -141,6 +143,7 @@ public class CoreApplicationEnvironment {
       public boolean isUnitTestMode() {
         return myUnitTestMode;
       }
+      public boolean isOnAir() { return myIsOnAir; }
     };
   }
 
