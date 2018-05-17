@@ -59,7 +59,7 @@ public abstract class CompositeIconPaintTestHelper {
       cellIcons[i].updateScaleContext(ctx.copy());
     }
 
-    Icon scaledIcon = createCompositeIcon(cellIcons).scale(iconScale);
+    Icon scaledIcon = createCompositeIcon(ctx, cellIcons).scale(iconScale);
     ctx.update(OBJ_SCALE.of(iconScale));
     test(scaledIcon, ctx);
   }
@@ -79,7 +79,7 @@ public abstract class CompositeIconPaintTestHelper {
       new ImageComparator.AASmootherComparator(0.1, 0.1, new Color(0, 0, 0, 0)), goldImage, iconImage, null);
   }
 
-  protected abstract ScalableIcon createCompositeIcon(Icon... cellIcons);
+  protected abstract ScalableIcon createCompositeIcon(ScaleContext ctx, Icon... cellIcons);
 
   protected abstract String[] getCellIconsPaths();
 
