@@ -106,9 +106,10 @@ public class NanoXmlUtil {
       try {
         parser.parse();
       }
+      catch (ParserStoppedXmlException ignore) {
+      }
       catch (XMLException e) {
-        if (e.getException() instanceof ParserStoppedXmlException) return;
-        LOG.debug(e);
+        LOG.warn(e);
       }
     }
     catch (ClassNotFoundException | IllegalAccessException | InstantiationException e) {
