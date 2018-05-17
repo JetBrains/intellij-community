@@ -31,7 +31,10 @@ fun askPassword(project: Project?,
                 attributes: CredentialAttributes,
                 resetPassword: Boolean = false,
                 error: String? = null): String? {
-  return askCredentials(project, dialogTitle, passwordFieldLabel, attributes, resetPassword = resetPassword, error = error)?.credentials?.getPasswordAsString()?.nullize()
+  return askCredentials(project, dialogTitle, passwordFieldLabel, attributes,
+                        isResetPassword = resetPassword,
+                        error = error,
+                        isCheckExistingBeforeDialog = true)?.credentials?.getPasswordAsString()?.nullize()
 }
 
 internal object RememberCheckBoxState {
@@ -54,14 +57,14 @@ fun askCredentials(project: Project?,
                    passwordFieldLabel: String,
                    attributes: CredentialAttributes,
                    isSaveOnOk: Boolean = true,
-                   checkExistingBeforeDialog: Boolean = true,
-                   resetPassword: Boolean = false,
+                   isCheckExistingBeforeDialog: Boolean = false,
+                   isResetPassword: Boolean = false,
                    error: String? = null): CredentialRequestResult? {
   val store = PasswordSafe.getInstance()
-  if (resetPassword) {
+  if (isResetPassword) {
     store.set(attributes, null)
   }
-  else if (checkExistingBeforeDialog) {
+  else if (isCheckExistingBeforeDialog) {
     store.get(attributes)?.let {
       return CredentialRequestResult(it, false, true)
     }
