@@ -18,6 +18,7 @@ package com.intellij.codeInspection.dataFlow;
 import com.intellij.codeInspection.dataFlow.value.DfaConstValue;
 import com.intellij.codeInspection.dataFlow.value.DfaRelationValue;
 import com.intellij.codeInspection.dataFlow.value.DfaValueFactory;
+import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.containers.ContainerUtil;
 import one.util.streamex.IntStreamEx;
@@ -98,11 +99,13 @@ public final class StandardMethodContract extends MethodContract {
 
   public static List<StandardMethodContract> parseContract(String text) throws ParseException {
     List<StandardMethodContract> result = ContainerUtil.newArrayList();
-    for (String clause : StringUtil.replace(text, " ", "").split(";")) {
+    String[] split = StringUtil.replace(text, " ", "").split(";");
+    for (int clauseIndex = 0; clauseIndex < split.length; clauseIndex++) {
+      String clause = split[clauseIndex];
       String arrow = "->";
       int arrowIndex = clause.indexOf(arrow);
       if (arrowIndex < 0) {
-        throw new ParseException("A contract clause must be in form arg1, ..., argN -> return-value");
+        throw ParseException.forClause("A contract clause must be in form arg1, ..., argN -> return-value", text, clauseIndex);
       }
 
       String beforeArrow = clause.substring(0, arrowIndex);
@@ -111,32 +114,31 @@ public final class StandardMethodContract extends MethodContract {
         String[] argStrings = beforeArrow.split(",");
         args = new ValueConstraint[argStrings.length];
         for (int i = 0; i < args.length; i++) {
-          args[i] = parseConstraint(argStrings[i]);
+          args[i] = parseConstraint(argStrings[i], text, clauseIndex, i);
         }
-      } else {
+      }
+      else {
         args = new ValueConstraint[0];
       }
-      result.add(new StandardMethodContract(args, parseReturnValue(clause.substring(arrowIndex + arrow.length()))));
+      String returnValueString = clause.substring(arrowIndex + arrow.length());
+      ContractReturnValue returnValue = ContractReturnValue.valueOf(returnValueString);
+      if (returnValue == null) {
+        throw ParseException.forReturnValue(
+          "Return value should be one of: null, !null, true, false, this, new, paramN, fail, _. Found: " + returnValueString,
+          text, clauseIndex);
+      }
+      result.add(new StandardMethodContract(args, returnValue));
     }
     return result;
   }
 
-  @NotNull
-  private static ContractReturnValue parseReturnValue(String returnValueString) throws ParseException {
-    ContractReturnValue returnValue = ContractReturnValue.valueOf(returnValueString);
-    if (returnValue == null) {
-      throw new ParseException(
-        "Return value should be one of: null, !null, true, false, this, new, paramN, fail, _. Found: " + returnValueString);
-    }
-    return returnValue;
-  }
-
-  private static ValueConstraint parseConstraint(String name) throws ParseException {
+  private static ValueConstraint parseConstraint(String name, String text, int clauseIndex, int constraintIndex) throws ParseException {
     if (StringUtil.isEmpty(name)) throw new ParseException("Constraint should not be empty");
     for (ValueConstraint constraint : ValueConstraint.values()) {
       if (constraint.toString().equals(name)) return constraint;
     }
-    throw new ParseException("Constraint should be one of: null, !null, true, false, _. Found: " + name);
+    throw ParseException
+      .forConstraint("Constraint should be one of: null, !null, true, false, _. Found: " + name, text, clauseIndex, constraintIndex);
   }
 
   public enum ValueConstraint {
@@ -221,8 +223,88 @@ public final class StandardMethodContract extends MethodContract {
   }
 
   public static class ParseException extends Exception {
-    private ParseException(String message) {
+    private final @Nullable TextRange myRange;
+
+    ParseException(String message) {
+      this(message, null);
+    }
+
+    ParseException(String message, @Nullable TextRange range) {
       super(message);
+      myRange = range != null && range.isEmpty() ? null : range;
+    }
+
+    @Nullable
+    public TextRange getRange() {
+      return myRange;
+    }
+
+    static ParseException forConstraint(String message, String text, int clauseNumber, int constraintNumber) {
+      TextRange range = findClauseRange(text, clauseNumber);
+      if (range == null) {
+        return new ParseException(message);
+      }
+      int start = range.getStartOffset();
+      while (constraintNumber > 0) {
+        start = text.indexOf(',', start);
+        if (start == -1) return new ParseException(message, range);
+        start++;
+        constraintNumber--;
+      }
+      int end = text.indexOf(',', start);
+      if (end == -1 || end > range.getEndOffset()) {
+        end = text.indexOf("->", start);
+        if (end == -1 || end > range.getEndOffset()) {
+          end = range.getEndOffset();
+        }
+      }
+      if (!text.substring(start, end).trim().isEmpty()) {
+        while (text.charAt(start) == ' ') start++;
+        while (end > start && text.charAt(end - 1) == ' ') end--;
+      }
+      return new ParseException(message, new TextRange(start, end));
+    }
+
+    static ParseException forReturnValue(String message, String text, int clauseNumber) {
+      TextRange range = findClauseRange(text, clauseNumber);
+      if (range == null) {
+        return new ParseException(message);
+      }
+      int index = text.indexOf("->", range.getStartOffset());
+      if (index == -1 || index > range.getEndOffset()) {
+        return new ParseException(message, range);
+      }
+      index += "->".length();
+      while (index < range.getEndOffset() && text.charAt(index) == ' ') index++;
+      if (index == range.getEndOffset()) {
+        return new ParseException(message, range);
+      }
+      return new ParseException(message, new TextRange(index, range.getEndOffset()));
+    }
+
+    static ParseException forClause(String message, String text, int clauseNumber) {
+      TextRange range = findClauseRange(text, clauseNumber);
+      return range == null ? new ParseException(message) : new ParseException(message, range);
+    }
+
+    private static TextRange findClauseRange(String text, int clauseNumber) {
+      int start = 0;
+      while (clauseNumber > 0) {
+        start = text.indexOf(';', start);
+        if (start == -1) return null;
+        start++;
+        clauseNumber--;
+      }
+      int end = text.indexOf(';', start);
+      if (end == -1) {
+        end = text.length();
+      }
+      if (text.substring(start, end).trim().isEmpty()) return new TextRange(start, end);
+
+      while (text.charAt(start) == ' ') start++;
+      while (end > start && text.charAt(end - 1) == ' ') end--;
+
+      return new TextRange(start, end);
     }
   }
 }

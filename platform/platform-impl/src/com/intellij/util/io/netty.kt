@@ -2,11 +2,8 @@
 package com.intellij.util.io
 
 import com.google.common.net.InetAddresses
-import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.util.Condition
 import com.intellij.openapi.util.Conditions
-import com.intellij.openapi.util.SystemInfo
-import com.intellij.util.SystemProperties
 import com.intellij.util.Url
 import com.intellij.util.Urls
 import com.intellij.util.net.NetUtils
@@ -15,8 +12,6 @@ import io.netty.bootstrap.BootstrapUtil
 import io.netty.bootstrap.ServerBootstrap
 import io.netty.buffer.ByteBuf
 import io.netty.channel.*
-import io.netty.channel.kqueue.KQueueEventLoopGroup
-import io.netty.channel.kqueue.KQueueServerSocketChannel
 import io.netty.channel.nio.NioEventLoopGroup
 import io.netty.channel.oio.OioEventLoopGroup
 import io.netty.channel.socket.ServerSocketChannel
@@ -30,7 +25,6 @@ import io.netty.handler.ssl.SslHandler
 import io.netty.resolver.ResolvedAddressTypes
 import io.netty.util.concurrent.GenericFutureListener
 import org.jetbrains.ide.PooledThreadExecutor
-import org.jetbrains.io.BuiltInServer
 import org.jetbrains.io.NettyUtil
 import java.io.IOException
 import java.net.InetAddress
@@ -68,7 +62,7 @@ fun serverBootstrap(group: EventLoopGroup): ServerBootstrap {
 private fun EventLoopGroup.serverSocketChannelClass(): Class<out ServerSocketChannel> = when {
   this is NioEventLoopGroup -> NioServerSocketChannel::class.java
   this is OioEventLoopGroup -> OioServerSocketChannel::class.java
-  SystemInfo.isMacOSSierra && this is KQueueEventLoopGroup -> KQueueServerSocketChannel::class.java
+//  SystemInfo.isMacOSSierra && this is KQueueEventLoopGroup -> KQueueServerSocketChannel::class.java
   else -> throw Exception("Unknown event loop group type: ${this.javaClass.name}")
 }
 
@@ -305,29 +299,29 @@ fun ByteBuf.writeUtf8(data: CharSequence) = writeCharSequence(data, Charsets.UTF
 
 @Suppress("FunctionName")
 fun MultiThreadEventLoopGroup(workerCount: Int, threadFactory: ThreadFactory): MultithreadEventLoopGroup {
-  if (SystemInfo.isMacOSSierra && SystemProperties.getBooleanProperty("native.net.io", false)) {
-    try {
-      return KQueueEventLoopGroup(workerCount, threadFactory)
-    }
-    catch (e: Throwable) {
-      logger<BuiltInServer>().warn("Cannot use native event loop group", e)
-    }
-  }
+//  if (SystemInfo.isMacOSSierra && SystemProperties.getBooleanProperty("native.net.io", false)) {
+//    try {
+//      return KQueueEventLoopGroup(workerCount, threadFactory)
+//    }
+//    catch (e: Throwable) {
+//      logger<BuiltInServer>().warn("Cannot use native event loop group", e)
+//    }
+//  }
 
   return NioEventLoopGroup(workerCount, threadFactory)
 }
 
 @Suppress("FunctionName")
 fun MultiThreadEventLoopGroup(workerCount: Int): MultithreadEventLoopGroup {
-  if (SystemInfo.isMacOSSierra && SystemProperties.getBooleanProperty("native.net.io", false)) {
-    try {
-      return KQueueEventLoopGroup(workerCount, PooledThreadExecutor.INSTANCE)
-    }
-    catch (e: Throwable) {
-      // error instead of warn to easy spot it
-      logger<BuiltInServer>().error("Cannot use native event loop group", e)
-    }
-  }
+//  if (SystemInfo.isMacOSSierra && SystemProperties.getBooleanProperty("native.net.io", false)) {
+//    try {
+//      return KQueueEventLoopGroup(workerCount, PooledThreadExecutor.INSTANCE)
+//    }
+//    catch (e: Throwable) {
+//      // error instead of warn to easy spot it
+//      logger<BuiltInServer>().error("Cannot use native event loop group", e)
+//    }
+//  }
 
   return NioEventLoopGroup(workerCount, PooledThreadExecutor.INSTANCE)
 }

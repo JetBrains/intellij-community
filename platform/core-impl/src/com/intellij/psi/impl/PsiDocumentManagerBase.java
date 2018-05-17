@@ -167,8 +167,6 @@ public abstract class PsiDocumentManagerBase extends PsiDocumentManager implemen
 
   @Override
   public Document getDocument(@NotNull PsiFile file) {
-    if (file instanceof PsiBinaryFile) return null;
-
     Document document = getCachedDocument(file);
     if (document != null) {
       if (!file.getViewProvider().isPhysical()) {

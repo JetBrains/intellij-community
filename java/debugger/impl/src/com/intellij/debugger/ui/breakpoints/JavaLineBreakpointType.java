@@ -36,8 +36,7 @@ import java.util.List;
  * Base class for java line-connected exceptions (line, method, field)
  * @author egor
  */
-public class JavaLineBreakpointType extends JavaLineBreakpointTypeBase<JavaLineBreakpointProperties>
-                                    implements JavaBreakpointType<JavaLineBreakpointProperties> {
+public class JavaLineBreakpointType extends JavaLineBreakpointTypeBase<JavaLineBreakpointProperties> {
   public JavaLineBreakpointType() {
     super("java-line", DebuggerBundle.message("line.breakpoints.tab.title"));
   }

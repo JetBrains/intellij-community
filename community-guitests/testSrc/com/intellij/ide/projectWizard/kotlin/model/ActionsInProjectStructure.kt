@@ -4,6 +4,9 @@ package com.intellij.ide.projectWizard.kotlin.model
 import com.intellij.testGuiFramework.fixtures.extended.ExtendedTreeFixture
 import com.intellij.testGuiFramework.impl.GuiTestCase
 import com.intellij.testGuiFramework.util.*
+import org.fest.swing.exception.WaitTimedOutError
+import java.awt.Dialog
+import java.awt.KeyboardFocusManager
 
 const val localTimeout = 2L // default timeout is 2 minutes and it's too big for most of tasks here
 
@@ -75,22 +78,48 @@ fun KotlinGuiTestCase.checkLibrariesFromIDEA(expectedLibName: String,
 }
 
 
-fun KotlinGuiTestCase.checkInProjectStructure(actions: KotlinGuiTestCase.()->Unit) {
-  logTestStep("Check structure of gradle project")
+fun KotlinGuiTestCase.checkInProjectStructure(actions: KotlinGuiTestCase.() -> Unit) {
+  fun getActiveModalDialog(): Dialog? {
+    val activeWindow = KeyboardFocusManager.getCurrentKeyboardFocusManager().activeWindow
+    if (activeWindow is Dialog) {
+      if (activeWindow.modalityType == Dialog.ModalityType.APPLICATION_MODAL) {
+        return activeWindow
+      }
+    }
+    return null
+  }
+
+  val projectStructureTitle = "Project Structure"
+  logTestStep("Check structure of the project")
   ideFrame {
-    waitAMoment()
-    invokeMainMenu("ShowProjectStructureSettings")
-    dialog("Project Structure") {
-      try {
-        actions()
+    val numberOfAttempts = 5
+    var isCorrectDialogOpen = false
+    for (currentAttempt in 0..numberOfAttempts) {
+      waitAMoment()
+      //    invokeMainMenu("ShowProjectStructureSettings")
+      logUIStep("Call '$projectStructureTitle' dialog with Ctrl+Shift+Alt+S. Attempt ${currentAttempt + 1}")
+      shortcut(Modifier.CONTROL + Modifier.SHIFT + Modifier.ALT + Key.S)
+      val activeDialog = getActiveModalDialog()
+      logUIStep("Active dialog: ${activeDialog?.title}")
+      if (activeDialog?.title == projectStructureTitle) {
+        dialog(projectStructureTitle) {
+          try {
+            isCorrectDialogOpen = true
+            actions()
+          }
+          finally {
+            logUIStep("Close Project Structure dialog with Cancel")
+            button("Cancel").click()
+          }
+        }
       }
-      catch (t: Throwable) {
-        throw t
+      else {
+        if (activeDialog != null) {
+          logUIStep("Active dialog is incorrect, going to close it with Escape")
+          shortcut(Key.ESCAPE)
+        }
       }
-      finally {
-        logUIStep("Close Project Structure dialog with Cancel")
-        button("Cancel").click()
-      }
+      if (isCorrectDialogOpen) break
     }
   }
 }

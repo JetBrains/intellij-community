@@ -7,8 +7,9 @@ import javax.swing.ButtonGroup
 import javax.swing.JLabel
 
 @PublishedApi
-internal fun createLayoutBuilder(): LayoutBuilder {
-  return LayoutBuilder(MigLayoutBuilder(createIntelliJSpacingConfiguration()))
+@JvmOverloads
+internal fun createLayoutBuilder(isUseMagic: Boolean = true): LayoutBuilder {
+  return LayoutBuilder(MigLayoutBuilder(createIntelliJSpacingConfiguration(), isUseMagic = isUseMagic))
 }
 
 interface LayoutBuilderImpl {

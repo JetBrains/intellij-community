@@ -29,6 +29,7 @@ import java.beans.PropertyChangeListener;
 import java.util.LinkedHashMap;
 import java.util.Objects;
 
+import static com.intellij.ide.ui.laf.darcula.DarculaUIUtil.MINIMUM_WIDTH;
 import static com.intellij.openapi.util.text.StringUtil.isEmpty;
 import static com.intellij.util.ui.JBUI.scale;
 
@@ -373,8 +374,11 @@ public abstract class TextFieldWithPopupHandlerUI extends BasicTextFieldUI imple
   }
 
   protected void updatePreferredSize(JComponent c, Dimension size) {
-    JBInsets.addTo(size, ((JTextComponent)c).getMargin());
-    size.height = Math.max(size.height, getMinimumHeight(size.height));
+    if (!(c.getParent() instanceof JComboBox)) {
+      JBInsets.addTo(size, ((JTextComponent)c).getMargin());
+      size.height = Math.max(size.height, getMinimumHeight(size.height));
+      size.width = Math.max(size.width, MINIMUM_WIDTH.get());
+    }
   }
 
   protected int getMinimumHeight(int textHeight) {

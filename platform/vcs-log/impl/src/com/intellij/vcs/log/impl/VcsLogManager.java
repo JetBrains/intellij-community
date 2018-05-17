@@ -22,7 +22,7 @@ import com.intellij.vcs.log.data.VcsLogStorage;
 import com.intellij.vcs.log.ui.AbstractVcsLogUi;
 import com.intellij.vcs.log.ui.VcsLogColorManagerImpl;
 import com.intellij.vcs.log.ui.VcsLogUiImpl;
-import com.intellij.vcs.log.visible.VcsLogFilterer;
+import com.intellij.vcs.log.visible.VcsLogFiltererImpl;
 import com.intellij.vcs.log.visible.VisiblePackRefresherImpl;
 import org.jetbrains.annotations.CalledInAny;
 import org.jetbrains.annotations.CalledInAwt;
@@ -236,9 +236,9 @@ public class VcsLogManager implements Disposable {
       MainVcsLogUiProperties properties = myUiProperties.createProperties(myLogId);
       VisiblePackRefresherImpl refresher =
         new VisiblePackRefresherImpl(project, logData, properties.get(MainVcsLogUiProperties.BEK_SORT_TYPE),
-                                     new VcsLogFilterer(logData.getLogProviders(), logData.getStorage(),
-                                                        logData.getTopCommitsCache(),
-                                                        logData.getCommitDetailsGetter(), logData.getIndex()));
+                                     new VcsLogFiltererImpl(logData.getLogProviders(), logData.getStorage(),
+                                                            logData.getTopCommitsCache(),
+                                                            logData.getCommitDetailsGetter(), logData.getIndex()));
       return new VcsLogUiImpl(myLogId, logData, myColorManager, properties, refresher);
     }
   }

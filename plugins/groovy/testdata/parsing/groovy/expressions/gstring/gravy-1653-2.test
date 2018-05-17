@@ -3,12 +3,12 @@
 Groovy script
   Compound regular expression
     PsiElement(regex begin)('/')
-    GrStringContentImpl(GString content element)
+    GrStringContentImpl(STRING_CONTENT)
       PsiElement(regex content)('aaaa ')
     GString injection
       PsiElement($)('$')
       Reference expression
         PsiElement(identifier)('str')
-    GrStringContentImpl(GString content element)
+    GrStringContentImpl(STRING_CONTENT)
       PsiElement(regex content)('... bbb')
     PsiElement(regex end)('/')

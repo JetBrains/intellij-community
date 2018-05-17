@@ -29,12 +29,12 @@ import com.intellij.openapi.vcs.history.VcsFileRevisionEx;
 import com.intellij.openapi.vcs.history.VcsRevisionNumber;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.Function;
-import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.Stack;
 import com.intellij.vcs.log.*;
 import com.intellij.vcs.log.data.*;
 import com.intellij.vcs.log.data.index.IndexDataGetter;
+import com.intellij.vcs.log.data.index.VcsLogIndex;
 import com.intellij.vcs.log.graph.GraphCommit;
 import com.intellij.vcs.log.graph.GraphCommitImpl;
 import com.intellij.vcs.log.graph.PermanentGraph;
@@ -56,197 +56,92 @@ import com.intellij.vcs.log.util.StopWatch;
 import com.intellij.vcs.log.util.VcsLogUtil;
 import com.intellij.vcs.log.visible.CommitCountStage;
 import com.intellij.vcs.log.visible.VcsLogFilterer;
+import com.intellij.vcs.log.visible.VcsLogFiltererImpl;
 import com.intellij.vcs.log.visible.VisiblePack;
+import com.intellij.vcsUtil.VcsUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
 
+import static com.intellij.util.ObjectUtils.assertNotNull;
 import static com.intellij.util.ObjectUtils.notNull;
+import static com.intellij.util.containers.ContainerUtil.getFirstItem;
 
-class FileHistoryFilterer extends VcsLogFilterer {
+class FileHistoryFilterer implements VcsLogFilterer {
   private static final Logger LOG = Logger.getInstance(FileHistoryFilterer.class);
 
   @NotNull private final Project myProject;
-  @NotNull private final FilePath myFilePath;
-  @Nullable private final Hash myHash;
+  @NotNull private final Map<VirtualFile, VcsLogProvider> myLogProviders;
+  @NotNull private final VcsLogStorage myStorage;
+  @NotNull private final VcsLogIndex myIndex;
   @NotNull private final IndexDataGetter myIndexDataGetter;
-  @NotNull private final VirtualFile myRoot;
+  @NotNull private final VcsLogFiltererImpl myVcsLogFilterer;
 
-  public FileHistoryFilterer(@NotNull VcsLogData logData, @NotNull FilePath filePath, @Nullable Hash hash, @NotNull VirtualFile root) {
-    super(logData.getLogProviders(), logData.getStorage(), logData.getTopCommitsCache(), logData.getCommitDetailsGetter(),
-          logData.getIndex());
+  public FileHistoryFilterer(@NotNull VcsLogData logData) {
     myProject = logData.getProject();
-    myFilePath = filePath;
-    myHash = hash;
-    myRoot = root;
-    myIndexDataGetter = ObjectUtils.assertNotNull(myIndex.getDataGetter());
+    myLogProviders = logData.getLogProviders();
+    myStorage = logData.getStorage();
+    myIndex = logData.getIndex();
+    myIndexDataGetter = assertNotNull(myIndex.getDataGetter());
+
+    myVcsLogFilterer = new VcsLogFiltererImpl(myLogProviders, myStorage, logData.getTopCommitsCache(),
+                                              logData.getCommitDetailsGetter(), myIndex);
   }
 
   @NotNull
   @Override
-  protected Pair<VisiblePack, CommitCountStage> filter(@NotNull DataPack dataPack,
-                                                       @NotNull PermanentGraph.SortType sortType,
-                                                       @NotNull VcsLogFilterCollection filters,
-                                                       @NotNull CommitCountStage commitCount) {
-    long start = System.currentTimeMillis();
-
-    checkDetailsFilter(filters);
-
-    if (myIndex.isIndexed(myRoot) && (dataPack.isFull() || myFilePath.isDirectory())) {
-      VisiblePack visiblePack = filterWithIndex(dataPack, sortType, filters);
-      LOG.debug(StopWatch.formatTime(System.currentTimeMillis() - start) + " for computing history for " + myFilePath + " with index");
-      checkNotEmpty(dataPack, visiblePack, true);
-      return Pair.create(visiblePack, commitCount);
+  public Pair<VisiblePack, CommitCountStage> filter(@NotNull DataPack dataPack,
+                                                    @NotNull PermanentGraph.SortType sortType,
+                                                    @NotNull VcsLogFilterCollection filters,
+                                                    @NotNull CommitCountStage commitCount) {
+    FilePath filePath = getFilePath(filters);
+    if (filePath == null) {
+      return myVcsLogFilterer.filter(dataPack, sortType, filters, commitCount);
     }
-
-    if (myFilePath.isDirectory()) {
-      return super.filter(dataPack, sortType, filters, commitCount);
-    }
-
-    AbstractVcs vcs = ProjectLevelVcsManager.getInstance(myProject).getVcsFor(myRoot);
-    if (vcs != null && vcs.getVcsHistoryProvider() != null) {
-      try {
-        VisiblePack visiblePack = filterWithProvider(vcs, dataPack, sortType, filters);
-        LOG.debug(StopWatch.formatTime(System.currentTimeMillis() - start) +
-                  " for computing history for " +
-                  myFilePath +
-                  " with history provider");
-        checkNotEmpty(dataPack, visiblePack, false);
-        return Pair.create(visiblePack, commitCount);
-      }
-      catch (VcsException e) {
-        LOG.error(e);
-        return super.filter(dataPack, sortType, filters, commitCount);
-      }
-    }
-
-    LOG.warn("Could not find vcs or history provider for file " + myFilePath);
-    return super.filter(dataPack, sortType, filters, commitCount);
-  }
-
-  private void checkNotEmpty(@NotNull DataPack dataPack, @NotNull VisiblePack visiblePack, boolean withIndex) {
-    if (!dataPack.isFull()) {
-      LOG.debug("Data pack is not full while computing file history for " + myFilePath + "\n" +
-                "Found " + visiblePack.getVisibleGraph().getVisibleCommitCount() + " commits");
-    }
-    else if (visiblePack.getVisibleGraph().getVisibleCommitCount() == 0) {
-      LOG.warn("Empty file history from " + (withIndex ? "index" : "provider") + " for " + myFilePath);
-    }
+    VirtualFile root = notNull(VcsUtil.getVcsRootFor(myProject, filePath));
+    return new MyWorker(root, filePath, getHash(filters)).filter(dataPack, sortType, filters, commitCount);
   }
 
   @Override
-  public boolean canBuildFromEmpty() {
-    return !myFilePath.isDirectory();
+  public boolean canFilterEmptyPack(@NotNull VcsLogFilterCollection filters) {
+    FilePath filePath = getFilePath(filters);
+    return filePath != null && !filePath.isDirectory();
   }
 
-  @NotNull
-  private VisiblePack filterWithProvider(@NotNull AbstractVcs vcs,
-                                         @NotNull DataPack dataPack,
-                                         @NotNull PermanentGraph.SortType sortType,
-                                         @NotNull VcsLogFilterCollection filters) throws VcsException {
-    VcsRevisionNumber revisionNumber = myHash != null ? VcsLogUtil.convertToRevisionNumber(myHash) : null;
-    List<VcsFileRevision> revisions = VcsCachingHistory.collect(vcs, myFilePath, revisionNumber);
-
-    if (revisions.isEmpty()) return VisiblePack.EMPTY;
-
-    Map<Integer, FilePath> pathsMap = ContainerUtil.newHashMap();
-    VisibleGraph<Integer> visibleGraph;
-
-    if (dataPack.isFull()) {
-      for (VcsFileRevision revision : revisions) {
-        pathsMap.put(getIndex(revision), ((VcsFileRevisionEx)revision).getPath());
-      }
-      visibleGraph = createVisibleGraph(dataPack, sortType, null, pathsMap.keySet());
-    }
-    else {
-      List<GraphCommit<Integer>> commits = ContainerUtil.newArrayListWithCapacity(revisions.size());
-
-      for (VcsFileRevision revision : revisions) {
-        int index = getIndex(revision);
-        pathsMap.put(index, ((VcsFileRevisionEx)revision).getPath());
-        commits.add(GraphCommitImpl.createCommit(index, Collections.emptyList(), revision.getRevisionDate().getTime()));
-      }
-
-      Map<VirtualFile, CompressedRefs> refs = getFilteredRefs(dataPack);
-      Map<VirtualFile, VcsLogProvider> providers = ContainerUtil.newHashMap(Pair.create(myRoot, myLogProviders.get(myRoot)));
-
-      dataPack = DataPack.build(commits, refs, providers, myStorage, false);
-      visibleGraph = createVisibleGraph(dataPack, sortType, null,
-                                        null/*no need to filter here, since we do not have any extra commits in this pack*/);
-    }
-
-    return new FileHistoryVisiblePack(dataPack, visibleGraph, false, filters, pathsMap);
-  }
-
-  @NotNull
-  private Map<VirtualFile, CompressedRefs> getFilteredRefs(@NotNull DataPack dataPack) {
-    Map<VirtualFile, CompressedRefs> refs = ContainerUtil.newHashMap();
-    CompressedRefs compressedRefs = dataPack.getRefsModel().getAllRefsByRoot().get(myRoot);
-    if (compressedRefs == null) {
-      compressedRefs = new CompressedRefs(ContainerUtil.newHashSet(), myStorage);
-    }
-    refs.put(myRoot, compressedRefs);
-    return refs;
-  }
-
-  private int getIndex(@NotNull VcsFileRevision revision) {
-    return myStorage.getCommitIndex(HashImpl.build(revision.getRevisionNumber().asString()), myRoot);
-  }
-
-  @NotNull
-  private VisiblePack filterWithIndex(@NotNull DataPack dataPack,
-                                      @NotNull PermanentGraph.SortType sortType,
-                                      @NotNull VcsLogFilterCollection filters) {
-    Set<Integer> matchingHeads = getMatchingHeads(dataPack.getRefsModel(), Collections.singleton(myRoot), filters);
-    IndexDataGetter.FileNamesData data = myIndexDataGetter.buildFileNamesData(myFilePath);
-    VisibleGraph<Integer> visibleGraph = createVisibleGraph(dataPack, sortType, matchingHeads, data.getCommits());
-
-    Map<Integer, FilePath> pathsMap = null;
-    if (visibleGraph.getVisibleCommitCount() > 0) {
-      if (visibleGraph instanceof VisibleGraphImpl) {
-        int row = getCurrentRow(dataPack, visibleGraph, data);
-        if (row >= 0) {
-          FileHistoryRefiner refiner = new FileHistoryRefiner((VisibleGraphImpl<Integer>)visibleGraph, data);
-          if (refiner.refine(row, myFilePath)) {
-            // creating a vg is the most expensive task, so trying to avoid that when unnecessary
-            visibleGraph = createVisibleGraph(dataPack, sortType, matchingHeads, refiner.getPathsForCommits().keySet());
-            pathsMap = refiner.getPathsForCommits();
-          }
-        }
-      }
-    }
-
-    if (pathsMap == null) {
-      pathsMap = data.buildPathsMap();
-    }
-
-    if (!myFilePath.isDirectory()) reindexFirstCommitsIfNeeded(visibleGraph);
-    return new FileHistoryVisiblePack(dataPack, visibleGraph, false, filters, pathsMap);
-  }
-
-  private void reindexFirstCommitsIfNeeded(@NotNull VisibleGraph<Integer> graph) {
-    // we may not have renames big commits, may need to reindex them
-    if (graph instanceof VisibleGraphImpl) {
-      LiteLinearGraph liteLinearGraph = LinearGraphUtils.asLiteLinearGraph(((VisibleGraphImpl)graph).getLinearGraph());
-      for (int row = 0; row < liteLinearGraph.nodesCount(); row++) {
-        // checking if commit is a root commit (which means file was added or renamed there)
-        if (liteLinearGraph.getNodes(row, LiteLinearGraph.NodeFilter.DOWN).isEmpty()) {
-          myIndex.reindexWithRenames(graph.getRowInfo(row).getCommit(), myRoot);
-        }
-      }
-    }
-  }
-
-  private void checkDetailsFilter(@NotNull VcsLogFilterCollection filters) {
+  @Nullable
+  private static FilePath getFilePath(@NotNull VcsLogFilterCollection filters) {
     List<VcsLogDetailsFilter> detailsFilters = filters.getDetailsFilters();
-    // checking our assumptions:
-    // we have one file filter here
-    LOG.assertTrue(detailsFilters.size() == 1);
+    if (detailsFilters.size() != 1) {
+      return null;
+    }
 
-    VcsLogDetailsFilter filter = notNull(ContainerUtil.getFirstItem(detailsFilters));
-    LOG.assertTrue(filter instanceof VcsLogStructureFilter);
-    LOG.assertTrue(((VcsLogStructureFilter)filter).getFiles().equals(Collections.singleton(myFilePath)));
+    VcsLogDetailsFilter filter = notNull(getFirstItem(detailsFilters));
+    if (!(filter instanceof VcsLogStructureFilter)) {
+      return null;
+    }
+
+    Collection<FilePath> files = ((VcsLogStructureFilter)filter).getFiles();
+    if (files.size() != 1) {
+      return null;
+    }
+
+    return notNull(getFirstItem(files));
+  }
+
+  @Nullable
+  private static Hash getHash(@NotNull VcsLogFilterCollection filters) {
+    VcsLogRevisionFilter revisionFilter = filters.get(VcsLogFilterCollection.REVISION_FILTER);
+    if (revisionFilter == null) {
+      return null;
+    }
+
+    Collection<CommitId> heads = revisionFilter.getHeads();
+    if (heads.size() != 1) {
+      return null;
+    }
+
+    return notNull(getFirstItem(heads)).getHash();
   }
 
   @NotNull
@@ -265,60 +160,214 @@ class FileHistoryFilterer extends VcsLogFilterer {
     return new VcsLogFilterCollectionImpl.VcsLogFilterCollectionBuilder(fileFilter, branchFilter).build();
   }
 
-  @NotNull
-  public VcsLogFilterCollection createFilters(boolean showAllBranches) {
-    return createFilters(myFilePath, myHash, myRoot, showAllBranches);
-  }
+  private class MyWorker {
+    @NotNull private final VirtualFile myRoot;
+    @NotNull private final FilePath myFilePath;
+    @Nullable private final Hash myHash;
 
-  private int getCurrentRow(@NotNull DataPack pack,
-                            @NotNull VisibleGraph<Integer> visibleGraph,
-                            @NotNull IndexDataGetter.FileNamesData fileIndexData) {
-    PermanentGraph<Integer> permanentGraph = pack.getPermanentGraph();
-    if (permanentGraph instanceof PermanentGraphImpl) {
-      Hash hash = myHash != null ? myHash : getHead(pack);
-      if (hash != null) {
-        return findAncestorRowAffectingFile((PermanentGraphImpl<Integer>)permanentGraph, hash, visibleGraph, fileIndexData);
+    private MyWorker(@NotNull VirtualFile root, @NotNull FilePath path, @Nullable Hash hash) {
+      myRoot = root;
+      myFilePath = path;
+      myHash = hash;
+    }
+
+    @NotNull
+    public Pair<VisiblePack, CommitCountStage> filter(@NotNull DataPack dataPack,
+                                                      @NotNull PermanentGraph.SortType sortType,
+                                                      @NotNull VcsLogFilterCollection filters,
+                                                      @NotNull CommitCountStage commitCount) {
+      long start = System.currentTimeMillis();
+
+      if (myIndex.isIndexed(myRoot) && (dataPack.isFull() || myFilePath.isDirectory())) {
+        VisiblePack visiblePack = filterWithIndex(dataPack, sortType, filters);
+        LOG.debug(StopWatch.formatTime(System.currentTimeMillis() - start) + " for computing history for " + myFilePath + " with index");
+        checkNotEmpty(dataPack, visiblePack, true);
+        return Pair.create(visiblePack, commitCount);
+      }
+
+      if (myFilePath.isDirectory()) {
+        return myVcsLogFilterer.filter(dataPack, sortType, filters, commitCount);
+      }
+
+      AbstractVcs vcs = ProjectLevelVcsManager.getInstance(myProject).getVcsFor(myRoot);
+      if (vcs != null && vcs.getVcsHistoryProvider() != null) {
+        try {
+          VisiblePack visiblePack = filterWithProvider(vcs, dataPack, sortType, filters);
+          LOG.debug(StopWatch.formatTime(System.currentTimeMillis() - start) +
+                    " for computing history for " +
+                    myFilePath +
+                    " with history provider");
+          checkNotEmpty(dataPack, visiblePack, false);
+          return Pair.create(visiblePack, commitCount);
+        }
+        catch (VcsException e) {
+          LOG.error(e);
+          return myVcsLogFilterer.filter(dataPack, sortType, filters, commitCount);
+        }
+      }
+
+      LOG.warn("Could not find vcs or history provider for file " + myFilePath);
+      return myVcsLogFilterer.filter(dataPack, sortType, filters, commitCount);
+    }
+
+    private void checkNotEmpty(@NotNull DataPack dataPack, @NotNull VisiblePack visiblePack, boolean withIndex) {
+      if (!dataPack.isFull()) {
+        LOG.debug("Data pack is not full while computing file history for " + myFilePath + "\n" +
+                  "Found " + visiblePack.getVisibleGraph().getVisibleCommitCount() + " commits");
+      }
+      else if (visiblePack.getVisibleGraph().getVisibleCommitCount() == 0) {
+        LOG.warn("Empty file history from " + (withIndex ? "index" : "provider") + " for " + myFilePath);
       }
     }
-    return 0;
-  }
 
-  @Nullable
-  private Hash getHead(@NotNull DataPack pack) {
-    CompressedRefs refs = pack.getRefsModel().getAllRefsByRoot().get(myRoot);
-    Optional<VcsRef> headOptional = refs.streamBranches().filter(br -> br.getName().equals("HEAD")).findFirst();
-    if (headOptional.isPresent()) {
-      VcsRef head = headOptional.get();
-      assert head.getRoot().equals(myRoot);
-      return head.getCommitHash();
+    @NotNull
+    private VisiblePack filterWithProvider(@NotNull AbstractVcs vcs,
+                                           @NotNull DataPack dataPack,
+                                           @NotNull PermanentGraph.SortType sortType,
+                                           @NotNull VcsLogFilterCollection filters) throws VcsException {
+      VcsRevisionNumber revisionNumber = myHash != null ? VcsLogUtil.convertToRevisionNumber(myHash) : null;
+      List<VcsFileRevision> revisions = VcsCachingHistory.collect(vcs, myFilePath, revisionNumber);
+
+      if (revisions.isEmpty()) return VisiblePack.EMPTY;
+
+      Map<Integer, FilePath> pathsMap = ContainerUtil.newHashMap();
+      VisibleGraph<Integer> visibleGraph;
+
+      if (dataPack.isFull()) {
+        for (VcsFileRevision revision : revisions) {
+          pathsMap.put(getIndex(revision), ((VcsFileRevisionEx)revision).getPath());
+        }
+        visibleGraph = myVcsLogFilterer.createVisibleGraph(dataPack, sortType, null, pathsMap.keySet());
+      }
+      else {
+        List<GraphCommit<Integer>> commits = ContainerUtil.newArrayListWithCapacity(revisions.size());
+
+        for (VcsFileRevision revision : revisions) {
+          int index = getIndex(revision);
+          pathsMap.put(index, ((VcsFileRevisionEx)revision).getPath());
+          commits.add(GraphCommitImpl.createCommit(index, Collections.emptyList(), revision.getRevisionDate().getTime()));
+        }
+
+        Map<VirtualFile, CompressedRefs> refs = getFilteredRefs(dataPack);
+        Map<VirtualFile, VcsLogProvider> providers = ContainerUtil.newHashMap(Pair.create(myRoot, myLogProviders.get(myRoot)));
+
+        dataPack = DataPack.build(commits, refs, providers, myStorage, false);
+        visibleGraph = myVcsLogFilterer.createVisibleGraph(dataPack, sortType, null,
+                                                           null/*no need to filter here, since we do not have any extra commits in this pack*/);
+      }
+
+      return new FileHistoryVisiblePack(dataPack, visibleGraph, false, filters, pathsMap);
     }
-    return null;
-  }
 
-  private int findAncestorRowAffectingFile(@NotNull PermanentGraphImpl<Integer> permanentGraph,
-                                           @NotNull Hash hash,
-                                           @NotNull VisibleGraph<Integer> visibleGraph,
-                                           @NotNull IndexDataGetter.FileNamesData fileNamesData) {
-    Ref<Integer> result = new Ref<>();
-
-    PermanentCommitsInfoImpl<Integer> commitsInfo = permanentGraph.getPermanentCommitsInfo();
-    ReachableNodes reachableNodes = new ReachableNodes(LinearGraphUtils.asLiteLinearGraph(permanentGraph.getLinearGraph()));
-    reachableNodes.walk(Collections.singleton(commitsInfo.getNodeId(myStorage.getCommitIndex(hash, myRoot))), true,
-                        currentNode -> {
-                          int id = commitsInfo.getCommitId(currentNode);
-                          if (fileNamesData.affects(id, myFilePath)) {
-                            result.set(currentNode);
-                            return false; // stop walk, we have found it
-                          }
-                          return true; // continue walk
-                        });
-
-    if (!result.isNull()) {
-      Integer rowIndex = visibleGraph.getVisibleRowIndex(commitsInfo.getCommitId(result.get()));
-      return ObjectUtils.assertNotNull(rowIndex);
+    @NotNull
+    private Map<VirtualFile, CompressedRefs> getFilteredRefs(@NotNull DataPack dataPack) {
+      Map<VirtualFile, CompressedRefs> refs = ContainerUtil.newHashMap();
+      CompressedRefs compressedRefs = dataPack.getRefsModel().getAllRefsByRoot().get(myRoot);
+      if (compressedRefs == null) {
+        compressedRefs = new CompressedRefs(ContainerUtil.newHashSet(), myStorage);
+      }
+      refs.put(myRoot, compressedRefs);
+      return refs;
     }
 
-    return -1;
+    private int getIndex(@NotNull VcsFileRevision revision) {
+      return myStorage.getCommitIndex(HashImpl.build(revision.getRevisionNumber().asString()), myRoot);
+    }
+
+    @NotNull
+    private VisiblePack filterWithIndex(@NotNull DataPack dataPack,
+                                        @NotNull PermanentGraph.SortType sortType,
+                                        @NotNull VcsLogFilterCollection filters) {
+      Set<Integer> matchingHeads = myVcsLogFilterer.getMatchingHeads(dataPack.getRefsModel(), Collections.singleton(myRoot), filters);
+      IndexDataGetter.FileNamesData data = myIndexDataGetter.buildFileNamesData(myFilePath);
+      VisibleGraph<Integer> visibleGraph = myVcsLogFilterer.createVisibleGraph(dataPack, sortType, matchingHeads, data.getCommits());
+
+      Map<Integer, FilePath> pathsMap = null;
+      if (visibleGraph.getVisibleCommitCount() > 0) {
+        if (visibleGraph instanceof VisibleGraphImpl) {
+          int row = getCurrentRow(dataPack, visibleGraph, data);
+          if (row >= 0) {
+            FileHistoryRefiner refiner = new FileHistoryRefiner((VisibleGraphImpl<Integer>)visibleGraph, data);
+            if (refiner.refine(row, myFilePath)) {
+              // creating a vg is the most expensive task, so trying to avoid that when unnecessary
+              visibleGraph = myVcsLogFilterer.createVisibleGraph(dataPack, sortType, matchingHeads, refiner.getPathsForCommits().keySet());
+              pathsMap = refiner.getPathsForCommits();
+            }
+          }
+        }
+      }
+
+      if (pathsMap == null) {
+        pathsMap = data.buildPathsMap();
+      }
+
+      if (!myFilePath.isDirectory()) reindexFirstCommitsIfNeeded(visibleGraph);
+      return new FileHistoryVisiblePack(dataPack, visibleGraph, false, filters, pathsMap);
+    }
+
+    private void reindexFirstCommitsIfNeeded(@NotNull VisibleGraph<Integer> graph) {
+      // we may not have renames big commits, may need to reindex them
+      if (graph instanceof VisibleGraphImpl) {
+        LiteLinearGraph liteLinearGraph = LinearGraphUtils.asLiteLinearGraph(((VisibleGraphImpl)graph).getLinearGraph());
+        for (int row = 0; row < liteLinearGraph.nodesCount(); row++) {
+          // checking if commit is a root commit (which means file was added or renamed there)
+          if (liteLinearGraph.getNodes(row, LiteLinearGraph.NodeFilter.DOWN).isEmpty()) {
+            myIndex.reindexWithRenames(graph.getRowInfo(row).getCommit(), myRoot);
+          }
+        }
+      }
+    }
+
+    private int getCurrentRow(@NotNull DataPack pack,
+                              @NotNull VisibleGraph<Integer> visibleGraph,
+                              @NotNull IndexDataGetter.FileNamesData fileIndexData) {
+      PermanentGraph<Integer> permanentGraph = pack.getPermanentGraph();
+      if (permanentGraph instanceof PermanentGraphImpl) {
+        Hash hash = myHash != null ? myHash : getHead(pack);
+        if (hash != null) {
+          return findAncestorRowAffectingFile((PermanentGraphImpl<Integer>)permanentGraph, hash, visibleGraph, fileIndexData);
+        }
+      }
+      return 0;
+    }
+
+    @Nullable
+    private Hash getHead(@NotNull DataPack pack) {
+      CompressedRefs refs = pack.getRefsModel().getAllRefsByRoot().get(myRoot);
+      Optional<VcsRef> headOptional = refs.streamBranches().filter(br -> br.getName().equals("HEAD")).findFirst();
+      if (headOptional.isPresent()) {
+        VcsRef head = headOptional.get();
+        assert head.getRoot().equals(myRoot);
+        return head.getCommitHash();
+      }
+      return null;
+    }
+
+    private int findAncestorRowAffectingFile(@NotNull PermanentGraphImpl<Integer> permanentGraph,
+                                             @NotNull Hash hash,
+                                             @NotNull VisibleGraph<Integer> visibleGraph,
+                                             @NotNull IndexDataGetter.FileNamesData fileNamesData) {
+      Ref<Integer> result = new Ref<>();
+
+      PermanentCommitsInfoImpl<Integer> commitsInfo = permanentGraph.getPermanentCommitsInfo();
+      ReachableNodes reachableNodes = new ReachableNodes(LinearGraphUtils.asLiteLinearGraph(permanentGraph.getLinearGraph()));
+      reachableNodes.walk(Collections.singleton(commitsInfo.getNodeId(myStorage.getCommitIndex(hash, myRoot))), true,
+                          currentNode -> {
+                            int id = commitsInfo.getCommitId(currentNode);
+                            if (fileNamesData.affects(id, myFilePath)) {
+                              result.set(currentNode);
+                              return false; // stop walk, we have found it
+                            }
+                            return true; // continue walk
+                          });
+
+      if (!result.isNull()) {
+        Integer rowIndex = visibleGraph.getVisibleRowIndex(commitsInfo.getCommitId(result.get()));
+        return assertNotNull(rowIndex);
+      }
+
+      return -1;
+    }
   }
 
   private static class FileHistoryRefiner implements DfsUtil.NodeVisitor {

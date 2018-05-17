@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2013 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.jps.cmdline;
 
 import com.google.protobuf.Message;
@@ -25,6 +11,10 @@ import com.intellij.uiDesigner.core.GridConstraints;
 import com.intellij.util.SystemProperties;
 import com.intellij.util.containers.ContainerUtil;
 import com.jgoodies.forms.layout.CellConstraints;
+import io.netty.buffer.ByteBufAllocator;
+import io.netty.channel.EventLoopGroup;
+import io.netty.handler.codec.protobuf.ProtobufDecoder;
+import io.netty.resolver.AddressResolverGroup;
 import io.netty.util.NetUtil;
 import net.n3.nanoxml.IXMLBuilder;
 import org.jetbrains.idea.maven.aether.ArtifactRepositoryManager;
@@ -52,6 +42,15 @@ public class ClasspathBootstrap {
   private ClasspathBootstrap() {
   }
 
+  private static final Class<?>[] COMMON_REQUIRED_CLASSES = {
+    Message.class, // protobuf
+    NetUtil.class, // netty common
+    EventLoopGroup.class, // netty transport
+    AddressResolverGroup.class, // netty resolver
+    ByteBufAllocator.class, // netty buffer
+    ProtobufDecoder.class,  // netty codec
+  };
+
   public static List<String> getBuildProcessApplicationClasspath() {
     final Set<String> cp = ContainerUtil.newHashSet();
 
@@ -59,8 +58,11 @@ public class ClasspathBootstrap {
     cp.add(getResourcePath(ExternalJavacProcess.class));  // intellij.platform.jps.build.javac.rt part
 
     cp.addAll(PathManager.getUtilClassPath()); // intellij.platform.util
-    cp.add(getResourcePath(Message.class)); // protobuf
-    cp.add(getResourcePath(NetUtil.class)); // netty
+
+    for (Class<?> aClass : COMMON_REQUIRED_CLASSES) {
+      cp.add(getResourcePath(aClass));
+    }
+
     cp.add(getResourcePath(ClassWriter.class));  // asm
     cp.add(getResourcePath(ClassVisitor.class));  // asm-commons
     cp.add(getResourcePath(JpsModel.class));  // intellij.platform.jps.model
@@ -108,8 +110,10 @@ public class ClasspathBootstrap {
     for (String path : PathManager.getUtilClassPath()) {
       cp.add(new File(path));
     }
-    cp.add(getResourceFile(Message.class)); // protobuf
-    cp.add(getResourceFile(NetUtil.class)); // netty
+
+    for (Class<?> aClass : COMMON_REQUIRED_CLASSES) {
+      cp.add(getResourceFile(aClass));
+    }
 
     final Class<StandardJavaFileManager> optimizedFileManagerClass = OptimizedFileManagerUtil.getManagerClass();
     if (optimizedFileManagerClass != null) {

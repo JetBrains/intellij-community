@@ -2842,8 +2842,7 @@ public class JBTabsImpl extends JComponent
     protected BaseNavigationAction(@NotNull String copyFromID, @NotNull JBTabsImpl tabs, @NotNull ActionManager mgr) {
       myActionManager = mgr;
       myTabs = tabs;
-      myShadow = new ShadowAction(this, myActionManager.getAction(copyFromID), tabs);
-      Disposer.register(tabs, myShadow);
+      myShadow = new ShadowAction(this, myActionManager.getAction(copyFromID), tabs, tabs);
       setEnabledInModalContext(true);
     }
 

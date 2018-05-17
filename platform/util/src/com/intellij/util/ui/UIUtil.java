@@ -2905,6 +2905,7 @@ public class UIUtil {
 
         List<LinkController> listeners1 = filterLinkControllerListeners(pane.getMouseListeners());
         List<LinkController> listeners2 = filterLinkControllerListeners(pane.getMouseMotionListeners());
+        // replace just the original listener
         if (listeners1.size() == 1 && listeners1.equals(listeners2)) {
           LinkController oldLinkController = listeners1.get(0);
           pane.removeMouseListener(oldLinkController);

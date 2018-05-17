@@ -17,7 +17,6 @@ package com.intellij.ide.ui.laf.intellij;
 
 import com.intellij.ide.ui.laf.darcula.DarculaUIUtil;
 import com.intellij.ide.ui.laf.darcula.ui.DarculaSpinnerBorder;
-import com.intellij.openapi.ui.ErrorBorderCapable;
 import com.intellij.util.ui.JBInsets;
 import com.intellij.util.ui.JBUI;
 
@@ -25,7 +24,7 @@ import javax.swing.*;
 import java.awt.*;
 import java.awt.geom.Path2D;
 
-public class WinIntelliJSpinnerBorder extends DarculaSpinnerBorder implements ErrorBorderCapable {
+public class WinIntelliJSpinnerBorder extends DarculaSpinnerBorder {
   @Override
   public void paintBorder(Component c, Graphics g, int x, int y, int width, int height) {
     if (!(c instanceof JSpinner)) return;

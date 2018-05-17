@@ -55,23 +55,26 @@ public class FileContentImpl extends UserDataHolderBase implements FileContent {
   protected final long myStamp;
   protected byte[] myHash;
   private boolean myLighterASTShouldBeThreadSafe;
+  private final boolean myPhysicalContent;
 
   public FileContentImpl(@NotNull final VirtualFile file, @NotNull final CharSequence contentAsText, long documentStamp) {
-    this(file, contentAsText, null, documentStamp);
+    this(file, contentAsText, null, documentStamp, false);
   }
 
   public FileContentImpl(@NotNull final VirtualFile file, @NotNull final byte[] content) {
-    this(file, null, content, -1);
+    this(file, null, content, -1, true);
   }
 
   FileContentImpl(@NotNull final VirtualFile file) {
-    this(file, null, null, -1);
+    this(file, null, null, -1, true);
   }
 
   private FileContentImpl(@NotNull VirtualFile file,
                           CharSequence contentAsText,
                           byte[] content,
-                          long stamp) {
+                          long stamp,
+                          boolean physicalContent
+                          ) {
     myFile = file;
     myContentAsText = contentAsText;
     myContent = content;
@@ -79,6 +82,7 @@ public class FileContentImpl extends UserDataHolderBase implements FileContent {
     // remember name explicitly because the file could be renamed afterwards
     myFileName = file.getName();
     myStamp = stamp;
+    myPhysicalContent = physicalContent;
   }
 
   @Override
@@ -248,14 +252,17 @@ public class FileContentImpl extends UserDataHolderBase implements FileContent {
 
   @NotNull
   public PsiFile getPsiFileForPsiDependentIndex() {
-    Document document = FileDocumentManager.getInstance().getCachedDocument(getFile());
     PsiFile psi = null;
-    if (document != null) {
-      PsiDocumentManager psiDocumentManager = PsiDocumentManager.getInstance(getProject());
-      if (psiDocumentManager.isUncommited(document)) {
-        PsiFile existingPsi = psiDocumentManager.getPsiFile(document);
-        if(existingPsi != null) {
-          psi = existingPsi;
+    if (!myPhysicalContent) {
+      Document document = FileDocumentManager.getInstance().getCachedDocument(getFile());
+
+      if (document != null) {
+        PsiDocumentManager psiDocumentManager = PsiDocumentManager.getInstance(getProject());
+        if (psiDocumentManager.isUncommited(document)) {
+          PsiFile existingPsi = psiDocumentManager.getPsiFile(document);
+          if (existingPsi != null) {
+            psi = existingPsi;
+          }
         }
       }
     }
@@ -264,5 +271,4 @@ public class FileContentImpl extends UserDataHolderBase implements FileContent {
     }
     return psi;
   }
-
 }

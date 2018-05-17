@@ -420,13 +420,12 @@ public final class EditorTabbedContainer implements Disposable, CloseAction.Clos
   }
 
   private class CloseTab extends AnAction implements DumbAware {
-
     ShadowAction myShadow;
     private final TabInfo myTabInfo;
 
     CloseTab(JComponent c, TabInfo info) {
       myTabInfo = info;
-      myShadow = new ShadowAction(this, ActionManager.getInstance().getAction(IdeActions.ACTION_CLOSE), c);
+      myShadow = new ShadowAction(this, ActionManager.getInstance().getAction(IdeActions.ACTION_CLOSE), c, myTabs);
     }
 
     @Override

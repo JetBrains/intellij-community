@@ -663,7 +663,7 @@ common.attrs.aria.implicit.navigation |= common.attrs.aria.implicit.landmark
 			attribute role { string "application" }
 
 	common.attrs.aria |= aria.application
-	common.attrs.aria.landmark.application |= aria.application
+	common.attrs.aria.role.application |= aria.application
 
 ## article
 	aria.article =

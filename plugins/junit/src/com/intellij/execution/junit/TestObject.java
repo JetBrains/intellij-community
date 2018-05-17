@@ -538,8 +538,7 @@ public abstract class TestObject extends JavaTestFrameworkRunnableState<JUnitCon
   private static boolean findCustomJunit5TestEngineUsingPsi(@NotNull GlobalSearchScope globalSearchScope, @NotNull Project project, @NotNull JavaPsiFacade psiFacade) {
     PsiClass testEngine = psiFacade.findClass(JUnitCommonClassNames.ORG_JUNIT_PLATFORM_ENGINE_TEST_ENGINE, globalSearchScope);
     if (testEngine == null) return false;
-    return Stream.of(FilenameIndex.getFilesByName(project, JUnitCommonClassNames.ORG_JUNIT_PLATFORM_ENGINE_TEST_ENGINE, globalSearchScope))
-                 .filter(f -> f.getFileType() instanceof SPIFileType)
+    return Stream.of(FilenameIndex.getFilesByName(project, JUnitCommonClassNames.ORG_JUNIT_PLATFORM_ENGINE_TEST_ENGINE, GlobalSearchScope.getScopeRestrictedByFileTypes(globalSearchScope, SPIFileType.INSTANCE)))
                  .flatMap(f -> PsiTreeUtil.findChildrenOfType(f, SPIClassProviderReferenceElement.class).stream())
                  .map(r -> r.resolve())
                  .filter(e -> e instanceof PsiClass)

@@ -355,9 +355,8 @@ public class MethodBreakpoint extends BreakpointWithHighlighter<JavaMethodBreakp
   }
 
   protected Icon getDisabledIcon(boolean isMuted) {
-    final Breakpoint master = DebuggerManagerEx.getInstanceEx(myProject).getBreakpointManager().findMasterBreakpoint(this);
-    if (master != null) {
-      return isMuted ? AllIcons.Debugger.Db_muted_dep_method_breakpoint : AllIcons.Debugger.Db_dep_method_breakpoint;
+    if (DebuggerManagerEx.getInstanceEx(myProject).getBreakpointManager().findMasterBreakpoint(this) != null && isMuted) {
+      return AllIcons.Debugger.Db_muted_dep_method_breakpoint;
     }
     return null;
   }

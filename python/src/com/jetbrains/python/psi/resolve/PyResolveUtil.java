@@ -109,8 +109,8 @@ public class PyResolveUtil {
       if (scopeOwner == roof) {
         return;
       }
-      if (scopeOwner instanceof PyClass && scopeOwner == originalScopeOwner) {
-        scopeOwner = PyUtil.as(scopeOwner.getContainingFile(), PyFile.class);
+      if (name != null && scopeOwner instanceof PyClass && scopeOwner == originalScopeOwner) {
+        scopeOwner = parentScopeForUnresolvedClassLevelName((PyClass)scopeOwner, name);
       }
       else {
         scopeOwner = ScopeUtil.getScopeOwner(scopeOwner);
@@ -316,5 +316,12 @@ public class PyResolveUtil {
              PsiTreeUtil.getParentOfType(element, PyAnnotation.class) != null;
     }
     return false;
+  }
+
+  @Nullable
+  public static ScopeOwner parentScopeForUnresolvedClassLevelName(@NotNull PyClass cls, @NotNull String name) {
+    return ControlFlowCache.getScope(cls).containsDeclaration(name)
+           ? PyUtil.as(cls.getContainingFile(), PyFile.class)
+           : ScopeUtil.getScopeOwner(cls);
   }
 }

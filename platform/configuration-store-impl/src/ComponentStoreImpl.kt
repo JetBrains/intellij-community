@@ -27,6 +27,7 @@ import com.intellij.project.isDirectoryBased
 import com.intellij.ui.AppUIUtil
 import com.intellij.util.ArrayUtilRt
 import com.intellij.util.SmartList
+import com.intellij.util.SystemProperties
 import com.intellij.util.containers.SmartHashSet
 import com.intellij.util.containers.isNullOrEmpty
 import com.intellij.util.lang.CompoundRuntimeException
@@ -34,7 +35,6 @@ import com.intellij.util.messages.MessageBus
 import com.intellij.util.xmlb.JDOMXIncluder
 import com.intellij.util.xmlb.XmlSerializerUtil
 import gnu.trove.THashMap
-import io.netty.util.internal.SystemPropertyUtil
 import org.jdom.Element
 import org.jetbrains.annotations.TestOnly
 import java.io.IOException
@@ -401,7 +401,7 @@ abstract class ComponentStoreImpl : IComponentStore {
            name != "ProjectRunConfigurationManager" && /* ProjectRunConfigurationManager is used only for IPR, avoid relatively cost call getState */
            name != "NewModuleRootManager" /* will be changed only on actual user change, so, to speed up module loading, skip it */ &&
            name != "DeprecatedModuleOptionManager" /* doesn't make sense to check it */ &&
-           SystemPropertyUtil.getBoolean("use.loaded.state.as.existing", true)
+           SystemProperties.getBooleanProperty("use.loaded.state.as.existing", true)
   }
 
   protected open fun isUseLoadedStateAsExisting(storage: StateStorage): Boolean = (storage as? XmlElementStorage)?.roamingType != RoamingType.DISABLED

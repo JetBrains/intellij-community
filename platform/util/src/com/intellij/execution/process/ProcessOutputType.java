@@ -67,6 +67,11 @@ public class ProcessOutputType extends Key {
     return key instanceof ProcessOutputType && ((ProcessOutputType)key).isStdout();
   }
 
+  @NotNull
+  public static String getKeyNameForLogging(@NotNull Key key) {
+    return key.toString().replace("\u001B", "ESC");
+  }
+
   @Nullable
   public static ProcessOutputType tryCast(@NotNull Key key) {
     return key instanceof ProcessOutputType ? (ProcessOutputType)key : null;

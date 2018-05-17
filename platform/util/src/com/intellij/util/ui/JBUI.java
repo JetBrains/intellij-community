@@ -519,8 +519,8 @@ public class JBUI {
 
   @NotNull
   public static JBInsets insets(String propName, JBInsets defaultValue) {
-    JBInsets i = (JBInsets)UIManager.getInsets(propName);
-    return i != null ? i : defaultValue;
+    Insets i = UIManager.getInsets(propName);
+    return i != null ? JBInsets.create(i) : defaultValue;
   }
 
   @NotNull
@@ -653,6 +653,11 @@ public class JBUI {
     @NotNull
     public static JBFont toolbarFont() {
       return SystemInfo.isMac ? smallFont() : label();
+    }
+
+    @NotNull
+    public static JBFont toolbarSmallComboBoxFont() {
+      return UIUtil.isUnderGTKLookAndFeel() ? label() : label(11);
     }
   }
 
@@ -1174,12 +1179,12 @@ public class JBUI {
    * @see ScaleContextSupport
    * @author tav
    */
-  public interface ScaleContextAware<T extends BaseScaleContext> {
+  public interface ScaleContextAware {
     /**
      * @return the scale context
      */
     @NotNull
-    T getScaleContext();
+    BaseScaleContext getScaleContext();
 
     /**
      * Updates the current context with the state of the provided context.
@@ -1189,7 +1194,7 @@ public class JBUI {
      * @param ctx the new scale context
      * @return whether any of the scale factors has been updated
      */
-    boolean updateScaleContext(@Nullable T ctx);
+    boolean updateScaleContext(@Nullable BaseScaleContext ctx);
 
     /**
      * @return the scale of the provided type from the context
@@ -1204,7 +1209,7 @@ public class JBUI {
     boolean updateScale(@NotNull Scale scale);
   }
 
-  public static class ScaleContextSupport<T extends BaseScaleContext> implements ScaleContextAware<T> {
+  public static class ScaleContextSupport<T extends BaseScaleContext> implements ScaleContextAware {
     @NotNull
     private final T myScaleContext;
 
@@ -1219,7 +1224,7 @@ public class JBUI {
     }
 
     @Override
-    public boolean updateScaleContext(@Nullable T ctx) {
+    public boolean updateScaleContext(@Nullable BaseScaleContext ctx) {
       return myScaleContext.update(ctx);
     }
 

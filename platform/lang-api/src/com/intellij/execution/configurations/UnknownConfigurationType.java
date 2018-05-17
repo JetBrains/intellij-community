@@ -7,18 +7,12 @@ import com.intellij.openapi.project.Project;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 
-import javax.swing.*;
-
 public final class UnknownConfigurationType extends ConfigurationTypeBase {
   @NotNull
   public static final UnknownConfigurationType INSTANCE = new UnknownConfigurationType();
 
   private UnknownConfigurationType() {
-    this(AllIcons.RunConfigurations.Unknown);
-  }
-
-  private UnknownConfigurationType(@NotNull Icon icon) {
-    super(NAME, NAME, ExecutionBundle.message("run.configuration.unknown.description"), icon);
+    super(NAME, NAME, ExecutionBundle.message("run.configuration.unknown.description"), lazyIcon(() -> AllIcons.RunConfigurations.Unknown));
 
     addFactory(new ConfigurationFactory(this) {
       @NotNull

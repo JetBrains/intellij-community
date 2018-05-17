@@ -5,14 +5,47 @@ import com.intellij.ui.components.noteComponent
 import com.intellij.ui.layout.*
 import com.intellij.ui.layout.migLayout.patched.*
 import com.intellij.util.containers.ContainerUtil
+import com.intellij.util.ui.JBUI
 import net.miginfocom.layout.*
 import java.awt.Component
 import java.awt.Container
 import javax.swing.ButtonGroup
+import javax.swing.JComponent
 import javax.swing.JDialog
 import javax.swing.JLabel
 
-internal class MigLayoutBuilder(val spacing: SpacingConfiguration) : LayoutBuilderImpl {
+internal class MigLayoutBuilder(val spacing: SpacingConfiguration, val isUseMagic: Boolean = true) : LayoutBuilderImpl {
+  companion object {
+    private var hRelatedGap = -1
+    private var vRelatedGap = -1
+
+    init {
+      JBUI.addPropertyChangeListener(JBUI.USER_SCALE_FACTOR_PROPERTY) {
+        updatePlatformDefaults()
+      }
+    }
+
+    private fun updatePlatformDefaults() {
+      if (hRelatedGap != -1 && vRelatedGap != -1) {
+        PlatformDefaults.setRelatedGap(createUnitValue(hRelatedGap, true), createUnitValue(vRelatedGap, false))
+      }
+    }
+
+    private fun setRelatedGap(h: Int, v: Int) {
+      if (hRelatedGap == h && vRelatedGap == v) {
+        return
+      }
+
+      hRelatedGap = h
+      vRelatedGap = v
+      updatePlatformDefaults()
+    }
+  }
+
+  init {
+    setRelatedGap(spacing.horizontalGap, spacing.verticalGap)
+  }
+
   /**
    * Map of component to constraints shared among rows (since components are unique)
    */
@@ -21,6 +54,8 @@ internal class MigLayoutBuilder(val spacing: SpacingConfiguration) : LayoutBuild
 
   val defaultComponentConstraintCreator = DefaultComponentConstraintCreator(spacing)
 
+  // keep in mind - MigLayout always creates one more than need column constraints (i.e. for 2 will be 3)
+  // it doesn't lead to any issue.
   val columnConstraints = AC()
 
   override fun newRow(label: JLabel?, buttonGroup: ButtonGroup?, separated: Boolean): Row {
@@ -54,19 +89,13 @@ internal class MigLayoutBuilder(val spacing: SpacingConfiguration) : LayoutBuild
     lc.isVisualPadding = spacing.isCompensateVisualPaddings
     lc.hideMode = 3
 
-    if (rootRow.subRows!!.any { it.isLabeledIncludingSubRows }) {
-      // using columnConstraints instead of component gap allows easy debug (proper painting of debug grid)
-      columnConstraints.gap("${spacing.labelColumnHorizontalGap}px!", 0)
-    }
-
-    for (i in 1 until columnConstraints.count) {
-      columnConstraints.gap("${spacing.horizontalGap}px!", i)
-    }
+    configureGapBetweenColumns()
 
     // if constraint specified only for rows 0 and 1, MigLayout will use constraint 1 for any rows with index 1+ (see LayoutUtil.getIndexSafe - use last element if index > size)
     val rowConstraints = AC()
-    rowConstraints.align("baseline")
+    rowConstraints.align(if (isUseMagic) "baseline" else "top")
 
+    (container as JComponent).putClientProperty("isVisualPaddingCompensatedOnComponentLevel", false)
     var isLayoutInsetsAdjusted = false
     container.layout = object : MigLayout(lc, columnConstraints, rowConstraints) {
       override fun layoutContainer(parent: Container) {
@@ -149,6 +178,21 @@ internal class MigLayoutBuilder(val spacing: SpacingConfiguration) : LayoutBuild
     // do not hold components
     componentConstraints.clear()
   }
+
+  private fun configureGapBetweenColumns() {
+    var startColumnIndexToApplyHorizontalGap = 0
+    if (rootRow.subRows!!.any { it.isLabeledIncludingSubRows }) {
+      // using columnConstraints instead of component gap allows easy debug (proper painting of debug grid)
+      columnConstraints.gap("${spacing.labelColumnHorizontalGap}px!", 0)
+      columnConstraints.grow(0f, 0)
+      startColumnIndexToApplyHorizontalGap = 1
+    }
+
+    val gapAfter = "${spacing.horizontalGap}px!"
+    for (i in startColumnIndexToApplyHorizontalGap until rootRow.columnIndexIncludingSubRows) {
+      columnConstraints.gap(gapAfter, i)
+    }
+  }
 }
 
 internal fun gapToBoundSize(value: Int, isHorizontal: Boolean): BoundSize {
@@ -169,6 +213,7 @@ private fun createUnitValue(value: Int, isHorizontal: Boolean): UnitValue {
 
 private fun LC.apply(flags: Array<out LCFlags>): LC {
   for (flag in flags) {
+    @Suppress("NON_EXHAUSTIVE_WHEN")
     when (flag) {
       LCFlags.noGrid -> isNoGrid = true
 

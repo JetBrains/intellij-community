@@ -296,9 +296,9 @@
           <option name="ERROR_STRIPE_COLOR" value="cf5b56" deuteranopia="d95716" protanopia="d95716"/>
         </value>
       </option>
-      <option name="RUNTIME_PROBLEM">
+      <option name="RUNTIME_ERROR">
         <value>
-          <option name="EFFECT_COLOR" value="ff0000" />
+          <option name="EFFECT_COLOR" value="f49810" />
           <option name="ERROR_STRIPE_COLOR" value="cf5b56" />
           <option name="EFFECT_TYPE" value="5" />
         </value>
@@ -1198,6 +1198,7 @@
       <option name="BREAKPOINT_ATTRIBUTES">
         <value>
           <option name="BACKGROUND" value="3a2323" deuteranopia="42372b" protanopia="42372b"/>
+          <option name="ERROR_STRIPE_COLOR" value="664233" />
         </value>
       </option>
       <option name="COFFEESCRIPT.GLOBAL_VARIABLE">
@@ -1599,9 +1600,9 @@
           <option name="ERROR_STRIPE_COLOR" value="9e2927" deuteranopia="ff8f40" protanopia="ff8f40"/>
         </value>
       </option>
-      <option name="RUNTIME_PROBLEM">
+      <option name="RUNTIME_ERROR">
         <value>
-          <option name="EFFECT_COLOR" value="bc3f3c"/>
+          <option name="EFFECT_COLOR" value="f49810"/>
           <option name="EFFECT_TYPE" value="5" />
           <option name="ERROR_STRIPE_COLOR" value="9e2927"/>
         </value>
@@ -1613,7 +1614,7 @@
       </option>
       <option name="NOT_TOP_FRAME_ATTRIBUTES">
         <value>
-          <option name="BACKGROUND" value="243040"/>
+          <option name="BACKGROUND" value="2f3f55"/>
         </value>
       </option>
       <option name="EVALUATED_EXPRESSION_ATTRIBUTES">

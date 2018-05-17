@@ -137,7 +137,7 @@ public class AddExceptionToExistingCatchFix extends PsiElementBaseIntentionActio
       if (unhandledExceptions.isEmpty()) return null;
       boolean containsInCatchOrFinally = containsInCatchOrFinally(element);
       List<PsiTryStatement> tryStatements =
-        PsiTreeUtil.collectParents(element, PsiTryStatement.class, el ->
+        PsiTreeUtil.collectParents(element, PsiTryStatement.class, false, el ->
           el instanceof PsiLambdaExpression || el instanceof PsiClass && !(el instanceof PsiAnonymousClass));
       if (containsInCatchOrFinally) {
         tryStatements.remove(0);

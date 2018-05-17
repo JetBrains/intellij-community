@@ -14,6 +14,7 @@ abstract class CommandProcessor<INCOMING, INCOMING_WITH_SEQ : Any, SUCCESS_RESPO
                                                                                               ResultReader<SUCCESS_RESPONSE>,
                                                                                               MessageProcessor {
   private val currentSequence = AtomicInteger()
+  @Suppress("LeakingThis")
   protected val messageManager = MessageManager(this)
 
   override fun cancelWaitingRequests() {

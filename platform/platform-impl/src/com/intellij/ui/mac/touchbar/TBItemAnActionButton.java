@@ -8,7 +8,6 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.IconLoader;
-import com.intellij.util.ui.EmptyIcon;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -19,9 +18,12 @@ import java.awt.event.KeyEvent;
 import static java.awt.event.ComponentEvent.COMPONENT_FIRST;
 
 public class TBItemAnActionButton extends TBItemButton {
+  private static final boolean LOG_ICON_ERRORS = System.getProperty("touchbar.log.icon.errors", "false").equals("true");
+
   public static final int SHOWMODE_IMAGE_ONLY = 0;
   public static final int SHOWMODE_TEXT_ONLY = 1;
   public static final int SHOWMODE_IMAGE_TEXT = 2;
+  public static final int SHOWMODE_IMAGE_ONLY_IF_PRESENTED = 3;
 
   private static final Logger LOG = Logger.getInstance(TBItemAnActionButton.class);
 
@@ -104,19 +106,19 @@ public class TBItemAnActionButton extends TBItemButton {
         if (icon == null)
           icon = IconLoader.getDisabledIcon(presentation.getIcon());
       }
-      if (icon == null) {
+      if (icon == null && LOG_ICON_ERRORS)
         LOG.error("can't get icon, action " + myActionId + ", presentation = " + _printPresentation(presentation));
-        icon = EmptyIcon.ICON_18;
-      }
     }
-
-    final String text = myShowMode == SHOWMODE_IMAGE_ONLY ? null : presentation.getText();
 
     boolean isSelected = false;
     if (myAnAction instanceof ToggleAction) {
       final Object selectedProp = presentation.getClientProperty(Toggleable.SELECTED_PROPERTY);
       isSelected = selectedProp != null && selectedProp == Boolean.TRUE;
     }
+
+    final boolean hideText = myShowMode == SHOWMODE_IMAGE_ONLY || (myShowMode == SHOWMODE_IMAGE_ONLY_IF_PRESENTED && icon != null);
+    final String text = hideText ? null : presentation.getText();
+
     update(icon, text, isSelected, !presentation.isEnabled());
   }
 

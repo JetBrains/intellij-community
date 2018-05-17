@@ -27,8 +27,7 @@ public final class EndUserAgreement {
 
   private static final String PRIVACY_POLICY_CONTENT_FILE_NAME = "Cached";
 
-  // todo: change to EULA after GDPR is mandatory and corresponding resource is hard-coded into the build
-  private static final String DEFAULT_DOC_NAME = PRIVACY_POLICY_DOCUMENT_NAME;
+  private static final String DEFAULT_DOC_NAME = EULA_DOCUMENT_NAME;
   private static final String DEFAULT_DOC_EAP_NAME = DEFAULT_DOC_NAME + "Eap";
   private static final String ACTIVE_DOC_FILE_NAME = "documentName";
   private static final String ACTIVE_DOC_EAP_FILE_NAME = "documentName.eap";

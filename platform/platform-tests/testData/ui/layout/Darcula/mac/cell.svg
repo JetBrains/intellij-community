@@ -24,13 +24,13 @@
         <path d="M-1 2 L-1 29 L77 29 L77 2 Z"/>
       </clipPath>
       <clipPath clipPathUnits="userSpaceOnUse" id="5">
-        <path d="M0 3 L0 30 L41 30 L41 3 Z"/>
+        <path d="M0 3 L0 30 L98 30 L98 3 Z"/>
       </clipPath>
       <clipPath clipPathUnits="userSpaceOnUse" id="6">
-        <path d="M-1 2 L-1 29 L40 29 L40 2 Z"/>
+        <path d="M-1 2 L-1 29 L97 29 L97 2 Z"/>
       </clipPath>
       <clipPath clipPathUnits="userSpaceOnUse" id="7">
-        <path d="M0 0 L0 22 L30 22 L30 0 Z"/>
+        <path d="M0 0 L0 22 L87 22 L87 0 Z"/>
       </clipPath>
       <clipPath clipPathUnits="userSpaceOnUse" id="8">
         <path d="M0 0 L0 16 L70 16 L70 0 Z"/>
@@ -51,31 +51,33 @@
     <g fill="rgb(120,120,120)" text-rendering="geometricPrecision" font-size="11px" font-family="'.SF NS Text'" transform="translate(80,30)" stroke="rgb(120,120,120)">
       <text x="0" xml:space="preserve" y="11" clip-path="url(#2)" stroke="none">Use File -&gt; Settings Repository... to configure</text>
     </g>
-    <g fill="rgb(60,63,65)" font-size="13px" font-family="'.SF NS Text'" transform="translate(116,-3)" stroke="rgb(60,63,65)">
+    <g fill="rgb(60,63,65)" font-size="13px" font-family="'.SF NS Text'" transform="translate(173,-3)" stroke="rgb(60,63,65)">
       <rect x="0" width="78" height="30" y="0" clip-path="url(#3)" stroke="none"/>
     </g>
-    <g fill="url(#linearGradient0)" text-rendering="optimizeLegibility" font-size="13px" font-family="'.SF NS Text'" transform="translate(117,-2)" stroke="url(#linearGradient0)">
+    <g font-size="13px" transform="translate(174,-2)" fill-opacity="0.502" fill="rgb(54,54,54)" text-rendering="optimizeLegibility" font-family="'.SF NS Text'" stroke="rgb(54,54,54)" stroke-opacity="0.502">
+      <rect x="2" y="4" clip-path="url(#4)" width="72" rx="3" ry="3" height="24" stroke="none"/>
+    </g>
+    <g fill="url(#linearGradient0)" text-rendering="optimizeLegibility" font-size="13px" font-family="'.SF NS Text'" transform="translate(174,-2)" stroke="url(#linearGradient0)">
       <rect x="2" y="2" clip-path="url(#4)" width="72" rx="3" ry="3" height="24" stroke="none"/>
     </g>
-    <g fill="rgb(187,187,187)" font-size="13px" font-family="'.SF NS Text'" transform="translate(116,-3)" stroke="rgb(187,187,187)">
+    <g fill="rgb(187,187,187)" font-size="13px" font-family="'.SF NS Text'" transform="translate(173,-3)" stroke="rgb(187,187,187)">
       <text x="20" xml:space="preserve" y="20" clip-path="url(#3)" stroke="none">Delete</text>
     </g>
-    <g fill="rgb(54,54,54)" text-rendering="optimizeLegibility" font-size="13px" font-family="'.SF NS Text'" transform="translate(117,-2)" stroke="rgb(54,54,54)">
-      <rect x="2" y="26" clip-path="url(#4)" width="72" height="2" opacity="0.5" stroke="none"/>
-      <path fill="rgb(94,96,96)" d="M2 5 L2 23 C2 24.6569 3.3431 26 5 26 L71 26 C72.6569 26 74 24.6569 74 23 L74 5 C74 3.3431 72.6569 2 71 2 L5 2 C3.3431 2 2 3.3431 2 5 ZM3 5.5 L3 22.5 C3 23.8807 4.1193 25 5.5 25 L70.5 25 C71.8807 25 73 23.8807 73 22.5 L73 5.5 C73 4.1193 71.8807 3 70.5 3 L5.5 3 C4.1193 3 3 4.1193 3 5.5 Z" clip-path="url(#4)" fill-rule="evenodd" stroke="none"/>
+    <g fill="rgb(94,96,96)" text-rendering="optimizeLegibility" font-size="13px" font-family="'.SF NS Text'" transform="translate(174,-2)" stroke="rgb(94,96,96)">
+      <path d="M2 5 L2 23 C2 24.6569 3.3431 26 5 26 L71 26 C72.6569 26 74 24.6569 74 23 L74 5 C74 3.3431 72.6569 2 71 2 L5 2 C3.3431 2 2 3.3431 2 5 ZM3 5.5 L3 22.5 C3 23.8807 4.1193 25 5.5 25 L70.5 25 C71.8807 25 73 23.8807 73 22.5 L73 5.5 C73 4.1193 71.8807 3 70.5 3 L5.5 3 C4.1193 3 3 4.1193 3 5.5 Z" fill-rule="evenodd" clip-path="url(#4)" stroke="none"/>
     </g>
     <g fill="rgb(60,63,65)" font-size="13px" font-family="'.SF NS Text'" transform="translate(73,-3)" stroke="rgb(60,63,65)">
-      <rect x="0" width="41" height="30" y="0" clip-path="url(#5)" stroke="none"/>
-      <rect x="0" width="41" height="30" y="0" clip-path="url(#5)" stroke="none"/>
+      <rect x="0" width="98" height="30" y="0" clip-path="url(#5)" stroke="none"/>
+      <rect x="0" width="98" height="30" y="0" clip-path="url(#5)" stroke="none"/>
     </g>
     <g fill="rgb(60,63,65)" text-rendering="optimizeLegibility" font-size="13px" font-family="'.SF NS Text'" transform="translate(74,-2)" stroke="rgb(60,63,65)">
-      <rect x="2" y="2" clip-path="url(#6)" width="35" rx="2.5" ry="2.5" height="24" stroke="none"/>
+      <rect x="2" y="2" clip-path="url(#6)" width="92" rx="2.5" ry="2.5" height="24" stroke="none"/>
     </g>
     <g fill="rgb(60,63,65)" font-size="13px" font-family="'.SF NS Text'" transform="translate(81,1)" stroke="rgb(60,63,65)">
-      <rect x="0" width="30" height="22" y="0" clip-path="url(#7)" stroke="none"/>
+      <rect x="0" width="87" height="22" y="0" clip-path="url(#7)" stroke="none"/>
     </g>
     <g fill="rgb(100,100,100)" text-rendering="optimizeLegibility" font-size="13px" font-family="'.SF NS Text'" transform="translate(74,-2)" stroke="rgb(100,100,100)">
-      <path d="M2 4.5 L2 23.5 C2 24.8807 3.1193 26 4.5 26 L34.5 26 C35.8807 26 37 24.8807 37 23.5 L37 4.5 C37 3.1193 35.8807 2 34.5 2 L4.5 2 C3.1193 2 2 3.1193 2 4.5 ZM3 5 L3 23 C3 24.1046 3.8954 25 5 25 L34 25 C35.1046 25 36 24.1046 36 23 L36 5 C36 3.8954 35.1046 3 34 3 L5 3 C3.8954 3 3 3.8954 3 5 Z" fill-rule="evenodd" clip-path="url(#6)" stroke="none"/>
+      <path d="M2 4.5 L2 23.5 C2 24.8807 3.1193 26 4.5 26 L91.5 26 C92.8807 26 94 24.8807 94 23.5 L94 4.5 C94 3.1193 92.8807 2 91.5 2 L4.5 2 C3.1193 2 2 3.1193 2 4.5 ZM3 5 L3 23 C3 24.1046 3.8954 25 5 25 L91 25 C92.1046 25 93 24.1046 93 23 L93 5 C93 3.8954 92.1046 3 91 3 L5 3 C3.8954 3 3 3.8954 3 5 Z" fill-rule="evenodd" clip-path="url(#6)" stroke="none"/>
     </g>
     <g fill="rgb(187,187,187)" font-size="13px" font-family="'.SF NS Text'" transform="translate(0,4)" stroke="rgb(187,187,187)">
       <text x="0" xml:space="preserve" y="13" clip-path="url(#8)" stroke="none">Repository:</text>

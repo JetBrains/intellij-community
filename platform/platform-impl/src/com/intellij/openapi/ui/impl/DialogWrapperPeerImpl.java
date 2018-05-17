@@ -1,6 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.ui.impl;
 
 import com.intellij.ide.DataManager;
@@ -94,6 +92,9 @@ public class DialogWrapperPeerImpl extends DialogWrapperPeer {
       myProject = project;
 
       window = myWindowManager.suggestParentWindow(project);
+      if (!headless && window != null && !(window instanceof Frame) && !(window instanceof Dialog)) {
+        throw new IllegalStateException("suggestParentWindow() returned " + window + " which is not a frame or dialog");
+      }
       if (window == null) {
         Window focusedWindow = myWindowManager.getMostRecentFocusedWindow();
         if (focusedWindow instanceof IdeFrameImpl) {

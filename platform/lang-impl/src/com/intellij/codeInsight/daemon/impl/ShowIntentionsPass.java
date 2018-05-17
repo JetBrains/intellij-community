@@ -42,11 +42,9 @@ import com.intellij.openapi.util.Segment;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.profile.codeInspection.InspectionProjectProfileManager;
-import com.intellij.psi.PsiDocumentManager;
-import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiFile;
-import com.intellij.psi.PsiWhiteSpace;
+import com.intellij.psi.*;
 import com.intellij.psi.impl.source.tree.injected.InjectedLanguageUtil;
+import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.util.CommonProcessors;
 import com.intellij.util.ObjectUtils;
@@ -290,18 +288,7 @@ public class ShowIntentionsPass extends TextEditorHighlightingPass {
       intentions.errorFixesToShow.addAll(fixes);
     }
     else {
-      final boolean isError = infoAtCursor.getSeverity() == HighlightSeverity.ERROR;
-      for (HighlightInfo.IntentionActionDescriptor fix : fixes) {
-        if (fix.isError() && isError) {
-          intentions.errorFixesToShow.add(fix);
-        }
-        else if (fix.isInformation()) {
-          intentions.intentionsToShow.add(fix);
-        }
-        else {
-          intentions.inspectionFixesToShow.add(fix);
-        }
-      }
+      fillIntentionsInfoForHighlightInfo(infoAtCursor, intentions, fixes);
     }
 
     for (final IntentionAction action : IntentionManager.getInstance().getAvailableIntentionActions()) {
@@ -357,89 +344,102 @@ public class ShowIntentionsPass extends TextEditorHighlightingPass {
     intentions.filterActions(hostFile);
   }
 
+  public static void fillIntentionsInfoForHighlightInfo(@NotNull HighlightInfo infoAtCursor, 
+                                                        @NotNull IntentionsInfo intentions,
+                                                        @NotNull List<HighlightInfo.IntentionActionDescriptor> fixes) {
+    final boolean isError = infoAtCursor.getSeverity() == HighlightSeverity.ERROR;
+    for (HighlightInfo.IntentionActionDescriptor fix : fixes) {
+      if (fix.isError() && isError) {
+        intentions.errorFixesToShow.add(fix);
+      }
+      else if (fix.isInformation()) {
+        intentions.intentionsToShow.add(fix);
+      }
+      else {
+        intentions.inspectionFixesToShow.add(fix);
+      }
+    }
+  }
+
   /**
    * Can be invoked in EDT, each inspection should be fast
    */
   private static void collectIntentionsFromDoNotShowLeveledInspections(@NotNull final Project project,
                                                                        @NotNull final PsiFile hostFile,
-                                                                       PsiElement psiElement,
+                                                                       @NotNull PsiElement psiElement,
                                                                        final int offset,
                                                                        @NotNull final IntentionsInfo intentions) {
-    if (psiElement != null) {
-      if (!psiElement.isPhysical()) {
-        VirtualFile virtualFile = hostFile.getVirtualFile();
-        String text = hostFile.getText();
-        LOG.error("not physical: '" + psiElement.getText() + "' @" + offset + " " +psiElement.getTextRange() +
-                  " elem:" + psiElement + " (" + psiElement.getClass().getName() + ")" +
-                  " in:" + psiElement.getContainingFile() + " host:" + hostFile + "(" + hostFile.getClass().getName() + ")",
-                  new Attachment(virtualFile != null ? virtualFile.getPresentableUrl() : "null", text != null ? text : "null"));
-      }
-      if (DumbService.isDumb(project)) {
-        return;
-      }
+    if (!psiElement.isPhysical()) {
+      VirtualFile virtualFile = hostFile.getVirtualFile();
+      String text = hostFile.getText();
+      LOG.error("not physical: '" + psiElement.getText() + "' @" + offset + " " +psiElement.getTextRange() +
+                " elem:" + psiElement + " (" + psiElement.getClass().getName() + ")" +
+                " in:" + psiElement.getContainingFile() + " host:" + hostFile + "(" + hostFile.getClass().getName() + ")",
+                new Attachment(virtualFile != null ? virtualFile.getPresentableUrl() : "null", text != null ? text : "null"));
+    }
+    if (DumbService.isDumb(project)) {
+      return;
+    }
 
-      final List<LocalInspectionToolWrapper> intentionTools = new ArrayList<>();
-      final InspectionProfile profile = InspectionProjectProfileManager.getInstance(project).getInspectionProfile();
-      final InspectionToolWrapper[] tools = profile.getInspectionTools(hostFile);
-      for (InspectionToolWrapper toolWrapper : tools) {
-        if (toolWrapper instanceof GlobalInspectionToolWrapper) {
-          toolWrapper = ((GlobalInspectionToolWrapper)toolWrapper).getSharedLocalInspectionToolWrapper();
-        }
-        if (toolWrapper instanceof LocalInspectionToolWrapper && !((LocalInspectionToolWrapper)toolWrapper).isUnfair()) {
-          final HighlightDisplayKey key = HighlightDisplayKey.find(toolWrapper.getShortName());
-          if (profile.isToolEnabled(key, hostFile) &&
-              HighlightDisplayLevel.DO_NOT_SHOW.equals(profile.getErrorLevel(key, hostFile))) {
-            intentionTools.add((LocalInspectionToolWrapper)toolWrapper);
-          }
+    final List<LocalInspectionToolWrapper> intentionTools = new ArrayList<>();
+    final InspectionProfile profile = InspectionProjectProfileManager.getInstance(project).getInspectionProfile();
+    final InspectionToolWrapper[] tools = profile.getInspectionTools(hostFile);
+    for (InspectionToolWrapper toolWrapper : tools) {
+      if (toolWrapper instanceof GlobalInspectionToolWrapper) {
+        toolWrapper = ((GlobalInspectionToolWrapper)toolWrapper).getSharedLocalInspectionToolWrapper();
+      }
+      if (toolWrapper instanceof LocalInspectionToolWrapper && !((LocalInspectionToolWrapper)toolWrapper).isUnfair()) {
+        final HighlightDisplayKey key = HighlightDisplayKey.find(toolWrapper.getShortName());
+        if (profile.isToolEnabled(key, hostFile) &&
+            HighlightDisplayLevel.DO_NOT_SHOW.equals(profile.getErrorLevel(key, hostFile))) {
+          intentionTools.add((LocalInspectionToolWrapper)toolWrapper);
         }
       }
+    }
 
-      if (!intentionTools.isEmpty()) {
-        final List<PsiElement> elements = new ArrayList<>();
-        PsiElement el = psiElement;
-        while (el != null) {
-          elements.add(el);
-          if (el instanceof PsiFile) break;
-          el = el.getParent();
-        }
+    if (intentionTools.isEmpty()) {
+      return;
+    }
 
-        final Set<String> dialectIds = InspectionEngine.calcElementDialectIds(elements);
-        final LocalInspectionToolSession session = new LocalInspectionToolSession(hostFile, 0, hostFile.getTextLength());
-        final Processor<LocalInspectionToolWrapper> processor = toolWrapper -> {
-          final LocalInspectionTool localInspectionTool = toolWrapper.getTool();
-          final HighlightDisplayKey key = HighlightDisplayKey.find(toolWrapper.getShortName());
-          final String displayName = toolWrapper.getDisplayName();
-          final ProblemsHolder holder = new ProblemsHolder(InspectionManager.getInstance(project), hostFile, true) {
-            @Override
-            public void registerProblem(@NotNull ProblemDescriptor problemDescriptor) {
-              super.registerProblem(problemDescriptor);
-              if (problemDescriptor instanceof ProblemDescriptorBase) {
-                final TextRange range = ((ProblemDescriptorBase)problemDescriptor).getTextRange();
-                if (range != null && range.containsOffset(offset)) {
-                  final QuickFix[] fixes = problemDescriptor.getFixes();
-                  if (fixes != null) {
-                    for (int k = 0; k < fixes.length; k++) {
-                      final IntentionAction intentionAction = QuickFixWrapper.wrap(problemDescriptor, k);
-                      final HighlightInfo.IntentionActionDescriptor actionDescriptor =
-                        new HighlightInfo.IntentionActionDescriptor(intentionAction, null, displayName, null,
-                                                                    key, null, HighlightSeverity.INFORMATION);
-                      intentions.intentionsToShow.add(actionDescriptor);
-                    }
-                  }
+    List<PsiElement> elements = PsiTreeUtil.collectParents(psiElement, PsiElement.class, true, e -> e instanceof PsiDirectory);
+
+    final Set<String> dialectIds = InspectionEngine.calcElementDialectIds(elements);
+    final LocalInspectionToolSession session = new LocalInspectionToolSession(hostFile, 0, hostFile.getTextLength());
+    final Processor<LocalInspectionToolWrapper> processor = toolWrapper -> {
+      final LocalInspectionTool localInspectionTool = toolWrapper.getTool();
+      final HighlightDisplayKey key = HighlightDisplayKey.find(toolWrapper.getShortName());
+      final String displayName = toolWrapper.getDisplayName();
+      final ProblemsHolder holder = new ProblemsHolder(InspectionManager.getInstance(project), hostFile, true) {
+        @Override
+        public void registerProblem(@NotNull ProblemDescriptor problemDescriptor) {
+          super.registerProblem(problemDescriptor);
+          if (problemDescriptor instanceof ProblemDescriptorBase) {
+            final TextRange range = ((ProblemDescriptorBase)problemDescriptor).getTextRange();
+            if (range != null && range.containsOffset(offset)) {
+              final QuickFix[] fixes = problemDescriptor.getFixes();
+              if (fixes != null) {
+                for (int k = 0; k < fixes.length; k++) {
+                  final IntentionAction intentionAction = QuickFixWrapper.wrap(problemDescriptor, k);
+                  final HighlightInfo.IntentionActionDescriptor actionDescriptor =
+                    new HighlightInfo.IntentionActionDescriptor(intentionAction, null, displayName, null,
+                                                                key, null, HighlightSeverity.INFORMATION);
+                  (problemDescriptor.getHighlightType() == ProblemHighlightType.ERROR 
+                   ? intentions.errorFixesToShow 
+                   : intentions.intentionsToShow).add(actionDescriptor);
                 }
               }
             }
-          };
-          InspectionEngine.createVisitorAndAcceptElements(localInspectionTool, holder, true, session, elements,
-                                                          dialectIds, InspectionEngine.getDialectIdsSpecifiedForTool(toolWrapper));
-          localInspectionTool.inspectionFinished(session, holder);
-          return true;
-        };
-        // indicator can be null when run from EDT
-        ProgressIndicator progress = ObjectUtils.notNull(ProgressIndicatorProvider.getGlobalProgressIndicator(), new DaemonProgressIndicator());
-        JobLauncher.getInstance().invokeConcurrentlyUnderProgress(intentionTools, progress, processor);
-      }
-    }
+          }
+        }
+      };
+      InspectionEngine.createVisitorAndAcceptElements(localInspectionTool, holder, true, session, elements,
+                                                      dialectIds, InspectionEngine.getDialectIdsSpecifiedForTool(toolWrapper));
+      localInspectionTool.inspectionFinished(session, holder);
+      return true;
+    };
+    // indicator can be null when run from EDT
+    ProgressIndicator progress = ObjectUtils.notNull(ProgressIndicatorProvider.getGlobalProgressIndicator(), new DaemonProgressIndicator());
+    JobLauncher.getInstance().invokeConcurrentlyUnderProgress(intentionTools, progress, processor);
   }
 }
 

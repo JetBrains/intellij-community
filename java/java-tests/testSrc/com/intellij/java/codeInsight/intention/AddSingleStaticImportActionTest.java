@@ -131,6 +131,17 @@ public class AddSingleStaticImportActionTest extends JavaCodeInsightFixtureTestC
     assertNull(intention);
   }
 
+  public void testInaccessibleClassReferencedInsideJavadocLink() {
+    myFixture.addClass("package foo; class Foo {static class Baz {}}");
+    myFixture.configureByText("a.java", 
+                              "/**\n" +
+                       " * {@link foo.Foo.Baz<caret>}\n" +
+                       " */\n" +
+                       " class InaccessibleClassReferencedInsideJavadocLink { }");
+    IntentionAction intention = myFixture.getAvailableIntention("Add import for 'foo.Foo.Baz'");
+    assertNull(intention);
+  }
+
   public void testComment() {
     doTest("Add static import for 'java.util.Arrays.asList'");
   }

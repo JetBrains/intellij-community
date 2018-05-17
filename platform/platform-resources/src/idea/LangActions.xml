@@ -1097,5 +1097,32 @@
       <keyboard-shortcut first-keystroke="control F10" keymap="$default"/>
       <add-to-group group-id="DebugMainMenu" anchor="before" relative-to-action="StepOver"/>
     </action>
+
+    <group id="TouchBar">
+      <group id="TouchBarDebug" text="Debugger">
+        <reference ref="Rerun"/>
+        <reference ref="Pause"/>
+        <reference ref="Resume"/>
+        <reference ref="Stop"/>
+        <separator/>
+        <reference ref="XDebugger.MuteBreakpoints"/>
+        <separator/>
+        <reference ref="StepOver"/>
+        <reference ref="StepInto"/>
+        <reference ref="StepOut"/>
+        <separator/>
+        <reference ref="EvaluateExpression"/>
+        <group id="TouchBarDebug_alt" text="Debugger with Alt key">
+          <separator/>
+          <reference ref="ViewBreakpoints"/>
+          <separator/>
+          <reference ref="ForceStepOver"/>
+          <reference ref="ForceStepInto"/>
+          <reference ref="SmartStepInto"/>
+          <reference ref="RunToCursor"/>
+        </group>
+        <group id="TouchBarDebug_cmd" text="Debugger with Cmd key"/>
+      </group>
+    </group>
   </actions>
 </idea-plugin>

@@ -229,6 +229,10 @@ public final class IconLoader {
       LOG.warn("unexpected: " + context);
       return null;
     }
+    // Find either PNG or SVG icon. The icon will then be wrapped into CachedImageIcon
+    // which will load proper icon version depending on the context - UI theme, DPI.
+    // SVG version, when present, has more priority than PNG.
+    // See for details: com.intellij.util.ImageLoader.ImageDescList#create
     if (url != null || !path.endsWith(".png")) return url;
     url = findURL(path.substring(0, path.length() - 4) + ".svg", context);
     if (url != null) LOG.info("replace '" + path + "' with '" + url + "'");

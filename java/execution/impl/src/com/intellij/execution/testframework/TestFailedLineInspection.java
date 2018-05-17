@@ -37,8 +37,8 @@ public class TestFailedLineInspection extends LocalInspectionTool {
           new RunActionFix(call, DefaultRunExecutor.EXECUTOR_ID)};
         ProblemDescriptor descriptor = InspectionManager.getInstance(call.getProject())
                                                         .createProblemDescriptor(call, state.errorMessage, isOnTheFly, fixes,
-                                                                                 ProblemHighlightType.GENERIC_ERROR);
-        descriptor.setTextAttributes(CodeInsightColors.RUNTIME_PROBLEM);
+                                                                                 ProblemHighlightType.GENERIC_ERROR_OR_WARNING);
+        descriptor.setTextAttributes(CodeInsightColors.RUNTIME_ERROR);
         holder.registerProblem(descriptor);
       }
     };

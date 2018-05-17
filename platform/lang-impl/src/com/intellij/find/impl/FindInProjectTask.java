@@ -29,7 +29,6 @@ import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.util.text.TrigramBuilder;
 import com.intellij.openapi.vfs.*;
-import com.intellij.psi.PsiBinaryFile;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiManager;
 import com.intellij.psi.impl.cache.CacheManager;
@@ -445,7 +444,7 @@ class FindInProjectTask {
 
   private Pair.NonNull<PsiFile, VirtualFile> findFile(@NotNull final VirtualFile virtualFile) {
     PsiFile psiFile = myPsiManager.findFile(virtualFile);
-    if (psiFile != null && !(psiFile instanceof PsiBinaryFile)) {
+    if (psiFile != null) {
       PsiFile sourceFile = (PsiFile)psiFile.getNavigationElement();
       if (sourceFile != null) psiFile = sourceFile;
       if (psiFile.getFileType().isBinary()) {

@@ -84,7 +84,7 @@ open class DarculaOptionButtonUI : BasicOptionButtonUI() {
     val yOffset = BW.getFloat() + LW.getFloat() + scale(1)
     val x = mainButton.width.toFloat()
 
-    g.color = (mainButton.border as DarculaButtonPainter).getBorderColor(c)
+    g.paint = (mainButton.border as DarculaButtonPainter).getBorderPaint(c)
     g.fill(Rectangle2D.Float(x, yOffset, LW.getFloat(), mainButton.height - yOffset * 2))
   }
 

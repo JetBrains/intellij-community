@@ -58,6 +58,7 @@
       <add-to-group group-id="Git.LogContextMenu"/>
       <add-to-group group-id="Vcs.Log.ContextMenu"/>
       <add-to-group group-id="VcsHistoryActionsGroup"/>
+      <add-to-group group-id="VcsHistoryActionsGroup.Toolbar"/>
     </action>
     <action id="Github.Create.Gist" class="org.jetbrains.plugins.github.GithubCreateGistAction">
       <add-to-group group-id="EditorPopupMenu"/>

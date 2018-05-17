@@ -182,10 +182,6 @@
                      groupKey="inspections.group.name"
                      enabledByDefault="true" level="ERROR"
                      implementationClass="org.jetbrains.idea.devkit.inspections.PresentationAnnotationInspection"/>
-    <localInspection language="UAST" shortName="UnstableApiUsage" displayName="Unstable API usage"
-                     groupKey="inspections.group.name" enabledByDefault="true" level="WARNING"
-                     implementationClass="org.jetbrains.idea.devkit.inspections.UnstableApiUsageInspection"/>
-
 
     <moduleConfigurationEditorProvider implementation="org.jetbrains.idea.devkit.module.PluginModuleEditorsProvider"/>
     <implicitUsageProvider implementation="org.jetbrains.idea.devkit.inspections.DevKitImplicitUsageProvider"/>
@@ -208,9 +204,11 @@
     <stacktrace.fold substring="at com.intellij.testFramework.EdtTestUtil"/>
     <stacktrace.fold substring="at com.intellij.testFramework.UsefulTestCase"/>
     <stacktrace.fold substring="at com.intellij.testFramework.fixtures.impl.CodeInsightTestFixtureImpl.collectAndCheckHighlighting("/>
-    <stacktrace.fold substring="at com.intellij.testFramework.fixtures.impl.CodeInsightTestFixtureImpl.checkResultByFile("/>
+    <stacktrace.fold substring="at com.intellij.testFramework.fixtures.impl.CodeInsightTestFixtureImpl.checkResult"/>
     <stacktrace.fold substring="at com.intellij.testFramework.fixtures.impl.CodeInsightTestFixtureImpl.access$"/>
+    <stacktrace.fold substring="at com.intellij.testFramework.fixtures.impl.CodeInsightTestFixtureImpl.lambda$"/>
     <stacktrace.fold substring="at com.intellij.testFramework.fixtures.impl.CodeInsightTestFixtureImpl$"/>
+    <stacktrace.fold substring="at com.intellij.testFramework.fixtures.CodeInsightTestFixture$"/>
     <stacktrace.fold substring="at com.intellij.testFramework.LightPlatformTestCase"/>
     <stacktrace.fold substring="at com.intellij.testFramework.LightPlatformCodeInsightTestCase"/>
     <stacktrace.fold substring="at com.intellij.testFramework.PlatformTestCase"/>

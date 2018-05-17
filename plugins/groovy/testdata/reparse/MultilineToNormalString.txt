@@ -44,7 +44,7 @@ Groovy script
                 <empty list>
               Compound Gstring
                 PsiElement(Gstring begin)('"')
-                GrStringContentImpl(GString content element)
+                GrStringContentImpl(STRING_CONTENT)
                   PsiElement(Gstring content)(')')
                 PsiErrorElement:String end expected
                   <empty list>

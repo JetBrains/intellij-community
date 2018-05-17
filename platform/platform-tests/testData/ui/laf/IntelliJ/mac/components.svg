@@ -24,9 +24,12 @@
         <path d="M8 3 L8 25 L472 25 L472 3 Z"/>
       </clipPath>
       <clipPath clipPathUnits="userSpaceOnUse" id="5">
-        <path d="M-1 -1 L-1 27 L479 27 L479 -1 Z"/>
+        <path d="M476 4 L476 24 L4 24 L4 4 ZM0 0 L0 28 L480 28 L480 0 Z"/>
       </clipPath>
       <clipPath clipPathUnits="userSpaceOnUse" id="6">
+        <path d="M-1 -1 L-1 27 L479 27 L479 -1 Z"/>
+      </clipPath>
+      <clipPath clipPathUnits="userSpaceOnUse" id="7">
         <path d="M8 4 L8 24 L472 24 L472 4 Z"/>
       </clipPath>
     </defs>
@@ -40,7 +43,7 @@
       <rect x="0" width="480" height="28" y="0" clip-path="url(#1)" stroke="none"/>
       <rect x="0" width="480" height="28" y="0" clip-path="url(#1)" stroke="none"/>
       <path fill="white" d="M460 3 L460 25 L9 25 Q3 25 3 19 L3 9 Q3 3 9 3 Z" clip-path="url(#1)" fill-rule="evenodd" stroke="none"/>
-      <image x="460" y="3" clip-path="url(#1)" fill="white" width="17" xlink:href="../../../../../../platform-impl/src/com/intellij/ide/ui/laf/icons/spinnerRight.png" height="21" stroke="white" preserveAspectRatio="none"/>
+      <image x="460" y="3" clip-path="url(#1)" fill="white" width="17" xlink:href="../../../../../../platform-impl/src/com/intellij/ide/ui/laf/icons/spinnerRight.svg" height="21" stroke="white" preserveAspectRatio="none"/>
     </g>
     <g fill="rgb(188,188,188)" text-rendering="optimizeLegibility" font-size="13px" font-family="'.SF NS Text'" transform="translate(0,266)" stroke="rgb(188,188,188)">
       <path d="M3 6 L3 22 C3 23.6569 4.3431 25 6 25 L474 25 C475.6569 25 477 23.6569 477 22 L477 6 C477 4.3431 475.6569 3 474 3 L6 3 C4.3431 3 3 4.3431 3 6 ZM4 6.5 L4 21.5 C4 22.8807 5.1193 24 6.5 24 L473.5 24 C474.8807 24 476 22.8807 476 21.5 L476 6.5 C476 5.1193 474.8807 4 473.5 4 L6.5 4 C5.1193 4 4 5.1193 4 6.5 Z" fill-rule="evenodd" clip-path="url(#2)" stroke="none"/>
@@ -72,7 +75,7 @@
     <g fill="white" text-rendering="optimizeLegibility" font-size="13px" font-family="'.SF NS Text'" transform="translate(0,76)" stroke="white">
       <path d="M6 3 C4.3431 3 3 4.3431 3 6 L3 22 C3 23.6569 4.3431 25 6 25 L474 25 C475.6569 25 477 23.6569 477 22 L477 6 C477 4.3431 475.6569 3 474 3 Z" stroke="none" clip-path="url(#1)"/>
     </g>
-    <g fill="white" font-size="13px" font-family="'.SF NS Text'" transform="translate(8,80)" stroke="white">
+    <g fill="rgb(252,252,252)" font-size="13px" font-family="'.SF NS Text'" transform="translate(8,80)" stroke="rgb(252,252,252)">
       <rect x="0" width="469" height="20" y="0" clip-path="url(#3)" stroke="none"/>
       <text fill="rgb(29,29,29)" x="1" xml:space="preserve" y="15" clip-path="url(#3)" stroke="none">one</text>
     </g>
@@ -90,19 +93,19 @@
       <text fill="rgb(29,29,29)" x="38" xml:space="preserve" y="19" clip-path="url(#4)" stroke="none">•</text>
     </g>
     <g fill="rgb(188,188,188)" text-rendering="optimizeLegibility" font-size="13px" font-family="'.SF NS Text'" transform="translate(0,38)" stroke="rgb(188,188,188)">
-      <path d="M3 3 L477 3 L477 25 L3 25 L3 3 ZM4 4 L476 4 L476 24 L4 24 L4 4 Z" fill-rule="evenodd" clip-path="url(#1)" stroke="none"/>
+      <path d="M3 3 L477 3 L477 25 L3 25 L3 3 ZM4 4 L476 4 L476 24 L4 24 L4 4 Z" fill-rule="evenodd" clip-path="url(#5)" stroke="none"/>
     </g>
     <g fill="rgb(236,236,236)" font-size="13px" font-family="'.SF NS Text'" stroke="rgb(236,236,236)">
       <rect x="0" width="480" height="28" y="0" clip-path="url(#1)" stroke="none"/>
     </g>
     <g fill="white" text-rendering="optimizeLegibility" font-size="13px" font-family="'.SF NS Text'" transform="translate(1,1)" stroke="white">
-      <rect x="3" y="3" clip-path="url(#5)" width="472" rx="0" ry="0" height="20" stroke="none"/>
+      <rect x="3" y="3" clip-path="url(#6)" width="472" rx="0" ry="0" height="20" stroke="none"/>
     </g>
     <g fill="rgb(29,29,29)" font-size="13px" font-family="'.SF NS Text'" stroke="rgb(29,29,29)">
-      <text x="8" xml:space="preserve" y="19" clip-path="url(#6)" stroke="none">text</text>
+      <text x="8" xml:space="preserve" y="19" clip-path="url(#7)" stroke="none">text</text>
     </g>
     <g fill="rgb(188,188,188)" text-rendering="optimizeLegibility" font-size="13px" font-family="'.SF NS Text'" stroke="rgb(188,188,188)">
-      <path d="M3 3 L477 3 L477 25 L3 25 L3 3 ZM4 4 L476 4 L476 24 L4 24 L4 4 Z" fill-rule="evenodd" clip-path="url(#1)" stroke="none"/>
+      <path d="M3 3 L477 3 L477 25 L3 25 L3 3 ZM4 4 L476 4 L476 24 L4 24 L4 4 Z" fill-rule="evenodd" clip-path="url(#5)" stroke="none"/>
     </g>
   </g>
 </svg>

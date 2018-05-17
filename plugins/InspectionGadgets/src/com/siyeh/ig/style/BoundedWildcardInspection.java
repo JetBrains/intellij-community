@@ -18,14 +18,18 @@ import com.intellij.psi.util.*;
 import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.refactoring.changeSignature.JavaChangeSignatureDialog;
 import com.intellij.refactoring.changeSignature.ParameterInfoImpl;
+import com.intellij.ui.components.JBCheckBox;
 import com.intellij.util.ArrayUtil;
+import com.intellij.util.Processor;
 import com.intellij.util.containers.ContainerUtil;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.psiutils.TypeUtils;
+import org.jdom.Element;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import javax.swing.*;
 import java.util.Arrays;
 import java.util.List;
 
@@ -33,6 +37,11 @@ import java.util.List;
  * {@code "void process(Processor<T> p)"  -> "void process(Processor<? super T> p)"}
  */
 public class BoundedWildcardInspection extends AbstractBaseJavaLocalInspectionTool {
+  @SuppressWarnings("WeakerAccess") public boolean REPORT_INVARIANT_CLASSES = true;
+  @SuppressWarnings("WeakerAccess") public boolean REPORT_PRIVATE_METHODS = true;
+  private JBCheckBox myReportInvariantClassesCB;
+  private JPanel myPanel;
+  private JBCheckBox myReportPrivateMethodsCB;
 
   @Override
   @NotNull
@@ -48,6 +57,14 @@ public class BoundedWildcardInspection extends AbstractBaseJavaLocalInspectionTo
       public void visitTypeElement(PsiTypeElement typeElement) {
         VarianceCandidate candidate = VarianceCandidate.findVarianceCandidate(typeElement);
         if (candidate == null) return;
+        PsiTypeParameterListOwner owner = candidate.typeParameter.getOwner();
+        if (owner instanceof PsiClass && !REPORT_INVARIANT_CLASSES && getClassVariance((PsiClass)owner, candidate.typeParameter) == Variance.INVARIANT) {
+          return; // Nikolay despises List<? extends T>
+        }
+        if (!REPORT_PRIVATE_METHODS && candidate.method.hasModifierProperty(PsiModifier.PRIVATE)) {
+          return; // somebody hates his precious private methods highlighted
+        }
+        if (loneFreeTypeParameter(candidate, typeElement)) return;
         PsiClassReferenceType extendsT = suggestMethodParameterType(candidate, true);
         PsiClassReferenceType superT = suggestMethodParameterType(candidate, false);
         Variance variance = checkParameterVarianceInMethodBody(candidate.methodParameter, candidate.method, candidate.typeParameter,
@@ -62,6 +79,21 @@ public class BoundedWildcardInspection extends AbstractBaseJavaLocalInspectionTo
         }
       }
     };
+  }
+
+  // doesn't make sense to replace "<T> boolean lone(Processor<T> p)" with wildcard
+  private static boolean loneFreeTypeParameter(@NotNull VarianceCandidate candidate, @NotNull PsiTypeElement typeElementToInspect) {
+    if (!(candidate.type instanceof PsiClassType)) return false;
+    PsiClass aClass = ((PsiClassType)candidate.type).resolve();
+    if (!(aClass instanceof PsiTypeParameter)) return false;
+    // type parameter find usages is cheap
+    boolean[] first = {true};
+    return ReferencesSearch.search(aClass).forEach(r -> {
+      if (!first[0]) return false;
+      first[0] = false;
+      // the only usage must be in our type element we are currently inspecting
+      return r.getElement().getTextRange().getStartOffset() == typeElementToInspect.getTextRange().getStartOffset();
+    });
   }
 
   private static boolean makesSenseToExtend(VarianceCandidate candidate) {
@@ -131,7 +163,7 @@ public class BoundedWildcardInspection extends AbstractBaseJavaLocalInspectionTo
 
       // check that if there is a super method, then it's parameterized similarly.
       // otherwise, it would make no sense to wildcardize "new Function<List<T>, T>(){ T apply(List<T> param) {...} }"
-      // Oh, and make sure super methods are all modifyable, or it wouldn't make sense to report them
+      // Oh, and make sure super methods are all modifiable, or it wouldn't make sense to report them
       if (!
       SuperMethodsSearch.search(method, null, true, true).forEach((MethodSignatureBackedByPsiMethod superMethod)-> {
         ProgressManager.checkCanceled();
@@ -322,14 +354,14 @@ public class BoundedWildcardInspection extends AbstractBaseJavaLocalInspectionTo
       if (PsiTreeUtil.isAncestor(ignoreUsagesIn, ref.getElement(), false)) return true;
       PsiMethod calledMethod = getMethodCallOnReference(ref);
       if (calledMethod == null) {
-        if (isInPolyadicExpression(ref)) return true; // ignore "x == y"
+        if (isInPolyadicOrInstanceOf(ref)) return true; // ignore "x == y"
         PsiField field = isAssignedToField(ref);
         if (field != null) {
           // check if e.g. "Processor<String> field" is used in "field.process(xxx)" only
-          PsiElement ignoreUsagesInAssignment = PsiUtil.skipParenthesizedExprUp(ref.getElement().getParent());
-          PsiClass fieldClass = field.getContainingClass();
-          Variance fv = fieldClass == null ? Variance.INVARIANT :
-                        getVariance(field, new LocalSearchScope(fieldClass), ignoreUsagesInAssignment, containingMethod, typeParameter, extendsT, superT);
+          PsiElement ignoreUsagesInAssignment = skipParensAndCastsUp(ref.getElement());
+          PsiFile fieldFile = field.getContainingFile();
+          Variance fv = fieldFile == null ? Variance.INVARIANT :
+                        getVariance(field, new LocalSearchScope(fieldFile), ignoreUsagesInAssignment, containingMethod, typeParameter, extendsT, superT);
           v[0] = v[0].combine(fv);
         }
         else if (isIteratedValueInForeachExpression(ref)) {
@@ -358,7 +390,7 @@ public class BoundedWildcardInspection extends AbstractBaseJavaLocalInspectionTo
         }
       }
       else {
-        Variance mv = checkVarianceInMethodSignature(calledMethod, typeParameter);
+        Variance mv = getMethodSignatureVariance(calledMethod, typeParameter);
         v[0] = v[0].combine(mv);
       }
       return v[0] != Variance.INVARIANT;
@@ -370,7 +402,7 @@ public class BoundedWildcardInspection extends AbstractBaseJavaLocalInspectionTo
                                                                       @NotNull PsiClassReferenceType suggestedMethodParameterType,
                                                                       @NotNull PsiMethod myself) {
     PsiElement refElement = ref.getElement();
-    PsiElement parent = PsiUtil.skipParenthesizedExprUp(refElement.getParent());
+    PsiElement parent = skipParensAndCastsUp(refElement);
     if (!(parent instanceof PsiExpressionList)) return false;
     List<PsiExpression> exprs = Arrays.asList(((PsiExpressionList)parent).getExpressions());
     int index = ContainerUtil.indexOf(exprs, (Condition<PsiExpression>)(PsiExpression e) -> PsiTreeUtil.isAncestor(e, refElement, false));
@@ -406,12 +438,37 @@ public class BoundedWildcardInspection extends AbstractBaseJavaLocalInspectionTo
     return TypeConversionUtil.isAssignable(paramType, capturedSuggested);
   }
 
+  private static PsiElement skipParensAndCastsUp(@NotNull PsiElement element) {
+    PsiElement prev = element;
+    PsiElement parent = element.getParent();
+    while (parent instanceof PsiParenthesizedExpression ||
+           parent instanceof PsiTypeCastExpression && ((PsiTypeCastExpression)parent).getOperand() == prev) {
+      prev = parent;
+      parent = parent.getParent();
+    }
+    return parent;
+
+  }
+
+  private static PsiExpression skipParensAndCastsDown(@Nullable PsiExpression element) {
+    while (element instanceof PsiParenthesizedExpression || element instanceof PsiTypeCastExpression) {
+      if (element instanceof PsiParenthesizedExpression) {
+        element = ((PsiParenthesizedExpression)element).getExpression();
+      }
+      if (element instanceof PsiTypeCastExpression) {
+        element = ((PsiTypeCastExpression)element).getOperand();
+      }
+    }
+    return element;
+
+  }
+
   private static PsiMethod getMethodCallOnReference(@NotNull PsiReference ref) {
     PsiElement refElement = ref.getElement();
-    PsiElement parent = PsiUtil.skipParenthesizedExprUp(refElement.getParent());
+    PsiElement parent = skipParensAndCastsUp(refElement);
     if (!(parent instanceof PsiReferenceExpression)) return null;
     PsiReferenceExpression refExpression = (PsiReferenceExpression)parent;
-    if (!refElement.equals(PsiUtil.skipParenthesizedExprDown(refExpression.getQualifierExpression()))) {
+    if (!refElement.equals(skipParensAndCastsDown(refExpression.getQualifierExpression()))) {
       return null;
     }
     // "foo(parameter::consume)" variance is equivalent to "parameter.consume(xxx)"
@@ -432,9 +489,9 @@ public class BoundedWildcardInspection extends AbstractBaseJavaLocalInspectionTo
 
   private static boolean isIteratedValueInForeachExpression(@NotNull PsiReference ref) {
     PsiElement refElement = ref.getElement();
-    PsiElement parent = PsiUtil.skipParenthesizedExprUp(refElement.getParent());
+    PsiElement parent = skipParensAndCastsUp(refElement);
     if (!(parent instanceof PsiForeachStatement)) return false;
-    PsiExpression iteratedValue = PsiUtil.skipParenthesizedExprDown(((PsiForeachStatement)parent).getIteratedValue());
+    PsiExpression iteratedValue = skipParensAndCastsDown(((PsiForeachStatement)parent).getIteratedValue());
     if (iteratedValue != ref) return false;
 
     PsiType type = iteratedValue.getType();
@@ -444,31 +501,33 @@ public class BoundedWildcardInspection extends AbstractBaseJavaLocalInspectionTo
     return aClass != null;
   }
 
-  private static boolean isInPolyadicExpression(@NotNull PsiReference ref) {
+  private static boolean isInPolyadicOrInstanceOf(@NotNull PsiReference ref) {
     PsiElement refElement = ref.getElement();
-    PsiElement parent = PsiUtil.skipParenthesizedExprUp(refElement.getParent());
-    return parent instanceof PsiPolyadicExpression;
+    PsiElement parent = skipParensAndCastsUp(refElement);
+    return parent instanceof PsiPolyadicExpression || parent instanceof PsiInstanceOfExpression;
   }
 
   private static PsiField isAssignedToField(@NotNull PsiReference ref) {
     PsiElement refElement = ref.getElement();
-    PsiElement parent = PsiUtil.skipParenthesizedExprUp(refElement.getParent());
+    PsiElement parent = skipParensAndCastsUp(refElement);
     if (!(parent instanceof PsiAssignmentExpression) || ((PsiAssignmentExpression)parent).getOperationTokenType() != JavaTokenType.EQ) return null;
     PsiExpression r = ((PsiAssignmentExpression)parent).getRExpression();
     if (!PsiTreeUtil.isAncestor(r, refElement, false)) return null;
-    PsiExpression l = PsiUtil.skipParenthesizedExprDown(((PsiAssignmentExpression)parent).getLExpression());
+    PsiExpression l = skipParensAndCastsDown(((PsiAssignmentExpression)parent).getLExpression());
     if (!(l instanceof PsiReferenceExpression)) return null;
     PsiReferenceExpression lExpression = (PsiReferenceExpression)l;
-    PsiExpression lQualifier = PsiUtil.skipParenthesizedExprDown(lExpression.getQualifierExpression());
+    PsiExpression lQualifier = skipParensAndCastsDown(lExpression.getQualifierExpression());
     if (lQualifier != null && !(lQualifier instanceof PsiThisExpression)) return null;
     PsiElement field = lExpression.resolve();
-    if (!(field instanceof PsiField)) return null;
+    // too expensive to search for usages of public field otherwise
+    if (!(field instanceof PsiField) ||
+        !((PsiField)field).hasModifierProperty(PsiModifier.PRIVATE) && !((PsiField)field).hasModifierProperty(PsiModifier.PACKAGE_LOCAL)) return null;
     return (PsiField)field;
   }
 
 
   @NotNull
-  private static Variance checkVarianceInMethodSignature(@NotNull PsiMethod method, @NotNull PsiTypeParameter typeParameter) {
+  private static Variance getMethodSignatureVariance(@NotNull PsiMethod method, @NotNull PsiTypeParameter typeParameter) {
     PsiTypeParameterListOwner owner = typeParameter.getOwner();
     PsiClass methodClass = method.getContainingClass();
     if (methodClass == null || !(owner instanceof PsiClass)) return Variance.INVARIANT;
@@ -484,23 +543,44 @@ public class BoundedWildcardInspection extends AbstractBaseJavaLocalInspectionTo
         return Variance.INVARIANT;
       }
     }
-    PsiType type = method.getReturnType();
+    PsiType returnType = method.getReturnType();
 
-    if (type != null && !TypeConversionUtil.isPrimitiveAndNotNullOrWrapper(type)) {
-      if (typeResolvesTo(type, typeParameter, superClassSubstitutor)) {
+    if (returnType != null && !TypeConversionUtil.isPrimitiveAndNotNullOrWrapper(returnType)) {
+      if (typeResolvesTo(returnType, typeParameter, superClassSubstitutor)) {
         r = r.combine(Variance.COVARIANT);
       }
-      else if (containsDeepIn(type, typeParameter, superClassSubstitutor)) {
+      else if (isComposeMethod(method, returnType, typeParameter, superClassSubstitutor)) {
+        // ignore
+      }
+      else if (containsDeepIn(returnType, typeParameter, superClassSubstitutor)) {
         r = Variance.INVARIANT;
       }
     }
     return r;
   }
 
-  private static boolean containsDeepIn(@NotNull PsiType type,
+  // java.util.Function contains "<V> Function<T, V> andThen(Function<? super R, ? extends V> after)" which doesn't preclude it to be contravariant on T
+  private static boolean isComposeMethod(@NotNull PsiMethod method,
+                                         @NotNull PsiType returnType,
+                                         @NotNull PsiTypeParameter typeParameter,
+                                         @NotNull PsiSubstitutor superClassSubstitutor) {
+    PsiClass containingClass = method.getContainingClass();
+    if (containingClass == null || !(returnType instanceof PsiClassType) || !containingClass.equals(((PsiClassType)returnType).resolve())) {
+      return false;
+    }
+    PsiTypeParameterListOwner typeParameterOwner = typeParameter.getOwner();
+    PsiTypeParameterList typeParameterList = typeParameterOwner == null ? null : typeParameterOwner.getTypeParameterList();
+    int index = typeParameterList == null ? -1 : typeParameterList.getTypeParameterIndex(typeParameter);
+
+    PsiType[] parameters = ((PsiClassType)returnType).getParameters();
+    if (index == -1 || parameters.length <= index) return false;
+    return typeResolvesTo(parameters[index], typeParameter, superClassSubstitutor);
+  }
+
+  private static boolean containsDeepIn(@NotNull PsiType rootType,
                                         @NotNull PsiTypeParameter parameter,
                                         @NotNull PsiSubstitutor superClassSubstitutor) {
-    return type.accept(new PsiTypeVisitor<Boolean>() {
+    return rootType.accept(new PsiTypeVisitor<Boolean>() {
       @Nullable
       @Override
       public Boolean visitClassType(PsiClassType classType) {
@@ -528,5 +608,36 @@ public class BoundedWildcardInspection extends AbstractBaseJavaLocalInspectionTo
     if (!(substituted instanceof PsiClassType))  return false;
     PsiClassType.ClassResolveResult result = ((PsiClassType)substituted).resolveGenerics();
     return typeParameter.equals(result.getElement()) && result.getSubstitutor().equals(PsiSubstitutor.EMPTY);
+  }
+
+  @NotNull
+  private static Variance getClassVariance(@NotNull PsiClass aClass, @NotNull PsiTypeParameter typeParameter) {
+    Variance result = Variance.NOVARIANT;
+    for (PsiMethod method : aClass.getAllMethods()) {
+      PsiClass containingClass = method.getContainingClass();
+      if (containingClass == null ||
+          CommonClassNames.JAVA_LANG_OBJECT.equals(containingClass.getQualifiedName()) ||
+          method.hasModifierProperty(PsiModifier.STATIC)) {
+        continue;
+      }
+      result = result.combine(getMethodSignatureVariance(method, typeParameter));
+      if (result == Variance.INVARIANT) break;
+    }
+    return result;
+  }
+
+  @Nullable
+  @Override
+  public JComponent createOptionsPanel() {
+    myReportInvariantClassesCB.setSelected(REPORT_INVARIANT_CLASSES);
+    myReportPrivateMethodsCB.setSelected(REPORT_PRIVATE_METHODS);
+    return myPanel;
+  }
+
+  @Override
+  public void readSettings(@NotNull Element node) {
+    super.readSettings(node);
+    myReportInvariantClassesCB.addItemListener(__ -> REPORT_INVARIANT_CLASSES = myReportInvariantClassesCB.isSelected());
+    myReportPrivateMethodsCB.addItemListener(__ -> REPORT_PRIVATE_METHODS = myReportPrivateMethodsCB.isSelected());
   }
 }

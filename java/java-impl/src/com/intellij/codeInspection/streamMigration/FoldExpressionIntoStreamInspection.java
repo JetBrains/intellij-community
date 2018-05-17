@@ -14,6 +14,7 @@ import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.InheritanceUtil;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
+import com.intellij.util.ArrayUtil;
 import com.siyeh.ig.psiutils.*;
 import one.util.streamex.IntStreamEx;
 import one.util.streamex.StreamEx;
@@ -41,9 +42,15 @@ public class FoldExpressionIntoStreamInspection extends AbstractBaseJavaLocalIns
       public void visitPolyadicExpression(PsiPolyadicExpression expression) {
         TerminalGenerator generator = getGenerator(expression);
         if (generator == null) return;
-        if (extractDiff(generator, expression).isEmpty()) return;
+        List<PsiExpression> diff = extractDiff(generator, expression);
+        if (diff.isEmpty()) return;
         if (!LambdaGenerationUtil.canBeUncheckedLambda(expression)) return;
-        holder.registerProblem(expression, InspectionsBundle.message("inspection.fold.expression.into.stream.display.name"), new FoldExpressionIntoStreamFix());
+        boolean stringJoin = generator.isStringJoin(expression, diff);
+        String message = InspectionsBundle.message(stringJoin ?
+                                                   "inspection.fold.expression.into.string.display.name" :
+                                                   "inspection.fold.expression.into.stream.display.name");
+        holder.registerProblem(expression, message,
+                               new FoldExpressionIntoStreamFix(stringJoin));
       }
     };
   }
@@ -57,9 +64,16 @@ public class FoldExpressionIntoStreamInspection extends AbstractBaseJavaLocalIns
     for (int i = 1; i < operands.length; i++) {
       if (!Objects.equals(operands[0].getType(), operands[i].getType())) return Collections.emptyList();
       EquivalenceChecker.Match match = equivalence.expressionsMatch(operands[0], operands[i]);
-      if (!match.isPartialMatch()) return Collections.emptyList();
-      PsiExpression left = tryCast(match.getLeftDiff(), PsiExpression.class);
-      PsiExpression right = tryCast(match.getRightDiff(), PsiExpression.class);
+      PsiExpression left = null;
+      PsiExpression right = null;
+      if (match.isPartialMatch()) {
+        left = tryCast(match.getLeftDiff(), PsiExpression.class);
+        right = tryCast(match.getRightDiff(), PsiExpression.class);
+      }
+      else if (match.isExactMismatch() && generator.isDittoSupported()) {
+        left = operands[0];
+        right = operands[i];
+      }
       if (left == null || right == null) return Collections.emptyList();
       if (elements.isEmpty()) {
         if (!StreamApiUtil.isSupportedStreamElement(left.getType()) || !ExpressionUtils.isSafelyRecomputableExpression(left)) {
@@ -94,8 +108,16 @@ public class FoldExpressionIntoStreamInspection extends AbstractBaseJavaLocalIns
       return polyadicExpression.getOperands();
     }
 
+    default boolean isDittoSupported() {
+      return false;
+    }
+
     @NotNull
     String generateTerminal(PsiType elementType, String lambda, CommentTracker ct);
+
+    default boolean isStringJoin(PsiPolyadicExpression expression, List<? extends PsiExpression> diff) {
+      return false;
+    }
   }
 
   @Nullable
@@ -123,27 +145,17 @@ public class FoldExpressionIntoStreamInspection extends AbstractBaseJavaLocalIns
       } else {
         mapToString = "";
       }
-      if (operands.length > 4 && operands.length % 2 == 1 && ExpressionUtils.isSafelyRecomputableExpression(operands[1]) &&
+      PsiExpression delimiter = null;
+      PsiExpression rest = null;
+      if (operands.length > 4 && ExpressionUtils.isSafelyRecomputableExpression(operands[1]) &&
           IntStreamEx.range(1, operands.length, 2).elements(operands).pairMap(PsiEquivalenceUtil::areElementsEquivalent)
                      .allMatch(Boolean.TRUE::equals)) {
-        PsiExpression delimiter = operands[1];
-        return new TerminalGenerator() {
-          @Override
-          public PsiExpression[] getOperands(PsiPolyadicExpression polyadicExpression) {
-            PsiExpression[] ops = polyadicExpression.getOperands();
-            return IntStreamEx.range(0, ops.length, 2).elements(ops).toArray(PsiExpression.EMPTY_ARRAY);
-          }
-
-          @NotNull
-          @Override
-          public String generateTerminal(PsiType elementType, String lambda, CommentTracker ct) {
-            return mapToString(elementType, operandType, lambda) + mapToString +
-                   ".collect(" + CommonClassNames.JAVA_UTIL_STREAM_COLLECTORS + ".joining(" + ct.text(delimiter) + "))";
-          }
-        };
+        delimiter = operands[1];
+        if (operands.length % 2 == 0) {
+          rest = ArrayUtil.getLastElement(operands);
+        }
       }
-      return (elementType, lambda, ct) -> mapToString(elementType, operandType, lambda) + mapToString +
-                                          ".collect(" + CommonClassNames.JAVA_UTIL_STREAM_COLLECTORS + ".joining())";
+      return new JoiningTerminalGenerator(operandType, mapToString, delimiter, rest);
     }
     return null;
   }
@@ -154,11 +166,17 @@ public class FoldExpressionIntoStreamInspection extends AbstractBaseJavaLocalIns
   }
 
   private static class FoldExpressionIntoStreamFix implements LocalQuickFix {
+    private final boolean myStringJoin;
+
+    private FoldExpressionIntoStreamFix(boolean stringJoin) {myStringJoin = stringJoin;}
+
     @Nls
     @NotNull
     @Override
     public String getFamilyName() {
-      return InspectionsBundle.message("inspection.fold.expression.into.stream.fix.name");
+      return InspectionsBundle.message(myStringJoin ?
+                                       "inspection.fold.expression.into.string.fix.name" :
+                                       "inspection.fold.expression.into.stream.fix.name");
     }
 
     @Override
@@ -172,7 +190,7 @@ public class FoldExpressionIntoStreamInspection extends AbstractBaseJavaLocalIns
 
       PsiExpression[] operands = expression.getOperands();
       PsiExpression firstExpression = diffs.get(0);
-      assert PsiTreeUtil.isAncestor(operands[0], firstExpression, true);
+      assert PsiTreeUtil.isAncestor(operands[0], firstExpression, false);
       Object marker = new Object();
       PsiTreeUtil.mark(firstExpression, marker);
       CommentTracker ct = new CommentTracker();
@@ -185,8 +203,12 @@ public class FoldExpressionIntoStreamInspection extends AbstractBaseJavaLocalIns
       String name = info.names.length > 0 ? info.names[0] : "v";
       name = codeStyleManager.suggestUniqueVariableName(name, expression, true);
       PsiElementFactory factory = JavaPsiFacade.getElementFactory(project);
-      expressionCopy.replace(factory.createExpressionFromText(name, expressionCopy));
-      String lambda = name + "->" + operandCopy.getText();
+      PsiExpression expressionCopyReplaced = (PsiExpression)expressionCopy.replace(factory.createExpressionFromText(name, expressionCopy));
+      if (operandCopy == expressionCopy) {
+        operandCopy = expressionCopyReplaced;
+      }
+      String operandCopyText = operandCopy.getText();
+      String lambda = operandCopyText.equals(name) ? null : name + "->" + operandCopyText;
       String streamClass = StreamApiUtil.getStreamClassForType(elementType);
       if (streamClass == null) return;
       String source = streamClass + "." + (elementType instanceof PsiClassType ? "<" + elementType.getCanonicalText() + ">" : "")
@@ -198,10 +220,53 @@ public class FoldExpressionIntoStreamInspection extends AbstractBaseJavaLocalIns
 
     private static void cleanup(PsiElement result) {
       JavaCodeStyleManager codeStyleManager = JavaCodeStyleManager.getInstance(result.getProject());
-      result = SimplifyStreamApiCallChainsInspection.simplifyStreamExpressions(result);
+      result = SimplifyStreamApiCallChainsInspection.simplifyStreamExpressions(result, false);
       LambdaCanBeMethodReferenceInspection.replaceAllLambdasWithMethodReferences(result);
       result = codeStyleManager.shortenClassReferences(result);
       PsiDiamondTypeUtil.removeRedundantTypeArguments(result);
+    }
+  }
+
+  private static class JoiningTerminalGenerator implements TerminalGenerator {
+    private final PsiType myOperandType;
+    private final String myMapToString;
+    private final PsiExpression myDelimiter;
+    private final PsiExpression myRest;
+
+    public JoiningTerminalGenerator(PsiType operandType, String mapToString, PsiExpression delimiter, PsiExpression rest) {
+      myOperandType = operandType;
+      myMapToString = mapToString;
+      myDelimiter = delimiter;
+      myRest = rest;
+    }
+
+    @Override
+    public PsiExpression[] getOperands(PsiPolyadicExpression polyadicExpression) {
+      PsiExpression[] ops = polyadicExpression.getOperands();
+      return myDelimiter == null ? ops :
+             IntStreamEx.range(0, ops.length, 2).elements(ops).toArray(PsiExpression.EMPTY_ARRAY);
+    }
+
+    @Override
+    public boolean isDittoSupported() {
+      return myDelimiter != null;
+    }
+
+    @Override
+    public boolean isStringJoin(PsiPolyadicExpression expression, List<? extends PsiExpression> diff) {
+      if (!myMapToString.isEmpty()) return false;
+      PsiExpression[] operands = getOperands(expression);
+      return operands[0] == diff.get(0);
+    }
+
+    @NotNull
+    @Override
+    public String generateTerminal(PsiType elementType, String lambda, CommentTracker ct) {
+      String map = (lambda == null ? "" : mapToString(elementType, myOperandType, lambda)) + myMapToString;
+      return map +
+             ".collect(" + CommonClassNames.JAVA_UTIL_STREAM_COLLECTORS +
+             ".joining(" + (myDelimiter == null ? "" : ct.text(myDelimiter)) + "))" +
+             (myRest == null ? "" : "+" + ct.text(myRest));
     }
   }
 }

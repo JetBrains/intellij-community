@@ -231,8 +231,8 @@ public class DfaMemoryStateImpl implements DfaMemoryState {
 
   @Override
   public void emptyStack() {
-    myCachedHash = null;
     while (!myStack.isEmpty() && !(myStack.peek() instanceof DfaControlTransferValue)) {
+      myCachedHash = null;
       myStack.pop();
     }
   }
@@ -670,12 +670,6 @@ public class DfaMemoryStateImpl implements DfaMemoryState {
     return true;
   }
 
-  <T> void setFact(DfaValue target, DfaFactType<T> factType, T fact) {
-    if (target instanceof DfaVariableValue && !isUnknownState(target)) {
-      setVariableState((DfaVariableValue)target, getVariableState((DfaVariableValue)target).withFact(factType, fact));
-    }
-  }
-
   private boolean applyFacts(DfaValue value, DfaFactMap facts) {
     if (value instanceof DfaVariableValue && !isUnknownState(value)) {
       DfaVariableState oldState = getVariableState((DfaVariableValue)value);
@@ -819,8 +813,11 @@ public class DfaMemoryStateImpl implements DfaMemoryState {
         DfaVariableValue dfaVar = (DfaVariableValue)dfaLeft;
         if (isUnknownState(dfaVar)) {
           if (relationType == RelationType.IS_NOT) {
+            DfaPsiType dfaType = dfaVar.getDfaType();
             TypeConstraint constraint = factValue.get(DfaFactType.TYPE_CONSTRAINT);
-            return constraint == null || constraint.withNotInstanceofValue(dfaVar.getDfaType()) != null;
+            if (dfaType != null && constraint != null) {
+              return constraint.getInstanceofValues().stream().noneMatch(type -> type.isAssignableFrom(dfaType));
+            }
           }
           return true;
         }
@@ -1210,7 +1207,7 @@ public class DfaMemoryStateImpl implements DfaMemoryState {
     return state;
   }
 
-  void forVariableStates(BiConsumer<DfaVariableValue, DfaVariableState> consumer) {
+  void forVariableStates(BiConsumer<? super DfaVariableValue, ? super DfaVariableState> consumer) {
     myVariableStates.forEach((value, state) -> {
       if (!isUnknownState(value)) {
         consumer.accept(value, state);

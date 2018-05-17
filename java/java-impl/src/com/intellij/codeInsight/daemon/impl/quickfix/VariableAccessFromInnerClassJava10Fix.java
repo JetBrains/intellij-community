@@ -4,7 +4,6 @@ package com.intellij.codeInsight.daemon.impl.quickfix;
 import com.intellij.codeInsight.FileModificationService;
 import com.intellij.codeInsight.daemon.QuickFixBundle;
 import com.intellij.codeInsight.intention.impl.BaseIntentionAction;
-import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
@@ -254,19 +253,5 @@ public class VariableAccessFromInnerClassJava10Fix extends BaseIntentionAction {
   @Override
   public boolean startInWriteAction() {
     return true;
-  }
-
-  private static class StringLookupElement extends LookupElement {
-    private String lookupString;
-
-    public StringLookupElement(String lookupString) {
-      this.lookupString = lookupString;
-    }
-
-    @NotNull
-    @Override
-    public String getLookupString() {
-      return lookupString;
-    }
   }
 }

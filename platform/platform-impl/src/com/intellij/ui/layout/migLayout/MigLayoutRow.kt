@@ -87,6 +87,9 @@ internal class MigLayoutRow(private val parent: MigLayoutRow?,
   internal val isLabeledIncludingSubRows: Boolean
     get() = labeled || (subRows?.any { it.isLabeledIncludingSubRows } ?: false)
 
+  internal val columnIndexIncludingSubRows: Int
+    get() = Math.max(columnIndex, subRows?.maxBy { it.columnIndex }?.columnIndex ?: 0)
+
   fun createChildRow(label: JLabel? = null, buttonGroup: ButtonGroup? = null, separated: Boolean = false, noGrid: Boolean = false): MigLayoutRow {
     if (subRows == null) {
       subRows = SmartList()
@@ -122,7 +125,7 @@ internal class MigLayoutRow(private val parent: MigLayoutRow?,
   }
 
   // cell mode not tested with "gear" button, wait first user request
-  override fun setCellMode(value: Boolean) {
+  override fun setCellMode(value: Boolean, isVerticalFlow: Boolean) {
     if (value) {
       assert(componentIndexWhenCellModeWasEnabled == -1)
       componentIndexWhenCellModeWasEnabled = components.size
@@ -133,7 +136,13 @@ internal class MigLayoutRow(private val parent: MigLayoutRow?,
       // do not add split if cell empty or contains the only component
       if ((components.size - firstComponentIndex) > 1) {
         val component = components.get(firstComponentIndex)
-        componentConstraints.getOrPut(component) { CC() }.split(components.size - firstComponentIndex)
+        val cc = componentConstraints.getOrPut(component) { CC() }
+        cc.split(components.size - firstComponentIndex)
+        if (isVerticalFlow) {
+          cc.flowY()
+          // because when vertical buttons placed near scroll pane, it wil be centered by baseline (and baseline not applicable for grow elements, so, will be centered)
+          cc.alignY("top")
+        }
       }
     }
   }
@@ -191,13 +200,6 @@ internal class MigLayoutRow(private val parent: MigLayoutRow?,
       componentConstraints.get(components.first())?.vertical?.gapBefore = builder.defaultComponentConstraintCreator.vertical1pxGap
     }
 
-    // (not yet clear is it true or just some strange gaps from another source) MigLayout compensate outer visual paddings, but if there are more than one component in the cell,
-    // inner horizontal spacing will be not corrected (e.g. between combobox and button will be 7px horizontal gap in case of macOS IntelliJ LaF), as solution, we set horizontal gap for such components).
-    // if it is not a first component in the cell, compensate horizontal visual paddings using gap.
-    if (componentIndexWhenCellModeWasEnabled != -1 && componentIndexWhenCellModeWasEnabled < (components.size - 1)) {
-      cc.value.horizontal.gapBefore = gapToBoundSize(spacing.horizontalGap, true)
-    }
-
     if (comment != null && comment.isNotEmpty()) {
       gapAfter = "${spacing.commentVerticalTopGap}px!"
 
@@ -233,6 +235,7 @@ internal class MigLayoutRow(private val parent: MigLayoutRow?,
       }
     }
 
+    // MigLayout doesn't check baseline if component has grow
     if (labeled && component is JScrollPane && component.viewport.view is JTextArea) {
       val labelCC = componentConstraints.getOrPut(components.get(0)) { CC() }
       labelCC.alignY("top")
@@ -245,29 +248,6 @@ internal class MigLayoutRow(private val parent: MigLayoutRow?,
 
     if (cc.isInitialized()) {
       componentConstraints.put(component, cc.value)
-    }
-
-    // "pushX can be used instead of having a "grow" keyword in the column/row constraints."
-    // dealing with column constraints is tricky and not reliable since not easily to count correct column index for component,
-    // approach like "set grow 0 for column #0 and 100 for other columns" leads to issues
-    // when developer specifies pushX for component (MigLayout internally interprets it as grow for column) (because other column will have grow 100)
-    // So - we just rely on MigLayout power and do not complicate our code
-
-    // problem if we have component with push (e.g. ScrollPane) in a non-labeled row - to solve this problem (this label column starts to grow since latter component push cancel our push), we set noGrid if such component is the only in the row
-
-    // so - we set 0 (actually, default AC() created with a one column constraint set to default, so, for first column size is 0 anyway) for labeled column, 100 if no component with pushX and 1000 if there is component with pushX
-    if (cc.isInitialized() && cc.value.pushX != null) {
-      if (columnIndex > 0) {
-        // if pushX defined for component, set column grow to 1000 (value that greater than default non-labeled column grow)
-        // (for now we don't allow to specify custom weight for push, so, real value of specified pushX doesn't matter)
-        builder.columnConstraints.grow(1000f, columnIndex)
-        // unset
-        cc.value.pushX = null
-      }
-    }
-    else if (columnIndex > 0 && columnIndex >= builder.columnConstraints.count) {
-      // set default grow if not yet defined
-      builder.columnConstraints.grow(100f, columnIndex)
     }
   }
 

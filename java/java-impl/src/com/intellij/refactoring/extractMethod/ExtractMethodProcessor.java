@@ -55,6 +55,7 @@ import com.intellij.refactoring.util.classMembers.ElementNeedsThis;
 import com.intellij.refactoring.util.duplicates.*;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.IncorrectOperationException;
+import com.intellij.util.ObjectUtils;
 import com.intellij.util.VisibilityUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.MultiMap;
@@ -1164,15 +1165,15 @@ public class ExtractMethodProcessor implements MatchProvider {
       if (myOutputVariables.length == 1) {
         final PsiExpression returnValue = insertedReturnStatement.getReturnValue();
         if (returnValue instanceof PsiReferenceExpression) {
-          final PsiElement resolved = ((PsiReferenceExpression)returnValue).resolve();
-          if (resolved instanceof PsiLocalVariable && Comparing.strEqual(((PsiVariable)resolved).getName(), outVariableName)) {
+          final PsiVariable variable = ObjectUtils.tryCast(((PsiReferenceExpression)returnValue).resolve(), PsiVariable.class);
+          if (variable != null && Comparing.strEqual(variable.getName(), outVariableName)) {
             final PsiStatement statement = PsiTreeUtil.getPrevSiblingOfType(insertedReturnStatement, PsiStatement.class);
             if (statement instanceof PsiDeclarationStatement) {
               final PsiElement[] declaredElements = ((PsiDeclarationStatement)statement).getDeclaredElements();
-              if (ArrayUtil.find(declaredElements, resolved) != -1) {
-                InlineUtil.inlineVariable((PsiVariable)resolved, ((PsiVariable)resolved).getInitializer(),
+              if (ArrayUtil.find(declaredElements, variable) != -1) {
+                InlineUtil.inlineVariable(variable, PsiUtil.skipParenthesizedExprDown(variable.getInitializer()),
                                           (PsiReferenceExpression)returnValue);
-                resolved.delete();
+                variable.delete();
               }
             }
           }

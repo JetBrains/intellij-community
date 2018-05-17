@@ -21,7 +21,6 @@
     <orderEntry type="module" module-name="intellij.platform.debugger.impl" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.xml" />
     <orderEntry type="library" name="Groovy" level="project" />
-    <orderEntry type="library" name="Netty" level="project" />
     <orderEntry type="library" name="http-client" level="project" />
     <orderEntry type="module" module-name="intellij.platform.jps.model.impl" scope="TEST" />
     <orderEntry type="library" name="gson" level="project" />

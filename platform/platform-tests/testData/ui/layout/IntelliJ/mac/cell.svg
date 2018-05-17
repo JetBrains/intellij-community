@@ -21,10 +21,10 @@
         <path d="M0 3 L0 27 L78 27 L78 3 Z"/>
       </clipPath>
       <clipPath clipPathUnits="userSpaceOnUse" id="4">
-        <path d="M0 3 L0 27 L40 27 L40 3 Z"/>
+        <path d="M0 3 L0 27 L92 27 L92 3 Z"/>
       </clipPath>
       <clipPath clipPathUnits="userSpaceOnUse" id="5">
-        <path d="M0 0 L0 19 L29 19 L29 0 Z"/>
+        <path d="M0 0 L0 19 L81 19 L81 0 Z"/>
       </clipPath>
       <clipPath clipPathUnits="userSpaceOnUse" id="6">
         <path d="M0 0 L0 16 L70 16 L70 0 Z"/>
@@ -45,22 +45,22 @@
     <g fill="rgb(120,120,120)" text-rendering="geometricPrecision" font-size="11px" font-family="'.SF NS Text'" transform="translate(81,27)" stroke="rgb(120,120,120)">
       <text x="0" xml:space="preserve" y="11" clip-path="url(#2)" stroke="none">Use File -&gt; Settings Repository... to configure</text>
     </g>
-    <g fill="rgb(236,236,236)" font-size="13px" font-family="'.SF NS Text'" transform="translate(115,-3)" stroke="rgb(236,236,236)">
+    <g fill="rgb(236,236,236)" font-size="13px" font-family="'.SF NS Text'" transform="translate(167,-3)" stroke="rgb(236,236,236)">
       <rect x="0" width="78" height="27" y="0" clip-path="url(#3)" stroke="none"/>
     </g>
-    <g fill="white" text-rendering="optimizeLegibility" font-size="13px" font-family="'.SF NS Text'" transform="translate(115,-3)" stroke="white">
+    <g fill="white" text-rendering="optimizeLegibility" font-size="13px" font-family="'.SF NS Text'" transform="translate(167,-3)" stroke="white">
       <rect x="3" y="3" clip-path="url(#3)" width="72" rx="3" ry="3" height="21" stroke="none"/>
       <path fill="url(#linearGradient0)" d="M3 6 L3 21 C3 22.6569 4.3431 24 6 24 L72 24 C73.6569 24 75 22.6569 75 21 L75 6 C75 4.3431 73.6569 3 72 3 L6 3 C4.3431 3 3 4.3431 3 6 ZM4 6.5 L4 20.5 C4 21.8807 5.1193 23 6.5 23 L71.5 23 C72.8807 23 74 21.8807 74 20.5 L74 6.5 C74 5.1193 72.8807 4 71.5 4 L6.5 4 C5.1193 4 4 5.1193 4 6.5 Z" clip-path="url(#3)" fill-rule="evenodd" stroke="none"/>
       <text fill="rgb(29,29,29)" x="20" xml:space="preserve" y="18" clip-path="url(#3)" stroke="none">Delete</text>
     </g>
     <g fill="white" text-rendering="optimizeLegibility" font-size="13px" font-family="'.SF NS Text'" transform="translate(73,-3)" stroke="white">
-      <path d="M6 3 C4.3431 3 3 4.3431 3 6 L3 21 C3 22.6569 4.3431 24 6 24 L34 24 C35.6569 24 37 22.6569 37 21 L37 6 C37 4.3431 35.6569 3 34 3 Z" stroke="none" clip-path="url(#4)"/>
+      <path d="M6 3 C4.3431 3 3 4.3431 3 6 L3 21 C3 22.6569 4.3431 24 6 24 L86 24 C87.6569 24 89 22.6569 89 21 L89 6 C89 4.3431 87.6569 3 86 3 Z" stroke="none" clip-path="url(#4)"/>
     </g>
-    <g fill="white" font-size="13px" font-family="'.SF NS Text'" transform="translate(81,1)" stroke="white">
-      <rect x="0" width="29" height="19" y="0" clip-path="url(#5)" stroke="none"/>
+    <g fill="rgb(252,252,252)" font-size="13px" font-family="'.SF NS Text'" transform="translate(81,1)" stroke="rgb(252,252,252)">
+      <rect x="0" width="81" height="19" y="0" clip-path="url(#5)" stroke="none"/>
     </g>
     <g fill="rgb(188,188,188)" text-rendering="optimizeLegibility" font-size="13px" font-family="'.SF NS Text'" transform="translate(73,-3)" stroke="rgb(188,188,188)">
-      <path d="M3 6 L3 21 C3 22.6569 4.3431 24 6 24 L34 24 C35.6569 24 37 22.6569 37 21 L37 6 C37 4.3431 35.6569 3 34 3 L6 3 C4.3431 3 3 4.3431 3 6 ZM4 6.5 L4 20.5 C4 21.8807 5.1193 23 6.5 23 L33.5 23 C34.8807 23 36 21.8807 36 20.5 L36 6.5 C36 5.1193 34.8807 4 33.5 4 L6.5 4 C5.1193 4 4 5.1193 4 6.5 Z" fill-rule="evenodd" clip-path="url(#4)" stroke="none"/>
+      <path d="M3 6 L3 21 C3 22.6569 4.3431 24 6 24 L86 24 C87.6569 24 89 22.6569 89 21 L89 6 C89 4.3431 87.6569 3 86 3 L6 3 C4.3431 3 3 4.3431 3 6 ZM4 6.5 L4 20.5 C4 21.8807 5.1193 23 6.5 23 L85.5 23 C86.8807 23 88 21.8807 88 20.5 L88 6.5 C88 5.1193 86.8807 4 85.5 4 L6.5 4 C5.1193 4 4 5.1193 4 6.5 Z" fill-rule="evenodd" clip-path="url(#4)" stroke="none"/>
     </g>
     <g font-family="'.SF NS Text'" font-size="13px" transform="translate(0,2)">
       <text x="0" xml:space="preserve" y="13" clip-path="url(#6)" stroke="none">Repository:</text>

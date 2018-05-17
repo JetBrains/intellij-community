@@ -542,11 +542,9 @@ public class FileManagerImpl implements FileManager {
     VirtualFile vFile = file.getVirtualFile();
     assert vFile != null;
 
-    if (file instanceof PsiBinaryFile) return;
-    FileDocumentManager fileDocumentManager = myFileDocumentManager;
-    Document document = fileDocumentManager.getCachedDocument(vFile);
+    Document document = myFileDocumentManager.getCachedDocument(vFile);
     if (document != null) {
-      fileDocumentManager.reloadFromDisk(document);
+      myFileDocumentManager.reloadFromDisk(document);
     }
     else {
       reloadPsiAfterTextChange(file.getViewProvider(), vFile);
@@ -554,9 +552,7 @@ public class FileManagerImpl implements FileManager {
   }
 
   void reloadPsiAfterTextChange(@NotNull FileViewProvider viewProvider, @NotNull VirtualFile vFile) {
-    FileViewProvider latestProvider = createFileViewProvider(vFile, false);
-    PsiFile psi = latestProvider.getPsi(latestProvider.getBaseLanguage());
-    if (psi instanceof PsiLargeFile || psi instanceof PsiBinaryFile) {
+    if (!areViewProvidersEquivalent(viewProvider, createFileViewProvider(vFile, false))) {
       forceReload(vFile);
       return;
     }

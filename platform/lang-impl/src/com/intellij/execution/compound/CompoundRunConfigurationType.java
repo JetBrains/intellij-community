@@ -7,11 +7,8 @@ import com.intellij.execution.configurations.ConfigurationTypeUtil;
 import com.intellij.execution.configurations.RunConfiguration;
 import com.intellij.icons.AllIcons;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.IconLoader;
 import com.intellij.ui.LayeredIcon;
 import org.jetbrains.annotations.NotNull;
-
-import javax.swing.*;
 
 public final class CompoundRunConfigurationType extends ConfigurationTypeBase {
   public static CompoundRunConfigurationType getInstance() {
@@ -21,13 +18,7 @@ public final class CompoundRunConfigurationType extends ConfigurationTypeBase {
   public CompoundRunConfigurationType() {
     super("CompoundRunConfigurationType",
           "Compound",
-          "It runs batch of run configurations at once",
-          new IconLoader.LazyIcon() {
-            @Override
-            protected Icon compute() {
-              return LayeredIcon.create(AllIcons.Nodes.Folder, AllIcons.Nodes.RunnableMark);
-            }
-          });
+          "It runs batch of run configurations at once", lazyIcon(() -> LayeredIcon.create(AllIcons.Nodes.Folder, AllIcons.Nodes.RunnableMark)));
     addFactory(new ConfigurationFactory(this) {
       @NotNull
       @Override

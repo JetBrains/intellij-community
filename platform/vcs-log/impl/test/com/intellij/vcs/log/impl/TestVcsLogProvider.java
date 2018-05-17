@@ -131,7 +131,7 @@ public class TestVcsLogProvider implements VcsLogProvider {
   public void readFullDetails(@NotNull VirtualFile root,
                               @NotNull List<String> hashes,
                               @NotNull Consumer<VcsFullCommitDetails> commitConsumer,
-                              boolean fast) {
+                              boolean isForIndexing) {
     throw new UnsupportedOperationException();
   }
 

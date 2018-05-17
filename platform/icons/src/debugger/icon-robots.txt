@@ -1,6 +1,5 @@
 deprecated: class_filter.png -> /general/filter.svg; to be removed in IDEA 2020 - use AllIcons.General.Filter
 deprecated: db_dep_exception_breakpoint.png -> /debugger/db_exception_breakpoint.svg; to be removed in IDEA 2020 - use AllIcons.Debugger.Db_exception_breakpoint
-deprecated: db_disabled_exception_breakpoint.png -> /debugger/db_exception_breakpoint.svg; to be removed in IDEA 2020 - use AllIcons.Debugger.Db_exception_breakpoint
 deprecated: db_field_warning_breakpoint.png; to be removed in IDEA 2020 - use AllIcons.Debugger.Db_exception_breakpoint
 deprecated: db_invalid_field_breakpoint.png -> /debugger/db_invalid_breakpoint.svg; to be removed in IDEA 2020 - use AllIcons.Debugger.Db_invalid_breakpoint
 deprecated: db_invalid_method_breakpoint.png -> /debugger/db_invalid_breakpoint.svg; to be removed in IDEA 2020 - use AllIcons.Debugger.Db_invalid_breakpoint

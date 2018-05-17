@@ -15,8 +15,6 @@
  */
 package com.intellij.ide.ui.laf.darcula.ui;
 
-import com.intellij.ui.Gray;
-import com.intellij.ui.JBColor;
 import com.intellij.util.ui.*;
 import org.intellij.lang.annotations.MagicConstant;
 
@@ -38,11 +36,11 @@ import static com.intellij.ide.ui.laf.darcula.DarculaUIUtil.*;
  */
 public class DarculaSpinnerUI extends BasicSpinnerUI {
   protected static final JBValue MINIMUM_WIDTH = new JBValue.Float(72);
-  private static final JBValue ARROW_WIDTH = new JBValue.Float(7);
+  private static final JBValue ARROW_WIDTH = new JBValue.Float(9);
   private static final JBValue ARROW_HEIGHT = new JBValue.Float(5);
 
-  protected static Insets editorMargins() {
-    return JBUI.insets(1, 5);
+  protected Insets editorMargins() {
+    return isCompact(spinner) ? JBUI.insets(0, 5) : JBUI.insets(1, 5);
   }
 
   protected JButton prevButton;
@@ -76,6 +74,13 @@ public class DarculaSpinnerUI extends BasicSpinnerUI {
     }
   }
 
+  private static void resetEditorOpaque(JComponent editor) {
+    if (editor != null) {
+      editor.setOpaque(false);
+      ((JComponent)editor.getComponents()[0]).setOpaque(false);
+    }
+  }
+
   @Override
   protected void uninstallListeners() {
     super.uninstallListeners();
@@ -87,12 +92,14 @@ public class DarculaSpinnerUI extends BasicSpinnerUI {
     super.replaceEditor(oldEditor, newEditor);
     removeEditorFocusListener(oldEditor);
     addEditorFocusListener(newEditor);
+    resetEditorOpaque(newEditor);
   }
 
   @Override
   protected JComponent createEditor() {
     JComponent editor = super.createEditor();
     addEditorFocusListener(editor);
+    resetEditorOpaque(editor);
     return editor;
   }
 
@@ -186,7 +193,7 @@ public class DarculaSpinnerUI extends BasicSpinnerUI {
       Insets i = spinner.getInsets();
       Insets m = editorMargins();
       int editorHeight = editor.getPreferredSize().height;
-      int editorOffset = (h - i.top - i.bottom - m.top - m.bottom - editorHeight) / 2;
+      int editorOffset = (int)Math.round((h - i.top - i.bottom - m.top - m.bottom - editorHeight) / 2.0);
 
       editor.setBounds(i.left + m.left,
                        i.top + m.top + editorOffset,
@@ -233,7 +240,7 @@ public class DarculaSpinnerUI extends BasicSpinnerUI {
           float lw = LW.getFloat();
           float bw = BW.getFloat();
 
-          g2.setColor(getArrowButtonFillColor(spinner.hasFocus(), isEnabled, spinner.getBackground()));
+          g2.setColor(getArrowButtonBackgroundColor(isEnabled));
           g2.fill(getInnerShape(lw, bw));
 
           // Paint side line
@@ -242,12 +249,12 @@ public class DarculaSpinnerUI extends BasicSpinnerUI {
                                  new Rectangle2D.Float(0, bw + lw, lw, h - (bw + lw)) :
                                  new Rectangle2D.Float(0, 0, lw, h - (bw + lw));
 
-          g2.setColor(getArrowButtonFillColor(spinner.hasFocus(), isEnabled, getOutlineColor(isEnabled)));
+          g2.setColor(getOutlineColor(spinner.isEnabled(), false));
           g2.fill(sideLine);
 
           // Paint arrow
           g2.translate(x, y);
-          g2.setColor(new JBColor(Gray._255, isEnabled ? getForeground() : getOutlineColor(false)));
+          g2.setColor(getArrowButtonForegroundColor(isEnabled));
           g2.fill(getArrowShape());
 
         } finally {
@@ -312,8 +319,9 @@ public class DarculaSpinnerUI extends BasicSpinnerUI {
       @Override
       public Dimension getPreferredSize() {
         Insets i = spinner.getInsets();
-        return new Dimension(JBUI.scale(17) + i.left,
-                             JBUI.scale(12) + (direction == SwingConstants.NORTH ? i.top : i.bottom));
+        int minHeight = isCompact(spinner) ? JBUI.scale(10) : JBUI.scale(12);
+        return new Dimension(ARROW_BUTTON_WIDTH.get() + i.left,
+                             minHeight + (direction == SwingConstants.NORTH ? i.top : i.bottom));
       }
     };
 

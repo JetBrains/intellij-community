@@ -32,6 +32,8 @@ public class TBItemButton extends TBItem {
     myFlags = buttonFlags;
   }
 
+  void setWidth(int width) { _update(myIcon, myText, myAction, width, myFlags); }
+
   void update(Icon icon, String text, NSTLibrary.Action action) { _update(icon, text, action, myWidth, myFlags); }
   void update(Icon icon, String text) { _update(icon, text, myAction, myWidth, myFlags); }
   void update(Icon icon) { _update(icon, myText, myAction, myWidth, myFlags); }

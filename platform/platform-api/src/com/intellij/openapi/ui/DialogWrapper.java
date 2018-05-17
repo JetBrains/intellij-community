@@ -672,16 +672,21 @@ public abstract class DialogWrapper {
     return myCheckBoxDoNotShowDialog != null && myCheckBoxDoNotShowDialog.isVisible() ? myCheckBoxDoNotShowDialog : null;
   }
 
+  private final JBValue BASE_BUTTON_GAP = new JBValue.Float(UIUtil.isUnderWin10LookAndFeel() ? 8 : 12);
+
   @NotNull
   protected JPanel createButtonsPanel(@NotNull List<JButton> buttons) {
-    int hgap = JBUI.scale(UIUtil.isUnderWin10LookAndFeel() ? 10 : 6);
     JPanel buttonsPanel = new NonOpaquePanel();
     buttonsPanel.setLayout(new BoxLayout(buttonsPanel, BoxLayout.X_AXIS));
 
     for (int i = 0; i < buttons.size(); i++) {
-      buttonsPanel.add(buttons.get(i));
+      JComponent button = buttons.get(i);
+      Insets insets = button.getInsets();
+
+      buttonsPanel.add(button);
       if (i < buttons.size() - 1) {
-        buttonsPanel.add(Box.createRigidArea(JBUI.size(hgap, 0)));
+        int gap = UIUtil.isUnderDarcula() || UIUtil.isUnderIntelliJLaF() ? BASE_BUTTON_GAP.get() - insets.left - insets.right : JBUI.scale(8);
+        buttonsPanel.add(Box.createRigidArea(new Dimension(gap, 0)));
       }
     }
 
@@ -1288,16 +1293,20 @@ public abstract class DialogWrapper {
     JComponent centerSection = new JPanel(new BorderLayout());
     root.add(centerSection, BorderLayout.CENTER);
 
-    root.setBorder(createContentPaneBorder());
-
     final JComponent n = createNorthPanel();
     if (n != null) {
       centerSection.add(n, BorderLayout.NORTH);
     }
 
-    final JComponent c = createCenterPanel();
-    if (c != null) {
-      centerSection.add(c, BorderLayout.CENTER);
+    final JComponent centerPanel = createCenterPanel();
+    if (centerPanel != null) {
+      centerSection.add(centerPanel, BorderLayout.CENTER);
+    }
+
+    boolean isVisualPaddingCompensatedOnComponentLevel = centerPanel == null || centerPanel.getClientProperty("isVisualPaddingCompensatedOnComponentLevel") == null;
+    if (isVisualPaddingCompensatedOnComponentLevel) {
+      // see comment about visual paddings in the MigLayoutBuilder.build
+      root.setBorder(createContentPaneBorder());
     }
 
     final JPanel southSection = new JPanel(new BorderLayout());
@@ -1306,6 +1315,9 @@ public abstract class DialogWrapper {
     southSection.add(myErrorText, BorderLayout.CENTER);
     final JComponent south = createSouthPanel();
     if (south != null) {
+      if (!isVisualPaddingCompensatedOnComponentLevel) {
+        south.setBorder(JBUI.Borders.empty(0, 12, 8, 12));
+      }
       southSection.add(south, BorderLayout.SOUTH);
     }
 

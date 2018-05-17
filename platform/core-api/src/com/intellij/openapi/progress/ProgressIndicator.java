@@ -55,8 +55,12 @@ public interface ProgressIndicator {
 
   void popState();
 
+  /** use {@link ProgressManager#executeNonCancelableSection(Runnable)} instead */
+  @Deprecated
   void startNonCancelableSection();
 
+  /** use {@link ProgressManager#executeNonCancelableSection(Runnable)} instead */
+  @Deprecated
   void finishNonCancelableSection();
 
   boolean isModal();

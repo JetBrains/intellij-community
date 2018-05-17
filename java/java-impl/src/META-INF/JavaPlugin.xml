@@ -170,6 +170,7 @@
     <java.elementFinder implementation="com.intellij.psi.impl.migration.MigrationElementFinder"/>
     <java.elementFinder implementation="com.intellij.psi.impl.PackagePrefixElementFinder"/>
     <treeCopyHandler implementation="com.intellij.psi.impl.source.tree.JavaTreeCopyHandler"/>
+    <lang.treePatcher language="JAVA" implementationClass="com.intellij.psi.templateLanguages.MiddleTreePatcher"/>
     <generation.topLevelFactory language="JAVA" implementationClass="com.intellij.psi.impl.JavaFactoryProvider"/>
     <dom.uiControlsProvider implementation="com.intellij.util.xml.impl.JavaDomApplicationComponent"/>
     <resolveScopeEnlarger implementation="com.intellij.psi.NonClasspathResolveScopeEnlarger"/>
@@ -201,7 +202,7 @@
                               implementationClass="com.intellij.testIntegration.TestRunLineMarkerProvider"/>
     <projectService serviceImplementation="com.intellij.testIntegration.TestFailedLineManager"/>
     <localInspection groupPath="Java" language="JAVA" shortName="TestFailedLine"
-                     enabledByDefault="true" level="ERROR"
+                     enabledByDefault="true" level="WARNING"
                      groupBundle="messages.InspectionsBundle" groupKey="group.names.junit.issues"
                      displayName="Highlight problem line in test"
                      implementationClass="com.intellij.execution.testframework.TestFailedLineInspection"/>

@@ -209,7 +209,6 @@ public class ContentUtilEx extends ContentsUtil {
           dispose(component);
           return true;
         }
-        return false;
       }
       else if (condition.value(content.getComponent())) {
         manager.removeContent(content, true);

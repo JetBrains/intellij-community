@@ -10,6 +10,7 @@ import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.ui.ComboBoxCompositeEditor;
 import com.intellij.ui.EditorTextField;
 import com.intellij.ui.Gray;
+import com.intellij.ui.JBColor;
 import com.intellij.ui.components.panels.Wrapper;
 import com.intellij.util.ui.*;
 import org.jetbrains.annotations.NotNull;
@@ -363,7 +364,16 @@ public class DarculaUIUtil {
     }
   }
 
+  public static final String COMPACT_PROPERTY = "JComponent.compactHeight";
+
+  public static boolean isCompact(Component c) {
+    return c instanceof JComponent && ((JComponent)c).getClientProperty(COMPACT_PROPERTY) == Boolean.TRUE;
+  }
+
+  public static final JBValue MINIMUM_WIDTH = new JBValue.Float(64);
   public static final JBValue MINIMUM_HEIGHT = new JBValue.Float(24);
+  public static final JBValue COMPACT_HEIGHT = new JBValue.Float(20);
+  public static final JBValue ARROW_BUTTON_WIDTH = new JBValue.Float(23);
   public static final JBValue LW = new JBValue.Float(1);
   public static final JBValue BW = new JBValue.UIInteger("Border.width", 2);
   public static final JBValue BUTTON_ARC = new JBValue.UIInteger("Button.arc", 6);
@@ -407,16 +417,21 @@ public class DarculaUIUtil {
     return JBUI.insets(1);
   }
 
-  public static Color getOutlineColor(boolean enabled) {
-    if (UIUtil.isUnderDarcula()) {
-      return enabled ? Gray._100 : Gray._83;
-    }
-    return Gray.xBC ;
+  public static Color getOutlineColor(boolean enabled, boolean focused) {
+    return enabled ?
+            focused ? new JBColor(0x87AFDA, 0x466D94) : new JBColor(Gray.xBF, Gray._100) :
+           new JBColor(Gray.xCF, Gray._100);
   }
 
-  public static Color getArrowButtonFillColor(boolean hasFocus, boolean enabled, Color defaultColor) {
-    Color color = UIManager.getColor(hasFocus ? "ComboBox.darcula.arrowFocusedFillColor" : "ComboBox.darcula.arrowFillColor");
-    return color == null ? defaultColor : enabled ? color : getOutlineColor(false);
+  public static Color getArrowButtonBackgroundColor(boolean enabled) {
+    Color color = UIManager.getColor("ComboBox.darcula.arrowButtonBackground");
+    return enabled && color != null ? color : UIUtil.getPanelBackground();
+  }
+
+  public static Color getArrowButtonForegroundColor(boolean enabled) {
+    return enabled ?
+      JBColor.namedColor("ComboBox.darcula.arrowButtonForeground", Gray.x66) :
+      JBColor.namedColor("ComboBox.darcula.arrowButtonDisabledForeground", Gray.xAB);
   }
 
   public static Dimension maximize(@Nullable Dimension s1, @NotNull Dimension s2) {

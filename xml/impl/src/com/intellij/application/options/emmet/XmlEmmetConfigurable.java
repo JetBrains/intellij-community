@@ -81,12 +81,14 @@ public class XmlEmmetConfigurable implements SearchableConfigurable, Disposable,
     final GridBagConstraints constraints = new GridBagConstraints(0, 0, 1, 1, 1, 1, GridBagConstraints.NORTHWEST, GridBagConstraints.NONE,
                                                                   JBUI.emptyInsets(), 0, 0);
     myFiltersListPanel.setLayout(layoutManager);
-    for (int i = 0; i < filters.size(); i++) {
-      ZenCodingFilter filter = filters.get(i);
+    int added = 0;
+    for (ZenCodingFilter filter : filters) {
+      if (myFilterCheckboxes.containsKey(filter.getSuffix())) continue;
       final JBCheckBox checkBox = new JBCheckBox(filter.getDisplayName());
       myFilterCheckboxes.put(filter.getSuffix(), checkBox);
-      constraints.gridy = i;
+      constraints.gridy = added;
       myFiltersListPanel.add(checkBox, constraints);
+      added++;
     }
     myFiltersListPanel.revalidate();
   }

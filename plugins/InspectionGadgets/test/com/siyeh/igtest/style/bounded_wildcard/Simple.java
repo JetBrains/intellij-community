@@ -29,7 +29,7 @@ public class Simple<T> {
     }
   }
 
-  boolean proper(Processor<? super T> processor) {
+  private boolean proper(Processor<? super T> processor) {
     return processor.process(null);
   }
 
@@ -39,12 +39,12 @@ public class Simple<T> {
     return f.apply(null);
   }
 
-  Number foo2(Function<?, <warning descr="Can generalize to '? extends Number'">Number</warning>> f) {
+  private Number foo2(Function<?, <warning descr="Can generalize to '? extends Number'">Number</warning>> f) {
     return ((f)).apply(null);
   }
 
   ////////////// inferred from method call
-  public static <T, V> String map2Set(T[] collection, Function<? super T, <warning descr="Can generalize to '? extends V'">V</warning>> mapper) {
+  public static <T, V> String map2Set(T[] collection, V v, Function<? super T, <warning descr="Can generalize to '? extends V'">V</warning>> mapper) {
       return map2((mapper));
   }
   private static <T, V> String map2(Function<? super T, ? extends V> mapper) {
@@ -68,7 +68,7 @@ public class Simple<T> {
   }
   /////////////// method ref
   <T> void forEach(Processor<? super T> action) {}
-  <P> void lookupMethodTypes(Processor<<warning descr="Can generalize to '? super P'">P</warning>> result) {
+  <P> void lookupMethodTypes(Processor<<warning descr="Can generalize to '? super P'">P</warning>> result, P p) {
     forEach(((result))::process);
   }
 
@@ -84,7 +84,7 @@ public class Simple<T> {
 
 
   //////////////// asynch
-  void asynch(AsynchConsumer<<warning descr="Can generalize to '? super String'">String</warning>> asconsumer) {
+  private void asynch(AsynchConsumer<<warning descr="Can generalize to '? super String'">String</warning>> asconsumer) {
     asconsumer.consume("changeList");
     asconsumer.finished();
   }
@@ -104,10 +104,10 @@ public class Simple<T> {
     };
   }
   ////////////// recursive
-  private static <T> void printNodes(Function<<warning descr="Can generalize to '? super T'">T</warning>, String> getter, int indent) {
-    if (indent == 0) {
+  private static <T> void printNodes(Function<<warning descr="Can generalize to '? super T'">T</warning>, String> getter, T indent) {
+    if (indent != null) {
       getter.apply(null);
-      printNodes(getter, indent + 2);
+      printNodes(getter, indent);
     }
     else {
       //buffer.append(" [...]\n");
@@ -194,4 +194,17 @@ public class Simple<T> {
       return myProcessor;
     }
   }
+
+  ///////// instanceof and cast
+  boolean castandinstanceof(Processor<<warning descr="Can generalize to '? super Number'">Number</warning>> p) {
+    if (p instanceof Number) return ((Number)p).intValue()==0;
+    if ((p) instanceof Number) return ((Number)(p)).intValue()==0;
+    return p.process(null);
+  }
+
+  //////////// doesn't make sense to replace lone free T with wildcard
+  <T> boolean lone(Processor<T> p) {
+     return p.process(null);
+  }
+
 }

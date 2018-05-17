@@ -4,7 +4,10 @@ package com.intellij.openapi.vcs.changes;
 import com.intellij.ide.CommonActionsManager;
 import com.intellij.ide.TreeExpander;
 import com.intellij.ide.util.treeView.TreeState;
-import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.actionSystem.ActionManager;
+import com.intellij.openapi.actionSystem.ActionToolbar;
+import com.intellij.openapi.actionSystem.DataKey;
+import com.intellij.openapi.actionSystem.DefaultActionGroup;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
@@ -20,6 +23,7 @@ import com.intellij.util.EditSourceOnEnterKeyHandler;
 import com.intellij.util.ui.JBDimension;
 import com.intellij.util.ui.tree.TreeUtil;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import javax.swing.tree.DefaultTreeModel;
@@ -47,18 +51,23 @@ abstract class SpecificFilesViewDialog extends DialogWrapper {
     myProject = project;
     final Runnable closer = () -> this.close(0);
     myView = new ChangesListView(project) {
+      @Nullable
       @Override
-      public void calcData(DataKey key, DataSink sink) {
-        super.calcData(key, sink);
-        if (shownDataKey.is(key.getName())) {
-          sink.put(shownDataKey, getSelectedVirtualFiles(null));
+      public Object getData(String dataId) {
+        if (shownDataKey.is(dataId)) {
+          return getSelectedVirtualFiles(null);
         }
+        return super.getData(dataId);
       }
 
       @Override
-      protected void editSourceRegistration() {
-        EditSourceOnDoubleClickHandler.install(this, closer);
+      protected void installEnterKeyHandler() {
         EditSourceOnEnterKeyHandler.install(this, closer);
+      }
+
+      @Override
+      protected void installDoubleClickHandler() {
+        EditSourceOnDoubleClickHandler.install(this, closer);
       }
     };
     myChangeListManager = ChangeListManager.getInstance(project);

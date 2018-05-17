@@ -16,7 +16,7 @@
 package com.intellij.testGuiFramework.fixtures;
 
 import com.intellij.openapi.ui.DialogWrapper;
-import com.intellij.openapi.ui.Messages;
+import com.intellij.openapi.ui.messages.MessageDialog;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.text.StringUtil;
 import org.fest.swing.core.GenericTypeMatcher;
@@ -71,8 +71,7 @@ public class MessageDialogFixture extends IdeaDialogFixture<DialogWrapper> imple
   public static boolean isMessageDialog(@NotNull JDialog dialog, Ref<DialogWrapper> wrapperRef) {
     DialogWrapper wrapper = getDialogWrapperFrom(dialog, DialogWrapper.class);
     if (wrapper != null) {
-      String typeName = Messages.class.getName() + "$MessageDialog";
-      if (typeName.equals(wrapper.getClass().getName())) {
+      if(wrapper instanceof MessageDialog){
         wrapperRef.set(wrapper);
         return true;
       }

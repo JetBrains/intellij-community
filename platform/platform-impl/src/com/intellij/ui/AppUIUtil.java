@@ -39,6 +39,7 @@ import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.wm.ToolWindowManager;
 import com.intellij.ui.AppIcon.MacAppIcon;
 import com.intellij.ui.components.JBScrollPane;
+import com.intellij.ui.components.panels.NonOpaquePanel;
 import com.intellij.util.*;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.ImageUtil;
@@ -354,6 +355,15 @@ public class AppUIUtil {
         setOKActionEnabled(false);
         setCancelButtonText("Reject and Exit");
         setAutoAdjustable(false);
+      }
+
+      @Override
+      protected JPanel createSouthAdditionalPanel() {
+        JPanel panel = new NonOpaquePanel(new BorderLayout());
+        JLabel label = new JLabel("Scroll to the end to accept");
+        label.setForeground(new JBColor(0x808080, 0x8C8C8C));
+        panel.add(label);
+        return panel;
       }
 
       @Override

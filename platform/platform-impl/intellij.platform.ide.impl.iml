@@ -27,7 +27,6 @@
     <orderEntry type="module" module-name="intellij.platform.indexing" />
     <orderEntry type="module" module-name="intellij.platform.indexing.impl" />
     <orderEntry type="module" module-name="intellij.platform.projectModel.impl" />
-    <orderEntry type="library" exported="" name="Netty" level="project" />
     <orderEntry type="library" name="commons-imaging" level="project" />
     <orderEntry type="library" name="Guava" level="project" />
     <orderEntry type="module" module-name="intellij.platform.jps.model.impl" />
@@ -52,5 +51,7 @@
     <orderEntry type="library" name="kotlinx-coroutines-core" level="project" />
     <orderEntry type="library" name="kotlinx-coroutines-jdk8" level="project" />
     <orderEntry type="library" name="org.apache.httpcomponents:fluent-hc" level="project" />
+    <orderEntry type="library" name="netty-codec-http" level="project" />
+    <orderEntry type="library" name="netty-handler" level="project" />
   </component>
 </module>

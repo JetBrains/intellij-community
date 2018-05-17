@@ -349,10 +349,10 @@
     <testCreator language="Python" implementationClass="com.jetbrains.python.codeInsight.testIntegration.PyTestCreator"/>
 
     <stubElementTypeHolder class="com.jetbrains.python.PyElementTypes"/>
-    <localInspection language="Python" shortName="PyParametrizedArgumentInspection" suppressId="PyParametrized"
+    <localInspection language="Python" shortName="PyTestParametrizedInspection" suppressId="PyTestParametrized"
                      bundle="com.jetbrains.python.PyBundle" key="INSP.NAME.pytest-parametrized" groupKey="INSP.GROUP.python"
                      enabledByDefault="true" level="WARNING"
-                     implementationClass="com.jetbrains.python.testing.pyTestParametrized.PyParametrizedArgumentInspection"/>
+                     implementationClass="com.jetbrains.python.testing.pyTestParametrized.PyTestParametrizedInspection"/>
     <localInspection language="Python" shortName="PyArgumentListInspection" suppressId="PyArgumentList" bundle="com.jetbrains.python.PyBundle" key="INSP.NAME.incorrect.call.arguments" groupKey="INSP.GROUP.python" enabledByDefault="true"  level="WARNING" implementationClass="com.jetbrains.python.inspections.PyArgumentListInspection"/>
     <localInspection language="Python" shortName="PyRedeclarationInspection" suppressId="PyRedeclaration" bundle="com.jetbrains.python.PyBundle" key="INSP.NAME.redeclaration" groupKey="INSP.GROUP.python" enabledByDefault="true"  level="WARNING" implementationClass="com.jetbrains.python.inspections.PyRedeclarationInspection"/>
     <localInspection language="Python" shortName="PyUnresolvedReferencesInspection" suppressId="PyUnresolvedReferences" bundle="com.jetbrains.python.PyBundle" key="INSP.NAME.unresolved.refs" groupKey="INSP.GROUP.python" enabledByDefault="true"  level="WARNING" implementationClass="com.jetbrains.python.inspections.unresolvedReference.PyUnresolvedReferencesInspection"/>
@@ -741,7 +741,7 @@
     <inspectionExtension implementation="com.jetbrains.python.pyi.PyiInspectionExtension"/>
     <inspectionExtension implementation="com.jetbrains.python.codeInsight.typing.PyTypingInspectionExtension"/>
     <inspectionExtension implementation="com.jetbrains.python.testing.pyTestFixtures.PyTestFixtureInspectionExtension"/>
-    <inspectionExtension implementation="com.jetbrains.python.testing.pyTestParametrized.PyParametrizedInspectionExtension"/>
+    <inspectionExtension implementation="com.jetbrains.python.testing.pyTestParametrized.PyTestParametrizedInspectionExtension"/>
     <customPackageIdentifier implementation="com.jetbrains.python.pyi.PyiCustomPackageIdentifier"/>
 
     <!-- User skeletons -->

@@ -37,6 +37,5 @@
     </orderEntry>
     <orderEntry type="library" name="XStream" level="project" />
     <orderEntry type="module" module-name="intellij.python.helpers" scope="RUNTIME" />
-    <orderEntry type="module" module-name="intellij.python.psi" />
   </component>
 </module>

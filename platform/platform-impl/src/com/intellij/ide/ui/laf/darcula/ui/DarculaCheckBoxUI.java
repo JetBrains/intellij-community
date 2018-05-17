@@ -71,6 +71,9 @@ public class DarculaCheckBoxUI extends MetalCheckBoxUI {
   }
 
   protected Rectangle updateViewRect(AbstractButton b, Rectangle viewRect) {
+    if (!(b.getBorder() instanceof DarculaCheckBoxBorder)) {
+      JBInsets.removeFrom(viewRect, b.getInsets());
+    }
     return viewRect;
   }
 

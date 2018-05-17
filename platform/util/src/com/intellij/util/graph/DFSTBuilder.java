@@ -23,6 +23,7 @@ import com.intellij.util.containers.Stack;
 import gnu.trove.TIntArrayList;
 import gnu.trove.TObjectIntHashMap;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
 
@@ -35,20 +36,50 @@ public class DFSTBuilder<Node> {
   private final Node[] myInvN; // node number in topological order [0..size) -> node
   private Couple<Node> myBackEdge;
 
-  private Comparator<Node> myComparator;
+  private Comparator<Node> myNComparator;
+  private Comparator<Node> myTComparator;
   private final TIntArrayList mySCCs = new TIntArrayList(); // strongly connected component sizes
   private final TObjectIntHashMap<Node> myNodeToTNumber = new TObjectIntHashMap<Node>(); // node -> number in scc topological order. Independent scc are in reversed loading order
 
   private final Node[] myInvT; // number in (enumerate all nodes scc by scc) order -> node
   private final Node[] myAllNodes;
 
+
+  /**
+   * @see DFSTBuilder#DFSTBuilder(OutboundSemiGraph, Object)
+   */
   public DFSTBuilder(@NotNull Graph<Node> graph) {
-    this((OutboundSemiGraph<Node>)graph);
+    this(graph, null);
   }
 
-  @SuppressWarnings("unchecked")
+  /**
+   * @see DFSTBuilder#DFSTBuilder(OutboundSemiGraph, Object)
+   */
+  public DFSTBuilder(@NotNull Graph<Node> graph, @Nullable Node entryNode) {
+    this((OutboundSemiGraph<Node>)graph, entryNode);
+  }
+
+  /**
+   * @see DFSTBuilder#DFSTBuilder(OutboundSemiGraph, Object)
+   */
   public DFSTBuilder(@NotNull OutboundSemiGraph<Node> graph) {
+    this(graph, null);
+  }
+
+  /**
+   * @param entryNode is a first node for Tarjan's algorithm. Different entry nodes produce different node numbers in topological ordering.
+   *                  if all nodes of the graph is reachable from the entry node and the entry node doesn't have incoming edges then
+   *                  passing the entry node could be used for finding "natural" back edges (like a loop back edge)
+   */
+  @SuppressWarnings("unchecked")
+  public DFSTBuilder(@NotNull OutboundSemiGraph<Node> graph, @Nullable Node entryNode) {
     myAllNodes = (Node[])graph.getNodes().toArray();
+    if (entryNode != null) {
+      int index = ArrayUtil.indexOf(myAllNodes, entryNode);
+      if (index != -1) {
+        ArrayUtil.swap(myAllNodes, 0, index);
+      }
+    }
     myGraph = graph;
     int size = graph.getNodes().size();
     myNodeToNNumber = new TObjectIntHashMap<Node>(size * 2, 0.5f);
@@ -210,16 +241,37 @@ public class DFSTBuilder<Node> {
 
   @NotNull
   public Comparator<Node> comparator() {
-    if (myComparator == null) {
-      final TObjectIntHashMap<Node> map = isAcyclic() ? myNodeToNNumber : myNodeToTNumber;
-      myComparator = new Comparator<Node>() {
-        @Override
-        public int compare(@NotNull Node t, @NotNull Node t1) {
-          return map.get(t) - map.get(t1);
-        }
-      };
+    return comparator(isAcyclic());
+  }
+
+  /**
+   * @param if useNNumber is true then a node number in topological ordering will be used for comparison
+   *           otherwise a node number in scc topological order will be used
+   */
+  @NotNull
+  public Comparator<Node> comparator(boolean useNNumber) {
+    if (useNNumber) {
+      if (myNComparator == null) {
+        myNComparator = new Comparator<Node>() {
+          @Override
+          public int compare(@NotNull Node t, @NotNull Node t1) {
+            return myNodeToNNumber.get(t) - myNodeToNNumber.get(t1);
+          }
+        };
+      }
+      return myNComparator;
     }
-    return myComparator;
+    else {
+      if (myTComparator == null) {
+        myTComparator = new Comparator<Node>() {
+          @Override
+          public int compare(@NotNull Node t, @NotNull Node t1) {
+            return myNodeToTNumber.get(t) - myNodeToTNumber.get(t1);
+          }
+        };
+      }
+      return myTComparator;
+    }
   }
 
   public Couple<Node> getCircularDependency() {
