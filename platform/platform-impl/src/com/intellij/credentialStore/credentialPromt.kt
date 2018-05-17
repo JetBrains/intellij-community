@@ -3,6 +3,7 @@
 package com.intellij.credentialStore
 
 import com.intellij.CommonBundle
+import com.intellij.credentialStore.RememberCheckBoxState.createCheckBox
 import com.intellij.ide.passwordSafe.PasswordSafe
 import com.intellij.ide.util.PropertiesComponent
 import com.intellij.openapi.application.ModalityState
@@ -49,6 +50,15 @@ object RememberCheckBoxState {
   fun update(component: JCheckBox) {
     PropertiesComponent.getInstance().setValue(key, component.isSelected, defaultValue)
   }
+
+  @JvmOverloads
+  fun createCheckBox(toolTip: String? = null): JCheckBox {
+    return CheckBox(
+      CommonBundle.message("checkbox.remember.password"),
+      selected = isSelected,
+      toolTip = toolTip
+    )
+  }
 }
 
 @JvmOverloads
@@ -72,9 +82,7 @@ fun askCredentials(project: Project?,
 
   return invokeAndWaitIfNeed(ModalityState.any()) {
     val passwordField = JPasswordField()
-    val rememberCheckBox = CheckBox(CommonBundle.message("checkbox.remember.password"),
-                                    selected = RememberCheckBoxState.isSelected,
-                                    toolTip = "The password will be stored between application sessions.")
+    val rememberCheckBox = createCheckBox(toolTip = "The password will be stored between application sessions.")
 
     val panel = panel {
       row { label(if (passwordFieldLabel.endsWith(":")) passwordFieldLabel else "$passwordFieldLabel:") }
