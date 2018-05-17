@@ -54,7 +54,7 @@ class PyTestConfiguration(project: Project, factory: PyTestFactory)
     when {
       keywords.isEmpty() -> ""
       else -> "-k $keywords"
-    }
+    } + if (forRerun) "--last-failed" else ""
 
   override fun isFrameworkInstalled() = VFSTestFrameworkListener.getInstance().isTestFrameworkInstalled(sdk, PyNames.PY_TEST)
 
