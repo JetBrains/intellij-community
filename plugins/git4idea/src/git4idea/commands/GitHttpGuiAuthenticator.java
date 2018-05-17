@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package git4idea.commands;
 
 import com.intellij.credentialStore.CredentialAttributes;
@@ -71,9 +57,9 @@ class GitHttpGuiAuthenticator implements GitHttpAuthenticator {
   @Nullable private String myPasswordKey;
   @Nullable private String myUnifiedUrl;
   @Nullable private String myLogin;
-  
+
   private ThreeState myIsMemoryOnly = ThreeState.UNSURE;
-  
+
   @Nullable private GitHttpAuthDataProvider myDataProvider;
   private boolean myWasCancelled;
 
@@ -112,7 +98,7 @@ class GitHttpGuiAuthenticator implements GitHttpAuthenticator {
     myPasswordKey = getUnifiedUrl(url);
     CredentialRequestResult result = CredentialPromptDialog.askCredentials(myProject,
                                                                            myTitle, "Password for " + getDisplayableUrl(url),
-                                                                           credentialAttributes(myPasswordKey), false, false);
+                                                                           credentialAttributes(myPasswordKey), false);
     String password = result == null ? null : result.getCredentials().getPasswordAsString();
     LOG.debug("askPassword. Password was asked and returned: " + (password == null ? "NULL" : password.isEmpty() ? "EMPTY" : "NOT EMPTY"));
     if (password == null) {
@@ -274,7 +260,7 @@ class GitHttpGuiAuthenticator implements GitHttpAuthenticator {
     }
     return candidate;
   }
-  
+
   @NotNull
   private List<GitHttpAuthDataProvider> getProviders() {
     List<GitHttpAuthDataProvider> providers = ContainerUtil.newArrayList();
