@@ -25,14 +25,6 @@ import org.jetbrains.jps.model.module.JpsModuleDependency
 class MavenArtifactsBuilder {
   /** second component of module names which describes a common group rather than a specific framework and therefore should be excluded from artifactId */
   private static final Set<String> COMMON_GROUP_NAMES = ["platform", "vcs", "tools", "clouds"] as Set<String>
-
-  /** temporary map which specifies which modules will be replaced by libraries so they won't need to be published */
-  private static final Map<String, MavenCoordinates> MODULES_TO_BE_CONVERTED_TO_LIBRARIES = [
-    "intellij.platform.annotations": new MavenCoordinates("org.jetbrains", "annotations", "16.0.1"),
-    "intellij.platform.annotations.java5": new MavenCoordinates("org.jetbrains", "annotations", "16.0.1"),
-    "intellij.platform.annotations.common": null
-  ] as Map<String, MavenCoordinates>
-
   private final BuildContext buildContext
 
   MavenArtifactsBuilder(BuildContext buildContext) {
@@ -167,10 +159,6 @@ ${it.includeTransitiveDeps ? "" : """
                                                       Set<JpsModule> computationInProgress) {
     if (results.containsKey(module)) return results[module]
     if (nonMavenizableModules.contains(module)) return null
-    if (MODULES_TO_BE_CONVERTED_TO_LIBRARIES.containsKey(module.name)) {
-      def coordinates = MODULES_TO_BE_CONVERTED_TO_LIBRARIES[module.name]
-      return coordinates != null ? new MavenArtifactData(coordinates, []) : null
-    }
     if (!module.name.startsWith("intellij.")) {
       buildContext.messages.debug("  module '$module.name' doesn't belong to IntelliJ project so it cannot be published")
       return null

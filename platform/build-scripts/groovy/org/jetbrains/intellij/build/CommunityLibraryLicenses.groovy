@@ -420,6 +420,10 @@ class CommunityLibraryLicenses {
                        url: "https://github.com/jboss-javassist/javassist", licenseUrl: "http://www.apache.org/licenses/LICENSE-2.0.txt"),
     new LibraryLicense(name: "Objenesis", libraryName: "Objenesis", version: "2.5.1", license: "Apache 2.0",
                        url: "http://objenesis.org/", licenseUrl: "http://www.apache.org/licenses/LICENSE-2.0.txt"),
+    new LibraryLicense(name: "JetBrains Annotations", libraryName: "jetbrains-annotations", version: "16.0.1", license: "Apache 2.0",
+                       url: "https://github.com/JetBrains/java-annotations"),
+    new LibraryLicense(name: "JetBrains Annotations for Java 5", libraryName: "jetbrains-annotations-java5", version: "16.0.1", license: "Apache 2.0",
+                       url: "https://github.com/JetBrains/java-annotations"),
 
     jetbrainsLibrary("intellij-coverage"),
     jetbrainsLibrary("intellij-test-discovery"),
