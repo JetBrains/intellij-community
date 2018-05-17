@@ -84,7 +84,8 @@ class ProjectData {
       return null;
     }
 
-    final MultiBarContainer container = new MultiBarContainer(new TouchBarActionBase(touchBarName, myProject, mainLayout, component, replaceEsc));
+    final Component targetComponent = type.equals(ToolWindowId.DEBUG) ? null : component; // debugger must use context of focused component (for example, to use selected text in the Editor)
+    final MultiBarContainer container = new MultiBarContainer(new TouchBarActionBase(touchBarName, myProject, mainLayout, targetComponent, replaceEsc));
     final Map<String, ActionGroup> alts = type.equals(DEFAULT) ? null : TouchBarActionBase.getAltLayouts(mainLayout);
     if (alts != null && !alts.isEmpty()) {
       for (String modId: alts.keySet()) {
