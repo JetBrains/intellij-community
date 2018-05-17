@@ -14,11 +14,14 @@ internal fun String.splitWithTab(): List<String> = this.split("\t".toRegex())
 
 internal fun String.execute(workingDir: String): String = execute(File(workingDir))
 
-internal fun String.execute(workingDir: File?, silent: Boolean = false): String {
-  if (!silent) log("Executing command $this")
+internal fun String.execute(workingDir: File?, silent: Boolean = false): String =
+  this.splitWithSpace().execute(workingDir, silent)
+
+internal fun List<String>.execute(workingDir: File?, silent: Boolean = false): String {
+  if (!silent) log("Executing command ${this.joinToString(" ")}")
   val start = System.currentTimeMillis()
   return try {
-    val process = ProcessBuilder(*this.splitWithSpace().toTypedArray())
+    val process = ProcessBuilder(*this.toTypedArray())
       .directory(workingDir)
       .redirectOutput(ProcessBuilder.Redirect.PIPE)
       .redirectError(ProcessBuilder.Redirect.PIPE)

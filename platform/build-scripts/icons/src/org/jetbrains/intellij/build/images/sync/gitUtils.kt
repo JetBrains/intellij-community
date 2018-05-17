@@ -88,7 +88,7 @@ internal fun findGitRepoRoot(path: String): File = File(path).let {
 internal fun addChangesToGit(files: List<String>, repo: File) {
   // OS has argument length limit
   files.split(1000).forEach {
-    "$GIT add ${it.joinToString(" ")}".execute(repo, true)
+    (listOf(GIT, "add") + it).execute(repo, true)
   }
 }
 
