@@ -149,21 +149,20 @@ public class ZipUtil {
     final Enumeration entries = zipFile.entries();
     while (entries.hasMoreElements()) {
       ZipEntry entry = (ZipEntry)entries.nextElement();
-      final File file = createFileForEntry(outputDir, entry);
+      final File file = createFileForEntry(outputDir, entry.getName());
       if (filenameFilter == null || filenameFilter.accept(file.getParentFile(), file.getName())) {
-        doExtractEntry(entry, zipFile.getInputStream(entry), file, overwrite);
+        extractEntry(entry.isDirectory() ? null : zipFile.getInputStream(entry), file, overwrite);
       }
     }
   }
 
   @NotNull
-  private static File createFileForEntry(@NotNull File outputDir, @NotNull ZipEntry entry) throws IOException {
-    String name = entry.getName();
-    File result = new File(outputDir, name);
+  public static File createFileForEntry(@NotNull File outputDir, @NotNull String entryName) throws IOException {
+    File result = new File(outputDir, entryName);
     // we cannot use Path, but File doesn't provide Path.normalize,
     // so, our FileUtil.toCanonicalPath is used to normalized (isAncestor uses it under the hood)
-    if (name.contains("..") && !FileUtil.isAncestor(outputDir, result, true)) {
-      throw new IOException("Invalid entry name: " + name);
+    if (entryName.contains("..") && !FileUtil.isAncestor(outputDir, result, true)) {
+      throw new IOException("Invalid entry name: " + entryName);
     }
     return result;
   }
@@ -173,18 +172,17 @@ public class ZipUtil {
   }
 
   public static void extractEntry(@NotNull ZipEntry entry, @NotNull InputStream inputStream, @NotNull File outputDir, boolean isOverwrite) throws IOException {
-    File outputFile = createFileForEntry(outputDir, entry);
-    doExtractEntry(entry, inputStream, outputFile, isOverwrite);
+    File outputFile = createFileForEntry(outputDir, entry.getName());
+    extractEntry(entry.isDirectory() ? null : inputStream, outputFile, isOverwrite);
   }
 
-  private static void doExtractEntry(@NotNull ZipEntry entry, @NotNull InputStream inputStream, @NotNull File outputFile, boolean isOverwrite) throws IOException {
-    final boolean isDirectory = entry.isDirectory();
+  public static void extractEntry(@Nullable InputStream inputStream, @NotNull File outputFile, boolean isOverwrite) throws IOException {
     if (outputFile.exists()) {
-      if (!isOverwrite || isDirectory) {
+      if (!isOverwrite || inputStream == null) {
         return;
       }
     }
-    else if (isDirectory) {
+    else if (inputStream == null) {
       //noinspection ResultOfMethodCallIgnored
       outputFile.mkdirs();
       return;
