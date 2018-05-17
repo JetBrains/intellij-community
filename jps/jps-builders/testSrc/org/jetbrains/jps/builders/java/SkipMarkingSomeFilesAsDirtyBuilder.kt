@@ -8,7 +8,7 @@ import org.jetbrains.jps.incremental.CompileContext
 import org.jetbrains.jps.incremental.ModuleBuildTarget
 import org.jetbrains.jps.incremental.ModuleLevelBuilder
 
-internal val DO_NOT_MARK_DIRTY_SUFFIX = "___DoNotMarkDirty"
+internal const val DO_NOT_MARK_DIRTY_SUFFIX = "___DoNotMarkDirty"
 
 class SkipMarkingSomeFilesAsDirtyBuilder : ModuleLevelBuilder(BuilderCategory.SOURCE_PROCESSOR) {
   override fun getPresentableName() = "Skip marking some files as dirty"
