@@ -85,6 +85,10 @@ public class RefParameterImpl extends RefJavaElementImpl implements RefParameter
     }
   }
 
+  void clearTemplateValue() {
+    myActualValueTemplate = VALUE_IS_NOT_CONST;
+  }
+  
   void updateTemplateValue(PsiExpression expression) {
     if (myActualValueTemplate == VALUE_IS_NOT_CONST) return;
 

@@ -554,11 +554,12 @@ public class RefMethodImpl extends RefJavaElementImpl implements RefMethod {
       }
     } else {
       final RefParameter[] params = getParameters();
-      if (params.length <= args.length && params.length > 0) {
-        for (int i = 0; i < args.length; i++) {
-          RefParameter refParameter = params.length <= i ? params[params.length - 1] : params[i];
-          ((RefParameterImpl)refParameter).updateTemplateValue(args[i]);
-        }
+      for (int i = 0; i < Math.min(params.length, args.length); i++) {
+        ((RefParameterImpl)params[i]).updateTemplateValue(args[i]);
+      }
+
+      if (params.length != args.length) {
+        ((RefParameterImpl)params[params.length - 1]).clearTemplateValue();
       }
     }
   }

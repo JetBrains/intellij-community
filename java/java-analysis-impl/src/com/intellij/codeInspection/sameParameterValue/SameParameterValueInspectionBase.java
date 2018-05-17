@@ -271,7 +271,7 @@ public class SameParameterValueInspectionBase extends GlobalJavaBatchInspectionT
                                            InspectionsBundle.message("inspection.same.parameter.problem.descriptor",
                                                                      name,
                                                                      StringUtil.unquoteString(shortName)),
-                                           usedForWriting ? null : createFix(name, stringPresentation),
+                                           usedForWriting || parameter.isVarArgs() ? null : createFix(name, stringPresentation),
                                            ProblemHighlightType.GENERIC_ERROR_OR_WARNING, false);
   }
 }
