@@ -10,7 +10,7 @@ import org.jetbrains.jps.util.JpsPathUtil
 
 import java.nio.file.Paths
 
-target('default': 'Check icons in repositories') {
+target('default': 'Check icons in IntelliJIcons repository') {
   def root = Paths.get(
     System.getProperty('teamcity.build.checkoutDir') ?: '.'
   ).normalize().toAbsolutePath().toString()
@@ -43,7 +43,7 @@ target('default': 'Check icons in repositories') {
   def sync = 'sync'
   String[] repos = System.properties."$repoArg"?.toString()?.split(/,/) ?: []
   if (repos.length < 2) {
-    context.messages.error("Usage: -D$repoArg=<codeRepoDir>,<iconsRepoDir> [-D$patternArg=...] [-D$sync=false|true]")
+    context.messages.error("Usage: -D$repoArg=<devRepoDir>,<iconsRepoDir> [-D$patternArg=...] [-D$sync=false|true]")
     System.exit(1)
   }
   def skipDirsPattern = System.properties."$patternArg"?.toString() ?: null
@@ -51,7 +51,10 @@ target('default': 'Check icons in repositories') {
     Class.forName('org.jetbrains.intellij.build.images.sync.CheckIconsKt').checkIcons(
       repos[0], repos[1], skipDirsPattern, Boolean.parseBoolean(System.properties[sync] as String),
       { String msg -> msg.split(/\n/).each { context.messages.info(it) } },
-      { String msg -> context.messages.buildStatus(msg); System.exit(1) }
+      { String msg ->
+        context.messages.buildStatus("To sync icons use 'Sync icons in IntelliJIcons repository' run configuration from IDEA Ultimate repository. $msg")
+        System.exit(1)
+      }
     )
   }
   catch (Exception e) {

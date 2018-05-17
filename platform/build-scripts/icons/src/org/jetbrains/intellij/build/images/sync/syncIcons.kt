@@ -22,14 +22,15 @@ private fun doSyncAdded(added: Collection<String>,
                         devIcons: Map<String, GitObject>,
                         iconsDir: String) {
   val iconsRepo = findGitRepoRoot(iconsDir)
-  val iconsRoot = File(iconsRepo, iconsDir.removePrefix(iconsRepo.path))
   val unversioned = mutableListOf<String>()
   added.forEach {
-    val target = File(iconsRoot, it)
+    val target = File("$iconsDir/$it")
     if (target.exists()) log("$it already exists in icons repo!")
     val source = devIcons[it]!!.getFile()
     source.copyTo(target, overwrite = true)
-    unversioned += target.relativeTo(iconsRepo).path
+    unversioned += target.relativeTo(iconsRepo).path.let {
+      if (it.contains(" ")) "\"$it\"" else it
+    }
   }
   addChangesToGit(unversioned, iconsRepo)
 }
@@ -38,8 +39,8 @@ private fun doSyncModified(modified: Collection<String>,
                            icons: Map<String, GitObject>,
                            devIcons: Map<String, GitObject>) {
   modified.forEach {
-    val dest = icons[it]!!.getFile()
+    val target = icons[it]!!.getFile()
     val source = devIcons[it]!!.getFile()
-    source.copyTo(dest, overwrite = true)
+    source.copyTo(target, overwrite = true)
   }
 }
