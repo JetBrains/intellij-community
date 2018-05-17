@@ -64,7 +64,7 @@ Groovy script
             PsiWhiteSpace(' ')
             Literal
               PsiElement(Integer)('2')
-        PsiElement(new line)('\n\n    ')
+          PsiElement(new line)('\n\n    ')
         PsiElement(})('}')
       PsiElement(new line)('\n    ')
       RETURN statement
@@ -140,7 +140,7 @@ Groovy script
             PsiWhiteSpace(' ')
             Literal
               PsiElement(Integer)('2')
-        PsiElement(new line)('\n\n    ')
+          PsiElement(new line)('\n\n    ')
         PsiElement(})('}')
       PsiElement(new line)('\n    ')
       RETURN statement

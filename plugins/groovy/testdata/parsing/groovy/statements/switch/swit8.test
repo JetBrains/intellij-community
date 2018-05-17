@@ -29,5 +29,5 @@ Groovy script
           Reference expression
             PsiElement(identifier)('a')
       PsiElement(;)(';')
-    PsiElement(new line)('\n')
+      PsiElement(new line)('\n')
     PsiElement(})('}')

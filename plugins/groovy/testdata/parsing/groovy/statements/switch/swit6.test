@@ -37,7 +37,7 @@ Groovy script
       PsiWhiteSpace(' ')
       Reference expression
         PsiElement(identifier)('do1')
-    PsiElement(new line)('\n')
+      PsiElement(new line)('\n')
     Case section
       Case label
         PsiElement(default)('default')
