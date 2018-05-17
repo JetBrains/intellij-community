@@ -32,11 +32,11 @@ import static com.intellij.util.ObjectUtils.notNull;
 
 public abstract class ProjectViewPsiTreeChangeListener extends PsiTreeChangeAdapter {
   private final PsiModificationTracker myModificationTracker;
-  private long myOutOfCodeBlockModificationCount;
+  private long myModificationCount;
 
   protected ProjectViewPsiTreeChangeListener(@NotNull Project project) {
     myModificationTracker = PsiManager.getInstance(project).getModificationTracker();
-    myOutOfCodeBlockModificationCount = myModificationTracker.getOutOfCodeBlockModificationCount();
+    myModificationCount = myModificationTracker.getModificationCount();
   }
 
   protected abstract AbstractTreeUpdater getUpdater();
@@ -84,10 +84,10 @@ public abstract class ProjectViewPsiTreeChangeListener extends PsiTreeChangeAdap
       return;
     }
 
-    long newModificationCount = myModificationTracker.getOutOfCodeBlockModificationCount();
-    if (newModificationCount == myOutOfCodeBlockModificationCount) return;
+    long newModificationCount = myModificationTracker.getModificationCount();
+    if (newModificationCount == myModificationCount) return;
     if (stopProcessingForThisModificationCount) {
-      myOutOfCodeBlockModificationCount = newModificationCount;
+      myModificationCount = newModificationCount;
     }
 
     while (true) {
