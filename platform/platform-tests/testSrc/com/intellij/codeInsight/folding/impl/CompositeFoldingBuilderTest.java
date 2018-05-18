@@ -27,6 +27,7 @@ import com.intellij.testFramework.TestFileType;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 
+import java.util.Collections;
 import java.util.List;
 
 public class CompositeFoldingBuilderTest extends AbstractEditorTest {
@@ -68,7 +69,8 @@ public class CompositeFoldingBuilderTest extends AbstractEditorTest {
         boolean quick)
       {
         final int index = root.getText().indexOf(textToFold);
-        descriptors.add(new NamedFoldingDescriptor(root, index, index + textToFold.length(), null, placeholderText));
+        descriptors.add(new NamedFoldingDescriptor(root.getNode(), new TextRange(index, index + textToFold.length()), null, placeholderText, true, Collections
+          .emptySet()));
       }
 
       @Override
