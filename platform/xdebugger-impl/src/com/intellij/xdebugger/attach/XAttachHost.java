@@ -26,10 +26,10 @@ import java.util.List;
  * This interface describes the host(local or remote), from which list of processes can be obtained
  */
 @ApiStatus.Experimental
-public interface XAttachHost {
+public interface XAttachHost<T extends ProcessInfo> {
   /**
    * @return a list of running processes on this host
    */
   @NotNull
-  List<ProcessInfo> getProcessList() throws ExecutionException;
+  List<T> getProcessList() throws ExecutionException;
 }

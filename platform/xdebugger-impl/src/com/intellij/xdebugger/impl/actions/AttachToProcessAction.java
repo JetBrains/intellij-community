@@ -212,7 +212,7 @@ public class AttachToProcessAction extends AnAction {
   }
 
   @NotNull
-  private static List<ProcessInfo> getProcessInfos(@NotNull XAttachHost host) {
+  private static List<? extends ProcessInfo> getProcessInfos(@NotNull XAttachHost<?> host) {
     try {
       return host.getProcessList();
     }
@@ -243,7 +243,7 @@ public class AttachToProcessAction extends AnAction {
   @NotNull
   static List<AttachToProcessItem> doCollectAttachProcessItems(@NotNull final Project project,
                                                                @NotNull XAttachHost host,
-                                                               @NotNull List<ProcessInfo> processInfos,
+                                                               @NotNull List<? extends ProcessInfo> processInfos,
                                                                @NotNull ProgressIndicator indicator,
                                                                @NotNull List<XAttachDebuggerProvider> providers) {
     UserDataHolderBase dataHolder = new UserDataHolderBase();

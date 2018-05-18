@@ -5,6 +5,7 @@ import com.intellij.execution.ExecutionException;
 import com.intellij.execution.configurations.GeneralCommandLine;
 import com.intellij.execution.process.BaseProcessHandler;
 import com.intellij.execution.process.CapturingProcessRunner;
+import com.intellij.execution.process.ProcessInfo;
 import com.intellij.execution.process.ProcessOutput;
 import com.intellij.xdebugger.attach.osHandlers.AttachOSHandler;
 import org.jetbrains.annotations.ApiStatus;
@@ -19,7 +20,7 @@ import java.io.InputStream;
  * downloading files and getting OS of a host
  */
 @ApiStatus.Experimental
-public abstract class EnvironmentAwareHost implements XAttachHost {
+public abstract class EnvironmentAwareHost implements XAttachHost<ProcessInfo> {
 
   private AttachOSHandler myOsHandler = null;
 
