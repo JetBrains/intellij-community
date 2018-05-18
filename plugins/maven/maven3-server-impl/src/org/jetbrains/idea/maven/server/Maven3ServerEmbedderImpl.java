@@ -435,6 +435,10 @@ public class Maven3ServerEmbedderImpl extends Maven3ServerEmbedder {
       ProjectBuilderConfiguration config = new DefaultProjectBuilderConfiguration().setExecutionProperties(props);
       config.setBuildStartTime(new Date());
 
+      Properties userProperties = new Properties();
+      userProperties.putAll(getMavenAndJvmConfigProperties(basedir));
+      config.setUserProperties(userProperties);
+
       result = interpolator.interpolate(result, basedir, config, false);
     }
     catch (ModelInterpolationException e) {
@@ -648,6 +652,11 @@ public class Maven3ServerEmbedderImpl extends Maven3ServerEmbedder {
                                                            final List<ResolutionListener> listeners) throws RemoteException {
     final File file = !files.isEmpty() ? files.iterator().next() : null;
     final MavenExecutionRequest request = createRequest(file, activeProfiles, inactiveProfiles, null);
+    if (!files.isEmpty() && file == null) { // maven.config and jvm.config are not resolved in "createRequest" method
+      File firstFile = ContainerUtil.getFirstItem(files);
+      //noinspection ConstantConditions
+      request.getUserProperties().putAll(getMavenAndJvmConfigProperties(firstFile.getParentFile()));
+    }
 
     request.setUpdateSnapshots(myAlwaysUpdateSnapshots);
 
@@ -864,6 +873,7 @@ public class Maven3ServerEmbedderImpl extends Maven3ServerEmbedder {
     return lifecycleListeners;
   }
 
+  @Override
   public MavenExecutionRequest createRequest(@Nullable File file,
                                              @Nullable List<String> activeProfiles,
                                              @Nullable List<String> inactiveProfiles,
@@ -886,7 +896,11 @@ public class Maven3ServerEmbedderImpl extends Maven3ServerEmbedder {
       getComponent(MavenExecutionRequestPopulator.class).populateDefaults(result);
 
       result.setSystemProperties(mySystemProperties);
-      result.setUserProperties(myUserProperties);
+      Properties userProperties = new Properties(myUserProperties);
+      if (file != null) {
+        userProperties.putAll(getMavenAndJvmConfigProperties(file.getParentFile()));
+      }
+      result.setUserProperties(userProperties);
 
       if (activeProfiles != null) {
         result.setActiveProfiles(activeProfiles);

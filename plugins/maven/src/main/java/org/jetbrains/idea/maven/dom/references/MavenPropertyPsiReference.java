@@ -23,6 +23,7 @@ import com.intellij.lang.properties.PropertiesLanguage;
 import com.intellij.lang.properties.psi.PropertiesFile;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.TextRange;
+import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.pom.Navigatable;
 import com.intellij.psi.*;
@@ -43,6 +44,7 @@ import gnu.trove.THashSet;
 import icons.MavenIcons;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.SystemIndependent;
 import org.jetbrains.idea.maven.dom.MavenDomBundle;
 import org.jetbrains.idea.maven.dom.MavenDomProjectProcessorUtils;
 import org.jetbrains.idea.maven.dom.MavenDomUtil;
@@ -53,6 +55,7 @@ import org.jetbrains.idea.maven.dom.model.MavenDomProjectModel;
 import org.jetbrains.idea.maven.dom.model.MavenDomSettingsModel;
 import org.jetbrains.idea.maven.execution.MavenRunner;
 import org.jetbrains.idea.maven.execution.MavenRunnerSettings;
+import org.jetbrains.idea.maven.model.MavenConstants;
 import org.jetbrains.idea.maven.model.MavenId;
 import org.jetbrains.idea.maven.plugins.api.MavenPluginDescriptor;
 import org.jetbrains.idea.maven.project.MavenProject;
@@ -173,7 +176,14 @@ public class MavenPropertyPsiReference extends MavenPsiReference implements Loca
       }
     }
 
-    // todo resolve properties from config.
+    if (mavenProject.getMavenConfig().containsKey(myText)) {
+      return resolveConfigFileProperty(MavenConstants.MAVEN_CONFIG_RELATIVE_PATH, mavenProject.getMavenConfig().get(myText));
+    }
+
+    if (mavenProject.getJvmConfig().containsKey(myText)) {
+      return resolveConfigFileProperty(MavenConstants.JVM_CONFIG_RELATIVE_PATH, mavenProject.getJvmConfig().get(myText));
+    }
+
     MavenRunnerSettings runnerSettings = MavenRunner.getInstance(myProject).getSettings();
     if (runnerSettings.getMavenProperties().containsKey(myText) || runnerSettings.getVmOptions().contains("-D" + myText + '=')) {
       return myElement;
@@ -276,6 +286,27 @@ public class MavenPropertyPsiReference extends MavenPsiReference implements Loca
 
   private PsiDirectory getBaseDir(@NotNull MavenProject mavenProject) {
     return PsiManager.getInstance(myProject).findDirectory(mavenProject.getDirectoryFile());
+  }
+
+  private PsiElement resolveConfigFileProperty(@SystemIndependent String fileRelativePath, String propertyValue) {
+    VirtualFile baseDir = VfsUtil.findFileByIoFile(MavenUtil.getBaseDir(myMavenProject.getDirectoryFile()), false);
+    if (baseDir != null) {
+      VirtualFile mavenConfigFile = baseDir.findFileByRelativePath(fileRelativePath);
+      if (mavenConfigFile != null) {
+        PsiFile psiFile = PsiManager.getInstance(myProject).findFile(mavenConfigFile);
+        if (psiFile != null && psiFile.getChildren().length > 0) {
+          return new MavenPsiElementWrapper(psiFile.getFirstChild(), psiFile) {
+
+            @Override
+            public String getName() {
+              return propertyValue;
+            }
+          };
+        }
+      }
+    }
+
+    return myElement;
   }
 
   @Nullable
@@ -397,6 +428,17 @@ public class MavenPropertyPsiReference extends MavenPsiReference implements Loca
     for (String prop : MavenUtil.getPropertiesFromMavenOpts().keySet()) {
       if (variants.add(prop)) {
         result.add(LookupElementBuilder.create(prop).withIcon(PlatformIcons.PROPERTY_ICON));
+      }
+    }
+
+    for (String property : myMavenProject.getMavenConfig().keySet()) {
+      if (variants.add(property)) {
+        result.add(LookupElementBuilder.create(property).withIcon(PlatformIcons.PROPERTY_ICON));
+      }
+    }
+    for (String property : myMavenProject.getJvmConfig().keySet()) {
+      if (variants.add(property)) {
+        result.add(LookupElementBuilder.create(property).withIcon(PlatformIcons.PROPERTY_ICON));
       }
     }
 
