@@ -264,7 +264,7 @@ public class SameParameterValueInspectionBase extends GlobalJavaBatchInspectionT
                                                  PsiSubstitutor.EMPTY);
       }
       else {
-        stringPresentation = shortName =  String.valueOf(value);
+        stringPresentation = shortName =  StringUtil.escapeLineBreak(String.valueOf(value));
       }
     }
     return manager.createProblemDescriptor(ObjectUtils.notNull(parameter.getNameIdentifier(), parameter),
