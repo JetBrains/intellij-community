@@ -51,7 +51,7 @@
                    replace="&quot;stylelint&quot; : {&quot;$ref&quot;: &quot;http://json.schemastore.org/stylelintrc#&quot;},${line.separator}  &quot;publishConfig&quot;" />
     <replaceregexp file="${idea.project.home}/plugins/NodeJS/src/com/jetbrains/nodejs/packageJson/packageJsonSchema.json"
                    match="&quot;publishConfig&quot;"
-                   replace="&quot;jest&quot; : {&quot;type&quot;: &quot;object&quot;, &quot;$ref&quot;: &quot;https://facebook.github.io/jest/docs/configuration.html#&quot;},${line.separator}  &quot;publishConfig&quot;" />
+                   replace="&quot;jest&quot; : {&quot;type&quot;: &quot;object&quot;, &quot;$ref&quot;: &quot;https://facebook.github.io/jest/docs/configuration.html!#&quot;},${line.separator}  &quot;publishConfig&quot;" />
     <replaceregexp file="${idea.project.home}/plugins/NodeJS/src/com/jetbrains/nodejs/packageJson/packageJsonSchema.json"
                    match="&quot;publishConfig&quot;"
                    replace="&quot;jshintConfig&quot; : {&quot;$ref&quot;: &quot;http://json.schemastore.org/jshintrc#&quot;},${line.separator}  &quot;publishConfig&quot;" />

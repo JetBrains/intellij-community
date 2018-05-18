@@ -27,19 +27,13 @@ public class JsonFileResolver {
   }
 
   @Nullable
-  public static VirtualFile urlToFile(@NotNull String urlString, Project project) {
-    boolean isHttpPath = isHttpPath(urlString);
-
-    // don't resolve http paths in tests
-    if (isHttpPath && !isRemoteEnabled(project)) return null;
-
+  public static VirtualFile urlToFile(@NotNull String urlString) {
     return VirtualFileManager.getInstance().findFileByUrl(urlString);
   }
 
   @Nullable
   public static VirtualFile resolveSchemaByReference(@Nullable VirtualFile currentFile,
-                                                     @Nullable String schemaUrl,
-                                                     Project project) {
+                                                     @Nullable String schemaUrl) {
     if (schemaUrl == null) return null;
 
     boolean isHttpPath = isHttpPath(schemaUrl);
@@ -51,7 +45,7 @@ public class JsonFileResolver {
     }
 
     if (schemaUrl != null) {
-      VirtualFile virtualFile = urlToFile(schemaUrl, project);
+      VirtualFile virtualFile = urlToFile(schemaUrl);
       // validate the URL before returning the file
       if (virtualFile instanceof HttpVirtualFile) {
         String url = virtualFile.getUrl();
@@ -64,12 +58,15 @@ public class JsonFileResolver {
     return null;
   }
 
-  public static void startFetchingHttpFileIfNeeded(@Nullable VirtualFile path) {
-    if (path instanceof HttpVirtualFile) {
-      RemoteFileInfo info = ((HttpVirtualFile)path).getFileInfo();
-      if (info == null || info.getState() == RemoteFileState.DOWNLOADING_NOT_STARTED) {
-        path.refresh(true, false);
-      }
+  public static void startFetchingHttpFileIfNeeded(@Nullable VirtualFile path, Project project) {
+    if (!(path instanceof HttpVirtualFile)) return;
+
+    // don't resolve http paths in tests
+    if (!isRemoteEnabled(project)) return;
+
+    RemoteFileInfo info = ((HttpVirtualFile)path).getFileInfo();
+    if (info == null || info.getState() == RemoteFileState.DOWNLOADING_NOT_STARTED) {
+      path.refresh(true, false);
     }
   }
 }

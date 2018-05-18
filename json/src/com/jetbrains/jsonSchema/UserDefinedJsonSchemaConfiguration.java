@@ -53,7 +53,7 @@ public class UserDefinedJsonSchemaConfiguration {
   public String name;
   public String relativePathToSchema;
   public JsonSchemaVersion schemaVersion = JsonSchemaVersion.SCHEMA_4;
-  public boolean applicationLevel;
+  public boolean applicationDefined;
   public List<Item> patterns = new SmartList<>();
   @Transient
   private final AtomicClearableLazyValue<List<PairProcessor<Project, VirtualFile>>> myCalculatedPatterns =
@@ -71,12 +71,12 @@ public class UserDefinedJsonSchemaConfiguration {
   public UserDefinedJsonSchemaConfiguration(@NotNull String name,
                                             JsonSchemaVersion schemaVersion,
                                             @NotNull String relativePathToSchema,
-                                            boolean applicationLevel,
+                                            boolean applicationDefined,
                                             @Nullable List<Item> patterns) {
     this.name = name;
     this.relativePathToSchema = relativePathToSchema;
     this.schemaVersion = schemaVersion;
-    this.applicationLevel = applicationLevel;
+    this.applicationDefined = applicationDefined;
     setPatterns(patterns);
   }
 
@@ -104,12 +104,12 @@ public class UserDefinedJsonSchemaConfiguration {
     this.relativePathToSchema = relativePathToSchema;
   }
 
-  public boolean isApplicationLevel() {
-    return applicationLevel;
+  public boolean isApplicationDefined() {
+    return applicationDefined;
   }
 
-  public void setApplicationLevel(boolean applicationLevel) {
-    this.applicationLevel = applicationLevel;
+  public void setApplicationDefined(boolean applicationDefined) {
+    this.applicationDefined = applicationDefined;
   }
 
   public List<Item> getPatterns() {
@@ -181,7 +181,7 @@ public class UserDefinedJsonSchemaConfiguration {
 
     UserDefinedJsonSchemaConfiguration info = (UserDefinedJsonSchemaConfiguration)o;
 
-    if (applicationLevel != info.applicationLevel) return false;
+    if (applicationDefined != info.applicationDefined) return false;
     if (schemaVersion != info.schemaVersion) return false;
     if (name != null ? !name.equals(info.name) : info.name != null) return false;
     if (relativePathToSchema != null
@@ -199,7 +199,7 @@ public class UserDefinedJsonSchemaConfiguration {
   public int hashCode() {
     int result = name != null ? name.hashCode() : 0;
     result = 31 * result + (relativePathToSchema != null ? relativePathToSchema.hashCode() : 0);
-    result = 31 * result + (applicationLevel ? 1 : 0);
+    result = 31 * result + (applicationDefined ? 1 : 0);
     result = 31 * result + (patterns != null ? patterns.hashCode() : 0);
     result = 31 * result + schemaVersion.hashCode();
     return result;

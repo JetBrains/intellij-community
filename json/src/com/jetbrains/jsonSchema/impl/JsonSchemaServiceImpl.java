@@ -93,7 +93,7 @@ public class JsonSchemaServiceImpl implements JsonSchemaService {
   @Nullable
   public VirtualFile findSchemaFileByReference(@NotNull String reference, @Nullable VirtualFile referent) {
     final Optional<VirtualFile> optional = findBuiltInSchemaByReference(reference);
-    return optional.orElseGet(() -> JsonFileResolver.resolveSchemaByReference(referent, JsonSchemaService.normalizeId(reference), myProject));
+    return optional.orElseGet(() -> JsonFileResolver.resolveSchemaByReference(referent, JsonSchemaService.normalizeId(reference)));
   }
 
   private Optional<VirtualFile> findBuiltInSchemaByReference(@NotNull String reference) {
@@ -217,14 +217,19 @@ public class JsonSchemaServiceImpl implements JsonSchemaService {
     // this way we're preventing http files when a built-in schema exists
     if (schemaFile instanceof HttpVirtualFile) {
       String url = schemaFile.getUrl();
-      Optional<VirtualFile> first = myState.getFiles().stream()
-                                           .filter(f -> {
-                                             JsonSchemaFileProvider prov = getSchemaProvider(f);
-                                             return prov != null && !(prov.getSchemaFile() instanceof HttpVirtualFile) && url.equals(prov.getRemoteSource());
-                                           }).findFirst();
-      return first.orElse(schemaFile);
+      VirtualFile first1 = getLocalSchemaByUrl(url);
+      return first1 != null ? first1 : schemaFile;
     }
     return schemaFile;
+  }
+
+  @Nullable
+  public VirtualFile getLocalSchemaByUrl(String url) {
+    return myState.getFiles().stream()
+                  .filter(f -> {
+                     JsonSchemaFileProvider prov = getSchemaProvider(f);
+                     return prov != null && !(prov.getSchemaFile() instanceof HttpVirtualFile) && url.equals(prov.getRemoteSource());
+                  }).findFirst().orElse(null);
   }
 
   @Nullable
@@ -305,7 +310,7 @@ public class JsonSchemaServiceImpl implements JsonSchemaService {
 
   @Override
   public void triggerUpdateRemote() {
-    myCatalogManager.triggerUpdateCatalog();
+    myCatalogManager.triggerUpdateCatalog(myProject);
   }
 
   private static class MyState {

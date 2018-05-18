@@ -71,7 +71,7 @@ public class JsonSchemaUserDefinedProviderFactory implements JsonSchemaProviderF
       if (myVirtualFile != null && myVirtualFile.isValid()) return myVirtualFile;
       String path = myFile;
       if (isHttpPath(path)) {
-        myVirtualFile = JsonFileResolver.urlToFile(path, myProject);
+        myVirtualFile = JsonFileResolver.urlToFile(path);
       }
       else {
         final LocalFileSystem lfs = LocalFileSystem.getInstance();

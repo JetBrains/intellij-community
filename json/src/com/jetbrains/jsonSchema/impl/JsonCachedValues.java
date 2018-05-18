@@ -24,7 +24,7 @@ public class JsonCachedValues {
   private static final Key<CachedValue<JsonSchemaObject>> JSON_OBJECT_CACHE_KEY = Key.create("JsonSchemaObjectCache");
   @Nullable
   public static JsonSchemaObject getSchemaObject(@NotNull VirtualFile schemaFile, @NotNull Project project) {
-    JsonFileResolver.startFetchingHttpFileIfNeeded(schemaFile);
+    JsonFileResolver.startFetchingHttpFileIfNeeded(schemaFile, project);
     final PsiFile psiFile = resolveFile(schemaFile, project);
     if (!(psiFile instanceof JsonFile)) return null;
 
