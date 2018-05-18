@@ -651,6 +651,7 @@ public class EditorPainter implements TextDrawingCallback {
       EditorSizeManager sizeManager = myView.getSizeManager();
       if (currentLineWidth > sizeManager.getMaxLineWithExtensionWidth()) {
         sizeManager.setMaxLineWithExtensionWidth(line, currentLineWidth);
+        myEditor.getContentComponent().revalidate();
       }
       return true;
     });
