@@ -67,7 +67,7 @@ abstract class MacDistributionCustomizer {
    * &lt;/dict&gt;
    * </pre>
    */
-  String additionalDocTypes = ""
+  List<String> additionalDocTypes = []
 
   /**
    * Specify &lt;scheme&gt; here if you want product to be able to open urls like <scheme>://open?file=/some/file/path&line=0

@@ -110,6 +110,7 @@ class IdeaCommunityProperties extends BaseIdeaProperties {
         icnsPath = "$projectHome/build/conf/ideaCE/mac/images/idea.icns"
         urlSchemes = ["idea"]
         associateIpr = true
+        additionalDocTypes = ["java", "groovy", "kt"]
         enableYourkitAgentInEAP = false
         bundleIdentifier = "com.jetbrains.intellij.ce"
         dmgImagePath = "$projectHome/build/conf/ideaCE/mac/images/dmg_background.tiff"
