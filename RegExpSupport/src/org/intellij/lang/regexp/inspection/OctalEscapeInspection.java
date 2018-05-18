@@ -1,29 +1,13 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.intellij.lang.regexp.inspection;
 
 import com.intellij.codeInspection.LocalInspectionTool;
 import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.codeInspection.ProblemsHolder;
-import com.intellij.lang.ASTNode;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiElementVisitor;
-import org.intellij.lang.regexp.RegExpTT;
 import org.intellij.lang.regexp.psi.RegExpChar;
 import org.intellij.lang.regexp.psi.RegExpElementVisitor;
 import org.jetbrains.annotations.Nls;
@@ -67,8 +51,7 @@ public class OctalEscapeInspection extends LocalInspectionTool {
   static String buildReplacementText(RegExpChar aChar) {
     final int value = aChar.getValue();
     final String hex = Integer.toHexString(value);
-    final String result = (hex.length() == 1 ? "\\x0" : "\\x") + hex;
-    return RegExpReplacementUtil.escapeForContext(result, aChar);
+    return (hex.length() == 1 ? "\\x0" : "\\x") + hex;
   }
 
   private static class ReplaceWithHexEscapeFix implements LocalQuickFix {
@@ -98,11 +81,7 @@ public class OctalEscapeInspection extends LocalInspectionTool {
       if (!(element instanceof RegExpChar)) {
         return;
       }
-      final ASTNode node = element.getNode();
-      final RegExpChar aChar = (RegExpChar)element;
-      final ASTNode anchor = node.getFirstChildNode();
-      node.addLeaf(RegExpTT.HEX_CHAR, buildReplacementText(aChar), anchor);
-      node.removeChild(anchor);
+      RegExpReplacementUtil.replaceInContext(element, buildReplacementText((RegExpChar)element));
     }
   }
 }
