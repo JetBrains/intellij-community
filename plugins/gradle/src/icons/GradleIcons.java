@@ -28,9 +28,10 @@ public class GradleIcons {
     return IconLoader.getIcon(path, GradleIcons.class);
   }
 
-  public static final Icon Gradle = load("/icons/gradle.png"); // 16x16
+  public static final Icon Gradle = load("/icons/gradle.svg"); // 16x16
+  public static final Icon GradleFile = load("/icons/gradleFile.svg"); // 16x16
   public static final Icon GradleImport = load("/icons/gradleImport.png"); // 16x16
-  public static final Icon GradleNavigate = load("/icons/gradleNavigate.png"); // 16x16
+  public static final Icon GradleNavigate = load("/icons/gradleNavigate.svg"); // 16x16
   public static final Icon GradlePlugin = load("/icons/gradlePlugin.png"); // 16x16
   public static final Icon GradleSync = load("/icons/gradleSync.png"); // 16x16
   public static final Icon OfflineMode = load("/icons/offlineMode.png"); // 16x16

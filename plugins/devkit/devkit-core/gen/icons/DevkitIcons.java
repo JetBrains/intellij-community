@@ -28,6 +28,6 @@ public class DevkitIcons {
     return IconLoader.getIcon(path, DevkitIcons.class);
   }
 
-  public static final Icon Add_sdk = load("/icons/add_sdk.png"); // 16x16
-  public static final Icon Sdk_closed = load("/icons/sdk_closed.png"); // 16x16
+  public static final Icon Add_sdk = load("/icons/add_sdk.svg"); // 16x16
+  public static final Icon Sdk_closed = load("/icons/sdk_closed.svg"); // 16x16
 }

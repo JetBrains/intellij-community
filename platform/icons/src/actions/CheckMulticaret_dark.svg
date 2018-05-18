@@ -1,0 +1,16 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 16 16">
+  <g fill="none" fill-rule="evenodd">
+    <rect width="1" height="1" x="9" y="8" fill="#AFB1B3"/>
+    <rect width="1" height="1" x="11" y="8" fill="#AFB1B3"/>
+    <rect width="1" height="1" x="9" y="15" fill="#AFB1B3"/>
+    <rect width="1" height="1" x="11" y="15" fill="#AFB1B3"/>
+    <rect width="1" height="6" x="10" y="9" fill="#AFB1B3"/>
+    <rect width="1" height="1" x="13" y="8" fill="#AFB1B3"/>
+    <rect width="1" height="1" x="15" y="8" fill="#AFB1B3"/>
+    <rect width="1" height="1" x="13" y="15" fill="#AFB1B3"/>
+    <rect width="1" height="1" x="15" y="15" fill="#AFB1B3"/>
+    <rect width="1" height="6" x="14" y="9" fill="#AFB1B3"/>
+    <path fill="#AFB1B3" d="M7.13241513,1.11022302e-16 L6.09688482,1 L1,1 L1,7 L7,7 L7,5.64218765 L8,4.67649887 L8,8 L0,8 L0,0 L7.13241513,0 Z"/>
+    <polygon fill="#AFB1B3" fill-rule="nonzero" points="8.968 0 10 .98 4.478 6.222 1.667 3.553 2.699 2.573 4.478 4.262"/>
+  </g>
+</svg>
