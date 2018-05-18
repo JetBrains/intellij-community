@@ -56,15 +56,7 @@ public class GitLineHandler extends GitTextHandler {
                         @NotNull VirtualFile vcsRoot,
                         @NotNull GitCommand command,
                         @NotNull List<String> configParameters) {
-    this(project, vcsRoot, command, configParameters, false);
-  }
-
-  public GitLineHandler(@NotNull Project project,
-                        @NotNull VirtualFile vcsRoot,
-                        @NotNull GitCommand command,
-                        @NotNull List<String> configParameters,
-                        boolean lowPriorityProcess) {
-    super(project, vcsRoot, command, configParameters, lowPriorityProcess);
+    super(project, vcsRoot, command, configParameters);
   }
 
   public GitLineHandler(@Nullable Project project,
