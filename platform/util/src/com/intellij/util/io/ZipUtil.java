@@ -5,6 +5,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.util.ArrayUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -159,10 +160,9 @@ public class ZipUtil {
   @NotNull
   public static File createFileForEntry(@NotNull File outputDir, @NotNull String entryName) throws IOException {
     File result = new File(outputDir, entryName);
-    // we cannot use Path, but File doesn't provide Path.normalize,
-    // so, our FileUtil.toCanonicalPath is used to normalized (isAncestor uses it under the hood)
-    // we check that name contains .. for performance reasons (isAncestor is relatively expensive call)
-    if (entryName.contains("..") && !FileUtil.isAncestor(outputDir, result, true)) {
+
+    // we check that name contains .. for performance reasons
+    if (entryName.contains("..") && ArrayUtil.contains("..", entryName.split("[/\\\\]"))) {
       throw new IOException("Invalid entry name: " + entryName);
     }
     return result;
