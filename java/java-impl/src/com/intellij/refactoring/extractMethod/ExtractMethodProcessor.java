@@ -1720,6 +1720,9 @@ public class ExtractMethodProcessor implements MatchProvider {
           PsiExpression initializer = ((PsiVariable)declaredElements[0]).getInitializer();
 
           Nullness nullness = DfaUtil.checkNullness(variableCopy, initializer, bodyCopy);
+          if (nullness == null) {
+            return null;
+          }
           return nullness == Nullness.NOT_NULL;
         }
         catch (IncorrectOperationException ignore) {
