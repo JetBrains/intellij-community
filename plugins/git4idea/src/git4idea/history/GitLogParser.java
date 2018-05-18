@@ -48,10 +48,10 @@ public class GitLogParser {
   // Single records begin with %x01, end with %03. Items of commit information (hash, committer, subject, etc.) are separated by %x02.
   // each character is declared twice - for Git pattern format and for actual character in the output.
   public static final String RECORD_START = "\u0001\u0001";
-  public static final char ITEMS_SEPARATOR = '\u0002';
+  public static final String ITEMS_SEPARATOR = "\u0002\u0002";
   public static final String RECORD_END = "\u0003\u0003";
   public static final String RECORD_START_GIT = "%x01%x01";
-  private static final String ITEMS_SEPARATOR_GIT = "%x02";
+  private static final String ITEMS_SEPARATOR_GIT = "%x02%x02";
   private static final String RECORD_END_GIT = "%x03%x03";
   private static final int INPUT_ERROR_MESSAGE_HEAD_LIMIT = 1000000; // limit the string by ~2mb
   private static final int INPUT_ERROR_MESSAGE_TAIL_LIMIT = 100;
@@ -271,14 +271,15 @@ public class GitLogParser {
           return true;
         }
 
-        char c = line.charAt(offset);
-        if (c == ITEMS_SEPARATOR) {
+        if (CharArrayUtil.regionMatches(line, offset, ITEMS_SEPARATOR)) {
           myResult.finishItem();
+          offset += ITEMS_SEPARATOR.length();
         }
         else {
+          char c = line.charAt(offset);
           myResult.append(c);
+          offset++;
         }
-        offset++;
       }
 
       myResult.append('\n');
