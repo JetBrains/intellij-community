@@ -9,7 +9,6 @@ import com.intellij.psi.PsiMethodCallExpression;
 import com.intellij.psi.util.CachedValueProvider;
 import com.intellij.psi.util.CachedValuesManager;
 import com.intellij.psi.util.PsiModificationTracker;
-import com.intellij.util.containers.ContainerUtil;
 import com.siyeh.ig.psiutils.ExpressionUtils;
 import com.siyeh.ig.psiutils.MethodCallUtils;
 import org.jetbrains.annotations.Contract;
@@ -54,22 +53,59 @@ public class JavaMethodContractUtil {
    */
   @NotNull
   public static List<StandardMethodContract> getMethodContracts(@NotNull final PsiMethod method) {
+    return getContractInfo(method).myContracts;
+  }
+
+  static class ContractInfo {
+    static final ContractInfo EMPTY = new ContractInfo(Collections.emptyList(), false, MutationSignature.UNKNOWN);
+
+    final @NotNull List<StandardMethodContract> myContracts;
+    final boolean myPure;
+    final @NotNull MutationSignature myMutationSignature;
+
+    ContractInfo(@NotNull List<StandardMethodContract> contracts, boolean pure, @NotNull MutationSignature signature) {
+      myContracts = contracts;
+      myPure = pure;
+      myMutationSignature = signature;
+    }
+  }
+
+  @NotNull
+  static ContractInfo getContractInfo(@NotNull PsiMethod method) {
     return CachedValuesManager.getCachedValue(method, () -> {
       final PsiAnnotation contractAnno = findContractAnnotation(method);
+      ContractInfo info = ContractInfo.EMPTY;
       if (contractAnno != null) {
         String text = AnnotationUtil.getStringAttributeValue(contractAnno, null);
+        List<StandardMethodContract> contracts = Collections.emptyList();
         if (text != null) {
           try {
             final int paramCount = method.getParameterList().getParametersCount();
-            List<StandardMethodContract> applicable = ContainerUtil.filter(StandardMethodContract.parseContract(text),
-                                                                           contract -> contract.getParameterCount() == paramCount);
-            return CachedValueProvider.Result.create(applicable, contractAnno, method, PsiModificationTracker.JAVA_STRUCTURE_MODIFICATION_COUNT);
+            List<StandardMethodContract> collection = StandardMethodContract.parseContract(text);
+            if (collection.stream().allMatch(c -> c.getParameterCount() == paramCount)) {
+              contracts = collection;
+            }
           }
-          catch (Exception ignored) {
+          catch (StandardMethodContract.ParseException ignored) {
           }
         }
+        boolean pure = Boolean.TRUE.equals(AnnotationUtil.getBooleanAttributeValue(contractAnno, "pure"));
+        MutationSignature mutationSignature = MutationSignature.UNKNOWN;
+        if (pure) {
+          mutationSignature = MutationSignature.PURE;
+        } else {
+          String mutationText = AnnotationUtil.getStringAttributeValue(contractAnno, MutationSignature.ATTR_MUTATES);
+          if (mutationText != null) {
+            try {
+              mutationSignature = MutationSignature.parse(mutationText);
+            }
+            catch (IllegalArgumentException ignored) {
+            }
+          }
+        }
+        info = new ContractInfo(contracts, pure, mutationSignature);
       }
-      return CachedValueProvider.Result.create(Collections.emptyList(), method, PsiModificationTracker.JAVA_STRUCTURE_MODIFICATION_COUNT);
+      return CachedValueProvider.Result.create(info, method, PsiModificationTracker.JAVA_STRUCTURE_MODIFICATION_COUNT);
     });
   }
 
@@ -91,8 +127,7 @@ public class JavaMethodContractUtil {
    * @return true if the method known to be pure (see {@link Contract#pure()} for details).
    */
   public static boolean isPure(@NotNull PsiMethod method) {
-    PsiAnnotation anno = findContractAnnotation(method);
-    return anno != null && Boolean.TRUE.equals(AnnotationUtil.getBooleanAttributeValue(anno, "pure"));
+    return getContractInfo(method).myPure;
   }
 
   /**
