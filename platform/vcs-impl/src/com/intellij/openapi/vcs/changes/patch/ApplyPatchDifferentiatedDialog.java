@@ -22,6 +22,7 @@ import com.intellij.openapi.fileTypes.FileTypes;
 import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
+import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.Splitter;
@@ -518,7 +519,7 @@ public class ApplyPatchDifferentiatedDialog extends DialogWrapper {
       group.add(new ResetStrip());
       group.add(new ZeroStrip());
       if (myCanChangePatchFile) {
-        group.add(new AnAction("Refresh", "Refresh", AllIcons.Actions.Refresh) {
+        group.add(new DumbAwareAction("Refresh", "Refresh", AllIcons.Actions.Refresh) {
           @Override
           public void actionPerformed(AnActionEvent e) {
             syncUpdatePatchFileAndScheduleReloadIfNeeded(null);
@@ -622,7 +623,7 @@ public class ApplyPatchDifferentiatedDialog extends DialogWrapper {
     }
   }
 
-  private class MapDirectory extends AnAction {
+  private class MapDirectory extends DumbAwareAction {
     private final NewBaseSelector myNewBaseSelector;
 
     private MapDirectory() {
@@ -1014,7 +1015,7 @@ public class ApplyPatchDifferentiatedDialog extends DialogWrapper {
     runExecutor(myCallback);
   }
 
-  private class ZeroStrip extends AnAction {
+  private class ZeroStrip extends DumbAwareAction {
     private ZeroStrip() {
       super("Remove Directories", "Remove Directories", AllIcons.Vcs.StripNull);
     }
@@ -1029,7 +1030,7 @@ public class ApplyPatchDifferentiatedDialog extends DialogWrapper {
     }
   }
 
-  private class StripDown extends AnAction {
+  private class StripDown extends DumbAwareAction {
     private StripDown() {
       super("Restore Directory", "Restore Directory", AllIcons.Vcs.StripDown);
     }
@@ -1059,7 +1060,7 @@ public class ApplyPatchDifferentiatedDialog extends DialogWrapper {
     }
   }
 
-  private class StripUp extends AnAction {
+  private class StripUp extends DumbAwareAction {
     private StripUp() {
       super("Strip Directory", "Strip Directory", AllIcons.Vcs.StripUp);
     }
@@ -1089,7 +1090,7 @@ public class ApplyPatchDifferentiatedDialog extends DialogWrapper {
     }
   }
 
-  private class ResetStrip extends AnAction {
+  private class ResetStrip extends DumbAwareAction {
     private ResetStrip() {
       super("Reset Directories", "Reset Directories", AllIcons.Vcs.ResetStrip);
     }
@@ -1104,7 +1105,7 @@ public class ApplyPatchDifferentiatedDialog extends DialogWrapper {
     }
   }
 
-  private class MyShowDiff extends AnAction {
+  private class MyShowDiff extends DumbAwareAction {
     private final MyChangeComparator myMyChangeComparator;
 
     private MyShowDiff() {
