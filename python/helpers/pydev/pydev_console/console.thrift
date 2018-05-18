@@ -141,7 +141,9 @@ service PythonConsole {
    */
   void changeVariable(1: string evaluationExpression, 2: string value),
 
-  void connectToDebugger(i32 localPort, map<string, string> opts),
+  void connectToDebugger(1: i32 localPort, 2: map<string, bool> opts, 3: map<string, string> extraEnvs),
+
+  void interrupt(),
 
   /**
    * Should normally return "PyCharm" string.
@@ -160,7 +162,7 @@ service PythonConsole {
   /**
    * The result is returned asyncronously with `IDE.returnFullValue`.
    */
-  LoadFullValueRequestSeq loadFullValue(1: list<string> variables),
+  void loadFullValue(1: LoadFullValueRequestSeq seq, 2: list<string> variables),
 }
 
 service IDE {
@@ -176,4 +178,6 @@ service IDE {
    * Returns the result for `PythonConsole.loadFullValue`.
    */
   void returnFullValue(1: LoadFullValueRequestSeq requestSeq, 2: list<DebugValue> response),
+
+  bool IPythonEditor(1: string path, 2: string line),
 }

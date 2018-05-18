@@ -26,6 +26,10 @@ fun main(args: Array<String>) {
 private fun startSyncServer(serverPort: Int) {
   val serverTransport = TNettyServerTransport(serverPort)
   val handler: IDE.Iface = object : IDE.Iface {
+    override fun IPythonEditor(path: String?, line: String?): Boolean {
+      TODO("not implemented") //To change body of created functions use File | Settings | File Templates.
+    }
+
     override fun notifyFinished(needsMoreInput: Boolean) {
       TODO("not implemented") //To change body of created functions use File | Settings | File Templates.
     }
@@ -89,6 +93,14 @@ private fun startSyncClient(serverPort: Int) {
   val serverTransport = clientTransport.serverTransport
 
   val handler: PythonConsole.Iface = object : PythonConsole.Iface {
+    override fun loadFullValue(seq: Int, variables: MutableList<String>?) {
+      TODO("not implemented") //To change body of created functions use File | Settings | File Templates.
+    }
+
+    override fun interrupt() {
+      TODO("not implemented") //To change body of created functions use File | Settings | File Templates.
+    }
+
     override fun execLine(line: String?): Boolean {
       TODO("not implemented") //To change body of created functions use File | Settings | File Templates.
     }
@@ -117,7 +129,7 @@ private fun startSyncClient(serverPort: Int) {
       TODO("not implemented") //To change body of created functions use File | Settings | File Templates.
     }
 
-    override fun connectToDebugger(localPort: Int, opts: MutableMap<String, String>?) {
+    override fun connectToDebugger(localPort: Int, opts: MutableMap<String, Boolean>?, extraEnvs: MutableMap<String, String>?) {
       TODO("not implemented") //To change body of created functions use File | Settings | File Templates.
     }
 
@@ -134,10 +146,6 @@ private fun startSyncClient(serverPort: Int) {
     }
 
     override fun getArray(vars: String?, rowOffset: Int, colOffset: Int, rows: Int, cols: Int, format: String?): GetArrayResponse {
-      TODO("not implemented") //To change body of created functions use File | Settings | File Templates.
-    }
-
-    override fun loadFullValue(variables: MutableList<String>?): Int {
       TODO("not implemented") //To change body of created functions use File | Settings | File Templates.
     }
 
