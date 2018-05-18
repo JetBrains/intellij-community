@@ -12,7 +12,7 @@ class ApplicationDispatcher(private val application: Application) : Dispatcher {
         thread.isDaemon = true
         thread
     }
-    private val context = ApplicationCoroutineContext(application, executor) + logUnhandledCoroutineException
+    private val context = ApplicationCoroutineContext(application, executor) + logUnhandledCoroutineException()
 
     override val coroutineContext: CoroutineContext
         get() = context
