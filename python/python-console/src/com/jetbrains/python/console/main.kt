@@ -100,6 +100,10 @@ private fun startAsyncClient(serverPort: Int) {
 }
 
 class IDEHandler : IDE.Iface {
+  override fun IPythonEditor(path: String?, line: String?): Boolean {
+    TODO("not implemented") //To change body of created functions use File | Settings | File Templates.
+  }
+
   private val requestNumber = AtomicInteger(0)
 
   override fun notifyFinished(needsMoreInput: Boolean) {
