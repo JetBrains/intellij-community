@@ -14,6 +14,10 @@ abstract class PasswordSafe : PasswordStorage {
       get() = ServiceManager.getService(PasswordSafe::class.java)
   }
 
+  /**
+   * State of "Remember" check box is global. If user did uncheck for one dialog, it should be unchecked for another.
+   * Use [RememberCheckBoxState.isSelected] to get initial value or use [RememberCheckBoxState.createCheckBox] to create check box.
+   */
   abstract val rememberCheckBoxState: RememberCheckBoxState
 
   abstract val isMemoryOnly: Boolean
