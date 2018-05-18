@@ -930,7 +930,7 @@ public class AbstractPopup implements JBPopup {
     window.setAlwaysOnTop(false);
 
     if (myFocusable) {
-      window.setFocusTraversalPolicy(new FocusTraversalPolicy() {
+      FocusTraversalPolicy focusTraversalPolicy = new FocusTraversalPolicy() {
         @Override
         public Component getComponentAfter(Container aContainer, Component aComponent) {
           return getComponent();
@@ -959,7 +959,9 @@ public class AbstractPopup implements JBPopup {
         public Component getDefaultComponent(Container aContainer) {
           return getComponent();
         }
-      });
+      };
+      window.setFocusTraversalPolicy(focusTraversalPolicy);
+      Disposer.register(this, () -> window.setFocusTraversalPolicy(null));
     }
 
     window.setAutoRequestFocus(myRequestFocus);
