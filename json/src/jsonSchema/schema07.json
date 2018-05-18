@@ -59,6 +59,10 @@
         "description": {
             "type": "string"
         },
+        "x-intellij-html-description": {
+            "type": "string",
+            "description": "Description in html format"
+        },
         "default": true,
         "readOnly": {
             "type": "boolean",
