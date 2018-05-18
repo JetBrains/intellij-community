@@ -1,6 +1,7 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.passwordSafe.ui;
 
+import com.intellij.credentialStore.RememberCheckBoxState;
 import com.intellij.ide.passwordSafe.PasswordSafe;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.text.StringUtil;
@@ -39,7 +40,7 @@ public class PasswordPromptComponent {
       myRememberCheckBox.setSelected(false);
     }
     else {
-      myRememberCheckBox.setSelected(PasswordSafe.getInstance().getRememberCheckBoxState().isSelected());
+      myRememberCheckBox.setSelected(PasswordSafe.getInstance().isRememberPasswordByDefault());
       myRememberCheckBox.setToolTipText("The password will be stored between application sessions.");
     }
 
@@ -84,7 +85,7 @@ public class PasswordPromptComponent {
 
   public void updateRememberState() {
     if (myRememberCheckBox.isEnabled()) {
-      PasswordSafe.getInstance().getRememberCheckBoxState().update(myRememberCheckBox);
+      RememberCheckBoxState.update(myRememberCheckBox);
     }
   }
 }

@@ -2,14 +2,17 @@
 @file:JvmName("CredentialPromptDialog")
 package com.intellij.credentialStore
 
+import com.intellij.CommonBundle
 import com.intellij.ide.passwordSafe.PasswordSafe
 import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.application.invokeAndWaitIfNeed
 import com.intellij.openapi.project.Project
 import com.intellij.ui.AppIcon
+import com.intellij.ui.components.CheckBox
 import com.intellij.ui.components.dialog
 import com.intellij.ui.layout.*
 import com.intellij.util.text.nullize
+import javax.swing.JCheckBox
 import javax.swing.JPasswordField
 
 /**
@@ -54,7 +57,7 @@ fun askCredentials(project: Project?,
 
   return invokeAndWaitIfNeed(ModalityState.any()) {
     val passwordField = JPasswordField()
-    val rememberCheckBox = store.rememberCheckBoxState.createCheckBox(toolTip = "The password will be stored between application sessions.")
+    val rememberCheckBox = RememberCheckBoxState.createCheckBox(toolTip = "The password will be stored between application sessions.")
 
     val panel = panel {
       row { label(if (passwordFieldLabel.endsWith(":")) passwordFieldLabel else "$passwordFieldLabel:") }
@@ -67,7 +70,7 @@ fun askCredentials(project: Project?,
       return@invokeAndWaitIfNeed null
     }
 
-    store.rememberCheckBoxState.update(rememberCheckBox)
+    RememberCheckBoxState.update(rememberCheckBox)
 
     val credentials = Credentials(attributes.userName, passwordField.password.nullize())
     if (isSaveOnOk && rememberCheckBox.isSelected) {
@@ -81,3 +84,21 @@ fun askCredentials(project: Project?,
 }
 
 data class CredentialRequestResult(val credentials: Credentials, val isRemember: Boolean)
+
+object RememberCheckBoxState {
+  val isSelected: Boolean
+    get() = PasswordSafe.instance.isRememberPasswordByDefault
+
+  @JvmStatic
+  fun update(component: JCheckBox) {
+    PasswordSafe.instance.isRememberPasswordByDefault = component.isSelected
+  }
+
+  fun createCheckBox(toolTip: String?): JCheckBox {
+    return CheckBox(
+      CommonBundle.message("checkbox.remember.password"),
+      selected = isSelected,
+      toolTip = toolTip
+    )
+  }
+}
