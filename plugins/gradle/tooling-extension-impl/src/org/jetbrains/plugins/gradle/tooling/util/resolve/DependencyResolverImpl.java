@@ -476,25 +476,27 @@ public class DependencyResolverImpl implements DependencyResolver {
                                      @NotNull final RuntimeDependenciesProvider runtimeDependenciesProvider,
                                      @NotNull final AbstractExternalDependency dep) {
     Collection<File> resolvedFiles = getFiles(dep);
-    Configuration compileOnlyConfiguration = compileDependenciesProvider.getCompileOnlyConfiguration();
-    Configuration deprecatedCompileConfiguration = compileDependenciesProvider.getDeprecatedCompileConfiguration();
-    Configuration compileConfiguration = compileDependenciesProvider.getCompileConfiguration();
 
     boolean checkCompileOnlyDeps = compileDependenciesProvider.getCompileClasspathConfiguration() != null;
+    final Set<File> compileConfigurationFiles = compileDependenciesProvider.getCompileConfigurationFiles();
+    final Set<File> compileOnlyConfigurationFiles = compileDependenciesProvider.getCompileOnlyConfigurationFiles();
+    final Set<File> deprecatedCompileConfigurationFiles = compileDependenciesProvider.getDeprecatedCompileConfigurationFiles();
+
+    final Set<File> runtimeConfigurationFiles = runtimeDependenciesProvider.getConfigurationFiles();
     // since version 3.4 compileOnly no longer extends compile
     // so, we can use compileOnly configuration for the check
     if (isJavaLibraryPluginSupported) {
-      if (compileOnlyConfiguration != null && containsAll(compileOnlyConfiguration, resolvedFiles)) {
+      if (compileOnlyConfigurationFiles != null && compileOnlyConfigurationFiles.containsAll(resolvedFiles)) {
         // deprecated 'compile' configuration still can be used
-        if (deprecatedCompileConfiguration == null || !containsAll(deprecatedCompileConfiguration, resolvedFiles)) {
+        if (deprecatedCompileConfigurationFiles == null || !deprecatedCompileConfigurationFiles.containsAll(resolvedFiles)) {
           dep.setScope(PROVIDED_SCOPE);
         }
       }
     }
     else {
       if (checkCompileOnlyDeps
-          && !containsAll(compileConfiguration, resolvedFiles)
-          && !containsAll(runtimeDependenciesProvider.getConfiguration(), resolvedFiles)) {
+          && !compileConfigurationFiles.containsAll(resolvedFiles)
+          && !runtimeConfigurationFiles.containsAll(resolvedFiles)) {
         dep.setScope(PROVIDED_SCOPE);
       }
     }

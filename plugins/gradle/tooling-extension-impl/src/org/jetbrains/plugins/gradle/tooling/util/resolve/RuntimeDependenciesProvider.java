@@ -7,6 +7,7 @@ import org.jetbrains.plugins.gradle.model.ExternalDependency;
 
 import java.io.File;
 import java.util.Collection;
+import java.util.Set;
 
 public class RuntimeDependenciesProvider {
   public static final String SCOPE = "RUNTIME";
@@ -16,6 +17,7 @@ public class RuntimeDependenciesProvider {
   private Configuration myConfiguration;
   private Collection<ExternalDependency> myDependencies;
   private Collection<File> myFiles;
+  private Set<File> myConfigurationFiles = null;
 
   public RuntimeDependenciesProvider(SourceSet sourceSet,
                                      Project project) {
@@ -25,6 +27,13 @@ public class RuntimeDependenciesProvider {
 
   public Configuration getConfiguration() {
     return myConfiguration;
+  }
+
+  public Set<File> getConfigurationFiles() {
+    if (myConfigurationFiles == null) {
+      myConfigurationFiles = myConfiguration.getFiles();
+    }
+    return myConfigurationFiles;
   }
 
   public Collection<ExternalDependency> getDependencies() {

@@ -9,6 +9,9 @@ import org.jetbrains.plugins.gradle.model.ExternalDependency;
 
 import java.io.File;
 import java.util.Collection;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.Set;
 
 public class CompileDependenciesProvider {
   public static final String SCOPE = "COMPILE";
@@ -21,26 +24,39 @@ public class CompileDependenciesProvider {
   private Configuration myCompileOnlyConfiguration;
   private Collection<ExternalDependency> myDependencies;
   private Collection<File> myFiles;
+  private final Map<Configuration, Set<File>> myConfigurationFilesCache = new HashMap<Configuration, Set<File>>();
 
   public CompileDependenciesProvider(SourceSet sourceSet, Project project) {
     mySourceSet = sourceSet;
     myProject = project;
   }
 
-  public Configuration getDeprecatedCompileConfiguration() {
-    return myConfiguration;
+  public Set<File> getDeprecatedCompileConfigurationFiles() {
+    return getFilesFromCache(myConfiguration);
   }
 
   public Configuration getCompileClasspathConfiguration() {
     return myCompileClasspathConfiguration;
   }
 
-  public Configuration getCompileConfiguration() {
-    return myCompileConfiguration;
+  public Set<File> getCompileConfigurationFiles() {
+    return getFilesFromCache(myCompileConfiguration);
   }
 
-  public Configuration getCompileOnlyConfiguration() {
-    return myCompileOnlyConfiguration;
+  public Set<File> getCompileOnlyConfigurationFiles() {
+    return getFilesFromCache(myCompileOnlyConfiguration);
+  }
+
+  private Set<File> getFilesFromCache(Configuration key) {
+    if (key == null) {
+      return null;
+    }
+    Set<File> cached = myConfigurationFilesCache.get(key);
+    if (cached == null) {
+      cached = key.getFiles();
+      myConfigurationFilesCache.put(key, cached);
+    }
+    return cached;
   }
 
   public Collection<ExternalDependency> getDependencies() {
