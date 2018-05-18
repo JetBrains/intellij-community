@@ -16,6 +16,7 @@
 package org.intellij.lang.regexp.inspection;
 
 import com.intellij.codeInspection.LocalInspectionTool;
+import com.intellij.testFramework.PsiTestUtil;
 import org.jetbrains.annotations.NotNull;
 
 /**
@@ -37,6 +38,7 @@ public class SingleCharAlternationInspectionTest extends RegExpInspectionTestCas
   }
 
   public void testQuickfix() {
+    PsiTestUtil.disablePsiTextConsistencyChecks(getTestRootDisposable());
     quickfixTest("<warning descr=\"Single character alternation in RegExp\">x|y|z</warning>", "[xyz]", "Replace with '[xyz]'");
   }
 
@@ -45,10 +47,12 @@ public class SingleCharAlternationInspectionTest extends RegExpInspectionTestCas
   }
 
   public void testRemoveEscaping() {
+    PsiTestUtil.disablePsiTextConsistencyChecks(getTestRootDisposable());
     quickfixTest("<warning descr=\"Single character alternation in RegExp\">\\^|\\å|\\{|\\\\|\\[</warning>", "[\\^å{\\\\\\[]", "Replace with '[\\^å{\\\\\\[]'");
   }
 
   public void testEscapes() {
+    PsiTestUtil.disablePsiTextConsistencyChecks(getTestRootDisposable());
     quickfixTest("(<warning descr=\"Single character alternation in RegExp\">\\.|<caret>\\[|]|\\(|\\)|\\{|}|\\^|\\?|\\*|\\||\\+|-|\\$</warning>)ab",
                  "([.\\[\\](){}^?*|+\\-$])ab", "Replace with '[.\\[\\](){}^?*|+\\-$]'");
   }

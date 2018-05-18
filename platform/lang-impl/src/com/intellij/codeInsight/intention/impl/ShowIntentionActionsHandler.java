@@ -182,7 +182,7 @@ public class ShowIntentionActionsHandler implements CodeInsightActionHandler {
   }
 
   private static void checkPsiTextConsistency(@NotNull PsiFile hostFile) {
-    if (Registry.is("ide.check.psi.text.consistency") ||
+    if (Registry.is("ide.check.stub.text.consistency") ||
         ApplicationManager.getApplication().isUnitTestMode() && !ApplicationInfoImpl.isInStressTest()) {
       if (hostFile.isValid()) {
         StubTextInconsistencyException.checkStubTextConsistency(hostFile);

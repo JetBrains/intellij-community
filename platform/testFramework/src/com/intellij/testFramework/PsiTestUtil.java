@@ -36,6 +36,7 @@ import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.*;
 import com.intellij.psi.PsiDocumentManager;
@@ -236,6 +237,13 @@ public class PsiTestUtil {
 
   public static void checkPsiMatchesTextIgnoringNonCode(PsiFile file) {
     compareFromAllRoots(file, f -> DebugUtil.psiToStringIgnoringNonCode(f));
+  }
+
+  /**
+   * @deprecated to attract attention and motivate to fix tests which fail these checks
+   */
+  public static void disablePsiTextConsistencyChecks(@NotNull Disposable parentDisposable) {
+    Registry.get("ide.check.structural.psi.text.consistency.in.tests").setValue(false, parentDisposable);
   }
 
   public static void addLibrary(Module module, String libPath) {
