@@ -31,8 +31,8 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.ToolWindow;
 import com.intellij.psi.impl.DebugUtil;
 import com.intellij.ui.JBColor;
-import com.intellij.ui.ScrollPaneFactory;
 import com.intellij.ui.awt.RelativePoint;
+import com.intellij.ui.components.JBLabel;
 import com.intellij.ui.treeStructure.Tree;
 import com.intellij.util.Alarm;
 import com.intellij.util.FunctionUtil;
@@ -65,8 +65,10 @@ import java.util.stream.Stream;
 import static com.intellij.openapi.vcs.changes.shelf.ShelveChangesManager.unshelveSilentlyWithDnd;
 import static com.intellij.openapi.vcs.changes.ui.ChangesTree.DEFAULT_GROUPING_KEYS;
 import static com.intellij.openapi.vcs.changes.ui.ChangesTree.GROUP_BY_ACTION_GROUP;
+import static com.intellij.ui.ScrollPaneFactory.createScrollPane;
 import static com.intellij.util.containers.ContainerUtil.newHashSet;
 import static com.intellij.util.containers.ContainerUtil.set;
+import static com.intellij.util.ui.JBUI.Panels.simplePanel;
 import static java.util.stream.Collectors.toList;
 
 @State(
@@ -183,6 +185,30 @@ public class ChangesViewManager implements ChangesViewI, ProjectComponent, Persi
     EmptyAction.registerWithShortcutSet("ChangesView.SetDefault", new CustomShortcutSet(KeyStroke.getKeyStroke(KeyEvent.VK_U, InputEvent.ALT_DOWN_MASK | ctrlMask())), panel);
     EmptyAction.registerWithShortcutSet(IdeActions.ACTION_SHOW_DIFF_COMMON, CommonShortcuts.getDiff(), panel);
 
+    ActionToolbar toolbar = createChangesToolbar();
+
+    myView.installPopupHandler((DefaultActionGroup)ActionManager.getInstance().getAction("ChangesViewPopupMenu"));
+    myView.getGroupingSupport().setGroupingKeysOrSkip(myState.groupingKeys);
+
+    myProgressLabel = simplePanel();
+
+    panel.setToolbar(toolbar.getComponent());
+
+    JPanel wrapper = simplePanel(createScrollPane(myView));
+    MyChangeProcessor changeProcessor = new MyChangeProcessor(myProject);
+    mySplitterComponent = new PreviewDiffSplitterComponent(wrapper, changeProcessor, CHANGES_VIEW_PREVIEW_SPLITTER_PROPORTION,
+                                                           myVcsConfiguration.LOCAL_CHANGES_DETAILS_PREVIEW_SHOWN);
+
+    panel.setContent(simplePanel(mySplitterComponent).addToBottom(myProgressLabel));
+
+    ChangesDnDSupport.install(myProject, myView);
+    myView.addTreeSelectionListener(myTsl);
+    myView.addGroupingChangeListener(myGroupingChangeListener);
+    return panel;
+  }
+
+  @NotNull
+  private ActionToolbar createChangesToolbar() {
     DefaultActionGroup group = new DefaultActionGroup();
     group.add(ActionManager.getInstance().getAction("ChangesViewToolbar"));
 
@@ -200,31 +226,7 @@ public class ChangesViewManager implements ChangesViewI, ProjectComponent, Persi
 
     ActionToolbar toolbar = ActionManager.getInstance().createActionToolbar(ActionPlaces.CHANGES_VIEW_TOOLBAR, group, false);
     toolbar.setTargetComponent(myView);
-
-    myView.installPopupHandler((DefaultActionGroup)ActionManager.getInstance().getAction("ChangesViewPopupMenu"));
-    myView.getGroupingSupport().setGroupingKeysOrSkip(myState.groupingKeys);
-
-    myProgressLabel = new JPanel(new BorderLayout());
-
-    panel.setToolbar(toolbar.getComponent());
-
-    final JPanel content = new JPanel(new BorderLayout());
-    final JScrollPane scrollPane = ScrollPaneFactory.createScrollPane(myView);
-    final JPanel wrapper = new JPanel(new BorderLayout());
-    wrapper.add(scrollPane, BorderLayout.CENTER);
-    MyChangeProcessor changeProcessor = new MyChangeProcessor(myProject);
-    mySplitterComponent =
-      new PreviewDiffSplitterComponent(wrapper, changeProcessor, CHANGES_VIEW_PREVIEW_SPLITTER_PROPORTION,
-                                       myVcsConfiguration.LOCAL_CHANGES_DETAILS_PREVIEW_SHOWN);
-
-    content.add(mySplitterComponent, BorderLayout.CENTER);
-    content.add(myProgressLabel, BorderLayout.SOUTH);
-    panel.setContent(content);
-
-    ChangesDnDSupport.install(myProject, myView);
-    myView.addTreeSelectionListener(myTsl);
-    myView.addGroupingChangeListener(myGroupingChangeListener);
-    return panel;
+    return toolbar;
   }
 
   @JdkConstants.InputEventMask
@@ -237,7 +239,8 @@ public class ChangesViewManager implements ChangesViewI, ProjectComponent, Persi
     SwingUtilities.invokeLater(() -> {
       if (myProgressLabel != null) {
         myProgressLabel.removeAll();
-        myProgressLabel.add(progress.create());
+        //TODO remove
+        myProgressLabel.add(new JBLabel("some progress or error"));
         myProgressLabel.setMinimumSize(JBUI.emptySize());
       }
     });
