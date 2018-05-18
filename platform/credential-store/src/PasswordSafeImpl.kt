@@ -3,15 +3,20 @@
 
 package com.intellij.ide.passwordSafe.impl
 
+import com.intellij.CommonBundle
 import com.intellij.credentialStore.*
 import com.intellij.ide.passwordSafe.PasswordSafe
 import com.intellij.ide.passwordSafe.PasswordStorage
+import com.intellij.ide.passwordSafe.RememberCheckBoxState
+import com.intellij.ide.util.PropertiesComponent
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.components.SettingsSavingComponent
 import com.intellij.openapi.diagnostic.runAndLogException
+import com.intellij.ui.components.CheckBox
 import org.jetbrains.annotations.TestOnly
 import org.jetbrains.concurrency.runAsync
 import java.nio.file.Paths
+import javax.swing.JCheckBox
 
 private fun computeProvider(settings: PasswordSafeSettings): CredentialStore {
   if (settings.providerType == ProviderType.MEMORY_ONLY || (ApplicationManager.getApplication()?.isUnitTestMode == true)) {
@@ -28,6 +33,8 @@ private fun computeProvider(settings: PasswordSafeSettings): CredentialStore {
 
 class PasswordSafeImpl @JvmOverloads constructor(val settings: PasswordSafeSettings /* public - backward compatibility */,
                                                  provider: CredentialStore? = null) : PasswordSafe(), SettingsSavingComponent {
+  override val rememberCheckBoxState: RememberCheckBoxState
+    get() = RememberCheckBoxStateImpl
 
   private var _currentProvider: Lazy<CredentialStore> = if (provider == null) lazy { computeProvider(settings) } else lazyOf(provider)
 
@@ -40,7 +47,8 @@ class PasswordSafeImpl @JvmOverloads constructor(val settings: PasswordSafeSetti
   // it is helper storage to support set password as memory-only (see setPassword memoryOnly flag)
   private val memoryHelperProvider = lazy { KeePassCredentialStore(emptyMap(), memoryOnly = true) }
 
-  override fun isMemoryOnly() = settings.providerType == ProviderType.MEMORY_ONLY
+  override val isMemoryOnly: Boolean
+    get() = settings.providerType == ProviderType.MEMORY_ONLY
 
   override fun get(attributes: CredentialAttributes): Credentials? {
     val value = currentProvider.get(attributes)
@@ -153,3 +161,25 @@ internal fun createKeePassStore(file: String): PasswordSafe =
   PasswordSafeImpl(
     PasswordSafeSettings().apply { loadState(PasswordSafeSettings.State().apply { providerType = ProviderType.KEEPASS; keepassDb = file }) },
     KeePassCredentialStore(dbFile = Paths.get(file)))
+
+private object RememberCheckBoxStateImpl : RememberCheckBoxState {
+  private const val key = "checkbox.remember.password"
+  private const val defaultValue = true
+
+  override val isSelected: Boolean
+    get() {
+      return PropertiesComponent.getInstance().getBoolean(key, defaultValue)
+    }
+
+  override fun update(component: JCheckBox) {
+    PropertiesComponent.getInstance().setValue(key, component.isSelected, defaultValue)
+  }
+
+  override fun createCheckBox(toolTip: String?): JCheckBox {
+    return CheckBox(
+      CommonBundle.message("checkbox.remember.password"),
+      selected = isSelected,
+      toolTip = toolTip
+    )
+  }
+}

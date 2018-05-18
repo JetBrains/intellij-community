@@ -57,7 +57,7 @@ internal class PasswordSafeConfigurableUi : ConfigurableUi<PasswordSafeSettings>
       else -> throw IllegalStateException("Unknown provider type: ${settings.providerType}")
     }
 
-    val currentProvider = (PasswordSafe.getInstance() as PasswordSafeImpl).currentProvider
+    val currentProvider = (PasswordSafe.instance as PasswordSafeImpl).currentProvider
     @Suppress("IfThenToElvis")
     keePassDbFile.text = settings.keepassDb ?: if (currentProvider is KeePassCredentialStore) currentProvider.dbFile.toString() else getDefaultKeePassDbFilePath()
     updateEnabledState()
@@ -74,7 +74,7 @@ internal class PasswordSafeConfigurableUi : ConfigurableUi<PasswordSafeSettings>
       }
 
       getCurrentDbFile()?.let {
-        val passwordSafe = PasswordSafe.getInstance() as PasswordSafeImpl
+        val passwordSafe = PasswordSafe.instance as PasswordSafeImpl
         if ((passwordSafe.currentProvider as KeePassCredentialStore).dbFile != it) {
           return true
         }
@@ -85,7 +85,7 @@ internal class PasswordSafeConfigurableUi : ConfigurableUi<PasswordSafeSettings>
 
   override fun apply(settings: PasswordSafeSettings) {
     val providerType = getProviderType()
-    val passwordSafe = PasswordSafe.getInstance() as PasswordSafeImpl
+    val passwordSafe = PasswordSafe.instance as PasswordSafeImpl
     var provider = passwordSafe.currentProvider
 
     val masterPassword = keePassMasterPassword.chars.toString().nullize(true)?.toByteArray()
@@ -142,7 +142,7 @@ internal class PasswordSafeConfigurableUi : ConfigurableUi<PasswordSafeSettings>
   }
 
   override fun getComponent(): JPanel {
-    val passwordSafe = PasswordSafe.getInstance() as PasswordSafeImpl
+    val passwordSafe = PasswordSafe.instance as PasswordSafeImpl
 
     keePassMasterPassword.setPasswordIsStored(true)
 

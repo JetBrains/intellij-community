@@ -2,19 +2,14 @@
 @file:JvmName("CredentialPromptDialog")
 package com.intellij.credentialStore
 
-import com.intellij.CommonBundle
-import com.intellij.credentialStore.RememberCheckBoxState.createCheckBox
 import com.intellij.ide.passwordSafe.PasswordSafe
-import com.intellij.ide.util.PropertiesComponent
 import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.application.invokeAndWaitIfNeed
 import com.intellij.openapi.project.Project
 import com.intellij.ui.AppIcon
-import com.intellij.ui.components.CheckBox
 import com.intellij.ui.components.dialog
 import com.intellij.ui.layout.*
 import com.intellij.util.text.nullize
-import javax.swing.JCheckBox
 import javax.swing.JPasswordField
 
 /**
@@ -38,29 +33,6 @@ fun askPassword(project: Project?,
                         isCheckExistingBeforeDialog = true)?.credentials?.getPasswordAsString()?.nullize()
 }
 
-object RememberCheckBoxState {
-  private const val key = "checkbox.remember.password"
-  private const val defaultValue = true
-
-  val isSelected: Boolean
-    get() {
-      return PropertiesComponent.getInstance().getBoolean(key, defaultValue)
-    }
-
-  fun update(component: JCheckBox) {
-    PropertiesComponent.getInstance().setValue(key, component.isSelected, defaultValue)
-  }
-
-  @JvmOverloads
-  fun createCheckBox(toolTip: String? = null): JCheckBox {
-    return CheckBox(
-      CommonBundle.message("checkbox.remember.password"),
-      selected = isSelected,
-      toolTip = toolTip
-    )
-  }
-}
-
 @JvmOverloads
 fun askCredentials(project: Project?,
                    dialogTitle: String,
@@ -70,7 +42,7 @@ fun askCredentials(project: Project?,
                    isCheckExistingBeforeDialog: Boolean = false,
                    isResetPassword: Boolean = false,
                    error: String? = null): CredentialRequestResult? {
-  val store = PasswordSafe.getInstance()
+  val store = PasswordSafe.instance
   if (isResetPassword) {
     store.set(attributes, null)
   }
@@ -82,7 +54,7 @@ fun askCredentials(project: Project?,
 
   return invokeAndWaitIfNeed(ModalityState.any()) {
     val passwordField = JPasswordField()
-    val rememberCheckBox = createCheckBox(toolTip = "The password will be stored between application sessions.")
+    val rememberCheckBox = store.rememberCheckBoxState.createCheckBox(toolTip = "The password will be stored between application sessions.")
 
     val panel = panel {
       row { label(if (passwordFieldLabel.endsWith(":")) passwordFieldLabel else "$passwordFieldLabel:") }
@@ -95,7 +67,7 @@ fun askCredentials(project: Project?,
       return@invokeAndWaitIfNeed null
     }
 
-    RememberCheckBoxState.update(rememberCheckBox)
+    store.rememberCheckBoxState.update(rememberCheckBox)
 
     val credentials = Credentials(attributes.userName, passwordField.password.nullize())
     if (isSaveOnOk && rememberCheckBox.isSelected) {

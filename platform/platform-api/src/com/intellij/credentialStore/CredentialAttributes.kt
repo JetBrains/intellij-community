@@ -45,7 +45,8 @@ class Credentials(user: String?, val password: OneTimeString? = null) {
   override fun hashCode() = (userName?.hashCode() ?: 0) * 37 + (password?.hashCode() ?: 0)
 }
 
-/**
+@Suppress("FunctionName")
+  /**
  * DEPRECATED. Never use it in a new code.
  */
 fun CredentialAttributes(requestor: Class<*>, userName: String?) = CredentialAttributes(requestor.name, userName, requestor)
@@ -62,7 +63,7 @@ fun Credentials?.isEmpty() = this == null || (userName == null && password.isNul
  * i.e. removes `oldAttributes` from the credentials store, and adds `newAttributes` instead.
  */
 fun getAndMigrateCredentials(oldAttributes: CredentialAttributes, newAttributes: CredentialAttributes): Credentials? {
-  val safe = PasswordSafe.getInstance()
+  val safe = PasswordSafe.instance
   var credentials = safe.get(newAttributes)
   if (credentials == null) {
     credentials = safe.get(oldAttributes)
@@ -74,6 +75,7 @@ fun getAndMigrateCredentials(oldAttributes: CredentialAttributes, newAttributes:
   return credentials
 }
 
+@Suppress("FunctionName")
 @JvmOverloads
 fun OneTimeString(value: ByteArray, offset: Int = 0, length: Int = value.size - offset, clearable: Boolean = false): OneTimeString {
   if (length == 0) {
@@ -112,8 +114,7 @@ fun OneTimeString(value: ByteArray, offset: Int = 0, length: Int = value.size - 
 class OneTimeString @JvmOverloads constructor(value: CharArray, offset: Int = 0, length: Int = value.size, private var clearable: Boolean = false) : CharArrayCharSequence(value, offset, offset + length) {
   private val consumed = AtomicReference<String?>()
 
-  constructor(value: String): this(value.toCharArray()) {
-  }
+  constructor(value: String): this(value.toCharArray())
 
   private fun consume(willBeCleared: Boolean) {
     if (!clearable) {
