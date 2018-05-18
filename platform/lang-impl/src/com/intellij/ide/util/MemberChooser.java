@@ -417,18 +417,7 @@ public class MemberChooser<T extends ClassMember> extends DialogWrapper implemen
 
   @NotNull
   protected String convertElementText(@NotNull String originalElementText) {
-    String res = originalElementText;
-
-    int i = res.indexOf(':');
-    if (i >= 0) {
-      res = res.substring(0, i);
-    }
-    i = res.indexOf('(');
-    if (i >= 0) {
-      res = res.substring(0, i);
-    }
-
-    return res;
+    return originalElementText;
   }
 
   protected void installSpeedSearch() {
