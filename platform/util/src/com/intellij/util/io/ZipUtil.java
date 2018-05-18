@@ -161,6 +161,7 @@ public class ZipUtil {
     File result = new File(outputDir, entryName);
     // we cannot use Path, but File doesn't provide Path.normalize,
     // so, our FileUtil.toCanonicalPath is used to normalized (isAncestor uses it under the hood)
+    // we check that name contains .. for performance reasons (isAncestor is relatively expensive call)
     if (entryName.contains("..") && !FileUtil.isAncestor(outputDir, result, true)) {
       throw new IOException("Invalid entry name: " + entryName);
     }
