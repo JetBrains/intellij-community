@@ -13,6 +13,7 @@ import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 
 import java.awt.*;
+import java.util.Collections;
 import java.util.List;
 
 import static com.intellij.ide.actions.SearchEverywhereAction.SEARCH_EVERYWHERE_POPUP;
@@ -21,6 +22,7 @@ public class SearchEverywhereManagerImpl implements SearchEverywhereManager {
 
   private final Project myProject;
   private final List<SearchEverywhereContributor> mySupportedContributors = SearchEverywhereContributor.getProvidersSorted();
+  private final List<SearchEverywhereContributor> myServiceContributors = Collections.singletonList(new TopHitSEContributor());
 
   private JBPopup myBalloon; //todo appropriate names #UX-1
   private SearchEverywhereUI mySearchEverywhereUI;
@@ -35,7 +37,7 @@ public class SearchEverywhereManagerImpl implements SearchEverywhereManager {
       setShownContributor(selectedContributorID);
     }
     else {
-      mySearchEverywhereUI = createView(myProject, mySupportedContributors);
+      mySearchEverywhereUI = createView(myProject, myServiceContributors, mySupportedContributors);
       mySearchEverywhereUI.switchToContributor(selectedContributorID);
       myBalloon = JBPopupFactory.getInstance().createComponentPopupBuilder(mySearchEverywhereUI, mySearchEverywhereUI.getSearchField())
                                 .setProject(myProject)
@@ -109,8 +111,10 @@ public class SearchEverywhereManagerImpl implements SearchEverywhereManager {
     return new RelativePoint(parent, new Point((parent.getSize().width - mySearchEverywhereUI.getPreferredSize().width) / 2, height));
   }
 
-  private SearchEverywhereUI createView(Project project, List<SearchEverywhereContributor> allContributors) {
-    SearchEverywhereUI view = new SearchEverywhereUI(project, allContributors, null);
+  private SearchEverywhereUI createView(Project project,
+                                        List<SearchEverywhereContributor> serviceContributors,
+                                        List<SearchEverywhereContributor> allContributors) {
+    SearchEverywhereUI view = new SearchEverywhereUI(project, serviceContributors, allContributors, null);
     view.addPropertyChangeListener("preferredSize", evt -> {
       if (isShown()) {
         myBalloon.pack(true, true);

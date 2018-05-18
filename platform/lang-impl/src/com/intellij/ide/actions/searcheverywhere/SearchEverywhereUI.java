@@ -84,7 +84,7 @@ public class SearchEverywhereUI extends BorderLayoutPanel implements Disposable 
   private final JPanel mySuggestionsPanel;
 
   // todo remove second param #UX-1
-  public SearchEverywhereUI(Project project,
+  public SearchEverywhereUI(Project project, List<SearchEverywhereContributor> serviceContributors,
                             List<SearchEverywhereContributor> contributors,
                             @Nullable SearchEverywhereContributor selected) {
     withMinimumWidth(670);
@@ -92,7 +92,9 @@ public class SearchEverywhereUI extends BorderLayoutPanel implements Disposable 
     withBackground(JBUI.CurrentTheme.SearchEverywhere.dialogBackground());
 
     myProject = project;
-    allContributors = contributors;
+    allContributors = new ArrayList<>();
+    allContributors.addAll(serviceContributors);
+    allContributors.addAll(contributors);
 
     myNonProjectCB = new JBCheckBox();
     myNonProjectCB.setOpaque(false);
