@@ -462,7 +462,7 @@ public class XmlTagImpl extends XmlElementImpl implements XmlTag, HintedReferenc
       return (XmlFile)psiFile;
     }
 
-    return XmlNamespaceIndex.guessSchema(namespace, nsDecl ? null : myLocalName, version, fileLocation, file);
+    return XmlNamespaceIndex.guessSchema(namespace, nsDecl ? null : getLocalName(), version, fileLocation, file);
   }
 
   @Nullable
