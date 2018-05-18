@@ -224,7 +224,18 @@ public class PsiTestUtil {
     String psiTree = StringUtil.join(file.getViewProvider().getAllFiles(), fun, "\n");
     String reparsedTree = StringUtil.join(dummyFile.getViewProvider().getAllFiles(), fun, "\n");
     if (!psiTree.equals(reparsedTree)) {
-      Assert.assertEquals("Re-created from text:\n" + reparsedTree, "PSI structure:\n" + psiTree);
+      String[] psiLines = StringUtil.splitByLines(psiTree);
+      String[] reparsedLines = StringUtil.splitByLines(reparsedTree);
+      for (int i = 0; ; i++) {
+        if (i >= psiLines.length || i >= reparsedLines.length || !psiLines[i].equals(reparsedLines[i])) {
+          psiLines[Math.min(i, psiLines.length - 1)] += "   // in PSI structure";
+          reparsedLines[Math.min(i, reparsedLines.length - 1)] += "   // re-created from text";
+          break;
+        }
+      }
+      psiTree = StringUtil.join(psiLines, "\n");
+      reparsedTree = StringUtil.join(reparsedLines, "\n");
+      Assert.assertEquals(reparsedTree, psiTree);
     }
   }
 
