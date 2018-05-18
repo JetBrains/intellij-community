@@ -430,6 +430,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
         }
 
         updateCaretCursor();
+        myCaretCursor.repaint();
       }
     };
 
