@@ -138,7 +138,9 @@ internal class ControlTransferHandler(val state: DfaMemoryState, val runner: Dat
     val result = arrayListOf<DfaInstructionState>()
     for ((catchSection, jumpOffset) in catches) {
       val param = catchSection.parameter ?: continue
-      if (throwableType == null) throwableType = createConstraint(thrownValue)
+      if (throwableType == null) {
+        throwableType = thrownValue?.asConstraint() ?: TypeConstraint.EMPTY
+      }
 
       for (caughtType in allCaughtTypes(param)) {
         throwableType?.withInstanceofValue(caughtType)?.let { constraint ->
@@ -164,7 +166,4 @@ internal class ControlTransferHandler(val state: DfaMemoryState, val runner: Dat
     return catchingCopy
   }
 
-  private fun createConstraint(throwable: DfaPsiType?): TypeConstraint {
-    return if (throwable != null) TypeConstraint.EMPTY.withInstanceofValue(throwable)!! else TypeConstraint.EMPTY
-  }
 }
