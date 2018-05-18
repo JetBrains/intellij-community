@@ -14,7 +14,6 @@ Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
  
    /**
     * Returns a name ot the project. For a directory-based project it's an arbitrary string specified by user at project creation
-\ No newline at end of file
 Index: platform/configuration-store-impl/src/ProjectStoreImpl.kt
 IDEA additional info:
 Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
@@ -39,12 +38,12 @@ IDEA additional info:
 Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
 <+>UTF-8
 ===================================================================
---- community/jps/model-serialization/src/org/jetbrains/jps/model/serialization/PathMacroUtil.java	(revision 83444e03e40e6673d2650a7840140cca65d5b5f6)
+--- community/jps/model-serialization/src/org/jetbrains/jps/model/serialization/PathMacroUtil.java	(revision 57d641cc1731bd145b2da90a6ad34dbf5566eaa9)
 +++ community/jps/model-serialization/src/org/jetbrains/jps/model/serialization/PathMacroUtil.java	(revision )
-@@ -35,7 +35,7 @@
- public class PathMacroUtil {
-   @NonNls public static final String PROJECT_DIR_MACRO_NAME = "PROJECT_DIR";
-   @NonNls public static final String MODULE_DIR_MACRO_NAME = "MODULE_DIR";
+@@ -26,7 +26,7 @@
+   public static final String MODULE_WORKING_DIR_NAME = "MODULE_WORKING_DIR";
+   public static final String MODULE_WORKING_DIR = "$" + MODULE_WORKING_DIR_NAME + "$";
+
 -  @NonNls public static final String DIRECTORY_STORE_NAME = ".idea";
 +  @NonNls public static final String DIRECTORY_STORE_NAME = ".mps";
    @NonNls public static final String APPLICATION_HOME_DIR = "APPLICATION_HOME_DIR";
