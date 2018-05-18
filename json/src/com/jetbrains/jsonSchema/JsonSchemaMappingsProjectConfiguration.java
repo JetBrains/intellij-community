@@ -30,7 +30,7 @@ public class JsonSchemaMappingsProjectConfiguration implements PersistentStateCo
   @Nullable
   public UserDefinedJsonSchemaConfiguration findMappingBySchemaInfo(JsonSchemaInfo value) {
     for (UserDefinedJsonSchemaConfiguration configuration : myState.myState.values()) {
-      if (Objects.equals(value.getUrl(myProject), configuration.getRelativePathToSchema())) return configuration;
+      if (Objects.equals(value.getUrl(myProject).replace('\\', '/'), configuration.getRelativePathToSchema().replace('\\', '/'))) return configuration;
     }
     return null;
   }

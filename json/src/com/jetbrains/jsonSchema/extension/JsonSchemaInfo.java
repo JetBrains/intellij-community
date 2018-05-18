@@ -41,7 +41,8 @@ public class JsonSchemaInfo {
         return schemaFile.getUrl();
       }
 
-      return VfsUtilCore.getRelativePath(schemaFile, project.getBaseDir());
+      String relativePath = VfsUtilCore.getRelativePath(schemaFile, project.getBaseDir());
+      return relativePath == null ? schemaFile.getPath() : relativePath;
     }
     else {
       return myUrl;

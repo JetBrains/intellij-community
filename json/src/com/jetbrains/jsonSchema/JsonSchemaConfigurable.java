@@ -158,7 +158,8 @@ public class JsonSchemaConfigurable extends NamedConfigurable<UserDefinedJsonSch
       }
     }
     else {
-      final File file = new File(myProject.getBasePath(), schemaSubPath);
+      File subPath = new File(schemaSubPath);
+      final File file = subPath.isAbsolute() ? subPath : new File(myProject.getBasePath(), schemaSubPath);
       if (!file.exists() || (vFile = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(file)) == null) {
         throw new ConfigurationException(
           (!StringUtil.isEmptyOrSpaces(myDisplayName) ? (myDisplayName + ": ") : "") + "Schema file does not exist");
