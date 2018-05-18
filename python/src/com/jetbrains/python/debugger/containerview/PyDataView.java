@@ -24,7 +24,6 @@ import com.jetbrains.python.debugger.PyDebugProcess;
 import com.jetbrains.python.debugger.PyDebugValue;
 import com.jetbrains.python.debugger.PyFrameAccessor;
 import icons.PythonIcons;
-import org.apache.xmlrpc.XmlRpcException;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -147,12 +146,7 @@ public class PyDataView implements DumbAware {
   }
 
   private static boolean isConnected(PydevConsoleCommunication accessor){
-    try {
-      return accessor.handshake();
-    }
-    catch (XmlRpcException ignored) {
-      return false;
-    }
+    return accessor.handshake();
   }
 
   public static PyDataView getInstance(@NotNull final Project project) {

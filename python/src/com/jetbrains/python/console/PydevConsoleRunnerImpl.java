@@ -85,7 +85,6 @@ import com.jetbrains.python.run.PythonRunParams;
 import com.jetbrains.python.run.PythonTracebackFilter;
 import com.jetbrains.python.sdk.PySdkUtil;
 import icons.PythonIcons;
-import org.apache.xmlrpc.XmlRpcException;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -643,12 +642,7 @@ public class PydevConsoleRunnerImpl implements PydevConsoleRunner {
     boolean res;
     long started = System.currentTimeMillis();
     do {
-      try {
-        res = myPydevConsoleCommunication.handshake();
-      }
-      catch (XmlRpcException ignored) {
-        res = false;
-      }
+      res = myPydevConsoleCommunication.handshake();
       if (res) {
         break;
       }
