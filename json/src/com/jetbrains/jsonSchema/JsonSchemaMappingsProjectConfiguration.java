@@ -17,9 +17,11 @@ import com.intellij.util.xmlb.annotations.Tag;
 import com.intellij.util.xmlb.annotations.XCollection;
 import com.jetbrains.jsonSchema.extension.JsonSchemaInfo;
 import com.jetbrains.jsonSchema.ide.JsonSchemaService;
+import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.io.File;
 import java.util.*;
 
 @State(name = "JsonSchemaMappingsProjectConfiguration", storages = @Storage("jsonSchemas.xml"))
@@ -30,9 +32,23 @@ public class JsonSchemaMappingsProjectConfiguration implements PersistentStateCo
   @Nullable
   public UserDefinedJsonSchemaConfiguration findMappingBySchemaInfo(JsonSchemaInfo value) {
     for (UserDefinedJsonSchemaConfiguration configuration : myState.myState.values()) {
-      if (Objects.equals(value.getUrl(myProject).replace('\\', '/'), configuration.getRelativePathToSchema().replace('\\', '/'))) return configuration;
+      if (areSimilar(value, configuration)) return configuration;
     }
     return null;
+  }
+
+  public boolean areSimilar(JsonSchemaInfo value, UserDefinedJsonSchemaConfiguration configuration) {
+    return Objects.equals(normalizePath(value.getUrl(myProject)), normalizePath(configuration.getRelativePathToSchema()));
+  }
+
+  @Nullable
+  @Contract("null -> null; !null -> !null")
+  public String normalizePath(@Nullable String valueUrl) {
+    if (valueUrl == null) return null;
+    if (StringUtil.contains(valueUrl, "..")) {
+      valueUrl = new File(valueUrl).getAbsolutePath();
+    }
+    return valueUrl.replace('\\', '/');
   }
 
   @Nullable
