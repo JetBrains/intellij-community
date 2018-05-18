@@ -19,6 +19,8 @@ import com.intellij.ExtensionPoints;
 import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.codeInspection.ProblemHighlightType;
+import com.intellij.codeInspection.ui.ListTable;
+import com.intellij.codeInspection.ui.ListWrappingTableModel;
 import com.intellij.diagnostic.ITNReporter;
 import com.intellij.ide.plugins.IdeaPluginDescriptorImpl;
 import com.intellij.ide.plugins.PluginManagerCore;
@@ -37,33 +39,48 @@ import com.intellij.psi.xml.XmlAttribute;
 import com.intellij.psi.xml.XmlAttributeValue;
 import com.intellij.psi.xml.XmlFile;
 import com.intellij.psi.xml.XmlTag;
+import com.intellij.util.ui.FormBuilder;
 import com.intellij.util.xml.*;
 import com.intellij.util.xml.highlighting.*;
 import com.intellij.util.xml.reflect.DomAttributeChildDescription;
+import com.siyeh.ig.ui.ExternalizableStringSet;
+import com.siyeh.ig.ui.UiUtils;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.devkit.DevKitBundle;
+import org.jetbrains.idea.devkit.dom.Action;
 import org.jetbrains.idea.devkit.dom.*;
 import org.jetbrains.idea.devkit.dom.impl.PluginPsiClassConverter;
 import org.jetbrains.idea.devkit.inspections.quickfix.AddWithTagFix;
 import org.jetbrains.idea.devkit.util.PsiUtil;
 import org.jetbrains.jps.model.java.JavaModuleSourceRootTypes;
 
+import javax.swing.*;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-/**
- * @author mike
- */
 public class PluginXmlDomInspection extends BasicDomElementsInspection<IdeaPlugin> {
   private static final Logger LOG = Logger.getInstance(PluginXmlDomInspection.class);
 
+  public List<String> myRegistrationCheckIgnoreClassList = new ExternalizableStringSet();
+
+
   public PluginXmlDomInspection() {
     super(IdeaPlugin.class);
+  }
+
+  @Nullable
+  @Override
+  public JComponent createOptionsPanel() {
+    String title = DevKitBundle.message("inspections.plugin.xml.ignore.classes.title");
+    ListTable table = new ListTable(new ListWrappingTableModel(myRegistrationCheckIgnoreClassList, title));
+    JPanel panel = UiUtils.createAddRemoveTreeClassChooserPanel(table, title);
+    return new FormBuilder().addComponentFillVertically(panel, 0).getPanel();
   }
 
   @NotNull
@@ -168,7 +185,7 @@ public class PluginXmlDomInspection extends BasicDomElementsInspection<IdeaPlugi
     }
   }
 
-  private static void annotateExtensionPoint(ExtensionPoint extensionPoint, DomElementAnnotationHolder holder) {
+  private void annotateExtensionPoint(ExtensionPoint extensionPoint, DomElementAnnotationHolder holder) {
     if (extensionPoint.getWithElements().isEmpty() &&
         !extensionPoint.collectMissingWithTags().isEmpty()) {
       holder.createProblem(extensionPoint, DevKitBundle.message("inspections.plugin.xml.ep.doesnt.have.with"), new AddWithTagFix());
@@ -187,7 +204,7 @@ public class PluginXmlDomInspection extends BasicDomElementsInspection<IdeaPlugi
 
     Module module = extensionPoint.getModule();
     if (ComponentModuleRegistrationChecker.isIdeaPlatformModule(module)) {
-      ComponentModuleRegistrationChecker.checkProperModule(extensionPoint, holder);
+      ComponentModuleRegistrationChecker.checkProperModule(extensionPoint, holder, myRegistrationCheckIgnoreClassList);
     }
   }
 
@@ -269,7 +286,7 @@ public class PluginXmlDomInspection extends BasicDomElementsInspection<IdeaPlugi
     return false;
   }
 
-  private static void annotateExtension(Extension extension, DomElementAnnotationHolder holder) {
+  private void annotateExtension(Extension extension, DomElementAnnotationHolder holder) {
     final ExtensionPoint extensionPoint = extension.getExtensionPoint();
     if (extensionPoint == null) return;
     final GenericAttributeValue<PsiClass> interfaceAttribute = extensionPoint.getInterface();
@@ -334,14 +351,15 @@ public class PluginXmlDomInspection extends BasicDomElementsInspection<IdeaPlugi
 
     Module module = extension.getModule();
     if (ComponentModuleRegistrationChecker.isIdeaPlatformModule(module)) {
-      ComponentModuleRegistrationChecker.checkProperXmlFileForExtension(extension, holder);
+      ComponentModuleRegistrationChecker.checkProperXmlFileForExtension(extension, holder, myRegistrationCheckIgnoreClassList);
     }
   }
 
-  private static void annotateComponent(Component component, DomElementAnnotationHolder holder) {
+  private void annotateComponent(Component component, DomElementAnnotationHolder holder) {
     Module module = component.getModule();
     if (ComponentModuleRegistrationChecker.isIdeaPlatformModule(module)) {
-      ComponentModuleRegistrationChecker.checkProperXmlFileForClass(component, holder, component.getImplementationClass().getValue());
+      ComponentModuleRegistrationChecker.checkProperXmlFileForClass(
+        component, holder, component.getImplementationClass().getValue(), myRegistrationCheckIgnoreClassList);
     }
   }
 
