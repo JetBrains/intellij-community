@@ -13,27 +13,24 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.ide.passwordSafe;
+package com.intellij.ide.passwordSafe
 
-import com.intellij.credentialStore.CredentialAttributes;
-import com.intellij.credentialStore.Credentials;
-import com.intellij.openapi.components.ServiceManager;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
-import org.jetbrains.concurrency.Promise;
+import com.intellij.credentialStore.CredentialAttributes
+import com.intellij.credentialStore.Credentials
+import com.intellij.openapi.components.ServiceManager
+import org.jetbrains.concurrency.Promise
 
-public abstract class PasswordSafe implements PasswordStorage {
-  @NotNull
-  public static PasswordSafe getInstance() {
-    return ServiceManager.getService(PasswordSafe.class);
+abstract class PasswordSafe : PasswordStorage {
+  companion object {
+    val instance: PasswordSafe
+      get() = ServiceManager.getService(PasswordSafe::class.java)
   }
 
-  public abstract void set(@NotNull CredentialAttributes attributes, @Nullable Credentials credentials, boolean memoryOnly);
+  abstract val isMemoryOnly: Boolean
 
-  public abstract boolean isMemoryOnly();
+  abstract operator fun set(attributes: CredentialAttributes, credentials: Credentials?, memoryOnly: Boolean)
 
-  @NotNull
-  public abstract Promise<Credentials> getAsync(@NotNull CredentialAttributes attributes);
+  abstract fun getAsync(attributes: CredentialAttributes): Promise<Credentials>
 
-  public abstract boolean isPasswordStoredOnlyInMemory(@NotNull CredentialAttributes attributes, @NotNull Credentials credentials);
+  abstract fun isPasswordStoredOnlyInMemory(attributes: CredentialAttributes, credentials: Credentials): Boolean
 }
