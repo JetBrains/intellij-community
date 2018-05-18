@@ -133,18 +133,24 @@ abstract class ComponentStoreImpl : IComponentStore {
   override fun save(readonlyFiles: MutableList<SaveSessionAndFile>, isForce: Boolean) {
     var errors: MutableList<Throwable>? = null
 
+    fun execute(handler: () -> Unit) {
+      try {
+        handler()
+      }
+      catch (e: Throwable) {
+        if (errors == null) {
+          errors = SmartList<Throwable>()
+        }
+        errors!!.add(e)
+      }
+    }
+
     // component state uses scheme manager in an ipr project, so, we must save it before
     val isIprProject = project?.let { !it.isDirectoryBased } ?: false
     if (isIprProject) {
       settingsSavingComponents.firstOrNull { it is SchemeManagerFactoryBase }?.let {
-        try {
+        execute {
           it.save()
-        }
-        catch (e: Throwable) {
-          if (errors == null) {
-            errors = SmartList<Throwable>()
-          }
-          errors!!.add(e)
         }
       }
     }
@@ -155,23 +161,24 @@ abstract class ComponentStoreImpl : IComponentStore {
     }
 
     for (settingsSavingComponent in settingsSavingComponents) {
-      try {
-        if (!isIprProject || settingsSavingComponent !is SchemeManagerFactoryBase) {
+      if (!isIprProject || settingsSavingComponent !is SchemeManagerFactoryBase) {
+        execute {
           settingsSavingComponent.save()
         }
       }
-      catch (e: Throwable) {
-        if (errors == null) {
-          errors = SmartList<Throwable>()
-        }
-        errors!!.add(e)
-      }
+    }
+
+    execute {
+      saveAdditionalComponents(isForce)
     }
 
     if (externalizationSession != null) {
       errors = doSave(externalizationSession.createSaveSessions(), readonlyFiles, errors)
     }
     CompoundRuntimeException.throwIfNotEmpty(errors)
+  }
+
+  protected open fun saveAdditionalComponents(isForce: Boolean) {
   }
 
   private fun doSaveComponents(isForce: Boolean, externalizationSession: ExternalizationSession, _errors: MutableList<Throwable>?): MutableList<Throwable>? {

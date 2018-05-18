@@ -9,6 +9,7 @@ import com.intellij.openapi.components.PathMacroManager
 import com.intellij.openapi.components.StateStorageOperation
 import com.intellij.openapi.components.impl.BasePathMacroManager
 import com.intellij.openapi.components.impl.stores.FileStorageCoreUtil
+import com.intellij.openapi.components.service
 import com.intellij.openapi.diagnostic.runAndLogException
 import com.intellij.openapi.util.NamedJDOMExternalizable
 import com.intellij.openapi.vfs.LocalFileSystem
@@ -49,6 +50,11 @@ class ApplicationStoreImpl(private val application: Application, pathMacroManage
         }
       }
     }
+  }
+
+  override fun saveAdditionalComponents(isForce: Boolean) {
+    // here, because no Project (and so, ProjectStoreImpl) on Welcome Screen
+    service<DefaultProjectExportableAndSaveTrigger>().save(isForce)
   }
 }
 

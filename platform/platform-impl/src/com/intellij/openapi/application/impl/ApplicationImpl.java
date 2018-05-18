@@ -1429,14 +1429,7 @@ public class ApplicationImpl extends PlatformComponentManagerImpl implements App
 
   @Override
   public void saveAll() {
-    saveAll(false);
-  }
-
-  @Override
-  public void saveAll(boolean isForce) {
-    if (mySaveAllowed) {
-      StoreUtil.saveDocumentsAndProjectsAndApp(isForce);
-    }
+    StoreUtil.saveDocumentsAndProjectsAndApp(false);
   }
 
   @Override
