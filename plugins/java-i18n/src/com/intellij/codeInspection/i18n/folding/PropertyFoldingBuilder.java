@@ -170,9 +170,6 @@ public class PropertyFoldingBuilder extends FoldingBuilderEx {
           text = text.replace("{" + (i - 1) + "}", value.toString());
         }
         if (text != null) {
-          if (callSourcePsi != null && !text.equals(callSourcePsi.getText())) {
-            text = text.replace("''", "'");
-          }
           return text.length() > FOLD_MAX_LENGTH ? text.substring(0, FOLD_MAX_LENGTH - 3) + "...\"" : text;
         }
       }
