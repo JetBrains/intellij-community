@@ -33,6 +33,7 @@ import com.intellij.psi.impl.DebugUtil;
 import com.intellij.ui.JBColor;
 import com.intellij.ui.awt.RelativePoint;
 import com.intellij.ui.components.JBLabel;
+import com.intellij.ui.components.JBPanel;
 import com.intellij.ui.treeStructure.Tree;
 import com.intellij.util.Alarm;
 import com.intellij.util.FunctionUtil;
@@ -193,18 +194,26 @@ public class ChangesViewManager implements ChangesViewI, ProjectComponent, Persi
     myProgressLabel = simplePanel();
 
     panel.setToolbar(toolbar.getComponent());
+    panel.setContent(createScrollPane(myView));
 
-    JPanel wrapper = simplePanel(createScrollPane(myView));
+    //JBPanel<?> p = new JBPanel<>(new VerticalFlowLayout(0, 0));
+    JBPanel<?> p = new JBPanel<>();
+    p.setLayout(new BoxLayout(p, BoxLayout.Y_AXIS));
+    p.add(panel);
+    p.add(new ChangesViewCommitPanel(myProject));
+    p = simplePanel(p).addToBottom(myProgressLabel);
+    //p.add(myProgressLabel);
+
     MyChangeProcessor changeProcessor = new MyChangeProcessor(myProject);
-    mySplitterComponent = new PreviewDiffSplitterComponent(wrapper, changeProcessor, CHANGES_VIEW_PREVIEW_SPLITTER_PROPORTION,
+    mySplitterComponent = new PreviewDiffSplitterComponent(p, changeProcessor, CHANGES_VIEW_PREVIEW_SPLITTER_PROPORTION,
                                                            myVcsConfiguration.LOCAL_CHANGES_DETAILS_PREVIEW_SHOWN);
 
-    panel.setContent(simplePanel(mySplitterComponent).addToBottom(myProgressLabel));
+    //panel.setContent(simplePanel(mySplitterComponent).addToBottom(myProgressLabel));
 
     ChangesDnDSupport.install(myProject, myView);
     myView.addTreeSelectionListener(myTsl);
     myView.addGroupingChangeListener(myGroupingChangeListener);
-    return panel;
+    return mySplitterComponent;
   }
 
   @NotNull
