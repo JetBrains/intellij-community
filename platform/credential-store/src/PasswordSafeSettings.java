@@ -17,9 +17,7 @@ import org.jetbrains.annotations.NotNull;
 public class PasswordSafeSettings implements PersistentStateComponent<PasswordSafeSettings.State> {
   public static final Topic<PasswordSafeSettingsListener> TOPIC = Topic.create("PasswordSafeSettingsListener", PasswordSafeSettingsListener.class);
 
-  private ProviderType myProviderType = getDefaultProviderType();
-
-  String keepassDb;
+  private State state = new State();
 
   @NotNull
   private static ProviderType getDefaultProviderType() {
@@ -28,7 +26,7 @@ public class PasswordSafeSettings implements PersistentStateComponent<PasswordSa
 
   @NotNull
   public ProviderType getProviderType() {
-    return SystemInfo.isWindows && myProviderType == ProviderType.KEYCHAIN ? ProviderType.KEEPASS : myProviderType;
+    return SystemInfo.isWindows && state.PROVIDER == ProviderType.KEYCHAIN ? ProviderType.KEEPASS : state.PROVIDER;
   }
 
   public void setProviderType(@NotNull ProviderType value) {
@@ -37,9 +35,9 @@ public class PasswordSafeSettings implements PersistentStateComponent<PasswordSa
       value = ProviderType.MEMORY_ONLY;
     }
 
-    ProviderType oldValue = myProviderType;
+    ProviderType oldValue = state.PROVIDER;
     if (value != oldValue) {
-      myProviderType = value;
+      state.PROVIDER = value;
       Application app = ApplicationManager.getApplication();
       if (app != null) {
         app.getMessageBus().syncPublisher(TOPIC).typeChanged(oldValue, value);
@@ -50,18 +48,17 @@ public class PasswordSafeSettings implements PersistentStateComponent<PasswordSa
   @Override
   @NotNull
   public State getState() {
-    State s = new State();
-    s.PROVIDER = myProviderType;
-    if (keepassDb != null && !keepassDb.equals(PasswordSafeConfigurableKt.getDefaultKeePassDbFilePath())) {
-      s.keepassDb = keepassDb;
+    if (state.keepassDb != null && state.keepassDb.equals(PasswordSafeConfigurableKt.getDefaultKeePassDbFilePath())) {
+      state.keepassDb = null;
     }
-    return s;
+    return state;
   }
 
   @Override
   public void loadState(@NotNull State state) {
+    this.state = state;
     setProviderType(ObjectUtils.chooseNotNull(state.PROVIDER, getDefaultProviderType()));
-    keepassDb = StringUtil.nullize(state.keepassDb, true);
+    state.keepassDb = StringUtil.nullize(state.keepassDb, true);
   }
 
   public static class State {

@@ -59,7 +59,7 @@ internal class PasswordSafeConfigurableUi : ConfigurableUi<PasswordSafeSettings>
 
     val currentProvider = (PasswordSafe.instance as PasswordSafeImpl).currentProvider
     @Suppress("IfThenToElvis")
-    keePassDbFile.text = settings.keepassDb ?: if (currentProvider is KeePassCredentialStore) currentProvider.dbFile.toString() else getDefaultKeePassDbFilePath()
+    keePassDbFile.text = settings.state.keepassDb ?: if (currentProvider is KeePassCredentialStore) currentProvider.dbFile.toString() else getDefaultKeePassDbFilePath()
     updateEnabledState()
   }
 
@@ -127,10 +127,10 @@ internal class PasswordSafeConfigurableUi : ConfigurableUi<PasswordSafeSettings>
 
     settings.providerType = providerType
     if (newProvider is KeePassCredentialStore) {
-      settings.keepassDb = newProvider.dbFile.toString()
+      settings.state.keepassDb = newProvider.dbFile.toString()
     }
     else {
-      settings.keepassDb = null
+      settings.state.keepassDb = null
     }
     passwordSafe.currentProvider = newProvider
   }
