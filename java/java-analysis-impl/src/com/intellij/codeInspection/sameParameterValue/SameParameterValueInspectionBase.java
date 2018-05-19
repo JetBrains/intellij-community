@@ -210,7 +210,7 @@ public class SameParameterValueInspectionBase extends GlobalJavaBatchInspectionT
             boolean needFurtherProcess = false;
             for (int i = 0; i < paramValues.length; i++) {
               Object value = paramValues[i];
-              final Object currentArg = getArgValue(arguments[i]);
+              final Object currentArg = getArgValue(arguments[i], method);
               if (value == VALUE_UNDEFINED) {
                 paramValues[i] = currentArg;
                 if (currentArg != VALUE_IS_NOT_CONST) {
@@ -238,8 +238,8 @@ public class SameParameterValueInspectionBase extends GlobalJavaBatchInspectionT
       };
     }
 
-    private Object getArgValue(PsiExpression arg) {
-      return RefParameterImpl.getExpressionValue(arg);
+    private Object getArgValue(PsiExpression arg, PsiMethod method) {
+      return RefParameterImpl.getAccessibleExpressionValue(arg, () -> method);
     }
   }
 
