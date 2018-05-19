@@ -90,6 +90,8 @@
       <add-to-group group-id="Vcs.KeymapGroup"/>
     </group>
 
+    <action id="Vcs.ShowCommitOptions" text="Show Commit Options" class="com.intellij.openapi.vcs.changes.actions.ShowCommitOptionsAction"/>
+
     <group id="ChangesViewToolbar">
       <action id="ChangesView.Refresh" class="com.intellij.openapi.vcs.changes.actions.RefreshAction"
               icon="AllIcons.Actions.Refresh"/>

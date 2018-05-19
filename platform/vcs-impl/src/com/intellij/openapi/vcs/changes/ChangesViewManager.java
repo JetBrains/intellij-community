@@ -200,7 +200,7 @@ public class ChangesViewManager implements ChangesViewI, ProjectComponent, Persi
     JBPanel<?> p = new JBPanel<>();
     p.setLayout(new BoxLayout(p, BoxLayout.Y_AXIS));
     p.add(panel);
-    p.add(new ChangesViewCommitPanel(myProject));
+    p.add(new ChangesViewCommitPanel(myProject, myView));
     p = simplePanel(p).addToBottom(myProgressLabel);
     //p.add(myProgressLabel);
 

@@ -5,22 +5,82 @@ import com.intellij.openapi.actionSystem.ActionManager
 import com.intellij.openapi.actionSystem.ActionPlaces
 import com.intellij.openapi.actionSystem.DefaultActionGroup
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.vcs.CheckinProjectPanel
 import com.intellij.openapi.vcs.changes.Change
 import com.intellij.openapi.vcs.changes.SimpleContentRevision
 import com.intellij.openapi.vcs.ui.CommitMessage
+import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.ui.components.JBOptionButton
 import com.intellij.ui.components.panels.NonOpaquePanel
 import com.intellij.util.ui.JBUI.Panels.simplePanel
 import com.intellij.util.ui.components.BorderLayoutPanel
 import com.intellij.vcsUtil.VcsUtil
 import java.awt.event.ActionEvent
+import java.io.File
 import javax.swing.AbstractAction
 import javax.swing.BoxLayout
 
-class ChangesViewCommitPanel(val project: Project) : BorderLayoutPanel() {
+class ChangesViewCommitPanel(private val project: Project, private val view: ChangesListView) : BorderLayoutPanel(), CheckinProjectPanel {
+  override fun getComponent() = this
+
+  //  duplicates CCLD
+  override fun getPreferredFocusedComponent() = commitMessage.getEditorField()
+
+
+  override fun hasDiffs(): Boolean {
+    TODO("not implemented") //To change body of created functions use File | Settings | File Templates.
+  }
+
+  override fun getVirtualFiles(): MutableCollection<VirtualFile> {
+    TODO("not implemented") //To change body of created functions use File | Settings | File Templates.
+  }
+
+  override fun getSelectedChanges(): MutableCollection<Change> {
+    TODO("not implemented") //To change body of created functions use File | Settings | File Templates.
+  }
+
+  override fun getFiles(): MutableCollection<File> {
+    TODO("not implemented") //To change body of created functions use File | Settings | File Templates.
+  }
+
+  override fun getProject() = project
+
+  override fun vcsIsAffected(name: String?): Boolean {
+    TODO("not implemented") //To change body of created functions use File | Settings | File Templates.
+  }
+
+  override fun getCommitActionName(): String {
+    TODO("not implemented") //To change body of created functions use File | Settings | File Templates.
+  }
+
+  override fun setCommitMessage(currentDescription: String?) {
+    TODO("not implemented") //To change body of created functions use File | Settings | File Templates.
+  }
+
+  override fun getRoots(): MutableCollection<VirtualFile> {
+    TODO("not implemented") //To change body of created functions use File | Settings | File Templates.
+  }
+
+  override fun getCommitMessage(): String {
+    TODO("not implemented") //To change body of created functions use File | Settings | File Templates.
+  }
+
+  override fun refresh() {
+    TODO("not implemented") //To change body of created functions use File | Settings | File Templates.
+  }
+
+  override fun saveState() {
+    TODO("not implemented") //To change body of created functions use File | Settings | File Templates.
+  }
+
+  override fun restoreState() {
+    TODO("not implemented") //To change body of created functions use File | Settings | File Templates.
+  }
+
+  private val commitMessage = CommitMessage(project, false, false, true)
+
   init {
-    val actions = DefaultActionGroup(ActionManager.getInstance().getAction("ChangesView.Refresh"),
-                                     ActionManager.getInstance().getAction("ChangesView.NewChangeList"))
+    val actions = DefaultActionGroup(ActionManager.getInstance().getAction("Vcs.ShowCommitOptions"))
     val toolbar = ActionManager.getInstance().createActionToolbar(ActionPlaces.UNKNOWN, actions, false)
     addToLeft(toolbar.component)
 
@@ -41,7 +101,7 @@ class ChangesViewCommitPanel(val project: Project) : BorderLayoutPanel() {
     legendPanel.add(button)
     legendPanel.add(legend.component)
 
-    val main = simplePanel(CommitMessage(project, false, false, true)).addToBottom(legendPanel)
+    val main = simplePanel(commitMessage).addToBottom(legendPanel)
     addToCenter(main)
   }
 
