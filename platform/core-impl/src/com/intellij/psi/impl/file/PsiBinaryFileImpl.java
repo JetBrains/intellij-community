@@ -251,7 +251,7 @@ public class PsiBinaryFileImpl extends PsiElementBase implements PsiBinaryFile, 
     if (!myPossiblyInvalidated) return true;
 
     // synchronized by read-write action
-    if (((FileManagerImpl)myManager.getFileManager()).evaluateValidity(myViewProvider)) {
+    if (((FileManagerImpl)myManager.getFileManager()).evaluateValidity(this)) {
       myPossiblyInvalidated = false;
       PsiInvalidElementAccessException.setInvalidationTrace(this, null);
       return true;

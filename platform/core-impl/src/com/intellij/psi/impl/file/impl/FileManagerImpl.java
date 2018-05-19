@@ -600,9 +600,14 @@ public class FileManagerImpl implements FileManager {
    * Should be called only from implementations of {@link PsiFile#isValid()}, only after they've been {@link PsiFileEx#markInvalidated()},
    * and only to check if they can be made valid again.
    * Synchronized by read-write action. Calls from several threads in read action for the same virtual file are allowed.
-   * @return if the view provider is still valid
+   * @return if the file is still valid
    */
-  public boolean evaluateValidity(@NotNull AbstractFileViewProvider viewProvider) {
+  public boolean evaluateValidity(@NotNull PsiFile file) {
+    AbstractFileViewProvider vp = (AbstractFileViewProvider)file.getViewProvider();
+    return evaluateValidity(vp) && vp.getCachedPsiFiles().contains(file);
+  }
+  
+  private boolean evaluateValidity(@NotNull AbstractFileViewProvider viewProvider) {
     ApplicationManager.getApplication().assertReadAccessAllowed();
     
     VirtualFile file = viewProvider.getVirtualFile();

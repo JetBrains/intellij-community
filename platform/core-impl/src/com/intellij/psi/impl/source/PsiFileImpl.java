@@ -149,12 +149,11 @@ public abstract class PsiFileImpl extends ElementBase implements PsiFileEx, PsiF
     if (!myPossiblyInvalidated) return true;
     
     // synchronized by read-write action
-    if (((FileManagerImpl)myManager.getFileManager()).evaluateValidity(myViewProvider)) {
+    if (((FileManagerImpl)myManager.getFileManager()).evaluateValidity(this)) {
       myPossiblyInvalidated = false;
       PsiInvalidElementAccessException.setInvalidationTrace(this, null);
       return true;
     }
-    System.out.println("fail " + getName() + Thread.currentThread());
     return false;
   }
 
@@ -424,7 +423,7 @@ public abstract class PsiFileImpl extends ElementBase implements PsiFileEx, PsiF
     myOriginalFile = originalFile.getOriginalFile();
 
     FileViewProvider original = myOriginalFile.getViewProvider();
-    ((AbstractFileViewProvider)original).registerAsCopy((AbstractFileViewProvider)myViewProvider);
+    ((AbstractFileViewProvider)original).registerAsCopy(myViewProvider);
   }
 
   @Override
