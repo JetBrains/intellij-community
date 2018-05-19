@@ -87,12 +87,10 @@ internal fun findGitRepoRoot(path: String): File = File(path).let {
 
 internal fun addChangesToGit(files: List<String>, repo: File) {
   // OS has argument length limit
-  files.split(1000).forEach {
-    (listOf(GIT, "add") + it).execute(repo, true)
+  files.split(1000).parallelStream().forEach {
+    (listOf(GIT, "add") + it).execute(repo)
   }
 }
-
-internal fun latestChangeTime(obj: GitObject) = latestChangeTime(obj.file, obj.repo)
 
 internal fun latestChangeTime(file: String, repo: File) =
   "$GIT log --max-count 1 --format=%cd --date=raw -- $file"

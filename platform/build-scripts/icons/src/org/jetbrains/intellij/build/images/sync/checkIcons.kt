@@ -49,17 +49,18 @@ fun checkIcons(
   val addedByDev = devIcons.keys
   val modifiedByDev = modifiedByDev(modified, icons, devIconsBackup)
   val removedByDev = removedByDev(addedByDesigners, icons, devRepoVcsRoots, File(devRepoDir))
+  val modifiedByDesigners = modified.filter { !modifiedByDev.contains(it) }
   val removedByDesigners = removedByDesigners(
     addedByDev, devIconsBackup, iconsRepo,
     File(iconsRepoDir).relativeTo(iconsRepo).path.let {
       if (it.isEmpty()) "" else "$it/"
     }
   )
-  val modifiedByDesigners = modified.filter { !modifiedByDev.contains(it) }
-  if (doSync) doSync(
-    addedByDev, modifiedByDev, icons,
-    devIconsBackup, iconsRepo, iconsRepoDir
-  )
+  if (doSync) callSafely {
+    syncAdded(addedByDev, devIconsBackup, iconsRepo, File(iconsRepoDir))
+    syncModified(modifiedByDev, icons, devIconsBackup)
+    syncRemoved(removedByDev, icons)
+  }
   report(
     devIconsBackup.size, icons.size, skippedDirs.size,
     addedByDev, removedByDev, modifiedByDev,
@@ -189,6 +190,7 @@ private fun modifiedByDev(
   .filter { latestChangeTime(icons[it]) < latestChangeTime(devIcons[it]) }
   .collect(Collectors.toList())
 
-private fun latestChangeTime(obj: GitObject?) = latestChangeTime(obj!!).also {
-  if (it <= 0) throw IllegalStateException(obj.toString())
-}
+private fun latestChangeTime(obj: GitObject?) =
+  latestChangeTime(obj!!.file, obj.repo).also {
+    if (it <= 0) throw IllegalStateException(obj.toString())
+  }

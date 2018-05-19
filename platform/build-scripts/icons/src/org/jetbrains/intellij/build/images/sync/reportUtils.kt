@@ -15,7 +15,7 @@ internal fun report(
   removedByDesigners: Collection<String>, modifiedByDesigners: Collection<String>,
   consistent: Collection<String>, errorHandler: Consumer<String>, doSync: Boolean
 ) {
-  log("Skipped $skipped test dirs")
+  log("Skipped $skipped dirs")
   log("""
     |dev repo:
     | added: ${addedByDev.joinToString()}
@@ -70,7 +70,7 @@ private val BUILD_ID = System.getProperty("teamcity.build.id")
 private fun notifySlackChannel(isSuccess: Boolean, report: String) {
   HttpClients.createDefault().use {
     val text = "${if (isSuccess) ":white_check_mark:" else ":scream:"}\n$report\n" +
-               "Use 'Sync icons to IntelliJIcons' IDEA Ultimate run configuration\n" +
+               "Use 'Sync icons in IntelliJIcons' IDEA Ultimate run configuration\n" +
                "<$BUILD_SERVER/viewLog.html?buildId=$BUILD_ID&buildTypeId=$BUILD_CONF|See build log>"
     val post = HttpPost(CHANNEL_WEB_HOOK)
     post.entity = StringEntity("""{ "text": "$text" }""", Charsets.UTF_8)
