@@ -14,7 +14,7 @@ abstract class AbstractDataStructure implements DataStructure {
     this.sizeHint = sizeHint;
   }
 
-  protected int childSizeHint() {
+  int childSizeHint() {
     return Math.max(1, sizeHint - 1);
   }
 
@@ -25,9 +25,9 @@ abstract class AbstractDataStructure implements DataStructure {
 
   @Override
   public <T> T generate(@NotNull Generator<T> generator) {
-    return generator.getGeneratorFunction().apply(subStructure(generator));
+    return generator.getGeneratorFunction().apply(subStructure(generator, childSizeHint()));
   }
 
   @NotNull
-  abstract DataStructure subStructure(@NotNull Generator<?> generator);
+  abstract DataStructure subStructure(@NotNull Generator<?> generator, int childSizeHint);
 }
