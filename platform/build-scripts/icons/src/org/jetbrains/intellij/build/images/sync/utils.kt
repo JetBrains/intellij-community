@@ -46,3 +46,13 @@ internal fun <T> List<T>.split(eachSize: Int): List<List<T>> {
   }
   return result
 }
+
+internal fun callSafely(call: () -> Unit) {
+  try {
+    call()
+  }
+  catch (e: Exception) {
+    e.printStackTrace()
+    log(e.message ?: e.javaClass.canonicalName)
+  }
+}

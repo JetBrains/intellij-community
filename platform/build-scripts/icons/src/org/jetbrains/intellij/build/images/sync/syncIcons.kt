@@ -7,21 +7,16 @@ internal fun doSync(added: Collection<String>,
                     modified: Collection<String>,
                     icons: Map<String, GitObject>,
                     devIcons: Map<String, GitObject>,
-                    iconsDir: String) {
-  try {
-    doSyncAdded(added, devIcons, iconsDir)
+                    iconsRepo: File, iconsDir: String) {
+  callSafely {
+    doSyncAdded(added, devIcons, iconsRepo, iconsDir)
     doSyncModified(modified, icons, devIcons)
-  }
-  catch (e: Exception) {
-    e.printStackTrace()
-    log(e.message ?: e.javaClass.canonicalName)
   }
 }
 
 private fun doSyncAdded(added: Collection<String>,
                         devIcons: Map<String, GitObject>,
-                        iconsDir: String) {
-  val iconsRepo = findGitRepoRoot(iconsDir)
+                        iconsRepo: File, iconsDir: String) {
   val unversioned = mutableListOf<String>()
   added.forEach {
     val target = File("$iconsDir/$it")
