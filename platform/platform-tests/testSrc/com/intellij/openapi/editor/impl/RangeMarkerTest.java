@@ -49,6 +49,7 @@ import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
+import java.io.IOException;
 import java.lang.ref.Reference;
 import java.lang.ref.WeakReference;
 import java.util.*;
@@ -460,7 +461,7 @@ public class RangeMarkerTest extends LightPlatformTestCase {
 
     for (int i = 1; i < 10; i++) {
       synchronizer.insertString(document, i, String.valueOf(i));
-      buffer.insert(i, String.valueOf(i));
+      buffer.insert(i, i);
     }
     PsiToDocumentSynchronizer.DocumentChangeTransaction transaction = PlatformTestUtil.notNull(synchronizer.getTransaction(document));
     assertSize(1, transaction.getAffectedFragments().keySet());
@@ -482,7 +483,7 @@ public class RangeMarkerTest extends LightPlatformTestCase {
 
     for (int i = 0; i < 10; i++) {
       synchronizer.insertString(document, i, String.valueOf(i));
-      buffer.insert(i, String.valueOf(i));
+      buffer.insert(i, i);
     }
 
     assertSize(1, transaction.getAffectedFragments().keySet());
@@ -717,19 +718,7 @@ public class RangeMarkerTest extends LightPlatformTestCase {
         }
       }
       catch (AssertionError e) {
-        String s= "adds: ";
-        for (Pair<RangeMarker, TextRange> c : adds) {
-          TextRange t = c.second;
-          s += t.getStartOffset() + "," + t.getEndOffset() + ", ";
-        }
-        s += "\ndels: ";
-
-        for (Pair<RangeMarker, TextRange> c : dels) {
-          int index = adds.indexOf(c);
-          assertSame(c, adds.get(index));
-          s += index + ", ";
-        }
-        System.err.println(s);
+        printFailingSteps(adds, dels, Collections.emptyList());
         throw e;
       }
     }
@@ -930,28 +919,34 @@ public class RangeMarkerTest extends LightPlatformTestCase {
           }
         }
         catch (AssertionError e) {
-          String s = "adds: ";
-          for (Pair<RangeMarker, TextRange> c : adds) {
-            TextRange t = c.second;
-            s += t.getStartOffset() + "," + t.getEndOffset() + ", ";
-          }
-
-          s += "\nedits: ";
-          for (Trinity<Integer, Integer, Integer> edit : edits) {
-            s += edit.first + "," + edit.second + "," + edit.third + ",  ";
-          }
-          s += "\ndels: ";
-
-          for (Pair<RangeMarker, TextRange> c : dels) {
-            int index = adds.indexOf(c);
-            assertSame(c, adds.get(index));
-            s += index + ", ";
-          }
-          System.err.println(s);
+          printFailingSteps(adds, dels, edits);
           throw e;
         }
       });
     }
+  }
+
+  private static void printFailingSteps(List<Pair<RangeMarker, TextRange>> adds,
+                                        List<Pair<RangeMarker, TextRange>> dels,
+                                        List<Trinity<Integer, Integer, Integer>> edits) {
+    String s = "adds: ";
+    for (Pair<RangeMarker, TextRange> c : adds) {
+      TextRange t = c.second;
+      s += t.getStartOffset() + "," + t.getEndOffset() + ", ";
+    }
+
+    s += "\nedits: ";
+    for (Trinity<Integer, Integer, Integer> edit : edits) {
+      s += edit.first + "," + edit.second + "," + edit.third + ",  ";
+    }
+    s += "\ndels: ";
+
+    for (Pair<RangeMarker, TextRange> c : dels) {
+      int index = adds.indexOf(c);
+      assertSame(c, adds.get(index));
+      s += index + ", ";
+    }
+    System.err.println(s);
   }
 
   private RangeMarkerEx createMarker(String text, final int start, final int end) {
@@ -1399,11 +1394,29 @@ public class RangeMarkerTest extends LightPlatformTestCase {
     // need to be physical file
     VirtualFile vf = VfsTestUtil.createFile(getSourceRoot(), "x.txt", "blah");
     PsiFile psiFile = ObjectUtils.notNull(getPsiManager().findFile(vf));
-    RangeMarker marker = createMarker(psiFile, 0, 4);
-    RangeMarker persistentMarker = document.createRangeMarker(0, 4, true);
-    Reference<Document> ref = new WeakReference<>(document);
+    RangeMarker[] marker = {createMarker(psiFile, 0, 4)};
+    RangeMarker[] persistentMarker = {document.createRangeMarker(0, 4, true)};
     int docHash0 = System.identityHashCode(document);
-    this.psiFile = null;
+    gcDocument();
+    assertTrue(marker[0].isValid());
+    assertTrue(persistentMarker[0].isValid());
+
+    Document newDoc = ObjectUtils.notNull(PsiDocumentManager.getInstance(getProject()).getDocument(psiFile));
+    int docHash1 = System.identityHashCode(newDoc);
+    assertNotSame(docHash0, docHash1);
+
+    WriteCommandAction.runWriteCommandAction(getProject(), ()->newDoc.insertString(2,"000"));
+    assertTrue(marker[0].isValid());
+    assertEquals("bl000ah", TextRange.create(marker[0]).substring(newDoc.getText()));
+    assertTrue(persistentMarker[0].isValid());
+    assertEquals("bl000ah", TextRange.create(persistentMarker[0]).substring(newDoc.getText()));
+
+    checkRMTreesAreGCedWhenNoReachableRangeMarkersLeft(vf, marker, persistentMarker);
+  }
+
+  private void gcDocument() {
+    Reference<Document> ref = new WeakReference<>(document);
+    psiFile = null;
     fileNode = null;
     document = null;
 
@@ -1411,25 +1424,44 @@ public class RangeMarkerTest extends LightPlatformTestCase {
       GCUtil.tryForceGC();
       UIUtil.dispatchAllInvocationEvents();
     }
-    assertTrue(marker.isValid());
-    assertTrue(persistentMarker.isValid());
+  }
+
+  public void testRangeMarkerUpdatesItselfEvenWhenDocumentIsGCedAndVirtualFileChanges_NoCommand() throws IOException {
+    // need to be physical file
+    VirtualFile vf = VfsTestUtil.createFile(getSourceRoot(), "x.txt", "blah");
+    PsiFile psiFile = ObjectUtils.notNull(getPsiManager().findFile(vf));
+    RangeMarker[] marker = {createMarker(psiFile, 1, 3)};
+    RangeMarker[] persistentMarker = {document.createRangeMarker(1, 3, true)};
+    int docHash0 = System.identityHashCode(document);
+    gcDocument();
+    assertTrue(marker[0].isValid());
+    assertTrue(persistentMarker[0].isValid());
+
+    String newText = "0123blah";
+    WriteCommandAction.runWriteCommandAction(getProject(), (ThrowableComputable<Object, IOException>)()->{
+      vf.setBinaryContent(newText.getBytes("utf-8"));
+      return null;
+    });
 
     Document newDoc = ObjectUtils.notNull(PsiDocumentManager.getInstance(getProject()).getDocument(psiFile));
     int docHash1 = System.identityHashCode(newDoc);
     assertNotSame(docHash0, docHash1);
+    assertEquals(newText, newDoc.getText());
 
-    WriteCommandAction.runWriteCommandAction(getProject(), ()->newDoc.insertString(2,"000"));
-    assertTrue(marker.isValid());
-    assertEquals("bl000ah", TextRange.create(marker).substring(newDoc.getText()));
-    assertTrue(persistentMarker.isValid());
-    assertEquals("bl000ah", TextRange.create(persistentMarker).substring(newDoc.getText()));
+    assertTrue(marker[0].isValid());
+    assertEquals("la", TextRange.create(marker[0]).substring(newDoc.getText()));
+    assertTrue(persistentMarker[0].isValid());
+    assertEquals("la", TextRange.create(persistentMarker[0]).substring(newDoc.getText()));
+    checkRMTreesAreGCedWhenNoReachableRangeMarkersLeft(vf, marker, persistentMarker);
+  }
 
-    Reference<RangeMarker> markerRef = new WeakReference<>(marker);
-    Reference<RangeMarker> persistentMarkerRef = new WeakReference<>(persistentMarker);
-    //noinspection UnusedAssignment
-    marker = null;
-    //noinspection UnusedAssignment
-    persistentMarker = null;
+  private static void checkRMTreesAreGCedWhenNoReachableRangeMarkersLeft(@NotNull VirtualFile vf,
+                                                                         @NotNull RangeMarker[] marker,
+                                                                         @NotNull RangeMarker[] persistentMarker) {
+    Reference<RangeMarker> markerRef = new WeakReference<>(marker[0]);
+    Reference<RangeMarker> persistentMarkerRef = new WeakReference<>(persistentMarker[0]);
+    marker[0] = null;
+    persistentMarker[0] = null;
     PsiDocumentManager.getInstance(getProject()).commitAllDocuments();
     while (markerRef.get() != null || persistentMarkerRef.get() != null) {
       GCUtil.tryForceGC();
