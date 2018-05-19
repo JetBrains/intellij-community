@@ -46,9 +46,14 @@ internal fun report(
 }
 
 private fun sendNotification(isSuccess: Boolean, report: String) {
-  callSafely {
-    if (teamCityBuildStatusChanged(isSuccess)) {
-      notifySlackChannel(isSuccess, report)
+  if (BUILD_SERVER == null) {
+    log("TeamCity url is unknown: unable to query last build status and send Slack channel notification")
+  }
+  else {
+    callSafely {
+      if (teamCityBuildStatusChanged(isSuccess)) {
+        notifySlackChannel(isSuccess, report)
+      }
     }
   }
 }
@@ -56,9 +61,9 @@ private fun sendNotification(isSuccess: Boolean, report: String) {
 private val BUILD_SERVER = System.getProperty("teamcity.serverUrl")
 private val BUILD_CONF = System.getProperty("teamcity.buildType.id")
 
-private fun teamCityBuildStatusChanged(isSuccess: Boolean): Boolean =
-  BUILD_SERVER != null && HttpClients.createDefault().use {
-    val get = HttpGet("$BUILD_SERVER/app/rest/builds?locator=buildType:$BUILD_CONF,count:1")
+private fun teamCityBuildStatusChanged(isSuccess: Boolean) =
+  HttpClients.createDefault().use {
+    val get = HttpGet("$BUILD_SERVER/guestAuth/app/rest/builds?locator=buildType:$BUILD_CONF,count:1")
     val response = EntityUtils.toString(it.execute(get).entity, Charsets.UTF_8)
     isSuccess && response.contains("status=\"FAILURE\"") ||
     !isSuccess && response.contains("status=\"SUCCESS\"")
