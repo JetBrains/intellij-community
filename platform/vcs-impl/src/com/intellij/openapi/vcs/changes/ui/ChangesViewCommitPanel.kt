@@ -1,12 +1,12 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-package com.intellij.openapi.vcs.changes
+package com.intellij.openapi.vcs.changes.ui
 
 import com.intellij.openapi.actionSystem.ActionManager
 import com.intellij.openapi.actionSystem.ActionPlaces
 import com.intellij.openapi.actionSystem.DefaultActionGroup
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.vcs.changes.ui.ChangeInfoCalculator
-import com.intellij.openapi.vcs.changes.ui.CommitLegendPanel
+import com.intellij.openapi.vcs.changes.Change
+import com.intellij.openapi.vcs.changes.SimpleContentRevision
 import com.intellij.openapi.vcs.ui.CommitMessage
 import com.intellij.ui.components.JBOptionButton
 import com.intellij.ui.components.panels.NonOpaquePanel
