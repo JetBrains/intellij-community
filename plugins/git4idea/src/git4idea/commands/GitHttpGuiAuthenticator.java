@@ -20,9 +20,9 @@ import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.io.URLUtil;
 import git4idea.DialogManager;
 import git4idea.remote.GitHttpAuthDataProvider;
-import git4idea.remote.InteractiveGitHttpAuthDataProvider;
 import git4idea.remote.GitRememberedInputs;
 import git4idea.remote.GitRepositoryHostingService;
+import git4idea.remote.InteractiveGitHttpAuthDataProvider;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -252,7 +252,7 @@ class GitHttpGuiAuthenticator implements GitHttpAuthenticator {
 
     @Override
     public void onAuthFailure(@NotNull String url) {
-      if(myData != null)myDelegate.forgetPassword(url, myData);
+      if (myData != null) myDelegate.forgetPassword(url, myData);
     }
   }
 
@@ -299,19 +299,21 @@ class GitHttpGuiAuthenticator implements GitHttpAuthenticator {
 
     @Nullable
     private AuthData getDataFromDialog(@NotNull String url, @Nullable String username, boolean editableUsername) {
-Map<String, InteractiveGitHttpAuthDataProvider> providers = new HashMap<>();
+      Map<String, InteractiveGitHttpAuthDataProvider> providers = new HashMap<>();
       for (GitRepositoryHostingService service : GitRepositoryHostingService.EP_NAME.getExtensions()) {
         InteractiveGitHttpAuthDataProvider provider = editableUsername || username == null
-                                                  ? service.getInteractiveAuthDataProvider(myProject, url)
-                                                  : service.getInteractiveAuthDataProvider(myProject, url, username);
+                                                      ? service.getInteractiveAuthDataProvider(myProject, url)
+                                                      : service.getInteractiveAuthDataProvider(myProject, url, username);
 
         if (provider != null) providers.put(service.getServiceDisplayName(), provider);
-      }      GitHttpLoginDialog dialog = showAuthDialog(UriUtil.splitScheme(url).second, username, editableUsername, providers);
+      }
+      GitHttpLoginDialog dialog = showAuthDialog(UriUtil.splitScheme(url).second, username, editableUsername, providers);
       LOG.debug("Showed dialog:" + (dialog.isOK() ? "OK" : "Cancel"));
       if (!dialog.isOK()) {
         myCancelled = true;
         return null;
       }
+      myPasswordSafeDelegate.setRememberPassword(dialog.getRememberPassword());
 
       AuthData sessionAuthData = dialog.getExternalAuthData();
       if (sessionAuthData != null) {
@@ -319,7 +321,6 @@ Map<String, InteractiveGitHttpAuthDataProvider> providers = new HashMap<>();
         return sessionAuthData;
       }
 
-      myPasswordSafeDelegate.setSavePassword(dialog.getRememberPassword());
       AuthData authData = new AuthData(dialog.getUsername(), dialog.getPassword());
       myPasswordSafeDelegate.setData(authData);
       return authData;
@@ -333,7 +334,7 @@ Map<String, InteractiveGitHttpAuthDataProvider> providers = new HashMap<>();
       Ref<GitHttpLoginDialog> dialogRef = Ref.create();
       ApplicationManager.getApplication().invokeAndWait(() -> {
         GitHttpLoginDialog dialog =
-          new GitHttpLoginDialog(myProject, url, myPasswordSafeDelegate.isRemembering(), username, editableUsername);
+          new GitHttpLoginDialog(myProject, url, myPasswordSafeDelegate.isRememberPasswordByDefault(), username, editableUsername);
         dialog.setInteractiveDataProviders(interactiveProviders);
         dialogRef.set(dialog);
         DialogManager.show(dialog);
@@ -391,9 +392,10 @@ Map<String, InteractiveGitHttpAuthDataProvider> providers = new HashMap<>();
     public void onAuthSuccess(@NotNull String url) {
       if (myData == null || myData.getPassword() == null) return;
       myRememberedInputs.addUrl(url, myData.getLogin());
+      if (!mySavePassword) return;
       String key = makeKey(url, myData.getLogin());
       Credentials credentials = new Credentials(key, myData.getPassword());
-      myPasswordSafe.set(credentialAttributes(key), credentials, !mySavePassword);
+      myPasswordSafe.set(credentialAttributes(key), credentials);
     }
 
     @Override
@@ -409,12 +411,13 @@ Map<String, InteractiveGitHttpAuthDataProvider> providers = new HashMap<>();
       myData = data;
     }
 
-    public void setSavePassword(boolean savePassword) {
-      mySavePassword = savePassword;
+    public void setRememberPassword(boolean remember) {
+      mySavePassword = remember;
+      myPasswordSafe.setRememberPasswordByDefault(remember);
     }
 
-    public boolean isRemembering() {
-      return !myPasswordSafe.isMemoryOnly();
+    public boolean isRememberPasswordByDefault() {
+      return myPasswordSafe.isRememberPasswordByDefault();
     }
 
     @NotNull

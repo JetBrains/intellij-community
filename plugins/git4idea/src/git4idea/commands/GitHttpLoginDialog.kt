@@ -23,7 +23,7 @@ import javax.swing.JTextArea
 
 class GitHttpLoginDialog @JvmOverloads constructor(project: Project,
                                                    url: String,
-                                                   allowRememberPassword: Boolean = true,
+                                                   rememberPassword: Boolean = true,
                                                    username: String? = null,
                                                    editableUsername: Boolean = true) : DialogWrapper(project, true) {
   private val descriptionLabel = JTextArea().apply {
@@ -39,7 +39,7 @@ class GitHttpLoginDialog @JvmOverloads constructor(project: Project,
   }
   private val usernameField = JBTextField(username).apply { isEditable = editableUsername }
   private val passwordField = JBPasswordField()
-  private val rememberCheckbox: JBCheckBox = JBCheckBox("Remember", false).apply { isVisible = allowRememberPassword }
+  private val rememberCheckbox: JBCheckBox = JBCheckBox("Remember", rememberPassword)
   private val additionalProvidersButton: JBOptionButton = JBOptionButton(null, null).apply { isVisible = false }
 
   var externalAuthData: AuthData? = null
