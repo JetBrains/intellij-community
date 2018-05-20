@@ -18,6 +18,7 @@ package git4idea.commands;
 import com.google.common.annotations.VisibleForTesting;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vfs.VfsUtilCore;
@@ -147,6 +148,9 @@ public class GitImpl extends GitImplBase {
       handler.setStdoutSuppressed(false);
       handler.setUrl(url);
       handler.addParameters("--progress");
+      if (GitVersionSpecialty.CLONE_RECURSE_SUBMODULES.existsIn(project) && Registry.is("git.clone.recurse.submodules")) {
+        handler.addParameters("--recurse-submodules");
+      }
       handler.addParameters(url);
       handler.endOptions();
       handler.addParameters(clonedDirectoryName);
