@@ -22,6 +22,7 @@ import com.intellij.openapi.actionSystem.Separator;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.EditorFactory;
 import com.intellij.openapi.editor.ex.EditorGutterComponentEx;
+import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.util.Couple;
 import com.intellij.openapi.vcs.history.VcsRevisionNumber;
 import org.jetbrains.annotations.NotNull;
@@ -32,7 +33,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
-public class AnnotateActionGroup extends ActionGroup {
+public class AnnotateActionGroup extends ActionGroup implements DumbAware {
   private final AnAction[] myActions;
 
   public AnnotateActionGroup(@NotNull List<AnnotationFieldGutter> gutters,
