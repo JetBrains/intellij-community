@@ -44,8 +44,10 @@ static void _setButtonData(NSButtonJAction *button, int updateOptions, int butto
     }
 
     if (updateOptions & BUTTON_UPDATE_TEXT) {
+        if (nstext != nil) {
+            [button setFont:[NSFont systemFontOfSize:0]];
+        }
         [button setTitle:nstext];
-        [button setImagePosition:(nstext == nil ? NSImageOnly : NSImageLeft)];
     }
 
     if (updateOptions & BUTTON_UPDATE_IMG)
@@ -71,6 +73,15 @@ static void _setButtonData(NSButtonJAction *button, int updateOptions, int butto
             [button.widthAnchor constraintEqualToConstant:buttonWidth].active = YES;
         else
             [button.widthAnchor constraintEqualToAnchor:button.widthAnchor].active = NO;
+    }
+
+    if (button.image != nil) {
+        if (button.title != nil && button.title.length > 0)
+            [button setImagePosition:NSImageLeft];
+        else
+            [button setImagePosition:NSImageOnly];
+    } else {
+        [button setImagePosition:NSNoImage];
     }
 }
 
