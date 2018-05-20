@@ -22,6 +22,14 @@ public class TouchBar implements NSTLibrary.ItemCreator {
 
   protected final TBItemButton myCustomEsc;
 
+  public static final TouchBar EMPTY = new TouchBar();
+
+  private TouchBar() {
+    myName = "EMPTY_STUB_TOUCHBAR";
+    myCustomEsc = null;
+    myNativePeer = ID.NIL;
+  }
+
   public TouchBar(@NotNull String touchbarName, boolean replaceEsc) {
     myName = touchbarName;
     myCustomEsc = replaceEsc ? new TBItemButton(_genNewID("esc"), AllIcons.Actions.Cancel, null, this::_closeSelf) : null;

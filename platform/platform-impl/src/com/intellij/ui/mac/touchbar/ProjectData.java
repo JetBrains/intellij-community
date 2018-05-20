@@ -13,21 +13,16 @@ import com.intellij.openapi.wm.ToolWindowId;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.awt.*;
 import java.awt.event.InputEvent;
-import java.util.*;
-import java.util.List;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.concurrent.atomic.AtomicInteger;
 
 class ProjectData {
   private static final Logger LOG = Logger.getInstance(ProjectData.class);
 
-  public static final String DEFAULT = "default";
-  public static final String DEBUGGER = ToolWindowId.DEBUG;
-  public static final String EDITOR = "editor";
-
   private final @NotNull Project myProject;
-  private final List<BarContainer> myBars = new ArrayList<>();
+  private final Map<BarType, BarContainer> myBars = new HashMap<>();
 
   private AtomicInteger myActiveDebugSessions = new AtomicInteger(0);
 
@@ -55,57 +50,68 @@ class ProjectData {
     });
   }
 
-  @Nullable BarContainer createBarContainer(@NotNull String type, Component component) {
+  @Nullable BarContainer get(BarType type) {
+    BarContainer result = myBars.get(type);
+    if (result == null) {
+      result = new BarContainer(type, TouchBar.EMPTY, null);
+      _fillBarContainer(result);
+      myBars.put(type, result);
+    }
+    return result;
+  }
+
+  private void _fillBarContainer(@NotNull BarContainer container) {
     ApplicationManager.getApplication().assertIsDispatchThread();
 
+    final @NotNull BarType type = container.getType();
+
     final String barId;
-    final String touchBarName;
     final boolean replaceEsc;
-    if (type.equals(DEFAULT)) {
+    if (type == BarType.DEFAULT) {
       barId = "Default";
-      touchBarName = barId;
       replaceEsc = false;
-    } else if (type.equals(ToolWindowId.DEBUG)) {
+    } else if (type == BarType.DEBUGGER) {
       barId = ToolWindowId.DEBUG;
-      touchBarName = ToolWindowId.DEBUG;
       replaceEsc = true;
-    } else if (type.equals(EDITOR)) {
-      barId = "Default";
-      touchBarName = barId;
-      replaceEsc = false;
     } else {
       LOG.error("can't create touchbar, unknown context: " + type);
-      return null;
+      return;
     }
 
     final ActionGroup mainLayout = TouchBarActionBase.getCustomizedGroup(barId);
     if (mainLayout == null) {
       LOG.error("can't create touchbar because corresponding ActionGroup isn't defined, context: " + barId);
-      return null;
+      return;
     }
 
-    final Component targetComponent = type.equals(ToolWindowId.DEBUG) ? null : component; // debugger must use context of focused component (for example, to use selected text in the Editor)
-    final MultiBarContainer container = new MultiBarContainer(new TouchBarActionBase(touchBarName, myProject, mainLayout, targetComponent, replaceEsc));
-    final Map<String, ActionGroup> alts = type.equals(DEFAULT) ? null : TouchBarActionBase.getAltLayouts(mainLayout);
-    if (alts != null && !alts.isEmpty()) {
-      for (String modId: alts.keySet()) {
+    final Map<String, ActionGroup> strmod2alt = TouchBarActionBase.getAltLayouts(mainLayout);
+    final Map<Long, TouchBar> alts = new HashMap<>();
+    if (strmod2alt != null && !strmod2alt.isEmpty()) {
+      for (String modId: strmod2alt.keySet()) {
         final long mask = _str2mask(modId);
         if (mask == 0) {
           // System.out.println("ERROR: zero mask for modId="+modId);
           continue;
         }
-        container.registerAltByKeyMask(mask, new TouchBarActionBase(touchBarName + "_" + modId, myProject, alts.get(modId), component, replaceEsc));
+        alts.put(mask, new TouchBarActionBase(type.name() + "_" + modId, myProject, strmod2alt.get(modId), replaceEsc));
       }
     }
 
-    myBars.add(container);
-    return container;
+    container.set(new TouchBarActionBase(type.name(), myProject, mainLayout, replaceEsc), alts);
   }
 
   void releaseAll() {
     ApplicationManager.getApplication().assertIsDispatchThread();
-    myBars.forEach((bc)->bc.release());
+    myBars.forEach((t, bc)->bc.release());
     myBars.clear();
+  }
+
+  void reloadAll() {
+    ApplicationManager.getApplication().assertIsDispatchThread();
+    myBars.forEach((t, bc)->{
+      bc.release();
+      _fillBarContainer(bc);
+    });
   }
 
   int getDbgSessions() { return myActiveDebugSessions.get(); }

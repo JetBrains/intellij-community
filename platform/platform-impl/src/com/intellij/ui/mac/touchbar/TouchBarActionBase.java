@@ -28,29 +28,27 @@ public class TouchBarActionBase extends TouchBarProjectBase {
 
   private final PresentationFactory myPresentationFactory = new PresentationFactory();
   private final TimerListener myTimerListener;
-  private final Component myComponent;
 
   static {
     _initExecutorsGroup();
   }
 
-  public TouchBarActionBase(@NotNull String touchbarName, @NotNull Project project, Component component) { this(touchbarName, project, component, false); }
+  public TouchBarActionBase(@NotNull String touchbarName, @NotNull Project project) { this(touchbarName, project, false); }
 
-  public TouchBarActionBase(@NotNull String touchbarName, @NotNull Project project, @NotNull ActionGroup customizedGroup, Component component, boolean replaceEsc) {
-    this(touchbarName, project, component, replaceEsc);
+  public TouchBarActionBase(@NotNull String touchbarName, @NotNull Project project, @NotNull ActionGroup customizedGroup, boolean replaceEsc) {
+    this(touchbarName, project, replaceEsc);
 
     final String groupId = _getActionId(customizedGroup);
     if (groupId == null) {
       LOG.error("unregistered group: " + customizedGroup);
       return;
     }
-    addActionGroupButtons(customizedGroup, component, null, TBItemAnActionButton.SHOWMODE_IMAGE_ONLY_IF_PRESENTED, nodeId -> nodeId.contains(groupId + "_"));
+    addActionGroupButtons(customizedGroup, null, TBItemAnActionButton.SHOWMODE_IMAGE_ONLY_IF_PRESENTED, nodeId -> nodeId.contains(groupId + "_"));
   }
 
-  public TouchBarActionBase(@NotNull String touchbarName, @NotNull Project project, Component component, boolean replaceEsc) {
+  public TouchBarActionBase(@NotNull String touchbarName, @NotNull Project project, boolean replaceEsc) {
     super(touchbarName, project, replaceEsc);
 
-    myComponent = component;
     myTimerListener = new TimerListener() {
       @Override
       public ModalityState getModalityState() { return ModalityState.current(); }
@@ -73,40 +71,23 @@ public class TouchBarActionBase extends TouchBarProjectBase {
   @Override
   public void onHide() { ActionManager.getInstance().removeTransparentTimerListener(myTimerListener); }
 
-  TBItemAnActionButton addAnActionButton(String actId) {
-    final AnAction act = _getActionById(actId);
-    if (act == null)
-      return null;
-
-    return _addAnActionButton(act, true, TBItemAnActionButton.SHOWMODE_IMAGE_ONLY, myComponent, null);
-  }
-
-  TBItemAnActionButton addAnActionButton(String actId, boolean hiddenWhenDisabled) {
-    final AnAction act = _getActionById(actId);
-    if (act == null)
-      return null;
-
-    return _addAnActionButton(act, hiddenWhenDisabled, TBItemAnActionButton.SHOWMODE_IMAGE_ONLY, myComponent, null);
-  }
-
-  TBItemAnActionButton addAnActionButton(String actId, boolean hiddenWhenDisabled, int showMode) {
-    final AnAction act = _getActionById(actId);
-    if (act == null)
-      return null;
-
-    return _addAnActionButton(act, hiddenWhenDisabled, showMode, myComponent, null);
-  }
-
-  private TBItemAnActionButton _addAnActionButton(@NotNull AnAction act, boolean hiddenWhenDisabled, int showMode, Component component, ModalityState modality) {
+  private TBItemAnActionButton _addAnActionButton(@NotNull AnAction act, boolean hiddenWhenDisabled, int showMode, ModalityState modality) {
     final String uid = String.format("%s.anActionButton.%d.%s", myName, myCounter++, ActionManager.getInstance().getId(act));
-    final TBItemAnActionButton butt = new TBItemAnActionButton(uid, act, hiddenWhenDisabled, showMode, component, modality);
+    final TBItemAnActionButton butt = new TBItemAnActionButton(uid, act, hiddenWhenDisabled, showMode, modality);
     myItems.add(butt);
     return butt;
   }
 
-  public void addActionGroupButtons(ActionGroup actionGroup, Component forCtx, ModalityState modality, int showMode) { addActionGroupButtons(actionGroup, forCtx, modality, showMode, null); }
+  public void setComponent(Component component/*for DataContext*/) {
+    myItems.forEach(item -> {
+      if (item instanceof TBItemAnActionButton)
+        ((TBItemAnActionButton)item).setComponent(component);
+    });
+  }
 
-  public void addActionGroupButtons(ActionGroup actionGroup, Component forCtx, ModalityState modality, int showMode, INodeFilter filter) {
+  public void addActionGroupButtons(ActionGroup actionGroup, ModalityState modality, int showMode) { addActionGroupButtons(actionGroup, modality, showMode, null); }
+
+  public void addActionGroupButtons(ActionGroup actionGroup, ModalityState modality, int showMode, INodeFilter filter) {
     _traverse(actionGroup, new ILeafVisitor() {
       private int mySeparatorCounter = 0;
 
@@ -135,7 +116,7 @@ public class TouchBarActionBase extends TouchBarProjectBase {
 
         final boolean isRunConfigPopover = actId != null && actId.contains("RunConfiguration");
         final int mode = isRunConfigPopover ? TBItemAnActionButton.SHOWMODE_IMAGE_TEXT : showMode;
-        final TBItemAnActionButton butt = _addAnActionButton(act, false, mode, forCtx, modality);
+        final TBItemAnActionButton butt = _addAnActionButton(act, false, mode, modality);
 
         if (isRunConfigPopover)
           butt.setWidth(ourRunConfigurationPopoverWidth);

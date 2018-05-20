@@ -59,16 +59,12 @@ public class TouchBarsManager {
       return;
 
     editor.addFocusListener(new FocusChangeListener() {
-      private final BarContainer myEditorBar = _getProjData(proj).createBarContainer(ProjectData.EDITOR, editor.getContentComponent());
-
       @Override
       public void focusGained(Editor editor) {
-        _elevateTouchBar(myEditorBar);
+        _elevateTouchBar(_getProjData(proj).get(BarType.DEFAULT));
       }
       @Override
-      public void focusLost(Editor editor) {
-        closeTouchBar(myEditorBar);
-      }
+      public void focusLost(Editor editor) {}
     });
   }
 
@@ -80,7 +76,7 @@ public class TouchBarsManager {
         private TouchBar myPopupBar = _createScrubberBarFromPopup(listPopup);
         @Override
         public void beforeShown(LightweightWindowEvent event) {
-          showTempTouchBar(myPopupBar);
+          _showTempTouchBar(myPopupBar, BarType.POPUP);
         }
         @Override
         public void onClosed(LightweightWindowEvent event) {
@@ -93,7 +89,7 @@ public class TouchBarsManager {
 
   public static TouchBar showTempButtonsBar(List<JButton> jbuttons, Project project) {
     final TouchBar tb = _createButtonsBar(jbuttons, project);
-    showTempTouchBar(tb);
+    _showTempTouchBar(tb, BarType.DIALOG);
     return tb;
   }
 
@@ -105,18 +101,14 @@ public class TouchBarsManager {
     Foundation.invoke(app, "setAutomaticCustomizeTouchBarMenuItemEnabled:", true);
 
     ApplicationManager.getApplication().getMessageBus().connect().subscribe(ProjectManager.TOPIC, new ProjectManagerListener() {
-      private BarContainer myDefaultBar;
       @Override
       public void projectOpened(Project project) {
         trace("opened project %s, set default touchbar", project);
 
         final ProjectData pd = _getProjData(project);
-        myDefaultBar = pd.createBarContainer(ProjectData.DEFAULT, null);
-        showTouchBar(myDefaultBar);
+        showTouchBar(pd.get(BarType.DEFAULT));
 
         project.getMessageBus().connect().subscribe(ToolWindowManagerListener.TOPIC, new ToolWindowManagerListener() {
-          private BarContainer myDebuggerBar;
-
           @Override
           public void stateChanged() {
             final ToolWindowManagerEx twm = ToolWindowManagerEx.getInstanceEx(project);
@@ -127,10 +119,7 @@ public class TouchBarsManager {
                 return;
 
               // TODO: stateChanged can be skipped sometimes when user clicks debug tool-window, need check by focus events or fix stateChanged-subscription
-              if (myDebuggerBar == null) {
-                myDebuggerBar = pd.createBarContainer(ProjectData.DEBUGGER, twm.getToolWindow(activeId).getComponent());
-              }
-              showTouchBar(myDebuggerBar);
+              showTouchBar(pd.get(BarType.DEBUGGER));
             }
           }
         });
@@ -144,8 +133,11 @@ public class TouchBarsManager {
             final BarContainer top;
             synchronized (TouchBarsManager.class) {
               top = ourTouchBarStack.peek();
+              if (top == null)
+                return;
+
               curr = top.get();
-              final boolean isDebugger = curr != null && curr.myName.startsWith(ToolWindowId.DEBUG);
+              final boolean isDebugger = top.getType() == BarType.DEBUGGER;
               if (isDebugger) {
                 if (executorId.equals(ToolWindowId.DEBUG)) {
                   // System.out.println("processTerminated, dbgSessionsCount=" + pd.getDbgSessions());
@@ -164,10 +156,22 @@ public class TouchBarsManager {
       @Override
       public void projectClosed(Project project) {
         trace("closed project %s, hide touchbar", project);
-        closeTouchBar(myDefaultBar);
-        _getProjData(project).releaseAll();
+        final ProjectData pd = _getProjData(project);
+        closeTouchBar(pd.get(BarType.DEFAULT));
+        pd.releaseAll();
+        ourProjectData.remove(project);
       }
     });
+  }
+
+  public static void reloadAll() {
+    if (!isTouchBarAvailable())
+      return;
+
+    ourProjectData.forEach((p, pd)->{
+      pd.reloadAll();
+    });
+    _setBarContainer(ourTouchBarStack.peek());
   }
 
   public static boolean isTouchBarAvailable() { return NST.isAvailable(); }
@@ -189,11 +193,15 @@ public class TouchBarsManager {
   }
 
   synchronized public static void showTempTouchBar(TouchBar tb) {
+    _showTempTouchBar(tb, BarType.DIALOG);
+  }
+
+  synchronized private static void _showTempTouchBar(TouchBar tb, BarType type) {
     if (tb == null)
       return;
 
     tb.selectVisibleItemsToShow();
-    BarContainer container = new TempBarContainer(tb);
+    BarContainer container = new BarContainer(type, tb, null);
     showTouchBar(container);
   }
 
@@ -268,9 +276,7 @@ public class TouchBarsManager {
       return;
     }
 
-    if (barContainer instanceof MultiBarContainer)
-      ((MultiBarContainer)barContainer).selectBarByKeyMask(ourCurrentKeyMask);
-
+    barContainer.selectBarByKeyMask(ourCurrentKeyMask);
     ourTouchBarHolder.setTouchBar(barContainer.get());
   }
 
@@ -315,7 +321,7 @@ public class TouchBarsManager {
 
   private static TouchBar _createButtonsBar(List<JButton> jbuttons, Project project) {
     try (NSAutoreleaseLock lock = new NSAutoreleaseLock()) {
-      TouchBarActionBase result = new TouchBarActionBase("dialog_buttons", project, null);
+      TouchBarActionBase result = new TouchBarActionBase("dialog_buttons", project);
       final ModalityState ms = LaterInvocator.getCurrentModalityState();
 
       // 1. add option buttons (at left)
@@ -333,8 +339,10 @@ public class TouchBarsManager {
             ag.add(anAct);
           }
 
-          if (ag.getChildrenCount() > 0)
-            result.addActionGroupButtons(ag, ob, ms, TBItemAnActionButton.SHOWMODE_TEXT_ONLY);
+          if (ag.getChildrenCount() > 0) {
+            result.addActionGroupButtons(ag, ms, TBItemAnActionButton.SHOWMODE_TEXT_ONLY);
+            result.setComponent(ob);
+          }
         }
       }
 
@@ -412,12 +420,6 @@ public class TouchBarsManager {
       result.selectVisibleItemsToShow();
       return result;
     }
-  }
-
-  private static class TempBarContainer extends SingleBarContainer {
-    TempBarContainer(@NotNull TouchBar tb) { super(tb); }
-    @Override
-    public boolean isTemporary() { return true; }
   }
 
   private static boolean _hasAnyActiveSession(Project proj, ProcessHandler handler/*already terminated*/) {
