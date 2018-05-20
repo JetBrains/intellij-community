@@ -25,6 +25,7 @@ import com.intellij.openapi.ui.popup.JBPopupListener;
 import com.intellij.openapi.ui.popup.LightweightWindowEvent;
 import com.intellij.openapi.ui.popup.ListPopupStep;
 import com.intellij.openapi.ui.popup.MnemonicNavigationFilter;
+import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.wm.ToolWindow;
 import com.intellij.openapi.wm.ToolWindowId;
 import com.intellij.openapi.wm.ex.ToolWindowManagerEx;
@@ -224,6 +225,43 @@ public class TouchBarsManager {
     _showTempTouchBar(tb, BarType.DIALOG);
   }
 
+  synchronized public static Runnable showMessageDlgBar(@NotNull String[] buttons, @NotNull Runnable[] actions, String defaultButton) {
+    if (!isTouchBarAvailable())
+      return null;
+
+    final List<TBItem> groupButtons = new ArrayList<>();
+    int defIndex = -1;
+    final int len = Math.min(buttons.length, actions.length);
+    for (int c = 0; c < len; ++c) {
+      final String sb = buttons[c];
+      final boolean isDefault = Comparing.equal(sb, defaultButton);
+      if (isDefault) {
+        defIndex = c;
+        continue;
+      }
+      groupButtons.add(new TBItemButton(
+        "message_dlg_bar_group_item_" + c,
+        null, DialogWrapper.extractMnemonic(sb).second, NSTLibrary.run2act(actions[c]), -1, 0
+      ));
+    }
+
+    if (defIndex >= 0)
+      groupButtons.add(new TBItemButton(
+        "message_dlg_bar_group_item_default",
+        null, DialogWrapper.extractMnemonic(buttons[defIndex]).second, NSTLibrary.run2act(actions[defIndex]), -1, NSTLibrary.BUTTON_FLAG_COLORED
+      ));
+
+    final TouchBar tb;
+    try (NSAutoreleaseLock lock = new NSAutoreleaseLock()) {
+      tb = new TouchBar("message_dlg_bar", false);
+      final TBItemGroup gr = tb.addGroup(groupButtons);
+      tb.setPrincipal(gr);
+    }
+
+    _showTempTouchBar(tb, BarType.DIALOG);
+    return ()->{closeTouchBar(tb, true);};
+  }
+
   synchronized private static void _showTempTouchBar(TouchBar tb, BarType type) {
     if (tb == null)
       return;
@@ -385,23 +423,36 @@ public class TouchBarsManager {
 
       // 3. add main buttons and make principal
       final List<TBItem> groupButtons = new ArrayList<>();
+      JButton jdef = null;
       for (JButton jb : jbuttons) {
         // TODO: make correct processing for disabled buttons, add them and update state by timer
         // NOTE: can be true: jb.getAction().isEnabled() && !jb.isEnabled()
-        final NSTLibrary.Action act = () -> ApplicationManager.getApplication().invokeLater(() -> jb.doClick(), ms);
         final boolean isDefault = jb.getAction().getValue(DialogWrapper.DEFAULT_ACTION) != null;
-        final TBItemButton butt = new TBItemButton(
-          "dialog_buttons_group_item_" + jbuttons.indexOf(jb),
-          null, DialogWrapper.extractMnemonic(jb.getText()).second, act, -1, isDefault ? NSTLibrary.BUTTON_FLAG_COLORED : 0
-          );
+        if (isDefault) {
+          jdef = jb;
+          continue;
+        }
+        final TBItemButton butt = _jbutton2item(jb, jbuttons.indexOf(jb), ms);
         groupButtons.add(butt);
       }
+
+      if (jdef != null)
+        groupButtons.add(_jbutton2item(jdef, jbuttons.indexOf(jdef), ms));
 
       final TBItemGroup gr = result.addGroup(groupButtons);
       result.setPrincipal(gr);
 
       return result;
     }
+  }
+
+  private static TBItemButton _jbutton2item(JButton jb, int index, ModalityState ms) {
+    final NSTLibrary.Action act = () -> ApplicationManager.getApplication().invokeLater(() -> jb.doClick(), ms);
+    final boolean isDefault = jb.getAction().getValue(DialogWrapper.DEFAULT_ACTION) != null;
+    return new TBItemButton(
+      "dialog_buttons_group_item_" + index,
+      null, DialogWrapper.extractMnemonic(jb.getText()).second, act, -1, isDefault ? NSTLibrary.BUTTON_FLAG_COLORED : 0
+    );
   }
 
   private static AnAction _createAnAction(@NotNull Action action, JBOptionButton fromButton) {
