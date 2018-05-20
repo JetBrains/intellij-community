@@ -368,13 +368,22 @@ public class TouchBarsManager {
           }
 
           if (ag.getChildrenCount() > 0) {
-            result.addActionGroupButtons(ag, ms, TBItemAnActionButton.SHOWMODE_TEXT_ONLY);
-            result.setComponent(ob);
+            result.addActionGroupButtons(ag, ms, TBItemAnActionButton.SHOWMODE_TEXT_ONLY, null, item -> {
+              if (item instanceof TBItemAnActionButton)
+                ((TBItemAnActionButton)item).setComponent(ob);
+            });
           }
         }
       }
 
-      // 2. add main buttons and make principal
+      // 2. set different priorities for items, otherwise system can hide all items with the same priority (but some of them is able to be placed)
+      byte prio = -1;
+      for (TBItem item: result.myItems) {
+        if (item instanceof TBItemButton)
+          ((TBItemButton)item).setPriority(--prio);
+      }
+
+      // 3. add main buttons and make principal
       final List<TBItem> groupButtons = new ArrayList<>();
       for (JButton jb : jbuttons) {
         // TODO: make correct processing for disabled buttons, add them and update state by timer

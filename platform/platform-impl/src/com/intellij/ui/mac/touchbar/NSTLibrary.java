@@ -58,9 +58,14 @@ public interface NSTLibrary extends Library {
   int BUTTON_FLAG_SELECTED  = 1 << 1;
   int BUTTON_FLAG_COLORED   = 1 << 2;
 
+  int BUTTON_PRIORITY_SHIFT     = 3*8;
+  int BUTTON_PRIORITY_MASK      = 0xFF << BUTTON_PRIORITY_SHIFT;
+
   // all updaters are called from EDT (when update UI, or from all another threads except AppKit)
   // C-implementation creates NSAutoReleasePool internally
   void updateButton(ID buttonObj, int updateOptions, int buttWidth, int buttonFlags, String text, byte[] raster4ByteRGBA, int w, int h, Action action);
   void updatePopover(ID popoverObj, int itemWidth, String text, byte[] raster4ByteRGBA, int w, int h, ID tbObjExpand, ID tbObjTapAndHold);
   void updateScrubber(ID scrubObj, int itemWidth, ScrubberItemData[] items, int count);
+
+  static int priority2mask(byte prio) { return (prio + 128) << BUTTON_PRIORITY_SHIFT; }
 }

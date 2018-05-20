@@ -43,7 +43,7 @@ public class TouchBarActionBase extends TouchBarProjectBase {
       LOG.error("unregistered group: " + customizedGroup);
       return;
     }
-    addActionGroupButtons(customizedGroup, null, TBItemAnActionButton.SHOWMODE_IMAGE_ONLY_IF_PRESENTED, nodeId -> nodeId.contains(groupId + "_"));
+    addActionGroupButtons(customizedGroup, null, TBItemAnActionButton.SHOWMODE_IMAGE_ONLY_IF_PRESENTED, nodeId -> nodeId.contains(groupId + "_"), null);
   }
 
   public TouchBarActionBase(@NotNull String touchbarName, @NotNull Project project, boolean replaceEsc) {
@@ -85,9 +85,9 @@ public class TouchBarActionBase extends TouchBarProjectBase {
     });
   }
 
-  public void addActionGroupButtons(ActionGroup actionGroup, ModalityState modality, int showMode) { addActionGroupButtons(actionGroup, modality, showMode, null); }
+  public void addActionGroupButtons(ActionGroup actionGroup, ModalityState modality, int showMode) { addActionGroupButtons(actionGroup, modality, showMode, null, null); }
 
-  public void addActionGroupButtons(ActionGroup actionGroup, ModalityState modality, int showMode, INodeFilter filter) {
+  public void addActionGroupButtons(ActionGroup actionGroup, ModalityState modality, int showMode, INodeFilter filter, ICustomizer customizer) {
     _traverse(actionGroup, new ILeafVisitor() {
       private int mySeparatorCounter = 0;
 
@@ -120,6 +120,9 @@ public class TouchBarActionBase extends TouchBarProjectBase {
 
         if (isRunConfigPopover)
           butt.setWidth(ourRunConfigurationPopoverWidth);
+
+        if (customizer != null)
+          customizer.customize(butt);
       }
     }, filter);
   }
@@ -210,6 +213,9 @@ public class TouchBarActionBase extends TouchBarProjectBase {
 
   protected interface INodeFilter {
     boolean skip(String nodeId);
+  }
+  protected interface ICustomizer {
+    void customize(TBItem item);
   }
   private interface ILeafVisitor {
     void visit(AnAction leaf);
