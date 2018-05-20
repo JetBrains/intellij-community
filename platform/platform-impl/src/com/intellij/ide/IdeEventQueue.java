@@ -399,6 +399,8 @@ public class IdeEventQueue extends EventQueue {
     }
 
     if (isFocusEvent(e)) {
+      TouchBarsManager.onFocusEvent(e);
+
       AWTEvent finalEvent = e;
       if (FOCUS_AWARE_RUNNABLES_LOG.isDebugEnabled()) {
         FOCUS_AWARE_RUNNABLES_LOG.debug("Focus event list (execute on focus event): " + focusEventsList.stream().

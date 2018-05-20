@@ -25,6 +25,7 @@ import com.intellij.openapi.ui.popup.JBPopupListener;
 import com.intellij.openapi.ui.popup.LightweightWindowEvent;
 import com.intellij.openapi.ui.popup.ListPopupStep;
 import com.intellij.openapi.ui.popup.MnemonicNavigationFilter;
+import com.intellij.openapi.wm.ToolWindow;
 import com.intellij.openapi.wm.ToolWindowId;
 import com.intellij.openapi.wm.ex.ToolWindowManagerEx;
 import com.intellij.openapi.wm.ex.ToolWindowManagerListener;
@@ -36,10 +37,13 @@ import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import javax.swing.Timer;
+import java.awt.*;
 import java.awt.event.ActionEvent;
+import java.awt.event.FocusEvent;
 import java.awt.event.InputEvent;
 import java.awt.event.MouseWheelEvent;
 import java.util.*;
+import java.util.List;
 
 public class TouchBarsManager {
   private final static boolean IS_LOGGING_ENABLED = false;
@@ -118,7 +122,6 @@ public class TouchBarsManager {
               if (pd.getDbgSessions() <= 0)
                 return;
 
-              // TODO: stateChanged can be skipped sometimes when user clicks debug tool-window, need check by focus events or fix stateChanged-subscription
               showTouchBar(pd.get(BarType.DEBUGGER));
             }
           }
@@ -191,6 +194,31 @@ public class TouchBarsManager {
       _setBarContainer(ourTouchBarStack.peek());
     }
   }
+
+  public static void onFocusEvent(AWTEvent e) {
+    if (!isTouchBarAvailable())
+      return;
+
+    // NOTE: WindowEvent.WINDOW_GAINED_FOCUS can be fired when frame focuse
+    if (e.getID() == FocusEvent.FOCUS_GAINED) {
+      ourProjectData.forEach((project, data) -> {
+        final ToolWindow dtw = ToolWindowManagerEx.getInstanceEx(project).getToolWindow(ToolWindowId.DEBUG);
+        if (dtw == null)
+          return;
+
+        final Component comp = dtw.getComponent();
+        if (comp == null)
+          return;
+
+        if (!(e.getSource() instanceof Component))
+          return;
+
+        if (e.getSource() == comp || SwingUtilities.isDescendingFrom((Component)e.getSource(), comp))
+          showTouchBar(data.get(BarType.DEBUGGER));
+      });
+    }
+  }
+
 
   synchronized public static void showTempTouchBar(TouchBar tb) {
     _showTempTouchBar(tb, BarType.DIALOG);
