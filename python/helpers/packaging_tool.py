@@ -64,11 +64,24 @@ def do_uninstall(pkgs):
 
 
 def run_pip(args):
+    # runpy module was introduced in Python 2.5, but pip 10.0 doesn't support this version
+    # anyway so we can access pip.main() directly there
+    if sys.version_info < (2, 5):
+        try:
+            import pip
+        except ImportError:
+            error_no_pip()
+
+        exit(pip.main(args))
+
     import runpy
     sys.argv[1:] = args
     # pip.__main__ has been around since 2010 but support for executing it automatically
     # was added in runpy.run_module only in Python 2.7/3.1
-    module_name = 'pip.__main__' if sys.version_info < (2, 7) else 'pip'
+    if sys.version_info < (2, 7):
+        module_name = 'pip.__main__'
+    else:
+        module_name = 'pip'
     try:
         runpy.run_module(module_name, run_name='__main__', alter_sys=True)
     except ImportError:
