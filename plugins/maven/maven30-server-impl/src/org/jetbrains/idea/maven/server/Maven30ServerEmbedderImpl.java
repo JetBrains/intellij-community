@@ -635,6 +635,9 @@ public class Maven30ServerEmbedderImpl extends Maven3ServerEmbedder {
     final MavenExecutionRequest request = createRequest(file, activeProfiles, inactiveProfiles, null);
     if (!files.isEmpty() && file == null) { // maven.config and jvm.config are not resolved in "createRequest" method
       File firstFile = ContainerUtil.getFirstItem(files);
+      if (myUserProperties != null) {
+        request.getUserProperties().putAll(myUserProperties);
+      }
       //noinspection ConstantConditions
       request.getUserProperties().putAll(getMavenAndJvmConfigProperties(firstFile.getParentFile()));
     }
@@ -850,7 +853,10 @@ public class Maven30ServerEmbedderImpl extends Maven3ServerEmbedder {
       getComponent(MavenExecutionRequestPopulator.class).populateDefaults(result);
 
       result.setSystemProperties(mySystemProperties);
-      Properties userProperties = new Properties(myUserProperties);
+      Properties userProperties = new Properties();
+      if (myUserProperties != null) {
+        userProperties.putAll(myUserProperties);
+      }
       if (file != null) {
         userProperties.putAll(getMavenAndJvmConfigProperties(file.getParentFile()));
       }
