@@ -8,7 +8,7 @@ class Foo {
   @Contract("!null -> !null; <warning descr="Contract clause '!null -> null' is never satisfied as its conditions are covered by previous contracts">!null -> null</warning>")
   public native String repeating(String x);
 
-  @Contract("true, false, _ -> !null; true, true, _\u0020-> null; <warning descr="Contract clause 'true, _, _ -> fail' is never satisfied as its conditions are covered by previous contracts">true, _, _ -> fail</warning>")
+  @Contract("true, false, _ ->\40!null; true, true,\040_\u0020-> null; <warning descr="Contract clause 'true, _, _ -> fail' is never satisfied as its conditions are covered by previous contracts">true, _, _ -> fail</warning>")
   public native String booleanProblem(boolean x, boolean y, String z);
 
   @Contract("true, false, _ -> !null; true, true, _ -> null; false, _, _ -> fail")
