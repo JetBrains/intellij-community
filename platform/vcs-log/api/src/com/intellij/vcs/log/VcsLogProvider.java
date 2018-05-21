@@ -140,6 +140,16 @@ public interface VcsLogProvider {
   }
 
   /**
+   * Returns {@link VcsLogFileHistoryHandler} for this provider in order to support Log-based file history.
+   *
+   * @return file history handler or null if unsupported.
+   */
+  @Nullable
+  default VcsLogFileHistoryHandler getFileHistoryHandler() {
+    return null;
+  }
+
+  /**
    * Returns the VCS root which should be used by the file history instead of the root found by standard mechanism (through mappings).
    */
   @Nullable
