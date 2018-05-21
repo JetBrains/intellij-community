@@ -24,13 +24,8 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 
-/**
- * @author Dmitry Batkovich
- */
 public class ScopesOrderDialog extends DialogWrapper {
-
-  private final JList myOptionsList = new JBList();
-
+  private final JList<String> myOptionsList = new JBList<>();
   private final InspectionProfileImpl myInspectionProfile;
   private final Project myProject;
   private final JPanel myPanel;
@@ -67,7 +62,7 @@ public class ScopesOrderDialog extends DialogWrapper {
   }
 
   private void fillList() {
-    DefaultListModel model = new DefaultListModel();
+    DefaultListModel<String> model = new DefaultListModel<>();
     model.removeAllElements();
 
     final List<String> scopes = new ArrayList<>();
@@ -98,7 +93,7 @@ public class ScopesOrderDialog extends DialogWrapper {
     final int size = myOptionsList.getModel().getSize();
     final String[] newScopeOrder = new String[size];
     for (int i = 0; i < size; i++) {
-      final String scopeName = (String) myOptionsList.getModel().getElementAt(i);
+      final String scopeName = myOptionsList.getModel().getElementAt(i);
       newScopeOrder[i] = scopeName;
     }
     if (!Arrays.equals(newScopeOrder, myInspectionProfile.getScopesOrder())) {
