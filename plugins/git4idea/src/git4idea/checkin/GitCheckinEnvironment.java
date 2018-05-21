@@ -245,7 +245,7 @@ public class GitCheckinEnvironment implements CheckinEnvironment {
       if (!exceptions.isEmpty()) return exceptions;
       changedWithIndex.addAll(caseOnlyRenameChanges);
 
-      if (!changedWithIndex.isEmpty()) {
+      if (!changedWithIndex.isEmpty() || Registry.is("git.force.commit.using.staging.area")) {
         runWithMessageFile(myProject, root, message, messageFile -> {
           exceptions.addAll(commitUsingIndex(myProject, root, changes, changedWithIndex, messageFile));
         });
