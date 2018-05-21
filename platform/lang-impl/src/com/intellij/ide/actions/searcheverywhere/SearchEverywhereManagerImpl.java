@@ -124,7 +124,7 @@ public class SearchEverywhereManagerImpl implements SearchEverywhereManager {
   private SearchEverywhereUI createView(Project project,
                                         List<SearchEverywhereContributor> serviceContributors,
                                         List<SearchEverywhereContributor> allContributors) {
-    SearchEverywhereUI view = new SearchEverywhereUI(project, serviceContributors, allContributors, null);
+    SearchEverywhereUI view = new SearchEverywhereUI(project, serviceContributors, allContributors);
     view.addPropertyChangeListener("preferredSize", evt -> {
       if (isShown()) {
         myBalloon.pack(true, true);

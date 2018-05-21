@@ -83,10 +83,8 @@ public class SearchEverywhereUI extends BorderLayoutPanel implements Disposable 
   private Runnable searchFinishedHandler = () -> {};
   private final JPanel mySuggestionsPanel;
 
-  // todo remove second param #UX-1
   public SearchEverywhereUI(Project project, List<SearchEverywhereContributor> serviceContributors,
-                            List<SearchEverywhereContributor> contributors,
-                            @Nullable SearchEverywhereContributor selected) {
+                            List<SearchEverywhereContributor> contributors) {
     withMinimumWidth(670);
     withPreferredWidth(670);
     withBackground(JBUI.CurrentTheme.SearchEverywhere.dialogBackground());
@@ -109,7 +107,7 @@ public class SearchEverywhereUI extends BorderLayoutPanel implements Disposable 
       }
     };
 
-    JPanel contributorsPanel = createTabPanel(contributors, selected);
+    JPanel contributorsPanel = createTabPanel(contributors);
     JPanel settingsPanel = createSettingsPanel();
     mySearchField = createSearchField();
     mySuggestionsPanel = createSuggestionsPanel();
@@ -283,7 +281,7 @@ public class SearchEverywhereUI extends BorderLayoutPanel implements Disposable 
   }
 
   @NotNull
-  private JPanel createTabPanel(List<SearchEverywhereContributor> contributors, @Nullable SearchEverywhereContributor selected) {
+  private JPanel createTabPanel(List<SearchEverywhereContributor> contributors) {
     JPanel contributorsPanel = new JPanel(new FlowLayout(FlowLayout.LEFT, 0, 0));
     contributorsPanel.setOpaque(false);
 
@@ -291,19 +289,12 @@ public class SearchEverywhereUI extends BorderLayoutPanel implements Disposable 
     contributorsPanel.add(allTab);
     myTabs.add(allTab);
 
-
     contributors.forEach(contributor -> {
       SETab tab = new SETab(contributor);
-      if (contributor == selected) {
-        switchToTab(tab);
-      }
       contributorsPanel.add(tab);
       myTabs.add(tab);
     });
-
-    if (mySelectedTab == null) {
-      switchToTab(allTab);
-    }
+    switchToTab(allTab);
 
     return contributorsPanel;
   }
