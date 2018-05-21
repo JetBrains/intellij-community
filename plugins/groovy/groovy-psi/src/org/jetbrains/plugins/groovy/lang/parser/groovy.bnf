@@ -935,7 +935,7 @@ list_or_map ::= empty_list | empty_map | non_empty_list_or_map
 
 private empty_map ::= '[' mb_nl ':' mb_nl ']'
 private empty_list ::= '[' mb_nl ']'
-private non_empty_list_or_map ::= '[' parse_bracket_argument_list ']'
+private non_empty_list_or_map ::= '[' bracket_argument_list_inner ']'
 {
   pin = 2
 }
@@ -981,7 +981,7 @@ private cast_expression_no_pin ::= '(' type_element ')' priority1_4
 
 private priority1_5 ::= index_expression | postfix_unary_expression
 index_expression ::= expression index_expression_argument_list
-index_expression_argument_list ::= !empty_map '[' parse_bracket_argument_list ']'
+index_expression_argument_list ::= !empty_map '[' bracket_argument_list_inner ']'
 {
   pin = 2
   elementType = argument_list
@@ -1089,19 +1089,29 @@ fake argument_list ::=
 empty_argument_list ::= { elementType = argument_list }
 
 private call_argument_list_start ::= &'(' // adds a variant, to achieve "'(' expected" generated message
-call_argument_list ::= empty_pars | '(' parse_paren_argument_list ')'
+call_argument_list ::= '(' (')') | '(' paren_argument_list_inner ')'
 {
   elementType = argument_list
   pin('call_argument_list_1') = 1
   consumeTokenMethod = 'consumeTokenFast'
 }
 
-private external parse_paren_argument_list ::= parseArgumentList 'T_RPAREN' argument
-private external parse_bracket_argument_list ::= parseArgumentList 'T_RBRACK' argument
+private paren_argument_list_inner ::= paren_argument_list_item* <<clearError>>
+private bracket_argument_list_inner ::= bracket_argument_list_item*
+
+private paren_argument_list_item ::= <<argument_list_item ')'>>
+private bracket_argument_list_item ::= <<argument_list_item ']'>>
+
+private meta argument_list_item ::= <<argument_list_item_head <<brace>>>> <<argument_list_item_end <<brace>>>> { pin = 1 }
+private meta argument_list_item_head ::= <<argument_list_item_head0 <<brace>> <<argument_list_item_recovery <<brace>>>>>>
+private meta argument_list_item_head0 ::= !(end_of_file | <<brace>>) parse_argument { pin = 1 recoverWhile = '<<recovery>>' }
+private meta argument_list_item_end ::= ',' | &<<brace>>
+private meta argument_list_item_recovery ::= !(<<brace>> | ',' | '}' | qualified_reference_expression_identifiers | expression_start | argument_label)
 
 application_argument_list ::= <<applicationArguments application_arguments>>
 private application_arguments ::= argument (',' mb_nl argument)*
 
+private parse_argument ::= <<parseArgument argument>>
 private argument ::= spread_list_argument | named_argument | <<parseExpressionOrMapArgument expression>>
 spread_list_argument ::= !<<isApplicationArguments>> '*' expression { consumeTokenMethod = 'consumeTokenFast' }
 named_argument ::= argument_label named_argument_tail
@@ -1202,7 +1212,7 @@ private nl ::= NL { consumeTokenMethod = 'consumeTokenFast' }
 private meta mb_nl_group ::= <<something>> | nl <<something>> // allows error reporting in position before the new line
 private empty ::= ()
 private external fail ::= noMatch
-private empty_pars ::= '(' ')' { consumeTokenMethod = 'consumeTokenFast' }
+private external end_of_file ::= eof
 // endregion
 
 

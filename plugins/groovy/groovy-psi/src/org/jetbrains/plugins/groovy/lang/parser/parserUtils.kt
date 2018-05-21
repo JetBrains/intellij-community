@@ -13,7 +13,6 @@ import com.intellij.openapi.util.Key
 import com.intellij.psi.tree.IElementType
 import com.intellij.psi.tree.TokenSet
 import org.jetbrains.plugins.groovy.GroovyBundle
-import org.jetbrains.plugins.groovy.lang.parser.parsing.statements.expressions.arguments.ArgumentList
 import org.jetbrains.plugins.groovy.lang.psi.GroovyElementTypes.*
 import org.jetbrains.plugins.groovy.util.get
 import org.jetbrains.plugins.groovy.util.getAndReset
@@ -122,9 +121,9 @@ fun codeReferenceTypeArguments(builder: PsiBuilder, level: Int, typeArgumentsPar
   return true
 }
 
-fun parseArgumentList(builder: PsiBuilder, level: Int, closingBrace: IElementType, argumentParser: Parser): Boolean {
+fun parseArgument(builder: PsiBuilder, level: Int, argumentParser: Parser): Boolean {
   return builder.withKey(parseArguments, true) {
-    ArgumentList.parseArgumentList(builder, level, closingBrace, argumentParser)
+    argumentParser.parse(builder, level)
   }
 }
 
@@ -313,4 +312,9 @@ fun clearVariants(builder: PsiBuilder, level: Int): Boolean {
 
 fun replaceVariants(builder: PsiBuilder, level: Int, variant: String): Boolean {
   return clearVariants(builder, level) && addVariant(builder, level, variant)
+}
+
+fun clearError(builder: PsiBuilder, level: Int): Boolean {
+  ErrorState.get(builder).currentFrame.errorReportedAt = -1
+  return true
 }

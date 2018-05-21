@@ -949,6 +949,111 @@ public class GroovyBnfParser implements PsiParser, LightPsiParser {
   }
 
   /* ********************************************************** */
+  // <<argument_list_item_head <<brace>>>> <<argument_list_item_end <<brace>>>>
+  static boolean argument_list_item(PsiBuilder b, int l, Parser _brace) {
+    if (!recursion_guard_(b, l, "argument_list_item")) return false;
+    boolean r, p;
+    Marker m = enter_section_(b, l, _NONE_);
+    r = argument_list_item_head(b, l + 1, _brace);
+    p = r; // pin = 1
+    r = r && argument_list_item_end(b, l + 1, _brace);
+    exit_section_(b, l, m, r, p, null);
+    return r || p;
+  }
+
+  /* ********************************************************** */
+  // ',' | &<<brace>>
+  static boolean argument_list_item_end(PsiBuilder b, int l, Parser _brace) {
+    if (!recursion_guard_(b, l, "argument_list_item_end")) return false;
+    boolean r;
+    Marker m = enter_section_(b);
+    r = consumeToken(b, T_COMMA);
+    if (!r) r = argument_list_item_end_1(b, l + 1, _brace);
+    exit_section_(b, m, null, r);
+    return r;
+  }
+
+  // &<<brace>>
+  private static boolean argument_list_item_end_1(PsiBuilder b, int l, Parser _brace) {
+    if (!recursion_guard_(b, l, "argument_list_item_end_1")) return false;
+    boolean r;
+    Marker m = enter_section_(b, l, _AND_);
+    r = _brace.parse(b, l);
+    exit_section_(b, l, m, r, false, null);
+    return r;
+  }
+
+  /* ********************************************************** */
+  // <<argument_list_item_head0 <<brace>> <<argument_list_item_recovery <<brace>>>>>>
+  static boolean argument_list_item_head(PsiBuilder b, int l, Parser _brace) {
+    return argument_list_item_head0(b, l + 1, _brace, new Parser() {
+      public boolean parse(PsiBuilder b, int l) {
+        return argument_list_item_recovery(b, l + 1, _brace);
+      }
+    });
+  }
+
+  /* ********************************************************** */
+  // !(end_of_file | <<brace>>) parse_argument
+  static boolean argument_list_item_head0(PsiBuilder b, int l, Parser _brace, Parser _recovery) {
+    if (!recursion_guard_(b, l, "argument_list_item_head0")) return false;
+    boolean r, p;
+    Marker m = enter_section_(b, l, _NONE_);
+    r = argument_list_item_head0_0(b, l + 1, _brace, _recovery);
+    p = r; // pin = 1
+    r = r && parse_argument(b, l + 1);
+    exit_section_(b, l, m, r, p, _recovery);
+    return r || p;
+  }
+
+  // !(end_of_file | <<brace>>)
+  private static boolean argument_list_item_head0_0(PsiBuilder b, int l, Parser _brace, Parser _recovery) {
+    if (!recursion_guard_(b, l, "argument_list_item_head0_0")) return false;
+    boolean r;
+    Marker m = enter_section_(b, l, _NOT_);
+    r = !argument_list_item_head0_0_0(b, l + 1, _brace, _recovery);
+    exit_section_(b, l, m, r, false, null);
+    return r;
+  }
+
+  // end_of_file | <<brace>>
+  private static boolean argument_list_item_head0_0_0(PsiBuilder b, int l, Parser _brace, Parser _recovery) {
+    if (!recursion_guard_(b, l, "argument_list_item_head0_0_0")) return false;
+    boolean r;
+    Marker m = enter_section_(b);
+    r = eof(b, l + 1);
+    if (!r) r = _brace.parse(b, l);
+    exit_section_(b, m, null, r);
+    return r;
+  }
+
+  /* ********************************************************** */
+  // !(<<brace>> | ',' | '}' | qualified_reference_expression_identifiers | expression_start | argument_label)
+  static boolean argument_list_item_recovery(PsiBuilder b, int l, Parser _brace) {
+    if (!recursion_guard_(b, l, "argument_list_item_recovery")) return false;
+    boolean r;
+    Marker m = enter_section_(b, l, _NOT_);
+    r = !argument_list_item_recovery_0(b, l + 1, _brace);
+    exit_section_(b, l, m, r, false, null);
+    return r;
+  }
+
+  // <<brace>> | ',' | '}' | qualified_reference_expression_identifiers | expression_start | argument_label
+  private static boolean argument_list_item_recovery_0(PsiBuilder b, int l, Parser _brace) {
+    if (!recursion_guard_(b, l, "argument_list_item_recovery_0")) return false;
+    boolean r;
+    Marker m = enter_section_(b);
+    r = _brace.parse(b, l);
+    if (!r) r = consumeToken(b, T_COMMA);
+    if (!r) r = consumeToken(b, T_RBRACE);
+    if (!r) r = qualified_reference_expression_identifiers(b, l + 1);
+    if (!r) r = expression_start(b, l + 1);
+    if (!r) r = argument_label(b, l + 1);
+    exit_section_(b, m, null, r);
+    return r;
+  }
+
+  /* ********************************************************** */
   // mandatory_expression optional_expression*
   public static boolean array_declarator(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "array_declarator")) return false;
@@ -1173,6 +1278,25 @@ public class GroovyBnfParser implements PsiParser, LightPsiParser {
   }
 
   /* ********************************************************** */
+  // bracket_argument_list_item*
+  static boolean bracket_argument_list_inner(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "bracket_argument_list_inner")) return false;
+    int c = current_position_(b);
+    while (true) {
+      if (!bracket_argument_list_item(b, l + 1)) break;
+      if (!empty_element_parsed_guard_(b, "bracket_argument_list_inner", c)) break;
+      c = current_position_(b);
+    }
+    return true;
+  }
+
+  /* ********************************************************** */
+  // <<argument_list_item ']'>>
+  static boolean bracket_argument_list_item(PsiBuilder b, int l) {
+    return argument_list_item(b, l + 1, T_RBRACK_parser_);
+  }
+
+  /* ********************************************************** */
   // 'break' IDENTIFIER?
   public static boolean break_statement(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "break_statement")) return false;
@@ -1193,26 +1317,47 @@ public class GroovyBnfParser implements PsiParser, LightPsiParser {
   }
 
   /* ********************************************************** */
-  // empty_pars | '(' parse_paren_argument_list ')'
+  // '(' (')') | '(' paren_argument_list_inner ')'
   public static boolean call_argument_list(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "call_argument_list")) return false;
     if (!nextTokenIsFast(b, T_LPAREN)) return false;
     boolean r;
     Marker m = enter_section_(b);
-    r = empty_pars(b, l + 1);
+    r = call_argument_list_0(b, l + 1);
     if (!r) r = call_argument_list_1(b, l + 1);
     exit_section_(b, m, ARGUMENT_LIST, r);
     return r;
   }
 
-  // '(' parse_paren_argument_list ')'
+  // '(' (')')
+  private static boolean call_argument_list_0(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "call_argument_list_0")) return false;
+    boolean r;
+    Marker m = enter_section_(b);
+    r = consumeTokenFast(b, T_LPAREN);
+    r = r && call_argument_list_0_1(b, l + 1);
+    exit_section_(b, m, null, r);
+    return r;
+  }
+
+  // (')')
+  private static boolean call_argument_list_0_1(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "call_argument_list_0_1")) return false;
+    boolean r;
+    Marker m = enter_section_(b);
+    r = consumeTokenFast(b, T_RPAREN);
+    exit_section_(b, m, null, r);
+    return r;
+  }
+
+  // '(' paren_argument_list_inner ')'
   private static boolean call_argument_list_1(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "call_argument_list_1")) return false;
     boolean r, p;
     Marker m = enter_section_(b, l, _NONE_);
     r = consumeTokenFast(b, T_LPAREN);
     p = r; // pin = 1
-    r = r && report_error_(b, parseArgumentList(b, l + 1, T_RPAREN, argument_parser_));
+    r = r && report_error_(b, paren_argument_list_inner(b, l + 1));
     r = p && consumeToken(b, T_RPAREN) && r;
     exit_section_(b, l, m, r, p, null);
     return r || p;
@@ -2814,18 +2959,6 @@ public class GroovyBnfParser implements PsiParser, LightPsiParser {
   }
 
   /* ********************************************************** */
-  // '(' ')'
-  static boolean empty_pars(PsiBuilder b, int l) {
-    if (!recursion_guard_(b, l, "empty_pars")) return false;
-    if (!nextTokenIsFast(b, T_LPAREN)) return false;
-    boolean r;
-    Marker m = enter_section_(b);
-    r = consumeTokens(b, 0, T_LPAREN, T_RPAREN);
-    exit_section_(b, m, null, r);
-    return r;
-  }
-
-  /* ********************************************************** */
   // empty
   public static boolean empty_throws_clause(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "empty_throws_clause")) return false;
@@ -3587,7 +3720,7 @@ public class GroovyBnfParser implements PsiParser, LightPsiParser {
   }
 
   /* ********************************************************** */
-  // !empty_map '[' parse_bracket_argument_list ']'
+  // !empty_map '[' bracket_argument_list_inner ']'
   public static boolean index_expression_argument_list(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "index_expression_argument_list")) return false;
     boolean r, p;
@@ -3595,7 +3728,7 @@ public class GroovyBnfParser implements PsiParser, LightPsiParser {
     r = index_expression_argument_list_0(b, l + 1);
     r = r && consumeTokenFast(b, T_LBRACK);
     p = r; // pin = 2
-    r = r && report_error_(b, parseArgumentList(b, l + 1, T_RBRACK, argument_parser_));
+    r = r && report_error_(b, bracket_argument_list_inner(b, l + 1));
     r = p && consumeToken(b, T_RBRACK) && r;
     exit_section_(b, l, m, r, p, null);
     return r || p;
@@ -4232,14 +4365,14 @@ public class GroovyBnfParser implements PsiParser, LightPsiParser {
   }
 
   /* ********************************************************** */
-  // '[' parse_bracket_argument_list ']'
+  // '[' bracket_argument_list_inner ']'
   static boolean non_empty_list_or_map(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "non_empty_list_or_map")) return false;
     if (!nextTokenIs(b, T_LBRACK)) return false;
     boolean r, p;
     Marker m = enter_section_(b, l, _NONE_);
     r = consumeToken(b, T_LBRACK);
-    r = r && parseArgumentList(b, l + 1, T_RBRACK, argument_parser_);
+    r = r && bracket_argument_list_inner(b, l + 1);
     p = r; // pin = 2
     r = r && consumeToken(b, T_RBRACK);
     exit_section_(b, l, m, r, p, null);
@@ -4499,6 +4632,36 @@ public class GroovyBnfParser implements PsiParser, LightPsiParser {
   }
 
   /* ********************************************************** */
+  // paren_argument_list_item* <<clearError>>
+  static boolean paren_argument_list_inner(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "paren_argument_list_inner")) return false;
+    boolean r;
+    Marker m = enter_section_(b);
+    r = paren_argument_list_inner_0(b, l + 1);
+    r = r && clearError(b, l + 1);
+    exit_section_(b, m, null, r);
+    return r;
+  }
+
+  // paren_argument_list_item*
+  private static boolean paren_argument_list_inner_0(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "paren_argument_list_inner_0")) return false;
+    int c = current_position_(b);
+    while (true) {
+      if (!paren_argument_list_item(b, l + 1)) break;
+      if (!empty_element_parsed_guard_(b, "paren_argument_list_inner_0", c)) break;
+      c = current_position_(b);
+    }
+    return true;
+  }
+
+  /* ********************************************************** */
+  // <<argument_list_item ')'>>
+  static boolean paren_argument_list_item(PsiBuilder b, int l) {
+    return argument_list_item(b, l + 1, T_RPAREN_parser_);
+  }
+
+  /* ********************************************************** */
   // '('')' | '(' <<paren_list_inner <<item>>>> ')'
   static boolean paren_list(PsiBuilder b, int l, Parser _item) {
     if (!recursion_guard_(b, l, "paren_list")) return false;
@@ -4586,6 +4749,12 @@ public class GroovyBnfParser implements PsiParser, LightPsiParser {
     if (!r) r = parseTailLeftFlat(b, l + 1, constructor_start_parser_, annotation_method_parser_);
     exit_section_(b, m, null, r);
     return r;
+  }
+
+  /* ********************************************************** */
+  // <<parseArgument argument>>
+  static boolean parse_argument(PsiBuilder b, int l) {
+    return parseArgument(b, l + 1, argument_parser_);
   }
 
   /* ********************************************************** */
@@ -7050,6 +7219,16 @@ public class GroovyBnfParser implements PsiParser, LightPsiParser {
   final static Parser T_LBRACE_parser_ = new Parser() {
     public boolean parse(PsiBuilder b, int l) {
       return consumeTokenFast(b, T_LBRACE);
+    }
+  };
+  final static Parser T_RBRACK_parser_ = new Parser() {
+    public boolean parse(PsiBuilder b, int l) {
+      return consumeToken(b, T_RBRACK);
+    }
+  };
+  final static Parser T_RPAREN_parser_ = new Parser() {
+    public boolean parse(PsiBuilder b, int l) {
+      return consumeToken(b, T_RPAREN);
     }
   };
   final static Parser angle_list_item_recovery_parser_ = new Parser() {
