@@ -69,16 +69,16 @@ internal data class GitObject(val file: String, val hash: String, val repo: File
  * @param path path in repo
  * @return root of repo
  */
-internal fun findGitRepoRoot(path: String): File = File(path).let {
+internal fun findGitRepoRoot(path: String, silent: Boolean = false): File = File(path).let {
   if (it.isDirectory && it.listFiles().find {
       it.isDirectory && it.name == ".git"
     } != null) {
-    log("Git repo found in $path")
+    if (!silent) log("Git repo found in $path")
     it
   }
   else if (it.parent != null) {
-    log("No git repo found in $path")
-    findGitRepoRoot(it.parent)
+    if (!silent) log("No git repo found in $path")
+    findGitRepoRoot(it.parent, silent)
   }
   else {
     throw IllegalArgumentException("No git repo found in $path")

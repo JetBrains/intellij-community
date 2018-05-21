@@ -13,7 +13,7 @@ internal fun report(
   addedByDev: Collection<String>, removedByDev: Collection<String>,
   modifiedByDev: Collection<String>, addedByDesigners: Collection<String>,
   removedByDesigners: Collection<String>, modifiedByDesigners: Collection<String>,
-  consistent: Collection<String>, errorHandler: Consumer<String>, doSync: Boolean
+  consistent: Collection<String>, errorHandler: Consumer<String>, doNotify: Boolean
 ) {
   log("Skipped $skipped dirs")
   fun Collection<String>.logIcons() = if (size < 100) joinToString() else size.toString()
@@ -39,7 +39,7 @@ internal fun report(
     |${consistent.size} consistent icons in both repos
   """.trimMargin()
   log(report)
-  if (!doSync) {
+  if (doNotify) {
     val success = addedByDev.isEmpty() && removedByDev.isEmpty() && modifiedByDev.isEmpty()
     sendNotification(success, report)
     if (!success) errorHandler.accept(report)

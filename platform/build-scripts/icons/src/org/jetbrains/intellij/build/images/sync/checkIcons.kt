@@ -15,15 +15,17 @@ import java.util.stream.Collectors
 
 private const val repoArg = "repos"
 private const val patternArg = "skip.dirs.pattern"
-private const val sync = "sync"
+private const val syncIcons = "sync.icons"
+private const val syncDevIcons = "sync.dev.icons"
 
 fun main(args: Array<String>) {
   if (args.isEmpty()) printUsageAndExit()
   val repos = args.find(repoArg)?.split(",") ?: emptyList()
   if (repos.size < 2) printUsageAndExit()
   val skipPattern = args.find(patternArg)
-  val sync = args.find(sync)?.toBoolean()
-  checkIcons(repos[0], repos[1], skipPattern, sync ?: false)
+  checkIcons(repos[0], repos[1], skipPattern,
+             args.find(syncIcons)?.toBoolean() ?: false,
+             args.find(syncDevIcons)?.toBoolean() ?: false)
 }
 
 private fun Array<String>.find(arg: String) = this.find {
@@ -31,7 +33,7 @@ private fun Array<String>.find(arg: String) = this.find {
 }?.removePrefix("$arg=")
 
 private fun printUsageAndExit() {
-  println("Usage: $repoArg=<devRepoDir>,<iconsRepoDir> [$patternArg=...] [$sync=false|true]")
+  println("Usage: $repoArg=<devRepoDir>,<iconsRepoDir> [$patternArg=...] [$syncIcons=false|true] [$syncDevIcons=false|true]")
   System.exit(1)
 }
 
@@ -41,8 +43,8 @@ private fun printUsageAndExit() {
  * @param skipDirsPattern dir name pattern to skip unnecessary icons
  */
 fun checkIcons(
-  devRepoDir: String, iconsRepoDir: String,
-  skipDirsPattern: String?, doSync: Boolean = false,
+  devRepoDir: String, iconsRepoDir: String, skipDirsPattern: String?,
+  doSyncIconsRepo: Boolean = false, doSyncDevRepo: Boolean = false,
   loggerImpl: Consumer<String> = Consumer { println(it) },
   errorHandler: Consumer<String> = Consumer { throw IllegalStateException(it) }
 ) {
@@ -84,16 +86,20 @@ fun checkIcons(
       }
     )
   }
-  if (doSync) callSafely {
-    syncAdded(addedByDev, devIconsBackup, iconsRepo, File(iconsRepoDir))
+  if (doSyncIconsRepo) callSafely {
+    syncAdded(addedByDev, devIconsBackup, File(iconsRepoDir)) { iconsRepo }
     syncModified(modifiedByDev, icons, devIconsBackup)
     syncRemoved(removedByDev, icons)
+  }
+  if (doSyncDevRepo) callSafely {
+    syncAdded(addedByDesigners, icons, File(devRepoDir)) { findGitRepoRoot(it.absolutePath, true) }
+    syncModified(modifiedByDesigners, devIconsBackup, icons)
   }
   report(
     devIconsBackup.size, icons.size, skippedDirs.size,
     addedByDev, removedByDev, modifiedByDev,
     addedByDesigners, removedByDesigners, modifiedByDesigners,
-    consistent, errorHandler, doSync
+    consistent, errorHandler, !doSyncIconsRepo && !doSyncDevRepo
   )
 }
 
@@ -197,18 +203,21 @@ private fun removedByDev(
   icons: Map<String, GitObject>,
   devRepos: Collection<File>, devRepoDir: File) =
   addedByDesigners.parallelStream().filter { path ->
-    devRepos.mapNotNull {
-      val file = File(devRepoDir, path).absolutePath
-      if (file.startsWith(it.absolutePath))
-        latestChangeTime(file.removePrefix("${it.absolutePath}/"), it)
-      else null
-    }.firstOrNull { it > 0 }?.let { latestChangeTimeByDev ->
-      // latest changes are made by developers
-      latestChangeTime(icons[path]) < latestChangeTimeByDev
-    } ?: false
+    // latest changes are made by developers
+    latestChangeTime(icons[path]) < latestChangeTime(File(devRepoDir, path).absolutePath, devRepos)
   }.collect(Collectors.toList()).also {
     addedByDesigners.removeAll(it)
   }
+
+private fun latestChangeTime(file: String, repos: Collection<File>): Long {
+  for (repo in repos) {
+    if (file.startsWith(repo.absolutePath)) {
+      val lct = latestChangeTime(file.removePrefix("${repo.absolutePath}/"), repo)
+      if (lct > 0) return lct
+    }
+  }
+  return -1
+}
 
 private fun modifiedByDev(
   modified: Collection<String>,

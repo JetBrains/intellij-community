@@ -43,7 +43,8 @@ target('default': 'Check icons in IntelliJIcons repository') {
     Class.forName('org.jetbrains.intellij.build.images.sync.CheckIconsKt').checkIcons(
       repos[0], repos[1],
       System.properties.'skip.dirs.pattern'?.toString() ?: null,
-      Boolean.parseBoolean(System.properties.'sync' as String),
+      Boolean.parseBoolean(System.properties.'sync.icons' as String),
+      Boolean.parseBoolean(System.properties.'sync.dev.icons' as String),
       { String msg -> msg.split(/\n/).each { context.messages.info(it) } },
       { String msg -> context.messages.buildStatus(msg); System.exit(1) }
     )

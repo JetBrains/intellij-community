@@ -4,32 +4,36 @@ package org.jetbrains.intellij.build.images.sync
 import java.io.File
 
 internal fun syncAdded(added: Collection<String>,
-                       devIcons: Map<String, GitObject>,
-                       iconsRepo: File, iconsDir: File) {
-  val unversioned = mutableListOf<String>()
+                       sourceRepoMap: Map<String, GitObject>,
+                       targetDir: File, targetRepo: (File) -> File) {
+  val unversioned = mutableMapOf<File, MutableList<String>>()
   added.forEach {
-    val target = File(iconsDir, it)
-    if (target.exists()) log("$it already exists in icons repo!")
-    val source = devIcons[it]!!.getFile()
+    val target = File(targetDir, it)
+    if (target.exists()) log("$it already exists in target repo!")
+    val source = sourceRepoMap[it]!!.getFile()
     source.copyTo(target, overwrite = true)
-    unversioned += target.relativeTo(iconsRepo).path
+    val repo = targetRepo(target)
+    if (!unversioned.containsKey(repo)) unversioned[repo] = mutableListOf()
+    unversioned[repo]!!.add(target.relativeTo(repo).path)
   }
-  addChangesToGit(unversioned, iconsRepo)
+  unversioned.forEach { repo, add ->
+    addChangesToGit(add, repo)
+  }
 }
 
 internal fun syncModified(modified: Collection<String>,
-                          icons: Map<String, GitObject>,
-                          devIcons: Map<String, GitObject>) {
+                          targetRepoMap: Map<String, GitObject>,
+                          sourceRepoMap: Map<String, GitObject>) {
   modified.forEach {
-    val target = icons[it]!!.getFile()
-    val source = devIcons[it]!!.getFile()
+    val target = targetRepoMap[it]!!.getFile()
+    val source = sourceRepoMap[it]!!.getFile()
     source.copyTo(target, overwrite = true)
   }
 }
 
 internal fun syncRemoved(removed: Collection<String>,
-                         icons: Map<String, GitObject>) {
-  removed.map { icons[it]!!.getFile() }.forEach {
+                         targetRepoMap: Map<String, GitObject>) {
+  removed.map { targetRepoMap[it]!!.getFile() }.forEach {
     if (!it.delete()) log("Failed to delete ${it.absolutePath}")
   }
 }
