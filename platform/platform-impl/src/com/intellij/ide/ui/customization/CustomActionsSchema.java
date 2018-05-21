@@ -57,6 +57,8 @@ public class CustomActionsSchema implements PersistentStateComponent<Element> {
   private List<ActionUrl> myActions = new ArrayList<>();
   private boolean isFirstLoadState = true;
 
+  private int myModificationStamp = 0;
+
   public CustomActionsSchema() {
     myIdToName.put(IdeActions.GROUP_MAIN_MENU, ActionsTreeUtil.MAIN_MENU_TITLE);
     myIdToName.put(IdeActions.GROUP_MAIN_TOOLBAR, ActionsTreeUtil.MAIN_TOOLBAR);
@@ -215,6 +217,16 @@ public class CustomActionsSchema implements PersistentStateComponent<Element> {
     if (frame != null) {
       frame.updateView();
     }
+
+    getInstance().incrementModificationStamp();
+  }
+
+  public void incrementModificationStamp() {
+    myModificationStamp++;
+  }
+
+  public int getModificationStamp() {
+    return myModificationStamp;
   }
 
   @Override
