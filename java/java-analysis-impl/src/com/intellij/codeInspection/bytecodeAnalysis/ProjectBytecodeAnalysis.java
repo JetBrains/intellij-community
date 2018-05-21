@@ -470,7 +470,7 @@ public class ProjectBytecodeAnalysis {
     // They are squashed to "_,_->!null" which is better expressed as @NotNull annotation
     if (nonFailingContracts.size() == 1) {
       StandardMethodContract contract = nonFailingContracts.get(0);
-      if (contract.getReturnValue().isNotNull() && contract.isTrivial()) {
+      if (contract.getReturnValue().equals(ContractReturnValue.returnNotNull()) && contract.isTrivial()) {
         nonFailingContracts = Collections.emptyList();
         notNulls.add(methodKey);
       }
