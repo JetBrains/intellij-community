@@ -15,11 +15,9 @@ import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
-import java.util.stream.Stream;
 
 import static com.intellij.codeInspection.dataFlow.StandardMethodContract.ParseException;
 import static com.intellij.codeInspection.dataFlow.StandardMethodContract.parseContract;
@@ -105,7 +103,8 @@ public class ContractInspection extends AbstractBaseJavaLocalInspectionTool {
     }
     PsiParameter[] parameters = method.getParameterList().getParameters();
     int paramCount = parameters.length;
-    List<Conditions> possibleConditions = Collections.singletonList(new Conditions(paramCount));
+    List<StandardMethodContract> possibleContracts =
+      Collections.singletonList(StandardMethodContract.trivialContract(paramCount, ContractReturnValue.returnAny()));
     for (int clauseIndex = 0; clauseIndex < contracts.size(); clauseIndex++) {
       StandardMethodContract contract = contracts.get(clauseIndex);
       if (contract.getParameterCount() != paramCount) {
@@ -141,74 +140,22 @@ public class ContractInspection extends AbstractBaseJavaLocalInspectionTool {
       if (problem != null) {
         return ParseException.forReturnValue(problem, text, clauseIndex);
       }
-      if (possibleConditions != null) {
-        if (possibleConditions.isEmpty()) {
+      if (possibleContracts != null) {
+        if (possibleContracts.isEmpty()) {
           return ParseException
             .forClause("Contract clause '" + contract + "' is unreachable: previous contracts cover all possible cases", text, clauseIndex);
         }
-        if (StreamEx.of(possibleConditions).allMatch(c -> c.fitContract(contract) == null)) {
+        if (StreamEx.of(possibleContracts).allMatch(c -> c.intersect(contract) == null)) {
           return ParseException.forClause(
             "Contract clause '" + contract + "' is never satisfied as its conditions are covered by previous contracts", text, clauseIndex);
         }
-        possibleConditions = StreamEx.of(possibleConditions).flatMap(c -> c.misfitContract(contract))
+        possibleContracts = StreamEx.of(possibleContracts).flatMap(c -> c.excludeContract(contract))
                                      .limit(DataFlowRunner.MAX_STATES_PER_BRANCH).toList();
-        if (possibleConditions.size() >= DataFlowRunner.MAX_STATES_PER_BRANCH) {
-          possibleConditions = null;
+        if (possibleContracts.size() >= DataFlowRunner.MAX_STATES_PER_BRANCH) {
+          possibleContracts = null;
         }
       }
     }
     return null;
-  }
-
-  private static final class Conditions {
-    private final List<ValueConstraint> myParameters;
-
-    Conditions(int paramCount) {
-      myParameters = StreamEx.constant(ValueConstraint.ANY_VALUE, paramCount).toList();
-    }
-
-    private Conditions(List<ValueConstraint> parameters) {
-      myParameters = parameters;
-    }
-
-    @Nullable
-    Conditions fitContract(StandardMethodContract contract) {
-      List<ValueConstraint> result = new ArrayList<>(myParameters);
-      assert contract.getParameterCount() == result.size();
-      for (int i = 0; i < result.size(); i++) {
-        ValueConstraint condition = result.get(i);
-        ValueConstraint constraint = contract.getParameterConstraint(i);
-        if (condition == constraint || condition == ValueConstraint.ANY_VALUE) {
-          result.set(i, constraint);
-        } else if (constraint == ValueConstraint.ANY_VALUE) {
-          result.set(i, condition);
-        }
-        else {
-          return null;
-        }
-      }
-      return new Conditions(result);
-    }
-
-    @NotNull
-    Stream<Conditions> misfitContract(StandardMethodContract contract) {
-      assert contract.getParameterCount() == myParameters.size();
-      List<ValueConstraint> constraints = contract.getConstraints();
-      List<ValueConstraint> template = StreamEx.constant(ValueConstraint.ANY_VALUE, myParameters.size()).toList();
-      List<StandardMethodContract> antiContracts = new ArrayList<>();
-      for (int i = 0; i < constraints.size(); i++) {
-        ValueConstraint constraint = constraints.get(i);
-        if (constraint == ValueConstraint.ANY_VALUE) continue;
-        template.set(i, constraint.negate());
-        antiContracts.add(new StandardMethodContract(template.toArray(new ValueConstraint[0]), ContractReturnValue.returnAny()));
-        template.set(i, constraint);
-      }
-      return StreamEx.of(antiContracts).map(this::fitContract).nonNull();
-    }
-
-    @Override
-    public String toString() {
-      return myParameters.toString();
-    }
   }
 }

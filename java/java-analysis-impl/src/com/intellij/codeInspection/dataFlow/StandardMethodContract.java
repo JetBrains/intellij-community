@@ -22,12 +22,15 @@ import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.containers.ContainerUtil;
 import one.util.streamex.IntStreamEx;
+import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
+import java.util.stream.Stream;
 
 /**
  * A method contract which is described by {@link ValueConstraint} constraints on arguments.
@@ -62,6 +65,41 @@ public final class StandardMethodContract extends MethodContract {
 
   public static StandardMethodContract trivialContract(int paramCount, @NotNull ContractReturnValue returnValue) {
     return new StandardMethodContract(createConstraintArray(paramCount), returnValue);
+  }
+
+  @Nullable
+  StandardMethodContract intersect(StandardMethodContract contract) {
+    ValueConstraint[] result = myParameters.clone();
+    assert contract.getParameterCount() == result.length;
+    for (int i = 0; i < result.length; i++) {
+      ValueConstraint condition = result[i];
+      ValueConstraint constraint = contract.getParameterConstraint(i);
+      if (condition == constraint || condition == ValueConstraint.ANY_VALUE) {
+        result[i] = constraint;
+      } else if (constraint == ValueConstraint.ANY_VALUE) {
+        result[i] = condition;
+      }
+      else {
+        return null;
+      }
+    }
+    return new StandardMethodContract(result, getReturnValue().intersect(contract.getReturnValue()));
+  }
+
+  @NotNull
+  Stream<StandardMethodContract> excludeContract(StandardMethodContract contract) {
+    assert contract.getParameterCount() == myParameters.length;
+    List<ValueConstraint> constraints = contract.getConstraints();
+    List<ValueConstraint> template = StreamEx.constant(ValueConstraint.ANY_VALUE, myParameters.length).toList();
+    List<StandardMethodContract> antiContracts = new ArrayList<>();
+    for (int i = 0; i < constraints.size(); i++) {
+      ValueConstraint constraint = constraints.get(i);
+      if (constraint == ValueConstraint.ANY_VALUE) continue;
+      template.set(i, constraint.negate());
+      antiContracts.add(new StandardMethodContract(template.toArray(new ValueConstraint[0]), ContractReturnValue.returnAny()));
+      template.set(i, constraint);
+    }
+    return StreamEx.of(antiContracts).map(this::intersect).nonNull();
   }
 
   @NotNull

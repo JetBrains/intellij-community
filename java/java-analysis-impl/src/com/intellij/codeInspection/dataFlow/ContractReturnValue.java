@@ -86,6 +86,13 @@ public abstract class ContractReturnValue {
 
   abstract Stream<Function<PsiMethod, String>> validators();
 
+  public ContractReturnValue intersect(ContractReturnValue other) {
+    if (this.equals(other) || other == ANY_VALUE) return this;
+    if (this == ANY_VALUE) return other;
+    if (this.isNotNull() && other.isNotNull()) return NOT_NULL_VALUE;
+    return FAIL_VALUE;
+  }
+
   static DfaValue merge(DfaValue defaultValue, DfaValue newValue, DfaMemoryState memState) {
     if (defaultValue == null || defaultValue == DfaUnknownValue.getInstance()) return newValue;
     if (newValue == null || newValue == DfaUnknownValue.getInstance()) return defaultValue;
@@ -419,6 +426,11 @@ public abstract class ContractReturnValue {
     }
 
     @Override
+    public boolean isNotNull() {
+      return true;
+    }
+
+    @Override
     public boolean isValueCompatible(DfaMemoryState state, DfaValue value) {
       return !state.isNull(value);
     }
@@ -437,6 +449,11 @@ public abstract class ContractReturnValue {
         }
         return "method return type should be compatible with method containing class";
       });
+    }
+
+    @Override
+    public boolean isNotNull() {
+      return true;
     }
 
     @Override
