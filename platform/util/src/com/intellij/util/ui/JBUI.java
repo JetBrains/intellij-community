@@ -853,6 +853,21 @@ public class JBUI {
       return 1f; // unreachable
     }
 
+    /**
+     * Applies the provided {@code ScaleType}'s to the provided {@code value} and returns the result.
+     */
+    public double apply(double value, @NotNull ScaleType... types) {
+      for (ScaleType t : types) value *= getScale(t);
+      return value;
+    }
+
+    /**
+     * Applies {@code PIX_SCALE} to the provided {@code value} and returns the result.
+     */
+    public double apply(double value) {
+      return value * getScale(PIX_SCALE);
+    }
+
     protected boolean onUpdated(boolean updated) {
       if (updated) {
         update(pixScale, derivePixScale());
@@ -911,6 +926,12 @@ public class JBUI {
       BaseScaleContext that = (BaseScaleContext)obj;
       return that.usrScale.value == usrScale.value &&
              that.objScale.value == objScale.value;
+    }
+
+    @Override
+    public int hashCode() {
+      return Double.valueOf(usrScale.value).hashCode() * 10 +
+             Double.valueOf(objScale.value).hashCode();
     }
 
     /**
@@ -1148,6 +1169,11 @@ public class JBUI {
         return that.sysScale.value == sysScale.value;
       }
       return false;
+    }
+
+    @Override
+    public int hashCode() {
+      return Double.valueOf(sysScale.value).hashCode() * 100 + super.hashCode();
     }
 
     @Override
