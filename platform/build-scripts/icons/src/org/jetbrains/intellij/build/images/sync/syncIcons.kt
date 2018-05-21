@@ -12,9 +12,7 @@ internal fun syncAdded(added: Collection<String>,
     if (target.exists()) log("$it already exists in icons repo!")
     val source = devIcons[it]!!.getFile()
     source.copyTo(target, overwrite = true)
-    unversioned += target.relativeTo(iconsRepo).path.let {
-      if (it.contains(" ")) "\"$it\"" else it
-    }
+    unversioned += target.relativeTo(iconsRepo).path
   }
   addChangesToGit(unversioned, iconsRepo)
 }

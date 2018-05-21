@@ -69,15 +69,21 @@ fun checkIcons(
     devIcons.remove(icon)
   }
   val addedByDev = devIcons.keys
-  val modifiedByDev = modifiedByDev(modified, icons, devIconsBackup)
-  val removedByDev = removedByDev(addedByDesigners, icons, devRepoVcsRoots, File(devRepoDir))
+  val modifiedByDev = callWithTimer("Searching for modified by developers") {
+    modifiedByDev(modified, icons, devIconsBackup)
+  }
+  val removedByDev = callWithTimer("Searching for removed by developers") {
+    removedByDev(addedByDesigners, icons, devRepoVcsRoots, File(devRepoDir))
+  }
   val modifiedByDesigners = modified.filter { !modifiedByDev.contains(it) }
-  val removedByDesigners = removedByDesigners(
-    addedByDev, devIconsBackup, iconsRepo,
-    File(iconsRepoDir).relativeTo(iconsRepo).path.let {
-      if (it.isEmpty()) "" else "$it/"
-    }
-  )
+  val removedByDesigners = callWithTimer("Searching for removed by designers") {
+    removedByDesigners(
+      addedByDev, devIconsBackup, iconsRepo,
+      File(iconsRepoDir).relativeTo(iconsRepo).path.let {
+        if (it.isEmpty()) "" else "$it/"
+      }
+    )
+  }
   if (doSync) callSafely {
     syncAdded(addedByDev, devIconsBackup, iconsRepo, File(iconsRepoDir))
     syncModified(modifiedByDev, icons, devIconsBackup)
@@ -192,9 +198,9 @@ private fun removedByDev(
   devRepos: Collection<File>, devRepoDir: File) =
   addedByDesigners.parallelStream().filter { path ->
     devRepos.mapNotNull {
-      val file = File(devRepoDir, path).relativeTo(it)
-      if (file.path == file.normalize().path)
-        latestChangeTime(file.path, it)
+      val file = File(devRepoDir, path).absolutePath
+      if (file.startsWith(it.absolutePath))
+        latestChangeTime(file.removePrefix("${it.absolutePath}/"), it)
       else null
     }.firstOrNull { it > 0 }?.let { latestChangeTimeByDev ->
       // latest changes are made by developers

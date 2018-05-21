@@ -16,15 +16,16 @@ internal fun report(
   consistent: Collection<String>, errorHandler: Consumer<String>, doSync: Boolean
 ) {
   log("Skipped $skipped dirs")
+  fun Collection<String>.logIcons() = if (size < 100) joinToString() else size.toString()
   log("""
     |dev repo:
-    | added: ${addedByDev.joinToString()}
-    | removed: ${removedByDev.joinToString()}
-    | modified: ${modifiedByDev.joinToString()}
+    | added: ${addedByDev.logIcons()}
+    | removed: ${removedByDev.logIcons()}
+    | modified: ${modifiedByDev.logIcons()}
     |icons repo:
-    | added: ${addedByDesigners.joinToString()}
-    | removed: ${removedByDesigners.joinToString()}
-    | modified: ${modifiedByDesigners.joinToString()}
+    | added: ${addedByDesigners.logIcons()}
+    | removed: ${removedByDesigners.logIcons()}
+    | modified: ${modifiedByDesigners.logIcons()}
   """.trimMargin())
   val report = """
     |$devIcons icons are found in dev repo:
