@@ -7,6 +7,7 @@ import com.intellij.icons.AllIcons;
 import com.intellij.ide.CommonActionsManager;
 import com.intellij.ide.DefaultTreeExpander;
 import com.intellij.ide.dnd.DnDEvent;
+import com.intellij.ide.ui.customization.CustomActionsSchema;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
@@ -184,7 +185,7 @@ public class ChangesViewManager implements ChangesViewI, ProjectComponent, Persi
     EmptyAction.registerWithShortcutSet(IdeActions.ACTION_SHOW_DIFF_COMMON, CommonShortcuts.getDiff(), panel);
 
     DefaultActionGroup group = new DefaultActionGroup();
-    group.add(ActionManager.getInstance().getAction("ChangesViewToolbar"));
+    group.add(CustomActionsSchema.getInstance().getCorrectedAction("ChangesViewToolbar"));
 
     group.addSeparator();
     group.add(ActionManager.getInstance().getAction(GROUP_BY_ACTION_GROUP));
