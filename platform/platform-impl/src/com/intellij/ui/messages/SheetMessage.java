@@ -142,7 +142,8 @@ class SheetMessage implements Disposable {
     LaterInvocator.enterModal(myWindow);
     final Runnable closer = _showTouchBar(buttons, defaultButton);
     myWindow.setVisible(true);
-    closer.run();
+    if (closer != null)
+      closer.run();
     LaterInvocator.leaveModal(myWindow);
 
     Component focusCandidate = beforeShowFocusOwner.get();
