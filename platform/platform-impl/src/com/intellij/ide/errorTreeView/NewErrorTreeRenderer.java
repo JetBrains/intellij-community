@@ -274,8 +274,11 @@ public class NewErrorTreeRenderer extends MultilineTreeCellRenderer {
       if (ErrorTreeElementKind.ERROR.equals(kind)) {
         icon = AllIcons.General.Error;
       }
-      else if (ErrorTreeElementKind.WARNING.equals(kind) || ErrorTreeElementKind.NOTE.equals(kind)) {
+      else if (ErrorTreeElementKind.WARNING.equals(kind)) {
         icon = AllIcons.General.Warning;
+      }
+      else if (ErrorTreeElementKind.NOTE.equals(kind)) {
+        icon = AllIcons.General.Note;
       }
       else if (ErrorTreeElementKind.INFO.equals(kind)) {
         icon = AllIcons.General.Information;
