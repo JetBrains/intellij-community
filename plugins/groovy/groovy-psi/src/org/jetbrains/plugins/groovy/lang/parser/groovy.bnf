@@ -182,7 +182,6 @@ package_definition ::= modifier_list mb_nl ('package') package_name
   pin = 3
   elementTypeClass = 'org.jetbrains.plugins.groovy.lang.psi.stubs.elements.GrPackageDefinitionElementType'
   consumeTokenMethod = 'consumeTokenFast'
-  name = ''
 }
 package_name ::= code_reference { elementType = '' name = 'package name' }
 
@@ -190,7 +189,6 @@ import ::= modifier_list mb_nl ('import') 'static'? import_reference import_star
 {
   pin = 3
   elementTypeClass = 'org.jetbrains.plugins.groovy.lang.psi.stubs.elements.GrImportStatementElementType'
-  name = ''
   consumeTokenMethod = 'consumeTokenFast'
 }
 private import_star ::= '.' '*'
@@ -205,10 +203,9 @@ import_alias ::= 'as' mb_nl IDENTIFIER
 modifier_list ::= non_empty_modifier_list | empty_modifier_list
 {
   elementTypeClass = 'org.jetbrains.plugins.groovy.lang.psi.stubs.elements.GrModifierListElementType'
-  name = ''
 }
 empty_modifier_list ::=
-non_empty_modifier_list ::= <<a_b_a (modifier | annotation) mb_nl>> { name = '' }
+non_empty_modifier_list ::= <<a_b_a (modifier | annotation) mb_nl>>
 annotation_modifier_list ::= <<a_b_a annotation mb_nl>>?
 private modifier ::= 'abstract'
                    | 'default'
@@ -503,7 +500,6 @@ type_parameter_list ::= '<' type_parameters '>'
 {
   pin = 1
   elementTypeClass = 'org.jetbrains.plugins.groovy.lang.psi.stubs.elements.GrTypeParameterListElementType'
-  name = ''
   consumeTokenMethod = 'consumeTokenFast'
 }
 private type_parameters ::= type_parameter type_parameters_tail*
@@ -526,7 +522,6 @@ private type_parameter_bounds_list_tail ::= '&' type_code_reference { pin = 1 }
 type_argument_list ::= <<isDiamondAllowed>> ('<') '>' | <<angle_list (mb_nl type_argument mb_nl)>>
 {
   pin = 1
-  name = ''
   consumeTokenMethod = 'consumeTokenFast'
 }
 private type_argument ::= type_element | wildcard_type_element
@@ -667,9 +662,6 @@ statement ::= if_statement
 private block_or_statement ::= block_statement | statement
 
 block_statement ::= lazy_block
-{
-  name = ''
-}
 
 if_statement ::= 'if' after_if_keyword
 {
@@ -855,11 +847,7 @@ private application_argument_start ::= IDENTIFIER
 
 built_in_type_expression ::= primitive_type
 
-literal ::= simple_literal_tokens | regex_literal
-{
-  extends = expression
-  name = ''
-}
+literal ::= simple_literal_tokens | regex_literal { extends = expression }
 private simple_literal_tokens ::= NUM_INT
                                 | NUM_LONG
                                 | NUM_BIG_INT
@@ -929,7 +917,6 @@ lazy_closure ::= <<parseBlockLazy closure 'CLOSURE'>>
 {
   extends = expression
   elementType = closure
-  name = ''
 }
 closure ::= '{' mb_nl closure_header mb_separators block_levels '}'
 {
@@ -938,11 +925,7 @@ closure ::= '{' mb_nl closure_header mb_separators block_levels '}'
 }
 private closure_header ::= empty_parameter_list closure_arrow | closure_parameter_list mb_nl closure_arrow | empty_parameter_list
 private closure_arrow ::= '->'
-closure_parameter_list ::= <<comma_list (mb_nl parse_parameter)>>
-{
-  elementType = parameter_list
-  name = ''
-}
+closure_parameter_list ::= <<comma_list (mb_nl parse_parameter)>> { elementType = parameter_list }
 empty_parameter_list ::= { elementType = parameter_list }
 
 list_or_map ::= empty_list | empty_map | non_empty_list_or_map
@@ -1003,7 +986,6 @@ index_expression_argument_list ::= !empty_map '[' parse_bracket_argument_list ']
   pin = 2
   elementType = argument_list
   consumeTokenMethod = 'consumeTokenFast'
-  name = ''
 }
 
 postfix_unary_expression ::= expression ('++' | '--')
@@ -1093,22 +1075,11 @@ private application ::= <<parseApplication application_ref application_expressio
 left application_ref ::= IDENTIFIER | simple_literal_tokens
 {
   elementType = reference_expression
-  name = ''
   consumeTokenMethod = 'consumeTokenFast'
 }
 left application_expression ::= application_argument_list
-{
-  name = ''
-}
-left application_call ::= call_argument_list lazy_closure* | empty_argument_list lazy_closure+
-{
-  elementType = method_call_expression
-  name = ''
-}
+left application_call ::= call_argument_list lazy_closure* | empty_argument_list lazy_closure+ { elementType = method_call_expression }
 left application_index ::= index_expression_argument_list
-{
-  name = ''
-}
 // endregion
 
 
@@ -1129,21 +1100,11 @@ private external parse_paren_argument_list ::= parseArgumentList 'T_RPAREN' argu
 private external parse_bracket_argument_list ::= parseArgumentList 'T_RBRACK' argument
 
 application_argument_list ::= <<applicationArguments application_arguments>>
-{
-  name = ''
-}
 private application_arguments ::= argument (',' mb_nl argument)*
 
 private argument ::= spread_list_argument | named_argument | <<parseExpressionOrMapArgument expression>>
-spread_list_argument ::= !<<isApplicationArguments>> '*' expression
-{
-  name = ''
-  consumeTokenMethod = 'consumeTokenFast'
-}
+spread_list_argument ::= !<<isApplicationArguments>> '*' expression { consumeTokenMethod = 'consumeTokenFast' }
 named_argument ::= argument_label named_argument_tail
-{
-  name = ''
-}
 private named_argument_tail ::= ':' expression
 {
   pin = 1
@@ -1151,7 +1112,6 @@ private named_argument_tail ::= ':' expression
 }
 argument_label ::= IDENTIFIER | STR_SQ | STR_DQ | '*' | 'null' | 'class' | primitive_type | 'default'
 {
-  name = ''
   consumeTokenMethod = 'consumeTokenFast'
 }
 // endregion
@@ -1185,7 +1145,7 @@ private expect_type ::= <<replaceVariants "type">> fail
 
 
 // region Code references
-code_reference ::= unqualified_code_reference qualified_code_reference_tail* { name = '' }
+code_reference ::= unqualified_code_reference qualified_code_reference_tail*
 import_reference ::= unqualified_code_reference import_reference_tail*
 {
   elementType = code_reference
@@ -1200,11 +1160,7 @@ qualified_code_reference ::= unqualified_code_reference qualified_code_reference
 private capital_code_reference ::= <<capitalizedReference code_reference>>
 private no_type_args_code_reference ::= <<noTypeArgsReference code_reference>>
 
-unqualified_code_reference ::= code_reference_part
-{
-  elementType = code_reference
-  name = ''
-}
+unqualified_code_reference ::= code_reference_part { elementType = code_reference }
 left qualified_code_reference_tail ::= code_reference_dot code_reference_part
 {
   elementType = code_reference
