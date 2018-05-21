@@ -165,8 +165,9 @@ public class DocumentImpl extends UserDataHolderBase implements DocumentEx {
     if (from == tree || from == null) {
       return;
     }
+    TextRange myDocumentRange = new TextRange(0, getTextLength());
     from.processAll(r ->{
-      if (r.isValid()) {
+      if (r.isValid() && myDocumentRange.contains(r)) {
         registerRangeMarker(r, r.getStartOffset(), r.getEndOffset(), r.isGreedyToLeft(), r.isGreedyToRight(), 0);
       }
       return true;
