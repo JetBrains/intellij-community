@@ -33,10 +33,11 @@ import com.intellij.util.IncorrectOperationException
 import com.intellij.util.SmartList
 import org.jetbrains.uast.UClass
 import org.jetbrains.uast.UDeclaration
+import org.jetbrains.uast.toUElementOfType
 
-class ImplicitSubclassInspection : AbstractBaseUastLocalInspectionTool() {
+class ImplicitSubclassInspection : LocalInspectionTool() {
 
-  override fun checkClass(aClass: UClass, manager: InspectionManager, isOnTheFly: Boolean): Array<ProblemDescriptor>? {
+  private fun checkClass(aClass: UClass, manager: InspectionManager, isOnTheFly: Boolean): Array<ProblemDescriptor>? {
 
     val classIsFinal = aClass.isFinal || aClass.hasModifierProperty(PsiModifier.PRIVATE)
 
@@ -211,6 +212,17 @@ class ImplicitSubclassInspection : AbstractBaseUastLocalInspectionTool() {
 
     override fun getText(): String = text
 
+  }
+
+  override fun buildVisitor(holder: ProblemsHolder, isOnTheFly: Boolean): PsiElementVisitor = object : PsiElementVisitor() {
+    override fun visitElement(element: PsiElement) {
+      super.visitElement(element)
+      val uClass = element.toUElementOfType<UClass>() ?: return
+      val problems = checkClass(uClass, holder.manager, isOnTheFly) ?: return
+      for (problem in problems) {
+        holder.registerProblem(problem)
+      }
+    }
   }
 
 }
