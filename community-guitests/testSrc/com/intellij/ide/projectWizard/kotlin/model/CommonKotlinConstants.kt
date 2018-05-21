@@ -9,10 +9,10 @@ enum class BuildSystem { Gradle, Maven, IDEA }
 
 typealias ArtifactType = Map<String, List<String>>
 
-fun ArtifactType.getJars() = this.keys.sortedDescending()
-                               .firstOrNull { KotlinTestProperties.kotlin_artifact_version >= it }
-                               ?.let { this[it]!! }
-                             ?: emptyList()
+fun ArtifactType.getJars(kotlinVersion: String) = this.keys.sortedDescending()
+                                                    .firstOrNull { kotlinVersion >= it }
+                                                    ?.let { this[it]!! }
+                                                  ?: emptyList()
 
 data class ProjectProperties(
   val group: String,
@@ -179,8 +179,7 @@ val versionFromArtifact: LanguageVersion by lazy {
   getVersionFromString(KotlinTestProperties.kotlin_artifact_version)
 }
 val versionFromPlugin: LanguageVersion by lazy {
-  getVersionFromString(
-    KotlinTestProperties.kotlin_plugin_version_main)
+  getVersionFromString(KotlinTestProperties.kotlin_plugin_version_main)
 }
 
 val defaultFacetSettings = mapOf(

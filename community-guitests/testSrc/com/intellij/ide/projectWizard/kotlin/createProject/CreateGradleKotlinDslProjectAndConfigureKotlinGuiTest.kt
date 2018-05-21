@@ -12,6 +12,7 @@ class CreateGradleKotlinDslProjectAndConfigureKotlinGuiTest : KotlinGuiTestCase(
   fun createGradleAndConfigureKotlinJvmActualVersion() {
     testCreateGradleAndConfigureKotlin(
       kotlinKind = KotlinKind.JVM,
+      kotlinVersion = KotlinTestProperties.kotlin_artifact_version,
       project = kotlinLibs[KotlinKind.JVM]!!.gradleKProject,
       expectedFacet = defaultFacetSettings[TargetPlatform.JVM18]!!,
       gradleOptions = BuildGradleOptions().build(),
@@ -25,6 +26,7 @@ class CreateGradleKotlinDslProjectAndConfigureKotlinGuiTest : KotlinGuiTestCase(
   fun createGradleAndConfigureKotlinJsActualVersion() {
     testCreateGradleAndConfigureKotlin(
       kotlinKind = KotlinKind.JS,
+      kotlinVersion = KotlinTestProperties.kotlin_artifact_version,
       project = kotlinLibs[KotlinKind.JS]!!.gradleKProject,
       expectedFacet = defaultFacetSettings[TargetPlatform.JavaScript]!!,
       gradleOptions = BuildGradleOptions().build(),
