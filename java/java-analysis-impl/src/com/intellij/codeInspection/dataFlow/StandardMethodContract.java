@@ -60,6 +60,10 @@ public final class StandardMethodContract extends MethodContract {
     return returnValue.equals(getReturnValue()) ? this : new StandardMethodContract(myParameters, returnValue);
   }
 
+  public static StandardMethodContract trivialContract(int paramCount, @NotNull ContractReturnValue returnValue) {
+    return new StandardMethodContract(createConstraintArray(paramCount), returnValue);
+  }
+
   @NotNull
   public static ValueConstraint[] createConstraintArray(int paramCount) {
     ValueConstraint[] args = new ValueConstraint[paramCount];

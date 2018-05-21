@@ -61,11 +61,11 @@ public class HardcodedContracts {
   interface ContractProvider {
     List<MethodContract> getContracts(PsiMethodCallExpression call, int paramCount);
 
-    static ContractProvider single(Supplier<MethodContract> supplier) {
+    static ContractProvider single(Supplier<? extends MethodContract> supplier) {
       return (call, paramCount) -> Collections.singletonList(supplier.get());
     }
 
-    static ContractProvider list(Supplier<List<MethodContract>> supplier) {
+    static ContractProvider list(Supplier<? extends List<MethodContract>> supplier) {
       return (call, paramCount) -> supplier.get();
     }
   }
@@ -253,7 +253,7 @@ public class HardcodedContracts {
 
     boolean testng = isTestng(className);
     if ("fail".equals(methodName)) {
-      return Collections.singletonList(new StandardMethodContract(createConstraintArray(paramCount), fail()));
+      return Collections.singletonList(StandardMethodContract.trivialContract(paramCount, fail()));
     }
 
     if (paramCount == 0) return Collections.emptyList();
@@ -361,7 +361,7 @@ public class HardcodedContracts {
     constraints[argIndex] = NULL_VALUE;
     StandardMethodContract failContract = new StandardMethodContract(constraints, fail());
     if (returnArg) {
-      return Arrays.asList(failContract, new StandardMethodContract(createConstraintArray(argCount), returnParameter(argIndex)));
+      return Arrays.asList(failContract, StandardMethodContract.trivialContract(argCount, returnParameter(argIndex)));
     }
     return Collections.singletonList(failContract);
   }
