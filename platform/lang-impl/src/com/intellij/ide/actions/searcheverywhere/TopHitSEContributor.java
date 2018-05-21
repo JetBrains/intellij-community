@@ -3,6 +3,7 @@ package com.intellij.ide.actions.searcheverywhere;
 
 import com.intellij.ide.SearchTopHitProvider;
 import com.intellij.ide.actions.ActivateToolWindowAction;
+import com.intellij.ide.actions.GotoActionAction;
 import com.intellij.ide.ui.OptionsTopHitProvider;
 import com.intellij.ide.ui.search.BooleanOptionDescription;
 import com.intellij.ide.ui.search.OptionDescription;
@@ -34,11 +35,17 @@ import javax.swing.*;
 import java.awt.*;
 import java.util.*;
 import java.util.List;
+import java.util.function.Consumer;
 import java.util.function.Function;
 
 public class TopHitSEContributor implements SearchEverywhereContributor {
 
   private final Collection<SearchTopHitProvider> myTopHitProviders = Arrays.asList(SearchTopHitProvider.EP_NAME.getExtensions());
+  private final Consumer<String> searchStringSetter;
+
+  public TopHitSEContributor(Consumer<String> setter) {
+    searchStringSetter = setter;
+  }
 
   @NotNull
   @Override
@@ -161,12 +168,32 @@ public class TopHitSEContributor implements SearchEverywhereContributor {
 
   @Override
   public boolean processSelectedItem(Object selected, int modifiers) {
+    if (selected instanceof BooleanOptionDescription) {
+      final BooleanOptionDescription option = (BooleanOptionDescription) selected;
+      option.setOptionState(!option.isOptionEnabled());
+      return false;
+    }
+
+    if (selected instanceof OptionsTopHitProvider) {
+      setSearchString("#" + ((OptionsTopHitProvider) selected).getId() + " ");
+      return false;
+    }
+
+    if (isActionValue(selected) || isSetting(selected)) {
+      GotoActionAction.openOptionOrPerformAction(selected, "", null, null);
+      return true;
+    }
+
     return false;
   }
 
   @Override
   public ListCellRenderer getElementsRenderer(Project project) {
     return new TopHitRenderer(project);
+  }
+
+  private void setSearchString(String str) {
+    searchStringSetter.accept(str);
   }
 
   private static class TopHitRenderer extends ColoredListCellRenderer<Object> {

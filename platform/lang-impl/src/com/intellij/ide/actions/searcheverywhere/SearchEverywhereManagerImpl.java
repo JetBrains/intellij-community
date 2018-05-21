@@ -13,7 +13,7 @@ import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 
 import java.awt.*;
-import java.util.Collections;
+import java.util.ArrayList;
 import java.util.List;
 
 import static com.intellij.ide.actions.SearchEverywhereAction.SEARCH_EVERYWHERE_POPUP;
@@ -21,14 +21,24 @@ import static com.intellij.ide.actions.SearchEverywhereAction.SEARCH_EVERYWHERE_
 public class SearchEverywhereManagerImpl implements SearchEverywhereManager {
 
   private final Project myProject;
-  private final List<SearchEverywhereContributor> mySupportedContributors = SearchEverywhereContributor.getProvidersSorted();
-  private final List<SearchEverywhereContributor> myServiceContributors = Collections.singletonList(new TopHitSEContributor());
+  private final List<SearchEverywhereContributor> myShownContributors = new ArrayList<>();
+  private final List<SearchEverywhereContributor> myServiceContributors = new ArrayList<>();
 
   private JBPopup myBalloon; //todo appropriate names #UX-1
   private SearchEverywhereUI mySearchEverywhereUI;
 
   public SearchEverywhereManagerImpl(Project project) {
     myProject = project;
+    fillContributors();
+  }
+
+  private void fillContributors() {
+    // fill shown contributors
+    myShownContributors.addAll(SearchEverywhereContributor.getProvidersSorted());
+
+    // fill service contributors
+    TopHitSEContributor topHitContributor = new TopHitSEContributor(s -> mySearchEverywhereUI.getSearchField().setText(s));
+    myServiceContributors.add(topHitContributor);
   }
 
   @Override
@@ -37,7 +47,7 @@ public class SearchEverywhereManagerImpl implements SearchEverywhereManager {
       setShownContributor(selectedContributorID);
     }
     else {
-      mySearchEverywhereUI = createView(myProject, myServiceContributors, mySupportedContributors);
+      mySearchEverywhereUI = createView(myProject, myServiceContributors, myShownContributors);
       mySearchEverywhereUI.switchToContributor(selectedContributorID);
       myBalloon = JBPopupFactory.getInstance().createComponentPopupBuilder(mySearchEverywhereUI, mySearchEverywhereUI.getSearchField())
                                 .setProject(myProject)

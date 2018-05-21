@@ -489,6 +489,8 @@ public class SearchEverywhereUI extends BorderLayoutPanel implements Disposable 
     if (closePopup) {
       stopSearching();
       searchFinishedHandler.run();
+    } else {
+      myResultsList.repaint();
     }
   }
 
