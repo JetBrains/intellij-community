@@ -39,7 +39,7 @@ Groovy script
         PsiWhiteSpace('\n      ')
         Parameter list
           <empty list>
-        PsiErrorElement:',', '->', ';', <statement>, identifier or new line expected, got 'case'
+        PsiErrorElement:'->', ';', <statement>, identifier or new line expected, got 'case'
           PsiElement(case)('case')
         PsiWhiteSpace(' ')
         Literal
@@ -109,7 +109,7 @@ Groovy script
               PsiWhiteSpace('\n      ')
               Parameter list
                 <empty list>
-              PsiErrorElement:',', '->', ';', <statement>, identifier or new line expected, got 'case'
+              PsiErrorElement:'->', ';', <statement>, identifier or new line expected, got 'case'
                 PsiElement(case)('case')
               PsiWhiteSpace(' ')
               Literal

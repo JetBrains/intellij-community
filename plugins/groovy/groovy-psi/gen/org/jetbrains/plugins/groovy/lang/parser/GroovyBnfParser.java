@@ -2279,9 +2279,9 @@ public class GroovyBnfParser implements PsiParser, LightPsiParser {
   }
 
   /* ********************************************************** */
-  // <<a_b_a <<item>> ','>>
+  // <<a_b_a <<item>> fast_comma>>
   static boolean comma_list(PsiBuilder b, int l, Parser _item) {
-    return a_b_a(b, l + 1, _item, T_COMMA_parser_);
+    return a_b_a(b, l + 1, _item, fast_comma_parser_);
   }
 
   /* ********************************************************** */
@@ -3174,6 +3174,12 @@ public class GroovyBnfParser implements PsiParser, LightPsiParser {
     if (!r) r = consumeToken(b, T_LBRACE);
     exit_section_(b, m, null, r);
     return r;
+  }
+
+  /* ********************************************************** */
+  // ','
+  static boolean fast_comma(PsiBuilder b, int l) {
+    return consumeTokenFast(b, T_COMMA);
   }
 
   /* ********************************************************** */
@@ -7239,6 +7245,11 @@ public class GroovyBnfParser implements PsiParser, LightPsiParser {
   final static Parser extends_recovery_parser_ = new Parser() {
     public boolean parse(PsiBuilder b, int l) {
       return extends_recovery(b, l + 1);
+    }
+  };
+  final static Parser fast_comma_parser_ = new Parser() {
+    public boolean parse(PsiBuilder b, int l) {
+      return fast_comma(b, l + 1);
     }
   };
   final static Parser fast_dollar_slashy_content_parser_ = new Parser() {
