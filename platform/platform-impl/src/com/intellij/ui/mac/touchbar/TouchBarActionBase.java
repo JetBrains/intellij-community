@@ -46,7 +46,7 @@ public class TouchBarActionBase extends TouchBarProjectBase {
     addActionGroupButtons(customizedGroup, null, TBItemAnActionButton.SHOWMODE_IMAGE_ONLY_IF_PRESENTED, nodeId -> nodeId.contains(groupId + "_"), null);
   }
 
-  public TouchBarActionBase(@NotNull String touchbarName, @NotNull Project project, boolean replaceEsc) {
+  private TouchBarActionBase(@NotNull String touchbarName, @NotNull Project project, boolean replaceEsc) {
     super(touchbarName, project, replaceEsc);
 
     myTimerListener = new TimerListener() {
@@ -130,10 +130,10 @@ public class TouchBarActionBase extends TouchBarProjectBase {
   void updateActionItems() {
     ApplicationManager.getApplication().assertIsDispatchThread();
 
-    boolean layoutChanged = false;
-    for (TBItem tbitem: myItems) {
+    final boolean[] layoutChanged = new boolean[]{false};
+    forEach(tbitem->{
       if (!(tbitem instanceof TBItemAnActionButton))
-        continue;
+        return;
 
       final TBItemAnActionButton item = (TBItemAnActionButton)tbitem;
       final Presentation presentation = myPresentationFactory.getPresentation(item.getAnAction());
@@ -148,12 +148,12 @@ public class TouchBarActionBase extends TouchBarProjectBase {
       if (item.isAutoVisibility()) {
         final boolean itemVisibilityChanged = item.updateVisibility(presentation);
         if (itemVisibilityChanged)
-          layoutChanged = true;
+          layoutChanged[0] = true;
       }
       item.updateView(presentation);
-    }
+    });
 
-    if (layoutChanged)
+    if (layoutChanged[0])
       selectVisibleItemsToShow();
   }
 

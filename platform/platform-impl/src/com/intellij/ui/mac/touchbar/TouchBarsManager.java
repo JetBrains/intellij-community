@@ -7,7 +7,6 @@ import com.intellij.execution.process.ProcessHandler;
 import com.intellij.execution.runners.ExecutionEnvironment;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
-import com.intellij.openapi.actionSystem.DefaultActionGroup;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.application.impl.LaterInvocator;
@@ -387,29 +386,24 @@ public class TouchBarsManager {
 
   private static TouchBar _createButtonsBar(List<JButton> jbuttons, Project project) {
     try (NSAutoreleaseLock lock = new NSAutoreleaseLock()) {
-      TouchBarActionBase result = new TouchBarActionBase("dialog_buttons", project);
+      final TouchBarActionBase result = new TouchBarActionBase("dialog_buttons", project);
       final ModalityState ms = LaterInvocator.getCurrentModalityState();
 
       // 1. add option buttons (at left)
       for (JButton jb : jbuttons) {
         if (jb instanceof JBOptionButton) {
-          JBOptionButton ob = (JBOptionButton)jb;
-          Action[] opts = ob.getOptions();
-          DefaultActionGroup ag = new DefaultActionGroup();
+          final JBOptionButton ob = (JBOptionButton)jb;
+          final Action[] opts = ob.getOptions();
           for (Action a : opts) {
             if (a == null)
               continue;
-            AnAction anAct = _createAnAction(a, ob);
+            final AnAction anAct = _createAnAction(a, ob, true);
             if (anAct == null)
               continue;
-            ag.add(anAct);
-          }
 
-          if (ag.getChildrenCount() > 0) {
-            result.addActionGroupButtons(ag, ms, TBItemAnActionButton.SHOWMODE_TEXT_ONLY, null, item -> {
-              if (item instanceof TBItemAnActionButton)
-                ((TBItemAnActionButton)item).setComponent(ob);
-            });
+            final TBItemAnActionButton butt = new TBItemAnActionButton(result.genNewID(a.toString()), anAct, false, TBItemAnActionButton.SHOWMODE_TEXT_ONLY, ms);
+            butt.setComponent(ob);
+            result.myItems.add(butt);
           }
         }
       }
@@ -423,21 +417,30 @@ public class TouchBarsManager {
 
       // 3. add main buttons and make principal
       final List<TBItem> groupButtons = new ArrayList<>();
-      JButton jdef = null;
+      TBItemAnActionButton def = null;
       for (JButton jb : jbuttons) {
         // TODO: make correct processing for disabled buttons, add them and update state by timer
         // NOTE: can be true: jb.getAction().isEnabled() && !jb.isEnabled()
+
+        final AnAction anAct = _createAnAction(jb.getAction(), jb, false);
+        if (anAct == null)
+          continue;
+
+        final int index = jbuttons.indexOf(jb);
+        final TBItemAnActionButton butt = new TBItemAnActionButton("dialog_buttons_group_item_" + index, anAct, false, TBItemAnActionButton.SHOWMODE_TEXT_ONLY, ms);
+        butt.setComponent(jb);
+
         final boolean isDefault = jb.getAction().getValue(DialogWrapper.DEFAULT_ACTION) != null;
         if (isDefault) {
-          jdef = jb;
+          def = butt;
+          def.myFlags |= NSTLibrary.BUTTON_FLAG_COLORED;
           continue;
         }
-        final TBItemButton butt = _jbutton2item(jb, jbuttons.indexOf(jb), ms);
         groupButtons.add(butt);
       }
 
-      if (jdef != null)
-        groupButtons.add(_jbutton2item(jdef, jbuttons.indexOf(jdef), ms));
+      if (def != null)
+        groupButtons.add(def);
 
       final TBItemGroup gr = result.addGroup(groupButtons);
       result.setPrincipal(gr);
@@ -446,29 +449,29 @@ public class TouchBarsManager {
     }
   }
 
-  private static TBItemButton _jbutton2item(JButton jb, int index, ModalityState ms) {
-    final NSTLibrary.Action act = () -> ApplicationManager.getApplication().invokeLater(() -> jb.doClick(), ms);
-    final boolean isDefault = jb.getAction().getValue(DialogWrapper.DEFAULT_ACTION) != null;
-    return new TBItemButton(
-      "dialog_buttons_group_item_" + index,
-      null, DialogWrapper.extractMnemonic(jb.getText()).second, act, -1, isDefault ? NSTLibrary.BUTTON_FLAG_COLORED : 0
-    );
-  }
-
-  private static AnAction _createAnAction(@NotNull Action action, JBOptionButton fromButton) {
+  private static AnAction _createAnAction(@NotNull Action action, JButton fromButton, boolean useTextFromAction /*for optional buttons*/) {
     final Object anAct = action.getValue(OptionAction.AN_ACTION);
     if (anAct == null) {
       // LOG.warn("null AnAction in action: '" + action + "', use wrapper");
       return new DumbAwareAction() {
         {
           setEnabledInModalContext(true);
-          final Object name = action.getValue(Action.NAME);
-          getTemplatePresentation().setText(name != null && name instanceof String ? (String)name : "");
+          if (useTextFromAction) {
+            final Object name = action.getValue(Action.NAME);
+            getTemplatePresentation().setText(name != null && name instanceof String ? (String)name : "");
+          }
         }
         @Override
-        public void actionPerformed(AnActionEvent e) { action.actionPerformed(new ActionEvent(fromButton, ActionEvent.ACTION_PERFORMED, null)); }
+        public void actionPerformed(AnActionEvent e) {
+          // also can be used something like: ApplicationManager.getApplication().invokeLater(() -> jb.doClick(), ms)
+          action.actionPerformed(new ActionEvent(fromButton, ActionEvent.ACTION_PERFORMED, null));
+        }
         @Override
-        public void update(AnActionEvent e) { e.getPresentation().setEnabled(action.isEnabled()); }
+        public void update(AnActionEvent e) {
+          e.getPresentation().setEnabled(action.isEnabled());
+          if (!useTextFromAction)
+            e.getPresentation().setText(DialogWrapper.extractMnemonic(fromButton.getText()).second);
+        }
       };
     }
     if (!(anAct instanceof AnAction)) {
