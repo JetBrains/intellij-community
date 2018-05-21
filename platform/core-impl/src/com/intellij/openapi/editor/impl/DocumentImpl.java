@@ -159,14 +159,19 @@ public class DocumentImpl extends UserDataHolderBase implements DocumentEx {
 
   private void getSaveRMTree(@NotNull VirtualFile f,
                              @NotNull Key<Reference<RangeMarkerTree<RangeMarkerEx>>> key, @NotNull RangeMarkerTree<RangeMarkerEx> tree) {
-    Reference<RangeMarkerTree<RangeMarkerEx>>
-      ref = ((UserDataHolderEx)f).putUserDataIfAbsent(key, new RMTreeReference(tree, f));
-    RangeMarkerTree<RangeMarkerEx> from = ref.get();
-    if (from == tree || from == null) {
+    RMTreeReference freshRef = new RMTreeReference(tree, f);
+    RangeMarkerTree<RangeMarkerEx> oldTree = SoftReference.dereference(f.getUserData(key));
+    ((UserDataHolderEx)f).putUserData(key, freshRef);
+
+    if (oldTree == null) {
+      // no tree was saved in virtual file before. happens when created new document.
+      // or the old tree got gc-ed, because no reachable markers retaining it are left alive. good riddance.
       return;
     }
+
+    // old tree was saved in the virtual file. Have to transfer markers from there.
     TextRange myDocumentRange = new TextRange(0, getTextLength());
-    from.processAll(r ->{
+    oldTree.processAll(r ->{
       if (r.isValid() && myDocumentRange.contains(r)) {
         registerRangeMarker(r, r.getStartOffset(), r.getEndOffset(), r.isGreedyToLeft(), r.isGreedyToRight(), 0);
       }
