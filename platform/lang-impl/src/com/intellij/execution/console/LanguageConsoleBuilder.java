@@ -82,7 +82,7 @@ public final class LanguageConsoleBuilder {
   }
 
   /**
-   * @see {@link com.intellij.psi.PsiCodeFragment}
+   * @see com.intellij.psi.PsiCodeFragment
    */
   public LanguageConsoleBuilder psiFileFactory(@NotNull PairFunction<VirtualFile, Project, PsiFile> value) {
     psiFileFactory = value;
@@ -134,7 +134,7 @@ public final class LanguageConsoleBuilder {
   }
 
   /**
-   * @see {@link com.intellij.openapi.editor.ex.EditorEx#setOneLineMode(boolean)}
+   * @see com.intellij.openapi.editor.ex.EditorEx#setOneLineMode(boolean)
    */
   @SuppressWarnings("UnusedDeclaration")
   public LanguageConsoleBuilder oneLineInput() {
@@ -143,7 +143,7 @@ public final class LanguageConsoleBuilder {
   }
 
   /**
-   * @see {@link com.intellij.openapi.editor.ex.EditorEx#setOneLineMode(boolean)}
+   * @see com.intellij.openapi.editor.ex.EditorEx#setOneLineMode(boolean)
    */
   public LanguageConsoleBuilder oneLineInput(boolean value) {
     oneLineInput = value;
