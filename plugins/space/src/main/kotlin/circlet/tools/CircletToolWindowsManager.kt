@@ -9,10 +9,10 @@ import com.intellij.openapi.wm.ex.*
 import runtime.reactive.*
 
 class CircletToolWindowsManager(project: Project) :
-    AbstractProjectComponent(project), Lifetimed by LifetimedOnDisposable(project)
-{
+    AbstractProjectComponent(project), Lifetimed by LifetimedOnDisposable(project) {
+
     override fun initComponent() {
-        myProject.settings.serverUrl.view(lifetime) { _, url -> updateToolWindows(url) }
+        myProject.settings.stateProperty.forEach(lifetime) { updateToolWindows(it) }
 
         ToolWindowManagerEx.getInstanceEx(myProject).addToolWindowManagerListener(object : ToolWindowManagerAdapter() {
             override fun toolWindowRegistered(id: String) {
@@ -26,11 +26,11 @@ class CircletToolWindowsManager(project: Project) :
     }
 
     private fun updateToolWindows(ids: Array<String> = TOOL_WINDOW_IDS) {
-        updateToolWindows(myProject.settings.serverUrl.value, ids)
+        updateToolWindows(myProject.settings.stateProperty.value, ids)
     }
 
-    private fun updateToolWindows(serverUrl: String, ids: Array<String> = TOOL_WINDOW_IDS) {
-        val available = serverUrl.isNotEmpty()
+    private fun updateToolWindows(state: CircletProjectSettings.State, ids: Array<String> = TOOL_WINDOW_IDS) {
+        val available = state.isIntegrationAvailable
         val toolWindowManager = ToolWindowManager.getInstance(myProject)
 
         ids.forEach { toolWindowManager.getToolWindow(it)?.setAvailable(available, null) }

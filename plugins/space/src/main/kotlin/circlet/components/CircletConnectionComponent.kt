@@ -24,8 +24,8 @@ import java.net.*
 import java.util.concurrent.*
 
 class CircletConnectionComponent(project: Project) :
-    AbstractProjectComponent(project), Lifetimed by LifetimedOnDisposable(project)
-{
+    AbstractProjectComponent(project), Lifetimed by LifetimedOnDisposable(project) {
+
     var loginModel: LoginModel? = null
         private set
 
@@ -71,9 +71,8 @@ class CircletConnectionComponent(project: Project) :
             "Circlet",
             "Circlet",
             XmlStringUtil.wrapInHtml("Failed to establish server connection. Will keep trying to reconnect.<br> <a href=\"switch-off\">Switch off</a>"),
-            NotificationType.INFORMATION,
-            { _, _ -> disable() }
-        ).notify(lifetime, myProject)
+            NotificationType.INFORMATION
+        ) { _, _ -> disable() }.notify(lifetime, myProject)
     }
 
     private fun notifyDisconnected(lifetime: Lifetime) {
@@ -81,9 +80,8 @@ class CircletConnectionComponent(project: Project) :
             "Circlet",
             "Circlet",
             XmlStringUtil.wrapInHtml("Integration switched off.<br> <a href=\"switch-on\">Switch on</a>"),
-            NotificationType.INFORMATION,
-            { _, _ -> enable() }
-        ).notify(lifetime, myProject)
+            NotificationType.INFORMATION
+        ) { _, _ -> enable() }.notify(lifetime, myProject)
     }
 
     private fun notifyConnected() {
@@ -109,9 +107,8 @@ class CircletConnectionComponent(project: Project) :
             "Circlet",
             "Circlet",
             XmlStringUtil.wrapInHtml("Not authenticated.<br> <a href=\"sign-in\">Sign in</a>"),
-            NotificationType.INFORMATION,
-            { _, _ -> authenticate() }
-        ).notify(lifetime, myProject)
+            NotificationType.INFORMATION
+        ) { _, _ -> authenticate() }.notify(lifetime, myProject)
     }
 
     private val seq = SequentialLifetimes(lifetime)

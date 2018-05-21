@@ -9,4 +9,7 @@ class CircletConnectionConfigurableForm {
 
     lateinit var serverUrlField: JBTextField
         private set
+
+    lateinit var projectKeyField: JBTextField
+        private set
 }

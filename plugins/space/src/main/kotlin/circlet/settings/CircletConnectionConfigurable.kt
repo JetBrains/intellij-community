@@ -19,23 +19,38 @@ class CircletConnectionConfigurable(private val project: Project) : SearchableCo
             return serverUrl
         }
 
-    override fun isModified(): Boolean =
-        serverUrlWithProtocol != project.settings.serverUrl.value
+    private val projectKeyTrimmed: String get() = form.projectKeyField.text.trim()
+
+    override fun isModified(): Boolean {
+        val settings = project.settings
+
+        return serverUrlWithProtocol != settings.serverUrl.value || projectKeyTrimmed != settings.projectKey.value
+    }
 
     override fun getId(): String = "circlet.settings.connection"
 
     override fun getDisplayName(): String = CircletBundle.message("connection-configurable.display-name")
 
     override fun apply() {
+        val settings = project.settings
+
         val serverUrl = serverUrlWithProtocol
 
-        project.settings.serverUrl.value = serverUrl
+        settings.serverUrl.value = serverUrl
         form.serverUrlField.text = serverUrl
+
+        val projectKey = projectKeyTrimmed
+
+        settings.projectKey.value = projectKey
+        form.projectKeyField.text = projectKey
     }
 
     override fun createComponent(): JComponent? = form.panel
 
     override fun reset() {
-        form.serverUrlField.text = project.settings.serverUrl.value
+        val settings = project.settings
+
+        form.serverUrlField.text = settings.serverUrl.value
+        form.projectKeyField.text = settings.projectKey.value
     }
 }
