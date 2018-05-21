@@ -228,11 +228,6 @@ fun parseExpressionOrMapArgument(builder: PsiBuilder, level: Int, expression: Pa
   }
 }
 
-fun emptyStringContent(builder: PsiBuilder, level: Int, token: IElementType): Boolean {
-  builder.mark().done(token)
-  return true
-}
-
 fun parsePrimitiveType(builder: PsiBuilder, level: Int): Boolean = builder.advanceIf(primitiveTypes)
 
 fun parseAssignment(builder: PsiBuilder, level: Int): Boolean = builder.advanceIf(assignments)
