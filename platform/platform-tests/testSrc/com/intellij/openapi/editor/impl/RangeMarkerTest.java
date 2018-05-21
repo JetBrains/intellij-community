@@ -1403,16 +1403,16 @@ public class RangeMarkerTest extends LightPlatformTestCase {
     assertTrue(marker[0].isValid());
     assertTrue(persistentMarker[0].isValid());
 
-    Document newDoc = ObjectUtils.notNull(PsiDocumentManager.getInstance(getProject()).getDocument(psiFile));
-    int docHash1 = System.identityHashCode(newDoc);
+    document = ObjectUtils.notNull(PsiDocumentManager.getInstance(getProject()).getDocument(psiFile));
+    int docHash1 = System.identityHashCode(document);
     assertNotSame(docHash0, docHash1);
 
-    WriteCommandAction.runWriteCommandAction(getProject(), ()->newDoc.insertString(2,"000"));
+    WriteCommandAction.runWriteCommandAction(getProject(), ()->document.insertString(2,"000"));
     assertTrue(marker[0].isValid());
-    assertEquals("bl000ah", TextRange.create(marker[0]).substring(newDoc.getText()));
+    assertEquals("bl000ah", TextRange.create(marker[0]).substring(document.getText()));
     assertTrue(persistentMarker[0].isValid());
-    assertEquals("bl000ah", TextRange.create(persistentMarker[0]).substring(newDoc.getText()));
-
+    assertEquals("bl000ah", TextRange.create(persistentMarker[0]).substring(document.getText()));
+    gcDocument();
     checkRMTreesAreGCedWhenNoReachableRangeMarkersLeft(vf, marker, persistentMarker);
   }
 
