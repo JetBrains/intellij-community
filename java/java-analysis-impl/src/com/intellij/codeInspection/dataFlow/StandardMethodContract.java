@@ -67,6 +67,12 @@ public final class StandardMethodContract extends MethodContract {
     return new StandardMethodContract(createConstraintArray(paramCount), returnValue);
   }
 
+  /**
+   * Creates a new contract which is an intersection of this and supplied contracts
+   *
+   * @param contract a contract to intersect with
+   * @return intersection contract or null if no intersection is possible
+   */
   @Nullable
   StandardMethodContract intersect(StandardMethodContract contract) {
     ValueConstraint[] result = myParameters.clone();
@@ -86,6 +92,13 @@ public final class StandardMethodContract extends MethodContract {
     return new StandardMethodContract(result, getReturnValue().intersect(contract.getReturnValue()));
   }
 
+  /**
+   * Creates a stream of contracts which describe all states covered by this contract but not covered by
+   * supplied contract.
+   *
+   * @param contract contract to exclude
+   * @return a stream of exclusion contracts (could be empty)
+   */
   @NotNull
   Stream<StandardMethodContract> excludeContract(StandardMethodContract contract) {
     assert contract.getParameterCount() == myParameters.length;
@@ -96,10 +109,35 @@ public final class StandardMethodContract extends MethodContract {
       ValueConstraint constraint = constraints.get(i);
       if (constraint == ValueConstraint.ANY_VALUE) continue;
       template.set(i, constraint.negate());
-      antiContracts.add(new StandardMethodContract(template.toArray(new ValueConstraint[0]), ContractReturnValue.returnAny()));
+      antiContracts.add(new StandardMethodContract(template.toArray(new ValueConstraint[0]), getReturnValue()));
       template.set(i, constraint);
     }
     return StreamEx.of(antiContracts).map(this::intersect).nonNull();
+  }
+
+  /**
+   * Converts list of contracts which are equivalent to the passed list, but independent on the order
+   * (e.g. {@code "null -> null, _ -> !null"} will be converted to {@code "null -> null, !null -> !null"}). Also removes unreachable
+   * contracts if any.
+   *
+   * @param contracts list of input contracts to process (assumed that they are applied in the specified order)
+   * @return list of equivalent non-intersecting contracts or null if the result is too big or the input list contains errors
+   * (e.g. contracts with different parameter count)
+   */
+  @Nullable("When result is too big or contracts are erroneous")
+  public static List<StandardMethodContract> toNonIntersectingContracts(List<StandardMethodContract> contracts) {
+    if (contracts.isEmpty()) return contracts;
+    int paramCount = contracts.get(0).getParameterCount();
+    List<StandardMethodContract> result = new ArrayList<>();
+    List<StandardMethodContract> leftovers = Collections.singletonList(trivialContract(paramCount, ContractReturnValue.returnAny()));
+    for (StandardMethodContract contract : contracts) {
+      if (contract.getParameterCount() != paramCount) return null;
+      StreamEx.of(leftovers).map(c -> c.intersect(contract)).nonNull().into(result);
+      if (result.size() >= DataFlowRunner.MAX_STATES_PER_BRANCH) return null;
+      leftovers = StreamEx.of(leftovers).flatMap(c -> c.excludeContract(contract)).toList();
+      if (leftovers.isEmpty()) break;
+    }
+    return result;
   }
 
   @NotNull
