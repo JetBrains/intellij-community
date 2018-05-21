@@ -107,16 +107,6 @@ public class PyTypeHintsInspectionTest extends PyInspectionTestCase {
   }
 
   // PY-28227
-  public void testGenericInstantiation() {
-    doTestByText("from typing import Generic\n" +
-                 "\n" +
-                 "<error descr=\"Type 'Generic' cannot be instantiated; it can be used only as a base class\">Generic()</error>\n" +
-                 "\n" +
-                 "B = Generic\n" +
-                 "<error descr=\"Type 'Generic' cannot be instantiated; it can be used only as a base class\">B()</error>");
-  }
-
-  // PY-28227
   public void testGenericParametersTypes() {
     doTestByText("from typing import Generic, TypeVar\n" +
                  "\n" +
@@ -468,6 +458,80 @@ public class PyTypeHintsInspectionTest extends PyInspectionTestCase {
                  "assert issubclass(A, B[int])\n" +
                  "C = B[int]\n" +
                  "assert issubclass(A, C)");
+  }
+
+  // PY-16853
+  public void testParenthesesAndTyping() {
+    runWithLanguageLevel(
+      LanguageLevel.PYTHON35,
+      () -> doTestByText("from typing import Union\n" +
+                         "\n" +
+                         "def a(b: <error descr=\"Generics should be specified through square brackets\">Union(int, str)</error>):\n" +
+                         "    pass\n" +
+                         "\n" +
+                         "def c(d):\n" +
+                         "    # type: (<error descr=\"Generics should be specified through square brackets\">Union(int, str)</error>) -> None\n" +
+                         "    pass\n" +
+                         "\n" +
+                         "def e(f: <error descr=\"Generics should be specified through square brackets\">Union()</error>):\n" +
+                         "    pass\n" +
+                         "\n" +
+                         "def g(h):\n" +
+                         "    # type: (<error descr=\"Generics should be specified through square brackets\">Union()</error>) -> None\n" +
+                         "    pass\n" +
+                         "    \n" +
+                         "v1 = <error descr=\"Generics should be specified through square brackets\">Union(int, str)</error>\n" +
+                         "v2 = None  # type: <error descr=\"Generics should be specified through square brackets\">Union(int, str)</error>\n" +
+                         "\n" +
+                         "U = Union\n" +
+                         "def i(j: <error descr=\"Generics should be specified through square brackets\">U(int, str)</error>):\n" +
+                         "    pass\n" +
+                         "    \n" +
+                         "v3 = <error descr=\"Generics should be specified through square brackets\">U(int, str)</error>\n" +
+                         "\n" +
+                         "with foo() as bar:  # type: <error descr=\"Generics should be specified through square brackets\">Union(int,str)</error>\n" +
+                         "    pass\n" +
+                         "    \n" +
+                         "for x in []:  # type: <error descr=\"Generics should be specified through square brackets\">Union(int,str)</error>\n" +
+                         "    pass")
+    );
+  }
+
+  // PY-16853
+  public void testParenthesesAndCustom() {
+    runWithLanguageLevel(
+      LanguageLevel.PYTHON35,
+      () -> doTestByText("from typing import Generic, TypeVar\n" +
+                         "\n" +
+                         "T = TypeVar(\"T\")\n" +
+                         "\n" +
+                         "class A(Generic[T]):\n" +
+                         "    def __init__(self, v):\n" +
+                         "        pass\n" +
+                         "\n" +
+                         "def a(b: <warning descr=\"Generics should be specified through square brackets\">A(int)</warning>):\n" +
+                         "    pass\n" +
+                         "\n" +
+                         "def c(d):\n" +
+                         "    # type: (<warning descr=\"Generics should be specified through square brackets\">A(int)</warning>) -> None\n" +
+                         "    pass\n" +
+                         "\n" +
+                         "def e(f: <warning descr=\"Generics should be specified through square brackets\">A()</warning>):\n" +
+                         "    pass\n" +
+                         "\n" +
+                         "def g(h):\n" +
+                         "    # type: (<warning descr=\"Generics should be specified through square brackets\">A()</warning>) -> None\n" +
+                         "    pass\n" +
+                         "    \n" +
+                         "v1 = A(int)\n" +
+                         "v2 = None  # type: <warning descr=\"Generics should be specified through square brackets\">A(int)</warning>\n" +
+                         "\n" +
+                         "U = A\n" +
+                         "def i(j: <warning descr=\"Generics should be specified through square brackets\">U(int)</warning>):\n" +
+                         "    pass\n" +
+                         "    \n" +
+                         "v3 = None  # type: <warning descr=\"Generics should be specified through square brackets\">U(int)</warning>")
+    );
   }
 
   @NotNull

@@ -2,16 +2,20 @@
 package com.jetbrains.python.inspections
 
 import com.intellij.codeInsight.controlflow.ControlFlowUtil
-import com.intellij.codeInspection.LocalInspectionToolSession
-import com.intellij.codeInspection.ProblemHighlightType
-import com.intellij.codeInspection.ProblemsHolder
+import com.intellij.codeInspection.*
+import com.intellij.lang.injection.InjectedLanguageManager
+import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiElementVisitor
+import com.intellij.psi.PsiFileFactory
+import com.intellij.psi.util.PsiTreeUtil
 import com.intellij.psi.util.QualifiedName
 import com.jetbrains.python.PyNames
 import com.jetbrains.python.codeInsight.controlflow.ControlFlowCache
 import com.jetbrains.python.codeInsight.controlflow.ReadWriteInstruction
+import com.jetbrains.python.codeInsight.controlflow.ScopeOwner
 import com.jetbrains.python.codeInsight.dataflow.scope.ScopeUtil
+import com.jetbrains.python.codeInsight.functionTypeComments.PyFunctionTypeAnnotationDialect
 import com.jetbrains.python.codeInsight.typing.PyTypingTypeProvider
 import com.jetbrains.python.psi.*
 import com.jetbrains.python.psi.impl.PyEvaluator
@@ -45,11 +49,9 @@ class PyTypeHintsInspection : PyInspection() {
           checkTypeVarRedefinition(target)
         }
 
-        if (genericQName in calleeQName) {
-          checkGenericInstantiation(node)
-        }
-
         checkInstanceAndClassChecks(node)
+
+        checkParenthesesOnGenerics(node)
       }
     }
 
@@ -160,12 +162,6 @@ class PyTypeHintsInspection : PyInspection() {
       }
     }
 
-    private fun checkGenericInstantiation(call: PyCallExpression) {
-      registerProblem(call,
-                      "Type 'Generic' cannot be instantiated; it can be used only as a base class",
-                      ProblemHighlightType.GENERIC_ERROR)
-    }
-
     private fun checkInstanceAndClassChecks(call: PyCallExpression) {
       if (call.isCalleeText(PyNames.ISINSTANCE, PyNames.ISSUBCLASS)) {
         val base = call.arguments.getOrNull(1) ?: return
@@ -265,6 +261,29 @@ class PyTypeHintsInspection : PyInspection() {
               }
             }
           }
+      }
+    }
+
+    private fun checkParenthesesOnGenerics(call: PyCallExpression) {
+      val callee = call.callee
+      if (callee is PyReferenceExpression) {
+        if (PyResolveUtil.resolveImportedElementQNameLocally(callee).any { PyTypingTypeProvider.GENERIC_CLASSES.contains(it.toString()) }) {
+          registerProblem(call,
+                          "Generics should be specified through square brackets",
+                          ProblemHighlightType.GENERIC_ERROR,
+                          null,
+                          ReplaceWithSubscriptionQuickFix())
+        }
+        else if (InjectedLanguageManager.getInstance(call.project).isInjectedFragment(call.containingFile) ||
+                 PsiTreeUtil.getParentOfType(call, PyAnnotation::class.java, true, ScopeOwner::class.java) != null) {
+          multiFollowAssignmentsChain(callee)
+            .asSequence()
+            .map { if (it is PyFunction) it.containingClass else it }
+            .any { it is PyWithAncestors && PyTypingTypeProvider.isGeneric(it, myTypeEvalContext) }
+            .also {
+              if (it) registerProblem(call, "Generics should be specified through square brackets", ReplaceWithSubscriptionQuickFix())
+            }
+        }
       }
     }
 
@@ -399,6 +418,31 @@ class PyTypeHintsInspection : PyInspection() {
                                             follow: (PyTargetExpression) -> Boolean = this::followNotTypingOpaque): List<PsiElement> {
       val resolveContext = PyResolveContext.noImplicits().withTypeEvalContext(myTypeEvalContext)
       return referenceExpression.multiFollowAssignmentsChain(resolveContext, follow).mapNotNull { it.element }
+    }
+  }
+
+  companion object {
+    private class ReplaceWithSubscriptionQuickFix : LocalQuickFix {
+
+      override fun getFamilyName() = "Replace with square brackets"
+
+      override fun applyFix(project: Project, descriptor: ProblemDescriptor) {
+        val element = descriptor.psiElement as? PyCallExpression ?: return
+
+        val callee = element.callee?.text ?: return
+        val argumentList = element.argumentList ?: return
+        val index = argumentList.text.let { it.substring(1, it.length - 1) }
+
+        val language = element.containingFile.language
+        val text = if (language == PyFunctionTypeAnnotationDialect.INSTANCE) "() -> $callee[$index]" else "$callee[$index]"
+
+        PsiFileFactory
+          .getInstance(project)
+          // it's important to create file with same language as element's file to have correct behaviour in injections
+          .createFileFromText(language, text)
+          ?.let { it.firstChild.lastChild as? PySubscriptionExpression }
+          ?.let { element.replace(it) }
+      }
     }
   }
 }
