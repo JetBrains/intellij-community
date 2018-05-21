@@ -15,6 +15,8 @@
  */
 package com.intellij.openapi.roots;
 
+import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.util.text.VersionComparatorUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -25,6 +27,7 @@ import java.util.List;
  * @author nik
  */
 public class ExternalLibraryDescriptor {
+  private static final Logger LOG = Logger.getInstance(ExternalLibraryDescriptor.class);
   private final String myLibraryGroupId;
   private final String myLibraryArtifactId;
   private final String myMinVersion;
@@ -46,6 +49,18 @@ public class ExternalLibraryDescriptor {
     myMinVersion = minVersion;
     myMaxVersion = maxVersion;
     myPreferredVersion = preferredVersion;
+    if (preferredVersion != null && maxVersion != null) {
+      LOG.assertTrue(VersionComparatorUtil.compare(preferredVersion, maxVersion) <= 0,
+                     "Preferred version (" + preferredVersion + ") must not be newer than max version (" + maxVersion + ")");
+    }
+    if (preferredVersion != null && minVersion != null) {
+      LOG.assertTrue(VersionComparatorUtil.compare(minVersion, preferredVersion) <= 0,
+                     "Preferred version (" + preferredVersion + ") must not be older than min version (" + minVersion + ")");
+    }
+    if (minVersion != null && maxVersion != null) {
+      LOG.assertTrue(VersionComparatorUtil.compare(minVersion, maxVersion) <= 0,
+                     "Max version (" + maxVersion + ") must not be older than min version (" + minVersion + ")");
+    }
   }
 
   @NotNull
