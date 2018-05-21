@@ -28,9 +28,8 @@ public abstract class GroovyConfigUtils extends AbstractConfigUtils {
 
   // to avoid java modules deps the same pattern was copied at org.jetbrains.plugins.gradle.service.GradleInstallationManager.GROOVY_ALL_JAR_PATTERN
   // please update it as well for further changes
-  @NonNls public static final Pattern GROOVY_ALL_JAR_PATTERN = Pattern.compile("groovy-all(-minimal)?(-(\\d+(\\.\\d+)*))?(-indy|-alpha.*|-beta.*)?\\.jar");
-  public static final int VERSION_GROUP_NUMBER = 3; // version will be in third group in GROOVY_ALL_JAR_PATTERN
-  @NonNls public static final Pattern GROOVY_JAR_PATTERN = Pattern.compile("groovy(-(\\d+(\\.\\d+)*))?(-indy|-alpha.*|-beta.*)?\\.jar");
+  @NonNls public static final Pattern GROOVY_ALL_JAR_PATTERN = Pattern.compile("groovy-all(-minimal)?(-(?<version>\\d+(\\.\\d+)*(-(?!indy)\\w+(-\\d+)?)?))?(-indy)?\\.jar");
+  @NonNls public static final Pattern GROOVY_JAR_PATTERN = Pattern.compile("groovy(-(?<version>\\d+(\\.\\d+)*(-(?!indy)\\w+(-\\d+)?)?))?(-indy)?\\.jar");
 
   public static final String NO_VERSION = "<no version>";
   public static final String GROOVY1_7 = "1.7";
@@ -69,15 +68,15 @@ public abstract class GroovyConfigUtils extends AbstractConfigUtils {
   @Override
   @NotNull
   public String getSDKVersion(@NotNull final String path) {
-    String groovyJarVersion = getSDKJarVersion(path + "/lib", GROOVY_JAR_PATTERN, MANIFEST_PATH, VERSION_GROUP_NUMBER);
+    String groovyJarVersion = getSDKJarVersion(path + "/lib", GROOVY_JAR_PATTERN, MANIFEST_PATH);
     if (groovyJarVersion == null) {
-      groovyJarVersion = getSDKJarVersion(path + "/lib", GROOVY_ALL_JAR_PATTERN, MANIFEST_PATH, VERSION_GROUP_NUMBER);
+      groovyJarVersion = getSDKJarVersion(path + "/lib", GROOVY_ALL_JAR_PATTERN, MANIFEST_PATH);
     }
     if (groovyJarVersion == null) {
-      groovyJarVersion = getSDKJarVersion(path + "/embeddable", GROOVY_ALL_JAR_PATTERN, MANIFEST_PATH, VERSION_GROUP_NUMBER);
+      groovyJarVersion = getSDKJarVersion(path + "/embeddable", GROOVY_ALL_JAR_PATTERN, MANIFEST_PATH);
     }
     if (groovyJarVersion == null) {
-      groovyJarVersion = getSDKJarVersion(path, GROOVY_ALL_JAR_PATTERN, MANIFEST_PATH, VERSION_GROUP_NUMBER);
+      groovyJarVersion = getSDKJarVersion(path, GROOVY_ALL_JAR_PATTERN, MANIFEST_PATH);
     }
     return groovyJarVersion == null ? UNDEFINED_VERSION : groovyJarVersion;
   }
