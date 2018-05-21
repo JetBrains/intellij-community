@@ -2,6 +2,7 @@
 package git4idea.checkin;
 
 import com.intellij.openapi.extensions.ExtensionPointName;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.FilePath;
 import org.jetbrains.annotations.NotNull;
 
@@ -21,6 +22,8 @@ public abstract class GitCheckinExplicitMovementProvider {
   public static final ExtensionPointName<GitCheckinExplicitMovementProvider> EP_NAME =
     ExtensionPointName.create("Git4Idea.GitCheckinExplicitMovementProvider");
 
+  public abstract boolean isEnabled(@NotNull Project project);
+
   /**
    * @return Text for checkbox in commit options
    */
@@ -37,7 +40,9 @@ public abstract class GitCheckinExplicitMovementProvider {
    * @return file movements, that should be committed explicitly
    */
   @NotNull
-  public abstract Collection<Movement> collectExplicitMovements(@NotNull List<FilePath> beforePaths, @NotNull List<FilePath> afterPaths);
+  public abstract Collection<Movement> collectExplicitMovements(@NotNull Project project,
+                                                                @NotNull List<FilePath> beforePaths,
+                                                                @NotNull List<FilePath> afterPaths);
 
   public static class Movement {
     @NotNull private final FilePath myBeforePath;

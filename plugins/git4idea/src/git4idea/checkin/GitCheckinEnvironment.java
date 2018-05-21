@@ -524,7 +524,7 @@ public class GitCheckinEnvironment implements CheckinEnvironment {
 
     Set<Movement> movedPaths = new HashSet<>();
     for (GitCheckinExplicitMovementProvider provider : GitCheckinExplicitMovementProvider.EP_NAME.getExtensions()) {
-      Collection<Movement> providerMovements = provider.collectExplicitMovements(beforePaths, afterPaths);
+      Collection<Movement> providerMovements = provider.collectExplicitMovements(myProject, beforePaths, afterPaths);
       if (!providerMovements.isEmpty()) {
         message = provider.getCommitMessage(message);
         movedPaths.addAll(providerMovements);
@@ -1049,7 +1049,7 @@ public class GitCheckinEnvironment implements CheckinEnvironment {
 
 
     GitCheckinOptions(@NotNull Project project, @NotNull CheckinProjectPanel panel) {
-      myExplicitMovementProviders = asList(GitCheckinExplicitMovementProvider.EP_NAME.getExtensions());
+      myExplicitMovementProviders = filter(GitCheckinExplicitMovementProvider.EP_NAME.getExtensions(), it -> it.isEnabled(myProject));
 
       myCheckinProjectPanel = panel;
       myAuthorField = createTextField(project, getAuthors(project));
