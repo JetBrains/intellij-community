@@ -1,23 +1,12 @@
 from typing import overload, Any, List, Optional, SupportsFloat, TypeVar, Union
 from datetime import date, datetime, timedelta
 
+from ._common import weekday
+
 __all__ = ...  # type: List[str]
 
 _SelfT = TypeVar('_SelfT', bound=relativedelta)
 _DateT = TypeVar('_DateT', date, datetime)
-
-
-class weekday(object):
-    def __init__(self, weekday: int, n: Optional[int]=...) -> None: ...
-
-    def __call__(self, n: int) -> 'weekday': ...
-
-    def __eq__(self, other) -> bool: ...
-
-    def __repr__(self) -> str: ...
-
-    weekday = ...  # type: int
-    n = ...  # type: int
 
 MO = ...  # type: weekday
 TU = ...  # type: weekday

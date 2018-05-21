@@ -31,6 +31,8 @@ public abstract class GitTextHandler extends GitHandler {
   private volatile boolean myIsDestroyed;
   private final Object myProcessStateLock = new Object();
 
+  protected boolean myWithMediator = true;
+
   protected GitTextHandler(@NotNull Project project, @NotNull File directory, @NotNull GitCommand command) {
     super(project, directory, command, Collections.emptyList());
   }
@@ -43,15 +45,7 @@ public abstract class GitTextHandler extends GitHandler {
                            @NotNull VirtualFile vcsRoot,
                            @NotNull GitCommand command,
                            List<String> configParameters) {
-    this(project, vcsRoot, command, configParameters, false);
-  }
-
-  protected GitTextHandler(@NotNull Project project,
-                           @NotNull VirtualFile vcsRoot,
-                           @NotNull GitCommand command,
-                           List<String> configParameters,
-                           boolean lowPriorityProcess) {
-    super(project, vcsRoot, command, configParameters, lowPriorityProcess);
+    super(project, vcsRoot, command, configParameters);
   }
 
   public GitTextHandler(@Nullable Project project,
@@ -59,7 +53,11 @@ public abstract class GitTextHandler extends GitHandler {
                         @NotNull String pathToExecutable,
                         @NotNull GitCommand command,
                         @NotNull List<String> configParameters) {
-    super(project, directory, pathToExecutable, command, configParameters, false);
+    super(project, directory, pathToExecutable, command, configParameters);
+  }
+
+  public void setWithMediator(boolean value) {
+    myWithMediator = value;
   }
 
   @Nullable
@@ -166,7 +164,7 @@ public abstract class GitTextHandler extends GitHandler {
   }
 
   protected ProcessHandler createProcess(@NotNull GeneralCommandLine commandLine) throws ExecutionException {
-    return new MyOSProcessHandler(commandLine, true);
+    return new MyOSProcessHandler(commandLine, myWithMediator && Registry.is("git.execute.with.mediator"));
   }
 
   protected static class MyOSProcessHandler extends KillableProcessHandler {

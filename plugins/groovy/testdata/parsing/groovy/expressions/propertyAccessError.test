@@ -18,5 +18,4 @@ Groovy script
           PsiElement(})('}')
       PsiErrorElement:',' or ']' expected
         <empty list>
-  PsiErrorElement:Unexpected symbol
-    PsiElement(})('}')
+  PsiElement(})('}')

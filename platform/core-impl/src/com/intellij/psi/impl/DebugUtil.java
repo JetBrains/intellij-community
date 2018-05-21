@@ -18,6 +18,7 @@ import com.intellij.psi.impl.source.SourceTreeToPsiMap;
 import com.intellij.psi.impl.source.tree.*;
 import com.intellij.psi.stubs.ObjectStubSerializer;
 import com.intellij.psi.stubs.Stub;
+import com.intellij.psi.templateLanguages.OuterLanguageElement;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.util.*;
@@ -143,7 +144,7 @@ public class DebugUtil {
         if (showRanges) buffer.append(root.getTextRange().toString());
         buffer.append("\n");
         indent += 2;
-        if (root instanceof CompositeElement && root.getFirstChildNode() == null) {
+        if (root instanceof CompositeElement && root.getFirstChildNode() == null && showEmptyChildren()) {
           StringUtil.repeatSymbol(buffer, ' ', indent);
           buffer.append("<empty list>\n");
         }
@@ -153,6 +154,10 @@ public class DebugUtil {
       }
 
       super.visitNode(root);
+    }
+
+    protected boolean showEmptyChildren() {
+      return true;
     }
 
     protected boolean shouldSkipNode(TreeElement node) {
@@ -400,7 +405,13 @@ public class DebugUtil {
         @Override
         protected boolean shouldSkipNode(TreeElement node) {
           return super.shouldSkipNode(node) || node instanceof PsiErrorElement || node instanceof PsiComment || 
-                 node instanceof LeafPsiElement && StringUtil.isEmptyOrSpaces(node.getText());
+                 node instanceof LeafPsiElement && StringUtil.isEmptyOrSpaces(node.getText()) || 
+                 node instanceof OuterLanguageElement;
+        }
+
+        @Override
+        protected boolean showEmptyChildren() {
+          return false;
         }
       });
     return buffer.toString();

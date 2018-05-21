@@ -13,5 +13,5 @@ Groovy script
     GrStringContentImpl(STRING_CONTENT)
       ASTWrapperPsiElement(regex content)
         <empty list>
-    PsiErrorElement:Regex ending expected
+    PsiErrorElement:regex end expected
       <empty list>

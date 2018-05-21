@@ -37,7 +37,7 @@ import java.util.*;
  * </ul>
  * Please note that since weak references can be collected at any time, index-based methods (like get(index))
  * or size-based methods (like size()) are dangerous, misleading, error-inducing and are not supported.
- * Instead, please use add(element) and iterator().
+ * Instead, please use {@link #add(T)} and {@link #iterator()}.
  */
 public class UnsafeWeakList<T> extends AbstractCollection<T> {
   protected final List<MyReference<T>> myList;
@@ -243,7 +243,7 @@ public class UnsafeWeakList<T> extends AbstractCollection<T> {
   /**
    * Since weak references can be collected at any time,
    * this method considered dangerous, misleading, error-inducing and are is not supported.
-   * Instead, please use add(element) and iterator()
+   * Instead, please use {@link #add(T)} and {@link #iterator()}.
    */
   @Override
   @Deprecated

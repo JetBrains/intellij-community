@@ -47,17 +47,6 @@ class PyNamedTuplesTypeProvider : PyTypeProviderBase() {
     return null
   }
 
-  override fun getCallType(function: PyFunction, callSite: PyCallSiteExpression?, context: TypeEvalContext): Ref<PyType?>? {
-    if (callSite != null && function.qualifiedName == PyTypingTypeProvider.NAMEDTUPLE + "._make") {
-      val receiverType = callSite.getReceiver(function)?.let { context.getType(it) }
-      if (receiverType is PyInstantiableType<*> && isNamedTuple(receiverType, context)) {
-        return Ref.create(receiverType.toInstance())
-      }
-    }
-
-    return null
-  }
-
   companion object {
 
     fun isNamedTuple(type: PyType?, context: TypeEvalContext): Boolean {

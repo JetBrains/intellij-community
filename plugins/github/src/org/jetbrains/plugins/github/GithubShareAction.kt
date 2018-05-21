@@ -133,9 +133,10 @@ class GithubShareAction : DumbAwareAction("Share Project on GitHub", "Easily sha
 
         @Throws(IOException::class)
         private fun loadAccountInfo(indicator: ProgressIndicator, account: GithubAccount): Pair<Boolean, Set<String>> {
+          val provider = service<GithubAccountInformationProvider>()
           return service<GithubApiTaskExecutor>().execute(indicator, account, GithubTask { connection ->
             // ability to create private repos and list of repos
-            val user = GithubApiUtil.getCurrentUser(connection)
+            val user = provider.getAccountInformation(account, connection)
             val canCreatePrivateRepo = user.canCreatePrivateRepo()
             val names = GithubApiUtil.getUserRepos(connection).mapSmartSet { it.name }
             canCreatePrivateRepo to names

@@ -1,4 +1,4 @@
-// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.java.codeInsight.daemon;
 
 import com.intellij.ToolExtensionPoints;
@@ -156,7 +156,7 @@ public class LightAdvHighlightingTest extends LightDaemonAnalyzerTestCase {
   public void testDeprecated() { doTest(true); }
   public void testJavadoc() { enableInspectionTool(new JavaDocLocalInspection()); doTest(true); }
   public void testExpressionsInSwitch () { doTest(false); }
-  public void testAccessInner() throws IOException {
+  public void testAccessInner() {
     Editor e = createSaveAndOpenFile("x/BeanContextServicesSupport.java",
                                      "" +
                                      "package x;\n" +
@@ -203,7 +203,7 @@ public class LightAdvHighlightingTest extends LightDaemonAnalyzerTestCase {
   public void testExtendMultipleClasses() { doTest(false); }
   public void testRecursiveConstructorInvocation() { doTest(false); }
   public void testMethodCalls() { doTest(false); }
-  public void testSingleTypeImportConflicts() throws IOException {
+  public void testSingleTypeImportConflicts() {
     createSaveAndOpenFile("sql/Date.java", "package sql; public class Date{}");
     UIUtil.dispatchAllInvocationEvents();
     PsiDocumentManager.getInstance(getProject()).commitAllDocuments();

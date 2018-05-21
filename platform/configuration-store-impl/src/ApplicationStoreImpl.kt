@@ -9,6 +9,7 @@ import com.intellij.openapi.components.PathMacroManager
 import com.intellij.openapi.components.StateStorageOperation
 import com.intellij.openapi.components.impl.BasePathMacroManager
 import com.intellij.openapi.components.impl.stores.FileStorageCoreUtil
+import com.intellij.openapi.components.service
 import com.intellij.openapi.diagnostic.runAndLogException
 import com.intellij.openapi.util.NamedJDOMExternalizable
 import com.intellij.openapi.vfs.LocalFileSystem
@@ -24,7 +25,7 @@ const val APP_CONFIG = "\$APP_CONFIG$"
 private const val FILE_STORAGE_DIR = "options"
 private const val DEFAULT_STORAGE_SPEC = "${PathManager.DEFAULT_OPTIONS_FILE_NAME}${FileStorageCoreUtil.DEFAULT_EXT}"
 
-class ApplicationStoreImpl(private val application: Application, pathMacroManager: PathMacroManager? = null) : ComponentStoreImpl() {
+class ApplicationStoreImpl(private val application: Application, pathMacroManager: PathMacroManager? = null) : ComponentStoreWithExtraComponents() {
   override val storageManager = ApplicationStorageManager(application, pathMacroManager)
 
   // number of app components require some state, so, we load default state in test mode
@@ -49,6 +50,11 @@ class ApplicationStoreImpl(private val application: Application, pathMacroManage
         }
       }
     }
+  }
+
+  override fun saveAdditionalComponents(isForce: Boolean) {
+    // here, because no Project (and so, ProjectStoreImpl) on Welcome Screen
+    service<DefaultProjectExportableAndSaveTrigger>().save(isForce)
   }
 }
 

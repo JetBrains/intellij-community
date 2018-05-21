@@ -38,8 +38,8 @@ public class JsonSchemaMappingsConfigurable extends MasterDetailsComponent imple
   public static final String JSON_SCHEMA_MAPPINGS = "JSON Schema Mappings";
 
   private final static Comparator<UserDefinedJsonSchemaConfiguration> COMPARATOR = (o1, o2) -> {
-    if (o1.isApplicationLevel() != o2.isApplicationLevel()) {
-      return o1.isApplicationLevel() ? -1 : 1;
+    if (o1.isApplicationDefined() != o2.isApplicationDefined()) {
+      return o1.isApplicationDefined() ? 1 : -1;
     }
     return o1.getName().compareToIgnoreCase(o2.getName());
   };
@@ -126,7 +126,7 @@ public class JsonSchemaMappingsConfigurable extends MasterDetailsComponent imple
   private void addCreatedMappings(@NotNull final UserDefinedJsonSchemaConfiguration info) {
     final JsonSchemaConfigurable configurable = new JsonSchemaConfigurable(myProject, "", info, myTreeUpdater, myNameCreator);
     configurable.setError(myError);
-    final MyNode node = new MyNode(configurable, info.isApplicationLevel());
+    final MyNode node = new MyNode(configurable);
     addNode(node, myRoot);
     selectNodeInTree(node, true);
   }
@@ -140,10 +140,10 @@ public class JsonSchemaMappingsConfigurable extends MasterDetailsComponent imple
     for (UserDefinedJsonSchemaConfiguration info : list) {
       String pathToSchema = info.getRelativePathToSchema();
       final JsonSchemaConfigurable configurable =
-        new JsonSchemaConfigurable(myProject, isHttpPath(pathToSchema) ? pathToSchema : new File(myProject.getBasePath(), pathToSchema).getPath(),
+        new JsonSchemaConfigurable(myProject, isHttpPath(pathToSchema) || new File(pathToSchema).isAbsolute() ? pathToSchema : new File(myProject.getBasePath(), pathToSchema).getPath(),
                                    info, myTreeUpdater, myNameCreator);
       configurable.setError(myError);
-      myRoot.add(new MyNode(configurable, info.isApplicationLevel()));
+      myRoot.add(new MyNode(configurable));
     }
     ((DefaultTreeModel) myTree.getModel()).reload(myRoot);
     if (myRoot.children().hasMoreElements()) {
@@ -170,9 +170,7 @@ public class JsonSchemaMappingsConfigurable extends MasterDetailsComponent imple
     validate(uiList);
     final Map<String, UserDefinedJsonSchemaConfiguration> projectMap = new HashMap<>();
     for (UserDefinedJsonSchemaConfiguration info : uiList) {
-      if (!info.isApplicationLevel()) {
-        projectMap.put(info.getName(), info);
-      }
+      projectMap.put(info.getName(), info);
     }
 
     JsonSchemaMappingsProjectConfiguration.getInstance(myProject).setState(projectMap);

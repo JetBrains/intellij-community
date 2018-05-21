@@ -25,8 +25,8 @@ public class TextToIconPaintTest extends CompositeIconPaintTestHelper {
   }
 
   @Override
-  protected ScalableIcon createCompositeIcon(Icon... cellIcons) {
-    return (ScalableIcon)IconUtil.textToIcon("IDEA", new JPanel(), JBUI.scale(12));
+  protected ScalableIcon createCompositeIcon(ScaleContext ctx, Icon... cellIcons) {
+    return (ScalableIcon)IconUtil.textToIcon("IDEA", TestScaleHelper.createComponent(ctx), JBUI.scale(12));
   }
 
   @Override

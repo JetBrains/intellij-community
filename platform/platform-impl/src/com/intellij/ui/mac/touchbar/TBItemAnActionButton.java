@@ -34,13 +34,12 @@ public class TBItemAnActionButton extends TBItemButton {
   private final boolean myHiddenWhenDisabled;
   private final int myShowMode;
 
-  private final Component myComponent;
+  private Component myComponent;
 
-  TBItemAnActionButton(@NotNull String uid, @NotNull AnAction action, boolean hiddenWhenDisabled, int showMode, Component component, ModalityState modality) {
+  TBItemAnActionButton(@NotNull String uid, @NotNull AnAction action, boolean hiddenWhenDisabled, int showMode, ModalityState modality) {
     super(uid);
     myAnAction = action;
     myActionId = ActionManager.getInstance().getId(myAnAction);
-    myComponent = component;
     myAction = () -> {
       if (modality != null)
         ApplicationManager.getApplication().invokeLater(() -> _performAction(), modality);
@@ -54,13 +53,7 @@ public class TBItemAnActionButton extends TBItemButton {
     myShowMode = showMode;
   }
 
-  TBItemAnActionButton(@NotNull String uid, @NotNull AnAction action, boolean hiddenWhenDisabled, int showMode) {
-    this(uid, action, hiddenWhenDisabled, showMode, null, null);
-  }
-
-  TBItemAnActionButton(@NotNull String uid, @NotNull AnAction action, boolean hiddenWhenDisabled) {
-    this(uid, action, hiddenWhenDisabled, SHOWMODE_IMAGE_ONLY, null, null);
-  }
+  void setComponent(Component component/*for DataCtx*/) { myComponent = component; }
 
   void updateAnAction(Presentation presentation) {
     final DataContext dctx = DataManager.getInstance().getDataContext(_getComponent());

@@ -52,7 +52,7 @@ public class SameParameterValueInspectionBase extends GlobalJavaBatchInspectionT
       RefParameter[] parameters = refMethod.getParameters();
       for (RefParameter refParameter : parameters) {
         Object value = refParameter.getActualConstValue();
-        if (value != VALUE_IS_NOT_CONST && value != RefParameter.VALUE_UNDEFINED) {
+        if (value != VALUE_IS_NOT_CONST && value != VALUE_UNDEFINED) {
           if (!globalContext.shouldCheck(refParameter, this)) continue;
           if (problems == null) problems = new ArrayList<>(1);
           problems.add(registerProblem(manager, refParameter.getElement(), value, refParameter.isUsedForWriting()));
@@ -210,7 +210,7 @@ public class SameParameterValueInspectionBase extends GlobalJavaBatchInspectionT
             boolean needFurtherProcess = false;
             for (int i = 0; i < paramValues.length; i++) {
               Object value = paramValues[i];
-              final Object currentArg = getArgValue(arguments[i]);
+              final Object currentArg = getArgValue(arguments[i], method);
               if (value == VALUE_UNDEFINED) {
                 paramValues[i] = currentArg;
                 if (currentArg != VALUE_IS_NOT_CONST) {
@@ -238,8 +238,8 @@ public class SameParameterValueInspectionBase extends GlobalJavaBatchInspectionT
       };
     }
 
-    private Object getArgValue(PsiExpression arg) {
-      return RefParameterImpl.getExpressionValue(arg);
+    private Object getArgValue(PsiExpression arg, PsiMethod method) {
+      return RefParameterImpl.getAccessibleExpressionValue(arg, () -> method);
     }
   }
 
@@ -264,14 +264,14 @@ public class SameParameterValueInspectionBase extends GlobalJavaBatchInspectionT
                                                  PsiSubstitutor.EMPTY);
       }
       else {
-        stringPresentation = shortName =  String.valueOf(value);
+        stringPresentation = shortName =  StringUtil.escapeLineBreak(String.valueOf(value));
       }
     }
     return manager.createProblemDescriptor(ObjectUtils.notNull(parameter.getNameIdentifier(), parameter),
                                            InspectionsBundle.message("inspection.same.parameter.problem.descriptor",
                                                                      name,
                                                                      StringUtil.unquoteString(shortName)),
-                                           usedForWriting ? null : createFix(name, stringPresentation),
+                                           usedForWriting || parameter.isVarArgs() ? null : createFix(name, stringPresentation),
                                            ProblemHighlightType.GENERIC_ERROR_OR_WARNING, false);
   }
 }

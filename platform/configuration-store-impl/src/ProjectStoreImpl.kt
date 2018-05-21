@@ -49,7 +49,7 @@ internal val PROJECT_FILE_STORAGE_ANNOTATION = FileStorageAnnotation(PROJECT_FIL
 internal val DEPRECATED_PROJECT_FILE_STORAGE_ANNOTATION = FileStorageAnnotation(PROJECT_FILE, true)
 
 // cannot be `internal`, used in Upsource
-abstract class ProjectStoreBase(override final val project: ProjectImpl) : ComponentStoreImpl(), IProjectStore {
+abstract class ProjectStoreBase(override final val project: ProjectImpl) : ComponentStoreWithExtraComponents(), IProjectStore {
   // protected setter used in upsource
   // Zelix KlassMaster - ERROR: Could not find method 'getScheme()'
   var scheme = StorageScheme.DEFAULT
@@ -302,7 +302,7 @@ private open class ProjectStoreImpl(project: ProjectImpl, private val pathMacroM
     }
   }
 
-  override fun doSave(saveSessions: List<SaveSession>, readonlyFiles: MutableList<SaveSessionAndFile>, prevErrors: MutableList<Throwable>?): MutableList<Throwable>? {
+  override fun doSave(saveSessions: List<SaveSession>, readonlyFiles: MutableList<SaveSessionAndFile>, errors: MutableList<Throwable>) {
     try {
       saveProjectName()
     }
@@ -310,17 +310,16 @@ private open class ProjectStoreImpl(project: ProjectImpl, private val pathMacroM
       LOG.error("Unable to store project name", e)
     }
 
-    var errors = prevErrors
     beforeSave(readonlyFiles)
 
-    errors = super.doSave(saveSessions, readonlyFiles, errors)
+    super.doSave(saveSessions, readonlyFiles, errors)
 
     val notifications = NotificationsManager.getNotificationsManager().getNotificationsOfType(UnableToSaveProjectNotification::class.java, project)
     if (readonlyFiles.isEmpty()) {
       for (notification in notifications) {
         notification.expire()
       }
-      return errors
+      return
     }
 
     if (!notifications.isEmpty()) {
@@ -336,7 +335,7 @@ private open class ProjectStoreImpl(project: ProjectImpl, private val pathMacroM
     val oldList = readonlyFiles.toTypedArray()
     readonlyFiles.clear()
     for (entry in oldList) {
-      errors = executeSave(entry.session, readonlyFiles, errors)
+      executeSave(entry.session, readonlyFiles, errors)
     }
 
     CompoundRuntimeException.throwIfNotEmpty(errors)
@@ -345,8 +344,6 @@ private open class ProjectStoreImpl(project: ProjectImpl, private val pathMacroM
       dropUnableToSaveProjectNotification(project, getFilesList(readonlyFiles))
       throw IComponentStore.SaveCancelledException()
     }
-
-    return errors
   }
 
   protected open fun beforeSave(readonlyFiles: MutableList<SaveSessionAndFile>) {

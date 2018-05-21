@@ -502,7 +502,7 @@ public class PathManager {
   public static Collection<String> getUtilClassPath() {
     final Class<?>[] classes = {
       PathManager.class,            // module 'intellij.platform.util'
-      Flow.class,                   // module 'intellij.platform.annotations.common'
+      Flow.class,                   // jetbrains-annotations-java5
       SystemInfoRt.class,           // module 'intellij.platform.util.rt'
       Document.class,               // jDOM
       Appender.class,               // log4j
@@ -518,16 +518,6 @@ public class PathManager {
       final String path = getJarPathForClass(aClass);
       if (path != null) {
         classPath.add(path);
-      }
-    }
-
-    final String annotationsRoot = getJarPathForClass(Flow.class);
-    if (annotationsRoot != null && !annotationsRoot.endsWith(".jar")) {
-      // We're running IDEA built from sources. Flow.class is under intellij.platform.annotations.common,
-      // and NotNull.class is under intellij.platform.annotations.java5. Add both roots to classpath.
-      final File notNullRoot = new File(new File(annotationsRoot).getParentFile(), "intellij.platform.annotations.java5");
-      if (notNullRoot.exists()) {
-        classPath.add(notNullRoot.getAbsolutePath());
       }
     }
 

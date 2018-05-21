@@ -452,7 +452,7 @@ public class GitLogParserTest extends GitPlatformTest {
 
     String prepareOutputLine(NameStatus nameStatusOption) {
       StringBuilder sb = new StringBuilder(RECORD_START);
-      sb.append(StringUtil.join(ContainerUtil.map(GIT_LOG_OPTIONS, this::optionToValue), Character.toString(ITEMS_SEPARATOR)));
+      sb.append(StringUtil.join(ContainerUtil.map(GIT_LOG_OPTIONS, this::optionToValue), ITEMS_SEPARATOR));
       sb.append(RECORD_END);
 
       if (nameStatusOption == STATUS) {

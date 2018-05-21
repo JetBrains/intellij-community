@@ -132,7 +132,7 @@ class JsonSchemaInfoPopupStep extends BaseListPopupStep<JsonSchemaInfo> {
         if (Objects.equals(VfsUtil.findRelativeFile(projectBaseDir, pattern.path), virtualFile)
               || virtualFile.getUrl().equals(pattern.path)) {
           mappingForFile.patterns.remove(pattern);
-          if (mappingForFile.patterns.size() == 0) {
+          if (mappingForFile.patterns.size() == 0 && mappingForFile.isApplicationDefined()) {
             configuration.removeConfiguration(mappingForFile);
           }
           else {
@@ -160,7 +160,7 @@ class JsonSchemaInfoPopupStep extends BaseListPopupStep<JsonSchemaInfo> {
       configuration.addConfiguration(new UserDefinedJsonSchemaConfiguration(selectedValue.getDescription(),
                                                                             selectedValue.getSchemaVersion(),
                                                                             selectedValue.getUrl(project),
-                                                                            false,
+                                                                            true,
                                                                             Collections.singletonList(item)));
     }
   }

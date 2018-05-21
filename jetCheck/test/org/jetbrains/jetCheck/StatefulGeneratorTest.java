@@ -8,6 +8,7 @@ import org.jetbrains.annotations.NotNull;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Objects;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Supplier;
 
@@ -92,6 +93,33 @@ public class StatefulGeneratorTest extends PropertyCheckerTestCase {
       catch (PropertyFalsified fromRecheck) {
         assertEquals(e.getBreakingValue(), fromRecheck.getBreakingValue());
       }
+    }
+  }
+
+  // we shouldn't fail on incomplete data
+  // because the test might have failed in the middle of some command execution,
+  // and after we fixed the reason of test failure, the command might just want to continue working,
+  // but there's no saved data for that
+  public void testRecheckingOnIncompleteData() {
+    AtomicBoolean shouldFail = new AtomicBoolean(true);
+    Supplier<ImperativeCommand> command = () -> env -> {
+      for (int i = 0; i < 100; i++) {
+        int value = env.generateValue(integers(0, 100), null);
+        if (shouldFail.get()) {
+          throw new AssertionError();
+        }
+      }
+    };
+
+    try {
+      PropertyChecker.customized().silent().checkScenarios(command);
+      fail();
+    }
+    catch (PropertyFalsified e) {
+      shouldFail.set(false);
+
+      //noinspection deprecation
+      PropertyChecker.customized().silent().rechecking(e.getFailure().getMinimalCounterexample().getSerializedData()).checkScenarios(command);
     }
   }
 

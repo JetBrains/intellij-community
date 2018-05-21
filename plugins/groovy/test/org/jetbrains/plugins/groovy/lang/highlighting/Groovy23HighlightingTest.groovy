@@ -284,7 +284,7 @@ interface I2 {
 
   void 'test default modifier'() {
     testHighlighting '''
-default<error descr="':' expected"> </error>interface I {
+<error descr="Modifier 'default' is available with Groovy 3.0 or later">default</error> interface I {
 }
 
 trait T {

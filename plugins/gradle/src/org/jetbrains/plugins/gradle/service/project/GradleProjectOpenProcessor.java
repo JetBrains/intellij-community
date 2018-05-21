@@ -149,7 +149,7 @@ public class GradleProjectOpenProcessor extends ProjectOpenProcessor {
   }
 
   private static class GradleAbstractWizard extends AbstractWizard<ExternalModuleSettingsStep> {
-    private AbstractExternalModuleBuilder<GradleProjectSettings> myBuilder;
+    private final AbstractExternalModuleBuilder<GradleProjectSettings> myBuilder;
 
     public GradleAbstractWizard(WizardContext wizardContext, String rootProjectPath) {
       super("Open Gradle Project", (Project)null);

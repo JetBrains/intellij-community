@@ -20,6 +20,6 @@ Groovy script
       Modifiers
         PsiElement(def)('def')
       PsiElement(new line)('\n')
-      PsiErrorElement:Identifier, string literal or '(' expected
+      PsiErrorElement:identifier expected, got '}'
         <empty list>
       PsiElement(})('}')

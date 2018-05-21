@@ -15,14 +15,22 @@
  */
 package org.jetbrains.idea.maven.server.embedder;
 
+import com.intellij.openapi.util.Condition;
 import com.intellij.util.containers.ContainerUtil;
 import org.apache.maven.model.Model;
 import org.apache.maven.project.ProjectBuilderConfiguration;
 import org.apache.maven.project.interpolation.ModelInterpolationException;
 import org.apache.maven.project.interpolation.StringSearchModelInterpolator;
 import org.apache.maven.project.path.DefaultPathTranslator;
+import org.codehaus.plexus.interpolation.MapBasedValueSource;
+import org.codehaus.plexus.interpolation.ValueSource;
 
 import java.io.File;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+
+import static org.jetbrains.idea.maven.server.embedder.CustomMaven3ModelInterpolator2.*;
 
 public class CustomMaven3ModelInterpolator extends StringSearchModelInterpolator {
   public CustomMaven3ModelInterpolator() {
@@ -37,6 +45,33 @@ public class CustomMaven3ModelInterpolator extends StringSearchModelInterpolator
       throws ModelInterpolationException {
     this.interpolateObject(ContainerUtil.ar(model.getParent(), model), model, projectDir, config, debugEnabled);
     return model;
+  }
+
+  @Override
+  protected List<ValueSource> createValueSources(Model model, File projectDir, ProjectBuilderConfiguration config) {
+    List<ValueSource> sources = super.createValueSources(model, projectDir, config);
+
+    int firstMapIndex = ContainerUtil.indexOf(sources, new Condition<ValueSource>() {
+      @Override
+      public boolean value(ValueSource source) {
+        return source instanceof MapBasedValueSource;
+      }
+    });
+
+    Map<String, Object> rightOrderProperties = new HashMap<String, Object>(3);
+    if (config.getExecutionProperties().containsKey(REVISION_PROPERTY)) {
+      rightOrderProperties.put(REVISION_PROPERTY, config.getExecutionProperties().getProperty(REVISION_PROPERTY));
+    }
+    if (config.getExecutionProperties().containsKey(CHANGELIST_PROPERTY)) {
+      rightOrderProperties.put(CHANGELIST_PROPERTY, config.getExecutionProperties().getProperty(CHANGELIST_PROPERTY));
+    }
+    if (config.getExecutionProperties().containsKey(SHA1_PROPERTY)) {
+      rightOrderProperties.put(SHA1_PROPERTY, config.getExecutionProperties().getProperty(SHA1_PROPERTY));
+    }
+    // these 3 system properties must be resolved before model properties
+    sources.add(firstMapIndex + 1, new MapBasedValueSource(rightOrderProperties));
+
+    return sources;
   }
 
   @Override

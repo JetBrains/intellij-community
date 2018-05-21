@@ -70,6 +70,11 @@ abstract class MacDistributionCustomizer {
   String additionalDocTypes = ""
 
   /**
+   * List of file extensions which installer will associate with the product
+   */
+  List<String> fileAssociations = []
+
+  /**
    * Specify &lt;scheme&gt; here if you want product to be able to open urls like <scheme>://open?file=/some/file/path&line=0
    */
   List<String> urlSchemes = []

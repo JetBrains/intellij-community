@@ -103,7 +103,7 @@ internal fun getAdditionalArgumentsPropertyName() = com.jetbrains.python.testing
  * If runner name is here that means test runner only can run inheritors for TestCase
  */
 val RunnersThatRequireTestCaseClass = setOf<String>(PythonTestConfigurationsModel.PYTHONS_UNITTEST_NAME,
-                                            PyTestFrameworkService.getSdkReadableNameByFramework(PyNames.TRIAL_TEST))
+                                                    PyTestFrameworkService.getSdkReadableNameByFramework(PyNames.TRIAL_TEST))
 
 /**
  * Checks if element could be test target
@@ -126,13 +126,14 @@ fun isTestElement(element: PsiElement, testCaseClassRequired: ThreeState, typeEv
 /**
  * Since runners report names of tests as qualified name, no need to convert it to PSI and back to string.
  * We just save its name and provide it again to rerun
- * TODO: Doc derived problem
+ * @param metainfo additional info provided by test runner, in case of py.test it is test name that could be used as "-k" argument
  */
 private class PyTargetBasedPsiLocation(val target: ConfigurationTarget,
-                                       element: PsiElement) : PsiLocation<PsiElement>(element) {
+                                       element: PsiElement,
+                                       val metainfo: String?) : PsiLocation<PsiElement>(element) {
   override fun equals(other: Any?): Boolean {
     if (other is PyTargetBasedPsiLocation) {
-      return target == other.target
+      return target == other.target && metainfo == other.metainfo
     }
     return false
   }
@@ -175,7 +176,8 @@ private fun getElementByUrl(protocol: String,
                             path: String,
                             module: Module,
                             evalContext: TypeEvalContext,
-                            matcher: Matcher = PATH_URL.matcher(protocol)): Location<out PsiElement>? {
+                            matcher: Matcher = PATH_URL.matcher(protocol),
+                            metainfo: String? = null): Location<out PsiElement>? {
   val folder = if (matcher.matches()) {
     LocalFileSystem.getInstance().findFileByPath(matcher.group(1))
   }
@@ -196,7 +198,7 @@ private fun getElementByUrl(protocol: String,
     // so we cut them out of path not to provide unsupported targets to runners
     val pathNoParentheses = QualifiedName.fromComponents(
       qualifiedName.components.filter { !it.contains('(') }).toString()
-    PyTargetBasedPsiLocation(ConfigurationTarget(pathNoParentheses, PyRunTargetVariant.PYTHON), element)
+    PyTargetBasedPsiLocation(ConfigurationTarget(pathNoParentheses, PyRunTargetVariant.PYTHON), element, metainfo)
   }
   else {
     null
@@ -205,10 +207,22 @@ private fun getElementByUrl(protocol: String,
 
 
 object PyTestsLocator : SMTestLocator {
+
   override fun getLocation(protocol: String,
                            path: String,
+                           metainfo: String?,
                            project: Project,
-                           scope: GlobalSearchScope): List<Location<out PsiElement>> {
+                           scope: GlobalSearchScope) = getLocationInternal(protocol, path, project, metainfo, scope)
+
+  override fun getLocation(protocol: String, path: String, project: Project, scope: GlobalSearchScope): List<Location<out PsiElement>> {
+    return getLocationInternal(protocol, path, project, null, scope)
+  }
+
+  private fun getLocationInternal(protocol: String,
+                                  path: String,
+                                  project: Project,
+                                  metainfo: String?,
+                                  scope: GlobalSearchScope): List<Location<out PsiElement>> {
     if (scope !is ModuleWithDependenciesScope) {
       return listOf()
     }
@@ -222,7 +236,7 @@ object PyTestsLocator : SMTestLocator {
       }
     }
 
-    return getElementByUrl(protocol, path, scope.module, TypeEvalContext.codeAnalysis(project, null), matcher)?.let {
+    return getElementByUrl(protocol, path, scope.module, TypeEvalContext.codeAnalysis(project, null), matcher, metainfo)?.let {
       listOf(it)
     } ?: listOf()
   }
@@ -613,6 +627,18 @@ abstract class PyAbstractTestConfiguration(project: Project,
    *  Second approach is prefered if this flag is set. It is generally better because filesystem path does not need __init__.py
    */
   internal open fun shouldSeparateTargetPath(): Boolean = true
+
+  /**
+   * @param metaInfo String "metainfo" field provided by test runner
+   */
+  open fun setMetaInfo(metaInfo: String) {
+
+  }
+
+  /**
+   * @return Boolean if metainfo and target produces same configuration
+   */
+  open fun isSameAsLocation(target: ConfigurationTarget, metainfo: String?) = target == this.target
 }
 
 abstract class PyAbstractTestFactory<out CONF_T : PyAbstractTestConfiguration> : PythonConfigurationFactoryBase(
@@ -629,8 +655,8 @@ object PyTestsConfigurationProducer : AbstractPythonTestConfigurationProducer<Py
   override val configurationClass = PyAbstractTestConfiguration::class.java
 
   override fun createLightConfiguration(context: ConfigurationContext): RunConfiguration? {
-    val module = context.module ?:return null
-    val project = context.project ?:return null
+    val module = context.module ?: return null
+    val project = context.project ?: return null
     val configuration =
       findConfigurationFactoryFromSettings(module).createTemplateConfiguration(project) as? PyAbstractTestConfiguration
       ?: return null
@@ -679,6 +705,7 @@ object PyTestsConfigurationProducer : AbstractPythonTestConfigurationProducer<Py
     configuration.isUseModuleSdk = true
     if (location is PyTargetBasedPsiLocation) {
       location.target.copyTo(configuration.target)
+      location.metainfo?.let { configuration.setMetaInfo(it)}
     }
     else {
       val targetForConfig = PyTestsConfigurationProducer.getTargetForConfig(configuration,
@@ -763,7 +790,7 @@ object PyTestsConfigurationProducer : AbstractPythonTestConfigurationProducer<Py
     val location = context?.location
     if (location is PyTargetBasedPsiLocation) {
       // With derived classes several configurations for same element may exist
-      return location.target == configuration.target
+      return configuration.isSameAsLocation(location.target, location.metainfo)
     }
 
     val psiElement = context?.psiLocation ?: return false

@@ -61,7 +61,7 @@ class IdeaDecompiler : ClassFileDecompilers.Light() {
           IFernflowerPreferences.BANNER to BANNER,
           IFernflowerPreferences.MAX_PROCESSING_METHOD to 60,
           IFernflowerPreferences.INDENT_STRING to indent,
-          IFernflowerPreferences.FAIL_ON_INVALID_BYTECODE to "0",
+          IFernflowerPreferences.IGNOIRE_INVALID_BYTECODE to "1",
           IFernflowerPreferences.UNIT_TEST_MODE to if (ApplicationManager.getApplication().isUnitTestMode) "1" else "0")
     }
   }

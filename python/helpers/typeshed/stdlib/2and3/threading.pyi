@@ -1,11 +1,11 @@
 # Stubs for threading
 
-import sys
-from types import FrameType, TracebackType
 from typing import (
-    Any, Callable, Iterable, List, Mapping, Optional, Type, Union,
+    Any, Callable, Iterable, List, Mapping, Optional, Tuple, Type, Union,
     TypeVar,
 )
+from types import FrameType, TracebackType
+import sys
 
 # TODO recursive type
 _TF = Callable[[FrameType, str, Any], Optional[Callable[..., Any]]]

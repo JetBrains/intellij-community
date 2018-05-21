@@ -28,6 +28,7 @@ import git4idea.GitUtil;
 import git4idea.commands.*;
 import git4idea.history.GitHistoryUtils;
 import git4idea.i18n.GitBundle;
+import git4idea.index.GitIndexUtil;
 import git4idea.repo.GitRepository;
 import git4idea.repo.GitRepositoryManager;
 import git4idea.util.GitFileUtils;
@@ -234,27 +235,16 @@ public class GitMergeProvider implements MergeProvider2 {
         if (!line.contains(blob)) return;
         if (pathAmbiguous[0]) return;
 
-        try {
-          StringScanner s = new StringScanner(line);
-          s.spaceToken(); // permissions
-          String type = s.spaceToken(); // type
-          String recordBlob = s.tabToken(); // blob
-          FilePath file = VcsUtil.getFilePath(root, GitUtil.unescapePath(s.line()));
-
-          if (!"blob".equals(type)) return;
-          if (!blob.equals(recordBlob)) return;
-
+        GitIndexUtil.StagedFile stagedFile = GitIndexUtil.parseListTreeRecord(root, line);
+        if (stagedFile != null && blob.equals(stagedFile.getBlobHash())) {
           if (result[0] == null) {
-            result[0] = file;
+            result[0] = stagedFile.getPath();
           }
           else {
             // there are multiple files with given content in this revision.
             // we don't know which is right, so do not return any
             pathAmbiguous[0] = true;
           }
-        }
-        catch (VcsException e) {
-          LOG.warn(e);
         }
       }
     });

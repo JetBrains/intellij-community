@@ -129,7 +129,7 @@ object FeatureReader {
     }
 
     private fun fileContent(fileName: String): String {
-        val fileStream = gson.javaClass.classLoader.getResourceAsStream(fileName)
+        val fileStream = FeatureReader.javaClass.classLoader.getResourceAsStream(fileName)
         return fileStream.reader().readText()
     }
 

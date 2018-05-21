@@ -126,7 +126,7 @@ public class FileDocumentManagerImpl extends FileDocumentManager implements Virt
     myMultiCaster = (FileDocumentManagerListener)Proxy.newProxyInstance(loader, new Class[]{FileDocumentManagerListener.class}, handler);
   }
 
-  private static void unwrapAndRethrow(Exception e) {
+  private static void unwrapAndRethrow(@NotNull Exception e) {
     Throwable unwrapped = e;
     if (e instanceof InvocationTargetException) {
       unwrapped = e.getCause() == null ? e : e.getCause();
@@ -207,7 +207,7 @@ public class FileDocumentManagerImpl extends FileDocumentManager implements Virt
     return document;
   }
 
-  public static boolean areTooManyDocumentsInTheQueue(Collection<Document> documents) {
+  public static boolean areTooManyDocumentsInTheQueue(@NotNull Collection<? extends Document> documents) {
     if (documents.size() > 100) return true;
     int totalSize = 0;
     for (Document document : documents) {
@@ -386,7 +386,7 @@ public class FileDocumentManagerImpl extends FileDocumentManager implements Virt
     LOG.trace("  done");
   }
 
-  private boolean maySaveDocument(VirtualFile file, Document document, boolean isExplicit) {
+  private boolean maySaveDocument(@NotNull VirtualFile file, @NotNull Document document, boolean isExplicit) {
     return !myConflictResolver.hasConflict(file) &&
            Arrays.stream(Extensions.getExtensions(FileDocumentSynchronizationVetoer.EP_NAME)).allMatch(vetoer -> vetoer.maySaveDocument(document, isExplicit));
   }
@@ -467,7 +467,7 @@ public class FileDocumentManagerImpl extends FileDocumentManager implements Virt
     return !Comparing.equal(document.getCharsSequence(), loaded);
   }
 
-  private static boolean needsRefresh(final VirtualFile file) {
+  private static boolean needsRefresh(@NotNull VirtualFile file) {
     final VirtualFileSystem fs = file.getFileSystem();
     return fs instanceof NewVirtualFileSystem && file.getTimeStamp() != ((NewVirtualFileSystem)fs).getTimeStamp(file);
   }
@@ -580,21 +580,43 @@ public class FileDocumentManagerImpl extends FileDocumentManager implements Virt
     return fileType.isBinary() && BinaryFileTypeDecompilers.INSTANCE.forFileType(fileType) == null;
   }
 
+  private static final Key<Document> DOCUMENT_WAS_SAVED_TEMPORARILY = Key.create("DOCUMENT_WAS_RESURRECTED_TEMPORARILY");
+  @Override
+  public void beforeContentsChange(@NotNull VirtualFileEvent event) {
+    VirtualFile virtualFile = event.getFile();
+    // check file type in second order to avoid content detection running
+    if (virtualFile.getLength() == 0 && virtualFile.getFileType() == UnknownFileType.INSTANCE) {
+      virtualFile.putUserData(MUST_RECOMPUTE_FILE_TYPE, Boolean.TRUE);
+    }
+
+    if (ourConflictsSolverEnabled) {
+      myConflictResolver.beforeContentChange(event);
+    }
+
+    Document document = getCachedDocument(virtualFile);
+    if (document == null && DocumentImpl.areRangeMarkersRetainedFor(virtualFile)) {
+      // re-create document with the old contents prior to this event
+      // then contentChanged() will diff the document with the new contents and update the markers
+      document = getDocument(virtualFile);
+    }
+    // save document strongly to make it live until contentChanged()
+    virtualFile.putUserData(DOCUMENT_WAS_SAVED_TEMPORARILY, document);
+  }
+
   @Override
   public void contentsChanged(@NotNull VirtualFileEvent event) {
+    final VirtualFile virtualFile = event.getFile();
+    final Document document = getCachedDocument(virtualFile);
+    // remove strong ref to allow document to gc
+    virtualFile.putUserData(DOCUMENT_WAS_SAVED_TEMPORARILY, null);
+
     if (event.isFromSave()) return;
-    final VirtualFile file = event.getFile();
-    final Document document = getCachedDocument(file);
-    if (document == null) {
-      myMultiCaster.fileWithNoDocumentChanged(file);
-      return;
+
+    if (document == null || isBinaryWithDecompiler(virtualFile)) {
+      myMultiCaster.fileWithNoDocumentChanged(virtualFile); // This will generate PSI event at FileManagerImpl
     }
 
-    if (isBinaryWithDecompiler(file)) {
-      myMultiCaster.fileWithNoDocumentChanged(file); // This will generate PSI event at FileManagerImpl
-    }
-
-    if (document.getModificationStamp() == event.getOldModificationStamp() || !isDocumentUnsaved(document)) {
+    if (document != null && (document.getModificationStamp() == event.getOldModificationStamp() || !isDocumentUnsaved(document))) {
       reloadFromDisk(document);
     }
   }
@@ -667,19 +689,6 @@ public class FileDocumentManagerImpl extends FileDocumentManager implements Virt
     }
   }
 
-  @Override
-  public void beforeContentsChange(@NotNull VirtualFileEvent event) {
-    VirtualFile virtualFile = event.getFile();
-    // check file type in second order to avoid content detection running
-    if (virtualFile.getLength() == 0 && virtualFile.getFileType() == UnknownFileType.INSTANCE) {
-      virtualFile.putUserData(MUST_RECOMPUTE_FILE_TYPE, Boolean.TRUE);
-    }
-
-    if (ourConflictsSolverEnabled) {
-      myConflictResolver.beforeContentChange(event);
-    }
-  }
-
   public static boolean recomputeFileTypeIfNecessary(@NotNull VirtualFile virtualFile) {
     if (virtualFile.getUserData(MUST_RECOMPUTE_FILE_TYPE) != null) {
       virtualFile.getFileType();
@@ -707,7 +716,7 @@ public class FileDocumentManagerImpl extends FileDocumentManager implements Virt
     myMultiCaster.unsavedDocumentsDropped();
   }
 
-  private boolean fireBeforeFileContentReload(final VirtualFile file, @NotNull Document document) {
+  private boolean fireBeforeFileContentReload(@NotNull VirtualFile file, @NotNull Document document) {
     for (FileDocumentSynchronizationVetoer vetoer : Extensions.getExtensions(FileDocumentSynchronizationVetoer.EP_NAME)) {
       try {
         if (!vetoer.mayReloadFileContent(file, document)) {
@@ -795,18 +804,15 @@ public class FileDocumentManagerImpl extends FileDocumentManager implements Virt
   //temp setter for Rider 2017.1
   public static boolean ourConflictsSolverEnabled = true;
 
-  // used in Upsource
-  protected void cacheDocument(@NotNull VirtualFile file, @NotNull Document document) {
+  private void cacheDocument(@NotNull VirtualFile file, @NotNull Document document) {
     myDocumentCache.put(file, document);
   }
 
-  // used in Upsource
-  protected void removeDocumentFromCache(@NotNull VirtualFile file) {
+  private void removeDocumentFromCache(@NotNull VirtualFile file) {
     myDocumentCache.remove(file);
   }
 
-  // used in Upsource
-  protected Document getDocumentFromCache(@NotNull VirtualFile file) {
+  private Document getDocumentFromCache(@NotNull VirtualFile file) {
     return myDocumentCache.get(file);
   }
 }

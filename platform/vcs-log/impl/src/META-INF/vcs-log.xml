@@ -155,9 +155,9 @@
       <separator/>
       <reference id="Vcs.Log.ShowOtherBranches"/>
       <separator/>
-      <reference id="VcsHistoryActionsGroup.Toolbar"/>
-      <separator/>
       <reference id="Vcs.Log.ShowDetailsAction"/>
+      <separator/>
+      <reference id="VcsHistoryActionsGroup.Toolbar"/>
       <separator/>
     </group>
 

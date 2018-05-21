@@ -57,6 +57,7 @@ public class RefImplicitConstructorImpl extends RefMethodImpl implements RefImpl
     return ReadAction.compute(getOwnerClass()::isValid).booleanValue();
   }
 
+  @NotNull
   @Override
   public String getAccessModifier() {
     return getOwnerClass().getAccessModifier();

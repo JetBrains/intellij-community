@@ -60,22 +60,25 @@ public class DfaUtil {
     });
   }
 
-  @NotNull
+  @Nullable
   public static Nullness checkNullness(@Nullable final PsiVariable variable, @Nullable final PsiElement context) {
     return checkNullness(variable, context, null);
   }
 
-  @NotNull
+  /**
+   * @return {@code null} means "can't get results of DFA"
+   */
+  @Nullable
   public static Nullness checkNullness(@Nullable final PsiVariable variable,
                                        @Nullable final PsiElement context,
                                        @Nullable final PsiElement outerBlock) {
-    if (variable == null || context == null) return Nullness.UNKNOWN;
+    if (variable == null || context == null) return null;
 
     final PsiElement codeBlock = outerBlock == null ? DfaPsiUtil.getEnclosingCodeBlock(variable, context) : outerBlock;
     Map<PsiElement, ValuableInstructionVisitor.PlaceResult> results = codeBlock == null ? null : getCachedPlaceResults(codeBlock);
     ValuableInstructionVisitor.PlaceResult placeResult = results == null ? null : results.get(context);
     if (placeResult == null) {
-      return Nullness.UNKNOWN;
+      return null;
     }
     if (placeResult.myNulls.contains(variable) && !placeResult.myNotNulls.contains(variable)) return Nullness.NULLABLE;
     if (placeResult.myNotNulls.contains(variable) && !placeResult.myNulls.contains(variable)) return Nullness.NOT_NULL;

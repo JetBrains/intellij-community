@@ -3,28 +3,12 @@ package org.jetbrains.intellij.build.images.sync
 
 import java.io.File
 
-internal fun doSync(added: Collection<String>,
-                    modified: Collection<String>,
-                    icons: Map<String, GitObject>,
-                    devIcons: Map<String, GitObject>,
-                    iconsDir: String) {
-  try {
-    doSyncAdded(added, devIcons, iconsDir)
-    doSyncModified(modified, icons, devIcons)
-  }
-  catch (e: Exception) {
-    e.printStackTrace()
-    log(e.message ?: e.javaClass.canonicalName)
-  }
-}
-
-private fun doSyncAdded(added: Collection<String>,
-                        devIcons: Map<String, GitObject>,
-                        iconsDir: String) {
-  val iconsRepo = findGitRepoRoot(iconsDir)
+internal fun syncAdded(added: Collection<String>,
+                       devIcons: Map<String, GitObject>,
+                       iconsRepo: File, iconsDir: File) {
   val unversioned = mutableListOf<String>()
   added.forEach {
-    val target = File("$iconsDir/$it")
+    val target = File(iconsDir, it)
     if (target.exists()) log("$it already exists in icons repo!")
     val source = devIcons[it]!!.getFile()
     source.copyTo(target, overwrite = true)
@@ -35,12 +19,19 @@ private fun doSyncAdded(added: Collection<String>,
   addChangesToGit(unversioned, iconsRepo)
 }
 
-private fun doSyncModified(modified: Collection<String>,
-                           icons: Map<String, GitObject>,
-                           devIcons: Map<String, GitObject>) {
+internal fun syncModified(modified: Collection<String>,
+                          icons: Map<String, GitObject>,
+                          devIcons: Map<String, GitObject>) {
   modified.forEach {
     val target = icons[it]!!.getFile()
     val source = devIcons[it]!!.getFile()
     source.copyTo(target, overwrite = true)
+  }
+}
+
+internal fun syncRemoved(removed: Collection<String>,
+                         icons: Map<String, GitObject>) {
+  removed.map { icons[it]!!.getFile() }.forEach {
+    if (!it.delete()) log("Failed to delete ${it.absolutePath}")
   }
 }

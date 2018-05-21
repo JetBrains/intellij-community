@@ -79,6 +79,39 @@ public class CommentTracker {
     return element;
   }
 
+  /**
+   * Marks the range of elements as unchanged and returns their text. The unchanged elements are assumed to be preserved
+   * in the resulting code as is, so the comments from them will not be extracted.
+   *
+   * @param firstElement first element to mark
+   * @param lastElement last element to mark (must be equal to firstElement or its sibling)
+   * @return a text to be inserted into refactored code
+   * @throws IllegalArgumentException if firstElement and lastElements are not siblings or firstElement goes after last element
+   */
+  public String rangeText(@NotNull PsiElement firstElement, @NotNull PsiElement lastElement) {
+    checkState();
+    PsiElement e;
+    StringBuilder result = new StringBuilder();
+    for (e = firstElement; e != null && e != lastElement; e = e.getNextSibling()) {
+      addIgnored(e);
+      result.append(e.getText());
+    }
+    if (e == null) {
+      throw new IllegalArgumentException("Elements must be siblings: " + firstElement + " and " + lastElement);
+    }
+    addIgnored(lastElement);
+    result.append(lastElement.getText());
+    return result.toString();
+  }
+
+  /**
+   * Marks the range of elements as unchanged. The unchanged elements are assumed to be preserved
+   * in the resulting code as is, so the comments from them will not be extracted.
+   *
+   * @param firstElement first element to mark
+   * @param lastElement last element to mark (must be equal to firstElement or its sibling)
+   * @throws IllegalArgumentException if firstElement and lastElements are not siblings or firstElement goes after last element
+   */
   public void markRangeUnchanged(@NotNull PsiElement firstElement, @NotNull PsiElement lastElement) {
     checkState();
     PsiElement e;

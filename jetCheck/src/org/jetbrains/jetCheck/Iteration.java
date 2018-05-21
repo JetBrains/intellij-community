@@ -57,7 +57,15 @@ class Iteration<T> {
       catch (CannotSatisfyCondition e) {
         continue;
       }
+      catch (DataSerializer.EOFException e) {
+        session.notifier.eofException();
+        return null;
+      }
       catch (Throwable e) {
+        //noinspection InstanceofCatchParameter
+        if (e instanceof CannotRestoreValue && session.parameters.serializedData != null) {
+          throw e;
+        }
         throw new GeneratorException(this, e);
       }
       if (!session.generatedNodes.add(node)) continue;

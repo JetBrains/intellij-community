@@ -2,13 +2,13 @@ case 1: 1+2
 true
 -----
 Groovy script
-  PsiErrorElement:'case' outside 'switch' block
-    Case label
-      PsiElement(case)('case')
-      PsiWhiteSpace(' ')
-      Literal
-        PsiElement(Integer)('1')
-      PsiElement(:)(':')
+  PsiErrorElement:';', <statement> or new line expected, got 'case'
+    PsiElement(case)('case')
+  PsiWhiteSpace(' ')
+  Literal
+    PsiElement(Integer)('1')
+  PsiErrorElement:<expression> expected, got ':'
+    PsiElement(:)(':')
   PsiWhiteSpace(' ')
   Additive expression
     Literal

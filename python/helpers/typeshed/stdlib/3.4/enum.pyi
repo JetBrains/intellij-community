@@ -1,3 +1,4 @@
+# NB: third_party/3/enum.pyi and stdlib/3.4/enum.pyi must remain consistent!
 import sys
 from typing import List, Any, TypeVar, Union, Iterator, TypeVar, Generic, Type, Sized, Mapping
 from abc import ABCMeta

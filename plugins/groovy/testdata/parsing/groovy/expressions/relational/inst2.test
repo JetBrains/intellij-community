@@ -7,7 +7,7 @@ Groovy script
       PsiElement(identifier)('a')
     PsiWhiteSpace(' ')
     PsiElement(instanceof)('instanceof')
-    PsiErrorElement:Type specification expected
+    PsiErrorElement:<type> expected
       <empty list>
   PsiElement(new line)('\n')
   Literal

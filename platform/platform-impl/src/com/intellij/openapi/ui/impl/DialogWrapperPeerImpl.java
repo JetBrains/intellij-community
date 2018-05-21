@@ -92,9 +92,6 @@ public class DialogWrapperPeerImpl extends DialogWrapperPeer {
       myProject = project;
 
       window = myWindowManager.suggestParentWindow(project);
-      if (!headless && window != null && !(window instanceof Frame) && !(window instanceof Dialog)) {
-        throw new IllegalStateException("suggestParentWindow() returned " + window + " which is not a frame or dialog");
-      }
       if (window == null) {
         Window focusedWindow = myWindowManager.getMostRecentFocusedWindow();
         if (focusedWindow instanceof IdeFrameImpl) {

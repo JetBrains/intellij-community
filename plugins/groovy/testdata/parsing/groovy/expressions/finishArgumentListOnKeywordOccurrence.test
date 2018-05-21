@@ -107,7 +107,7 @@ Groovy script
                     PsiElement(identifier)('goo')
                 PsiElement(])(']')
             PsiElement())(')')
-      PsiErrorElement:';', '}' or new line expected
+      PsiErrorElement:';', new line or '}' expected, got 'return'
         <empty list>
       PsiWhiteSpace('\n        ')
       RETURN statement

@@ -3,7 +3,7 @@ def ((a,b),c)=[[1,2],3]
 Groovy script
   Modifiers
     PsiElement(def)('def')
-  PsiErrorElement:Identifier expected
+  PsiErrorElement:identifier expected, got '('
     <empty list>
   PsiWhiteSpace(' ')
   Parenthesized expression
@@ -17,24 +17,14 @@ Groovy script
         Reference expression
           PsiElement(identifier)('b')
         PsiElement())(')')
-      PsiErrorElement:'=' expected
+      PsiErrorElement:'=' expected, got ','
         <empty list>
-  PsiErrorElement:Unexpected symbol
-    PsiElement(,)(',')
-  PsiErrorElement:';' or new line expected
-    <empty list>
+  PsiElement(,)(',')
   Reference expression
     PsiElement(identifier)('c')
-  PsiErrorElement:';' or new line expected
-    <empty list>
-  PsiErrorElement:Unexpected symbol
+  PsiErrorElement:<expression> expected, got ')'
     PsiElement())(')')
-  PsiErrorElement:';' or new line expected
-    <empty list>
-  PsiErrorElement:Unexpected symbol
-    PsiElement(=)('=')
-  PsiErrorElement:';' or new line expected
-    <empty list>
+  PsiElement(=)('=')
   Generalized list
     PsiElement([)('[')
     Generalized list

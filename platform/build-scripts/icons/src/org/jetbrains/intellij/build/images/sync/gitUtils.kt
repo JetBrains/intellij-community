@@ -61,7 +61,7 @@ internal fun listGitObjects(
 /**
  * @param file path relative to [repo]
  */
-internal class GitObject(val file: String, val hash: String, val repo: File) {
+internal data class GitObject(val file: String, val hash: String, val repo: File) {
   fun getFile() = File(repo, file)
 }
 
@@ -87,13 +87,14 @@ internal fun findGitRepoRoot(path: String): File = File(path).let {
 
 internal fun addChangesToGit(files: List<String>, repo: File) {
   // OS has argument length limit
-  files.split(1000).forEach {
-    (listOf(GIT, "add") + it).execute(repo, true)
+  files.split(1000).parallelStream().forEach {
+    (listOf(GIT, "add") + it).execute(repo)
   }
 }
 
 internal fun latestChangeTime(file: String, repo: File) =
   "$GIT log --max-count 1 --format=%cd --date=raw -- $file"
     .execute(repo, true)
-    .splitWithSpace()[0]
-    .toLong()
+    .splitWithSpace().let {
+      if (it.isEmpty()) -1 else it[0].toLong()
+    }

@@ -113,7 +113,7 @@ public abstract class InvokeThread<E extends PrioritizedTask> {
   protected abstract void processEvent(E e);
 
   protected void startNewWorkerThread() {
-    final WorkerThreadRequest workerRequest = new WorkerThreadRequest<>(this);
+    final WorkerThreadRequest<E> workerRequest = new WorkerThreadRequest<>(this);
     myCurrentRequest = workerRequest;
     workerRequest.setRequestFuture( ApplicationManager.getApplication().executeOnPooledThread(workerRequest) );
   }

@@ -33,7 +33,7 @@ interface I2 {
 
   void 'test default modifier'() {
     testHighlighting '''
-default<error descr="':' expected"> </error>interface I {
+default interface I {
 }
 
 trait T {

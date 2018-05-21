@@ -1,22 +1,29 @@
 print $/abc/$
+print $/a$bc/$
 -----
 Groovy script
   Reference expression
     PsiElement(identifier)('print')
-  PsiErrorElement:';' or new line expected
-    <empty list>
   PsiWhiteSpace(' ')
-  PsiErrorElement:Unexpected symbol
+  PsiErrorElement:<expression> expected, got '$'
     PsiElement($)('$')
-  PsiErrorElement:';' or new line expected
-    <empty list>
-  PsiErrorElement:Unexpected symbol
-    PsiElement(/)('/')
-  PsiErrorElement:';' or new line expected
-    <empty list>
+  PsiElement(/)('/')
   Multiplicative expression
     Reference expression
       PsiElement(identifier)('abc')
+    PsiElement(/)('/')
+    Reference expression
+      PsiElement(identifier)('$')
+  PsiElement(new line)('\n')
+  Reference expression
+    PsiElement(identifier)('print')
+  PsiWhiteSpace(' ')
+  PsiErrorElement:<expression> expected, got '$'
+    PsiElement($)('$')
+  PsiElement(/)('/')
+  Multiplicative expression
+    Reference expression
+      PsiElement(identifier)('a$bc')
     PsiElement(/)('/')
     Reference expression
       PsiElement(identifier)('$')

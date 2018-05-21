@@ -456,7 +456,7 @@ public class MultipleLocalChangeListsBrowser extends CommitDialogChangesBrowser 
     }
   }
 
-  private class ToggleChangeDiffAction extends ThreeStateCheckboxAction implements CustomComponentAction {
+  private class ToggleChangeDiffAction extends ThreeStateCheckboxAction implements CustomComponentAction, DumbAware {
     public ToggleChangeDiffAction() {
       super(VcsBundle.message("commit.dialog.include.action.name"));
     }

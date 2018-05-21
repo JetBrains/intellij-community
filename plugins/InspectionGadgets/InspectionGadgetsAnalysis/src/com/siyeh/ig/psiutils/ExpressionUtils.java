@@ -15,10 +15,7 @@
  */
 package com.siyeh.ig.psiutils;
 
-import com.intellij.codeInsight.AnnotationUtil;
-import com.intellij.codeInsight.ExpressionUtil;
-import com.intellij.codeInsight.NullableNotNullManager;
-import com.intellij.codeInsight.PsiEquivalenceUtil;
+import com.intellij.codeInsight.*;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.*;
@@ -1258,43 +1255,7 @@ public class ExpressionUtils {
     if (expression instanceof PsiLiteralExpression) {
       String value = tryCast(((PsiLiteralExpression)expression).getValue(), String.class);
       if (value == null || value.length() < from || value.length() < to) return null;
-      String text = expression.getText();
-      if (text.startsWith("`")) {
-        // raw-string
-        return new TextRange(1 + from, 1 + to);
-      }
-      if (text.startsWith("\"")) {
-        int curOffset = 0;
-        int mappedFrom = -1, mappedTo = -1;
-        int end = text.length() - 1;
-        int i = 1;
-        while (i <= end) {
-          if (curOffset == from) {
-            mappedFrom = i;
-          }
-          if (curOffset == to) {
-            mappedTo = i;
-            break;
-          }
-          if (i == end) break;
-          char c = text.charAt(i);
-          if (c == '\\') {
-            i++;
-            if (i == end) return null;
-            // like \u0020
-            if (text.charAt(i) == 'u') {
-              while (i < end && text.charAt(i) == 'u') i++;
-              i += 3;
-            }
-          }
-          curOffset++;
-          i++;
-        }
-        if (mappedFrom >= 0 && mappedTo >= 0) {
-          return new TextRange(mappedFrom, mappedTo);
-        }
-      }
-      return null;
+      return CodeInsightUtilCore.mapBackStringRange(expression.getText(), from, to);
     }
     if (expression instanceof PsiParenthesizedExpression) {
       PsiExpression operand = ((PsiParenthesizedExpression)expression).getExpression();

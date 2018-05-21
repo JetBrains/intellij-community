@@ -21,7 +21,7 @@ Groovy script
         PsiElement(()('(')
         Reference expression
           PsiElement(identifier)('word')
-        PsiErrorElement:')' expected
+        PsiErrorElement:')' expected, got 'w'
           <empty list>
       PsiWhiteSpace(' ')
       Call expression
@@ -31,22 +31,21 @@ Groovy script
         Command arguments
           Reference expression
             PsiElement(identifier)('w')
-      PsiErrorElement:';', '}' or new line expected
-        <empty list>
-      PsiElement())(')')
+      PsiErrorElement:',' expected, got ')'
+        PsiElement())(')')
       PsiWhiteSpace(' ')
       Closable block
         PsiElement({)('{')
         PsiWhiteSpace('\n      ')
         Parameter list
           <empty list>
-        PsiErrorElement:'case' outside 'switch' block
-          Case label
-            PsiElement(case)('case')
-            PsiWhiteSpace(' ')
-            Literal
-              PsiElement(Integer)('2')
-            PsiElement(:)(':')
+        PsiErrorElement:',', '->', ';', <statement>, identifier or new line expected, got 'case'
+          PsiElement(case)('case')
+        PsiWhiteSpace(' ')
+        Literal
+          PsiElement(Integer)('2')
+        PsiErrorElement:<expression> expected, got ':'
+          PsiElement(:)(':')
         PsiElement(new line)('\n        ')
         Variable definitions
           Modifiers
@@ -91,7 +90,7 @@ Groovy script
         PsiElement(()('(')
         Reference expression
           PsiElement(identifier)('word')
-        PsiErrorElement:')' expected
+        PsiErrorElement:')' expected, got 'w'
           <empty list>
       PsiWhiteSpace(' ')
       Call expression
@@ -110,13 +109,13 @@ Groovy script
               PsiWhiteSpace('\n      ')
               Parameter list
                 <empty list>
-              PsiErrorElement:'case' outside 'switch' block
-                Case label
-                  PsiElement(case)('case')
-                  PsiWhiteSpace(' ')
-                  Literal
-                    PsiElement(Integer)('2')
-                  PsiElement(:)(':')
+              PsiErrorElement:',', '->', ';', <statement>, identifier or new line expected, got 'case'
+                PsiElement(case)('case')
+              PsiWhiteSpace(' ')
+              Literal
+                PsiElement(Integer)('2')
+              PsiErrorElement:<expression> expected, got ':'
+                PsiElement(:)(':')
               PsiElement(new line)('\n        ')
               Variable definitions
                 Modifiers

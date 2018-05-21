@@ -36,7 +36,7 @@ class JavaPredefinedConfigurations {
       createSearchTemplateInfo(SSRBundle.message("predefined.configuration.all.expressions.of.some.type"),"'_Expression:[exprtype( SomeType )]",EXPRESSION_TYPE),
       createSearchTemplateInfo(SSRBundle.message("predefined.configuration.sample.method.invokation.with.constant.argument"),"Integer.parseInt('_a:[script( \"com.intellij.psi.util.PsiUtil.isConstantExpression(__context__)\" )])",EXPRESSION_TYPE),
       createSearchTemplateInfo(SSRBundle.message("predefined.configuration.method.references"), "'_Qualifier::'Method", EXPRESSION_TYPE),
-      createSearchTemplateInfo(SSRBundle.message("predefined.configuration.string.concatenations"), "[exprtype( java\\.lang\\.String )]'_a + '_b+", EXPRESSION_TYPE),
+      createSearchTemplateInfo(SSRBundle.message("predefined.configuration.string.concatenations"), "[exprtype( java\\.lang\\.String )]'_a + '_b{10,}", EXPRESSION_TYPE),
       createSearchTemplateInfo(SSRBundle.message("predefined.configuration.deprecated.method.calls"), "'_Instance?.'MethodCall:[ref( deprecated methods )]('_Parameter*)", EXPRESSION_TYPE),
 
       // Operators
@@ -47,6 +47,7 @@ class JavaPredefinedConfigurations {
       createSearchTemplateInfo(SSRBundle.message("predefined.configuration.foreaches"), "for ('_Type '_Variable : '_Expression) {\n  '_Statement*;\n}", OPERATOR_TYPE),
       createSearchTemplateInfo(SSRBundle.message("predefined.configuration.logging.without.if"), "[!within( statement in if )]LOG.debug('_Argument*);", OPERATOR_TYPE),
       createSearchTemplateInfo("statement in if", "if('_condition) { 'statement*; }", OPERATOR_TYPE),
+      createSearchTemplateInfo(SSRBundle.message("predefined.configuration.assert.without.description"), "assert '_condition : '_description{0};", OPERATOR_TYPE),
 
       // Class based
       createSearchTemplateInfo(
@@ -182,6 +183,8 @@ class JavaPredefinedConfigurations {
       createSearchTemplateInfo(SSRBundle.message("predefined.configuration.type.var.substitutions.in.intanceof.with.generic.types"),"'_Expr instanceof '_Type <'Substitutions+> ", GENERICS_TYPE),
       createSearchTemplateInfo(SSRBundle.message("predefined.configuration.variables.of.generic.types"),"'_Type <'_GenericArgument+>  'Var = '_Init?;", GENERICS_TYPE),
       createSearchTemplateInfo(SSRBundle.message("predefined.configuration.diamond.operators"), "new 'Class<>('_Argument*)", GENERICS_TYPE),
+      createSearchTemplateInfo(SSRBundle.message("predefined.configuration.method.returns.bounded.wildcard"), "[script( \"!Method.hasModifierProperty(com.intellij.psi.PsiModifier.ABSTRACT)\" )]'_Type<? extends '_Bound> 'Method('_ParameterType '_Parameter*);", GENERICS_TYPE),
+      createSearchTemplateInfo(SSRBundle.message("predefined.configuration.generic.constructors"), "<'_TypeParameter+> 'Class('_ParameterType '_Parameter*) {\n  '_Statement*;\n}", GENERICS_TYPE),
 
       // Add comments and metadata
       createSearchTemplateInfo(SSRBundle.message("predefined.configuration.comments"),"/* 'CommentContent */", METADATA_TYPE),
@@ -311,6 +314,8 @@ class JavaPredefinedConfigurations {
       createSearchTemplateInfo(SSRBundle.message("predefined.configuration.any.boxing"), "'_expression:[ exprtype( int|boolean|long|char|short|byte ) && formal( Object|Integer|Boolean|Long|Character|Short|Byte )]", INTERESTING_TYPE),
       createSearchTemplateInfo(SSRBundle.message("predefined.configuration.any.unboxing"), "'_expression:[ formal( int|boolean|long|char|short|byte ) && exprtype( Integer|Boolean|Long|Character|Short|Byte )]", INTERESTING_TYPE),
       createSearchTemplateInfo(SSRBundle.message("predefined.configuration.try.without.resources"), "try ('_ResourceType '_resource{0,0} = '_init; '_expression{0,0}) {\n  '_TryStatement*;\n} catch('_ExceptionType '_Exception{0,0}) {\n  '_CatchStatement*;\n}", INTERESTING_TYPE),
+      createSearchTemplateInfo(SSRBundle.message("predefined.configuration.switch.with.branches"), "switch ('_expression) {\n  case '_value{0,4}\\: '_statement*;\n}", INTERESTING_TYPE),
+      createSearchTemplateInfo(SSRBundle.message("predefined.configuration.labeled.break"), "break '_label;", INTERESTING_TYPE),
       //createSearchTemplateInfo("methods called","'_?.'_:[ref('Method)] ('_*)", INTERESTING_TYPE),
       //createSearchTemplateInfo("fields selected","'_?.'_:[ref('Field)] ", INTERESTING_TYPE),
       //createSearchTemplateInfo("symbols used","'_:[ref('Symbol)] ", INTERESTING_TYPE),

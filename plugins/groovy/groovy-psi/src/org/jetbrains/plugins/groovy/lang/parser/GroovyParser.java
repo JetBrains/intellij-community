@@ -16,9 +16,7 @@
 
 package org.jetbrains.plugins.groovy.lang.parser;
 
-import com.intellij.lang.ASTNode;
 import com.intellij.lang.PsiBuilder;
-import com.intellij.lang.PsiParser;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.tree.TokenSet;
 import org.jetbrains.annotations.NotNull;
@@ -29,7 +27,6 @@ import org.jetbrains.plugins.groovy.lang.parser.parsing.auxiliary.Separators;
 import org.jetbrains.plugins.groovy.lang.parser.parsing.auxiliary.modifiers.Modifiers;
 import org.jetbrains.plugins.groovy.lang.parser.parsing.statements.*;
 import org.jetbrains.plugins.groovy.lang.parser.parsing.statements.blocks.OpenOrClosableBlock;
-import org.jetbrains.plugins.groovy.lang.parser.parsing.statements.constructor.ConstructorBody;
 import org.jetbrains.plugins.groovy.lang.parser.parsing.statements.declaration.Declaration;
 import org.jetbrains.plugins.groovy.lang.parser.parsing.statements.expressions.AssignmentExpression;
 import org.jetbrains.plugins.groovy.lang.parser.parsing.statements.expressions.ConditionalExpression;
@@ -37,7 +34,6 @@ import org.jetbrains.plugins.groovy.lang.parser.parsing.statements.expressions.E
 import org.jetbrains.plugins.groovy.lang.parser.parsing.statements.expressions.arithmetic.PathExpression;
 import org.jetbrains.plugins.groovy.lang.parser.parsing.statements.imports.ImportStatement;
 import org.jetbrains.plugins.groovy.lang.parser.parsing.statements.typeDefinitions.TypeDefinition;
-import org.jetbrains.plugins.groovy.lang.parser.parsing.toplevel.CompilationUnit;
 import org.jetbrains.plugins.groovy.lang.parser.parsing.util.ParserUtils;
 
 /**
@@ -45,7 +41,7 @@ import org.jetbrains.plugins.groovy.lang.parser.parsing.util.ParserUtils;
  *
  * @author ilyas, Dmitry.Krasilschikov
  */
-public class GroovyParser implements PsiParser {
+public class GroovyParser extends GroovyBnfParser {
 
   public static final TokenSet RCURLY_ONLY = TokenSet.create(GroovyTokenTypes.mRCURLY);
   public static final TokenSet CASE_SECTION_END = TokenSet.create(GroovyTokenTypes.kCASE, GroovyTokenTypes.kDEFAULT,
@@ -57,28 +53,6 @@ public class GroovyParser implements PsiParser {
 
   public static void parseExpression(PsiBuilder builder) {
     ExpressionStatement.argParse(builder, new GroovyParser());
-  }
-
-  @Override
-  @NotNull
-  public ASTNode parse(@NotNull IElementType root, @NotNull PsiBuilder builder) {
-    //builder.setDebugMode(true);
-    if (root == GroovyElementTypes.OPEN_BLOCK) {
-      OpenOrClosableBlock.parseOpenBlockDeep(builder, this);
-    }
-    else if (root == GroovyElementTypes.CLOSABLE_BLOCK) {
-      OpenOrClosableBlock.parseClosableBlockDeep(builder, this);
-    }
-    else if (root == GroovyElementTypes.CONSTRUCTOR_BODY) {
-      ConstructorBody.parseConstructorBodyDeep(builder, this);
-    }
-    else {
-      assert root == GroovyParserDefinition.GROOVY_FILE : root;
-      PsiBuilder.Marker rootMarker = builder.mark();
-      CompilationUnit.parseFile(builder, this);
-      rootMarker.done(root);
-    }
-    return builder.getTreeBuilt();
   }
 
   public boolean parseForStatement(PsiBuilder builder) {

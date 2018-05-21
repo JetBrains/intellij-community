@@ -65,6 +65,7 @@ public class GitVcsSettings implements PersistentStateComponent<GitVcsSettings.S
     public int BRANCH_INFO_UPDATE_TIME = 10;
     public boolean PREVIEW_PUSH_ON_COMMIT_AND_PUSH = true;
     public boolean PREVIEW_PUSH_PROTECTED_ONLY = false;
+    public boolean COMMIT_RENAMES_SEPARATELY = false;
 
     @Property(surroundWithTag = false, flat = true)
     public DvcsBranchSettings FAVORITE_BRANCH_SETTINGS = new DvcsBranchSettings();
@@ -274,6 +275,14 @@ public class GitVcsSettings implements PersistentStateComponent<GitVcsSettings.S
 
   public void setPreviewPushProtectedOnly(boolean state) {
     myState.PREVIEW_PUSH_PROTECTED_ONLY = state;
+  }
+
+  public boolean isCommitRenamesSeparately() {
+    return myState.COMMIT_RENAMES_SEPARATELY;
+  }
+
+  public void setCommitRenamesSeparately(boolean state) {
+    myState.COMMIT_RENAMES_SEPARATELY = state;
   }
 
   /**

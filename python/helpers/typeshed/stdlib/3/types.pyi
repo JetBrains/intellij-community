@@ -4,13 +4,14 @@
 # TODO parts of this should be conditional on version
 
 import sys
-# ModuleType is exported from this module, but for circular import
-# reasons exists in its own stub file (with ModuleSpec and Loader).
-from _importlib_modulespec import ModuleType as ModuleType  # Exported
 from typing import (
     Any, Awaitable, Callable, Dict, Generic, Iterator, Mapping, Optional, Tuple, TypeVar,
     Union, overload, Type
 )
+
+# ModuleType is exported from this module, but for circular import
+# reasons exists in its own stub file (with ModuleSpec and Loader).
+from _importlib_modulespec import ModuleType as ModuleType  # Exported
 
 _T = TypeVar('_T')
 _T_co = TypeVar('_T_co', covariant=True)

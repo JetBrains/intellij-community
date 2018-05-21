@@ -36,4 +36,8 @@ public class SimplifiableConditionalExpressionFixTest extends IGQuickFixesTestCa
   public void testInverted() {
     doTest();
   }
+
+  public void testBinary() {
+    doTest();
+  }
 }

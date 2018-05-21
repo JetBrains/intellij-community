@@ -39,6 +39,7 @@ import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.packageDependencies.ui.TreeExpansionMonitor;
 import com.intellij.ui.*;
+import com.intellij.ui.mac.touchbar.TouchBarsManager;
 import com.intellij.ui.treeStructure.Tree;
 import com.intellij.util.ImageLoader;
 import com.intellij.util.ObjectUtils;
@@ -367,6 +368,7 @@ public class CustomizableActionsPanel {
     restorePathsAfterTreeOptimization(treePaths);
     CustomActionsSchema.getInstance().copyFrom(mySelectedSchema);
     CustomActionsSchema.setCustomizationSchemaForCurrentProjects();
+    TouchBarsManager.reloadAll();
   }
 
   private void restorePathsAfterTreeOptimization(final List<TreePath> treePaths) {

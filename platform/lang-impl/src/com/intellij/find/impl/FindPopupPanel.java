@@ -1247,11 +1247,14 @@ public class FindPopupPanel extends JBPanel implements FindUI {
         return new ValidationInfo(FindBundle.message("find.invalid.regular.expression.error", toFind, e.getDescription()),
                                   mySearchComponent);
       }
-      try {
-        Pattern.compile(getStringToReplace());
-      } catch (PatternSyntaxException e) {
-        return new ValidationInfo(FindBundle.message("find.invalid.regular.expression.error", getStringToReplace(), e.getDescription()),
-                                  myReplaceComponent);
+      if (model.isReplaceState()) {
+        try {
+          Pattern.compile(getStringToReplace());
+        }
+        catch (PatternSyntaxException e) {
+          return new ValidationInfo(FindBundle.message("find.invalid.regular.expression.error", getStringToReplace(), e.getDescription()),
+                                    myReplaceComponent);
+        }
       }
     }
 
