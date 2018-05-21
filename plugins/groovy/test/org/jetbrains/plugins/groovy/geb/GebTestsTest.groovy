@@ -95,6 +95,24 @@ class PageWithContent extends geb.Page {
     TestUtils.checkCompletionContains(myFixture, "button", "formField()")
   }
 
+  void testContentElementsCompletionType() {
+    myFixture.configureByText("PageWithContent.groovy", """
+class PageWithContent extends geb.Page {
+  static content = {
+    button { \$('button') }
+    formField { String name -> \$('input', name: name) }
+  }
+  
+  def someMethod() {
+    <caret>
+  }
+}
+""")
+
+    TestUtils.checkCompletionType(myFixture, "button", "geb.navigator.Navigator")
+    TestUtils.checkCompletionType(myFixture, "formField", "geb.navigator.Navigator")
+  }
+
   void testContentMethodReturnType() {
     myFixture.configureByText("PageWithContent.groovy", """
 class PageWithContent extends geb.Page {
