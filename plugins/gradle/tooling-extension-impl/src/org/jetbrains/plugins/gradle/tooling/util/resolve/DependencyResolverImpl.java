@@ -478,16 +478,14 @@ public class DependencyResolverImpl implements DependencyResolver {
     Collection<File> resolvedFiles = getFiles(dep);
 
     boolean checkCompileOnlyDeps = compileDependenciesProvider.getCompileClasspathConfiguration() != null;
-    final Set<File> compileConfigurationFiles = compileDependenciesProvider.getCompileConfigurationFiles();
-    final Set<File> compileOnlyConfigurationFiles = compileDependenciesProvider.getCompileOnlyConfigurationFiles();
-    final Set<File> deprecatedCompileConfigurationFiles = compileDependenciesProvider.getDeprecatedCompileConfigurationFiles();
 
-    final Set<File> runtimeConfigurationFiles = runtimeDependenciesProvider.getConfigurationFiles();
     // since version 3.4 compileOnly no longer extends compile
     // so, we can use compileOnly configuration for the check
     if (isJavaLibraryPluginSupported) {
+      final Set<File> compileOnlyConfigurationFiles = compileDependenciesProvider.getCompileOnlyConfigurationFiles();
       if (compileOnlyConfigurationFiles != null && compileOnlyConfigurationFiles.containsAll(resolvedFiles)) {
         // deprecated 'compile' configuration still can be used
+        final Set<File> deprecatedCompileConfigurationFiles = compileDependenciesProvider.getDeprecatedCompileConfigurationFiles();
         if (deprecatedCompileConfigurationFiles == null || !deprecatedCompileConfigurationFiles.containsAll(resolvedFiles)) {
           dep.setScope(PROVIDED_SCOPE);
         }
@@ -495,8 +493,8 @@ public class DependencyResolverImpl implements DependencyResolver {
     }
     else {
       if (checkCompileOnlyDeps
-          && !compileConfigurationFiles.containsAll(resolvedFiles)
-          && !runtimeConfigurationFiles.containsAll(resolvedFiles)) {
+          && !compileDependenciesProvider.getCompileConfigurationFiles().containsAll(resolvedFiles)
+          && !runtimeDependenciesProvider.getConfigurationFiles().containsAll(resolvedFiles)) {
         dep.setScope(PROVIDED_SCOPE);
       }
     }

@@ -31,7 +31,7 @@ public class RuntimeDependenciesProvider {
 
   public Set<File> getConfigurationFiles() {
     if (myConfigurationFiles == null) {
-      myConfigurationFiles = myConfiguration.getFiles();
+      myConfigurationFiles = myConfiguration.getResolvedConfiguration().getLenientConfiguration().getFiles();
     }
     return myConfigurationFiles;
   }

@@ -53,7 +53,7 @@ public class CompileDependenciesProvider {
     }
     Set<File> cached = myConfigurationFilesCache.get(key);
     if (cached == null) {
-      cached = key.getFiles();
+      cached = key.getResolvedConfiguration().getLenientConfiguration().getFiles();
       myConfigurationFilesCache.put(key, cached);
     }
     return cached;
