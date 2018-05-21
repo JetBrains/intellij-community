@@ -234,7 +234,7 @@ public class AttachToProcessAction extends AnAction {
   }
 
   @NotNull
-  static List<AttachToProcessItem> collectAttachProcessItems(@NotNull final Project project,
+  public static List<AttachToProcessItem> collectAttachProcessItems(@NotNull final Project project,
                                                                @NotNull XAttachHost host,
                                                                @NotNull ProgressIndicator indicator) {
     return doCollectAttachProcessItems(project, host, getProcessInfos(host), indicator, getProvidersApplicableForHost(host));
