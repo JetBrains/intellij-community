@@ -260,8 +260,13 @@ def zip_stdlib(zip_path):
 
     import platform
 
+    if sys.version.find('Anaconda') != -1:
+        interpreter_name = 'Anaconda'
+    else:
+        interpreter_name = 'Python'
+
     zip_filename = os.path.normpath(os.path.sep.join([zip_path, "%s-%s-stdlib-%s.zip" % (
-        'Anaconda' if sys.version.find('Anaconda') != -1 else 'Python',
+        interpreter_name,
         '.'.join(map(str, sys.version_info)),
         platform.platform())]))
 
