@@ -5,11 +5,11 @@ import com.intellij.codeInsight.NullableNotNullManager
 import com.intellij.codeInspection.dataFlow.ContractReturnValue
 import com.intellij.codeInspection.dataFlow.JavaMethodContractUtil
 import com.intellij.codeInspection.dataFlow.StandardMethodContract
-import com.intellij.codeInspection.dataFlow.StandardMethodContract.ValueConstraint.ANY_VALUE
-import com.intellij.codeInspection.dataFlow.StandardMethodContract.ValueConstraint.NULL_VALUE
+import com.intellij.codeInspection.dataFlow.StandardMethodContract.ValueConstraint.*
 import com.intellij.codeInspection.dataFlow.inference.ContractInferenceInterpreter.withConstraint
 import com.intellij.codeInspection.dataFlow.instructions.MethodCallInstruction
 import com.intellij.psi.*
+import com.intellij.psi.util.PsiUtil
 import com.siyeh.ig.psiutils.SideEffectChecker
 
 /**
@@ -65,7 +65,7 @@ internal data class DelegationContract(internal val expression: ExpressionRange,
           break
         }
 
-        val argument = callArguments[i]
+        val argument = PsiUtil.skipParenthesizedExprDown(callArguments[i]) ?: return null
         val paramIndex = resolveParameter(callerMethod, argument)
         if (paramIndex >= 0) {
           answer = withConstraint(answer, paramIndex, argConstraint) ?: return null
@@ -90,6 +90,7 @@ internal data class DelegationContract(internal val expression: ExpressionRange,
   private fun getLiteralConstraint(argument: PsiExpression) = when (argument) {
     is PsiLiteralExpression -> ContractInferenceInterpreter.getLiteralConstraint(
       argument.getFirstChild().node.elementType)
+    is PsiNewExpression, is PsiPolyadicExpression, is PsiFunctionalExpression -> NOT_NULL_VALUE
     else -> null
   }
 
