@@ -992,12 +992,12 @@ public class ProjectViewImpl extends ProjectView implements PersistentStateCompo
   private final class MyPanel extends JPanel implements DataProvider {
     MyPanel() {
       super(new BorderLayout());
-
+      Collection<AbstractProjectViewPane> snapshot = new ArrayList<>(myId2Pane.values());
       UIUtil.putClientProperty(
         this, UIUtil.NOT_IN_HIERARCHY_COMPONENTS, new Iterable<JComponent>() {
           @Override
           public Iterator<JComponent> iterator() {
-            return JBIterable.from(myId2Pane.values())
+            return JBIterable.from(snapshot)
               .map(pane -> {
                 JComponent last = null;
                 for (Component c : UIUtil.uiParents(pane.getComponentToFocus(), false)) {
