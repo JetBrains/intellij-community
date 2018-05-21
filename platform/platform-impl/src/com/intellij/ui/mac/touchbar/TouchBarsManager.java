@@ -91,7 +91,7 @@ public class TouchBarsManager {
     );
   }
 
-  public static TouchBar showTempButtonsBar(List<JButton> jbuttons, Project project) {
+  public static TouchBar showDlgButtonsBar(List<JButton> jbuttons, Project project) {
     final TouchBar tb = _createButtonsBar(jbuttons, project);
     _showTempTouchBar(tb, BarType.DIALOG);
     return tb;
@@ -220,7 +220,7 @@ public class TouchBarsManager {
   }
 
 
-  synchronized public static void showTempTouchBar(TouchBar tb) {
+  synchronized public static void showStopRunningBar(TouchBar tb) {
     _showTempTouchBar(tb, BarType.DIALOG);
   }
 

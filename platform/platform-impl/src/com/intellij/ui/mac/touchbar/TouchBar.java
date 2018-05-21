@@ -20,6 +20,7 @@ public class TouchBar implements NSTLibrary.ItemCreator {
   protected ID myNativePeer;        // java wrapper holds native object
   protected long myCounter = 0;
   protected final List<TBItem> myItems = new ArrayList<>();
+  protected final boolean myReleaseOnClose;
 
   protected final TBItemButton myCustomEsc;
 
@@ -29,12 +30,18 @@ public class TouchBar implements NSTLibrary.ItemCreator {
     myName = "EMPTY_STUB_TOUCHBAR";
     myCustomEsc = null;
     myNativePeer = ID.NIL;
+    myReleaseOnClose = false;
   }
 
   public TouchBar(@NotNull String touchbarName, boolean replaceEsc) {
+    this(touchbarName, replaceEsc, false);
+  }
+
+  public TouchBar(@NotNull String touchbarName, boolean replaceEsc, boolean releaseOnClose) {
     myName = touchbarName;
     myCustomEsc = replaceEsc ? new TBItemButton(genNewID("esc"), AllIcons.Actions.Cancel, null, this::_closeSelf) : null;
     myNativePeer = NST.createTouchBar(touchbarName, this, myCustomEsc != null ? myCustomEsc.myUid : null);
+    myReleaseOnClose = releaseOnClose;
   }
 
   public boolean isManualClose() { return myCustomEsc != null; }
@@ -149,7 +156,10 @@ public class TouchBar implements NSTLibrary.ItemCreator {
   public void setPrincipal(@NotNull TBItem item) { NST.setPrincipal(myNativePeer, item.myUid); }
 
   public void onBeforeShow() {}
-  public void onHide() {}
+  public void onHide() {
+    if (myReleaseOnClose)
+      release();
+  }
 
   String genNewID(String desc) { return String.format("%s.%s.%d", myName, desc, myCounter++); }
 

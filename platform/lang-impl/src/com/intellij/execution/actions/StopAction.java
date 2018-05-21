@@ -105,8 +105,7 @@ public class StopAction extends DumbAwareAction implements AnAction.TransparentU
       }
 
       if (e.getPlace().equals(ActionPlaces.TOUCHBAR_GENERAL)) {
-        final TouchBar tb = createStopSelectTouchBar(stoppableDescriptors);
-        TouchBarsManager.showTempTouchBar(tb);
+        _showStopRunningBar(stoppableDescriptors);
         return;
       }
 
@@ -263,25 +262,30 @@ public class StopAction extends DumbAwareAction implements AnAction.TransparentU
                || processHandler instanceof KillableProcess && ((KillableProcess)processHandler).canKillProcess());
   }
 
-  private static TouchBar createStopSelectTouchBar(List<RunContentDescriptor> stoppableDescriptors) {
+  private static void _showStopRunningBar(List<RunContentDescriptor> stoppableDescriptors) {
+    if (!TouchBarsManager.isTouchBarAvailable())
+      return;
+
+    final TouchBar tb;
     try (NSAutoreleaseLock lock = new NSAutoreleaseLock()) {
-      TouchBar result = new TouchBar("select_running_to_stop", false);
-      result.addButton(null, "Stop all", () -> {
+      tb = new TouchBar("select_running_to_stop", true, true);
+      tb.addButton(null, "Stop all", () -> {
         for (RunContentDescriptor sd : stoppableDescriptors)
           ExecutionManagerImpl.stopProcess(sd);
-        TouchBarsManager.closeTouchBar(result, true);
+        TouchBarsManager.closeTouchBar(tb, true);
       });
-      final TBItemScrubber stopScrubber = result.addScrubber();
+      final TBItemScrubber stopScrubber = tb.addScrubber();
       List<TBItemScrubber.ItemData> scrubItems = new ArrayList<>();
       for (RunContentDescriptor sd : stoppableDescriptors) {
         scrubItems.add(new TBItemScrubber.ItemData(sd.getIcon(), sd.getDisplayName(), () -> {
           ExecutionManagerImpl.stopProcess(sd);
-          TouchBarsManager.closeTouchBar(result, true);
+          TouchBarsManager.closeTouchBar(tb, true);
         }));
       }
       stopScrubber.setItems(scrubItems);
-      return result;
     }
+
+    TouchBarsManager.showStopRunningBar(tb);
   }
 
   abstract static class HandlerItem {

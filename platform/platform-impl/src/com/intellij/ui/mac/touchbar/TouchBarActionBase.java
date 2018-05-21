@@ -85,8 +85,6 @@ public class TouchBarActionBase extends TouchBarProjectBase {
     });
   }
 
-  public void addActionGroupButtons(ActionGroup actionGroup, ModalityState modality, int showMode) { addActionGroupButtons(actionGroup, modality, showMode, null, null); }
-
   public void addActionGroupButtons(ActionGroup actionGroup, ModalityState modality, int showMode, INodeFilter filter, ICustomizer customizer) {
     _traverse(actionGroup, new ILeafVisitor() {
       private int mySeparatorCounter = 0;
