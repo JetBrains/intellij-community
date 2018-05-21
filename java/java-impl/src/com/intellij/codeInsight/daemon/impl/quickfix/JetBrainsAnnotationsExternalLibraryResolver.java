@@ -17,66 +17,23 @@ package com.intellij.codeInsight.daemon.impl.quickfix;
 
 import com.intellij.codeInsight.AnnotationUtil;
 import com.intellij.codeInsight.daemon.quickFix.ExternalLibraryResolver;
-import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.module.EffectiveLanguageLevelUtil;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.roots.ExternalLibraryDescriptor;
-import com.intellij.openapi.util.io.FileUtil;
-import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.util.ThreeState;
-import com.intellij.util.containers.ContainerUtil;
-import org.intellij.lang.annotations.Flow;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-
-import java.io.File;
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.List;
 
 /**
  * @author nik
  */
 public class JetBrainsAnnotationsExternalLibraryResolver extends ExternalLibraryResolver {
-  private static final ExternalLibraryDescriptor JAVA5 = new JetBrainsAnnotationsLibraryDescriptor("annotations-java5") {
-    @NotNull
-    @Override
-    public List<String> getLibraryClassesRoots() {
-      File annotationsJar = new File(PathManager.getLibPath(), "annotations.jar");
-      if (annotationsJar.exists()) {
-        return Collections.singletonList(FileUtil.toSystemIndependentName(annotationsJar.getAbsolutePath()));
-      }
-      return ContainerUtil.createMaybeSingletonList(getPathToJava5AnnotationsJarInDevelopmentMode());
-    }
-  };
-
-  private static final ExternalLibraryDescriptor JAVA8 = new JetBrainsAnnotationsLibraryDescriptor("annotations") {
-    @NotNull
-    @Override
-    public List<String> getLibraryClassesRoots() {
-      File annotationsJar = new File(PathManager.getHomePath(), "redist/annotations-java8.jar");
-      if (annotationsJar.exists()) {
-        return Collections.singletonList(FileUtil.toSystemIndependentName(annotationsJar.getAbsolutePath()));
-      }
-      String annotationJava5JarPath = getPathToJava5AnnotationsJarInDevelopmentMode();
-      if (annotationJava5JarPath == null) return Collections.emptyList();
-      String annotationsJava8JarPath = StringUtil.replace(annotationJava5JarPath, "annotations-java5", "annotations");
-      if (!new File(annotationsJava8JarPath).exists()) {
-        return Collections.emptyList();
-      }
-      return Collections.singletonList(annotationsJava8JarPath);
-    }
-  };
-
-  @Nullable
-  private static String getPathToJava5AnnotationsJarInDevelopmentMode() {
-    String annotationsRoot = PathManager.getJarPathForClass(Flow.class);
-    if (annotationsRoot == null) return null;
-    File annotationsJar = new File(annotationsRoot);
-    if (annotationsJar.isFile()) return FileUtil.toSystemIndependentName(annotationsJar.getAbsolutePath());
-    return null;
-  }
+  private static final String VERSION = "16.0.2";
+  private static final ExternalLibraryDescriptor JAVA5 = new ExternalLibraryDescriptor("org.jetbrains", "annotations-java5",
+                                                                                       null, null, VERSION);
+  private static final ExternalLibraryDescriptor JAVA8 = new ExternalLibraryDescriptor("org.jetbrains", "annotations",
+                                                                                       null, null, VERSION);
 
   @Nullable
   @Override
@@ -92,11 +49,5 @@ public class JetBrainsAnnotationsExternalLibraryResolver extends ExternalLibrary
   public static ExternalLibraryDescriptor getAnnotationsLibraryDescriptor(@NotNull Module contextModule) {
     boolean java8 = EffectiveLanguageLevelUtil.getEffectiveLanguageLevel(contextModule).isAtLeast(LanguageLevel.JDK_1_8);
     return java8 ? JAVA8 : JAVA5;
-  }
-
-  private static abstract class JetBrainsAnnotationsLibraryDescriptor extends ExternalLibraryDescriptor {
-    public JetBrainsAnnotationsLibraryDescriptor(final String artifactId) {
-      super("org.jetbrains", artifactId);
-    }
   }
 }
