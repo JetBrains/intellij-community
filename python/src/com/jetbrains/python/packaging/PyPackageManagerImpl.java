@@ -51,10 +51,12 @@ public class PyPackageManagerImpl extends PyPackageManager {
   private static final String PIP_PRE_26_VERSION = "1.1";
   private static final String VIRTUALENV_PRE_26_VERSION = "1.7.2";
 
-  private static final String SETUPTOOLS_VERSION = "39.0.1";
+  private static final String SETUPTOOLS_VERSION = "39.1.0";
   private static final String SETUPTOOLS_VERSION_26 = "36.8.0";
-  private static final String PIP_VERSION = "9.0.3";
-  private static final String VIRTUALENV_VERSION = "15.2.0";
+  private static final String PIP_VERSION = "10.0.1";
+  private static final String PIP_VERSION_26 = "9.0.3";
+  private static final String VIRTUALENV_VERSION = "16.0.0";
+  private static final String VIRTUALENV_VERSION_26 = "15.2.0";
 
   private static final int ERROR_NO_SETUPTOOLS = 3;
 
@@ -93,15 +95,15 @@ public class PyPackageManagerImpl extends PyPackageManager {
     final Sdk sdk = getSdk();
     final LanguageLevel languageLevel = PythonSdkType.getLanguageLevelForSdk(sdk);
     final boolean pre26 = languageLevel.isOlderThan(LanguageLevel.PYTHON26);
+    final boolean py26 = languageLevel == LanguageLevel.PYTHON26;
     if (!refreshAndCheckForSetuptools()) {
-      final boolean py26 = languageLevel == LanguageLevel.PYTHON26;
       final String name = PyPackageUtil.SETUPTOOLS + "-" + (pre26 ? SETUPTOOLS_PRE_26_VERSION :
                                                             py26 ? SETUPTOOLS_VERSION_26 :
                                                             SETUPTOOLS_VERSION);
       installManagement(name);
     }
     if (PyPackageUtil.findPackage(refreshAndGetPackages(false), PyPackageUtil.PIP) == null) {
-      final String name = PyPackageUtil.PIP + "-" + (pre26 ? PIP_PRE_26_VERSION : PIP_VERSION);
+      final String name = PyPackageUtil.PIP + "-" + (pre26 ? PIP_PRE_26_VERSION : py26 ? PIP_VERSION_26 : PIP_VERSION);
       installManagement(name);
     }
   }
@@ -321,7 +323,8 @@ public class PyPackageManagerImpl extends PyPackageManager {
       }
       args.add(destinationDir);
       final boolean pre26 = languageLevel.isOlderThan(LanguageLevel.PYTHON26);
-      final String name = "virtualenv-" + (pre26 ? VIRTUALENV_PRE_26_VERSION : VIRTUALENV_VERSION);
+      final boolean py26 = languageLevel == LanguageLevel.PYTHON26;
+      final String name = "virtualenv-" + (pre26 ? VIRTUALENV_PRE_26_VERSION : py26 ? VIRTUALENV_VERSION_26 : VIRTUALENV_VERSION);
       final String dirName = extractHelper(name + ".tar.gz");
       try {
         final String fileName = dirName + name + File.separatorChar + "virtualenv.py";
