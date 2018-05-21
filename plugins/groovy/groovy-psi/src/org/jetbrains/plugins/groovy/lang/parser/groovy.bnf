@@ -166,13 +166,11 @@
   elementType('.*_modifier_list') = modifier_list
   elementType('.*_reference_expression') = reference_expression
   elementType('.*_class_type_element') = class_type_element
-  elementType('.*_content_inner') = string_content
   consumeTokenMethod('.*_expression') = 'consumeTokenFast'
   consumeTokenMethod('.*_shift.*_sign') = 'consumeTokenFast'
-  consumeTokenMethod('.*_content_inner') = 'consumeTokenFast'
+  consumeTokenMethod('fast.*') = 'consumeTokenFast'
   consumeTokenMethod('.*_type_definition') = 'consumeTokenFast'
   name(".*type_element") = 'type'
-  name('.*_content_inner') = ''
   name('.*type_definition') = ''
 }
 
@@ -877,44 +875,21 @@ private simple_literal_tokens ::= NUM_INT
   consumeTokenMethod = 'consumeTokenFast'
 }
 
-private regex_literal ::= slashy_literal | dollar_slashy_literal
-{
-  consumeTokenMethod = 'consumeTokenFast'
-}
-slashy_literal ::= SLASHY_BEGIN fast_slashy_content SLASHY_END | slashy_literal_pin
-private fast_slashy_content ::= SLASHY_CONTENT { consumeTokenMethod = 'consumeTokenFast'}
-private slashy_literal_pin ::= SLASHY_BEGIN (fast_slashy_content | <<string_content empty_slashy_content>>) !'$' SLASHY_END
-{
-  pin = 3
-}
-dollar_slashy_literal ::= DOLLAR_SLASHY_BEGIN fast_dollar_slashy_content? DOLLAR_SLASHY_END | dollar_slashy_literal_pin
-private fast_dollar_slashy_content ::= DOLLAR_SLASHY_CONTENT { consumeTokenMethod = 'consumeTokenFast'}
-private dollar_slashy_literal_pin ::= DOLLAR_SLASHY_BEGIN (fast_dollar_slashy_content | <<string_content empty_dollar_slashy_content>>) !'$' DOLLAR_SLASHY_END
-{
-  pin = 3
-}
+private regex_literal ::= slashy_literal | dollar_slashy_literal { consumeTokenMethod = 'consumeTokenFast' }
+slashy_literal ::= SLASHY_BEGIN fast_slashy_content !'$' SLASHY_END { pin = 3 }
+dollar_slashy_literal ::= DOLLAR_SLASHY_BEGIN fast_dollar_slashy_content? !'$' DOLLAR_SLASHY_END { pin = 3 }
 
-gstring ::= (<<compound_string GSTRING_BEGIN gstring_content_inner gstring_end>>)
-{
-  extends = expression
-  consumeTokenMethod = 'consumeTokenFast'
-}
-private gstring_end ::= GSTRING_END
-regex ::= slashy_string | dollar_slashy_string
-{
-  extends = expression
-}
-private slashy_string ::= <<compound_string SLASHY_BEGIN slashy_content_inner SLASHY_END>>
-private dollar_slashy_string ::= <<compound_string DOLLAR_SLASHY_BEGIN dollar_slashy_content_inner DOLLAR_SLASHY_END>>
-private meta compound_string ::= <<begin>> <<a_b_a <<content>> string_injection>> <<end>> { pin = 1 }
+gstring ::= <<compound_string GSTRING_BEGIN fast_string_content GSTRING_END>> { extends = expression }
+regex ::= slashy_string | dollar_slashy_string { extends = expression }
+private slashy_string ::= <<compound_string SLASHY_BEGIN fast_slashy_content SLASHY_END>>
+private dollar_slashy_string ::= <<compound_string DOLLAR_SLASHY_BEGIN fast_dollar_slashy_content DOLLAR_SLASHY_END>>
+
+private fast_slashy_content ::= SLASHY_CONTENT
+private fast_dollar_slashy_content ::= DOLLAR_SLASHY_CONTENT
+private fast_string_content ::= GSTRING_CONTENT
+
+private meta compound_string ::= <<begin>> (<<string_content <<content>>>> | string_injection)* <<end>> { pin = 1 }
 meta string_content ::= <<content>>
-gstring_content_inner       ::= GSTRING_CONTENT | empty_gstring_content
-slashy_content_inner        ::= SLASHY_CONTENT | empty_slashy_content
-dollar_slashy_content_inner ::= DOLLAR_SLASHY_CONTENT | empty_dollar_slashy_content
-//TODO get rid of this weird logic
-private external empty_gstring_content       ::= emptyStringContent 'GSTRING_CONTENT'
-private external empty_slashy_content        ::= emptyStringContent 'SLASHY_CONTENT'
-private external empty_dollar_slashy_content ::= emptyStringContent 'DOLLAR_SLASHY_CONTENT'
 string_injection ::= '$' string_injection_body
 {
   pin = 1

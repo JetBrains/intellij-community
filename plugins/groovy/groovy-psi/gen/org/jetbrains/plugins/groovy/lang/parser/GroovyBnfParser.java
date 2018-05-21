@@ -2291,17 +2291,40 @@ public class GroovyBnfParser implements PsiParser, LightPsiParser {
   }
 
   /* ********************************************************** */
-  // <<begin>> <<a_b_a <<content>> string_injection>> <<end>>
+  // <<begin>> (<<string_content <<content>>>> | string_injection)* <<end>>
   static boolean compound_string(PsiBuilder b, int l, Parser _begin, Parser _content, Parser _end) {
     if (!recursion_guard_(b, l, "compound_string")) return false;
     boolean r, p;
     Marker m = enter_section_(b, l, _NONE_);
     r = _begin.parse(b, l);
     p = r; // pin = 1
-    r = r && report_error_(b, a_b_a(b, l + 1, _content, string_injection_parser_));
+    r = r && report_error_(b, compound_string_1(b, l + 1, _content));
     r = p && _end.parse(b, l) && r;
     exit_section_(b, l, m, r, p, null);
     return r || p;
+  }
+
+  // (<<string_content <<content>>>> | string_injection)*
+  private static boolean compound_string_1(PsiBuilder b, int l, Parser _content) {
+    if (!recursion_guard_(b, l, "compound_string_1")) return false;
+    int c = current_position_(b);
+    while (true) {
+      if (!compound_string_1_0(b, l + 1, _content)) break;
+      if (!empty_element_parsed_guard_(b, "compound_string_1", c)) break;
+      c = current_position_(b);
+    }
+    return true;
+  }
+
+  // <<string_content <<content>>>> | string_injection
+  private static boolean compound_string_1_0(PsiBuilder b, int l, Parser _content) {
+    if (!recursion_guard_(b, l, "compound_string_1_0")) return false;
+    boolean r;
+    Marker m = enter_section_(b);
+    r = string_content(b, l + 1, _content);
+    if (!r) r = string_injection(b, l + 1);
+    exit_section_(b, m, null, r);
+    return r;
   }
 
   /* ********************************************************** */
@@ -2594,79 +2617,31 @@ public class GroovyBnfParser implements PsiParser, LightPsiParser {
   }
 
   /* ********************************************************** */
-  // DOLLAR_SLASHY_CONTENT | empty_dollar_slashy_content
-  public static boolean dollar_slashy_content_inner(PsiBuilder b, int l) {
-    if (!recursion_guard_(b, l, "dollar_slashy_content_inner")) return false;
-    boolean r;
-    Marker m = enter_section_(b, l, _COLLAPSE_, STRING_CONTENT, null);
-    r = consumeTokenFast(b, DOLLAR_SLASHY_CONTENT);
-    if (!r) r = emptyStringContent(b, l + 1, DOLLAR_SLASHY_CONTENT);
-    exit_section_(b, l, m, r, false, null);
-    return r;
-  }
-
-  /* ********************************************************** */
-  // DOLLAR_SLASHY_BEGIN fast_dollar_slashy_content? DOLLAR_SLASHY_END | dollar_slashy_literal_pin
+  // DOLLAR_SLASHY_BEGIN fast_dollar_slashy_content? !'$' DOLLAR_SLASHY_END
   public static boolean dollar_slashy_literal(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "dollar_slashy_literal")) return false;
     if (!nextTokenIs(b, DOLLAR_SLASHY_BEGIN)) return false;
-    boolean r;
-    Marker m = enter_section_(b);
-    r = dollar_slashy_literal_0(b, l + 1);
-    if (!r) r = dollar_slashy_literal_pin(b, l + 1);
-    exit_section_(b, m, DOLLAR_SLASHY_LITERAL, r);
-    return r;
-  }
-
-  // DOLLAR_SLASHY_BEGIN fast_dollar_slashy_content? DOLLAR_SLASHY_END
-  private static boolean dollar_slashy_literal_0(PsiBuilder b, int l) {
-    if (!recursion_guard_(b, l, "dollar_slashy_literal_0")) return false;
-    boolean r;
-    Marker m = enter_section_(b);
-    r = consumeToken(b, DOLLAR_SLASHY_BEGIN);
-    r = r && dollar_slashy_literal_0_1(b, l + 1);
-    r = r && consumeToken(b, DOLLAR_SLASHY_END);
-    exit_section_(b, m, null, r);
-    return r;
-  }
-
-  // fast_dollar_slashy_content?
-  private static boolean dollar_slashy_literal_0_1(PsiBuilder b, int l) {
-    if (!recursion_guard_(b, l, "dollar_slashy_literal_0_1")) return false;
-    fast_dollar_slashy_content(b, l + 1);
-    return true;
-  }
-
-  /* ********************************************************** */
-  // DOLLAR_SLASHY_BEGIN (fast_dollar_slashy_content | <<string_content empty_dollar_slashy_content>>) !'$' DOLLAR_SLASHY_END
-  static boolean dollar_slashy_literal_pin(PsiBuilder b, int l) {
-    if (!recursion_guard_(b, l, "dollar_slashy_literal_pin")) return false;
-    if (!nextTokenIs(b, DOLLAR_SLASHY_BEGIN)) return false;
     boolean r, p;
-    Marker m = enter_section_(b, l, _NONE_);
+    Marker m = enter_section_(b, l, _NONE_, DOLLAR_SLASHY_LITERAL, null);
     r = consumeToken(b, DOLLAR_SLASHY_BEGIN);
-    r = r && dollar_slashy_literal_pin_1(b, l + 1);
-    r = r && dollar_slashy_literal_pin_2(b, l + 1);
+    r = r && dollar_slashy_literal_1(b, l + 1);
+    r = r && dollar_slashy_literal_2(b, l + 1);
     p = r; // pin = 3
     r = r && consumeToken(b, DOLLAR_SLASHY_END);
     exit_section_(b, l, m, r, p, null);
     return r || p;
   }
 
-  // fast_dollar_slashy_content | <<string_content empty_dollar_slashy_content>>
-  private static boolean dollar_slashy_literal_pin_1(PsiBuilder b, int l) {
-    if (!recursion_guard_(b, l, "dollar_slashy_literal_pin_1")) return false;
-    boolean r;
-    Marker m = enter_section_(b);
-    r = fast_dollar_slashy_content(b, l + 1);
-    if (!r) r = string_content(b, l + 1, empty_dollar_slashy_content_parser_);
-    exit_section_(b, m, null, r);
-    return r;
+  // fast_dollar_slashy_content?
+  private static boolean dollar_slashy_literal_1(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "dollar_slashy_literal_1")) return false;
+    fast_dollar_slashy_content(b, l + 1);
+    return true;
   }
 
   // !'$'
-  private static boolean dollar_slashy_literal_pin_2(PsiBuilder b, int l) {
-    if (!recursion_guard_(b, l, "dollar_slashy_literal_pin_2")) return false;
+  private static boolean dollar_slashy_literal_2(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "dollar_slashy_literal_2")) return false;
     boolean r;
     Marker m = enter_section_(b, l, _NOT_);
     r = !consumeToken(b, T_DOLLAR);
@@ -2675,9 +2650,9 @@ public class GroovyBnfParser implements PsiParser, LightPsiParser {
   }
 
   /* ********************************************************** */
-  // <<compound_string DOLLAR_SLASHY_BEGIN dollar_slashy_content_inner DOLLAR_SLASHY_END>>
+  // <<compound_string DOLLAR_SLASHY_BEGIN fast_dollar_slashy_content DOLLAR_SLASHY_END>>
   static boolean dollar_slashy_string(PsiBuilder b, int l) {
-    return compound_string(b, l + 1, DOLLAR_SLASHY_BEGIN_parser_, dollar_slashy_content_inner_parser_, DOLLAR_SLASHY_END_parser_);
+    return compound_string(b, l + 1, DOLLAR_SLASHY_BEGIN_parser_, fast_dollar_slashy_content_parser_, DOLLAR_SLASHY_END_parser_);
   }
 
   /* ********************************************************** */
@@ -3214,6 +3189,12 @@ public class GroovyBnfParser implements PsiParser, LightPsiParser {
   }
 
   /* ********************************************************** */
+  // GSTRING_CONTENT
+  static boolean fast_string_content(PsiBuilder b, int l) {
+    return consumeTokenFast(b, GSTRING_CONTENT);
+  }
+
+  /* ********************************************************** */
   // var
   public static boolean field(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "field")) return false;
@@ -3411,24 +3392,6 @@ public class GroovyBnfParser implements PsiParser, LightPsiParser {
     if (!recursion_guard_(b, l, "for_statement_1_2")) return false;
     block_or_statement(b, l + 1);
     return true;
-  }
-
-  /* ********************************************************** */
-  // GSTRING_CONTENT | empty_gstring_content
-  public static boolean gstring_content_inner(PsiBuilder b, int l) {
-    if (!recursion_guard_(b, l, "gstring_content_inner")) return false;
-    boolean r;
-    Marker m = enter_section_(b, l, _COLLAPSE_, STRING_CONTENT, null);
-    r = consumeTokenFast(b, GSTRING_CONTENT);
-    if (!r) r = emptyStringContent(b, l + 1, GSTRING_CONTENT);
-    exit_section_(b, l, m, r, false, null);
-    return r;
-  }
-
-  /* ********************************************************** */
-  // GSTRING_END
-  static boolean gstring_end(PsiBuilder b, int l) {
-    return consumeToken(b, GSTRING_END);
   }
 
   /* ********************************************************** */
@@ -5200,72 +5163,24 @@ public class GroovyBnfParser implements PsiParser, LightPsiParser {
   }
 
   /* ********************************************************** */
-  // SLASHY_CONTENT | empty_slashy_content
-  public static boolean slashy_content_inner(PsiBuilder b, int l) {
-    if (!recursion_guard_(b, l, "slashy_content_inner")) return false;
-    boolean r;
-    Marker m = enter_section_(b, l, _COLLAPSE_, STRING_CONTENT, null);
-    r = consumeTokenFast(b, SLASHY_CONTENT);
-    if (!r) r = emptyStringContent(b, l + 1, SLASHY_CONTENT);
-    exit_section_(b, l, m, r, false, null);
-    return r;
-  }
-
-  /* ********************************************************** */
-  // SLASHY_BEGIN fast_slashy_content SLASHY_END | slashy_literal_pin
+  // SLASHY_BEGIN fast_slashy_content !'$' SLASHY_END
   public static boolean slashy_literal(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "slashy_literal")) return false;
     if (!nextTokenIs(b, SLASHY_BEGIN)) return false;
-    boolean r;
-    Marker m = enter_section_(b);
-    r = slashy_literal_0(b, l + 1);
-    if (!r) r = slashy_literal_pin(b, l + 1);
-    exit_section_(b, m, SLASHY_LITERAL, r);
-    return r;
-  }
-
-  // SLASHY_BEGIN fast_slashy_content SLASHY_END
-  private static boolean slashy_literal_0(PsiBuilder b, int l) {
-    if (!recursion_guard_(b, l, "slashy_literal_0")) return false;
-    boolean r;
-    Marker m = enter_section_(b);
+    boolean r, p;
+    Marker m = enter_section_(b, l, _NONE_, SLASHY_LITERAL, null);
     r = consumeToken(b, SLASHY_BEGIN);
     r = r && fast_slashy_content(b, l + 1);
-    r = r && consumeToken(b, SLASHY_END);
-    exit_section_(b, m, null, r);
-    return r;
-  }
-
-  /* ********************************************************** */
-  // SLASHY_BEGIN (fast_slashy_content | <<string_content empty_slashy_content>>) !'$' SLASHY_END
-  static boolean slashy_literal_pin(PsiBuilder b, int l) {
-    if (!recursion_guard_(b, l, "slashy_literal_pin")) return false;
-    if (!nextTokenIs(b, SLASHY_BEGIN)) return false;
-    boolean r, p;
-    Marker m = enter_section_(b, l, _NONE_);
-    r = consumeToken(b, SLASHY_BEGIN);
-    r = r && slashy_literal_pin_1(b, l + 1);
-    r = r && slashy_literal_pin_2(b, l + 1);
+    r = r && slashy_literal_2(b, l + 1);
     p = r; // pin = 3
     r = r && consumeToken(b, SLASHY_END);
     exit_section_(b, l, m, r, p, null);
     return r || p;
   }
 
-  // fast_slashy_content | <<string_content empty_slashy_content>>
-  private static boolean slashy_literal_pin_1(PsiBuilder b, int l) {
-    if (!recursion_guard_(b, l, "slashy_literal_pin_1")) return false;
-    boolean r;
-    Marker m = enter_section_(b);
-    r = fast_slashy_content(b, l + 1);
-    if (!r) r = string_content(b, l + 1, empty_slashy_content_parser_);
-    exit_section_(b, m, null, r);
-    return r;
-  }
-
   // !'$'
-  private static boolean slashy_literal_pin_2(PsiBuilder b, int l) {
-    if (!recursion_guard_(b, l, "slashy_literal_pin_2")) return false;
+  private static boolean slashy_literal_2(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "slashy_literal_2")) return false;
     boolean r;
     Marker m = enter_section_(b, l, _NOT_);
     r = !consumeToken(b, T_DOLLAR);
@@ -5274,9 +5189,9 @@ public class GroovyBnfParser implements PsiParser, LightPsiParser {
   }
 
   /* ********************************************************** */
-  // <<compound_string SLASHY_BEGIN slashy_content_inner SLASHY_END>>
+  // <<compound_string SLASHY_BEGIN fast_slashy_content SLASHY_END>>
   static boolean slashy_string(PsiBuilder b, int l) {
-    return compound_string(b, l + 1, SLASHY_BEGIN_parser_, slashy_content_inner_parser_, SLASHY_END_parser_);
+    return compound_string(b, l + 1, SLASHY_BEGIN_parser_, fast_slashy_content_parser_, SLASHY_END_parser_);
   }
 
   /* ********************************************************** */
@@ -5396,9 +5311,9 @@ public class GroovyBnfParser implements PsiParser, LightPsiParser {
   public static boolean string_content(PsiBuilder b, int l, Parser _content) {
     if (!recursion_guard_(b, l, "string_content")) return false;
     boolean r;
-    Marker m = enter_section_(b, l, _COLLAPSE_, STRING_CONTENT, null);
+    Marker m = enter_section_(b);
     r = _content.parse(b, l);
-    exit_section_(b, l, m, r, false, null);
+    exit_section_(b, m, STRING_CONTENT, r);
     return r;
   }
 
@@ -7061,13 +6976,13 @@ public class GroovyBnfParser implements PsiParser, LightPsiParser {
     return r;
   }
 
-  // <<compound_string GSTRING_BEGIN gstring_content_inner gstring_end>>
+  // <<compound_string GSTRING_BEGIN fast_string_content GSTRING_END>>
   public static boolean gstring(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "gstring")) return false;
     if (!nextTokenIsSmart(b, GSTRING_BEGIN)) return false;
     boolean r;
     Marker m = enter_section_(b);
-    r = compound_string(b, l + 1, GSTRING_BEGIN_parser_, gstring_content_inner_parser_, gstring_end_parser_);
+    r = compound_string(b, l + 1, GSTRING_BEGIN_parser_, fast_string_content_parser_, GSTRING_END_parser_);
     exit_section_(b, m, GSTRING, r);
     return r;
   }
@@ -7107,7 +7022,12 @@ public class GroovyBnfParser implements PsiParser, LightPsiParser {
   };
   final static Parser GSTRING_BEGIN_parser_ = new Parser() {
     public boolean parse(PsiBuilder b, int l) {
-      return consumeTokenSmart(b, GSTRING_BEGIN);
+      return consumeToken(b, GSTRING_BEGIN);
+    }
+  };
+  final static Parser GSTRING_END_parser_ = new Parser() {
+    public boolean parse(PsiBuilder b, int l) {
+      return consumeToken(b, GSTRING_END);
     }
   };
   final static Parser SLASHY_BEGIN_parser_ = new Parser() {
@@ -7305,21 +7225,6 @@ public class GroovyBnfParser implements PsiParser, LightPsiParser {
       return declaration_tail(b, l + 1);
     }
   };
-  final static Parser dollar_slashy_content_inner_parser_ = new Parser() {
-    public boolean parse(PsiBuilder b, int l) {
-      return dollar_slashy_content_inner(b, l + 1);
-    }
-  };
-  final static Parser empty_dollar_slashy_content_parser_ = new Parser() {
-    public boolean parse(PsiBuilder b, int l) {
-      return emptyStringContent(b, l + 1, DOLLAR_SLASHY_CONTENT);
-    }
-  };
-  final static Parser empty_slashy_content_parser_ = new Parser() {
-    public boolean parse(PsiBuilder b, int l) {
-      return emptyStringContent(b, l + 1, SLASHY_CONTENT);
-    }
-  };
   final static Parser expression_or_application_inner_parser_ = new Parser() {
     public boolean parse(PsiBuilder b, int l) {
       return expression_or_application_inner(b, l + 1);
@@ -7340,14 +7245,19 @@ public class GroovyBnfParser implements PsiParser, LightPsiParser {
       return extends_recovery(b, l + 1);
     }
   };
-  final static Parser gstring_content_inner_parser_ = new Parser() {
+  final static Parser fast_dollar_slashy_content_parser_ = new Parser() {
     public boolean parse(PsiBuilder b, int l) {
-      return gstring_content_inner(b, l + 1);
+      return fast_dollar_slashy_content(b, l + 1);
     }
   };
-  final static Parser gstring_end_parser_ = new Parser() {
+  final static Parser fast_slashy_content_parser_ = new Parser() {
     public boolean parse(PsiBuilder b, int l) {
-      return gstring_end(b, l + 1);
+      return fast_slashy_content(b, l + 1);
+    }
+  };
+  final static Parser fast_string_content_parser_ = new Parser() {
+    public boolean parse(PsiBuilder b, int l) {
+      return fast_string_content(b, l + 1);
     }
   };
   final static Parser implements_list_item_parser_ = new Parser() {
@@ -7418,16 +7328,6 @@ public class GroovyBnfParser implements PsiParser, LightPsiParser {
   final static Parser semicolon_recovery_parser_ = new Parser() {
     public boolean parse(PsiBuilder b, int l) {
       return semicolon_recovery(b, l + 1);
-    }
-  };
-  final static Parser slashy_content_inner_parser_ = new Parser() {
-    public boolean parse(PsiBuilder b, int l) {
-      return slashy_content_inner(b, l + 1);
-    }
-  };
-  final static Parser string_injection_parser_ = new Parser() {
-    public boolean parse(PsiBuilder b, int l) {
-      return string_injection(b, l + 1);
     }
   };
   final static Parser throws_list_item_parser_ = new Parser() {

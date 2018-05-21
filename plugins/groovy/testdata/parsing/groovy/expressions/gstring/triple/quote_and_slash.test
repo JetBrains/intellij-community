@@ -14,14 +14,8 @@ Groovy script
         Reference expression
           PsiElement(identifier)('href')
         PsiElement(})('}')
-    GrStringContentImpl(STRING_CONTENT)
-      ASTWrapperPsiElement(Gstring content)
-        <empty list>
     GString injection
       PsiElement($)('$')
       Reference expression
         PsiElement(identifier)('x')
-    GrStringContentImpl(STRING_CONTENT)
-      ASTWrapperPsiElement(Gstring content)
-        <empty list>
     PsiElement(Gstring end)('"""')
