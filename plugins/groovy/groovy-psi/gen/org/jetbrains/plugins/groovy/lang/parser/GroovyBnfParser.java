@@ -3742,6 +3742,29 @@ public class GroovyBnfParser implements PsiParser, LightPsiParser {
   }
 
   /* ********************************************************** */
+  // <<something>> | nl <<something>>
+  static boolean mb_nl_group(PsiBuilder b, int l, Parser _something) {
+    if (!recursion_guard_(b, l, "mb_nl_group")) return false;
+    boolean r;
+    Marker m = enter_section_(b);
+    r = _something.parse(b, l);
+    if (!r) r = mb_nl_group_1(b, l + 1, _something);
+    exit_section_(b, m, null, r);
+    return r;
+  }
+
+  // nl <<something>>
+  private static boolean mb_nl_group_1(PsiBuilder b, int l, Parser _something) {
+    if (!recursion_guard_(b, l, "mb_nl_group_1")) return false;
+    boolean r;
+    Marker m = enter_section_(b);
+    r = nl(b, l + 1);
+    r = r && _something.parse(b, l);
+    exit_section_(b, m, null, r);
+    return r;
+  }
+
+  /* ********************************************************** */
   // separator*
   static boolean mb_separators(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "mb_separators")) return false;
@@ -4164,42 +4187,6 @@ public class GroovyBnfParser implements PsiParser, LightPsiParser {
     boolean r;
     Marker m = enter_section_(b, l, _AND_);
     r = declaration_lookahead(b, l + 1);
-    exit_section_(b, l, m, r, false, null);
-    return r;
-  }
-
-  /* ********************************************************** */
-  // (mb_nl dot) mb_nl &expression_start  fail
-  static boolean no_ref_qualified_reference_expression_pin(PsiBuilder b, int l) {
-    if (!recursion_guard_(b, l, "no_ref_qualified_reference_expression_pin")) return false;
-    boolean r, p;
-    Marker m = enter_section_(b, l, _NONE_);
-    r = no_ref_qualified_reference_expression_pin_0(b, l + 1);
-    r = r && mb_nl(b, l + 1);
-    r = r && no_ref_qualified_reference_expression_pin_2(b, l + 1);
-    p = r; // pin = 3
-    r = r && noMatch(b, l + 1);
-    exit_section_(b, l, m, r, p, null);
-    return r || p;
-  }
-
-  // mb_nl dot
-  private static boolean no_ref_qualified_reference_expression_pin_0(PsiBuilder b, int l) {
-    if (!recursion_guard_(b, l, "no_ref_qualified_reference_expression_pin_0")) return false;
-    boolean r;
-    Marker m = enter_section_(b);
-    r = mb_nl(b, l + 1);
-    r = r && dot(b, l + 1);
-    exit_section_(b, m, null, r);
-    return r;
-  }
-
-  // &expression_start
-  private static boolean no_ref_qualified_reference_expression_pin_2(PsiBuilder b, int l) {
-    if (!recursion_guard_(b, l, "no_ref_qualified_reference_expression_pin_2")) return false;
-    boolean r;
-    Marker m = enter_section_(b, l, _AND_);
-    r = expression_start(b, l + 1);
     exit_section_(b, l, m, r, false, null);
     return r;
   }
@@ -4791,15 +4778,17 @@ public class GroovyBnfParser implements PsiParser, LightPsiParser {
   }
 
   /* ********************************************************** */
-  // (mb_nl dot) mb_nl type_argument_list? <<identifiers>>
+  // (mb_nl dot) <<mb_nl_group (type_argument_list? <<identifiers>>)>>
   static boolean qualified_reference_op(PsiBuilder b, int l, Parser _identifiers) {
     if (!recursion_guard_(b, l, "qualified_reference_op")) return false;
     boolean r;
     Marker m = enter_section_(b);
     r = qualified_reference_op_0(b, l + 1);
-    r = r && mb_nl(b, l + 1);
-    r = r && qualified_reference_op_2(b, l + 1);
-    r = r && _identifiers.parse(b, l);
+    r = r && mb_nl_group(b, l + 1, new Parser() {
+      public boolean parse(PsiBuilder b, int l) {
+        return qualified_reference_op_1_0(b, l + 1, _identifiers);
+      }
+    });
     exit_section_(b, m, null, r);
     return r;
   }
@@ -4815,9 +4804,20 @@ public class GroovyBnfParser implements PsiParser, LightPsiParser {
     return r;
   }
 
+  // type_argument_list? <<identifiers>>
+  private static boolean qualified_reference_op_1_0(PsiBuilder b, int l, Parser _identifiers) {
+    if (!recursion_guard_(b, l, "qualified_reference_op_1_0")) return false;
+    boolean r;
+    Marker m = enter_section_(b);
+    r = qualified_reference_op_1_0_0(b, l + 1);
+    r = r && _identifiers.parse(b, l);
+    exit_section_(b, m, null, r);
+    return r;
+  }
+
   // type_argument_list?
-  private static boolean qualified_reference_op_2(PsiBuilder b, int l) {
-    if (!recursion_guard_(b, l, "qualified_reference_op_2")) return false;
+  private static boolean qualified_reference_op_1_0_0(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "qualified_reference_op_1_0_0")) return false;
     type_argument_list(b, l + 1);
     return true;
   }
@@ -6312,7 +6312,7 @@ public class GroovyBnfParser implements PsiParser, LightPsiParser {
   // 13: PREFIX(prefix_unary_expression)
   // 14: PREFIX(not_expression) ATOM(cast_expression)
   // 15: POSTFIX(index_expression) POSTFIX(postfix_unary_expression)
-  // 16: POSTFIX(qualified_reference_expression) POSTFIX(property_expression) POSTFIX(no_ref_qualified_reference_expression)
+  // 16: POSTFIX(qualified_reference_expression) POSTFIX(property_expression)
   // 17: POSTFIX(method_call_expression) ATOM(lazy_closure) ATOM(list_or_map)
   // 18: ATOM(new_anonymous_expression) ATOM(new_expression)
   // 19: ATOM(unqualified_reference_expression) ATOM(built_in_type_expression) ATOM(literal) ATOM(gstring)
@@ -6444,10 +6444,6 @@ public class GroovyBnfParser implements PsiParser, LightPsiParser {
       else if (g < 16 && qualified_reference_op(b, l + 1, property_expression_identifiers_parser_)) {
         r = true;
         exit_section_(b, l, m, PROPERTY_EXPRESSION, r, true, null);
-      }
-      else if (g < 16 && no_ref_qualified_reference_expression_pin(b, l + 1)) {
-        r = true;
-        exit_section_(b, l, m, REFERENCE_EXPRESSION, r, true, null);
       }
       else if (g < 17 && call_tail(b, l + 1)) {
         r = true;

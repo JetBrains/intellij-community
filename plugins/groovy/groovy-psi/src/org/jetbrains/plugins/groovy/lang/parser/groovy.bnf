@@ -957,17 +957,10 @@ private non_empty_list_or_map ::= '[' parse_bracket_argument_list ']'
   pin = 2
 }
 
-private qualified_expressions ::= qualified_reference_expression | property_expression | no_ref_qualified_reference_expression
+private qualified_expressions ::= qualified_reference_expression | property_expression
 qualified_reference_expression ::= expression <<qualified_reference_op qualified_reference_expression_identifiers>>
 property_expression ::= expression <<qualified_reference_op property_expression_identifiers>>
-no_ref_qualified_reference_expression ::= expression no_ref_qualified_reference_expression_pin
-// TODO decide whether to create references without reference element
-private no_ref_qualified_reference_expression_pin ::= (mb_nl dot) mb_nl &expression_start  fail
-{
-  pin = 3
-  consumeTokenMethod = 'consumeTokenFast'
-}
-private meta qualified_reference_op ::= (mb_nl dot) mb_nl type_argument_list? <<identifiers>>
+private meta qualified_reference_op ::= (mb_nl dot) <<mb_nl_group (type_argument_list? <<identifiers>>)>>
 private dot ::= '.' attribute_dot? | '?.' attribute_dot? | '.&' | '*.' { consumeTokenMethod = 'consumeTokenFast' }
 private attribute_dot ::= mb_nl ('@')
 {
@@ -1250,6 +1243,7 @@ private mb_initializer ::= ['=' mb_nl expression_or_application]
 // region Other
 private mb_nl ::= nl?
 private nl ::= NL { consumeTokenMethod = 'consumeTokenFast' }
+private meta mb_nl_group ::= <<something>> | nl <<something>> // allows error reporting in position before the new line
 private empty ::= ()
 private external fail ::= noMatch
 private empty_pars ::= '(' ')' { consumeTokenMethod = 'consumeTokenFast' }
