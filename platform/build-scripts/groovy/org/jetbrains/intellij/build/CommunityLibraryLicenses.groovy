@@ -326,7 +326,7 @@ class CommunityLibraryLicenses {
                        licenseUrl: "https://github.com/google/protobuf/blob/master/LICENSE"),
     new LibraryLicense(name: "Proxy Vole", libraryName: "proxy-vole", version: "1.0.4", license: "Apache 2.0",
                        url: "https://github.com/MarkusBernhardt/proxy-vole", licenseUrl: "https://github.com/MarkusBernhardt/proxy-vole/blob/master/LICENSE.md"),
-    new LibraryLicense(name: "pty4j", libraryName: "pty4j", version: "0.7.3", license: "Eclipse Public License v1.0",
+    new LibraryLicense(name: "pty4j", libraryName: "pty4j", version: "0.7.4", license: "Eclipse Public License v1.0",
                        url: "https://github.com/traff/pty4j"),
     new LibraryLicense(name: "PureJavaComm", libraryName: "purejavacomm", version: "0.0.16", license: "BSD",
                        url: "http://www.sparetimelabs.com/purejavacomm"),
