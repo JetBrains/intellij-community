@@ -2,16 +2,17 @@
 package com.intellij.profile.codeInspection.ui;
 
 import com.intellij.codeInspection.ex.InspectionProfileImpl;
+import com.intellij.icons.AllIcons;
+import com.intellij.ide.util.scopeChooser.ScopeChooserConfigurable;
+import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.options.ShowSettingsUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.psi.search.scope.NonProjectFilesScope;
 import com.intellij.psi.search.scope.packageSet.CustomScopesProviderEx;
 import com.intellij.psi.search.scope.packageSet.NamedScope;
 import com.intellij.psi.search.scope.packageSet.NamedScopesHolder;
-import com.intellij.ui.AnActionButton;
-import com.intellij.ui.AnActionButtonRunnable;
-import com.intellij.ui.ListUtil;
-import com.intellij.ui.ToolbarDecorator;
+import com.intellij.ui.*;
 import com.intellij.ui.components.JBList;
 import com.intellij.util.ui.EditableModel;
 import com.intellij.util.ui.UIUtil;
@@ -24,6 +25,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
+import java.util.stream.IntStream;
 
 public class ScopesOrderDialog extends DialogWrapper {
   private final JList<String> myOptionsList = new JBList<>();
@@ -48,6 +50,11 @@ public class ScopesOrderDialog extends DialogWrapper {
       @Override
       public void run(AnActionButton anActionButton) {
         ListUtil.moveSelectedItemsUp(myOptionsList);
+      }
+    }).addExtraAction(new AnActionButton("Edit Scopes", AllIcons.Actions.Edit) {
+      @Override
+      public void actionPerformed(AnActionEvent e) {
+        ShowSettingsUtil.getInstance().editConfigurable(project, new ScopeChooserConfigurable(project));
       }
     }).disableRemoveAction().disableAddAction().createPanel();
     final JLabel descr = new JLabel("<html><p>If file appears in two or more scopes, it will be " +
@@ -123,7 +130,7 @@ public class ScopesOrderDialog extends DialogWrapper {
 
     @Override
     public void removeRow(int idx) {
-      throw new UnsupportedOperationException();
+      remove(idx);
     }
   }
 }
