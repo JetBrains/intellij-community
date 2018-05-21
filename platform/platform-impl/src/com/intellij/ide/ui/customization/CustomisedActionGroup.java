@@ -28,12 +28,14 @@ public class CustomisedActionGroup extends ActionGroup {
   private final String myRootGroupName;
 
   public CustomisedActionGroup(String shortName,
-                               boolean popup,
                                final ActionGroup group,
                                CustomActionsSchema schema,
                                String defaultGroupName, 
                                String name) {
-    super(shortName, popup);
+    copyFrom(group);
+    getTemplatePresentation().setText(shortName);
+    setPopup(group.isPopup());
+
     myGroup = group;
     mySchema = schema;
     myDefaultGroupName = defaultGroupName;

@@ -50,9 +50,10 @@ public class CustomizationUtil {
                                                final CustomActionsSchema schema,
                                                final String defaultGroupName,
                                                final String rootGroupName) {
-    if (!schema.isCorrectActionGroup(group, defaultGroupName)){
-       return group;
-     }
+    if (!schema.isCorrectActionGroup(group, defaultGroupName)) {
+      return group;
+    }
+
     String text = group.getTemplatePresentation().getText();
     final int mnemonic = group.getTemplatePresentation().getMnemonic();
     if (text != null) {
@@ -64,7 +65,7 @@ public class CustomizationUtil {
       }
     }
 
-    return new CustomisedActionGroup(text, group.isPopup(), group, schema, defaultGroupName, rootGroupName);
+    return new CustomisedActionGroup(text, group, schema, defaultGroupName, rootGroupName);
   }
 
 
