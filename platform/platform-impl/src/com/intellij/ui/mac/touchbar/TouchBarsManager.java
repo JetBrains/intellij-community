@@ -228,6 +228,7 @@ public class TouchBarsManager {
     if (!isTouchBarAvailable())
       return null;
 
+    // NOTE: buttons are placed from right to left, see SheetController.layoutButtons
     final List<TBItem> groupButtons = new ArrayList<>();
     int defIndex = -1;
     final int len = Math.min(buttons.length, actions.length);
@@ -243,6 +244,7 @@ public class TouchBarsManager {
         null, DialogWrapper.extractMnemonic(sb).second, NSTLibrary.run2act(actions[c]), -1, 0
       ));
     }
+    Collections.reverse(groupButtons);
 
     if (defIndex >= 0)
       groupButtons.add(new TBItemButton(
