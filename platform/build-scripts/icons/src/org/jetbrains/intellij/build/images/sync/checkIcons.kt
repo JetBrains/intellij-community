@@ -13,6 +13,28 @@ import java.io.PrintStream
 import java.util.function.Consumer
 import java.util.stream.Collectors
 
+private const val repoArg = "repos"
+private const val patternArg = "skip.dirs.pattern"
+private const val sync = "sync"
+
+fun main(args: Array<String>) {
+  if (args.isEmpty()) printUsageAndExit()
+  val repos = args.find(repoArg)?.split(",") ?: emptyList()
+  if (repos.size < 2) printUsageAndExit()
+  val skipPattern = args.find(patternArg)
+  val sync = args.find(sync)?.toBoolean()
+  checkIcons(repos[0], repos[1], skipPattern, sync ?: false)
+}
+
+private fun Array<String>.find(arg: String) = this.find {
+  it.startsWith("$arg=")
+}?.removePrefix("$arg=")
+
+private fun printUsageAndExit() {
+  println("Usage: $repoArg=<devRepoDir>,<iconsRepoDir> [$patternArg=...] [$sync=false|true]")
+  System.exit(1)
+}
+
 /**
  * @param devRepoDir developers' git repo
  * @param iconsRepoDir designers' git repo
