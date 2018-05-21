@@ -1,21 +1,8 @@
-/*
- * Copyright 2000-2013 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInsight.lookup;
 
 import com.intellij.codeInsight.completion.*;
+import com.intellij.codeInsight.editorActions.TabOutScopesTracker;
 import com.intellij.diagnostic.AttachmentFactory;
 import com.intellij.diagnostic.LogMessageEx;
 import com.intellij.openapi.diagnostic.Logger;
@@ -123,24 +110,23 @@ public class PsiTypeLookupItem extends LookupItem implements TypedLookupItem {
       JavaCompletionUtil.shortenReference(context.getFile(), genericsStart - 1);
     }
 
-    int tail = context.getTailOffset();
+    int targetOffset = context.getTailOffset();
     String braces = StringUtil.repeat("[]", getBracketsCount());
     Editor editor = context.getEditor();
     if (!braces.isEmpty()) {
       if (myAddArrayInitializer) {
-        context.getDocument().insertString(tail, braces + "{}");
-        editor.getCaretModel().moveToOffset(tail + braces.length() + 1);
+        context.getDocument().insertString(targetOffset, braces + "{}");
+        targetOffset += braces.length() + 1;
       } else {
-        context.getDocument().insertString(tail, braces);
-        editor.getCaretModel().moveToOffset(tail + 1);
+        context.getDocument().insertString(targetOffset, braces);
+        targetOffset++;
         if (context.getCompletionChar() == '[') {
           context.setAddCompletionChar(false);
         }
       }
+      TabOutScopesTracker.getInstance().registerEmptyScope(editor, targetOffset);
     }
-    else {
-      editor.getCaretModel().moveToOffset(tail);
-    }
+    editor.getCaretModel().moveToOffset(targetOffset);
     editor.getScrollingModel().scrollToCaret(ScrollType.RELATIVE);
 
     InsertHandler handler = getInsertHandler();
