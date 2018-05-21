@@ -233,7 +233,7 @@ public abstract class PsiJavaFileBaseImpl extends PsiFileImpl implements PsiJava
     private final Collection<String> myHiddenTypeNames = new HashSet<>();
     private final Collection<PsiElement> myCollectedElements = new HashSet<>();
 
-    public StaticImportFilteringProcessor(final PsiScopeProcessor delegate) {
+    StaticImportFilteringProcessor(final PsiScopeProcessor delegate) {
       myDelegate = delegate;
     }
 
@@ -331,9 +331,7 @@ public abstract class PsiJavaFileBaseImpl extends PsiFileImpl implements PsiJava
 
     if (!processOnDemandStaticImports(state, lastParent, place, importStaticStatements, staticImportProcessor)) return false;
 
-    if (shouldProcessClasses && !processImplicitImports(processor, state, place)) return false;
-
-    return true;
+    return !shouldProcessClasses || processImplicitImports(processor, state, place);
   }
 
   private boolean processOwnClasses(PsiScopeProcessor processor, @NotNull ResolveState state) {
@@ -391,8 +389,7 @@ public abstract class PsiJavaFileBaseImpl extends PsiFileImpl implements PsiJava
   private boolean processCurrentPackage(PsiScopeProcessor processor, ResolveState state, PsiElement place) {
     processor.handleEvent(JavaScopeProcessorEvent.SET_CURRENT_FILE_CONTEXT, null);
     PsiPackage aPackage = JavaPsiFacade.getInstance(myManager.getProject()).findPackage(getPackageName());
-    if (aPackage != null && !processPackageDeclarations(processor, state, place, aPackage)) return false;
-    return true;
+    return aPackage == null || processPackageDeclarations(processor, state, place, aPackage);
   }
 
   private static boolean processOnDemandTypeImports(PsiScopeProcessor processor, ResolveState state, PsiElement place, PsiImportStatement[] imports) {
@@ -472,12 +469,7 @@ public abstract class PsiJavaFileBaseImpl extends PsiFileImpl implements PsiJava
         public <T> T getHint(@NotNull Key<T> hintKey) {
           if (hintKey == ElementClassHint.KEY) {
             //noinspection unchecked
-            return (T)new ElementClassHint() {
-              @Override
-              public boolean shouldProcess(DeclarationKind kind) {
-                return kind == DeclarationKind.CLASS;
-              }
-            };
+            return (T)(ElementClassHint)kind -> kind == ElementClassHint.DeclarationKind.CLASS;
           }
           return super.getHint(hintKey);
         }
@@ -530,7 +522,7 @@ public abstract class PsiJavaFileBaseImpl extends PsiFileImpl implements PsiJava
   }
 
   @Override
-  public boolean importClass(PsiClass aClass) {
+  public boolean importClass(@NotNull PsiClass aClass) {
     return JavaCodeStyleManager.getInstance(getProject()).addImport(this, aClass);
   }
 
@@ -587,7 +579,7 @@ public abstract class PsiJavaFileBaseImpl extends PsiFileImpl implements PsiJava
   private static class MyCacheBuilder implements CachedValueProvider<MostlySingularMultiMap<String, SymbolCollectingProcessor.ResultWithContext>> {
     private final PsiJavaFileBaseImpl myFile;
 
-    public MyCacheBuilder(PsiJavaFileBaseImpl file) {
+    MyCacheBuilder(PsiJavaFileBaseImpl file) {
       myFile = file;
     }
 
@@ -604,7 +596,7 @@ public abstract class PsiJavaFileBaseImpl extends PsiFileImpl implements PsiJava
     private final PsiScopeProcessor myProcessor;
     private final ResolveState myState;
 
-    public MyResolveCacheProcessor(PsiScopeProcessor processor, ResolveState state) {
+    MyResolveCacheProcessor(PsiScopeProcessor processor, ResolveState state) {
       myProcessor = processor;
       myState = state;
     }

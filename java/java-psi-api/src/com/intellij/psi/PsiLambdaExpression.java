@@ -53,5 +53,6 @@ public interface PsiLambdaExpression extends PsiFunctionalExpression, PsiParamet
    *   If the target type's function type has a void return, then the lambda body is either a statement expression (p14.8) or a void-compatible block (p15.27.2).
    *   If the target type's function type has a (non-void) return type, then the lambda body is either an expression or a value-compatible block (p15.27.2).
    */
+  @Override
   boolean isPotentiallyCompatible(PsiType left);
 }

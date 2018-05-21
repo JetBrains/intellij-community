@@ -188,14 +188,14 @@ public class ExpectedTypesProvider {
     return set.toArray(PsiType.createArray(set.size()));
   }
 
-  private static void processType(@NotNull PsiType type, @NotNull PsiTypeVisitor<PsiType> visitor, @NotNull Set<PsiType> typeSet) {
+  private static void processType(@NotNull PsiType type, @NotNull PsiTypeVisitor<PsiType> visitor, @NotNull Set<? super PsiType> typeSet) {
     PsiType accepted = type.accept(visitor);
     if (accepted != null) typeSet.add(accepted);
   }
 
   private static void processPrimitiveTypeAndSubtypes(@NotNull PsiPrimitiveType type,
                                                       @NotNull PsiTypeVisitor<PsiType> visitor,
-                                                      @NotNull Set<PsiType> set) {
+                                                      @NotNull Set<? super PsiType> set) {
     if (type.equals(PsiType.BOOLEAN) || type.equals(PsiType.VOID) || type.equals(PsiType.NULL)) return;
 
     for (int i = 0; ; i++) {
@@ -205,7 +205,7 @@ public class ExpectedTypesProvider {
     }
   }
 
-  public static void processAllSuperTypes(@NotNull PsiType type, @NotNull PsiTypeVisitor<PsiType> visitor, @NotNull Project project, @NotNull Set<PsiType> set, @NotNull Set<PsiType> visited) {
+  public static void processAllSuperTypes(@NotNull PsiType type, @NotNull PsiTypeVisitor<PsiType> visitor, @NotNull Project project, @NotNull Set<? super PsiType> set, @NotNull Set<? super PsiType> visited) {
     if (!visited.add(type)) return;
 
     if (type instanceof PsiPrimitiveType) {
@@ -297,7 +297,7 @@ public class ExpectedTypesProvider {
       if (referenceName != null) {
         final PsiElement parent = expression.getParent();
         if (parent instanceof PsiMethodCallExpression) {
-          Collections.addAll(myResult, findClassesWithDeclaredMethod((PsiMethodCallExpression)parent, false));
+          Collections.addAll(myResult, findClassesWithDeclaredMethod((PsiMethodCallExpression)parent));
         }
         else if (parent instanceof PsiReferenceExpression || parent instanceof PsiVariable ||
                  parent instanceof PsiExpression) {
@@ -636,7 +636,7 @@ public class ExpectedTypesProvider {
 
     private void getExpectedTypesForConstructorCall(@NotNull final PsiClass referencedClass,
                                                     @NotNull final PsiExpressionList argumentList,
-                                                    final PsiSubstitutor substitutor, PsiMethod method) {
+                                                    @NotNull PsiSubstitutor substitutor, PsiMethod method) {
       List<CandidateInfo> array = new ArrayList<>();
       for (PsiMethod constructor : referencedClass.getConstructors()) {
         array.add(new MethodCandidateInfo(constructor, substitutor, false, false, argumentList, null, argumentList.getExpressionTypes(), null));
@@ -1060,7 +1060,7 @@ public class ExpectedTypesProvider {
                                                      final int index,
                                                      @NotNull final PsiMethod method,
                                                      @NotNull final PsiSubstitutor substitutor,
-                                                     @NotNull final Set<ExpectedTypeInfo> array) {
+                                                     @NotNull final Set<? super ExpectedTypeInfo> array) {
       LOG.assertTrue(substitutor.isValid());
       PsiParameter[] parameters = method.getParameterList().getParameters();
       if (!forCompletion && parameters.length != args.length && !method.isVarArgs()) return;
@@ -1176,7 +1176,7 @@ public class ExpectedTypesProvider {
     }
 
     @NotNull
-    private ExpectedTypeInfo[] findClassesWithDeclaredMethod(@NotNull final PsiMethodCallExpression methodCallExpr, final boolean forCompletion) {
+    private ExpectedTypeInfo[] findClassesWithDeclaredMethod(@NotNull final PsiMethodCallExpression methodCallExpr) {
       PsiUtilCore.ensureValid(methodCallExpr);
       final PsiReferenceExpression reference = methodCallExpr.getMethodExpression();
       if (reference.getQualifierExpression() instanceof PsiClassObjectAccessExpression) {
@@ -1190,7 +1190,7 @@ public class ExpectedTypesProvider {
         final PsiClass aClass = method.getContainingClass();
         if (aClass == null || !facade.getResolveHelper().isAccessible(method, reference, aClass)) continue;
 
-        final PsiSubstitutor substitutor = ExpectedTypeUtil.inferSubstitutor(method, methodCallExpr, forCompletion);
+        final PsiSubstitutor substitutor = ExpectedTypeUtil.inferSubstitutor(method, methodCallExpr, false);
         final PsiClassType type =
           substitutor == null ? facade.getElementFactory().createType(aClass) : facade.getElementFactory().createType(aClass, substitutor);
 

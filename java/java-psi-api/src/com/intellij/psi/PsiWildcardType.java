@@ -155,6 +155,7 @@ public class PsiWildcardType extends PsiType.Stub implements JvmWildcardType {
     return myManager;
   }
 
+  @Override
   public boolean equals(Object o) {
     if (!(o instanceof PsiWildcardType)) return false;
 
@@ -168,6 +169,7 @@ public class PsiWildcardType extends PsiType.Stub implements JvmWildcardType {
     return myIsExtending == that.myIsExtending && Comparing.equal(myBound, that.myBound);
   }
 
+  @Override
   public int hashCode() {
     return (myIsExtending ? 1 : 0) + (myBound != null ? myBound.hashCode() : 0);
   }

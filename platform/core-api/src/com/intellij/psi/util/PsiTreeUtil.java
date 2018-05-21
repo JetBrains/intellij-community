@@ -848,6 +848,7 @@ public class PsiTreeUtil {
   }
 
   @NotNull
+  @Contract(pure=true)
   public static PsiElement[] collectElements(@Nullable PsiElement element, @NotNull PsiElementFilter filter) {
     CollectFilteredElements<PsiElement> processor = new CollectFilteredElements<>(filter);
     processElements(element, processor);
@@ -856,6 +857,7 @@ public class PsiTreeUtil {
 
   @SafeVarargs
   @NotNull
+  @Contract(pure=true)
   public static <T extends PsiElement> Collection<T> collectElementsOfType(@Nullable PsiElement element, @NotNull Class<T>... classes) {
     return findChildrenOfAnyType(element, false, classes);
   }
@@ -921,6 +923,7 @@ public class PsiTreeUtil {
   }
 
   @Nullable
+  @Contract(pure=true)
   public static <T extends PsiElement> T findElementOfClassAtOffset(@NotNull PsiFile file,
                                                                     int offset,
                                                                     @NotNull Class<T> clazz,
@@ -947,6 +950,7 @@ public class PsiTreeUtil {
 
   @SafeVarargs
   @Nullable
+  @Contract(pure=true)
   public static <T extends PsiElement> T findElementOfClassAtOffsetWithStopSet(@NotNull PsiFile file,
                                                                                int offset,
                                                                                @NotNull Class<T> clazz,
@@ -976,6 +980,7 @@ public class PsiTreeUtil {
    * @return maximal element of specified Class starting at startOffset exactly and ending not farther than endOffset
    */
   @Nullable
+  @Contract(pure=true)
   public static <T extends PsiElement> T findElementOfClassAtRange(@NotNull PsiFile file,
                                                                    int startOffset,
                                                                    int endOffset,
