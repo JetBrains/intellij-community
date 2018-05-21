@@ -32,6 +32,7 @@ import com.intellij.openapi.vcs.versionBrowser.CommittedChangeList;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
+import com.intellij.openapi.vfs.newvfs.impl.NullVirtualFile;
 import com.intellij.util.Consumer;
 import com.intellij.util.ThreeState;
 import com.intellij.util.containers.ContainerUtil;
@@ -77,6 +78,7 @@ import java.util.Map;
 import java.util.function.Function;
 
 import static com.intellij.openapi.vfs.VfsUtilCore.virtualToIoFile;
+import static com.intellij.util.ObjectUtils.notNull;
 import static com.intellij.util.containers.ContainerUtil.*;
 import static java.util.Collections.emptyList;
 import static java.util.function.Function.identity;
@@ -759,14 +761,16 @@ public class SvnVcs extends AbstractVcs<CommittedChangeList> {
               .mapToEntry(
                 file -> {
                   RootUrlInfo wcRoot = getSvnFileUrlMapping().getWcRootForFilePath(virtualToIoFile(file));
-                  return wcRoot != null ? wcRoot.getVirtualFile() : SvnUtil.getWorkingCopyRoot(file);
+                  VirtualFile wcRootFile = wcRoot != null ? wcRoot.getVirtualFile() : SvnUtil.getWorkingCopyRoot(file);
+
+                  return notNull(wcRootFile, NullVirtualFile.INSTANCE);
                 },
                 identity())
               .grouping();
 
     return EntryStream.of(byWorkingCopy)
                       .flatMapToValue((workingCopy, files) -> {
-                        if (workingCopy != null) {
+                        if (!NullVirtualFile.INSTANCE.equals(workingCopy)) {
                           FilterDescendantVirtualFiles.filter(files);
                         }
                         return files.stream();
