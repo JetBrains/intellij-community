@@ -97,7 +97,7 @@ public class PyDebuggerConfigurable implements SearchableConfigurable, Configura
            mySupportGevent.isSelected() != mySettings.isSupportGeventDebugging() ||
            mySupportQt.isSelected() != mySettings.isSupportQtDebugging() ||
            (myPyQtBackend.getSelectedItem() != null && !myPyQtBackend.getSelectedItem().equals(mySettings.getPyQtBackend())) ||
-           myAttachProcessFilter.getText() != mySettings.getAttachProcessFilter();
+           !myAttachProcessFilter.getText().equals(mySettings.getAttachProcessFilter());
   }
 
   public void apply() throws ConfigurationException {
