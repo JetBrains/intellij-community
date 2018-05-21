@@ -14,7 +14,7 @@ internal fun String.splitWithTab(): List<String> = this.split("\t".toRegex())
 
 internal fun List<String>.execute(workingDir: File?, silent: Boolean = false): String {
   val processCall = {
-    val process = ProcessBuilder(*this.toTypedArray())
+    val process = ProcessBuilder(*this.filter { it.isNotBlank() }.toTypedArray())
       .directory(workingDir)
       .redirectOutput(ProcessBuilder.Redirect.PIPE)
       .redirectError(ProcessBuilder.Redirect.PIPE)

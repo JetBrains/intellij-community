@@ -107,6 +107,8 @@ private fun readIconsRepo(iconsRepo: File, iconsRepoDir: String) =
   listGitObjects(iconsRepo, iconsRepoDir) {
     // read icon hashes
     isIcon(it)
+  }.also {
+    if (it.isEmpty()) throw IllegalStateException("Icons repo doesn't contain icons")
   }
 
 private fun readDevRepo(devRepoRoot: File,
@@ -131,6 +133,7 @@ private fun readDevRepo(devRepoRoot: File,
     // read icons from multiple repos in devRepoRoot
     listGitObjects(devRepoRoot, devRepoVcsRoots, devRepoIconFilter)
   }
+  if (devIcons.isEmpty()) throw IllegalStateException("Dev repo doesn't contain icons")
   return devIcons.toMutableMap()
 }
 
@@ -193,18 +196,22 @@ private fun removedByDesigners(
   addedByDev: MutableCollection<String>,
   devIcons: Map<String, GitObject>,
   iconsRepo: File, iconsDir: String) = addedByDev.parallelStream()
-  // latest changes are made by designers
-  .filter { latestChangeTime(devIcons[it]) < latestChangeTime("$iconsDir$it", iconsRepo) }
-  .collect(Collectors.toList())
-  .also { addedByDev.removeAll(it) }
+  .filter {
+    val latestChangeTimeByDesigners = latestChangeTime("$iconsDir$it", iconsRepo)
+    // latest changes are made by designers
+    latestChangeTimeByDesigners > 0 && latestChangeTime(devIcons[it]) < latestChangeTimeByDesigners
+  }.collect(Collectors.toList()).also {
+    addedByDev.removeAll(it)
+  }
 
 private fun removedByDev(
   addedByDesigners: MutableCollection<String>,
   icons: Map<String, GitObject>,
-  devRepos: Collection<File>, devRepoDir: File) =
-  addedByDesigners.parallelStream().filter { path ->
+  devRepos: Collection<File>, devRepoDir: File) = addedByDesigners.parallelStream()
+  .filter { path ->
+    val latestChangeTimeByDev = latestChangeTime(File(devRepoDir, path).absolutePath, devRepos)
     // latest changes are made by developers
-    latestChangeTime(icons[path]) < latestChangeTime(File(devRepoDir, path).absolutePath, devRepos)
+    latestChangeTimeByDev > 0 && latestChangeTime(icons[path]) < latestChangeTimeByDev
   }.collect(Collectors.toList()).also {
     addedByDesigners.removeAll(it)
   }
