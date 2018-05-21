@@ -115,6 +115,6 @@ public class MutationSignature {
   @NotNull
   public static MutationSignature fromMethod(@Nullable PsiMethod method) {
     if (method == null) return UNKNOWN;
-    return JavaMethodContractUtil.getContractInfo(method).myMutationSignature;
+    return JavaMethodContractUtil.getContractInfo(method).getMutationSignature();
   }
 }

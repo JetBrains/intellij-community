@@ -59,14 +59,28 @@ public class JavaMethodContractUtil {
   static class ContractInfo {
     static final ContractInfo EMPTY = new ContractInfo(Collections.emptyList(), false, MutationSignature.UNKNOWN);
 
-    final @NotNull List<StandardMethodContract> myContracts;
-    final boolean myPure;
-    final @NotNull MutationSignature myMutationSignature;
+    private final @NotNull List<StandardMethodContract> myContracts;
+    private final boolean myPure;
+    private final @NotNull MutationSignature myMutationSignature;
 
     ContractInfo(@NotNull List<StandardMethodContract> contracts, boolean pure, @NotNull MutationSignature signature) {
       myContracts = contracts;
       myPure = pure;
       myMutationSignature = signature;
+    }
+
+    @NotNull
+    List<StandardMethodContract> getContracts() {
+      return myContracts;
+    }
+
+    boolean isPure() {
+      return myPure;
+    }
+
+    @NotNull
+    MutationSignature getMutationSignature() {
+      return myMutationSignature;
     }
   }
 
