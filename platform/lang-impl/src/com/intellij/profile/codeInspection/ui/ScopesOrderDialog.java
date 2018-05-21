@@ -13,6 +13,7 @@ import com.intellij.ui.AnActionButtonRunnable;
 import com.intellij.ui.ListUtil;
 import com.intellij.ui.ToolbarDecorator;
 import com.intellij.ui.components.JBList;
+import com.intellij.util.ui.EditableModel;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -37,6 +38,7 @@ public class ScopesOrderDialog extends DialogWrapper {
     myInspectionProfile = inspectionProfile;
     myProject = project;
 
+    fillList();
     final JPanel listPanel = ToolbarDecorator.createDecorator(myOptionsList).setMoveDownAction(new AnActionButtonRunnable() {
       @Override
       public void run(AnActionButton anActionButton) {
@@ -56,13 +58,12 @@ public class ScopesOrderDialog extends DialogWrapper {
     myPanel.setLayout(new BorderLayout());
     myPanel.add(listPanel, BorderLayout.CENTER);
     myPanel.add(descr, BorderLayout.SOUTH);
-    fillList();
     init();
     setTitle("Scopes Order");
   }
 
   private void fillList() {
-    DefaultListModel<String> model = new DefaultListModel<>();
+    MyModel model = new MyModel();
     model.removeAllElements();
 
     final List<String> scopes = new ArrayList<>();
@@ -100,5 +101,29 @@ public class ScopesOrderDialog extends DialogWrapper {
       myInspectionProfile.setScopesOrder(newScopeOrder);
     }
     super.doOKAction();
+  }
+
+  private static class MyModel extends DefaultListModel<String> implements EditableModel {
+    @Override
+    public void addRow() {
+      throw new UnsupportedOperationException();
+    }
+
+    @Override
+    public void exchangeRows(int oldIndex, int newIndex) {
+      String scope1 = getElementAt(newIndex);
+      set(newIndex, getElementAt(oldIndex));
+      set(oldIndex, scope1);
+    }
+
+    @Override
+    public boolean canExchangeRows(int oldIndex, int newIndex) {
+      return true;
+    }
+
+    @Override
+    public void removeRow(int idx) {
+      throw new UnsupportedOperationException();
+    }
   }
 }
