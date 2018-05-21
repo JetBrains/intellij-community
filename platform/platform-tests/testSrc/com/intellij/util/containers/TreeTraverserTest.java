@@ -377,9 +377,10 @@ public class TreeTraverserTest extends TestCase {
   }
 
   public void testJoin() {
+    assertNull(JBIterable.<String>of().join(", ").reduce((a, b) -> a + b));
     assertEquals("", JBIterable.of().join(", ").reduce("", (a, b) -> a + b));
-    assertEquals("a", JBIterable.of("a").join(", ").reduce("", (a, b) -> a + b));
-    assertEquals("a, b, c", JBIterable.of("a", "b", "c").join(", ").reduce("", (a, b) -> a + b));
+    assertEquals("a", JBIterable.of("a").join(", ").reduce((a, b) -> a + b));
+    assertEquals("a, b, c", JBIterable.of("a", "b", "c").join(", ").reduce((a, b) -> a + b));
   }
 
   public void testSplits1() {
