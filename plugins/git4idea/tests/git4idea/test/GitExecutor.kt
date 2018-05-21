@@ -45,7 +45,7 @@ fun git(project: Project, command: String, ignoreNonZeroExitCode: Boolean = fals
 
   val result = Git.getInstance().runCommand(handler)
   if (result.exitCode != 0 && !ignoreNonZeroExitCode) {
-    throw IllegalStateException("Command [$command] failed with exit code ${result.exitCode}")
+    throw IllegalStateException("Command [$command] failed with exit code ${result.exitCode}\n${result.output}\n${result.errorOutput}")
   }
   return result.errorOutputAsJoinedString + result.outputAsJoinedString
 }

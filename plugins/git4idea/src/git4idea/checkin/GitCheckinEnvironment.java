@@ -74,10 +74,7 @@ import git4idea.index.GitIndexUtil;
 import git4idea.repo.GitRepository;
 import git4idea.repo.GitRepositoryManager;
 import git4idea.util.GitFileUtils;
-import org.jetbrains.annotations.CalledInAwt;
-import org.jetbrains.annotations.NonNls;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.*;
 
 import javax.swing.*;
 import java.awt.*;
@@ -1288,6 +1285,11 @@ public class GitCheckinEnvironment implements CheckinEnvironment {
 
   public void setSkipHooksForNextCommit(boolean skipHooksForNextCommit) {
     myNextCommitSkipHook = skipHooksForNextCommit;
+  }
+
+  @TestOnly
+  public void setCommitRenamesSeparately(boolean commitRenamesSeparately) {
+    myNextCommitCommitRenamesSeparately = commitRenamesSeparately;
   }
 
   private static class CommitChange {
