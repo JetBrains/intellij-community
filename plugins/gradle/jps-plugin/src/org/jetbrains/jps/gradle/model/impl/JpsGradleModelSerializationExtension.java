@@ -39,10 +39,14 @@ import java.util.List;
  */
 public class JpsGradleModelSerializationExtension extends JpsModelSerializerExtension {
   private static final String PRODUCTION_ON_TEST_ATTRIBUTE = "production-on-test";
+  private static final String GRADLE_SYSTEM_ID = "GRADLE";
 
   @Override
   public void loadModuleOptions(@NotNull JpsModule module, @NotNull Element rootElement) {
-    if ("GRADLE".equals(rootElement.getAttributeValue("external.system.id"))) {
+    boolean isGradleModule = "GRADLE".equals(rootElement.getAttributeValue("external.system.id")) ||
+                             rootElement.getChildren().stream()
+                                        .anyMatch(element -> GRADLE_SYSTEM_ID.equals(element.getAttributeValue("externalSystem")));
+    if (isGradleModule) {
       JpsGradleExtensionService.getInstance().getOrCreateExtension(module, rootElement);
     }
   }
