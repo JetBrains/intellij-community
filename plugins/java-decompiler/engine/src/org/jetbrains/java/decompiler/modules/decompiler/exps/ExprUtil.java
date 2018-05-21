@@ -26,7 +26,7 @@ public class ExprUtil {
     if (wrapper != null) {
       // own class
       MethodWrapper methodWrapper = wrapper.getMethodWrapper(CodeConstants.INIT_NAME, descriptor);
-      if (methodWrapper == null && DecompilerContext.getOption(IFernflowerPreferences.IGNOIRE_INVALID_BYTECODE)) {
+      if (methodWrapper == null && DecompilerContext.getOption(IFernflowerPreferences.IGNORE_INVALID_BYTECODE)) {
         return null;
       }
       mask = methodWrapper.synthParameters;
