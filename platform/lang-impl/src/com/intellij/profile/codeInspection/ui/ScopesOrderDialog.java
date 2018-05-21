@@ -25,7 +25,6 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
-import java.util.stream.IntStream;
 
 public class ScopesOrderDialog extends DialogWrapper {
   private final JList<String> myOptionsList = new JBList<>();
@@ -130,7 +129,7 @@ public class ScopesOrderDialog extends DialogWrapper {
 
     @Override
     public void removeRow(int idx) {
-      remove(idx);
+      throw new UnsupportedOperationException();
     }
   }
 }
