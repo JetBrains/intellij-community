@@ -51,13 +51,16 @@ class GitCommitTest : GitSingleRepoTest() {
   }
 
   override fun tearDown() {
-    val point = Extensions.getRootArea().getExtensionPoint(GitCheckinExplicitMovementProvider.EP_NAME)
-    point.unregisterExtension(myMovementProvider)
-    Registry.get("git.allow.explicit.commit.renames").resetToDefault()
+    try {
+      val point = Extensions.getRootArea().getExtensionPoint(GitCheckinExplicitMovementProvider.EP_NAME)
+      point.unregisterExtension(myMovementProvider)
+      Registry.get("git.allow.explicit.commit.renames").resetToDefault()
 
-    (vcs.checkinEnvironment as GitCheckinEnvironment).setCommitRenamesSeparately(false)
-
-    super.tearDown()
+      (vcs.checkinEnvironment as GitCheckinEnvironment).setCommitRenamesSeparately(false)
+    }
+    finally {
+      super.tearDown()
+    }
   }
 
   // IDEA-50318
@@ -91,6 +94,67 @@ class GitCommitTest : GitSingleRepoTest() {
     assertNoChanges()
   }
 
+  fun `test commit with excluded staged rename`() {
+    tac("a.java", "old content")
+    tac("b.java")
+
+    git("mv -f b.java c.java")
+    overwrite("a.java", "new content")
+
+    val changes = assertChanges {
+      modified("a.java")
+      rename("b.java", "c.java")
+    }
+
+    commit(listOf(changes[0]))
+
+    assertChanges {
+      rename("b.java", "c.java")
+    }
+    repo.assertCommitted {
+      modified("a.java")
+    }
+  }
+
+  fun `test commit with excluded case rename`() {
+    tac("a.java", "old content")
+    tac("b.java")
+
+    git("mv -f b.java B.java")
+    overwrite("a.java", "new content")
+
+    val changes = assertChanges {
+      modified("a.java")
+      rename("b.java", "B.java")
+    }
+
+    commit(listOf(changes[0]))
+
+    assertChanges {
+      rename("b.java", "B.java")
+    }
+    repo.assertCommitted {
+      modified("a.java")
+    }
+  }
+
+  fun `test commit staged rename`() {
+    tac("b.java")
+
+    git("mv -f b.java c.java")
+
+    val changes = assertChanges {
+      rename("b.java", "c.java")
+    }
+
+    commit(changes)
+
+    assertNoChanges()
+    repo.assertCommitted {
+      rename("b.java", "c.java")
+    }
+  }
+
   fun `test commit case rename`() {
     generateCaseRename("a.java", "A.java")
 
@@ -101,6 +165,41 @@ class GitCommitTest : GitSingleRepoTest() {
     assertNoChanges()
     repo.assertCommitted {
       rename("a.java", "A.java")
+    }
+  }
+
+  fun `test commit unstaged case rename - case ignored on case insensitive system`() {
+    assumeTrue(!SystemInfo.isFileSystemCaseSensitive)
+
+    tac("a.java", "old content")
+    rm("a.java")
+    touch("A.java", "new content")
+
+    val changes = assertChanges {
+      modified("a.java")
+    }
+    commit(changes)
+    assertNoChanges()
+    repo.assertCommitted {
+      modified("a.java")
+    }
+  }
+
+  fun `test commit wrongly staged case rename - case ignored on case insensitive system`() {
+    assumeTrue(!SystemInfo.isFileSystemCaseSensitive)
+
+    tac("a.java", "old content")
+    rm("a.java")
+    touch("A.java", "new content")
+    git("add -A a.java A.java")
+
+    val changes = assertChanges {
+      modified("a.java")
+    }
+    commit(changes)
+    assertNoChanges()
+    repo.assertCommitted {
+      modified("a.java")
     }
   }
 
@@ -120,6 +219,27 @@ class GitCommitTest : GitSingleRepoTest() {
     repo.assertCommitted {
       rename("a.java", "A.java")
       added("s.java")
+    }
+  }
+
+  fun `test commit case rename with another staged rename`() {
+    tac("a.java")
+    tac("b.java")
+
+    git("mv -f a.java c.java")
+    git("mv -f b.java B.java")
+
+    val changes = assertChanges {
+      rename("b.java", "B.java")
+      rename("a.java", "c.java")
+    }
+
+    commit(changes)
+
+    assertNoChanges()
+    repo.assertCommitted {
+      rename("b.java", "B.java")
+      rename("a.java", "c.java")
     }
   }
 
