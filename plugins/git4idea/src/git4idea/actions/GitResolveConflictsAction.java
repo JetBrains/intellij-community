@@ -59,16 +59,11 @@ public class GitResolveConflictsAction extends DumbAwareAction {
   }
 
   private static boolean isEnabled(@NotNull Project project) {
-    final Collection<Change> changes = ChangeListManager.getInstance(project).getAllChanges();
+    Collection<Change> changes = ChangeListManager.getInstance(project).getAllChanges();
     if (changes.size() > 1000) {
       return true;
     }
-    for (Change change : changes) {
-      if (change.getFileStatus() == FileStatus.MERGED_WITH_CONFLICTS) {
-        return true;
-      }
-    }
-    return false;
+    return changes.stream().anyMatch(it -> it.getFileStatus() == FileStatus.MERGED_WITH_CONFLICTS);
   }
 
   @Override
