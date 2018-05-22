@@ -17,6 +17,7 @@ import com.intellij.openapi.vfs.encoding.EncodingManager;
 import com.intellij.openapi.vfs.encoding.EncodingManagerImpl;
 import com.intellij.openapi.vfs.encoding.EncodingUtil;
 import com.intellij.openapi.vfs.impl.BulkVirtualFileListenerAdapter;
+import com.intellij.openapi.wm.StatusBar;
 import com.intellij.openapi.wm.StatusBarWidget;
 import com.intellij.util.ObjectUtils;
 import org.jetbrains.annotations.NotNull;
@@ -32,8 +33,9 @@ public class EncodingPanel extends EditorBasedStatusBarPopup {
   @NotNull
   @Override
   protected WidgetState getWidgetState(@Nullable VirtualFile file) {
-    // this is done to preserve the old behavior; not sure if it is correct
-    if (file == null) return new WidgetState("", "", false);
+    if (file == null) {
+      return WidgetState.HIDDEN;
+    }
 
     Pair<Charset, String> check = EncodingUtil.getCharsetAndTheReasonTooltip(file);
     String failReason = check == null ? null : check.second;
@@ -78,6 +80,6 @@ public class EncodingPanel extends EditorBasedStatusBarPopup {
   @Override
   @NotNull
   public String ID() {
-    return "Encoding";
+    return StatusBar.StandardWidgets.ENCODING_PANEL;
   }
 }

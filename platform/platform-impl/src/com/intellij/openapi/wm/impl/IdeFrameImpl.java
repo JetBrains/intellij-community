@@ -41,6 +41,7 @@ import com.intellij.openapi.wm.impl.status.*;
 import com.intellij.openapi.wm.impl.welcomeScreen.WelcomeFrame;
 import com.intellij.ui.*;
 import com.intellij.ui.mac.MacMainFrameDecorator;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.accessibility.AccessibleContextAccessor;
@@ -56,6 +57,7 @@ import java.awt.event.WindowEvent;
 import java.awt.image.BufferedImage;
 import java.io.File;
 import java.lang.reflect.Field;
+import java.util.Set;
 
 /**
  * @author Anton Katilin
@@ -438,34 +440,36 @@ public class IdeFrameImpl extends JFrame implements IdeFrameEx, AccessibleContex
     }
   }
 
+  private final Set<String> widgetIDs = ContainerUtil.newHashSet();
+  private void addWidget(StatusBar statusBar, StatusBarWidget widget, String anchor) {
+    if (!widgetIDs.add(widget.ID())) {
+      LOG.error("Attempting to add more than one widget with ID: " + widget.ID());
+      return;
+    }
+    statusBar.addWidget(widget, anchor);
+  }
+
   private void installDefaultProjectStatusBarWidgets(@NotNull final Project project) {
     final StatusBar statusBar = getStatusBar();
+    addWidget(statusBar, new PositionPanel(project), StatusBar.Anchors.before(IdeMessagePanel.FATAL_ERROR));
+    addWidget(statusBar, new IdeNotificationArea(), StatusBar.Anchors.before(IdeMessagePanel.FATAL_ERROR));
+    addWidget(statusBar, new EncodingPanel(project), StatusBar.Anchors.after(StatusBar.StandardWidgets.POSITION_PANEL));
+    addWidget(statusBar, new LineSeparatorPanel(project), StatusBar.Anchors.before(StatusBar.StandardWidgets.ENCODING_PANEL));
+    addWidget(statusBar, new InsertOverwritePanel(project), StatusBar.Anchors.after(StatusBar.StandardWidgets.ENCODING_PANEL));
+    addWidget(statusBar, new ToggleReadOnlyAttributePanel(project),
+              StatusBar.Anchors.after(StatusBar.StandardWidgets.INSERT_OVERWRITE_PANEL));
 
-    final PositionPanel positionPanel = new PositionPanel(project);
-    statusBar.addWidget(positionPanel, "before " + IdeMessagePanel.FATAL_ERROR);
-
-    final IdeNotificationArea notificationArea = new IdeNotificationArea();
-    statusBar.addWidget(notificationArea, "before " + IdeMessagePanel.FATAL_ERROR);
-
-    final EncodingPanel encodingPanel = new EncodingPanel(project);
-    statusBar.addWidget(encodingPanel, "after Position");
-
-    final LineSeparatorPanel lineSeparatorPanel = new LineSeparatorPanel(project);
-    statusBar.addWidget(lineSeparatorPanel, "before " + encodingPanel.ID());
-
-    final ToggleReadOnlyAttributePanel readOnlyAttributePanel = new ToggleReadOnlyAttributePanel(project);
-
-    final InsertOverwritePanel insertOverwritePanel = new InsertOverwritePanel(project);
-    statusBar.addWidget(insertOverwritePanel, "after Encoding");
-    statusBar.addWidget(readOnlyAttributePanel, "after InsertOverwrite");
+    for (StatusBarWidgetProvider widgetProvider: StatusBarWidgetProvider.EP_NAME.getExtensions()) {
+      StatusBarWidget widget = widgetProvider.getWidget(project);
+      if (widget == null) continue;
+      addWidget(statusBar, widget, widgetProvider.getAnchor());
+    }
 
     Disposer.register(project, () -> {
-      statusBar.removeWidget(encodingPanel.ID());
-      statusBar.removeWidget(lineSeparatorPanel.ID());
-      statusBar.removeWidget(positionPanel.ID());
-      statusBar.removeWidget(notificationArea.ID());
-      statusBar.removeWidget(readOnlyAttributePanel.ID());
-      statusBar.removeWidget(insertOverwritePanel.ID());
+      for (String widgetID: widgetIDs) {
+        statusBar.removeWidget(widgetID);
+      }
+      widgetIDs.clear();
 
       //noinspection deprecation
       ((StatusBarEx)statusBar).removeCustomIndicationComponents();

@@ -204,6 +204,12 @@ public abstract class EditorBasedStatusBarPopup extends EditorBasedWidget implem
   }
 
   protected static class WidgetState {
+
+    public static final WidgetState HIDDEN = new WidgetState("", "", false);
+    static {
+      HIDDEN.setHidden(true);
+    }
+
     protected WidgetState(String toolTip, String text, boolean actionEnabled) {
       this.toolTip = toolTip;
       this.text = text;
