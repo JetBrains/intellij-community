@@ -1069,7 +1069,10 @@ public class RefactoringUtil {
       assignment = (PsiExpressionStatement)body.addAfter(assignment, anchor);
       PsiExpression fieldInitializer = ((PsiField)copy).getInitializer();
       if (fieldInitializer instanceof PsiArrayInitializerExpression) {
-        fieldInitializer = createNewExpressionFromArrayInitializer((PsiArrayInitializerExpression)fieldInitializer, field.getType());
+        PsiType fieldType = field.getType();
+        if (fieldType instanceof PsiArrayType) {
+          fieldInitializer = createNewExpressionFromArrayInitializer((PsiArrayInitializerExpression)fieldInitializer, fieldType);
+        }
       }
       PsiExpression rExpression = ((PsiAssignmentExpression)assignment.getExpression()).getRExpression();
       assert fieldInitializer != null;
