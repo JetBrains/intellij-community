@@ -1627,7 +1627,8 @@ public class InferenceSession {
 
       final PsiType qType = JavaPsiFacade.getElementFactory(method.getProject()).createType(containingClass, psiSubstitutor);
 
-      addConstraint(new TypeCompatibilityConstraint(substituteWithInferenceVariables(qType), pType));
+      addConstraint(new TypeCompatibilityConstraint(substituteWithInferenceVariables(qType), 
+                                                    PsiUtil.captureToplevelWildcards(pType, reference)));
 
       if (methodContainingClass != null) {
         psiSubstitutor = JavaClassSupers.getInstance().getSuperClassSubstitutor(methodContainingClass, containingClass, reference.getResolveScope(), psiSubstitutor);
