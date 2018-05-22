@@ -60,4 +60,9 @@ public final class CommandLineFileType extends LanguageFileType {
   public Icon getIcon() {
     return null;
   }
+
+  @Override
+  public boolean isReadOnly() {
+    return true;
+  }
 }

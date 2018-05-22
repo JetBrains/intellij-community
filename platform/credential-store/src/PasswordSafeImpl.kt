@@ -23,6 +23,7 @@ import com.intellij.ide.passwordSafe.PasswordStorage
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.components.SettingsSavingComponent
 import com.intellij.openapi.diagnostic.runAndLogException
+import org.jetbrains.annotations.TestOnly
 import org.jetbrains.concurrency.runAsync
 import java.nio.file.Paths
 
@@ -154,3 +155,9 @@ internal fun createPersistentCredentialStore(existing: KeePassCredentialStore? =
   }
   return KeePassCredentialStore()
 }
+
+@TestOnly
+fun createKeePassStore(file: String): PasswordSafe =
+  PasswordSafeImpl(
+    PasswordSafeSettings().apply { loadState(PasswordSafeSettings.State().apply { providerType = ProviderType.KEEPASS; keepassDb = file }) },
+    KeePassCredentialStore(dbFile = Paths.get(file)))

@@ -25,7 +25,7 @@ public class QtUIFileType extends QtFileType implements FileType {
   public static QtUIFileType INSTANCE = new QtUIFileType();
 
   protected QtUIFileType() {
-    super("Qt UI file", "Qt UI Designer form files", "ui", PythonIcons.Pyqt.UiForm);
+    super("Qt UI file", "Qt UI Designer form", "ui", PythonIcons.Pyqt.UiForm);
   }
 
   protected String getToolName() {

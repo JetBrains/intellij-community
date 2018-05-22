@@ -104,6 +104,6 @@ public abstract class Executor {
    * Too long names don't fit into UI controls and have to be trimmed
    */
   public static String shortenNameIfNeed(@NotNull String name) {
-    return StringUtil.first(name, Registry.intValue("run.configuration.max.name.length", 40), true);
+    return StringUtil.trimMiddle(name, Registry.intValue("run.configuration.max.name.length", 80));
   }
 }

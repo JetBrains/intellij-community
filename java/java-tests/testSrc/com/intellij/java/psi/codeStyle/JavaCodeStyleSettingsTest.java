@@ -16,6 +16,11 @@
 package com.intellij.java.psi.codeStyle;
 
 import com.intellij.ide.codeStyleSettings.CodeStyleTestCase;
+import com.intellij.lang.java.JavaLanguage;
+import com.intellij.openapi.application.ex.PathManagerEx;
+import com.intellij.openapi.options.SchemeImportException;
+import com.intellij.psi.codeStyle.CodeStyleSettings;
+import com.intellij.psi.codeStyle.CommonCodeStyleSettings;
 import com.intellij.psi.codeStyle.JavaCodeStyleSettings;
 import com.intellij.psi.codeStyle.PackageEntry;
 
@@ -53,7 +58,20 @@ public class JavaCodeStyleSettingsTest extends CodeStyleTestCase {
     }
   }
 
+  public void testImportPre173Settings() throws SchemeImportException {
+    CodeStyleSettings imported = importSettings();
+    CommonCodeStyleSettings commonSettings = imported.getCommonSettings(JavaLanguage.INSTANCE);
+    assertEquals("testprefix", imported.getCustomSettings(JavaCodeStyleSettings.class).FIELD_NAME_PREFIX);
+    assertTrue(commonSettings.WRAP_COMMENTS);
+    assertFalse(imported.WRAP_COMMENTS);
+  }
+
   private static boolean isPrimitiveOrString(Class type) {
     return type.isPrimitive() || type.equals(String.class);
+  }
+
+  @Override
+  protected String getBasePath() {
+    return PathManagerEx.getTestDataPath() + "/codeStyle";
   }
 }

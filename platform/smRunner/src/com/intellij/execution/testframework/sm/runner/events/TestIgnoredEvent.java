@@ -26,14 +26,16 @@ public class TestIgnoredEvent extends TreeNodeEvent {
   private final String myStacktrace;
 
   public TestIgnoredEvent(@NotNull String testName, @NotNull String ignoreComment, @Nullable String stacktrace) {
-    super(testName, null);
-    myIgnoreComment = ignoreComment;
-    myStacktrace = stacktrace;
+    this(testName, null, ignoreComment, stacktrace);
   }
 
   public TestIgnoredEvent(@NotNull TestIgnored testIgnored, @Nullable String stacktrace) {
-    super(testIgnored.getTestName(), TreeNodeEvent.getNodeId(testIgnored));
-    myIgnoreComment = testIgnored.getIgnoreComment();
+    this(testIgnored.getTestName(), TreeNodeEvent.getNodeId(testIgnored), testIgnored.getIgnoreComment(), stacktrace);
+  }
+
+  public TestIgnoredEvent(@Nullable String name, @Nullable String id, @Nullable String ignoreComment, @Nullable String stacktrace) {
+    super(name, id);
+    myIgnoreComment = ignoreComment;
     myStacktrace = stacktrace;
   }
 

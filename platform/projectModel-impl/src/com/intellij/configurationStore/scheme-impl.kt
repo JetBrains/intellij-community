@@ -1,4 +1,4 @@
-// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.configurationStore
 
 import com.intellij.openapi.extensions.AbstractExtensionPointBean
@@ -39,7 +39,7 @@ interface SchemeDataHolder<in T> {
 
   fun updateDigest(scheme: T)
 
-  fun updateDigest(data: Element)
+  fun updateDigest(data: Element?)
 }
 
 /**
@@ -67,7 +67,7 @@ abstract class LazySchemeProcessor<SCHEME, MUTABLE_SCHEME : SCHEME>(private val 
                             name: String,
                             attributeProvider: Function<String, String?>,
                             isBundled: Boolean = false): MUTABLE_SCHEME
-  override fun writeScheme(scheme: MUTABLE_SCHEME) = (scheme as SerializableScheme).writeScheme()
+  override fun writeScheme(scheme: MUTABLE_SCHEME): Element? = (scheme as SerializableScheme).writeScheme()
 
   open fun isSchemeFile(name: CharSequence) = true
 

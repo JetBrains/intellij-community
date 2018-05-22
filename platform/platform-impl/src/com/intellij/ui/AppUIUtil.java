@@ -38,7 +38,6 @@ import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.wm.ToolWindowManager;
-import com.intellij.openapi.wm.ex.WindowManagerEx;
 import com.intellij.ui.AppIcon.MacAppIcon;
 import com.intellij.ui.components.JBScrollPane;
 import com.intellij.util.*;
@@ -369,7 +368,7 @@ public class AppUIUtil {
     if (consents.isEmpty()) return null;
 
     ConsentSettingsUi ui = new ConsentSettingsUi(false);
-    final DialogWrapper dialog = new DialogWrapper(WindowManagerEx.getInstanceEx().getMostRecentFocusedWindow(), true) {
+    final DialogWrapper dialog = new DialogWrapper(true) {
       @Nullable
       @Override
       protected Border createContentPaneBorder() {

@@ -123,7 +123,7 @@ public class DarculaButtonUI extends BasicButtonUI {
   @Override
   public void paint(Graphics g, JComponent c) {
     if (paintDecorations((Graphics2D)g, c)) {
-      super.paint(g, c);
+      paintContents(g, (AbstractButton)c);
     }
   }
 

@@ -68,6 +68,13 @@ public class Splitter extends JPanel implements Splittable {
   private boolean mySkipNextLayouting;
   private static final Rectangle myNullBounds = new Rectangle();
 
+  public enum LackOfSpaceStrategy {
+    SIMPLE_RATIO, //default
+    HONOR_THE_FIRST_MIN_SIZE,
+    HONOR_THE_SECOND_MIN_SIZE
+  }
+  private LackOfSpaceStrategy myLackOfSpaceStrategy = LackOfSpaceStrategy.SIMPLE_RATIO;
+
 
   /**
    * Creates horizontal split (with components which are side by side) with proportion equals to .5f
@@ -146,6 +153,14 @@ public class Splitter extends JPanel implements Splittable {
 
   public void setHonorComponentsMinimumSize(boolean honorMinimumSize) {
     myHonorMinimumSize = honorMinimumSize;
+  }
+
+  public void setLackOfSpaceStrategy(LackOfSpaceStrategy strategy) {
+    myLackOfSpaceStrategy = strategy;
+  }
+
+  public LackOfSpaceStrategy getLackOfSpaceStrategy() {
+    return myLackOfSpaceStrategy;
   }
 
   /**
@@ -270,8 +285,18 @@ public class Splitter extends JPanel implements Splittable {
           double mSize2 = isVertical() ? mySecondComponent.getMinimumSize().getHeight() : mySecondComponent.getMinimumSize().getWidth();
 
           if (size1 + size2 < mSize1 + mSize2) {
-            double proportion = mSize1 / (mSize1 + mSize2);
-            size1 = proportion * total;
+            switch (myLackOfSpaceStrategy) {
+              case SIMPLE_RATIO:
+                double proportion = mSize1 / (mSize1 + mSize2);
+                size1 = proportion * total;
+                break;
+              case HONOR_THE_FIRST_MIN_SIZE:
+                size1 = mSize1;
+                break;
+              case HONOR_THE_SECOND_MIN_SIZE:
+                size1 = total - mSize2 - d;
+                break;
+            }
           }
           else {
             if (size1 < mSize1) {

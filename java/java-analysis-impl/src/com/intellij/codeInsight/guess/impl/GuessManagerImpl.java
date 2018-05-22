@@ -343,32 +343,24 @@ public class GuessManagerImpl extends GuessManager {
     if (expr.getType() instanceof PsiPrimitiveType) {
       return Collections.emptyList();
     }
-    List<PsiType> result = null;
     PsiExpression place = PsiUtil.skipParenthesizedExprDown(expr);
     if (place == null) return Collections.emptyList();
-    if (place instanceof PsiReferenceExpression) {
-      PsiElement target = ((PsiReferenceExpression)place).resolve();
-      if (target instanceof PsiParameter) {
-        PsiElement parent = target.getParent();
-        if (parent instanceof PsiParameterList && parent.getParent() instanceof PsiLambdaExpression) {
-          result = getTypesFromDfa(expr);
-        }
-      }
-    }
-    if (result == null) {
+
+    List<PsiType> result = null;
+    if (!ControlFlowAnalyzer.inlinerMayInferPreciseType(place)) {
       GuessTypeVisitor visitor = new GuessTypeVisitor(place);
       getTopmostBlock(place).accept(visitor);
 
-      if (visitor.isDfaNeeded()) {
-        result = getTypesFromDfa(expr);
-      }
-      else {
+      if (!visitor.isDfaNeeded()) {
         result = visitor.mySpecificType == null ?
                  Collections.emptyList() : Collections.singletonList(tryGenerify(expr, visitor.mySpecificType));
       }
     }
+    if (result == null) {
+      result = getTypesFromDfa(expr);
+    }
     if (result.equals(Collections.singletonList(expr.getType()))) {
-      result = Collections.emptyList();
+      return Collections.emptyList();
     }
     return result;
   }

@@ -531,6 +531,18 @@ public class StubUpdatingIndex extends CustomImplementationFileBasedIndexExtensi
     }
 
     @Override
+    public void removeTransientDataForKeys(int inputId, Collection<Integer> keys) {
+      super.removeTransientDataForKeys(inputId, keys);
+      if (keys instanceof StubUpdatingIndexKeys) {
+        Map<StubIndexKey, Map<Object, StubIdList>> stubIndicesValueMap = ((StubUpdatingIndexKeys)keys).myStubIndicesValueMap;
+        final StubIndexImpl stubIndex = (StubIndexImpl)StubIndex.getInstance();
+        for (StubIndexKey key : stubIndicesValueMap.keySet()) {
+          stubIndex.removeTransientDataForFile(key, inputId, stubIndicesValueMap.get(key).keySet());
+        }
+      }
+    }
+
+    @Override
     protected void doClear() throws StorageException, IOException {
       final StubIndexImpl stubIndex = StubIndexImpl.getInstanceOrInvalidate();
       if (stubIndex != null) {

@@ -5,7 +5,6 @@ package com.intellij.ide.projectView.impl.nodes;
 import com.intellij.ide.projectView.ViewSettings;
 import com.intellij.ide.projectView.impl.ModuleGroup;
 import com.intellij.ide.projectView.impl.ProjectRootsUtil;
-import com.intellij.ide.scratch.ScratchProjectViewPane;
 import com.intellij.ide.util.treeView.AbstractTreeNode;
 import com.intellij.openapi.module.*;
 import com.intellij.openapi.module.impl.LoadedModuleDescriptionImpl;
@@ -70,10 +69,6 @@ public class ProjectViewProjectNode extends AbstractProjectNode {
     if (getSettings().isShowLibraryContents()) {
       nodes.add(new ExternalLibrariesNode(getProject(), getSettings()));
     }
-    if (ScratchProjectViewPane.isScratchesMergedIntoProjectTab()) {
-      nodes.add(ScratchProjectViewPane.createRootNode(getProject(), getSettings()));
-    }
-
     return nodes;
   }
 

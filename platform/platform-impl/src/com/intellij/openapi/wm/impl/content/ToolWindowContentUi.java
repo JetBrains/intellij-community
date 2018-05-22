@@ -31,9 +31,9 @@ import com.intellij.openapi.util.Conditions;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.Ref;
-import com.intellij.openapi.wm.IdeFrame;
-import com.intellij.openapi.wm.ToolWindowContentUiType;
+import com.intellij.openapi.wm.*;
 import com.intellij.openapi.wm.impl.ToolWindowImpl;
+import com.intellij.openapi.wm.impl.ToolWindowManagerImpl;
 import com.intellij.ui.PopupHandler;
 import com.intellij.ui.content.*;
 import com.intellij.ui.content.tabs.PinToolwindowTabAction;
@@ -111,6 +111,23 @@ public class ToolWindowContentUi extends JPanel implements ContentUI, PropertyCh
             .iterator();
         }
       });
+  }
+
+  private boolean isResizeable() {
+    if (myWindow.getType() == ToolWindowType.FLOATING || myWindow.getType() == ToolWindowType.WINDOWED) return false;
+    if (myWindow.getAnchor() == ToolWindowAnchor.BOTTOM) return true;
+    if (myWindow.getAnchor() == ToolWindowAnchor.TOP) return false;
+    if (!myWindow.isSplitMode()) return false;
+    ToolWindowManagerImpl manager = myWindow.getToolWindowManager();
+    List<String> ids = manager.getIdsOn(myWindow.getAnchor());
+    for (String id : ids) {
+      if (id.equals(myWindow.getId())) continue;
+      ToolWindow window = manager.getToolWindow(id);
+      if (window != null && window.isVisible() && (window.getType() == ToolWindowType.DOCKED || window.getType() == ToolWindowType.SLIDING)) {
+        return true;
+      }
+    }
+    return false;
   }
 
   public void setType(@NotNull ToolWindowContentUiType type) {
@@ -314,7 +331,7 @@ public class ToolWindowContentUi extends JPanel implements ContentUI, PropertyCh
 
 
       private Component getActualSplitter() {
-        if (!allowResize) return null;
+        if (!allowResize || !ui.isResizeable()) return null;
 
         Component component = c;
         Component parent = component.getParent();
@@ -325,7 +342,9 @@ public class ToolWindowContentUi extends JPanel implements ContentUI, PropertyCh
               return parent;
             }
           }
-          if (parent instanceof Splitter && ((Splitter)parent).isVertical() && ((Splitter)parent).getSecondComponent() == component) {
+          if (parent instanceof Splitter && ((Splitter)parent).isVertical()
+              && ((Splitter)parent).getSecondComponent() == component
+              && ((Splitter)parent).getFirstComponent() != null) {
             return parent;
           }
           component = parent;
@@ -359,7 +378,7 @@ public class ToolWindowContentUi extends JPanel implements ContentUI, PropertyCh
         if (!e.isPopupTrigger()) {
           if (!UIUtil.isCloseClick(e)) {
             myLastPoint.set(info != null ? info.getLocation() : e.getLocationOnScreen());
-            if (allowResize) {
+            if (allowResize && ui.isResizeable()) {
               myPressPoint.set(myLastPoint.get());
               arm(c.getComponentAt(e.getPoint()) == c ? c : null);
             }
@@ -380,7 +399,7 @@ public class ToolWindowContentUi extends JPanel implements ContentUI, PropertyCh
 
       @Override
       public void mouseMoved(MouseEvent e) {
-        c.setCursor(allowResize && getActualSplitter() != null && c.getComponentAt(e.getPoint()) == c
+        c.setCursor(allowResize && ui.isResizeable() && getActualSplitter() != null && c.getComponentAt(e.getPoint()) == c
                     ? Cursor.getPredefinedCursor(Cursor.N_RESIZE_CURSOR)
                     : Cursor.getDefaultCursor());
       }

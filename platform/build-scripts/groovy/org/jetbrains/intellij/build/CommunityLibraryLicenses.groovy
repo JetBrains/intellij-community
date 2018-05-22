@@ -29,6 +29,7 @@ class CommunityLibraryLicenses {
     new LibraryLicense(name: "Android Profiler", libraryName: "studio-profiler-grpc-1.0-jarjar", license: "Apache 2.0", url: "http://source.android.com/"),
     new LibraryLicense(name: "Android Analytics Shared", libraryName: "com.android.tools.analytics-library:shared:26.0.0", license: "Apache 2.0", url: "http://source.android.com/"),
     new LibraryLicense(name: "Android Analytics Tracker", libraryName: "com.android.tools.analytics-library:tracker:26.0.0", license: "Apache 2.0", url: "http://source.android.com/"),
+    // Android Studio: modified by Change Ie6a45d96 / commit c12953a
     new LibraryLicense(name: "Android Analytics Protos", libraryName: "studio_analytics_proto.jar", license: "Apache 2.0", url: "http://source.android.com/"),
     new LibraryLicense(name: "Android Baksmali", libraryName: "baksmali", license: "Apache 2.0", url: "http://source.android.com/"),
     new LibraryLicense(name: "Android Archive Patcher", libraryName: "archive-patcher", license: "Apache 2.0", url: "http://source.android.com/"),
@@ -79,9 +80,9 @@ class CommunityLibraryLicenses {
                        licenseUrl: "http://www.opensource.org/licenses/bsd-license.php"),
     new LibraryLicense(name: "Axis", libraryName: "axis-1.4", version: "1.4", license: "Apache 2.0", url: "http://ws.apache.org/axis/",
                        licenseUrl: "http://www.apache.org/licenses/LICENSE-2.0.html"),
-    new LibraryLicense(name: "bouncy-castle", version: "1.48", license: "MIT License", url: "http://bouncycastle.org",
+    new LibraryLicense(name: "bouncy-castle", version: "1.59", license: "MIT License", url: "http://bouncycastle.org",
                        licenseUrl: "http://bouncycastle.org/licence.html"),
-    new LibraryLicense(name: "bouncy-castle-provider", version: "1.55", license: "MIT License", url: "http://bouncycastle.org",
+    new LibraryLicense(name: "bouncy-castle-provider", version: "1.59", license: "MIT License", url: "http://bouncycastle.org",
                        licenseUrl: "http://bouncycastle.org/licence.html"),
     new LibraryLicense(name: "CGLib", libraryName: "CGLIB", version: "2.2.2", license: "Apache", url: "http://cglib.sourceforge.net/",
                        licenseUrl: "http://www.apache.org/foundation/licence-FAQ.html"),
@@ -185,9 +186,7 @@ class CommunityLibraryLicenses {
                        url: "https://github.com/JetBrains/jediterm", licenseUrl: "https://github.com/JetBrains/jediterm/blob/master/COPYING"),
     new LibraryLicense(name: "JEuclid", libraryName: "jeuclid-core-3.1.9.jar", version: "3.1.9", license: "Apache 2.0",
                        url: "http://jeuclid.sourceforge.net", licenseUrl: "http://sourceforge.net/p/jeuclid/code/ci/default/tree/LICENSE.txt"),
-    new LibraryLicense(name: "Jackson", libraryName: "jackson", version: "2.5.1", license: "Apache 2.0",
-                       licenseUrl: "http://www.eclipse.org/org/documents/edl-v10.php", url: "https://github.com/FasterXML/jackson"),
-    new LibraryLicense(name: "javax inject", libraryName: "javax-inject", version: "1", license: "Apache 2.0",
+    new LibraryLicense(name: "javax inject", libraryName: "javax.inject:javax.inject:1", version: "1", license: "Apache 2.0",
                        licenseUrl: "http://apache.org/licenses/LICENSE-2.0", url: "http://code.google.com/p/atinject/"),
     new LibraryLicense(name: "JGit", libraryName: "jgit", version: "4.0", license: "Eclipse Distribution License 1.0",
                        licenseUrl: "http://www.eclipse.org/org/documents/edl-v10.php", url: "https://eclipse.org/jgit/"),
@@ -403,6 +402,9 @@ class CommunityLibraryLicenses {
                        url: "http://plantuml.com", licenseUrl: "http://www.apache.org/licenses/LICENSE-2.0.txt"),
     new LibraryLicense(name: "FST", libraryName: "de.ruedigermoeller:fst", version: "2.56", license: "Apache 2.0",
                        url: "https://github.com/RuedigerMoeller/fast-serialization", licenseUrl: "http://www.apache.org/licenses/LICENSE-2.0.txt"),
+
+    new LibraryLicense(name: "Jackson", libraryName: "jackson", version: "2.9.5", license: "Apache 2.0",
+                               licenseUrl: "http://www.apache.org/licenses/LICENSE-2.0", url: "https://github.com/FasterXML/jackson"),
 
     // Android Studio: added by Change I43400d97 / commit 27761cb
     new LibraryLicense(name: "JUniversal Char Detection", libraryName: "juniversalchardet", version: "1.0.3", license: "MPL 1.1",

@@ -27,6 +27,7 @@ import com.intellij.util.ArrayUtil;
 import com.intellij.util.ObjectUtils;
 import com.siyeh.ig.callMatcher.CallMapper;
 import com.siyeh.ig.callMatcher.CallMatcher;
+import com.siyeh.ig.psiutils.TypeUtils;
 import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
@@ -261,5 +262,10 @@ public class OptionalChainInliner implements CallInliner {
     if ("of".equals(qualifierCall.getMethodExpression().getReferenceName())) {
       builder.checkNotNull(argument, NullabilityProblemKind.passingNullableToNotNullParameter);
     }
+  }
+
+  @Override
+  public boolean mayInferPreciseType(@NotNull PsiExpression expression) {
+    return InlinerUtil.isLambdaChainParameterReference(expression, TypeUtils::isOptional);
   }
 }

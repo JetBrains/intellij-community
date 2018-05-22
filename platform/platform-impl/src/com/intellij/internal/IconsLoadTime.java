@@ -22,7 +22,6 @@ import java.util.Collections;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Objects;
-import java.util.function.Function;
 
 /**
  * Logs load time statistics for PNG/SVG images, such as: average, median, ide startup total, first N icons total.
@@ -83,7 +82,7 @@ public class IconsLoadTime extends DumbAwareAction {
   }
 
   public static void log(boolean measureStartupLoad) {
-    log(measureStartupLoad, Type.PNG);
+    log(measureStartupLoad, Type.IMG);
     log(measureStartupLoad, Type.SVG);
   }
 
@@ -110,7 +109,7 @@ public class IconsLoadTime extends DumbAwareAction {
     boolean measure = stats.size() < STATS_LIMIT;
     long t = measure ? System.nanoTime() : 0;
 
-    Image img = func.load(null, null);
+    Image img = func.load(null, type);
 
     if (measure) {
       int size;

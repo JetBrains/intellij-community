@@ -527,6 +527,7 @@ public class PyPackageManagerImpl extends PyPackageManager {
       if (result.isCancelled()) {
         throw new RunCanceledByUserException();
       }
+      result.checkSuccess(LOG);
       final int exitCode = result.getExitCode();
       if (exitCode != 0) {
         final String message = StringUtil.isEmptyOrSpaces(result.getStdout()) && StringUtil.isEmptyOrSpaces(result.getStderr()) ?

@@ -19,7 +19,7 @@ class VirtualFileWindowImpl extends com.intellij.injected.editor.VirtualFileWind
     super(name, language, text);
     setCharset(delegate.getCharset());
     setFileType(language.getAssociatedFileType());
-
+    if (delegate instanceof VirtualFileWindow) throw new IllegalArgumentException(delegate +" must not be injected");
     myDelegate = delegate;
     myDocumentWindow = window;
   }

@@ -85,6 +85,10 @@ public class PluginsAdvertiserDialog extends DialogWrapper {
       }
     }
 
+    if (!PluginManagerMain.checkThirdPartyPluginsAllowed(nodes)) {
+      return;
+    }
+
     PluginManagerMain.suggestToEnableInstalledDependantPlugins(pluginHelper, nodes);
 
     final Runnable notifyRunnable = () -> PluginManagerMain.notifyPluginsUpdated(myProject);

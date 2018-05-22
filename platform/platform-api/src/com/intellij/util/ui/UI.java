@@ -12,6 +12,12 @@ import javax.swing.*;
  */
 public class UI extends JBUI {
 
+  public enum Anchor {
+    Top,
+    Center,
+    Bottom
+  }
+
   /**
    * <p>Factory class for creating panels of components. There are two different types of panels.</p>
    *
@@ -38,7 +44,7 @@ public class UI extends JBUI {
    * in the leftmost column and components/progress bars are in the second column expanding horizontally.
    * </p>
    *
-   * <p>{@link PanelGridBuilder} has convenient {@link PanelGridBuilder#expandVertically()} method that allows rows to expand
+   * <p>{@link PanelGridBuilder} has convenient {@link PanelGridBuilder#resize()} method that allows rows to expand
    * vertically when the grid is resized. By default all rows stick to the top of the grid and all available empty space is
    * expanded below rows.
    * </p>

@@ -24,6 +24,7 @@ import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.VcsDataKeys;
 import com.intellij.openapi.vcs.changes.Change;
+import com.intellij.openapi.vcs.changes.ui.ChangesBrowserBase;
 import com.intellij.pom.Navigatable;
 
 import javax.swing.*;
@@ -43,8 +44,11 @@ class EditSourceFromChangesBrowserAction extends EditSourceAction {
     super.update(event);
     event.getPresentation().setIcon(myEditSourceIcon);
     event.getPresentation().setText("Edit Source");
-    if ((!ModalityState.NON_MODAL.equals(ModalityState.current())) ||
-        CommittedChangesBrowserUseCase.IN_AIR.equals(CommittedChangesBrowserUseCase.DATA_KEY.getData(event.getDataContext()))) {
+    if (event.getData(ChangesBrowserBase.DATA_KEY) == null) {
+      event.getPresentation().setEnabledAndVisible(false);
+    }
+    else if ((!ModalityState.NON_MODAL.equals(ModalityState.current())) ||
+             CommittedChangesBrowserUseCase.IN_AIR.equals(CommittedChangesBrowserUseCase.DATA_KEY.getData(event.getDataContext()))) {
       event.getPresentation().setEnabled(false);
     }
   }

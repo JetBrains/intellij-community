@@ -45,7 +45,7 @@ public interface RegExpElementTypes {
     IElementType NUMBER = new RegExpElementType("NUMBER");
 
     TokenSet ATOMS = TokenSet.create(CLOSURE, BOUNDARY, SIMPLE_CLASS, CLASS, CHAR, GROUP, PROPERTY, BACKREF, NAMED_GROUP_REF,
-                                     PY_COND_REF, NAMED_CHARACTER);
+                                     PY_COND_REF, NAMED_CHARACTER, SET_OPTIONS);
 
     TokenSet CLASS_ELEMENTS = TokenSet.create(CHAR, CHAR_RANGE, SIMPLE_CLASS, CLASS, INTERSECTION, PROPERTY);
 }

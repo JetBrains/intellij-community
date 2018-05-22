@@ -28,6 +28,7 @@ public class GroupedItemsListRenderer<E> extends GroupedElementsRenderer.List im
   protected ListItemDescriptor<E> myDescriptor;
 
   protected JLabel myNextStepLabel;
+  protected int myCurrentIndex;
 
   public JLabel getNextStepLabel() {
     return myNextStepLabel;
@@ -48,6 +49,8 @@ public class GroupedItemsListRenderer<E> extends GroupedElementsRenderer.List im
     final JComponent result = configureComponent(myDescriptor.getTextFor(value), myDescriptor.getTooltipFor(value),
                                                  icon, icon, isSelected, hasSeparator,
                                                  caption, -1);
+    myCurrentIndex = index;
+    myRendererComponent.setBackground(list.getBackground());
     customizeComponent(list, value, isSelected);
     return result;
   }

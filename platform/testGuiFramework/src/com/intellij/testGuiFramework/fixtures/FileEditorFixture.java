@@ -12,7 +12,6 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.fest.swing.core.Robot;
-import org.fest.swing.edt.GuiActionRunner;
 import org.fest.swing.edt.GuiQuery;
 import org.fest.swing.edt.GuiTask;
 import org.fest.swing.timing.Condition;
@@ -30,8 +29,6 @@ import static org.fest.swing.edt.GuiActionRunner.execute;
 import static org.fest.swing.timing.Pause.pause;
 import static org.fest.util.Strings.quote;
 import static org.junit.Assert.*;
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNull;
 
 public class FileEditorFixture extends EditorFixture {
 
@@ -337,7 +334,7 @@ public class FileEditorFixture extends EditorFixture {
    * Selects the editor with a given tab name.
    */
   public FileEditorFixture selectTab(@NotNull final String tabName) {
-    tabs.waitTab(tabName, 30).selectTab(tabName);
+    tabs.waitTab(tabName, 5).selectTab(tabName);
     return this;
   }
 

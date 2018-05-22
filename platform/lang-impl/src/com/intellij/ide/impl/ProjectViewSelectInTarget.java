@@ -11,6 +11,7 @@ import com.intellij.ide.projectView.impl.AbstractProjectViewPane;
 import com.intellij.ide.projectView.impl.ProjectViewImpl;
 import com.intellij.ide.scratch.ScratchFileType;
 import com.intellij.ide.scratch.ScratchProjectViewPane;
+import com.intellij.ide.scratch.ScratchUtil;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.project.DumbService;
@@ -116,7 +117,7 @@ public abstract class ProjectViewSelectInTarget extends SelectInTargetPsiWrapper
            index.isInLibraryClasses(vFile) ||
            index.isInLibrarySource(vFile) ||
            Comparing.equal(vFile.getParent(), myProject.getBaseDir()) ||
-           ScratchProjectViewPane.isScratchesMergedIntoProjectTab() && vFile.getFileType() == ScratchFileType.INSTANCE;
+           ScratchProjectViewPane.isScratchesMergedIntoProjectTab() && ScratchUtil.isScratch(vFile);
   }
 
   public String getSubIdPresentableName(String subId) {

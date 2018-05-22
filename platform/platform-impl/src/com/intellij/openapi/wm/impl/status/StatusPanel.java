@@ -237,9 +237,6 @@ class StatusPanel extends JPanel {
 
   private void setStatusText(String text) {
     myTextPanel.setText(text);
-    if (!myAfterClick) {
-      myTextPanel.revalidate();
-    }
   }
 
   public String getText() {

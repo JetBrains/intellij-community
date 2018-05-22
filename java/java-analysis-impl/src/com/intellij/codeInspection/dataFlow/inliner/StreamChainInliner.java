@@ -19,9 +19,9 @@ import com.intellij.codeInspection.dataFlow.*;
 import com.intellij.codeInspection.dataFlow.value.DfaValue;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTypesUtil;
+import com.intellij.psi.util.InheritanceUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.ArrayUtil;
-import com.intellij.util.ObjectUtils;
 import com.siyeh.ig.callMatcher.CallMapper;
 import com.siyeh.ig.callMatcher.CallMatcher;
 import com.siyeh.ig.psiutils.MethodCallUtils;
@@ -31,6 +31,7 @@ import org.jetbrains.annotations.NotNull;
 import java.util.function.UnaryOperator;
 
 import static com.intellij.psi.CommonClassNames.*;
+import static com.intellij.util.ObjectUtils.tryCast;
 import static com.siyeh.ig.callMatcher.CallMatcher.*;
 
 public class StreamChainInliner implements CallInliner {
@@ -344,7 +345,7 @@ public class StreamChainInliner implements CallInliner {
       super(call, next, null);
       // Try to inline smoothly .flatMap(x -> stream().call().chain())
       PsiLambdaExpression lambda =
-        ObjectUtils.tryCast(PsiUtil.skipParenthesizedExprDown(myCall.getArgumentList().getExpressions()[0]), PsiLambdaExpression.class);
+        tryCast(PsiUtil.skipParenthesizedExprDown(myCall.getArgumentList().getExpressions()[0]), PsiLambdaExpression.class);
       Step chain = null;
       PsiParameter parameter = null;
       PsiExpression streamSource = null;
@@ -536,7 +537,7 @@ public class StreamChainInliner implements CallInliner {
 
   static void buildStreamCFG(CFGBuilder builder, Step firstStep, PsiExpression originalQualifier) {
     PsiType inType = StreamApiUtil.getStreamElementType(originalQualifier.getType());
-    PsiMethodCallExpression sourceCall = ObjectUtils.tryCast(PsiUtil.skipParenthesizedExprDown(originalQualifier), PsiMethodCallExpression.class);
+    PsiMethodCallExpression sourceCall = tryCast(PsiUtil.skipParenthesizedExprDown(originalQualifier), PsiMethodCallExpression.class);
     if(STREAM_GENERATE.test(sourceCall)) {
       PsiExpression fn = sourceCall.getArgumentList().getExpressions()[0];
       builder
@@ -658,5 +659,10 @@ public class StreamChainInliner implements CallInliner {
   private static Step createTerminalStep(PsiMethodCallExpression call) {
     Step step = TERMINAL_STEP_MAPPER.mapFirst(call);
     return step == null ? new UnknownTerminalStep(call) : step;
+  }
+
+  @Override
+  public boolean mayInferPreciseType(@NotNull PsiExpression expression) {
+    return InlinerUtil.isLambdaChainParameterReference(expression, type -> InheritanceUtil.isInheritor(type, JAVA_UTIL_STREAM_STREAM));
   }
 }

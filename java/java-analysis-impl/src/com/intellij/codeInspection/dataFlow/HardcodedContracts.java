@@ -21,6 +21,7 @@ import com.intellij.psi.*;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.siyeh.ig.callMatcher.CallMapper;
+import com.siyeh.ig.callMatcher.CallMatcher;
 import com.siyeh.ig.psiutils.MethodUtils;
 import com.siyeh.ig.psiutils.TypeUtils;
 import org.jetbrains.annotations.NotNull;
@@ -51,6 +52,8 @@ public class HardcodedContracts {
     MethodContract.singleConditionContract(ContractValue.argument(1), RelationType.GT,
                                            ContractValue.argument(2), THROW_EXCEPTION)
   );
+
+  private static final CallMatcher QUEUE_POLL = instanceCall("java.util.Queue", "poll").parameterCount(0);
 
   private static StandardMethodContract standardContract(MethodContract.ValueConstraint returnValue,
                                                          MethodContract.ValueConstraint... args) {
@@ -120,7 +123,11 @@ public class HardcodedContracts {
     .register(staticCall(JAVA_UTIL_ARRAYS, "binarySearch", "fill", "parallelPrefix", "parallelSort", "sort", "spliterator", "stream"),
               (call, cnt) -> cnt >= 3 ? ARRAY_RANGE_CONTRACTS : null)
     .register(staticCall("org.mockito.ArgumentMatchers", "argThat").parameterCount(1),
-              ContractProvider.single(() -> new StandardMethodContract(new MethodContract.ValueConstraint[] {ANY_VALUE}, ANY_VALUE)));
+              ContractProvider.single(() -> new StandardMethodContract(new MethodContract.ValueConstraint[]{ANY_VALUE}, ANY_VALUE)))
+    .register(instanceCall("java.util.Queue", "peek", "poll").parameterCount(0),
+              (call, paramCount) -> Arrays.asList(MethodContract.singleConditionContract(
+                ContractValue.qualifier().specialField(SpecialField.COLLECTION_SIZE), RelationType.EQ,
+                ContractValue.zero(), NULL_VALUE), MethodContract.trivialContract(ANY_VALUE)));
 
   public static List<MethodContract> getHardcodedContracts(@NotNull PsiMethod method, @Nullable PsiMethodCallExpression call) {
     PsiClass owner = method.getContainingClass();
@@ -361,6 +368,9 @@ public class HardcodedContracts {
     }
     if (JAVA_UTIL_ARRAYS.equals(className)) {
       return name.equals("binarySearch") || name.equals("spliterator") || name.equals("stream");
+    }
+    if (QUEUE_POLL.methodMatches(method)) {
+      return false;
     }
     return true;
   }

@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package com.intellij.codeInsight.intention.impl;
 
@@ -21,7 +7,6 @@ import com.intellij.codeInsight.daemon.impl.ShowIntentionsPass;
 import com.intellij.codeInsight.hint.HintManager;
 import com.intellij.codeInsight.intention.*;
 import com.intellij.codeInsight.intention.impl.config.IntentionManagerSettings;
-import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.codeInspection.SuppressIntentionActionFromFix;
 import com.intellij.codeInspection.ex.QuickFixWrapper;
 import com.intellij.concurrency.ConcurrentCollectionFactory;
@@ -384,27 +369,26 @@ public class IntentionListStep implements ListPopupStep<IntentionActionWithTextC
     while (a instanceof IntentionActionDelegate) {
       a = ((IntentionActionDelegate)a).getDelegate();
     }
-    if (a instanceof HighPriorityAction) {
-      return group + 3;
-    }
-    if (a instanceof LowPriorityAction) {
-      return group - 3;
+    if (a instanceof PriorityAction) {
+      return group + getPriorityWeight(((PriorityAction)a).getPriority());
     }
     if (a instanceof SuppressIntentionActionFromFix) {
       if (((SuppressIntentionActionFromFix)a).isShouldBeAppliedToInjectionHost() == ThreeState.NO) {
         return group - 1;
       }
     }
-    if (a instanceof QuickFixWrapper) {
-      final LocalQuickFix quickFix = ((QuickFixWrapper)a).getFix();
-      if (quickFix instanceof HighPriorityAction) {
-        return group + 3;
-      }
-      if (quickFix instanceof LowPriorityAction) {
-        return group - 3;
-      }
-    }
     return group;
+  }
+
+  private static int getPriorityWeight(PriorityAction.Priority priority) {
+    switch (priority) {
+      case HIGH:
+        return 3;
+      case LOW:
+        return -3;
+      default:
+        return 0;
+    }
   }
 
   private int getGroup(IntentionActionWithTextCaching action) {

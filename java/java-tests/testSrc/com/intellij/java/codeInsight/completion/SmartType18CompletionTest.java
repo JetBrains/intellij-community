@@ -269,4 +269,9 @@ public void testConvertToObjectStream() {
     assertOrderedEquals(myFixture.getLookupElementStrings(), "() -> ");
   }
 
+  public void testPreselectTreeMapWhenSortedMapExpected() {
+    configureByTestName();
+    myFixture.assertPreferredCompletionItems(2, "SortedMap", "NavigableMap", "TreeMap", "ConcurrentNavigableMap", "ConcurrentSkipListMap");
+  }
+
 }

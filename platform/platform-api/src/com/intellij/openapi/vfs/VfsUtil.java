@@ -286,7 +286,10 @@ public class VfsUtil extends VfsUtilCore {
     }
   }
 
-  public static VirtualFile createChildSequent(Object requestor, @NotNull VirtualFile dir, @NotNull String prefix, @NotNull String extension) throws IOException {
+  @NotNull
+  public static String getNextAvailableName(@NotNull VirtualFile dir,
+                                            @NotNull String prefix,
+                                            @NotNull String extension) {
     String dotExt = PathUtil.makeFileName("", extension);
     String fileName = prefix + dotExt;
     int i = 1;
@@ -294,7 +297,12 @@ public class VfsUtil extends VfsUtilCore {
       fileName = prefix + "_" + i + dotExt;
       i++;
     }
-    return dir.createChildData(requestor, fileName);
+    return fileName;
+  }
+
+  @NotNull
+  public static VirtualFile createChildSequent(Object requestor, @NotNull VirtualFile dir, @NotNull String prefix, @NotNull String extension) throws IOException {
+    return dir.createChildData(requestor, getNextAvailableName(dir, prefix, extension));
   }
 
   @NotNull

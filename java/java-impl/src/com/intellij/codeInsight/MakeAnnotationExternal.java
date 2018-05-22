@@ -48,7 +48,7 @@ public class MakeAnnotationExternal extends BaseIntentionAction {
     if (annotation != null && annotation.getQualifiedName() != null &&
         annotation.getManager().isInProject(annotation)) {
       PsiModifierListOwner modifierListOwner = PsiTreeUtil.getParentOfType(annotation, PsiModifierListOwner.class);
-      if (modifierListOwner != null) {
+      if (modifierListOwner != null && ExternalAnnotationsManagerImpl.areExternalAnnotationsApplicable(modifierListOwner)) {
         VirtualFile virtualFile = PsiUtilCore.getVirtualFile(modifierListOwner);
         if (CodeStyleSettingsManager.getSettings(project).getCustomSettings(JavaCodeStyleSettings.class).USE_EXTERNAL_ANNOTATIONS ||
             virtualFile != null && ExternalAnnotationsManager.getInstance(project).hasAnnotationRootsForFile(virtualFile)) {
@@ -82,7 +82,7 @@ public class MakeAnnotationExternal extends BaseIntentionAction {
       return;
     }
 
-    WriteAction.run(() -> annotation.delete());
+    WriteAction.run(annotation::delete);
   }
 
   @Override

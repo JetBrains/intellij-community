@@ -15,23 +15,32 @@
  */
 package com.intellij.execution.testframework.sm.runner;
 
-import com.intellij.execution.testframework.sm.runner.events.TestFailedEvent;
-import com.intellij.execution.testframework.sm.runner.events.TestStartedEvent;
-import com.intellij.execution.testframework.sm.runner.events.TestSuiteStartedEvent;
-import com.intellij.execution.testframework.sm.runner.events.TreeNodeEvent;
+import com.intellij.execution.testframework.TestConsoleProperties;
+import com.intellij.execution.testframework.sm.runner.events.*;
+import com.intellij.execution.testframework.sm.runner.ui.SMTRunnerConsoleView;
+import com.intellij.execution.testframework.sm.runner.ui.SMTestRunnerResultsForm;
 import com.intellij.openapi.util.Disposer;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 public class GeneralIdBasedToSMTRunnerEventsConvertorTest extends BaseSMTRunnerTestCase {
+  private SMTRunnerConsoleView myConsole;
   private GeneralIdBasedToSMTRunnerEventsConvertor myEventsProcessor;
   private SMTestProxy.SMRootTestProxy myRootProxy;
+  private SMTestRunnerResultsForm myResultsViewer;
 
   @Override
   protected void setUp() throws Exception {
     super.setUp();
+
+    TestConsoleProperties consoleProperties = createConsoleProperties();
+    myConsole = new SMTRunnerConsoleView(consoleProperties);
+    myConsole.initUI();
+    myResultsViewer = myConsole.getResultsViewer();
+
     myRootProxy = new SMTestProxy.SMRootTestProxy();
     myEventsProcessor = new GeneralIdBasedToSMTRunnerEventsConvertor(getProject(), myRootProxy, "test");
+    myEventsProcessor.addEventsListener(myResultsViewer);
     myEventsProcessor.onStartTesting();
   }
 
@@ -39,6 +48,7 @@ public class GeneralIdBasedToSMTRunnerEventsConvertorTest extends BaseSMTRunnerT
   protected void tearDown() throws Exception {
     try {
       Disposer.dispose(myEventsProcessor);
+      Disposer.dispose(myConsole);
     }
     finally {
       super.tearDown();
@@ -82,6 +92,27 @@ public class GeneralIdBasedToSMTRunnerEventsConvertorTest extends BaseSMTRunnerT
     onTestFailed("2", "NPE", 5);
     validateTestFailure("2", testProxy, 5);
     assertTrue(suiteProxy.isInProgress());
+  }
+
+  public void testIgnoredEvent() {
+    onSuiteStarted("Suite", null, "1", TreeNodeEvent.ROOT_NODE_ID);
+    SMTestProxy suite = validateSuite("1", "Suite", null, myRootProxy);
+    onTestStarted("testA", null, "A", "1", true);
+    SMTestProxy testA = validateTest("A", "testA", null, true, suite);
+    onTestIgnored("A");
+    validateTestIgnored("A", testA);
+    assertFalse(testA.isInProgress());
+    assertTrue(suite.isInProgress());
+    assertEquals(1, myResultsViewer.getFinishedTestCount());
+    onTestFinished("A", null);
+    assertEquals(1, myResultsViewer.getFinishedTestCount());
+
+    onTestStarted("testB", null, "B", "1", true);
+    SMTestProxy testB = validateTest("B", "testB", null, true, suite);
+    assertEquals(1, myResultsViewer.getFinishedTestCount());
+    onTestIgnored("B");
+    assertEquals(2, myResultsViewer.getFinishedTestCount());
+    validateTestIgnored("B", testB);
   }
 
   @NotNull
@@ -129,6 +160,14 @@ public class GeneralIdBasedToSMTRunnerEventsConvertorTest extends BaseSMTRunnerT
     return test;
   }
 
+  private void validateTestIgnored(@NotNull String id, @NotNull SMTestProxy expectedTestProxy) {
+    SMTestProxy test = myEventsProcessor.findProxyById(id);
+    assertEquals(expectedTestProxy, test);
+    assertFalse(test.isSuite());
+    assertTrue(test.isFinal());
+    assertTrue(test.isIgnored());
+  }
+
   private void onSuiteStarted(@NotNull String suiteName, @Nullable String metainfo, @NotNull String id, @NotNull String parentId) {
     myEventsProcessor.onSuiteStarted(new TestSuiteStartedEvent(suiteName, id, parentId, null, metainfo, null, null, false));
   }
@@ -141,9 +180,16 @@ public class GeneralIdBasedToSMTRunnerEventsConvertorTest extends BaseSMTRunnerT
     myEventsProcessor.onTestStarted(new TestStartedEvent(testName, id, parentId, null, metainfo, null, null, running));
   }
 
+  private void onTestFinished(@NotNull String id, @Nullable Long duration) {
+    myEventsProcessor.onTestFinished(new TestFinishedEvent(null, id, duration));
+  }
+
   private void onTestFailed(@NotNull String id, @NotNull String errorMessage, int durationMillis) {
     myEventsProcessor.onTestFailure(new TestFailedEvent(null, id, errorMessage, null, false, null,
                                                         null, null, null, false, false, durationMillis));
   }
 
+  private void onTestIgnored(@NotNull String id) {
+    myEventsProcessor.onTestIgnored(new TestIgnoredEvent(null, id, null, null));
+  }
 }

@@ -483,6 +483,9 @@ public class BookmarkManager implements PersistentStateComponent<Element> {
 
     @Override
     public void documentChanged(DocumentEvent e) {
+      if (!ApplicationManager.getApplication().isDispatchThread()) {
+        return;// Changes in lightweight documents are irrelevant to bookmarks and have to be ignored
+      }
       List<Bookmark> bookmarksToRemove = null;
       for (Bookmark bookmark : myBookmarks) {
         if (!bookmark.isValid() || isDuplicate(bookmark, bookmarksToRemove)) {

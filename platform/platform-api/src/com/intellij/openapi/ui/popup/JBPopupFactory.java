@@ -97,24 +97,43 @@ public abstract class JBPopupFactory {
                                                Runnable onNo,
                                                int defaultOptionIndex);
 
+  @Deprecated
   @NotNull
-  public abstract ListPopupStep createActionsStep(@NotNull ActionGroup actionGroup,
-                                                  @NotNull DataContext dataContext,
-                                                  boolean showNumbers,
-                                                  boolean showDisabledActions,
-                                                  String title,
-                                                  Component component,
-                                                  boolean honorActionMnemonics);
+  public ListPopupStep createActionsStep(@NotNull ActionGroup actionGroup,
+                                         @NotNull DataContext dataContext,
+                                         boolean showNumbers,
+                                         boolean showDisabledActions,
+                                         String title,
+                                         Component component,
+                                         boolean honorActionMnemonics) {
+    return createActionsStep(actionGroup, dataContext, null, showNumbers, showDisabledActions, title, component, honorActionMnemonics, 0, false);
+  }
+
+  @Deprecated
+  @NotNull
+  public ListPopupStep createActionsStep(@NotNull ActionGroup actionGroup,
+                                         @NotNull DataContext dataContext,
+                                         boolean showNumbers,
+                                         boolean showDisabledActions,
+                                         String title,
+                                         Component component,
+                                         boolean honorActionMnemonics,
+                                         int defaultOptionIndex,
+                                         boolean autoSelectionEnabled) {
+    return createActionsStep(actionGroup, dataContext, null, showNumbers, showDisabledActions, title, component, honorActionMnemonics, defaultOptionIndex, autoSelectionEnabled);
+  }
 
   @NotNull
   public abstract ListPopupStep createActionsStep(@NotNull ActionGroup actionGroup,
                                                   @NotNull DataContext dataContext,
+                                                  @Nullable String actionPlace,
                                                   boolean showNumbers,
                                                   boolean showDisabledActions,
                                                   String title,
                                                   Component component,
                                                   boolean honorActionMnemonics,
-                                                  int defaultOptionIndex, final boolean autoSelectionEnabled);
+                                                  int defaultOptionIndex,
+                                                  boolean autoSelectionEnabled);
 
   @NotNull
   public abstract RelativePoint guessBestPopupLocation(@NotNull JComponent component);
@@ -173,11 +192,21 @@ public abstract class JBPopupFactory {
    * @return the popup instance.
    */
   @NotNull
-  public abstract ListPopup createActionGroupPopup(@Nullable @Nls(capitalization = Nls.Capitalization.Title) String title,
-                                                   @NotNull ActionGroup actionGroup,
-                                                   @NotNull DataContext dataContext,
-                                                   ActionSelectionAid selectionAidMethod,
-                                                   boolean showDisabledActions);
+  public ListPopup createActionGroupPopup(@Nullable @Nls(capitalization = Nls.Capitalization.Title)String title,
+                                          @NotNull ActionGroup actionGroup,
+                                          @NotNull DataContext dataContext,
+                                          ActionSelectionAid selectionAidMethod,
+                                          boolean showDisabledActions) {
+    return createActionGroupPopup(title,
+                                  actionGroup,
+                                  dataContext,
+                                  selectionAidMethod,
+                                  showDisabledActions,
+                                  null,
+                                  -1,
+                                  null,
+                                  null);
+  }
 
   /**
    * Creates a popup allowing to choose one of the actions from the specified action group.
@@ -191,12 +220,14 @@ public abstract class JBPopupFactory {
    * @return the popup instance.
    */
   @NotNull
-  public abstract ListPopup createActionGroupPopup(@Nls(capitalization = Nls.Capitalization.Title) String title,
-                                                   @NotNull ActionGroup actionGroup,
-                                                   @NotNull DataContext dataContext,
-                                                   ActionSelectionAid selectionAidMethod,
-                                                   boolean showDisabledActions,
-                                                   @Nullable String actionPlace);
+  public ListPopup createActionGroupPopup(@Nls(capitalization = Nls.Capitalization.Title) String title,
+                                          @NotNull ActionGroup actionGroup,
+                                          @NotNull DataContext dataContext,
+                                          ActionSelectionAid selectionAidMethod,
+                                          boolean showDisabledActions,
+                                          @Nullable String actionPlace) {
+    return createActionGroupPopup(title, actionGroup, dataContext, selectionAidMethod, showDisabledActions, null, -1, null, actionPlace);
+  }
 
   /**
    * Creates a popup allowing to choose one of the actions from the specified action group.
@@ -212,13 +243,15 @@ public abstract class JBPopupFactory {
    * @return the popup instance.
    */
   @NotNull
-  public abstract ListPopup createActionGroupPopup(@Nls(capitalization = Nls.Capitalization.Title) String title,
-                                                   @NotNull ActionGroup actionGroup,
-                                                   @NotNull DataContext dataContext,
-                                                   ActionSelectionAid selectionAidMethod,
-                                                   boolean showDisabledActions,
-                                                   @Nullable Runnable disposeCallback,
-                                                   int maxRowCount);
+  public ListPopup createActionGroupPopup(@Nls(capitalization = Nls.Capitalization.Title) String title,
+                                          @NotNull ActionGroup actionGroup,
+                                          @NotNull DataContext dataContext,
+                                          ActionSelectionAid selectionAidMethod,
+                                          boolean showDisabledActions,
+                                          Runnable disposeCallback,
+                                          int maxRowCount) {
+    return createActionGroupPopup(title, actionGroup, dataContext, selectionAidMethod, showDisabledActions, disposeCallback, maxRowCount, null, null);
+  }
 
   @NotNull
   public ListPopup createActionGroupPopup(@Nls(capitalization = Nls.Capitalization.Title) String title,

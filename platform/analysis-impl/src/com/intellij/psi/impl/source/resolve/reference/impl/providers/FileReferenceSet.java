@@ -262,9 +262,13 @@ public class FileReferenceSet {
       // todo reference-set should be bound to exact range & text in a file, consider: ${slash}path${slash}file&amp;.txt
       String refText = index == 0 && nextSep < 0 && !StringUtil.contains(decoded, str) ? str :
                                 decoded.subSequence(start, endTrimmed).toString();
-      TextRange r = new TextRange(offset(start, escaper, valueRange),
-                                  offset(endTrimmed, escaper, valueRange));
-      referencesList.add(createFileReference(r, index++, refText));
+      int refStart = offset(start, escaper, valueRange);
+      int refEnd = offset(endTrimmed, escaper, valueRange);
+      if (!(refStart <= refEnd && refStart >= 0)) {
+        LOG.error("Invalid range: (" + (refText + ", " + refEnd) + "), escaper=" + escaper + "\n" +
+                  "text=" + refText + ", start=" + startInElement);
+      }
+      referencesList.add(createFileReference(new TextRange(refStart, refEnd), index++, refText));
       curSep = nextSep;
       sepLen = curSep > 0 ? findSeparatorLength(decoded, curSep) : 0;
     }

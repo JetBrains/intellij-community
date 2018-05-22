@@ -177,6 +177,7 @@ public class MovablePopup {
       if (owner != null) {
         if (myHeavyWeight) {
           Window view = new JWindow(owner);
+          view.setType(Window.Type.POPUP);
           setAlwaysOnTop(view, myAlwaysOnTop);
           setWindowFocusable(view, myWindowFocusable);
           setWindowShadow(view, myWindowShadow);

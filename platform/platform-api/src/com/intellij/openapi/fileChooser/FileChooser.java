@@ -18,7 +18,7 @@ package com.intellij.openapi.fileChooser;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.openapi.wm.IdeFocusManager;
+import com.intellij.openapi.wm.WindowManager;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.Consumer;
 import org.jetbrains.annotations.NotNull;
@@ -108,7 +108,7 @@ public class FileChooser {
                                  @Nullable final Component parent,
                                  @Nullable final VirtualFile toSelect,
                                  @NotNull final Consumer<List<VirtualFile>> callback) {
-    Component parentComponent = (parent == null) ? KeyboardFocusManager.getCurrentKeyboardFocusManager().getActiveWindow() : parent;
+    Component parentComponent = (parent == null) ? WindowManager.getInstance().suggestParentWindow(project) : parent;
     final FileChooserFactory factory = FileChooserFactory.getInstance();
     final PathChooserDialog pathChooser = factory.createPathChooser(descriptor, project, parentComponent);
     pathChooser.choose(toSelect, callback);

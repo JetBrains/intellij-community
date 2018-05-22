@@ -1082,15 +1082,12 @@ public class PsiClassImplUtil {
         PsiClassReferenceListStub classStub = (PsiClassReferenceListStub)stub;
         String[] names = classStub.getReferencedNames();
         for (int i = 0; i < names.length; i++) {
-          String name = names[i];
-          int typeParam = name.indexOf('<');
-          if (typeParam != -1) {
-            name = name.substring(0, typeParam);
-          }
+          String name = PsiNameHelper.getShortClassName(names[i]);
           // baseName=="ArrayList" classStub.getReferenceNames()[i]=="java.util.ArrayList"
           if (name.endsWith(baseName)) {
             PsiClassType[] referencedTypes = classStub.getReferencedTypes();
-            PsiClass resolved = referencedTypes[i].resolve();
+            PsiClassType type =  referencedTypes[i];
+            PsiClass resolved = type == null ? null : type.resolve();
             if (manager.areElementsEquivalent(baseClass, resolved)) return true;
           }
         }

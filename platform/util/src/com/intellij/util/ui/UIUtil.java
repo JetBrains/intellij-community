@@ -746,8 +746,12 @@ public class UIUtil {
     final Point point = new Point(0, 0);
     final Insets insets = label.getInsets();
     if (icon != null) {
-      point.x += label.getIconTextGap();
-      point.x += icon.getIconWidth();
+      if (label.getHorizontalTextPosition() == SwingConstants.TRAILING) {
+        point.x += label.getIconTextGap();
+        point.x += icon.getIconWidth();
+      } else if (label.getHorizontalTextPosition() == SwingConstants.LEADING) {
+        size.width -= icon.getIconWidth();
+      }
     }
     point.x += insets.left;
     point.y += insets.top;
@@ -1616,8 +1620,7 @@ public class UIUtil {
   }
 
   public static Insets getListViewportPadding() {
-    return isUnderNativeMacLookAndFeel() ? JBUI.insets(1, 0) :
-           isUnderWin10LookAndFeel() ? JBUI.emptyInsets() : JBUI.insets(5);
+    return isUnderNativeMacLookAndFeel() ? JBUI.insets(1, 0) : JBUI.emptyInsets();
   }
 
   public static boolean isToUseDottedCellBorder() {

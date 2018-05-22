@@ -120,8 +120,8 @@ public class SwitchTaskAction extends ComboBoxAction implements DumbAware {
     popup.showCenteredInCurrentWindow(project);
   }
 
-  private static ListPopupImpl createPopup(final DataContext dataContext,
-                                           @Nullable final Runnable onDispose,
+  private static ListPopupImpl createPopup(@NotNull DataContext dataContext,
+                                           @Nullable Runnable onDispose,
                                            boolean withTitle) {
     final Project project = CommonDataKeys.PROJECT.getData(dataContext);
     final Ref<Boolean> shiftPressed = Ref.create(false);
@@ -137,8 +137,9 @@ public class SwitchTaskAction extends ComboBoxAction implements DumbAware {
           return FINAL_CHOICE;
         }
         ActionGroup group = createActionsStep(selectedValues, project, shiftPressed);
-        return JBPopupFactory.getInstance()
-          .createActionsStep(group, DataManager.getInstance().getDataContext(componentRef.get()), false, false, null, null, true);
+        DataContext dataContext = DataManager.getInstance().getDataContext(componentRef.get());
+        return JBPopupFactory.getInstance().createActionsStep(
+          group, dataContext, null, false, false, null, null, true, 0, false);
       }
 
       @Override

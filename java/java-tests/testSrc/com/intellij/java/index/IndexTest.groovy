@@ -58,18 +58,13 @@ import com.intellij.psi.impl.search.JavaNullMethodArgumentIndex
 import com.intellij.psi.impl.source.JavaFileElementType
 import com.intellij.psi.impl.source.PostprocessReformattingAspect
 import com.intellij.psi.impl.source.PsiFileWithStubSupport
-import com.intellij.psi.search.EverythingGlobalScope
-import com.intellij.psi.search.FilenameIndex
-import com.intellij.psi.search.GlobalSearchScope
-import com.intellij.psi.search.PsiSearchHelper
-import com.intellij.psi.search.TodoAttributesUtil
-import com.intellij.psi.search.TodoPattern
+import com.intellij.psi.impl.source.PsiJavaFileImpl
+import com.intellij.psi.search.*
 import com.intellij.psi.stubs.SerializedStubTree
 import com.intellij.psi.stubs.StubIndex
 import com.intellij.psi.stubs.StubIndexImpl
 import com.intellij.psi.stubs.StubUpdatingIndex
 import com.intellij.testFramework.IdeaTestUtil
-import com.intellij.testFramework.LightVirtualFile
 import com.intellij.testFramework.PlatformTestUtil
 import com.intellij.testFramework.PsiTestUtil
 import com.intellij.testFramework.SkipSlowTestLocally
@@ -408,6 +403,31 @@ class IndexTest extends JavaCodeInsightFixtureTestCase {
 
     PlatformTestUtil.tryGcSoftlyReachableObjects()
     assert ((PsiJavaFile)getPsiManager().findFile(vFile)).importList.node
+  }
+  
+  void "test unknown file type in stubs" () {
+    def vFile = myFixture.addFileToProject("Foo.java", "").virtualFile
+    final Document document = FileDocumentManager.getInstance().getDocument(vFile)
+    document.setText("class Foo {}")
+    PsiDocumentManager.getInstance(project).commitAllDocuments() 
+    assert findClass("Foo")
+    
+    vFile.rename(null, "Foo1")
+    assert !findClass("Foo")
+  }
+
+  void "test plain text file type in stubs" () {
+    def vFile = myFixture.addFileToProject("Foo.java", "class Bar {}").virtualFile
+    assert findClass("Bar")
+    final Document document = FileDocumentManager.getInstance().getDocument(vFile)
+    document.setText("class Foo {}")
+    PsiDocumentManager.getInstance(project).commitAllDocuments()
+    assert findClass("Foo")
+    assert !findClass("Bar")
+
+    vFile.rename(null, "Foo1")
+    assert !findClass("Foo")
+    assert !findClass("Bar")
   }
 
   void "test changing a file without psi makes the document committed and updates index"() {
@@ -1031,6 +1051,6 @@ class IndexTest extends JavaCodeInsightFixtureTestCase {
 
       VfsUtil.saveText(file, fileText)
       assertNotNull(findClass("Bar"))
-   }
+    }
   }
 }

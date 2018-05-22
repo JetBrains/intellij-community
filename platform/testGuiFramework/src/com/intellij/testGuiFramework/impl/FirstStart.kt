@@ -110,9 +110,9 @@ abstract class FirstStart(val ideType: IdeType) {
 
   private fun completeFirstStart() {
       completeInstallation()
-      evaluateLicense(ideType.name, myRobot)
       acceptAgreement()
       acceptDataSharing()
+      evaluateLicense(ideType.name, myRobot)
       customizeIde()
       waitWelcomeFrameAndClose()
   }
@@ -183,10 +183,10 @@ abstract class FirstStart(val ideType: IdeType) {
   private fun acceptDataSharing() {
     with(myRobot) {
       LOG.info("Accepting Data Sharing")
-      val title = "Data Sharing Options"
+      val title = "Data Sharing"
       try {
         dialog(title, timeoutSeconds = 5)
-        button("OK").click()
+        button("Send Usage Statistics").click()
         LOG.info("Data sharing accepted")
       } catch (e: WaitTimedOutError) {
         LOG.info("Data sharing dialog hasn't been shown")

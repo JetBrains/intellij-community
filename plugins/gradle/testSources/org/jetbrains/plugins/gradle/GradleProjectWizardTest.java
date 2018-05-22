@@ -64,10 +64,11 @@ public class GradleProjectWizardTest extends NewProjectWizardTestCase {
 
     VirtualFile buildScript = VfsUtilCore.findRelativeFile("build.gradle", root);
     assertNotNull(buildScript);
-    assertEquals("group '" + projectName + "'\n" +
+    assertEquals("plugins {\n" +
+                 "    id 'java'\n" +
+                 "}\n\n" +
+                 "group '" + projectName + "'\n" +
                  "version '1.0-SNAPSHOT'\n" +
-                 "\n" +
-                 "apply plugin: 'java'\n" +
                  "\n" +
                  "sourceCompatibility = 1.8\n" +
                  "\n" +

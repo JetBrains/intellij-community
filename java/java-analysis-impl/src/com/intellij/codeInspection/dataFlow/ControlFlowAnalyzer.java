@@ -1864,6 +1864,14 @@ public class ControlFlowAnalyzer extends JavaElementVisitor {
     return variable instanceof TempVariable;
   }
 
+  /**
+   * @param expression expression to test
+   * @return true if some inliner may add constraints on the precise type of given expression
+   */
+  public static boolean inlinerMayInferPreciseType(PsiExpression expression) {
+    return Arrays.stream(INLINERS).anyMatch(inliner -> inliner.mayInferPreciseType(expression));
+  }
+
   private static class TempVariable extends LightVariableBuilder<TempVariable> {
     TempVariable(int index, @NotNull PsiType type, @NotNull PsiElement navigationElement) {
       super("tmp$" + index, type, navigationElement);

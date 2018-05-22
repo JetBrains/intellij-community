@@ -8,6 +8,7 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
+import com.intellij.openapi.util.Conditions;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.openapi.wm.WindowManager;
@@ -293,7 +294,7 @@ public class XDebuggerEvaluationDialog extends DialogWrapper {
     final XDebuggerTree tree = myTreePanel.getTree();
     tree.markNodesObsolete();
     tree.setRoot(new EvaluatingExpressionRootNode(this, tree), false);
-    tree.selectNodeOnLoad(XDebuggerEvaluationDialog::isFirstChild);
+    tree.selectNodeOnLoad(XDebuggerEvaluationDialog::isFirstChild, Conditions.alwaysFalse());
 
     myResultPanel.invalidate();
 

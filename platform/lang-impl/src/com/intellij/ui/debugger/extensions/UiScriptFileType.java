@@ -44,7 +44,7 @@ public class UiScriptFileType implements FileType {
   @Override
   @NotNull
   public String getDescription() {
-    return "UI test scripts.";
+    return "UI test script";
   }
 
   public static final String myExtension = "ijs";

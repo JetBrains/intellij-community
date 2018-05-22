@@ -145,6 +145,28 @@ public class VfsAwareMapReduceIndex<Key, Value, Input> extends MapReduceIndex<Ke
     return IndexingStamp.isFileIndexedStateCurrent(fileId, (ID<?, ?>)myIndexId);
   }
 
+  public void removeTransientDataForFile(int inputId) {
+    Lock lock = getWriteLock();
+    lock.lock();
+    try {
+      Collection<Key> keyCollection;
+      synchronized (myInMemoryKeys) {
+        keyCollection = myInMemoryKeys.remove(inputId);
+      }
+      if (keyCollection != null && !keyCollection.isEmpty()) {
+        removeTransientDataForKeys(inputId, keyCollection);
+      }
+      
+    } finally {
+      lock.unlock();
+    }
+  }
+
+  public void removeTransientDataForKeys(int inputId, Collection<Key> keys) {
+    MemoryIndexStorage memoryIndexStorage = (MemoryIndexStorage)getStorage();
+    for(Key key:keys) memoryIndexStorage.clearMemoryMapForId(key, inputId);
+  }
+
   @Override
   public boolean processAllKeys(@NotNull Processor<Key> processor, @NotNull GlobalSearchScope scope, IdFilter idFilter) throws StorageException {
     final Lock lock = getReadLock();

@@ -18,6 +18,7 @@ import com.intellij.testFramework.PlatformTestCase;
 import com.intellij.testFramework.PlatformTestUtil;
 import com.jetbrains.jsonSchema.ide.JsonSchemaService;
 import com.jetbrains.jsonSchema.impl.JsonSchemaAnnotator;
+import org.intellij.lang.annotations.Language;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.File;
@@ -547,6 +548,78 @@ public class JsonSchemaHighlightingTest extends DaemonAnalyzerTestCase {
                           "  }\n" +
                           "}";
     doTest(schema, "{\"withFormat\": \"localhost\"}");
+  }
+
+  public void testArrayItemReference() throws Exception {
+    @Language("JSON") final String schema = "{\n" +
+                                            "  \"items\": [\n" +
+                                            "    {\n" +
+                                            "      \"type\": \"integer\"\n" +
+                                            "    },\n" +
+                                            "    {\n" +
+                                            "      \"$ref\": \"#/items/0\"\n" +
+                                            "    }\n" +
+                                            "  ]\n" +
+                                            "}";
+    doTest(schema, "[1, 2]");
+    doTest(schema, "[1, <warning>\"foo\"</warning>]");
+  }
+
+  public void testArrayReference() throws Exception {
+    @Language("JSON") final String schema = "{\n" +
+                                            "  \"definitions\": {\n" +
+                                            "    \"options\": {\n" +
+                                            "      \"type\": \"array\",\n" +
+                                            "      \"items\": {\n" +
+                                            "        \"type\": \"number\"\n" +
+                                            "      }\n" +
+                                            "    }\n" +
+                                            "  },\n" +
+                                            "  \"items\":{\n" +
+                                            "      \"$ref\": \"#/definitions/options/items\"\n" +
+                                            "    }\n" +
+                                            "  \n" +
+                                            "}";
+    doTest(schema, "[2, 3 ,4]");
+    doTest(schema, "[2, <warning>\"3\"</warning>]");
+  }
+
+  public void testSelfArrayReferenceDoesNotThrowSOE() throws Exception {
+    @Language("JSON") final String schema = "{\n" +
+                                            "  \"items\": [\n" +
+                                            "    {\n" +
+                                            "      \"$ref\": \"#/items/0\"\n" +
+                                            "    }\n" +
+                                            "  ]\n" +
+                                            "}";
+    doTest(schema, "[]");
+  }
+
+  public void testValidateAdditionalItems() throws Exception {
+    @Language("JSON") final String schema = "{\n" +
+                                            "  \"definitions\": {\n" +
+                                            "    \"options\": {\n" +
+                                            "      \"type\": \"array\",\n" +
+                                            "      \"items\": {\n" +
+                                            "        \"type\": \"number\"\n" +
+                                            "      }\n" +
+                                            "    }\n" +
+                                            "  },\n" +
+                                            "  \"items\": [\n" +
+                                            "    {\n" +
+                                            "      \"type\": \"boolean\"\n" +
+                                            "    },\n" +
+                                            "    {\n" +
+                                            "      \"type\": \"boolean\"\n" +
+                                            "    }\n" +
+                                            "  ],\n" +
+                                            "  \"additionalItems\": {\n" +
+                                            "    \"$ref\": \"#/definitions/options/items\"\n" +
+                                            "  }\n" +
+                                            "}";
+    doTest(schema, "[true, true]");
+    doTest(schema, "[true, true, 1, 2, 3]");
+    doTest(schema, "[true, true, 1, <warning>\"2\"</warning>]");
   }
 
   public static String rootObjectRedefinedSchema() {
