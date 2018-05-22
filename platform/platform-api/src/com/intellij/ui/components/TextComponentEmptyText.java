@@ -20,6 +20,7 @@ import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.StatusText;
 import org.jetbrains.annotations.NotNull;
 
+import javax.swing.*;
 import javax.swing.text.JTextComponent;
 import java.awt.*;
 import java.awt.event.FocusEvent;
@@ -59,8 +60,8 @@ class TextComponentEmptyText extends StatusText {
   }
 
   public void paintStatusText(Graphics g) {
-    getComponent().setFont(myOwner.getFont());
-    if (!isVerticalFlow()) {
+    if (!isFontSet()) {
+      getComponent().setFont(myOwner.getFont());
       getSecondaryComponent().setFont(myOwner.getFont());
     }
     paint(myOwner, g);
@@ -84,5 +85,19 @@ class TextComponentEmptyText extends StatusText {
     return new Rectangle(left, top,
                          b.width - left - right,
                          b.height - top - bottom);
+  }
+
+  @NotNull
+  @Override
+  protected Rectangle adjustComponentBounds(@NotNull JComponent component, @NotNull Rectangle bounds) {
+    if (isVerticalFlow()) {
+      return super.adjustComponentBounds(component, bounds);
+    }
+    else {
+      Dimension size = component.getPreferredSize();
+      return component == myComponent
+             ? new Rectangle(bounds.x, bounds.y, size.width, bounds.height)
+             : new Rectangle(bounds.x + bounds.width - size.width, bounds.y, size.width, bounds.height);
+    }
   }
 }

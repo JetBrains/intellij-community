@@ -52,6 +52,7 @@ public abstract class StatusText {
   private boolean myHasActiveClickListeners; // calculated field for performance optimization
   private boolean myShowAboveCenter = true;
   private boolean myVerticalFlow = true;
+  private boolean myFontSet = false;
 
   protected StatusText(JComponent owner) {
     this();
@@ -100,6 +101,16 @@ public abstract class StatusText {
 
     mySecondaryComponent.setOpaque(false);
     mySecondaryComponent.setFont(UIUtil.getLabelFont());
+  }
+
+  protected boolean isFontSet() {
+    return myFontSet;
+  }
+
+  public void setFont(@NotNull Font font) {
+    myComponent.setFont(font);
+    mySecondaryComponent.setFont(font);
+    myFontSet = true;
   }
 
   public void attachTo(@Nullable Component owner) {
@@ -284,7 +295,7 @@ public abstract class StatusText {
   }
 
   @NotNull
-  private Rectangle adjustComponentBounds(@NotNull JComponent component, @NotNull Rectangle bounds) {
+  protected Rectangle adjustComponentBounds(@NotNull JComponent component, @NotNull Rectangle bounds) {
     Dimension size = component.getPreferredSize();
 
     if (myVerticalFlow) {
@@ -323,10 +334,14 @@ public abstract class StatusText {
     if (!hasSecondaryText()) return componentSize;
     Dimension secondaryComponentSize = mySecondaryComponent.getPreferredSize();
 
-    return new Dimension(Math.max(componentSize.width, secondaryComponentSize.width),
-                         myVerticalFlow
-                         ? componentSize.height + secondaryComponentSize.height + JBUI.scale(Y_GAP)
-                         : componentSize.height + secondaryComponentSize.height);
+    if (myVerticalFlow) {
+      return new Dimension(Math.max(componentSize.width, secondaryComponentSize.width),
+                           componentSize.height + secondaryComponentSize.height + JBUI.scale(Y_GAP));
+    }
+    else {
+      return new Dimension(componentSize.width + secondaryComponentSize.width,
+                           Math.max(componentSize.height, secondaryComponentSize.height));
+    }
   }
 
   public boolean isVerticalFlow() {

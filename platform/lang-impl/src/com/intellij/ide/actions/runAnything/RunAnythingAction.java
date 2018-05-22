@@ -116,7 +116,6 @@ public class RunAnythingAction extends AnAction implements CustomComponentAction
   private static final Border RENDERER_BORDER = JBUI.Borders.empty(1, 0);
   private static final Icon RUN_ANYTHING_POPPED_ICON = new PoppedIcon(AllIcons.Actions.Run_anything, 16, 16);
   private static final String HELP_PLACEHOLDER = "?";
-  private static final String ICON_GAP = "     ";
   private RunAnythingAction.MyListRenderer myRenderer;
   private MySearchTextField myPopupField;
   private JBPopup myPopup;
@@ -774,8 +773,9 @@ public class RunAnythingAction extends AnAction implements CustomComponentAction
     StatusText statusText = textEditor.getEmptyText();
     statusText.setIsVerticalFlow(false);
     statusText.setShowAboveCenter(false);
-    statusText.setText(ICON_GAP + leftText, SimpleTextAttributes.GRAYED_SMALL_ATTRIBUTES);
-    statusText.appendSecondaryText(rightText, SimpleTextAttributes.GRAYED_SMALL_ATTRIBUTES, null);
+    statusText.setText(leftText, SimpleTextAttributes.GRAY_ATTRIBUTES);
+    statusText.appendSecondaryText(rightText, SimpleTextAttributes.GRAY_ATTRIBUTES, null);
+    statusText.setFont(UIUtil.getLabelFont(UIUtil.FontSize.SMALL));
   }
 
   private void setHandleMatchedConfiguration() {
