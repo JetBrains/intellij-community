@@ -166,17 +166,15 @@
   elementType('.*_modifier_list') = modifier_list
   elementType('.*_reference_expression') = reference_expression
   elementType('.*_class_type_element') = class_type_element
-  elementType('.*_content_inner') = string_content
   consumeTokenMethod('.*_expression') = 'consumeTokenFast'
   consumeTokenMethod('.*_shift.*_sign') = 'consumeTokenFast'
-  consumeTokenMethod('.*_content_inner') = 'consumeTokenFast'
+  consumeTokenMethod('fast.*') = 'consumeTokenFast'
   consumeTokenMethod('.*_type_definition') = 'consumeTokenFast'
   name(".*type_element") = 'type'
-  name('.*_content_inner') = ''
   name('.*type_definition') = ''
 }
 
-root ::= mb_nl package_definition? mb_separators top_level_item*
+root ::= mb_nl package_definition? mb_separators top_levels
 
 // region Header constructs
 package_definition ::= modifier_list mb_nl ('package') package_name
@@ -184,7 +182,6 @@ package_definition ::= modifier_list mb_nl ('package') package_name
   pin = 3
   elementTypeClass = 'org.jetbrains.plugins.groovy.lang.psi.stubs.elements.GrPackageDefinitionElementType'
   consumeTokenMethod = 'consumeTokenFast'
-  name = ''
 }
 package_name ::= code_reference { elementType = '' name = 'package name' }
 
@@ -192,7 +189,6 @@ import ::= modifier_list mb_nl ('import') 'static'? import_reference import_star
 {
   pin = 3
   elementTypeClass = 'org.jetbrains.plugins.groovy.lang.psi.stubs.elements.GrImportStatementElementType'
-  name = ''
   consumeTokenMethod = 'consumeTokenFast'
 }
 private import_star ::= '.' '*'
@@ -207,10 +203,9 @@ import_alias ::= 'as' mb_nl IDENTIFIER
 modifier_list ::= non_empty_modifier_list | empty_modifier_list
 {
   elementTypeClass = 'org.jetbrains.plugins.groovy.lang.psi.stubs.elements.GrModifierListElementType'
-  name = ''
 }
 empty_modifier_list ::=
-non_empty_modifier_list ::= <<a_b_a (modifier | annotation) mb_nl>> { name = '' }
+non_empty_modifier_list ::= <<a_b_a (modifier | annotation) mb_nl>>
 annotation_modifier_list ::= <<a_b_a annotation mb_nl>>?
 private modifier ::= 'abstract'
                    | 'default'
@@ -330,7 +325,7 @@ annotation_body ::= '{' mb_nl annotation_members '}'
 // region Members
 private meta class_level_item ::= <<separated_item class_level_end <<item>> class_level_start>>
 
-private class_members ::= class_member*
+private class_members ::= class_member* clear_error
 private class_member ::= <<class_level_item class_level>>
 private class_level ::= class_initializer
                       | type_definition
@@ -505,7 +500,6 @@ type_parameter_list ::= '<' type_parameters '>'
 {
   pin = 1
   elementTypeClass = 'org.jetbrains.plugins.groovy.lang.psi.stubs.elements.GrTypeParameterListElementType'
-  name = ''
   consumeTokenMethod = 'consumeTokenFast'
 }
 private type_parameters ::= type_parameter type_parameters_tail*
@@ -528,7 +522,6 @@ private type_parameter_bounds_list_tail ::= '&' type_code_reference { pin = 1 }
 type_argument_list ::= <<isDiamondAllowed>> ('<') '>' | <<angle_list (mb_nl type_argument mb_nl)>>
 {
   pin = 1
-  name = ''
   consumeTokenMethod = 'consumeTokenFast'
 }
 private type_argument ::= type_element | wildcard_type_element
@@ -559,12 +552,13 @@ private separator ::= ';' | NL | <<extendedSeparator>>
 private separators ::= separator+
 private mb_separators ::= separator*
 
+private top_levels ::= top_level_item* clear_error
 private top_level_item ::= <<addVariant "statement">> <<separated_item top_level_end top_level top_level_start>>
 private top_level ::= import | block_level
 private top_level_start ::= 'import' | block_level_start
 private top_level_end ::= separators | <<eof>>
 
-private block_levels ::= block_level_item*
+private block_levels ::= block_level_item* clear_error
 private block_level_item ::= <<addVariant "statement">> <<separated_item block_level_end block_level block_level_start>>
 private block_level ::= type_definition | tuple_var_declaration | statement
 private block_level_start ::= statement_start | class_level_start
@@ -669,9 +663,6 @@ statement ::= if_statement
 private block_or_statement ::= block_statement | statement
 
 block_statement ::= lazy_block
-{
-  name = ''
-}
 
 if_statement ::= 'if' after_if_keyword
 {
@@ -857,11 +848,7 @@ private application_argument_start ::= IDENTIFIER
 
 built_in_type_expression ::= primitive_type
 
-literal ::= simple_literal_tokens | regex_literal
-{
-  extends = expression
-  name = ''
-}
+literal ::= simple_literal_tokens | regex_literal { extends = expression }
 private simple_literal_tokens ::= NUM_INT
                                 | NUM_LONG
                                 | NUM_BIG_INT
@@ -877,44 +864,21 @@ private simple_literal_tokens ::= NUM_INT
   consumeTokenMethod = 'consumeTokenFast'
 }
 
-private regex_literal ::= slashy_literal | dollar_slashy_literal
-{
-  consumeTokenMethod = 'consumeTokenFast'
-}
-slashy_literal ::= SLASHY_BEGIN fast_slashy_content SLASHY_END | slashy_literal_pin
-private fast_slashy_content ::= SLASHY_CONTENT { consumeTokenMethod = 'consumeTokenFast'}
-private slashy_literal_pin ::= SLASHY_BEGIN (fast_slashy_content | <<string_content empty_slashy_content>>) !'$' SLASHY_END
-{
-  pin = 3
-}
-dollar_slashy_literal ::= DOLLAR_SLASHY_BEGIN fast_dollar_slashy_content? DOLLAR_SLASHY_END | dollar_slashy_literal_pin
-private fast_dollar_slashy_content ::= DOLLAR_SLASHY_CONTENT { consumeTokenMethod = 'consumeTokenFast'}
-private dollar_slashy_literal_pin ::= DOLLAR_SLASHY_BEGIN (fast_dollar_slashy_content | <<string_content empty_dollar_slashy_content>>) !'$' DOLLAR_SLASHY_END
-{
-  pin = 3
-}
+private regex_literal ::= slashy_literal | dollar_slashy_literal { consumeTokenMethod = 'consumeTokenFast' }
+slashy_literal ::= SLASHY_BEGIN fast_slashy_content !'$' SLASHY_END { pin = 3 }
+dollar_slashy_literal ::= DOLLAR_SLASHY_BEGIN fast_dollar_slashy_content? !'$' DOLLAR_SLASHY_END { pin = 3 }
 
-gstring ::= (<<compound_string GSTRING_BEGIN gstring_content_inner gstring_end>>)
-{
-  extends = expression
-  consumeTokenMethod = 'consumeTokenFast'
-}
-private gstring_end ::= GSTRING_END
-regex ::= slashy_string | dollar_slashy_string
-{
-  extends = expression
-}
-private slashy_string ::= <<compound_string SLASHY_BEGIN slashy_content_inner SLASHY_END>>
-private dollar_slashy_string ::= <<compound_string DOLLAR_SLASHY_BEGIN dollar_slashy_content_inner DOLLAR_SLASHY_END>>
-private meta compound_string ::= <<begin>> <<a_b_a <<content>> string_injection>> <<end>> { pin = 1 }
+gstring ::= <<compound_string GSTRING_BEGIN fast_string_content GSTRING_END>> { extends = expression }
+regex ::= slashy_string | dollar_slashy_string { extends = expression }
+private slashy_string ::= <<compound_string SLASHY_BEGIN fast_slashy_content SLASHY_END>>
+private dollar_slashy_string ::= <<compound_string DOLLAR_SLASHY_BEGIN fast_dollar_slashy_content DOLLAR_SLASHY_END>>
+
+private fast_slashy_content ::= SLASHY_CONTENT
+private fast_dollar_slashy_content ::= DOLLAR_SLASHY_CONTENT
+private fast_string_content ::= GSTRING_CONTENT
+
+private meta compound_string ::= <<begin>> (<<string_content <<content>>>> | string_injection)* <<end>> { pin = 1 }
 meta string_content ::= <<content>>
-gstring_content_inner       ::= GSTRING_CONTENT | empty_gstring_content
-slashy_content_inner        ::= SLASHY_CONTENT | empty_slashy_content
-dollar_slashy_content_inner ::= DOLLAR_SLASHY_CONTENT | empty_dollar_slashy_content
-//TODO get rid of this weird logic
-private external empty_gstring_content       ::= emptyStringContent 'GSTRING_CONTENT'
-private external empty_slashy_content        ::= emptyStringContent 'SLASHY_CONTENT'
-private external empty_dollar_slashy_content ::= emptyStringContent 'DOLLAR_SLASHY_CONTENT'
 string_injection ::= '$' string_injection_body
 {
   pin = 1
@@ -954,7 +918,6 @@ lazy_closure ::= <<parseBlockLazy closure 'CLOSURE'>>
 {
   extends = expression
   elementType = closure
-  name = ''
 }
 closure ::= '{' mb_nl closure_header mb_separators block_levels '}'
 {
@@ -963,11 +926,7 @@ closure ::= '{' mb_nl closure_header mb_separators block_levels '}'
 }
 private closure_header ::= empty_parameter_list closure_arrow | closure_parameter_list mb_nl closure_arrow | empty_parameter_list
 private closure_arrow ::= '->'
-closure_parameter_list ::= <<comma_list (mb_nl parse_parameter)>>
-{
-  elementType = parameter_list
-  name = ''
-}
+closure_parameter_list ::= <<comma_list (mb_nl parse_parameter)>> { elementType = parameter_list }
 empty_parameter_list ::= { elementType = parameter_list }
 
 list_or_map ::= empty_list | empty_map | non_empty_list_or_map
@@ -977,22 +936,15 @@ list_or_map ::= empty_list | empty_map | non_empty_list_or_map
 
 private empty_map ::= '[' mb_nl ':' mb_nl ']'
 private empty_list ::= '[' mb_nl ']'
-private non_empty_list_or_map ::= '[' parse_bracket_argument_list ']'
+private non_empty_list_or_map ::= '[' bracket_argument_list_inner ']'
 {
   pin = 2
 }
 
-private qualified_expressions ::= qualified_reference_expression | property_expression | no_ref_qualified_reference_expression
+private qualified_expressions ::= qualified_reference_expression | property_expression
 qualified_reference_expression ::= expression <<qualified_reference_op qualified_reference_expression_identifiers>>
 property_expression ::= expression <<qualified_reference_op property_expression_identifiers>>
-no_ref_qualified_reference_expression ::= expression no_ref_qualified_reference_expression_pin
-// TODO decide whether to create references without reference element
-private no_ref_qualified_reference_expression_pin ::= (mb_nl dot) mb_nl &expression_start  fail
-{
-  pin = 3
-  consumeTokenMethod = 'consumeTokenFast'
-}
-private meta qualified_reference_op ::= (mb_nl dot) mb_nl type_argument_list? <<identifiers>>
+private meta qualified_reference_op ::= (mb_nl dot) <<mb_nl_group (type_argument_list? <<identifiers>>)>>
 private dot ::= '.' attribute_dot? | '?.' attribute_dot? | '.&' | '*.' { consumeTokenMethod = 'consumeTokenFast' }
 private attribute_dot ::= mb_nl ('@')
 {
@@ -1030,12 +982,11 @@ private cast_expression_no_pin ::= '(' type_element ')' priority1_4
 
 private priority1_5 ::= index_expression | postfix_unary_expression
 index_expression ::= expression index_expression_argument_list
-index_expression_argument_list ::= !empty_map '[' parse_bracket_argument_list ']'
+index_expression_argument_list ::= !empty_map '[' bracket_argument_list_inner ']'
 {
   pin = 2
   elementType = argument_list
   consumeTokenMethod = 'consumeTokenFast'
-  name = ''
 }
 
 postfix_unary_expression ::= expression ('++' | '--')
@@ -1125,22 +1076,11 @@ private application ::= <<parseApplication application_ref application_expressio
 left application_ref ::= IDENTIFIER | simple_literal_tokens
 {
   elementType = reference_expression
-  name = ''
   consumeTokenMethod = 'consumeTokenFast'
 }
 left application_expression ::= application_argument_list
-{
-  name = ''
-}
-left application_call ::= call_argument_list lazy_closure* | empty_argument_list lazy_closure+
-{
-  elementType = method_call_expression
-  name = ''
-}
+left application_call ::= call_argument_list lazy_closure* | empty_argument_list lazy_closure+ { elementType = method_call_expression }
 left application_index ::= index_expression_argument_list
-{
-  name = ''
-}
 // endregion
 
 
@@ -1150,32 +1090,32 @@ fake argument_list ::=
 empty_argument_list ::= { elementType = argument_list }
 
 private call_argument_list_start ::= &'(' // adds a variant, to achieve "'(' expected" generated message
-call_argument_list ::= empty_pars | '(' parse_paren_argument_list ')'
+call_argument_list ::= '(' (')') | '(' paren_argument_list_inner ')'
 {
   elementType = argument_list
   pin('call_argument_list_1') = 1
   consumeTokenMethod = 'consumeTokenFast'
 }
 
-private external parse_paren_argument_list ::= parseArgumentList 'T_RPAREN' argument
-private external parse_bracket_argument_list ::= parseArgumentList 'T_RBRACK' argument
+private paren_argument_list_inner ::= paren_argument_list_item* clear_error
+private bracket_argument_list_inner ::= bracket_argument_list_item*
+
+private paren_argument_list_item ::= <<argument_list_item ')'>>
+private bracket_argument_list_item ::= <<argument_list_item ']'>>
+
+private meta argument_list_item ::= <<argument_list_item_head <<brace>>>> <<argument_list_item_end <<brace>>>> { pin = 1 }
+private meta argument_list_item_head ::= <<argument_list_item_head0 <<brace>> <<argument_list_item_recovery <<brace>>>>>>
+private meta argument_list_item_head0 ::= !(end_of_file | <<brace>>) parse_argument { pin = 1 recoverWhile = '<<recovery>>' }
+private meta argument_list_item_end ::= ',' | &<<brace>>
+private meta argument_list_item_recovery ::= !(<<brace>> | ',' | '}' | qualified_reference_expression_identifiers | expression_start | argument_label)
 
 application_argument_list ::= <<applicationArguments application_arguments>>
-{
-  name = ''
-}
 private application_arguments ::= argument (',' mb_nl argument)*
 
+private parse_argument ::= <<parseArgument argument>>
 private argument ::= spread_list_argument | named_argument | <<parseExpressionOrMapArgument expression>>
-spread_list_argument ::= !<<isApplicationArguments>> '*' expression
-{
-  name = ''
-  consumeTokenMethod = 'consumeTokenFast'
-}
+spread_list_argument ::= !<<isApplicationArguments>> '*' expression { consumeTokenMethod = 'consumeTokenFast' }
 named_argument ::= argument_label named_argument_tail
-{
-  name = ''
-}
 private named_argument_tail ::= ':' expression
 {
   pin = 1
@@ -1183,7 +1123,6 @@ private named_argument_tail ::= ':' expression
 }
 argument_label ::= IDENTIFIER | STR_SQ | STR_DQ | '*' | 'null' | 'class' | primitive_type | 'default'
 {
-  name = ''
   consumeTokenMethod = 'consumeTokenFast'
 }
 // endregion
@@ -1217,7 +1156,7 @@ private expect_type ::= <<replaceVariants "type">> fail
 
 
 // region Code references
-code_reference ::= unqualified_code_reference qualified_code_reference_tail* { name = '' }
+code_reference ::= unqualified_code_reference qualified_code_reference_tail*
 import_reference ::= unqualified_code_reference import_reference_tail*
 {
   elementType = code_reference
@@ -1232,11 +1171,7 @@ qualified_code_reference ::= unqualified_code_reference qualified_code_reference
 private capital_code_reference ::= <<capitalizedReference code_reference>>
 private no_type_args_code_reference ::= <<noTypeArgsReference code_reference>>
 
-unqualified_code_reference ::= code_reference_part
-{
-  elementType = code_reference
-  name = ''
-}
+unqualified_code_reference ::= code_reference_part { elementType = code_reference }
 left qualified_code_reference_tail ::= code_reference_dot code_reference_part
 {
   elementType = code_reference
@@ -1275,16 +1210,16 @@ private mb_initializer ::= ['=' mb_nl expression_or_application]
 // region Other
 private mb_nl ::= nl?
 private nl ::= NL { consumeTokenMethod = 'consumeTokenFast' }
+private meta mb_nl_group ::= <<something>> | nl <<something>> // allows error reporting in position before the new line
 private empty ::= ()
-private external fail ::= noMatch
-private empty_pars ::= '(' ')' { consumeTokenMethod = 'consumeTokenFast' }
 // endregion
 
 
 // region Lists
 private meta comma_list_p ::= <<a_b_a_p <<item>> ','>>
 private meta a_b_a_p ::= <<a>> (<<b>> <<a>>)* { pin('.*') = 1 }
-private meta comma_list ::= <<a_b_a <<item>> ','>>
+private meta comma_list ::= <<a_b_a <<item>> fast_comma>>
+private fast_comma ::= ','
 private meta a_b_a ::= <<a>> (<<b>> <<a>>)* { pin = 1 }
 
 private meta paren_list ::= '('')' | '(' <<paren_list_inner <<item>>>> ')' { pin('paren_list_1') = 1 }
@@ -1316,7 +1251,10 @@ private meta separated_recovery ::= !(<<item_end>> | <<element_start>>)
 // endregion
 
 
-// region Variants
+// region Generated parser utils
 private clear_variants_and_fail ::= clear_variants fail
 private external clear_variants ::= clearVariants
+private external clear_error ::= clearError
+private external fail ::= noMatch
+private external end_of_file ::= eof
 // endregion

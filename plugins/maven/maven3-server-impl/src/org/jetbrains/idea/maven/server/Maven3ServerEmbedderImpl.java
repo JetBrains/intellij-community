@@ -652,11 +652,6 @@ public class Maven3ServerEmbedderImpl extends Maven3ServerEmbedder {
                                                            final List<ResolutionListener> listeners) throws RemoteException {
     final File file = !files.isEmpty() ? files.iterator().next() : null;
     final MavenExecutionRequest request = createRequest(file, activeProfiles, inactiveProfiles, null);
-    if (!files.isEmpty() && file == null) { // maven.config and jvm.config are not resolved in "createRequest" method
-      File firstFile = ContainerUtil.getFirstItem(files);
-      //noinspection ConstantConditions
-      request.getUserProperties().putAll(getMavenAndJvmConfigProperties(firstFile.getParentFile()));
-    }
 
     request.setUpdateSnapshots(myAlwaysUpdateSnapshots);
 
@@ -896,7 +891,10 @@ public class Maven3ServerEmbedderImpl extends Maven3ServerEmbedder {
       getComponent(MavenExecutionRequestPopulator.class).populateDefaults(result);
 
       result.setSystemProperties(mySystemProperties);
-      Properties userProperties = new Properties(myUserProperties);
+      Properties userProperties = new Properties();
+      if (myUserProperties != null) {
+        userProperties.putAll(myUserProperties);
+      }
       if (file != null) {
         userProperties.putAll(getMavenAndJvmConfigProperties(file.getParentFile()));
       }

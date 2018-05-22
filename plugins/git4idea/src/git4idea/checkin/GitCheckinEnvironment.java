@@ -74,10 +74,7 @@ import git4idea.index.GitIndexUtil;
 import git4idea.repo.GitRepository;
 import git4idea.repo.GitRepositoryManager;
 import git4idea.util.GitFileUtils;
-import org.jetbrains.annotations.CalledInAwt;
-import org.jetbrains.annotations.NonNls;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.*;
 
 import javax.swing.*;
 import java.awt.*;
@@ -245,7 +242,7 @@ public class GitCheckinEnvironment implements CheckinEnvironment {
       if (!exceptions.isEmpty()) return exceptions;
       changedWithIndex.addAll(caseOnlyRenameChanges);
 
-      if (!changedWithIndex.isEmpty()) {
+      if (!changedWithIndex.isEmpty() || Registry.is("git.force.commit.using.staging.area")) {
         runWithMessageFile(myProject, root, message, messageFile -> {
           exceptions.addAll(commitUsingIndex(myProject, root, changes, changedWithIndex, messageFile));
         });
@@ -524,7 +521,7 @@ public class GitCheckinEnvironment implements CheckinEnvironment {
 
     Set<Movement> movedPaths = new HashSet<>();
     for (GitCheckinExplicitMovementProvider provider : GitCheckinExplicitMovementProvider.EP_NAME.getExtensions()) {
-      Collection<Movement> providerMovements = provider.collectExplicitMovements(beforePaths, afterPaths);
+      Collection<Movement> providerMovements = provider.collectExplicitMovements(myProject, beforePaths, afterPaths);
       if (!providerMovements.isEmpty()) {
         message = provider.getCommitMessage(message);
         movedPaths.addAll(providerMovements);
@@ -1049,7 +1046,7 @@ public class GitCheckinEnvironment implements CheckinEnvironment {
 
 
     GitCheckinOptions(@NotNull Project project, @NotNull CheckinProjectPanel panel) {
-      myExplicitMovementProviders = asList(GitCheckinExplicitMovementProvider.EP_NAME.getExtensions());
+      myExplicitMovementProviders = filter(GitCheckinExplicitMovementProvider.EP_NAME.getExtensions(), it -> it.isEnabled(myProject));
 
       myCheckinProjectPanel = panel;
       myAuthorField = createTextField(project, getAuthors(project));
@@ -1288,6 +1285,11 @@ public class GitCheckinEnvironment implements CheckinEnvironment {
 
   public void setSkipHooksForNextCommit(boolean skipHooksForNextCommit) {
     myNextCommitSkipHook = skipHooksForNextCommit;
+  }
+
+  @TestOnly
+  public void setCommitRenamesSeparately(boolean commitRenamesSeparately) {
+    myNextCommitCommitRenamesSeparately = commitRenamesSeparately;
   }
 
   private static class CommitChange {

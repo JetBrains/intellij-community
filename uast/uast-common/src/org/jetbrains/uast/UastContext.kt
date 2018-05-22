@@ -93,7 +93,7 @@ class UastContext(val project: Project) : UastLanguagePlugin {
 
   override fun isExpressionValueUsed(element: UExpression): Boolean {
     val language = element.getLanguage()
-    return (languagePlugins.firstOrNull { it.language == language })?.isExpressionValueUsed(element) ?: false
+    return UastLanguagePlugin.byLanguage(language)?.isExpressionValueUsed(element) ?: false
   }
 
   private tailrec fun UElement.getLanguage(): Language {

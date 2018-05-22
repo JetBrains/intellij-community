@@ -26,6 +26,7 @@ import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.text.StringHash;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiReference;
 import com.intellij.psi.TokenType;
@@ -298,7 +299,7 @@ public class GeneratedParserUtilBase {
     ErrorState state = ErrorState.get(builder);
     IElementType tokenType = builder.getTokenType();
     if (isNotEmpty(frameName)) {
-      addVariantInner(state, builder.rawTokenIndex(), frameName);
+      addVariantInner(state, state.currentFrame, builder.rawTokenIndex(), frameName);
     }
     else {
       for (IElementType token : tokens) {
@@ -372,7 +373,7 @@ public class GeneratedParserUtilBase {
 
   private static void addVariant(PsiBuilder builder, ErrorState state, Object o) {
     builder.eof(); // skip whitespaces
-    addVariantInner(state, builder.rawTokenIndex(), o);
+    addVariantInner(state, state.currentFrame, builder.rawTokenIndex(), o);
 
     CompletionState completionState = state.completionState;
     if (completionState != null && state.predicateSign) {
@@ -380,12 +381,12 @@ public class GeneratedParserUtilBase {
     }
   }
 
-  private static void addVariantInner(ErrorState state, int pos, Object o) {
+  private static void addVariantInner(ErrorState state, Frame frame, int pos, Object o) {
     Variant variant = state.VARIANTS.alloc().init(pos, o);
     if (state.predicateSign) {
       state.variants.add(variant);
-      if (state.lastExpectedVariantPos < variant.position) {
-        state.lastExpectedVariantPos = variant.position;
+      if (frame.lastVariantAt < pos) {
+        frame.lastVariantAt = pos;
       }
     }
     else {
@@ -553,9 +554,8 @@ public class GeneratedParserUtilBase {
                                          boolean pinned,
                                          @Nullable Parser eatMore) {
     int initialPos = builder.rawTokenIndex();
-    boolean willFail = !result && !pinned;
     replace_variants_with_name_(state, frame, builder, elementType, result, pinned);
-    int lastErrorPos = getLastVariantPos(state, initialPos);
+    int lastErrorPos = frame.lastVariantAt < 0 ? initialPos : frame.lastVariantAt;
     if (!state.suppressErrors && eatMore != null) {
       state.suppressErrors = true;
       final boolean eatMoreFlagOnce = !builder.eof() && eatMore.parse(builder, frame.level + 1);
@@ -611,7 +611,8 @@ public class GeneratedParserUtilBase {
       if (errorReported || result) {
         state.clearVariants(true, 0);
         state.clearVariants(false, 0);
-        state.lastExpectedVariantPos = -1;
+        frame.lastVariantAt = -1;
+        for (Frame f = frame; f != null && f.variantCount > 0; f = f.parentFrame) f.variantCount = 0;
       }
     }
     else if (!result && pinned && frame.errorReportedAt < 0) {
@@ -626,9 +627,13 @@ public class GeneratedParserUtilBase {
       }
     }
     // propagate errorReportedAt up the stack to avoid duplicate reporting
-    Frame prevFrame = willFail && eatMore == null ? null : state.currentFrame;
-    if (prevFrame != null && prevFrame.errorReportedAt < frame.errorReportedAt) {
-      prevFrame.errorReportedAt = frame.errorReportedAt;
+    if (state.currentFrame != null) {
+      if (state.currentFrame.errorReportedAt < frame.errorReportedAt) {
+        state.currentFrame.errorReportedAt = frame.errorReportedAt;
+      }
+      if (state.currentFrame.lastVariantAt < frame.lastVariantAt) {
+        state.currentFrame.lastVariantAt = frame.lastVariantAt;
+      }
     }
   }
 
@@ -640,10 +645,12 @@ public class GeneratedParserUtilBase {
                                         boolean result,
                                         boolean pinned) {
     if (((frame.modifiers & _AND_) | (frame.modifiers & _NOT_)) != 0) {
+      boolean resetLastPos = !state.suppressErrors && frame.lastVariantAt < 0 && frame.position < builder.rawTokenIndex();
       close_marker_impl_(frame, marker, null, false);
       state.predicateCount--;
       if ((frame.modifiers & _NOT_) != 0) state.predicateSign = !state.predicateSign;
       marker = elementType != null && marker != null && (result || pinned) ? builder.mark() : null;
+      if (resetLastPos) frame.lastVariantAt = builder.rawTokenIndex();
     }
     if (elementType != null && marker != null) {
       if (result || pinned) {
@@ -724,10 +731,10 @@ public class GeneratedParserUtilBase {
                                                   boolean pinned) {
     int initialPos = builder.rawTokenIndex();
     boolean willFail = !result && !pinned;
-    if (willFail && initialPos == frame.position && state.lastExpectedVariantPos == frame.position &&
+    if (willFail && initialPos == frame.position && frame.lastVariantAt == frame.position &&
         frame.name != null && state.variants.size() >= frame.variantCount + (elementType == null ? 0 : 2)) {
       state.clearVariants(true, frame.variantCount);
-      addVariantInner(state, initialPos, frame.name);
+      addVariantInner(state, frame, initialPos, frame.name);
     }
   }
 
@@ -743,21 +750,9 @@ public class GeneratedParserUtilBase {
       return;
     }
     int position = builder.rawTokenIndex();
-    if (frame.errorReportedAt < position && getLastVariantPos(state, position + 1) <= position) {
+    if (frame.errorReportedAt < position && frame.lastVariantAt > -1 && frame.lastVariantAt <= position) {
       reportError(builder, state, frame, null, true, advance);
     }
-  }
-
-  public static boolean withProtectedLastVariantPos(PsiBuilder builder, int level, Parser parser) {
-    ErrorState state = ErrorState.get(builder);
-    int backup = state.lastExpectedVariantPos;
-    boolean result = parser.parse(builder, level);
-    state.lastExpectedVariantPos = backup;
-    return result;
-  }
-
-  private static int getLastVariantPos(ErrorState state, int defValue) {
-    return state.lastExpectedVariantPos < 0 ? defValue : state.lastExpectedVariantPos;
   }
 
   private static boolean reportError(PsiBuilder builder,
@@ -772,8 +767,8 @@ public class GeneratedParserUtilBase {
     boolean empty = sb.length() == 0;
     if (!force && empty && !advance) return false;
 
-    String actual = nullize(builder.getTokenText(), true);
-    if (actual == null) {
+    String actual = StringUtil.trim(builder.getTokenText());
+    if (StringUtil.isEmpty(actual)) {
       sb.append(empty ? "unmatched input" : " expected");
     }
     else {
@@ -916,7 +911,6 @@ public class GeneratedParserUtilBase {
     public BracePair[] braces;
     public boolean altMode;
 
-    int lastExpectedVariantPos = -1;
     MyList<Variant> variants = new MyList<>(INITIAL_VARIANTS_SIZE);
     MyList<Variant> unexpected = new MyList<>(INITIAL_VARIANTS_SIZE / 10);
 
@@ -1001,6 +995,7 @@ public class GeneratedParserUtilBase {
 
     public void clearVariants(Frame frame) {
       clearVariants(true, frame == null ? 0 : frame.variantCount);
+      if (frame != null) frame.lastVariantAt = -1;
     }
 
     void clearVariants(boolean expected, int start) {
@@ -1034,6 +1029,7 @@ public class GeneratedParserUtilBase {
     public String name;
     public int variantCount;
     public int errorReportedAt;
+    public int lastVariantAt;
     public PsiBuilder.Marker leftMarker;
 
     public Frame() {
@@ -1055,6 +1051,7 @@ public class GeneratedParserUtilBase {
       name = name_;
       variantCount = state.variants.size();
       errorReportedAt = -1;
+      lastVariantAt = -1;
 
       leftMarker = null;
       return this;

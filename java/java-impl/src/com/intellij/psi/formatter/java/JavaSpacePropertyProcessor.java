@@ -53,7 +53,8 @@ public class JavaSpacePropertyProcessor extends JavaElementVisitor {
   private static final TokenSet ESCAPED_TOKENS = TokenSet.create(
     JavaTokenType.LT, JavaTokenType.LTLT, JavaTokenType.LTLTEQ,
     JavaTokenType.GT, JavaTokenType.GTGT, JavaTokenType.GTGTEQ, JavaTokenType.GTGTGTEQ,
-    JavaTokenType.AND, JavaTokenType.ANDAND, JavaTokenType.ANDEQ);
+    JavaTokenType.AND, JavaTokenType.ANDAND, JavaTokenType.ANDEQ,
+    JavaTokenType.STRING_LITERAL);
 
   private static final Map<Pair<IElementType, IElementType>, Boolean> ourTokenStickingMatrix = ContainerUtil.newConcurrentMap();
 

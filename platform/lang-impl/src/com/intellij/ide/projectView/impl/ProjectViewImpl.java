@@ -992,12 +992,12 @@ public class ProjectViewImpl extends ProjectView implements PersistentStateCompo
   private final class MyPanel extends JPanel implements DataProvider {
     MyPanel() {
       super(new BorderLayout());
-
+      Collection<AbstractProjectViewPane> snapshot = new ArrayList<>(myId2Pane.values());
       UIUtil.putClientProperty(
         this, UIUtil.NOT_IN_HIERARCHY_COMPONENTS, new Iterable<JComponent>() {
           @Override
           public Iterator<JComponent> iterator() {
-            return JBIterable.from(myId2Pane.values())
+            return JBIterable.from(snapshot)
               .map(pane -> {
                 JComponent last = null;
                 for (Component c : UIUtil.uiParents(pane.getComponentToFocus(), false)) {
@@ -1418,11 +1418,12 @@ public class ProjectViewImpl extends ProjectView implements PersistentStateCompo
   @NotNull
   public static String getDefaultViewId() {
     //noinspection SpellCheckingInspection
-    if (!"AndroidStudio".equals(PlatformUtils.getPlatformPrefix()) || Boolean.getBoolean("studio.projectview")) {
-      return ProjectViewPane.ID;
+    if ("AndroidStudio".equals(PlatformUtils.getPlatformPrefix()) && !Boolean.getBoolean("studio.projectview")) {
+      // the default in Android Studio unless studio.projectview is set: issuetracker.google.com/37091465
+      return "AndroidView";
     }
     else {
-      return "AndroidView";
+      return ProjectViewPane.ID;
     }
   }
 

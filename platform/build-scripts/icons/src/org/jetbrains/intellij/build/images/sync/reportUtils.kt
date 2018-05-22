@@ -13,18 +13,19 @@ internal fun report(
   addedByDev: Collection<String>, removedByDev: Collection<String>,
   modifiedByDev: Collection<String>, addedByDesigners: Collection<String>,
   removedByDesigners: Collection<String>, modifiedByDesigners: Collection<String>,
-  consistent: Collection<String>, errorHandler: Consumer<String>, doSync: Boolean
+  consistent: Collection<String>, errorHandler: Consumer<String>, doNotify: Boolean
 ) {
   log("Skipped $skipped dirs")
+  fun Collection<String>.logIcons() = if (size < 100) joinToString() else size.toString()
   log("""
     |dev repo:
-    | added: ${addedByDev.joinToString()}
-    | removed: ${removedByDev.joinToString()}
-    | modified: ${modifiedByDev.joinToString()}
+    | added: ${addedByDev.logIcons()}
+    | removed: ${removedByDev.logIcons()}
+    | modified: ${modifiedByDev.logIcons()}
     |icons repo:
-    | added: ${addedByDesigners.joinToString()}
-    | removed: ${removedByDesigners.joinToString()}
-    | modified: ${modifiedByDesigners.joinToString()}
+    | added: ${addedByDesigners.logIcons()}
+    | removed: ${removedByDesigners.logIcons()}
+    | modified: ${modifiedByDesigners.logIcons()}
   """.trimMargin())
   val report = """
     |$devIcons icons are found in dev repo:
@@ -38,7 +39,7 @@ internal fun report(
     |${consistent.size} consistent icons in both repos
   """.trimMargin()
   log(report)
-  if (!doSync) {
+  if (doNotify) {
     val success = addedByDev.isEmpty() && removedByDev.isEmpty() && modifiedByDev.isEmpty()
     sendNotification(success, report)
     if (!success) errorHandler.accept(report)

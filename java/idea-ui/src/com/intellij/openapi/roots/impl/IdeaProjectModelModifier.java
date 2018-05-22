@@ -69,7 +69,7 @@ public class IdeaProjectModelModifier extends JavaProjectModelModifier {
       classesRoots = new LocateLibraryDialog(firstModule, defaultRoots, descriptor.getPresentableName()).showAndGetResult();
     }
     else {
-      String version = descriptor.getMinVersion();
+      String version = descriptor.getPreferredVersion();
       String mavenCoordinates = descriptor.getLibraryGroupId() + ":" +
                                 descriptor.getLibraryArtifactId() +
                                 (version != null ? ":" + version : "");

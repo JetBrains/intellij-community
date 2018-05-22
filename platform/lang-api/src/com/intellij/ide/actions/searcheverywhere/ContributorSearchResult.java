@@ -11,7 +11,7 @@ public class ContributorSearchResult<T> {
     return new Builder<>();
   }
 
-  private ContributorSearchResult(List<T> items, boolean hasMoreItems) {
+  public ContributorSearchResult(List<T> items, boolean hasMoreItems) {
     this.items = items;
     this.hasMoreItems = hasMoreItems;
   }

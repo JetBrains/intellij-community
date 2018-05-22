@@ -3,9 +3,6 @@
 Groovy script
   Compound Gstring
     PsiElement(Gstring begin)('"')
-    GrStringContentImpl(STRING_CONTENT)
-      ASTWrapperPsiElement(Gstring content)
-        <empty list>
     GString injection
       PsiElement($)('$')
       Reference expression

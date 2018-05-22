@@ -91,5 +91,5 @@ Groovy script
                 PsiElement(})('}')
           PsiElement(new line)('\n')
           PsiElement(})('}')
-      PsiErrorElement:';', <statement>, new line or '}' expected
+      PsiErrorElement:';', new line or '}' expected
         <empty list>

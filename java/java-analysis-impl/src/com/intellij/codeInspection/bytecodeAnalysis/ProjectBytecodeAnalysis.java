@@ -470,7 +470,7 @@ public class ProjectBytecodeAnalysis {
     // They are squashed to "_,_->!null" which is better expressed as @NotNull annotation
     if (nonFailingContracts.size() == 1) {
       StandardMethodContract contract = nonFailingContracts.get(0);
-      if (contract.getReturnValue().isNotNull() && contract.isTrivial()) {
+      if (contract.getReturnValue().equals(ContractReturnValue.returnNotNull()) && contract.isTrivial()) {
         nonFailingContracts = Collections.emptyList();
         notNulls.add(methodKey);
       }
@@ -479,8 +479,7 @@ public class ProjectBytecodeAnalysis {
     removeConstraintFromNonNullParameter(methodKey, allContracts);
 
     if (allContracts.isEmpty() && !fullReturnValue.equals(ContractReturnValue.returnAny())) {
-      StandardMethodContract contract = new StandardMethodContract(StandardMethodContract.createConstraintArray(arity), fullReturnValue);
-      allContracts.add(contract);
+      allContracts.add(StandardMethodContract.trivialContract(arity, fullReturnValue));
     }
     if (notNulls.contains(methodKey)) {
       // filter contract clauses for @NotNull methods
@@ -533,8 +532,8 @@ public class ProjectBytecodeAnalysis {
       return c1;
     }).nonNull().findFirst().orElse(null);
     if(soleContract != null) {
-      ValueConstraint[] constraints = StandardMethodContract.createConstraintArray(soleContract.getParameterCount());
-      contractClauses = Collections.singletonList(new StandardMethodContract(constraints, soleContract.getReturnValue()));
+      contractClauses =
+        Collections.singletonList(StandardMethodContract.trivialContract(soleContract.getParameterCount(), soleContract.getReturnValue()));
     }
     return contractClauses;
   }

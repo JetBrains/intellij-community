@@ -15,6 +15,7 @@ import com.siyeh.ig.psiutils.CommentTracker;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 
+import java.security.SecureRandom;
 import java.util.Random;
 
 
@@ -37,11 +38,11 @@ public class ChangeUIDAction extends PsiElementBaseIntentionAction {
     PsiField field = PsiTreeUtil.getParentOfType(element, PsiField.class);
     if (field == null) return;
     PsiExpression initializer = field.getInitializer();
+    if (initializer == null) return;
     PsiElementFactory factory = JavaPsiFacade.getElementFactory(project);
     Application application = ApplicationManager.getApplication();
-    Random random = application.isUnitTestMode() ? new Random(42) : new Random();
+    Random random = application.isUnitTestMode() ? new Random(42) : new SecureRandom();
     PsiExpression newInitializer = factory.createExpressionFromText(Long.toString(random.nextLong()) + "L", null);
-    if (initializer == null) return;
     new CommentTracker().replaceAndRestoreComments(initializer, newInitializer);
   }
 

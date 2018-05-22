@@ -15,29 +15,52 @@
  */
 package com.intellij.openapi.roots;
 
+import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.util.text.VersionComparatorUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.Collections;
 import java.util.List;
 
 /**
  * @author nik
  */
-public abstract class ExternalLibraryDescriptor {
+public class ExternalLibraryDescriptor {
+  private static final Logger LOG = Logger.getInstance(ExternalLibraryDescriptor.class);
   private final String myLibraryGroupId;
   private final String myLibraryArtifactId;
   private final String myMinVersion;
   private final String myMaxVersion;
+  private final String myPreferredVersion;
 
   public ExternalLibraryDescriptor(String libraryGroupId, String libraryArtifactId) {
-    this(libraryGroupId, libraryArtifactId, null, null);
+    this(libraryGroupId, libraryArtifactId, null, null, null);
   }
 
   public ExternalLibraryDescriptor(@NotNull String libraryGroupId, @NotNull String libraryArtifactId, @Nullable String minVersion, @Nullable String maxVersion) {
+    this(libraryGroupId, libraryArtifactId, minVersion, maxVersion, null);
+  }
+
+  public ExternalLibraryDescriptor(@NotNull String libraryGroupId, @NotNull String libraryArtifactId,
+                                   @Nullable String minVersion, @Nullable String maxVersion, @Nullable String preferredVersion) {
     myLibraryGroupId = libraryGroupId;
     myLibraryArtifactId = libraryArtifactId;
     myMinVersion = minVersion;
     myMaxVersion = maxVersion;
+    myPreferredVersion = preferredVersion;
+    if (preferredVersion != null && maxVersion != null) {
+      LOG.assertTrue(VersionComparatorUtil.compare(preferredVersion, maxVersion) <= 0,
+                     "Preferred version (" + preferredVersion + ") must not be newer than max version (" + maxVersion + ")");
+    }
+    if (preferredVersion != null && minVersion != null) {
+      LOG.assertTrue(VersionComparatorUtil.compare(minVersion, preferredVersion) <= 0,
+                     "Preferred version (" + preferredVersion + ") must not be older than min version (" + minVersion + ")");
+    }
+    if (minVersion != null && maxVersion != null) {
+      LOG.assertTrue(VersionComparatorUtil.compare(minVersion, maxVersion) <= 0,
+                     "Max version (" + maxVersion + ") must not be older than min version (" + minVersion + ")");
+    }
   }
 
   @NotNull
@@ -60,10 +83,16 @@ public abstract class ExternalLibraryDescriptor {
     return myMaxVersion;
   }
 
+  public String getPreferredVersion() {
+    return myPreferredVersion;
+  }
+
   public String getPresentableName() {
     return myLibraryArtifactId;
   }
 
   @NotNull
-  public abstract List<String> getLibraryClassesRoots();
+  public List<String> getLibraryClassesRoots() {
+    return Collections.emptyList();
+  }
 }

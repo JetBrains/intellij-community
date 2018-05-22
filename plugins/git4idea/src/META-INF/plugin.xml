@@ -119,7 +119,6 @@
     <action id="Git.Commit.And.Push.Executor" class="git4idea.actions.GitCommitAndPushExecutorAction" text="Commit and &amp;Push...">
       <add-to-group group-id="Vcs.CommitExecutor.Actions"/>
       <keyboard-shortcut first-keystroke="control alt K" keymap="$default"/>
-      <keyboard-shortcut first-keystroke="meta alt K" keymap="Xcode" remove="true"/>
     </action>
 
     <group id="Git.Log.ContextMenu">

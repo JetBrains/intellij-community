@@ -29,6 +29,7 @@ import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.xmlb.annotations.Tag;
 import com.intellij.util.xmlb.annotations.Transient;
+import com.jetbrains.jsonSchema.ide.JsonSchemaService;
 import com.jetbrains.jsonSchema.impl.JsonSchemaObject;
 import com.jetbrains.jsonSchema.impl.JsonSchemaVersion;
 import org.jetbrains.annotations.NotNull;
@@ -148,7 +149,8 @@ public class UserDefinedJsonSchemaConfiguration {
       else if (patternText.directory) {
         result.add((project, vfile) -> {
           final VirtualFile relativeFile = getRelativeFile(project, patternText);
-          return relativeFile != null && VfsUtilCore.isAncestor(relativeFile, vfile, true);
+          return relativeFile != null && VfsUtilCore.isAncestor(relativeFile, vfile, true)
+            && !JsonSchemaService.Impl.get(project).isSchemaFile(vfile);
         });
       }
       else {

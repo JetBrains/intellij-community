@@ -22,7 +22,7 @@ private fun listGitTree(
     File(it).relativeTo(repo).path
   } ?: ""
   log("Inspecting $repo")
-  return "$GIT ls-tree HEAD -r $relativeDirToList"
+  return listOf(GIT, "ls-tree", "HEAD", "-r", relativeDirToList)
     .execute(repo).trim().lineSequence()
     .filter { it.isNotBlank() }.map { line ->
       // format: <mode> SP <type> SP <object> TAB <file>
@@ -69,16 +69,16 @@ internal data class GitObject(val file: String, val hash: String, val repo: File
  * @param path path in repo
  * @return root of repo
  */
-internal fun findGitRepoRoot(path: String): File = File(path).let {
+internal fun findGitRepoRoot(path: String, silent: Boolean = false): File = File(path).let {
   if (it.isDirectory && it.listFiles().find {
       it.isDirectory && it.name == ".git"
     } != null) {
-    log("Git repo found in $path")
+    if (!silent) log("Git repo found in $path")
     it
   }
   else if (it.parent != null) {
-    log("No git repo found in $path")
-    findGitRepoRoot(it.parent)
+    if (!silent) log("No git repo found in $path")
+    findGitRepoRoot(it.parent, silent)
   }
   else {
     throw IllegalArgumentException("No git repo found in $path")
@@ -87,14 +87,13 @@ internal fun findGitRepoRoot(path: String): File = File(path).let {
 
 internal fun addChangesToGit(files: List<String>, repo: File) {
   // OS has argument length limit
-  files.split(1000).parallelStream().forEach {
-    (listOf(GIT, "add") + it).execute(repo)
+  files.split(1000).forEach {
+    (listOf(GIT, "add") + it).execute(repo, true)
   }
 }
 
 internal fun latestChangeTime(file: String, repo: File) =
-  "$GIT log --max-count 1 --format=%cd --date=raw -- $file"
+  listOf(GIT, "log", "--max-count", "1", "--format=%cd", "--date=raw", "--", file)
     .execute(repo, true)
-    .splitWithSpace().let {
-      if (it.isEmpty()) -1 else it[0].toLong()
-    }
+    .splitWithSpace()
+    .let { if (it.isEmpty()) -1 else it[0].toLong() }

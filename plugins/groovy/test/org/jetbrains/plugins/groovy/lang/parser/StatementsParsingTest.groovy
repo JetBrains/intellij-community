@@ -238,7 +238,6 @@ class StatementsParsingTest extends GroovyParsingTestCase {
 
   void testTry_catch$try1() throws Throwable { doTest() }
 
-  @Bombed(year = 2039, month = 6, day = 10, user = "daniil", description = "wait for grammar-kit fixes")
   void testTry_catch$try2() throws Throwable { doTest() }
 
   void testTry_catch$try3() throws Throwable { doTest() }
@@ -297,7 +296,6 @@ class StatementsParsingTest extends GroovyParsingTestCase {
 
   void testTypedef$classes$errors$classerr1() throws Throwable { doTest() }
 
-  @Bombed(year = 2039, month = 6, day = 10, user = "daniil", description = "wait for grammar-kit fixes")
   void testTypedef$classes$errors$classerr2() throws Throwable { doTest() }
 
   void testTypedef$classes$errors$classerr3() throws Throwable { doTest() }
