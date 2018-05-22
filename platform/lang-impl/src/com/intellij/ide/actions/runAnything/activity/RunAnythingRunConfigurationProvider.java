@@ -19,9 +19,7 @@ import javax.swing.*;
 import static com.intellij.ide.actions.runAnything.RunAnythingAction.EXECUTOR_KEY;
 import static com.intellij.ide.actions.runAnything.RunAnythingUtil.fetchProject;
 
-public abstract class RunAnythingRunConfigurationExecutionProvider
-  extends RunAnythingProviderBase<ChooseRunConfigurationPopup.ItemWrapper> {
-
+public abstract class RunAnythingRunConfigurationProvider extends RunAnythingProviderBase<ChooseRunConfigurationPopup.ItemWrapper> {
   @NotNull
   @Override
   public String getCommand(@NotNull ChooseRunConfigurationPopup.ItemWrapper value) {

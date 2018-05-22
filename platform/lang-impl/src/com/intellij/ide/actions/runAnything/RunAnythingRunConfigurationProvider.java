@@ -6,7 +6,6 @@ import com.intellij.execution.ExecutorRegistry;
 import com.intellij.execution.actions.ChooseRunConfigurationPopup;
 import com.intellij.execution.actions.ExecutorProvider;
 import com.intellij.ide.IdeBundle;
-import com.intellij.ide.actions.runAnything.activity.RunAnythingRunConfigurationExecutionProvider;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.wm.ToolWindowId;
@@ -17,7 +16,7 @@ import java.util.Collection;
 
 import static com.intellij.ide.actions.runAnything.RunAnythingUtil.fetchProject;
 
-public class RunAnythingRunConfigurationProvider extends RunAnythingRunConfigurationExecutionProvider {
+public class RunAnythingRunConfigurationProvider extends com.intellij.ide.actions.runAnything.activity.RunAnythingRunConfigurationProvider {
   @NotNull
   @Override
   public Collection<ChooseRunConfigurationPopup.ItemWrapper> getValues(@NotNull DataContext dataContext) {

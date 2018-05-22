@@ -5,7 +5,7 @@ import com.intellij.openapi.actionSystem.DataContext;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-public class RunAnythingCommandExecutionProvider extends RunAnythingCommandExecutionProviderBase {
+public class RunAnythingCommandExecutionProvider extends RunAnythingCommandProvider {
 
   @Nullable
   @Override

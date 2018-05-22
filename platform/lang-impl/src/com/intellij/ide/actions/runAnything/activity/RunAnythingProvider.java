@@ -17,7 +17,7 @@ import java.util.Collection;
  * {@link RunAnythingProvider} operates with {@code V} that represents a value to be executed.
  * E.g. {@code V} can be a run configuration, an action or a string command to be executed in console.
  * <p>
- * See {@link RunAnythingRunConfigurationExecutionProvider}, {@link RunAnythingCommandExecutionProviderBase} and others inheritors.
+ * See {@link RunAnythingRunConfigurationProvider}, {@link RunAnythingCommandProvider} and others inheritors.
  */
 public interface RunAnythingProvider<V> {
   ExtensionPointName<RunAnythingProvider> EP_NAME = ExtensionPointName.create("com.intellij.runAnything.executionProvider");

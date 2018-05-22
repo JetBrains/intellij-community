@@ -12,7 +12,7 @@ import java.util.Arrays;
 import java.util.Collection;
 import java.util.stream.Collectors;
 
-public class RunAnythingRecentProjectProvider extends RunAnythingActionExecutionProvider<AnAction> {
+public class RunAnythingRecentProjectProvider extends RunAnythingAnActionProvider<AnAction> {
   @NotNull
   @Override
   public Collection<AnAction> getValues(@NotNull DataContext dataContext) {

@@ -18,7 +18,7 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 
-public abstract class RunAnythingActionExecutionProvider<V extends AnAction> extends RunAnythingProviderBase<V> {
+public abstract class RunAnythingAnActionProvider<V extends AnAction> extends RunAnythingProviderBase<V> {
   @NotNull
   @Override
   public RunAnythingItem getMainListItem(@NotNull DataContext dataContext, @NotNull V value) {

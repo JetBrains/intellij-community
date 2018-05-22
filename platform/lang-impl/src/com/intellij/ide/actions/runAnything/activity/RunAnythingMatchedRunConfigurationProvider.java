@@ -11,7 +11,7 @@ import javax.swing.*;
 /**
  * Implement this class if a particular run configuration should be created for matching input string.
  */
-public abstract class RunAnythingMatchedRunConfigurationProvider extends RunAnythingRunConfigurationExecutionProvider {
+public abstract class RunAnythingMatchedRunConfigurationProvider extends RunAnythingRunConfigurationProvider {
   /**
    * Actual run configuration creation by {@code commandLine}
    *
