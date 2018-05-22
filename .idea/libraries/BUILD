@@ -148,8 +148,8 @@ java_library(
 java_library(
     name = "bouncy-castle-provider",
     visibility = ["//visibility:public"],
-    exports = ["//prebuilts/tools/common/m2/repository/org/bouncycastle/bcprov-jdk15on/1.56:jar"],
-    runtime_deps = ["//prebuilts/tools/common/m2/repository/org/bouncycastle/bcprov-jdk15on/1.56:jar"],
+    exports = ["//prebuilts/tools/common/m2/repository/org/bouncycastle/bcprov-jdk15on/1.59:jar"],
+    runtime_deps = ["//prebuilts/tools/common/m2/repository/org/bouncycastle/bcprov-jdk15on/1.59:jar"],
 )
 
 # managed by go/iml_to_build
@@ -1202,4 +1202,22 @@ java_library(
     visibility = ["//visibility:public"],
     exports = ["//tools/analytics-library/protos/src/main/proto:studio.proto"],
     runtime_deps = ["//tools/analytics-library/protos/src/main/proto:studio.proto"],
+)
+
+# managed by go/iml_to_build
+java_library(
+    name = "jackson",
+    visibility = ["//visibility:public"],
+    # do not sort: must match IML order
+    exports = [
+        "//prebuilts/tools/common/m2/repository/com/fasterxml/jackson/core/jackson-annotations/2.9.0:jar",
+        "//prebuilts/tools/common/m2/repository/com/fasterxml/jackson/core/jackson-core/2.9.5:jar",
+        "//prebuilts/tools/common/m2/repository/com/fasterxml/jackson/core/jackson-databind/2.9.5:jar",
+    ],
+    # do not sort: must match IML order
+    runtime_deps = [
+        "//prebuilts/tools/common/m2/repository/com/fasterxml/jackson/core/jackson-annotations/2.9.0:jar",
+        "//prebuilts/tools/common/m2/repository/com/fasterxml/jackson/core/jackson-core/2.9.5:jar",
+        "//prebuilts/tools/common/m2/repository/com/fasterxml/jackson/core/jackson-databind/2.9.5:jar",
+    ],
 )

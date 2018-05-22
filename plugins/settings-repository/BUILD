@@ -38,14 +38,12 @@ iml_module(
         "//tools/idea/platform/projectModel-impl:intellij.platform.projectModel.impl[module]",
         "//tools/idea/.idea/libraries:JSch",
         "//tools/idea/.idea/libraries:KotlinJavaRuntime",
-        "//tools/idea/plugins/settings-repository/lib:jackson-annotations-2.8.1",
-        "//tools/idea/plugins/settings-repository/lib:jackson-core-2.8.1",
-        "//tools/idea/plugins/settings-repository/lib:jackson-databind-2.8.1",
         "//tools/idea/.idea/libraries:Slf4j",
         "//tools/idea/platform/configuration-store-impl:intellij.platform.configurationStore.impl[module]",
         "//tools/idea/.idea/libraries:miglayout-swing",
         "//tools/idea/platform/credential-store:intellij.platform.credentialStore[module]",
         "//tools/idea/.idea/libraries:Guava",
+        "//tools/idea/.idea/libraries:jackson",
     ],
 )
 
