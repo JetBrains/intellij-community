@@ -1244,13 +1244,24 @@ public class GroovyBnfParser implements PsiParser, LightPsiParser {
   }
 
   /* ********************************************************** */
-  // block_level_item*
+  // block_level_item* clear_error
   static boolean block_levels(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "block_levels")) return false;
+    boolean r;
+    Marker m = enter_section_(b);
+    r = block_levels_0(b, l + 1);
+    r = r && clearError(b, l + 1);
+    exit_section_(b, m, null, r);
+    return r;
+  }
+
+  // block_level_item*
+  private static boolean block_levels_0(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "block_levels_0")) return false;
     int c = current_position_(b);
     while (true) {
       if (!block_level_item(b, l + 1)) break;
-      if (!empty_element_parsed_guard_(b, "block_levels", c)) break;
+      if (!empty_element_parsed_guard_(b, "block_levels_0", c)) break;
       c = current_position_(b);
     }
     return true;
@@ -2193,13 +2204,24 @@ public class GroovyBnfParser implements PsiParser, LightPsiParser {
   }
 
   /* ********************************************************** */
-  // class_member*
+  // class_member* clear_error
   static boolean class_members(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "class_members")) return false;
+    boolean r;
+    Marker m = enter_section_(b);
+    r = class_members_0(b, l + 1);
+    r = r && clearError(b, l + 1);
+    exit_section_(b, m, null, r);
+    return r;
+  }
+
+  // class_member*
+  private static boolean class_members_0(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "class_members_0")) return false;
     int c = current_position_(b);
     while (true) {
       if (!class_member(b, l + 1)) break;
-      if (!empty_element_parsed_guard_(b, "class_members", c)) break;
+      if (!empty_element_parsed_guard_(b, "class_members_0", c)) break;
       c = current_position_(b);
     }
     return true;
@@ -4632,7 +4654,7 @@ public class GroovyBnfParser implements PsiParser, LightPsiParser {
   }
 
   /* ********************************************************** */
-  // paren_argument_list_item* <<clearError>>
+  // paren_argument_list_item* clear_error
   static boolean paren_argument_list_inner(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "paren_argument_list_inner")) return false;
     boolean r;
@@ -5121,7 +5143,7 @@ public class GroovyBnfParser implements PsiParser, LightPsiParser {
   }
 
   /* ********************************************************** */
-  // mb_nl package_definition? mb_separators top_level_item*
+  // mb_nl package_definition? mb_separators top_levels
   static boolean root(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "root")) return false;
     boolean r;
@@ -5129,7 +5151,7 @@ public class GroovyBnfParser implements PsiParser, LightPsiParser {
     r = mb_nl(b, l + 1);
     r = r && root_1(b, l + 1);
     r = r && mb_separators(b, l + 1);
-    r = r && root_3(b, l + 1);
+    r = r && top_levels(b, l + 1);
     exit_section_(b, m, null, r);
     return r;
   }
@@ -5138,18 +5160,6 @@ public class GroovyBnfParser implements PsiParser, LightPsiParser {
   private static boolean root_1(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "root_1")) return false;
     package_definition(b, l + 1);
-    return true;
-  }
-
-  // top_level_item*
-  private static boolean root_3(PsiBuilder b, int l) {
-    if (!recursion_guard_(b, l, "root_3")) return false;
-    int c = current_position_(b);
-    while (true) {
-      if (!top_level_item(b, l + 1)) break;
-      if (!empty_element_parsed_guard_(b, "root_3", c)) break;
-      c = current_position_(b);
-    }
     return true;
   }
 
@@ -5719,6 +5729,30 @@ public class GroovyBnfParser implements PsiParser, LightPsiParser {
     if (!r) r = block_level_start(b, l + 1);
     exit_section_(b, m, null, r);
     return r;
+  }
+
+  /* ********************************************************** */
+  // top_level_item* clear_error
+  static boolean top_levels(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "top_levels")) return false;
+    boolean r;
+    Marker m = enter_section_(b);
+    r = top_levels_0(b, l + 1);
+    r = r && clearError(b, l + 1);
+    exit_section_(b, m, null, r);
+    return r;
+  }
+
+  // top_level_item*
+  private static boolean top_levels_0(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "top_levels_0")) return false;
+    int c = current_position_(b);
+    while (true) {
+      if (!top_level_item(b, l + 1)) break;
+      if (!empty_element_parsed_guard_(b, "top_levels_0", c)) break;
+      c = current_position_(b);
+    }
+    return true;
   }
 
   /* ********************************************************** */

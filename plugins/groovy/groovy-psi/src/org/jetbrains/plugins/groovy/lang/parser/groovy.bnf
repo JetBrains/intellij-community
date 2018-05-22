@@ -174,7 +174,7 @@
   name('.*type_definition') = ''
 }
 
-root ::= mb_nl package_definition? mb_separators top_level_item*
+root ::= mb_nl package_definition? mb_separators top_levels
 
 // region Header constructs
 package_definition ::= modifier_list mb_nl ('package') package_name
@@ -325,7 +325,7 @@ annotation_body ::= '{' mb_nl annotation_members '}'
 // region Members
 private meta class_level_item ::= <<separated_item class_level_end <<item>> class_level_start>>
 
-private class_members ::= class_member*
+private class_members ::= class_member* clear_error
 private class_member ::= <<class_level_item class_level>>
 private class_level ::= class_initializer
                       | type_definition
@@ -552,12 +552,13 @@ private separator ::= ';' | NL | <<extendedSeparator>>
 private separators ::= separator+
 private mb_separators ::= separator*
 
+private top_levels ::= top_level_item* clear_error
 private top_level_item ::= <<addVariant "statement">> <<separated_item top_level_end top_level top_level_start>>
 private top_level ::= import | block_level
 private top_level_start ::= 'import' | block_level_start
 private top_level_end ::= separators | <<eof>>
 
-private block_levels ::= block_level_item*
+private block_levels ::= block_level_item* clear_error
 private block_level_item ::= <<addVariant "statement">> <<separated_item block_level_end block_level block_level_start>>
 private block_level ::= type_definition | tuple_var_declaration | statement
 private block_level_start ::= statement_start | class_level_start
@@ -1096,7 +1097,7 @@ call_argument_list ::= '(' (')') | '(' paren_argument_list_inner ')'
   consumeTokenMethod = 'consumeTokenFast'
 }
 
-private paren_argument_list_inner ::= paren_argument_list_item* <<clearError>>
+private paren_argument_list_inner ::= paren_argument_list_item* clear_error
 private bracket_argument_list_inner ::= bracket_argument_list_item*
 
 private paren_argument_list_item ::= <<argument_list_item ')'>>
@@ -1211,8 +1212,6 @@ private mb_nl ::= nl?
 private nl ::= NL { consumeTokenMethod = 'consumeTokenFast' }
 private meta mb_nl_group ::= <<something>> | nl <<something>> // allows error reporting in position before the new line
 private empty ::= ()
-private external fail ::= noMatch
-private external end_of_file ::= eof
 // endregion
 
 
@@ -1252,7 +1251,10 @@ private meta separated_recovery ::= !(<<item_end>> | <<element_start>>)
 // endregion
 
 
-// region Variants
+// region Generated parser utils
 private clear_variants_and_fail ::= clear_variants fail
 private external clear_variants ::= clearVariants
+private external clear_error ::= clearError
+private external fail ::= noMatch
+private external end_of_file ::= eof
 // endregion

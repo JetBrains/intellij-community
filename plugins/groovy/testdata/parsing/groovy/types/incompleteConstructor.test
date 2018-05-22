@@ -33,3 +33,5 @@ Groovy script
           PsiElement(})('}')
         Throw clause
           <empty list>
+      PsiErrorElement:';', new line or '}' expected
+        <empty list>
