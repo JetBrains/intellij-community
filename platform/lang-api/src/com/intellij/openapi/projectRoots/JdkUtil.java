@@ -30,12 +30,10 @@ import gnu.trove.THashMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.io.File;
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.PrintWriter;
+import java.io.*;
 import java.nio.charset.Charset;
 import java.nio.charset.IllegalCharsetNameException;
+import java.nio.charset.StandardCharsets;
 import java.nio.charset.UnsupportedCharsetException;
 import java.util.*;
 import java.util.jar.Attributes;
@@ -202,7 +200,7 @@ public class JdkUtil {
     try {
       File argFile = FileUtil.createTempFile("idea_arg_file" + + Math.abs(new Random().nextInt()), null);
 
-      try (PrintWriter writer = new PrintWriter(argFile)) {
+      try (PrintWriter writer = createOutputWriter(argFile)) {
         if (dynamicVMOptions) {
           for (String param : vmParameters.getList()) {
             writer.print(quoteArg(param));
@@ -289,7 +287,7 @@ public class JdkUtil {
       File vmParamsFile = null;
       if (dynamicVMOptions) {
         vmParamsFile = FileUtil.createTempFile("idea_vm_params" + pseudoUniquePrefix, null);
-        try (PrintWriter writer = new PrintWriter(vmParamsFile)) {
+        try (PrintWriter writer = createOutputWriter(vmParamsFile)) {
           for (String param : vmParameters.getList()) {
             if (isUserDefinedProperty(param)) {
               writer.println(param);
@@ -309,7 +307,7 @@ public class JdkUtil {
       File appParamsFile = null;
       if (dynamicParameters) {
         appParamsFile = FileUtil.createTempFile("idea_app_params" + pseudoUniquePrefix, null);
-        try (PrintWriter writer = new PrintWriter(appParamsFile)) {
+        try (PrintWriter writer = createOutputWriter(appParamsFile)) {
           for (String parameter : javaParameters.getProgramParametersList().getList()) {
             writer.println(parameter);
           }
@@ -318,7 +316,7 @@ public class JdkUtil {
 
       File classpathFile = FileUtil.createTempFile("idea_classpath" + pseudoUniquePrefix, null);
       PathsList classPath = javaParameters.getClassPath();
-      try (PrintWriter writer = new PrintWriter(classpathFile)) {
+      try (PrintWriter writer = createOutputWriter(classpathFile)) {
         for (String path : classPath.getPathList()) {
           writer.println(path);
         }
@@ -358,6 +356,10 @@ public class JdkUtil {
     catch (IOException e) {
       throwUnableToCreateTempFile(e);
     }
+  }
+
+  private static PrintWriter createOutputWriter(File vmParamsFile) throws FileNotFoundException {
+    return new PrintWriter(new OutputStreamWriter(new FileOutputStream(vmParamsFile), StandardCharsets.UTF_8));
   }
 
   private static void setClasspathJarParams(GeneralCommandLine commandLine,
