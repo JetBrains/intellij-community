@@ -545,17 +545,17 @@ public class RefMethodImpl extends RefJavaElementImpl implements RefMethod {
     }
   }
 
-  void updateParameterValues(PsiExpression[] args) {
+  void updateParameterValues(PsiExpression[] args, @Nullable PsiElement elementPlace) {
     if (isExternalOverride()) return;
 
     if (!getSuperMethods().isEmpty()) {
       for (RefMethod refSuper : getSuperMethods()) {
-        ((RefMethodImpl)refSuper).updateParameterValues(args);
+        ((RefMethodImpl)refSuper).updateParameterValues(args, null);
       }
     } else {
       final RefParameter[] params = getParameters();
       for (int i = 0; i < Math.min(params.length, args.length); i++) {
-        ((RefParameterImpl)params[i]).updateTemplateValue(args[i]);
+        ((RefParameterImpl)params[i]).updateTemplateValue(args[i], elementPlace);
       }
 
       if (params.length != args.length) {

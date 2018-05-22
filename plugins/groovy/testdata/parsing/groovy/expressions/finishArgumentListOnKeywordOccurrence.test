@@ -37,10 +37,9 @@ Groovy script
               PsiElement([)('[')
               Reference expression
                 PsiElement(identifier)('param')
-              PsiErrorElement:',' or ']' expected
-                <empty list>
-              PsiElement())(')')
-              PsiErrorElement:',' or ']' expected
+              PsiErrorElement:')' unexpected
+                PsiElement())(')')
+              PsiErrorElement:',', <expression> or ']' expected, got 'case'
                 <empty list>
     PsiWhiteSpace('\n      ')
     Case section
@@ -64,7 +63,7 @@ Groovy script
               Reference expression
                 PsiElement(identifier)('param')
               PsiElement(])(']')
-            PsiErrorElement:',' or ')' expected
+            PsiErrorElement:')' or ',' expected, got 'case'
               <empty list>
     PsiWhiteSpace('\n      ')
     Case section

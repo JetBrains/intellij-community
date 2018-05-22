@@ -140,7 +140,7 @@ public class JsonSchemaMappingsConfigurable extends MasterDetailsComponent imple
     for (UserDefinedJsonSchemaConfiguration info : list) {
       String pathToSchema = info.getRelativePathToSchema();
       final JsonSchemaConfigurable configurable =
-        new JsonSchemaConfigurable(myProject, isHttpPath(pathToSchema) ? pathToSchema : new File(myProject.getBasePath(), pathToSchema).getPath(),
+        new JsonSchemaConfigurable(myProject, isHttpPath(pathToSchema) || new File(pathToSchema).isAbsolute() ? pathToSchema : new File(myProject.getBasePath(), pathToSchema).getPath(),
                                    info, myTreeUpdater, myNameCreator);
       configurable.setError(myError);
       myRoot.add(new MyNode(configurable));

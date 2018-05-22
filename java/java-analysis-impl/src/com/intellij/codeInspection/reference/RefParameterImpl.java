@@ -11,6 +11,8 @@ import com.intellij.psi.util.PsiTreeUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.function.Supplier;
+
 public class RefParameterImpl extends RefJavaElementImpl implements RefParameter {
   private static final int USED_FOR_READING_MASK = 0x10000;
   private static final int USED_FOR_WRITING_MASK = 0x20000;
@@ -89,10 +91,10 @@ public class RefParameterImpl extends RefJavaElementImpl implements RefParameter
     myActualValueTemplate = VALUE_IS_NOT_CONST;
   }
   
-  void updateTemplateValue(PsiExpression expression) {
+  void updateTemplateValue(PsiExpression expression, @Nullable PsiElement accessPlace) {
     if (myActualValueTemplate == VALUE_IS_NOT_CONST) return;
 
-    Object newTemplate = getExpressionValue(expression);
+    Object newTemplate = getAccessibleExpressionValue(expression, () -> accessPlace == null ? getContainingFile() : accessPlace);
     if (myActualValueTemplate == VALUE_UNDEFINED) {
       myActualValueTemplate = newTemplate;
     }
@@ -126,13 +128,17 @@ public class RefParameterImpl extends RefJavaElementImpl implements RefParameter
   }
 
   @Nullable
-  public static Object getExpressionValue(PsiExpression expression) {
+  public static Object getAccessibleExpressionValue(PsiExpression expression, Supplier<? extends PsiElement> accessPlace) {
     if (expression instanceof PsiReferenceExpression) {
       PsiReferenceExpression referenceExpression = (PsiReferenceExpression) expression;
       PsiElement resolved = referenceExpression.resolve();
       if (resolved instanceof PsiField) {
         PsiField psiField = (PsiField) resolved;
+        PsiElement element = accessPlace.get();
         if (psiField.hasModifierProperty(PsiModifier.STATIC) && psiField.hasModifierProperty(PsiModifier.FINAL)) {
+          if (element == null || !isAccessible(psiField, element)) {
+            return VALUE_IS_NOT_CONST;
+          }
           PsiClass containingClass = psiField.getContainingClass();
           if (containingClass != null && containingClass.getQualifiedName() != null) {
             return psiField;
@@ -145,6 +151,15 @@ public class RefParameterImpl extends RefJavaElementImpl implements RefParameter
     }
     Object constValue = JavaConstantExpressionEvaluator.computeConstantExpression(expression, false);
     return constValue == null ? VALUE_IS_NOT_CONST : constValue instanceof String ? "\"" + constValue + "\"" : constValue;
+  }
+
+  private static boolean isAccessible(@NotNull PsiField field, @NotNull PsiElement place) {
+    PsiClass fieldContainingClass = field.getContainingClass();
+    if (fieldContainingClass == null) return false;
+    String qName = fieldContainingClass.getQualifiedName();
+    if (qName == null) return false;
+    String fieldQName = qName + "." + field.getName();
+    return PsiResolveHelper.SERVICE.getInstance(field.getProject()).resolveReferencedVariable(fieldQName, place) != null;
   }
 
   @Nullable

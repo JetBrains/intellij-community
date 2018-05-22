@@ -93,11 +93,13 @@ class IntelliJCoreArtifactsBuilder {
 
         [
           "ASM", "Guava", "picocontainer", "Trove4j", "cli-parser", "lz4-java", "jayatana", "imgscalr", "batik", "xmlgraphics-commons",
-         "JDOM", "OroMatcher", "jna", "Log4J", "StreamEx", "jetbrains-annotations-java5"
+         "JDOM", "OroMatcher", "jna", "Log4J", "StreamEx"
         ].each {
           projectLibrary(it)
         }
+        projectLibrary("jetbrains-annotations-java5", true)
       }
+      ant.move(file: "$coreArtifactDir/annotations-java5.jar", tofile: "$coreArtifactDir/annotations.jar")
       buildContext.notifyArtifactBuilt(coreArtifactDir)
 
       def intellijCoreZip = "${buildContext.paths.artifacts}/intellij-core-${buildContext.buildNumber}.zip"

@@ -56,15 +56,7 @@ public class GitLineHandler extends GitTextHandler {
                         @NotNull VirtualFile vcsRoot,
                         @NotNull GitCommand command,
                         @NotNull List<String> configParameters) {
-    this(project, vcsRoot, command, configParameters, false);
-  }
-
-  public GitLineHandler(@NotNull Project project,
-                        @NotNull VirtualFile vcsRoot,
-                        @NotNull GitCommand command,
-                        @NotNull List<String> configParameters,
-                        boolean lowPriorityProcess) {
-    super(project, vcsRoot, command, configParameters, lowPriorityProcess);
+    super(project, vcsRoot, command, configParameters);
   }
 
   public GitLineHandler(@Nullable Project project,
@@ -121,24 +113,20 @@ public class GitLineHandler extends GitTextHandler {
     String lineWithoutSeparator = LineHandlerHelper.trimLineSeparator(line);
     // do not log git remote progress (progress lines are separated with CR by convention)
     if (!line.endsWith("\r")) logOutput(lineWithoutSeparator, outputType);
+    if (outputType == ProcessOutputTypes.SYSTEM) return;
     myLineListeners.getMulticaster().onLineAvailable(lineWithoutSeparator, outputType);
   }
 
   private void logOutput(@NotNull String line, @NotNull Key outputType) {
     String trimmedLine = line.trim();
-    if (outputType == ProcessOutputTypes.STDOUT) {
-      if (!isStdoutSuppressed() && !mySilent && !StringUtil.isEmptyOrSpaces(trimmedLine)) {
-        LOG.info(trimmedLine);
-      }
-      else {
-        OUTPUT_LOG.debug(trimmedLine);
-      }
-    }
-    else if (outputType == ProcessOutputTypes.STDERR && !isStderrSuppressed() && !mySilent && !StringUtil.isEmptyOrSpaces(trimmedLine)) {
+    if (!StringUtil.isEmptyOrSpaces(trimmedLine) &&
+        !mySilent &&
+        ((outputType == ProcessOutputTypes.STDOUT && !isStdoutSuppressed()) ||
+         outputType == ProcessOutputTypes.STDERR && !isStderrSuppressed())) {
       LOG.info(trimmedLine);
     }
     else {
-      LOG.debug(trimmedLine);
+      OUTPUT_LOG.debug(trimmedLine);
     }
   }
 

@@ -135,7 +135,12 @@ public class TextMergeViewer implements MergeTool.MergeViewer {
     components.statusPanel = init.statusPanel;
     components.toolbarActions = init.toolbarActions;
 
-    components.closeHandler = () -> MergeUtil.showExitWithoutApplyingChangesDialog(this, myMergeRequest, myMergeContext);
+    components.closeHandler = () -> {
+      if (myViewer.myContentModified)
+        return MergeUtil.showExitWithoutApplyingChangesDialog(this, myMergeRequest, myMergeContext);
+      else
+        return true;
+    };
 
     return components;
   }

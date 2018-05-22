@@ -53,16 +53,16 @@ class MacDistributionBuilder extends OsSpecificDistributionBuilder {
         <string>Editor</string>
       </dict>
 """ : "")
-    def docTypes = ""
-    if (!customizer.additionalDocTypes.empty) {
-      docTypes = """<dict>
+    def associations = ""
+    if (!customizer.fileAssociations.empty) {
+      associations = """<dict>
         <key>CFBundleTypeExtensions</key>
         <array>
 """
-      customizer.additionalDocTypes.each {
-        docTypes += "          <string>${it}</string>\n"
+      customizer.fileAssociations.each {
+        associations += "          <string>${it}</string>\n"
       }
-      docTypes +=  """        </array>
+      associations +=  """        </array>
         <key>CFBundleTypeRole</key>
         <string>Editor</string>
         <key>CFBundleTypeIconFile</key>
@@ -70,7 +70,7 @@ class MacDistributionBuilder extends OsSpecificDistributionBuilder {
       </dict>
 """
     }
-    return iprAssociation + docTypes;
+    return iprAssociation + associations + customizer.additionalDocTypes;
   }
 
   @Override

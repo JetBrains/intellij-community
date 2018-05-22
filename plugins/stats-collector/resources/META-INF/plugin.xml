@@ -5,9 +5,9 @@
   <vendor email="vitaliy.bibaev@jetbrains.com" url="http://www.jetbrains.com">JetBrains</vendor>
 
   <description><![CDATA[
-      This plugin collects data about your usage of code completion, anonymises and sends it to us.
+      This plugin collects data about your usage of code completion, anonymizes and sends it to JetBrains.
       Note, the plugin doesn't send any of your personal data or code. All we send is just numbers
-      calculated based on your completion usage patterns.
+      calculated based on your completion usage patterns. If you don't want to send anything just disable this plugin.
     ]]></description>
 
   <change-notes><![CDATA[

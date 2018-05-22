@@ -23,6 +23,7 @@ import org.jetbrains.plugins.github.api.GithubServerPath
 import org.jetbrains.plugins.github.api.data.GithubUserDetailed
 import org.jetbrains.plugins.github.authentication.accounts.GithubAccount
 import org.jetbrains.plugins.github.authentication.accounts.GithubAccountInformationProvider
+import org.jetbrains.plugins.github.authentication.accounts.GithubAccountManager
 import org.jetbrains.plugins.github.exceptions.GithubAuthenticationException
 import java.awt.*
 import java.awt.event.MouseAdapter
@@ -95,7 +96,7 @@ internal class GithubAccountsPanel(private val project: Project, private val acc
   private fun addAccount() {
     val dialog = GithubLoginDialog(project, this, ::isAccountUnique)
     if (dialog.showAndGet()) {
-      val githubAccount = GithubAccount(dialog.getLogin(), dialog.getServer())
+      val githubAccount = GithubAccountManager.createAccount(dialog.getLogin(), dialog.getServer())
       newTokensMap[githubAccount] = dialog.getToken()
 
       val accountData = GithubAccountDecorator(githubAccount, false)

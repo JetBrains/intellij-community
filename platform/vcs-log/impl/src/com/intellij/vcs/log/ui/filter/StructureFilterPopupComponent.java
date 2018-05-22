@@ -367,7 +367,7 @@ class StructureFilterPopupComponent extends FilterPopupComponent<VcsLogFileFilte
     }
   }
 
-  private class SelectFromHistoryAction extends ToggleAction {
+  private class SelectFromHistoryAction extends ToggleAction implements DumbAware {
     @NotNull private final VcsLogStructureFilter myFilter;
     @NotNull private final Icon myIcon;
     @NotNull private final Icon myEmptyIcon;

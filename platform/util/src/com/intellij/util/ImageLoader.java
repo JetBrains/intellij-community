@@ -339,15 +339,23 @@ public class ImageLoader implements Serializable {
   }
 
   /**
+   * @see #loadFromUrl(URL, boolean, boolean, boolean, ImageFilter[], ScaleContext)
+   */
+  @Nullable
+  public static Image loadFromUrl(@NotNull URL url, final boolean allowFloatScaling, boolean useCache, ImageFilter[] filters, final ScaleContext ctx) {
+    return loadFromUrl(url, allowFloatScaling, useCache, UIUtil.isUnderDarcula(), filters, ctx);
+  }
+
+  /**
    * Loads an image of available resolution (1x, 2x, ...) and scales to address the provided scale context.
    * Then wraps the image with {@link JBHiDPIScaledImage} if necessary.
    */
   @Nullable
-  public static Image loadFromUrl(@NotNull URL url, final boolean allowFloatScaling, boolean useCache, ImageFilter[] filters, final ScaleContext ctx) {
+  public static Image loadFromUrl(@NotNull URL url, final boolean allowFloatScaling, boolean useCache, boolean dark, ImageFilter[] filters, final ScaleContext ctx) {
     // We can't check all 3rd party plugins and convince the authors to add @2x icons.
     // In IDE-managed HiDPI mode with scale > 1.0 we scale images manually.
 
-    return ImageDescList.create(url.toString(), null, UIUtil.isUnderDarcula(), allowFloatScaling, ctx).load(
+    return ImageDescList.create(url.toString(), null, dark, allowFloatScaling, ctx).load(
       ImageConverterChain.create().
         withFilter(filters).
         with(new ImageConverter() {

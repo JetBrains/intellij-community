@@ -18,6 +18,7 @@ import com.intellij.psi.impl.source.SourceTreeToPsiMap;
 import com.intellij.psi.impl.source.tree.*;
 import com.intellij.psi.stubs.ObjectStubSerializer;
 import com.intellij.psi.stubs.Stub;
+import com.intellij.psi.templateLanguages.OuterLanguageElement;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.util.*;
@@ -404,7 +405,8 @@ public class DebugUtil {
         @Override
         protected boolean shouldSkipNode(TreeElement node) {
           return super.shouldSkipNode(node) || node instanceof PsiErrorElement || node instanceof PsiComment || 
-                 node instanceof LeafPsiElement && StringUtil.isEmptyOrSpaces(node.getText());
+                 node instanceof LeafPsiElement && StringUtil.isEmptyOrSpaces(node.getText()) || 
+                 node instanceof OuterLanguageElement;
         }
 
         @Override

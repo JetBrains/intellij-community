@@ -4,6 +4,7 @@ package com.intellij.diagnostic
 import com.intellij.CommonBundle
 import com.intellij.credentialStore.CredentialAttributes
 import com.intellij.credentialStore.Credentials
+import com.intellij.credentialStore.RememberCheckBoxState
 import com.intellij.ide.BrowserUtil
 import com.intellij.ide.passwordSafe.PasswordSafe
 import com.intellij.openapi.project.Project
@@ -26,7 +27,7 @@ fun showJetBrainsAccountDialog(parent: Component, project: Project? = null): Dia
   val passwordSafe = PasswordSafe.instance
   val isSelected = if (credentials?.userName == null) {
     // if no user name - never stored and so, defaults
-    passwordSafe.rememberCheckBoxState.isSelected
+    passwordSafe.isRememberPasswordByDefault
   }
   else {
     // if user name set, but no password, so, previously was stored without password
@@ -60,7 +61,7 @@ fun showJetBrainsAccountDialog(parent: Component, project: Project? = null): Dia
       parent = if (parent.isShowing) parent else null) {
     val userName = userField.text.nullize(true)
     val password = if (rememberCheckBox.isSelected) passwordField.password else null
-    passwordSafe.rememberCheckBoxState.update(rememberCheckBox)
+    RememberCheckBoxState.update(rememberCheckBox)
     passwordSafe.set(CredentialAttributes(ErrorReportConfigurable.SERVICE_NAME, userName), Credentials(userName, password))
     return@dialog null
   }

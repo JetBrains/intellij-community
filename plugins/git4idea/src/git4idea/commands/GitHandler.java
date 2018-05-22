@@ -76,27 +76,11 @@ public abstract class GitHandler {
                        @NotNull File directory,
                        @NotNull GitCommand command,
                        @NotNull List<String> configParameters) {
-    this(project, directory, command, configParameters, false);
-  }
-
-  /**
-   * A constructor
-   *  @param project   a project
-   * @param directory a process directory
-   * @param command   a command to execute
-   * @param lowPriorityProcess
-   */
-  protected GitHandler(@NotNull Project project,
-                       @NotNull File directory,
-                       @NotNull GitCommand command,
-                       @NotNull List<String> configParameters,
-                       boolean lowPriorityProcess) {
     this(project,
          directory,
          GitExecutableManager.getInstance().getPathToGit(project),
          command,
-         configParameters,
-         lowPriorityProcess);
+         configParameters);
     myProgressParameterAllowed =
       GitVersionSpecialty.ABLE_TO_USE_PROGRESS_IN_REMOTE_COMMANDS.existsIn(project);
   }
@@ -112,39 +96,23 @@ public abstract class GitHandler {
                        @NotNull VirtualFile vcsRoot,
                        @NotNull GitCommand command,
                        @NotNull List<String> configParameters) {
-    this(project, vcsRoot, command, configParameters, false);
-  }
-
-  /**
-   * A constructor
-   *  @param project a project
-   * @param vcsRoot a process directory
-   * @param command a command to execute
-   * @param lowPriorityProcess
-   */
-  protected GitHandler(@NotNull Project project,
-                       @NotNull VirtualFile vcsRoot,
-                       @NotNull GitCommand command,
-                       @NotNull List<String> configParameters,
-                       boolean lowPriorityProcess) {
-    this(project, VfsUtil.virtualToIoFile(vcsRoot), command, configParameters, lowPriorityProcess);
+    this(project, VfsUtil.virtualToIoFile(vcsRoot), command, configParameters);
   }
 
   /**
    * A constructor for handler that can be run without project association
-   *  @param project          optional project
+   *
+   * @param project          optional project
    * @param directory        working directory
    * @param pathToExecutable path to git executable
    * @param command          git command to execute
    * @param configParameters list of config parameters to use for this git execution
-   * @param lowPriorityProcess if true, the git process is started with low priority
    */
   protected GitHandler(@Nullable Project project,
                        @NotNull File directory,
                        @NotNull String pathToExecutable,
                        @NotNull GitCommand command,
-                       @NotNull List<String> configParameters,
-                       boolean lowPriorityProcess) {
+                       @NotNull List<String> configParameters) {
     myProject = project;
     myVcs = project != null ? GitVcs.getInstance(project) : null;
     myPathToExecutable = pathToExecutable;
@@ -152,14 +120,8 @@ public abstract class GitHandler {
 
     myCommandLine = new GeneralCommandLine()
       .withWorkDirectory(directory)
+      .withExePath(myPathToExecutable)
       .withCharset(CharsetToolkit.UTF8_CHARSET);
-
-    if (lowPriorityProcess) {
-      LowPriorityProcessRunnerKt.setupLowPriorityExecution(myCommandLine, pathToExecutable);
-    }
-    else {
-      myCommandLine.setExePath(pathToExecutable);
-    }
 
     for (String parameter : getConfigParameters(project, configParameters)) {
       myCommandLine.addParameters("-c", parameter);
@@ -223,6 +185,20 @@ public abstract class GitHandler {
    */
   protected void addListener(ProcessEventListener listener) {
     myListeners.addListener(listener);
+  }
+
+  /***
+   * Execute process with lower priority
+   *
+   * @param isLowPriority whether to use lower or normal priority
+   */
+  public void setWithLowPriority(boolean isLowPriority) {
+    if (isLowPriority) {
+      LowPriorityProcessRunnerKt.setupLowPriorityExecution(myCommandLine, myPathToExecutable);
+    }
+    else {
+      myCommandLine.setExePath(myPathToExecutable);
+    }
   }
 
   /**

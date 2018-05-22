@@ -142,9 +142,9 @@ public class StringToConstraintsTransformerTest {
 
   @Test
   public void testInvalidRegularExpression() {
-    expectException("'a:x!(", "Invalid regular expression: Unclosed group near index 3\n" +
-                              "x!(\n" +
-                              "   ^");
+    expectException("'a:x!(", String.format("Invalid regular expression: Unclosed group near index 3%n" +
+                              "x!(%n" +
+                              "   ^"));
   }
 
   @Test
@@ -277,8 +277,8 @@ public class StringToConstraintsTransformerTest {
 
   @Test
   public void testInvalidRegex() {
-    expectException("'T:{ ;", "Invalid regular expression: Illegal repetition\n" +
-                              "{");
+    expectException("'T:{ ;", String.format("Invalid regular expression: Illegal repetition%n" +
+                              "{"));
   }
 
   @Test

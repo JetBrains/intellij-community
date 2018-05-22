@@ -24,7 +24,6 @@ import com.intellij.openapi.vcs.changes.PseudoMap;
 import com.intellij.openapi.vcs.checkin.CheckinChangeListSpecificComponent;
 import com.intellij.openapi.vcs.checkin.CheckinEnvironment;
 import com.intellij.openapi.vcs.checkin.CheckinHandler;
-import com.intellij.openapi.vcs.ui.Refreshable;
 import com.intellij.openapi.vcs.ui.RefreshableOnComponent;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.IdeBorderFactory;
@@ -42,7 +41,7 @@ import static com.intellij.openapi.vcs.VcsBundle.message;
 import static com.intellij.util.containers.ContainerUtil.*;
 import static java.util.Collections.unmodifiableList;
 
-public class CommitOptionsPanel extends BorderLayoutPanel implements Refreshable, Disposable {
+public class CommitOptionsPanel extends BorderLayoutPanel implements Disposable {
 
   private static final Comparator<AbstractVcs> VCS_COMPARATOR =
     Comparator.comparing(it -> it.getKeyInstanceMethod().getName(), String::compareToIgnoreCase);
@@ -77,17 +76,14 @@ public class CommitOptionsPanel extends BorderLayoutPanel implements Refreshable
     return myAdditionalData;
   }
 
-  @Override
   public void saveState() {
     myAdditionalComponents.forEach(RefreshableOnComponent::saveState);
   }
 
-  @Override
   public void restoreState() {
     myAdditionalComponents.forEach(RefreshableOnComponent::restoreState);
   }
 
-  @Override
   public void refresh() {
     myAdditionalComponents.forEach(RefreshableOnComponent::refresh);
   }

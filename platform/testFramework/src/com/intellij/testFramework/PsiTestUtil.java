@@ -223,8 +223,23 @@ public class PsiTestUtil {
 
     String psiTree = StringUtil.join(file.getViewProvider().getAllFiles(), fun, "\n");
     String reparsedTree = StringUtil.join(dummyFile.getViewProvider().getAllFiles(), fun, "\n");
+    assertPsiTextTreeConsistency(psiTree, reparsedTree);
+  }
+
+  private static void assertPsiTextTreeConsistency(String psiTree, String reparsedTree) {
     if (!psiTree.equals(reparsedTree)) {
-      Assert.assertEquals("Re-created from text:\n" + reparsedTree, "PSI structure:\n" + psiTree);
+      String[] psiLines = StringUtil.splitByLinesDontTrim(psiTree);
+      String[] reparsedLines = StringUtil.splitByLinesDontTrim(reparsedTree);
+      for (int i = 0; ; i++) {
+        if (i >= psiLines.length || i >= reparsedLines.length || !psiLines[i].equals(reparsedLines[i])) {
+          psiLines[Math.min(i, psiLines.length - 1)] += "   // in PSI structure";
+          reparsedLines[Math.min(i, reparsedLines.length - 1)] += "   // re-created from text";
+          break;
+        }
+      }
+      psiTree = StringUtil.join(psiLines, "\n");
+      reparsedTree = StringUtil.join(reparsedLines, "\n");
+      Assert.assertEquals(reparsedTree, psiTree);
     }
   }
 
@@ -460,7 +475,7 @@ public class PsiTestUtil {
   }
 
   public static void compareStubTexts(@NotNull StubTextInconsistencyException e) {
-    Assert.assertEquals("Re-created from text:\n" + e.getStubsFromText(), "Stubs from PSI structure:\n" + e.getStubsFromPsi());
+    assertPsiTextTreeConsistency(e.getStubsFromPsi(), e.getStubsFromText());
     throw e;
   }
 

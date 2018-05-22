@@ -13,7 +13,7 @@ public class AllIcons {
 
   public static class Actions {
     public static final Icon AddFacesSupport = IconLoader.getIcon("/actions/addFacesSupport.png"); // 16x16
-    public static final Icon AddMulticaret = IconLoader.getIcon("/actions/AddMulticaret.png"); // 16x16
+    public static final Icon AddMulticaret = IconLoader.getIcon("/actions/AddMulticaret.svg"); // 16x16
     public static final Icon AllLeft = IconLoader.getIcon("/actions/allLeft.png"); // 16x16
     public static final Icon AllRight = IconLoader.getIcon("/actions/allRight.png"); // 16x16
     public static final Icon Annotate = IconLoader.getIcon("/actions/annotate.svg"); // 16x16
@@ -31,7 +31,7 @@ public class AllIcons {
     public static final Icon Checked_small_selected = IconLoader.getIcon("/actions/checked_small_selected.png"); // 11x11
     public static final Icon CheckedBlack = IconLoader.getIcon("/actions/checkedBlack.png"); // 12x12
     public static final Icon CheckedGrey = IconLoader.getIcon("/actions/checkedGrey.png"); // 12x12
-    public static final Icon CheckMulticaret = IconLoader.getIcon("/actions/CheckMulticaret.png"); // 16x16
+    public static final Icon CheckMulticaret = IconLoader.getIcon("/actions/CheckMulticaret.svg"); // 16x16
     public static final Icon CheckOut = IconLoader.getIcon("/actions/checkOut.svg"); // 16x16
     public static final Icon Clean = IconLoader.getIcon("/actions/clean.png"); // 16x16
     public static final Icon CleanLight = IconLoader.getIcon("/actions/cleanLight.png"); // 16x16
@@ -40,7 +40,7 @@ public class AllIcons {
     public static final Icon CloseHovered = IconLoader.getIcon("/actions/closeHovered.png"); // 16x16
     public static final Icon CloseNew = IconLoader.getIcon("/actions/closeNew.png"); // 16x16
     public static final Icon CloseNewHovered = IconLoader.getIcon("/actions/closeNewHovered.png"); // 16x16
-    public static final Icon Collapseall = IconLoader.getIcon("/actions/collapseall.png"); // 16x16
+    public static final Icon Collapseall = IconLoader.getIcon("/actions/collapseall.svg"); // 16x16
     public static final Icon Commit = IconLoader.getIcon("/actions/commit.svg"); // 16x16
     public static final Icon Compile = IconLoader.getIcon("/actions/compile.svg"); // 16x16
     public static final Icon Copy = IconLoader.getIcon("/actions/copy.svg"); // 16x16
@@ -52,7 +52,7 @@ public class AllIcons {
     @SuppressWarnings("unused")
     @Deprecated
     public static final Icon Delete = IconLoader.getIcon("/actions/cancel.svg"); // 16x16
-    public static final Icon DiagramDiff = IconLoader.getIcon("/actions/diagramDiff.png"); // 16x16
+    public static final Icon DiagramDiff = IconLoader.getIcon("/actions/diagramDiff.svg"); // 16x16
     public static final Icon Diff = IconLoader.getIcon("/actions/diff.svg"); // 16x16
     public static final Icon DiffPreview = IconLoader.getIcon("/actions/diffPreview.png"); // 16x16
     public static final Icon DiffWithClipboard = IconLoader.getIcon("/actions/diffWithClipboard.svg"); // 16x16
@@ -70,7 +70,7 @@ public class AllIcons {
     public static final Icon Exclude = IconLoader.getIcon("/general/remove.svg"); // 16x16
     public static final Icon Execute = IconLoader.getIcon("/actions/execute.svg"); // 16x16
     public static final Icon Exit = IconLoader.getIcon("/actions/exit.svg"); // 16x16
-    public static final Icon Expandall = IconLoader.getIcon("/actions/expandall.png"); // 16x16
+    public static final Icon Expandall = IconLoader.getIcon("/actions/expandall.svg"); // 16x16
 
     /** @deprecated to be removed in IDEA 2020 - use AllIcons.ToolbarDecorator.Export */
     @SuppressWarnings("unused")
@@ -110,7 +110,7 @@ public class AllIcons {
     public static final Icon Install = IconLoader.getIcon("/actions/install.svg"); // 16x16
     public static final Icon IntentionBulb = IconLoader.getIcon("/actions/intentionBulb.png"); // 16x16
     public static final Icon Left = IconLoader.getIcon("/actions/left.png"); // 16x16
-    public static final Icon Lightning = IconLoader.getIcon("/actions/lightning.png"); // 16x16
+    public static final Icon Lightning = IconLoader.getIcon("/actions/lightning.svg"); // 16x16
     public static final Icon ListChanges = IconLoader.getIcon("/actions/listChanges.svg"); // 16x16
     public static final Icon ListFiles = IconLoader.getIcon("/actions/listFiles.svg"); // 16x16
     public static final Icon Menu_cut = IconLoader.getIcon("/actions/menu-cut.svg"); // 16x16
@@ -142,7 +142,7 @@ public class AllIcons {
     public static final Icon MoveToStandardPlace = IconLoader.getIcon("/actions/moveToStandardPlace.png"); // 16x16
     public static final Icon MoveUp = IconLoader.getIcon("/actions/moveUp.svg"); // 16x16
     public static final Icon Multicaret = IconLoader.getIcon("/actions/multicaret.svg"); // 16x16
-    public static final Icon New = IconLoader.getIcon("/actions/new.png"); // 16x16
+    public static final Icon New = IconLoader.getIcon("/actions/new.svg"); // 16x16
     public static final Icon NewFolder = IconLoader.getIcon("/actions/newFolder.svg"); // 16x16
 
     /** @deprecated to be removed in IDEA 2020 - use AllIcons.Actions.Forward */
@@ -150,6 +150,7 @@ public class AllIcons {
     @Deprecated
     public static final Icon Nextfile = IconLoader.getIcon("/actions/forward.svg"); // 16x16
     public static final Icon NextOccurence = IconLoader.getIcon("/actions/nextOccurence.svg"); // 16x16
+    public static final Icon OfflineMode = IconLoader.getIcon("/actions/offlineMode.svg"); // 16x16
     public static final Icon Pause = IconLoader.getIcon("/actions/pause.svg"); // 16x16
     public static final Icon PopFrame = IconLoader.getIcon("/actions/popFrame.svg"); // 16x16
 
@@ -157,7 +158,7 @@ public class AllIcons {
     @SuppressWarnings("unused")
     @Deprecated
     public static final Icon Prevfile = IconLoader.getIcon("/actions/back.svg"); // 16x16
-    public static final Icon Preview = IconLoader.getIcon("/actions/preview.png"); // 16x16
+    public static final Icon Preview = IconLoader.getIcon("/actions/preview.svg"); // 16x16
     public static final Icon PreviewDetails = IconLoader.getIcon("/actions/previewDetails.svg"); // 16x16
     public static final Icon PreviewDetailsVertically = IconLoader.getIcon("/actions/previewDetailsVertically.svg"); // 16x16
     public static final Icon PreviousOccurence = IconLoader.getIcon("/actions/previousOccurence.svg"); // 16x16
@@ -173,7 +174,7 @@ public class AllIcons {
     public static final Icon Redo = IconLoader.getIcon("/actions/redo.svg"); // 16x16
     public static final Icon RefactoringBulb = IconLoader.getIcon("/actions/refactoringBulb.png"); // 16x16
     public static final Icon Refresh = IconLoader.getIcon("/actions/refresh.svg"); // 16x16
-    public static final Icon RemoveMulticaret = IconLoader.getIcon("/actions/RemoveMulticaret.png"); // 16x16
+    public static final Icon RemoveMulticaret = IconLoader.getIcon("/actions/RemoveMulticaret.svg"); // 16x16
     public static final Icon Replace = IconLoader.getIcon("/actions/replace.svg"); // 16x16
     public static final Icon Rerun = IconLoader.getIcon("/actions/rerun.svg"); // 16x16
     public static final Icon Reset_to_default = IconLoader.getIcon("/actions/reset-to-default.png"); // 16x16
@@ -195,6 +196,7 @@ public class AllIcons {
     public static final Icon SearchNewLine = IconLoader.getIcon("/actions/searchNewLine.png"); // 16x16
     public static final Icon SearchNewLineHover = IconLoader.getIcon("/actions/searchNewLineHover.png"); // 16x16
     public static final Icon Selectall = IconLoader.getIcon("/actions/selectall.svg"); // 16x16
+    public static final Icon SetDefault = IconLoader.getIcon("/actions/setDefault.svg"); // 16x16
     public static final Icon Share = IconLoader.getIcon("/actions/share.png"); // 14x14
     public static final Icon ShortcutFilter = IconLoader.getIcon("/actions/shortcutFilter.svg"); // 16x16
     public static final Icon Show = IconLoader.getIcon("/actions/show.svg"); // 16x16
@@ -630,7 +632,7 @@ public class AllIcons {
     public static final Icon ActualZoom = IconLoader.getIcon("/general/actualZoom.svg"); // 16x16
     public static final Icon Add = IconLoader.getIcon("/general/add.svg"); // 16x16
     public static final Icon AddFavoritesList = IconLoader.getIcon("/general/addFavoritesList.svg"); // 16x16
-    public static final Icon AddJdk = IconLoader.getIcon("/general/addJdk.png"); // 16x16
+    public static final Icon AddJdk = IconLoader.getIcon("/general/addJdk.svg"); // 16x16
     public static final Icon ArrowDown = IconLoader.getIcon("/general/arrowDown.png"); // 7x6
     public static final Icon ArrowDown_white = IconLoader.getIcon("/general/arrowDown_white.png"); // 7x6
 
@@ -997,13 +999,13 @@ public class AllIcons {
       public static final Icon Top = IconLoader.getIcon("/ide/dnd/top.png"); // 16x16
 
     }
-    public static final Icon EmptyFatalError = IconLoader.getIcon("/ide/emptyFatalError.png"); // 16x16
+    public static final Icon EmptyFatalError = IconLoader.getIcon("/ide/emptyFatalError.svg"); // 16x16
     public static final Icon Error = IconLoader.getIcon("/ide/error.png"); // 16x16
     public static final Icon Error_notifications = IconLoader.getIcon("/ide/error_notifications.png"); // 16x16
     public static final Icon ErrorPoint = IconLoader.getIcon("/ide/errorPoint.png"); // 6x6
     public static final Icon External_link_arrow = IconLoader.getIcon("/ide/external_link_arrow.png"); // 14x14
-    public static final Icon FatalError_read = IconLoader.getIcon("/ide/fatalError-read.png"); // 16x16
-    public static final Icon FatalError = IconLoader.getIcon("/ide/fatalError.png"); // 16x16
+    public static final Icon FatalError_read = IconLoader.getIcon("/ide/fatalError-read.svg"); // 16x16
+    public static final Icon FatalError = IconLoader.getIcon("/ide/fatalError.svg"); // 16x16
     public static final Icon HectorNo = IconLoader.getIcon("/ide/hectorNo.png"); // 16x16
     public static final Icon HectorOff = IconLoader.getIcon("/ide/hectorOff.png"); // 16x16
     public static final Icon HectorOn = IconLoader.getIcon("/ide/hectorOn.png"); // 16x16
@@ -1027,7 +1029,7 @@ public class AllIcons {
     public static final Icon NoNotifications13 = IconLoader.getIcon("/ide/noNotifications13.png"); // 13x13
 
     public static class Notification {
-      public static final Icon Close = IconLoader.getIcon("/ide/notification/close.png"); // 16x16
+      public static final Icon Close = IconLoader.getIcon("/ide/notification/close.svg"); // 16x16
       public static final Icon CloseHover = IconLoader.getIcon("/ide/notification/closeHover.png"); // 16x16
       public static final Icon Collapse = IconLoader.getIcon("/ide/notification/collapse.png"); // 16x16
       public static final Icon CollapseHover = IconLoader.getIcon("/ide/notification/collapseHover.png"); // 16x16
@@ -1063,8 +1065,8 @@ public class AllIcons {
     public static final Icon Rating2 = IconLoader.getIcon("/ide/rating2.png"); // 11x11
     public static final Icon Rating3 = IconLoader.getIcon("/ide/rating3.png"); // 11x11
     public static final Icon Rating4 = IconLoader.getIcon("/ide/rating4.png"); // 11x11
-    public static final Icon Readonly = IconLoader.getIcon("/ide/readonly.png"); // 16x16
-    public static final Icon Readwrite = IconLoader.getIcon("/ide/readwrite.png"); // 16x16
+    public static final Icon Readonly = IconLoader.getIcon("/ide/readonly.svg"); // 16x16
+    public static final Icon Readwrite = IconLoader.getIcon("/ide/readwrite.svg"); // 16x16
 
     public static class Shadow {
       public static final Icon Bottom_left = IconLoader.getIcon("/ide/shadow/bottom-left.png"); // 18x22
@@ -1100,6 +1102,10 @@ public class AllIcons {
   public static class Javaee {
     public static final Icon Application_xml = IconLoader.getIcon("/javaee/application_xml.png"); // 16x16
     public static final Icon BuildOnFrameDeactivation = IconLoader.getIcon("/javaee/buildOnFrameDeactivation.png"); // 16x16
+
+    /** @deprecated to be removed in IDEA 2020 */
+    @SuppressWarnings("unused")
+    @Deprecated
     public static final Icon DataSourceImport = IconLoader.getIcon("/javaee/dataSourceImport.png"); // 16x16
     public static final Icon DbSchemaImportBig = IconLoader.getIcon("/javaee/dbSchemaImportBig.png"); // 32x32
     public static final Icon Ejb_jar_xml = IconLoader.getIcon("/javaee/ejb-jar_xml.png"); // 16x16
@@ -1128,7 +1134,7 @@ public class AllIcons {
     public static final Icon PersistenceUnit = IconLoader.getIcon("/javaee/persistenceUnit.png"); // 16x16
     public static final Icon Remote = IconLoader.getIcon("/javaee/remote.png"); // 16x16
     public static final Icon SessionBean = IconLoader.getIcon("/javaee/sessionBean.png"); // 16x16
-    public static final Icon UpdateRunningApplication = IconLoader.getIcon("/javaee/updateRunningApplication.png"); // 16x16
+    public static final Icon UpdateRunningApplication = IconLoader.getIcon("/javaee/updateRunningApplication.svg"); // 16x16
     public static final Icon Web_xml = IconLoader.getIcon("/javaee/web_xml.png"); // 16x16
     public static final Icon WebModule = IconLoader.getIcon("/javaee/webModule.png"); // 16x16
     public static final Icon WebModuleGroup = IconLoader.getIcon("/javaee/webModuleGroup.png"); // 16x16
@@ -1383,10 +1389,10 @@ public class AllIcons {
     @SuppressWarnings("unused")
     @Deprecated
     public static final Icon ShowModules = IconLoader.getIcon("/actions/GroupByModule.svg"); // 16x16
-    public static final Icon SortByType = IconLoader.getIcon("/objectBrowser/sortByType.png"); // 16x16
+    public static final Icon SortByType = IconLoader.getIcon("/objectBrowser/sortByType.svg"); // 16x16
     public static final Icon Sorted = IconLoader.getIcon("/objectBrowser/sorted.svg"); // 16x16
-    public static final Icon SortedByUsage = IconLoader.getIcon("/objectBrowser/sortedByUsage.png"); // 16x16
-    public static final Icon VisibilitySort = IconLoader.getIcon("/objectBrowser/visibilitySort.png"); // 16x16
+    public static final Icon SortedByUsage = IconLoader.getIcon("/objectBrowser/sortedByUsage.svg"); // 16x16
+    public static final Icon VisibilitySort = IconLoader.getIcon("/objectBrowser/visibilitySort.svg"); // 16x16
 
   }
 
@@ -1547,12 +1553,12 @@ public class AllIcons {
     public static final Icon LoadingTree = IconLoader.getIcon("/runConfigurations/loadingTree.png"); // 16x16
     public static final Icon Ql_console = IconLoader.getIcon("/runConfigurations/ql_console.png"); // 16x16
     public static final Icon Remote = IconLoader.getIcon("/runConfigurations/remote.png"); // 16x16
-    public static final Icon RerunFailedTests = IconLoader.getIcon("/runConfigurations/rerunFailedTests.png"); // 16x16
+    public static final Icon RerunFailedTests = IconLoader.getIcon("/runConfigurations/rerunFailedTests.svg"); // 16x16
     public static final Icon SaveTempConfig = IconLoader.getIcon("/runConfigurations/saveTempConfig.png"); // 16x16
     public static final Icon Scroll_down = IconLoader.getIcon("/runConfigurations/scroll_down.svg"); // 16x16
     public static final Icon ScrollToStackTrace = IconLoader.getIcon("/runConfigurations/scrollToStackTrace.png"); // 16x16
     public static final Icon SelectFirstDefect = IconLoader.getIcon("/runConfigurations/selectFirstDefect.png"); // 16x16
-    public static final Icon SortbyDuration = IconLoader.getIcon("/runConfigurations/sortbyDuration.png"); // 16x16
+    public static final Icon SortbyDuration = IconLoader.getIcon("/runConfigurations/sortbyDuration.svg"); // 16x16
     public static final Icon SourceAtException = IconLoader.getIcon("/runConfigurations/sourceAtException.png"); // 16x16
     public static final Icon TestCustom = IconLoader.getIcon("/runConfigurations/testCustom.png"); // 16x16
     public static final Icon TestError = IconLoader.getIcon("/runConfigurations/testError.png"); // 16x16

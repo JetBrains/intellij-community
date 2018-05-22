@@ -15,6 +15,8 @@
  */
 package com.intellij.ui.components;
 
+import com.intellij.util.ObjectUtils;
+import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.StatusText;
 import org.jetbrains.annotations.NotNull;
 
@@ -72,11 +74,15 @@ class TextComponentEmptyText extends StatusText {
   @Override
   protected Rectangle getTextComponentBound() {
     Rectangle b = myOwner.getBounds();
-    Insets insets = myOwner.getInsets();
-    int left = insets.left >> 1;
-    int right = insets.right >> 1;
-    return new Rectangle(left, insets.top + insets.bottom,
+    Insets insets = ObjectUtils.notNull(myOwner.getInsets(), JBUI.emptyInsets());
+    Insets margin = ObjectUtils.notNull(myOwner.getMargin(), JBUI.emptyInsets());
+    Insets ipad = getComponent().getIpad();
+    int left = insets.left + margin.left - ipad.left;
+    int right = insets.right + margin.right - ipad.right;
+    int top = insets.top + margin.top - ipad.top;
+    int bottom = insets.bottom + margin.bottom - ipad.bottom;
+    return new Rectangle(left, top,
                          b.width - left - right,
-                         b.height - insets.top - insets.bottom);
+                         b.height - top - bottom);
   }
 }

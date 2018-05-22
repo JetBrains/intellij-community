@@ -32,12 +32,21 @@ public class JsonSchemaUserDefinedProviderFactory implements JsonSchemaProviderF
 
     final Map<String, UserDefinedJsonSchemaConfiguration> map = configuration.getStateMap();
     final List<JsonSchemaFileProvider> providers = map.values().stream()
-      .map(schema -> new MyProvider(project, schema.getSchemaVersion(), schema.getName(), isHttpPath(schema.getRelativePathToSchema())
-                                                               ? schema.getRelativePathToSchema()
-                                                               : new File(project.getBasePath(), schema.getRelativePathToSchema()).getAbsolutePath(),
-                                    schema.getCalculatedPatterns())).collect(Collectors.toList());
+                                                      .map(schema -> createProvider(project, schema)).collect(Collectors.toList());
 
     return providers.isEmpty() ? Collections.emptyList() : providers;
+  }
+
+  @NotNull
+  public MyProvider createProvider(@NotNull Project project,
+                                   UserDefinedJsonSchemaConfiguration schema) {
+    String relPath = schema.getRelativePathToSchema();
+    return new MyProvider(project, schema.getSchemaVersion(), schema.getName(),
+                          isHttpPath(relPath) || new File(relPath).isAbsolute()
+                            ? relPath
+                            : new File(project.getBasePath(),
+                          relPath).getAbsolutePath(),
+                          schema.getCalculatedPatterns());
   }
 
   static class MyProvider implements JsonSchemaFileProvider, JsonSchemaImportedProviderMarker {

@@ -11,7 +11,8 @@ class CreateKotlinProjectGuiTest : KotlinGuiTestCase() {
     createKotlinProject(projectFolder, KotlinKind.JVM)
     ideFrame {
       checkKotlinLibsInStructureFromPlugin(
-        kotlinKind = KotlinKind.JVM)
+        kotlinKind = KotlinKind.JVM,
+        kotlinVersion = KotlinTestProperties.kotlin_artifact_version)
     }
   }
 
@@ -21,7 +22,8 @@ class CreateKotlinProjectGuiTest : KotlinGuiTestCase() {
     createKotlinProject(projectFolder, KotlinKind.JS)
     ideFrame {
       checkKotlinLibsInStructureFromPlugin(
-        kotlinKind = KotlinKind.JS)
+        kotlinKind = KotlinKind.JS,
+        kotlinVersion = KotlinTestProperties.kotlin_artifact_version)
     }
   }
 

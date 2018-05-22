@@ -485,9 +485,7 @@ public class UnusedDeclarationInspectionBase extends GlobalInspectionTool {
                   getEntryPointsManager(globalContext).addEntryPoint(refMethod, false);
                 }
                 else if (!refMethod.isExternalOverride() && !PsiModifier.PRIVATE.equals(refMethod.getAccessModifier())) {
-                  for (final RefMethod derivedMethod : refMethod.getDerivedMethods()) {
-                    myProcessedSuspicious.add(derivedMethod);
-                  }
+                  myProcessedSuspicious.addAll(refMethod.getDerivedMethods());
 
                   enqueueMethodUsages(globalContext, refMethod);
                   requestAdded[0] = true;

@@ -39,9 +39,6 @@ Groovy script
         Literal
           PsiElement(Integer)('3')
         PsiElement(})('}')
-    GrStringContentImpl(STRING_CONTENT)
-      ASTWrapperPsiElement(Gstring content)
-        <empty list>
     PsiErrorElement:Gstring end expected
       <empty list>
   PsiElement(new line)('\n ')
@@ -51,8 +48,5 @@ Groovy script
     Command arguments
       Compound Gstring
         PsiElement(Gstring begin)('"""')
-        GrStringContentImpl(STRING_CONTENT)
-          ASTWrapperPsiElement(Gstring content)
-            <empty list>
         PsiErrorElement:Gstring end expected
           <empty list>

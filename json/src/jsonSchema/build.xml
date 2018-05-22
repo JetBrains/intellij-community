@@ -35,6 +35,11 @@
                 toFile="${idea.project.home}/contrib/tslint/resources/tslintJsonSchema/tslint-schema.json" />
   </target>
 
+  <target name="webpack4">
+    <get_schema fromUrl="https://raw.githubusercontent.com/webpack/webpack/master/schemas/WebpackOptions.json"
+                toFile="${idea.project.home}/plugins/JavaScriptLanguage/src/jsonSchemas/webpack-schema4.json" />
+  </target>
+
   <target name="nodejs">
     <get_schema fromUrl="http://json.schemastore.org/package"
                 toFile="${idea.project.home}/plugins/NodeJS/src/com/jetbrains/nodejs/packageJson/packageJsonSchema.json" />
@@ -87,5 +92,6 @@
     <antcall target="prettier" />
     <antcall target="tslint" />
     <antcall target="nodejs" />
+    <antcall target="webpack4" />
   </target>
 </project>
