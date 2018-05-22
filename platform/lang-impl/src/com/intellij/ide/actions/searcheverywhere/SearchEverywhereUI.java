@@ -60,8 +60,8 @@ import java.util.stream.Collectors;
  */
 public class SearchEverywhereUI extends BorderLayoutPanel implements Disposable {
   private static final Logger LOG = Logger.getInstance(SearchEverywhereUI.class);
-  public static final int SINGLE_CONTRIBUTOR_ELEMENTS_LIMIT = 15;
-  public static final int MULTIPLE_CONTRIBUTORS_ELEMENTS_LIMIT = 8;
+  public static final int SINGLE_CONTRIBUTOR_ELEMENTS_LIMIT = 30;
+  public static final int MULTIPLE_CONTRIBUTORS_ELEMENTS_LIMIT = 15;
 
   private final List<SearchEverywhereContributor> allContributors;
   private final Project myProject;
@@ -81,7 +81,6 @@ public class SearchEverywhereUI extends BorderLayoutPanel implements Disposable 
   private final Alarm listOperationsAlarm = new Alarm(Alarm.ThreadToUse.SWING_THREAD, ApplicationManager.getApplication());
 
   private Runnable searchFinishedHandler = () -> {};
-  private final JPanel mySuggestionsPanel;
 
   public SearchEverywhereUI(Project project, List<SearchEverywhereContributor> serviceContributors,
                             List<SearchEverywhereContributor> contributors) {
@@ -110,7 +109,7 @@ public class SearchEverywhereUI extends BorderLayoutPanel implements Disposable 
     JPanel contributorsPanel = createTabPanel(contributors);
     JPanel settingsPanel = createSettingsPanel();
     mySearchField = createSearchField();
-    mySuggestionsPanel = createSuggestionsPanel();
+    JPanel suggestionsPanel = createSuggestionsPanel();
 
     myResultsList.setModel(myListModel);
     myResultsList.setCellRenderer(new CompositeCellRenderer());
@@ -123,7 +122,12 @@ public class SearchEverywhereUI extends BorderLayoutPanel implements Disposable 
     topPanel.add(settingsPanel, BorderLayout.EAST);
     topPanel.add(mySearchField, BorderLayout.SOUTH);
 
+    WindowMoveListener moveListener = new WindowMoveListener(this);
+    topPanel.addMouseListener(moveListener);
+    topPanel.addMouseMotionListener(moveListener);
+
     addToTop(topPanel);
+    addToCenter(suggestionsPanel);
 
     initSearchActions();
   }
@@ -136,6 +140,8 @@ public class SearchEverywhereUI extends BorderLayoutPanel implements Disposable 
     JScrollPane resultsScroll = new JBScrollPane(myResultsList);
     resultsScroll.setBorder(null);
     resultsScroll.setHorizontalScrollBarPolicy(ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER);
+
+    resultsScroll.setPreferredSize(JBUI.size(670, JBUI.CurrentTheme.SearchEverywhere.maxListHeght()));
     pnl.add(resultsScroll, BorderLayout.CENTER);
 
     String hint = IdeBundle.message("searcheverywhere.history.shortcuts.hint",
@@ -299,27 +305,6 @@ public class SearchEverywhereUI extends BorderLayoutPanel implements Disposable 
     return contributorsPanel;
   }
 
-  private void showSuggestions(boolean show) {
-    Container parent = mySuggestionsPanel.getParent();
-
-    Dimension oldSize = null;
-    Dimension newSize = null;
-
-    if (show && parent != this) {
-      oldSize = getPreferredSize();
-      addToCenter(mySuggestionsPanel);
-      newSize = getPreferredSize();
-    } else if (!show && parent == this) {
-      oldSize = getPreferredSize();
-      remove(mySuggestionsPanel);
-      newSize = getPreferredSize();
-    }
-
-    if (oldSize != null && newSize != null) {
-      firePropertyChange("preferredSize", oldSize, newSize);
-    }
-  }
-
   private class SETab extends JLabel {
     private final SearchEverywhereContributor myContributor;
 
@@ -425,11 +410,7 @@ public class SearchEverywhereUI extends BorderLayoutPanel implements Disposable 
     mySearchField.getDocument().addDocumentListener(new DocumentAdapter() {
       @Override
       protected void textChanged(DocumentEvent e) {
-        boolean show = !getSearchPattern().isEmpty();
-        if (show) {
-          rebuildList();
-        }
-        showSuggestions(show);
+        rebuildList();
       }
     });
 

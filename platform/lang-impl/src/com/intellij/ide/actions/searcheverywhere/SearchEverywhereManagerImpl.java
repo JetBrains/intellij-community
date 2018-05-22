@@ -58,6 +58,8 @@ public class SearchEverywhereManagerImpl implements SearchEverywhereManager {
                                 .setCancelKeyEnabled(false)
                                 //.setCancelCallback(() -> true)
                                 .addUserData("SIMPLE_WINDOW")
+                                .setResizable(true)
+                                .setMovable(true)
                                 .createPopup();
       Disposer.register(myBalloon, mySearchEverywhereUI);
 
