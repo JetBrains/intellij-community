@@ -86,12 +86,6 @@ abstract class FirstStart(val ideType: IdeType) {
 
   companion object {
     var DEFAULT_TIMEOUT: Long = GuiTestCase().defaultTimeout
-
-    fun guessIdeAndStartRobot() {
-      val firstStartClass = System.getProperty("idea.gui.test.first.start.class")
-      val firstStart = Class.forName(firstStartClass).newInstance() as FirstStart
-      firstStart.completeInstallation()
-    }
   }
 
   private fun completeFirstStart() {
