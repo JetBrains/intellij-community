@@ -21,22 +21,17 @@ import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.vcs.FileStatusListener;
 import com.intellij.openapi.vcs.FileStatusManager;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.problems.WolfTheProblemSolver;
+import com.intellij.problems.ProblemListener;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiManager;
 import com.intellij.psi.util.PsiUtilCore;
-import com.intellij.ui.tree.AsyncTreeModel;
-import com.intellij.ui.tree.RestoreSelectionListener;
-import com.intellij.ui.tree.StructureTreeModel;
-import com.intellij.ui.tree.TreeCollector;
-import com.intellij.ui.tree.TreeVisitor;
-import com.intellij.ui.tree.ProjectFileChangeListener;
+import com.intellij.ui.tree.*;
 import com.intellij.util.SmartList;
 import com.intellij.util.messages.MessageBusConnection;
 import com.intellij.util.ui.tree.TreeUtil;
 import org.jetbrains.annotations.NotNull;
 
-import javax.swing.JTree;
+import javax.swing.*;
 import javax.swing.tree.DefaultMutableTreeNode;
 import javax.swing.tree.TreePath;
 import java.util.Collections;
@@ -138,7 +133,7 @@ class AsyncProjectViewSupport {
       }
     }, parent);
     CopyPasteManager.getInstance().addContentChangedListener(new CopyPasteUtil.DefaultCopyPasteListener(element -> updateByElement(element, true)), parent);
-    WolfTheProblemSolver.getInstance(project).addProblemListener(new WolfTheProblemSolver.ProblemListener() {
+    project.getMessageBus().connect(parent).subscribe(ProblemListener.TOPIC, new ProblemListener() {
       @Override
       public void problemsAppeared(@NotNull VirtualFile file) {
         updatePresentationsFromRootTo(file);
@@ -148,7 +143,7 @@ class AsyncProjectViewSupport {
       public void problemsDisappeared(@NotNull VirtualFile file) {
         updatePresentationsFromRootTo(file);
       }
-    }, parent);
+    });
   }
 
   public void setComparator(Comparator<NodeDescriptor> comparator) {
