@@ -4531,39 +4531,105 @@ public class GroovyBnfParser implements PsiParser, LightPsiParser {
   }
 
   /* ********************************************************** */
-  // modifier_list [parameter_type_element | clear_variants_and_fail] ellipsis?
+  // parameter_start_modifiers | parameter_start_no_modifiers
   static boolean parameter_start(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "parameter_start")) return false;
     boolean r;
+    r = parameter_start_modifiers(b, l + 1);
+    if (!r) r = parameter_start_no_modifiers(b, l + 1);
+    return r;
+  }
+
+  /* ********************************************************** */
+  // parameter_type_element_silent? ellipsis?
+  static boolean parameter_start_after_modifiers(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "parameter_start_after_modifiers")) return false;
+    boolean r;
     Marker m = enter_section_(b);
-    r = modifier_list(b, l + 1);
-    r = r && parameter_start_1(b, l + 1);
-    r = r && parameter_start_2(b, l + 1);
+    r = parameter_start_after_modifiers_0(b, l + 1);
+    r = r && parameter_start_after_modifiers_1(b, l + 1);
     exit_section_(b, m, null, r);
     return r;
   }
 
-  // [parameter_type_element | clear_variants_and_fail]
-  private static boolean parameter_start_1(PsiBuilder b, int l) {
-    if (!recursion_guard_(b, l, "parameter_start_1")) return false;
-    parameter_start_1_0(b, l + 1);
+  // parameter_type_element_silent?
+  private static boolean parameter_start_after_modifiers_0(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "parameter_start_after_modifiers_0")) return false;
+    parameter_type_element_silent(b, l + 1);
     return true;
   }
 
-  // parameter_type_element | clear_variants_and_fail
-  private static boolean parameter_start_1_0(PsiBuilder b, int l) {
-    if (!recursion_guard_(b, l, "parameter_start_1_0")) return false;
+  // ellipsis?
+  private static boolean parameter_start_after_modifiers_1(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "parameter_start_after_modifiers_1")) return false;
+    ellipsis(b, l + 1);
+    return true;
+  }
+
+  /* ********************************************************** */
+  // parameter_type_element_silent ellipsis? | ellipsis | &IDENTIFIER
+  static boolean parameter_start_after_no_modifiers(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "parameter_start_after_no_modifiers")) return false;
     boolean r;
-    r = parameter_type_element(b, l + 1);
-    if (!r) r = clear_variants_and_fail(b, l + 1);
+    Marker m = enter_section_(b);
+    r = parameter_start_after_no_modifiers_0(b, l + 1);
+    if (!r) r = ellipsis(b, l + 1);
+    if (!r) r = parameter_start_after_no_modifiers_2(b, l + 1);
+    exit_section_(b, m, null, r);
+    return r;
+  }
+
+  // parameter_type_element_silent ellipsis?
+  private static boolean parameter_start_after_no_modifiers_0(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "parameter_start_after_no_modifiers_0")) return false;
+    boolean r;
+    Marker m = enter_section_(b);
+    r = parameter_type_element_silent(b, l + 1);
+    r = r && parameter_start_after_no_modifiers_0_1(b, l + 1);
+    exit_section_(b, m, null, r);
     return r;
   }
 
   // ellipsis?
-  private static boolean parameter_start_2(PsiBuilder b, int l) {
-    if (!recursion_guard_(b, l, "parameter_start_2")) return false;
+  private static boolean parameter_start_after_no_modifiers_0_1(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "parameter_start_after_no_modifiers_0_1")) return false;
     ellipsis(b, l + 1);
     return true;
+  }
+
+  // &IDENTIFIER
+  private static boolean parameter_start_after_no_modifiers_2(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "parameter_start_after_no_modifiers_2")) return false;
+    boolean r;
+    Marker m = enter_section_(b, l, _AND_);
+    r = consumeToken(b, IDENTIFIER);
+    exit_section_(b, l, m, r, false, null);
+    return r;
+  }
+
+  /* ********************************************************** */
+  // non_empty_modifier_list parameter_start_after_modifiers
+  static boolean parameter_start_modifiers(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "parameter_start_modifiers")) return false;
+    boolean r, p;
+    Marker m = enter_section_(b, l, _NONE_);
+    r = non_empty_modifier_list(b, l + 1);
+    p = r; // pin = 1
+    r = r && parameter_start_after_modifiers(b, l + 1);
+    exit_section_(b, l, m, r, p, null);
+    return r || p;
+  }
+
+  /* ********************************************************** */
+  // empty_modifier_list parameter_start_after_no_modifiers
+  static boolean parameter_start_no_modifiers(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "parameter_start_no_modifiers")) return false;
+    boolean r;
+    Marker m = enter_section_(b);
+    r = empty_modifier_list(b, l + 1);
+    r = r && parameter_start_after_no_modifiers(b, l + 1);
+    exit_section_(b, m, null, r);
+    return r;
   }
 
   /* ********************************************************** */
@@ -4644,6 +4710,16 @@ public class GroovyBnfParser implements PsiParser, LightPsiParser {
     r = r && array_type_element(b, l + 1);
     r = r && array_type_elements(b, l + 1);
     exit_section_(b, m, null, r);
+    return r;
+  }
+
+  /* ********************************************************** */
+  // parameter_type_element | clear_variants_and_fail
+  static boolean parameter_type_element_silent(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "parameter_type_element_silent")) return false;
+    boolean r;
+    r = parameter_type_element(b, l + 1);
+    if (!r) r = clear_variants_and_fail(b, l + 1);
     return r;
   }
 
@@ -4853,12 +4929,7 @@ public class GroovyBnfParser implements PsiParser, LightPsiParser {
   /* ********************************************************** */
   // <<parseTailLeftFlat parameter_start parameter>>
   static boolean parse_parameter(PsiBuilder b, int l) {
-    if (!recursion_guard_(b, l, "parse_parameter")) return false;
-    boolean r;
-    Marker m = enter_section_(b, l, _NONE_, null, "<parameter>");
-    r = parseTailLeftFlat(b, l + 1, parameter_start_parser_, parameter_parser_);
-    exit_section_(b, l, m, r, false, null);
-    return r;
+    return parseTailLeftFlat(b, l + 1, parameter_start_parser_, parameter_parser_);
   }
 
   /* ********************************************************** */

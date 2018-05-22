@@ -445,8 +445,13 @@ private parse_empty_parameter_list ::= '(' empty_parameter_list ')'
 private parse_non_empty_parameter_list ::= '(' method_parameter_list ')' { pin = 1 }
 
 method_parameter_list ::= <<paren_list_inner parse_parameter>> { elementType = parameter_list }
-private parse_parameter ::= <<parseTailLeftFlat parameter_start parameter>> { name = 'parameter' }
-private parameter_start ::= modifier_list [parameter_type_element | clear_variants_and_fail] ellipsis?
+private parse_parameter ::= <<parseTailLeftFlat parameter_start parameter>>
+private parameter_start ::= parameter_start_modifiers | parameter_start_no_modifiers
+private parameter_start_modifiers ::= non_empty_modifier_list parameter_start_after_modifiers { pin = 1 }
+private parameter_start_after_modifiers ::= parameter_type_element_silent? ellipsis?
+private parameter_start_no_modifiers ::= empty_modifier_list parameter_start_after_no_modifiers
+private parameter_start_after_no_modifiers ::= parameter_type_element_silent ellipsis? | ellipsis | &IDENTIFIER
+private parameter_type_element_silent ::= parameter_type_element | clear_variants_and_fail
 private parameter_type_element ::= primitive_type_element array_type_elements
                                  | qualified_class_type_element array_type_elements
                                  | unqualified_class_type_element &(IDENTIFIER | ellipsis)
