@@ -65,6 +65,15 @@ public class PathManager {
 
   @NotNull
   public static String getHomePath() {
+    return getHomePath(true);
+  }
+
+  /**
+   * @param insideIde {@code true} if the calling code is working inside IDE and {@code false} if it isn't (e.g. if it's running in a build
+   *                              process or a script)
+   */
+  @Contract("true -> !null")
+  public static String getHomePath(boolean insideIde) {
     if (ourHomePath != null) return ourHomePath;
 
     String fromProperty = System.getProperty(PROPERTY_HOME_PATH, System.getProperty(PROPERTY_HOME));
@@ -74,7 +83,7 @@ public class PathManager {
         throw new RuntimeException("Invalid home path '" + ourHomePath + "'");
       }
     }
-    else {
+    else if (insideIde) {
       ourHomePath = getHomePathFor(PathManager.class);
       if (ourHomePath == null) {
         String advice = SystemInfo.isMac ? "reinstall the software." : "make sure bin/idea.properties is present in the installation directory.";
@@ -82,11 +91,11 @@ public class PathManager {
       }
     }
 
-    if (SystemInfo.isWindows) {
+    if (ourHomePath != null && SystemInfo.isWindows) {
       ourHomePath = canonicalPath(ourHomePath);
     }
 
-    ourBinDirectories = getBinDirectories(new File(ourHomePath));
+    ourBinDirectories = ourHomePath != null ? getBinDirectories(new File(ourHomePath)) : ArrayUtil.EMPTY_STRING_ARRAY;
 
     return ourHomePath;
   }
