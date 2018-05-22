@@ -10,7 +10,7 @@
     <rect width="1" height="1" x="13" y="15" fill="#AFB1B3"/>
     <rect width="1" height="1" x="15" y="15" fill="#AFB1B3"/>
     <rect width="1" height="6" x="14" y="9" fill="#AFB1B3"/>
-    <path fill="#AFB1B3" d="M7.13241513,1.11022302e-16 L6.09688482,1 L1,1 L1,7 L7,7 L7,5.64218765 L8,4.67649887 L8,8 L0,8 L0,0 L7.13241513,0 Z"/>
-    <polygon fill="#AFB1B3" fill-rule="nonzero" points="8.968 0 10 .98 4.478 6.222 1.667 3.553 2.699 2.573 4.478 4.262"/>
+    <path fill="#AFB1B3" d="M7.13241513,2 L6.09688482,3 L1,3 L1,9 L7,9 L7,7.64218765 L8,6.67649887 L8,10 L0,10 L0,2 L7.13241513,2 Z"/>
+    <polygon fill="#AFB1B3" fill-rule="nonzero" points="8.968 2 10 2.98 4.478 8.222 1.667 5.553 2.699 4.573 4.478 6.262"/>
   </g>
 </svg>
