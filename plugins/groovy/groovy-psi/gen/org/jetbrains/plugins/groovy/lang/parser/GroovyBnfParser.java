@@ -4741,6 +4741,29 @@ public class GroovyBnfParser implements PsiParser, LightPsiParser {
   }
 
   /* ********************************************************** */
+  // !(',' | ')' | '}')
+  static boolean paren_list_item_recovery(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "paren_list_item_recovery")) return false;
+    boolean r;
+    Marker m = enter_section_(b, l, _NOT_);
+    r = !paren_list_item_recovery_0(b, l + 1);
+    exit_section_(b, l, m, r, false, null);
+    return r;
+  }
+
+  // ',' | ')' | '}'
+  private static boolean paren_list_item_recovery_0(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "paren_list_item_recovery_0")) return false;
+    boolean r;
+    Marker m = enter_section_(b);
+    r = consumeToken(b, T_COMMA);
+    if (!r) r = consumeToken(b, T_RPAREN);
+    if (!r) r = consumeToken(b, T_RBRACE);
+    exit_section_(b, m, null, r);
+    return r;
+  }
+
+  /* ********************************************************** */
   // ',' <<paren_list_item <<item>>>>
   static boolean paren_list_tail(PsiBuilder b, int l, Parser _item) {
     if (!recursion_guard_(b, l, "paren_list_tail")) return false;
@@ -7495,7 +7518,7 @@ public class GroovyBnfParser implements PsiParser, LightPsiParser {
   };
   final static Parser paren_list_item_recovery_parser_ = new Parser() {
     public boolean parse(PsiBuilder b, int l) {
-      return commaParenRecovery(b, l + 1);
+      return paren_list_item_recovery(b, l + 1);
     }
   };
   final static Parser parse_parameter_parser_ = new Parser() {

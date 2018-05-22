@@ -1239,7 +1239,7 @@ private meta paren_list ::= '('')' | '(' <<paren_list_inner <<item>>>> ')' { pin
 private meta paren_list_inner ::= <<paren_list_item <<item>>>> <<paren_list_tail <<item>>>>*
 private meta paren_list_item ::= empty <<item>> { pin = 1 recoverWhile = paren_list_item_recovery }
 private meta paren_list_tail ::= ',' <<paren_list_item <<item>>>> { pin = 1 }
-private external paren_list_item_recovery ::= commaParenRecovery
+private paren_list_item_recovery ::= !(',' | ')' | '}')
 // endregion
 
 

@@ -231,8 +231,6 @@ fun parsePrimitiveType(builder: PsiBuilder, level: Int): Boolean = builder.advan
 
 fun parseAssignment(builder: PsiBuilder, level: Int): Boolean = builder.advanceIf(assignments)
 
-fun commaParenRecovery(builder: PsiBuilder, level: Int): Boolean = builder.tokenType.let { it != T_COMMA && it != T_RPAREN }
-
 fun error(builder: PsiBuilder, level: Int, key: String): Boolean {
   val marker = builder.latestDoneMarker ?: return false
   val elementType = marker.tokenType
