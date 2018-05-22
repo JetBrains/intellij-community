@@ -15,23 +15,28 @@ import org.jetbrains.annotations.Nullable;
 
 import static com.intellij.ide.actions.runAnything.RunAnythingUtil.fetchProject;
 
+/**
+ * Implement notifiable provider if you desire to run an arbitrary activity in the IDE, that may hasn't provide visual effects,
+ * and show notification about it with optional ability to rollback the action as {@link #getRollbackAction(DataContext)}.
+ *
+ * @param <V> see {@link RunAnythingProvider}
+ */
 public abstract class RunAnythingNotifiableActivityProviderBase<V> extends RunAnythingProviderBase<V> {
   private static final String RUN_ANYTHING_GROUP_ID = IdeBundle.message("run.anything.custom.activity.notification.group.id");
 
   /**
-   * Executes arbitrary activity if {@code pattern} is matched as {@link #isMatching(DataContext, String)}
+   * Runs an activity silently. After the exception is passed a notification is shown.
    *
    * @param dataContext 'Run Anything' data context
-   * @param value       'Run Anything' search bar input text
    * @return true if succeed, false is failed
    */
-  protected abstract boolean runNotificationProduceActivity(@NotNull DataContext dataContext, @NotNull V value);
+  protected abstract boolean run(@NotNull DataContext dataContext, @NotNull V value);
 
   /**
-   * Creates rollback action for {@link #runNotificationProduceActivity(DataContext, Object)}
+   * Creates rollback action for {@link #run(DataContext, Object)}
    *
    * @param dataContext 'Run Anything' data context
-   * @return rollback action for {@link #runNotificationProduceActivity(DataContext, Object)}, null if isn't provided
+   * @return rollback action for {@link #run(DataContext, Object)}, null if isn't provided
    */
   @Nullable
   protected abstract Runnable getRollbackAction(@NotNull DataContext dataContext);
@@ -40,7 +45,6 @@ public abstract class RunAnythingNotifiableActivityProviderBase<V> extends RunAn
    * Creates post activity {@link Notification} title
    *
    * @param dataContext 'Run Anything' data context
-   * @param pattern     'Run Anything' search bar input text
    */
   @NotNull
   protected abstract String getNotificationTitle(@NotNull DataContext dataContext, @NotNull V value);
@@ -49,7 +53,6 @@ public abstract class RunAnythingNotifiableActivityProviderBase<V> extends RunAn
    * Creates post activity {@link Notification} content
    *
    * @param dataContext 'Run Anything' data context
-   * @param pattern     'Run Anything' search bar input text
    */
   @NotNull
   protected abstract String getNotificationContent(@NotNull DataContext dataContext, @NotNull V value);
@@ -59,12 +62,11 @@ public abstract class RunAnythingNotifiableActivityProviderBase<V> extends RunAn
    * Executes arbitrary activity in IDE and shows {@link Notification} with optional rollback action
    *
    * @param dataContext 'Run Anything' data context
-   * @param pattern     'Run Anything' search bar input text
    * @return true if succeed, false is failed
    */
   @Override
   public void execute(@NotNull DataContext dataContext, @NotNull V value) {
-    if (runNotificationProduceActivity(dataContext, value)) {
+    if (run(dataContext, value)) {
       getNotificationCallback(dataContext, value).run();
     }
     else {
