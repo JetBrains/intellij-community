@@ -297,11 +297,8 @@ public class CoverageLineMarkerRenderer implements ActiveGutterRenderer, LineMar
       getTemplatePresentation().setText("Previous Coverage Mark");
     }
 
-    protected boolean hasNext(final int idx, final List<Integer> list) {
-      return idx > 0;
-    }
-
-    protected int next(final int idx) {
+    protected int next(final int idx, int size) {
+      if (idx == 0) return size - 1;
       return idx - 1;
     }
 
@@ -323,11 +320,8 @@ public class CoverageLineMarkerRenderer implements ActiveGutterRenderer, LineMar
       getTemplatePresentation().setText("Next Coverage Mark");
     }
 
-    protected boolean hasNext(final int idx, final List<Integer> list) {
-      return idx < list.size() - 1;
-    }
-
-    protected int next(final int idx) {
+    protected int next(final int idx, int size) {
+      if (idx == size - 1) return 0;
       return idx + 1;
     }
 
@@ -357,18 +351,18 @@ public class CoverageLineMarkerRenderer implements ActiveGutterRenderer, LineMar
       }
     }
 
-    protected abstract boolean hasNext(int idx, List<Integer> list);
-    protected abstract int next(int idx);
+    protected abstract int next(int idx, int size);
 
     @Nullable
     private Integer getLineEntry() {
       final ArrayList<Integer> list = new ArrayList<>(myLines.keySet());
       Collections.sort(list);
+      int size = list.size();
       final LineData data = getLineData(myLineNumber);
       final int currentStatus = data != null ? data.getStatus() : LineCoverage.NONE;
       int idx = list.indexOf(myNewToOldConverter != null ? myNewToOldConverter.fun(myLineNumber).intValue() : myLineNumber);
-      while (hasNext(idx, list)) {
-        final int index = next(idx);
+      while (true) {
+        final int index = next(idx, size);
         final LineData lineData = myLines.get(list.get(index));
         idx = index;
         if (lineData != null && lineData.getStatus() != currentStatus) {
@@ -381,7 +375,6 @@ public class CoverageLineMarkerRenderer implements ActiveGutterRenderer, LineMar
           }
         }
       }
-      return null;
     }
 
     @Nullable
