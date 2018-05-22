@@ -2452,9 +2452,9 @@ public class GroovyBnfParser implements PsiParser, LightPsiParser {
   }
 
   /* ********************************************************** */
-  // <<a_b_a_p <<item>> ','>>
+  // <<a_b_a_p <<item>> fast_comma>>
   static boolean comma_list_p(PsiBuilder b, int l, Parser _item) {
-    return a_b_a_p(b, l + 1, _item, T_COMMA_parser_);
+    return a_b_a_p(b, l + 1, _item, fast_comma_parser_);
   }
 
   /* ********************************************************** */
@@ -7243,11 +7243,6 @@ public class GroovyBnfParser implements PsiParser, LightPsiParser {
   final static Parser SLASHY_END_parser_ = new Parser() {
     public boolean parse(PsiBuilder b, int l) {
       return consumeToken(b, SLASHY_END);
-    }
-  };
-  final static Parser T_COMMA_parser_ = new Parser() {
-    public boolean parse(PsiBuilder b, int l) {
-      return consumeToken(b, T_COMMA);
     }
   };
   final static Parser T_LBRACE_parser_ = new Parser() {

@@ -15,7 +15,7 @@ Groovy script
         PsiElement(identifier)('B')
     Implements clause
       <empty list>
-    PsiErrorElement:',' or '{' expected, got 'fff'
+    PsiErrorElement:'{' expected, got 'fff'
       <empty list>
   PsiWhiteSpace(' ')
   Call expression

@@ -1212,14 +1212,15 @@ private mb_nl ::= nl?
 private nl ::= NL { consumeTokenMethod = 'consumeTokenFast' }
 private meta mb_nl_group ::= <<something>> | nl <<something>> // allows error reporting in position before the new line
 private empty ::= ()
+
+private fast_comma ::= ','
 // endregion
 
 
 // region Lists
-private meta comma_list_p ::= <<a_b_a_p <<item>> ','>>
+private meta comma_list_p ::= <<a_b_a_p <<item>> fast_comma>>
 private meta a_b_a_p ::= <<a>> (<<b>> <<a>>)* { pin('.*') = 1 }
 private meta comma_list ::= <<a_b_a <<item>> fast_comma>>
-private fast_comma ::= ','
 private meta a_b_a ::= <<a>> (<<b>> <<a>>)* { pin = 1 }
 
 private meta paren_list ::= '('')' | '(' <<paren_list_inner <<item>>>> ')' { pin('paren_list_1') = 1 }

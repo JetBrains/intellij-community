@@ -14,7 +14,7 @@ Groovy script
       Type element
         Reference element
           PsiElement(identifier)('S')
-      PsiErrorElement:',' or '>' expected, got ''preved''
+      PsiErrorElement:'>' expected, got ''preved''
         <empty list>
     PsiWhiteSpace(' ')
     PsiElement(string)(''preved'')
