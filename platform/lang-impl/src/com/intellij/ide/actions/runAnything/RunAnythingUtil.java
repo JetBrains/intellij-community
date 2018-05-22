@@ -8,14 +8,12 @@ import com.intellij.ide.IdeBundle;
 import com.intellij.ide.actions.runAnything.activity.RunAnythingProvider;
 import com.intellij.ide.ui.search.OptionDescription;
 import com.intellij.ide.util.PropertiesComponent;
-import com.intellij.openapi.actionSystem.CommonDataKeys;
-import com.intellij.openapi.actionSystem.DataContext;
-import com.intellij.openapi.actionSystem.KeyboardShortcut;
-import com.intellij.openapi.actionSystem.Shortcut;
+import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.keymap.KeymapUtil;
 import com.intellij.openapi.keymap.MacKeymapUtil;
+import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.popup.JBPopup;
 import com.intellij.openapi.util.Key;
@@ -191,6 +189,12 @@ public class RunAnythingUtil {
 
   public static void executeMatched(@NotNull DataContext dataContext, @NotNull String pattern) {
     List<String> commands = RunAnythingCache.getInstance(fetchProject(dataContext)).getState().getCommands();
+
+    Module module = LangDataKeys.MODULE.getData(dataContext);
+    if (module == null) {
+      LOG.info("RunAnything: module hasn't been found, command will be executed in context of 'null' module.");
+    }
+
     for (RunAnythingProvider provider : RunAnythingProvider.EP_NAME.getExtensions()) {
       Object value = provider.findMatchingValue(dataContext, pattern);
       if (value != null) {
