@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.execution.impl
 
 import com.intellij.execution.application.ApplicationConfigurationType
@@ -20,6 +6,7 @@ import com.intellij.execution.impl.RunConfigurableNodeKind.*
 import com.intellij.execution.junit.JUnitConfigurationType
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.Trinity
+import com.intellij.testFramework.DisposableRule
 import com.intellij.testFramework.EdtRule
 import com.intellij.testFramework.ProjectRule
 import com.intellij.testFramework.RunsInEdt
@@ -29,7 +16,6 @@ import com.intellij.ui.RowsDnDSupport.RefinedDropSupport.Position.*
 import com.intellij.ui.treeStructure.Tree
 import com.intellij.util.loadElement
 import org.jdom.Element
-import org.junit.After
 import org.junit.ClassRule
 import org.junit.Rule
 import org.junit.Test
@@ -38,13 +24,13 @@ import javax.swing.tree.DefaultMutableTreeNode
 import javax.swing.tree.TreePath
 
 private val ORDER = arrayOf(CONFIGURATION_TYPE, //Application
-  FOLDER, //1
-  CONFIGURATION, CONFIGURATION, CONFIGURATION, CONFIGURATION, CONFIGURATION, TEMPORARY_CONFIGURATION, TEMPORARY_CONFIGURATION, FOLDER, //2
-  TEMPORARY_CONFIGURATION, FOLDER, //3
-  CONFIGURATION, TEMPORARY_CONFIGURATION, CONFIGURATION_TYPE, //JUnit
-  FOLDER, //4
-  CONFIGURATION, CONFIGURATION, FOLDER, //5
-  CONFIGURATION, CONFIGURATION, TEMPORARY_CONFIGURATION, UNKNOWN//Defaults
+                            FOLDER, //1
+                            CONFIGURATION, CONFIGURATION, CONFIGURATION, CONFIGURATION, CONFIGURATION, TEMPORARY_CONFIGURATION, TEMPORARY_CONFIGURATION, FOLDER, //2
+                            TEMPORARY_CONFIGURATION, FOLDER, //3
+                            CONFIGURATION, TEMPORARY_CONFIGURATION, CONFIGURATION_TYPE, //JUnit
+                            FOLDER, //4
+                            CONFIGURATION, CONFIGURATION, FOLDER, //5
+                            CONFIGURATION, CONFIGURATION, TEMPORARY_CONFIGURATION, UNKNOWN //Defaults
 )
 
 @RunsInEdt
@@ -72,11 +58,13 @@ class RunConfigurableTest {
   @Rule
   val edtRule = EdtRule()
 
-  private val disposable = Disposer.newDisposable()
+  @JvmField
+  @Rule
+  val disposableRule = DisposableRule()
 
   private val configurable: RunConfigurable by lazy {
     val result = MockRunConfigurable(createRunManager(loadElement(RunConfigurableTest::class.java.getResourceAsStream("folders.xml"))))
-    Disposer.register(disposable, result)
+    Disposer.register(disposableRule.disposable, result)
     result
   }
 
@@ -88,11 +76,6 @@ class RunConfigurableTest {
 
   private val model: RunConfigurable.MyTreeModel
     get() = configurable.treeModel
-
-  @After
-  fun tearDown() {
-    Disposer.dispose(disposable)
-  }
 
   @Test
   fun testDND() {
@@ -211,35 +194,35 @@ class RunConfigurableTest {
     assertThat(configurable.isModified).isTrue()
     configurable.apply()
     assertThat(configurable.runManager.allSettings.map { it.name }).isEqualTo(listOf("Renamer",
-      "UI",
-      "AuTest",
-      "Simples",
-      "OutAndErr",
-      "C148C_TersePrincess",
-      "Periods",
-      "C148E_Porcelain",
-      "ErrAndOut",
-      "All in titled",
-      "All in titled2",
-      "All in titled3",
-      "All in titled4",
-      "All in titled5"))
+                                                                                     "UI",
+                                                                                     "AuTest",
+                                                                                     "Simples",
+                                                                                     "OutAndErr",
+                                                                                     "C148C_TersePrincess",
+                                                                                     "Periods",
+                                                                                     "C148E_Porcelain",
+                                                                                     "ErrAndOut",
+                                                                                     "All in titled",
+                                                                                     "All in titled2",
+                                                                                     "All in titled3",
+                                                                                     "All in titled4",
+                                                                                     "All in titled5"))
     assertThat(configurable.isModified).isFalse()
     model.drop(4, 8, BELOW)
     configurable.apply()
     assertThat(configurable.runManager.allSettings.map { it.name }).isEqualTo(listOf("Renamer",
-      "AuTest",
-      "Simples",
-      "UI",
-      "OutAndErr",
-      "C148C_TersePrincess",
-      "Periods",
-      "C148E_Porcelain",
-      "ErrAndOut",
-      "All in titled",
-      "All in titled2",
-      "All in titled3",
-      "All in titled4",
-      "All in titled5"))
+                                                                                     "AuTest",
+                                                                                     "Simples",
+                                                                                     "UI",
+                                                                                     "OutAndErr",
+                                                                                     "C148C_TersePrincess",
+                                                                                     "Periods",
+                                                                                     "C148E_Porcelain",
+                                                                                     "ErrAndOut",
+                                                                                     "All in titled",
+                                                                                     "All in titled2",
+                                                                                     "All in titled3",
+                                                                                     "All in titled4",
+                                                                                     "All in titled5"))
   }
 }
