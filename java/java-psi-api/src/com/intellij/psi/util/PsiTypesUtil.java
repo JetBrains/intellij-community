@@ -468,4 +468,18 @@ public class PsiTypesUtil {
       return false;
     }
   }
+
+  /**
+   * @param context in which type should be checked
+   * @return true if type has no explicit canonical type representation (e. g. intersection type)
+   */
+  public static boolean isNonDenotableType(@NotNull PsiType type, @NotNull PsiElement context) {
+    PsiElementFactory elementFactory = JavaPsiFacade.getElementFactory(context.getProject());
+    try {
+      PsiType typeAfterReplacement = elementFactory.createTypeElementFromText(type.getCanonicalText(), context).getType();
+      return !type.equals(typeAfterReplacement);
+    } catch (IncorrectOperationException e) {
+      return true;
+    }
+  }
 }
