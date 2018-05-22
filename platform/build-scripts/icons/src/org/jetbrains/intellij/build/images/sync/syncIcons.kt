@@ -3,43 +3,37 @@ package org.jetbrains.intellij.build.images.sync
 
 import java.io.File
 
-internal fun doSync(added: Collection<String>,
-                    modified: Collection<String>,
-                    icons: Map<String, GitObject>,
-                    devIcons: Map<String, GitObject>,
-                    iconsDir: String) {
-  try {
-    doSyncAdded(added, devIcons, iconsDir)
-    doSyncModified(modified, icons, devIcons)
-  }
-  catch (e: Exception) {
-    e.printStackTrace()
-    log(e.message ?: e.javaClass.canonicalName)
-  }
-}
-
-private fun doSyncAdded(added: Collection<String>,
-                        devIcons: Map<String, GitObject>,
-                        iconsDir: String) {
-  val iconsRepo = findGitRepoRoot(iconsDir)
-  val iconsRoot = File(iconsRepo, iconsDir.removePrefix(iconsRepo.path))
-  val unversioned = mutableListOf<String>()
+internal fun syncAdded(added: Collection<String>,
+                       sourceRepoMap: Map<String, GitObject>,
+                       targetDir: File, targetRepo: (File) -> File) {
+  val unversioned = mutableMapOf<File, MutableList<String>>()
   added.forEach {
-    val target = File(iconsRoot, it)
-    if (target.exists()) log("$it already exists in icons repo!")
-    val source = devIcons[it]!!.getFile()
+    val target = File(targetDir, it)
+    if (target.exists()) log("$it already exists in target repo!")
+    val source = sourceRepoMap[it]!!.getFile()
     source.copyTo(target, overwrite = true)
-    unversioned += target.relativeTo(iconsRepo).path
+    val repo = targetRepo(target)
+    if (!unversioned.containsKey(repo)) unversioned[repo] = mutableListOf()
+    unversioned[repo]!!.add(target.relativeTo(repo).path)
   }
-  addChangesToGit(unversioned, iconsRepo)
+  unversioned.forEach { repo, add ->
+    addChangesToGit(add, repo)
+  }
 }
 
-private fun doSyncModified(modified: Collection<String>,
-                           icons: Map<String, GitObject>,
-                           devIcons: Map<String, GitObject>) {
+internal fun syncModified(modified: Collection<String>,
+                          targetRepoMap: Map<String, GitObject>,
+                          sourceRepoMap: Map<String, GitObject>) {
   modified.forEach {
-    val dest = icons[it]!!.getFile()
-    val source = devIcons[it]!!.getFile()
-    source.copyTo(dest, overwrite = true)
+    val target = targetRepoMap[it]!!.getFile()
+    val source = sourceRepoMap[it]!!.getFile()
+    source.copyTo(target, overwrite = true)
+  }
+}
+
+internal fun syncRemoved(removed: Collection<String>,
+                         targetRepoMap: Map<String, GitObject>) {
+  removed.map { targetRepoMap[it]!!.getFile() }.forEach {
+    if (!it.delete()) log("Failed to delete ${it.absolutePath}")
   }
 }

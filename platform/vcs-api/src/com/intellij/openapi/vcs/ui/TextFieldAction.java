@@ -19,6 +19,7 @@ import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.Presentation;
 import com.intellij.openapi.actionSystem.ex.CustomComponentAction;
+import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.ui.ClickListener;
 import com.intellij.util.ui.JBUI;
@@ -33,7 +34,7 @@ import java.awt.event.KeyAdapter;
 import java.awt.event.KeyEvent;
 import java.awt.event.MouseEvent;
 
-public abstract class TextFieldAction extends AnAction implements CustomComponentAction {
+public abstract class TextFieldAction extends AnAction implements CustomComponentAction, DumbAware {
   protected JTextField myField;
   private final String myDescription;
   private final Icon myIcon;

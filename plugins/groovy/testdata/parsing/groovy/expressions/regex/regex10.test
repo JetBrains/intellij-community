@@ -17,9 +17,8 @@ Groovy script
           PsiElement({)('{')
           Parameter list
             <empty list>
-          PsiErrorElement:Wrong statement
-            <empty list>
-          PsiElement(do)('do')
+          PsiErrorElement:'->', ';', <statement>, identifier or new line expected, got 'do'
+            PsiElement(do)('do')
           PsiWhiteSpace(' ')
           Compound Gstring
             PsiElement(Gstring begin)('"')
@@ -38,9 +37,6 @@ Groovy script
                   Reference expression
                     PsiElement(identifier)('b')
                 PsiElement(})('}')
-            GrStringContentImpl(STRING_CONTENT)
-              ASTWrapperPsiElement(Gstring content)
-                <empty list>
             PsiElement(Gstring end)('"')
           PsiElement(})('}')
       GrStringContentImpl(STRING_CONTENT)

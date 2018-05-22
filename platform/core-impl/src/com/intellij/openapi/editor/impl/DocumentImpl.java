@@ -148,34 +148,49 @@ public class DocumentImpl extends UserDataHolderBase implements DocumentEx {
     getSaveRMTree(f, PERSISTENT_RANGE_MARKERS_KEY, myPersistentRangeMarkers);
   }
 
+  // are some range markers retained by strong references?
+  public static boolean areRangeMarkersRetainedFor(@NotNull VirtualFile f) {
+    processQueue();
+    // if a marker is retained then so is its node and the whole tree
+    // (ignore the race when marker is gc-ed right after this call - it's harmless)
+    return SoftReference.dereference(f.getUserData(RANGE_MARKERS_KEY)) != null
+           || SoftReference.dereference(f.getUserData(PERSISTENT_RANGE_MARKERS_KEY)) != null;
+  }
+
   private void getSaveRMTree(@NotNull VirtualFile f,
                              @NotNull Key<Reference<RangeMarkerTree<RangeMarkerEx>>> key, @NotNull RangeMarkerTree<RangeMarkerEx> tree) {
-    Reference<RangeMarkerTree<RangeMarkerEx>>
-      ref = ((UserDataHolderEx)f).putUserDataIfAbsent(key, new RMTreeReference(tree, f));
-    RangeMarkerTree<RangeMarkerEx> from = ref.get();
-    if (from == tree || from == null) {
+    RMTreeReference freshRef = new RMTreeReference(tree, f);
+    RangeMarkerTree<RangeMarkerEx> oldTree = SoftReference.dereference(f.getUserData(key));
+    ((UserDataHolderEx)f).putUserData(key, freshRef);
+
+    if (oldTree == null) {
+      // no tree was saved in virtual file before. happens when created new document.
+      // or the old tree got gc-ed, because no reachable markers retaining it are left alive. good riddance.
       return;
     }
-    from.processAll(r ->{
-      if (r.isValid()) {
+
+    // old tree was saved in the virtual file. Have to transfer markers from there.
+    TextRange myDocumentRange = new TextRange(0, getTextLength());
+    oldTree.processAll(r ->{
+      if (r.isValid() && myDocumentRange.contains(r)) {
         registerRangeMarker(r, r.getStartOffset(), r.getEndOffset(), r.isGreedyToLeft(), r.isGreedyToRight(), 0);
       }
       return true;
     });
   }
 
+  private static final ReferenceQueue<RangeMarkerTree<RangeMarkerEx>> rmTreeQueue = new ReferenceQueue<>();
   private static class RMTreeReference extends WeakReference<RangeMarkerTree<RangeMarkerEx>> {
     @NotNull private final VirtualFile virtualFile;
 
     RMTreeReference(@NotNull RangeMarkerTree<RangeMarkerEx> referent, @NotNull VirtualFile virtualFile) {
-      super(referent, copyableInfoQueue);
+      super(referent, rmTreeQueue);
       this.virtualFile = virtualFile;
     }
   }
-  private static final ReferenceQueue<RangeMarkerTree<RangeMarkerEx>> copyableInfoQueue = new ReferenceQueue<>();
   static void processQueue() {
     RMTreeReference ref;
-    while ((ref = (RMTreeReference)copyableInfoQueue.poll()) != null) {
+    while ((ref = (RMTreeReference)rmTreeQueue.poll()) != null) {
       ref.virtualFile.replace(RANGE_MARKERS_KEY, ref, null);
       ref.virtualFile.replace(PERSISTENT_RANGE_MARKERS_KEY, ref, null);
     }
@@ -920,10 +935,10 @@ public class DocumentImpl extends UserDataHolderBase implements DocumentEx {
 
   // this contortion is for avoiding document leak when the listener is leaked
   private static class DocumentListenerDisposable implements Disposable {
-    @NotNull private final LockFreeCOWSortedArray<DocumentListener> myList;
+    @NotNull private final LockFreeCOWSortedArray<? super DocumentListener> myList;
     @NotNull private final DocumentListener myListener;
 
-    DocumentListenerDisposable(@NotNull LockFreeCOWSortedArray<DocumentListener> list, @NotNull DocumentListener listener) {
+    DocumentListenerDisposable(@NotNull LockFreeCOWSortedArray<? super DocumentListener> list, @NotNull DocumentListener listener) {
       myList = list;
       myListener = listener;
     }

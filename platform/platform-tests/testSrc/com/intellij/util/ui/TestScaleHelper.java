@@ -11,12 +11,17 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.junit.*;
 
+import javax.swing.*;
 import java.awt.*;
+import java.awt.geom.AffineTransform;
 import java.awt.image.BufferedImage;
+import java.awt.image.ColorModel;
 import java.io.File;
 import java.net.MalformedURLException;
 import java.util.HashMap;
 import java.util.Map;
+
+import static com.intellij.util.ui.JBUI.ScaleType.SYS_SCALE;
 
 /**
  * @author tav
@@ -101,6 +106,16 @@ public class TestScaleHelper {
     return Pair.create(image, g);
   }
 
+  public static JComponent createComponent(ScaleContext ctx) {
+    return new JComponent() {
+      MyGraphicsConfiguration myGC = new MyGraphicsConfiguration(ctx.getScale(SYS_SCALE));
+      @Override
+      public GraphicsConfiguration getGraphicsConfiguration() {
+        return myGC;
+      }
+    };
+  }
+
   @SuppressWarnings("unused")
   public static void saveImage(BufferedImage image, String path) {
     try {
@@ -118,6 +133,44 @@ public class TestScaleHelper {
     }
     catch (MalformedURLException e) {
       throw new RuntimeException(e);
+    }
+  }
+
+  private static class MyGraphicsConfiguration extends GraphicsConfiguration {
+    private AffineTransform myTx;
+
+    protected MyGraphicsConfiguration(double scale) {
+      myTx = AffineTransform.getScaleInstance(scale, scale);
+    }
+
+    @Override
+    public GraphicsDevice getDevice() {
+      return null;
+    }
+
+    @Override
+    public ColorModel getColorModel() {
+      return null;
+    }
+
+    @Override
+    public ColorModel getColorModel(int transparency) {
+      return null;
+    }
+
+    @Override
+    public AffineTransform getDefaultTransform() {
+      return myTx;
+    }
+
+    @Override
+    public AffineTransform getNormalizingTransform() {
+      return myTx;
+    }
+
+    @Override
+    public Rectangle getBounds() {
+      return new Rectangle();
     }
   }
 }

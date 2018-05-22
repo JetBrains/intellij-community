@@ -2,6 +2,7 @@
 package com.intellij.codeInsight.completion;
 
 import com.intellij.injected.editor.DocumentWindow;
+import com.intellij.lang.injection.InjectedLanguageManager;
 import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Caret;
@@ -140,7 +141,7 @@ public class CompletionInitializationUtil {
     OffsetsInFile translatedOffsets = hostCopyOffsets.toInjectedIfAny(hostStartOffset);
     if (translatedOffsets != hostCopyOffsets) {
       PsiFile injected = translatedOffsets.getFile();
-      if (injected instanceof PsiFileImpl) {
+      if (injected instanceof PsiFileImpl && InjectedLanguageManager.getInstance(originalFile.getProject()).isInjectedFragment(originalFile)) {
         ((PsiFileImpl)injected).setOriginalFile(originalFile);
       }
       DocumentWindow documentWindow = InjectedLanguageUtil.getDocumentWindow(injected);

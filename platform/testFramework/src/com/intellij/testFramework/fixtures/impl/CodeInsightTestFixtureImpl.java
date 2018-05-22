@@ -86,6 +86,7 @@ import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.roots.ex.ProjectRootManagerEx;
 import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.readOnlyHandler.ReadonlyStatusHandlerImpl;
 import com.intellij.openapi.vfs.*;
@@ -1921,7 +1922,11 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
   private static void checkPsiTextConsistency(Project project, VirtualFile vFile) {
     PsiFile topLevelPsi = vFile.isValid() ? PsiManager.getInstance(project).findFile(vFile) : null;
     if (topLevelPsi != null) {
-      PsiTestUtil.checkStubsMatchText(topLevelPsi);
+      if (Registry.is("ide.check.structural.psi.text.consistency.in.tests")) {
+        PsiTestUtil.checkPsiStructureWithCommit(topLevelPsi, PsiTestUtil::checkPsiMatchesTextIgnoringNonCode);
+      } else {
+        PsiTestUtil.checkStubsMatchText(topLevelPsi);
+      }
     }
   }
 

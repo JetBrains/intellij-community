@@ -38,11 +38,8 @@ class MacDistributionBuilder extends OsSpecificDistributionBuilder {
     targetIcnsFileName = "${buildContext.productProperties.baseFileName}.icns"
   }
 
-  @Override
-  String copyFilesForOsDistribution() {
-    buildContext.messages.progress("Building distributions for macOS")
-    String macDistPath = "$buildContext.paths.buildOutputRoot/dist.mac"
-    def docTypes = (customizer.associateIpr ? """
+  String getDocTypes() {
+    def iprAssociation = (customizer.associateIpr ? """
       <dict>
         <key>CFBundleTypeExtensions</key>
         <array>
@@ -55,7 +52,32 @@ class MacDistributionBuilder extends OsSpecificDistributionBuilder {
         <key>CFBundleTypeRole</key>
         <string>Editor</string>
       </dict>
-""" : "") + customizer.additionalDocTypes
+""" : "")
+    def associations = ""
+    if (!customizer.fileAssociations.empty) {
+      associations = """<dict>
+        <key>CFBundleTypeExtensions</key>
+        <array>
+"""
+      customizer.fileAssociations.each {
+        associations += "          <string>${it}</string>\n"
+      }
+      associations +=  """        </array>
+        <key>CFBundleTypeRole</key>
+        <string>Editor</string>
+        <key>CFBundleTypeIconFile</key>
+        <string>$targetIcnsFileName</string>        
+      </dict>
+"""
+    }
+    return iprAssociation + associations + customizer.additionalDocTypes;
+  }
+
+  @Override
+  String copyFilesForOsDistribution() {
+    buildContext.messages.progress("Building distributions for macOS")
+    String macDistPath = "$buildContext.paths.buildOutputRoot/dist.mac"
+    def docTypes = getDocTypes()
     Map<String, String> customIdeaProperties = [:]
     if (buildContext.productProperties.toolsJarRequired) {
       customIdeaProperties["idea.jre.check"] = "true"

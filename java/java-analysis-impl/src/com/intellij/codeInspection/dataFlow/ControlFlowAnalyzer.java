@@ -1999,16 +1999,12 @@ public class ControlFlowAnalyzer extends JavaElementVisitor {
     addInstruction(new PushInstruction(myFactory.controlTransfer(ReturnTransfer.INSTANCE, FList.emptyList()), null));
     myInlinedBlockContext = new InlinedBlockContext(block, resultNullness == Nullness.NOT_NULL, target);
     startElement(block);
-    try {
-      block.accept(this);
-    }
-    finally {
-      finishElement(block);
-      myInlinedBlockContext = oldBlock;
-      popTrap(Trap.InsideInlinedBlock.class);
-      // Pop transfer value
-      addInstruction(new PopInstruction());
-    }
+    block.accept(this);
+    finishElement(block);
+    myInlinedBlockContext = oldBlock;
+    popTrap(Trap.InsideInlinedBlock.class);
+    // Pop transfer value
+    addInstruction(new PopInstruction());
   }
 
   /**

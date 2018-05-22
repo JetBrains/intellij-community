@@ -2,7 +2,6 @@ from typing import Any
 
 from .message import Message
 
-
 class Error(Exception): ...
 class TypeTransformationError(Error): ...
 

@@ -33,6 +33,7 @@ import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import static com.intellij.psi.codeStyle.JavaCodeStyleSettings.*;
 
@@ -127,7 +128,7 @@ class JavaClassNameInsertHandler implements InsertHandler<JavaPsiClassReferenceE
     }
   }
 
-  static PsiJavaCodeReferenceElement findJavaReference(PsiFile file, int offset) {
+  @Nullable static PsiJavaCodeReferenceElement findJavaReference(@NotNull PsiFile file, int offset) {
     return PsiTreeUtil.findElementOfClassAtOffset(file, offset, PsiJavaCodeReferenceElement.class, false);
   }
 

@@ -6,6 +6,7 @@ package org.jetbrains.idea.devkit.inspections
 import com.intellij.codeInspection.LocalQuickFix
 import com.intellij.codeInspection.ProblemDescriptor
 import com.intellij.codeInspection.ProblemHighlightType
+import com.intellij.openapi.extensions.ExtensionPointName
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.module.ModuleManager
 import com.intellij.openapi.module.ModuleUtilCore
@@ -23,6 +24,7 @@ import com.intellij.psi.xml.XmlTag
 import com.intellij.util.xml.DomElement
 import com.intellij.util.xml.DomUtil
 import com.intellij.util.xml.highlighting.DomElementAnnotationHolder
+import com.siyeh.ig.psiutils.TypeUtils
 import org.jetbrains.annotations.Nls
 import org.jetbrains.idea.devkit.dom.Extension
 import org.jetbrains.idea.devkit.dom.ExtensionPoint
@@ -30,15 +32,20 @@ import org.jetbrains.idea.devkit.dom.impl.PluginPsiClassConverter
 import org.jetbrains.idea.devkit.util.PsiUtil
 import org.jetbrains.jps.model.serialization.PathMacroUtil
 
-fun checkProperModule(extensionPoint: ExtensionPoint, holder: DomElementAnnotationHolder) {
-  if (checkProperXmlFileForClass(extensionPoint, holder, extensionPoint.`interface`.value)) {
+fun checkProperModule(extensionPoint: ExtensionPoint, holder: DomElementAnnotationHolder, ignoreClassList: List<String>) {
+  val interfacePsiClass = extensionPoint.`interface`.value
+  if (shouldCheckExtensionPointClassAttribute(interfacePsiClass) &&
+      checkProperXmlFileForClass(extensionPoint, holder, interfacePsiClass, ignoreClassList)) {
     return
   }
-  if (checkProperXmlFileForClass(extensionPoint, holder, extensionPoint.beanClass.value)) {
+  val beanClassPsiClass = extensionPoint.beanClass.value
+  if (shouldCheckExtensionPointClassAttribute(beanClassPsiClass) &&
+      checkProperXmlFileForClass(extensionPoint, holder, beanClassPsiClass, ignoreClassList)) {
     return
   }
+
   for (withElement in extensionPoint.withElements) {
-    if (checkProperXmlFileForClass(extensionPoint, holder, withElement.implements.value)) return
+    if (checkProperXmlFileForClass(extensionPoint, holder, withElement.implements.value, ignoreClassList)) return
   }
 
   val shortName = extensionPoint.effectiveQualifiedName.substringAfterLast('.')
@@ -72,7 +79,9 @@ private fun getRegisteringModule(element: PsiElement): Module? {
   return null
 }
 
-fun checkProperXmlFileForExtension(element: Extension, holder: DomElementAnnotationHolder) {
+fun checkProperXmlFileForExtension(element: Extension,
+                                   holder: DomElementAnnotationHolder,
+                                   ignoreClassList: List<String>) {
   for (attributeDescription in element.genericInfo.attributeChildrenDescriptions) {
     val attributeName = attributeDescription.name
     if (attributeName == "interfaceClass" || attributeName == "serviceInterface" || attributeName == "forClass") continue
@@ -82,7 +91,7 @@ fun checkProperXmlFileForExtension(element: Extension, holder: DomElementAnnotat
 
     if (attributeValue.converter is PluginPsiClassConverter) {
       val psiClass = attributeValue.value as PsiClass? ?: continue
-      if (checkProperXmlFileForClass(element, holder, psiClass)) return
+      if (checkProperXmlFileForClass(element, holder, psiClass, ignoreClassList)) return
     }
   }
 
@@ -92,11 +101,22 @@ fun checkProperXmlFileForExtension(element: Extension, holder: DomElementAnnotat
     val text = domElement.xmlTag?.value?.text ?: continue
     val project = domElement.xmlTag.project
     val psiClass = JavaPsiFacade.getInstance(project).findClass(text, GlobalSearchScope.projectScope(project))
-    if (psiClass != null && checkProperXmlFileForClass(element, holder, psiClass)) return
+    if (psiClass != null && checkProperXmlFileForClass(element, holder, psiClass, ignoreClassList)) return
   }
 }
 
-fun checkProperXmlFileForClass(element: DomElement, holder: DomElementAnnotationHolder, psiClass: PsiClass?): Boolean {
+private fun shouldCheckExtensionPointClassAttribute(psiClass: PsiClass?): Boolean {
+  psiClass?.fields?.forEach { field ->
+    if (TypeUtils.typeEquals(ExtensionPointName::class.java.canonicalName, field.type)) return true
+  }
+  return false
+}
+
+fun checkProperXmlFileForClass(element: DomElement,
+                               holder: DomElementAnnotationHolder,
+                               psiClass: PsiClass?,
+                               ignoreClassList : List<String>): Boolean {
+  if (ignoreClassList.contains(psiClass?.qualifiedName)) return false
   val definingModule = psiClass?.let { ModuleUtilCore.findModuleForPsiElement(it) } ?: return false
   return checkProperXmlFileForDefinition(element, holder, definingModule)
 }

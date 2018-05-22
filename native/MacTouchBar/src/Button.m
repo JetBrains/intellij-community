@@ -29,6 +29,13 @@ const int BUTTON_FLAG_DISABLED  = 1;
 const int BUTTON_FLAG_SELECTED  = 1 << 1;
 const int BUTTON_FLAG_COLORED   = 1 << 2;
 
+const int BUTTON_PRIORITY_SHIFT     = 3*8;
+const unsigned int BUTTON_PRIORITY_MASK      = 0xFF << BUTTON_PRIORITY_SHIFT;
+
+static int _getPriority(int flags) {
+    return (flags & BUTTON_PRIORITY_MASK) >> BUTTON_PRIORITY_SHIFT;
+}
+
 static void _setButtonData(NSButtonJAction *button, int updateOptions, int buttonWidth, int buttonFlags, NSString *nstext, NSImage *img, execute jaction) {
     if (updateOptions & BUTTON_UPDATE_ACTION) {
         button.jaction = jaction;
@@ -44,8 +51,10 @@ static void _setButtonData(NSButtonJAction *button, int updateOptions, int butto
     }
 
     if (updateOptions & BUTTON_UPDATE_TEXT) {
+        if (nstext != nil) {
+            [button setFont:[NSFont systemFontOfSize:0]];
+        }
         [button setTitle:nstext];
-        [button setImagePosition:(nstext == nil ? NSImageOnly : NSImageLeft)];
     }
 
     if (updateOptions & BUTTON_UPDATE_IMG)
@@ -72,6 +81,15 @@ static void _setButtonData(NSButtonJAction *button, int updateOptions, int butto
         else
             [button.widthAnchor constraintEqualToAnchor:button.widthAnchor].active = NO;
     }
+
+    if (button.image != nil) {
+        if (button.title != nil && button.title.length > 0)
+            [button setImagePosition:NSImageLeft];
+        else
+            [button setImagePosition:NSImageOnly];
+    } else {
+        [button setImagePosition:NSNoImage];
+    }
 }
 
 // NOTE: called from AppKit (creation when TB becomes visible)
@@ -94,6 +112,13 @@ id createButton(
     NSString *nstext = getString(text);
     _setButtonData(button, BUTTON_UPDATE_ALL, buttonWidth, buttonFlags, nstext, img, jaction);
     customItemForButton.view = button; // NOTE: view is strong
+
+    const int prio = _getPriority(buttonFlags);
+    if (prio != 0) {
+        // empiric: when prio <= -1.f then item won't be shown when at least 1 item with 0-priority (normal, default) presented => use interval from -0.5 to 0.5
+        customItemForButton.visibilityPriority = (float)(prio - 127)/256;
+        // NSLog(@"item [%@], prio=%1.5f", nsUid, customItemForButton.visibilityPriority);
+    }
     return customItemForButton;
 }
 

@@ -62,6 +62,8 @@ public class CodeCompletionPanel {
   private JBRadioButton myAllLetters;
   private JBLabel myBasicShortcut;
   private JBLabel mySmartShortcut;
+  private JPanel myCbOnCodeCompletionPanel;
+  private JPanel myCbOnSmartTypeCompletionPanel;
 
   public CodeCompletionPanel() {
     ChangeListener updateCaseCheckboxes = __ -> {
@@ -106,9 +108,9 @@ public class CodeCompletionPanel {
      }
    );
 
-    hideOption(myCbOnSmartTypeCompletion, OptionId.COMPLETION_SMART_TYPE);
-    hideOption(myCbOnCodeCompletion, OptionId.AUTOCOMPLETE_ON_BASIC_CODE_COMPLETION);
-    if(!myCbOnSmartTypeCompletion.isVisible() && !myCbOnCodeCompletion.isVisible())
+    hideOption(myCbOnSmartTypeCompletionPanel, OptionId.COMPLETION_SMART_TYPE);
+    hideOption(myCbOnCodeCompletionPanel, OptionId.AUTOCOMPLETE_ON_BASIC_CODE_COMPLETION);
+    if(!myCbOnSmartTypeCompletionPanel.isVisible() && !myCbOnCodeCompletionPanel.isVisible())
       myAutoInsertLabel.setVisible(false);
 
     reset();

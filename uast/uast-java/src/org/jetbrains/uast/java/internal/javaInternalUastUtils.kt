@@ -15,7 +15,6 @@
  */
 package org.jetbrains.uast.java
 
-import com.intellij.openapi.util.Key
 import com.intellij.psi.JavaTokenType
 import com.intellij.psi.PsiAnnotation
 import com.intellij.psi.PsiElement
@@ -25,9 +24,6 @@ import com.intellij.psi.tree.IElementType
 import org.jetbrains.uast.UDeclaration
 import org.jetbrains.uast.UElement
 import org.jetbrains.uast.UastBinaryOperator
-import java.lang.ref.WeakReference
-
-internal val JAVA_CACHED_UELEMENT_KEY = Key.create<WeakReference<UElement>>("cached-java-uelement")
 
 internal fun IElementType.getOperatorType() = when (this) {
   JavaTokenType.EQ -> UastBinaryOperator.ASSIGN

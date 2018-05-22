@@ -69,11 +69,11 @@ fun GitRepository.assertStagedChanges(changes: ChangesBuilder.() -> Unit) {
   PlatformTestCase.assertTrue(actualChanges.isEmpty())
 }
 
-fun GitRepository.assertCommitted(changes: ChangesBuilder.() -> Unit) {
+fun GitRepository.assertCommitted(depth: Int = 1, changes: ChangesBuilder.() -> Unit) {
   val cb = ChangesBuilder()
   cb.changes()
 
-  val actualChanges = GitHistoryUtils.history(project, root, "-1")[0].changes
+  val actualChanges = GitHistoryUtils.history(project, root, "-${depth}")[depth - 1].changes
   for (change in cb.changes) {
     val found = actualChanges.find(change.matcher)
     PlatformTestCase.assertNotNull("The change [$change] wasn't committed", found)
@@ -135,6 +135,12 @@ class ChangesBuilder {
   }
 
   val changes = linkedSetOf<AChange>()
+
+  fun deleted(name: String) {
+    PlatformTestCase.assertTrue(changes.add(AChange(FileStatus.DELETED, name) {
+      it.fileStatus == FileStatus.DELETED && it.beforeRevision!!.file.name == name && it.afterRevision == null
+    }))
+  }
 
   fun added(name: String) {
     PlatformTestCase.assertTrue(changes.add(AChange(FileStatus.ADDED, name) {

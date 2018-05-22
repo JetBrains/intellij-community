@@ -6,7 +6,7 @@ Groovy script
     Literal
       PsiElement(Gstring)('"abc"')
     PsiElement(,)(',')
-    PsiErrorElement:Expression expected
+    PsiErrorElement:<expression> expected, got ','
       <empty list>
     PsiWhiteSpace(' ')
     PsiElement(,)(',')

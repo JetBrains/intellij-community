@@ -79,7 +79,6 @@ public class LazyAttachVirtualFS extends VirtualFileSystem {
 
   @Override
   public void removeVirtualFileListener(@NotNull VirtualFileListener listener) {
-    throw new IncorrectOperationException();
   }
 
   @Override

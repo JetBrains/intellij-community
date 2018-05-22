@@ -34,13 +34,14 @@ public abstract class AbstractGotoSEContributor implements SearchEverywhereContr
                                            LOG.error("Null returned from " + model + " in " + this);
                                            return true;
                                          }
-                                         builder.addItem(o);
 
-                                         if (builder.itemsCount() >= elementsLimit ) {
+                                         if (builder.itemsCount() < elementsLimit ) {
+                                           builder.addItem(o);
+                                           return true;
+                                         } else {
                                            builder.setHasMore(true);
                                            return false;
                                          }
-                                         return true;
                                        }
     );
 

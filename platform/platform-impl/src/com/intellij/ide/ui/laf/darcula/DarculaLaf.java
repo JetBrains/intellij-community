@@ -13,6 +13,7 @@ import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.registry.Registry;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.util.Alarm;
 import com.intellij.util.containers.hash.HashMap;
@@ -20,6 +21,7 @@ import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
 import org.intellij.lang.annotations.JdkConstants;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import sun.awt.AppContext;
 
 import javax.swing.*;
@@ -233,19 +235,15 @@ public class DarculaLaf extends BasicLookAndFeel {
     }
   }
 
+  @NotNull
   protected String getPrefix() {
     return "darcula";
   }
 
-  private void call(String method) {
-    try {
-      final Method superMethod = BasicLookAndFeel.class.getDeclaredMethod(method);
-      superMethod.setAccessible(true);
-      superMethod.invoke(base);
-    }
-    catch (Exception ignore) {
-      log(ignore);
-    }
+  @Nullable
+  protected String getSystemPrefix() {
+    String osSuffix = SystemInfo.isMac ? "mac" : SystemInfo.isWindows ? "windows" : "linux";
+    return getPrefix() + "_" + osSuffix;
   }
 
   public void initComponentDefaults(UIDefaults defaults) {
@@ -313,16 +311,18 @@ public class DarculaLaf extends BasicLookAndFeel {
 
   @SuppressWarnings("IOResourceOpenedButNotSafelyClosed")
   protected void loadDefaults(UIDefaults defaults) {
-    final Properties properties = new Properties();
-    final String osSuffix = SystemInfo.isMac ? "mac" : SystemInfo.isWindows ? "windows" : "linux";
+    Properties properties = new Properties();
     try {
       InputStream stream = getClass().getResourceAsStream(getPrefix() + ".properties");
       properties.load(stream);
       stream.close();
 
-      stream = getClass().getResourceAsStream(getPrefix() + "_" + osSuffix + ".properties");
-      properties.load(stream);
-      stream.close();
+      String systemPrefix = getSystemPrefix();
+      if (StringUtil.isNotEmpty(systemPrefix)) {
+        stream = getClass().getResourceAsStream(systemPrefix + ".properties");
+        properties.load(stream);
+        stream.close();
+      }
 
       HashMap<String, Object> darculaGlobalSettings = new HashMap<>();
       final String prefix = getPrefix() + ".";

@@ -21,6 +21,7 @@ import com.intellij.openapi.util.Condition;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
 import com.intellij.psi.tree.IElementType;
+import com.intellij.util.IncorrectOperationException;
 import gnu.trove.THashMap;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NonNls;
@@ -131,7 +132,7 @@ public class PsiTypesUtil {
    */
   @Contract("null -> null; !null -> !null")
   @Nullable
-  public static String unboxIfPossible(final String type) {
+  public static String unboxIfPossible(@Nullable String type) {
     if (type == null) return null;
     final String s = ourUnboxedTypes.get(type);
     return s == null? type : s;
@@ -144,7 +145,7 @@ public class PsiTypesUtil {
    */
   @Contract("null -> null; !null -> !null")
   @Nullable
-  public static String boxIfPossible(final String type) {
+  public static String boxIfPossible(@Nullable String type) {
     if (type == null) return null;
     final String s = ourBoxedTypes.get(type);
     return s == null ? type : s;
@@ -155,6 +156,7 @@ public class PsiTypesUtil {
     return psiType instanceof PsiClassType? ((PsiClassType)psiType).resolve() : null;
   }
 
+  @NotNull
   public static PsiClassType getClassType(@NotNull PsiClass psiClass) {
     return JavaPsiFacade.getElementFactory(psiClass.getProject()).createType(psiClass);
   }
@@ -190,7 +192,7 @@ public class PsiTypesUtil {
   public static PsiType patchMethodGetClassReturnType(@NotNull PsiExpression call,
                                                       @NotNull PsiReferenceExpression methodExpression,
                                                       @NotNull PsiMethod method,
-                                                      @Nullable Condition<IElementType> condition,
+                                                      @NotNull Condition<? super IElementType> condition,
                                                       @NotNull LanguageLevel languageLevel) {
     //JLS3 15.8.2
     if (languageLevel.isAtLeast(LanguageLevel.JDK_1_5) && isGetClass(method)) {
@@ -200,7 +202,7 @@ public class PsiTypesUtil {
       if (qualifier != null) {
         qualifierType = TypeConversionUtil.erasure(qualifier.getType());
       }
-      else if (condition != null) {
+      else {
         PsiElement parent = call.getContext();
         while (parent != null && condition.value(parent.getNode().getElementType())) {
           parent = parent.getContext();
@@ -214,7 +216,7 @@ public class PsiTypesUtil {
     return null;
   }
 
-  public static boolean isGetClass(PsiMethod method) {
+  public static boolean isGetClass(@NotNull PsiMethod method) {
     if (GET_CLASS_METHOD.equals(method.getName())) {
       PsiClass aClass = method.getContainingClass();
       return aClass != null && CommonClassNames.JAVA_LANG_OBJECT.equals(aClass.getQualifiedName());
@@ -299,7 +301,7 @@ public class PsiTypesUtil {
    * @return the return type or null if cannot be determined
    */
   @Nullable
-  public static PsiType getMethodReturnType(PsiElement element) {
+  public static PsiType getMethodReturnType(@NotNull PsiElement element) {
     final PsiElement methodOrLambda = PsiTreeUtil.getParentOfType(element, PsiMethod.class, PsiLambdaExpression.class);
     return methodOrLambda instanceof PsiMethod
            ? ((PsiMethod)methodOrLambda).getReturnType()
@@ -362,7 +364,8 @@ public class PsiTypesUtil {
     });
   }
 
-  public static PsiType getParameterType(PsiParameter[] parameters, int i, boolean varargs) {
+  @NotNull
+  public static PsiType getParameterType(@NotNull PsiParameter[] parameters, int i, boolean varargs) {
     final PsiParameter parameter = parameters[i < parameters.length ? i : parameters.length - 1];
     PsiType parameterType = parameter.getType();
     if (parameterType instanceof PsiEllipsisType && varargs) {
@@ -375,8 +378,7 @@ public class PsiTypesUtil {
   }
 
   @NotNull
-  public static PsiTypeParameter[] filterUnusedTypeParameters(@NotNull PsiTypeParameter[] typeParameters,
-                                                              final PsiType... types) {
+  public static PsiTypeParameter[] filterUnusedTypeParameters(@NotNull PsiTypeParameter[] typeParameters, @NotNull PsiType... types) {
     if (typeParameters.length == 0) return PsiTypeParameter.EMPTY_ARRAY;
 
     TypeParameterSearcher searcher = new TypeParameterSearcher();
@@ -387,12 +389,12 @@ public class PsiTypesUtil {
   }
 
   @NotNull
-  public static PsiTypeParameter[] filterUnusedTypeParameters(final PsiType superReturnTypeInBaseClassType,
+  public static PsiTypeParameter[] filterUnusedTypeParameters(@NotNull PsiType superReturnTypeInBaseClassType,
                                                               @NotNull PsiTypeParameter[] typeParameters) {
     return filterUnusedTypeParameters(typeParameters, superReturnTypeInBaseClassType);
   }
 
-  private static boolean isAccessibleAt(PsiTypeParameter parameter, PsiElement context) {
+  private static boolean isAccessibleAt(@NotNull PsiTypeParameter parameter, @NotNull PsiElement context) {
     PsiTypeParameterListOwner owner = parameter.getOwner();
     if(owner instanceof PsiMethod) {
       return PsiTreeUtil.isAncestor(owner, context, false);
@@ -404,14 +406,15 @@ public class PsiTypesUtil {
     return false;
   }
 
-  public static boolean allTypeParametersResolved(PsiElement context, PsiType targetType) {
+  public static boolean allTypeParametersResolved(@NotNull PsiElement context, @NotNull PsiType targetType) {
     TypeParameterSearcher searcher = new TypeParameterSearcher();
     targetType.accept(searcher);
     Set<PsiTypeParameter> parameters = searcher.getTypeParameters();
     return parameters.stream().allMatch(parameter -> isAccessibleAt(parameter, context));
   }
 
-  public static PsiType createArrayType(PsiType newType, int arrayDim) {
+  @NotNull
+  public static PsiType createArrayType(@NotNull PsiType newType, int arrayDim) {
     for(int i = 0; i < arrayDim; i++){
       newType = newType.createArrayType();
     }
@@ -421,6 +424,7 @@ public class PsiTypesUtil {
   public static class TypeParameterSearcher extends PsiTypeVisitor<Boolean> {
     private final Set<PsiTypeParameter> myTypeParams = new HashSet<>();
 
+    @NotNull
     public Set<PsiTypeParameter> getTypeParameters() {
       return myTypeParams;
     }
@@ -462,6 +466,20 @@ public class PsiTypesUtil {
         bound.accept(this);
       }
       return false;
+    }
+  }
+
+  /**
+   * @param context in which type should be checked
+   * @return true if type has no explicit canonical type representation (e. g. intersection type)
+   */
+  public static boolean isNonDenotableType(@NotNull PsiType type, @NotNull PsiElement context) {
+    PsiElementFactory elementFactory = JavaPsiFacade.getElementFactory(context.getProject());
+    try {
+      PsiType typeAfterReplacement = elementFactory.createTypeElementFromText(type.getCanonicalText(), context).getType();
+      return !type.equals(typeAfterReplacement);
+    } catch (IncorrectOperationException e) {
+      return true;
     }
   }
 }

@@ -50,7 +50,7 @@ class NotificationManager : StartupActivity {
     }
     
     private fun notify(project: Project) {
-        val messageText = if (ApplicationManager.getApplication().isEAP) MESSAGE_TEXT else MESSAGE_TEXT_EAP
+        val messageText = if (ApplicationManager.getApplication().isEAP) MESSAGE_TEXT_EAP else MESSAGE_TEXT
         val notification = Notification(PLUGIN_NAME, PLUGIN_NAME, messageText, NotificationType.INFORMATION)
         notification.notify(project)
     }

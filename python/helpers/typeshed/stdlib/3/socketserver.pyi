@@ -1,3 +1,4 @@
+# NB: SocketServer.pyi and socketserver.pyi must remain consistent!
 # Stubs for socketserver
 
 from typing import Any, BinaryIO, Optional, Tuple, Type

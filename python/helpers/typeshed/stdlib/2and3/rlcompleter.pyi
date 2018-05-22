@@ -1,6 +1,6 @@
 # Stubs for rlcompleter
 
-from typing import Optional, Union
+from typing import Any, Dict, Optional, Union
 import sys
 
 if sys.version_info >= (3,):
@@ -10,4 +10,5 @@ else:
 
 
 class Completer:
+    def __init__(self, namespace: Optional[Dict[str, Any]] = ...) -> None: ...
     def complete(self, text: _Text, state: int) -> Optional[str]: ...

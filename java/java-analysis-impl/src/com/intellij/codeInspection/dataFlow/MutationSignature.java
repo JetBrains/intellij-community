@@ -1,8 +1,10 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInspection.dataFlow;
 
-import com.intellij.codeInsight.AnnotationUtil;
-import com.intellij.psi.*;
+import com.intellij.psi.PsiMethod;
+import com.intellij.psi.PsiModifier;
+import com.intellij.psi.PsiParameter;
+import com.intellij.psi.PsiType;
 import com.siyeh.ig.psiutils.ClassUtils;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -11,9 +13,8 @@ import java.util.Arrays;
 
 public class MutationSignature {
   public static final String ATTR_MUTATES = "mutates";
-  private static final String CONTRACT_ANNOTATION = "org.jetbrains.annotations.Contract";
-  private static final MutationSignature UNKNOWN = new MutationSignature(false, new boolean[0]);
-  private static final MutationSignature PURE = new MutationSignature(false, new boolean[0]);
+  static final MutationSignature UNKNOWN = new MutationSignature(false, new boolean[0]);
+  static final MutationSignature PURE = new MutationSignature(false, new boolean[0]);
   public static final String INVALID_TOKEN_MESSAGE = "Invalid token: %s; supported are 'this', 'param1', 'param2', etc.";
   private final boolean myThis;
   private final boolean[] myParameters;
@@ -114,21 +115,6 @@ public class MutationSignature {
   @NotNull
   public static MutationSignature fromMethod(@Nullable PsiMethod method) {
     if (method == null) return UNKNOWN;
-    PsiAnnotation annotation = AnnotationUtil.findAnnotation(method, CONTRACT_ANNOTATION);
-    if (annotation == null) return UNKNOWN;
-    PsiAnnotationMemberValue value = annotation.findAttributeValue(ATTR_MUTATES);
-    if (value instanceof PsiLiteralExpression) {
-      Object text = ((PsiLiteralExpression)value).getValue();
-      if (text instanceof String) {
-        try {
-          return parse((String)text);
-        }
-        catch (IllegalArgumentException ignored) { }
-      }
-    }
-    if(JavaMethodContractUtil.isPure(method)) {
-      return PURE;
-    }
-    return UNKNOWN;
+    return JavaMethodContractUtil.getContractInfo(method).getMutationSignature();
   }
 }

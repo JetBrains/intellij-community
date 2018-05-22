@@ -46,7 +46,7 @@ public class JsonSchemaCatalogManager {
 
   private void update() {
     // ignore schema catalog when remote activity is disabled (when we're in tests or it is off in settings)
-    myCatalog = !JsonFileResolver.isRemoteEnabled(myProject) ? null : JsonFileResolver.urlToFile(DEFAULT_CATALOG, myProject);
+    myCatalog = !JsonFileResolver.isRemoteEnabled(myProject) ? null : JsonFileResolver.urlToFile(DEFAULT_CATALOG);
   }
 
   @Nullable
@@ -62,14 +62,14 @@ public class JsonSchemaCatalogManager {
     if (myResolvedMappings.containsKey(name)) {
       String urlString = myResolvedMappings.get(name);
       if (EMPTY.equals(urlString)) return null;
-      return JsonFileResolver.resolveSchemaByReference(file, urlString, myProject);
+      return JsonFileResolver.resolveSchemaByReference(file, urlString);
     }
 
     if (myCatalog != null) {
       String urlString = resolveSchemaFile(file, myCatalog, myProject);
       if (NO_CACHE.equals(urlString)) return null;
       myResolvedMappings.put(name, urlString == null ? EMPTY : urlString);
-      return JsonFileResolver.resolveSchemaByReference(file, urlString, myProject);
+      return JsonFileResolver.resolveSchemaByReference(file, urlString);
     }
 
     return null;
@@ -117,13 +117,13 @@ public class JsonSchemaCatalogManager {
     }
   }
 
-  public void triggerUpdateCatalog() {
-    JsonFileResolver.startFetchingHttpFileIfNeeded(myCatalog);
+  public void triggerUpdateCatalog(Project project) {
+    JsonFileResolver.startFetchingHttpFileIfNeeded(myCatalog, project);
   }
 
   @Nullable
   private static String resolveSchemaFile(@NotNull VirtualFile file, @NotNull VirtualFile catalogFile, @NotNull Project project) {
-    JsonFileResolver.startFetchingHttpFileIfNeeded(catalogFile);
+    JsonFileResolver.startFetchingHttpFileIfNeeded(catalogFile, project);
 
     List<Pair<Collection<String>, String>> schemaCatalog = JsonCachedValues.getSchemaCatalog(catalogFile, project);
     if (schemaCatalog == null) return catalogFile instanceof HttpVirtualFile ? NO_CACHE : null;

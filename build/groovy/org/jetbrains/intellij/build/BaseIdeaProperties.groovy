@@ -62,7 +62,6 @@ abstract class BaseIdeaProperties extends ProductProperties {
     productLayout.additionalPlatformJars.putAll("resources.jar", ["intellij.java.resources", "intellij.java.resources.en"])
     productLayout.additionalPlatformJars.
       putAll("javac2.jar", ["intellij.java.compiler.antTasks", "intellij.java.guiForms.compiler", "intellij.java.guiForms.rt", "intellij.java.compiler.instrumentationUtil", "intellij.java.compiler.instrumentationUtil.java8", "intellij.java.jps.javacRefScanner8"])
-    productLayout.additionalPlatformJars.putAll("annotations-java8.jar", ["intellij.platform.annotations.common", "intellij.platform.annotations"])
 
     def JAVA_API_JAR = "java-api.jar"
     def JAVA_IMPL_JAR = "java-impl.jar"
@@ -96,8 +95,10 @@ abstract class BaseIdeaProperties extends ProductProperties {
         withProjectLibrary("jgoodies-common")
         withProjectLibrary("commons-net")
         withProjectLibrary("snakeyaml")
+        withProjectLibrary("jetbrains-annotations")
         withoutProjectLibrary("Ant")
         withoutProjectLibrary("Gradle")
+        removeVersionFromProjectLibraryJarNames("jetbrains-annotations")
         removeVersionFromProjectLibraryJarNames("JUnit3") //for compatibility with users projects which refer to IDEA_HOME/lib/junit.jar
       }
     } as Consumer<PlatformLayout>
@@ -124,6 +125,8 @@ abstract class BaseIdeaProperties extends ProductProperties {
     context.ant.copy(todir: "$targetDirectory/plugins/Kotlin") {
       fileset(dir: "$context.paths.kotlinHome")
     }
-    context.ant.move(file: "$targetDirectory/lib/annotations-java8.jar", tofile: "$targetDirectory/redist/annotations-java8.jar")
+    context.ant.move(file: "$targetDirectory/lib/annotations.jar", tofile: "$targetDirectory/redist/annotations-java8.jar")
+    //for compatibility with users projects which refer to IDEA_HOME/lib/annotations.jar
+    context.ant.move(file: "$targetDirectory/lib/annotations-java5.jar", tofile: "$targetDirectory/lib/annotations.jar")
   }
 }

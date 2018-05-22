@@ -1643,7 +1643,7 @@ public class UIUtil {
   }
 
   public static boolean isUnderDefaultMacTheme() {
-    return SystemInfo.isMac && isUnderIntelliJLaF();
+    return SystemInfo.isMac && isUnderIntelliJLaF() && Registry.is("ide.intellij.laf.macos.ui");
   }
 
   public static boolean isUnderWin10LookAndFeel() {

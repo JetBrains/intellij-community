@@ -429,12 +429,12 @@ public final class IconLoader {
   /**
    *  For internal usage. Converts the icon to 1x scale when applicable.
    */
-  public static Icon get1xIcon(Icon icon) {
+  public static Icon get1xIcon(Icon icon, boolean dark) {
     if (icon instanceof LazyIcon) {
       icon = ((LazyIcon)icon).getOrComputeIcon();
     }
     if (icon instanceof CachedImageIcon) {
-      Image img = ((CachedImageIcon)icon).loadFromUrl(ScaleContext.createIdentity());
+      Image img = ((CachedImageIcon)icon).loadFromUrl(ScaleContext.createIdentity(), dark);
       if (img != null) {
         icon = new ImageIcon(img);
       }
@@ -606,7 +606,11 @@ public final class IconLoader {
     }
 
     private Image loadFromUrl(@NotNull ScaleContext ctx) {
-      return ImageLoader.loadFromUrl(myUrl, true, useCacheOnLoad, myFilters, ctx);
+      return loadFromUrl(ctx, UIUtil.isUnderDarcula());
+    }
+
+    private Image loadFromUrl(@NotNull ScaleContext ctx, boolean dark) {
+      return ImageLoader.loadFromUrl(myUrl, true, useCacheOnLoad, dark, myFilters, ctx);
     }
 
     private class MyScaledIconsCache {

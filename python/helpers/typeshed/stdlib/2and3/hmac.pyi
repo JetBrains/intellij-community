@@ -1,6 +1,6 @@
 # Stubs for hmac
 
-from typing import Any, Callable, Optional, Union, overload
+from typing import Any, Callable, Optional, Union, overload, AnyStr
 from types import ModuleType
 import sys
 
@@ -30,11 +30,9 @@ class HMAC:
     def copy(self) -> HMAC: ...
 
 @overload
-def compare_digest(a: str, b: str) -> bool: ...
-@overload
-def compare_digest(a: bytes, b: bytes) -> bool: ...
-@overload
 def compare_digest(a: bytearray, b: bytearray) -> bool: ...
+@overload
+def compare_digest(a: AnyStr, b: AnyStr) -> bool: ...
 
 if sys.version_info >= (3, 7):
     def digest(key: _B, msg: _B, digest: str) -> bytes: ...

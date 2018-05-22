@@ -159,7 +159,7 @@ public class RefJavaUtilImpl extends RefJavaUtil{
             }
 
             if (refConstructor != null) {
-              refConstructor.updateParameterValues(psiParams);
+              refConstructor.updateParameterValues(psiParams, psiConstructor);
             }
           }
           return refConstructor;
@@ -269,7 +269,7 @@ public class RefJavaUtilImpl extends RefJavaUtil{
 
       PsiExpressionList argumentList = call.getArgumentList();
       if (!argumentList.isEmpty()) {
-        refMethod.updateParameterValues(argumentList.getExpressions());
+        refMethod.updateParameterValues(argumentList.getExpressions(), psiMethod);
       }
 
       final PsiExpression psiExpression = call.getMethodExpression().getQualifierExpression();

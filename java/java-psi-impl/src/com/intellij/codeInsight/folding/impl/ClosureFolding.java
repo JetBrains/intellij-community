@@ -16,11 +16,13 @@
 package com.intellij.codeInsight.folding.impl;
 
 import com.intellij.codeInsight.daemon.impl.analysis.HighlightUtilBase;
+import com.intellij.codeInsight.folding.JavaCodeFoldingSettings;
 import com.intellij.codeInsight.generation.OverrideImplementExploreUtil;
 import com.intellij.lang.folding.NamedFoldingDescriptor;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.FoldingGroup;
 import com.intellij.openapi.project.IndexNotReadyException;
+import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiUtil;
@@ -30,6 +32,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 
 /**
@@ -127,9 +130,10 @@ class ClosureFolding {
 
     FoldingGroup group = FoldingGroup.newGroup("lambda");
     List<NamedFoldingDescriptor> foldElements = new ArrayList<>();
-    foldElements.add(new NamedFoldingDescriptor(myNewExpression, getClosureStartOffset(), rangeStart, group, header));
+    foldElements.add(new NamedFoldingDescriptor(myNewExpression.getNode(), new TextRange(getClosureStartOffset(), rangeStart), group, header, JavaCodeFoldingSettings.getInstance().isCollapseLambdas(), Collections
+      .emptySet()));
     if (rangeEnd + 1 < getClosureEndOffset()) {
-      foldElements.add(new NamedFoldingDescriptor(classRBrace, rangeEnd, getClosureEndOffset(), group, footer));
+      foldElements.add(new NamedFoldingDescriptor(classRBrace.getNode(), new TextRange(rangeEnd, getClosureEndOffset()), group, footer, JavaCodeFoldingSettings.getInstance().isCollapseLambdas(), Collections.emptySet()));
     }
     return foldElements;
   }

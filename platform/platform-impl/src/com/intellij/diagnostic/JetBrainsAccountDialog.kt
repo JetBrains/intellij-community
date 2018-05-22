@@ -4,6 +4,7 @@ package com.intellij.diagnostic
 import com.intellij.CommonBundle
 import com.intellij.credentialStore.CredentialAttributes
 import com.intellij.credentialStore.Credentials
+import com.intellij.credentialStore.RememberCheckBoxState
 import com.intellij.ide.BrowserUtil
 import com.intellij.ide.passwordSafe.PasswordSafe
 import com.intellij.openapi.project.Project
@@ -23,9 +24,18 @@ fun showJetBrainsAccountDialog(parent: Component, project: Project? = null): Dia
   val userField = JTextField(credentials?.userName)
   val passwordField = JPasswordField(credentials?.password?.toString())
 
-  // if no user name - never stored and so, defaults to remember. if user name set, but no password, so, previously was stored without password
-  val selected = credentials?.userName == null || !credentials.password.isNullOrEmpty()
-  val rememberCheckBox = CheckBox(CommonBundle.message("checkbox.remember.password"), selected)
+  val passwordSafe = PasswordSafe.instance
+  val isSelected = if (credentials?.userName == null) {
+    // if no user name - never stored and so, defaults
+    passwordSafe.isRememberPasswordByDefault
+  }
+  else {
+    // if user name set, but no password, so, previously was stored without password
+    !credentials.password.isNullOrEmpty()
+  }
+
+    credentials?.userName == null || !credentials.password.isNullOrEmpty()
+  val rememberCheckBox = CheckBox(CommonBundle.message("checkbox.remember.password"), isSelected)
 
   val panel = panel {
     noteRow("Login to JetBrains Account to get notified\nwhen the submitted exceptions are fixed.")
@@ -51,7 +61,8 @@ fun showJetBrainsAccountDialog(parent: Component, project: Project? = null): Dia
       parent = if (parent.isShowing) parent else null) {
     val userName = userField.text.nullize(true)
     val password = if (rememberCheckBox.isSelected) passwordField.password else null
-    PasswordSafe.getInstance().set(CredentialAttributes(ErrorReportConfigurable.SERVICE_NAME, userName), Credentials(userName, password))
+    RememberCheckBoxState.update(rememberCheckBox)
+    passwordSafe.set(CredentialAttributes(ErrorReportConfigurable.SERVICE_NAME, userName), Credentials(userName, password))
     return@dialog null
   }
 }

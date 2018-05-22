@@ -644,7 +644,7 @@ public final class PythonPyTestingTest extends PyEnvTestCase {
                           Matchers.containsString("I will fail"));
 
         // This test has "sleep(1)", so duration should be >=1000
-        Assert.assertThat("Wrong duration", testFail.getDuration(), Matchers.greaterThanOrEqualTo(1000L));
+        Assert.assertThat("Wrong duration", testFail.getDuration(), Matchers.greaterThanOrEqualTo(900L));
       }
     });
   }

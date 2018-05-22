@@ -26,6 +26,7 @@ import java.util.Arrays;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Objects;
+import java.util.stream.Collectors;
 
 import static com.intellij.util.ObjectUtils.tryCast;
 import static java.util.Collections.emptyList;
@@ -37,7 +38,6 @@ public class VariableAccessFromInnerClassJava10Fix extends BaseIntentionAction {
     "context",
     "rContext"
   };
-  private static final LinkedHashSet<String> ourSuggestions = new LinkedHashSet<>(Arrays.asList(NAMES));
 
   private final PsiElement myContext;
 
@@ -60,15 +60,14 @@ public class VariableAccessFromInnerClassJava10Fix extends BaseIntentionAction {
     if (reference == null) return false;
     PsiLocalVariable variable = tryCast(reference.resolve(), PsiLocalVariable.class);
     if (variable == null) return false;
+    PsiDeclarationStatement declarationStatement = tryCast(variable.getParent(), PsiDeclarationStatement.class);
+    if (declarationStatement == null) return false;
+    if (declarationStatement.getDeclaredElements().length != 1) return false;
     String name = variable.getName();
     if (name == null) return false;
 
     PsiType type = variable.getType();
-    if (!PsiTypesUtil.isDenotableType(type) ||
-        (variable.getTypeElement().isInferredType() &&
-         type instanceof PsiClassType &&
-         ((PsiClassType)type).resolve() instanceof PsiAnonymousClass)
-      ) {
+    if (PsiTypesUtil.isNonDenotableType(type, variable)) {
       return false;
     }
     setText(QuickFixBundle.message("convert.variable.to.field.in.anonymous.class.fix.name", name));
@@ -102,35 +101,34 @@ public class VariableAccessFromInnerClassJava10Fix extends BaseIntentionAction {
 
         JavaCodeStyleManager codeStyleManager = JavaCodeStyleManager.getInstance(project);
         String boxName = codeStyleManager.suggestUniqueVariableName(NAMES[0], variable, true);
-        if (editor != null) {
-          String boxDeclarationText = "var " +
-                                      boxName +
-                                      " = new Object(){" +
-                                      variableText +
-                                      "};";
-          PsiStatement boxDeclaration = factory.createStatementFromText(boxDeclarationText, variable);
-          replaceReferences(variable, factory, boxName);
-          PsiDeclarationStatement declarationStatement = (PsiDeclarationStatement)variable.replace(boxDeclaration);
-          PsiLocalVariable localVariable = (PsiLocalVariable)declarationStatement.getDeclaredElements()[0];
-          SmartPointerManager smartPointerManager = SmartPointerManager.getInstance(project);
-          SmartPsiElementPointer<PsiLocalVariable> pointer = smartPointerManager.createSmartPsiElementPointer(localVariable);
-          PsiDocumentManager.getInstance(project).doPostponedOperationsAndUnblockDocument(editor.getDocument());
-          PsiLocalVariable varToChange = pointer.getElement();
-          if (varToChange == null) return;
-          editor.getCaretModel().moveToOffset(varToChange.getTextOffset());
-          editor.getSelectionModel().removeSelection();
-          new MemberInplaceRenamer(varToChange, varToChange, editor).performInplaceRefactoring(ourSuggestions);
-        }
-        else {
-          String boxDeclarationText = "var " +
-                                      boxName +
-                                      " = new Object(){" +
-                                      variableText +
-                                      "};";
-          PsiStatement boxDeclaration = factory.createStatementFromText(boxDeclarationText, variable);
-          replaceReferences(variable, factory, boxName);
+        String boxDeclarationText = "var " +
+                                    boxName +
+                                    " = new Object(){" +
+                                    variableText +
+                                    "};";
+        PsiStatement boxDeclaration = factory.createStatementFromText(boxDeclarationText, variable);
+        replaceReferences(variable, factory, boxName);
+        if (editor == null) {
           variable.replace(boxDeclaration);
+          return;
         }
+        PsiStatement statement = PsiTreeUtil.getParentOfType(variable, PsiStatement.class);
+        if (statement == null) return;
+        PsiDeclarationStatement declarationStatement = (PsiDeclarationStatement)statement.replace(boxDeclaration);
+        PsiLocalVariable localVariable = (PsiLocalVariable)declarationStatement.getDeclaredElements()[0];
+        SmartPointerManager smartPointerManager = SmartPointerManager.getInstance(project);
+        SmartPsiElementPointer<PsiLocalVariable> pointer = smartPointerManager.createSmartPsiElementPointer(localVariable);
+        PsiDocumentManager.getInstance(project).doPostponedOperationsAndUnblockDocument(editor.getDocument());
+        PsiLocalVariable varToChange = pointer.getElement();
+        if (varToChange == null) return;
+        editor.getCaretModel().moveToOffset(varToChange.getTextOffset());
+        editor.getSelectionModel().removeSelection();
+        LinkedHashSet<String> suggestions = Arrays.stream(NAMES)
+                                                  .map(
+                                                    suggestion -> codeStyleManager
+                                                      .suggestUniqueVariableName(suggestion, varToChange, var -> var == varToChange))
+                                                  .collect(Collectors.toCollection(() -> new LinkedHashSet<>()));
+        new MemberInplaceRenamer(varToChange, varToChange, editor).performInplaceRefactoring(suggestions);
       }
     });
   }
@@ -252,6 +250,6 @@ public class VariableAccessFromInnerClassJava10Fix extends BaseIntentionAction {
 
   @Override
   public boolean startInWriteAction() {
-    return true;
+    return false;
   }
 }

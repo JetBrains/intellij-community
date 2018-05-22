@@ -121,8 +121,6 @@ public class FieldCanBeLocalInspection extends FieldCanBeLocalInspectionBase {
 
     @Override
     protected void beforeDelete(@NotNull Project project, @NotNull PsiField variable, @NotNull PsiElement newDeclaration) {
-      final PsiDocComment docComment = variable.getDocComment();
-      if (docComment != null) moveDocCommentToDeclaration(project, docComment, newDeclaration);
     }
 
     @NotNull

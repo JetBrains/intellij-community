@@ -14,16 +14,16 @@ class FooChar {
 
   def charCast() {
     <error descr="Cannot cast 'null' to 'char'">(char)null</error>
-    (char)1 as char
-    <error descr="Cannot cast 'BigDecimal' to 'char'">(char)1 as BigDecimal</error>
-    <error descr="Cannot cast 'BigInteger' to 'char'">(char)1 as BigInteger</error>
-    (char)1 as double
-    (char)1 as float
-    (char)1 as int
-    (char)1 as short
-    (char)1 as long
-    <error descr="Cannot cast 'boolean' to 'char'">(char)1 as boolean</error>
-    <error descr="Cannot cast 'void' to 'char'">(char)1 as void</error>
+    (char) (1 as char)
+    <error descr="Cannot cast 'BigDecimal' to 'char'">(char) (1 as BigDecimal)</error>
+    <error descr="Cannot cast 'BigInteger' to 'char'">(char) (1 as BigInteger)</error>
+    (char) (1 as double)
+    (char) (1 as float)
+    (char) (1 as int)
+    (char) (1 as short)
+    (char) (1 as long)
+    <error descr="Cannot cast 'boolean' to 'char'">(char) (1 as boolean)</error>
+    <error descr="Cannot cast 'void' to 'char'">(char) (1 as void)</error>
     <error descr="Cannot cast 'void' to 'char'">(char)explicitVoid()</error>
     <error descr="Cannot cast 'Date' to 'char'">(char)new Date()</error>
     (char)"a"
@@ -33,7 +33,7 @@ class FooChar {
     (char)new Object()
     <error descr="Cannot cast 'Object[]' to 'char'">(char)new Object[0]</error>
     <error descr="Cannot cast 'Closure<Integer>' to 'char'">(char){ int a, int b -> a + b }</error>
-    <error descr="Cannot cast 'Matcher' to 'char'">(char)"aaa" =~ /aaa/</error>
+    <error descr="Cannot cast 'Matcher' to 'char'">(char) ("aaa" =~ /aaa/)</error>
     <error descr="Cannot cast 'List' to 'char'">(char)[]</error>
     <error descr="Cannot cast 'String' to 'char'">(char)s</error>
     <error descr="Cannot cast 'String' to 'char'">(char)s1</error>

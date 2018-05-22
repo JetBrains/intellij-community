@@ -18,8 +18,5 @@ Groovy script
           PsiElement($)('$')
           PsiErrorElement:Identifier or code block expected
             <empty list>
-        GrStringContentImpl(STRING_CONTENT)
-          ASTWrapperPsiElement($/ regex content)
-            <empty list>
-        PsiErrorElement:Dollar slash ending expected
+        PsiErrorElement:$/ regex end expected
           <empty list>

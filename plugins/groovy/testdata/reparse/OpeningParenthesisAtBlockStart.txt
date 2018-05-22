@@ -51,7 +51,7 @@ Groovy script
       PsiElement(new line)('\n\n')
       PsiElement(})('}')
   PsiElement(new line)('\n')
-  PsiErrorElement:Unexpected symbol
+  PsiErrorElement:';', <statement> or new line expected, got '}'
     PsiElement(})('}')
 ---
 Groovy script
@@ -77,7 +77,7 @@ Groovy script
             PsiElement(()('(')
             Reference expression
               PsiElement(identifier)('String')
-            PsiErrorElement:')' expected
+            PsiErrorElement:')' expected, got 'home'
               <empty list>
           PsiWhiteSpace(' ')
           Command arguments
@@ -85,9 +85,8 @@ Groovy script
               PsiElement(identifier)('home')
         PsiWhiteSpace('\n    ')
         PsiElement(identifier)('simplePlugins')
-      PsiErrorElement:';', '}' or new line expected
-        <empty list>
-      PsiElement(.)('.')
+      PsiErrorElement:<expression> expected, got '.'
+        PsiElement(.)('.')
       Method call
         Reference expression
           PsiElement(identifier)('each')
@@ -111,5 +110,5 @@ Groovy script
       PsiWhiteSpace('\n\n')
       PsiElement(})('}')
   PsiElement(new line)('\n')
-  PsiErrorElement:Unexpected symbol
+  PsiErrorElement:';', <statement> or new line expected, got '}'
     PsiElement(})('}')

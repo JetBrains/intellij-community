@@ -1,67 +1,43 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.actions.runAnything;
 
-import com.intellij.execution.RunnerAndConfigurationSettings;
-import com.intellij.execution.configurations.ConfigurationFactory;
-import com.intellij.openapi.extensions.ExtensionPointName;
+import com.intellij.execution.Executor;
+import com.intellij.execution.ExecutorRegistry;
+import com.intellij.execution.actions.ChooseRunConfigurationPopup;
+import com.intellij.execution.actions.ExecutorProvider;
+import com.intellij.ide.IdeBundle;
+import com.intellij.ide.actions.runAnything.activity.RunAnythingRunConfigurationExecutionProvider;
+import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.wm.ToolWindowId;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
-/**
- * Implement this class if a particular run configuration should be created for matching input string.
- */
-public abstract class RunAnythingRunConfigurationProvider {
-  public static final ExtensionPointName<RunAnythingRunConfigurationProvider> EP_NAME =
-    ExtensionPointName.create("com.intellij.runAnything.runConfigurationProvider");
+import java.util.Arrays;
+import java.util.Collection;
 
-  /**
-   * If {@code commandLine} is matched than current provider associated run configuration of factory {@link #getConfigurationFactory()}
-   * will be created as {@link #createConfiguration(Project, String, VirtualFile)}.
-   * <p>
-   * E.g. for input string `ruby test.rb` a new temporary 'ruby script' run configuration will be created.
-   *
-   * @param commandLine   'Run Anything' input string
-   * @param workDirectory command execution context directory
-   * @return true if current provider associated run configuration should be created by 'commandLine'
-   */
-  public abstract boolean isMatched(@NotNull Project project, @NotNull String commandLine, @NotNull VirtualFile workDirectory);
+import static com.intellij.ide.actions.runAnything.RunAnythingUtil.fetchProject;
 
-  /**
-   * Actual run configuration creation by {@code commandLine}
-   *
-   * @param commandLine      'Run Anything' input string
-   * @param workingDirectory command execution context directory
-   * @return created run configuration
-   */
+public class RunAnythingRunConfigurationProvider extends RunAnythingRunConfigurationExecutionProvider {
   @NotNull
-  public abstract RunnerAndConfigurationSettings createConfiguration(@NotNull Project project,
-                                                                     @NotNull String commandLine,
-                                                                     @NotNull VirtualFile workingDirectory);
+  @Override
+  public Collection<ChooseRunConfigurationPopup.ItemWrapper> getValues(@NotNull DataContext dataContext) {
+    return Arrays.asList(getWrappers(dataContext));
+  }
 
-  /**
-   * Returns current provider associated run configuration factory
-   */
   @NotNull
-  public abstract ConfigurationFactory getConfigurationFactory();
+  @Override
+  public String getCompletionGroupTitle() {
+    return IdeBundle.message("run.anything.run.configurations.group.title");
+  }
 
-  /**
-   * Finds matched provider along with all {@link RunAnythingRunConfigurationProvider} providers
-   *
-   * @param commandLine      'Run Anything' input string
-   * @param workingDirectory command execution context directory
-   */
-  @Nullable
-  public static RunAnythingRunConfigurationProvider findMatchedProvider(@NotNull Project project,
-                                                                        @NotNull String commandLine,
-                                                                        @NotNull VirtualFile workingDirectory) {
-    for (RunAnythingRunConfigurationProvider provider : EP_NAME.getExtensions()) {
-      if (provider.isMatched(project, commandLine, workingDirectory)) {
-        return provider;
+  @NotNull
+  private static ChooseRunConfigurationPopup.ItemWrapper[] getWrappers(@NotNull DataContext dataContext) {
+    Project project = fetchProject(dataContext);
+    return ChooseRunConfigurationPopup.createSettingsList(project, new ExecutorProvider() {
+      @Override
+      public Executor getExecutor() {
+        return ExecutorRegistry.getInstance().getExecutorById(ToolWindowId.RUN);
       }
-    }
-
-    return null;
+    }, false);
   }
 }

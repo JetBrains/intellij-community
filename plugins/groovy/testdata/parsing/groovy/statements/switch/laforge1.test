@@ -36,7 +36,7 @@ Groovy script
       PsiElement(new line)('\n\n        ')
       BREAK statement
         PsiElement(break)('break')
-    PsiElement(new line)('\n    ')
+      PsiElement(new line)('\n    ')
     Case section
       Case label
         PsiElement(case)('case')
@@ -47,7 +47,7 @@ Groovy script
       PsiElement(new line)('\n\n        ')
       BREAK statement
         PsiElement(break)('break')
-    PsiElement(new line)('\n    ')
+      PsiElement(new line)('\n    ')
     Case section
       Case label
         PsiElement(case)('case')
@@ -58,7 +58,7 @@ Groovy script
       PsiElement(new line)('\n\n        ')
       BREAK statement
         PsiElement(break)('break')
-    PsiElement(new line)('\n    ')
+      PsiElement(new line)('\n    ')
     Case section
       Case label
         PsiElement(default)('default')
@@ -75,5 +75,5 @@ Groovy script
         PsiWhiteSpace(' ')
         Literal
           PsiElement(Gstring)('"Bulk command not recognized"')
-    PsiElement(new line)('\n')
+      PsiElement(new line)('\n')
     PsiElement(})('}')

@@ -1,6 +1,8 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.groovy.lang.parser
 
+import com.intellij.idea.Bombed
+
 /**
  * @author peter
  */
@@ -68,6 +70,7 @@ class ExpressionsParsingTest extends GroovyParsingTestCase {
 
   void testclosures$closparam6() throws Throwable { doTest() }
 
+  @Bombed(month = 6, day = 10, user = "daniil", description = "highlight in annotator, update the test")
   void testclosures$final_error() throws Throwable { doTest() }
 
   void testclosures$param6() throws Throwable { doTest() }
@@ -173,9 +176,47 @@ class ExpressionsParsingTest extends GroovyParsingTestCase {
   void testnew$arr_decl() throws Throwable { doTest() }
 
   void testnew$emptyTypeArgs() { doTest() }
+
+  void testnew$noArgumentList() { doTest() }
+
 //  public void testnew$new1() throws Throwable { doTest(); }
   void testanonymous$anonymous() throws Throwable { doTest() }
 
+  void testanonymous$anonymous1() throws Throwable { doTest() }
+
+  void testanonymous$anonymous2() throws Throwable { doTest() }
+
+  void testanonymous$anonymous3() throws Throwable { doTest() }
+
+  void testanonymous$anonymous4() throws Throwable { doTest() }
+
+  void testanonymous$anonymous5() throws Throwable { doTest() }
+
+  void testanonymous$anonymous6() throws Throwable { doTest() }
+
+  void testanonymous$anonymous7() throws Throwable { doTest() }
+
+  void testanonymous$anonymous8() throws Throwable { doTest() }
+
+  void testanonymous$anonymous9() throws Throwable { doTest() }
+
+  void testanonymous$anonymous10() throws Throwable { doTest() }
+
+  void testanonymous$anonymous11() throws Throwable { doTest() }
+
+  void testanonymous$anonymous12() throws Throwable { doTest() }
+
+  void testanonymous$anonymous13() throws Throwable { doTest() }
+
+  void testanonymous$anonymous14() throws Throwable { doTest() }
+
+  void testanonymous$anonymous15() throws Throwable { doTest() }
+
+  void testanonymous$anonymous16() throws Throwable { doTest() }
+
+  void testanonymous$anonymous17() throws Throwable { doTest() }
+
+  @Bombed(month = 6, day = 10, user = "daniil", description = "highlight in annotator, update the test")
   void testnumbers() throws Throwable { doTest() }
 
   void testparenthed$exprInParenth() throws Throwable { doTest() }
@@ -238,6 +279,8 @@ class ExpressionsParsingTest extends GroovyParsingTestCase {
 
   void testpath$method$method9() throws Throwable { doTest() }
 
+  void testpath$method$method14() { doTest() }
+
   void testpath$path1() throws Throwable { doTest() }
 
   void testpath$path13() throws Throwable { doTest() }
@@ -285,6 +328,8 @@ class ExpressionsParsingTest extends GroovyParsingTestCase {
   void testreferences$ref8() throws Throwable { doTest() }
 
   void testreferences$ref9() throws Throwable { doTest() }
+
+  void testreferences$keywords() { doTest() }
 
   void testreferences$emptyTypeArgs() { doTest() }
 
@@ -454,6 +499,12 @@ class ExpressionsParsingTest extends GroovyParsingTestCase {
 
   void testtypecast$elvis() throws Throwable { doTest() }
 
+  void testtypecast$equality() { doTest() }
+
+  void testtypecast$parenthesized() { doTest() }
+
+  void testtypecast$noExpression() { doTest() }
+
   void testtypecast$conditional() throws Throwable { doTest() }
 
   void testAtHang() throws Throwable { doTest() }
@@ -533,6 +584,9 @@ class ExpressionsParsingTest extends GroovyParsingTestCase {
   void testcommandExpr$literalInvoked() { doTest() }
 
   void testDiamond() { doTest() }
+
+  @Bombed(month = 6, day = 10, user = "daniil")
+  void testDiamondErrors() { doTest() }
 
   void testpath$stringMethodCall1() { doTest() }
 

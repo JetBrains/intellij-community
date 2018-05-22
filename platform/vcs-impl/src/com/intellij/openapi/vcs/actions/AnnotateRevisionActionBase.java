@@ -1,6 +1,5 @@
 package com.intellij.openapi.vcs.actions;
 
-import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.fileEditor.FileEditorManager;
@@ -10,6 +9,7 @@ import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.progress.util.ProgressWindow;
+import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.vcs.AbstractVcs;
 import com.intellij.openapi.vcs.AbstractVcsHelper;
@@ -32,7 +32,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
 
 import static com.intellij.util.ObjectUtils.notNull;
 
-public abstract class AnnotateRevisionActionBase extends AnAction {
+public abstract class AnnotateRevisionActionBase extends DumbAwareAction {
   public AnnotateRevisionActionBase(@Nullable String text, @Nullable String description, @Nullable Icon icon) {
     super(text, description, icon);
   }

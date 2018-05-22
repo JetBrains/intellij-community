@@ -292,6 +292,7 @@ public class JavaLineBreakpointType extends JavaLineBreakpointTypeBase<JavaLineB
           Object value = JavaPsiFacade.getInstance(project).getConstantEvaluationHelper().computeConstantExpression(initializer);
           return value == null;
         }
+        return false;
       }
       else if (element instanceof PsiMethod) {
         PsiCodeBlock body = ((PsiMethod)element).getBody();

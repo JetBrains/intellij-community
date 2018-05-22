@@ -51,7 +51,10 @@ public class PackagePrefixIndex {
   }
 
   public Collection<String> getAllPackagePrefixes(@Nullable GlobalSearchScope scope) {
-    MultiMap<String, Module> map = myMap;
+    MultiMap<String, Module> map;
+    synchronized (LOCK) {
+      map = myMap;
+    }
     if (map != null) {
       return getAllPackagePrefixes(scope, map);
     }

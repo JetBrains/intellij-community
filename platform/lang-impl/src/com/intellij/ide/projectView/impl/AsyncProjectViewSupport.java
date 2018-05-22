@@ -24,6 +24,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.problems.WolfTheProblemSolver;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiManager;
+import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.ui.tree.AsyncTreeModel;
 import com.intellij.ui.tree.RestoreSelectionListener;
 import com.intellij.ui.tree.StructureTreeModel;
@@ -115,7 +116,13 @@ class AsyncProjectViewSupport {
 
       @Override
       protected boolean addSubtreeToUpdateByElement(PsiElement element) {
-        updateByElement(element, true);
+        VirtualFile file = PsiUtilCore.getVirtualFile(element);
+        if (file != null) {
+          myChangeListener.invalidate(file);
+        }
+        else {
+          updateByElement(element, true);
+        }
         return true;
       }
     }, parent);

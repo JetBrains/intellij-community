@@ -67,7 +67,7 @@ public class TextPanel extends JComponent implements Accessible {
   protected void paintComponent(final Graphics g) {
     String s = getText();
     final Rectangle bounds = getBounds();
-    if (UIUtil.isUnderDarcula()) {
+    if (UIUtil.isUnderDarcula() && getClientProperty("NoFillPanelColorForDarcula") == null) {
       g.setColor(UIUtil.getPanelBackground());
       g.fillRect(bounds.x, bounds.y, bounds.width, bounds.height);
     }

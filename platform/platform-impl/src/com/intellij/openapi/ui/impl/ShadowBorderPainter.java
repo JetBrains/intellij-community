@@ -40,14 +40,14 @@ public class ShadowBorderPainter {
                                                                               AllIcons.Ide.Shadow.Popup.Top_left,
                                                                               Gray.x00.withAlpha(30));
 
-  public static final ShadowPainter ourShadowPainter = new ShadowPainter(AllIcons.Ide.Notification.Shadow.Top,
-                                                                         AllIcons.Ide.Notification.Shadow.Top_right,
-                                                                         AllIcons.Ide.Notification.Shadow.Right,
-                                                                         AllIcons.Ide.Notification.Shadow.Bottom_right,
-                                                                         AllIcons.Ide.Notification.Shadow.Bottom,
-                                                                         AllIcons.Ide.Notification.Shadow.Bottom_left,
-                                                                         AllIcons.Ide.Notification.Shadow.Left,
-                                                                         AllIcons.Ide.Notification.Shadow.Top_left,
+  public static final ShadowPainter ourShadowPainter = new ShadowPainter(AllIcons.Ide.Shadow.Top,
+                                                                         AllIcons.Ide.Shadow.Top_right,
+                                                                         AllIcons.Ide.Shadow.Right,
+                                                                         AllIcons.Ide.Shadow.Bottom_right,
+                                                                         AllIcons.Ide.Shadow.Bottom,
+                                                                         AllIcons.Ide.Shadow.Bottom_left,
+                                                                         AllIcons.Ide.Shadow.Left,
+                                                                         AllIcons.Ide.Shadow.Top_left,
                                                                          Gray.x00.withAlpha(30));
 
 

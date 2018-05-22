@@ -15,23 +15,50 @@
  */
 package git4idea.tests
 
+import com.intellij.openapi.extensions.Extensions
+import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.SystemInfo
 import com.intellij.openapi.util.io.FileUtil
+import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.vcs.Executor.*
+import com.intellij.openapi.vcs.FilePath
 import com.intellij.openapi.vcs.VcsException
 import com.intellij.openapi.vcs.changes.Change
 import com.intellij.util.containers.ContainerUtil
 import git4idea.GitUtil
 import git4idea.checkin.GitCheckinEnvironment
+import git4idea.checkin.GitCheckinExplicitMovementProvider
 import git4idea.config.GitVersion
 import git4idea.test.*
 import org.junit.Assume.assumeTrue
 import java.io.File
 import java.util.*
 
+
 class GitCommitTest : GitSingleRepoTest() {
+  private val myMovementProvider = MyExplicitMovementProvider()
 
   override fun getDebugLogCategories() = super.getDebugLogCategories().plus("#" + GitCheckinEnvironment::class.java.name)
+
+  override fun setUp() {
+    super.setUp()
+
+    val point = Extensions.getRootArea().getExtensionPoint(GitCheckinExplicitMovementProvider.EP_NAME)
+    point.registerExtension(myMovementProvider)
+    Registry.get("git.allow.explicit.commit.renames").setValue(true)
+
+    (vcs.checkinEnvironment as GitCheckinEnvironment).setCommitRenamesSeparately(true)
+  }
+
+  override fun tearDown() {
+    val point = Extensions.getRootArea().getExtensionPoint(GitCheckinExplicitMovementProvider.EP_NAME)
+    point.unregisterExtension(myMovementProvider)
+    Registry.get("git.allow.explicit.commit.renames").resetToDefault()
+
+    (vcs.checkinEnvironment as GitCheckinEnvironment).setCommitRenamesSeparately(false)
+
+    super.tearDown()
+  }
 
   // IDEA-50318
   fun `test merge commit with spaces in path`() {
@@ -287,6 +314,78 @@ class GitCommitTest : GitSingleRepoTest() {
     assertEquals(initialContent + additionalContent, git("show HEAD:A.java"))
   }
 
+  fun `test commit explicit rename`() {
+    `assume version where git reset returns 0 exit code on success `()
+
+    tac("a.before", "before content")
+
+    rm("a.before")
+    touch("a.after", "after content")
+    git("add a.after")
+
+
+    val changes = assertChanges {
+      deleted("a.before")
+      added("a.after")
+    }
+
+    commit(changes)
+    assertNoChanges()
+
+    assertMessage("comment", repo.message("HEAD"))
+    assertMessage("explicit movement in tests", repo.message("HEAD~1"))
+
+    repo.assertCommitted(1) {
+      modified("a.after")
+    }
+    repo.assertCommitted(2) {
+      rename("a.before", "a.after")
+    }
+  }
+
+  fun `test commit explicit rename + one unstaged file & don't commit one staged file`() {
+    `assume version where git reset returns 0 exit code on success `()
+
+    tac("s.java")
+    tac("m.java")
+    tac("a.before")
+
+    rm("a.before")
+    touch("a.after", "after content")
+    git("add a.after")
+
+    echo("s.java", "staged")
+    echo("m.java", "unstaged")
+    git("add s.java m.java")
+
+    val changes = assertChanges {
+      deleted("a.before")
+      added("a.after")
+      modified("m.java")
+      modified("s.java")
+    }
+
+    commit(listOf(changes[0], changes[1], changes[2]))
+
+    assertChanges {
+      modified("s.java")
+    }
+    repo.assertStagedChanges {
+      modified("s.java")
+    }
+
+    assertMessage("comment", repo.message("HEAD"))
+    assertMessage("explicit movement in tests", repo.message("HEAD~1"))
+
+    repo.assertCommitted(1) {
+      modified("a.after")
+      modified("m.java")
+    }
+    repo.assertCommitted(2) {
+      rename("a.before", "a.after")
+    }
+  }
+
   private fun `assume version where git reset returns 0 exit code on success `() {
     assumeTrue("Not testing: git reset returns 1 and fails the commit process in ${vcs.version}",
                vcs.version.isLaterOrEqual(GitVersion(1, 8, 2, 0)))
@@ -332,5 +431,32 @@ class GitCommitTest : GitSingleRepoTest() {
     }
     assertTrue(actualChanges.isEmpty())
     return allChanges
+  }
+
+  private class MyExplicitMovementProvider : GitCheckinExplicitMovementProvider() {
+    override fun isEnabled(project: Project): Boolean = true
+
+    override fun getDescription(): String = "explicit movement in tests"
+
+    override fun getCommitMessage(originalCommitMessage: String): String = description
+
+    override fun collectExplicitMovements(project: Project,
+                                          beforePaths: MutableList<FilePath>,
+                                          afterPaths: MutableList<FilePath>): MutableCollection<Movement> {
+      val beforeMap = beforePaths.filter { it.name.endsWith(".before") }
+        .associate { it.name.removeSuffix(".before") to it }
+
+      val afterMap = afterPaths.filter { it.name.endsWith(".after") }
+        .associate { it.name.removeSuffix(".after") to it }
+
+      val movedChanges = ArrayList<Movement>()
+      for (key in (beforeMap.keys + afterMap.keys)) {
+        val beforePath = beforeMap[key] ?: continue
+        val afterPath = afterMap[key] ?: continue
+        movedChanges.add(Movement(beforePath, afterPath))
+      }
+
+      return movedChanges
+    }
   }
 }

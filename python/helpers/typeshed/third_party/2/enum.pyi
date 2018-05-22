@@ -28,6 +28,7 @@ class Enum(metaclass=EnumMeta):
     name = ...  # type: str
     value = ...  # type: Any
 
-class IntEnum(int, Enum): ...
+class IntEnum(int, Enum):
+    value = ...  # type: int
 
 def unique(enumeration: _S) -> _S: ...

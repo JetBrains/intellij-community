@@ -44,7 +44,7 @@ import java.awt.event.MouseEvent;
 
 public class InlineProgressIndicator extends ProgressIndicatorBase implements Disposable {
 
-  private final TextPanel myText = new TextPanel();
+  protected final TextPanel myText = new TextPanel();
   private final TextPanel myText2 = new TextPanel();
   private final JBIterable<ProgressButton> myEastButtons;
 
@@ -69,15 +69,7 @@ public class InlineProgressIndicator extends ProgressIndicatorBase implements Di
     myEastButtons = createEastButtons();
     if (myCompact) {
       myComponent.setLayout(new BorderLayout(2, 0));
-      JPanel textAndProgress = new NonOpaquePanel(new BorderLayout());
-      textAndProgress.add(myText, BorderLayout.CENTER);
-
-      final NonOpaquePanel progressWrapper = new NonOpaquePanel(new BorderLayout());
-      progressWrapper.setBorder(JBUI.Borders.empty(0, 4));
-      progressWrapper.add(myProgress, BorderLayout.CENTER);
-
-      textAndProgress.add(progressWrapper, BorderLayout.EAST);
-      myComponent.add(textAndProgress, BorderLayout.CENTER);
+      createCompactTextAndProgress();
       myComponent.add(createButtonPanel(myEastButtons.map(b -> b.button)), BorderLayout.EAST);
       myComponent.setToolTipText(processInfo.getTitle() + ". " + IdeBundle.message("progress.text.clickToViewProgressWindow"));
     } 
@@ -107,6 +99,18 @@ public class InlineProgressIndicator extends ProgressIndicatorBase implements Di
       myText2.recomputeSize();
     }
 
+  }
+
+  protected void createCompactTextAndProgress() {
+    JPanel textAndProgress = new NonOpaquePanel(new BorderLayout());
+    textAndProgress.add(myText, BorderLayout.CENTER);
+
+    final NonOpaquePanel progressWrapper = new NonOpaquePanel(new BorderLayout());
+    progressWrapper.setBorder(JBUI.Borders.empty(0, 4));
+    progressWrapper.add(myProgress, BorderLayout.CENTER);
+
+    textAndProgress.add(progressWrapper, BorderLayout.EAST);
+    myComponent.add(textAndProgress, BorderLayout.CENTER);
   }
 
   static JPanel createButtonPanel(Iterable<JComponent> components) {

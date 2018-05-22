@@ -227,7 +227,7 @@ public class ResolveCache {
     }
   }
 
-  @Nullable
+  @Nullable // null means not cached
   public <T extends PsiPolyVariantReference> ResolveResult[] getCachedResults(@NotNull T ref, boolean physical, boolean incompleteCode, boolean isPoly) {
     Map<T, ResolveResult[]> map = getMap(physical, getIndex(incompleteCode, isPoly));
     return map.get(ref);

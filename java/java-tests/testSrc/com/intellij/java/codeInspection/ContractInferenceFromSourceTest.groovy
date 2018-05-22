@@ -642,6 +642,36 @@ public static int atLeast(int min, int actual, String varName) {
     assert c == ['_, _, _ -> param2']
   }
 
+  void "test delegate to coalesce"() {
+    def c = inferContracts("""
+public static Object test(Object o1, Object o2) {
+  return choose(foo(o2, o1), "xyz");
+}
+
+@org.jetbrains.annotations.Contract("_, null -> null") 
+public static native Object foo(Object x, Object y);
+
+@org.jetbrains.annotations.Contract("!null, _ -> !null; _, !null -> !null; _, _ -> null")
+public static native Object choose(Object o1, Object o2);
+""")
+    assert c == []
+  }
+
+  void "test delegate to coalesce 2"() {
+    def c = inferContracts("""
+public static Object test(Object o1, Object o2) {
+  return choose(o2, foo("xyz", o1));
+}
+
+@org.jetbrains.annotations.Contract("_, null -> null") 
+public static native Object foo(Object x, Object y);
+
+@org.jetbrains.annotations.Contract("!null, _ -> !null; _, !null -> !null; _, _ -> null")
+public static native Object choose(Object o1, Object o2);
+""")
+    assert c == ['_, !null -> !null']
+  }
+
   private String inferContract(String method) {
     return assertOneElement(inferContracts(method))
   }

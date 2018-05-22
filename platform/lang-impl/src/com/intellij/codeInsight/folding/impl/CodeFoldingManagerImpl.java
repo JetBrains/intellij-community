@@ -1,6 +1,4 @@
-/*
- * Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInsight.folding.impl;
 
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
@@ -70,14 +68,15 @@ public class CodeFoldingManagerImpl extends CodeFoldingManager implements Projec
       @Override
       public void mouseMoved(EditorMouseEvent e) {
         if (myProject.isDisposed()) return;
-        HintManager hintManager = HintManager.getInstance();
-        if (hintManager != null && hintManager.hasShownHintsThatWillHideByOtherHint(false)) {
-          return;
-        }
-
-        if (e.getArea() != EditorMouseEventArea.FOLDING_OUTLINE_AREA) return;
         LightweightHint hint = null;
         try {
+          HintManager hintManager = HintManager.getInstance();
+          if (hintManager != null && hintManager.hasShownHintsThatWillHideByOtherHint(false)) {
+            return;
+          }
+
+          if (e.getArea() != EditorMouseEventArea.FOLDING_OUTLINE_AREA) return;
+
           Editor editor = e.getEditor();
           if (PsiDocumentManager.getInstance(myProject).isUncommited(editor.getDocument())) return;
 

@@ -2004,7 +2004,13 @@ public class HighlightUtil extends HighlightUtilBase {
       if (aClass == null) {
         String canonicalText = type.getCanonicalText();
         String description = JavaErrorMessages.message("unknown.class", canonicalText);
-        return HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(typeElement).descriptionAndTooltip(description).create();
+        HighlightInfo info =
+          HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(typeElement).descriptionAndTooltip(description).create();
+        PsiJavaCodeReferenceElement referenceElement = typeElement.getInnermostComponentReferenceElement();
+        if (referenceElement != null) {
+          UnresolvedReferenceQuickFixProvider.registerReferenceFixes(referenceElement, new QuickFixActionRegistrarImpl(info));
+        }
+        return info;
       }
     }
 

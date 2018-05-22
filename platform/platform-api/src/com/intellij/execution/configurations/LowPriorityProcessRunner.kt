@@ -15,11 +15,11 @@ fun setupLowPriorityExecution(commandLine: GeneralCommandLine, executablePath: S
   else {
     if (SystemInfo.isWindows) {
       commandLine.exePath = "cmd"
-      commandLine.addParameters("/c", "start", "/b", "/low", "/wait", GeneralCommandLine.inescapableQuote(""), executablePath)
+      commandLine.parametersList.prependAll("/c", "start", "/b", "/low", "/wait", GeneralCommandLine.inescapableQuote(""), executablePath)
     }
     else {
       commandLine.exePath = "/usr/bin/nice"
-      commandLine.addParameters("-n", "10", executablePath)
+      commandLine.parametersList.prependAll("-n", "10", executablePath)
     }
   }
 }

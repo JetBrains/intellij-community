@@ -158,7 +158,6 @@
     <action id="Hg.Commit.And.Push.Executor" class="org.zmlx.hg4idea.action.HgCommitAndPushExecutorAction" text="Commit and &amp;Push...">
       <add-to-group group-id="Vcs.CommitExecutor.Actions"/>
       <keyboard-shortcut first-keystroke="control alt K" keymap="$default"/>
-      <keyboard-shortcut first-keystroke="meta alt K" keymap="Xcode" remove="true"/>
     </action>
   </actions>
 

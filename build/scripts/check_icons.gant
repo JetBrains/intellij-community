@@ -10,7 +10,7 @@ import org.jetbrains.jps.util.JpsPathUtil
 
 import java.nio.file.Paths
 
-target('default': 'Check icons in repositories') {
+target('default': 'Check icons in IntelliJIcons repository') {
   def root = Paths.get(
     System.getProperty('teamcity.build.checkoutDir') ?: '.'
   ).normalize().toAbsolutePath().toString()
@@ -38,18 +38,13 @@ target('default': 'Check icons in repositories') {
     // so we have to add dependencies to AntClassLoader classpath directly
     BuildUtils.addToJpsClassPath(it.absolutePath, ant)
   }
-  def repoArg = 'repos'
-  def patternArg = 'skip.dirs.pattern'
-  def sync = 'sync'
-  String[] repos = System.properties."$repoArg"?.toString()?.split(/,/) ?: []
-  if (repos.length < 2) {
-    context.messages.error("Usage: -D$repoArg=<codeRepoDir>,<iconsRepoDir> [-D$patternArg=...] [-D$sync=false|true]")
-    System.exit(1)
-  }
-  def skipDirsPattern = System.properties."$patternArg"?.toString() ?: null
+  String[] repos = System.properties.'repos'?.toString()?.split(/,/) ?: []
   try {
     Class.forName('org.jetbrains.intellij.build.images.sync.CheckIconsKt').checkIcons(
-      repos[0], repos[1], skipDirsPattern, Boolean.parseBoolean(System.properties[sync] as String),
+      repos[0], repos[1],
+      System.properties.'skip.dirs.pattern'?.toString() ?: null,
+      Boolean.parseBoolean(System.properties.'sync.icons' as String),
+      Boolean.parseBoolean(System.properties.'sync.dev.icons' as String),
       { String msg -> msg.split(/\n/).each { context.messages.info(it) } },
       { String msg -> context.messages.buildStatus(msg); System.exit(1) }
     )

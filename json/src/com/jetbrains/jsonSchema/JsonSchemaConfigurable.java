@@ -151,14 +151,15 @@ public class JsonSchemaConfigurable extends NamedConfigurable<UserDefinedJsonSch
           (!StringUtil.isEmptyOrSpaces(myDisplayName) ? (myDisplayName + ": ") : "") + "Invalid schema URL");
       }
 
-      vFile = JsonFileResolver.urlToFile(schemaSubPath, myProject);
+      vFile = JsonFileResolver.urlToFile(schemaSubPath);
       if (vFile == null) {
         throw new ConfigurationException(
           (!StringUtil.isEmptyOrSpaces(myDisplayName) ? (myDisplayName + ": ") : "") + "Invalid URL resource");
       }
     }
     else {
-      final File file = new File(myProject.getBasePath(), schemaSubPath);
+      File subPath = new File(schemaSubPath);
+      final File file = subPath.isAbsolute() ? subPath : new File(myProject.getBasePath(), schemaSubPath);
       if (!file.exists() || (vFile = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(file)) == null) {
         throw new ConfigurationException(
           (!StringUtil.isEmptyOrSpaces(myDisplayName) ? (myDisplayName + ": ") : "") + "Schema file does not exist");
@@ -191,7 +192,7 @@ public class JsonSchemaConfigurable extends NamedConfigurable<UserDefinedJsonSch
 
   public UserDefinedJsonSchemaConfiguration getUiSchema() {
     final UserDefinedJsonSchemaConfiguration info = new UserDefinedJsonSchemaConfiguration();
-    info.setApplicationLevel(mySchema.isApplicationLevel());
+    info.setApplicationDefined(mySchema.isApplicationDefined());
     if (myView != null && myView.isInitialized()) {
       info.setName(getDisplayName());
       info.setSchemaVersion(myView.getSchemaVersion());

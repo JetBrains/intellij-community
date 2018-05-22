@@ -16,7 +16,7 @@ Groovy script
       Variable
         PsiElement(identifier)('key')
       PsiElement(,)(',')
-      PsiErrorElement:Identifier expected
+      PsiErrorElement:'->' or identifier expected, got '}'
         <empty list>
     PsiWhiteSpace(' ')
     PsiElement(})('}')
