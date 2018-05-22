@@ -20,7 +20,6 @@ import com.intellij.ide.browsers.WebBrowserService
 import com.intellij.ide.browsers.WebBrowserUrlProvider
 import com.intellij.ide.browsers.createOpenInBrowserRequest
 import com.intellij.lang.xml.XMLLanguage
-import com.intellij.openapi.fileTypes.LanguageFileType
 import com.intellij.openapi.project.DumbService
 import com.intellij.psi.PsiElement
 import com.intellij.testFramework.LightVirtualFile
@@ -63,11 +62,7 @@ class WebBrowserServiceImpl : WebBrowserService() {
   }
 
   override fun getUrlsToOpen(request: OpenInBrowserRequest, preferLocalUrl: Boolean): Collection<Url> {
-    var isHtmlOrXml = WebBrowserService.isHtmlOrXmlFile(request.file.viewProvider.baseLanguage)
-    if (!isHtmlOrXml && request.file.fileType is LanguageFileType) {
-      isHtmlOrXml = WebBrowserService.isHtmlOrXmlFile((request.file.fileType as LanguageFileType).language)
-    }
-
+    val isHtmlOrXml = WebBrowserService.isHtmlOrXmlFile(request.file)
     if (!preferLocalUrl || !isHtmlOrXml) {
       val dumbService = DumbService.getInstance(request.project)
       for (urlProvider in WebBrowserUrlProvider.EP_NAME.extensions) {

@@ -18,12 +18,12 @@ package org.jetbrains.builtInWebServer
 import com.intellij.ide.browsers.OpenInBrowserRequest
 import com.intellij.ide.browsers.WebBrowserService
 import com.intellij.ide.browsers.WebBrowserUrlProvider
-import com.intellij.lang.Language
 import com.intellij.openapi.project.DumbAware
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.impl.http.HttpVirtualFile
+import com.intellij.psi.PsiFile
 import com.intellij.testFramework.LightVirtualFile
 import com.intellij.util.SmartList
 import com.intellij.util.Url
@@ -39,10 +39,10 @@ open class BuiltInWebBrowserUrlProvider : WebBrowserUrlProvider(), DumbAware {
     // we must use base language because we serve file - not part of file, but the whole file
     // handlebars, for example, contains HTML and HBS psi trees, so, regardless of context, we should not handle such file
     val viewProvider = request.file.viewProvider
-    return viewProvider.isPhysical && request.virtualFile !is LightVirtualFile && isMyLanguage(viewProvider.baseLanguage)
+    return viewProvider.isPhysical && request.virtualFile !is LightVirtualFile && isFileOfMyLanguage(request.file)
   }
 
-  protected open fun isMyLanguage(language: Language) = WebBrowserService.isHtmlOrXmlFile(language)
+  protected open fun isFileOfMyLanguage(psiFile: PsiFile) = WebBrowserService.isHtmlOrXmlFile(psiFile)
 
   override fun getUrl(request: OpenInBrowserRequest, file: VirtualFile): Url? {
     if (file is HttpVirtualFile) {
