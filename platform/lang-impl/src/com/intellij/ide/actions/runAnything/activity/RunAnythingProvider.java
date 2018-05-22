@@ -12,12 +12,35 @@ import java.util.Arrays;
 import java.util.Collection;
 
 /**
- * This class provides ability to run an arbitrary activity for matched input text.
+ * Introduction
+ * <p>
+ * This class provides ability to run an arbitrary activity for and may provide help section to the matched input text.
+ * If you want to provide your own provider usually it's better to extend {@link RunAnythingProviderBase} - default implementation base class.
+ * <p>
+ * <p>
+ * Matching and execution
  * <p>
  * {@link RunAnythingProvider} operates with {@code V} that represents a value to be executed.
  * E.g. {@code V} can be a run configuration, an action or a string command to be executed in console.
  * <p>
  * See {@link RunAnythingRunConfigurationProvider}, {@link RunAnythingCommandProvider} and others inheritors.
+ * <p>
+ * <p>
+ * Help
+ * <p>
+ * "Run Anything" popup provides ability to show commands help. If "?" is inserted a list of commands that can be matched will be shown.
+ * <p>
+ * This help list is divided into several help groups, that usually are associated with a language or plugin, e.g. 'ruby'/'java'.
+ * E.g. 'ruby' help group consists of "ruby \<script.rb\>", "rvm use \<sdk_version\>" etc. command placeholders.
+ * <p>
+ * Each help group {@link com.intellij.ide.actions.runAnything.groups.RunAnythingHelpGroup} joins providers related to this group.
+ * <p>
+ * To add a provider command help placeholder in a group do the following:
+ * <ul>
+ * <li>register your own help group {@link com.intellij.ide.actions.runAnything.groups.RunAnythingHelpGroup}</li>
+ * <li>implement {@link #getHelpItem(DataContext)}. See also getHelp*() methods of {@link RunAnythingProviderBase}</li>
+ * <li>add provider to {@link com.intellij.ide.actions.runAnything.groups.RunAnythingHelpGroup#getProviders()}</li>
+ * </ul>
  */
 public interface RunAnythingProvider<V> {
   ExtensionPointName<RunAnythingProvider> EP_NAME = ExtensionPointName.create("com.intellij.runAnything.executionProvider");
