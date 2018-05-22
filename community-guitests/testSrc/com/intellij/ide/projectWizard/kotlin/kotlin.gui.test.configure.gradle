@@ -36,6 +36,7 @@ task updateXmlParsing(dependsOn: downloadUpdateXml) {
         project.ext.pluginZipName = 'kotlin-plugin-' + plugins.plugin[0].@version + '.zip'
         project.ext.pluginInstallPath = project.ext.downloadPath + File.separator + project.ext.pluginZipName
         project.ext.fullVersion = plugins.plugin[0].@version
+        project.ext.isFinalRelease = (project.ext.versionKind == "release").toString()
     }
 }
 
@@ -47,7 +48,6 @@ task getKotlinArtifactVersion(dependsOn: updateXmlParsing) {
                 project.ext.kotlin_artifact_version = releaseVersion
             else
                 project.ext.kotlin_artifact_version = idePluginVersion
-            project.ext.isFinalRelease = versionKind == "release"
         }
     }
 }
