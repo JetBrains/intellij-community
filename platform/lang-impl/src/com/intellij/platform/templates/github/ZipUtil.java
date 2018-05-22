@@ -154,7 +154,7 @@ public class ZipUtil {
         return;
       }
     }
-    File child = com.intellij.util.io.ZipUtil.createFileForEntry(extractToDir, relativeExtractPath);
+    File child = com.intellij.util.io.ZipUtil.newFileForEntry(extractToDir, relativeExtractPath);
     File dir = zipEntry.isDirectory() ? child : child.getParentFile();
     if (!dir.exists() && !dir.mkdirs()) {
       throw new IOException("Unable to create dir: '" + dir + "'!");
