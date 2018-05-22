@@ -11,10 +11,21 @@ import java.util.Collection;
 import java.util.Objects;
 import java.util.stream.Collectors;
 
-public abstract class RunAnythingHelpGroup<P extends RunAnythingProvider>
-  extends RunAnythingGroupBase {
+/**
+ * 'Run Anything' popup help section is divided into groups by categories.
+ * E.g. 'ruby' help group contains 'ruby' related run configuration commands, 'rvm use #sdk_version' commands etc.
+ * <p>
+ * To add an own help group extend this class and register {@link #EP_NAME} in your ide or plugin.
+ *
+ * @param <P>
+ */
+public abstract class RunAnythingHelpGroup<P extends RunAnythingProvider> extends RunAnythingGroupBase {
   public static final ExtensionPointName<RunAnythingGroup> EP_NAME = ExtensionPointName.create("com.intellij.runAnything.helpGroup");
 
+  /**
+   * Returns collections of providers each of them is expecting to provide not null {@link RunAnythingProvider#getHelpItem(DataContext)}
+   * See also {@code RunAnythingProviderBase.getHelp*()} methods.
+   */
   @NotNull
   public abstract Collection<P> getProviders();
 
