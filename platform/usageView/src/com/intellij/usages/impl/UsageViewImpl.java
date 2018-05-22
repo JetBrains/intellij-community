@@ -1371,6 +1371,7 @@ public class UsageViewImpl implements UsageViewEx {
     disposeUsageContextPanels();
     synchronized (lock) {
       isDisposed = true;
+      cancelCurrentSearch();
       if (myTree != null) {
         ToolTipManager.sharedInstance().unregisterComponent(myTree);
       }
