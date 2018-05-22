@@ -16,10 +16,10 @@
 package com.jetbrains.python.debugger.attach;
 
 import com.intellij.execution.process.ProcessInfo;
+import com.intellij.icons.AllIcons;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.UserDataHolder;
 import com.intellij.xdebugger.attach.XLocalAttachGroup;
-import icons.PythonIcons;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -44,7 +44,7 @@ class PyLocalAttachGroup implements XLocalAttachGroup {
   @NotNull
   @Override
   public Icon getProcessIcon(@NotNull Project project, @NotNull ProcessInfo info, @NotNull UserDataHolder dataHolder) {
-    return PythonIcons.Python.Python;
+    return AllIcons.RunConfigurations.Application;
   }
 
   @NotNull

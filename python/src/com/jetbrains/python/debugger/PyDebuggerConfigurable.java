@@ -70,7 +70,7 @@ public class PyDebuggerConfigurable implements SearchableConfigurable, Configura
       }
     });
 
-    myAttachFilterLabel.setText("<html>For <b>Attach To Local Process</b> show processes with names containing:</html>");
+    myAttachFilterLabel.setText("<html>For <b>Attach To Process</b> show processes with names containing:</html>");
   }
 
   public String getDisplayName() {
