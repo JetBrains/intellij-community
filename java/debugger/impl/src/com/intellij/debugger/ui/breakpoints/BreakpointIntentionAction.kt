@@ -28,8 +28,9 @@ internal abstract class BreakpointIntentionAction(protected val myBreakpoint: XB
     override fun actionPerformed(e: AnActionEvent) {
       with(myBreakpoint.properties as JavaBreakpointProperties<*>) {
         isCALLER_FILTERS_ENABLED = true
-        callerFilters = ArrayUtil.remove(callerFilters, myCaller)
-        callerExclusionFilters = ArrayUtil.append(callerExclusionFilters, myCaller)
+        val callerFilter = ClassFilter(myCaller)
+        callerFilters = ArrayUtil.remove(callerFilters, callerFilter)
+        callerExclusionFilters = ArrayUtil.append(callerExclusionFilters, callerFilter)
       }
       (myBreakpoint as XBreakpointBase<*, *, *>).fireBreakpointChanged()
     }
@@ -42,8 +43,9 @@ internal abstract class BreakpointIntentionAction(protected val myBreakpoint: XB
     override fun actionPerformed(e: AnActionEvent) {
       with(myBreakpoint.properties as JavaBreakpointProperties<*>) {
         isCALLER_FILTERS_ENABLED = true
-        callerFilters = ArrayUtil.append(callerExclusionFilters, myCaller)
-        callerExclusionFilters = ArrayUtil.remove(callerExclusionFilters, myCaller)
+        val callerFilter = ClassFilter(myCaller)
+        callerFilters = ArrayUtil.append(callerFilters, callerFilter)
+        callerExclusionFilters = ArrayUtil.remove(callerExclusionFilters, callerFilter)
       }
       (myBreakpoint as XBreakpointBase<*, *, *>).fireBreakpointChanged()
     }

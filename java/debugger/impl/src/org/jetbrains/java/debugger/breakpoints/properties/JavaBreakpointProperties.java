@@ -26,8 +26,8 @@ public class JavaBreakpointProperties<T extends JavaBreakpointProperties> extend
   private InstanceFilter[] myInstanceFilters;
 
   private boolean CALLER_FILTERS_ENABLED    = false;
-  private String[] myCallerFilters;
-  private String[] myCallerExclusionFilters;
+  private ClassFilter[] myCallerFilters;
+  private ClassFilter[] myCallerExclusionFilters;
 
   @XCollection(propertyElementName = "instance-filters")
   public InstanceFilter[] getInstanceFilters() {
@@ -158,22 +158,22 @@ public class JavaBreakpointProperties<T extends JavaBreakpointProperties> extend
   }
 
   @XCollection(propertyElementName = "caller-filters")
-  public String[] getCallerFilters() {
-    return myCallerFilters != null ? myCallerFilters : ArrayUtil.EMPTY_STRING_ARRAY;
+  public ClassFilter[] getCallerFilters() {
+    return myCallerFilters != null ? myCallerFilters : ClassFilter.EMPTY_ARRAY;
   }
 
-  public boolean setCallerFilters(String[] callerFilters) {
+  public boolean setCallerFilters(ClassFilter[] callerFilters) {
     boolean changed = !filtersEqual(myCallerFilters, callerFilters);
     myCallerFilters = callerFilters;
     return changed;
   }
 
   @XCollection(propertyElementName = "caller-exclusion-filters")
-  public String[] getCallerExclusionFilters() {
-    return myCallerExclusionFilters != null ? myCallerExclusionFilters : ArrayUtil.EMPTY_STRING_ARRAY;
+  public ClassFilter[] getCallerExclusionFilters() {
+    return myCallerExclusionFilters != null ? myCallerExclusionFilters : ClassFilter.EMPTY_ARRAY;
   }
 
-  public boolean setCallerExclusionFilters(String[] callerExclusionFilters) {
+  public boolean setCallerExclusionFilters(ClassFilter[] callerExclusionFilters) {
     boolean changed = !filtersEqual(myCallerExclusionFilters, callerExclusionFilters);
     myCallerExclusionFilters = callerExclusionFilters;
     return changed;
