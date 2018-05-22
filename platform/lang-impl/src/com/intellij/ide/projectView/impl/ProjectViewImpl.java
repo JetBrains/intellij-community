@@ -1418,11 +1418,11 @@ public class ProjectViewImpl extends ProjectView implements PersistentStateCompo
   @NotNull
   public static String getDefaultViewId() {
     //noinspection SpellCheckingInspection
-    if (!"AndroidStudio".equals(PlatformUtils.getPlatformPrefix()) || Boolean.getBoolean("studio.projectview")) {
-      return ProjectViewPane.ID;
+    if ("AndroidStudio".equals(PlatformUtils.getPlatformPrefix()) && !Boolean.getBoolean("studio.projectview")) {
+      return "AndroidView";  // the default in Android Studio unless studio.projectview is set: issuetracker.google.com/37091465
     }
     else {
-      return "AndroidView";
+      return ProjectViewPane.ID;
     }
   }
 
