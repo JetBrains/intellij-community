@@ -102,6 +102,12 @@ class ExternalSystemRunManagerListener implements RunManagerListener {
   }
 
   public void attach() {
+    eventDisposable = Disposer.newDisposable();
+    myManager.getProject().getMessageBus().connect(eventDisposable).subscribe(RunManagerListener.TOPIC, this);
+  }
+
+  @Override
+  public void stateLoaded() {
     myMap.clear();
 
     for (ExternalSystemManager<?, ?, ?, ?, ?> systemManager : ExternalSystemApiUtil.getAllManagers()) {
@@ -114,9 +120,6 @@ class ExternalSystemRunManagerListener implements RunManagerListener {
         add(myMap, configurationSettings);
       }
     }
-
-    eventDisposable = Disposer.newDisposable();
-    myManager.getProject().getMessageBus().connect(eventDisposable).subscribe(RunManagerListener.TOPIC, this);
   }
 
   public void detach() {

@@ -507,6 +507,7 @@ open class RunManagerImpl(internal val project: Project) : RunManagerEx(), Persi
     isFirstLoadState.set(false)
     loadSharedRunConfigurations()
     runConfigurationFirstLoaded()
+    eventPublisher.stateLoaded()
   }
 
   override fun loadState(parentNode: Element) {
@@ -585,6 +586,8 @@ open class RunManagerImpl(internal val project: Project) : RunManagerEx(), Persi
     if (!isFirstLoadState && oldSelectedConfigurationId != null && oldSelectedConfigurationId != selectedConfigurationId) {
       eventPublisher.runConfigurationSelected()
     }
+
+    eventPublisher.stateLoaded()
   }
 
   private fun loadSharedRunConfigurations() {
