@@ -83,6 +83,7 @@ public class ExternalLibraryDescriptor {
     return myMaxVersion;
   }
 
+  @Nullable
   public String getPreferredVersion() {
     return myPreferredVersion;
   }
