@@ -16,7 +16,7 @@ public interface GroovyTokenTypes {
   /**
    * Wrong token. Use for debug needs
    */
-  IElementType mWRONG = new GroovyElementType("wrong token");
+  IElementType mWRONG = T_WRONG;
 
   /* **************************************************************************************************
  *  Whitespaces & NewLines
@@ -29,8 +29,8 @@ public interface GroovyTokenTypes {
  * ****************************************************************************************************/
 
   IElementType mSH_COMMENT = SH_COMMENT;
-  IElementType mSL_COMMENT = new GroovyElementType("line comment");
-  IElementType mML_COMMENT = new GroovyElementType("block comment");
+  IElementType mSL_COMMENT = SL_COMMENT;
+  IElementType mML_COMMENT = ML_COMMENT;
 
   /* **************************************************************************************************
  *  Identifiers
@@ -151,7 +151,7 @@ public interface GroovyTokenTypes {
   IElementType kCONTINUE = KW_CONTINUE;
   IElementType kDEF = KW_DEF;
   IElementType kDEFAULT = KW_DEFAULT;
-  IElementType kDO = new GroovyElementType("do");
+  IElementType kDO = KW_DO;
   IElementType kDOUBLE = KW_DOUBLE;
   IElementType kELSE = KW_ELSE;
   IElementType kEXTENDS = KW_EXTENDS;

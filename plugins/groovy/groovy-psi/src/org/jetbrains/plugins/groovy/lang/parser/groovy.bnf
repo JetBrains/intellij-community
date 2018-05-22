@@ -18,6 +18,9 @@
 
   tokens = [
     SH_COMMENT = 'shell comment'
+    SL_COMMENT = 'line comment'
+    ML_COMMENT = 'block comment'
+
     IDENTIFIER = 'identifier'
     NL = 'new line'
 
@@ -102,6 +105,7 @@
     KW_CONTINUE = 'continue'
     KW_DEF = 'def'
     KW_DEFAULT = 'default'
+    KW_DO = 'do'
     KW_ELSE = 'else'
     KW_ENUM = 'enum'
     KW_EXTENDS = 'extends'
@@ -159,6 +163,8 @@
     DOLLAR_SLASHY_BEGIN = '$/ regex begin'
     DOLLAR_SLASHY_CONTENT = '$/ regex content'
     DOLLAR_SLASHY_END = '$/ regex end'
+
+    T_WRONG = 'wrong token'
   ]
 
   extends(".*_expression") = expression

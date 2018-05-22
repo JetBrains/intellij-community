@@ -1,3 +1,5 @@
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+
 // This is a generated file. Not intended for manual editing.
 package org.jetbrains.plugins.groovy.lang.psi;
 
@@ -176,6 +178,7 @@ public interface GroovyElementTypes {
   IElementType KW_CONTINUE = new GroovyElementType("continue");
   IElementType KW_DEF = new GroovyElementType("def");
   IElementType KW_DEFAULT = new GroovyElementType("default");
+  IElementType KW_DO = new GroovyElementType("do");
   IElementType KW_DOUBLE = new GroovyElementType("double");
   IElementType KW_ELSE = new GroovyElementType("else");
   IElementType KW_ENUM = new GroovyElementType("enum");
@@ -217,6 +220,7 @@ public interface GroovyElementTypes {
   IElementType KW_VOID = new GroovyElementType("void");
   IElementType KW_VOLATILE = new GroovyElementType("volatile");
   IElementType KW_WHILE = new GroovyElementType("while");
+  IElementType ML_COMMENT = new GroovyElementType("block comment");
   IElementType NL = new GroovyElementType("new line");
   IElementType NUM_BIG_DECIMAL = new GroovyElementType("BigDecimal");
   IElementType NUM_BIG_INT = new GroovyElementType("BigInteger");
@@ -228,6 +232,7 @@ public interface GroovyElementTypes {
   IElementType SLASHY_BEGIN = new GroovyElementType("regex begin");
   IElementType SLASHY_CONTENT = new GroovyElementType("regex content");
   IElementType SLASHY_END = new GroovyElementType("regex end");
+  IElementType SL_COMMENT = new GroovyElementType("line comment");
   IElementType STR_DQ = new GroovyElementType("Gstring");
   IElementType STR_SQ = new GroovyElementType("string");
   IElementType T_3DOT = new GroovyElementType("...");
@@ -286,6 +291,7 @@ public interface GroovyElementTypes {
   IElementType T_SPREAD_DOT = new GroovyElementType("*.");
   IElementType T_STAR = new GroovyElementType("*");
   IElementType T_STAR_ASSIGN = new GroovyElementType("*=");
+  IElementType T_WRONG = new GroovyElementType("wrong token");
   IElementType T_XOR = new GroovyElementType("^");
   IElementType T_XOR_ASSIGN = new GroovyElementType("^=");
 }
