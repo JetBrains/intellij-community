@@ -36,7 +36,7 @@ fun extendedStatement(builder: PsiBuilder, level: Int): Boolean = builder.groovy
 fun extendedSeparator(builder: PsiBuilder, level: Int): Boolean = builder.advanceIf { builder.groovyParser.isExtendedSeparator(tokenType) }
 
 private val currentClassName: Key<String> = Key.create("groovy.parse.class.name")
-private val parseDiamonds: Key<Boolean> = Key.create("groovy.parse.diamons")
+private val parseDiamonds: Key<Boolean> = Key.create("groovy.parse.diamonds")
 private val parseArguments: Key<Boolean> = Key.create("groovy.parse.arguments")
 private val parseApplicationArguments: Key<Boolean> = Key.create("groovy.parse.application.arguments")
 private val parseNoTypeArgumentsCodeReference: Key<Boolean> = Key.create("groovy.parse.no.type.arguments")
@@ -233,8 +233,6 @@ fun parseAssignment(builder: PsiBuilder, level: Int): Boolean = builder.advanceI
 
 fun commaParenRecovery(builder: PsiBuilder, level: Int): Boolean = builder.tokenType.let { it != T_COMMA && it != T_RPAREN }
 
-fun commaAngleRecovery(builder: PsiBuilder, level: Int): Boolean = builder.tokenType.let { it != T_COMMA && it != T_GT }
-
 fun error(builder: PsiBuilder, level: Int, key: String): Boolean {
   val marker = builder.latestDoneMarker ?: return false
   val elementType = marker.tokenType
@@ -305,7 +303,7 @@ fun addVariant(builder: PsiBuilder, level: Int, variant: String): Boolean {
 }
 
 fun clearVariants(builder: PsiBuilder, level: Int): Boolean {
-  val state = ErrorState.get(builder)
+  val state = builder.state
   state.clearVariants(state.currentFrame)
   return true
 }
@@ -315,6 +313,21 @@ fun replaceVariants(builder: PsiBuilder, level: Int, variant: String): Boolean {
 }
 
 fun clearError(builder: PsiBuilder, level: Int): Boolean {
-  ErrorState.get(builder).currentFrame.errorReportedAt = -1
+  builder.state.currentFrame.errorReportedAt = -1
   return true
 }
+
+fun withProtectedLastVariantPos(builder: PsiBuilder, level: Int, parser: Parser): Boolean {
+  val state = builder.state
+  val prev = state.currentFrame.lastVariantAt
+  @Suppress("LiftReturnOrAssignment")
+  if (parser.parse(builder, level)) {
+    return true
+  }
+  else {
+    state.currentFrame.lastVariantAt = prev
+    return false
+  }
+}
+
+private val PsiBuilder.state: ErrorState get() = ErrorState.get(this)

@@ -435,50 +435,6 @@ public class GroovyBnfParser implements PsiParser, LightPsiParser {
   }
 
   /* ********************************************************** */
-  // '<' <<comma_list_p <<angle_list_item <<item>>>>>> '>'
-  static boolean angle_list(PsiBuilder b, int l, Parser _item) {
-    if (!recursion_guard_(b, l, "angle_list")) return false;
-    if (!nextTokenIsFast(b, T_LT)) return false;
-    boolean r, p;
-    Marker m = enter_section_(b, l, _NONE_);
-    r = consumeTokenFast(b, T_LT);
-    p = r; // pin = 1
-    r = r && report_error_(b, comma_list_p(b, l + 1, new Parser() {
-      public boolean parse(PsiBuilder b, int l) {
-        return angle_list_item(b, l + 1, _item);
-      }
-    }));
-    r = p && consumeToken(b, T_GT) && r;
-    exit_section_(b, l, m, r, p, null);
-    return r || p;
-  }
-
-  /* ********************************************************** */
-  // <<item>> | angle_list_item_recovered
-  static boolean angle_list_item(PsiBuilder b, int l, Parser _item) {
-    if (!recursion_guard_(b, l, "angle_list_item")) return false;
-    boolean r;
-    Marker m = enter_section_(b);
-    r = _item.parse(b, l);
-    if (!r) r = angle_list_item_recovered(b, l + 1);
-    exit_section_(b, m, null, r);
-    return r;
-  }
-
-  /* ********************************************************** */
-  // empty fail
-  static boolean angle_list_item_recovered(PsiBuilder b, int l) {
-    if (!recursion_guard_(b, l, "angle_list_item_recovered")) return false;
-    boolean r, p;
-    Marker m = enter_section_(b, l, _NONE_);
-    r = empty(b, l + 1);
-    p = r; // pin = 1
-    r = r && noMatch(b, l + 1);
-    exit_section_(b, l, m, r, p, angle_list_item_recovery_parser_);
-    return r || p;
-  }
-
-  /* ********************************************************** */
   // '@' annotation_reference after_annotation_reference
   public static boolean annotation(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "annotation")) return false;
@@ -2743,6 +2699,19 @@ public class GroovyBnfParser implements PsiParser, LightPsiParser {
   }
 
   /* ********************************************************** */
+  // <<isDiamondAllowed>> fast_l_angle '>'
+  static boolean diamond_type_argument_list(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "diamond_type_argument_list")) return false;
+    boolean r;
+    Marker m = enter_section_(b);
+    r = isDiamondAllowed(b, l + 1);
+    r = r && fast_l_angle(b, l + 1);
+    r = r && consumeToken(b, T_GT);
+    exit_section_(b, m, null, r);
+    return r;
+  }
+
+  /* ********************************************************** */
   // disjunction_type_element_part+
   public static boolean disjunction_type_element(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "disjunction_type_element")) return false;
@@ -3344,6 +3313,12 @@ public class GroovyBnfParser implements PsiParser, LightPsiParser {
   }
 
   /* ********************************************************** */
+  // '<'
+  static boolean fast_l_angle(PsiBuilder b, int l) {
+    return consumeTokenFast(b, T_LT);
+  }
+
+  /* ********************************************************** */
   // SLASHY_CONTENT
   static boolean fast_slashy_content(PsiBuilder b, int l) {
     return consumeTokenFast(b, SLASHY_CONTENT);
@@ -3903,20 +3878,24 @@ public class GroovyBnfParser implements PsiParser, LightPsiParser {
   }
 
   /* ********************************************************** */
-  // <<something>> | nl <<something>>
+  // <<something>> | <<withProtectedLastVariantPos (nl <<something>>)>>
   static boolean mb_nl_group(PsiBuilder b, int l, Parser _something) {
     if (!recursion_guard_(b, l, "mb_nl_group")) return false;
     boolean r;
     Marker m = enter_section_(b);
     r = _something.parse(b, l);
-    if (!r) r = mb_nl_group_1(b, l + 1, _something);
+    if (!r) r = withProtectedLastVariantPos(b, l + 1, new Parser() {
+      public boolean parse(PsiBuilder b, int l) {
+        return mb_nl_group_1_0(b, l + 1, _something);
+      }
+    });
     exit_section_(b, m, null, r);
     return r;
   }
 
   // nl <<something>>
-  private static boolean mb_nl_group_1(PsiBuilder b, int l, Parser _something) {
-    if (!recursion_guard_(b, l, "mb_nl_group_1")) return false;
+  private static boolean mb_nl_group_1_0(PsiBuilder b, int l, Parser _something) {
+    if (!recursion_guard_(b, l, "mb_nl_group_1_0")) return false;
     boolean r;
     Marker m = enter_section_(b);
     r = nl(b, l + 1);
@@ -4431,6 +4410,21 @@ public class GroovyBnfParser implements PsiParser, LightPsiParser {
     r = consumeTokenFast(b, KW_THROWS);
     p = r; // pin = 1
     r = r && comma_list_p(b, l + 1, throws_list_item_parser_);
+    exit_section_(b, l, m, r, p, null);
+    return r || p;
+  }
+
+  /* ********************************************************** */
+  // '<' <<comma_list_p type_argument_list_item>> type_argument_list_end
+  static boolean non_empty_type_argument_list(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "non_empty_type_argument_list")) return false;
+    if (!nextTokenIsFast(b, T_LT)) return false;
+    boolean r, p;
+    Marker m = enter_section_(b, l, _NONE_);
+    r = consumeTokenFast(b, T_LT);
+    p = r; // pin = 1
+    r = r && report_error_(b, comma_list_p(b, l + 1, type_argument_list_item_parser_));
+    r = p && type_argument_list_end(b, l + 1) && r;
     exit_section_(b, l, m, r, p, null);
     return r || p;
   }
@@ -6085,47 +6079,31 @@ public class GroovyBnfParser implements PsiParser, LightPsiParser {
   }
 
   /* ********************************************************** */
-  // <<isDiamondAllowed>> ('<') '>' | <<angle_list (mb_nl type_argument mb_nl)>>
+  // diamond_type_argument_list | non_empty_type_argument_list
   public static boolean type_argument_list(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "type_argument_list")) return false;
     boolean r;
     Marker m = enter_section_(b, l, _NONE_, TYPE_ARGUMENT_LIST, "<type argument list>");
-    r = type_argument_list_0(b, l + 1);
-    if (!r) r = angle_list(b, l + 1, type_argument_list_1_0_parser_);
+    r = diamond_type_argument_list(b, l + 1);
+    if (!r) r = non_empty_type_argument_list(b, l + 1);
     exit_section_(b, l, m, r, false, null);
     return r;
   }
 
-  // <<isDiamondAllowed>> ('<') '>'
-  private static boolean type_argument_list_0(PsiBuilder b, int l) {
-    if (!recursion_guard_(b, l, "type_argument_list_0")) return false;
-    boolean r;
-    Marker m = enter_section_(b);
-    r = isDiamondAllowed(b, l + 1);
-    r = r && type_argument_list_0_1(b, l + 1);
-    r = r && consumeToken(b, T_GT);
-    exit_section_(b, m, null, r);
-    return r;
+  /* ********************************************************** */
+  // <<mb_nl_group '>'>>
+  static boolean type_argument_list_end(PsiBuilder b, int l) {
+    return mb_nl_group(b, l + 1, T_GT_parser_);
   }
 
-  // ('<')
-  private static boolean type_argument_list_0_1(PsiBuilder b, int l) {
-    if (!recursion_guard_(b, l, "type_argument_list_0_1")) return false;
-    boolean r;
-    Marker m = enter_section_(b);
-    r = consumeTokenFast(b, T_LT);
-    exit_section_(b, m, null, r);
-    return r;
-  }
-
-  // mb_nl type_argument mb_nl
-  private static boolean type_argument_list_1_0(PsiBuilder b, int l) {
-    if (!recursion_guard_(b, l, "type_argument_list_1_0")) return false;
+  /* ********************************************************** */
+  // mb_nl type_argument
+  static boolean type_argument_list_item(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "type_argument_list_item")) return false;
     boolean r;
     Marker m = enter_section_(b);
     r = mb_nl(b, l + 1);
     r = r && type_argument(b, l + 1);
-    r = r && mb_nl(b, l + 1);
     exit_section_(b, m, null, r);
     return r;
   }
@@ -7245,6 +7223,11 @@ public class GroovyBnfParser implements PsiParser, LightPsiParser {
       return consumeToken(b, SLASHY_END);
     }
   };
+  final static Parser T_GT_parser_ = new Parser() {
+    public boolean parse(PsiBuilder b, int l) {
+      return consumeToken(b, T_GT);
+    }
+  };
   final static Parser T_LBRACE_parser_ = new Parser() {
     public boolean parse(PsiBuilder b, int l) {
       return consumeTokenFast(b, T_LBRACE);
@@ -7258,11 +7241,6 @@ public class GroovyBnfParser implements PsiParser, LightPsiParser {
   final static Parser T_RPAREN_parser_ = new Parser() {
     public boolean parse(PsiBuilder b, int l) {
       return consumeToken(b, T_RPAREN);
-    }
-  };
-  final static Parser angle_list_item_recovery_parser_ = new Parser() {
-    public boolean parse(PsiBuilder b, int l) {
-      return commaAngleRecovery(b, l + 1);
     }
   };
   final static Parser annotation_level_parser_ = new Parser() {
@@ -7565,9 +7543,9 @@ public class GroovyBnfParser implements PsiParser, LightPsiParser {
       return top_level_start(b, l + 1);
     }
   };
-  final static Parser type_argument_list_1_0_parser_ = new Parser() {
+  final static Parser type_argument_list_item_parser_ = new Parser() {
     public boolean parse(PsiBuilder b, int l) {
-      return type_argument_list_1_0(b, l + 1);
+      return type_argument_list_item(b, l + 1);
     }
   };
   final static Parser type_argument_list_parser_ = new Parser() {

@@ -519,11 +519,15 @@ empty_type_parameter_bounds ::= { elementType = type_parameter_bounds }
 private type_parameter_bounds_list ::= type_code_reference type_parameter_bounds_list_tail*
 private type_parameter_bounds_list_tail ::= '&' type_code_reference { pin = 1 }
 
-type_argument_list ::= <<isDiamondAllowed>> ('<') '>' | <<angle_list (mb_nl type_argument mb_nl)>>
+type_argument_list ::= diamond_type_argument_list | non_empty_type_argument_list
+private diamond_type_argument_list ::=  <<isDiamondAllowed>> fast_l_angle '>'
+private non_empty_type_argument_list ::= '<' <<comma_list_p type_argument_list_item>> type_argument_list_end
 {
   pin = 1
   consumeTokenMethod = 'consumeTokenFast'
 }
+private type_argument_list_item ::= mb_nl type_argument
+private type_argument_list_end ::= <<mb_nl_group '>'>>
 private type_argument ::= type_element | wildcard_type_element
 {
   name = 'type argument'
@@ -1210,10 +1214,12 @@ private mb_initializer ::= ['=' mb_nl expression_or_application]
 // region Other
 private mb_nl ::= nl?
 private nl ::= NL { consumeTokenMethod = 'consumeTokenFast' }
-private meta mb_nl_group ::= <<something>> | nl <<something>> // allows error reporting in position before the new line
+// FIXME this rule allows error reporting in position before the new line
+private meta mb_nl_group ::= <<something>> | <<withProtectedLastVariantPos (nl <<something>>)>>
 private empty ::= ()
 
 private fast_comma ::= ','
+private fast_l_angle ::= '<'
 // endregion
 
 
@@ -1228,11 +1234,6 @@ private meta paren_list_inner ::= <<paren_list_item <<item>>>> <<paren_list_tail
 private meta paren_list_item ::= empty <<item>> { pin = 1 recoverWhile = paren_list_item_recovery }
 private meta paren_list_tail ::= ',' <<paren_list_item <<item>>>> { pin = 1 }
 private external paren_list_item_recovery ::= commaParenRecovery
-
-private meta angle_list ::= '<' <<comma_list_p <<angle_list_item <<item>>>>>> '>' { pin = 1 consumeTokenMethod = 'consumeTokenFast' }
-private meta angle_list_item ::= <<item>> | angle_list_item_recovered
-private angle_list_item_recovered ::= empty fail { pin = 1 recoverWhile = angle_list_item_recovery }
-private external angle_list_item_recovery ::= commaAngleRecovery
 // endregion
 
 

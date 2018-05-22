@@ -585,7 +585,6 @@ class ExpressionsParsingTest extends GroovyParsingTestCase {
 
   void testDiamond() { doTest() }
 
-  @Bombed(month = 6, day = 10, user = "daniil")
   void testDiamondErrors() { doTest() }
 
   void testpath$stringMethodCall1() { doTest() }

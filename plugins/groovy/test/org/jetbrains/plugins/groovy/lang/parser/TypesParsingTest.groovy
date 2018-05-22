@@ -70,6 +70,10 @@ class TypesParsingTest extends GroovyParsingTestCase {
 
   void testNewLineBeforeRAngleInTypeArgumentList() { doTest() }
 
+  void testNewLineBetweenTypeArguments() { doTest() }
+
+  void testNewLineBetweenTypeArgumentsError() { doTest() }
+
   void testNewLineBetweenExtendsImplements() { doTest() }
 
   void testStaticInitializer() throws Throwable { doTest() }
