@@ -11,7 +11,6 @@ import com.intellij.codeInsight.lookup.LookupElement
 import com.intellij.codeInsight.lookup.LookupElementPresentation
 import com.intellij.codeInsight.lookup.PsiTypeLookupItem
 import com.intellij.idea.Bombed
-import com.intellij.psi.codeStyle.CodeStyleSettingsManager
 import com.intellij.psi.statistics.StatisticsManager
 import com.intellij.psi.statistics.impl.StatisticsManagerImpl
 import com.intellij.psi.util.PsiTreeUtil
@@ -21,6 +20,7 @@ import org.jetbrains.plugins.groovy.codeStyle.GrReferenceAdjuster
 import org.jetbrains.plugins.groovy.codeStyle.GroovyCodeStyleSettings
 import org.jetbrains.plugins.groovy.lang.psi.api.types.GrCodeReferenceElement
 import org.jetbrains.plugins.groovy.util.TestUtils
+
 /**
  * @author Maxim.Medvedev
  */
@@ -995,12 +995,10 @@ println "abcd"
 
   void testMakingDefFromAssignment() { checkCompletion 'int defInt; de<caret>foo = 2', 'f ', "int defInt; def <caret>foo = 2" }
 
-  @Bombed(month = 6, day = 10, user = "daniil")
   void testEnumPropertyType() {
     checkSingleItemCompletion 'enum Foo {a,b; static List<StringBui<caret>>', "enum Foo {a,b; static List<StringBuilder<caret>>"
   }
 
-  @Bombed(month = 6, day = 10, user = "daniil")
   void testEnumPropertyType2() {
     checkSingleItemCompletion 'enum Foo {a,b; static List<StringBui<caret>', "enum Foo {a,b; static List<StringBuilder<caret>"
   }

@@ -345,43 +345,45 @@ private enum_constants_separated ::= enum_constants class_level_end { pin = 1 }
 
 private annotation_members ::= annotation_level_item*
 private annotation_level_item ::= <<class_level_item annotation_level>>
-private annotation_level ::= type_definition | parse_annotation_member
+private annotation_level ::= type_definition | parse_annotation_declaration
+// endregion
+
+
+// region Declarations
+private declaration_start_modifiers ::= non_empty_modifier_list mb_type_parameter_list mb_declaration_type_element { pin = 1 }
+private mb_type_parameter_list ::= [mb_nl type_parameter_list]
+private mb_declaration_type_element ::= [mb_nl declaration_type_element]
+private declaration_type_element ::= (type_element | clear_variants_and_fail) &declaration_lookahead
+
+private declaration_lookahead ::= method_lookahead | IDENTIFIER { consumeTokenMethod = 'consumeTokenFast' }
+private method_lookahead ::= method_identifier '('
 // endregion
 
 
 // region Class level declarations
 private parse_class_declaration ::= <<parseTailLeftFlat class_declaration_start class_declaration_tail>>
-                                  | <<parseTailLeftFlat constructor_start methods_tail>>
-private class_declaration_start ::= class_declaration_start1 | class_declaration_start2 | class_declaration_start3
-private class_declaration_tail ::= methods_tail | field_declaration
+                                  | <<parseTailLeftFlat naked_method_declaration_start methods_tail>>
+private class_declaration_start ::= declaration_start_modifiers | class_declaration_start_no_modifiers
+
+private class_declaration_start_no_modifiers ::= empty_modifier_list class_declaration_start_after_no_modifiers
+private class_declaration_start_after_no_modifiers ::= class_declaration_start_after_no_modifiers1
+                                                     | class_declaration_start_after_no_modifiers2
+private class_declaration_start_after_no_modifiers1 ::= capital_type_element !'('
+private class_declaration_start_after_no_modifiers2 ::= declaration_type_element
+private naked_method_declaration_start ::= empty_modifier_list &method_lookahead
+
+private class_declaration_tail ::= <<mb_nl_group (methods_tail | field_declaration)>>
 private methods_tail ::= constructor | method
 
-private class_declaration_start1 ::= non_empty_modifier_list
-                                     [mb_nl type_parameter_list]
-                                     [mb_nl (type_element | clear_variants_and_fail) &declaration_lookahead]
-                                     mb_nl &declaration_lookahead
-{
-  pin = 1
-}
-private class_declaration_start2 ::= empty_modifier_list
-                                     type_parameter_list
-                                     [mb_nl (type_element | clear_variants_and_fail) &declaration_lookahead]
-                                     mb_nl &declaration_lookahead
-{
-  pin = 2
-}
-private class_declaration_start3 ::= empty_modifier_list (type_element | clear_variants_and_fail) &declaration_lookahead
-private constructor_start ::= empty_modifier_list &method_lookahead
-
-private parse_annotation_member ::= <<parseTailLeftFlat class_declaration_start annotation_tails>>
-                                  | <<parseTailLeftFlat constructor_start annotation_method>>
-private annotation_tails ::= annotation_method | field_declaration
+private parse_annotation_declaration ::= <<parseTailLeftFlat class_declaration_start annotation_tails>>
+                                       | <<parseTailLeftFlat naked_method_declaration_start annotation_method>>
+private annotation_tails ::= <<mb_nl_group (annotation_method | field_declaration)>>
 // endregion
 
 
 // region Class initializers
 class_initializer ::= class_initializer_modifier_list mb_nl lazy_block
-class_initializer_modifier_list ::= 'static' | empty !nl
+class_initializer_modifier_list ::= 'static' | !nl { consumeTokenMethod = 'consumeTokenFast' }
 // endregion
 
 
@@ -431,7 +433,6 @@ annotation_method ::= method_identifier parse_parameter_list [mb_nl annotation_m
 }
 private annotation_method_default ::= 'default' annotation_value { pin = 1 }
 
-private method_lookahead ::= method_identifier '('
 private method_identifier ::= IDENTIFIER | STR_SQ | STR_DQ { consumeTokenMethod = 'consumeTokenFast' }
 private constructor_identifier ::= <<constructorIdentifier>>
 // endregion
@@ -591,13 +592,11 @@ private case_level_end ::= block_level_end | &('case' | 'default')
 // region Block level declarations
 fake variable_declaration ::= { elementTypeClass = 'org.jetbrains.plugins.groovy.lang.psi.stubs.elements.GrVariableDeclarationElementType' }
 
-private parse_block_declaration ::= <<parseTailLeftFlat declaration_start declaration_tail>>
-private declaration_start ::= modifiers_declaration_start | no_modifiers_start
-
-private modifiers_declaration_start ::= non_empty_modifier_list [mb_nl type_parameter_list] (mb_nl (type_element &declaration_lookahead | &declaration_lookahead)) { pin = 1 }
-private no_modifiers_start ::= empty_modifier_list (capital_type_element | clear_variants_and_fail) &declaration_lookahead
-private declaration_lookahead ::= method_lookahead | IDENTIFIER { consumeTokenMethod = 'consumeTokenFast' }
-private declaration_tail ::= method | variable_declaration_tail
+private parse_block_declaration ::= <<parseTailLeftFlat block_declaration_start block_declaration_tail>>
+private block_declaration_start ::= declaration_start_modifiers | block_declaration_start_no_modifiers
+private block_declaration_start_no_modifiers ::= empty_modifier_list block_declaration_type_element
+private block_declaration_type_element ::= (capital_type_element | clear_variants_and_fail) &declaration_lookahead
+private block_declaration_tail ::= <<mb_nl_group (method | variable_declaration_tail)>>
 
 variable_declaration_tail ::= variable (',' mb_nl variable)*
 {

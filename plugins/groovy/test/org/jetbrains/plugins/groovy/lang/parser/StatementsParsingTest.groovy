@@ -412,6 +412,8 @@ class StatementsParsingTest extends GroovyParsingTestCase {
 
   void testVardef$vardeferrsingle4() throws Throwable { doTest() }
 
+  void testVardef$newlineAfterModifiers() { doTest() }
+
   void testWith$with1() throws Throwable { doTest() }
 
   void testWith$with2() throws Throwable { doTest() }

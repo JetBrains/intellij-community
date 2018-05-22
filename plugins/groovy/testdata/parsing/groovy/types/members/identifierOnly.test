@@ -1,5 +1,5 @@
-class Steps {
-   def
+class A {
+  foo
 }
 -----
 Groovy script
@@ -8,7 +8,7 @@ Groovy script
       <empty list>
     PsiElement(class)('class')
     PsiWhiteSpace(' ')
-    PsiElement(identifier)('Steps')
+    PsiElement(identifier)('A')
     Extends clause
       <empty list>
     Implements clause
@@ -16,10 +16,9 @@ Groovy script
     PsiWhiteSpace(' ')
     Type definition body
       PsiElement({)('{')
-      PsiWhiteSpace('\n   ')
-      Modifiers
-        PsiElement(def)('def')
-      PsiErrorElement:identifier expected
+      PsiWhiteSpace('\n  ')
+      PsiElement(identifier)('foo')
+      PsiErrorElement:'(' expected
         <empty list>
       PsiElement(new line)('\n')
       PsiElement(})('}')

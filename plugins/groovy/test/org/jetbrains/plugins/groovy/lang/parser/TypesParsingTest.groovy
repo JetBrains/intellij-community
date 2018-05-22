@@ -89,4 +89,38 @@ class TypesParsingTest extends GroovyParsingTestCase {
   void testEmptyTypeArgs() { doTest() }
 
   void testIncompleteConstructor() { doTest() }
+
+  void testmembers$identifierOnly() { doTest() }
+
+  void testmembers$capitalIdentifierOnly() { doTest() }
+
+  void testmembers$constructorIdentifierOnly() { doTest() }
+
+  void testmembers$modifierListOnly() { doTest() }
+
+  void testmembers$modifierListAndIdentifier() { doTest() }
+
+  void testmembers$modifierListAndCapitalIdentifier() { doTest() }
+
+  void testmembers$modifierListAndConstructorIdentifier() { doTest() }
+
+  void testmembers$modifierListAndTypeParameters() { doTest() }
+
+  void testmembers$modifierListTypeParametersAndIdentifier() { doTest() }
+
+  void testmembers$modifierListTypeParametersAndCapitalIdentifier() { doTest() }
+
+  void testmembers$modifierListTypeParametersAndConstructorIdentifier() { doTest() }
+
+  void testmembers$modifierListTypeParametersIdentifierAndLeftParen() { doTest() }
+
+  void testmembers$modifierListTypeParametersCapitalIdentifierAndLeftParen() { doTest() }
+
+  void testmembers$modifierListTypeParametersConstructorIdentifierAndLeftParen() { doTest() }
+
+  void testmembers$capitalIdentifierAndLeftParen() { doTest() }
+
+  void testmembers$constructorIdentifierAndLeftParen() { doTest() }
+
+  void testmembers$identifierAndLeftParen() { doTest() }
 }
