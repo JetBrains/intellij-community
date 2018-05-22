@@ -6,6 +6,8 @@ import com.intellij.execution.configurations.GeneralCommandLine;
 import com.intellij.ide.actions.runAnything.activity.RunAnythingProvider;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.*;
+import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.project.Project;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.xmlb.XmlSerializerUtil;
@@ -20,6 +22,7 @@ import java.util.stream.Collectors;
 
 @State(name = "RunAnythingCache", storages = @Storage(StoragePathMacros.WORKSPACE_FILE))
 public class RunAnythingCache implements PersistentStateComponent<RunAnythingCache.State> {
+  private static final Logger LOG = Logger.getInstance(RunAnythingCache.class);
   private final State mySettings = new State();
   public boolean CAN_RUN_RVM = false;
   public boolean CAN_RUN_RBENV = false;
@@ -28,13 +31,21 @@ public class RunAnythingCache implements PersistentStateComponent<RunAnythingCac
     try {
       CAN_RUN_RVM = ApplicationManager.getApplication().executeOnPooledThread(() -> canRunRVM()).get();
     }
-    catch (InterruptedException | java.util.concurrent.ExecutionException ignored) {
+    catch (java.util.concurrent.ExecutionException ignored) {
+    }
+    catch (InterruptedException e) {
+      LOG.error(e);
+      throw new ProcessCanceledException(e);
     }
 
     try {
       CAN_RUN_RBENV = ApplicationManager.getApplication().executeOnPooledThread(() -> canRunRbenv()).get();
     }
-    catch (InterruptedException | java.util.concurrent.ExecutionException ignored) {
+    catch (java.util.concurrent.ExecutionException ignored) {
+    }
+    catch (InterruptedException e) {
+      LOG.error(e);
+      throw new ProcessCanceledException(e);
     }
   }
 
