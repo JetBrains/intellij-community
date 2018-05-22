@@ -71,7 +71,7 @@ public class SearchEverywhereUI extends BorderLayoutPanel implements Disposable 
   private final JCheckBox myNonProjectCB;
   private final List<SETab> myTabs = new ArrayList<>();
 
-  private final JBList<Object> myResultsList;
+  private final JBList<Object> myResultsList = new JBList<>();
   private final SearchListModel myListModel = new SearchListModel(); //todo using in different threads? #UX-1
 
   private CalcThread myCalcThread;
@@ -96,15 +96,6 @@ public class SearchEverywhereUI extends BorderLayoutPanel implements Disposable 
     myNonProjectCB = new JBCheckBox();
     myNonProjectCB.setOpaque(false);
     myNonProjectCB.setFocusable(false);
-
-    myResultsList = new JBList<Object>() {
-      @Override
-      public Dimension getPreferredScrollableViewportSize() {
-        Dimension size = super.getPreferredScrollableViewportSize();
-        size.height = Integer.min(myResultsList.getPreferredSize().height, JBUI.CurrentTheme.SearchEverywhere.maxListHeght());
-        return size;
-      }
-    };
 
     JPanel contributorsPanel = createTabPanel(contributors);
     JPanel settingsPanel = createSettingsPanel();
