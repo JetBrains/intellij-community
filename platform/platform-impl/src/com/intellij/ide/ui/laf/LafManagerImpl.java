@@ -372,6 +372,21 @@ public final class LafManagerImpl extends LafManager implements PersistentStateC
         return;
       }
     }
+
+    if (lookAndFeelInfo instanceof UIThemeBasedLookAndFeelInfo) {
+      try {
+        ((UIThemeBasedLookAndFeelInfo)lookAndFeelInfo).installTheme(UIManager.getDefaults());
+      }
+      catch (Exception e) {
+        Messages.showMessageDialog(
+          IdeBundle.message("error.cannot.set.look.and.feel", lookAndFeelInfo.getName(), e.getMessage()),
+          CommonBundle.getErrorTitle(),
+          Messages.getErrorIcon()
+        );
+        return;
+      }
+    }
+
     myCurrentLaf = ObjectUtils.chooseNotNull(findLaf(lookAndFeelInfo.getClassName()), lookAndFeelInfo);
   }
 
