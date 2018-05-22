@@ -67,8 +67,6 @@ import static git4idea.util.GitUIUtil.*;
 
 /**
  * Handles update process (pull via merge or rebase) for several roots.
- *
- * @author Kirill Likhodedov
  */
 public class GitUpdateProcess {
   private static final Logger LOG = Logger.getInstance(GitUpdateProcess.class);
@@ -150,6 +148,14 @@ public class GitUpdateProcess {
     return result;
   }
 
+  protected boolean unstashAfterUpdate() {
+    return true;
+  }
+
+  protected boolean stashBeforeUpdate() {
+    return true;
+  }
+
   @NotNull
   private GitUpdateResult updateImpl(@NotNull UpdateMethod updateMethod) {
     Map<VirtualFile, GitBranchPair> trackedBranches = checkTrackedBranchesConfiguration();
@@ -202,12 +208,14 @@ public class GitUpdateProcess {
     // save local changes if needed (update via merge may perform without saving).
     final Collection<VirtualFile> myRootsToSave = ContainerUtil.newArrayList();
     LOG.info("updateImpl: identifying if save is needed...");
-    for (Map.Entry<GitRepository, GitUpdater> entry : updaters.entrySet()) {
-      GitRepository repo = entry.getKey();
-      GitUpdater updater = entry.getValue();
-      if (updater.isSaveNeeded()) {
-        myRootsToSave.add(repo.getRoot());
-        LOG.info("update| root " + repo + " needs save");
+    if (stashBeforeUpdate()) {
+      for (Map.Entry<GitRepository, GitUpdater> entry : updaters.entrySet()) {
+        GitRepository repo = entry.getKey();
+        GitUpdater updater = entry.getValue();
+        if (updater.isSaveNeeded()) {
+          myRootsToSave.add(repo.getRoot());
+          LOG.info("update| root " + repo + " needs save");
+        }
       }
     }
 
@@ -240,14 +248,16 @@ public class GitUpdateProcess {
       }
     });
     myPreservingProcess.execute(() -> {
+      if (!unstashAfterUpdate()) return false;
+
       // Note: compoundResult normally should not be null, because the updaters map was checked for non-emptiness.
       // But if updater.update() fails with exception for the first root, then the value would not be assigned.
       // In this case we don't restore local changes either, because update failed.
-      boolean load = !incomplete.get() && !compoundResult.isNull() && compoundResult.get().isSuccess();
-      if (!load) {
+      boolean success = !incomplete.get() && !compoundResult.isNull() && compoundResult.get().isSuccess();
+      if (!success) {
         notifyLocalChangesAreNotRestored();
       }
-      return load;
+      return success;
     });
     // GitPreservingProcess#save may fail due index.lock presence
     return ObjectUtils.notNull(compoundResult.get(), GitUpdateResult.ERROR);
@@ -326,6 +336,11 @@ public class GitUpdateProcess {
       LOG.info("update| root=" + root + " ,updater=" + updater);
     }
     return updaters;
+  }
+
+  @Nullable
+  public GitPreservingProcess getPreservingProcess() {
+    return myPreservingProcess;
   }
 
   @NotNull
