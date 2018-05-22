@@ -36,4 +36,9 @@ class PyTypeHintsQuickFixTest : PyQuickFixTestCase() {
   fun testParenthesesAndCustomTarget() {
     doQuickFixTest(PyTypeHintsInspection::class.java, "Replace with square brackets", LanguageLevel.PYTHON35)
   }
+
+  // PY-28243
+  fun testTypeVarAndTargetName() {
+    doQuickFixTest(PyTypeHintsInspection::class.java, "Replace with target name")
+  }
 }

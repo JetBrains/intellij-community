@@ -128,8 +128,13 @@ class PyTypeHintsInspection : PyInspection() {
               if (argument !is PyStringLiteralExpression) {
                 registerProblem(argument, "'TypeVar()' expects a string literal as first argument")
               }
-              else if (target != null && argument.stringValue != target.name) {
-                registerProblem(argument, "The argument to 'TypeVar()' must be a string equal to the variable name to which it is assigned")
+              else {
+                val targetName = target?.name
+                if (targetName != null && targetName != argument.stringValue) {
+                  registerProblem(argument,
+                                  "The argument to 'TypeVar()' must be a string equal to the variable name to which it is assigned",
+                                  ReplaceWithTargetNameQuickFix(targetName))
+                }
               }
             "covariant" -> covariant = PyEvaluator.evaluateAsBoolean(argument, false)
             "contravariant" -> contravariant = PyEvaluator.evaluateAsBoolean(argument, false)
@@ -422,6 +427,18 @@ class PyTypeHintsInspection : PyInspection() {
   }
 
   companion object {
+    private class ReplaceWithTargetNameQuickFix(private val targetName: String) : LocalQuickFix {
+
+      override fun getFamilyName() = "Replace with target name"
+
+      override fun applyFix(project: Project, descriptor: ProblemDescriptor) {
+        val old = descriptor.psiElement as? PyStringLiteralExpression ?: return
+        val new = PyElementGenerator.getInstance(project).createStringLiteral(old, targetName) ?: return
+
+        old.replace(new)
+      }
+    }
+
     private class ReplaceWithSubscriptionQuickFix : LocalQuickFix {
 
       override fun getFamilyName() = "Replace with square brackets"
