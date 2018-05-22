@@ -2,6 +2,7 @@ package org.jetbrains.plugins.gradle.tooling.util.resolve;
 
 import org.gradle.api.Project;
 import org.gradle.api.artifacts.Configuration;
+import org.gradle.api.specs.Specs;
 import org.gradle.api.tasks.SourceSet;
 import org.jetbrains.plugins.gradle.model.ExternalDependency;
 
@@ -31,7 +32,7 @@ public class RuntimeDependenciesProvider {
 
   public Set<File> getConfigurationFiles() {
     if (myConfigurationFiles == null) {
-      myConfigurationFiles = myConfiguration.getResolvedConfiguration().getLenientConfiguration().getFiles();
+      myConfigurationFiles = myConfiguration.getResolvedConfiguration().getLenientConfiguration().getFiles(Specs.SATISFIES_ALL);
     }
     return myConfigurationFiles;
   }
