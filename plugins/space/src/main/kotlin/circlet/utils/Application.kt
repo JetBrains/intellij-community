@@ -6,6 +6,7 @@ import com.intellij.openapi.application.*
 import com.intellij.openapi.components.*
 import com.intellij.openapi.project.*
 import com.intellij.openapi.util.*
+import com.intellij.xml.util.*
 import runtime.reactive.*
 
 inline fun <reified T : Any> Project.component(): T = getComponent()
@@ -48,7 +49,22 @@ class SimpleLifetimedDisposable : LifetimedDisposable {
     }
 }
 
+fun Project.notify(lifetime: Lifetime, text: String, handler: (() -> Unit)? = null) {
+    notify(lifetime, text, handler?.let { NotificationListener { _, _ -> it() } })
+}
+
+fun Project.notify(lifetime: Lifetime, text: String, listener: NotificationListener?) {
+    Notification(
+        "Circlet",
+        "Circlet",
+        XmlStringUtil.wrapInHtml(text),
+        NotificationType.INFORMATION,
+        listener
+    ).notify(lifetime, this)
+}
+
 fun Notification.notify(lifetime: Lifetime, project: Project?) {
     lifetime.add { expire() }
-    Notifications.Bus.notify(this, project)
+
+    notify(project)
 }
