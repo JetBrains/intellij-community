@@ -9,6 +9,7 @@ import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.psi.PsiComment;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.ResolveResult;
@@ -1405,6 +1406,21 @@ public class PyTypingTypeProvider extends PyTypeProviderBase {
     }
 
     return "r";
+  }
+
+  public static boolean isInAnnotationOrTypeComment(@NotNull PsiElement element) {
+    final PsiElement realContext = PyPsiUtils.getRealContext(element);
+
+    if (PsiTreeUtil.getParentOfType(realContext, PyAnnotation.class, false, ScopeOwner.class) != null) {
+      return true;
+    }
+
+    final PsiComment comment = PsiTreeUtil.getParentOfType(realContext, PsiComment.class, false, ScopeOwner.class);
+    if (comment != null && getTypeCommentValue(comment.getText()) != null) {
+      return true;
+    }
+
+    return false;
   }
 
   static class Context {

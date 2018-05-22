@@ -3,17 +3,14 @@ package com.jetbrains.python.inspections
 
 import com.intellij.codeInsight.controlflow.ControlFlowUtil
 import com.intellij.codeInspection.*
-import com.intellij.lang.injection.InjectedLanguageManager
 import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiElementVisitor
 import com.intellij.psi.PsiFileFactory
-import com.intellij.psi.util.PsiTreeUtil
 import com.intellij.psi.util.QualifiedName
 import com.jetbrains.python.PyNames
 import com.jetbrains.python.codeInsight.controlflow.ControlFlowCache
 import com.jetbrains.python.codeInsight.controlflow.ReadWriteInstruction
-import com.jetbrains.python.codeInsight.controlflow.ScopeOwner
 import com.jetbrains.python.codeInsight.dataflow.scope.ScopeUtil
 import com.jetbrains.python.codeInsight.functionTypeComments.PyFunctionTypeAnnotationDialect
 import com.jetbrains.python.codeInsight.typing.PyTypingTypeProvider
@@ -283,8 +280,7 @@ class PyTypeHintsInspection : PyInspection() {
                           null,
                           ReplaceWithSubscriptionQuickFix())
         }
-        else if (InjectedLanguageManager.getInstance(call.project).isInjectedFragment(call.containingFile) ||
-                 PsiTreeUtil.getParentOfType(call, PyAnnotation::class.java, true, ScopeOwner::class.java) != null) {
+        else if (PyTypingTypeProvider.isInAnnotationOrTypeComment(call)) {
           multiFollowAssignmentsChain(callee)
             .asSequence()
             .map { if (it is PyFunction) it.containingClass else it }
