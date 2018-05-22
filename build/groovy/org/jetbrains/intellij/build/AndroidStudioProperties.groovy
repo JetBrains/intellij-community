@@ -327,7 +327,7 @@ class AndroidStudioProperties extends BaseIdeaProperties {
     return new WindowsDistributionCustomizer() {
       {
         icoPath = "$projectHome/../adt/idea/adt-branding/src/artwork/androidstudio.ico"
-// TODO
+        icoPathForEAP = "$projectHome/../adt/idea/adt-branding/src/artwork/preview/androidstudio.ico"
         installerImagesPath = "$projectHome/build/conf/ideaCE/win/images"
         fileAssociations = [".java", ".groovy", ".kt"]
       }
@@ -381,6 +381,7 @@ class AndroidStudioProperties extends BaseIdeaProperties {
       {
         buildTarGzWithoutBundledJre = false
         iconPngPath = "$projectHome/../adt/idea/adt-branding/src/artwork/icon_AS_128.png"
+        iconPngPathForEAP = "$projectHome/../adt/idea/adt-branding/src/artwork/preview/icon_AS_128.png"
       }
 
       @Override
