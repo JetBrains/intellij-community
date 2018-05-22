@@ -11,13 +11,11 @@ import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.PsiManager;
 import com.intellij.psi.xml.XmlTag;
 import com.intellij.util.containers.ContainerUtil;
-import org.jetbrains.annotations.NotNull;
 import org.jetbrains.concurrency.Promise;
 import org.jetbrains.idea.maven.dom.MavenDomWithIndicesTestCase;
 import org.jetbrains.idea.maven.importing.MavenProjectModelModifier;
 
 import java.util.Collections;
-import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -25,13 +23,17 @@ import java.util.regex.Pattern;
  * @author nik
  */
 public class MavenProjectModelModifierTest extends MavenDomWithIndicesTestCase {
+  private static final ExternalLibraryDescriptor COMMONS_IO_LIBRARY_DESCRIPTOR_2_4 =
+    new ExternalLibraryDescriptor("commons-io", "commons-io", "2.4", "2.4");
+
   public void testAddExternalLibraryDependency() {
     importProject("<groupId>test</groupId>" +
                   "<artifactId>project</artifactId>" +
                   "<version>1</version>");
 
     Promise<Void> result =
-      getExtension().addExternalLibraryDependency(Collections.singletonList(getModule("project")), new JunitLibraryDescriptor(),
+      getExtension().addExternalLibraryDependency(Collections.singletonList(getModule("project")),
+                                                  new ExternalLibraryDescriptor("junit", "junit"),
                                                   DependencyScope.COMPILE);
     assertNotNull(result);
     String version = assertHasDependency(myProjectPom, "junit", "junit");
@@ -45,7 +47,7 @@ public class MavenProjectModelModifierTest extends MavenDomWithIndicesTestCase {
                   "<version>1</version>");
 
     Promise<Void> result =
-      getExtension().addExternalLibraryDependency(Collections.singletonList(getModule("project")), new CommonsIoLibraryDescriptor_2_4(),
+      getExtension().addExternalLibraryDependency(Collections.singletonList(getModule("project")), COMMONS_IO_LIBRARY_DESCRIPTOR_2_4,
                                                   DependencyScope.COMPILE);
     assertNotNull(result);
     assertHasDependency(myProjectPom, "commons-io", "commons-io");
@@ -68,7 +70,7 @@ public class MavenProjectModelModifierTest extends MavenDomWithIndicesTestCase {
                   "</dependencyManagement>");
 
     Promise<Void> result =
-      getExtension().addExternalLibraryDependency(Collections.singletonList(getModule("project")), new CommonsIoLibraryDescriptor_2_4(),
+      getExtension().addExternalLibraryDependency(Collections.singletonList(getModule("project")), COMMONS_IO_LIBRARY_DESCRIPTOR_2_4,
                                                   DependencyScope.COMPILE);
     assertNotNull(result);
     assertHasManagedDependency(myProjectPom, "commons-io", "commons-io");
@@ -92,7 +94,7 @@ public class MavenProjectModelModifierTest extends MavenDomWithIndicesTestCase {
                   "</dependencyManagement>");
 
     Promise<Void> result =
-      getExtension().addExternalLibraryDependency(Collections.singletonList(getModule("project")), new CommonsIoLibraryDescriptor_2_4(),
+      getExtension().addExternalLibraryDependency(Collections.singletonList(getModule("project")), COMMONS_IO_LIBRARY_DESCRIPTOR_2_4,
                                                   DependencyScope.COMPILE);
     assertNotNull(result);
     waitUntilImported(result);
@@ -105,7 +107,7 @@ public class MavenProjectModelModifierTest extends MavenDomWithIndicesTestCase {
                   "<version>1</version>");
 
     Promise<Void> result = getExtension().addExternalLibraryDependency(
-      Collections.singletonList(getModule("project")), new CommonsIoLibraryDescriptorUnknownVersion(), DependencyScope.COMPILE);
+      Collections.singletonList(getModule("project")), new ExternalLibraryDescriptor("commons-io", "commons-io", "999.999", "999.999"), DependencyScope.COMPILE);
     assertNotNull(result);
     final String version = assertHasDependency(myProjectPom, "commons-io", "commons-io");
     assertEquals("RELEASE", version);
@@ -229,41 +231,5 @@ public class MavenProjectModelModifierTest extends MavenDomWithIndicesTestCase {
 
   private MavenProjectModelModifier getExtension() {
     return ContainerUtil.findInstance(JavaProjectModelModifier.EP_NAME.getExtensions(myProject), MavenProjectModelModifier.class);
-  }
-
-  private static class CommonsIoLibraryDescriptor_2_4 extends ExternalLibraryDescriptor {
-    public CommonsIoLibraryDescriptor_2_4() {
-      super("commons-io", "commons-io", "2.4", "2.4");
-    }
-
-    @NotNull
-    @Override
-    public List<String> getLibraryClassesRoots() {
-      return Collections.emptyList();
-    }
-  }
-
-  private static class CommonsIoLibraryDescriptorUnknownVersion extends ExternalLibraryDescriptor {
-    public CommonsIoLibraryDescriptorUnknownVersion() {
-      super("commons-io", "commons-io", "999.999", "999.999");
-    }
-
-    @NotNull
-    @Override
-    public List<String> getLibraryClassesRoots() {
-      return Collections.emptyList();
-    }
-  }
-
-  private static class JunitLibraryDescriptor extends ExternalLibraryDescriptor {
-    public JunitLibraryDescriptor() {
-      super("junit", "junit");
-    }
-
-    @NotNull
-    @Override
-    public List<String> getLibraryClassesRoots() {
-      return Collections.emptyList();
-    }
   }
 }
