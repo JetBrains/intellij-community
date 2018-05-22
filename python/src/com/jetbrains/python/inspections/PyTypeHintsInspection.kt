@@ -250,7 +250,9 @@ class PyTypeHintsInspection : PyInspection() {
                 PyTypingTypeProvider.PROTOCOL_EXT -> {
                   registerProblem(base,
                                   "Parameterized generics cannot be used with instance and class checks",
-                                  ProblemHighlightType.GENERIC_ERROR)
+                                  ProblemHighlightType.GENERIC_ERROR,
+                                  null,
+                                  if (base is PySubscriptionExpression) RemoveGenericParametersQuickFix() else null)
                   return@forEach
                 }
               }
@@ -262,7 +264,9 @@ class PyTypeHintsInspection : PyInspection() {
               if (type is PyWithAncestors && PyTypingTypeProvider.isGeneric(type, myTypeEvalContext)) {
                 registerProblem(base,
                                 "Parameterized generics cannot be used with instance and class checks",
-                                ProblemHighlightType.GENERIC_ERROR)
+                                ProblemHighlightType.GENERIC_ERROR,
+                                null,
+                                if (base is PySubscriptionExpression) RemoveGenericParametersQuickFix() else null)
               }
             }
           }
@@ -436,6 +440,17 @@ class PyTypeHintsInspection : PyInspection() {
         val new = PyElementGenerator.getInstance(project).createStringLiteral(old, targetName) ?: return
 
         old.replace(new)
+      }
+    }
+
+    private class RemoveGenericParametersQuickFix : LocalQuickFix {
+
+      override fun getFamilyName() = "Remove generic parameter(s)"
+
+      override fun applyFix(project: Project, descriptor: ProblemDescriptor) {
+        val old = descriptor.psiElement as? PySubscriptionExpression ?: return
+
+        old.replace(old.operand)
       }
     }
 
