@@ -11,22 +11,36 @@ import com.intellij.testGuiFramework.launcher.ide.CommunityIdeFirstStart
 import org.junit.runner.RunWith
 import org.junit.runners.Suite
 
-@RunWith(GuiTestSuite::class)
-@RunWithIde(CommunityIde::class)
-@FirstStartWith(CommunityIdeFirstStart::class)
+@RunWith(Suite::class)
 @Suite.SuiteClasses(
-  InstallPluginGuiTest::class
-  , CreateSdksGuiTest::class
-  , CreateKotlinProjectGuiTest::class
-  , CreateGradleProjectAndConfigureKotlinGuiTest::class
-  , CreateGradleProjectAndConfigureOldKotlinGuiTest::class
-  , CreateGradleProjectWithKotlinGuiTest::class
-  , CreateGradleKotlinDslProjectAndConfigureKotlinGuiTest::class
-  , CreateGradleKotlinDslProjectWithKotlinGuiTest::class
-  , CreateKotlinMPProjectGuiTest::class
-  , CreateJavaProjectAndConfigureKotlinGuiTest::class
-  , CreateJavaProjectWithKotlinGuiTest::class // attempt to find a workaround to failing java_with_jvm test when it runs first ever time
-  , CreateMavenProjectWithKotlinGuiTest::class
-  , CreateMavenProjectAndConfigureKotlinGuiTest::class
+    KotlinCreateProjectGuiTestSuite.PreparationSteps::class
+  , KotlinCreateProjectGuiTestSuite.KotlinCreateProject::class
 )
-class KotlinCreateProjectGuiTestSuite
+class KotlinCreateProjectGuiTestSuite{
+
+  @RunWith(GuiTestSuite::class)
+  @RunWithIde(CommunityIde::class)
+   @FirstStartWith(CommunityIdeFirstStart::class)
+  @Suite.SuiteClasses(
+        InstallPluginGuiTest::class
+      , CreateSdksGuiTest::class
+  )
+  class PreparationSteps
+
+  @RunWith(Suite::class)
+  @RunWithIde(CommunityIde::class)
+  @Suite.SuiteClasses(
+     CreateKotlinProjectGuiTest::class
+    , CreateGradleProjectAndConfigureKotlinGuiTest::class
+    , CreateGradleProjectAndConfigureOldKotlinGuiTest::class
+    , CreateGradleProjectWithKotlinGuiTest::class
+    , CreateGradleKotlinDslProjectAndConfigureKotlinGuiTest::class
+    , CreateGradleKotlinDslProjectWithKotlinGuiTest::class
+    , CreateKotlinMPProjectGuiTest::class
+    , CreateJavaProjectAndConfigureKotlinGuiTest::class
+    , CreateJavaProjectWithKotlinGuiTest::class // attempt to find a workaround to failing java_with_jvm test when it runs first ever time
+    , CreateMavenProjectWithKotlinGuiTest::class
+    , CreateMavenProjectAndConfigureKotlinGuiTest::class
+  )
+  class KotlinCreateProject
+}
