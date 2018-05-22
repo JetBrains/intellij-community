@@ -188,7 +188,11 @@ public abstract class GotoTargetHandler implements CodeInsightActionHandler {
 
     if (gotoData.listUpdaterTask != null) {
       Alarm alarm = new Alarm(popup);
-      alarm.addRequest(() -> popup.showInBestPositionFor(editor), 300);
+      alarm.addRequest(() -> {
+        if (!editor.isDisposed()) {
+          popup.showInBestPositionFor(editor);
+        }
+      }, 300);
       gotoData.listUpdaterTask.init(popup, builder.getBackgroundUpdater(), usageView);
       ProgressManager.getInstance().run(gotoData.listUpdaterTask);
     }
