@@ -8,6 +8,7 @@ import org.gradle.api.Project;
 import org.gradle.api.artifacts.*;
 import org.gradle.api.artifacts.component.*;
 import org.gradle.api.artifacts.result.*;
+import org.gradle.api.attributes.AttributeContainer;
 import org.gradle.api.component.Artifact;
 import org.gradle.api.tasks.AbstractCopyTask;
 import org.gradle.api.tasks.SourceSetOutput;
@@ -16,6 +17,7 @@ import org.gradle.internal.impldep.com.google.common.collect.Multimap;
 import org.gradle.internal.impldep.com.google.common.io.Files;
 import org.gradle.language.base.artifact.SourcesArtifact;
 import org.gradle.language.java.artifact.JavadocArtifact;
+import org.gradle.util.GradleVersion;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.gradle.model.*;
@@ -29,6 +31,10 @@ import java.util.*;
 import static org.jetbrains.plugins.gradle.tooling.util.resolve.DependencyResolverImpl.*;
 
 public class DependencyResultsTransformer {
+
+  private static final boolean is46rBetter = GradleVersion.current().getBaseVersion().compareTo(GradleVersion.version("4.6")) >= 0;
+
+
   private final Project myProject;
   private final SourceSetCachedFinder mySourceSetFinder;
   private final Multimap<ModuleVersionIdentifier, ResolvedArtifact> artifactMap;
@@ -38,6 +44,7 @@ public class DependencyResultsTransformer {
   private final Set<File> resolvedDepsFiles = new HashSet<File>();
 
   private final List<DependencyResult> handledDependencyResults = new ArrayList<DependencyResult>();
+  private final Set<ComponentResultKey> myVisitedComponentResults = new HashSet<ComponentResultKey>();
 
   public DependencyResultsTransformer(@NotNull final Project project,
                                @NotNull final SourceSetCachedFinder sourceSetFinder,
@@ -68,7 +75,7 @@ public class DependencyResultsTransformer {
         handledDependencyResults.add(dependencyResult);
 
         if (dependencyResult instanceof ResolvedDependencyResult) {
-          dependencies.addAll(processResolvedResult(dependencyResult));
+          dependencies.addAll(processResolvedResult((ResolvedDependencyResult)dependencyResult));
         }
 
         if (dependencyResult instanceof UnresolvedDependencyResult) {
@@ -91,10 +98,14 @@ public class DependencyResultsTransformer {
     return dependencies;
   }
 
-  private Set<ExternalDependency> processResolvedResult(DependencyResult dependencyResult) {
+  private Set<ExternalDependency> processResolvedResult(ResolvedDependencyResult dependencyResult) {
     Set<ExternalDependency> result = new LinkedHashSet<ExternalDependency>();
 
-    ResolvedComponentResult componentResult = ((ResolvedDependencyResult)dependencyResult).getSelected();
+    final ResolvedComponentResult componentResult = dependencyResult.getSelected();
+
+    if (!myVisitedComponentResults.add(getKey(componentResult))) {
+      return Collections.emptySet();
+    }
 
     ComponentSelector componentSelector = dependencyResult.getRequested();
     ModuleComponentIdentifier componentIdentifier = toComponentIdentifier(componentResult.getModuleVersion());
@@ -272,6 +283,80 @@ public class DependencyResultsTransformer {
 
     return result;
   }
+
+  private ComponentResultKey getKey(ResolvedComponentResult result) {
+    if (is46rBetter) {
+      return new AttributesBasedKey(result.getId(), result.getVariant().getAttributes());
+    } else {
+      return new ComponentIdKey(result.getId());
+    }
+  }
+
+  private interface ComponentResultKey{}
+
+  private static class ComponentIdKey implements ComponentResultKey {
+    private final ComponentIdentifier myId;
+
+    public ComponentIdKey(ComponentIdentifier id) {
+      myId = id;
+    }
+
+    @Override
+    public boolean equals(Object o) {
+      if (this == o) return true;
+      if (o == null || getClass() != o.getClass()) return false;
+
+      ComponentIdKey key = (ComponentIdKey)o;
+
+      if (!myId.equals(key.myId)) return false;
+
+      return true;
+    }
+
+    @Override
+    public int hashCode() {
+      return myId.hashCode();
+    }
+  }
+
+  private static class AttributesBasedKey implements ComponentResultKey {
+    private final ComponentIdentifier myId;
+    private final AttributeContainer myAttributes;
+
+    public AttributesBasedKey(ComponentIdentifier id, AttributeContainer attributes) {
+      myId = id;
+      myAttributes = attributes;
+    }
+
+    @Override
+    public boolean equals(Object o) {
+      if (this == o) return true;
+      if (o == null || getClass() != o.getClass()) return false;
+
+      AttributesBasedKey key = (AttributesBasedKey)o;
+
+      if (!myId.equals(key.myId)) return false;
+      if (!myAttributes.equals(key.myAttributes)) return false;
+
+      return true;
+    }
+
+    @Override
+    public int hashCode() {
+      int result = myId.hashCode();
+      result = 31 * result + myAttributes.hashCode();
+      return result;
+    }
+
+    @Override
+    public String toString() {
+      return "AttributesBasedKey{" +
+             "myId=" + myId +
+             ", myAttributes=" + myAttributes +
+             '}';
+    }
+  }
+
 
   @NotNull
   private DefaultExternalProjectDependency createProjectDependency(DependencyResult dependencyResult,
