@@ -31,7 +31,6 @@ public class StackFrameDescriptorImpl extends NodeDescriptorImpl implements Stac
   private final StackFrameProxyImpl myFrame;
   private int myUiIndex;
   private String myName = null;
-  private String myTypeName = null;
   private Location myLocation;
   private MethodsTracker.MethodOccurrence myMethodOccurrence;
   private boolean myIsSynthetic;
@@ -116,15 +115,10 @@ public class StackFrameDescriptorImpl extends NodeDescriptorImpl implements Stac
     }
     return null;
   }
-  
+
   @Override
   public String getName() {
     return myName;
-  }
-
-  @Nullable
-  public String getTypeName() {
-    return myTypeName;
   }
 
   @Override
@@ -148,8 +142,7 @@ public class StackFrameDescriptorImpl extends NodeDescriptorImpl implements Stac
       String name;
       try {
         ReferenceType refType = myLocation.declaringType();
-        myTypeName = refType != null ? refType.name() : null;
-        name = myTypeName;
+        name = refType != null ? refType.name() : null;
       }
       catch (InternalError e) {
         name = e.toString();

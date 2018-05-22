@@ -95,6 +95,9 @@ internal abstract class BreakpointIntentionAction(protected val myBreakpoint: XB
     @JvmField
     val CALLER_KEY = Key.create<String>("CALLER_KEY")
 
+    @JvmField
+    val THIS_TYPE_KEY = Key.create<String>("THIS_TYPE_KEY")
+
     @JvmStatic
     fun getIntentions(breakpoint: XBreakpoint<*>, currentSession: XDebugSession?): List<AnAction> {
       val process = currentSession?.debugProcess
@@ -104,7 +107,8 @@ internal abstract class BreakpointIntentionAction(protected val myBreakpoint: XB
         val currentStackFrame = currentSession.currentStackFrame
         if (currentStackFrame is JavaStackFrame) {
           val frameDescriptor = currentStackFrame.descriptor
-          frameDescriptor.typeName?.let {
+
+          frameDescriptor.getUserData(THIS_TYPE_KEY)?.let {
             res.add(AddClassFilter(breakpoint, it))
             res.add(AddClassNotFilter(breakpoint, it))
           }
