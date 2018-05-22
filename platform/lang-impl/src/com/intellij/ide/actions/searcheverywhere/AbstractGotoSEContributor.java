@@ -61,7 +61,7 @@ public abstract class AbstractGotoSEContributor implements SearchEverywhereContr
   }
 
   @Override
-  public boolean processSelectedItem(Object selected, int modifiers) {
+  public boolean processSelectedItem(Project project, Object selected, int modifiers) {
     //todo maybe another elements types
     if (selected instanceof PsiElement) {
       NavigationUtil.activateFileWithPsiElement((PsiElement) selected, (modifiers & InputEvent.SHIFT_MASK) != 0);

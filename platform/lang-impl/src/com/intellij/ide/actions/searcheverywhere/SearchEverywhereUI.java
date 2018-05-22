@@ -476,7 +476,7 @@ public class SearchEverywhereUI extends BorderLayoutPanel implements Disposable 
   }
 
   private void gotoSelectedItem(Object value, SearchEverywhereContributor contributor, int modifiers) {
-    boolean closePopup = contributor.processSelectedItem(value, modifiers);
+    boolean closePopup = contributor.processSelectedItem(myProject, value, modifiers);
     if (closePopup) {
       stopSearching();
       searchFinishedHandler.run();

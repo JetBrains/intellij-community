@@ -15,6 +15,8 @@ import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.Presentation;
 import com.intellij.openapi.actionSystem.ex.ActionUtil;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
@@ -167,7 +169,7 @@ public class TopHitSEContributor implements SearchEverywhereContributor {
   }
 
   @Override
-  public boolean processSelectedItem(Object selected, int modifiers) {
+  public boolean processSelectedItem(Project project, Object selected, int modifiers) {
     if (selected instanceof BooleanOptionDescription) {
       final BooleanOptionDescription option = (BooleanOptionDescription) selected;
       option.setOptionState(!option.isOptionEnabled());
@@ -180,11 +182,17 @@ public class TopHitSEContributor implements SearchEverywhereContributor {
     }
 
     if (isActionValue(selected) || isSetting(selected)) {
-      GotoActionAction.openOptionOrPerformAction(selected, "", null, null);
+      Component component = getProjectCurrentEditor(project);
+      GotoActionAction.openOptionOrPerformAction(selected, "", project, component);
       return true;
     }
 
     return false;
+  }
+
+  private Component getProjectCurrentEditor(Project project) {
+    Editor editor = FileEditorManager.getInstance(project).getSelectedTextEditor();
+    return editor == null ? null : editor.getComponent();
   }
 
   @Override
