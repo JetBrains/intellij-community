@@ -70,7 +70,8 @@ abstract class MacDistributionCustomizer {
   String additionalDocTypes = ""
 
   /**
-   * List of file extensions which installer will associate with the product
+   * List of file extensions which installer will associate with the product.
+   * This list may different from similar for windows because current one is NOT optional.
    */
   List<String> fileAssociations = []
 
