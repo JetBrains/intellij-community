@@ -95,6 +95,7 @@ public class OnePixelDivider extends Divider {
     super.removeNotify();
     if (myDisposable != null && !Disposer.isDisposed(myDisposable)) {
       Disposer.dispose(myDisposable);
+      myDisposable = null;
     }
   }
 
