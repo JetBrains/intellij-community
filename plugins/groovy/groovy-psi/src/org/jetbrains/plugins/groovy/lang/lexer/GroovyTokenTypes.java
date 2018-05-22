@@ -122,8 +122,8 @@ public interface GroovyTokenTypes {
   IElementType mSEMI = T_SEMI;
   IElementType mDOLLAR = T_DOLLAR;
   IElementType mRANGE_INCLUSIVE = T_RANGE;
-  IElementType mRANGE_EXCLUSIVE = T_EX_RANGE;
-  IElementType mTRIPLE_DOT = T_3DOT;
+  IElementType mRANGE_EXCLUSIVE = T_RANGE_EX;
+  IElementType mTRIPLE_DOT = T_ELLIPSIS;
   IElementType mSPREAD_DOT = T_SPREAD_DOT;
   IElementType mOPTIONAL_DOT = T_SAFE_DOT;
   IElementType mMEMBER_POINTER = T_METHOD_CLOSURE;
@@ -131,7 +131,7 @@ public interface GroovyTokenTypes {
   IElementType mREGEX_MATCH = T_REGEX_MATCH;
   IElementType mSTAR_STAR = T_POW;
   IElementType mSTAR_STAR_ASSIGN = T_POW_ASSIGN;
-  IElementType mCLOSABLE_BLOCK_OP = T_ARR;
+  IElementType mCLOSABLE_BLOCK_OP = T_ARROW;
   IElementType mAT = T_AT;
 
   /* **************************************************************************************************

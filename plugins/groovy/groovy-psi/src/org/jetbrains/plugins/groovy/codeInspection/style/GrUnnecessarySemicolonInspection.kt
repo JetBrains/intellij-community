@@ -44,7 +44,7 @@ class GrUnnecessarySemicolonInspection : GroovySuppressableInspectionTool(), Cle
     private val forwardSet = WHITE_SPACES_OR_COMMENTS + TokenSet(T_SEMI) - nlSet
     private val backwardSet = WHITE_SPACES_OR_COMMENTS - nlSet
     private val separators = TokenSet(NL, T_SEMI)
-    private val previousSet = TokenSet(T_LBRACE, T_ARR)
+    private val previousSet = TokenSet(T_LBRACE, T_ARROW)
 
     private fun isSemicolonNecessary(semicolon: PsiElement): Boolean {
       if (semicolon.parent is GrTraditionalForClause) return true

@@ -235,8 +235,7 @@ public interface GroovyElementTypes {
   IElementType SL_COMMENT = new GroovyElementType("line comment");
   IElementType STR_DQ = new GroovyElementType("Gstring");
   IElementType STR_SQ = new GroovyElementType("string");
-  IElementType T_3DOT = new GroovyElementType("...");
-  IElementType T_ARR = new GroovyElementType("->");
+  IElementType T_ARROW = new GroovyElementType("->");
   IElementType T_ASSIGN = new GroovyElementType("=");
   IElementType T_AT = new GroovyElementType("@");
   IElementType T_BAND = new GroovyElementType("&");
@@ -252,9 +251,9 @@ public interface GroovyElementTypes {
   IElementType T_DIV_ASSIGN = new GroovyElementType("/=");
   IElementType T_DOLLAR = new GroovyElementType("$");
   IElementType T_DOT = new GroovyElementType(".");
+  IElementType T_ELLIPSIS = new GroovyElementType("...");
   IElementType T_ELVIS = new GroovyElementType("?:");
   IElementType T_EQ = new GroovyElementType("==");
-  IElementType T_EX_RANGE = new GroovyElementType("..<");
   IElementType T_GE = new GroovyElementType(">=");
   IElementType T_GT = new GroovyElementType(">");
   IElementType T_INC = new GroovyElementType("++");
@@ -277,6 +276,7 @@ public interface GroovyElementTypes {
   IElementType T_POW_ASSIGN = new GroovyElementType("**=");
   IElementType T_Q = new GroovyElementType("?");
   IElementType T_RANGE = new GroovyElementType("..");
+  IElementType T_RANGE_EX = new GroovyElementType("..<");
   IElementType T_RBRACE = new GroovyElementType("}");
   IElementType T_RBRACK = new GroovyElementType("]");
   IElementType T_REGEX_FIND = new GroovyElementType("=~");

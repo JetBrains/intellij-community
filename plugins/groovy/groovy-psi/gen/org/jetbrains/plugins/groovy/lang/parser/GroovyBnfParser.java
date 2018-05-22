@@ -2244,7 +2244,7 @@ public class GroovyBnfParser implements PsiParser, LightPsiParser {
   /* ********************************************************** */
   // '->'
   static boolean closure_arrow(PsiBuilder b, int l) {
-    return consumeToken(b, T_ARR);
+    return consumeToken(b, T_ARROW);
   }
 
   /* ********************************************************** */
@@ -2844,7 +2844,7 @@ public class GroovyBnfParser implements PsiParser, LightPsiParser {
   /* ********************************************************** */
   // '...'
   static boolean ellipsis(PsiBuilder b, int l) {
-    return consumeTokenFast(b, T_3DOT);
+    return consumeTokenFast(b, T_ELLIPSIS);
   }
 
   /* ********************************************************** */
@@ -6796,7 +6796,7 @@ public class GroovyBnfParser implements PsiParser, LightPsiParser {
     boolean r;
     Marker m = enter_section_(b);
     r = consumeTokenSmart(b, T_RANGE);
-    if (!r) r = consumeTokenSmart(b, T_EX_RANGE);
+    if (!r) r = consumeTokenSmart(b, T_RANGE_EX);
     exit_section_(b, m, null, r);
     return r;
   }
