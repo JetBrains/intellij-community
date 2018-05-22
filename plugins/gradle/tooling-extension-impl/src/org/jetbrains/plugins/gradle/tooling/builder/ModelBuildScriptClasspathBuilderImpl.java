@@ -41,8 +41,6 @@ import java.util.concurrent.ConcurrentHashMap;
  */
 public class ModelBuildScriptClasspathBuilderImpl implements ModelBuilderService {
 
-  private static final boolean is40OrBetter = GradleVersion.current().getBaseVersion().compareTo(GradleVersion.version("4.0")) >= 0;
-
   private static final String CLASSPATH_CONFIGURATION_NAME = "classpath";
   private final Map<String, BuildScriptClasspathModelImpl> cache = new ConcurrentHashMap<String, BuildScriptClasspathModelImpl>();
   private SourceSetCachedFinder mySourceSetFinder = null;
