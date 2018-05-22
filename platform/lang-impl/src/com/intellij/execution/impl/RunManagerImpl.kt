@@ -1020,3 +1020,10 @@ private inline fun Collection<RunnerAndConfigurationSettings>.forEachManaged(han
     }
   }
 }
+
+fun getBeforeRunTasks(configuration: RunConfiguration): List<BeforeRunTask<*>> {
+  return when (configuration) {
+    is WrappingRunConfiguration<*> -> getBeforeRunTasks(configuration.peer)
+    else -> configuration.beforeRunTasks
+  }
+}

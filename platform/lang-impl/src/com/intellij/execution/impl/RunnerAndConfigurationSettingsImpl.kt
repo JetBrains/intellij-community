@@ -51,7 +51,7 @@ enum class RunConfigurationLevel {
   WORKSPACE, PROJECT, TEMPORARY
 }
 
-class RunnerAndConfigurationSettingsImpl @JvmOverloads constructor(private val manager: RunManagerImpl,
+class RunnerAndConfigurationSettingsImpl @JvmOverloads constructor(val manager: RunManagerImpl,
                                                                    private var _configuration: RunConfiguration? = null,
                                                                    private var isTemplate: Boolean = false,
                                                                    private var isSingleton: Boolean = false,

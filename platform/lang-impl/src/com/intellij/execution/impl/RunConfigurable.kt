@@ -175,7 +175,7 @@ open class RunConfigurable @JvmOverloads constructor(private val project: Projec
             else if (userObject is RunnerAndConfigurationSettingsImpl) {
               val settings = userObject as RunnerAndConfigurationSettings
               shared = settings.isShared
-              icon = RunManagerEx.getInstanceEx(project).getConfigurationIcon(settings)
+              icon = runManager.getConfigurationIcon(settings)
               configuration = settings
             }
             if (configuration != null) {
@@ -221,7 +221,7 @@ open class RunConfigurable @JvmOverloads constructor(private val project: Projec
 
     // add templates
     val templates = DefaultMutableTreeNode(TEMPLATES)
-    for (type in RunManagerImpl.getInstanceImpl(project).configurationFactoriesWithoutUnknown) {
+    for (type in manager.configurationFactoriesWithoutUnknown) {
       val configurationFactories = type.configurationFactories
       val typeNode = DefaultMutableTreeNode(type)
       templates.add(typeNode)
@@ -318,7 +318,7 @@ open class RunConfigurable @JvmOverloads constructor(private val project: Projec
   private fun showTemplateConfigurable(factory: ConfigurationFactory) {
     var configurable: Configurable? = storedComponents[factory]
     if (configurable == null) {
-      configurable = TemplateConfigurable(RunManagerImpl.getInstanceImpl(project).getConfigurationTemplate(factory))
+      configurable = TemplateConfigurable(runManager.getConfigurationTemplate(factory))
       storedComponents.put(factory, configurable)
       configurable.reset()
     }
