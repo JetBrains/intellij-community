@@ -4,4 +4,4 @@ package org.jetbrains.plugins.groovy.lang.psi.impl
 import com.intellij.psi.impl.source.tree.FileElement
 import com.intellij.psi.tree.IElementType
 
-class GroovyDummyElement(val childType: IElementType, text: CharSequence?) : FileElement(GroovyDummyElementType, text)
+class GroovyDummyElement(val childType: IElementType, text: CharSequence) : FileElement(GroovyDummyElementType, text)

@@ -123,7 +123,7 @@ public class GroovyPsiElementFactoryImpl extends GroovyPsiElementFactory {
     DummyHolder holder = new DummyHolder(myManager, dummyElement, context);
     PsiElement element = holder.getFirstChild();
     if (!(element instanceof GrCodeReferenceElement)) {
-      throw new IncorrectOperationException("Incorrect core reference '" + refName + "'");
+      throw new IncorrectOperationException("Incorrect code reference '" + refName + "'");
     }
     return (GrCodeReferenceElement)element;
   }
