@@ -427,6 +427,9 @@ public class AttachToProcessAction extends AnAction {
 
     abstract String getText(@NotNull Project project);
 
+    @Nullable
+    abstract String getTooltipText(@NotNull Project project);
+
     abstract List<AttachToProcessItem> getSubItems();
 
     @Override
@@ -640,7 +643,7 @@ public class AttachToProcessAction extends AnAction {
     @Nullable
     @Override
     public String getTooltipTextFor(AttachItem value) {
-      return value.getText(myProject);
+      return value.getTooltipText(myProject);
     }
 
     @Override
