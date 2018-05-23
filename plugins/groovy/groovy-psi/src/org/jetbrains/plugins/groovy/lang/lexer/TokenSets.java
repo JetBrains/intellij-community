@@ -6,6 +6,7 @@ import com.intellij.psi.TokenType;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.tree.TokenSet;
 import com.intellij.util.containers.ContainerUtil;
+import org.jetbrains.plugins.groovy.lang.psi.GroovyTokenSets;
 
 import java.util.Map;
 
@@ -158,20 +159,8 @@ public interface TokenSets {
 
   TokenSet POSTFIX_UNARY_OP_SET = TokenSet.create(mDEC, mINC);
 
-  TokenSet BINARY_OP_SET = TokenSet.create(mBAND, mBOR, mBXOR,
-                                           mDIV, mEQUAL, mGE,
-                                           mGT, mLOR, mLT,
-                                           mLE, mMINUS, kAS,
-                                           kIN,
-                                           mMOD, mPLUS, mSTAR,
-                                           mSTAR_STAR, mNOT_EQUAL,
-                                           mCOMPARE_TO, mLAND,
-                                           kINSTANCEOF,
-                                           COMPOSITE_LSHIFT_SIGN,
-                                           COMPOSITE_RSHIFT_SIGN,
-                                           COMPOSITE_TRIPLE_SHIFT_SIGN,
-                                           mREGEX_FIND, mREGEX_MATCH,
-                                           mRANGE_INCLUSIVE, mRANGE_EXCLUSIVE);
+  @Deprecated
+  TokenSet BINARY_OP_SET = GroovyTokenSets.BINARY_OPERATORS;
 
   TokenSet PARENTHESIZED_BINARY_OP_SET = TokenSet.create(mEQUAL, mNOT_EQUAL);
 

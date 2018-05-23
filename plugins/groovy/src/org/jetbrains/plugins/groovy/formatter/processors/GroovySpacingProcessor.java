@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package org.jetbrains.plugins.groovy.formatter.processors;
 
@@ -73,6 +59,8 @@ import org.jetbrains.plugins.groovy.lang.psi.api.types.GrArrayTypeElement;
 import org.jetbrains.plugins.groovy.lang.psi.api.types.GrTypeArgumentList;
 import org.jetbrains.plugins.groovy.lang.psi.api.types.GrTypeParameterList;
 import org.jetbrains.plugins.groovy.lang.psi.impl.PsiImplUtil;
+
+import static org.jetbrains.plugins.groovy.lang.psi.GroovyTokenSets.*;
 
 /**
  * @author ilyas
@@ -771,16 +759,16 @@ public class GroovySpacingProcessor extends GroovyElementVisitor {
   public void visitBinaryExpression(@NotNull GrBinaryExpression expression) {
 
     @SuppressWarnings("SimplifiableConditionalExpression" )
-    boolean spaceAround = isLeftOrRight(SpacingTokens.LOGICAL_OPERATORS)        ? mySettings.SPACE_AROUND_LOGICAL_OPERATORS :
-                          isLeftOrRight(SpacingTokens.EQUALITY_OPERATORS)       ? mySettings.SPACE_AROUND_EQUALITY_OPERATORS :
-                          isLeftOrRight(SpacingTokens.RELATIONAL_OPERATORS)     ? mySettings.SPACE_AROUND_RELATIONAL_OPERATORS :
-                          isLeftOrRight(SpacingTokens.BITWISE_OPERATORS)        ? mySettings.SPACE_AROUND_BITWISE_OPERATORS :
-                          isLeftOrRight(SpacingTokens.ADDITIVE_OPERATORS)       ? mySettings.SPACE_AROUND_ADDITIVE_OPERATORS :
-                          isLeftOrRight(SpacingTokens.MULTIPLICATIVE_OPERATORS) ? mySettings.SPACE_AROUND_MULTIPLICATIVE_OPERATORS :
-                          isLeftOrRight(SpacingTokens.SHIFT_OPERATORS)          ? mySettings.SPACE_AROUND_SHIFT_OPERATORS :
-                          isLeftOrRight(SpacingTokens.REGEX_OPERATORS)          ? myGroovySettings.SPACE_AROUND_REGEX_OPERATORS :
+    boolean spaceAround = isLeftOrRight(LOGICAL_OPERATORS) ? mySettings.SPACE_AROUND_LOGICAL_OPERATORS :
+                          isLeftOrRight(EQUALITY_OPERATORS) ? mySettings.SPACE_AROUND_EQUALITY_OPERATORS :
+                          isLeftOrRight(RELATIONAL_OPERATORS) ? mySettings.SPACE_AROUND_RELATIONAL_OPERATORS :
+                          isLeftOrRight(BITWISE_OPERATORS) ? mySettings.SPACE_AROUND_BITWISE_OPERATORS :
+                          isLeftOrRight(ADDITIVE_OPERATORS) ? mySettings.SPACE_AROUND_ADDITIVE_OPERATORS :
+                          isLeftOrRight(MULTIPLICATIVE_OPERATORS) ? mySettings.SPACE_AROUND_MULTIPLICATIVE_OPERATORS :
+                          isLeftOrRight(SHIFT_OPERATORS) ? mySettings.SPACE_AROUND_SHIFT_OPERATORS :
+                          isLeftOrRight(REGEX_OPERATORS) ? myGroovySettings.SPACE_AROUND_REGEX_OPERATORS :
                           isLeftOrRight(GroovyTokenTypes.kIN);
-    if (TokenSets.BINARY_OP_SET.contains(myType2)) {
+    if (BINARY_OPERATORS.contains(myType2)) {
       createDependentLFSpacing(mySettings.BINARY_OPERATION_SIGN_ON_NEXT_LINE, spaceAround, expression.getTextRange());
     }
     else {
