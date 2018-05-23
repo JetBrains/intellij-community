@@ -15,7 +15,6 @@
  */
 package com.siyeh.ig.fixes.parenthesis;
 
-import com.intellij.testFramework.PsiTestUtil;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.IGQuickFixesTestCase;
@@ -31,10 +30,7 @@ public class UnnecessaryParenthesesQuickFixTest extends IGQuickFixesTestCase {
   }
 
   public void testPolyadic() { doTest(); }
-  public void testCommutative() {
-    PsiTestUtil.disablePsiTextConsistencyChecks(getTestRootDisposable());
-    doTest();
-  }
+  public void testCommutative() { doTest(); }
   public void testWrapping() { doTest(); }
   public void testNotCommutative() { assertQuickfixNotAvailable(); }
   public void testStringParentheses() { assertQuickfixNotAvailable(); }

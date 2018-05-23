@@ -18,6 +18,7 @@ package com.siyeh.ig.psiutils;
 import com.intellij.psi.*;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.PsiPrecedenceUtil;
+import com.intellij.util.ArrayUtil;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -183,7 +184,18 @@ public class ParenthesesUtils {
     }
     final PsiElement parent = parenthesizedExpression.getParent();
     if (!(parent instanceof PsiExpression) || !areParenthesesNeeded(body, (PsiExpression)parent, ignoreClarifyingParentheses)) {
-      final PsiExpression newExpression = (PsiExpression)new CommentTracker().replaceAndRestoreComments(parenthesizedExpression, body);
+      final PsiExpression newExpression;
+      int idx;
+      if (parent instanceof PsiPolyadicExpression && (idx = ArrayUtil.indexOf(((PsiPolyadicExpression)parent).getOperands(), parenthesizedExpression)) > 0) {
+        PsiPolyadicExpression copyParentPolyadic = (PsiPolyadicExpression)parent.copy();
+        new CommentTracker().replaceAndRestoreComments(copyParentPolyadic.getOperands()[idx], body);
+        PsiExpression recreateCopyFromText = JavaPsiFacade.getElementFactory(copyParentPolyadic.getProject())
+                                                          .createExpressionFromText(copyParentPolyadic.getText(), parent);
+        newExpression = ((PsiPolyadicExpression)parent.replace(recreateCopyFromText)).getOperands()[idx];
+      }
+      else {
+        newExpression = (PsiExpression)new CommentTracker().replaceAndRestoreComments(parenthesizedExpression, body);
+      }
       removeParentheses(newExpression, ignoreClarifyingParentheses);
     }
     else {
