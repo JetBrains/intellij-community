@@ -37,7 +37,8 @@ public class FailedLineTest extends LightCodeInsightFixtureTestCase {
   public void testFailedLineManager() {
 
     configure();
-
+    myFixture.enableInspections(new TestFailedLineInspection());
+    myFixture.testHighlighting();
     PsiElement element = PsiUtilBase.getElementAtCaret(getEditor());
     PsiMethodCallExpression callExpression = PsiTreeUtil.getParentOfType(element, PsiMethodCallExpression.class);
     PsiMethod psiMethod = PsiTreeUtil.getParentOfType(callExpression, PsiMethod.class);
@@ -91,7 +92,7 @@ public class FailedLineTest extends LightCodeInsightFixtureTestCase {
     myFixture.addClass("package junit.framework; public class TestCase {}");
     myFixture.configureByText("MainTest.java", "  public class MainTest extends junit.framework.TestCase {\n" +
                                                "    public void testFoo() {\n" +
-                                               "       <warning descr=\"oops\">assertE<caret>quals()</warning>;\n" +
+                                               "       <warning descr=\"oops\">assertE<caret>quals</warning>();\n" +
                                                "       assertEquals();\n" +
                                                "    }\n" +
                                                "    public void assertEquals() {}\n" +
