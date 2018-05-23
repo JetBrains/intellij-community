@@ -3,7 +3,11 @@ package org.jetbrains.intellij.build.images.sync
 
 import java.io.File
 
-private val GIT = System.getenv("TEAMCITY_GIT_PATH") ?: "git"
+private val GIT = (System.getenv("TEAMCITY_GIT_PATH") ?: "git").also {
+  val gitVersion = listOf("git", "--version").execute(File(System.getProperty("user.dir")), true)
+  if (gitVersion.isBlank()) throw IllegalStateException("Git is not found")
+  log(gitVersion)
+}
 
 /**
  * @param dirToList optional dir in [repo] from which to list files
