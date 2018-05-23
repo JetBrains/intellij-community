@@ -243,6 +243,10 @@ class CommunityRepositoryModules {
       withModule("intellij.android.rt", "android-rt.jar", null)
 
       withModule("intellij.android", "android.jar", null)
+      withModule("intellij.android.android-adb", "android.jar")
+      withModule("intellij.android.android-debuggers", "android.jar")
+      withModule("intellij.android.android-lang", "android.jar")
+      withModule("intellij.android.plugin", "android.jar")
       withModule("intellij.android.artwork")
       withModule("intellij.android.observable", "android.jar")
       withModule("intellij.android.observable.ui", "android.jar")
@@ -255,9 +259,11 @@ class CommunityRepositoryModules {
       withModule("intellij.android.perfdHost", "android-profilers.jar")
       withModule("intellij.android.profilers", "android-profilers.jar")
       withModule("intellij.android.profilers.ui", "android-profilers.jar")
+      withModule("intellij.android.apkanalyzer", "android.jar")
+      withModule("intellij.android.project-system", "android.jar")
+      withModule("intellij.android.project-system-gradle", "android.jar")
       withModule("intellij.android.adt.ui", "adt-ui.jar")
       withModule("intellij.android.adt.ui.model", "adt-ui.jar")
-      withModule("intellij.android.sherpaUi", "constraint-layout.jar")
       withModule("android.sdktools.sdklib", "sdklib.jar")
       withModule("android.sdktools.layoutlib-api", "layoutlib-api.jar")
       withModule("intellij.android.layoutlib", "layoutlib-loader.jar")
@@ -273,13 +279,15 @@ class CommunityRepositoryModules {
       withModule("android.sdktools.ninepatch", "sdk-tools.jar")
       withModule("android.sdktools.perflib", "sdk-tools.jar")
       withModule("android.sdktools.layoutinspector", "sdk-tools.jar")
+      withModule("android.sdktools.java-lib-model", "sdk-tools.jar")
+      withModule("android.sdktools.java-lib-model-builder", "sdk-tools.jar")
+      withModule("android.sdktools.usb-devices", "sdk-tools.jar")
 
       withModule("intellij.android.jps", "jps/android-jps-plugin.jar", null)
 
       withProjectLibrary("freemarker-2.3.20") //todo[nik] move to module libraries
       withProjectLibrary("jgraphx") //todo[nik] move to module libraries
       withProjectLibrary("kxml2") //todo[nik] move to module libraries
-      withProjectLibrary("lombok-ast") //todo[nik] move to module libraries
       withProjectLibrary("layoutlib") //todo[nik] move to module libraries
 
       withResourceFromModule("intellij.android","lib/antlr4-runtime-4.5.3.jar", "lib")
@@ -305,11 +313,11 @@ class CommunityRepositoryModules {
 
       withProjectLibrary("studio-profiler-grpc-1.0-jarjar")
       withProjectLibrary("archive-patcher")
-      withProjectLibrary("com.android.tools.analytics-library:shared:26.0.0")
-      withProjectLibrary("com.android.tools.analytics-library:tracker:26.0.0")
-      withProjectLibrary("com.android.tools:annotations:26.0.0")
-      withProjectLibrary("com.android.tools:sdk-common:26.0.0")
-      withProjectLibrary("com.android.tools.build:manifest-merger:26.0.0")
+      withProjectLibrary("com.android.tools.analytics-library:shared:26.1.2")
+      withProjectLibrary("com.android.tools.analytics-library:tracker:26.1.2")
+      withProjectLibrary("com.android.tools:annotations:26.1.2")
+      withProjectLibrary("com.android.tools:sdk-common:26.1.2")
+      withProjectLibrary("com.android.tools.build:manifest-merger:26.1.2")
       withProjectLibrary("analytics-protos")
 
       additionalModulesToJars.entrySet().each {

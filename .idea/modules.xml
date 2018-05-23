@@ -418,7 +418,6 @@
       <module fileurl="file://$PROJECT_DIR$/android/project-system/intellij.android.project-system-tests.iml" filepath="$PROJECT_DIR$/android/project-system/intellij.android.project-system-tests.iml" />
       <module fileurl="file://$PROJECT_DIR$/android/rt/intellij.android.rt.iml" filepath="$PROJECT_DIR$/android/rt/intellij.android.rt.iml" />
       <module fileurl="file://$PROJECT_DIR$/android/sdk-updates/intellij.android.sdkUpdates.iml" filepath="$PROJECT_DIR$/android/sdk-updates/intellij.android.sdkUpdates.iml" />
-      <module fileurl="file://$PROJECT_DIR$/android/sherpa-ui/intellij.android.sherpaUi.iml" filepath="$PROJECT_DIR$/android/sherpa-ui/intellij.android.sherpaUi.iml" />
       <module fileurl="file://$PROJECT_DIR$/android/smali/intellij.android.smali.iml" filepath="$PROJECT_DIR$/android/smali/intellij.android.smali.iml" />
       <module fileurl="file://$PROJECT_DIR$/android/android-test-framework/intellij.android.testFramework.iml" filepath="$PROJECT_DIR$/android/android-test-framework/intellij.android.testFramework.iml" />
       <module fileurl="file://$PROJECT_DIR$/android/android/intellij.android.tests.iml" filepath="$PROJECT_DIR$/android/android/intellij.android.tests.iml" />
