@@ -153,10 +153,10 @@ public class AddExceptionToExistingCatchFix extends PsiElementBaseIntentionActio
       PsiElement parent = element.getParent();
       List<PsiTryStatement> parents = new SmartList<>();
       while (parent != null) {
-        if (parent instanceof PsiLambdaExpression || parent instanceof PsiMember) break;
+        if (parent instanceof PsiLambdaExpression || parent instanceof PsiMember || parent instanceof PsiFile) break;
         if (parent instanceof PsiTryStatement) {
           PsiTryStatement tryStatement = (PsiTryStatement)parent;
-          if (tryStatement.getFinallyBlock() != current && !isInCatch(current, tryStatement)) {
+          if (tryStatement.getFinallyBlock() != current && !(current instanceof PsiCatchSection)) {
             parents.add((PsiTryStatement)parent);
           }
         }
@@ -164,15 +164,6 @@ public class AddExceptionToExistingCatchFix extends PsiElementBaseIntentionActio
         parent = parent.getParent();
       }
       return parents;
-    }
-
-    private static boolean isInCatch(PsiElement current, PsiTryStatement tryStatement) {
-      for (PsiCatchSection block : tryStatement.getCatchSections()) {
-        if (block == current) {
-          return true;
-        }
-      }
-      return false;
     }
 
     private String getMessage() {
