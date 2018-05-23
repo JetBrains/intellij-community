@@ -65,4 +65,24 @@ class PyTypeHintsQuickFixTest : PyQuickFixTestCase() {
   fun testInstanceCheckOnOperandReference() {
     doQuickFixTest(PyTypeHintsInspection::class.java, "Remove generic parameter(s)")
   }
+
+  // PY-20530
+  fun testCallableMoreThanTwoElements() {
+    doQuickFixTest(PyTypeHintsInspection::class.java, "Surround with square brackets", LanguageLevel.PYTHON37)
+  }
+
+  // PY-20530
+  fun testCallableTwoElements() {
+    doQuickFixTest(PyTypeHintsInspection::class.java, "Surround with square brackets", LanguageLevel.PYTHON37)
+  }
+
+  // PY-20530
+  fun testCallableTwoElementsTupleAsFirst() {
+    doQuickFixTest(PyTypeHintsInspection::class.java, "Replace with square brackets", LanguageLevel.PYTHON37)
+  }
+
+  // PY-20530
+  fun testCallableTwoElementsParenthesizedAsFirst() {
+    doQuickFixTest(PyTypeHintsInspection::class.java, "Replace with square brackets", LanguageLevel.PYTHON37)
+  }
 }

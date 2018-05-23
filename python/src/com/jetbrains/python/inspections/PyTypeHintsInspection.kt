@@ -4,6 +4,7 @@ package com.jetbrains.python.inspections
 import com.intellij.codeInsight.controlflow.ControlFlowUtil
 import com.intellij.codeInspection.*
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.util.TextRange
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiElementVisitor
 import com.intellij.psi.PsiFileFactory
@@ -64,15 +65,18 @@ class PyTypeHintsInspection : PyInspection() {
       }
     }
 
-    override fun visitPySubscriptionExpression(node: PySubscriptionExpression?) {
+    override fun visitPySubscriptionExpression(node: PySubscriptionExpression) {
       super.visitPySubscriptionExpression(node)
 
-      if (node != null) {
-        val callee = node.operand as? PyReferenceExpression
-        val calleeQName = callee?.let { PyResolveUtil.resolveImportedElementQNameLocally(it) } ?: emptyList()
+      val operand = node.operand as? PyReferenceExpression ?: return
+      val index = node.indexExpression ?: return
 
-        if (genericQName in calleeQName) {
-          checkGenericParameters(node.indexExpression)
+      val callableQName = QualifiedName.fromDottedString(PyTypingTypeProvider.CALLABLE)
+
+      PyResolveUtil.resolveImportedElementQNameLocally(operand).forEach {
+        when (it) {
+          genericQName -> checkGenericParameters(index)
+          callableQName -> checkCallableParameters(index)
         }
       }
     }
@@ -386,7 +390,7 @@ class PyTypeHintsInspection : PyInspection() {
       return Pair(if (seenGeneric) genericTypeVars else null, nonGenericTypeVars)
     }
 
-    private fun checkGenericParameters(index: PyExpression?) {
+    private fun checkGenericParameters(index: PyExpression) {
       val parameters = (index as? PyTupleExpression)?.elements ?: arrayOf(index)
       val typeVars = mutableSetOf<PsiElement>()
 
@@ -407,6 +411,41 @@ class PyTypeHintsInspection : PyInspection() {
               registerProblem(it, "Parameters to 'Generic[...]' must all be type variables", ProblemHighlightType.GENERIC_ERROR)
             }
           }
+        }
+      }
+    }
+
+    private fun checkCallableParameters(index: PyExpression) {
+      val message = "'Callable' must be used as 'Callable[[arg, ...], result]'"
+
+      if (index !is PyTupleExpression) {
+        registerProblem(index, message, ProblemHighlightType.GENERIC_ERROR)
+        return
+      }
+
+      val parameters = index.elements
+      if (parameters.size > 2) {
+        val possiblyLastParameter = parameters[parameters.size - 2]
+
+        registerProblem(index,
+                        message,
+                        ProblemHighlightType.GENERIC_ERROR,
+                        null,
+                        TextRange.create(0, possiblyLastParameter.startOffsetInParent + possiblyLastParameter.textLength),
+                        SurroundElementsWithSquareBracketsQuickFix())
+      }
+      else if (parameters.size < 2) {
+        registerProblem(index, message, ProblemHighlightType.GENERIC_ERROR)
+      }
+      else {
+        val first = parameters.first()
+
+        if (first !is PyListLiteralExpression && !(first is PyNoneLiteralExpression && first.isEllipsis)) {
+          registerProblem(first,
+                          message,
+                          ProblemHighlightType.GENERIC_ERROR,
+                          null,
+                          if (first is PyParenthesizedExpression) ReplaceWithListQuickFix() else SurroundElementWithSquareBracketsQuickFix())
         }
       }
     }
@@ -470,6 +509,52 @@ class PyTypeHintsInspection : PyInspection() {
           .createFileFromText(language, text)
           ?.let { it.firstChild.lastChild as? PySubscriptionExpression }
           ?.let { element.replace(it) }
+      }
+    }
+
+    private class SurroundElementsWithSquareBracketsQuickFix : LocalQuickFix {
+
+      override fun getFamilyName() = "Surround with square brackets"
+
+      override fun applyFix(project: Project, descriptor: ProblemDescriptor) {
+        val element = descriptor.psiElement as? PyTupleExpression ?: return
+        val list = PyElementGenerator.getInstance(project).createListLiteral()
+
+        val originalElements = element.elements
+        originalElements.dropLast(1).forEach { list.add(it) }
+        originalElements.dropLast(2).forEach { it.delete() }
+
+        element.elements.first().replace(list)
+      }
+    }
+
+    private class SurroundElementWithSquareBracketsQuickFix : LocalQuickFix {
+
+      override fun getFamilyName() = "Surround with square brackets"
+
+      override fun applyFix(project: Project, descriptor: ProblemDescriptor) {
+        val element = descriptor.psiElement
+        val list = PyElementGenerator.getInstance(project).createListLiteral()
+
+        list.add(element)
+
+        element.replace(list)
+      }
+    }
+
+    private class ReplaceWithListQuickFix : LocalQuickFix {
+
+      override fun getFamilyName() = "Replace with square brackets"
+
+      override fun applyFix(project: Project, descriptor: ProblemDescriptor) {
+        val element = descriptor.psiElement
+
+        val expression = (element as? PyParenthesizedExpression)?.containedExpression ?: return
+        val elements = expression.let { if (it is PyTupleExpression) it.elements else arrayOf(it) }
+
+        val list = PyElementGenerator.getInstance(project).createListLiteral()
+        elements.forEach { list.add(it) }
+        element.replace(list)
       }
     }
   }
