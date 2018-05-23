@@ -944,7 +944,7 @@ public class FileStructurePopup implements Disposable, TreeActionsOwner {
         String text = getSpeedSearchText(value);
         if (text == null) return false;
 
-        if (matches(text)) {
+        if (matches(filter, text)) {
           Object o = value;
           while (o instanceof FilteringTreeStructure.FilteringNode && (o = ((FilteringTreeStructure.FilteringNode)o).getParent()) != null) {
             myVisibleParents.add(o);
@@ -958,12 +958,10 @@ public class FileStructurePopup implements Disposable, TreeActionsOwner {
       return true;
     }
 
-    private boolean matches(@NotNull String text) {
-      if (isUnitTest) {
-        SpeedSearchComparator comparator = mySpeedSearch.getComparator();
-        return StringUtil.isNotEmpty(myTestSearchFilter) && comparator.matchingFragments(myTestSearchFilter, text) != null;
-      }
-      return mySpeedSearch.matchingFragments(text) != null;
+    private boolean matches(@NotNull String filter, @NotNull String text) {
+      return (isUnitTest || mySpeedSearch.isPopupActive()) &&
+             StringUtil.isNotEmpty(filter) &&
+             mySpeedSearch.getComparator().matchingFragments(filter, text) != null;
     }
   }
 
