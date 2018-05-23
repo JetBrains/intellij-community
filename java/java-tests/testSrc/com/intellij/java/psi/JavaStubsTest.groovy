@@ -328,4 +328,12 @@ class A {
     assert !staticImport.resolveTargetClass()
   }
 
+  void "test adding import to broken file with type parameters"() {
+    def file = myFixture.addFileToProject("a.java", "A<B>") as PsiJavaFile
+    WriteCommandAction.runWriteCommandAction(project) {
+      file.importClass(myFixture.findClass(CommonClassNames.JAVA_UTIL_LIST))
+    }
+    PsiTestUtil.checkStubsMatchText(file)
+  }
+
 }
