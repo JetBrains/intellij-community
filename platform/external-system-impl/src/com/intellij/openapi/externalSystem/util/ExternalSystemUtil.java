@@ -493,7 +493,9 @@ public class ExternalSystemUtil {
             rerunImportAction.getTemplatePresentation()
               .setDescription(ExternalSystemBundle.message("action.refresh.project.description", systemId));
             rerunImportAction.getTemplatePresentation().setIcon(AllIcons.Actions.Refresh);
-            String message = isPreviewMode ? "creating of the project preview..." : "syncing...";
+
+            if(isPreviewMode) return;
+            String message = "syncing...";
             ServiceManager.getService(project, SyncViewManager.class).onEvent(
               new StartBuildEventImpl(new DefaultBuildDescriptor(id, projectName, externalProjectPath, eventTime), message)
                 .withProcessHandler(processHandler, null)
@@ -546,7 +548,7 @@ public class ExternalSystemUtil {
 
           @Override
           public void onStatusChange(@NotNull ExternalSystemTaskNotificationEvent event) {
-            if (event instanceof ExternalSystemTaskExecutionEvent) {
+            if (!isPreviewMode && event instanceof ExternalSystemTaskExecutionEvent) {
               BuildEvent buildEvent = convert(((ExternalSystemTaskExecutionEvent)event));
               ServiceManager.getService(project, SyncViewManager.class).onEvent(buildEvent);
             }
@@ -609,8 +611,8 @@ public class ExternalSystemUtil {
             }
             project.putUserData(ExternalSystemDataKeys.NEWLY_CREATED_PROJECT, null);
             project.putUserData(ExternalSystemDataKeys.NEWLY_IMPORTED_PROJECT, null);
+            sendSyncFinishEvent(finishSyncEventSupplier);
           }
-          sendSyncFinishEvent(finishSyncEventSupplier);
         }
       }
 
