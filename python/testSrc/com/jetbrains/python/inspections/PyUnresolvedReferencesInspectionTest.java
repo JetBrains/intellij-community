@@ -715,6 +715,30 @@ public class PyUnresolvedReferencesInspectionTest extends PyInspectionTestCase {
                  "    return x");
   }
 
+  // PY-20530
+  public void testSelfInAnnotationAndTypeComment() {
+    runWithLanguageLevel(
+      LanguageLevel.PYTHON36,
+      () -> doTestByText("class A:\n" +
+                         "    def f1(self) -> <error descr=\"Unresolved reference 'self'\">self</error>.B:\n" +
+                         "        pass\n" +
+                         "\n" +
+                         "    def f2(self):\n" +
+                         "        # type: () -> <warning descr=\"Unresolved reference 'self'\">self</warning>.B\n" +
+                         "        pass\n" +
+                         "\n" +
+                         "    def f3(self):\n" +
+                         "        v3: self.B\n" +
+                         "        v4 = None  # type: self.B\n" +
+                         "\n" +
+                         "    v1: <error descr=\"Unresolved reference 'self'\">self</error>.B\n" +
+                         "    v2 = None  # type: <warning descr=\"Unresolved reference 'self'\">self</warning>.B\n" +
+                         "\n" +
+                         "    class B:\n" +
+                         "        pass")
+    );
+  }
+
   // PY-30383
   public void testLambdaMember() {
     doTestByText("class SomeClass:\n" +
