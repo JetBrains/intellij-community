@@ -43,8 +43,8 @@ import org.jetbrains.jps.model.java.compiler.JpsJavaCompilerConfiguration;
 import org.jetbrains.jps.model.java.compiler.ProcessorConfigProfile;
 import org.jetbrains.jps.model.module.JpsModule;
 
+import javax.tools.*;
 import java.io.File;
-import java.io.IOException;
 import java.io.PrintWriter;
 import java.io.StringWriter;
 import java.lang.reflect.Constructor;
@@ -60,6 +60,7 @@ public class GreclipseBuilder extends ModuleLevelBuilder {
   private static final Logger LOG = Logger.getInstance("#org.jetbrains.jps.incremental.groovy.GreclipseBuilder");
   private static final Key<Boolean> COMPILER_VERSION_INFO = Key.create("_greclipse_compiler_info_");
   public static final String ID = "Groovy-Eclipse";
+  private static final Object ourGlobalEnvironmentLock = new String("GreclipseBuilder lock");
 
   private String myGreclipseJar;
   /**
@@ -91,7 +92,7 @@ public class GreclipseBuilder extends ModuleLevelBuilder {
         new File(jar).toURI().toURL(),
         new File(ObjectUtils.assertNotNull(PathManager.getJarPathForClass(GreclipseMain.class))).toURI().toURL()
       };
-      ClassLoader loader = new URLClassLoader(urls, null);
+      ClassLoader loader = new URLClassLoader(urls, StandardJavaFileManager.class.getClassLoader());
       Class.forName("org.eclipse.jdt.internal.compiler.batch.Main", false, loader);
       myGreclipseJar = jar;
       myGreclipseLoader = loader;
@@ -113,7 +114,7 @@ public class GreclipseBuilder extends ModuleLevelBuilder {
   public ExitCode build(final CompileContext context,
                         ModuleChunk chunk,
                         DirtyFilesHolder<JavaSourceRootDescriptor, ModuleBuildTarget> dirtyFilesHolder,
-                        OutputConsumer outputConsumer) throws ProjectBuildException, IOException {
+                        OutputConsumer outputConsumer) throws ProjectBuildException {
     if (!useGreclipse(context)) return ModuleLevelBuilder.ExitCode.NOTHING_DONE;
 
     try {
@@ -221,10 +222,26 @@ public class GreclipseBuilder extends ModuleLevelBuilder {
 
   private boolean performCompilation(List<String> args, StringWriter out, StringWriter err, Map<String, List<String>> outputs, CompileContext context, ModuleChunk chunk) {
     String bytecodeTarget = JpsGroovycRunner.getBytecodeTarget(context, chunk);
-    if (bytecodeTarget != null) {
-      System.setProperty(JpsGroovycRunner.GROOVY_TARGET_BYTECODE, bytecodeTarget);
+    if (bytecodeTarget != null && System.getProperty(JpsGroovycRunner.GROOVY_TARGET_BYTECODE) == null) {
+      synchronized (ourGlobalEnvironmentLock) {
+        try {
+          System.setProperty(JpsGroovycRunner.GROOVY_TARGET_BYTECODE, bytecodeTarget);
+          return performCompilationInner(args, out, err, outputs, context, chunk);
+        }
+        finally {
+          System.clearProperty(JpsGroovycRunner.GROOVY_TARGET_BYTECODE);
+        }
+      }
     }
 
+    return performCompilationInner(args, out, err, outputs, context, chunk);
+  }
+
+  private boolean performCompilationInner(List<String> args,
+                                          StringWriter out,
+                                          StringWriter err,
+                                          Map<String, List<String>> outputs,
+                                          CompileContext context, ModuleChunk chunk) {
     try {
       Class<?> mainClass = Class.forName(GreclipseMain.class.getName(), true, myGreclipseLoader);
       Constructor<?> constructor = mainClass.getConstructor(PrintWriter.class, PrintWriter.class, Map.class, Map.class);
@@ -242,7 +259,7 @@ public class GreclipseBuilder extends ModuleLevelBuilder {
       return (Boolean)compileMethod.invoke(main, new Object[]{ArrayUtil.toStringArray(args)});
     }
     catch (Exception e) {
-      context.processMessage(new CompilerMessage(getPresentableName(), e));
+      context.processMessage(CompilerMessage.createInternalBuilderError(getPresentableName(), e));
       return false;
     }
   }

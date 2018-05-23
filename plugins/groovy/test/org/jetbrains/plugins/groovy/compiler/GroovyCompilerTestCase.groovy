@@ -26,6 +26,7 @@ import com.intellij.openapi.util.Key
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.pom.java.LanguageLevel
 import com.intellij.psi.PsiFile
 import com.intellij.testFramework.*
 import com.intellij.testFramework.builders.JavaModuleFixtureBuilder
@@ -69,7 +70,7 @@ abstract class GroovyCompilerTestCase extends JavaCodeInsightFixtureTestCase imp
 
   @Override
   protected void tuneFixture(JavaModuleFixtureBuilder moduleBuilder) throws Exception {
-    moduleBuilder.setLanguageLevel(JavaSdkVersion.fromJavaVersion(JavaVersion.current()).maxLanguageLevel)
+    moduleBuilder.setLanguageLevel(LanguageLevel.JDK_1_8)
     def javaHome = FileUtil.toSystemIndependentName(SystemProperties.javaHome)
     moduleBuilder.addJdk(StringUtil.trimEnd(StringUtil.trimEnd(javaHome, '/'), '/jre'))
     super.tuneFixture(moduleBuilder)
