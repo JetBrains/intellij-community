@@ -15,7 +15,6 @@
  */
 package com.intellij.javaee;
 
-import com.intellij.xml.util.HtmlUtil;
 import com.intellij.xml.util.XmlUtil;
 
 /**
@@ -63,9 +62,6 @@ public class InternalResourceProvider implements StandardResourceProvider{
 
     impl.addInternalResource("http://www.openmobilealliance.org/tech/DTD/xhtml-mobile12.dtd", "xhtml-mobile/xhtml-mobile12.dtd");
 
-    // svg and mathML
-    impl.addIgnoredResource(HtmlUtil.MATH_ML_NAMESPACE);
-    impl.addIgnoredResource(HtmlUtil.SVG_NAMESPACE);
     impl.addInternalResource("http://www.w3.org/1999/xlink", "xlink.dtd");
   }
 }
