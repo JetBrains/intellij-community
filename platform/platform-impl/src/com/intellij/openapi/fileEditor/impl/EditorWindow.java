@@ -801,8 +801,6 @@ public class EditorWindow {
           final VirtualFile nextFile = virtualFile == null ? firstFile : virtualFile;
           HistoryEntry currentState = firstEC.currentStateAsHistoryEntry();
 
-          fileEditorManager.disposeComposite(firstEC);
-
           final boolean focusEditor = !focusNew;
           final FileEditor[] firstEditors = fileEditorManager.openFileImpl4(this, firstFile, currentState,
                                                                             true, focusEditor, null, -1, true).first;
