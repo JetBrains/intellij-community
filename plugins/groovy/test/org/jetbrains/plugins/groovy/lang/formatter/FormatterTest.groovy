@@ -833,7 +833,7 @@ print abc ? cde
 
   void testLabelsInBasicMode() {
     groovySettings.indentOptions.INDENT_SIZE = 4
-    groovySettings.indentOptions.LABEL_INDENT_SIZE = -2
+    groovySettings.indentOptions.LABEL_INDENT_SIZE = 2
     groovyCustomSettings.INDENT_LABEL_BLOCKS = false
 
     checkFormatting('''\
@@ -844,7 +844,7 @@ def bar() {
 }
 ''', '''\
 def bar() {
-  abc:
+      abc:
     foo()
     bar()
 }
