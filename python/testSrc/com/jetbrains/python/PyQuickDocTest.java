@@ -1,6 +1,8 @@
 // Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.jetbrains.python;
 
+import com.intellij.codeInsight.TargetElementUtil;
+import com.intellij.codeInsight.documentation.DocumentationManager;
 import com.intellij.psi.PsiElement;
 import com.jetbrains.python.documentation.PyDocumentationSettings;
 import com.jetbrains.python.documentation.PythonDocumentationProvider;
@@ -62,12 +64,14 @@ public class PyQuickDocTest extends LightMarkedTestCase {
   }
 
   private void checkHTMLOnly() {
-    Map<String, PsiElement> marks = loadTest();
+    final Map<String, PsiElement> marks = loadTest();
     final PsiElement originalElement = marks.get("<the_ref>");
-    PsiElement referenceElement = originalElement.getParent(); // ident -> expr
-    assertInstanceOf(referenceElement, PyReferenceOwner.class);
-    final PsiElement docOwner = referenceElement.getReference().resolve();
-    checkByHTML(myProvider.generateDoc(docOwner, originalElement));
+    final DocumentationManager manager = DocumentationManager.getInstance(myFixture.getProject());
+    final PsiElement target = manager.findTargetElement(myFixture.getEditor(),
+                                                        originalElement.getTextOffset(),
+                                                        myFixture.getFile(),
+                                                        originalElement);
+    checkByHTML(myProvider.generateDoc(target, originalElement));
   }
 
   private void checkHover() {
@@ -180,6 +184,14 @@ public class PyQuickDocTest extends LightMarkedTestCase {
   }
 
   public void testPropDocstringOfGetter() {
+    checkHTMLOnly();
+  }
+
+  public void testPropNewUndefinedSetter() {
+    checkHTMLOnly();
+  }
+
+  public void testPropOldUndefinedSetter() {
     checkHTMLOnly();
   }
 

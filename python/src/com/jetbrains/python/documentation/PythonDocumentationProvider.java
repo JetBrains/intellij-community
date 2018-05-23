@@ -433,9 +433,8 @@ public class PythonDocumentationProvider extends AbstractDocumentationProvider i
 
   // provides ctrl+Q doc
   @Override
-  public String generateDoc(@Nullable PsiElement element, @Nullable PsiElement originalElement) {
-    if (element != null && PydevConsoleRunner.isInPydevConsole(element) ||
-        originalElement != null && PydevConsoleRunner.isInPydevConsole(originalElement)) {
+  public String generateDoc(@NotNull PsiElement element, @Nullable PsiElement originalElement) {
+    if (PydevConsoleRunner.isInPydevConsole(element) || originalElement != null && PydevConsoleRunner.isInPydevConsole(originalElement)) {
       return PydevDocumentationProvider.createDoc(element, originalElement);
     }
     return new PyDocumentationBuilder(element, originalElement).build();

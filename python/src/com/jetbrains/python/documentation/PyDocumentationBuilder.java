@@ -77,7 +77,7 @@ public class PyDocumentationBuilder {
 
   private static final Pattern ourSpacesPattern = Pattern.compile("^\\s+");
 
-  public PyDocumentationBuilder(PsiElement element, PsiElement originalElement) {
+  public PyDocumentationBuilder(@NotNull PsiElement element, @Nullable PsiElement originalElement) {
     myElement = element;
     myOriginalElement = originalElement;
     myProlog = new ChainIterable<>();
@@ -142,12 +142,17 @@ public class PyDocumentationBuilder {
       return null; // got nothing substantial to say!
     }
     else {
-      ChainIterable<String> result = new ChainIterable<>();
+      final ChainIterable<String> result = new ChainIterable<>();
       if (!myProlog.isEmpty() || !myBody.isEmpty()) {
         result.addItem(DocumentationMarkup.DEFINITION_START)
-                .add(myProlog)
-                .add(myBody)
-                .addItem(DocumentationMarkup.DEFINITION_END);
+              .add(myProlog);
+
+        if (!myBody.isEmpty() && !myProlog.isEmpty()) {
+          result.addItem(BR);
+        }
+
+        result.add(myBody)
+              .addItem(DocumentationMarkup.DEFINITION_END);
       }
       if (!myContent.isEmpty()) {
         result.addItem(DocumentationMarkup.CONTENT_START)
@@ -188,8 +193,7 @@ public class PyDocumentationBuilder {
       .addWith(TagBold, $().addWith(TagCode, $(parameter.getName())))
       .addItem(" of ")
       // TODO links to functions
-      .addWith(TagCode, $(funcName))
-      .addItem(BR);
+      .addWith(TagCode, $(funcName));
 
     if (func != null) {
       final PyStringLiteralExpression docString = getEffectiveDocStringExpression(func);
@@ -251,16 +255,10 @@ public class PyDocumentationBuilder {
     }
     if (accessor.isDefined() && accessor.value() == null) elementDefinition = null;
     final String accessorKind = getAccessorKind(direction);
-    if (elementDefinition != null) {
-      myEpilog.addWith(TagSmall, $(BR, BR, accessorKind, " of property")).addItem(BR);
-    }
+    mySectionsMap.get(PyBundle.message("QDOC.accessor.kind"))
+                 .addItem(accessorKind)
+                 .addItem(elementDefinition == null ? " (not defined)" : "");
 
-    if (!(elementDefinition instanceof PyDocStringOwner)) {
-      myBody.addWith(TagItalic, elementDefinition != null ? $("Declaration: ") : $(accessorKind + " is not defined.")).addItem(BR);
-      if (elementDefinition != null) {
-        myBody.addItem(combUp(PyUtil.getReadableRepr(elementDefinition, false)));
-      }
-    }
     return true;
   }
 
@@ -323,8 +321,7 @@ public class PyDocumentationBuilder {
           .addItem(type)
           .addWith(TagBold, $().addWith(TagCode, $(elementDefinition.getName())))
           .addItem(" of class ")
-          .addItem(PyDocumentationLink.toContainingClass(WRAP_IN_CODE.apply(target.getContainingClass().getName())))
-          .addItem(BR);
+          .addItem(PyDocumentationLink.toContainingClass(WRAP_IN_CODE.apply(target.getContainingClass().getName())));
       }
       myBody.add(PythonDocumentationProvider.describeTarget(target, context));
     }
