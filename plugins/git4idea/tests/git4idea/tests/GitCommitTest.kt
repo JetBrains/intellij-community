@@ -308,6 +308,31 @@ class GitCommitTest : GitSingleRepoTest() {
     }
   }
 
+  fun `test commit case rename & don't commit one staged case rename`() {
+    `assume version where git reset returns 0 exit code on success `()
+
+    tac("s.java")
+    generateCaseRename("a.java", "A.java")
+    git("mv s.java S.java")
+
+    val changes = assertChanges {
+      rename("a.java", "A.java")
+      rename("s.java", "S.java")
+    }
+
+    commit(listOf(changes[0]))
+
+    repo.assertCommitted {
+      rename("a.java", "A.java")
+    }
+    assertChanges {
+      rename("s.java", "S.java")
+    }
+    repo.assertStagedChanges {
+      rename("s.java", "S.java")
+    }
+  }
+
   fun `test commit case rename & don't commit one staged simple rename, then rename should remain staged`() {
     `assume version where git reset returns 0 exit code on success `()
 
@@ -540,12 +565,13 @@ class GitCommitTest : GitSingleRepoTest() {
     cb.changes()
 
     updateChangeListManager()
+    val vcsChanges = changeListManager.allChanges
     val allChanges = mutableListOf<Change>()
-    val actualChanges = HashSet(changeListManager.allChanges)
+    val actualChanges = HashSet(vcsChanges)
 
     for (change in cb.changes) {
       val found = actualChanges.find(change.matcher)
-      assertNotNull("The change [$change] not found", found)
+      assertNotNull("The change [$change] not found\n$vcsChanges", found)
       actualChanges.remove(found)
       allChanges.add(found!!)
     }

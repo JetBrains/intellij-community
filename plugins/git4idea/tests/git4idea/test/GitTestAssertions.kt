@@ -73,10 +73,11 @@ fun GitRepository.assertCommitted(depth: Int = 1, changes: ChangesBuilder.() -> 
   val cb = ChangesBuilder()
   cb.changes()
 
-  val actualChanges = GitHistoryUtils.history(project, root, "-${depth}")[depth - 1].changes
+  val allCanges = GitHistoryUtils.history(project, root, "-${depth}")[depth - 1].changes
+  val actualChanges = allCanges.toMutableSet()
   for (change in cb.changes) {
     val found = actualChanges.find(change.matcher)
-    PlatformTestCase.assertNotNull("The change [$change] wasn't committed", found)
+    PlatformTestCase.assertNotNull("The change [$change] wasn't committed\n$allCanges", found)
     actualChanges.remove(found)
   }
   PlatformTestCase.assertTrue(actualChanges.isEmpty())

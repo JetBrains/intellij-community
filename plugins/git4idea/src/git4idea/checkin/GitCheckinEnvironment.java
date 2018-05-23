@@ -74,6 +74,7 @@ import git4idea.index.GitIndexUtil;
 import git4idea.repo.GitRepository;
 import git4idea.repo.GitRepositoryManager;
 import git4idea.util.GitFileUtils;
+import gnu.trove.THashSet;
 import org.jetbrains.annotations.*;
 
 import javax.swing.*;
@@ -301,7 +302,7 @@ public class GitCheckinEnvironment implements CheckinEnvironment {
                                                                                  !removed.contains(getBeforePath(change)));
       if (!excludedStagedChanges.isEmpty()) {
         LOG.info("Staged changes excluded for commit: " + GitUtil.getLogString(rootPath, excludedStagedChanges));
-        reset(project, root, excludedStagedChanges);
+        resetExcluded(project, root, excludedStagedChanges);
       }
       try {
         List<FilePath> alreadyHandledPaths = getPaths(changedWithIndex);
@@ -324,12 +325,7 @@ public class GitCheckinEnvironment implements CheckinEnvironment {
       finally {
         // Stage back the changes unstaged before commit
         if (!excludedStagedChanges.isEmpty()) {
-          Set<FilePath> toAdd = map2SetNotNull(excludedStagedChanges, ChangesUtil::getAfterPath);
-          Set<FilePath> toRemove = map2SetNotNull(excludedStagedChanges, ChangesUtil::getBeforePath);
-          toRemove.removeAll(toAdd);
-
-          LOG.debug(String.format("Restoring staged changes after commit: added: %s, removed: %s", toAdd, toRemove));
-          updateIndex(project, root, toAdd, toRemove, exceptions);
+          restoreExcluded(project, root, excludedStagedChanges, exceptions);
         }
       }
     }
@@ -658,8 +654,10 @@ public class GitCheckinEnvironment implements CheckinEnvironment {
   }
 
 
-  private static void reset(@NotNull Project project, @NotNull VirtualFile root, @NotNull Collection<Change> changes) throws VcsException {
-    Set<FilePath> allPaths = new HashSet<>();
+  private static void resetExcluded(@NotNull Project project,
+                                    @NotNull VirtualFile root,
+                                    @NotNull Collection<Change> changes) throws VcsException {
+    Set<FilePath> allPaths = new THashSet<>(CASE_SENSITIVE_FILE_PATH_HASHING_STRATEGY);
     allPaths.addAll(mapNotNull(changes, ChangesUtil::getAfterPath));
     allPaths.addAll(mapNotNull(changes, ChangesUtil::getBeforePath));
 
@@ -670,6 +668,46 @@ public class GitCheckinEnvironment implements CheckinEnvironment {
       Git.getInstance().runCommand(handler).getOutputOrThrow();
     }
   }
+
+  private static void restoreExcluded(@NotNull Project project,
+                                      @NotNull VirtualFile root,
+                                      @NotNull Collection<Change> changes,
+                                      @NotNull List<VcsException> exceptions) throws VcsException {
+    Set<FilePath> toAdd = new HashSet<>();
+    Set<FilePath> toRemove = new HashSet<>();
+
+    for (Change change : changes) {
+      if (addAsCaseOnlyRename(project, root, change)) continue;
+
+      addIfNotNull(toAdd, getAfterPath(change));
+      addIfNotNull(toRemove, getBeforePath(change));
+    }
+    toRemove.removeAll(toAdd);
+
+    LOG.debug(String.format("Restoring staged changes after commit: added: %s, removed: %s", toAdd, toRemove));
+    updateIndex(project, root, toAdd, toRemove, exceptions);
+  }
+
+  private static boolean addAsCaseOnlyRename(@NotNull Project project, @NotNull VirtualFile root, @NotNull Change change) {
+    try {
+      CommitChange commitChange = new CommitChange(change);
+      if (!isCaseOnlyRename(commitChange)) return false;
+
+      FilePath beforePath = assertNotNull(commitChange.beforePath);
+      FilePath afterPath = assertNotNull(commitChange.afterPath);
+
+      LOG.debug(String.format("Restoring staged case-only rename after commit: %s", change));
+      GitLineHandler h = new GitLineHandler(project, root, GitCommand.MV);
+      h.addParameters("-f", beforePath.getPath(), afterPath.getPath());
+      Git.getInstance().runCommandWithoutCollectingOutput(h).getOutputOrThrow();
+      return true;
+    }
+    catch (VcsException e) {
+      LOG.warn(e);
+      return false;
+    }
+  }
+
 
   public List<VcsException> commit(List<Change> changes, String preparedComment) {
     return commit(changes, preparedComment, FunctionUtil.nullConstant(), null);
