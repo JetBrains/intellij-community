@@ -336,7 +336,7 @@ public class GeneralHighlightingPass extends ProgressableTextEditorHighlightingP
                            @NotNull List<ProperTextRange> ranges,
                            int chunkSize,
                            @NotNull ProgressIndicator progress,
-                           @NotNull Set<PsiElement> skipParentsSet,
+                           @NotNull Set<? super PsiElement> skipParentsSet,
                            @NotNull HighlightInfoHolder holder,
                            @NotNull List<HighlightInfo> insideResult,
                            @NotNull List<HighlightInfo> outsideResult,
@@ -526,7 +526,7 @@ public class GeneralHighlightingPass extends ProgressableTextEditorHighlightingP
     return myUpdateAll ? super.getProgress() : -1;
   }
 
-  private static List<Problem> convertToProblems(@NotNull Collection<HighlightInfo> infos,
+  private static List<Problem> convertToProblems(@NotNull Collection<? extends HighlightInfo> infos,
                                                  @NotNull VirtualFile file,
                                                  final boolean hasErrorElement) {
     List<Problem> problems = new SmartList<>();

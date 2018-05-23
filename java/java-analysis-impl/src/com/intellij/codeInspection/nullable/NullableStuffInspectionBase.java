@@ -297,7 +297,7 @@ public class NullableStuffInspectionBase extends AbstractBaseJavaLocalInspection
       private boolean isNullableNotNullCollectionConflict(PsiElement place,
                                                           @Nullable PsiType expectedType,
                                                           @Nullable PsiType assignedType,
-                                                          @NotNull Set<Couple<PsiType>> visited) {
+                                                          @NotNull Set<? super Couple<PsiType>> visited) {
         if (!visited.add(Couple.of(expectedType, assignedType))) return false;
 
         if (isNullityConflict(JavaGenericsUtil.getCollectionItemType(expectedType, place.getResolveScope()),

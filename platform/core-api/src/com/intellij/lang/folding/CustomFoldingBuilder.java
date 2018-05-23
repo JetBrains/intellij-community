@@ -85,7 +85,7 @@ public abstract class CustomFoldingBuilder extends FoldingBuilderEx implements P
 
   private void addCustomFoldingRegionsRecursively(@NotNull FoldingStack foldingStack,
                                                   @NotNull ASTNode node,
-                                                  @NotNull List<FoldingDescriptor> descriptors,
+                                                  @NotNull List<? super FoldingDescriptor> descriptors,
                                                   int currDepth) {
     FoldingStack localFoldingStack = isCustomFoldingRoot(node) ? new FoldingStack(node) : foldingStack;
     for (ASTNode child = node.getFirstChildNode(); child != null; child = child.getTreeNext()) {

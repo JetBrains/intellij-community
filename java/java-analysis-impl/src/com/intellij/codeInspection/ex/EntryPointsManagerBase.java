@@ -438,7 +438,7 @@ public abstract class EntryPointsManagerBase extends EntryPointsManager implemen
     myPatterns.addAll(manager.getPatterns());
   }
 
-  public static void convert(Element element, final Map<String, SmartRefElementPointer> persistentEntryPoints) {
+  static void convert(Element element, final Map<? super String, ? super SmartRefElementPointer> persistentEntryPoints) {
     List content = element.getChildren();
     for (final Object aContent : content) {
       Element entryElement = (Element)aContent;
@@ -536,7 +536,7 @@ public abstract class EntryPointsManagerBase extends EntryPointsManager implemen
            AnnotationUtil.checkAnnotatedUsingPatterns(owner, getAdditionalAnnotations());
   }
 
-  private static boolean isAcceptedByPattern(@NotNull PsiClass element, String qualifiedName, ClassPattern pattern, Set<PsiClass> visited) {
+  private static boolean isAcceptedByPattern(@NotNull PsiClass element, String qualifiedName, ClassPattern pattern, Set<? super PsiClass> visited) {
     if (qualifiedName == null) {
       return false;
     }

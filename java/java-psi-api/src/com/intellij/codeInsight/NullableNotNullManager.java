@@ -60,7 +60,7 @@ public abstract class NullableNotNullManager {
     return isNullable(owner, false) || isNotNull(owner, false);
   }
 
-  private static void addAllIfNotPresent(@NotNull Collection<String> collection, @NotNull String... annotations) {
+  private static void addAllIfNotPresent(@NotNull Collection<? super String> collection, @NotNull String... annotations) {
     for (String annotation : annotations) {
       LOG.assertTrue(annotation != null);
       if (!collection.contains(annotation)) {

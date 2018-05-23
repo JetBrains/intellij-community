@@ -294,9 +294,9 @@ public class GlobalInspectionContextBase extends UserDataHolderBase implements G
   }
 
 
-  public void initializeTools(@NotNull List<Tools> outGlobalTools,
-                              @NotNull List<Tools> outLocalTools,
-                              @NotNull List<Tools> outGlobalSimpleTools) {
+  public void initializeTools(@NotNull List<? super Tools> outGlobalTools,
+                              @NotNull List<? super Tools> outLocalTools,
+                              @NotNull List<? super Tools> outGlobalSimpleTools) {
     final List<Tools> usedTools = getUsedTools();
     for (Tools currentTools : usedTools) {
       final String shortName = currentTools.getShortName();
@@ -335,9 +335,9 @@ public class GlobalInspectionContextBase extends UserDataHolderBase implements G
     return new ArrayList<>(set);
   }
 
-  private static void classifyTool(@NotNull List<Tools> outGlobalTools,
-                                   @NotNull List<Tools> outLocalTools,
-                                   @NotNull List<Tools> outGlobalSimpleTools,
+  private static void classifyTool(@NotNull List<? super Tools> outGlobalTools,
+                                   @NotNull List<? super Tools> outLocalTools,
+                                   @NotNull List<? super Tools> outGlobalSimpleTools,
                                    @NotNull Tools currentTools,
                                    @NotNull InspectionToolWrapper toolWrapper) {
     if (toolWrapper instanceof LocalInspectionToolWrapper) {

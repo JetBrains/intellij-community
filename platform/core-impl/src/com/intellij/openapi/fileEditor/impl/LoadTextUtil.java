@@ -582,7 +582,7 @@ public final class LoadTextUtil {
                                                                  boolean saveDetectedSeparators,
                                                                  boolean saveBOM,
                                                                  @NotNull FileType fileType,
-                                                                 @NotNull NotNullFunction<CharSequence, FileType> fileTextProcessor) {
+                                                                 @NotNull NotNullFunction<? super CharSequence, ? extends FileType> fileTextProcessor) {
     DetectResult info = detectInternalCharsetAndSetBOM(virtualFile, bytes, length, saveBOM, fileType);
     Charset internalCharset = info.hardCodedCharset;
     CharsetToolkit.GuessedEncoding guessed = info.guessed;

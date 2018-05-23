@@ -49,7 +49,7 @@ public class PackageUtil {
     return result.toArray(PsiPackage.EMPTY_ARRAY);
   }
 
-  public static void addPackageAsChild(@NotNull Collection<AbstractTreeNode> children,
+  public static void addPackageAsChild(@NotNull Collection<? super AbstractTreeNode> children,
                                        @NotNull PsiPackage aPackage,
                                        @Nullable Module module,
                                        @NotNull ViewSettings settings,
