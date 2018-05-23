@@ -77,60 +77,58 @@ public class VariableAccessFromInnerClassJava10Fix extends BaseIntentionAction {
   @Override
   public void invoke(@NotNull Project project, Editor editor, PsiFile file) throws IncorrectOperationException {
     if (!FileModificationService.getInstance().preparePsiElementsForWrite(myContext)) return;
-    WriteCommandAction.runWriteCommandAction(project, () -> {
-      if (myContext instanceof PsiReferenceExpression && myContext.isValid()) {
-        PsiReferenceExpression referenceExpression = (PsiReferenceExpression)myContext;
-        PsiLocalVariable variable = tryCast(referenceExpression.resolve(), PsiLocalVariable.class);
-        if (variable == null) return;
-        PsiElementFactory factory = JavaPsiFacade.getElementFactory(project);
-        PsiExpression initializer = variable.getInitializer();
-        final String variableText = getFieldText(variable, factory, initializer);
+    if (myContext instanceof PsiReferenceExpression && myContext.isValid()) {
+      PsiReferenceExpression referenceExpression = (PsiReferenceExpression)myContext;
+      PsiLocalVariable variable = tryCast(referenceExpression.resolve(), PsiLocalVariable.class);
+      if (variable == null) return;
+      PsiElementFactory factory = JavaPsiFacade.getElementFactory(project);
+      PsiExpression initializer = variable.getInitializer();
+      final String variableText = getFieldText(variable, factory, initializer);
 
 
-        PsiLambdaExpression lambdaExpression = PsiTreeUtil.getParentOfType(myContext, PsiLambdaExpression.class);
-        if (lambdaExpression == null) return;
-        DeclarationInfo declarationInfo = DeclarationInfo.findExistingAnonymousClass(variable);
+      PsiLambdaExpression lambdaExpression = PsiTreeUtil.getParentOfType(myContext, PsiLambdaExpression.class);
+      if (lambdaExpression == null) return;
+      DeclarationInfo declarationInfo = DeclarationInfo.findExistingAnonymousClass(variable);
 
-        if (declarationInfo != null) {
-          replaceReferences(variable, factory, declarationInfo.name);
-          declarationInfo.replace(variableText);
-          variable.delete();
-          return;
-        }
-
-
-        JavaCodeStyleManager codeStyleManager = JavaCodeStyleManager.getInstance(project);
-        String boxName = codeStyleManager.suggestUniqueVariableName(NAMES[0], variable, true);
-        String boxDeclarationText = "var " +
-                                    boxName +
-                                    " = new Object(){" +
-                                    variableText +
-                                    "};";
-        PsiStatement boxDeclaration = factory.createStatementFromText(boxDeclarationText, variable);
-        replaceReferences(variable, factory, boxName);
-        if (editor == null) {
-          variable.replace(boxDeclaration);
-          return;
-        }
-        PsiStatement statement = PsiTreeUtil.getParentOfType(variable, PsiStatement.class);
-        if (statement == null) return;
-        PsiDeclarationStatement declarationStatement = (PsiDeclarationStatement)statement.replace(boxDeclaration);
-        PsiLocalVariable localVariable = (PsiLocalVariable)declarationStatement.getDeclaredElements()[0];
-        SmartPointerManager smartPointerManager = SmartPointerManager.getInstance(project);
-        SmartPsiElementPointer<PsiLocalVariable> pointer = smartPointerManager.createSmartPsiElementPointer(localVariable);
-        PsiDocumentManager.getInstance(project).doPostponedOperationsAndUnblockDocument(editor.getDocument());
-        PsiLocalVariable varToChange = pointer.getElement();
-        if (varToChange == null) return;
-        editor.getCaretModel().moveToOffset(varToChange.getTextOffset());
-        editor.getSelectionModel().removeSelection();
-        LinkedHashSet<String> suggestions = Arrays.stream(NAMES)
-                                                  .map(
-                                                    suggestion -> codeStyleManager
-                                                      .suggestUniqueVariableName(suggestion, varToChange, var -> var == varToChange))
-                                                  .collect(Collectors.toCollection(() -> new LinkedHashSet<>()));
-        new MemberInplaceRenamer(varToChange, varToChange, editor).performInplaceRefactoring(suggestions);
+      if (declarationInfo != null) {
+        replaceReferences(variable, factory, declarationInfo.name);
+        declarationInfo.replace(variableText);
+        variable.delete();
+        return;
       }
-    });
+
+
+      JavaCodeStyleManager codeStyleManager = JavaCodeStyleManager.getInstance(project);
+      String boxName = codeStyleManager.suggestUniqueVariableName(NAMES[0], variable, true);
+      String boxDeclarationText = "var " +
+                                  boxName +
+                                  " = new Object(){" +
+                                  variableText +
+                                  "};";
+      PsiStatement boxDeclaration = factory.createStatementFromText(boxDeclarationText, variable);
+      replaceReferences(variable, factory, boxName);
+      if (editor == null) {
+        variable.replace(boxDeclaration);
+        return;
+      }
+      PsiStatement statement = PsiTreeUtil.getParentOfType(variable, PsiStatement.class);
+      if (statement == null) return;
+      PsiDeclarationStatement declarationStatement = (PsiDeclarationStatement)statement.replace(boxDeclaration);
+      PsiLocalVariable localVariable = (PsiLocalVariable)declarationStatement.getDeclaredElements()[0];
+      SmartPointerManager smartPointerManager = SmartPointerManager.getInstance(project);
+      SmartPsiElementPointer<PsiLocalVariable> pointer = smartPointerManager.createSmartPsiElementPointer(localVariable);
+      PsiDocumentManager.getInstance(project).doPostponedOperationsAndUnblockDocument(editor.getDocument());
+      PsiLocalVariable varToChange = pointer.getElement();
+      if (varToChange == null) return;
+      editor.getCaretModel().moveToOffset(varToChange.getTextOffset());
+      editor.getSelectionModel().removeSelection();
+      LinkedHashSet<String> suggestions = Arrays.stream(NAMES)
+                                                .map(
+                                                  suggestion -> codeStyleManager
+                                                    .suggestUniqueVariableName(suggestion, varToChange, var -> var == varToChange))
+                                                .collect(Collectors.toCollection(() -> new LinkedHashSet<>()));
+      new MemberInplaceRenamer(varToChange, varToChange, editor).performInplaceRefactoring(suggestions);
+    }
   }
 
   private static void replaceReferences(PsiLocalVariable variable, PsiElementFactory factory, String boxName) {
@@ -246,10 +244,5 @@ public class VariableAccessFromInnerClassJava10Fix extends BaseIntentionAction {
       }
     });
     return references;
-  }
-
-  @Override
-  public boolean startInWriteAction() {
-    return false;
   }
 }
