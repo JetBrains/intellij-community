@@ -21,7 +21,8 @@ import java.util.Map;
 import java.util.concurrent.ConcurrentMap;
 
 public class JsonSchemaCatalogManager {
-  private static final String DEFAULT_CATALOG = "http://schemastore.org/api/json/catalog.json";
+  static final String DEFAULT_CATALOG = "http://schemastore.org/api/json/catalog.json";
+  static final String DEFAULT_CATALOG_HTTPS = "https://schemastore.azurewebsites.net/api/json/catalog.json";
   @NotNull private final Project myProject;
   @NotNull private final JsonSchemaRemoteContentProvider myRemoteContentProvider;
   @Nullable private VirtualFile myCatalog = null;

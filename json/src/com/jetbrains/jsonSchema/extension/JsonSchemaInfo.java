@@ -72,7 +72,8 @@ public class JsonSchemaInfo {
     }
 
     // the only weird case
-    if ("http://json.schemastore.org/config".equals(myUrl)) {
+    if ("http://json.schemastore.org/config".equals(myUrl)
+      || "https://schemastore.azurewebsites.net/schemas/json/config.json".equals(myUrl)) {
       return "asp.net config";
     }
 

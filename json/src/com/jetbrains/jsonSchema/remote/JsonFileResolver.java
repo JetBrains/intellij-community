@@ -13,6 +13,7 @@ import com.intellij.openapi.vfs.impl.http.RemoteFileState;
 import com.intellij.util.Url;
 import com.intellij.util.Urls;
 import com.jetbrains.jsonSchema.JsonSchemaCatalogProjectConfiguration;
+import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -28,7 +29,20 @@ public class JsonFileResolver {
 
   @Nullable
   public static VirtualFile urlToFile(@NotNull String urlString) {
-    return VirtualFileManager.getInstance().findFileByUrl(urlString);
+    return VirtualFileManager.getInstance().findFileByUrl(replaceUnsafeSchemaStoreUrls(urlString));
+  }
+
+  @Nullable
+  @Contract("null -> null; !null -> !null")
+  public static String replaceUnsafeSchemaStoreUrls(@Nullable String urlString) {
+    if (urlString == null) return null;
+    if (urlString.equals(JsonSchemaCatalogManager.DEFAULT_CATALOG)) {
+      return JsonSchemaCatalogManager.DEFAULT_CATALOG_HTTPS;
+    }
+    if (StringUtil.startsWithIgnoreCase(urlString, JsonSchemaRemoteContentProvider.STORE_URL_PREFIX_HTTP)) {
+      return StringUtil.replace(urlString, "http://json.schemastore.org/", "https://schemastore.azurewebsites.net/schemas/json/") + ".json";
+    }
+    return urlString;
   }
 
   @Nullable

@@ -228,7 +228,9 @@ public class JsonSchemaServiceImpl implements JsonSchemaService {
     return myState.getFiles().stream()
                   .filter(f -> {
                      JsonSchemaFileProvider prov = getSchemaProvider(f);
-                     return prov != null && !(prov.getSchemaFile() instanceof HttpVirtualFile) && url.equals(prov.getRemoteSource());
+                     return prov != null && !(prov.getSchemaFile() instanceof HttpVirtualFile)
+                            && (url.equals(prov.getRemoteSource()) || JsonFileResolver.replaceUnsafeSchemaStoreUrls(url).equals(prov.getRemoteSource())
+                             || url.equals(JsonFileResolver.replaceUnsafeSchemaStoreUrls(prov.getRemoteSource())));
                   }).findFirst().orElse(null);
   }
 
