@@ -4,6 +4,7 @@ package com.intellij.ide.actions.runAnything;
 import com.intellij.execution.actions.ChooseRunConfigurationPopup;
 import com.intellij.execution.configurations.ConfigurationType;
 import com.intellij.ide.actions.runAnything.items.RunAnythingItemBase;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.SimpleColoredComponent;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -30,7 +31,7 @@ public class RunAnythingRunConfigurationItem extends RunAnythingItemBase {
     }
     SimpleColoredComponent component = new SimpleColoredComponent();
     setupIcon(component, myIcon);
-    component.append(myWrapper.getText());
+    component.append(StringUtil.shortenTextWithEllipsis(myWrapper.getText(), 40, 0));
 
     appendDescription(component, description);
 

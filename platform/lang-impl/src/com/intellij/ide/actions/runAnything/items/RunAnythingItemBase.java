@@ -1,6 +1,7 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.actions.runAnything.items;
 
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.SimpleColoredComponent;
 import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.util.ObjectUtils;
@@ -39,7 +40,6 @@ public class RunAnythingItemBase extends RunAnythingItem {
 
   public void setupIcon(@NotNull SimpleColoredComponent component, @Nullable Icon icon) {
     component.setIcon(ObjectUtils.notNull(icon, EmptyIcon.ICON_16));
-    component.setIconTextGap(5);
     component.setIpad(JBUI.insets(0, 10, 0, 0));
   }
 
@@ -62,7 +62,7 @@ public class RunAnythingItemBase extends RunAnythingItem {
 
   protected static void appendDescription(@NotNull SimpleColoredComponent component, @Nullable String description) {
     if (description != null) {
-      component.append(description, SimpleTextAttributes.GRAYED_SMALL_ATTRIBUTES);
+      component.append(StringUtil.shortenTextWithEllipsis(description, 40, 0), SimpleTextAttributes.GRAYED_SMALL_ATTRIBUTES);
       component.appendTextPadding(480, SwingConstants.RIGHT);
     }
   }
