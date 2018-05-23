@@ -55,7 +55,7 @@ class PyCharmEduProperties extends PyCharmPropertiesBase {
     return new PyCharmWindowsDistributionCustomizer() {
       {
         installerImagesPath = "$pythonCommunityPath/educational-python/build/resources"
-        fileAssociations = [".py"]
+        fileAssociations = ["py"]
         silentInstallationConfig = "$pythonCommunityPath/educational-python/build/silent.config"
         customNsiConfigurationFiles = [
           "$pythonCommunityPath/educational-python/build/desktop.ini",

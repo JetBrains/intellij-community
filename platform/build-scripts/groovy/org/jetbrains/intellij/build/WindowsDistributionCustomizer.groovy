@@ -68,7 +68,7 @@ abstract class WindowsDistributionCustomizer {
   String installerImagesPath
 
   /**
-   * List of file extensions (starting with dot) which installer will suggest to associate with the product
+   * List of file extensions (without leading dot) which installer will suggest to associate with the product
    */
   List<String> fileAssociations = []
 

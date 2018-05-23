@@ -68,7 +68,7 @@ class IdeaCommunityProperties extends BaseIdeaProperties {
       {
         icoPath = "$projectHome/platform/icons/src/idea_CE.ico"
         installerImagesPath = "$projectHome/build/conf/ideaCE/win/images"
-        fileAssociations = [".java", ".groovy", ".kt"]
+        fileAssociations = ["java", "groovy", "kt"]
       }
 
       @Override

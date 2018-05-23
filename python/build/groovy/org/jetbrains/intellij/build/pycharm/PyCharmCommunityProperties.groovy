@@ -60,7 +60,7 @@ class PyCharmCommunityProperties extends PyCharmPropertiesBase {
     return new PyCharmWindowsDistributionCustomizer() {
       {
         installerImagesPath = "$projectHome/python/build/resources"
-        fileAssociations = [".py"]
+        fileAssociations = ["py"]
       }
 
       @Override
