@@ -153,9 +153,16 @@ public class JavaPsiMathUtil {
     return StreamEx.iterate(from, PsiElement::getNextSibling).takeWhileInclusive(e -> !to.equals(e)).map(ct::text).joining() + updatedAddend;
   }
 
+  /**
+   * Return a numeric value of literal expression or unary minus expression (like -1).
+   * More complex constant expressions are deliberately not computed.
+   *
+   * @param expression expression to extract the numeric value from
+   * @return an extracted number or null if supplied expression does not represent a number.
+   */
   @Nullable
   @Contract("null->null")
-  private static Number getNumberFromLiteral(@Nullable PsiExpression expression) {
+  public static Number getNumberFromLiteral(@Nullable PsiExpression expression) {
     expression = PsiUtil.skipParenthesizedExprDown(expression);
     if (expression instanceof PsiLiteralExpression) {
       return tryCast(((PsiLiteralExpression)expression).getValue(), Number.class);
