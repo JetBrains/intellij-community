@@ -6,8 +6,9 @@ import com.intellij.dvcs.repo.Repository;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.util.Comparing;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.ui.TextFieldWithAutoCompletion;
+import com.intellij.ui.TextFieldWithAutoCompletionListProvider;
 import com.intellij.ui.components.JBLabel;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.MultiMap;
@@ -23,6 +24,7 @@ import com.intellij.vcs.log.impl.VcsGoToRefComparator;
 import com.intellij.vcs.log.impl.VcsLogManager;
 import com.intellij.vcs.log.impl.VcsProjectLog;
 import com.intellij.vcs.log.ui.actions.VcsRefCompletionProvider;
+import git4idea.GitBranch;
 import git4idea.GitLocalBranch;
 import git4idea.GitReference;
 import git4idea.GitRemoteBranch;
@@ -79,8 +81,8 @@ public class GitRefDialog extends DialogWrapper {
         return new MyVcsRefCompletionProvider(dataPack.getRefsModel(), roots, comparator);
       }
     }
-    List<String> branches = collectCommonBranches(repositories);
-    return new TextFieldWithAutoCompletion.StringsCompletionProvider(branches, null);
+    List<GitBranch> branches = collectCommonBranches(repositories);
+    return new MyTextFieldWithAutoCompletionListProvider(branches);
   }
 
   @NotNull
@@ -111,7 +113,7 @@ public class GitRefDialog extends DialogWrapper {
   }
 
   @NotNull
-  private static List<String> collectCommonBranches(@NotNull List<GitRepository> repositories) {
+  private static List<GitBranch> collectCommonBranches(@NotNull List<GitRepository> repositories) {
     Collection<GitLocalBranch> commonLocalBranches = collectCommon(repositories.stream().map(repository -> {
       return repository.getBranches().getLocalBranches();
     }));
@@ -120,9 +122,7 @@ public class GitRefDialog extends DialogWrapper {
       return repository.getBranches().getRemoteBranches();
     }));
 
-    return Streams.concat(commonLocalBranches.stream().sorted(),
-                          commonRemoteBranches.stream().sorted())
-                  .map(GitReference::getName)
+    return Streams.concat(commonLocalBranches.stream(), commonRemoteBranches.stream())
                   .collect(Collectors.toList());
   }
 
@@ -167,6 +167,26 @@ public class GitRefDialog extends DialogWrapper {
                type == GitRefManager.TAG;
       });
       return collectCommonVcsRefs(branches).stream();
+    }
+  }
+
+  private static class MyTextFieldWithAutoCompletionListProvider extends TextFieldWithAutoCompletionListProvider<GitBranch> {
+    private final Comparator<GitBranch> myComparator = Comparator.<GitBranch, Boolean>comparing(branch -> branch.isRemote())
+      .thenComparing(GitReference::getName, StringUtil::naturalCompare);
+
+    public MyTextFieldWithAutoCompletionListProvider(@NotNull List<GitBranch> branches) {
+      super(branches);
+    }
+
+    @NotNull
+    @Override
+    protected String getLookupString(@NotNull GitBranch branch) {
+      return branch.getName();
+    }
+
+    @Override
+    public int compare(@NotNull GitBranch branch1, @NotNull GitBranch branch2) {
+      return myComparator.compare(branch1, branch2);
     }
   }
 
