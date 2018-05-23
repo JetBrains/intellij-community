@@ -1,6 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.binaryCalculators;
 
 import com.intellij.psi.PsiType;
@@ -14,6 +12,9 @@ import org.jetbrains.plugins.groovy.lang.parser.GroovyElementTypes;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrOperatorExpression;
 
 import java.util.Map;
+
+import static org.jetbrains.plugins.groovy.lang.psi.GroovyElementTypes.T_ID;
+import static org.jetbrains.plugins.groovy.lang.psi.GroovyElementTypes.T_NID;
 
 public class GrBinaryExpressionTypeCalculators {
   private static final Map<IElementType, Function<GrOperatorExpression, PsiType>> MAP = ContainerUtil.newLinkedHashMap();
@@ -44,6 +45,8 @@ public class GrBinaryExpressionTypeCalculators {
     MAP.put(GroovyTokenTypes.mLAND, GrBooleanExpressionTypeCalculator.INSTANCE);
     MAP.put(GroovyTokenTypes.mEQUAL, GrBooleanExpressionTypeCalculator.INSTANCE);
     MAP.put(GroovyTokenTypes.mNOT_EQUAL, GrBooleanExpressionTypeCalculator.INSTANCE);
+    MAP.put(T_ID, GrBooleanExpressionTypeCalculator.INSTANCE);
+    MAP.put(T_NID, GrBooleanExpressionTypeCalculator.INSTANCE);
     MAP.put(GroovyTokenTypes.mGT, GrBooleanExpressionTypeCalculator.INSTANCE);
     MAP.put(GroovyTokenTypes.mGE, GrBooleanExpressionTypeCalculator.INSTANCE);
     MAP.put(GroovyTokenTypes.mLT, GrBooleanExpressionTypeCalculator.INSTANCE);
