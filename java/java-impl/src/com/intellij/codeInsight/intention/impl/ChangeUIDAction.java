@@ -37,13 +37,16 @@ public class ChangeUIDAction extends PsiElementBaseIntentionAction {
   public void invoke(@NotNull Project project, Editor editor, @NotNull PsiElement element) throws IncorrectOperationException {
     PsiField field = PsiTreeUtil.getParentOfType(element, PsiField.class);
     if (field == null) return;
-    PsiExpression initializer = field.getInitializer();
-    if (initializer == null) return;
     PsiElementFactory factory = JavaPsiFacade.getElementFactory(project);
     Application application = ApplicationManager.getApplication();
     Random random = application.isUnitTestMode() ? new Random(42) : new SecureRandom();
     PsiExpression newInitializer = factory.createExpressionFromText(Long.toString(random.nextLong()) + "L", null);
-    new CommentTracker().replaceAndRestoreComments(initializer, newInitializer);
+    PsiExpression initializer = field.getInitializer();
+    if (initializer != null) {
+      new CommentTracker().replaceAndRestoreComments(initializer, newInitializer);
+    } else {
+      field.setInitializer(newInitializer);
+    }
   }
 
   @Override
