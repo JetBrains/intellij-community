@@ -15,7 +15,6 @@ import com.intellij.util.containers.MultiMap;
 import com.intellij.util.textCompletion.DefaultTextCompletionValueDescriptor;
 import com.intellij.util.textCompletion.TextCompletionProvider;
 import com.intellij.util.textCompletion.TextFieldWithCompletion;
-import com.intellij.vcs.log.VcsLogProvider;
 import com.intellij.vcs.log.VcsLogRefs;
 import com.intellij.vcs.log.VcsRef;
 import com.intellij.vcs.log.VcsRefType;
@@ -75,9 +74,8 @@ public class GitRefDialog extends DialogWrapper {
     if (logManager != null) {
       List<VirtualFile> roots = ContainerUtil.map(repositories, Repository::getRoot);
       DataPack dataPack = logManager.getDataManager().getDataPack();
-      Map<VirtualFile, VcsLogProvider> logProviders = dataPack.getLogProviders();
-      if (!logProviders.isEmpty()) {
-        VcsGoToRefComparator comparator = new VcsGoToRefComparator(logProviders);
+      if (dataPack != DataPack.EMPTY) {
+        VcsGoToRefComparator comparator = new VcsGoToRefComparator(dataPack.getLogProviders());
         return new MyVcsRefCompletionProvider(dataPack.getRefsModel(), roots, comparator);
       }
     }
