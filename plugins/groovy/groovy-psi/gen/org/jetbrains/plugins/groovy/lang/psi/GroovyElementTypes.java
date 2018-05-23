@@ -256,6 +256,7 @@ public interface GroovyElementTypes {
   IElementType T_EQ = new GroovyElementType("==");
   IElementType T_GE = new GroovyElementType(">=");
   IElementType T_GT = new GroovyElementType(">");
+  IElementType T_ID = new GroovyElementType("===");
   IElementType T_INC = new GroovyElementType("++");
   IElementType T_LAND = new GroovyElementType("&&");
   IElementType T_LBRACE = new GroovyElementType("{");
@@ -269,6 +270,7 @@ public interface GroovyElementTypes {
   IElementType T_MINUS = new GroovyElementType("-");
   IElementType T_MINUS_ASSIGN = new GroovyElementType("-=");
   IElementType T_NEQ = new GroovyElementType("!=");
+  IElementType T_NID = new GroovyElementType("!==");
   IElementType T_NOT = new GroovyElementType("!");
   IElementType T_PLUS = new GroovyElementType("+");
   IElementType T_PLUS_ASSIGN = new GroovyElementType("+=");

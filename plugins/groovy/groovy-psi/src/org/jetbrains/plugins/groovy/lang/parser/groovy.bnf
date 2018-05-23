@@ -40,7 +40,9 @@
     T_INC = '++'
     T_DEC = '--'
     T_EQ = '=='
+    T_ID = '==='
     T_NEQ = '!='
+    T_NID = '!=='
     T_LAND = '&&'
     T_LOR = '||'
     T_NOT = '!'
@@ -1039,7 +1041,7 @@ instanceof_expression ::= expression ('instanceof' (type_element | expect_type))
 as_expression ::= expression 'as' type_element
 
 private priority8 ::= equality_expression | compare_expression | regex_find_expression | regex_match_expression
-equality_expression ::= expression ('==' | '!=') expression
+equality_expression ::= expression <<equalityOperator>> expression
 compare_expression ::= expression '<=>' mb_nl expression
 {
   elementType = relational_expression

@@ -1,9 +1,0 @@
-2===3
------
-Groovy script
-  Relational expression
-    Literal
-      PsiElement(Integer)('2')
-    PsiElement(==)('===')
-    Literal
-      PsiElement(Integer)('3')

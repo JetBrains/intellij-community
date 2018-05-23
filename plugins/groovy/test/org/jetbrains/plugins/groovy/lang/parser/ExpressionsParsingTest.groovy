@@ -520,7 +520,7 @@ class ExpressionsParsingTest extends GroovyParsingTestCase {
 
   void testsuper$super() throws Throwable { doTest() }
 
-  void testTripleEqual() throws Exception { doTest() }
+  void testbinary$identity() { doTest() }
 
   void testcommandExpr$closureArg() { doTest() }
 

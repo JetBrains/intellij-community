@@ -6562,7 +6562,7 @@ public class GroovyBnfParser implements PsiParser, LightPsiParser {
         r = expression(b, l, 6);
         exit_section_(b, l, m, BAND_EXPRESSION, r, true, null);
       }
-      else if (g < 7 && equality_expression_0(b, l + 1)) {
+      else if (g < 7 && equalityOperator(b, l + 1)) {
         r = expression(b, l, 7);
         exit_section_(b, l, m, EQUALITY_EXPRESSION, r, true, null);
       }
@@ -6726,17 +6726,6 @@ public class GroovyBnfParser implements PsiParser, LightPsiParser {
     Marker m = enter_section_(b);
     r = consumeTokenSmart(b, T_LAND);
     r = r && mb_nl(b, l + 1);
-    exit_section_(b, m, null, r);
-    return r;
-  }
-
-  // '==' | '!='
-  private static boolean equality_expression_0(PsiBuilder b, int l) {
-    if (!recursion_guard_(b, l, "equality_expression_0")) return false;
-    boolean r;
-    Marker m = enter_section_(b);
-    r = consumeTokenSmart(b, T_EQ);
-    if (!r) r = consumeTokenSmart(b, T_NEQ);
     exit_section_(b, m, null, r);
     return r;
   }

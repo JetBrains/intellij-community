@@ -448,10 +448,12 @@ mGSTRING_LITERAL = {mDOUBLE_QUOTED_LITERAL} | {mTRIPLE_DOUBLE_QUOTED_LITERAL}
 "."                                       { return storeToken(T_DOT); }
 "="                                       { return storeToken(T_ASSIGN); }
 "<=>"                                     { return storeToken(T_COMPARE); }
-"=="|"==="                                { return storeToken(T_EQ); }
+"==="                                     { return storeToken(T_ID); }
+"=="                                      { return storeToken(T_EQ); }
 "!"                                       { return storeToken(T_NOT); }
 "~"                                       { return storeToken(T_BNOT); }
-"!="|"!=="                                { return storeToken(T_NEQ); }
+"!=="                                     { return storeToken(T_NID); }
+"!="                                      { return storeToken(T_NEQ); }
 "+"                                       { return storeToken(T_PLUS); }
 "+="                                      { return storeToken(T_PLUS_ASSIGN); }
 "++"                                      { return storeToken(T_INC); }

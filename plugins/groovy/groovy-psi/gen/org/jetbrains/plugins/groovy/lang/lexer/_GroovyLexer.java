@@ -198,35 +198,35 @@ public class _GroovyLexer extends GroovyLexerBase implements FlexLexer {
     "\1\121\1\122\1\123\1\124\1\125\1\126\1\127\1\130"+
     "\1\0\4\43\1\47\1\131\1\132\1\133\1\51\5\53"+
     "\1\76\1\53\1\77\1\53\1\100\12\53\1\112\21\53"+
-    "\1\134\1\0\1\135\1\136\1\63\1\137\1\140\1\71"+
-    "\1\141\1\0\1\141\3\7\1\142\3\7\1\143\1\144"+
-    "\4\7\2\10\3\7\1\145\1\146\4\14\1\111\2\0"+
-    "\1\147\23\7\1\150\3\7\1\151\5\7\1\113\1\152"+
-    "\1\153\1\154\1\155\4\0\1\156\3\53\1\142\3\53"+
-    "\1\143\1\144\32\53\1\150\3\53\1\151\5\53\1\136"+
-    "\1\157\1\63\2\137\1\141\1\0\3\7\1\160\6\7"+
-    "\1\161\1\7\1\162\2\0\2\7\1\163\3\0\2\14"+
-    "\6\0\7\7\1\164\2\7\1\165\10\7\1\166\1\167"+
-    "\3\7\1\170\1\7\1\171\1\7\1\172\3\53\1\160"+
-    "\6\53\1\161\1\53\1\162\2\53\1\163\7\53\1\164"+
-    "\2\53\1\165\10\53\1\166\1\167\3\53\1\170\1\53"+
-    "\1\171\1\53\1\136\2\157\1\63\1\0\1\137\1\173"+
-    "\1\174\1\175\7\7\1\176\1\7\1\14\1\0\1\14"+
-    "\3\0\6\7\1\177\1\200\3\7\1\201\1\7\1\202"+
-    "\1\7\1\203\1\7\1\204\3\7\1\205\1\173\1\174"+
-    "\1\175\7\53\1\176\7\53\1\177\1\200\3\53\1\201"+
-    "\1\53\1\202\1\53\1\203\1\53\1\204\3\53\1\205"+
-    "\1\136\1\0\1\157\1\0\2\7\1\206\3\7\1\207"+
-    "\5\7\1\210\1\7\1\211\1\7\1\212\2\7\1\213"+
-    "\1\7\1\214\1\215\1\216\1\7\2\53\1\206\3\53"+
-    "\1\207\5\53\1\210\1\53\1\211\1\53\1\212\2\53"+
-    "\1\213\1\53\1\214\1\215\1\216\1\53\1\0\1\217"+
-    "\3\7\1\220\1\221\1\222\1\223\1\224\7\7\1\217"+
-    "\3\53\1\220\1\221\1\222\1\223\1\224\7\53\4\7"+
-    "\1\225\1\226\1\227\2\7\1\230\4\53\1\225\1\226"+
-    "\1\227\2\53\1\230\2\7\1\231\1\232\1\7\1\233"+
-    "\2\53\1\231\1\232\1\53\1\233\1\234\1\235\1\7"+
-    "\1\234\1\235\1\53\1\7\1\53\2\236";
+    "\1\134\1\0\1\135\1\136\1\63\1\137\1\140\1\141"+
+    "\1\142\1\0\1\142\3\7\1\143\3\7\1\144\1\145"+
+    "\4\7\2\10\3\7\1\146\1\147\4\14\1\111\2\0"+
+    "\1\150\23\7\1\151\3\7\1\152\5\7\1\153\1\154"+
+    "\1\155\1\156\1\157\4\0\1\160\3\53\1\143\3\53"+
+    "\1\144\1\145\32\53\1\151\3\53\1\152\5\53\1\136"+
+    "\1\161\1\63\2\137\1\142\1\0\3\7\1\162\6\7"+
+    "\1\163\1\7\1\164\2\0\2\7\1\165\3\0\2\14"+
+    "\6\0\7\7\1\166\2\7\1\167\10\7\1\170\1\171"+
+    "\3\7\1\172\1\7\1\173\1\7\1\174\3\53\1\162"+
+    "\6\53\1\163\1\53\1\164\2\53\1\165\7\53\1\166"+
+    "\2\53\1\167\10\53\1\170\1\171\3\53\1\172\1\53"+
+    "\1\173\1\53\1\136\2\161\1\63\1\0\1\137\1\175"+
+    "\1\176\1\177\7\7\1\200\1\7\1\14\1\0\1\14"+
+    "\3\0\6\7\1\201\1\202\3\7\1\203\1\7\1\204"+
+    "\1\7\1\205\1\7\1\206\3\7\1\207\1\175\1\176"+
+    "\1\177\7\53\1\200\7\53\1\201\1\202\3\53\1\203"+
+    "\1\53\1\204\1\53\1\205\1\53\1\206\3\53\1\207"+
+    "\1\136\1\0\1\161\1\0\2\7\1\210\3\7\1\211"+
+    "\5\7\1\212\1\7\1\213\1\7\1\214\2\7\1\215"+
+    "\1\7\1\216\1\217\1\220\1\7\2\53\1\210\3\53"+
+    "\1\211\5\53\1\212\1\53\1\213\1\53\1\214\2\53"+
+    "\1\215\1\53\1\216\1\217\1\220\1\53\1\0\1\221"+
+    "\3\7\1\222\1\223\1\224\1\225\1\226\7\7\1\221"+
+    "\3\53\1\222\1\223\1\224\1\225\1\226\7\53\4\7"+
+    "\1\227\1\230\1\231\2\7\1\232\4\53\1\227\1\230"+
+    "\1\231\2\53\1\232\2\7\1\233\1\234\1\7\1\235"+
+    "\2\53\1\233\1\234\1\53\1\235\1\236\1\237\1\7"+
+    "\1\236\1\237\1\53\1\7\1\53\2\240";
 
   private static int [] zzUnpackAction() {
     int [] result = new int[692];
@@ -1342,454 +1342,454 @@ public class _GroovyLexer extends GroovyLexerBase implements FlexLexer {
             { return T_WRONG;
             } 
             // fall through
-          case 159: break;
+          case 161: break;
           case 2: 
             { yybeginstate(NLS_AFTER_NLS);
                                             return isWithinBraces() ? TokenType.WHITE_SPACE : storeToken(NL);
             } 
             // fall through
-          case 160: break;
+          case 162: break;
           case 3: 
             { return TokenType.WHITE_SPACE;
             } 
             // fall through
-          case 161: break;
+          case 163: break;
           case 4: 
             { yybeginstate(IN_SLASHY_STRING);
                                             return storeToken(SLASHY_BEGIN);
             } 
             // fall through
-          case 162: break;
+          case 164: break;
           case 5: 
             { return storeToken(T_STAR);
             } 
             // fall through
-          case 163: break;
+          case 165: break;
           case 6: 
             { return storeToken(T_NOT);
             } 
             // fall through
-          case 164: break;
+          case 166: break;
           case 7: 
             { return storeToken(IDENTIFIER);
             } 
             // fall through
-          case 165: break;
+          case 167: break;
           case 8: 
             { return storeToken(NUM_INT);
             } 
             // fall through
-          case 166: break;
+          case 168: break;
           case 9: 
             { return storeToken(T_PLUS);
             } 
             // fall through
-          case 167: break;
+          case 169: break;
           case 10: 
             { return storeToken(T_MINUS);
             } 
             // fall through
-          case 168: break;
+          case 170: break;
           case 11: 
             { return storeToken(T_DOT);
             } 
             // fall through
-          case 169: break;
+          case 171: break;
           case 12: 
             { return storeToken(STR_SQ);
             } 
             // fall through
-          case 170: break;
+          case 172: break;
           case 13: 
             { yybeginstate(IN_SINGLE_GSTRING);
                                             return storeToken(GSTRING_BEGIN);
             } 
             // fall through
-          case 171: break;
+          case 173: break;
           case 14: 
             { yyendstate(YYINITIAL);
     return storeToken(T_RBRACE);
             } 
             // fall through
-          case 172: break;
+          case 174: break;
           case 15: 
             { yybeginstate(YYINITIAL, NLS_AFTER_LBRACE);
                                             return storeToken(T_LBRACE);
             } 
             // fall through
-          case 173: break;
+          case 175: break;
           case 16: 
             { return storeToken(T_ASSIGN);
             } 
             // fall through
-          case 174: break;
+          case 176: break;
           case 17: 
             { return storeToken(T_Q);
             } 
             // fall through
-          case 175: break;
+          case 177: break;
           case 18: 
             { return storeToken(T_LPAREN);
             } 
             // fall through
-          case 176: break;
+          case 178: break;
           case 19: 
             { return storeToken(T_RPAREN);
             } 
             // fall through
-          case 177: break;
+          case 179: break;
           case 20: 
             { return storeToken(T_LBRACK);
             } 
             // fall through
-          case 178: break;
+          case 180: break;
           case 21: 
             { return storeToken(T_RBRACK);
             } 
             // fall through
-          case 179: break;
+          case 181: break;
           case 22: 
             { return storeToken(T_COLON);
             } 
             // fall through
-          case 180: break;
+          case 182: break;
           case 23: 
             { return storeToken(T_COMMA);
             } 
             // fall through
-          case 181: break;
+          case 183: break;
           case 24: 
             { return storeToken(T_LT);
             } 
             // fall through
-          case 182: break;
+          case 184: break;
           case 25: 
             { return storeToken(T_GT);
             } 
             // fall through
-          case 183: break;
+          case 185: break;
           case 26: 
             { return storeToken(T_BNOT);
             } 
             // fall through
-          case 184: break;
+          case 186: break;
           case 27: 
             { return storeToken(T_REM);
             } 
             // fall through
-          case 185: break;
+          case 187: break;
           case 28: 
             { return storeToken(T_XOR);
             } 
             // fall through
-          case 186: break;
+          case 188: break;
           case 29: 
             { return storeToken(T_BOR);
             } 
             // fall through
-          case 187: break;
+          case 189: break;
           case 30: 
             { return storeToken(T_BAND);
             } 
             // fall through
-          case 188: break;
+          case 190: break;
           case 31: 
             { return storeToken(T_SEMI);
             } 
             // fall through
-          case 189: break;
+          case 191: break;
           case 32: 
             { return storeToken(T_AT);
             } 
             // fall through
-          case 190: break;
+          case 192: break;
           case 33: 
             { yyendstate(IN_INNER_BLOCK, IN_GSTRING_DOLLAR);
     return storeToken(T_RBRACE);
             } 
             // fall through
-          case 191: break;
+          case 193: break;
           case 34: 
             { yypushback(1);
     yyendstate(DIVISION_EXPECTED);
             } 
             // fall through
-          case 192: break;
+          case 194: break;
           case 35: 
             { return storeToken(GSTRING_CONTENT);
             } 
             // fall through
-          case 193: break;
+          case 195: break;
           case 36: 
             { resetState();
     yybeginstate(NLS_AFTER_NLS);
     return storeToken(NL);
             } 
             // fall through
-          case 194: break;
+          case 196: break;
           case 37: 
             { yybeginstate(IN_GSTRING_DOLLAR);
     return storeToken(T_DOLLAR);
             } 
             // fall through
-          case 195: break;
+          case 197: break;
           case 38: 
             { yyendstate(IN_SINGLE_GSTRING);
     return storeToken(GSTRING_END);
             } 
             // fall through
-          case 196: break;
+          case 198: break;
           case 39: 
             { return storeToken(SLASHY_CONTENT);
             } 
             // fall through
-          case 197: break;
+          case 199: break;
           case 40: 
             { yyendstate(IN_SLASHY_STRING);
     return storeToken(SLASHY_END);
             } 
             // fall through
-          case 198: break;
+          case 200: break;
           case 41: 
             { return storeToken(DOLLAR_SLASHY_CONTENT);
             } 
             // fall through
-          case 199: break;
+          case 201: break;
           case 42: 
             { yypushback(1);
     yyendstate(IN_GSTRING_DOLLAR);
             } 
             // fall through
-          case 200: break;
+          case 202: break;
           case 43: 
             { yybeginstate(IN_GSTRING_DOT);
     return storeToken(IDENTIFIER);
             } 
             // fall through
-          case 201: break;
+          case 203: break;
           case 44: 
             { yybeginstate(IN_INNER_BLOCK, NLS_AFTER_LBRACE);
     return storeToken(T_LBRACE);
             } 
             // fall through
-          case 202: break;
+          case 204: break;
           case 45: 
             { yypushback(1);
     yyendstate(IN_GSTRING_DOT);
             } 
             // fall through
-          case 203: break;
+          case 205: break;
           case 46: 
             { yypushback(1);
     yyendstate(IN_GSTRING_DOT_IDENT);
             } 
             // fall through
-          case 204: break;
+          case 206: break;
           case 47: 
             { yypushback(1);
     yyendstate(NLS_AFTER_COMMENT);
             } 
             // fall through
-          case 205: break;
+          case 207: break;
           case 48: 
             { yypushback(1);
     yyendstate(NLS_AFTER_LBRACE);
             } 
             // fall through
-          case 206: break;
+          case 208: break;
           case 49: 
             { yypushback(1);
     yyendstate(NLS_AFTER_NLS);
     yybeginstate(NLS_AFTER_COMMENT);
             } 
             // fall through
-          case 207: break;
+          case 209: break;
           case 50: 
             { return storeToken(SL_COMMENT);
             } 
             // fall through
-          case 208: break;
+          case 210: break;
           case 51: 
             { return storeToken(ML_COMMENT);
             } 
             // fall through
-          case 209: break;
+          case 211: break;
           case 52: 
             { return storeToken(T_DIV_ASSIGN);
             } 
             // fall through
-          case 210: break;
+          case 212: break;
           case 53: 
             { return storeToken(T_POW);
             } 
             // fall through
-          case 211: break;
+          case 213: break;
           case 54: 
             { return storeToken(T_SPREAD_DOT);
             } 
             // fall through
-          case 212: break;
+          case 214: break;
           case 55: 
             { return storeToken(T_STAR_ASSIGN);
             } 
             // fall through
-          case 213: break;
+          case 215: break;
           case 56: 
             { return storeToken(SH_COMMENT);
             } 
             // fall through
-          case 214: break;
+          case 216: break;
           case 57: 
             { return storeToken(T_NEQ);
             } 
             // fall through
-          case 215: break;
+          case 217: break;
           case 58: 
             { return storeToken(NUM_BIG_INT);
             } 
             // fall through
-          case 216: break;
+          case 218: break;
           case 59: 
             { return storeToken(NUM_FLOAT);
             } 
             // fall through
-          case 217: break;
+          case 219: break;
           case 60: 
             { return storeToken(NUM_LONG);
             } 
             // fall through
-          case 218: break;
+          case 220: break;
           case 61: 
             { return storeToken(NUM_DOUBLE);
             } 
             // fall through
-          case 219: break;
+          case 221: break;
           case 62: 
             { return storeToken(KW_IF);
             } 
             // fall through
-          case 220: break;
+          case 222: break;
           case 63: 
             { return storeToken(KW_IN);
             } 
             // fall through
-          case 221: break;
+          case 223: break;
           case 64: 
             { return storeToken(KW_DO);
             } 
             // fall through
-          case 222: break;
+          case 224: break;
           case 65: 
             { return storeToken(T_INC);
             } 
             // fall through
-          case 223: break;
+          case 225: break;
           case 66: 
             { return storeToken(T_PLUS_ASSIGN);
             } 
             // fall through
-          case 224: break;
+          case 226: break;
           case 67: 
             { return storeToken(T_DEC);
             } 
             // fall through
-          case 225: break;
+          case 227: break;
           case 68: 
             { return storeToken(T_MINUS_ASSIGN);
             } 
             // fall through
-          case 226: break;
+          case 228: break;
           case 69: 
             { return storeToken(T_ARROW);
             } 
             // fall through
-          case 227: break;
+          case 229: break;
           case 70: 
             { return storeToken(T_RANGE);
             } 
             // fall through
-          case 228: break;
+          case 230: break;
           case 71: 
             { return storeToken(T_METHOD_CLOSURE);
             } 
             // fall through
-          case 229: break;
+          case 231: break;
           case 72: 
             { yybeginstate(IN_DOLLAR_SLASH_STRING);
                                             return storeToken(DOLLAR_SLASHY_BEGIN);
             } 
             // fall through
-          case 230: break;
+          case 232: break;
           case 73: 
             { return storeToken(STR_DQ);
             } 
             // fall through
-          case 231: break;
+          case 233: break;
           case 74: 
             { return storeToken(KW_AS);
             } 
             // fall through
-          case 232: break;
+          case 234: break;
           case 75: 
             { return storeToken(T_EQ);
             } 
             // fall through
-          case 233: break;
+          case 235: break;
           case 76: 
             { return storeToken(T_REGEX_FIND);
             } 
             // fall through
-          case 234: break;
+          case 236: break;
           case 77: 
             { return storeToken(T_SAFE_DOT);
             } 
             // fall through
-          case 235: break;
+          case 237: break;
           case 78: 
             { return storeToken(T_ELVIS);
             } 
             // fall through
-          case 236: break;
+          case 238: break;
           case 79: 
             { return storeToken(T_LE);
             } 
             // fall through
-          case 237: break;
+          case 239: break;
           case 80: 
             { return storeToken(T_GE);
             } 
             // fall through
-          case 238: break;
+          case 240: break;
           case 81: 
             { return storeToken(T_REM_ASSIGN);
             } 
             // fall through
-          case 239: break;
+          case 241: break;
           case 82: 
             { return storeToken(T_XOR_ASSIGN);
             } 
             // fall through
-          case 240: break;
+          case 242: break;
           case 83: 
             { return storeToken(T_BOR_ASSIGN);
             } 
             // fall through
-          case 241: break;
+          case 243: break;
           case 84: 
             { return storeToken(T_LOR);
             } 
             // fall through
-          case 242: break;
+          case 244: break;
           case 85: 
             { return storeToken(T_BAND_ASSIGN);
             } 
             // fall through
-          case 243: break;
+          case 245: break;
           case 86: 
             { return storeToken(T_LAND);
             } 
             // fall through
-          case 244: break;
+          case 246: break;
           case 87: 
             // lookahead expression with fixed base length
             zzMarkedPos = Character.offsetByCodePoints
@@ -1798,14 +1798,14 @@ public class _GroovyLexer extends GroovyLexerBase implements FlexLexer {
     return storeToken(T_DIV);
             } 
             // fall through
-          case 245: break;
+          case 247: break;
           case 88: 
             { yypushback(1);
     yyendstate(DIVISION_EXPECTED);
     return storeToken(T_DOLLAR);
             } 
             // fall through
-          case 246: break;
+          case 248: break;
           case 89: 
             // lookahead expression with fixed base length
             zzMarkedPos = Character.offsetByCodePoints
@@ -1813,13 +1813,13 @@ public class _GroovyLexer extends GroovyLexerBase implements FlexLexer {
             { return storeToken(SLASHY_CONTENT);
             } 
             // fall through
-          case 247: break;
+          case 249: break;
           case 90: 
             { yyendstate(IN_DOLLAR_SLASH_STRING);
     return storeToken(DOLLAR_SLASHY_END);
             } 
             // fall through
-          case 248: break;
+          case 250: break;
           case 91: 
             // lookahead expression with fixed base length
             zzMarkedPos = Character.offsetByCodePoints
@@ -1827,7 +1827,7 @@ public class _GroovyLexer extends GroovyLexerBase implements FlexLexer {
             { return storeToken(DOLLAR_SLASHY_CONTENT);
             } 
             // fall through
-          case 249: break;
+          case 251: break;
           case 92: 
             // lookahead expression with fixed base length
             zzMarkedPos = Character.offsetByCodePoints
@@ -1836,339 +1836,349 @@ public class _GroovyLexer extends GroovyLexerBase implements FlexLexer {
     return storeToken(T_DOT);
             } 
             // fall through
-          case 250: break;
+          case 252: break;
           case 93: 
             { return SL_COMMENT;
             } 
             // fall through
-          case 251: break;
+          case 253: break;
           case 94: 
             { return ML_COMMENT;
             } 
             // fall through
-          case 252: break;
+          case 254: break;
           case 95: 
             { return storeToken(GROOVY_DOC_COMMENT);
             } 
             // fall through
-          case 253: break;
+          case 255: break;
           case 96: 
             { return storeToken(T_POW_ASSIGN);
             } 
             // fall through
-          case 254: break;
-          case 97: 
-            { return storeToken(NUM_BIG_DECIMAL);
-            } 
-            // fall through
-          case 255: break;
-          case 98: 
-            { return storeToken(KW_FOR);
-            } 
-            // fall through
           case 256: break;
-          case 99: 
-            { return storeToken(KW_INT);
+          case 97: 
+            { return storeToken(T_NID);
             } 
             // fall through
           case 257: break;
-          case 100: 
-            { return storeToken(KW_DEF);
+          case 98: 
+            { return storeToken(NUM_BIG_DECIMAL);
             } 
             // fall through
           case 258: break;
-          case 101: 
-            { return storeToken(T_ELLIPSIS);
+          case 99: 
+            { return storeToken(KW_FOR);
             } 
             // fall through
           case 259: break;
-          case 102: 
-            { return storeToken(T_RANGE_EX);
+          case 100: 
+            { return storeToken(KW_INT);
             } 
             // fall through
           case 260: break;
+          case 101: 
+            { return storeToken(KW_DEF);
+            } 
+            // fall through
+          case 261: break;
+          case 102: 
+            { return storeToken(T_ELLIPSIS);
+            } 
+            // fall through
+          case 262: break;
           case 103: 
+            { return storeToken(T_RANGE_EX);
+            } 
+            // fall through
+          case 263: break;
+          case 104: 
             { yybeginstate(IN_TRIPLE_GSTRING);
                                             return storeToken(GSTRING_BEGIN);
             } 
             // fall through
-          case 261: break;
-          case 104: 
+          case 264: break;
+          case 105: 
             { return storeToken(KW_TRY);
             } 
             // fall through
-          case 262: break;
-          case 105: 
+          case 265: break;
+          case 106: 
             { return storeToken(KW_NEW);
             } 
             // fall through
-          case 263: break;
-          case 106: 
-            { return storeToken(T_REGEX_MATCH);
-            } 
-            // fall through
-          case 264: break;
-          case 107: 
-            { return storeToken(T_COMPARE);
-            } 
-            // fall through
-          case 265: break;
-          case 108: 
-            { return storeToken(T_LSH_ASSIGN);
-            } 
-            // fall through
           case 266: break;
-          case 109: 
-            { return storeToken(T_RSH_ASSIGN);
+          case 107: 
+            { return storeToken(T_ID);
             } 
             // fall through
           case 267: break;
+          case 108: 
+            { return storeToken(T_REGEX_MATCH);
+            } 
+            // fall through
+          case 268: break;
+          case 109: 
+            { return storeToken(T_COMPARE);
+            } 
+            // fall through
+          case 269: break;
           case 110: 
+            { return storeToken(T_LSH_ASSIGN);
+            } 
+            // fall through
+          case 270: break;
+          case 111: 
+            { return storeToken(T_RSH_ASSIGN);
+            } 
+            // fall through
+          case 271: break;
+          case 112: 
             { yyendstate(IN_TRIPLE_GSTRING);
     return storeToken(GSTRING_END);
             } 
             // fall through
-          case 268: break;
-          case 111: 
+          case 272: break;
+          case 113: 
             { return GROOVY_DOC_COMMENT;
             } 
             // fall through
-          case 269: break;
-          case 112: 
+          case 273: break;
+          case 114: 
             { return storeToken(KW_LONG);
             } 
             // fall through
-          case 270: break;
-          case 113: 
+          case 274: break;
+          case 115: 
             { return storeToken(KW_ELSE);
             } 
             // fall through
-          case 271: break;
-          case 114: 
+          case 275: break;
+          case 116: 
             { return storeToken(KW_ENUM);
             } 
             // fall through
-          case 272: break;
-          case 115: 
+          case 276: break;
+          case 117: 
             { return storeToken(KW_BYTE);
             } 
             // fall through
-          case 273: break;
-          case 116: 
+          case 277: break;
+          case 118: 
             { return storeToken(KW_CASE);
             } 
             // fall through
-          case 274: break;
-          case 117: 
+          case 278: break;
+          case 119: 
             { return storeToken(KW_CHAR);
             } 
             // fall through
-          case 275: break;
-          case 118: 
+          case 279: break;
+          case 120: 
             { return storeToken(KW_TRUE);
             } 
             // fall through
-          case 276: break;
-          case 119: 
+          case 280: break;
+          case 121: 
             { return storeToken(KW_THIS);
             } 
             // fall through
-          case 277: break;
-          case 120: 
+          case 281: break;
+          case 122: 
             { return storeToken(KW_NULL);
             } 
             // fall through
-          case 278: break;
-          case 121: 
+          case 282: break;
+          case 123: 
             { return storeToken(KW_VOID);
             } 
             // fall through
-          case 279: break;
-          case 122: 
+          case 283: break;
+          case 124: 
             { return storeToken(T_RSHU_ASSIGN);
             } 
             // fall through
-          case 280: break;
-          case 123: 
+          case 284: break;
+          case 125: 
             { return storeToken(KW_FLOAT);
             } 
             // fall through
-          case 281: break;
-          case 124: 
+          case 285: break;
+          case 126: 
             { return storeToken(KW_FINAL);
             } 
             // fall through
-          case 282: break;
-          case 125: 
+          case 286: break;
+          case 127: 
             { return storeToken(KW_FALSE);
             } 
             // fall through
-          case 283: break;
-          case 126: 
+          case 287: break;
+          case 128: 
             { return storeToken(KW_BREAK);
             } 
             // fall through
-          case 284: break;
-          case 127: 
+          case 288: break;
+          case 129: 
             { return storeToken(KW_CLASS);
             } 
             // fall through
-          case 285: break;
-          case 128: 
+          case 289: break;
+          case 130: 
             { return storeToken(KW_CATCH);
             } 
             // fall through
-          case 286: break;
-          case 129: 
+          case 290: break;
+          case 131: 
             { return storeToken(KW_SUPER);
             } 
             // fall through
-          case 287: break;
-          case 130: 
+          case 291: break;
+          case 132: 
             { return storeToken(KW_SHORT);
             } 
             // fall through
-          case 288: break;
-          case 131: 
+          case 292: break;
+          case 133: 
             { return storeToken(KW_TRAIT);
             } 
             // fall through
-          case 289: break;
-          case 132: 
+          case 293: break;
+          case 134: 
             { return storeToken(KW_THROW);
             } 
             // fall through
-          case 290: break;
-          case 133: 
+          case 294: break;
+          case 135: 
             { return storeToken(KW_WHILE);
             } 
             // fall through
-          case 291: break;
-          case 134: 
+          case 295: break;
+          case 136: 
             { return storeToken(KW_IMPORT);
             } 
             // fall through
-          case 292: break;
-          case 135: 
+          case 296: break;
+          case 137: 
             { return storeToken(KW_DOUBLE);
             } 
             // fall through
-          case 293: break;
-          case 136: 
+          case 297: break;
+          case 138: 
             { return storeToken(KW_PUBLIC);
             } 
             // fall through
-          case 294: break;
-          case 137: 
+          case 298: break;
+          case 139: 
             { return storeToken(KW_ASSERT);
             } 
             // fall through
-          case 295: break;
-          case 138: 
+          case 299: break;
+          case 140: 
             { return storeToken(KW_STATIC);
             } 
             // fall through
-          case 296: break;
-          case 139: 
+          case 300: break;
+          case 141: 
             { return storeToken(KW_SWITCH);
             } 
             // fall through
-          case 297: break;
-          case 140: 
+          case 301: break;
+          case 142: 
             { return storeToken(KW_THROWS);
             } 
             // fall through
-          case 298: break;
-          case 141: 
+          case 302: break;
+          case 143: 
             { return storeToken(KW_RETURN);
             } 
             // fall through
-          case 299: break;
-          case 142: 
+          case 303: break;
+          case 144: 
             { return storeToken(KW_NATIVE);
             } 
             // fall through
-          case 300: break;
-          case 143: 
+          case 304: break;
+          case 145: 
             { return storeToken(KW_FINALLY);
             } 
             // fall through
-          case 301: break;
-          case 144: 
+          case 305: break;
+          case 146: 
             { return storeToken(KW_DEFAULT);
             } 
             // fall through
-          case 302: break;
-          case 145: 
+          case 306: break;
+          case 147: 
             { return storeToken(KW_EXTENDS);
             } 
             // fall through
-          case 303: break;
-          case 146: 
+          case 307: break;
+          case 148: 
             { return storeToken(KW_BOOLEAN);
             } 
             // fall through
-          case 304: break;
-          case 147: 
+          case 308: break;
+          case 149: 
             { return storeToken(KW_PACKAGE);
             } 
             // fall through
-          case 305: break;
-          case 148: 
+          case 309: break;
+          case 150: 
             { return storeToken(KW_PRIVATE);
             } 
             // fall through
-          case 306: break;
-          case 149: 
+          case 310: break;
+          case 151: 
             { return storeToken(KW_ABSTRACT);
             } 
             // fall through
-          case 307: break;
-          case 150: 
+          case 311: break;
+          case 152: 
             { return storeToken(KW_CONTINUE);
             } 
             // fall through
-          case 308: break;
-          case 151: 
+          case 312: break;
+          case 153: 
             { return storeToken(KW_STRICTFP);
             } 
             // fall through
-          case 309: break;
-          case 152: 
+          case 313: break;
+          case 154: 
             { return storeToken(KW_VOLATILE);
             } 
             // fall through
-          case 310: break;
-          case 153: 
+          case 314: break;
+          case 155: 
             { return storeToken(KW_INTERFACE);
             } 
             // fall through
-          case 311: break;
-          case 154: 
+          case 315: break;
+          case 156: 
             { return storeToken(KW_PROTECTED);
             } 
             // fall through
-          case 312: break;
-          case 155: 
+          case 316: break;
+          case 157: 
             { return storeToken(KW_TRANSIENT);
             } 
             // fall through
-          case 313: break;
-          case 156: 
+          case 317: break;
+          case 158: 
             { return storeToken(KW_IMPLEMENTS);
             } 
             // fall through
-          case 314: break;
-          case 157: 
+          case 318: break;
+          case 159: 
             { return storeToken(KW_INSTANCEOF);
             } 
             // fall through
-          case 315: break;
-          case 158: 
+          case 319: break;
+          case 160: 
             { return storeToken(KW_SYNCHRONIZED);
             } 
             // fall through
-          case 316: break;
+          case 320: break;
           default:
             zzScanError(ZZ_NO_MATCH);
           }
