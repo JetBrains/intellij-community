@@ -792,6 +792,8 @@ public class EditorWindow {
           panel.revalidate();
         }
         else {
+          Component oldComp = panel.getComponent(0);
+          myPanel.add(oldComp);
           panel.removeAll();
           panel.add(splitter, BorderLayout.CENTER);
           splitter.setFirstComponent(myPanel);
@@ -800,14 +802,8 @@ public class EditorWindow {
           final VirtualFile firstFile = firstEC.getFile();
           final VirtualFile nextFile = virtualFile == null ? firstFile : virtualFile;
           HistoryEntry currentState = firstEC.currentStateAsHistoryEntry();
-
-          final boolean focusEditor = !focusNew;
-          final FileEditor[] firstEditors = fileEditorManager.openFileImpl4(this, firstFile, currentState,
-                                                                            true, focusEditor, null, -1, true).first;
-          syncCaretIfPossible(firstEditors);
-          final FileEditor[] secondEditors = fileEditorManager.openFileImpl4(res, nextFile, currentState,
-                                                                             true, focusNew, null, -1, true).first;
-          syncCaretIfPossible(secondEditors);
+          fileEditorManager.openFileImpl4(res, nextFile, currentState, true, focusNew, null, -1, true);
+          if (!focusNew) getGlobalInstance().requestFocus(oldComp, true);
         }
         return res;
       }
