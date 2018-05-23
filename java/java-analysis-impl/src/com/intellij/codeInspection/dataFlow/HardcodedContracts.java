@@ -285,6 +285,30 @@ public class HardcodedContracts {
       PsiExpression[] args = ((PsiMethodCallExpression)expr).getArgumentList().getExpressions();
       if (calledName == null) return null;
       switch (calledName) {
+        case "array":
+        case "arrayWithSize":
+        case "arrayContaining":
+        case "arrayContainingInAnyOrder":
+        case "contains":
+        case "containsInAnyOrder":
+        case "containsString":
+        case "endsWith":
+        case "startsWith":
+        case "stringContainsInOrder":
+        case "empty":
+        case "emptyArray":
+        case "emptyCollectionOf":
+        case "emptyIterable":
+        case "emptyIterableOf":
+        case "hasEntry":
+        case "hasItem":
+        case "hasItems":
+        case "hasKey":
+        case "hasProperty":
+        case "hasSize":
+        case "hasToString":
+        case "hasValue":
+        case "hasXPath":
         case "notNullValue":
           return NULL_VALUE;
         case "nullValue":
