@@ -353,7 +353,8 @@ private annotation_level ::= type_definition | parse_annotation_declaration
 private declaration_start_modifiers ::= non_empty_modifier_list mb_type_parameter_list mb_declaration_type_element { pin = 1 }
 private mb_type_parameter_list ::= [mb_nl type_parameter_list]
 private mb_declaration_type_element ::= [mb_nl declaration_type_element]
-private declaration_type_element ::= (type_element | clear_variants_and_fail) &declaration_lookahead
+private declaration_type_element ::= definitely_type_element | clear_variants_and_fail
+private definitely_type_element ::= <<definitelyTypeElement type_element (<<wasDefinitelyTypeElement>> | &declaration_lookahead)>>
 
 private declaration_lookahead ::= method_lookahead | IDENTIFIER { consumeTokenMethod = 'consumeTokenFast' }
 private method_lookahead ::= method_identifier '('
@@ -538,7 +539,7 @@ private non_empty_type_argument_list ::= '<' <<comma_list_p type_argument_list_i
   pin = 1
   consumeTokenMethod = 'consumeTokenFast'
 }
-private type_argument_list_item ::= mb_nl type_argument
+private type_argument_list_item ::= mb_nl <<anyTypeElement type_argument>>
 private type_argument_list_end ::= <<mb_nl_group '>'>>
 private type_argument ::= type_element | wildcard_type_element
 {
@@ -1144,18 +1145,21 @@ argument_label ::= IDENTIFIER | STR_SQ | STR_DQ | '*' | 'null' | 'class' | primi
 
 // region Type elements
 type_element ::= (primitive_type_element | class_type_element) array_type_elements
-capital_type_element ::= (primitive_type_element | capital_class_type_element) array_type_elements
-{
-  elementType = type_element
-}
 
-primitive_type_element ::= primitive_type
+primitive_type_element ::= primitive_type <<setTypeWasPrimitive>>
 external primitive_type ::= parsePrimitiveType
+
+// Type element with last part capitalized or primitive type.
+// Example 1: com.foo.bar.Baz       will match
+// Example 2: com.foo.bar.Baz<Baz>  will match
+// Example 3: com.foo.bar.baz       will not match
+// Example 4: com.foo.bar.baz<Baz>  will not match
+capital_type_element ::= (primitive_type_element | capital_class_type_element) array_type_elements { elementType = type_element }
 
 class_type_element ::= code_reference
 qualified_class_type_element ::= qualified_code_reference
 unqualified_class_type_element ::= unqualified_code_reference
-capital_class_type_element ::= capital_code_reference
+private capital_class_type_element ::= <<capitalizedTypeElement class_type_element <<refWasCapitalized>>>>
 
 private array_type_elements ::= array_type_element*
 left array_type_element ::= '[' mb_nl ']' { consumeTokenMethod = 'consumeTokenFast' }
@@ -1177,16 +1181,10 @@ import_reference ::= unqualified_code_reference import_reference_tail*
   name = 'import reference'
 }
 qualified_code_reference ::= unqualified_code_reference qualified_code_reference_tail qualified_code_reference_tail* { elementType = code_reference}
-// Code reference with last part capitalized.
-// Example 1: com.foo.bar.Baz       will match
-// Example 2: com.foo.bar.Baz<Baz>  will match
-// Example 3: com.foo.bar.baz       will not match
-// Example 4: com.foo.bar.baz<Baz>  will not match
-private capital_code_reference ::= <<capitalizedReference code_reference>>
 private no_type_args_code_reference ::= <<noTypeArgsReference code_reference>>
 
 unqualified_code_reference ::= code_reference_part { elementType = code_reference }
-left qualified_code_reference_tail ::= code_reference_dot code_reference_part
+left qualified_code_reference_tail ::= code_reference_dot code_reference_part <<setRefWasQualified>>
 {
   elementType = code_reference
   consumeTokenMethod = 'consumeTokenFast'
@@ -1197,11 +1195,11 @@ left import_reference_tail ::= code_reference_dot code_reference_part
   pin = 1
 }
 private code_reference_dot ::= '.' !'*' mb_nl
-private code_reference_part ::= code_reference_identifier code_reference_type_arguments
+private code_reference_part ::= code_reference_identifier code_reference_type_arguments?
 private code_reference_identifier ::= <<codeReferenceIdentifier code_reference_identifiers>>
 private code_reference_identifiers ::= IDENTIFIER | code_reference_identifiers_soft
 private code_reference_identifiers_soft ::= 'def' | 'as' | 'in' | 'trait' { consumeTokenMethod = 'consumeTokenFast' }
-private code_reference_type_arguments ::= <<codeReferenceTypeArguments type_argument_list>>
+private code_reference_type_arguments ::= <<codeReferenceTypeArguments type_argument_list>> <<setRefHadTypeArguments>>
 
 // for the sake of showing 'type expected' message
 type_code_reference ::= code_reference { elementType = '' name = 'type' }

@@ -104,6 +104,12 @@ class TypesParsingTest extends GroovyParsingTestCase {
 
   void testmembers$modifierListAndConstructorIdentifier() { doTest() }
 
+  void testmembers$modifierListAndPrimitive() { doTest() }
+
+  void testmembers$modifierListAndRefQualified() { doTest() }
+
+  void testmembers$modifierListAndRefTypeArgs() { doTest() }
+
   void testmembers$modifierListAndTypeParameters() { doTest() }
 
   void testmembers$modifierListTypeParametersAndIdentifier() { doTest() }
@@ -111,6 +117,12 @@ class TypesParsingTest extends GroovyParsingTestCase {
   void testmembers$modifierListTypeParametersAndCapitalIdentifier() { doTest() }
 
   void testmembers$modifierListTypeParametersAndConstructorIdentifier() { doTest() }
+
+  void testmembers$modifierListTypeParametersAndPrimitive() { doTest() }
+
+  void testmembers$modifierListTypeParametersAndRefQualified() { doTest() }
+
+  void testmembers$modifierListTypeParametersAndRefTypeArgs() { doTest() }
 
   void testmembers$modifierListTypeParametersIdentifierAndLeftParen() { doTest() }
 

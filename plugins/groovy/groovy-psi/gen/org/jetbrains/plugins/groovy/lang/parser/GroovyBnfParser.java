@@ -1489,20 +1489,14 @@ public class GroovyBnfParser implements PsiParser, LightPsiParser {
   }
 
   /* ********************************************************** */
-  // capital_code_reference
-  public static boolean capital_class_type_element(PsiBuilder b, int l) {
+  // <<capitalizedTypeElement class_type_element <<refWasCapitalized>>>>
+  static boolean capital_class_type_element(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "capital_class_type_element")) return false;
     boolean r;
-    Marker m = enter_section_(b, l, _COLLAPSE_, CLASS_TYPE_ELEMENT, "<type>");
-    r = capital_code_reference(b, l + 1);
+    Marker m = enter_section_(b, l, _NONE_, null, "<type>");
+    r = capitalizedTypeElement(b, l + 1, class_type_element_parser_, capital_class_type_element_0_1_parser_);
     exit_section_(b, l, m, r, false, null);
     return r;
-  }
-
-  /* ********************************************************** */
-  // <<capitalizedReference code_reference>>
-  static boolean capital_code_reference(PsiBuilder b, int l) {
-    return capitalizedReference(b, l + 1, code_reference_parser_);
   }
 
   /* ********************************************************** */
@@ -2316,21 +2310,34 @@ public class GroovyBnfParser implements PsiParser, LightPsiParser {
   }
 
   /* ********************************************************** */
-  // code_reference_identifier code_reference_type_arguments
+  // code_reference_identifier code_reference_type_arguments?
   static boolean code_reference_part(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "code_reference_part")) return false;
     boolean r;
     Marker m = enter_section_(b);
     r = code_reference_identifier(b, l + 1);
-    r = r && code_reference_type_arguments(b, l + 1);
+    r = r && code_reference_part_1(b, l + 1);
     exit_section_(b, m, null, r);
     return r;
   }
 
+  // code_reference_type_arguments?
+  private static boolean code_reference_part_1(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "code_reference_part_1")) return false;
+    code_reference_type_arguments(b, l + 1);
+    return true;
+  }
+
   /* ********************************************************** */
-  // <<codeReferenceTypeArguments type_argument_list>>
+  // <<codeReferenceTypeArguments type_argument_list>> <<setRefHadTypeArguments>>
   static boolean code_reference_type_arguments(PsiBuilder b, int l) {
-    return codeReferenceTypeArguments(b, l + 1, type_argument_list_parser_);
+    if (!recursion_guard_(b, l, "code_reference_type_arguments")) return false;
+    boolean r;
+    Marker m = enter_section_(b);
+    r = codeReferenceTypeArguments(b, l + 1, type_argument_list_parser_);
+    r = r && setRefHadTypeArguments(b, l + 1);
+    exit_section_(b, m, null, r);
+    return r;
   }
 
   /* ********************************************************** */
@@ -2536,32 +2543,13 @@ public class GroovyBnfParser implements PsiParser, LightPsiParser {
   }
 
   /* ********************************************************** */
-  // (type_element | clear_variants_and_fail) &declaration_lookahead
+  // definitely_type_element | clear_variants_and_fail
   static boolean declaration_type_element(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "declaration_type_element")) return false;
     boolean r;
     Marker m = enter_section_(b, l, _NONE_, null, "<type>");
-    r = declaration_type_element_0(b, l + 1);
-    r = r && declaration_type_element_1(b, l + 1);
-    exit_section_(b, l, m, r, false, null);
-    return r;
-  }
-
-  // type_element | clear_variants_and_fail
-  private static boolean declaration_type_element_0(PsiBuilder b, int l) {
-    if (!recursion_guard_(b, l, "declaration_type_element_0")) return false;
-    boolean r;
-    r = type_element(b, l + 1);
+    r = definitely_type_element(b, l + 1);
     if (!r) r = clear_variants_and_fail(b, l + 1);
-    return r;
-  }
-
-  // &declaration_lookahead
-  private static boolean declaration_type_element_1(PsiBuilder b, int l) {
-    if (!recursion_guard_(b, l, "declaration_type_element_1")) return false;
-    boolean r;
-    Marker m = enter_section_(b, l, _AND_);
-    r = declaration_lookahead(b, l + 1);
     exit_section_(b, l, m, r, false, null);
     return r;
   }
@@ -2631,6 +2619,38 @@ public class GroovyBnfParser implements PsiParser, LightPsiParser {
     p = r; // pin = 1
     exit_section_(b, l, m, r, p, null);
     return r || p;
+  }
+
+  /* ********************************************************** */
+  // <<definitelyTypeElement type_element (<<wasDefinitelyTypeElement>> | &declaration_lookahead)>>
+  static boolean definitely_type_element(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "definitely_type_element")) return false;
+    boolean r;
+    Marker m = enter_section_(b, l, _NONE_, null, "<type>");
+    r = definitelyTypeElement(b, l + 1, type_element_parser_, definitely_type_element_0_1_parser_);
+    exit_section_(b, l, m, r, false, null);
+    return r;
+  }
+
+  // <<wasDefinitelyTypeElement>> | &declaration_lookahead
+  private static boolean definitely_type_element_0_1(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "definitely_type_element_0_1")) return false;
+    boolean r;
+    Marker m = enter_section_(b);
+    r = wasDefinitelyTypeElement(b, l + 1);
+    if (!r) r = definitely_type_element_0_1_1(b, l + 1);
+    exit_section_(b, m, null, r);
+    return r;
+  }
+
+  // &declaration_lookahead
+  private static boolean definitely_type_element_0_1_1(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "definitely_type_element_0_1_1")) return false;
+    boolean r;
+    Marker m = enter_section_(b, l, _AND_);
+    r = declaration_lookahead(b, l + 1);
+    exit_section_(b, l, m, r, false, null);
+    return r;
   }
 
   /* ********************************************************** */
@@ -4822,12 +4842,13 @@ public class GroovyBnfParser implements PsiParser, LightPsiParser {
   }
 
   /* ********************************************************** */
-  // primitive_type
+  // primitive_type <<setTypeWasPrimitive>>
   public static boolean primitive_type_element(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "primitive_type_element")) return false;
     boolean r;
-    Marker m = enter_section_(b, l, _COLLAPSE_, PRIMITIVE_TYPE_ELEMENT, "<type>");
+    Marker m = enter_section_(b, l, _NONE_, PRIMITIVE_TYPE_ELEMENT, "<type>");
     r = parsePrimitiveType(b, l + 1);
+    r = r && setTypeWasPrimitive(b, l + 1);
     exit_section_(b, l, m, r, false, null);
     return r;
   }
@@ -4883,7 +4904,7 @@ public class GroovyBnfParser implements PsiParser, LightPsiParser {
   }
 
   /* ********************************************************** */
-  // code_reference_dot code_reference_part
+  // code_reference_dot code_reference_part <<setRefWasQualified>>
   public static boolean qualified_code_reference_tail(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "qualified_code_reference_tail")) return false;
     if (!nextTokenIsFast(b, T_DOT)) return false;
@@ -4891,6 +4912,7 @@ public class GroovyBnfParser implements PsiParser, LightPsiParser {
     Marker m = enter_section_(b, l, _LEFT_, CODE_REFERENCE, null);
     r = code_reference_dot(b, l + 1);
     r = r && code_reference_part(b, l + 1);
+    r = r && setRefWasQualified(b, l + 1);
     exit_section_(b, l, m, r, false, null);
     return r;
   }
@@ -6069,13 +6091,13 @@ public class GroovyBnfParser implements PsiParser, LightPsiParser {
   }
 
   /* ********************************************************** */
-  // mb_nl type_argument
+  // mb_nl <<anyTypeElement type_argument>>
   static boolean type_argument_list_item(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "type_argument_list_item")) return false;
     boolean r;
     Marker m = enter_section_(b);
     r = mb_nl(b, l + 1);
-    r = r && type_argument(b, l + 1);
+    r = r && anyTypeElement(b, l + 1, type_argument_parser_);
     exit_section_(b, m, null, r);
     return r;
   }
@@ -6307,7 +6329,7 @@ public class GroovyBnfParser implements PsiParser, LightPsiParser {
   public static boolean unqualified_code_reference(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "unqualified_code_reference")) return false;
     boolean r;
-    Marker m = enter_section_(b, l, _NONE_, CODE_REFERENCE, "<unqualified code reference>");
+    Marker m = enter_section_(b, l, _COLLAPSE_, CODE_REFERENCE, "<unqualified code reference>");
     r = code_reference_part(b, l + 1);
     exit_section_(b, l, m, r, false, null);
     return r;
@@ -7315,6 +7337,11 @@ public class GroovyBnfParser implements PsiParser, LightPsiParser {
       return call_tail_1_1_0(b, l + 1);
     }
   };
+  final static Parser capital_class_type_element_0_1_parser_ = new Parser() {
+    public boolean parse(PsiBuilder b, int l) {
+      return refWasCapitalized(b, l + 1);
+    }
+  };
   final static Parser case_level_end_parser_ = new Parser() {
     public boolean parse(PsiBuilder b, int l) {
       return case_level_end(b, l + 1);
@@ -7370,6 +7397,11 @@ public class GroovyBnfParser implements PsiParser, LightPsiParser {
       return class_level_start(b, l + 1);
     }
   };
+  final static Parser class_type_element_parser_ = new Parser() {
+    public boolean parse(PsiBuilder b, int l) {
+      return class_type_element(b, l + 1);
+    }
+  };
   final static Parser closure_parameter_list_0_0_parser_ = new Parser() {
     public boolean parse(PsiBuilder b, int l) {
       return closure_parameter_list_0_0(b, l + 1);
@@ -7393,6 +7425,11 @@ public class GroovyBnfParser implements PsiParser, LightPsiParser {
   final static Parser constructor_block_parser_ = new Parser() {
     public boolean parse(PsiBuilder b, int l) {
       return constructor_block(b, l + 1);
+    }
+  };
+  final static Parser definitely_type_element_0_1_parser_ = new Parser() {
+    public boolean parse(PsiBuilder b, int l) {
+      return definitely_type_element_0_1(b, l + 1);
     }
   };
   final static Parser expression_or_application_inner_parser_ = new Parser() {
@@ -7538,6 +7575,16 @@ public class GroovyBnfParser implements PsiParser, LightPsiParser {
   final static Parser type_argument_list_parser_ = new Parser() {
     public boolean parse(PsiBuilder b, int l) {
       return type_argument_list(b, l + 1);
+    }
+  };
+  final static Parser type_argument_parser_ = new Parser() {
+    public boolean parse(PsiBuilder b, int l) {
+      return type_argument(b, l + 1);
+    }
+  };
+  final static Parser type_element_parser_ = new Parser() {
+    public boolean parse(PsiBuilder b, int l) {
+      return type_element(b, l + 1);
     }
   };
 }

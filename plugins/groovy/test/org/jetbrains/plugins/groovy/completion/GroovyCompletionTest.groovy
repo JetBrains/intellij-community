@@ -97,7 +97,6 @@ class GroovyCompletionTest extends GroovyCompletionTestBase {
     doVariantableTest("hahaha", "hohoho")
   }
 
-  @Bombed(month = 6, day = 10, user = "daniil")
   void testUnfinishedMethodTypeParameter() {
     doVariantableTest("MyParameter", "MySecondParameter")
   }

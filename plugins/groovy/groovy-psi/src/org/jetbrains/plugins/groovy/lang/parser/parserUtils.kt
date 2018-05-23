@@ -15,11 +15,18 @@ import com.intellij.psi.tree.TokenSet
 import org.jetbrains.plugins.groovy.GroovyBundle
 import org.jetbrains.plugins.groovy.lang.psi.GroovyElementTypes.*
 import org.jetbrains.plugins.groovy.util.get
-import org.jetbrains.plugins.groovy.util.getAndReset
 import org.jetbrains.plugins.groovy.util.set
 import org.jetbrains.plugins.groovy.util.withKey
 
 private val PsiBuilder.groovyParser: GroovyParser get() = (this as Builder).parser as GroovyParser
+
+private val collapseHook = Hook<IElementType> { _, marker: Marker?, elementType: IElementType ->
+  marker ?: return@Hook null
+  val newMarker = marker.precede()
+  marker.drop()
+  newMarker.collapse(elementType)
+  newMarker
+}
 
 fun parseBlockLazy(builder: PsiBuilder, level: Int, deepParser: Parser, elementType: IElementType): Boolean {
   return if (builder.groovyParser.parseDeep()) {
@@ -40,8 +47,13 @@ private val parseDiamonds: Key<Boolean> = Key.create("groovy.parse.diamonds")
 private val parseArguments: Key<Boolean> = Key.create("groovy.parse.arguments")
 private val parseApplicationArguments: Key<Boolean> = Key.create("groovy.parse.application.arguments")
 private val parseNoTypeArgumentsCodeReference: Key<Boolean> = Key.create("groovy.parse.no.type.arguments")
+private val parseAnyTypeElement: Key<Boolean> = Key.create("groovy.parse.any.type.element")
 private val parseCapitalizedCodeReference: Key<Boolean> = Key.create("groovy.parse.capitalized")
-private val lastIdentifierWasCapitalized: Key<Boolean> = Key.create("groovy.parse.last.identifier.capitalized")
+private val parseDefinitelyTypeElement: Key<Boolean> = Key.create("groovy.parse.definitely.type.element")
+private val referenceWasCapitalized: Key<Boolean> = Key.create("groovy.parse.ref.was.capitalized")
+private val typeWasPrimitive: Key<Boolean> = Key.create("groovy.parse.type.was.primitive")
+private val referenceHadTypeArguments: Key<Boolean> = Key.create("groovy.parse.ref.had.type.arguments")
+private val referenceWasQualified: Key<Boolean> = Key.create("groovy.parse.ref.was.qualified")
 
 @Suppress("LiftReturnOrAssignment")
 fun classIdentifier(builder: PsiBuilder, level: Int): Boolean {
@@ -65,18 +77,12 @@ fun constructorIdentifier(builder: PsiBuilder, level: Int): Boolean {
 }
 
 fun allowDiamond(builder: PsiBuilder, level: Int, parser: Parser): Boolean {
-  return builder.withKey(parseDiamonds, true) { parser.parse(builder, level) }
+  return builder.withKey(parseDiamonds, true) {
+    parser.parse(builder, level)
+  }
 }
 
 fun isDiamondAllowed(builder: PsiBuilder, level: Int): Boolean = builder[parseDiamonds]
-
-private val collapseHook = Hook<IElementType> { _, marker: Marker?, elementType: IElementType ->
-  marker ?: return@Hook null
-  val newMarker = marker.precede()
-  marker.drop()
-  newMarker.collapse(elementType)
-  newMarker
-}
 
 fun noTypeArgsReference(builder: PsiBuilder, level: Int, codeReferenceParser: Parser): Boolean {
   return builder.withKey(parseNoTypeArgumentsCodeReference, true) {
@@ -84,27 +90,44 @@ fun noTypeArgsReference(builder: PsiBuilder, level: Int, codeReferenceParser: Pa
   }
 }
 
-fun capitalizedReference(builder: PsiBuilder, level: Int, codeReferenceParser: Parser): Boolean {
-  return builder.withKey(parseCapitalizedCodeReference, true) {
-    codeReferenceParser.parse(builder, level) && builder.getAndReset(lastIdentifierWasCapitalized) == true
+private val PsiBuilder.noTypeArgsReferenceParsing get() = this[parseNoTypeArgumentsCodeReference]
+
+fun anyTypeElement(builder: PsiBuilder, level: Int, typeElement: Parser): Boolean {
+  return builder.withKey(parseAnyTypeElement, true) {
+    typeElement.parse(builder, level + 1)
   }
 }
 
-fun codeReferenceIdentifier(builder: PsiBuilder, level: Int, identifierParser: Parser): Boolean {
-  if (!builder[parseCapitalizedCodeReference]) {
-    // do not store last identifier capitalization flag
-    // if we are not within #parseCapitalizedCodeReference call
-    return identifierParser.parse(builder, level)
+private val PsiBuilder.anyTypeElementParsing get() = this[parseAnyTypeElement]
+
+fun capitalizedTypeElement(builder: PsiBuilder, level: Int, typeElement: Parser, check: Parser): Boolean {
+  try {
+    return builder.withKey(parseCapitalizedCodeReference, true) {
+      typeElement.parse(builder, level) && check.parse(builder, level)
+    }
   }
-  val capitalized = builder.isNextTokenCapitalized()
-  val result = identifierParser.parse(builder, level)
-  if (result) {
-    builder[lastIdentifierWasCapitalized] = capitalized
+  finally {
+    builder[referenceWasCapitalized] = null
   }
-  else {
-    builder[lastIdentifierWasCapitalized] = null
+}
+
+private val PsiBuilder.capitalizedReferenceParsing get() = this[parseCapitalizedCodeReference] && !anyTypeElementParsing
+
+fun refWasCapitalized(builder: PsiBuilder, level: Int): Boolean = builder[referenceWasCapitalized]
+
+fun codeReferenceIdentifier(builder: PsiBuilder, level: Int, identifier: Parser): Boolean {
+  if (builder.capitalizedReferenceParsing) {
+    val capitalized = builder.isNextTokenCapitalized()
+    val result = identifier.parse(builder, level)
+    if (result) {
+      builder[referenceWasCapitalized] = capitalized
+    }
+    else {
+      builder[referenceWasCapitalized] = null
+    }
+    return result
   }
-  return result
+  return identifier.parse(builder, level)
 }
 
 private fun PsiBuilder.isNextTokenCapitalized(): Boolean {
@@ -112,13 +135,50 @@ private fun PsiBuilder.isNextTokenCapitalized(): Boolean {
   return text != null && text.isNotEmpty() && text != DUMMY_IDENTIFIER_TRIMMED && text.first().isUpperCase()
 }
 
-fun codeReferenceTypeArguments(builder: PsiBuilder, level: Int, typeArgumentsParser: Parser): Boolean {
-  if (!builder[parseNoTypeArgumentsCodeReference]) {
-    builder.withKey(parseCapitalizedCodeReference, null) {
-      typeArgumentsParser.parse(builder, level)
+fun definitelyTypeElement(builder: PsiBuilder, level: Int, typeElement: Parser, check: Parser): Boolean {
+  try {
+    return builder.withKey(parseDefinitelyTypeElement, true) {
+      typeElement.parse(builder, level) && check.parse(builder, level)
     }
   }
+  finally {
+    builder[typeWasPrimitive] = null
+    builder[referenceHadTypeArguments] = null
+    builder[referenceWasQualified] = null
+  }
+}
+
+private val PsiBuilder.definitelyTypeElementParsing get() = this[parseDefinitelyTypeElement] && !anyTypeElementParsing
+
+fun wasDefinitelyTypeElement(builder: PsiBuilder, level: Int): Boolean {
+  return builder[typeWasPrimitive] ||
+         builder[referenceHadTypeArguments] ||
+         builder[referenceWasQualified]
+}
+
+fun setTypeWasPrimitive(builder: PsiBuilder, level: Int): Boolean {
+  if (builder.definitelyTypeElementParsing) {
+    builder[typeWasPrimitive] = true
+  }
   return true
+}
+
+fun setRefWasQualified(builder: PsiBuilder, level: Int): Boolean {
+  if (builder.definitelyTypeElementParsing) {
+    builder[referenceWasQualified] = true
+  }
+  return true
+}
+
+fun setRefHadTypeArguments(builder: PsiBuilder, level: Int): Boolean {
+  if (builder.definitelyTypeElementParsing) {
+    builder[referenceHadTypeArguments] = true
+  }
+  return true
+}
+
+fun codeReferenceTypeArguments(builder: PsiBuilder, level: Int, typeArgumentsParser: Parser): Boolean {
+  return !builder.noTypeArgsReferenceParsing && typeArgumentsParser.parse(builder, level)
 }
 
 fun parseArgument(builder: PsiBuilder, level: Int, argumentParser: Parser): Boolean {

@@ -29,9 +29,3 @@ internal operator fun UserDataHolderUnprotected.get(key: Key<Boolean>): Boolean 
 internal operator fun <V : Any> UserDataHolderUnprotected.set(key: Key<V>, value: V?) {
   putUserDataUnprotected(key, value)
 }
-
-internal fun <V : Any> UserDataHolderUnprotected.getAndReset(key: Key<V>): V? {
-  val result = this[key]
-  this[key] = null
-  return result
-}
