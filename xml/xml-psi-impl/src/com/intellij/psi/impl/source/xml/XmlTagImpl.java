@@ -915,6 +915,7 @@ public class XmlTagImpl extends XmlElementImpl implements XmlTag, HintedReferenc
             map = new BidirectionalMap<>();
           }
           for (final String[] prefix2ns : namespacesFromDocument) {
+            if (map.containsKey(prefix2ns[0])) continue;
             map.put(prefix2ns[0], getRealNs(prefix2ns[1]));
           }
         }
