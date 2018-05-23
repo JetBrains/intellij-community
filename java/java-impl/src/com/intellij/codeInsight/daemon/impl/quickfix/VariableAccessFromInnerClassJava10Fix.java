@@ -67,7 +67,7 @@ public class VariableAccessFromInnerClassJava10Fix extends BaseIntentionAction {
     if (name == null) return false;
 
     PsiType type = variable.getType();
-    if (PsiTypesUtil.isNonDenotableType(type, variable)) {
+    if (!PsiTypesUtil.isDenotableType(type, variable)) {
       return false;
     }
     setText(QuickFixBundle.message("convert.variable.to.field.in.anonymous.class.fix.name", name));

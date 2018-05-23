@@ -315,7 +315,7 @@ public class LambdaRefactoringUtil {
     for (int i = 0; i < parameters.length; i++) {
       PsiType psiType = substitutor.substitute(parameters[i].getType());
       if (psiType == null) return null;
-      if (!PsiTypesUtil.isDenotableType(psiType)) {
+      if (!PsiTypesUtil.isDenotableType(psiType, interfaceMethod)) {
         return null;
       }
 

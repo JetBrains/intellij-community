@@ -23,7 +23,7 @@ public class VariableTypeCanBeExplicitInspection extends AbstractBaseJavaLocalIn
         PsiTypeElement typeElement = variable.getTypeElement();
         if (typeElement != null && typeElement.isInferredType()) {
           PsiType type = variable.getType();
-          if (!PsiTypesUtil.isNonDenotableType(type, variable)) {
+          if (PsiTypesUtil.isDenotableType(type, variable)) {
             holder.registerProblem(typeElement,
                                    "'var' can be replaced with explicit type",
                                    ProblemHighlightType.GENERIC_ERROR_OR_WARNING,
