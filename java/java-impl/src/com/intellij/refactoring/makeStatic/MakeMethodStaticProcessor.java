@@ -96,8 +96,25 @@ public class MakeMethodStaticProcessor extends MakeMethodOrClassStaticProcessor<
   }
 
   protected void changeSelfUsage(SelfUsageInfo usageInfo) throws IncorrectOperationException {
-    PsiElement parent = usageInfo.getElement().getParent();
-    LOG.assertTrue(parent instanceof PsiMethodCallExpression);
+    PsiElement element = usageInfo.getElement();
+    PsiElement parent = element.getParent();
+    if (element instanceof PsiMethodReferenceExpression) {
+      if (needLambdaConversion((PsiMethodReferenceExpression)element)) {
+        PsiMethodCallExpression methodCallExpression = getMethodCallExpression((PsiMethodReferenceExpression)element);
+        if (methodCallExpression == null) return;
+        parent = methodCallExpression;
+      }
+      else {
+        PsiElementFactory factory = JavaPsiFacade.getElementFactory(parent.getProject());
+        PsiClass memberClass = myMember.getContainingClass();
+        LOG.assertTrue(memberClass != null);
+        PsiElement qualifier = ((PsiMethodReferenceExpression)element).getQualifier();
+        LOG.assertTrue(qualifier != null);
+        qualifier.replace(factory.createReferenceExpression(memberClass));
+        return;
+      }
+    }
+    LOG.assertTrue(parent instanceof PsiMethodCallExpression, parent);
     PsiMethodCallExpression methodCall = (PsiMethodCallExpression) parent;
     final PsiExpression qualifier = methodCall.getMethodExpression().getQualifierExpression();
     if (qualifier != null) qualifier.delete();
@@ -271,13 +288,9 @@ public class MakeMethodStaticProcessor extends MakeMethodOrClassStaticProcessor<
 
     PsiReferenceExpression methodRef = (PsiReferenceExpression) element;
     if (methodRef instanceof PsiMethodReferenceExpression && needLambdaConversion((PsiMethodReferenceExpression)methodRef)) {
-      PsiLambdaExpression lambdaExpression =
-        LambdaRefactoringUtil.convertMethodReferenceToLambda(((PsiMethodReferenceExpression)methodRef), true, true);
-      List<PsiExpression> returnExpressions = LambdaUtil.getReturnExpressions(lambdaExpression);
-      if (returnExpressions.size() != 1) return;
-      PsiExpression expression = returnExpressions.get(0);
-      if (!(expression instanceof PsiMethodCallExpression)) return;
-      methodRef = ((PsiMethodCallExpression)expression).getMethodExpression();
+      PsiMethodCallExpression expression = getMethodCallExpression((PsiMethodReferenceExpression)methodRef);
+      if (expression == null) return;
+      methodRef = expression.getMethodExpression();
     }
     PsiElement parent = methodRef.getParent();
 
@@ -357,6 +370,16 @@ public class MakeMethodStaticProcessor extends MakeMethodOrClassStaticProcessor<
     if (newQualifier != null) {
       methodRef.getQualifierExpression().replace(newQualifier);
     }
+  }
+
+  private static PsiMethodCallExpression getMethodCallExpression(PsiMethodReferenceExpression methodRef) {
+    PsiLambdaExpression lambdaExpression =
+      LambdaRefactoringUtil.convertMethodReferenceToLambda(methodRef, true, true);
+    List<PsiExpression> returnExpressions = LambdaUtil.getReturnExpressions(lambdaExpression);
+    if (returnExpressions.size() != 1) return null;
+    PsiExpression expression = returnExpressions.get(0);
+    if (!(expression instanceof PsiMethodCallExpression)) return null;
+    return (PsiMethodCallExpression)expression;
   }
 
   private boolean needLambdaConversion(PsiMethodReferenceExpression methodRef) {
