@@ -110,7 +110,7 @@ public final class VcsConfiguration implements PersistentStateComponent<VcsConfi
   }
 
   public boolean FORCE_NON_EMPTY_COMMENT = false;
-  public boolean CLEAR_INITIAL_COMMIT_MESSAGE = false;
+  public boolean CLEAR_INITIAL_COMMIT_MESSAGE = true;
 
   @Property(surroundWithTag = false)
   @XCollection(elementName = "MESSAGE")
