@@ -270,18 +270,19 @@ public class NewErrorTreeRenderer extends MultilineTreeCellRenderer {
       icon = groupingElement.getFile() != null ? groupingElement.getFile().getFileType().getIcon() : AllIcons.FileTypes.Any_type;
     }
     else if (element instanceof SimpleMessageElement || element instanceof NavigatableMessageElement) {
-      ErrorTreeElementKind kind = element.getKind();
-      if (ErrorTreeElementKind.ERROR.equals(kind)) {
-        icon = AllIcons.General.Error;
-      }
-      else if (ErrorTreeElementKind.WARNING.equals(kind)) {
-        icon = AllIcons.General.Warning;
-      }
-      else if (ErrorTreeElementKind.NOTE.equals(kind)) {
-        icon = AllIcons.General.Note;
-      }
-      else if (ErrorTreeElementKind.INFO.equals(kind)) {
-        icon = AllIcons.General.Information;
+      switch (element.getKind()) {
+        case ERROR:
+          icon = AllIcons.General.Error;
+          break;
+        case WARNING:
+          icon = AllIcons.General.Warning;
+          break;
+        case NOTE:
+          icon = AllIcons.General.Note;
+          break;
+        case INFO:
+          icon = AllIcons.General.Information;
+          break;
       }
     }
 
