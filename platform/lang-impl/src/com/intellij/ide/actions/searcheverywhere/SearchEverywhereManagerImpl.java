@@ -1,6 +1,7 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.actions.searcheverywhere;
 
+import com.google.common.collect.Lists;
 import com.intellij.ide.ui.UISettings;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
@@ -18,6 +19,7 @@ import javax.swing.*;
 import java.awt.*;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
 import static com.intellij.ide.actions.SearchEverywhereAction.SEARCH_EVERYWHERE_POPUP;
@@ -31,7 +33,7 @@ public class SearchEverywhereManagerImpl implements SearchEverywhereManager {
   private JBPopup myBalloon;
   private SearchEverywhereUI mySearchEverywhereUI;
 
-  private final List<HistoryItem> historyList = new ArrayList<>();
+  private final SearchHistoryList myHistoryList = new SearchHistoryList();
   private HistoryIterator myHistoryIterator;
 
   public SearchEverywhereManagerImpl(Project project) {
@@ -56,7 +58,7 @@ public class SearchEverywhereManagerImpl implements SearchEverywhereManager {
     else {
       mySearchEverywhereUI = createView(myProject, myServiceContributors, myShownContributors);
       mySearchEverywhereUI.switchToContributor(selectedContributorID);
-      myHistoryIterator = new HistoryIterator(selectedContributorID);
+      myHistoryIterator = myHistoryList.getIterator(selectedContributorID);
       myBalloon = JBPopupFactory.getInstance().createComponentPopupBuilder(mySearchEverywhereUI, mySearchEverywhereUI.getSearchField())
                                 .setProject(myProject)
                                 .setResizable(false)
@@ -169,7 +171,7 @@ public class SearchEverywhereManagerImpl implements SearchEverywhereManager {
     updateHistoryIterator();
     String searchText = mySearchEverywhereUI.getSearchField().getText();
     if (!searchText.isEmpty()) {
-      myHistoryIterator.save(searchText);
+      myHistoryList.saveText(searchText, mySearchEverywhereUI.getSelectedContributorID());
     }
   }
 
@@ -183,37 +185,101 @@ public class SearchEverywhereManagerImpl implements SearchEverywhereManager {
   private void updateHistoryIterator() {
     String selectedContributorID = mySearchEverywhereUI.getSelectedContributorID();
     if (myHistoryIterator == null || !myHistoryIterator.getContributorID().equals(selectedContributorID)) {
-      myHistoryIterator = new HistoryIterator(selectedContributorID);
+      myHistoryIterator = myHistoryList.getIterator(selectedContributorID);
     }
   }
 
-  private static class HistoryItem {
-    private final String searchText;
-    private final String contributorID;
+  private static class SearchHistoryList {
 
-    public HistoryItem(String searchText, String contributorID) {
-      this.searchText = searchText;
-      this.contributorID = contributorID;
+    private final static int HISTORY_LIMIT = 50;
+
+    private static class HistoryItem {
+      private final String searchText;
+      private final String contributorID;
+
+      public HistoryItem(String searchText, String contributorID) {
+        this.searchText = searchText;
+        this.contributorID = contributorID;
+      }
+
+      public String getSearchText() {
+        return searchText;
+      }
+
+      public String getContributorID() {
+        return contributorID;
+      }
     }
 
-    public String getSearchText() {
-      return searchText;
+    private final List<HistoryItem> historyList = new ArrayList<>();
+
+    public HistoryIterator getIterator(String contributorID) {
+      List<String> list = getHistoryForContributor(contributorID);
+      return new HistoryIterator(contributorID, list);
     }
 
-    public String getContributorID() {
-      return contributorID;
+    public void saveText(String text, String contributorID) {
+      String lastHistoryItem = lastSearchForContributor(contributorID);
+      if (text.equals(lastHistoryItem)) {
+        return;
+      }
+
+      historyList.add(new HistoryItem(text, contributorID));
+
+      List<String> list = filteredHistory(item -> item.getContributorID().equals(contributorID));
+      if (list.size() > HISTORY_LIMIT) {
+        historyList.stream()
+                   .filter(item -> item.getContributorID().equals(contributorID))
+                   .findFirst()
+                   .ifPresent(historyList::remove);
+      }
+    }
+
+    private String lastSearchForContributor(String contributorID) {
+      if (historyList.isEmpty()) {
+        return null;
+      }
+
+      if (SearchEverywhereContributor.ALL_CONTRIBUTORS_GROUP_ID.equals(contributorID)) {
+        return historyList.get(historyList.size() - 1).getSearchText();
+      } else {
+        return Lists.reverse(historyList)
+                    .stream()
+                    .filter(item -> item.getContributorID().equals(contributorID))
+                    .findFirst()
+                    .map(item -> item.getSearchText())
+                    .orElse(null);
+      }
+    }
+
+    private List<String> getHistoryForContributor(String contributorID) {
+      if (SearchEverywhereContributor.ALL_CONTRIBUTORS_GROUP_ID.equals(contributorID)) {
+        List<String> res = filteredHistory(item -> true);
+        int size = res.size();
+        return size > HISTORY_LIMIT ? res.subList(size - HISTORY_LIMIT, size) : res;
+      } else {
+        return filteredHistory(item -> item.getContributorID().equals(contributorID));
+      }
+    }
+
+    @NotNull
+    private List<String> filteredHistory(Predicate<HistoryItem> predicate) {
+      return historyList.stream()
+                        .filter(predicate)
+                        .map(item -> item.getSearchText())
+                        .collect(Collectors.toList());
     }
   }
 
-  private class HistoryIterator {
+  private static class HistoryIterator {
 
     private final String contributorID;
     private final List<String> list;
     private int index;
 
-    private HistoryIterator(String id) {
+    public HistoryIterator(String id, List<String> list) {
       contributorID = id;
-      list = getHistoryForContributor(id);
+      this.list = list;
       index = -1;
     }
 
@@ -243,29 +309,6 @@ public class SearchEverywhereManagerImpl implements SearchEverywhereManager {
         index = list.size() - 1;
       }
       return list.get(index);
-    }
-
-    public void save(String text) {
-      String lastHistoryItem = list.isEmpty() ? null : list.get(list.size() - 1);
-      if (text.equals(lastHistoryItem)) {
-        return;
-      }
-
-      historyList.add(new HistoryItem(text, contributorID));
-      list.add(text);
-    }
-
-    private List<String> getHistoryForContributor(String contributorID) {
-      if (SearchEverywhereContributor.ALL_CONTRIBUTORS_GROUP_ID.equals(contributorID)) {
-        return historyList.stream()
-                          .map(item -> item.getSearchText())
-                          .collect(Collectors.toList());
-      } else {
-        return historyList.stream()
-                          .filter(item -> item.getContributorID().equals(contributorID))
-                          .map(item -> item.getSearchText())
-                          .collect(Collectors.toList());
-      }
     }
   }
 }
