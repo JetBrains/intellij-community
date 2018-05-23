@@ -78,6 +78,7 @@ import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.StatusText;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.components.BorderLayoutPanel;
+import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -1139,15 +1140,15 @@ public class RunAnythingAction extends AnAction implements CustomComponentAction
     private void buildCompletionGroups(@NotNull String pattern, @NotNull Runnable checkCancellation) {
       LOG.assertTrue(myListModel instanceof RunAnythingSearchListModel.RunAnythingMainListModel);
 
-      myListModel
-        .getGroups()
-        .stream()
-        .filter(group -> group instanceof RunAnythingCompletionGroup || group instanceof RunAnythingGeneralGroup)
-        .filter(group -> RunAnythingCache.getInstance(myProject).isGroupVisible(group.getTitle()))
-        .forEach(group -> {
-          runReadAction(() -> group.collectItems(myDataContext, myListModel, pattern, checkCancellation));
-          checkCancellation.run();
-        });
+      StreamEx.of(RunAnythingRecentGroup.INSTANCE)
+              .select(RunAnythingGroup.class)
+              .append(myListModel.getGroups().stream()
+                                 .filter(group -> group instanceof RunAnythingCompletionGroup || group instanceof RunAnythingGeneralGroup)
+                                 .filter(group -> RunAnythingCache.getInstance(myProject).isGroupVisible(group.getTitle())))
+              .forEach(group -> {
+                runReadAction(() -> group.collectItems(myDataContext, myListModel, pattern, checkCancellation));
+                checkCancellation.run();
+              });
     }
 
     private boolean isCanceled() {
