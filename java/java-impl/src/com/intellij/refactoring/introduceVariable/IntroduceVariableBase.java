@@ -1040,7 +1040,13 @@ public abstract class IntroduceVariableBase extends IntroduceHandlerBase {
   }
 
   public static PsiExpression simplifyVariableInitializer(final PsiExpression initializer,
-                                                          final PsiType expectedType) {
+                                                        final PsiType expectedType) {
+    return simplifyVariableInitializer(initializer, expectedType, true);
+  }
+
+  public static PsiExpression simplifyVariableInitializer(final PsiExpression initializer,
+                                                          final PsiType expectedType,
+                                                          final boolean inDeclaration) {
 
     if (initializer instanceof PsiTypeCastExpression) {
       PsiExpression operand = ((PsiTypeCastExpression)initializer).getOperand();
@@ -1054,7 +1060,9 @@ public abstract class IntroduceVariableBase extends IntroduceHandlerBase {
     else if (initializer instanceof PsiNewExpression) {
       final PsiNewExpression newExpression = (PsiNewExpression)initializer;
       if (newExpression.getArrayInitializer() != null) {
-        return newExpression.getArrayInitializer();
+        if (inDeclaration) {
+          return newExpression.getArrayInitializer();
+        }
       }
       else {
         final PsiExpression tryToDetectDiamondNewExpr = ((PsiVariable)JavaPsiFacade.getElementFactory(initializer.getProject())
