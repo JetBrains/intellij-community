@@ -28,6 +28,11 @@ abstract class WindowsDistributionCustomizer {
   String icoPath
 
   /**
+   * Path to ico file for EAP builds (if {@code null} {@link #icoPath} will be used)
+   */
+  String icoPathForEAP = null
+
+  /**
    * If {@code true} *.bat files (productName.bat and inspect.bat) will be included into the distribution
    */
   boolean includeBatchLaunchers = true
