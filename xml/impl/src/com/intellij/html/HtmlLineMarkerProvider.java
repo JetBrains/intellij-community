@@ -20,7 +20,6 @@ import com.intellij.codeInsight.daemon.LineMarkerProvider;
 import com.intellij.codeInsight.daemon.LineMarkerProviders;
 import com.intellij.lang.Language;
 import com.intellij.lang.xml.XMLLanguage;
-import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiWhiteSpace;
 import com.intellij.util.containers.ContainerUtil;
@@ -37,8 +36,6 @@ import java.util.Map;
  */
 public class HtmlLineMarkerProvider implements LineMarkerProvider {
 
-  private static final Logger LOG = Logger.getInstance(HtmlLineMarkerProvider.class);
-
   private final Map<Language, List<LineMarkerProvider>> embeddedLanguagesLineMarkerProviders = ContainerUtil.newConcurrentMap();
 
   @Override
@@ -49,10 +46,7 @@ public class HtmlLineMarkerProvider implements LineMarkerProvider {
     if (!(language instanceof XMLLanguage)) {
       List<LineMarkerProvider> markerProviders = getAllLineMarkerProvidersForLanguage(language, embeddedLanguagesLineMarkerProviders);
       for (LineMarkerProvider provider : markerProviders) {
-        if (provider == this) {
-          LOG.error("Found " + HtmlLineMarkerProvider.class.getName() + " in " + LineMarkerProviders.EP_NAME + " for " + language);
-          continue;
-        }
+        if (provider instanceof HtmlLineMarkerProvider) continue;
         LineMarkerInfo info = provider.getLineMarkerInfo(element);
         if (info != null) {
           return info;
@@ -92,6 +86,7 @@ public class HtmlLineMarkerProvider implements LineMarkerProvider {
         List<LineMarkerProvider> lineMarkerProviders = getAllLineMarkerProvidersForLanguage(language,
                                                                                             localEmbeddedLanguagesLineMarkerProviders);
         for (LineMarkerProvider provider : lineMarkerProviders) {
+          if (provider instanceof HtmlLineMarkerProvider) continue;
           if (embeddedLineMarkersWorkItems == null) embeddedLineMarkersWorkItems = new THashMap<>();
           List<PsiElement> elementList = embeddedLineMarkersWorkItems.computeIfAbsent(provider, k -> new ArrayList<>(5));
 
