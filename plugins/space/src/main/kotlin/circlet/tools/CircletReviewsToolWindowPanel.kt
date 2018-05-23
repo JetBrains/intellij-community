@@ -13,4 +13,7 @@ class CircletReviewsToolWindowPanel(project: Project) :
 
         setContent(form.panel)
     }
+
+    fun reload() {
+    }
 }

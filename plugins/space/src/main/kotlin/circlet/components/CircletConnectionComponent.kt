@@ -132,4 +132,4 @@ class CircletConnectionComponent(project: Project) :
     }
 }
 
-val Project.connection: CircletConnectionComponent get() = component()
+val Project.connection: CircletConnectionComponent get() = getComponent()

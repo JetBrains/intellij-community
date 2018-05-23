@@ -4,7 +4,6 @@ import circlet.settings.*
 import circlet.utils.*
 import com.intellij.openapi.components.*
 import com.intellij.openapi.project.*
-import com.intellij.openapi.wm.*
 import com.intellij.openapi.wm.ex.*
 import runtime.reactive.*
 
@@ -14,7 +13,7 @@ class CircletToolWindowsManager(project: Project) :
     override fun initComponent() {
         myProject.settings.stateProperty.forEach(lifetime) { updateToolWindows(it) }
 
-        ToolWindowManagerEx.getInstanceEx(myProject).addToolWindowManagerListener(object : ToolWindowManagerAdapter() {
+        myProject.toolWindowManagerEx.addToolWindowManagerListener(object : ToolWindowManagerAdapter() {
             override fun toolWindowRegistered(id: String) {
                 if (id in TOOL_WINDOW_IDS) {
                     updateToolWindows(arrayOf(id))
@@ -31,7 +30,7 @@ class CircletToolWindowsManager(project: Project) :
 
     private fun updateToolWindows(state: CircletProjectSettings.State, ids: Array<String> = TOOL_WINDOW_IDS) {
         val available = state.isIntegrationAvailable
-        val toolWindowManager = ToolWindowManager.getInstance(myProject)
+        val toolWindowManager = myProject.toolWindowManager
 
         ids.forEach { toolWindowManager.getToolWindow(it)?.setAvailable(available, null) }
     }

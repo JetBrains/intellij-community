@@ -9,17 +9,10 @@ import com.intellij.openapi.util.*
 import com.intellij.xml.util.*
 import runtime.reactive.*
 
-inline fun <reified T : Any> Project.component(): T = getComponent()
-
 inline fun <reified T : Any> ComponentManager.getComponent(): T =
-    computeSafe { getComponent(T::class.java) } ?: throw Error("Component ${T::class.java} not found in container $this")
+    getComponent(T::class.java) ?: throw Error("Component ${T::class.java} not found in container $this")
 
-inline fun <T : Any, C : ComponentManager> C.computeSafe(crossinline compute: C.() -> T?) : T? =
-    application.runReadAction(Computable {
-        if (isDisposed) null else compute()
-    })
-
-inline fun <reified T : Any> Project.getService(): T = computeSafe { service<T>() }.checkService(this)
+inline fun <reified T : Any> Project.getService(): T = service<T>().checkService(this)
 
 inline fun <reified T : Any> T?.checkService(container: Any): T =
     this ?: throw Error("Service ${T::class.java} not found in container $container")
@@ -68,3 +61,9 @@ fun Notification.notify(lifetime: Lifetime, project: Project?) {
 
     notify(project)
 }
+
+inline fun <T : Any, C : ComponentManager> C.computeSafe(crossinline compute: C.() -> T?) : T? =
+    application.runReadAction(Computable {
+        if (isDisposed) null else compute()
+    })
+

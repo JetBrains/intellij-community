@@ -1,9 +1,11 @@
 package circlet.tools
 
 import circlet.messages.*
+import circlet.utils.*
 import com.intellij.openapi.project.*
 import com.intellij.openapi.util.*
 import com.intellij.openapi.wm.*
+import com.intellij.openapi.wm.ex.*
 import com.intellij.ui.content.*
 
 class CircletReviewsToolWindowFactory : ToolWindowFactory, DumbAware {
@@ -28,12 +30,31 @@ class CircletReviewsToolWindowFactory : ToolWindowFactory, DumbAware {
                 content.updateDisplayName()
             }
         })
+
+        project.toolWindowManagerEx.addToolWindowManagerListener(object : ToolWindowManagerAdapter() {
+            private var previouslyVisible = toolWindow.isVisible
+
+            override fun stateChanged() {
+                val visible = project.reviewsToolWindow?.isVisible ?: return
+
+                if (visible && !previouslyVisible) {
+                    panel.reload()
+                }
+
+                previouslyVisible = visible
+            }
+        })
     }
 
     companion object {
         const val TOOL_WINDOW_ID = "Code reviews"
     }
 }
+
+val Project.reviewsToolWindow: ToolWindow?
+    get() = computeSafe {
+        toolWindowManager.getToolWindow(CircletReviewsToolWindowFactory.TOOL_WINDOW_ID)
+    }
 
 private fun Content.updateDisplayName() {
     displayName = if (manager.contentCount > 1) {
