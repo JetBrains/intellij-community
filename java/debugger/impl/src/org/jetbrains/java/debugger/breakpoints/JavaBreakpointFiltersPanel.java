@@ -2,6 +2,7 @@
 package org.jetbrains.java.debugger.breakpoints;
 
 import com.intellij.debugger.InstanceFilter;
+import com.intellij.debugger.ui.breakpoints.CallerFiltersField;
 import com.intellij.debugger.ui.breakpoints.ClassFiltersField;
 import com.intellij.debugger.ui.breakpoints.EditInstanceFiltersDialog;
 import com.intellij.ide.util.ClassFilter;
@@ -48,7 +49,7 @@ public class JavaBreakpointFiltersPanel<T extends JavaBreakpointProperties, B ex
   private JPanel myCatchFiltersPanel;
   private JPanel myPassCountFieldPanel;
   private JCheckBox myCallerFiltersCheckBox;
-  private ClassFiltersField myCallerFilters;
+  private CallerFiltersField myCallerFilters;
   private JPanel myCallerFiltersPanel;
 
   private final FieldPanel myInstanceFiltersField;
@@ -233,7 +234,7 @@ public class JavaBreakpointFiltersPanel<T extends JavaBreakpointProperties, B ex
   private void createUIComponents() {
     myClassFiltersField = new ClassFiltersField(myProject, this);
     myCatchClassFilters = new ClassFiltersField(myProject, this);
-    myCallerFilters = new ClassFiltersField(myProject, this);
+    myCallerFilters = new CallerFiltersField(myProject, this);
   }
 
   private class MyTextField extends JTextField {

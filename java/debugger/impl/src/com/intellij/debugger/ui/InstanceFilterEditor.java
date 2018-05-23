@@ -7,16 +7,11 @@ import com.intellij.openapi.ui.InputValidatorEx;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.ui.classFilter.ClassFilter;
-import com.intellij.ui.classFilter.ClassFilterEditor;
-import com.intellij.util.IconUtil;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
-
-public class InstanceFilterEditor extends ClassFilterEditor {
+public class InstanceFilterEditor extends PatternFilterEditor {
   public InstanceFilterEditor(Project project) {
     super(project);
-    getEmptyText().setText(DebuggerBundle.message("add.instance.filter.dialog.empty.text"));
   }
 
   protected void addClassFilter() {
@@ -59,19 +54,5 @@ public class InstanceFilterEditor extends ClassFilterEditor {
         IdeFocusManager.getGlobalInstance().requestFocus(myTable, true);
       });
     }
-  }
-
-  protected String getAddButtonText() {
-    return DebuggerBundle.message("button.add");
-  }
-
-  @Override
-  protected Icon getAddButtonIcon() {
-    return IconUtil.getAddIcon();
-  }
-
-  @Override
-  protected boolean addPatternButtonVisible() {
-    return false;
   }
 }

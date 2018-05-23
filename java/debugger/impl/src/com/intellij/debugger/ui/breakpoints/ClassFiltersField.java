@@ -22,7 +22,7 @@ public class ClassFiltersField extends TextFieldWithBrowseButton {
     super(null, parent);
     addActionListener(e -> {
                         reloadFilters();
-                        EditClassFiltersDialog dialog = new EditClassFiltersDialog(project);
+                        EditClassFiltersDialog dialog = createEditDialog(project);
                         dialog.setFilters(myClassFilters, myClassExclusionFilters);
                         dialog.show();
                         if (dialog.getExitCode() == DialogWrapper.OK_EXIT_CODE) {
@@ -32,6 +32,10 @@ public class ClassFiltersField extends TextFieldWithBrowseButton {
                         }
                       }
     );
+  }
+
+  protected EditClassFiltersDialog createEditDialog(Project project) {
+    return new EditClassFiltersDialog(project);
   }
 
   public void setClassFilters(ClassFilter[] includeFilters, ClassFilter[] excludeFilters) {
