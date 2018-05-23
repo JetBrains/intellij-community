@@ -14,6 +14,7 @@ import com.intellij.ui.SearchTextField;
 import com.intellij.ui.awt.RelativePoint;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
@@ -51,13 +52,18 @@ public class SearchEverywhereManagerImpl implements SearchEverywhereManager {
   }
 
   @Override
-  public void show(@NotNull String selectedContributorID) {
+  public void show(@NotNull String selectedContributorID, @Nullable String searchText) {
     if (isShown()) {
       setShownContributor(selectedContributorID);
     }
     else {
       mySearchEverywhereUI = createView(myProject, myServiceContributors, myShownContributors);
       mySearchEverywhereUI.switchToContributor(selectedContributorID);
+      if (searchText != null && !searchText.isEmpty()) {
+        mySearchEverywhereUI.getSearchField().setText(searchText);
+        mySearchEverywhereUI.getSearchField().selectAll();
+      }
+
       myHistoryIterator = myHistoryList.getIterator(selectedContributorID);
       myBalloon = JBPopupFactory.getInstance().createComponentPopupBuilder(mySearchEverywhereUI, mySearchEverywhereUI.getSearchField())
                                 .setProject(myProject)

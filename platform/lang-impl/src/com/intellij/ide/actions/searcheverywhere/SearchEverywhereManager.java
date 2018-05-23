@@ -4,6 +4,7 @@ package com.intellij.ide.actions.searcheverywhere;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.project.Project;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 /**
  * @author Mikhail.Sokolov
@@ -16,7 +17,7 @@ public interface SearchEverywhereManager {
 
   boolean isShown();
 
-  void show(@NotNull String selectedContributorID); //todo change to contributor??? UX-1
+  void show(@NotNull String selectedContributorID, @Nullable String searchText); //todo change to contributor??? UX-1
 
   String getShownContributorID();
 
