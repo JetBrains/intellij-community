@@ -153,7 +153,7 @@ service PythonConsole {
   /**
    * Closes Python console script.
    */
-  void close(),
+  oneway void close(),
 
   DebugValues evaluate(1: string expression),
 
