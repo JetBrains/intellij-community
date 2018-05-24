@@ -332,7 +332,7 @@ public class Tool implements SchemeElement {
     catch (Macro.ExecutionCancelledException ignored) {
       return null;
     }
-    return commandLine;
+    return ToolsCustomizer.customizeCommandLine(commandLine, dataContext);
   }
 
   @Override
