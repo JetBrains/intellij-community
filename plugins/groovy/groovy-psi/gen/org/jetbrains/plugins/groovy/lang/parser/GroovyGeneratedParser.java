@@ -6638,12 +6638,12 @@ public class GroovyGeneratedParser implements PsiParser, LightPsiParser {
     return r;
   }
 
-  // assignment mb_nl
+  // <<assignmentOperator>> mb_nl
   private static boolean assignment_expression_0(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "assignment_expression_0")) return false;
     boolean r;
     Marker m = enter_section_(b);
-    r = parseAssignment(b, l + 1);
+    r = assignmentOperator(b, l + 1);
     r = r && mb_nl(b, l + 1);
     exit_section_(b, m, null, r);
     return r;

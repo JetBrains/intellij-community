@@ -750,7 +750,7 @@ public class GroovySpacingProcessor extends GroovyElementVisitor {
 
   @Override
   public void visitAssignmentExpression(@NotNull GrAssignmentExpression expression) {
-    if (TokenSets.ASSIGNMENTS.contains(myType1) || TokenSets.ASSIGNMENTS.contains(myType2)) {
+    if (ASSIGNMENT_OPERATORS.contains(myType1) || ASSIGNMENT_OPERATORS.contains(myType2)) {
       createSpaceInCode(mySettings.SPACE_AROUND_ASSIGNMENT_OPERATORS);
     }
   }

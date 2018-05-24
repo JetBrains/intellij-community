@@ -31,4 +31,20 @@ public interface GroovyTokenSets {
     RANGES,
     OTHER_OPERATORS
   );
+
+  TokenSet ASSIGNMENT_OPERATORS = create(
+    T_ASSIGN,
+    T_POW_ASSIGN,
+    T_STAR_ASSIGN,
+    T_DIV_ASSIGN,
+    T_REM_ASSIGN,
+    T_PLUS_ASSIGN,
+    T_MINUS_ASSIGN,
+    T_LSH_ASSIGN,
+    T_RSH_ASSIGN,
+    T_RSHU_ASSIGN,
+    T_BAND_ASSIGN,
+    T_XOR_ASSIGN,
+    T_BOR_ASSIGN
+  );
 }

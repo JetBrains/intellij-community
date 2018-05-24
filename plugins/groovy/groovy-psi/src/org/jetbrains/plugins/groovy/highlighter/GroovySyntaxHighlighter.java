@@ -24,6 +24,7 @@ import java.util.HashMap;
 import java.util.Map;
 
 import static com.intellij.openapi.editor.colors.TextAttributesKey.createTextAttributesKey;
+import static org.jetbrains.plugins.groovy.lang.psi.GroovyTokenSets.ASSIGNMENT_OPERATORS;
 import static org.jetbrains.plugins.groovy.lang.psi.GroovyTokenSets.BINARY_OPERATORS;
 
 /**
@@ -119,7 +120,7 @@ public class GroovySyntaxHighlighter extends SyntaxHighlighterBase {
     GroovyTokenTypes.mRBRACK
   );
 
-  static final TokenSet tOperators = TokenSet.orSet(BINARY_OPERATORS, TokenSets.UNARY_OP_SET, TokenSets.ASSIGNMENTS);
+  static final TokenSet tOperators = TokenSet.orSet(BINARY_OPERATORS, TokenSets.UNARY_OP_SET, ASSIGNMENT_OPERATORS);
 
   static {
     fillMap(ATTRIBUTES, tLINE_COMMENTS, LINE_COMMENT);

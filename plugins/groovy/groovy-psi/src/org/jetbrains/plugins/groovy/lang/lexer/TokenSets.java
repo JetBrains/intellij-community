@@ -14,6 +14,7 @@ import static org.jetbrains.plugins.groovy.lang.groovydoc.lexer.GroovyDocTokenTy
 import static org.jetbrains.plugins.groovy.lang.groovydoc.parser.GroovyDocElementTypes.GROOVY_DOC_COMMENT;
 import static org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes.*;
 import static org.jetbrains.plugins.groovy.lang.parser.GroovyElementTypes.*;
+import static org.jetbrains.plugins.groovy.lang.psi.GroovyTokenSets.ASSIGNMENT_OPERATORS;
 
 public interface TokenSets {
 
@@ -201,21 +202,7 @@ public interface TokenSets {
     .put(mSTAR_STAR_ASSIGN, mSTAR_STAR)
     .build();
 
-  TokenSet ASSIGNMENTS = TokenSet.create(
-    mASSIGN,
-    mPLUS_ASSIGN,
-    mMINUS_ASSIGN,
-    mSTAR_ASSIGN,
-    mDIV_ASSIGN,
-    mMOD_ASSIGN,
-    mSL_ASSIGN,
-    mSR_ASSIGN,
-    mBSR_ASSIGN,
-    mBAND_ASSIGN,
-    mBOR_ASSIGN,
-    mBXOR_ASSIGN,
-    mSTAR_STAR_ASSIGN
-  );
+  TokenSet ASSIGNMENTS = ASSIGNMENT_OPERATORS;
 
   TokenSet CODE_REFERENCE_ELEMENT_NAME_TOKENS = TokenSet.create(mIDENT, kDEF, kIN, kAS, kTRAIT);
 

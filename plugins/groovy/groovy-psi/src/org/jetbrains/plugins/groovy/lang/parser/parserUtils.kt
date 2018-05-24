@@ -14,6 +14,7 @@ import com.intellij.psi.tree.IElementType
 import com.intellij.psi.tree.TokenSet
 import org.jetbrains.plugins.groovy.GroovyBundle
 import org.jetbrains.plugins.groovy.lang.psi.GroovyElementTypes.*
+import org.jetbrains.plugins.groovy.lang.psi.GroovyTokenSets.ASSIGNMENT_OPERATORS
 import org.jetbrains.plugins.groovy.lang.psi.GroovyTokenSets.EQUALITY_OPERATORS
 import org.jetbrains.plugins.groovy.util.get
 import org.jetbrains.plugins.groovy.util.set
@@ -290,7 +291,7 @@ fun parseExpressionOrMapArgument(builder: PsiBuilder, level: Int, expression: Pa
 
 fun parsePrimitiveType(builder: PsiBuilder, level: Int): Boolean = builder.advanceIf(primitiveTypes)
 
-fun parseAssignment(builder: PsiBuilder, level: Int): Boolean = builder.advanceIf(assignments)
+fun assignmentOperator(builder: PsiBuilder, level: Int): Boolean = builder.advanceIf(ASSIGNMENT_OPERATORS)
 
 fun equalityOperator(builder: PsiBuilder, level: Int): Boolean = builder.advanceIf(EQUALITY_OPERATORS)
 
