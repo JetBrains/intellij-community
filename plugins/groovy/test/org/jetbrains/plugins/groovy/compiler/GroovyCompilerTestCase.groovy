@@ -131,9 +131,7 @@ abstract class GroovyCompilerTestCase extends JavaCodeInsightFixtureTestCase imp
   }
 
   protected Module addModule(final String name, final boolean withSource) {
-    return new WriteCommandAction<Module>(getProject()) {
-      @Override
-      protected void run(@NotNull Result<Module> result) throws Throwable {
+    return WriteCommandAction.runWriteCommandAction(getProject(), {
         final VirtualFile depRoot = myFixture.getTempDirFixture().findOrCreateDir(name)
 
         final ModifiableModuleModel moduleModel = ModuleManager.getInstance(getProject()).getModifiableModel()
@@ -149,9 +147,8 @@ abstract class GroovyCompilerTestCase extends JavaCodeInsightFixtureTestCase imp
         }
         IdeaTestUtil.setModuleLanguageLevel(dep, LanguageLevelModuleExtensionImpl.getInstance(myModule).getLanguageLevel())
 
-        result.setResult(dep)
-      }
-    }.execute().getResultObject()
+        return dep
+    })
   }
 
   protected void deleteClassFile(final String className) throws IOException {
