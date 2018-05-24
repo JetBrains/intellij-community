@@ -2,6 +2,7 @@
 package com.intellij.ide.projectWizard.kotlin.createProject
 
 import com.intellij.ide.projectWizard.kotlin.model.*
+import com.intellij.testGuiFramework.util.scenarios.NewProjectDialogModel
 import org.junit.Test
 
 class CreateGradleProjectAndConfigureOldKotlinGuiTest : KotlinGuiTestCase() {
@@ -20,7 +21,9 @@ class CreateGradleProjectAndConfigureOldKotlinGuiTest : KotlinGuiTestCase() {
         apiVersion = LanguageVersion.L12,
         jvmOptions = FacetStructureJVM()
       ),
-      gradleOptions = BuildGradleOptions().build()
+      gradleOptions = NewProjectDialogModel.GradleProjectOptions(
+        artifact = testMethod.methodName
+      )
     )
   }
 
@@ -38,7 +41,9 @@ class CreateGradleProjectAndConfigureOldKotlinGuiTest : KotlinGuiTestCase() {
         apiVersion = LanguageVersion.L11,
         jvmOptions = FacetStructureJVM()
       ),
-      gradleOptions = BuildGradleOptions().build()
+      gradleOptions = NewProjectDialogModel.GradleProjectOptions(
+        artifact = testMethod.methodName
+      )
     )
   }
 }

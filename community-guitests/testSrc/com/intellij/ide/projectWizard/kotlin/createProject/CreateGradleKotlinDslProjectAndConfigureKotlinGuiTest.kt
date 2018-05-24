@@ -3,6 +3,7 @@ package com.intellij.ide.projectWizard.kotlin.createProject
 
 import com.intellij.ide.projectWizard.kotlin.model.*
 import com.intellij.testGuiFramework.util.*
+import com.intellij.testGuiFramework.util.scenarios.NewProjectDialogModel
 import org.junit.Test
 
 class CreateGradleKotlinDslProjectAndConfigureKotlinGuiTest : KotlinGuiTestCase() {
@@ -15,9 +16,10 @@ class CreateGradleKotlinDslProjectAndConfigureKotlinGuiTest : KotlinGuiTestCase(
       kotlinVersion = KotlinTestProperties.kotlin_artifact_version,
       project = kotlinLibs[KotlinKind.JVM]!!.gradleKProject,
       expectedFacet = defaultFacetSettings[TargetPlatform.JVM18]!!,
-      gradleOptions = BuildGradleOptions().build(),
-      isJavaUsed = true,
-      isKotlinDslUsed = true
+      gradleOptions = NewProjectDialogModel.GradleProjectOptions(
+        artifact = testMethod.methodName,
+        useKotlinDsl = true
+      )
     )
   }
 
@@ -29,9 +31,10 @@ class CreateGradleKotlinDslProjectAndConfigureKotlinGuiTest : KotlinGuiTestCase(
       kotlinVersion = KotlinTestProperties.kotlin_artifact_version,
       project = kotlinLibs[KotlinKind.JS]!!.gradleKProject,
       expectedFacet = defaultFacetSettings[TargetPlatform.JavaScript]!!,
-      gradleOptions = BuildGradleOptions().build(),
-      isJavaUsed = true,
-      isKotlinDslUsed = true
+      gradleOptions = NewProjectDialogModel.GradleProjectOptions(
+        artifact = testMethod.methodName,
+        useKotlinDsl = true
+      )
     )
   }
 
