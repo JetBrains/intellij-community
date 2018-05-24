@@ -61,6 +61,7 @@ class GutterIntentionAction extends AbstractIntentionAction implements Comparabl
 
   private boolean isAvailable(@NotNull AnActionEvent event) {
     if (myText == null) {
+      event.getPresentation().setEnabledAndVisible(true); // we may share the event for several actions
       myAction.update(event);
       if (event.getPresentation().isEnabled() && event.getPresentation().isVisible()) {
         String text = event.getPresentation().getText();
