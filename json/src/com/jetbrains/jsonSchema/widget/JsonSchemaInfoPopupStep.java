@@ -153,8 +153,10 @@ class JsonSchemaInfoPopupStep extends BaseListPopupStep<JsonSchemaInfo> {
     UserDefinedJsonSchemaConfiguration existing = configuration.findMappingBySchemaInfo(selectedValue);
     UserDefinedJsonSchemaConfiguration.Item item = new UserDefinedJsonSchemaConfiguration.Item(path, false, false);
     if (existing != null) {
-      existing.patterns.add(item);
-      existing.refreshPatterns();
+      if (!existing.patterns.contains(item)) {
+        existing.patterns.add(item);
+        existing.refreshPatterns();
+      }
     }
     else {
       configuration.addConfiguration(new UserDefinedJsonSchemaConfiguration(selectedValue.getDescription(),
