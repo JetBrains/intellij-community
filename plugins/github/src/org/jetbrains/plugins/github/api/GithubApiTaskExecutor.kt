@@ -10,6 +10,7 @@ import com.intellij.util.ThrowableConvertor
 import org.jetbrains.annotations.TestOnly
 import org.jetbrains.plugins.github.authentication.GithubAuthenticationManager
 import org.jetbrains.plugins.github.authentication.accounts.GithubAccount
+import org.jetbrains.plugins.github.exceptions.GithubMissingTokenException
 import org.jetbrains.plugins.github.exceptions.GithubOperationCanceledException
 import org.jetbrains.plugins.github.exceptions.GithubTwoFactorAuthenticationException
 import org.jetbrains.plugins.github.util.GithubAuthData
@@ -31,9 +32,8 @@ class GithubApiTaskExecutor(private val authenticationManager: GithubAuthenticat
    */
   @Throws(IOException::class)
   fun <T> execute(indicator: ProgressIndicator, account: GithubAccount, task: GithubTask<T>): T {
-    return CancellableGithubConnection(indicator,
-                                       GithubAuthData.createTokenAuth(account.server.toString(),
-                                                                      authenticationManager.getTokenForAccount(account))).use(task::convert)
+    val token = authenticationManager.getTokenForAccount(account) ?: throw GithubMissingTokenException(account)
+    return CancellableGithubConnection(indicator, GithubAuthData.createTokenAuth(account.server.toString(), token)).use(task::convert)
   }
 
   @TestOnly
@@ -82,10 +82,10 @@ class GithubApiTaskExecutor(private val authenticationManager: GithubAuthenticat
                                      connection: GithubConnection): GithubAuthData {
       GithubApiUtil.askForTwoFactorCodeSMS(connection)
       val code = invokeAndWaitIfNeed(indicator.modalityState) {
-          Messages.showInputDialog(null,
-                                   "Authentication Code",
-                                   "Github Two-Factor Authentication",
-                                   null)
+        Messages.showInputDialog(null,
+                                 "Authentication Code",
+                                 "Github Two-Factor Authentication",
+                                 null)
       }
 
       if (code == null) throw GithubOperationCanceledException("Can't get two factor authentication code")

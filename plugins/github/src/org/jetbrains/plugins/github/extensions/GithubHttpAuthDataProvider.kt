@@ -10,7 +10,6 @@ import git4idea.remote.GitHttpAuthDataProvider
 import org.jetbrains.plugins.github.authentication.GithubAuthenticationManager
 import org.jetbrains.plugins.github.authentication.accounts.GithubAccount
 import org.jetbrains.plugins.github.authentication.accounts.GithubAccountInformationProvider
-import org.jetbrains.plugins.github.exceptions.GithubAuthenticationException
 import java.io.IOException
 
 class GithubHttpAuthDataProvider(private val authenticationManager: GithubAuthenticationManager,
@@ -19,27 +18,22 @@ class GithubHttpAuthDataProvider(private val authenticationManager: GithubAuthen
   private val LOG = logger<GithubHttpAuthDataProvider>()
 
   override fun getAuthData(project: Project, url: String): GithubAccountAuthData? {
-    return getSuitableAccounts(project, url, null).singleOrNull()?.let {
+    return getSuitableAccounts(project, url, null).singleOrNull()?.let { account ->
       try {
-        val username = accountInformationProvider.getAccountUsername(DumbProgressIndicator(), it)
-        GithubAccountAuthData(it, username, authenticationManager.getTokenForAccount(it))
+        val token = authenticationManager.getTokenForAccount(account) ?: return null
+        val username = accountInformationProvider.getAccountUsername(DumbProgressIndicator(), account)
+        GithubAccountAuthData(account, username, token)
       }
       catch (e: IOException) {
-        LOG.info("Cannot load username for $it", e)
+        LOG.info("Cannot load username for $account", e)
         null
       }
     }
   }
 
   override fun getAuthData(project: Project, url: String, login: String): GithubAccountAuthData? {
-    return getSuitableAccounts(project, url, login).singleOrNull()?.let {
-      try {
-        GithubAccountAuthData(it, login, authenticationManager.getTokenForAccount(it))
-      }
-      catch (e: GithubAuthenticationException) {
-        LOG.info(e)
-        null
-      }
+    return getSuitableAccounts(project, url, login).singleOrNull()?.let { account ->
+      return authenticationManager.getTokenForAccount(account)?.let { GithubAccountAuthData(account, login, it) }
     }
   }
 

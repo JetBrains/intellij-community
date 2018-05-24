@@ -12,7 +12,6 @@ import org.jetbrains.plugins.github.authentication.accounts.GithubAccount
 import org.jetbrains.plugins.github.authentication.accounts.GithubAccountManager
 import org.jetbrains.plugins.github.authentication.accounts.GithubProjectDefaultAccountHolder
 import org.jetbrains.plugins.github.authentication.ui.GithubLoginDialog
-import org.jetbrains.plugins.github.exceptions.GithubAuthenticationException
 
 /**
  * Entry point for interactions with Github authentication subsystem
@@ -24,13 +23,8 @@ class GithubAuthenticationManager internal constructor(private val accountManage
   @CalledInAny
   fun getAccounts(): Set<GithubAccount> = accountManager.accounts
 
-  @Throws(GithubAuthenticationException::class)
   @CalledInAny
-  internal fun getTokenForAccount(account: GithubAccount): String {
-    val token = accountManager.getTokenForAccount(account)
-    if (token == null) throw GithubAuthenticationException("Missing access token for account $account")
-    else return token
-  }
+  internal fun getTokenForAccount(account: GithubAccount): String? = accountManager.getTokenForAccount(account)
 
   @CalledInAwt
   fun requestNewAccount(project: Project): GithubAccount? {
