@@ -222,6 +222,11 @@ public final class ToolWindowImpl implements ToolWindowEx {
       ArrayList<FinalizableCommand> cmd = new ArrayList<>();
       cmd.add(new FinalizableCommand(null) {
         @Override
+        public boolean willChangeState() {
+          return false;
+        }
+
+        @Override
         public void run() {
           IdeFocusManager.getInstance(myToolWindowManager.getProject()).doWhenFocusSettlesDown(() -> {
             if (myContentManager.isDisposed()) return;
