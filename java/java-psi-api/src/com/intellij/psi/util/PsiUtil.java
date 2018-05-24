@@ -87,7 +87,9 @@ public final class PsiUtil extends PsiUtilCore {
    * by module (java) rules. 
    * 
    * <p>NOTE:</p>
-   * If there is no module (IDEA's) dependency from module with {@code place} on a module with {@code member}, then reference won't be resolved. 
+   * If there is no module (IDEA's) dependency from module with {@code place} on a module with {@code member}, 
+   * then reference won't be resolved and this method will return {@code true}.
+   * 
    * Please use {@link #isMemberAccessibleAt(PsiMember, PsiElement)} to catch these cases as well
    */
   public static boolean isAccessible(@NotNull Project project, @NotNull PsiMember member,
