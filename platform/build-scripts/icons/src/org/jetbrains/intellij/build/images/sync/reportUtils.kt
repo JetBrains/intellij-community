@@ -76,7 +76,7 @@ private val BUILD_ID = System.getProperty("teamcity.build.id")
 private fun notifySlackChannel(isSuccess: Boolean, report: String) {
   HttpClients.createDefault().use {
     val text = (if (isSuccess) ":white_check_mark:" else ":scream:") + "\n$report\n" +
-               (if (!isSuccess) "Use 'Icons processing/Sync icons in IntelliJIcons' IDEA Ultimate run configuration\n" else "") +
+               (if (!isSuccess) "Use 'Icons processing/Sync icons in IntelliJIcons from IDEA' IDEA Ultimate run configuration\n" else "") +
                "<$BUILD_SERVER/viewLog.html?buildId=$BUILD_ID&buildTypeId=$BUILD_CONF|See build log>"
     val post = HttpPost(CHANNEL_WEB_HOOK)
     post.entity = StringEntity("""{ "text": "$text" }""", Charsets.UTF_8)
