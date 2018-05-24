@@ -85,4 +85,14 @@ class PyTypeHintsQuickFixTest : PyQuickFixTestCase() {
   fun testCallableTwoElementsParenthesizedAsFirst() {
     doQuickFixTest(PyTypeHintsInspection::class.java, "Replace with square brackets", LanguageLevel.PYTHON37)
   }
+
+  // PY-20530
+  fun testSelfInAnnotation() {
+    doQuickFixTest(PyTypeHintsInspection::class.java, "Replace with type name", LanguageLevel.PYTHON37)
+  }
+
+  // PY-20530
+  fun testSelfInTypeComment() {
+    doQuickFixTest(PyTypeHintsInspection::class.java, "Replace with type name")
+  }
 }

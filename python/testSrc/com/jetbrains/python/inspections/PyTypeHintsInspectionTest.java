@@ -553,6 +553,26 @@ public class PyTypeHintsInspectionTest extends PyInspectionTestCase {
     );
   }
 
+  // PY-20530
+  public void testSelf() {
+    runWithLanguageLevel(
+      LanguageLevel.PYTHON36,
+      () -> doTestByText("class A:\n" +
+                         "    def method(self, i: int):\n" +
+                         "        v1: <error descr=\"Invalid type 'self'\">self</error>.B\n" +
+                         "        v2 = None  # type: <error descr=\"Invalid type 'self'\">self</error>.B\n" +
+                         "        print(self.B)\n" +
+                         "\n" +
+                         "    class B:\n" +
+                         "        pass\n" +
+                         "\n" +
+                         "class self:\n" +
+                         "    pass\n" +
+                         "\n" +
+                         "v: self")
+    );
+  }
+
   @NotNull
   @Override
   protected Class<? extends PyInspection> getInspectionClass() {
