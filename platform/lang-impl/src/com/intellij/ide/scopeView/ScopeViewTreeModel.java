@@ -3,6 +3,7 @@ package com.intellij.ide.scopeView;
 
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.projectView.*;
+import com.intellij.ide.projectView.impl.nodes.ProjectViewDirectoryHelper;
 import com.intellij.ide.projectView.impl.nodes.PsiFileNode;
 import com.intellij.ide.util.treeView.AbstractTreeNode;
 import com.intellij.ide.util.treeView.NodeDescriptor;
@@ -214,7 +215,7 @@ public final class ScopeViewTreeModel extends BaseTreeModel<AbstractTreeNode> im
         Node node = (Node)found;
         if (file.isDirectory()) {
           ViewSettings settings = root.getSettings();
-          if (settings.isFlattenPackages() || settings.isHideEmptyMiddlePackages()) {
+          if (settings.isFlattenPackages() || isHideEmptyMiddlePackages(root)) {
             AbstractTreeNode parent = node.getParent();
             if (parent instanceof Node) node = (Node)parent;
           }
@@ -485,7 +486,7 @@ public final class ScopeViewTreeModel extends BaseTreeModel<AbstractTreeNode> im
 
     @NotNull
     Collection<AbstractTreeNode> createChildren(@NotNull Node parent, @NotNull Collection<AbstractTreeNode> old) {
-      boolean hideEmptyMiddlePackages = getSettings().isHideEmptyMiddlePackages();
+      boolean hideEmptyMiddlePackages = isHideEmptyMiddlePackages(this);
       Mapper<FileNode, ProjectFileNode> mapper = new Mapper<>(FileNode::new, FileNode.class, old);
       List<AbstractTreeNode> children = new SmartList<>();
       List<PsiFile> files = new SmartList<>();
@@ -927,7 +928,7 @@ public final class ScopeViewTreeModel extends BaseTreeModel<AbstractTreeNode> im
       Mapper<GroupNode, Object> mapper = new Mapper<>(GroupNode::new, GroupNode.class, old);
       ModuleManager manager = getModuleManager(parent.getProject());
       char separator = manager != null && manager.hasModuleGroups() ? VFS_SEPARATOR_CHAR : '.';
-      boolean hideEmptyMiddlePackages = parent.getSettings().isHideEmptyMiddlePackages();
+      boolean hideEmptyMiddlePackages = isHideEmptyMiddlePackages(parent);
       List<AbstractTreeNode> children = new SmartList<>();
       for (Group group : groups.values()) {
         Object id = group.id;
@@ -1059,6 +1060,15 @@ public final class ScopeViewTreeModel extends BaseTreeModel<AbstractTreeNode> im
       }
     }
     return false;
+  }
+
+  private static boolean isHideEmptyMiddlePackages(@NotNull Node node) {
+    ViewSettings settings = node.getSettings();
+    if (settings == null || !settings.isHideEmptyMiddlePackages()) return false;
+    Project project = node.getProject();
+    if (project == null || project.isDisposed()) return false;
+    ProjectViewDirectoryHelper helper = ProjectViewDirectoryHelper.getInstance(project);
+    return helper != null && helper.supportsHideEmptyMiddlePackages();
   }
 
   @NotNull
