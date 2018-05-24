@@ -68,7 +68,7 @@ abstract class DefaultJreSelector {
 
 
   class ProjectSdkSelector(val project: Project): DefaultJreSelector() {
-    override fun getNameAndDescription() = Pair.create(ProjectRootManager.getInstance(project).projectSdkName, "project SDK")
+    override fun getNameAndDescription(): Pair<String?, String> = Pair.create(ProjectRootManager.getInstance(project).projectSdkName, "project SDK")
   }
 
   open class SdkFromModuleDependencies<T: ComboBox<*>>(val moduleComboBox: T, val getSelectedModule: (T) -> Module?, val productionOnly: () -> Boolean): DefaultJreSelector() {

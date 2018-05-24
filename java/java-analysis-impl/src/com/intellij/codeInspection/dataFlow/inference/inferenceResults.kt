@@ -24,7 +24,7 @@ data class ExpressionRange internal constructor (internal val startOffset: Int, 
 
   companion object {
     @JvmStatic
-    fun create(expr: LighterASTNode, scopeStart: Int) = ExpressionRange(
+    fun create(expr: LighterASTNode, scopeStart: Int): ExpressionRange = ExpressionRange(
       expr.startOffset - scopeStart, expr.endOffset - scopeStart)
   }
 
@@ -38,7 +38,7 @@ data class ExpressionRange internal constructor (internal val startOffset: Int, 
 
 data class PurityInferenceResult(internal val mutatedRefs: List<ExpressionRange>, internal val singleCall: ExpressionRange?) {
 
-  fun isPure(method: PsiMethod, body: () -> PsiCodeBlock) = !mutatesNonLocals(method, body) && callsOnlyPureMethods(body)
+  fun isPure(method: PsiMethod, body: () -> PsiCodeBlock): Boolean = !mutatesNonLocals(method, body) && callsOnlyPureMethods(body)
 
   private fun mutatesNonLocals(method: PsiMethod, body: () -> PsiCodeBlock): Boolean {
     return mutatedRefs.any { range -> !isLocalVarReference(range.restoreExpression(body()), method) }
@@ -87,7 +87,7 @@ interface MethodReturnInferenceResult {
   @Suppress("EqualsOrHashCode")
   data class Predefined(internal val value: Nullness) : MethodReturnInferenceResult {
     override fun hashCode() = value.ordinal
-    override fun getNullness(method: PsiMethod, body: () -> PsiCodeBlock) = when {
+    override fun getNullness(method: PsiMethod, body: () -> PsiCodeBlock): Nullness = when {
       value == Nullness.NULLABLE && InferenceFromSourceUtil.suppressNullable(
         method) -> Nullness.UNKNOWN
       else -> value

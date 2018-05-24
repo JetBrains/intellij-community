@@ -33,8 +33,8 @@ import kotlin.collections.ArrayList
 class DfaControlTransferValue(factory: DfaValueFactory,
                               val target: TransferTarget,
                               val traps: FList<Trap>) : DfaValue(factory) {
-  fun dispatch(state: DfaMemoryState, runner: DataFlowRunner) = ControlTransferHandler(state, runner, this).dispatch()
-  override fun toString() = target.toString() + (if (traps.isEmpty()) "" else " $traps")
+  fun dispatch(state: DfaMemoryState, runner: DataFlowRunner): List<DfaInstructionState> = ControlTransferHandler(state, runner, this).dispatch()
+  override fun toString(): String = target.toString() + (if (traps.isEmpty()) "" else " $traps")
 }
 
 interface TransferTarget {
@@ -44,7 +44,7 @@ interface TransferTarget {
   fun dispatch(state: DfaMemoryState, runner: DataFlowRunner) : List<DfaInstructionState> = emptyList()
 }
 data class ExceptionTransfer(val throwable: DfaPsiType?) : TransferTarget {
-  override fun toString() = "Exception($throwable)"
+  override fun toString(): String = "Exception($throwable)"
 }
 data class InstructionTransfer(val offset: ControlFlow.ControlFlowOffset, private val toFlush: List<DfaVariableValue>) : TransferTarget {
   override fun dispatch(state: DfaMemoryState, runner: DataFlowRunner): List<DfaInstructionState> {
@@ -52,18 +52,18 @@ data class InstructionTransfer(val offset: ControlFlow.ControlFlowOffset, privat
     return listOf(DfaInstructionState(runner.getInstruction(offset.instructionOffset), state))
   }
 
-  override fun getPossibleTargets() = listOf(offset.instructionOffset)
-  override fun toString() = "-> $offset" + (if (toFlush.isEmpty()) "" else "; flushing $toFlush")
+  override fun getPossibleTargets(): List<Int> = listOf(offset.instructionOffset)
+  override fun toString(): String = "-> $offset" + (if (toFlush.isEmpty()) "" else "; flushing $toFlush")
 }
 data class ExitFinallyTransfer(private val enterFinally: Trap.EnterFinally) : TransferTarget {
-  override fun getPossibleTargets() = enterFinally.backLinks.asIterable().flatMap { it.getPossibleTargetIndices() }
+  override fun getPossibleTargets(): Set<Int> = enterFinally.backLinks.asIterable().flatMap { it.getPossibleTargetIndices() }
     .filter { index -> index != enterFinally.jumpOffset.instructionOffset }.toSet()
 
   override fun dispatch(state: DfaMemoryState, runner: DataFlowRunner): List<DfaInstructionState> {
     return (state.pop() as DfaControlTransferValue).dispatch(state, runner)
   }
 
-  override fun toString() = "ExitFinally"
+  override fun toString(): String = "ExitFinally"
 }
 object ReturnTransfer : TransferTarget {
   override fun toString(): String = "Return"
@@ -74,7 +74,7 @@ sealed class Trap(val anchor: PsiElement) {
 
   internal abstract fun dispatch(handler: ControlTransferHandler): List<DfaInstructionState>
   internal open fun getPossibleTargets(): Collection<Int> = emptyList()
-  override fun toString() = javaClass.simpleName!!
+  override fun toString(): String = javaClass.simpleName!!
 
   class TryCatch(tryStatement: PsiTryStatement, val clauses: LinkedHashMap<PsiCatchSection, ControlFlow.ControlFlowOffset>)
     : Trap(tryStatement) {
@@ -84,7 +84,7 @@ sealed class Trap(val anchor: PsiElement) {
     }
 
     override fun getPossibleTargets() = clauses.values.map { it.instructionOffset }
-    override fun toString() = "${super.toString()} -> ${clauses.values}"
+    override fun toString(): String = "${super.toString()} -> ${clauses.values}"
   }
   abstract class EnterFinally(anchor: PsiElement, val jumpOffset: ControlFlow.ControlFlowOffset): Trap(anchor) {
     internal val backLinks = ArrayList<ControlTransferInstruction>()
@@ -99,7 +99,7 @@ sealed class Trap(val anchor: PsiElement) {
     }
 
     override fun getPossibleTargets() = listOf(jumpOffset.instructionOffset)
-    override fun toString() = "${super.toString()} -> $jumpOffset"
+    override fun toString(): String = "${super.toString()} -> $jumpOffset"
   }
   class TryFinally(finallyBlock: PsiCodeBlock, jumpOffset: ControlFlow.ControlFlowOffset): EnterFinally(finallyBlock, jumpOffset)
   class TwrFinally(resourceList: PsiResourceList, jumpOffset: ControlFlow.ControlFlowOffset) : EnterFinally(resourceList, jumpOffset) {

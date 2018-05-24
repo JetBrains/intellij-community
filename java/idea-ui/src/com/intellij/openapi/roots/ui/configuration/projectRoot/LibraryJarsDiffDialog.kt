@@ -38,7 +38,7 @@ class LibraryJarsDiffDialog(libraryFile: VirtualFile,
                             private val libraryName: String,
                             project: Project) : DialogWrapper(project) {
   companion object {
-    val CHANGE_COORDINATES_CODE = 2;
+    val CHANGE_COORDINATES_CODE: Int = 2
   }
 
   private val panel: DiffRequestPanel

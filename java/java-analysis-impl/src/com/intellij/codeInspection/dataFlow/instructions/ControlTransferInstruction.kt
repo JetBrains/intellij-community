@@ -18,7 +18,7 @@ open class ControlTransferInstruction(val transfer: DfaControlTransferValue) : I
   /**
    * Returns list of possible target instruction indices
    */
-  fun getPossibleTargetIndices() = transfer.traps.flatMap(Trap::getPossibleTargets) + transfer.target.getPossibleTargets()
+  fun getPossibleTargetIndices(): List<Int> = transfer.traps.flatMap(Trap::getPossibleTargets) + transfer.target.getPossibleTargets()
 
-  override fun toString() = "TRANSFER $transfer [targets: ${getPossibleTargetIndices()}]"
+  override fun toString(): String = "TRANSFER $transfer [targets: ${getPossibleTargetIndices()}]"
 }
