@@ -65,4 +65,8 @@ I i = {3}
   void 'test identity operators'() {
     fixture.testHighlighting "${testName}.groovy"
   }
+
+  void 'test safe index access'() {
+    fixture.testHighlighting testName + '.groovy'
+  }
 }

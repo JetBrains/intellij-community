@@ -14,4 +14,8 @@ class GroovyPre30HighlightingTest extends GrHighlightingTestBase {
   void 'test identity operators'() {
     fixture.testHighlighting testName + '.groovy'
   }
+
+  void 'test safe index access'() {
+    fixture.testHighlighting testName + '.groovy'
+  }
 }

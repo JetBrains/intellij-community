@@ -2,10 +2,11 @@
 package org.jetbrains.plugins.groovy.annotator
 
 import com.intellij.lang.annotation.AnnotationHolder
-import org.jetbrains.plugins.groovy.GroovyBundle
+import org.jetbrains.plugins.groovy.GroovyBundle.message
 import org.jetbrains.plugins.groovy.lang.psi.GroovyElementTypes
 import org.jetbrains.plugins.groovy.lang.psi.GroovyElementVisitor
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrBinaryExpression
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.path.GrIndexProperty
 
 internal class GroovyAnnotatorPre30(private val holder: AnnotationHolder) : GroovyElementVisitor() {
 
@@ -14,7 +15,15 @@ internal class GroovyAnnotatorPre30(private val holder: AnnotationHolder) : Groo
     val operator = expression.operationToken
     val tokenType = operator.node.elementType
     if (tokenType === GroovyElementTypes.T_ID || tokenType === GroovyElementTypes.T_NID) {
-      holder.createErrorAnnotation(operator, GroovyBundle.message("operator.is.not.supported.in", tokenType))
+      holder.createErrorAnnotation(operator, message("operator.is.not.supported.in", tokenType))
+    }
+  }
+
+  override fun visitIndexProperty(expression: GrIndexProperty) {
+    super.visitIndexProperty(expression)
+    val safeAccessToken = expression.safeAccessToken
+    if (safeAccessToken != null) {
+      holder.createErrorAnnotation(safeAccessToken, message("unsupported.safe.index.access"))
     }
   }
 }
