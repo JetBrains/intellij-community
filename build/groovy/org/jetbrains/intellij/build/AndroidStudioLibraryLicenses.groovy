@@ -79,6 +79,8 @@ class AndroidStudioLibraryLicenses {
                        libraryName: "gradle-appengine-builder-model-0.1.0.jar",
                        url: "https://github.com/GoogleCloudPlatform/gradle-appengine-plugin",
                        license: "Apache 2.0", licenseUrl: "http://www.apache.org/licenses/LICENSE-2.0"),
+    new LibraryLicense(name: "HdrHistogram", version: "2.1.4", libraryName: "HdrHistogram",
+                       license: "BSD 2-Clause", licenseUrl: "https://opensource.org/licenses/BSD-2-Clause"),
     new LibraryLicense(name: "Jackson", version: "1.9.11", libraryName: "jackson-core-asl-1.9.11.jar", url: "http://jackson.codehaus.org",
                        license: "Apache 2.0", licenseUrl: "http://www.apache.org/licenses/LICENSE-2.0"),
     new LibraryLicense(name: "Java Servlet API", libraryName: "javax.servlet-api-3.0.1.jar", license: "CDDL + GPLv2 w/ Classpath Exception",

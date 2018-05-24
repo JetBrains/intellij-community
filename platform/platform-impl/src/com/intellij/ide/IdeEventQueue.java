@@ -77,6 +77,9 @@ public class IdeEventQueue extends EventQueue {
   private static final Logger LOG = Logger.getInstance("#com.intellij.ide.IdeEventQueue");
   private static final Logger TYPEAHEAD_LOG = Logger.getInstance("#com.intellij.ide.IdeEventQueue.typeahead");
   private static final Logger FOCUS_AWARE_RUNNABLES_LOG = Logger.getInstance("#com.intellij.ide.IdeEventQueue.runnables");
+  // Android Studio: We added this to measure the performance of the event queue.
+  public static final int EVENT_TIMING_INTERVAL = 1;
+  private static boolean MEASURING_EVENT_LATENCIES = !Boolean.getBoolean("disable.event.measurement");
   private static TransactionGuardImpl ourTransactionGuard;
 
   /**
@@ -125,6 +128,9 @@ public class IdeEventQueue extends EventQueue {
   private int myInputMethodLock;
   private final com.intellij.util.EventDispatcher<PostEventHook>
     myPostEventListeners = com.intellij.util.EventDispatcher.create(PostEventHook.class);
+
+  // Android Studio: We added this to measure the performance of the event queue.
+  private final RecursiveStopwatch myRecursiveStopwatch = new RecursiveStopwatch();
 
   private final LinkedHashMap <AWTEvent, ArrayList<Runnable>> myRunnablesWaitingFocusChange = new LinkedHashMap<>();
 
@@ -392,7 +398,30 @@ public class IdeEventQueue extends EventQueue {
 
     HeavyProcessLatch.INSTANCE.prioritizeUiActivity();
     try (AccessToken ignored = startActivity(e)) {
-      _dispatchEvent(e, false);
+      // Android Studio: We've wrapped the call to _dispatchEvent in calls to a stopwatch in order
+      // to collect metrics about the performance of the event queue.
+      if (MEASURING_EVENT_LATENCIES && (myEventCount % EVENT_TIMING_INTERVAL) == 0) {
+        // Pause and save any currently-running stopwatch, then start a new one.
+        long oldStopwatchState = myRecursiveStopwatch.start();
+        try {
+          _dispatchEvent(e, false);
+        }
+        finally {
+          // Stop the current stopwatch and resume any previously-running stopwatch.
+          long elapsed = myRecursiveStopwatch.end(oldStopwatchState);
+          if (elapsed != -1) {
+            SystemHealthMonitor.recordEventTime(EVENT_TIMING_INTERVAL, elapsed);
+          }
+        }
+      }
+      else {
+        // If there is a currently-running stopwatch, abort it. Since we won't be measuring
+        // the dispatch time in the recursive call to dispatch, we won't know how much time went
+        // to which event. Ending the stopwatch here will cause our caller's [end] call to
+        // return -1, which will abort the timer and skip collecting a sample.
+        myRecursiveStopwatch.end(-1L);
+        _dispatchEvent(e, false);
+      }
     }
     catch (Throwable t) {
       processException(t);
@@ -478,6 +507,13 @@ public class IdeEventQueue extends EventQueue {
   @Override
   @NotNull
   public AWTEvent getNextEvent() throws InterruptedException {
+    // Android Studio: We've added some instrumentation about the performance of the event queue.
+    //
+    // If we're currently in the middle of timing an event, pause the timer since we don't want the time spent waiting for the next
+    // event to be included in the outer event's time. If we later go on to disptach the event, the timer will be resumed from this
+    // point by the end() call. If we never dispatch the event, the time for the outer event may be underestimated. If we weren't
+    // in the middle of timing an event, this is an inexpensive no-op.
+    myRecursiveStopwatch.pause();
     AWTEvent event = super.getNextEvent();
     if (isKeyboardEvent(event) && myKeyboardEventsDispatched.incrementAndGet() > myKeyboardEventsPosted.get()) {
       throw new RuntimeException(event + "; posted: " + myKeyboardEventsPosted + "; dispatched: " + myKeyboardEventsDispatched);
@@ -1345,7 +1381,7 @@ public class IdeEventQueue extends EventQueue {
   private boolean isTestMode() {
     Boolean testMode = myTestMode;
     if (testMode != null) return testMode;
-    
+
     Application application = ApplicationManager.getApplication();
     if (application == null) return false;
 

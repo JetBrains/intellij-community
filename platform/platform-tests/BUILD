@@ -48,5 +48,8 @@ iml_module(
         "//tools/idea/platform/bootstrap:intellij.platform.bootstrap[module]",
         "//tools/base/common:studio.android.sdktools.common[module, test]",
         "//tools/base/testutils:studio.android.sdktools.testutils[module, test]",
+        "//tools/idea/.idea/libraries:HdrHistogram[test]",
+        "//tools/idea/.idea/libraries:protobuf[test]",
+        "//tools/idea/.idea/libraries:studio-analytics-proto[test]",
     ],
 )
