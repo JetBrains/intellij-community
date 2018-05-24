@@ -35,9 +35,7 @@ object LafIconLookup {
       UIUtil.isUnderIntelliJLaF() -> "intellij/"
       else -> ""
     }
-
-    key = dir + key
-    return IconLoader.findIcon("/com/intellij/ide/ui/laf/icons/$key.png", LafIconLookup::class.java, true, isThrowErrorIfNotFound)
+    return IconLoader.findLafIcon(dir + key, LafIconLookup::class.java, isThrowErrorIfNotFound)
   }
 
   @JvmStatic
