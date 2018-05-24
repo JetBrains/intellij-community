@@ -183,7 +183,15 @@ public class PyQuickDocTest extends LightMarkedTestCase {
     checkHTMLOnly();
   }
 
-  public void testPropDocstringOfGetter() {
+  public void testPropNewDocstringOfGetter() {
+    checkHTMLOnly();
+  }
+
+  public void testPropOldDocParamOfPropertyCall() {
+    checkHTMLOnly();
+  }
+
+  public void testPropOldDocstringOfGetter() {
     checkHTMLOnly();
   }
 
