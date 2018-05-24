@@ -3,7 +3,9 @@ package com.intellij.codeInspection.dataFlow.inference
 
 import com.intellij.lang.LighterAST
 import com.intellij.lang.LighterASTNode
+import com.intellij.psi.JavaTokenType
 import com.intellij.psi.impl.source.JavaLightStubBuilder
+import com.intellij.psi.impl.source.JavaLightTreeUtil
 import com.intellij.psi.impl.source.PsiMethodImpl
 import com.intellij.psi.impl.source.tree.JavaElementType.*
 import com.intellij.psi.impl.source.tree.LightTreeUtil
@@ -21,62 +23,78 @@ private val gist = GistManager.getInstance().newPsiFileGist("contractInference",
 }
 
 private fun indexFile(tree: LighterAST): Map<Int, MethodData> {
+  val visitor = InferenceVisitor(tree)
+  visitor.visitNode(tree.root)
+  return visitor.result
+}
+
+private class InferenceVisitor(val tree : LighterAST) : RecursiveLighterASTNodeWalkingVisitor(tree) {
+  var methodIndex = 0
+  val volatileFieldNames = HashSet<String>()
   val result = HashMap<Int, MethodData>()
 
-  object : RecursiveLighterASTNodeWalkingVisitor(tree) {
-    var methodIndex = 0
-
-    override fun visitNode(element: LighterASTNode) {
-      if (element.tokenType === METHOD) {
-        calcData(tree, element)?.let { data -> result[methodIndex] = data }
+  override fun visitNode(element: LighterASTNode) {
+    when(element.tokenType) {
+      CLASS -> gatherFields(element)
+      METHOD -> {
+        calcData(element)?.let { data -> result[methodIndex] = data }
         methodIndex++
       }
-
-      if (JavaLightStubBuilder.isCodeBlockWithoutStubs(element)) return
-
-      super.visitNode(element)
     }
-  }.visitNode(tree.root)
 
-  return result
-}
-
-private fun calcData(tree: LighterAST, method: LighterASTNode): MethodData? {
-  val body = LightTreeUtil.firstChildOfType(tree, method, CODE_BLOCK) ?: return null
-  val statements = ContractInferenceInterpreter.getStatements(body, tree)
-
-  val contracts = ContractInferenceInterpreter(tree, method, body).inferContracts(statements)
-
-  val nullityVisitor = MethodReturnInferenceVisitor(tree, body)
-  val purityVisitor = PurityInferenceVisitor(tree, body)
-  for (statement in statements) {
-    walkMethodBody(tree, statement) { nullityVisitor.visitNode(it); purityVisitor.visitNode(it) }
+    if (JavaLightStubBuilder.isCodeBlockWithoutStubs(element)) return
+    super.visitNode(element)
   }
-  val notNullParams = inferNotNullParameters(tree, method, statements)
 
-  return createData(body, contracts, nullityVisitor.result, purityVisitor.result, notNullParams)
-}
-
-private fun walkMethodBody(tree: LighterAST, root: LighterASTNode, processor: (LighterASTNode) -> Unit) {
-  object : RecursiveLighterASTNodeWalkingVisitor(tree) {
-    override fun visitNode(element: LighterASTNode) {
-      val type = element.tokenType
-      if (type === CLASS || type === FIELD || type === METHOD || type === ANNOTATION_METHOD || type === LAMBDA_EXPRESSION) return
-
-      processor(element)
-      super.visitNode(element)
+  private fun gatherFields(aClass: LighterASTNode) {
+    val fields = LightTreeUtil.getChildrenOfType(tree, aClass, FIELD)
+    for (field in fields) {
+      val modifierList = LightTreeUtil.firstChildOfType(tree, field, MODIFIER_LIST)
+      val fieldName = JavaLightTreeUtil.getNameIdentifierText(tree, field)
+      if (modifierList != null && fieldName != null &&
+          tree.getChildren(modifierList).any { modifier -> modifier.tokenType === JavaTokenType.VOLATILE_KEYWORD }) {
+        volatileFieldNames.add(fieldName)
+      }
     }
-  }.visitNode(root)
-}
+  }
 
-private fun createData(body: LighterASTNode,
-                       contracts: List<PreContract>,
-                       methodReturn: MethodReturnInferenceResult?,
-                       purity: PurityInferenceResult?,
-                       notNullParams: BitSet): MethodData? {
-  if (methodReturn == null && purity == null && contracts.isEmpty() && notNullParams.isEmpty) return null
+  private fun calcData(method: LighterASTNode): MethodData? {
+    val body = LightTreeUtil.firstChildOfType(tree, method, CODE_BLOCK) ?: return null
+    val statements = ContractInferenceInterpreter.getStatements(body, tree)
 
-  return MethodData(methodReturn, purity, contracts, notNullParams, body.startOffset, body.endOffset)
+    val contracts = ContractInferenceInterpreter(tree, method, body).inferContracts(statements)
+
+    val nullityVisitor = MethodReturnInferenceVisitor(tree, body)
+    val purityVisitor = PurityInferenceVisitor(tree, body, volatileFieldNames)
+    for (statement in statements) {
+      walkMethodBody(statement) { nullityVisitor.visitNode(it); purityVisitor.visitNode(it) }
+    }
+    val notNullParams = inferNotNullParameters(tree, method, statements)
+
+    return createData(body, contracts, nullityVisitor.result, purityVisitor.result, notNullParams)
+  }
+
+  private fun walkMethodBody(root: LighterASTNode, processor: (LighterASTNode) -> Unit) {
+    object : RecursiveLighterASTNodeWalkingVisitor(tree) {
+      override fun visitNode(element: LighterASTNode) {
+        val type = element.tokenType
+        if (type === CLASS || type === FIELD || type === METHOD || type === ANNOTATION_METHOD || type === LAMBDA_EXPRESSION) return
+
+        processor(element)
+        super.visitNode(element)
+      }
+    }.visitNode(root)
+  }
+
+  private fun createData(body: LighterASTNode,
+                         contracts: List<PreContract>,
+                         methodReturn: MethodReturnInferenceResult?,
+                         purity: PurityInferenceResult?,
+                         notNullParams: BitSet): MethodData? {
+    if (methodReturn == null && purity == null && contracts.isEmpty() && notNullParams.isEmpty) return null
+
+    return MethodData(methodReturn, purity, contracts, notNullParams, body.startOffset, body.endOffset)
+  }
 }
 
 fun getIndexedData(method: PsiMethodImpl): MethodData? = gist.getFileData(method.containingFile)?.get(JavaStubImplUtil.getMethodStubIndex(method))

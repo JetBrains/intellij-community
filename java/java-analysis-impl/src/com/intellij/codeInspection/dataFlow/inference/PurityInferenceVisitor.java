@@ -14,20 +14,23 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Set;
 
 import static com.intellij.psi.impl.source.tree.JavaElementType.*;
 
 class PurityInferenceVisitor {
   private final LighterAST tree;
   private final LighterASTNode body;
+  private final Set<String> myVolatileFieldNames;
   private final List<LighterASTNode> mutatedRefs = new ArrayList<>();
   private boolean hasReturns;
   private boolean hasVolatileReads;
   private final List<LighterASTNode> calls = new ArrayList<>();
 
-  PurityInferenceVisitor(LighterAST tree, LighterASTNode body) {
+  PurityInferenceVisitor(LighterAST tree, LighterASTNode body, Set<String> volatileFieldNames) {
     this.tree = tree;
     this.body = body;
+    myVolatileFieldNames = volatileFieldNames;
   }
 
   void visitNode(LighterASTNode element) {
@@ -44,19 +47,16 @@ class PurityInferenceVisitor {
     else if (isCall(element, type)) {
       calls.add(element);
     }
-    else if (type == REFERENCE_EXPRESSION) {
+    else if (type == REFERENCE_EXPRESSION && !myVolatileFieldNames.isEmpty()) {
       LighterASTNode qualifier = JavaLightTreeUtil.findExpressionChild(tree, element);
       if (qualifier == null || qualifier.getTokenType() == THIS_EXPRESSION) {
-        LighterASTNode target = new FileLocalResolver(tree).resolveLocally(element).getTarget();
-        if (target != null && target.getTokenType() == FIELD) {
-          LighterASTNode modifierList = LightTreeUtil.firstChildOfType(tree, target, MODIFIER_LIST);
-          if (modifierList != null) {
-            for (LighterASTNode modifier : tree.getChildren(modifierList)) {
-              if (modifier.getTokenType() == JavaTokenType.VOLATILE_KEYWORD) {
-                hasVolatileReads = true;
-                break;
-              }
-            }
+        if (myVolatileFieldNames.contains(JavaLightTreeUtil.getNameIdentifierText(tree, element))) {
+          LighterASTNode target = new FileLocalResolver(tree).resolveLocally(element).getTarget();
+          if (target != null && target.getTokenType() == FIELD) {
+            LighterASTNode modifierList = LightTreeUtil.firstChildOfType(tree, target, MODIFIER_LIST);
+            hasVolatileReads |= modifierList != null &&
+                                tree.getChildren(modifierList).stream()
+                                    .anyMatch(modifier -> modifier.getTokenType() == JavaTokenType.VOLATILE_KEYWORD);
           }
         }
       }
