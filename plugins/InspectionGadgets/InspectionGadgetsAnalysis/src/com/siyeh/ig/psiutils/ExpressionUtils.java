@@ -1281,4 +1281,26 @@ public class ExpressionUtils {
     }
     return null;
   }
+
+  /**
+   * Flattens second+ polyadic's operand replaced with another polyadic expression of the same type to the parent's operands.
+   * 
+   * Otherwise reparse would produce different expression.
+   */
+  public static PsiExpression replacePolyadicWithParent(PsiExpression expressionToReplace, PsiExpression replacement) {
+    PsiElement parent = expressionToReplace.getParent();
+    if (parent instanceof PsiPolyadicExpression && 
+        replacement instanceof PsiPolyadicExpression &&
+        ((PsiPolyadicExpression)parent).getOperationTokenType() == ((PsiPolyadicExpression)replacement).getOperationTokenType()) {
+      int idx = ArrayUtil.indexOf(((PsiPolyadicExpression)parent).getOperands(), expressionToReplace);
+      if (idx > 0) {
+        PsiPolyadicExpression copyParentPolyadic = (PsiPolyadicExpression)parent.copy();
+        new CommentTracker().replaceAndRestoreComments(copyParentPolyadic.getOperands()[idx], replacement);
+        PsiExpression recreateCopyFromText = JavaPsiFacade.getElementFactory(parent.getProject())
+                                                          .createExpressionFromText(copyParentPolyadic.getText(), parent);
+        return ((PsiPolyadicExpression)parent.replace(recreateCopyFromText)).getOperands()[idx];
+      }
+    }
+    return null;
+  }
 }
