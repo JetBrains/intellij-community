@@ -27,8 +27,13 @@
       <option name="url" value="https://repo.jenkins-ci.org/releases" />
     </remote-repository>
     <remote-repository>
-      <option name="id" value="a78e8595-cdf4-489b-ad0b-ae2c3c5a8339" />
-      <option name="name" value="a78e8595-cdf4-489b-ad0b-ae2c3c5a8339" />
+      <option name="id" value="groovy-proxy" />
+      <option name="name" value="Groovy Bintray Repository Mirror" />
+      <option name="url" value="https://repo.labs.intellij.net/bintray-groovy" />
+    </remote-repository>
+    <remote-repository>
+      <option name="id" value="groovy" />
+      <option name="name" value="Groovy Bintray Repository" />
       <option name="url" value="https://dl.bintray.com/groovy/maven/" />
     </remote-repository>
   </component>
