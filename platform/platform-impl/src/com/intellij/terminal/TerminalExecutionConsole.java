@@ -43,7 +43,6 @@ import com.jediterm.terminal.TtyConnector;
 import com.jediterm.terminal.model.JediTerminal;
 import com.jediterm.terminal.model.StyleState;
 import com.jediterm.terminal.model.TerminalTextBuffer;
-import com.jediterm.terminal.ui.TerminalAction;
 import com.jediterm.terminal.ui.TerminalSession;
 import com.jediterm.terminal.ui.settings.SettingsProvider;
 import com.jediterm.terminal.util.CharUtils;
@@ -57,7 +56,6 @@ import java.io.IOException;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
-import java.util.Optional;
 import java.util.concurrent.CopyOnWriteArraySet;
 import java.util.concurrent.atomic.AtomicBoolean;
 
@@ -110,6 +108,11 @@ public class TerminalExecutionConsole implements ConsoleView, ObservableConsoleV
                 }
               }
             });
+          }
+
+          @Override
+          public void clearBuffer() {
+            super.clearBuffer(false);
           }
         };
 
@@ -219,19 +222,8 @@ public class TerminalExecutionConsole implements ConsoleView, ObservableConsoleV
    */
   @Override
   public void clear() {
-    List<TerminalAction> actions = myTerminalWidget.getTerminalPanel().getActions();
-    Optional<TerminalAction> first = actions.stream().filter((action) -> "Clear Buffer".equals(action.getName())).findFirst();
-    if (first.isPresent()) {
-      // TODO make TerminalPanel#clearBuffer public?
-      /* Execute {@link com.jediterm.terminal.ui.TerminalPanel#clearBuffer()} */
-      first.get().perform(null);
-    }
-    else {
-      myTerminalWidget.getTerminalPanel().getTerminalTextBuffer().clearHistory();
-      myTerminalWidget.getTerminal().clearScreen();
-      myTerminalWidget.getTerminal().cursorPosition(1, 1);
-      myTerminalWidget.getTerminalPanel().setScrollingEnabled(true);
-    }
+    myLastCR = false;
+    myTerminalWidget.getTerminalPanel().clearBuffer();
   }
 
   @Override
