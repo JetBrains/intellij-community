@@ -56,6 +56,7 @@ import java.io.FileNotFoundException;
 import java.io.FileReader;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.function.Function;
@@ -73,7 +74,7 @@ public class PyDocumentationBuilder {
   private final ChainIterable<String> mySections;
   private final ChainIterable<String> myEpilog;      // sequence for doc "copied from" notices and such
 
-  private final Map<String, ChainIterable<String>> mySectionsMap = FactoryMap.create(item -> new ChainIterable<String>());
+  private final Map<String, ChainIterable<String>> mySectionsMap = FactoryMap.createMap(item -> new ChainIterable<>(), LinkedHashMap::new);
 
   private static final Pattern ourSpacesPattern = Pattern.compile("^\\s+");
 
@@ -120,11 +121,12 @@ public class PyDocumentationBuilder {
 
     if (!mySectionsMap.isEmpty()) {
       mySections.addItem(DocumentationMarkup.SECTIONS_START);
-      for (Map.Entry<String, ChainIterable<String>> entry : mySectionsMap.entrySet()) {
+      // FactoryMap's entrySet() returns pairs without particular order even for LinkedHashMap
+      for (String header : mySectionsMap.keySet()) {
         mySections.addItem(DocumentationMarkup.SECTION_HEADER_START);
-        mySections.addItem(entry.getKey());
+        mySections.addItem(header);
         mySections.addItem(DocumentationMarkup.SECTION_SEPARATOR);
-        mySections.add(entry.getValue());
+        mySections.add(mySectionsMap.get(header));
         mySections.addItem(DocumentationMarkup.SECTION_END);
       }
       mySections.addItem(DocumentationMarkup.SECTIONS_END);
@@ -331,7 +333,7 @@ public class PyDocumentationBuilder {
     return myElement instanceof PyTargetExpression && PyUtil.isAttribute((PyTargetExpression)myElement);
   }
 
-  @Nullable
+  @NotNull
   private PsiElement resolveToDocStringOwner(@NotNull TypeEvalContext context) {
     // here the ^Q target is already resolved; the resolved element may point to intermediate assignments
     if (myElement instanceof PyTargetExpression && ((PyTargetExpression)myElement).getDocStringValue() == null) {
