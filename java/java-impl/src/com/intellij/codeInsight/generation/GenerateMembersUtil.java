@@ -1,6 +1,7 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInsight.generation;
 
+import com.intellij.application.options.CodeStyle;
 import com.intellij.codeInsight.ExceptionUtil;
 import com.intellij.codeInsight.NullableNotNullManager;
 import com.intellij.codeInsight.daemon.impl.quickfix.CreateFromUsageUtils;
@@ -701,7 +702,12 @@ public class GenerateMembersUtil {
   public static PsiMethod setVisibility(PsiMember member, PsiMethod prototype) {
     if (prototype == null) return null;
 
-    String visibility = JavaCodeStyleSettings.getInstance(member.getContainingFile()).VISIBILITY;
+    PsiFile file = member.getContainingFile();
+    JavaCodeStyleSettings javaSettings =
+      file != null
+      ? JavaCodeStyleSettings.getInstance(file)
+      : CodeStyle.getProjectOrDefaultSettings(member.getProject()).getCustomSettings(JavaCodeStyleSettings.class);
+    String visibility = javaSettings.VISIBILITY;
 
     @PsiModifier.ModifierConstant String newVisibility;
     if (VisibilityUtil.ESCALATE_VISIBILITY.equals(visibility)) {
