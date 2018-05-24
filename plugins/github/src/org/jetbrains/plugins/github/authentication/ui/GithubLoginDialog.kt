@@ -42,7 +42,7 @@ import javax.swing.*
 import javax.swing.event.HyperlinkEvent
 import javax.swing.text.html.HTMLEditorKit
 
-class GithubLoginDialog @JvmOverloads constructor(private val project: Project,
+class GithubLoginDialog @JvmOverloads constructor(private val project: Project? = null,
                                                   parent: JComponent? = null,
                                                   private val isAccountUnique: (name: String, server: GithubServerPath) -> Boolean = { _, _ -> true },
                                                   title: String = "Log In to Github",
