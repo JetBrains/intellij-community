@@ -175,6 +175,9 @@ public class DocumentImpl extends UserDataHolderBase implements DocumentEx {
       if (r.isValid() && myDocumentRange.contains(r)) {
         registerRangeMarker(r, r.getStartOffset(), r.getEndOffset(), r.isGreedyToLeft(), r.isGreedyToRight(), 0);
       }
+      else {
+        ((RangeMarkerImpl)r).invalidate("document was gc-ed and re-created");
+      }
       return true;
     });
   }
