@@ -6,6 +6,7 @@ package org.jetbrains.idea.devkit.inspections
 import com.intellij.codeInspection.LocalQuickFix
 import com.intellij.codeInspection.ProblemDescriptor
 import com.intellij.codeInspection.ProblemHighlightType
+import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.extensions.ExtensionPointName
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.module.ModuleManager
@@ -143,6 +144,9 @@ private fun checkProperXmlFileForDefinition(element: DomElement,
 }
 
 fun isIdeaPlatformModule(module: Module?): Boolean {
+  if (ApplicationManager.getApplication().isUnitTestMode) {
+    return true
+  }
   if (module == null || !PsiUtil.isIdeaProject(module.project)) {
     return false
   }
