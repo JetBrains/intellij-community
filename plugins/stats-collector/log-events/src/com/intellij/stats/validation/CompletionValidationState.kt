@@ -23,15 +23,15 @@ import org.jetbrains.annotations.TestOnly
 class CompletionValidationState(event: CompletionStartedEvent) : LogEventVisitor() {
     val allCompletionItemIds: MutableList<Int> = event.newCompletionListItems.map { it.id }.toMutableList()
 
-    var currentPosition    = event.currentPosition
-    var completionList     = event.completionListIds
-    var currentId          = getSafeCurrentId(completionList, currentPosition)
+    var currentPosition: Int = event.currentPosition
+    var completionList: List<Int> = event.completionListIds
+    var currentId: Int = getSafeCurrentId(completionList, currentPosition)
 
     private var isValid = true
     private var isFinished = false
     private var errorMessage = ""
 
-    var events = mutableListOf<LogEvent>(event)
+    private var events = mutableListOf<LogEvent>(event)
 
     private fun updateState(nextEvent: LookupStateLogData) {
         currentPosition = nextEvent.currentPosition

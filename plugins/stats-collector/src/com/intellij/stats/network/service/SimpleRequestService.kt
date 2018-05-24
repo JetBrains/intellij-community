@@ -101,7 +101,7 @@ class SimpleRequestService: RequestService() {
 
 
 data class ResponseData(val code: Int, val text: String = "") {
-    fun isOK() = code in 200..299
+    fun isOK(): Boolean = code in 200..299
 }
 
 

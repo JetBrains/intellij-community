@@ -24,8 +24,8 @@ import com.intellij.stats.completion.StagePosition
 class PositionTrackingListener(private val lookup: LookupImpl): PrefixChangeListener {
     private var stage = 0
 
-    override fun beforeAppend(c: Char) = update()
-    override fun beforeTruncate() = update()
+    override fun beforeAppend(c: Char): Unit = update()
+    override fun beforeTruncate(): Unit = update()
 
     private fun update() {
         lookup.items.forEachIndexed { index, lookupElement ->

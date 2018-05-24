@@ -28,19 +28,19 @@ typealias IgnoredFeatureInfo = Set<String>
 
 
 object FeatureUtils {
-    const val UNDEFINED = "UNDEFINED"
-    const val INVALID_CACHE = "INVALID_CACHE"
+    const val UNDEFINED: String = "UNDEFINED"
+    const val INVALID_CACHE: String = "INVALID_CACHE"
 
-    const val OTHER = "OTHER"
-    const val NONE = "NONE"
+    const val OTHER: String = "OTHER"
+    const val NONE: String = "NONE"
 
-    const val ML_RANK = "ml_rank"
-    const val BEFORE_ORDER = "before_rerank_order"
+    const val ML_RANK: String = "ml_rank"
+    const val BEFORE_ORDER: String = "before_rerank_order"
 
-    const val DEFAULT = "default"
+    const val DEFAULT: String = "default"
 
-    fun getOtherCategoryFeatureName(name: String) = "$name=$OTHER"
-    fun getUndefinedFeatureName(name: String) = "$name=$UNDEFINED"
+    fun getOtherCategoryFeatureName(name: String): String = "$name=$OTHER"
+    fun getUndefinedFeatureName(name: String): String = "$name=$UNDEFINED"
 
     fun prepareRevelanceMap(relevance: List<Pair<String, Any?>>, position: Int, prefixLength: Int, elementLength: Int)
             : Map<String, Any> {

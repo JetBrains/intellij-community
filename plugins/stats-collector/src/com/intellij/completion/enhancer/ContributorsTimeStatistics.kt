@@ -61,10 +61,10 @@ class ContributorsTimeStatistics : PersistentStateComponent<CompletionTimeStats>
         }
     }
 
-    fun languages() = (completionIntervals.keys + secondCompletionIntervals.keys).toList()
+    fun languages(): List<Language> = (completionIntervals.keys + secondCompletionIntervals.keys).toList()
 
-    fun intervals(languge: Language) = completionIntervals[languge]
-    fun secondCompletionIntervals(languge: Language) = secondCompletionIntervals[languge]
+    fun intervals(languge: Language): IntervalCounter? = completionIntervals[languge]
+    fun secondCompletionIntervals(languge: Language): IntervalCounter? = secondCompletionIntervals[languge]
 
     fun registerCompletionContributorsTime(languge: Language, timeTaken: Long) {
         val interval = completionIntervals[languge] ?: IntervalCounter(MIN_POWER, MAX_POWER, EXPONENT)
@@ -83,7 +83,7 @@ class ContributorsTimeStatistics : PersistentStateComponent<CompletionTimeStats>
         private val MAX_POWER = 17
         private val EXPONENT = 2.0
 
-        fun getInstance() = service<ContributorsTimeStatistics>()
+        fun getInstance(): ContributorsTimeStatistics = service<ContributorsTimeStatistics>()
     }
 
 }

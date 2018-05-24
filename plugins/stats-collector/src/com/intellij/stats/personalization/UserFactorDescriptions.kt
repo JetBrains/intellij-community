@@ -25,14 +25,14 @@ import com.jetbrains.completion.feature.DoubleFeature
  * @author Vitaliy.Bibaev
  */
 object UserFactorDescriptions {
-    val COMPLETION_TYPE = Descriptor("completionType", ::CompletionTypeUpdater, ::CompletionTypeReader)
-    val COMPLETION_FINISH_TYPE =
+    val COMPLETION_TYPE: Descriptor<CompletionTypeUpdater, CompletionTypeReader> = Descriptor("completionType", ::CompletionTypeUpdater, ::CompletionTypeReader)
+    val COMPLETION_FINISH_TYPE: Descriptor<CompletionFinishTypeUpdater, CompletionFinishTypeReader> =
             Descriptor("completionFinishedType", ::CompletionFinishTypeUpdater, ::CompletionFinishTypeReader)
-    val COMPLETION_USAGE = Descriptor("completionUsage", ::CompletionUsageUpdater, ::CompletionUsageReader)
-    val PREFIX_LENGTH_ON_COMPLETION = Descriptor("prefixLength", ::PrefixLengthUpdater, ::PrefixLengthReader)
-    val SELECTED_ITEM_POSITION = Descriptor("itemPosition", ::ItemPositionUpdater, ::ItemPositionReader)
-    val TIME_BETWEEN_TYPING = Descriptor("timeBetweenTyping", ::TimeBetweenTypingUpdater, ::TimeBetweenTypingReader)
-    val MNEMONICS_USAGE = Descriptor("mnemonicsUsage", ::MnemonicsUsageUpdater, ::MnemonicsUsageReader)
+    val COMPLETION_USAGE: Descriptor<CompletionUsageUpdater, CompletionUsageReader> = Descriptor("completionUsage", ::CompletionUsageUpdater, ::CompletionUsageReader)
+    val PREFIX_LENGTH_ON_COMPLETION: Descriptor<PrefixLengthUpdater, PrefixLengthReader> = Descriptor("prefixLength", ::PrefixLengthUpdater, ::PrefixLengthReader)
+    val SELECTED_ITEM_POSITION: Descriptor<ItemPositionUpdater, ItemPositionReader> = Descriptor("itemPosition", ::ItemPositionUpdater, ::ItemPositionReader)
+    val TIME_BETWEEN_TYPING: Descriptor<TimeBetweenTypingUpdater, TimeBetweenTypingReader> = Descriptor("timeBetweenTyping", ::TimeBetweenTypingUpdater, ::TimeBetweenTypingReader)
+    val MNEMONICS_USAGE: Descriptor<MnemonicsUsageUpdater, MnemonicsUsageReader> = Descriptor("mnemonicsUsage", ::MnemonicsUsageUpdater, ::MnemonicsUsageReader)
 
     fun binaryFeatureDescriptor(feature: BinaryFeature): Descriptor<BinaryFeatureUpdater, BinaryFeatureReader> {
         return Descriptor("binaryFeature:${feature.name}", ::BinaryFeatureUpdater, ::BinaryFeatureReader)

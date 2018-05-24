@@ -27,11 +27,11 @@ class SvnLoadedBranchesStorage(private val myProject: Project) {
     myFile = File(file, myProject.locationHash)
   }
 
-  operator fun get(url: Url) = synchronized(myLock) {
+  operator fun get(url: Url): Collection<SvnBranchItem>? = synchronized(myLock) {
     myState?.get("")?.get(url)
   }
 
-  fun activate() = synchronized(myLock) {
+  fun activate(): Unit = synchronized(myLock) {
     myState = SmallMapSerializer(myFile, EnumeratorStringDescriptor.INSTANCE, createExternalizer())
   }
 

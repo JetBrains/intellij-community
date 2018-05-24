@@ -33,9 +33,9 @@ class CompletionFinishTypeReader(private val factor: DailyAggregatedDoubleFactor
 }
 
 class CompletionFinishTypeUpdater(private val factor: MutableDoubleFactor) : FactorUpdater {
-    fun fireExplicitCompletionPerformed() = factor.incrementOnToday(explicitSelectKey)
-    fun fireTypedSelectPerformed() = factor.incrementOnToday(typedSelectKey)
-    fun fireLookupCancelled() = factor.incrementOnToday(cancelledKey)
+    fun fireExplicitCompletionPerformed(): Boolean = factor.incrementOnToday(explicitSelectKey)
+    fun fireTypedSelectPerformed(): Boolean = factor.incrementOnToday(typedSelectKey)
+    fun fireLookupCancelled(): Boolean = factor.incrementOnToday(cancelledKey)
 
 }
 

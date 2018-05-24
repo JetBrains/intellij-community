@@ -32,8 +32,8 @@ class TimeBetweenTypingTracker(private val project: Project) : PrefixChangeListe
 
     private var lastTypingTime: Long = -1L
 
-    override fun beforeAppend(c: Char) = prefixChanged()
-    override fun beforeTruncate() = prefixChanged()
+    override fun beforeAppend(c: Char): Unit = prefixChanged()
+    override fun beforeTruncate(): Unit = prefixChanged()
 
     private fun prefixChanged() {
         if (lastTypingTime == -1L) {

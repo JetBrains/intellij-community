@@ -23,9 +23,7 @@ import org.jdom.Element
 import java.text.DecimalFormat
 import java.util.*
 
-abstract class UserFactorStorageBase
-    : UserFactorStorage, PersistentStateComponent<Element> {
-
+abstract class UserFactorStorageBase : UserFactorStorage, PersistentStateComponent<Element> {
     private companion object {
         val DOUBLE_VALUE_FORMATTER = DecimalFormat().apply {
             maximumFractionDigits = 6
@@ -88,7 +86,7 @@ abstract class UserFactorStorageBase
         }
 
         companion object {
-            const val DAYS_LIMIT = 10
+            private const val DAYS_LIMIT = 10
 
             fun restore(element: Element): DailyAggregateFactor? {
                 val data = sortedMapOf<Day, DailyData>()

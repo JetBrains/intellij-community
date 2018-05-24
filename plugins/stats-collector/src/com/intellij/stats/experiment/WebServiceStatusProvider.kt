@@ -29,7 +29,7 @@ class WebServiceStatusProvider(
 ): WebServiceStatus {
 
     companion object {
-        val STATUS_URL = "https://www.jetbrains.com/config/features-service-status.json"
+        val STATUS_URL: String = "https://www.jetbrains.com/config/features-service-status.json"
 
         private val GSON = Gson()
 
@@ -46,7 +46,7 @@ class WebServiceStatusProvider(
     
     override fun dataServerUrl(): String = dataServerUrl
 
-    override fun isExperimentGoingOnNow() = info.performExperiment
+    override fun isExperimentGoingOnNow(): Boolean = info.performExperiment
 
     override fun isServerOk(): Boolean = serverStatus.equals("ok", ignoreCase = true)
     

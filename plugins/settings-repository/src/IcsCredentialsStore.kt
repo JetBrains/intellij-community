@@ -11,7 +11,7 @@ import com.intellij.ide.passwordSafe.PasswordSafe
  * Also, if you remove password from keychain, ssh-agent will continue to use cached password.
  */
 class IcsCredentialsStore {
-  fun get(host: String?, sshKeyFile: String?, accountName: String?) = CredentialAttributes(host, sshKeyFile, accountName)?.let { PasswordSafe.instance.get(it) }
+  fun get(host: String?, sshKeyFile: String?, accountName: String?): Credentials? = CredentialAttributes(host, sshKeyFile, accountName)?.let { PasswordSafe.instance.get(it) }
 
   fun set(host: String?, sshKeyFile: String?, credentials: Credentials?) {
     CredentialAttributes(host, sshKeyFile, credentials?.userName)?.let { PasswordSafe.instance.set(it, credentials) }

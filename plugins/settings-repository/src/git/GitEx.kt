@@ -183,7 +183,7 @@ fun cloneBare(uri: String, dir: Path, credentialsStore: Lazy<IcsCredentialsStore
     config.save()
   }
 
-  val commit = RevWalk(repository).use { it.parseCommit(head!!.objectId) }
+  val commit = RevWalk(repository).use { it.parseCommit(head.objectId) }
   val u = repository.updateRef(Constants.HEAD, !head.name.startsWith(Constants.R_HEADS))
   u.setNewObjectId(commit.id)
   u.forceUpdate()
@@ -376,7 +376,7 @@ fun buildRepository(workTree: Path? = null, bare: Boolean = false, gitDir: Path?
   }
 }
 
-fun buildBareRepository(gitDir: Path) = buildRepository(bare = true, gitDir = gitDir)
+fun buildBareRepository(gitDir: Path): Repository = buildRepository(bare = true, gitDir = gitDir)
 
 fun createBareRepository(dir: Path): Repository {
   val repository = buildRepository(bare = true, gitDir = dir)

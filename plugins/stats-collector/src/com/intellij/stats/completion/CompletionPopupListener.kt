@@ -26,12 +26,12 @@ interface CompletionPopupListener {
     fun beforeCharTyped(c: Char)
 
     class Adapter: CompletionPopupListener {
-        override fun beforeDownPressed() = Unit
-        override fun downPressed() = Unit
-        override fun beforeUpPressed() = Unit
-        override fun upPressed() = Unit
-        override fun afterBackspacePressed() = Unit
-        override fun beforeBackspacePressed() = Unit
-        override fun beforeCharTyped(c: Char) = Unit
+        override fun beforeDownPressed(): Unit = Unit
+        override fun downPressed(): Unit = Unit
+        override fun beforeUpPressed(): Unit = Unit
+        override fun upPressed(): Unit = Unit
+        override fun afterBackspacePressed(): Unit = Unit
+        override fun beforeBackspacePressed(): Unit = Unit
+        override fun beforeCharTyped(c: Char): Unit = Unit
     }
 }
