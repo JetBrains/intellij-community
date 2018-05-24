@@ -138,7 +138,7 @@ class EditCustomVmOptionsAction : EditCustomSettingsAction() {
   override fun file(): File? = EditCustomVmOptionsAction.file.value
   override fun template(): String = "# custom ${ApplicationNamesInfo.getInstance().fullProductName} VM options\n\n${VMOptions.read() ?: ""}"
 
-  fun isEnabled() = file() != null
+  fun isEnabled(): Boolean = file() != null
 
   class AccessExtension : NonProjectFileWritingAccessExtension {
     override fun isWritable(file: VirtualFile): Boolean = FileUtil.pathsEqual(file.path, EditCustomVmOptionsAction.file.value?.path)

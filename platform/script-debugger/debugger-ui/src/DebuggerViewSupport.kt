@@ -37,21 +37,21 @@ interface DebuggerViewSupport {
   /**
    * [org.jetbrains.debugger.values.FunctionValue] is special case and handled by SDK
    */
-  fun canNavigateToSource(variable: Variable, context: VariableContext) = false
+  fun canNavigateToSource(variable: Variable, context: VariableContext): Boolean = false
 
   fun computeSourcePosition(name: String, value: Value?, variable: Variable, context: VariableContext, navigatable: XNavigatable) {
   }
 
-  fun computeInlineDebuggerData(name: String, variable: Variable, context: VariableContext, callback: XInlineDebuggerDataCallback) = ThreeState.UNSURE
+  fun computeInlineDebuggerData(name: String, variable: Variable, context: VariableContext, callback: XInlineDebuggerDataCallback): ThreeState = ThreeState.UNSURE
 
   // return null if you don't need to add additional properties
   fun computeAdditionalObjectProperties(value: ObjectValue, variable: Variable, context: VariableContext, node: XCompositeNode): Promise<Any?>? = null
 
   fun getMemberFilter(context: VariableContext): Promise<MemberFilter>
 
-  fun transformErrorOnGetUsedReferenceValue(value: Value?, error: String?) = value
+  fun transformErrorOnGetUsedReferenceValue(value: Value?, error: String?): Value? = value
 
-  fun isInLibraryContent(sourceInfo: SourceInfo, script: Script?) = false
+  fun isInLibraryContent(sourceInfo: SourceInfo, script: Script?): Boolean = false
 
   fun computeReceiverVariable(context: VariableContext, callFrame: CallFrame, node: XCompositeNode): Promise<*>
 }

@@ -17,12 +17,12 @@ import java.io.DataOutput
 abstract class PrebuiltIndexAwareIdIndexer : PrebuiltIndexProviderBase<Map<IdIndexEntry, Int>>(), LexingIdIndexer {
   companion object {
     private val LOG = Logger.getInstance("#com.intellij.index.PrebuiltIndexAwareIdIndexer")
-    val ID_INDEX_FILE_NAME = "id-index"
+    val ID_INDEX_FILE_NAME: String = "id-index"
   }
 
-  override val indexName get() = ID_INDEX_FILE_NAME
+  override val indexName: String get() = ID_INDEX_FILE_NAME
 
-  override val indexExternalizer get() = IdIndexMapDataExternalizer()
+  override val indexExternalizer: IdIndexMapDataExternalizer get() = IdIndexMapDataExternalizer()
 
   override fun map(inputData: FileContent): Map<IdIndexEntry, Int> {
     val map = get(inputData)

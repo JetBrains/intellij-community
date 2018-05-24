@@ -100,5 +100,5 @@ abstract class ModuleGrouper {
   }
 }
 
-fun isQualifiedModuleNamesEnabled(project: Project) = Registry.`is`("project.qualified.module.names") &&
-                                                      !ModuleManager.getInstance(project).hasModuleGroups()
+fun isQualifiedModuleNamesEnabled(project: Project): Boolean = Registry.`is`("project.qualified.module.names") &&
+                                                               !ModuleManager.getInstance(project).hasModuleGroups()

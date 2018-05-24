@@ -120,7 +120,7 @@ open class AsyncPromise<T : Any?> : InternalPromiseUtil.BasePromise<T>(), Cancel
     }
   }
 
-  fun setError(error: String) = setError(createError(error))
+  fun setError(error: String): Boolean = setError(createError(error))
 
   override fun cancel() {
     setError(InternalPromiseUtil.OBSOLETE_ERROR)
@@ -240,7 +240,7 @@ open class AsyncPromise<T : Any?> : InternalPromiseUtil.BasePromise<T>(), Cancel
     }
   }
 
-  override fun getValue() = valueRef.get()
+  override fun getValue(): PromiseValue<T>? = valueRef.get()
 }
 
 private class CompoundConsumer<T>(c1: Consumer<in T>, c2: Consumer<in T>) : Consumer<T> {

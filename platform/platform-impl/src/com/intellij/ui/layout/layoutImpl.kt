@@ -17,7 +17,7 @@ interface LayoutBuilderImpl {
 
   // backward compatibility
   @Deprecated(level = DeprecationLevel.HIDDEN, message = "deprecated")
-  fun newRow(label: JLabel? = null, buttonGroup: ButtonGroup? = null, separated: Boolean = false, indented: Boolean = false) = newRow(label, buttonGroup, separated)
+  fun newRow(label: JLabel? = null, buttonGroup: ButtonGroup? = null, separated: Boolean = false, indented: Boolean = false): Row = newRow(label, buttonGroup, separated)
 
   fun build(container: Container, layoutConstraints: Array<out LCFlags>)
 

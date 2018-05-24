@@ -25,14 +25,14 @@ abstract class ScriptBase(override val type: Script.Type,
                           line: Int,
                           override val column: Int,
                           override val endLine: Int) : UserDataHolderBase(), Script {
-  override val line = Math.max(line, 0)
+  override val line: Int = Math.max(line, 0)
 
   @SuppressWarnings("UnusedDeclaration")
   private @Volatile var source: Promise<String>? = null
 
   override var sourceMap: SourceMap? = null
 
-  override fun toString() = "[url=$url, lineRange=[$line;$endLine]]"
+  override fun toString(): String = "[url=$url, lineRange=[$line;$endLine]]"
 
   override val isWorker: Boolean = false
 }

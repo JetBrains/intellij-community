@@ -18,9 +18,10 @@ package org.jetbrains.debugger
 import com.intellij.util.Url
 import com.intellij.util.Urls
 import com.intellij.util.containers.ContainerUtil
+import java.util.concurrent.ConcurrentMap
 
 abstract class ScriptManagerBaseEx<SCRIPT : ScriptBase> : ScriptManagerBase<SCRIPT>() {
-  protected val idToScript = ContainerUtil.newConcurrentMap<String, SCRIPT>()
+  protected val idToScript: ConcurrentMap<String, SCRIPT> = ContainerUtil.newConcurrentMap<String, SCRIPT>()
 
   override final fun forEachScript(scriptProcessor: (Script) -> Boolean) {
     for (script in idToScript.values) {
@@ -30,14 +31,14 @@ abstract class ScriptManagerBaseEx<SCRIPT : ScriptBase> : ScriptManagerBase<SCRI
     }
   }
 
-  override final fun findScriptById(id: String) = idToScript[id]
+  override final fun findScriptById(id: String): SCRIPT? = idToScript[id]
 
   fun clear(listener: DebugEventListener) {
     idToScript.clear()
     listener.scriptsCleared()
   }
 
-  override final fun findScriptByUrl(rawUrl: String) = findScriptByUrl(rawUrlToOurUrl(rawUrl))
+  override final fun findScriptByUrl(rawUrl: String): SCRIPT? = findScriptByUrl(rawUrlToOurUrl(rawUrl))
 
   override final fun findScriptByUrl(url: Url): SCRIPT? {
     for (script in idToScript.values) {
@@ -48,5 +49,5 @@ abstract class ScriptManagerBaseEx<SCRIPT : ScriptBase> : ScriptManagerBase<SCRI
     return null
   }
 
-  open fun rawUrlToOurUrl(rawUrl: String) = Urls.parseEncoded(rawUrl)!!
+  open fun rawUrlToOurUrl(rawUrl: String): Url = Urls.parseEncoded(rawUrl)!!
 }

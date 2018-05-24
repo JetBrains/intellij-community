@@ -118,7 +118,7 @@ abstract class RemoteVmConnection<VmT : Vm> : VmConnection<VmT>() {
   }
 }
 
-fun RemoteVmConnection<*>.open(address: InetSocketAddress, processHandler: ProcessHandler) = open(address, Condition<java.lang.Void> { processHandler.isProcessTerminating || processHandler.isProcessTerminated })
+fun RemoteVmConnection<*>.open(address: InetSocketAddress, processHandler: ProcessHandler): Promise<out Vm> = open(address, Condition<java.lang.Void> { processHandler.isProcessTerminating || processHandler.isProcessTerminated })
 
 fun <T> chooseDebuggee(targets: Collection<T>, selectedIndex: Int, renderer: (T, ColoredListCellRenderer<*>) -> Unit): Promise<T> {
   if (targets.size == 1) {

@@ -79,15 +79,15 @@ class KeymapManagerImpl(defaultKeymap: DefaultKeymap, factory: SchemeManagerFact
     var ourKeymapManagerInitialized: Boolean = false
   }
 
-  override fun getAllKeymaps() = getKeymaps(Conditions.alwaysTrue<Keymap>()).toTypedArray()
+  override fun getAllKeymaps(): Array<Keymap> = getKeymaps(Conditions.alwaysTrue<Keymap>()).toTypedArray()
 
-  fun getKeymaps(additionalFilter: Condition<Keymap>) = schemeManager.allSchemes.filter { !it.presentableName.startsWith("$") && additionalFilter.value(it)  }
+  fun getKeymaps(additionalFilter: Condition<Keymap>): List<Keymap> = schemeManager.allSchemes.filter { !it.presentableName.startsWith("$") && additionalFilter.value(it)  }
 
-  override fun getKeymap(name: String) = schemeManager.findSchemeByName(name)
+  override fun getKeymap(name: String): Keymap? = schemeManager.findSchemeByName(name)
 
-  override fun getActiveKeymap() = schemeManager.activeScheme
+  override fun getActiveKeymap(): Keymap? = schemeManager.activeScheme
 
-  override fun setActiveKeymap(keymap: Keymap?) = schemeManager.setCurrent(keymap)
+  override fun setActiveKeymap(keymap: Keymap?): Unit = schemeManager.setCurrent(keymap)
 
   override fun bindShortcuts(sourceActionId: String, targetActionId: String) {
     boundShortcuts.put(targetActionId, sourceActionId)
@@ -97,7 +97,7 @@ class KeymapManagerImpl(defaultKeymap: DefaultKeymap, factory: SchemeManagerFact
     boundShortcuts.remove(targetActionId)
   }
 
-  override fun getBoundActions() = boundShortcuts.keys
+  override fun getBoundActions(): MutableSet<String> = boundShortcuts.keys
 
   override fun getActionBinding(actionId: String): String? {
     var visited: MutableSet<String>? = null
@@ -116,7 +116,7 @@ class KeymapManagerImpl(defaultKeymap: DefaultKeymap, factory: SchemeManagerFact
     return if (id == actionId) null else id
   }
 
-  override fun getSchemeManager() = schemeManager
+  override fun getSchemeManager(): SchemeManager<Keymap> = schemeManager
 
   fun setKeymaps(keymaps: List<Keymap>, active: Keymap?, removeCondition: Condition<Keymap>?) {
     schemeManager.setSchemes(keymaps, active, removeCondition)

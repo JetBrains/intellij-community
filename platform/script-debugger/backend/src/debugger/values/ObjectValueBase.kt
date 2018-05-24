@@ -18,7 +18,7 @@ abstract class ObjectValueBase<VALUE_LOADER : ValueManager>(type: ValueType) : V
     override fun isObsolete() = obsolescent.isObsolete || childrenManager.valueManager.isObsolete
   }
 
-  override fun getProperties(names: List<String>, evaluateContext: EvaluateContext, obsolescent: Obsolescent) = properties
+  override fun getProperties(names: List<String>, evaluateContext: EvaluateContext, obsolescent: Obsolescent): Promise<List<Variable>> = properties
     .thenAsync(object : MyObsolescentAsyncFunction<List<Variable>, List<Variable>>(obsolescent) {
       override fun `fun`(variables: List<Variable>) = getSpecifiedProperties(variables, names, evaluateContext)
     })

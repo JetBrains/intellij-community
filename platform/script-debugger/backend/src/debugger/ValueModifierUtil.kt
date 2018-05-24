@@ -28,7 +28,7 @@ object ValueModifierUtil {
   fun setValue(variable: Variable,
                newValue: String,
                evaluateContext: EvaluateContext,
-               modifier: ValueModifier) = evaluateContext.evaluate(newValue)
+               modifier: ValueModifier): Promise<Any?> = evaluateContext.evaluate(newValue)
     .thenAsyncAccept { modifier.setValue(variable, it.value, evaluateContext) }
 
   fun evaluateGet(variable: Variable,

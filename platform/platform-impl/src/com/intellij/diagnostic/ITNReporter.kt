@@ -47,7 +47,7 @@ open class ITNReporter : ErrorReportSubmitter() {
   /**
    * Used to enable error reporting even in release versions.
    */
-  open fun showErrorInRelease(event: IdeaLoggingEvent) = false
+  open fun showErrorInRelease(event: IdeaLoggingEvent): Boolean = false
 }
 
 fun setPluginInfo(event: IdeaLoggingEvent, errorBean: ErrorBean) {

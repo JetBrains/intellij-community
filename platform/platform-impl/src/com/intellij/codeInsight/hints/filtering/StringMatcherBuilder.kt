@@ -20,7 +20,7 @@ interface StringMatcher {
 }
 
 class StringMatcherImpl(private val matcher: (String) -> Boolean) : StringMatcher {
-  override fun isMatching(text: String) = matcher(text)
+  override fun isMatching(text: String): Boolean = matcher(text)
 }
 
 object StringMatcherBuilder {

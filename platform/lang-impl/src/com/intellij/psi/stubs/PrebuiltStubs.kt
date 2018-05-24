@@ -38,7 +38,7 @@ import java.io.File
  * @author traff
  */
 
-val EP_NAME = "com.intellij.filetype.prebuiltStubsProvider"
+val EP_NAME: String = "com.intellij.filetype.prebuiltStubsProvider"
 
 object PrebuiltStubsProviders : FileTypeExtension<PrebuiltStubsProvider>(EP_NAME)
 
@@ -50,7 +50,7 @@ interface PrebuiltStubsProvider {
 class FileContentHashing {
   private val hashing = Hashing.sha256()
 
-  fun hashString(fileContent: FileContent) = hashing.hashBytes(fileContent.content)!!
+  fun hashString(fileContent: FileContent): HashCode = hashing.hashBytes(fileContent.content)!!
 }
 
 
@@ -60,7 +60,7 @@ class HashCodeDescriptor : HashCodeExternalizers(), KeyDescriptor<HashCode> {
   override fun isEqual(val1: HashCode, val2: HashCode): Boolean = val1 == val2
 
   companion object {
-    val instance = HashCodeDescriptor()
+    val instance: HashCodeDescriptor = HashCodeDescriptor()
   }
 }
 
@@ -84,7 +84,7 @@ class StubTreeExternalizer : DataExternalizer<SerializedStubTree> {
     value.write(out)
   }
 
-  override fun read(`in`: DataInput) = SerializedStubTree(`in`)
+  override fun read(`in`: DataInput): SerializedStubTree = SerializedStubTree(`in`)
 }
 
 abstract class PrebuiltStubsProviderBase : PrebuiltIndexProviderBase<SerializedStubTree>(), PrebuiltStubsProvider {
@@ -93,13 +93,13 @@ abstract class PrebuiltStubsProviderBase : PrebuiltIndexProviderBase<SerializedS
 
   protected abstract val stubVersion: Int
 
-  override val indexName get() = SDK_STUBS_STORAGE_NAME
+  override val indexName: String get() = SDK_STUBS_STORAGE_NAME
 
-  override val indexExternalizer get() = StubTreeExternalizer()
+  override val indexExternalizer: StubTreeExternalizer get() = StubTreeExternalizer()
 
   companion object {
-    val PREBUILT_INDICES_PATH_PROPERTY = "prebuilt_indices_path"
-    val SDK_STUBS_STORAGE_NAME = "sdk-stubs"
+    val PREBUILT_INDICES_PATH_PROPERTY: String = "prebuilt_indices_path"
+    val SDK_STUBS_STORAGE_NAME: String = "sdk-stubs"
     private val LOG = Logger.getInstance("#com.intellij.psi.stubs.PrebuiltStubsProviderBase")
   }
 

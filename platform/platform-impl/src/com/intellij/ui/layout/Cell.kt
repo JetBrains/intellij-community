@@ -39,22 +39,22 @@ abstract class Cell {
    * If this constraint is not set the grow weight is set to 0 and the component will not grow (unless some automatic rule is not applied (see [com.intellij.ui.layout.panel])).
    * Grow weight will only be compared against the weights for the same cell.
    */
-  val growX = CCFlags.growX
+  val growX: CCFlags = CCFlags.growX
   @Suppress("unused")
-  val growY = CCFlags.growY
-  val grow = CCFlags.grow
+  val growY: CCFlags = CCFlags.growY
+  val grow: CCFlags = CCFlags.grow
 
   /**
    * Makes the column that the component is residing in grow with `weight`.
    */
-  val pushX = CCFlags.pushX
+  val pushX: CCFlags = CCFlags.pushX
 
   /**
    * Makes the row that the component is residing in grow with `weight`.
    */
   @Suppress("unused")
-  val pushY = CCFlags.pushY
-  val push = CCFlags.push
+  val pushY: CCFlags = CCFlags.pushY
+  val push: CCFlags = CCFlags.push
 
   fun link(text: String, style: UIUtil.ComponentStyle? = null, action: () -> Unit) {
     val result = Link(text, action = action)

@@ -18,7 +18,7 @@ import com.intellij.util.ObjectUtils.consumeIfCast
 class RunConfigurationHandler : ConfigurationHandler {
 
   companion object {
-    val LOG = Logger.getInstance(RunConfigurationHandler::class.java)
+    val LOG: Logger = Logger.getInstance(RunConfigurationHandler::class.java)
   }
 
   private fun Any?.isTrue(): Boolean = this != null && this is Boolean && this

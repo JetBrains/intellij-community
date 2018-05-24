@@ -57,21 +57,21 @@ fun <T> cancelledPromise(): Promise<T> = InternalPromiseUtil.CANCELLED_PROMISE.v
 interface ObsolescentFunction<Param, Result> : Function<Param, Result>, Obsolescent
 
 abstract class ValueNodeAsyncFunction<PARAM, RESULT>(private val node: Obsolescent) : Function<PARAM, Promise<RESULT>>, Obsolescent {
-  override fun isObsolete() = node.isObsolete
+  override fun isObsolete(): Boolean = node.isObsolete
 }
 
 abstract class ObsolescentConsumer<T>(private val obsolescent: Obsolescent) : Obsolescent, Consumer<T> {
-  override fun isObsolete() = obsolescent.isObsolete
+  override fun isObsolete(): Boolean = obsolescent.isObsolete
 }
 
-inline fun <T, SUB_RESULT> Promise<T>.then(obsolescent: Obsolescent, crossinline handler: (T) -> SUB_RESULT) = then(object : ObsolescentFunction<T, SUB_RESULT> {
+inline fun <T, SUB_RESULT> Promise<T>.then(obsolescent: Obsolescent, crossinline handler: (T) -> SUB_RESULT): Promise<SUB_RESULT> = then(object : ObsolescentFunction<T, SUB_RESULT> {
   override fun `fun`(param: T) = handler(param)
 
   override fun isObsolete() = obsolescent.isObsolete
 })
 
 
-inline fun <T> Promise<T>.onSuccess(node: Obsolescent, crossinline handler: (T) -> Unit) = onSuccess(object : ObsolescentConsumer<T>(node) {
+inline fun <T> Promise<T>.onSuccess(node: Obsolescent, crossinline handler: (T) -> Unit): Promise<T> = onSuccess(object : ObsolescentConsumer<T>(node) {
   override fun accept(param: T) = handler(param)
 })
 
@@ -84,7 +84,7 @@ inline fun Promise<*>.processed(node: Obsolescent, crossinline handler: () -> Un
 }
 
 @Suppress("UNCHECKED_CAST")
-inline fun Promise<*>.doneRun(crossinline handler: () -> Unit) = onSuccess { handler() }
+inline fun Promise<*>.doneRun(crossinline handler: () -> Unit): Promise<out Any> = onSuccess { handler() }
 
 @Suppress("UNCHECKED_CAST")
 inline fun <T> Promise<*>.thenRun(crossinline handler: () -> T): Promise<T> = (this as Promise<Any?>).then { handler() }
@@ -95,7 +95,7 @@ inline fun Promise<*>.processedRun(crossinline handler: () -> Unit): Promise<*> 
 }
 
 
-inline fun <T, SUB_RESULT> Promise<T>.thenAsync(node: Obsolescent, crossinline handler: (T) -> Promise<SUB_RESULT>) = thenAsync(object : ValueNodeAsyncFunction<T, SUB_RESULT>(node) {
+inline fun <T, SUB_RESULT> Promise<T>.thenAsync(node: Obsolescent, crossinline handler: (T) -> Promise<SUB_RESULT>): Promise<SUB_RESULT> = thenAsync(object : ValueNodeAsyncFunction<T, SUB_RESULT>(node) {
   override fun `fun`(param: T) = handler(param)
 })
 
@@ -106,13 +106,13 @@ inline fun <T> Promise<T>.thenAsyncAccept(node: Obsolescent, crossinline handler
   })
 }
 
-inline fun <T> Promise<T>.thenAsyncAccept(crossinline handler: (T) -> Promise<*>) = thenAsync(Function<T, Promise<Any?>> { param ->
+inline fun <T> Promise<T>.thenAsyncAccept(crossinline handler: (T) -> Promise<*>): Promise<Any?> = thenAsync(Function<T, Promise<Any?>> { param ->
   @Suppress("UNCHECKED_CAST")
   (return@Function handler(param) as Promise<Any?>)
 })
 
 
-inline fun Promise<*>.onError(node: Obsolescent, crossinline handler: (Throwable) -> Unit) = onError(object : ObsolescentConsumer<Throwable>(node) {
+inline fun Promise<*>.onError(node: Obsolescent, crossinline handler: (Throwable) -> Unit): Promise<out Any> = onError(object : ObsolescentConsumer<Throwable>(node) {
   override fun accept(param: Throwable) = handler(param)
 })
 

@@ -64,7 +64,7 @@ fun Parent.write(output: OutputStream, lineSeparator: String = "\n", filter: JDO
 }
 
 @Throws(IOException::class, JDOMException::class)
-fun loadElement(chars: CharSequence) = loadElement(CharSequenceReader(chars))
+fun loadElement(chars: CharSequence): Element = loadElement(CharSequenceReader(chars))
 
 @Throws(IOException::class, JDOMException::class)
 fun loadElement(reader: Reader): Element = loadDocument(reader).detachRootElement()
@@ -77,7 +77,7 @@ fun loadElement(path: Path): Element = loadDocument(path.inputStream().bufferedR
 
 fun loadDocument(reader: Reader): Document = reader.use { getSaxBuilder().build(it) }
 
-fun Element?.isEmpty() = this == null || JDOMUtil.isEmpty(this)
+fun Element?.isEmpty(): Boolean = this == null || JDOMUtil.isEmpty(this)
 
 fun Element.getOrCreate(name: String): Element {
   var element = getChild(name)
