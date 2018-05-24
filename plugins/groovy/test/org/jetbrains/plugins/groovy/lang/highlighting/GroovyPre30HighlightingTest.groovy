@@ -15,6 +15,10 @@ class GroovyPre30HighlightingTest extends GrHighlightingTestBase {
     fixture.testHighlighting testName + '.groovy'
   }
 
+  void 'test elvis assignment'() {
+    fixture.testHighlighting testName + '.groovy'
+  }
+
   void 'test safe index access'() {
     fixture.testHighlighting testName + '.groovy'
   }

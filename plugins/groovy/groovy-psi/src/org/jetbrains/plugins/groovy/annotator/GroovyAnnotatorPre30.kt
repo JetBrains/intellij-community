@@ -5,6 +5,7 @@ import com.intellij.lang.annotation.AnnotationHolder
 import org.jetbrains.plugins.groovy.GroovyBundle.message
 import org.jetbrains.plugins.groovy.lang.psi.GroovyElementTypes
 import org.jetbrains.plugins.groovy.lang.psi.GroovyElementVisitor
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrAssignmentExpression
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrBinaryExpression
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.path.GrIndexProperty
 
@@ -16,6 +17,14 @@ internal class GroovyAnnotatorPre30(private val holder: AnnotationHolder) : Groo
     val tokenType = operator.node.elementType
     if (tokenType === GroovyElementTypes.T_ID || tokenType === GroovyElementTypes.T_NID) {
       holder.createErrorAnnotation(operator, message("operator.is.not.supported.in", tokenType))
+    }
+  }
+
+  override fun visitAssignmentExpression(expression: GrAssignmentExpression) {
+    super.visitAssignmentExpression(expression)
+    val operator = expression.operationToken
+    if (operator.node.elementType === GroovyElementTypes.T_ELVIS_ASSIGN) {
+      holder.createErrorAnnotation(operator, message("unsupported.elvis.assignment"))
     }
   }
 
