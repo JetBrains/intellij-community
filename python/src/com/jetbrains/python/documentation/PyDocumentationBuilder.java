@@ -64,6 +64,7 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 import static com.jetbrains.python.documentation.DocumentationBuilderKit.*;
+import static com.jetbrains.python.psi.PyUtil.as;
 
 public class PyDocumentationBuilder {
   private final PsiElement myElement;
@@ -93,8 +94,13 @@ public class PyDocumentationBuilder {
     final TypeEvalContext context = TypeEvalContext.userInitiated(myElement.getProject(), myElement.getContainingFile());
     final PsiElement outerElement = myOriginalElement != null ? myOriginalElement.getParent() : null;
 
-    final PsiElement elementDefinition = resolveToDocStringOwner(context);
-    final boolean isProperty = buildFromProperty(elementDefinition, outerElement, context);
+    PsiElement elementDefinition = resolveToDocStringOwner(context);
+    final PsiElement propertyDefinition = buildFromProperty(elementDefinition, outerElement, context);
+    boolean isProperty = false;
+    if (propertyDefinition != null) {
+      isProperty = true;
+      elementDefinition = propertyDefinition;
+    }
 
     if (elementDefinition instanceof PyDocStringOwner) {
       buildFromDocstring(((PyDocStringOwner)elementDefinition), isProperty);
@@ -210,30 +216,32 @@ public class PyDocumentationBuilder {
     myBody.add(PythonDocumentationProvider.describeParameter(parameter, context));
   }
 
-  private boolean buildFromProperty(PsiElement elementDefinition, @Nullable final PsiElement outerElement,
-                                    @NotNull final TypeEvalContext context) {
+  @Nullable
+  private PsiElement buildFromProperty(@NotNull PsiElement elementDefinition,
+                                       @Nullable PsiElement outerElement,
+                                       @NotNull TypeEvalContext context) {
     if (myOriginalElement == null) {
-      return false;
+      return null;
     }
     final String elementName = myOriginalElement.getText();
     if (!PyNames.isIdentifier(elementName)) {
-      return false;
+      return null;
     }
     if (!(outerElement instanceof PyQualifiedExpression)) {
-      return false;
+      return null;
     }
     final PyExpression qualifier = ((PyQualifiedExpression)outerElement).getQualifier();
     if (qualifier == null) {
-      return false;
+      return null;
     }
     final PyType type = context.getType(qualifier);
     if (!(type instanceof PyClassType)) {
-      return false;
+      return null;
     }
     final PyClass cls = ((PyClassType)type).getPyClass();
     final Property property = cls.findProperty(elementName, true, null);
     if (property == null) {
-      return false;
+      return null;
     }
 
     final AccessDirection direction = AccessDirection.of((PyElement)outerElement);
@@ -241,27 +249,50 @@ public class PyDocumentationBuilder {
     myProlog.addItem("property ").addWith(TagBold, $().addWith(TagCode, $(elementName)))
             .addItem(" of ")
             .add(PythonDocumentationProvider.describeClass(cls, Function.identity(), TO_ONE_LINE_AND_ESCAPE, true, true, context));
-    if (accessor.isDefined() && property.getDoc() != null) {
-      myContent.add(formatDocString(elementDefinition, property.getDoc()));
+
+    // Choose appropriate docstring
+    String docstring = null;
+    if (property.getDoc() != null) {
+      docstring = property.getDoc();
     }
-    else {
-      final PyCallable getter = property.getGetter().valueOrNull();
-      if (getter != null && getter != myElement && getter instanceof PyFunction) {
-        // not in getter, getter's doc comment may be useful
-        final PyStringLiteralExpression docstring = getEffectiveDocStringExpression((PyFunction)getter);
-        if (docstring != null) {
-          mySectionsMap.get(PyBundle.message("QDOC.documentation.is.copied.from")).addItem("property getter");
-          myContent.add(formatDocString(elementDefinition, docstring.getStringValue()));
+    if (docstring == null) {
+      final PyFunction accessorFunc = as(accessor.valueOrNull(), PyFunction.class);
+      if (accessorFunc != null) {
+        final PyStringLiteralExpression accessorDocstring = getEffectiveDocStringExpression(accessorFunc);
+        if (accessorDocstring != null) {
+          docstring = accessorDocstring.getStringValue();
         }
       }
     }
-    if (accessor.isDefined() && accessor.value() == null) elementDefinition = null;
+    if (docstring == null && direction != AccessDirection.READ) {
+      final PyFunction getter = as(property.getGetter().valueOrNull(), PyFunction.class);
+      if (getter != null) {
+        // not in getter, getter's doc comment may be useful
+        final PyStringLiteralExpression getterDocstring = getEffectiveDocStringExpression(getter);
+        if (getterDocstring != null) {
+          mySectionsMap.get(PyBundle.message("QDOC.documentation.is.copied.from")).addItem("property getter");
+          docstring = getterDocstring.getStringValue();
+        }
+      }
+    }
+    if (docstring != null) {
+      myContent.add(formatDocString(elementDefinition, docstring));
+    }
     final String accessorKind = getAccessorKind(direction);
     mySectionsMap.get(PyBundle.message("QDOC.accessor.kind"))
                  .addItem(accessorKind)
-                 .addItem(elementDefinition == null ? " (not defined)" : "");
+                 .addItem(accessor.valueOrNull() == null ? " (not defined)" : "");
 
-    return true;
+    // Choose appropriate definition to display
+    if (accessor.valueOrNull() != null) {
+      return accessor.value();
+    }
+    else if (property.getGetter().valueOrNull() != null) {
+      return property.getGetter().value();
+    }
+    else {
+      return property.getDefinitionSite();
+    }
   }
 
   @NotNull
@@ -281,9 +312,8 @@ public class PyDocumentationBuilder {
 
   private void buildFromDocstring(@NotNull final PyDocStringOwner elementDefinition, boolean isProperty) {
     PyClass pyClass = null;
-    final PyFunction pyFunction;
     final PyStringLiteralExpression docStringExpression = getEffectiveDocStringExpression(elementDefinition);
-    if (docStringExpression != null) {
+    if (docStringExpression != null && !isProperty) {
       myContent.add(formatDocString(myElement, docStringExpression.getStringValue()));
     }
     final TypeEvalContext context = TypeEvalContext.userInitiated(elementDefinition.getProject(), elementDefinition.getContainingFile());
@@ -295,7 +325,7 @@ public class PyDocumentationBuilder {
         .add(PythonDocumentationProvider.describeClass(pyClass, WRAP_IN_BOLD, ESCAPE_AND_SAVE_NEW_LINES_AND_SPACES, false, true, context));
     }
     else if (elementDefinition instanceof PyFunction) {
-      pyFunction = (PyFunction)elementDefinition;
+      final PyFunction pyFunction = (PyFunction)elementDefinition;
       if (!isProperty) {
         pyClass = pyFunction.getContainingClass();
         if (pyClass != null) {
@@ -308,7 +338,7 @@ public class PyDocumentationBuilder {
       }
       myBody.add(PythonDocumentationProvider.describeDecorators(pyFunction, WRAP_IN_ITALIC, ESCAPE_AND_SAVE_NEW_LINES_AND_SPACES, BR, BR));
       myBody.add(PythonDocumentationProvider.describeFunction(pyFunction, WRAP_IN_BOLD, ESCAPE_AND_SAVE_NEW_LINES_AND_SPACES, context));
-      if (docStringExpression == null) {
+      if (docStringExpression == null && !isProperty) {
         addInheritedDocString(pyFunction, pyClass);
       }
     }
@@ -316,8 +346,8 @@ public class PyDocumentationBuilder {
       addModulePath((PyFile)elementDefinition);
     }
     else if (elementDefinition instanceof PyTargetExpression) {
-      PyTargetExpression target = (PyTargetExpression)elementDefinition;
-      if (isAttribute()) {
+      final PyTargetExpression target = (PyTargetExpression)elementDefinition;
+      if (isAttribute() && !isProperty) {
         final String type = PyUtil.isInstanceAttribute(target) ? "Instance attribute " : "Class attribute ";
         myProlog
           .addItem(type)
@@ -527,7 +557,7 @@ public class PyDocumentationBuilder {
       return expression;
     }
     final PsiElement original = PyiUtil.getOriginalElement(owner);
-    final PyDocStringOwner originalOwner = PyUtil.as(original, PyDocStringOwner.class);
+    final PyDocStringOwner originalOwner = as(original, PyDocStringOwner.class);
     return originalOwner != null ? originalOwner.getDocStringExpression() : null;
   }
 
