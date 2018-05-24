@@ -1,6 +1,7 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.groovy.lang.psi.impl;
 
+import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiClass;
@@ -52,7 +53,7 @@ public class GroovyDirectInheritorsSearcher implements QueryExecutor<PsiClass, D
   @Override
   public boolean execute(@NotNull final DirectClassInheritorsSearch.SearchParameters queryParameters, @NotNull final Processor<? super PsiClass> consumer) {
     final PsiClass clazz = queryParameters.getClassToProcess();
-    final SearchScope scope = queryParameters.getScope();
+    SearchScope scope = ReadAction.compute(() -> queryParameters.getScope().intersectWith(clazz.getUseScope()));
     Project project = PsiUtilCore.getProjectInReadAction(clazz);
     GlobalSearchScope globalSearchScope = GlobalSearchScopeUtil.toGlobalSearchScope(scope, project);
     DumbService dumbService = DumbService.getInstance(project);
