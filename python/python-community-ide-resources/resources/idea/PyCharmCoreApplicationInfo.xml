@@ -1,5 +1,5 @@
 <component>
-  <version major="2016" minor="3.5" eap="false"/>
+  <version major="2016" minor="3.6" eap="false"/>
   <company name="JetBrains s.r.o." url="https://www.jetbrains.com/?fromIDE"/>
   <build number="__BUILD_NUMBER__" date="__BUILD_DATE__"/>
   <logo url="/pycharm_core_logo.png" textcolor="dddddd" progressColor="08f5d6" progressX="114" progressY="278" progressHeight="3"/>
