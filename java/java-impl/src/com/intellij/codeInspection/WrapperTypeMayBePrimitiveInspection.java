@@ -174,6 +174,7 @@ public class WrapperTypeMayBePrimitiveInspection extends AbstractBaseJavaLocalIn
         if (method == null) return true;
         PsiParameter[] parameters = method.getParameterList().getParameters();
         int parameterIndex = parameters.length < argumentsIndex + 1 ? parameters.length - 1 : argumentsIndex;
+        if (parameterIndex < 0) return false;
         PsiParameter parameter = parameters[parameterIndex];
         PsiType type = parameter.getType();
         if (type instanceof PsiPrimitiveType) {
