@@ -6,5 +6,5 @@ import com.intellij.util.xmlb.annotations.OptionTag
 
 open class JavaScratchConfigurationOptions: ApplicationConfigurationOptions() {
   @get:OptionTag("SCRATCH_FILE_URL")
-  open var scratchFileUrl by string()
+  open var scratchFileUrl: String? by string()
 }

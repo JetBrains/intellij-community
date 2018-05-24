@@ -14,7 +14,6 @@
  * limitations under the License.
  */
 
-
 package com.intellij.execution.ui
 
 import com.intellij.application.options.ModuleDescriptionsComboBox
@@ -36,7 +35,6 @@ import com.intellij.ui.EditorTextFieldWithBrowseButton
 /**
  * @author nik
  */
-
 abstract class DefaultJreSelector {
   companion object {
     @JvmStatic
@@ -105,7 +103,6 @@ abstract class DefaultJreSelector {
       })
     }
   }
-
 }
 
 private fun <T: ComboBox<*>> isClassInProductionSources(moduleSelector: T, getSelectedModule: (T) -> Module?, classSelector: EditorTextFieldWithBrowseButton): Boolean {

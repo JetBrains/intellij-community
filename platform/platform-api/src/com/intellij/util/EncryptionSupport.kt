@@ -24,9 +24,9 @@ import javax.crypto.spec.SecretKeySpec
 
 // opposite to PropertiesEncryptionSupport, we store iv length, but not body length
 open class EncryptionSupport(private val key: Key = SecretKeySpec(generateAesKey(), "AES")) {
-  open fun encrypt(data: ByteArray, size: Int = data.size) = encrypt(data, size, key)
+  open fun encrypt(data: ByteArray, size: Int = data.size): ByteArray = encrypt(data, size, key)
 
-  open fun decrypt(data: ByteArray) = decrypt(data, key)
+  open fun decrypt(data: ByteArray): ByteArray = decrypt(data, key)
 }
 
 fun generateAesKey(): ByteArray {
