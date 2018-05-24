@@ -22,21 +22,22 @@ import com.intellij.execution.util.ExecUtil;
 import com.intellij.ide.actions.*;
 import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.internal.statistic.analytics.StudioCrashDetails;
-import com.intellij.internal.statistic.analytics.StudioCrashDetection;
 import com.intellij.internal.statistic.utils.StatisticsUploadAssistant;
+import com.intellij.internal.statistic.analytics.StudioCrashDetection;
 import com.intellij.jna.JnaLoader;
 import com.intellij.notification.*;
 import com.intellij.notification.impl.NotificationFullContent;
 import com.intellij.openapi.actionSystem.ActionManager;
 import com.intellij.openapi.actionSystem.AnActionEvent;
-import com.intellij.openapi.actionSystem.Presentation;
 import com.intellij.openapi.actionSystem.ex.ActionUtil;
+import com.intellij.openapi.actionSystem.Presentation;
 import com.intellij.openapi.application.*;
 import com.intellij.openapi.components.ApplicationComponent;
 import com.intellij.openapi.diagnostic.ErrorReportSubmitter;
 import com.intellij.openapi.diagnostic.IdeaLoggingEvent;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.actionSystem.EditorAction;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.SystemInfoRt;
@@ -49,7 +50,6 @@ import com.sun.jna.Library;
 import com.sun.jna.Memory;
 import com.sun.jna.Native;
 import com.sun.jna.Pointer;
-import org.HdrHistogram.Histogram;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -96,12 +96,6 @@ public class SystemHealthMonitor implements ApplicationComponent {
   @NonNls private static final String BUNDLED_PLUGINS_EXCEPTION_COUNT_FILE = "studio.exb";
   @NonNls private static final String NON_BUNDLED_PLUGINS_EXCEPTION_COUNT_FILE = "studio.exp";
 
-  /**
-   * Histogram of event timings, in milliseconds. Must be accessed from the EDT.
-   */
-  private static final Histogram myEventDurationsMs = new Histogram(1);
-  /** Maximum freeze duration to record. Longer freeze durations are truncated to keep the size of the histogram bounded. */
-  private static final long MAX_EVENT_DURATION = 30 * 60 * 1000;
   private final ThreadDumpsDatabase myThreadDumpsDatabase = new ThreadDumpsDatabase(new File(PathManager.getTempPath(), "threads.dmp"));
 
   private static final Object ACTION_INVOCATIONS_LOCK = new Object();
@@ -113,10 +107,6 @@ public class SystemHealthMonitor implements ApplicationComponent {
 
   public SystemHealthMonitor(@NotNull PropertiesComponent properties) {
     myProperties = properties;
-  }
-
-  public static void recordEventTime(int interval, long durationMs) {
-    myEventDurationsMs.recordValueWithCount(Math.min(durationMs, MAX_EVENT_DURATION), interval);
   }
 
   @Override
@@ -639,19 +629,6 @@ public class SystemHealthMonitor implements ApplicationComponent {
                                                          .setInvocations(invocationEntry.getCount())));
       }
     }
-
-    // Move to the EDT since myEventDurationsMs structure can only be accessed from that thread.
-    ApplicationManager.getApplication().invokeLater(() -> {
-      StudioPerformanceStats.Builder statsProto =
-        StudioPerformanceStats.newBuilder()
-                              .setEventServiceTimeSamplePeriod(IdeEventQueue.EVENT_TIMING_INTERVAL)
-                              .setEventServiceTimeMs(HistogramUtil.toProto(myEventDurationsMs));
-      UsageTracker.getInstance().log(AndroidStudioEvent.newBuilder()
-                                                       .setCategory(EventCategory.STUDIO_UI)
-                                                       .setKind(EventKind.STUDIO_PERFORMANCE_STATS)
-                                                       .setStudioPerformanceStats(statsProto));
-      myEventDurationsMs.reset();
-    });
   }
 
   /**
