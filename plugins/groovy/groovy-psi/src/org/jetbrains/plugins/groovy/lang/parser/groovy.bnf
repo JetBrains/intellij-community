@@ -999,7 +999,7 @@ private cast_expression_pin ::= '(' capital_type_element ')' priority1_4 { pin =
 private cast_expression_no_pin ::= '(' type_element ')' priority1_4
 
 private priority1_5 ::= index_expression | postfix_unary_expression
-index_expression ::= expression '?'? index_expression_argument_list
+index_expression ::= expression mb_question index_expression_argument_list
 index_expression_argument_list ::= !empty_map '[' bracket_argument_list_inner ']'
 {
   pin = 2
@@ -1099,7 +1099,7 @@ left application_ref ::= IDENTIFIER | simple_literal_tokens
 }
 left application_expression ::= application_argument_list
 left application_call ::= call_argument_list lazy_closure* | empty_argument_list lazy_closure+ { elementType = method_call_expression }
-left application_index ::= index_expression_argument_list
+left application_index ::= mb_question index_expression_argument_list
 // endregion
 
 
@@ -1229,6 +1229,8 @@ private nl ::= NL { consumeTokenMethod = 'consumeTokenFast' }
 // FIXME this rule allows error reporting in position before the new line
 private meta mb_nl_group ::= <<something>> | <<withProtectedLastVariantPos (nl <<something>>)>>
 private empty ::= ()
+
+private mb_question ::= '?'? { consumeTokenMethod = 'consumeTokenFast' }
 
 private fast_colon ::= ':'
 private fast_comma ::= ','

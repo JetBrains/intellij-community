@@ -856,12 +856,13 @@ public class GroovyGeneratedParser implements PsiParser, LightPsiParser {
   }
 
   /* ********************************************************** */
-  // index_expression_argument_list
+  // mb_question index_expression_argument_list
   public static boolean application_index(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "application_index")) return false;
     boolean r;
     Marker m = enter_section_(b, l, _LEFT_, APPLICATION_INDEX, "<application index>");
-    r = index_expression_argument_list(b, l + 1);
+    r = mb_question(b, l + 1);
+    r = r && index_expression_argument_list(b, l + 1);
     exit_section_(b, l, m, r, false, null);
     return r;
   }
@@ -3882,6 +3883,14 @@ public class GroovyGeneratedParser implements PsiParser, LightPsiParser {
     r = r && _something.parse(b, l);
     exit_section_(b, m, null, r);
     return r;
+  }
+
+  /* ********************************************************** */
+  // '?'?
+  static boolean mb_question(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "mb_question")) return false;
+    consumeTokenFast(b, T_Q);
+    return true;
   }
 
   /* ********************************************************** */
@@ -6969,22 +6978,15 @@ public class GroovyGeneratedParser implements PsiParser, LightPsiParser {
     return r;
   }
 
-  // '?'? index_expression_argument_list
+  // mb_question index_expression_argument_list
   private static boolean index_expression_0(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "index_expression_0")) return false;
     boolean r;
     Marker m = enter_section_(b);
-    r = index_expression_0_0(b, l + 1);
+    r = mb_question(b, l + 1);
     r = r && index_expression_argument_list(b, l + 1);
     exit_section_(b, m, null, r);
     return r;
-  }
-
-  // '?'?
-  private static boolean index_expression_0_0(PsiBuilder b, int l) {
-    if (!recursion_guard_(b, l, "index_expression_0_0")) return false;
-    consumeTokenSmart(b, T_Q);
-    return true;
   }
 
   // '++' | '--'
