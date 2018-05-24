@@ -81,6 +81,14 @@ class ExpressionsParsingTest extends GroovyParsingTestCase {
 
   void testconditional$elvis2() throws Throwable { doTest() }
 
+  void testconditional$ternaryQuestionOnly() { doTest() }
+
+  void testconditional$ternaryWithoutElse() { doTest() }
+
+  void testconditional$ternaryWithoutThen() { doTest() }
+
+  void testconditional$ternaryWithoutThenElse() { doTest() }
+
   void testerrors$err_final() throws Throwable { doTest() }
 
   void testgstring$daniel_sun() throws Throwable { doTest() }
@@ -609,4 +617,26 @@ class ExpressionsParsingTest extends GroovyParsingTestCase {
   void testspecial$mapHang() { doTest() }
 
   void testindexpropertyWithUnfinishedInvokedExpression() { doTest() }
+
+  void testindex$safeIndex() { doTest() }
+
+  void testindex$safeIndexEmpty() { doTest() }
+
+  void testindex$safeIndexEmptyMap() { doTest() }
+
+  void testindex$safeIndexLBrack() { doTest() }
+
+  void testindex$safeIndexMap() { doTest() }
+
+  void testindex$safeIndexNoRBrack() { doTest() }
+
+  void testindex$safeIndexVsTernary() { doTest() }
+
+  void testindex$safeIndexVsTernary2() { doTest() }
+
+  void testindex$safeIndexVsTernary3() { doTest() }
+
+  void testindex$safeIndexNewLineAfterQ() { doTest() }
+
+  void testindex$safeIndexNewLineBeforeQ() { doTest() }
 }

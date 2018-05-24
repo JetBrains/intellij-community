@@ -952,9 +952,9 @@ list_or_map ::= empty_list | empty_map | non_empty_list_or_map
   extends = expression
 }
 
-private empty_map ::= '[' mb_nl ':' mb_nl ']'
-private empty_list ::= '[' mb_nl ']'
-private non_empty_list_or_map ::= '[' bracket_argument_list_inner ']'
+private empty_map ::= '[' mb_nl fast_colon mb_nl ']' { consumeTokenMethod='consumeTokenFast' }
+private empty_list ::= '[' mb_nl ']' { consumeTokenMethod='consumeTokenFast' }
+private non_empty_list_or_map ::= '[' bracket_argument_list_item bracket_argument_list_inner ']'
 {
   pin = 2
 }
@@ -999,7 +999,7 @@ private cast_expression_pin ::= '(' capital_type_element ')' priority1_4 { pin =
 private cast_expression_no_pin ::= '(' type_element ')' priority1_4
 
 private priority1_5 ::= index_expression | postfix_unary_expression
-index_expression ::= expression index_expression_argument_list
+index_expression ::= expression '?'? index_expression_argument_list
 index_expression_argument_list ::= !empty_map '[' bracket_argument_list_inner ']'
 {
   pin = 2
@@ -1057,7 +1057,9 @@ land_expression ::= expression '&&' mb_nl expression
 lor_expression ::= expression '||' mb_nl expression
 
 private conditionals ::= ternary_expression | elvis_expression
-ternary_expression ::= expression '?' mb_nl priority15 mb_nl ':' mb_nl conditionals
+ternary_expression ::= expression (ternary_tail_pin | ternary_tail)
+private ternary_tail_pin ::= '?' mb_nl !'[' expression mb_nl ':' mb_nl conditionals { pin = 3 consumeTokenMethod = 'consumeTokenFast' }
+private ternary_tail ::= '?' mb_nl expression mb_nl ':' mb_nl conditionals { pin = 5 consumeTokenMethod = 'consumeTokenFast' }
 elvis_expression ::= expression '?:' mb_nl expression
 {
   rightAssociative = true
@@ -1228,6 +1230,7 @@ private nl ::= NL { consumeTokenMethod = 'consumeTokenFast' }
 private meta mb_nl_group ::= <<something>> | <<withProtectedLastVariantPos (nl <<something>>)>>
 private empty ::= ()
 
+private fast_colon ::= ':'
 private fast_comma ::= ','
 private fast_l_angle ::= '<'
 // endregion
