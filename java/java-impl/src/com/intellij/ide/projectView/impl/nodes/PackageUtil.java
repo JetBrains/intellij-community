@@ -169,6 +169,11 @@ public class PackageUtil {
              aPackage == null ? defaultShortName : aPackage.getQualifiedName();
     }
     else if (parentPackageInTree != null || aPackage != null && aPackage.getParentPackage() != null) {
+      if (parentPackageInTree != null && aPackage != null) {
+        String prefix = parentPackageInTree.getQualifiedName();
+        String string = aPackage.getQualifiedName();
+        if (string.startsWith(prefix)) return string.substring(prefix.length());
+      }
       PsiPackage parentPackage = aPackage.getParentPackage();
       final StringBuilder buf = new StringBuilder();
       buf.append(aPackage.getName());
