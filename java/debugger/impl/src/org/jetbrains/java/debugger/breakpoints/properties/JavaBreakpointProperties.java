@@ -41,7 +41,7 @@ public class JavaBreakpointProperties<T extends JavaBreakpointProperties> extend
   }
 
   public void addInstanceFilter(long l) {
-    InstanceFilter newFilter = InstanceFilter.create(String.valueOf(l));
+    InstanceFilter newFilter = InstanceFilter.create(l);
     if (myInstanceFilters == null) {
       myInstanceFilters = new InstanceFilter[] {newFilter};
     }
