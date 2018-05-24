@@ -34,6 +34,7 @@ public interface GroovyTokenSets {
 
   TokenSet ASSIGNMENT_OPERATORS = create(
     T_ASSIGN,
+    T_ELVIS_ASSIGN,
     T_POW_ASSIGN,
     T_STAR_ASSIGN,
     T_DIV_ASSIGN,

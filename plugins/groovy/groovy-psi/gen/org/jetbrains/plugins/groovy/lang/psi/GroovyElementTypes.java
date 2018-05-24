@@ -253,6 +253,7 @@ public interface GroovyElementTypes {
   IElementType T_DOT = new GroovyElementType(".");
   IElementType T_ELLIPSIS = new GroovyElementType("...");
   IElementType T_ELVIS = new GroovyElementType("?:");
+  IElementType T_ELVIS_ASSIGN = new GroovyElementType("?=");
   IElementType T_EQ = new GroovyElementType("==");
   IElementType T_GE = new GroovyElementType(">=");
   IElementType T_GT = new GroovyElementType(">");

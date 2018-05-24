@@ -471,6 +471,7 @@ mGSTRING_LITERAL = {mDOUBLE_QUOTED_LITERAL} | {mTRIPLE_DOUBLE_QUOTED_LITERAL}
 "<<="                                     { return storeToken(T_LSH_ASSIGN); }
 "<="                                      { return storeToken(T_LE); }
 "?:"                                      { return storeToken(T_ELVIS); }
+"?="                                      { return storeToken(T_ELVIS_ASSIGN); }
 "<"                                       { return storeToken(T_LT); }
 "^"                                       { return storeToken(T_XOR); }
 "^="                                      { return storeToken(T_XOR_ASSIGN); }

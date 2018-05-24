@@ -522,6 +522,12 @@ class ExpressionsParsingTest extends GroovyParsingTestCase {
 
   void testbinary$identity() { doTest() }
 
+  void testbinary$elvisAssign() { doTest() }
+
+  void testbinary$elvisAssignNewLine() { doTest() }
+
+  void testbinary$elvisAssignWithoutRValue() { doTest() }
+
   void testcommandExpr$closureArg() { doTest() }
 
   void testcommandExpr$simple() { doTest() }
