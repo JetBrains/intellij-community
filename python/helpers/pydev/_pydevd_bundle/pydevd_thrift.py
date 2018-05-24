@@ -2,13 +2,13 @@ import sys
 import traceback
 
 from _pydev_bundle import pydev_log
-from _pydev_bundle.pydev_imports import quote
 from _pydevd_bundle import pydevd_extension_utils
 from _pydevd_bundle import pydevd_resolver
 from _pydevd_bundle.pydevd_constants import dict_iter_items, dict_keys, IS_PY3K, \
     BUILTINS_MODULE_NAME, MAXIMUM_VARIABLE_REPRESENTATION_SIZE, RETURN_VALUES_DICT, LOAD_VALUES_ASYNC, \
     DEFAULT_VALUE
 from _pydevd_bundle.pydevd_extension_api import TypeResolveProvider, StrPresentationProvider
+from pydev_console.thrift_communication import console_thrift
 
 try:
     import types
@@ -287,7 +287,7 @@ def frame_vars_to_struct(frame_f_locals, hidden_ns=None):
 def var_to_struct(val, name, doTrim=True, additional_in_xml='', evaluate_full_value=True):
     """ single variable or dictionary to Thrift struct representation """
 
-    debug_value = python_console_thrift.DebugValue()
+    debug_value = console_thrift.DebugValue()
 
     try:
         # This should be faster than isinstance (but we have to protect against not having a '__class__' attribute).
@@ -340,11 +340,6 @@ def var_to_struct(val, name, doTrim=True, additional_in_xml='', evaluate_full_va
                 value = repr(v)
             except:
                 value = 'Unable to get repr for %s' % v.__class__
-
-    try:
-        name = quote(name, '/>_= ')  # TODO: Fix PY-5834 without using quote
-    except:
-        pass
 
     debug_value.name = name
     debug_value.type = typeName
