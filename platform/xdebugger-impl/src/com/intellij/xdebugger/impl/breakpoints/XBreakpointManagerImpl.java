@@ -104,7 +104,7 @@ public class XBreakpointManagerImpl implements XBreakpointManager {
                                                                                       boolean defaultBreakpoint) {
     BreakpointState<?,T,?> state = new BreakpointState<>(enabled,
                                                          type.getId(),
-                                                         defaultBreakpoint ? 0 : myTime++, type.getDefaultSuspendPolicy());
+                                                         defaultBreakpoint ? 0 : ++myTime, type.getDefaultSuspendPolicy());
     getBreakpointDefaults(type).applyDefaults(state);
     state.setGroup(myDefaultGroup);
     return new XBreakpointBase<XBreakpoint<T>,T, BreakpointState<?,T,?>>(type, this, properties, state);
@@ -200,7 +200,7 @@ public class XBreakpointManagerImpl implements XBreakpointManager {
                                                                                 boolean temporary) {
     ApplicationManager.getApplication().assertWriteAccessAllowed();
     LineBreakpointState<T> state = new LineBreakpointState<>(true, type.getId(), fileUrl, line, temporary,
-                                                             myTime++, type.getDefaultSuspendPolicy());
+                                                             ++myTime, type.getDefaultSuspendPolicy());
     getBreakpointDefaults(type).applyDefaults(state);
     state.setGroup(myDefaultGroup);
     XLineBreakpointImpl<T> breakpoint = new XLineBreakpointImpl<>(type, this, properties,
@@ -357,7 +357,6 @@ public class XBreakpointManagerImpl implements XBreakpointManager {
     state.setBreakpointsDefaults(breakpointsDefaults);
 
     state.setBreakpointsDialogProperties(myBreakpointsDialogSettings);
-    state.setTime(myTime);
     state.setDefaultGroup(myDefaultGroup);
     return state;
   }
@@ -418,7 +417,6 @@ public class XBreakpointManagerImpl implements XBreakpointManager {
       myDependentBreakpointManager.loadState();
     });
     myLineBreakpointManager.updateBreakpointsUI();
-    myTime = state.getTime();
     myDefaultGroup = state.getDefaultGroup();
   }
 
@@ -442,6 +440,7 @@ public class XBreakpointManagerImpl implements XBreakpointManager {
     if (breakpoint != null) {
       addBreakpoint(breakpoint, defaultBreakpoint, false);
     }
+    myTime = Math.max(myTime, breakpointState.getTimeStamp());
   }
 
   public XBreakpointsDialogState getBreakpointsDialogSettings() {
