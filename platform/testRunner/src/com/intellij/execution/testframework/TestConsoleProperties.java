@@ -195,6 +195,11 @@ public abstract class TestConsoleProperties extends StoringPropertyContainer imp
     return myConsole;
   }
 
+  @Nullable
+  public ConsoleView createInnerConsole() {
+    return null;
+  }
+
   public boolean isUsePredefinedMessageFilter() {
     return myUsePredefinedMessageFilter;
   }

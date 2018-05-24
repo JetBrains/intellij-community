@@ -22,6 +22,7 @@ import com.intellij.execution.ui.ConsoleViewContentType;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.UserDataHolderBase;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.util.concurrency.SequentialTaskExecutor;
@@ -321,6 +322,18 @@ public class CompositePrintable extends UserDataHolderBase implements Printable,
 
       @Override
       public void mark() {}
+
+      @Override
+      public void printWithAnsiColoring(@NotNull String text, @NotNull Key processOutputType) {
+        // Write text to a file as a single chunk. ANSI coloring will be applied when reading the file.
+        print(text, ConsoleViewContentType.getConsoleViewType(processOutputType));
+      }
+
+      @Override
+      public void printWithAnsiColoring(@NotNull String text, @NotNull ConsoleViewContentType contentType) {
+        // Write text to a file as a single chunk. ANSI coloring will be applied when reading the file.
+        print(text, contentType);
+      }
     }
 
     private void readFileContentAndPrint(Printer printer, @Nullable File file, List<Printable> nestedPrintables) {
@@ -343,7 +356,9 @@ public class CompositePrintable extends UserDataHolderBase implements Printable,
               else {
                 ConsoleViewContentType contentType = contentTypeByNameMap.getOrDefault(firstToken, ConsoleViewContentType.NORMAL_OUTPUT);
                 String text = IOUtil.readString(reader);
-                printText(printer, text, contentType);
+                if (text != null) {
+                  printer.printWithAnsiColoring(text, contentType);
+                }
               }
               lineNum++;
             }
@@ -362,15 +377,6 @@ public class CompositePrintable extends UserDataHolderBase implements Printable,
       for (int i = 0; i < nestedPrintables.size(); i++) {
         if (i == getExceptionMark() && i > 0) printer.mark();
         nestedPrintables.get(i).printOn(printer);
-      }
-    }
-
-    private void printText(Printer printer, String text, ConsoleViewContentType contentType) {
-      if (ConsoleViewContentType.NORMAL_OUTPUT.equals(contentType)) {
-        printer.printWithAnsiColoring(text, contentType);
-      }
-      else {
-        printer.print(text, contentType);
       }
     }
 

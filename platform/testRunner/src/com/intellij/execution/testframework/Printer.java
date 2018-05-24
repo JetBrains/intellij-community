@@ -26,13 +26,22 @@ public interface Printer {
   }
 
   default void printWithAnsiColoring(@NotNull String text, @NotNull ConsoleViewContentType contentType) {
-    AnsiEscapeDecoder decoder = new AnsiEscapeDecoder();
-    decoder.escapeText(text, ProcessOutputTypes.STDOUT, (text1, attributes) -> {
+    Key outputType;
+    if (contentType == ConsoleViewContentType.NORMAL_OUTPUT) {
+      outputType = ProcessOutputTypes.STDOUT;
+    }
+    else if (contentType == ConsoleViewContentType.ERROR_OUTPUT) {
+      outputType = ProcessOutputTypes.STDERR;
+    }
+    else {
+      // Any contentType other than NORMAL_OUTPUT or ERROR_OUTPUT is either already ANSI-color-contentType
+      // or a specific contentType where ANSI coloring is not supported.
+      print(text, contentType);
+      return;
+    }
+    new AnsiEscapeDecoder().escapeText(text, outputType, (textChunk, attributes) -> {
       ConsoleViewContentType viewContentType = ConsoleViewContentType.getConsoleViewType(attributes);
-      if (viewContentType == null) {
-        viewContentType = contentType;
-      }
-      print(text1, viewContentType);
+      print(textChunk, viewContentType);
     });
   }
 }

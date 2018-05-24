@@ -20,6 +20,8 @@ import com.intellij.execution.testframework.*;
 import com.intellij.execution.ui.ConsoleView;
 import com.intellij.execution.ui.ConsoleViewContentType;
 import com.intellij.openapi.Disposable;
+import com.intellij.openapi.util.Key;
+import com.intellij.terminal.TerminalExecutionConsole;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -147,5 +149,27 @@ public class TestsOutputConsolePrinter implements Printer, Disposable {
         myConsole.scrollTo(myMarkOffset);
       }
     });
+  }
+
+  @Override
+  public void printWithAnsiColoring(@NotNull String text, @NotNull Key processOutputType) {
+    if (myConsole instanceof TerminalExecutionConsole) {
+      // Terminal console handles ANSI escape sequences itself
+      print(text, ConsoleViewContentType.getConsoleViewType(processOutputType));
+    }
+    else {
+      Printer.super.printWithAnsiColoring(text, processOutputType);
+    }
+  }
+
+  @Override
+  public void printWithAnsiColoring(@NotNull String text, @NotNull ConsoleViewContentType contentType) {
+    if (myConsole instanceof TerminalExecutionConsole) {
+      // Terminal console handles ANSI escape sequences itself
+      print(text, contentType);
+    }
+    else {
+      Printer.super.printWithAnsiColoring(text, contentType);
+    }
   }
 }
