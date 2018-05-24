@@ -102,14 +102,14 @@ internal fun getAdditionalArgumentsPropertyName() = com.jetbrains.python.testing
 /**
  * If runner name is here that means test runner only can run inheritors for TestCase
  */
-val RunnersThatRequireTestCaseClass = setOf<String>(PythonTestConfigurationsModel.PYTHONS_UNITTEST_NAME,
-                                                    PyTestFrameworkService.getSdkReadableNameByFramework(PyNames.TRIAL_TEST))
+val RunnersThatRequireTestCaseClass: Set<String> = setOf<String>(PythonTestConfigurationsModel.PYTHONS_UNITTEST_NAME,
+                                                                 PyTestFrameworkService.getSdkReadableNameByFramework(PyNames.TRIAL_TEST))
 
 /**
  * Checks if element could be test target
  * @param testCaseClassRequired see [PythonUnitTestUtil] docs
  */
-fun isTestElement(element: PsiElement, testCaseClassRequired: ThreeState, typeEvalContext: TypeEvalContext) = when (element) {
+fun isTestElement(element: PsiElement, testCaseClassRequired: ThreeState, typeEvalContext: TypeEvalContext): Boolean = when (element) {
   is PyFile -> PythonUnitTestUtil.isTestFile(element, testCaseClassRequired, typeEvalContext)
   is com.intellij.psi.PsiDirectory -> element.name.contains("test", true) || element.children.any {
     it is PyFile && PythonUnitTestUtil.isTestFile(it, testCaseClassRequired, typeEvalContext)
@@ -212,7 +212,7 @@ object PyTestsLocator : SMTestLocator {
                            path: String,
                            metainfo: String?,
                            project: Project,
-                           scope: GlobalSearchScope) = getLocationInternal(protocol, path, project, metainfo, scope)
+                           scope: GlobalSearchScope): List<Location<out PsiElement>> = getLocationInternal(protocol, path, project, metainfo, scope)
 
   override fun getLocation(protocol: String, path: String, project: Project, scope: GlobalSearchScope): List<Location<out PsiElement>> {
     return getLocationInternal(protocol, path, project, null, scope)
@@ -305,7 +305,7 @@ data class ConfigurationTarget(@ConfigField override var target: String,
     }
   }
 
-  fun asPsiElement(configuration: PyAbstractTestConfiguration) =
+  fun asPsiElement(configuration: PyAbstractTestConfiguration): PsiElement? =
     asPsiElement(configuration, configuration.getWorkingDirectoryAsVirtual())
 
   fun generateArgumentsLine(configuration: PyAbstractTestConfiguration): List<String> =
@@ -411,17 +411,17 @@ abstract class PyAbstractTestConfiguration(project: Project,
   : AbstractPythonTestRunConfiguration<PyAbstractTestConfiguration>(project, configurationFactory), PyRerunAwareConfiguration,
     RefactoringListenerProvider {
   @DelegationProperty
-  val target = ConfigurationTarget(DEFAULT_PATH, PyRunTargetVariant.PATH)
+  val target: ConfigurationTarget = ConfigurationTarget(DEFAULT_PATH, PyRunTargetVariant.PATH)
   @ConfigField
-  var additionalArguments = ""
+  var additionalArguments: String = ""
 
-  val testFrameworkName = configurationFactory.name!!
+  val testFrameworkName: String = configurationFactory.name!!
 
 
   /**
    * @see [RunnersThatRequireTestCaseClass]
    */
-  fun isTestClassRequired() = if (RunnersThatRequireTestCaseClass.contains(runnerName)) {
+  fun isTestClassRequired(): ThreeState = if (RunnersThatRequireTestCaseClass.contains(runnerName)) {
     ThreeState.YES
   }
   else {
@@ -431,7 +431,7 @@ abstract class PyAbstractTestConfiguration(project: Project,
 
   @Suppress("LeakingThis") // Legacy adapter is used to support legacy configs. Leak is ok here since everything takes place in one thread
   @DelegationProperty
-  val legacyConfigurationAdapter = PyTestLegacyConfigurationAdapter(this)
+  val legacyConfigurationAdapter: PyTestLegacyConfigurationAdapter<PyAbstractTestConfiguration> = PyTestLegacyConfigurationAdapter(this)
 
 
   /**
@@ -479,7 +479,7 @@ abstract class PyAbstractTestConfiguration(project: Project,
   abstract fun isFrameworkInstalled(): Boolean
 
 
-  override fun isIdTestBased() = true
+  override fun isIdTestBased(): Boolean = true
 
   private fun getPythonTestSpecByLocation(location: Location<*>): List<String> {
 
@@ -535,7 +535,7 @@ abstract class PyAbstractTestConfiguration(project: Project,
     return emptyList()
   }
 
-  override fun suggestedName() =
+  override fun suggestedName(): String =
     when (target.targetType) {
       PyRunTargetVariant.PATH -> {
         val name = target.asVirtualFile()?.name
@@ -553,7 +553,7 @@ abstract class PyAbstractTestConfiguration(project: Project,
   /**
    * @return configuration-specific arguments
    */
-  protected open fun getCustomRawArgumentsString(forRerun: Boolean = false) = ""
+  protected open fun getCustomRawArgumentsString(forRerun: Boolean = false): String = ""
 
   fun reset() {
     target.target = DEFAULT_PATH
@@ -638,7 +638,7 @@ abstract class PyAbstractTestConfiguration(project: Project,
   /**
    * @return Boolean if metainfo and target produces same configuration
    */
-  open fun isSameAsLocation(target: ConfigurationTarget, metainfo: String?) = target == this.target
+  open fun isSameAsLocation(target: ConfigurationTarget, metainfo: String?): Boolean = target == this.target
 }
 
 abstract class PyAbstractTestFactory<out CONF_T : PyAbstractTestConfiguration> : PythonConfigurationFactoryBase(
@@ -652,7 +652,7 @@ abstract class PyAbstractTestFactory<out CONF_T : PyAbstractTestConfiguration> :
 object PyTestsConfigurationProducer : AbstractPythonTestConfigurationProducer<PyAbstractTestConfiguration>(
   PythonTestConfigurationType.getInstance()) {
 
-  override val configurationClass = PyAbstractTestConfiguration::class.java
+  override val configurationClass: Class<PyAbstractTestConfiguration> = PyAbstractTestConfiguration::class.java
 
   override fun createLightConfiguration(context: ConfigurationContext): RunConfiguration? {
     val module = context.module ?: return null
@@ -683,10 +683,10 @@ object PyTestsConfigurationProducer : AbstractPythonTestConfigurationProducer<Py
 
   // test configuration is always prefered over regular one
   override fun shouldReplace(self: ConfigurationFromContext,
-                             other: ConfigurationFromContext) = other.configuration is PythonRunConfiguration
+                             other: ConfigurationFromContext): Boolean = other.configuration is PythonRunConfiguration
 
   override fun isPreferredConfiguration(self: ConfigurationFromContext?,
-                                        other: ConfigurationFromContext) = other.configuration is PythonRunConfiguration
+                                        other: ConfigurationFromContext): Boolean = other.configuration is PythonRunConfiguration
 
   override fun setupConfigurationFromContext(configuration: PyAbstractTestConfiguration?,
                                              context: ConfigurationContext?,

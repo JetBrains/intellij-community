@@ -134,7 +134,7 @@ class PyAddSdkDialog private constructor(private val project: Project?,
 
   private val cancelButton = lazy { createJButtonForAction(cancelAction) }
 
-  override fun postponeValidation() = false
+  override fun postponeValidation(): Boolean = false
 
   override fun doValidateAll(): List<ValidationInfo> = selectedPanel?.validateAll() ?: emptyList()
 

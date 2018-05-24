@@ -41,8 +41,8 @@ import java.io.File
 object PyTypeShed {
   private val ONLY_SUPPORTED_PY2_MINOR = 7
   private val SUPPORTED_PY3_MINORS = 2..7
-  val WHITE_LIST = setOf(TYPING, "six", "__builtin__", "builtins", "exceptions", "types", "datetime", "functools", "shutil", "re", "time",
-                         "argparse", "uuid", "threading", "signal", "collections", "subprocess", "math", "queue", "socket", "sqlite3")
+  val WHITE_LIST: Set<String> = setOf(TYPING, "six", "__builtin__", "builtins", "exceptions", "types", "datetime", "functools", "shutil", "re", "time",
+                                      "argparse", "uuid", "threading", "signal", "collections", "subprocess", "math", "queue", "socket", "sqlite3")
   private val BLACK_LIST = setOf<String>()
 
   /**
@@ -129,9 +129,9 @@ object PyTypeShed {
   /**
    * A shallow check for a [file] being located inside the typeshed third-party stubs.
    */
-  fun isInThirdPartyLibraries(file: VirtualFile) = "third_party" in file.path
+  fun isInThirdPartyLibraries(file: VirtualFile): Boolean = "third_party" in file.path
 
-  fun isInStandardLibrary(file: VirtualFile) = "stdlib" in file.path
+  fun isInStandardLibrary(file: VirtualFile): Boolean = "stdlib" in file.path
 
   private val LanguageLevel.major: Int
     get() = this.version / 10

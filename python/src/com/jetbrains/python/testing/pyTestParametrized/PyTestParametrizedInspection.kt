@@ -18,7 +18,7 @@ import com.jetbrains.python.psi.PyParameter
 class PyTestParametrizedInspection : PyInspection() {
   override fun buildVisitor(holder: ProblemsHolder,
                             isOnTheFly: Boolean,
-                            session: LocalInspectionToolSession) = object : PsiElementVisitor() {
+                            session: LocalInspectionToolSession): PsiElementVisitor = object : PsiElementVisitor() {
     override fun visitElement(element: PsiElement?) {
       if (element is PyFunction) {
         val requiredParameters = element.getParametersFromGenerator()

@@ -32,7 +32,7 @@ import com.jetbrains.python.codeInsight.typing.PyTypeShed
  */
 class PyTypeShedNode(project: Project?, sdk: Sdk, viewSettings: ViewSettings) : ProjectViewNode<Sdk>(project, sdk, viewSettings) {
   companion object {
-    fun create(project : Project?, sdk: Sdk, viewSettings: ViewSettings) =
+    fun create(project : Project?, sdk: Sdk, viewSettings: ViewSettings): PyTypeShedNode? =
         if (sdk.rootProvider.getFiles(CLASSES).any { PyTypeShed.isInside(it) })
           PyTypeShedNode(project, sdk, viewSettings)
         else null
@@ -50,7 +50,7 @@ class PyTypeShedNode(project: Project?, sdk: Sdk, viewSettings: ViewSettings) : 
         .toMutableList()
   }
 
-  override fun contains(file: VirtualFile) = PyTypeShed.isInside(file)
+  override fun contains(file: VirtualFile): Boolean = PyTypeShed.isInside(file)
 
   override fun update(presentation: PresentationData?) {
     val p = presentation ?: return

@@ -51,8 +51,8 @@ import javax.swing.event.DocumentEvent
 class PyAddNewCondaEnvPanel(private val project: Project?,
                             private val existingSdks: List<Sdk>,
                             newProjectPath: String?) : PyAddNewEnvPanel() {
-  override val envName = "Conda"
-  override val panelName = "New environment"
+  override val envName: String = "Conda"
+  override val panelName: String = "New environment"
   override val icon: Icon = PythonIcons.Python.Anaconda
 
   private val languageLevelsField: JComboBox<String>
@@ -105,7 +105,7 @@ class PyAddNewCondaEnvPanel(private val project: Project?,
     add(formPanel, BorderLayout.NORTH)
   }
 
-  override fun validateAll() =
+  override fun validateAll(): List<ValidationInfo> =
     listOfNotNull(validateAnacondaPath(), validateEnvironmentDirectoryLocation(pathField))
 
   override fun getOrCreateSdk(): Sdk? {

@@ -11,7 +11,7 @@ import com.jetbrains.python.psi.resolve.PyResolveUtil
 data class PyTypingNewType(internal val classType: PyClassType, internal val isDefinition: Boolean, internal val myName: String?) : PyClassTypeImpl(
   classType.pyClass, isDefinition) {
 
-  override fun getName() = myName
+  override fun getName(): String? = myName
 
   override fun getCallType(context: TypeEvalContext, callSite: PyCallSiteExpression): PyType? {
     return PyTypingNewType(classType, false, name)
@@ -25,11 +25,11 @@ data class PyTypingNewType(internal val classType: PyClassType, internal val isD
     return if (isDefinition) PyTypingNewType(classType, false, name) else this
   }
 
-  override fun isBuiltin() = false
+  override fun isBuiltin(): Boolean = false
 
-  override fun isCallable() = classType.isCallable || isDefinition
+  override fun isCallable(): Boolean = classType.isCallable || isDefinition
 
-  override fun toString() = "TypingNewType: $myName"
+  override fun toString(): String = "TypingNewType: $myName"
 
   override fun getParameters(context: TypeEvalContext): List<PyCallableParameter>? {
     return if (isCallable) {

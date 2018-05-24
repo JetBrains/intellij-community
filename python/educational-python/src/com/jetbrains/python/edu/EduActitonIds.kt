@@ -3,12 +3,12 @@
 
 package com.jetbrains.python.edu
 
-const val CHECK = "Educational.Check"
-const val PREV_WINDOW = "Educational.PrevPlaceholder"
-const val NEXT_WINDOW = "Educational.NextPlaceholder"
-const val PREV_TASK = "Educational.PreviousTask"
-const val NEXT_TASK = "Educational.NextTask"
-const val REFRESH = "Educational.RefreshTaskFile"
-const val HINT = "Educational.ShowHint"
+const val CHECK: String = "Educational.Check"
+const val PREV_WINDOW: String = "Educational.PrevPlaceholder"
+const val NEXT_WINDOW: String = "Educational.NextPlaceholder"
+const val PREV_TASK: String = "Educational.PreviousTask"
+const val NEXT_TASK: String = "Educational.NextTask"
+const val REFRESH: String = "Educational.RefreshTaskFile"
+const val HINT: String = "Educational.ShowHint"
 
 

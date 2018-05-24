@@ -12,8 +12,8 @@ import com.jetbrains.python.psi.resolve.PyResolveContext
 import com.jetbrains.python.psi.types.TypeEvalContext
 
 
-const val DATACLASSES_INITVAR_TYPE = "dataclasses.InitVar"
-const val DUNDER_POST_INIT = "__post_init__"
+const val DATACLASSES_INITVAR_TYPE: String = "dataclasses.InitVar"
+const val DUNDER_POST_INIT: String = "__post_init__"
 
 
 fun parseDataclassParameters(cls: PyClass, context: TypeEvalContext): DataclassParameters? {

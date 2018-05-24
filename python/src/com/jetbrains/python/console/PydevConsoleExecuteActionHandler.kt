@@ -45,7 +45,7 @@ open class PydevConsoleExecuteActionHandler(private val myConsoleView: LanguageC
   private val myEnterHandler = PyConsoleEnterHandler()
   private var myIpythonInputPromptCount = 2
 
-  override var isEnabled = false
+  override var isEnabled: Boolean = false
     set(value) {
       field = value
       updateConsoleState()
@@ -163,7 +163,7 @@ open class PydevConsoleExecuteActionHandler(private val myConsoleView: LanguageC
     }
   }
 
-  override fun commandExecuted(more: Boolean) = updateConsoleState()
+  override fun commandExecuted(more: Boolean): Unit = updateConsoleState()
 
   override fun inputRequested() {
     isEnabled = true

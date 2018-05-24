@@ -16,7 +16,7 @@ import com.jetbrains.python.psi.stubs.PyDecoratorStubIndex
 import com.jetbrains.python.psi.types.TypeEvalContext
 import com.jetbrains.python.testing.isTestElement
 
-const val decoratorName = "pytest.fixture"
+const val decoratorName: String = "pytest.fixture"
 
 /**
  * If named parameter has fixture -- return it

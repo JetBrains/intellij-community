@@ -15,16 +15,16 @@ import com.jetbrains.python.psi.types.PyType
 import com.jetbrains.python.psi.types.TypeEvalContext
 
 
-fun isProtocol(classLikeType: PyClassLikeType, context: TypeEvalContext) = containsProtocol(classLikeType.getSuperClassTypes(context))
+fun isProtocol(classLikeType: PyClassLikeType, context: TypeEvalContext): Boolean = containsProtocol(classLikeType.getSuperClassTypes(context))
 
-fun isProtocol(cls: PyClass, context: TypeEvalContext) = containsProtocol(cls.getSuperClassTypes(context))
+fun isProtocol(cls: PyClass, context: TypeEvalContext): Boolean = containsProtocol(cls.getSuperClassTypes(context))
 
-fun matchingProtocolDefinitions(expected: PyType?, actual: PyType?, context: TypeEvalContext) = expected is PyClassLikeType &&
-                                                                                                actual is PyClassLikeType &&
-                                                                                                expected.isDefinition &&
-                                                                                                actual.isDefinition &&
-                                                                                                isProtocol(expected, context) &&
-                                                                                                isProtocol(actual, context)
+fun matchingProtocolDefinitions(expected: PyType?, actual: PyType?, context: TypeEvalContext): Boolean = expected is PyClassLikeType &&
+                                                                                                         actual is PyClassLikeType &&
+                                                                                                         expected.isDefinition &&
+                                                                                                         actual.isDefinition &&
+                                                                                                         isProtocol(expected, context) &&
+                                                                                                         isProtocol(actual, context)
 
 typealias ProtocolAndSubclassElements = Pair<PyTypedElement, List<RatedResolveResult>?>
 
