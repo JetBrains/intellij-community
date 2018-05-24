@@ -6,4 +6,9 @@ public class DoubleNaN {
       System.out.println("oops");
     }
   }
+
+  void test2() {
+    System.out.println(<warning descr="Condition '1.0 == Double.NaN' is always 'false'">1.0 == Double.NaN</warning>);
+    System.out.println(!(<warning descr="Condition '1.0 < Double.NaN' is always 'false'">1.0 < Double.NaN</warning>));
+  }
 }
