@@ -589,6 +589,13 @@ public class GenerateMembersUtil {
     }
   }
 
+  public static void copyAnnotations(@NotNull PsiModifierListOwner source, @NotNull PsiModifierListOwner target, String... skipAnnotations) {
+    PsiModifierList targetModifierList = target.getModifierList();
+    PsiModifierList sourceModifierList = source.getModifierList();
+    if (targetModifierList == null || sourceModifierList == null) return;
+    copyAnnotations(sourceModifierList, targetModifierList, skipAnnotations);
+  }
+
   //java bean getters/setters
   public static PsiMethod generateSimpleGetterPrototype(@NotNull PsiField field) {
     return generatePrototype(field, PropertyUtilBase.generateGetterPrototype(field));
