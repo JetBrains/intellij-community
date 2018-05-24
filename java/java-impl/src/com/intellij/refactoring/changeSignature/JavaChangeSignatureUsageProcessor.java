@@ -17,10 +17,15 @@ package com.intellij.refactoring.changeSignature;
 
 import com.intellij.codeInsight.AnnotationUtil;
 import com.intellij.codeInsight.ExceptionUtil;
+import com.intellij.codeInsight.InferredAnnotationsManagerImpl;
 import com.intellij.codeInsight.daemon.impl.analysis.JavaHighlightUtil;
 import com.intellij.codeInsight.daemon.impl.quickfix.RemoveUnusedVariableUtil;
 import com.intellij.codeInsight.generation.surroundWith.SurroundWithUtil;
+import com.intellij.codeInspection.dataFlow.ContractReturnValue;
 import com.intellij.codeInspection.dataFlow.JavaMethodContractUtil;
+import com.intellij.codeInspection.dataFlow.MutationSignature;
+import com.intellij.codeInspection.dataFlow.StandardMethodContract;
+import com.intellij.codeInspection.dataFlow.StandardMethodContract.ValueConstraint;
 import com.intellij.lang.StdLanguages;
 import com.intellij.lang.java.JavaLanguage;
 import com.intellij.openapi.application.ApplicationManager;
@@ -56,6 +61,7 @@ import com.intellij.util.VisibilityUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.MultiMap;
 import com.siyeh.IntentionPowerPackBundle;
+import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -805,6 +811,8 @@ public class JavaChangeSignatureUsageProcessor implements ChangeSignatureUsagePr
       fixPrimaryThrowsLists(method, newExceptions);
     }
 
+    tryUpdateContracts(method, changeInfo);
+
     if (baseMethod == null && method.findSuperMethods().length == 0) {
       final PsiAnnotation annotation = AnnotationUtil.findAnnotation(method, true, Override.class.getName());
       if (annotation != null) {
@@ -1102,9 +1110,12 @@ public class JavaChangeSignatureUsageProcessor implements ChangeSignatureUsagePr
       }
     }
 
-    private static void checkContract(MultiMap<PsiElement, String> conflictDescriptions, PsiMethod method) {
-      if (JavaMethodContractUtil.hasExplicitContractAnnotation(method)) {
-        conflictDescriptions.putValue(method, "@Contract annotation will have to be changed manually");
+    private void checkContract(MultiMap<PsiElement, String> conflictDescriptions, PsiMethod method) {
+      try {
+        convertContract(method, myChangeInfo);
+      }
+      catch (ContractConversionException e) {
+        conflictDescriptions.putValue(method, "@Contract annotation cannot be updated automatically: " + e.getMessage());
       }
     }
 
@@ -1151,7 +1162,7 @@ public class JavaChangeSignatureUsageProcessor implements ChangeSignatureUsagePr
     }
 
     public static void searchForHierarchyConflicts(PsiMethod method, MultiMap<PsiElement, String> conflicts, final String modifier) {
-      SuperMethodsSearch.search(method, ReadAction.compute(() -> method.getContainingClass()), true, false).forEach(
+      SuperMethodsSearch.search(method, ReadAction.compute(method::getContainingClass), true, false).forEach(
         new ReadActionProcessor<MethodSignatureBackedByPsiMethod>() {
           @Override
           public boolean processInReadAction(MethodSignatureBackedByPsiMethod methodSignature) {
@@ -1270,4 +1281,93 @@ public class JavaChangeSignatureUsageProcessor implements ChangeSignatureUsagePr
     }
   }
 
+  private static final class ContractConversionException extends Exception {
+    public ContractConversionException(String message) {
+      super(message);
+    }
+  }
+
+  @Nullable
+  private static PsiAnnotation convertContract(PsiMethod method, JavaChangeInfo info) throws ContractConversionException {
+    PsiAnnotation annotation = JavaMethodContractUtil.findContractAnnotation(method);
+    if (annotation == null || AnnotationUtil.isInferredAnnotation(annotation)) return null;
+    if (AnnotationUtil.isExternalAnnotation(annotation)) {
+      throw new ContractConversionException("automatic update of external annotation is not yet supported");
+    }
+    if (annotation.getOwner() != method.getModifierList()) {
+      throw new ContractConversionException("annotation is inherited from base method");
+    }
+    if (annotation.findDeclaredAttributeValue(MutationSignature.ATTR_MUTATES) != null) {
+      throw new ContractConversionException("it contains mutation contract");
+    }
+    String text = AnnotationUtil.getStringAttributeValue(annotation, null);
+    List<StandardMethodContract> contracts = Collections.emptyList();
+    if (text != null) {
+      try {
+        contracts = StandardMethodContract.parseContract(text);
+      }
+      catch (StandardMethodContract.ParseException exception) {
+        throw new ContractConversionException("error in contract definition: " + exception.getMessage());
+      }
+    }
+    int oldParameterCount = info.getOldParameterNames().length;
+    JavaParameterInfo[] newParameters = info.getNewParameters();
+    int[] reusedParameters = new int[oldParameterCount];
+    Arrays.fill(reusedParameters, -1);
+    for (int i = 0; i < newParameters.length; i++) {
+      int oldIndex = newParameters[i].getOldIndex();
+      if (oldIndex >= 0 && oldIndex < oldParameterCount) {
+        reusedParameters[oldIndex] = i;
+      }
+    }
+    List<StandardMethodContract> result = new ArrayList<>();
+    for (StandardMethodContract contract : contracts) {
+      if (contract.getParameterCount() != oldParameterCount) {
+        // invalid contract
+        throw new ContractConversionException("invalid contract clause '" + contract + "'");
+      }
+      for (int i = 0; i < oldParameterCount; i++) {
+        if (contract.getParameterConstraint(i) != ValueConstraint.ANY_VALUE && reusedParameters[i] == -1) {
+          throw new ContractConversionException(
+            "parameter '" + info.getOldParameterNames()[i] + "' was deleted, but contract clause '" + contract + "' depends on it");
+        }
+      }
+      ValueConstraint[] newConstraints =
+        StreamEx.of(newParameters).mapToInt(ParameterInfo::getOldIndex)
+                .mapToObj(idx -> idx == -1 ? ValueConstraint.ANY_VALUE : contract.getParameterConstraint(idx))
+                .toArray(ValueConstraint.class);
+      ContractReturnValue returnValue = contract.getReturnValue();
+      if (returnValue instanceof ContractReturnValue.ParameterReturnValue) {
+        int oldIndex = ((ContractReturnValue.ParameterReturnValue)returnValue).getParameterNumber();
+        if (oldIndex >= oldParameterCount) {
+          throw new ContractConversionException("invalid reference in return value: "+returnValue);
+        }
+        int index = reusedParameters[oldIndex];
+        if (index == -1) {
+          throw new ContractConversionException("parameter '" + info.getOldParameterNames()[oldIndex] + "' was deleted, but contract clause '" + contract + "' returns it");
+        }
+        returnValue = ContractReturnValue.returnParameter(index);
+      }
+      result.add(new StandardMethodContract(newConstraints, returnValue));
+    }
+    if (result.equals(contracts)) return annotation;
+    boolean pure = Boolean.TRUE.equals(AnnotationUtil.getBooleanAttributeValue(annotation, "pure"));
+    String mutates = StringUtil.notNullize(AnnotationUtil.getStringAttributeValue(annotation, MutationSignature.ATTR_MUTATES));
+    String resultValue = StreamEx.of(result).joining("; ");
+    Project project = method.getProject();
+    return InferredAnnotationsManagerImpl.createContractAnnotation(project, pure, resultValue, mutates);
+  }
+
+  private static void tryUpdateContracts(PsiMethod method, JavaChangeInfo info) {
+    PsiAnnotation annotation = JavaMethodContractUtil.findContractAnnotation(method);
+    if (annotation == null) return;
+    try {
+      PsiAnnotation newAnnotation = convertContract(method, info);
+      if (newAnnotation != null && !newAnnotation.isPhysical()) {
+        annotation.replace(newAnnotation);
+      }
+    }
+    catch (ContractConversionException ignored) {
+    }
+  }
 }
