@@ -16,6 +16,7 @@ import javax.swing.plaf.IconUIResource;
 import java.awt.*;
 import java.io.IOException;
 import java.io.InputStream;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -50,7 +51,23 @@ public class UITheme {
   }
 
   public void applyProperties(UIDefaults defaults) {
-    //todo[kb] apply properties to LaF
+    if (ui == null) return;
+
+    for (Map.Entry<String, Object> entry : ui.entrySet()) {
+      apply(entry.getKey(), entry.getValue(), defaults);
+    }
+  }
+
+  private void apply(String key, Object value, UIDefaults defaults) {
+    if (value instanceof HashMap) {
+      for (Map.Entry<String, Object> o : ((HashMap<String, Object>)value).entrySet()) {
+        //todo[kb] transform to properties or parse by a new way?
+      }
+    }
+  }
+
+  public void removeProperties(UIDefaults defaults) {
+
   }
 
   public static Object parseValue(String key, @NotNull String value) {
