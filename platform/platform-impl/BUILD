@@ -87,6 +87,7 @@ iml_module(
         "//tools/idea/.idea/libraries:jediterm-pty",
         "//tools/idea/.idea/libraries:kotlinx-coroutines-core",
         "//tools/idea/.idea/libraries:kotlinx-coroutines-jdk8",
+        "//tools/idea/.idea/libraries:HdrHistogram",
         "//tools/idea/.idea/libraries:protobuf",
         "//tools/idea/.idea/libraries:studio-analytics-proto",
     ],

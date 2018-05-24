@@ -1221,3 +1221,11 @@ java_library(
         "//prebuilts/tools/common/m2/repository/com/fasterxml/jackson/core/jackson-databind/2.9.5:jar",
     ],
 )
+
+# managed by go/iml_to_build
+java_library(
+    name = "HdrHistogram",
+    visibility = ["//visibility:public"],
+    exports = ["//prebuilts/tools/common/m2/repository/org/hdrhistogram/HdrHistogram/2.1.4:jar"],
+    runtime_deps = ["//prebuilts/tools/common/m2/repository/org/hdrhistogram/HdrHistogram/2.1.4:jar"],
+)
