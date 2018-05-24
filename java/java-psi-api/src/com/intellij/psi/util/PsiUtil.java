@@ -81,9 +81,29 @@ public final class PsiUtil extends PsiUtilCore {
   public static boolean isAccessible(@NotNull PsiMember member, @NotNull PsiElement place, @Nullable PsiClass accessObjectClass) {
     return isAccessible(place.getProject(), member, place, accessObjectClass);
   }
+
+  /**
+   * Checks that a *resolved* to {@code member} reference at {@code place} is accessible: it's visible by visibility rules as well as 
+   * by module (java) rules. 
+   * 
+   * <p>NOTE:</p>
+   * If there is no module (IDEA's) dependency from module with {@code place} on a module with {@code member}, then reference won't be resolved. 
+   * Please use {@link #isMemberAccessibleAt(PsiMember, PsiElement)} to catch these cases as well
+   */
   public static boolean isAccessible(@NotNull Project project, @NotNull PsiMember member,
                                      @NotNull PsiElement place, @Nullable PsiClass accessObjectClass) {
     return JavaPsiFacade.getInstance(project).getResolveHelper().isAccessible(member, place, accessObjectClass);
+  }
+
+  /**
+   * Checks that reference on {@code member} inserted at {@code place} will be resolved and accessible
+   */
+  public static boolean isMemberAccessibleAt(@NotNull PsiMember member, @NotNull PsiElement place) {
+    VirtualFile virtualFile = PsiUtilCore.getVirtualFile(member);
+    if (virtualFile != null && !place.getResolveScope().contains(virtualFile)) {
+      return false;
+    }
+    return isAccessible(member, place, null);
   }
 
   @NotNull
