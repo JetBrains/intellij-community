@@ -444,7 +444,8 @@ public final class ToolWindowImpl implements ToolWindowEx {
       }
     }
     //getSelectedContent().setIcon(icon);
-    myIcon = icon;
+
+    myIcon = new ToolWindowIcon(icon, getId());
     myChangeSupport.firePropertyChange(PROP_ICON, oldIcon, icon);
   }
 
