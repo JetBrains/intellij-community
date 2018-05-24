@@ -994,7 +994,7 @@ public class PersistentFSImpl extends PersistentFS implements ApplicationCompone
 
     int rootId = FSRecords.findRootRecord(rootUrl);
 
-    VfsData.Segment segment = VfsData.getSegment(rootId, true);
+    VfsData.Segment segment = VfsData.getInstance().getSegment(rootId, true);
     VfsData.DirectoryData directoryData = new VfsData.DirectoryData();
     VirtualFileSystemEntry newRoot = new FsRoot(rootId, segment, directoryData, fs, rootName, StringUtil.trimTrailing(rootPath, '/'));
 
@@ -1062,7 +1062,7 @@ public class PersistentFSImpl extends PersistentFS implements ApplicationCompone
 
   @Override
   public NewVirtualFile findFileByIdIfCached(final int id) {
-    return VfsData.hasLoadedFile(id) ? findFileById(id) : null;
+    return VfsData.getInstance().hasLoadedFile(id) ? findFileById(id) : null;
   }
 
   @Override
