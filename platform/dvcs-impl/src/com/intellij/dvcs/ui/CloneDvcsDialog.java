@@ -496,7 +496,7 @@ public abstract class CloneDvcsDialog extends DialogWrapper {
    */
   @Deprecated
   public void prependToHistory(@NotNull final String item) {
-    myRepositoryUrlCombobox.addItem(item);
+    myRepositoryUrlComboboxModel.add(item);
   }
 
   public void rememberSettings() {
