@@ -19,6 +19,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.projectRoots.impl.SdkConfigurationUtil
 import com.intellij.openapi.roots.ui.configuration.projectRoot.ProjectSdksModel
+import com.intellij.openapi.util.SystemInfo
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.util.PathUtil
@@ -57,8 +58,13 @@ var Sdk.isPipEnv: Boolean
 /**
  * Finds the pipenv executable in `$PATH`.
  */
-fun getPipEnvExecutable(): File? =
-  PathEnvironmentVariableUtil.findInPath("pipenv")
+fun getPipEnvExecutable(): File? {
+  val name = when {
+    SystemInfo.isWindows -> "pipenv.exe"
+    else -> "pipenv"
+  }
+  return PathEnvironmentVariableUtil.findInPath(name)
+}
 
 /**
  * Sets up the pipenv environment under the modal progress window.
