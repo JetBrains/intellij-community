@@ -41,6 +41,7 @@ import com.intellij.testFramework.RunAll;
 import com.intellij.testFramework.UsefulTestCase;
 import com.intellij.testFramework.fixtures.CodeInsightTestFixture;
 import com.intellij.util.ThrowableRunnable;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.JBIterable;
 import com.intellij.util.containers.TreeTraversal;
 import com.intellij.util.ui.UIUtil;
@@ -278,6 +279,10 @@ public class MadTestingUtil {
 
   public static boolean isAfterError(PsiFile file, int offset) {
     return SyntaxTraverser.psiTraverser(file).filter(PsiErrorElement.class).find(e -> e.getTextRange().getStartOffset() <= offset) != null;
+  }
+
+  public static boolean containsErrorElements(FileViewProvider viewProvider) {
+    return ContainerUtil.exists(viewProvider.getAllFiles(), file -> SyntaxTraverser.psiTraverser(file).filter(PsiErrorElement.class).isNotEmpty());
   }
 
   private static class FileGenerator implements Function<DataStructure, File> {
