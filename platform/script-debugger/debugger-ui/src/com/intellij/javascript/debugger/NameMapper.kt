@@ -65,7 +65,7 @@ open class NameMapper(private val document: Document, private val transpiledDocu
       LOG.warn("Cannot get generated name: source entry (${sourceEntry.generatedLine},  ${sourceEntry.generatedColumn}). Transpiled File: " + transpiledFile?.path)
       return null
     }
-    if (generatedName.isEmpty()) {
+    if (generatedName == null || generatedName.isEmpty()) {
       return null
     }
 
@@ -85,7 +85,7 @@ open class NameMapper(private val document: Document, private val transpiledDocu
     rawNameToSource!!.put(generatedName, sourceName)
   }
 
-  protected open fun extractName(rawGeneratedName: CharSequence) = NAME_TRIMMER.trimFrom(rawGeneratedName)
+  protected open fun extractName(rawGeneratedName: CharSequence):String? = NAME_TRIMMER.trimFrom(rawGeneratedName)
 
   companion object {
     fun trimName(rawGeneratedName: CharSequence, isLastToken: Boolean) = (if (isLastToken) NAME_TRIMMER else OPERATOR_TRIMMER).trimFrom(rawGeneratedName)
