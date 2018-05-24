@@ -839,7 +839,7 @@ public abstract class ChooseByNameBase {
       myTextPopup = null;
       close(false);
       return Boolean.TRUE;
-    }).setFocusable(true).setRequestFocus(true).setModalContext(false);
+    }).setFocusable(true).setRequestFocus(true).setModalContext(false).setCancelOnClickOutside(false);
 
     Point point = new Point(x, y);
     SwingUtilities.convertPointToScreen(point, layeredPane);
