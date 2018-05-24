@@ -53,19 +53,31 @@ public class JavaMethodContractUtil {
    */
   @NotNull
   public static List<StandardMethodContract> getMethodContracts(@NotNull final PsiMethod method) {
-    return getContractInfo(method).myContracts;
+    return getContractInfo(method).getContracts();
+  }
+
+  /**
+   * Checks whether method has an explicit contract annotation (either in source code or as external annotation)
+   *
+   * @param method method to check
+   * @return true if method has explicit (non-inferred) contract annotation.
+   */
+  public static boolean hasExplicitContractAnnotation(@NotNull PsiMethod method) {
+    return getContractInfo(method).isExplicit();
   }
 
   static class ContractInfo {
-    static final ContractInfo EMPTY = new ContractInfo(Collections.emptyList(), false, MutationSignature.UNKNOWN);
+    static final ContractInfo EMPTY = new ContractInfo(Collections.emptyList(), false, false, MutationSignature.UNKNOWN);
 
     private final @NotNull List<StandardMethodContract> myContracts;
     private final boolean myPure;
+    private final boolean myExplicit;
     private final @NotNull MutationSignature myMutationSignature;
 
-    ContractInfo(@NotNull List<StandardMethodContract> contracts, boolean pure, @NotNull MutationSignature signature) {
+    ContractInfo(@NotNull List<StandardMethodContract> contracts, boolean pure, boolean explicit, @NotNull MutationSignature signature) {
       myContracts = contracts;
       myPure = pure;
+      myExplicit = explicit;
       myMutationSignature = signature;
     }
 
@@ -76,6 +88,10 @@ public class JavaMethodContractUtil {
 
     boolean isPure() {
       return myPure;
+    }
+
+    boolean isExplicit() {
+      return myExplicit;
     }
 
     @NotNull
@@ -117,7 +133,8 @@ public class JavaMethodContractUtil {
             }
           }
         }
-        info = new ContractInfo(contracts, pure, mutationSignature);
+        boolean explicit = !AnnotationUtil.isInferredAnnotation(contractAnno);
+        info = new ContractInfo(contracts, pure, explicit, mutationSignature);
       }
       return CachedValueProvider.Result.create(info, method, PsiModificationTracker.JAVA_STRUCTURE_MODIFICATION_COUNT);
     });

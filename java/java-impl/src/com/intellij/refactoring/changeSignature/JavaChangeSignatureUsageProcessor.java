@@ -1103,8 +1103,7 @@ public class JavaChangeSignatureUsageProcessor implements ChangeSignatureUsagePr
     }
 
     private static void checkContract(MultiMap<PsiElement, String> conflictDescriptions, PsiMethod method) {
-      PsiAnnotation contract = JavaMethodContractUtil.findContractAnnotation(method);
-      if (contract != null && !AnnotationUtil.isInferredAnnotation(contract)) {
+      if (JavaMethodContractUtil.hasExplicitContractAnnotation(method)) {
         conflictDescriptions.putValue(method, "@Contract annotation will have to be changed manually");
       }
     }
