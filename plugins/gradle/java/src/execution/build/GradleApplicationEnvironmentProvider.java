@@ -51,6 +51,7 @@ import com.intellij.task.ExecuteRunConfigurationTask;
 import org.intellij.lang.annotations.Language;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.plugins.gradle.execution.GradleRunnerUtil;
 import org.jetbrains.plugins.gradle.service.project.GradleProjectResolverUtil;
 import org.jetbrains.plugins.gradle.service.task.GradleTaskManager;
 import org.jetbrains.plugins.gradle.util.GradleConstants;
@@ -107,7 +108,8 @@ public class GradleApplicationEnvironmentProvider implements GradleExecutionEnvi
 
     ExternalSystemTaskExecutionSettings taskSettings = new ExternalSystemTaskExecutionSettings();
     taskSettings.setExternalSystemIdString(GradleConstants.SYSTEM_ID.getId());
-    taskSettings.setExternalProjectPath(ExternalSystemApiUtil.getExternalProjectPath(module));
+    String projectPath = GradleRunnerUtil.resolveProjectPath(module);
+    taskSettings.setExternalProjectPath(projectPath);
     final String runAppTaskName = mainClass.getName() + ".main()";
     taskSettings.setTaskNames(Collections.singletonList(runAppTaskName));
 
