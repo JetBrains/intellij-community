@@ -49,10 +49,8 @@ private class InferenceVisitor(val tree : LighterAST) : RecursiveLighterASTNodeW
   private fun gatherFields(aClass: LighterASTNode) {
     val fields = LightTreeUtil.getChildrenOfType(tree, aClass, FIELD)
     for (field in fields) {
-      val modifierList = LightTreeUtil.firstChildOfType(tree, field, MODIFIER_LIST)
       val fieldName = JavaLightTreeUtil.getNameIdentifierText(tree, field)
-      if (modifierList != null && fieldName != null &&
-          tree.getChildren(modifierList).any { modifier -> modifier.tokenType === JavaTokenType.VOLATILE_KEYWORD }) {
+      if (fieldName != null && JavaLightTreeUtil.hasExplicitModifier(tree, field, JavaTokenType.VOLATILE_KEYWORD)) {
         volatileFieldNames.add(fieldName)
       }
     }

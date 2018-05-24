@@ -52,11 +52,9 @@ class PurityInferenceVisitor {
       if (qualifier == null || qualifier.getTokenType() == THIS_EXPRESSION) {
         if (myVolatileFieldNames.contains(JavaLightTreeUtil.getNameIdentifierText(tree, element))) {
           LighterASTNode target = new FileLocalResolver(tree).resolveLocally(element).getTarget();
-          if (target != null && target.getTokenType() == FIELD) {
-            LighterASTNode modifierList = LightTreeUtil.firstChildOfType(tree, target, MODIFIER_LIST);
-            hasVolatileReads |= modifierList != null &&
-                                tree.getChildren(modifierList).stream()
-                                    .anyMatch(modifier -> modifier.getTokenType() == JavaTokenType.VOLATILE_KEYWORD);
+          if (target != null && target.getTokenType() == FIELD &&
+              JavaLightTreeUtil.hasExplicitModifier(tree, target, JavaTokenType.VOLATILE_KEYWORD)) {
+            hasVolatileReads = true;
           }
         }
       }
