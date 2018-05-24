@@ -67,6 +67,7 @@ class IdeaCommunityProperties extends BaseIdeaProperties {
     return new WindowsDistributionCustomizer() {
       {
         icoPath = "$projectHome/platform/icons/src/idea_CE.ico"
+        icoPathForEAP = "$projectHome/build/conf/ideaCE/win/images/idea_CE_EAP.ico"
         installerImagesPath = "$projectHome/build/conf/ideaCE/win/images"
         fileAssociations = ["java", "groovy", "kt"]
       }
@@ -92,6 +93,7 @@ class IdeaCommunityProperties extends BaseIdeaProperties {
     return new LinuxDistributionCustomizer() {
       {
         iconPngPath = "$projectHome/platform/icons/src/icon_CE_128.png"
+        iconPngPathForEAP = "$projectHome/build/conf/ideaCE/linux/images/icon_CE_EAP_128.png"
         snapName = "intellij-idea-community"
         snapDescription =
           "The most intelligent Java IDE. Every aspect of IntelliJ IDEA is specifically designed to maximize developer productivity. " +
