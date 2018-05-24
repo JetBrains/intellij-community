@@ -5,6 +5,7 @@ import com.intellij.codeInsight.navigation.NavigationUtil;
 import com.intellij.ide.IdeBundle;
 import com.intellij.ide.util.gotoByName.ChooseByNameModel;
 import com.intellij.ide.util.gotoByName.GotoFileModel;
+import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiElement;
 import com.intellij.ui.IdeUICustomization;
@@ -57,5 +58,14 @@ public class FileSearchEverywhereContributor extends AbstractGotoSEContributor {
     }
 
     return true;
+  }
+
+  @Override
+  protected Object getItemData(String dataId, Object element) {
+    if (CommonDataKeys.PSI_FILE.is(dataId)) {
+      return element;
+    }
+
+    return super.getItemData(dataId, element);
   }
 }

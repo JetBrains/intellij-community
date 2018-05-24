@@ -58,7 +58,7 @@ import java.util.stream.Collectors;
  * @author Konstantin Bulenkov
  * @author Mikhail.Sokolov
  */
-public class SearchEverywhereUI extends BorderLayoutPanel implements Disposable {
+public class SearchEverywhereUI extends BorderLayoutPanel implements Disposable, DataProvider {
   private static final Logger LOG = Logger.getInstance(SearchEverywhereUI.class);
   public static final int SINGLE_CONTRIBUTOR_ELEMENTS_LIMIT = 30;
   public static final int MULTIPLE_CONTRIBUTORS_ELEMENTS_LIMIT = 15;
@@ -74,7 +74,7 @@ public class SearchEverywhereUI extends BorderLayoutPanel implements Disposable 
   private final JBList<Object> myResultsList = new JBList<>();
   private final SearchListModel myListModel = new SearchListModel(); //todo using in different threads? #UX-1
 
-  private CalcThread myCalcThread;
+  private CalcThread myCalcThread; //todo using in different threads? #UX-1
   private volatile ActionCallback myCurrentWorker = ActionCallback.DONE;
   private int myCalcThreadRestartRequestId = 0;
   private final Object myWorkerRestartRequestLock = new Object();
@@ -177,6 +177,23 @@ public class SearchEverywhereUI extends BorderLayoutPanel implements Disposable 
   @Override
   public void dispose() {
     stopSearching();
+  }
+
+  @Nullable
+  @Override
+  public Object getData(String dataId) {
+    //common data section---------------------
+    //todo
+
+    //item-specific data section--------------
+    int index = myResultsList.getSelectedIndex();
+    if (myListModel.isMoreElement(index)) {
+      return null;
+    }
+
+    SearchEverywhereContributor contributor = myListModel.getContributorForIndex(index);
+    DataContext context = contributor.getDataContextForItem(myListModel.getElementAt(index));
+    return context.getData(dataId);
   }
 
   private void switchToNextTab() {
