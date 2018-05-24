@@ -89,12 +89,15 @@ public class SimplifiableConditionalExpressionInspection extends BaseInspection 
     assert thenExpression != null;
     assert elseExpression != null;
     if (BoolUtils.areExpressionsOpposite(thenExpression, elseExpression)) {
+      // EQUALITY_PRECEDENCE is technically enough here, but it may produces quite confusing code like "a == b > c"
+      // so we add (formally redundant) parentheses in this case: "a == (b > c)"
+      final int precedence = PsiPrecedenceUtil.RELATIONAL_PRECEDENCE;
       if (BoolUtils.isNegation(thenExpression)) {
-        return ParenthesesUtils.getText(tracker.markUnchanged(condition), PsiPrecedenceUtil.RELATIONAL_PRECEDENCE) + " != " +
-               ParenthesesUtils.getText(tracker.markUnchanged(elseExpression), PsiPrecedenceUtil.RELATIONAL_PRECEDENCE);
+        return ParenthesesUtils.getText(tracker.markUnchanged(condition), precedence) + " != " +
+               ParenthesesUtils.getText(tracker.markUnchanged(elseExpression), precedence);
       } else {
-        return ParenthesesUtils.getText(tracker.markUnchanged(condition), PsiPrecedenceUtil.RELATIONAL_PRECEDENCE) + " == " +
-               ParenthesesUtils.getText(tracker.markUnchanged(thenExpression), PsiPrecedenceUtil.RELATIONAL_PRECEDENCE);
+        return ParenthesesUtils.getText(tracker.markUnchanged(condition), precedence) + " == " +
+               ParenthesesUtils.getText(tracker.markUnchanged(thenExpression), precedence);
       }
     }
     if (BoolUtils.isTrue(thenExpression)) {
