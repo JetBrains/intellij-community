@@ -40,7 +40,7 @@ abstract class FirstStart(val ideType: IdeType) {
 
   private val FIRST_START_ROBOT_THREAD = "First Start Robot Thread"
 
-  protected val LOG = Logger.getInstance(this.javaClass.name)
+  private val LOG = Logger.getInstance(this.javaClass.name)
 
   val myRobot: Robot
 

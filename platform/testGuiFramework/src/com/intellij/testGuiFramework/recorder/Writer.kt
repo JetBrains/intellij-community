@@ -19,7 +19,7 @@ import com.intellij.openapi.command.WriteCommandAction
 
 object Writer {
 
-  val indent = 2
+  val indent: Int = 2
 
   private fun writeln(str: String) {
     write(str + "\n")

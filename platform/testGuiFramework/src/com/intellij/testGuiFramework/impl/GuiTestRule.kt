@@ -53,7 +53,7 @@ import java.util.concurrent.TimeUnit
 
 class GuiTestRule : TestRule {
 
-  var CREATE_NEW_PROJECT_ACTION_NAME = "Create New Project"
+  var CREATE_NEW_PROJECT_ACTION_NAME: String = "Create New Project"
 
   private val myRobotTestRule = RobotTestRule()
   private val myFatalErrorsFlusher = FatalErrorsFlusher()
@@ -226,7 +226,7 @@ class GuiTestRule : TestRule {
 
       }
       catch (e: WaitTimedOutError) {
-        throw AssumptionViolatedException("didn't find welcome frame", e) as Throwable
+        throw AssumptionViolatedException("didn't find welcome frame", e)
       }
       GuiTestUtilKt.waitUntil("Splash is gone") { !GuiTestUtilKt.windowsShowing().any { it is Splash } }
       Assume.assumeTrue("Only welcome frame is showing", GuiTestUtilKt.windowsShowing().size == 1)
@@ -306,7 +306,7 @@ class GuiTestRule : TestRule {
   }
 
   fun importProjectAndWaitForProjectSyncToFinish(projectDirName: String, gradleVersion: String?): IdeFrameFixture {
-    val projectPath = setUpProject(projectDirName, false)
+    val projectPath = setUpProject(projectDirName)
     val toSelect = VfsUtil.findFileByIoFile(projectPath, false)
     Assert.assertNotNull(toSelect)
     doImportProject(toSelect!!)
@@ -315,7 +315,7 @@ class GuiTestRule : TestRule {
   }
 
   fun importProject(projectDirName: String): File {
-    val projectPath = setUpProject(projectDirName, false)
+    val projectPath = setUpProject(projectDirName)
     val toSelect = VfsUtil.findFileByIoFile(projectPath, false)
     Assert.assertNotNull(toSelect)
     doImportProject(toSelect!!)
@@ -323,7 +323,7 @@ class GuiTestRule : TestRule {
   }
 
   fun importProject(projectFile: File): File {
-    val projectPath = setUpProject(projectFile, false)
+    val projectPath = setUpProject(projectFile)
     val toSelect = VfsUtil.findFileByIoFile(projectPath, false)
     Assert.assertNotNull(toSelect)
     doImportProject(toSelect!!)
@@ -338,15 +338,13 @@ class GuiTestRule : TestRule {
   }
 
 
-  private fun setUpProject(projectDirName: String,
-                           forOpen: Boolean): File {
+  private fun setUpProject(projectDirName: String): File {
     val projectPath = copyProjectBeforeOpening(projectDirName)
     Assert.assertNotNull(projectPath)
     return projectPath
   }
 
-  private fun setUpProject(projectDirFile: File,
-                           forOpen: Boolean): File {
+  private fun setUpProject(projectDirFile: File): File {
     val projectPath = copyProjectBeforeOpening(projectDirFile)
     Assert.assertNotNull(projectPath)
     return projectPath

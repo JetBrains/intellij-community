@@ -19,8 +19,8 @@ import com.intellij.openapi.application.PathManager
 
 object GuiTestOptions {
 
-  val RESUME_LABEL = "idea.gui.test.resume.label"
-  val RESUME_TEST = "idea.gui.test.resume.testname"
+  val RESUME_LABEL: String = "idea.gui.test.resume.label"
+  val RESUME_TEST: String = "idea.gui.test.resume.testname"
 
   fun getConfigPath(): String = getSystemProperty("idea.config.path", getConfigDefaultPath())
   fun getSystemPath(): String = getSystemProperty("idea.system.path", getSystemDefaultPath())
