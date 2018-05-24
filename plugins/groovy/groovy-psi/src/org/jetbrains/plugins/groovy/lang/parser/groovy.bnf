@@ -5,7 +5,7 @@
     exact-types = 'elements'
   ]
 
-  parserClass = 'org.jetbrains.plugins.groovy.lang.parser.GroovyBnfParser'
+  parserClass = 'org.jetbrains.plugins.groovy.lang.parser.GroovyGeneratedParser'
   parserUtilClass = 'org.jetbrains.plugins.groovy.lang.parser.GroovyParserUtils'
   parserImports = [
     'static com.intellij.lang.parser.GeneratedParserUtilBase.*'

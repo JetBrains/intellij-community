@@ -16,7 +16,7 @@ import static com.intellij.lang.parser.GeneratedParserUtilBase.*;
 import static org.jetbrains.plugins.groovy.lang.parser.GroovyGeneratedParserUtils.adapt_builder_;
 
 @SuppressWarnings({"SimplifiableIfStatement", "UnusedAssignment"})
-public class GroovyBnfParser implements PsiParser, LightPsiParser {
+public class GroovyGeneratedParser implements PsiParser, LightPsiParser {
 
   public ASTNode parse(IElementType t, PsiBuilder b) {
     parseLight(t, b);
