@@ -81,6 +81,17 @@ class PyTypeHintsInspection : PyInspection() {
       }
     }
 
+    override fun visitPyReferenceExpression(node: PyReferenceExpression) {
+      super.visitPyReferenceExpression(node)
+
+      if (node.referencedName == PyNames.CANONICAL_SELF && PyTypingTypeProvider.isInAnnotationOrTypeComment(node)) {
+        val typeName = myTypeEvalContext.getType(node)?.name
+        if (typeName != null && typeName != PyNames.CANONICAL_SELF) {
+          registerProblem(node, "Invalid type 'self'", ProblemHighlightType.GENERIC_ERROR, null, ReplaceWithTypeNameQuickFix(typeName))
+        }
+      }
+    }
+
     private fun checkTypeVarPlacement(call: PyCallExpression, target: PyExpression?) {
       if (target == null) {
         registerProblem(call, "A 'TypeVar()' expression must always directly be assigned to a variable")
@@ -466,6 +477,16 @@ class PyTypeHintsInspection : PyInspection() {
   }
 
   companion object {
+    private class ReplaceWithTypeNameQuickFix(private val typeName: String) : LocalQuickFix {
+
+      override fun getFamilyName() = "Replace with type name"
+
+      override fun applyFix(project: Project, descriptor: ProblemDescriptor) {
+        val element = descriptor.psiElement as? PyReferenceExpression ?: return
+        element.reference.handleElementRename(typeName)
+      }
+    }
+
     private class ReplaceWithTargetNameQuickFix(private val targetName: String) : LocalQuickFix {
 
       override fun getFamilyName() = "Replace with target name"
