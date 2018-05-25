@@ -693,14 +693,15 @@ public abstract class ChangesTree extends Tree implements DataProvider {
   @Override
   protected void processMouseEvent(MouseEvent e) {
     if (e.getID() == MouseEvent.MOUSE_PRESSED) {
-      if (!isEnabled()) return;
-      int row = getRowForLocation(e.getX(), e.getY());
-      if (row >= 0) {
-        final Rectangle baseRect = getRowBounds(row);
-        baseRect.setSize(myCheckboxWidth, baseRect.height);
-        if (baseRect.contains(e.getPoint())) {
-          setSelectionRow(row);
-          toggleChanges(getSelectedUserObjects());
+      if (myShowCheckboxes && isEnabled() && !e.isPopupTrigger()) {
+        int row = getRowForLocation(e.getX(), e.getY());
+        if (row >= 0) {
+          final Rectangle baseRect = getRowBounds(row);
+          baseRect.setSize(myCheckboxWidth, baseRect.height);
+          if (baseRect.contains(e.getPoint())) {
+            setSelectionRow(row);
+            toggleChanges(getSelectedUserObjects());
+          }
         }
       }
     }
