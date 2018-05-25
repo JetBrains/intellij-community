@@ -8,6 +8,7 @@ import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProgressIndicator;
+import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiElement;
 import org.jetbrains.annotations.NotNull;
@@ -27,6 +28,10 @@ public abstract class AbstractGotoSEContributor implements SearchEverywhereContr
 
   @Override
   public ContributorSearchResult<Object> search(Project project, String pattern, boolean everywhere, ProgressIndicator progressIndicator, int elementsLimit) {
+    if (!isDumbModeSupported() && DumbService.getInstance(project).isDumb()) {
+      return ContributorSearchResult.empty();
+    }
+
     ChooseByNameModel model = createModel(project);
     ChooseByNamePopup popup = ChooseByNamePopup.createPopup(project, model, (PsiElement)null);
     ContributorSearchResult.Builder<Object> builder = ContributorSearchResult.builder();
@@ -83,5 +88,9 @@ public abstract class AbstractGotoSEContributor implements SearchEverywhereContr
     }
 
     return null;
+  }
+
+  protected boolean isDumbModeSupported() {
+    return false;
   }
 }

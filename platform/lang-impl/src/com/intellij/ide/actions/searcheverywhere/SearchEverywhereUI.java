@@ -488,6 +488,13 @@ public class SearchEverywhereUI extends BorderLayoutPanel implements Disposable,
         updateHint(selectedValue);
       }
     });
+
+    myProject.getMessageBus().connect(this).subscribe(DumbService.DUMB_MODE, new DumbService.DumbModeListener() {
+      @Override
+      public void exitDumbMode() {
+        ApplicationManager.getApplication().invokeLater(() -> rebuildList());
+      }
+    });
   }
 
   private void elementSelected(int i, int modifiers) {
@@ -603,34 +610,32 @@ public class SearchEverywhereUI extends BorderLayoutPanel implements Disposable,
     }
 
     private void addContributorItems(SearchEverywhereContributor contributor, int count, boolean clearBefore) {
-      if (!DumbService.getInstance(project).isDumb()) {
-        ApplicationManager.getApplication().runReadAction(() -> {
-          ContributorSearchResult<Object> results = contributor.search(project, pattern, isUseNonProjectItems(), myProgressIndicator, count);
+      ApplicationManager.getApplication().runReadAction(() -> {
+        ContributorSearchResult<Object> results = contributor.search(project, pattern, isUseNonProjectItems(), myProgressIndicator, count);
 
-          if (clearBefore) {
-            listOperationsAlarm.cancelAllRequests();
+        if (clearBefore) {
+          listOperationsAlarm.cancelAllRequests();
+        }
+
+        listOperationsAlarm.addRequest(() -> {
+          if (isCanceled()) {
+            return;
           }
 
-          listOperationsAlarm.addRequest(() -> {
-            if (isCanceled()) {
-              return;
-            }
-
-            Dimension oldSize = getPreferredSize();
-            if (clearBefore) {
-              myListModel.clear();
-            }
-            List<Object> itemsToAdd = results.getItems().stream()
-                                             .filter(o -> !myListModel.contains(o))
-                                             .collect(Collectors.toList());
-            if (!itemsToAdd.isEmpty()) {
-              myListModel.addElements(itemsToAdd, contributor, results.hasMoreItems());
-              ScrollingUtil.ensureSelectionExists(myResultsList);
-            }
-            firePropertyChange("preferredSize", oldSize, getPreferredSize());
-          }, 0);
-        });
-      }
+          Dimension oldSize = getPreferredSize();
+          if (clearBefore) {
+            myListModel.clear();
+          }
+          List<Object> itemsToAdd = results.getItems().stream()
+                                           .filter(o -> !myListModel.contains(o))
+                                           .collect(Collectors.toList());
+          if (!itemsToAdd.isEmpty()) {
+            myListModel.addElements(itemsToAdd, contributor, results.hasMoreItems());
+            ScrollingUtil.ensureSelectionExists(myResultsList);
+          }
+          firePropertyChange("preferredSize", oldSize, getPreferredSize());
+        }, 0);
+      });
     }
 
     protected void check() {

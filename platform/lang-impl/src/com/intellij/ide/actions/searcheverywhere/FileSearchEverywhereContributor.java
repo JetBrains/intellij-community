@@ -68,4 +68,9 @@ public class FileSearchEverywhereContributor extends AbstractGotoSEContributor {
 
     return super.getItemData(dataId, element);
   }
+
+  @Override
+  protected boolean isDumbModeSupported() {
+    return true;
+  }
 }
