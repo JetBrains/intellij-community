@@ -58,7 +58,6 @@ public class NativeFileWatcherImpl extends PluggableFileWatcher {
   private volatile List<String> myFlatWatchRoots = Collections.emptyList();
   private final String[] myLastChangedPaths = new String[2];
   private int myLastChangedPathIndex;
-  private boolean myInternalMode;
 
   @Override
   public void initialize(@NotNull ManagingFS managingFS, @NotNull FileWatcherNotificationSink notificationSink) {
@@ -84,7 +83,6 @@ public class NativeFileWatcherImpl extends PluggableFileWatcher {
       try {
         startupProcess(false);
         LOG.info("Native file watcher is operational.");
-        myInternalMode = ApplicationManager.getApplication().isInternal();
       }
       catch (IOException e) {
         LOG.warn(e.getMessage());
@@ -347,7 +345,6 @@ public class NativeFileWatcherImpl extends PluggableFileWatcher {
         }
         else if (watcherOp == WatcherOp.RESET) {
           myNotificationSink.notifyReset(null);
-          if (myInternalMode) LOG.warn("RESET happened");
         }
         else {
           myLastOp = watcherOp;
@@ -396,7 +393,6 @@ public class NativeFileWatcherImpl extends PluggableFileWatcher {
     private void processChange(String path, WatcherOp op) {
       if (SystemInfo.isWindows && op == WatcherOp.RECDIRTY) {
         myNotificationSink.notifyReset(path);
-        if (myInternalMode) LOG.warn("RESET happened on " + path);
         return;
       }
 
