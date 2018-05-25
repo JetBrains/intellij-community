@@ -7,6 +7,7 @@ import com.intellij.openapi.progress.EmptyProgressIndicator
 import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.ui.Messages
 import com.intellij.util.ThrowableConvertor
+import org.jetbrains.annotations.CalledInBackground
 import org.jetbrains.annotations.TestOnly
 import org.jetbrains.plugins.github.authentication.GithubAuthenticationManager
 import org.jetbrains.plugins.github.authentication.accounts.GithubAccount
@@ -30,12 +31,14 @@ class GithubApiTaskExecutor(private val authenticationManager: GithubAuthenticat
    * Run github task using saved OAuth token to authenticate
    * TODO: Share connection between requests
    */
+  @CalledInBackground
   @Throws(IOException::class)
   fun <T> execute(indicator: ProgressIndicator, account: GithubAccount, task: GithubTask<T>): T {
     val token = authenticationManager.getTokenForAccount(account) ?: throw GithubMissingTokenException(account)
     return CancellableGithubConnection(indicator, GithubAuthData.createTokenAuth(account.server.toString(), token)).use(task::convert)
   }
 
+  @CalledInBackground
   @TestOnly
   @Throws(IOException::class)
   fun <T> execute(account: GithubAccount, task: GithubTask<T>): T = execute(EmptyProgressIndicator(), account, task)
@@ -44,6 +47,7 @@ class GithubApiTaskExecutor(private val authenticationManager: GithubAuthenticat
     /**
      * Run one-time github task without authentication
      */
+    @CalledInBackground
     @JvmStatic
     @Throws(IOException::class)
     fun <T> execute(indicator: ProgressIndicator, server: GithubServerPath, task: GithubTask<T>): T {
@@ -53,6 +57,7 @@ class GithubApiTaskExecutor(private val authenticationManager: GithubAuthenticat
     /**
      * Run one-time github task using OAuth token to authenticate
      */
+    @CalledInBackground
     @JvmStatic
     @Throws(IOException::class)
     fun <T> execute(indicator: ProgressIndicator, server: GithubServerPath, token: String, task: GithubTask<T>): T {
@@ -62,6 +67,7 @@ class GithubApiTaskExecutor(private val authenticationManager: GithubAuthenticat
     /**
      * Run one-time github task with login and password
      */
+    @CalledInBackground
     @JvmStatic
     @Throws(IOException::class)
     fun <T> execute(indicator: ProgressIndicator, server: GithubServerPath, login: String, password: CharArray, task: GithubTask<T>): T {
