@@ -42,7 +42,7 @@ public class ComboEditorCompletionContributor extends CompletionContributor impl
         for (int i = 0; i < count; i++) {
           final Object o = comboBox.getItemAt(i);
           if (o instanceof String) {
-            resultSet.addElement(PrioritizedLookupElement.withPriority(lookupElementProvider.getLookupElement((String)o), count - i));
+            resultSet.addElement(PrioritizedLookupElement.withPriority(lookupElementProvider.createLookupElement((String)o), count - i));
           }
         }
         if (!Boolean.TRUE.equals(document.getUserData(CONTINUE_RUN_COMPLETION))) {
@@ -58,12 +58,14 @@ public class ComboEditorCompletionContributor extends CompletionContributor impl
 
   public interface LookupElementProvider {
     DefaultLookupElementProvider DEFAULT = new DefaultLookupElementProvider();
-    LookupElement getLookupElement(@NotNull String lookupString);
+    @NotNull
+    LookupElement createLookupElement(@NotNull String lookupString);
   }
 
   public static class DefaultLookupElementProvider implements LookupElementProvider {
+    @NotNull
     @Override
-    public LookupElementBuilder getLookupElement(@NotNull String lookupString) {
+    public LookupElementBuilder createLookupElement(@NotNull String lookupString) {
       return LookupElementBuilder.create(lookupString).withInsertHandler((context, item) -> {
         final Document document = context.getEditor().getDocument();
         document.deleteString(context.getEditor().getCaretModel().getOffset(), document.getTextLength());
