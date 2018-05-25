@@ -23,10 +23,10 @@ class GithubAccountInformationProvider(private val apiTaskExecutor: GithubApiTas
   init {
     ApplicationManager.getApplication().messageBus
       .connect()
-      .subscribe(GithubAccountManager.ACCOUNT_REMOVED_TOPIC, object : AccountRemovedListener {
-        override fun accountRemoved(removedAccount: GithubAccount) {
-          informationCache.remove(removedAccount)
-          imageCache.remove(removedAccount)
+      .subscribe(GithubAccountManager.ACCOUNT_TOKEN_CHANGED_TOPIC, object : AccountTokenChangedListener {
+        override fun tokenChanged(account: GithubAccount) {
+          informationCache.remove(account)
+          imageCache.remove(account)
         }
       })
   }
