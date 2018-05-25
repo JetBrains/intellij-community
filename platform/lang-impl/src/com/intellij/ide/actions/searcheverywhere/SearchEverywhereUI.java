@@ -78,13 +78,13 @@ public class SearchEverywhereUI extends BorderLayoutPanel implements Disposable,
   private final SearchListModel myListModel = new SearchListModel(); //todo using in different threads? #UX-1
 
   private JBPopup myHint;
+  private final Alarm hintAlarm = new Alarm(Alarm.ThreadToUse.SWING_THREAD, ApplicationManager.getApplication());
 
   private CalcThread myCalcThread; //todo using in different threads? #UX-1
   private volatile ActionCallback myCurrentWorker = ActionCallback.DONE;
   private int myCalcThreadRestartRequestId = 0;
   private final Object myWorkerRestartRequestLock = new Object();
   private final Alarm listOperationsAlarm = new Alarm(Alarm.ThreadToUse.SWING_THREAD, ApplicationManager.getApplication());
-  private final Alarm hintAlarm = new Alarm(Alarm.ThreadToUse.SWING_THREAD, ApplicationManager.getApplication());
 
   private Runnable searchFinishedHandler = () -> {};
 
@@ -172,6 +172,29 @@ public class SearchEverywhereUI extends BorderLayoutPanel implements Disposable,
     switchToTab(selectedTab);
   }
 
+  private void switchToNextTab() {
+    int currentIndex = myTabs.indexOf(mySelectedTab);
+    SETab nextTab = currentIndex == myTabs.size() - 1 ? myTabs.get(0) : myTabs.get(currentIndex + 1);
+    switchToTab(nextTab);
+  }
+
+  private void switchToTab(SETab tab) {
+    mySelectedTab = tab;
+    String text = tab.getContributor()
+                     .map(SearchEverywhereContributor::includeNonProjectItemsText)
+                     .orElse(IdeBundle.message("checkbox.include.non.project.items", IdeUICustomization.getInstance().getProjectConceptName()));
+    if (text.indexOf(UIUtil.MNEMONIC) != -1) {
+      DialogUtil.setTextWithMnemonic(myNonProjectCB, text);
+    } else {
+      myNonProjectCB.setText(text);
+      myNonProjectCB.setDisplayedMnemonicIndex(-1);
+      myNonProjectCB.setMnemonic(0);
+    }
+    myNonProjectCB.setSelected(false);
+    repaint();
+    rebuildList();
+  }
+
   public void setSearchFinishedHandler(@NotNull Runnable searchFinishedHandler) {
     this.searchFinishedHandler = searchFinishedHandler;
   }
@@ -232,29 +255,6 @@ public class SearchEverywhereUI extends BorderLayoutPanel implements Disposable,
     if (updateProcessor != null) {
       updateProcessor.updatePopup(element);
     }
-  }
-
-  private void switchToNextTab() {
-    int currentIndex = myTabs.indexOf(mySelectedTab);
-    SETab nextTab = currentIndex == myTabs.size() - 1 ? myTabs.get(0) : myTabs.get(currentIndex + 1);
-    switchToTab(nextTab);
-  }
-
-  private void switchToTab(SETab tab) {
-    mySelectedTab = tab;
-    String text = tab.getContributor()
-      .map(SearchEverywhereContributor::includeNonProjectItemsText)
-      .orElse(IdeBundle.message("checkbox.include.non.project.items", IdeUICustomization.getInstance().getProjectConceptName()));
-    if (text.indexOf(UIUtil.MNEMONIC) != -1) {
-      DialogUtil.setTextWithMnemonic(myNonProjectCB, text);
-    } else {
-      myNonProjectCB.setText(text);
-      myNonProjectCB.setDisplayedMnemonicIndex(-1);
-      myNonProjectCB.setMnemonic(0);
-    }
-    myNonProjectCB.setSelected(false);
-    repaint();
-    rebuildList();
   }
 
   private boolean isAllTabSelected() {
