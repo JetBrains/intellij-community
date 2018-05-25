@@ -10,7 +10,6 @@ import com.intellij.util.ui.JBInsets;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
-import javax.swing.plaf.BorderUIResource;
 import javax.swing.plaf.ColorUIResource;
 import javax.swing.plaf.IconUIResource;
 import java.awt.*;
@@ -94,14 +93,9 @@ public class UITheme {
 
     if (key.endsWith("Insets") || key.endsWith("padding")) {
       return parseInsets(value);
-    } else if (key.endsWith("Border") || key.endsWith("border")) {
-
+    } else if (key.endsWith("border")) {
       try {
-        if (StringUtil.split(value, ",").size() == 4) {
-          return new BorderUIResource.EmptyBorderUIResource(parseInsets(value));
-        } else {
-          return Class.forName(value).newInstance();
-        }
+        return Class.forName(value).newInstance();
       } catch (Exception e) {
         e.printStackTrace();
       }

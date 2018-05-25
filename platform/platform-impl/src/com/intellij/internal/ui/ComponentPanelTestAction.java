@@ -1,7 +1,6 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.internal.ui;
 
-import com.intellij.openapi.actionSystem.ActionManager;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.project.DumbAwareAction;
@@ -10,16 +9,13 @@ import com.intellij.openapi.ui.ComponentWithBrowseButton;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.panel.ComponentPanel;
 import com.intellij.openapi.ui.panel.ProgressPanel;
-import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.ui.ComboboxWithBrowseButton;
 import com.intellij.ui.DocumentAdapter;
 import com.intellij.ui.SideBorder;
 import com.intellij.ui.components.JBScrollPane;
+import com.intellij.ui.components.JBTabbedPane;
 import com.intellij.ui.components.labels.DropDownLink;
 import com.intellij.ui.table.JBTable;
-import com.intellij.ui.tabs.TabInfo;
-import com.intellij.ui.tabs.TabsListener;
-import com.intellij.ui.tabs.impl.JBEditorTabs;
 import com.intellij.util.Alarm;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.ui.JBUI;
@@ -44,13 +40,11 @@ public class ComponentPanelTestAction extends DumbAwareAction {
 
   @SuppressWarnings({"MethodMayBeStatic", "UseOfSystemOutOrSystemErr"})
   private static class ComponentPanelTest extends DialogWrapper {
-    private final Project myProject;
     private final Alarm myAlarm = new Alarm(getDisposable());
     private ProgressTimerRequest progressTimerRequest;
 
     private ComponentPanelTest(Project project) {
       super(project);
-      myProject = project;
       init();
       setTitle("Component Panel Test Action");
     }
@@ -58,31 +52,28 @@ public class ComponentPanelTestAction extends DumbAwareAction {
     @Nullable
     @Override
     protected JComponent createCenterPanel() {
-      JBEditorTabs tabs = new JBEditorTabs(myProject, ActionManager.getInstance(), IdeFocusManager.getInstance(myProject), getDisposable()) {
-        @Override
-        public boolean isAlphabeticalMode() {
-          return false;
-        }
-      };
+      JTabbedPane pane = new JBTabbedPane(SwingConstants.TOP);
+      pane.addTab("Component", createComponentPanel());
+      pane.addTab("Component Grid", createComponentGridPanel());
+      pane.addTab("Progress Grid", createProgressGridPanel());
 
-      tabs.addTab(new TabInfo(createComponentPanel()).setText("Component"));
-      tabs.addTab(new TabInfo(createComponentGridPanel()).setText("Component Grid"));
+      for (int i = 1; i <= 20; i++) {
+        String title = "Blank " + i;
+        JLabel label = new JLabel(title);
+        pane.addTab(title, JBUI.Panels.simplePanel(label));
+      }
 
-      TabInfo progressTab = new TabInfo(createProgressGridPanel()).setText("Progress Grid");
-      tabs.addTab(progressTab);
+      //pane.setTabLayoutPolicy(JTabbedPane.SCROLL_TAB_LAYOUT);
 
-      tabs.addListener(new TabsListener(){
-        @Override
-        public void selectionChanged(TabInfo oldSelection, TabInfo newSelection) {
-          if (newSelection == progressTab) {
-            myAlarm.addRequest(progressTimerRequest, 200, ModalityState.any());
-          } else {
-            myAlarm.cancelRequest(progressTimerRequest);
-          }
+      pane.addChangeListener(e -> {
+        if (pane.getSelectedIndex() == 2) {
+          myAlarm.addRequest(progressTimerRequest, 200, ModalityState.any());
+        } else {
+          myAlarm.cancelRequest(progressTimerRequest);
         }
       });
 
-      return tabs;
+      return pane;
     }
 
     private JComponent createComponentPanel() {
@@ -261,8 +252,6 @@ public class ComponentPanelTestAction extends DumbAwareAction {
       JProgressBar pb2 = new JProgressBar(0, 100);
 
       progressTimerRequest = new ProgressTimerRequest(pb1);
-
-      myAlarm.addRequest(progressTimerRequest, 200, ModalityState.any());
 
       ProgressPanel progressPanel = ProgressPanel.getProgressPanel(pb1);
       if (progressPanel != null) {
