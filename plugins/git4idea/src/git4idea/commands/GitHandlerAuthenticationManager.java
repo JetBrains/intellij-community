@@ -74,7 +74,8 @@ public class GitHandlerAuthenticationManager implements AutoCloseable {
         if (lowerCaseLine.contains("authentication failed") ||
             lowerCaseLine.contains("403 forbidden") ||
             lowerCaseLine.contains("error: 400") ||
-            (lowerCaseLine.contains("fatal: repository") && lowerCaseLine.contains("not found"))) {
+            (lowerCaseLine.contains("fatal: repository") && lowerCaseLine.contains("not found")) ||
+            lowerCaseLine.contains("[remote rejected] (permission denied)")) {
           LOG.debug("auth listener: auth failure detected: " + line);
           myHttpAuthFailed = true;
         }
