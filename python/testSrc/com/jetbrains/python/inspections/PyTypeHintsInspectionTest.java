@@ -573,6 +573,17 @@ public class PyTypeHintsInspectionTest extends PyInspectionTestCase {
     );
   }
 
+  // PY-20530
+  public void testTupleUnpacking() {
+    doTestByText("a1 = undefined()  # type: int\n" +
+                 "\n" +
+                 "b1, (c1, d1) = undefined()  # type: int, (int, str)\n" +
+                 "e1, (f1, g1), h1 = undefined()  # type: int, (str, int), str\n" +
+                 "\n" +
+                 "b2, (c2, d2) = undefined()  # type: <warning descr=\"Type comment cannot be matched with unpacked variables\">int, (int)</warning>\n" +
+                 "e2, (f2, g2), h2 = undefined()  # type: <warning descr=\"Type comment cannot be matched with unpacked variables\">int, (str), str</warning>");
+  }
+
   @NotNull
   @Override
   protected Class<? extends PyInspection> getInspectionClass() {
