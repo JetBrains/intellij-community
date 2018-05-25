@@ -84,6 +84,7 @@ public class SearchEverywhereUI extends BorderLayoutPanel implements Disposable,
   private int myCalcThreadRestartRequestId = 0;
   private final Object myWorkerRestartRequestLock = new Object();
   private final Alarm listOperationsAlarm = new Alarm(Alarm.ThreadToUse.SWING_THREAD, ApplicationManager.getApplication());
+  private final Alarm hintAlarm = new Alarm(Alarm.ThreadToUse.SWING_THREAD, ApplicationManager.getApplication());
 
   private Runnable searchFinishedHandler = () -> {};
 
@@ -477,7 +478,13 @@ public class SearchEverywhereUI extends BorderLayoutPanel implements Disposable,
 
     myResultsList.addListSelectionListener(e -> {
       Object selectedValue = myResultsList.getSelectedValue();
-      if (selectedValue != null && myHint != null && myHint.isVisible()) {
+      hintAlarm.cancelAllRequests();
+      if (selectedValue == null) {
+        hintAlarm.addRequest(() -> hideHint(), 200);
+        return;
+      }
+
+      if (myHint != null && myHint.isVisible()) {
         updateHint(selectedValue);
       }
     });
