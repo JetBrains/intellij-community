@@ -49,10 +49,7 @@ import javax.swing.*;
 import javax.swing.border.Border;
 import javax.swing.event.DocumentEvent;
 import java.awt.*;
-import java.awt.event.KeyAdapter;
-import java.awt.event.KeyEvent;
-import java.awt.event.MouseAdapter;
-import java.awt.event.MouseEvent;
+import java.awt.event.*;
 import java.util.*;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -176,6 +173,12 @@ public class SearchEverywhereUI extends BorderLayoutPanel implements Disposable,
     int currentIndex = myTabs.indexOf(mySelectedTab);
     SETab nextTab = currentIndex == myTabs.size() - 1 ? myTabs.get(0) : myTabs.get(currentIndex + 1);
     switchToTab(nextTab);
+  }
+
+  private void switchToPrevTab() {
+    int currentIndex = myTabs.indexOf(mySelectedTab);
+    SETab prevTab = currentIndex == 0 ? myTabs.get(myTabs.size() - 1) : myTabs.get(currentIndex - 1);
+    switchToTab(prevTab);
   }
 
   private void switchToTab(SETab tab) {
@@ -436,9 +439,14 @@ public class SearchEverywhereUI extends BorderLayoutPanel implements Disposable,
     mySearchField.addKeyListener(new KeyAdapter() {
       @Override
       public void keyPressed(KeyEvent e) {
-        if (e.getKeyCode() == KeyEvent.VK_TAB && e.getModifiers() == 0) {
-          switchToNextTab();
-          e.consume();
+        if (e.getKeyCode() == KeyEvent.VK_TAB) {
+          if (e.getModifiers() == 0) {
+            switchToNextTab();
+            e.consume();
+          } else if (e.getModifiers() == InputEvent.SHIFT_MASK) {
+            switchToPrevTab();
+            e.consume();
+          }
         }
 
         if (e.getKeyCode() == KeyEvent.VK_ENTER) {
