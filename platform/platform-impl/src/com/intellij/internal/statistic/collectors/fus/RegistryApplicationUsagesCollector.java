@@ -16,6 +16,11 @@ public class RegistryApplicationUsagesCollector extends ApplicationUsagesCollect
   @NotNull
   @Override
   public Set<UsageDescriptor> getUsages() {
+    return getChangedValuesUsages();
+  }
+
+  @NotNull
+  static Set<UsageDescriptor> getChangedValuesUsages() {
     return Registry.getAll().stream()
                    .filter(key -> key.isChangedFromDefault())
                    .map(key -> new UsageDescriptor(key.getKey()))
