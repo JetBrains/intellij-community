@@ -397,7 +397,7 @@ public class DarculaComboBoxUI extends BasicComboBoxUI implements Border, ErrorB
     Insets i = getInsets();
     Dimension abSize = arrowButton.getPreferredSize();
 
-    if (isCompact(comboBox)) {
+    if (isCompact(comboBox) && size != null) {
       JBInsets.removeFrom(size, padding); // don't count paddings in compact mode
     }
 
@@ -405,8 +405,11 @@ public class DarculaComboBoxUI extends BasicComboBoxUI implements Border, ErrorB
     int editorWidth = editorSize != null ? editorSize.width + i.left + padding.left + padding.right : 0;
     editorWidth = Math.max(editorWidth, MINIMUM_WIDTH.get() + i.left);
 
-    int width = Math.max(editorWidth + abSize.width, size.width + padding.left);
-    int height = Math.max(Math.max(editorHeight, Math.max(abSize.height, size.height)),
+    int width = size != null ? size.width : 0;
+    int height = size != null ? size.height : 0;
+
+    width = Math.max(editorWidth + abSize.width, width + padding.left);
+    height = Math.max(Math.max(editorHeight, Math.max(abSize.height, height)),
                           (isCompact(comboBox) ? COMPACT_HEIGHT.get() : MINIMUM_HEIGHT.get()) + i.top + i.bottom);
 
     return new Dimension(width, height);

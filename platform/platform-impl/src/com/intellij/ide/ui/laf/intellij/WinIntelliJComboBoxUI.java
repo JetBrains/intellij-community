@@ -447,8 +447,13 @@ public class WinIntelliJComboBoxUI extends DarculaComboBoxUI {
     int editorWidth = editorSize != null ? editorSize.width + i.left + padding.left + padding.right : 0;
     editorWidth = Math.max(editorWidth, MINIMUM_WIDTH.get() + i.left);
 
-    return new Dimension(Math.max(editorWidth + ARROW_BUTTON_SIZE.width, size.width + padding.left),
-                         Math.max(ARROW_BUTTON_SIZE.height, Math.max(editorHeight, size.height)));
+    int width = size != null ? size.width : 0;
+    int height = size != null ? size.height : 0;
+
+    width = Math.max(editorWidth + ARROW_BUTTON_SIZE.width, width + padding.left);
+    height = Math.max(ARROW_BUTTON_SIZE.height, Math.max(editorHeight, height));
+
+    return new Dimension(width, height);
   }
 
   @Override
