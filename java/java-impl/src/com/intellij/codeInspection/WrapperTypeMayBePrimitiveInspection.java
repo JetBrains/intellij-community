@@ -39,7 +39,7 @@ public class WrapperTypeMayBePrimitiveInspection extends AbstractBaseJavaLocalIn
     ourReplacementMap.put(CommonClassNames.JAVA_LANG_BYTE, "parseByte");
   }
 
-  static CallMatcher getValueOfMatcher() {
+  private static CallMatcher getValueOfMatcher() {
     CallMatcher[] matchers = JvmPrimitiveTypeKind.getBoxedFqns()
                                                  .stream()
                                                  .filter(fqn -> !fqn.equals(CommonClassNames.JAVA_LANG_CHARACTER))
