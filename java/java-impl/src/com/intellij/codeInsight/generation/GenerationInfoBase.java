@@ -43,6 +43,7 @@ public abstract class GenerationInfoBase implements GenerationInfo {
     PsiElement element = leaf;
     while (element.getParent() != aClass) {
       element = element.getParent();
+      if (element == null) return null;
     }
 
     PsiElement lBrace = aClass.getLBrace();
