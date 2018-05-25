@@ -194,12 +194,6 @@ public abstract class CloneDvcsDialog extends DialogWrapper {
     myRepositoryUrlField.addDocumentListener(new DocumentListener() {
       @Override
       public void documentChanged(com.intellij.openapi.editor.event.DocumentEvent event) {
-        startTrackingValidation();
-      }
-    });
-    myRepositoryUrlField.addDocumentListener(new DocumentListener() {
-      @Override
-      public void documentChanged(com.intellij.openapi.editor.event.DocumentEvent event) {
         myDirectoryField.trySetChildPath(defaultDirectoryName(myRepositoryUrlField.getText().trim()));
       }
     });
@@ -223,12 +217,6 @@ public abstract class CloneDvcsDialog extends DialogWrapper {
                                              DvcsBundle.getString("clone.destination.directory.browser.description"),
                                              myProject,
                                              fcd);
-    myDirectoryField.getTextField().getDocument().addDocumentListener(new DocumentAdapter() {
-      @Override
-      protected void textChanged(DocumentEvent e) {
-        startTrackingValidation();
-      }
-    });
 
     if (defaultUrl != null) {
       myRepositoryUrlField.setText(defaultUrl);
