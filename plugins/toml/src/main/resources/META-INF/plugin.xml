@@ -4,7 +4,7 @@
     <version>0.0.1</version>
     <idea-version since-build="162" until-build="182.*"/>
 
-    <vendor url="https://github.com/intellij-rust/intellij-rust"/>
+    <vendor>JetBrains</vendor>
 
     <description><![CDATA[
       TOML language support
