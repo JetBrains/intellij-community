@@ -349,10 +349,6 @@ class CompilationContextImpl implements CompilationContext {
   void notifyArtifactBuilt(String artifactPath) {
     def file = new File(artifactPath)
     def artifactsDir = new File(paths.artifacts)
-    if (!FileUtil.isAncestor(new File(paths.projectHome), file, true)) {
-      messages.warning("Artifact '$artifactPath' is not under '$paths.projectHome', it won't be reported")
-      return
-    }
 
     if (file.isFile()) {
       //temporary workaround until TW-54541 is fixed: if build is going to produce big artifacts and we have lack of free disk space it's better not to send 'artifactBuilt' message to avoid "No space left on device" errors
