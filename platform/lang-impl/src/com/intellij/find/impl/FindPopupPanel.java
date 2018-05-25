@@ -489,17 +489,7 @@ public class FindPopupPanel extends JBPanel implements FindUI {
 
     myOkActionListener = __ -> doOK(true);
     myReplaceAllButton.addActionListener(e -> {
-      boolean okToReplaceAll = myResultsPreviewTable.getRowCount() < 2;
-      if (!okToReplaceAll) {
-        okToReplaceAll = ReplaceInProjectManager.getInstance(myProject).showReplaceAllConfirmDialog(
-          myUsagesCount,
-          getStringToFind(),
-          myFilesCount,
-          getStringToReplace());
-      }
-      if (okToReplaceAll) {
-        doOK(false);
-      }
+      doOK(false);
     });
     myReplaceSelectedButton.addActionListener(e -> {
       int rowToSelect = myResultsPreviewTable.getSelectionModel().getMinSelectionIndex();
@@ -829,6 +819,15 @@ public class FindPopupPanel extends JBPanel implements FindUI {
     ValidationInfo validationInfo = getValidationInfo(validateModel);
 
     if (validationInfo == null) {
+      if (validateModel.isReplaceState() &&
+          myResultsPreviewTable.getRowCount() > 1 &&
+          !ReplaceInProjectManager.getInstance(myProject).showReplaceAllConfirmDialog(
+            myUsagesCount,
+            getStringToFind(),
+            myFilesCount,
+            getStringToReplace())) {
+        return;
+      }
       myHelper.getModel().copyFrom(validateModel);
       myHelper.getModel().setPromptOnReplace(promptOnReplace);
       myHelper.doOKAction();
@@ -1233,12 +1232,11 @@ public class FindPopupPanel extends JBPanel implements FindUI {
       return new ValidationInfo(FindBundle.message("find.empty.search.text.error"), mySearchComponent);
     }
 
-    if (myCbRegularExpressions != null && myCbRegularExpressions.isSelected() && myCbRegularExpressions.isEnabled()) {
-      String toFind = getStringToFind();
+    if (model.isRegularExpressions()) {
+      String toFind = model.getStringToFind();
       try {
-        boolean isCaseSensitive = myCbCaseSensitive != null && myCbCaseSensitive.isSelected() && myCbCaseSensitive.isEnabled();
         Pattern pattern =
-          Pattern.compile(toFind, isCaseSensitive ? Pattern.MULTILINE : Pattern.MULTILINE | Pattern.CASE_INSENSITIVE);
+          Pattern.compile(toFind, model.isCaseSensitive() ? Pattern.MULTILINE : Pattern.MULTILINE | Pattern.CASE_INSENSITIVE);
         if (pattern.matcher("").matches() && !toFind.endsWith("$") && !toFind.startsWith("^")) {
           return new ValidationInfo(FindBundle.message("find.empty.match.regular.expression.error"), mySearchComponent);
         }
@@ -1248,6 +1246,19 @@ public class FindPopupPanel extends JBPanel implements FindUI {
                                   mySearchComponent);
       }
       if (model.isReplaceState()) {
+        if (myResultsPreviewTable.getRowCount() > 0) {
+          Object value = myResultsPreviewTable.getModel().getValueAt(0, 0);
+          if (value instanceof Usage) {
+            try {
+              // Just check
+              ReplaceInProjectManager.getInstance(myProject).replaceUsage((Usage)value, model, Collections.emptySet(), true);
+            }
+            catch (FindManager.MalformedReplacementStringException e) {
+              return new ValidationInfo(e.getMessage(), myReplaceComponent);
+            }
+          }
+        }
+
         try {
           Pattern.compile(getStringToReplace());
         }
