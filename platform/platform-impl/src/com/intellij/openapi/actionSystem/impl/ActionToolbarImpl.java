@@ -985,8 +985,17 @@ public class ActionToolbarImpl extends JPanel implements ActionToolbar, QuickAct
       if (myOrientation == SwingConstants.HORIZONTAL) {
         if (myText != null) {
           FontMetrics fontMetrics = getFontMetrics(getFont());
-          return new JBDimension(JBUI.scale(9) + fontMetrics.stringWidth(myText) + JBUI.scale(4),
-                                 Math.max(fontMetrics.getHeight(), JBUI.scale(24)), true);
+
+          Graphics g = getGraphics().create();
+          try {
+            UISettings.setupAntialiasing(g);
+            int textWidth = fontMetrics.getStringBounds(myText, g).getBounds().width;
+            return new JBDimension(JBUI.scale(9) + textWidth + JBUI.scale(4),
+                                   Math.max(fontMetrics.getHeight(), JBUI.scale(24)), true);
+          }
+          finally {
+            g.dispose();
+          }
         }
         else {
           return JBUI.size(7, 24);
