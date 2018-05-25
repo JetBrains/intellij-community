@@ -187,7 +187,7 @@ public class SearchEverywhereUI extends BorderLayoutPanel implements Disposable,
 
     //item-specific data section--------------
     int index = myResultsList.getSelectedIndex();
-    if (myListModel.isMoreElement(index)) {
+    if (index < 0 || myListModel.isMoreElement(index)) {
       return null;
     }
 
