@@ -122,6 +122,7 @@ class AndroidStudioProperties extends BaseIdeaProperties {
       withTestModule("intellij.android.testFramework")
       withModule("intellij.platform.testFramework")
       withTestModule("intellij.android.observable")
+      withModule("android.sdktools.fakeadbserver")
     }
   }
 
@@ -299,6 +300,10 @@ class AndroidStudioProperties extends BaseIdeaProperties {
       buildContext.ant.copy(todir: "$targetDirectory/plugins/uitest-framework/testData") {
         fileset(dir: "$root/tools/adt/idea/android-uitests/testData")
       }
+      buildContext.ant.copy(todir: "$targetDirectory/bin", overwrite: "true") {// BuildTasksImpl.copyLogXml copies a version of this without the CONSOLE-WARN appender, which we want for UI tests.
+        fileset(file: "$root/tools/idea/bin/log.xml")
+        fileset(file: "$root/tools/adt/idea/uitest-framework/testSrc/com/android/tools/idea/tests/gui/framework/run_uitests.py")
+      }
     }
   }
 
@@ -308,6 +313,12 @@ class AndroidStudioProperties extends BaseIdeaProperties {
 
     buildContext.messages.block("Bundle Gradle $gradleVersion and the offline Maven repo") {
       buildContext.ant.unzip(src: "$root/tools/external/gradle/gradle-$gradleVersion-bin.zip", dest: "$targetDirectory/gradle")
+      // when creating gradle wrappers for UI test projects, we need a zipped copy of gradle to point to
+      if (buildContext.options.includeUiTests) {
+        buildContext.ant.copy(todir: "$targetDirectory/gradle") {
+          fileset(file: "$root/tools/external/gradle/gradle-$gradleVersion-bin.zip")
+        }
+      }
 
       buildContext.ant.copy(todir: "$targetDirectory/gradle/m2repository") {
         fileset(dir: System.getenv().STUDIO_CUSTOM_REPO ?: "$root/prebuilts/tools/common/offline-m2") {
