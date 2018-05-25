@@ -16,7 +16,6 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.util.*;
-import java.util.stream.Stream;
 
 class DiscoveredTestsTreeModel extends BaseTreeModel<Object> {
   private final Object myRoot = ObjectUtils.NULL;
@@ -86,13 +85,13 @@ class DiscoveredTestsTreeModel extends BaseTreeModel<Object> {
   }
 
   @NotNull
-  synchronized DiscoveredTestsTreeModel.Node.Method[] getTestMethods() {
+  synchronized TestMethodUsage[] getTestMethods() {
     //noinspection unchecked
     return myTests
-      .values()
+      .entrySet()
       .stream()
-      .flatMap(vs -> vs.stream())
-      .toArray(DiscoveredTestsTreeModel.Node.Method[]::new);
+      .flatMap(e -> e.getValue().stream().map(m -> new TestMethodUsage(m.getPointer(), e.getKey().getPointer(), m.getParameters())))
+      .toArray(TestMethodUsage[]::new);
   }
 
   synchronized int getTestCount() {

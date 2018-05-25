@@ -101,15 +101,15 @@ public abstract class TestDiscoveryConfigurationProducer extends JavaRunConfigur
     return detectTargetModule(survivedModules, project);
   }
 
-  public abstract boolean isApplicable(@NotNull PsiMethod method);
+  public abstract boolean isApplicable(@NotNull Location<PsiMethod> testMethod);
 
   @NotNull
-  public abstract RunProfileState createProfile(@NotNull PsiMethod[] testMethods,
+  public abstract RunProfileState createProfile(@NotNull Location<PsiMethod>[] testMethods,
                                                 Module module,
                                                 RunConfiguration configuration,
                                                 ExecutionEnvironment environment);
 
-  public RunProfile createProfile(PsiMethod[] testMethods,
+  public RunProfile createProfile(Location<PsiMethod>[] testMethods,
                                   Module module,
                                   ConfigurationContext context, 
                                   String configurationName) {
@@ -190,12 +190,12 @@ public abstract class TestDiscoveryConfigurationProducer extends JavaRunConfigur
   }
 
   private class MyRunProfile implements RunProfile, ConfigurationWithCommandLineShortener {
-    private final PsiMethod[] myTestMethods;
+    private final Location<PsiMethod>[] myTestMethods;
     private final Module myModule;
     private final JavaTestConfigurationBase myConfiguration;
     private final String myConfigurationName;
 
-    public MyRunProfile(PsiMethod[] testMethods, Module module, JavaTestConfigurationBase configuration, String configurationName) {
+    public MyRunProfile(Location<PsiMethod>[] testMethods, Module module, JavaTestConfigurationBase configuration, String configurationName) {
       myTestMethods = testMethods;
       myModule = module;
       myConfiguration = configuration;

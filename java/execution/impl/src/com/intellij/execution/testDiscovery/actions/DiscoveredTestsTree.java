@@ -111,7 +111,8 @@ class DiscoveredTestsTree extends Tree implements DataProvider {
                   .collect(Collectors.toSet());
   }
 
-  DiscoveredTestsTreeModel.Node.Method[] getTestMethods() {
+  @NotNull
+  TestMethodUsage[] getTestMethods() {
     return myModel.getTestMethods();
   }
 

@@ -2,6 +2,7 @@
 package com.theoryinpractice.testng.configuration.testDiscovery;
 
 import com.intellij.execution.JavaTestConfigurationBase;
+import com.intellij.execution.Location;
 import com.intellij.execution.PsiLocation;
 import com.intellij.execution.configurations.RunConfiguration;
 import com.intellij.execution.configurations.RunProfileState;
@@ -9,6 +10,7 @@ import com.intellij.execution.runners.ExecutionEnvironment;
 import com.intellij.execution.testDiscovery.TestDiscoveryConfigurationProducer;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.util.Pair;
+import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiMethod;
 import com.theoryinpractice.testng.configuration.TestNGConfiguration;
 import com.theoryinpractice.testng.configuration.TestNGConfigurationType;
@@ -19,6 +21,7 @@ import com.theoryinpractice.testng.util.TestNGUtil;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Arrays;
+import java.util.Iterator;
 import java.util.LinkedHashSet;
 import java.util.stream.Collectors;
 
@@ -42,19 +45,23 @@ public class TestNGTestDiscoveryConfigurationProducer extends TestDiscoveryConfi
   }
 
   @Override
-  public boolean isApplicable(@NotNull PsiMethod method) {
-    return TestNGUtil.hasTest(method);
+  public boolean isApplicable(@NotNull Location<PsiMethod> method) {
+    //TODO
+    return TestNGUtil.hasTest(method.getPsiElement());
   }
 
   @NotNull
   @Override
-  public RunProfileState createProfile(@NotNull PsiMethod[] testMethods,
+  public RunProfileState createProfile(@NotNull Location<PsiMethod>[] testMethods,
                                        Module module,
                                        RunConfiguration configuration,
                                        ExecutionEnvironment environment) {
     TestData data = ((TestNGConfiguration)configuration).getPersistantData();
     data.setPatterns(Arrays.stream(testMethods)
-            .map(method -> method.getContainingClass().getQualifiedName() + "," + method.getName())
+            .map(method -> {
+              Iterator<Location<PsiClass>> ancestors = method.getAncestors(PsiClass.class, true);
+              return ancestors.next().getPsiElement().getQualifiedName() + "," + method.getPsiElement().getName();
+            })
             .collect(Collectors.toCollection(LinkedHashSet::new)));
     data.TEST_OBJECT = TestType.PATTERN.type; 
     return new TestNGRunnableState(environment, (TestNGConfiguration)configuration);
