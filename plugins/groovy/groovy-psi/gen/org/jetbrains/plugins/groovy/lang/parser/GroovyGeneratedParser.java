@@ -1858,7 +1858,7 @@ public class GroovyGeneratedParser implements PsiParser, LightPsiParser {
   }
 
   /* ********************************************************** */
-  // '{' mb_nl class_members '}'
+  // '{' class_body_inner '}'
   public static boolean class_body(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "class_body")) return false;
     if (!nextTokenIs(b, T_LBRACE)) return false;
@@ -1866,11 +1866,22 @@ public class GroovyGeneratedParser implements PsiParser, LightPsiParser {
     Marker m = enter_section_(b, l, _NONE_, CLASS_BODY, null);
     r = consumeToken(b, T_LBRACE);
     p = r; // pin = 1
-    r = r && report_error_(b, mb_nl(b, l + 1));
-    r = p && report_error_(b, class_members(b, l + 1)) && r;
+    r = r && report_error_(b, class_body_inner(b, l + 1));
     r = p && consumeToken(b, T_RBRACE) && r;
     exit_section_(b, l, m, r, p, null);
     return r || p;
+  }
+
+  /* ********************************************************** */
+  // mb_separators class_members
+  public static boolean class_body_inner(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "class_body_inner")) return false;
+    boolean r;
+    Marker m = enter_section_(b);
+    r = mb_separators(b, l + 1);
+    r = r && class_members(b, l + 1);
+    exit_section_(b, m, null, r);
+    return r;
   }
 
   /* ********************************************************** */
@@ -3132,8 +3143,13 @@ public class GroovyGeneratedParser implements PsiParser, LightPsiParser {
 
   /* ********************************************************** */
   // <<notApplicationArguments expression_or_application_inner>>
-  static boolean expression_or_application(PsiBuilder b, int l) {
-    return notApplicationArguments(b, l + 1, expression_or_application_inner_parser_);
+  public static boolean expression_or_application(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "expression_or_application")) return false;
+    boolean r;
+    Marker m = enter_section_(b);
+    r = notApplicationArguments(b, l + 1, expression_or_application_inner_parser_);
+    exit_section_(b, m, null, r);
+    return r;
   }
 
   /* ********************************************************** */

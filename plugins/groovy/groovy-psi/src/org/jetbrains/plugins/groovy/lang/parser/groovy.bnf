@@ -313,11 +313,12 @@ left annotation_type_definition ::= '@' ('interface') annotation_definition_head
   elementTypeClass = 'org.jetbrains.plugins.groovy.lang.psi.stubs.elements.GrAnnotationDefinitionElementType'
 }
 
-class_body ::= '{' mb_nl class_members '}'
+class_body ::= '{' class_body_inner '}'
 {
   pin = 1
   elementTypeClass = 'org.jetbrains.plugins.groovy.lang.psi.stubs.elements.GrTypeDefinitionBodyElementType'
 }
+class_body_inner ::= mb_separators class_members { elementType = '' name = '' }
 enum_body ::= '{' mb_nl enum_members '}'
 {
   pin = 1
@@ -1087,7 +1088,7 @@ tuple ::= '(' unqualified_reference_expression (',' unqualified_reference_expres
 
 
 // region Applications
-private expression_or_application ::= <<notApplicationArguments expression_or_application_inner>>
+expression_or_application ::= <<notApplicationArguments expression_or_application_inner>> { elementType = '' name = '' }
 private expression_or_application_inner ::= expression application*
 private application ::= <<parseApplication application_ref application_expression application_call application_index>>
 {
