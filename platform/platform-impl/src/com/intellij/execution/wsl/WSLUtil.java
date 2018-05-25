@@ -53,7 +53,8 @@ public class WSLUtil {
     new WSLDistribution.Description("KALI", "kali-linux", "kali.exe", "Kali Linux"),
     new WSLDistribution.Description("OPENSUSE42", "openSUSE-42", "opensuse-42.exe", "openSUSE Leap 42"),
     new WSLDistribution.Description("SLES12", "SLES-12", "sles-12.exe", "SUSE Linux Enterprise Server 12"),
-    new WSLDistribution.Description("UBUNTU", "Ubuntu", "ubuntu.exe", "Ubuntu")
+    new WSLDistribution.Description("UBUNTU", "Ubuntu", "ubuntu.exe", "Ubuntu"),
+    new WSLDistribution.Description("UBUNTU1804", "Ubuntu-18.04", "ubuntu1804.exe", "Ubuntu 18.04")
   );
 
   /**
