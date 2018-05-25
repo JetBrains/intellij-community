@@ -20,9 +20,9 @@ import com.intellij.openapi.module.Module
 import com.intellij.openapi.module.ModuleManager
 import com.intellij.openapi.module.StdModuleTypes
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.projectRoots.JavaSdkVersion
 import com.intellij.openapi.roots.*
 import com.intellij.openapi.util.Key
+import com.intellij.openapi.util.ThrowableComputable
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.openapi.vfs.VirtualFile
@@ -33,14 +33,13 @@ import com.intellij.testFramework.builders.JavaModuleFixtureBuilder
 import com.intellij.testFramework.fixtures.JavaCodeInsightFixtureTestCase
 import com.intellij.util.SystemProperties
 import com.intellij.util.io.PathKt
-import com.intellij.util.lang.JavaVersion
 import groovy.transform.CompileStatic
 import org.jetbrains.annotations.NotNull
 import org.jetbrains.annotations.Nullable
 import org.jetbrains.plugins.groovy.config.GroovyFacetUtil
 import org.jetbrains.plugins.groovy.runner.GroovyScriptRunConfiguration
 import org.jetbrains.plugins.groovy.runner.GroovyScriptRunConfigurationType
-import org.jetbrains.plugins.groovy.util.Slow
+import org.jetbrains.plugins.groovy.util.Slow 
 /**
  * @author aalmiray
  * @author peter
@@ -148,7 +147,7 @@ abstract class GroovyCompilerTestCase extends JavaCodeInsightFixtureTestCase imp
         IdeaTestUtil.setModuleLanguageLevel(dep, LanguageLevelModuleExtensionImpl.getInstance(myModule).getLanguageLevel())
 
         return dep
-    })
+    } as ThrowableComputable<Module,RuntimeException>)
   }
 
   protected void deleteClassFile(final String className) throws IOException {
