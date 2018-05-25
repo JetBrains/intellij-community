@@ -2460,5 +2460,14 @@ public class StructuralReplaceTest extends StructuralReplaceTestCase {
                  "}",
                  replace(in, "'_ReturnType '_Method('_ParameterType '_Parameter*);",
                          "$ReturnType$ $Method$ ($ParameterType$ $Parameter$);", true));
+
+    String in2 = "class X {" +
+                "  public final X[] EMPTY_ARRAY = {};" +
+                "}";
+    assertEquals("shouldn't delete semicolon",
+                 "class X {" +
+                 "  public final X[] EMPTY_ARRAY = {};" +
+                 "}",
+                 replace(in2, "'_FieldType 'Field = '_Init?;", "$FieldType$ $Field$ = $Init$;", true));
   }
 }
