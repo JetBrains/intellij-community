@@ -1,6 +1,6 @@
 package com.siyeh.igtest.assignment.method_parameter;
 
-class AssigmentToMethodParameterMissesCompoundAssign {
+class AssignmentToMethodParameterMissesCompoundAssign {
 
     public void incrementParameter(int value) {
         <warning descr="Assignment to method parameter 'value'">value</warning>++; // not flagged by the inspection
