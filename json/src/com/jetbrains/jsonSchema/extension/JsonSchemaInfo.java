@@ -3,11 +3,15 @@ package com.jetbrains.jsonSchema.extension;
 
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.impl.http.HttpVirtualFile;
 import com.jetbrains.jsonSchema.impl.JsonSchemaVersion;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
+
+import java.io.File;
 
 public class JsonSchemaInfo {
   private final JsonSchemaFileProvider myProvider;
@@ -41,7 +45,7 @@ public class JsonSchemaInfo {
         return schemaFile.getUrl();
       }
 
-      return VfsUtilCore.getRelativePath(schemaFile, project.getBaseDir());
+      return getRelativePath(project, schemaFile.getPath());
     }
     else {
       return myUrl;
@@ -68,7 +72,8 @@ public class JsonSchemaInfo {
     }
 
     // the only weird case
-    if ("http://json.schemastore.org/config".equals(myUrl)) {
+    if ("http://json.schemastore.org/config".equals(myUrl)
+      || "https://schemastore.azurewebsites.net/schemas/json/config.json".equals(myUrl)) {
       return "asp.net config";
     }
 
@@ -101,5 +106,28 @@ public class JsonSchemaInfo {
 
   public JsonSchemaVersion getSchemaVersion() {
     return myProvider != null ? myProvider.getSchemaVersion() : JsonSchemaVersion.SCHEMA_4;
+  }
+
+  public static String getRelativePath(@NotNull Project project, @NotNull String text) {
+    text = text.trim();
+    if (project.isDefault() || project.getBasePath() == null) return text;
+    if (StringUtil.isEmptyOrSpaces(text)) return text;
+    final File ioFile = new File(text);
+    if (!ioFile.isAbsolute()) return text;
+    VirtualFile file = VfsUtil.findFileByIoFile(ioFile, false);
+    if (file == null) return text;
+    final String relativePath = VfsUtilCore.getRelativePath(file, project.getBaseDir());
+    if (relativePath != null) return relativePath;
+    if (isMeaningfulAncestor(VfsUtilCore.getCommonAncestor(file, project.getBaseDir()))) {
+      String path = VfsUtilCore.findRelativePath(project.getBaseDir(), file, File.separatorChar);
+      if (path != null) return path;
+    }
+    return text;
+  }
+
+  private static boolean isMeaningfulAncestor(@Nullable VirtualFile ancestor) {
+    if (ancestor == null) return false;
+    VirtualFile homeDir = VfsUtil.getUserHomeDir();
+    return homeDir != null && VfsUtilCore.isAncestor(homeDir, ancestor, true);
   }
 }

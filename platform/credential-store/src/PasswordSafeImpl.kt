@@ -28,6 +28,11 @@ private fun computeProvider(settings: PasswordSafeSettings): CredentialStore {
 
 class PasswordSafeImpl @JvmOverloads constructor(val settings: PasswordSafeSettings /* public - backward compatibility */,
                                                  provider: CredentialStore? = null) : PasswordSafe(), SettingsSavingComponent {
+  override var isRememberPasswordByDefault: Boolean
+    get() = settings.state.isRememberPasswordByDefault
+    set(value) {
+      settings.state.isRememberPasswordByDefault = value
+    }
 
   private var _currentProvider: Lazy<CredentialStore> = if (provider == null) lazy { computeProvider(settings) } else lazyOf(provider)
 
@@ -40,7 +45,8 @@ class PasswordSafeImpl @JvmOverloads constructor(val settings: PasswordSafeSetti
   // it is helper storage to support set password as memory-only (see setPassword memoryOnly flag)
   private val memoryHelperProvider = lazy { KeePassCredentialStore(emptyMap(), memoryOnly = true) }
 
-  override fun isMemoryOnly() = settings.providerType == ProviderType.MEMORY_ONLY
+  override val isMemoryOnly: Boolean
+    get() = settings.providerType == ProviderType.MEMORY_ONLY
 
   override fun get(attributes: CredentialAttributes): Credentials? {
     val value = currentProvider.get(attributes)

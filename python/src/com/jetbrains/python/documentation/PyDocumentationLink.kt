@@ -46,7 +46,7 @@ object PyDocumentationLink {
   }
 
   @JvmStatic
-  fun toPossibleClass(type: String, anchor: PsiElement, context: TypeEvalContext) = toPossibleClass(type, type, anchor, context)
+  fun toPossibleClass(type: String, anchor: PsiElement, context: TypeEvalContext): String = toPossibleClass(type, type, anchor, context)
 
   @JvmStatic
   fun toPossibleClass(content: String, qualifiedName: String, anchor: PsiElement, context: TypeEvalContext): String {

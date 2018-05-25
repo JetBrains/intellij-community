@@ -102,7 +102,7 @@ public abstract class VirtualFileSystemEntry extends NewVirtualFile {
 
   @Override
   public VirtualDirectoryImpl getParent() {
-    VirtualDirectoryImpl changedParent = VfsData.getChangedParent(myId);
+    VirtualDirectoryImpl changedParent = mySegment.vfsData.getChangedParent(myId);
     return changedParent != null ? changedParent : myParent;
   }
 
@@ -272,7 +272,7 @@ public abstract class VirtualFileSystemEntry extends NewVirtualFile {
 
   @Override
   public int getId() {
-    return VfsData.isFileValid(myId) ? myId : -myId;
+    return mySegment.vfsData.isFileValid(myId) ? myId : -myId;
   }
 
   @Override
@@ -300,7 +300,7 @@ public abstract class VirtualFileSystemEntry extends NewVirtualFile {
 
   @Override
   public boolean exists() {
-    return VfsData.isFileValid(myId);
+    return mySegment.vfsData.isFileValid(myId);
   }
 
   @Override
@@ -331,7 +331,7 @@ public abstract class VirtualFileSystemEntry extends NewVirtualFile {
     parent.removeChild(this);
 
     VirtualDirectoryImpl directory = (VirtualDirectoryImpl)newParent;
-    VfsData.changeParent(myId, directory);
+    mySegment.vfsData.changeParent(myId, directory);
     directory.addChild(this);
     updateLinkStatus();
     ((PersistentFSImpl)PersistentFS.getInstance()).incStructuralModificationCount();
@@ -343,7 +343,7 @@ public abstract class VirtualFileSystemEntry extends NewVirtualFile {
   }
 
   public void invalidate() {
-    VfsData.invalidateFile(myId);
+    mySegment.vfsData.invalidateFile(myId);
   }
 
   @NotNull

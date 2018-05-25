@@ -47,7 +47,7 @@ open class BasicOptionButtonUI : OptionButtonUI() {
 
   protected var popup: ListPopup? = null
   protected var showPopupAction: AnAction? = null
-  protected var isPopupShowing = false
+  protected var isPopupShowing: Boolean = false
 
   protected var propertyChangeListener: PropertyChangeListener? = null
   protected var changeListener: ChangeListener? = null
@@ -55,7 +55,7 @@ open class BasicOptionButtonUI : OptionButtonUI() {
   protected var arrowButtonActionListener: ActionListener? = null
   protected var arrowButtonMouseListener: MouseListener? = null
 
-  protected val isSimpleButton get() = optionButton.isSimpleButton
+  protected val isSimpleButton: Boolean get() = optionButton.isSimpleButton
 
   override fun installUI(c: JComponent) {
     _optionButton = c as JBOptionButton
@@ -75,8 +75,8 @@ open class BasicOptionButtonUI : OptionButtonUI() {
     _optionButton = null
   }
 
-  override fun getPreferredSize(c: JComponent) = Dimension(mainButton.preferredSize.width + arrowButton.preferredSize.width,
-                                                           maxOf(mainButton.preferredSize.height, arrowButton.preferredSize.height))
+  override fun getPreferredSize(c: JComponent): Dimension = Dimension(mainButton.preferredSize.width + arrowButton.preferredSize.width,
+                                                                      maxOf(mainButton.preferredSize.height, arrowButton.preferredSize.height))
 
   protected open fun installPopup() {
     showPopupAction = DumbAwareAction.create { _ -> showPopup() }
@@ -265,9 +265,9 @@ open class BasicOptionButtonUI : OptionButtonUI() {
     }
   }
 
-  protected open val showPopupXOffset get() = 0
-  protected open val showPopupBelowLocation get() = RelativePoint(optionButton, Point(showPopupXOffset, optionButton.height + scale(6)))
-  protected open val showPopupAboveLocation get() = RelativePoint(optionButton, Point(showPopupXOffset, -scale(6)))
+  protected open val showPopupXOffset: Int get() = 0
+  protected open val showPopupBelowLocation: RelativePoint get() = RelativePoint(optionButton, Point(showPopupXOffset, optionButton.height + scale(6)))
+  protected open val showPopupAboveLocation: RelativePoint get() = RelativePoint(optionButton, Point(showPopupXOffset, -scale(6)))
 
   protected open fun createPopup(toSelect: Action?, ensureSelection: Boolean): ListPopup {
     val (actionGroup, mapping) = createActionMapping()
@@ -292,7 +292,7 @@ open class BasicOptionButtonUI : OptionButtonUI() {
     return Pair(actionGroup, mapping)
   }
 
-  protected open fun createAnAction(action: Action) = action.getValue(OptionAction.AN_ACTION) as? AnAction ?: ActionDelegate(action)
+  protected open fun createAnAction(action: Action): AnAction = action.getValue(OptionAction.AN_ACTION) as? AnAction ?: ActionDelegate(action)
 
   private fun updateTooltip() {
     val toolTip = if (!isSimpleButton) optionButton.optionTooltipText else optionButton.toolTipText
@@ -306,14 +306,14 @@ open class BasicOptionButtonUI : OptionButtonUI() {
   }
 
   open inner class BaseButton : JButton() {
-    override fun hasFocus() = optionButton.hasFocus()
-    override fun isDefaultButton() = optionButton.isDefaultButton
+    override fun hasFocus(): Boolean = optionButton.hasFocus()
+    override fun isDefaultButton(): Boolean = optionButton.isDefaultButton
 
-    override fun paint(g: Graphics) = if (isSimpleButton) super.paint(g) else cloneAndPaint(g) { paintNotSimple(it) }
-    open fun paintNotSimple(g: Graphics2D) = super.paint(g)
+    override fun paint(g: Graphics): Unit = if (isSimpleButton) super.paint(g) else cloneAndPaint(g) { paintNotSimple(it) }
+    open fun paintNotSimple(g: Graphics2D): Unit = super.paint(g)
 
-    override fun paintBorder(g: Graphics) = if (isSimpleButton) super.paintBorder(g) else cloneAndPaint(g) { paintBorderNotSimple(it) }
-    open fun paintBorderNotSimple(g: Graphics2D) = super.paintBorder(g)
+    override fun paintBorder(g: Graphics): Unit = if (isSimpleButton) super.paintBorder(g) else cloneAndPaint(g) { paintBorderNotSimple(it) }
+    open fun paintBorderNotSimple(g: Graphics2D): Unit = super.paintBorder(g)
   }
 
   open inner class MainButton : BaseButton()
@@ -328,8 +328,8 @@ open class BasicOptionButtonUI : OptionButtonUI() {
       arrowButton.bounds = Rectangle(mainButtonWidth, 0, arrowButton.preferredSize.width, optionButton.height)
     }
 
-    override fun preferredLayoutSize(parent: Container) = parent.preferredSize
-    override fun minimumLayoutSize(parent: Container) = parent.minimumSize
+    override fun preferredLayoutSize(parent: Container): Dimension = parent.preferredSize
+    override fun minimumLayoutSize(parent: Container): Dimension = parent.minimumSize
   }
 
   open inner class OptionButtonPopup(step: ActionPopupStep, dataContext: DataContext, private val ensureSelection: Boolean)
@@ -342,14 +342,14 @@ open class BasicOptionButtonUI : OptionButtonUI() {
       if (ensureSelection) super.afterShow()
     }
 
-    protected val background get() = mainButton.background
+    protected val background: Color? get() = mainButton.background
 
-    override fun createContent() = super.createContent().also {
+    override fun createContent(): JComponent = super.createContent().also {
       list.clearSelection() // prevents first action selection if all actions are disabled
       list.border = JBUI.Borders.empty(2, 0)
     }
 
-    override fun getListElementRenderer() = object : PopupListElementRenderer<Any>(this) {
+    override fun getListElementRenderer(): PopupListElementRenderer<Any> = object : PopupListElementRenderer<Any>(this) {
       override fun getBackground() = this@OptionButtonPopup.background
       override fun createSeparator() = super.createSeparator().apply { border = JBUI.Borders.empty(2, 6) }
       override fun getDefaultItemComponentBorder() = JBUI.Borders.empty(6, 8)
@@ -362,8 +362,8 @@ open class BasicOptionButtonUI : OptionButtonUI() {
                       null, true, defaultSelection, false, true) {
     // if there is no default selection condition - -1 should be returned, this way first enabled action should be selected by
     // OptionButtonPopup.afterShow() (if corresponding ensureSelection parameter is true)
-    override fun getDefaultOptionIndex() = defaultSelection?.let { super.getDefaultOptionIndex() } ?: -1
-    override fun isSpeedSearchEnabled() = false
+    override fun getDefaultOptionIndex(): Int = defaultSelection?.let { super.getDefaultOptionIndex() } ?: -1
+    override fun isSpeedSearchEnabled(): Boolean = false
   }
 
   open inner class ActionDelegate(val action: Action) : DumbAwareAction() {
@@ -384,7 +384,7 @@ open class BasicOptionButtonUI : OptionButtonUI() {
   companion object {
     @Suppress("UNUSED_PARAMETER")
     @JvmStatic
-    fun createUI(c: JComponent) = BasicOptionButtonUI()
+    fun createUI(c: JComponent): BasicOptionButtonUI = BasicOptionButtonUI()
 
     fun paintBackground(g: Graphics, c: JComponent) {
       g.color = c.background

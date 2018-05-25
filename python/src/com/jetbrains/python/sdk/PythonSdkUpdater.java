@@ -229,7 +229,7 @@ public class PythonSdkUpdater implements StartupActivity {
   /**
    * Updates the paths of an SDK and regenerates its skeletons as a background task. Shows an error message if the update fails.
    *
-   * @see {@link #update(Sdk, SdkModificator, Project, Component)}
+   * @see #update(Sdk, SdkModificator, Project, Component)
    */
   public static void updateOrShowError(@NotNull Sdk sdk, @Nullable SdkModificator sdkModificator, @Nullable Project project,
                                        @Nullable Component ownerComponent) {

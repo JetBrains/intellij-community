@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.refactoring.introduce;
 
 import com.intellij.codeInsight.navigation.NavigationUtil;
@@ -75,9 +61,7 @@ public abstract class IntroduceHandler<Target extends IntroduceTarget, Scope ext
       invokeOnSelection(selectionModel.getSelectionStart(), selectionModel.getSelectionEnd(), project, editor, file);
     }
     else {
-      int offset = editor.getCaretModel().getOffset();
-
-      Pair<List<Target>, Integer> targetInfo = collectTargets(offset, file, editor, project);
+      Pair<List<Target>, Integer> targetInfo = collectTargets(file, editor, project);
       List<Target> list = targetInfo.getFirst();
       if (list.isEmpty()) {
         cannotPerformRefactoring(project, editor);
@@ -238,13 +222,10 @@ public abstract class IntroduceHandler<Target extends IntroduceTarget, Scope ext
                                                      @NotNull Project project);
 
   /**
-   *
-   * @param offset position of the caret in the editor.
    * @return candidates for refactoring (e.g. all expressions which are under caret)
    */
   @NotNull
-  protected abstract Pair<List<Target>, Integer> collectTargets(int offset,
-                                                                @NotNull PsiFile file,
+  protected abstract Pair<List<Target>, Integer> collectTargets(@NotNull PsiFile file,
                                                                 @NotNull Editor editor,
                                                                 @NotNull Project project);
 

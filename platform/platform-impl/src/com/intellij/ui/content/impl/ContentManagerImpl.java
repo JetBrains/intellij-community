@@ -480,7 +480,9 @@ public class ContentManagerImpl implements ContentManager, PropertyChangeListene
 
         addSelectedContent(content);
 
-        requestFocus(content, forcedFocus);
+        if (requestFocus) {
+          requestFocus(content, forcedFocus);
+        }
         return ActionCallback.DONE;
       }
     };

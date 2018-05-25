@@ -30,7 +30,7 @@ import com.intellij.testGuiFramework.recorder.ui.Notifier
 class PerformScriptAction : AnAction(null, "Run GUI Script", AllIcons.Actions.Execute) {
 
   companion object {
-    val LOG = Logger.getInstance(PerformScriptAction::class.java)
+    val LOG: Logger = Logger.getInstance(PerformScriptAction::class.java)
   }
 
   override fun actionPerformed(p0: AnActionEvent?) {

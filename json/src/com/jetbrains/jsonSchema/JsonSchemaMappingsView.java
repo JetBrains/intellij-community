@@ -22,8 +22,6 @@ import com.intellij.openapi.util.Getter;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
-import com.intellij.openapi.vfs.VfsUtil;
-import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.*;
 import com.intellij.ui.components.JBLabel;
@@ -33,6 +31,7 @@ import com.intellij.ui.components.JBTextField;
 import com.intellij.ui.table.TableView;
 import com.intellij.util.Alarm;
 import com.intellij.util.ui.*;
+import com.jetbrains.jsonSchema.extension.JsonSchemaInfo;
 import com.jetbrains.jsonSchema.impl.JsonSchemaVersion;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -199,7 +198,7 @@ public class JsonSchemaMappingsView implements Disposable {
   public String getSchemaSubPath() {
     String schemaFieldText = mySchemaField.getText();
     if (isHttpPath(schemaFieldText)) return schemaFieldText;
-    return FileUtil.toSystemDependentName(getRelativePath(myProject, schemaFieldText));
+    return FileUtil.toSystemDependentName(JsonSchemaInfo.getRelativePath(myProject, schemaFieldText));
   }
 
   private static ColumnInfo[] createColumns() {
@@ -318,7 +317,7 @@ public class JsonSchemaMappingsView implements Disposable {
         } else {
           text = fileField.getText();
         }
-        return getRelativePath(myProject, text);
+        return JsonSchemaInfo.getRelativePath(myProject, text);
       };
       final Alarm alarm = new Alarm(Alarm.ThreadToUse.SWING_THREAD);
       final Runnable updaterValidator = new Runnable() {
@@ -414,18 +413,6 @@ public class JsonSchemaMappingsView implements Disposable {
         myTreeUpdater.run();
       }
     }
-  }
-
-  private static String getRelativePath(@NotNull Project project, @NotNull String text) {
-    text = text.trim();
-    if (project.isDefault() || project.getBasePath() == null) return text;
-    if (StringUtil.isEmptyOrSpaces(text)) return text;
-    final File ioFile = new File(text);
-    if (!ioFile.isAbsolute()) return text;
-    VirtualFile file = VfsUtil.findFileByIoFile(ioFile, false);
-    if (file == null) return text;
-    final String relativePath = VfsUtilCore.getRelativePath(file, project.getBaseDir());
-    return relativePath == null ? text : relativePath;
   }
 
   private static class SchemaFieldErrorMessageProvider extends DocumentAdapter {

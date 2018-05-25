@@ -36,8 +36,8 @@ public class CvsMessagesConsole extends CvsMessagesAdapter {
     final String message = event.getMessage();
     if (message.isEmpty()) return;
     if (!event.isError() && !event.isTagged()) {
-      if (currentLines >= lineLimit) return;
       currentLines++;
+      if (currentLines > lineLimit) return;
     }
     appendString(message, getAttributesFor(event));
   }
@@ -60,6 +60,8 @@ public class CvsMessagesConsole extends CvsMessagesAdapter {
 
   @Override
   public void commandFinished(String commandName, long time) {
+    if (currentLines > lineLimit) appendString(CvsBundle.message("message.log.truncated", lineLimit, currentLines - lineLimit),
+                                               PROGRESS_MESSAGES_ATTRIBUTES);
     appendString(CvsBundle.message("message.command.finished", time / 1000), COMMAND);
   }
 }

@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package com.intellij.codeInsight.lookup.impl;
 
@@ -68,7 +54,7 @@ public class LookupCellRenderer implements ListCellRenderer {
 
   public static final Color BACKGROUND_COLOR = new JBColor(() -> (JBColor.isBright() ? new Color(235, 244, 254) : JBColor.background()));
   public static final Color FOREGROUND_COLOR = JBColor.foreground();
-  private static final Color GRAYED_FOREGROUND_COLOR = new JBColor(Gray._160, Gray._110);
+  private static final Color GRAYED_FOREGROUND_COLOR = new JBColor(Gray._150, Gray._110);
   private static final Color SELECTED_BACKGROUND_COLOR = new Color(0, 82, 164);
   public static final Color SELECTED_NON_FOCUSED_BACKGROUND_COLOR = new JBColor(0x6e8ea2, 0x55585a);
   public static final Color SELECTED_FOREGROUND_COLOR = new JBColor(() -> (JBColor.isBright() ? JBColor.WHITE : JBColor.foreground()));

@@ -27,14 +27,16 @@ import org.fest.swing.core.Robot
 import org.fest.swing.exception.LocationUnavailableException
 import org.fest.swing.fixture.JTreeFixture
 import org.fest.swing.timing.Pause
+import java.awt.Point
 import java.util.*
+import javax.swing.JPopupMenu
 import javax.swing.JTree
 import javax.swing.tree.DefaultMutableTreeNode
 import javax.swing.tree.TreePath
 
 open class ExtendedTreeFixture(val robot: Robot, val tree: JTree) : JTreeFixture(robot, tree) {
 
-  val myDriver = ExtendedJTreeDriver(robot)
+  val myDriver: ExtendedJTreeDriver = ExtendedJTreeDriver(robot)
   val myCellReader: JTreeCellReader
 
   init {
@@ -56,81 +58,81 @@ open class ExtendedTreeFixture(val robot: Robot, val tree: JTree) : JTreeFixture
     }
   }
 
-  fun clickPath(pathStrings: List<String>, mouseClickInfo: MouseClickInfo) = myDriver.clickPath(tree, pathStrings, mouseClickInfo)
+  fun clickPath(pathStrings: List<String>, mouseClickInfo: MouseClickInfo): Unit = myDriver.clickPath(tree, pathStrings, mouseClickInfo)
 
-  fun clickPath(vararg pathStrings: String, mouseClickInfo: MouseClickInfo) = myDriver.clickPath(tree, pathStrings.toList(), mouseClickInfo)
+  fun clickPath(vararg pathStrings: String, mouseClickInfo: MouseClickInfo): Unit = myDriver.clickPath(tree, pathStrings.toList(), mouseClickInfo)
 
-  fun clickPath(pathStrings: List<String>, button: MouseButton = MouseButton.LEFT_BUTTON, times: Int = 1) = myDriver.clickPath(tree,
-                                                                                                                               pathStrings,
-                                                                                                                               button,
-                                                                                                                               times)
+  fun clickPath(pathStrings: List<String>, button: MouseButton = MouseButton.LEFT_BUTTON, times: Int = 1): Unit = myDriver.clickPath(tree,
+                                                                                                                                     pathStrings,
+                                                                                                                                     button,
+                                                                                                                                     times)
 
-  fun clickXPath(vararg xPathStrings: String) = myDriver.clickXPath(tree, xPathStrings.toList())
+  fun clickXPath(vararg xPathStrings: String): Unit = myDriver.clickXPath(tree, xPathStrings.toList())
 
   fun clickXPath(xPathStrings: List<String>) {
     myDriver.clickXPath(tree, xPathStrings, MouseButton.LEFT_BUTTON, 1)
   }
 
-  fun clickPath(vararg pathStrings: String, button: MouseButton = MouseButton.LEFT_BUTTON, times: Int = 1) = myDriver.clickPath(tree,
-                                                                                                                                pathStrings.toList(),
-                                                                                                                                button,
-                                                                                                                                times)
+  fun clickPath(vararg pathStrings: String, button: MouseButton = MouseButton.LEFT_BUTTON, times: Int = 1): Unit = myDriver.clickPath(tree,
+                                                                                                                                      pathStrings.toList(),
+                                                                                                                                      button,
+                                                                                                                                      times)
 
-  fun checkPathExists(pathStrings: List<String>) = myDriver.checkPathExists(tree, pathStrings)
+  fun checkPathExists(pathStrings: List<String>): Unit = myDriver.checkPathExists(tree, pathStrings)
 
-  fun checkPathExists(vararg pathStrings: String) = myDriver.checkPathExists(tree, pathStrings.toList())
+  fun checkPathExists(vararg pathStrings: String): Unit = myDriver.checkPathExists(tree, pathStrings.toList())
 
   fun nodeValue(pathStrings: List<String>): String? = myDriver.nodeValue(tree, pathStrings)
 
   fun nodeValue(vararg pathStrings: String): String? = myDriver.nodeValue(tree, pathStrings.toList())
 
-  fun doubleClickPath(pathStrings: List<String>) = myDriver.doubleClickPath(tree, pathStrings)
+  fun doubleClickPath(pathStrings: List<String>): Unit = myDriver.doubleClickPath(tree, pathStrings)
 
-  fun doubleClickPath(vararg pathStrings: String) = myDriver.doubleClickPath(tree, pathStrings.toList())
+  fun doubleClickPath(vararg pathStrings: String): Unit = myDriver.doubleClickPath(tree, pathStrings.toList())
 
-  fun doubleClickXPath(vararg pathStrings: String) = myDriver.doubleClickXPath(tree, pathStrings.toList())
+  fun doubleClickXPath(vararg pathStrings: String): Unit = myDriver.doubleClickXPath(tree, pathStrings.toList())
 
-  fun rightClickPath(pathStrings: List<String>) = myDriver.rightClickPath(tree, pathStrings)
+  fun rightClickPath(pathStrings: List<String>): Unit = myDriver.rightClickPath(tree, pathStrings)
 
-  fun rightClickPath(vararg pathStrings: String) = myDriver.rightClickPath(tree, pathStrings.toList())
+  fun rightClickPath(vararg pathStrings: String): Unit = myDriver.rightClickPath(tree, pathStrings.toList())
 
-  fun rightClickXPath(vararg pathStrings: String) = myDriver.rightClickXPath(tree, pathStrings.toList())
+  fun rightClickXPath(vararg pathStrings: String): Unit = myDriver.rightClickXPath(tree, pathStrings.toList())
 
-  fun expandPath(pathStrings: List<String>) = myDriver.expandPath(tree, pathStrings)
+  fun expandPath(pathStrings: List<String>): Unit = myDriver.expandPath(tree, pathStrings)
 
-  fun expandPath(vararg pathStrings: String) = myDriver.expandPath(tree, pathStrings.toList())
+  fun expandPath(vararg pathStrings: String): Unit = myDriver.expandPath(tree, pathStrings.toList())
 
-  fun expandXPath(vararg pathStrings: String) = myDriver.expandXPath(tree, pathStrings.toList())
+  fun expandXPath(vararg pathStrings: String): Unit = myDriver.expandXPath(tree, pathStrings.toList())
 
-  fun collapsePath(pathStrings: List<String>) = myDriver.collapsePath(tree, pathStrings)
+  fun collapsePath(pathStrings: List<String>): Unit = myDriver.collapsePath(tree, pathStrings)
 
-  fun collapsePath(vararg pathStrings: String) = myDriver.collapsePath(tree, pathStrings.toList())
+  fun collapsePath(vararg pathStrings: String): Unit = myDriver.collapsePath(tree, pathStrings.toList())
 
-  fun collapseXPath(vararg pathStrings: String) = myDriver.collapseXPath(tree, pathStrings.toList())
+  fun collapseXPath(vararg pathStrings: String): Unit = myDriver.collapseXPath(tree, pathStrings.toList())
 
-  fun selectPath(pathStrings: List<String>) = myDriver.selectPath(tree, pathStrings)
+  fun selectPath(pathStrings: List<String>): Unit = myDriver.selectPath(tree, pathStrings)
 
-  fun selectPath(vararg pathStrings: String) = myDriver.selectPath(tree, pathStrings.toList())
+  fun selectPath(vararg pathStrings: String): Unit = myDriver.selectPath(tree, pathStrings.toList())
 
-  fun selectXPath(vararg pathStrings: String) = myDriver.selectXPath(tree, pathStrings.toList())
+  fun selectXPath(vararg pathStrings: String): Unit = myDriver.selectXPath(tree, pathStrings.toList())
 
-  fun scrollToPath(pathStrings: List<String>) = myDriver.scrollToPath(tree, pathStrings)
+  fun scrollToPath(pathStrings: List<String>): Point = myDriver.scrollToPath(tree, pathStrings)
 
-  fun scrollToPath(vararg pathStrings: String) = myDriver.scrollToPath(tree, pathStrings.toList())
+  fun scrollToPath(vararg pathStrings: String): Point = myDriver.scrollToPath(tree, pathStrings.toList())
 
-  fun scrollToXPath(vararg pathStrings: String) = myDriver.scrollToXPath(tree, pathStrings.toList())
+  fun scrollToXPath(vararg pathStrings: String): Point = myDriver.scrollToXPath(tree, pathStrings.toList())
 
-  fun showPopupMenu(pathStrings: List<String>) = myDriver.showPopupMenu(tree, pathStrings)
+  fun showPopupMenu(pathStrings: List<String>): JPopupMenu = myDriver.showPopupMenu(tree, pathStrings)
 
-  fun showPopupMenu(vararg pathStrings: String) = myDriver.showPopupMenu(tree, pathStrings.toList())
+  fun showPopupMenu(vararg pathStrings: String): JPopupMenu = myDriver.showPopupMenu(tree, pathStrings.toList())
 
-  fun drag(pathStrings: List<String>) = myDriver.drag(tree, pathStrings)
+  fun drag(pathStrings: List<String>): Unit = myDriver.drag(tree, pathStrings)
 
-  fun drag(vararg pathStrings: String) = myDriver.drag(tree, pathStrings.toList())
+  fun drag(vararg pathStrings: String): Unit = myDriver.drag(tree, pathStrings.toList())
 
-  fun drop(pathStrings: List<String>) = myDriver.drop(tree, pathStrings)
+  fun drop(pathStrings: List<String>): Unit = myDriver.drop(tree, pathStrings)
 
-  fun drop(vararg pathStrings: String) = myDriver.drop(tree, pathStrings.toList())
+  fun drop(vararg pathStrings: String): Unit = myDriver.drop(tree, pathStrings.toList())
 
   fun getPath(treePath: TreePath): List<String> {
     var path = treePath

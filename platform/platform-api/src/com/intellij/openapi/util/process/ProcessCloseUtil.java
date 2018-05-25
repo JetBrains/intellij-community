@@ -15,57 +15,47 @@
  */
 package com.intellij.openapi.util.process;
 
-import com.intellij.openapi.application.Application;
-import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.util.concurrency.Semaphore;
+import com.intellij.util.concurrency.AppExecutorUtil;
+import org.jetbrains.annotations.NotNull;
 
 import java.io.IOException;
-import java.util.concurrent.Future;
+import java.util.concurrent.TimeUnit;
 
 public class ProcessCloseUtil {
   private static final long ourSynchronousWaitTimeout = 1000;
   private static final long ourAsynchronousWaitTimeout = 30 * 1000;
 
-  private ProcessCloseUtil() {
-  }
+  public static void close(@NotNull Process process) {
+    try {
+      if (process.waitFor(ourSynchronousWaitTimeout, TimeUnit.MILLISECONDS)) {
+        closeStreams(process);
+        return;
+      }
+    }
+    catch (InterruptedException e) {
+      closeStreams(process);
+      throw new RuntimeException(e);
+    }
 
-  public static void close(final Process process) {
-    if (!process.isAlive()) return;
-    
-    final Semaphore outerSemaphore = new Semaphore();
-    outerSemaphore.down();
+    process.destroy();
 
-    final Application application = ApplicationManager.getApplication();
-    application.executeOnPooledThread(() -> {
+    AppExecutorUtil.getAppScheduledExecutorService().schedule(() -> {
       try {
-        final Semaphore semaphore = new Semaphore();
-        semaphore.down();
-
-        final Runnable closeRunnable = () -> {
-          try {
-            closeProcessImpl(process);
-          }
-          finally {
-            semaphore.up();
-          }
-        };
-
-        final Future<?> innerFuture = application.executeOnPooledThread(closeRunnable);
-        semaphore.waitFor(ourAsynchronousWaitTimeout);
-        if ( ! (innerFuture.isDone() || innerFuture.isCancelled())) {
-          innerFuture.cancel(true); // will call interrupt()
+        if (process.isAlive()) {
+          process.destroyForcibly();
         }
       }
       finally {
-        outerSemaphore.up();
+        closeStreams(process);
       }
-    });
-
-    // just wait
-    outerSemaphore.waitFor(ourSynchronousWaitTimeout);
+    }, ourAsynchronousWaitTimeout, TimeUnit.MILLISECONDS);
   }
 
-  private static void closeProcessImpl(final Process process) {
+  /**
+   * We need to close process streams, because on Windows (MSDN for "TerminateProcess" function):
+   * "When a process terminates, its kernel object is not destroyed until all processes that have open handles to the process have released those handles."
+   */
+  private static void closeStreams(@NotNull Process process) {
     try {
       process.getOutputStream().close();
     }
@@ -78,6 +68,5 @@ public class ProcessCloseUtil {
       process.getErrorStream().close();
     }
     catch (IOException e) {/**/}
-    process.destroy();
   }
 }

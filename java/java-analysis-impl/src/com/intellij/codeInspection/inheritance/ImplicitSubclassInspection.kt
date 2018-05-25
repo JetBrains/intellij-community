@@ -22,6 +22,7 @@ import com.intellij.codeInspection.*
 import com.intellij.lang.jvm.JvmClass
 import com.intellij.lang.jvm.JvmModifier
 import com.intellij.lang.jvm.JvmModifiersOwner
+import com.intellij.lang.jvm.JvmNamedElement
 import com.intellij.lang.jvm.actions.MemberRequest
 import com.intellij.lang.jvm.actions.createModifierActions
 import com.intellij.openapi.application.ApplicationManager
@@ -29,41 +30,43 @@ import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.Messages
 import com.intellij.psi.*
+import com.intellij.uast.UastSmartPointer
+import com.intellij.uast.createUastSmartPointer
 import com.intellij.util.IncorrectOperationException
 import com.intellij.util.SmartList
 import org.jetbrains.uast.UClass
 import org.jetbrains.uast.UDeclaration
+import org.jetbrains.uast.toUElementOfType
 
-class ImplicitSubclassInspection : AbstractBaseUastLocalInspectionTool() {
+class ImplicitSubclassInspection : LocalInspectionTool() {
 
-  override fun checkClass(aClass: UClass, manager: InspectionManager, isOnTheFly: Boolean): Array<ProblemDescriptor>? {
+  private fun checkClass(aClass: UClass, manager: InspectionManager, isOnTheFly: Boolean): Array<ProblemDescriptor>? {
 
-    val classIsFinal = aClass.isFinal || aClass.hasModifierProperty(PsiModifier.PRIVATE)
+    val psiClass = aClass.javaPsi
+    val classIsFinal = aClass.isFinal || psiClass.hasModifierProperty(PsiModifier.PRIVATE)
 
     val problems = SmartList<ProblemDescriptor>()
 
     val subclassProviders = ImplicitSubclassProvider.EP_NAME.extensions
-      .asSequence().filter { it.isApplicableTo(aClass) }
+      .asSequence().filter { it.isApplicableTo(psiClass) }
 
-    val subclassInfos = subclassProviders.mapNotNull { it.getSubclassingInfo(aClass) }
+    val subclassInfos = subclassProviders.mapNotNull { it.getSubclassingInfo(psiClass) }
 
     val methodsToOverride = aClass.methods.mapNotNull { method ->
       subclassInfos
-        .mapNotNull { it.methodsInfo?.get(method)?.description }
+        .mapNotNull { it.methodsInfo?.get(method.javaPsi)?.description }
         .firstOrNull()?.let { description ->
         method to description
       }
     }
 
     val methodsToAttachToClassFix = if (classIsFinal)
-      SmartList<SmartPsiElementPointer<UDeclaration>>()
+      SmartList<UastSmartPointer<UDeclaration>>()
     else null
 
-    val smartPointerManager = SmartPointerManager.getInstance(aClass.project)
-
     for ((method, description) in methodsToOverride) {
-      if (method.isFinal || method.isStatic || method.hasModifierProperty(PsiModifier.PRIVATE)) {
-        methodsToAttachToClassFix?.add(smartPointerManager.createSmartPsiElementPointer(method, method.containingFile))
+      if (method.isFinal || method.isStatic || method.javaPsi.hasModifierProperty(PsiModifier.PRIVATE)) {
+        methodsToAttachToClassFix?.add(method.createUastSmartPointer())
 
         val methodFixes = createFixesIfApplicable(method, method.name)
         problemTargets(method, methodHighlightableModifiersSet).forEach {
@@ -80,9 +83,9 @@ class ImplicitSubclassInspection : AbstractBaseUastLocalInspectionTool() {
       if ((methodsToOverride.isNotEmpty() || classReasonToBeSubclassed != null)) {
         problemTargets(aClass, classHighlightableModifiersSet).forEach {
           problems.add(manager.createProblemDescriptor(
-            it, classReasonToBeSubclassed ?: InspectionsBundle.message("inspection.implicit.subclass.display.forClass", aClass.name),
+            it, classReasonToBeSubclassed ?: InspectionsBundle.message("inspection.implicit.subclass.display.forClass", psiClass.name),
             isOnTheFly,
-            createFixesIfApplicable(aClass, aClass.name ?: "class", methodsToAttachToClassFix ?: emptyList()),
+            createFixesIfApplicable(aClass, psiClass.name ?: "class", methodsToAttachToClassFix ?: emptyList()),
             ProblemHighlightType.GENERIC_ERROR_OR_WARNING)
           )
         }
@@ -94,23 +97,22 @@ class ImplicitSubclassInspection : AbstractBaseUastLocalInspectionTool() {
 
   private fun createFixesIfApplicable(aClass: UDeclaration,
                                       hintTargetName: String,
-                                      methodsToAttachToClassFix: List<SmartPsiElementPointer<UDeclaration>> = emptyList()): Array<LocalQuickFix> {
+                                      methodsToAttachToClassFix: List<UastSmartPointer<UDeclaration>> = emptyList()): Array<LocalQuickFix> {
     val fix = MakeExtendableFix(aClass, hintTargetName, methodsToAttachToClassFix)
     if (!fix.hasActionsToPerform) return emptyArray()
     return arrayOf(fix)
   }
 
   private fun problemTargets(declaration: UDeclaration, highlightableModifiersSet: Set<String>): List<PsiElement> {
-    val modifiersElements = declaration.modifierList?.let {
-      it.getChildren().filter {
-        it is PsiKeyword && highlightableModifiersSet.contains(it.getText())
-      }
-    } ?: emptyList<PsiElement>()
+    val modifiersElements = getRelatedJavaModifiers(declaration, highlightableModifiersSet)
+    if (modifiersElements.isNotEmpty()) return modifiersElements
+    return listOfNotNull(declaration.uastAnchor?.sourcePsi)
+  }
 
-    if (modifiersElements.isEmpty())
-      return (declaration as? PsiNameIdentifierOwner)?.nameIdentifier?.let { listOf(it) } ?: emptyList<PsiElement>()
-    else
-      return modifiersElements
+  private fun getRelatedJavaModifiers(declaration: UDeclaration,
+                                      highlightableModifiersSet: Set<String>): List<PsiElement> {
+    val modifierList = (declaration.sourcePsi as? PsiModifierListOwner)?.modifierList ?: return emptyList()
+    return modifierList.children.filter { it is PsiKeyword && highlightableModifiersSet.contains(it.getText()) }
   }
 
   private val methodHighlightableModifiersSet = setOf(PsiModifier.FINAL, PsiModifier.PRIVATE, PsiModifier.STATIC)
@@ -119,8 +121,8 @@ class ImplicitSubclassInspection : AbstractBaseUastLocalInspectionTool() {
 
   private class MakeExtendableFix(uDeclaration: UDeclaration,
                                   hintTargetName: String,
-                                  val siblings: List<SmartPsiElementPointer<UDeclaration>> = emptyList())
-    : LocalQuickFixOnPsiElement(uDeclaration) {
+                                  val siblings: List<UastSmartPointer<UDeclaration>> = emptyList())
+    : LocalQuickFixOnPsiElement(uDeclaration.sourcePsi!!) {
 
     companion object {
       private val LOG = Logger.getInstance("#com.intellij.codeInspection.inheritance.MakeExtendableFix")
@@ -161,14 +163,12 @@ class ImplicitSubclassInspection : AbstractBaseUastLocalInspectionTool() {
     private fun collectMakeExtendable(declaration: UDeclaration,
                                       actionsList: SmartList<IntentionAction>,
                                       checkParent: Boolean = true) {
-      val isClassMember = !(declaration is JvmClass)
-      declaration.modifierList?.apply {
-        addIfApplicable(declaration, JvmModifier.FINAL, false, actionsList)
+      val isClassMember = declaration !is JvmClass
+      addIfApplicable(declaration, JvmModifier.FINAL, false, actionsList)
         addIfApplicable(declaration, JvmModifier.PRIVATE, false, actionsList)
         if (isClassMember) {
           addIfApplicable(declaration, JvmModifier.STATIC, false, actionsList)
         }
-      }
       if (checkParent && isClassMember) {
         (declaration.uastParent as? UClass)?.apply {
           addIfApplicable(this, JvmModifier.FINAL, false, actionsList)
@@ -205,12 +205,23 @@ class ImplicitSubclassInspection : AbstractBaseUastLocalInspectionTool() {
 
     private fun siblingsDescription() =
       when (siblings.size) {
-        1 -> "'${(siblings.firstOrNull()?.element as? PsiNamedElement)?.name}'"
+        1 -> "'${(siblings.firstOrNull()?.element?.javaPsi as? JvmNamedElement)?.name}'"
         else -> ""
       }
 
     override fun getText(): String = text
 
+  }
+
+  override fun buildVisitor(holder: ProblemsHolder, isOnTheFly: Boolean): PsiElementVisitor = object : PsiElementVisitor() {
+    override fun visitElement(element: PsiElement) {
+      super.visitElement(element)
+      val uClass = element.toUElementOfType<UClass>() ?: return
+      val problems = checkClass(uClass, holder.manager, isOnTheFly) ?: return
+      for (problem in problems) {
+        holder.registerProblem(problem)
+      }
+    }
   }
 
 }

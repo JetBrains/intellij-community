@@ -25,7 +25,7 @@ class GitLogUtilTest : GitSingleRepoTest() {
     touch("file.txt", "content")
     repo.addCommit(message)
 
-    GitLogUtil.readFullDetails(myProject, repo.root, CollectConsumer(details), true)
+    GitLogUtil.readFullDetails(myProject, repo.root, CollectConsumer(details), true, true, true)
 
     val lastCommit = ContainerUtil.getFirstItem(details)
     assertNotNull(lastCommit)

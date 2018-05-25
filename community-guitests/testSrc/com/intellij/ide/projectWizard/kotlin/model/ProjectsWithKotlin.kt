@@ -419,7 +419,8 @@ fun KotlinGuiTestCase.testTreeItemExist(name: String, vararg expectedItem: Strin
  * */
 fun KotlinGuiTestCase.checkKotlinLibsInStructureFromProject(
   projectPath: String,
-  kotlinKind: KotlinKind) {
+  kotlinKind: KotlinKind,
+  kotlinVersion: String) {
   val expectedJars = getKotlinLibInProject(projectPath)
     .map { projectPath + File.separator + "lib" + File.separator + it }
   val expectedLibName = kotlinLibs[kotlinKind]!!.kotlinProject.libName!!
@@ -438,13 +439,14 @@ fun KotlinGuiTestCase.checkKotlinLibsInStructureFromProject(
  * @param kotlinKind kotlin kind (JVM or JS)
  * */
 fun KotlinGuiTestCase.checkKotlinLibsInStructureFromPlugin(
-  kotlinKind: KotlinKind) {
+  kotlinKind: KotlinKind,
+  kotlinVersion: String) {
   val expectedLibName = kotlinLibs[kotlinKind]!!.kotlinProject.libName!!
   val configPath = PathManager.getConfigPath().normalizeSeparator()
   val expectedJars = kotlinLibs[kotlinKind]!!
     .kotlinProject
     .jars
-    .getJars()
+    .getJars(kotlinVersion)
     .map { configPath + pathKotlinInConfig + File.separator + it }
   checkInProjectStructure {
     checkLibrariesFromIDEA(
@@ -460,8 +462,9 @@ fun KotlinGuiTestCase.checkKotlinLibsInStructureFromPlugin(
  * @param kotlinKind kotlin kind (JVM or JS)
  * */
 fun KotlinGuiTestCase.checkKotlinLibInProject(projectPath: String,
-                                              kotlinKind: KotlinKind) {
-  val expectedLibs = kotlinLibs[kotlinKind]?.kotlinProject?.jars?.getJars() ?: return
+                                              kotlinKind: KotlinKind,
+                                              kotlinVersion: String) {
+  val expectedLibs = kotlinLibs[kotlinKind]?.kotlinProject?.jars?.getJars(kotlinVersion) ?: return
   val actualLibs = getKotlinLibInProject(projectPath)
 
   expectedLibs.forEach {
@@ -760,9 +763,8 @@ fun KotlinGuiTestCase.editBuildGradle(
   val fileName = projectFolder + innerPath + "/build.gradle${if (isKotlinDslUsed) ".kts" else ""}"
   logTestStep("Going to edit $fileName")
 
-  if (isKotlinDslUsed) changePluginsInBuildGradle(fileName, kotlinKind)
   if (KotlinTestProperties.isArtifactOnlyInDevRep) addDevRepositoryToBuildGradle(fileName, isKotlinDslUsed)
-  if (!KotlinTestProperties.isArtifactPresentInConfigureDialog && KotlinTestProperties.kotlin_plugin_version_main != KotlinTestProperties.kotlin_artifact_version)
+  if (!KotlinTestProperties.isArtifactPresentInConfigureDialog && KotlinTestProperties.kotlin_plugin_version_main != kotlinVersion)
     changeKotlinVersionInBuildGradle(fileName, isKotlinDslUsed, kotlinVersion)
 }
 
@@ -777,7 +779,7 @@ fun KotlinGuiTestCase.editPomXml(kotlinVersion: String,
   logTestStep("Going to edit $fileName")
 
   if (KotlinTestProperties.isArtifactOnlyInDevRep) addDevRepositoryToPomXml(fileName)
-  if (!KotlinTestProperties.isArtifactPresentInConfigureDialog && KotlinTestProperties.kotlin_plugin_version_main != KotlinTestProperties.kotlin_artifact_version)
+  if (!KotlinTestProperties.isArtifactPresentInConfigureDialog && KotlinTestProperties.kotlin_plugin_version_main != kotlinVersion)
     changeKotlinVersionInPomXml(fileName, kotlinVersion)
 }
 
@@ -871,6 +873,7 @@ fun KotlinGuiTestCase.saveAndCloseCurrentEditor(){
 
 fun KotlinGuiTestCase.testCreateGradleAndConfigureKotlin(
   kotlinKind: KotlinKind,
+  kotlinVersion: String,
   project: ProjectProperties,
   expectedFacet: FacetStructure,
   gradleOptions: GradleProjectOptions,
@@ -880,7 +883,6 @@ fun KotlinGuiTestCase.testCreateGradleAndConfigureKotlin(
   val groupName = "group_gradle"
   val projectName = testMethod.methodName
   val extraTimeOut = 4000L
-  val kotlinVersion = KotlinTestProperties.kotlin_artifact_version
   createGradleProject(
     projectPath = projectFolder,
     group = groupName,
@@ -920,7 +922,7 @@ fun KotlinGuiTestCase.checkInProjectStructureGradleExplicitModuleGroups(
     checkLibrariesFromMavenGradle(
       buildSystem = BuildSystem.Gradle,
       kotlinVersion = kotlinVersion,
-      expectedJars = project.jars.getJars()
+      expectedJars = project.jars.getJars(kotlinVersion)
     )
     checkFacetInOneModule(
       expectedFacet,

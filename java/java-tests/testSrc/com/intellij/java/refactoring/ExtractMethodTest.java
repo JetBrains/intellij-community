@@ -22,6 +22,8 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.LanguageLevelProjectExtension;
+import com.intellij.openapi.util.registry.Registry;
+import com.intellij.openapi.util.registry.RegistryValue;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
@@ -804,6 +806,14 @@ public class ExtractMethodTest extends LightCodeInsightTestCase {
     doDuplicatesTest();
   }
 
+  public void testSuggestChangeSignatureSameSubexpression() throws Exception {
+    doDuplicatesTest();
+  }
+
+  public void testSuggestChangeSignatureTrivialMethod() throws Exception {
+    doDuplicatesTest();
+  }
+
   public void testSuggestChangeSignaturePlusOneFolding() throws Exception {
     doDuplicatesTest();
   }
@@ -1083,6 +1093,17 @@ public class ExtractMethodTest extends LightCodeInsightTestCase {
 
   public void testNotNullArgument7() throws Exception {
     doTest();
+  }
+
+  public void testNotNullArgumentTooComplexCode() throws Exception {
+    RegistryValue value = Registry.get("ide.dfa.state.limit");
+    int oldValue = value.asInteger();
+    try {
+      value.setValue(50);
+      doTest();
+    }finally {
+      value.setValue(oldValue);
+    }
   }
 
   public void testVariableInLoopWithConditionalBreak() throws Exception {

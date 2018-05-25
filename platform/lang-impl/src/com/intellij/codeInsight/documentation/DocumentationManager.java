@@ -17,6 +17,7 @@ import com.intellij.ide.actions.BaseNavigateToSourceAction;
 import com.intellij.ide.highlighter.ArchiveFileType;
 import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.ide.util.gotoByName.ChooseByNameBase;
+import com.intellij.ide.util.gotoByName.QuickSearchComponent;
 import com.intellij.lang.Language;
 import com.intellij.lang.LanguageDocumentation;
 import com.intellij.lang.documentation.*;
@@ -529,9 +530,7 @@ public class DocumentationManager extends DockablePopupManager<DocumentationComp
         if (closeCallback != null) {
           closeCallback.run();
         }
-        if (fromQuickSearch()) {
-          ((ChooseByNameBase.JPanelProvider)myPreviouslyFocused.getParent()).unregisterHint();
-        }
+        findQuickSearchComponent(myPreviouslyFocused).ifPresent(QuickSearchComponent::unregisterHint);
 
         Disposer.dispose(component);
         myEditor = null;
@@ -571,9 +570,7 @@ public class DocumentationManager extends DockablePopupManager<DocumentationComp
 
     myDocInfoHintRef = new WeakReference<>(hint);
 
-    if (fromQuickSearch() && myPreviouslyFocused != null) {
-      ((ChooseByNameBase.JPanelProvider)myPreviouslyFocused.getParent()).registerHint(hint);
-    }
+    findQuickSearchComponent(myPreviouslyFocused).ifPresent(quickSearch -> quickSearch.registerHint(hint));
   }
 
   static String getTitle(@NotNull final PsiElement element, final boolean _short) {
@@ -679,10 +676,6 @@ public class DocumentationManager extends DockablePopupManager<DocumentationComp
       }
     }
     return null;
-  }
-
-  private boolean fromQuickSearch() {
-    return myPreviouslyFocused != null && myPreviouslyFocused.getParent() instanceof ChooseByNameBase.JPanelProvider;
   }
 
   public String generateDocumentation(@NotNull final PsiElement element, @Nullable final PsiElement originalElement) throws Exception {
@@ -1023,9 +1016,9 @@ public class DocumentationManager extends DockablePopupManager<DocumentationComp
   }
 
   public void requestFocus() {
-    if (fromQuickSearch()) {
-      getGlobalInstance().doWhenFocusSettlesDown(() -> getGlobalInstance().requestFocus(myPreviouslyFocused.getParent(), true));
-    }
+    findQuickSearchComponent(myPreviouslyFocused).ifPresent(quickSearch ->
+      getGlobalInstance().doWhenFocusSettlesDown(() -> getGlobalInstance().requestFocus(quickSearch.asComponent(), true))
+    );
   }
 
   public Project getProject(@Nullable final PsiElement element) {
@@ -1223,5 +1216,15 @@ public class DocumentationManager extends DockablePopupManager<DocumentationComp
          "<p><span class='grayed'>Modified:</span> " + DateFormatUtil.formatDateTime(attr.lastModifiedTime().toMillis()) +
          "<p><span class='grayed'>Created:</span> " + DateFormatUtil.formatDateTime(attr.creationTime().toMillis()) +
          (withUrl ? DocumentationMarkup.CONTENT_END : "");
+  }
+
+  private static Optional<QuickSearchComponent> findQuickSearchComponent(Component c) {
+    while (c != null) {
+      if (c instanceof QuickSearchComponent) {
+        return Optional.of((QuickSearchComponent) c);
+      }
+      c = c.getParent();
+    }
+    return Optional.empty();
   }
 }

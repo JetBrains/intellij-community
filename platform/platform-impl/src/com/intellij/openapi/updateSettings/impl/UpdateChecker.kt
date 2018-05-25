@@ -42,6 +42,7 @@ import java.io.File
 import java.io.IOException
 import java.lang.IllegalStateException
 import java.util.*
+import kotlin.collections.HashSet
 import kotlin.collections.set
 
 /**
@@ -50,7 +51,7 @@ import kotlin.collections.set
 object UpdateChecker {
   private val LOG = Logger.getInstance("#com.intellij.openapi.updateSettings.impl.UpdateChecker")
 
-  @JvmField val NOTIFICATIONS = NotificationGroup(IdeBundle.message("update.notifications.title"), NotificationDisplayType.STICKY_BALLOON, true)
+  @JvmField val NOTIFICATIONS: NotificationGroup = NotificationGroup(IdeBundle.message("update.notifications.title"), NotificationDisplayType.STICKY_BALLOON, true)
 
   private const val DISABLED_UPDATE = "disabled_update.txt"
 
@@ -66,7 +67,7 @@ object UpdateChecker {
    * Has no effect on non-bundled or "essential" (i.e. required for one of open projects) plugins.
    */
   @Suppress("MemberVisibilityCanBePrivate")
-  val excludedFromUpdateCheckPlugins = hashSetOf<String>()
+  val excludedFromUpdateCheckPlugins: HashSet<String> = hashSetOf<String>()
 
   private val updateUrl: String
     get() = System.getProperty("idea.updates.url") ?: ApplicationInfoEx.getInstanceEx().updateUrls.checkingUrl
@@ -103,7 +104,7 @@ object UpdateChecker {
    * An immediate check for plugin updates for use from a command line (read "Toolbox").
    */
   @JvmStatic
-  fun getPluginUpdates() =
+  fun getPluginUpdates(): Collection<PluginDownloader>? =
     checkPluginsUpdate(UpdateSettings.getInstance(), EmptyProgressIndicator(), null, BuildNumber.currentVersion())
 
   private fun doUpdateAndShowResult(project: Project?,
@@ -461,7 +462,7 @@ object UpdateChecker {
   @Deprecated("Replaced", ReplaceWith("PermanentInstallationID.get()", "com.intellij.openapi.application.PermanentInstallationID"))
   @JvmStatic
   @Suppress("unused", "UNUSED_PARAMETER")
-  fun getInstallationUID(c: PropertiesComponent) = PermanentInstallationID.get()
+  fun getInstallationUID(c: PropertiesComponent): String = PermanentInstallationID.get()
 
   @JvmStatic
   val disabledToUpdatePlugins: Set<String>

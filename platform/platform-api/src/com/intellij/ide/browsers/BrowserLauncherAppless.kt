@@ -81,10 +81,10 @@ open class BrowserLauncherAppless : BrowserLauncher() {
       }
     }
 
-    fun isOpenCommandUsed(command: GeneralCommandLine) = SystemInfo.isMac && ExecUtil.getOpenCommandPath() == command.exePath
+    fun isOpenCommandUsed(command: GeneralCommandLine): Boolean = SystemInfo.isMac && ExecUtil.getOpenCommandPath() == command.exePath
   }
 
-  override fun open(url: String) = openOrBrowse(url, false)
+  override fun open(url: String): Unit = openOrBrowse(url, false)
 
   override fun browse(file: File) {
     var path = file.absolutePath

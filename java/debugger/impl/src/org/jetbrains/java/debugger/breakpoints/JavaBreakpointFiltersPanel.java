@@ -2,6 +2,7 @@
 package org.jetbrains.java.debugger.breakpoints;
 
 import com.intellij.debugger.InstanceFilter;
+import com.intellij.debugger.ui.breakpoints.CallerFiltersField;
 import com.intellij.debugger.ui.breakpoints.ClassFiltersField;
 import com.intellij.debugger.ui.breakpoints.EditInstanceFiltersDialog;
 import com.intellij.ide.util.ClassFilter;
@@ -12,7 +13,6 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiClass;
 import com.intellij.ui.FieldPanel;
 import com.intellij.ui.MultiLineTooltipUI;
-import com.intellij.util.ArrayUtil;
 import com.intellij.util.ui.JBUI;
 import com.intellij.xdebugger.XSourcePosition;
 import com.intellij.xdebugger.breakpoints.XBreakpoint;
@@ -49,9 +49,8 @@ public class JavaBreakpointFiltersPanel<T extends JavaBreakpointProperties, B ex
   private JPanel myCatchFiltersPanel;
   private JPanel myPassCountFieldPanel;
   private JCheckBox myCallerFiltersCheckBox;
-  private JTextField myCallerFilters;
+  private CallerFiltersField myCallerFilters;
   private JPanel myCallerFiltersPanel;
-  private JPanel myCallerFiltersFieldPanel;
 
   private final FieldPanel myInstanceFiltersField;
 
@@ -100,7 +99,7 @@ public class JavaBreakpointFiltersPanel<T extends JavaBreakpointProperties, B ex
     myInstanceFiltersField.setBorder(JBUI.Borders.emptyLeft(myInstanceFiltersCheckBox.getInsets().left));
     myClassFiltersField.setBorder(JBUI.Borders.emptyLeft(myClassFiltersCheckBox.getInsets().left));
     myPassCountFieldPanel.setBorder(JBUI.Borders.emptyLeft(myPassCountCheckbox.getInsets().left));
-    myCallerFiltersFieldPanel.setBorder(JBUI.Borders.emptyLeft(myCallerFiltersCheckBox.getInsets().left));
+    myCallerFilters.setBorder(JBUI.Borders.emptyLeft(myCallerFiltersCheckBox.getInsets().left));
 
     DebuggerUIUtil.focusEditorOnCheck(myPassCountCheckbox, myPassCountField);
     DebuggerUIUtil.focusEditorOnCheck(myInstanceFiltersCheckBox, myInstanceFiltersField.getTextField());
@@ -164,14 +163,9 @@ public class JavaBreakpointFiltersPanel<T extends JavaBreakpointProperties, B ex
     changed = properties.setINSTANCE_FILTERS_ENABLED(!myInstanceFiltersField.getText().isEmpty() && myInstanceFiltersCheckBox.isSelected()) || changed;
     changed = properties.setInstanceFilters(myInstanceFilters) || changed;
 
-    String callerFiltersText = myCallerFilters.getText();
-    changed = properties.setCALLER_FILTERS_ENABLED(!callerFiltersText.isEmpty() && myCallerFiltersCheckBox.isSelected()) || changed;
-    String[] filterStrings = callerFiltersText.isEmpty() ? ArrayUtil.EMPTY_STRING_ARRAY : callerFiltersText.split(" ");
-    changed = properties.setCallerFilters(StreamEx.of(filterStrings).filter(s -> !s.startsWith("-")).toArray(ArrayUtil.EMPTY_STRING_ARRAY)) || changed;
-    changed = properties.setCallerExclusionFilters(StreamEx.of(filterStrings)
-                                                           .filter(s -> s.startsWith("-"))
-                                                           .map(s -> s.substring(1))
-                                                           .toArray(ArrayUtil.EMPTY_STRING_ARRAY)) || changed;
+    changed = properties.setCALLER_FILTERS_ENABLED(!myCallerFilters.getText().isEmpty() && myCallerFiltersCheckBox.isSelected()) || changed;
+    changed = properties.setCallerFilters(myCallerFilters.getClassFilters()) || changed;
+    changed = properties.setCallerExclusionFilters(myCallerFilters.getClassExclusionFilters()) || changed;
 
     if (changed) {
       ((XBreakpointBase)breakpoint).fireBreakpointChanged();
@@ -217,8 +211,7 @@ public class JavaBreakpointFiltersPanel<T extends JavaBreakpointProperties, B ex
       if (Registry.is("debugger.breakpoints.caller.filter")) {
         myCallerFiltersPanel.setVisible(true);
         myCallerFiltersCheckBox.setSelected(properties.isCALLER_FILTERS_ENABLED());
-        myCallerFilters.setText(StreamEx.of(properties.getCallerExclusionFilters()).map(s -> '-' + s)
-                                        .prepend(properties.getCallerFilters()).joining(" "));
+        myCallerFilters.setClassFilters(properties.getCallerFilters(), properties.getCallerExclusionFilters());
       }
 
       XSourcePosition position = breakpoint.getSourcePosition();
@@ -241,6 +234,7 @@ public class JavaBreakpointFiltersPanel<T extends JavaBreakpointProperties, B ex
   private void createUIComponents() {
     myClassFiltersField = new ClassFiltersField(myProject, this);
     myCatchClassFilters = new ClassFiltersField(myProject, this);
+    myCallerFilters = new CallerFiltersField(myProject, this);
   }
 
   private class MyTextField extends JTextField {

@@ -8,11 +8,11 @@ import com.intellij.openapi.util.SystemInfoRt
 import com.intellij.testFramework.runInEdtAndWait
 import com.intellij.ui.components.dialog
 import com.intellij.ui.layout.migLayout.*
+import com.intellij.ui.layout.migLayout.patched.*
 import com.intellij.util.io.write
 import com.intellij.util.ui.UIUtil
 import net.miginfocom.layout.AC
 import net.miginfocom.layout.LayoutUtil
-import net.miginfocom.swing.MigLayout
 import java.awt.Dimension
 import java.awt.GraphicsEnvironment
 import java.awt.Point
@@ -51,9 +51,12 @@ private fun run(laf: LookAndFeel) {
     //      val panel = visualPaddingsPanelOnlyComboBox()
 //          val panel = alignFieldsInTheNestedGrid()
 //          val panel = visualPaddingsPanelOnlyTextField()
+//          val panel = visualPaddingsPanelOnlyLabeledScrollPane()
     //      val panel = labelRowShouldNotGrow()
-    //      val panel = cellPanel()
+//          val panel = cellPanel()
+//          val panel = alignFieldsInTheNestedGrid()
           val panel = visualPaddingsPanel()
+//          val panel = withVerticalButtons()
 //    val panel = createLafTestPanel()
 
     val dialog = dialog(
@@ -65,7 +68,7 @@ private fun run(laf: LookAndFeel) {
       return@dialog null
     }
 
-    panel.preferredSize = Dimension(50, 50)
+    panel.preferredSize = Dimension(350, 250)
     if (panel.layout is MigLayout) {
       Paths.get(System.getProperty("user.home"), "layout-dump.yml").write(serializeLayout(panel, isIncludeCellBounds = false))
     }

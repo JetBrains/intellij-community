@@ -127,12 +127,9 @@ public class GrMainCompletionProvider extends CompletionProvider<CompletionParam
     if (parent instanceof GrVariable) {
       final PsiElement pparent = parent.getParent();
       if (pparent instanceof GrVariableDeclaration) {
-        final PsiElement errorElement = PsiUtil.skipWhitespacesAndComments(parent.getPrevSibling(), false);
-        if (errorElement instanceof PsiErrorElement) {
-          final PsiElement child = errorElement.getFirstChild();
-          if (child instanceof GrTypeParameterList) {
-            return (GrTypeParameterList)child;
-          }
+        PsiElement candidate = PsiUtil.skipWhitespacesAndComments(parent.getPrevSibling(), false);
+        if (candidate instanceof GrTypeParameterList) {
+          return (GrTypeParameterList)candidate;
         }
       }
     }

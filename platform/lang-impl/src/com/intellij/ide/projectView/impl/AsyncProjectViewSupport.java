@@ -21,9 +21,10 @@ import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.vcs.FileStatusListener;
 import com.intellij.openapi.vcs.FileStatusManager;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.problems.WolfTheProblemSolver;
+import com.intellij.problems.ProblemListener;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiManager;
+import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.ui.tree.*;
 import com.intellij.util.SmartList;
 import com.intellij.util.messages.MessageBusConnection;
@@ -43,6 +44,7 @@ import static com.intellij.openapi.vfs.VirtualFileManager.VFS_CHANGES;
 class AsyncProjectViewSupport {
   private static final Logger LOG = Logger.getInstance(AsyncProjectViewSupport.class);
   private final TreeCollector<VirtualFile> myFileRoots = TreeCollector.createFileRootsCollector();
+  private final ProjectFileChangeListener myChangeListener;
   private final StructureTreeModel myStructureTreeModel;
   private final AsyncTreeModel myAsyncTreeModel;
 
@@ -56,13 +58,14 @@ class AsyncProjectViewSupport {
     myStructureTreeModel.setComparator(comparator);
     myAsyncTreeModel = new AsyncTreeModel(myStructureTreeModel, true, parent);
     myAsyncTreeModel.setRootImmediately(myStructureTreeModel.getRootImmediately());
-    setModel(tree, myAsyncTreeModel);
-    MessageBusConnection connection = project.getMessageBus().connect(parent);
-    connection.subscribe(VFS_CHANGES, new ProjectFileChangeListener(project, (module, file) -> {
+    myChangeListener = new ProjectFileChangeListener(myStructureTreeModel.getInvoker(), project, (module, file) -> {
       if (myFileRoots.add(file)) {
         myFileRoots.processLater(myStructureTreeModel.getInvoker(), roots -> roots.forEach(root -> updateByFile(root, true)));
       }
-    }));
+    });
+    setModel(tree, myAsyncTreeModel);
+    MessageBusConnection connection = project.getMessageBus().connect(parent);
+    connection.subscribe(VFS_CHANGES, myChangeListener);
     connection.subscribe(ProjectTopics.PROJECT_ROOTS, new ModuleRootListener() {
       @Override
       public void rootsChanged(ModuleRootEvent event) {
@@ -108,7 +111,13 @@ class AsyncProjectViewSupport {
 
       @Override
       protected boolean addSubtreeToUpdateByElement(PsiElement element) {
-        updateByElement(element, true);
+        VirtualFile file = PsiUtilCore.getVirtualFile(element);
+        if (file != null) {
+          myChangeListener.invalidate(file);
+        }
+        else {
+          updateByElement(element, true);
+        }
         return true;
       }
     }, parent);
@@ -124,7 +133,7 @@ class AsyncProjectViewSupport {
       }
     }, parent);
     CopyPasteManager.getInstance().addContentChangedListener(new CopyPasteUtil.DefaultCopyPasteListener(element -> updateByElement(element, true)), parent);
-    WolfTheProblemSolver.getInstance(project).addProblemListener(new WolfTheProblemSolver.ProblemListener() {
+    project.getMessageBus().connect(parent).subscribe(ProblemListener.TOPIC, new ProblemListener() {
       @Override
       public void problemsAppeared(@NotNull VirtualFile file) {
         updatePresentationsFromRootTo(file);
@@ -134,7 +143,7 @@ class AsyncProjectViewSupport {
       public void problemsDisappeared(@NotNull VirtualFile file) {
         updatePresentationsFromRootTo(file);
       }
-    }, parent);
+    });
   }
 
   public void setComparator(Comparator<NodeDescriptor> comparator) {

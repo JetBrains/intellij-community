@@ -37,7 +37,7 @@ internal fun isIcon(file: File): Boolean {
   return size.height == size.width || size.height <= 100 && size.width <= 100
 }
 
-private fun isImage(file: File) = ImageExtension.fromFile(file) != null
+internal fun isImage(file: File) = ImageExtension.fromFile(file) != null
 
 internal fun imageSize(file: File): Dimension? {
   val image = loadImage(file)

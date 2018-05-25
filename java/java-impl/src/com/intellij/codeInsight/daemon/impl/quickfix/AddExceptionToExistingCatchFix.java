@@ -14,10 +14,10 @@ import com.intellij.openapi.util.Pass;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
-import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.refactoring.IntroduceTargetChooser;
 import com.intellij.util.IncorrectOperationException;
+import com.intellij.util.SmartList;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -27,8 +27,6 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.Objects;
 import java.util.stream.Collectors;
-
-import static com.intellij.util.ObjectUtils.tryCast;
 
 public class AddExceptionToExistingCatchFix extends PsiElementBaseIntentionAction {
   private final PsiElement myErrorElement;
@@ -67,7 +65,7 @@ public class AddExceptionToExistingCatchFix extends PsiElementBaseIntentionActio
         },
         section -> Objects.requireNonNull(section.getCatchType()).getPresentableText(),
         QuickFixBundle.message("add.exception.to.existing.catch.chooser.title"),
-        dom -> Objects.requireNonNull(((PsiCatchSection)dom).getParameter()).getTextRange()
+        catchSection -> Objects.requireNonNull(((PsiCatchSection)catchSection).getParameter()).getTextRange()
       );
     }
   }
@@ -135,13 +133,7 @@ public class AddExceptionToExistingCatchFix extends PsiElementBaseIntentionActio
       if (!element.isValid() || !PsiUtil.isLanguageLevel7OrHigher(element)) return null;
       List<PsiClassType> unhandledExceptions = new ArrayList<>(ExceptionUtil.getOwnUnhandledExceptions(element));
       if (unhandledExceptions.isEmpty()) return null;
-      boolean containsInCatchOrFinally = containsInCatchOrFinally(element);
-      List<PsiTryStatement> tryStatements =
-        PsiTreeUtil.collectParents(element, PsiTryStatement.class, false, el ->
-          el instanceof PsiLambdaExpression || el instanceof PsiClass && !(el instanceof PsiAnonymousClass));
-      if (containsInCatchOrFinally) {
-        tryStatements.remove(0);
-      }
+      List<PsiTryStatement> tryStatements = getTryStatements(element);
       List<PsiCatchSection> sections =
         tryStatements.stream()
                      .flatMap(stmt -> Arrays.stream(stmt.getCatchSections()))
@@ -155,24 +147,23 @@ public class AddExceptionToExistingCatchFix extends PsiElementBaseIntentionActio
       return new Context(sections, unhandledExceptions);
     }
 
-    private static boolean containsInCatchOrFinally(@NotNull PsiElement element) {
+    @NotNull
+    private static List<PsiTryStatement> getTryStatements(@NotNull PsiElement element) {
+      PsiElement current = element;
       PsiElement parent = element.getParent();
+      List<PsiTryStatement> parents = new SmartList<>();
       while (parent != null) {
+        if (parent instanceof PsiLambdaExpression || parent instanceof PsiMember || parent instanceof PsiFile) break;
         if (parent instanceof PsiTryStatement) {
-          return false;
-        }
-        if (parent instanceof PsiCatchSection) {
-          return true;
-        }
-        if (parent instanceof PsiCodeBlock) {
-          PsiKeyword keyword = tryCast(PsiTreeUtil.skipWhitespacesAndCommentsBackward(parent), PsiKeyword.class);
-          if (keyword != null && keyword.getText().equals(PsiKeyword.FINALLY)) {
-            return true;
+          PsiTryStatement tryStatement = (PsiTryStatement)parent;
+          if (tryStatement.getFinallyBlock() != current && !(current instanceof PsiCatchSection)) {
+            parents.add((PsiTryStatement)parent);
           }
         }
+        current = parent;
         parent = parent.getParent();
       }
-      return false;
+      return parents;
     }
 
     private String getMessage() {

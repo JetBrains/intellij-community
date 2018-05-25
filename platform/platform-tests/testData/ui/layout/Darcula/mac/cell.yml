@@ -27,28 +27,18 @@ columnConstraints:
       max: &id004 {horizontal: true, value: 6.0}
       min: *id004
       preferred: *id004
-  - gapAfter:
-      max: &id005 {horizontal: true, value: 8.0}
-      min: *id005
-      preferred: *id005
-    grow: 100.0
+    grow: 0.0
   - {}
-  count: 3
+  count: 2
 componentConstrains:
   'Repository:': {}
   'ComboBox #1': {split: 2}
-  Delete:
-    horizontal:
-      gapBefore:
-        min: &id006 {horizontal: true, value: 8.0}
-        preferred: *id006
-    spanX: 2097051
-    wrap: true
+  Delete: {spanX: 2097051, wrap: true}
   Use File -> Settings Repository... to configure:
     horizontal:
       gapBefore:
-        min: &id007 {horizontal: true, value: 4.0}
-        preferred: *id007
+        min: &id005 {horizontal: true, value: 4.0}
+        preferred: *id005
     skip: 1
     spanX: 2097051
     wrap: true
@@ -60,8 +50,8 @@ componentConstrains:
     wrap: true
 cellBounds:
 - [0, 0, 70, 24]
-- [76, 0, 396, 24]
-- [76, 0, 396, 24]
+- [76, 0, 404, 24]
+- [76, 0, 404, 24]
 - [76, 30, 404, 14]
 - [0, 54, 480, 256]
 componentBounds:

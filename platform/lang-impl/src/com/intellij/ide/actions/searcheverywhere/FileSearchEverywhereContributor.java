@@ -4,9 +4,8 @@ package com.intellij.ide.actions.searcheverywhere;
 import com.intellij.codeInsight.navigation.NavigationUtil;
 import com.intellij.ide.IdeBundle;
 import com.intellij.ide.util.gotoByName.ChooseByNameModel;
-import com.intellij.ide.util.gotoByName.ChooseByNamePopup;
 import com.intellij.ide.util.gotoByName.GotoFileModel;
-import com.intellij.openapi.progress.ProgressIndicator;
+import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiElement;
 import com.intellij.ui.IdeUICustomization;
@@ -14,18 +13,11 @@ import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import java.awt.event.InputEvent;
-import java.util.ArrayList;
-import java.util.List;
 
 /**
  * @author Konstantin Bulenkov
  */
-public class FileSearchEverywhereContributor implements SearchEverywhereContributor {
-  @NotNull
-  @Override
-  public String getSearchProviderId() {
-    return getClass().getSimpleName();
-  }
+public class FileSearchEverywhereContributor extends AbstractGotoSEContributor {
 
   @NotNull
   @Override
@@ -44,35 +36,7 @@ public class FileSearchEverywhereContributor implements SearchEverywhereContribu
   }
 
   @Override
-  public boolean showInFindResults() {
-    return true;
-  }
-
-  @Override
-  public ContributorSearchResult search(Project project, String pattern, boolean everywhere, ProgressIndicator progressIndicator, int elementsLimit) {
-    ChooseByNameModel mdl = createModel(project);
-
-    ChooseByNamePopup popup = ChooseByNamePopup.createPopup(project, mdl, (PsiElement)null);
-    List<Object> items = new ArrayList<>();
-    boolean[] hasMore = {false}; //todo builder for  ContributorSearchResult #UX-1
-    popup.getProvider().filterElements(popup, pattern, everywhere,
-                                       progressIndicator, o -> {
-
-        if (o != null && !items.contains(o)) {
-          if (elementsLimit >= 0 && items.size() >= elementsLimit) {
-            hasMore[0] = true;
-            return false;
-          }
-          items.add(o);
-        }
-        return true;
-      });
-
-    return new ContributorSearchResult(items, hasMore[0]);
-  }
-
-  @NotNull
-  private GotoFileModel createModel(Project project) {
+  protected ChooseByNameModel createModel(Project project) {
     return new GotoFileModel(project){
       @Override
       public boolean isSlashlessMatchingEnabled() {
@@ -87,12 +51,26 @@ public class FileSearchEverywhereContributor implements SearchEverywhereContribu
   }
 
   @Override
-  public boolean processSelectedItem(Object selected, int modifiers) {
+  public boolean processSelectedItem(Project project, Object selected, int modifiers) {
     //todo maybe another elements types
     if (selected instanceof PsiElement) {
       NavigationUtil.activateFileWithPsiElement((PsiElement) selected, (modifiers & InputEvent.SHIFT_MASK) != 0);
     }
 
+    return true;
+  }
+
+  @Override
+  protected Object getItemData(String dataId, Object element) {
+    if (CommonDataKeys.PSI_FILE.is(dataId)) {
+      return element;
+    }
+
+    return super.getItemData(dataId, element);
+  }
+
+  @Override
+  protected boolean isDumbModeSupported() {
     return true;
   }
 }

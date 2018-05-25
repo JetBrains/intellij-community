@@ -4,7 +4,7 @@
 Groovy script
   Call expression
     Literal
-      GroovyASTPsiElementImpl(regex literal)
+      GroovyASTPsiElementImpl(SLASHY_LITERAL)
         PsiElement(regex begin)('/')
         PsiElement(regex content)('asd\n')
         PsiElement(regex end)('/')

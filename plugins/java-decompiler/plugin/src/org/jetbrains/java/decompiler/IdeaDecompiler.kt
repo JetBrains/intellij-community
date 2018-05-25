@@ -52,17 +52,17 @@ class IdeaDecompiler : ClassFileDecompilers.Light() {
       val options = CodeStyle.getDefaultSettings().getIndentOptions(JavaFileType.INSTANCE)
       val indent = StringUtil.repeat(" ", options.INDENT_SIZE)
       return mapOf(
-          IFernflowerPreferences.HIDE_DEFAULT_CONSTRUCTOR to "0",
-          IFernflowerPreferences.DECOMPILE_GENERIC_SIGNATURES to "1",
-          IFernflowerPreferences.REMOVE_SYNTHETIC to "1",
-          IFernflowerPreferences.REMOVE_BRIDGE to "1",
-          IFernflowerPreferences.LITERALS_AS_IS to "1",
-          IFernflowerPreferences.NEW_LINE_SEPARATOR to "1",
-          IFernflowerPreferences.BANNER to BANNER,
-          IFernflowerPreferences.MAX_PROCESSING_METHOD to 60,
-          IFernflowerPreferences.INDENT_STRING to indent,
-          IFernflowerPreferences.FAIL_ON_INVALID_BYTECODE to "0",
-          IFernflowerPreferences.UNIT_TEST_MODE to if (ApplicationManager.getApplication().isUnitTestMode) "1" else "0")
+        IFernflowerPreferences.HIDE_DEFAULT_CONSTRUCTOR to "0",
+        IFernflowerPreferences.DECOMPILE_GENERIC_SIGNATURES to "1",
+        IFernflowerPreferences.REMOVE_SYNTHETIC to "1",
+        IFernflowerPreferences.REMOVE_BRIDGE to "1",
+        IFernflowerPreferences.LITERALS_AS_IS to "1",
+        IFernflowerPreferences.NEW_LINE_SEPARATOR to "1",
+        IFernflowerPreferences.BANNER to BANNER,
+        IFernflowerPreferences.MAX_PROCESSING_METHOD to 60,
+        IFernflowerPreferences.INDENT_STRING to indent,
+        IFernflowerPreferences.IGNORE_INVALID_BYTECODE to "1",
+        IFernflowerPreferences.UNIT_TEST_MODE to if (ApplicationManager.getApplication().isUnitTestMode) "1" else "0")
     }
   }
 

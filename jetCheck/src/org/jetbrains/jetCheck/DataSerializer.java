@@ -10,19 +10,26 @@ import java.util.Base64;
 class DataSerializer {
 
   private static int readINT(ByteArrayInputStream record) {
-    final int val = record.read();
+    int val = readWithEof(record);
     if (val < 192) {
       return val;
     }
 
     int res = val - 192;
     for (int sh = 6; ; sh += 7) {
-      int next = record.read();
+      int next = readWithEof(record);
       res |= (next & 0x7F) << sh;
       if ((next & 0x80) == 0) {
         return res;
       }
     }
+  }
+
+  private static int readWithEof(ByteArrayInputStream record) {
+    if (record.available() <= 0) {
+      throw new EOFException();
+    }
+    return record.read();
   }
 
   static void writeINT(DataOutput record, int val) throws IOException {
@@ -61,7 +68,14 @@ class DataSerializer {
     int hint = readINT(stream);
     parameters.sizeHintFun = __ -> hint;
 
-    parameters.serializedData = __ -> readINT(stream);
+    parameters.serializedData = (IntDistribution dist) -> {
+      int i = readINT(stream);
+      if (!dist.isValidValue(i)) {
+        throw new CannotRestoreValue("Error restoring from serialized \"rechecking\" data. Possible cause: either the test or the environment it depends on has changed.");
+      }
+      return i;
+    };
   }
-  
+
+  static class EOFException extends RuntimeException {}
 }

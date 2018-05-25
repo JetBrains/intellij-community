@@ -22,6 +22,7 @@ import com.intellij.execution.Executor;
 import com.intellij.execution.configurations.ModuleRunProfile;
 import com.intellij.execution.configurations.RunProfile;
 import com.intellij.execution.executors.DefaultDebugExecutor;
+import com.intellij.execution.testframework.ui.TestsConsoleBuilderImpl;
 import com.intellij.execution.ui.ConsoleView;
 import com.intellij.execution.ui.ExecutionConsole;
 import com.intellij.execution.util.StoringPropertyContainer;
@@ -193,6 +194,14 @@ public abstract class TestConsoleProperties extends StoringPropertyContainer imp
 
   protected ExecutionConsole getConsole() {
     return myConsole;
+  }
+
+  @NotNull
+  public ConsoleView createConsole() {
+    return new TestsConsoleBuilderImpl(getProject(),
+                                       getScope(),
+                                       !isEditable(),
+                                       isUsePredefinedMessageFilter()).getConsole();
   }
 
   public boolean isUsePredefinedMessageFilter() {

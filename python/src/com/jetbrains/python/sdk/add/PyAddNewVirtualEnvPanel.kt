@@ -26,6 +26,7 @@ import com.intellij.openapi.project.ProjectManager
 import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.roots.ModuleRootManager
 import com.intellij.openapi.ui.TextFieldWithBrowseButton
+import com.intellij.openapi.ui.ValidationInfo
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.vfs.StandardFileSystems
 import com.intellij.openapi.vfs.VfsUtil
@@ -47,7 +48,7 @@ import javax.swing.event.DocumentEvent
 class PyAddNewVirtualEnvPanel(private val project: Project?,
                               private val existingSdks: List<Sdk>,
                               newProjectPath: String?) : PyAddNewEnvPanel() {
-  override val envName = "Virtualenv"
+  override val envName: String = "Virtualenv"
 
   override var newProjectPath: String? = newProjectPath
     set(value) {
@@ -58,7 +59,7 @@ class PyAddNewVirtualEnvPanel(private val project: Project?,
   val path: String
     get() = pathField.text.trim()
 
-  override val panelName = "New environment"
+  override val panelName: String = "New environment"
   override val icon: Icon = PythonIcons.Python.Virtualenv
   private val baseSdkField = PySdkPathChoosingComboBox(findBaseSdks(existingSdks), null).apply {
     val preferredSdkPath = PySdkSettings.instance.preferredVirtualEnvBaseSdk
@@ -90,7 +91,7 @@ class PyAddNewVirtualEnvPanel(private val project: Project?,
     add(formPanel, BorderLayout.NORTH)
   }
 
-  override fun validateAll() =
+  override fun validateAll(): List<ValidationInfo> =
     listOfNotNull(validateEnvironmentDirectoryLocation(pathField),
                   validateSdkComboBox(baseSdkField))
 

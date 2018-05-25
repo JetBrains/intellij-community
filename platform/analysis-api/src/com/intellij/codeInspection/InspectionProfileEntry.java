@@ -147,7 +147,7 @@ public abstract class InspectionProfileEntry implements BatchSuppressableTool {
     return fixes.toArray(SuppressQuickFix.EMPTY_ARRAY);
   }
 
-  private static void addAllSuppressActions(@NotNull Collection<SuppressQuickFix> fixes,
+  private static void addAllSuppressActions(@NotNull Collection<? super SuppressQuickFix> fixes,
                                             @NotNull PsiElement element,
                                             @NotNull InspectionSuppressor suppressor,
                                             @NotNull ThreeState appliedToInjectionHost,

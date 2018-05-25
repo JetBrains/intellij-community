@@ -62,7 +62,7 @@ public class DefaultIdeaErrorLogger implements ErrorLogger {
 
     try {
       Throwable throwable = event.getThrowable();
-      final MemoryKind kind = getOOMErrorKind(throwable);
+      MemoryKind kind = getOOMErrorKind(throwable);
       if (kind != null) {
         ourOomOccurred = true;
         SwingUtilities.invokeAndWait(() -> new OutOfMemoryDialog(kind).show());
@@ -71,8 +71,7 @@ public class DefaultIdeaErrorLogger implements ErrorLogger {
         processMappingFailed(event);
       }
       else if (!ourOomOccurred) {
-        MessagePool messagePool = MessagePool.getInstance();
-        messagePool.addIdeFatalMessage(event);
+        MessagePool.getInstance().addIdeFatalMessage(event);
       }
     }
     catch (Throwable e) {

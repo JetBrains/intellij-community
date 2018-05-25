@@ -40,7 +40,6 @@ import com.intellij.openapi.module.ModuleUtilCore;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.Task;
-import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.roots.CompilerModuleExtension;
@@ -57,20 +56,11 @@ import com.intellij.psi.*;
 import com.intellij.psi.controlFlow.*;
 import com.intellij.psi.impl.source.tree.java.PsiSwitchStatementImpl;
 import com.intellij.psi.search.GlobalSearchScope;
-import com.intellij.psi.search.GlobalSearchScopesCore;
-import com.intellij.psi.util.ClassUtil;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.rt.coverage.data.JumpData;
 import com.intellij.rt.coverage.data.LineData;
-import com.intellij.rt.coverage.data.ProjectData;
 import com.intellij.rt.coverage.data.SwitchData;
-import com.intellij.rt.coverage.instrumentation.SaveHook;
-import jetbrains.coverage.report.ClassInfo;
-import jetbrains.coverage.report.ReportBuilderFactory;
 import jetbrains.coverage.report.ReportGenerationFailedException;
-import jetbrains.coverage.report.SourceCodeProvider;
-import jetbrains.coverage.report.html.HTMLReportBuilder;
-import jetbrains.coverage.report.idea.IDEACoverageData;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.jps.model.java.JavaSourceRootType;
@@ -566,69 +556,6 @@ public class JavaCoverageEngine extends CoverageEngine {
     return ReadAction.compute(() -> ((PsiClassOwner)sourceFile).getPackageName());
   }
 
-  protected static void generateJavaReport(@NotNull final Project project,
-                                           final File tempFile,
-                                           final CoverageSuitesBundle currentSuite) {
-    final ExportToHTMLSettings settings = ExportToHTMLSettings.getInstance(project);
-    final ProjectData projectData = currentSuite.getCoverageData();
-    ProgressManager.getInstance().run(new Task.Backgroundable(project, "Generating Coverage Report ...") {
-      final Exception[] myExceptions = new Exception[1];
-
-      @Override
-      public void run(@NotNull final ProgressIndicator indicator) {
-        try {
-          new SaveHook(tempFile, true, new IdeaClassFinder(project, currentSuite)).save(projectData);
-          final HTMLReportBuilder builder = ReportBuilderFactory.createHTMLReportBuilder();
-          builder.setReportDir(new File(settings.OUTPUT_DIRECTORY));
-          final SourceCodeProvider sourceCodeProvider = classname -> DumbService.getInstance(project).runReadActionInSmartMode(() -> {
-            if (project.isDisposed()) return "";
-            final PsiClass psiClass = ClassUtil.findPsiClassByJVMName(PsiManager.getInstance(project), classname);
-            return psiClass != null ? psiClass.getNavigationElement().getContainingFile().getText() : "";
-          });
-          builder.generateReport(new IDEACoverageData(projectData, sourceCodeProvider) {
-            @NotNull
-            @Override
-            public Collection<ClassInfo> getClasses() {
-              final Collection<ClassInfo> classes = super.getClasses();
-              if (!currentSuite.isTrackTestFolders()) {
-                final JavaPsiFacade psiFacade = JavaPsiFacade.getInstance(project);
-                final GlobalSearchScope productionScope = GlobalSearchScopesCore.projectProductionScope(project);
-                for (Iterator<ClassInfo> iterator = classes.iterator(); iterator.hasNext();) {
-                  final ClassInfo aClass = iterator.next();
-                  final PsiClass psiClass = DumbService.getInstance(project).runReadActionInSmartMode(() -> {
-                    if (project.isDisposed()) return null;
-                    return psiFacade.findClass(aClass.getFQName(), productionScope);
-                  });
-                  if (psiClass == null) {
-                    iterator.remove();
-                  }
-                }
-              }
-              return classes;
-            }
-          });
-        }
-        catch (IOException e) {
-          LOG.error(e);
-        }
-        catch (ReportGenerationFailedException e) {
-          myExceptions[0] = e;
-        }
-      }
-
-      @Override
-      public void onSuccess() {
-        if (myExceptions[0] != null) {
-          Messages.showErrorDialog(project, myExceptions[0].getMessage(), CommonBundle.getErrorTitle());
-          return;
-        }
-        if (settings.OPEN_IN_BROWSER) {
-          BrowserUtil.browse(new File(settings.OUTPUT_DIRECTORY, "index.html"));
-        }
-      }
-    });
-  }
-
   @Override
   public boolean isReportGenerationAvailable(@NotNull Project project,
                                              @NotNull DataContext dataContext,
@@ -641,14 +568,36 @@ public class JavaCoverageEngine extends CoverageEngine {
   public final void generateReport(@NotNull final Project project,
                                    @NotNull final DataContext dataContext,
                                    @NotNull final CoverageSuitesBundle currentSuite) {
-    try {
-      final File tempFile = FileUtil.createTempFile("temp", "");
-      tempFile.deleteOnExit();
-      generateJavaReport(project, tempFile, currentSuite);
-    }
-    catch (IOException e1) {
-      LOG.error(e1);
-    }
+
+    final ExportToHTMLSettings settings = ExportToHTMLSettings.getInstance(project);
+    ProgressManager.getInstance().run(new Task.Backgroundable(project, "Generating Coverage Report ...") {
+      final Exception[] myExceptions = new Exception[1];
+
+      @Override
+      public void run(@NotNull final ProgressIndicator indicator) {
+        try {
+          ((JavaCoverageRunner)currentSuite.getSuites()[0].getRunner()).generateReport(currentSuite, project);
+        }
+        catch (IOException e) {
+          LOG.error(e);
+        }
+        catch (ReportGenerationFailedException e) {
+          myExceptions[0] = e;
+        }
+      }
+
+      
+      @Override
+      public void onSuccess() {
+        if (myExceptions[0] != null) {
+          Messages.showErrorDialog(project, myExceptions[0].getMessage(), CommonBundle.getErrorTitle());
+          return;
+        }
+        if (settings.OPEN_IN_BROWSER) {
+          BrowserUtil.browse(new File(settings.OUTPUT_DIRECTORY, "index.html"));
+        }
+      }
+    });
   }
 
   @Override

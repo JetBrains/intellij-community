@@ -220,25 +220,19 @@ public class EditorComponentImpl extends JTextComponent implements Scrollable, D
   @Override
   public void paintComponent(Graphics g) {
     myEditor.measureTypingLatency();
-    myApplication.editorPaintStart();
 
-    try {
-      Graphics2D gg = (Graphics2D)g;
-      UIUtil.setupComposite(gg);
-      if (myEditor.useEditorAntialiasing()) {
-        EditorUIUtil.setupAntialiasing(gg);
-      }
-      else {
-        UISettings.setupAntialiasing(gg);
-      }
-      gg.setRenderingHint(RenderingHints.KEY_FRACTIONALMETRICS, myEditor.myFractionalMetricsHintValue);
-      AffineTransform origTx = PaintUtil.alignTxToInt(gg, PaintUtil.insets2offset(getInsets()), true, false, RoundingMode.CEIL);
-      myEditor.paint(gg);
-      if (origTx != null) gg.setTransform(origTx);
+    Graphics2D gg = (Graphics2D)g;
+    UIUtil.setupComposite(gg);
+    if (myEditor.useEditorAntialiasing()) {
+      EditorUIUtil.setupAntialiasing(gg);
     }
-    finally {
-      myApplication.editorPaintFinish();
+    else {
+      UISettings.setupAntialiasing(gg);
     }
+    gg.setRenderingHint(RenderingHints.KEY_FRACTIONALMETRICS, myEditor.myFractionalMetricsHintValue);
+    AffineTransform origTx = PaintUtil.alignTxToInt(gg, PaintUtil.insets2offset(getInsets()), true, false, RoundingMode.CEIL);
+    myEditor.paint(gg);
+    if (origTx != null) gg.setTransform(origTx);
   }
 
   public void repaintEditorComponent() {

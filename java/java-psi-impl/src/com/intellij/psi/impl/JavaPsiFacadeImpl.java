@@ -294,9 +294,9 @@ public class JavaPsiFacadeImpl extends JavaPsiFacadeEx {
   }
 
   private static void filterClassesAndAppend(PsiElementFinder finder,
-                                             @Nullable Condition<PsiClass> classesFilter,
+                                             @Nullable Condition<? super PsiClass> classesFilter,
                                              @NotNull PsiClass[] classes,
-                                             @NotNull List<PsiClass> result) {
+                                             @NotNull List<? super PsiClass> result) {
     for (PsiClass psiClass : classes) {
       if (psiClass == null) {
         LOG.error("Finder " + finder + " returned null PsiClass");

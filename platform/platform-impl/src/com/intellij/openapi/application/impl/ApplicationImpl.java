@@ -98,7 +98,6 @@ public class ApplicationImpl extends PlatformComponentManagerImpl implements App
   private int myWriteStackBase;
   private volatile Thread myWriteActionThread;
 
-  private int myInEditorPaintCounter; // EDT only
   private final long myStartTime;
   @Nullable
   private Splash mySplash;
@@ -1373,15 +1372,6 @@ public class ApplicationImpl extends PlatformComponentManagerImpl implements App
     });
   }
 
-  public void editorPaintStart() {
-    myInEditorPaintCounter++;
-  }
-
-  public void editorPaintFinish() {
-    myInEditorPaintCounter--;
-    LOG.assertTrue(myInEditorPaintCounter >= 0);
-  }
-
   @Override
   public void addApplicationListener(@NotNull ApplicationListener l) {
     myDispatcher.addListener(l);
@@ -1439,14 +1429,7 @@ public class ApplicationImpl extends PlatformComponentManagerImpl implements App
 
   @Override
   public void saveAll() {
-    saveAll(false);
-  }
-
-  @Override
-  public void saveAll(boolean isForce) {
-    if (mySaveAllowed) {
-      StoreUtil.saveDocumentsAndProjectsAndApp(isForce);
-    }
+    StoreUtil.saveDocumentsAndProjectsAndApp(false);
   }
 
   @Override

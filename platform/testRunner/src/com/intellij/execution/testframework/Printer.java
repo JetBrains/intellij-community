@@ -24,15 +24,4 @@ public interface Printer {
     new AnsiEscapeDecoder().escapeText(text, processOutputType, (text1, attributes) ->
       print(text1, ConsoleViewContentType.getConsoleViewType(attributes)));
   }
-
-  default void printWithAnsiColoring(@NotNull String text, @NotNull ConsoleViewContentType contentType) {
-    AnsiEscapeDecoder decoder = new AnsiEscapeDecoder();
-    decoder.escapeText(text, ProcessOutputTypes.STDOUT, (text1, attributes) -> {
-      ConsoleViewContentType viewContentType = ConsoleViewContentType.getConsoleViewType(attributes);
-      if (viewContentType == null) {
-        viewContentType = contentType;
-      }
-      print(text1, viewContentType);
-    });
-  }
 }

@@ -8,7 +8,7 @@
     <orderEntry type="jdk" jdkName="IDEA jdk" jdkType="JavaSDK" />
     <orderEntry type="sourceFolder" forTests="false" />
     <orderEntry type="module" module-name="intellij.platform.externalSystem.rt" />
-    <orderEntry type="module" module-name="intellij.platform.annotations.java5" />
+    <orderEntry type="library" name="jetbrains-annotations-java5" level="project" />
     <orderEntry type="library" exported="" name="Slf4j" level="project" />
     <orderEntry type="library" exported="" name="Gradle" level="project" />
     <orderEntry type="library" scope="PROVIDED" name="Groovy" level="project" />

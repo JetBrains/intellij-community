@@ -20,9 +20,9 @@ open class ProjectLibraryTable(val project: Project) : LibraryTableBase() {
     fun getInstance(project: Project): LibraryTable = project.service<ProjectLibraryTable>()
   }
 
-  override fun getTableLevel() = LibraryTablesRegistrar.PROJECT_LEVEL
+  override fun getTableLevel(): String = LibraryTablesRegistrar.PROJECT_LEVEL
 
-  override fun getPresentation() = PROJECT_LIBRARY_TABLE_PRESENTATION
+  override fun getPresentation(): LibraryTablePresentation = PROJECT_LIBRARY_TABLE_PRESENTATION
 
   class LibraryStateSplitter : StateSplitterEx() {
     override fun splitState(state: Element): MutableList<Pair<Element, String>> = StateSplitterEx.splitState(state, LibraryImpl.LIBRARY_NAME_ATTR)

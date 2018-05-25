@@ -1,0 +1,56 @@
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+
+import org.jetbrains.intellij.build.CompilationTasks
+import org.jetbrains.intellij.build.impl.BuildUtils
+import org.jetbrains.intellij.build.impl.CompilationContextImpl
+import org.jetbrains.jps.idea.IdeaProjectLoader
+import org.jetbrains.jps.model.java.JpsJavaExtensionService
+import org.jetbrains.jps.model.library.JpsOrderRootType
+import org.jetbrains.jps.util.JpsPathUtil
+
+import java.nio.file.Paths
+
+target('default': 'Check icons in IntelliJIcons repository') {
+  def root = Paths.get(
+    System.getProperty('teamcity.build.checkoutDir') ?: '.'
+  ).normalize().toAbsolutePath().toString()
+  def home = IdeaProjectLoader.guessHome(this)
+  def output = "$home/out/iconsCheck"
+  def context = CompilationContextImpl.create(home, home, output)
+  def moduleName = 'intellij.platform.images.build'
+  CompilationTasks.create(context).with {
+    resolveProjectDependencies()
+    compileModules([moduleName])
+  }
+  (
+    // dependencies
+    context.findModule(moduleName)
+      .with { JpsJavaExtensionService.dependencies(it) }
+      .productionOnly().recursively()
+      .libraries.collectMany { it.getRoots(JpsOrderRootType.COMPILED) }
+      .collect { JpsPathUtil.urlToFile(it.url) } +
+    // compiled modules and jars in lib directory
+    ["$output/classes/production", "$root/lib"]
+      .collectMany { new File(it).listFiles().toList() }
+      .findAll { it.isDirectory() || it.name.endsWith('.jar') }
+  ).each {
+    // com.intellij.util package gets loaded by AntClassLoader before this script starts
+    // so we have to add dependencies to AntClassLoader classpath directly
+    BuildUtils.addToJpsClassPath(it.absolutePath, ant)
+  }
+  String[] repos = System.properties.'repos'?.toString()?.split(/,/) ?: []
+  try {
+    Class.forName('org.jetbrains.intellij.build.images.sync.CheckIconsKt').checkIcons(
+      repos[0], repos[1],
+      System.properties.'skip.dirs.pattern'?.toString() ?: null,
+      Boolean.parseBoolean(System.properties.'sync.icons' as String),
+      Boolean.parseBoolean(System.properties.'sync.dev.icons' as String),
+      { String msg -> msg.split(/\n/).each { context.messages.info(it) } },
+      { String msg -> context.messages.buildStatus(msg); System.exit(1) }
+    )
+  }
+  catch (Exception e) {
+    e.printStackTrace()
+    throw e
+  }
+}

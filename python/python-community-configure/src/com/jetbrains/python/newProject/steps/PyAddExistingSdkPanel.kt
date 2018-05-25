@@ -30,7 +30,7 @@ class PyAddExistingSdkPanel(project: Project?,
                             newProjectPath: String?,
                             preferredSdk: Sdk?) : PyAddSdkPanel() {
 
-  override val panelName = "Existing interpreter"
+  override val panelName: String = "Existing interpreter"
 
   override val sdk: Sdk?
     get() = sdkChooserCombo.comboBox.selectedItem as? Sdk
@@ -71,7 +71,7 @@ class PyAddExistingSdkPanel(project: Project?,
     update()
   }
 
-  override fun validateAll() =
+  override fun validateAll(): List<ValidationInfo> =
     listOf(validateSdkChooserField(),
            validateRemotePathField())
       .filterNotNull()

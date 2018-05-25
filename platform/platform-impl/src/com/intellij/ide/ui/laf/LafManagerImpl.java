@@ -5,9 +5,7 @@ import com.intellij.CommonBundle;
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.IdeBundle;
 import com.intellij.ide.WelcomeWizardUtil;
-import com.intellij.ide.ui.LafManager;
-import com.intellij.ide.ui.LafManagerListener;
-import com.intellij.ide.ui.UISettings;
+import com.intellij.ide.ui.*;
 import com.intellij.ide.ui.laf.darcula.DarculaInstaller;
 import com.intellij.ide.ui.laf.darcula.DarculaLaf;
 import com.intellij.ide.ui.laf.darcula.DarculaLookAndFeelInfo;
@@ -59,6 +57,7 @@ import java.beans.PropertyChangeListener;
 import java.lang.reflect.Method;
 import java.util.*;
 import java.util.List;
+import java.util.stream.Collectors;
 
 @State(
   name = "LafManager",
@@ -134,6 +133,12 @@ public final class LafManagerImpl extends LafManager implements PersistentStateC
 
     lafList.add(new DarculaLookAndFeelInfo());
 
+
+    lafList.addAll(Arrays.stream(UIThemeProvider.EP_NAME.getExtensions())
+                         .map(UIThemeProvider::createTheme)
+                         .filter(x -> x != null)
+                         .map(UIThemeBasedLookAndFeelInfo::new)
+                         .collect(Collectors.toList()));
     myLaFs = lafList.toArray(new UIManager.LookAndFeelInfo[0]);
 
     if (!SystemInfo.isMac) {
@@ -367,6 +372,21 @@ public final class LafManagerImpl extends LafManager implements PersistentStateC
         return;
       }
     }
+
+    if (lookAndFeelInfo instanceof UIThemeBasedLookAndFeelInfo) {
+      try {
+        ((UIThemeBasedLookAndFeelInfo)lookAndFeelInfo).installTheme(UIManager.getDefaults());
+      }
+      catch (Exception e) {
+        Messages.showMessageDialog(
+          IdeBundle.message("error.cannot.set.look.and.feel", lookAndFeelInfo.getName(), e.getMessage()),
+          CommonBundle.getErrorTitle(),
+          Messages.getErrorIcon()
+        );
+        return;
+      }
+    }
+
     myCurrentLaf = ObjectUtils.chooseNotNull(findLaf(lookAndFeelInfo.getClassName()), lookAndFeelInfo);
   }
 

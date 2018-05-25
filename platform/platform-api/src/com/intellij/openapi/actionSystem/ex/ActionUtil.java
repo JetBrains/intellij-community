@@ -279,6 +279,16 @@ public class ActionUtil {
     }
   }
 
+  public static boolean recursiveContainsAction(@NotNull ActionGroup group, @NotNull AnAction action) {
+    for (AnAction child : group.getChildren(null)) {
+      if (action.equals(child)) return true;
+      if (child instanceof ActionGroup && recursiveContainsAction((ActionGroup)child, action)) {
+        return true;
+      }
+    }
+    return false;
+  }
+
   /**
    * Convenience method for copying properties from a registered action
    *

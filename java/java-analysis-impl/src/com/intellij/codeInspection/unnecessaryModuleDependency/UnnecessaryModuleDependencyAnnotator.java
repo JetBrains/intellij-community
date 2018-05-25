@@ -74,7 +74,7 @@ public class UnnecessaryModuleDependencyAnnotator extends RefGraphAnnotator {
     }
   }
 
-  private void collectRequiredModulesInHierarchy(PsiElement element, Set<Module> modules) {
+  private void collectRequiredModulesInHierarchy(PsiElement element, Set<? super Module> modules) {
     if (element instanceof PsiClass) {
       processClassHierarchy((PsiClass)element, modules);
     }
@@ -94,14 +94,14 @@ public class UnnecessaryModuleDependencyAnnotator extends RefGraphAnnotator {
     }
   }
 
-  private void processTypeHierarchy(Set<PsiClass> classes, PsiType returnType, Set<Module> modules) {
+  private void processTypeHierarchy(Set<? super PsiClass> classes, PsiType returnType, Set<? super Module> modules) {
     PsiClass aClass = PsiUtil.resolveClassInType(returnType);
     if (aClass != null && classes.add(aClass)) {
       processClassHierarchy(aClass, modules);
     }
   }
 
-  private void processClassHierarchy(PsiClass currentClass, Set<Module> modules) {
+  private void processClassHierarchy(PsiClass currentClass, Set<? super Module> modules) {
     LinkedHashSet<PsiClass> superClasses = new LinkedHashSet<>();
     RefElement refClass = myManager.getReference(currentClass);
     if (!(refClass instanceof RefClass)) {

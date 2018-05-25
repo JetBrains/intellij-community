@@ -20,50 +20,56 @@ import com.intellij.openapi.diff.impl.patch.TextFilePatch;
 import com.intellij.openapi.diff.impl.patch.apply.GenericPatchApplier;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
+import com.intellij.openapi.util.AtomicNotNullLazyValue;
 import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.changes.ContentRevision;
 import com.intellij.openapi.vcs.history.VcsRevisionNumber;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 public class LazyPatchContentRevision implements ContentRevision {
-  private volatile String myContent;
   private final VirtualFile myVf;
   private final FilePath myNewFilePath;
   private final String myRevision;
   private final TextFilePatch myPatch;
-  private volatile boolean myPatchApplyFailed;
+
+  private final AtomicNotNullLazyValue<Data> myData;
 
   public LazyPatchContentRevision(final VirtualFile vf, final FilePath newFilePath, final String revision, final TextFilePatch patch) {
     myVf = vf;
     myNewFilePath = newFilePath;
     myRevision = revision;
     myPatch = patch;
+
+    myData = AtomicNotNullLazyValue.createValue(() -> loadContent());
   }
 
-  public String getContent() {
-    if (myContent == null) {
-      final String localContext = ReadAction.compute(() -> {
-        final Document doc = FileDocumentManager.getInstance().getDocument(myVf);
-        return doc == null ? null : doc.getText();
-      });
-      if (localContext == null) {
-        myPatchApplyFailed = true;
-        return null;
-      }
-
-      final GenericPatchApplier applier = new GenericPatchApplier(localContext, myPatch.getHunks());
-      if (applier.execute()) {
-        myContent = applier.getAfter();
-      } else {
-        myPatchApplyFailed = true;
-      }
+  private Data loadContent() {
+    String localContext = ReadAction.compute(() -> {
+      Document doc = FileDocumentManager.getInstance().getDocument(myVf);
+      return doc == null ? null : doc.getText();
+    });
+    if (localContext == null) {
+      return new Data(null, true);
     }
-    return myContent;
+
+    GenericPatchApplier.AppliedPatch appliedPatch = GenericPatchApplier.apply(localContext, myPatch.getHunks());
+    if (appliedPatch != null) {
+      return new Data(appliedPatch.patchedText, false);
+    }
+    else {
+      return new Data(null, true);
+    }
+  }
+
+  @Nullable
+  public String getContent() {
+    return myData.getValue().content;
   }
 
   public boolean isPatchApplyFailed() {
-    return myPatchApplyFailed;
+    return myData.getValue().patchApplyFailed;
   }
 
   @NotNull
@@ -82,5 +88,15 @@ public class LazyPatchContentRevision implements ContentRevision {
         return 0;
       }
     };
+  }
+
+  private static class Data {
+    @Nullable public final String content;
+    public final boolean patchApplyFailed;
+
+    public Data(@Nullable String content, boolean patchApplyFailed) {
+      this.content = content;
+      this.patchApplyFailed = patchApplyFailed;
+    }
   }
 }

@@ -116,7 +116,7 @@ public abstract class GroovyFileBaseImpl extends PsiFileBase implements GroovyFi
   }
 
   @Override
-  public boolean importClass(PsiClass aClass) {
+  public boolean importClass(@NotNull PsiClass aClass) {
     return addImportForClass(aClass) != null;
   }
 

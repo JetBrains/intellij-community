@@ -18,6 +18,7 @@ package com.intellij.codeInsight;
 import com.intellij.lang.Language;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.RangeMarker;
+import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
@@ -212,9 +213,71 @@ public abstract class CodeInsightUtilCore extends FileModificationService {
           }
       }
       if (sourceOffsets != null) {
-        sourceOffsets[outChars.length()-outOffset] = index;
+        sourceOffsets[outChars.length() - outOffset] = index;
       }
     }
     return true;
+  }
+
+  /**
+   * Maps the substring range inside Java String literal value back into the source code range.
+   *
+   * @param text string literal as present in source code (including quotes)
+   * @param from start offset inside the represented string
+   * @param to end offset inside the represented string
+   * @return the range which represents the corresponding substring inside source representation,
+   * or null if from/to values are out of bounds.
+   */
+  @Nullable
+  public static TextRange mapBackStringRange(@NotNull String text, int from, int to) {
+    if (from > to || to < 0) return null;
+    if (text.startsWith("`")) {
+      // raw string
+      return new TextRange(from + 1, to + 1);
+    }
+    if (!text.startsWith("\"")) {
+      return null;
+    }
+    if (text.indexOf('\\') == -1) {
+      return new TextRange(from + 1, to + 1);
+    }
+    int curOffset = 0;
+    int mappedFrom = -1, mappedTo = -1;
+    int end = text.length() - 1;
+    int i = 1;
+    while (i <= end) {
+      if (curOffset == from) {
+        mappedFrom = i;
+      }
+      if (curOffset == to) {
+        mappedTo = i;
+        break;
+      }
+      if (i == end) break;
+      char c = text.charAt(i++);
+      if (c == '\\') {
+        if (i == end) return null;
+        // like \u0020
+        char c1 = text.charAt(i++);
+        if (c1 == 'u') {
+          while (i < end && text.charAt(i) == 'u') i++;
+          i += 4;
+        } else if (c1 >= '0' && c1 <= '7') { // octal escape
+          char c2 = i < end ? text.charAt(i) : 0;
+          if (c2 >= '0' && c2 <= '7') {
+            i++;
+            char c3 = i < end ? text.charAt(i) : 0;
+            if (c3 >= '0' && c3 <= '7' && c1 <= '3') {
+              i++;
+            }
+          }
+        }
+      }
+      curOffset++;
+    }
+    if (mappedFrom >= 0 && mappedTo >= 0) {
+      return new TextRange(mappedFrom, mappedTo);
+    }
+    return null;
   }
 }

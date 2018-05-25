@@ -23,5 +23,5 @@ Groovy script
         Arguments
           PsiElement(()('(')
           PsiElement())(')')
-      PsiErrorElement:'}' expected
+      PsiErrorElement:';', <statement>, new line or '}' expected
         <empty list>

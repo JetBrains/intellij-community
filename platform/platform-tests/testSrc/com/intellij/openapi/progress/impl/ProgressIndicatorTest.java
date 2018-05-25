@@ -27,10 +27,7 @@ import com.intellij.openapi.application.ex.ApplicationManagerEx;
 import com.intellij.openapi.application.impl.LaterInvocator;
 import com.intellij.openapi.diagnostic.DefaultLogger;
 import com.intellij.openapi.progress.*;
-import com.intellij.openapi.progress.util.ProgressIndicatorBase;
-import com.intellij.openapi.progress.util.ProgressIndicatorUtils;
-import com.intellij.openapi.progress.util.ProgressWrapper;
-import com.intellij.openapi.progress.util.ReadTask;
+import com.intellij.openapi.progress.util.*;
 import com.intellij.openapi.util.EmptyRunnable;
 import com.intellij.openapi.wm.ex.ProgressIndicatorEx;
 import com.intellij.testFramework.BombedProgressIndicator;
@@ -47,6 +44,7 @@ import com.intellij.util.containers.DoubleArrayList;
 import com.intellij.util.containers.Stack;
 import com.intellij.util.ui.UIUtil;
 import gnu.trove.TLongArrayList;
+import org.assertj.core.util.VisibleForTesting;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
@@ -216,11 +214,11 @@ public class ProgressIndicatorTest extends LightPlatformTestCase {
   private volatile Throwable exception;
   public void testProgressManagerCheckCanceledDoesNotDelegateToProgressIndicatorIfThereAreNoCanceledIndicators() {
     final long warmupEnd = System.currentTimeMillis() + 1000;
-    final long end = warmupEnd + 10000;
     checkCanceledCalled = false;
     final ProgressIndicatorBase myIndicator = new ProgressIndicatorBase();
     taskCanceled = taskSucceeded = false;
     exception = null;
+    final long end = warmupEnd + 10000;
     Future<?> future = ((ProgressManagerImpl)ProgressManager.getInstance()).runProcessWithProgressAsynchronously(
       new Task.Backgroundable(getProject(), "Xxx") {
         @Override
@@ -775,6 +773,61 @@ public class ProgressIndicatorTest extends LightPlatformTestCase {
 
     for (Future<?> future : futures) {
       future.get(1, TimeUnit.SECONDS);
+    }
+  }
+
+  public void testDuringProgressManagerExecuteNonCancelableSectionTheIndicatorIsCancelableShouldReturnFalse() {
+    MyAbstractProgressIndicator progress = new MyAbstractProgressIndicator();
+    ProgressManager.getInstance().executeProcessUnderProgress(() -> {
+      assertTrue(!progress.isCanceled());
+      assertTrue(progress.isCancelable());
+      try {
+        ProgressManager.getInstance().executeNonCancelableSection(()->{
+          assertFalse(progress.isCancelable());
+          progress.cancel();
+          assertTrue(progress.isCanceled());
+          progress.checkCanceled();
+        });
+      }
+      catch (ProcessCanceledException e) {
+        e.printStackTrace();
+        fail("must not throw");
+      }
+
+      try {
+        progress.checkCanceled();
+        fail("PCE must have been thrown");
+      }
+      catch (ProcessCanceledException ignored) {
+
+      }
+    }, progress);
+  }
+
+  private static class MyAbstractProgressIndicator extends AbstractProgressIndicatorBase {
+    @VisibleForTesting
+    @Override
+    public boolean isCancelable() {
+      return super.isCancelable();
+    }
+  }
+
+  public void testIndicatorsStillNotThrowInCheckCanceledIfCalledStartNonCancelableSectionBeforeByOldStaleDeprecatedPluginsNotYetPortedToProgressManagerExecuteInNonCancelableSection() {
+    checkIndicatorNotThrowInThisOldStaleDisgustingNonCancelableSection(new EmptyProgressIndicator());
+    checkIndicatorNotThrowInThisOldStaleDisgustingNonCancelableSection(new AbstractProgressIndicatorBase());
+  }
+
+  private static void checkIndicatorNotThrowInThisOldStaleDisgustingNonCancelableSection(ProgressIndicator indicator) {
+    assertFalse(ProgressManager.getInstance().isInNonCancelableSection());
+    indicator.startNonCancelableSection();
+    indicator.cancel();
+    indicator.checkCanceled();
+    indicator.finishNonCancelableSection();
+    try {
+      indicator.checkCanceled();
+      fail("Must throw");
+    }
+    catch (ProcessCanceledException ignored) {
     }
   }
 }

@@ -2,15 +2,14 @@
 package org.jetbrains.plugins.groovy.lang.highlighting
 
 import com.intellij.testFramework.LightProjectDescriptor
-import org.jetbrains.annotations.NotNull
+import groovy.transform.CompileStatic
 import org.jetbrains.plugins.groovy.GroovyLightProjectDescriptor
 
+@CompileStatic
 class Groovy30HighlightingTest extends GrHighlightingTestBase {
-  @Override
-  @NotNull
-  protected LightProjectDescriptor getProjectDescriptor() {
-    return GroovyLightProjectDescriptor.GROOVY_3_0
-  }
+
+  final LightProjectDescriptor projectDescriptor = GroovyLightProjectDescriptor.GROOVY_3_0
+  final String basePath = super.basePath + 'v30/'
 
   void 'test default method in interfaces'() {
     testHighlighting '''
@@ -33,7 +32,7 @@ interface I2 {
 
   void 'test default modifier'() {
     testHighlighting '''
-default<error descr="':' expected"> </error>interface I {
+default interface I {
 }
 
 trait T {
@@ -61,5 +60,17 @@ interface I {
 
 I i = {3}
 '''
+  }
+
+  void 'test identity operators'() {
+    fixture.testHighlighting "${testName}.groovy"
+  }
+
+  void 'test elvis assignment'() {
+    fixture.testHighlighting testName + '.groovy'
+  }
+
+  void 'test safe index access'() {
+    fixture.testHighlighting testName + '.groovy'
   }
 }

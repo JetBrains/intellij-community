@@ -285,4 +285,11 @@ public class NullableStuffInspectionTest extends LightCodeInsightFixtureTestCase
     myFixture.checkResultByFile(getTestName(false) + "_after.java");
   }
 
+  public void testAnnotateOverridingParametersOnNotNullMethod() {
+    myInspection.REPORT_ANNOTATION_NOT_PROPAGATED_TO_OVERRIDERS = true;
+    doTest();
+    myFixture.launchAction(myFixture.findSingleIntention("Annotate overridden method parameters"));
+    myFixture.checkResultByFile(getTestName(false) + "_after.java");
+  }
+
 }

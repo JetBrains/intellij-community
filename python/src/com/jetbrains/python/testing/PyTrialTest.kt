@@ -32,7 +32,7 @@ class PyTrialTestSettingsEditor(configuration: PyAbstractTestConfiguration) :
 
 class PyTrialTestExecutionEnvironment(configuration: PyTrialTestConfiguration, environment: ExecutionEnvironment) :
   PyTestExecutionEnvironment<PyTrialTestConfiguration>(configuration, environment) {
-  override fun getRunner() = PythonHelper.TRIAL
+  override fun getRunner(): PythonHelper = PythonHelper.TRIAL
 }
 
 
@@ -48,13 +48,13 @@ class PyTrialTestConfiguration(project: Project, factory: PyTrialTestFactory)
 
   override fun shouldSeparateTargetPath() = false
 
-  override fun isFrameworkInstalled() = VFSTestFrameworkListener.getInstance().isTestFrameworkInstalled(sdk, PyNames.TRIAL_TEST)
+  override fun isFrameworkInstalled(): Boolean = VFSTestFrameworkListener.getInstance().isTestFrameworkInstalled(sdk, PyNames.TRIAL_TEST)
 
 }
 
 
 object PyTrialTestFactory : PyAbstractTestFactory<PyTrialTestConfiguration>() {
-  override fun createTemplateConfiguration(project: Project) = PyTrialTestConfiguration(project, this)
+  override fun createTemplateConfiguration(project: Project): PyTrialTestConfiguration = PyTrialTestConfiguration(project, this)
 
   override fun getName(): String = PyTestFrameworkService.getSdkReadableNameByFramework(PyNames.TRIAL_TEST)
 }

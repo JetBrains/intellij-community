@@ -34,7 +34,7 @@ import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.openapi.wm.ToolWindowId;
 import com.intellij.openapi.wm.ToolWindowManager;
 import com.intellij.pom.Navigatable;
-import com.intellij.problems.WolfTheProblemSolver;
+import com.intellij.problems.ProblemListener;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.refactoring.move.MoveHandler;
@@ -100,7 +100,7 @@ public abstract class AbstractProjectViewPane implements DataProvider, Disposabl
 
   protected AbstractProjectViewPane(@NotNull Project project) {
     myProject = project;
-    WolfTheProblemSolver.ProblemListener problemListener = new WolfTheProblemSolver.ProblemListener() {
+    ProblemListener problemListener = new ProblemListener() {
       @Override
       public void problemsAppeared(@NotNull VirtualFile file) {
         queueUpdateByProblem();
@@ -116,7 +116,7 @@ public abstract class AbstractProjectViewPane implements DataProvider, Disposabl
         queueUpdateByProblem();
       }
     };
-    WolfTheProblemSolver.getInstance(project).addProblemListener(problemListener, this);
+    project.getMessageBus().connect(this).subscribe(ProblemListener.TOPIC, problemListener);
     Disposer.register(project, this);
   }
 

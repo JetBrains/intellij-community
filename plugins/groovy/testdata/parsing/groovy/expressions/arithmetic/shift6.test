@@ -11,7 +11,7 @@ Groovy script
       Literal
         PsiElement(Integer)('10')
       PsiWhiteSpace(' ')
-      ASTWrapperPsiElement(>>>)
+      ASTWrapperPsiElement(RIGHT_SHIFT_UNSIGNED_SIGN)
         PsiElement(>)('>')
         PsiElement(>)('>')
         PsiElement(>)('>')

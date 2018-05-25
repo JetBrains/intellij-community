@@ -3,16 +3,14 @@
  */
 package com.intellij.ide.actions.searcheverywhere;
 
-import com.intellij.ide.IdeBundle;
+import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.project.Project;
-import com.intellij.ui.IdeUICustomization;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import java.util.Arrays;
-import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -39,17 +37,18 @@ public interface SearchEverywhereContributor {
 
   boolean showInFindResults();
 
-  default ContributorSearchResult search(Project project, String pattern, boolean everywhere, ProgressIndicator progressIndicator, int elementsLimit) {
-    return new ContributorSearchResult(Collections.emptyList(), false);
-  }
+  ContributorSearchResult<Object> search(Project project, String pattern, boolean everywhere, ProgressIndicator progressIndicator, int elementsLimit);
 
   default List<Object> search(Project project, String pattern, boolean everywhere, ProgressIndicator progressIndicator) {
     return search(project, pattern, everywhere, progressIndicator, -1).getItems();
   }
 
-  boolean processSelectedItem(Object selected, int modifiers);
+  boolean processSelectedItem(Project project, Object selected, int modifiers);
 
   ListCellRenderer getElementsRenderer(Project project);
+
+  @NotNull
+  DataContext getDataContextForItem(Object element);
 
   static List<SearchEverywhereContributor> getProvidersSorted() {
     return Arrays.stream(EP_NAME.getExtensions())

@@ -36,8 +36,6 @@ Groovy script
       Variable definitions
         Modifiers
           PsiElement(def)('def')
-        PsiErrorElement:Type expected
-          <empty list>
         PsiWhiteSpace(' ')
         Field
           PsiElement(identifier)('field')

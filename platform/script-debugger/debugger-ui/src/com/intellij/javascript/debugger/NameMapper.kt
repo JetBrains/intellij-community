@@ -31,7 +31,7 @@ private val S1 = ",()[]{}="
 // don't trim trailing .&: - could be part of expression
 private val OPERATOR_TRIMMER = CharMatcher.INVISIBLE.or(CharMatcher.anyOf(S1))
 
-val NAME_TRIMMER = CharMatcher.INVISIBLE.or(CharMatcher.anyOf(S1 + ".&:"))
+val NAME_TRIMMER: CharMatcher = CharMatcher.INVISIBLE.or(CharMatcher.anyOf(S1 + ".&:"))
 
 // generateVirtualFile only for debug purposes
 open class NameMapper(private val document: Document, private val transpiledDocument: Document, private val sourceMappings: Mappings, protected val sourceMap: SourceMap, private val transpiledFile: VirtualFile? = null) {
@@ -65,7 +65,7 @@ open class NameMapper(private val document: Document, private val transpiledDocu
       LOG.warn("Cannot get generated name: source entry (${sourceEntry.generatedLine},  ${sourceEntry.generatedColumn}). Transpiled File: " + transpiledFile?.path)
       return null
     }
-    if (generatedName.isEmpty()) {
+    if (generatedName == null || generatedName.isEmpty()) {
       return null
     }
 
@@ -85,10 +85,10 @@ open class NameMapper(private val document: Document, private val transpiledDocu
     rawNameToSource!!.put(generatedName, sourceName)
   }
 
-  protected open fun extractName(rawGeneratedName: CharSequence) = NAME_TRIMMER.trimFrom(rawGeneratedName)
+  protected open fun extractName(rawGeneratedName: CharSequence):String? = NAME_TRIMMER.trimFrom(rawGeneratedName)
 
   companion object {
-    fun trimName(rawGeneratedName: CharSequence, isLastToken: Boolean) = (if (isLastToken) NAME_TRIMMER else OPERATOR_TRIMMER).trimFrom(rawGeneratedName)
+    fun trimName(rawGeneratedName: CharSequence, isLastToken: Boolean): String? = (if (isLastToken) NAME_TRIMMER else OPERATOR_TRIMMER).trimFrom(rawGeneratedName)
   }
 }
 

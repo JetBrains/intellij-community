@@ -59,7 +59,7 @@ public class JsonSchemaStatusPopup {
     if (!showOnlyEdit || mapping == null) {
       List<JsonSchemaInfo> infos = service.getAllUserVisibleSchemas();
       Comparator<JsonSchemaInfo> comparator = Comparator.comparing(JsonSchemaInfo::getDescription, String::compareTo);
-      Stream<JsonSchemaInfo> registered = infos.stream().filter(i -> i.getProvider() != null).sorted(comparator);
+      Stream<JsonSchemaInfo> registered = infos.stream().filter(i -> i.getProvider() != null && i.getUrl(project) != null).sorted(comparator);
       List<JsonSchemaInfo> otherList = ContainerUtil.emptyList();
 
       if (JsonSchemaCatalogProjectConfiguration.getInstance(project).isRemoteActivityEnabled()) {

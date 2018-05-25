@@ -2,70 +2,78 @@
 package com.intellij.ide.projectWizard.kotlin.createProject
 
 import com.intellij.ide.projectWizard.kotlin.model.*
+import com.intellij.testGuiFramework.framework.GuiTestSuiteParam
 import org.junit.Test
+import org.junit.runner.RunWith
+import org.junit.runners.Parameterized
 
-class CreateGradleProjectWithKotlinGuiTest : KotlinGuiTestCase() {
-  @Test
-  @JvmName("gradle_with_jvm")
-  fun createGradleWithKotlinJvm() {
-    createGradleWith(
-      projectName = testMethod.methodName,
-      kotlinKind = KotlinKind.JVM,
-      kotlinVersion = KotlinTestProperties.kotlin_artifact_version,
-      project = kotlinLibs[KotlinKind.JVM]!!.gradleGProject,
-      expectedFacet = defaultFacetSettings[TargetPlatform.JVM18]!!)
+@RunWith(GuiTestSuiteParam::class)
+class CreateGradleProjectWithKotlinGuiTest(val testParameters: TestParameters) : KotlinGuiTestCase() {
+
+  data class TestParameters(
+    val projectName: String,
+    val kotlinKind: KotlinKind,
+    val project: ProjectProperties,
+    val expectedFacet: FacetStructure) {
+    override fun toString() = projectName
   }
 
-  @Test
-  @JvmName("gradle_with_js")
-  fun createGradleWithKotlinJs() {
-    createGradleWith(
-      projectName = testMethod.methodName,
-      kotlinKind = KotlinKind.JS,
-      kotlinVersion = KotlinTestProperties.kotlin_artifact_version,
-      project = kotlinLibs[KotlinKind.JS]!!.gradleGProject,
-      expectedFacet = defaultFacetSettings[TargetPlatform.JavaScript]!!)
-  }
 
   @Test
-  @JvmName("gradle_mpp_common")
-   fun createGradleMppCommon(){
+  fun createGradleWithKotlin() {
     createGradleWith(
-      projectName = testMethod.methodName,
-      kotlinKind = KotlinKind.Common,
+      projectName = testParameters.projectName,
+      kotlinKind = testParameters.kotlinKind,
       kotlinVersion = KotlinTestProperties.kotlin_artifact_version,
-      project = kotlinLibs[KotlinKind.Common]!!.gradleGMPProject,
-      expectedFacet = defaultFacetSettings[TargetPlatform.Common]!!)
+      project = testParameters.project,
+      expectedFacet = testParameters.expectedFacet)
   }
 
-  @Test
-  @JvmName("gradle_mpp_jvm")
-   fun createGradleMppJvm(){
-    createGradleWith(
-      projectName = testMethod.methodName,
-      kotlinKind = KotlinKind.JVM,
-      kotlinVersion = KotlinTestProperties.kotlin_artifact_version,
-      project = kotlinLibs[KotlinKind.JVM]!!.gradleGMPProject,
-      expectedFacet = defaultFacetSettings[TargetPlatform.JVM18]!!)
+  companion object {
+    @JvmStatic
+    @Parameterized.Parameters(name = "{0}")
+    fun data(): Collection<TestParameters> {
+      return listOf(
+        TestParameters(
+          projectName = "gradle_with_jvm",
+          kotlinKind = KotlinKind.JVM,
+          project = kotlinLibs.getValue(KotlinKind.JVM).gradleGProject,
+          expectedFacet = defaultFacetSettings.getValue(TargetPlatform.JVM18)
+        ),
+        TestParameters(
+          projectName = "gradle_mpp_jvm",
+          kotlinKind = KotlinKind.JVM,
+          project = kotlinLibs.getValue(KotlinKind.JVM).gradleGMPProject,
+          expectedFacet = defaultFacetSettings.getValue(TargetPlatform.JVM18)
+        ),
+        TestParameters(
+          projectName = "gradle_with_js",
+          kotlinKind = KotlinKind.JS,
+          project = kotlinLibs.getValue(KotlinKind.JS).gradleGProject,
+          expectedFacet = defaultFacetSettings.getValue(TargetPlatform.JavaScript)
+        ),
+        TestParameters(
+          projectName = "gradle_mpp_js",
+          kotlinKind = KotlinKind.JS,
+          project = kotlinLibs.getValue(KotlinKind.JS).gradleGMPProject,
+          expectedFacet = defaultFacetSettings.getValue(TargetPlatform.JavaScript)
+        ),
+        TestParameters(
+          projectName = "gradle_mpp_common",
+          kotlinKind = KotlinKind.Common,
+          project = kotlinLibs.getValue(KotlinKind.Common).gradleGMPProject,
+          expectedFacet = defaultFacetSettings.getValue(TargetPlatform.Common)
+        )
+      )
+    }
   }
 
-  @Test
-  @JvmName("gradle_mpp_js")
-   fun createGradleMppJs(){
-    createGradleWith(
-      projectName = testMethod.methodName,
-      kotlinKind = KotlinKind.JS,
-      kotlinVersion = KotlinTestProperties.kotlin_artifact_version,
-      project = kotlinLibs[KotlinKind.JS]!!.gradleGMPProject,
-      expectedFacet = defaultFacetSettings[TargetPlatform.JavaScript]!!)
-  }
-
-   fun createGradleWith(
-     projectName: String,
-     kotlinKind: KotlinKind,
-     kotlinVersion: String,
-     project: ProjectProperties,
-     expectedFacet: FacetStructure) {
+  private fun createGradleWith(
+    projectName: String,
+    kotlinKind: KotlinKind,
+    kotlinVersion: String,
+    project: ProjectProperties,
+    expectedFacet: FacetStructure) {
     val groupName = "group_gradle"
     val extraTimeOut = 4000L
     createGradleProject(
@@ -83,8 +91,8 @@ class CreateGradleProjectWithKotlinGuiTest : KotlinGuiTestCase() {
     gradleReimport()
     waitAMoment(extraTimeOut)
 
-     checkInProjectStructureGradleExplicitModuleGroups(
-       project, kotlinVersion, projectName, expectedFacet
-     )
+    checkInProjectStructureGradleExplicitModuleGroups(
+      project, kotlinVersion, projectName, expectedFacet
+    )
   }
 }

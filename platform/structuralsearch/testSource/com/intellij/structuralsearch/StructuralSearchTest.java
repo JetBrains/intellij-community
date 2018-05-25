@@ -988,11 +988,11 @@ public class StructuralSearchTest extends StructuralSearchTestCase {
     assertEquals("backtracking greedy regexp", 1, findMatchesCount(s89, "{ '_T*; '_T2*; }"));
     assertEquals("backtracking greedy regexp 2", 1, findMatchesCount(s89, " { '_T*; '_T2*; '_T3+; } "));
     assertEquals("backtracking greedy regexp 3", 0, findMatchesCount(s89, " { '_T+; '_T2+; '_T3+; '_T4+; } "));
-    assertEquals("counted regexp (with back tracking)", 1, findMatchesCount(s89, " { '_T{1,3}; '_T2{2}; } "));
+    assertEquals("counted regexp (with back tracking)", 1, findMatchesCount(s89, " { '_T{1,3}; '_T2{2,}; } "));
     assertEquals("nongreedy regexp (counted, with back tracking)", 1,
-                 findMatchesCount(s89, " { '_T{1}?; '_T2*?; '_T3+?; } "));
+                 findMatchesCount(s89, " { '_T{1,}?; '_T2*?; '_T3+?; } "));
     assertEquals("nongreedy regexp (counted, with back tracking) 2", 0,
-                 findMatchesCount(s89, " { '_T{1}?; '_T2{1,2}?; '_T3+?; '_T4+?; } "));
+                 findMatchesCount(s89, " { '_T{1,}?; '_T2{1,2}?; '_T3+?; '_T4+?; } "));
 
     String s1000 = "class A {\n" +
                    "      void _() {}\n" +
@@ -1356,7 +1356,7 @@ public class StructuralSearchTest extends StructuralSearchTestCase {
     try {
       findMatchesCount(s109, "'_:*[regex( I ) && ref2('T)] '_;");
       fail("implements navigation match in definition 2 with nested conditions - incorrect cond");
-    } catch(UnsupportedPatternException ignored) {}
+    } catch (MalformedPatternException ignored) {}
 
     final String s111 = "interface E {} class A implements E {} class B extends A { int f = 0; } class C extends B {} class D { void e() { C c; B b; A a;} }";
     final String s112 = "'_";
@@ -2457,6 +2457,9 @@ public class StructuralSearchTest extends StructuralSearchTestCase {
 
     options.fillSearchCriteria("'_a?.'_b?");
     assertEquals("MINIMUM ZERO not applicable for b", checkApplicableConstraints(options));
+
+    options.fillSearchCriteria("case '_a* :");
+    assertEquals("MINIMUM ZERO not applicable for a", checkApplicableConstraints(options));
   }
 
   public void testFindInnerClass() {
@@ -2600,6 +2603,14 @@ public class StructuralSearchTest extends StructuralSearchTestCase {
                  "     throw new RuntimeException(e);\n" +
                  "  } finally {}",
                  matches2.get(0).getMatchImage());
+
+    String pattern9 = "try { '_st1*; } catch ('_E '_e{0,0}) { '_St2*; }";
+    final List<MatchResult> matches3 = findMatches(source, pattern9, StdFileTypes.JAVA);
+    assertEquals(1, matches3.size());
+    assertEquals("Should find try without catch blocks",
+                 "try (InputStream in = new FileInputStream(\"tmp\")) {\n" +
+                 "  }",
+                 matches3.get(0).getMatchImage());
   }
 
   public void testFindAsserts() {
@@ -2689,20 +2700,32 @@ public class StructuralSearchTest extends StructuralSearchTestCase {
   public void testFindParameterizedMethodCalls() {
     String source = "interface Foo {" +
                     "  <T> T bar();" +
-                    "  <S, T> void bar2(S, T);" +
+                    "  <S, T> void bar2(S s, T t);" +
                     "}" +
                     "class X {" +
+                    "  <T> X(T t) {}" +
+                    "  X() {}" +
                     "  void x(Foo foo) {" +
                     "    foo.<String>bar();" +
                     "    foo.<Integer>bar();" +
                     "    String s = foo.bar();" +
                     "    foo.bar2(1, 2);" +
                     "  }" +
+                    "  void y(String s) {" +
+                    "    new <String>X();" +
+                    "    new <String>X();" +
+                    "    new X();" +
+                    "    new X(s);" +
+                    "  }" +
                     "}";
     assertEquals("find parameterized method calls 1", 1, findMatchesCount(source, "foo.<Integer>bar()"));
     assertEquals("find parameterized method calls 2", 2, findMatchesCount(source, "foo.<String>bar()"));
     assertEquals("find parameterized method calls 3", 3, findMatchesCount(source, "'_a.<'_b>'_c('_d*)"));
     assertEquals("find parameterized method calls 4", 4, findMatchesCount(source, "'_a.<'_b+>'_c('_d*)"));
+
+    assertEquals("find parameterized constructor calls 1", 2, findMatchesCount(source, "new <String>X()"));
+    assertEquals("find parameterized constructor calls 2", 1, findMatchesCount(source, "new <String>X(s)"));
+    assertEquals("find constructor calls 3", 3, findMatchesCount(source, "new X()"));
   }
 
   public void testFindDiamondTypes() {
@@ -3000,5 +3023,67 @@ public class StructuralSearchTest extends StructuralSearchTestCase {
                      "}";
     assertEquals("find method throwing only RuntimeException", 2, findMatchesCount(s, "'_T '_m() throws '_RE:RuntimeException , '_Other{0,0};"));
     assertEquals("find method throwing RuntimeException and others", 1, findMatchesCount(s, "'_T '_m() throws '_RE:RuntimeException , '_Other{1,100};"));
+  }
+
+  public void testMatchWildcards() {
+    final String in = "import java.util.List;" +
+                      "class X {" +
+                      "  List a;" +
+                      "  List<String> b;" +
+                      "  List<?> c;" +
+                      "  List<? extends Object> d;" +
+                      "  List<? extends Number> e;" +
+                      "  List<? extends Number> f;" +
+                      "  List<? extends Integer> g;" +
+                      "}";
+    assertEquals("List<?> should match List<? extends Object>", 2, findMatchesCount(in, "'_A<?>"));
+    assertEquals("List<? extends Object> should match List<?>", 2, findMatchesCount(in, "'_A<? extends Object>"));
+    assertEquals("should match wildcards with extends bound", 4, findMatchesCount(in, "'_A<? extends '_B>"));
+    assertEquals("should match wildcards with extends bound extending Number", 3, findMatchesCount(in, "'_A<? extends '_B:*Number >"));
+    assertEquals("should match wildcards with or without extends bound", 5, findMatchesCount(in, "'_A<? extends '_B?>"));
+    assertEquals("should match any generic type", 6, findMatchesCount(in, "'_A<'_B>"));
+    assertEquals("should match generic and raw types", 7, findMatchesCount(in, "List '_x;"));
+    assertEquals("should match generic and raw types 2", 7, findMatchesCount(in, "'_A:List <'_B? >"));
+  }
+
+  public void testSwitchStatements() {
+    final String in = "class X {" +
+                      "  void x(int i) {" +
+                      "    switch (i) {" +
+                      "      case 10:" +
+                      "        System.out.println(10);" +
+                      "    }" +
+                      "    switch (i) {" +
+                      "      case 1:" +
+                      "      default:" +
+                      "    }" +
+                      "    switch (i) {" +
+                      "      case 1:" +
+                      "      default:" +
+                      "    }" +
+                      "    switch (i) {" +
+                      "      case 1:" +
+                      "      case 2:" +
+                      "      default:" +
+                      "    }" +
+                      "  }" +
+                      "}";
+
+    assertEquals("Should find switch with one case", 1, findMatchesCount(in, "switch ('_a) {" +
+                                                                             "  case '_c :" +
+                                                                             "    '_st*;" +
+                                                                             "}"));
+    assertEquals("should find switch with 2 cases", 2, findMatchesCount(in, "switch ('_a) {" +
+                                                                            "  case '_c{2,2} :" +
+                                                                            "    '_st*;" +
+                                                                            "}"));
+    assertEquals("should find swith with one case and default", 2, findMatchesCount(in, "switch ('_a) {" +
+                                                                                        "  case '_c :" +
+                                                                                        "    '_st1*;" +
+                                                                                        "  default:" +
+                                                                                        "    '_st2*;" +
+                                                                                        "  }"));
+    assertEquals("should find defaults", 3, findMatchesCount(in, "default:"));
+    assertEquals("should find cases", 8, findMatchesCount(in, "case '_a :"));
   }
 }

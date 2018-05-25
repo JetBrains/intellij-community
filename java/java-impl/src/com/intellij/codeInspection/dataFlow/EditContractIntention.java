@@ -206,7 +206,11 @@ public class EditContractIntention extends BaseIntentionAction implements LowPri
 
   @Nullable
   private static String getContractErrorMessage(String contract, PsiMethod method) {
-    return StringUtil.isEmpty(contract) ? null : ContractInspection.checkContract(method, contract);
+    if (StringUtil.isEmpty(contract)) {
+      return null;
+    }
+    StandardMethodContract.ParseException error = ContractInspection.checkContract(method, contract);
+    return error != null ? error.getMessage() : null;
   }
 
   @Override

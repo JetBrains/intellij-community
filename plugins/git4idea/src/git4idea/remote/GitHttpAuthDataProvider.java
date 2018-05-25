@@ -32,15 +32,26 @@ public interface GitHttpAuthDataProvider {
   ExtensionPointName<GitHttpAuthDataProvider> EP_NAME = ExtensionPointName.create("Git4Idea.GitHttpAuthDataProvider");
 
   @Nullable
+  default AuthData getAuthData(@NotNull Project project, @NotNull String url, @NotNull String login) {
+    return getAuthData(project, url);
+  }
+
+  @Nullable
   default AuthData getAuthData(@NotNull Project project, @NotNull String url) {
     return getAuthData(url);
   }
 
+  @Deprecated
   @Nullable
   default AuthData getAuthData(@NotNull String url) {
     return null;
   }
 
-  void forgetPassword(@NotNull String url);
+  default void forgetPassword(@NotNull String url, @NotNull AuthData authData) {
+    //noinspection deprecation
+    forgetPassword(url);
+  }
 
+  @Deprecated
+  default void forgetPassword(@NotNull String url) {}
 }

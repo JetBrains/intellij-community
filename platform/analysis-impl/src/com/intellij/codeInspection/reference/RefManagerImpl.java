@@ -624,14 +624,14 @@ public class RefManagerImpl extends RefManager {
   }
 
   @Nullable
-  <T extends RefElement> T getFromRefTableOrCache(final PsiElement element, @NotNull NullableFactory<T> factory) {
+  <T extends RefElement> T getFromRefTableOrCache(final PsiElement element, @NotNull NullableFactory<? extends T> factory) {
     return getFromRefTableOrCache(element, factory, null); 
   }
   
   @Nullable
   private <T extends RefElement> T getFromRefTableOrCache(@NotNull PsiElement element,
-                                                          @NotNull NullableFactory<T> factory,
-                                                          @Nullable Consumer<T> whenCached) {
+                                                          @NotNull NullableFactory<? extends T> factory,
+                                                          @Nullable Consumer<? super T> whenCached) {
 
     PsiAnchor psiAnchor = createAnchor(element);
     //noinspection unchecked

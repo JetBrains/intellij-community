@@ -30,15 +30,18 @@ public class TestFailedLineInspection extends LocalInspectionTool {
       @Override
       public void visitMethodCallExpression(PsiMethodCallExpression call) {
 
+        PsiElement nameElement = call.getMethodExpression().getReferenceNameElement();
+        if (nameElement == null) return;
+
         TestStateStorage.Record state = TestFailedLineManager.getInstance(call.getProject()).getFailedLineState(call);
         if (state == null) return;
 
         LocalQuickFix[] fixes = {new DebugFailedTestFix(call, state.topStacktraceLine),
           new RunActionFix(call, DefaultRunExecutor.EXECUTOR_ID)};
         ProblemDescriptor descriptor = InspectionManager.getInstance(call.getProject())
-                                                        .createProblemDescriptor(call, state.errorMessage, isOnTheFly, fixes,
-                                                                                 ProblemHighlightType.GENERIC_ERROR);
-        descriptor.setTextAttributes(CodeInsightColors.RUNTIME_PROBLEM);
+                                                        .createProblemDescriptor(nameElement, state.errorMessage, isOnTheFly, fixes,
+                                                                                 ProblemHighlightType.GENERIC_ERROR_OR_WARNING);
+        descriptor.setTextAttributes(CodeInsightColors.RUNTIME_ERROR);
         holder.registerProblem(descriptor);
       }
     };

@@ -16,6 +16,7 @@
 package com.siyeh.ig.errorhandling;
 
 import com.intellij.psi.*;
+import com.intellij.psi.util.InheritanceUtil;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
@@ -47,10 +48,13 @@ public class InstanceofCatchParameterInspection extends BaseInspection {
     extends BaseInspectionVisitor {
 
     @Override
-    public void visitInstanceOfExpression(
-      @NotNull PsiInstanceOfExpression exp) {
+    public void visitInstanceOfExpression(@NotNull PsiInstanceOfExpression exp) {
       super.visitInstanceOfExpression(exp);
       if (!ControlFlowUtils.isInCatchBlock(exp)) {
+        return;
+      }
+      PsiTypeElement typeElement = exp.getCheckType();
+      if (typeElement == null || !InheritanceUtil.isInheritor(typeElement.getType(), CommonClassNames.JAVA_LANG_THROWABLE)) {
         return;
       }
       final PsiExpression operand = exp.getOperand();

@@ -97,7 +97,7 @@ public class FieldCanBeLocalInspection extends FieldCanBeLocalInspectionBase {
     private static boolean findExistentBlock(Map<PsiCodeBlock, Collection<PsiReference>> refs,
                                              PsiReference psiReference,
                                              PsiCodeBlock block,
-                                             Collection<PsiReference> references) {
+                                             Collection<? super PsiReference> references) {
       for (Iterator<PsiCodeBlock> iterator = refs.keySet().iterator(); iterator.hasNext(); ) {
         PsiCodeBlock codeBlock = iterator.next();
         if (PsiTreeUtil.isAncestor(codeBlock, block, false)) {
@@ -121,8 +121,6 @@ public class FieldCanBeLocalInspection extends FieldCanBeLocalInspectionBase {
 
     @Override
     protected void beforeDelete(@NotNull Project project, @NotNull PsiField variable, @NotNull PsiElement newDeclaration) {
-      final PsiDocComment docComment = variable.getDocComment();
-      if (docComment != null) moveDocCommentToDeclaration(project, docComment, newDeclaration);
     }
 
     @NotNull

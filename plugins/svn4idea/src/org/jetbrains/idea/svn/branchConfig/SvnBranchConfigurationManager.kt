@@ -31,10 +31,10 @@ class SvnBranchConfigurationManager(private val myProject: Project,
                                     private val myStorage: SvnLoadedBranchesStorage) : PersistentStateComponent<SvnBranchConfigurationManager.ConfigurationBean> {
   private val myVcsManager = vcsManager as ProjectLevelVcsManagerImpl
   private val myBranchesLoader = ProgressManagerQueue(myProject, "Subversion Branches Preloader")
-  val svnBranchConfigManager = NewRootBunch(myProject, myBranchesLoader)
+  val svnBranchConfigManager: NewRootBunch = NewRootBunch(myProject, myBranchesLoader)
   private var myIsInitialized = false
 
-  val supportValue get() = myConfigurationBean.myVersion
+  val supportValue: Long? get() = myConfigurationBean.myVersion
   private var myConfigurationBean = ConfigurationBean()
 
   init {
@@ -59,7 +59,7 @@ class SvnBranchConfigurationManager(private val myProject: Project,
     var myVersion: Long? = null
   }
 
-  fun get(vcsRoot: VirtualFile) = svnBranchConfigManager.getConfig(vcsRoot)
+  fun get(vcsRoot: VirtualFile): SvnBranchConfigurationNew = svnBranchConfigManager.getConfig(vcsRoot)
 
   fun setConfiguration(vcsRoot: VirtualFile, configuration: SvnBranchConfigurationNew) {
     svnBranchConfigManager.updateForRoot(vcsRoot, InfoStorage(configuration, InfoReliability.setByUser), true)
@@ -69,7 +69,7 @@ class SvnBranchConfigurationManager(private val myProject: Project,
       myProject, vcsRoot)
   }
 
-  override fun getState() = ConfigurationBean().apply {
+  override fun getState(): ConfigurationBean = ConfigurationBean().apply {
     myVersion = myConfigurationBean.myVersion
 
     for (root in svnBranchConfigManager.mapCopy.keys) {
@@ -182,7 +182,7 @@ class SvnBranchConfigurationManager(private val myProject: Project,
 
   companion object {
     @JvmStatic
-    fun getInstance(project: Project) =
+    fun getInstance(project: Project): SvnBranchConfigurationManager =
       ServiceManager.getService(project, SvnBranchConfigurationManager::class.java)!!.apply { initialize() }
   }
 }

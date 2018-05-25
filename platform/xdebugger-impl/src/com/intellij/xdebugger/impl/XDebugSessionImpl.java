@@ -941,7 +941,7 @@ public class XDebugSessionImpl implements XDebugSession {
     XDebuggerManagerImpl.NOTIFICATION_GROUP.createNotification("", message, type.toNotificationType(), notificationListener).notify(myProject);
   }
 
-  private class MyBreakpointListener implements XBreakpointListener<XBreakpoint<?>> {
+  private final class MyBreakpointListener implements XBreakpointListener<XBreakpoint<?>> {
     @Override
     public void breakpointAdded(@NotNull final XBreakpoint<?> breakpoint) {
       if (!myBreakpointsDisabled) {
@@ -954,12 +954,16 @@ public class XDebugSessionImpl implements XDebugSession {
       if (getActiveNonLineBreakpoint() == breakpoint) {
         myActiveNonLineBreakpoint = null;
       }
+      processRemove(breakpoint);
+    }
+
+    void processRemove(@NotNull final XBreakpoint<?> breakpoint) {
       processAllHandlers(breakpoint, false);
     }
 
     @Override
     public void breakpointChanged(@NotNull final XBreakpoint<?> breakpoint) {
-      breakpointRemoved(breakpoint);
+      processRemove(breakpoint);
       breakpointAdded(breakpoint);
     }
   }

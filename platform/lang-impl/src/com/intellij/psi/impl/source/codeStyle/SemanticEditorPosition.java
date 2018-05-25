@@ -92,6 +92,22 @@ public class SemanticEditorPosition {
     return false;
   }
 
+  /**
+   * Checks if there are line breaks strictly after the given offset till the end of the current element.
+   *
+   * @param offset The offset to search line breaks after.
+   * @return True if there are line breaks after the given offset.
+   */
+  public boolean hasLineBreaksAfter(int offset) {
+    if (!myIterator.atEnd() && offset >= 0) {
+      int offsetAfter = offset + 1;
+      if (offsetAfter < myIterator.getEnd()) {
+        return CharArrayUtil.containLineBreaks(myChars, offsetAfter, myIterator.getEnd());
+      }
+    }
+    return false;
+  }
+
   public boolean isAtMultiline(SyntaxElement... elements) {
     return isAtAnyOf(elements) && CharArrayUtil.containLineBreaks(myChars, myIterator.getStart(), myIterator.getEnd());
   }

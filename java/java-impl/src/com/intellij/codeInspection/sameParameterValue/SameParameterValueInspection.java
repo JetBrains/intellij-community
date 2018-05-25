@@ -107,7 +107,8 @@ public class SameParameterValueInspection extends SameParameterValueInspectionBa
 
       final PsiExpression defToInline;
       try {
-        defToInline = JavaPsiFacade.getInstance(project).getElementFactory().createExpressionFromText(myValue, parameter);
+        defToInline = JavaPsiFacade.getInstance(project).getElementFactory()
+                                   .createExpressionFromText(myValue, parameter);
       }
       catch (IncorrectOperationException e) {
         return;

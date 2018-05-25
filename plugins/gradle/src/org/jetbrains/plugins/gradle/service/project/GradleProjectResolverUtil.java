@@ -280,20 +280,16 @@ public class GradleProjectResolverUtil {
   @Nullable
   public static String getGradlePath(final Module module) {
     if (!ExternalSystemApiUtil.isExternalSystemAwareModule(GradleConstants.SYSTEM_ID, module)) return null;
-    final String projectId = ExternalSystemApiUtil.getExternalProjectId(module);
-    if (projectId == null) return null;
+    final String externalProjectId = ExternalSystemApiUtil.getExternalProjectId(module);
+    if (externalProjectId == null) return null;
+
     final String moduleType = ExternalSystemApiUtil.getExternalModuleType(module);
-    final String gradlePath;
-    if (GradleConstants.GRADLE_SOURCE_SET_MODULE_TYPE_KEY.equals(moduleType)) {
-      int lastColonIndex = projectId.lastIndexOf(':');
-      assert lastColonIndex != -1;
-      int firstColonIndex = projectId.indexOf(':');
-      gradlePath = firstColonIndex == lastColonIndex ? ":" : projectId.substring(firstColonIndex, lastColonIndex);
-    }
-    else {
-      gradlePath = projectId.charAt(0) == ':' ? projectId : ":";
-    }
-    return gradlePath;
+    boolean trimSourceSet = GradleConstants.GRADLE_SOURCE_SET_MODULE_TYPE_KEY.equals(moduleType);
+    final List<String> pathParts = StringUtil.split(externalProjectId, ":");
+    if (!externalProjectId.startsWith(":") && !pathParts.isEmpty()) pathParts.remove(0);
+    if (trimSourceSet && !pathParts.isEmpty()) pathParts.remove(pathParts.size() - 1);
+    String join = StringUtil.join(pathParts, ":");
+    return join.isEmpty() ? ":" : ":" + join;
   }
 
   @NotNull

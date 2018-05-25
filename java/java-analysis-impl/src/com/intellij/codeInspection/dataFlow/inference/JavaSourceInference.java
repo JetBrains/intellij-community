@@ -197,7 +197,7 @@ public class JavaSourceInference {
   }
 
   private static boolean isReturnNullitySpecifiedExplicitly(@NotNull PsiMethod method, StandardMethodContract contract) {
-    if (!contract.getReturnValue().isNotNull() && !contract.getReturnValue().isNull()) {
+    if (!contract.getReturnValue().equals(ContractReturnValue.returnNotNull()) && !contract.getReturnValue().isNull()) {
       return false; // spare expensive nullity check
     }
     return NullableNotNullManager.getInstance(method.getProject()).isNotNull(method, false);

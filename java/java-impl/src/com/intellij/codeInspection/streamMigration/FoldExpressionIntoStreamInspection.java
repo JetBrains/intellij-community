@@ -220,7 +220,7 @@ public class FoldExpressionIntoStreamInspection extends AbstractBaseJavaLocalIns
 
     private static void cleanup(PsiElement result) {
       JavaCodeStyleManager codeStyleManager = JavaCodeStyleManager.getInstance(result.getProject());
-      result = SimplifyStreamApiCallChainsInspection.simplifyStreamExpressions(result);
+      result = SimplifyStreamApiCallChainsInspection.simplifyStreamExpressions(result, false);
       LambdaCanBeMethodReferenceInspection.replaceAllLambdasWithMethodReferences(result);
       result = codeStyleManager.shortenClassReferences(result);
       PsiDiamondTypeUtil.removeRedundantTypeArguments(result);

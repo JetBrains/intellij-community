@@ -670,4 +670,14 @@ class Foo {
 '''
     assert myFixture.filterAvailableIntentions("Import class").empty
   }
+
+  void "test inaccessible class from the project"() {
+    myFixture.addClass('package foo; class Foo {}')
+    myFixture.configureByText 'a.java', '''
+class Bar {
+  F<caret>oo abc;
+}  
+'''
+    assert !myFixture.filterAvailableIntentions("Import class").empty
+  }
 }

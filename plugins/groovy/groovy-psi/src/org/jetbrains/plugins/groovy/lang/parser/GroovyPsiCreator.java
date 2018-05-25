@@ -219,6 +219,7 @@ public class GroovyPsiCreator {
     if (elem == GroovyElementTypes.PATH_PROPERTY_REFERENCE) return new GrPropertySelectionImpl(node);
     if (elem == GroovyElementTypes.PATH_METHOD_CALL) return new GrMethodCallExpressionImpl(node);
     if (elem == GroovyElementTypes.PATH_INDEX_PROPERTY) return new GrIndexPropertyImpl(node);
+    if (elem == org.jetbrains.plugins.groovy.lang.psi.GroovyElementTypes.APPLICATION_INDEX) return new GrIndexPropertyImpl(node);
 
     // Arguments
     if (elem == GroovyElementTypes.ARGUMENTS) return new GrArgumentListImpl(node);

@@ -23,7 +23,7 @@ abstract class CompletionLoggerProvider {
     
     abstract fun newCompletionLogger(): CompletionLogger
     
-    open fun dispose() = Unit
+    open fun dispose(): Unit = Unit
     
     companion object {
         fun getInstance(): CompletionLoggerProvider = ServiceManager.getService(CompletionLoggerProvider::class.java)

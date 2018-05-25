@@ -180,7 +180,7 @@ public class UsageInfo2UsageAdapter implements UsageInModule,
   }
 
   // must iterate in start offset order
-  public boolean processRangeMarkers(@NotNull Processor<Segment> processor) {
+  public boolean processRangeMarkers(@NotNull Processor<? super Segment> processor) {
     for (UsageInfo usageInfo : getMergedInfos()) {
       Segment segment = usageInfo.getSegment();
       if (segment != null && !processor.process(segment)) {

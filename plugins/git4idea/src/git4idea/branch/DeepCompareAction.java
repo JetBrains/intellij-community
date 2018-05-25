@@ -29,6 +29,7 @@ import com.intellij.util.Consumer;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.vcs.log.*;
 import com.intellij.vcs.log.data.VcsLogBranchFilterImpl;
+import com.intellij.vcs.log.ui.AbstractVcsLogUi;
 import com.intellij.vcs.log.ui.filter.BranchPopupBuilder;
 import com.intellij.vcs.log.util.VcsLogUtil;
 import git4idea.repo.GitRepositoryManager;
@@ -65,7 +66,7 @@ public class DeepCompareAction extends ToggleAction implements DumbAware {
 
       String singleBranchName = VcsLogUtil.getSingleFilteredBranch(ui.getFilterUi().getFilters(), ui.getDataPack().getRefs());
       if (singleBranchName == null) {
-        selectBranchAndPerformAction(ui.getDataPack(), e, selectedBranch -> {
+        selectBranchAndPerformAction(ui, e, selectedBranch -> {
           ui.getFilterUi().setFilter(VcsLogBranchFilterImpl.fromBranch(selectedBranch));
           dc.highlightInBackground(selectedBranch, dataProvider);
         }, getGitRoots(project, ui));
@@ -78,10 +79,11 @@ public class DeepCompareAction extends ToggleAction implements DumbAware {
     }
   }
 
-  private static void selectBranchAndPerformAction(@NotNull VcsLogDataPack dataPack,
+  private static void selectBranchAndPerformAction(@NotNull VcsLogUi ui,
                                                    @NotNull AnActionEvent event,
                                                    @NotNull Consumer<String> consumer,
                                                    @NotNull Collection<VirtualFile> visibleRoots) {
+    VcsLogDataPack dataPack = ui.getDataPack();
     ActionGroup actionGroup = new BranchPopupBuilder(dataPack, visibleRoots, null) {
       @NotNull
       @Override
@@ -99,6 +101,9 @@ public class DeepCompareAction extends ToggleAction implements DumbAware {
     InputEvent inputEvent = event.getInputEvent();
     if (inputEvent instanceof MouseEvent) {
       popup.show(new RelativePoint((MouseEvent)inputEvent));
+    }
+    else if (ui instanceof AbstractVcsLogUi) {
+      popup.showInCenterOf(((AbstractVcsLogUi)ui).getTable());
     }
     else {
       popup.showInBestPositionFor(event.getDataContext());
@@ -119,8 +124,8 @@ public class DeepCompareAction extends ToggleAction implements DumbAware {
       if (allRoots.isEmpty()) {
         allRoots = ContainerUtil.map2Set(ProjectLevelVcsManager.getInstance(project).getAllVcsRoots(), VcsRoot::getPath);
       }
-      e.getPresentation().setEnabled(hasGitRoots(project, allRoots));
-      e.getPresentation().setVisible(hasGitRoots(project, visibleRoots));
+      e.getPresentation().setEnabled(hasGitRoots(project, visibleRoots));
+      e.getPresentation().setVisible(hasGitRoots(project, allRoots));
     }
   }
 

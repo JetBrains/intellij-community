@@ -325,7 +325,7 @@ public class AnalysisScope {
   }
 
   @NotNull
-  private ContentIterator createScopeIterator(@NotNull final Processor<VirtualFile> processor, 
+  private ContentIterator createScopeIterator(@NotNull final Processor<? super VirtualFile> processor,
                                               @Nullable final SearchScope searchScope) {
     return fileOrDir -> {
       final boolean isInScope = ReadAction.compute(() -> {
@@ -403,7 +403,7 @@ public class AnalysisScope {
     }
   }
 
-  protected boolean accept(@NotNull final PsiDirectory dir, @NotNull final Processor<VirtualFile> processor) {
+  protected boolean accept(@NotNull final PsiDirectory dir, @NotNull final Processor<? super VirtualFile> processor) {
     final Project project = dir.getProject();
     //we should analyze generated source files only if the action is explicitly invoked for a directory located under generated roots
     final boolean processGeneratedFiles = GeneratedSourcesFilter.isGeneratedSourceByAnyFilter(dir.getVirtualFile(), project);
@@ -589,7 +589,7 @@ public class AnalysisScope {
   }
 
   @NotNull
-  static AnalysisScope collectScopes(@NotNull final Project defaultProject, @NotNull final HashSet<Module> modules) {
+  static AnalysisScope collectScopes(@NotNull final Project defaultProject, @NotNull final Set<Module> modules) {
     if (modules.isEmpty()) {
       return new AnalysisScope(defaultProject);
     }

@@ -49,7 +49,7 @@ public class PackageUtil {
     return result.toArray(PsiPackage.EMPTY_ARRAY);
   }
 
-  public static void addPackageAsChild(@NotNull Collection<AbstractTreeNode> children,
+  public static void addPackageAsChild(@NotNull Collection<? super AbstractTreeNode> children,
                                        @NotNull PsiPackage aPackage,
                                        @Nullable Module module,
                                        @NotNull ViewSettings settings,
@@ -169,6 +169,18 @@ public class PackageUtil {
              aPackage == null ? defaultShortName : aPackage.getQualifiedName();
     }
     else if (parentPackageInTree != null || aPackage != null && aPackage.getParentPackage() != null) {
+      if (parentPackageInTree != null && aPackage != null) {
+        String prefix = parentPackageInTree.getQualifiedName();
+        String string = aPackage.getQualifiedName();
+        int length = prefix.length();
+        if (length == 0) {
+          if (!string.isEmpty()) return string;
+        }
+        else if (string.startsWith(prefix)) {
+          if (length < string.length() && '.' == string.charAt(length)) length++;
+          if (length < string.length()) return string.substring(length);
+        }
+      }
       PsiPackage parentPackage = aPackage.getParentPackage();
       final StringBuilder buf = new StringBuilder();
       buf.append(aPackage.getName());

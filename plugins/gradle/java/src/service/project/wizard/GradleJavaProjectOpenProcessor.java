@@ -153,11 +153,6 @@ public class GradleJavaProjectOpenProcessor extends ProjectOpenProcessorBase<Gra
   }
 
   @Override
-  public boolean lookForProjectsInDirectory() {
-    return false;
-  }
-
-  @Override
   public boolean isStrongProjectInfoHolder() {
     return ApplicationManager.getApplication().isHeadlessEnvironment();
   }

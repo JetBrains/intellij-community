@@ -13,13 +13,13 @@ private const val FILE_URL_PREFIX = "file:/"
 class Url private constructor(innerUri: URI) {
   private val uri = fixDefaultPort(innerUri)
 
-  val protocol = uri.scheme.orEmpty()
-  val host = uri.host.orEmpty()
-  val port = uri.port
+  val protocol: String = uri.scheme.orEmpty()
+  val host: String = uri.host.orEmpty()
+  val port: Int = uri.port
   val userInfo: String? = uri.userInfo
-  val path = uri.path.orEmpty().removeSuffix("/")
+  val path: String = uri.path.orEmpty().removeSuffix("/")
 
-  val tail get() = path.substringAfterLast('/')
+  val tail: String get() = path.substringAfterLast('/')
 
   fun commonAncestorWith(url: Url): Url? {
     if (protocol != url.protocol || host != url.host || port != url.port || userInfo != url.userInfo) return null
@@ -34,11 +34,11 @@ class Url private constructor(innerUri: URI) {
   }
 
   @Throws(SvnBindException::class)
-  fun appendPath(path: String, encoded: Boolean = true) =
+  fun appendPath(path: String, encoded: Boolean = true): Url =
     if (path.isEmpty() || path == "/") this else wrap { uri.resolve(URI(prepareUri(path.removePrefix("/"), encoded))) }
 
   @Throws(SvnBindException::class)
-  fun setUserInfo(userInfo: String?) = wrap { URI(uri.scheme, userInfo, uri.host, uri.port, uri.path, uri.query, uri.fragment) }
+  fun setUserInfo(userInfo: String?): Url = wrap { URI(uri.scheme, userInfo, uri.host, uri.port, uri.path, uri.query, uri.fragment) }
 
   override fun equals(other: Any?): Boolean {
     if (this === other) return true
@@ -47,10 +47,10 @@ class Url private constructor(innerUri: URI) {
     return uri == other.uri
   }
 
-  override fun hashCode() = uri.hashCode()
+  override fun hashCode(): Int = uri.hashCode()
 
-  override fun toString() = fixFileUrlToString(uri.toASCIIString().removeSuffix("/"))
-  fun toDecodedString() = URLUtil.unescapePercentSequences(toString())
+  override fun toString(): String = fixFileUrlToString(uri.toASCIIString().removeSuffix("/"))
+  fun toDecodedString(): String = URLUtil.unescapePercentSequences(toString())
 
   private fun fixFileUrlToString(url: String) = if (url.startsWith(FILE_URL_PREFIX) && !url.startsWith(
       "$FILE_URL_PREFIX/")) "$FILE_URL_PREFIX//${url.substring(FILE_URL_PREFIX.length)}"
@@ -58,9 +58,9 @@ class Url private constructor(innerUri: URI) {
 
   companion object {
     @JvmField
-    val EMPTY = Url(URI(""))
+    val EMPTY: Url = Url(URI(""))
     @JvmField
-    val DEFAULT_PORTS = mapOf("http" to 80, "https" to 443, "svn" to 3690, "svn+ssh" to 22)
+    val DEFAULT_PORTS: Map<String, Int> = mapOf("http" to 80, "https" to 443, "svn" to 3690, "svn+ssh" to 22)
 
     @JvmStatic
     @Throws(SvnBindException::class)
@@ -75,10 +75,10 @@ class Url private constructor(innerUri: URI) {
     }
 
     @JvmStatic
-    fun tail(url: String) = url.removeSuffix("/").substringAfterLast('/')
+    fun tail(url: String): String = url.removeSuffix("/").substringAfterLast('/')
 
     @JvmStatic
-    fun removeTail(url: String) = url.removeSuffix("/").substringBeforeLast('/', "")
+    fun removeTail(url: String): String = url.removeSuffix("/").substringBeforeLast('/', "")
 
     @JvmStatic
     fun append(url1: String, url2: String): String {
@@ -98,11 +98,11 @@ class Url private constructor(innerUri: URI) {
     }
 
     @JvmStatic
-    fun isAncestor(parent: String, child: String) = parent.isEmpty() || child.startsWith(
+    fun isAncestor(parent: String, child: String): Boolean = parent.isEmpty() || child.startsWith(
       parent) && (parent.last() == '/' || child.getOrElse(parent.length, { '/' }) == '/')
 
     @JvmStatic
-    fun getCommonAncestor(url1: String, url2: String) = (url1.splitToSequence('/') zip url2.splitToSequence('/'))
+    fun getCommonAncestor(url1: String, url2: String): String = (url1.splitToSequence('/') zip url2.splitToSequence('/'))
       .takeWhile { it.first == it.second }
       .joinToString("/") { it.first }
 

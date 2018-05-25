@@ -519,8 +519,8 @@ public class JBUI {
 
   @NotNull
   public static JBInsets insets(String propName, JBInsets defaultValue) {
-    JBInsets i = (JBInsets)UIManager.getInsets(propName);
-    return i != null ? i : defaultValue;
+    Insets i = UIManager.getInsets(propName);
+    return i != null ? JBInsets.create(i) : defaultValue;
   }
 
   @NotNull
@@ -653,6 +653,11 @@ public class JBUI {
     @NotNull
     public static JBFont toolbarFont() {
       return SystemInfo.isMac ? smallFont() : label();
+    }
+
+    @NotNull
+    public static JBFont toolbarSmallComboBoxFont() {
+      return UIUtil.isUnderGTKLookAndFeel() ? label() : label(11);
     }
   }
 
@@ -848,6 +853,21 @@ public class JBUI {
       return 1f; // unreachable
     }
 
+    /**
+     * Applies the provided {@code ScaleType}'s to the provided {@code value} and returns the result.
+     */
+    public double apply(double value, @NotNull ScaleType... types) {
+      for (ScaleType t : types) value *= getScale(t);
+      return value;
+    }
+
+    /**
+     * Applies {@code PIX_SCALE} to the provided {@code value} and returns the result.
+     */
+    public double apply(double value) {
+      return value * getScale(PIX_SCALE);
+    }
+
     protected boolean onUpdated(boolean updated) {
       if (updated) {
         update(pixScale, derivePixScale());
@@ -906,6 +926,12 @@ public class JBUI {
       BaseScaleContext that = (BaseScaleContext)obj;
       return that.usrScale.value == usrScale.value &&
              that.objScale.value == objScale.value;
+    }
+
+    @Override
+    public int hashCode() {
+      return Double.valueOf(usrScale.value).hashCode() * 10 +
+             Double.valueOf(objScale.value).hashCode();
     }
 
     /**
@@ -1146,6 +1172,11 @@ public class JBUI {
     }
 
     @Override
+    public int hashCode() {
+      return Double.valueOf(sysScale.value).hashCode() * 100 + super.hashCode();
+    }
+
+    @Override
     public void dispose() {
       super.dispose();
       if (compRef != null) {
@@ -1174,12 +1205,12 @@ public class JBUI {
    * @see ScaleContextSupport
    * @author tav
    */
-  public interface ScaleContextAware<T extends BaseScaleContext> {
+  public interface ScaleContextAware {
     /**
      * @return the scale context
      */
     @NotNull
-    T getScaleContext();
+    BaseScaleContext getScaleContext();
 
     /**
      * Updates the current context with the state of the provided context.
@@ -1189,7 +1220,7 @@ public class JBUI {
      * @param ctx the new scale context
      * @return whether any of the scale factors has been updated
      */
-    boolean updateScaleContext(@Nullable T ctx);
+    boolean updateScaleContext(@Nullable BaseScaleContext ctx);
 
     /**
      * @return the scale of the provided type from the context
@@ -1204,7 +1235,7 @@ public class JBUI {
     boolean updateScale(@NotNull Scale scale);
   }
 
-  public static class ScaleContextSupport<T extends BaseScaleContext> implements ScaleContextAware<T> {
+  public static class ScaleContextSupport<T extends BaseScaleContext> implements ScaleContextAware {
     @NotNull
     private final T myScaleContext;
 
@@ -1219,7 +1250,7 @@ public class JBUI {
     }
 
     @Override
-    public boolean updateScaleContext(@Nullable T ctx) {
+    public boolean updateScaleContext(@Nullable BaseScaleContext ctx) {
       return myScaleContext.update(ctx);
     }
 
@@ -1612,6 +1643,10 @@ public class JBUI {
 
       public static Insets searchFieldInsets() {
         return insets(0, 12, 0, 10);
+      }
+
+      public static int maxListHeght() {
+        return JBUI.scale(600);
       }
     }
   }

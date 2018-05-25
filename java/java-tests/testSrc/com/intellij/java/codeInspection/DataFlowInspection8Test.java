@@ -33,7 +33,7 @@ import org.jetbrains.annotations.NotNull;
  * @author peter
  */
 public class DataFlowInspection8Test extends DataFlowInspectionTestCase {
-  private static final DefaultLightProjectDescriptor PROJECT_DESCRIPTOR = new DefaultLightProjectDescriptor() {
+  static final DefaultLightProjectDescriptor PROJECT_DESCRIPTOR = new DefaultLightProjectDescriptor() {
     @Override
     public Sdk getSdk() {
       return PsiTestUtil.addJdkAnnotations(IdeaTestUtil.getMockJdk18());
@@ -228,4 +228,5 @@ public class DataFlowInspection8Test extends DataFlowInspectionTestCase {
   public void testQueuePeek() { doTest(); }
   public void testForeachCollectionElement() { doTest(); }
   public void testContractReturnValues() { doTest(); }
+  public void testTryFinallySimple() { doTest(); }
 }

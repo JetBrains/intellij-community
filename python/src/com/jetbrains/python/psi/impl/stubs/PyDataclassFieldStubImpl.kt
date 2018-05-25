@@ -68,8 +68,8 @@ class PyDataclassFieldStubImpl private constructor(private val calleeName: Quali
     stream.writeBoolean(initValue)
   }
 
-  override fun getCalleeName() = calleeName
-  override fun hasDefault() = hasDefault
-  override fun hasDefaultFactory() = hasDefaultFactory
-  override fun initValue() = initValue
+  override fun getCalleeName(): QualifiedName = calleeName
+  override fun hasDefault(): Boolean = hasDefault
+  override fun hasDefaultFactory(): Boolean = hasDefaultFactory
+  override fun initValue(): Boolean = initValue
 }

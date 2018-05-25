@@ -7,35 +7,35 @@ import com.intellij.util.xmlb.annotations.OptionTag
 
 class UpdateOptions : BaseState() {
   @get:CollectionBean
-  val pluginHosts by list<String>()
+  val pluginHosts: MutableList<String> by list()
 
   @get:CollectionBean
-  val ignoredBuildNumbers by list<String>()
+  val ignoredBuildNumbers: MutableList<String> by list()
 
   @get:CollectionBean
-  val enabledExternalComponentSources by list<String>()
+  val enabledExternalComponentSources: MutableList<String> by list()
 
   @get:CollectionBean
-  val knownExternalComponentSources by list<String>()
+  val knownExternalComponentSources: MutableList<String> by list()
 
   @get:CollectionBean
-  val externalUpdateChannels by map<String, String>()
+  val externalUpdateChannels: MutableMap<String, String> by map()
 
   @get:OptionTag("CHECK_NEEDED")
-  var isCheckNeeded by property(true)
+  var isCheckNeeded: Boolean by property(true)
 
   @get:OptionTag("LAST_TIME_CHECKED")
-  var lastTimeChecked by property(0L)
+  var lastTimeChecked: Long by property(0L)
 
   @get:OptionTag("LAST_BUILD_CHECKED")
-  var lastBuildChecked by string()
+  var lastBuildChecked: String? by string()
 
   @get:OptionTag("UPDATE_CHANNEL_TYPE")
-  var updateChannelType by string(ChannelStatus.RELEASE.code)
+  var updateChannelType: String? by string(ChannelStatus.RELEASE.code)
 
   @get:OptionTag("SECURE_CONNECTION")
-  var isUseSecureConnection by property(true)
+  var isUseSecureConnection: Boolean by property(true)
 
   @get:OptionTag("THIRD_PARTY_PLUGINS_ALLOWED")
-  var isThirdPartyPluginsAllowed by property(false)
+  var isThirdPartyPluginsAllowed: Boolean by property(false)
 }

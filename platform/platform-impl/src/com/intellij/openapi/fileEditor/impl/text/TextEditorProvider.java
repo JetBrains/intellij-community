@@ -71,9 +71,9 @@ public class TextEditorProvider implements FileEditorProvider, DumbAware {
 
   @Override
   @NotNull
-  public FileEditorState readState(@Nullable Element element, @NotNull Project project, @NotNull VirtualFile file) {
+  public FileEditorState readState(@NotNull Element element, @NotNull Project project, @NotNull VirtualFile file) {
     TextEditorState state = new TextEditorState();
-    if (element == null) {
+    if (JDOMUtil.isEmpty(element)) {
       return state;
     }
 
@@ -218,7 +218,7 @@ public class TextEditorProvider implements FileEditorProvider, DumbAware {
       LogicalPosition caretPosition = caretState.getCaretPosition();
       LogicalPosition selectionStartPosition = caretState.getSelectionStart();
       LogicalPosition selectionEndPosition = caretState.getSelectionEnd();
-      
+
       TextEditorState.CaretState s = new TextEditorState.CaretState();
       s.LINE = getLine(caretPosition);
       s.COLUMN = getColumn(caretPosition);

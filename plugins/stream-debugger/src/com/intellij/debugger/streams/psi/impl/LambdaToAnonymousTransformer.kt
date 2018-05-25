@@ -20,7 +20,7 @@ import java.util.*
  * @author Vitaliy.Bibaev
  */
 object LambdaToAnonymousTransformer : PsiElementTransformer.Base() {
-  val LOG = Logger.getInstance("#" + LambdaToAnonymousTransformer::class.java.name)
+  private val LOG = Logger.getInstance("#" + LambdaToAnonymousTransformer::class.java.name)
 
   override val visitor: PsiElementVisitor
     get() = object : JavaRecursiveElementVisitor() {

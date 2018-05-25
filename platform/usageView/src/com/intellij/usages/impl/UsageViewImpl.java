@@ -25,10 +25,7 @@ import com.intellij.openapi.vfs.ReadonlyStatusHandler;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.pom.Navigatable;
-import com.intellij.psi.PsiDocumentManager;
-import com.intellij.psi.PsiInvalidElementAccessException;
-import com.intellij.psi.SmartPointerManager;
-import com.intellij.psi.SmartPsiElementPointer;
+import com.intellij.psi.*;
 import com.intellij.psi.impl.PsiDocumentManagerBase;
 import com.intellij.ui.*;
 import com.intellij.ui.components.JBLabel;
@@ -77,8 +74,6 @@ import java.util.concurrent.*;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
-import com.intellij.util.containers.Queue;
-
 
 /**
  * @author max
@@ -111,8 +106,8 @@ public class UsageViewImpl implements UsageViewEx {
   private volatile boolean myChangesDetected;
   public static final Comparator<Usage> USAGE_COMPARATOR = (o1, o2) -> {
     if (o1 == o2) return 0;
-    if (o1 == NULL_NODE) return -1;
-    if (o2 == NULL_NODE) return 1;
+    if (o1 == NullUsage.INSTANCE) return -1;
+    if (o2 == NullUsage.INSTANCE) return 1;
     if (o1 instanceof Comparable && o2 instanceof Comparable && o1.getClass() == o2.getClass()) {
       //noinspection unchecked
       final int selfcompared = ((Comparable<Usage>)o1).compareTo(o2);
@@ -307,12 +302,14 @@ public class UsageViewImpl implements UsageViewEx {
       public void excludeNode(@NotNull DefaultMutableTreeNode node) {
         Set<Node> nodes = new HashSet<>();
         collectAllChildNodes(node, nodes);
-        collectParentNodes(node, nodes, true);
+        collectParentNodes(node, true, nodes);
         setExcludeNodes(nodes, true);
       }
 
       // include the parent if its all children (except the "node" itself) excluded flags are "almostAllChildrenExcluded"
-      private void collectParentNodes(DefaultMutableTreeNode node, Set<Node> nodes, boolean almostAllChildrenExcluded) {
+      private void collectParentNodes(@NotNull DefaultMutableTreeNode node,
+                                      boolean almostAllChildrenExcluded,
+                                      @NotNull Set<? super Node> nodes) {
         TreeNode parent = node.getParent();
         if (parent == myRoot || !(parent instanceof GroupNode)) return;
         GroupNode parentNode = (GroupNode)parent;
@@ -320,7 +317,7 @@ public class UsageViewImpl implements UsageViewEx {
           parentNode.getChildren().stream().filter(n -> n.isExcluded() != almostAllChildrenExcluded).collect(Collectors.toList());
         if (otherNodes.size() == 1 && otherNodes.get(0) == node) {
           nodes.add(parentNode);
-          collectParentNodes(parentNode, nodes, almostAllChildrenExcluded);
+          collectParentNodes(parentNode, almostAllChildrenExcluded, nodes);
         }
       }
 
@@ -335,7 +332,7 @@ public class UsageViewImpl implements UsageViewEx {
       public void includeNode(@NotNull DefaultMutableTreeNode node) {
         Set<Node> nodes = new HashSet<>();
         collectAllChildNodes(node, nodes);
-        collectParentNodes(node, nodes, false);
+        collectParentNodes(node, false, nodes);
         setExcludeNodes(nodes, false);
       }
 
@@ -945,7 +942,7 @@ public class UsageViewImpl implements UsageViewEx {
     }
   }
 
-  private void captureUsagesExpandState(@NotNull TreePath pathFrom, @NotNull Collection<UsageState> states) {
+  private void captureUsagesExpandState(@NotNull TreePath pathFrom, @NotNull Collection<? super UsageState> states) {
     ApplicationManager.getApplication().assertIsDispatchThread();
     if (!myTree.isExpanded(pathFrom)) {
       return;
@@ -1164,7 +1161,7 @@ public class UsageViewImpl implements UsageViewEx {
       return null;
     }
 
-    UsageNode child = myBuilder.appendOrGet(usage, edtNodeInsertedUnderQueue, isFilterDuplicateLines());
+    UsageNode child = myBuilder.appendOrGet(usage, isFilterDuplicateLines(), edtNodeInsertedUnderQueue);
     myUsageNodes.put(usage, child == null ? NULL_NODE : child);
 
     for (Node node = child; node != myRoot && node != null; node = (Node)node.getParent()) {
@@ -1319,7 +1316,7 @@ public class UsageViewImpl implements UsageViewEx {
     }
   }
 
-  private void checkNodeValidity(@NotNull TreeNode node, @NotNull TreePath path, @NotNull List<Node> result) {
+  private void checkNodeValidity(@NotNull TreeNode node, @NotNull TreePath path, @NotNull List<? super Node> result) {
     ApplicationManager.getApplication().assertIsDispatchThread();
     boolean shouldCheckChildren = true;
     if (myTree.isCollapsed(path)) {
@@ -1374,6 +1371,7 @@ public class UsageViewImpl implements UsageViewEx {
     disposeUsageContextPanels();
     synchronized (lock) {
       isDisposed = true;
+      cancelCurrentSearch();
       if (myTree != null) {
         ToolTipManager.sharedInstance().unregisterComponent(myTree);
       }
@@ -1651,7 +1649,7 @@ public class UsageViewImpl implements UsageViewEx {
     return usages;
   }
 
-  private static void collectUsages(@NotNull DefaultMutableTreeNode node, @NotNull Set<Usage> usages) {
+  private static void collectUsages(@NotNull DefaultMutableTreeNode node, @NotNull Set<? super Usage> usages) {
     if (node instanceof UsageNode) {
       UsageNode usageNode = (UsageNode)node;
       final Usage usage = usageNode.getUsage();
@@ -1665,7 +1663,7 @@ public class UsageViewImpl implements UsageViewEx {
     }
   }
 
-  private static void collectAllChildNodes(@NotNull DefaultMutableTreeNode node, @NotNull Set<Node> nodes) {
+  private static void collectAllChildNodes(@NotNull DefaultMutableTreeNode node, @NotNull Set<? super Node> nodes) {
     if (node instanceof Node) {
       nodes.add((Node)node);
     }
@@ -1863,6 +1861,14 @@ public class UsageViewImpl implements UsageViewEx {
       }
       else if (key == PlatformDataKeys.COPY_PROVIDER) {
         sink.put(PlatformDataKeys.COPY_PROVIDER, myCopyProvider);
+      }
+      else if (key == LangDataKeys.PSI_ELEMENT_ARRAY) {
+        sink.put(LangDataKeys.PSI_ELEMENT_ARRAY, getSelectedUsages()
+          .stream()
+          .filter(u -> u instanceof PsiElementUsage)
+          .map(u -> ((PsiElementUsage)u).getElement())
+          .filter(Objects::nonNull)
+          .toArray(PsiElement.ARRAY_FACTORY::create));
       }
       else {
         // can arrive here outside EDT from usage view preview.

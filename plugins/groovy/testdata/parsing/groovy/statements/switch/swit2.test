@@ -19,7 +19,7 @@ Groovy script
         Unary expression
           PsiElement(~)('~')
           Literal
-            GroovyASTPsiElementImpl(regex literal)
+            GroovyASTPsiElementImpl(SLASHY_LITERAL)
               PsiElement(regex begin)('/')
               PsiElement(regex content)('....')
               PsiElement(regex end)('/')
@@ -42,5 +42,5 @@ Groovy script
       PsiWhiteSpace(' ')
       BREAK statement
         PsiElement(break)('break')
-    PsiElement(new line)('\n')
+      PsiElement(new line)('\n')
     PsiElement(})('}')

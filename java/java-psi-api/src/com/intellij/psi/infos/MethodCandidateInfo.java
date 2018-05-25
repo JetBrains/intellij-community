@@ -53,7 +53,7 @@ public class MethodCandidateInfo extends CandidateInfo{
   private final LanguageLevel myLanguageLevel;
 
   public MethodCandidateInfo(@NotNull PsiElement candidate,
-                             PsiSubstitutor substitutor,
+                             @NotNull PsiSubstitutor substitutor,
                              boolean accessProblem,
                              boolean staticsProblem,
                              PsiElement argumentList,

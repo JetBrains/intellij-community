@@ -18,8 +18,8 @@ class Revision private constructor(private val order: Int, val keyword: String? 
     keyword?.let { ourKeywordRevisions[keyword] = this }
   }
 
-  val isValid get() = this !== UNDEFINED
-  val isLocal get() = this === BASE || this === WORKING
+  val isValid: Boolean get() = this !== UNDEFINED
+  val isLocal: Boolean get() = this === BASE || this === WORKING
 
   override fun equals(other: Any?): Boolean {
     if (this === other) return true
@@ -56,21 +56,21 @@ class Revision private constructor(private val order: Int, val keyword: String? 
   companion object {
     private val ourKeywordRevisions = newHashMap<String, Revision>()
 
-    @JvmField val BASE = Revision(2, "BASE")
-    @JvmField val COMMITTED = Revision(3, "COMMITTED")
-    @JvmField val HEAD = Revision(0, "HEAD")
-    @JvmField val PREV = Revision(4, "PREV")
+    @JvmField val BASE: Revision = Revision(2, "BASE")
+    @JvmField val COMMITTED: Revision = Revision(3, "COMMITTED")
+    @JvmField val HEAD: Revision = Revision(0, "HEAD")
+    @JvmField val PREV: Revision = Revision(4, "PREV")
     // TODO: This one should likely be removed - not in the least of svn revision keywords
-    @JvmField val WORKING = Revision(1, "WORKING")
-    @JvmField val UNDEFINED = Revision(30, "UNDEFINED")
+    @JvmField val WORKING: Revision = Revision(1, "WORKING")
+    @JvmField val UNDEFINED: Revision = Revision(30, "UNDEFINED")
 
     @JvmField val GENERAL_ORDER: Comparator<Revision> = compareByDescending { it.order }
 
     @JvmStatic
-    fun of(number: Long) = if (number < 0) UNDEFINED else Revision(10, number = number)
+    fun of(number: Long): Revision = if (number < 0) UNDEFINED else Revision(10, number = number)
 
     @JvmStatic
-    fun of(date: Date) = Revision(20, date = date)
+    fun of(date: Date): Revision = Revision(20, date = date)
 
     @JvmStatic
     fun parse(value: String?): Revision {

@@ -155,6 +155,26 @@ class GitHistoryUtilsTest : GitSingleRepoTest() {
     }
   }
 
+  fun testHistoryWithMergeCommit() {
+    repo.checkoutNew("newBranch", revisions.last().hash)
+
+    git("rm " + afile.path)
+    repo.addCommit("remove a.txt")
+    // difference with master is going to be in one file (bfile)
+    // so merge commit is going to have no difference with one of the parents
+
+    val success = git.merge(repo, "master", mutableListOf("--no-ff")).success()
+    if (!success) {
+      TestCase.fail("Could not do a merge")
+    }
+
+    val mergeCommit = repo.last()
+
+    val history = GitHistoryUtils.history(myProject, projectRoot)
+    TestCase.assertNotNull("History does not contain merge commit", history.find { it.id.asString() == mergeCommit })
+    TestCase.assertEquals("Merge commit is not the first", mergeCommit, history.first().id.asString())
+  }
+
   private fun timeStampToDate(timestamp: String): Date {
     return Date(java.lang.Long.parseLong(timestamp) * 1000)
   }

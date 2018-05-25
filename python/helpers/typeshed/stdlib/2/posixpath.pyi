@@ -1,3 +1,4 @@
+# NB: os2emxpath.pyi, posixpath.pyi, ntpath.pyi, and macpath.pyi must remain consistent!
 from typing import Any
 from genericpath import *  # noqa: F403
 

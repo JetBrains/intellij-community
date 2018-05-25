@@ -180,7 +180,13 @@ public class SimplifyStreamApiCallChainsInspection extends AbstractBaseJavaLocal
     };
   }
 
-  public static PsiElement simplifyStreamExpressions(PsiElement element) {
+  /**
+   * Simplify any stream expressions encountered within given element
+   * @param element element to process
+   * @param keepStream if true, no simplification which changes stream to non-stream will be performed
+   * @return the resulting element (may differ from the passed one if it was completely replaced)
+   */
+  public static PsiElement simplifyStreamExpressions(PsiElement element, boolean keepStream) {
     boolean replaced = true;
     while(replaced) {
       replaced = false;
@@ -189,6 +195,7 @@ public class SimplifyStreamApiCallChainsInspection extends AbstractBaseJavaLocal
           .select(PsiMethodCallExpression.class)
           .mapToEntry(CALL_TO_FIX_MAPPER::mapFirst)
           .nonNullValues()
+          .chain(s -> keepStream ? s.filterValues(CallChainSimplification::keepsStream) : s)
           .toCustomMap(LinkedHashMap::new);
       for (Map.Entry<PsiMethodCallExpression, CallChainSimplification> entry : callToSimplification.entrySet()) {
         if(entry.getKey().isValid()) {
@@ -226,6 +233,10 @@ public class SimplifyStreamApiCallChainsInspection extends AbstractBaseJavaLocal
 
   interface CallChainSimplification extends CallChainFix {
     String getMessage();
+
+    default boolean keepsStream() {
+      return true;
+    }
 
     default void applyFix(@NotNull Project project, PsiElement element) {
       PsiMethodCallExpression call = PsiTreeUtil.getParentOfType(element, PsiMethodCallExpression.class, false);
@@ -420,6 +431,11 @@ public class SimplifyStreamApiCallChainsInspection extends AbstractBaseJavaLocal
       myStreamMethod = streamMethod;
       myReplacementMethod = replacementMethod;
       myChangeSemantics = changeSemantics;
+    }
+
+    @Override
+    public boolean keepsStream() {
+      return false;
     }
 
     @Nls
@@ -805,6 +821,11 @@ public class SimplifyStreamApiCallChainsInspection extends AbstractBaseJavaLocal
       OPTIONAL, FUNCTION, NEGATED_FUNCTION
     }
 
+    @Override
+    public boolean keepsStream() {
+      return false;
+    }
+
     public SimpleStreamOfFix(ReplacementMode mode) {
       myMode = mode;
     }
@@ -967,6 +988,11 @@ public class SimplifyStreamApiCallChainsInspection extends AbstractBaseJavaLocal
     @Override
     public String getName() {
       return "Replace 'stream().toArray()' with 'toArray()'";
+    }
+
+    @Override
+    public boolean keepsStream() {
+      return false;
     }
 
     @Override
@@ -1607,6 +1633,11 @@ public class SimplifyStreamApiCallChainsInspection extends AbstractBaseJavaLocal
     }
 
     @Override
+    public boolean keepsStream() {
+      return false;
+    }
+
+    @Override
     public PsiElement simplify(PsiMethodCallExpression call) {
       PsiExpression value = myValuePointer.getElement();
       if (value == null) return null;
@@ -1667,6 +1698,11 @@ public class SimplifyStreamApiCallChainsInspection extends AbstractBaseJavaLocal
     @Override
     public String getMessage() {
       return "Replace with 'containsAll'";
+    }
+
+    @Override
+    public boolean keepsStream() {
+      return false;
     }
 
     @Override
@@ -1734,6 +1770,11 @@ public class SimplifyStreamApiCallChainsInspection extends AbstractBaseJavaLocal
     @Override
     public String getName() {
       return "Replace with 'String.join'";
+    }
+
+    @Override
+    public boolean keepsStream() {
+      return false;
     }
 
     @Override

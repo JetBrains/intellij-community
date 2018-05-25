@@ -39,8 +39,8 @@ public class DarculaSpinnerUI extends BasicSpinnerUI {
   private static final JBValue ARROW_WIDTH = new JBValue.Float(9);
   private static final JBValue ARROW_HEIGHT = new JBValue.Float(5);
 
-  protected static Insets editorMargins() {
-    return JBUI.insets(1, 5);
+  protected Insets editorMargins() {
+    return isCompact(spinner) ? JBUI.insets(0, 5) : JBUI.insets(1, 5);
   }
 
   protected JButton prevButton;
@@ -74,6 +74,13 @@ public class DarculaSpinnerUI extends BasicSpinnerUI {
     }
   }
 
+  private static void resetEditorOpaque(JComponent editor) {
+    if (editor != null) {
+      editor.setOpaque(false);
+      ((JComponent)editor.getComponents()[0]).setOpaque(false);
+    }
+  }
+
   @Override
   protected void uninstallListeners() {
     super.uninstallListeners();
@@ -85,12 +92,14 @@ public class DarculaSpinnerUI extends BasicSpinnerUI {
     super.replaceEditor(oldEditor, newEditor);
     removeEditorFocusListener(oldEditor);
     addEditorFocusListener(newEditor);
+    resetEditorOpaque(newEditor);
   }
 
   @Override
   protected JComponent createEditor() {
     JComponent editor = super.createEditor();
     addEditorFocusListener(editor);
+    resetEditorOpaque(editor);
     return editor;
   }
 
@@ -184,7 +193,7 @@ public class DarculaSpinnerUI extends BasicSpinnerUI {
       Insets i = spinner.getInsets();
       Insets m = editorMargins();
       int editorHeight = editor.getPreferredSize().height;
-      int editorOffset = (h - i.top - i.bottom - m.top - m.bottom - editorHeight) / 2;
+      int editorOffset = (int)Math.round((h - i.top - i.bottom - m.top - m.bottom - editorHeight) / 2.0);
 
       editor.setBounds(i.left + m.left,
                        i.top + m.top + editorOffset,
@@ -310,8 +319,9 @@ public class DarculaSpinnerUI extends BasicSpinnerUI {
       @Override
       public Dimension getPreferredSize() {
         Insets i = spinner.getInsets();
+        int minHeight = isCompact(spinner) ? JBUI.scale(10) : JBUI.scale(12);
         return new Dimension(ARROW_BUTTON_WIDTH.get() + i.left,
-                             JBUI.scale(12) + (direction == SwingConstants.NORTH ? i.top : i.bottom));
+                             minHeight + (direction == SwingConstants.NORTH ? i.top : i.bottom));
       }
     };
 

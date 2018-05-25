@@ -3,12 +3,12 @@
 
 # based on http://docs.python.org/3.2/library/sys.html
 
-import sys
-from types import FrameType, ModuleType, TracebackType
 from typing import (
     List, NoReturn, Sequence, Any, Dict, Tuple, TextIO, overload, Optional,
-    TypeVar, Callable, Type
+    Union, TypeVar, Callable, Type
 )
+import sys
+from types import FrameType, ModuleType, TracebackType
 
 if sys.version_info >= (3, 3):
     from importlib.abc import MetaPathFinder

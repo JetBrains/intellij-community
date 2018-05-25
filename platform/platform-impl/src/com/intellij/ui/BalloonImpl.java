@@ -1,6 +1,7 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ui;
 
+import com.intellij.codeInsight.hint.HintManagerImpl;
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.*;
 import com.intellij.openapi.MnemonicHelper;
@@ -585,7 +586,7 @@ public class BalloonImpl implements Balloon, IdeTooltip.Ui {
       ActionManager.getInstance().addAnActionListener(new AnActionListener.Adapter() {
         @Override
         public void beforeActionPerformed(AnAction action, DataContext dataContext, AnActionEvent event) {
-          if (myHideOnAction) {
+          if (myHideOnAction && !(action instanceof HintManagerImpl.ActionToIgnore)) {
             hide();
           }
         }

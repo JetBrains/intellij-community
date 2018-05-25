@@ -1728,7 +1728,7 @@ class Bar {
 }
 
 def bar(Object o) {
-  if (o instanceof Foo && o instanceof Bar o.fo<caret>o() && o.bar()) {
+  if (o instanceof Foo && o instanceof Bar && o.fo<caret>o() && o.bar()) {
     print o.foo()
   }
 }
@@ -1746,7 +1746,7 @@ class Bar {
 }
 
 def bar(Object o) {
-  if (o instanceof Foo && o instanceof Bar o.foo() && o.b<caret>ar()) {
+  if (o instanceof Foo && o instanceof Bar && o.foo() && o.b<caret>ar()) {
     print o.foo()
   }
 }
@@ -2182,7 +2182,7 @@ class X {
 trait GenericSourceTrait<E> {
     static E someOtherStaticMethod() {null}
 }
-class SourceConcrete implements GenericSourceTrait<String> {})
+class SourceConcrete implements GenericSourceTrait<String> {}
 SourceConcrete.someOtherStatic<caret>Method()
 ''', GrTraitMethod)
     assertEquals "java.lang.String", method.returnType.canonicalText

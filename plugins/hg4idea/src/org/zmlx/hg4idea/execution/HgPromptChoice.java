@@ -41,7 +41,7 @@ public class HgPromptChoice {
 
   @Override
   public boolean equals(Object o) {
-    if (null == o) return true;
+    if (null == o) return false;
     if (getClass() != o.getClass()) return false;
 
     HgPromptChoice choice = (HgPromptChoice)o;

@@ -76,7 +76,7 @@ open class PySdkListCellRenderer(private val sdkModifiers: Map<Sdk, SdkModificat
   }
 
   companion object {
-    const val SEPARATOR = "separator"
+    const val SEPARATOR: String = "separator"
 
     private fun customizeIcon(sdk: Sdk): Icon? {
       val flavor = PythonSdkFlavor.getPlatformIndependentFlavor(sdk.homePath)

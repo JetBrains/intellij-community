@@ -299,9 +299,9 @@ public class PluginManagerCore {
   }
 
   private static boolean checkDependants(@NotNull IdeaPluginDescriptor pluginDescriptor,
-                                         @NotNull Function<PluginId, IdeaPluginDescriptor> pluginId2Descriptor,
-                                         @NotNull Condition<PluginId> check,
-                                         @NotNull Set<PluginId> processed) {
+                                         @NotNull Function<? super PluginId, ? extends IdeaPluginDescriptor> pluginId2Descriptor,
+                                         @NotNull Condition<? super PluginId> check,
+                                         @NotNull Set<? super PluginId> processed) {
     processed.add(pluginDescriptor.getPluginId());
     final PluginId[] dependentPluginIds = pluginDescriptor.getDependentPluginIds();
     final Set<PluginId> optionalDependencies = new THashSet<>(Arrays.asList(pluginDescriptor.getOptionalDependentPluginIds()));
@@ -553,7 +553,7 @@ public class PluginManagerCore {
 
   @NotNull
   private static Comparator<IdeaPluginDescriptor> getPluginDescriptorComparator(@NotNull Map<PluginId, ? extends IdeaPluginDescriptor> idToDescriptorMap,
-                                                                                @NotNull List<String> errors) {
+                                                                                @NotNull List<? super String> errors) {
     Graph<PluginId> graph = createPluginIdGraph(idToDescriptorMap);
     DFSTBuilder<PluginId> builder = new DFSTBuilder<>(graph);
     if (!builder.isAcyclic()) {
@@ -849,10 +849,9 @@ public class PluginManagerCore {
     return false;
   }
 
-  // used in upsource
-  public static void resolveOptionalDescriptors(@NotNull String fileName,
+  private static void resolveOptionalDescriptors(@NotNull String fileName,
                                                 @NotNull IdeaPluginDescriptorImpl descriptor,
-                                                @NotNull Function<String, IdeaPluginDescriptorImpl> optionalDescriptorLoader) {
+                                                @NotNull Function<? super String, ? extends IdeaPluginDescriptorImpl> optionalDescriptorLoader) {
     Map<PluginId, List<String>> optionalConfigs = descriptor.getOptionalConfigs();
     if (optionalConfigs != null && !optionalConfigs.isEmpty()) {
       Map<PluginId, List<IdeaPluginDescriptorImpl>> descriptors = new THashMap<>(optionalConfigs.size());
@@ -916,7 +915,7 @@ public class PluginManagerCore {
 
   private static void filterBadPlugins(@NotNull List<? extends IdeaPluginDescriptor> result,
                                        @NotNull Map<String, String> disabledPluginNames,
-                                       @NotNull List<String> errors) {
+                                       @NotNull List<? super String> errors) {
     Map<PluginId, IdeaPluginDescriptor> idToDescriptorMap = new THashMap<>();
     boolean pluginsWithoutIdFound = false;
     for (Iterator<? extends IdeaPluginDescriptor> it = result.iterator(); it.hasNext();) {
@@ -1078,7 +1077,7 @@ public class PluginManagerCore {
     }
   }
 
-  private static void loadDescriptorsFromProperty(@NotNull List<IdeaPluginDescriptorImpl> result) {
+  private static void loadDescriptorsFromProperty(@NotNull List<? super IdeaPluginDescriptorImpl> result) {
     final String pathProperty = System.getProperty(PROPERTY_PLUGIN_PATH);
     if (pathProperty == null) return;
 
@@ -1358,9 +1357,9 @@ public class PluginManagerCore {
                                     @NotNull ClassLoader parentLoader,
                                     @NotNull Map<PluginId, IdeaPluginDescriptorImpl> idToDescriptorMap,
                                     @NotNull Map<String, String> disabledPluginNames,
-                                    @NotNull List<String> brokenPluginsList,
+                                    @NotNull List<? super String> brokenPluginsList,
                                     @NotNull List<IdeaPluginDescriptorImpl> result,
-                                    @NotNull List<String> errors) {
+                                    @NotNull List<? super String> errors) {
     checkCanLoadPlugins(pluginDescriptors, parentLoader, disabledPluginNames, brokenPluginsList, result);
 
     filterBadPlugins(result, disabledPluginNames, errors);
@@ -1375,8 +1374,8 @@ public class PluginManagerCore {
   private static void checkCanLoadPlugins(@NotNull IdeaPluginDescriptorImpl[] pluginDescriptors,
                                           @NotNull ClassLoader parentLoader,
                                           @NotNull Map<String, String> disabledPluginNames,
-                                          @NotNull List<String> brokenPluginsList,
-                                          @NotNull List<IdeaPluginDescriptorImpl> result) {
+                                          @NotNull List<? super String> brokenPluginsList,
+                                          @NotNull List<? super IdeaPluginDescriptorImpl> result) {
     for (IdeaPluginDescriptorImpl descriptor : pluginDescriptors) {
       String toNotLoadReason = detectReasonToNotLoad(descriptor, pluginDescriptors);
       if (toNotLoadReason == null) {

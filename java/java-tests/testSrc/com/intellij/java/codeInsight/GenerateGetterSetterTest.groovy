@@ -200,7 +200,6 @@ class Foo {
 
     @NotNull
     public String getMyName() {
-    
         return myName;
     }
 }

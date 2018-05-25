@@ -84,7 +84,7 @@ public class InstalledPackagesPanel extends JPanel {
     myPackagesTable.getTableHeader().setReorderingAllowed(false);
     new TableSpeedSearch(myPackagesTable);
 
-    myUpgradeButton = new AnActionButton("Upgrade", AllIcons.Actions.Download) {
+    myUpgradeButton = new AnActionButton("Upgrade", IconUtil.getMoveUpIcon()) {
       @Override
       public void actionPerformed(@NotNull AnActionEvent e) {
         upgradeAction();

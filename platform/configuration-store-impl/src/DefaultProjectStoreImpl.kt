@@ -3,6 +3,7 @@ package com.intellij.configurationStore
 
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.components.*
+import com.intellij.openapi.components.impl.stores.StoreUtil
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.impl.ProjectImpl
 import org.jdom.Element
@@ -71,7 +72,7 @@ class DefaultProjectStoreImpl(override val project: ProjectImpl, private val pat
 
   // don't want to optimize and use already loaded data - it will add unnecessary complexity and implementation-lock (currently we store loaded archived state in memory, but later implementation can be changed)
   fun getStateCopy() = storage.loadLocalData()
-  
+
   override fun getPathMacroManagerForDefaults() = pathMacroManager
 
   override fun <T> getStorageSpecs(component: PersistentStateComponent<T>, stateSpec: State, operation: StateStorageOperation) = listOf(PROJECT_FILE_STORAGE_ANNOTATION)
@@ -94,12 +95,12 @@ private class MyExternalizationSession(val externalizationSession: StateStorage.
 
 // ExportSettingsAction checks only "State" annotation presence, but doesn't require PersistentStateComponent implementation, so, we can just specify annotation
 @State(name = "ProjectManager", storages = [(Storage(FILE_SPEC))])
-private class DefaultProjectExportableAndSaveTrigger : SettingsSavingComponent {
+internal class DefaultProjectExportableAndSaveTrigger {
   @Volatile
   var project: Project? = null
 
-  override fun save() {
+  fun save(isForceSavingAllSettings: Boolean) {
     // we must trigger save
-    project?.save()
+    StoreUtil.saveProject(project ?: return, isForceSavingAllSettings)
   }
 }

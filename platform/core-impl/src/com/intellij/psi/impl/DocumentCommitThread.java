@@ -663,7 +663,7 @@ public class DocumentCommitThread implements Runnable, Disposable, DocumentCommi
                                           @NotNull final PsiFile file,
                                           @NotNull final FileASTNode oldFileNode,
                                           @NotNull ProperTextRange changedPsiRange,
-                                          @NotNull List<BooleanRunnable> outReparseInjectedProcessors) {
+                                          @NotNull List<? super BooleanRunnable> outReparseInjectedProcessors) {
     Document document = task.getDocument();
     final CharSequence newDocumentText = document.getImmutableCharSequence();
 

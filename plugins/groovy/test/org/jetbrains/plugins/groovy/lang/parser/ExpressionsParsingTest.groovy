@@ -1,6 +1,5 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.groovy.lang.parser
-
 /**
  * @author peter
  */
@@ -81,6 +80,14 @@ class ExpressionsParsingTest extends GroovyParsingTestCase {
   void testconditional$elvis1() throws Throwable { doTest() }
 
   void testconditional$elvis2() throws Throwable { doTest() }
+
+  void testconditional$ternaryQuestionOnly() { doTest() }
+
+  void testconditional$ternaryWithoutElse() { doTest() }
+
+  void testconditional$ternaryWithoutThen() { doTest() }
+
+  void testconditional$ternaryWithoutThenElse() { doTest() }
 
   void testerrors$err_final() throws Throwable { doTest() }
 
@@ -173,8 +180,45 @@ class ExpressionsParsingTest extends GroovyParsingTestCase {
   void testnew$arr_decl() throws Throwable { doTest() }
 
   void testnew$emptyTypeArgs() { doTest() }
+
+  void testnew$noArgumentList() { doTest() }
+
 //  public void testnew$new1() throws Throwable { doTest(); }
   void testanonymous$anonymous() throws Throwable { doTest() }
+
+  void testanonymous$anonymous1() throws Throwable { doTest() }
+
+  void testanonymous$anonymous2() throws Throwable { doTest() }
+
+  void testanonymous$anonymous3() throws Throwable { doTest() }
+
+  void testanonymous$anonymous4() throws Throwable { doTest() }
+
+  void testanonymous$anonymous5() throws Throwable { doTest() }
+
+  void testanonymous$anonymous6() throws Throwable { doTest() }
+
+  void testanonymous$anonymous7() throws Throwable { doTest() }
+
+  void testanonymous$anonymous8() throws Throwable { doTest() }
+
+  void testanonymous$anonymous9() throws Throwable { doTest() }
+
+  void testanonymous$anonymous10() throws Throwable { doTest() }
+
+  void testanonymous$anonymous11() throws Throwable { doTest() }
+
+  void testanonymous$anonymous12() throws Throwable { doTest() }
+
+  void testanonymous$anonymous13() throws Throwable { doTest() }
+
+  void testanonymous$anonymous14() throws Throwable { doTest() }
+
+  void testanonymous$anonymous15() throws Throwable { doTest() }
+
+  void testanonymous$anonymous16() throws Throwable { doTest() }
+
+  void testanonymous$anonymous17() throws Throwable { doTest() }
 
   void testnumbers() throws Throwable { doTest() }
 
@@ -238,6 +282,8 @@ class ExpressionsParsingTest extends GroovyParsingTestCase {
 
   void testpath$method$method9() throws Throwable { doTest() }
 
+  void testpath$method$method14() { doTest() }
+
   void testpath$path1() throws Throwable { doTest() }
 
   void testpath$path13() throws Throwable { doTest() }
@@ -285,6 +331,8 @@ class ExpressionsParsingTest extends GroovyParsingTestCase {
   void testreferences$ref8() throws Throwable { doTest() }
 
   void testreferences$ref9() throws Throwable { doTest() }
+
+  void testreferences$keywords() { doTest() }
 
   void testreferences$emptyTypeArgs() { doTest() }
 
@@ -454,6 +502,12 @@ class ExpressionsParsingTest extends GroovyParsingTestCase {
 
   void testtypecast$elvis() throws Throwable { doTest() }
 
+  void testtypecast$equality() { doTest() }
+
+  void testtypecast$parenthesized() { doTest() }
+
+  void testtypecast$noExpression() { doTest() }
+
   void testtypecast$conditional() throws Throwable { doTest() }
 
   void testAtHang() throws Throwable { doTest() }
@@ -464,28 +518,7 @@ class ExpressionsParsingTest extends GroovyParsingTestCase {
 
   void testNoArrowClosure2() throws Throwable { doTest() }
 
-  void testPropertyAccessError() throws Throwable {
-    checkParsingByText "a[b{}}", """Groovy script
-  Property by index
-    Reference expression
-      PsiElement(identifier)('a')
-    Arguments
-      PsiElement([)('[')
-      Method call
-        Reference expression
-          PsiElement(identifier)('b')
-        Arguments
-          <empty list>
-        Closable block
-          PsiElement({)('{')
-          Parameter list
-            <empty list>
-          PsiElement(})('}')
-      PsiErrorElement:',' or ']' expected
-        <empty list>
-  PsiErrorElement:Unexpected symbol
-    PsiElement(})('}')"""
-  }
+  void testPropertyAccessError() throws Throwable { doTest() }
 
   void testthis$qualifiedThis() throws Throwable { doTest() }
 
@@ -495,16 +528,13 @@ class ExpressionsParsingTest extends GroovyParsingTestCase {
 
   void testsuper$super() throws Throwable { doTest() }
 
-  void testTripleEqual() throws Exception {
-    checkParsingByText "2===3", """Groovy script
-  Relational expression
-    Literal
-      PsiElement(Integer)('2')
-    PsiElement(==)('===')
-    Literal
-      PsiElement(Integer)('3')
-"""
-  }
+  void testbinary$identity() { doTest() }
+
+  void testbinary$elvisAssign() { doTest() }
+
+  void testbinary$elvisAssignNewLine() { doTest() }
+
+  void testbinary$elvisAssignWithoutRValue() { doTest() }
 
   void testcommandExpr$closureArg() { doTest() }
 
@@ -562,7 +592,19 @@ class ExpressionsParsingTest extends GroovyParsingTestCase {
 
   void testcommandExpr$literalInvoked() { doTest() }
 
+  void testcommandExpr$safeIndex() { doTest() }
+
+  void testcommandExpr$safeIndexEmpty() { doTest() }
+
+  void testcommandExpr$safeIndexEmptyMap() { doTest() }
+
+  void testcommandExpr$safeIndexLBrack() { doTest() }
+
+  void testcommandExpr$safeIndexMap() { doTest() }
+
   void testDiamond() { doTest() }
+
+  void testDiamondErrors() { doTest() }
 
   void testpath$stringMethodCall1() { doTest() }
 
@@ -570,312 +612,41 @@ class ExpressionsParsingTest extends GroovyParsingTestCase {
 
   void testpath$stringMethodCall3() { doTest() }
 
-  void testSpacesInStringAfterSlash() {
-    checkParsingByText '''
-print 'abc \\ \ncde' ''', '''
-Groovy script
-  PsiElement(new line)(\'\\n\')
-  Call expression
-    Reference expression
-      PsiElement(identifier)(\'print\')
-    PsiWhiteSpace(\' \')
-    Command arguments
-      Literal
-        PsiElement(string)(\'\'abc \\ \\ncde\'\')
-  PsiWhiteSpace(\' \')'''
-  }
+  void testSpacesInStringAfterSlash() { doTest() }
 
-  void testDiamondInPathRefElement() {
-    checkParsingByText 'Map<String, String> map = new java.util.concurrent.ConcurrentHashMap<>()', '''
-Groovy script
-  Variable definitions
-    Modifiers
-      <empty list>
-    Type element
-      Reference element
-        PsiElement(identifier)('Map')
-        Type arguments
-          PsiElement(<)('<')
-          Type element
-            Reference element
-              PsiElement(identifier)('String')
-          PsiElement(,)(',')
-          PsiWhiteSpace(' ')
-          Type element
-            Reference element
-              PsiElement(identifier)('String')
-          PsiElement(>)('>')
-    PsiWhiteSpace(' ')
-    Variable
-      PsiElement(identifier)('map')
-      PsiWhiteSpace(' ')
-      PsiElement(=)('=')
-      PsiWhiteSpace(' ')
-      NEW expression
-        PsiElement(new)('new')
-        PsiWhiteSpace(' ')
-        Reference element
-          Reference element
-            Reference element
-              Reference element
-                PsiElement(identifier)('java')
-              PsiElement(.)('.')
-              PsiElement(identifier)('util')
-            PsiElement(.)('.')
-            PsiElement(identifier)('concurrent')
-          PsiElement(.)('.')
-          PsiElement(identifier)('ConcurrentHashMap')
-          Type arguments
-            PsiElement(<)('<')
-            PsiElement(>)('>')
-        Arguments
-          PsiElement(()('(')
-          PsiElement())(')')
-'''
-  }
+  void testDiamondInPathRefElement() { doTest() }
 
-  void testNewMethodName() {
-    checkParsingByText 'def a = qualifer.new X()', '''
-Groovy script
-  Variable definitions
-    Modifiers
-      PsiElement(def)('def')
-    PsiWhiteSpace(' ')
-    Variable
-      PsiElement(identifier)('a')
-      PsiWhiteSpace(' ')
-      PsiElement(=)('=')
-      PsiWhiteSpace(' ')
-      Call expression
-        Reference expression
-          Reference expression
-            PsiElement(identifier)('qualifer')
-          PsiElement(.)('.')
-          PsiElement(new)('new')
-        PsiWhiteSpace(' ')
-        Command arguments
-          Method call
-            Reference expression
-              PsiElement(identifier)('X')
-            Arguments
-              PsiElement(()('(')
-              PsiElement())(')')'''
-  }
+  void testNewMethodName() { doTest() }
 
-  void testRefElementsWithKeywords() {
-    checkParsingByText('''\
-def a = new def.as.Foo()
-def b = new foo.as.in.Foo()
-''', '''\
-Groovy script
-  Variable definitions
-    Modifiers
-      PsiElement(def)('def')
-    PsiWhiteSpace(' ')
-    Variable
-      PsiElement(identifier)('a')
-      PsiWhiteSpace(' ')
-      PsiElement(=)('=')
-      PsiWhiteSpace(' ')
-      NEW expression
-        PsiElement(new)('new')
-        PsiWhiteSpace(' ')
-        Reference element
-          Reference element
-            Reference element
-              PsiElement(def)('def')
-            PsiElement(.)('.')
-            PsiElement(as)('as')
-          PsiElement(.)('.')
-          PsiElement(identifier)('Foo')
-        Arguments
-          PsiElement(()('(')
-          PsiElement())(')')
-  PsiElement(new line)('\\n')
-  Variable definitions
-    Modifiers
-      PsiElement(def)('def')
-    PsiWhiteSpace(' ')
-    Variable
-      PsiElement(identifier)('b')
-      PsiWhiteSpace(' ')
-      PsiElement(=)('=')
-      PsiWhiteSpace(' ')
-      NEW expression
-        PsiElement(new)('new')
-        PsiWhiteSpace(' ')
-        Reference element
-          Reference element
-            Reference element
-              Reference element
-                PsiElement(identifier)('foo')
-              PsiElement(.)('.')
-              PsiElement(as)('as')
-            PsiElement(.)('.')
-            PsiElement(in)('in')
-          PsiElement(.)('.')
-          PsiElement(identifier)('Foo')
-        Arguments
-          PsiElement(()('(')
-          PsiElement())(')')
-  PsiElement(new line)('\\n')
-''')
-  }
+  void testRefElementsWithKeywords() { doTest() }
 
-  void "test finish argument list on keyword occurrence"() {
-    checkParsingByText '''switch (obj) {
-      case 1: return bar([param)
-      case 3: return bar([param]
-      case 2:
-        param = param.bar((foo):[bar:goo])
-        return param.foo
-    }
-''', '''\
-Groovy script
-  Switch statement
-    PsiElement(switch)('switch')
-    PsiWhiteSpace(' ')
-    PsiElement(()('(')
-    Reference expression
-      PsiElement(identifier)('obj')
-    PsiElement())(')')
-    PsiWhiteSpace(' ')
-    PsiElement({)('{')
-    PsiWhiteSpace('\\n      ')
-    Case section
-      Case label
-        PsiElement(case)('case')
-        PsiWhiteSpace(' ')
-        Literal
-          PsiElement(Integer)('1')
-        PsiElement(:)(':')
-      PsiWhiteSpace(' ')
-      RETURN statement
-        PsiElement(return)('return')
-        PsiWhiteSpace(' ')
-        Method call
-          Reference expression
-            PsiElement(identifier)('bar')
-          Arguments
-            PsiElement(()('(')
-            Generalized list
-              PsiElement([)('[')
-              Reference expression
-                PsiElement(identifier)('param')
-              PsiErrorElement:',' or ']' expected
-                <empty list>
-              PsiElement())(')')
-              PsiErrorElement:',' or ']' expected
-                <empty list>
-    PsiWhiteSpace('\\n      ')
-    Case section
-      Case label
-        PsiElement(case)('case')
-        PsiWhiteSpace(' ')
-        Literal
-          PsiElement(Integer)('3')
-        PsiElement(:)(':')
-      PsiWhiteSpace(' ')
-      RETURN statement
-        PsiElement(return)('return')
-        PsiWhiteSpace(' ')
-        Method call
-          Reference expression
-            PsiElement(identifier)('bar')
-          Arguments
-            PsiElement(()('(')
-            Generalized list
-              PsiElement([)('[')
-              Reference expression
-                PsiElement(identifier)('param')
-              PsiElement(])(']')
-            PsiErrorElement:',' or ')' expected
-              <empty list>
-    PsiWhiteSpace('\\n      ')
-    Case section
-      Case label
-        PsiElement(case)('case')
-        PsiWhiteSpace(' ')
-        Literal
-          PsiElement(Integer)('2')
-        PsiElement(:)(':')
-      PsiWhiteSpace('\\n        ')
-      Assignment expression
-        Reference expression
-          PsiElement(identifier)('param')
-        PsiWhiteSpace(' ')
-        PsiElement(=)('=')
-        PsiWhiteSpace(' ')
-        Method call
-          Reference expression
-            Reference expression
-              PsiElement(identifier)('param')
-            PsiElement(.)('.')
-            PsiElement(identifier)('bar')
-          Arguments
-            PsiElement(()('(')
-            Named argument
-              Argument label
-                Parenthesized expression
-                  PsiElement(()('(')
-                  Reference expression
-                    PsiElement(identifier)('foo')
-                  PsiElement())(')')
-              PsiElement(:)(':')
-              Generalized list
-                PsiElement([)('[')
-                Named argument
-                  Argument label
-                    PsiElement(identifier)('bar')
-                  PsiElement(:)(':')
-                  Reference expression
-                    PsiElement(identifier)('goo')
-                PsiElement(])(']')
-            PsiElement())(')')
-      PsiErrorElement:';', '}' or new line expected
-        <empty list>
-      PsiWhiteSpace('\\n        ')
-      RETURN statement
-        PsiElement(return)('return')
-        PsiWhiteSpace(' ')
-        Reference expression
-          Reference expression
-            PsiElement(identifier)('param')
-          PsiElement(.)('.')
-          PsiElement(identifier)('foo')
-    PsiWhiteSpace('\\n    ')
-    PsiElement(})('}')
-  PsiElement(new line)('\\n')'''
-  }
+  void "test finish argument list on keyword occurrence"() { doTest("finishArgumentListOnKeywordOccurrence.test") }
 
-  void testConditionalExpressionWithLineFeed() {
-    checkParsingByText('''\
-print true ? abc
-:cde
-''', '''\
-Groovy script
-  Call expression
-    Reference expression
-      PsiElement(identifier)('print')
-    PsiWhiteSpace(' ')
-    Command arguments
-      Conditional expression
-        Literal
-          PsiElement(true)('true')
-        PsiWhiteSpace(' ')
-        PsiElement(?)('?')
-        PsiWhiteSpace(' ')
-        Reference expression
-          PsiElement(identifier)('abc')
-        PsiElement(new line)('\\n')
-        PsiElement(:)(':')
-        Reference expression
-          PsiElement(identifier)('cde')
-  PsiElement(new line)('\\n')
-''')
-  }
+  void testConditionalExpressionWithLineFeed() { doTest() }
 
   void testspecial$mapHang() { doTest() }
 
   void testindexpropertyWithUnfinishedInvokedExpression() { doTest() }
+
+  void testindex$safeIndex() { doTest() }
+
+  void testindex$safeIndexEmpty() { doTest() }
+
+  void testindex$safeIndexEmptyMap() { doTest() }
+
+  void testindex$safeIndexLBrack() { doTest() }
+
+  void testindex$safeIndexMap() { doTest() }
+
+  void testindex$safeIndexNoRBrack() { doTest() }
+
+  void testindex$safeIndexVsTernary() { doTest() }
+
+  void testindex$safeIndexVsTernary2() { doTest() }
+
+  void testindex$safeIndexVsTernary3() { doTest() }
+
+  void testindex$safeIndexNewLineAfterQ() { doTest() }
+
+  void testindex$safeIndexNewLineBeforeQ() { doTest() }
 }

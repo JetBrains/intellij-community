@@ -15,7 +15,6 @@ import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.ex.ActionUtil;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ReadAction;
-import com.intellij.openapi.application.impl.ApplicationImpl;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.*;
 import com.intellij.openapi.editor.colors.ColorKey;
@@ -269,54 +268,48 @@ class EditorGutterComponentImpl extends EditorGutterComponentEx implements Mouse
 
   @Override
   public void paint(Graphics g_) {
-    ((ApplicationImpl)ApplicationManager.getApplication()).editorPaintStart();
+    Rectangle clip = g_.getClipBounds();
+    if (clip.height < 0) return;
+
+    Graphics2D g = (Graphics2D)getComponentGraphics(g_);
+    AffineTransform old = setMirrorTransformIfNeeded(g, 0, getWidth());
+
+    EditorUIUtil.setupAntialiasing(g);
+    Color backgroundColor = getBackground();
+
+    if (myEditor.isDisposed()) {
+      g.setColor(myEditor.getDisposedBackground());
+      g.fillRect(clip.x, clip.y, clip.width, clip.height);
+      return;
+    }
+
+    int startVisualLine = myEditor.yToVisibleLine(clip.y);
+    int endVisualLine = myEditor.yToVisibleLine(clip.y + clip.height);
+
+    // paint all backgrounds
+    int gutterSeparatorX = getWhitespaceSeparatorOffset();
+    paintBackground(g, clip, 0, gutterSeparatorX, backgroundColor);
+    paintBackground(g, clip, gutterSeparatorX, getFoldingAreaWidth(), myEditor.getBackgroundColor());
+
+    int firstVisibleOffset = myEditor.visualLineStartOffset(startVisualLine);
+    int lastVisibleOffset = myEditor.visualLineStartOffset(endVisualLine + 1);
+    paintEditorBackgrounds(g, firstVisibleOffset, lastVisibleOffset);
+
+    Object hint = g.getRenderingHint(RenderingHints.KEY_ANTIALIASING);
+    if (!UIUtil.isJreHiDPI(g)) g.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_OFF);
+
     try {
-      Rectangle clip = g_.getClipBounds();
-      if (clip.height < 0) return;
-
-      Graphics2D g = (Graphics2D)getComponentGraphics(g_);
-      AffineTransform old = setMirrorTransformIfNeeded(g, 0, getWidth());
-
-      EditorUIUtil.setupAntialiasing(g);
-      Color backgroundColor = getBackground();
-
-      if (myEditor.isDisposed()) {
-        g.setColor(myEditor.getDisposedBackground());
-        g.fillRect(clip.x, clip.y, clip.width, clip.height);
-        return;
-      }
-
-      int startVisualLine = myEditor.yToVisibleLine(clip.y);
-      int endVisualLine = myEditor.yToVisibleLine(clip.y + clip.height);
-
-      // paint all backgrounds
-      int gutterSeparatorX = getWhitespaceSeparatorOffset();
-      paintBackground(g, clip, 0, gutterSeparatorX, backgroundColor);
-      paintBackground(g, clip, gutterSeparatorX, getFoldingAreaWidth(), myEditor.getBackgroundColor());
-
-      int firstVisibleOffset = myEditor.visualLineStartOffset(startVisualLine);
-      int lastVisibleOffset = myEditor.visualLineStartOffset(endVisualLine + 1);
-      paintEditorBackgrounds(g, firstVisibleOffset, lastVisibleOffset);
-
-      Object hint = g.getRenderingHint(RenderingHints.KEY_ANTIALIASING);
-      if (!UIUtil.isJreHiDPI(g)) g.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_OFF);
-
-      try {
-        paintAnnotations(g, startVisualLine, endVisualLine);
-        paintLineMarkers(g, firstVisibleOffset, lastVisibleOffset);
-        paintFoldingLines(g, clip);
-        paintFoldingTree(g, clip, firstVisibleOffset, lastVisibleOffset);
-        paintLineNumbers(g, startVisualLine, endVisualLine);
-      }
-      finally {
-        g.setRenderingHint(RenderingHints.KEY_ANTIALIASING, hint);
-      }
-
-      if (old != null) g.setTransform(old);
+      paintAnnotations(g, startVisualLine, endVisualLine);
+      paintLineMarkers(g, firstVisibleOffset, lastVisibleOffset);
+      paintFoldingLines(g, clip);
+      paintFoldingTree(g, clip, firstVisibleOffset, lastVisibleOffset);
+      paintLineNumbers(g, startVisualLine, endVisualLine);
     }
     finally {
-      ((ApplicationImpl)ApplicationManager.getApplication()).editorPaintFinish();
+      g.setRenderingHint(RenderingHints.KEY_ANTIALIASING, hint);
     }
+
+    if (old != null) g.setTransform(old);
   }
 
   private void paintEditorBackgrounds(Graphics g, int firstVisibleOffset, int lastVisibleOffset) {

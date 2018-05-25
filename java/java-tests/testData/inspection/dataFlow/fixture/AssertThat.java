@@ -44,4 +44,12 @@ class Contracts {
     }
   }
 
+  private void testArraySize() {
+    String[] things = retrieveThings();
+    assertThat(things, is(arrayWithSize(1)));
+    assertThat(things[0], is(equalTo("...")));
+  }
+
+  @Nullable
+  private static native String[] retrieveThings();
 }

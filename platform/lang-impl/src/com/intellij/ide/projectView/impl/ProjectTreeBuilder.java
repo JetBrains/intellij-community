@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package com.intellij.ide.projectView.impl;
 
@@ -33,7 +19,7 @@ import com.intellij.openapi.roots.ModuleRootListener;
 import com.intellij.openapi.vcs.FileStatusListener;
 import com.intellij.openapi.vcs.FileStatusManager;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.problems.WolfTheProblemSolver;
+import com.intellij.problems.ProblemListener;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiManager;
 import com.intellij.util.Alarm;
@@ -74,7 +60,7 @@ public class ProjectTreeBuilder extends BaseProjectTreeBuilder {
     FileStatusManager.getInstance(project).addFileStatusListener(new MyFileStatusListener(), this);
     CopyPasteUtil.addDefaultListener(this, this::addSubtreeToUpdateByElement);
 
-    WolfTheProblemSolver.getInstance(project).addProblemListener(new MyProblemListener(), this);
+    connection.subscribe(ProblemListener.TOPIC, new MyProblemListener());
 
     setCanYieldUpdate(true);
 
@@ -155,7 +141,7 @@ public class ProjectTreeBuilder extends BaseProjectTreeBuilder {
     return vFile.isDirectory() ? psiManager.findDirectory(vFile) : psiManager.findFile(vFile);
   }
 
-  private class MyProblemListener extends WolfTheProblemSolver.ProblemListener {
+  private class MyProblemListener implements ProblemListener {
     private final Alarm myUpdateProblemAlarm = new Alarm();
     private final Collection<VirtualFile> myFilesToRefresh = new THashSet<>();
 

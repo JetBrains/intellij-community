@@ -17,6 +17,9 @@ public class DeprecatedDuplicatesIconPathPatcher extends IconPathPatcher {
     ourDeprecatedIconsReplacements.put("/actions/prevfile.png", "AllIcons.Actions.Back");
     ourDeprecatedIconsReplacements.put("/actions/prevfile.svg", "AllIcons.Actions.Back");
 
+    ourDeprecatedIconsReplacements.put("/actions/delete.png", "AllIcons.Actions.Cancel");
+    ourDeprecatedIconsReplacements.put("/actions/delete.svg", "AllIcons.Actions.Cancel");
+
     ourDeprecatedIconsReplacements.put("/modules/edit.png", "AllIcons.Actions.Edit");
     ourDeprecatedIconsReplacements.put("/modules/edit.svg", "AllIcons.Actions.Edit");
     ourDeprecatedIconsReplacements.put("/toolbarDecorator/edit.png", "AllIcons.Actions.Edit");
@@ -31,6 +34,14 @@ public class DeprecatedDuplicatesIconPathPatcher extends IconPathPatcher {
 
     ourDeprecatedIconsReplacements.put("/actions/nextfile.png", "AllIcons.Actions.Forward");
     ourDeprecatedIconsReplacements.put("/actions/nextfile.svg", "AllIcons.Actions.Forward");
+    ourDeprecatedIconsReplacements.put("/hierarchy/base.png", "AllIcons.Actions.Forward");
+    ourDeprecatedIconsReplacements.put("/hierarchy/base.svg", "AllIcons.Actions.Forward");
+
+    ourDeprecatedIconsReplacements.put("/objectBrowser/showModules.png", "AllIcons.Actions.GroupByModule");
+    ourDeprecatedIconsReplacements.put("/objectBrowser/showModules.svg", "AllIcons.Actions.GroupByModule");
+
+    ourDeprecatedIconsReplacements.put("/toolbar/folders.png", "AllIcons.Actions.GroupByPackage");
+    ourDeprecatedIconsReplacements.put("/toolbar/folders.svg", "AllIcons.Actions.GroupByPackage");
 
     ourDeprecatedIconsReplacements.put("/actions/menu_help.png", "AllIcons.Actions.Help");
     ourDeprecatedIconsReplacements.put("/actions/menu_help.svg", "AllIcons.Actions.Help");
@@ -94,6 +105,10 @@ public class DeprecatedDuplicatesIconPathPatcher extends IconPathPatcher {
 
     ourDeprecatedIconsReplacements.put("/general/debug.png", "AllIcons.Actions.StartDebugger");
     ourDeprecatedIconsReplacements.put("/general/debug.svg", "AllIcons.Actions.StartDebugger");
+
+
+    ourDeprecatedIconsReplacements.put("/codeStyle/mac/AddNewSectionRule.png", "AllIcons.CodeStyle.AddNewSectionRule");
+    ourDeprecatedIconsReplacements.put("/codeStyle/mac/AddNewSectionRule.svg", "AllIcons.CodeStyle.AddNewSectionRule");
 
 
     ourDeprecatedIconsReplacements.put("/debugger/watches.png", "AllIcons.Debugger.Watch");
@@ -176,6 +191,13 @@ public class DeprecatedDuplicatesIconPathPatcher extends IconPathPatcher {
     ourDeprecatedIconsReplacements.put("/compiler/warning.svg", "AllIcons.General.Warning");
 
 
+    ourDeprecatedIconsReplacements.put("/hierarchy/callee.png", "AllIcons.Hierarchy.Subtypes");
+    ourDeprecatedIconsReplacements.put("/hierarchy/callee.svg", "AllIcons.Hierarchy.Subtypes");
+
+    ourDeprecatedIconsReplacements.put("/hierarchy/caller.png", "AllIcons.Hierarchy.Supertypes");
+    ourDeprecatedIconsReplacements.put("/hierarchy/caller.svg", "AllIcons.Hierarchy.Supertypes");
+
+
     ourDeprecatedIconsReplacements.put("/general/packagesTab.png", "AllIcons.Nodes.CopyOfFolder");
     ourDeprecatedIconsReplacements.put("/general/packagesTab.svg", "AllIcons.Nodes.CopyOfFolder");
 
@@ -184,6 +206,37 @@ public class DeprecatedDuplicatesIconPathPatcher extends IconPathPatcher {
     ourDeprecatedIconsReplacements.put("/nodes/treeOpen.png", "AllIcons.Nodes.Folder");
     ourDeprecatedIconsReplacements.put("/nodes/treeOpen.svg", "AllIcons.Nodes.Folder");
 
+
+    ourDeprecatedIconsReplacements.put("/toolbarDecorator/mac/addBlankLine.png", "AllIcons.ToolbarDecorator.AddBlankLine");
+    ourDeprecatedIconsReplacements.put("/toolbarDecorator/mac/addBlankLine.svg", "AllIcons.ToolbarDecorator.AddBlankLine");
+
+    ourDeprecatedIconsReplacements.put("/toolbarDecorator/mac/addClass.png", "AllIcons.ToolbarDecorator.AddClass");
+    ourDeprecatedIconsReplacements.put("/toolbarDecorator/mac/addClass.svg", "AllIcons.ToolbarDecorator.AddClass");
+
+    ourDeprecatedIconsReplacements.put("/toolbarDecorator/addPackage.png", "AllIcons.ToolbarDecorator.AddFolder");
+    ourDeprecatedIconsReplacements.put("/toolbarDecorator/addPackage.svg", "AllIcons.ToolbarDecorator.AddFolder");
+    ourDeprecatedIconsReplacements.put("/toolbarDecorator/mac/addFolder.png", "AllIcons.ToolbarDecorator.AddFolder");
+    ourDeprecatedIconsReplacements.put("/toolbarDecorator/mac/addFolder.svg", "AllIcons.ToolbarDecorator.AddFolder");
+    ourDeprecatedIconsReplacements.put("/toolbarDecorator/mac/addPackage.png", "AllIcons.ToolbarDecorator.AddFolder");
+    ourDeprecatedIconsReplacements.put("/toolbarDecorator/mac/addPackage.svg", "AllIcons.ToolbarDecorator.AddFolder");
+
+    ourDeprecatedIconsReplacements.put("/toolbarDecorator/mac/addIcon.png", "AllIcons.ToolbarDecorator.AddIcon");
+    ourDeprecatedIconsReplacements.put("/toolbarDecorator/mac/addIcon.svg", "AllIcons.ToolbarDecorator.AddIcon");
+
+    ourDeprecatedIconsReplacements.put("/toolbarDecorator/mac/addJira.png", "AllIcons.ToolbarDecorator.AddJira");
+    ourDeprecatedIconsReplacements.put("/toolbarDecorator/mac/addJira.svg", "AllIcons.ToolbarDecorator.AddJira");
+
+    ourDeprecatedIconsReplacements.put("/toolbarDecorator/mac/addLink.png", "AllIcons.ToolbarDecorator.AddLink");
+    ourDeprecatedIconsReplacements.put("/toolbarDecorator/mac/addLink.svg", "AllIcons.ToolbarDecorator.AddLink");
+
+    ourDeprecatedIconsReplacements.put("/toolbarDecorator/mac/addPattern.png", "AllIcons.ToolbarDecorator.AddPattern");
+    ourDeprecatedIconsReplacements.put("/toolbarDecorator/mac/addPattern.svg", "AllIcons.ToolbarDecorator.AddPattern");
+
+    ourDeprecatedIconsReplacements.put("/toolbarDecorator/mac/addRemoteDatasource.png", "AllIcons.ToolbarDecorator.AddRemoteDatasource");
+    ourDeprecatedIconsReplacements.put("/toolbarDecorator/mac/addRemoteDatasource.svg", "AllIcons.ToolbarDecorator.AddRemoteDatasource");
+
+    ourDeprecatedIconsReplacements.put("/toolbarDecorator/mac/addYouTrack.png", "AllIcons.ToolbarDecorator.AddYouTrack");
+    ourDeprecatedIconsReplacements.put("/toolbarDecorator/mac/addYouTrack.svg", "AllIcons.ToolbarDecorator.AddYouTrack");
 
     ourDeprecatedIconsReplacements.put("/actions/export.png", "AllIcons.ToolbarDecorator.Export");
     ourDeprecatedIconsReplacements.put("/actions/export.svg", "AllIcons.ToolbarDecorator.Export");

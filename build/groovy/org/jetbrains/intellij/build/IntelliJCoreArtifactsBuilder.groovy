@@ -43,6 +43,7 @@ class IntelliJCoreArtifactsBuilder {
     "intellij.xml.analysis",
     "intellij.xml.psi",
     "intellij.xml.structureView",
+    "intellij.jvm.analysis",
   ]
   private static final List<String> ANALYSIS_IMPL_MODULES = [
     "intellij.platform.analysis.impl",
@@ -56,6 +57,7 @@ class IntelliJCoreArtifactsBuilder {
     "intellij.xml.analysis.impl",
     "intellij.xml.psi.impl",
     "intellij.xml.structureView.impl",
+    "intellij.jvm.analysis.impl",
   ]
   private final BuildContext buildContext
 
@@ -85,11 +87,6 @@ class IntelliJCoreArtifactsBuilder {
           module("intellij.java.psi.impl")
         }
 
-        jar("annotations.jar") {
-          module("intellij.platform.annotations.common")
-          module("intellij.platform.annotations.java5")
-        }
-
         jar("intellij-core-analysis.jar") {
           analysisModules.each { module it }
         }
@@ -100,7 +97,9 @@ class IntelliJCoreArtifactsBuilder {
         ].each {
           projectLibrary(it)
         }
+        projectLibrary("jetbrains-annotations-java5", true)
       }
+      ant.move(file: "$coreArtifactDir/annotations-java5.jar", tofile: "$coreArtifactDir/annotations.jar")
       buildContext.notifyArtifactBuilt(coreArtifactDir)
 
       def intellijCoreZip = "${buildContext.paths.artifacts}/intellij-core-${buildContext.buildNumber}.zip"

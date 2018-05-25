@@ -140,7 +140,7 @@ public class WinIntelliJTextFieldUI extends TextFieldWithPopupHandlerUI {
         }
       };
     }
-    return icon != null ? icon : IconLoader.findIcon("/com/intellij/ide/ui/laf/icons/search.png", DarculaTextFieldUI.class, true);
+    return icon != null ? icon : IconLoader.findLafIcon("search", DarculaTextFieldUI.class);
   }
 
   @Override
@@ -152,7 +152,7 @@ public class WinIntelliJTextFieldUI extends TextFieldWithPopupHandlerUI {
   protected Icon getClearIcon(boolean hovered, boolean clickable) {
     if (!clickable) return null;
     Icon icon = UIManager.getIcon("TextField.darcula.clear.icon");
-    return icon != null ? icon : IconLoader.findIcon("/com/intellij/ide/ui/laf/icons/clear.png", DarculaTextFieldUI.class, true);
+    return icon != null ? icon : IconLoader.findLafIcon("clear", DarculaTextFieldUI.class);
   }
 
   @Override

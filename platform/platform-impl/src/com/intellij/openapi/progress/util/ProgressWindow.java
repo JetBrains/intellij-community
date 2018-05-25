@@ -22,12 +22,16 @@ import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.application.impl.LaterInvocator;
 import com.intellij.openapi.application.impl.ModalityStateEx;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.progress.ProgressManager;
+import com.intellij.openapi.progress.TaskInfo;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.EmptyRunnable;
 import com.intellij.openapi.wm.IdeFocusManager;
+import com.intellij.openapi.wm.ex.ProgressIndicatorEx;
+import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.messages.Topic;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
@@ -64,7 +68,7 @@ public class ProgressWindow extends ProgressIndicatorBase implements BlockingPro
 
   @FunctionalInterface
   public interface Listener {
-    void progressWindowCreated(ProgressWindow pw);
+    void progressWindowCreated(@NotNull ProgressWindow pw);
   }
 
   public static final Topic<Listener> TOPIC = Topic.create("progress window", Listener.class);
@@ -102,15 +106,7 @@ public class ProgressWindow extends ProgressIndicatorBase implements BlockingPro
 
     Disposer.register(this, myDialog);
 
-    addStateDelegate(new AbstractProgressIndicatorExBase() {
-      @Override
-      public void cancel() {
-        super.cancel();
-        if (myDialog != null) {
-          myDialog.cancel();
-        }
-      }
-    });
+    addStateDelegate(new MyDelegate());
     ApplicationManager.getApplication().getMessageBus().syncPublisher(TOPIC).progressWindowCreated(this);
 
     if (myProject != null) {
@@ -238,22 +234,6 @@ public class ProgressWindow extends ProgressIndicatorBase implements BlockingPro
   }
 
   @Override
-  public void startNonCancelableSection() {
-    if (isCancelable()) {
-      enableCancel(false);
-    }
-    super.startNonCancelableSection();
-  }
-
-  @Override
-  public void finishNonCancelableSection() {
-    super.finishNonCancelableSection();
-    if (isCancelable()) {
-      enableCancel(true);
-    }
-  }
-
-  @Override
   public void setIndeterminate(boolean indeterminate) {
     super.setIndeterminate(indeterminate);
     update();
@@ -366,7 +346,7 @@ public class ProgressWindow extends ProgressIndicatorBase implements BlockingPro
     return myDialog != null && myDialog.myPopup != null && myDialog.myPopup.isShowing();
   }
 
-  private void enableCancel(boolean enable) {
+  private void enableCancelButton(boolean enable) {
     if (myDialog != null) {
       myDialog.enableCancelButtonIfNeeded(enable);
     }
@@ -375,5 +355,45 @@ public class ProgressWindow extends ProgressIndicatorBase implements BlockingPro
   @Override
   public String toString() {
     return getTitle() + " " + System.identityHashCode(this) + ": running="+isRunning()+"; canceled="+isCanceled();
+  }
+
+  private class MyDelegate extends AbstractProgressIndicatorBase implements ProgressIndicatorEx {
+    @Override
+    public void cancel() {
+      super.cancel();
+      if (myDialog != null) {
+        myDialog.cancel();
+      }
+    }
+
+    @Override
+    public void checkCanceled() {
+      super.checkCanceled();
+      // assume checkCanceled() would be called from the correct thread
+      enableCancelButton(!ProgressManager.getInstance().isInNonCancelableSection());
+    }
+
+    @Override
+    public void addStateDelegate(@NotNull ProgressIndicatorEx delegate) {
+      throw new IncorrectOperationException();
+    }
+
+    @Override
+    public void finish(@NotNull TaskInfo task) {
+    }
+
+    @Override
+    public boolean isFinished(@NotNull TaskInfo task) {
+      return true;
+    }
+
+    @Override
+    public boolean wasStarted() {
+      return false;
+    }
+
+    @Override
+    public void processFinish() {
+    }
   }
 }

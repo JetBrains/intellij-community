@@ -45,7 +45,13 @@ public class YAMLColorsPage implements ColorSettingsPage {
                                           "      title: Static Sidebar\n" +
                                           "      body: The body of a static sidebar\n" +
                                           "  type: StaticSidebar\n" +
-                                          "  type: > some_type_here";
+                                          "  description: >\n" +
+                                          "    Sidebar configuration example\n" +
+                                          "  extensions:\n" +
+                                          "    - &params \n" +
+                                          "        auto_run: true\n" +
+                                          "        reload: true\n" +
+                                          "    - *params";
 
   private static final AttributesDescriptor[] ATTRS = new AttributesDescriptor[]{
       new AttributesDescriptor(YAMLBundle.message("color.settings.yaml.key"), YAMLHighlighter.SCALAR_KEY),
@@ -55,6 +61,8 @@ public class YAMLColorsPage implements ColorSettingsPage {
       new AttributesDescriptor(YAMLBundle.message("color.settings.yaml.scalar.text"), YAMLHighlighter.SCALAR_TEXT),
       new AttributesDescriptor(YAMLBundle.message("color.settings.yaml.text"), YAMLHighlighter.TEXT),
       new AttributesDescriptor(YAMLBundle.message("color.settings.yaml.sign"), YAMLHighlighter.SIGN),
+      new AttributesDescriptor(YAMLBundle.message("color.settings.yaml.anchor"), YAMLHighlighter.ANCHOR),
+      new AttributesDescriptor(YAMLBundle.message("color.settings.yaml.alias"), YAMLHighlighter.ALIAS),
       new AttributesDescriptor(YAMLBundle.message("color.settings.yaml.comment"), YAMLHighlighter.COMMENT)
   };
 

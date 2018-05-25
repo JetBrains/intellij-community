@@ -418,5 +418,42 @@
       <add-to-group group-id="ChangesView.GroupBy"/>
     </action>
 
+    <group id="TouchBarDefault" text="Default">
+      <reference ref="CompileDirty"/>
+      <reference ref="RunConfiguration"/>
+      <group id="RunnerActionsTouchbar"/> <!--filled from ExecutorRegistry-->
+      <reference ref="Stop"/>
+      <separator/>
+      <reference ref="Vcs.UpdateProject"/>
+      <reference ref="CheckinProject"/>
+      <add-to-group group-id="TouchBar" anchor="before" relative-to-action="TouchBarDebugger"/>
+      <group id="TouchBarDefault_alt" text="Default with Alt key">
+        <separator text="type.flexible"/>
+        <reference ref="RevealGroup"/>
+      </group>
+      <group id="TouchBarDefault_cmd" text="Default with Cmd key">
+        <!--Use Cmd modifier key to show Navigation buttons, Bookmark and Breakpoint toggles and to Show Usages/-->
+        <!--Cmd key is used, because it’s used in most of the action shortcuts: Back/Forward, Breakpoint and Find Usages./-->
+        <reference ref="Back"/>
+        <reference ref="Forward"/>
+        <separator text="type.big"/>
+        <reference ref="ToggleBookmark"/>
+        <reference ref="ToggleLineBreakpoint"/>
+        <separator text="type.flexible"/>
+        <reference ref="FindUsages"/>
+      </group>
+      <group id="TouchBarDefault_cmd.alt" text="Default with Alt+Cmd key">
+        <separator text="type.flexible"/>
+        <reference ref="ShowUsages"/>
+      </group>
+      <group id="TouchBarDefault_shift" text="Default with Shift key">
+        <!--Use Shift to show Refactor actions/-->
+        <reference ref="RenameElement"/>
+        <reference ref="ChangeSignature"/>
+        <separator text="type.flexible"/>
+        <reference ref="CopyElement"/>
+        <reference ref="Move"/>
+      </group>
+    </group>
   </actions>
 </idea-plugin>

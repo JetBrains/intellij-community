@@ -1,19 +1,26 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.execution.testDiscovery.actions;
 
+import com.intellij.execution.Location;
+import com.intellij.execution.junit2.info.MethodLocation;
 import com.intellij.ide.SelectInEditorManager;
+import com.intellij.openapi.actionSystem.DataProvider;
 import com.intellij.openapi.fileEditor.*;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleUtilCore;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Segment;
 import com.intellij.openapi.util.TextRange;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.psi.PsiMethod;
+import com.intellij.pom.Navigatable;
+import com.intellij.psi.*;
 import com.intellij.ui.SimpleTextAttributes;
+import com.intellij.usageView.UsageInfo;
 import com.intellij.usages.TextChunk;
 import com.intellij.usages.Usage;
 import com.intellij.usages.UsagePresentation;
+import com.intellij.usages.UsageView;
 import com.intellij.usages.rules.PsiElementUsage;
 import com.intellij.usages.rules.UsageInFile;
 import com.intellij.usages.rules.UsageInModule;
@@ -21,20 +28,44 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.List;
+import java.util.Objects;
 
-class TestMethodUsage implements Usage, UsageInFile, UsageInModule, PsiElementUsage {
-  private final DiscoveredTestsTreeModel.Node<PsiMethod> myNode;
+class TestMethodUsage implements Usage, UsageInFile, UsageInModule, PsiElementUsage, DataProvider {
+  @NotNull
+  private final Collection<String> myParameters;
+  @NotNull
+  private final SmartPsiElementPointer<PsiMethod> myTestMethodPointer;
+  @Nullable
+  private final SmartPsiElementPointer<PsiClass> myTestClassPointer;
 
-  TestMethodUsage(DiscoveredTestsTreeModel.Node<PsiMethod> node) {myNode = node;}
+  TestMethodUsage(@NotNull SmartPsiElementPointer<PsiMethod> testMethod,
+                  @NotNull SmartPsiElementPointer<PsiClass> testClass,
+                  @NotNull Collection<String> parameters) {
+    myTestMethodPointer = testMethod;
+    myTestClassPointer = parameters.isEmpty() ? null : testClass;
+    myParameters = parameters;
+  }
+
+  @Nullable
+  public Location<PsiMethod> calculateLocation() {
+    PsiMethod m = myTestMethodPointer.getElement();
+    if (m == null) return null;
+    PsiClass c = myTestClassPointer == null ? m.getContainingClass() : myTestClassPointer.getElement();
+    if (c == null) return null;
+    return MethodLocation.elementInClass(m, c);
+  }
 
   @Override
   public VirtualFile getFile() {
-    return myNode.getPointer().getVirtualFile();
+    return getPointer().getVirtualFile();
   }
 
   @Override
   public Module getModule() {
-    return ModuleUtilCore.findModuleForFile(myNode.getPointer().getContainingFile());
+    return ModuleUtilCore.findModuleForFile(getPointer().getContainingFile());
   }
 
   @NotNull
@@ -50,12 +81,12 @@ class TestMethodUsage implements Usage, UsageInFile, UsageInModule, PsiElementUs
       @NotNull
       @Override
       public String getPlainText() {
-        return myNode.getName();
+        return StringUtil.notNullize(Objects.requireNonNull(getElement()).getName());
       }
 
       @Override
       public Icon getIcon() {
-        return myNode.getIcon();
+        return Objects.requireNonNull(getElement()).getIcon(0);
       }
 
       @Override
@@ -67,7 +98,7 @@ class TestMethodUsage implements Usage, UsageInFile, UsageInModule, PsiElementUs
 
   @Override
   public boolean isValid() {
-    return myNode.getPointer().getElement() != null;
+    return getPointer().getElement() != null;
   }
 
   @Override
@@ -80,11 +111,11 @@ class TestMethodUsage implements Usage, UsageInFile, UsageInModule, PsiElementUs
   public FileEditorLocation getLocation() {
     VirtualFile virtualFile = getFile();
     if (virtualFile == null) return null;
-    Project project = myNode.getPointer().getProject();
+    Project project = getPointer().getProject();
     FileEditor editor = FileEditorManager.getInstance(project).getSelectedEditor(virtualFile);
     if (!(editor instanceof TextEditor)) return null;
 
-    Segment segment = myNode.getPointer().getPsiRange();
+    Segment segment = getPointer().getPsiRange();
     if (segment == null) return null;
     return new TextEditorLocation(segment.getStartOffset(), (TextEditor)editor);
   }
@@ -96,9 +127,9 @@ class TestMethodUsage implements Usage, UsageInFile, UsageInModule, PsiElementUs
 
   @Override
   public void highlightInEditor() {
-    PsiMethod element = getElement();
+    PsiElement element = getElement();
     if (element != null) {
-      Project project = myNode.getPointer().getProject();
+      Project project = getPointer().getProject();
       TextRange range = element.getTextRange();
       SelectInEditorManager.getInstance(project).selectInEditor(getFile(), range.getStartOffset(), range.getEndOffset(), false, false);
     }
@@ -106,9 +137,9 @@ class TestMethodUsage implements Usage, UsageInFile, UsageInModule, PsiElementUs
 
   @Override
   public void navigate(boolean requestFocus) {
-    PsiMethod element = getElement();
+    PsiElement element = getElement();
     if (element != null) {
-      element.navigate(requestFocus);
+      ((Navigatable)element).navigate(requestFocus);
     }
   }
 
@@ -124,12 +155,25 @@ class TestMethodUsage implements Usage, UsageInFile, UsageInModule, PsiElementUs
 
   @Nullable
   @Override
-  public PsiMethod getElement() {
-    return myNode.getPointer().getElement();
+  public PsiMember getElement() {
+    return getPointer().getElement();
+  }
+
+  @NotNull
+  private SmartPsiElementPointer<? extends PsiMember> getPointer() {
+    return myTestClassPointer != null ? myTestClassPointer : myTestMethodPointer;
   }
 
   @Override
   public boolean isNonCodeUsage() {
     return false;
+  }
+
+  @Nullable
+  @Override
+  public Object getData(String dataId) {
+    if (!UsageView.USAGE_INFO_LIST_KEY.is(dataId)) return null;
+    PsiElement psi = getElement();
+    return psi == null ? null : Collections.singletonList(new UsageInfo(psi));
   }
 }

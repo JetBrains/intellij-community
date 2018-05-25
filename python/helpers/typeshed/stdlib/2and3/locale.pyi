@@ -1,8 +1,8 @@
 # Stubs for locale
 
-import sys
 from decimal import Decimal
 from typing import Any, Dict, Iterable, List, Mapping, Optional, Sequence, Tuple, Union
+import sys
 
 # workaround for mypy#2010
 if sys.version_info < (3,):

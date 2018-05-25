@@ -6,12 +6,6 @@
     <!-- Add your application components here -->
   </application-components>
 
-  <project-components>
-    <component>
-      <implementation-class>com.jetbrains.jsonSchema.widget.JsonWidgetProvider</implementation-class>
-    </component>
-  </project-components>
-
   <actions>
     <!-- Add your actions here -->
   </actions>
@@ -25,6 +19,7 @@
     <lang.syntaxHighlighterFactory language="JSON" implementationClass="com.intellij.json.highlighting.JsonSyntaxHighlighterFactory"/>
     <lang.syntaxHighlighterFactory language="JSON5" implementationClass="com.intellij.json.json5.highlighting.Json5SyntaxHighlightingFactory"/>
     <psi.treeChangePreprocessor implementation="com.intellij.json.psi.impl.JsonTreeChangePreprocessor"/>
+    <statusBarWidgetProvider implementation="com.jetbrains.jsonSchema.widget.JsonSchemaStatusWidgetProvider" />
 
     <!-- Code style and formatting -->
     <codeStyleSettingsProvider implementation="com.intellij.json.formatter.JsonCodeStyleSettingsProvider"/>
@@ -94,6 +89,7 @@
                                 implementationClass="com.jetbrains.jsonSchema.impl.JsonSchemaDocumentationProvider"/>
     <refactoring.elementListenerProvider implementation="com.jetbrains.jsonSchema.JsonSchemaRefactoringListenerProvider"/>
     <editorNotificationProvider implementation="com.jetbrains.jsonSchema.impl.JsonSchemaConflictNotificationProvider"/>
+    <statistics.applicationUsagesCollector implementation="com.jetbrains.jsonSchema.impl.JsonSchemaUsageTriggerCollector"/>
 
     <psi.referenceContributor language="JSON" implementation="com.jetbrains.jsonSchema.impl.JsonSchemaReferenceContributor"/>
   </extensions>

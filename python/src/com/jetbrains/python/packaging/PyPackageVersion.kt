@@ -15,5 +15,5 @@ data class PyPackageVersion(val epoch: String? = null,
                             val dev: String? = null,
                             val local: String? = null) {
 
-  override fun toString() = PyRequirementVersion(epoch, release, pre, post, dev, local).presentableText
+  override fun toString(): String = PyRequirementVersion(epoch, release, pre, post, dev, local).presentableText
 }

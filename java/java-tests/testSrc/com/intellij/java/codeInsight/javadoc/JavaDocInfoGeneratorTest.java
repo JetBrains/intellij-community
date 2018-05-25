@@ -457,6 +457,11 @@ public class JavaDocInfoGeneratorTest extends CodeInsightTestCase {
     verifyJavaDoc(aPackage);
   }
 
+  public void testLiteralInsideCode() throws Exception {
+    useJava8();
+    doTestClass();
+  }
+
   @Override
   protected String getTestDataPath() {
     return JavaTestUtil.getJavaTestDataPath();

@@ -24,7 +24,7 @@ public class SingleClassesTest {
     fixture = new DecompilerTestFixture();
     fixture.setUp(IFernflowerPreferences.BYTECODE_SOURCE_MAPPING, "1",
                   IFernflowerPreferences.DUMP_ORIGINAL_LINES, "1",
-                  IFernflowerPreferences.FAIL_ON_INVALID_BYTECODE, "0");
+                  IFernflowerPreferences.IGNORE_INVALID_BYTECODE, "1");
   }
 
   @After

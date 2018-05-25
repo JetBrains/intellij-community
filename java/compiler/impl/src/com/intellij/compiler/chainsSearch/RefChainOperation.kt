@@ -37,9 +37,9 @@ sealed class RefChainOperation {
 class TypeCast(override val lightRef: LightRef.LightClassHierarchyElementDef,
                val castTypeRef: LightRef.LightClassHierarchyElementDef,
                refService: CompilerReferenceServiceEx): RefChainOperation() {
-  override val qualifierRawName
+  override val qualifierRawName: String
     get() = operandName.value
-  override val qualifierDef
+  override val qualifierDef: LightRef.LightClassHierarchyElementDef
     get() = lightRef
 
   private val operandName = lazy(LazyThreadSafetyMode.NONE) {

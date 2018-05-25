@@ -92,9 +92,6 @@ public class DialogWrapperPeerImpl extends DialogWrapperPeer {
       myProject = project;
 
       window = myWindowManager.suggestParentWindow(project);
-      if (!headless && window != null && !(window instanceof Frame) && !(window instanceof Dialog)) {
-        throw new IllegalStateException("suggestParentWindow() returned " + window + " which is not a frame or dialog");
-      }
       if (window == null) {
         Window focusedWindow = myWindowManager.getMostRecentFocusedWindow();
         if (focusedWindow instanceof IdeFrameImpl) {
@@ -431,7 +428,7 @@ public class DialogWrapperPeerImpl extends DialogWrapperPeer {
     myDialog.getWindow().setAutoRequestFocus(true);
 
     if (myTouchBarButtons != null && myProject != null)
-      myTouchBar = TouchBarsManager.showTempButtonsBar(myTouchBarButtons, myProject);
+      myTouchBar = TouchBarsManager.showDlgButtonsBar(myTouchBarButtons, myProject);
 
     try {
       myDialog.show();

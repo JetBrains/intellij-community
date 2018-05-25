@@ -17,6 +17,7 @@ package com.intellij.refactoring.memberPushDown;
 
 import com.intellij.codeInsight.AnnotationUtil;
 import com.intellij.codeInsight.ChangeContextUtil;
+import com.intellij.codeInsight.generation.GenerateMembersUtil;
 import com.intellij.codeInsight.generation.OverrideImplementUtil;
 import com.intellij.codeInsight.intention.impl.CreateClassDialog;
 import com.intellij.codeInsight.intention.impl.CreateSubclassAction;
@@ -277,6 +278,12 @@ public class JavaPushDownDelegate extends PushDownDelegate<MemberInfo, PsiMember
             if (annotation != null && !leaveOverrideAnnotation(sourceClass, substitutor, method)) {
               annotation.delete();
             }
+            PsiParameter[] sourceParameters = method.getParameterList().getParameters();
+            PsiParameter[] targetParameters = methodBySignature.getParameterList().getParameters();
+            for (int i = 0; i < sourceParameters.length; i++) {
+              GenerateMembersUtil.copyAnnotations(sourceParameters[i], targetParameters[i]);
+            }
+            GenerateMembersUtil.copyAnnotations(method, methodBySignature);
           }
           final PsiDocComment oldDocComment = method.getDocComment();
           if (oldDocComment != null) {

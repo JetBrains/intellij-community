@@ -200,7 +200,7 @@ public class CommandLineWrapper {
 
   /** @noinspection ResultOfMethodCallIgnored*/
   private static List readLinesAndDeleteFile(File file) throws IOException {
-    BufferedReader reader = new BufferedReader(new FileReader(file));
+    BufferedReader reader = new BufferedReader(new InputStreamReader(new FileInputStream(file), "UTF-8"));
     try {
       List lines = new ArrayList();
       String line;

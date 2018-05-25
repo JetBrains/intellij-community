@@ -14,7 +14,6 @@
  * limitations under the License.
  */
 
-
 package com.intellij.execution.ui
 
 import com.intellij.application.options.ModuleDescriptionsComboBox
@@ -36,7 +35,6 @@ import com.intellij.ui.EditorTextFieldWithBrowseButton
 /**
  * @author nik
  */
-
 abstract class DefaultJreSelector {
   companion object {
     @JvmStatic
@@ -70,7 +68,7 @@ abstract class DefaultJreSelector {
 
 
   class ProjectSdkSelector(val project: Project): DefaultJreSelector() {
-    override fun getNameAndDescription() = Pair.create(ProjectRootManager.getInstance(project).projectSdkName, "project SDK")
+    override fun getNameAndDescription(): Pair<String?, String> = Pair.create(ProjectRootManager.getInstance(project).projectSdkName, "project SDK")
   }
 
   open class SdkFromModuleDependencies<T: ComboBox<*>>(val moduleComboBox: T, val getSelectedModule: (T) -> Module?, val productionOnly: () -> Boolean): DefaultJreSelector() {
@@ -105,7 +103,6 @@ abstract class DefaultJreSelector {
       })
     }
   }
-
 }
 
 private fun <T: ComboBox<*>> isClassInProductionSources(moduleSelector: T, getSelectedModule: (T) -> Module?, classSelector: EditorTextFieldWithBrowseButton): Boolean {

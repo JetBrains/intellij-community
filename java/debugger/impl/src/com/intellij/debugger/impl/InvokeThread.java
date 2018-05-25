@@ -113,7 +113,7 @@ public abstract class InvokeThread<E extends PrioritizedTask> {
   protected abstract void processEvent(E e);
 
   protected void startNewWorkerThread() {
-    final WorkerThreadRequest workerRequest = new WorkerThreadRequest<>(this);
+    final WorkerThreadRequest<E> workerRequest = new WorkerThreadRequest<>(this);
     myCurrentRequest = workerRequest;
     workerRequest.setRequestFuture( ApplicationManager.getApplication().executeOnPooledThread(workerRequest) );
   }
@@ -132,10 +132,8 @@ public abstract class InvokeThread<E extends PrioritizedTask> {
 
           final WorkerThreadRequest currentRequest = getCurrentRequest();
           if(currentRequest != threadRequest) {
-            LOG.error("Expected " + threadRequest + " instead of " + currentRequest);
-            if (currentRequest != null && !currentRequest.isDone()) {
-              continue; // ensure events are processed by one thread at a time
-            }
+            reportCommandError(new IllegalStateException("Expected " + threadRequest + " instead of " + currentRequest));
+            break; // ensure events are processed by one thread at a time
           }
 
           processEvent(myEvents.get());

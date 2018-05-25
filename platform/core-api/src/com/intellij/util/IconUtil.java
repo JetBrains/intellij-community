@@ -258,42 +258,42 @@ public class IconUtil {
 
   @NotNull
   public static Icon getAddClassIcon() {
-    return getToolbarDecoratorIcon("addClass.png");
+    return AllIcons.ToolbarDecorator.AddClass;
   }
 
   @NotNull
   public static Icon getAddPatternIcon() {
-    return getToolbarDecoratorIcon("addPattern.png");
+    return AllIcons.ToolbarDecorator.AddPattern;
   }
 
   @NotNull
   public static Icon getAddJiraPatternIcon() {
-    return getToolbarDecoratorIcon("addJira.png");
+    return AllIcons.ToolbarDecorator.AddJira;
   }
 
   @NotNull
   public static Icon getAddYouTrackPatternIcon() {
-    return getToolbarDecoratorIcon("addYouTrack.png");
+    return AllIcons.ToolbarDecorator.AddYouTrack;
   }
 
   @NotNull
   public static Icon getAddBlankLineIcon() {
-    return getToolbarDecoratorIcon("addBlankLine.png");
+    return AllIcons.ToolbarDecorator.AddBlankLine;
   }
 
   @NotNull
   public static Icon getAddPackageIcon() {
-    return getToolbarDecoratorIcon("addPackage.png");
+    return AllIcons.ToolbarDecorator.AddFolder;
   }
 
   @NotNull
   public static Icon getAddLinkIcon() {
-    return getToolbarDecoratorIcon("addLink.png");
+    return AllIcons.ToolbarDecorator.AddLink;
   }
 
   @NotNull
   public static Icon getAddFolderIcon() {
-    return getToolbarDecoratorIcon("addFolder.png");
+    return AllIcons.ToolbarDecorator.AddFolder;
   }
 
   @NotNull
@@ -467,7 +467,6 @@ public class IconUtil {
   public static Icon scale(@NotNull Icon icon, @Nullable Component ancestor, float scale) {
     if (icon instanceof ScalableIcon) {
       if (icon instanceof ScaleContextAware) {
-        //noinspection unchecked
         ((ScaleContextAware)icon).updateScaleContext(ancestor != null ? ScaleContext.create(ancestor) : null);
       }
       return ((ScalableIcon)icon).scale(scale);
@@ -494,7 +493,6 @@ public class IconUtil {
     if (icon instanceof ScalableIcon) {
       if (icon instanceof ScaleContextAware) {
         ScaleContextAware ctxIcon = (ScaleContextAware)icon;
-        //noinspection unchecked
         ctxIcon.updateScaleContext(ancestor != null ? ScaleContext.create(ancestor) : null);
         // take into account the user scale of the icon
         double usrScale = ctxIcon.getScaleContext().getScale(USR_SCALE);

@@ -853,4 +853,8 @@ class Foo {
     checkPreferredItems 0, 'BlaOperation'
   }
 
+  void testPreferFinalBeforeVariable() {
+    checkPreferredItems 0, 'final', 'find1'
+  }
+
 }

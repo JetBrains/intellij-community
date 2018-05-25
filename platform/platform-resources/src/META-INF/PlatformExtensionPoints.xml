@@ -181,6 +181,7 @@
     </extensionPoint>
 
     <extensionPoint name="statusBarComponent" interface="com.intellij.openapi.wm.StatusBarCustomComponentFactory"/>
+    <extensionPoint name="statusBarWidgetProvider" interface="com.intellij.openapi.wm.StatusBarWidgetProvider"/>
 
     <extensionPoint name="checkinHandlerFactory" interface="com.intellij.openapi.vcs.checkin.CheckinHandlerFactory"/>
 
@@ -302,7 +303,13 @@
 
     <extensionPoint name="tasks.contextProvider" interface="com.intellij.tasks.context.WorkingContextProvider" area="IDEA_PROJECT"/>
     <extensionPoint name="smartSelectProvider" interface="com.intellij.openapi.ide.SmartSelectProvider"/>
+
+    <extensionPoint name="sshCredentialProvider" interface="com.intellij.remote.SshCredentialProvider"/>
+
     <extensionPoint name="experimentalFeature" beanClass="com.intellij.openapi.application.ExperimentalFeatureImpl" />
+    <extensionPoint name="themeProvider" beanClass="com.intellij.ide.ui.UIThemeProvider">
+      <with attribute="path"/>
+    </extensionPoint>
 
     <extensionPoint qualifiedName="com.intellij.tree.CustomLanguageASTComparator" beanClass="com.intellij.lang.LanguageExtensionPoint">
       <with attribute="implementationClass" implements="com.intellij.psi.tree.CustomLanguageASTComparator"/>

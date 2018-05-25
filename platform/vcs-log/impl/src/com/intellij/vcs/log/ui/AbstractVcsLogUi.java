@@ -43,6 +43,7 @@ import com.intellij.vcs.log.visible.VisiblePack;
 import com.intellij.vcs.log.visible.VisiblePackChangeListener;
 import com.intellij.vcs.log.visible.VisiblePackRefresher;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.awt.*;
 import java.util.ArrayList;
@@ -127,6 +128,9 @@ public abstract class AbstractVcsLogUi implements VcsLogUi, Disposable {
   @NotNull
   public abstract VcsLogUiProperties getProperties();
 
+  @Nullable
+  public abstract String getHelpId();
+
   @NotNull
   public VisiblePackRefresher getRefresher() {
     return myRefresher;
@@ -136,7 +140,7 @@ public abstract class AbstractVcsLogUi implements VcsLogUi, Disposable {
   public VcsLogColorManager getColorManager() {
     return myColorManager;
   }
-  
+
   @NotNull
   public VcsLog getVcsLog() {
     return myLog;

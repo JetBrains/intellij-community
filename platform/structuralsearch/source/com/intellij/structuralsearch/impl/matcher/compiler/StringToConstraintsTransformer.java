@@ -4,9 +4,11 @@ package com.intellij.structuralsearch.impl.matcher.compiler;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.structuralsearch.*;
 import com.intellij.structuralsearch.plugin.ui.Configuration;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
+import java.util.Set;
 import java.util.regex.Pattern;
 import java.util.regex.PatternSyntaxException;
 
@@ -22,6 +24,8 @@ public class StringToConstraintsTransformer {
   @NonNls private static final String SCRIPT = "script";
   @NonNls private static final String CONTAINS = "contains";
   @NonNls private static final String WITHIN = "within";
+
+  private static final Set<String> knownOptions = ContainerUtil.set(REF, REGEX, REGEXW, EXPRTYPE, FORMAL, SCRIPT, CONTAINS, WITHIN);
 
   @SuppressWarnings("AssignmentToForLoopParameter")
   public static void transformCriteria(String criteria, MatchOptions options) {
@@ -103,8 +107,10 @@ public class StringToConstraintsTransformer {
               ++index;
             } else if (ch == '{') {
               ++index;
-              minOccurs = 0;
+              minOccurs = -1;
+              maxOccurs = -1;
               while (index < length && (ch = criteria.charAt(index)) >= '0' && ch <= '9') {
+                if (minOccurs < 0) minOccurs = 0;
                 minOccurs = (minOccurs * 10) + (ch - '0');
                 if (minOccurs < 0) throw new MalformedPatternException(SSRBundle.message("error.overflow"));
                 ++index;
@@ -112,21 +118,26 @@ public class StringToConstraintsTransformer {
 
               if (ch==',') {
                 ++index;
-                maxOccurs = 0;
 
                 while (index < length && (ch = criteria.charAt(index)) >= '0' && ch <= '9') {
+                  if (maxOccurs < 0) maxOccurs = 0;
                   maxOccurs = (maxOccurs * 10) + (ch - '0');
                   if (maxOccurs < 0) throw new MalformedPatternException(SSRBundle.message("error.overflow"));
                   ++index;
                 }
               } else {
-                maxOccurs = Integer.MAX_VALUE;
+                maxOccurs = -2;
               }
 
               if (ch != '}') {
-                if (maxOccurs == Integer.MAX_VALUE) throw new MalformedPatternException(SSRBundle.message("error.expected.brace1"));
+                if (minOccurs < 0 && maxOccurs < 0) throw new MalformedPatternException(SSRBundle.message("error.expected.digit"));
+                if (maxOccurs < 0) throw new MalformedPatternException(SSRBundle.message("error.expected.brace1"));
                 else throw new MalformedPatternException(SSRBundle.message("error.expected.brace2"));
               }
+              if (minOccurs < 0 && maxOccurs < 0) throw new MalformedPatternException(SSRBundle.message("error.empty.quantifier"));
+              else if (minOccurs == -1) minOccurs = 0;
+              else if (maxOccurs == -1) maxOccurs = Integer.MAX_VALUE;
+              else if (maxOccurs == -2) maxOccurs = minOccurs;
               ++index;
             }
 
@@ -244,7 +255,7 @@ public class StringToConstraintsTransformer {
         }
       }
       if (quoted) throw new MalformedPatternException(SSRBundle.message("error.expected.value", "\""));
-      if (ch != ']') throw new MalformedPatternException(SSRBundle.message("error.expected.condition.or.bracket"));
+      if (ch != ']') throw new MalformedPatternException(SSRBundle.message("error.expected.value", "]"));
       parseCondition(constraint, criteria.substring(index, endIndex));
       return endIndex + 1;
     }
@@ -294,6 +305,9 @@ public class StringToConstraintsTransformer {
       else if (c == '(') {
         if (text.length() == 0) throw new MalformedPatternException(SSRBundle.message("error.expected.condition.name"));
         final String option = text.toString();
+        if (!knownOptions.contains(option)) {
+          throw new MalformedPatternException(SSRBundle.message("option.is.not.recognized.error.message", option));
+        }
         text.setLength(0);
         int spaces = 0; // balance spaces surrounding content between parentheses
         while (++i < length && condition.charAt(i) == ' ') spaces++;
@@ -315,6 +329,7 @@ public class StringToConstraintsTransformer {
           }
           text.append(c);
         }
+        if (text.length() == 0) throw new MalformedPatternException(SSRBundle.message("error.argument.expected", option));
         if (quoted) throw new MalformedPatternException(SSRBundle.message("error.expected.value", "\""));
         if (!closed) throw new MalformedPatternException(SSRBundle.message("error.expected.value",
                                                                            StringUtil.repeatSymbol(' ', spaces) + ")"));
@@ -349,19 +364,17 @@ public class StringToConstraintsTransformer {
       handleOption(constraint, text.toString(), "", invert);
     }
     else if (invert) throw new MalformedPatternException(SSRBundle.message("error.expected.condition", "!"));
-    else if (optionExpected) throw new MalformedPatternException(SSRBundle.message("error.expected.condition", "&&"));
+    else if (optionExpected) throw new MalformedPatternException(SSRBundle.message("error.expected.condition", length == 0 ? "[" : "&&"));
   }
 
   private static void handleOption(@NotNull MatchVariableConstraint constraint, @NotNull String option, @NotNull String argument,
                                    boolean invert) {
     argument = argument.trim();
     if (option.equalsIgnoreCase(REF)) {
-      if (argument.isEmpty()) throw new MalformedPatternException(SSRBundle.message("error.pattern.argument.expected", option));
       constraint.setReferenceConstraint(argument);
       constraint.setInvertReference(invert);
     }
     else if (option.equalsIgnoreCase(REGEX) || option.equalsIgnoreCase(REGEXW)) {
-      if (argument.isEmpty()) throw new MalformedPatternException(SSRBundle.message("error.regular.expression.argument.expected", option));
       if (argument.charAt(0) == '*') {
         argument = argument.substring(1);
         constraint.setWithinHierarchy(true);
@@ -374,7 +387,6 @@ public class StringToConstraintsTransformer {
       }
     }
     else if (option.equalsIgnoreCase(EXPRTYPE)) {
-      if (argument.isEmpty()) throw new MalformedPatternException(SSRBundle.message("error.regular.expression.argument.expected", option));
       if (argument.charAt(0) == '*') {
         argument = argument.substring(1);
         constraint.setExprTypeWithinHierarchy(true);
@@ -384,7 +396,6 @@ public class StringToConstraintsTransformer {
       constraint.setInvertExprType(invert);
     }
     else if (option.equalsIgnoreCase(FORMAL)) {
-      if (argument.isEmpty()) throw new MalformedPatternException(SSRBundle.message("error.regular.expression.argument.expected", option));
       if (argument.charAt(0) == '*') {
         argument = argument.substring(1);
         constraint.setFormalArgTypeWithinHierarchy(true);
@@ -394,24 +405,21 @@ public class StringToConstraintsTransformer {
       constraint.setInvertFormalType(invert);
     }
     else if (option.equalsIgnoreCase(SCRIPT)) {
-      if (argument.isEmpty()) throw new MalformedPatternException(SSRBundle.message("error.script.argument.expected", option));
       if (invert) throw new MalformedPatternException(SSRBundle.message("error.cannot.invert", option));
       constraint.setScriptCodeConstraint(argument);
     }
     else if (option.equalsIgnoreCase(CONTAINS)) {
-      if (argument.isEmpty()) throw new MalformedPatternException(SSRBundle.message("error.pattern.argument.expected", option));
       constraint.setContainsConstraint(argument);
       constraint.setInvertContainsConstraint(invert);
     }
     else if (option.equalsIgnoreCase(WITHIN)) {
       if (!Configuration.CONTEXT_VAR_NAME.equals(constraint.getName()))
         throw new MalformedPatternException(SSRBundle.message("error.only.applicable.to.complete.match", option));
-      if (argument.isEmpty()) throw new MalformedPatternException(SSRBundle.message("error.pattern.argument.expected", option));
       constraint.setWithinConstraint(argument);
       constraint.setInvertWithinConstraint(invert);
     }
     else {
-      throw new UnsupportedPatternException(SSRBundle.message("option.is.not.recognized.error.message", option));
+      assert false;
     }
   }
 

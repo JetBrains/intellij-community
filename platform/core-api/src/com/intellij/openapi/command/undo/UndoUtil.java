@@ -44,7 +44,7 @@ public class UndoUtil {
   }
 
   /**
-   * @deprecated please use CommandProcessor.getInstance().addAffectedFiles instead
+   * @deprecated please use {@link CommandProcessor#addAffectedFiles} instead
    */
   public static void markVirtualFileForUndo(@NotNull Project project, @NotNull VirtualFile file) {
     CommandProcessor.getInstance().addAffectedFiles(project, file);

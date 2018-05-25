@@ -976,7 +976,7 @@ public class ControlFlowAnalyzer extends JavaElementVisitor {
   }
 
   private void addConditionalRuntimeThrow() {
-    if (myTrapStack.isEmpty()) {
+    if (!shouldHandleException()) {
       return;
     }
     
@@ -990,6 +990,15 @@ public class ControlFlowAnalyzer extends JavaElementVisitor {
     throwException(myError, null);
 
     ifNoException.setOffset(myCurrentFlow.getInstructionCount());
+  }
+
+  private boolean shouldHandleException() {
+    for (Trap trap : myTrapStack) {
+      if (trap instanceof TryCatch || trap instanceof TryFinally || trap instanceof TwrFinally) {
+        return true;
+      }
+    }
+    return false;
   }
 
   @Override
@@ -1040,7 +1049,7 @@ public class ControlFlowAnalyzer extends JavaElementVisitor {
       myTrapStack = myTrapStack.prepend(new InsideFinally(finallyBlock));
 
       finallyBlock.accept(this);
-      addInstruction(new ControlTransferInstruction(null)); // DfaControlTransferValue is on stack
+      controlTransfer(new ExitFinallyTransfer(finallyDescriptor), FList.emptyList());
 
       popTrap(InsideFinally.class);
     }
@@ -1079,7 +1088,7 @@ public class ControlFlowAnalyzer extends JavaElementVisitor {
       myTrapStack = myTrapStack.prepend(new InsideFinally(resourceList));
       startElement(resourceList);
       addThrows(null, closerExceptions.toArray(PsiClassType.EMPTY_ARRAY));
-      addInstruction(new ControlTransferInstruction(null)); // DfaControlTransferValue is on stack
+      controlTransfer(new ExitFinallyTransfer(twrFinallyDescriptor), FList.emptyList()); // DfaControlTransferValue is on stack
       finishElement(resourceList);
       popTrap(InsideFinally.class);
     }
@@ -1700,7 +1709,7 @@ public class ControlFlowAnalyzer extends JavaElementVisitor {
       ifNotFail.setOffset(myCurrentFlow.getInstructionCount());
     }
 
-    if (!myTrapStack.isEmpty()) {
+    if (shouldHandleException()) {
       addMethodThrows(method, anchor);
     }
   }
@@ -1788,7 +1797,7 @@ public class ControlFlowAnalyzer extends JavaElementVisitor {
       addInstruction(new MethodCallInstruction(expression, null, constructor == null ? Collections.emptyList() : JavaMethodContractUtil
         .getMethodContracts(constructor)));
 
-      if (!myTrapStack.isEmpty()) {
+      if (shouldHandleException()) {
         addMethodThrows(constructor, expression);
       }
       setEmptyCollectionSize(expression);
@@ -1882,7 +1891,7 @@ public class ControlFlowAnalyzer extends JavaElementVisitor {
   @Override public void visitPrefixExpression(PsiPrefixExpression expression) {
     startElement(expression);
 
-    DfaValue dfaValue = myFactory.createValue(expression);
+    DfaValue dfaValue = expression.getOperationTokenType() == JavaTokenType.EXCL ? null : myFactory.createValue(expression);
     if (dfaValue != null) {
       // Constant expression is computed: just push the result
       addInstruction(new PushInstruction(dfaValue, expression));
@@ -1990,16 +1999,12 @@ public class ControlFlowAnalyzer extends JavaElementVisitor {
     addInstruction(new PushInstruction(myFactory.controlTransfer(ReturnTransfer.INSTANCE, FList.emptyList()), null));
     myInlinedBlockContext = new InlinedBlockContext(block, resultNullness == Nullness.NOT_NULL, target);
     startElement(block);
-    try {
-      block.accept(this);
-    }
-    finally {
-      finishElement(block);
-      myInlinedBlockContext = oldBlock;
-      popTrap(Trap.InsideInlinedBlock.class);
-      // Pop transfer value
-      addInstruction(new PopInstruction());
-    }
+    block.accept(this);
+    finishElement(block);
+    myInlinedBlockContext = oldBlock;
+    popTrap(Trap.InsideInlinedBlock.class);
+    // Pop transfer value
+    addInstruction(new PopInstruction());
   }
 
   /**

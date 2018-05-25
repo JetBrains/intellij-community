@@ -12,10 +12,10 @@ import com.jetbrains.python.testing.isTestElement
 /**
  * @return Boolean is parameter provided to function by parametrized decorator
  */
-fun PyNamedParameter.isParametrized() = PsiTreeUtil.getParentOfType(this, PyFunction::class.java)
-                                          ?.getParametersFromGenerator()
-                                          ?.contains(name)
-                                        ?: false
+fun PyNamedParameter.isParametrized(): Boolean = PsiTreeUtil.getParentOfType(this, PyFunction::class.java)
+                                                   ?.getParametersFromGenerator()
+                                                   ?.contains(name)
+                                                 ?: false
 
 /**
  * @return List<String> if test function decorated with parametrize -- return parameter names

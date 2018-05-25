@@ -26,5 +26,10 @@
       <option name="name" value="5ddb844f-da77-4dd2-9c71-ab1484ec2e60" />
       <option name="url" value="https://repo.jenkins-ci.org/releases" />
     </remote-repository>
+    <remote-repository>
+      <option name="id" value="groovy" />
+      <option name="name" value="Groovy Bintray Repository" />
+      <option name="url" value="https://dl.bintray.com/groovy/maven/" />
+    </remote-repository>
   </component>
 </project>

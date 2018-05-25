@@ -285,7 +285,7 @@ fun parseAndCheckIsLocalHost(uri: String?, onlyAnyOrLoopback: Boolean = true, ho
   return false
 }
 
-fun HttpRequest.isRegularBrowser() = userAgent?.startsWith("Mozilla/5.0") ?: false
+fun HttpRequest.isRegularBrowser(): Boolean = userAgent?.startsWith("Mozilla/5.0") ?: false
 
 // forbid POST requests from browser without Origin
 fun HttpRequest.isWriteFromBrowserWithoutOrigin(): Boolean {
@@ -295,7 +295,7 @@ fun HttpRequest.isWriteFromBrowserWithoutOrigin(): Boolean {
 
 fun ByteBuf.readUtf8(): String = toString(Charsets.UTF_8)
 
-fun ByteBuf.writeUtf8(data: CharSequence) = writeCharSequence(data, Charsets.UTF_8)
+fun ByteBuf.writeUtf8(data: CharSequence): Int = writeCharSequence(data, Charsets.UTF_8)
 
 @Suppress("FunctionName")
 fun MultiThreadEventLoopGroup(workerCount: Int, threadFactory: ThreadFactory): MultithreadEventLoopGroup {

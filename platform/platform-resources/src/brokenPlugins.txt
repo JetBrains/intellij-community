@@ -96,3 +96,5 @@ com.javils.ThemeSwitcher 1.0 1.1 1.2
 org.ziglang 0.0.3
 com.intellij.aspectj 0.7
 TRTIdea 1.0
+com.intellij.stats.completion 0.0.41 0.0.42 0.0.49 0.0.519 0.0.536 0.0.537 0.0.538 0.1.0 0.1.1 0.1.2
+com.huawei.ide 1.0

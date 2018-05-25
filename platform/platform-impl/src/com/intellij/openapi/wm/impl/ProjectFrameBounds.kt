@@ -16,7 +16,7 @@ import java.awt.Rectangle
 class ProjectFrameBounds(private val project: Project) : PersistentStateComponent<FrameInfo>, ModificationTracker {
   companion object {
     @JvmStatic
-    fun getInstance(project: Project) = project.service<ProjectFrameBounds>()
+    fun getInstance(project: Project): ProjectFrameBounds = project.service<ProjectFrameBounds>()
   }
 
   // in device space
@@ -26,7 +26,7 @@ class ProjectFrameBounds(private val project: Project) : PersistentStateComponen
   val isInFullScreen: Boolean
     get() = rawFrameInfo?.fullScreen ?: false
 
-  override fun getState() = rawFrameInfo
+  override fun getState(): FrameInfo? = rawFrameInfo
 
   override fun loadState(state: FrameInfo) {
     rawFrameInfo = state
@@ -49,10 +49,10 @@ class ProjectFrameBounds(private val project: Project) : PersistentStateComponen
 
 class FrameInfo : BaseState() {
   // flat is used due to backward compatibility
-  @get:Property(flat = true) var bounds by property<Rectangle>()
-  @get:Attribute var extendedState by property(Frame.NORMAL)
+  @get:Property(flat = true) var bounds: Rectangle? by property<Rectangle>()
+  @get:Attribute var extendedState: Int by property(Frame.NORMAL)
 
-  @get:Attribute var fullScreen by property(false)
+  @get:Attribute var fullScreen: Boolean by property(false)
 }
 
 fun WindowManagerImpl.getFrameInfoInDeviceSpace(project: Project): FrameInfo? {

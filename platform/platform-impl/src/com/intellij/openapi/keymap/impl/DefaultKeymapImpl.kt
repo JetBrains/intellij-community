@@ -18,6 +18,7 @@ package com.intellij.openapi.keymap.impl
 import com.intellij.configurationStore.SchemeDataHolder
 import com.intellij.openapi.actionSystem.IdeActions
 import com.intellij.openapi.actionSystem.MouseShortcut
+import com.intellij.openapi.keymap.Keymap
 import com.intellij.openapi.keymap.KeymapManager
 import com.intellij.openapi.options.SchemeState
 import com.intellij.openapi.util.SystemInfo
@@ -31,7 +32,7 @@ open class DefaultKeymapImpl(dataHolder: SchemeDataHolder<KeymapImpl>, private v
       // ignore
     }
 
-  override fun getSchemeState() = SchemeState.NON_PERSISTENT
+  override fun getSchemeState(): SchemeState = SchemeState.NON_PERSISTENT
 
   override fun getPresentableName(): String = DefaultKeymap.instance.getKeymapPresentableName(this)
 
@@ -45,5 +46,5 @@ open class DefaultKeymapImpl(dataHolder: SchemeDataHolder<KeymapImpl>, private v
 
   // default keymap can have parent only in the defaultKeymapManager
   // also, it allows us to avoid dependency on KeymapManager (maybe not initialized yet)
-  override fun findParentScheme(parentSchemeName: String) = defaultKeymapManager.findScheme(parentSchemeName)
+  override fun findParentScheme(parentSchemeName: String): Keymap? = defaultKeymapManager.findScheme(parentSchemeName)
 }

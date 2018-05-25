@@ -692,6 +692,7 @@ public class SearchDialog extends DialogWrapper {
 
   private void removeUnusedVariableConstraints(Configuration configuration) {
     final List<String> variableNames = getVariablesFromListeners();
+    variableNames.add(Configuration.CONTEXT_VAR_NAME);
     configuration.getMatchOptions().retainVariableConstraints(variableNames);
   }
 

@@ -169,7 +169,7 @@ public class FileParser {
     }
 
     if (invalidElements != null) {
-      invalidElements.error(JavaErrorMessages.message("unexpected.token"));
+      invalidElements.rollbackTo();
     }
 
     if (isEmpty) {

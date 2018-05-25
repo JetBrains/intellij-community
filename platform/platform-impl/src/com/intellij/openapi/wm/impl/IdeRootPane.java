@@ -263,12 +263,12 @@ public class IdeRootPane extends JRootPane implements UISettingsListener, Dispos
           public void dispose() {
             componentFactory.disposeComponent(myStatusBar, c);
           }
-        }, "before " + MemoryUsagePanel.WIDGET_ID);
+        }, StatusBar.Anchors.before(MemoryUsagePanel.WIDGET_ID));
       }
     }
 
     myStatusBar.addWidget(myMemoryWidget);
-    myStatusBar.addWidget(new IdeMessagePanel(frame, MessagePool.getInstance()), "before " + MemoryUsagePanel.WIDGET_ID);
+    myStatusBar.addWidget(new IdeMessagePanel(frame, MessagePool.getInstance()), StatusBar.Anchors.before(MemoryUsagePanel.WIDGET_ID));
 
     setMemoryIndicatorVisible(UISettings.getInstance().getShowMemoryIndicator());
   }

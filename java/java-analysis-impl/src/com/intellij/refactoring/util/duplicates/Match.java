@@ -29,6 +29,7 @@ import com.intellij.psi.util.PsiUtil;
 import com.intellij.psi.util.TypeConversionUtil;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.IncorrectOperationException;
+import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -65,6 +66,13 @@ public final class Match {
 
   public PsiElement getMatchEnd() {
     return myMatchEnd;
+  }
+
+  public PsiElement[] getMatchElements() {
+    return StreamEx.iterate(myMatchStart,
+                            Objects::nonNull,
+                            element -> element != myMatchEnd ? element.getNextSibling() : null)
+                   .toArray(PsiElement.EMPTY_ARRAY);
   }
 
   @Nullable
@@ -420,6 +428,10 @@ public final class Match {
 
   public boolean putExtractedParameter(@NotNull ExtractableExpressionPart patternPart, @NotNull ExtractableExpressionPart candidatePart) {
     return ExtractedParameter.match(patternPart, candidatePart, myExtractedParameters);
+  }
+
+  public void addExtractedParameter(@NotNull ExtractedParameter parameter) {
+    myExtractedParameters.add(parameter);
   }
 
   @NotNull

@@ -1,0 +1,1278 @@
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+{
+  generate = [
+    psi = 'no'
+    exact-types = 'elements'
+  ]
+
+  parserClass = 'org.jetbrains.plugins.groovy.lang.parser.GroovyGeneratedParser'
+  parserUtilClass = 'org.jetbrains.plugins.groovy.lang.parser.GroovyParserUtils'
+  parserImports = [
+    'static com.intellij.lang.parser.GeneratedParserUtilBase.*'
+    'static org.jetbrains.plugins.groovy.lang.parser.GroovyGeneratedParserUtils.adapt_builder_'
+  ]
+
+  elementTypeHolderClass = 'org.jetbrains.plugins.groovy.lang.psi.GroovyElementTypes'
+  elementTypeClass = 'org.jetbrains.plugins.groovy.lang.lexer.GroovyElementType'
+  tokenTypeClass = 'org.jetbrains.plugins.groovy.lang.lexer.GroovyElementType'
+
+  tokens = [
+    SH_COMMENT = 'shell comment'
+    SL_COMMENT = 'line comment'
+    ML_COMMENT = 'block comment'
+
+    IDENTIFIER = 'identifier'
+    NL = 'new line'
+
+    T_RBRACE = '}'
+    T_LPAREN = '('
+    T_RPAREN = ')'
+    T_LBRACK = '['
+    T_RBRACK = ']'
+    T_LBRACE = '{'
+    T_ELLIPSIS = '...'
+    T_ARROW = '->'
+    T_DOLLAR = '$'
+    T_AT = '@'
+    T_SEMI = ';'
+    T_COLON = ':'
+    T_COMMA = ','
+    T_INC = '++'
+    T_DEC = '--'
+    T_EQ = '=='
+    T_ID = '==='
+    T_NEQ = '!='
+    T_NID = '!=='
+    T_LAND = '&&'
+    T_LOR = '||'
+    T_NOT = '!'
+    T_BNOT = '~'
+    T_COMPARE = '<=>'
+    T_REGEX_FIND = '=~'
+    T_REGEX_MATCH = '==~'
+    T_LT = '<'
+    T_GT = '>'
+    T_LE = '<='
+    T_GE = '>='
+    T_RANGE = '..'
+    T_RANGE_EX = '..<'
+    T_DOT = '.'
+    T_SAFE_DOT = '?.'
+    T_SPREAD_DOT = '*.'
+    T_METHOD_CLOSURE = '.&'
+    T_Q = '?'
+    T_ELVIS = '?:'
+
+    T_POW = '**'
+    T_STAR = '*'
+    T_DIV = '/'
+    T_REM = '%'
+    T_PLUS = '+'
+    T_MINUS = '-'
+    T_BAND = '&'
+    T_XOR = '^'
+    T_BOR = '|'
+
+    T_ASSIGN = '='
+    T_ELVIS_ASSIGN = '?='
+    T_POW_ASSIGN = '**='
+    T_STAR_ASSIGN = '*='
+    T_DIV_ASSIGN = '/='
+    T_REM_ASSIGN = '%='
+    T_PLUS_ASSIGN = '+='
+    T_MINUS_ASSIGN = '-='
+    T_LSH_ASSIGN = '<<='
+    T_RSH_ASSIGN = '>>='
+    T_RSHU_ASSIGN = '>>>='
+    T_BAND_ASSIGN = '&='
+    T_XOR_ASSIGN = '^='
+    T_BOR_ASSIGN = '|='
+
+    KW_BOOLEAN = 'boolean'
+    KW_BYTE = 'byte'
+    KW_CHAR = 'char'
+    KW_DOUBLE = 'double'
+    KW_FLOAT = 'float'
+    KW_INT = 'int'
+    KW_LONG = 'long'
+    KW_SHORT = 'short'
+    KW_VOID = 'void'
+
+    KW_ABSTRACT = 'abstract'
+    KW_AS = 'as'
+    KW_ASSERT = 'assert'
+    KW_BREAK = 'break'
+    KW_CASE = 'case'
+    KW_CATCH = 'catch'
+    KW_CLASS = 'class'
+    KW_CONTINUE = 'continue'
+    KW_DEF = 'def'
+    KW_DEFAULT = 'default'
+    KW_DO = 'do'
+    KW_ELSE = 'else'
+    KW_ENUM = 'enum'
+    KW_EXTENDS = 'extends'
+    KW_FALSE = 'false'
+    KW_FINAL = 'final'
+    KW_FINALLY = 'finally'
+    KW_FOR = 'for'
+    KW_IF = 'if'
+    KW_IMPLEMENTS = 'implements'
+    KW_IMPORT = 'import'
+    KW_IN = 'in'
+    KW_INTERFACE = 'interface'
+    KW_INSTANCEOF = 'instanceof'
+    KW_NATIVE = 'native'
+    KW_NULL = 'null'
+    KW_NEW = 'new'
+    KW_PACKAGE = 'package'
+    KW_PRIVATE = 'private'
+    KW_PROTECTED = 'protected'
+    KW_PUBLIC = 'public'
+    KW_RETURN = 'return'
+    KW_STATIC = 'static'
+    KW_STRICTFP = 'strictfp'
+    KW_SUPER = 'super'
+    KW_SWITCH = 'switch'
+    KW_SYNCHRONIZED = 'synchronized'
+    KW_THIS = 'this'
+    KW_THROW = 'throw'
+    KW_THROWS = 'throws'
+    KW_TRAIT = 'trait'
+    KW_TRANSIENT = 'transient'
+    KW_TRUE = 'true'
+    KW_TRY = 'try'
+    KW_VOLATILE = 'volatile'
+    KW_WHILE = 'while'
+
+    NUM_INT = 'Integer'
+    NUM_LONG = 'Long'
+    NUM_BIG_INT = 'BigInteger'
+    NUM_BIG_DECIMAL = 'BigDecimal'
+    NUM_FLOAT = 'Float'
+    NUM_DOUBLE = 'Double'
+
+    STR_SQ = 'string'
+    STR_DQ = 'Gstring'
+
+    GSTRING_BEGIN = 'Gstring begin'
+    GSTRING_CONTENT = 'Gstring content'
+    GSTRING_END = 'Gstring end'
+
+    SLASHY_BEGIN = 'regex begin'
+    SLASHY_CONTENT = 'regex content'
+    SLASHY_END = 'regex end'
+
+    DOLLAR_SLASHY_BEGIN = '$/ regex begin'
+    DOLLAR_SLASHY_CONTENT = '$/ regex content'
+    DOLLAR_SLASHY_END = '$/ regex end'
+
+    T_WRONG = 'wrong token'
+  ]
+
+  extends(".*_expression") = expression
+  extends(".*_type_element") = type_element
+  elementType('.*_modifier_list') = modifier_list
+  elementType('.*_reference_expression') = reference_expression
+  elementType('.*_class_type_element') = class_type_element
+  consumeTokenMethod('.*_expression') = 'consumeTokenFast'
+  consumeTokenMethod('.*_shift.*_sign') = 'consumeTokenFast'
+  consumeTokenMethod('fast.*') = 'consumeTokenFast'
+  consumeTokenMethod('.*_type_definition') = 'consumeTokenFast'
+  name(".*type_element") = 'type'
+  name('.*type_definition') = ''
+}
+
+root ::= mb_nl package_definition? mb_separators top_levels
+
+// region Header constructs
+package_definition ::= modifier_list mb_nl ('package') package_name
+{
+  pin = 3
+  elementTypeClass = 'org.jetbrains.plugins.groovy.lang.psi.stubs.elements.GrPackageDefinitionElementType'
+  consumeTokenMethod = 'consumeTokenFast'
+}
+package_name ::= code_reference { elementType = '' name = 'package name' }
+
+import ::= modifier_list mb_nl ('import') 'static'? import_reference import_star? import_alias?
+{
+  pin = 3
+  elementTypeClass = 'org.jetbrains.plugins.groovy.lang.psi.stubs.elements.GrImportStatementElementType'
+  consumeTokenMethod = 'consumeTokenFast'
+}
+private import_star ::= '.' '*'
+import_alias ::= 'as' mb_nl IDENTIFIER
+{
+  pin = 1
+}
+// endregion
+
+
+// region Modifiers
+modifier_list ::= non_empty_modifier_list | empty_modifier_list
+{
+  elementTypeClass = 'org.jetbrains.plugins.groovy.lang.psi.stubs.elements.GrModifierListElementType'
+}
+empty_modifier_list ::=
+non_empty_modifier_list ::= <<a_b_a (modifier | annotation) mb_nl>>
+annotation_modifier_list ::= <<a_b_a annotation mb_nl>>?
+private modifier ::= 'abstract'
+                   | 'default'
+                   | 'final'
+                   | 'native'
+                   | 'private'
+                   | 'protected'
+                   | 'public'
+                   | 'static'
+                   | 'strictfp'
+                   | 'synchronized' !'('
+                   | 'transient'
+                   | 'volatile'
+                   | def_modifier
+{
+  consumeTokenMethod = 'consumeTokenFast'
+}
+/*
+ * 'def' is a part of a reference if followed by a dot
+ */
+private def_modifier ::= 'def' !'.' { consumeTokenMethod = 'consumeTokenFast' }
+// endregion
+
+
+// region Annotations
+annotation ::= '@' annotation_reference after_annotation_reference
+{
+  elementTypeClass = 'org.jetbrains.plugins.groovy.lang.psi.stubs.elements.GrAnnotationElementType'
+  consumeTokenMethod = 'consumeTokenFast'
+}
+annotation_reference ::= no_type_args_code_reference
+{
+  elementType = ''
+  name = 'annotation reference'
+}
+private after_annotation_reference ::= mb_nl annotation_argument_list | empty_annotation_argument_list
+annotation_argument_list ::= <<paren_list annotation_member_value_pair>>
+{
+  elementTypeClass = 'org.jetbrains.plugins.groovy.lang.psi.stubs.elements.GrAnnotationArgumentListElementType'
+}
+empty_annotation_argument_list ::= { elementType = annotation_argument_list }
+annotation_member_value_pair ::= annotation_key '=' annotation_value | annotation_value
+{
+  name = 'annotation attribute'
+  pin('.*') = 2
+  elementTypeClass = 'org.jetbrains.plugins.groovy.lang.psi.stubs.elements.GrNameValuePairElementType'
+}
+private annotation_key ::= IDENTIFIER | 'as' | 'def' | 'in'
+private annotation_value ::= annotation | annotation_array_value | expression
+{
+  name = 'annotation attribute initializer'
+}
+annotation_array_value ::= '[' <<comma_list annotation_value>>? ']'
+{
+  pin = 1
+}
+// endregion
+
+
+// region Type definitions
+private type_definition ::= (non_empty_modifier_list mb_nl | empty_modifier_list) type_definition_tail
+private type_definition_tail ::= class_type_definition
+                               | interface_type_definition
+                               | trait_type_definition
+                               | enum_type_definition
+                               | annotation_type_definition
+private class_definition_header ::= <<classIdentifier>> type_parameter_list? nl_extends nl_implements
+private interface_definition_header ::= <<classIdentifier>> type_parameter_list? nl_extends nl_non_empty_implements?
+private trait_definition_header ::= IDENTIFIER type_parameter_list? nl_extends nl_implements
+private enum_definition_header ::= <<classIdentifier>> nl_non_empty_extends? nl_implements
+private annotation_definition_header ::= IDENTIFIER
+
+left class_type_definition ::= 'class' class_definition_header mb_nl class_body <<resetClassIdentifier>>
+{
+  pin = class_definition_header
+  elementTypeClass = 'org.jetbrains.plugins.groovy.lang.psi.stubs.elements.GrClassDefinitionElementType'
+}
+left interface_type_definition ::= 'interface' interface_definition_header mb_nl class_body <<resetClassIdentifier>>
+{
+  pin = interface_definition_header
+  elementTypeClass = 'org.jetbrains.plugins.groovy.lang.psi.stubs.elements.GrInterfaceDefinitionElementType'
+}
+left trait_type_definition ::= 'trait' trait_definition_header mb_nl class_body
+{
+  pin = trait_definition_header
+  elementTypeClass = 'org.jetbrains.plugins.groovy.lang.psi.stubs.elements.GrTraitElementType'
+}
+left enum_type_definition ::= 'enum' enum_definition_header mb_nl enum_body <<resetClassIdentifier>>
+{
+  pin = enum_definition_header
+  elementTypeClass = 'org.jetbrains.plugins.groovy.lang.psi.stubs.elements.GrEnumDefinitionElementType'
+}
+left annotation_type_definition ::= '@' ('interface') annotation_definition_header mb_nl annotation_body
+{
+  pin = annotation_definition_header
+  elementTypeClass = 'org.jetbrains.plugins.groovy.lang.psi.stubs.elements.GrAnnotationDefinitionElementType'
+}
+
+class_body ::= '{' mb_nl class_members '}'
+{
+  pin = 1
+  elementTypeClass = 'org.jetbrains.plugins.groovy.lang.psi.stubs.elements.GrTypeDefinitionBodyElementType'
+}
+enum_body ::= '{' mb_nl enum_members '}'
+{
+  pin = 1
+  elementTypeClass = 'org.jetbrains.plugins.groovy.lang.parser.GrEnumDefinitionBodyElementType'
+}
+annotation_body ::= '{' mb_nl annotation_members '}'
+{
+  pin = 1
+  elementType = class_body
+}
+// endregion
+
+
+// region Members
+private meta class_level_item ::= <<separated_item class_level_end <<item>> class_level_start>>
+
+private class_members ::= class_member* clear_error
+private class_member ::= <<class_level_item class_level>>
+private class_level ::= class_initializer
+                      | type_definition
+                      | tuple_var_declaration <<error "tuple.cant.be.placed.in.class">>
+                      | parse_class_declaration
+private class_level_start ::= IDENTIFIER | modifier | '{' | '@' | 'class' | 'interface' | 'trait' | 'enum' | primitive_type
+private class_level_end ::= separators | <<eof>> | &'}'
+
+private enum_members ::= [enum_constants_separated] class_members
+private enum_constants_separated ::= enum_constants class_level_end { pin = 1 }
+
+private annotation_members ::= annotation_level_item*
+private annotation_level_item ::= <<class_level_item annotation_level>>
+private annotation_level ::= type_definition | parse_annotation_declaration
+// endregion
+
+
+// region Declarations
+private declaration_start_modifiers ::= non_empty_modifier_list mb_type_parameter_list mb_declaration_type_element { pin = 1 }
+private mb_type_parameter_list ::= [mb_nl type_parameter_list]
+private mb_declaration_type_element ::= [mb_nl declaration_type_element]
+private declaration_type_element ::= definitely_type_element | clear_variants_and_fail
+private definitely_type_element ::= <<definitelyTypeElement type_element (<<wasDefinitelyTypeElement>> | &declaration_lookahead)>>
+
+private declaration_lookahead ::= method_lookahead | IDENTIFIER { consumeTokenMethod = 'consumeTokenFast' }
+private method_lookahead ::= method_identifier '('
+// endregion
+
+
+// region Class level declarations
+private parse_class_declaration ::= <<parseTailLeftFlat class_declaration_start class_declaration_tail>>
+                                  | <<parseTailLeftFlat naked_method_declaration_start methods_tail>>
+private class_declaration_start ::= declaration_start_modifiers | class_declaration_start_no_modifiers
+
+private class_declaration_start_no_modifiers ::= empty_modifier_list class_declaration_start_after_no_modifiers
+private class_declaration_start_after_no_modifiers ::= class_declaration_start_after_no_modifiers1
+                                                     | class_declaration_start_after_no_modifiers2
+private class_declaration_start_after_no_modifiers1 ::= capital_type_element !'('
+private class_declaration_start_after_no_modifiers2 ::= declaration_type_element
+private naked_method_declaration_start ::= empty_modifier_list &method_lookahead
+
+private class_declaration_tail ::= <<mb_nl_group (methods_tail | field_declaration)>>
+private methods_tail ::= constructor | method
+
+private parse_annotation_declaration ::= <<parseTailLeftFlat class_declaration_start annotation_tails>>
+                                       | <<parseTailLeftFlat naked_method_declaration_start annotation_method>>
+private annotation_tails ::= <<mb_nl_group (annotation_method | field_declaration)>>
+// endregion
+
+
+// region Class initializers
+class_initializer ::= class_initializer_modifier_list mb_nl lazy_block
+class_initializer_modifier_list ::= 'static' | !nl { consumeTokenMethod = 'consumeTokenFast' }
+// endregion
+
+
+// region Fields
+field_declaration ::= field (',' mb_nl field)* { elementType = variable_declaration }
+field ::= var { elementTypeClass = 'org.jetbrains.plugins.groovy.lang.psi.stubs.elements.GrFieldElementType' }
+// endregion
+
+
+// region Enum constants
+// A
+// A,
+// A, B
+// A, B,
+enum_constants ::= enum_constant ((mb_nl ',') mb_nl enum_constant)* [mb_nl ',']
+{
+  pin = 1
+  elementTypeClass = 'org.jetbrains.plugins.groovy.lang.psi.stubs.elements.GrEnumConstantListElementType'
+}
+enum_constant ::= annotation_modifier_list mb_nl IDENTIFIER call_argument_list? enum_constant_initializer?
+{
+  pin = 3
+  elementTypeClass = 'org.jetbrains.plugins.groovy.lang.psi.stubs.elements.GrEnumConstantElementType'
+}
+enum_constant_initializer ::= class_body
+{
+  elementTypeClass = 'org.jetbrains.plugins.groovy.lang.psi.stubs.elements.GrEnumConstantInitializerElementType'
+}
+// endregion
+
+
+// region Methods
+method ::= method_identifier parse_parameter_list nl_throws [mb_nl lazy_block]
+{
+  elementTypeClass = 'org.jetbrains.plugins.groovy.lang.psi.stubs.elements.GrMethodElementType'
+  pin = parse_parameter_list
+}
+constructor ::= constructor_identifier parse_parameter_list nl_throws [mb_nl lazy_constructor_block]
+{
+  elementTypeClass = 'org.jetbrains.plugins.groovy.lang.psi.stubs.elements.GrConstructorElementType'
+  pin = parse_parameter_list
+}
+annotation_method ::= method_identifier parse_parameter_list [mb_nl annotation_method_default] nl_throws
+{
+  elementTypeClass = 'org.jetbrains.plugins.groovy.lang.psi.stubs.elements.GrAnnotationMethodElementType'
+  pin = parse_parameter_list
+}
+private annotation_method_default ::= 'default' annotation_value { pin = 1 }
+
+private method_identifier ::= IDENTIFIER | STR_SQ | STR_DQ { consumeTokenMethod = 'consumeTokenFast' }
+private constructor_identifier ::= <<constructorIdentifier>>
+// endregion
+
+
+// region Parameters
+fake parameter_list ::= { elementTypeClass = 'org.jetbrains.plugins.groovy.lang.psi.stubs.elements.GrParameterListElementType' }
+
+private parse_parameter_list ::= parse_empty_parameter_list | parse_non_empty_parameter_list
+private parse_empty_parameter_list ::= '(' empty_parameter_list ')'
+private parse_non_empty_parameter_list ::= '(' method_parameter_list ')' { pin = 1 }
+
+method_parameter_list ::= <<paren_list_inner parse_parameter>> { elementType = parameter_list }
+private parse_parameter ::= <<parseTailLeftFlat parameter_start parameter>>
+private parameter_start ::= parameter_start_modifiers | parameter_start_no_modifiers
+private parameter_start_modifiers ::= non_empty_modifier_list parameter_start_after_modifiers { pin = 1 }
+private parameter_start_after_modifiers ::= parameter_type_element_silent? ellipsis?
+private parameter_start_no_modifiers ::= empty_modifier_list parameter_start_after_no_modifiers
+private parameter_start_after_no_modifiers ::= parameter_type_element_silent ellipsis? | ellipsis | &IDENTIFIER
+private parameter_type_element_silent ::= parameter_type_element | clear_variants_and_fail
+private parameter_type_element ::= primitive_type_element array_type_elements
+                                 | qualified_class_type_element array_type_elements
+                                 | unqualified_class_type_element &(IDENTIFIER | ellipsis)
+                                 | unqualified_class_type_element array_type_element array_type_elements
+private ellipsis ::= '...' { consumeTokenMethod = 'consumeTokenFast' }
+parameter ::= var { elementTypeClass = 'org.jetbrains.plugins.groovy.lang.psi.stubs.elements.GrParameterElementType' }
+// endregion
+
+
+// region Reference lists
+fake extends_clause ::=     { elementTypeClass = 'org.jetbrains.plugins.groovy.lang.psi.stubs.elements.GrExtendsClauseElementType' }
+fake implements_clause ::=  { elementTypeClass = 'org.jetbrains.plugins.groovy.lang.psi.stubs.elements.GrImplementsClauseElementType' }
+fake throws_clause ::=      { elementTypeClass = 'org.jetbrains.plugins.groovy.lang.psi.stubs.elements.GrThrowsClauseElementType' }
+
+private nl_extends ::= nl_non_empty_extends | empty_extends_clause
+private nl_implements ::= nl_non_empty_implements | empty_implements_clause
+private nl_throws ::= [nl &('throws' | '{')] (non_empty_throws_clause | empty_throws_clause)
+
+empty_extends_clause ::= empty { elementType = extends_clause }
+empty_implements_clause ::= empty { elementType = implements_clause }
+empty_throws_clause ::= empty { elementType = throws_clause }
+
+private nl_non_empty_extends ::= mb_nl non_empty_extends_clause { consumeTokenMethod = 'consumeTokenFast' }
+private nl_non_empty_implements ::= mb_nl non_empty_implements_clause { consumeTokenMethod = 'consumeTokenFast' }
+
+non_empty_extends_clause ::= 'extends' <<comma_list_p extends_list_item>>
+{
+  pin = 1
+  elementType = extends_clause
+  consumeTokenMethod = 'consumeTokenFast'
+}
+non_empty_implements_clause ::= 'implements' <<comma_list_p implements_list_item>>
+{
+  pin = 1
+  elementType = implements_clause
+  consumeTokenMethod = 'consumeTokenFast'
+}
+non_empty_throws_clause ::= 'throws' <<comma_list_p throws_list_item>>
+{
+  pin = 1
+  elementType = throws_clause
+  consumeTokenMethod = 'consumeTokenFast'
+}
+
+private extends_list_item ::= mb_nl type_code_reference | extends_list_item_recovered
+private extends_list_item_recovered ::= empty fail { pin = 1 recoverWhile = extends_recovery }
+private extends_recovery ::= !(',' | 'implements' | '{')
+private implements_list_item ::= mb_nl type_code_reference | implement_list_item_recovered
+private implement_list_item_recovered ::= empty fail { pin = 1 recoverWhile = implements_recovery }
+private implements_recovery ::= !(',' | '{')
+private throws_list_item ::= mb_nl type_code_reference
+// endregion
+
+
+// region Generics
+type_parameter_list ::= '<' type_parameters '>'
+{
+  pin = 1
+  elementTypeClass = 'org.jetbrains.plugins.groovy.lang.psi.stubs.elements.GrTypeParameterListElementType'
+  consumeTokenMethod = 'consumeTokenFast'
+}
+private type_parameters ::= type_parameter type_parameters_tail*
+private type_parameters_tail ::= ',' type_parameter { pin = 1 }
+
+type_parameter ::= IDENTIFIER (type_parameter_bounds | empty_type_parameter_bounds)
+{
+  name = 'type parameter'
+  elementTypeClass = 'org.jetbrains.plugins.groovy.lang.psi.stubs.elements.GrTypeParameterElementType'
+}
+type_parameter_bounds ::= 'extends' type_parameter_bounds_list
+{
+  pin = 1
+  elementTypeClass = 'org.jetbrains.plugins.groovy.lang.psi.stubs.elements.GrTypeParameterBoundsElementType'
+}
+empty_type_parameter_bounds ::= { elementType = type_parameter_bounds }
+private type_parameter_bounds_list ::= type_code_reference type_parameter_bounds_list_tail*
+private type_parameter_bounds_list_tail ::= '&' type_code_reference { pin = 1 }
+
+type_argument_list ::= diamond_type_argument_list | non_empty_type_argument_list
+private diamond_type_argument_list ::=  <<isDiamondAllowed>> fast_l_angle '>'
+private non_empty_type_argument_list ::= '<' <<comma_list_p type_argument_list_item>> type_argument_list_end
+{
+  pin = 1
+  consumeTokenMethod = 'consumeTokenFast'
+}
+private type_argument_list_item ::= mb_nl <<anyTypeElement type_argument>>
+private type_argument_list_end ::= <<mb_nl_group '>'>>
+private type_argument ::= type_element | wildcard_type_element
+{
+  name = 'type argument'
+}
+// endregion
+
+
+// region Blocks
+lazy_constructor_block ::= <<parseBlockLazy constructor_block 'CONSTRUCTOR_BLOCK'>> { elementType = '' }
+constructor_block ::= '{' mb_separators [constructor_call_expression block_level_end] block_levels '}'
+{
+  elementTypeClass = 'org.jetbrains.plugins.groovy.lang.parser.GrConstructorBlockElementType'
+  pin = 1
+}
+lazy_block ::= <<parseBlockLazy open_block 'OPEN_BLOCK'>> { elementType = '' }
+open_block ::= '{' mb_separators block_levels '}'
+{
+  elementTypeClass = 'org.jetbrains.plugins.groovy.lang.parser.GrBlockElementType'
+  pin = 1
+}
+// endregion
+
+
+// region Block level constructs
+private separator ::= ';' | NL | <<extendedSeparator>>
+private separators ::= separator+
+private mb_separators ::= separator*
+
+private top_levels ::= top_level_item* clear_error
+private top_level_item ::= <<addVariant "statement">> <<separated_item top_level_end top_level top_level_start>>
+private top_level ::= import | block_level
+private top_level_start ::= 'import' | block_level_start
+private top_level_end ::= separators | <<eof>>
+
+private block_levels ::= block_level_item* clear_error
+private block_level_item ::= <<addVariant "statement">> <<separated_item block_level_end block_level block_level_start>>
+private block_level ::= type_definition | tuple_var_declaration | statement
+private block_level_start ::= statement_start | class_level_start
+private block_level_end ::= top_level_end | &'}'
+
+private case_level_item ::= <<addVariant "statement">> <<separated_item case_level_end block_level case_level_start>>
+private case_level_start ::= statement_start | class_level_start | 'case' | 'default'
+private case_level_end ::= block_level_end | &('case' | 'default')
+{
+  consumeTokenMethod = 'consumeTokenFast'
+}
+// endregion
+
+
+// region Block level declarations
+fake variable_declaration ::= { elementTypeClass = 'org.jetbrains.plugins.groovy.lang.psi.stubs.elements.GrVariableDeclarationElementType' }
+
+private parse_block_declaration ::= <<parseTailLeftFlat block_declaration_start block_declaration_tail>>
+private block_declaration_start ::= declaration_start_modifiers | block_declaration_start_no_modifiers
+private block_declaration_start_no_modifiers ::= empty_modifier_list block_declaration_type_element
+private block_declaration_type_element ::= (capital_type_element | clear_variants_and_fail) &declaration_lookahead
+private block_declaration_tail ::= <<mb_nl_group (method | variable_declaration_tail)>>
+
+variable_declaration_tail ::= variable (',' mb_nl variable)*
+{
+  elementType = variable_declaration
+  pin('variable_declaration_tail_1_0') = 1
+}
+variable ::= var { elementTypeClass = 'org.jetbrains.plugins.groovy.lang.psi.stubs.elements.GrVariableElementType' }
+
+tuple_var_declaration ::= tuple_modifier_list tuple_var_declaration_tuple tuple_initializer
+{
+  elementType = variable_declaration
+  pin = tuple_var_declaration_tuple
+  consumeTokenMethod = 'consumeTokenFast'
+}
+tuple_modifier_list ::= def_modifier
+{
+  consumeTokenMethod = 'consumeTokenFast'
+}
+private tuple_var_declaration_tuple ::= '(' tuple_var_declaration_item (',' tuple_var_declaration_item)* ')'
+{
+  consumeTokenMethod = 'consumeTokenFast'
+}
+
+private tuple_var_declaration_item ::= type_element tuple_variable | tuple_variable
+{
+  elementType = variable
+}
+tuple_variable ::= IDENTIFIER
+{
+  elementType = variable
+}
+private tuple_initializer ::= '=' mb_nl expression
+{
+  pin = 1
+}
+// endregion
+
+
+// region Statements
+private statement_start ::= expression_start
+                          | '@'
+                          | statement_keywords
+                          | modifier
+                          | primitive_type
+                          | code_reference_identifiers
+private statement_keywords ::= 'assert'
+                             | 'break'
+                             | 'continue'
+                             | 'for'
+                             | 'if'
+                             | 'return'
+                             | 'switch'
+                             | 'throw'
+                             | 'try'
+                             | 'while'
+{
+  consumeTokenMethod = 'consumeTokenFast'
+}
+statement ::= if_statement
+            | switch_statement
+            | try_statement
+            | while_statement
+            | for_statement
+            | synchronized_statement
+            | return_statement
+            | break_statement
+            | continue_statement
+            | assert_statement
+            | throw_statement
+            | labeled_statement
+            | parse_block_declaration
+            | <<extendedStatement>>
+            | expression_or_application
+{
+  elementType = ''
+}
+
+private block_or_statement ::= block_statement | statement
+
+block_statement ::= lazy_block
+
+if_statement ::= 'if' after_if_keyword
+{
+  pin = 1
+}
+private after_if_keyword ::= '(' mb_nl expression mb_nl ')' mb_nl block_or_statement [mb_nl ';'] else_branch?
+{
+  pin = 1
+}
+private else_branch ::= mb_nl 'else' mb_nl block_or_statement
+{
+  pin = 2
+}
+
+switch_statement ::= 'switch' '(' expression ')' (mb_nl switch_body)
+{
+  pin = 1
+}
+private switch_body ::= '{' mb_nl case_sections* '}' { pin = 1 }
+private case_sections ::= !'}' (case_section | default_case_section) { pin = 1 recoverWhile = case_section_recovery }
+private case_section_recovery ::= !('}' | 'case' | 'default')
+
+case_section ::= case_label (mb_nl case_label)* (mb_nl case_level_item*)
+{
+  pin = 1
+}
+default_case_section ::= default_label mb_nl case_level_item+
+{
+  elementType = case_section
+  pin = 1
+}
+case_label ::= 'case' expression ':' { pin = 1 }
+default_label ::= 'default' ':' { elementType = case_label pin = 1 }
+
+try_statement ::= 'try' lazy_block (mb_nl catch_clause)* [mb_nl finally_clause]
+{
+  pin = 1
+}
+catch_clause ::= 'catch' '(' parse_catch_parameter ')' lazy_block
+{
+  pin = 1
+}
+private parse_catch_parameter ::= <<parseTailLeftFlat catch_parameter_start catch_parameter>>
+private catch_parameter_start ::= modifier_list catch_parameter_type_element?
+private catch_parameter_type_element ::= type_element &IDENTIFIER
+                                       | type_element disjunction_type_element
+catch_parameter ::= IDENTIFIER { elementType = parameter }
+finally_clause ::= 'finally' lazy_block
+{
+  pin = 1
+}
+
+while_statement ::= 'while' ('(' mb_nl expression mb_nl ')' mb_nl block_or_statement)
+{
+  pin('.*') = 1
+}
+
+for_statement ::= 'for' (('(' mb_nl for_clause mb_nl ')') mb_nl block_or_statement?)
+{
+  pin('.*') = 1
+}
+private for_clause ::= for_in_clause | traditional_for_clause
+for_in_clause ::= for_parameter (':' | 'in') expression
+
+private for_parameter_inner ::= modifier_list [type_element &IDENTIFIER] IDENTIFIER
+for_parameter ::= for_parameter_inner
+{
+  elementType = parameter
+}
+traditional_for_clause ::= (traditional_for_parameter ';' | ';') expression? ';' mb_nl expression?
+{
+  pin('.*') = 1
+  recoverWhile = r_par_recovery
+}
+traditional_for_parameter ::= for_parameter_inner mb_initializer
+{
+  elementType = parameter
+  recoverWhile = semicolon_recovery
+}
+private semicolon_recovery ::= !';' r_par_recovery
+private r_par_recovery ::= !')'
+
+synchronized_statement ::= 'synchronized' '(' expression ')' lazy_block
+{
+  pin = 2
+}
+
+labeled_statement ::= IDENTIFIER after_label
+private after_label ::= ':' mb_nl block_or_statement
+{
+  pin = 1
+  consumeTokenMethod = 'consumeTokenFast'
+}
+
+return_statement ::= 'return' expression?
+
+break_statement ::= 'break' IDENTIFIER?
+continue_statement ::= 'continue' IDENTIFIER?
+
+throw_statement ::= 'throw' expression
+{
+  pin = 1
+}
+
+assert_statement ::= 'assert' expression assert_message?
+{
+  pin = 1
+}
+private assert_message ::= assert_message_separator (mb_nl expression)
+{
+  pin = 1
+}
+private assert_message_separator ::= ':' | ','
+// endregion
+
+
+// region Expressions
+private expression_start ::= IDENTIFIER
+                           | '!' | '(' | '+' | '++' | '-' | '--' | '[' | '~'
+                           | 'this' | 'super'
+                           | DOLLAR_SLASHY_BEGIN
+                           | GSTRING_BEGIN
+                           | SLASHY_BEGIN
+                           | STR_DQ | STR_SQ
+                           | 'new'
+                           | primitive_type
+                           | simple_literal_tokens
+{
+  consumeTokenMethod = 'consumeTokenFast'
+}
+expression ::= priority15
+             | conditionals               // 14
+             | lor_expression             // 13
+             | land_expression            // 12
+             | bor_expression             // 11
+             | xor_expression             // 10
+             | band_expression            //  9
+             | priority8
+             | priority7
+             | shift_or_range             //  6
+             | additive_expression        //  5
+             | multiplicative_expression  //  4
+             | power_expression           //  2
+             | prefix_unary_expression    //  3
+             | priority1_4
+             | priority1_5
+             | qualified_expressions
+             | priority1_2
+             | priority1_1
+             | priority0
+
+fake reference_expression ::=
+fake unary_expression ::=
+private priority0 ::= unqualified_reference_expression
+                    | built_in_type_expression
+                    | literal
+                    | gstring
+                    | regex
+                    | parenthesized_expression
+unqualified_reference_expression ::= IDENTIFIER
+                                   | 'this'
+                                   | 'super'
+                                   | ('in' | 'def' | 'trait') &dot
+                                   | (STR_SQ | STR_DQ) &string_literal_as_reference
+{
+  elementType = reference_expression
+}
+// TODO use literal as reference element
+private string_literal_as_reference ::= '('                                           // explicit method call
+                                      | !<<isArguments>> !<<isApplicationArguments>> application_argument_start   // followed by application arguments
+                                      | <<closureArgumentSeparator '{'>>              // closure arguments
+{
+  consumeTokenMethod = 'consumeTokenFast'
+}
+private application_argument_start ::= IDENTIFIER
+                                     | simple_literal_tokens
+                                     | primitive_type
+                                     | '~' | '!'
+                                     | 'this' | 'super'
+{
+  consumeTokenMethod = 'consumeTokenFast'
+}
+
+built_in_type_expression ::= primitive_type
+
+literal ::= simple_literal_tokens | regex_literal { extends = expression }
+private simple_literal_tokens ::= NUM_INT
+                                | NUM_LONG
+                                | NUM_BIG_INT
+                                | NUM_BIG_DECIMAL
+                                | NUM_FLOAT
+                                | NUM_DOUBLE
+                                | STR_SQ
+                                | STR_DQ
+                                | 'true'
+                                | 'false'
+                                | 'null'
+{
+  consumeTokenMethod = 'consumeTokenFast'
+}
+
+private regex_literal ::= slashy_literal | dollar_slashy_literal { consumeTokenMethod = 'consumeTokenFast' }
+slashy_literal ::= SLASHY_BEGIN fast_slashy_content !'$' SLASHY_END { pin = 3 }
+dollar_slashy_literal ::= DOLLAR_SLASHY_BEGIN fast_dollar_slashy_content? !'$' DOLLAR_SLASHY_END { pin = 3 }
+
+gstring ::= <<compound_string GSTRING_BEGIN fast_string_content GSTRING_END>> { extends = expression }
+regex ::= slashy_string | dollar_slashy_string { extends = expression }
+private slashy_string ::= <<compound_string SLASHY_BEGIN fast_slashy_content SLASHY_END>>
+private dollar_slashy_string ::= <<compound_string DOLLAR_SLASHY_BEGIN fast_dollar_slashy_content DOLLAR_SLASHY_END>>
+
+private fast_slashy_content ::= SLASHY_CONTENT
+private fast_dollar_slashy_content ::= DOLLAR_SLASHY_CONTENT
+private fast_string_content ::= GSTRING_CONTENT
+
+private meta compound_string ::= <<begin>> (<<string_content <<content>>>> | string_injection)* <<end>> { pin = 1 }
+meta string_content ::= <<content>>
+string_injection ::= '$' string_injection_body
+{
+  pin = 1
+  consumeTokenMethod = 'consumeTokenFast'
+}
+private string_injection_body ::= qualified_reference_expression | unqualified_reference_expression | lazy_closure | clear_variants <<unexpected "identifier.or.block.expected">>
+
+parenthesized_expression ::= p_parenthesized_expression_inner
+private p_parenthesized_expression_inner ::= '(' expression ')' { pin = 1}
+
+private priority1_1 ::= new_anonymous_expression | new_expression
+
+new_expression ::= 'new' type_argument_list?
+                   (primitive_type_element | <<allowDiamond code_reference>>)
+                   (call_argument_list_start call_argument_list | array_declarator)
+{
+  pin = 1
+}
+new_anonymous_expression ::= 'new' type_argument_list? anonymous_class
+{
+  elementType = new_expression
+}
+anonymous_class ::= code_reference call_argument_list class_body
+{
+  elementTypeClass = 'org.jetbrains.plugins.groovy.lang.psi.stubs.elements.GrAnonymousElementType'
+}
+array_declarator ::= mandatory_expression optional_expression* { consumeTokenMethod = 'consumeTokenFast' }
+private mandatory_expression ::= '[' expression ']' { pin = 1 consumeTokenMethod = 'consumeTokenFast' }
+private optional_expression ::= '[' expression? ']' { pin = 1 consumeTokenMethod = 'consumeTokenFast' }
+
+private priority1_2 ::= method_call_expression | lazy_closure | list_or_map
+constructor_call_expression ::= &('this' | 'super') unqualified_reference_expression call_tail
+method_call_expression ::= expression call_tail
+private call_tail ::= call_argument_list (mb_nl lazy_closure)* | empty_argument_list <<closureArgumentSeparator lazy_closure+>>
+
+lazy_closure ::= <<parseBlockLazy closure 'CLOSURE'>>
+{
+  extends = expression
+  elementType = closure
+}
+closure ::= '{' mb_nl closure_header mb_separators block_levels '}'
+{
+  elementTypeClass = 'org.jetbrains.plugins.groovy.lang.parser.GrClosureElementType'
+  pin = 1
+  consumeTokenMethod = 'consumeTokenFast'
+}
+private closure_header ::= empty_parameter_list closure_arrow | closure_parameter_list mb_nl closure_arrow | empty_parameter_list
+private closure_arrow ::= '->'
+closure_parameter_list ::= <<comma_list (mb_nl parse_parameter)>> { elementType = parameter_list }
+empty_parameter_list ::= { elementType = parameter_list }
+
+list_or_map ::= empty_list | empty_map | non_empty_list_or_map
+{
+  extends = expression
+}
+
+private empty_map ::= '[' mb_nl fast_colon mb_nl ']' { consumeTokenMethod='consumeTokenFast' }
+private empty_list ::= '[' mb_nl ']' { consumeTokenMethod='consumeTokenFast' }
+private non_empty_list_or_map ::= '[' bracket_argument_list_item bracket_argument_list_inner ']'
+{
+  pin = 2
+}
+
+private qualified_expressions ::= qualified_reference_expression | property_expression
+qualified_reference_expression ::= expression <<qualified_reference_op qualified_reference_expression_identifiers>>
+property_expression ::= expression <<qualified_reference_op property_expression_identifiers>>
+private meta qualified_reference_op ::= (mb_nl dot) <<mb_nl_group (type_argument_list? <<identifiers>>)>>
+private dot ::= '.' attribute_dot? | '?.' attribute_dot? | '.&' | '*.' { consumeTokenMethod = 'consumeTokenFast' }
+private attribute_dot ::= mb_nl ('@')
+{
+  consumeTokenMethod = 'consumeTokenFast'
+}
+private qualified_reference_expression_identifiers ::= IDENTIFIER
+                                                     | STR_SQ | STR_DQ
+                                                     | regex_literal
+                                                     | 'true'
+                                                     | 'false'
+                                                     | 'null'
+                                                     | 'new'
+                                                     | 'class' | 'interface' | 'trait' | 'enum'
+                                                     | 'this' | 'super'
+                                                     | 'case'
+                                                     | 'as' | 'in'
+                                                     | 'else'
+                                                     | modifier
+                                                     | statement_keywords
+                                                     | primitive_type
+{
+  name = 'property selector'
+}
+private property_expression_identifiers ::= parenthesized_expression | lazy_block | gstring | regex
+{
+  name = 'property selector'
+}
+
+private priority1_4 ::= not_expression | cast_expression
+not_expression ::= ('~' | '!') expression { elementType = unary_expression }
+cast_expression ::= &cast_expression_start (cast_expression_pin | cast_expression_no_pin)
+private cast_expression_start ::= '(' (IDENTIFIER | primitive_type) { consumeTokenMethod = 'consumeTokenFast' }
+private cast_expression_pin ::= '(' capital_type_element ')' priority1_4 { pin = 3 }
+private cast_expression_no_pin ::= '(' type_element ')' priority1_4
+
+private priority1_5 ::= index_expression | postfix_unary_expression
+index_expression ::= expression mb_question index_expression_argument_list
+index_expression_argument_list ::= !empty_map '[' bracket_argument_list_inner ']'
+{
+  pin = 2
+  elementType = argument_list
+  consumeTokenMethod = 'consumeTokenFast'
+}
+
+postfix_unary_expression ::= expression ('++' | '--')
+{
+  elementType = unary_expression
+}
+
+power_expression ::= expression '**' mb_nl expression
+
+prefix_unary_expression ::= ('++' | '--' | '-' | '+') mb_nl expression
+{
+  elementType = unary_expression
+}
+
+multiplicative_expression ::= expression ('*' | '/' | '%') mb_nl expression
+
+additive_expression ::= expression ('+' | '-') mb_nl expression
+
+private shift_or_range ::= shift_expression | range_expression
+shift_expression ::= expression shift_sign expression
+private shift_sign ::= left_shift_sign | right_shift_unsigned_sign | right_shift_sign { consumeTokenMethod = 'consumeTokenFast' }
+left_shift_sign ::= '<' '<'
+right_shift_sign ::= '>' '>'
+right_shift_unsigned_sign ::= '>' '>' '>'
+range_expression ::= expression ('..' | '..<') expression
+
+private priority7 ::= relational_expression | instanceof_expression | as_expression
+relational_expression ::= expression relational_operator expression
+private relational_operator ::= '<' !'<' | '<=' | '>' !'>' | '>=' | 'in' { consumeTokenMethod = 'consumeTokenFast' }
+
+instanceof_expression ::= expression ('instanceof' (type_element | expect_type))
+{
+  pin('.*') = 1
+}
+as_expression ::= expression 'as' type_element
+
+private priority8 ::= equality_expression | compare_expression | regex_find_expression | regex_match_expression
+equality_expression ::= expression <<equalityOperator>> expression
+compare_expression ::= expression '<=>' mb_nl expression
+{
+  elementType = relational_expression
+}
+regex_find_expression ::= expression '=~' expression
+regex_match_expression ::= expression '==~' expression
+
+band_expression ::= expression '&' expression
+xor_expression ::= expression '^' expression
+bor_expression ::= expression '|' expression
+land_expression ::= expression '&&' mb_nl expression
+lor_expression ::= expression '||' mb_nl expression
+
+private conditionals ::= ternary_expression | elvis_expression
+ternary_expression ::= expression (ternary_tail_pin | ternary_tail)
+private ternary_tail_pin ::= '?' mb_nl !'[' expression mb_nl ':' mb_nl conditionals { pin = 3 consumeTokenMethod = 'consumeTokenFast' }
+private ternary_tail ::= '?' mb_nl expression mb_nl ':' mb_nl conditionals { pin = 5 consumeTokenMethod = 'consumeTokenFast' }
+elvis_expression ::= expression '?:' mb_nl expression
+{
+  rightAssociative = true
+}
+
+private priority15 ::= assignment_expression | tuple_assignment_expression
+assignment_expression ::= expression (<<assignmentOperator>> mb_nl) expression application*
+{
+  rightAssociative = true
+}
+
+tuple_assignment_expression ::= single_tuple_assignment | multi_tuple_assignment
+private single_tuple_assignment ::= single_tuple tuple_initializer // don't pin because "(foo)" may be a parenthesized expression
+private multi_tuple_assignment ::= tuple tuple_initializer
+{
+  pin = tuple
+}
+single_tuple ::= '(' unqualified_reference_expression ')' { elementType = tuple }
+tuple ::= '(' unqualified_reference_expression (',' unqualified_reference_expression)+ ')'
+{
+  consumeTokenMethod = 'consumeTokenFast'
+}
+// endregion
+
+
+// region Applications
+private expression_or_application ::= <<notApplicationArguments expression_or_application_inner>>
+private expression_or_application_inner ::= expression application*
+private application ::= <<parseApplication application_ref application_expression application_call application_index>>
+{
+  extends = expression
+}
+left application_ref ::= IDENTIFIER | simple_literal_tokens
+{
+  elementType = reference_expression
+  consumeTokenMethod = 'consumeTokenFast'
+}
+left application_expression ::= application_argument_list
+left application_call ::= call_argument_list lazy_closure* | empty_argument_list lazy_closure+ { elementType = method_call_expression }
+left application_index ::= mb_question index_expression_argument_list
+// endregion
+
+
+// region Arguments
+fake argument_list ::=
+
+empty_argument_list ::= { elementType = argument_list }
+
+private call_argument_list_start ::= &'(' // adds a variant, to achieve "'(' expected" generated message
+call_argument_list ::= '(' (')') | '(' paren_argument_list_inner ')'
+{
+  elementType = argument_list
+  pin('call_argument_list_1') = 1
+  consumeTokenMethod = 'consumeTokenFast'
+}
+
+private paren_argument_list_inner ::= paren_argument_list_item* clear_error
+private bracket_argument_list_inner ::= bracket_argument_list_item*
+
+private paren_argument_list_item ::= <<argument_list_item ')'>>
+private bracket_argument_list_item ::= <<argument_list_item ']'>>
+
+private meta argument_list_item ::= <<argument_list_item_head <<brace>>>> <<argument_list_item_end <<brace>>>> { pin = 1 }
+private meta argument_list_item_head ::= <<argument_list_item_head0 <<brace>> <<argument_list_item_recovery <<brace>>>>>>
+private meta argument_list_item_head0 ::= !(end_of_file | <<brace>>) parse_argument { pin = 1 recoverWhile = '<<recovery>>' }
+private meta argument_list_item_end ::= ',' | &<<brace>>
+private meta argument_list_item_recovery ::= !(<<brace>> | ',' | '}' | qualified_reference_expression_identifiers | expression_start | argument_label)
+
+application_argument_list ::= <<applicationArguments application_arguments>>
+private application_arguments ::= argument (',' mb_nl argument)*
+
+private parse_argument ::= <<parseArgument argument>>
+private argument ::= spread_list_argument | named_argument | <<parseExpressionOrMapArgument expression>>
+spread_list_argument ::= !<<isApplicationArguments>> '*' expression { consumeTokenMethod = 'consumeTokenFast' }
+named_argument ::= argument_label named_argument_tail
+private named_argument_tail ::= ':' expression
+{
+  pin = 1
+  consumeTokenMethod = 'consumeTokenFast'
+}
+argument_label ::= IDENTIFIER | STR_SQ | STR_DQ | '*' | 'null' | 'class' | primitive_type | 'default'
+{
+  consumeTokenMethod = 'consumeTokenFast'
+}
+// endregion
+
+
+// region Type elements
+type_element ::= (primitive_type_element | class_type_element) array_type_elements
+
+primitive_type_element ::= primitive_type <<setTypeWasPrimitive>>
+external primitive_type ::= parsePrimitiveType
+
+// Type element with last part capitalized or primitive type.
+// Example 1: com.foo.bar.Baz       will match
+// Example 2: com.foo.bar.Baz<Baz>  will match
+// Example 3: com.foo.bar.baz       will not match
+// Example 4: com.foo.bar.baz<Baz>  will not match
+capital_type_element ::= (primitive_type_element | capital_class_type_element) array_type_elements { elementType = type_element }
+
+class_type_element ::= code_reference
+qualified_class_type_element ::= qualified_code_reference
+unqualified_class_type_element ::= unqualified_code_reference
+private capital_class_type_element ::= <<capitalizedTypeElement class_type_element <<refWasCapitalized>>>>
+
+private array_type_elements ::= array_type_element*
+left array_type_element ::= '[' mb_nl ']' { consumeTokenMethod = 'consumeTokenFast' }
+
+wildcard_type_element ::= '?' wildcard_bound?
+private wildcard_bound ::= ('extends' | 'super') type_element { pin = 1 }
+left disjunction_type_element ::= disjunction_type_element_part+
+private disjunction_type_element_part ::= '|' (type_element | expect_type) { pin = 1 consumeTokenMethod = 'consumeTokenFast' }
+
+private expect_type ::= <<replaceVariants "type">> fail
+// endregion
+
+
+// region Code references
+code_reference ::= unqualified_code_reference qualified_code_reference_tail*
+import_reference ::= unqualified_code_reference import_reference_tail*
+{
+  elementType = code_reference
+  name = 'import reference'
+}
+qualified_code_reference ::= unqualified_code_reference qualified_code_reference_tail qualified_code_reference_tail* { elementType = code_reference}
+private no_type_args_code_reference ::= <<noTypeArgsReference code_reference>>
+
+unqualified_code_reference ::= code_reference_part { elementType = code_reference }
+left qualified_code_reference_tail ::= code_reference_dot code_reference_part <<setRefWasQualified>>
+{
+  elementType = code_reference
+  consumeTokenMethod = 'consumeTokenFast'
+}
+left import_reference_tail ::= code_reference_dot code_reference_part
+{
+  elementType = code_reference
+  pin = 1
+}
+private code_reference_dot ::= '.' !'*' mb_nl
+private code_reference_part ::= code_reference_identifier code_reference_type_arguments?
+private code_reference_identifier ::= <<codeReferenceIdentifier code_reference_identifiers>>
+private code_reference_identifiers ::= IDENTIFIER | code_reference_identifiers_soft
+private code_reference_identifiers_soft ::= 'def' | 'as' | 'in' | 'trait' { consumeTokenMethod = 'consumeTokenFast' }
+private code_reference_type_arguments ::= <<codeReferenceTypeArguments type_argument_list>> <<setRefHadTypeArguments>>
+
+// for the sake of showing 'type expected' message
+type_code_reference ::= code_reference { elementType = '' name = 'type' }
+// endregion
+
+
+// region Variables
+private var ::= IDENTIFIER mb_initializer
+{
+  consumeTokenMethod = 'consumeTokenFast'
+}
+private mb_initializer ::= ['=' mb_nl expression_or_application]
+{
+  pin('.*') = 1
+  consumeTokenMethod = 'consumeTokenFast'
+}
+// endregion
+
+
+// region Other
+private mb_nl ::= nl?
+private nl ::= NL { consumeTokenMethod = 'consumeTokenFast' }
+// FIXME this rule allows error reporting in position before the new line
+private meta mb_nl_group ::= <<something>> | <<withProtectedLastVariantPos (nl <<something>>)>>
+private empty ::= ()
+
+private mb_question ::= '?'? { consumeTokenMethod = 'consumeTokenFast' }
+
+private fast_colon ::= ':'
+private fast_comma ::= ','
+private fast_l_angle ::= '<'
+// endregion
+
+
+// region Lists
+private meta comma_list_p ::= <<a_b_a_p <<item>> fast_comma>>
+private meta a_b_a_p ::= <<a>> (<<b>> <<a>>)* { pin('.*') = 1 }
+private meta comma_list ::= <<a_b_a <<item>> fast_comma>>
+private meta a_b_a ::= <<a>> (<<b>> <<a>>)* { pin = 1 }
+
+private meta paren_list ::= '('')' | '(' <<paren_list_inner <<item>>>> ')' { pin('paren_list_1') = 1 }
+private meta paren_list_inner ::= <<paren_list_item <<item>>>> <<paren_list_tail <<item>>>>*
+private meta paren_list_item ::= empty <<item>> { pin = 1 recoverWhile = paren_list_item_recovery }
+private meta paren_list_tail ::= ',' <<paren_list_item <<item>>>> { pin = 1 }
+private paren_list_item_recovery ::= !(',' | ')' | '}')
+// endregion
+
+
+// region Recovery
+
+// item junk item -> parse item, recover junk until end or item, report missing end
+// item junk end  -> parse item, recover junk until end or item, parse end
+// junk item      -> recover junk until end or item, report missing end
+// junk end       -> recover junk until end or item, parse separator
+
+// fun item(end, element, start) = head(end, element, recovery(end, start)) | end
+private meta separated_item ::= <<separated_item_head <<item_end>> <<element>> <<separated_recovery <<element_start>> <<item_end>>>>>> <<item_end>> { pin = 1 }
+// fun head(end, element, recovery) = !end element { recoverWhile = recovery }
+private meta separated_item_head ::= !<<item_end>> <<element>> { pin = 1 recoverWhile = '<<separated_recovery>>' }
+// fun recovery(end, start) = !(end | start)
+private meta separated_recovery ::= !(<<item_end>> | <<element_start>>)
+// endregion
+
+
+// region Generated parser utils
+private clear_variants_and_fail ::= clear_variants fail
+private external clear_variants ::= clearVariants
+private external clear_error ::= clearError
+private external fail ::= noMatch
+private external end_of_file ::= eof
+// endregion

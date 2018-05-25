@@ -121,6 +121,16 @@
       <option name="DEFAULT_PARAMETER">
         <value/>
       </option>
+      <option name="DEFAULT_REASSIGNED_PARAMETER">
+        <value>
+          <option name="FOREGROUND" value="6060c0" deuteranopia="1948a6" protanopia="1948a6"/>
+        </value>
+      </option>
+      <option name="DEFAULT_REASSIGNED_LOCAL_VARIABLE">
+        <value>
+          <option name="FOREGROUND" value="6060c0" deuteranopia="1948a6" protanopia="1948a6"/>
+        </value>
+      </option>
       <option name="DEFAULT_STATIC_METHOD">
         <value>
           <option name="FONT_TYPE" value="2"/>
@@ -296,9 +306,9 @@
           <option name="ERROR_STRIPE_COLOR" value="cf5b56" deuteranopia="d95716" protanopia="d95716"/>
         </value>
       </option>
-      <option name="RUNTIME_PROBLEM">
+      <option name="RUNTIME_ERROR">
         <value>
-          <option name="EFFECT_COLOR" value="ff0000" />
+          <option name="EFFECT_COLOR" value="f49810" />
           <option name="ERROR_STRIPE_COLOR" value="cf5b56" />
           <option name="EFFECT_TYPE" value="5" />
         </value>
@@ -1538,6 +1548,16 @@
           <option name="FOREGROUND" value="cc7832" deuteranopia="5c7ab8" protanopia="5c7ab8"/>
         </value>
       </option>
+      <option name="DEFAULT_REASSIGNED_PARAMETER">
+        <value>
+          <option name="FOREGROUND" value="80bac0" deuteranopia="828eba" protanopia="828eba"/>
+        </value>
+      </option>
+      <option name="DEFAULT_REASSIGNED_LOCAL_VARIABLE">
+        <value>
+          <option name="FOREGROUND" value="80bac0" deuteranopia="828eba" protanopia="828eba"/>
+        </value>
+      </option>
       <option name="DELETED_TEXT_ATTRIBUTES">
         <value>
           <option name="FOREGROUND" value="bbbbbb" />
@@ -1600,9 +1620,9 @@
           <option name="ERROR_STRIPE_COLOR" value="9e2927" deuteranopia="ff8f40" protanopia="ff8f40"/>
         </value>
       </option>
-      <option name="RUNTIME_PROBLEM">
+      <option name="RUNTIME_ERROR">
         <value>
-          <option name="EFFECT_COLOR" value="bc3f3c"/>
+          <option name="EFFECT_COLOR" value="f49810"/>
           <option name="EFFECT_TYPE" value="5" />
           <option name="ERROR_STRIPE_COLOR" value="9e2927"/>
         </value>

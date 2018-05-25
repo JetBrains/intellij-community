@@ -16,6 +16,7 @@
 package com.intellij.vcs.log.ui;
 
 import com.intellij.openapi.actionSystem.DataProvider;
+import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.vcs.VcsDataKeys;
 import com.intellij.openapi.vcs.history.VcsRevisionNumber;
 import com.intellij.ui.components.JBPanel;
@@ -75,6 +76,9 @@ public class VcsLogPanel extends JBPanel implements DataProvider {
       if (hashes.size() > VcsLogUtil.MAX_SELECTED_COMMITS) return null;
       return ArrayUtil.toObjectArray(ContainerUtil.map(hashes, commitId -> VcsLogUtil.convertToRevisionNumber(commitId.getHash())),
                                      VcsRevisionNumber.class);
+    }
+    else if (PlatformDataKeys.HELP_ID.is(dataId)) {
+      return myUi.getHelpId();
     }
     return null;
   }

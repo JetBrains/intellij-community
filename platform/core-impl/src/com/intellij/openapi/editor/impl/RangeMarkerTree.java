@@ -255,7 +255,7 @@ public class RangeMarkerTree<T extends RangeMarkerEx> extends IntervalTreeImpl<T
   // returns true if all deltas involved are still 0
   private boolean collectAffectedMarkersAndShiftSubtrees(@Nullable IntervalNode<T> root,
                                                          @NotNull DocumentEvent e,
-                                                         @NotNull List<IntervalNode<T>> affected) {
+                                                         @NotNull List<? super IntervalNode<T>> affected) {
     if (root == null) return true;
     boolean norm = pushDelta(root);
 
@@ -353,7 +353,7 @@ public class RangeMarkerTree<T extends RangeMarkerEx> extends IntervalTreeImpl<T
 
   private void collectNodesToRetarget(@Nullable IntervalNode<T> root,
                                       int start, int end,
-                                      @NotNull List<IntervalNode<T>> affected) {
+                                      @NotNull List<? super IntervalNode<T>> affected) {
     if (root == null) return;
     pushDelta(root);
 

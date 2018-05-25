@@ -288,18 +288,7 @@ public class ShowIntentionsPass extends TextEditorHighlightingPass {
       intentions.errorFixesToShow.addAll(fixes);
     }
     else {
-      final boolean isError = infoAtCursor.getSeverity() == HighlightSeverity.ERROR;
-      for (HighlightInfo.IntentionActionDescriptor fix : fixes) {
-        if (fix.isError() && isError) {
-          intentions.errorFixesToShow.add(fix);
-        }
-        else if (fix.isInformation()) {
-          intentions.intentionsToShow.add(fix);
-        }
-        else {
-          intentions.inspectionFixesToShow.add(fix);
-        }
-      }
+      fillIntentionsInfoForHighlightInfo(infoAtCursor, intentions, fixes);
     }
 
     for (final IntentionAction action : IntentionManager.getInstance().getAvailableIntentionActions()) {
@@ -353,6 +342,23 @@ public class ShowIntentionsPass extends TextEditorHighlightingPass {
     EditorNotificationActions.collectDescriptorsForEditor(hostEditor, intentions.notificationActionsToShow);
 
     intentions.filterActions(hostFile);
+  }
+
+  public static void fillIntentionsInfoForHighlightInfo(@NotNull HighlightInfo infoAtCursor, 
+                                                        @NotNull IntentionsInfo intentions,
+                                                        @NotNull List<HighlightInfo.IntentionActionDescriptor> fixes) {
+    final boolean isError = infoAtCursor.getSeverity() == HighlightSeverity.ERROR;
+    for (HighlightInfo.IntentionActionDescriptor fix : fixes) {
+      if (fix.isError() && isError) {
+        intentions.errorFixesToShow.add(fix);
+      }
+      else if (fix.isInformation()) {
+        intentions.intentionsToShow.add(fix);
+      }
+      else {
+        intentions.inspectionFixesToShow.add(fix);
+      }
+    }
   }
 
   /**
@@ -417,7 +423,9 @@ public class ShowIntentionsPass extends TextEditorHighlightingPass {
                   final HighlightInfo.IntentionActionDescriptor actionDescriptor =
                     new HighlightInfo.IntentionActionDescriptor(intentionAction, null, displayName, null,
                                                                 key, null, HighlightSeverity.INFORMATION);
-                  intentions.intentionsToShow.add(actionDescriptor);
+                  (problemDescriptor.getHighlightType() == ProblemHighlightType.ERROR 
+                   ? intentions.errorFixesToShow 
+                   : intentions.intentionsToShow).add(actionDescriptor);
                 }
               }
             }

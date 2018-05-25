@@ -379,7 +379,7 @@ public class ReferenceParser {
     if (expect(builder, start)) {
       while (true) {
         endsWithError = false;
-        PsiBuilder.Marker classReference = parseJavaCodeReference(builder, true, true, false, false);
+        PsiBuilder.Marker classReference = parseJavaCodeReference(builder, false, true, false, false);
         if (classReference == null) {
           error(builder, JavaErrorMessages.message("expected.identifier"));
           endsWithError = true;

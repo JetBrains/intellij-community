@@ -63,10 +63,9 @@ public abstract class PsiFileImpl extends ElementBase implements PsiFileEx, PsiF
   private long myModificationStamp;
 
   protected PsiFile myOriginalFile;
-  private final FileViewProvider myViewProvider;
+  private final AbstractFileViewProvider myViewProvider;
   private volatile FileTrees myTrees = FileTrees.noStub(null, this);
-  private boolean myInvalidated;
-  @SuppressWarnings("FieldAccessedSynchronizedAndUnsynchronized")
+  private volatile boolean myPossiblyInvalidated;
   protected final PsiManagerEx myManager;
   public static final Key<Boolean> BUILDING_STUB = new Key<>("Don't use stubs mark!");
   private final PsiLock myPsiLock;
@@ -78,8 +77,8 @@ public abstract class PsiFileImpl extends ElementBase implements PsiFileEx, PsiF
 
   protected PsiFileImpl(@NotNull FileViewProvider provider ) {
     myManager = (PsiManagerEx)provider.getManager();
-    myViewProvider = provider;
-    myPsiLock = ((AbstractFileViewProvider) provider).getFilePsiLock();
+    myViewProvider = (AbstractFileViewProvider)provider;
+    myPsiLock = myViewProvider.getFilePsiLock();
   }
 
   public void setContentElementType(final IElementType contentElementType) {
@@ -146,12 +145,35 @@ public abstract class PsiFileImpl extends ElementBase implements PsiFileEx, PsiF
       // but some VFS listeners receive the same events before that and ask PsiFile.isValid
       return false;
     }
-    return !myInvalidated;
+
+    if (!myPossiblyInvalidated) return true;
+    
+    /*
+    Originally, all PSI was invalidated on root change, to avoid UI freeze (IDEA-172762),
+    but that has led to too many PIEAEs (like IDEA-191185, IDEA-188292, IDEA-184186, EA-114990).
+    
+    Ideally those clients should all be converted to smart pointers, but that proved to be quite hard to do, especially without breaking API.
+    And they mostly worked before those batch invalidations.
+    
+    So now we have a smarter way of dealing with this issue. On root change, we mark
+    PSI as "potentially invalid", and then, when someone calls "isValid"
+    (hopefully not for all cached PSI at once, and hopefully in a background thread),
+    we check if the old PSI is equivalent to the one that would be re-created in its place. 
+    If yes, we return valid. If no, we invalidate the old PSI forever and return the new one.
+    */
+    
+    // synchronized by read-write action
+    if (((FileManagerImpl)myManager.getFileManager()).evaluateValidity(this)) {
+      myPossiblyInvalidated = false;
+      PsiInvalidElementAccessException.setInvalidationTrace(this, null);
+      return true;
+    }
+    return false;
   }
 
   @Override
-  public void markInvalidated() {
-    myInvalidated = true;
+  public final void markInvalidated() {
+    myPossiblyInvalidated = true;
     DebugUtil.onInvalidated(this);
   }
 
@@ -415,7 +437,7 @@ public abstract class PsiFileImpl extends ElementBase implements PsiFileEx, PsiF
     myOriginalFile = originalFile.getOriginalFile();
 
     FileViewProvider original = myOriginalFile.getViewProvider();
-    ((AbstractFileViewProvider)original).registerAsCopy((AbstractFileViewProvider)myViewProvider);
+    ((AbstractFileViewProvider)original).registerAsCopy(myViewProvider);
   }
 
   @Override

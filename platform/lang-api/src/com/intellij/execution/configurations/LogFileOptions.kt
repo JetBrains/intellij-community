@@ -45,19 +45,19 @@ class LogFileOptions : BaseState {
   }
 
   @get:Attribute("alias")
-  var name by string()
+  var name: String? by string()
 
   @get:Attribute(value = "path", converter = PathConverter::class)
-  var pathPattern by string()
+  var pathPattern: String? by string()
 
   @get:Attribute("checked")
-  var isEnabled by property(true)
+  var isEnabled: Boolean by property(true)
 
   @get:Attribute("skipped")
-  var isSkipContent by property(true)
+  var isSkipContent: Boolean by property(true)
 
   @get:Attribute("show_all")
-  var isShowAll by property(false)
+  var isShowAll: Boolean by property(false)
 
   @get:Attribute(value = "charset", converter = CharsetConverter::class)
   var charset: Charset by property(Charset.defaultCharset())

@@ -332,4 +332,6 @@ public interface IdeActions {
   @NonNls String ACTION_UPDATE_RUNNING_APPLICATION = "UpdateRunningApplication";
 
   @NonNls String ACTION_BRACE_OR_QUOTE_OUT = "BraceOrQuoteOut";
+
+  @NonNls String GROUP_TOUCHBAR = "TouchBar";
 }

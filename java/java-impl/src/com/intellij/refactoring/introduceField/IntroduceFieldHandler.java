@@ -74,16 +74,9 @@ public class IntroduceFieldHandler extends BaseExpressionToFieldHandler {
                                            PsiExpression[] occurrences, PsiElement anchorElement, PsiElement anchorElementIfAll) {
     final AbstractInplaceIntroducer activeIntroducer = AbstractInplaceIntroducer.getActiveIntroducer(editor);
 
-    PsiLocalVariable localVariable = null;
-    if (anchorElement instanceof PsiLocalVariable) {
-      localVariable = (PsiLocalVariable)anchorElement;
-    }
-    else if (expr instanceof PsiReferenceExpression) {
-      PsiElement ref = ((PsiReferenceExpression)expr).resolve();
-      if (ref instanceof PsiLocalVariable) {
-        localVariable = (PsiLocalVariable)ref;
-      }
-    }
+    ElementToWorkOn elementToWorkOn = ElementToWorkOn.adjustElements(expr, anchorElement);
+    PsiLocalVariable localVariable = elementToWorkOn.getLocalVariable();
+    expr = elementToWorkOn.getExpression();
 
     String enteredName = null;
     boolean replaceAll = false;

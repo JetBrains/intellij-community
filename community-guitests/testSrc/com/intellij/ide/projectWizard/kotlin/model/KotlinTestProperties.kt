@@ -55,6 +55,14 @@ object KotlinTestProperties {
   val isArtifactOnlyInDevRep: Boolean
     get() = getPropertyValue("kotlin.artifact.isOnlyDevRep", "true").toBoolean()
 
+  /**
+   * @return true - if artifact with version specified by kotlin_artifact_version is final released one
+   * it's false for EAP releases and other builds.
+   * Used in maven with preconfigured kotlin test, as maven archetypes are published only for final release
+   */
+  val isArtifactFinalRelease: Boolean
+    get() = getPropertyValue("kotlin.artifact.isFinalRelease", "false").toBoolean()
+
    /**
    * @return kotlin plugin version it can differ from kotlin artifact version in case of developed versions. e.g. `1.2.41-release` or `1.2.50-dev-1065`
    */

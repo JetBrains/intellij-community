@@ -17,7 +17,7 @@ import com.jetbrains.python.psi.types.PyClassType
 
 class PyDataclassPostInitCompletionContributor : CompletionContributor() {
 
-  override fun handleAutoCompletionPossibility(context: AutoCompletionContext) = autoInsertSingleItem(context)
+  override fun handleAutoCompletionPossibility(context: AutoCompletionContext): AutoCompletionDecision = autoInsertSingleItem(context)
 
   init {
     extend(CompletionType.BASIC, PlatformPatterns.psiElement().afterDefInMethod(), MyCompletionProvider)

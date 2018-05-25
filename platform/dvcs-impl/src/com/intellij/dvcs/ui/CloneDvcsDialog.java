@@ -25,6 +25,7 @@ import com.intellij.openapi.actionSystem.ActionManager;
 import com.intellij.openapi.actionSystem.IdeActions;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
+import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.event.DocumentListener;
 import com.intellij.openapi.fileChooser.FileChooserDescriptor;
 import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory;
@@ -253,6 +254,7 @@ public abstract class CloneDvcsDialog extends DialogWrapper {
     for (RepositoryHostingService service : repositoryHostingServices) {
       String serviceDisplayName = service.getServiceDisplayName();
       RepositoryListLoader loader = service.getRepositoryListLoader(myProject);
+      if (loader == null) continue;
       if (loader.isEnabled()) {
         enabledLoaders.put(serviceDisplayName, loader);
       }
@@ -333,13 +335,14 @@ public abstract class CloneDvcsDialog extends DialogWrapper {
 
   private void showRepositoryUrlAutoCompletionTooltipNow() {
     if (!hasErrors(myRepositoryUrlCombobox) && !myLoadedRepositoryHostingServicesNames.isEmpty()) {
+      Editor editor = myRepositoryUrlField.getEditor();
+      if (editor == null) return;
       String completionShortcutText =
         KeymapUtil.getFirstKeyboardShortcutText(ActionManager.getInstance().getAction(IdeActions.ACTION_CODE_COMPLETION));
-      HintManager.getInstance().showInformationHint(
-        Objects.requireNonNull(myRepositoryUrlField.getEditor()),
-        DvcsBundle.message("clone.repository.url.autocomplete.hint",
-                           DvcsUtil.joinWithAnd(myLoadedRepositoryHostingServicesNames, 0),
-                           completionShortcutText));
+      HintManager.getInstance().showInformationHint(editor,
+                                                    DvcsBundle.message("clone.repository.url.autocomplete.hint",
+                                                                       DvcsUtil.joinWithAnd(myLoadedRepositoryHostingServicesNames, 0),
+                                                                       completionShortcutText));
     }
   }
 
@@ -493,7 +496,7 @@ public abstract class CloneDvcsDialog extends DialogWrapper {
    */
   @Deprecated
   public void prependToHistory(@NotNull final String item) {
-    myRepositoryUrlCombobox.addItem(item);
+    myRepositoryUrlComboboxModel.add(item);
   }
 
   public void rememberSettings() {

@@ -53,8 +53,8 @@
     <action class="com.intellij.vcs.log.ui.actions.GoToHashOrRefAction" id="Vcs.Log.GoToRef" icon="AllIcons.Actions.Find"
             use-shortcut-of="Find"
             text="Go To Hash/Branch/Tag" description="Specify hash or name of a branch or a tag to navigate to the commit it points"/>
-    <action class="com.intellij.vcs.log.ui.actions.VcsLogQuickSettingsActions" id="Vcs.Log.QuickSettings"
-            text="Quick Settings" description="Quick Settings"/>
+    <action class="com.intellij.vcs.log.ui.actions.VcsLogPresentationActions" id="Vcs.Log.QuickPresentationSettings"
+            text="Presentation Settings" description="Presentation Settings"/>
     <action class="com.intellij.vcs.log.ui.actions.VcsLogTextFilterSettingsActions" id="Vcs.Log.QuickTextFilterSettings"
             text="Text Filter Settings" description="Text Filter Settings"/>
     <action class="com.intellij.vcs.log.ui.actions.IntelliSortChooserToggleAction" id="Vcs.Log.IntelliSortChooser"/>
@@ -98,26 +98,24 @@
             use-shortcut-of="VcsHistory.ShowAllAffected" icon="AllIcons.Actions.ListChanges" text="Show All Affected Files"
             description="Show all changes made in the chosen revision"/>
 
-    <group id="Vcs.Log.Settings">
+    <group id="Vcs.Log.PresentationSettings">
       <reference id="Vcs.Log.ShowRootsColumnAction"/>
       <reference id="Vcs.Log.CompactReferencesView"/>
       <reference id="Vcs.Log.ShowTagNames"/>
+      <reference id="Vcs.Log.ShowLongEdges"/>
       <separator/>
       <reference id="Vcs.Log.CollapseAll"/>
       <reference id="Vcs.Log.ExpandAll"/>
       <reference id="Vcs.Log.HighlightersActionGroup"/>
-      <separator/>
-      <reference id="ContextHelp"/>
     </group>
     <group id="Vcs.Log.TextFilterSettings">
       <reference id="Vcs.Log.EnableFilterByRegexAction"/>
       <reference id="Vcs.Log.MatchCaseAction"/>
     </group>
     <group id="Vcs.Log.Toolbar.Internal">
-      <reference id="Vcs.Log.ShowLongEdges"/>
       <reference id="Vcs.Log.Refresh"/>
-      <reference id="Vcs.Log.GoToRef"/>
       <group id="Vcs.Log.Toolbar"/>
+      <reference id="Vcs.Log.QuickPresentationSettings"/>
       <separator/>
       <reference ref="Vcs.Log.OpenAnotherTab"/>
     </group>
@@ -128,6 +126,8 @@
     <group id="Vcs.Log.ChangesBrowser.Toolbar">
       <reference id="Vcs.RepositoryChangesBrowserToolbar"/>
       <separator/>
+      <reference id="ChangesView.GroupBy"/>
+      <separator/>
       <reference id="Vcs.Log.ShowDetailsAction"/>
       <reference id="Vcs.Log.ShowDiffPreview"/>
     </group>
@@ -136,14 +136,16 @@
       <reference id="Vcs.Log.ShowChangesFromParents"/>
     </group>
     <group id="Vcs.FileHistory.ContextMenu">
-      <reference id="Vcs.Log.OpenRepositoryVersion"/>
-      <reference id="Diff.ShowDiff"/>
-      <reference id="Vcs.ShowDiffWithLocal"/>
+      <reference id="Vcs.CopyRevisionNumberAction"/>
       <reference id="ChangesView.CreatePatchFromChanges"/>
+      <separator/>
+      <reference id="Diff.ShowDiff"/>
+      <reference id="Vcs.Log.ShowAllAffected"/>
+      <reference id="Vcs.ShowDiffWithLocal"/>
+      <separator/>
+      <reference id="Vcs.Log.OpenRepositoryVersion"/>
       <reference id="Vcs.Log.GetVersion"/>
       <reference id="Vcs.Log.AnnotateRevisionAction"/>
-      <reference id="Vcs.Log.ShowAllAffected"/>
-      <reference id="Vcs.CopyRevisionNumberAction"/>
       <reference id="VcsHistoryActionsGroup"/>
     </group>
     <group id="Vcs.FileHistory.Toolbar">
@@ -154,6 +156,8 @@
       <reference id="Vcs.Log.ShowOtherBranches"/>
       <separator/>
       <reference id="Vcs.Log.ShowDetailsAction"/>
+      <separator/>
+      <reference id="VcsHistoryActionsGroup.Toolbar"/>
       <separator/>
     </group>
 
@@ -171,7 +175,7 @@
       <reference ref="Vcs.Log.ExpandAll"/>
       <reference ref="Vcs.Log.ShowLongEdges"/>
       <separator/>
-      <reference ref="Vcs.Log.QuickSettings"/>
+      <reference ref="Vcs.Log.QuickPresentationSettings"/>
       <reference ref="Vcs.Log.CompactReferencesView"/>
       <reference ref="Vcs.Log.ShowTagNames"/>
       <reference ref="Vcs.Log.ShowRootsColumnAction"/>
@@ -200,6 +204,7 @@
       <reference id="Vcs.Log.Refresh"/>
       <reference id="Vcs.Log.ShowDetailsAction"/>
       <reference id="VcsHistoryActionsGroup"/>
+      <reference id="VcsHistoryActionsGroup.Toolbar"/>
 
       <add-to-group group-id="FileHistory.KeymapGroup"/>
     </group>

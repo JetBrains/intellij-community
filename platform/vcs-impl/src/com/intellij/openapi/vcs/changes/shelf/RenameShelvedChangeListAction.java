@@ -15,16 +15,16 @@
  */
 package com.intellij.openapi.vcs.changes.shelf;
 
-import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
+import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
 
 import java.util.List;
 
-public class RenameShelvedChangeListAction extends AnAction {
+public class RenameShelvedChangeListAction extends DumbAwareAction {
   public void actionPerformed(AnActionEvent e) {
     final Project project = e.getRequiredData(CommonDataKeys.PROJECT);
     final List<ShelvedChangeList> changelists = ShelvedChangesViewManager.getShelvedLists(e.getDataContext());

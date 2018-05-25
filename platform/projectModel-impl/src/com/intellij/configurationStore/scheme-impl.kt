@@ -21,13 +21,13 @@ interface SchemeNameToFileName {
   fun schemeNameToFileName(name: String): String
 }
 
-val OLD_NAME_CONVERTER = object : SchemeNameToFileName {
+val OLD_NAME_CONVERTER: SchemeNameToFileName = object : SchemeNameToFileName {
   override fun schemeNameToFileName(name: String) = FileUtil.sanitizeFileName(name, true)
 }
-val CURRENT_NAME_CONVERTER = object : SchemeNameToFileName {
+val CURRENT_NAME_CONVERTER: SchemeNameToFileName = object : SchemeNameToFileName {
   override fun schemeNameToFileName(name: String) = FileUtil.sanitizeFileName(name, false)
 }
-val MODERN_NAME_CONVERTER = object : SchemeNameToFileName {
+val MODERN_NAME_CONVERTER: SchemeNameToFileName = object : SchemeNameToFileName {
   override fun schemeNameToFileName(name: String) = sanitizeFileName(name)
 }
 
@@ -69,11 +69,11 @@ abstract class LazySchemeProcessor<SCHEME, MUTABLE_SCHEME : SCHEME>(private val 
                             isBundled: Boolean = false): MUTABLE_SCHEME
   override fun writeScheme(scheme: MUTABLE_SCHEME): Element? = (scheme as SerializableScheme).writeScheme()
 
-  open fun isSchemeFile(name: CharSequence) = true
+  open fun isSchemeFile(name: CharSequence): Boolean = true
 
-  open fun isSchemeDefault(scheme: MUTABLE_SCHEME, digest: ByteArray) = false
+  open fun isSchemeDefault(scheme: MUTABLE_SCHEME, digest: ByteArray): Boolean = false
 
-  open fun isSchemeEqualToBundled(scheme: MUTABLE_SCHEME) = false
+  open fun isSchemeEqualToBundled(scheme: MUTABLE_SCHEME): Boolean = false
 }
 
 class DigestOutputStream(val digest: MessageDigest) : OutputStream() {
@@ -85,7 +85,7 @@ class DigestOutputStream(val digest: MessageDigest) : OutputStream() {
     digest.update(b, off, len)
   }
 
-  override fun toString() = "[Digest Output Stream] $digest"
+  override fun toString(): String = "[Digest Output Stream] $digest"
 }
 
 fun Element.digest(): ByteArray {
@@ -101,7 +101,7 @@ abstract class SchemeWrapper<out T>(name: String) : ExternalizableSchemeAdapter(
   val scheme: T
     get() = lazyScheme.value
 
-  override fun getSchemeState() = if (lazyScheme.isInitialized()) SchemeState.POSSIBLY_CHANGED else SchemeState.UNCHANGED
+  override fun getSchemeState(): SchemeState = if (lazyScheme.isInitialized()) SchemeState.POSSIBLY_CHANGED else SchemeState.UNCHANGED
 
   init {
     this.name = name
@@ -109,7 +109,7 @@ abstract class SchemeWrapper<out T>(name: String) : ExternalizableSchemeAdapter(
 }
 
 abstract class LazySchemeWrapper<T>(name: String, dataHolder: SchemeDataHolder<SchemeWrapper<T>>, protected val writer: (scheme: T) -> Element) : SchemeWrapper<T>(name) {
-  protected val dataHolder = AtomicReference(dataHolder)
+  protected val dataHolder: AtomicReference<SchemeDataHolder<SchemeWrapper<T>>> = AtomicReference(dataHolder)
 
   override final fun writeScheme(): Element {
     val dataHolder = dataHolder.get()
@@ -119,9 +119,9 @@ abstract class LazySchemeWrapper<T>(name: String, dataHolder: SchemeDataHolder<S
 }
 
 class InitializedSchemeWrapper<out T : Scheme>(scheme: T, private val writer: (scheme: T) -> Element) : SchemeWrapper<T>(scheme.name) {
-  override val lazyScheme = lazyOf(scheme)
+  override val lazyScheme: Lazy<T> = lazyOf(scheme)
 
-  override fun writeScheme() = writer(scheme)
+  override fun writeScheme(): Element = writer(scheme)
 }
 
 fun unwrapState(element: Element, project: Project, iprAdapter: SchemeManagerIprProvider?, schemeManager: SchemeManager<*>): Element? {

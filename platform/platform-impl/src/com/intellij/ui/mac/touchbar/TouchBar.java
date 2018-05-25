@@ -10,6 +10,7 @@ import org.jetbrains.annotations.NotNull;
 import javax.swing.*;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.function.Consumer;
 
 public class TouchBar implements NSTLibrary.ItemCreator {
   static final Logger LOG = Logger.getInstance(TouchBar.class);
@@ -19,13 +20,28 @@ public class TouchBar implements NSTLibrary.ItemCreator {
   protected ID myNativePeer;        // java wrapper holds native object
   protected long myCounter = 0;
   protected final List<TBItem> myItems = new ArrayList<>();
+  protected final boolean myReleaseOnClose;
 
   protected final TBItemButton myCustomEsc;
 
+  public static final TouchBar EMPTY = new TouchBar();
+
+  private TouchBar() {
+    myName = "EMPTY_STUB_TOUCHBAR";
+    myCustomEsc = null;
+    myNativePeer = ID.NIL;
+    myReleaseOnClose = false;
+  }
+
   public TouchBar(@NotNull String touchbarName, boolean replaceEsc) {
+    this(touchbarName, replaceEsc, false);
+  }
+
+  public TouchBar(@NotNull String touchbarName, boolean replaceEsc, boolean releaseOnClose) {
     myName = touchbarName;
-    myCustomEsc = replaceEsc ? new TBItemButton(_genNewID("esc"), AllIcons.Actions.Clear, null, this::_closeSelf) : null;
+    myCustomEsc = replaceEsc ? new TBItemButton(genNewID("esc"), AllIcons.Actions.Cancel, null, this::_closeSelf) : null;
     myNativePeer = NST.createTouchBar(touchbarName, this, myCustomEsc != null ? myCustomEsc.myUid : null);
+    myReleaseOnClose = releaseOnClose;
   }
 
   public boolean isManualClose() { return myCustomEsc != null; }
@@ -63,49 +79,49 @@ public class TouchBar implements NSTLibrary.ItemCreator {
   //
 
   public TBItemButton addButton() {
-    final TBItemButton butt = new TBItemButton(_genNewID("button"), null, null, null);
+    final TBItemButton butt = new TBItemButton(genNewID("button"), null, null, null);
     myItems.add(butt);
     return butt;
   }
 
   public TBItemButton addButton(Icon icon, String text, NSTLibrary.Action action) {
-    final TBItemButton butt = new TBItemButton(_genNewID("button"), icon, text, action);
+    final TBItemButton butt = new TBItemButton(genNewID("button"), icon, text, action);
     myItems.add(butt);
     return butt;
   }
 
   public TBItemButton addButton(Icon icon, String text, NSTLibrary.Action action, int buttonFlags) {
-    final TBItemButton butt = new TBItemButton(_genNewID("button"), icon, text, action, -1, buttonFlags);
+    final TBItemButton butt = new TBItemButton(genNewID("button"), icon, text, action, -1, buttonFlags);
     myItems.add(butt);
     return butt;
   }
 
   public TBItemButton addButton(Icon icon, String text, String actionId) {
-    final TBItemButton butt = new TBItemButton(_genNewID("button"), icon, text, new PlatformAction(actionId));
+    final TBItemButton butt = new TBItemButton(genNewID("button"), icon, text, new PlatformAction(actionId));
     myItems.add(butt);
     return butt;
   }
 
   public TBItemButton addButton(Icon icon, String text, AnAction act) {
-    final TBItemButton butt = new TBItemButton(_genNewID("button"), icon, text, new PlatformAction(act));
+    final TBItemButton butt = new TBItemButton(genNewID("button"), icon, text, new PlatformAction(act));
     myItems.add(butt);
     return butt;
   }
 
   public TBItemGroup addGroup(List<TBItem> items) {
-    final TBItemGroup group = new TBItemGroup(_genNewID("group"), items);
+    final TBItemGroup group = new TBItemGroup(genNewID("group"), items);
     myItems.add(group);
     return group;
   }
 
   public TBItemPopover addPopover(Icon icon, String text, int width, TouchBar expandTB, TouchBar tapAndHoldTB) {
-    final TBItemPopover popover = new TBItemPopover(_genNewID("popover"), icon, text, width, expandTB, tapAndHoldTB);
+    final TBItemPopover popover = new TBItemPopover(genNewID("popover"), icon, text, width, expandTB, tapAndHoldTB);
     myItems.add(popover);
     return popover;
   }
 
   public TBItemScrubber addScrubber(int width) {
-    final TBItemScrubber scrubber = new TBItemScrubber(_genNewID("scrubber"), width);
+    final TBItemScrubber scrubber = new TBItemScrubber(genNewID("scrubber"), width);
     myItems.add(scrubber);
     return scrubber;
   }
@@ -140,9 +156,22 @@ public class TouchBar implements NSTLibrary.ItemCreator {
   public void setPrincipal(@NotNull TBItem item) { NST.setPrincipal(myNativePeer, item.myUid); }
 
   public void onBeforeShow() {}
-  public void onHide() {}
+  public void onHide() {
+    if (myReleaseOnClose)
+      release();
+  }
 
-  private String _genNewID(String desc) { return String.format("%s.%s.%d", myName, desc, myCounter++); }
+  String genNewID(String desc) { return String.format("%s.%s.%d", myName, desc, myCounter++); }
+
+  void forEach(Consumer<? super TBItem> proc) {
+    myItems.forEach((item -> {
+      if (item instanceof TBItemGroup) {
+        ((TBItemGroup)item).getGroupItems().forEach(proc);
+        return;
+      }
+      proc.accept(item);
+    }));
+  }
 
   private TBItem findItem(String uid) {
     for (TBItem item : myItems)

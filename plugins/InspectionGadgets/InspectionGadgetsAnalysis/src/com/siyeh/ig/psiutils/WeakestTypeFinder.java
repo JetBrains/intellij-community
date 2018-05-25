@@ -38,6 +38,8 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
 
+import static com.intellij.util.ObjectUtils.tryCast;
+
 public class WeakestTypeFinder {
 
   private WeakestTypeFinder() {}
@@ -124,6 +126,14 @@ public class WeakestTypeFinder {
         if (!findWeakestType(referenceElement, methodCallExpression, useParameterizedTypeForCollectionMethods, weakestTypeClasses)) {
           return Collections.emptyList();
         }
+      }
+      else if (referenceParent instanceof PsiLambdaExpression) {
+        PsiLambdaExpression lambda = (PsiLambdaExpression)referenceParent;
+        PsiClassType returnType = tryCast(LambdaUtil.getFunctionalInterfaceReturnType(lambda), PsiClassType.class);
+        if (returnType == null) return Collections.emptyList();
+        PsiClass resolvedClass = returnType.resolve();
+        if (resolvedClass == null) return Collections.emptyList();
+        weakestTypeClasses.add(resolvedClass);
       }
       else if (referenceGrandParent instanceof PsiMethodCallExpression) {
         final PsiMethodCallExpression methodCallExpression = (PsiMethodCallExpression)referenceGrandParent;

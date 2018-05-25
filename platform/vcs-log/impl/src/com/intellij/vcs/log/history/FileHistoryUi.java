@@ -64,6 +64,7 @@ import static com.intellij.util.ObjectUtils.chooseNotNull;
 import static com.intellij.util.ObjectUtils.notNull;
 
 public class FileHistoryUi extends AbstractVcsLogUi {
+  @NotNull private static final String HELP_ID = "reference.versionControl.toolwindow.history";
   @NotNull private static final List<String> HIGHLIGHTERS = Arrays.asList(MyCommitsHighlighter.Factory.ID,
                                                                           CurrentBranchHighlighter.Factory.ID);
   @NotNull private final FileHistoryUiProperties myUiProperties;
@@ -265,6 +266,12 @@ public class FileHistoryUi extends AbstractVcsLogUi {
   @Override
   public Component getMainComponent() {
     return myFileHistoryPanel;
+  }
+
+  @Nullable
+  @Override
+  public String getHelpId() {
+    return HELP_ID;
   }
 
   private void updateFilter() {

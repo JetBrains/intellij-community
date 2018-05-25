@@ -46,13 +46,13 @@ private const val RECENT = "recent_temporary"
 @State(name = "RunManager", storages = [(Storage(value = StoragePathMacros.WORKSPACE_FILE, useSaveThreshold = ThreeState.NO))])
 open class RunManagerImpl(internal val project: Project) : RunManagerEx(), PersistentStateComponent<Element>, Disposable {
   companion object {
-    const val CONFIGURATION = "configuration"
-    const val NAME_ATTR = "name"
+    const val CONFIGURATION: String = "configuration"
+    const val NAME_ATTR: String = "name"
 
     internal val LOG = logger<RunManagerImpl>()
 
     @JvmStatic
-    fun getInstanceImpl(project: Project) = RunManager.getInstance(project) as RunManagerImpl
+    fun getInstanceImpl(project: Project): RunManagerImpl = RunManager.getInstance(project) as RunManagerImpl
 
     @JvmStatic
     fun canRunConfiguration(environment: ExecutionEnvironment): Boolean {
@@ -190,9 +190,9 @@ open class RunManagerImpl(internal val project: Project) : RunManagerEx(), Persi
     lock.write { templateIdToConfiguration.clear() }
   }
 
-  override fun getConfig() = _config
+  override fun getConfig(): RunManagerConfig = _config
 
-  override val configurationFactories by lazy { idToType.values.toTypedArray() }
+  override val configurationFactories: Array<ConfigurationType> by lazy { idToType.values.toTypedArray() }
 
   override val configurationFactoriesWithoutUnknown: List<ConfigurationType>
     get() = idToType.values.filterSmart { it.isManaged }
@@ -217,9 +217,9 @@ open class RunManagerImpl(internal val project: Project) : RunManagerEx(), Persi
   override val allConfigurationsList: List<RunConfiguration>
     get() = allSettings.mapSmart { it.configuration }
 
-  fun getSettings(configuration: RunConfiguration) = allSettings.firstOrNull { it.configuration === configuration } as? RunnerAndConfigurationSettingsImpl
+  fun getSettings(configuration: RunConfiguration): RunnerAndConfigurationSettingsImpl? = allSettings.firstOrNull { it.configuration === configuration } as? RunnerAndConfigurationSettingsImpl
 
-  override fun getConfigurationSettingsList(type: ConfigurationType) = allSettings.filterSmart { it.type.id == type.id }
+  override fun getConfigurationSettingsList(type: ConfigurationType): List<RunnerAndConfigurationSettings> = allSettings.filterSmart { it.type.id == type.id }
 
   override fun getStructure(type: ConfigurationType): Map<String, List<RunnerAndConfigurationSettings>> {
     val result = LinkedHashMap<String?, MutableList<RunnerAndConfigurationSettings>>()
@@ -507,6 +507,7 @@ open class RunManagerImpl(internal val project: Project) : RunManagerEx(), Persi
     isFirstLoadState.set(false)
     loadSharedRunConfigurations()
     runConfigurationFirstLoaded()
+    eventPublisher.stateLoaded()
   }
 
   override fun loadState(parentNode: Element) {
@@ -585,6 +586,8 @@ open class RunManagerImpl(internal val project: Project) : RunManagerEx(), Persi
     if (!isFirstLoadState && oldSelectedConfigurationId != null && oldSelectedConfigurationId != selectedConfigurationId) {
       eventPublisher.runConfigurationSelected()
     }
+
+    eventPublisher.stateLoaded()
   }
 
   private fun loadSharedRunConfigurations() {
@@ -622,7 +625,7 @@ open class RunManagerImpl(internal val project: Project) : RunManagerEx(), Persi
     eventPublisher.runConfigurationSelected()
   }
 
-  override fun hasSettings(settings: RunnerAndConfigurationSettings) = lock.read { idToSettings.get(settings.uniqueID) == settings }
+  override fun hasSettings(settings: RunnerAndConfigurationSettings): Boolean = lock.read { idToSettings.get(settings.uniqueID) == settings }
 
   private fun findExistingConfigurationId(settings: RunnerAndConfigurationSettings): String? {
     for ((key, value) in idToSettings) {
@@ -746,7 +749,7 @@ open class RunManagerImpl(internal val project: Project) : RunManagerEx(), Persi
     configuration.beforeRunTasks = result ?: emptyList()
   }
 
-  override fun getConfigurationType(typeName: String) = idToType.get(typeName)
+  override fun getConfigurationType(typeName: String): ConfigurationType? = idToType.get(typeName)
 
   @JvmOverloads
   fun getFactory(typeId: String?, factoryId: String?, checkUnknown: Boolean = false): ConfigurationFactory? {
@@ -840,7 +843,7 @@ open class RunManagerImpl(internal val project: Project) : RunManagerEx(), Persi
     return icon
   }
 
-  fun getConfigurationById(id: String) = lock.read { idToSettings.get(id) }
+  fun getConfigurationById(id: String): RunnerAndConfigurationSettings? = lock.read { idToSettings.get(id) }
 
   override fun findConfigurationByName(name: String?): RunnerAndConfigurationSettings? {
     if (name == null) {
@@ -1015,5 +1018,12 @@ private inline fun Collection<RunnerAndConfigurationSettings>.forEachManaged(han
     if (settings.type.isManaged) {
       handler(settings)
     }
+  }
+}
+
+fun getBeforeRunTasks(configuration: RunConfiguration): List<BeforeRunTask<*>> {
+  return when (configuration) {
+    is WrappingRunConfiguration<*> -> getBeforeRunTasks(configuration.peer)
+    else -> configuration.beforeRunTasks
   }
 }

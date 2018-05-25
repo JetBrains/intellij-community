@@ -26,8 +26,11 @@ public class ExprUtil {
     if (wrapper != null) {
       // own class
       MethodWrapper methodWrapper = wrapper.getMethodWrapper(CodeConstants.INIT_NAME, descriptor);
-      if (methodWrapper == null && !DecompilerContext.getOption(IFernflowerPreferences.FAIL_ON_INVALID_BYTECODE)) {
-        return null;
+      if (methodWrapper == null) {
+        if (DecompilerContext.getOption(IFernflowerPreferences.IGNORE_INVALID_BYTECODE)) {
+          return null;
+        }
+        throw new RuntimeException("Constructor " + node.classStruct.qualifiedName + "." + CodeConstants.INIT_NAME + descriptor + " not found");
       }
       mask = methodWrapper.synthParameters;
     }

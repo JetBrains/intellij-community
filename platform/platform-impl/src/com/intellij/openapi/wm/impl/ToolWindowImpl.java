@@ -222,6 +222,11 @@ public final class ToolWindowImpl implements ToolWindowEx {
       ArrayList<FinalizableCommand> cmd = new ArrayList<>();
       cmd.add(new FinalizableCommand(null) {
         @Override
+        public boolean willChangeState() {
+          return false;
+        }
+
+        @Override
         public void run() {
           IdeFocusManager.getInstance(myToolWindowManager.getProject()).doWhenFocusSettlesDown(() -> {
             if (myContentManager.isDisposed()) return;
@@ -444,7 +449,8 @@ public final class ToolWindowImpl implements ToolWindowEx {
       }
     }
     //getSelectedContent().setIcon(icon);
-    myIcon = icon;
+
+    myIcon = new ToolWindowIcon(icon, getId());
     myChangeSupport.firePropertyChange(PROP_ICON, oldIcon, icon);
   }
 

@@ -3,6 +3,9 @@ package git4idea.actions;
 
 import com.intellij.openapi.actionSystem.ActionPlaces;
 import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.actionSystem.CommonDataKeys;
+import com.intellij.openapi.actionSystem.Presentation;
+import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.AbstractVcsHelper;
 import com.intellij.openapi.vcs.FileStatus;
@@ -10,27 +13,28 @@ import com.intellij.openapi.vcs.changes.Change;
 import com.intellij.openapi.vcs.changes.ChangeListManager;
 import com.intellij.openapi.vcs.changes.ContentRevision;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.util.ObjectUtils;
 import git4idea.GitVcs;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Collection;
+import java.util.Comparator;
 import java.util.Set;
 import java.util.TreeSet;
 
+import static com.intellij.util.ObjectUtils.notNull;
 import static com.intellij.util.containers.ContainerUtilRt.newArrayList;
 
 /**
  * Git merge tool for resolving conflicts. Use IDEA built-in 3-way merge tool.
  */
-public class GitResolveConflictsAction extends GitAction {
+public class GitResolveConflictsAction extends DumbAwareAction {
 
   @Override
   public void actionPerformed(@NotNull AnActionEvent event) {
-    Project project = ObjectUtils.assertNotNull(event.getProject());
+    Project project = notNull(event.getProject());
     GitVcs vcs = GitVcs.getInstance(project);
 
-    final Set<VirtualFile> conflictedFiles = new TreeSet<>((f1, f2) -> f1.getPresentableUrl().compareTo(f2.getPresentableUrl()));
+    Set<VirtualFile> conflictedFiles = new TreeSet<>(Comparator.comparing(VirtualFile::getPresentableUrl));
     for (Change change : ChangeListManager.getInstance(project).getAllChanges()) {
       if (change.getFileStatus() != FileStatus.MERGED_WITH_CONFLICTS) {
         continue;
@@ -54,25 +58,26 @@ public class GitResolveConflictsAction extends GitAction {
     AbstractVcsHelper.getInstance(project).showMergeDialog(newArrayList(conflictedFiles), vcs.getMergeProvider());
   }
 
-  @Override
-  protected boolean isEnabled(@NotNull AnActionEvent event) {
-    final Collection<Change> changes = ChangeListManager.getInstance(event.getProject()).getAllChanges();
+  private static boolean isEnabled(@NotNull Project project) {
+    Collection<Change> changes = ChangeListManager.getInstance(project).getAllChanges();
     if (changes.size() > 1000) {
       return true;
     }
-    for (Change change : changes) {
-      if (change.getFileStatus() == FileStatus.MERGED_WITH_CONFLICTS) {
-        return true;
-      }
-    }
-    return false;
+    return changes.stream().anyMatch(it -> it.getFileStatus() == FileStatus.MERGED_WITH_CONFLICTS);
   }
 
   @Override
   public void update(@NotNull AnActionEvent e) {
-    super.update(e);
+    Presentation presentation = e.getPresentation();
+    Project project = e.getData(CommonDataKeys.PROJECT);
+    if (project == null || project.isDisposed()) {
+      presentation.setEnabledAndVisible(false);
+      return;
+    }
+
+    presentation.setEnabled(isEnabled(project));
     if (ActionPlaces.isPopupPlace(e.getPlace())) {
-      e.getPresentation().setVisible(e.getPresentation().isEnabled());
+      presentation.setVisible(e.getPresentation().isEnabled());
     }
   }
 }

@@ -34,7 +34,7 @@ abstract class PrebuiltIndexProviderBase<Value> : Disposable {
     private val LOG = Logger.getInstance("#com.intellij.index.PrebuiltIndexProviderBase")
 
     @JvmField
-    val DEBUG_PREBUILT_INDICES = SystemProperties.getBooleanProperty("debug.prebuilt.indices", false)
+    val DEBUG_PREBUILT_INDICES: Boolean = SystemProperties.getBooleanProperty("debug.prebuilt.indices", false)
   }
 
   init {

@@ -40,7 +40,7 @@ class JGitCredentialsProvider(private val credentialsStore: Lazy<IcsCredentialsS
         override fun load(it: URIish) = getCredentialsUsingGit(it, repository) ?: Credentials(null)
       })
 
-  override fun isInteractive() = true
+  override fun isInteractive(): Boolean = true
 
   override fun supports(vararg items: CredentialItem): Boolean {
     for (item in items) {

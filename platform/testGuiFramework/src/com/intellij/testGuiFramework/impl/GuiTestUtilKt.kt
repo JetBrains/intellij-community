@@ -135,9 +135,9 @@ object GuiTestUtilKt {
       return child
     }
 
-    fun countChildren() = children.count()
+    fun countChildren(): Int = children.count()
 
-    fun isLeaf() = (children.count() == 0)
+    fun isLeaf(): Boolean = (children.count() == 0)
 
   }
 

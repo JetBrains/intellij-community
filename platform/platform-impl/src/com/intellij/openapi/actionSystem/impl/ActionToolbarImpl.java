@@ -5,6 +5,7 @@ import com.intellij.icons.AllIcons;
 import com.intellij.ide.DataManager;
 import com.intellij.ide.HelpTooltip;
 import com.intellij.ide.impl.DataManagerImpl;
+import com.intellij.ide.ui.UISettings;
 import com.intellij.internal.statistic.collectors.fus.ui.persistence.ToolbarClicksCollector;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
@@ -18,6 +19,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.keymap.ex.KeymapManagerEx;
 import com.intellij.openapi.ui.popup.*;
 import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.openapi.wm.WindowManager;
 import com.intellij.openapi.wm.ex.WindowManagerEx;
@@ -289,7 +291,7 @@ public class ActionToolbarImpl extends JPanel implements ActionToolbar, QuickAct
     final List<AnAction> rightAligned = new ArrayList<>();
     boolean isLastElementSeparator = false;
     if (myAddSeparatorFirst) {
-      add(new MySeparator());
+      add(new MySeparator(null));
       isLastElementSeparator = true;
     }
     for (int i = 0; i < actions.size(); i++) {
@@ -309,7 +311,7 @@ public class ActionToolbarImpl extends JPanel implements ActionToolbar, QuickAct
       if (action instanceof Separator) {
         if (isLastElementSeparator) continue;
         if (i > 0 && i < actions.size() - 1) {
-          add(new MySeparator());
+          add(new MySeparator(((Separator) action).getText()));
           isLastElementSeparator = true;
           continue;
         }
@@ -427,6 +429,11 @@ public class ActionToolbarImpl extends JPanel implements ActionToolbar, QuickAct
       @Override
       protected HelpTooltip.Alignment getTooltipLocation() {
         return tooltipLocation();
+      }
+
+      @Override
+      protected Icon getFallbackIcon(boolean enabled) {
+        return enabled ? AllIcons.Toolbar.Unknown : IconLoader.getDisabledIcon(AllIcons.Toolbar.Unknown);
       }
     };
     actionButton.setLook(look);
@@ -966,9 +973,22 @@ public class ActionToolbarImpl extends JPanel implements ActionToolbar, QuickAct
   }
 
   private final class MySeparator extends JComponent {
+    private final String myText;
+
+    private MySeparator(String text) {
+      myText = text;
+      setFont(JBUI.Fonts.toolbarSmallComboBoxFont());
+    }
+
     @Override
     public Dimension getPreferredSize() {
-      return (myOrientation == SwingConstants.HORIZONTAL) ? JBUI.size(7, 24) : JBUI.size(24, 7);
+      if (myOrientation == SwingConstants.HORIZONTAL) {
+        int separatorWidth = myText == null ? 0 : getFontMetrics(getFont()).stringWidth(myText) + JBUI.scale(4);
+        return JBUI.size(7 + separatorWidth, 24);
+      }
+      else {
+        return JBUI.size(24, 7);
+      }
     }
 
     @Override
@@ -986,7 +1006,16 @@ public class ActionToolbarImpl extends JPanel implements ActionToolbar, QuickAct
 
         g.setColor(UIUtil.getSeparatorColor());
         if (myOrientation == SwingConstants.HORIZONTAL) {
-          LinePainter2D.paint((Graphics2D)g, center, gap, center, ActionToolbarImpl.this.getHeight() - gap * 2 - offset);
+          int y2 = ActionToolbarImpl.this.getHeight() - gap * 2 - offset;
+          LinePainter2D.paint((Graphics2D)g, center, gap, center, y2);
+
+          if (myText != null) {
+            FontMetrics fontMetrics = getFontMetrics(getFont());
+            int top = (getHeight() - fontMetrics.getHeight()) / 2;
+            UISettings.setupAntialiasing(g);
+            g.setColor(JBColor.foreground());
+            g.drawString(myText, JBUI.scale(9), top + fontMetrics.getAscent());
+          }
         }
         else {
           LinePainter2D.paint((Graphics2D)g, gap, center, ActionToolbarImpl.this.getWidth() - gap * 2 - offset, center);

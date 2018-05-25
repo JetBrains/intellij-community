@@ -425,6 +425,7 @@
     <statistics.applicationUsagesCollector implementation="com.intellij.internal.statistic.collectors.fus.ui.UiInfoUsageCollector"/>
     <statistics.applicationUsagesCollector implementation="com.intellij.internal.statistic.collectors.fus.ui.A11YUsagesCollector"/>
     <statistics.applicationUsagesCollector implementation="com.intellij.diff.statistics.DiffUsagesCollector"/>
+    <statistics.applicationUsagesCollector implementation="com.intellij.internal.statistic.collectors.fus.RegistryApplicationUsagesCollector"/>
 
     <statistics.usagesCollector implementation="com.intellij.internal.statistic.collectors.legacy.productivity.LegacyProductivityFeaturesUsageCollector"/>
     <statistics.usagesCollector implementation="com.intellij.internal.statistic.collectors.legacy.plugins.LegacyDisabledPluginsUsagesCollector"/>
@@ -450,6 +451,8 @@
     <statistics.projectUsagesCollector implementation="com.intellij.openapi.vcs.statistics.VcsOptionsUsagesCollector"/>
     <statistics.projectUsagesCollector implementation="com.intellij.openapi.vcs.statistics.VcsStatsUsagesCollector"/>
     <statistics.projectUsagesCollector implementation="com.intellij.openapi.vcs.statistics.VcsNamesUsagesCollector"/>
+
+    <statistics.projectUsagesCollector implementation="com.intellij.internal.statistic.collectors.fus.RegistryProjectUsagesCollector"/>
 
     <statistics.usagesCollector implementation="com.intellij.openapi.vcs.statistics.LegacyVcsOptionsUsagesCollector"/>
     <statistics.usagesCollector implementation="com.intellij.openapi.vcs.statistics.LegacyVcsStatsUsagesCollector"/>

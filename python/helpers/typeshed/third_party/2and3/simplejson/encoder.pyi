@@ -1,5 +1,4 @@
-from typing import Any
-
+from typing import Any, IO
 
 class JSONEncoder(object):
     def __init__(self, *args, **kwargs): ...

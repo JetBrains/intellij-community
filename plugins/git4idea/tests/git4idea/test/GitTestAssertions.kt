@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package git4idea.test
 
 import com.intellij.openapi.application.ApplicationManager
@@ -64,7 +50,7 @@ fun GitRepository.assertLatestSubjects(vararg expectedMessages: String) {
 }
 
 private fun GitRepository.assertLatestHistory(mapping: (VcsCommitMetadata) -> String, vararg expectedMessages: String) {
-  val actualMessages = GitLogUtil.collectMetadata(project, root).commits
+  val actualMessages = GitLogUtil.collectMetadata(project, root, false).commits
     .map(mapping)
     .subList(0, expectedMessages.size)
   assertOrderedEquals("History is incorrect", actualMessages, expectedMessages.asList())
@@ -83,14 +69,15 @@ fun GitRepository.assertStagedChanges(changes: ChangesBuilder.() -> Unit) {
   PlatformTestCase.assertTrue(actualChanges.isEmpty())
 }
 
-fun GitRepository.assertCommitted(changes: ChangesBuilder.() -> Unit) {
+fun GitRepository.assertCommitted(depth: Int = 1, changes: ChangesBuilder.() -> Unit) {
   val cb = ChangesBuilder()
   cb.changes()
 
-  val actualChanges = GitHistoryUtils.history(project, root, "-1")[0].changes
+  val allCanges = GitHistoryUtils.history(project, root, "-${depth}")[depth - 1].changes
+  val actualChanges = allCanges.toMutableSet()
   for (change in cb.changes) {
     val found = actualChanges.find(change.matcher)
-    PlatformTestCase.assertNotNull("The change [$change] wasn't committed", found)
+    PlatformTestCase.assertNotNull("The change [$change] wasn't committed\n$allCanges", found)
     actualChanges.remove(found)
   }
   PlatformTestCase.assertTrue(actualChanges.isEmpty())
@@ -149,6 +136,12 @@ class ChangesBuilder {
   }
 
   val changes = linkedSetOf<AChange>()
+
+  fun deleted(name: String) {
+    PlatformTestCase.assertTrue(changes.add(AChange(FileStatus.DELETED, name) {
+      it.fileStatus == FileStatus.DELETED && it.beforeRevision!!.file.name == name && it.afterRevision == null
+    }))
+  }
 
   fun added(name: String) {
     PlatformTestCase.assertTrue(changes.add(AChange(FileStatus.ADDED, name) {

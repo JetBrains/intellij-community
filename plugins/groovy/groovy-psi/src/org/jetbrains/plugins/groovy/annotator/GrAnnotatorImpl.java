@@ -36,9 +36,13 @@ public class GrAnnotatorImpl implements Annotator {
     final GroovyConfigUtils groovyConfig = GroovyConfigUtils.getInstance();
     if (element instanceof GroovyPsiElement) {
       final GroovyAnnotator annotator = new GroovyAnnotator(holder);
-      final GroovyAnnotator30 annotator30 = new GroovyAnnotator30(holder, groovyConfig.isVersionAtLeast(element, GroovyConfigUtils.GROOVY3_0));
+      boolean atLeast30 = groovyConfig.isVersionAtLeast(element, GroovyConfigUtils.GROOVY3_0);
+      final GroovyAnnotator30 annotator30 = new GroovyAnnotator30(holder, atLeast30);
       ((GroovyPsiElement)element).accept(annotator);
       ((GroovyPsiElement)element).accept(annotator30);
+      if (!atLeast30) {
+        ((GroovyPsiElement)element).accept(new GroovyAnnotatorPre30(holder));
+      }
       if (PsiUtil.isCompileStatic(element)) {
         final GroovyStaticTypeCheckVisitor typeCheckVisitor = myTypeCheckVisitorThreadLocal.get();
         assert typeCheckVisitor != null;

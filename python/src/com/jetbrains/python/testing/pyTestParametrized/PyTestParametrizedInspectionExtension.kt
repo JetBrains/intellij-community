@@ -10,6 +10,6 @@ import com.jetbrains.python.psi.PyNamedParameter
  */
 class PyTestParametrizedInspectionExtension : PyInspectionExtension() {
 
-  override fun ignoreUnused(local: PsiElement) = local is PyNamedParameter && local.isParametrized()
+  override fun ignoreUnused(local: PsiElement): Boolean = local is PyNamedParameter && local.isParametrized()
 
 }

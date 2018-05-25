@@ -18,12 +18,15 @@ package com.intellij.testFramework.propertyBased;
 import com.intellij.codeInsight.daemon.impl.HighlightInfo;
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.lang.annotation.HighlightSeverity;
+import com.intellij.openapi.Disposable;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.fileEditor.OpenFileDescriptor;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiComment;
 import com.intellij.psi.PsiDocumentManager;
@@ -41,7 +44,6 @@ import org.jetbrains.jetCheck.Generator;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
-import java.util.function.Function;
 import java.util.stream.Collectors;
 
 public class InvokeIntention extends ActionOnFile {
@@ -57,26 +59,29 @@ public class InvokeIntention extends ActionOnFile {
   public void performCommand(@NotNull Environment env) {
     int offset = generateDocOffset(env, "Go to offset %s and run daemon");
 
-    doInvokeIntention(offset, actions -> {
-      if (actions.isEmpty()) {
-        env.logMessage("No intentions found");
-        return null;
-      }
-
-      IntentionAction result = env.generateValue(Generator.sampledFrom(actions).noShrink(), null);
-      env.logMessage("Invoke intention '" + result.getText() + "'");
-      return result;
-    }, env);
+    doInvokeIntention(offset, env);
   }
 
-  private void doInvokeIntention(int offset, Function<List<IntentionAction>, IntentionAction> intentionChooser, @Nullable Environment env) {
+  @Nullable
+  private static IntentionAction chooseIntention(@NotNull Environment env, List<IntentionAction> actions) {
+    if (actions.isEmpty()) {
+      env.logMessage("No intentions found");
+      return null;
+    }
+
+    IntentionAction result = env.generateValue(Generator.sampledFrom(actions).noShrink(), null);
+    env.logMessage("Invoke intention '" + result.getText() + "'");
+    return result;
+  }
+
+  private void doInvokeIntention(int offset, @Nullable Environment env) {
     Project project = getProject();
     Editor editor = FileEditorManager.getInstance(project).openTextEditor(new OpenFileDescriptor(project, getVirtualFile(), offset), true);
 
     boolean hasErrors = !highlightErrors(project, editor).isEmpty();
 
     PsiFile file = PsiUtilBase.getPsiFileInEditor(editor, getProject());
-    IntentionAction intention = intentionChooser.apply(getAvailableIntentions(editor, file));
+    IntentionAction intention = chooseIntention(env, getAvailableIntentions(editor, file));
     if (intention == null) return;
 
     String intentionString = intention.toString();
@@ -91,6 +96,11 @@ public class InvokeIntention extends ActionOnFile {
     Document changedDocument = getDocumentToBeChanged(intention);
     String textBefore = changedDocument == null ? null : changedDocument.getText();
     Long stampBefore = changedDocument == null ? null : changedDocument.getModificationStamp();
+
+    Disposable disposable = Disposer.newDisposable();
+    if (MadTestingUtil.containsErrorElements(file.getViewProvider())) {
+      Registry.get("ide.check.structural.psi.text.consistency.in.tests").setValue(false, disposable);
+    }
 
     Runnable r = () -> CodeInsightTestFixtureImpl.invokeIntention(intention, file, editor, intention.getText());
     try {
@@ -134,6 +144,9 @@ public class InvokeIntention extends ActionOnFile {
         env.logMessage("Error happened, the file's text before invoking printed to the debug log, search for 'text before intention invocation' there");
       }
       throw error;
+    }
+    finally {
+      Disposer.dispose(disposable);
     }
   }
 

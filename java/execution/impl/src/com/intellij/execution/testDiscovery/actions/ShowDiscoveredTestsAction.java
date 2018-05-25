@@ -5,6 +5,7 @@ import com.intellij.codeInsight.actions.FormatChangedTextUtil;
 import com.intellij.execution.ExecutionException;
 import com.intellij.execution.Executor;
 import com.intellij.execution.JavaTestConfigurationBase;
+import com.intellij.execution.Location;
 import com.intellij.execution.actions.ConfigurationContext;
 import com.intellij.execution.actions.RunConfigurationProducer;
 import com.intellij.execution.executors.DefaultRunExecutor;
@@ -52,7 +53,6 @@ import com.intellij.util.PsiNavigateUtil;
 import com.intellij.util.ui.EdtInvocationManager;
 import com.intellij.util.ui.JBDimension;
 import com.intellij.util.ui.tree.TreeModelAdapter;
-import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.uast.UFile;
@@ -64,10 +64,7 @@ import javax.swing.*;
 import javax.swing.event.TreeModelEvent;
 import javax.swing.tree.TreeModel;
 import java.awt.event.ActionEvent;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
-import java.util.Objects;
+import java.util.*;
 import java.util.stream.Collectors;
 
 import static com.intellij.openapi.actionSystem.CommonDataKeys.EDITOR;
@@ -175,7 +172,13 @@ public class ShowDiscoveredTestsAction extends AnAction {
     ActiveComponent runButton = createButton(RUN_ALL_ACTION_TEXT, AllIcons.Actions.Execute, () -> runAllDiscoveredTests(project, tree, ref, context, initTitle));
 
     Runnable pinActionListener = () -> {
-      UsageView view = FindUtil.showInUsageView(null, tree.getTestMethods(), param -> new TestMethodUsage(param), initTitle, project);
+      UsageView view = FindUtil.showInUsageView(null, tree.getTestMethods(), param -> param, initTitle, p -> {
+        p.setCodeUsages(false); // don't show r/w, imports filtering actions
+        p.setUsagesWord("test");
+        p.setMergeDupLinesAvailable(false);
+        p.setUsageTypeFilteringAvailable(false);
+        p.setExcludeAvailable(false);
+      }, project);
       if (view != null) {
         view.addButtonToLowerPane(new AbstractAction(RUN_ALL_ACTION_TEXT, AllIcons.Actions.Execute) {
           @Override
@@ -183,10 +186,6 @@ public class ShowDiscoveredTestsAction extends AnAction {
             runAllDiscoveredTests(project, tree, ref, context, initTitle);
           }
         });
-        view.getPresentation().setUsagesWord("test");
-        view.getPresentation().setMergeDupLinesAvailable(false);
-        view.getPresentation().setUsageTypeFilteringAvailable(false);
-        view.getPresentation().setExcludeAvailable(false);
       }
       JBPopup popup = ref.get();
       if (popup != null) {
@@ -237,14 +236,20 @@ public class ShowDiscoveredTestsAction extends AnAction {
 
         for (TestDiscoveryConfigurationProducer producer : getRunConfigurationProducers(project)) {
           byte frameworkId = ((JavaTestConfigurationBase)producer.getConfigurationFactory().createTemplateConfiguration(project)).getTestFrameworkId();
-          TestDiscoveryProducer.consumeDiscoveredTests(project, fqn, methodName, frameworkId, (testClass, testMethod) -> {
-            PsiMethod psiMethod = ReadAction.compute(() -> {
-              PsiClass cc = testClass == null ? null : ClassUtil.findPsiClass(PsiManager.getInstance(project), testClass, null, true, scope);
-              return cc == null ? null : ArrayUtil.getFirstElement(cc.findMethodsByName(testMethod, false));
+          TestDiscoveryProducer.consumeDiscoveredTests(project, fqn, methodName, frameworkId, (testClass, testMethod, parameter) -> {
+            PsiClass[] testClassPsi = {null};
+            PsiMethod[] testMethodPsi = {null};
+            ReadAction.run(() -> {
+              testClassPsi[0] = ClassUtil.findPsiClass(PsiManager.getInstance(project), testClass, null, true, scope);
+              boolean checkBases = parameter != null; // check bases for parameterized tests
+              if (testClassPsi[0] != null) {
+                testMethodPsi[0] = ArrayUtil.getFirstElement(testClassPsi[0].findMethodsByName(testMethod, checkBases));
+              }
             });
-            if (psiMethod != null) {
-              tree.addTest(ReadAction.compute(() -> psiMethod.getContainingClass()), psiMethod);
+            if (testMethodPsi[0] != null) {
+              tree.addTest(testClassPsi[0], testMethodPsi[0], parameter);
             }
+            return true;
           });
         }
       }
@@ -281,29 +286,35 @@ public class ShowDiscoveredTestsAction extends AnAction {
     Executor executor = DefaultRunExecutor.getRunExecutorInstance();
     Module targetModule = TestDiscoveryConfigurationProducer.detectTargetModule(tree.getContainingModules(), project);
     //first producer with results will be picked
-    PsiMethod[] testMethods = Arrays
+    @SuppressWarnings("unchecked")
+    Location<PsiMethod>[] testMethods = Arrays
       .stream(tree.getTestMethods())
-      .map(DiscoveredTestsTreeModel.Node::getPointer)
-      .map(SmartPsiElementPointer::getElement)
+      .map(TestMethodUsage::calculateLocation)
       .filter(Objects::nonNull)
-      .toArray(PsiMethod[]::new);
-    StreamEx.of(getRunConfigurationProducers(project))
-            .filter(producer -> producer.isApplicable(testMethods))
-            .map((producer) -> producer.createProfile(testMethods, targetModule, context, title))
-            .findFirst()
-            .ifPresent(profile -> {
-              try {
-                ExecutionEnvironmentBuilder.create(project, executor, profile).buildAndExecute();
-              }
-              catch (ExecutionException e) {
-                ExecutionUtil.handleExecutionError(project, executor.getToolWindowId(), title, e);
-              }
+      .toArray(Location[]::new);
 
-              JBPopup popup = ref.get();
-              if (popup != null) {
-                popup.cancel();
-              }
-            });
+    //noinspection unchecked
+    getRunConfigurationProducers(project)
+      .stream()
+      .map(producer -> new Object() {
+        TestDiscoveryConfigurationProducer myProducer = producer;
+        Location<PsiMethod>[] mySupportedTests = Arrays.stream(testMethods).filter(producer::isApplicable).toArray(Location[]::new);
+      })
+      .max(Comparator.comparingInt(p -> p.mySupportedTests.length))
+      .map(p -> p.myProducer.createProfile(p.mySupportedTests, targetModule, context, title))
+      .ifPresent(profile -> {
+        try {
+          ExecutionEnvironmentBuilder.create(project, executor, profile).buildAndExecute();
+        }
+        catch (ExecutionException e) {
+          ExecutionUtil.handleExecutionError(project, executor.getToolWindowId(), title, e);
+        }
+
+        JBPopup popup = ref.get();
+        if (popup != null) {
+          popup.cancel();
+        }
+      });
   }
 
   @Nullable

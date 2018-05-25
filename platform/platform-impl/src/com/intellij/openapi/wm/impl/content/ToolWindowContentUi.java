@@ -4,10 +4,12 @@ package com.intellij.openapi.wm.impl.content;
 import com.intellij.ide.IdeEventQueue;
 import com.intellij.ide.actions.CloseAction;
 import com.intellij.ide.actions.ShowContentAction;
+import com.intellij.ide.ui.UISettingsListener;
 import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.impl.ActionManagerImpl;
 import com.intellij.openapi.actionSystem.impl.MenuItemPresentationFactory;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.ui.Splitter;
 import com.intellij.openapi.ui.ThreeComponentsSplitter;
@@ -97,6 +99,11 @@ public class ToolWindowContentUi extends JPanel implements ContentUI, PropertyCh
             .iterator();
         }
       });
+
+    ApplicationManager.getApplication().getMessageBus().connect(this).subscribe(UISettingsListener.TOPIC, uiSettings -> {
+        revalidate();
+        repaint();
+    });
   }
 
   private boolean isResizeable() {
@@ -254,6 +261,7 @@ public class ToolWindowContentUi extends JPanel implements ContentUI, PropertyCh
       final Component each = getComponent(i);
       size.height = Math.max(each.getPreferredSize().height, size.height);
     }
+    size.width = Math.max(size.width, getCurrentLayout().getMinimumWidth());
     return size;
   }
 

@@ -2,8 +2,6 @@
 package com.intellij.openapi.util;
 
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.util.registry.Registry;
-import com.intellij.openapi.util.registry.RegistryValue;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.reference.SoftReference;
 import com.intellij.ui.RetrievableIcon;
@@ -34,13 +32,13 @@ import java.lang.reflect.Field;
 import java.net.URL;
 import java.util.*;
 import java.util.List;
-import java.util.concurrent.Callable;
 import java.util.concurrent.ConcurrentMap;
 
 import static com.intellij.util.ui.JBUI.ScaleType.*;
 
 public final class IconLoader {
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.util.IconLoader");
+  private static final String LAF_PREFIX = "/com/intellij/ide/ui/laf/icons/";
   @SuppressWarnings("MismatchedQueryAndUpdateOfCollection")
   private static final ConcurrentMap<URL, CachedImageIcon> ourIconsCache = ContainerUtil.newConcurrentMap(100, 0.9f, 2);
   /**
@@ -162,6 +160,16 @@ public final class IconLoader {
     return !ourIsActivated;
   }
 
+  @Nullable
+  public static Icon findLafIcon(@NotNull String key, @NotNull Class aClass) {
+    return findLafIcon(key, aClass, STRICT);
+  }
+
+  @Nullable
+  public static Icon findLafIcon(@NotNull String key, @NotNull Class aClass, boolean strict) {
+    return findIcon(LAF_PREFIX + key + ".png", aClass, true, strict);
+  }
+
   /**
    * Might return null if icon was not found.
    * Use only if you expected null return value, otherwise see {@link IconLoader#getIcon(String, Class)}
@@ -229,9 +237,13 @@ public final class IconLoader {
       LOG.warn("unexpected: " + context);
       return null;
     }
+    // Find either PNG or SVG icon. The icon will then be wrapped into CachedImageIcon
+    // which will load proper icon version depending on the context - UI theme, DPI.
+    // SVG version, when present, has more priority than PNG.
+    // See for details: com.intellij.util.ImageLoader.ImageDescList#create
     if (url != null || !path.endsWith(".png")) return url;
     url = findURL(path.substring(0, path.length() - 4) + ".svg", context);
-    if (url != null) LOG.info("replace '" + path + "' with '" + url + "'");
+    if (url != null && !path.startsWith(LAF_PREFIX)) LOG.info("replace '" + path + "' with '" + url + "'");
     return url;
   }
 
@@ -425,12 +437,12 @@ public final class IconLoader {
   /**
    *  For internal usage. Converts the icon to 1x scale when applicable.
    */
-  public static Icon get1xIcon(Icon icon) {
+  public static Icon get1xIcon(Icon icon, boolean dark) {
     if (icon instanceof LazyIcon) {
       icon = ((LazyIcon)icon).getOrComputeIcon();
     }
     if (icon instanceof CachedImageIcon) {
-      Image img = ((CachedImageIcon)icon).loadFromUrl(ScaleContext.createIdentity());
+      Image img = ((CachedImageIcon)icon).loadFromUrl(ScaleContext.createIdentity(), dark);
       if (img != null) {
         icon = new ImageIcon(img);
       }
@@ -602,7 +614,11 @@ public final class IconLoader {
     }
 
     private Image loadFromUrl(@NotNull ScaleContext ctx) {
-      return ImageLoader.loadFromUrl(myUrl, true, useCacheOnLoad, myFilters, ctx);
+      return loadFromUrl(ctx, UIUtil.isUnderDarcula());
+    }
+
+    private Image loadFromUrl(@NotNull ScaleContext ctx, boolean dark) {
+      return ImageLoader.loadFromUrl(myUrl, true, useCacheOnLoad, dark, myFilters, ctx);
     }
 
     private class MyScaledIconsCache {

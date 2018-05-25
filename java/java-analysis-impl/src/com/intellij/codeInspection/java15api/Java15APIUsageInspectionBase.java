@@ -97,7 +97,7 @@ public class Java15APIUsageInspectionBase extends AbstractBaseJavaLocalInspectio
     return result;
   }
 
-  private static void loadForbiddenApi(String fileName, Set<String> set) {
+  private static void loadForbiddenApi(String fileName, Set<? super String> set) {
     URL resource = Java15APIUsageInspectionBase.class.getResource(fileName);
     if (resource == null) {
       Logger.getInstance(Java15APIUsageInspectionBase.class).warn("not found: " + fileName);
@@ -277,7 +277,7 @@ public class Java15APIUsageInspectionBase extends AbstractBaseJavaLocalInspectio
       }
     }
 
-    private boolean isRawInheritance(String generifiedClassQName, PsiClass currentClass, Set<PsiClass> visited) {
+    private boolean isRawInheritance(String generifiedClassQName, PsiClass currentClass, Set<? super PsiClass> visited) {
       for (PsiClassType classType : currentClass.getSuperTypes()) {
         if (classType.isRaw()) {
           return true;

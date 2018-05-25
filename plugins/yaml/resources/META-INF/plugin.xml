@@ -28,6 +28,21 @@
     <lang.elementManipulator forClass="org.jetbrains.yaml.psi.impl.YAMLScalarImpl"
                              implementationClass="org.jetbrains.yaml.psi.impl.YAMLScalarElementManipulator"/>
     <breadcrumbsInfoProvider implementation="org.jetbrains.yaml.breadcrumbs.YAMLBreadcrumbsInfoProvider"/>
+    <readWriteAccessDetector implementation="org.jetbrains.yaml.resolve.YAMLAnchorReadWriteAccessDetector"/>
+    <renameInputValidator implementation="org.jetbrains.yaml.resolve.YAMLAnchorRenameInputValidator" order="first"/>
+    <lang.refactoringSupport language="yaml" implementationClass="org.jetbrains.yaml.resolve.YAMLRefactoringSupportProvider"/>
+    <renamePsiElementProcessor implementation="org.jetbrains.yaml.resolve.YAMLRenamePsiElementProcessor"/>
+    <localInspection language="yaml" bundle="messages.YAMLBundle"
+                     shortName="YAMLUnresolvedAlias"
+                     key="inspections.unresolved.alias.name" level="ERROR"
+                     groupKey="inspections.group.name" enabledByDefault="true"
+                     implementationClass="org.jetbrains.yaml.inspections.YAMLUnresolvedAliasInspection"/>
+    <localInspection language="yaml" bundle="messages.YAMLBundle"
+                     shortName="YAMLRecursiveAlias"
+                     key="inspections.recursive.alias.name" level="ERROR"
+                     groupKey="inspections.group.name" enabledByDefault="true"
+                     implementationClass="org.jetbrains.yaml.inspections.YAMLRecursiveAliasInspection"/>
+
   </extensions>
   
   <extensions defaultExtensionNs="com.intellij.spellchecker">

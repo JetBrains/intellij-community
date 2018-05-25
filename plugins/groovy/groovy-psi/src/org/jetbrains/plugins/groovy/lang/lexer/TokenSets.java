@@ -6,6 +6,7 @@ import com.intellij.psi.TokenType;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.tree.TokenSet;
 import com.intellij.util.containers.ContainerUtil;
+import org.jetbrains.plugins.groovy.lang.psi.GroovyTokenSets;
 
 import java.util.Map;
 
@@ -13,6 +14,7 @@ import static org.jetbrains.plugins.groovy.lang.groovydoc.lexer.GroovyDocTokenTy
 import static org.jetbrains.plugins.groovy.lang.groovydoc.parser.GroovyDocElementTypes.GROOVY_DOC_COMMENT;
 import static org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes.*;
 import static org.jetbrains.plugins.groovy.lang.parser.GroovyElementTypes.*;
+import static org.jetbrains.plugins.groovy.lang.psi.GroovyTokenSets.ASSIGNMENT_OPERATORS;
 
 public interface TokenSets {
 
@@ -158,20 +160,8 @@ public interface TokenSets {
 
   TokenSet POSTFIX_UNARY_OP_SET = TokenSet.create(mDEC, mINC);
 
-  TokenSet BINARY_OP_SET = TokenSet.create(mBAND, mBOR, mBXOR,
-                                           mDIV, mEQUAL, mGE,
-                                           mGT, mLOR, mLT,
-                                           mLE, mMINUS, kAS,
-                                           kIN,
-                                           mMOD, mPLUS, mSTAR,
-                                           mSTAR_STAR, mNOT_EQUAL,
-                                           mCOMPARE_TO, mLAND,
-                                           kINSTANCEOF,
-                                           COMPOSITE_LSHIFT_SIGN,
-                                           COMPOSITE_RSHIFT_SIGN,
-                                           COMPOSITE_TRIPLE_SHIFT_SIGN,
-                                           mREGEX_FIND, mREGEX_MATCH,
-                                           mRANGE_INCLUSIVE, mRANGE_EXCLUSIVE);
+  @Deprecated
+  TokenSet BINARY_OP_SET = GroovyTokenSets.BINARY_OPERATORS;
 
   TokenSet PARENTHESIZED_BINARY_OP_SET = TokenSet.create(mEQUAL, mNOT_EQUAL);
 
@@ -212,21 +202,7 @@ public interface TokenSets {
     .put(mSTAR_STAR_ASSIGN, mSTAR_STAR)
     .build();
 
-  TokenSet ASSIGNMENTS = TokenSet.create(
-    mASSIGN,
-    mPLUS_ASSIGN,
-    mMINUS_ASSIGN,
-    mSTAR_ASSIGN,
-    mDIV_ASSIGN,
-    mMOD_ASSIGN,
-    mSL_ASSIGN,
-    mSR_ASSIGN,
-    mBSR_ASSIGN,
-    mBAND_ASSIGN,
-    mBOR_ASSIGN,
-    mBXOR_ASSIGN,
-    mSTAR_STAR_ASSIGN
-  );
+  TokenSet ASSIGNMENTS = ASSIGNMENT_OPERATORS;
 
   TokenSet CODE_REFERENCE_ELEMENT_NAME_TOKENS = TokenSet.create(mIDENT, kDEF, kIN, kAS, kTRAIT);
 

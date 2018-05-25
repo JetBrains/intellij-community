@@ -65,15 +65,13 @@ Groovy script
   Literal
     PsiElement(Integer)('0x1_7___9____8i')
   PsiElement(new line)('\n\n')
-  Call expression
-    Literal
-      PsiElement(Integer)('0x1_7___9')
-    PsiElement(.)('.')
-    PsiErrorElement:Property selector expected
-      <empty list>
-    Command arguments
-      Literal
-        PsiElement(BigDecimal)('3___9_8e+5_6')
+  Literal
+    PsiElement(Integer)('0x1_7___9')
+  PsiElement(.)('.')
+  PsiErrorElement:<property selector> expected, got '3___9_8e+5_6'
+    <empty list>
+  Literal
+    PsiElement(BigDecimal)('3___9_8e+5_6')
   PsiElement(new line)('\n')
   Literal
     PsiElement(BigDecimal)('1_7___9.3___9_8e+5_6')
@@ -81,15 +79,13 @@ Groovy script
   Literal
     PsiElement(BigDecimal)('01_7___4.3___2_5')
   PsiElement(new line)('\n\n')
-  Call expression
-    Literal
-      PsiElement(Integer)('0x1_7___9')
-    PsiElement(.)('.')
-    PsiErrorElement:Property selector expected
-      <empty list>
-    Command arguments
-      Literal
-        PsiElement(Integer)('3___9_8')
+  Literal
+    PsiElement(Integer)('0x1_7___9')
+  PsiElement(.)('.')
+  PsiErrorElement:<property selector> expected, got '3___9_8'
+    <empty list>
+  Literal
+    PsiElement(Integer)('3___9_8')
   PsiElement(new line)('\n')
   Literal
     PsiElement(Integer)('078')

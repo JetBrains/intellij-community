@@ -9,7 +9,7 @@ Groovy script
     PsiWhiteSpace(' ')
     Compound regular expression
       PsiElement(regex begin)('/')
-      GrStringContentImpl(GString content element)
+      GrStringContentImpl(STRING_CONTENT)
         PsiElement(regex content)('abc \')
       GString injection
         PsiElement($)('$')
@@ -17,13 +17,12 @@ Groovy script
           PsiElement({)('{')
           Parameter list
             <empty list>
-          PsiErrorElement:Wrong statement
-            <empty list>
-          PsiElement(do)('do')
+          PsiErrorElement:'->', ';', <statement>, identifier or new line expected, got 'do'
+            PsiElement(do)('do')
           PsiWhiteSpace(' ')
           Compound Gstring
             PsiElement(Gstring begin)('"')
-            GrStringContentImpl(GString content element)
+            GrStringContentImpl(STRING_CONTENT)
               PsiElement(Gstring content)('def ')
             GString injection
               PsiElement($)('$')
@@ -38,18 +37,15 @@ Groovy script
                   Reference expression
                     PsiElement(identifier)('b')
                 PsiElement(})('}')
-            GrStringContentImpl(GString content element)
-              ASTWrapperPsiElement(Gstring content)
-                <empty list>
             PsiElement(Gstring end)('"')
           PsiElement(})('}')
-      GrStringContentImpl(GString content element)
+      GrStringContentImpl(STRING_CONTENT)
         PsiElement(regex content)(' fgh')
       GString injection
         PsiElement($)('$')
         Reference expression
           PsiElement(identifier)('st')
-      GrStringContentImpl(GString content element)
+      GrStringContentImpl(STRING_CONTENT)
         PsiElement(regex content)(' ')
       GString injection
         PsiElement($)('$')
@@ -62,7 +58,7 @@ Groovy script
               Reference expression
                 PsiElement(identifier)('frg')
               PsiElement(.)('.')
-              GroovyASTPsiElementImpl(regex literal)
+              GroovyASTPsiElementImpl(SLASHY_LITERAL)
                 PsiElement(regex begin)('/')
                 PsiElement(regex content)('sdf')
                 PsiElement(regex end)('/')
@@ -72,6 +68,6 @@ Groovy script
                 PsiElement(Integer)('5')
               PsiElement())(')')
           PsiElement(})('}')
-      GrStringContentImpl(GString content element)
+      GrStringContentImpl(STRING_CONTENT)
         PsiElement(regex content)(' ')
       PsiElement(regex end)('/')

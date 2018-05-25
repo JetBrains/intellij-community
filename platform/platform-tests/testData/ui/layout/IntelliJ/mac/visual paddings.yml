@@ -21,13 +21,9 @@ columnConstraints:
       max: &id003 {horizontal: true, value: 6.0}
       min: *id003
       preferred: *id003
-  - gapAfter:
-      max: &id004 {horizontal: true, value: 8.0}
-      min: *id004
-      preferred: *id004
-    grow: 100.0
+    grow: 0.0
   - {}
-  count: 3
+  count: 2
 componentConstrains:
   'Text field:': {}
   'JTextField #1':
@@ -38,12 +34,12 @@ componentConstrains:
   'JPasswordField #3': {spanX: 2097051, wrap: true}
   'Combobox:': {}
   'JComboBox #5':
-    horizontal: {grow: 100.0}
+    horizontal: {grow: 1000.0}
     spanX: 2097051
     wrap: true
   'Combobox Editable:': {}
   'JComboBox #7':
-    horizontal: {grow: 100.0}
+    horizontal: {grow: 1000.0}
     spanX: 2097051
     wrap: true
   'Button:': {}
@@ -65,44 +61,18 @@ componentConstrains:
   'JTextField #19':
     horizontal: {grow: 100.0}
     split: 6
-  'JPasswordField #20':
-    horizontal:
-      gapBefore:
-        min: &id005 {horizontal: true, value: 8.0}
-        preferred: *id005
-      size:
-        max: &id006 {horizontal: true, value: 250.0}
-        min: *id006
-        preferred: *id006
+  'JPasswordField #20': {}
   'JComboBox #21':
-    horizontal:
-      gapBefore:
-        min: &id007 {horizontal: true, value: 8.0}
-        preferred: *id007
-      grow: 100.0
-  b:
-    horizontal:
-      gapBefore:
-        min: &id008 {horizontal: true, value: 8.0}
-        preferred: *id008
-  c:
-    horizontal:
-      gapBefore:
-        min: &id009 {horizontal: true, value: 8.0}
-        preferred: *id009
-  rb:
-    horizontal:
-      gapBefore:
-        min: &id010 {horizontal: true, value: 8.0}
-        preferred: *id010
-    spanX: 2097051
-    wrap: true
+    horizontal: {grow: 1000.0}
+  b: {}
+  c: {}
+  rb: {spanX: 2097051, wrap: true}
   'Scroll pane:':
     vertical:
       align: {horizontal: false, unit: 6, value: 0.0}
       gapBefore:
-        min: &id011 {horizontal: false, value: 1.0}
-        preferred: *id011
+        min: &id004 {horizontal: false, value: 1.0}
+        preferred: *id004
   'JBScrollPane #26':
     horizontal: {grow: 100.0}
     pushY: 100.0
@@ -111,23 +81,23 @@ componentConstrains:
     wrap: true
 cellBounds:
 - [0, 0, 124, 21]
-- [130, 0, 577, 21]
+- [130, 0, 569, 21]
 - [0, 31, 124, 21]
-- [130, 31, 577, 21]
+- [130, 31, 569, 21]
 - [0, 62, 124, 21]
-- [130, 62, 577, 21]
+- [130, 62, 569, 21]
 - [0, 93, 124, 21]
-- [130, 93, 577, 21]
+- [130, 93, 569, 21]
 - [0, 124, 124, 21]
-- [130, 124, 577, 21]
+- [130, 124, 569, 21]
 - [0, 155, 124, 16]
-- [130, 155, 577, 16]
+- [130, 155, 569, 16]
 - [0, 181, 124, 16]
-- [130, 181, 577, 16]
+- [130, 181, 569, 16]
 - [0, 207, 124, 22]
-- [130, 207, 577, 22]
+- [130, 207, 569, 22]
 - [0, 239, 124, 21]
-- [130, 239, 577, 21]
+- [130, 239, 569, 21]
 - [0, 270, 124, 21]
 - [130, 270, 569, 21]
 - [130, 270, 569, 21]
@@ -136,16 +106,16 @@ cellBounds:
 - [130, 270, 569, 21]
 - [130, 270, 569, 21]
 - [0, 301, 124, 53]
-- [130, 301, 577, 53]
+- [130, 301, 569, 53]
 componentBounds:
   'Text field:': [0, 2, 61, 16]
-  'JTextField #1': [127, -3, 583, 27]
+  'JTextField #1': [127, -3, 575, 27]
   'Password:': [0, 33, 64, 16]
   'JPasswordField #3': [127, 28, 256, 27]
   'Combobox:': [0, 64, 71, 16]
-  'JComboBox #5': [127, 59, 583, 27]
+  'JComboBox #5': [127, 59, 575, 27]
   'Combobox Editable:': [0, 95, 124, 16]
-  'JComboBox #7': [127, 90, 583, 27]
+  'JComboBox #7': [127, 90, 575, 27]
   'Button:': [0, 126, 47, 16]
   label: [127, 178, 53, 22]
   'CheckBox:': [0, 155, 66, 16]
@@ -154,7 +124,7 @@ componentBounds:
   'Spinner:': [0, 210, 51, 16]
   'JBIntSpinner #15': [127, 204, 78, 28]
   'Text with browse:': [0, 242, 110, 16]
-  'TextFieldWithHistoryWithBrowseButton #17': [127, 236, 583, 27]
+  'TextFieldWithHistoryWithBrowseButton #17': [127, 236, 575, 27]
   'All:': [0, 272, 19, 16]
   'JTextField #19': [127, 267, 64, 27]
   'JPasswordField #20': [193, 267, 256, 27]
@@ -163,4 +133,4 @@ componentBounds:
   c: [624, 269, 32, 22]
   rb: [661, 269, 38, 22]
   'Scroll pane:': [0, 302, 72, 16]
-  'JBScrollPane #26': [130, 301, 577, 53]
+  'JBScrollPane #26': [130, 301, 569, 53]

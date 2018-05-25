@@ -54,14 +54,17 @@ public class GCUtil {
     System.gc();
     final long freeMemory = Runtime.getRuntime().freeMemory();
 
-    for (int i = 0; i < 100; i++) {
-      if (q.poll() != null) {
-        break;
-      }
-
+    int i = 0;
+    while (q.poll() == null) {
       // full gc is caused by allocation of large enough array below, SoftReference will be cleared after two full gc
       int bytes = Math.min((int)(freeMemory * 0.05), Integer.MAX_VALUE / 2);
       list.add(new SoftReference<Object>(new byte[bytes]));
+      i++;
+      if (i > 1000) {
+        //noinspection UseOfSystemOutOrSystemErr
+        System.out.println("GCUtil.tryGcSoftlyReachableObjects: giving up");
+        break;
+      }
     }
 
     // use ref is important as to loop to finish with several iterations: long runs of the method (~80 run of PsiModificationTrackerTest)

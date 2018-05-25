@@ -50,14 +50,20 @@ public class BoundedWildcardInspectionTest extends LightInspectionTestCase {
   @Override
   protected InspectionProfileEntry getInspection() {
     BoundedWildcardInspection inspection = new BoundedWildcardInspection();
-    if (getTestName(false).contains("SwitchedOff")) {
+    if (getTestName(false).contains("InvariantSwitchedOff")) {
       inspection.REPORT_INVARIANT_CLASSES = false;
+    }
+    if (getTestName(false).contains("PrivateMethodsSwitchedOff")) {
+      inspection.REPORT_PRIVATE_METHODS = false;
     }
     return inspection;
   }
 
   public void testSimple() { doTest(); }
   public void testInvariantSwitchedOff() {
+    doTest();
+  }
+  public void testPrivateMethodsSwitchedOff() {
     doTest();
   }
 }

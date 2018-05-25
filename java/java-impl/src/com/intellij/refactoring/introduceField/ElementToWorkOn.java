@@ -53,6 +53,23 @@ public class ElementToWorkOn {
     myLocalVariable = localVariable;
     myExpression = expr;
   }
+  
+  public static ElementToWorkOn adjustElements(PsiExpression expr, PsiElement anchorElement) {
+    PsiLocalVariable localVariable = null;
+    if (anchorElement instanceof PsiLocalVariable) {
+      localVariable = (PsiLocalVariable)anchorElement;
+    }
+    else if (expr instanceof PsiReferenceExpression) {
+      PsiElement ref = ((PsiReferenceExpression)expr).resolve();
+      if (ref instanceof PsiLocalVariable) {
+        localVariable = (PsiLocalVariable)ref;
+      }
+    }
+    else if (expr instanceof PsiArrayInitializerExpression && expr.getParent() instanceof PsiNewExpression) {
+      expr = (PsiExpression)expr.getParent();
+    }
+    return new ElementToWorkOn(localVariable, expr);
+  }
 
   public PsiExpression getExpression() {
     return myExpression;
@@ -155,6 +172,9 @@ public class ElementToWorkOn {
         if (ident != null) {
           localVar = PsiTreeUtil.getParentOfType(ident, PsiLocalVariable.class);
         }
+      }
+      else if (expr instanceof PsiArrayInitializerExpression && expr.getParent() instanceof PsiNewExpression) {
+        expr = (PsiExpression)expr.getParent();
       }
     }
 
