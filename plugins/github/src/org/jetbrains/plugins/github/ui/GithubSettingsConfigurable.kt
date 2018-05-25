@@ -2,18 +2,20 @@
 package org.jetbrains.plugins.github.ui
 
 import com.intellij.openapi.application.ApplicationManager
-import com.intellij.openapi.components.service
 import com.intellij.openapi.options.Configurable
 import com.intellij.openapi.options.ConfigurableBase
 import com.intellij.openapi.project.Project
-import org.jetbrains.plugins.github.authentication.accounts.AccountTokenChangedListener
-import org.jetbrains.plugins.github.authentication.accounts.GithubAccount
-import org.jetbrains.plugins.github.authentication.accounts.GithubAccountManager
-import org.jetbrains.plugins.github.authentication.accounts.GithubProjectDefaultAccountHolder
+import org.jetbrains.plugins.github.api.GithubApiTaskExecutor
+import org.jetbrains.plugins.github.authentication.accounts.*
 import org.jetbrains.plugins.github.util.GithubSettings
 import org.jetbrains.plugins.github.util.GithubUtil
 
-class GithubSettingsConfigurable(private val project: Project) :
+class GithubSettingsConfigurable internal constructor(private val project: Project,
+                                                      private val settings: GithubSettings,
+                                                      private val accountManager: GithubAccountManager,
+                                                      private val defaultAccountHolder: GithubProjectDefaultAccountHolder,
+                                                      private val apiTaskExecutor: GithubApiTaskExecutor,
+                                                      private val accountInformationProvider: GithubAccountInformationProvider) :
   ConfigurableBase<GithubSettingsPanel, GithubSettingsConfigurable.GithubSettingsHolder>("settings.github",
                                                                                          GithubUtil.SERVICE_DISPLAY_NAME,
                                                                                          "settings.github"),
@@ -30,11 +32,11 @@ class GithubSettingsConfigurable(private val project: Project) :
   }
 
   override fun getSettings(): GithubSettingsHolder {
-    return GithubSettingsHolder(service(), service(), project.service())
+    return GithubSettingsHolder(settings, accountManager, defaultAccountHolder)
   }
 
   override fun createUi(): GithubSettingsPanel {
-    return GithubSettingsPanel(project, service(), service())
+    return GithubSettingsPanel(project, apiTaskExecutor, accountInformationProvider)
   }
 
   inner class GithubSettingsHolder internal constructor(val application: GithubSettings,
