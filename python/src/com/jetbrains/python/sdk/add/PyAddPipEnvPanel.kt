@@ -11,9 +11,7 @@ import com.intellij.ui.components.JBCheckBox
 import com.intellij.util.PlatformUtils
 import com.intellij.util.ui.FormBuilder
 import com.jetbrains.python.PythonModuleTypeBase
-import com.jetbrains.python.psi.LanguageLevel
-import com.jetbrains.python.sdk.associatedModulePath
-import com.jetbrains.python.sdk.basePath
+import com.jetbrains.python.sdk.*
 import com.jetbrains.python.sdk.flavors.*
 import java.awt.BorderLayout
 import java.awt.Dimension
@@ -34,9 +32,18 @@ class PyAddPipEnvPanel(private val project: Project?,
   override val panelName = "Pipenv Environment"
   override val icon: Icon = PIPENV_ICON
 
-  private val DEFAULT_PYTHON = "<Default>"
   private val moduleField: JComboBox<Module>
-  private val languageLevelsField: JComboBox<String>
+  private val baseSdkField = PySdkPathChoosingComboBox(findBaseSdks(existingSdks), null).apply {
+    val preferredSdkPath = PySdkSettings.instance.preferredVirtualEnvBaseSdk
+    val detectedPreferredSdk = items.find { it.homePath == preferredSdkPath }
+    selectedSdk = when {
+      detectedPreferredSdk != null -> detectedPreferredSdk
+      preferredSdkPath != null -> PyDetectedSdk(preferredSdkPath).apply {
+        childComponent.insertItemAt(this, 0)
+      }
+      else -> items.getOrNull(0)
+    }
+  }
   private val installPackagesCheckBox = JBCheckBox("Install packages from Pipfile").apply {
     isVisible = newProjectPath == null
   }
@@ -58,25 +65,12 @@ class PyAddPipEnvPanel(private val project: Project?,
       }
     }
 
-    val supportedLanguageLevels =
-      listOf(DEFAULT_PYTHON,
-             LanguageLevel.PYTHON37,
-             LanguageLevel.PYTHON36,
-             LanguageLevel.PYTHON35,
-             LanguageLevel.PYTHON34,
-             LanguageLevel.PYTHON27)
-        .map { it.toString() }
-
-    languageLevelsField = JComboBox(supportedLanguageLevels.toTypedArray()).apply {
-      selectedItem = if (itemCount > 0) getItemAt(0) else null
-    }
-
     val builder = FormBuilder.createFormBuilder().apply {
       if (module == null && modules.size > 1) {
         val associatedObject = if (PlatformUtils.isPyCharm()) "project" else "module"
         addLabeledComponent("Associated $associatedObject:", moduleField)
       }
-      addLabeledComponent("Python version:", languageLevelsField)
+      addLabeledComponent("Base interpreter:", baseSdkField)
       addComponent(installPackagesCheckBox)
     }
     add(builder.panel, BorderLayout.NORTH)
@@ -85,18 +79,26 @@ class PyAddPipEnvPanel(private val project: Project?,
 
   override fun getOrCreateSdk(): Sdk? {
     return setupPipEnvSdkUnderProgress(project, selectedModule, existingSdks, newProjectPath,
-                                       selectedLanguageLevel, installPackagesCheckBox.isSelected)
+                                       baseSdkField.selectedSdk?.homePath, installPackagesCheckBox.isSelected)?.apply {
+      PySdkSettings.instance.preferredVirtualEnvBaseSdk = baseSdkField.selectedSdk?.homePath
+    }
   }
 
   override fun validateAll(): List<ValidationInfo> =
     listOfNotNull(validatePipEnvExecutable(), validatePipEnvIsNotAdded())
 
+  /**
+   * Shows the install packages checkbox if we can detect any requirements to install.
+   */
   private fun updateInstallPackagesCheckBox() {
     selectedModule?.let {
       installPackagesCheckBox.isEnabled = it.pipFile != null
     }
   }
 
+  /**
+   * The effective module for which we add a new environment.
+   */
   private val selectedModule: Module?
     get() = module ?: moduleField.selectedItem as? Module
 
@@ -125,13 +127,4 @@ class PyAddPipEnvPanel(private val project: Project?,
    */
   private val projectPath: String?
     get() = newProjectPath ?: selectedModule?.basePath ?: project?.basePath
-
-  /**
-   * The version of Python selected by the user or `null` if the default version is selected.
-   */
-  private val selectedLanguageLevel: String?
-    get() {
-      val text = languageLevelsField.getItemAt(languageLevelsField.selectedIndex)
-      return if (text == DEFAULT_PYTHON) null else text
-    }
 }
