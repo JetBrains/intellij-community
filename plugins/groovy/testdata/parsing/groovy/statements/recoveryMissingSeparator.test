@@ -4,7 +4,7 @@ Groovy script
   Reference expression
     PsiElement(identifier)('foo')
   PsiWhiteSpace(' ')
-  PsiErrorElement:<expression> expected, got '#'
+  PsiErrorElement:'#' unexpected
     PsiElement(wrong token)('#')
   PsiWhiteSpace(' ')
   Reference expression

@@ -845,12 +845,13 @@ public class GroovyGeneratedParser implements PsiParser, LightPsiParser {
   }
 
   /* ********************************************************** */
-  // application_argument_list
+  // application_argument_list | clear_variants_and_fail
   public static boolean application_expression(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "application_expression")) return false;
     boolean r;
     Marker m = enter_section_(b, l, _LEFT_, APPLICATION_EXPRESSION, "<application expression>");
     r = application_argument_list(b, l + 1);
+    if (!r) r = clear_variants_and_fail(b, l + 1);
     exit_section_(b, l, m, r, false, null);
     return r;
   }

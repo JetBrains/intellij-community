@@ -44,7 +44,7 @@ Groovy script
         PsiWhiteSpace(' ')
         Literal
           PsiElement(Integer)('2')
-        PsiErrorElement:<expression> expected, got ':'
+        PsiErrorElement:':' unexpected
           PsiElement(:)(':')
         PsiElement(new line)('\n        ')
         Variable definitions
@@ -114,7 +114,7 @@ Groovy script
               PsiWhiteSpace(' ')
               Literal
                 PsiElement(Integer)('2')
-              PsiErrorElement:<expression> expected, got ':'
+              PsiErrorElement:':' unexpected
                 PsiElement(:)(':')
               PsiElement(new line)('\n        ')
               Variable definitions

@@ -1098,7 +1098,7 @@ left application_ref ::= IDENTIFIER | simple_literal_tokens
   elementType = reference_expression
   consumeTokenMethod = 'consumeTokenFast'
 }
-left application_expression ::= application_argument_list
+left application_expression ::= application_argument_list | clear_variants_and_fail
 left application_call ::= call_argument_list lazy_closure* | empty_argument_list lazy_closure+ { elementType = method_call_expression }
 left application_index ::= mb_question index_expression_argument_list
 // endregion
