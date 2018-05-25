@@ -1550,12 +1550,12 @@
       </option>
       <option name="DEFAULT_REASSIGNED_PARAMETER">
         <value>
-          <option name="FOREGROUND" value="c0b0d0" deuteranopia="828eba" protanopia="828eba"/>
+          <option name="FOREGROUND" value="80bac0" deuteranopia="828eba" protanopia="828eba"/>
         </value>
       </option>
       <option name="DEFAULT_REASSIGNED_LOCAL_VARIABLE">
         <value>
-          <option name="FOREGROUND" value="c0b0d0" deuteranopia="828eba" protanopia="828eba"/>
+          <option name="FOREGROUND" value="80bac0" deuteranopia="828eba" protanopia="828eba"/>
         </value>
       </option>
       <option name="DELETED_TEXT_ATTRIBUTES">
