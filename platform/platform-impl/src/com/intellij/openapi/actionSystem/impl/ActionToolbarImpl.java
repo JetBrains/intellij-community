@@ -991,16 +991,9 @@ public class ActionToolbarImpl extends JPanel implements ActionToolbar, QuickAct
         if (myText != null) {
           FontMetrics fontMetrics = getFontMetrics(getFont());
 
-          Graphics g = getGraphics().create();
-          try {
-            UISettings.setupAntialiasing(g);
-            int textWidth = fontMetrics.getStringBounds(myText, g).getBounds().width;
-            return new JBDimension(width + gap * 2 + textWidth,
-                                   Math.max(fontMetrics.getHeight(), height), true);
-          }
-          finally {
-            g.dispose();
-          }
+          int textWidth = getTextWidth(fontMetrics, myText, getGraphics());
+          return new JBDimension(width + gap * 2 + textWidth,
+                                 Math.max(fontMetrics.getHeight(), height), true);
         }
         else {
           return new JBDimension(width, height, true);
@@ -1040,6 +1033,22 @@ public class ActionToolbarImpl extends JPanel implements ActionToolbar, QuickAct
       }
       else {
         LinePainter2D.paint((Graphics2D)g, gap, center, ActionToolbarImpl.this.getWidth() - gap * 2 - offset, center);
+      }
+    }
+
+    private int getTextWidth(@NotNull FontMetrics fontMetrics, @NotNull String text, @Nullable Graphics graphics) {
+      if (graphics == null) {
+        return fontMetrics.stringWidth(text);
+      }
+      else {
+        Graphics g = graphics.create();
+        try {
+          UISettings.setupAntialiasing(g);
+          return fontMetrics.getStringBounds(text, g).getBounds().width;
+        }
+        finally {
+          g.dispose();
+        }
       }
     }
   }
