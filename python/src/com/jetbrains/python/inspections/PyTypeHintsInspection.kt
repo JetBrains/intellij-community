@@ -15,8 +15,10 @@ import com.jetbrains.python.codeInsight.controlflow.ReadWriteInstruction
 import com.jetbrains.python.codeInsight.dataflow.scope.ScopeUtil
 import com.jetbrains.python.codeInsight.functionTypeComments.PyFunctionTypeAnnotationDialect
 import com.jetbrains.python.codeInsight.typing.PyTypingTypeProvider
+import com.jetbrains.python.documentation.doctest.PyDocstringFile
 import com.jetbrains.python.psi.*
 import com.jetbrains.python.psi.impl.PyEvaluator
+import com.jetbrains.python.psi.impl.PyPsiUtils
 import com.jetbrains.python.psi.resolve.PyResolveContext
 import com.jetbrains.python.psi.resolve.PyResolveUtil
 import com.jetbrains.python.psi.types.PyGenericType
@@ -89,6 +91,14 @@ class PyTypeHintsInspection : PyInspection() {
         if (typeName != null && typeName != PyNames.CANONICAL_SELF) {
           registerProblem(node, "Invalid type 'self'", ProblemHighlightType.GENERIC_ERROR, null, ReplaceWithTypeNameQuickFix(typeName))
         }
+      }
+    }
+
+    override fun visitPyFile(node: PyFile?) {
+      super.visitPyFile(node)
+
+      if (node is PyDocstringFile && PyTypingTypeProvider.isInAnnotationOrTypeComment(node)) {
+        node.children.singleOrNull().also { if (it is PyExpressionStatement) checkTupleMatching(it.expression) }
       }
     }
 
@@ -458,6 +468,18 @@ class PyTypeHintsInspection : PyInspection() {
                           null,
                           if (first is PyParenthesizedExpression) ReplaceWithListQuickFix() else SurroundElementWithSquareBracketsQuickFix())
         }
+      }
+    }
+
+    private fun checkTupleMatching(expression: PyExpression) {
+      if (expression !is PyTupleExpression) return
+
+      val assignment = PyPsiUtils.getRealContext(expression).parent as? PyAssignmentStatement ?: return
+      val lhs = assignment.leftHandSideExpression ?: return
+
+      if (PyTypingTypeProvider.mapTargetsToAnnotations(lhs, expression).isEmpty() &&
+          (expression.elements.isNotEmpty() || assignment.rawTargets.isNotEmpty())) {
+        registerProblem(expression, "Type comment cannot be matched with unpacked variables")
       }
     }
 
