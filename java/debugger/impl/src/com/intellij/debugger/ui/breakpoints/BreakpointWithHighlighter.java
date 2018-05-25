@@ -219,7 +219,7 @@ public abstract class BreakpointWithHighlighter<P extends JavaBreakpointProperti
     ApplicationManager.getApplication().assertReadAccessAllowed();
     mySourcePosition = DebuggerUtilsEx.toSourcePosition(myXBreakpoint.getSourcePosition(), myProject);
     if (mySourcePosition != null) {
-      reload(mySourcePosition.getFile());
+      reload(null);
     }
   }
 
@@ -311,6 +311,7 @@ public abstract class BreakpointWithHighlighter<P extends JavaBreakpointProperti
     return position != null && position.getLine() == line && position.getFile().equals(file);
   }
 
+  @Deprecated
   protected void reload(PsiFile psiFile) {
   }
 
