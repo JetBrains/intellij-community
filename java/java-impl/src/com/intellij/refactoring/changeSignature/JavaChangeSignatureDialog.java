@@ -17,6 +17,7 @@ package com.intellij.refactoring.changeSignature;
 
 import com.intellij.codeInsight.completion.CompletionResultSet;
 import com.intellij.codeInsight.lookup.LookupElementBuilder;
+import com.intellij.codeInspection.dataFlow.JavaMethodContractUtil;
 import com.intellij.icons.AllIcons;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.CustomShortcutSet;
@@ -60,6 +61,7 @@ import com.intellij.ui.table.TableView;
 import com.intellij.ui.treeStructure.Tree;
 import com.intellij.usageView.UsageInfo;
 import com.intellij.util.*;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.DialogUtil;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
@@ -702,25 +704,26 @@ public class JavaChangeSignatureDialog extends ChangeSignatureDialogBase<Paramet
   protected String doCalculateSignature(PsiMethod method) {
     final StringBuilder buffer = new StringBuilder();
     final PsiModifierList modifierList = method.getModifierList();
-    String modifiers = modifierList.getText();
-    final String oldModifier = VisibilityUtil.getVisibilityModifier(modifierList);
-    final String newModifier = ObjectUtils.notNull(getVisibility(), PsiModifier.PACKAGE_LOCAL);
-    String newModifierStr = VisibilityUtil.getVisibilityString(newModifier);
-    if (!Comparing.equal(newModifier, oldModifier)) {
-      int index = modifiers.indexOf(oldModifier);
-      if (index >= 0) {
-        final StringBuilder buf = new StringBuilder(modifiers);
-        buf.replace(index,
-                    index + oldModifier.length() + (StringUtil.isEmpty(newModifierStr) ? 1 : 0),
-                    newModifierStr);
-        modifiers = buf.toString();
-      } else {
-        if (!StringUtil.isEmpty(newModifierStr)) {
-          newModifierStr += " ";
+    PsiModifierList copy = (PsiModifierList)modifierList.copy();
+    PsiAnnotation annotation = copy.findAnnotation(JavaMethodContractUtil.ORG_JETBRAINS_ANNOTATIONS_CONTRACT);
+    if (annotation != null) {
+      String[] oldNames = ContainerUtil.map2Array(method.getParameterList().getParameters(), String.class, PsiParameter::getName);
+      JavaParameterInfo[] parameters = ContainerUtil.map2Array(myParametersTableModel.getItems(), JavaParameterInfo.class, item -> item.parameter);
+      try {
+        PsiAnnotation converted = ContractConverter.convertContract(method, oldNames, parameters);
+        if (converted != null && converted != annotation) {
+          annotation.replace(converted);
         }
-        modifiers = newModifierStr + modifiers;
       }
+      catch (ContractConverter.ContractConversionException ignored) { }
     }
+    final String oldModifier = VisibilityUtil.getVisibilityModifier(modifierList);
+    @PsiModifier.ModifierConstant final String newModifier = ObjectUtils.notNull(getVisibility(), PsiModifier.PACKAGE_LOCAL);
+    if (!Comparing.equal(newModifier, oldModifier)) {
+      copy.setModifierProperty(oldModifier, false);
+      copy.setModifierProperty(newModifier, true);
+    }
+    String modifiers = String.join("\n", copy.getText().split("\\s*\n\\s*", -1));
 
     buffer.append(modifiers);
     if (modifiers.length() > 0 &&

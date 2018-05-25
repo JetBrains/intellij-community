@@ -25,11 +25,18 @@ final class ContractConverter {
   private ContractConverter() {}
 
   @Nullable
-  static PsiAnnotation convertContract(PsiMethod method, JavaChangeInfo info) throws ContractConversionException {
+  static PsiAnnotation convertContract(@NotNull PsiMethod method, @NotNull JavaChangeInfo info) throws ContractConversionException {
+    return convertContract(method, info.getOldParameterNames(), info.getNewParameters());
+  }
+
+  @Nullable
+  static PsiAnnotation convertContract(@NotNull PsiMethod method,
+                                       @NotNull String[] oldParameterNames,
+                                       @NotNull JavaParameterInfo[] newParameters) throws ContractConversionException {
     PsiAnnotation annotation = JavaMethodContractUtil.findContractAnnotation(method);
     if (annotation == null || AnnotationUtil.isInferredAnnotation(annotation)) return null;
     if (AnnotationUtil.isExternalAnnotation(annotation)) {
-      throw new ContractConversionException("automatic update of external annotation is not yet supported");
+      throw new ContractConversionException("automatic update of external annotation is not supported");
     }
     if (annotation.getOwner() != method.getModifierList()) {
       throw new ContractConversionException("annotation is inherited from base method");
@@ -47,8 +54,6 @@ final class ContractConverter {
         throw new ContractConversionException("error in contract definition: " + exception.getMessage());
       }
     }
-    String[] oldParameterNames = info.getOldParameterNames();
-    JavaParameterInfo[] newParameters = info.getNewParameters();
     int[] newToOldIndex = StreamEx.of(newParameters).mapToInt(ParameterInfo::getOldIndex).toArray();
     int[] oldToNewIndex = reverseIndex(oldParameterNames.length, newToOldIndex);
 
