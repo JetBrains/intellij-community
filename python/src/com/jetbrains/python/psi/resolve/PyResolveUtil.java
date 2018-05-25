@@ -38,9 +38,7 @@ import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.Collection;
-import java.util.Collections;
-import java.util.List;
+import java.util.*;
 
 /**
  * @author vlan
@@ -111,8 +109,8 @@ public class PyResolveUtil {
       if (scopeOwner == roof) {
         return;
       }
-      if (scopeOwner instanceof PyClass && scopeOwner == originalScopeOwner) {
-        scopeOwner = PyUtil.as(scopeOwner.getContainingFile(), PyFile.class);
+      if (name != null && scopeOwner instanceof PyClass && scopeOwner == originalScopeOwner) {
+        scopeOwner = parentScopeForUnresolvedClassLevelName((PyClass)scopeOwner, name);
       }
       else {
         scopeOwner = ScopeUtil.getScopeOwner(scopeOwner);
@@ -164,28 +162,28 @@ public class PyResolveUtil {
              : ContainerUtil.map(resolveImportedElementQNameLocally((PyReferenceExpression)qualifier), qn -> qn.append(name));
     }
     else {
-      return StreamEx
-        .of(resolveLocally(expression))
+      return fullMultiResolveLocally(expression, new HashSet<>())
         .select(PyImportElement.class)
-        .map(
-          element -> {
-            final PyStatement importStatement = element.getContainingImportStatement();
-
-            if (importStatement instanceof PyFromImportStatement) {
-              final QualifiedName importSourceQName = ((PyFromImportStatement)importStatement).getImportSourceQName();
-              final QualifiedName importedQName = element.getImportedQName();
-
-              if (importSourceQName != null && importedQName != null) {
-                return importSourceQName.append(importedQName);
-              }
-            }
-
-            return element.getImportedQName();
-          }
-        )
+        .map(PyResolveUtil::getImportedElementQName)
         .nonNull()
         .toList();
     }
+  }
+
+  @Nullable
+  private static QualifiedName getImportedElementQName(@NotNull PyImportElement element) {
+    final PyStatement importStatement = element.getContainingImportStatement();
+
+    if (importStatement instanceof PyFromImportStatement) {
+      final QualifiedName importSourceQName = ((PyFromImportStatement)importStatement).getImportSourceQName();
+      final QualifiedName importedQName = element.getImportedQName();
+
+      if (importSourceQName != null && importedQName != null) {
+        return importSourceQName.append(importedQName);
+      }
+    }
+
+    return element.getImportedQName();
   }
 
   /**
@@ -260,21 +258,45 @@ public class PyResolveUtil {
     return PyPsiUtils.strValue(nameExpression);
   }
 
+  /**
+   * Follows one of 'target-reference` chain and returns assigned value or null.
+   *
+   * @param referenceExpression expression to resolve
+   * @return resolved assigned value.
+   */
   @Nullable
   public static PyExpression fullResolveLocally(@NotNull PyReferenceExpression referenceExpression) {
-    for (PsiElement element : resolveLocally(referenceExpression)) {
-      if (element instanceof PyTargetExpression) {
-        final PyExpression assignedValue = ((PyTargetExpression)element).findAssignedValue();
+    return fullMultiResolveLocally(referenceExpression, new HashSet<>()).select(PyExpression.class).findFirst().orElse(null);
+  }
 
-        if (assignedValue instanceof PyReferenceExpression) {
-          return fullResolveLocally((PyReferenceExpression)assignedValue);
+  /**
+   * Runs DFS on assignment chains and returns all reached assigned values.
+   *
+   * @param referenceExpression expression to resolve
+   * @param visited             set to store visited references to prevent recursion
+   * @return resolved assigned values.
+   * <i>Note: the returned stream could contain null values.</i>
+   */
+  @NotNull
+  private static StreamEx<PsiElement> fullMultiResolveLocally(@NotNull PyReferenceExpression referenceExpression,
+                                                              @NotNull Set<PyReferenceExpression> visited) {
+    return StreamEx
+      .of(resolveLocally(referenceExpression))
+      .flatMap(
+        element -> {
+          if (element instanceof PyTargetExpression) {
+            final PyExpression assignedValue = ((PyTargetExpression)element).findAssignedValue();
+
+            if (assignedValue instanceof PyReferenceExpression && visited.add((PyReferenceExpression)assignedValue)) {
+              return fullMultiResolveLocally((PyReferenceExpression)assignedValue, visited);
+            }
+
+            return StreamEx.of(assignedValue);
+          }
+
+          return StreamEx.of(element);
         }
-
-        return assignedValue;
-      }
-    }
-
-    return null;
+      );
   }
 
   /**
@@ -294,5 +316,12 @@ public class PyResolveUtil {
              PsiTreeUtil.getParentOfType(element, PyAnnotation.class) != null;
     }
     return false;
+  }
+
+  @Nullable
+  public static ScopeOwner parentScopeForUnresolvedClassLevelName(@NotNull PyClass cls, @NotNull String name) {
+    return ControlFlowCache.getScope(cls).containsDeclaration(name)
+           ? PyUtil.as(cls.getContainingFile(), PyFile.class)
+           : ScopeUtil.getScopeOwner(cls);
   }
 }

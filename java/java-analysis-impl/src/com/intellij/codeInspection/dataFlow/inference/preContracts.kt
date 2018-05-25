@@ -3,7 +3,7 @@ package com.intellij.codeInspection.dataFlow.inference
 
 import com.intellij.codeInsight.NullableNotNullManager
 import com.intellij.codeInspection.dataFlow.ContractReturnValue
-import com.intellij.codeInspection.dataFlow.ControlFlowAnalyzer
+import com.intellij.codeInspection.dataFlow.JavaMethodContractUtil
 import com.intellij.codeInspection.dataFlow.StandardMethodContract
 import com.intellij.codeInspection.dataFlow.StandardMethodContract.ValueConstraint.ANY_VALUE
 import com.intellij.codeInspection.dataFlow.StandardMethodContract.ValueConstraint.NULL_VALUE
@@ -38,7 +38,7 @@ internal data class DelegationContract(internal val expression: ExpressionRange,
     val arguments = call.argumentList.expressions
     val varArgCall = MethodCallInstruction.isVarArgCall(targetMethod, result.substitutor, arguments, parameters)
 
-    val fromDelegate = ControlFlowAnalyzer.getMethodContracts(targetMethod).mapNotNull { dc ->
+    val fromDelegate = JavaMethodContractUtil.getMethodContracts(targetMethod).mapNotNull { dc ->
       convertDelegatedMethodContract(method, parameters, arguments, varArgCall, dc)
     }
     if (NullableNotNullManager.isNotNull(targetMethod)) {

@@ -21,6 +21,7 @@ import com.intellij.concurrency.SensitiveProgressWrapper;
 import com.intellij.ide.util.DelegatingProgressIndicator;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
+import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.application.ex.ApplicationManagerEx;
 import com.intellij.openapi.application.impl.LaterInvocator;
@@ -39,6 +40,7 @@ import com.intellij.util.Alarm;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.ConcurrencyUtil;
 import com.intellij.util.TimeoutUtil;
+import com.intellij.util.concurrency.AppExecutorUtil;
 import com.intellij.util.concurrency.Semaphore;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.DoubleArrayList;
@@ -47,6 +49,7 @@ import com.intellij.util.ui.UIUtil;
 import gnu.trove.TLongArrayList;
 import org.jetbrains.annotations.NotNull;
 
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Random;
@@ -721,6 +724,57 @@ public class ProgressIndicatorTest extends LightPlatformTestCase {
     }
     finally {
       LaterInvocator.leaveAllModals();
+    }
+  }
+
+  public void test_runInReadActionWithWriteActionPriority_DoesNotHang() throws Exception {
+    AtomicBoolean finished = new AtomicBoolean();
+    Runnable action = () -> {
+      long start = System.currentTimeMillis();
+      while (!finished.get()) {
+        ProgressManager.checkCanceled();
+        if (System.currentTimeMillis() - start > 10_000) {
+          finished.set(true);
+          throw new AssertionError("Too long without cancellation");
+        }
+      }
+    };
+
+    List<Future<?>> futures = new ArrayList<>();
+    for (int i = 0; i < 3; i++) {
+      futures.add(ApplicationManager.getApplication().executeOnPooledThread(() -> {
+        while (!finished.get()) {
+          ProgressIndicatorUtils.runInReadActionWithWriteActionPriority(action);
+        }
+      }));
+      futures.add(ApplicationManager.getApplication().executeOnPooledThread(() -> {
+        ProgressIndicatorBase reusableProgress = new ProgressIndicatorBase(true);
+        while (!finished.get()) {
+          ProgressIndicatorUtils.runInReadActionWithWriteActionPriority(action, reusableProgress);
+        }
+      }));
+      futures.add(ReadAction.nonBlocking(action).submit(AppExecutorUtil.getAppExecutorService()));
+    }
+      
+    for (int i = 0; i < 10_000 && !finished.get(); i++) {
+      UIUtil.dispatchAllInvocationEvents();
+      WriteAction.run(() -> {});
+    }
+    finished.set(true);
+
+    waitForFutures(futures);
+  }
+
+  private static void waitForFutures(List<Future<?>> futures)
+    throws InterruptedException, ExecutionException, TimeoutException {
+    long start = System.currentTimeMillis();
+    while (System.currentTimeMillis() - start < 10_000 && !futures.stream().allMatch(Future::isDone)) {
+      UIUtil.dispatchAllInvocationEvents();
+      TimeoutUtil.sleep(10);
+    }
+
+    for (Future<?> future : futures) {
+      future.get(1, TimeUnit.SECONDS);
     }
   }
 }

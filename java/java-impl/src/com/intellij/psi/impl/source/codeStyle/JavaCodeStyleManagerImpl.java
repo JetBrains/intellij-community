@@ -651,15 +651,11 @@ public class JavaCodeStyleManagerImpl extends JavaCodeStyleManager {
       }
     }
     else if (expr instanceof PsiArrayAccessExpression) {
-      PsiExpression arrayExpr = ((PsiArrayAccessExpression)expr).getArrayExpression();
-      if (arrayExpr instanceof PsiReferenceExpression) {
-        String arrayName = getPropertyName((PsiReferenceExpression)arrayExpr);
-        if (arrayName != null) {
-          String name = StringUtil.unpluralize(arrayName);
-          if (name != null) {
-            return new NamesByExprInfo(name);
-          }
-        }
+      NamesByExprInfo info = suggestVariableNameByExpressionOnly(((PsiArrayAccessExpression)expr).getArrayExpression(), variableKind, useAllMethodNames);
+
+      String singular = info.propertyName == null ? null : StringUtil.unpluralize(info.propertyName);
+      if (singular != null) {
+        return new NamesByExprInfo(singular, ContainerUtil.mapNotNull(info.names, StringUtil::unpluralize));
       }
     }
     else if (expr instanceof PsiLiteralExpression && variableKind == VariableKind.STATIC_FINAL_FIELD) {

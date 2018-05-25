@@ -57,7 +57,7 @@ public class VcsToolbarLabelAction extends DumbAwareAction implements CustomComp
     String name = DEFAULT_LABEL;
     if (project != null) {
       AbstractVcs[] vcss = ProjectLevelVcsManager.getInstance(project).getAllActiveVcss();
-      List<String> ids = Arrays.stream(vcss).map(vcs -> vcs.getDisplayName()).distinct().collect(Collectors.toList());
+      List<String> ids = Arrays.stream(vcss).map(vcs -> vcs.getShortName()).distinct().collect(Collectors.toList());
       if (ids.size() == 1) {
         name = ids.get(0) + ":";
       }

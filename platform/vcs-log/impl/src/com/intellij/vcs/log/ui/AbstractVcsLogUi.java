@@ -54,6 +54,7 @@ public abstract class AbstractVcsLogUi implements VcsLogUi, Disposable {
   public static final ExtensionPointName<VcsLogHighlighterFactory> LOG_HIGHLIGHTER_FACTORY_EP =
     ExtensionPointName.create("com.intellij.logHighlighterFactory");
 
+  @NotNull private final String myId;
   @NotNull protected final Project myProject;
   @NotNull protected final VcsLogData myLogData;
   @NotNull protected final VcsLogColorManager myColorManager;
@@ -65,9 +66,11 @@ public abstract class AbstractVcsLogUi implements VcsLogUi, Disposable {
 
   @NotNull protected VisiblePack myVisiblePack;
 
-  public AbstractVcsLogUi(@NotNull VcsLogData logData,
+  public AbstractVcsLogUi(@NotNull String id,
+                          @NotNull VcsLogData logData,
                           @NotNull VcsLogColorManager manager,
                           @NotNull VisiblePackRefresher refresher) {
+    myId = id;
     myProject = logData.getProject();
     myLogData = logData;
     myRefresher = refresher;
@@ -84,6 +87,12 @@ public abstract class AbstractVcsLogUi implements VcsLogUi, Disposable {
       }
     });
     myRefresher.addVisiblePackChangeListener(myVisiblePackChangeListener);
+  }
+
+  @NotNull
+  @Override
+  public String getId() {
+    return myId;
   }
 
   public void requestFocus() {

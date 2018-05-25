@@ -48,6 +48,7 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.github.api.GithubApiTaskExecutor;
 import org.jetbrains.plugins.github.api.GithubApiUtil;
 import org.jetbrains.plugins.github.api.GithubFullPath;
+import org.jetbrains.plugins.github.api.GithubServerPath;
 import org.jetbrains.plugins.github.api.data.GithubBranch;
 import org.jetbrains.plugins.github.api.data.GithubPullRequest;
 import org.jetbrains.plugins.github.api.data.GithubRepo;
@@ -133,7 +134,7 @@ public class GithubCreatePullRequestWorker {
       Git git = ServiceManager.getService(Git.class);
 
       gitRepository.update();
-      Pair<GitRemote, String> remote = findGithubRemote(account, gitRepository);
+      Pair<GitRemote, String> remote = findGithubRemote(account.getServer(), gitRepository);
       if (remote == null) {
         GithubNotifications.showError(project, CANNOT_CREATE_PULL_REQUEST, "Can't find GitHub remote");
         return null;
@@ -171,11 +172,11 @@ public class GithubCreatePullRequestWorker {
   }
 
   @Nullable
-  static Pair<GitRemote, String> findGithubRemote(@NotNull GithubAccount account, @NotNull GitRepository repository) {
+  static Pair<GitRemote, String> findGithubRemote(@NotNull GithubServerPath server, @NotNull GitRepository repository) {
     Pair<GitRemote, String> githubRemote = null;
     for (GitRemote gitRemote : repository.getRemotes()) {
       for (String remoteUrl : gitRemote.getUrls()) {
-        if (account.getServer().matches(remoteUrl)) {
+        if (server.matches(remoteUrl)) {
           String remoteName = gitRemote.getName();
           if ("github" == remoteName || "origin" == remoteName) {
             return Pair.create(gitRemote, remoteUrl);

@@ -507,14 +507,12 @@ public class ApplyPatchDifferentiatedDialog extends DialogWrapper {
       final GridBagConstraints gb = createConstraints();
 
       final DefaultActionGroup group = new DefaultActionGroup();
-      final AnAction[] treeActions = myChangesTreeList.getTreeActions();
-      group.addAll(treeActions);
-      group.add(new MapDirectory());
 
       final MyShowDiff diffAction = new MyShowDiff();
       diffAction.registerCustomShortcutSet(CommonShortcuts.getDiff(), getRootPane());
       group.add(diffAction);
 
+      group.add(new MapDirectory());
       group.add(new StripUp());
       group.add(new StripDown());
       group.add(new ResetStrip());
@@ -527,10 +525,13 @@ public class ApplyPatchDifferentiatedDialog extends DialogWrapper {
           }
         });
       }
+      group.add(Separator.getInstance());
+      group.add(ActionManager.getInstance().getAction(ChangesTree.GROUP_BY_ACTION_GROUP));
 
       final ActionToolbar toolbar = ActionManager.getInstance().createActionToolbar("APPLY_PATCH", group, true);
+      TreeActionsToolbarPanel toolbarPanel = new TreeActionsToolbarPanel(toolbar, myChangesTreeList);
       gb.fill = GridBagConstraints.HORIZONTAL;
-      treePanel.add(toolbar.getComponent(), gb);
+      treePanel.add(toolbarPanel, gb);
 
       ++gb.gridy;
       gb.weighty = 1;

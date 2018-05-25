@@ -28,8 +28,8 @@ abstract class ImageSanityCheckerBase(val projectHome: File, val ignoreSkipTag: 
   private val STUB_PNG_MD5 = "5a87124746c39b00aad480e92672eca0" // /actions/stub.svg - 16x16
 
   private val IMAGES_WITH_BOTH_SVG_AND_PNG = MultiMap.createSet<String, String>().apply {
-    putValue("intellij.platform.icons", "general/settings")
-    putValue("intellij.platform.icons", "actions/cross")
+    //putValue("intellij.platform.icons", "general/settings")
+    //putValue("intellij.platform.icons", "actions/cross")
   }
 
   fun check(module: JpsModule) {

@@ -234,8 +234,9 @@ public class ReplaceInProjectManager {
       FindBundle.message("find.replace.all.confirmation.title"),
       FindBundle.message("find.replace.all.confirmation", usagesCount, StringUtil.escapeXml(stringToFind), filesCount,
                          StringUtil.escapeXml(stringToReplace)))
-      .yesText(FindBundle.message("find.replace.command"))
-      .noText(Messages.CANCEL_BUTTON).show();
+                                               .yesText(FindBundle.message("find.replace.command"))
+                                               .project(myProject)
+                                               .noText(Messages.CANCEL_BUTTON).show();
   }
 
   private static Set<VirtualFile> getFiles(@NotNull ReplaceContext replaceContext, boolean selectedOnly) {

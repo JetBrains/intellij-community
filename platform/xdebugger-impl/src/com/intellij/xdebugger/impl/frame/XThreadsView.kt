@@ -21,6 +21,8 @@ class XThreadsView(val project: Project, session: XDebugSessionImpl) : XDebugVie
   private fun getTree() = treePanel.tree
   fun getPanel() = treePanel.mainPanel
 
+  fun getDefaultFocusedComponent() =  treePanel.tree
+
   override fun clear() {
     DebuggerUIUtil.invokeLater {
       getTree().setRoot(object : XValueContainerNode<XValueContainer>(getTree(), null, true, object : XValueContainer() {}) {}, false)

@@ -777,7 +777,8 @@ public class LambdaUtil {
       if (resolveMethod == null) {
         return null;
       }
-      PsiClass anEnum = JavaPsiFacade.getElementFactory(call.getProject()).createEnum(enumName);
+      PsiElement contextFile = call.getContainingFile().copy();
+      PsiClass anEnum = (PsiClass)contextFile.add(JavaPsiFacade.getElementFactory(call.getProject()).createEnum(enumName));
       anEnum.add(resolveMethod);
       return  (PsiCall)anEnum.add(call);
     }

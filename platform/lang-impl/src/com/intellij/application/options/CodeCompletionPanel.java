@@ -62,7 +62,6 @@ public class CodeCompletionPanel {
   private JBRadioButton myAllLetters;
   private JBLabel myBasicShortcut;
   private JBLabel mySmartShortcut;
-  private JBLabel myDocComment;
 
   public CodeCompletionPanel() {
     ChangeListener updateCaseCheckboxes = __ -> {
@@ -78,7 +77,6 @@ public class CodeCompletionPanel {
 
     myBasicShortcut.setForeground(JBColor.GRAY);
     mySmartShortcut.setForeground(JBColor.GRAY);
-    myDocComment.setForeground(JBColor.GRAY);
 
     myCbAutocompletion.addActionListener(
      new ActionListener() {

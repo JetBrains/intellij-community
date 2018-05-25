@@ -1507,7 +1507,7 @@ class EditorGutterComponentImpl extends EditorGutterComponentEx implements Mouse
   private void tooltipAvailable(@Nullable String toolTip, @NotNull MouseEvent e, @Nullable GutterIconRenderer renderer) {
     myCalculatingInBackground = null;
     TooltipController controller = TooltipController.getInstance();
-    if (toolTip == null || toolTip.isEmpty()) {
+    if (toolTip == null || toolTip.isEmpty() || myEditor.isDisposed()) {
       controller.cancelTooltip(GUTTER_TOOLTIP_GROUP, e, false);
     }
     else {
@@ -1863,22 +1863,20 @@ class EditorGutterComponentImpl extends EditorGutterComponentEx implements Mouse
     else {
       GutterIconRenderer renderer = getGutterRenderer(e);
       if (renderer != null) {
-        ActionGroup actionGroup = renderer.getPopupMenuActions();
-          if (actionGroup != null) {
-          if (checkDumbAware(actionGroup)) {
-            ActionPopupMenu popupMenu = actionManager.createActionPopupMenu(ActionPlaces.UNKNOWN,
-                                                                            actionGroup);
-            popupMenu.getComponent().show(this, e.getX(), e.getY());
-          }
-          else {
-            notifyNotDumbAware();
-          }
+        AnAction rightButtonAction = renderer.getRightButtonClickAction();
+        if (rightButtonAction != null) {
+          performAction(rightButtonAction, e, "ICON_NAVIGATION_SECONDARY_BUTTON", myEditor.getDataContext());
           e.consume();
         }
         else {
-          AnAction rightButtonAction = renderer.getRightButtonClickAction();
-          if (rightButtonAction != null) {
-            performAction(rightButtonAction, e, "ICON_NAVIGATION_SECONDARY_BUTTON", myEditor.getDataContext());
+          ActionGroup actionGroup = renderer.getPopupMenuActions();
+          if (actionGroup != null) {
+            if (checkDumbAware(actionGroup)) {
+              actionManager.createActionPopupMenu(ActionPlaces.UNKNOWN, actionGroup).getComponent().show(this, e.getX(), e.getY());
+            }
+            else {
+              notifyNotDumbAware();
+            }
             e.consume();
           }
         }

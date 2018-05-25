@@ -1,6 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.lang.ant.config.explorer;
 
 import com.intellij.execution.ExecutionBundle;
@@ -43,7 +41,9 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiElement;
 import com.intellij.ui.*;
 import com.intellij.ui.treeStructure.Tree;
-import com.intellij.util.*;
+import com.intellij.util.EditSourceOnDoubleClickHandler;
+import com.intellij.util.Function;
+import com.intellij.util.IconUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.tree.TreeUtil;
@@ -230,22 +230,36 @@ public class AntExplorer extends SimpleToolWindowPanel implements DataProvider, 
       }
       if (ignoredFiles.size() != 0) {
         String messageText;
-        final StringBuilder message = StringBuilderSpinAllocator.alloc();
-        try {
-          String separator = "";
-          for (final VirtualFile virtualFile : ignoredFiles) {
-            message.append(separator);
-            message.append(virtualFile.getPresentableUrl());
-            separator = "\n";
-          }
-          messageText = message.toString();
+        final StringBuilder message = new StringBuilder();
+        String separator = "";
+        for (final VirtualFile virtualFile : ignoredFiles) {
+          message.append(separator);
+          message.append(virtualFile.getPresentableUrl());
+          separator = "\n";
         }
-        finally {
-          StringBuilderSpinAllocator.dispose(message);
-        }
+        messageText = message.toString();
         Messages.showWarningDialog(myProject, messageText, AntBundle.message("cannot.add.ant.files.dialog.title"));
       }
     });
+  }
+
+  public void removeSelectedBuildFiles() {
+    final Collection<AntBuildFileBase> files = getSelectedBuildFiles();
+    if (!files.isEmpty()) {
+      if (files.size() == 1) {
+        removeBuildFile(files.iterator().next());
+      }
+      else {
+        final int result = Messages.showYesNoDialog(
+          myProject, "Do you want to remove references to " +files.size() + " build files?", AntBundle.message("confirm.remove.dialog.title"), Messages.getQuestionIcon()
+        );
+        if (result == Messages.YES) {
+          for (AntBuildFileBase file : files) {
+            myConfig.removeBuildFile(file);
+          }
+        }
+      }
+    }
   }
 
   public void removeBuildFile() {
@@ -253,6 +267,10 @@ public class AntExplorer extends SimpleToolWindowPanel implements DataProvider, 
     if (buildFile == null) {
       return;
     }
+    removeBuildFile(buildFile);
+  }
+
+  private void removeBuildFile(AntBuildFile buildFile) {
     final String fileName = buildFile.getPresentableUrl();
     final int result = Messages.showYesNoDialog(myProject, AntBundle.message("remove.the.reference.to.file.confirmation.text", fileName),
                                                 AntBundle.message("confirm.remove.dialog.title"), Messages.getQuestionIcon());
@@ -278,7 +296,7 @@ public class AntExplorer extends SimpleToolWindowPanel implements DataProvider, 
     final AntBuildFileBase buildFile = getCurrentBuildFile();
     if (buildFile != null) {
       final TreePath[] paths = myTree.getSelectionPaths();
-      final String[] targets = getTargetNamesFromPaths(paths);
+      final List<String> targets = getTargetNamesFromPaths(paths);
       ExecutionHandler.runBuild(buildFile, targets, null, dataContext, Collections.emptyList(), AntBuildListener.NULL);
     }
   }
@@ -315,7 +333,7 @@ public class AntExplorer extends SimpleToolWindowPanel implements DataProvider, 
     return true;
   }
 
-  private static String[] getTargetNamesFromPaths(TreePath[] paths) {
+  private static List<String> getTargetNamesFromPaths(TreePath[] paths) {
     final List<String> targets = new ArrayList<>();
     for (final TreePath path : paths) {
       final Object userObject = ((DefaultMutableTreeNode)path.getLastPathComponent()).getUserObject();
@@ -330,7 +348,7 @@ public class AntExplorer extends SimpleToolWindowPanel implements DataProvider, 
         targets.add(target.getName());
       }
     }
-    return ArrayUtil.toStringArray(targets);
+    return targets;
   }
 
   private static AntBuildTarget[] getTargetObjectsFromPaths(TreePath[] paths) {
@@ -351,6 +369,33 @@ public class AntExplorer extends SimpleToolWindowPanel implements DataProvider, 
   private AntBuildFileBase getCurrentBuildFile() {
     final AntBuildFileNodeDescriptor descriptor = getCurrentBuildFileNodeDescriptor();
     return (AntBuildFileBase)((descriptor == null) ? null : descriptor.getBuildFile());
+  }
+
+  @NotNull
+  private Collection<AntBuildFileBase> getSelectedBuildFiles() {
+    if (myTree == null) {
+      return Collections.emptyList();
+    }
+    final TreePath[] paths = myTree.getSelectionPaths();
+    if (paths == null) {
+      return Collections.emptyList();
+    }
+    final Set<AntBuildFileBase> result  = new HashSet<>();
+    for (TreePath path : paths) {
+      DefaultMutableTreeNode node = (DefaultMutableTreeNode)path.getLastPathComponent();
+      while (node != null) {
+        final Object userObject = node.getUserObject();
+        if (userObject instanceof AntBuildFileNodeDescriptor) {
+          final AntBuildFileBase file = (AntBuildFileBase)((AntBuildFileNodeDescriptor)userObject).getBuildFile();
+          if (file != null) {
+            result.add(file);
+          }
+          break;
+        }
+        node = (DefaultMutableTreeNode)node.getParent();
+      }
+    }
+    return result;
   }
 
   @Nullable
@@ -543,7 +588,7 @@ public class AntExplorer extends SimpleToolWindowPanel implements DataProvider, 
 
     @Override
     public void actionPerformed(AnActionEvent e) {
-      removeBuildFile();
+      removeSelectedBuildFiles();
     }
 
     @Override
@@ -731,7 +776,7 @@ public class AntExplorer extends SimpleToolWindowPanel implements DataProvider, 
     @Override
     public void actionPerformed(AnActionEvent e) {
       final AntBuildFile buildFile = getCurrentBuildFile();
-      final String[] targets = getTargetNamesFromPaths(myTree.getSelectionPaths());
+      final List<String> targets = getTargetNamesFromPaths(myTree.getSelectionPaths());
       final ExecuteCompositeTargetEvent event = new ExecuteCompositeTargetEvent(targets);
       final SaveMetaTargetDialog dialog = new SaveMetaTargetDialog(myTree, event, AntConfigurationBase.getInstance(myProject), buildFile);
       dialog.setTitle(e.getPresentation().getText());
@@ -881,7 +926,7 @@ public class AntExplorer extends SimpleToolWindowPanel implements DataProvider, 
       final KeymapManagerEx keymapManager = KeymapManagerEx.getInstanceEx();
       final Keymap activeKeymap = keymapManager.getActiveKeymap();
       listenTo(activeKeymap);
-      keymapManager.addKeymapManagerListener(this, AntExplorer.this);
+      ApplicationManager.getApplication().getMessageBus().connect(AntExplorer.this).subscribe(KeymapManagerListener.TOPIC, this);
     }
 
     @Override

@@ -25,6 +25,7 @@
     </item>
     <item name='org.apache.commons.collections.bidimap.AbstractDualBidiMap java.util.Iterator createEntrySetIterator(java.util.Iterator)'>
         <annotation name='org.jetbrains.annotations.Contract'>
+            <val name="value" val="&quot;_-&gt;new&quot;"/>
             <val name="pure" val="true"/>
         </annotation>
         <annotation name='org.jetbrains.annotations.NotNull'/>
@@ -34,6 +35,7 @@
     </item>
     <item name='org.apache.commons.collections.bidimap.AbstractDualBidiMap java.util.Iterator createKeySetIterator(java.util.Iterator)'>
         <annotation name='org.jetbrains.annotations.Contract'>
+            <val name="value" val="&quot;_-&gt;new&quot;"/>
             <val name="pure" val="true"/>
         </annotation>
         <annotation name='org.jetbrains.annotations.NotNull'/>
@@ -43,6 +45,7 @@
     </item>
     <item name='org.apache.commons.collections.bidimap.AbstractDualBidiMap java.util.Iterator createValuesIterator(java.util.Iterator)'>
         <annotation name='org.jetbrains.annotations.Contract'>
+            <val name="value" val="&quot;_-&gt;new&quot;"/>
             <val name="pure" val="true"/>
         </annotation>
         <annotation name='org.jetbrains.annotations.NotNull'/>
@@ -57,6 +60,9 @@
         <annotation name='org.jetbrains.annotations.Nullable'/>
     </item>
     <item name='org.apache.commons.collections.bidimap.AbstractDualBidiMap org.apache.commons.collections.MapIterator mapIterator()'>
+        <annotation name='org.jetbrains.annotations.Contract'>
+            <val val="&quot;-&gt;new&quot;"/>
+        </annotation>
         <annotation name='org.jetbrains.annotations.NotNull'/>
     </item>
     <item name='org.apache.commons.collections.bidimap.AbstractDualBidiMap void putAll(java.util.Map) 0'>
@@ -170,6 +176,9 @@
         </annotation>
     </item>
     <item name='org.apache.commons.collections.bidimap.DualHashBidiMap org.apache.commons.collections.BidiMap createBidiMap(java.util.Map, java.util.Map, org.apache.commons.collections.BidiMap)'>
+        <annotation name='org.jetbrains.annotations.Contract'>
+            <val val="&quot;_,_,_-&gt;new&quot;"/>
+        </annotation>
         <annotation name='org.jetbrains.annotations.NotNull'/>
     </item>
     <item name='org.apache.commons.collections.bidimap.DualHashBidiMap void readObject(java.io.ObjectInputStream) 0'>
@@ -188,21 +197,36 @@
         <annotation name='org.jetbrains.annotations.Nullable'/>
     </item>
     <item name='org.apache.commons.collections.bidimap.DualTreeBidiMap java.util.SortedMap headMap(java.lang.Object)'>
+        <annotation name='org.jetbrains.annotations.Contract'>
+            <val val="&quot;_-&gt;new&quot;"/>
+        </annotation>
         <annotation name='org.jetbrains.annotations.NotNull'/>
     </item>
     <item name='org.apache.commons.collections.bidimap.DualTreeBidiMap java.util.SortedMap subMap(java.lang.Object, java.lang.Object)'>
+        <annotation name='org.jetbrains.annotations.Contract'>
+            <val val="&quot;_,_-&gt;new&quot;"/>
+        </annotation>
         <annotation name='org.jetbrains.annotations.NotNull'/>
     </item>
     <item name='org.apache.commons.collections.bidimap.DualTreeBidiMap java.util.SortedMap tailMap(java.lang.Object)'>
+        <annotation name='org.jetbrains.annotations.Contract'>
+            <val val="&quot;_-&gt;new&quot;"/>
+        </annotation>
         <annotation name='org.jetbrains.annotations.NotNull'/>
     </item>
     <item name='org.apache.commons.collections.bidimap.DualTreeBidiMap org.apache.commons.collections.BidiMap createBidiMap(java.util.Map, java.util.Map, org.apache.commons.collections.BidiMap)'>
+        <annotation name='org.jetbrains.annotations.Contract'>
+            <val val="&quot;_,_,_-&gt;new&quot;"/>
+        </annotation>
         <annotation name='org.jetbrains.annotations.NotNull'/>
     </item>
     <item name='org.apache.commons.collections.bidimap.DualTreeBidiMap org.apache.commons.collections.BidiMap createBidiMap(java.util.Map, java.util.Map, org.apache.commons.collections.BidiMap) 0'>
         <annotation name='org.jetbrains.annotations.NotNull'/>
     </item>
     <item name='org.apache.commons.collections.bidimap.DualTreeBidiMap org.apache.commons.collections.OrderedMapIterator orderedMapIterator()'>
+        <annotation name='org.jetbrains.annotations.Contract'>
+            <val val="&quot;-&gt;new&quot;"/>
+        </annotation>
         <annotation name='org.jetbrains.annotations.NotNull'/>
     </item>
     <item name='org.apache.commons.collections.bidimap.DualTreeBidiMap void readObject(java.io.ObjectInputStream) 0'>
@@ -224,12 +248,21 @@
         <annotation name='org.jetbrains.annotations.NotNull'/>
     </item>
     <item name='org.apache.commons.collections.bidimap.DualTreeBidiMap.ViewMap java.util.SortedMap headMap(java.lang.Object)'>
+        <annotation name='org.jetbrains.annotations.Contract'>
+            <val val="&quot;_-&gt;new&quot;"/>
+        </annotation>
         <annotation name='org.jetbrains.annotations.NotNull'/>
     </item>
     <item name='org.apache.commons.collections.bidimap.DualTreeBidiMap.ViewMap java.util.SortedMap subMap(java.lang.Object, java.lang.Object)'>
+        <annotation name='org.jetbrains.annotations.Contract'>
+            <val val="&quot;_,_-&gt;new&quot;"/>
+        </annotation>
         <annotation name='org.jetbrains.annotations.NotNull'/>
     </item>
     <item name='org.apache.commons.collections.bidimap.DualTreeBidiMap.ViewMap java.util.SortedMap tailMap(java.lang.Object)'>
+        <annotation name='org.jetbrains.annotations.Contract'>
+            <val val="&quot;_-&gt;new&quot;"/>
+        </annotation>
         <annotation name='org.jetbrains.annotations.NotNull'/>
     </item>
     <item name='org.apache.commons.collections.bidimap.TreeBidiMap TreeBidiMap()'>
@@ -664,6 +697,7 @@
     </item>
     <item name='org.apache.commons.collections.bidimap.TreeBidiMap.View java.util.Iterator iterator()'>
         <annotation name='org.jetbrains.annotations.Contract'>
+            <val name="value" val="&quot;-&gt;new&quot;"/>
             <val name="pure" val="true"/>
         </annotation>
         <annotation name='org.jetbrains.annotations.NotNull'/>

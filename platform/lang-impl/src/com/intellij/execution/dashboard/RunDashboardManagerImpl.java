@@ -31,6 +31,7 @@ import com.intellij.ui.AppUIUtil;
 import com.intellij.ui.content.*;
 import com.intellij.util.messages.MessageBusConnection;
 import gnu.trove.THashSet;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -50,6 +51,7 @@ import java.util.stream.Collectors;
 )
 public class RunDashboardManagerImpl implements RunDashboardManager, PersistentStateComponent<RunDashboardManagerImpl.State> {
   private static final float DEFAULT_CONTENT_PROPORTION = 0.3f;
+  @NonNls private static final String HELP_ID = "run-dashboard.reference";
 
   @NotNull private final Project myProject;
   @NotNull private final ContentManager myContentManager;
@@ -177,6 +179,11 @@ public class RunDashboardManagerImpl implements RunDashboardManager, PersistentS
   }
 
   @Override
+  public String getToolWindowContextHelpId() {
+    return HELP_ID;
+  }
+
+  @Override
   public boolean isToolWindowAvailable() {
     return hasContent();
   }
@@ -186,6 +193,7 @@ public class RunDashboardManagerImpl implements RunDashboardManager, PersistentS
     myDashboardContent = new RunDashboardContent(myProject, myContentManager, myGroupers);
     myToolWindowContent = ContentFactory.SERVICE.getInstance().createContent(myDashboardContent, null, false);
     myToolWindowContent.putUserData(ToolWindow.SHOW_CONTENT_ICON, Boolean.TRUE);
+    myToolWindowContent.setHelpId(getToolWindowContextHelpId());
     myToolWindowContent.setCloseable(false);
     Disposer.register(myToolWindowContent, myDashboardContent);
     Disposer.register(myToolWindowContent, () -> {
@@ -458,6 +466,7 @@ public class RunDashboardManagerImpl implements RunDashboardManager, PersistentS
     dashboardContent.addPropertyChangeListener(propertyChangeListener);
     toolWindowContent.setShouldDisposeContent(false);
     toolWindowContent.putUserData(ToolWindow.SHOW_CONTENT_ICON, Boolean.TRUE);
+    toolWindowContent.setHelpId(getToolWindowContextHelpId());
     myToolWindowContentManager.addContent(toolWindowContent);
     myDashboardToToolWindowContents.put(dashboardContent, toolWindowContent);
   }

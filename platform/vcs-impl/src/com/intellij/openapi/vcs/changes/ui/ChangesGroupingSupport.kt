@@ -10,7 +10,7 @@ import javax.swing.tree.DefaultTreeModel
 
 private val PREDEFINED_PRIORITIES = mapOf("directory" to 10, "module" to 20, "repository" to 30)
 
-class ChangesGroupingSupport(project: Project, source: Any) {
+class ChangesGroupingSupport(val project: Project, source: Any, val showingLocalChanges: Boolean) {
   private val changeSupport = PropertyChangeSupport(source)
   private val groupingFactories = collectFactories(project)
   private val groupingConfig = groupingFactories.allKeys.associateBy({ it }, { false }).toMutableMap()
@@ -37,7 +37,7 @@ class ChangesGroupingSupport(project: Project, source: Any) {
   val grouping
     get() = object : ChangesGroupingPolicyFactory() {
       override fun createGroupingPolicy(model: DefaultTreeModel): ChangesGroupingPolicy {
-        var result: ChangesGroupingPolicy = NoneChangesGroupingPolicy.Factory().createGroupingPolicy(model)
+        var result: ChangesGroupingPolicy = DefaultChangesGroupingPolicy.Factory(project, showingLocalChanges).createGroupingPolicy(model)
         groupingConfig.filterValues { it }.keys.sortedByDescending { PREDEFINED_PRIORITIES[it] }.forEach {
           result = groupingFactories.getByKey(it)!!.createGroupingPolicy(model).apply { setNextGroupingPolicy(result) }
         }

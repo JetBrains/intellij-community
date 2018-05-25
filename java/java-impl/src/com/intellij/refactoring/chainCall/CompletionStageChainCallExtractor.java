@@ -19,9 +19,6 @@ import com.intellij.psi.*;
 import com.siyeh.ig.callMatcher.CallMatcher;
 import org.jetbrains.annotations.NotNull;
 
-/**
- * @author Tagir Valeev
- */
 public class CompletionStageChainCallExtractor implements ChainCallExtractor {
   private static final CallMatcher NEXT_CALL =
     CallMatcher.instanceCall("java.util.concurrent.CompletionStage", "thenApply", "thenAccept", "thenCompose").parameterCount(1);

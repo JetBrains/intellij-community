@@ -3,8 +3,10 @@ package com.intellij.ide.projectWizard.kotlin.installKotlinPlugin
 
 import com.intellij.ide.projectWizard.kotlin.model.KotlinGuiTestCase
 import com.intellij.ide.projectWizard.kotlin.model.KotlinTestProperties
+import com.intellij.testGuiFramework.util.logInfo
 import com.intellij.testGuiFramework.util.logTestStep
 import com.intellij.testGuiFramework.util.logUIStep
+import org.fest.swing.exception.ComponentLookupException
 import org.junit.Test
 
 class CreateSdksGuiTest : KotlinGuiTestCase() {
@@ -44,9 +46,23 @@ class CreateSdksGuiTest : KotlinGuiTestCase() {
       popupClick("Project Structure")
       logUIStep("Open `$dialogName` dialog")
       dialog(dialogName) {
-        actionButton("Add New SDK").click()
-        popupClick("Kotlin SDK")
-        button("OK").click()
+        jList("SDKs").clickItem("SDKs")
+        val kotlinSdk = "Kotlin SDK"
+        try{
+          jTree(kotlinSdk, timeout = 1L)
+          logInfo("$kotlinSdk exists")
+        }
+        catch (e: ComponentLookupException){
+          logUIStep("Going to create $kotlinSdk")
+          actionButton("Add New SDK").click()
+          popupClick(kotlinSdk)
+          logUIStep("Going to check whether $kotlinSdk created")
+          jTree(kotlinSdk, timeout = 1L)
+        }
+        finally {
+          logUIStep("Close `Default Project Structure` dialog with OK")
+          button("OK").click()
+        }
       }
     }
   }

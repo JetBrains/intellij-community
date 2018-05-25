@@ -43,6 +43,7 @@ import com.intellij.util.ContentUtilEx;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.EmptyIterator;
 import com.intellij.util.containers.JBIterable;
+import com.intellij.util.containers.Predicate;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -80,6 +81,8 @@ public class ToolWindowContentUi extends JPanel implements ContentUI, PropertyCh
   ContentLayout myComboLayout = new ComboContentLayout(this);
 
   private ToolWindowContentUiType myType = ToolWindowContentUiType.TABBED;
+
+  public Predicate<Point> isResizableArea = p -> true;
 
   public ToolWindowContentUi(ToolWindowImpl window) {
     myWindow = window;
@@ -128,6 +131,10 @@ public class ToolWindowContentUi extends JPanel implements ContentUI, PropertyCh
       }
     }
     return false;
+  }
+
+  private boolean isResizeable(@NotNull Point point) {
+    return isResizableArea.apply(point);
   }
 
   public void setType(@NotNull ToolWindowContentUiType type) {
@@ -380,7 +387,7 @@ public class ToolWindowContentUi extends JPanel implements ContentUI, PropertyCh
             myLastPoint.set(info != null ? info.getLocation() : e.getLocationOnScreen());
             if (allowResize && ui.isResizeable()) {
               myPressPoint.set(myLastPoint.get());
-              arm(c.getComponentAt(e.getPoint()) == c ? c : null);
+              arm(c.getComponentAt(e.getPoint()) == c && ui.isResizeable(e.getPoint()) ? c : null);
             }
             ui.myWindow.fireActivated();
           }
@@ -399,7 +406,7 @@ public class ToolWindowContentUi extends JPanel implements ContentUI, PropertyCh
 
       @Override
       public void mouseMoved(MouseEvent e) {
-        c.setCursor(allowResize && ui.isResizeable() && getActualSplitter() != null && c.getComponentAt(e.getPoint()) == c
+        c.setCursor(allowResize && ui.isResizeable() && getActualSplitter() != null && c.getComponentAt(e.getPoint()) == c && ui.isResizeable(e.getPoint())
                     ? Cursor.getPredefinedCursor(Cursor.N_RESIZE_CURSOR)
                     : Cursor.getDefaultCursor());
       }

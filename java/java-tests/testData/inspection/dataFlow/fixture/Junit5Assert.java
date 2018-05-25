@@ -19,7 +19,7 @@ class Contracts {
 
   void foo3(boolean b) {
     Assertions.assertTrue(b, "message");
-    if (<warning descr="Condition '!b' is always 'false'">!<warning descr="Value 'b' is always 'true'">b</warning></warning>) {
+    if (<warning descr="Condition '!b' is always 'false'">!<weak_warning descr="Value 'b' is always 'true'">b</weak_warning></warning>) {
       System.out.println("how?");
     }
   }

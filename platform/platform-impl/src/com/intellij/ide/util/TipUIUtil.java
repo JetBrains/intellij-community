@@ -209,17 +209,10 @@ public class TipUIUtil {
               BufferedImage image = trinity.second;
               int w = image.getWidth();
               int h = image.getHeight();
-              if (UIUtil.isJreHiDPI(component)) {
-                // compensate JRE scale
-                float sysScale = JBUI.sysScale(component);
-                w /= sysScale;
-                h /= sysScale;
-              }
-              else {
-                // compensate image scale
-                float imgScale = hidpi ? 2f : 1f;
-                w /= imgScale;
-                h /= imgScale;
+              if (hidpi) {
+                // the expected (user space) size is @2x / 2 in either JRE-HiDPI or IDE-HiDPI mode
+                w /= 2;
+                h /= 2;
               }
               // fit the user scale
               w = (int)(JBUI.scale((float)w));

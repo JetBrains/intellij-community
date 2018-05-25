@@ -12,9 +12,6 @@ import java.util.function.Predicate;
 
 import static com.siyeh.ig.psiutils.ExpressionUtils.getCallForQualifier;
 
-/**
- * @author Tagir Valeev
- */
 public class StreamApiUtil {
   @Contract("null -> null")
   public static PsiType getStreamElementType(PsiType type) {

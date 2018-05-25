@@ -399,24 +399,17 @@ public abstract class DebugProcessImpl extends UserDataHolderBase implements Deb
 
   void deleteStepRequests(@Nullable final ThreadReference stepThread) {
     EventRequestManager requestManager = getVirtualMachineProxy().eventRequestManager();
-    List<StepRequest> stepRequests = requestManager.stepRequests();
-    if (!stepRequests.isEmpty()) {
-      final List<StepRequest> toDelete = new ArrayList<>(stepRequests.size());
-      for (final StepRequest request : stepRequests) {
-        ThreadReference threadReference = request.thread();
-        // [jeka] on attempt to delete a request assigned to a thread with unknown status, a JDWP error occurs
+    for (StepRequest request : new ArrayList<>(requestManager.stepRequests())) { // need a copy here to avoid CME
+      if (stepThread == null || stepThread.equals(request.thread())) {
         try {
-          if (threadReference.status() != ThreadReference.THREAD_STATUS_UNKNOWN && (stepThread == null || stepThread.equals(threadReference))) {
-            toDelete.add(request);
-          }
-        }
-        catch (IllegalThreadStateException e) {
-          LOG.info(e); // undocumented by JDI: may be thrown when querying thread status
+          requestManager.deleteEventRequest(request);
         }
         catch (ObjectCollectedException ignored) {
         }
+        catch (Exception e) {
+          LOG.error(e); // report all for now
+        }
       }
-      requestManager.deleteEventRequests(toDelete);
     }
   }
 

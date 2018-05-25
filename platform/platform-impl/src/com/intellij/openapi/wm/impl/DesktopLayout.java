@@ -4,16 +4,17 @@ package com.intellij.openapi.wm.impl;
 import com.intellij.configurationStore.XmlSerializer;
 import com.intellij.ide.ui.UISettings;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.util.ClearableLazyValue;
 import com.intellij.openapi.util.JDOMUtil;
 import com.intellij.openapi.wm.ToolWindow;
 import com.intellij.openapi.wm.ToolWindowAnchor;
-import com.intellij.util.ArrayUtil;
 import gnu.trove.THashMap;
+import gnu.trove.THashSet;
 import org.jdom.Element;
-import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import javax.swing.*;
 import java.util.*;
 
 import static com.intellij.configurationStore.XmlSerializer.serialize;
@@ -24,67 +25,84 @@ import static com.intellij.configurationStore.XmlSerializer.serialize;
 public final class DesktopLayout {
   private static final Logger LOG = Logger.getInstance(DesktopLayout.class);
 
-  @NonNls static final String TAG = "layout";
+  private static int getAnchorWeight(@NotNull ToolWindowAnchor anchor) {
+    if (anchor == ToolWindowAnchor.TOP) {
+      return SwingConstants.TOP;
+    }
+    if (anchor == ToolWindowAnchor.LEFT) {
+      return SwingConstants.LEFT;
+    }
+    if (anchor == ToolWindowAnchor.BOTTOM) {
+      return SwingConstants.BOTTOM;
+    }
+    if (anchor == ToolWindowAnchor.RIGHT) {
+      return SwingConstants.RIGHT;
+    }
+    return 0;
+  }
+
+  private static final Comparator<WindowInfoImpl> ourWindowInfoComparator = (o1, o2) -> {
+    int d = getAnchorWeight(o1.getAnchor()) - getAnchorWeight(o2.getAnchor());
+    return d == 0 ? o1.getOrder() - o2.getOrder() : d;
+  };
+
+  static final String TAG = "layout";
+
   /**
-   * Map between {@code id}s and registered {@code WindowInfo}s.
+   * Map between {@code id}s {@code WindowInfo}s.
    */
-  private final Map<String, WindowInfoImpl> myRegisteredId2Info = new HashMap<>();
-  /**
-   * Map between {@code id}s and unregistered {@code WindowInfo}s.
-   */
-  private final Map<String, WindowInfoImpl> myUnregisteredId2Info = new THashMap<>();
-  /**
-   *
-   */
-  private static final MyWindowInfoComparator ourWindowInfoComparator = new MyWindowInfoComparator();
-  /**
-   * Don't use this member directly. Get it only by {@code getInfos} method.
-   * It exists here only for optimization purposes. This member can be {@code null}
-   * if the cached data is invalid.
-   */
-  private WindowInfoImpl[] myRegisteredInfos;
-  /**
-   * Don't use this member directly. Get it only by {@code getUnregisteredInfos} method.
-   * It exists here only for optimization purposes. This member can be {@code null}
-   * if the cached data is invalid.
-   */
-  private WindowInfoImpl[] myUnregisteredInfos;
-  /**
-   * Don't use this member directly. Get it only by {@code getAllInfos} method.
-   * It exists here only for optimization purposes. This member can be {@code null}
-   * if the cached data is invalid.
-   */
-  private WindowInfoImpl[] myAllInfos;
+  private final Map<String, WindowInfoImpl> myIdToInfo = new THashMap<>();
+
+  private final ClearableLazyValue<List<WindowInfoImpl>> myRegisteredInfos = new ClearableLazyValue<List<WindowInfoImpl>>() {
+    @NotNull
+    @Override
+    protected List<WindowInfoImpl> compute() {
+      if (myIdToInfo.isEmpty()) {
+        return Collections.emptyList();
+      }
+
+      List<WindowInfoImpl> result = new ArrayList<>();
+      for (WindowInfoImpl value : myIdToInfo.values()) {
+        if (value.isRegistered()) {
+          result.add(value);
+        }
+      }
+      result.sort(ourWindowInfoComparator);
+      return result;
+    }
+  };
 
   /**
    * Copies itself from the passed
-   *
    * @param layout to be copied.
    */
   public final void copyFrom(@NotNull DesktopLayout layout) {
-    for (WindowInfoImpl info1 : layout.getAllInfos()) {
-      WindowInfoImpl info = myRegisteredId2Info.get(info1.getId());
-      if (info != null) {
-        info.copyFrom(info1);
-        continue;
-      }
-      info = myUnregisteredId2Info.get(info1.getId());
-      if (info == null) {
-        myUnregisteredId2Info.put(info1.getId(), info1.copy());
+    Map<String, WindowInfoImpl> old = new THashMap<>(myIdToInfo);
+    myIdToInfo.clear();
+    for (WindowInfoImpl otherInfo : layout.myIdToInfo.values()) {
+      WindowInfoImpl oldInfo = old.get(otherInfo.getId());
+      if (oldInfo == null) {
+        WindowInfoImpl newInfo = otherInfo.copy();
+        newInfo.setRegistered(otherInfo.isRegistered());
+        myIdToInfo.put(otherInfo.getId(), newInfo);
       }
       else {
-        info.copyFrom(info1);
+        oldInfo.copyFrom(otherInfo);
+        oldInfo.setRegistered(otherInfo.isRegistered());
+        myIdToInfo.put(otherInfo.getId(), oldInfo);
       }
     }
-    // invalidate caches
-    myRegisteredInfos = null;
-    myUnregisteredInfos = null;
-    myAllInfos = null;
-    // normalize orders
+
+    normalizeOrders();
+  }
+
+  private void normalizeOrders() {
     normalizeOrder(getAllInfos(ToolWindowAnchor.TOP));
     normalizeOrder(getAllInfos(ToolWindowAnchor.LEFT));
     normalizeOrder(getAllInfos(ToolWindowAnchor.BOTTOM));
     normalizeOrder(getAllInfos(ToolWindowAnchor.RIGHT));
+
+    myRegisteredInfos.drop();
   }
 
   /**
@@ -95,33 +113,27 @@ public final class DesktopLayout {
    * @param anchor the default tool window anchor.
    */
   final WindowInfoImpl register(@NotNull String id, @NotNull ToolWindowAnchor anchor, final boolean splitMode) {
-    WindowInfoImpl info = myUnregisteredId2Info.get(id);
+    WindowInfoImpl info = myIdToInfo.get(id);
     if (info == null) {
-      // tool window is being registered first time
       info = new WindowInfoImpl();
       info.setId(id);
       info.setAnchor(anchor);
       info.setSplit(splitMode);
+      myIdToInfo.put(id, info);
     }
-    else {
-      // tool window has been already registered some time
-      myUnregisteredId2Info.remove(id);
+    if (!info.isRegistered()) {
+      info.setRegistered(true);
+      myRegisteredInfos.drop();
     }
-    myRegisteredId2Info.put(id, info);
-    // invalidate caches
-    myRegisteredInfos = null;
-    myUnregisteredInfos = null;
-    myAllInfos = null;
     return info;
   }
 
   final void unregister(@NotNull String id) {
-    final WindowInfoImpl info = myRegisteredId2Info.remove(id).copy();
-    myUnregisteredId2Info.put(id, info);
-    // invalidate caches
-    myRegisteredInfos = null;
-    myUnregisteredInfos = null;
-    myAllInfos = null;
+    WindowInfoImpl info = myIdToInfo.get(id);
+    if (info.isRegistered()) {
+      info.setRegistered(false);
+      myRegisteredInfos.drop();
+    }
   }
 
   /**
@@ -130,17 +142,16 @@ public final class DesktopLayout {
    *         value if and only if window with {@code id} is registered one.
    */
   final WindowInfoImpl getInfo(@NotNull String id, final boolean onlyRegistered) {
-    final WindowInfoImpl info = myRegisteredId2Info.get(id);
-    if (onlyRegistered || info != null) {
-      return info;
+    WindowInfoImpl info = myIdToInfo.get(id);
+    if (onlyRegistered && info != null && !info.isRegistered()) {
+      return null;
     }
-    return myUnregisteredId2Info.get(id);
+    return info;
   }
 
   @Nullable
   final String getActiveId() {
-    final WindowInfoImpl[] infos = getInfos();
-    for (WindowInfoImpl info : infos) {
+    for (WindowInfoImpl info : getInfos()) {
       if (info.isActive()) {
         return info.getId();
       }
@@ -152,33 +163,8 @@ public final class DesktopLayout {
    * @return {@code WindowInfo}s for all registered tool windows.
    */
   @NotNull
-  final WindowInfoImpl[] getInfos() {
-    if (myRegisteredInfos == null) {
-      myRegisteredInfos = myRegisteredId2Info.values().toArray(new WindowInfoImpl[0]);
-    }
-    return myRegisteredInfos;
-  }
-
-  /**
-   * @return {@code WindowInfos}s for all windows that are currently unregistered.
-   */
-  @NotNull
-  private WindowInfoImpl[] getUnregisteredInfos() {
-    if (myUnregisteredInfos == null) {
-      myUnregisteredInfos = myUnregisteredId2Info.values().toArray(new WindowInfoImpl[0]);
-    }
-    return myUnregisteredInfos;
-  }
-
-  /**
-   * @return {@code WindowInfo}s of all (registered and unregistered) tool windows.
-   */
-  @NotNull
-  private WindowInfoImpl[] getAllInfos() {
-    final WindowInfoImpl[] registeredInfos = getInfos();
-    final WindowInfoImpl[] unregisteredInfos = getUnregisteredInfos();
-    myAllInfos = ArrayUtil.mergeArrays(registeredInfos, unregisteredInfos);
-    return myAllInfos;
+  final List<WindowInfoImpl> getInfos() {
+    return myRegisteredInfos.getValue();
   }
 
   /**
@@ -186,40 +172,34 @@ public final class DesktopLayout {
    *         Returned infos are sorted by order.
    */
   @NotNull
-  private WindowInfoImpl[] getAllInfos(@NotNull ToolWindowAnchor anchor) {
-    WindowInfoImpl[] infos = getAllInfos();
-    final ArrayList<WindowInfoImpl> list = new ArrayList<>(infos.length);
-    for (WindowInfoImpl info : infos) {
+  private List<WindowInfoImpl> getAllInfos(@NotNull ToolWindowAnchor anchor) {
+    List<WindowInfoImpl> result = new ArrayList<>();
+    for (WindowInfoImpl info : myIdToInfo.values()) {
       if (anchor == info.getAnchor()) {
-        list.add(info);
+        result.add(info);
       }
     }
-    infos = list.toArray(new WindowInfoImpl[0]);
-    Arrays.sort(infos, ourWindowInfoComparator);
-    return infos;
+    result.sort(ourWindowInfoComparator);
+    return result;
   }
 
   /**
    * Normalizes order of windows in the passed array. Note, that array should be
    * sorted by order (by ascending). Order of first window will be {@code 0}.
    */
-  private static void normalizeOrder(@NotNull WindowInfoImpl[] infos) {
-    for (int i = 0; i < infos.length; i++) {
-      infos[i].setOrder(i);
+  private static void normalizeOrder(@NotNull List<WindowInfoImpl> infos) {
+    for (int i = 0; i < infos.size(); i++) {
+      infos.get(i).setOrder(i);
     }
   }
 
   final boolean isToolWindowRegistered(@NotNull String id) {
-    return myRegisteredId2Info.containsKey(id);
-  }
-
-  final boolean isToolWindowUnregistered(@NotNull String id) {
-    return myUnregisteredId2Info.containsKey(id);
+    WindowInfoImpl info = myIdToInfo.get(id);
+    return info != null && info.isRegistered();
   }
 
   /**
-   * @return comparator which compares {@code StripeButtons} in the stripe with
-   *         specified {@code anchor}.
+   * @return comparator which compares {@code StripeButtons} in the stripe with specified {@code anchor}.
    */
   @NotNull
   final Comparator<StripeButton> comparator(@NotNull ToolWindowAnchor anchor) {
@@ -233,8 +213,7 @@ public final class DesktopLayout {
    */
   private int getMaxOrder(@NotNull ToolWindowAnchor anchor) {
     int res = -1;
-    final WindowInfoImpl[] infos = getAllInfos();
-    for (final WindowInfoImpl info : infos) {
+    for (WindowInfoImpl info : myIdToInfo.values()) {
       if (anchor == info.getAnchor() && res < info.getOrder()) {
         res = info.getOrder();
       }
@@ -250,15 +229,16 @@ public final class DesktopLayout {
    * @param newOrder  new order
    */
   final void setAnchor(@NotNull String id, @NotNull ToolWindowAnchor newAnchor, int newOrder) {
-    if (newOrder == -1) { // if order isn't defined then the window will the last in the stripe
+    if (newOrder == -1) {
+      // if order isn't defined then the window will the last in the stripe
       newOrder = getMaxOrder(newAnchor) + 1;
     }
     final WindowInfoImpl info = getInfo(id, true);
     final ToolWindowAnchor oldAnchor = info.getAnchor();
-    // Shift order to the right in the target stripe.
-    final WindowInfoImpl[] infos = getAllInfos(newAnchor);
-    for (int i = infos.length - 1; i > -1; i--) {
-      final WindowInfoImpl info2 = infos[i];
+    // shift order to the right in the target stripe
+    final List<WindowInfoImpl> infos = getAllInfos(newAnchor);
+    for (int i = infos.size() - 1; i > -1; i--) {
+      final WindowInfoImpl info2 = infos.get(i);
       if (newOrder <= info2.getOrder()) {
         info2.setOrder(info2.getOrder() + 1);
       }
@@ -266,44 +246,63 @@ public final class DesktopLayout {
     // "move" window into the target position
     info.setAnchor(newAnchor);
     info.setOrder(newOrder);
-    // Normalize orders in the source and target stripes
+    // normalize orders in the source and target stripes
     normalizeOrder(getAllInfos(oldAnchor));
     if (oldAnchor != newAnchor) {
       normalizeOrder(getAllInfos(newAnchor));
     }
+
+    myRegisteredInfos.drop();
   }
 
   final void setSplitMode(@NotNull String id, boolean split) {
-    final WindowInfoImpl info = getInfo(id, true);
-    info.setSplit(split);
+    getInfo(id, true).setSplit(split);
   }
 
   public final void readExternal(@NotNull Element layoutElement) {
-    myUnregisteredInfos = null;
+    Set<String> registered = new THashSet<>();
+    for (WindowInfoImpl info : myIdToInfo.values()) {
+      if (info.isRegistered()) {
+        registered.add(info.getId());
+      }
+    }
+
+    myIdToInfo.clear();
     for (Element e : layoutElement.getChildren(WindowInfoImpl.TAG)) {
       WindowInfoImpl info = XmlSerializer.deserialize(e, WindowInfoImpl.class);
+      info.normalizeAfterRead();
       if (info.getId() == null) {
         LOG.warn("Skip invalid window info (no id): " + JDOMUtil.writeElement(e));
         continue;
       }
 
+      if (registered.contains(info.getId())) {
+        info.setRegistered(true);
+      }
+
+      myIdToInfo.put(info.getId(), info);
+    }
+
+    for (WindowInfoImpl info : myIdToInfo.values()) {
       if (info.getOrder() == -1) {
         // if order isn't defined then window's button will be the last one in the stripe
         info.setOrder(getMaxOrder(info.getAnchor()) + 1);
       }
-      myUnregisteredId2Info.put(info.getId(), info);
     }
+
+    normalizeOrders();
   }
 
   @Nullable
   public final Element writeExternal(@NotNull String tagName) {
-    WindowInfoImpl[] infos = getAllInfos();
-    if (infos.length == 0) {
+    if (myIdToInfo.isEmpty()) {
       return null;
     }
 
+    List<WindowInfoImpl> list = new ArrayList<>(myIdToInfo.values());
+    list.sort(ourWindowInfoComparator);
     Element state = new Element(tagName);
-    for (WindowInfoImpl info : infos) {
+    for (WindowInfoImpl info : list) {
       Element element = serialize(info);
       if (element != null) {
         state.addContent(element);
@@ -325,31 +324,23 @@ public final class DesktopLayout {
     return ids;
   }
 
-  private static final class MyWindowInfoComparator implements Comparator<WindowInfoImpl> {
-    @Override
-    public int compare(final WindowInfoImpl info1, final WindowInfoImpl info2) {
-      return info1.getOrder() - info2.getOrder();
-    }
-  }
-
   private final class MyStripeButtonComparator implements Comparator<StripeButton> {
-    private final HashMap<String, WindowInfoImpl> myId2Info = new HashMap<>();
+    private final Map<String, WindowInfoImpl> myIdToInfo = new THashMap<>();
 
     public MyStripeButtonComparator(@NotNull ToolWindowAnchor anchor) {
-      final WindowInfoImpl[] infos = getInfos();
-      for (final WindowInfoImpl info : infos) {
+      for (WindowInfoImpl info : getInfos()) {
         if (anchor == info.getAnchor()) {
-          myId2Info.put(info.getId(), info.copy());
+          myIdToInfo.put(info.getId(), info.copy());
         }
       }
     }
 
     @Override
     public final int compare(final StripeButton obj1, final StripeButton obj2) {
-      final WindowInfoImpl info1 = myId2Info.get(obj1.getWindowInfo().getId());
+      final WindowInfoImpl info1 = myIdToInfo.get(obj1.getWindowInfo().getId());
       final int order1 = info1 != null ? info1.getOrder() : 0;
 
-      final WindowInfoImpl info2 = myId2Info.get(obj2.getWindowInfo().getId());
+      final WindowInfoImpl info2 = myIdToInfo.get(obj2.getWindowInfo().getId());
       final int order2 = info2 != null ? info2.getOrder() : 0;
 
       return order1 - order2;

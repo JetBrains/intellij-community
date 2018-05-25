@@ -28,9 +28,6 @@ import javax.swing.*;
 import java.util.Collection;
 import java.util.Objects;
 
-/**
- * @author Tagir Valeev
- */
 public class Java8MapForEachInspection extends AbstractBaseJavaLocalInspectionTool {
   private static final String JAVA_UTIL_MAP_ENTRY = CommonClassNames.JAVA_UTIL_MAP + ".Entry";
 

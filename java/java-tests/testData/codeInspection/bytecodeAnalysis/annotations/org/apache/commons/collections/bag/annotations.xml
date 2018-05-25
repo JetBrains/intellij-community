@@ -44,6 +44,11 @@
             <val name="pure" val="true"/>
         </annotation>
     </item>
+    <item name='org.apache.commons.collections.bag.AbstractMapBag java.lang.Object[] toArray()'>
+        <annotation name='org.jetbrains.annotations.Contract'>
+            <val val="&quot;-&gt;new&quot;"/>
+        </annotation>
+    </item>
     <item name='org.apache.commons.collections.bag.AbstractMapBag java.lang.Object[] toArray(java.lang.Object[]) 0'>
         <annotation name='org.jetbrains.annotations.NotNull'/>
     </item>
@@ -54,6 +59,9 @@
         <annotation name='org.jetbrains.annotations.NotNull'/>
     </item>
     <item name='org.apache.commons.collections.bag.AbstractMapBag java.util.Iterator iterator()'>
+        <annotation name='org.jetbrains.annotations.Contract'>
+            <val val="&quot;-&gt;new&quot;"/>
+        </annotation>
         <annotation name='org.jetbrains.annotations.NotNull'/>
     </item>
     <item name='org.apache.commons.collections.bag.AbstractMapBag java.util.Map getMap()'>
@@ -120,6 +128,9 @@
         <annotation name='org.jetbrains.annotations.NotNull'/>
     </item>
     <item name='org.apache.commons.collections.bag.PredicatedBag org.apache.commons.collections.Bag decorate(org.apache.commons.collections.Bag, org.apache.commons.collections.Predicate)'>
+        <annotation name='org.jetbrains.annotations.Contract'>
+            <val val="&quot;_,_-&gt;new&quot;"/>
+        </annotation>
         <annotation name='org.jetbrains.annotations.NotNull'/>
     </item>
     <item name='org.apache.commons.collections.bag.PredicatedBag org.apache.commons.collections.Bag decorate(org.apache.commons.collections.Bag, org.apache.commons.collections.Predicate) 0'>
@@ -135,6 +146,9 @@
         <annotation name='org.jetbrains.annotations.NotNull'/>
     </item>
     <item name='org.apache.commons.collections.bag.PredicatedSortedBag org.apache.commons.collections.SortedBag decorate(org.apache.commons.collections.SortedBag, org.apache.commons.collections.Predicate)'>
+        <annotation name='org.jetbrains.annotations.Contract'>
+            <val val="&quot;_,_-&gt;new&quot;"/>
+        </annotation>
         <annotation name='org.jetbrains.annotations.NotNull'/>
     </item>
     <item name='org.apache.commons.collections.bag.PredicatedSortedBag org.apache.commons.collections.SortedBag decorate(org.apache.commons.collections.SortedBag, org.apache.commons.collections.Predicate) 0'>
@@ -160,10 +174,14 @@
         <annotation name='org.jetbrains.annotations.NotNull'/>
     </item>
     <item name='org.apache.commons.collections.bag.SynchronizedBag java.util.Set uniqueSet()'>
+        <annotation name='org.jetbrains.annotations.Contract'>
+            <val val="&quot;-&gt;new&quot;"/>
+        </annotation>
         <annotation name='org.jetbrains.annotations.NotNull'/>
     </item>
     <item name='org.apache.commons.collections.bag.SynchronizedBag org.apache.commons.collections.Bag decorate(org.apache.commons.collections.Bag)'>
         <annotation name='org.jetbrains.annotations.Contract'>
+            <val name="value" val="&quot;_-&gt;new&quot;"/>
             <val name="pure" val="true"/>
         </annotation>
         <annotation name='org.jetbrains.annotations.NotNull'/>
@@ -202,6 +220,7 @@
     </item>
     <item name='org.apache.commons.collections.bag.SynchronizedSortedBag org.apache.commons.collections.SortedBag decorate(org.apache.commons.collections.SortedBag)'>
         <annotation name='org.jetbrains.annotations.Contract'>
+            <val name="value" val="&quot;_-&gt;new&quot;"/>
             <val name="pure" val="true"/>
         </annotation>
         <annotation name='org.jetbrains.annotations.NotNull'/>
@@ -226,10 +245,14 @@
         <annotation name='org.jetbrains.annotations.NotNull'/>
     </item>
     <item name='org.apache.commons.collections.bag.TransformedBag java.util.Set uniqueSet()'>
+        <annotation name='org.jetbrains.annotations.Contract'>
+            <val val="&quot;-&gt;new&quot;"/>
+        </annotation>
         <annotation name='org.jetbrains.annotations.NotNull'/>
     </item>
     <item name='org.apache.commons.collections.bag.TransformedBag org.apache.commons.collections.Bag decorate(org.apache.commons.collections.Bag, org.apache.commons.collections.Transformer)'>
         <annotation name='org.jetbrains.annotations.Contract'>
+            <val name="value" val="&quot;_,_-&gt;new&quot;"/>
             <val name="pure" val="true"/>
         </annotation>
         <annotation name='org.jetbrains.annotations.NotNull'/>
@@ -258,6 +281,7 @@
     </item>
     <item name='org.apache.commons.collections.bag.TransformedSortedBag org.apache.commons.collections.SortedBag decorate(org.apache.commons.collections.SortedBag, org.apache.commons.collections.Transformer)'>
         <annotation name='org.jetbrains.annotations.Contract'>
+            <val name="value" val="&quot;_,_-&gt;new&quot;"/>
             <val name="pure" val="true"/>
         </annotation>
         <annotation name='org.jetbrains.annotations.NotNull'/>
@@ -295,6 +319,9 @@
         </annotation>
     </item>
     <item name='org.apache.commons.collections.bag.TypedBag org.apache.commons.collections.Bag decorate(org.apache.commons.collections.Bag, java.lang.Class)'>
+        <annotation name='org.jetbrains.annotations.Contract'>
+            <val val="&quot;_,_-&gt;new&quot;"/>
+        </annotation>
         <annotation name='org.jetbrains.annotations.NotNull'/>
     </item>
     <item name='org.apache.commons.collections.bag.TypedBag org.apache.commons.collections.Bag decorate(org.apache.commons.collections.Bag, java.lang.Class) 0'>
@@ -309,6 +336,9 @@
         </annotation>
     </item>
     <item name='org.apache.commons.collections.bag.TypedSortedBag org.apache.commons.collections.SortedBag decorate(org.apache.commons.collections.SortedBag, java.lang.Class)'>
+        <annotation name='org.jetbrains.annotations.Contract'>
+            <val val="&quot;_,_-&gt;new&quot;"/>
+        </annotation>
         <annotation name='org.jetbrains.annotations.NotNull'/>
     </item>
     <item name='org.apache.commons.collections.bag.TypedSortedBag org.apache.commons.collections.SortedBag decorate(org.apache.commons.collections.SortedBag, java.lang.Class) 0'>

@@ -4,6 +4,7 @@ package com.intellij.codeInsight.documentation;
 
 import com.intellij.codeInsight.CodeInsightBundle;
 import com.intellij.codeInsight.TargetElementUtil;
+import com.intellij.codeInsight.completion.CompletionUtil;
 import com.intellij.codeInsight.documentation.actions.ShowQuickDocInfoAction;
 import com.intellij.codeInsight.hint.HintManagerImpl;
 import com.intellij.codeInsight.hint.ParameterInfoController;
@@ -614,9 +615,13 @@ public class DocumentationManager extends DockablePopupManager<DocumentationComp
    */
   @Nullable
   private PsiElement findTargetElementUnsafe(final Editor editor, int offset, @Nullable final PsiFile file, PsiElement contextElement) {
+    if (LookupManager.getInstance(myProject).getActiveLookup() != null) {
+      return assertSameProject(getElementFromLookup(editor, file));
+    }
+
     TargetElementUtil util = TargetElementUtil.getInstance();
-    PsiElement element = assertSameProject(getElementFromLookup(editor, file));
-    if (element == null && file != null) {
+    PsiElement element = null;
+    if (file != null) {
       final DocumentationProvider documentationProvider = getProviderFromElement(file);
       if (documentationProvider instanceof DocumentationProviderEx) {
         element = assertSameProject(((DocumentationProviderEx)documentationProvider).getCustomDocumentationElement(editor, file, contextElement));
@@ -658,8 +663,6 @@ public class DocumentationManager extends DockablePopupManager<DocumentationComp
     if (activeLookup != null) {
       LookupElement item = activeLookup.getCurrentItem();
       if (item != null) {
-
-
         int offset = editor.getCaretModel().getOffset();
         if (offset > 0 && offset == editor.getDocument().getTextLength()) offset--;
         PsiReference ref = TargetElementUtil.findReference(editor, offset);
@@ -670,9 +673,9 @@ public class DocumentationManager extends DockablePopupManager<DocumentationComp
         }
 
         DocumentationProvider documentationProvider = getProviderFromElement(file);
-
         PsiManager psiManager = PsiManager.getInstance(myProject);
-        return documentationProvider.getDocumentationElementForLookupItem(psiManager, item.getObject(), targetElement);
+        PsiElement fromProvider = documentationProvider.getDocumentationElementForLookupItem(psiManager, item.getObject(), targetElement);
+        return fromProvider != null ? fromProvider : CompletionUtil.getTargetElement(item);
       }
     }
     return null;
@@ -1218,6 +1221,7 @@ public class DocumentationManager extends DockablePopupManager<DocumentationComp
          "<p><span class='grayed'>Size:</span> " + StringUtil.formatFileSize(attr.size()) +
          "<p><span class='grayed'>Type:</span> " + typeName + (type.isBinary() || typeName.equals(languageName) ? "" : " (" + languageName + ")") +
          "<p><span class='grayed'>Modified:</span> " + DateFormatUtil.formatDateTime(attr.lastModifiedTime().toMillis()) +
-         "<p><span class='grayed'>Created:</span> " + DateFormatUtil.formatDateTime(attr.creationTime().toMillis());
+         "<p><span class='grayed'>Created:</span> " + DateFormatUtil.formatDateTime(attr.creationTime().toMillis()) +
+         (withUrl ? DocumentationMarkup.CONTENT_END : "");
   }
 }

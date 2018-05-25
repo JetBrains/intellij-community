@@ -65,4 +65,12 @@ public class JavaLightTreeUtil {
     }
     return node;
   }
+
+  @Nullable
+  public static LighterASTNode skipParenthesesDown(@NotNull LighterAST tree, @Nullable LighterASTNode expression) {
+    while (expression != null && expression.getTokenType() == PARENTH_EXPRESSION) {
+      expression = findExpressionChild(tree, expression);
+    }
+    return expression;
+  }
 }

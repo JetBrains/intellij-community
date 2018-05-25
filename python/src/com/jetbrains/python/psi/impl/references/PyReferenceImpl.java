@@ -292,7 +292,7 @@ public class PyReferenceImpl implements PsiReferenceEx, PsiPolyVariantReference 
           return latestDefs;
         }
         else if (resolvedOwner instanceof PyClass) {
-          resolveInParentScope = () -> PyUtil.as(resolvedOwner.getContainingFile(), PyFile.class);
+          resolveInParentScope = () -> PyResolveUtil.parentScopeForUnresolvedClassLevelName((PyClass)resolvedOwner, referencedName);
         }
         else if (instructions.isEmpty() && allInOwnScopeComprehensions(resolvedElements)) {
           resolveInParentScope = () -> ScopeUtil.getScopeOwner(resolvedOwner);
@@ -790,7 +790,7 @@ public class PyReferenceImpl implements PsiReferenceEx, PsiPolyVariantReference 
 
   private static class CachingResolver implements ResolveCache.PolyVariantResolver<PyReferenceImpl> {
     public static final CachingResolver INSTANCE = new CachingResolver();
-    
+
     @Override
     @NotNull
     public ResolveResult[] resolve(@NotNull final PyReferenceImpl ref, final boolean incompleteCode) {

@@ -322,6 +322,7 @@ public class ChooseByNamePopup extends ChooseByNameBase implements ChooseByNameP
   );
   public static final Pattern patternToDetectAnonymousClasses = Pattern.compile("([\\.\\w]+)((\\$[\\d]+)*(\\$)?)");
   private static final Pattern patternToDetectMembers = Pattern.compile("(.+)(#)(.*)");
+  private static final Pattern patternToDetectSignatures = Pattern.compile("(.+#.*)\\(.*\\)");
 
   @Override
   public String transformPattern(String pattern) {
@@ -337,7 +338,7 @@ public class ChooseByNamePopup extends ChooseByNameBase implements ChooseByNameP
 
     if (model instanceof GotoClassModel2 || model instanceof GotoSymbolModel2) {
       if (pattern.indexOf('#') != -1) {
-        regex = patternToDetectMembers;
+        regex = model instanceof GotoClassModel2 ? patternToDetectMembers : patternToDetectSignatures;
       }
 
       if (pattern.indexOf('$') != -1) {

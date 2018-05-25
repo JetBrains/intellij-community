@@ -44,7 +44,7 @@ public class SpellcheckerPerformanceTest extends SpellcheckerInspectionTestCase 
   }
 
   public void testLargeTextFileWithManyTypos() {
-    final int typoCount = 40000;
+    final int typoCount = 5000;
     @SuppressWarnings("SpellCheckingInspection") String text = StringUtil.repeat("aaaaaaaaa ", typoCount);  // about 0.5M
 
     long start = System.currentTimeMillis();

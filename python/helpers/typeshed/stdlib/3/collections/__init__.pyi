@@ -6,45 +6,28 @@
 import sys
 import typing
 from typing import (
-    TypeVar, Generic, Dict, overload, List, Tuple,
-    Any, Type, Optional, Union
-)
-# These are exported.
-from . import abc
-
-from typing import (
     Callable as Callable,
-    Container as Container,
-    Hashable as Hashable,
     Iterable as Iterable,
     Iterator as Iterator,
-    Sized as Sized,
-    Generator as Generator,
-    ByteString as ByteString,
     Reversible as Reversible,
     Mapping as Mapping,
-    MappingView as MappingView,
     ItemsView as ItemsView,
     KeysView as KeysView,
     ValuesView as ValuesView,
     MutableMapping as MutableMapping,
     Sequence as Sequence,
     MutableSequence as MutableSequence,
-    MutableSet as MutableSet,
-    AbstractSet as Set,
 )
+from typing import (
+    TypeVar, Generic, Dict, overload, List, Tuple,
+    Any, Type, Optional, Union
+)
+
+# These are exported.
 if sys.version_info >= (3, 6):
-    from typing import (
-        Collection as Collection,
-        AsyncGenerator as AsyncGenerator,
-    )
+    pass
 if sys.version_info >= (3, 5):
-    from typing import (
-        Awaitable as Awaitable,
-        Coroutine as Coroutine,
-        AsyncIterable as AsyncIterable,
-        AsyncIterator as AsyncIterator,
-    )
+    pass
 
 _T = TypeVar('_T')
 _KT = TypeVar('_KT')
@@ -65,7 +48,8 @@ else:
 _UserDictT = TypeVar('_UserDictT', bound=UserDict)
 
 class UserDict(MutableMapping[_KT, _VT]):
-    data = ...  # type: Mapping[_KT, _VT]
+    data: Mapping[_KT, _VT]
+    def __init__(self, dict: Optional[Mapping[_KT, _VT]] = ..., **kwargs: _VT) -> None: ...
     def __len__(self) -> int: ...
     def __getitem__(self, key: _KT) -> _VT: ...
     def __setitem__(self, key: _KT, item: _VT) -> None: ...
@@ -285,11 +269,18 @@ class Counter(Dict[_T, int], Generic[_T]):
 
 _OrderedDictT = TypeVar('_OrderedDictT', bound=OrderedDict)
 
+class _OrderedDictKeysView(KeysView[_KT], Reversible[_KT]): ...
+class _OrderedDictItemsView(ItemsView[_KT, _VT], Reversible[Tuple[_KT, _VT]]): ...
+class _OrderedDictValuesView(ValuesView[_VT], Reversible[_VT]): ...
+
 class OrderedDict(Dict[_KT, _VT], Reversible[_KT], Generic[_KT, _VT]):
     def popitem(self, last: bool = ...) -> Tuple[_KT, _VT]: ...
     def move_to_end(self, key: _KT, last: bool = ...) -> None: ...
     def copy(self: _OrderedDictT) -> _OrderedDictT: ...
     def __reversed__(self) -> Iterator[_KT]: ...
+    def keys(self) -> _OrderedDictKeysView[_KT]: ...
+    def items(self) -> _OrderedDictItemsView[_KT, _VT]: ...
+    def values(self) -> _OrderedDictValuesView[_VT]: ...
 
 _DefaultDictT = TypeVar('_DefaultDictT', bound=defaultdict)
 

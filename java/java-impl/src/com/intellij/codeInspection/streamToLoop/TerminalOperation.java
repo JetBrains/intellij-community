@@ -38,9 +38,6 @@ import java.util.Objects;
 import java.util.function.Consumer;
 import java.util.function.Function;
 
-/**
- * @author Tagir Valeev
- */
 abstract class TerminalOperation extends Operation {
   @Override
   final String wrap(StreamVariable inVar, StreamVariable outVar, String code, StreamToLoopReplacementContext context) {

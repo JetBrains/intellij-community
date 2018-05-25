@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="ISO-8859-1"?>
-<project name="JSON Schemas Update" default="update_schemas">
+<project name="JSON Schemas Update" default="ALL">
   <property name="idea.project.home" value="${basedir}/../../../../"/>
 
   <macrodef name="get_schema">
@@ -10,6 +10,7 @@
       <get src="@{fromUrl}"
            dest="@{toFile}" />
       <local name="baseUrl"/>
+      <fixcrlf file="@{toFile}"/>
       <property name="baseUrl" value="@{fromUrl}" />
       <script language="javascript"><![CDATA[
         var url = new java.net.URL(project.getProperty("baseUrl"));

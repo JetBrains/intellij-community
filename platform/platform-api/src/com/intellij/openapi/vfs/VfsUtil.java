@@ -320,7 +320,7 @@ public class VfsUtil extends VfsUtilCore {
     for (String each : StringUtil.split(relativePath, "/")) {
       VirtualFile child = parent.findChild(each);
       if (child == null) {
-        child = parent.createChildDirectory(LocalFileSystem.getInstance(), each);
+        child = parent.createChildDirectory(parent.getFileSystem(), each);
       }
       parent = child;
     }

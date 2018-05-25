@@ -32,9 +32,6 @@ import org.jetbrains.annotations.NotNull;
 
 import static com.intellij.util.ObjectUtils.tryCast;
 
-/**
- * @author Tagir Valeev
- */
 class MigrateToStreamFix implements LocalQuickFix {
   private final BaseStreamApiMigration myMigration;
 

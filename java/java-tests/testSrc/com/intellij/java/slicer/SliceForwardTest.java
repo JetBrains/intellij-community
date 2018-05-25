@@ -21,8 +21,6 @@ import com.intellij.openapi.editor.RangeMarker;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.slicer.*;
-import com.intellij.util.containers.IntArrayList;
-import gnu.trove.TIntObjectHashMap;
 
 import java.util.Collection;
 import java.util.Map;
@@ -31,25 +29,25 @@ import java.util.Map;
  * @author cdr
  */
 public class SliceForwardTest extends SliceTestCase {
-  private final TIntObjectHashMap<IntArrayList> myFlownOffsets = new TIntObjectHashMap<>();
-
   private void dotest() throws Exception {
     configureByFile("/codeInsight/slice/forward/"+getTestName(false)+".java");
     Map<String, RangeMarker> sliceUsageName2Offset = SliceTestUtil.extractSliceOffsetsFromDocument(getEditor().getDocument());
     PsiDocumentManager.getInstance(getProject()).commitAllDocuments();
     PsiElement element = new SliceForwardHandler().getExpressionAtCaret(getEditor(), getFile());
     assertNotNull(element);
-    SliceTestUtil.calcRealOffsets(element, sliceUsageName2Offset, myFlownOffsets);
+    SliceTestUtil.Node tree = SliceTestUtil.buildTree(element, sliceUsageName2Offset);
     Collection<HighlightInfo> errors = highlightErrors();
     assertEmpty(errors);
     SliceAnalysisParams params = new SliceAnalysisParams();
     params.scope = new AnalysisScope(getProject());
     params.dataFlowToThis = false;
     SliceUsage usage = LanguageSlicing.getProvider(element).createRootUsage(element, params);
-    SliceTestUtil.checkUsages(usage, myFlownOffsets);
+    SliceTestUtil.checkUsages(usage, tree);
   }
 
   public void testSimple() throws Exception { dotest();}
   public void testInterMethod() throws Exception { dotest();}
   public void testParameters() throws Exception { dotest();}
+  public void testRequireNonNull() throws Exception { dotest();}
+  public void testAppend() throws Exception { dotest();}
 }

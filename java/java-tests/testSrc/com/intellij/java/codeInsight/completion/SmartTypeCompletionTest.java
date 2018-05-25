@@ -1282,4 +1282,8 @@ public class SmartTypeCompletionTest extends LightFixtureCompletionTestCase {
   public void testNewMapTypeArguments() { doTest(); }
   public void testNewMapObjectTypeArguments() { doTest(); }
 
+  public void testNoUnrelatedMethodSuggestion() {
+    configureByTestName();
+    assertOrderedEquals(myFixture.getLookupElementStrings(), "this");
+  }
 }

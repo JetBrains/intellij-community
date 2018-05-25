@@ -277,8 +277,8 @@ public class RedundantCastUtil {
         }
         if (Comparing.equal(newReturnType, oldReturnType) &&
             (Comparing.equal(newTargetMethod, targetMethod) ||
-             newTargetMethod.getSignature(newResult.getSubstitutor()).equals(targetMethod.getSignature(resolveResult.getSubstitutor())) &&
              !(newTargetMethod.isDeprecated() && !targetMethod.isDeprecated()) &&
+             MethodSignatureUtil.isSuperMethod(newTargetMethod, targetMethod) &&
              // see SCR11555, SCR14559
              areThrownExceptionsCompatible(targetMethod, newTargetMethod) &&
              areNullnessCompatible(project, targetMethod, newTargetMethod))) {

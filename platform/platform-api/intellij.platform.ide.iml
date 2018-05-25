@@ -31,5 +31,6 @@
     <orderEntry type="library" name="KotlinJavaRuntime" level="project" />
     <orderEntry type="library" name="ini4j" level="project" />
     <orderEntry type="library" name="JDOM" level="project" />
+    <orderEntry type="library" name="jackson" level="project" />
   </component>
 </module>

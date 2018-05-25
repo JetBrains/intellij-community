@@ -51,7 +51,6 @@ import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.CharsetToolkit;
 import com.intellij.openapi.vfs.LocalFileSystem;
-import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.encoding.EncodingProjectManager;
 import com.intellij.psi.PsiDocumentManager;
@@ -234,34 +233,15 @@ public abstract class LightPlatformCodeInsightTestCase extends LightPlatformTest
   }
 
   @NotNull
-  protected static Editor createSaveAndOpenFile(@NotNull String relativePath, @NotNull String fileText) throws IOException {
-    return WriteCommandAction.runWriteCommandAction(getProject(), (ThrowableComputable<Editor, IOException>)() -> {
-      VirtualFile myVFile = VfsTestUtil.createFile(getSourceRoot(),relativePath);
-      VfsUtil.saveText(myVFile, fileText);
-      final FileDocumentManager manager = FileDocumentManager.getInstance();
-      final Document document = manager.getDocument(myVFile);
-      assertNotNull("Can't create document for '" + relativePath + "'", document);
-      manager.reloadFromDisk(document);
-      document.insertString(0, " ");
-      document.deleteString(0, 1);
-      PsiFile myFile = getPsiManager().findFile(myVFile);
-      assertNotNull("Can't create PsiFile for '" + relativePath + "'. Unknown file type most probably.", myFile);
-      assertTrue(myFile.isPhysical());
-      Editor myEditor = createEditor(myVFile);
-      myVFile.setCharset(CharsetToolkit.UTF8_CHARSET);
-
-      PsiDocumentManager.getInstance(getProject()).commitAllDocuments();
-      return myEditor;
-    });
+  protected static Editor createSaveAndOpenFile(@NotNull String relativePath, @NotNull String fileText) {
+    Editor editor = createEditor(VfsTestUtil.createFile(getSourceRoot(), relativePath, fileText));
+    PsiDocumentManager.getInstance(getProject()).commitAllDocuments();
+    return editor;
   }
 
   @NotNull
-  protected static VirtualFile createAndSaveFile(@NotNull String relativePath, @NotNull String fileText) throws IOException {
-    return WriteCommandAction.runWriteCommandAction(getProject(), (ThrowableComputable<VirtualFile, IOException>)() -> {
-      VirtualFile myVFile = VfsTestUtil.createFile(getSourceRoot(),relativePath);
-      VfsUtil.saveText(myVFile, fileText);
-      return myVFile;
-    });
+  protected static VirtualFile createAndSaveFile(@NotNull String relativePath, @NotNull String fileText) {
+    return VfsTestUtil.createFile(getSourceRoot(), relativePath, fileText);
   }
 
   protected static void setupEditorForInjectedLanguage() {

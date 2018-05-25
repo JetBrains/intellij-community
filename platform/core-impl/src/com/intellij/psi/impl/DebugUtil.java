@@ -15,10 +15,7 @@ import com.intellij.openapi.util.UserDataHolderBase;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.source.SourceTreeToPsiMap;
-import com.intellij.psi.impl.source.tree.CompositeElement;
-import com.intellij.psi.impl.source.tree.RecursiveTreeElementWalkingVisitor;
-import com.intellij.psi.impl.source.tree.SharedImplUtil;
-import com.intellij.psi.impl.source.tree.TreeElement;
+import com.intellij.psi.impl.source.tree.*;
 import com.intellij.psi.stubs.ObjectStubSerializer;
 import com.intellij.psi.stubs.Stub;
 import com.intellij.psi.tree.IElementType;
@@ -402,7 +399,8 @@ public class DebugUtil {
       new TreeToBuffer(buffer, 0, true, false, false, true, null) {
         @Override
         protected boolean shouldSkipNode(TreeElement node) {
-          return super.shouldSkipNode(node) || node instanceof PsiErrorElement || node instanceof PsiComment;
+          return super.shouldSkipNode(node) || node instanceof PsiErrorElement || node instanceof PsiComment || 
+                 node instanceof LeafPsiElement && StringUtil.isEmptyOrSpaces(node.getText());
         }
       });
     return buffer.toString();

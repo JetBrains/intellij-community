@@ -166,12 +166,6 @@ public abstract class InstructionVisitor {
     }
   }
 
-
-  public DfaInstructionState[] visitEmptyStack(EmptyStackInstruction instruction, DataFlowRunner runner, DfaMemoryState memState) {
-    memState.emptyStack();
-    return nextInstruction(instruction, runner, memState);
-  }
-
   public DfaInstructionState[] visitFieldReference(DereferenceInstruction instruction, DataFlowRunner runner, DfaMemoryState memState) {
     memState.pop();
     return nextInstruction(instruction, runner, memState);

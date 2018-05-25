@@ -1,11 +1,16 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.execution.testframework.sm.runner.ui;
 
+import com.intellij.execution.Location;
+import com.intellij.execution.testframework.sm.runner.SMTestLocator;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.psi.search.GlobalSearchScope;
 
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.StringReader;
+import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -17,6 +22,7 @@ public class TestStackTraceParser {
   private int myFailedLine = -1;
   private String myFailedMethodName;
   private String myErrorMessage;
+  private String myTopLocationLine;
 
   public int getFailedLine() {
     return myFailedLine;
@@ -30,18 +36,33 @@ public class TestStackTraceParser {
     return myErrorMessage;
   }
 
-  public TestStackTraceParser(String url, String stacktrace, String errorMessage) {
+  public String getTopLocationLine() {
+    return myTopLocationLine;
+  }
+
+  public TestStackTraceParser(String url,
+                              String stacktrace,
+                              String errorMessage,
+                              SMTestLocator locator,
+                              Project project) {
     myErrorMessage = errorMessage;
     if (stacktrace == null || url == null) return;
     int i = url.indexOf("//");
     if (i == -1) return;
     String path = "\tat " + url.substring(i + 2);
+    GlobalSearchScope scope = GlobalSearchScope.projectScope(project);
 
     try (BufferedReader reader = new BufferedReader(new StringReader(stacktrace))) {
       String line, previous = null;
       while ((line = reader.readLine()) != null) {
         if (StringUtil.isEmpty(myErrorMessage)) {
           myErrorMessage = line;
+        }
+        if (myTopLocationLine == null) {
+          List<Location> location = locator.getLocation(line, project, scope);
+          if (!location.isEmpty()) {
+            myTopLocationLine = line;
+          }
         }
         if (line.startsWith(path)) {
           Matcher matcher = outerPattern.matcher(line);

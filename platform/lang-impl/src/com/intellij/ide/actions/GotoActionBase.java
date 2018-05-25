@@ -16,6 +16,9 @@
 
 package com.intellij.ide.actions;
 
+import com.intellij.featureStatistics.FeatureUsageTracker;
+import com.intellij.ide.IdeEventQueue;
+import com.intellij.ide.actions.searcheverywhere.SearchEverywhereManager;
 import com.intellij.ide.util.gotoByName.*;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.ModalityState;
@@ -332,6 +335,24 @@ public abstract class GotoActionBase extends AnAction {
     }.registerCustomShortcutSet(SearchTextField.SHOW_HISTORY_SHORTCUT, editor);
   }
 
+  protected void showInSearchEverywherePopup(String searchProviderID, AnActionEvent evnt) {
+    FeatureUsageTracker.getInstance().triggerFeatureUsed(IdeActions.ACTION_SEARCH_EVERYWHERE);
+    FeatureUsageTracker.getInstance().triggerFeatureUsed(IdeActions.ACTION_SEARCH_EVERYWHERE + "." + searchProviderID);
+
+    SearchEverywhereManager seManager = SearchEverywhereManager.getInstance(evnt.getProject());
+    if (seManager.isShown()) {
+      if (searchProviderID.equals(seManager.getShownContributorID())) {
+        seManager.setShowNonProjectItems(!seManager.isShowNonProjectItems());
+      }
+      else {
+        seManager.setShownContributor(searchProviderID);
+      }
+      return;
+    }
+
+    IdeEventQueue.getInstance().getPopupManager().closeAllPopups(false);
+    seManager.show(searchProviderID);
+  }
 
   private static boolean historyEnabled() {
     return !ContainerUtil.isEmpty(ourHistory.get(myInAction));

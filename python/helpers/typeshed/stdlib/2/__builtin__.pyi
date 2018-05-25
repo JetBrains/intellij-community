@@ -3,6 +3,7 @@
 # True and False are deliberately omitted because they are keywords in
 # Python 3, and stub files conform to Python 3 syntax.
 
+from abc import ABCMeta
 from typing import (
     TypeVar, Iterator, Iterable, NoReturn, overload,
     Sequence, Mapping, Tuple, List, Any, Dict, Callable, Generic, Set,
@@ -10,7 +11,6 @@ from typing import (
     SupportsComplex, SupportsRound, IO, BinaryIO, Union, AnyStr, MutableSequence, MutableMapping,
     MutableSet, ItemsView, KeysView, ValuesView, Optional, Container, Type
 )
-from abc import abstractmethod, ABCMeta
 
 _T = TypeVar('_T')
 _T_co = TypeVar('_T_co', covariant=True)
@@ -1012,8 +1012,22 @@ class SystemError(StandardError): ...
 class TypeError(StandardError): ...
 class UnboundLocalError(NameError): ...
 class UnicodeError(ValueError): ...
-class UnicodeDecodeError(UnicodeError): ...
-class UnicodeEncodeError(UnicodeError): ...
+class UnicodeDecodeError(UnicodeError):
+    encoding: bytes
+    object: bytes
+    start: int
+    end: int
+    reason: bytes
+    def __init__(self, __encoding: bytes, __object: bytes, __start: int, __end: int,
+                 __reason: bytes) -> None: ...
+class UnicodeEncodeError(UnicodeError):
+    encoding: bytes
+    object: unicode
+    start: int
+    end: int
+    reason: bytes
+    def __init__(self, __encoding: bytes, __object: unicode, __start: int, __end: int,
+                 __reason: bytes) -> None: ...
 class UnicodeTranslateError(UnicodeError): ...
 class ZeroDivisionError(ArithmeticError): ...
 

@@ -23,7 +23,8 @@ public class VcsLogActionPlaces {
   public static final String TEXT_FILTER_SETTINGS_ACTION_GROUP = "Vcs.Log.TextFilterSettings";
   public static final String FILE_HISTORY_TOOLBAR_ACTION_GROUP = "Vcs.FileHistory.Toolbar";
   public static final String HISTORY_POPUP_ACTION_GROUP = "Vcs.FileHistory.ContextMenu";
-  public static final String CHANGES_BROWSER_ACTION_GROUP = "Vcs.Log.ChangesBrowser";
+  public static final String CHANGES_BROWSER_TOOLBAR_ACTION_GROUP = "Vcs.Log.ChangesBrowser.Toolbar";
+  public static final String CHANGES_BROWSER_POPUP_ACTION_GROUP = "Vcs.Log.ChangesBrowser.Popup";
 
   // action places
   public static final String VCS_LOG_TABLE_PLACE = "Vcs.Log.ContextMenu";

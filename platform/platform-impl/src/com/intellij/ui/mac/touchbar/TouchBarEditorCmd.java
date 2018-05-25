@@ -1,7 +1,6 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ui.mac.touchbar;
 
-import com.intellij.openapi.actionSystem.ActionManager;
 import com.intellij.openapi.project.Project;
 import org.jetbrains.annotations.NotNull;
 
@@ -17,10 +16,10 @@ public class TouchBarEditorCmd extends TouchBarActionBase {
     addAnActionButton("Forward", false);
     addSpacing(true);
 
-    addAnActionButton(ActionManager.getInstance().getAction("ToggleBookmark"), false, TBItemAnActionButton.SHOWMODE_TEXT_ONLY);       // TODO: make with custom icon (doesn't defined in template presentation)
-    addAnActionButton(ActionManager.getInstance().getAction("ToggleLineBreakpoint"), false, TBItemAnActionButton.SHOWMODE_TEXT_ONLY); // TODO: make with custom icon (doesn't defined in template presentation)
+    addAnActionButton("ToggleBookmark", false, TBItemAnActionButton.SHOWMODE_TEXT_ONLY);       // TODO: make with custom icon (doesn't defined in template presentation)
+    addAnActionButton("ToggleLineBreakpoint", false, TBItemAnActionButton.SHOWMODE_TEXT_ONLY); // TODO: make with custom icon (doesn't defined in template presentation)
     addFlexibleSpacing();
 
-    addAnActionButton(ActionManager.getInstance().getAction("FindUsages"), false, TBItemAnActionButton.SHOWMODE_TEXT_ONLY);
+    addAnActionButton("FindUsages", false, TBItemAnActionButton.SHOWMODE_TEXT_ONLY);
   }
 }

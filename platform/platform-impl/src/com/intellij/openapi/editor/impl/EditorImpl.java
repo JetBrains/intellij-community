@@ -9,6 +9,7 @@ import com.intellij.ide.*;
 import com.intellij.ide.dnd.DnDManager;
 import com.intellij.ide.ui.UISettings;
 import com.intellij.ide.ui.customization.CustomActionsSchema;
+import com.intellij.internal.performance.LatenciometerKt;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.ex.ActionManagerEx;
@@ -143,6 +144,8 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
   @NotNull private final EditorComponentImpl myEditorComponent;
   @NotNull private final EditorGutterComponentImpl myGutterComponent;
   private final TraceableDisposable myTraceableDisposable = new TraceableDisposable(true);
+  private long myLastTypedActionTimestamp = -1;
+  private String myLastTypedAction;
 
   private static final Cursor EMPTY_CURSOR;
 
@@ -1170,7 +1173,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
 
     Graphics graphics = GraphicsUtil.safelyGetGraphics(myEditorComponent);
     if (graphics != null) { // editor component is not showing
-      PaintUtil.alignTxToInt((Graphics2D)graphics, true, false, RoundingMode.CEIL);
+      PaintUtil.alignTxToInt((Graphics2D)graphics, PaintUtil.insets2offset(getInsets()), true, false, RoundingMode.CEIL);
       processKeyTypedImmediately(c, graphics, context);
       graphics.dispose();
     }
@@ -1185,7 +1188,9 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
   void processKeyTypedImmediately(char c, Graphics graphics, DataContext dataContext) {
     EditorActionPlan plan = new EditorActionPlan(this);
     EditorActionManager.getInstance().getTypedAction().beforeActionPerformed(this, c, dataContext, plan);
-    myImmediatePainter.paint(graphics, plan);
+    if (myImmediatePainter.paint(graphics, plan)) {
+      myLastTypedActionTimestamp = -1;
+    }
   }
 
   void processKeyTypedNormally(char c, DataContext dataContext) {
@@ -3205,15 +3210,31 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
 
   @Override
   public boolean processKeyTyped(@NotNull KeyEvent e) {
-
+    myLastTypedActionTimestamp = -1;
     if (e.getID() != KeyEvent.KEY_TYPED) return false;
     char c = e.getKeyChar();
     if (UIUtil.isReallyTypedEvent(e)) { // Hack just like in javax.swing.text.DefaultEditorKit.DefaultKeyTypedAction
+      myLastTypedActionTimestamp = e.getWhen();
+      myLastTypedAction = Character.toString(c);
       processKeyTyped(c);
       return true;
     }
     else {
       return false;
+    }
+  }
+
+  public void recordLatencyAwareAction(String actionId, AnActionEvent event) {
+    InputEvent inputEvent = event.getInputEvent();
+    if (inputEvent == null) return;
+    myLastTypedActionTimestamp = inputEvent.getWhen();
+    myLastTypedAction = actionId;
+  }
+
+  void measureTypingLatency() {
+    if (myLastTypedActionTimestamp != -1) {
+      LatenciometerKt.recordTypingLatency(this, myLastTypedAction, System.currentTimeMillis() - myLastTypedActionTimestamp);
+      myLastTypedActionTimestamp = -1;
     }
   }
 

@@ -9,8 +9,10 @@ import com.intellij.openapi.components.State;
 import com.intellij.openapi.components.Storage;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.util.ArrayUtil;
 import com.intellij.util.xmlb.annotations.Tag;
 import com.intellij.util.xmlb.annotations.XCollection;
 import com.jetbrains.jsonSchema.extension.JsonSchemaInfo;
@@ -28,7 +30,7 @@ public class JsonSchemaMappingsProjectConfiguration implements PersistentStateCo
   @Nullable
   public UserDefinedJsonSchemaConfiguration findMappingBySchemaInfo(JsonSchemaInfo value) {
     for (UserDefinedJsonSchemaConfiguration configuration : myState.myState.values()) {
-      if (Objects.equals(value.getUrl(), configuration.getRelativePathToSchema())) return configuration;
+      if (Objects.equals(value.getUrl(myProject), configuration.getRelativePathToSchema())) return configuration;
     }
     return null;
   }
@@ -39,9 +41,9 @@ public class JsonSchemaMappingsProjectConfiguration implements PersistentStateCo
     for (UserDefinedJsonSchemaConfiguration configuration : myState.myState.values()) {
       for (UserDefinedJsonSchemaConfiguration.Item pattern : configuration.patterns) {
         if (pattern.pattern || pattern.directory) continue;
-        String path = pattern.path;
-        VirtualFile relativeFile = VfsUtil.findRelativeFile(projectBaseDir, path);
-        if (Objects.equals(relativeFile, file)) {
+        String path = pattern.path.replace('\\', '/');
+        VirtualFile relativeFile = VfsUtil.findRelativeFile(projectBaseDir, StringUtil.split(path, "/").toArray(ArrayUtil.EMPTY_STRING_ARRAY));
+        if (Objects.equals(relativeFile, file) || file.getUrl().equals(path)) {
           return configuration;
         }
       }

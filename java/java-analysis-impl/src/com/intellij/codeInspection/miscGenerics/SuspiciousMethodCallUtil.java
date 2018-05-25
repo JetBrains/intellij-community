@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2013 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInspection.miscGenerics;
 
 import com.intellij.codeInsight.daemon.impl.analysis.JavaGenericsUtil;
@@ -39,10 +25,10 @@ public class SuspiciousMethodCallUtil {
   private static final CallMatcher.Simple SINGLETON_COLLECTION =
     CallMatcher.staticCall(CommonClassNames.JAVA_UTIL_COLLECTIONS, "singletonList", "singleton").parameterCount(1);
 
-  static void setupPatternMethods(PsiManager manager,
-                                  GlobalSearchScope searchScope,
-                                  List<PsiMethod> patternMethods,
-                                  IntArrayList indices) {
+  private static void setupPatternMethods(PsiManager manager,
+                                          GlobalSearchScope searchScope,
+                                          List<PsiMethod> patternMethods,
+                                          IntArrayList indices) {
     final JavaPsiFacade javaPsiFacade = JavaPsiFacade.getInstance(manager.getProject());
     final PsiClass
       collectionClass = javaPsiFacade.findClass(CommonClassNames.JAVA_UTIL_COLLECTION, searchScope);
@@ -87,14 +73,14 @@ public class SuspiciousMethodCallUtil {
       PsiTypeParameter[] typeParameters = mapClass.getTypeParameters();
       if (typeParameters.length > 0) {
         MethodSignature getOrDefaultSignature = MethodSignatureUtil.createMethodSignature("getOrDefault",
-                                                                                          new PsiType[] {PsiType.getJavaLangObject(manager, searchScope),
+                                                                                          new PsiType[] {javaLangObject[0],
                                                                                             PsiSubstitutor.EMPTY.substitute(typeParameters[1])}, PsiTypeParameter.EMPTY_ARRAY, PsiSubstitutor.EMPTY);
         PsiMethod getOrDefault = MethodSignatureUtil.findMethodBySignature(mapClass, getOrDefaultSignature, false);
         addMethod(getOrDefault, 0, patternMethods, indices);
       }
 
       MethodSignature removeWithDefaultSignature = MethodSignatureUtil.createMethodSignature("remove",
-                                                                                             new PsiType[] {PsiType.getJavaLangObject(manager, searchScope), PsiType.getJavaLangObject(manager, searchScope)},
+                                                                                             new PsiType[] {javaLangObject[0], javaLangObject[0]},
                                                                                              PsiTypeParameter.EMPTY_ARRAY, PsiSubstitutor.EMPTY);
       PsiMethod removeWithDefault = MethodSignatureUtil.findMethodBySignature(mapClass, removeWithDefaultSignature, false);
       addMethod(removeWithDefault, 0, patternMethods, indices);
@@ -123,7 +109,7 @@ public class SuspiciousMethodCallUtil {
     }
   }
 
-  static boolean isInheritorOrSelf(PsiMethod inheritorCandidate, PsiMethod base) {
+  private static boolean isInheritorOrSelf(PsiMethod inheritorCandidate, PsiMethod base) {
     PsiClass aClass = inheritorCandidate.getContainingClass();
     PsiClass bClass = base.getContainingClass();
     if (aClass == null || bClass == null) return false;

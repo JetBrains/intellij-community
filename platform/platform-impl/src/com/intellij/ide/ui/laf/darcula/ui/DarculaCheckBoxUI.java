@@ -76,7 +76,7 @@ public class DarculaCheckBoxUI extends MetalCheckBoxUI {
 
   protected void drawCheckIcon(JComponent c, Graphics2D g, AbstractButton b, Rectangle iconRect, boolean selected, boolean enabled) {
     String iconName = isIndeterminate(b) ? "checkBoxIndeterminate" : "checkBox";
-    Icon icon = IconCache.getIcon(iconName, selected || isIndeterminate(b), c.hasFocus(), b.isEnabled());
+    Icon icon = LafIconLookup.getIcon(iconName, selected || isIndeterminate(b), c.hasFocus(), b.isEnabled());
     icon.paintIcon(c, g, iconRect.x, iconRect.y);
   }
 

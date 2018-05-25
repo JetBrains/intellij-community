@@ -14,10 +14,7 @@ import com.intellij.openapi.components.ServiceKt;
 import com.intellij.openapi.components.impl.stores.ModuleStore;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.*;
-import com.intellij.openapi.progress.EmptyProgressIndicator;
-import com.intellij.openapi.progress.ProgressIndicator;
-import com.intellij.openapi.progress.ProgressIndicatorProvider;
-import com.intellij.openapi.progress.ProgressManager;
+import com.intellij.openapi.progress.*;
 import com.intellij.openapi.progress.util.ProgressWrapper;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectBundle;
@@ -299,6 +296,8 @@ public abstract class ModuleManagerImpl extends ModuleManager implements Disposa
           }
           catch (IOException e) {
             reportError(errors, modulePath, e);
+          }
+          catch (ProcessCanceledException ignore) {
           }
           catch (Exception e) {
             LOG.error(e);

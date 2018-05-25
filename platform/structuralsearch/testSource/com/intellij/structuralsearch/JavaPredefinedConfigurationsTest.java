@@ -1,4 +1,4 @@
-// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.structuralsearch;
 
 import com.intellij.openapi.fileTypes.StdFileTypes;
@@ -57,6 +57,26 @@ public class JavaPredefinedConfigurationsTest extends StructuralSearchTestCase {
                        asList("X() {}",
                               "X(int i) {    System.out.println(i);  }",
                               "X(String... ss) {}")));
+    testCases.put(SSRBundle.message("predefined.configuration.class.with.parameterless.constructors"),
+                  pair("class X {" +
+                       "  X() {}" +
+                       "}" +
+                       "class Y {" +
+                       "  Y() {}" +
+                       "  Y(String name) {}" +
+                       "}" +
+                       "class Z {" +
+                       "  Z(String name) {}" +
+                       "}" +
+                       "class A {" +
+                       "  void x(String names) {}" +
+                       "}",
+                  asList("class X {" +
+                         "  X() {}" +
+                         "}",
+                         "class A {" +
+                         "  void x(String names) {}" +
+                         "}")));
   }
 
   public void testPredefinedConfigurations() {

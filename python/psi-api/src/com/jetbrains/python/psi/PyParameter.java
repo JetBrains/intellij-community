@@ -27,13 +27,8 @@ public interface PyParameter extends PyElement {
 
   boolean hasDefaultValue();
 
-  /**
-   * @apiNote This method will be marked as abstract in 2018.2.
-   */
   @Nullable
-  default String getDefaultValueText() {
-    return null;
-  }
+  String getDefaultValueText();
 
   /**
    * @return true if the parameter is the 'self' parameter of an instance attribute function or a function

@@ -152,7 +152,7 @@ public class UserDefinedJsonSchemaConfiguration {
         });
       }
       else {
-        result.add((project, vfile) -> vfile.equals(getRelativeFile(project, patternText)));
+        result.add((project, vfile) -> vfile.equals(getRelativeFile(project, patternText)) || vfile.getUrl().equals(patternText.path));
       }
     }
     return result;

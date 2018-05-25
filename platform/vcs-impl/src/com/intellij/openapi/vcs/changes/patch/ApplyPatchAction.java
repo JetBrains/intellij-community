@@ -256,7 +256,7 @@ public class ApplyPatchAction extends DumbAwareAction {
       }
       catch (IOException e) {
         LOG.error(e);
-        return ApplyFilePatch.Result.createThrow(e);
+        return ApplyFilePatch.FAILURE;
       }
     });
   }

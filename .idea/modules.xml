@@ -322,7 +322,6 @@
     <module old-name="ui-designer-core" new-name="intellij.uiDesigner" />
     <module old-name="ui-designer-jps-plugin" new-name="intellij.java.guiForms.jps" />
     <module old-name="uitest-framework" new-name="intellij.android.guiTestFramework" />
-    <module old-name="update-server-mock" new-name="intellij.tools.updateServerMock" />
     <module old-name="updater" new-name="intellij.platform.updater" />
     <module old-name="usageView" new-name="intellij.platform.usageView" />
     <module old-name="util" new-name="intellij.platform.util" />

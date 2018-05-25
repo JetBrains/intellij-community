@@ -119,14 +119,9 @@ public class GithubRepositoryEditor extends BaseRepositoryEditor<GithubRepositor
   }
 
   private void generateToken() {
-    GithubLoginDialog dialog = new GithubLoginDialog(myProject,
-                                                     (u, s) -> true,
-                                                     null,
-                                                     "Login To Github",
-                                                     getHost(),
-                                                     false,
-                                                     "",
-                                                     "IntelliJ tasks plugin");
+    GithubLoginDialog dialog = new GithubLoginDialog(myProject);
+    dialog.withServer(getHost(), false);
+    dialog.setTokenNote("IntelliJ tasks plugin");
     if (dialog.showAndGet()) {
       myToken.setText(dialog.getToken());
     }

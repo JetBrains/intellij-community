@@ -17,16 +17,19 @@ public class CompilerDetailsImpl implements CompilerDetails {
   private final Set<File> myIncludePath;
   private final Set<File> mySystemIncludes;
   private final String myCompileTaskName;
+  private final String myCompileKind;
   private final File myExecutable;
   private final File myWorkingDir;
   private final List<String> myArgs;
 
-  public CompilerDetailsImpl(String compileTaskName,
+  public CompilerDetailsImpl(String compileKind,
+                             String compileTaskName,
                              File executable,
                              File workingDir,
                              List<String> args,
                              Set<File> includePath,
                              Set<File> systemIncludes) {
+    myCompileKind = compileKind;
     myCompileTaskName = compileTaskName;
     myExecutable = executable;
     myWorkingDir = workingDir;
@@ -36,13 +39,18 @@ public class CompilerDetailsImpl implements CompilerDetails {
   }
 
   public CompilerDetailsImpl(CompilerDetails details) {
-    this(details.getCompileTaskName(), details.getExecutable(), details.getWorkingDir(), details.getArgs(),
+    this(details.getCompilerKind(), details.getCompileTaskName(), details.getExecutable(), details.getWorkingDir(), details.getArgs(),
          details.getIncludePath(), details.getSystemIncludes());
   }
 
   @Override
   public String getCompileTaskName() {
     return myCompileTaskName;
+  }
+
+  @Override
+  public String getCompilerKind() {
+    return myCompileKind;
   }
 
   @Override

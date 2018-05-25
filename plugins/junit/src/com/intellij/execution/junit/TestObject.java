@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package com.intellij.execution.junit;
 
@@ -38,6 +24,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleUtilCore;
 import com.intellij.openapi.project.DumbService;
+import com.intellij.openapi.project.IndexNotReadyException;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.OrderRootType;
 import com.intellij.openapi.roots.ProjectFileIndex;
@@ -48,14 +35,19 @@ import com.intellij.openapi.vfs.CharsetToolkit;
 import com.intellij.openapi.vfs.JarFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
+import com.intellij.psi.search.FilenameIndex;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.GlobalSearchScopesCore;
+import com.intellij.psi.util.InheritanceUtil;
+import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.refactoring.listeners.RefactoringElementListener;
 import com.intellij.rt.execution.junit.IDEAJUnitListener;
 import com.intellij.rt.execution.junit.JUnitStarter;
 import com.intellij.rt.execution.junit.RepeatCount;
 import com.intellij.rt.execution.testFrameworks.ForkedDebuggerHelper;
+import com.intellij.spi.SPIFileType;
+import com.intellij.spi.psi.SPIClassProviderReferenceElement;
 import com.intellij.util.Function;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.PathUtil;
@@ -73,6 +65,7 @@ import java.util.*;
 import java.util.jar.Attributes;
 import java.util.jar.JarFile;
 import java.util.jar.Manifest;
+import java.util.stream.Stream;
 
 public abstract class TestObject extends JavaTestFrameworkRunnableState<JUnitConfiguration> {
   private static final String DEBUG_RT_PATH = "idea.junit_rt.path";
@@ -508,21 +501,30 @@ public abstract class TestObject extends JavaTestFrameworkRunnableState<JUnitCon
   private boolean isCustomJUnit5(GlobalSearchScope globalSearchScope) {
     Project project = myConfiguration.getProject();
     JavaPsiFacade psiFacade = JavaPsiFacade.getInstance(project);
+
+    if (DumbService.isDumb(project)) {
+      return findCustomJUnit5TestEngineUsingClassLoader(globalSearchScope, project, psiFacade);
+    }
+    else {
+      return findCustomJunit5TestEngineUsingPsi(globalSearchScope, project, psiFacade);
+    }
+  }
+
+  private boolean findCustomJUnit5TestEngineUsingClassLoader(@NotNull GlobalSearchScope globalSearchScope, @NotNull Project project, @NotNull JavaPsiFacade psiFacade) {
     if (DumbService.getInstance(project)
-          .computeWithAlternativeResolveEnabled(() -> {
-            @Nullable PsiClass testEngine = ReadAction.compute(() -> psiFacade.findClass(JUnitCommonClassNames.ORG_JUNIT_PLATFORM_ENGINE_TEST_ENGINE, globalSearchScope));
-            return testEngine;
-          }) == null) {
+                   .computeWithAlternativeResolveEnabled(() -> {
+                     @Nullable PsiClass testEngine = ReadAction.compute(() -> psiFacade.findClass(JUnitCommonClassNames.ORG_JUNIT_PLATFORM_ENGINE_TEST_ENGINE, globalSearchScope));
+                     return testEngine;
+                   }) == null) {
       return false;
     }
-
     ClassLoader loader = TestClassCollector.createUsersClassLoader(myConfiguration);
     try {
-      ServiceLoader<?> serviceLoader = ServiceLoader.load(Class.forName(JUnitCommonClassNames.ORG_JUNIT_PLATFORM_ENGINE_TEST_ENGINE, false, loader), loader);
+      ServiceLoader<?>
+        serviceLoader = ServiceLoader.load(Class.forName(JUnitCommonClassNames.ORG_JUNIT_PLATFORM_ENGINE_TEST_ENGINE, false, loader), loader);
       for (Object engine : serviceLoader) {
         String engineClassName = engine.getClass().getName();
-        if (!"org.junit.jupiter.engine.JupiterTestEngine".equals(engineClassName) &&
-            !"org.junit.vintage.engine.VintageTestEngine".equals(engineClassName)) {
+        if (isCustomJunit5TestEngineName(engineClassName)) {
           return true;
         }
       }
@@ -531,5 +533,22 @@ public abstract class TestObject extends JavaTestFrameworkRunnableState<JUnitCon
     catch (Throwable e) {
       return false;
     }
+  }
+
+  private static boolean findCustomJunit5TestEngineUsingPsi(@NotNull GlobalSearchScope globalSearchScope, @NotNull Project project, @NotNull JavaPsiFacade psiFacade) {
+    PsiClass testEngine = psiFacade.findClass(JUnitCommonClassNames.ORG_JUNIT_PLATFORM_ENGINE_TEST_ENGINE, globalSearchScope);
+    if (testEngine == null) return false;
+    return Stream.of(FilenameIndex.getFilesByName(project, JUnitCommonClassNames.ORG_JUNIT_PLATFORM_ENGINE_TEST_ENGINE, GlobalSearchScope.getScopeRestrictedByFileTypes(globalSearchScope, SPIFileType.INSTANCE)))
+                 .flatMap(f -> PsiTreeUtil.findChildrenOfType(f, SPIClassProviderReferenceElement.class).stream())
+                 .map(r -> r.resolve())
+                 .filter(e -> e instanceof PsiClass)
+                 .map(e -> (PsiClass)e)
+                 .filter(c -> isCustomJunit5TestEngineName(c.getQualifiedName()))
+                 .anyMatch(c -> InheritanceUtil.isInheritorOrSelf(c, testEngine, true));
+  }
+
+  private static boolean isCustomJunit5TestEngineName(@Nullable String engineImplClassName) {
+    return !"org.junit.jupiter.engine.JupiterTestEngine".equals(engineImplClassName) &&
+           !"org.junit.vintage.engine.VintageTestEngine".equals(engineImplClassName);
   }
 }

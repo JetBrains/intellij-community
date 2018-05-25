@@ -51,6 +51,7 @@ import com.intellij.util.ObjectUtils;
 import com.intellij.util.concurrency.Semaphore;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.ContainerUtilRt;
+import com.intellij.util.containers.MultiMap;
 import com.intellij.util.ui.EmptyIcon;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
@@ -81,7 +82,7 @@ public class GotoActionModel implements ChooseByNameModel, Comparator<Object>, D
 
   private static final Icon EMPTY_ICON = EmptyIcon.ICON_18;
 
-  protected final Map<AnAction, String> myActionGroups = ContainerUtil.newHashMap();
+  private final MultiMap<AnAction, String> myActionGroups = MultiMap.create();
 
   private final NotNullLazyValue<Map<String, String>> myConfigurablesNames = VolatileNotNullLazyValue.createValue(() -> {
     Map<String, String> map = ContainerUtil.newTroveMap();
@@ -106,7 +107,7 @@ public class GotoActionModel implements ChooseByNameModel, Comparator<Object>, D
     myModality = modalityState;
     ActionGroup mainMenu = (ActionGroup)myActionManager.getActionOrStub(IdeActions.GROUP_MAIN_MENU);
     assert mainMenu != null;
-    collectActions(myActionGroups, mainMenu, mainMenu.getTemplatePresentation().getText());
+    collectActions(mainMenu, "");
   }
 
   @NotNull
@@ -319,24 +320,25 @@ public class GotoActionModel implements ChooseByNameModel, Comparator<Object>, D
     return myConfigurablesNames.getValue();
   }
 
-  private void collectActions(@NotNull Map<AnAction, String> result, @NotNull ActionGroup group, @Nullable String containingGroupName) {
+  private void collectActions(@NotNull ActionGroup group, @NotNull String path) {
     AnAction[] actions = group.getChildren(null);
-    includeGroup(result, group, actions, containingGroupName);
+
+    if (!groupHasMeaningfulChildren(actions)) {
+      myActionGroups.putValue(group, path);
+    }
+
     for (AnAction action : actions) {
       if (action == null || action instanceof Separator) continue;
       if (action instanceof ActionGroup) {
         ActionGroup actionGroup = (ActionGroup)action;
-        String groupName = actionGroup.getTemplatePresentation().getText();
-        collectActions(result, actionGroup, getGroupName(StringUtil.isEmpty(groupName) || !actionGroup.isPopup() ? containingGroupName : groupName));
+        String groupName = getGroupName(actionGroup.getTemplatePresentation().getText());
+        String childPath = StringUtil.isEmpty(groupName) || !actionGroup.isPopup() ? path : 
+                           path.isEmpty() ? groupName : 
+                           path + " | " + groupName;
+        collectActions(actionGroup, childPath);
       }
       else {
-        String groupName = group.getTemplatePresentation().getText();
-        if (result.containsKey(action)) {
-          result.put(action, null);
-        }
-        else {
-          result.put(action, getGroupName(StringUtil.isEmpty(groupName) ? containingGroupName : groupName));
-        }
+        myActionGroups.putValue(action, path);
       }
     }
   }
@@ -350,20 +352,13 @@ public class GotoActionModel implements ChooseByNameModel, Comparator<Object>, D
     return groupName;  
   }
 
-  private void includeGroup(@NotNull Map<AnAction, String> result,
-                            @NotNull ActionGroup group,
-                            @NotNull AnAction[] actions,
-                            @Nullable String containingGroupName) {
-    boolean showGroup = true;
-    for (AnAction action : actions) {
-      if (myActionManager.getId(action) != null) {
-        showGroup = false;
-        break;
-      }
-    }
-    if (showGroup) {
-      result.put(group, getGroupName(containingGroupName));
-    }
+  private boolean groupHasMeaningfulChildren(AnAction[] children) {
+    return Arrays.stream(children).anyMatch(action -> myActionManager.getId(action) != null);
+  }
+
+  @Nullable
+  String getAnyGroupPath(@NotNull AnAction action) {
+    return ContainerUtil.getFirstItem(myActionGroups.get(action));
   }
 
   @Override
@@ -394,7 +389,6 @@ public class GotoActionModel implements ChooseByNameModel, Comparator<Object>, D
     Presentation presentation = anAction.getTemplatePresentation();
     String text = presentation.getText();
     String description = presentation.getDescription();
-    String groupName = myActionGroups.get(anAction);
     if (text != null && matcher.matches(text)) {
       return MatchMode.NAME;
     }
@@ -404,11 +398,13 @@ public class GotoActionModel implements ChooseByNameModel, Comparator<Object>, D
     if (text == null) {
       return MatchMode.NONE;
     }
-    if (matcher.matches(groupName + " " + text)) {
-      return anAction instanceof ToggleAction ? MatchMode.NAME : MatchMode.GROUP;
-    }
-    if (matcher.matches(text + " " + groupName)) {
-      return MatchMode.GROUP;
+    for (String groupName : myActionGroups.get(anAction)) {
+      if (matcher.matches(groupName + " " + text)) {
+        return anAction instanceof ToggleAction ? MatchMode.NAME : MatchMode.GROUP;
+      }
+      if (matcher.matches(text + " " + groupName)) {
+        return MatchMode.GROUP;
+      }
     }
 
     for (GotoActionAliasMatcher m : GotoActionAliasMatcher.EP_NAME.getExtensions()) {

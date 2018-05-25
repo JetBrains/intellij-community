@@ -63,6 +63,8 @@ public class GitVcsSettings implements PersistentStateComponent<GitVcsSettings.S
     public boolean SWAP_SIDES_IN_COMPARE_BRANCHES = false;
     public boolean UPDATE_BRANCHES_INFO = false;
     public int BRANCH_INFO_UPDATE_TIME = 10;
+    public boolean PREVIEW_PUSH_ON_COMMIT_AND_PUSH = true;
+    public boolean PREVIEW_PUSH_PROTECTED_ONLY = false;
 
     @Property(surroundWithTag = false, flat = true)
     public DvcsBranchSettings FAVORITE_BRANCH_SETTINGS = new DvcsBranchSettings();
@@ -256,6 +258,22 @@ public class GitVcsSettings implements PersistentStateComponent<GitVcsSettings.S
 
   public void setBranchInfoUpdateTime(int time) {
     myState.BRANCH_INFO_UPDATE_TIME = time;
+  }
+
+  public boolean shouldPreviewPushOnCommitAndPush() {
+    return myState.PREVIEW_PUSH_ON_COMMIT_AND_PUSH;
+  }
+
+  public void setPreviewPushOnCommitAndPush(boolean state) {
+    myState.PREVIEW_PUSH_ON_COMMIT_AND_PUSH = state;
+  }
+
+  public boolean isPreviewPushProtectedOnly() {
+    return myState.PREVIEW_PUSH_PROTECTED_ONLY;
+  }
+
+  public void setPreviewPushProtectedOnly(boolean state) {
+    myState.PREVIEW_PUSH_PROTECTED_ONLY = state;
   }
 
   /**

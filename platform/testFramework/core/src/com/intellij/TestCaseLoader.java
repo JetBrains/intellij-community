@@ -29,10 +29,12 @@ public class TestCaseLoader {
   public static final String PERFORMANCE_TESTS_ONLY_FLAG = "idea.performance.tests";
   public static final String INCLUDE_PERFORMANCE_TESTS_FLAG = "idea.include.performance.tests";
   public static final String INCLUDE_UNCONVENTIONALLY_NAMED_TESTS_FLAG = "idea.include.unconventionally.named.tests";
+  public static final String RUN_ONLY_AFFECTED_TEST_FLAG = "idea.run.only.affected.tests";
 
   private static final boolean PERFORMANCE_TESTS_ONLY = "true".equals(System.getProperty(PERFORMANCE_TESTS_ONLY_FLAG));
   private static final boolean INCLUDE_PERFORMANCE_TESTS = "true".equals(System.getProperty(INCLUDE_PERFORMANCE_TESTS_FLAG));
   private static final boolean INCLUDE_UNCONVENTIONALLY_NAMED_TESTS = "true".equals(System.getProperty(INCLUDE_UNCONVENTIONALLY_NAMED_TESTS_FLAG));
+  private static final boolean RUN_ONLY_AFFECTED_TESTS = "true".equals(System.getProperty(RUN_ONLY_AFFECTED_TEST_FLAG));
 
   /**
    * An implicit group which includes all tests from all defined groups and tests which don't belong to any group.
@@ -50,58 +52,82 @@ public class TestCaseLoader {
   public TestCaseLoader(String classFilterName) {
     this(classFilterName, false);
   }
-  
+
   public TestCaseLoader(String classFilterName, boolean forceLoadPerformanceTests) {
     myForceLoadPerformanceTests = forceLoadPerformanceTests;
-    String patterns = getTestPatterns();
-    if (!StringUtil.isEmpty(patterns)) {
-      myTestClassesFilter = new PatternListTestClassFilter(StringUtil.split(patterns, ";"));
-      System.out.println("Using patterns: [" + patterns +"]");
-    }
-    else {
-      List<URL> groupingFileUrls = Collections.emptyList();
-      if (!StringUtil.isEmpty(classFilterName)) {
-        try {
-          groupingFileUrls = Collections.list(getClassLoader().getResources(classFilterName));
-        }
-        catch (IOException e) {
-          e.printStackTrace();
-        }
-      }
+    TestClassesFilter testClassesFilter = calcTestClassFilter(classFilterName);
+    TestClassesFilter affectedTestsFilter = affectedTestsFilter();
 
-      List<String> testGroupNames = getTestGroups();
-      MultiMap<String, String> groups = MultiMap.createLinked();
-
-      for (URL fileUrl : groupingFileUrls) {
-        try {
-          InputStreamReader reader = new InputStreamReader(fileUrl.openStream());
-          try {
-            groups.putAllValues(GroupBasedTestClassFilter.readGroups(reader));
-          }
-          finally {
-            reader.close();
-          }
-        }
-        catch (IOException e) {
-          e.printStackTrace();
-          System.err.println("Failed to load test groups from " + fileUrl);
-        }
-      }
-
-      if (groups.isEmpty() || testGroupNames.contains(ALL_TESTS_GROUP)) {
-        System.out.println("Using all classes");
-        myTestClassesFilter = TestClassesFilter.ALL_CLASSES;
-      }
-      else {
-        System.out.println("Using test groups: " + testGroupNames);
-        myTestClassesFilter = new GroupBasedTestClassFilter(groups, testGroupNames);
-      }
-    }
+    myTestClassesFilter = new TestClassesFilter.And(testClassesFilter, affectedTestsFilter);
+    System.out.println(myTestClassesFilter.toString());
   }
 
-  @Nullable 
+  private TestClassesFilter calcTestClassFilter(String classFilterName) {
+    String patterns = getTestPatterns();
+    if (!StringUtil.isEmpty(patterns)) {
+      System.out.println("Using patterns: [" + patterns + "]");
+      return new PatternListTestClassFilter(StringUtil.split(patterns, ";"));
+    }
+    List<URL> groupingFileUrls = Collections.emptyList();
+    if (!StringUtil.isEmpty(classFilterName)) {
+      try {
+        groupingFileUrls = Collections.list(getClassLoader().getResources(classFilterName));
+      }
+      catch (IOException e) {
+        e.printStackTrace();
+      }
+    }
+
+    List<String> testGroupNames = getTestGroups();
+    MultiMap<String, String> groups = MultiMap.createLinked();
+
+    for (URL fileUrl : groupingFileUrls) {
+      try {
+        InputStreamReader reader = new InputStreamReader(fileUrl.openStream());
+        try {
+          groups.putAllValues(GroupBasedTestClassFilter.readGroups(reader));
+        }
+        finally {
+          reader.close();
+        }
+      }
+      catch (IOException e) {
+        e.printStackTrace();
+        System.err.println("Failed to load test groups from " + fileUrl);
+      }
+    }
+
+    if (groups.isEmpty() || testGroupNames.contains(ALL_TESTS_GROUP)) {
+      System.out.println("Using all classes");
+      return TestClassesFilter.ALL_CLASSES;
+    }
+    System.out.println("Using test groups: " + testGroupNames);
+    return new GroupBasedTestClassFilter(groups, testGroupNames);
+  }
+
+  @Nullable
   private static String getTestPatterns() {
     return System.getProperty("intellij.build.test.patterns", System.getProperty("idea.test.patterns"));
+  }
+
+  @NotNull
+  private static TestClassesFilter affectedTestsFilter() {
+    if (RUN_ONLY_AFFECTED_TESTS) {
+      System.out.println("Trying to load affected tests.");
+      File affectedTestClasses = new File(System.getProperty("idea.home.path"), "discoveredTestClasses.txt");
+      if (affectedTestClasses.exists()) {
+        System.out.println("Loading file with affected classes " + affectedTestClasses.getAbsolutePath());
+        try {
+          return new PatternListTestClassFilter(FileUtil.loadLines(affectedTestClasses));
+        }
+        catch (IOException e) {
+          e.printStackTrace();
+          throw new RuntimeException(e);
+        }
+      }
+    }
+    System.out.println("No affected tests were found, will run with the standard test filter.");
+    return TestClassesFilter.ALL_CLASSES;
   }
 
   @NotNull
@@ -118,14 +144,14 @@ public class TestCaseLoader {
   }
 
   void addFirstTest(Class aClass) {
-    assert myFirstTestClass == null : "already added: "+aClass;
-    assert shouldAddTestCase(aClass, null, false) : "not a test: "+aClass;
+    assert myFirstTestClass == null : "already added: " + aClass;
+    assert shouldAddTestCase(aClass, null, false) : "not a test: " + aClass;
     myFirstTestClass = aClass;
   }
 
   void addLastTest(Class aClass) {
-    assert myLastTestClass == null : "already added: "+aClass;
-    assert shouldAddTestCase(aClass, null, false) : "not a test: "+aClass;
+    assert myLastTestClass == null : "already added: " + aClass;
+    assert shouldAddTestCase(aClass, null, false) : "not a test: " + aClass;
     myLastTestClass = aClass;
   }
 
@@ -142,7 +168,8 @@ public class TestCaseLoader {
         return true;
       }
     }
-    catch (NoSuchMethodException ignored) { }
+    catch (NoSuchMethodException ignored) {
+    }
 
     return TestFrameworkUtil.isJUnit4TestClass(testCaseClass);
   }
@@ -159,7 +186,7 @@ public class TestCaseLoader {
     if (bombedAnnotation == null) return false;
     return !TestFrameworkUtil.bombExplodes(bombedAnnotation);
   }
-  
+
   public void loadTestCases(final String moduleName, final Collection<String> classNamesIterator) {
     for (String className : classNamesIterator) {
       try {
@@ -195,7 +222,8 @@ public class TestCaseLoader {
       try {
         return FileUtil.loadLines(filePath);
       }
-      catch (IOException ignored) { }
+      catch (IOException ignored) {
+      }
     }
 
     return Collections.emptyList();
@@ -244,7 +272,7 @@ public class TestCaseLoader {
     List<Class> result = new ArrayList<>(myClassList.size());
     result.addAll(myClassList);
     Collections.sort(result, Comparator.comparingInt(TestCaseLoader::getRank));
-    
+
     if (myFirstTestClass != null) {
       result.add(0, myFirstTestClass);
     }
@@ -268,7 +296,7 @@ public class TestCaseLoader {
   }
 
   static boolean shouldIncludePerformanceTestCase(Class aClass) {
-    return isIncludingPerformanceTestsRun() || isPerformanceTestsRun() || !isPerformanceTest(null,aClass);
+    return isIncludingPerformanceTestsRun() || isPerformanceTestsRun() || !isPerformanceTest(null, aClass);
   }
 
   static boolean isPerformanceTest(String methodName, Class aClass) {
@@ -291,9 +319,9 @@ public class TestCaseLoader {
       clearClasses();
     }
     long after = System.currentTimeMillis();
-    
-    String message = "Number of test classes found: " + getClasses().size() 
-                      + " time to load: " + (after - before) / 1000 + "s.";
+
+    String message = "Number of test classes found: " + getClasses().size()
+                     + " time to load: " + (after - before) / 1000 + "s.";
     System.out.println(message);
     TeamCityLogger.info(message);
   }

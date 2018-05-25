@@ -47,7 +47,7 @@ public class InspectionProfileLoadUtil {
   }
 
   /**
-   * @deprecated Please use load(file: Path, ...)
+   * @deprecated Please use {@link #load(Path, InspectionToolRegistrar, InspectionProfileManager)} instead
    */
   @NotNull
   @Deprecated

@@ -55,6 +55,9 @@ public abstract class JavaCoverageRunner extends CoverageRunner {
     appendCoverageArgument(sessionDataFilePath, patterns, parameters, collectLineInfo, isSampling);
   }
 
+  public boolean isBranchInfoAvailable(boolean sampling) {
+    return !sampling;
+  }
 
   @Nullable
   public static String handleSpacesInAgentPath(@NotNull String agentPath) {

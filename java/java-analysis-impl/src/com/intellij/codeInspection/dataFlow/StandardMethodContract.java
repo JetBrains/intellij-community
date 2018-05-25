@@ -36,11 +36,10 @@ import java.util.List;
  */
 public final class StandardMethodContract extends MethodContract {
   private final @NotNull ValueConstraint[] myParameters;
-  private final @NotNull ContractReturnValue myReturnValue;
 
   public StandardMethodContract(@NotNull ValueConstraint[] parameters, @NotNull ContractReturnValue returnValue) {
+    super(returnValue);
     myParameters = parameters;
-    myReturnValue = returnValue;
   }
 
   public int getParameterCount() {
@@ -57,13 +56,7 @@ public final class StandardMethodContract extends MethodContract {
 
   @NotNull
   public StandardMethodContract withReturnValue(@NotNull ContractReturnValue returnValue) {
-    return returnValue.equals(myReturnValue) ? this : new StandardMethodContract(myParameters, returnValue);
-  }
-
-  @NotNull
-  @Override
-  public ContractReturnValue getReturnValue() {
-    return myReturnValue;
+    return returnValue.equals(getReturnValue()) ? this : new StandardMethodContract(myParameters, returnValue);
   }
 
   @NotNull
@@ -79,11 +72,7 @@ public final class StandardMethodContract extends MethodContract {
     if (o == null || o.getClass() != getClass()) return false;
 
     StandardMethodContract contract = (StandardMethodContract)o;
-
-    if (!Arrays.equals(myParameters, contract.myParameters)) return false;
-    if (myReturnValue != contract.myReturnValue) return false;
-
-    return true;
+    return Arrays.equals(myParameters, contract.myParameters) && getReturnValue().equals(contract.getReturnValue());
   }
 
   @Override
@@ -92,7 +81,7 @@ public final class StandardMethodContract extends MethodContract {
     for (ValueConstraint argument : myParameters) {
       result = 31 * result + argument.ordinal();
     }
-    result = 31 * result + myReturnValue.hashCode();
+    result = 31 * result + getReturnValue().hashCode();
     return result;
   }
 
@@ -136,7 +125,8 @@ public final class StandardMethodContract extends MethodContract {
   private static ContractReturnValue parseReturnValue(String returnValueString) throws ParseException {
     ContractReturnValue returnValue = ContractReturnValue.valueOf(returnValueString);
     if (returnValue == null) {
-      throw new ParseException("Return value should be one of: null, !null, true, false, fail, _. Found: " + returnValueString);
+      throw new ParseException(
+        "Return value should be one of: null, !null, true, false, this, new, paramN, fail, _. Found: " + returnValueString);
     }
     return returnValue;
   }

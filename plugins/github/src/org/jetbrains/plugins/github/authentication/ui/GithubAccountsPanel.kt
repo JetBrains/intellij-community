@@ -93,9 +93,7 @@ internal class GithubAccountsPanel(private val project: Project, private val acc
   }
 
   private fun addAccount() {
-    val dialog = GithubLoginDialog(project,
-                                   ::isAccountUnique,
-                                   this)
+    val dialog = GithubLoginDialog(project, this, ::isAccountUnique)
     if (dialog.showAndGet()) {
       val githubAccount = GithubAccount(dialog.getLogin(), dialog.getServer())
       newTokensMap[githubAccount] = dialog.getToken()
@@ -107,12 +105,10 @@ internal class GithubAccountsPanel(private val project: Project, private val acc
   }
 
   private fun editAccount(decorator: GithubAccountDecorator) {
-    val dialog = GithubLoginDialog(project,
-                                   { _, _ -> true },
-                                   this,
-                                   host = decorator.account.server.toString(),
-                                   editableHost = false,
-                                   login = decorator.account.name)
+    val dialog = GithubLoginDialog(project, this).apply {
+      withServer(decorator.account.server.toString(), false)
+      withCredentials(decorator.account.name)
+    }
     if (dialog.showAndGet()) {
       decorator.account.name = dialog.getLogin()
       newTokensMap[decorator.account] = dialog.getToken()

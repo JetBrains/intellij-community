@@ -197,7 +197,8 @@ public class JavaCompilingVisitor extends JavaRecursiveElementWalkingVisitor {
     if (!(expression.getParent() instanceof PsiExpressionStatement) && !(expression instanceof PsiParenthesizedExpression)) {
       final MatchingHandler handler = myCompilingVisitor.getContext().getPattern().getHandler(expression);
       if (handler.getFilter() == null) {
-        handler.setFilter(e -> DefaultFilter.accepts((e instanceof PsiExpression) ? PsiUtil.skipParenthesizedExprDown((PsiExpression)e) : e, expression));
+        handler.setFilter(e -> DefaultFilter.accepts(expression,
+                                                     (e instanceof PsiExpression) ? PsiUtil.skipParenthesizedExprDown((PsiExpression)e) : e));
       }
     }
   }

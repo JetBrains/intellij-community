@@ -66,6 +66,7 @@
       <category>Java/I18N</category>
     </intentionAction>
 
+    <completion.confidence language="JAVA" implementationClass="com.intellij.lang.properties.PropertyKeyLiteralConfidence" id="propertyKeys" order="before javaSkipAutopopupInStrings"/>
   </extensions>
   <actions>
     <action id="I18nize" class="com.intellij.codeInspection.i18n.I18nizeAction">

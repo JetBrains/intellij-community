@@ -1,4 +1,4 @@
-// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.svn;
 
 import com.intellij.openapi.util.Pair;
@@ -16,7 +16,7 @@ import java.util.*;
 public class SvnCachingRevisionsTest extends CodeInsightFixtureTestCase {
   private SvnRepositoryLocation myLocation;
   private LoadedRevisionsCache myInternalManager;
-  private final static String URL = "file:///C:/repo/trunk";
+  private final static Url URL = SvnUtil.parseUrl("file:///C:/repo/trunk");
   private final static Url ROOT = SvnUtil.parseUrl("file:///C:/repo");
   private final static String AUTHOR = "author";
   private final static int PAGE = 5;

@@ -18,11 +18,7 @@ package com.siyeh.ig.controlflow;
 import com.intellij.codeInsight.intention.LowPriorityAction;
 import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.codeInspection.SetInspectionOptionFix;
-import com.intellij.codeInspection.dataFlow.ContractReturnValue;
-import com.intellij.codeInspection.dataFlow.ControlFlowAnalyzer;
-import com.intellij.codeInspection.dataFlow.MethodContract;
-import com.intellij.codeInspection.dataFlow.StandardMethodContract;
-import com.intellij.codeInspection.dataFlow.StandardMethodContract.ValueConstraint;
+import com.intellij.codeInspection.dataFlow.*;
 import com.intellij.codeInspection.ui.SingleCheckboxOptionsPanel;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Iconable;
@@ -30,6 +26,7 @@ import com.intellij.psi.*;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
+import com.intellij.util.containers.ContainerUtil;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
@@ -266,21 +263,13 @@ public class PointlessNullCheckInspection extends BaseInspection {
       if (qualifier != null && SideEffectChecker.mayHaveSideEffects(qualifier)) return null;
       PsiMethod method = call.resolveMethod();
       if (method == null) return null;
-      List<? extends MethodContract> contracts = ControlFlowAnalyzer.getMethodCallContracts(method, call);
+      List<? extends MethodContract> contracts = JavaMethodContractUtil.getMethodCallContracts(method, call);
       if (contracts.isEmpty()) return null;
-      StandardMethodContract contract = tryCast(contracts.get(0), StandardMethodContract.class);
+      MethodContract contract = tryCast(contracts.get(0), StandardMethodContract.class);
       if (contract == null || !contract.getReturnValue().equals(ContractReturnValue.returnFalse())) return null;
-      int idx = -1;
-      for (int i = 0; i < contract.getParameterCount(); i++) {
-        ValueConstraint constraint = contract.getParameterConstraint(i);
-        if (constraint == ValueConstraint.NULL_VALUE) {
-          if (idx != -1) return null;
-          idx = i;
-        }
-        else if (constraint != ValueConstraint.ANY_VALUE) {
-          return null;
-        }
-      }
+      ContractValue condition = ContainerUtil.getOnlyItem(contract.getConditions());
+      if (condition == null) return null;
+      int idx = condition.getNullCheckedArgument(true).orElse(-1);
       if (idx == -1) return null;
       PsiExpression[] args = ((PsiMethodCallExpression)expression).getArgumentList().getExpressions();
       if (args.length <= idx || method.isVarArgs() && idx == args.length - 1) return null;

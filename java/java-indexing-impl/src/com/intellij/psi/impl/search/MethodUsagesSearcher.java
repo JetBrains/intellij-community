@@ -5,10 +5,7 @@ import com.intellij.openapi.application.QueryExecutorBase;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
-import com.intellij.psi.search.GlobalSearchScope;
-import com.intellij.psi.search.SearchRequestCollector;
-import com.intellij.psi.search.SearchScope;
-import com.intellij.psi.search.UsageSearchContext;
+import com.intellij.psi.search.*;
 import com.intellij.psi.search.searches.MethodReferencesSearch;
 import com.intellij.psi.search.searches.ReferencesSearch;
 import com.intellij.psi.util.PsiUtil;
@@ -78,7 +75,8 @@ public class MethodUsagesSearcher extends QueryExecutorBase<PsiReference, Method
 
       short searchContext = UsageSearchContext.IN_CODE | UsageSearchContext.IN_COMMENTS | UsageSearchContext.IN_FOREIGN_LANGUAGES;
       for (PsiMethod m : methods) {
-        collector.searchWord(methodName[0], searchScope.intersectWith(m.getUseScope()), searchContext, true, m,
+        SearchScope methodUseScope = PsiSearchHelper.getInstance(p.getProject()).getUseScope(m);
+        collector.searchWord(methodName[0], searchScope.intersectWith(methodUseScope), searchContext, true, m,
                              getTextOccurrenceProcessor(new PsiMethod[] {m}, aClass, strictSignatureSearch));
       }
 

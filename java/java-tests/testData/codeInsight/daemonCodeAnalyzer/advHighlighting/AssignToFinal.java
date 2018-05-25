@@ -243,3 +243,12 @@ class AssignmentInUnreachablePolyadic {
     else if (true && (<error descr="Variable 'bbbb' might already have been assigned to">bbbb</error> = false)) ;
   }
 }
+
+class QualifiedThis {
+  final int x;
+
+  QualifiedThis() {
+    <error descr="Cannot assign a value to final variable 'x'">QualifiedThis.this.x</error> = 5;
+    <error descr="Variable 'x' might already have been assigned to">this.x</error> = 5;
+  }
+}

@@ -672,16 +672,20 @@ public abstract class DialogWrapper {
     return myCheckBoxDoNotShowDialog != null && myCheckBoxDoNotShowDialog.isVisible() ? myCheckBoxDoNotShowDialog : null;
   }
 
+  private final JBValue BASE_BUTTON_GAP = new JBValue.Float(UIUtil.isUnderWin10LookAndFeel() ? 8 : 12);
+
   @NotNull
   protected JPanel createButtonsPanel(@NotNull List<JButton> buttons) {
-    int hgap = JBUI.scale(UIUtil.isUnderWin10LookAndFeel() ? 10 : 6);
     JPanel buttonsPanel = new NonOpaquePanel();
     buttonsPanel.setLayout(new BoxLayout(buttonsPanel, BoxLayout.X_AXIS));
 
     for (int i = 0; i < buttons.size(); i++) {
-      buttonsPanel.add(buttons.get(i));
+      JComponent button = buttons.get(i);
+      Insets insets = button.getInsets();
+
+      buttonsPanel.add(button);
       if (i < buttons.size() - 1) {
-        buttonsPanel.add(Box.createRigidArea(JBUI.size(hgap, 0)));
+        buttonsPanel.add(Box.createRigidArea(new Dimension(BASE_BUTTON_GAP.get() - insets.left - insets.right, 0)));
       }
     }
 
@@ -772,7 +776,7 @@ public abstract class DialogWrapper {
   }
 
   @NotNull
-  private static Pair<Integer, String> extractMnemonic(@Nullable String text) {
+  public static Pair<Integer, String> extractMnemonic(@Nullable String text) {
     if (text == null) return Pair.create(0, null);
 
     int mnemonic = 0;
@@ -1324,7 +1328,7 @@ public abstract class DialogWrapper {
   }
 
   @NotNull
-  LayoutManager createRootLayout() {
+  protected LayoutManager createRootLayout() {
     return new BorderLayout();
   }
 
@@ -1497,6 +1501,10 @@ public abstract class DialogWrapper {
 
   protected final void setOKButtonMnemonic(int c) {
     myOKAction.putValue(Action.MNEMONIC_KEY, c);
+  }
+
+  protected final void setOKButtonTooltip(String text) {
+    myOKAction.putValue(Action.SHORT_DESCRIPTION, text);
   }
 
   /**

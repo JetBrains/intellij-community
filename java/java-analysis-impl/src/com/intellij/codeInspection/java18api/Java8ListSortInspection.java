@@ -14,9 +14,6 @@ import com.siyeh.ig.psiutils.ParenthesesUtils;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 
-/**
- * @author Tagir Valeev
- */
 public class Java8ListSortInspection extends AbstractBaseJavaLocalInspectionTool {
 
   @NotNull

@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2015 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2018 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -61,15 +61,11 @@ public class AbstractMethodWithMissingImplementationsInspection
     @Override
     public void visitMethod(PsiMethod method) {
       super.visitMethod(method);
-      if (method.getNameIdentifier() == null) {
+      if (method.getNameIdentifier() == null || !method.hasModifierProperty(PsiModifier.ABSTRACT)) {
         return;
       }
       final PsiClass containingClass = method.getContainingClass();
       if (containingClass == null) {
-        return;
-      }
-      if (!containingClass.isInterface() ||
-          !method.hasModifierProperty(PsiModifier.ABSTRACT)) {
         return;
       }
       final InheritorFinder inheritorFinder = new InheritorFinder(containingClass);

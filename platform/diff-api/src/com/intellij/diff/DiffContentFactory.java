@@ -77,6 +77,10 @@ public abstract class DiffContentFactory {
 
 
   @NotNull
+  public abstract DocumentContent createEditable(@Nullable Project project, @NotNull String text, @Nullable FileType fileType);
+
+
+  @NotNull
   public abstract DocumentContent create(@NotNull Document document, @Nullable DocumentContent referent);
 
 

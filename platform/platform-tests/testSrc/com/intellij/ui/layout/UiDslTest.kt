@@ -8,7 +8,7 @@ import com.intellij.testFramework.PlatformTestUtil
 import com.intellij.testFramework.UsefulTestCase
 import com.intellij.ui.UiTestRule
 import com.intellij.ui.changeLafIfNeed
-import net.miginfocom.layout.LayoutUtil
+import com.intellij.ui.layout.migLayout.patched.*
 import org.junit.*
 import org.junit.Assume.assumeTrue
 import org.junit.rules.TestName
@@ -86,17 +86,10 @@ class UiDslTest {
 
   private fun doTest(panelCreator: () -> JPanel) {
     invokeAndWaitIfNeed {
-      // otherwise rectangles are not set
-      LayoutUtil.setGlobalDebugMillis(1000)
       val panel = panelCreator()
-      try {
-        uiRule.validate(panel, testName, lafName)
-      }
-      finally {
-        LayoutUtil.setGlobalDebugMillis(0)
-        // as result, MigLayout will stop debug timer
-        panel.doLayout()
-      }
+      // otherwise rectangles are not set
+      (panel.layout as MigLayout).isDebugEnabled = true
+      uiRule.validate(panel, testName, lafName)
     }
   }
 }

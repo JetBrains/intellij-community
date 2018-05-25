@@ -151,7 +151,7 @@ public class JsonSchemaConfigurable extends NamedConfigurable<UserDefinedJsonSch
           (!StringUtil.isEmptyOrSpaces(myDisplayName) ? (myDisplayName + ": ") : "") + "Invalid schema URL");
       }
 
-      vFile = JsonFileResolver.urlToFile(schemaSubPath);
+      vFile = JsonFileResolver.urlToFile(schemaSubPath, myProject);
       if (vFile == null) {
         throw new ConfigurationException(
           (!StringUtil.isEmptyOrSpaces(myDisplayName) ? (myDisplayName + ": ") : "") + "Invalid URL resource");

@@ -36,12 +36,12 @@ public class TouchBarGeneral extends TouchBarActionBase {
     myButtonAddRunConf = addButton(AllIcons.General.Add, "Add Configuration", IdeActions.ACTION_EDIT_RUN_CONFIGURATIONS);
 
     {
-      final TouchBar tapHoldTB = new TouchBar("run_configs_popover_tap_and_hold");
+      final TouchBar tapHoldTB = new TouchBar("run_configs_popover_tap_and_hold", false);
       tapHoldTB.addFlexibleSpacing();
       myPopoverRunConfTapAndHold = tapHoldTB.addButton(null, null, (NSTLibrary.Action)null);
       tapHoldTB.selectVisibleItemsToShow();
 
-      myPopoverRunConfExpandTB = new TouchBar("run_configs_popover_expand");
+      myPopoverRunConfExpandTB = new TouchBar("run_configs_popover_expand", false);
       myPopoverRunConfExpandTB.addButton(AllIcons.Actions.EditSource, null, IdeActions.ACTION_EDIT_RUN_CONFIGURATIONS);
       myScrubberRunConf = myPopoverRunConfExpandTB.addScrubber(500);
       myPopoverRunConfExpandTB.addFlexibleSpacing();

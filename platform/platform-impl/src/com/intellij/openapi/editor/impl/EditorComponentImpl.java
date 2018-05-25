@@ -219,6 +219,7 @@ public class EditorComponentImpl extends JTextComponent implements Scrollable, D
 
   @Override
   public void paintComponent(Graphics g) {
+    myEditor.measureTypingLatency();
     myApplication.editorPaintStart();
 
     try {
@@ -231,7 +232,7 @@ public class EditorComponentImpl extends JTextComponent implements Scrollable, D
         UISettings.setupAntialiasing(gg);
       }
       gg.setRenderingHint(RenderingHints.KEY_FRACTIONALMETRICS, myEditor.myFractionalMetricsHintValue);
-      AffineTransform origTx = PaintUtil.alignTxToInt(gg, true, false, RoundingMode.CEIL);
+      AffineTransform origTx = PaintUtil.alignTxToInt(gg, PaintUtil.insets2offset(getInsets()), true, false, RoundingMode.CEIL);
       myEditor.paint(gg);
       if (origTx != null) gg.setTransform(origTx);
     }

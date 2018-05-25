@@ -77,7 +77,7 @@ public class Matcher {
 
     if (matchOptions != null) {
       matchContext.setOptions(matchOptions);
-      matchContext.setPattern(PatternCompiler.compilePattern(project, matchOptions));
+      matchContext.setPattern(PatternCompiler.compilePattern(project, matchOptions, false));
     }
     myDumbService = DumbService.getInstance(project);
   }
@@ -112,7 +112,7 @@ public class Matcher {
   }
 
   public static void validate(Project project, MatchOptions options) {
-    PatternCompiler.compilePattern(project, options);
+    PatternCompiler.compilePattern(project, options, true);
   }
 
   public static boolean checkIfShouldAttemptToMatch(MatchContext context, NodeIterator matchedNodes) {
@@ -208,7 +208,7 @@ public class Matcher {
       matchContext.setOptions(matchOptions);
 
       try {
-        matchContext.setPattern(PatternCompiler.compilePattern(project, matchOptions));
+        matchContext.setPattern(PatternCompiler.compilePattern(project, matchOptions, false));
         out.put(configuration, matchContext);
       }
       catch (StructuralSearchException e) {
@@ -302,7 +302,7 @@ public class Matcher {
     matchContext.setSink(new DuplicateFilteringResultSink(sink));
     matchContext.setOptions(options);
     matchContext.setMatcher(visitor);
-    matchContext.setPattern(PatternCompiler.compilePattern(project, options));
+    matchContext.setPattern(PatternCompiler.compilePattern(project, options, false));
     visitor.setMatchContext(matchContext);
 
     return matchContext.getPattern();

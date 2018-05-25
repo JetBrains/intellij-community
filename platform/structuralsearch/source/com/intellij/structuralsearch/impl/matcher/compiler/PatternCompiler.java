@@ -23,6 +23,7 @@ import com.intellij.structuralsearch.impl.matcher.CompiledPattern;
 import com.intellij.structuralsearch.impl.matcher.MatcherImplUtil;
 import com.intellij.structuralsearch.impl.matcher.PatternTreeContext;
 import com.intellij.structuralsearch.impl.matcher.filters.LexicalNodesFilter;
+import com.intellij.structuralsearch.impl.matcher.handlers.DelegatingHandler;
 import com.intellij.structuralsearch.impl.matcher.handlers.MatchingHandler;
 import com.intellij.structuralsearch.impl.matcher.handlers.SubstitutionHandler;
 import com.intellij.structuralsearch.impl.matcher.predicates.*;
@@ -50,21 +51,33 @@ public class PatternCompiler {
   private static final Object LOCK = new Object();
   private static SoftReference<CompiledPattern> ourLastCompiledPattern;
   private static MatchOptions ourLastMatchOptions;
+  private static boolean ourLastCompileSuccessful = true;
   private static CompileContext lastTestingContext;
 
-  public static CompiledPattern compilePattern(final Project project, final MatchOptions options)
-    throws MalformedPatternException, NoMatchFoundException, UnsupportedOperationException {
-    final CompiledPattern lastPattern = getLastCompiledPattern(options);
-    if (lastPattern != null) {
-      return lastPattern;
+  public static CompiledPattern compilePattern(Project project,MatchOptions options, boolean checkForErrors)
+    throws MalformedPatternException, NoMatchFoundException {
+    if (!checkForErrors) {
+      synchronized (LOCK) {
+        if (options.equals(ourLastMatchOptions) &&
+            (!(options.getScope() instanceof GlobalSearchScope) || options.getScope() == ourLastMatchOptions.getScope())) {
+          if (!ourLastCompileSuccessful) return null;
+          assert ourLastCompiledPattern != null;
+          final CompiledPattern lastCompiledPattern = ourLastCompiledPattern.get();
+          if (lastCompiledPattern != null) {
+            return lastCompiledPattern;
+          }
+        }
+      }
     }
     return !ApplicationManager.getApplication().isDispatchThread()
-           ? ReadAction.compute(() -> doCompilePattern(project, options))
-           : doCompilePattern(project, options);
+           ? ReadAction.compute(() -> doCompilePattern(project, options, checkForErrors))
+           : doCompilePattern(project, options, checkForErrors);
   }
 
   @NotNull
-  private static CompiledPattern doCompilePattern(Project project, MatchOptions options) {
+  private static CompiledPattern doCompilePattern(Project project, MatchOptions options, boolean checkForErrors)
+    throws MalformedPatternException, NoMatchFoundException {
+
     final StructuralSearchProfile profile = StructuralSearchUtil.getProfileByFileType(options.getFileType());
     assert profile != null : "no profile found for " + options.getFileType().getDescription();
     final CompiledPattern result = profile.createCompiledPattern();
@@ -77,23 +90,36 @@ public class PatternCompiler {
 
     try {
       final List<PsiElement> elements = compileByAllPrefixes(project, options, result, context, prefixes);
-
       final CompiledPattern pattern = context.getPattern();
-      checkForUnknownVariables(pattern, elements);
-      pattern.setNodes(elements);
-      synchronized (LOCK) {
-        ourLastMatchOptions = options.copy();
-        ourLastCompiledPattern = new SoftReference<>(result);
+      try {
+        checkForUnknownVariables(pattern, elements);
+        pattern.setNodes(elements);
+        synchronized (LOCK) {
+          ourLastMatchOptions = options.copy();
+          ourLastCompiledPattern = new SoftReference<>(result);
+          ourLastCompileSuccessful = true;
+        }
+      } catch (MalformedPatternException e) {
+        synchronized (LOCK) {
+          ourLastMatchOptions = options.copy();
+          ourLastCompiledPattern = null;
+          ourLastCompileSuccessful = false;
+        }
+        throw e;
       }
-      profile.checkSearchPattern(pattern);
-      optimizeScope(options, result, context);
+      if (checkForErrors) {
+        profile.checkSearchPattern(pattern);
+        optimizeScope(options, result, context);
+      }
       return result;
     } finally {
       context.clear();
     }
   }
 
-  private static void optimizeScope(MatchOptions options, CompiledPattern result, CompileContext context) {
+  private static void optimizeScope(MatchOptions options, CompiledPattern result, CompileContext context)
+    throws NoMatchFoundException {
+
     final OptimizingSearchHelper searchHelper = context.getSearchHelper();
     if (searchHelper.doOptimizing() && searchHelper.isScannedSomething()) {
       final List<PsiFile> filesToScan = new SmartList<>();
@@ -109,8 +135,11 @@ public class PatternCompiler {
     }
   }
 
-  private static void checkForUnknownVariables(final CompiledPattern pattern, List<PsiElement> elements) {
+  private static void checkForUnknownVariables(final CompiledPattern pattern, List<PsiElement> elements)
+    throws MalformedPatternException {
+
     for (PsiElement element : elements) {
+      pattern.putVariableNode(Configuration.CONTEXT_VAR_NAME, element);
       element.accept(new PsiRecursiveElementWalkingVisitor() {
         @Override
         public void visitElement(PsiElement element) {
@@ -137,25 +166,26 @@ public class PatternCompiler {
           }
         }
       });
-    }
-  }
+      element.accept(new PsiRecursiveElementWalkingVisitor() {
+        @Override
+        public void visitElement(PsiElement element) {
+          collectNode(element, element.getUserData(CompiledPattern.HANDLER_KEY));
+          super.visitElement(element);
 
-  @Nullable
-  public static CompiledPattern getLastCompiledPattern(MatchOptions options) {
-    synchronized (LOCK) {
-      final CompiledPattern lastCompiledPattern = ourLastCompiledPattern == null ? null : ourLastCompiledPattern.get();
-      if (lastCompiledPattern == null || !options.equals(ourLastMatchOptions)) {
-        return null;
-      }
-      if (lastCompiledPattern.getScope() != null) {
-        if (!options.getScope().equals(lastCompiledPattern.getScope())) {
-          return null;
+          if (element instanceof LeafElement) {
+            collectNode(element, pattern.getHandler(pattern.getTypedVarString(element)));
+          }
         }
-      }
-      else if (options.getScope() instanceof GlobalSearchScope) {
-        return null;
-      }
-      return lastCompiledPattern;
+
+        private void collectNode(PsiElement element, Object handler) {
+          if (handler instanceof DelegatingHandler) {
+            handler = ((DelegatingHandler)handler).getDelegate();
+          }
+          if (handler instanceof SubstitutionHandler){
+            pattern.putVariableNode(((SubstitutionHandler)handler).getName(), element);
+          }
+        }
+      });
     }
   }
 
@@ -506,7 +536,6 @@ public class PatternCompiler {
     buf.append(text.substring(prevOffset));
 
     PsiElement[] patternElements;
-
     try {
       patternElements = MatcherImplUtil.createTreeFromText(buf.toString(), PatternTreeContext.Block, options.getFileType(),
                                                            options.getDialect(), options.getPatternContext(), project, false);

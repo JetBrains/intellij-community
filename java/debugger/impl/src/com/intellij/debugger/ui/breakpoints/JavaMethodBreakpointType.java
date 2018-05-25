@@ -20,8 +20,7 @@ import javax.swing.*;
 /**
  * @author Eugene Zhuravlev
  */
-public class JavaMethodBreakpointType extends JavaLineBreakpointTypeBase<JavaMethodBreakpointProperties>
-                                      implements JavaBreakpointType<JavaMethodBreakpointProperties> {
+public class JavaMethodBreakpointType extends JavaLineBreakpointTypeBase<JavaMethodBreakpointProperties> {
   public JavaMethodBreakpointType() {
     super("java-method", DebuggerBundle.message("method.breakpoints.tab.title"));
   }

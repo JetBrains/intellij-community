@@ -24,6 +24,7 @@ import com.jetbrains.jsonSchema.extension.JsonSchemaInfo;
 import com.jetbrains.jsonSchema.extension.SchemaType;
 import com.jetbrains.jsonSchema.ide.JsonSchemaService;
 import com.jetbrains.jsonSchema.impl.JsonSchemaConflictNotificationProvider;
+import com.jetbrains.jsonSchema.impl.JsonSchemaServiceImpl;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -140,22 +141,11 @@ public class JsonSchemaStatusWidget {
       }
 
       VirtualFile schemaFile = schemaFiles.iterator().next();
-      JsonSchemaFileProvider provider = myService.getSchemaProvider(schemaFile);
-      if (provider != null) {
-        if (!isValidSchemaFile(schemaFile)) {
-          MyWidgetState state = new MyWidgetState("File is not a schema", "JSON schema error", true);
-          state.setWarning(true);
-          return state;
-        }
-        String providerName = provider.getPresentableName();
-        String shortName = StringUtil.trimEnd(StringUtil.trimEnd(providerName, ".json"), "-schema");
-        String name = shortName.startsWith("JSON Schema") ? shortName : (JSON_SCHEMA_BAR + shortName);
-        String kind = provider.getSchemaType() == SchemaType.embeddedSchema || provider.getSchemaType() == SchemaType.schema ? " (bundled)" : "";
-        return new MyWidgetState(JSON_SCHEMA_TOOLTIP + providerName + kind, name, true);
-      }
+      schemaFile = ((JsonSchemaServiceImpl)myService).replaceHttpFileWithBuiltinIfNeeded(schemaFile);
+
       if (schemaFile instanceof HttpVirtualFile) {
         RemoteFileInfo info = ((HttpVirtualFile)schemaFile).getFileInfo();
-        if (info == null) return getDownloadErrorState();
+        if (info == null) return getDownloadErrorState(null);
 
         //noinspection EnumSwitchStatementWhichMissesCases
         switch (info.getState()) {
@@ -185,7 +175,7 @@ public class JsonSchemaStatusWidget {
             });
             return new MyWidgetState("Download is scheduled or in progress", "Downloading JSON schema", false);
           case ERROR_OCCURRED:
-            return getDownloadErrorState();
+            return getDownloadErrorState(info.getErrorMessage());
         }
       }
 
@@ -193,6 +183,15 @@ public class JsonSchemaStatusWidget {
         MyWidgetState state = new MyWidgetState("File is not a schema", "JSON schema error", true);
         state.setWarning(true);
         return state;
+      }
+
+      JsonSchemaFileProvider provider = myService.getSchemaProvider(schemaFile);
+      if (provider != null) {
+        String providerName = provider.getPresentableName();
+        String shortName = StringUtil.trimEnd(StringUtil.trimEnd(providerName, ".json"), "-schema");
+        String name = shortName.startsWith("JSON schema") ? shortName : (JSON_SCHEMA_BAR + shortName);
+        String kind = provider.getSchemaType() == SchemaType.embeddedSchema || provider.getSchemaType() == SchemaType.schema ? " (bundled)" : "";
+        return new MyWidgetState(JSON_SCHEMA_TOOLTIP + providerName + kind, name, true);
       }
 
       return new MyWidgetState(JSON_SCHEMA_TOOLTIP + getSchemaFileDesc(schemaFile), JSON_SCHEMA_BAR + getPresentableNameForFile(schemaFile), true);
@@ -243,8 +242,9 @@ public class JsonSchemaStatusWidget {
     }
 
     @NotNull
-    private WidgetState getDownloadErrorState() {
-      MyWidgetState state = new MyWidgetState("Error downloading schema", "JSON schema error", true);
+    private WidgetState getDownloadErrorState(@Nullable String message) {
+      MyWidgetState state = new MyWidgetState("Error downloading schema" + (message == null ? "" : (": <br/>" + message)),
+                                              "JSON schema error", true);
       state.setWarning(true);
       return state;
     }

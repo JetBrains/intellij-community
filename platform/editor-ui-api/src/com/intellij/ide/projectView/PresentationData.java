@@ -79,7 +79,7 @@ public class PresentationData implements ColoredItemPresentation, ComparableObje
   }
 
   /**
-   * @deprecated Use constructor with single icon instead.
+   * @deprecated Use {@link #PresentationData(String, String, Icon, TextAttributesKey)} instead.
    */
   public PresentationData(String presentableText, String locationString, Icon openIcon, Icon closedIcon,
                           @Nullable TextAttributesKey attributesKey) {

@@ -20,9 +20,6 @@ import com.intellij.codeInspection.LocalInspectionTool;
 import com.intellij.codeInspection.java18api.Java8CollectionRemoveIfInspection;
 import org.jetbrains.annotations.NotNull;
 
-/**
- * @author Tagir Valeev
- */
 public class Java8CollectionRemoveIfInspectionTest extends LightQuickFixParameterizedTestCase {
   @NotNull
   @Override

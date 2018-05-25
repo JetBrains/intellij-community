@@ -1566,7 +1566,7 @@ class ControlFlowAnalyzer extends JavaElementVisitor {
     emitEmptyInstruction();
 
     //generate jumps to all handled exception handlers
-    generateExceptionJumps(expression, ExceptionUtil.getUnhandledExceptions(expression, expression.getParent(), true));
+    generateExceptionJumps(expression, ExceptionUtil.getUnhandledExceptions(expression, expression.getParent()));
 
     finishElement(expression);
   }
@@ -1582,7 +1582,7 @@ class ControlFlowAnalyzer extends JavaElementVisitor {
       child.accept(this);
     }
     //generate jumps to all handled exception handlers
-    generateExceptionJumps(expression, ExceptionUtil.getUnhandledExceptions(expression, expression.getParent(), true));
+    generateExceptionJumps(expression, ExceptionUtil.getUnhandledExceptions(expression, expression.getParent()));
 
     if (pc == myCurrentFlow.getSize()) {
       // generate at least one instruction for constructor call

@@ -85,6 +85,7 @@ checkboxes
 checkstyle
 checksum
 chmod
+clangd
 classloader
 classloading
 classpath
@@ -548,6 +549,7 @@ preprocessor
 preprocessors
 println
 processlist
+profileable
 profiler
 progressbar
 proto

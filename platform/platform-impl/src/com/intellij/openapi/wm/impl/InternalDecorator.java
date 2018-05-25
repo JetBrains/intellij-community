@@ -3,6 +3,7 @@
  */
 package com.intellij.openapi.wm.impl;
 
+import com.intellij.icons.AllIcons;
 import com.intellij.ide.actions.ContextHelpAction;
 import com.intellij.ide.actions.ResizeToolWindowAction;
 import com.intellij.ide.actions.ToggleToolbarAction;
@@ -93,9 +94,7 @@ public final class InternalDecorator extends JPanel implements Queryable, DataPr
     setFocusable(false);
     setFocusTraversalPolicy(new LayoutFocusTraversalPolicy());
 
-    myHeader = new ToolWindowHeader(toolWindow, info, () -> {
-      return /*createGearPopupGroup()*/createPopupGroup(true);
-    }) {
+    myHeader = new ToolWindowHeader(toolWindow, () -> createPopupGroup(true)) {
       @Override
       protected boolean isActive() {
         return myToolWindow.isActive();
@@ -382,6 +381,9 @@ public final class InternalDecorator extends JPanel implements Queryable, DataPr
 
   public final ActionGroup createPopupGroup(boolean skipHideAction) {
     final DefaultActionGroup group = createGearPopupGroup();
+    if (myInfo == null) {
+      return group;
+    }
     if (!ToolWindowId.PREVIEW.equals(myInfo.getId())) {
       group.add(myToggleContentUiTypeAction);
     }
@@ -433,7 +435,13 @@ public final class InternalDecorator extends JPanel implements Queryable, DataPr
             return helpId;
           }
         }
-        return myToolWindow.getHelpId();
+
+        String id = myToolWindow.getHelpId();
+        if (id != null) {
+          return id;
+        }
+
+        return super.getHelpId(dataContext);
       }
 
       @Override
@@ -446,39 +454,46 @@ public final class InternalDecorator extends JPanel implements Queryable, DataPr
   }
 
   private DefaultActionGroup createGearPopupGroup() {
-    final DefaultActionGroup group = new DefaultActionGroup();
+    return new GearActionGroup();
+  }
 
-    if (myAdditionalGearActions != null) {
-      addSorted(group, myAdditionalGearActions);
-      group.addSeparator();
-    }
-    group.addAction(myToggleToolbarGroup).setAsSecondary(true);
-    if (myInfo.isDocked()) {
-      group.add(myToggleAutoHideModeAction);
-      group.add(myToggleDockModeAction);
-      group.add(myToggleFloatingModeAction);
-      group.add(myToggleWindowedModeAction);
-      group.add(myToggleSideModeAction);
-    }
-    else if (myInfo.isFloating()) {
-      group.add(myToggleAutoHideModeAction);
-      group.add(myToggleFloatingModeAction);
-      group.add(myToggleWindowedModeAction);
-    }
-    else if (myInfo.isWindowed()) {
-      group.add(myToggleFloatingModeAction);
-      group.add(myToggleWindowedModeAction);
-    }
-    else if (myInfo.isSliding()) {
-      if (!ToolWindowId.PREVIEW.equals(myInfo.getId())) {
-        group.add(myToggleDockModeAction);
+  private class GearActionGroup extends DefaultActionGroup {
+    public GearActionGroup() {
+      getTemplatePresentation().setIcon(AllIcons.General.GearPlain);
+      getTemplatePresentation().setText("Show Options Menu");
+      if (myInfo == null) return;
+
+      if (myAdditionalGearActions != null) {
+        addSorted(this, myAdditionalGearActions);
+        addSeparator();
       }
-      group.add(myToggleFloatingModeAction);
-      group.add(myToggleWindowedModeAction);
-      group.add(myToggleSideModeAction);
+      addAction(myToggleToolbarGroup).setAsSecondary(true);
+      if (myInfo.isDocked()) {
+        add(myToggleAutoHideModeAction);
+        add(myToggleDockModeAction);
+        add(myToggleFloatingModeAction);
+        add(myToggleWindowedModeAction);
+        add(myToggleSideModeAction);
+      }
+      else if (myInfo.isFloating()) {
+        add(myToggleAutoHideModeAction);
+        add(myToggleFloatingModeAction);
+        add(myToggleWindowedModeAction);
+      }
+      else if (myInfo.isWindowed()) {
+        add(myToggleFloatingModeAction);
+        add(myToggleWindowedModeAction);
+      }
+      else if (myInfo.isSliding()) {
+        if (!ToolWindowId.PREVIEW.equals(myInfo.getId())) {
+          add(myToggleDockModeAction);
+        }
+        add(myToggleFloatingModeAction);
+        add(myToggleWindowedModeAction);
+        add(myToggleSideModeAction);
+      }
+      add(myHideStripeButtonAction);
     }
-    group.add(myHideStripeButtonAction);
-    return group;
   }
 
   private static void addSorted(DefaultActionGroup main, ActionGroup group) {

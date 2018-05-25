@@ -153,6 +153,14 @@ public class UpdateSettings implements PersistentStateComponent<UpdateOptions>, 
     return myState.isUseSecureConnection() && NetUtils.isSniEnabled();
   }
 
+  public boolean isThirdPartyPluginsAllowed() {
+    return myState.isThirdPartyPluginsAllowed();
+  }
+
+  public void setThirdPartyPluginsAllowed(boolean value) {
+    myState.setThirdPartyPluginsAllowed(value);
+  }
+
   //<editor-fold desc="Deprecated stuff.">
   /** @deprecated use {@link #getSelectedChannelStatus()} (to be removed in IDEA 2018) */
   @SuppressWarnings("unused")

@@ -188,6 +188,12 @@ public void testConvertToObjectStream() {
     checkResultByFile("/" + getTestName(false) + "-out.java");
   }
 
+  public void testNoUnrelatedMethodSuggestion() {
+    configureByTestName();
+    myFixture.complete(CompletionType.SMART, 1);
+    assertOrderedEquals(myFixture.getLookupElementStrings(), "this");
+  }
+
   public void testInferFromReturnTypeWhenCompleteInsideArgList() {
     configureByTestName();
     myFixture.complete(CompletionType.SMART, 1);
@@ -275,4 +281,8 @@ public void testConvertToObjectStream() {
     myFixture.assertPreferredCompletionItems(2, "SortedMap", "NavigableMap", "TreeMap", "ConcurrentNavigableMap", "ConcurrentSkipListMap");
   }
 
+  public void testConsiderClassProximityForClassLiterals() {
+    configureByTestName();
+    myFixture.assertPreferredCompletionItems(0, "String.class");
+  }
 }

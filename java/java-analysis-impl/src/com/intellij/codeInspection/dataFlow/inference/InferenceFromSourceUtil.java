@@ -1,7 +1,7 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInspection.dataFlow.inference;
 
-import com.intellij.codeInspection.dataFlow.ControlFlowAnalyzer;
+import com.intellij.codeInspection.dataFlow.JavaMethodContractUtil;
 import com.intellij.codeInspection.dataFlow.StandardMethodContract;
 import com.intellij.openapi.roots.FileIndexFacade;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -58,7 +58,7 @@ public class InferenceFromSourceUtil {
   public static boolean suppressNullable(PsiMethod method) {
     if (method.getParameterList().isEmpty()) return false;
 
-    for (StandardMethodContract contract : ControlFlowAnalyzer.getMethodContracts(method)) {
+    for (StandardMethodContract contract : JavaMethodContractUtil.getMethodContracts(method)) {
       if (contract.getReturnValue().isNull()) {
         return true;
       }

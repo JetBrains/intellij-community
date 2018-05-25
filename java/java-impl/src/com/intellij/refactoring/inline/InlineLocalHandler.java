@@ -141,17 +141,18 @@ public class InlineLocalHandler extends JavaInlineActionHandler {
       }
     }
     catch (RuntimeException e) {
-      Throwable cause = e.getCause();
-      if (cause instanceof AnalysisCanceledException) {
-        CommonRefactoringUtil.showErrorHint(project, editor, RefactoringBundle.getCannotRefactorMessage(RefactoringBundle.message("extract.method.control.flow.analysis.failed")),
-                                            REFACTORING_NAME, HelpID.INLINE_VARIABLE);
-        return;
-      }
-      throw e;
+      processWrappedAnalysisCanceledException(project, editor, e);
+      return;
     }
 
     List<PsiElement> refsToInlineList = new ArrayList<>();
-    Collections.addAll(refsToInlineList, DefUseUtil.getRefs(containerBlock, local, defToInline));
+    try {
+      Collections.addAll(refsToInlineList, DefUseUtil.getRefs(containerBlock, local, defToInline));
+    }
+    catch (RuntimeException e) {
+      processWrappedAnalysisCanceledException(project, editor, e);
+      return;      
+    }
     for (PsiElement innerClassUsage : innerClassUsages) {
       if (!refsToInlineList.contains(innerClassUsage)) {
         refsToInlineList.add(innerClassUsage);
@@ -306,6 +307,19 @@ public class InlineLocalHandler extends JavaInlineActionHandler {
     };
 
     CommandProcessor.getInstance().executeCommand(project, () -> PostprocessReformattingAspect.getInstance(project).postponeFormattingInside(runnable), RefactoringBundle.message("inline.command", localName), null);
+  }
+
+  private static void processWrappedAnalysisCanceledException(@NotNull Project project,
+                                                              Editor editor,
+                                                              RuntimeException e) {
+    Throwable cause = e.getCause();
+    if (cause instanceof AnalysisCanceledException) {
+      CommonRefactoringUtil.showErrorHint(project, editor, 
+                                          RefactoringBundle.getCannotRefactorMessage(RefactoringBundle.message("extract.method.control.flow.analysis.failed")),
+                                          REFACTORING_NAME, HelpID.INLINE_VARIABLE);
+      return;
+    }
+    throw e;
   }
 
   private static void deleteInitializer(@NotNull PsiExpression defToInline) {

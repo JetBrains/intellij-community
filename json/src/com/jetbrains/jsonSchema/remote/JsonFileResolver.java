@@ -2,6 +2,7 @@
 package com.jetbrains.jsonSchema.remote;
 
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -11,6 +12,7 @@ import com.intellij.openapi.vfs.impl.http.RemoteFileInfo;
 import com.intellij.openapi.vfs.impl.http.RemoteFileState;
 import com.intellij.util.Url;
 import com.intellij.util.Urls;
+import com.jetbrains.jsonSchema.JsonSchemaCatalogProjectConfiguration;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -19,19 +21,28 @@ import java.io.File;
 import static com.jetbrains.jsonSchema.JsonSchemaConfigurable.isHttpPath;
 
 public class JsonFileResolver {
+  public static boolean isRemoteEnabled(Project project) {
+    return !ApplicationManager.getApplication().isUnitTestMode() &&
+           JsonSchemaCatalogProjectConfiguration.getInstance(project).isRemoteActivityEnabled();
+  }
+
   @Nullable
-  public static VirtualFile urlToFile(@NotNull String urlString) {
+  public static VirtualFile urlToFile(@NotNull String urlString, Project project) {
+    boolean isHttpPath = isHttpPath(urlString);
+
+    // don't resolve http paths in tests
+    if (isHttpPath && !isRemoteEnabled(project)) return null;
+
     return VirtualFileManager.getInstance().findFileByUrl(urlString);
   }
 
   @Nullable
-  public static VirtualFile resolveSchemaByReference(@Nullable VirtualFile currentFile, @Nullable String schemaUrl) {
+  public static VirtualFile resolveSchemaByReference(@Nullable VirtualFile currentFile,
+                                                     @Nullable String schemaUrl,
+                                                     Project project) {
     if (schemaUrl == null) return null;
 
     boolean isHttpPath = isHttpPath(schemaUrl);
-
-    // don't resolve http paths in tests
-    if (isHttpPath && ApplicationManager.getApplication().isUnitTestMode()) return null;
 
     if (StringUtil.startsWithChar(schemaUrl, '.') || !isHttpPath) {
       // relative path
@@ -40,7 +51,7 @@ public class JsonFileResolver {
     }
 
     if (schemaUrl != null) {
-      VirtualFile virtualFile = urlToFile(schemaUrl);
+      VirtualFile virtualFile = urlToFile(schemaUrl, project);
       // validate the URL before returning the file
       if (virtualFile instanceof HttpVirtualFile) {
         String url = virtualFile.getUrl();

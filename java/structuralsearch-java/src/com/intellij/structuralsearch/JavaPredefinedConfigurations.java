@@ -158,7 +158,7 @@ class JavaPredefinedConfigurations {
 
       createSearchTemplateInfo(
         SSRBundle.message("predefined.configuration.class.with.parameterless.constructors"),
-        "class 'Class {\n  '_Method{0,0}:[ script( \"__context__.constructor\" ) ]('_ParameterType '_Parameter+);\n}",
+        "class 'Class {\n  '_Method{0,0}('_ParameterType '_Parameter+);\n}",
         CLASS_TYPE
       ),
 

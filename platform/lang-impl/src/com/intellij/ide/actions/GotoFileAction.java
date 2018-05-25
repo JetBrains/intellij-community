@@ -17,7 +17,11 @@ package com.intellij.ide.actions;
 
 import com.intellij.featureStatistics.FeatureUsageTracker;
 import com.intellij.ide.IdeBundle;
-import com.intellij.ide.util.gotoByName.*;
+import com.intellij.ide.actions.searcheverywhere.FileSearchEverywhereContributor;
+import com.intellij.ide.util.gotoByName.ChooseByNameFilter;
+import com.intellij.ide.util.gotoByName.ChooseByNamePopup;
+import com.intellij.ide.util.gotoByName.GotoFileConfiguration;
+import com.intellij.ide.util.gotoByName.GotoFileModel;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.application.ApplicationManager;
@@ -27,6 +31,7 @@ import com.intellij.openapi.fileTypes.FileTypeManager;
 import com.intellij.openapi.fileTypes.FileTypes;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.pom.Navigatable;
 import com.intellij.psi.PsiFile;
@@ -47,6 +52,15 @@ import java.util.List;
  */
 public class GotoFileAction extends GotoActionBase implements DumbAware {
   public static final String ID = "GotoFile";
+
+  @Override
+  public void actionPerformed(@NotNull AnActionEvent e) {
+    if (Registry.is("new.search.everywhere")) {
+      showInSearchEverywherePopup(FileSearchEverywhereContributor.class.getSimpleName(), e);
+    } else {
+      super.actionPerformed(e);
+    }
+  }
 
   @Override
   public void gotoActionPerformed(AnActionEvent e) {

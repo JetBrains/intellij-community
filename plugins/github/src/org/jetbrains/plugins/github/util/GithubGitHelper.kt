@@ -16,7 +16,8 @@ import org.jetbrains.plugins.github.authentication.GithubAuthenticationManager
  * Utilities for Github-Git interactions
  */
 class GithubGitHelper(private val githubSettings: GithubSettings,
-                      private val authenticationManager: GithubAuthenticationManager) {
+                      private val authenticationManager: GithubAuthenticationManager,
+                      private val migrationHelper: GithubAccountsMigrationHelper) {
   private val DEFAULT_SERVER = GithubServerPath(GithubApiUtil.DEFAULT_GITHUB_HOST)
 
   fun getRemoteUrl(server: GithubServerPath, repoPath: GithubFullPath): String {
@@ -43,7 +44,9 @@ class GithubGitHelper(private val githubSettings: GithubSettings,
   private fun isRemoteUrlAccessible(url: String) = authenticationManager.getAccounts().find { it.server.matches(url) } != null
 
   fun getPossibleRepositories(repository: GitRepository): Set<GithubRepositoryPath> {
-    val registeredServers = (authenticationManager.getAccounts().map { it.server } + DEFAULT_SERVER)
+    val registeredServers = mutableSetOf(DEFAULT_SERVER)
+    migrationHelper.getOldServer()?.run(registeredServers::add)
+    authenticationManager.getAccounts().mapTo(registeredServers) { it.server }
     val repositoryPaths = mutableSetOf<GithubRepositoryPath>()
     for (url in repository.remotes.map { it.urls }.flatten()) {
       registeredServers.filter { it.matches(url) }

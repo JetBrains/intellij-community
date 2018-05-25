@@ -38,7 +38,8 @@ public class MacIntelliJTextBorder extends DarculaTextBorder {
     return BW.getFloat();
   }
 
-  protected Color getOutlineColor(boolean enabled) {
+  @Override
+  protected Color getOutlineColor(boolean enabled, boolean focused) {
     return OUTLINE_COLOR;
   }
 

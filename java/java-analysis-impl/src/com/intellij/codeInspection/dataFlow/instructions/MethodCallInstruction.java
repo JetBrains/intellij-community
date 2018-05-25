@@ -197,7 +197,7 @@ public class MethodCallInstruction extends Instruction {
 
   private boolean isPureCall() {
     if (myTargetMethod != null) {
-      return ControlFlowAnalyzer.isPure(myTargetMethod) || SpecialField.findSpecialField(myTargetMethod) != null;
+      return JavaMethodContractUtil.isPure(myTargetMethod) || SpecialField.findSpecialField(myTargetMethod) != null;
     }
     if (!(myContext instanceof PsiNewExpression)) return false;
     PsiNewExpression newExpression = (PsiNewExpression)myContext;
@@ -209,7 +209,7 @@ public class MethodCallInstruction extends Instruction {
     Set<PsiClass> visited = new HashSet<>();
     while (true) {
       for (PsiMethod ctor : clazz.getConstructors()) {
-        if(ctor.getParameterList().isEmpty()) return ControlFlowAnalyzer.isPure(ctor);
+        if(ctor.getParameterList().isEmpty()) return JavaMethodContractUtil.isPure(ctor);
       }
       clazz = clazz.getSuperClass();
       if (clazz == null || !visited.add(clazz)) return false;

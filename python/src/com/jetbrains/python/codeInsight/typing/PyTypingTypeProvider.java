@@ -81,14 +81,12 @@ public class PyTypingTypeProvider extends PyTypeProviderBase {
   private static final String COUNTER = "typing.Counter";
   private static final String DEQUE = "typing.Deque";
   private static final String TUPLE = "typing.Tuple";
-  private static final String CLASS_VAR = "typing.ClassVar";
-  private static final String TYPE_VAR = "typing.TypeVar";
+  public static final String CLASS_VAR = "typing.ClassVar";
+  public static final String TYPE_VAR = "typing.TypeVar";
   private static final String CHAIN_MAP = "typing.ChainMap";
-  private static final String UNION = "typing.Union";
-  private static final String OPTIONAL = "typing.Optional";
-  private static final String CLASSVAR = "typing.ClassVar";
-
-  public static final String NAMEDTUPLE_SIMPLE = "NamedTuple";
+  public static final String UNION = "typing.Union";
+  public static final String OPTIONAL = "typing.Optional";
+  public static final String NO_RETURN = "typing.NoReturn";
 
   private static final String PY2_FILE_TYPE = "typing.BinaryIO";
   private static final String PY3_BINARY_FILE_TYPE = "typing.BinaryIO";
@@ -131,7 +129,7 @@ public class PyTypingTypeProvider extends PyTypeProviderBase {
    * since they are not type aliases already and in typing.pyi are assigned to
    * some synthetic values.
    */
-  private static final ImmutableSet<String> OPAQUE_NAMES = ImmutableSet.<String>builder()
+  public static final ImmutableSet<String> OPAQUE_NAMES = ImmutableSet.<String>builder()
     .add(PyKnownDecoratorUtil.KnownDecorator.TYPING_OVERLOAD.name())
     .add(ANY)
     .add(TYPE_VAR)
@@ -152,6 +150,7 @@ public class PyTypingTypeProvider extends PyTypeProviderBase {
     .add(COUNTER)
     .add(DEQUE)
     .add(CHAIN_MAP)
+    .add(NO_RETURN)
     .build();
 
   @Nullable
@@ -165,7 +164,7 @@ public class PyTypingTypeProvider extends PyTypeProviderBase {
     }
     // Check for the exact name in advance for performance reasons
     if ("Protocol".equals(referenceExpression.getName())) {
-      if (resolveToQualifiedNames(referenceExpression, context).contains(PROTOCOL)) {
+      if (ContainerUtil.exists(resolveToQualifiedNames(referenceExpression, context), n -> PROTOCOL.equals(n) || PROTOCOL_EXT.equals(n))) {
         return createTypingProtocolType(referenceExpression);
       }
     }
@@ -176,7 +175,12 @@ public class PyTypingTypeProvider extends PyTypeProviderBase {
       }
     }
 
-    return getNewTypeForReference(referenceExpression, context);
+    final PyType newType = getNewTypeForReference(referenceExpression, context);
+    if (newType != null) {
+      return newType;
+    }
+
+    return getTypeVarTypeForCallee(referenceExpression, context);
   }
 
   @Override
@@ -293,6 +297,32 @@ public class PyTypingTypeProvider extends PyTypeProviderBase {
   @NotNull
   public static PyType createTypingCallableType(@NotNull PsiElement anchor) {
     return new PyCustomType(CALLABLE, null, false, true, PyBuiltinCache.getInstance(anchor).getObjectType());
+  }
+
+  @Nullable
+  private static PyType getTypeVarTypeForCallee(@NotNull PyReferenceExpression referenceExpression, @NotNull TypeEvalContext context) {
+    if (PyCallExpressionNavigator.getPyCallExpressionByCallee(referenceExpression) == null) return null;
+
+    if (resolveToQualifiedNames(referenceExpression, context).contains(TYPE_VAR)) {
+      final List<PyCallableParameter> parameters = new ArrayList<>();
+
+      final PyBuiltinCache builtinCache = PyBuiltinCache.getInstance(referenceExpression);
+      final LanguageLevel languageLevel = LanguageLevel.forElement(referenceExpression);
+      final PyElementGenerator generator = PyElementGenerator.getInstance(referenceExpression.getProject());
+
+      parameters.add(PyCallableParameterImpl.nonPsi("name", builtinCache.getStringType(languageLevel)));
+      parameters.add(PyCallableParameterImpl.positionalNonPsi("constraints", builtinCache.getTypeType()));
+      parameters.add(PyCallableParameterImpl.nonPsi("bound", builtinCache.getTypeType(), generator.createEllipsis()));
+
+      final PyClassType boolType = builtinCache.getBoolType();
+      final PyExpression falseValue = generator.createExpressionFromText(languageLevel, "False");
+      parameters.add(PyCallableParameterImpl.nonPsi("covariant", boolType, falseValue));
+      parameters.add(PyCallableParameterImpl.nonPsi("contravariant", boolType, falseValue));
+
+      return new PyCallableTypeImpl(parameters, null);
+    }
+
+    return null;
   }
 
   private static boolean omitFirstParamInTypeComment(@NotNull PyFunction func, @NotNull PyFunctionTypeAnnotation annotation) {
@@ -435,16 +465,18 @@ public class PyTypingTypeProvider extends PyTypeProviderBase {
   public Ref<PyType> getReferenceType(@NotNull PsiElement referenceTarget, @NotNull TypeEvalContext context, @Nullable PsiElement anchor) {
     if (referenceTarget instanceof PyTargetExpression) {
       final PyTargetExpression target = (PyTargetExpression)referenceTarget;
+      final String targetQName = target.getQualifiedName();
+
       // Depends on typing.Generic defined as a target expression
-      if (GENERIC.equals(target.getQualifiedName())) {
+      if (GENERIC.equals(targetQName)) {
         return Ref.create(createTypingGenericType(target));
       }
       // Depends on typing.Protocol defined as a target expression
-      if (PROTOCOL.equals(target.getQualifiedName())) {
+      if (PROTOCOL.equals(targetQName) || PROTOCOL_EXT.equals(targetQName)) {
         return Ref.create(createTypingProtocolType(target));
       }
       // Depends on typing.Callable defined as a target expression
-      if (CALLABLE.equals(target.getQualifiedName())) {
+      if (CALLABLE.equals(targetQName)) {
         return Ref.create(createTypingCallableType(referenceTarget));
       }
 
@@ -461,6 +493,14 @@ public class PyTypingTypeProvider extends PyTypeProviderBase {
       final Ref<PyType> annotatedType = getTypeFromTargetExpressionAnnotation(target, context);
       if (annotatedType != null) {
         return annotatedType;
+      }
+
+      final PyExpression assignedValue = PyTypingAliasStubType.getAssignedValueStubLike(target);
+      if (assignedValue != null) {
+        final PyType type = getGenericTypeFromTypeVar(assignedValue, new Context(context));
+        if (type != null) {
+          return Ref.create(type);
+        }
       }
 
       final String name = target.getReferencedName();
@@ -701,6 +741,11 @@ public class PyTypingTypeProvider extends PyTypeProviderBase {
       }
     }
     return false;
+  }
+
+  @Nullable
+  public static Ref<PyType> getType(@NotNull PyExpression expression, @NotNull TypeEvalContext context) {
+    return getType(expression, new Context(context));
   }
 
   @Nullable
@@ -1298,16 +1343,6 @@ public class PyTypingTypeProvider extends PyTypeProviderBase {
     final PyClass asyncGenerator = as(PyResolveImportUtil.resolveTopLevelMember(QualifiedName.fromDottedString(ASYNC_GENERATOR),
                                                                                 PyResolveImportUtil.fromFoothold(anchor)), PyClass.class);
     return asyncGenerator != null ? new PyCollectionTypeImpl(asyncGenerator, false, Arrays.asList(elementType, null)) : null;
-  }
-
-  /**
-   * @deprecated Use {@link PyTypingTypeProvider#coroutineOrGeneratorElementType(PyType)} instead.
-   * This method will be removed in 2018.2.
-   */
-  @Nullable
-  @Deprecated
-  public static Ref<PyType> coroutineOrGeneratorElementType(@Nullable PyType coroutineOrGeneratorType, @NotNull TypeEvalContext context) {
-    return coroutineOrGeneratorElementType(coroutineOrGeneratorType);
   }
 
   @Nullable

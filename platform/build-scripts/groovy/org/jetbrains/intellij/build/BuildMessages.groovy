@@ -1,6 +1,4 @@
-/*
- * Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.intellij.build
 
 import groovy.transform.CompileStatic
@@ -36,6 +34,8 @@ interface BuildMessages {
   void progress(String message)
 
   void buildStatus(String message)
+
+  void setParameter(String parameterName, String value)
 
   def <V> V block(String blockName, Closure<V> body)
 

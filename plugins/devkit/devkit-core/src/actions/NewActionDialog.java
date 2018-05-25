@@ -26,11 +26,14 @@ import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.TextFieldWithBrowseButton;
 import com.intellij.openapi.ui.ValidationInfo;
 import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.PsiNameHelper;
 import com.intellij.ui.ColoredListCellRenderer;
 import com.intellij.ui.ListSpeedSearch;
 import com.intellij.ui.SimpleTextAttributes;
+import com.intellij.util.ExceptionUtil;
 import com.intellij.util.Function;
+import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.ui.accessibility.ScreenReader;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -74,11 +77,12 @@ public class NewActionDialog extends DialogWrapper implements ActionData {
   private final ShortcutTextField mySecondKeystrokeEdit;
   private TextFieldWithBrowseButton myIconEdit;
   private final Project myProject;
+  private final PsiDirectory myDirectory;
   private ButtonGroup myAnchorButtonGroup;
 
 
   public NewActionDialog(@NotNull PsiClass actionClass) {
-    this(actionClass.getProject());
+    this(actionClass.getProject(), null);
 
     myActionClassNameEdit.setText(actionClass.getQualifiedName());
     myActionClassNameEdit.setEditable(false);
@@ -88,9 +92,10 @@ public class NewActionDialog extends DialogWrapper implements ActionData {
     }
   }
 
-  NewActionDialog(Project project) {
+  NewActionDialog(Project project, PsiDirectory directory) {
     super(project, false);
     myProject = project;
+    myDirectory = directory;
     init();
     setTitle(DevKitBundle.message("new.action.dialog.title"));
     ActionManager actionManager = ActionManager.getInstance();
@@ -286,13 +291,32 @@ public class NewActionDialog extends DialogWrapper implements ActionData {
            (!myActionClassNameEdit.isEditable() || PsiNameHelper.getInstance(myProject).isQualifiedName(myActionClassNameEdit.getText()));
   }
 
+  @Nullable
+  private String checkCanCreateActionClass() {
+    if (myDirectory != null) {
+      try {
+        DevkitActionsUtil.checkCanCreateClass(myDirectory, myActionClassNameEdit.getText());
+      } catch (IncorrectOperationException e) {
+        String exceptionMessage = ExceptionUtil.getMessage(e);
+        return exceptionMessage != null ? exceptionMessage : DevKitBundle.message("new.action.cannot.create.class");
+      }
+    }
+    return null;
+  }
+
+  @Override
+  public void setValidationDelay(int delay) {
+    super.setValidationDelay(delay);
+  }
+
   @NotNull
   @Override
   protected List<ValidationInfo> doValidateAll() {
     boolean actionIdValid = isActionIdValid();
     boolean actionNameValid = isActionNameValid();
     boolean actionClassNameValid = isActionClassNameValid();
-    if (actionIdValid && actionNameValid && actionClassNameValid) {
+    String createClassErrorMessage = checkCanCreateActionClass();
+    if (actionIdValid && actionNameValid && actionClassNameValid && createClassErrorMessage == null) {
       return Collections.emptyList();
     }
 
@@ -305,6 +329,9 @@ public class NewActionDialog extends DialogWrapper implements ActionData {
     }
     if (!actionNameValid) {
       result.add(new ValidationInfo(DevKitBundle.message("new.action.invalid.name"), myActionNameEdit));
+    }
+    if (createClassErrorMessage != null) {
+      result.add(new ValidationInfo(createClassErrorMessage, myActionClassNameEdit));
     }
     return result;
   }

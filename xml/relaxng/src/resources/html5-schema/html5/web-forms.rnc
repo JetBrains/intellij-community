@@ -168,6 +168,7 @@ datatypes w = "http://whattf.org/datatype-draft"
 			|	common.attrs.aria.role.menuitem
 			|	common.attrs.aria.role.menuitemcheckbox
 			|	common.attrs.aria.role.menuitemradio
+			|	common.attrs.aria.role.option
 			|	common.attrs.aria.role.radio
 			|	common.attrs.aria.role.switch
 			)?
@@ -460,6 +461,7 @@ datatypes w = "http://whattf.org/datatype-draft"
 			|	common.attrs.aria.role.menuitem
 			|	common.attrs.aria.role.menuitemcheckbox
 			|	common.attrs.aria.role.menuitemradio
+			|	common.attrs.aria.role.option
 			|	common.attrs.aria.role.radio
 			|	common.attrs.aria.role.tab
 			)?
@@ -487,6 +489,7 @@ datatypes w = "http://whattf.org/datatype-draft"
 			|	common.attrs.aria.role.menuitem
 			|	common.attrs.aria.role.menuitemcheckbox
 			|	common.attrs.aria.role.menuitemradio
+			|	common.attrs.aria.role.option
 			|	common.attrs.aria.role.radio
 			|	common.attrs.aria.role.switch
 			)?
@@ -514,6 +517,7 @@ datatypes w = "http://whattf.org/datatype-draft"
 			|	common.attrs.aria.role.menuitem
 			|	common.attrs.aria.role.menuitemcheckbox
 			|	common.attrs.aria.role.menuitemradio
+			|	common.attrs.aria.role.option
 			|	common.attrs.aria.role.radio
 			|	common.attrs.aria.role.switch
 			|	common.attrs.aria.role.tab

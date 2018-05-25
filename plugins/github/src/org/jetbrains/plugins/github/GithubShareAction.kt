@@ -65,6 +65,7 @@ import org.jetbrains.plugins.github.authentication.GithubAuthenticationManager
 import org.jetbrains.plugins.github.authentication.accounts.GithubAccount
 import org.jetbrains.plugins.github.authentication.accounts.GithubAccountInformationProvider
 import org.jetbrains.plugins.github.ui.GithubShareDialog
+import org.jetbrains.plugins.github.util.GithubAccountsMigrationHelper
 import org.jetbrains.plugins.github.util.GithubGitHelper
 import org.jetbrains.plugins.github.util.GithubNotifications
 import org.jetbrains.plugins.github.util.GithubUtil
@@ -113,6 +114,7 @@ class GithubShareAction : DumbAwareAction("Share Project on GitHub", "Easily sha
 
       val gitRepository = GithubGitHelper.findGitRepository(project, file)
 
+      if (!service<GithubAccountsMigrationHelper>().migrate(project)) return
       val authManager = service<GithubAuthenticationManager>()
       if (!authManager.ensureHasAccounts(project)) return
       val accounts = authManager.getAccounts()

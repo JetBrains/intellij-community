@@ -331,6 +331,7 @@ public class ProjectManagerImpl extends ProjectManagerEx implements Disposable {
   public synchronized Project getDefaultProject() {
     LOG.assertTrue(!myDefaultProjectWasDisposed, "Default project has been already disposed!");
     if (myDefaultProject == null) {
+      LOG.assertTrue(!ApplicationManager.getApplication().isDisposeInProgress(), "Application being disposed!");
       ProgressManager.getInstance().executeNonCancelableSection(() -> {
         try {
           myDefaultProject = createProject(null, "", true);

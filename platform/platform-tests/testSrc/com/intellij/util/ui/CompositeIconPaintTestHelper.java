@@ -5,6 +5,7 @@ import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.ScalableIcon;
 import com.intellij.ui.RestoreScaleRule;
+import com.intellij.util.ui.JBUI.ScaleContext;
 import com.intellij.util.ui.paint.ImageComparator;
 import org.junit.ClassRule;
 import org.junit.rules.ExternalResource;
@@ -42,7 +43,7 @@ public abstract class CompositeIconPaintTestHelper {
 
   private void test(int iconScale, int usrScale, int sysScale) {
     JBUI.setUserScaleFactor(usrScale);
-    JBUI.ScaleContext ctx = JBUI.ScaleContext.create(SYS_SCALE.of(sysScale)/*, USR_SCALE.of(usrScale)*/); // USR_SCALE is set automatically
+    ScaleContext ctx = ScaleContext.create(SYS_SCALE.of(sysScale)/*, USR_SCALE.of(usrScale)*/); // USR_SCALE is set automatically
 
     String[] cellIconsPaths = getCellIconsPaths();
     int count = cellIconsPaths.length;
@@ -63,16 +64,16 @@ public abstract class CompositeIconPaintTestHelper {
     test(scaledIcon, ctx);
   }
 
-  private void test(Icon icon, JBUI.ScaleContext ctx) {
+  private void test(Icon icon, ScaleContext ctx) {
     Pair<BufferedImage, Graphics2D> pair = createImageAndGraphics(ctx.getScale(SYS_SCALE), icon.getIconWidth(), icon.getIconHeight());
     BufferedImage iconImage = pair.first;
     Graphics2D g2d = pair.second;
 
     icon.paintIcon(null, g2d, 0, 0);
 
-    if (shouldSaveGoldImage()) saveImage(iconImage, getGoldImagePath((int)ctx.getScale(PIX_SCALE)));
+    if (shouldSaveGoldImage()) saveImage(iconImage, getGoldImagePath(ctx));
 
-    BufferedImage goldImage = loadImage(getGoldImagePath((int)ctx.getScale(PIX_SCALE)));
+    BufferedImage goldImage = loadImage(getGoldImagePath(ctx));
 
     ImageComparator.compareAndAssert(
       new ImageComparator.AASmootherComparator(0.1, 0.1, new Color(0, 0, 0, 0)), goldImage, iconImage, null);
@@ -82,7 +83,7 @@ public abstract class CompositeIconPaintTestHelper {
 
   protected abstract String[] getCellIconsPaths();
 
-  protected abstract String getGoldImagePath(int scale);
+  protected abstract String getGoldImagePath(ScaleContext ctx);
 
   protected abstract boolean shouldSaveGoldImage();
 }

@@ -4,6 +4,6 @@ package com.intellij.ide.ui.laf.darcula.ui;
 public class DarculaRadioButtonBorder extends DarculaCheckBoxBorder {
   @Override
   protected String borderWidthPropertyName() {
-    return "RadioButton.border.width";
+    return "RadioButton.borderInsets";
   }
 }

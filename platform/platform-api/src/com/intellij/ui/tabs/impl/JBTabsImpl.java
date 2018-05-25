@@ -2481,6 +2481,8 @@ public class JBTabsImpl extends JComponent
 
   @NotNull
   private ActionCallback removeTab(TabInfo info, @Nullable TabInfo forcedSelectionTransfer, boolean transferFocus, boolean isDropTarget) {
+    if (myPopupInfo == info) myPopupInfo = null;
+
     if (!isDropTarget) {
       if (info == null || !getTabs().contains(info)) return ActionCallback.DONE;
     }

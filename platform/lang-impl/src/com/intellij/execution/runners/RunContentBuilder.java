@@ -146,7 +146,6 @@ public class RunContentBuilder extends RunTab {
     actionGroup.add(myUi.getOptions().getLayoutActions());
     actionGroup.addSeparator();
     actionGroup.add(PinToolwindowTabAction.getPinAction());
-    actionGroup.add(new CloseAction(myEnvironment.getExecutor(), contentDescriptor, myProject));
     return actionGroup;
   }
 

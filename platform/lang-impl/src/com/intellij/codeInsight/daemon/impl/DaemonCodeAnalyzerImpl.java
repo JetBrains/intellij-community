@@ -404,7 +404,7 @@ public class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzerEx implements Pers
         throw new IllegalStateException("You must not perform PSI modifications from inside highlighting");
       });
     if (!canChangeDocument) {
-      myProject.getMessageBus().connect(disposable).subscribe(DaemonCodeAnalyzer.DAEMON_EVENT_TOPIC, new DaemonListenerAdapter() {
+      myProject.getMessageBus().connect(disposable).subscribe(DaemonCodeAnalyzer.DAEMON_EVENT_TOPIC, new DaemonListener() {
         @Override
         public void daemonCancelEventOccurred(@NotNull String reason) {
           throw new IllegalStateException("You must not cancel daemon inside highlighting test: "+reason);
@@ -793,9 +793,8 @@ public class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzerEx implements Pers
         // we'll restart when the write action finish
         return;
       }
-      Editor activeEditor = FileEditorManager.getInstance(project).getSelectedTextEditor();
       final PsiDocumentManagerBase documentManager = (PsiDocumentManagerBase)dca.myPsiDocumentManager;
-      if (documentManager.hasUncommitedDocuments() || activeEditor==null) {
+      if (documentManager.hasUncommitedDocuments()) {
         // restart when everything committed
         AutoPopupController.runTransactionWithEverythingCommitted(myProject, this);
         return;

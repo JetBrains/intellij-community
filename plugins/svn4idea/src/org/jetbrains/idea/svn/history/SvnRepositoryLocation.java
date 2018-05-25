@@ -1,44 +1,50 @@
-// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.svn.history;
 
 import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.RepositoryLocation;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.svn.SvnUtil;
 import org.jetbrains.idea.svn.api.Url;
 import org.jetbrains.idea.svn.commandLine.SvnBindException;
 
-/**
- * @author yole
- */
 public class SvnRepositoryLocation implements RepositoryLocation {
 
-  private final String myURL;
+  private final String myUrlValue;
+  @Nullable private final Url myUrl;
   @Nullable private final FilePath myRoot;
 
   public SvnRepositoryLocation(final String url) {
+    myUrl = null;
+    myUrlValue = url;
+    myRoot = null;
+  }
+
+  public SvnRepositoryLocation(@NotNull Url url) {
     this(url, null);
   }
 
-  public SvnRepositoryLocation(String url, @Nullable FilePath root) {
-    myURL = url;
+  public SvnRepositoryLocation(@NotNull Url url, @Nullable FilePath root) {
+    myUrl = url;
+    myUrlValue = url.toString();
     myRoot = root;
   }
 
   public String toString() {
-    return myURL;
+    return myUrlValue;
   }
 
   public String toPresentableString() {
-    return myURL;
+    return myUrlValue;
   }
 
   public String getURL() {
-    return myURL;
+    return myUrlValue;
   }
 
   public String getKey() {
-    return myURL;
+    return myUrlValue;
   }
 
   @Nullable
@@ -54,7 +60,8 @@ public class SvnRepositoryLocation implements RepositoryLocation {
   public void onAfterBatch() {
   }
 
+  @NotNull
   public Url toSvnUrl() throws SvnBindException {
-    return SvnUtil.createUrl(myURL);
+    return myUrl != null ? myUrl : SvnUtil.createUrl(myUrlValue);
   }
 }

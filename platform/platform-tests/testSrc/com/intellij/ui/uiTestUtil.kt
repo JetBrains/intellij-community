@@ -10,22 +10,28 @@ import com.intellij.rt.execution.junit.FileComparisonFailure
 import com.intellij.testFramework.UsefulTestCase
 import com.intellij.testFramework.assertions.compareFileContent
 import com.intellij.ui.layout.*
+import com.intellij.ui.layout.migLayout.patched.*
+import com.intellij.util.SVGLoader
 import com.intellij.util.io.exists
+import com.intellij.util.io.inputStream
 import com.intellij.util.io.sanitizeFileName
 import com.intellij.util.io.write
 import com.intellij.util.ui.TestScaleHelper
 import com.intellij.util.ui.UIUtil
+import com.intellij.util.ui.paint.ImageComparator
 import io.netty.util.internal.SystemPropertyUtil
-import net.miginfocom.swing.MigLayout
-import org.junit.Assume.assumeTrue
 import org.junit.rules.ExternalResource
 import org.junit.rules.TestName
+import org.junit.runners.model.MultipleFailureException
 import org.yaml.snakeyaml.DumperOptions
 import org.yaml.snakeyaml.Yaml
+import java.awt.Color
 import java.awt.Component
 import java.awt.Container
 import java.awt.GraphicsEnvironment
+import java.awt.image.BufferedImage
 import java.io.File
+import java.lang.AssertionError
 import java.nio.file.Path
 import javax.swing.AbstractButton
 import javax.swing.JLabel
@@ -38,7 +44,8 @@ open class RequireHeadlessMode : ExternalResource() {
   override fun before() {
     // there is some difference if run as not headless (on retina monitor, at least), not yet clear why, so, just require to run in headless mode
     if (UsefulTestCase.IS_UNDER_TEAMCITY) {
-      assumeTrue("headless mode is required", GraphicsEnvironment.isHeadless())
+      // assumeTrue("headless mode is required", GraphicsEnvironment.isHeadless())
+      // on TC headless is not enabled
     }
     else {
       System.setProperty("java.awt.headless", "true")
@@ -111,6 +118,53 @@ fun validateBounds(component: Container, snapshotDir: Path, snapshotName: String
   }
 
   compareSnapshot(snapshotDir.resolve("$snapshotName.yml"), actualSerializedLayout, isUpdateSnapshots)
+}
+
+@Throws(FileComparisonFailure::class)
+internal fun compareSvgSnapshot(snapshotFile: Path, newData: String, isUpdateSnapshots: Boolean) {
+  if (!snapshotFile.exists()) {
+    System.out.println("Write a new snapshot ${snapshotFile.fileName}")
+    snapshotFile.write(newData)
+    return
+  }
+
+  val uri = snapshotFile.toUri().toURL()
+
+  fun updateSnapshot() {
+    System.out.println("UPDATED snapshot ${snapshotFile.fileName}")
+    snapshotFile.write(newData)
+  }
+
+  val old = try {
+    snapshotFile.inputStream().use { SVGLoader.load(uri, it, 1.0) } as BufferedImage
+  }
+  catch (e: Exception) {
+    if (isUpdateSnapshots) {
+      updateSnapshot()
+      return
+    }
+
+    throw e
+  }
+
+  val new = newData.byteInputStream().use { SVGLoader.load(uri, it, 1.0) } as BufferedImage
+  val imageMismatchError = StringBuilder("images mismatch: ")
+  if (ImageComparator(ImageComparator.AASmootherComparator(0.1, 0.1, Color(0, 0, 0, 0))).compare(old, new, imageMismatchError)) {
+    return
+  }
+
+  try {
+    compareFileContent(newData, snapshotFile)
+  }
+  catch (e: FileComparisonFailure) {
+    if (isUpdateSnapshots) {
+      updateSnapshot()
+      return
+    }
+    else {
+      throw MultipleFailureException(listOf(AssertionError(imageMismatchError.toString()), e))
+    }
+  }
 }
 
 @Throws(FileComparisonFailure::class)

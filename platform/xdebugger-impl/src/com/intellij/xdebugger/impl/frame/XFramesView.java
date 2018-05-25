@@ -158,6 +158,10 @@ public class XFramesView extends XDebugView {
     myMainPanel.add(myThreadsPanel, BorderLayout.NORTH);
   }
 
+  public JComponent getDefaultFocusedComponent() {
+    return myFramesList;
+  }
+
   private class ThreadsBuilder implements XSuspendContext.XExecutionStackContainer {
     private volatile boolean myObsolete;
 

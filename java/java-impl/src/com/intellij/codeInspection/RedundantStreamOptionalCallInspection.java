@@ -7,8 +7,10 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.*;
+import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.psi.util.InheritanceUtil;
 import com.intellij.psi.util.PsiUtil;
+import com.intellij.util.ArrayUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.siyeh.ig.callMatcher.CallMatcher;
 import com.siyeh.ig.psiutils.*;
@@ -18,15 +20,15 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
+import java.util.Objects;
 import java.util.Set;
 import java.util.function.Predicate;
 
 import static com.intellij.util.ObjectUtils.tryCast;
+import static com.siyeh.ig.callMatcher.CallMatcher.anyOf;
+import static com.siyeh.ig.callMatcher.CallMatcher.staticCall;
 import static com.siyeh.ig.psiutils.StreamApiUtil.findSubsequentCall;
 
-/**
- * @author Tagir Valeev
- */
 public class RedundantStreamOptionalCallInspection extends AbstractBaseJavaLocalInspectionTool {
   private static final Logger LOG = Logger.getInstance(RedundantStreamOptionalCallInspection.class);
   private static final Set<String> INTERESTING_NAMES =
@@ -37,15 +39,34 @@ public class RedundantStreamOptionalCallInspection extends AbstractBaseJavaLocal
   private static final Set<String> CALLS_KEEPING_ELEMENTS_DISTINCT =
     ContainerUtil.set("filter", "boxed", "asLongStream", "limit", "skip", "sorted", "takeWhile", "dropWhile");
   private static final Set<String> CALLS_AFFECTING_PARALLELIZATION = ContainerUtil.set("sequential", "parallel");
+  private static final Set<String> CALLS_USELESS_FOR_SINGLE_ELEMENT_STREAM = ContainerUtil.set("sorted", "distinct");
   private static final Set<String> BOX_UNBOX_NAMES = ContainerUtil
     .set("valueOf", "booleanValue", "byteValue", "charValue", "shortValue", "intValue", "longValue", "floatValue", "doubleValue");
+  private static final Set<String> STANDARD_STREAM_INTERMEDIATE_OPERATIONS = ContainerUtil
+    .set("asDoubleStream", "asLongStream", "boxed", "distinct", "dropWhile", "filter", "flatMap", "flatMapToDouble",
+         "flatMapToInt", "flatMapToLong", "flatMapToObj", "limit", "map", "mapToDouble", "mapToInt", "mapToLong", "mapToObj", "onClose",
+         "parallel", "peek", "sequential", "skip", "takeWhile", "unordered");
+  private static final Set<String> STANDARD_STREAM_TERMINAL_OPERATIONS = ContainerUtil
+    .set("allMatch", "anyMatch", "average", "collect", "count", "findAny", "findFirst", "forEach", "forEachOrdered", "max", "min",
+         "noneMatch", "reduce", "sum", "summaryStatistics", "toArray");
 
   private static final CallMatcher COLLECTOR_TO_SET =
-    CallMatcher.staticCall(CommonClassNames.JAVA_UTIL_STREAM_COLLECTORS, "toSet", "toUnmodifiableSet").parameterCount(0);
+    staticCall(CommonClassNames.JAVA_UTIL_STREAM_COLLECTORS, "toSet", "toUnmodifiableSet").parameterCount(0);
+  private static final CallMatcher COLLECTOR_TO_COLLECTION =
+    staticCall(CommonClassNames.JAVA_UTIL_STREAM_COLLECTORS, "toCollection").parameterCount(1);
   private static final CallMatcher COLLECTOR_TO_MAP =
-    CallMatcher.staticCall(CommonClassNames.JAVA_UTIL_STREAM_COLLECTORS, "toMap", "toUnmodifiableMap").parameterTypes(
+    staticCall(CommonClassNames.JAVA_UTIL_STREAM_COLLECTORS, "toMap", "toUnmodifiableMap").parameterTypes(
       CommonClassNames.JAVA_UTIL_FUNCTION_FUNCTION, CommonClassNames.JAVA_UTIL_FUNCTION_FUNCTION);
-  private static final CallMatcher UNORDERED_COLLECTORS = CallMatcher.anyOf(COLLECTOR_TO_MAP, COLLECTOR_TO_SET);
+  private static final CallMatcher UNORDERED_COLLECTORS = anyOf(COLLECTOR_TO_MAP, COLLECTOR_TO_SET);
+  private static final Predicate<PsiMethodCallExpression> UNORDERED_COLLECTOR =
+    UNORDERED_COLLECTORS.or(RedundantStreamOptionalCallInspection::isUnorderedToCollection);
+  private static final CallMatcher STREAM_OF_SINGLE =
+    anyOf(
+      staticCall(CommonClassNames.JAVA_UTIL_STREAM_STREAM, "of").parameterTypes("T"),
+      staticCall(CommonClassNames.JAVA_UTIL_STREAM_INT_STREAM, "of").parameterTypes("int"),
+      staticCall(CommonClassNames.JAVA_UTIL_STREAM_LONG_STREAM, "of").parameterTypes("long"),
+      staticCall(CommonClassNames.JAVA_UTIL_STREAM_DOUBLE_STREAM, "of").parameterTypes("double")
+    );
 
   @SuppressWarnings("PublicField")
   public boolean USELESS_BOXING_IN_STREAM_MAP = true;
@@ -66,6 +87,9 @@ public class RedundantStreamOptionalCallInspection extends AbstractBaseJavaLocal
     return new JavaElementVisitor() {
       @Override
       public void visitMethodCallExpression(PsiMethodCallExpression call) {
+        if (STREAM_OF_SINGLE.test(call)) {
+          handleSingleElementStream(call);
+        }
         PsiReferenceExpression methodExpression = call.getMethodExpression();
         String name = methodExpression.getReferenceName();
         if (name == null || !INTERESTING_NAMES.contains(name)) return;
@@ -110,10 +134,15 @@ public class RedundantStreamOptionalCallInspection extends AbstractBaseJavaLocal
           case "sorted":
             if (args.length <= 1) {
               PsiMethodCallExpression furtherCall =
-                findSubsequentCall(call, CALLS_MAKING_SORT_USELESS::contains, UNORDERED_COLLECTORS, CALLS_KEEPING_SORT_ORDER::contains);
+                findSubsequentCall(call, CALLS_MAKING_SORT_USELESS::contains, UNORDERED_COLLECTOR, CALLS_KEEPING_SORT_ORDER::contains);
               if (furtherCall != null) {
-                register(call, InspectionsBundle.message("inspection.redundant.stream.optional.call.explanation.sorted",
-                                                         furtherCall.getMethodExpression().getReferenceName()));
+                String furtherCallName = furtherCall.getMethodExpression().getReferenceName();
+                LocalQuickFix additionalFix = null;
+                if ("toSet".equals(furtherCallName) || "toCollection".equals(furtherCallName)) {
+                  additionalFix = new CollectToOrderedSetFix();
+                }
+                register(call, InspectionsBundle.message("inspection.redundant.stream.optional.call.explanation.sorted", furtherCallName),
+                         additionalFix);
               }
             }
             break;
@@ -124,7 +153,9 @@ public class RedundantStreamOptionalCallInspection extends AbstractBaseJavaLocal
               if (furtherCall != null && furtherCall.getArgumentList().isEmpty()) {
                 register(furtherCall, InspectionsBundle.message("inspection.redundant.stream.optional.call.explanation.distinct"));
               }
-              if (findSubsequentCall(call, c -> false, COLLECTOR_TO_SET,
+              Predicate<PsiMethodCallExpression> setCollector =
+                COLLECTOR_TO_SET.or(RedundantStreamOptionalCallInspection::isToCollectionSet);
+              if (findSubsequentCall(call, c -> false, setCollector,
                                      ContainerUtil.set("unordered", "parallel", "sequential", "sorted")::contains) != null) {
                 register(call, InspectionsBundle.message("inspection.redundant.stream.optional.call.explanation.distinct.set"));
               }
@@ -152,16 +183,43 @@ public class RedundantStreamOptionalCallInspection extends AbstractBaseJavaLocal
         }
       }
 
-      private void register(PsiMethodCallExpression call, String explanation) {
+      private void handleSingleElementStream(PsiMethodCallExpression call) {
+        PsiMethodCallExpression subsequentCall =
+          findSubsequentCall(call, CALLS_USELESS_FOR_SINGLE_ELEMENT_STREAM::contains,
+                             name -> STANDARD_STREAM_INTERMEDIATE_OPERATIONS.contains(name) && !name.startsWith("flatMap"));
+        if (subsequentCall != null) {
+          register(subsequentCall, InspectionsBundle.message("inspection.redundant.stream.optional.call.explanation.at.most.one"));
+          return;
+        }
+        Predicate<String> standardNoSorted = name -> STANDARD_STREAM_INTERMEDIATE_OPERATIONS.contains(name) && !name.equals("sorted");
+        PsiMethodCallExpression parallelCall = findSubsequentCall(call, "parallel"::equals, standardNoSorted);
+        if (parallelCall != null && findSubsequentCall(call, STANDARD_STREAM_TERMINAL_OPERATIONS::contains, standardNoSorted) != null) {
+          register(parallelCall, InspectionsBundle.message("inspection.redundant.stream.optional.call.explanation.parallel.single"));
+        }
+      }
+
+      private void register(PsiMethodCallExpression call, String explanation, LocalQuickFix... additionalFixes) {
         String methodName = call.getMethodExpression().getReferenceName();
         String message = InspectionsBundle.message("inspection.redundant.stream.optional.call.message", methodName);
         if (explanation != null) {
           message += ": " + explanation;
         }
         holder.registerProblem(call, message, ProblemHighlightType.LIKE_UNUSED_SYMBOL, getRange(call),
-                               new RemoveCallFix(methodName));
+                               ArrayUtil.prepend(new RemoveCallFix(methodName), additionalFixes));
       }
     };
+  }
+
+  static boolean isUnorderedToCollection(PsiMethodCallExpression call) {
+    if (!COLLECTOR_TO_COLLECTION.test(call)) return false;
+    PsiClass aClass = FunctionalExpressionUtils.getClassOfDefaultConstructorFunction(call.getArgumentList().getExpressions()[0]);
+    return aClass != null && CommonClassNames.JAVA_UTIL_HASH_SET.equals(aClass.getQualifiedName());
+  }
+
+  static boolean isToCollectionSet(PsiMethodCallExpression call) {
+    if (!COLLECTOR_TO_COLLECTION.test(call)) return false;
+    PsiClass aClass = FunctionalExpressionUtils.getClassOfDefaultConstructorFunction(call.getArgumentList().getExpressions()[0]);
+    return InheritanceUtil.isInheritor(aClass, CommonClassNames.JAVA_UTIL_SET);
   }
 
   @NotNull
@@ -218,7 +276,7 @@ public class RedundantStreamOptionalCallInspection extends AbstractBaseJavaLocal
       primitiveCandidate = list.getParameters()[0].getType();
     }
     if (!(primitiveCandidate instanceof PsiPrimitiveType)) return false;
-    return ((PsiPrimitiveType)primitiveCandidate).getBoxedTypeName().equals(aClass.getQualifiedName());
+    return Objects.equals(((PsiPrimitiveType)primitiveCandidate).getBoxedTypeName(), aClass.getQualifiedName());
   }
 
   static boolean isTruePredicate(PsiExpression expression) {
@@ -257,6 +315,28 @@ public class RedundantStreamOptionalCallInspection extends AbstractBaseJavaLocal
       if (qualifier == null) return;
       CommentTracker ct = new CommentTracker();
       ct.replaceAndRestoreComments(call, ct.markUnchanged(qualifier));
+    }
+  }
+
+  private static class CollectToOrderedSetFix implements LocalQuickFix {
+    @Nls(capitalization = Nls.Capitalization.Sentence)
+    @NotNull
+    @Override
+    public String getFamilyName() {
+      return InspectionsBundle.message("inspection.redundant.stream.optional.call.fix.collect.to.ordered.family.name");
+    }
+
+    @Override
+    public void applyFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
+      PsiMethodCallExpression sortCall = tryCast(descriptor.getStartElement(), PsiMethodCallExpression.class);
+      if (sortCall == null) return;
+      PsiMethodCallExpression collector =
+        findSubsequentCall(sortCall, c -> false, UNORDERED_COLLECTOR, CALLS_KEEPING_SORT_ORDER::contains);
+      if (collector == null) return;
+      CommentTracker ct = new CommentTracker();
+      String replacementText = CommonClassNames.JAVA_UTIL_STREAM_COLLECTORS + ".toCollection(java.util.LinkedHashSet::new)";
+      PsiElement result = ct.replaceAndRestoreComments(collector, replacementText);
+      JavaCodeStyleManager.getInstance(project).shortenClassReferences(result);
     }
   }
 }

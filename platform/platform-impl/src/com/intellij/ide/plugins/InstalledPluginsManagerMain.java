@@ -101,9 +101,9 @@ public class InstalledPluginsManagerMain extends PluginManagerMain {
     emptyText.appendText("Search in repositories", SimpleTextAttributes.LINK_ATTRIBUTES, new BrowseRepoListener(null));
   }
 
-  private static void chooseAndInstall(@NotNull final InstalledPluginsTableModel model,
-                                       @NotNull final Consumer<Pair<File, IdeaPluginDescriptor>> callback,
-                                       @Nullable final Component parent) {
+  public static void chooseAndInstall(@NotNull final InstalledPluginsTableModel model,
+                                      @NotNull final Consumer<Pair<File, IdeaPluginDescriptor>> callback,
+                                      @Nullable final Component parent) {
     final FileChooserDescriptor descriptor = new FileChooserDescriptor(false, false, true, true, false, false) {
       @Override
       public boolean isFileSelectable(VirtualFile file) {

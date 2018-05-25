@@ -21,9 +21,7 @@
   </description>
 
   <depends>com.intellij.modules.lang</depends>
-  <xi:include href="/META-INF/ExternalBuildSystemsSupport.xml" xpointer="xpointer(/idea-plugin/*)">
-    <xi:fallback/>
-  </xi:include>
+  <depends>com.intellij.modules.externalSystem</depends>
   <xi:include href="/META-INF/gradle-java-integration.xml" xpointer="xpointer(/idea-plugin/*)">
     <xi:fallback/>
   </xi:include>
@@ -62,6 +60,8 @@
     <stacktrace.fold substring="at org.jetbrains.plugins.gradle."/>
     <stacktrace.fold substring="at com.intellij.openapi.externalSystem."/>
 
+    <externalSystemOutputParserProvider implementation="org.jetbrains.plugins.gradle.execution.build.output.GradleOutputParserProvider"
+                                        id="gradle"/>
     <externalSystemExecutionConsoleManager implementation="org.jetbrains.plugins.gradle.execution.GradleExecutionConsoleManager"
                                            id="gradle"/>
 

@@ -6,6 +6,7 @@ import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.ui.popup.ListPopup;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.containers.ContainerUtil;
+import com.jetbrains.jsonSchema.JsonSchemaCatalogProjectConfiguration;
 import com.jetbrains.jsonSchema.JsonSchemaMappingsProjectConfiguration;
 import com.jetbrains.jsonSchema.UserDefinedJsonSchemaConfiguration;
 import com.jetbrains.jsonSchema.extension.JsonSchemaInfo;
@@ -21,7 +22,7 @@ public class JsonSchemaStatusPopup {
   static final JsonSchemaInfo ADD_MAPPING = new JsonSchemaInfo("") {
     @Override
     public String getDescription() {
-      return "Add Schema Mapping…";
+      return "New Schema Mapping…";
     }
   };
 
@@ -59,9 +60,13 @@ public class JsonSchemaStatusPopup {
       List<JsonSchemaInfo> infos = service.getAllUserVisibleSchemas();
       Comparator<JsonSchemaInfo> comparator = Comparator.comparing(JsonSchemaInfo::getDescription, String::compareTo);
       Stream<JsonSchemaInfo> registered = infos.stream().filter(i -> i.getProvider() != null).sorted(comparator);
-      List<JsonSchemaInfo> otherList = infos.stream().filter(i -> i.getProvider() == null).sorted(comparator).collect(Collectors.toList());
-      if (otherList.size() == 0) {
-        otherList = ContainerUtil.createMaybeSingletonList(LOAD_REMOTE);
+      List<JsonSchemaInfo> otherList = ContainerUtil.emptyList();
+
+      if (JsonSchemaCatalogProjectConfiguration.getInstance(project).isRemoteActivityEnabled()) {
+        otherList = infos.stream().filter(i -> i.getProvider() == null).sorted(comparator).collect(Collectors.toList());
+        if (otherList.size() == 0) {
+          otherList = ContainerUtil.createMaybeSingletonList(LOAD_REMOTE);
+        }
       }
       allSchemas = Stream.concat(registered, otherList.stream()).collect(Collectors.toList());
       allSchemas.add(0, mapping == null ? ADD_MAPPING : EDIT_MAPPINGS);

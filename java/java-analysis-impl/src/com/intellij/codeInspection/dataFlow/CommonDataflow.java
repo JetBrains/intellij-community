@@ -5,7 +5,10 @@ import com.intellij.codeInspection.dataFlow.instructions.*;
 import com.intellij.codeInspection.dataFlow.value.DfaConstValue;
 import com.intellij.codeInspection.dataFlow.value.DfaValue;
 import com.intellij.psi.*;
-import com.intellij.psi.util.*;
+import com.intellij.psi.util.CachedValueProvider;
+import com.intellij.psi.util.CachedValuesManager;
+import com.intellij.psi.util.PsiModificationTracker;
+import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.JavaPsiConstructorUtil;
 import com.intellij.util.ObjectUtils;
 import com.siyeh.ig.psiutils.ExpressionUtils;
@@ -120,10 +123,7 @@ public class CommonDataflow {
    */
   @Nullable
   public static DataflowResult getDataflowResult(PsiExpression context) {
-    PsiMember member = PsiTreeUtil.getParentOfType(context, PsiMember.class);
-    if(!(member instanceof PsiMethod) && !(member instanceof PsiField) && !(member instanceof PsiClassInitializer)) return null;
-    PsiElement body =
-      member instanceof PsiMethod && !((PsiMethod)member).isConstructor() ? ((PsiMethod)member).getBody() : member.getContainingClass();
+    PsiElement body = DfaUtil.getDataflowContext(context);
     if (body == null) return null;
     return CachedValuesManager.getCachedValue(body, () -> {
       DataflowResult result = runDFA(body);

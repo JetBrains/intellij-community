@@ -93,21 +93,26 @@
     <group id="ChangesViewToolbar">
       <action id="ChangesView.Refresh" class="com.intellij.openapi.vcs.changes.actions.RefreshAction"
               icon="AllIcons.Actions.Refresh"/>
-      <reference ref="CheckinProject" />
+      <reference ref="CheckinProject"/>
       <reference ref="ChangesView.Revert"/>
-      <action id="ChangesView.NewChangeList" class="com.intellij.openapi.vcs.changes.actions.AddChangeListAction"
-              icon="AllIcons.General.Add"/>
-      <action id="ChangesView.RemoveChangeList" class="com.intellij.openapi.vcs.changes.actions.RemoveChangeListAction"
-              icon="AllIcons.General.Remove"/>
-      <action id="ChangesView.SetDefault" class="com.intellij.openapi.vcs.changes.actions.SetDefaultChangeListAction"
-              icon="AllIcons.Actions.Submit1"/>
-      <action id="ChangesView.Move" class="com.intellij.openapi.vcs.changes.actions.MoveChangesToAnotherListAction"
-              icon="AllIcons.Actions.MoveToAnotherChangelist"/>
+      <action id="ChangesView.Diff" class="com.intellij.diff.actions.ShowDiffAction" icon="AllIcons.Actions.Diff"
+              use-shortcut-of="Diff.ShowDiff"/>
+      <group icon="AllIcons.Vcs.Changelist" text="Changelists" popup="true">
+        <action id="ChangesView.NewChangeList" class="com.intellij.openapi.vcs.changes.actions.AddChangeListAction"
+                icon="AllIcons.General.Add"/>
+        <action id="ChangesView.Rename" class="com.intellij.openapi.vcs.changes.actions.RenameChangeListAction"
+                icon="AllIcons.Actions.Edit"/>
+        <action id="ChangesView.RemoveChangeList" class="com.intellij.openapi.vcs.changes.actions.RemoveChangeListAction"
+                icon="AllIcons.General.Remove"/>
+        <action id="ChangesView.SetDefault" class="com.intellij.openapi.vcs.changes.actions.SetDefaultChangeListAction"
+                icon="AllIcons.Actions.Submit1"/>
+        <action id="ChangesView.Move" class="com.intellij.openapi.vcs.changes.actions.MoveChangesToAnotherListAction"
+                icon="AllIcons.Actions.MoveToAnotherChangelist"/>
+      </group>
       <action id="ChangesView.ShelveSilently" class="com.intellij.openapi.vcs.changes.actions.ShelveSilentlyAction"
               text="Shelve Silently" description="Shelve changes to appropriate shelved changelists" icon="AllIcons.Vcs.ShelveSilent">
         <keyboard-shortcut first-keystroke="control alt H" keymap="$default"/>
       </action>
-      <action id="ChangesView.Diff" class="com.intellij.diff.actions.ShowDiffAction" icon="AllIcons.Actions.Diff" use-shortcut-of="Diff.ShowDiff"/>
     </group>
 
     <group id="ChangesViewPopupMenu">
@@ -117,12 +122,11 @@
       <reference ref="Diff.ShowDiff"/>
       <reference ref="EditSource"/>
       <separator/>
-      <action id="ChangesView.DeleteUnversioned" class="com.intellij.openapi.vcs.changes.actions.DeleteUnversionedFilesAction"
-              icon="AllIcons.Actions.Cancel"/>
+      <action id="ChangesView.DeleteUnversioned" class="com.intellij.openapi.vcs.changes.actions.DeleteUnversionedFilesAction"/>
       <action id="ChangesView.AddUnversioned" class="com.intellij.openapi.vcs.changes.actions.ScheduleForAdditionAction">
         <keyboard-shortcut first-keystroke="control alt A" keymap="$default"/>
       </action>
-      <action id="ChangesView.Ignore" class="com.intellij.openapi.vcs.changes.actions.IgnoreUnversionedAction" icon="AllIcons.Actions.Properties"/>
+      <action id="ChangesView.Ignore" class="com.intellij.openapi.vcs.changes.actions.IgnoreUnversionedAction"/>
       <action id="ChangesView.RemoveDeleted" class="com.intellij.openapi.vcs.changes.actions.ScheduleForRemovalAction"
               icon="AllIcons.General.Remove"/>
       <action id="ChangesView.Edit" class="com.intellij.openapi.vcs.changes.actions.EditAction"/>
@@ -130,7 +134,7 @@
       <reference ref="ChangesView.NewChangeList"/>
       <reference ref="ChangesView.RemoveChangeList"/>
       <reference ref="ChangesView.SetDefault"/>
-      <action id="ChangesView.Rename" class="com.intellij.openapi.vcs.changes.actions.RenameChangeListAction"/>
+      <reference ref="ChangesView.Rename"/>
       <reference ref="ChangesView.CreatePatch"/>
       <action id="ChangesView.CreatePatchToClipboard" class="com.intellij.openapi.vcs.changes.actions.CreatePatchFromChangesAction$Clipboard"/>
       <reference ref="ChangesView.Shelve"/>
@@ -145,7 +149,7 @@
       <action id="ChangesView.AddUnversioned.From.Dialog" class="com.intellij.openapi.vcs.changes.actions.ScheduleForAdditionAction"
               icon="AllIcons.General.Add" use-shortcut-of="ChangesView.AddUnversioned" />
       <reference ref="ChangesView.Move"/>
-      <action id="ChangesView.DeleteUnversioned.From.Dialog" class="com.intellij.openapi.vcs.changes.actions.DeleteUnversionedFilesAction"/>
+      <reference ref="ChangesView.DeleteUnversioned"/>
       <reference ref="ChangesView.Ignore"/>
     </group>
 
@@ -169,16 +173,17 @@
     </group>
 
     <group id="ShelvedChangesToolbar">
-      <reference ref="Diff.ShowDiff"/>
       <action id="ChangesView.UnshelveSilently" class="com.intellij.openapi.vcs.changes.actions.UnshelveSilentlyAction"
               text="Unshelve Silently" description="Unshelve changes to appropriate changelists" icon="AllIcons.Vcs.UnshelveSilent">
         <keyboard-shortcut first-keystroke="control alt U" keymap="$default"/>
       </action>
-      <reference ref="ChangesView.CreatePatchFromChanges"/>
-      <reference ref="ShelvedChanges.ShowHideDeleted" />
+      <reference ref="Diff.ShowDiff"/>
       <reference ref="ShelvedChanges.CleanMarkedToDelete"/>
-     <action id="ShelfChanges.Settings" class="com.intellij.openapi.vcs.changes.shelf.OpenShelfSettings"
-              text="Shelf Settings" description="Open shelf settings" icon="AllIcons.General.GearPlain"/>
+      <separator/>
+      <reference ref="ShelvedChanges.ShowHideDeleted"/>
+      <separator/>
+      <action id="ShelfChanges.Settings" class="com.intellij.openapi.vcs.changes.shelf.OpenShelfSettings"
+              text="Shelf Settings" description="Open shelf settings" icon="AllIcons.General.Settings"/>
     </group>
 
     <!--a group for plugins to add their actions-->
@@ -197,10 +202,6 @@
 
     <group id="VcsHistoryInternalGroup.Toolbar">
       <reference ref="Diff.ShowDiff"/>
-      <reference ref="VcsHistoryActionsGroup"/>
-      <reference ref="ChangesView.CreatePatchFromChanges"/>
-      <reference ref="Vcs.GetVersion"/>
-      <reference ref="FileHistory.AnnotateRevision"/>
     </group>
 
     <group id="CommittedChangesToolbar">
@@ -224,6 +225,11 @@
             text="Revert Selected Changes" icon="AllIcons.Actions.Rollback"/>
 
     <group id="Vcs.RepositoryChangesBrowserToolbar">
+      <reference ref="Vcs.RevertSelectedChanges"/>
+      <reference ref="Vcs.ShowHistoryForRevision"/>
+    </group>
+
+    <group id="Vcs.RepositoryChangesBrowserMenu">
       <reference ref="Vcs.ShowDiffWithLocal"/>
       <reference ref="Vcs.ShowDiffWithLocal.Before"/>
       <reference ref="Vcs.EditSource"/>
@@ -266,11 +272,9 @@
       <separator/>
     </group>
 
-    <group id="Vcs.CheckinProjectPopup">
-      <separator/>
-    </group>
-
     <group id="Vcs.CheckinProjectToolbar">
+    </group>
+    <group id="Vcs.CheckinProjectMenu">
     </group>
 
     <group id="UpdateActionGroup">
@@ -405,7 +409,6 @@
       <reference ref="ChangesView.Edit"/>
       <reference ref="ChangesView.Rename"/>
       <reference ref="ChangesView.AddUnversioned.From.Dialog"/>
-      <reference ref="ChangesView.DeleteUnversioned.From.Dialog"/>
       <separator/>
       <reference ref="CommittedChanges.Refresh"/>
       <reference ref="CommittedChanges.Filter"/>

@@ -1,7 +1,7 @@
 import org.jetbrains.annotations.Contract;
 
 class Zoo {
-  @Contract(<warning descr="Invalid contract return value for a constructor: null">"null->null"</warning> )
+  @Contract(<warning descr="Contract return value 'null': not applicable for constructor">"null->null"</warning> )
   Zoo(Object o) {}
 
   @Contract("_->fail" )

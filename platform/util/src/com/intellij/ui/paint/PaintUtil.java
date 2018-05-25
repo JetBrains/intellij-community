@@ -9,6 +9,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.awt.*;
 import java.awt.geom.AffineTransform;
+import java.awt.geom.Point2D;
 import java.awt.geom.Rectangle2D;
 
 import static com.intellij.ui.paint.PaintUtil.RoundingMode.FLOOR;
@@ -191,19 +192,28 @@ public class PaintUtil {
    * otherwise does nothing.
    *
    * @param g the graphics to align
+   * @param offset x/y offset to take into account when provided (this may be e.g. insets left/top)
    * @param alignX should the x-translate be aligned
    * @param alignY should the y-translate be aligned
    * @return the original graphics transform when aligned, otherwise null
    */
-  public static AffineTransform alignTxToInt(@NotNull Graphics2D g, boolean alignX, boolean alignY, RoundingMode rm) {
+  public static AffineTransform alignTxToInt(@NotNull Graphics2D g, @Nullable Point2D offset, boolean alignX, boolean alignY, RoundingMode rm) {
     try {
       AffineTransform tx = g.getTransform();
       if (isFractionalScale(tx)) {
         double scaleX = tx.getScaleX();
         double scaleY = tx.getScaleY();
         AffineTransform alignedTx = new AffineTransform();
-        double trX = alignX ? rm.round(tx.getTranslateX()) : tx.getTranslateX();
-        double trY = alignY ? rm.round(tx.getTranslateY()) : tx.getTranslateY();
+        double trX = tx.getTranslateX();
+        double trY = tx.getTranslateY();
+        if (alignX) {
+          double offX = trX + (offset != null ? offset.getX() * scaleX : 0);
+          trX += rm.round(offX) - offX;
+        }
+        if (alignY) {
+          double offY = trY + (offset != null ? offset.getY() * scaleY : 0);
+          trY += rm.round(offY) - offY;
+        }
         alignedTx.translate(trX, trY);
         alignedTx.scale(scaleX, scaleY);
         assert tx.getShearX() == 0 && tx.getShearY() == 0; // the shear is ignored
@@ -277,5 +287,10 @@ public class PaintUtil {
     } finally {
       g.setRenderingHint(RenderingHints.KEY_ANTIALIASING, key);
     }
+  }
+
+  @NotNull
+  public static Point2D insets2offset(@Nullable Insets in) {
+    return in == null ? new Point2D.Double(0, 0) : new Point2D.Double(in.left, in.top);
   }
 }

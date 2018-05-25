@@ -22,6 +22,7 @@
     </item>
     <item name='org.apache.commons.collections.functors.AndPredicate org.apache.commons.collections.Predicate getInstance(org.apache.commons.collections.Predicate, org.apache.commons.collections.Predicate)'>
         <annotation name='org.jetbrains.annotations.Contract'>
+            <val name="value" val="&quot;_,_-&gt;new&quot;"/>
             <val name="pure" val="true"/>
         </annotation>
         <annotation name='org.jetbrains.annotations.NotNull'/>
@@ -34,6 +35,7 @@
     </item>
     <item name='org.apache.commons.collections.functors.AndPredicate org.apache.commons.collections.Predicate[] getPredicates()'>
         <annotation name='org.jetbrains.annotations.Contract'>
+            <val name="value" val="&quot;-&gt;new&quot;"/>
             <val name="pure" val="true"/>
         </annotation>
         <annotation name='org.jetbrains.annotations.NotNull'/>
@@ -64,6 +66,7 @@
     </item>
     <item name='org.apache.commons.collections.functors.ChainedClosure org.apache.commons.collections.Closure getInstance(org.apache.commons.collections.Closure, org.apache.commons.collections.Closure)'>
         <annotation name='org.jetbrains.annotations.Contract'>
+            <val name="value" val="&quot;_,_-&gt;new&quot;"/>
             <val name="pure" val="true"/>
         </annotation>
         <annotation name='org.jetbrains.annotations.NotNull'/>
@@ -92,6 +95,7 @@
     </item>
     <item name='org.apache.commons.collections.functors.ChainedTransformer org.apache.commons.collections.Transformer getInstance(org.apache.commons.collections.Transformer, org.apache.commons.collections.Transformer)'>
         <annotation name='org.jetbrains.annotations.Contract'>
+            <val name="value" val="&quot;_,_-&gt;new&quot;"/>
             <val name="pure" val="true"/>
         </annotation>
         <annotation name='org.jetbrains.annotations.NotNull'/>
@@ -136,7 +140,7 @@
     </item>
     <item name='org.apache.commons.collections.functors.ClosureTransformer java.lang.Object transform(java.lang.Object)'>
         <annotation name='org.jetbrains.annotations.Contract'>
-            <val val="&quot;!null-&gt;!null;null-&gt;null&quot;"/>
+            <val val="&quot;_-&gt;param1&quot;"/>
         </annotation>
     </item>
     <item name='org.apache.commons.collections.functors.ClosureTransformer org.apache.commons.collections.Closure getClosure()'>
@@ -146,6 +150,7 @@
     </item>
     <item name='org.apache.commons.collections.functors.ClosureTransformer org.apache.commons.collections.Transformer getInstance(org.apache.commons.collections.Closure)'>
         <annotation name='org.jetbrains.annotations.Contract'>
+            <val name="value" val="&quot;_-&gt;new&quot;"/>
             <val name="pure" val="true"/>
         </annotation>
         <annotation name='org.jetbrains.annotations.NotNull'/>
@@ -311,6 +316,7 @@
     </item>
     <item name='org.apache.commons.collections.functors.FactoryTransformer org.apache.commons.collections.Transformer getInstance(org.apache.commons.collections.Factory)'>
         <annotation name='org.jetbrains.annotations.Contract'>
+            <val name="value" val="&quot;_-&gt;new&quot;"/>
             <val name="pure" val="true"/>
         </annotation>
         <annotation name='org.jetbrains.annotations.NotNull'/>
@@ -382,6 +388,11 @@
     </item>
     <item name='org.apache.commons.collections.functors.FunctorUtils org.apache.commons.collections.Predicate[] copy(org.apache.commons.collections.Predicate[]) 0'>
         <annotation name='org.jetbrains.annotations.Nullable'/>
+    </item>
+    <item name='org.apache.commons.collections.functors.FunctorUtils org.apache.commons.collections.Predicate[] validate(java.util.Collection)'>
+        <annotation name='org.jetbrains.annotations.Contract'>
+            <val val="&quot;_-&gt;new&quot;"/>
+        </annotation>
     </item>
     <item name='org.apache.commons.collections.functors.FunctorUtils org.apache.commons.collections.Predicate[] validate(java.util.Collection) 0'>
         <annotation name='org.jetbrains.annotations.NotNull'/>
@@ -466,6 +477,7 @@
     </item>
     <item name='org.apache.commons.collections.functors.IfClosure org.apache.commons.collections.Closure getInstance(org.apache.commons.collections.Predicate, org.apache.commons.collections.Closure)'>
         <annotation name='org.jetbrains.annotations.Contract'>
+            <val name="value" val="&quot;_,_-&gt;new&quot;"/>
             <val name="pure" val="true"/>
         </annotation>
         <annotation name='org.jetbrains.annotations.NotNull'/>
@@ -478,6 +490,7 @@
     </item>
     <item name='org.apache.commons.collections.functors.IfClosure org.apache.commons.collections.Closure getInstance(org.apache.commons.collections.Predicate, org.apache.commons.collections.Closure, org.apache.commons.collections.Closure)'>
         <annotation name='org.jetbrains.annotations.Contract'>
+            <val name="value" val="&quot;_,_,_-&gt;new&quot;"/>
             <val name="pure" val="true"/>
         </annotation>
         <annotation name='org.jetbrains.annotations.NotNull'/>
@@ -513,6 +526,7 @@
     </item>
     <item name='org.apache.commons.collections.functors.InstanceofPredicate org.apache.commons.collections.Predicate getInstance(java.lang.Class)'>
         <annotation name='org.jetbrains.annotations.Contract'>
+            <val name="value" val="&quot;_-&gt;new&quot;"/>
             <val name="pure" val="true"/>
         </annotation>
         <annotation name='org.jetbrains.annotations.NotNull'/>
@@ -521,6 +535,9 @@
         <annotation name='org.jetbrains.annotations.NotNull'/>
     </item>
     <item name='org.apache.commons.collections.functors.InstantiateFactory org.apache.commons.collections.Factory getInstance(java.lang.Class, java.lang.Class[], java.lang.Object[])'>
+        <annotation name='org.jetbrains.annotations.Contract'>
+            <val val="&quot;_,_,_-&gt;new&quot;"/>
+        </annotation>
         <annotation name='org.jetbrains.annotations.NotNull'/>
     </item>
     <item name='org.apache.commons.collections.functors.InstantiateFactory org.apache.commons.collections.Factory getInstance(java.lang.Class, java.lang.Class[], java.lang.Object[]) 0'>
@@ -560,6 +577,7 @@
     </item>
     <item name='org.apache.commons.collections.functors.InvokerTransformer org.apache.commons.collections.Transformer getInstance(java.lang.String)'>
         <annotation name='org.jetbrains.annotations.Contract'>
+            <val name="value" val="&quot;_-&gt;new&quot;"/>
             <val name="pure" val="true"/>
         </annotation>
         <annotation name='org.jetbrains.annotations.NotNull'/>
@@ -568,6 +586,9 @@
         <annotation name='org.jetbrains.annotations.NotNull'/>
     </item>
     <item name='org.apache.commons.collections.functors.InvokerTransformer org.apache.commons.collections.Transformer getInstance(java.lang.String, java.lang.Class[], java.lang.Object[])'>
+        <annotation name='org.jetbrains.annotations.Contract'>
+            <val val="&quot;_,_,_-&gt;new&quot;"/>
+        </annotation>
         <annotation name='org.jetbrains.annotations.NotNull'/>
     </item>
     <item name='org.apache.commons.collections.functors.InvokerTransformer org.apache.commons.collections.Transformer getInstance(java.lang.String, java.lang.Class[], java.lang.Object[]) 0'>
@@ -617,7 +638,7 @@
     </item>
     <item name='org.apache.commons.collections.functors.NOPTransformer java.lang.Object transform(java.lang.Object)'>
         <annotation name='org.jetbrains.annotations.Contract'>
-            <val name="value" val="&quot;!null-&gt;!null;null-&gt;null&quot;"/>
+            <val name="value" val="&quot;_-&gt;param1&quot;"/>
             <val name="pure" val="true"/>
         </annotation>
     </item>
@@ -668,6 +689,7 @@
     </item>
     <item name='org.apache.commons.collections.functors.NotPredicate org.apache.commons.collections.Predicate getInstance(org.apache.commons.collections.Predicate)'>
         <annotation name='org.jetbrains.annotations.Contract'>
+            <val name="value" val="&quot;_-&gt;new&quot;"/>
             <val name="pure" val="true"/>
         </annotation>
         <annotation name='org.jetbrains.annotations.NotNull'/>
@@ -677,6 +699,7 @@
     </item>
     <item name='org.apache.commons.collections.functors.NotPredicate org.apache.commons.collections.Predicate[] getPredicates()'>
         <annotation name='org.jetbrains.annotations.Contract'>
+            <val name="value" val="&quot;-&gt;new&quot;"/>
             <val name="pure" val="true"/>
         </annotation>
         <annotation name='org.jetbrains.annotations.NotNull'/>
@@ -691,6 +714,7 @@
     </item>
     <item name='org.apache.commons.collections.functors.NullIsExceptionPredicate org.apache.commons.collections.Predicate getInstance(org.apache.commons.collections.Predicate)'>
         <annotation name='org.jetbrains.annotations.Contract'>
+            <val name="value" val="&quot;_-&gt;new&quot;"/>
             <val name="pure" val="true"/>
         </annotation>
         <annotation name='org.jetbrains.annotations.NotNull'/>
@@ -700,6 +724,7 @@
     </item>
     <item name='org.apache.commons.collections.functors.NullIsExceptionPredicate org.apache.commons.collections.Predicate[] getPredicates()'>
         <annotation name='org.jetbrains.annotations.Contract'>
+            <val name="value" val="&quot;-&gt;new&quot;"/>
             <val name="pure" val="true"/>
         </annotation>
         <annotation name='org.jetbrains.annotations.NotNull'/>
@@ -719,6 +744,7 @@
     </item>
     <item name='org.apache.commons.collections.functors.NullIsFalsePredicate org.apache.commons.collections.Predicate getInstance(org.apache.commons.collections.Predicate)'>
         <annotation name='org.jetbrains.annotations.Contract'>
+            <val name="value" val="&quot;_-&gt;new&quot;"/>
             <val name="pure" val="true"/>
         </annotation>
         <annotation name='org.jetbrains.annotations.NotNull'/>
@@ -728,6 +754,7 @@
     </item>
     <item name='org.apache.commons.collections.functors.NullIsFalsePredicate org.apache.commons.collections.Predicate[] getPredicates()'>
         <annotation name='org.jetbrains.annotations.Contract'>
+            <val name="value" val="&quot;-&gt;new&quot;"/>
             <val name="pure" val="true"/>
         </annotation>
         <annotation name='org.jetbrains.annotations.NotNull'/>
@@ -747,6 +774,7 @@
     </item>
     <item name='org.apache.commons.collections.functors.NullIsTruePredicate org.apache.commons.collections.Predicate getInstance(org.apache.commons.collections.Predicate)'>
         <annotation name='org.jetbrains.annotations.Contract'>
+            <val name="value" val="&quot;_-&gt;new&quot;"/>
             <val name="pure" val="true"/>
         </annotation>
         <annotation name='org.jetbrains.annotations.NotNull'/>
@@ -756,6 +784,7 @@
     </item>
     <item name='org.apache.commons.collections.functors.NullIsTruePredicate org.apache.commons.collections.Predicate[] getPredicates()'>
         <annotation name='org.jetbrains.annotations.Contract'>
+            <val name="value" val="&quot;-&gt;new&quot;"/>
             <val name="pure" val="true"/>
         </annotation>
         <annotation name='org.jetbrains.annotations.NotNull'/>
@@ -785,6 +814,9 @@
         </annotation>
     </item>
     <item name='org.apache.commons.collections.functors.OnePredicate org.apache.commons.collections.Predicate getInstance(java.util.Collection)'>
+        <annotation name='org.jetbrains.annotations.Contract'>
+            <val val="&quot;_-&gt;new&quot;"/>
+        </annotation>
         <annotation name='org.jetbrains.annotations.NotNull'/>
     </item>
     <item name='org.apache.commons.collections.functors.OnePredicate org.apache.commons.collections.Predicate getInstance(java.util.Collection) 0'>
@@ -805,6 +837,7 @@
     </item>
     <item name='org.apache.commons.collections.functors.OrPredicate org.apache.commons.collections.Predicate getInstance(org.apache.commons.collections.Predicate, org.apache.commons.collections.Predicate)'>
         <annotation name='org.jetbrains.annotations.Contract'>
+            <val name="value" val="&quot;_,_-&gt;new&quot;"/>
             <val name="pure" val="true"/>
         </annotation>
         <annotation name='org.jetbrains.annotations.NotNull'/>
@@ -817,6 +850,7 @@
     </item>
     <item name='org.apache.commons.collections.functors.OrPredicate org.apache.commons.collections.Predicate[] getPredicates()'>
         <annotation name='org.jetbrains.annotations.Contract'>
+            <val name="value" val="&quot;-&gt;new&quot;"/>
             <val name="pure" val="true"/>
         </annotation>
         <annotation name='org.jetbrains.annotations.NotNull'/>
@@ -833,6 +867,7 @@
     </item>
     <item name='org.apache.commons.collections.functors.PredicateTransformer org.apache.commons.collections.Transformer getInstance(org.apache.commons.collections.Predicate)'>
         <annotation name='org.jetbrains.annotations.Contract'>
+            <val name="value" val="&quot;_-&gt;new&quot;"/>
             <val name="pure" val="true"/>
         </annotation>
         <annotation name='org.jetbrains.annotations.NotNull'/>
@@ -967,6 +1002,7 @@
     </item>
     <item name='org.apache.commons.collections.functors.TransformedPredicate org.apache.commons.collections.Predicate getInstance(org.apache.commons.collections.Transformer, org.apache.commons.collections.Predicate)'>
         <annotation name='org.jetbrains.annotations.Contract'>
+            <val name="value" val="&quot;_,_-&gt;new&quot;"/>
             <val name="pure" val="true"/>
         </annotation>
         <annotation name='org.jetbrains.annotations.NotNull'/>
@@ -979,6 +1015,7 @@
     </item>
     <item name='org.apache.commons.collections.functors.TransformedPredicate org.apache.commons.collections.Predicate[] getPredicates()'>
         <annotation name='org.jetbrains.annotations.Contract'>
+            <val name="value" val="&quot;-&gt;new&quot;"/>
             <val name="pure" val="true"/>
         </annotation>
         <annotation name='org.jetbrains.annotations.NotNull'/>
@@ -1014,6 +1051,7 @@
     </item>
     <item name='org.apache.commons.collections.functors.TransformerPredicate org.apache.commons.collections.Predicate getInstance(org.apache.commons.collections.Transformer)'>
         <annotation name='org.jetbrains.annotations.Contract'>
+            <val name="value" val="&quot;_-&gt;new&quot;"/>
             <val name="pure" val="true"/>
         </annotation>
         <annotation name='org.jetbrains.annotations.NotNull'/>
@@ -1065,6 +1103,7 @@
     </item>
     <item name='org.apache.commons.collections.functors.WhileClosure org.apache.commons.collections.Closure getInstance(org.apache.commons.collections.Predicate, org.apache.commons.collections.Closure, boolean)'>
         <annotation name='org.jetbrains.annotations.Contract'>
+            <val name="value" val="&quot;_,_,_-&gt;new&quot;"/>
             <val name="pure" val="true"/>
         </annotation>
         <annotation name='org.jetbrains.annotations.NotNull'/>

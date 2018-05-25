@@ -25,6 +25,7 @@ import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.ObjectUtils;
+import com.intellij.util.containers.ContainerUtil;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
@@ -101,13 +102,8 @@ public class SuspiciousComparatorCompareInspection extends BaseInspection {
       if (soleCall != null) {
         PsiMethod method = soleCall.resolveMethod();
         if (method != null) {
-          List<? extends MethodContract> contracts = ControlFlowAnalyzer.getMethodCallContracts(method, soleCall);
-          if (contracts.size() == 1) {
-            MethodContract contract = contracts.get(0);
-            if (contract.isTrivial() && contract.getReturnValue().isFail()) {
-              return;
-            }
-          }
+          MethodContract contract = ContainerUtil.getOnlyItem(JavaMethodContractUtil.getMethodCallContracts(method, soleCall));
+          if (contract != null && contract.isTrivial() && contract.getReturnValue().isFail()) return;
         }
       }
       PsiParameter[] parameters = parameterList.getParameters();

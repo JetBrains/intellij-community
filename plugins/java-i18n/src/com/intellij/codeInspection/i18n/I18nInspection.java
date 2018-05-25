@@ -533,7 +533,7 @@ public class I18nInspection extends AbstractBaseJavaLocalInspectionTool implemen
       return false;
     }
 
-    if (JavaI18nUtil.isPassedToAnnotatedParam(expression, AnnotationUtil.NON_NLS, new HashMap<>(), nonNlsTargets)) {
+    if (JavaI18nUtil.isPassedToAnnotatedParam(expression, AnnotationUtil.NON_NLS, null, nonNlsTargets)) {
       return false;
     }
 
@@ -549,7 +549,7 @@ public class I18nInspection extends AbstractBaseJavaLocalInspectionTool implemen
       return false;
     }
 
-    if (JavaI18nUtil.mustBePropertyKey(expression, new HashMap<>())) {
+    if (JavaI18nUtil.mustBePropertyKey(expression, null)) {
       return false;
     }
 

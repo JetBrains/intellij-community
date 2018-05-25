@@ -51,6 +51,8 @@ public class DataFlowInspectionTestSuite {
 
     suite.addTestSuite(NullableStuffInspectionTest.class);
     suite.addTestSuite(NullableStuffInspectionAncientTest.class);
+    
+    suite.addTestSuite(CheckerNullityTest.class);
 
     suite.addTestSuite(AddAssertStatementFixTest.class);
     suite.addTestSuite(SurroundWithIfFixTest.class);

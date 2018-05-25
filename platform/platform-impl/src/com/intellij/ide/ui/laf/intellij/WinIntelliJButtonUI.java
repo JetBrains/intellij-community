@@ -67,7 +67,7 @@ public class WinIntelliJButtonUI extends DarculaButtonUI {
   @Override
   public void paint(Graphics g, JComponent c) {
     if (UIUtil.isHelpButton(c)) {
-      Icon help = IconCache.getIcon("winHelp");
+      Icon help = LafIconLookup.getIcon("winHelp");
       Insets i = c.getInsets();
       help.paintIcon(c, g, i.left, i.top + (c.getHeight() - help.getIconHeight()) / 2);
     } else if (c instanceof AbstractButton) {

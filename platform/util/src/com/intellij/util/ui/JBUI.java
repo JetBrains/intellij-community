@@ -518,6 +518,12 @@ public class JBUI {
   }
 
   @NotNull
+  public static JBInsets insets(String propName, JBInsets defaultValue) {
+    JBInsets i = (JBInsets)UIManager.getInsets(propName);
+    return i != null ? i : defaultValue;
+  }
+
+  @NotNull
   public static JBInsets insets(int topBottom, int leftRight) {
     return insets(topBottom, leftRight, topBottom, leftRight);
   }
@@ -998,9 +1004,9 @@ public class JBUI {
      * Creates a context based on the comp's system scale and sticks to it via the {@link #update()} method.
      */
     @NotNull
-    public static ScaleContext create(@NotNull Component comp) {
+    public static ScaleContext create(@Nullable Component comp) {
       final ScaleContext ctx = new ScaleContext(SYS_SCALE.of(sysScale(comp)));
-      ctx.compRef = new WeakReference<Component>(comp);
+      if (comp != null) ctx.compRef = new WeakReference<Component>(comp);
       return ctx;
     }
 
@@ -1477,6 +1483,15 @@ public class JBUI {
         return font;
       }
 
+      public static float overrideHeaderFontSizeOffset() {
+        Object offset = UIManager.get("ToolWindow.overridden.header.font.size.offset");
+        if (offset instanceof Integer) {
+          return ((Integer)offset).floatValue();
+        }
+
+        return 0;
+      }
+
       @NotNull
       public static Color hoveredIconBackground() {
         return JBColor.namedColor("ToolWindow.header.closeButton.background", 0xB9B9B9);
@@ -1549,10 +1564,55 @@ public class JBUI {
       }
     }
 
-    private static final Color GRAPHITE_COLOR = new JBColor(new Color(0x8099979d, true), new Color(0x676869));
+    public static class Focus {
+      private static final Color GRAPHITE_COLOR = new JBColor(new Color(0x8099979d, true), new Color(0x676869));
 
-    public static Color focusBorderColor() {
-      return UIUtil.isGraphite() ? GRAPHITE_COLOR : JBColor.namedColor("Focus.borderColor", new JBColor(0x8ab2eb, 0x395d82));
+      public static Color focusColor() {
+        return UIUtil.isGraphite() ? GRAPHITE_COLOR : JBColor.namedColor("Focus.borderColor", new JBColor(0x8ab2eb, 0x395d82));
+      }
+
+      public static Color defaultButtonColor() {
+        return UIUtil.isUnderDarcula() ? JBColor.namedColor("Focus.defaultButtonBorderColor", new JBColor(0x97c3f3, 0x43688c)) : focusColor();
+      }
+
+      public static Color errorColor(boolean active) {
+        return active ?
+               JBColor.namedColor("Focus.activeErrorBorderColor", new JBColor(0xe53e4d, 0x8b3c3c)) :
+               JBColor.namedColor("Focus.inactiveErrorBorderColor", new JBColor(0xebbcbc, 0x725252));
+      }
+
+      public static Color warningColor(boolean active) {
+        return active ?
+               JBColor.namedColor("Focus.activeWarningBorderColor", new JBColor(0xe2a53a, 0xac7920)) :
+               JBColor.namedColor("Focus.inactiveWarningBorderColor", new JBColor(0xffd385, 0x6e5324));
+      }
+    }
+
+    //todo #UX-1 maybe move to popup
+    public static class SearchEverywhere {
+      public static Color dialogBackground() {
+        return JBColor.namedColor("SearchEverywhere.Dialog.background", 0xf2f2f2);
+      }
+
+      public static Insets tabInsets() {
+        return insets(0, 12);
+      }
+
+      public static Color selectedTabColor() {
+        return JBColor.namedColor("SearchEverywhere.Tab.selected.background", 0xdedede);
+      }
+
+      public static Color searchFieldBackground() {
+        return JBColor.namedColor("SearchEverywhere.SearchField.background", 0xffffff);
+      }
+
+      public static Color searchFieldBorderColor() {
+        return JBColor.namedColor("SearchEverywhere.SearchField.Border.color", 0xbdbdbd);
+      }
+
+      public static Insets searchFieldInsets() {
+        return insets(0, 12, 0, 10);
+      }
     }
   }
 

@@ -45,13 +45,13 @@
     <g fill="rgb(60,63,65)" font-size="13px" font-family="'.SF NS Text'" transform="translate(0,240)" stroke="rgb(60,63,65)">
       <rect x="0" width="480" height="30" y="0" clip-path="url(#1)" stroke="none"/>
       <rect x="0" width="480" height="30" y="0" clip-path="url(#1)" stroke="none"/>
-      <image x="0" y="6" clip-path="url(#1)" width="19" xlink:href="../../../../../../platform-impl/src/com/intellij/ide/ui/laf/icons/darcula/radio.png" height="19" preserveAspectRatio="none"/>
+      <image x="0" y="6" clip-path="url(#1)" width="19" xlink:href="../../../../../../platform-impl/src/com/intellij/ide/ui/laf/icons/darcula/radio.svg" height="19" preserveAspectRatio="none"/>
       <text fill="rgb(187,187,187)" x="23" xml:space="preserve" y="20" clip-path="url(#1)" stroke="none">label</text>
     </g>
     <g fill="rgb(60,63,65)" font-size="13px" font-family="'.SF NS Text'" transform="translate(0,200)" stroke="rgb(60,63,65)">
       <rect x="0" width="480" height="30" y="0" clip-path="url(#1)" stroke="none"/>
       <rect x="0" width="480" height="30" y="0" clip-path="url(#1)" stroke="none"/>
-      <image x="0" y="6" clip-path="url(#1)" width="18" xlink:href="../../../../../../platform-impl/src/com/intellij/ide/ui/laf/icons/darcula/checkBox.png" height="18" preserveAspectRatio="none"/>
+      <image x="0" y="6" clip-path="url(#1)" width="19" xlink:href="../../../../../../platform-impl/src/com/intellij/ide/ui/laf/icons/darcula/checkBox.svg" height="19" preserveAspectRatio="none"/>
       <text fill="rgb(187,187,187)" x="23" xml:space="preserve" y="20" clip-path="url(#1)" stroke="none">enabled</text>
     </g>
     <g fill="rgb(60,63,65)" font-size="13px" font-family="'.SF NS Text'" transform="translate(0,160)" stroke="rgb(60,63,65)">

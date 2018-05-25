@@ -19,16 +19,17 @@ import com.intellij.icons.AllIcons;
 import com.intellij.ide.ui.UISettings;
 import com.intellij.ui.ColorUtil;
 import com.intellij.ui.JBColor;
-import com.intellij.util.ui.GraphicsUtil;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.Nullable;
 
+import javax.swing.*;
 import java.awt.*;
 
 /**
  * @author pegov
  */
 public abstract class MoreTabsIcon {
+  private final Icon icon = AllIcons.General.MoreTabs;
   private int myCounter;
 
   public void paintIcon(final Component c, Graphics graphics) {
@@ -44,26 +45,34 @@ public abstract class MoreTabsIcon {
     int width = graphics.getFontMetrics().stringWidth(String.valueOf(myCounter));
     iconX -= width / 2 + 1;
 
-    AllIcons.General.MoreTabs.paintIcon(c, graphics, iconX, iconY);
+    icon.paintIcon(c, graphics, iconX, iconY);
     Graphics g = graphics.create();
     try {
       UISettings.setupAntialiasing(g);
       UIUtil.drawStringWithHighlighting(g, String.valueOf(myCounter),
-                                        iconX + AllIcons.General.MoreTabs.getIconWidth() + 2,
-                                        iconY + AllIcons.General.MoreTabs.getIconHeight() - 5,
+                                        iconX + getIconWidth() + 2,
+                                        iconY + getIconHeight() - 5,
                                         JBColor.BLACK,
                                         ColorUtil.withPreAlpha(JBColor.WHITE, .9));
     } finally {
       g.dispose();
     }
   }
-  
+
+  public int getIconWidth() {
+    return icon.getIconWidth();
+  }
+
+  public int getIconHeight() {
+    return icon.getIconHeight();
+  }
+
   protected int getIconX(final Rectangle iconRec) {
-    return iconRec.x + iconRec.width / 2 - (AllIcons.General.MoreTabs.getIconWidth()) / 2;
+    return iconRec.x + iconRec.width / 2 - (getIconWidth()) / 2;
   }
 
   protected int getIconY(final Rectangle iconRec) {
-    return iconRec.y + iconRec.height / 2 - AllIcons.General.MoreTabs.getIconHeight() / 2;
+    return iconRec.y + iconRec.height / 2 - getIconHeight() / 2;
   }
 
   @Nullable

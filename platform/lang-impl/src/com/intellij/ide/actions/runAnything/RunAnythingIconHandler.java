@@ -6,7 +6,7 @@ import com.intellij.ide.ui.laf.darcula.ui.DarculaTextFieldUI;
 import com.intellij.ide.ui.laf.intellij.MacIntelliJTextFieldUI;
 import com.intellij.ide.ui.laf.intellij.WinIntelliJTextFieldUI;
 import com.intellij.openapi.util.NotNullLazyValue;
-import com.intellij.ui.components.fields.ExtendableTextField;
+import com.intellij.ui.components.fields.ExtendableTextComponent;
 import com.intellij.util.Consumer;
 import com.intellij.util.ui.EmptyIcon;
 import com.intellij.util.ui.UIUtil;
@@ -23,11 +23,11 @@ class RunAnythingIconHandler implements PropertyChangeListener {
   protected static final String MATCHED_CONFIGURATION_PROPERTY = "JTextField.match";
 
   private final NotNullLazyValue<Map<String, Icon>> myIconsMap;
-  private final Consumer<ExtendableTextField.Extension> myConsumer;
+  private final Consumer<ExtendableTextComponent.Extension> myConsumer;
   private final JTextComponent myComponent;
 
   public RunAnythingIconHandler(@NotNull NotNullLazyValue<Map<String, Icon>> iconsMap,
-                                @NotNull Consumer<ExtendableTextField.Extension> consumer,
+                                @NotNull Consumer<ExtendableTextComponent.Extension> consumer,
                                 @NotNull JTextComponent component) {
     myIconsMap = iconsMap;
     myConsumer = consumer;
@@ -57,7 +57,7 @@ class RunAnythingIconHandler implements PropertyChangeListener {
   }
 
   private static void installIconListeners(@NotNull NotNullLazyValue<Map<String, Icon>> iconsMap,
-                                           @NotNull Consumer<ExtendableTextField.Extension> extensionConsumer,
+                                           @NotNull Consumer<ExtendableTextComponent.Extension> extensionConsumer,
                                            @NotNull JTextComponent component) {
     RunAnythingIconHandler handler = new RunAnythingIconHandler(iconsMap, extensionConsumer, component);
     component.addPropertyChangeListener(handler);
@@ -135,7 +135,7 @@ class RunAnythingIconHandler implements PropertyChangeListener {
     }
   }
 
-  private class RunConfigurationTypeExtension implements ExtendableTextField.Extension {
+  private class RunConfigurationTypeExtension implements ExtendableTextComponent.Extension {
     private final String myVariant;
 
     public RunConfigurationTypeExtension(String variant) {myVariant = variant;}

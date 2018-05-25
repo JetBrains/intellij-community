@@ -14,7 +14,7 @@ layoutConstraints:
   - {horizontal: true, unit: 0, value: 0.0}
 rowConstraints:
   constraints:
-  - align: {horizontal: false, unit: 6, value: 0.0}
+  - align: {horizontal: false, unit: -1, value: 0.0}
 columnConstraints:
   constraints:
   - gapAfter:
@@ -29,28 +29,18 @@ columnConstraints:
   - {}
   count: 3
 componentConstrains:
-  Create Android module:
-    vertical:
-      gapBefore:
-        max: &id005 {horizontal: false, value: 3.0}
-        min: *id005
-        preferred: *id005
-  'Android module name:':
-    vertical:
-      gapBefore:
-        max: &id006 {horizontal: false, value: 3.0}
-        min: *id006
-        preferred: *id006
+  Create Android module: {}
+  'Android module name:': {}
   'JTextField #3':
     horizontal: {grow: 100.0}
     spanX: 2097051
     wrap: true
 cellBounds:
-- [0, 0, 124, 22]
-- [130, 0, 350, 22]
-- [0, 32, 124, 22]
-- [130, 32, 350, 22]
+- [0, 0, 124, 16]
+- [130, 0, 350, 16]
+- [0, 26, 124, 22]
+- [130, 26, 350, 22]
 componentBounds:
-  Create Android module: [0, 3, 124, 16]
-  'Android module name:': [0, 35, 123, 16]
-  'JTextField #3': [129, 31, 352, 24]
+  Create Android module: [0, 0, 124, 16]
+  'Android module name:': [0, 29, 123, 16]
+  'JTextField #3': [129, 25, 352, 24]

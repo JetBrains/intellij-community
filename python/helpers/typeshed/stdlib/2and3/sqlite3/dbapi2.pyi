@@ -2,8 +2,8 @@
 # based heavily on Andrey Vlasovskikh's python-skeletons https://github.com/JetBrains/python-skeletons/blob/master/sqlite3.py
 
 import sys
-from typing import Any, Callable, Iterable, Iterator, List, Optional, Text, Tuple, Type, TypeVar, Union
 from datetime import date, time, datetime
+from typing import Any, Callable, Iterable, Iterator, List, Optional, Text, Tuple, Type, TypeVar, Union
 
 _T = TypeVar('_T')
 
@@ -20,7 +20,10 @@ def TimestampFromTicks(ticks): ...
 
 version_info: str
 sqlite_version_info: Tuple[int, int, int]
-Binary: Type[Any]
+if sys.version_info >= (3,):
+    Binary = memoryview
+else:
+    Binary = buffer
 
 def register_adapters_and_converters(): ...
 

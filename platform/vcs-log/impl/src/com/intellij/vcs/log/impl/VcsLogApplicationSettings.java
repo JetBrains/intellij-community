@@ -10,6 +10,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.Set;
 
+import static com.intellij.vcs.log.impl.CommonUiProperties.SHOW_DIFF_PREVIEW;
 import static com.intellij.vcs.log.impl.MainVcsLogUiProperties.*;
 
 @State(name = "Vcs.Log.App.Settings", storages = {@Storage("vcs.xml")})
@@ -27,7 +28,7 @@ public class VcsLogApplicationSettings implements PersistentStateComponent<VcsLo
   public void loadState(@NotNull State state) {
     myState = state;
   }
-  
+
   @SuppressWarnings("unchecked")
   @NotNull
   @Override
@@ -40,6 +41,9 @@ public class VcsLogApplicationSettings implements PersistentStateComponent<VcsLo
     }
     else if (SHOW_CHANGES_FROM_PARENTS.equals(property)) {
       return (T)Boolean.valueOf(myState.SHOW_CHANGES_FROM_PARENTS);
+    }
+    else if (SHOW_DIFF_PREVIEW.equals(property)) {
+      return (T)Boolean.valueOf(myState.SHOW_DIFF_PREVIEW);
     }
     throw new UnsupportedOperationException("Property " + property + " does not exist");
   }
@@ -55,6 +59,9 @@ public class VcsLogApplicationSettings implements PersistentStateComponent<VcsLo
     else if (SHOW_CHANGES_FROM_PARENTS.equals(property)) {
       myState.SHOW_CHANGES_FROM_PARENTS = (Boolean)value;
     }
+    else if (SHOW_DIFF_PREVIEW.equals(property)) {
+      myState.SHOW_DIFF_PREVIEW = (Boolean)value;
+    }
     else {
       throw new UnsupportedOperationException("Property " + property + " does not exist");
     }
@@ -64,7 +71,7 @@ public class VcsLogApplicationSettings implements PersistentStateComponent<VcsLo
   @Override
   public <T> boolean exists(@NotNull VcsLogUiProperty<T> property) {
     return COMPACT_REFERENCES_VIEW.equals(property) || SHOW_TAG_NAMES.equals(property) ||
-           SHOW_CHANGES_FROM_PARENTS.equals(property);
+           SHOW_CHANGES_FROM_PARENTS.equals(property) || SHOW_DIFF_PREVIEW.equals(property);
   }
 
   public void addChangeListener(@NotNull VcsLogUiProperties.PropertiesChangeListener listener) {
@@ -79,5 +86,6 @@ public class VcsLogApplicationSettings implements PersistentStateComponent<VcsLo
     public boolean COMPACT_REFERENCES_VIEW = true;
     public boolean SHOW_TAG_NAMES = false;
     public boolean SHOW_CHANGES_FROM_PARENTS = false;
+    public boolean SHOW_DIFF_PREVIEW = false;
   }
 }

@@ -184,7 +184,7 @@ final class DataFlowInstructionVisitor extends StandardInstructionVisitor {
   void handleBooleanCalls(MethodCallInstruction instruction, DfaInstructionState[] states) {
     if (!hasNonTrivialBooleanContracts(instruction)) return;
     PsiMethod method = instruction.getTargetMethod();
-    if (method == null || !ControlFlowAnalyzer.isPure(method)) return;
+    if (method == null || !JavaMethodContractUtil.isPure(method)) return;
     PsiMethodCallExpression call = ObjectUtils.tryCast(instruction.getCallExpression(), PsiMethodCallExpression.class);
     if (call == null || myBooleanCalls.get(call) == ThreeState.UNSURE) return;
     PsiElement parent = call.getParent();

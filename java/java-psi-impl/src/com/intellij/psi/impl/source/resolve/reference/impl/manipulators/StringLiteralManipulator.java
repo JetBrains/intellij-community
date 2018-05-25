@@ -61,8 +61,8 @@ public class StringLiteralManipulator extends AbstractElementManipulator<PsiLite
       if (type == JavaTokenType.RAW_STRING_LITERAL) {
         String text = ((PsiLiteralExpressionImpl)element).getNode().getText();
 
-        int leadingSeq = PsiRawStringLiteralUtil.getLeadingTicsSequence(text);
-        int trailingSeq = PsiRawStringLiteralUtil.getTrailingTicsSequence(text);
+        int leadingSeq = PsiRawStringLiteralUtil.getLeadingTicksSequence(text);
+        int trailingSeq = PsiRawStringLiteralUtil.getTrailingTicksSequence(text);
 
         return length >= leadingSeq + trailingSeq ? TextRange.from(leadingSeq, length - trailingSeq - leadingSeq) : TextRange.from(0, length);
       }

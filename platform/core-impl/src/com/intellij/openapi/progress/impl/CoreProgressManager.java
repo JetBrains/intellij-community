@@ -666,21 +666,7 @@ public class CoreProgressManager extends ProgressManager implements Disposable {
   @NotNull
   @Override
   protected final NonCancelableSection startNonCancelableSection() {
-    LOG.warn("Use executeNonCancelableSection() instead");
-    if (isInNonCancelableSection()) return NonCancelableSection.EMPTY;
-    final ProgressIndicator myOld = getProgressIndicator();
-
-    final Thread currentThread = Thread.currentThread();
-    final NonCancelableIndicator nonCancelor = new NonCancelableIndicator() {
-      @Override
-      public void done() {
-        setCurrentIndicator(currentThread, myOld);
-        isInNonCancelableSection.remove();
-      }
-    };
-    isInNonCancelableSection.set(Boolean.TRUE);
-    setCurrentIndicator(currentThread, nonCancelor);
-    return nonCancelor;
+    throw new UnsupportedOperationException();
   }
 
   @Override

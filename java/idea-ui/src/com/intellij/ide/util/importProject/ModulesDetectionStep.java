@@ -60,20 +60,19 @@ public class ModulesDetectionStep extends AbstractStepWithProgress<List<ModuleDe
     myProjectDescriptor.setModules(myModulesLayoutPanel.getChosenEntries());
   }
 
+  @Override
   protected JComponent createResultsPanel() {
-    myModulesLayoutPanel = new ModulesLayoutPanel(myInsight, new ModulesLayoutPanel.LibraryFilter() {
-      public boolean isLibraryChosen(final LibraryDescriptor libDescriptor) {
-        return myProjectDescriptor.isLibraryChosen(libDescriptor);
-      }
-    });
+    myModulesLayoutPanel = new ModulesLayoutPanel(myInsight, libDescriptor -> myProjectDescriptor.isLibraryChosen(libDescriptor));
     return myModulesLayoutPanel;
   }
 
+  @Override
   protected String getProgressText() {
     return "Searching for modules. Please wait.";
   }
 
-  int myPreviousStateHashCode = -1;
+  private int myPreviousStateHashCode = -1;
+  @Override
   protected boolean shouldRunProgress() {
     final int currentHash = calcStateHashCode();
     try {
@@ -100,6 +99,7 @@ public class ModulesDetectionStep extends AbstractStepWithProgress<List<ModuleDe
     return hash;
   }
 
+  @Override
   protected List<ModuleDescriptor> calculate() {
     myInsight.scanModules();
     final List<ModuleDescriptor> suggestedModules = myInsight.getSuggestedModules();
@@ -144,6 +144,7 @@ public class ModulesDetectionStep extends AbstractStepWithProgress<List<ModuleDe
     return true;
   }
 
+  @Override
   protected void onFinished(final List<ModuleDescriptor> moduleDescriptors, final boolean canceled) {
     myModulesLayoutPanel.rebuild();
   }

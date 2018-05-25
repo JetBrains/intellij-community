@@ -51,7 +51,7 @@ class UiTestRule(private val testDataRoot: Path) : RequireHeadlessMode() {
     }
 
     try {
-      compareSnapshot(svgRenderer.svgFileDir.resolve("$snapshotName.svg"), svgRenderer.render(panel), isUpdateSnapshotsGlobal)
+      compareSvgSnapshot(svgRenderer.svgFileDir.resolve("$snapshotName.svg"), svgRenderer.render(panel), isUpdateSnapshotsGlobal)
     }
     catch (e: Throwable) {
       errors.add(e)

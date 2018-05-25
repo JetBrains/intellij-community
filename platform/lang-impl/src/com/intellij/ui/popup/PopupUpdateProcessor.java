@@ -16,7 +16,6 @@
 
 package com.intellij.ui.popup;
 
-import com.intellij.codeInsight.completion.CompletionUtil;
 import com.intellij.codeInsight.documentation.DocumentationManager;
 import com.intellij.codeInsight.lookup.*;
 import com.intellij.ide.util.gotoByName.ChooseByNameBase;
@@ -49,10 +48,8 @@ public abstract class PopupUpdateProcessor extends PopupUpdateProcessorBase {
           if (windowEvent.asPopup().isVisible()) { //was not canceled yet
             final LookupElement item = event.getItem();
             if (item != null) {
-              PsiElement targetElement = CompletionUtil.getTargetElement(item);
-              if (targetElement == null) {
-                targetElement = DocumentationManager.getInstance(myProject).getElementFromLookup(activeLookup.getEditor(), activeLookup.getPsiFile());
-              }
+              PsiElement targetElement =
+                DocumentationManager.getInstance(myProject).getElementFromLookup(activeLookup.getEditor(), activeLookup.getPsiFile());
 
               updatePopup(targetElement); //open next
             }

@@ -15,7 +15,6 @@
  */
 package com.intellij.codeInspection.dataFlow;
 
-import com.intellij.codeInsight.AnnotationUtil;
 import com.intellij.codeInsight.ExceptionUtil;
 import com.intellij.codeInsight.daemon.ImplicitUsageProvider;
 import com.intellij.codeInsight.daemon.impl.UnusedSymbolUtil;
@@ -37,9 +36,10 @@ import com.intellij.openapi.util.registry.Registry;
 import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.tree.IElementType;
-import com.intellij.psi.util.CachedValueProvider.Result;
-import com.intellij.psi.util.*;
 import com.intellij.psi.util.InheritanceUtil;
+import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.psi.util.PsiUtil;
+import com.intellij.psi.util.TypeConversionUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
@@ -48,7 +48,6 @@ import com.siyeh.ig.callMatcher.CallMatcher;
 import com.siyeh.ig.numeric.UnnecessaryExplicitNumericCastInspection;
 import com.siyeh.ig.psiutils.*;
 import one.util.streamex.StreamEx;
-import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -59,7 +58,6 @@ import static com.intellij.psi.CommonClassNames.*;
 
 public class ControlFlowAnalyzer extends JavaElementVisitor {
   private static final Logger LOG = Logger.getInstance("#com.intellij.codeInspection.dataFlow.ControlFlowAnalyzer");
-  public static final String ORG_JETBRAINS_ANNOTATIONS_CONTRACT = Contract.class.getName();
   private static final CallMatcher LIST_INITIALIZER = CallMatcher.anyOf(
     CallMatcher.staticCall(JAVA_UTIL_ARRAYS, "asList"),
     CallMatcher.staticCall(JAVA_UTIL_LIST, "of"));
@@ -816,7 +814,7 @@ public class ControlFlowAnalyzer extends JavaElementVisitor {
       }
 
       controlTransfer(new InstructionTransfer(getEndOffset(myInlinedBlockContext.myCodeBlock), getVariablesInside(
-        myInlinedBlockContext.myCodeBlock)), myTrapStack);
+        myInlinedBlockContext.myCodeBlock)), getTrapsInsideElement(myInlinedBlockContext.myCodeBlock));
     } else {
 
       if (returnValue != null) {
@@ -1026,8 +1024,7 @@ public class ControlFlowAnalyzer extends JavaElementVisitor {
     controlTransfer(gotoEnd, singleFinally);
 
     if (sections.length > 0) {
-      assert myTrapStack.getHead() instanceof TryCatch;
-      myTrapStack = myTrapStack.getTail();
+      popTrap(TryCatch.class);
     }
 
     for (PsiCatchSection section : sections) {
@@ -1039,17 +1036,23 @@ public class ControlFlowAnalyzer extends JavaElementVisitor {
     }
 
     if (finallyBlock != null) {
-      assert myTrapStack.getHead() instanceof TryFinally;
-      myTrapStack = myTrapStack.getTail().prepend(new InsideFinally(finallyBlock));
+      popTrap(TryFinally.class);
+      myTrapStack = myTrapStack.prepend(new InsideFinally(finallyBlock));
 
       finallyBlock.accept(this);
       addInstruction(new ControlTransferInstruction(null)); // DfaControlTransferValue is on stack
 
-      assert myTrapStack.getHead() instanceof InsideFinally;
-      myTrapStack = myTrapStack.getTail();
+      popTrap(InsideFinally.class);
     }
 
     finishElement(statement);
+  }
+
+  private void popTrap(Class<? extends Trap> aClass) {
+    if (!aClass.isInstance(myTrapStack.getHead())) {
+      throw new IllegalStateException("Unexpected trap-stack head (wanted: "+aClass.getSimpleName()+"); stack: "+myTrapStack);
+    }
+    myTrapStack = myTrapStack.getTail();
   }
 
   private void processTryWithResources(@Nullable PsiResourceList resourceList, @Nullable PsiCodeBlock tryBlock) {
@@ -1070,16 +1073,15 @@ public class ControlFlowAnalyzer extends JavaElementVisitor {
     }
 
     if (twrFinallyDescriptor != null) {
-      assert myTrapStack.getHead() instanceof TwrFinally;
       InstructionTransfer gotoEnd = new InstructionTransfer(getEndOffset(resourceList), getVariablesInside(tryBlock));
       controlTransfer(gotoEnd, FList.createFromReversed(ContainerUtil.createMaybeSingletonList(twrFinallyDescriptor)));
-      myTrapStack = myTrapStack.getTail().prepend(new InsideFinally(resourceList));
+      popTrap(TwrFinally.class);
+      myTrapStack = myTrapStack.prepend(new InsideFinally(resourceList));
       startElement(resourceList);
       addThrows(null, closerExceptions.toArray(PsiClassType.EMPTY_ARRAY));
       addInstruction(new ControlTransferInstruction(null)); // DfaControlTransferValue is on stack
       finishElement(resourceList);
-      assert myTrapStack.getHead() instanceof InsideFinally;
-      myTrapStack = myTrapStack.getTail();
+      popTrap(InsideFinally.class);
     }
   }
 
@@ -1620,7 +1622,6 @@ public class ControlFlowAnalyzer extends JavaElementVisitor {
   }
 
   private void throwException(ExceptionTransfer kind, @Nullable PsiElement anchor) {
-    addInstruction(new EmptyStackInstruction());
     addInstruction(new ReturnInstruction(myFactory.controlTransfer(kind, myTrapStack), anchor));
   }
 
@@ -1672,7 +1673,8 @@ public class ControlFlowAnalyzer extends JavaElementVisitor {
   void addBareCall(@Nullable PsiMethodCallExpression expression, @NotNull PsiReferenceExpression reference) {
     addConditionalRuntimeThrow();
     PsiMethod method = ObjectUtils.tryCast(reference.resolve(), PsiMethod.class);
-    List<? extends MethodContract> contracts = method == null ? Collections.emptyList() : getMethodCallContracts(method, expression);
+    List<? extends MethodContract> contracts = method == null ? Collections.emptyList() : JavaMethodContractUtil
+      .getMethodCallContracts(method, expression);
     MethodCallInstruction instruction;
     PsiExpression anchor;
     if (expression == null) {
@@ -1692,7 +1694,6 @@ public class ControlFlowAnalyzer extends JavaElementVisitor {
       addInstruction(new BinopInstruction(JavaTokenType.EQEQ, null, PsiType.BOOLEAN));
       ConditionalGotoInstruction ifNotFail = new ConditionalGotoInstruction(null, true, null);
       addInstruction(ifNotFail);
-      addInstruction(new EmptyStackInstruction());
       addInstruction(
         new ReturnInstruction(myFactory.controlTransfer(new ExceptionTransfer(null), myTrapStack), anchor));
 
@@ -1704,40 +1705,13 @@ public class ControlFlowAnalyzer extends JavaElementVisitor {
     }
   }
 
-  public static List<? extends MethodContract> getMethodCallContracts(@NotNull final PsiMethod method,
-                                                                      @Nullable PsiMethodCallExpression call) {
-    List<MethodContract> contracts = HardcodedContracts.getHardcodedContracts(method, call);
-    return !contracts.isEmpty() ? contracts : getMethodContracts(method);
-  }
-
-  public static List<StandardMethodContract> getMethodContracts(@NotNull final PsiMethod method) {
-    return CachedValuesManager.getCachedValue(method, () -> {
-      final PsiAnnotation contractAnno = findContractAnnotation(method);
-      if (contractAnno != null) {
-        String text = AnnotationUtil.getStringAttributeValue(contractAnno, null);
-        if (text != null) {
-          try {
-            final int paramCount = method.getParameterList().getParametersCount();
-            List<StandardMethodContract> applicable = ContainerUtil.filter(StandardMethodContract.parseContract(text),
-                                                                           contract -> contract.getParameterCount() == paramCount);
-            return Result.create(applicable, contractAnno, method, PsiModificationTracker.JAVA_STRUCTURE_MODIFICATION_COUNT);
-          }
-          catch (Exception ignored) {
-          }
-        }
-      }
-      return Result.create(Collections.emptyList(), method, PsiModificationTracker.JAVA_STRUCTURE_MODIFICATION_COUNT);
-    });
-  }
-
+  /**
+   * @deprecated use {@link JavaMethodContractUtil#findContractAnnotation(PsiMethod)}.
+   */
+  @Deprecated
   @Nullable
   public static PsiAnnotation findContractAnnotation(@NotNull PsiMethod method) {
-    return AnnotationUtil.findAnnotationInHierarchy(method, Collections.singleton(ORG_JETBRAINS_ANNOTATIONS_CONTRACT));
-  }
-
-  public static boolean isPure(@NotNull PsiMethod method) {
-    PsiAnnotation anno = findContractAnnotation(method);
-    return anno != null && Boolean.TRUE.equals(AnnotationUtil.getBooleanAttributeValue(anno, "pure"));
+    return JavaMethodContractUtil.findContractAnnotation(method);
   }
 
   @Override
@@ -1811,7 +1785,8 @@ public class ControlFlowAnalyzer extends JavaElementVisitor {
       }
 
       addConditionalRuntimeThrow();
-      addInstruction(new MethodCallInstruction(expression, null, constructor == null ? Collections.emptyList() : getMethodContracts(constructor)));
+      addInstruction(new MethodCallInstruction(expression, null, constructor == null ? Collections.emptyList() : JavaMethodContractUtil
+        .getMethodContracts(constructor)));
 
       if (!myTrapStack.isEmpty()) {
         addMethodThrows(constructor, expression);
@@ -2011,7 +1986,8 @@ public class ControlFlowAnalyzer extends JavaElementVisitor {
   void inlineBlock(@NotNull PsiCodeBlock block, @NotNull Nullness resultNullness, @NotNull DfaVariableValue target) {
     InlinedBlockContext oldBlock = myInlinedBlockContext;
     // Transfer value is pushed to avoid emptying stack beyond this point
-    addInstruction(new PushInstruction(myFactory.controlTransfer(ReturnTransfer.INSTANCE, this.myTrapStack), null));
+    myTrapStack = myTrapStack.prepend(new Trap.InsideInlinedBlock(block));
+    addInstruction(new PushInstruction(myFactory.controlTransfer(ReturnTransfer.INSTANCE, FList.emptyList()), null));
     myInlinedBlockContext = new InlinedBlockContext(block, resultNullness == Nullness.NOT_NULL, target);
     startElement(block);
     try {
@@ -2020,6 +1996,7 @@ public class ControlFlowAnalyzer extends JavaElementVisitor {
     finally {
       finishElement(block);
       myInlinedBlockContext = oldBlock;
+      popTrap(Trap.InsideInlinedBlock.class);
       // Pop transfer value
       addInstruction(new PopInstruction());
     }

@@ -19,9 +19,8 @@ import com.intellij.util.text.StringFactory;
 import org.jetbrains.annotations.NotNull;
 
 /**
- * @deprecated Please use java.util.Base64
+ * @deprecated Please use {@link java.util.Base64} instead
  */
-@SuppressWarnings("unused")
 @Deprecated
 public class Base64Converter {
   private static final char[] alphabet = {

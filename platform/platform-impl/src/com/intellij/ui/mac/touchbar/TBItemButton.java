@@ -74,18 +74,17 @@ public class TBItemButton extends TBItem {
 
   @Override
   protected void _updateNativePeer() {
-    final Icon scaledIcon = (myUpdateOptions & NSTLibrary.BUTTON_UPDATE_IMG) != 0 ? scaleForTouchBar(myIcon) : null;
+    final Icon icon = (myUpdateOptions & NSTLibrary.BUTTON_UPDATE_IMG) != 0 ? myIcon : null;
     final String text = (myUpdateOptions & NSTLibrary.BUTTON_UPDATE_TEXT) != 0 ? myText : null;
 //    System.out.printf("_updateNativePeer, button [%s]: updateOptions 0x%X\n", myUid, myUpdateOptions);
-    NST.updateButton(myNativePeer, myUpdateOptions, myWidth, myFlags, text, getRaster(scaledIcon), getIconW(scaledIcon), getIconH(scaledIcon), myAction);
+    NST.updateButton(myNativePeer, myUpdateOptions, myWidth, myFlags, text, icon, myAction);
     myUpdateOptions = 0;
   }
 
   @Override
   synchronized protected ID _createNativePeer() {
-    Icon scaledIcon = scaleForTouchBar(myIcon);
 //    System.out.printf("_createNativePeer, button [%s]\n", myUid);
-    return NST.createButton(myUid, myWidth, myFlags, myText, getRaster(scaledIcon), getIconW(scaledIcon), getIconH(scaledIcon), myAction);
+    return NST.createButton(myUid, myWidth, myFlags, myText, myIcon, myAction);
   }
 
   private static int _applyFlag(int src, boolean include, int flag) {

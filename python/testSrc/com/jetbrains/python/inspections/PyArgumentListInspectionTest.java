@@ -347,4 +347,9 @@ public class PyArgumentListInspectionTest extends PyInspectionTestCase {
   public void testObjectMethodInPossiblyInheritanceChain() {
     doTest();
   }
+
+  // PY-28127
+  public void testInitializingTypeVar() {
+    doTest();
+  }
 }

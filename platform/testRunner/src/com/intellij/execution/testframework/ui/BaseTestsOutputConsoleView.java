@@ -152,8 +152,6 @@ public abstract class BaseTestsOutputConsoleView implements ConsoleView, Observa
   public void addChangeListener(@NotNull final ChangeListener listener, @NotNull final Disposable parent) {
     if (myConsole instanceof ObservableConsoleView) {
       ((ObservableConsoleView)myConsole).addChangeListener(listener, parent);
-    } else {
-      throw new UnsupportedOperationException(myConsole.getClass().getName());
     }
   }
 

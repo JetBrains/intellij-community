@@ -102,3 +102,8 @@ class HiearchyWithDefaults {
     }
 
 }
+
+/**
+ * {@link java.util.concurrent.ConcurrentHashMap.SearchValuesTask}
+ */
+class InaccessibleClassReferencedInsideJavadocLink { }

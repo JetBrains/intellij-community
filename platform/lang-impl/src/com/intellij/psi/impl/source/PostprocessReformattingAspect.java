@@ -28,7 +28,6 @@ import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.RangeMarker;
-import com.intellij.openapi.fileTypes.FileTypeManager;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.*;
@@ -45,14 +44,12 @@ import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.psi.impl.PsiDocumentManagerBase;
 import com.intellij.psi.impl.PsiManagerEx;
-import com.intellij.psi.impl.PsiTreeDebugBuilder;
 import com.intellij.psi.impl.file.impl.FileManager;
 import com.intellij.psi.impl.source.codeStyle.CodeEditUtil;
 import com.intellij.psi.impl.source.codeStyle.CodeFormatterFacade;
 import com.intellij.psi.impl.source.codeStyle.IndentHelperImpl;
 import com.intellij.psi.impl.source.tree.*;
 import com.intellij.util.Function;
-import com.intellij.util.LocalTimeCounter;
 import com.intellij.util.containers.JBIterable;
 import com.intellij.util.text.CharArrayUtil;
 import com.intellij.util.text.TextRangeUtil;
@@ -362,10 +359,6 @@ public class PostprocessReformattingAspect implements PomModelAspect {
       // then we create ranges by changed nodes. One per node. There ranges can intersect. Ranges are sorted by end offset.
       if (astNodes != null) createActionsMap(astNodes, key, postProcessTasks);
 
-      if (Boolean.getBoolean("check.psi.is.valid") && ApplicationManager.getApplication().isUnitTestMode()) {
-        checkPsiIsCorrect(key);
-      }
-
       while (!postProcessTasks.isEmpty()) {
         // now we have to normalize actions so that they not intersect and ordered in most appropriate way
         // (free reformatting -> reindent -> formatting under reindent)
@@ -397,28 +390,6 @@ public class PostprocessReformattingAspect implements PomModelAspect {
           ((PsiDocumentManagerBase)PsiDocumentManager.getInstance(myProject)).reparseFileFromText((PsiFileImpl)file);
           file.putUserData(REPARSE_PENDING, null);
         }
-      }
-    }
-  }
-
-  private void checkPsiIsCorrect(@NotNull FileViewProvider key) {
-    PsiFile actualPsi = key.getPsi(key.getBaseLanguage());
-
-    PsiTreeDebugBuilder treeDebugBuilder = new PsiTreeDebugBuilder().setShowErrorElements(false).setShowWhiteSpaces(false);
-
-    String actualPsiTree = treeDebugBuilder.psiToString(actualPsi);
-
-    String fileName = key.getVirtualFile().getName();
-    PsiFile psi = PsiFileFactory.getInstance(myProject)
-      .createFileFromText(fileName, FileTypeManager.getInstance().getFileTypeByFileName(fileName), actualPsi.getNode().getText(),
-                          LocalTimeCounter.currentTime(), false);
-
-    if (actualPsi.getClass().equals(psi.getClass())) {
-      String expectedPsi = treeDebugBuilder.psiToString(psi);
-
-      if (!expectedPsi.equals(actualPsiTree)) {
-        getContext().myReformatElements.clear();
-        assert expectedPsi.equals(actualPsiTree) : "Refactored psi should be the same as result of parsing";
       }
     }
   }

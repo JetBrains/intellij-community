@@ -73,7 +73,7 @@ public abstract class RunLineMarkerContributor {
   protected static String getText(@NotNull AnAction action, @NotNull PsiElement element) {
     DataContext parent = DataManager.getInstance().getDataContext();
     DataContext dataContext = SimpleDataContext.getSimpleContext(CommonDataKeys.PSI_ELEMENT.getName(), element, parent);
-    return ((ExecutorAction)action).getActionName(dataContext);
+    return action instanceof ExecutorAction ? ((ExecutorAction)action).getActionName(dataContext) : null;
   }
 
   protected static Icon getTestStateIcon(String url, Project project, boolean isClass) {
@@ -81,7 +81,7 @@ public abstract class RunLineMarkerContributor {
     return getTestStateIcon(state, isClass);
   }
 
-  protected static Icon getTestStateIcon(TestStateStorage.Record state, boolean isClass) {
+  protected static Icon getTestStateIcon(@Nullable TestStateStorage.Record state, boolean isClass) {
     if (state != null) {
       TestStateInfo.Magnitude magnitude = TestIconMapper.getMagnitude(state.magnitude);
       if (magnitude != null) {

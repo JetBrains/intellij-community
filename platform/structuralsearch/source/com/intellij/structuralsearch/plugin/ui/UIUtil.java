@@ -46,6 +46,14 @@ public class UIUtil {
   public static final NotificationGroup SSR_NOTIFICATION_GROUP =
     NotificationGroup.toolWindowGroup(SSRBundle.message("structural.search.title"), ToolWindowId.FIND);
 
+  @NonNls public static final String TEXT = "TEXT";
+  @NonNls public static final String TEXT_HIERARCHY = "TEXT HIERARCHY";
+  @NonNls public static final String REFERENCE = "REFERENCE";
+  @NonNls public static final String TYPE = "TYPE";
+  @NonNls public static final String EXPECTED_TYPE = "EXPECTED TYPE";
+  @NonNls public static final String MINIMUM_ZERO = "MINIMUM ZERO";
+  @NonNls public static final String MAXIMUM_UNLIMITED = "MAXIMUM UNLIMITED";
+
   @NotNull
   public static Editor createEditor(Document doc, final Project project, boolean editable, @Nullable TemplateContextType contextType) {
     return createEditor(doc, project, editable, false, contextType);

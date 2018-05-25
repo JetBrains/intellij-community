@@ -1,28 +1,15 @@
-/*
- * Copyright 2000-2013 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.cvsSupport2.cvshandlers;
 
 import com.intellij.CvsBundle;
-import com.intellij.util.ui.EditorAdapter;
 import com.intellij.cvsSupport2.cvsoperations.cvsMessages.CvsMessagesAdapter;
 import com.intellij.cvsSupport2.cvsoperations.cvsMessages.MessageEvent;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.markup.EffectType;
 import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.registry.Registry;
+import com.intellij.util.ui.EditorAdapter;
 import org.jetbrains.annotations.NotNull;
 
 import java.awt.*;
@@ -37,15 +24,22 @@ public class CvsMessagesConsole extends CvsMessagesAdapter {
   public static final TextAttributes PROGRESS_MESSAGES_ATTRIBUTES = new TextAttributes(null, null, null, EffectType.LINE_UNDERSCORE, Font.ITALIC);
   public static final TextAttributes COMMAND = new TextAttributes(null, null, null, EffectType.LINE_UNDERSCORE, Font.BOLD);
 
+  private int lineLimit = 1000;
+  private int currentLines = 0;
+
   public void connectToOutputView(@NotNull Editor editor, Project project) {
     myOutput = new EditorAdapter(editor, project, true);
   }
 
   @Override
   public void addMessage(final MessageEvent event) {
-    if (hasNotEmptyMessage(event)) {
-      appendString(event.getMessage(), getAttributesFor(event));
+    final String message = event.getMessage();
+    if (message.isEmpty()) return;
+    if (!event.isError() && !event.isTagged()) {
+      if (currentLines >= lineLimit) return;
+      currentLines++;
     }
+    appendString(message, getAttributesFor(event));
   }
 
   private void appendString(String message, TextAttributes attributes) {
@@ -55,15 +49,12 @@ public class CvsMessagesConsole extends CvsMessagesAdapter {
 
   private static TextAttributes getAttributesFor(MessageEvent event) {
     return event.isError() || event.isTagged() ? USER_MESSAGES_ATTRIBUTES : PROGRESS_MESSAGES_ATTRIBUTES;
-
-  }
-
-  private static boolean hasNotEmptyMessage(final MessageEvent event) {
-    return !event.getMessage().isEmpty();
   }
 
   @Override
   public void commandStarted(String command) {
+    lineLimit = Registry.intValue("cvs.server.output.max.lines", 1000);
+    currentLines = 0;
     appendString(command, COMMAND);
   }
 
@@ -71,5 +62,4 @@ public class CvsMessagesConsole extends CvsMessagesAdapter {
   public void commandFinished(String commandName, long time) {
     appendString(CvsBundle.message("message.command.finished", time / 1000), COMMAND);
   }
-
 }

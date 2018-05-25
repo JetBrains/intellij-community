@@ -413,9 +413,16 @@ public class SvnVcs extends AbstractVcs<CommittedChangeList> {
     return mySvnUpdateEnvironment;
   }
 
+  @NotNull
   @Override
   public String getDisplayName() {
     return VCS_DISPLAY_NAME;
+  }
+
+  @NotNull
+  @Override
+  public String getShortName() {
+    return "SVN";
   }
 
   @Override

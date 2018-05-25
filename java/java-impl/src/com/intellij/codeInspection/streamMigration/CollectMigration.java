@@ -35,9 +35,6 @@ import static com.siyeh.ig.psiutils.ControlFlowUtils.getInitializerUsageStatus;
 import static com.siyeh.ig.psiutils.Java8MigrationUtils.MapCheckCondition.fromConditional;
 import static com.siyeh.ig.psiutils.Java8MigrationUtils.extractLambdaCandidate;
 
-/**
- * @author Tagir Valeev
- */
 class CollectMigration extends BaseStreamApiMigration {
   private static final Logger LOG = Logger.getInstance(CollectMigration.class);
 

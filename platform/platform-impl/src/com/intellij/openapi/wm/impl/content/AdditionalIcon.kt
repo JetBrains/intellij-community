@@ -37,6 +37,8 @@ abstract class AdditionalIcon(val myIcon: ActiveIcon) {
   abstract val rectangle: Rectangle
   abstract val active: Boolean
   abstract val available: Boolean
+  abstract val action: Runnable
+  open val afterText = true
 
   private fun getIconY(): Int {
     return rectangle.y + rectangle.height / 2 - getIconHeight() / 2 + 1

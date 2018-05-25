@@ -842,11 +842,11 @@ public class SMTestRunnerResultsForm extends TestResultsPanel
           String url = proxy instanceof SMTestProxy.SMRootTestProxy ? ((SMTestProxy.SMRootTestProxy)proxy).getRootLocation() : proxy.getLocationUrl();
           if (url != null) {
             String configurationName = myConfiguration != null ? myConfiguration.getName() : null;
-            TestStackTraceParser info = new TestStackTraceParser(url, proxy.getStacktrace(), proxy.getErrorMessage());
+            TestStackTraceParser info = new TestStackTraceParser(url, proxy.getStacktrace(), proxy.getErrorMessage(), proxy.getLocator(), project);
             storage.writeState(url, new TestStateStorage.Record(proxy.getMagnitude(), new Date(),
                                                                 configurationName == null ? 0 : configurationName.hashCode(),
                                                                 info.getFailedLine(), info.getFailedMethodName(),
-                                                                info.getErrorMessage()));
+                                                                info.getErrorMessage(), info.getTopLocationLine()));
           }
         }
       });

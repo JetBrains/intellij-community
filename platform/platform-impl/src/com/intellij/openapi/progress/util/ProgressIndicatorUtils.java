@@ -22,6 +22,7 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.application.ex.ApplicationEx;
 import com.intellij.openapi.application.ex.ApplicationManagerEx;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
@@ -44,8 +45,7 @@ import java.util.concurrent.Executor;
  * @author gregsh
  */
 public class ProgressIndicatorUtils {
-  private ProgressIndicatorUtils() {
-  }
+  private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.progress.util.ProgressIndicatorUtils");
 
   @NotNull
   public static ProgressIndicator forceWriteActionPriority(@NotNull ProgressIndicator progress, @NotNull Disposable parentDisposable) {
@@ -106,48 +106,52 @@ public class ProgressIndicatorUtils {
   }
 
   public static boolean runWithWriteActionPriority(@NotNull Runnable action, @NotNull ProgressIndicator progressIndicator) {
-    final ApplicationEx application = (ApplicationEx)ApplicationManager.getApplication();
+    ApplicationEx application = (ApplicationEx)ApplicationManager.getApplication();
     if (application.isDispatchThread()) {
       throw new IllegalStateException("Must not call from EDT");
     }
-    if (application.isWriteActionPending()) {
-      // first catch: check if write action acquisition started: especially important when current thread has read action, because
-      // tryRunReadAction below would just run without really checking if a write action is pending
-      if (!progressIndicator.isCanceled()) progressIndicator.cancel();
+    if (isWriting(application)) {
+      cancelProcess(progressIndicator);
       return false;
     }
 
-    final ApplicationAdapter listener = new ApplicationAdapter() {
+    ApplicationAdapter listener = new ApplicationAdapter() {
       @Override
       public void beforeWriteActionStart(@NotNull Object action) {
-        if (!progressIndicator.isCanceled()) progressIndicator.cancel();
+        cancelProcess(progressIndicator);
       }
     };
 
-    boolean succeededWithAddingListener = application.tryRunReadAction(() -> {
-      // Even if writeLock.lock() acquisition is in progress at this point then runProcess will block wanting read action which is
-      // also ok as last resort.
+    Ref<Boolean> wasCancelled = new Ref<>();
+    ProgressManager.getInstance().runProcess(() -> {
+      // add listener inside runProcess to avoid cancelling indicator before even starting the progress
       application.addApplicationListener(listener);
-    });
-    if (!succeededWithAddingListener) { // second catch: writeLock.lock() acquisition is in progress or already acquired
-      if (!progressIndicator.isCanceled()) progressIndicator.cancel();
-      return false;
-    }
-    final Ref<Boolean> wasCancelled = new Ref<>();
-    try {
-      ProgressManager.getInstance().runProcess(() -> {
-        try {
-          action.run();
-        }
-        catch (ProcessCanceledException ignore) {
+      try {
+        if (isWriting(application)) {
+          // the listener might not be notified if write action was requested concurrently with listener addition
+          cancelProcess(progressIndicator);
           wasCancelled.set(Boolean.TRUE);
+          return;
         }
-      }, progressIndicator);
-    }
-    finally {
-      application.removeApplicationListener(listener);
-    }
+
+        action.run();
+      }
+      catch (ProcessCanceledException ignore) {
+        wasCancelled.set(Boolean.TRUE);
+      }
+      finally {
+        application.removeApplicationListener(listener);
+      }
+    }, progressIndicator);
     return wasCancelled.get() != Boolean.TRUE;
+  }
+
+  private static void cancelProcess(ProgressIndicator progressIndicator) {
+    if (!progressIndicator.isCanceled()) progressIndicator.cancel();
+  }
+
+  private static boolean isWriting(ApplicationEx application) {
+    return application.isWriteActionPending() || application.isWriteActionInProgress();
   }
 
   @NotNull

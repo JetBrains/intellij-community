@@ -15,21 +15,21 @@
  */
 package com.intellij.codeInspection.bytecodeAnalysis;
 
-import com.intellij.codeInspection.dataFlow.StandardMethodContract;
-import com.intellij.codeInspection.dataFlow.StandardMethodContract.ValueConstraint;
 import com.intellij.openapi.util.ThreadLocalCachedValue;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.TypeConversionUtil;
-import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Map;
+import java.util.Set;
 
-import static com.intellij.codeInspection.bytecodeAnalysis.Direction.*;
+import static com.intellij.codeInspection.bytecodeAnalysis.Direction.InOut;
+import static com.intellij.codeInspection.bytecodeAnalysis.Direction.InThrow;
 import static com.intellij.codeInspection.bytecodeAnalysis.ProjectBytecodeAnalysis.LOG;
 
 /**
@@ -243,117 +243,22 @@ public class BytecodeAnalysisConverter {
     return keys;
   }
 
-  /**
-   * Given `solution` of all dependencies of a method with the `methodKey`, converts this solution into annotations.
-   *
-   * @param solution solution of equations
-   * @param methodAnnotations annotations to which corresponding solutions should be added
-   * @param methodKey a primary key of a method being analyzed. not it is stable
-   * @param arity arity of this method (hint for constructing @Contract annotations)
-   */
-  public static void addMethodAnnotations(@NotNull Map<EKey, Value> solution, @NotNull MethodAnnotations methodAnnotations, @NotNull EKey methodKey, int arity) {
-    List<StandardMethodContract> contractClauses = new ArrayList<>();
-    Set<EKey> notNulls = methodAnnotations.notNulls;
-    Set<EKey> pures = methodAnnotations.pures;
-    Map<EKey, String> contracts = methodAnnotations.contractsValues;
-
-    for (Map.Entry<EKey, Value> entry : solution.entrySet()) {
-      // NB: keys from Psi are always stable, so we need to stabilize keys from equations
-      Value value = entry.getValue();
-      if (value == Value.Top || value == Value.Bot || (value == Value.Fail && !pures.contains(methodKey))) {
-        continue;
-      }
-      EKey key = entry.getKey().mkStable();
-      Direction direction = key.getDirection();
-      EKey baseKey = key.mkBase();
-      if (!methodKey.equals(baseKey)) {
-        continue;
-      }
-      if (value == Value.NotNull && direction == Out) {
-        notNulls.add(methodKey);
-      }
-      else if (value == Value.Pure && direction == Pure) {
-        pures.add(methodKey);
-      }
-      else if (direction instanceof ParamValueBasedDirection) {
-        contractClauses.add(contractElement(arity, (ParamValueBasedDirection)direction, value));
-      }
-    }
-
-    // no contract clauses for @NotNull methods
-    if (!notNulls.contains(methodKey) && !contractClauses.isEmpty()) {
-      Map<Boolean, List<StandardMethodContract>> partition =
-        StreamEx.of(contractClauses).partitioningBy(c -> c.getReturnValue().isFail());
-      List<StandardMethodContract> failingContracts = squashContracts(partition.get(true));
-      List<StandardMethodContract> nonFailingContracts = squashContracts(partition.get(false));
-      // Sometimes "null,_->!null;!null,_->!null" contracts are inferred for some reason
-      // They are squashed to "_,_->!null" which is better expressed as @NotNull annotation
-      if(nonFailingContracts.size() == 1) {
-        StandardMethodContract contract = nonFailingContracts.get(0);
-        if(contract.getReturnValue().isNotNull() && contract.isTrivial()) {
-          nonFailingContracts = Collections.emptyList();
-          notNulls.add(methodKey);
-        }
-      }
-      // Failing contracts go first
-      String result = StreamEx.of(failingContracts, nonFailingContracts)
-        .flatMap(list -> list.stream()
-          .map(Object::toString)
-          .map(str -> str.replace(" ", "")) // for compatibility with existing tests
-          .sorted())
-        .joining(";");
-      if(!result.isEmpty()) {
-        contracts.put(methodKey, '"'+result+'"');
-      }
-    }
-
-  }
-
-  @NotNull
-  private static List<StandardMethodContract> squashContracts(List<StandardMethodContract> contractClauses) {
-    // If there's a pair of contracts yielding the same value like "null,_->true", "!null,_->true"
-    // then trivial contract should be used like "_,_->true"
-    StandardMethodContract soleContract = StreamEx.ofPairs(contractClauses, (c1, c2) -> {
-      if (c1.getReturnValue() != c2.getReturnValue()) return null;
-      int idx = -1;
-      for (int i = 0; i < c1.getParameterCount(); i++) {
-        ValueConstraint left = c1.getParameterConstraint(i);
-        ValueConstraint right = c2.getParameterConstraint(i);
-        if (left == ValueConstraint.ANY_VALUE && right == ValueConstraint.ANY_VALUE) continue;
-        if (idx >= 0 || !right.canBeNegated() || left != right.negate()) return null;
-        idx = i;
-      }
-      return c1;
-    }).nonNull().findFirst().orElse(null);
-    if(soleContract != null) {
-      ValueConstraint[] constraints = StandardMethodContract.createConstraintArray(soleContract.getParameterCount());
-      contractClauses = Collections.singletonList(new StandardMethodContract(constraints, soleContract.getReturnValue()));
-    }
-    return contractClauses;
-  }
-
   public static void addEffectAnnotations(Map<EKey, Effects> puritySolutions,
                                           MethodAnnotations result,
                                           EKey methodKey,
                                           boolean constructor) {
     for (Map.Entry<EKey, Effects> entry : puritySolutions.entrySet()) {
-      Set<EffectQuantum> effects = entry.getValue().effects;
       EKey key = entry.getKey().mkStable();
       EKey baseKey = key.mkBase();
       if (!methodKey.equals(baseKey)) {
         continue;
       }
+      result.returnValue = entry.getValue().returnValue;
+      Set<EffectQuantum> effects = entry.getValue().effects;
       if (effects.isEmpty() || (constructor && effects.size() == 1 && effects.contains(EffectQuantum.ThisChangeQuantum))) {
         // Pure constructor is allowed to change "this" object as this is a new object anyways
         result.pures.add(methodKey);
       }
     }
-  }
-
-  private static StandardMethodContract contractElement(int arity, ParamValueBasedDirection inOut, Value value) {
-    final ValueConstraint[] constraints = new ValueConstraint[arity];
-    Arrays.fill(constraints, ValueConstraint.ANY_VALUE);
-    constraints[inOut.paramIndex] = inOut.inValue.toValueConstraint();
-    return new StandardMethodContract(constraints, value.toReturnValue());
   }
 }

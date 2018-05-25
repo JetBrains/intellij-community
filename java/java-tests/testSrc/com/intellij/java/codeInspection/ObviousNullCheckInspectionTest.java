@@ -28,9 +28,6 @@ import com.intellij.testFramework.fixtures.DefaultLightProjectDescriptor;
 import com.siyeh.ig.LightInspectionTestCase;
 import org.jetbrains.annotations.NotNull;
 
-/**
- * @author Tagir Valeev
- */
 public class ObviousNullCheckInspectionTest extends LightInspectionTestCase {
   static final String TEST_DATA_DIR = "/inspection/obviousNotNull/";
 

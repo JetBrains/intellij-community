@@ -8,6 +8,7 @@ import com.intellij.json.JsonLanguage;
 import com.intellij.json.psi.*;
 import com.intellij.lang.Language;
 import com.intellij.openapi.actionSystem.DataContext;
+import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.actionSystem.EditorActionHandler;
 import com.intellij.openapi.util.Ref;
@@ -68,11 +69,13 @@ public class JsonEnterHandler extends EnterHandlerDelegateAdapter {
 
       if (prevSibling instanceof JsonProperty && ((JsonProperty)prevSibling).getValue() != null) {
         int offset = elementType == JsonElementTypes.COMMA ? nextSibling.getTextRange().getEndOffset() : prevSibling.getTextRange().getEndOffset();
-        if (elementType == JsonElementTypes.R_CURLY) {
-          editor.getDocument().insertString(offset, ",");
-          offset++;
+        if (offset < editor.getDocument().getTextLength()) {
+          if (elementType == JsonElementTypes.R_CURLY) {
+            editor.getDocument().insertString(offset, ",");
+            offset++;
+          }
+          caretOffsetRef.set(offset);
         }
-        caretOffsetRef.set(offset);
         return true;
       }
       return false;
@@ -86,8 +89,10 @@ public class JsonEnterHandler extends EnterHandlerDelegateAdapter {
 
       if (prevSibling instanceof JsonProperty) {
         int offset = prevSibling.getTextRange().getEndOffset();
-        editor.getDocument().insertString(offset, ",");
-        caretOffsetRef.set(offset + 1);
+        if (offset < editor.getDocument().getTextLength()) {
+          editor.getDocument().insertString(offset, ",");
+          caretOffsetRef.set(offset + 1);
+        }
         return true;
       }
     }
@@ -113,7 +118,10 @@ public class JsonEnterHandler extends EnterHandlerDelegateAdapter {
         || !(nextSibling instanceof JsonProperty)) {
         return;
       }
-      editor.getDocument().insertString(offset, ",");
+      Document document = editor.getDocument();
+      if (offset < document.getTextLength()) {
+        document.insertString(offset, ",");
+      }
       return;
     }
 
@@ -121,10 +129,15 @@ public class JsonEnterHandler extends EnterHandlerDelegateAdapter {
       offset = nextSibling.getTextRange().getEndOffset();
     }
     else {
-      editor.getDocument().insertString(offset, ",");
+      Document document = editor.getDocument();
+      if (offset < document.getTextLength()) {
+        document.insertString(offset, ",");
+      }
       offset++;
     }
 
-    caretOffsetRef.set(offset);
+    if (offset < editor.getDocument().getTextLength()) {
+      caretOffsetRef.set(offset);
+    }
   }
 }

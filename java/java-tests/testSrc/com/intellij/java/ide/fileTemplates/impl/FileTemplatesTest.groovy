@@ -141,6 +141,19 @@ class FileTemplatesTest extends IdeaTestCase {
     FileTemplateManager.getInstance(getProject()).removeTemplate(template)
   }
 
+  void testDirPath() {
+    FileTemplate template = FileTemplateManager.getInstance(getProject()).addTemplate(name, "txt")
+    disposeOnTearDown({ FileTemplateManager.getInstance(getProject()).removeTemplate(template) } as Disposable)
+    template.setText('${DIR_PATH}; ${FILE_NAME}')
+
+    File temp = createTempDirectory(false)
+    VirtualFile tempDir = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(temp)
+    def directory = PsiManager.getInstance(project).findDirectory(tempDir)
+    def element = FileTemplateUtil.createFromTemplate(template, "foo", new Properties(), directory)
+
+    assertEquals("idea_test_; foo.txt", element.getText())
+  }
+
   private FileTemplate addTestTemplate(String name, String text) {
     FileTemplate template = FileTemplateManager.getInstance(getProject()).addTemplate(name, "java")
     disposeOnTearDown({ FileTemplateManager.getInstance(getProject()).removeTemplate(template) } as Disposable)

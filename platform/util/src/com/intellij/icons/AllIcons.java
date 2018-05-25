@@ -155,6 +155,7 @@ public class AllIcons {
     public static final Icon Prevfile = IconLoader.getIcon("/actions/back.svg"); // 16x16
     public static final Icon Preview = IconLoader.getIcon("/actions/preview.png"); // 16x16
     public static final Icon PreviewDetails = IconLoader.getIcon("/actions/previewDetails.svg"); // 16x16
+    public static final Icon PreviewDetailsVertically = IconLoader.getIcon("/actions/previewDetailsVertically.svg"); // 16x16
     public static final Icon PreviousOccurence = IconLoader.getIcon("/actions/previousOccurence.svg"); // 16x16
     public static final Icon Profile = IconLoader.getIcon("/actions/profile.svg"); // 16x16
     public static final Icon ProfileCPU = IconLoader.getIcon("/actions/profileCPU.png"); // 16x16
@@ -189,9 +190,10 @@ public class AllIcons {
     public static final Icon Search = IconLoader.getIcon("/actions/search.png"); // 16x16
     public static final Icon SearchNewLine = IconLoader.getIcon("/actions/searchNewLine.png"); // 16x16
     public static final Icon SearchNewLineHover = IconLoader.getIcon("/actions/searchNewLineHover.png"); // 16x16
-    public static final Icon Selectall = IconLoader.getIcon("/actions/selectall.png"); // 16x16
+    public static final Icon Selectall = IconLoader.getIcon("/actions/selectall.svg"); // 16x16
     public static final Icon Share = IconLoader.getIcon("/actions/share.png"); // 14x14
     public static final Icon ShortcutFilter = IconLoader.getIcon("/actions/shortcutFilter.png"); // 16x16
+    public static final Icon Show = IconLoader.getIcon("/actions/show.svg"); // 16x16
     public static final Icon ShowAsTree = IconLoader.getIcon("/actions/showAsTree.svg"); // 16x16
     public static final Icon ShowChangesOnly = IconLoader.getIcon("/actions/showChangesOnly.png"); // 16x16
     public static final Icon ShowHiddens = IconLoader.getIcon("/actions/showHiddens.png"); // 16x16
@@ -902,21 +904,21 @@ public class AllIcons {
   }
 
   public static class Graph {
-    public static final Icon ActualZoom = IconLoader.getIcon("/graph/actualZoom.png"); // 16x16
+    public static final Icon ActualZoom = IconLoader.getIcon("/graph/actualZoom.svg"); // 16x16
 
     /** @deprecated to be removed in IDEA 2020 - use AllIcons.ToolbarDecorator.Export */
     @SuppressWarnings("unused")
     @Deprecated
     public static final Icon Export = IconLoader.getIcon("/toolbarDecorator/export.svg"); // 16x16
-    public static final Icon FitContent = IconLoader.getIcon("/graph/fitContent.png"); // 16x16
+    public static final Icon FitContent = IconLoader.getIcon("/graph/fitContent.svg"); // 16x16
     public static final Icon Grid = IconLoader.getIcon("/graph/grid.png"); // 16x16
-    public static final Icon Layout = IconLoader.getIcon("/graph/layout.png"); // 16x16
+    public static final Icon Layout = IconLoader.getIcon("/graph/layout.svg"); // 16x16
     public static final Icon NodeSelectionMode = IconLoader.getIcon("/graph/nodeSelectionMode.png"); // 16x16
     public static final Icon Print = IconLoader.getIcon("/graph/print.svg"); // 16x16
     public static final Icon PrintPreview = IconLoader.getIcon("/graph/printPreview.png"); // 16x16
     public static final Icon SnapToGrid = IconLoader.getIcon("/graph/snapToGrid.png"); // 16x16
-    public static final Icon ZoomIn = IconLoader.getIcon("/graph/zoomIn.png"); // 16x16
-    public static final Icon ZoomOut = IconLoader.getIcon("/graph/zoomOut.png"); // 16x16
+    public static final Icon ZoomIn = IconLoader.getIcon("/graph/zoomIn.svg"); // 16x16
+    public static final Icon ZoomOut = IconLoader.getIcon("/graph/zoomOut.svg"); // 16x16
 
   }
 
@@ -1697,6 +1699,7 @@ public class AllIcons {
   public static class Vcs {
     public static final Icon Arrow_left = IconLoader.getIcon("/vcs/arrow_left.png"); // 16x16
     public static final Icon Arrow_right = IconLoader.getIcon("/vcs/arrow_right.png"); // 16x16
+    public static final Icon Changelist = IconLoader.getIcon("/vcs/changelist.svg"); // 16x16
     public static final Icon CheckSpelling = IconLoader.getIcon("/vcs/checkSpelling.png"); // 16x16
     public static final Icon Equal = IconLoader.getIcon("/vcs/equal.png"); // 16x16
     public static final Icon Favorite = IconLoader.getIcon("/vcs/favorite.png"); // 16x16

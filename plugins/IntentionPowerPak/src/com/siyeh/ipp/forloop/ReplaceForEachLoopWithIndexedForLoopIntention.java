@@ -65,10 +65,7 @@ public class ReplaceForEachLoopWithIndexedForLoopIntention extends Intention {
     @NonNls final StringBuilder newStatement = new StringBuilder();
     final String indexText = createVariableName("i", PsiType.INT, statement);
     createForLoopDeclaration(statement, iteratedValue, isArray, iteratedValueText, newStatement, indexText);
-    final Project project = statement.getProject();
-    final CodeStyleSettings codeStyleSettings =
-      CodeStyleSettingsManager.getSettings(project);
-    if (codeStyleSettings.getCustomSettings(JavaCodeStyleSettings.class).GENERATE_FINAL_LOCALS) {
+    if (JavaCodeStyleSettings.getInstance(statement.getContainingFile()).GENERATE_FINAL_LOCALS) {
       newStatement.append("final ");
     }
     newStatement.append(type.getCanonicalText());

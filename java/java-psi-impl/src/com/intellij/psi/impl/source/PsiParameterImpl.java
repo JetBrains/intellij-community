@@ -301,7 +301,7 @@ public class PsiParameterImpl extends JavaStubPsiElement<PsiParameterStub> imple
       PsiElement gParent = parent.getParent();
       if (gParent instanceof PsiMethod) {
         PsiElement originalMethod = gParent.getOriginalElement();
-        if (originalMethod instanceof PsiMethod) {
+        if (originalMethod instanceof PsiMethod && originalMethod != gParent) {
           int index = ((PsiParameterList)parent).getParameterIndex(this);
           PsiParameter[] originalParameters = ((PsiMethod)originalMethod).getParameterList().getParameters();
           if (index < originalParameters.length) {

@@ -15,39 +15,81 @@
  */
 package com.intellij.openapi.diagnostic;
 
+import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.CharsetToolkit;
+import com.intellij.util.ArrayUtil;
 import com.intellij.util.Base64;
 import com.intellij.util.ExceptionUtil;
 import com.intellij.util.PathUtilRt;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
+
+import java.io.*;
 
 public class Attachment {
+  private static final Logger LOG = Logger.getInstance(Attachment.class);
+
   public static final Attachment[] EMPTY_ARRAY = new Attachment[0];
+
   private final String myPath;
-  private final byte[] myBytes;
+  @Nullable private final File myTemporaryFile;
+  @Nullable private final byte[] myBytes;
   private boolean myIncluded;   // opt-out for traces, opt-in otherwise
   private final String myDisplayText;
 
   public Attachment(@NotNull String path, @NotNull String content) {
-    myPath = path;
-    myDisplayText = content;
-    myBytes = getBytes(content);
+    this(path, content.getBytes(CharsetToolkit.UTF8_CHARSET), content);
   }
 
   public Attachment(@NotNull String path, @NotNull byte[] bytes, @NotNull String displayText) {
     myPath = path;
-    myBytes = bytes;
     myDisplayText = displayText;
+    myBytes = bytes;
+    myTemporaryFile = null;
+  }
+
+  public Attachment(@NotNull String path, @NotNull InputStream inputStream, @NotNull String displayText) {
+    myPath = path;
+    myDisplayText = displayText;
+
+    myBytes = null;
+
+    File temporaryFile;
+    try {
+      temporaryFile = FileUtil.createTempFile("intellij-attachment", ".bin", true);
+      temporaryFile.deleteOnExit();
+    } catch (IOException e) {
+      LOG.error("Unable to create temp file for attachment: " + e.getMessage(), e);
+      temporaryFile = null;
+    }
+
+    if (temporaryFile != null) {
+      try {
+        OutputStream outputStream = new FileOutputStream(temporaryFile);
+        try {
+          FileUtil.copy(inputStream, outputStream);
+        } finally {
+          outputStream.close();
+        }
+      } catch (IOException e) {
+        LOG.error("Unable to write temp file for attachment at " + temporaryFile + ": " + e.getMessage(), e);
+        temporaryFile = null;
+      }
+    }
+
+    myTemporaryFile = temporaryFile;
+  }
+
+  public Attachment(@NotNull String path, @NotNull File existingTemporaryFile, @NotNull String displayText) {
+    myPath = path;
+    myDisplayText = displayText;
+    myTemporaryFile = existingTemporaryFile;
+    myBytes = null;
   }
 
   public Attachment(@NotNull String name, @NotNull Throwable throwable) {
     this(name + ".trace", ExceptionUtil.getThrowableText(throwable));
     myIncluded = true;
-  }
-
-  @NotNull
-  public static byte[] getBytes(@NotNull String content) {
-    return content.getBytes(CharsetToolkit.UTF8_CHARSET);
   }
 
   @NotNull
@@ -67,12 +109,43 @@ public class Attachment {
 
   @NotNull
   public String getEncodedBytes() {
-    return Base64.encode(myBytes);
+    return Base64.encode(getBytes());
   }
 
   @NotNull
   public byte[] getBytes() {
-    return myBytes;
+    if (myBytes != null) {
+      return myBytes;
+    }
+
+    if (myTemporaryFile == null) {
+      return ArrayUtil.EMPTY_BYTE_ARRAY;
+    }
+
+    try {
+      return FileUtil.loadFileBytes(myTemporaryFile);
+    } catch (IOException e) {
+      LOG.error("Unable to read attachment content from temporary file " + myTemporaryFile + ": " + e.getMessage(), e);
+      return ArrayUtil.EMPTY_BYTE_ARRAY;
+    }
+  }
+
+  @NotNull
+  public InputStream openContentStream() {
+    if (myBytes != null) {
+      return new ByteArrayInputStream(myBytes);
+    }
+
+    if (myTemporaryFile == null) {
+      return new ByteArrayInputStream(ArrayUtil.EMPTY_BYTE_ARRAY);
+    }
+
+    try {
+      return new FileInputStream(myTemporaryFile);
+    } catch (FileNotFoundException e) {
+      LOG.warn("Unable to read attachment content from temporary file " + myTemporaryFile + ": " + e.getMessage(), e);
+      return new ByteArrayInputStream(ArrayUtil.EMPTY_BYTE_ARRAY);
+    }
   }
 
   public boolean isIncluded() {

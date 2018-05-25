@@ -22,7 +22,6 @@ import com.intellij.openapi.components.ServiceManager
 import com.intellij.openapi.vfs.VfsUtilCore
 import com.intellij.psi.*
 import com.intellij.psi.util.PsiTreeUtil
-import org.jetbrains.annotations.ApiStatus
 import java.io.File
 
 inline fun <reified T : UElement> UElement.getParentOfType(strict: Boolean = true): T? = getParentOfType(T::class.java, strict)
@@ -176,14 +175,13 @@ fun Collection<UElement?>.toPsiElements() = mapNotNull { it?.psi }
 
 /**
  * A helper function for getting parents for given [PsiElement] that could be considered as identifier.
- * Useful for working with gutter accorting to recommendations in [com.intellij.codeInsight.daemon.LineMarkerProvider].
+ * Useful for working with gutter according to recommendations in [com.intellij.codeInsight.daemon.LineMarkerProvider].
+ *
+ * @see [getUParentForAnnotationIdentifier] for working with annotations
  */
-@ApiStatus.Experimental
 fun getUParentForIdentifier(identifier: PsiElement): UElement? {
   val uIdentifier = identifier.toUElementOfType<UIdentifier>() ?: return null
   return uIdentifier.uastParent
-         ?: identifier.parent.toUElement() // a workaround for Kotlin < 1.2.30 which identifiers cant get parents
-
 }
 
 /**

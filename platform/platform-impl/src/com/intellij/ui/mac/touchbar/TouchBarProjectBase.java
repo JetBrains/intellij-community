@@ -7,8 +7,10 @@ import org.jetbrains.annotations.NotNull;
 public class TouchBarProjectBase extends TouchBar {
   protected final @NotNull Project myProject;
 
-  public TouchBarProjectBase(@NotNull String touchbarName, @NotNull Project project) {
-    super(touchbarName);
+  public TouchBarProjectBase(@NotNull String touchbarName, @NotNull Project project) { this(touchbarName, project, false); }
+
+  public TouchBarProjectBase(@NotNull String touchbarName, @NotNull Project project, boolean replaceEsc) {
+    super(touchbarName, replaceEsc);
     myProject = project;
   }
 }

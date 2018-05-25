@@ -38,13 +38,8 @@ public interface PyCallableParameter {
 
   boolean hasDefaultValue();
 
-  /**
-   * @apiNote This method will be marked as abstract in 2018.2.
-   */
   @Nullable
-  default String getDefaultValueText() {
-    return null;
-  }
+  String getDefaultValueText();
 
   boolean isPositionalContainer();
 

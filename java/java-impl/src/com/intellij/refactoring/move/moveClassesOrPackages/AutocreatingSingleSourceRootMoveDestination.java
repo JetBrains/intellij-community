@@ -15,6 +15,7 @@
  */
 package com.intellij.refactoring.move.moveClassesOrPackages;
 
+import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleUtil;
 import com.intellij.openapi.project.Project;
@@ -100,7 +101,14 @@ public class AutocreatingSingleSourceRootMoveDestination extends AutocreatingMov
   PsiDirectory myTargetDirectory;
   private PsiDirectory getDirectory() throws IncorrectOperationException {
     if (myTargetDirectory == null) {
-      myTargetDirectory = RefactoringUtil.createPackageDirectoryInSourceRoot(myPackage, mySourceRoot);
+      myTargetDirectory = WriteAction.compute(() -> {
+        try {
+          return RefactoringUtil.createPackageDirectoryInSourceRoot(myPackage, mySourceRoot);
+        }
+        catch (IncorrectOperationException e) {
+          return null;
+        }
+      });
     }
     return myTargetDirectory;
   }

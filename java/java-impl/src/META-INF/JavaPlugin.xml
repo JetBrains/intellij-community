@@ -204,7 +204,7 @@
                      enabledByDefault="true" level="ERROR"
                      groupBundle="messages.InspectionsBundle" groupKey="group.names.junit.issues"
                      displayName="Highlight problem line in test"
-                     implementationClass="com.intellij.testIntegration.TestFailedLineInspection"/>
+                     implementationClass="com.intellij.execution.testframework.TestFailedLineInspection"/>
     <testGenerator language="JAVA" implementationClass="com.intellij.testIntegration.createTest.JavaTestGenerator" />
     <testCreator language="JAVA" implementationClass="com.intellij.testIntegration.JavaTestCreator"/>
     <testFinder implementation="com.intellij.testIntegration.JavaTestFinder"/>
@@ -266,6 +266,7 @@
     <scopeTreeExpander implementation="com.intellij.ide.scopeView.ClassesScopeTreeStructureExpander"/>
     <gotoSymbolContributor implementation="com.intellij.ide.util.gotoByName.JavaModuleNavigationContributor"/>
     <gotoSymbolContributor implementation="com.intellij.ide.util.gotoByName.DefaultSymbolNavigationContributor"/>
+    <gotoSymbolContributor implementation="com.intellij.ide.util.gotoByName.DefaultSymbolNavigationContributor$JavadocSeparatorContributor"/>
     <gotoClassContributor implementation="com.intellij.ide.util.gotoByName.DefaultClassNavigationContributor"/>
     <targetElementEvaluator language="JAVA" implementationClass="com.intellij.codeInsight.JavaTargetElementEvaluator"/>
     <targetElementUtilExtender implementation="com.intellij.codeInsight.JavaTargetElementEvaluator"/>
@@ -559,7 +560,7 @@
                      bundle="messages.InspectionsBundle"
                      key="inspection.redundant.explicit.close"
                      implementationClass="com.intellij.codeInspection.RedundantExplicitCloseInspection"/>
-    <localInspection groupPath="Java,Java language level migration aids" language="JAVA" shortName="WrapperTypeMayBePrimitive"
+    <localInspection groupPath="Java" language="JAVA" shortName="WrapperTypeMayBePrimitive"
                      groupBundle="messages.InspectionsBundle"
                      groupKey="group.names.declaration.redundancy" enabledByDefault="true" level="WARNING"
                      displayName="Wrapper type may be primitive"
@@ -987,6 +988,10 @@
       <category>Java/Strings</category>
     </intentionAction>
     <intentionAction>
+      <className>com.intellij.codeInsight.intention.impl.SplitRawStringIntentionAction</className>
+      <category>Java/Strings</category>
+    </intentionAction>
+    <intentionAction>
       <className>com.intellij.codeInsight.intention.impl.ReplaceCastWithVariableAction</className>
       <category>Java/Imports</category>
     </intentionAction>
@@ -1198,5 +1203,9 @@
     <java.error.fix errorCode="lambda.variable.must.be.final"
                     implementationClass="com.intellij.codeInsight.daemon.impl.quickfix.VariableAccessFromInnerClassJava10Fix"
     />
+    <intentionAction>
+      <className>com.intellij.codeInsight.intention.impl.ChangeUIDAction</className>
+      <category>Serialization</category>
+    </intentionAction>
   </extensions>
 </idea-plugin>

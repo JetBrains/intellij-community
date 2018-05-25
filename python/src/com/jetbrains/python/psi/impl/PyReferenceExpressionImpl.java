@@ -47,6 +47,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
+import java.util.function.Predicate;
 
 import static com.jetbrains.python.psi.PyUtil.as;
 
@@ -155,7 +156,8 @@ public class PyReferenceExpressionImpl extends PyElementImpl implements PyRefere
 
   @NotNull
   @Override
-  public List<QualifiedRatedResolveResult> multiFollowAssignmentsChain(@NotNull PyResolveContext resolveContext) {
+  public List<QualifiedRatedResolveResult> multiFollowAssignmentsChain(@NotNull PyResolveContext resolveContext,
+                                                                       @NotNull Predicate<? super PyTargetExpression> follow) {
     final List<QualifiedRatedResolveResult> result = new ArrayList<>();
     final Queue<MultiFollowQueueNode> queue = new LinkedList<>();
     final Set<PyReferenceExpression> visited = new HashSet<>();
@@ -169,7 +171,7 @@ public class PyReferenceExpressionImpl extends PyElementImpl implements PyRefere
 
       for (ResolveResult resolveResult : node.myReferenceExpression.getReference(resolveContext).multiResolve(false)) {
         final PsiElement element = resolveResult.getElement();
-        if (element instanceof PyTargetExpression) {
+        if (element instanceof PyTargetExpression && follow.test((PyTargetExpression)element)) {
           final PyTargetExpression target = (PyTargetExpression)element;
 
           final List<PsiElement> assignedFromElements = context.maySwitchToAST(target)

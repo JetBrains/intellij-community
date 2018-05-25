@@ -8,7 +8,7 @@ import java.awt.*;
 
 public class TouchBarDebuggerAlt extends TouchBarActionBase {
   public TouchBarDebuggerAlt(@NotNull Project project, Component component) {
-    super("debugger_alt", project, component);
+    super("debugger_alt", project, component, true);
 
     addFlexibleSpacing();
     addAnActionButton("ViewBreakpoints", false);

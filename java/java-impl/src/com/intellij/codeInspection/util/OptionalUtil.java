@@ -20,9 +20,6 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.Objects;
 
-/**
- * @author Tagir Valeev
- */
 public class OptionalUtil {
   private static final String OPTIONAL_INT = "java.util.OptionalInt";
   private static final String OPTIONAL_LONG = "java.util.OptionalLong";

@@ -380,7 +380,7 @@ public class PyPackageManagementService extends PackageManagementServiceEx {
     myExecutorService.submit(() -> {
       try {
         PyPIPackageUtil.INSTANCE.loadAndGetPackages();
-        final String version = PyPIPackageUtil.INSTANCE.fetchLatestPackageVersion(pkg.getName());
+        final String version = PyPIPackageUtil.INSTANCE.fetchLatestPackageVersion(myProject, pkg.getName());
         consumer.consume(StringUtil.notNullize(version));
       }
       catch (IOException e) {

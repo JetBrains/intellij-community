@@ -11,13 +11,13 @@
         <path d="M0 0 L0 14 L155 14 L155 0 Z"/>
       </clipPath>
       <clipPath clipPathUnits="userSpaceOnUse" id="2">
-        <path d="M0 0 L0 28 L254 28 L254 0 Z"/>
+        <path d="M0 0 L0 30 L256 30 L256 0 Z"/>
       </clipPath>
       <clipPath clipPathUnits="userSpaceOnUse" id="3">
-        <path d="M-1 -1 L-1 27 L253 27 L253 -1 Z"/>
+        <path d="M-1 -1 L-1 29 L255 29 L255 -1 Z"/>
       </clipPath>
       <clipPath clipPathUnits="userSpaceOnUse" id="4">
-        <path d="M0 0 L0 24 L246 24 L246 0 Z"/>
+        <path d="M0 0 L0 24 L254 24 L254 0 Z"/>
       </clipPath>
       <clipPath clipPathUnits="userSpaceOnUse" id="5">
         <path d="M0 0 L0 16 L110 16 L110 0 Z"/>
@@ -26,56 +26,56 @@
         <path d="M0 0 L0 16 L21 16 L21 0 Z"/>
       </clipPath>
       <clipPath clipPathUnits="userSpaceOnUse" id="7">
-        <path d="M0 0 L0 28 L314 28 L314 0 Z"/>
+        <path d="M0 0 L0 30 L314 30 L314 0 Z"/>
       </clipPath>
       <clipPath clipPathUnits="userSpaceOnUse" id="8">
-        <path d="M-1 -1 L-1 27 L313 27 L313 -1 Z"/>
+        <path d="M-1 -1 L-1 29 L313 29 L313 -1 Z"/>
       </clipPath>
       <clipPath clipPathUnits="userSpaceOnUse" id="9">
         <path d="M0 0 L0 16 L61 16 L61 0 Z"/>
       </clipPath>
       <clipPath clipPathUnits="userSpaceOnUse" id="10">
-        <path d="M2 0 L2 24 L90 24 L90 0 Z"/>
+        <path d="M2 2 L2 19 L90 19 L90 2 Z"/>
       </clipPath>
     </defs>
     <g fill="rgb(60,63,65)" font-size="13px" font-family="'.SF NS Text'" stroke="rgb(60,63,65)">
       <rect x="0" width="480" height="320" y="0" clip-path="url(#0)" stroke="none"/>
     </g>
-    <g fill="rgb(120,120,120)" text-rendering="geometricPrecision" font-size="11px" font-family="'.SF NS Text'" transform="translate(138,98)" stroke="rgb(120,120,120)">
+    <g fill="rgb(120,120,120)" text-rendering="geometricPrecision" font-size="11px" font-family="'.SF NS Text'" transform="translate(140,89)" stroke="rgb(120,120,120)">
       <text x="0" xml:space="preserve" y="11" clip-path="url(#1)" stroke="none">Stored using weak encryption.</text>
     </g>
-    <g fill="rgb(60,63,65)" font-size="13px" font-family="'.SF NS Text'" transform="translate(135,66)" stroke="rgb(60,63,65)">
-      <rect x="0" width="254" height="28" y="0" clip-path="url(#2)" stroke="none"/>
+    <g fill="rgb(60,63,65)" font-size="13px" font-family="'.SF NS Text'" transform="translate(136,56)" stroke="rgb(60,63,65)">
+      <rect x="0" width="256" height="30" y="0" clip-path="url(#2)" stroke="none"/>
     </g>
-    <g fill="rgb(69,73,74)" text-rendering="optimizeLegibility" font-size="13px" font-family="'.SF NS Text'" transform="translate(136,67)" stroke="rgb(69,73,74)">
-      <rect x="2" width="248" height="22" y="2" clip-path="url(#3)" stroke="none"/>
+    <g fill="rgb(69,73,74)" text-rendering="optimizeLegibility" font-size="13px" font-family="'.SF NS Text'" transform="translate(137,57)" stroke="rgb(69,73,74)">
+      <rect x="2" width="250" height="24" y="2" clip-path="url(#3)" stroke="none"/>
     </g>
-    <g fill="rgb(100,100,100)" text-rendering="optimizeLegibility" font-size="13px" font-family="'.SF NS Text'" transform="translate(135,66)" stroke="rgb(100,100,100)">
-      <path d="M2 2 L252 2 L252 26 L2 26 L2 2 ZM3 3 L251 3 L251 25 L3 25 L3 3 Z" fill-rule="evenodd" clip-path="url(#2)" stroke="none"/>
+    <g fill="rgb(100,100,100)" text-rendering="optimizeLegibility" font-size="13px" font-family="'.SF NS Text'" transform="translate(137,57)" stroke="rgb(100,100,100)">
+      <path d="M2 2 L252 2 L252 26 L2 26 L2 2 ZM3 3 L251 3 L251 25 L3 25 L3 3 Z" fill-rule="evenodd" clip-path="url(#3)" stroke="none"/>
     </g>
-    <g fill="rgb(187,187,187)" font-size="13px" font-family="'.SF NS Text'" transform="translate(21,72)" stroke="rgb(187,187,187)">
+    <g fill="rgb(187,187,187)" font-size="13px" font-family="'.SF NS Text'" transform="translate(23,63)" stroke="rgb(187,187,187)">
       <text x="0" xml:space="preserve" y="13" clip-path="url(#5)" stroke="none">Master Password:</text>
     </g>
-    <g fill="rgb(187,187,187)" font-size="13px" font-family="'.SF NS Text'" transform="translate(451,38)" stroke="rgb(187,187,187)">
+    <g fill="rgb(187,187,187)" font-size="13px" font-family="'.SF NS Text'" transform="translate(451,29)" stroke="rgb(187,187,187)">
       <image x="0" y="0" clip-path="url(#6)" width="21" xlink:href="../../../../../../icons/src/general/gear.png" height="16" preserveAspectRatio="none"/>
     </g>
-    <g fill="rgb(60,63,65)" font-size="13px" font-family="'.SF NS Text'" transform="translate(135,32)" stroke="rgb(60,63,65)">
-      <rect x="0" width="314" height="28" y="0" clip-path="url(#7)" stroke="none"/>
+    <g fill="rgb(60,63,65)" font-size="13px" font-family="'.SF NS Text'" transform="translate(136,22)" stroke="rgb(60,63,65)">
+      <rect x="0" width="314" height="30" y="0" clip-path="url(#7)" stroke="none"/>
     </g>
-    <g fill="rgb(69,73,74)" text-rendering="optimizeLegibility" font-size="13px" font-family="'.SF NS Text'" transform="translate(136,33)" stroke="rgb(69,73,74)">
-      <rect x="2" y="2" clip-path="url(#8)" width="308" rx="0" ry="0" height="22" stroke="none"/>
+    <g fill="rgb(69,73,74)" text-rendering="optimizeLegibility" font-size="13px" font-family="'.SF NS Text'" transform="translate(137,23)" stroke="rgb(69,73,74)">
+      <rect x="2" y="2" clip-path="url(#8)" width="308" rx="0" ry="0" height="24" stroke="none"/>
     </g>
-    <g fill="rgb(100,100,100)" text-rendering="optimizeLegibility" font-size="13px" font-family="'.SF NS Text'" transform="translate(135,32)" stroke="rgb(100,100,100)">
-      <path d="M2 2 L312 2 L312 26 L2 26 L2 2 ZM3 3 L311 3 L311 25 L3 25 L3 3 Z" fill-rule="evenodd" clip-path="url(#7)" stroke="none"/>
+    <g fill="rgb(100,100,100)" text-rendering="optimizeLegibility" font-size="13px" font-family="'.SF NS Text'" transform="translate(137,23)" stroke="rgb(100,100,100)">
+      <path d="M2 2 L310 2 L310 26 L2 26 L2 2 ZM3 3 L309 3 L309 25 L3 25 L3 3 Z" fill-rule="evenodd" clip-path="url(#8)" stroke="none"/>
     </g>
-    <g fill="rgb(187,187,187)" font-size="13px" font-family="'.SF NS Text'" transform="translate(21,38)" stroke="rgb(187,187,187)">
+    <g fill="rgb(187,187,187)" font-size="13px" font-family="'.SF NS Text'" transform="translate(23,29)" stroke="rgb(187,187,187)">
       <text x="0" xml:space="preserve" y="13" clip-path="url(#9)" stroke="none">Database:</text>
     </g>
-    <g fill="rgb(60,63,65)" font-size="13px" font-family="'.SF NS Text'" transform="translate(-2,0)" stroke="rgb(60,63,65)">
-      <rect x="0" width="90" height="24" y="0" clip-path="url(#10)" stroke="none"/>
-      <rect x="0" width="90" height="24" y="0" clip-path="url(#10)" stroke="none"/>
-      <image x="0" y="3" clip-path="url(#10)" width="19" xlink:href="../../../../../../platform-impl/src/com/intellij/ide/ui/laf/icons/darcula/radio.png" height="19" preserveAspectRatio="none"/>
-      <text fill="rgb(187,187,187)" x="23" xml:space="preserve" y="17" clip-path="url(#10)" stroke="none">In KeePass</text>
+    <g fill="rgb(60,63,65)" font-size="13px" font-family="'.SF NS Text'" transform="translate(-2,-2)" stroke="rgb(60,63,65)">
+      <rect x="0" width="90" height="19" y="0" clip-path="url(#10)" stroke="none"/>
+      <rect x="0" width="90" height="19" y="0" clip-path="url(#10)" stroke="none"/>
+      <image x="0" y="0" clip-path="url(#10)" width="19" xlink:href="../../../../../../platform-impl/src/com/intellij/ide/ui/laf/icons/darcula/radio.svg" height="19" preserveAspectRatio="none"/>
+      <text fill="rgb(187,187,187)" x="23" xml:space="preserve" y="14" clip-path="url(#10)" stroke="none">In KeePass</text>
     </g>
   </g>
 </svg>

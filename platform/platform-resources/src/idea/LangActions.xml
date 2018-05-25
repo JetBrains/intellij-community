@@ -212,8 +212,8 @@
       <action id="GotoClass" class="com.intellij.ide.actions.GotoClassAction"/>
       <action id="GotoFile" class="com.intellij.ide.actions.GotoFileAction"/>
       <action id="GotoSymbol" class="com.intellij.ide.actions.GotoSymbolAction"/>
-      <action id="GotoCustomRegion" class="com.intellij.lang.customFolding.GotoCustomRegionAction"/>
 
+      <action id="GotoCustomRegion" class="com.intellij.lang.customFolding.GotoCustomRegionAction"/>
       <add-to-group group-id="GoToMenu" anchor="first"/>
     </group>
 
@@ -363,7 +363,7 @@
       <action id="editRunConfigurations" class="com.intellij.execution.actions.EditRunConfigurationsAction"/>
       <action id="Stop" class="com.intellij.execution.actions.StopAction" icon="AllIcons.Actions.Suspend"/>
       <action id="ShowLiveRunConfigurations" class="com.intellij.execution.actions.ShowRunningListAction"/>
-      <action id="StopBackgroundProcesses" class="com.intellij.execution.actions.StopBackgroundProcessesAction" icon="AllIcons.Process.Stop"/>
+      <action id="StopBackgroundProcesses" class="com.intellij.execution.actions.StopBackgroundProcessesAction"/>
 
       <add-to-group group-id="MainMenu" anchor="after" relative-to-action="RefactoringMenu"/>
     </group>
@@ -398,6 +398,7 @@
     </group>
 
     <group id="WeighingNewGroup" class="com.intellij.ide.actions.WeighingNewActionGroup"/>
+    <reference ref="AssociateWithFileType"/>
 
     <group id="RevealGroup">
       <action id="RevealIn" class="com.intellij.ide.actions.RevealFileAction"/>
@@ -484,7 +485,7 @@
 
     <group id="ProjectViewPopupMenu">
       <reference ref="WeighingNewGroup"/>
-      <action id="AssociateWithFileType" class="com.intellij.ide.actions.AssociateFileTypeAction"/>
+      <reference ref="AssociateWithFileType"/>
       <action id="RestoreDefaultExtensionScripts" class="com.intellij.ide.extensionResources.RestoreBundledExtensionsAction"/>
       <separator/>
       <reference ref="CutCopyPasteGroup"/>
@@ -642,6 +643,7 @@
 
     <group id="EditorTabPopupMenuEx">
       <separator/>
+      <reference ref="AssociateWithFileType"/>
       <reference ref="AddToFavorites"/>
       <reference ref="AddAllToFavorites"/>
       <separator/>

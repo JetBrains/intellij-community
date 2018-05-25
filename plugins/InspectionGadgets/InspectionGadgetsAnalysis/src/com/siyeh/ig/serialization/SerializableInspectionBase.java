@@ -44,7 +44,9 @@ public abstract class SerializableInspectionBase extends BaseInspection {
 
   @Override
   public void writeSettings(@NotNull Element node) throws WriteExternalException {
-    superClassString = formatString(superClassList);
+    if (!superClassList.isEmpty()) {
+      superClassString = formatString(superClassList);
+    }
     super.writeSettings(node);
   }
 

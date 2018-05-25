@@ -183,7 +183,7 @@ class ContractInferenceFromSourceTest extends LightCodeInsightFixtureTestCase {
             return o;
     }
 """)
-    assert c == ['null -> fail']
+    assert c == ['null -> fail', '!null -> param1']
   }
 
   void "test plain delegation"() {
@@ -364,7 +364,7 @@ class ContractInferenceFromSourceTest extends LightCodeInsightFixtureTestCase {
         return new String("abc");
     }
     """)
-    assert c == ['null -> null', '!null -> !null']
+    assert c == ['null -> null', '!null -> new']
   }
 
   void "test go inside do-while"() {
@@ -538,7 +538,7 @@ class Foo {{
     Object bar(boolean b) { return foo(b);}
   };
 }}"""), PsiAnonymousClass).methods[0]
-    assert JavaSourceInference.inferContracts(method as PsiMethodImpl).collect { it as String } == ['true -> null', 'false -> !null']
+    assert JavaSourceInference.inferContracts(method as PsiMethodImpl).collect { it as String } == ['true -> null', 'false -> this']
   }
 
   void "test anonymous class methods potentially used from outside"() {
@@ -577,6 +577,69 @@ class Foo {{
   }
 """)
     assert c == []
+  }
+
+  void "test nullToEmpty"() {
+    def c = inferContracts("""
+  String nullToEmpty(String s) {
+    return s == null ? "" : s;
+  }
+""")
+    assert c == ['null -> !null', '!null -> param1']
+  }
+
+  void "test coalesce"() {
+    def c = inferContracts("""
+  <T> T coalesce(T t1, T t2, T t3) {
+    if(t1 != null) return t1;
+    if(t2 != null) return t2;
+    return t3;
+  }
+""")
+    assert c == ['!null, _, _ -> param1', 'null, !null, _ -> param2', 'null, null, _ -> param3']
+  }
+
+  void "test param check"() {
+    def c = inferContracts("""
+public static int atLeast(int min, int actual, String varName) {
+    if (actual < min) throw new IllegalArgumentException('\\\\'' + varName + " must be at least " + min + ": " + actual);
+    return actual;
+  }
+""")
+    assert c == ['_, _, _ -> param2']
+  }
+
+  void "test param reassigned"() {
+    def c = inferContracts("""
+public static int atLeast(int min, int actual, String varName) {
+    if (actual < min) throw new IllegalArgumentException('\\\\'' + varName + " must be at least " + min + ": " + actual);
+    actual+=1;
+    return actual;
+  }
+""")
+    assert c == []
+  }
+
+  void "test param incremented"() {
+    def c = inferContracts("""
+public static int atLeast(int min, int actual, String varName) {
+    if (actual < min) throw new IllegalArgumentException('\\\\'' + varName + " must be at least " + min + ": " + actual);
+    System.out.println(++actual);
+    return actual;
+  }
+""")
+    assert c == []
+  }
+
+  void "test param unary minus"() {
+    def c = inferContracts("""
+public static int atLeast(int min, int actual, String varName) {
+    if (actual < min) throw new IllegalArgumentException('\\\\'' + varName + " must be at least " + min + ": " + actual);
+    System.out.println(-actual);
+    return actual;
+  }
+""")
+    assert c == ['_, _, _ -> param2']
   }
 
   private String inferContract(String method) {

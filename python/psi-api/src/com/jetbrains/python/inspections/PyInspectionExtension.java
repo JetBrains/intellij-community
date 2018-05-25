@@ -21,6 +21,10 @@ public abstract class PyInspectionExtension {
     return false;
   }
 
+  public boolean ignoreShadowed(@NotNull final PsiElement element) {
+    return false;
+  }
+
   public boolean ignoreMissingDocstring(PyDocStringOwner docStringOwner) {
     return false;
   }
@@ -35,20 +39,6 @@ public abstract class PyInspectionExtension {
 
   public boolean ignorePackageNameInRequirements(@NotNull PyQualifiedExpression importedExpression) {
     return false;
-  }
-
-  /**
-   * Checks if unresolved reference could be ignored.
-   *
-   * @param node element containing reference
-   * @param reference unresolved reference
-   * @return true if the unresolved reference could be ignored
-   * @deprecated Use {@link PyInspectionExtension#ignoreUnresolvedReference(PyElement, PsiReference, TypeEvalContext)} instead.
-   * This method will be remove in 2018.2.
-   */
-  @Deprecated
-  public boolean ignoreUnresolvedReference(@NotNull PyElement node, @NotNull PsiReference reference) {
-    return ignoreUnresolvedReference(node, reference, TypeEvalContext.codeInsightFallback(node.getProject()));
   }
 
   /**

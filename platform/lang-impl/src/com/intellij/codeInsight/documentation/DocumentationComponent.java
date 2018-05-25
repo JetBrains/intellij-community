@@ -570,7 +570,7 @@ public class DocumentationComponent extends JPanel implements Disposable, DataPr
     editorKit.getStyleSheet().addRule("html { padding-bottom: 5px; }");
     editorKit.getStyleSheet().addRule("a { color: #" + ColorUtil.toHex(getLinkColor()) + "; text-decoration: none;}");
     editorKit.getStyleSheet().addRule(".definition { padding: 3px 10px 1px 7px; border-bottom: thin solid #" + ColorUtil.toHex(ColorUtil.mix(DOCUMENTATION_COLOR, BORDER_COLOR, 0.5)) + "; }");
-    editorKit.getStyleSheet().addRule(".content { padding: 5px 9px 0 7px; }");
+    editorKit.getStyleSheet().addRule(".content { padding: 5px 9px 0 7px; max-width: 100% }");
     editorKit.getStyleSheet().addRule(".bottom { padding: 3px 9px 0 7px; }");
     editorKit.getStyleSheet().addRule(".bottom-no-content { padding: 5px 9px 0 7px; }");
     editorKit.getStyleSheet().addRule("p { padding: 1px 0 2px 0; }");
@@ -794,6 +794,10 @@ public class DocumentationComponent extends JPanel implements Disposable, DataPr
   private void showHint() {
     Editor editor = myManager.getEditor();
     Component popupAnchor = getPopupAnchor(editor);
+    if (popupAnchor instanceof JPanel && ((JPanel)popupAnchor).getComponent(0) == this) {
+      // we don't want to use our own popup as an anchor
+      popupAnchor = null;
+    }
     int maxWidth = popupAnchor != null ? JBUI.scale(435) : MAX_DEFAULT.width;
     if (myHint != null) {
       Dimension hintSize;

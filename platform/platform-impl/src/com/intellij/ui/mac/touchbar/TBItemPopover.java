@@ -17,7 +17,7 @@ public class TBItemPopover extends TBItem {
   // NOTE: make popover with 'flexible' width when widthInPix <= 0
   public TBItemPopover(@NotNull String uid, Icon icon, String text, int widthInPix, TouchBar expandTB, TouchBar tapAndHoldTB) {
     super(uid);
-    myIcon = scaleForTouchBar(icon);
+    myIcon = icon;
     myText = text;
     myWidthPix = widthInPix;
     myExpandTB = expandTB;
@@ -25,7 +25,7 @@ public class TBItemPopover extends TBItem {
   }
 
   synchronized public void update(Icon icon, String text) {
-    myIcon = scaleForTouchBar(icon);
+    myIcon = icon;
     myText = text;
     updateNativePeer();
   }
@@ -51,12 +51,12 @@ public class TBItemPopover extends TBItem {
 
   @Override
   protected void _updateNativePeer() {
-    NST.updatePopover(myNativePeer, myWidthPix, myText, getRaster(myIcon), getIconW(myIcon), getIconH(myIcon), getNativePeer(myExpandTB), getNativePeer(myTapAndHoldTB));
+    NST.updatePopover(myNativePeer, myWidthPix, myText, myIcon, getNativePeer(myExpandTB), getNativePeer(myTapAndHoldTB));
   }
 
   @Override
   synchronized protected ID _createNativePeer() {
-    return NST.createPopover(myUid, myWidthPix, myText, getRaster(myIcon), getIconW(myIcon), getIconH(myIcon), getNativePeer(myExpandTB), getNativePeer(myTapAndHoldTB));
+    return NST.createPopover(myUid, myWidthPix, myText, myIcon, getNativePeer(myExpandTB), getNativePeer(myTapAndHoldTB));
   }
 
   private static ID getNativePeer(TouchBar tb) { return tb == null ? ID.NIL : tb.getNativePeer(); }

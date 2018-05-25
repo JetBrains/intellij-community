@@ -106,8 +106,9 @@ class JsonSchemaInfoPopupStep extends BaseListPopupStep<JsonSchemaInfo> {
       UserDefinedJsonSchemaConfiguration mappingForFile = mappingsConf.findMappingForFile(myVirtualFile);
       if (mappingForFile == null) {
         UserDefinedJsonSchemaConfiguration configuration = configurable.addProjectSchema();
+        String relativePath = VfsUtilCore.getRelativePath(myVirtualFile, myProject.getBaseDir());
         configuration.patterns.add(new UserDefinedJsonSchemaConfiguration.Item(
-          VfsUtilCore.getRelativePath(myVirtualFile, myProject.getBaseDir()), false, false));
+          relativePath == null ? myVirtualFile.getUrl() : relativePath, false, false));
         mappingForFile = configuration;
       }
 
@@ -128,7 +129,8 @@ class JsonSchemaInfoPopupStep extends BaseListPopupStep<JsonSchemaInfo> {
     UserDefinedJsonSchemaConfiguration mappingForFile = configuration.findMappingForFile(virtualFile);
     if (mappingForFile != null) {
       for (UserDefinedJsonSchemaConfiguration.Item pattern : mappingForFile.patterns) {
-        if (Objects.equals(VfsUtil.findRelativeFile(projectBaseDir, pattern.path), virtualFile)) {
+        if (Objects.equals(VfsUtil.findRelativeFile(projectBaseDir, pattern.path), virtualFile)
+              || virtualFile.getUrl().equals(pattern.path)) {
           mappingForFile.patterns.remove(pattern);
           if (mappingForFile.patterns.size() == 0) {
             configuration.removeConfiguration(mappingForFile);
@@ -144,6 +146,9 @@ class JsonSchemaInfoPopupStep extends BaseListPopupStep<JsonSchemaInfo> {
     if (selectedValue == null) return;
 
     String path = VfsUtilCore.getRelativePath(virtualFile, projectBaseDir);
+    if (path == null) {
+      path = virtualFile.getUrl();
+    }
 
     UserDefinedJsonSchemaConfiguration existing = configuration.findMappingBySchemaInfo(selectedValue);
     UserDefinedJsonSchemaConfiguration.Item item = new UserDefinedJsonSchemaConfiguration.Item(path, false, false);
@@ -154,7 +159,7 @@ class JsonSchemaInfoPopupStep extends BaseListPopupStep<JsonSchemaInfo> {
     else {
       configuration.addConfiguration(new UserDefinedJsonSchemaConfiguration(selectedValue.getDescription(),
                                                                             selectedValue.getSchemaVersion(),
-                                                                            selectedValue.getUrl(),
+                                                                            selectedValue.getUrl(project),
                                                                             false,
                                                                             Collections.singletonList(item)));
     }

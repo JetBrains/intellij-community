@@ -1,10 +1,10 @@
 # Stubs for argparse (Python 2.7 and 3.4)
 
+import sys
 from typing import (
     Any, Callable, Dict, Generator, Iterable, List, IO, NoReturn, Optional,
-    Pattern, Sequence, Tuple, Type, Union, TypeVar, overload
+    Pattern, Sequence, Tuple, Type, Union, TypeVar
 )
-import sys
 
 _T = TypeVar('_T')
 _ActionT = TypeVar('_ActionT', bound='Action')
@@ -138,8 +138,8 @@ class ArgumentParser(_AttributeHolder, _ActionsContainer):
     def parse_known_args(self, args: Optional[Sequence[_Text]] = ...,
                          namespace: Optional[Namespace] = ...) -> Tuple[Namespace, List[str]]: ...
     def convert_arg_line_to_args(self, arg_line: _Text) -> List[str]: ...
-    def exit(self, status: int = ..., message: Optional[_Text] = ...) -> None: ...
-    def error(self, message: _Text) -> None: ...
+    def exit(self, status: int = ..., message: Optional[_Text] = ...) -> NoReturn: ...
+    def error(self, message: _Text) -> NoReturn: ...
     if sys.version_info >= (3, 7):
         def parse_intermixed_args(self, args: Optional[Sequence[_Text]] = ...,
                                   namespace: Optional[Namespace] = ...) -> Namespace: ...

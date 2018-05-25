@@ -147,7 +147,7 @@ class SheetMessage implements Disposable {
     final TouchBar tb = createModalMsgDlgTouchBar(buttons, defaultButton);
     TouchBarsManager.showTempTouchBar(tb);
     myWindow.setVisible(true);
-    TouchBarsManager.closeTempTouchBar(tb);
+    TouchBarsManager.closeTouchBar(tb, true);
     LaterInvocator.leaveModal(myWindow);
 
     Component focusCandidate = beforeShowFocusOwner.get();
@@ -176,7 +176,7 @@ class SheetMessage implements Disposable {
       return null;
 
     try (NSAutoreleaseLock lock = new NSAutoreleaseLock()) {
-      TouchBar result = new TouchBar("message_dlg_bar");
+      TouchBar result = new TouchBar("message_dlg_bar", false);
       final ModalityState ms = LaterInvocator.getCurrentModalityState();
       for (String sb: buttons) {
         final NSTLibrary.Action act = () -> ApplicationManager.getApplication().invokeLater(()->myController.setResultAndStartClose(sb), ms);

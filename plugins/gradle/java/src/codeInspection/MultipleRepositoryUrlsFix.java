@@ -1,23 +1,11 @@
-/*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.gradle.codeInspection;
 
 import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiElement;
+import com.intellij.psi.SmartPointerManager;
+import com.intellij.psi.SmartPsiElementPointer;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
@@ -35,17 +23,19 @@ import java.util.List;
  * @since 11/21/13
  */
 public class MultipleRepositoryUrlsFix extends GroovyFix {
-  private final GrClosableBlock myClosure;
+  private final SmartPsiElementPointer<GrClosableBlock> myClosure;
   private final String myRepoType;
 
   public MultipleRepositoryUrlsFix(@NotNull GrClosableBlock closure, @NotNull String repoType) {
-    myClosure = closure;
+    myClosure = SmartPointerManager.getInstance(closure.getProject()).createSmartPsiElementPointer(closure);
     myRepoType = repoType;
   }
 
   @Override
   protected void doFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) throws IncorrectOperationException {
-    List<GrCallExpression> statements = MultipleRepositoryUrlsInspection.findUrlCallExpressions(myClosure);
+    GrClosableBlock closure = myClosure.getElement();
+    if (closure == null) return;
+    List<GrCallExpression> statements = MultipleRepositoryUrlsInspection.findUrlCallExpressions(closure);
     if (statements.size() <= 1) return;
     statements.remove(0);
 
@@ -57,8 +47,8 @@ public class MultipleRepositoryUrlsFix extends GroovyFix {
       }
     }
 
-    myClosure.removeElements(elements.toArray(PsiElement.EMPTY_ARRAY));
-    GrClosableBlock closableBlock = PsiTreeUtil.getParentOfType(myClosure, GrClosableBlock.class);
+    closure.removeElements(elements.toArray(PsiElement.EMPTY_ARRAY));
+    GrClosableBlock closableBlock = PsiTreeUtil.getParentOfType(closure, GrClosableBlock.class);
     if (closableBlock == null) return;
 
     GroovyPsiElementFactory elementFactory = GroovyPsiElementFactory.getInstance(project);

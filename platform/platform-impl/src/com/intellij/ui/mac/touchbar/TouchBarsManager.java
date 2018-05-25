@@ -20,6 +20,7 @@ import com.intellij.openapi.ui.OptionAction;
 import com.intellij.openapi.ui.popup.JBPopupListener;
 import com.intellij.openapi.ui.popup.LightweightWindowEvent;
 import com.intellij.openapi.ui.popup.ListPopupStep;
+import com.intellij.openapi.ui.popup.MnemonicNavigationFilter;
 import com.intellij.openapi.wm.ex.ToolWindowManagerEx;
 import com.intellij.openapi.wm.ex.ToolWindowManagerListener;
 import com.intellij.ui.components.JBOptionButton;
@@ -30,7 +31,7 @@ import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import java.awt.event.ActionEvent;
-import java.awt.event.KeyEvent;
+import java.awt.event.InputEvent;
 import java.util.ArrayDeque;
 import java.util.ArrayList;
 import java.util.List;
@@ -51,17 +52,15 @@ public class TouchBarsManager {
       return;
 
     editor.addFocusListener(new FocusChangeListener() {
-      private BarContainer myEditorBar = ProjectBarsStorage.instance(proj).createBarContainer(ProjectBarsStorage.EDITOR, editor.getContentComponent());
+      private final BarContainer myEditorBar = ProjectBarsStorage.instance(proj).createBarContainer(ProjectBarsStorage.EDITOR, editor.getContentComponent());
 
       @Override
       public void focusGained(Editor editor) {
-        if (!hasTemporary())
-          showTouchBar(myEditorBar);
+        _elevateTouchBar(myEditorBar);
       }
       @Override
       public void focusLost(Editor editor) {
-        if (!hasTemporary())
-          closeTouchBar(myEditorBar);
+        closeTouchBar(myEditorBar);
       }
     });
   }
@@ -78,7 +77,7 @@ public class TouchBarsManager {
         }
         @Override
         public void onClosed(LightweightWindowEvent event) {
-          closeTempTouchBar(myPopupBar);
+          closeTouchBar(myPopupBar, true);
           myPopupBar = null;
         }
       }
@@ -106,22 +105,23 @@ public class TouchBarsManager {
         myGeneralBar = ProjectBarsStorage.instance(project).createBarContainer(ProjectBarsStorage.GENERAL, null);
         showTouchBar(myGeneralBar);
 
-        final ToolWindowManagerEx twm = ToolWindowManagerEx.getInstanceEx(project);
-        twm.addToolWindowManagerListener(new ToolWindowManagerListener() {
+        project.getMessageBus().connect().subscribe(ToolWindowManagerListener.TOPIC, new ToolWindowManagerListener() {
           private BarContainer myDebuggerBar;
 
           @Override
-          public void toolWindowRegistered(@NotNull String id) {}
-          @Override
           public void stateChanged() {
+            final ToolWindowManagerEx twm = ToolWindowManagerEx.getInstanceEx(project);
             final String activeId = twm.getActiveToolWindowId();
             if (activeId != null && activeId.equals("Debug")) {
+              // TODO:
+              // 1. check whether some debug session is running
+              // 2. stateChanged can be skipped sometimes when user clicks debug tool-window, need check by focus events or fix stateChanged-subscription
               if (myDebuggerBar == null) {
-                myDebuggerBar = ProjectBarsStorage.instance(project).createBarContainer(ProjectBarsStorage.DEBUGGER, twm.getToolWindow(activeId).getComponent());
+                myDebuggerBar = ProjectBarsStorage.instance(project).createBarContainer(ProjectBarsStorage.DEBUGGER,
+                                                                                        twm.getToolWindow(activeId).getComponent());
               }
               showTouchBar(myDebuggerBar);
-            } else
-              closeTouchBar(myDebuggerBar);
+            }
           }
         });
       }
@@ -136,7 +136,7 @@ public class TouchBarsManager {
 
   public static boolean isTouchBarAvailable() { return NST.isAvailable(); }
 
-  public static void onKeyEvent(KeyEvent e) {
+  public static void onInputEvent(InputEvent e) {
     if (!isTouchBarAvailable())
       return;
 
@@ -145,10 +145,6 @@ public class TouchBarsManager {
       ourCurrentKeyMask = e.getModifiersEx();
       _setBarContainer(ourTouchBarStack.peek());
     }
-  }
-
-  synchronized public static boolean hasTemporary() {
-    return ourTouchBarStack.stream().anyMatch((bc)->bc.isTemporary());
   }
 
   synchronized public static void showTempTouchBar(TouchBar tb) {
@@ -160,11 +156,12 @@ public class TouchBarsManager {
     showTouchBar(container);
   }
 
-  synchronized public static void closeTempTouchBar(TouchBar tb) {
+  synchronized public static void closeTouchBar(TouchBar tb, boolean doRelease) {
     if (tb == null)
       return;
 
-    tb.release();
+    if (doRelease)
+      tb.release();
 
     if (ourTouchBarStack.isEmpty())
       return;
@@ -185,6 +182,24 @@ public class TouchBarsManager {
     ourTouchBarStack.remove(bar);
     ourTouchBarStack.push(bar);
     _setBarContainer(bar);
+  }
+
+  synchronized private static void _elevateTouchBar(@NotNull BarContainer bar) {
+    final BarContainer top = ourTouchBarStack.peek();
+    if (top == bar)
+      return;
+
+    final boolean preserveTop = top != null && (top.isTemporary() || top.get().isManualClose());
+    if (preserveTop) {
+      ourTouchBarStack.remove(bar);
+      ourTouchBarStack.remove(top);
+      ourTouchBarStack.push(bar);
+      ourTouchBarStack.push(top);
+    } else {
+      ourTouchBarStack.remove(bar);
+      ourTouchBarStack.push(bar);
+      _setBarContainer(bar);
+    }
   }
 
   synchronized public static void closeTouchBar(BarContainer tb) {
@@ -250,6 +265,8 @@ public class TouchBarsManager {
     try (NSAutoreleaseLock lock = new NSAutoreleaseLock()) {
       TouchBarActionBase result = new TouchBarActionBase("dialog_buttons", project, null);
       final ModalityState ms = LaterInvocator.getCurrentModalityState();
+
+      // 1. add option buttons (at left)
       for (JButton jb : jbuttons) {
         if (jb instanceof JBOptionButton) {
           JBOptionButton ob = (JBOptionButton)jb;
@@ -267,11 +284,24 @@ public class TouchBarsManager {
           if (ag.getChildrenCount() > 0)
             result.addActionGroupButtons(ag, ob, ms);
         }
+      }
 
+      // 2. add main buttons and make principal
+      final List<TBItem> groupButtons = new ArrayList<>();
+      for (JButton jb : jbuttons) {
+        // TODO: make correct processing for disabled buttons, add them and update state by timer
+        // NOTE: can be true: jb.getAction().isEnabled() && !jb.isEnabled()
         final NSTLibrary.Action act = () -> ApplicationManager.getApplication().invokeLater(() -> jb.doClick(), ms);
         final boolean isDefault = jb.getAction().getValue(DialogWrapper.DEFAULT_ACTION) != null;
-        result.addButton(null, jb.getText(), act, isDefault ? NSTLibrary.BUTTON_FLAG_COLORED : 0);
+        final TBItemButton butt = new TBItemButton(
+          "dialog_buttons_group_item_" + jbuttons.indexOf(jb),
+          null, DialogWrapper.extractMnemonic(jb.getText()).second, act, -1, isDefault ? NSTLibrary.BUTTON_FLAG_COLORED : 0
+          );
+        groupButtons.add(butt);
       }
+
+      final TBItemGroup gr = result.addGroup(groupButtons);
+      result.setPrincipal(gr);
 
       return result;
     }
@@ -302,13 +332,20 @@ public class TouchBarsManager {
 
   private static TouchBar _createScrubberBarFromPopup(@NotNull ListPopupImpl listPopup) {
     try (NSAutoreleaseLock lock = new NSAutoreleaseLock()) {
-      final TouchBar result = new TouchBar("popup_scrubber_bar" + listPopup);
+      final TouchBar result = new TouchBar("popup_scrubber_bar" + listPopup, false);
 
       List<TBItemScrubber.ItemData> items = new ArrayList<>();
       @NotNull ListPopupStep listPopupStep = listPopup.getListStep();
       for (Object obj : listPopupStep.getValues()) {
         final Icon ic = listPopupStep.getIconFor(obj);
-        final String txt = listPopupStep.getTextFor(obj);
+        String txt = listPopupStep.getTextFor(obj);
+
+        if (listPopupStep.isMnemonicsNavigationEnabled()) {
+          final MnemonicNavigationFilter<Object> filter = listPopupStep.getMnemonicNavigationFilter();
+          final int pos = filter == null ? -1 : filter.getMnemonicPos(obj);
+          if (pos != -1)
+            txt = txt.substring(0, pos) + txt.substring(pos + 1);
+        }
 
         final Runnable action = () -> {
           listPopup.getList().setSelectedValue(obj, false);

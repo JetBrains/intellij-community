@@ -88,6 +88,13 @@
         </xs:documentation>
       </xs:annotation>
     </xs:attribute>
+    <xs:attribute type="xs:string" name="motto">
+      <xs:annotation>
+        <xs:documentation>
+          Motto of the product. Used as a comment for the command-line launcher. Default is "The Drive to Develop".
+        </xs:documentation>
+      </xs:annotation>
+    </xs:attribute>
   </xs:complexType>
   <xs:complexType name="companyType">
     <xs:attribute type="xs:string" name="name" use="required">

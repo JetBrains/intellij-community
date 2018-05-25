@@ -18,7 +18,6 @@ package com.siyeh.ig.migration;
 import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
-import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
 import com.intellij.psi.codeStyle.JavaCodeStyleSettings;
 import com.intellij.psi.search.searches.ReferencesSearch;
 import com.intellij.psi.util.PsiTreeUtil;
@@ -87,7 +86,6 @@ public class WhileCanBeForeachInspection extends WhileCanBeForeachInspectionBase
       if (iteratorContentType == null) {
         return;
       }
-      final Project project = whileStatement.getProject();
       final PsiStatement firstStatement = ForCanBeForeachInspection.getFirstStatement(body);
       final boolean isDeclaration = ForCanBeForeachInspection.isIteratorNextDeclaration(firstStatement, iterator, contentType);
       final PsiStatement statementToSkip;
@@ -112,7 +110,7 @@ public class WhileCanBeForeachInspection extends WhileCanBeForeachInspectionBase
       }
       @NonNls final StringBuilder out = new StringBuilder();
       out.append("for(");
-      if (CodeStyleSettingsManager.getSettings(project).getCustomSettings(JavaCodeStyleSettings.class).GENERATE_FINAL_PARAMETERS) {
+      if (JavaCodeStyleSettings.getInstance(whileStatement.getContainingFile()).GENERATE_FINAL_PARAMETERS) {
         out.append("final ");
       }
       out.append(iteratorContentType.getCanonicalText()).append(' ').append(contentVariableName).append(": ");

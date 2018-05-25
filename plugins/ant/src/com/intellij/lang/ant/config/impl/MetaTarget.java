@@ -21,20 +21,21 @@ import com.intellij.lang.ant.config.execution.ExecutionHandler;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.fileEditor.OpenFileDescriptor;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.StringBuilderSpinAllocator;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.Arrays;
 import java.util.List;
 
 public class MetaTarget implements AntBuildTargetBase {
   private final AntBuildFileBase myBuildFile;
-  private final String[] myTargets;
+  private final List<String> myTargets;
   private final String myName;
   private final String myDescription;
 
-  public MetaTarget(final AntBuildFileBase buildFile, final String displayName, final String[] targets) {
+  public MetaTarget(final AntBuildFileBase buildFile, final String displayName, final List<String> targets) {
     myBuildFile = buildFile;
     myTargets = targets;
     myName = displayName;
@@ -49,7 +50,9 @@ public class MetaTarget implements AntBuildTargetBase {
     return myBuildFile;
   }
 
-  public String[] getTargetNames() {
+  @NotNull
+  @Override
+  public List<String> getTargetNames() {
     return myTargets;
   }
 
@@ -125,7 +128,7 @@ public class MetaTarget implements AntBuildTargetBase {
     if (!myBuildFile.equals(that.myBuildFile)) {
       return false;
     }
-    if (!Arrays.equals(myTargets, that.myTargets)) {
+    if (!Comparing.equal(myTargets, that.myTargets)) {
       return false;
     }
 

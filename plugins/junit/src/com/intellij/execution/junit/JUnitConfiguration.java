@@ -25,6 +25,7 @@ import com.intellij.openapi.options.SettingsEditorGroup;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.util.ClassUtil;
@@ -673,7 +674,7 @@ public class JUnitConfiguration extends JavaTestConfigurationBase {
     }
 
     public void setWorkingDirectory(String value) {
-      WORKING_DIRECTORY = ExternalizablePath.urlValue(value);
+      WORKING_DIRECTORY = StringUtil.isEmptyOrSpaces(value) ? "" : FileUtilRt.toSystemIndependentName(value.trim());
     }
 
     public void setUniqueIds(String... uniqueId) {

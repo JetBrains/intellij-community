@@ -5,8 +5,8 @@ import com.intellij.ide.ui.laf.darcula.ui.DarculaComboBoxUI;
 import com.intellij.ui.Gray;
 import com.intellij.util.IconUtil;
 import com.intellij.util.ui.EmptyIcon;
-import com.intellij.util.ui.IconCache;
 import com.intellij.util.ui.JBUI;
+import com.intellij.util.ui.LafIconLookup;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.components.BorderLayoutPanel;
 import org.jetbrains.annotations.NotNull;
@@ -22,6 +22,7 @@ import java.awt.geom.RoundRectangle2D;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 
+import static com.intellij.ide.ui.laf.darcula.DarculaUIUtil.MINIMUM_WIDTH;
 import static com.intellij.ide.ui.laf.intellij.MacIntelliJTextBorder.ARC;
 import static com.intellij.ide.ui.laf.intellij.MacIntelliJTextBorder.BW;
 
@@ -29,7 +30,8 @@ import static com.intellij.ide.ui.laf.intellij.MacIntelliJTextBorder.BW;
  * @author Konstantin Bulenkov
  */
 public class MacIntelliJComboBoxUI extends DarculaComboBoxUI {
-  private static final Icon DEFAULT_ICON = EmptyIcon.create(IconCache.getIcon("comboRight", false, false, true, true));
+  private static final Icon ICON = EmptyIcon.create(LafIconLookup.getIcon("comboRight", false, false, true, false));
+  private static final Icon EDITABLE_ICON = EmptyIcon.create(LafIconLookup.getIcon("comboRight", false, false, true, true));
 
   @SuppressWarnings({"MethodOverridesStaticMethodOfSuperclass", "UnusedDeclaration"})
   public static ComponentUI createUI(JComponent c) {
@@ -40,7 +42,9 @@ public class MacIntelliJComboBoxUI extends DarculaComboBoxUI {
     comboBox.setOpaque(false);
   }
 
-  @Override
+  protected void uninstallDarculaDefaults() {}
+
+    @Override
   protected JButton createArrowButton() {
     Color bg = comboBox.getBackground();
     Color fg = comboBox.getForeground();
@@ -49,7 +53,7 @@ public class MacIntelliJComboBoxUI extends DarculaComboBoxUI {
       public void paint(Graphics g) {
         if (!UIUtil.isUnderDefaultMacTheme()) return; // Paint events may still arrive after UI switch until entire UI is updated.
 
-        Icon icon = IconCache.getIcon("comboRight", false, false, comboBox.isEnabled(), comboBox.isEditable());
+        Icon icon = LafIconLookup.getIcon("comboRight", false, false, comboBox.isEnabled(), comboBox.isEditable());
         if (getWidth() > icon.getIconWidth() || getHeight() > icon.getIconHeight()) {
           Image image = IconUtil.toImage(icon);
           UIUtil.drawImage(g, image, new Rectangle(0, 0, getWidth(), getHeight()), null);
@@ -60,7 +64,8 @@ public class MacIntelliJComboBoxUI extends DarculaComboBoxUI {
 
       @Override
       public Dimension getPreferredSize() {
-        return new Dimension(DEFAULT_ICON.getIconWidth(), DEFAULT_ICON.getIconHeight());
+        Icon icon = comboBox.isEditable() ? EDITABLE_ICON : ICON;
+        return new Dimension(icon.getIconWidth(), icon.getIconHeight());
       }
     };
     button.setBorder(BorderFactory.createEmptyBorder());
@@ -68,16 +73,19 @@ public class MacIntelliJComboBoxUI extends DarculaComboBoxUI {
     return button;
   }
 
-  protected Dimension getSizeWithButton(Dimension d) {
+  @Override
+  protected Dimension getSizeWithButton(Dimension size, Dimension editorSize) {
     Insets i = comboBox.getInsets();
-    int iconWidth = DEFAULT_ICON.getIconWidth() + i.right;
-    int iconHeight = DEFAULT_ICON.getIconHeight() + i.top + i.bottom;
+    Icon icon = comboBox.isEditable() ? EDITABLE_ICON : ICON;
+    int iconWidth = icon.getIconWidth() + i.right;
+    int iconHeight = icon.getIconHeight() + i.top + i.bottom;
 
-    Dimension ePrefSize = editor != null ? editor.getPreferredSize() : null;
-    int editorHeight = ePrefSize != null ? ePrefSize.height + i.top + i.bottom + padding.top + padding.bottom: 0;
-    int editorWidth = ePrefSize != null ? ePrefSize.width + i.left + padding.left + padding.right : 0;
+    int editorHeight = editorSize != null ? editorSize.height + i.top + i.bottom + padding.top + padding.bottom: 0;
+    int editorWidth = editorSize != null ? editorSize.width + i.left + padding.left + padding.right : 0;
+    editorWidth = Math.max(editorWidth, MINIMUM_WIDTH.get() + i.left);
 
-    return new Dimension(Math.max(d.width, editorWidth + iconWidth), Math.max(iconHeight, editorHeight));
+    return new Dimension(Math.max(size.width + padding.left, editorWidth + iconWidth),
+                         Math.max(Math.max(iconHeight, size.height), editorHeight));
   }
 
   @Override

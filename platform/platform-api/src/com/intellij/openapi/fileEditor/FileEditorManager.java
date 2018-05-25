@@ -185,7 +185,7 @@ public abstract class FileEditorManager {
   /**
    * Adds specified {@code listener}
    * @param listener listener to be added
-   * @deprecated Use MessageBus instead: see {@link FileEditorManagerListener#FILE_EDITOR_MANAGER}
+   * @deprecated Use {@link com.intellij.util.messages.MessageBus} instead: see {@link FileEditorManagerListener#FILE_EDITOR_MANAGER}
    */
   public abstract void addFileEditorManagerListener(@NotNull FileEditorManagerListener listener);
 

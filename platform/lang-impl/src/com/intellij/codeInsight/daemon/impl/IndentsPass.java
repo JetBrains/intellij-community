@@ -37,11 +37,11 @@ import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.tree.TokenSet;
 import com.intellij.psi.util.PsiUtilBase;
 import com.intellij.psi.util.PsiUtilCore;
+import com.intellij.ui.paint.LinePainter2D;
 import com.intellij.util.DocumentUtil;
 import com.intellij.util.containers.ContainerUtilRt;
 import com.intellij.util.containers.IntStack;
 import com.intellij.util.text.CharArrayUtil;
-import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 
 import java.awt.*;
@@ -148,7 +148,7 @@ public class IndentsPass extends TextEditorHighlightingPass implements DumbAware
     //     1. Show only active indent if it crosses soft wrap-introduced text;
     //     2. Show indent as is if it doesn't intersect with soft wrap-introduced text;
     if (selected) {
-      UIUtil.drawLine(g, start.x + 2, start.y, start.x + 2, maxY - 1);
+      LinePainter2D.paint((Graphics2D)g, start.x + 2, start.y, start.x + 2, maxY - 1);
     }
     else {
       int y = start.y;
@@ -163,7 +163,7 @@ public class IndentsPass extends TextEditorHighlightingPass implements DumbAware
         }
         if (!softWraps.isEmpty() && softWraps.get(0).getIndentInColumns() < indentColumn) {
           if (y < newY || i > startLine + lineShift) { // There is a possible case that soft wrap is located on indent start line.
-            UIUtil.drawLine(g, start.x + 2, y, start.x + 2, newY + lineHeight - 1);
+            LinePainter2D.paint((Graphics2D)g, start.x + 2, y, start.x + 2, newY + lineHeight - 1);
           }
           newY += logicalLineHeight;
           y = newY;
@@ -179,7 +179,7 @@ public class IndentsPass extends TextEditorHighlightingPass implements DumbAware
       }
 
       if (y < maxY) {
-        UIUtil.drawLine(g, start.x + 2, y, start.x + 2, maxY - 1);
+        LinePainter2D.paint((Graphics2D)g, start.x + 2, y, start.x + 2, maxY - 1);
       }
     }
   };

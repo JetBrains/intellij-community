@@ -173,7 +173,7 @@ final class FileTrees {
     }
     catch (Throwable e) {
       LOG.error(e);
-      myFile.onContentReload();
+      myFile.clearContent(PsiFileImpl.STUB_PSI_MISMATCH);
       myFile.rebuildStub();
       throw StubTreeLoader.getInstance().stubTreeAndIndexDoNotMatch(e.getMessage(), stubTree, myFile);
     }

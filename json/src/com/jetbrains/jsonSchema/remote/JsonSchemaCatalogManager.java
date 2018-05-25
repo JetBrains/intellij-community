@@ -1,7 +1,6 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.jetbrains.jsonSchema.remote;
 
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -10,6 +9,8 @@ import com.intellij.openapi.vfs.impl.http.HttpVirtualFile;
 import com.intellij.openapi.vfs.impl.http.RemoteFileInfo;
 import com.intellij.openapi.vfs.impl.http.RemoteFileManager;
 import com.intellij.util.containers.ContainerUtil;
+import com.jetbrains.jsonSchema.JsonSchemaCatalogProjectConfiguration;
+import com.jetbrains.jsonSchema.ide.JsonSchemaService;
 import com.jetbrains.jsonSchema.impl.JsonCachedValues;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -18,7 +19,6 @@ import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentMap;
-import java.util.concurrent.atomic.AtomicBoolean;
 
 public class JsonSchemaCatalogManager {
   private static final String DEFAULT_CATALOG = "http://schemastore.org/api/json/catalog.json";
@@ -28,41 +28,48 @@ public class JsonSchemaCatalogManager {
   @NotNull private final ConcurrentMap<String, String> myResolvedMappings = ContainerUtil.newConcurrentMap();
   private static final String NO_CACHE = "$_$_WS_NO_CACHE_$_$";
   private static final String EMPTY = "$_$_WS_EMPTY_$_$";
-  private static final AtomicBoolean myIsEnabled = new AtomicBoolean(true);
 
   public JsonSchemaCatalogManager(@NotNull Project project) {
     myProject = project;
     myRemoteContentProvider = new JsonSchemaRemoteContentProvider();
   }
 
-  public void setEnabled(boolean enabled) {
-    myIsEnabled.set(enabled);
-  }
-
   public void startUpdates() {
-    // ignore schema catalog in tests
-    if (ApplicationManager.getApplication().isUnitTestMode()) return;
+    JsonSchemaCatalogProjectConfiguration.getInstance(myProject).addChangeHandler(() -> {
+      update();
+      JsonSchemaService.Impl.get(myProject).reset();
+    });
     RemoteFileManager instance = RemoteFileManager.getInstance();
     instance.addRemoteContentProvider(myRemoteContentProvider);
-    myCatalog = JsonFileResolver.urlToFile(DEFAULT_CATALOG);
+    update();
+  }
+
+  private void update() {
+    // ignore schema catalog when remote activity is disabled (when we're in tests or it is off in settings)
+    myCatalog = !JsonFileResolver.isRemoteEnabled(myProject) ? null : JsonFileResolver.urlToFile(DEFAULT_CATALOG, myProject);
   }
 
   @Nullable
   public VirtualFile getSchemaFileForFile(@NotNull VirtualFile file) {
-    if (!myIsEnabled.get()) return null;
+    if (!JsonSchemaCatalogProjectConfiguration.getInstance(myProject).isCatalogEnabled()) return null;
+    for (JsonSchemaCatalogExclusion exclusion : JsonSchemaCatalogExclusion.EP_NAME.getExtensions()) {
+      if (exclusion.isExcluded(file)) {
+        return null;
+      }
+    }
 
     String name = file.getName();
     if (myResolvedMappings.containsKey(name)) {
       String urlString = myResolvedMappings.get(name);
       if (EMPTY.equals(urlString)) return null;
-      return JsonFileResolver.resolveSchemaByReference(file, urlString);
+      return JsonFileResolver.resolveSchemaByReference(file, urlString, myProject);
     }
 
     if (myCatalog != null) {
       String urlString = resolveSchemaFile(file, myCatalog, myProject);
       if (NO_CACHE.equals(urlString)) return null;
       myResolvedMappings.put(name, urlString == null ? EMPTY : urlString);
-      return JsonFileResolver.resolveSchemaByReference(file, urlString);
+      return JsonFileResolver.resolveSchemaByReference(file, urlString, myProject);
     }
 
     return null;

@@ -330,34 +330,12 @@ public class PsiSearchHelperImpl implements PsiSearchHelper {
     while (true) {
       ProgressManager.checkCanceled();
       List<VirtualFile> failedList = new SmartList<>();
-      final List<VirtualFile> failedFiles = Collections.synchronizedList(failedList);
-      final Processor<VirtualFile> processor = vfile -> {
-        ProgressManager.checkCanceled();
-        if (failedFiles.isEmpty()) {
-          try {
-            // wrap in unconditional impatient reader to bail early at write action start,
-            // regardless of whether was called from highlighting (already impatient-wrapped) or Find Usages action
-            app.executeByImpatientReader(() -> {
-              if (!localProcessor.process(vfile)) {
-                stopped.set(true);
-              }
-            });
-          }
-          catch (ApplicationUtil.CannotRunReadActionException action) {
-            failedFiles.add(vfile);
-          }
-        }
-        else {
-          // 1st: optimisation to avoid unnecessary processing if it's doomed to fail because some other task has failed already,
-          // and 2nd: bail out of fork/join task as soon as possible
-          failedFiles.add(vfile);
-        }
-        return !stopped.get();
-      };
+      List<VirtualFile> failedFiles = Collections.synchronizedList(failedList);
       boolean completed;
       if (app.isWriteAccessAllowed() || app.isReadAccessAllowed() && app.isWriteActionPending()) {
         // no point in processing in separate threads - they are doomed to fail to obtain read action anyway
-        completed = ContainerUtil.process(files, processor);
+        // do not wrap in impatient reader because every read action inside would trigger AU.CRRAE
+        completed = ContainerUtil.process(files, localProcessor);
       }
       else if (app.isWriteActionPending()) {
         completed = true;
@@ -365,6 +343,29 @@ public class PsiSearchHelperImpl implements PsiSearchHelper {
         failedFiles.addAll(files);
       }
       else {
+        final Processor<VirtualFile> processor = vfile -> {
+          ProgressManager.checkCanceled();
+          if (failedFiles.isEmpty()) {
+            try {
+              // wrap in unconditional impatient reader to bail early at write action start,
+              // regardless of whether was called from highlighting (already impatient-wrapped) or Find Usages action
+              app.executeByImpatientReader(() -> {
+                if (!localProcessor.process(vfile)) {
+                  stopped.set(true);
+                }
+              });
+            }
+            catch (ApplicationUtil.CannotRunReadActionException action) {
+              failedFiles.add(vfile);
+            }
+          }
+          else {
+            // 1st: optimisation to avoid unnecessary processing if it's doomed to fail because some other task has failed already,
+            // and 2nd: bail out of fork/join task as soon as possible
+            failedFiles.add(vfile);
+          }
+          return !stopped.get();
+        };
         // try to run parallel read actions but fail as soon as possible
         completed = JobLauncher.getInstance().invokeConcurrentlyUnderProgress(files, progress, processor);
       }

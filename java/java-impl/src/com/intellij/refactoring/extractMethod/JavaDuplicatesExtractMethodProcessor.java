@@ -203,7 +203,7 @@ public class JavaDuplicatesExtractMethodProcessor extends ExtractMethodProcessor
     ReturnValue returnValue = myOutputVariables.length == 1 ? new VariableReturnValue(myOutputVariables[0]) : null;
 
     Set<PsiVariable> effectivelyLocal = getEffectivelyLocalVariables();
-    return new DuplicatesFinder(myElements, myInputVariables, returnValue, Collections.emptyList(), true, effectivelyLocal);
+    return new DuplicatesFinder(myElements, myInputVariables, returnValue, Collections.emptyList(), DuplicatesFinder.MatchType.PARAMETRIZED, effectivelyLocal);
   }
 
   private void relaxMethodVisibility(Match match) {

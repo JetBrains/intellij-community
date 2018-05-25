@@ -53,7 +53,7 @@ static void _setButtonData(NSButtonJAction *button, int updateOptions, int butto
 
     if (updateOptions & BUTTON_UPDATE_FLAGS) {
         if (buttonFlags & BUTTON_FLAG_COLORED) {
-            button.bezelColor = NSColor.blueColor;
+            button.bezelColor = [NSColor colorWithRed:0 green:130/255.f blue:215/255.f alpha:1];
         } else if (buttonFlags & BUTTON_FLAG_SELECTED) {
             button.bezelColor = NSColor.selectedControlColor;
         } else {

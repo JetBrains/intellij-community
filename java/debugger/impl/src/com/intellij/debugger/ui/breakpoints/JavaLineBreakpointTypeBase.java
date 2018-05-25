@@ -31,7 +31,8 @@ import javax.swing.*;
  * Base class for java line-connected exceptions (line, method, field)
  * @author egor
  */
-public abstract class JavaLineBreakpointTypeBase<P extends JavaBreakpointProperties> extends XLineBreakpointType<P> {
+public abstract class JavaLineBreakpointTypeBase<P extends JavaBreakpointProperties> extends XLineBreakpointType<P>
+  implements JavaBreakpointType<P> {
   public JavaLineBreakpointTypeBase(@NonNls @NotNull String id, @Nls @NotNull String title) {
     super(id, title);
   }

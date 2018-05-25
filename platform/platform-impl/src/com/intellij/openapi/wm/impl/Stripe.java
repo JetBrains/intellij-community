@@ -287,7 +287,6 @@ final class Stripe extends JPanel implements UISettingsListener {
       tryDroppingOnGap(data, gap, -1);
     }
 
-
     if (isDroppingButton()) {
       final Dimension dragSize = myDragButton.getPreferredSize();
       if (getAnchor().isHorizontal() == myDragButton.getWindowInfo().getAnchor().isHorizontal()) {

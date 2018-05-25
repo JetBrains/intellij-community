@@ -4,6 +4,7 @@ package com.intellij.java.codeInsight.daemon;
 import com.intellij.JavaTestUtil;
 import com.intellij.codeInsight.daemon.QuickFixBundle;
 import com.intellij.codeInsight.intention.IntentionAction;
+import com.intellij.codeInspection.RedundantBackticksAroundRawStringLiteralInspection;
 import com.intellij.openapi.actionSystem.IdeActions;
 import com.intellij.psi.JavaPsiFacade;
 import com.intellij.psi.PsiElementFactory;
@@ -39,9 +40,7 @@ public class LightAdvRawStringLiteralsTest extends LightCodeInsightFixtureTestCa
   public void testStringToRawTransformation() { doTestIntention(QuickFixBundle.message("convert.to.raw.string.text")); }
   public void testStringToRawTransformationWithWrongSeparators() { doTestIntention(QuickFixBundle.message("convert.to.raw.string.text")); }
 
-  public void testStringToRawTransformationLeadingTics() {
-    doTestIntention(QuickFixBundle.message("convert.to.raw.string.text"));
-  }
+  public void testStringToRawTransformationLeadingTics() { doTestIntention(QuickFixBundle.message("convert.to.raw.string.text")); }
 
   public void testStringToRawTransformationOnlyTics() {
     myFixture.configureByFile(getTestName(false) + ".java");
@@ -50,6 +49,12 @@ public class LightAdvRawStringLiteralsTest extends LightCodeInsightFixtureTestCa
 
   public void testStringToRawTransformationWithTicsInside() {
     doTestIntention(QuickFixBundle.message("convert.to.raw.string.text"));
+  }
+
+  public void testSplitRawStringLiteral() { doTestIntention("Split raw string literal"); }
+  public void testSplitRawStringLiteralDisabledOnTic() {
+    myFixture.configureByFile(getTestName(false) + ".java");
+    assertEmpty(myFixture.filterAvailableIntentions("Split raw string literal"));
   }
 
   public void testPasteInRawStringLiteral() {
@@ -95,6 +100,23 @@ public class LightAdvRawStringLiteralsTest extends LightCodeInsightFixtureTestCa
 
     rawStringLiteral = factory.createExpressionFromText("`abc````", null);
     assertEquals("abc", ((PsiLiteralExpressionImpl)rawStringLiteral).getRawString());
+  }
+
+  public void testReduceNumberOfBackticks() {
+    doTestRedundantBackticks("class A {{String s = <caret>```a`b```;}}", "class A {{String s = ``a`b``;}}");
+  }
+
+  public void testReduceNumberOfBackticksSimple() {
+    doTestRedundantBackticks("class A {{String s = <caret>```a``b```;}}", "class A {{String s = `a``b`;}}");
+  }
+
+  private void doTestRedundantBackticks(String beforeText, String afterText) {
+    myFixture.configureByText("a.java", beforeText);
+    myFixture.enableInspections(new RedundantBackticksAroundRawStringLiteralInspection());
+    IntentionAction reduceNumberOfBackticks = myFixture.getAvailableIntention("Reduce number of backticks");
+    assertNotNull(reduceNumberOfBackticks);
+    myFixture.launchAction(reduceNumberOfBackticks);
+    myFixture.checkResult(afterText);
   }
 
   public void testTypingOpeningTic() {

@@ -148,6 +148,10 @@ public class SMTestProxy extends AbstractTestProxy {
     return myErrorMessage;
   }
 
+  public SMTestLocator getLocator() {
+    return myLocator;
+  }
+
   public boolean isLeaf() {
     return myChildren == null || myChildren.isEmpty();
   }

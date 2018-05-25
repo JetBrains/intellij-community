@@ -7,26 +7,30 @@ import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.ui.mac.foundation.ID;
 import com.intellij.util.lang.UrlClassLoader;
+import com.sun.jna.Memory;
 import com.sun.jna.Native;
+import org.jetbrains.annotations.NotNull;
 
+import javax.swing.*;
+import java.awt.*;
+import java.awt.image.*;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 public class NST {
   private static final Logger LOG = Logger.getInstance(NST.class);
   private static final String ourRegistryKeyTouchbar = "ide.mac.touchbar.use";
-  private static final String ourRegistryKeyDoCheckEnv = "ide.mac.touchbar.check.env";
   private static final NSTLibrary ourNSTLibrary; // NOTE: JNA is stateless (doesn't have any limitations of multi-threaded use)
 
   static {
     final boolean isSystemSupportTouchbar = SystemInfo.isMac && SystemInfo.isOsVersionAtLeast("10.12.2");
     final boolean isRegistryKeyEnabled = Registry.is(ourRegistryKeyTouchbar, false);
-    final boolean doCheckEnv = Registry.is(ourRegistryKeyDoCheckEnv, true);
     NSTLibrary lib = null;
     if (
       isSystemSupportTouchbar
       && isRegistryKeyEnabled
-      && (!doCheckEnv || SystemSettingsTouchBar.isTouchBarServerRunning())
+      && SystemSettingsTouchBar.isTouchBarServerRunning()
     ) {
       try {
         UrlClassLoader.loadPlatformLibrary("nst");
@@ -45,7 +49,7 @@ public class NST {
       if (lib != null) {
         // small check that loaded library works
         try {
-          final ID test = lib.createTouchBar("test", (uid) -> { return ID.NIL; });
+          final ID test = lib.createTouchBar("test", (uid) -> { return ID.NIL; }, null);
           if (test == null || test == ID.NIL) {
             LOG.error("Failed to create native touchbar object, result is null");
           } else {
@@ -63,16 +67,16 @@ public class NST {
     else if (!isRegistryKeyEnabled)
       LOG.info("registry key '" + ourRegistryKeyTouchbar + "' is disabled, skip nst loading");
     else
-      LOG.warn("touchbar-server isn't running, skip nst loading");
+      LOG.info("touchbar-server isn't running, skip nst loading");
 
     ourNSTLibrary = lib;
   }
 
   public static boolean isAvailable() { return ourNSTLibrary != null; }
 
-  public static ID createTouchBar(String name, NSTLibrary.ItemCreator creator) {
+  public static ID createTouchBar(String name, NSTLibrary.ItemCreator creator, String escID) {
     ApplicationManager.getApplication().assertIsDispatchThread();
-    return ourNSTLibrary.createTouchBar(name, creator);
+    return ourNSTLibrary.createTouchBar(name, creator, escID);
   }
 
   public static void releaseTouchBar(ID tbObj) {
@@ -88,33 +92,43 @@ public class NST {
     ourNSTLibrary.selectItemsToShow(tbObj, ids, count);
   }
 
+  public static void setPrincipal(ID tbObj, String uid) {
+    ourNSTLibrary.setPrincipal(tbObj, uid);
+  }
+
   public static ID createButton(String uid,
                                 int buttWidth,
                                 int buttFlags,
                                 String text,
-                                byte[] raster4ByteRGBA,
-                                int w,
-                                int h,
+                                Icon icon,
                                 NSTLibrary.Action action) {
+    final BufferedImage img = _getImg4ByteRGBA(icon);
+    final byte[] raster4ByteRGBA = _getRaster(img);
+    final int w = _getImgW(img);
+    final int h = _getImgH(img);
     return ourNSTLibrary.createButton(uid, buttWidth, buttFlags, text, raster4ByteRGBA, w, h, action);
   }
 
   public static ID createPopover(String uid,
                                  int itemWidth,
                                  String text,
-                                 byte[] raster4ByteRGBA,
-                                 int w,
-                                 int h,
+                                 Icon icon,
                                  ID tbObjExpand,
                                  ID tbObjTapAndHold) {
+    final BufferedImage img = _getImg4ByteRGBA(icon);
+    final byte[] raster4ByteRGBA = _getRaster(img);
+    final int w = _getImgW(img);
+    final int h = _getImgH(img);
     return ourNSTLibrary.createPopover(uid, itemWidth, text, raster4ByteRGBA, w, h, tbObjExpand, tbObjTapAndHold);
   }
 
-  public static ID createScrubber(String uid,
-                                  int itemWidth,
-                                  NSTLibrary.ScrubberItemData[] items,
-                                  int count) {
-    return ourNSTLibrary.createScrubber(uid, itemWidth, items, count);
+  public static ID createScrubber(String uid, int itemWidth, List<TBItemScrubber.ItemData> items) {
+    final NSTLibrary.ScrubberItemData[] vals = _makeItemsArray2(items);
+    return ourNSTLibrary.createScrubber(uid, itemWidth, vals, vals != null ? vals.length : 0);
+  }
+
+  public static ID createGroupItem(String uid, ID[] items, int count) {
+    return ourNSTLibrary.createGroupItem(uid, items, count);
   }
 
   public static void updateButton(ID buttonObj,
@@ -122,27 +136,119 @@ public class NST {
                                   int buttWidth,
                                   int buttonFlags,
                                   String text,
-                                  byte[] raster4ByteRGBA,
-                                  int w,
-                                  int h,
+                                  Icon icon,
                                   NSTLibrary.Action action) {
     ApplicationManager.getApplication().assertIsDispatchThread();
+    final BufferedImage img = _getImg4ByteRGBA(icon);
+    final byte[] raster4ByteRGBA = _getRaster(img);
+    final int w = _getImgW(img);
+    final int h = _getImgH(img);
     ourNSTLibrary.updateButton(buttonObj, updateOptions, buttWidth, buttonFlags, text, raster4ByteRGBA, w, h, action);
   }
 
   public static void updatePopover(ID popoverObj,
                                    int itemWidth,
                                    String text,
-                                   byte[] raster4ByteRGBA,
-                                   int w,
-                                   int h,
+                                   Icon icon,
                                    ID tbObjExpand, ID tbObjTapAndHold) {
     ApplicationManager.getApplication().assertIsDispatchThread();
+    final BufferedImage img = _getImg4ByteRGBA(icon);
+    final byte[] raster4ByteRGBA = _getRaster(img);
+    final int w = _getImgW(img);
+    final int h = _getImgH(img);
     ourNSTLibrary.updatePopover(popoverObj, itemWidth, text, raster4ByteRGBA, w, h, tbObjExpand, tbObjTapAndHold);
   }
 
-  public static void updateScrubber(ID scrubObj, int itemWidth, NSTLibrary.ScrubberItemData[] items, int count) {
+  public static void updateScrubber(ID scrubObj, int itemWidth, List<TBItemScrubber.ItemData> items) {
     ApplicationManager.getApplication().assertIsDispatchThread();
-    ourNSTLibrary.updateScrubber(scrubObj, itemWidth, items, count);
+    final NSTLibrary.ScrubberItemData[] vals = _makeItemsArray2(items);
+    ourNSTLibrary.updateScrubber(scrubObj, itemWidth, vals, vals != null ? vals.length : 0);
+  }
+
+  private static NSTLibrary.ScrubberItemData[] _makeItemsArray2(List<TBItemScrubber.ItemData> items) {
+    if (items == null)
+      return null;
+
+    final NSTLibrary.ScrubberItemData scitem = new NSTLibrary.ScrubberItemData();
+    // Structure.toArray allocates a contiguous block of memory internally (each array item is inside this block)
+    // note that for large arrays, this can be extremely slow
+    final NSTLibrary.ScrubberItemData[] result = (NSTLibrary.ScrubberItemData[])scitem.toArray(items.size());
+
+    int c = 0;
+    for (TBItemScrubber.ItemData id : items) {
+      NSTLibrary.ScrubberItemData out = result[c++];
+      _fill(id, out);
+    }
+
+    return result;
+  }
+
+  private static void _fill(TBItemScrubber.ItemData from, @NotNull NSTLibrary.ScrubberItemData out) {
+    if (from.myText != null) {
+      final byte[] data = Native.toByteArray(from.myText, "UTF8");
+      out.text = new Memory(data.length + 1);
+      out.text.write(0, data, 0, data.length);
+      out.text.setByte(data.length, (byte)0);
+    } else
+      out.text = null;
+
+    if (from.myIcon != null) {
+      final BufferedImage img = _getImg4ByteRGBA(from.myIcon);
+      final byte[] raster = ((DataBufferByte)img.getRaster().getDataBuffer()).getData();
+      out.raster4ByteRGBA = new Memory(raster.length);
+      out.raster4ByteRGBA.write(0, raster, 0, raster.length);
+
+      out.rasterW = img.getWidth();
+      out.rasterH = img.getHeight();
+    } else {
+      out.raster4ByteRGBA = null;
+      out.rasterW = 0;
+      out.rasterH = 0;
+    }
+
+    out.action = from.myAction;
+  }
+
+  private static byte[] _getRaster(BufferedImage img) {
+    if (img == null)
+      return null;
+
+    return ((DataBufferByte)img.getRaster().getDataBuffer()).getData();
+  }
+
+  private static int _getImgW(BufferedImage img) { return img == null ? 0 : img.getWidth(); }
+  private static int _getImgH(BufferedImage img) { return img == null ? 0 : img.getHeight(); }
+
+  private static BufferedImage _getImg4ByteRGBA(Icon icon, float scale) {
+    if (icon == null)
+      return null;
+
+    final int w = Math.round(icon.getIconWidth()*scale);
+    final int h = Math.round(icon.getIconHeight()*scale);
+    final WritableRaster
+      raster = Raster.createInterleavedRaster(new DataBufferByte(w * h * 4), w, h, 4 * w, 4, new int[]{0, 1, 2, 3}, (Point) null);
+    final ColorModel
+      colorModel = new ComponentColorModel(ColorModel.getRGBdefault().getColorSpace(), true, false, Transparency.TRANSLUCENT, DataBuffer.TYPE_BYTE);
+    final BufferedImage image = new BufferedImage(colorModel, raster, false, null);
+    final Graphics2D g = image.createGraphics();
+    g.scale(scale, scale);
+    g.setComposite(AlphaComposite.SrcOver);
+    icon.paintIcon(null, g, 0, 0);
+    g.dispose();
+
+    return image;
+  }
+
+  private static BufferedImage _getImg4ByteRGBA(Icon icon) {
+    if (icon == null)
+      return null;
+
+    // according to https://developer.apple.com/macos/human-interface-guidelines/touch-bar/touch-bar-icons-and-images/
+    // icons generally should not exceed 44px in height (36px for circular icons)
+    // Ideal icon size	    36px × 36px (18pt × 18pt @2x)
+    // Maximum icon size    44px × 44px (22pt × 22pt @2x)
+    final int newIconW = 40;
+    final float fMulX = newIconW/(float)icon.getIconWidth();
+    return _getImg4ByteRGBA(icon, fMulX);
   }
 }

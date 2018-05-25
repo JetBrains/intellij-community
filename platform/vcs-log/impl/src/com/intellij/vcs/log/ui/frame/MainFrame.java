@@ -4,6 +4,7 @@ import com.google.common.primitives.Ints;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.ex.ActionUtil;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.keymap.KeymapUtil;
 import com.intellij.openapi.progress.util.ProgressWindow;
 import com.intellij.openapi.ui.Splitter;
@@ -57,6 +58,9 @@ import static com.intellij.util.ObjectUtils.chooseNotNull;
 
 public class MainFrame extends JPanel implements DataProvider, Disposable {
   private static final String HELP_ID = "reference.changesToolWindow.log";
+  private static final String DIFF_SPLITTER_PROPORTION = "vcs.log.diff.splitter.proportion";
+  private static final String DETAILS_SPLITTER_PROPORTION = "vcs.log.details.splitter.proportion";
+  private static final String CHANGES_SPLITTER_PROPORTION = "vcs.log.changes.splitter.proportion";
 
   @NotNull private final VcsLogData myLogData;
   @NotNull private final AbstractVcsLogUi myUi;
@@ -70,9 +74,11 @@ public class MainFrame extends JPanel implements DataProvider, Disposable {
   @NotNull private final JComponent myToolbar;
   @NotNull private final VcsLogChangesBrowser myChangesBrowser;
   @NotNull private final Splitter myChangesBrowserSplitter;
+  @NotNull private final Splitter myPreviewDiffSplitter;
   @NotNull private final SearchTextField myTextFilter;
   @NotNull private final MainVcsLogUiProperties myUiProperties;
-  private final MyCommitSelectionListenerForDiff mySelectionListenerForDiff;
+  @NotNull private final MyCommitSelectionListenerForDiff mySelectionListenerForDiff;
+  @NotNull private final VcsLogChangeProcessor myPreviewDiff;
 
   public MainFrame(@NotNull VcsLogData logData,
                    @NotNull VcsLogUiImpl ui,
@@ -107,9 +113,20 @@ public class MainFrame extends JPanel implements DataProvider, Disposable {
     myChangesLoadingPane = new JBLoadingPanel(new BorderLayout(), this, ProgressWindow.DEFAULT_PROGRESS_DIALOG_POSTPONE_TIME_MILLIS);
     myChangesLoadingPane.add(myChangesBrowser);
 
-    myDetailsSplitter = new OnePixelSplitter(true, "vcs.log.details.splitter.proportion", 0.7f);
+    myDetailsSplitter = new OnePixelSplitter(true, DETAILS_SPLITTER_PROPORTION, 0.7f);
     myDetailsSplitter.setFirstComponent(myChangesLoadingPane);
-    setupDetailsSplitter(myUiProperties.get(CommonUiProperties.SHOW_DETAILS));
+    showDetails(myUiProperties.get(CommonUiProperties.SHOW_DETAILS));
+
+    myPreviewDiff = new VcsLogChangeProcessor(logData.getProject(), myChangesBrowser, this);
+    myPreviewDiffSplitter = new OnePixelSplitter(false, DIFF_SPLITTER_PROPORTION, 0.5f);
+    myPreviewDiffSplitter.setHonorComponentsMinimumSize(false);
+    myPreviewDiffSplitter.setFirstComponent(myDetailsSplitter);
+    showDiffPreview(myUiProperties.get(CommonUiProperties.SHOW_DIFF_PREVIEW));
+
+    Runnable changesListener = () -> ApplicationManager.getApplication().invokeLater(
+      () -> myPreviewDiff.updatePreview(myUiProperties.get(CommonUiProperties.SHOW_DIFF_PREVIEW)));
+    myChangesBrowser.getViewer().addSelectionListener(changesListener);
+    myChangesBrowser.setModelUpdateListener(changesListener);
 
     mySelectionListenerForDiff = new MyCommitSelectionListenerForDiff();
     myGraphTable.getSelectionModel().addListSelectionListener(mySelectionListenerForDiff);
@@ -119,6 +136,7 @@ public class MainFrame extends JPanel implements DataProvider, Disposable {
     myTextFilter = myFilterUi.createTextFilter();
     myToolbar = createActionsToolbar();
     myChangesBrowser.setToolbarHeightReferent(myToolbar);
+    myPreviewDiff.getToolbarWrapper().setVerticalSizeReferent(myToolbar);
 
     JComponent toolbars = new JPanel(new BorderLayout());
     toolbars.add(myToolbar, BorderLayout.NORTH);
@@ -127,9 +145,9 @@ public class MainFrame extends JPanel implements DataProvider, Disposable {
     toolbarsAndTable.add(VcsLogUiUtil.installProgress(VcsLogUiUtil.setupScrolledGraph(myGraphTable, SideBorder.TOP),
                                                       myLogData, this), BorderLayout.CENTER);
 
-    myChangesBrowserSplitter = new OnePixelSplitter(false, "vcs.log.changes.splitter.proportion", 0.7f);
+    myChangesBrowserSplitter = new OnePixelSplitter(false, CHANGES_SPLITTER_PROPORTION, 0.7f);
     myChangesBrowserSplitter.setFirstComponent(toolbarsAndTable);
-    myChangesBrowserSplitter.setSecondComponent(myDetailsSplitter);
+    myChangesBrowserSplitter.setSecondComponent(myPreviewDiffSplitter);
 
     setLayout(new BorderLayout());
     add(myChangesBrowserSplitter);
@@ -150,10 +168,6 @@ public class MainFrame extends JPanel implements DataProvider, Disposable {
   public void updateDataPack(@NotNull VisiblePack dataPack, boolean permGraphChanged) {
     myFilterUi.updateDataPack(dataPack);
     myGraphTable.updateDataPack(dataPack, permGraphChanged);
-  }
-
-  public void setupDetailsSplitter(boolean state) {
-    myDetailsSplitter.setSecondComponent(state ? myDetailsPanel : null);
   }
 
   @NotNull
@@ -220,7 +234,7 @@ public class MainFrame extends JPanel implements DataProvider, Disposable {
   @Override
   public Object getData(@NonNls String dataId) {
     if (VcsDataKeys.CHANGES.is(dataId) || VcsDataKeys.SELECTED_CHANGES.is(dataId)) {
-      return ArrayUtil.toObjectArray(myChangesBrowser.getAllChanges(), Change.class);
+      return ArrayUtil.toObjectArray(myChangesBrowser.getDirectChanges(), Change.class);
     }
     else if (VcsDataKeys.CHANGE_LISTS.is(dataId)) {
       List<VcsFullCommitDetails> details = myLog.getSelectedDetails();
@@ -259,6 +273,11 @@ public class MainFrame extends JPanel implements DataProvider, Disposable {
 
   public void showDetails(boolean state) {
     myDetailsSplitter.setSecondComponent(state ? myDetailsPanel : null);
+  }
+
+  public void showDiffPreview(boolean state) {
+    myPreviewDiff.updatePreview(state);
+    myPreviewDiffSplitter.setSecondComponent(state ? myPreviewDiff.getComponent() : null);
   }
 
   @Override

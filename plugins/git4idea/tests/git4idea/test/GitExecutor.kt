@@ -123,6 +123,10 @@ fun GitRepository.lastMessage() = cd { lastMessage(project) }
 fun GitPlatformTest.lastMessage() = lastMessage(project)
 private fun lastMessage(project: Project) = message(project, "HEAD")
 
+fun GitRepository.lastAuthorTime() = cd { lastAuthorTime(project) }
+fun GitPlatformTest.lastAuthorTime() = lastAuthorTime(project)
+private fun lastAuthorTime(project: Project) = git(project, "log -1 --pretty=%at")
+
 fun GitRepository.message(revision: String) = cd { message(project, revision)}
 private fun message(project: Project, revision: String) =
   git(project, "log $revision --no-walk --pretty=${getPrettyFormatTagForFullCommitMessage(project)}")

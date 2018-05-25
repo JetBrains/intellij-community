@@ -127,7 +127,7 @@ private fun GrReferenceExpression.doResolvePackageOrClass(): PsiElement? {
     resolveClass()?.let { return it }
   }
 
-  for (parent in parents().drop(1)) {
+  for (parent in strictParents()) {
     if (parent !is GrReferenceExpression) return null
     if (parent.resolveClass() == null) continue
     val qname = qualifiedReferenceName!!

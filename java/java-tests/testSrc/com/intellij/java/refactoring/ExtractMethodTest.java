@@ -893,6 +893,26 @@ public class ExtractMethodTest extends LightCodeInsightTestCase {
     doDuplicatesTest();
   }
 
+  public void testParametrizedDuplicateFoldListElement() throws Exception {
+    doDuplicatesTest();
+  }
+
+  public void testParametrizedDuplicateFoldArrayElement() throws Exception {
+    doDuplicatesTest();
+  }
+
+  public void testParametrizedMultiDuplicatesFoldArrayElement() throws Exception {
+    doDuplicatesTest();
+  }
+
+  public void testParametrizedDuplicateFoldArrayElementTwoUsages() throws Exception {
+    doDuplicatesTest();
+  }
+
+  public void testTripleParametrizedDuplicate() throws Exception {
+    doDuplicatesTest();
+  }
+
   public void testSuggestChangeSignatureWithChangedParameterName() throws Exception {
     configureByFile(BASE_PATH + getTestName(false) + ".java");
     boolean success = performExtractMethod(true, true, getEditor(), getFile(), getProject(), false, null, false, "p");

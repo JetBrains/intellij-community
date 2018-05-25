@@ -23,9 +23,6 @@ import com.siyeh.ig.psiutils.ControlFlowUtils.InitializerUsageStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-/**
- * @author Tagir Valeev
- */
 abstract class BaseStreamApiMigration {
   private boolean myShouldWarn;
   private final String myReplacement;

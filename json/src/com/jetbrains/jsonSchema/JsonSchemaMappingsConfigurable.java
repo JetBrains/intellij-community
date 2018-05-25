@@ -35,7 +35,7 @@ import static com.jetbrains.jsonSchema.JsonSchemaConfigurable.isHttpPath;
  */
 public class JsonSchemaMappingsConfigurable extends MasterDetailsComponent implements SearchableConfigurable, Disposable {
   @NonNls public static final String SETTINGS_JSON_SCHEMA = "settings.json.schema";
-  public static final String JSON_SCHEMA_MAPPINGS = "JSON Schema";
+  public static final String JSON_SCHEMA_MAPPINGS = "JSON Schema Mappings";
 
   private final static Comparator<UserDefinedJsonSchemaConfiguration> COMPARATOR = (o1, o2) -> {
     if (o1.isApplicationLevel() != o2.isApplicationLevel()) {

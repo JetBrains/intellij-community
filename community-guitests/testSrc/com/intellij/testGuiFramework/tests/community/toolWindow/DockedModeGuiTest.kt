@@ -1,7 +1,6 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.testGuiFramework.tests.community.toolWindow
 
-import com.intellij.icons.AllIcons
 import com.intellij.openapi.actionSystem.impl.ActionMenuItem
 import com.intellij.testGuiFramework.fixtures.IdeFrameFixture
 import com.intellij.testGuiFramework.impl.GuiTestCase
@@ -19,7 +18,7 @@ class DockedModeGuiTest : GuiTestCase() {
   }
 
   @Test
-  fun testDockerMode() {
+  fun testDockedMode() {
     CommunityProjectCreator.importCommandLineAppAndOpenMain()
     ideFrame {
       if (!projectView.isVisible) projectView.activate()
@@ -43,7 +42,7 @@ class DockedModeGuiTest : GuiTestCase() {
       projectView.activate()
       Pause.pause(2000) // pause to wait when project view is appeared
     }
-    inplaceButton(AllIcons.General.Gear).click()
+    actionButton("Show Options Menu").click()
     val pinnedModeItem = menu(toolWindowMode.mode)
     val selected = (pinnedModeItem.target() as ActionMenuItem).isSelected
     if (selected != flag) pinnedModeItem.click()

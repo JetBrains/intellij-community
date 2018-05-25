@@ -92,8 +92,8 @@ public class PsiPackageImpl extends PsiPackageBase implements PsiPackage, Querya
   }
 
   @Override
-  protected PsiElement findPackage(String qName) {
-    return getFacade().findPackage(qName);
+  protected PsiPackageImpl findPackage(String qName) {
+    return (PsiPackageImpl)getFacade().findPackage(qName);
   }
 
   @Override
@@ -110,11 +110,6 @@ public class PsiPackageImpl extends PsiPackageBase implements PsiPackage, Querya
   @Override
   public PsiPackageImpl getParentPackage() {
     return (PsiPackageImpl)super.getParentPackage();
-  }
-
-  @Override
-  protected PsiPackageImpl createInstance(PsiManager manager, String qName) {
-    return new PsiPackageImpl(getManager(), qName);
   }
 
   @Override

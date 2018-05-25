@@ -1,6 +1,7 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.ui.laf.intellij;
 
+import com.intellij.ide.ui.laf.darcula.DarculaUIUtil;
 import com.intellij.ui.Gray;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.MacUIUtil;
@@ -11,6 +12,8 @@ import java.awt.geom.Area;
 import java.awt.geom.Path2D;
 import java.awt.geom.Rectangle2D;
 import java.awt.geom.RoundRectangle2D;
+
+import static com.intellij.ide.ui.laf.darcula.DarculaUIUtil.paintOutlineBorder;
 
 /**
  * @author Konstantin Bulenkov
@@ -44,7 +47,16 @@ public class MacIntelliJComboBoxBorder extends MacIntelliJTextBorder {
       g2.fill(border);
 
       g2.setClip(clip); // Reset clip
-      paint(c, g2, width, height, arc);
+
+      clipForBorder(c, g2, width, height);
+
+      Object op = ((JComponent)c).getClientProperty("JComponent.outline");
+      boolean focused = isFocused(c);
+      if (op != null) {
+        paintOutlineBorder(g2, width, height, arc, isSymmetric(), focused, DarculaUIUtil.Outline.valueOf(op.toString()));
+      } else if (focused) {
+        paintOutlineBorder(g2, width, height, arc, isSymmetric(), true, DarculaUIUtil.Outline.focus);
+      }
     } finally {
       g2.dispose();
     }

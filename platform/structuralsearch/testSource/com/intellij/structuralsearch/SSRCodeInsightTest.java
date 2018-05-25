@@ -53,7 +53,8 @@ public class SSRCodeInsightTest extends UsefulTestCase {
   }
 
   public void testBrokenPattern() {
-    doTest("int i", "semicolon expected");
+    // check broken pattern does not throw exceptions
+    doTest("int i(", "semicolon expected");
   }
 
   private void doTest(final String searchPattern, final String patternName) {

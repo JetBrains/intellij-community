@@ -4,7 +4,7 @@ package com.intellij.openapi.externalSystem.service.execution;
 import com.intellij.build.output.BuildOutputParser;
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.externalSystem.model.ProjectSystemId;
-import com.intellij.openapi.externalSystem.service.internal.ExternalSystemExecuteTaskTask;
+import com.intellij.openapi.externalSystem.model.task.ExternalSystemTask;
 import org.jetbrains.annotations.ApiStatus;
 
 import java.util.List;
@@ -19,5 +19,5 @@ public interface ExternalSystemOutputParserProvider {
 
   ProjectSystemId getExternalSystemId();
 
-  List<BuildOutputParser> getBuildOutputParsers(ExternalSystemExecuteTaskTask task);
+  List<BuildOutputParser> getBuildOutputParsers(ExternalSystemTask task);
 }

@@ -8,13 +8,15 @@
 
 @implementation TouchBar
 
--(id)init:(NSString *)name jcreator:(createItem)jcreator {
+-(id)init:(NSString *)name jcreator:(createItem)jcreator customEscId:(NSString *)escId {
     self = [super init];
     if (self) {
         _jcreator = jcreator;
         self.name = name;
         self.touchBar = [[[NSTouchBar alloc] init] autorelease];
         self.touchBar.delegate = self;          // NOTE: delegate-property of NSTouchBar is weak
+        if (escId != nil && [escId length] > 0)
+            self.touchBar.escapeKeyReplacementItemIdentifier = escId;
     }
     return self;
 }
@@ -64,15 +66,32 @@ void selectItemsToShow(id touchBar, const char** ppIds, int count) {
     [edtPool release];
 }
 
-id createTouchBar(const char * name, createItem jcreator) {
+id createTouchBar(const char * name, createItem jcreator, const char * escId) {
     NSAutoreleasePool * edtPool = [[NSAutoreleasePool alloc] init];
-    TouchBar * result = [[TouchBar alloc] init:getString(name) jcreator:jcreator]; // creates non-autorelease obj to be owned by java-wrapper
+    TouchBar * result = [[TouchBar alloc] init:getString(name) jcreator:jcreator customEscId:getString(escId)]; // creates non-autorelease obj to be owned by java-wrapper
     [edtPool release];
     return result;
 }
 
+void setPrincipal(id tbobj, const char * uid) {
+    TouchBar * tb = (TouchBar *)tbobj; // TODO: check types
+    [tb.touchBar setPrincipalItemIdentifier:getString(uid)];
+}
+
 void releaseTouchBar(id tbobj) {
     [tbobj release];
+}
+
+id createGroupItem(const char * uid, id * items, int count) {
+    NSMutableArray *allItems = [NSMutableArray arrayWithCapacity:count];
+    for (int c = 0; c < count; ++c)
+        [allItems addObject:items[c]];
+
+    NSGroupTouchBarItem * result = [NSGroupTouchBarItem groupItemWithIdentifier:getString(uid) items:allItems];
+    // NOTE: should create non-autorelease object to be owned by java-wrapper
+    // the simplest way to create working NSGroupTouchBarItem with fixed item set is to call groupItemWithIdentifier, which creates autorelease object, so do retain..
+    [result retain];
+    return result;
 }
 
 void setTouchBar(id tb) {

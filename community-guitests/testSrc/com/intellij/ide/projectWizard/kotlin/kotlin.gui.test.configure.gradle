@@ -1,0 +1,88 @@
+plugins {
+    id "de.undercouch.download" version "3.4.0"
+}
+
+import de.undercouch.gradle.tasks.download.Download
+
+group 'kotlin-gui-tests-configuration'
+version '1.0-SNAPSHOT'
+
+task setBaseProperties{
+    project.ext.ideTested = System.getenv("ide.tested")
+    project.ext.updateXmlName = 'updatePlugins-' + ideTested + '.xml'
+    project.ext.downloadPath = System.getenv("kotlin.plugin.download.path")
+    project.ext.updateXmlFile = project.ext.downloadPath + File.separator + project.ext.updateXmlName
+}
+
+task downloadUpdateXml(type: Download, dependsOn: setBaseProperties) {
+    def url = 'https://teamcity.jetbrains.com/guestAuth/repository/download/' +
+            System.getenv('kotlin.configuration.name') + "/" +
+            System.getenv('kotlin.configuration.buildId') + "/" +
+            project.ext.updateXmlName
+    src url
+    dest project.ext.updateXmlFile
+}
+
+task updateXmlParsing(dependsOn: downloadUpdateXml) {
+    doLast {
+        ext.srcFile = file(project.ext.updateXmlFile)
+        def plugins = new XmlParser().parse(srcFile)
+        project.ext.url = plugins.plugin[0].@url
+        def versionParts = plugins.plugin[0].@version =~ /(\d+\.\d+\.\d+)-(release|(eap|dev)-\d+)-(IJ|AS)(\d{4}\.\d)-(\d+)/
+        project.ext.releaseVersion = versionParts[0][1]
+        project.ext.versionKind = versionParts[0][2]
+        project.ext.idePluginVersion = releaseVersion + "-" + versionKind
+        project.ext.microVersion = versionParts[0][6]
+        project.ext.pluginZipName = 'kotlin-plugin-' + plugins.plugin[0].@version + '.zip'
+        project.ext.pluginInstallPath = project.ext.downloadPath + File.separator + project.ext.pluginZipName
+        project.ext.fullVersion = plugins.plugin[0].@version
+    }
+}
+
+task getKotlinArtifactVersion(dependsOn: updateXmlParsing) {
+    doLast {
+        project.ext.kotlin_artifact_version = System.getenv("kotlin.artifact.version")
+        if (project.ext.kotlin_artifact_version == null || project.ext.kotlin_artifact_version.trim().isEmpty()) {
+            if (versionKind == "release")
+                project.ext.kotlin_artifact_version = releaseVersion
+            else
+                project.ext.kotlin_artifact_version = idePluginVersion
+        }
+    }
+}
+
+task createPropertiesFile(dependsOn: getKotlinArtifactVersion) {
+    def dstFile = new File(System.getenv('kotlin.gui.test.properties.file'))
+    outputs.file dstFile
+    dstFile.createNewFile()
+    doLast {
+        Properties props = new Properties()
+
+        props.setProperty("kotlin.plugin.install.path", project.ext.pluginInstallPath)
+        props.setProperty("kotlin.plugin.version.main", project.ext.idePluginVersion)
+        props.setProperty("kotlin.plugin.version.full", project.ext.fullVersion)
+        props.setProperty("kotlin.artifact.version", project.ext.kotlin_artifact_version)
+        props.setProperty("kotlin.artifact.isOnlyDevRep", System.getenv("kotlin.artifact.isOnlyDevRep"))
+        props.setProperty("kotlin.artifact.isPresentInConfigureDialog", System.getenv("kotlin.artifact.isPresentInConfigureDialog"))
+
+        props.store(dstFile.newWriter(), null)
+
+        println()
+        println "Following properties are going to be used:"
+        props.each {
+            propertyName, propertyValue -> println "    " + propertyName + " = " + propertyValue
+        }
+    }
+}
+
+task downloadPluginZip(dependsOn: createPropertiesFile) {
+    doLast {
+        download {
+            src project.ext.url
+            dest project.ext.pluginInstallPath
+            overwrite true
+        }
+    }
+}
+
+defaultTasks 'downloadPluginZip'

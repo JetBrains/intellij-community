@@ -82,7 +82,7 @@ public class VcsLogContentProvider implements ChangesViewContentProvider {
   private void addMainUi(@NotNull VcsLogManager logManager) {
     LOG.assertTrue(ApplicationManager.getApplication().isDispatchThread());
     if (myUi == null) {
-      myUi = logManager.createLogUi(VcsLogTabsProperties.MAIN_LOG_ID, TAB_NAME);
+      myUi = logManager.createLogUi(VcsLogTabsProperties.MAIN_LOG_ID, true);
       myContainer.add(new VcsLogPanel(logManager, myUi), BorderLayout.CENTER);
 
       if (myOnCreatedListener != null) myOnCreatedListener.consume(myUi);
@@ -148,7 +148,7 @@ public class VcsLogContentProvider implements ChangesViewContentProvider {
     @Override
     public Boolean fun(Project project) {
       return !VcsLogManager.findLogProviders(Arrays.asList(ProjectLevelVcsManager.getInstance(project).getAllVcsRoots()), project)
-        .isEmpty();
+                           .isEmpty();
     }
   }
 }

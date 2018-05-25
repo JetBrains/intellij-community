@@ -8,6 +8,7 @@ import com.intellij.codeInsight.intention.IntentionActionDelegate;
 import com.intellij.codeInspection.QuickFix;
 import com.intellij.codeInspection.ex.QuickFixWrapper;
 import com.intellij.icons.AllIcons;
+import com.intellij.ide.impl.DataManagerImpl;
 import com.intellij.ide.ui.AntialiasingType;
 import com.intellij.ide.ui.UISettings;
 import com.intellij.notification.Notification;
@@ -53,10 +54,7 @@ import org.jetbrains.annotations.Nullable;
 import javax.accessibility.Accessible;
 import javax.accessibility.AccessibleContext;
 import javax.swing.*;
-import javax.swing.border.Border;
-import javax.swing.border.CompoundBorder;
-import javax.swing.border.LineBorder;
-import javax.swing.border.TitledBorder;
+import javax.swing.border.*;
 import javax.swing.event.TreeSelectionEvent;
 import javax.swing.event.TreeSelectionListener;
 import javax.swing.plaf.ColorUIResource;
@@ -396,6 +394,10 @@ public class UiInspectorAction extends ToggleAction implements DumbAware {
         }
         if (component.isDoubleBuffered()) {
           append(", double-buffered", SimpleTextAttributes.GRAYED_ATTRIBUTES);
+        }
+        if (DataManagerImpl.getDataProviderEx(component) != null) {
+          append(", ", SimpleTextAttributes.GRAYED_ATTRIBUTES);
+          append("data-provider", SimpleTextAttributes.REGULAR_BOLD_ATTRIBUTES);
         }
         componentNode.setText(toString());
         setIcon(createColorIcon(component.getForeground(), component.getBackground()));
@@ -1023,6 +1025,14 @@ public class UiInspectorAction extends ToggleAction implements DumbAware {
       if (value instanceof CompoundBorder) {
         sb.append(" inside={").append(getTextDescription(((CompoundBorder)value).getInsideBorder())).append("}");
         sb.append(" outside={").append(getTextDescription(((CompoundBorder)value).getOutsideBorder())).append("}");
+      }
+      if (value instanceof EmptyBorder) {
+        Insets insets = ((EmptyBorder)value).getBorderInsets();
+        sb.append(" insets={top=").append(insets.top)
+          .append(" left=").append(insets.left)
+          .append(" bottom=").append(insets.bottom)
+          .append(" right=").append(insets.right)
+          .append("}");
       }
 
       if (value instanceof UIResource) sb.append(" UIResource");

@@ -217,19 +217,20 @@ public final class IconLoader {
   }
 
   @Nullable
-  private static URL findURL(@NotNull String path, @NotNull Class aClass) {
-    URL url = aClass.getResource(path);
+  private static URL findURL(@NotNull String path, @Nullable Object context) {
+    URL url;
+    if (context instanceof Class) {
+      url = ((Class)context).getResource(path);
+    }
+    else if (context instanceof ClassLoader) {
+      url = ((ClassLoader)context).getResource(path);
+    }
+    else {
+      LOG.warn("unexpected: " + context);
+      return null;
+    }
     if (url != null || !path.endsWith(".png")) return url;
-    url = aClass.getResource(path.substring(0, path.length() - 4) + ".svg");
-    if (url != null) LOG.info("replace '" + path + "' with '" + url + "'");
-    return url;
-  }
-
-  @Nullable
-  private static URL findURL(@NotNull String path, @NotNull ClassLoader loader) {
-    URL url = loader.getResource(path);
-    if (url != null || !path.endsWith(".png")) return url;
-    url = loader.getResource(path.substring(0, path.length() - 4) + ".svg");
+    url = findURL(path.substring(0, path.length() - 4) + ".svg", context);
     if (url != null) LOG.info("replace '" + path + "' with '" + url + "'");
     return url;
   }
@@ -445,7 +446,6 @@ public final class IconLoader {
     private URL myUrl;
     private volatile boolean dark;
     private volatile int numberOfPatchers = ourPatchers.size();
-    private final boolean svg;
     private final boolean useCacheOnLoad;
     private int myClearCacheCounter = clearCacheCounter;
 
@@ -470,7 +470,6 @@ public final class IconLoader {
       dark = icon.dark;
       numberOfPatchers = icon.numberOfPatchers;
       myFilters = icon.myFilters;
-      svg = myOriginalPath != null && myOriginalPath.toLowerCase().endsWith("svg");
       useCacheOnLoad = icon.useCacheOnLoad;
     }
 
@@ -482,7 +481,6 @@ public final class IconLoader {
       myUrl = url;
       dark = USE_DARK_ICONS;
       myFilters = new ImageFilter[] {IMAGE_FILTER};
-      svg = url.toString().endsWith("svg");
       this.useCacheOnLoad = useCacheOnLoad;
     }
 
@@ -610,41 +608,36 @@ public final class IconLoader {
     private class MyScaledIconsCache {
       private static final int SCALED_ICONS_CACHE_LIMIT = 5;
 
-      // Map {pixel scale -> icon}
-      private final Map<Double, SoftReference<ImageIcon>> scaledIconsCache = Collections.synchronizedMap(new LinkedHashMap<Double, SoftReference<ImageIcon>>(SCALED_ICONS_CACHE_LIMIT) {
+      private final Map<Couple<Double>, SoftReference<ImageIcon>> scaledIconsCache = Collections.synchronizedMap(new LinkedHashMap<Couple<Double>, SoftReference<ImageIcon>>(SCALED_ICONS_CACHE_LIMIT) {
         @Override
-        public boolean removeEldestEntry(Map.Entry<Double, SoftReference<ImageIcon>> entry) {
+        public boolean removeEldestEntry(Map.Entry<Couple<Double>, SoftReference<ImageIcon>> entry) {
           return size() > SCALED_ICONS_CACHE_LIMIT;
         }
       });
+
+      private Couple<Double> key(@NotNull ScaleContext ctx) {
+        return new Couple<Double>(ctx.getScale(USR_SCALE) * ctx.getScale(OBJ_SCALE), ctx.getScale(SYS_SCALE));
+      }
 
       /**
        * Retrieves the orig icon scaled by the provided scale.
        */
       ImageIcon getOrScaleIcon(final float scale) {
-        final ScaleContext ctx = scale == 1 ? getScaleContext() : (ScaleContext)getScaleContext().copy(); // not modifying this scale context
-        if (scale != 1) ctx.update(OBJ_SCALE.of(scale));
+        ScaleContext ctx = getScaleContext();
+        if (scale != 1) {
+          ctx = ctx.copy();
+          ctx.update(OBJ_SCALE.of(scale));
+        }
 
-        ImageIcon icon = SoftReference.dereference(scaledIconsCache.get(ctx.getScale(PIX_SCALE)));
+        ImageIcon icon = SoftReference.dereference(scaledIconsCache.get(key(ctx)));
         if (icon != null) {
           return icon;
         }
-        Image image;
-        if (svg) {
-          image = doWithTmpRegValue("ide.svg.icon", true, new Callable<Image>() {
-            @Override
-            public Image call() {
-              return loadFromUrl(ctx);
-            }
-          });
-        }
-        else {
-          image = loadFromUrl(ctx);
-        }
+        Image image = loadFromUrl(ctx);
         icon = checkIcon(image, myUrl);
 
         if (icon != null && icon.getIconWidth() * icon.getIconHeight() * 4 < ImageLoader.CACHED_IMAGE_MAX_SIZE) {
-          scaledIconsCache.put(ctx.getScale(PIX_SCALE), new SoftReference<ImageIcon>(icon));
+          scaledIconsCache.put(key(ctx), new SoftReference<ImageIcon>(icon));
         }
         return icon;
       }
@@ -713,23 +706,5 @@ public final class IconLoader {
      * not null component to paint.
      */
     private static final JComponent ourFakeComponent = new JLabel();
-  }
-
-  /**
-   * Do something with the temporarily registry value.
-   */
-  private static <T> T doWithTmpRegValue(@NotNull String key, @NotNull Boolean tempValue, @NotNull Callable<T> action) {
-    RegistryValue regVal = Registry.get(key);
-    boolean regValOrig = regVal.asBoolean();
-    if (regValOrig != tempValue) regVal.setValue(tempValue);
-    try {
-      return action.call();
-    }
-    catch (Exception ignore) {
-      return null;
-    }
-    finally {
-      if (regValOrig != tempValue) regVal.setValue(regValOrig);
-    }
   }
 }

@@ -12,11 +12,13 @@ import com.intellij.openapi.actionSystem.impl.Utils;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.project.IndexNotReadyException;
 import com.intellij.openapi.project.Project;
 import com.intellij.ui.components.JBOptionButton;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.messages.MessageBus;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.awt.*;
 import java.util.List;
@@ -28,8 +30,10 @@ public class TouchBarActionBase extends TouchBarProjectBase implements Execution
   private final TimerListener myTimerListener;
   private final Component myComponent;
 
-  public TouchBarActionBase(@NotNull String touchbarName, @NotNull Project project, Component component) {
-    super(touchbarName, project);
+  public TouchBarActionBase(@NotNull String touchbarName, @NotNull Project project, Component component) { this(touchbarName, project, component, false); }
+
+  public TouchBarActionBase(@NotNull String touchbarName, @NotNull Project project, Component component, boolean replaceEsc) {
+    super(touchbarName, project, replaceEsc);
 
     myComponent = component;
     myTimerListener = new TimerListener() {
@@ -58,28 +62,30 @@ public class TouchBarActionBase extends TouchBarProjectBase implements Execution
   public void onHide() { ActionManager.getInstance().removeTransparentTimerListener(myTimerListener); }
 
   TBItemAnActionButton addAnActionButton(String actId) {
-    return addAnActionButton(ActionManager.getInstance().getAction(actId), true, TBItemAnActionButton.SHOWMODE_IMAGE_ONLY, myComponent, null);
+    final AnAction act = _getActionById(actId);
+    if (act == null)
+      return null;
+
+    return _addAnActionButton(act, true, TBItemAnActionButton.SHOWMODE_IMAGE_ONLY, myComponent, null);
   }
 
   TBItemAnActionButton addAnActionButton(String actId, boolean hiddenWhenDisabled) {
-    final AnAction act = ActionManager.getInstance().getAction(actId);
-    if (act == null) {
-      LOG.error("can't find action by id: " + actId);
+    final AnAction act = _getActionById(actId);
+    if (act == null)
       return null;
-    }
-    return addAnActionButton(act, hiddenWhenDisabled, TBItemAnActionButton.SHOWMODE_IMAGE_ONLY, myComponent, null);
+
+    return _addAnActionButton(act, hiddenWhenDisabled, TBItemAnActionButton.SHOWMODE_IMAGE_ONLY, myComponent, null);
   }
 
-  TBItemAnActionButton addAnActionButton(AnAction act, boolean hiddenWhenDisabled, int showMode) {
-    return addAnActionButton(act, hiddenWhenDisabled, showMode, myComponent, null);
+  TBItemAnActionButton addAnActionButton(String actId, boolean hiddenWhenDisabled, int showMode) {
+    final AnAction act = _getActionById(actId);
+    if (act == null)
+      return null;
+
+    return _addAnActionButton(act, hiddenWhenDisabled, showMode, myComponent, null);
   }
 
-  TBItemAnActionButton addAnActionButton(AnAction act, boolean hiddenWhenDisabled, int showMode, Component component, ModalityState modality) {
-    if (act == null) {
-      LOG.error("can't create action-button with null action");
-      return null;
-    }
-
+  private TBItemAnActionButton _addAnActionButton(@NotNull AnAction act, boolean hiddenWhenDisabled, int showMode, Component component, ModalityState modality) {
     final String uid = String.format("%s.anActionButton.%d.%s", myName, myCounter++, ActionManager.getInstance().getId(act));
     final TBItemAnActionButton butt = new TBItemAnActionButton(uid, act, hiddenWhenDisabled, showMode, component, modality);
     myItems.add(butt);
@@ -91,10 +97,10 @@ public class TouchBarActionBase extends TouchBarProjectBase implements Execution
     List<AnAction> visibleActions = ContainerUtil.newArrayListWithCapacity(10);
     Utils.expandActionGroup(false, actionGroup, visibleActions, myPresentationFactory, dctx, ActionPlaces.UNKNOWN, ActionManager.getInstance());
     for (AnAction act: visibleActions) {
-      if (act instanceof Separator)
+      if (act == null || act instanceof Separator)
         continue;
 
-      addAnActionButton(act, false, TBItemAnActionButton.SHOWMODE_TEXT_ONLY, forCtx, modality);
+      _addAnActionButton(act, false, TBItemAnActionButton.SHOWMODE_TEXT_ONLY, forCtx, modality);
     }
   }
 
@@ -119,7 +125,13 @@ public class TouchBarActionBase extends TouchBarProjectBase implements Execution
 
       final TBItemAnActionButton item = (TBItemAnActionButton)tbitem;
       final Presentation presentation = myPresentationFactory.getPresentation(item.getAnAction());
-      item.updateAnAction(presentation);
+
+      try {
+        item.updateAnAction(presentation);
+      } catch (IndexNotReadyException e1) {
+        presentation.setEnabled(false);
+        presentation.setVisible(false);
+      }
 
       if (item.isAutoVisibility()) {
         final boolean itemVisibilityChanged = item.updateVisibility(presentation);
@@ -131,5 +143,13 @@ public class TouchBarActionBase extends TouchBarProjectBase implements Execution
 
     if (layoutChanged)
       selectVisibleItemsToShow();
+  }
+
+  private static @Nullable AnAction _getActionById(String actId) {
+    final AnAction act = ActionManager.getInstance().getAction(actId);
+    if (act == null)
+      LOG.error("can't find action by id: " + actId);
+
+    return act;
   }
 }

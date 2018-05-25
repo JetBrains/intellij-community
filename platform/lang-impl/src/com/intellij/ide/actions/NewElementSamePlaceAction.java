@@ -22,6 +22,7 @@ import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.LangDataKeys;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.popup.ListPopup;
+import org.jetbrains.annotations.NotNull;
 
 public class NewElementSamePlaceAction extends NewElementAction {
   @Override
@@ -30,12 +31,13 @@ public class NewElementSamePlaceAction extends NewElementAction {
   }
 
   @Override
-  protected boolean isEnabled(AnActionEvent e) {
+  protected boolean isEnabled(@NotNull AnActionEvent e) {
     return LangDataKeys.IDE_VIEW.getData(e.getDataContext()) != null;
   }
 
-  protected void showPopup(AnActionEvent e) {
-    ListPopup popup = createPopup(e);
+  @Override
+  public void actionPerformed(@NotNull AnActionEvent e) {
+    ListPopup popup = createPopup(e.getDataContext());
     Project project = e.getData(CommonDataKeys.PROJECT);
     if (project != null) {
       popup.showCenteredInCurrentWindow(project);

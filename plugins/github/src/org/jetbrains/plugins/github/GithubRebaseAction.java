@@ -29,6 +29,7 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.github.api.GithubApiTaskExecutor;
 import org.jetbrains.plugins.github.api.GithubApiUtil;
 import org.jetbrains.plugins.github.api.GithubFullPath;
+import org.jetbrains.plugins.github.api.GithubServerPath;
 import org.jetbrains.plugins.github.api.data.GithubRepoDetailed;
 import org.jetbrains.plugins.github.authentication.accounts.GithubAccount;
 import org.jetbrains.plugins.github.util.GithubGitHelper;
@@ -62,12 +63,12 @@ public class GithubRebaseAction extends LegacySingleAccountActionGroup {
 
   @Nullable
   @Override
-  protected Pair<GitRemote, String> getRemote(@NotNull GithubAccount account, @NotNull GitRepository repository) {
+  protected Pair<GitRemote, String> getRemote(@NotNull GithubServerPath server, @NotNull GitRepository repository) {
     for (GitRemote gitRemote : repository.getRemotes()) {
       String remoteName = gitRemote.getName();
       if ("upstream".equals(remoteName)) {
         for (String remoteUrl : gitRemote.getUrls()) {
-          if (account.getServer().matches(remoteUrl)) {
+          if (server.matches(remoteUrl)) {
             return Pair.pair(gitRemote, remoteUrl);
           }
         }
@@ -100,7 +101,7 @@ public class GithubRebaseAction extends LegacySingleAccountActionGroup {
     @Override
     public void run(@NotNull ProgressIndicator indicator) {
       myRepository.update();
-      Pair<GitRemote, String> remote = getRemote(myAccount, myRepository);
+      Pair<GitRemote, String> remote = getRemote(myAccount.getServer(), myRepository);
       String upstreamRemoteUrl = remote != null ? remote.second : null;
       if (upstreamRemoteUrl == null) {
         indicator.setText("Configuring upstream remote...");

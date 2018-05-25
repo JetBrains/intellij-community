@@ -39,16 +39,18 @@ import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.impl.PsiDocumentManagerImpl;
 import com.intellij.psi.impl.PsiToDocumentSynchronizer;
-import com.intellij.testFramework.LeakHunter;
-import com.intellij.testFramework.LightPlatformTestCase;
-import com.intellij.testFramework.PlatformTestUtil;
-import com.intellij.testFramework.Timings;
+import com.intellij.testFramework.*;
 import com.intellij.util.CommonProcessors;
+import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.WeakList;
+import com.intellij.util.ref.GCUtil;
+import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
+import java.lang.ref.Reference;
+import java.lang.ref.WeakReference;
 import java.util.*;
 import java.util.concurrent.ThreadLocalRandom;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -948,7 +950,6 @@ public class RangeMarkerTest extends LightPlatformTestCase {
           System.err.println(s);
           throw e;
         }
-        ;
       });
     }
   }
@@ -1392,5 +1393,54 @@ public class RangeMarkerTest extends LightPlatformTestCase {
       }
     }).assertTiming();
     assertNotEmpty(markers);
+  }
+
+  public void testRangeMarkerContinuesToReceiveEventsFromDocumentAfterItsBeingGcedAndRecreatedAgain_NoCommand() {
+    // need to be physical file
+    VirtualFile vf = VfsTestUtil.createFile(getSourceRoot(), "x.txt", "blah");
+    PsiFile psiFile = ObjectUtils.notNull(getPsiManager().findFile(vf));
+    RangeMarker marker = createMarker(psiFile, 0, 4);
+    RangeMarker persistentMarker = document.createRangeMarker(0, 4, true);
+    Reference<Document> ref = new WeakReference<>(document);
+    int docHash0 = System.identityHashCode(document);
+    this.psiFile = null;
+    fileNode = null;
+    document = null;
+
+    while (ref.get() != null) {
+      GCUtil.tryForceGC();
+      UIUtil.dispatchAllInvocationEvents();
+    }
+    assertTrue(marker.isValid());
+    assertTrue(persistentMarker.isValid());
+
+    Document newDoc = ObjectUtils.notNull(PsiDocumentManager.getInstance(getProject()).getDocument(psiFile));
+    int docHash1 = System.identityHashCode(newDoc);
+    assertNotSame(docHash0, docHash1);
+
+    WriteCommandAction.runWriteCommandAction(getProject(), ()->newDoc.insertString(2,"000"));
+    assertTrue(marker.isValid());
+    assertEquals("bl000ah", TextRange.create(marker).substring(newDoc.getText()));
+    assertTrue(persistentMarker.isValid());
+    assertEquals("bl000ah", TextRange.create(persistentMarker).substring(newDoc.getText()));
+
+    Reference<RangeMarker> markerRef = new WeakReference<>(marker);
+    Reference<RangeMarker> persistentMarkerRef = new WeakReference<>(persistentMarker);
+    //noinspection UnusedAssignment
+    marker = null;
+    //noinspection UnusedAssignment
+    persistentMarker = null;
+    PsiDocumentManager.getInstance(getProject()).commitAllDocuments();
+    while (markerRef.get() != null || persistentMarkerRef.get() != null) {
+      GCUtil.tryForceGC();
+      UIUtil.dispatchAllInvocationEvents();
+    }
+
+    DocumentImpl.processQueue();
+
+    UIUtil.dispatchAllInvocationEvents();
+
+    assertNull(vf.getUserData(DocumentImpl.RANGE_MARKERS_KEY));
+    assertNull(vf.getUserData(DocumentImpl.PERSISTENT_RANGE_MARKERS_KEY));
   }
 }

@@ -11,7 +11,7 @@
         <path d="M0 0 L0 20 L316 20 L316 0 Z"/>
       </clipPath>
       <clipPath clipPathUnits="userSpaceOnUse" id="2">
-        <path d="M0 0 L0 26 L94 26 L94 0 Z"/>
+        <path d="M0 0 L0 22 L93 22 L93 0 Z"/>
       </clipPath>
       <clipPath clipPathUnits="userSpaceOnUse" id="3">
         <path d="M0 0 L0 27 L256 27 L256 0 Z"/>
@@ -26,24 +26,24 @@
     <g fill="rgb(236,236,236)" font-size="13px" font-family="'.SF NS Text'" stroke="rgb(236,236,236)">
       <rect x="0" width="480" height="320" y="0" clip-path="url(#0)" stroke="none"/>
     </g>
-    <g fill="rgb(236,236,236)" font-size="13px" font-family="'.SF NS Text'" transform="translate(0,146)" stroke="rgb(236,236,236)">
+    <g fill="rgb(236,236,236)" font-size="13px" font-family="'.SF NS Text'" transform="translate(0,139)" stroke="rgb(236,236,236)">
       <rect x="0" width="316" height="20" y="0" clip-path="url(#1)" stroke="none"/>
       <text fill="rgb(29,29,29)" x="3" xml:space="preserve" y="15" clip-path="url(#1)" stroke="none">Should be an empty row above as a gap. </text>
       <text fill="rgb(36,112,179)" x="258" xml:space="preserve" y="15" clip-path="url(#1)" stroke="none">Click me</text>
       <text fill="rgb(29,29,29)" x="309" xml:space="preserve" y="15" clip-path="url(#1)" stroke="none">.</text>
     </g>
-    <g fill="rgb(29,29,29)" font-size="13px" font-family="'.SF NS Text'" transform="translate(102,100)" stroke="rgb(29,29,29)">
-      <image x="0" y="2" clip-path="url(#2)" width="22" xlink:href="../../../../../../platform-impl/src/com/intellij/ide/ui/laf/icons/checkBoxSelected.png" height="22" preserveAspectRatio="none"/>
-      <text x="26" xml:space="preserve" y="18" clip-path="url(#2)" stroke="none">&amp;Remember</text>
+    <g fill="rgb(29,29,29)" font-size="13px" font-family="'.SF NS Text'" transform="translate(102,99)" stroke="rgb(29,29,29)">
+      <image x="0" y="0" clip-path="url(#2)" width="22" xlink:href="../../../../../../platform-impl/src/com/intellij/ide/ui/laf/icons/checkBoxSelected.png" height="22" preserveAspectRatio="none"/>
+      <text x="25" xml:space="preserve" y="16" clip-path="url(#2)" stroke="none">&amp;Remember</text>
     </g>
     <g fill="rgb(236,236,236)" font-size="13px" font-family="'.SF NS Text'" transform="translate(103,69)" stroke="rgb(236,236,236)">
       <rect x="0" width="256" height="27" y="0" clip-path="url(#3)" stroke="none"/>
-      <rect x="5" y="5" clip-path="url(#3)" fill="white" width="247" height="18" stroke="none"/>
+      <rect x="3" y="3" clip-path="url(#3)" fill="white" width="250" height="21" stroke="none"/>
     </g>
     <g fill="rgb(188,188,188)" text-rendering="optimizeLegibility" font-size="13px" font-family="'.SF NS Text'" transform="translate(103,69)" stroke="rgb(188,188,188)">
       <path d="M3 3 L253 3 L253 24 L3 24 L3 3 ZM4 4 L252 4 L252 23 L4 23 L4 4 Z" fill-rule="evenodd" clip-path="url(#3)" stroke="none"/>
     </g>
-    <g font-family="'.SF NS Text'" font-size="13px" transform="translate(0,75)">
+    <g font-family="'.SF NS Text'" font-size="13px" transform="translate(0,74)">
       <text x="0" xml:space="preserve" y="13" clip-path="url(#4)" stroke="none">Sudo password:</text>
     </g>
     <g font-family="'.SF NS Text'" font-size="13px" transform="translate(0,10)">

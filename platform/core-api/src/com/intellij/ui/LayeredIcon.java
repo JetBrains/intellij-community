@@ -16,7 +16,6 @@
 package com.intellij.ui;
 
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.util.ScalableIcon;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.ui.JBUI.CachingScalableJBIcon;
 import org.intellij.lang.annotations.MagicConstant;
@@ -86,21 +85,7 @@ public class LayeredIcon extends CachingScalableJBIcon<LayeredIcon> {
     if (myScaledIcons != null) {
       return myScaledIcons;
     }
-    if (getScale() == 1f) {
-      return myScaledIcons = myIcons;
-    }
-    for (Icon icon : myIcons) {
-      if (icon != null && !(icon instanceof ScalableIcon)) {
-        return myScaledIcons = myIcons;
-      }
-    }
-    myScaledIcons = new Icon[myIcons.length];
-    for (int i = 0; i < myIcons.length; i++) {
-      if (myIcons[i] != null) {
-        myScaledIcons[i] = ((ScalableIcon)myIcons[i]).scale(getScale());
-      }
-    }
-    return myScaledIcons;
+    return myScaledIcons = RowIcon.scaleIcons(myIcons, getScale());
   }
 
   @NotNull

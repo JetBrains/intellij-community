@@ -67,6 +67,7 @@
     <action class="com.intellij.vcs.log.ui.actions.ExpandGraphAction" id="Vcs.Log.ExpandAll"/>
     <action class="com.intellij.vcs.log.ui.actions.ShowLongEdgesAction" id="Vcs.Log.ShowLongEdges"/>
     <action class="com.intellij.vcs.log.ui.actions.ShowDetailsAction" id="Vcs.Log.ShowDetailsAction"/>
+    <action class="com.intellij.vcs.log.ui.actions.ShowDiffPreviewAction" id="Vcs.Log.ShowDiffPreview"/>
     <action class="com.intellij.vcs.log.ui.actions.ShowChangesFromParentsAction" id="Vcs.Log.ShowChangesFromParents"/>
     <action class="com.intellij.vcs.log.ui.actions.ShowRootsColumnAction" id="Vcs.Log.ShowRootsColumnAction"/>
     <action class="com.intellij.vcs.log.ui.actions.FocusTextFilterAction" id="Vcs.Log.FocusTextFilter">
@@ -75,7 +76,6 @@
     </action>
     <group class="com.intellij.vcs.log.ui.actions.HighlightersActionGroup" id="Vcs.Log.HighlightersActionGroup"/>
     <action class="com.intellij.vcs.log.ui.actions.OpenAnotherLogTabAction" id="Vcs.Log.OpenAnotherTab"/>
-    <action class="com.intellij.vcs.log.ui.actions.CloseLogTabAction" id="Vcs.Log.CloseLogTabAction"/>
     <action class="com.intellij.vcs.log.ui.actions.RefreshLogAction" id="Vcs.Log.Refresh" use-shortcut-of="Refresh"/>
     <action class="com.intellij.vcs.log.ui.actions.ShowCommitTooltipAction" id="Vcs.Log.ShowTooltip"
             text="Show Commit Tooltip" description="Show tooltip for currently selected commit in the Log"
@@ -120,15 +120,19 @@
       <group id="Vcs.Log.Toolbar"/>
       <separator/>
       <reference ref="Vcs.Log.OpenAnotherTab"/>
-      <reference ref="Vcs.Log.CloseLogTabAction"/>
     </group>
     <group id="Vcs.Log.ContextMenu">
       <reference id="Vcs.CopyRevisionNumberAction"/>
       <reference id="ChangesView.CreatePatchFromChanges"/>
     </group>
-    <group id="Vcs.Log.ChangesBrowser">
+    <group id="Vcs.Log.ChangesBrowser.Toolbar">
       <reference id="Vcs.RepositoryChangesBrowserToolbar"/>
+      <separator/>
       <reference id="Vcs.Log.ShowDetailsAction"/>
+      <reference id="Vcs.Log.ShowDiffPreview"/>
+    </group>
+    <group id="Vcs.Log.ChangesBrowser.Popup">
+      <reference id="Vcs.RepositoryChangesBrowserMenu"/>
       <reference id="Vcs.Log.ShowChangesFromParents"/>
     </group>
     <group id="Vcs.FileHistory.ContextMenu">
@@ -143,18 +147,14 @@
       <reference id="VcsHistoryActionsGroup"/>
     </group>
     <group id="Vcs.FileHistory.Toolbar">
+      <reference id="Vcs.Log.Refresh"/>
       <reference id="Diff.ShowDiff"/>
-      <reference id="ChangesView.CreatePatchFromChanges"/>
-      <reference id="Vcs.Log.GetVersion"/>
-      <reference id="Vcs.Log.AnnotateRevisionAction"/>
       <reference id="Vcs.Log.ShowAllAffected"/>
-      <reference id="Vcs.CopyRevisionNumberAction"/>
-      <reference id="VcsHistoryActionsGroup"/>
       <separator/>
       <reference id="Vcs.Log.ShowOtherBranches"/>
-      <reference id="Vcs.Log.Refresh"/>
+      <separator/>
       <reference id="Vcs.Log.ShowDetailsAction"/>
-      <reference ref="Vcs.Log.CloseLogTabAction"/>
+      <separator/>
     </group>
 
     <group id="Log.KeymapGroup" text="Log">
@@ -178,10 +178,10 @@
       <separator/>
       <reference ref="Vcs.Log.ShowDetailsAction"/>
       <reference ref="Vcs.Log.ShowChangesFromParents"/>
+      <reference ref="Vcs.Log.ShowDiffPreview"/>
       <separator/>
       <reference ref="Vcs.Log.Refresh"/>
       <reference ref="Vcs.Log.OpenAnotherTab"/>
-      <reference ref="Vcs.Log.CloseLogTabAction"/>
 
       <add-to-group group-id="Vcs.KeymapGroup"/>
     </group>
@@ -200,7 +200,6 @@
       <reference id="Vcs.Log.Refresh"/>
       <reference id="Vcs.Log.ShowDetailsAction"/>
       <reference id="VcsHistoryActionsGroup"/>
-      <reference ref="Vcs.Log.CloseLogTabAction"/>
 
       <add-to-group group-id="FileHistory.KeymapGroup"/>
     </group>

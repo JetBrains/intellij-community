@@ -17,7 +17,6 @@
 package com.intellij.refactoring.extractMethod;
 
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Pair;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.psi.codeStyle.VariableKind;
@@ -285,6 +284,10 @@ public class InputVariables {
     return inputVariables;
   }
 
+  @NotNull
+  public InputVariables copyWithoutFolding() {
+    return new InputVariables(myInitialParameters, myProject, myScope, false);
+  }
 
   public void appendCallArguments(VariableData data, StringBuilder buffer) {
     if (myFoldingAvailable) {
@@ -310,8 +313,9 @@ public class InputVariables {
   }
 
   public void annotateWithParameter(PsiJavaCodeReferenceElement reference) {
+    if (myInputVariables.isEmpty()) return;
+    final PsiElement element = reference.resolve();
     for (VariableData data : myInputVariables) {
-      final PsiElement element = reference.resolve();
       if (data.variable.equals(element)) {
         PsiType type = data.variable.getType();
         final PsiMethodCallExpression methodCallExpression = PsiTreeUtil.getParentOfType(reference, PsiMethodCallExpression.class);
@@ -334,7 +338,7 @@ public class InputVariables {
           }
         }
         if (!myFoldingAvailable || !myFolding.annotateWithParameter(data, reference)) {
-          reference.putUserData(DuplicatesFinder.PARAMETER, Pair.create(data.variable, type));
+          reference.putUserData(DuplicatesFinder.PARAMETER, new DuplicatesFinder.Parameter(data.variable, type));
         }
       }
     }

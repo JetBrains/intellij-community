@@ -6,12 +6,13 @@ import java.io.FileInputStream
 import java.util.*
 
 object KotlinTestProperties {
-  const val PATH_TO_CONFIG = "com/intellij/ide/projectWizard/kotlin/kotlin.gui.test.properties"
+  private val pathToProperties: String
+    get() = System.getenv("kotlin.gui.test.properties.file") ?: throw IllegalStateException("Property `kotlin.gui.test.properties.file` not set in the Environment!")
   private val props by lazy {
     val propertiesFromFile = Properties()
-    val propertiesUri = this.javaClass.classLoader.getResource(PATH_TO_CONFIG)?.toURI()
-    if(propertiesUri != null) {
-      val input = FileInputStream(File(propertiesUri))
+    val propertiesFile = File(pathToProperties)
+    if(propertiesFile.exists()) {
+      val input = FileInputStream(propertiesFile)
       propertiesFromFile.load(input)
       input.close()
     }
@@ -19,7 +20,7 @@ object KotlinTestProperties {
   }
 
   private fun getPropertyValue(propertyName: String, defaultValue: String? = null): String =
-    System.getenv(propertyName) ?: props.getProperty(propertyName, defaultValue) ?:
+    props.getProperty(propertyName, defaultValue) ?: System.getenv(propertyName) ?:
     throw IllegalStateException("Property `$propertyName` not set either in Environment or in `kotlin.gui.test.properties` file!")
 
   /**
@@ -54,35 +55,23 @@ object KotlinTestProperties {
   val isArtifactOnlyInDevRep: Boolean
     get() = getPropertyValue("kotlin.artifact.isOnlyDevRep", "true").toBoolean()
 
-  /**
-   * @return true - projects created during tests working should be removed
-   */
-  val kotlin_projects_remove: Boolean
-    get() = getPropertyValue("kotlin.projects.remove", "true").toBoolean()
-
-  /**
-   * @return kotlin plugin version it can differ from kotlin artifact version in case of developed versions
+   /**
+   * @return kotlin plugin version it can differ from kotlin artifact version in case of developed versions. e.g. `1.2.41-release` or `1.2.50-dev-1065`
    */
   val kotlin_plugin_version_main: String
     get() = getPropertyValue("kotlin.plugin.version.main")
 
   /**
-   * @return folder on the local file system where the zip file with kotlin plugin is located
+   * @return the full name (including folders) of the kotlin IDE plugin zip file
    */
-  val kotlin_plugin_download_path: String
-    get() = getPropertyValue("kotlin.plugin.download.path")
+  val kotlin_plugin_install_path: String
+    get() = getPropertyValue("kotlin.plugin.install.path")
 
   /**
-   * @return rough version of IDE with IJ/AS prefix what the kotlin plugin is tested against
+   * @return Kotlin plugin version with IDE marker, e.g. `1.2.41-release-IJ2018.2-1`. This value is shown in Plugins dialog.
    */
-  val ide_tested: String
-    get() = getPropertyValue("ide.tested", "IJ2017.3")
-
-  /**
-   * @return last number of kotlin plugin version (or patch version), this number goes after ide codename
-   */
-  val kotlin_plugin_version_micro: String
-    get() = getPropertyValue("kotlin.plugin.version.micro", "1")
+  val kotlin_plugin_version_full: String
+    get() = getPropertyValue("kotlin.plugin.version.full")
 
   /**
    * @return path where the Java is installed

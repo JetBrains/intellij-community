@@ -31,8 +31,8 @@ import com.intellij.util.containers.ConcurrentFactoryMap;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.text.StringSearcher;
 import com.siyeh.ig.style.UnnecessarilyQualifiedStaticUsageInspection;
-import gnu.trove.THashMap;
 import gnu.trove.THashSet;
+import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -204,7 +204,7 @@ public class DuplicateStringLiteralInspection extends BaseLocalInspectionTool {
   }
 
   private boolean shouldCheck(@NotNull PsiLiteralExpression expression) {
-    if (IGNORE_PROPERTY_KEYS && JavaI18nUtil.mustBePropertyKey(expression, new THashMap<>())) return false;
+    if (IGNORE_PROPERTY_KEYS && JavaI18nUtil.mustBePropertyKey(expression, null)) return false;
     return !SuppressManager.isSuppressedInspectionName(expression);
   }
 
@@ -414,7 +414,7 @@ public class DuplicateStringLiteralInspection extends BaseLocalInspectionTool {
 
       PsiLiteralExpression literal = (PsiLiteralExpression)startElement;
       List<PsiLiteralExpression> duplicates = getDuplicateLiterals(file.getProject(), literal);
-      PsiLiteralExpression[] literalExpressions = Stream.concat(duplicates.stream(), Stream.of(literal)).toArray(PsiLiteralExpression[]::new);
+      PsiLiteralExpression[] literalExpressions = StreamEx.of(duplicates).append(literal).toArray(PsiLiteralExpression.class);
       Usage[] usages = Stream.of(literalExpressions)
         .map(UsageInfo::new)
         .map(UsageInfo2UsageAdapter::new)

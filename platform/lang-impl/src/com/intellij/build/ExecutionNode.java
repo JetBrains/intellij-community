@@ -277,8 +277,10 @@ public class ExecutionNode extends CachingSimpleNode {
     }
     else {
       return isRunning() ? ExecutionNodeProgressAnimator.getCurrentFrame() :
-             isFailed() ? AllIcons.Process.State.RedExcl :
+             isFailed() ? AllIcons.General.Error :
              isSkipped() ? AllIcons.Process.State.YellowStr :
+             myErrors.get() > 0 ? AllIcons.General.Error :
+             myWarnings.get() > 0 ? AllIcons.General.Warning :
              AllIcons.Process.State.GreenOK;
     }
   }

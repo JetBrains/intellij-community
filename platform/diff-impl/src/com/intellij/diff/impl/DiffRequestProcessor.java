@@ -97,8 +97,9 @@ public abstract class DiffRequestProcessor implements Disposable {
 
   @NotNull private final JPanel myPanel;
   @NotNull private final MyPanel myMainPanel;
-  @NotNull private final Wrapper myContentPanel;
+  @NotNull protected final Wrapper myContentPanel;
   @NotNull private final ActionToolbar myToolbar;
+  @NotNull protected final Wrapper myToolbarWrapper;
   @NotNull private final Wrapper myToolbarStatusPanel;
   @NotNull private final MyProgressBar myProgressBar;
 
@@ -138,11 +139,12 @@ public abstract class DiffRequestProcessor implements Disposable {
 
     myToolbar = ActionManager.getInstance().createActionToolbar(ActionPlaces.DIFF_TOOLBAR, myToolbarGroup, true);
     myToolbar.setTargetComponent(myMainPanel);
+    myToolbarWrapper = new Wrapper(myToolbar.getComponent());
 
     myPanel = JBUI.Panels.simplePanel(myMainPanel);
 
     JPanel statusPanel = JBUI.Panels.simplePanel(myToolbarStatusPanel).addToLeft(myProgressBar);
-    JPanel topPanel = JBUI.Panels.simplePanel(myToolbar.getComponent()).addToRight(statusPanel);
+    JPanel topPanel = JBUI.Panels.simplePanel(myToolbarWrapper).addToRight(statusPanel);
 
     Splitter bottomContentSplitter = new JBSplitter(true, "DiffRequestProcessor.BottomComponentSplitter", 0.8f);
     bottomContentSplitter.setFirstComponent(myContentPanel);

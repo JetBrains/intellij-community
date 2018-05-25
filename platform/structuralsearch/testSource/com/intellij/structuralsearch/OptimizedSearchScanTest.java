@@ -30,13 +30,13 @@ public class OptimizedSearchScanTest extends StructuralSearchTestCase {
   public void testOptionalMethodWithThrowsClause() {
     final String plan = findWordsToBeUsedWhenSearchingFor(
       "class C {" +
-      "    void 'm{0,1} () throws OMGWTFBBQException {}" +
+      "    void '_m{0,1} () throws OMGWTFBBQException {}" +
       "}");
     assertEquals("exception should not be in plan", "[in code:class|in code:enum|in code:interface][in code:C]", plan);
 
     final String plan2 = findWordsToBeUsedWhenSearchingFor(
       "class C {" +
-      "  String m() throws 'E{0,1} {" +
+      "  String m() throws '_E{0,1} {" +
       "    System.out.println();" +
       "    return null;" +
       "  }" +

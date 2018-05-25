@@ -973,18 +973,24 @@ public class ActionToolbarImpl extends JPanel implements ActionToolbar, QuickAct
 
     @Override
     protected void paintComponent(final Graphics g) {
-      int gap = JBUI.scale(2);
-      int offset = JBUI.scale(3);
+      if (getParent() == null) return;
 
-      if (getParent() != null) {
+      int gap = JBUI.scale(2);
+      int center = JBUI.scale(3);
+      int offset;
+      if (myOrientation == SwingConstants.HORIZONTAL) {
+        offset = ActionToolbarImpl.this.getHeight() - getMaxButtonHeight() - 1;
+      } else {
+        offset = ActionToolbarImpl.this.getWidth() - getMaxButtonWidth() - 1;
+      }
+
         g.setColor(UIUtil.getSeparatorColor());
         if (myOrientation == SwingConstants.HORIZONTAL) {
-          LinePainter2D.paint((Graphics2D)g, offset, gap, offset, getParent().getSize().height - gap * 2 - offset);
+          LinePainter2D.paint((Graphics2D)g, center, gap, center, ActionToolbarImpl.this.getHeight() - gap * 2 - offset);
         }
         else {
-          LinePainter2D.paint((Graphics2D)g, gap, offset, getParent().getSize().width - gap * 2 - offset, offset);
+          LinePainter2D.paint((Graphics2D)g, gap, center, ActionToolbarImpl.this.getWidth() - gap * 2 - offset, center);
         }
-      }
     }
   }
 
@@ -1282,6 +1288,9 @@ public class ActionToolbarImpl extends JPanel implements ActionToolbar, QuickAct
       super(place, actionGroup, horizontal, false, dataManager, actionManager, keymapManager, true);
       myActionManager.addAnActionListener(this);
       myParent = parent;
+      if (myParent != null) {
+        setBorder(myParent.getBorder());
+      }
     }
 
     @Override

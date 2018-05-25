@@ -27,6 +27,8 @@ import com.intellij.build.events.impl.FailureImpl;
 import com.intellij.build.events.impl.FailureResultImpl;
 import com.intellij.build.events.impl.SkippedResultImpl;
 import com.intellij.build.events.impl.SuccessResultImpl;
+import com.intellij.build.output.BuildOutputInstantReaderImpl;
+import com.intellij.build.output.BuildOutputParser;
 import com.intellij.execution.*;
 import com.intellij.execution.configurations.ConfigurationType;
 import com.intellij.execution.executors.DefaultDebugExecutor;
@@ -458,6 +460,18 @@ public class ExternalSystemUtil {
           Disposer.register(project, processHandler);
         }
 
+        List<BuildOutputParser> buildOutputParsers = new SmartList<>();
+        for (ExternalSystemOutputParserProvider outputParserProvider : ExternalSystemOutputParserProvider.EP_NAME.getExtensions()) {
+          if (resolveProjectTask.getExternalSystemId().equals(outputParserProvider.getExternalSystemId())) {
+            buildOutputParsers.addAll(outputParserProvider.getBuildOutputParsers(resolveProjectTask));
+          }
+        }
+
+        //noinspection IOResourceOpenedButNotSafelyClosed
+        final BuildOutputInstantReaderImpl buildOutputInstantReader =
+          buildOutputParsers.isEmpty() ? null : new BuildOutputInstantReaderImpl(
+            resolveProjectTask.getId(), ServiceManager.getService(project, SyncViewManager.class), buildOutputParsers);
+
         Ref<Supplier<FinishBuildEvent>> finishSyncEventSupplier = Ref.create();
         ExternalSystemTaskNotificationListenerAdapter taskListener = new ExternalSystemTaskNotificationListenerAdapter() {
           @Override
@@ -507,6 +521,10 @@ public class ExternalSystemUtil {
           @Override
           public void onTaskOutput(@NotNull ExternalSystemTaskId id, @NotNull String text, boolean stdOut) {
             processHandler.notifyTextAvailable(text, stdOut ? ProcessOutputTypes.STDOUT : ProcessOutputTypes.STDERR);
+
+            if (buildOutputInstantReader != null) {
+              buildOutputInstantReader.append(text);
+            }
           }
 
           @Override
@@ -523,7 +541,7 @@ public class ExternalSystemUtil {
 
           @Override
           public void onSuccess(@NotNull ExternalSystemTaskId id) {
-            String message = isPreviewMode ? "project preview created" : "synced successfully";
+            String message = isPreviewMode ? "project preview created" : "sync finished";
             finishSyncEventSupplier.set(
               () -> new FinishBuildEventImpl(id, null, System.currentTimeMillis(), message, new SuccessResultImpl()));
             processHandler.notifyProcessTerminated(0);
@@ -534,6 +552,13 @@ public class ExternalSystemUtil {
             if (event instanceof ExternalSystemTaskExecutionEvent) {
               BuildEvent buildEvent = convert(((ExternalSystemTaskExecutionEvent)event));
               ServiceManager.getService(project, SyncViewManager.class).onEvent(buildEvent);
+            }
+          }
+
+          @Override
+          public void onEnd(@NotNull ExternalSystemTaskId id) {
+            if (buildOutputInstantReader != null) {
+              buildOutputInstantReader.close();
             }
           }
         };

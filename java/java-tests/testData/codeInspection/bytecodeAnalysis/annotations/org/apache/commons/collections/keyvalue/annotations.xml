@@ -66,6 +66,9 @@
         <annotation name='org.jetbrains.annotations.Nullable'/>
     </item>
     <item name='org.apache.commons.collections.keyvalue.DefaultKeyValue java.util.Map.Entry toMapEntry()'>
+        <annotation name='org.jetbrains.annotations.Contract'>
+            <val val="&quot;-&gt;new&quot;"/>
+        </annotation>
         <annotation name='org.jetbrains.annotations.NotNull'/>
     </item>
     <item name='org.apache.commons.collections.keyvalue.DefaultMapEntry DefaultMapEntry(java.lang.Object, java.lang.Object)'>

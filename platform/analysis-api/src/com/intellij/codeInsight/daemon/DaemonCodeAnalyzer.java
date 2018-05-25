@@ -58,7 +58,6 @@ public abstract class DaemonCodeAnalyzer {
      * @param fileEditors The list of files that will be analyzed during the current execution of the daemon.
      */
     default void daemonStarting(@NotNull Collection<FileEditor> fileEditors) {
-      daemonFinished();
     }
 
     /**
@@ -80,15 +79,8 @@ public abstract class DaemonCodeAnalyzer {
   }
 
   /**
-   * @deprecated Please use DaemonListener directly
+   * @deprecated Use {@link DaemonListener} instead
    */
   public abstract static class DaemonListenerAdapter implements DaemonListener {
-    @Override
-    public void daemonFinished() {
-    }
-
-    @Override
-    public void daemonCancelEventOccurred(@NotNull String reason) {
-    }
   }
 }

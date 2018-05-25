@@ -1,6 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.dvcs.push.ui;
 
 import com.intellij.dvcs.push.*;
@@ -33,8 +31,9 @@ public class VcsPushDialog extends DialogWrapper {
 
   private static final String ID = "Vcs.Push.Dialog";
 
+  protected final Project myProject;
   private final PushLog myListPanel;
-  private final PushController myController;
+  protected final PushController myController;
   private final Map<PushSupport, VcsPushOptionsPanel> myAdditionalPanels;
 
   private Action myPushAction;
@@ -44,6 +43,7 @@ public class VcsPushDialog extends DialogWrapper {
                        @NotNull List<? extends Repository> selectedRepositories,
                        @Nullable Repository currentRepo) {
     super(project, true, (Registry.is("ide.perProjectModality")) ? IdeModalityType.PROJECT : IdeModalityType.IDE);
+    myProject = project;
     myController = new PushController(project, this, selectedRepositories, currentRepo);
     myAdditionalPanels = myController.createAdditionalPanels();
     myListPanel = myController.getPushPanelLog();
@@ -57,14 +57,20 @@ public class VcsPushDialog extends DialogWrapper {
 
   @Override
   protected JComponent createCenterPanel() {
+    JPanel optionsPanel = createOptionsPanel();
+    return JBUI.Panels.simplePanel(0, 2)
+      .addToCenter(myListPanel)
+      .addToBottom(optionsPanel);
+  }
+
+  @NotNull
+  protected JPanel createOptionsPanel() {
     JPanel optionsPanel = new JPanel(new MigLayout("ins 0 0, flowx"));
     for (VcsPushOptionsPanel panel : myAdditionalPanels.values()) {
       optionsPanel.add(panel);
     }
     optionsPanel.setBorder(JBUI.Borders.emptyTop(6));
-    return JBUI.Panels.simplePanel(0, 2)
-      .addToCenter(myListPanel)
-      .addToBottom(optionsPanel);
+    return optionsPanel;
   }
 
   @Override
@@ -104,7 +110,7 @@ public class VcsPushDialog extends DialogWrapper {
     return actions.toArray(new Action[0]);
   }
 
-  private boolean canPush() {
+  public boolean canPush() {
     return myController.isPushAllowed();
   }
 
@@ -130,7 +136,7 @@ public class VcsPushDialog extends DialogWrapper {
   }
 
   @CalledInAwt
-  private void push(boolean forcePush) {
+  public void push(boolean forcePush) {
     FileDocumentManager.getInstance().saveAllDocuments();
     AtomicReference<PrePushHandler.Result> result = new AtomicReference<>(PrePushHandler.Result.OK);
     new Task.Modal(myController.getProject(), "Checking Commits...", true) {

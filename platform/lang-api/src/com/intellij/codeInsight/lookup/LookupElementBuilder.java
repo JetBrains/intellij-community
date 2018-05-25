@@ -239,6 +239,16 @@ public final class LookupElementBuilder extends LookupElement {
   }
 
   /**
+   * @since 2018.2
+   */
+  @Contract(pure=true)
+  public LookupElementBuilder withItemTextItalic(boolean italic) {
+    final LookupElementPresentation presentation = copyPresentation();
+    presentation.setItemTextItalic(italic);
+    return new LookupElementBuilder(myLookupString, myObject, myInsertHandler, null, presentation, myPsiElement, myAllLookupStrings, myCaseSensitive);
+  }
+
+  /**
    * @deprecated use {@link #withTypeText(String)}
    */
   @Contract(pure=true)

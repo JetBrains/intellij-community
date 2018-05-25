@@ -3,7 +3,6 @@ package com.jetbrains.python.codeInsight.override;
 
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
-import com.google.common.collect.Streams;
 import com.intellij.codeInsight.CodeInsightUtilCore;
 import com.intellij.featureStatistics.FeatureUsageTracker;
 import com.intellij.featureStatistics.ProductivityFeatureNames;
@@ -35,8 +34,6 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
 import java.util.function.Function;
-import java.util.stream.Collectors;
-import java.util.stream.Stream;
 
 /**
  * @author Alexey.Ivanov
@@ -392,17 +389,14 @@ public class PyOverrideImplementUtil {
    * @return
    */
   private static List<PyAnnotation> getAnnotations(@NotNull PyFunction function, @NotNull TypeEvalContext typeEvalContext) {
-    return Streams.concat(
-      function.getParameters(typeEvalContext).stream()
+    return StreamEx.of(function.getParameters(typeEvalContext))
         .map(PyCallableParameter::getParameter)
-        .filter(PyNamedParameter.class::isInstance)
-        .map(PyNamedParameter.class::cast)
-        .filter(parameter -> !parameter.isSelf())
-        .map(pyNamedParameter -> pyNamedParameter.getAnnotation()),
-      Stream.of(function.getAnnotation())
-    )
-      .filter(Objects::nonNull)
-      .collect(Collectors.toList());
+        .select(PyNamedParameter.class)
+        .remove(PyParameter::isSelf)
+        .map(PyAnnotationOwner::getAnnotation)
+        .append(function.getAnnotation())
+        .nonNull()
+        .toList();
   }
 
   /**

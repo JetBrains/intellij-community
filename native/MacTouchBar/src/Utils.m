@@ -49,7 +49,8 @@ NSImage * createImgFrom4ByteRGBA(const unsigned char *bytes, int w, int h) {
     unsigned char* pix = [rep bitmapData];
     memcpy(pix, bytes, h*rowBytes);
 
-    NSImage* nsimg = [[[NSImage alloc] initWithSize:NSMakeSize(w, h)] autorelease];
+    NSSize sizeInPoints = NSMakeSize(w/2, h/2); // NOTE: 'retina' display has 2 pix in 1 point
+    NSImage* nsimg = [[[NSImage alloc] initWithSize:sizeInPoints] autorelease];
     [nsimg addRepresentation:rep];
     return nsimg;
 }

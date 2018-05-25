@@ -54,7 +54,7 @@ import static com.intellij.util.AstLoadingFilter.assertTreeLoadingEnabled;
 
 public abstract class PsiFileImpl extends ElementBase implements PsiFileEx, PsiFileWithStubSupport, Queryable {
   private static final Logger LOG = Logger.getInstance("#com.intellij.psi.impl.source.PsiFileImpl");
-  public static final String STUB_PSI_MISMATCH = "stub-psi mismatch";
+  static final String STUB_PSI_MISMATCH = "stub-psi mismatch";
   private static final AtomicFieldUpdater<PsiFileImpl, FileTrees> ourTreeUpdater =
     AtomicFieldUpdater.forFieldOfType(PsiFileImpl.class, FileTrees.class);
 
@@ -510,14 +510,18 @@ public abstract class PsiFileImpl extends ElementBase implements PsiFileEx, PsiF
   public void onContentReload() {
     ApplicationManager.getApplication().assertWriteAccessAllowed();
 
-    DebugUtil.performPsiModification("onContentReload", () -> {
+    clearContent("onContentReload");
+  }
+
+  final void clearContent(String reason) {
+    DebugUtil.performPsiModification(reason, () -> {
       synchronized (myPsiLock) {
         FileElement treeElement = derefTreeElement();
         if (treeElement != null) {
           treeElement.detachFromFile();
           DebugUtil.onInvalidated(treeElement);
         }
-        updateTrees(myTrees.clearStub("onContentReload"));
+        updateTrees(myTrees.clearStub(reason));
         setTreeElementPointer(null);
       }
     });

@@ -882,7 +882,10 @@ public class GlobalInspectionContextImpl extends GlobalInspectionContextBase imp
       String presentationClass = StringUtil.notNullize(toolWrapper.myEP == null ? null : toolWrapper.myEP.presentation, DefaultInspectionToolPresentation.class.getName());
 
       try {
-        Constructor<?> constructor = Class.forName(presentationClass).getConstructor(InspectionToolWrapper.class, GlobalInspectionContextImpl.class);
+        InspectionEP extension = toolWrapper.getExtension();
+        ClassLoader classLoader = extension != null ? extension.getLoaderForClass() : getClass().getClassLoader();
+        Constructor<?> constructor = Class.forName(presentationClass, true, classLoader)
+                                          .getConstructor(InspectionToolWrapper.class, GlobalInspectionContextImpl.class);
         presentation = (InspectionToolPresentation)constructor.newInstance(toolWrapper, this);
       }
       catch (Exception e) {

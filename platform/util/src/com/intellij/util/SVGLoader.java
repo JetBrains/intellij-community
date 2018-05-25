@@ -18,7 +18,13 @@ package com.intellij.util;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Couple;
 import com.intellij.openapi.util.text.StringUtil;
-import org.apache.batik.anim.dom.*;
+import com.intellij.util.ui.ImageUtil;
+import com.intellij.util.ui.JBUI.ScaleContext;
+import org.apache.batik.anim.dom.SAXSVGDocumentFactory;
+import org.apache.batik.anim.dom.SVGDOMImplementation;
+import org.apache.batik.anim.dom.SVGOMAnimatedLength;
+import org.apache.batik.anim.dom.SVGOMRectElement;
+import org.apache.batik.bridge.UserAgent;
 import org.apache.batik.dom.AbstractDocument;
 import org.apache.batik.transcoder.SVGAbstractTranscoder;
 import org.apache.batik.transcoder.TranscoderException;
@@ -30,15 +36,19 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
+import org.w3c.dom.svg.SVGDocument;
 
 import java.awt.*;
 import java.awt.image.BufferedImage;
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.StringReader;
 import java.net.URISyntaxException;
 import java.net.URL;
 import java.util.ArrayList;
 import java.util.List;
+
+import static com.intellij.util.ui.JBUI.ScaleType.PIX_SCALE;
 
 /**
  * @author tav
@@ -128,6 +138,17 @@ public class SVGLoader {
     public void writeImage(BufferedImage img, TranscoderOutput output) {
       SVGLoader.this.img = img;
     }
+
+    @Override
+    protected UserAgent createUserAgent() {
+      return new SVGAbstractTranscoderUserAgent() {
+        @Override
+        public SVGDocument getBrokenLinkDocument(Element e, String url, String message) {
+          LOG.warn(url + " " + message);
+          return createFallbackPlaceholder();
+        }
+      };
+    }
   }
 
   public static Image load(@NotNull URL url, float scale) throws IOException {
@@ -145,6 +166,12 @@ public class SVGLoader {
     catch (TranscoderException ex) {
       throw new IOException(ex);
     }
+  }
+
+  public static <T extends BufferedImage> T loadHiDPI(@Nullable URL url, @NotNull InputStream stream , ScaleContext ctx) throws IOException {
+    BufferedImage image = (BufferedImage)load(url, stream, ctx.getScale(PIX_SCALE));
+    //noinspection unchecked
+    return (T)ImageUtil.ensureHiDPI(image, ctx);
   }
 
   public static Couple<Integer> loadInfo(@Nullable URL url, @NotNull InputStream stream , double scale) throws IOException {
@@ -175,6 +202,23 @@ public class SVGLoader {
     r.addTranscodingHint(SVGAbstractTranscoder.KEY_HEIGHT, new Float(size.height));
     r.transcode(input, null);
     return img;
+  }
+
+  @NotNull
+  private static SVGDocument createFallbackPlaceholder() {
+    try {
+      String fallbackIcon = "<svg xmlns=\"http://www.w3.org/2000/svg\" width=\"16\" height=\"16\" viewBox=\"0 0 16 16\">\n" +
+                            "  <rect x=\"1\" y=\"1\" width=\"14\" height=\"14\" fill=\"none\" stroke=\"red\" stroke-width=\"2\"/>\n" +
+                            "  <line x1=\"1\" y1=\"1\" x2=\"15\" y2=\"15\" stroke=\"red\" stroke-width=\"2\"/>\n" +
+                            "  <line x1=\"1\" y1=\"15\" x2=\"15\" y2=\"1\" stroke=\"red\" stroke-width=\"2\"/>\n" +
+                            "</svg>\n";
+
+      SAXSVGDocumentFactory factory = new SAXSVGDocumentFactory(XMLResourceDescriptor.getXMLParserClassName());
+      return (SVGDocument)factory.createDocument(null, new StringReader(fallbackIcon));
+    }
+    catch (IOException e) {
+      throw new IllegalStateException(e);
+    }
   }
 
   /**

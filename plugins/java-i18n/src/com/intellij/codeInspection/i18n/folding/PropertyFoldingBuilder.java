@@ -15,7 +15,6 @@
  */
 package com.intellij.codeInspection.i18n.folding;
 
-import com.intellij.codeInsight.AnnotationUtil;
 import com.intellij.codeInsight.folding.JavaCodeFoldingSettings;
 import com.intellij.codeInspection.i18n.JavaI18nUtil;
 import com.intellij.lang.ASTNode;
@@ -216,9 +215,7 @@ public class PropertyFoldingBuilder extends FoldingBuilderEx {
     if (property == NULL) return false;
     if (property != null) return true;
 
-    final Map<String, Object> annotationParams = new HashMap<>();
-    annotationParams.put(AnnotationUtil.PROPERTY_KEY_RESOURCE_BUNDLE_PARAMETER, null);
-    final boolean isI18n = JavaI18nUtil.mustBePropertyKey(expr, annotationParams);
+    final boolean isI18n = JavaI18nUtil.mustBePropertyKey(expr, null);
     if (!isI18n) {
       expr.putUserData(CACHE, NULL);
     }

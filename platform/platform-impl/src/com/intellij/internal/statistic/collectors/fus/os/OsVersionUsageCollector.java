@@ -29,37 +29,42 @@ public class OsVersionUsageCollector extends ApplicationUsagesCollector {
     UsageDescriptor descriptor;
 
     if (SystemInfo.isLinux) {
-      String releaseId = null, releaseVersion = null;
-
-      try {
-        Map<String, String> values = Files.lines(Paths.get("/etc/os-release"))
-                                          .map(line -> StringUtil.split(line, "="))
-                                          .filter(parts -> parts.size() == 2)
-                                          .collect(
-                                            Collectors.toMap(parts -> parts.get(0), parts -> StringUtil.unquoteString(parts.get(1))));
-        releaseId = values.get("ID");
-        releaseVersion = values.get("VERSION_ID");
-      }
-      catch (IOException ignored) {
-      }
-
-      if (releaseId == null) releaseId = "unknown";
-
-      if (releaseVersion == null) {
-        releaseVersion = SystemInfo.OS_VERSION;
-        Version version = Version.parseVersion(releaseVersion);
-        if (version != null) {
-          releaseVersion = version.toCompactString();
-        }
-      }
-
-      descriptor = new UsageDescriptor("Linux/" + releaseId + " " + releaseVersion, 1);
+      final String version = getLinuxOSVersion();
+      descriptor = new UsageDescriptor("Linux/" + version, 1);
     }
     else {
       descriptor = new UsageDescriptor(UsageDescriptorKeyValidator.ensureProperKey(SystemInfo.OS_NAME + "." + SystemInfo.OS_VERSION), 1);
     }
 
     return Collections.singleton(descriptor);
+  }
+
+  @NotNull
+  public static String getLinuxOSVersion() {
+    String releaseId = null, releaseVersion = null;
+
+    try {
+      Map<String, String> values = Files.lines(Paths.get("/etc/os-release"))
+                                        .map(line -> StringUtil.split(line, "="))
+                                        .filter(parts -> parts.size() == 2)
+                                        .collect(
+                                          Collectors.toMap(parts -> parts.get(0), parts -> StringUtil.unquoteString(parts.get(1))));
+      releaseId = values.get("ID");
+      releaseVersion = values.get("VERSION_ID");
+    }
+    catch (IOException ignored) {
+    }
+
+    if (releaseId == null) releaseId = "unknown";
+
+    if (releaseVersion == null) {
+      releaseVersion = SystemInfo.OS_VERSION;
+      Version version = Version.parseVersion(releaseVersion);
+      if (version != null) {
+        releaseVersion = version.toCompactString();
+      }
+    }
+    return releaseId + " " + releaseVersion;
   }
 
   @NotNull

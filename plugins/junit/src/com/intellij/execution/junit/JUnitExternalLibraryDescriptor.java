@@ -40,7 +40,7 @@ public abstract class JUnitExternalLibraryDescriptor extends ExternalLibraryDesc
       return JavaSdkUtil.getJUnit4JarPaths();
     }
   };
-  public static final ExternalLibraryDescriptor JUNIT5 = new JUnitExternalLibraryDescriptor("org.junit.jupiter", "junit-jupiter-api", "5.1") {
+  public static final ExternalLibraryDescriptor JUNIT5 = new JUnitExternalLibraryDescriptor("org.junit.jupiter", "junit-jupiter-api", "5.2") {
     @NotNull
     @Override
     public List<String> getLibraryClassesRoots() {

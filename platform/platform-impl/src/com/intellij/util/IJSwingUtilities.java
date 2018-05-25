@@ -150,6 +150,7 @@ public class IJSwingUtilities extends JBSwingUtilities {
         int dy = component.getHeight() / 2;
         try {
           new Robot().mouseMove(point.x + dx, point.y + dy);
+          component.requestFocusInWindow();
         }
         catch (AWTException ignored) {
           // robot is not available

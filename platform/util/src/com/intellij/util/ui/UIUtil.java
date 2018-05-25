@@ -23,6 +23,7 @@ import com.intellij.util.ui.accessibility.ScreenReader;
 import org.intellij.lang.annotations.JdkConstants;
 import org.intellij.lang.annotations.Language;
 import org.jetbrains.annotations.*;
+import sun.awt.HeadlessToolkit;
 import sun.java2d.SunGraphicsEnvironment;
 
 import javax.sound.sampled.AudioInputStream;
@@ -923,7 +924,7 @@ public class UIUtil {
   }
 
   /**
-   * @deprecated Use {@link LinePainter2D#paint(Graphics, double, double, double, double)} instead.
+   * @deprecated Use {@link LinePainter2D#paint(Graphics2D, double, double, double, double)} instead.
    */
   @Deprecated
   public static void drawLine(Graphics g, int x1, int y1, int x2, int y2) {
@@ -2901,13 +2902,43 @@ public class UIUtil {
           }
         });
         pane.addHyperlinkListener(myHyperlinkListener);
+
+        List<LinkController> listeners1 = filterLinkControllerListeners(pane.getMouseListeners());
+        List<LinkController> listeners2 = filterLinkControllerListeners(pane.getMouseMotionListeners());
+        // replace just the original listener
+        if (listeners1.size() == 1 && listeners1.equals(listeners2)) {
+          LinkController oldLinkController = listeners1.get(0);
+          pane.removeMouseListener(oldLinkController);
+          pane.removeMouseMotionListener(oldLinkController);
+          MouseExitSupportLinkController newLinkController = new MouseExitSupportLinkController();
+          pane.addMouseListener(newLinkController);
+          pane.addMouseMotionListener(newLinkController);
+        }
       }
+    }
+
+    @NotNull
+    private static List<LinkController> filterLinkControllerListeners(@NotNull Object[] listeners) {
+      return ContainerUtil.mapNotNull(listeners, new Function<Object, LinkController>() {
+        @Override
+        public LinkController fun(Object o) {
+          return ObjectUtils.tryCast(o, LinkController.class);
+        }
+      });
     }
 
     @Override
     public void deinstall(JEditorPane c) {
       c.removeHyperlinkListener(myHyperlinkListener);
       super.deinstall(c);
+    }
+  }
+
+  // Workaround for https://bugs.openjdk.java.net/browse/JDK-8202529
+  private static class MouseExitSupportLinkController extends HTMLEditorKit.LinkController {
+    @Override
+    public void mouseExited(MouseEvent e) {
+      mouseMoved(new MouseEvent(e.getComponent(), e.getID(), e.getWhen(), e.getModifiersEx(), -1, -1, e.getClickCount(), e.isPopupTrigger(), e.getButton()));
     }
   }
 
@@ -3204,11 +3235,15 @@ public class UIUtil {
 
     // With JB Linux JDK the label font comes properly scaled based on Xft.dpi settings.
     Font font = getLabelFont();
-    verbose("Label font: %s, %d", font.getFontName(), font.getSize());
+    if (JBUI.SCALE_VERBOSE) {
+      LOG.info(String.format("Label font: %s, %d", font.getFontName(), font.getSize()));
+    }
 
     if (SystemInfo.isLinux) {
       Object value = Toolkit.getDefaultToolkit().getDesktopProperty("gnome.Xft/DPI");
-      verbose("gnome.Xft/DPI: %s", value);
+      if (JBUI.SCALE_VERBOSE) {
+        LOG.info(String.format("gnome.Xft/DPI: %s", value));
+      }
       if (value instanceof Integer) { // defined by JB JDK when the resource is available in the system
         // If the property is defined, then:
         // 1) it provides correct system scale
@@ -3217,13 +3252,17 @@ public class UIUtil {
         if (dpi < 50) dpi = 50;
         float scale = JBUI.discreteScale(dpi / 96f);
         DEF_SYSTEM_FONT_SIZE = font.getSize() / scale; // derive actual system base font size
-        verbose("DEF_SYSTEM_FONT_SIZE: %.2f, %d", DEF_SYSTEM_FONT_SIZE, dpi);
+        if (JBUI.SCALE_VERBOSE) {
+          LOG.info(String.format("DEF_SYSTEM_FONT_SIZE: %.2f, %d", DEF_SYSTEM_FONT_SIZE, dpi));
+        }
       }
       else if (!SystemInfo.isJetBrainsJvm) {
         // With Oracle JDK: derive scale from X server DPI, do not change DEF_SYSTEM_FONT_SIZE
         float size = DEF_SYSTEM_FONT_SIZE * getScreenScale();
         font = font.deriveFont(size);
-        verbose("(Not-JB JRE) reset font size: %.2f", size);
+        if (JBUI.SCALE_VERBOSE) {
+          LOG.info(String.format("(Not-JB JRE) reset font size: %.2f", size));
+        }
       }
     }
     else if (SystemInfo.isWindows) {
@@ -3231,15 +3270,15 @@ public class UIUtil {
       Font winFont = (Font)Toolkit.getDefaultToolkit().getDesktopProperty("win.messagebox.font");
       if (winFont != null) {
         font = winFont; // comes scaled
-        verbose("Windows sys font: %s, %d", winFont.getFontName(), winFont.getSize());
+        if (JBUI.SCALE_VERBOSE) {
+          LOG.info(String.format("Windows sys font: %s, %d", winFont.getFontName(), winFont.getSize()));
+        }
       }
     }
     ourSystemFontData = Pair.create(font.getName(), font.getSize());
-    verbose("ourSystemFontData: %s, %d", ourSystemFontData.first, ourSystemFontData.second);
-  }
-
-  private static void verbose(String msg, Object... args) {
-    if (JBUI.SCALE_VERBOSE) LOG.info(String.format(msg, args));
+    if (JBUI.SCALE_VERBOSE) {
+      LOG.info(String.format("ourSystemFontData: %s, %d", ourSystemFontData.first, ourSystemFontData.second));
+    }
   }
 
   @Nullable
@@ -3330,6 +3369,7 @@ public class UIUtil {
   public static void fixFormattedField(JFormattedTextField field) {
     if (SystemInfo.isMac) {
       final Toolkit toolkit = Toolkit.getDefaultToolkit();
+      if (toolkit instanceof HeadlessToolkit) return;
       final int commandKeyMask = toolkit.getMenuShortcutKeyMask();
       final InputMap inputMap = field.getInputMap();
       final KeyStroke copyKeyStroke = KeyStroke.getKeyStroke(KeyEvent.VK_C, commandKeyMask);
