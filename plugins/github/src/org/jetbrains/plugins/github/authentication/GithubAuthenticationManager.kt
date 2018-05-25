@@ -40,7 +40,7 @@ class GithubAuthenticationManager internal constructor(private val accountManage
 
   @CalledInAwt
   private fun requestNewToken(account: GithubAccount, project: Project?, parentComponent: JComponent?): String? {
-    val dialog = GithubLoginDialog(project, parentComponent)
+    val dialog = GithubLoginDialog(project, parentComponent, message = "Missing access token for $account")
       .withServer(account.server.toString(), false)
       .withCredentials(account.name)
       .withToken()

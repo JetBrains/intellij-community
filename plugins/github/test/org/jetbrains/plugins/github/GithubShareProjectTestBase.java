@@ -15,7 +15,6 @@
  */
 package org.jetbrains.plugins.github;
 
-import com.intellij.openapi.progress.EmptyProgressIndicator;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.util.Clock;
 import com.intellij.util.text.DateFormatUtil;
@@ -51,7 +50,7 @@ public abstract class GithubShareProjectTestBase extends GithubTest {
   }
 
   protected void deleteGithubRepo() throws IOException {
-    myApiTaskExecutor.execute(new EmptyProgressIndicator(), myAccount, c -> {
+    myApiTaskExecutor.execute(myAccount, c -> {
       String username = GithubApiUtil.getCurrentUser(c).getLogin();
       GithubApiUtil.deleteGithubRepository(c, username, PROJECT_NAME);
       return null;

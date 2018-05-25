@@ -7,12 +7,14 @@ import com.intellij.openapi.progress.DumbProgressIndicator
 import com.intellij.openapi.project.Project
 import com.intellij.util.AuthData
 import git4idea.remote.GitHttpAuthDataProvider
+import org.jetbrains.plugins.github.api.GithubApiTaskExecutor
 import org.jetbrains.plugins.github.authentication.GithubAuthenticationManager
 import org.jetbrains.plugins.github.authentication.accounts.GithubAccount
 import org.jetbrains.plugins.github.authentication.accounts.GithubAccountInformationProvider
 import java.io.IOException
 
 class GithubHttpAuthDataProvider(private val authenticationManager: GithubAuthenticationManager,
+                                 private val apiTaskExecutor: GithubApiTaskExecutor,
                                  private val accountInformationProvider: GithubAccountInformationProvider,
                                  private val authenticationFailureManager: GithubAccountGitAuthenticationFailureManager) : GitHttpAuthDataProvider {
   private val LOG = logger<GithubHttpAuthDataProvider>()
@@ -21,7 +23,7 @@ class GithubHttpAuthDataProvider(private val authenticationManager: GithubAuthen
     return getSuitableAccounts(project, url, null).singleOrNull()?.let { account ->
       try {
         val token = authenticationManager.getTokenForAccount(account) ?: return null
-        val username = accountInformationProvider.getAccountUsername(DumbProgressIndicator(), account)
+        val username = apiTaskExecutor.execute(DumbProgressIndicator(), account, accountInformationProvider.usernameTask, true)
         GithubAccountAuthData(account, username, token)
       }
       catch (e: IOException) {
@@ -51,7 +53,7 @@ class GithubHttpAuthDataProvider(private val authenticationManager: GithubAuthen
     if (login != null) {
       potentialAccounts = potentialAccounts.filter {
         try {
-          accountInformationProvider.getAccountUsername(DumbProgressIndicator(), it) == login
+          apiTaskExecutor.execute(DumbProgressIndicator(), it, accountInformationProvider.usernameTask, true) == login
         }
         catch (e: IOException) {
           LOG.info("Cannot load username for $it", e)

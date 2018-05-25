@@ -34,7 +34,7 @@ class GithubSettingsConfigurable(private val project: Project) :
   }
 
   override fun createUi(): GithubSettingsPanel {
-    return GithubSettingsPanel(project, service())
+    return GithubSettingsPanel(project, service(), service())
   }
 
   inner class GithubSettingsHolder internal constructor(val application: GithubSettings,

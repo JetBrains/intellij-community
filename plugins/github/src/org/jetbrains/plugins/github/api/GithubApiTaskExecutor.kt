@@ -4,6 +4,7 @@ package org.jetbrains.plugins.github.api
 import com.intellij.openapi.application.invokeAndWaitIfNeed
 import com.intellij.openapi.components.service
 import com.intellij.openapi.progress.EmptyProgressIndicator
+import com.intellij.openapi.progress.ProcessCanceledException
 import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.ui.Messages
 import com.intellij.util.ThrowableConvertor
@@ -29,19 +30,30 @@ class GithubApiTaskExecutor(private val authenticationManager: GithubAuthenticat
 
   /**
    * Run github task using saved OAuth token to authenticate
+   * If [silentFailOnMissingToken] is true - throw [GithubMissingTokenException] when token is missing, otherwise - ask user to provide one
    * TODO: Share connection between requests
    */
   @CalledInBackground
+  @JvmOverloads
   @Throws(IOException::class)
-  fun <T> execute(indicator: ProgressIndicator, account: GithubAccount, task: GithubTask<T>): T {
-    val token = authenticationManager.getTokenForAccount(account) ?: throw GithubMissingTokenException(account)
-    return CancellableGithubConnection(indicator, GithubAuthData.createTokenAuth(account.server.toString(), token)).use(task::convert)
+  fun <T> execute(indicator: ProgressIndicator, account: GithubAccount, task: GithubTask<T>, silentFailOnMissingToken: Boolean = false): T {
+    val token = if (silentFailOnMissingToken) {
+      authenticationManager.getTokenForAccount(account) ?: throw GithubMissingTokenException(account)
+    }
+    else {
+      authenticationManager.getOrRequestTokenForAccount(account, modalityStateSupplier = { indicator.modalityState })
+      ?: throw ProcessCanceledException(GithubMissingTokenException(account))
+    }
+
+    return CancellableGithubConnection(indicator, GithubAuthData.createTokenAuth(account.server.toString(), token))
+      .apply { setAccount(account) }
+      .use(task::convert)
   }
 
   @CalledInBackground
   @TestOnly
   @Throws(IOException::class)
-  fun <T> execute(account: GithubAccount, task: GithubTask<T>): T = execute(EmptyProgressIndicator(), account, task)
+  fun <T> execute(account: GithubAccount, task: GithubTask<T>): T = execute(EmptyProgressIndicator(), account, task, true)
 
   companion object {
     /**
