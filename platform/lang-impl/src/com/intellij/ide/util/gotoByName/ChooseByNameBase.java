@@ -251,7 +251,7 @@ public abstract class ChooseByNameBase implements ChooseByNameViewModel {
     return myModel;
   }
 
-  public class JPanelProvider extends JPanel implements DataProvider {
+  public class JPanelProvider extends JPanel implements DataProvider, QuickSearchComponent {
     private JBPopup myHint = null;
     private boolean myFocusRequested = false;
 
@@ -300,6 +300,7 @@ public abstract class ChooseByNameBase implements ChooseByNameViewModel {
       return null;
     }
 
+    @Override
     public void registerHint(JBPopup h) {
       if (myHint != null && myHint.isVisible() && myHint != h) {
         myHint.cancel();
@@ -320,8 +321,14 @@ public abstract class ChooseByNameBase implements ChooseByNameViewModel {
       myFocusRequested = true;
     }
 
+    @Override
     public void unregisterHint() {
       myHint = null;
+    }
+
+    @Override
+    public Component asComponent() {
+      return this;
     }
 
     public void hideHint() {

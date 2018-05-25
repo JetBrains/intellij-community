@@ -5,6 +5,7 @@ import com.google.common.collect.Lists;
 import com.intellij.find.findUsages.PsiElement2UsageTargetAdapter;
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.IdeBundle;
+import com.intellij.ide.util.gotoByName.QuickSearchComponent;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.impl.ActionButton;
@@ -19,6 +20,7 @@ import com.intellij.openapi.progress.util.ProgressIndicatorBase;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.ui.popup.JBPopup;
 import com.intellij.openapi.util.ActionCallback;
 import com.intellij.openapi.util.Pair;
 import com.intellij.psi.PsiElement;
@@ -30,6 +32,7 @@ import com.intellij.ui.components.JBCheckBox;
 import com.intellij.ui.components.JBList;
 import com.intellij.ui.components.JBScrollPane;
 import com.intellij.ui.components.fields.ExtendableTextField;
+import com.intellij.ui.popup.PopupUpdateProcessor;
 import com.intellij.usageView.UsageInfo;
 import com.intellij.usages.*;
 import com.intellij.util.Alarm;
@@ -58,7 +61,7 @@ import java.util.stream.Collectors;
  * @author Konstantin Bulenkov
  * @author Mikhail.Sokolov
  */
-public class SearchEverywhereUI extends BorderLayoutPanel implements Disposable, DataProvider {
+public class SearchEverywhereUI extends BorderLayoutPanel implements Disposable, DataProvider, QuickSearchComponent {
   private static final Logger LOG = Logger.getInstance(SearchEverywhereUI.class);
   public static final int SINGLE_CONTRIBUTOR_ELEMENTS_LIMIT = 30;
   public static final int MULTIPLE_CONTRIBUTORS_ELEMENTS_LIMIT = 15;
@@ -73,6 +76,8 @@ public class SearchEverywhereUI extends BorderLayoutPanel implements Disposable,
 
   private final JBList<Object> myResultsList = new JBList<>();
   private final SearchListModel myListModel = new SearchListModel(); //todo using in different threads? #UX-1
+
+  private JBPopup myHint;
 
   private CalcThread myCalcThread; //todo using in different threads? #UX-1
   private volatile ActionCallback myCurrentWorker = ActionCallback.DONE;
@@ -194,6 +199,38 @@ public class SearchEverywhereUI extends BorderLayoutPanel implements Disposable,
     SearchEverywhereContributor contributor = myListModel.getContributorForIndex(index);
     DataContext context = contributor.getDataContextForItem(myListModel.getElementAt(index));
     return context.getData(dataId);
+  }
+
+  @Override
+  public void registerHint(JBPopup h) {
+    if (myHint != null && myHint.isVisible() && myHint != h) {
+      myHint.cancel();
+    }
+    myHint = h;
+  }
+
+  @Override
+  public void unregisterHint() {
+    registerHint(null);
+  }
+
+  @Override
+  public Component asComponent() {
+    return this;
+  }
+
+  private void hideHint() {
+    if (myHint != null && myHint.isVisible()) {
+      myHint.cancel();
+    }
+  }
+
+  private void updateHint(Object element) {
+    if (myHint == null || !myHint.isVisible()) return;
+    final PopupUpdateProcessor updateProcessor = myHint.getUserData(PopupUpdateProcessor.class);
+    if (updateProcessor != null) {
+      updateProcessor.updatePopup(element);
+    }
   }
 
   private void switchToNextTab() {
@@ -435,6 +472,13 @@ public class SearchEverywhereUI extends BorderLayoutPanel implements Disposable,
             elementSelected(i, e.getModifiers());
           }
         }
+      }
+    });
+
+    myResultsList.addListSelectionListener(e -> {
+      Object selectedValue = myResultsList.getSelectedValue();
+      if (selectedValue != null && myHint != null && myHint.isVisible()) {
+        updateHint(selectedValue);
       }
     });
   }
