@@ -172,7 +172,14 @@ public class PackageUtil {
       if (parentPackageInTree != null && aPackage != null) {
         String prefix = parentPackageInTree.getQualifiedName();
         String string = aPackage.getQualifiedName();
-        if (string.startsWith(prefix)) return string.substring(prefix.length());
+        int length = prefix.length();
+        if (length == 0) {
+          if (!string.isEmpty()) return string;
+        }
+        else if (string.startsWith(prefix)) {
+          if (length < string.length() && '.' == string.charAt(length)) length++;
+          if (length < string.length()) return string.substring(length);
+        }
       }
       PsiPackage parentPackage = aPackage.getParentPackage();
       final StringBuilder buf = new StringBuilder();
