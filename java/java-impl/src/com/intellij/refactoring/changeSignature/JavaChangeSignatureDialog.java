@@ -723,7 +723,7 @@ public class JavaChangeSignatureDialog extends ChangeSignatureDialogBase<Paramet
       copy.setModifierProperty(oldModifier, false);
       copy.setModifierProperty(newModifier, true);
     }
-    String modifiers = String.join("\n", copy.getText().split("\\s*\n\\s*", -1));
+    String modifiers = copy.getText().replaceAll("\n\\s+", "\n");
 
     buffer.append(modifiers);
     if (modifiers.length() > 0 &&
