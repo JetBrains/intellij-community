@@ -5,7 +5,6 @@ import com.intellij.ide.structureView.StructureViewTreeElement;
 import com.intellij.ide.structureView.impl.common.PsiTreeElementBase;
 import com.intellij.ide.util.treeView.AbstractTreeUi;
 import com.intellij.ide.util.treeView.NodeDescriptorProvidingKey;
-import com.intellij.ide.util.treeView.TreeAnchorizer;
 import com.intellij.navigation.ItemPresentation;
 import com.intellij.pom.Navigatable;
 import com.intellij.psi.PsiElement;
@@ -120,21 +119,19 @@ abstract class DuplicatedPsiTreeElementBase<T extends PsiElement & Navigatable> 
   /** This class is a wrapper over PSI element with additional information */
   private static class StoredData<T extends Navigatable> implements Navigatable {
     @NotNull
-    private final Object myAnchor;
+    private final T myElement;
+
     @NotNull
     private final String myDetails;
 
     public StoredData(@NotNull T element, @NotNull String details) {
-      myAnchor = TreeAnchorizer.getService().createAnchor(element);
+      myElement = element;
       myDetails = details;
     }
 
     @NotNull
     public T getElement() {
-      @SuppressWarnings("unchecked")
-      T element = (T)TreeAnchorizer.getService().retrieveElement(myAnchor);
-      assert element != null;
-      return element;
+      return myElement;
     }
 
     @NotNull
