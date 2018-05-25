@@ -66,7 +66,6 @@ public abstract class GroovyResolverProcessor implements PsiScopeProcessor, Elem
 
   GroovyResolverProcessor(@NotNull GrReferenceExpression ref,
                           @NotNull EnumSet<GroovyResolveKind> kinds,
-                          @Nullable GrExpression myUpToArgument,
                           boolean forceRValue) {
     myRef = ref;
     myAcceptableKinds = kinds;
@@ -165,7 +164,11 @@ public abstract class GroovyResolverProcessor implements PsiScopeProcessor, Elem
       candidate = new GroovyMethodResultImpl(
         method, resolveContext, spreadState,
         applicabilitySubst,
-        () -> new GroovyInferenceSessionBuilder(myRef, methodCandidate).addReturnConstraint().resolveMode(false).build().inferSubst(),
+        () -> {
+          GroovyInferenceSession inferenceSession =
+            new GroovyInferenceSessionBuilder(myRef, methodCandidate).addReturnConstraint().resolveMode(false).build();
+          return inferenceSession.inferSubst();
+        },
         methodCandidate,
         false,
         isAccessible, isStaticsOK, isApplicable

@@ -10,23 +10,24 @@ import org.jetbrains.plugins.groovy.lang.psi.api.GroovyMethodResult
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression
 import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil
 
-class ReferenceExpressionConstraint(private val callRef: GrReferenceExpression, val leftType: PsiType) : ConstraintFormula {
+class ReferenceExpressionConstraint(private val callRef: GrReferenceExpression, private val leftType: PsiType?) : ConstraintFormula {
 
   override fun reduce(session: InferenceSession, constraints: MutableList<ConstraintFormula>): Boolean {
+    session as? GroovyInferenceSession ?: return true
     val resolved = callRef.advancedResolve()
     resolved as? GroovyMethodResult ?: return true
     resolved.candidate?.let {
       val typeParameters = it.method.typeParameters
-      val nestedSession = GroovyInferenceSession(typeParameters, it.siteSubstitutor, callRef,
-                                                 (session as GroovyInferenceSession).resolveMode)
-
+      val nestedSession = GroovyInferenceSession(typeParameters, it.siteSubstitutor, callRef, session.skipClosureBlock)
+      session.myNestedSessions[callRef] = nestedSession
       nestedSession.propagateVariables(session.inferenceVariables, session.restoreNameSubstitution)
 
       nestedSession.addConstraint(MethodCallConstraint(callRef, it))
       nestedSession.repeatInferencePhases()
-      val returnType = PsiUtil.getSmartReturnType(it.method)
-      if (returnType != null && PsiType.VOID != returnType) {
-        nestedSession.addConstraint(TypeConstraint(session.substituteWithInferenceVariables(leftType), returnType, callRef))
+      val returnType = session.siteSubstitutor.substitute(PsiUtil.getSmartReturnType(it.method))
+      val substitutedLeft = session.siteSubstitutor.substitute(session.substituteWithInferenceVariables(leftType))
+      if (returnType != null && PsiType.VOID != returnType && leftType != null) {
+        nestedSession.addConstraint(TypeConstraint(substitutedLeft, returnType, callRef))
         nestedSession.repeatInferencePhases()
       }
 
@@ -37,6 +38,7 @@ class ReferenceExpressionConstraint(private val callRef: GrReferenceExpression, 
       return true
     }
 
+    leftType ?: return true
     callRef.type?.let {
       constraints.add(TypeCompatibilityConstraint(leftType, it))
     }

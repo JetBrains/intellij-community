@@ -4,4 +4,16 @@ package org.jetbrains.plugins.groovy.lang.resolve.processors.inference
 import com.intellij.psi.PsiType
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression
 
-data class Argument(val type:PsiType?, val expression: GrExpression? = null)
+/**
+ * Class represents actual argument of method's resolve result. Either type - exactly one field is not null.
+ */
+data class Argument(
+  /**
+   * Not null if argument could not be represented as some GrExpression. At least we should know type of passed to method argument.
+   */
+  val type:PsiType?,
+  /**
+   * Not null if we know expression passed to method as argument.
+   */
+  val expression: GrExpression?
+)

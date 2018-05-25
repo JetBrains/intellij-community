@@ -4,6 +4,7 @@ package org.jetbrains.plugins.groovy.lang.resolve.processors.inference
 import com.intellij.psi.PsiClassType
 import com.intellij.psi.PsiSubstitutor
 import com.intellij.psi.PsiType
+import com.intellij.psi.impl.source.resolve.graphInference.FunctionalInterfaceParameterizationUtil.getNonWildcardParameterization
 import com.intellij.psi.impl.source.resolve.graphInference.InferenceSession
 import com.intellij.psi.impl.source.resolve.graphInference.constraints.ConstraintFormula
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrClosableBlock
@@ -14,7 +15,7 @@ import org.jetbrains.plugins.groovy.lang.sam.isSamConversionAllowed
 
 class ClosureConstraint(val closure: GrClosableBlock, val leftType: PsiType) : ConstraintFormula {
   override fun reduce(session: InferenceSession, constraints: MutableList<ConstraintFormula>): Boolean {
-    if ((session as GroovyInferenceSession).resolveMode) {
+    if ((session as GroovyInferenceSession).skipClosureBlock) {
       //TODO:add explicit typed closure constraints
     } else {
       if (leftType !is PsiClassType) return true
@@ -27,7 +28,7 @@ class ClosureConstraint(val closure: GrClosableBlock, val leftType: PsiType) : C
         if (parameters.size != 1) return true
         constraints.add(TypeConstraint(parameters[0], closureReturnType, closure))
       } else {
-        val samReturnType = callSamReturnType()?: return true
+        val samReturnType = callSamReturnType() ?: return true
         constraints.add(TypeConstraint(samReturnType, closureReturnType, closure))
       }
     }
@@ -36,7 +37,8 @@ class ClosureConstraint(val closure: GrClosableBlock, val leftType: PsiType) : C
 
   private fun callSamReturnType(): PsiType? {
     if (isSamConversionAllowed(closure)) {
-      val resolveResult = (leftType as PsiClassType).resolveGenerics()
+      val groundType = (leftType as? PsiClassType)?.let { getNonWildcardParameterization(it) } ?: return null
+      val resolveResult = (groundType as PsiClassType).resolveGenerics()
 
       val samClass = resolveResult.element ?: return null
 

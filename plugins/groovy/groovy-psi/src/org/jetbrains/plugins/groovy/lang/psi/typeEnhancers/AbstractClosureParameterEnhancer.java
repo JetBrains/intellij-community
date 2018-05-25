@@ -10,7 +10,7 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrVariable;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.arguments.GrArgumentList;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrClosableBlock;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrCall;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrMethodCall;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.params.GrParameter;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.params.GrParameterList;
 import org.jetbrains.plugins.groovy.lang.psi.impl.synthetic.ClosureSyntheticParameter;
@@ -55,16 +55,16 @@ public abstract class AbstractClosureParameterEnhancer extends GrVariableEnhance
   }
 
   @Nullable
-  public static GrCall findCall(@NotNull GrClosableBlock closure) {
+  public static GrMethodCall findCall(@NotNull GrClosableBlock closure) {
     PsiElement parent = closure.getParent();
-    if (parent instanceof GrCall && ArrayUtil.contains(closure, ((GrCall)parent).getClosureArguments())) {
-      return (GrCall)parent;
+    if (parent instanceof GrMethodCall && ArrayUtil.contains(closure, ((GrMethodCall)parent).getClosureArguments())) {
+      return (GrMethodCall)parent;
     }
 
     if (parent instanceof GrArgumentList) {
       PsiElement pparent = parent.getParent();
-      if (pparent instanceof GrCall) {
-        return (GrCall)pparent;
+      if (pparent instanceof GrMethodCall) {
+        return (GrMethodCall)pparent;
       }
     }
 

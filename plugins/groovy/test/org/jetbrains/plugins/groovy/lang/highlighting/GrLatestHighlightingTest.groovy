@@ -19,7 +19,8 @@ class GrLatestHighlightingTest extends GrHighlightingTestBase {
 
   @Override
   InspectionProfileEntry[] getCustomInspections() {
-    [new GroovyAssignabilityCheckInspection(), new GroovyAccessibilityInspection(), new GrUnresolvedAccessInspection()]
+    [new GroovyAssignabilityCheckInspection(), new GrUnresolvedAccessInspection(), new GroovyAccessibilityInspection(),
+     new MissingReturnInspection()]
   }
 
   void 'test IDEA-184690'() {
@@ -82,8 +83,7 @@ def com() {
 '''
   }
 
-  //works in 2.5.0
-  void '_ test IDEA-185371-3'() {
+  void '_test IDEA-185371-3'() {
     testHighlighting '''\
 import groovy.transform.CompileStatic
 import groovy.transform.stc.ClosureParams
@@ -110,10 +110,6 @@ def m() {
     testHighlighting '''\
 import groovy.transform.CompileStatic
 
-def <K,V> Map<K, V> getMap() {
-    new HashMap<K, V>()
-}
-
 @CompileStatic
 def m() {
     ''.with {
@@ -132,10 +128,7 @@ interface A {}
 class C implements A {}
 
 class Container<T> {
-
-    public <U extends T> void register(Class<U> clazz, Closure<Integer> closure) {
-
-    }
+    public <U extends T> void register(Class<U> clazz, Closure<Integer> closure) {}
 }
 
 @CompileStatic
@@ -154,90 +147,76 @@ interface A {}
 class B implements A {}
 
 class Box<T> {
-
-   public  <U extends T> void register(Class<U> clazz, Closure<? extends U> closure) {
-
-  }
+   public  <U extends T> void register(Class<U> clazz, Closure<? extends U> closure) {}
 }
 
 @CompileStatic
 def method(Box<A> box) {
     box.register(B) { param -> new B() }
 }
-
 '''
   }
 
   void testPerformanceLike() {
-    myFixture.enableInspections(new MissingReturnInspection())
-
     testHighlighting '''
-    def <T> void foo(T t, Closure cl) {}
-    
-    foo(1) { println it }
+def <T> void foo(T t, Closure cl) {}
 
-    '''
+foo(1) { println it }
+'''
   }
 
   void testPerformanceLikeCS() {
-    myFixture.enableInspections(new MissingReturnInspection())
-
     testHighlighting '''
-    import groovy.transform.CompileStatic
+import groovy.transform.CompileStatic
 
-    def <T> void foo(T t, Closure<T> cl) {}
-    
-    @CompileStatic
-    def m() {
-      foo(1) { 
-        println it 
-        1
-      }
-    }
+def <T> void foo(T t, Closure<T> cl) {}
 
-    '''
+@CompileStatic
+def m() {
+  foo(1) { 
+    println it 
+    1
+  }
+}
+'''
   }
 
   void testPerformanceLikeCS2() {
     myFixture.enableInspections(new MissingReturnInspection())
 
     testHighlighting '''
-    import groovy.transform.CompileStatic
+import groovy.transform.CompileStatic
 
-    def <T> void foo(T t, Closure<T> cl) {}
-    
-    @CompileStatic
-    def m() {
-     foo(1) { it.<error descr="Cannot resolve symbol 'toUpperCase'">toUpperCase</error>() }
-    }
+def <T> void foo(T t, Closure<T> cl) {}
 
-    '''
+@CompileStatic
+def m() {
+ foo(1) { it.<error descr="Cannot resolve symbol 'toUpperCase'">toUpperCase</error>() }
+}
+
+'''
   }
 
 
-  void _testPerformanceLikeCS3() {
-    myFixture.enableInspections(new MissingReturnInspection())
+  void testPerformanceLikeCS3() {
 
     testHighlighting '''
-    import groovy.transform.CompileStatic
+import groovy.transform.CompileStatic
 import groovy.transform.stc.ClosureParams
 import groovy.transform.stc.FirstParam
 
-def <T> void foo(T t, @ClosureParams(value = FirstParam.FirstGenericType) Closure<T> cl) {}
+def <T> void foo(T t, @ClosureParams(value = FirstParam) Closure<T> cl) {}
 
 @CompileStatic
 def m() {
   foo('') { it.toUpperCase() }
 }
-    '''
+'''
   }
 
   void 'test IDEA-171738'() {
-    myFixture.enableInspections(new MissingReturnInspection())
-
     testHighlighting '''
-    import groovy.transform.CompileStatic
-
+import groovy.transform.CompileStatic
 import java.util.stream.Collectors
 
 @CompileStatic
@@ -248,11 +227,89 @@ void testAsItIs(Collection<Thread> existingPairs) {
     '''
   }
 
-  void 'test IDEA-189792'() {
-    myFixture.enableInspections(new MissingReturnInspection())
-
+  void 'test IDEA-171738-2'() {
     testHighlighting '''
-    import groovy.transform.CompileStatic
+import groovy.transform.CompileStatic
+
+import java.util.stream.Collectors
+
+@CompileStatic
+void testAsItIs(Collection<Thread> existingPairs) {
+    Integer key = existingPairs.stream().collect(Collectors.toMap({ kv -> 1 }, { kv -> kv })).keySet().getAt(1)
+}
+    '''
+  }
+
+  void 'test IDEA-171738-2_5'() {
+    testHighlighting '''
+import java.util.stream.Collectors
+
+@groovy.transform.CompileStatic
+void testAsItIs(Collection<Thread> existingPairs) {
+    Map<Integer, Thread> value = existingPairs.stream().collect(Collectors.toMap({ kv -> 1 }, { kv -> kv }))
+}
+'''
+  }
+
+  void '_test IDEA-171738-3'() {
+    testHighlighting '''
+@groovy.transform.CompileStatic
+public class G<T> {
+
+    T t;
+    G<T> add(T t) {
+        this.t = t
+        return this
+    }
+
+    T get(){
+        return t
+    }
+
+    static <R> G<R> add(G<R> b, R t) {
+        b.add(t)
+        return b;
+    }
+
+
+
+    private static <K> G<K> getG() {
+        return new G<K>()
+    }
+
+    static void m() {
+        println getG().add("Str").get().toUpperCase()
+    }
+}
+    '''
+  }
+
+  void '_test IDEA-171738-4'() {
+    testHighlighting '''
+@groovy.transform.CompileStatic
+public class G<T> {
+    T t;
+    G<T> add(T t) {
+        this.t = t
+        return this
+    }
+
+    private static <K> G<K> getG() {
+        return new G<K>()
+    }
+
+    static void m() {
+       G<String> g =  getG().add("Str")
+    }
+}
+
+
+    '''
+  }
+
+  void 'test IDEA-189792'() {
+    testHighlighting '''
+import groovy.transform.CompileStatic
 
 import java.nio.file.Files
 import java.nio.file.Path
@@ -262,13 +319,10 @@ import java.util.stream.Stream
 static Stream<String> topicStream(Path path) {
     Files.list(path).map { it.toFile().name }
 }
-
-    '''
+'''
   }
 
-  void '_test IDEA-189274'() {
-    myFixture.enableInspections(new MissingReturnInspection())
-
+  void 'test IDEA-189274'() {
     testHighlighting '''
 import groovy.transform.CompileStatic
 
@@ -288,7 +342,43 @@ class JustAClass {
         events.reverse().findResult(LocalDateTime.MAX) { it.timeToEscalate }
     }
 }
+'''
+  }
 
-    '''
+  void 'test IDEA-188105'() {
+    testHighlighting '''
+import groovy.transform.CompileStatic
+
+@CompileStatic
+static <T> T apply(T self, @DelegatesTo(type = "T") Closure<Void> block) {
+    block.delegate = self
+    block()
+    self
+}
+
+@CompileStatic
+void usage() {
+    apply("hello world") {
+        println toUpperCase() 
+    }
+}
+'''
+  }
+
+  void 'test IDEA-191019'() {
+    testHighlighting '''
+import groovy.transform.CompileStatic
+
+import java.util.stream.Collectors
+
+@CompileStatic
+class GoodCodeRed {
+    static Set<Integer> intset = new HashSet<>(Arrays.asList(1, 2, 3, 4))
+
+    static Integer testCode() {
+        return intset.stream().collect(Collectors.toList()).get(0)
+    }
+}
+'''
   }
 }

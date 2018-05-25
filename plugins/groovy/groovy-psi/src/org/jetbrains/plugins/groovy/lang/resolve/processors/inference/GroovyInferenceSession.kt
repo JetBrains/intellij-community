@@ -5,11 +5,14 @@ import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiSubstitutor
 import com.intellij.psi.PsiTypeParameter
 import com.intellij.psi.impl.source.resolve.graphInference.InferenceSession
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression
 
 class GroovyInferenceSession(typeParams: Array<PsiTypeParameter>,
                              val siteSubstitutor: PsiSubstitutor,
                              context: PsiElement,
-                             val resolveMode: Boolean = true) : InferenceSession(typeParams, siteSubstitutor, context.manager, context) {
+                             val skipClosureBlock: Boolean = true) : InferenceSession(typeParams, siteSubstitutor, context.manager, context) {
+
+  val myNestedSessions = mutableMapOf<GrReferenceExpression, GroovyInferenceSession>()
 
   fun result(): PsiSubstitutor {
     resolveBounds(myInferenceVariables, siteSubstitutor)
@@ -19,5 +22,11 @@ class GroovyInferenceSession(typeParams: Array<PsiTypeParameter>,
   fun inferSubst(): PsiSubstitutor {
     repeatInferencePhases()
     return result()
+  }
+
+  fun inferSubst(ref: GrReferenceExpression): PsiSubstitutor {
+    repeatInferencePhases()
+    val session = myNestedSessions[ref] ?: return PsiSubstitutor.EMPTY
+    return session.inferSubst()
   }
 }

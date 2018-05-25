@@ -242,11 +242,6 @@ public class PsiImplUtil {
     return PsiUtil.skipWhitespacesAndComments(element.getParent().getFirstChild(), true) == element;
   }
 
-  @Nullable
-  public static GrExpression getRuntimeQualifier(@NotNull GrReferenceExpression refExpr) {
-    return refExpr.getQualifierExpression();
-  }
-
   public static void removeVariable(GrVariable variable) {
     final GrVariableDeclaration varDecl = (GrVariableDeclaration) variable.getParent();
     final List<GrVariable> variables = Arrays.asList(varDecl.getVariables());
@@ -875,7 +870,7 @@ public class PsiImplUtil {
 
   @Nullable
   public static PsiType getQualifierType(@NotNull GrReferenceExpression ref) {
-    final GrExpression rtQualifier = getRuntimeQualifier(ref);
+    final GrExpression rtQualifier = ref.getQualifierExpression();
     if (rtQualifier != null) {
       return rtQualifier.getType();
     }

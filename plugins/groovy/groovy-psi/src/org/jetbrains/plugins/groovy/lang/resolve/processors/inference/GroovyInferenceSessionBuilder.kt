@@ -2,6 +2,7 @@
 package org.jetbrains.plugins.groovy.lang.resolve.processors.inference
 
 import com.intellij.psi.PsiElement
+import com.intellij.psi.PsiSubstitutor
 import com.intellij.psi.PsiType
 import com.intellij.psi.PsiTypeParameter
 import com.intellij.psi.util.PsiTreeUtil
@@ -29,12 +30,19 @@ class GroovyInferenceSessionBuilder(val ref: GrReferenceExpression, val candidat
 
   private var left: PsiType? = null
 
-  private var resolveMode = true
+  private var skipClosureBlock = true
+
+  private var startFromTop = false
 
   private var siteTypeParams: Array<PsiTypeParameter> = PsiTypeParameter.EMPTY_ARRAY
 
-  fun resolveMode(resolveMode: Boolean): GroovyInferenceSessionBuilder {
-    this.resolveMode = resolveMode
+  fun resolveMode(skipClosureBlock: Boolean): GroovyInferenceSessionBuilder {
+    this.skipClosureBlock = skipClosureBlock
+    return this
+  }
+
+  fun startFromTop(startFromTop: Boolean): GroovyInferenceSessionBuilder {
+    this.startFromTop = startFromTop
     return this
   }
 
@@ -44,37 +52,47 @@ class GroovyInferenceSessionBuilder(val ref: GrReferenceExpression, val candidat
   }
 
   fun addReturnConstraint(): GroovyInferenceSessionBuilder {
-    left = getMostTopLevelCall(ref)?.let { getReturnConstraintType(it) }
+    val methodCall = ref.parent as? GrMethodCall ?: return this
+    left = getReturnConstraintType(getMostTopLevelCall(methodCall))
     return this
   }
 
   fun addTypeParams(typeParams: Array<PsiTypeParameter>): GroovyInferenceSessionBuilder {
-    val siteTypeParams = ArrayUtil.mergeArrays(siteTypeParams, typeParams)
+    siteTypeParams = ArrayUtil.mergeArrays(siteTypeParams, typeParams)
     return this
   }
 
   fun build(): GroovyInferenceSession {
-    val typeParameters = ArrayUtil.mergeArrays(siteTypeParams, candidate.method.typeParameters)
-    val session = GroovyInferenceSession(typeParameters, candidate.siteSubstitutor, ref, resolveMode)
-    session.addConstraint(MethodCallConstraint(ref, candidate))
-    session.repeatInferencePhases()
+    if (!startFromTop) {
+      val typeParameters = ArrayUtil.mergeArrays(siteTypeParams, candidate.method.typeParameters)
+      val session = GroovyInferenceSession(typeParameters, candidate.siteSubstitutor, ref, skipClosureBlock)
+      session.addConstraint(MethodCallConstraint(ref, candidate))
 
-    val returnType = PsiUtil.getSmartReturnType(candidate.method)
-    val left = left
-    if (left == null || returnType == null || PsiType.VOID == returnType) return session
-    session.addConstraint(TypeConstraint(left, returnType, ref))
-    return session
+      val returnType = PsiUtil.getSmartReturnType(candidate.method) //TODO: Fix with startFromTop in GroovyResolveProcessor
+      val left = left
+      if (left == null || returnType == null || PsiType.VOID == returnType) return session
+      session.repeatInferencePhases()
+      session.addConstraint(TypeConstraint(left, returnType, ref))
+      return session
+    } else {
+      val session = GroovyInferenceSession(siteTypeParams, PsiSubstitutor.EMPTY, ref, skipClosureBlock)
+      val methodCall = ref.parent as? GrMethodCall ?: return session
+      session.addConstraint(ReferenceExpressionConstraint(getMostTopLevelCall(methodCall).invokedExpression as GrReferenceExpression, left))
+      return session
+    }
   }
 
-  private fun getMostTopLevelCall(call: GrReferenceExpression): GrMethodCall? {
-    var topLevel: PsiElement = call
+  private fun getMostTopLevelCall(call: GrMethodCall): GrMethodCall {
+    var topLevel: GrMethodCall = call
     while (true) {
       val parent = topLevel.parent
-      if (parent is GrMethodCall || parent is GrArgumentList) {
-        topLevel = parent
-      }
-      else {
-        return topLevel as? GrMethodCall
+      val gparent = parent?.parent
+      topLevel = if (parent is GrMethodCall) {
+        parent
+      } else if (parent is GrArgumentList && gparent is GrMethodCall) {
+        gparent
+      } else {
+        return topLevel
       }
     }
   }
