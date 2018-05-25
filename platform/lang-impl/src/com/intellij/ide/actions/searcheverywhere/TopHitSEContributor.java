@@ -9,10 +9,7 @@ import com.intellij.ide.ui.search.BooleanOptionDescription;
 import com.intellij.ide.ui.search.OptionDescription;
 import com.intellij.navigation.ItemPresentation;
 import com.intellij.navigation.NavigationItem;
-import com.intellij.openapi.actionSystem.AbbreviationManager;
-import com.intellij.openapi.actionSystem.ActionManager;
-import com.intellij.openapi.actionSystem.AnAction;
-import com.intellij.openapi.actionSystem.Presentation;
+import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.ex.ActionUtil;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.Editor;
@@ -95,6 +92,12 @@ public class TopHitSEContributor implements SearchEverywhereContributor {
 
     boolean interrupted = fill(project, pattern, consumer);
     return new ContributorSearchResult<>(new ArrayList<>(res), interrupted);
+  }
+
+  @NotNull
+  @Override
+  public DataContext getDataContextForItem(Object element) {
+    return DataContext.EMPTY_CONTEXT;
   }
 
   private boolean fill(Project project, String pattern, Function<Object, Boolean> consumer) {

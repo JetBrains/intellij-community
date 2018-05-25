@@ -4,6 +4,8 @@ package com.intellij.ide.actions.searcheverywhere;
 import com.intellij.codeInsight.navigation.NavigationUtil;
 import com.intellij.ide.util.gotoByName.ChooseByNameModel;
 import com.intellij.ide.util.gotoByName.ChooseByNamePopup;
+import com.intellij.openapi.actionSystem.CommonDataKeys;
+import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.project.Project;
@@ -70,4 +72,16 @@ public abstract class AbstractGotoSEContributor implements SearchEverywhereContr
     return true;
   }
 
+  @Override
+  public DataContext getDataContextForItem(Object element) {
+    return (dataId) -> getItemData(dataId, element);
+  }
+
+  protected Object getItemData(String dataId, Object element) {
+    if (CommonDataKeys.PSI_ELEMENT.is(dataId)) {
+      return element;
+    }
+
+    return null;
+  }
 }

@@ -3,6 +3,7 @@
  */
 package com.intellij.ide.actions.searcheverywhere;
 
+import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.project.Project;
@@ -45,6 +46,9 @@ public interface SearchEverywhereContributor {
   boolean processSelectedItem(Project project, Object selected, int modifiers);
 
   ListCellRenderer getElementsRenderer(Project project);
+
+  @NotNull
+  DataContext getDataContextForItem(Object element);
 
   static List<SearchEverywhereContributor> getProvidersSorted() {
     return Arrays.stream(EP_NAME.getExtensions())
