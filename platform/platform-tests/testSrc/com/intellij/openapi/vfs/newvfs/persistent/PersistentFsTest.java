@@ -195,7 +195,7 @@ public class PersistentFsTest extends PlatformTestCase {
     String testName = getTestName(false);
 
     // wrt persistence subDir becomes partially loaded and subsubDir becomes fully loaded
-    File nestedDirOutsideTheProject = new File(projectStructure.getPath() + "../../../"+testName + "/subDir", "subSubDir");
+    File nestedDirOutsideTheProject = new File(projectStructure.getPath() + "../../../"+testName + "/subDir", "subSubDir").getCanonicalFile();
     Disposable disposable = null;
     
     try {
