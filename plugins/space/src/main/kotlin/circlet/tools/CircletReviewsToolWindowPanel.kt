@@ -8,12 +8,13 @@ import com.intellij.openapi.ui.*
 class CircletReviewsToolWindowPanel(project: Project) :
     SimpleToolWindowPanel(false, true), LifetimedDisposable by SimpleLifetimedDisposable() {
 
-    init {
-        val form = CircletReviewsForm(project, lifetime)
+    private val form = CircletReviewsForm(project, lifetime)
 
+    init {
         setContent(form.panel)
     }
 
     fun reload() {
+        form.reload()
     }
 }

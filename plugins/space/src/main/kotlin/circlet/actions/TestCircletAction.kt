@@ -15,7 +15,7 @@ class TestCircletAction : AnAction() {
     }
 
     override fun actionPerformed(e: AnActionEvent) {
-        async(UiDispatch.coroutineContext) {
+        launch(UiDispatch.coroutineContext) {
             val project = e.project!!
             val result = project.connection.loginModel!!.client.me.info()
 
