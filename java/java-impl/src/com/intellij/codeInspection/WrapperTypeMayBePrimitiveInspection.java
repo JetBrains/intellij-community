@@ -42,10 +42,10 @@ public class WrapperTypeMayBePrimitiveInspection extends AbstractBaseJavaLocalIn
   static CallMatcher getValueOfMatcher() {
     CallMatcher[] matchers = JvmPrimitiveTypeKind.getBoxedFqns()
                                                  .stream()
-                                             .filter(fqn -> !fqn.equals(CommonClassNames.JAVA_LANG_CHARACTER))
-                                             .map(fqn -> CallMatcher.staticCall(fqn, "valueOf")
-                                                                  .parameterTypes(CommonClassNames.JAVA_LANG_STRING))
-                                             .toArray(size -> new CallMatcher[size]);
+                                                 .filter(fqn -> !fqn.equals(CommonClassNames.JAVA_LANG_CHARACTER))
+                                                 .map(fqn -> CallMatcher.staticCall(fqn, "valueOf")
+                                                                        .parameterTypes(CommonClassNames.JAVA_LANG_STRING))
+                                                 .toArray(size -> new CallMatcher[size]);
     return CallMatcher.anyOf(matchers);
   }
 
