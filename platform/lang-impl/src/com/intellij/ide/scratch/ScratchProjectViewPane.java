@@ -14,6 +14,7 @@ import com.intellij.ide.util.treeView.AbstractTreeNode;
 import com.intellij.ide.util.treeView.AbstractTreeUi;
 import com.intellij.lang.Language;
 import com.intellij.openapi.Disposable;
+import com.intellij.openapi.actionSystem.LangDataKeys;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.fileTypes.LanguageFileType;
@@ -191,6 +192,14 @@ public class ScratchProjectViewPane extends ProjectViewPane {
     @Nullable
     @Override
     public Object getData(@NotNull Collection<AbstractTreeNode> selected, String dataName) {
+      if (LangDataKeys.PASTE_TARGET_PSI_ELEMENT.is(dataName)) {
+        AbstractTreeNode single = JBIterable.from(selected).single();
+        if (single instanceof MyRootNode) {
+          VirtualFile file = ((MyRootNode)single).getVirtualFile();
+          Project project = single.getProject();
+          return file == null || project == null ? null : PsiManager.getInstance(project).findDirectory(file);
+        }
+      }
       return null;
     }
   }
