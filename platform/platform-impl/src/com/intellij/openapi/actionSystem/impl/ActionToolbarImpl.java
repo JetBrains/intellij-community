@@ -982,6 +982,11 @@ public class ActionToolbarImpl extends JPanel implements ActionToolbar, QuickAct
 
     @Override
     public Dimension getPreferredSize() {
+      int gap = JBUI.scale(2);
+      int center = JBUI.scale(3);
+      int width = gap * 2 + center;
+      int height = JBUI.scale(24);
+
       if (myOrientation == SwingConstants.HORIZONTAL) {
         if (myText != null) {
           FontMetrics fontMetrics = getFontMetrics(getFont());
@@ -990,19 +995,20 @@ public class ActionToolbarImpl extends JPanel implements ActionToolbar, QuickAct
           try {
             UISettings.setupAntialiasing(g);
             int textWidth = fontMetrics.getStringBounds(myText, g).getBounds().width;
-            return new JBDimension(JBUI.scale(9) + textWidth + JBUI.scale(4),
-                                   Math.max(fontMetrics.getHeight(), JBUI.scale(24)), true);
+            return new JBDimension(width + gap * 2 + textWidth,
+                                   Math.max(fontMetrics.getHeight(), height), true);
           }
           finally {
             g.dispose();
           }
         }
         else {
-          return JBUI.size(7, 24);
+          return new JBDimension(width, height, true);
         }
       }
       else {
-        return JBUI.size(24, 7);
+        //noinspection SuspiciousNameCombination
+        return new JBDimension(height, width, true);
       }
     }
 
@@ -1029,7 +1035,7 @@ public class ActionToolbarImpl extends JPanel implements ActionToolbar, QuickAct
           int top = (getHeight() - fontMetrics.getHeight()) / 2;
           UISettings.setupAntialiasing(g);
           g.setColor(JBColor.foreground());
-          g.drawString(myText, JBUI.scale(9), top + fontMetrics.getAscent());
+          g.drawString(myText, gap * 2 + center + gap, top + fontMetrics.getAscent());
         }
       }
       else {
