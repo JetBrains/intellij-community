@@ -133,25 +133,46 @@ public abstract class CloneDvcsDialog extends DialogWrapper {
 
   @Override
   protected void doOKAction() {
-    myCreateDirectoryValidationInfo = createDestination();
-    super.doOKAction();
+    String path = myDirectoryField.getText();
+    new Task.Modal(myProject, "Creating Destination Directory", true) {
+      private ValidationInfo error = null;
+
+      @Override
+      public void run(@NotNull ProgressIndicator indicator) {
+        error = createDestination(path);
+      }
+
+      @Override
+      public void onSuccess() {
+        if (error == null) {
+          CloneDvcsDialog.super.doOKAction();
+        }
+        else {
+          myCreateDirectoryValidationInfo = error;
+          startTrackingValidation();
+        }
+      }
+    }.queue();
   }
 
   @Nullable
-  private ValidationInfo createDestination() {
-    Path directoryPath = Paths.get(myDirectoryField.getText());
-    if (!Files.exists(directoryPath)) {
-      try {
+  private static ValidationInfo createDestination(@NotNull String path) {
+    try {
+      Path directoryPath = Paths.get(path);
+      if (!Files.exists(directoryPath)) {
         Files.createDirectories(directoryPath);
       }
-      catch (Exception e) {
-        return new ValidationInfo(DvcsBundle.getString("clone.destination.directory.error.access"));
+      else if (!Files.isDirectory(directoryPath) || !Files.isWritable(directoryPath)) {
+        return new ValidationInfo(DvcsBundle.getString("clone.destination.directory.error.access"), false);
       }
+      return null;
     }
-    else if (!Files.isDirectory(directoryPath) || !Files.isWritable(directoryPath)) {
-      return new ValidationInfo(DvcsBundle.getString("clone.destination.directory.error.access"));
+    catch (InvalidPathException e) {
+      return new ValidationInfo(DvcsBundle.getString("clone.destination.directory.error.invalid"));
     }
-    return null;
+    catch (Exception e) {
+      return new ValidationInfo(DvcsBundle.getString("clone.destination.directory.error.access"), false);
+    }
   }
 
   @NotNull
