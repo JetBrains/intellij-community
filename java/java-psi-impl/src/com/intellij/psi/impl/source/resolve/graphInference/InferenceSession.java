@@ -588,7 +588,7 @@ public class InferenceSession {
             foundErrorMessage = checkBoundsConsistency(mySiteSubstitutor, inferenceVariable) == PsiType.NULL;
           }
           mySiteSubstitutor = mySiteSubstitutor
-            .put(typeParameter, JavaPsiFacade.getInstance(typeParameter.getProject()).getElementFactory().createType(typeParameter));
+            .put(typeParameter, JavaPsiFacade.getInstance(myManager.getProject()).getElementFactory().createType(typeParameter));
         }
       }
     }
@@ -627,7 +627,7 @@ public class InferenceSession {
       }
       InferenceVariable variable = new InferenceVariable(context, parameter, name);
       result.add(variable);
-      final PsiElementFactory elementFactory = JavaPsiFacade.getElementFactory(parameter.getProject());
+      final PsiElementFactory elementFactory = JavaPsiFacade.getElementFactory(myManager.getProject());
       myInferenceSubstitution = myInferenceSubstitution.put(parameter, elementFactory.createType(variable));
       myRestoreNameSubstitution = myRestoreNameSubstitution.put(variable, elementFactory.createType(parameter));
       myInferenceVariables.add(variable);
@@ -1621,11 +1621,13 @@ public class InferenceSession {
       }
 
       //no additional constraints for array creation
-      if (PsiEquivalenceUtil.areElementsEquivalent(containingClass, JavaPsiFacade.getElementFactory(reference.getProject()).getArrayClass(PsiUtil.getLanguageLevel(reference)))) {
+      PsiElementFactory factory = JavaPsiFacade.getElementFactory(myManager.getProject());
+      if (PsiEquivalenceUtil.areElementsEquivalent(containingClass, factory
+                                                                                 .getArrayClass(PsiUtil.getLanguageLevel(reference)))) {
         return null;
       }
 
-      final PsiType qType = JavaPsiFacade.getElementFactory(method.getProject()).createType(containingClass, psiSubstitutor);
+      final PsiType qType = factory.createType(containingClass, psiSubstitutor);
 
       addConstraint(new TypeCompatibilityConstraint(substituteWithInferenceVariables(qType), 
                                                     PsiUtil.captureToplevelWildcards(pType, reference)));
@@ -1952,7 +1954,7 @@ public class InferenceSession {
   public PsiType startWithFreshVars(PsiType type) {
     PsiSubstitutor s = PsiSubstitutor.EMPTY;
     for (InferenceVariable variable : myInferenceVariables) {
-      s = s.put(variable, JavaPsiFacade.getElementFactory(variable.getProject()).createType(variable.getParameter()));
+      s = s.put(variable, JavaPsiFacade.getElementFactory(myManager.getProject()).createType(variable.getParameter()));
     }
     return s.substitute(type);
   }
