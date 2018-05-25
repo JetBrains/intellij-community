@@ -161,15 +161,4 @@ public class TestsOutputConsolePrinter implements Printer, Disposable {
       Printer.super.printWithAnsiColoring(text, processOutputType);
     }
   }
-
-  @Override
-  public void printWithAnsiColoring(@NotNull String text, @NotNull ConsoleViewContentType contentType) {
-    if (myConsole instanceof TerminalExecutionConsole) {
-      // Terminal console handles ANSI escape sequences itself
-      print(text, contentType);
-    }
-    else {
-      Printer.super.printWithAnsiColoring(text, contentType);
-    }
-  }
 }

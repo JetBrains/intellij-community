@@ -328,12 +328,6 @@ public class CompositePrintable extends UserDataHolderBase implements Printable,
         // Write text to a file as a single chunk. ANSI coloring will be applied when reading the file.
         print(text, ConsoleViewContentType.getConsoleViewType(processOutputType));
       }
-
-      @Override
-      public void printWithAnsiColoring(@NotNull String text, @NotNull ConsoleViewContentType contentType) {
-        // Write text to a file as a single chunk. ANSI coloring will be applied when reading the file.
-        print(text, contentType);
-      }
     }
 
     private void readFileContentAndPrint(Printer printer, @Nullable File file, List<Printable> nestedPrintables) {
@@ -357,7 +351,7 @@ public class CompositePrintable extends UserDataHolderBase implements Printable,
                 ConsoleViewContentType contentType = contentTypeByNameMap.getOrDefault(firstToken, ConsoleViewContentType.NORMAL_OUTPUT);
                 String text = IOUtil.readString(reader);
                 if (text != null) {
-                  printer.printWithAnsiColoring(text, contentType);
+                  printer.print(text, contentType);
                 }
               }
               lineNum++;

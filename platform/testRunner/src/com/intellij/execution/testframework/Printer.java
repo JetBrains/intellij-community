@@ -24,24 +24,4 @@ public interface Printer {
     new AnsiEscapeDecoder().escapeText(text, processOutputType, (text1, attributes) ->
       print(text1, ConsoleViewContentType.getConsoleViewType(attributes)));
   }
-
-  default void printWithAnsiColoring(@NotNull String text, @NotNull ConsoleViewContentType contentType) {
-    Key outputType;
-    if (contentType == ConsoleViewContentType.NORMAL_OUTPUT) {
-      outputType = ProcessOutputTypes.STDOUT;
-    }
-    else if (contentType == ConsoleViewContentType.ERROR_OUTPUT) {
-      outputType = ProcessOutputTypes.STDERR;
-    }
-    else {
-      // Any contentType other than NORMAL_OUTPUT or ERROR_OUTPUT is either already ANSI-color-contentType
-      // or a specific contentType where ANSI coloring is not supported.
-      print(text, contentType);
-      return;
-    }
-    new AnsiEscapeDecoder().escapeText(text, outputType, (textChunk, attributes) -> {
-      ConsoleViewContentType viewContentType = ConsoleViewContentType.getConsoleViewType(attributes);
-      print(textChunk, viewContentType);
-    });
-  }
 }
