@@ -2154,10 +2154,10 @@ public class GroovyGeneratedParser implements PsiParser, LightPsiParser {
   // '{' mb_nl closure_header mb_separators block_levels '}'
   public static boolean closure(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "closure")) return false;
-    if (!nextTokenIs(b, T_LBRACE)) return false;
+    if (!nextTokenIsFast(b, T_LBRACE)) return false;
     boolean r, p;
     Marker m = enter_section_(b, l, _NONE_, CLOSURE, null);
-    r = consumeToken(b, T_LBRACE);
+    r = consumeTokenFast(b, T_LBRACE);
     p = r; // pin = 1
     r = r && report_error_(b, mb_nl(b, l + 1));
     r = p && report_error_(b, closure_header(b, l + 1)) && r;

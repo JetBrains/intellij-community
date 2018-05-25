@@ -939,8 +939,9 @@ lazy_closure ::= <<parseBlockLazy closure 'CLOSURE'>>
 }
 closure ::= '{' mb_nl closure_header mb_separators block_levels '}'
 {
-  pin = 1
   elementTypeClass = 'org.jetbrains.plugins.groovy.lang.parser.GrClosureElementType'
+  pin = 1
+  consumeTokenMethod = 'consumeTokenFast'
 }
 private closure_header ::= empty_parameter_list closure_arrow | closure_parameter_list mb_nl closure_arrow | empty_parameter_list
 private closure_arrow ::= '->'
