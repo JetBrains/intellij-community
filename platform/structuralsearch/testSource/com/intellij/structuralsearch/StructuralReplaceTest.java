@@ -2439,4 +2439,26 @@ public class StructuralReplaceTest extends StructuralReplaceTestCase {
                  "}",
                  replace(in, "new '_X<'_p+>()", "new $X$</*0*/$p$>()", true));
   }
+
+  public void testArrays() {
+    String in = "public abstract class Bar {\n" +
+                "    String[] x;\n" +
+                "    abstract String[] foo(String[] x);\n" +
+                "}";
+
+    assertEquals("should keep array brackets 1",
+                 "public abstract class Bar {\n" +
+                 "    String[] x;\n" +
+                 "    abstract String[] foo(String[] x);\n" +
+                 "}",
+                 replace(in, "'_FieldType 'Field = '_Init?;", "$FieldType$ $Field$ = $Init$;", true));
+
+    assertEquals("should keep array brackets 2",
+                 "public abstract class Bar {\n" +
+                 "    String[] x;\n" +
+                 "    abstract String[] foo (String[] x );\n" +
+                 "}",
+                 replace(in, "'_ReturnType '_Method('_ParameterType '_Parameter*);",
+                         "$ReturnType$ $Method$ ($ParameterType$ $Parameter$);", true));
+  }
 }
