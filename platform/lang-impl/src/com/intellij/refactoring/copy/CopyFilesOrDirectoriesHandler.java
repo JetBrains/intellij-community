@@ -75,7 +75,10 @@ public class CopyFilesOrDirectoriesHandler extends CopyHandlerDelegateBase {
   @Override
   public void doCopy(final PsiElement[] elements, PsiDirectory defaultTargetDirectory) {
     if (defaultTargetDirectory == null) {
-      defaultTargetDirectory = getCommonParentDirectory(elements);
+      PsiDirectory commonParent = getCommonParentDirectory(elements);
+      if (commonParent != null && !ScratchFileService.isInScratchRoot(commonParent.getVirtualFile())) {
+        defaultTargetDirectory = commonParent;
+      }
     }
     Project project = defaultTargetDirectory != null ? defaultTargetDirectory.getProject() : elements [0].getProject();
     if (defaultTargetDirectory != null) {
@@ -90,7 +93,7 @@ public class CopyFilesOrDirectoriesHandler extends CopyHandlerDelegateBase {
 
   @Nullable
   private static PsiDirectory tryNotNullizeDirectory(@NotNull Project project, @Nullable PsiDirectory defaultTargetDirectory) {
-    if (defaultTargetDirectory == null || ScratchFileService.isInScratchRoot(defaultTargetDirectory.getVirtualFile())) {
+    if (defaultTargetDirectory == null) {
       VirtualFile root = ArrayUtil.getFirstElement(ProjectRootManager.getInstance(project).getContentRoots());
       if (root == null) root = project.getBaseDir();
       if (root == null) root = VfsUtil.getUserHomeDir();
