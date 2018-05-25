@@ -674,6 +674,9 @@ public class EditorWindow {
         myPanel.removeAll ();
         myPanel.add (new TCompForTablessMode(this, editor), BorderLayout.CENTER);
         myOwner.validate();
+        if (selectEditor) {
+          setSelectedEditor(editor, focusEditor);
+        }
         return;
       }
 
