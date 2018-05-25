@@ -42,7 +42,7 @@ public abstract class SourcePosition implements Navigatable{
   private abstract static class SourcePositionCache extends SourcePosition {
     @NotNull private final PsiFile myFile;
     @Nullable private final SmartPsiElementPointer<PsiFile> myFilePointer;
-    private long myModificationStamp = -1L;
+    private long myModificationStamp;
 
     private WeakReference<PsiElement> myPsiElementRef;
     private Integer myLine;
@@ -52,7 +52,7 @@ public abstract class SourcePosition implements Navigatable{
       myFile = file;
       myFilePointer = ReadAction.compute(
         () -> file.isValid() ? SmartPointerManager.getInstance(file.getProject()).createSmartPsiElementPointer(file) : null);
-      updateData();
+      myModificationStamp = file.getModificationStamp();
     }
 
     @Override
