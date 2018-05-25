@@ -58,12 +58,29 @@ public class UITheme {
     }
   }
 
-  private void apply(String key, Object value, UIDefaults defaults) {
+  private static void apply(String key, Object value, UIDefaults defaults) {
     if (value instanceof HashMap) {
       for (Map.Entry<String, Object> o : ((HashMap<String, Object>)value).entrySet()) {
-        //todo[kb] transform to properties or parse by a new way?
+        apply(key + "." + o.getKey(), o.getValue(), defaults);
+      }
+    } else {
+      if (value instanceof String) {
+        value = parseString(key, (String)value);
+      }
+      if (key.startsWith("*.")) {
+        //todo[kb] apply for all properties
+      } else {
+        defaults.put(key, value);
       }
     }
+  }
+
+  private static Object parseString(String key, String value) {
+    //todo[kb] merge with parsing properties file in DarculaLaf
+    if (value.startsWith("#")) {
+      return ColorUtil.fromHex(value);
+    }
+    return value;
   }
 
   public void removeProperties(UIDefaults defaults) {
