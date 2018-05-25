@@ -18,10 +18,10 @@ public class UIThemeBasedLookAndFeelInfo extends UIManager.LookAndFeelInfo {
   }
 
   public void installTheme(UIDefaults defaults) {
-
+    myTheme.applyProperties(defaults);
   }
 
   public void uninstallTheme(UIDefaults defaults) {
-
+    myTheme.removeProperties(defaults);
   }
 }
