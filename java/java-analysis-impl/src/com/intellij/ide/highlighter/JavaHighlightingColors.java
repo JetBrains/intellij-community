@@ -68,9 +68,9 @@ public class JavaHighlightingColors {
   public static final TextAttributesKey LAMBDA_PARAMETER_ATTRIBUTES
     = TextAttributesKey.createTextAttributesKey("LAMBDA_PARAMETER_ATTRIBUTES", PARAMETER_ATTRIBUTES);
   public static final TextAttributesKey REASSIGNED_LOCAL_VARIABLE_ATTRIBUTES
-    = TextAttributesKey.createTextAttributesKey("REASSIGNED_LOCAL_VARIABLE_ATTRIBUTES", LOCAL_VARIABLE_ATTRIBUTES);
+    = TextAttributesKey.createTextAttributesKey("REASSIGNED_LOCAL_VARIABLE_ATTRIBUTES", DefaultLanguageHighlighterColors.REASSIGNED_LOCAL_VARIABLE);
   public static final TextAttributesKey REASSIGNED_PARAMETER_ATTRIBUTES 
-    = TextAttributesKey.createTextAttributesKey("REASSIGNED_PARAMETER_ATTRIBUTES", PARAMETER_ATTRIBUTES);
+    = TextAttributesKey.createTextAttributesKey("REASSIGNED_PARAMETER_ATTRIBUTES", DefaultLanguageHighlighterColors.REASSIGNED_PARAMETER);
   public static final TextAttributesKey INSTANCE_FIELD_ATTRIBUTES 
     = TextAttributesKey.createTextAttributesKey("INSTANCE_FIELD_ATTRIBUTES", DefaultLanguageHighlighterColors.INSTANCE_FIELD);
   public static final TextAttributesKey INSTANCE_FINAL_FIELD_ATTRIBUTES 
