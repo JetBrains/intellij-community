@@ -26,10 +26,7 @@ import com.intellij.openapi.vcs.history.VcsCachingHistory
 import com.intellij.openapi.vcs.history.VcsFileRevision
 import com.intellij.openapi.vcs.history.VcsFileRevisionEx
 import com.intellij.openapi.vfs.VirtualFile
-import com.intellij.util.ObjectUtils.assertNotNull
-import com.intellij.util.ObjectUtils.notNull
 import com.intellij.util.containers.ContainerUtil
-import com.intellij.util.containers.ContainerUtil.getFirstItem
 import com.intellij.vcs.log.*
 import com.intellij.vcs.log.data.*
 import com.intellij.vcs.log.data.index.IndexDataGetter
@@ -67,13 +64,12 @@ internal class FileHistoryFilterer(logData: VcsLogData) : VcsLogFilterer {
                       filters: VcsLogFilterCollection,
                       commitCount: CommitCountStage): Pair<VisiblePack, CommitCountStage> {
     val filePath = getFilePath(filters) ?: return vcsLogFilterer.filter(dataPack, sortType, filters, commitCount)
-    val root = notNull(VcsUtil.getVcsRootFor(project, filePath))
+    val root = VcsUtil.getVcsRootFor(project, filePath)!!
     return MyWorker(root, filePath, getHash(filters)).filter(dataPack, sortType, filters, commitCount)
   }
 
   override fun canFilterEmptyPack(filters: VcsLogFilterCollection): Boolean {
-    val filePath = getFilePath(filters)
-    return filePath != null && !filePath.isDirectory
+    return getFilePath(filters)?.run { !isDirectory } ?: false
   }
 
   private inner class MyWorker constructor(private val root: VirtualFile,
@@ -88,7 +84,7 @@ internal class FileHistoryFilterer(logData: VcsLogData) : VcsLogFilterer {
 
       if (index.isIndexed(root) && (dataPack.isFull || filePath.isDirectory)) {
         val visiblePack = filterWithIndex(dataPack, sortType, filters)
-        LOG.debug(StopWatch.formatTime(System.currentTimeMillis() - start) + " for computing history for " + filePath + " with index")
+        LOG.debug(StopWatch.formatTime(System.currentTimeMillis() - start) + " for computing history for $filePath with index")
         checkNotEmpty(dataPack, visiblePack, true)
         return Pair.create(visiblePack, commitCount)
       }
@@ -97,22 +93,20 @@ internal class FileHistoryFilterer(logData: VcsLogData) : VcsLogFilterer {
         return vcsLogFilterer.filter(dataPack, sortType, filters, commitCount)
       }
 
-      val vcs = ProjectLevelVcsManager.getInstance(project).getVcsFor(root)
-      if (vcs != null && vcs.vcsHistoryProvider != null) {
-        return try {
-          val visiblePack = filterWithProvider(vcs, dataPack, sortType, filters)
-          LOG.debug(StopWatch.formatTime(System.currentTimeMillis() - start) +
-                    " for computing history for " +
-                    filePath +
-                    " with history provider")
-          checkNotEmpty(dataPack, visiblePack, false)
-          Pair.create(visiblePack, commitCount)
+      ProjectLevelVcsManager.getInstance(project).getVcsFor(root)?.let { vcs ->
+        if (vcs.vcsHistoryProvider != null) {
+          return@filter try {
+            val visiblePack = filterWithProvider(vcs, dataPack, sortType, filters)
+            LOG.debug(StopWatch.formatTime(System.currentTimeMillis() - start) +
+                      " for computing history for $filePath with history provider")
+            checkNotEmpty(dataPack, visiblePack, false)
+            Pair.create(visiblePack, commitCount)
+          }
+          catch (e: VcsException) {
+            LOG.error(e)
+            vcsLogFilterer.filter(dataPack, sortType, filters, commitCount)
+          }
         }
-        catch (e: VcsException) {
-          LOG.error(e)
-          vcsLogFilterer.filter(dataPack, sortType, filters, commitCount)
-        }
-
       }
 
       LOG.warn("Could not find vcs or history provider for file $filePath")
@@ -121,11 +115,11 @@ internal class FileHistoryFilterer(logData: VcsLogData) : VcsLogFilterer {
 
     private fun checkNotEmpty(dataPack: DataPack, visiblePack: VisiblePack, withIndex: Boolean) {
       if (!dataPack.isFull) {
-        LOG.debug("Data pack is not full while computing file history for " + filePath + "\n" +
-                  "Found " + visiblePack.visibleGraph.visibleCommitCount + " commits")
+        LOG.debug("Data pack is not full while computing file history for $filePath\n" +
+                  "Found ${visiblePack.visibleGraph.visibleCommitCount} commits")
       }
       else if (visiblePack.visibleGraph.visibleCommitCount == 0) {
-        LOG.warn("Empty file history from " + (if (withIndex) "index" else "provider") + " for " + filePath)
+        LOG.warn("Empty file history from ${if (withIndex) "index" else "provider"} for $filePath")
       }
     }
 
@@ -134,49 +128,41 @@ internal class FileHistoryFilterer(logData: VcsLogData) : VcsLogFilterer {
                                    dataPack: DataPack,
                                    sortType: PermanentGraph.SortType,
                                    filters: VcsLogFilterCollection): VisiblePack {
-      var dataPack = dataPack
       val revisionNumber = if (hash != null) VcsLogUtil.convertToRevisionNumber(hash) else null
       val revisions = VcsCachingHistory.collect(vcs, filePath, revisionNumber)
 
       if (revisions.isEmpty()) return VisiblePack.EMPTY
 
-      val pathsMap = ContainerUtil.newHashMap<Int, FilePath>()
-      val visibleGraph: VisibleGraph<Int>
-
       if (dataPack.isFull) {
+        val pathsMap = ContainerUtil.newHashMap<Int, FilePath>()
         for (revision in revisions) {
           pathsMap[getIndex(revision)] = (revision as VcsFileRevisionEx).path
         }
-        visibleGraph = vcsLogFilterer.createVisibleGraph(dataPack, sortType, null, pathsMap.keys)
-      }
-      else {
-        val commits = ContainerUtil.newArrayListWithCapacity<GraphCommit<Int>>(revisions.size)
-
-        for (revision in revisions) {
-          val index = getIndex(revision)
-          pathsMap[index] = (revision as VcsFileRevisionEx).path
-          commits.add(GraphCommitImpl.createCommit(index, emptyList(), revision.getRevisionDate().time))
-        }
-
-        val refs = getFilteredRefs(dataPack)
-        val providers = ContainerUtil.newHashMap(Pair.create<VirtualFile, VcsLogProvider>(root, logProviders[root]))
-
-        dataPack = DataPack.build(commits, refs, providers, storage, false)
-        visibleGraph = vcsLogFilterer.createVisibleGraph(dataPack, sortType, null,
-                                                         null/*no need to filter here, since we do not have any extra commits in this pack*/)
+        val visibleGraph = vcsLogFilterer.createVisibleGraph(dataPack, sortType, null, pathsMap.keys)
+        return FileHistoryVisiblePack(dataPack, visibleGraph, false, filters, pathsMap)
       }
 
-      return FileHistoryVisiblePack(dataPack, visibleGraph, false, filters, pathsMap)
+      val commits = ContainerUtil.newArrayListWithCapacity<GraphCommit<Int>>(revisions.size)
+
+      val pathsMap = ContainerUtil.newHashMap<Int, FilePath>()
+      for (revision in revisions) {
+        val index = getIndex(revision)
+        pathsMap[index] = (revision as VcsFileRevisionEx).path
+        commits.add(GraphCommitImpl.createCommit(index, emptyList(), revision.getRevisionDate().time))
+      }
+
+      val refs = getFilteredRefs(dataPack)
+      val providers = ContainerUtil.newHashMap(Pair.create<VirtualFile, VcsLogProvider>(root, logProviders[root]))
+
+      val fakeDataPack = DataPack.build(commits, refs, providers, storage, false)
+      val visibleGraph = vcsLogFilterer.createVisibleGraph(fakeDataPack, sortType, null,
+                                                           null/*no need to filter here, since we do not have any extra commits in this pack*/)
+      return FileHistoryVisiblePack(fakeDataPack, visibleGraph, false, filters, pathsMap)
     }
 
     private fun getFilteredRefs(dataPack: DataPack): Map<VirtualFile, CompressedRefs> {
-      val refs = ContainerUtil.newHashMap<VirtualFile, CompressedRefs>()
-      var compressedRefs: CompressedRefs? = dataPack.refsModel.allRefsByRoot[root]
-      if (compressedRefs == null) {
-        compressedRefs = CompressedRefs(ContainerUtil.newHashSet(), storage)
-      }
-      refs[root] = compressedRefs
-      return refs
+      val compressedRefs = dataPack.refsModel.allRefsByRoot[root] ?: CompressedRefs(emptySet(), storage)
+      return mapOf(kotlin.Pair(root, compressedRefs))
     }
 
     private fun getIndex(revision: VcsFileRevision): Int {
@@ -270,42 +256,25 @@ internal class FileHistoryFilterer(logData: VcsLogData) : VcsLogFilterer {
       }
 
       if (!result.isNull) {
-        val rowIndex = visibleGraph.getVisibleRowIndex(commitsInfo.getCommitId(result.get()))
-        return assertNotNull(rowIndex)
+        return visibleGraph.getVisibleRowIndex(commitsInfo.getCommitId(result.get()))!!
       }
 
       return -1
     }
   }
 
+  private fun getFilePath(filters: VcsLogFilterCollection): FilePath? {
+    val filter = filters.detailsFilters.singleOrNull() as? VcsLogStructureFilter ?: return null
+    return filter.files.singleOrNull()
+  }
+
+  private fun getHash(filters: VcsLogFilterCollection): Hash? {
+    val revisionFilter = filters.get(VcsLogFilterCollection.REVISION_FILTER) ?: return null
+    return revisionFilter.heads.singleOrNull()?.hash
+  }
+
   companion object {
     private val LOG = Logger.getInstance(FileHistoryFilterer::class.java)
-
-    private fun getFilePath(filters: VcsLogFilterCollection): FilePath? {
-      val detailsFilters = filters.detailsFilters
-      if (detailsFilters.size != 1) {
-        return null
-      }
-
-      val filter = notNull(getFirstItem(detailsFilters)) as? VcsLogStructureFilter ?: return null
-
-      val files = filter.files
-      return if (files.size != 1) {
-        null
-      }
-      else notNull(getFirstItem(files))
-
-    }
-
-    private fun getHash(filters: VcsLogFilterCollection): Hash? {
-      val revisionFilter = filters.get(VcsLogFilterCollection.REVISION_FILTER) ?: return null
-
-      val heads = revisionFilter.heads
-      return if (heads.size != 1) {
-        null
-      }
-      else notNull(getFirstItem(heads)).hash
-    }
 
     @JvmStatic
     fun createFilters(path: FilePath,
