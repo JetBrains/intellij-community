@@ -165,8 +165,8 @@ object PsiIndexConsistencyTester {
       override fun performAction(model: Model) {
         val oldValue = model.refs[kind]
         val newValue = kind.loadRef(model)
-        if (oldValue is PsiElement && oldValue.isValid && newValue is PsiElement && oldValue !== newValue) {
-          fail("Duplicate PSI elements: $oldValue and $newValue")
+        if (oldValue !== null && newValue !== null && oldValue !== newValue) {
+          kind.checkDuplicates(oldValue, newValue)
         }
         model.refs[kind] = newValue
       }
@@ -194,6 +194,12 @@ object PsiIndexConsistencyTester {
   abstract class RefKind {
 
     abstract fun loadRef(model: Model): Any?
+    
+    open fun checkDuplicates(oldValue: Any, newValue: Any) {
+      if (oldValue is PsiElement && oldValue.isValid && newValue is PsiElement) {
+        fail("Duplicate PSI elements: $oldValue and $newValue")
+      }
+    }
 
     object PsiFileRef : RefKind() {
       override fun loadRef(model: Model): Any? = model.findPsiFile()
