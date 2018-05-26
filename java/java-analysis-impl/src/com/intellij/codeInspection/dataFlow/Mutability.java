@@ -125,13 +125,10 @@ public enum Mutability {
     }
     if (owner instanceof PsiField && owner.hasModifierProperty(PsiModifier.FINAL)) {
       PsiExpression initializer = PsiUtil.skipParenthesizedExprDown(((PsiField)owner).getInitializer());
+      if (initializer != null && ClassUtils.isImmutable(initializer.getType())) return UNMODIFIABLE;
       if (initializer instanceof PsiMethodCallExpression) {
         PsiMethod method = ((PsiMethodCallExpression)initializer).resolveMethod();
-        if (method == null) {
-          return UNKNOWN;
-        }
-        if (ClassUtils.isImmutable(method.getReturnType())) return UNMODIFIABLE;
-        return getMutability(method);
+        return method == null ? UNKNOWN : getMutability(method);
       }
     }
     return owner instanceof PsiMethodImpl ? JavaSourceInference.inferMutability((PsiMethodImpl)owner) : UNKNOWN;

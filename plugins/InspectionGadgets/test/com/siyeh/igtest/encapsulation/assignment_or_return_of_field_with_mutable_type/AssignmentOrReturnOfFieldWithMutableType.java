@@ -1,10 +1,6 @@
 package com.siyeh.igtest.encapsulation;
 
-import java.util.Calendar;
-import java.util.Collections;
-import java.util.Date;
-import java.util.Set;
-import java.util.List;
+import java.util.*;
 
 public class AssignmentOrReturnOfFieldWithMutableType
 {
@@ -146,5 +142,13 @@ class Test {
         I i = () -> {
             return <warning descr="Return of Set field 'field'">field</warning>;
         };
+    }
+}
+
+class ImmutableTest {
+    final List<String> list = Collections.unmodifiableList(Arrays.asList("foo", "bar", "baz"));
+
+    public List<String> getList() {
+        return list;
     }
 }
