@@ -304,7 +304,7 @@ class ImmutableElement extends Element {
 
   //////////////////////////////////////////////////////////////////////
   @Override
-  public Content detach() {
+  public Element detach() {
     throw immutableError(this);
   }
   @Override
