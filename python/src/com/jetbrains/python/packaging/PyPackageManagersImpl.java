@@ -64,8 +64,6 @@ public class PyPackageManagersImpl extends PyPackageManagers {
   @Override
   public void clearCache(@NotNull Sdk sdk) {
     final String key = PythonSdkType.getSdkKey(sdk);
-    if (myInstances.containsKey(key)) {
-      myInstances.remove(key);
-    }
+    myInstances.remove(key);
   }
 }
