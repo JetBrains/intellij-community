@@ -122,6 +122,16 @@ fun setupPipEnv(projectPath: @SystemDependent String, python: String?, installPa
 }
 
 /**
+ * Runs the configured pipenv for the specified Pipenv SDK with the associated project path.
+ */
+fun runPipEnv(sdk: Sdk, vararg args: String): String {
+  val projectPath = sdk.associatedModulePath ?:
+                    throw PyExecutionException("Cannot find the project associated with this Pipenv environment",
+                                               "Pipenv", emptyList(), ProcessOutput())
+  return runPipEnv(projectPath, *args)
+}
+
+/**
  * Runs the configured pipenv for the specified project path.
  */
 fun runPipEnv(projectPath: @SystemDependent String, vararg args: String): String {
