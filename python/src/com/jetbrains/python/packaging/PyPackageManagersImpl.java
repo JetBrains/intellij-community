@@ -21,6 +21,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.jetbrains.python.packaging.ui.PyCondaManagementService;
 import com.jetbrains.python.packaging.ui.PyPackageManagementService;
 import com.jetbrains.python.sdk.PythonSdkType;
+import com.jetbrains.python.sdk.flavors.PipenvKt;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.HashMap;
@@ -30,16 +31,19 @@ import java.util.Map;
  * @author yole
  */
 public class PyPackageManagersImpl extends PyPackageManagers {
-  private final Map<String, PyPackageManagerImpl> myInstances = new HashMap<>();
+  private final Map<String, PyPackageManager> myInstances = new HashMap<>();
 
   @NotNull
   public synchronized PyPackageManager forSdk(@NotNull final Sdk sdk) {
     final String key = PythonSdkType.getSdkKey(sdk);
-    PyPackageManagerImpl manager = myInstances.get(key);
+    PyPackageManager manager = myInstances.get(key);
     if (manager == null) {
       final VirtualFile homeDirectory = sdk.getHomeDirectory();
       if (PythonSdkType.isRemote(sdk)) {
         manager = new PyRemotePackageManagerImpl(sdk);
+      }
+      else if (PipenvKt.isPipEnv(sdk)) {
+        manager = new PyPipEnvPackageManager(sdk);
       }
       else if (PyCondaPackageManagerImpl.isConda(sdk) &&
                homeDirectory != null &&
