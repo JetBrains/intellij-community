@@ -167,13 +167,23 @@ public class UserDefinedJsonSchemaConfiguration {
     }
 
     final String path = FileUtilRt.toSystemIndependentName(StringUtil.notNullize(pattern.path));
-    final List<String> parts = ContainerUtil.filter(StringUtil.split(path, "/"), s -> !".".equals(s));
+    final List<String> parts = pathToPartsList(path);
     if (parts.isEmpty()) {
       return project.getBaseDir();
     }
     else {
       return VfsUtil.findRelativeFile(project.getBaseDir(), ArrayUtil.toStringArray(parts));
     }
+  }
+
+  @NotNull
+  private static List<String> pathToPartsList(@NotNull String path) {
+    return ContainerUtil.filter(StringUtil.split(path, "/"), s -> !".".equals(s));
+  }
+
+  @NotNull
+  private static String[] pathToParts(@NotNull String path) {
+    return ArrayUtil.toStringArray(pathToPartsList(path));
   }
 
   @Override
@@ -216,9 +226,14 @@ public class UserDefinedJsonSchemaConfiguration {
     }
 
     public Item(String path, boolean isPattern, boolean isDirectory) {
-      this.path = path;
+      this.path = normalizePath(path);
       pattern = isPattern;
       directory = isDirectory;
+    }
+
+    @NotNull
+    private static String normalizePath(String path) {
+      return path.replace('\\', '/');
     }
 
     public String getPath() {
@@ -226,7 +241,7 @@ public class UserDefinedJsonSchemaConfiguration {
     }
 
     public void setPath(String path) {
-      this.path = path;
+      this.path = normalizePath(path);
     }
 
     public boolean isPattern() {
@@ -248,6 +263,10 @@ public class UserDefinedJsonSchemaConfiguration {
     public String getPresentation() {
       final String prefix = pattern ? "Pattern: " : (directory ? "Directory: " : "File: ");
       return prefix + path;
+    }
+
+    public String[] getPathParts() {
+      return pathToParts(path);
     }
 
     @Override
