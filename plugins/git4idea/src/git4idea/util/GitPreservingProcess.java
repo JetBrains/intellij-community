@@ -100,6 +100,9 @@ public class GitPreservingProcess {
             LOG.debug("loading");
             load();
           }
+          else {
+            mySaver.notifyLocalChangesAreNotRestored();
+          }
         }
       }
       LOG.debug("finished.");
@@ -166,10 +169,5 @@ public class GitPreservingProcess {
     else {
       LOG.info("The changes were already loaded");
     }
-  }
-
-  @NotNull
-  public GitChangesSaver getSaver() {
-    return mySaver;
   }
 }

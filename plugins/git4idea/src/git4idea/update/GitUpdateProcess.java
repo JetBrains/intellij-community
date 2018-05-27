@@ -17,8 +17,6 @@ package git4idea.update;
 
 import com.google.common.annotations.VisibleForTesting;
 import com.intellij.dvcs.DvcsUtil;
-import com.intellij.notification.Notification;
-import com.intellij.notification.NotificationListener;
 import com.intellij.openapi.application.AccessToken;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.EmptyProgressIndicator;
@@ -27,7 +25,6 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.vcs.ProjectLevelVcsManager;
 import com.intellij.openapi.vcs.VcsException;
-import com.intellij.openapi.vcs.VcsNotifier;
 import com.intellij.openapi.vcs.changes.Change;
 import com.intellij.openapi.vcs.changes.ChangeListManager;
 import com.intellij.openapi.vcs.impl.LocalChangesUnderRoots;
@@ -49,12 +46,10 @@ import git4idea.merge.GitMerger;
 import git4idea.rebase.GitRebaser;
 import git4idea.repo.GitBranchTrackInfo;
 import git4idea.repo.GitRepository;
-import git4idea.stash.GitChangesSaver;
 import git4idea.util.GitPreservingProcess;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.event.HyperlinkEvent;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
@@ -249,39 +244,13 @@ public class GitUpdateProcess {
     });
     myPreservingProcess.execute(() -> {
       if (!unstashAfterUpdate()) return false;
-
       // Note: compoundResult normally should not be null, because the updaters map was checked for non-emptiness.
       // But if updater.update() fails with exception for the first root, then the value would not be assigned.
       // In this case we don't restore local changes either, because update failed.
-      boolean success = !incomplete.get() && !compoundResult.isNull() && compoundResult.get().isSuccess();
-      if (!success) {
-        notifyLocalChangesAreNotRestored();
-      }
-      return success;
+      return !incomplete.get() && !compoundResult.isNull() && compoundResult.get().isSuccess();
     });
     // GitPreservingProcess#save may fail due index.lock presence
     return ObjectUtils.notNull(compoundResult.get(), GitUpdateResult.ERROR);
-  }
-
-  public void notifyLocalChangesAreNotRestored() {
-    if (myPreservingProcess != null) {
-      GitChangesSaver saver = myPreservingProcess.getSaver();
-      if (saver.wereChangesSaved()) {
-        LOG.info("Update is incomplete, changes are not restored");
-        String message = "Before update your uncommitted changes were saved to <a href='saver'>" + saver.getSaverName() + "</a>.<br/>" +
-                         "Update is not complete, you have unresolved merges in your working tree<br/>" +
-                         "Resolve conflicts, complete update and restore changes manually.";
-        VcsNotifier.getInstance(myProject).notifyImportantWarning("Local changes were not restored", message,
-          new NotificationListener.Adapter() {
-            @Override
-            protected void hyperlinkActivated(@NotNull Notification notification, @NotNull HyperlinkEvent event) {
-              if (event.getDescription().equals("saver")) {
-                saver.showSavedChanges();
-              }
-            }
-          });
-      }
-    }
   }
 
   @NotNull
