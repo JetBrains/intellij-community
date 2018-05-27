@@ -56,8 +56,8 @@ public class PyPackageManagementService extends PackageManagementServiceEx {
   
   @NonNls private static final String TEXT_SUFFIX = "</body></html>";
 
-  private final Project myProject;
-  protected final Sdk mySdk;
+  @NotNull private final Project myProject;
+  @NotNull protected final Sdk mySdk;
   protected final ExecutorService myExecutorService;
 
   public PyPackageManagementService(@NotNull Project project, @NotNull Sdk sdk) {
@@ -70,6 +70,11 @@ public class PyPackageManagementService extends PackageManagementServiceEx {
   @NotNull
   public Sdk getSdk() {
     return mySdk;
+  }
+
+  @NotNull
+  public Project getProject() {
+    return myProject;
   }
 
   @Nullable

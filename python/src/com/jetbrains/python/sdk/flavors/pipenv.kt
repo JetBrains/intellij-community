@@ -1,6 +1,9 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.jetbrains.python.sdk.flavors
 
+import com.google.gson.Gson
+import com.google.gson.JsonSyntaxException
+import com.google.gson.annotations.SerializedName
 import com.intellij.codeInspection.LocalQuickFix
 import com.intellij.codeInspection.ProblemDescriptor
 import com.intellij.execution.ExecutionException
@@ -10,6 +13,8 @@ import com.intellij.execution.configurations.PathEnvironmentVariableUtil
 import com.intellij.execution.process.CapturingProcessHandler
 import com.intellij.execution.process.ProcessOutput
 import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.application.ReadAction
+import com.intellij.openapi.fileEditor.FileDocumentManager
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.module.ModuleUtilCore
 import com.intellij.openapi.progress.ProgressIndicator
@@ -21,6 +26,7 @@ import com.intellij.openapi.projectRoots.impl.SdkConfigurationUtil
 import com.intellij.openapi.roots.ui.configuration.projectRoot.ProjectSdksModel
 import com.intellij.openapi.util.SystemInfo
 import com.intellij.openapi.util.io.FileUtil
+import com.intellij.openapi.vfs.StandardFileSystems
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.util.PathUtil
 import com.jetbrains.python.packaging.PyExecutionException
@@ -35,6 +41,8 @@ import javax.swing.Icon
  */
 
 const val PIP_FILE: String = "Pipfile"
+const val PIP_FILE_LOCK: String = "Pipfile.lock"
+const val PIPENV_DEFAULT_SOURCE_URL: String = "https://pypi.org/simple"
 
 // TODO: Provide a special icon for pipenv
 val PIPENV_ICON: Icon = PythonIcons.Python.PythonClosed
@@ -172,6 +180,13 @@ fun detectAndSetupPipEnv(project: Project?, module: Module?, existingSdks: List<
 }
 
 /**
+ * URLs of package sources configured in the Pipfile.lock of the module associated with this SDK.
+ */
+val Sdk.pipFileLockSources: List<String>
+  get() = parsePipFileLock()?.meta?.sources?.mapNotNull { it.url } ?:
+          listOf(PIPENV_DEFAULT_SOURCE_URL)
+
+/**
  * A quick-fix for setting up the pipenv for the module of the current PSI element.
  */
 class UsePipEnvQuickFix : LocalQuickFix {
@@ -209,3 +224,27 @@ class UsePipEnvQuickFix : LocalQuickFix {
     }
   }
 }
+
+private fun Sdk.parsePipFileLock(): PipFileLock? {
+  // TODO: Log errors if Pipfile.lock is not found
+  val file = pipFileLock ?: return null
+  val text = ReadAction.compute<String, Throwable> { FileDocumentManager.getInstance().getDocument(file)?.text }
+  return try {
+    Gson().fromJson(text, PipFileLock::class.java)
+  }
+  catch (e: JsonSyntaxException) {
+    // TODO: Log errors
+    return null
+  }
+}
+
+private val Sdk.pipFileLock: VirtualFile?
+  get() =
+    associatedModulePath?.let { StandardFileSystems.local().findFileByPath(it)?.findChild(PIP_FILE_LOCK) }
+
+private data class PipFileLock(@SerializedName("_meta") var meta: PipFileLockMeta?)
+
+private data class PipFileLockMeta(@SerializedName("sources") var sources: List<PipFileLockSource>?)
+
+private data class PipFileLockSource(@SerializedName("url") var url: String?)
+
