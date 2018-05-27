@@ -62,6 +62,9 @@ public class PyPackageManagersImpl extends PyPackageManagers {
     if (PyCondaPackageManagerImpl.isConda(sdk)) {
       return new PyCondaManagementService(project, sdk);
     }
+    else if (PipenvKt.isPipEnv(sdk)) {
+      return new PyPipEnvPackageManagementService(project, sdk);
+    }
     return new PyPackageManagementService(project, sdk);
   }
 
