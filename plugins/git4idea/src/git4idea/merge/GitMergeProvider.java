@@ -387,8 +387,9 @@ public class GitMergeProvider implements MergeProvider2 {
       String m = e.getMessage().trim();
       if (m.startsWith("fatal: ambiguous argument ")
           || (m.startsWith("fatal: Path '") && m.contains("' exists on disk, but not in '"))
-          || (m.contains("is in the index, but not at stage ")
-          || (m.contains("bad revision")))) {
+          || m.contains("is in the index, but not at stage ")
+          || m.contains("bad revision")
+          || m.startsWith("fatal: Not a valid object name")) {
         return ArrayUtil.EMPTY_BYTE_ARRAY;
       }
       else {
