@@ -37,6 +37,7 @@ public class GitCommand {
   public static final GitCommand ADD = write("add");
   public static final GitCommand BLAME = read("blame");
   public static final GitCommand BRANCH = read("branch");
+  public static final GitCommand CAT_FILE = write("cat-file");
   public static final GitCommand CHECKOUT = write("checkout");
   public static final GitCommand CHECK_ATTR = read("check-attr");
   public static final GitCommand COMMIT = write("commit");

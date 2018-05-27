@@ -32,6 +32,8 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.*;
 
+import static git4idea.config.GitVersionSpecialty.CAT_FILE_SUPPORTS_FILTERS;
+
 public class GitFileUtils {
 
   private static final Logger LOG = Logger.getInstance(GitFileUtils.class);
@@ -167,10 +169,15 @@ public class GitFileUtils {
    * @throws VcsException if there is a problem with running git
    */
   public static byte[] getFileContent(Project project, VirtualFile root, String revisionOrBranch, String relativePath) throws VcsException {
-    GitBinaryHandler h = new GitBinaryHandler(project, root, GitCommand.SHOW);
+    GitBinaryHandler h = new GitBinaryHandler(project, root, GitCommand.CAT_FILE);
     h.setSilent(true);
+    if (CAT_FILE_SUPPORTS_FILTERS.existsIn(project)) {
+      h.addParameters("--filters");
+    }
+    else {
+      h.addParameters("-p");
+    }
     h.addParameters(revisionOrBranch + ":" + relativePath);
-    h.endOptions();
     return h.run();
   }
 
