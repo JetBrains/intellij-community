@@ -238,6 +238,13 @@ public enum GitVersionSpecialty {
     public boolean existsIn(@NotNull GitVersion version) {
       return version.isLaterOrEqual(new GitVersion(2, 11, 0, 0));
     }
+  },
+
+  CAT_FILE_SUPPORTS_TEXTCONV {
+    @Override
+    public boolean existsIn(@NotNull GitVersion version) {
+      return version.isLaterOrEqual(new GitVersion(2, 2, 0, 0));
+    }
   };
 
   public abstract boolean existsIn(@NotNull GitVersion version);
