@@ -3,6 +3,9 @@ package com.jetbrains.jsonSchema.impl;
 
 import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.psi.PsiElement;
+import com.jetbrains.jsonSchema.impl.fixes.AddMissingPropertyFix;
+import com.jetbrains.jsonSchema.impl.fixes.RemoveProhibitedPropertyFix;
+import com.jetbrains.jsonSchema.impl.fixes.SuggestEnumValuesFix;
 import org.jetbrains.annotations.Nullable;
 
 public class JsonValidationError {
@@ -27,10 +30,14 @@ public class JsonValidationError {
   public static class MissingPropertyIssueData implements IssueData {
     public final String propertyName;
     public final JsonSchemaType propertyType;
+    public final Object defaultValue;
+    public final boolean hasEnumItems;
 
-    public MissingPropertyIssueData(String propertyName, JsonSchemaType propertyType) {
+    public MissingPropertyIssueData(String propertyName, JsonSchemaType propertyType, Object defaultValue, boolean hasEnumItems) {
       this.propertyName = propertyName;
       this.propertyType = propertyType;
+      this.defaultValue = defaultValue;
+      this.hasEnumItems = hasEnumItems;
     }
   }
 
@@ -39,14 +46,6 @@ public class JsonValidationError {
 
     public ProhibitedPropertyIssueData(String propertyName) {
       this.propertyName = propertyName;
-    }
-  }
-
-  public static class NonEnumValueIssueData implements IssueData {
-    public final String[] expectedValues;
-
-    public NonEnumValueIssueData(String[] expectedValues) {
-      this.expectedValues = expectedValues;
     }
   }
 
@@ -78,6 +77,15 @@ public class JsonValidationError {
 
   @Nullable
   public LocalQuickFix createFix(PsiElement key) {
-    return null;
+    switch (myFixableIssueKind) {
+      case MissingProperty:
+        return new AddMissingPropertyFix(key, (MissingPropertyIssueData)myIssueData);
+      case ProhibitedProperty:
+        return new RemoveProhibitedPropertyFix(key, (ProhibitedPropertyIssueData)myIssueData);
+      case NonEnumValue:
+        return new SuggestEnumValuesFix(key);
+      default:
+        return null;
+    }
   }
 }
