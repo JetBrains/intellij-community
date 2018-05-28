@@ -19,7 +19,7 @@ import org.jetbrains.plugins.github.exceptions.GithubAuthenticationException
  */
 class GithubAuthenticationManager internal constructor(private val accountManager: GithubAccountManager) {
   @CalledInAny
-  fun hasAccounts() = accountManager.accounts.isNotEmpty()
+  fun hasAccounts(): Boolean = accountManager.accounts.isNotEmpty()
 
   @CalledInAny
   fun getAccounts(): Set<GithubAccount> = accountManager.accounts

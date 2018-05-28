@@ -1,6 +1,7 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.gradle.service.resolve
 
+import com.intellij.patterns.PsiJavaElementPattern
 import com.intellij.patterns.PsiJavaPatterns.psiElement
 import com.intellij.patterns.StandardPatterns.or
 import com.intellij.psi.PsiElement
@@ -10,6 +11,7 @@ import groovy.lang.Closure
 import org.jetbrains.plugins.gradle.service.resolve.GradleCommonClassNames.*
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrClosableBlock
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.TypesUtil
+import org.jetbrains.plugins.groovy.lang.psi.patterns.GroovyClosurePattern
 import org.jetbrains.plugins.groovy.lang.psi.patterns.groovyClosure
 import org.jetbrains.plugins.groovy.lang.psi.patterns.psiMethod
 import org.jetbrains.plugins.groovy.lang.resolve.delegatesTo.DelegatesToInfo
@@ -29,9 +31,9 @@ import org.jetbrains.plugins.groovy.lang.resolve.delegatesTo.DelegatesToInfo
  */
 class GradleMavenArtifactRepositoryContributor : GradleMethodContextContributor {
   companion object {
-    val repositoriesClosure = groovyClosure().inMethod(or(psiMethod(GRADLE_API_PROJECT, "repositories"),
-                                                          psiMethod(GRADLE_API_SCRIPT_HANDLER, "repositories")))
-    val repositoryClosure = psiElement().andOr(
+    val repositoriesClosure: GroovyClosurePattern = groovyClosure().inMethod(or(psiMethod(GRADLE_API_PROJECT, "repositories"),
+                                                                                psiMethod(GRADLE_API_SCRIPT_HANDLER, "repositories")))
+    val repositoryClosure: PsiJavaElementPattern.Capture<PsiElement> = psiElement().andOr(
       groovyClosure().withAncestor(2, repositoriesClosure),
       groovyClosure().inMethod(psiMethod(GRADLE_API_REPOSITORY_HANDLER, "maven")))
   }

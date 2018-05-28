@@ -29,5 +29,5 @@ class GithubAccountGitAuthenticationFailureManager {
     storeMap.compute(account) { _, current -> current?.plus(url) ?: setOf(url) }
   }
 
-  fun isAccountIgnored(url: String, account: GithubAccount) = storeMap[account]?.contains(url) ?: false
+  fun isAccountIgnored(url: String, account: GithubAccount): Boolean = storeMap[account]?.contains(url) ?: false
 }
