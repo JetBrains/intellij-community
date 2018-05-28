@@ -575,17 +575,16 @@ private mb_separators ::= separator*
 
 private top_levels ::= top_level_item* clear_error
 private top_level_item ::= <<addVariant "statement">> <<separated_item top_level_end top_level top_level_start>>
-private top_level ::= import | block_level
+private top_level ::= import | statement
 private top_level_start ::= 'import' | block_level_start
 private top_level_end ::= separators | <<eof>>
 
 private block_levels ::= block_level_item* clear_error
-private block_level_item ::= <<addVariant "statement">> <<separated_item block_level_end block_level block_level_start>>
-private block_level ::= type_definition | tuple_var_declaration | statement
+private block_level_item ::= <<addVariant "statement">> <<separated_item block_level_end statement block_level_start>>
 private block_level_start ::= statement_start | class_level_start
 private block_level_end ::= top_level_end | &'}'
 
-private case_level_item ::= <<addVariant "statement">> <<separated_item case_level_end block_level case_level_start>>
+private case_level_item ::= <<addVariant "statement">> <<separated_item case_level_end statement case_level_start>>
 private case_level_start ::= statement_start | class_level_start | 'case' | 'default'
 private case_level_end ::= block_level_end | &('case' | 'default')
 {
@@ -672,7 +671,7 @@ statement ::= if_statement
             | assert_statement
             | throw_statement
             | labeled_statement
-            | parse_block_declaration
+            | type_definition | <<withProtectedLastVariantPos tuple_var_declaration>> | parse_block_declaration
             | <<extendedStatement>>
             | expression_or_application
 {

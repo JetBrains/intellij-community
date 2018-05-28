@@ -1212,17 +1212,6 @@ public class GroovyGeneratedParser implements PsiParser, LightPsiParser {
   }
 
   /* ********************************************************** */
-  // type_definition | tuple_var_declaration | statement
-  static boolean block_level(PsiBuilder b, int l) {
-    if (!recursion_guard_(b, l, "block_level")) return false;
-    boolean r;
-    r = type_definition(b, l + 1);
-    if (!r) r = tuple_var_declaration(b, l + 1);
-    if (!r) r = statement(b, l + 1);
-    return r;
-  }
-
-  /* ********************************************************** */
   // top_level_end | &'}'
   static boolean block_level_end(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "block_level_end")) return false;
@@ -1245,13 +1234,13 @@ public class GroovyGeneratedParser implements PsiParser, LightPsiParser {
   }
 
   /* ********************************************************** */
-  // <<addVariant "statement">> <<separated_item block_level_end block_level block_level_start>>
+  // <<addVariant "statement">> <<separated_item block_level_end statement block_level_start>>
   static boolean block_level_item(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "block_level_item")) return false;
     boolean r;
     Marker m = enter_section_(b);
     r = addVariant(b, l + 1, "statement");
-    r = r && separated_item(b, l + 1, block_level_end_parser_, block_level_parser_, block_level_start_parser_);
+    r = r && separated_item(b, l + 1, block_level_end_parser_, statement_parser_, block_level_start_parser_);
     exit_section_(b, m, null, r);
     return r;
   }
@@ -1559,13 +1548,13 @@ public class GroovyGeneratedParser implements PsiParser, LightPsiParser {
   }
 
   /* ********************************************************** */
-  // <<addVariant "statement">> <<separated_item case_level_end block_level case_level_start>>
+  // <<addVariant "statement">> <<separated_item case_level_end statement case_level_start>>
   static boolean case_level_item(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "case_level_item")) return false;
     boolean r;
     Marker m = enter_section_(b);
     r = addVariant(b, l + 1, "statement");
-    r = r && separated_item(b, l + 1, case_level_end_parser_, block_level_parser_, case_level_start_parser_);
+    r = r && separated_item(b, l + 1, case_level_end_parser_, statement_parser_, case_level_start_parser_);
     exit_section_(b, m, null, r);
     return r;
   }
@@ -5410,7 +5399,7 @@ public class GroovyGeneratedParser implements PsiParser, LightPsiParser {
   //             | assert_statement
   //             | throw_statement
   //             | labeled_statement
-  //             | parse_block_declaration
+  //             | type_definition | <<withProtectedLastVariantPos tuple_var_declaration>> | parse_block_declaration
   //             | <<extendedStatement>>
   //             | expression_or_application
   public static boolean statement(PsiBuilder b, int l) {
@@ -5429,6 +5418,8 @@ public class GroovyGeneratedParser implements PsiParser, LightPsiParser {
     if (!r) r = assert_statement(b, l + 1);
     if (!r) r = throw_statement(b, l + 1);
     if (!r) r = labeled_statement(b, l + 1);
+    if (!r) r = type_definition(b, l + 1);
+    if (!r) r = withProtectedLastVariantPos(b, l + 1, tuple_var_declaration_parser_);
     if (!r) r = parse_block_declaration(b, l + 1);
     if (!r) r = extendedStatement(b, l + 1);
     if (!r) r = expression_or_application(b, l + 1);
@@ -5729,12 +5720,12 @@ public class GroovyGeneratedParser implements PsiParser, LightPsiParser {
   }
 
   /* ********************************************************** */
-  // import | block_level
+  // import | statement
   static boolean top_level(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "top_level")) return false;
     boolean r;
     r = import_$(b, l + 1);
-    if (!r) r = block_level(b, l + 1);
+    if (!r) r = statement(b, l + 1);
     return r;
   }
 
@@ -7353,11 +7344,6 @@ public class GroovyGeneratedParser implements PsiParser, LightPsiParser {
       return block_level_end(b, l + 1);
     }
   };
-  final static Parser block_level_parser_ = new Parser() {
-    public boolean parse(PsiBuilder b, int l) {
-      return block_level(b, l + 1);
-    }
-  };
   final static Parser block_level_start_parser_ = new Parser() {
     public boolean parse(PsiBuilder b, int l) {
       return block_level_start(b, l + 1);
@@ -7578,6 +7564,11 @@ public class GroovyGeneratedParser implements PsiParser, LightPsiParser {
       return semicolon_recovery(b, l + 1);
     }
   };
+  final static Parser statement_parser_ = new Parser() {
+    public boolean parse(PsiBuilder b, int l) {
+      return statement(b, l + 1);
+    }
+  };
   final static Parser throws_list_item_parser_ = new Parser() {
     public boolean parse(PsiBuilder b, int l) {
       return throws_list_item(b, l + 1);
@@ -7596,6 +7587,11 @@ public class GroovyGeneratedParser implements PsiParser, LightPsiParser {
   final static Parser top_level_start_parser_ = new Parser() {
     public boolean parse(PsiBuilder b, int l) {
       return top_level_start(b, l + 1);
+    }
+  };
+  final static Parser tuple_var_declaration_parser_ = new Parser() {
+    public boolean parse(PsiBuilder b, int l) {
+      return tuple_var_declaration(b, l + 1);
     }
   };
   final static Parser type_argument_list_item_parser_ = new Parser() {
