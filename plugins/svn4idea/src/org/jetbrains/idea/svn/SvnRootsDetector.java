@@ -183,10 +183,13 @@ public class SvnRootsDetector {
       myRoots.add(url);
     }
 
-    public Url ask(final Url url, VirtualFile file) {
-      for (Url root : myRoots) {
-        if (isAncestor(root, url)) {
-          return root;
+    @Nullable
+    public Url ask(@Nullable Url url, @NotNull VirtualFile file) {
+      if (url != null) {
+        for (Url root : myRoots) {
+          if (isAncestor(root, url)) {
+            return root;
+          }
         }
       }
       // TODO: Seems that RepositoryRoots class should be removed. And necessary repository root should be determined explicitly
