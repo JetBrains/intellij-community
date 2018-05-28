@@ -579,12 +579,17 @@ private top_level ::= import | statement
 private top_level_start ::= 'import' | block_level_start
 private top_level_end ::= separators | <<eof>>
 
+// FIXME parse extended statement inside statement rule, i.e. expect separators after extended statement
+private extended_statement_item ::= <<extendedStatement>> mb_separators
+
 block_levels ::= block_level_item* clear_error { elementType = '' name = '' }
-private block_level_item ::= <<addVariant "statement">> <<separated_item block_level_end statement block_level_start>>
+private block_level_item ::= extended_statement_item
+                           | <<addVariant "statement">> <<separated_item block_level_end statement block_level_start>>
 private block_level_start ::= statement_start | class_level_start
 private block_level_end ::= top_level_end | &'}'
 
-private case_level_item ::= <<addVariant "statement">> <<separated_item case_level_end statement case_level_start>>
+private case_level_item ::= extended_statement_item
+                          | <<addVariant "statement">> <<separated_item case_level_end statement case_level_start>>
 private case_level_start ::= statement_start | class_level_start | 'case' | 'default'
 private case_level_end ::= block_level_end | &('case' | 'default')
 {
@@ -672,12 +677,12 @@ statement ::= if_statement
             | throw_statement
             | labeled_statement
             | type_definition | <<withProtectedLastVariantPos tuple_var_declaration>> | parse_block_declaration
-            | <<extendedStatement>>
             | expression_or_application
 {
   elementType = ''
 }
 
+private branch ::= <<extendedStatement>> | block_or_statement
 private block_or_statement ::= block_statement | statement
 
 block_statement ::= lazy_block
@@ -686,11 +691,11 @@ if_statement ::= 'if' after_if_keyword
 {
   pin = 1
 }
-private after_if_keyword ::= '(' mb_nl expression mb_nl ')' mb_nl block_or_statement [mb_nl ';'] else_branch?
+private after_if_keyword ::= '(' mb_nl expression mb_nl ')' mb_nl branch [mb_nl ';'] else_branch?
 {
   pin = 1
 }
-private else_branch ::= mb_nl 'else' mb_nl block_or_statement
+private else_branch ::= mb_nl 'else' mb_nl branch
 {
   pin = 2
 }
@@ -733,12 +738,12 @@ finally_clause ::= 'finally' lazy_block
   pin = 1
 }
 
-while_statement ::= 'while' ('(' mb_nl expression mb_nl ')' mb_nl block_or_statement)
+while_statement ::= 'while' ('(' mb_nl expression mb_nl ')' mb_nl branch)
 {
   pin('.*') = 1
 }
 
-for_statement ::= 'for' (('(' mb_nl for_clause mb_nl ')') mb_nl block_or_statement?)
+for_statement ::= 'for' (('(' mb_nl for_clause mb_nl ')') mb_nl for_body?)
 {
   pin('.*') = 1
 }
@@ -762,6 +767,8 @@ traditional_for_parameter ::= for_parameter_inner mb_initializer
 }
 private semicolon_recovery ::= !';' r_par_recovery
 private r_par_recovery ::= !')'
+// FIXME get rid of this weird logic
+private for_body ::= &<<extendedStatement>> | block_or_statement
 
 synchronized_statement ::= 'synchronized' '(' expression ')' lazy_block
 {
