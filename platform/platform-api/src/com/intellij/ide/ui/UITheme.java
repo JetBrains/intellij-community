@@ -23,7 +23,6 @@ import java.util.Map;
  * @author Konstantin Bulenkov
  */
 public class UITheme {
-  private Map<String, Object> myProperties;
   private String name;
   private boolean dark;
   private String author;
@@ -78,10 +77,6 @@ public class UITheme {
         defaults.put(key, value);
       }
     }
-  }
-
-  public void removeProperties(UIDefaults defaults) {
-
   }
 
   public static Object parseValue(String key, @NotNull String value) {
@@ -154,14 +149,9 @@ public class UITheme {
     return new JBDimension(Integer.parseInt(numbers.get(0)), Integer.parseInt(numbers.get(1))).asUIResource();
   }
 
-
-  //public static void main(String[] args) throws IOException {
-  //  try (FileInputStream stream = new FileInputStream("C:\\IDEA\\community\\platform\\platform-api\\src\\com\\intellij\\ide\\ui\\example.theme.json")) {
-  //    loadFromJson(stream);
-  //  }
-  //}
-
+  //
   //json deserialization methods
+  //
 
   @SuppressWarnings("unused")
   private void setName(String name) {
