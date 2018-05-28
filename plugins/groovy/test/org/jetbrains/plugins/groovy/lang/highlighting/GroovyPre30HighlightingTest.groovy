@@ -22,4 +22,12 @@ class GroovyPre30HighlightingTest extends GrHighlightingTestBase {
   void 'test safe index access'() {
     fixture.testHighlighting testName + '.groovy'
   }
+
+  void 'test negated in'() {
+    fixture.testHighlighting testName + '.groovy'
+  }
+
+  void 'test negated instanceof'() {
+    fixture.testHighlighting testName + '.groovy'
+  }
 }
