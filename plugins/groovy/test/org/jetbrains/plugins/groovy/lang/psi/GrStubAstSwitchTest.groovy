@@ -350,8 +350,8 @@ class C {
           assert decl.valid
         }
       }
-      catch (any) {
-        throw new RuntimeException("Failed with cancelAt=$cancelAt", any)
+      catch (Throwable e) {
+        throw new RuntimeException("Failed with cancelAt=$cancelAt", e)
       }
     }
 
