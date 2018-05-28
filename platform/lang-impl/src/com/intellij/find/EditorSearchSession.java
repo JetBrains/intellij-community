@@ -23,6 +23,7 @@ import com.intellij.openapi.editor.event.SelectionEvent;
 import com.intellij.openapi.editor.event.SelectionListener;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.wm.IdeFocusManager;
@@ -339,7 +340,12 @@ public class EditorSearchSession implements SearchSession,
 
   private void replaceCurrent() {
     if (mySearchResults.getCursor() != null) {
-      myLivePreviewController.performReplace();
+      try {
+        myLivePreviewController.performReplace();
+      }
+      catch (FindManager.MalformedReplacementStringException e) {
+        Messages.showErrorDialog(myComponent, e.getMessage(), FindBundle.message("find.replace.invalid.replacement.string.title"));
+      }
     }
   }
 

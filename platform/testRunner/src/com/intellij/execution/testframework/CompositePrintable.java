@@ -16,6 +16,7 @@
 package com.intellij.execution.testframework;
 
 import com.intellij.execution.filters.HyperlinkInfo;
+import com.intellij.execution.process.ProcessOutputTypes;
 import com.intellij.execution.testframework.stacktrace.DiffHyperlink;
 import com.intellij.execution.testframework.ui.TestsOutputConsolePrinter;
 import com.intellij.execution.ui.ConsoleViewContentType;
@@ -351,7 +352,7 @@ public class CompositePrintable extends UserDataHolderBase implements Printable,
                 ConsoleViewContentType contentType = contentTypeByNameMap.getOrDefault(firstToken, ConsoleViewContentType.NORMAL_OUTPUT);
                 String text = IOUtil.readString(reader);
                 if (text != null) {
-                  printer.print(text, contentType);
+                  printText(printer, text, contentType);
                 }
               }
               lineNum++;
@@ -371,6 +372,18 @@ public class CompositePrintable extends UserDataHolderBase implements Printable,
       for (int i = 0; i < nestedPrintables.size(); i++) {
         if (i == getExceptionMark() && i > 0) printer.mark();
         nestedPrintables.get(i).printOn(printer);
+      }
+    }
+
+    private void printText(@NotNull Printer printer, @NotNull String text, @NotNull ConsoleViewContentType contentType) {
+      if (ConsoleViewContentType.NORMAL_OUTPUT.equals(contentType)) {
+        printer.printWithAnsiColoring(text, ProcessOutputTypes.STDOUT);
+      }
+      else if (ConsoleViewContentType.ERROR_OUTPUT.equals(contentType)) {
+        printer.printWithAnsiColoring(text, ProcessOutputTypes.STDERR);
+      }
+      else {
+        printer.print(text, contentType);
       }
     }
 

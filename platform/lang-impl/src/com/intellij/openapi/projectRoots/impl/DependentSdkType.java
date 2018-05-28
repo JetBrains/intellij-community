@@ -19,7 +19,6 @@ import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.projectRoots.SdkModel;
 import com.intellij.openapi.projectRoots.SdkType;
 import com.intellij.openapi.ui.Messages;
-import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Ref;
 import com.intellij.util.Consumer;
 import com.intellij.util.containers.ContainerUtil;
@@ -68,7 +67,7 @@ public abstract class DependentSdkType extends SdkType {
     createSdkOfType(sdkModel, this, sdkCreatedCallback);
   }
 
-  protected abstract SdkType getDependencyType();
+  public abstract SdkType getDependencyType();
 
   protected Sdk fixDependency(SdkModel sdkModel, Consumer<Sdk> sdkCreatedCallback) {
     return createSdkOfType(sdkModel, getDependencyType(), sdkCreatedCallback);

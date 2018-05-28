@@ -15,8 +15,8 @@ internal fun <T : Any> PsiAnnotationMemberValue.getArrayValue(computeValue: (Psi
   return AnnotationUtil.arrayAttributeValues(this).mapNotNull(computeValue)
 }
 
-fun PsiAnnotationMemberValue?.booleanValue() = (this as? PsiLiteral)?.value as? Boolean
+fun PsiAnnotationMemberValue?.booleanValue(): Boolean? = (this as? PsiLiteral)?.value as? Boolean
 
-fun PsiAnnotationMemberValue?.stringValue() = (this as? PsiLiteral)?.value as? String
+fun PsiAnnotationMemberValue?.stringValue(): String? = (this as? PsiLiteral)?.value as? String
 
-fun GrModifierList.hasAnnotation(fqn: String) = annotations.any { it.qualifiedName == fqn }
+fun GrModifierList.hasAnnotation(fqn: String): Boolean = annotations.any { it.qualifiedName == fqn }

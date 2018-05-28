@@ -88,15 +88,21 @@ public class MethodBreakpoint extends BreakpointWithHighlighter<JavaMethodBreakp
     return super.isValid() && getMethodName() != null;
   }
 
-  protected void reload(@NotNull PsiFile psiFile) {
+  @Override
+  public void reload() {
+    super.reload();
+
     setMethodName(null);
     mySignature = null;
 
-    MethodDescriptor descriptor = getMethodDescriptor(myProject, psiFile, getSourcePosition());
-    if (descriptor != null) {
-      setMethodName(descriptor.methodName);
-      mySignature = descriptor.methodSignature;
-      myIsStatic = descriptor.isStatic;
+    SourcePosition sourcePosition = getSourcePosition();
+    if (sourcePosition != null) {
+      MethodDescriptor descriptor = getMethodDescriptor(myProject, sourcePosition);
+      if (descriptor != null) {
+        setMethodName(descriptor.methodName);
+        mySignature = descriptor.methodSignature;
+        myIsStatic = descriptor.isStatic;
+      }
     }
     PsiClass psiClass = getPsiClass();
     if (psiClass != null) {
@@ -431,13 +437,8 @@ public class MethodBreakpoint extends BreakpointWithHighlighter<JavaMethodBreakp
    * finds FQ method's class name and method's signature
    */
   @Nullable
-  private static MethodDescriptor getMethodDescriptor(@NotNull final Project project,
-                                                      @NotNull final PsiFile psiJavaFile,
-                                                      @Nullable final SourcePosition sourcePosition) {
-    if (sourcePosition == null) {
-      return null;
-    }
-    Document document = PsiDocumentManager.getInstance(project).getDocument(psiJavaFile);
+  private static MethodDescriptor getMethodDescriptor(@NotNull final Project project, @NotNull final SourcePosition sourcePosition) {
+    Document document = PsiDocumentManager.getInstance(project).getDocument(sourcePosition.getFile());
     if (document == null) {
       return null;
     }

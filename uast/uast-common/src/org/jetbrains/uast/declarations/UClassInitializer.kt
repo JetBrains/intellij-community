@@ -16,6 +16,7 @@
 package org.jetbrains.uast
 
 import com.intellij.psi.PsiClassInitializer
+import com.intellij.psi.PsiCodeBlock
 
 import org.jetbrains.uast.internal.acceptList
 import org.jetbrains.uast.internal.log
@@ -34,7 +35,7 @@ interface UClassInitializer : UDeclaration, PsiClassInitializer {
   val uastBody: UExpression
 
   @Deprecated("Use uastBody instead.", ReplaceWith("uastBody"))
-  override fun getBody() = psi.body
+  override fun getBody(): PsiCodeBlock = psi.body
 
   override fun accept(visitor: UastVisitor) {
     if (visitor.visitInitializer(this)) return
@@ -43,13 +44,13 @@ interface UClassInitializer : UDeclaration, PsiClassInitializer {
     visitor.afterVisitInitializer(this)
   }
 
-  override fun asRenderString() = buildString {
+  override fun asRenderString(): String = buildString {
     append(modifierList)
     appendln(uastBody.asRenderString().withMargin)
   }
 
-  override fun <D, R> accept(visitor: UastTypedVisitor<D, R>, data: D) =
+  override fun <D, R> accept(visitor: UastTypedVisitor<D, R>, data: D): R =
     visitor.visitClassInitializer(this, data)
 
-  override fun asLogString() = log("isStatic = $isStatic")
+  override fun asLogString(): String = log("isStatic = $isStatic")
 }

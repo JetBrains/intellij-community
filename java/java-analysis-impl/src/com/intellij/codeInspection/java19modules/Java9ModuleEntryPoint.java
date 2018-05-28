@@ -81,7 +81,7 @@ public class Java9ModuleEntryPoint extends EntryPointWithVisibilityLevel {
         return PsiUtil.ACCESS_LEVEL_PACKAGE_LOCAL;
       }
     }
-    return -1;
+    return ACCESS_LEVEL_INVALID;
   }
 
   @Override
@@ -95,7 +95,7 @@ public class Java9ModuleEntryPoint extends EntryPointWithVisibilityLevel {
   }
 
   @Override
-  public boolean keepVisibilityLevel(boolean entryPointEnabled, RefJavaElement refJavaElement) {
+  public boolean keepVisibilityLevel(boolean entryPointEnabled, @NotNull RefJavaElement refJavaElement) {
     if (refJavaElement instanceof RefClass) {
       RefClass refClass = (RefClass)refJavaElement;
       RefModule refModule = refClass.getModule();

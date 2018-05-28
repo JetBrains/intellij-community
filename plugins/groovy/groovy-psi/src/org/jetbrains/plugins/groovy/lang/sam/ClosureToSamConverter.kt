@@ -28,7 +28,7 @@ class ClosureToSamConverter : GrTypeConverter() {
 
   private val myPositions = setOf(ASSIGNMENT, RETURN_VALUE, METHOD_PARAMETER)
 
-  override fun isApplicableTo(position: ApplicableTo) = position in myPositions
+  override fun isApplicableTo(position: ApplicableTo): Boolean = position in myPositions
 
   override fun isConvertibleEx(targetType: PsiType, actualType: PsiType, context: GroovyPsiElement,
                                currentPosition: ApplicableTo): ConversionResult? {

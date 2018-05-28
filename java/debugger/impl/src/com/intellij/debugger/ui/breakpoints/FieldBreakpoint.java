@@ -109,8 +109,8 @@ public class FieldBreakpoint extends BreakpointWithHighlighter<JavaFieldBreakpoi
   }
 
   @Override
-  protected void reload(PsiFile psiFile) {
-    super.reload(psiFile);
+  public void reload() {
+    super.reload();
     PsiField field = PositionUtil.getPsiElementAt(myProject, PsiField.class, getSourcePosition());
     if (field != null) {
       setFieldName(field.getName());

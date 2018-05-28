@@ -2,6 +2,7 @@
 package com.jetbrains.jsonSchema.impl;
 
 import com.intellij.codeInspection.LocalInspectionToolSession;
+import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.codeInspection.ProblemsHolder;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.Ref;
@@ -76,11 +77,17 @@ public class JsonSchemaComplianceChecker {
 
   private void createWarnings(@Nullable JsonSchemaAnnotatorChecker checker) {
     if (checker != null && ! checker.isCorrect()) {
-      for (Map.Entry<PsiElement, String> entry : checker.getErrors().entrySet()) {
+      for (Map.Entry<PsiElement, JsonValidationError> entry : checker.getErrors().entrySet()) {
         if (checkIfAlreadyProcessed(entry.getKey())) continue;
-        String value = entry.getValue();
+        String value = entry.getValue().getMessage();
         if (myMessagePrefix != null) value = myMessagePrefix + value;
-        myHolder.registerProblem(entry.getKey(), value);
+        LocalQuickFix fix = entry.getValue().createFix(entry.getKey());
+        if (fix == null) {
+          myHolder.registerProblem(entry.getKey(), value);
+        }
+        else {
+          myHolder.registerProblem(entry.getKey(), value, fix);
+        }
       }
     }
   }

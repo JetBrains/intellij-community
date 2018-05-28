@@ -135,7 +135,11 @@ public class HardcodedContracts {
                     staticCall(JAVA_LANG_MATH, "min").parameterTypes("long", "long"),
                     staticCall(JAVA_LANG_INTEGER, "min").parameterTypes("int", "int"),
                     staticCall(JAVA_LANG_LONG, "min").parameterTypes("long", "long")),
-              (call, paramCount) -> mathMinMax(false));
+              (call, paramCount) -> mathMinMax(false))
+    .register(instanceCall(JAVA_LANG_STRING, "startsWith", "endsWith", "contains"),
+              ContractProvider.single(() -> MethodContract.singleConditionContract(
+                ContractValue.qualifier().specialField(SpecialField.STRING_LENGTH), RelationType.LT,
+                ContractValue.argument(0).specialField(SpecialField.STRING_LENGTH), returnFalse())));
 
   public static List<MethodContract> getHardcodedContracts(@NotNull PsiMethod method, @Nullable PsiMethodCallExpression call) {
     PsiClass owner = method.getContainingClass();
@@ -279,7 +283,7 @@ public class HardcodedContracts {
   }
 
   @Nullable
-  private static ValueConstraint constraintFromMatcher(PsiExpression expr) {
+  private static ValueConstraint constraintFromMatcher(PsiExpression expr, boolean negate) {
     if (expr instanceof PsiMethodCallExpression) {
       String calledName = ((PsiMethodCallExpression)expr).getMethodExpression().getReferenceName();
       PsiExpression[] args = ((PsiMethodCallExpression)expr).getArgumentList().getExpressions();
@@ -309,27 +313,25 @@ public class HardcodedContracts {
         case "hasToString":
         case "hasValue":
         case "hasXPath":
+          return negate ? null : NULL_VALUE;
         case "notNullValue":
-          return NULL_VALUE;
+          return negate ? NOT_NULL_VALUE : NULL_VALUE;
         case "nullValue":
-          return NOT_NULL_VALUE;
+          return negate ? NULL_VALUE : NOT_NULL_VALUE;
         case "equalTo":
           if (args.length == 1) {
-            return constraintFromLiteral(args[0]);
+            return constraintFromLiteral(args[0], negate);
           }
           return null;
         case "not":
           if (args.length == 1) {
-            ValueConstraint constraint = constraintFromMatcher(args[0]);
-            if (constraint != null) {
-              return constraint.negate();
-            }
+            return constraintFromMatcher(args[0], !negate);
           }
           return null;
         case "is":
           if (args.length == 1) {
-            ValueConstraint fromMatcher = constraintFromMatcher(args[0]);
-            return fromMatcher == null ? constraintFromLiteral(args[0]) : fromMatcher;
+            ValueConstraint fromMatcher = constraintFromMatcher(args[0], negate);
+            return fromMatcher == null ? constraintFromLiteral(args[0], negate) : fromMatcher;
           }
           return null;
       }
@@ -338,13 +340,13 @@ public class HardcodedContracts {
   }
 
   @Nullable
-  private static ValueConstraint constraintFromLiteral(PsiExpression arg) {
+  private static ValueConstraint constraintFromLiteral(PsiExpression arg, boolean negate) {
     arg = PsiUtil.skipParenthesizedExprDown(arg);
     if (!(arg instanceof PsiLiteralExpression)) return null;
     Object value = ((PsiLiteralExpression)arg).getValue();
-    if (value == null) return NOT_NULL_VALUE;
-    if (Boolean.TRUE.equals(value)) return FALSE_VALUE;
-    if (Boolean.FALSE.equals(value)) return TRUE_VALUE;
+    if (value == null) return negate ? NULL_VALUE : NOT_NULL_VALUE;
+    if (Boolean.TRUE.equals(value)) return negate ? TRUE_VALUE : FALSE_VALUE;
+    if (Boolean.FALSE.equals(value)) return negate ? FALSE_VALUE : TRUE_VALUE;
     return null;
   }
 
@@ -353,7 +355,7 @@ public class HardcodedContracts {
     PsiExpression[] args = call.getArgumentList().getExpressions();
     if (args.length == paramCount) {
       for (int i = 1; i < args.length; i++) {
-        ValueConstraint constraint = constraintFromMatcher(args[i]);
+        ValueConstraint constraint = constraintFromMatcher(args[i], false);
         if (constraint != null) {
           ValueConstraint[] constraints = createConstraintArray(paramCount);
           constraints[i - 1] = constraint;

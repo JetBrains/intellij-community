@@ -7,6 +7,7 @@ import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.ScalableIcon;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.registry.Registry;
+import com.intellij.ui.Gray;
 import com.intellij.ui.JBColor;
 import com.intellij.ui.border.CustomLineBorder;
 import com.intellij.util.LazyInitializer.NotNullValue;
@@ -1599,23 +1600,29 @@ public class JBUI {
       private static final Color GRAPHITE_COLOR = new JBColor(new Color(0x8099979d, true), new Color(0x676869));
 
       public static Color focusColor() {
-        return UIUtil.isGraphite() ? GRAPHITE_COLOR : JBColor.namedColor("Focus.borderColor", new JBColor(0x8ab2eb, 0x395d82));
+        return UIUtil.isGraphite() ? GRAPHITE_COLOR : JBColor.namedColor("Focus.borderColor", 0x8ab2eb);
       }
 
       public static Color defaultButtonColor() {
-        return UIUtil.isUnderDarcula() ? JBColor.namedColor("Focus.defaultButtonBorderColor", new JBColor(0x97c3f3, 0x43688c)) : focusColor();
+        return UIUtil.isUnderDarcula() ? JBColor.namedColor("Focus.defaultButtonBorderColor", 0x97c3f3) : focusColor();
       }
 
       public static Color errorColor(boolean active) {
-        return active ?
-               JBColor.namedColor("Focus.activeErrorBorderColor", new JBColor(0xe53e4d, 0x8b3c3c)) :
-               JBColor.namedColor("Focus.inactiveErrorBorderColor", new JBColor(0xebbcbc, 0x725252));
+        return active ? JBColor.namedColor("Focus.activeErrorBorderColor", 0xe53e4d) :
+                        JBColor.namedColor("Focus.inactiveErrorBorderColor", 0xebbcbc);
       }
 
       public static Color warningColor(boolean active) {
-        return active ?
-               JBColor.namedColor("Focus.activeWarningBorderColor", new JBColor(0xe2a53a, 0xac7920)) :
-               JBColor.namedColor("Focus.inactiveWarningBorderColor", new JBColor(0xffd385, 0x6e5324));
+        return active ? JBColor.namedColor("Focus.activeWarningBorderColor", 0xe2a53a) :
+                        JBColor.namedColor("Focus.inactiveWarningBorderColor",0xffd385);
+      }
+
+      public static class TabbedPane {
+        public static final Color ENABLED_SELECTED_COLOR = JBColor.namedColor("TabbedPane.selectedСolor", 0x357ecc);
+        public static final Color DISABLED_SELECTED_COLOR = JBColor.namedColor("TabbedPane.selectedDisabledColor", Gray.xAB);
+        public static final Color HOVER_COLOR = JBColor.namedColor("TabbedPane.hoverColor", Gray.xD9);
+        public static final JBValue TAB_HEIGHT = new JBValue.UIInteger("TabbedPane.tabHeight", 32);
+        public static final JBValue SELECTION_HEIGHT = new JBValue.UIInteger("TabbedPane.tabSelectionHeight", 2);
       }
     }
 

@@ -49,13 +49,13 @@ public interface GroovyElementTypes {
   GrNameValuePairElementType ANNOTATION_MEMBER_VALUE_PAIR = new GrNameValuePairElementType("ANNOTATION_MEMBER_VALUE_PAIR");
   GrAnnotationMethodElementType ANNOTATION_METHOD = new GrAnnotationMethodElementType("ANNOTATION_METHOD");
   GrAnnotationDefinitionElementType ANNOTATION_TYPE_DEFINITION = new GrAnnotationDefinitionElementType("ANNOTATION_TYPE_DEFINITION");
-  GrAnonymousElementType ANONYMOUS_CLASS = new GrAnonymousElementType("ANONYMOUS_CLASS");
+  GrAnonymousElementType ANONYMOUS_TYPE_DEFINITION = new GrAnonymousElementType("ANONYMOUS_TYPE_DEFINITION");
   GroovyElementType APPLICATION_ARGUMENT_LIST = new GroovyElementType("APPLICATION_ARGUMENT_LIST");
   GroovyElementType APPLICATION_EXPRESSION = new GroovyElementType("APPLICATION_EXPRESSION");
   GroovyElementType APPLICATION_INDEX = new GroovyElementType("APPLICATION_INDEX");
   GroovyElementType ARGUMENT_LABEL = new GroovyElementType("ARGUMENT_LABEL");
   GroovyElementType ARGUMENT_LIST = new GroovyElementType("ARGUMENT_LIST");
-  GroovyElementType ARRAY_DECLARATOR = new GroovyElementType("ARRAY_DECLARATOR");
+  GroovyElementType ARRAY_DECLARATION = new GroovyElementType("ARRAY_DECLARATION");
   GroovyElementType ARRAY_TYPE_ELEMENT = new GroovyElementType("ARRAY_TYPE_ELEMENT");
   GroovyElementType ASSERT_STATEMENT = new GroovyElementType("ASSERT_STATEMENT");
   GroovyElementType ASSIGNMENT_EXPRESSION = new GroovyElementType("ASSIGNMENT_EXPRESSION");
@@ -149,7 +149,7 @@ public interface GroovyElementTypes {
   GroovyElementType TYPE_ARGUMENT_LIST = new GroovyElementType("TYPE_ARGUMENT_LIST");
   GroovyElementType TYPE_ELEMENT = new GroovyElementType("TYPE_ELEMENT");
   GrTypeParameterElementType TYPE_PARAMETER = new GrTypeParameterElementType("TYPE_PARAMETER");
-  GrTypeParameterBoundsElementType TYPE_PARAMETER_BOUNDS = new GrTypeParameterBoundsElementType("TYPE_PARAMETER_BOUNDS");
+  GrTypeParameterBoundsElementType TYPE_PARAMETER_BOUNDS_LIST = new GrTypeParameterBoundsElementType("TYPE_PARAMETER_BOUNDS_LIST");
   GrTypeParameterListElementType TYPE_PARAMETER_LIST = new GrTypeParameterListElementType("TYPE_PARAMETER_LIST");
   GroovyElementType UNARY_EXPRESSION = new GroovyElementType("UNARY_EXPRESSION");
   GrVariableElementType VARIABLE = new GrVariableElementType("VARIABLE");

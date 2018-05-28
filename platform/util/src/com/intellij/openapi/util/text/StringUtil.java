@@ -1,6 +1,7 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.util.text;
 
+import com.intellij.ReviseWhenPortedToJDK;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.util.Pair;
@@ -143,6 +144,7 @@ public class StringUtil extends StringUtilRt {
 
   // Unlike String.replace(CharSequence,CharSequence) does not allocate intermediate objects on non-match
   // TODO revise when JDK9 arrives - its String.replace(CharSequence, CharSequence) is more optimized
+  @ReviseWhenPortedToJDK("9")
   @NotNull
   @Contract(pure = true)
   public static String replace(@NonNls @NotNull String text, @NonNls @NotNull String oldS, @NonNls @NotNull String newS) {

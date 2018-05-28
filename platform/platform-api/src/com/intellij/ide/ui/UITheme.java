@@ -10,7 +10,6 @@ import com.intellij.util.ui.JBInsets;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
-import javax.swing.plaf.BorderUIResource;
 import javax.swing.plaf.ColorUIResource;
 import javax.swing.plaf.IconUIResource;
 import java.awt.*;
@@ -58,12 +57,29 @@ public class UITheme {
     }
   }
 
-  private void apply(String key, Object value, UIDefaults defaults) {
+  private static void apply(String key, Object value, UIDefaults defaults) {
     if (value instanceof HashMap) {
       for (Map.Entry<String, Object> o : ((HashMap<String, Object>)value).entrySet()) {
-        //todo[kb] transform to properties or parse by a new way?
+        apply(key + "." + o.getKey(), o.getValue(), defaults);
+      }
+    } else {
+      if (value instanceof String) {
+        value = parseString(key, (String)value);
+      }
+      if (key.startsWith("*.")) {
+        //todo[kb] apply for all properties
+      } else {
+        defaults.put(key, value);
       }
     }
+  }
+
+  private static Object parseString(String key, String value) {
+    //todo[kb] merge with parsing properties file in DarculaLaf
+    if (value.startsWith("#")) {
+      return ColorUtil.fromHex(value);
+    }
+    return value;
   }
 
   public void removeProperties(UIDefaults defaults) {
@@ -77,14 +93,9 @@ public class UITheme {
 
     if (key.endsWith("Insets") || key.endsWith("padding")) {
       return parseInsets(value);
-    } else if (key.endsWith("Border") || key.endsWith("border")) {
-
+    } else if (key.endsWith("border")) {
       try {
-        if (StringUtil.split(value, ",").size() == 4) {
-          return new BorderUIResource.EmptyBorderUIResource(parseInsets(value));
-        } else {
-          return Class.forName(value).newInstance();
-        }
+        return Class.forName(value).newInstance();
       } catch (Exception e) {
         e.printStackTrace();
       }

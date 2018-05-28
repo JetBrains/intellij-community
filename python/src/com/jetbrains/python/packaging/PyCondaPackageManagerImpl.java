@@ -61,7 +61,7 @@ public class PyCondaPackageManagerImpl extends PyPackageManagerImpl {
     if (useConda) {
       final ArrayList<String> arguments = new ArrayList<>();
       for (PyRequirement requirement : requirements) {
-        arguments.add(requirement.toString());
+        arguments.add(requirement.getPresentableText());
       }
       arguments.add("-y");
       if (!extraArgs.contains("-U")) {
@@ -154,7 +154,7 @@ public class PyCondaPackageManagerImpl extends PyPackageManagerImpl {
   }
 
   @NotNull
-  protected static List<PyPackage> parseCondaToolOutput(@NotNull String s) throws ExecutionException {
+  private List<PyPackage> parseCondaToolOutput(@NotNull String s) throws ExecutionException {
     final String[] lines = StringUtil.splitByLines(s);
     final List<PyPackage> packages = new ArrayList<>();
     for (String line : lines) {
@@ -169,7 +169,7 @@ public class PyCondaPackageManagerImpl extends PyPackageManagerImpl {
       if (fields.size() >= 4) {
         final String requiresLine = fields.get(3);
         final String requiresSpec = StringUtil.join(StringUtil.split(requiresLine, ":"), "\n");
-        requirements.addAll(PyPackageUtil.fix(PyRequirement.fromText(requiresSpec)));
+        requirements.addAll(parseRequirements(requiresSpec));
       }
       if (!"Python".equals(name)) {
         packages.add(new PyPackage(name, version, "", requirements));

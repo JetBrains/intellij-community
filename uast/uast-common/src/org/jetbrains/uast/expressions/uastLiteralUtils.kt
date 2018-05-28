@@ -105,7 +105,7 @@ fun ULiteralExpression.getLongValue(): Long = value.let {
 /**
  * @return corresponding [PsiLanguageInjectionHost] for this literal expression if it exists.
  */
-val ULiteralExpression.psiLanguageInjectionHost
+val ULiteralExpression.psiLanguageInjectionHost: PsiLanguageInjectionHost?
   get() = this.psi?.let { PsiTreeUtil.getParentOfType(it, PsiLanguageInjectionHost::class.java, false) }
 
 /**

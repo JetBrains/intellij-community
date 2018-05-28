@@ -25,7 +25,7 @@ import org.jetbrains.plugins.groovy.lang.resolve.wrapClassType
 
 class LogbackDelegateMemberContributor : NonCodeMembersContributor() {
 
-  override fun getParentClassName() = componentDelegateFqn
+  override fun getParentClassName(): String = componentDelegateFqn
 
   override fun processDynamicElements(qualifierType: PsiType, processor: PsiScopeProcessor, place: PsiElement, state: ResolveState) {
     val name = processor.getHint(NameHint.KEY)?.getName(state)
@@ -113,7 +113,7 @@ class LogbackDelegateMemberContributor : NonCodeMembersContributor() {
       return true
     }
 
-    override fun <T : Any?> getHint(hintKey: Key<T>) = if (hintKey == ElementClassHint.KEY) {
+    override fun <T : Any?> getHint(hintKey: Key<T>): T? = if (hintKey == ElementClassHint.KEY) {
       @Suppress("UNCHECKED_CAST")
       ElementClassHint { it == ElementClassHint.DeclarationKind.METHOD } as T
     }

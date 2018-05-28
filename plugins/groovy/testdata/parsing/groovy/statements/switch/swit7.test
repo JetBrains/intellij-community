@@ -7,7 +7,7 @@ Groovy script
   PsiWhiteSpace(' ')
   Literal
     PsiElement(Integer)('1')
-  PsiErrorElement:<expression> expected, got ':'
+  PsiErrorElement:':' unexpected
     PsiElement(:)(':')
   PsiWhiteSpace(' ')
   Additive expression

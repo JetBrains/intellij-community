@@ -70,7 +70,7 @@ class DirectoryChangesGroupingPolicy(val project: Project, val model: DefaultTre
   }
 
   class Factory(val project: Project) : ChangesGroupingPolicyFactory() {
-    override fun createGroupingPolicy(model: DefaultTreeModel) = DirectoryChangesGroupingPolicy(project, model)
+    override fun createGroupingPolicy(model: DefaultTreeModel): DirectoryChangesGroupingPolicy = DirectoryChangesGroupingPolicy(project, model)
   }
 
   companion object {

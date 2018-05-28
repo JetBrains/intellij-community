@@ -432,9 +432,13 @@ public class RunContentManagerImpl implements RunContentManager, Disposable {
       return null;
     }
     final RunContentDescriptor oldDescriptor = getRunContentDescriptorByContent(content);
-    if (oldDescriptor != null && !oldDescriptor.isContentReuseProhibited() ) {
-      //content.setExecutionId(executionId);
-      return oldDescriptor;
+    if (oldDescriptor != null) {
+      if (oldDescriptor.isContentReuseProhibited()) {
+        return null;
+      }
+      if (descriptor != null && oldDescriptor.getReusePolicy().canBeReusedBy(descriptor)) {
+        return oldDescriptor;
+      }
     }
 
     return null;

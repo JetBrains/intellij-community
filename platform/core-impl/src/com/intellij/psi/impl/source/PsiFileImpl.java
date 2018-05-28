@@ -227,7 +227,7 @@ public abstract class PsiFileImpl extends ElementBase implements PsiFileEx, PsiF
     AstSpine astSpine = calcTreeElement().getStubbedSpine();
     if (!myTrees.useSpineRefs()) {
       synchronized (myPsiLock) {
-        updateTrees(myTrees.switchToSpineRefs(astSpine));
+        updateTrees(myTrees.switchToSpineRefs(FileTrees.getAllSpinePsi(astSpine)));
       }
     }
     return astSpine;

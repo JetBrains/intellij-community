@@ -26,7 +26,7 @@ class MethodChainHintsPassFactory(project: Project, registrar: TextEditorHighlig
   }
 
   companion object {
-    val modificationStampHolder = ModificationStampHolder(Key.create("METHOD_CHAIN_PASS_LAST_MODIFICATION_TIMESTAMP"))
+    val modificationStampHolder: ModificationStampHolder = ModificationStampHolder(Key.create("METHOD_CHAIN_PASS_LAST_MODIFICATION_TIMESTAMP"))
   }
 
 }

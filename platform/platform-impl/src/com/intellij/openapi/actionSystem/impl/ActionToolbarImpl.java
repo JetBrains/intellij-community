@@ -982,12 +982,26 @@ public class ActionToolbarImpl extends JPanel implements ActionToolbar, QuickAct
 
     @Override
     public Dimension getPreferredSize() {
+      int gap = JBUI.scale(2);
+      int center = JBUI.scale(3);
+      int width = gap * 2 + center;
+      int height = JBUI.scale(24);
+
       if (myOrientation == SwingConstants.HORIZONTAL) {
-        int separatorWidth = myText == null ? 0 : getFontMetrics(getFont()).stringWidth(myText) + JBUI.scale(4);
-        return JBUI.size(7 + separatorWidth, 24);
+        if (myText != null) {
+          FontMetrics fontMetrics = getFontMetrics(getFont());
+
+          int textWidth = getTextWidth(fontMetrics, myText, getGraphics());
+          return new JBDimension(width + gap * 2 + textWidth,
+                                 Math.max(fontMetrics.getHeight(), height), true);
+        }
+        else {
+          return new JBDimension(width, height, true);
+        }
       }
       else {
-        return JBUI.size(24, 7);
+        //noinspection SuspiciousNameCombination
+        return new JBDimension(height, width, true);
       }
     }
 
@@ -1004,22 +1018,38 @@ public class ActionToolbarImpl extends JPanel implements ActionToolbar, QuickAct
         offset = ActionToolbarImpl.this.getWidth() - getMaxButtonWidth() - 1;
       }
 
-        g.setColor(UIUtil.getSeparatorColor());
-        if (myOrientation == SwingConstants.HORIZONTAL) {
-          int y2 = ActionToolbarImpl.this.getHeight() - gap * 2 - offset;
-          LinePainter2D.paint((Graphics2D)g, center, gap, center, y2);
+      g.setColor(UIUtil.getSeparatorColor());
+      if (myOrientation == SwingConstants.HORIZONTAL) {
+        int y2 = ActionToolbarImpl.this.getHeight() - gap * 2 - offset;
+        LinePainter2D.paint((Graphics2D)g, center, gap, center, y2);
 
-          if (myText != null) {
-            FontMetrics fontMetrics = getFontMetrics(getFont());
-            int top = (getHeight() - fontMetrics.getHeight()) / 2;
-            UISettings.setupAntialiasing(g);
-            g.setColor(JBColor.foreground());
-            g.drawString(myText, JBUI.scale(9), top + fontMetrics.getAscent());
-          }
+        if (myText != null) {
+          FontMetrics fontMetrics = getFontMetrics(getFont());
+          int top = (getHeight() - fontMetrics.getHeight()) / 2;
+          UISettings.setupAntialiasing(g);
+          g.setColor(JBColor.foreground());
+          g.drawString(myText, gap * 2 + center + gap, top + fontMetrics.getAscent());
         }
-        else {
-          LinePainter2D.paint((Graphics2D)g, gap, center, ActionToolbarImpl.this.getWidth() - gap * 2 - offset, center);
+      }
+      else {
+        LinePainter2D.paint((Graphics2D)g, gap, center, ActionToolbarImpl.this.getWidth() - gap * 2 - offset, center);
+      }
+    }
+
+    private int getTextWidth(@NotNull FontMetrics fontMetrics, @NotNull String text, @Nullable Graphics graphics) {
+      if (graphics == null) {
+        return fontMetrics.stringWidth(text);
+      }
+      else {
+        Graphics g = graphics.create();
+        try {
+          UISettings.setupAntialiasing(g);
+          return fontMetrics.getStringBounds(text, g).getBounds().width;
         }
+        finally {
+          g.dispose();
+        }
+      }
     }
   }
 

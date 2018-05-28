@@ -642,7 +642,8 @@ public class FileManagerImpl implements FileManager {
     if (!file.isValid()) return false;
 
     Map<VirtualFile, FileViewProvider> tempProviders = myTempProviders.get();
-    LOG.assertTrue(!tempProviders.containsKey(file), "isValid leads to endless recursion");
+    LOG.assertTrue(!tempProviders.containsKey(file), "isValid leads to endless recursion in " + viewProvider.getClass() + ": " +
+                                                     new ArrayList<>(viewProvider.getLanguages()));
     tempProviders.put(file, null);
     try {
       FileViewProvider recreated = createFileViewProvider(file, true);

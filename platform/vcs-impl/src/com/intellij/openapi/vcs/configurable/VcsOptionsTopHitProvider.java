@@ -66,7 +66,6 @@ public final class VcsOptionsTopHitProvider extends OptionsTopHitProvider {
     if (vcsCA != null) {
       options.add(option(vcsCA, id, "Show changed in last " + vcsCA.getLimitDays() + " days", "isShow", "setShow"));
     }
-    options.add(option(vcs, id, "Notify about VCS root errors", "SHOW_VCS_ERROR_NOTIFICATIONS"));
     options.add(option(vcs, id, "Commit message right margin " + getBodyRightMargin(project) + " columns", "USE_COMMIT_MESSAGE_MARGIN"));
     options.add(option(vcs, id, ApplicationBundle.message("checkbox.wrap.typing.on.right.margin"), "WRAP_WHEN_TYPING_REACHES_RIGHT_MARGIN"));
 

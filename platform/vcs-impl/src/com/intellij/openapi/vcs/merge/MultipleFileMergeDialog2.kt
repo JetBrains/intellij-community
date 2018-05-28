@@ -59,7 +59,7 @@ open class MultipleFileMergeDialog2(
 
   private var files = files.toMutableList()
   private val mergeSession = (mergeProvider as? MergeProvider2)?.createMergeSession(files)
-  val processedFiles = mutableListOf<VirtualFile>()
+  val processedFiles: MutableList<VirtualFile> = mutableListOf<VirtualFile>()
   private lateinit var table: TreeTable
   private lateinit var acceptYoursButton: JButton
   private lateinit var acceptTheirsButton: JButton
@@ -309,7 +309,7 @@ open class MultipleFileMergeDialog2(
     return true
   }
 
-  override fun createActions() = arrayOf(cancelAction)
+  override fun createActions(): Array<Action> = arrayOf(cancelAction)
 
 
   override fun getCancelAction(): Action = super.getCancelAction().apply {
@@ -322,7 +322,7 @@ open class MultipleFileMergeDialog2(
   }
 
   @NonNls
-  override fun getDimensionServiceKey() = "MultipleFileMergeDialog"
+  override fun getDimensionServiceKey(): String = "MultipleFileMergeDialog"
 
   private fun acceptRevision(resolution: MergeSession.Resolution) {
     FileDocumentManager.getInstance().saveAllDocuments()

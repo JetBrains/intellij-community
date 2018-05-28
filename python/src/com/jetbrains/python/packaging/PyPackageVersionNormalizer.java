@@ -1,17 +1,5 @@
-// Copyright 2000-2017 JetBrains s.r.o.
-//
-// Licensed under the Apache License, Version 2.0 (the "License");
-// you may not use this file except in compliance with the License.
-// You may obtain a copy of the License at
-//
-// http://www.apache.org/licenses/LICENSE-2.0
-//
-// Unless required by applicable law or agreed to in writing, software
-// distributed under the License is distributed on an "AS IS" BASIS,
-// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-// See the License for the specific language governing permissions and
-// limitations under the License.
-package com.jetbrains.python.packaging.requirement;
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+package com.jetbrains.python.packaging;
 
 import com.intellij.openapi.util.text.StringUtil;
 import one.util.streamex.StreamEx;
@@ -29,12 +17,8 @@ import java.util.regex.Pattern;
  * <a href="https://www.python.org/dev/peps/pep-0440/#normalization">https://www.python.org/dev/peps/pep-0440/#normalization</a>
  * and
  * <a href="https://www.python.org/dev/peps/pep-0440/#summary-of-permitted-suffixes-and-relative-ordering">https://www.python.org/dev/peps/pep-0440/#summary-of-permitted-suffixes-and-relative-ordering</a>.
- *
- * @deprecated Use {@link com.jetbrains.python.packaging.PyRequirement} instead.
- * This class will be removed in 2018.2.
  */
-@Deprecated
-public final class PyRequirementVersionNormalizer {
+public final class PyPackageVersionNormalizer {
 
   @NotNull
   private static final String EPOCH_GROUP = "epoch";
@@ -114,10 +98,10 @@ public final class PyRequirementVersionNormalizer {
     Pattern.CASE_INSENSITIVE);
 
   @Nullable
-  public static PyRequirementVersion normalize(@NotNull String version) {
+  public static PyPackageVersion normalize(@NotNull String version) {
     final Matcher matcher = VERSION.matcher(version);
     if (matcher.matches()) {
-      return new PyRequirementVersion(
+      return new PyPackageVersion(
         normalizeEpoch(matcher),
         normalizeRelease(matcher),
         normalizePre(matcher),

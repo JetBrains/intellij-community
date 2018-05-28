@@ -1,7 +1,11 @@
 // "Insert new" "true"
 class a {
  void f() {
-     <caret>new RuntimeException();
+     //c1
+     new RuntimeException(
+       //c2
+     )//c3
+   ;
  }
 }
 

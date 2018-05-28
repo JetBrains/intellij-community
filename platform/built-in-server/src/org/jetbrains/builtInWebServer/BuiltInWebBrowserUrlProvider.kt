@@ -42,7 +42,7 @@ open class BuiltInWebBrowserUrlProvider : WebBrowserUrlProvider(), DumbAware {
     return viewProvider.isPhysical && request.virtualFile !is LightVirtualFile && isFileOfMyLanguage(request.file)
   }
 
-  protected open fun isFileOfMyLanguage(psiFile: PsiFile) = WebBrowserService.isHtmlOrXmlFile(psiFile)
+  protected open fun isFileOfMyLanguage(psiFile: PsiFile): Boolean = WebBrowserService.isHtmlOrXmlFile(psiFile)
 
   override fun getUrl(request: OpenInBrowserRequest, file: VirtualFile): Url? {
     if (file is HttpVirtualFile) {

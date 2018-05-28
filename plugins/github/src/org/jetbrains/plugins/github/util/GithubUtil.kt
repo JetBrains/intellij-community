@@ -27,10 +27,10 @@ import java.util.concurrent.TimeUnit
 object GithubUtil {
 
   @JvmField
-  val LOG = Logger.getInstance("github")
-  const val SERVICE_DISPLAY_NAME = "GitHub"
-  const val DEFAULT_TOKEN_NOTE = "IntelliJ Plugin"
-  const val GIT_AUTH_PASSWORD_SUBSTITUTE = "x-oauth-basic"
+  val LOG: Logger = Logger.getInstance("github")
+  const val SERVICE_DISPLAY_NAME: String = "GitHub"
+  const val DEFAULT_TOKEN_NOTE: String = "IntelliJ Plugin"
+  const val GIT_AUTH_PASSWORD_SUBSTITUTE: String = "x-oauth-basic"
 
   @JvmStatic
   fun addCancellationListener(run: () -> Unit): ScheduledFuture<*> {

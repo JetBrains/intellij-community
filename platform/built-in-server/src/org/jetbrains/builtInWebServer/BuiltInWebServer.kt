@@ -62,7 +62,7 @@ class BuiltInWebServer : HttpRequestHandler() {
            request.isLocalOrigin(onlyAnyOrLoopback = false, hostsOnly = true)
   }
 
-  override fun isSupported(request: FullHttpRequest) = super.isSupported(request) || request.method() == HttpMethod.POST
+  override fun isSupported(request: FullHttpRequest): Boolean = super.isSupported(request) || request.method() == HttpMethod.POST
 
   override fun process(urlDecoder: QueryStringDecoder, request: FullHttpRequest, context: ChannelHandlerContext): Boolean {
     var host = request.host
@@ -102,8 +102,8 @@ class BuiltInWebServer : HttpRequestHandler() {
 
 internal fun isActivatable() = Registry.`is`("ide.built.in.web.server.activatable", false)
 
-const val TOKEN_PARAM_NAME = "_ijt"
-const val TOKEN_HEADER_NAME = "x-ijt"
+const val TOKEN_PARAM_NAME: String = "_ijt"
+const val TOKEN_HEADER_NAME: String = "x-ijt"
 
 private val STANDARD_COOKIE by lazy {
   val productName = ApplicationNamesInfo.getInstance().lowercaseProductName

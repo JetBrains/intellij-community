@@ -170,6 +170,7 @@ public class AnalysisScope {
             return;
           }
           if (!shouldHighlightFile(file)) return;
+          if (myFilesSet == null) return;
           myFilesSet.add(virtualFile);
         }
       }

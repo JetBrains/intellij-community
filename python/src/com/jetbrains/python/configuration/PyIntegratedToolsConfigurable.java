@@ -46,7 +46,7 @@ import com.jetbrains.python.documentation.docstrings.DocStringFormat;
 import com.jetbrains.python.packaging.PyPackageManagerUI;
 import com.jetbrains.python.packaging.PyPackageRequirementsSettings;
 import com.jetbrains.python.packaging.PyPackageUtil;
-import com.jetbrains.python.packaging.PyRequirement;
+import com.jetbrains.python.packaging.PyRequirementsKt;
 import com.jetbrains.python.psi.PyUtil;
 import com.jetbrains.python.sdk.PythonSdkType;
 import com.jetbrains.python.testing.PyTestFrameworkService;
@@ -164,7 +164,7 @@ public class PyIntegratedToolsConfigurable implements SearchableConfigurable {
             }
           }
         });
-        ui.install(Collections.singletonList(new PyRequirement(name)), Collections.emptyList());
+        ui.install(Collections.singletonList(PyRequirementsKt.pyRequirement(name)), Collections.emptyList());
       }
     };
   }

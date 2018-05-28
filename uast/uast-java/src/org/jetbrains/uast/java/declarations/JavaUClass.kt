@@ -29,7 +29,7 @@ abstract class AbstractJavaUClass(givenParent: UElement?) : JavaAbstractUElement
   @Deprecated("use AbstractJavaUClass(givenParent)", ReplaceWith("AbstractJavaUClass(givenParent)"))
   constructor() : this(null)
 
-  override val uastDeclarations by lz {
+  override val uastDeclarations: MutableList<UDeclaration> by lz {
     mutableListOf<UDeclaration>().apply {
       addAll(fields)
       addAll(initializers)
@@ -38,7 +38,7 @@ abstract class AbstractJavaUClass(givenParent: UElement?) : JavaAbstractUElement
     }
   }
 
-  protected fun createJavaUTypeReferenceExpression(referenceElement: PsiJavaCodeReferenceElement) =
+  protected fun createJavaUTypeReferenceExpression(referenceElement: PsiJavaCodeReferenceElement): LazyJavaUTypeReferenceExpression =
     LazyJavaUTypeReferenceExpression(referenceElement, this) {
       JavaPsiFacade.getElementFactory(referenceElement.project).createType(referenceElement)
     }
@@ -54,8 +54,8 @@ abstract class AbstractJavaUClass(givenParent: UElement?) : JavaAbstractUElement
   override val annotations: List<UAnnotation>
     get() = psi.annotations.map { JavaUAnnotation(it, this) }
 
-  override fun equals(other: Any?) = other is AbstractJavaUClass && psi == other.psi
-  override fun hashCode() = psi.hashCode()
+  override fun equals(other: Any?): Boolean = other is AbstractJavaUClass && psi == other.psi
+  override fun hashCode(): Int = psi.hashCode()
 }
 
 class JavaUClass private constructor(psi: PsiClass, val givenParent: UElement?) :
@@ -86,7 +86,7 @@ class JavaUAnonymousClass(
   psi: PsiAnonymousClass,
   uastParent: UElement?
 ) : AbstractJavaUClass(uastParent), UAnonymousClass, UAnchorOwner, PsiAnonymousClass by psi {
-  override val psi
+  override val psi: PsiAnonymousClass
     get() = javaPsi
 
   override val javaPsi: PsiAnonymousClass = unwrap<UAnonymousClass, PsiAnonymousClass>(psi)

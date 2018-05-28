@@ -5,7 +5,7 @@ Groovy script
   Reference expression
     PsiElement(identifier)('print')
   PsiWhiteSpace(' ')
-  PsiErrorElement:<expression> expected, got '$'
+  PsiErrorElement:'$' unexpected
     PsiElement($)('$')
   PsiElement(/)('/')
   Multiplicative expression
@@ -18,7 +18,7 @@ Groovy script
   Reference expression
     PsiElement(identifier)('print')
   PsiWhiteSpace(' ')
-  PsiErrorElement:<expression> expected, got '$'
+  PsiErrorElement:'$' unexpected
     PsiElement($)('$')
   PsiElement(/)('/')
   Multiplicative expression

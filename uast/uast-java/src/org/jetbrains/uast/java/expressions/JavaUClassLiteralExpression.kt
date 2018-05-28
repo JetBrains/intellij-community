@@ -27,5 +27,5 @@ class JavaUClassLiteralExpression(
   override val type: PsiType
     get() = psi.operand.type
 
-  override val expression by lz { JavaUTypeReferenceExpression(psi.operand, this) }
+  override val expression: JavaUTypeReferenceExpression by lz { JavaUTypeReferenceExpression(psi.operand, this) }
 }

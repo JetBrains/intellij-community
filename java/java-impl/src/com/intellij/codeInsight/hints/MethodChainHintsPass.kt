@@ -19,7 +19,7 @@ class MethodChainHintsPass(
   editor: Editor
 ) : ElementProcessingHintPass(rootElement, editor, modificationStampHolder) {
 
-  override fun isAvailable(virtualFile: VirtualFile) = CodeInsightSettings.getInstance().SHOW_METHOD_CHAIN_TYPES_INLINE
+  override fun isAvailable(virtualFile: VirtualFile): Boolean = CodeInsightSettings.getInstance().SHOW_METHOD_CHAIN_TYPES_INLINE
 
   override fun collectElementHints(element: PsiElement, collector: (offset: Int, hint: String) -> Unit) {
     val call = element as? PsiMethodCallExpression ?: return

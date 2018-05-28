@@ -18,10 +18,7 @@ import com.intellij.openapi.ui.popup.JBPopupListener;
 import com.intellij.openapi.ui.popup.LightweightWindowEvent;
 import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.registry.Registry;
-import com.intellij.openapi.wm.FocusRequestor;
-import com.intellij.openapi.wm.IdeFocusManager;
-import com.intellij.openapi.wm.IdeGlassPane;
-import com.intellij.openapi.wm.IdeGlassPaneUtil;
+import com.intellij.openapi.wm.*;
 import com.intellij.openapi.wm.impl.IdeGlassPaneEx;
 import com.intellij.ui.awt.RelativePoint;
 import com.intellij.ui.components.panels.NonOpaquePanel;
@@ -1626,6 +1623,33 @@ public class BalloonImpl implements Balloon, IdeTooltip.Ui {
       myContent.setOpaque(false);
 
       add(myContent);
+      setFocusTraversalPolicyProvider(true);
+      setFocusTraversalPolicy(new FocusTraversalPolicy() {
+        @Override
+        public Component getComponentAfter(Container aContainer, Component aComponent) {
+          return WeakFocusStackManager.getInstance().getLastFocusedOutside(MyComponent.this);
+        }
+
+        @Override
+        public Component getComponentBefore(Container aContainer, Component aComponent) {
+          return WeakFocusStackManager.getInstance().getLastFocusedOutside(MyComponent.this);
+        }
+
+        @Override
+        public Component getFirstComponent(Container aContainer) {
+          return WeakFocusStackManager.getInstance().getLastFocusedOutside(MyComponent.this);
+        }
+
+        @Override
+        public Component getLastComponent(Container aContainer) {
+          return WeakFocusStackManager.getInstance().getLastFocusedOutside(MyComponent.this);
+        }
+
+        @Override
+        public Component getDefaultComponent(Container aContainer) {
+          return WeakFocusStackManager.getInstance().getLastFocusedOutside(MyComponent.this);
+        }
+      });
     }
 
     public Rectangle getContentBounds() {

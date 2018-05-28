@@ -37,11 +37,11 @@ class UCallResultValue(val resolvable: UResolvable, val arguments: List<UValue>)
     else -> UPhiValue.create(this, other)
   }
 
-  override fun equals(other: Any?) =
+  override fun equals(other: Any?): Boolean =
     other is UCallResultValue && resolvable == other.resolvable &&
     argumentsHashCode == other.argumentsHashCode && arguments == other.arguments
 
-  override fun hashCode() = resolvable.hashCode() * 19 + argumentsHashCode
+  override fun hashCode(): Int = resolvable.hashCode() * 19 + argumentsHashCode
 
   override fun toString(): String {
     return "external ${(resolvable as? UElement)?.asRenderString() ?: "???"}(${arguments.joinToString()})"

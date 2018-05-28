@@ -24,6 +24,7 @@ import com.intellij.openapi.ui.popup.ListItemDescriptorAdapter;
 import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.wm.*;
+import com.intellij.openapi.wm.impl.IdeFrameImpl;
 import com.intellij.openapi.wm.impl.IdeGlassPaneImpl;
 import com.intellij.ui.*;
 import com.intellij.ui.border.CustomLineBorder;
@@ -191,6 +192,7 @@ public class FlatWelcomeFrame extends JFrame implements IdeFrame, Disposable, Ac
     if (Boolean.getBoolean("ide.ui.version.in.title")) {
       title += ' ' + ApplicationInfo.getInstance().getFullVersion();
     }
+    title += IdeFrameImpl.getElevationSuffix();
     return title;
   }
 

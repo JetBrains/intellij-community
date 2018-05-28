@@ -22,7 +22,7 @@ abstract class IndexGenerator<Value>(private val indexStorageFilePath: String) {
     val CHECK_HASH_COLLISIONS: Boolean = System.getenv("INDEX_GENERATOR_CHECK_HASH_COLLISIONS")?.toBoolean() ?: false
   }
 
-  open val fileFilter
+  open val fileFilter: VirtualFileFilter
     get() = VirtualFileFilter { f -> !f.isDirectory }
 
   data class Stats(val indexed: AtomicInteger, val skipped: AtomicInteger) {

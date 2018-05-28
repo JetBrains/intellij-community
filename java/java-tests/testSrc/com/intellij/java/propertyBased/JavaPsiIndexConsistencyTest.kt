@@ -35,6 +35,7 @@ import com.intellij.testFramework.propertyBased.PsiIndexConsistencyTester.Model
 import com.intellij.testFramework.propertyBased.PsiIndexConsistencyTester.RefKind
 import org.jetbrains.jetCheck.Generator
 import org.jetbrains.jetCheck.PropertyChecker
+import org.junit.Assert
 
 /**
  * @author peter
@@ -143,6 +144,14 @@ class JavaPsiIndexConsistencyTest : LightCodeInsightFixtureTestCase() {
 
   private object ClassRef : RefKind(){
     override fun loadRef(model: Model) = model.findPsiClass()
+    override fun checkDuplicates(oldValue: Any, newValue: Any) {
+      oldValue as PsiClass
+      newValue as PsiClass
+      if (oldValue.isValid && (newValue.containingFile as PsiJavaFile).classes.size == 1) {
+        // if there are >1 classes in the file, it could be that after reparse previously retrieved PsiClass instance is now pointing to a non-first one, and so there's no duplicate 
+        Assert.fail("Duplicate PSI elements: $oldValue and $newValue")
+      }
+    }
   }
 }
 

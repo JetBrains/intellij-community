@@ -35,7 +35,7 @@ class RemoveParenthesesFromMethodCallIntention : Intention() {
 
   override fun getElementPredicate(): PsiElementPredicate = Predicate
 
-  override fun isStopElement(element: PsiElement) = super.isStopElement(element) || element is GrStatementOwner
+  override fun isStopElement(element: PsiElement): Boolean = super.isStopElement(element) || element is GrStatementOwner
 
   override fun processIntention(element: PsiElement, project: Project, editor: Editor) {
     val newText = removeParentheses(element as GrMethodCallExpression)
