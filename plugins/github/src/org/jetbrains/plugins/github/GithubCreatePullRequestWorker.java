@@ -50,7 +50,7 @@ import org.jetbrains.plugins.github.api.GithubApiRequests;
 import org.jetbrains.plugins.github.api.GithubFullPath;
 import org.jetbrains.plugins.github.api.GithubServerPath;
 import org.jetbrains.plugins.github.api.data.GithubBranch;
-import org.jetbrains.plugins.github.api.data.GithubPullRequest;
+import org.jetbrains.plugins.github.api.data.GithubPullRequestDetailed;
 import org.jetbrains.plugins.github.api.data.GithubRepo;
 import org.jetbrains.plugins.github.api.data.GithubRepoDetailed;
 import org.jetbrains.plugins.github.api.util.GithubApiPagesLoader;
@@ -502,7 +502,7 @@ public class GithubCreatePullRequestWorker {
 
         LOG.info("Creating pull request");
         indicator.setText("Creating pull request...");
-        GithubPullRequest request = doCreatePullRequest(indicator, branch, title, description);
+        GithubPullRequestDetailed request = doCreatePullRequest(indicator, branch, title, description);
         if (request == null) {
           return;
         }
@@ -514,10 +514,10 @@ public class GithubCreatePullRequestWorker {
   }
 
   @Nullable
-  private GithubPullRequest doCreatePullRequest(@NotNull ProgressIndicator indicator,
-                                                @NotNull final BranchInfo branch,
-                                                @NotNull final String title,
-                                                @NotNull final String description) {
+  private GithubPullRequestDetailed doCreatePullRequest(@NotNull ProgressIndicator indicator,
+                                                        @NotNull final BranchInfo branch,
+                                                        @NotNull final String title,
+                                                        @NotNull final String description) {
     final GithubFullPath forkPath = branch.getForkInfo().getPath();
 
     final String head = myPath.getUser() + ":" + myCurrentBranch;

@@ -152,8 +152,8 @@ object GithubApiRequests {
       fun create(server: GithubServerPath,
                  username: String, repoName: String,
                  title: String, description: String, head: String, base: String) =
-        Post.json<GithubPullRequest>(getUrl(server, Repos.urlSuffix, "/$username/$repoName", urlSuffix),
-                                     GithubPullRequestRequest(title, description, head, base))
+        Post.json<GithubPullRequestDetailed>(getUrl(server, Repos.urlSuffix, "/$username/$repoName", urlSuffix),
+                                             GithubPullRequestRequest(title, description, head, base))
           .withOperationName("create pull request in $username/$repoName")
     }
   }
