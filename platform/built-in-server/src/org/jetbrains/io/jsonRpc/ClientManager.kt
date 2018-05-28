@@ -33,7 +33,7 @@ class ClientManager(private val listener: ClientListener?, val exceptionHandler:
   val clientCount: Int
     get() = synchronized (clients) { clients.size }
 
-  fun hasClients() = clientCount > 0
+  fun hasClients(): Boolean = clientCount > 0
 
   override fun dispose() {
     try {

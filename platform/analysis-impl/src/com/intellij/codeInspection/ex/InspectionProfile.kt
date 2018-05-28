@@ -29,15 +29,15 @@ import com.intellij.profile.codeInspection.ProjectInspectionProfileManager
 import com.intellij.util.xmlb.annotations.Transient
 import org.jdom.Element
 
-const val DEFAULT_PROFILE_NAME = "Default"
-val BASE_PROFILE by lazy { InspectionProfileImpl(DEFAULT_PROFILE_NAME) }
+const val DEFAULT_PROFILE_NAME: String = "Default"
+val BASE_PROFILE: InspectionProfileImpl by lazy { InspectionProfileImpl(DEFAULT_PROFILE_NAME) }
 
 abstract class NewInspectionProfile(name: String, private var profileManager: BaseInspectionProfileManager) : ProfileEx(name), InspectionProfile, SerializableScheme {
   @Volatile
   @JvmField
-  protected var initialized = false
+  protected var initialized: Boolean = false
   @JvmField
-  protected val myLock = Any()
+  protected val myLock: Any = Any()
 
   private var isProjectLevel: Boolean = false
 
@@ -45,17 +45,17 @@ abstract class NewInspectionProfile(name: String, private var profileManager: Ba
   @Transient
   internal var schemeState: SchemeState? = null
 
-  override fun getSchemeState() = schemeState
+  override fun getSchemeState(): SchemeState? = schemeState
 
   @Transient
-  fun isProjectLevel() = isProjectLevel
+  fun isProjectLevel(): Boolean = isProjectLevel
 
   fun setProjectLevel(value: Boolean) {
     isProjectLevel = value
   }
 
   @Transient
-  fun getProfileManager() = profileManager
+  fun getProfileManager(): BaseInspectionProfileManager = profileManager
 
   fun setProfileManager(value: BaseInspectionProfileManager) {
     profileManager = value
@@ -71,9 +71,9 @@ abstract class NewInspectionProfile(name: String, private var profileManager: Ba
       return PathMacroManager.getInstance((profileManager as? ProjectInspectionProfileManager)?.project ?: ApplicationManager.getApplication())
     }
 
-  override fun toString() = name
+  override fun toString(): String = name
 
-  override fun equals(other: Any?) = super.equals(other) && (other as NewInspectionProfile).profileManager === profileManager
+  override fun equals(other: Any?): Boolean = super.equals(other) && (other as NewInspectionProfile).profileManager === profileManager
 
   /**
    * If you need to enable multiple tools, please use [.modifyProfile]
@@ -103,7 +103,7 @@ abstract class NewInspectionProfile(name: String, private var profileManager: Ba
     }
   }
 
-  fun getTools(name: String, project: Project?) = getToolsOrNull(name, project) ?: throw AssertionError("Can't find tools for \"$name\" in the profile \"${this.name}\"")
+  fun getTools(name: String, project: Project?): ToolsImpl = getToolsOrNull(name, project) ?: throw AssertionError("Can't find tools for \"$name\" in the profile \"${this.name}\"")
 
   abstract fun getToolsOrNull(name: String, project: Project?): ToolsImpl?
 

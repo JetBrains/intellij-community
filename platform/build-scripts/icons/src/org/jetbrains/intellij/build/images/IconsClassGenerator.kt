@@ -120,7 +120,7 @@ class IconsClassGenerator(val projectHome: File, val util: JpsModule, val writeC
     println("Generated classes: $processedClasses. Processed icons: $processedIcons")
   }
 
-  fun getModifiedClasses() = modifiedClasses
+  fun getModifiedClasses(): List<Triple<JpsModule, File, String>> = modifiedClasses
 
   private fun findIconClass(dir: File): String? {
     var className: String? = null
