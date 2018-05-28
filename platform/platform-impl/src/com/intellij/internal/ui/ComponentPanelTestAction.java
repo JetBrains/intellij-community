@@ -43,6 +43,8 @@ public class ComponentPanelTestAction extends DumbAwareAction {
     private final Alarm myAlarm = new Alarm(getDisposable());
     private ProgressTimerRequest progressTimerRequest;
 
+    private JTabbedPane pane;
+
     private ComponentPanelTest(Project project) {
       super(project);
       init();
@@ -52,7 +54,7 @@ public class ComponentPanelTestAction extends DumbAwareAction {
     @Nullable
     @Override
     protected JComponent createCenterPanel() {
-      JTabbedPane pane = new JBTabbedPane(SwingConstants.TOP);
+      pane = new JBTabbedPane(SwingConstants.TOP);
       pane.addTab("Component", createComponentPanel());
       pane.addTab("Component Grid", createComponentGridPanel());
       pane.addTab("Progress Grid", createProgressGridPanel());
@@ -64,6 +66,7 @@ public class ComponentPanelTestAction extends DumbAwareAction {
       }
 
       //pane.setTabLayoutPolicy(JTabbedPane.SCROLL_TAB_LAYOUT);
+      //pane.putClientProperty("JTabbedPane.hasFullBorder", Boolean.TRUE);
 
       pane.addChangeListener(e -> {
         if (pane.getSelectedIndex() == 2) {
@@ -104,12 +107,16 @@ public class ComponentPanelTestAction extends DumbAwareAction {
         }
       });
 
-      panel.add(UI.PanelFactory.panel(new JCheckBox("This is a checkbox 1")).
-        withComment("My long long long long long long long long long long comment").
+      JCheckBox cb1 = new JCheckBox("Scroll tab layout");
+      cb1.addActionListener(e -> pane.setTabLayoutPolicy(cb1.isSelected() ? JTabbedPane.SCROLL_TAB_LAYOUT : JTabbedPane.WRAP_TAB_LAYOUT));
+      panel.add(UI.PanelFactory.panel(cb1).
+        withComment("Set tabbed pane tabs layout property to SCROLL_TAB_LAYOUT").
         createPanel());
 
-      panel.add(UI.PanelFactory.panel(new JCheckBox("This is a checkbox 2")).
-        withTooltip("Help tooltip description").createPanel());
+      JCheckBox cb2 = new JCheckBox("Full border");
+      cb2.addActionListener(e -> pane.putClientProperty("JTabbedPane.hasFullBorder", Boolean.valueOf(cb2.isSelected())));
+      panel.add(UI.PanelFactory.panel(cb2).
+        withTooltip("Enable full border around the tabbed pane").createPanel());
 
       panel.add(UI.PanelFactory.panel(new JButton("Abracadabra")).
         withComment("Abradabra comment").resizeX(false).createPanel());

@@ -15,6 +15,7 @@
  */
 package com.intellij.ide.ui.laf.darcula.ui;
 
+import com.intellij.ui.JBColor;
 import com.intellij.util.ui.JBInsets;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.JBValue;
@@ -58,7 +59,7 @@ public class DarculaTabbedPaneUI extends BasicTabbedPaneUI {
 
     Object rStyle = UIManager.get("TabbedPane.tabFillStyle");
     tabStyle = rStyle != null ? TabStyle.valueOf(rStyle.toString()) : TabStyle.underline;
-    contentBorderInsets = JBUI.insetsTop(1);
+    contentBorderInsets = tabPane.getTabLayoutPolicy() == JTabbedPane.WRAP_TAB_LAYOUT ? JBUI.insetsTop(1) : JBUI.emptyInsets();
   }
 
   @Override
@@ -66,12 +67,16 @@ public class DarculaTabbedPaneUI extends BasicTabbedPaneUI {
     super.installListeners();
 
     borderTypePropertyListener = evt -> {
-      contentBorderInsets = evt.getNewValue() == Boolean.TRUE ? JBUI.insets(1) : JBUI.insetsTop(1);
+      boolean fullBorder = tabPane.getClientProperty("JTabbedPane.hasFullBorder") == Boolean.TRUE;
+      contentBorderInsets = (tabPane.getTabLayoutPolicy() == JTabbedPane.WRAP_TAB_LAYOUT) ?
+                            fullBorder ? JBUI.insets(1) : JBUI.insetsTop(1) :
+                            fullBorder ? JBUI.insets(0, 1, 1, 1) : JBUI.emptyInsets();
       tabPane.revalidate();
       tabPane.repaint();
     };
 
     tabPane.addPropertyChangeListener("JTabbedPane.hasFullBorder", borderTypePropertyListener);
+    tabPane.addPropertyChangeListener("tabLayoutPolicy", borderTypePropertyListener);
 
     paneMouseListener = new MouseAdapter() {
       public void mouseEntered(MouseEvent e) {
@@ -120,6 +125,21 @@ public class DarculaTabbedPaneUI extends BasicTabbedPaneUI {
   }
 
   @Override
+  protected void paintTabArea(Graphics g, int tabPlacement, int selectedIndex) {
+    if (tabPane.getTabLayoutPolicy() == JTabbedPane.SCROLL_TAB_LAYOUT) {
+      Rectangle bounds = g.getClipBounds();
+      g.setColor(JBColor.namedColor("TabbedPane.contentAreaColor", 0xbfbfbf));
+
+      if (tabPlacement == LEFT || tabPlacement == RIGHT) {
+        g.fillRect(bounds.x + bounds.width - OFFSET.get(), bounds.y, OFFSET.get(), bounds.y + bounds.height);
+      } else {
+        g.fillRect(bounds.x, bounds.y + bounds.height - OFFSET.get(), bounds.x + bounds.width, OFFSET.get());
+      }
+    }
+    super.paintTabArea(g, tabPlacement, selectedIndex);
+  }
+
+  @Override
   protected void paintTabBackground(Graphics g, int tabPlacement, int tabIndex, int x, int y, int w, int h, boolean isSelected) {
     switch (tabStyle) {
       case fill:
@@ -137,6 +157,15 @@ public class DarculaTabbedPaneUI extends BasicTabbedPaneUI {
         }
         break;
     }
+
+    if (tabPane.getTabLayoutPolicy() == JTabbedPane.SCROLL_TAB_LAYOUT) {
+      if (tabPlacement == LEFT || tabPlacement == RIGHT) {
+        w -= OFFSET.get();
+      } else {
+        h -= OFFSET.get();
+      }
+    }
+
     g.fillRect(x, y, w, h);
   }
 
@@ -145,19 +174,21 @@ public class DarculaTabbedPaneUI extends BasicTabbedPaneUI {
     if (isSelected && tabStyle == TabStyle.underline) {
       g.setColor(tabPane.isEnabled() ?  ENABLED_SELECTED_COLOR : DISABLED_SELECTED_COLOR);
 
+      int offset = tabPane.getTabLayoutPolicy() == JTabbedPane.WRAP_TAB_LAYOUT ? OFFSET.get() : SELECTION_HEIGHT.get();
+
       switch(tabPlacement) {
         case LEFT:
-          g.fillRect(x + w - OFFSET.get(), y, SELECTION_HEIGHT.get(), h);
+          g.fillRect(x + w - offset, y, SELECTION_HEIGHT.get(), h);
           break;
         case RIGHT:
-          g.fillRect(x - OFFSET.get(), y, SELECTION_HEIGHT.get(), h);
+          g.fillRect(x - offset, y, SELECTION_HEIGHT.get(), h);
           break;
         case BOTTOM:
-          g.fillRect(x, y - OFFSET.get(), w, SELECTION_HEIGHT.get());
+          g.fillRect(x, y - offset, w, SELECTION_HEIGHT.get());
           break;
         case TOP:
         default:
-          g.fillRect(x, y + h - OFFSET.get(), w, SELECTION_HEIGHT.get());
+          g.fillRect(x, y + h - offset, w, SELECTION_HEIGHT.get());
       }
     }
   }
@@ -210,7 +241,9 @@ public class DarculaTabbedPaneUI extends BasicTabbedPaneUI {
     }
     Insets tabInsets = getTabInsets(tabPlacement, tabIndex);
     height += tabInsets.top + tabInsets.bottom;
-    return Math.max(height, TAB_HEIGHT.get() - OFFSET.get());
+
+    int minHeight = TAB_HEIGHT.get() - (tabPane.getTabLayoutPolicy() == JTabbedPane.WRAP_TAB_LAYOUT ? OFFSET.get() : 0);
+    return Math.max(height, minHeight);
   }
 
   @Override
