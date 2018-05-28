@@ -5,8 +5,8 @@ import com.intellij.dvcs.hosting.RepositoryListLoader;
 import com.intellij.dvcs.hosting.RepositoryListLoadingException;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.project.Project;
-import git4idea.remote.InteractiveGitHttpAuthDataProvider;
 import git4idea.remote.GitRepositoryHostingService;
+import git4idea.remote.InteractiveGitHttpAuthDataProvider;
 import org.jetbrains.annotations.CalledInBackground;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -27,13 +27,16 @@ import java.util.stream.Collectors;
 
 public class GithubRepositoryHostingService extends GitRepositoryHostingService {
   @NotNull private final GithubAuthenticationManager myAuthenticationManager;
+  @NotNull private final GithubApiTaskExecutor myApiTaskExecutor;
   @NotNull private final GithubGitHelper myGitHelper;
   @NotNull private final GithubHttpAuthDataProvider myAuthDataProvider;
 
   public GithubRepositoryHostingService(@NotNull GithubAuthenticationManager manager,
+                                        @NotNull GithubApiTaskExecutor executor,
                                         @NotNull GithubGitHelper gitHelper,
                                         @NotNull GithubHttpAuthDataProvider authDataProvider) {
     myAuthenticationManager = manager;
+    myApiTaskExecutor = executor;
     myGitHelper = gitHelper;
     myAuthDataProvider = authDataProvider;
   }
@@ -66,14 +69,13 @@ public class GithubRepositoryHostingService extends GitRepositoryHostingService 
           List<String> urls = new ArrayList<>();
           for (GithubAccount account : myAuthenticationManager.getAccounts()) {
             urls.addAll(
-              GithubApiTaskExecutor.getInstance().execute(progressIndicator, account,
-                                                          connection -> GithubApiUtil.getAvailableRepos(connection))
-                                   .stream()
-                                   .sorted(Comparator.comparing(GithubRepo::getUserName).thenComparing(GithubRepo::getName))
-                                   .map(repo -> myGitHelper.getRemoteUrl(account.getServer(),
-                                                                         repo.getUserName(),
-                                                                         repo.getName()))
-                                   .collect(Collectors.toList())
+              myApiTaskExecutor.execute(progressIndicator, account, connection -> GithubApiUtil.getAvailableRepos(connection))
+                               .stream()
+                               .sorted(Comparator.comparing(GithubRepo::getUserName).thenComparing(GithubRepo::getName))
+                               .map(repo -> myGitHelper.getRemoteUrl(account.getServer(),
+                                                                     repo.getUserName(),
+                                                                     repo.getName()))
+                               .collect(Collectors.toList())
             );
           }
           return urls;
@@ -95,7 +97,9 @@ public class GithubRepositoryHostingService extends GitRepositoryHostingService 
   @CalledInBackground
   @Nullable
   @Override
-  public InteractiveGitHttpAuthDataProvider getInteractiveAuthDataProvider(@NotNull Project project, @NotNull String url, @NotNull String login) {
+  public InteractiveGitHttpAuthDataProvider getInteractiveAuthDataProvider(@NotNull Project project,
+                                                                           @NotNull String url,
+                                                                           @NotNull String login) {
     return getProvider(project, url, login);
   }
 
