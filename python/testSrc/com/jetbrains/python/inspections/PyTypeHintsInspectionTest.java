@@ -610,6 +610,159 @@ public class PyTypeHintsInspectionTest extends PyInspectionTestCase {
     );
   }
 
+  // PY-20530
+  public void testValidTypeCommentAndParameters() {
+    doTestByText("from typing import Type\n" +
+                 "\n" +
+                 "class A:\n" +
+                 "    pass\n" +
+                 "\n" +
+                 "class Bar(A):\n" +
+                 "    # self is specified\n" +
+                 "    def spam11(self):\n" +
+                 "        # type: (Bar) -> None\n" +
+                 "        pass\n" +
+                 "\n" +
+                 "    def egg11(self, a, b):\n" +
+                 "        # type: (Bar, str, bool) -> None\n" +
+                 "        pass\n" +
+                 "        \n" +
+                 "    # self is specified\n" +
+                 "    def spam12(self):\n" +
+                 "        # type: (A) -> None\n" +
+                 "        pass\n" +
+                 "\n" +
+                 "    def egg12(self, a, b):\n" +
+                 "        # type: (A, str, bool) -> None\n" +
+                 "        pass\n" +
+                 "        \n" +
+                 "    # self is not specified\n" +
+                 "    def spam2(self):\n" +
+                 "        # type: () -> None\n" +
+                 "        pass\n" +
+                 "\n" +
+                 "    def egg2(self, a, b):\n" +
+                 "        # type: (str, bool) -> None\n" +
+                 "        pass\n" +
+                 "        \n" +
+                 "    # cls is not specified \n" +
+                 "    @classmethod\n" +
+                 "    def spam3(cls):\n" +
+                 "        # type: () -> None\n" +
+                 "        pass\n" +
+                 "\n" +
+                 "    @classmethod\n" +
+                 "    def egg3(cls, a, b):\n" +
+                 "        # type: (str, bool) -> None\n" +
+                 "        pass\n" +
+                 "    \n" +
+                 "    # cls is specified    \n" +
+                 "    @classmethod\n" +
+                 "    def spam41(cls):\n" +
+                 "        # type: (Type[Bar]) -> None\n" +
+                 "        pass\n" +
+                 "\n" +
+                 "    @classmethod\n" +
+                 "    def egg41(cls, a, b):\n" +
+                 "        # type: (Type[Bar], str, bool) -> None\n" +
+                 "        pass\n" +
+                 "    \n" +
+                 "    # cls is specified    \n" +
+                 "    @classmethod\n" +
+                 "    def spam42(cls):\n" +
+                 "        # type: (Type[A]) -> None\n" +
+                 "        pass\n" +
+                 "\n" +
+                 "    @classmethod\n" +
+                 "    def egg42(cls, a, b):\n" +
+                 "        # type: (Type[A], str, bool) -> None\n" +
+                 "        pass\n" +
+                 "    \n" +
+                 "    @staticmethod\n" +
+                 "    def spam5():\n" +
+                 "        # type: () -> None\n" +
+                 "        pass\n" +
+                 "\n" +
+                 "    @staticmethod\n" +
+                 "    def egg5(a, b):\n" +
+                 "        # type: (str, bool) -> None\n" +
+                 "        pass\n" +
+                 "        \n" +
+                 "    def baz(self, a, b, c, d):\n" +
+                 "        # type: (...) -> None\n" +
+                 "        pass");
+  }
+
+  // PY-20530
+  public void testInvalidTypeCommentAndParameters() {
+    doTestByText("from typing import Type\n" +
+                 "\n" +
+                 "class Bar:\n" +
+                 "    # self is specified\n" +
+                 "    def spam1(self):\n" +
+                 "        <warning descr=\"Type signature has too many arguments\"># type: (Bar, int) -> None</warning>\n" +
+                 "        pass\n" +
+                 "\n" +
+                 "    def egg11(self, a, b):\n" +
+                 "        <warning descr=\"Type signature has too many arguments\"># type: (Bar, int, str, bool) -> None</warning>\n" +
+                 "        pass\n" +
+                 "\n" +
+                 "    def egg12(self, a, b):\n" +
+                 "        <warning descr=\"Type signature has too few arguments\"># type: (Bar) -> None</warning>\n" +
+                 "        pass\n" +
+                 "        \n" +
+                 "    # self is not specified\n" +
+                 "    def spam2(self):\n" +
+                 "        <warning descr=\"The type of self 'int' is not a supertype of its class 'Bar'\"># type: (int) -> None</warning>\n" +
+                 "        pass\n" +
+                 "\n" +
+                 "    def egg2(self, a, b):\n" +
+                 "        <warning descr=\"The type of self 'int' is not a supertype of its class 'Bar'\"># type: (int, str, bool) -> None</warning>\n" +
+                 "        pass\n" +
+                 "        \n" +
+                 "    # cls is not specified \n" +
+                 "    @classmethod\n" +
+                 "    def spam3(cls):\n" +
+                 "        <warning descr=\"The type of self 'int' is not a supertype of its class 'Type[Bar]'\"># type: (int) -> None</warning>\n" +
+                 "        pass\n" +
+                 "\n" +
+                 "    @classmethod\n" +
+                 "    def egg3(cls, a, b):\n" +
+                 "        <warning descr=\"The type of self 'int' is not a supertype of its class 'Type[Bar]'\"># type: (int, str, bool) -> None</warning>\n" +
+                 "        pass\n" +
+                 "    \n" +
+                 "    # cls is specified    \n" +
+                 "    @classmethod\n" +
+                 "    def spam4(cls):\n" +
+                 "        <warning descr=\"Type signature has too many arguments\"># type: (Type[Bar], int) -> None</warning>\n" +
+                 "        pass\n" +
+                 "\n" +
+                 "    @classmethod\n" +
+                 "    def egg41(cls, a, b):\n" +
+                 "        <warning descr=\"Type signature has too many arguments\"># type: (Type[Bar], int, str, bool) -> None</warning>\n" +
+                 "        pass\n" +
+                 "\n" +
+                 "    @classmethod\n" +
+                 "    def egg42(cls, a, b):\n" +
+                 "        <warning descr=\"Type signature has too few arguments\"># type: (Type[Bar]) -> None</warning>\n" +
+                 "        pass\n" +
+                 "    \n" +
+                 "    @staticmethod\n" +
+                 "    def spam5():\n" +
+                 "        <warning descr=\"Type signature has too many arguments\"># type: (int) -> None</warning>\n" +
+                 "        pass\n" +
+                 "\n" +
+                 "    @staticmethod\n" +
+                 "    def egg51(a, b):\n" +
+                 "        <warning descr=\"Type signature has too many arguments\"># type: (int, str, bool) -> None</warning>\n" +
+                 "        pass\n" +
+                 "\n" +
+                 "    @staticmethod\n" +
+                 "    def egg52(a, b):\n" +
+                 "        <warning descr=\"Type signature has too few arguments\"># type: (int) -> None</warning>\n" +
+                 "        pass");
+  }
+
   @NotNull
   @Override
   protected Class<? extends PyInspection> getInspectionClass() {

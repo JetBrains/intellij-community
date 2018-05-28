@@ -15,6 +15,7 @@ import com.jetbrains.python.codeInsight.controlflow.ReadWriteInstruction
 import com.jetbrains.python.codeInsight.dataflow.scope.ScopeUtil
 import com.jetbrains.python.codeInsight.functionTypeComments.PyFunctionTypeAnnotationDialect
 import com.jetbrains.python.codeInsight.typing.PyTypingTypeProvider
+import com.jetbrains.python.documentation.PythonDocumentationProvider
 import com.jetbrains.python.documentation.doctest.PyDocstringFile
 import com.jetbrains.python.psi.*
 import com.jetbrains.python.psi.impl.PyEvaluator
@@ -22,6 +23,7 @@ import com.jetbrains.python.psi.impl.PyPsiUtils
 import com.jetbrains.python.psi.resolve.PyResolveContext
 import com.jetbrains.python.psi.resolve.PyResolveUtil
 import com.jetbrains.python.psi.types.PyGenericType
+import com.jetbrains.python.psi.types.PyInstantiableType
 import com.jetbrains.python.psi.types.PyTypeChecker
 
 class PyTypeHintsInspection : PyInspection() {
@@ -119,6 +121,12 @@ class PyTypeHintsInspection : PyInspection() {
           registerProblem(node.annotation, message, RemoveElementQuickFix("Remove annotation"))
         }
       }
+    }
+
+    override fun visitPyFunction(node: PyFunction) {
+      super.visitPyFunction(node)
+
+      checkTypeCommentAndParameters(node)
     }
 
     private fun checkTypeVarPlacement(call: PyCallExpression, target: PyExpression?) {
@@ -499,6 +507,48 @@ class PyTypeHintsInspection : PyInspection() {
       if (PyTypingTypeProvider.mapTargetsToAnnotations(lhs, expression).isEmpty() &&
           (expression.elements.isNotEmpty() || assignment.rawTargets.isNotEmpty())) {
         registerProblem(expression, "Type comment cannot be matched with unpacked variables")
+      }
+    }
+
+    private fun checkTypeCommentAndParameters(node: PyFunction) {
+      val functionTypeAnnotation = PyTypingTypeProvider.getFunctionTypeAnnotation(node) ?: return
+
+      val parameterTypes = functionTypeAnnotation.parameterTypeList.parameterTypes
+      if (parameterTypes.singleOrNull().let { it is PyNoneLiteralExpression && it.isEllipsis }) return
+
+      val actualParametersSize = node.parameterList.parameters.size
+      val commentParametersSize = parameterTypes.size
+
+      val cls = node.containingClass
+      val modifier = node.modifier
+
+      val hasSelf = cls != null && modifier != PyFunction.Modifier.STATICMETHOD
+
+      if (commentParametersSize < actualParametersSize - if (hasSelf) 1 else 0) {
+        registerProblem(node.typeComment, "Type signature has too few arguments")
+      }
+      else if (commentParametersSize > actualParametersSize) {
+        registerProblem(node.typeComment, "Type signature has too many arguments")
+      }
+      else if (hasSelf && actualParametersSize == commentParametersSize) {
+        val actualSelfType =
+          (myTypeEvalContext.getType(cls!!) as? PyInstantiableType<*>)
+            ?.let { if (modifier == PyFunction.Modifier.CLASSMETHOD) it.toClass() else it.toInstance() }
+          ?: return
+
+        val commentSelfType =
+          parameterTypes.firstOrNull()
+            ?.let { PyTypingTypeProvider.getType(it, myTypeEvalContext) }
+            ?.get()
+          ?: return
+
+        if (!PyTypeChecker.match(commentSelfType, actualSelfType, myTypeEvalContext)) {
+          val actualSelfTypeDescription = PythonDocumentationProvider.getTypeDescription(actualSelfType, myTypeEvalContext)
+          val commentSelfTypeDescription = PythonDocumentationProvider.getTypeDescription(commentSelfType, myTypeEvalContext)
+
+          registerProblem(node.typeComment,
+                          "The type of self '$commentSelfTypeDescription' is not a supertype of its class '$actualSelfTypeDescription'")
+        }
       }
     }
 
