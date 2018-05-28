@@ -141,7 +141,7 @@ Object foo(Object o) { if (o == null) return o.hashCode(); return 2; }
     assert inferNullity(parse('String foo(Object o) { return o instanceof String ? (String)o : "abc"; }')) == NOT_NULL
   }
   
-  void "test System.exit"() {
+  void "test System exit"() {
     assert inferNullity(parse('String foo(Object obj) {try {return bar();} catch(Exception ex) {System.exit(1);return null;}}')) == UNKNOWN
   }
   
