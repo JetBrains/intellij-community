@@ -1,6 +1,7 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.groovy.lang.psi
 
+import com.intellij.openapi.command.WriteCommandAction
 import com.intellij.openapi.vfs.VirtualFileFilter
 import com.intellij.psi.*
 import com.intellij.psi.impl.PsiManagerEx
@@ -8,14 +9,16 @@ import com.intellij.psi.impl.source.PsiFileImpl
 import com.intellij.psi.search.GlobalSearchScope
 import com.intellij.psi.stubs.StubIndex
 import com.intellij.psi.util.InheritanceUtil
+import com.intellij.testFramework.BombedProgressIndicator
 import com.intellij.testFramework.fixtures.impl.JavaCodeInsightTestFixtureImpl
+import com.intellij.util.ref.GCUtil
 import groovy.transform.CompileStatic
 import org.jetbrains.plugins.groovy.LightGroovyTestCase
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrVariableDeclaration
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrAnonymousClassDefinition
 import org.jetbrains.plugins.groovy.lang.psi.impl.GroovyFileImpl
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.typedef.GrAnonymousClassDefinitionImpl
-import org.jetbrains.plugins.groovy.lang.psi.stubs.index.GrAnonymousClassIndex
-
+import org.jetbrains.plugins.groovy.lang.psi.stubs.index.GrAnonymousClassIndex 
 /**
  * Created by Max Medvedev on 12/4/13
  */
@@ -319,5 +322,38 @@ class C {
     def clazz = file.typeDefinitions.first()
     def typeParameter = clazz.typeParameters.first()
     assert typeParameter.extendsList.referencedTypes.size() == 1
+  }
+
+  void 'test PCE during retrieving stub index of an AST-based PSI does not break everything later'() {
+    def random = new Random()
+    def file = fixture.addFileToProject('a.groovy', '@Anno int var; ' * 3) as GroovyFileImpl
+    for (i in 1..5) {
+      def cancelAt = random.nextInt(100)
+
+      assert file.node
+      List<GrVariableDeclaration> decls = SyntaxTraverser.psiTraverser(file).filter(GrVariableDeclaration).toList().reverse()
+
+      new BombedProgressIndicator(cancelAt).runBombed {
+        assert PsiAnchor.create(decls[0]) instanceof PsiAnchor.StubIndexReference
+      }
+
+      GCUtil.tryGcSoftlyReachableObjects()
+
+      try {
+        WriteCommandAction.runWriteCommandAction(project) {
+          file.viewProvider.document.insertString(0, ' ')
+          PsiDocumentManager.getInstance(project).commitAllDocuments()
+        }
+
+        for (decl in decls) {
+          assert decl.node
+          assert decl.valid
+        }
+      }
+      catch (any) {
+        throw new RuntimeException("Failed with cancelAt=$cancelAt", any)
+      }
+    }
+
   }
 }
