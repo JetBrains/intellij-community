@@ -269,12 +269,12 @@ public class GroovyGeneratedParser implements PsiParser, LightPsiParser {
       BAND_EXPRESSION, BOR_EXPRESSION, BUILT_IN_TYPE_EXPRESSION, CAST_EXPRESSION,
       CLOSURE, CONSTRUCTOR_CALL_EXPRESSION, ELVIS_EXPRESSION, EQUALITY_EXPRESSION,
       EXPRESSION, GSTRING, INDEX_EXPRESSION, INSTANCEOF_EXPRESSION,
-      LAND_EXPRESSION, LIST_OR_MAP, LITERAL, LOR_EXPRESSION,
-      METHOD_CALL_EXPRESSION, MULTIPLICATIVE_EXPRESSION, NEW_EXPRESSION, PARENTHESIZED_EXPRESSION,
-      POWER_EXPRESSION, PROPERTY_EXPRESSION, RANGE_EXPRESSION, REFERENCE_EXPRESSION,
-      REGEX, REGEX_FIND_EXPRESSION, REGEX_MATCH_EXPRESSION, RELATIONAL_EXPRESSION,
-      SHIFT_EXPRESSION, TERNARY_EXPRESSION, TUPLE_ASSIGNMENT_EXPRESSION, UNARY_EXPRESSION,
-      XOR_EXPRESSION),
+      IN_EXPRESSION, LAND_EXPRESSION, LIST_OR_MAP, LITERAL,
+      LOR_EXPRESSION, METHOD_CALL_EXPRESSION, MULTIPLICATIVE_EXPRESSION, NEW_EXPRESSION,
+      PARENTHESIZED_EXPRESSION, POWER_EXPRESSION, PROPERTY_EXPRESSION, RANGE_EXPRESSION,
+      REFERENCE_EXPRESSION, REGEX, REGEX_FIND_EXPRESSION, REGEX_MATCH_EXPRESSION,
+      RELATIONAL_EXPRESSION, SHIFT_EXPRESSION, TERNARY_EXPRESSION, TUPLE_ASSIGNMENT_EXPRESSION,
+      UNARY_EXPRESSION, XOR_EXPRESSION),
   };
 
   /* ********************************************************** */
@@ -3759,6 +3759,40 @@ public class GroovyGeneratedParser implements PsiParser, LightPsiParser {
   }
 
   /* ********************************************************** */
+  // mb_not ('instanceof') (type_element | expect_type)
+  static boolean instanceof_expression_tail(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "instanceof_expression_tail")) return false;
+    if (!nextTokenIsFast(b, T_NOT, KW_INSTANCEOF)) return false;
+    boolean r, p;
+    Marker m = enter_section_(b, l, _NONE_);
+    r = mb_not(b, l + 1);
+    r = r && instanceof_expression_tail_1(b, l + 1);
+    p = r; // pin = 2
+    r = r && instanceof_expression_tail_2(b, l + 1);
+    exit_section_(b, l, m, r, p, null);
+    return r || p;
+  }
+
+  // ('instanceof')
+  private static boolean instanceof_expression_tail_1(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "instanceof_expression_tail_1")) return false;
+    boolean r;
+    Marker m = enter_section_(b);
+    r = consumeTokenFast(b, KW_INSTANCEOF);
+    exit_section_(b, m, null, r);
+    return r;
+  }
+
+  // type_element | expect_type
+  private static boolean instanceof_expression_tail_2(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "instanceof_expression_tail_2")) return false;
+    boolean r;
+    r = type_element(b, l + 1);
+    if (!r) r = expect_type(b, l + 1);
+    return r;
+  }
+
+  /* ********************************************************** */
   // <<classIdentifier>> type_parameter_list? nl_extends nl_non_empty_implements?
   static boolean interface_definition_header(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "interface_definition_header")) return false;
@@ -3938,6 +3972,14 @@ public class GroovyGeneratedParser implements PsiParser, LightPsiParser {
     r = r && _something.parse(b, l);
     exit_section_(b, m, null, r);
     return r;
+  }
+
+  /* ********************************************************** */
+  // '!'?
+  static boolean mb_not(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "mb_not")) return false;
+    consumeTokenFast(b, T_NOT);
+    return true;
   }
 
   /* ********************************************************** */
@@ -5097,7 +5139,7 @@ public class GroovyGeneratedParser implements PsiParser, LightPsiParser {
   }
 
   /* ********************************************************** */
-  // '<' !'<' | '<=' | '>' !'>' | '>=' | 'in'
+  // '<' !'<' | '<=' | '>' !'>' | '>='
   static boolean relational_operator(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "relational_operator")) return false;
     boolean r;
@@ -5106,7 +5148,6 @@ public class GroovyGeneratedParser implements PsiParser, LightPsiParser {
     if (!r) r = consumeTokenFast(b, T_LE);
     if (!r) r = relational_operator_2(b, l + 1);
     if (!r) r = consumeTokenFast(b, T_GE);
-    if (!r) r = consumeTokenFast(b, KW_IN);
     exit_section_(b, m, null, r);
     return r;
   }
@@ -6592,7 +6633,7 @@ public class GroovyGeneratedParser implements PsiParser, LightPsiParser {
   // 5: BINARY(xor_expression)
   // 6: BINARY(band_expression)
   // 7: BINARY(equality_expression) BINARY(compare_expression) BINARY(regex_find_expression) BINARY(regex_match_expression)
-  // 8: BINARY(relational_expression) POSTFIX(instanceof_expression) POSTFIX(as_expression)
+  // 8: BINARY(relational_expression) BINARY(in_expression) POSTFIX(instanceof_expression) POSTFIX(as_expression)
   // 9: BINARY(shift_expression) BINARY(range_expression)
   // 10: BINARY(additive_expression)
   // 11: BINARY(multiplicative_expression)
@@ -6688,7 +6729,11 @@ public class GroovyGeneratedParser implements PsiParser, LightPsiParser {
         r = expression(b, l, 8);
         exit_section_(b, l, m, RELATIONAL_EXPRESSION, r, true, null);
       }
-      else if (g < 8 && instanceof_expression_0(b, l + 1)) {
+      else if (g < 8 && in_expression_0(b, l + 1)) {
+        r = expression(b, l, 8);
+        exit_section_(b, l, m, IN_EXPRESSION, r, true, null);
+      }
+      else if (g < 8 && instanceof_expression_tail(b, l + 1)) {
         r = true;
         exit_section_(b, l, m, INSTANCEOF_EXPRESSION, r, true, null);
       }
@@ -6842,24 +6887,24 @@ public class GroovyGeneratedParser implements PsiParser, LightPsiParser {
     return r;
   }
 
-  // 'instanceof' (type_element | expect_type)
-  private static boolean instanceof_expression_0(PsiBuilder b, int l) {
-    if (!recursion_guard_(b, l, "instanceof_expression_0")) return false;
-    boolean r, p;
-    Marker m = enter_section_(b, l, _NONE_);
-    r = consumeTokenSmart(b, KW_INSTANCEOF);
-    p = r; // pin = 1
-    r = r && instanceof_expression_0_1(b, l + 1);
-    exit_section_(b, l, m, r, p, null);
-    return r || p;
+  // mb_not ('in')
+  private static boolean in_expression_0(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "in_expression_0")) return false;
+    boolean r;
+    Marker m = enter_section_(b);
+    r = mb_not(b, l + 1);
+    r = r && in_expression_0_1(b, l + 1);
+    exit_section_(b, m, null, r);
+    return r;
   }
 
-  // type_element | expect_type
-  private static boolean instanceof_expression_0_1(PsiBuilder b, int l) {
-    if (!recursion_guard_(b, l, "instanceof_expression_0_1")) return false;
+  // ('in')
+  private static boolean in_expression_0_1(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "in_expression_0_1")) return false;
     boolean r;
-    r = type_element(b, l + 1);
-    if (!r) r = expect_type(b, l + 1);
+    Marker m = enter_section_(b);
+    r = consumeTokenSmart(b, KW_IN);
+    exit_section_(b, m, null, r);
     return r;
   }
 

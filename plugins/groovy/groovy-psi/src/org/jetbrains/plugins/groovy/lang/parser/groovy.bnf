@@ -176,6 +176,7 @@
   elementType('.*_reference_expression') = reference_expression
   elementType('.*_class_type_element') = class_type_element
   consumeTokenMethod('.*_expression') = 'consumeTokenFast'
+  consumeTokenMethod('.*_expression_tail') = 'consumeTokenFast'
   consumeTokenMethod('.*_shift.*_sign') = 'consumeTokenFast'
   consumeTokenMethod('fast.*') = 'consumeTokenFast'
   consumeTokenMethod('.*_type_definition') = 'consumeTokenFast'
@@ -1039,14 +1040,12 @@ right_shift_sign ::= '>' '>'
 right_shift_unsigned_sign ::= '>' '>' '>'
 range_expression ::= expression ('..' | '..<') expression
 
-private priority7 ::= relational_expression | instanceof_expression | as_expression
+private priority7 ::= relational_expression | in_expression | instanceof_expression | as_expression
 relational_expression ::= expression relational_operator mb_nl expression
-private relational_operator ::= '<' !'<' | '<=' | '>' !'>' | '>=' | 'in' { consumeTokenMethod = 'consumeTokenFast' }
-
-instanceof_expression ::= expression ('instanceof' (type_element | expect_type))
-{
-  pin('.*') = 1
-}
+private relational_operator ::= '<' !'<' | '<=' | '>' !'>' | '>=' { consumeTokenMethod = 'consumeTokenFast' }
+in_expression ::= expression mb_not ('in') expression
+instanceof_expression ::= expression instanceof_expression_tail
+private instanceof_expression_tail ::= mb_not ('instanceof') (type_element | expect_type) { pin = 2 }
 as_expression ::= expression 'as' type_element
 
 private priority8 ::= equality_expression | compare_expression | regex_find_expression | regex_match_expression
@@ -1239,6 +1238,7 @@ private meta mb_nl_group ::= <<something>> | <<withProtectedLastVariantPos (nl <
 private empty ::= ()
 
 private mb_question ::= '?'? { consumeTokenMethod = 'consumeTokenFast' }
+private mb_not ::= '!'? { consumeTokenMethod = 'consumeTokenFast' }
 
 private fast_colon ::= ':'
 private fast_comma ::= ','

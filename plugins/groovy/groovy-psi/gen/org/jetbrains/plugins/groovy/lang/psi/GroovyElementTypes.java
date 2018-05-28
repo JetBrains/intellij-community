@@ -102,6 +102,7 @@ public interface GroovyElementTypes {
   GroovyElementType INDEX_EXPRESSION = new GroovyElementType("INDEX_EXPRESSION");
   GroovyElementType INSTANCEOF_EXPRESSION = new GroovyElementType("INSTANCEOF_EXPRESSION");
   GrInterfaceDefinitionElementType INTERFACE_TYPE_DEFINITION = new GrInterfaceDefinitionElementType("INTERFACE_TYPE_DEFINITION");
+  GroovyElementType IN_EXPRESSION = new GroovyElementType("IN_EXPRESSION");
   GroovyElementType LABELED_STATEMENT = new GroovyElementType("LABELED_STATEMENT");
   GroovyElementType LAND_EXPRESSION = new GroovyElementType("LAND_EXPRESSION");
   GroovyElementType LEFT_SHIFT_SIGN = new GroovyElementType("LEFT_SHIFT_SIGN");

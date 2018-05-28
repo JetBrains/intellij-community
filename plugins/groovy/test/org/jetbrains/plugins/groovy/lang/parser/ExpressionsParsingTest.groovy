@@ -464,6 +464,12 @@ class ExpressionsParsingTest extends GroovyParsingTestCase {
 
   void testrelational$noRValue() { doTest() }
 
+  void testrelational$exclamationAfterExpression() { doTest() }
+
+  void testrelational$inNegated() { doTest() }
+
+  void testrelational$instanceOfNegated() { doTest() }
+
   void testspecial$grvy1173() throws Throwable { doTest() }
 
   void testspecial$list1() throws Throwable { doTest() }
