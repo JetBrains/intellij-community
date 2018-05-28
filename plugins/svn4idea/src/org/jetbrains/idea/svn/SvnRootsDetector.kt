@@ -1,233 +1,183 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-package org.jetbrains.idea.svn;
+package org.jetbrains.idea.svn
 
-import com.intellij.openapi.util.io.FileUtil;
-import com.intellij.openapi.vcs.changes.ChangeListManager;
-import com.intellij.openapi.vcs.changes.InvokeAfterUpdateMode;
-import com.intellij.openapi.vcs.changes.VcsDirtyScopeManager;
-import com.intellij.openapi.vfs.LocalFileSystem;
-import com.intellij.openapi.vfs.VfsUtilCore;
-import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.util.containers.ContainerUtil;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
-import org.jetbrains.idea.svn.api.Url;
-import org.jetbrains.idea.svn.status.Status;
+import com.intellij.openapi.util.io.FileUtil
+import com.intellij.openapi.vcs.changes.ChangeListManager
+import com.intellij.openapi.vcs.changes.InvokeAfterUpdateMode
+import com.intellij.openapi.vcs.changes.VcsDirtyScopeManager
+import com.intellij.openapi.vfs.LocalFileSystem
+import com.intellij.openapi.vfs.VfsUtilCore
+import com.intellij.openapi.vfs.VfsUtilCore.virtualToIoFile
+import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.util.containers.ContainerUtil
+import com.intellij.util.containers.ContainerUtil.map
+import org.jetbrains.idea.svn.SvnUtil.isAncestor
+import org.jetbrains.idea.svn.api.Url
+import java.io.File
+import java.util.stream.Collectors.toList
 
-import java.io.File;
-import java.util.*;
+class SvnRootsDetector(private val myVcs: SvnVcs,
+                       private val myMapping: SvnFileUrlMappingImpl,
+                       private val myNestedCopiesHolder: NestedCopiesHolder) {
+  private val myResult = Result()
+  private val myRepositoryRoots = RepositoryRoots(myVcs)
 
-import static com.intellij.openapi.vfs.VfsUtilCore.virtualToIoFile;
-import static com.intellij.util.containers.ContainerUtil.map;
-import static java.util.stream.Collectors.toList;
-import static org.jetbrains.idea.svn.SvnUtil.isAncestor;
+  fun detectCopyRoots(roots: Array<VirtualFile>, clearState: Boolean, callback: Runnable) {
+    for (vcsRoot in roots) {
+      val foundRoots = ForNestedRootChecker(myVcs).getAllNestedWorkingCopies(vcsRoot)
 
-/**
-* @author Konstantin Kolosovsky.
-*/
-public class SvnRootsDetector {
-
-  @NotNull private final SvnVcs myVcs;
-  @NotNull private final SvnFileUrlMappingImpl myMapping;
-  @NotNull private final Result myResult;
-  @NotNull private final RepositoryRoots myRepositoryRoots;
-  @NotNull private final NestedCopiesHolder myNestedCopiesHolder;
-
-  public SvnRootsDetector(@NotNull final SvnVcs vcs,
-                          @NotNull final SvnFileUrlMappingImpl mapping,
-                          @NotNull final NestedCopiesHolder holder) {
-    myVcs = vcs;
-    myMapping = mapping;
-    myResult = new Result();
-    myNestedCopiesHolder = holder;
-    myRepositoryRoots = new RepositoryRoots(myVcs);
-  }
-
-  public void detectCopyRoots(final VirtualFile[] roots, final boolean clearState, Runnable callback) {
-    for (final VirtualFile vcsRoot : roots) {
-      List<Node> foundRoots = new ForNestedRootChecker(myVcs).getAllNestedWorkingCopies(vcsRoot);
-
-      registerLonelyRoots(vcsRoot, foundRoots);
-      registerTopRoots(vcsRoot, foundRoots);
+      registerLonelyRoots(vcsRoot, foundRoots)
+      registerTopRoots(vcsRoot, foundRoots)
     }
 
-    addNestedRoots(clearState, callback);
+    addNestedRoots(clearState, callback)
   }
 
-  private void registerLonelyRoots(VirtualFile vcsRoot, List<Node> foundRoots) {
+  private fun registerLonelyRoots(vcsRoot: VirtualFile, foundRoots: List<Node>) {
     if (foundRoots.isEmpty()) {
-      myResult.myLonelyRoots.add(vcsRoot);
+      myResult.lonelyRoots.add(vcsRoot)
     }
   }
 
-  private void registerTopRoots(@NotNull VirtualFile vcsRoot, @NotNull List<Node> foundRoots) {
+  private fun registerTopRoots(vcsRoot: VirtualFile, foundRoots: List<Node>) {
     // filter out bad(?) items
-    for (Node foundRoot : foundRoots) {
-      RootUrlInfo root = new RootUrlInfo(foundRoot, SvnFormatSelector.findRootAndGetFormat(foundRoot.getIoFile()), vcsRoot);
+    for (foundRoot in foundRoots) {
+      val root = RootUrlInfo(foundRoot, SvnFormatSelector.findRootAndGetFormat(foundRoot.ioFile), vcsRoot)
 
       if (!foundRoot.hasError()) {
-        myRepositoryRoots.register(foundRoot.getRepositoryRootUrl());
-        myResult.myTopRoots.add(root);
-      } else {
-        myResult.myErrorRoots.add(root);
+        myRepositoryRoots.register(foundRoot.repositoryRootUrl)
+        myResult.topRoots.add(root)
+      }
+      else {
+        myResult.errorRoots.add(root)
       }
     }
   }
 
-  private void addNestedRoots(final boolean clearState, final Runnable callback) {
-    List<VirtualFile> basicVfRoots = map(myResult.myTopRoots, RootUrlInfo::getVirtualFile);
-    final ChangeListManager clManager = ChangeListManager.getInstance(myVcs.getProject());
+  private fun addNestedRoots(clearState: Boolean, callback: Runnable) {
+    val basicVfRoots = map<RootUrlInfo, VirtualFile>(myResult.topRoots) { it.virtualFile }
+    val clManager = ChangeListManager.getInstance(myVcs.project)
 
     if (clearState) {
       // clear what was reported before (could be for currently-not-existing roots)
-      myNestedCopiesHolder.getAndClear();
-      VcsDirtyScopeManager.getInstance(myVcs.getProject()).filesDirty(null, basicVfRoots);
+      myNestedCopiesHolder.getAndClear()
+      VcsDirtyScopeManager.getInstance(myVcs.project).filesDirty(null, basicVfRoots)
     }
-    clManager.invokeAfterUpdate(() -> {
-      final List<RootUrlInfo> nestedRoots = new ArrayList<>();
+    clManager.invokeAfterUpdate(
+      {
+        val nestedRoots = mutableListOf<RootUrlInfo>()
 
-      for (NestedCopyInfo info : myNestedCopiesHolder.getAndClear()) {
-        if (NestedCopyType.external.equals(info.getType()) || NestedCopyType.switched.equals(info.getType())) {
-          RootUrlInfo topRoot = findTopRoot(virtualToIoFile(info.getFile()));
+        for (info in myNestedCopiesHolder.getAndClear()) {
+          if (NestedCopyType.external == info.type || NestedCopyType.switched == info.type) {
+            val topRoot = findTopRoot(virtualToIoFile(info.file))
 
-          if (topRoot != null) {
-            // TODO: Seems that type is not set in ForNestedRootChecker as we could not determine it for sure. Probably, for the case
-            // TODO: (or some other cases) when vcs root from settings belongs is in externals of some other working copy upper
-            // TODO: the tree (I did not check this). Leave this setter for now.
-            topRoot.setType(info.getType());
-            continue;
+            if (topRoot != null) {
+              // TODO: Seems that type is not set in ForNestedRootChecker as we could not determine it for sure. Probably, for the case
+              // TODO: (or some other cases) when vcs root from settings belongs is in externals of some other working copy upper
+              // TODO: the tree (I did not check this). Leave this setter for now.
+              topRoot.type = info.type
+              continue
+            }
+            if (!refreshPointInfo(info)) {
+              continue
+            }
           }
-          if (!refreshPointInfo(info)) {
-            continue;
-          }
+          registerRootUrlFromNestedPoint(info, nestedRoots)
         }
-        registerRootUrlFromNestedPoint(info, nestedRoots);
-      }
 
-      myResult.myTopRoots.addAll(nestedRoots);
-      putWcDbFilesToVfs(myResult.myTopRoots);
-      myMapping.applyDetectionResult(myResult);
+        myResult.topRoots.addAll(nestedRoots)
+        putWcDbFilesToVfs(myResult.topRoots)
+        myMapping.applyDetectionResult(myResult)
 
-      callback.run();
-    }, InvokeAfterUpdateMode.SILENT_CALLBACK_POOLED, null, null);
+        callback.run()
+      }, InvokeAfterUpdateMode.SILENT_CALLBACK_POOLED, null, null)
   }
 
-  private static void putWcDbFilesToVfs(@NotNull Collection<RootUrlInfo> infos) {
-    if (!SvnVcs.ourListenToWcDb) return;
+  private fun putWcDbFilesToVfs(infos: Collection<RootUrlInfo>) {
+    if (!SvnVcs.ourListenToWcDb) return
 
-    List<File> wcDbFiles = infos.stream()
-      .filter(info -> info.getFormat().isOrGreater(WorkingCopyFormat.ONE_DOT_SEVEN))
-      .filter(info -> !NestedCopyType.switched.equals(info.getType()))
-      .map(RootUrlInfo::getIoFile)
-      .map(SvnUtil::getWcDb)
-      .collect(toList());
+    val wcDbFiles = infos.stream()
+      .filter { info -> info.format.isOrGreater(WorkingCopyFormat.ONE_DOT_SEVEN) }
+      .filter { info -> NestedCopyType.switched != info.type }
+      .map { it.ioFile }
+      .map { SvnUtil.getWcDb(it) }
+      .collect(toList())
 
-    LocalFileSystem.getInstance().refreshIoFiles(wcDbFiles);
+    LocalFileSystem.getInstance().refreshIoFiles(wcDbFiles)
   }
 
-  private void registerRootUrlFromNestedPoint(@NotNull NestedCopyInfo info, @NotNull List<RootUrlInfo> nestedRoots) {
+  private fun registerRootUrlFromNestedPoint(info: NestedCopyInfo, nestedRoots: MutableList<RootUrlInfo>) {
     // TODO: Seems there could be issues if myTopRoots contains nested roots => RootUrlInfo.myRoot could be incorrect
     // TODO: (not nearest ancestor) for new RootUrlInfo
-    RootUrlInfo topRoot = findAncestorTopRoot(info.getFile());
+    val topRoot = findAncestorTopRoot(info.file)
 
     if (topRoot != null) {
-      Url repoRoot = info.getRootURL();
-      repoRoot = repoRoot == null ? myRepositoryRoots.ask(info.getUrl(), info.getFile()) : repoRoot;
+      var repoRoot = info.rootURL
+      repoRoot = if (repoRoot == null) myRepositoryRoots.ask(info.url, info.file) else repoRoot
       if (repoRoot != null) {
-        Node node = new Node(info.getFile(), info.getUrl(), repoRoot);
-        nestedRoots.add(new RootUrlInfo(node, info.getFormat(), topRoot.getRoot(), info.getType()));
+        val node = Node(info.file, info.url!!, repoRoot)
+        nestedRoots.add(RootUrlInfo(node, info.format, topRoot.root, info.type))
       }
     }
   }
 
-  private boolean refreshPointInfo(@NotNull NestedCopyInfo info) {
+  private fun refreshPointInfo(info: NestedCopyInfo): Boolean {
     // TODO: Here we refresh url, repository url, format because they are not set for some NestedCopies in NestedCopiesBuilder.
     // TODO: For example they are not set for externals. Probably this logic could be moved to NestedCopiesBuilder instead.
-    boolean refreshed = false;
+    var refreshed = false
 
-    final File infoFile = virtualToIoFile(info.getFile());
-    final Status svnStatus = SvnUtil.getStatus(myVcs, infoFile);
+    val infoFile = virtualToIoFile(info.file)
+    val svnStatus = SvnUtil.getStatus(myVcs, infoFile)
 
-    if (svnStatus != null && svnStatus.getURL() != null) {
-      info.setUrl(svnStatus.getURL());
-      info.setFormat(myVcs.getWorkingCopyFormat(infoFile, false));
-      if (svnStatus.getRepositoryRootURL() != null) {
-        info.setRootURL(svnStatus.getRepositoryRootURL());
+    if (svnStatus != null && svnStatus.url != null) {
+      info.url = svnStatus.url
+      info.format = myVcs.getWorkingCopyFormat(infoFile, false)
+      if (svnStatus.repositoryRootURL != null) {
+        info.rootURL = svnStatus.repositoryRootURL
       }
-      refreshed = true;
+      refreshed = true
     }
 
-    return refreshed;
+    return refreshed
   }
 
-  @Nullable
-  private RootUrlInfo findTopRoot(@NotNull final File file) {
-    return ContainerUtil.find(myResult.myTopRoots, topRoot -> FileUtil.filesEqual(topRoot.getIoFile(), file));
+  private fun findTopRoot(file: File): RootUrlInfo? {
+    return ContainerUtil.find(myResult.topRoots) { topRoot -> FileUtil.filesEqual(topRoot.ioFile, file) }
   }
 
-  @Nullable
-  private RootUrlInfo findAncestorTopRoot(@NotNull final VirtualFile file) {
-    return ContainerUtil.find(myResult.myTopRoots, topRoot -> VfsUtilCore.isAncestor(topRoot.getVirtualFile(), file, true));
+  private fun findAncestorTopRoot(file: VirtualFile): RootUrlInfo? {
+    return ContainerUtil.find(myResult.topRoots) { topRoot -> VfsUtilCore.isAncestor(topRoot.virtualFile, file, true) }
   }
 
-  private static class RepositoryRoots {
-    private final SvnVcs myVcs;
-    private final Set<Url> myRoots;
+  private class RepositoryRoots(private val myVcs: SvnVcs) {
+    private val myRoots = mutableSetOf<Url>()
 
-    private RepositoryRoots(final SvnVcs vcs) {
-      myVcs = vcs;
-      myRoots = new HashSet<>();
+    fun register(url: Url) {
+      myRoots.add(url)
     }
 
-    public void register(final Url url) {
-      myRoots.add(url);
-    }
-
-    @Nullable
-    public Url ask(@Nullable Url url, @NotNull VirtualFile file) {
+    fun ask(url: Url?, file: VirtualFile): Url? {
       if (url != null) {
-        for (Url root : myRoots) {
+        for (root in myRoots) {
           if (isAncestor(root, url)) {
-            return root;
+            return root
           }
         }
       }
       // TODO: Seems that RepositoryRoots class should be removed. And necessary repository root should be determined explicitly
       // TODO: using info command.
-      final Url newUrl = SvnUtil.getRepositoryRoot(myVcs, virtualToIoFile(file));
+      val newUrl = SvnUtil.getRepositoryRoot(myVcs, virtualToIoFile(file))
       if (newUrl != null) {
-        myRoots.add(newUrl);
-        return newUrl;
+        myRoots.add(newUrl)
+        return newUrl
       }
-      return null;
+      return null
     }
   }
 
-  public static class Result {
-
-    @NotNull private final List<VirtualFile> myLonelyRoots;
-    @NotNull private final List<RootUrlInfo> myTopRoots;
-    @NotNull private final List<RootUrlInfo> myErrorRoots;
-
-    public Result() {
-      myTopRoots = new ArrayList<>();
-      myErrorRoots = new ArrayList<>();
-      myLonelyRoots = new ArrayList<>();
-    }
-
-    @NotNull
-    public List<VirtualFile> getLonelyRoots() {
-      return myLonelyRoots;
-    }
-
-    @NotNull
-    public List<RootUrlInfo> getTopRoots() {
-      return myTopRoots;
-    }
-
-    @NotNull
-    public List<RootUrlInfo> getErrorRoots() {
-      return myErrorRoots;
-    }
+  class Result {
+    val lonelyRoots = mutableListOf<VirtualFile>()
+    val topRoots = mutableListOf<RootUrlInfo>()
+    val errorRoots = mutableListOf<RootUrlInfo>()
   }
 }
