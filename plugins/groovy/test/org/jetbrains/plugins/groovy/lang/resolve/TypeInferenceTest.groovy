@@ -937,4 +937,10 @@ class W {
 }
 ''', 'W'
   }
+
+  void 'test elvis assignment'() {
+    doExprTest 'def a; a ?= "hello"', 'java.lang.String'
+    doExprTest 'def a = ""; a ?= null', 'java.lang.String'
+    doExprTest 'def a = "s"; a ?= 1', '[java.io.Serializable,java.lang.Comparable<? extends java.io.Serializable>]'
+  }
 }
