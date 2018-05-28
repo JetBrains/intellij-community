@@ -49,6 +49,8 @@ public class SearchEverywhereManagerImpl implements SearchEverywhereManager {
     // fill service contributors
     TopHitSEContributor topHitContributor = new TopHitSEContributor(s -> mySearchEverywhereUI.getSearchField().setText(s));
     myServiceContributors.add(topHitContributor);
+    RecentFilesSEContributor recentContributor = new RecentFilesSEContributor();
+    myServiceContributors.add(recentContributor);
   }
 
   @Override

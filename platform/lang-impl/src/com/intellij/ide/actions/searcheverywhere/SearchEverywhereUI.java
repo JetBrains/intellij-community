@@ -619,7 +619,7 @@ public class SearchEverywhereUI extends BorderLayoutPanel implements Disposable,
       } else {
         boolean clearBefore = true;
         for (SearchEverywhereContributor contributor : allContributors) {
-          anyFound = anyFound || addContributorItems(contributor, MULTIPLE_CONTRIBUTORS_ELEMENTS_LIMIT, clearBefore);
+          anyFound |= addContributorItems(contributor, MULTIPLE_CONTRIBUTORS_ELEMENTS_LIMIT, clearBefore);
           clearBefore = false;
         }
       }
