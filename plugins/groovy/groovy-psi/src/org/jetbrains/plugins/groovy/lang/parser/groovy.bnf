@@ -1033,7 +1033,7 @@ right_shift_unsigned_sign ::= '>' '>' '>'
 range_expression ::= expression ('..' | '..<') expression
 
 private priority7 ::= relational_expression | instanceof_expression | as_expression
-relational_expression ::= expression relational_operator expression
+relational_expression ::= expression relational_operator mb_nl expression
 private relational_operator ::= '<' !'<' | '<=' | '>' !'>' | '>=' | 'in' { consumeTokenMethod = 'consumeTokenFast' }
 
 instanceof_expression ::= expression ('instanceof' (type_element | expect_type))

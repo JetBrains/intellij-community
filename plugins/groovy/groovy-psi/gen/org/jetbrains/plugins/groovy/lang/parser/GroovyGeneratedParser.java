@@ -6616,7 +6616,7 @@ public class GroovyGeneratedParser implements PsiParser, LightPsiParser {
         r = expression(b, l, 7);
         exit_section_(b, l, m, REGEX_MATCH_EXPRESSION, r, true, null);
       }
-      else if (g < 8 && relational_operator(b, l + 1)) {
+      else if (g < 8 && relational_expression_0(b, l + 1)) {
         r = expression(b, l, 8);
         exit_section_(b, l, m, RELATIONAL_EXPRESSION, r, true, null);
       }
@@ -6758,6 +6758,17 @@ public class GroovyGeneratedParser implements PsiParser, LightPsiParser {
     boolean r;
     Marker m = enter_section_(b);
     r = consumeTokenSmart(b, T_COMPARE);
+    r = r && mb_nl(b, l + 1);
+    exit_section_(b, m, null, r);
+    return r;
+  }
+
+  // relational_operator mb_nl
+  private static boolean relational_expression_0(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "relational_expression_0")) return false;
+    boolean r;
+    Marker m = enter_section_(b);
+    r = relational_operator(b, l + 1);
     r = r && mb_nl(b, l + 1);
     exit_section_(b, m, null, r);
     return r;
