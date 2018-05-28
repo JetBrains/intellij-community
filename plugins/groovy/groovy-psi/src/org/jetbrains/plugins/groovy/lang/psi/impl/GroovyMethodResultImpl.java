@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.groovy.lang.psi.impl;
 
 import com.intellij.openapi.util.NotNullComputable;
@@ -25,11 +11,13 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
 import org.jetbrains.plugins.groovy.lang.psi.api.GroovyMethodResult;
 import org.jetbrains.plugins.groovy.lang.psi.api.SpreadState;
+import org.jetbrains.plugins.groovy.lang.resolve.processors.inference.MethodCandidate;
 import org.jetbrains.plugins.groovy.util.NotNullCachedComputableWrapper;
 
 public class GroovyMethodResultImpl extends GroovyResolveResultImpl implements GroovyMethodResult {
 
   private final @NotNull NotNullComputable<PsiSubstitutor> mySubstitutorComputer;
+  private final @Nullable MethodCandidate myCandidate;
 
   public GroovyMethodResultImpl(@NotNull PsiMethod method,
                                 @Nullable PsiElement resolveContext,
@@ -37,7 +25,7 @@ public class GroovyMethodResultImpl extends GroovyResolveResultImpl implements G
                                 @NotNull PsiSubstitutor partialSubstitutor,
                                 @NotNull NotNullComputable<PsiSubstitutor> substitutorComputer,
                                 boolean isAccessible, boolean isStaticsOK) {
-    this(method, resolveContext, spreadState, partialSubstitutor, substitutorComputer, true, isAccessible, isStaticsOK, true);
+    this(method, resolveContext, spreadState, partialSubstitutor, substitutorComputer, null, true, isAccessible, isStaticsOK, true);
   }
 
   public GroovyMethodResultImpl(@NotNull PsiMethod method,
@@ -46,7 +34,7 @@ public class GroovyMethodResultImpl extends GroovyResolveResultImpl implements G
                                 @NotNull PsiSubstitutor partialSubstitutor,
                                 @NotNull NotNullComputable<PsiSubstitutor> substitutorComputer,
                                 boolean isAccessible, boolean isStaticsOK, boolean isApplicable) {
-    this(method, resolveContext, spreadState, partialSubstitutor, substitutorComputer, false, isAccessible, isStaticsOK, isApplicable);
+    this(method, resolveContext, spreadState, partialSubstitutor, substitutorComputer, null, false, isAccessible, isStaticsOK, isApplicable);
   }
 
   public GroovyMethodResultImpl(@NotNull PsiMethod method,
@@ -54,9 +42,11 @@ public class GroovyMethodResultImpl extends GroovyResolveResultImpl implements G
                                 @Nullable SpreadState spreadState,
                                 @NotNull PsiSubstitutor partialSubstitutor,
                                 @NotNull NotNullComputable<PsiSubstitutor> substitutorComputer,
+                                @Nullable MethodCandidate candidate,
                                 boolean isInvokedOnProperty,
                                 boolean isAccessible, boolean isStaticsOk, boolean isApplicable) {
     super(method, resolveContext, spreadState, partialSubstitutor, isAccessible, isStaticsOk, isInvokedOnProperty, isApplicable);
+    myCandidate = candidate;
     mySubstitutorComputer = new NotNullCachedComputableWrapper<>(() -> {
       PsiSubstitutor substitutor = RecursionManager.doPreventingRecursion(this, false, substitutorComputer);
       return substitutor == null ? PsiSubstitutor.EMPTY : substitutor;
@@ -105,5 +95,11 @@ public class GroovyMethodResultImpl extends GroovyResolveResultImpl implements G
   @NotNull
   public NotNullComputable<PsiSubstitutor> getSubstitutorComputer() {
     return mySubstitutorComputer;
+  }
+
+  @Override
+  @Nullable
+  public MethodCandidate getCandidate() {
+    return myCandidate;
   }
 }

@@ -146,11 +146,6 @@ public class CompleteReferenceExpression {
 
       ClosureMissingMethodContributor.processMethodsFromClosures(myRefExpr, myProcessor);
 
-      GrExpression runtimeQualifier = PsiImplUtil.getRuntimeQualifier(myRefExpr);
-      if (runtimeQualifier != null) {
-        getVariantsFromQualifier(runtimeQualifier);
-      }
-
       getBindings();
     }
     else {
@@ -423,7 +418,7 @@ public class CompleteReferenceExpression {
     }
 
     private boolean shouldSkipPackages() {
-      if (PsiImplUtil.getRuntimeQualifier(myRefExpr) != null) {
+      if (myRefExpr.getQualifierExpression() != null) {
         return false;
       }
 
