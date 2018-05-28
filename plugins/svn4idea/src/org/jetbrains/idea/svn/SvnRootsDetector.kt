@@ -9,9 +9,7 @@ import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.openapi.vfs.VfsUtilCore
 import com.intellij.openapi.vfs.VfsUtilCore.virtualToIoFile
 import com.intellij.openapi.vfs.VirtualFile
-import com.intellij.util.containers.ContainerUtil
-import com.intellij.util.containers.ContainerUtil.map
-import org.jetbrains.idea.svn.SvnUtil.isAncestor
+import org.jetbrains.idea.svn.SvnUtil.*
 import org.jetbrains.idea.svn.api.Url
 import java.io.File
 import java.util.stream.Collectors.toList
@@ -55,7 +53,7 @@ class SvnRootsDetector(private val myVcs: SvnVcs,
   }
 
   private fun addNestedRoots(clearState: Boolean, callback: Runnable) {
-    val basicVfRoots = map<RootUrlInfo, VirtualFile>(myResult.topRoots) { it.virtualFile }
+    val basicVfRoots = myResult.topRoots.map { it.virtualFile }
     val clManager = ChangeListManager.getInstance(myVcs.project)
 
     if (clearState) {
@@ -97,10 +95,10 @@ class SvnRootsDetector(private val myVcs: SvnVcs,
     if (!SvnVcs.ourListenToWcDb) return
 
     val wcDbFiles = infos.stream()
-      .filter { info -> info.format.isOrGreater(WorkingCopyFormat.ONE_DOT_SEVEN) }
-      .filter { info -> NestedCopyType.switched != info.type }
+      .filter { it.format.isOrGreater(WorkingCopyFormat.ONE_DOT_SEVEN) }
+      .filter { NestedCopyType.switched != it.type }
       .map { it.ioFile }
-      .map { SvnUtil.getWcDb(it) }
+      .map { getWcDb(it) }
       .collect(toList())
 
     LocalFileSystem.getInstance().refreshIoFiles(wcDbFiles)
@@ -109,12 +107,8 @@ class SvnRootsDetector(private val myVcs: SvnVcs,
   private fun registerRootUrlFromNestedPoint(info: NestedCopyInfo, nestedRoots: MutableList<RootUrlInfo>) {
     // TODO: Seems there could be issues if myTopRoots contains nested roots => RootUrlInfo.myRoot could be incorrect
     // TODO: (not nearest ancestor) for new RootUrlInfo
-    val topRoot = findAncestorTopRoot(info.file)
-
-    if (topRoot != null) {
-      var repoRoot = info.rootURL
-      repoRoot = if (repoRoot == null) myRepositoryRoots.ask(info.url, info.file) else repoRoot
-      if (repoRoot != null) {
+    findAncestorTopRoot(info.file)?.let { topRoot ->
+      (info.rootURL ?: myRepositoryRoots.ask(info.url, info.file))?.let { repoRoot ->
         val node = Node(info.file, info.url!!, repoRoot)
         nestedRoots.add(RootUrlInfo(node, info.format, topRoot.root, info.type))
       }
@@ -127,7 +121,7 @@ class SvnRootsDetector(private val myVcs: SvnVcs,
     var refreshed = false
 
     val infoFile = virtualToIoFile(info.file)
-    val svnStatus = SvnUtil.getStatus(myVcs, infoFile)
+    val svnStatus = getStatus(myVcs, infoFile)
 
     if (svnStatus != null && svnStatus.url != null) {
       info.url = svnStatus.url
@@ -141,13 +135,9 @@ class SvnRootsDetector(private val myVcs: SvnVcs,
     return refreshed
   }
 
-  private fun findTopRoot(file: File): RootUrlInfo? {
-    return ContainerUtil.find(myResult.topRoots) { topRoot -> FileUtil.filesEqual(topRoot.ioFile, file) }
-  }
+  private fun findTopRoot(file: File) = myResult.topRoots.find { FileUtil.filesEqual(it.ioFile, file) }
 
-  private fun findAncestorTopRoot(file: VirtualFile): RootUrlInfo? {
-    return ContainerUtil.find(myResult.topRoots) { topRoot -> VfsUtilCore.isAncestor(topRoot.virtualFile, file, true) }
-  }
+  private fun findAncestorTopRoot(file: VirtualFile) = myResult.topRoots.find { VfsUtilCore.isAncestor(it.virtualFile, file, true) }
 
   private class RepositoryRoots(private val myVcs: SvnVcs) {
     private val myRoots = mutableSetOf<Url>()
@@ -157,21 +147,10 @@ class SvnRootsDetector(private val myVcs: SvnVcs,
     }
 
     fun ask(url: Url?, file: VirtualFile): Url? {
-      if (url != null) {
-        for (root in myRoots) {
-          if (isAncestor(root, url)) {
-            return root
-          }
-        }
-      }
+      val root = url?.let { myRoots.find { root -> isAncestor(root, it) } }
       // TODO: Seems that RepositoryRoots class should be removed. And necessary repository root should be determined explicitly
       // TODO: using info command.
-      val newUrl = SvnUtil.getRepositoryRoot(myVcs, virtualToIoFile(file))
-      if (newUrl != null) {
-        myRoots.add(newUrl)
-        return newUrl
-      }
-      return null
+      return root ?: getRepositoryRoot(myVcs, virtualToIoFile(file))?.also { myRoots.add(it) }
     }
   }
 
