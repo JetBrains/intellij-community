@@ -39,7 +39,6 @@ import com.intellij.util.Alarm;
 import com.intellij.util.text.MatcherHolder;
 import com.intellij.util.ui.DialogUtil;
 import com.intellij.util.ui.JBUI;
-import com.intellij.util.ui.StatusText;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.components.BorderLayoutPanel;
 import org.jetbrains.annotations.NotNull;
@@ -155,6 +154,7 @@ public class SearchEverywhereUI extends BorderLayoutPanel implements Disposable,
 
   public void setUseNonProjectItems(boolean use) {
     myNonProjectCB.setSelected(use);
+    nonProjectCheckBoxLocked = true;
   }
 
   public boolean isUseNonProjectItems() {
@@ -195,6 +195,7 @@ public class SearchEverywhereUI extends BorderLayoutPanel implements Disposable,
       myNonProjectCB.setMnemonic(0);
     }
     myNonProjectCB.setSelected(false);
+    nonProjectCheckBoxLocked = false;
 
     myResultsList.getEmptyText().setText(getEmptyText());
 
@@ -473,10 +474,8 @@ public class SearchEverywhereUI extends BorderLayoutPanel implements Disposable,
       }
     });
 
-    myNonProjectCB.addItemListener(e -> {
-      nonProjectCheckBoxLocked = true;
-      rebuildList();
-    });
+    myNonProjectCB.addItemListener(e -> rebuildList());
+    myNonProjectCB.addActionListener(e -> nonProjectCheckBoxLocked = true);
 
     myResultsList.addMouseListener(new MouseAdapter() {
       @Override
