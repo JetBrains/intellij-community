@@ -351,7 +351,9 @@ public class CompositePrintable extends UserDataHolderBase implements Printable,
               else {
                 ConsoleViewContentType contentType = contentTypeByNameMap.getOrDefault(firstToken, ConsoleViewContentType.NORMAL_OUTPUT);
                 String text = IOUtil.readString(reader);
-                printText(printer, text, contentType);
+                if (text != null) {
+                  printText(printer, text, contentType);
+                }
               }
               lineNum++;
             }
@@ -373,7 +375,7 @@ public class CompositePrintable extends UserDataHolderBase implements Printable,
       }
     }
 
-    private void printText(Printer printer, String text, ConsoleViewContentType contentType) {
+    private void printText(@NotNull Printer printer, @NotNull String text, @NotNull ConsoleViewContentType contentType) {
       if (ConsoleViewContentType.NORMAL_OUTPUT.equals(contentType)) {
         printer.printWithAnsiColoring(text, ProcessOutputTypes.STDOUT);
       }
