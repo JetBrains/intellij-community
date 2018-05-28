@@ -62,7 +62,7 @@ fun Notification.notify(lifetime: Lifetime, project: Project?) {
     notify(project)
 }
 
-inline fun <T : Any, C : ComponentManager> C.computeSafe(crossinline compute: C.() -> T?) : T? =
+inline fun <T : Any, C : ComponentManager> C.computeSafe(crossinline compute: C.() -> T?): T? =
     application.runReadAction(Computable {
         if (isDisposed) null else compute()
     })
