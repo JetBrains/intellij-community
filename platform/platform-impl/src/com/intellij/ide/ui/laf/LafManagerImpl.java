@@ -89,6 +89,7 @@ public final class LafManagerImpl extends LafManager implements PersistentStateC
 
   private final EventDispatcher<LafManagerListener> myEventDispatcher = EventDispatcher.create(LafManagerListener.class);
   private final UIManager.LookAndFeelInfo[] myLaFs;
+  private final UIDefaults ourDefaults;
   private UIManager.LookAndFeelInfo myCurrentLaf;
   private final Map<UIManager.LookAndFeelInfo, HashMap<String, Object>> myStoredDefaults = ContainerUtil.newHashMap();
 
@@ -107,6 +108,7 @@ public final class LafManagerImpl extends LafManager implements PersistentStateC
   LafManagerImpl() {
     List<UIManager.LookAndFeelInfo> lafList = ContainerUtil.newArrayList();
 
+    ourDefaults = (UIDefaults)UIManager.getDefaults().clone();
     if (SystemInfo.isMac) {
       String className = useIntelliJInsteadOfAqua() ? IntelliJLaf.class.getName() : UIManager.getSystemLookAndFeelClassName();
       lafList.add(new UIManager.LookAndFeelInfo("Light", className));
@@ -324,6 +326,9 @@ public final class LafManagerImpl extends LafManager implements PersistentStateC
       LOG.error("unknown LookAndFeel : " + lookAndFeelInfo);
       return;
     }
+
+    UIManager.getDefaults().clear();
+    UIManager.getDefaults().putAll(ourDefaults);
     // Set L&F
     if (IdeaLookAndFeelInfo.CLASS_NAME.equals(lookAndFeelInfo.getClassName())) { // that is IDEA default LAF
       IdeaLaf laf = new IdeaLaf();
