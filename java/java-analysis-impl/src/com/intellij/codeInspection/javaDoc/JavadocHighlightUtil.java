@@ -362,7 +362,7 @@ public class JavadocHighlightUtil {
                                     @NotNull PsiMethod psiMethod,
                                     @NotNull PsiElement toHighlight,
                                     @NotNull ProblemHolder holder) {
-    List<PsiParameter> absentParameters = null;
+    List<PsiNamedElement> absentParameters = null;
 
     for (PsiParameter param : psiMethod.getParameterList().getParameters()) {
       if (!hasTagForParameter(tags, param)) {
@@ -370,8 +370,15 @@ public class JavadocHighlightUtil {
       }
     }
 
+    for (PsiTypeParameter parameter : psiMethod.getTypeParameters()) {
+      if (!hasTagForParameter(tags, parameter)) {
+        (absentParameters = list(absentParameters)).add(parameter);
+      }
+    }
+
+
     if (absentParameters != null) {
-      for (PsiParameter parameter : absentParameters) {
+      for (PsiNamedElement parameter : absentParameters) {
         String name = parameter.getName();
         if (name != null) {
           String tagText = "<code>" + name + "</code>";
