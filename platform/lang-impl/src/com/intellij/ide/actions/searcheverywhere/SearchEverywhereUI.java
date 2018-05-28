@@ -70,12 +70,12 @@ public class SearchEverywhereUI extends BorderLayoutPanel implements Disposable,
   private final JTextField mySearchField;
   private final JCheckBox myNonProjectCB;
   private final List<SETab> myTabs = new ArrayList<>();
+  private boolean nonProjectCheckBoxLocked;
 
   private final JBList<Object> myResultsList = new JBList<>();
   private final SearchListModel myListModel = new SearchListModel(); //todo using in different threads? #UX-1
 
   private JBPopup myHint;
-  private final Alarm hintAlarm = new Alarm(Alarm.ThreadToUse.SWING_THREAD, ApplicationManager.getApplication());
 
   private CalcThread myCalcThread; //todo using in different threads? #UX-1
   private volatile ActionCallback myCurrentWorker = ActionCallback.DONE;
@@ -464,11 +464,15 @@ public class SearchEverywhereUI extends BorderLayoutPanel implements Disposable,
     mySearchField.getDocument().addDocumentListener(new DocumentAdapter() {
       @Override
       protected void textChanged(DocumentEvent e) {
+        nonProjectCheckBoxLocked = false;
         rebuildList();
       }
     });
 
-    myNonProjectCB.addItemListener(e -> rebuildList());
+    myNonProjectCB.addItemListener(e -> {
+      nonProjectCheckBoxLocked = true;
+      rebuildList();
+    });
 
     myResultsList.addMouseListener(new MouseAdapter() {
       @Override
@@ -486,13 +490,7 @@ public class SearchEverywhereUI extends BorderLayoutPanel implements Disposable,
 
     myResultsList.addListSelectionListener(e -> {
       Object selectedValue = myResultsList.getSelectedValue();
-      hintAlarm.cancelAllRequests();
-      if (selectedValue == null) {
-        hintAlarm.addRequest(() -> hideHint(), 200);
-        return;
-      }
-
-      if (myHint != null && myHint.isVisible()) {
+      if (selectedValue != null && myHint != null && myHint.isVisible()) {
         updateHint(selectedValue);
       }
     });
@@ -547,6 +545,18 @@ public class SearchEverywhereUI extends BorderLayoutPanel implements Disposable,
     }
   }
 
+  private void handleEmptyResults() {
+    ApplicationManager.getApplication().invokeLater(() -> {
+      if (!nonProjectCheckBoxLocked && !isUseNonProjectItems() && !getSearchPattern().isEmpty()) {
+        setUseNonProjectItems(true);
+        return;
+      }
+
+      hideHint();
+    });
+
+  }
+
   @SuppressWarnings("Duplicates") //todo remove suppress #UX-1
   private class CalcThread implements Runnable {
     private final Project project;
@@ -599,15 +609,20 @@ public class SearchEverywhereUI extends BorderLayoutPanel implements Disposable,
         firePropertyChange("preferredSize", oldSize, newSize);
       }, 200);
 
+      boolean anyFound = false;
       SearchEverywhereContributor selectedContributor = mySelectedTab.getContributor().orElse(null);
       if (selectedContributor != null) {
-        addContributorItems(selectedContributor, SINGLE_CONTRIBUTOR_ELEMENTS_LIMIT, true);
+        anyFound = addContributorItems(selectedContributor, SINGLE_CONTRIBUTOR_ELEMENTS_LIMIT, true);
       } else {
         boolean clearBefore = true;
         for (SearchEverywhereContributor contributor : allContributors) {
-          addContributorItems(contributor, MULTIPLE_CONTRIBUTORS_ELEMENTS_LIMIT, clearBefore);
+          anyFound = anyFound || addContributorItems(contributor, MULTIPLE_CONTRIBUTORS_ELEMENTS_LIMIT, clearBefore);
           clearBefore = false;
         }
+      }
+
+      if (!anyFound) {
+        handleEmptyResults();
       }
     }
 
@@ -617,9 +632,11 @@ public class SearchEverywhereUI extends BorderLayoutPanel implements Disposable,
       addContributorItems(contributor, size, false);
     }
 
-    private void addContributorItems(SearchEverywhereContributor contributor, int count, boolean clearBefore) {
+    private boolean addContributorItems(SearchEverywhereContributor contributor, int count, boolean clearBefore) {
+      boolean[] found = {false};
       ApplicationManager.getApplication().runReadAction(() -> {
         ContributorSearchResult<Object> results = contributor.search(project, pattern, isUseNonProjectItems(), myProgressIndicator, count);
+        found[0] = !results.isEmpty();
 
         if (clearBefore) {
           listOperationsAlarm.cancelAllRequests();
@@ -644,6 +661,8 @@ public class SearchEverywhereUI extends BorderLayoutPanel implements Disposable,
           firePropertyChange("preferredSize", oldSize, getPreferredSize());
         }, 0);
       });
+
+      return found[0];
     }
 
     protected void check() {
