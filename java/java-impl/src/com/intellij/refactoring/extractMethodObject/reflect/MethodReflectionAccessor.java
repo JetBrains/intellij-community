@@ -47,7 +47,7 @@ public class MethodReflectionAccessor extends ReflectionAccessorBase<MethodRefle
   @Override
   protected void grantAccess(@NotNull MethodCallDescriptor descriptor) {
     PsiClass outerClass = getOuterClass();
-    String returnType = PsiReflectionAccessUtil.getAccessibleReturnType(resolveMethodReturnType(descriptor));
+    String returnType = PsiReflectionAccessUtil.getAccessibleReturnType(descriptor.callExpression, resolveMethodReturnType(descriptor));
     PsiClass containingClass = descriptor.method.getContainingClass();
     String containingClassName = containingClass == null ? null : ClassUtil.getJVMClassName(containingClass);
     String name = descriptor.method.getName();

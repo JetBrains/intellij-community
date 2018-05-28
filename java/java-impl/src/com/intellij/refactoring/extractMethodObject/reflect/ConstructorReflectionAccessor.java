@@ -106,7 +106,7 @@ public class ConstructorReflectionAccessor extends ReflectionAccessorBase<Constr
       return null;
     }
 
-    public ConstructorDescriptor(@NotNull PsiNewExpression expression, @Nullable PsiMethod constructor, PsiClass psiClass) {
+    public ConstructorDescriptor(@NotNull PsiNewExpression expression, @Nullable PsiMethod constructor, @NotNull PsiClass psiClass) {
       newExpression = expression;
       this.constructor = constructor;
       this.psiClass = psiClass;
