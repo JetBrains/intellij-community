@@ -1,6 +1,7 @@
 package com.siyeh.igtest.encapsulation;
 
 import java.util.*;
+import com.google.common.collect.*;
 
 public class AssignmentOrReturnOfFieldWithMutableType
 {
@@ -149,6 +150,14 @@ class ImmutableTest {
     final List<String> list = Collections.unmodifiableList(Arrays.asList("foo", "bar", "baz"));
 
     public List<String> getList() {
+        return list;
+    }
+}
+
+class GuavaTest {
+    private final ImmutableList<?> list = ImmutableList.of();
+
+    public ImmutableList<?> getList() {
         return list;
     }
 }

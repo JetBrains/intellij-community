@@ -145,7 +145,9 @@ public class AssignmentOrReturnOfFieldWithMutableTypeInspection extends BaseInsp
       if (field == null) return;
       final String type = TypeUtils.expressionHasTypeOrSubtype(returnValue, MUTABLE_TYPES);
       if (type == null && !(returnValue.getType() instanceof PsiArrayType)) return;
-      if (CollectionUtils.isConstantEmptyArray(field) || Mutability.getMutability(field).isUnmodifiable()) return;
+      if (CollectionUtils.isConstantEmptyArray(field) ||
+          ClassUtils.isImmutable(field.getType()) ||
+          Mutability.getMutability(field).isUnmodifiable()) return;
       registerError(returnValue, field, returnValue, type, Boolean.FALSE);
     }
   }

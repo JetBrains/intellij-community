@@ -22,6 +22,19 @@ public class AssignmentOrReturnOfFieldWithMutableTypeInspectionTest extends Ligh
     }
   };
 
+  @Override
+  protected String[] getEnvironmentClasses() {
+    return new String[] {
+      "package com.google.common.collect;\n" +
+      "\n" +
+      "import java.util.List;\n" +
+      "\n" +
+      "public class ImmutableList<E> implements List<E> {\n" +
+      "  public static ImmutableList<?> of() {return new ImmutableList<>();}\n" +
+      "}"
+    };
+  }
+
   @NotNull
   @Override
   protected LightProjectDescriptor getProjectDescriptor() {
