@@ -95,4 +95,9 @@ class PyTypeHintsQuickFixTest : PyQuickFixTestCase() {
   fun testSelfInTypeComment() {
     doQuickFixTest(PyTypeHintsInspection::class.java, "Replace with type name")
   }
+
+  // PY-20530
+  fun testFunctionAnnotationAndTypeComment() {
+    doQuickFixTest(PyTypeHintsInspection::class.java, "Remove function annotations", LanguageLevel.PYTHON35)
+  }
 }
