@@ -56,22 +56,24 @@ public class SourceRootIconProvider {
   private static Icon calcFileLayerIcon(VirtualFile vFile, Project project) {
     ProjectFileIndexImpl index = (ProjectFileIndexImpl)ProjectFileIndex.getInstance(project);
     if (vFile != null) {
+      VirtualFile parent = vFile.getParent();
+      
       if (index.isExcluded(vFile)) {
         //If the parent directory is also excluded it'll have a special icon (see DirectoryIconProvider), so it makes no sense to add
         // additional marks for all files under it.
-        if (!index.isExcluded(vFile.getParent())) {
+        if (parent == null || !index.isExcluded(parent)) {
           return AllIcons.Nodes.ExcludedFromCompile;
         }
       }
       else {
         JpsModuleSourceRootType<?> rootType = index.getSourceRootType(vFile);
         if (rootType != null) {
-          JpsModuleSourceRootType<?> parentRootType = index.getSourceRootType(vFile.getParent());
+          JpsModuleSourceRootType<?> parentRootType = parent == null ? null : index.getSourceRootType(parent);
 
           // do not mark files under folder of the same root type (e.g. test root file under test root dir)
           // but mark file if they are under different root type (e.g. test root file under source root dir)
           if (parentRootType == null || !rootType.equals(parentRootType)) {
-            // calculating getModuleSourceRoot is O(M), where N - number of source folder entries in the module,
+            // calculating getModuleSourceRoot is O(M), where M - number of source folder entries in the module,
             // so it should be only called when absolutely needed.
             SourceFolder sourceFolder = ProjectRootsUtil.getModuleSourceRoot(vFile, project);
             if (sourceFolder != null) {
