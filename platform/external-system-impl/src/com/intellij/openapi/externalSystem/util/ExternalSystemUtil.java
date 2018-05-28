@@ -295,7 +295,7 @@ public class ExternalSystemUtil {
 
     if (!toRefresh.isEmpty()) {
       ExternalSystemNotificationManager.getInstance(spec.getProject())
-        .clearNotifications(null, NotificationSource.PROJECT_SYNC, spec.getExternalSystemId());
+                                       .clearNotifications(null, NotificationSource.PROJECT_SYNC, spec.getExternalSystemId());
 
       for (String path : toRefresh) {
         refreshProject(path, new ImportSpecBuilder(spec).callback(callback).build());
@@ -432,7 +432,7 @@ public class ExternalSystemUtil {
 
         if (!(callback instanceof MyMultiExternalProjectRefreshCallback)) {
           ExternalSystemNotificationManager.getInstance(project)
-            .clearNotifications(null, NotificationSource.PROJECT_SYNC, externalSystemId);
+                                           .clearNotifications(null, NotificationSource.PROJECT_SYNC, externalSystemId);
         }
 
         final ExternalSystemTaskActivator externalSystemTaskActivator = ExternalProjectsManagerImpl.getInstance(project).getTaskActivator();
@@ -480,9 +480,11 @@ public class ExternalSystemUtil {
             String systemId = id.getProjectSystemId().getReadableName();
             rerunImportAction.getTemplatePresentation().setText(ExternalSystemBundle.message("action.refresh.project.text", systemId));
             rerunImportAction.getTemplatePresentation()
-              .setDescription(ExternalSystemBundle.message("action.refresh.project.description", systemId));
+                             .setDescription(ExternalSystemBundle.message("action.refresh.project.description", systemId));
             rerunImportAction.getTemplatePresentation().setIcon(AllIcons.Actions.Refresh);
-            String message = isPreviewMode ? "creating of the project preview..." : "syncing...";
+
+            if (isPreviewMode) return;
+            String message = "syncing...";
             ServiceManager.getService(project, SyncViewManager.class).onEvent(
               new StartBuildEventImpl(new DefaultBuildDescriptor(id, projectName, externalProjectPath, eventTime), message)
                 .withProcessHandler(processHandler, null)
@@ -516,9 +518,10 @@ public class ExternalSystemUtil {
                                                         externalSystemId.getReadableName(), projectName);
             com.intellij.build.events.FailureResult failureResult = createFailureResult(title, e, externalSystemId, project);
             String message = isPreviewMode ? "project preview creation failed" : "sync failed";
-            ServiceManager.getService(project, SyncViewManager.class).onEvent(
-              new FinishBuildEventImpl(id, null, System.currentTimeMillis(), message, failureResult));
-
+            if (!isPreviewMode) {
+              ServiceManager.getService(project, SyncViewManager.class).onEvent(
+                new FinishBuildEventImpl(id, null, System.currentTimeMillis(), message, failureResult));
+            }
             printFailure(e, failureResult, consoleView, processHandler);
             processHandler.notifyProcessTerminated(1);
           }
@@ -526,14 +529,16 @@ public class ExternalSystemUtil {
           @Override
           public void onSuccess(@NotNull ExternalSystemTaskId id) {
             String message = isPreviewMode ? "project preview created" : "synced successfully";
-            ServiceManager.getService(project, SyncViewManager.class).onEvent(new FinishBuildEventImpl(
-              id, null, System.currentTimeMillis(), message, new SuccessResultImpl()));
+            if (!isPreviewMode) {
+              ServiceManager.getService(project, SyncViewManager.class).onEvent(new FinishBuildEventImpl(
+                id, null, System.currentTimeMillis(), message, new SuccessResultImpl()));
+            }
             processHandler.notifyProcessTerminated(0);
           }
 
           @Override
           public void onStatusChange(@NotNull ExternalSystemTaskNotificationEvent event) {
-            if (event instanceof ExternalSystemTaskExecutionEvent) {
+            if (!isPreviewMode && event instanceof ExternalSystemTaskExecutionEvent) {
               BuildEvent buildEvent = convert(((ExternalSystemTaskExecutionEvent)event));
               ServiceManager.getService(project, SyncViewManager.class).onEvent(buildEvent);
             }
@@ -546,8 +551,8 @@ public class ExternalSystemUtil {
           final Throwable error = myTask.getError();
           if (error == null) {
             if (callback != null) {
-              final ExternalProjectInfo externalProjectData = ProjectDataManagerImpl.getInstance()
-                .getExternalProjectData(project, externalSystemId, externalProjectPath);
+              final ExternalProjectInfo externalProjectData =
+                ProjectDataManagerImpl.getInstance().getExternalProjectData(project, externalSystemId, externalProjectPath);
               if (externalProjectData != null) {
                 DataNode<ProjectData> externalProject = externalProjectData.getExternalProjectStructure();
                 if (externalProject != null && importSpec.shouldCreateDirectoriesForEmptyContentRoots()) {
