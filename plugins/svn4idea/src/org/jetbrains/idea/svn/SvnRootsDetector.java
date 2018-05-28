@@ -1,7 +1,6 @@
-// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.svn;
 
-import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vcs.changes.ChangeListManager;
 import com.intellij.openapi.vcs.changes.InvokeAfterUpdateMode;
@@ -27,8 +26,6 @@ import static org.jetbrains.idea.svn.SvnUtil.isAncestor;
 * @author Konstantin Kolosovsky.
 */
 public class SvnRootsDetector {
-
-  private static final Logger LOG = Logger.getInstance(SvnRootsDetector.class);
 
   @NotNull private final SvnVcs myVcs;
   @NotNull private final SvnFileUrlMappingImpl myMapping;
@@ -148,22 +145,16 @@ public class SvnRootsDetector {
     // TODO: For example they are not set for externals. Probably this logic could be moved to NestedCopiesBuilder instead.
     boolean refreshed = false;
 
-    // TODO: No checked exceptions are thrown - remove catch/LOG.error/rethrow to fix real cause if any
-    try {
-      final File infoFile = virtualToIoFile(info.getFile());
-      final Status svnStatus = SvnUtil.getStatus(myVcs, infoFile);
+    final File infoFile = virtualToIoFile(info.getFile());
+    final Status svnStatus = SvnUtil.getStatus(myVcs, infoFile);
 
-      if (svnStatus != null && svnStatus.getURL() != null) {
-        info.setUrl(svnStatus.getURL());
-        info.setFormat(myVcs.getWorkingCopyFormat(infoFile, false));
-        if (svnStatus.getRepositoryRootURL() != null) {
-          info.setRootURL(svnStatus.getRepositoryRootURL());
-        }
-        refreshed = true;
+    if (svnStatus != null && svnStatus.getURL() != null) {
+      info.setUrl(svnStatus.getURL());
+      info.setFormat(myVcs.getWorkingCopyFormat(infoFile, false));
+      if (svnStatus.getRepositoryRootURL() != null) {
+        info.setRootURL(svnStatus.getRepositoryRootURL());
       }
-    }
-    catch (Exception e) {
-      LOG.info(e);
+      refreshed = true;
     }
 
     return refreshed;
