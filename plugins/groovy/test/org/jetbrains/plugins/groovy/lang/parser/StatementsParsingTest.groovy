@@ -183,6 +183,18 @@ class StatementsParsingTest extends GroovyParsingTestCase {
 
   void testLoop$while7() throws Throwable { doTest() }
 
+  void testLoop$dowhile0() { doTest() }
+
+  void testLoop$dowhile1() { doTest() }
+
+  void testLoop$dowhile2() { doTest() }
+
+  void testLoop$dowhile3() { doTest() }
+
+  void testLoop$dowhile4() { doTest() }
+
+  void testLoop$dowhile5() { doTest() }
+
   void testMethods$method1() throws Throwable { doTest() }
 
   void testMethods$method2() throws Throwable { doTest() }

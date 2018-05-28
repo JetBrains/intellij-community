@@ -117,6 +117,9 @@ public class GroovyGeneratedParser implements PsiParser, LightPsiParser {
     else if (t == DISJUNCTION_TYPE_ELEMENT) {
       r = disjunction_type_element(b, 0);
     }
+    else if (t == DO_WHILE_STATEMENT) {
+      r = do_while_statement(b, 0);
+    }
     else if (t == DOLLAR_SLASHY_LITERAL) {
       r = dollar_slashy_literal(b, 0);
     }
@@ -2706,6 +2709,25 @@ public class GroovyGeneratedParser implements PsiParser, LightPsiParser {
     r = type_element(b, l + 1);
     if (!r) r = expect_type(b, l + 1);
     return r;
+  }
+
+  /* ********************************************************** */
+  // 'do' mb_nl branch mb_nl 'while' '(' expression ')'
+  public static boolean do_while_statement(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "do_while_statement")) return false;
+    if (!nextTokenIs(b, KW_DO)) return false;
+    boolean r, p;
+    Marker m = enter_section_(b, l, _NONE_, DO_WHILE_STATEMENT, null);
+    r = consumeToken(b, KW_DO);
+    p = r; // pin = 1
+    r = r && report_error_(b, mb_nl(b, l + 1));
+    r = p && report_error_(b, branch(b, l + 1)) && r;
+    r = p && report_error_(b, mb_nl(b, l + 1)) && r;
+    r = p && report_error_(b, consumeTokens(b, -1, KW_WHILE, T_LPAREN)) && r;
+    r = p && report_error_(b, expression(b, l + 1, -1)) && r;
+    r = p && consumeToken(b, T_RPAREN) && r;
+    exit_section_(b, l, m, r, p, null);
+    return r || p;
   }
 
   /* ********************************************************** */
@@ -5438,6 +5460,7 @@ public class GroovyGeneratedParser implements PsiParser, LightPsiParser {
   //             | switch_statement
   //             | try_statement
   //             | while_statement
+  //             | do_while_statement
   //             | for_statement
   //             | synchronized_statement
   //             | return_statement
@@ -5456,6 +5479,7 @@ public class GroovyGeneratedParser implements PsiParser, LightPsiParser {
     if (!r) r = switch_statement(b, l + 1);
     if (!r) r = try_statement(b, l + 1);
     if (!r) r = while_statement(b, l + 1);
+    if (!r) r = do_while_statement(b, l + 1);
     if (!r) r = for_statement(b, l + 1);
     if (!r) r = synchronized_statement(b, l + 1);
     if (!r) r = return_statement(b, l + 1);

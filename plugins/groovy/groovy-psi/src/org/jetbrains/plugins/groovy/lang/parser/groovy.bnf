@@ -664,6 +664,7 @@ statement ::= if_statement
             | switch_statement
             | try_statement
             | while_statement
+            | do_while_statement
             | for_statement
             | synchronized_statement
             | return_statement
@@ -738,6 +739,8 @@ while_statement ::= 'while' ('(' mb_nl expression mb_nl ')' mb_nl branch)
 {
   pin('.*') = 1
 }
+
+do_while_statement ::= 'do' mb_nl branch mb_nl 'while' '(' expression ')' { pin = 1 }
 
 private type_element_followed_by_identifier ::= type_element &IDENTIFIER
 private mb_type_element ::= type_element_followed_by_identifier?

@@ -3,6 +3,7 @@ package org.jetbrains.plugins.groovy.lang.psi;
 
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.lang.groovydoc.psi.api.*;
+import org.jetbrains.plugins.groovy.lang.psi.api.GrDoWhileStatement;
 import org.jetbrains.plugins.groovy.lang.psi.api.GrInExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.GrListOrMap;
 import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.GrThrowsClause;
@@ -370,6 +371,10 @@ public abstract class GroovyElementVisitor {
 
   public void visitWhileStatement(@NotNull GrWhileStatement whileStatement) {
     visitStatement(whileStatement);
+  }
+
+  public void visitDoWhileStatement(@NotNull GrDoWhileStatement statement) {
+    visitStatement(statement);
   }
 
   public void visitSwitchStatement(@NotNull GrSwitchStatement switchStatement) {
