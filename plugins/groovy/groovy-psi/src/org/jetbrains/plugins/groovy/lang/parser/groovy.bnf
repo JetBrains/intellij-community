@@ -579,7 +579,7 @@ private top_level ::= import | statement
 private top_level_start ::= 'import' | block_level_start
 private top_level_end ::= separators | <<eof>>
 
-private block_levels ::= block_level_item* clear_error
+block_levels ::= block_level_item* clear_error { elementType = '' name = '' }
 private block_level_item ::= <<addVariant "statement">> <<separated_item block_level_end statement block_level_start>>
 private block_level_start ::= statement_start | class_level_start
 private block_level_end ::= top_level_end | &'}'

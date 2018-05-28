@@ -1257,7 +1257,7 @@ public class GroovyGeneratedParser implements PsiParser, LightPsiParser {
 
   /* ********************************************************** */
   // block_level_item* clear_error
-  static boolean block_levels(PsiBuilder b, int l) {
+  public static boolean block_levels(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "block_levels")) return false;
     boolean r;
     Marker m = enter_section_(b);
