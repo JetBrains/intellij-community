@@ -6,6 +6,7 @@ import com.intellij.psi.PsiReference;
 import com.intellij.psi.util.QualifiedName;
 import com.intellij.util.containers.ContainerUtil;
 import com.jetbrains.python.PyNames;
+import com.jetbrains.python.psi.resolve.PyResolveContext;
 import com.jetbrains.python.psi.types.TypeEvalContext;
 import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.NotNull;
@@ -208,6 +209,15 @@ public class PyKnownDecoratorUtil {
 
   public static boolean hasGeneratorBasedCoroutineDecorator(@NotNull PyFunction function, @NotNull TypeEvalContext context) {
     return ContainerUtil.exists(getKnownDecorators(function, context), GENERATOR_BASED_COROUTINE_DECORATORS::contains);
+  }
+
+  public static boolean isResolvedToGeneratorBasedCoroutine(@NotNull PyCallExpression receiver,
+                                                            @NotNull PyResolveContext resolveContext,
+                                                            @NotNull TypeEvalContext typeEvalContext) {
+    return StreamEx
+      .of((receiver).multiResolveCalleeFunction(resolveContext))
+      .select(PyFunction.class)
+      .anyMatch(function -> hasGeneratorBasedCoroutineDecorator(function, typeEvalContext));
   }
 
   public static boolean hasRedeclarationDecorator(@NotNull PyFunction function, @NotNull TypeEvalContext context) {

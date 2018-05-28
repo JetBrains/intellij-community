@@ -877,12 +877,7 @@ public class PyUnresolvedReferencesInspection extends PyInspection {
         final PyExpression receiver = ((PyOperatorReference)reference).getReceiver();
 
         if (receiver instanceof PyCallExpression) {
-          final boolean resolvedToGeneratorBasedCoroutine = StreamEx
-            .of(((PyCallExpression)receiver).multiResolveCalleeFunction(getResolveContext()))
-            .select(PyFunction.class)
-            .anyMatch(function -> PyKnownDecoratorUtil.hasGeneratorBasedCoroutineDecorator(function, myTypeEvalContext));
-
-          if (resolvedToGeneratorBasedCoroutine) return true;
+          return PyKnownDecoratorUtil.isResolvedToGeneratorBasedCoroutine((PyCallExpression)receiver, getResolveContext(), myTypeEvalContext);
         }
       }
 

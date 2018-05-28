@@ -97,6 +97,9 @@ public class PyABCUtil {
     if (PyNames.ASYNC_ITERABLE.equals(superClassName)) {
       return hasMethod(subClass, PyNames.AITER, inherited, context);
     }
+    if (PyNames.AWAITABLE.equals(superClassName)) {
+      return hasMethod(subClass, PyNames.DUNDER_AWAIT, inherited, context);
+    }
     if (PyNames.PATH_LIKE.equals(superClassName)) {
       return hasMethod(subClass, PyNames.FSPATH, inherited, context);
     }
