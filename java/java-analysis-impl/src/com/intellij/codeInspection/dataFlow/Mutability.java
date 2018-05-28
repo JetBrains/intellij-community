@@ -10,14 +10,21 @@ import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.ModificationTracker;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.source.PsiMethodImpl;
-import com.intellij.psi.util.*;
+import com.intellij.psi.util.CachedValue;
+import com.intellij.psi.util.CachedValueProvider;
+import com.intellij.psi.util.CachedValuesManager;
+import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.testFramework.LightVirtualFile;
 import com.intellij.util.ObjectUtils;
+import com.intellij.util.containers.ContainerUtil;
 import com.siyeh.ig.psiutils.ClassUtils;
+import com.siyeh.ig.psiutils.ExpressionUtils;
+import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Collections;
+import java.util.List;
 
 import static com.intellij.codeInspection.bytecodeAnalysis.ProjectBytecodeAnalysis.INFERRED_ANNOTATION;
 
@@ -124,12 +131,25 @@ public enum Mutability {
       return UNMODIFIABLE_VIEW;
     }
     if (owner instanceof PsiField && owner.hasModifierProperty(PsiModifier.FINAL)) {
-      PsiExpression initializer = PsiUtil.skipParenthesizedExprDown(((PsiField)owner).getInitializer());
-      if (initializer != null && ClassUtils.isImmutable(initializer.getType())) return UNMODIFIABLE;
-      if (initializer instanceof PsiMethodCallExpression) {
-        PsiMethod method = ((PsiMethodCallExpression)initializer).resolveMethod();
-        return method == null ? UNKNOWN : getMutability(method);
+      PsiField field = (PsiField)owner;
+      List<PsiExpression> initializers = ContainerUtil.createMaybeSingletonList(field.getInitializer());
+      if (initializers.isEmpty() && !owner.hasModifierProperty(PsiModifier.STATIC)) {
+        initializers = DfaPsiUtil.findAllConstructorInitializers(field);
       }
+      if (initializers.isEmpty()) return UNKNOWN;
+      Mutability mutability = UNMODIFIABLE;
+      for (PsiExpression initializer : StreamEx.of(initializers).flatMap(ExpressionUtils::nonStructuralChildren)) {
+        Mutability newMutability = UNKNOWN;
+        if (ClassUtils.isImmutable(initializer.getType())) {
+          newMutability = UNMODIFIABLE;
+        } else if (initializer instanceof PsiMethodCallExpression) {
+          PsiMethod method = ((PsiMethodCallExpression)initializer).resolveMethod();
+          newMutability = method == null ? UNKNOWN : getMutability(method);
+        }
+        mutability = mutability.union(newMutability);
+        if (!mutability.isUnmodifiable()) break;
+      }
+      return mutability;
     }
     return owner instanceof PsiMethodImpl ? JavaSourceInference.inferMutability((PsiMethodImpl)owner) : UNKNOWN;
   }

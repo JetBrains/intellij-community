@@ -161,3 +161,14 @@ class GuavaTest {
         return list;
     }
 }
+class ReturnImmutableCollection {
+    private final List<String> names;
+
+    public ReturnImmutableCollection(List<String> names) {
+        this.names = ImmutableList.copyOf(names);
+    }
+
+    public List<String> getNames() {
+        return names;
+    }
+}

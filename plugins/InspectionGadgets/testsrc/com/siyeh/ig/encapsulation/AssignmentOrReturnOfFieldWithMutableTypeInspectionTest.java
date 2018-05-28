@@ -31,6 +31,7 @@ public class AssignmentOrReturnOfFieldWithMutableTypeInspectionTest extends Ligh
       "\n" +
       "public class ImmutableList<E> implements List<E> {\n" +
       "  public static ImmutableList<?> of() {return new ImmutableList<>();}\n" +
+      "  public static <T> ImmutableList<T> copyOf(List<T> list) {return new ImmutableList<>();}\n" +
       "}"
     };
   }
