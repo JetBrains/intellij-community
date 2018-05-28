@@ -25,7 +25,7 @@ import com.intellij.util.Url
 abstract class OpenInBrowserRequest(open val file: PsiFile) {
   var result: Collection<Url>? = null
 
-  var isAppendAccessToken = true
+  var isAppendAccessToken: Boolean = true
 
   val virtualFile: VirtualFile?
     get() = file.virtualFile

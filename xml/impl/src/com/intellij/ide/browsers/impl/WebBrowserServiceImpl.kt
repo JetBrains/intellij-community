@@ -58,7 +58,7 @@ class WebBrowserServiceImpl : WebBrowserService() {
     }
 
     @JvmStatic
-    fun getDebuggableUrl(context: PsiElement?) = ContainerUtil.getFirstItem(getDebuggableUrls(context))
+    fun getDebuggableUrl(context: PsiElement?): Url? = ContainerUtil.getFirstItem(getDebuggableUrls(context))
   }
 
   override fun getUrlsToOpen(request: OpenInBrowserRequest, preferLocalUrl: Boolean): Collection<Url> {

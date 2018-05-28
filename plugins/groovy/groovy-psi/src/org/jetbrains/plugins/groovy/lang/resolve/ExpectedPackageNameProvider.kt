@@ -26,7 +26,7 @@ interface ExpectedPackageNameProvider {
 
 class DefaultExpectedPackageNameProvider : ExpectedPackageNameProvider {
 
-  override fun inferPackageName(file: GroovyFile) = file.containingDirectory?.let {
+  override fun inferPackageName(file: GroovyFile): String? = file.containingDirectory?.let {
     JavaDirectoryService.getInstance().getPackage(it)?.qualifiedName
   }
 }

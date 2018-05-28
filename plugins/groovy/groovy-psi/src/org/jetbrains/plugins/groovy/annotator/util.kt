@@ -28,7 +28,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.modifiers.GrModifier.
 import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.modifiers.GrModifierList
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrVariableDeclaration
 
-val VARIABLE_MODIFIERS = setOf(GrModifier.DEF, GrModifier.FINAL)
+val VARIABLE_MODIFIERS: Set<String> = setOf(GrModifier.DEF, GrModifier.FINAL)
 
 internal fun checkVariableModifiers(holder: AnnotationHolder, variableDeclaration: GrVariableDeclaration) {
   val modifierList = variableDeclaration.modifierList

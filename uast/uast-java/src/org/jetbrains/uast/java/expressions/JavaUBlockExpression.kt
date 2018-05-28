@@ -18,10 +18,11 @@ package org.jetbrains.uast.java
 import com.intellij.psi.PsiBlockStatement
 import org.jetbrains.uast.UBlockExpression
 import org.jetbrains.uast.UElement
+import org.jetbrains.uast.UExpression
 
 class JavaUBlockExpression(
   override val psi: PsiBlockStatement,
   givenParent: UElement?
 ) : JavaAbstractUExpression(givenParent), UBlockExpression {
-  override val expressions by lz { psi.codeBlock.statements.map { JavaConverter.convertOrEmpty(it, this) } }
+  override val expressions: List<UExpression> by lz { psi.codeBlock.statements.map { JavaConverter.convertOrEmpty(it, this) } }
 }

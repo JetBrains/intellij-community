@@ -86,7 +86,7 @@ interface MethodReturnInferenceResult {
 
   @Suppress("EqualsOrHashCode")
   data class Predefined(internal val value: Nullness) : MethodReturnInferenceResult {
-    override fun hashCode() = value.ordinal
+    override fun hashCode(): Int = value.ordinal
     override fun getNullness(method: PsiMethod, body: () -> PsiCodeBlock): Nullness = when {
       value == Nullness.NULLABLE && InferenceFromSourceUtil.suppressNullable(
         method) -> Nullness.UNKNOWN

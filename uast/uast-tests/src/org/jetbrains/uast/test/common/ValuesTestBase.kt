@@ -18,10 +18,12 @@ package org.jetbrains.uast.test.common
 import org.jetbrains.uast.UElement
 import org.jetbrains.uast.UExpression
 import org.jetbrains.uast.UFile
-import org.jetbrains.uast.evaluation.*
+import org.jetbrains.uast.evaluation.MapBasedEvaluationContext
+import org.jetbrains.uast.evaluation.UEvaluationContext
+import org.jetbrains.uast.evaluation.UEvaluatorExtension
+import org.jetbrains.uast.evaluation.analyzeAll
 import org.jetbrains.uast.java.JavaUFile
 import org.jetbrains.uast.test.env.assertEqualsToFile
-import org.jetbrains.uast.values.UUndeterminedValue
 import org.jetbrains.uast.visitor.UastVisitor
 import java.io.File
 
@@ -49,10 +51,8 @@ interface ValuesTestBase {
   }
 
   class ValueLogger(val evaluationContext: UEvaluationContext, val cachedOnly: Boolean) : UastVisitor {
-
-    val builder = StringBuilder()
-
-    var level = 0
+    private val builder = StringBuilder()
+    private var level = 0
 
     override fun visitElement(node: UElement): Boolean {
       val initialLine = node.asLogString() + " [" + run {
@@ -85,6 +85,6 @@ interface ValuesTestBase {
       level--
     }
 
-    override fun toString() = builder.toString()
+    override fun toString(): String = builder.toString()
   }
 }

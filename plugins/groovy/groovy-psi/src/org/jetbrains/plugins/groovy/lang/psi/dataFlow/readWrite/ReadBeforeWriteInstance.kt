@@ -40,5 +40,5 @@ class ReadBeforeWriteInstance(val nameIndex: TObjectIntHashMap<String>, val only
     }
   }
 
-  override fun initial() = ReadBeforeWriteState.bottom
+  override fun initial(): ReadBeforeWriteState = ReadBeforeWriteState.bottom
 }

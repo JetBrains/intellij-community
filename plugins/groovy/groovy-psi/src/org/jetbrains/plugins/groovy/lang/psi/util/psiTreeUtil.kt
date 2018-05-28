@@ -43,7 +43,7 @@ fun <T : PsiElement> PsiElement.treeWalkUpAndGetSingleElement(processor: GrResol
   return treeWalkUpAndGetSingleResult(processor)?.element
 }
 
-inline fun <reified T : PsiElement> PsiElement.skipParentsOfType() = skipParentsOfType(true, T::class.java)
+inline fun <reified T : PsiElement> PsiElement.skipParentsOfType(): Pair<PsiElement, PsiElement?>? = skipParentsOfType(true, T::class.java)
 
 fun PsiElement.skipParentsOfType(strict: Boolean = false, vararg types: Class<*>): Pair<PsiElement, PsiElement?>? {
   val seq = parents().withPrevious().drop(if (strict) 1 else 0)

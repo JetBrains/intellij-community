@@ -37,10 +37,10 @@ interface UDeclarationsExpression : UExpression {
     visitor.afterVisitDeclarationsExpression(this)
   }
 
-  override fun <D, R> accept(visitor: UastTypedVisitor<D, R>, data: D) =
+  override fun <D, R> accept(visitor: UastTypedVisitor<D, R>, data: D): R =
     visitor.visitDeclarationsExpression(this, data)
 
-  override fun asRenderString() = declarations.joinToString(LINE_SEPARATOR) { it.asRenderString() }
+  override fun asRenderString(): String = declarations.joinToString(LINE_SEPARATOR) { it.asRenderString() }
 
-  override fun asLogString() = log()
+  override fun asLogString(): String = log()
 }

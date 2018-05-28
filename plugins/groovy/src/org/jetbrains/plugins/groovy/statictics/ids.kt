@@ -3,5 +3,5 @@
 
 package org.jetbrains.plugins.groovy.statictics
 
-const val CONVERT_GROOVY_TO_JAVA_ID = "refactoring.convert.groovyToJava"
-const val GROOVY_NEW_CONSOLE = "groovy.new.console"
+const val CONVERT_GROOVY_TO_JAVA_ID: String = "refactoring.convert.groovyToJava"
+const val GROOVY_NEW_CONSOLE: String = "groovy.new.console"

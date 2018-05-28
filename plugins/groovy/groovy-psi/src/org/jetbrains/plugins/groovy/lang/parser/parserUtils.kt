@@ -357,7 +357,7 @@ private inline fun PsiBuilder.advanceIf(crossinline condition: PsiBuilder.() -> 
   }
 }
 
-fun noMatch(builder: PsiBuilder, level: Int) = false
+fun noMatch(builder: PsiBuilder, level: Int): Boolean = false
 
 fun addVariant(builder: PsiBuilder, level: Int, variant: String): Boolean {
   addVariant(builder, "<$variant>")

@@ -34,7 +34,7 @@ class JavaUCompositeQualifiedExpression(
   override val resolvedName: String?
     get() = (resolve() as? PsiNamedElement)?.name
 
-  override fun resolve() = (selector as? UResolvable)?.resolve()
+  override fun resolve(): PsiElement? = (selector as? UResolvable)?.resolve()
 
   override val accessType: UastQualifiedExpressionAccessType
     get() = UastQualifiedExpressionAccessType.SIMPLE
