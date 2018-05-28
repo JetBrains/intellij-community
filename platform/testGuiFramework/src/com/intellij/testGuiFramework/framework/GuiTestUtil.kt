@@ -29,6 +29,7 @@ import com.intellij.openapi.wm.impl.IdeFrameImpl
 import com.intellij.testGuiFramework.fixtures.IdeFrameFixture
 import com.intellij.testGuiFramework.fixtures.RadioButtonFixture
 import com.intellij.testGuiFramework.fixtures.extended.ExtendedTreeFixture
+import com.intellij.testGuiFramework.impl.GuiRobot
 import com.intellij.testGuiFramework.impl.GuiTestUtilKt
 import com.intellij.testGuiFramework.impl.GuiTestUtilKt.getComponentText
 import com.intellij.testGuiFramework.impl.GuiTestUtilKt.isTextComponent
@@ -108,15 +109,6 @@ object GuiTestUtil {
   val FIRST_START = "GUI_FIRST_START"
   private val SYSTEM_EVENT_QUEUE = Toolkit.getDefaultToolkit().systemEventQueue
   val projectCreationDirPath = createTempProjectCreationDir()
-
-  private var _robot: Robot? = null
-  val robot: Robot
-    get() = _robot ?: throw IllegalStateException("Robot must be initialized before using")
-
-  fun initializeRobot(robot: Robot) {
-    if (_robot != null) throw IllegalStateException("Robot has already been initialized")
-    else _robot = robot
-  }
 
   val gradleHomePath: File?
     get() = getFilePathProperty("supported.gradle.home.path", "the path of a local Gradle 2.2.1 distribution", true)
@@ -590,7 +582,7 @@ object GuiTestUtil {
                                     matcher: GenericTypeMatcher<T>) {
     Pause.pause(object : Condition("Find component using " + matcher.toString()) {
       override fun test(): Boolean {
-        val allFound = if (root == null) robot.finder().findAll(matcher) else robot.finder().findAll(root, matcher)
+        val allFound = if (root == null) GuiRobot.robot.finder().findAll(matcher) else GuiRobot.robot.finder().findAll(root, matcher)
         return allFound.isEmpty()
       }
     }, SHORT_TIMEOUT)
@@ -604,7 +596,7 @@ object GuiTestUtil {
                                     matcher: GenericTypeMatcher<T>) {
     Pause.pause(object : Condition("Find component using " + matcher.toString()) {
       override fun test(): Boolean {
-        val allFound = if (root == null) robot.finder().findAll(matcher) else robot.finder().findAll(root, matcher)
+        val allFound = if (root == null) GuiRobot.robot.finder().findAll(matcher) else GuiRobot.robot.finder().findAll(root, matcher)
         return allFound.isEmpty()
       }
     }, timeout(timeoutInSeconds.toLong(), SECONDS))
@@ -637,48 +629,48 @@ object GuiTestUtil {
   }
 
   fun findTextField(labelText: String): JTextComponentFixture {
-    return JTextComponentFixture(robot, robot.finder().findByLabel(labelText, JTextComponent::class.java))
+    return JTextComponentFixture(GuiRobot.robot, GuiRobot.robot.finder().findByLabel(labelText, JTextComponent::class.java))
   }
 
   fun findJTreeFixture(container: Container): JTreeFixture {
-    val actionTree = robot.finder().findByType(container, JTree::class.java)
-    return JTreeFixture(robot, actionTree)
+    val actionTree = GuiRobot.robot.finder().findByType(container, JTree::class.java)
+    return JTreeFixture(GuiRobot.robot, actionTree)
   }
 
   fun findJTreeFixtureByClassName(container: Container, className: String): JTreeFixture {
-    val actionTree = robot.finder().find(container, ClassNameMatcher.forClass(className, JTree::class.java, true))
-    return JTreeFixture(robot, actionTree)
+    val actionTree = GuiRobot.robot.finder().find(container, ClassNameMatcher.forClass(className, JTree::class.java, true))
+    return JTreeFixture(GuiRobot.robot, actionTree)
   }
 
   fun findRadioButton(container: Container?, text: String, timeout: Timeout): RadioButtonFixture {
-    val radioButton = waitUntilFound(robot, container, object : GenericTypeMatcher<JRadioButton>(JRadioButton::class.java) {
+    val radioButton = waitUntilFound(GuiRobot.robot, container, object : GenericTypeMatcher<JRadioButton>(JRadioButton::class.java) {
       override fun isMatching(@Nonnull button: JRadioButton): Boolean {
         return button.text != null && button.text == text && button.isShowing
       }
     }, timeout)
-    return RadioButtonFixture(robot, radioButton)
+    return RadioButtonFixture(GuiRobot.robot, radioButton)
   }
 
   fun findRadioButton(container: Container, text: String): RadioButtonFixture {
-    val radioButton = waitUntilFound(robot, container, object : GenericTypeMatcher<JRadioButton>(JRadioButton::class.java) {
+    val radioButton = waitUntilFound(GuiRobot.robot, container, object : GenericTypeMatcher<JRadioButton>(JRadioButton::class.java) {
       override fun isMatching(@Nonnull button: JRadioButton): Boolean {
         return button.text != null && button.text == text
       }
     }, SHORT_TIMEOUT)
-    return RadioButtonFixture(robot, radioButton)
+    return RadioButtonFixture(GuiRobot.robot, radioButton)
   }
 
   fun findComboBox(container: Container, labelText: String): JComboBoxFixture {
-    val label = robot.finder().find(container) {
+    val label = GuiRobot.robot.finder().find(container) {
       it is JLabel && it.text != null && it.text == labelText
     } as? JLabel ?: throw ComponentLookupException("Unable to find label with text \" + labelText+\"")
 
     val boundedCmp = label.labelFor as? Container ?: throw ComponentLookupException(
       "Unable to find bounded component for label \" + labelText+\"")
-    val cb = robot.finder().findByType(boundedCmp, JComboBox::class.java)
+    val cb = GuiRobot.robot.finder().findByType(boundedCmp, JComboBox::class.java)
     // findByType returns non null, so no need to use elvis:
     // ?: throw ComponentLookupException("Unable to find JComboBox near label \" + labelText+\"")
-    return JComboBoxFixture(robot, cb)
+    return JComboBoxFixture(GuiRobot.robot, cb)
   }
 
   /**
@@ -688,7 +680,7 @@ object GuiTestUtil {
 
     val keyStroke = KeyStrokeAdapter.getKeyStroke(shortcut)
     LOG.info("Invoking action via shortcut \"$shortcut\"")
-    robot.pressAndReleaseKey(keyStroke.keyCode, *intArrayOf(keyStroke.modifiers))
+    GuiRobot.robot.pressAndReleaseKey(keyStroke.keyCode, *intArrayOf(keyStroke.modifiers))
   }
 
   fun invokeAction(actionId: String) {
@@ -696,7 +688,7 @@ object GuiTestUtil {
 
     val keyStroke = keyboardShortcut.firstKeyStroke
     LOG.info("Invoking action \"" + actionId + "\" via shortcut " + keyboardShortcut.toString())
-    robot.pressAndReleaseKey(keyStroke.keyCode, *intArrayOf(keyStroke.modifiers))
+    GuiRobot.robot.pressAndReleaseKey(keyStroke.keyCode, *intArrayOf(keyStroke.modifiers))
   }
 
   fun pause(conditionString: String, producer: Producer<Boolean>, timeout: Timeout) {
@@ -717,14 +709,14 @@ object GuiTestUtil {
     if (textLabel.isNullOrEmpty()) {
       val jTextField = com.intellij.testGuiFramework.impl.waitUntilFound(container, JTextField::class.java,
                                                                          timeout) { jTextField -> jTextField.isShowing }
-      return JTextComponentFixture(robot, jTextField)
+      return JTextComponentFixture(GuiRobot.robot, jTextField)
     }
     //wait until label has appeared
     com.intellij.testGuiFramework.impl.waitUntilFound(container, Component::class.java, timeout) {
       it.isShowing && it.isVisible && it.isTextComponent() && it.getComponentText() == textLabel
     }
-    val jTextComponent = GuiTestUtilKt.findBoundedComponentByText(robot, container, textLabel!!, JTextComponent::class.java)
-    return JTextComponentFixture(robot, jTextComponent)
+    val jTextComponent = GuiTestUtilKt.findBoundedComponentByText(GuiRobot.robot, container, textLabel!!, JTextComponent::class.java)
+    return JTextComponentFixture(GuiRobot.robot, jTextComponent)
   }
 
   fun jTreePath(container: Container, timeout: Long, vararg pathStrings: String): ExtendedTreeFixture {
@@ -732,25 +724,25 @@ object GuiTestUtil {
     val pathList = pathStrings.toList()
     try {
       myTree = if (pathList.isEmpty()) {
-        waitUntilFound(robot, container, GuiTestUtilKt.typeMatcher(JTree::class.java) { true }, timeout.toFestTimeout())
+        waitUntilFound(GuiRobot.robot, container, GuiTestUtilKt.typeMatcher(JTree::class.java) { true }, timeout.toFestTimeout())
       }
       else {
-        waitUntilFound(robot, container,
-                       GuiTestUtilKt.typeMatcher(JTree::class.java) { ExtendedTreeFixture(robot, it).hasPath(pathList) },
+        waitUntilFound(GuiRobot.robot, container,
+                       GuiTestUtilKt.typeMatcher(JTree::class.java) { ExtendedTreeFixture(GuiRobot.robot, it).hasPath(pathList) },
                        timeout.toFestTimeout())
       }
     }
     catch (e: WaitTimedOutError){
       throw ComponentLookupException("""JTree "${if (pathStrings.isNotEmpty()) "by path $pathStrings" else ""}"""")
     }
-    return ExtendedTreeFixture(robot, myTree)
+    return ExtendedTreeFixture(GuiRobot.robot, myTree)
   }
 
   //*********COMMON FUNCTIONS WITHOUT CONTEXT
   /**
    * Type text by symbol with a constant delay. Generate system key events, so entered text will aply to a focused component.
    */
-  fun typeText(text: String) = GuiTestUtil.typeText(text, robot, 10)
+  fun typeText(text: String) = GuiTestUtil.typeText(text, GuiRobot.robot, 10)
 
   /**
    * @param keyStroke should follow {@link KeyStrokeAdapter#getKeyStroke(String)} instructions and be generated by {@link KeyStrokeAdapter#toString(KeyStroke)} preferably

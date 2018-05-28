@@ -57,7 +57,7 @@ class GuiTestRule : TestRule {
 
   private val myRobotTestRule: RobotTestRule by lazy {
     val robotTestRule = RobotTestRule()
-    GuiTestUtil.initializeRobot(robotTestRule.getRobot())
+    GuiRobot.initializeRobot(robotTestRule.getRobot())
     return@lazy robotTestRule
   }
   private val myFatalErrorsFlusher = FatalErrorsFlusher()
