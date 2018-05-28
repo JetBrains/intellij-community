@@ -102,6 +102,25 @@ class PyTypeHintsInspection : PyInspection() {
       }
     }
 
+    override fun visitPyElement(node: PyElement?) {
+      super.visitPyElement(node)
+
+      if (node is PyTypeCommentOwner && node is PyAnnotationOwner && node.typeCommentAnnotation != null) {
+        val message = "Type(s) specified both in type comment and annotation"
+
+        if (node is PyFunction) {
+          if (node.annotationValue != null || node.parameterList.parameters.any { it is PyNamedParameter && it.annotationValue != null }) {
+            registerProblem(node.typeComment, message, RemoveElementQuickFix("Remove type comment"))
+            registerProblem(node.nameIdentifier, message, RemoveFunctionAnnotations())
+          }
+        }
+        else if (node.annotationValue != null) {
+          registerProblem(node.typeComment, message, RemoveElementQuickFix("Remove type comment"))
+          registerProblem(node.annotation, message, RemoveElementQuickFix("Remove annotation"))
+        }
+      }
+    }
+
     private fun checkTypeVarPlacement(call: PyCallExpression, target: PyExpression?) {
       if (target == null) {
         registerProblem(call, "A 'TypeVar()' expression must always directly be assigned to a variable")
@@ -506,6 +525,29 @@ class PyTypeHintsInspection : PyInspection() {
       override fun applyFix(project: Project, descriptor: ProblemDescriptor) {
         val element = descriptor.psiElement as? PyReferenceExpression ?: return
         element.reference.handleElementRename(typeName)
+      }
+    }
+
+    private class RemoveElementQuickFix(private val description: String) : LocalQuickFix {
+
+      override fun getFamilyName() = description
+      override fun applyFix(project: Project, descriptor: ProblemDescriptor) = descriptor.psiElement.delete()
+    }
+
+    private class RemoveFunctionAnnotations : LocalQuickFix {
+
+      override fun getFamilyName() = "Remove function annotations"
+
+      override fun applyFix(project: Project, descriptor: ProblemDescriptor) {
+        val function = (descriptor.psiElement.parent as? PyFunction) ?: return
+
+        function.annotation?.delete()
+
+        function.parameterList.parameters
+          .asSequence()
+          .filterIsInstance<PyNamedParameter>()
+          .mapNotNull { it.annotation }
+          .forEach { it.delete() }
       }
     }
 
