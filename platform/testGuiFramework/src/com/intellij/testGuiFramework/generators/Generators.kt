@@ -400,7 +400,7 @@ class ActionMenuItemGenerator : ComponentCodeGenerator<ActionMenuItem> {
 
 class WelcomeFrameGenerator : GlobalContextCodeGenerator<FlatWelcomeFrame>() {
   override fun priority(): Int = 1
-  override fun accept(cmp: Component): Boolean = cmp is JComponent && cmp.rootPane.parent is FlatWelcomeFrame
+  override fun accept(cmp: Component): Boolean = cmp is JComponent && cmp.rootPane?.parent is FlatWelcomeFrame
   override fun generate(cmp: FlatWelcomeFrame): String {
     return "welcomeFrame {"
   }
