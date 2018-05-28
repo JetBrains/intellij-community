@@ -350,6 +350,7 @@ public class StandardInstructionVisitor extends InstructionVisitor {
 
   @NotNull
   private List<DfaMemoryState> handleKnownMethods(MethodCallInstruction instruction, DataFlowRunner runner, DfaMemoryState memState) {
+    if (instruction.getTargetMethod() == null) return Collections.emptyList();
     CustomMethodHandlers.CustomMethodHandler handler = CustomMethodHandlers.find(instruction);
     if (handler == null) return Collections.emptyList();
     memState = memState.createCopy();
