@@ -566,7 +566,7 @@ public class IdeFrameFixture extends ComponentFixture<IdeFrameFixture, IdeFrameI
 
   @NotNull
   public IdeFrameFixture waitForStartingIndexing() {
-    return waitForStartingIndexing(15 * 60);
+    return waitForStartingIndexing(20);
   }
 
   @NotNull
