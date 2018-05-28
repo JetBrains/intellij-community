@@ -63,23 +63,21 @@ public class UITheme {
         apply(key + "." + o.getKey(), o.getValue(), defaults);
       }
     } else {
-      if (value instanceof String) {
-        value = parseString(key, (String)value);
-      }
+      value = parseValue(key, value.toString());
       if (key.startsWith("*.")) {
-        //todo[kb] apply for all properties
+        String tail = key.substring(1);
+        Object finalValue = value;
+
+        //please DO NOT invoke forEach on UIDefaults directly
+        ((UIDefaults)defaults.clone()).entrySet().forEach(e -> {
+          if (e.getKey() instanceof String && ((String)e.getKey()).endsWith(tail)) {
+            defaults.put(e.getKey(), finalValue);
+          }
+        });
       } else {
         defaults.put(key, value);
       }
     }
-  }
-
-  private static Object parseString(String key, String value) {
-    //todo[kb] merge with parsing properties file in DarculaLaf
-    if (value.startsWith("#")) {
-      return ColorUtil.fromHex(value);
-    }
-    return value;
   }
 
   public void removeProperties(UIDefaults defaults) {
