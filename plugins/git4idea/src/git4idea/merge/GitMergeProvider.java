@@ -235,8 +235,8 @@ public class GitMergeProvider implements MergeProvider2 {
         if (!line.contains(blob)) return;
         if (pathAmbiguous[0]) return;
 
-        GitIndexUtil.StagedFile stagedFile = GitIndexUtil.parseListTreeRecord(root, line);
-        if (stagedFile != null && blob.equals(stagedFile.getBlobHash())) {
+        GitIndexUtil.StagedFileOrDirectory stagedFile = GitIndexUtil.parseListTreeRecord(root, line);
+        if (stagedFile instanceof GitIndexUtil.StagedFile && blob.equals(((GitIndexUtil.StagedFile) stagedFile).getBlobHash())) {
           if (result[0] == null) {
             result[0] = stagedFile.getPath();
           }
