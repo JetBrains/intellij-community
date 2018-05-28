@@ -183,17 +183,21 @@ public class SearchEverywhereUI extends BorderLayoutPanel implements Disposable,
 
   private void switchToTab(SETab tab) {
     mySelectedTab = tab;
-    String text = tab.getContributor()
+
+    String checkBoxText = tab.getContributor()
                      .map(SearchEverywhereContributor::includeNonProjectItemsText)
                      .orElse(IdeBundle.message("checkbox.include.non.project.items", IdeUICustomization.getInstance().getProjectConceptName()));
-    if (text.indexOf(UIUtil.MNEMONIC) != -1) {
-      DialogUtil.setTextWithMnemonic(myNonProjectCB, text);
+    if (checkBoxText.indexOf(UIUtil.MNEMONIC) != -1) {
+      DialogUtil.setTextWithMnemonic(myNonProjectCB, checkBoxText);
     } else {
-      myNonProjectCB.setText(text);
+      myNonProjectCB.setText(checkBoxText);
       myNonProjectCB.setDisplayedMnemonicIndex(-1);
       myNonProjectCB.setMnemonic(0);
     }
     myNonProjectCB.setSelected(false);
+
+    myResultsList.getEmptyText().setText(getEmptyText());
+
     repaint();
     rebuildList();
   }
@@ -591,7 +595,7 @@ public class SearchEverywhereUI extends BorderLayoutPanel implements Disposable,
       }
       finally {
         if (!isCanceled()) {
-          listOperationsAlarm.addRequest(() -> myResultsList.getEmptyText().setText(StatusText.DEFAULT_EMPTY_TEXT), 0);
+          listOperationsAlarm.addRequest(() -> myResultsList.getEmptyText().setText(getEmptyText()), 0);
         }
         if (!myDone.isProcessed()) {
           myDone.setDone();
@@ -603,7 +607,7 @@ public class SearchEverywhereUI extends BorderLayoutPanel implements Disposable,
       listOperationsAlarm.cancelAllRequests();
       listOperationsAlarm.addRequest(() -> {
         Dimension oldSize = getPreferredSize();
-        myResultsList.getEmptyText().setText("Searching...");
+        myResultsList.getEmptyText().setText(IdeBundle.message("label.choosebyname.searching"));
         myListModel.clear();
         Dimension newSize = getPreferredSize();
         firePropertyChange("preferredSize", oldSize, newSize);
@@ -985,5 +989,11 @@ public class SearchEverywhereUI extends BorderLayoutPanel implements Disposable,
     label.setFont(UIUtil.getLabelFont().deriveFont(UIUtil.getFontSize(UIUtil.FontSize.SMALL)));
     label.setOpaque(false);
     return label;
+  }
+
+  private String getEmptyText() {
+    return mySelectedTab.getContributor()
+                        .map(c -> IdeBundle.message("searcheverywhere.nothing.found.for.contributor.anywhere", c.getGroupName()))
+                        .orElse(IdeBundle.message("searcheverywhere.nothing.found.for.all.anywhere"));
   }
 }
