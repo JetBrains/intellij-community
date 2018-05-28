@@ -1,5 +1,4 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-
 package org.jetbrains.plugins.groovy.lang.parser;
 
 import com.intellij.extapi.psi.ASTWrapperPsiElement;
@@ -9,7 +8,6 @@ import com.intellij.psi.tree.IElementType;
 import org.jetbrains.plugins.groovy.lang.groovydoc.lexer.IGroovyDocElementType;
 import org.jetbrains.plugins.groovy.lang.groovydoc.psi.GroovyDocPsiCreator;
 import org.jetbrains.plugins.groovy.lang.lexer.GroovyElementType;
-import org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes;
 import org.jetbrains.plugins.groovy.lang.psi.impl.GrImportAliasImpl;
 import org.jetbrains.plugins.groovy.lang.psi.impl.GroovyASTPsiElementImpl;
 import org.jetbrains.plugins.groovy.lang.psi.impl.auxiliary.GrListOrMapImpl;
@@ -55,6 +53,8 @@ import org.jetbrains.plugins.groovy.lang.psi.impl.toplevel.imports.GrImportState
 import org.jetbrains.plugins.groovy.lang.psi.impl.toplevel.packaging.GrPackageDefinitionImpl;
 import org.jetbrains.plugins.groovy.lang.psi.impl.types.*;
 
+import static org.jetbrains.plugins.groovy.lang.psi.GroovyElementTypes.*;
+
 /**
  * Creates Groovy PSI element by given AST node
  *
@@ -79,157 +79,146 @@ public class GroovyPsiCreator {
       return GroovyDocPsiCreator.createElement(node);
     }
 
-    //Identifiers & literal
-    if (elem == GroovyElementTypes.LITERAL) return new GrLiteralImpl(node);
-//    if (elem.equals(IDENTIFIER)) return new GrIdentifierImpl(node);
-    //Lists, maps etc...
-    if (elem == GroovyElementTypes.LIST_OR_MAP) return new GrListOrMapImpl(node);
-
-    if (elem == GroovyElementTypes.MODIFIERS) return new GrModifierListImpl(node);
-    if (elem == GroovyElementTypes.ANNOTATION) return new GrAnnotationImpl(node);
-    if (elem == GroovyElementTypes.ANNOTATION_ARGUMENTS) return new GrAnnotationArgumentListImpl(node);
-    if (elem == GroovyElementTypes.ANNOTATION_ARRAY_INITIALIZER) return new GrAnnotationArrayInitializerImpl(node);
-    if (elem == GroovyElementTypes.ANNOTATION_MEMBER_VALUE_PAIR) return new GrAnnotationNameValuePairImpl(node);
-
-    //throws
-    if (elem == GroovyElementTypes.THROW_CLAUSE) return new GrThrowsClauseImpl(node);
+    if (elem == MODIFIER_LIST) return new GrModifierListImpl(node);
+    if (elem == ANNOTATION) return new GrAnnotationImpl(node);
+    if (elem == ANNOTATION_ARGUMENT_LIST) return new GrAnnotationArgumentListImpl(node);
+    if (elem == ANNOTATION_ARRAY_VALUE) return new GrAnnotationArrayInitializerImpl(node);
+    if (elem == ANNOTATION_MEMBER_VALUE_PAIR) return new GrAnnotationNameValuePairImpl(node);
 
     // Imports
-    if (elem == GroovyElementTypes.IMPORT_STATEMENT) return new GrImportStatementImpl(node);
-    if (elem == GroovyElementTypes.IMPORT_ALIAS) return new GrImportAliasImpl(node);
+    if (elem == IMPORT) return new GrImportStatementImpl(node);
+    if (elem == IMPORT_ALIAS) return new GrImportAliasImpl(node);
 
     // Packaging
-    if (elem == GroovyElementTypes.PACKAGE_DEFINITION) return new GrPackageDefinitionImpl(node);
+    if (elem == PACKAGE_DEFINITION) return new GrPackageDefinitionImpl(node);
 
     //statements
-    if (elem == GroovyElementTypes.LABELED_STATEMENT) return new GrLabeledStatementImpl(node);
-    if (elem == GroovyElementTypes.IF_STATEMENT) return new GrIfStatementImpl(node);
-    if (elem == GroovyElementTypes.FOR_STATEMENT) return new GrForStatementImpl(node);
-    if (elem == GroovyElementTypes.FOR_IN_CLAUSE) return new GrForInClauseImpl(node);
-    if (elem == GroovyElementTypes.FOR_TRADITIONAL_CLAUSE) return new GrTraditionalForClauseImpl(node);
-    if (elem == GroovyElementTypes.WHILE_STATEMENT) return new GrWhileStatementImpl(node);
-    if (elem == GroovyElementTypes.TRY_BLOCK_STATEMENT) return new GrTryCatchStatementImpl(node);
-    if (elem == GroovyElementTypes.CATCH_CLAUSE) return new GrCatchClauseImpl(node);
-    if (elem == GroovyElementTypes.FINALLY_CLAUSE) return new GrFinallyClauseImpl(node);
-    if (elem == GroovyElementTypes.SYNCHRONIZED_STATEMENT) return new GrSynchronizedStatementImpl(node);
-    if (elem == GroovyElementTypes.SWITCH_STATEMENT) return new GrSwitchStatementImpl(node);
-    if (elem == GroovyElementTypes.CASE_LABEL) return new GrCaseLabelImpl(node);
-    if (elem == GroovyElementTypes.CASE_SECTION) return new GrCaseSectionImpl(node);
-    if (elem == GroovyElementTypes.VARIABLE_DEFINITION || elem == GroovyElementTypes.VARIABLE_DEFINITION_ERROR) return new GrVariableDeclarationImpl(node);
-    if (elem == GroovyElementTypes.TUPLE) return new GrTupleImpl(node);
-    if (elem == GroovyElementTypes.VARIABLE) return new GrVariableImpl(node);
-
-    if (elem == GroovyElementTypes.FIELD) return new GrFieldImpl(node);
-    if (elem == GroovyElementTypes.CLASS_INITIALIZER) return new GrClassInitializerImpl(node);
+    if (elem == LABELED_STATEMENT) return new GrLabeledStatementImpl(node);
+    if (elem == IF_STATEMENT) return new GrIfStatementImpl(node);
+    if (elem == FOR_STATEMENT) return new GrForStatementImpl(node);
+    if (elem == FOR_IN_CLAUSE) return new GrForInClauseImpl(node);
+    if (elem == TRADITIONAL_FOR_CLAUSE) return new GrTraditionalForClauseImpl(node);
+    if (elem == WHILE_STATEMENT) return new GrWhileStatementImpl(node);
+    if (elem == TRY_STATEMENT) return new GrTryCatchStatementImpl(node);
+    if (elem == CATCH_CLAUSE) return new GrCatchClauseImpl(node);
+    if (elem == FINALLY_CLAUSE) return new GrFinallyClauseImpl(node);
+    if (elem == SYNCHRONIZED_STATEMENT) return new GrSynchronizedStatementImpl(node);
+    if (elem == SWITCH_STATEMENT) return new GrSwitchStatementImpl(node);
+    if (elem == CASE_LABEL) return new GrCaseLabelImpl(node);
+    if (elem == CASE_SECTION) return new GrCaseSectionImpl(node);
+    if (elem == VARIABLE_DECLARATION) return new GrVariableDeclarationImpl(node);
+    if (elem == TUPLE) return new GrTupleImpl(node);
+    if (elem == VARIABLE) return new GrVariableImpl(node);
 
     //type definitions
-    if (elem == GroovyElementTypes.CLASS_DEFINITION) return new GrClassDefinitionImpl(node);
-    if (elem == GroovyElementTypes.INTERFACE_DEFINITION) return new GrInterfaceDefinitionImpl(node);
-    if (elem == GroovyElementTypes.ENUM_DEFINITION) return new GrEnumTypeDefinitionImpl(node);
-    if (elem == GroovyElementTypes.ANNOTATION_DEFINITION) return new GrAnnotationTypeDefinitionImpl(node);
-    if (elem == GroovyElementTypes.TRAIT_DEFINITION) return new GrTraitTypeDefinitionImpl(node);
-    if (elem == GroovyElementTypes.ANNOTATION_METHOD) return new GrAnnotationMethodImpl(node);
+    if (elem == CLASS_TYPE_DEFINITION) return new GrClassDefinitionImpl(node);
+    if (elem == INTERFACE_TYPE_DEFINITION) return new GrInterfaceDefinitionImpl(node);
+    if (elem == ENUM_TYPE_DEFINITION) return new GrEnumTypeDefinitionImpl(node);
+    if (elem == ANNOTATION_TYPE_DEFINITION) return new GrAnnotationTypeDefinitionImpl(node);
+    if (elem == TRAIT_TYPE_DEFINITION) return new GrTraitTypeDefinitionImpl(node);
+    if (elem == ANNOTATION_METHOD) return new GrAnnotationMethodImpl(node);
+    if (elem == ANONYMOUS_TYPE_DEFINITION) return new GrAnonymousClassDefinitionImpl(node);
 
-    if (elem == GroovyElementTypes.REFERENCE_ELEMENT) return new GrCodeReferenceElementImpl(node);
-    if (elem == GroovyElementTypes.CLASS_TYPE_ELEMENT) return new GrClassTypeElementImpl(node);
+    if (elem == CODE_REFERENCE) return new GrCodeReferenceElementImpl(node);
 
     //clauses
-    if (elem == GroovyElementTypes.IMPLEMENTS_CLAUSE) return new GrImplementsClauseImpl(node);
-    if (elem == GroovyElementTypes.EXTENDS_CLAUSE) return new GrExtendsClauseImpl(node);
+    if (elem == EXTENDS_CLAUSE) return new GrExtendsClauseImpl(node);
+    if (elem == IMPLEMENTS_CLAUSE) return new GrImplementsClauseImpl(node);
+    if (elem == THROWS_CLAUSE) return new GrThrowsClauseImpl(node);
 
     //bodies
-    if (elem == GroovyElementTypes.CLASS_BODY) return new GrTypeDefinitionBodyBase.GrClassBody(node);
-    if (elem == GroovyElementTypes.ENUM_BODY) return new GrTypeDefinitionBodyBase.GrEnumBody(node);
-    if (elem == GroovyElementTypes.BLOCK_STATEMENT) return new GrBlockStatementImpl(node);
-    if (elem == GroovyElementTypes.EXPLICIT_CONSTRUCTOR) return new GrConstructorInvocationImpl(node);
+    if (elem == CLASS_BODY) return new GrTypeDefinitionBodyBase.GrClassBody(node);
+    if (elem == ENUM_BODY) return new GrTypeDefinitionBodyBase.GrEnumBody(node);
+    if (elem == BLOCK_STATEMENT) return new GrBlockStatementImpl(node);
+    if (elem == CONSTRUCTOR_CALL_EXPRESSION) return new GrConstructorInvocationImpl(node);
 
     //enum
-    if (elem == GroovyElementTypes.ENUM_CONSTANTS) return new GrEnumConstantListImpl(node);
-    if (elem == GroovyElementTypes.ENUM_CONSTANT) return new GrEnumConstantImpl(node);
+    if (elem == ENUM_CONSTANTS) return new GrEnumConstantListImpl(node);
+    if (elem == ENUM_CONSTANT) return new GrEnumConstantImpl(node);
 
     //members
-    if (elem == GroovyElementTypes.CONSTRUCTOR_DEFINITION) return new GrConstructorImpl(node);
-    if (elem == GroovyElementTypes.METHOD_DEFINITION) return new GrMethodImpl(node);
+    if (elem == CLASS_INITIALIZER) return new GrClassInitializerImpl(node);
+    if (elem == FIELD) return new GrFieldImpl(node);
+    if (elem == CONSTRUCTOR) return new GrConstructorImpl(node);
+    if (elem == METHOD) return new GrMethodImpl(node);
 
     //parameters
-    if (elem == GroovyElementTypes.PARAMETERS_LIST) return new GrParameterListImpl(node);
-    if (elem == GroovyElementTypes.PARAMETER) return new GrParameterImpl(node);
+    if (elem == PARAMETER_LIST) return new GrParameterListImpl(node);
+    if (elem == PARAMETER) return new GrParameterImpl(node);
 
     //type parameters
-    if (elem == GroovyElementTypes.TYPE_ARGUMENT) return new GrWildcardTypeArgumentImpl(node);
-    if (elem == GroovyElementTypes.TYPE_ARGUMENTS) return new GrTypeArgumentListImpl(node);
+    if (elem == TYPE_PARAMETER_LIST) return new GrTypeParameterListImpl(node);
+    if (elem == TYPE_PARAMETER) return new GrTypeParameterImpl(node);
+    if (elem == TYPE_PARAMETER_BOUNDS_LIST) return new GrTypeParameterParameterExtendsListImpl(node);
+    if (elem == TYPE_ARGUMENT_LIST) return new GrTypeArgumentListImpl(node);
 
-
-    if (elem == GroovyElementTypes.TYPE_PARAMETER_LIST) return new GrTypeParameterListImpl(node);
-    if (elem == GroovyElementTypes.TYPE_PARAMETER) return new GrTypeParameterImpl(node);
-    if (elem == GroovyElementTypes.TYPE_PARAMETER_EXTENDS_BOUND_LIST) return new GrTypeParameterParameterExtendsListImpl(node);
+    // types
+    if (elem == PRIMITIVE_TYPE_ELEMENT) return new GrBuiltInTypeElementImpl(node);
+    if (elem == CLASS_TYPE_ELEMENT) return new GrClassTypeElementImpl(node);
+    if (elem == ARRAY_TYPE_ELEMENT) return new GrArrayTypeElementImpl(node);
+    if (elem == DISJUNCTION_TYPE_ELEMENT) return new GrDisjunctionTypeElementImpl(node);
+    if (elem == WILDCARD_TYPE_ELEMENT) return new GrWildcardTypeArgumentImpl(node);
 
     //Branch statements
-    if (elem == GroovyElementTypes.RETURN_STATEMENT) return new GrReturnStatementImpl(node);
-    if (elem == GroovyElementTypes.THROW_STATEMENT) return new GrThrowStatementImpl(node);
-    if (elem == GroovyElementTypes.ASSERT_STATEMENT) return new GrAssertStatementImpl(node);
-    if (elem == GroovyElementTypes.BREAK_STATEMENT) return new GrBreakStatementImpl(node);
-    if (elem == GroovyElementTypes.CONTINUE_STATEMENT) return new GrContinueStatementImpl(node);
+    if (elem == RETURN_STATEMENT) return new GrReturnStatementImpl(node);
+    if (elem == THROW_STATEMENT) return new GrThrowStatementImpl(node);
+    if (elem == ASSERT_STATEMENT) return new GrAssertStatementImpl(node);
+    if (elem == BREAK_STATEMENT) return new GrBreakStatementImpl(node);
+    if (elem == CONTINUE_STATEMENT) return new GrContinueStatementImpl(node);
 
     //expressions
-    if (elem == GroovyElementTypes.CALL_EXPRESSION) return new GrApplicationStatementImpl(node);
-    if (elem == GroovyElementTypes.COMMAND_ARGUMENTS) return new GrCommandArgumentListImpl(node);
-    if (elem == GroovyElementTypes.CONDITIONAL_EXPRESSION) return new GrConditionalExprImpl(node);
-    if (elem == GroovyElementTypes.ELVIS_EXPRESSION) return new GrElvisExprImpl(node);
-    if (elem == GroovyElementTypes.ASSIGNMENT_EXPRESSION) return new GrAssignmentExpressionImpl(node);
-    if (elem == GroovyElementTypes.TUPLE_ASSIGNMENT_EXPRESSION) return new GrTupleAssignmentExpressionImpl(node);
-
-    if (elem == GroovyElementTypes.LOGICAL_OR_EXPRESSION) return new GrLogicalExpressionImpl(node);
-    if (elem == GroovyElementTypes.LOGICAL_AND_EXPRESSION) return new GrLogicalExpressionImpl(node);
-
-    if (elem == GroovyElementTypes.EXCLUSIVE_OR_EXPRESSION) return new GrBitwiseExpressionImpl(node);
-    if (elem == GroovyElementTypes.INCLUSIVE_OR_EXPRESSION) return new GrBitwiseExpressionImpl(node);
-    if (elem == GroovyElementTypes.AND_EXPRESSION) return new GrBitwiseExpressionImpl(node);
-
-    if (elem == GroovyElementTypes.REGEX_MATCH_EXPRESSION) return new GrLogicalExpressionImpl(node);
-    if (elem == GroovyElementTypes.REGEX_FIND_EXPRESSION) return new GrRegexFindExpressionImpl(node);
-    if (elem == GroovyElementTypes.EQUALITY_EXPRESSION) return new GrRelationalExpressionImpl(node);
-    if (elem == GroovyElementTypes.RELATIONAL_EXPRESSION) return new GrRelationalExpressionImpl(node);
-    if (elem == GroovyElementTypes.SHIFT_EXPRESSION) return new GrShiftExpressionImpl(node);
-    if (elem == GroovyElementTypes.RANGE_EXPRESSION) return new GrRangeExpressionImpl(node);
-    if (elem == GroovyElementTypes.ADDITIVE_EXPRESSION) return new GrAdditiveExpressionImpl(node);
-    if (elem == GroovyElementTypes.MULTIPLICATIVE_EXPRESSION) return new GrMultiplicativeExpressionImpl(node);
-    if (elem == GroovyElementTypes.POWER_EXPRESSION) return new GrPowerExpressionImpl(node);
-    if (elem == GroovyElementTypes.POWER_EXPRESSION_SIMPLE) return new GrPowerExpressionImpl(node);
-    if (elem == GroovyElementTypes.UNARY_EXPRESSION) return new GrUnaryExpressionImpl(node);
-    if (elem == GroovyElementTypes.CAST_EXPRESSION) return new GrTypeCastExpressionImpl(node);
-    if (elem == GroovyElementTypes.SAFE_CAST_EXPRESSION) return new GrSafeCastExpressionImpl(node);
-    if (elem == GroovyElementTypes.INSTANCEOF_EXPRESSION) return new GrInstanceofExpressionImpl(node);
-    if (elem == GroovyElementTypes.BUILT_IN_TYPE_EXPRESSION) return new GrBuiltinTypeClassExpressionImpl(node);
-    if (elem == GroovyElementTypes.ARRAY_TYPE) return new GrArrayTypeElementImpl(node);
-    if (elem == GroovyElementTypes.BUILT_IN_TYPE) return new GrBuiltInTypeElementImpl(node);
-    if (elem == GroovyElementTypes.DISJUNCTION_TYPE_ELEMENT) return new GrDisjunctionTypeElementImpl(node);
-    if (elem == GroovyElementTypes.GSTRING) return new GrStringImpl(node);
-    if (elem == GroovyElementTypes.REGEX) return new GrRegexImpl(node);
-    if (elem == GroovyElementTypes.GSTRING_INJECTION) return new GrStringInjectionImpl(node);
-    if (elem == GroovyElementTypes.GSTRING_CONTENT) return new GrStringContentImpl(node);
-    if (elem == GroovyElementTypes.REFERENCE_EXPRESSION) return new GrReferenceExpressionImpl(node);
-    if (elem == GroovyElementTypes.PARENTHESIZED_EXPRESSION) return new GrParenthesizedExpressionImpl(node);
-    if (elem == GroovyElementTypes.NEW_EXPRESSION) return new GrNewExpressionImpl(node);
-    if (elem == GroovyElementTypes.ANONYMOUS_CLASS_DEFINITION) return new GrAnonymousClassDefinitionImpl(node);
-    if (elem == GroovyElementTypes.ENUM_CONSTANT_INITIALIZER) return new GrEnumConstantInitializerImpl(node);
-    if (elem == GroovyElementTypes.ARRAY_DECLARATOR) return new GrArrayDeclarationImpl(node);
+    if (elem == LITERAL) return new GrLiteralImpl(node);
+    if (elem == LIST_OR_MAP) return new GrListOrMapImpl(node);
+    if (elem == ASSIGNMENT_EXPRESSION) return new GrAssignmentExpressionImpl(node);
+    if (elem == TUPLE_ASSIGNMENT_EXPRESSION) return new GrTupleAssignmentExpressionImpl(node);
+    if (elem == TERNARY_EXPRESSION) return new GrConditionalExprImpl(node);
+    if (elem == ELVIS_EXPRESSION) return new GrElvisExprImpl(node);
+    if (elem == LOR_EXPRESSION) return new GrLogicalExpressionImpl(node);
+    if (elem == LAND_EXPRESSION) return new GrLogicalExpressionImpl(node);
+    if (elem == XOR_EXPRESSION) return new GrBitwiseExpressionImpl(node);
+    if (elem == BOR_EXPRESSION) return new GrBitwiseExpressionImpl(node);
+    if (elem == BAND_EXPRESSION) return new GrBitwiseExpressionImpl(node);
+    if (elem == REGEX_MATCH_EXPRESSION) return new GrLogicalExpressionImpl(node);
+    if (elem == REGEX_FIND_EXPRESSION) return new GrRegexFindExpressionImpl(node);
+    if (elem == EQUALITY_EXPRESSION) return new GrRelationalExpressionImpl(node);
+    if (elem == RELATIONAL_EXPRESSION) return new GrRelationalExpressionImpl(node);
+    if (elem == SHIFT_EXPRESSION) return new GrShiftExpressionImpl(node);
+    if (elem == RANGE_EXPRESSION) return new GrRangeExpressionImpl(node);
+    if (elem == ADDITIVE_EXPRESSION) return new GrAdditiveExpressionImpl(node);
+    if (elem == MULTIPLICATIVE_EXPRESSION) return new GrMultiplicativeExpressionImpl(node);
+    if (elem == POWER_EXPRESSION) return new GrPowerExpressionImpl(node);
+    if (elem == UNARY_EXPRESSION) return new GrUnaryExpressionImpl(node);
+    if (elem == CAST_EXPRESSION) return new GrTypeCastExpressionImpl(node);
+    if (elem == AS_EXPRESSION) return new GrSafeCastExpressionImpl(node);
+    if (elem == INSTANCEOF_EXPRESSION) return new GrInstanceofExpressionImpl(node);
+    if (elem == BUILT_IN_TYPE_EXPRESSION) return new GrBuiltinTypeClassExpressionImpl(node);
+    if (elem == GSTRING) return new GrStringImpl(node);
+    if (elem == REGEX) return new GrRegexImpl(node);
+    if (elem == STRING_INJECTION) return new GrStringInjectionImpl(node);
+    if (elem == STRING_CONTENT) return new GrStringContentImpl(node);
+    if (elem == PARENTHESIZED_EXPRESSION) return new GrParenthesizedExpressionImpl(node);
+    if (elem == NEW_EXPRESSION) return new GrNewExpressionImpl(node);
+    if (elem == ENUM_CONSTANT_INITIALIZER) return new GrEnumConstantInitializerImpl(node);
+    if (elem == ARRAY_DECLARATION) return new GrArrayDeclarationImpl(node);
 
     //Paths
-    if (elem == GroovyElementTypes.PATH_PROPERTY_REFERENCE) return new GrPropertySelectionImpl(node);
-    if (elem == GroovyElementTypes.PATH_METHOD_CALL) return new GrMethodCallExpressionImpl(node);
-    if (elem == GroovyElementTypes.PATH_INDEX_PROPERTY) return new GrIndexPropertyImpl(node);
-    if (elem == org.jetbrains.plugins.groovy.lang.psi.GroovyElementTypes.APPLICATION_INDEX) return new GrIndexPropertyImpl(node);
+    if (elem == REFERENCE_EXPRESSION) return new GrReferenceExpressionImpl(node);
+    if (elem == PROPERTY_EXPRESSION) return new GrPropertySelectionImpl(node);
+    if (elem == METHOD_CALL_EXPRESSION) return new GrMethodCallExpressionImpl(node);
+    if (elem == INDEX_EXPRESSION) return new GrIndexPropertyImpl(node);
+    if (elem == APPLICATION_INDEX) return new GrIndexPropertyImpl(node);
+    if (elem == APPLICATION_EXPRESSION) return new GrApplicationStatementImpl(node);
+    if (elem == APPLICATION_ARGUMENT_LIST) return new GrCommandArgumentListImpl(node);
 
     // Arguments
-    if (elem == GroovyElementTypes.ARGUMENTS) return new GrArgumentListImpl(node);
-    if (elem == GroovyElementTypes.NAMED_ARGUMENT) return new GrNamedArgumentImpl(node);
-    if (elem == GroovyElementTypes.SPREAD_ARGUMENT) return new GrSpreadArgumentImpl(node);
-    if (elem == GroovyElementTypes.ARGUMENT_LABEL) return new GrArgumentLabelImpl(node);
+    if (elem == ARGUMENT_LIST) return new GrArgumentListImpl(node);
+    if (elem == NAMED_ARGUMENT) return new GrNamedArgumentImpl(node);
+    if (elem == SPREAD_LIST_ARGUMENT) return new GrSpreadArgumentImpl(node);
+    if (elem == ARGUMENT_LABEL) return new GrArgumentLabelImpl(node);
 
-    if (elem == GroovyTokenTypes.mREGEX_LITERAL || elem == GroovyTokenTypes.mDOLLAR_SLASH_REGEX_LITERAL) return new GroovyASTPsiElementImpl(node);
+    if (elem == SLASHY_LITERAL) return new GroovyASTPsiElementImpl(node);
+    if (elem == DOLLAR_SLASHY_LITERAL) return new GroovyASTPsiElementImpl(node);
 
     return new ASTWrapperPsiElement(node);
   }
-
 }
