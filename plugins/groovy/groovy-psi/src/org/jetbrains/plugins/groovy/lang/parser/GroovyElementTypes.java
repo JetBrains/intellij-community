@@ -40,7 +40,7 @@ public interface GroovyElementTypes {
   GrStubElementType<GrTypeDefinitionStub, GrInterfaceDefinition> INTERFACE_DEFINITION = INTERFACE_TYPE_DEFINITION;
   GrStubElementType<GrTypeDefinitionStub, GrEnumTypeDefinition> ENUM_DEFINITION = ENUM_TYPE_DEFINITION;
   GrStubElementType<GrTypeDefinitionStub, GrAnnotationTypeDefinition> ANNOTATION_DEFINITION = ANNOTATION_TYPE_DEFINITION;
-  GrStubElementType<GrTypeDefinitionStub, GrAnonymousClassDefinition> ANONYMOUS_CLASS_DEFINITION = ANONYMOUS_CLASS;
+  GrStubElementType<GrTypeDefinitionStub, GrAnonymousClassDefinition> ANONYMOUS_CLASS_DEFINITION = ANONYMOUS_TYPE_DEFINITION;
   GrStubElementType<GrTypeDefinitionStub, GrTraitTypeDefinition> TRAIT_DEFINITION = TRAIT_TYPE_DEFINITION;
   GrStubElementType<GrTypeDefinitionStub, GrEnumConstantInitializer> ENUM_CONSTANT_INITIALIZER = org.jetbrains.plugins.groovy.lang.psi.GroovyElementTypes.ENUM_CONSTANT_INITIALIZER;
 
@@ -142,7 +142,7 @@ public interface GroovyElementTypes {
   IElementType REGEX = org.jetbrains.plugins.groovy.lang.psi.GroovyElementTypes.REGEX;
   //types
   IElementType REFERENCE_ELEMENT = CODE_REFERENCE;
-  IElementType ARRAY_DECLARATOR = org.jetbrains.plugins.groovy.lang.psi.GroovyElementTypes.ARRAY_DECLARATOR;
+  IElementType ARRAY_DECLARATOR = ARRAY_DECLARATION;
 
   IElementType TYPE_ARGUMENTS = TYPE_ARGUMENT_LIST;
   IElementType TYPE_ARGUMENT = WILDCARD_TYPE_ELEMENT;
@@ -150,7 +150,7 @@ public interface GroovyElementTypes {
 
   GrStubElementType<GrTypeParameterStub, GrTypeParameter> TYPE_PARAMETER = org.jetbrains.plugins.groovy.lang.psi.GroovyElementTypes.TYPE_PARAMETER;
 
-  IStubElementType<GrReferenceListStub, GrReferenceList> TYPE_PARAMETER_EXTENDS_BOUND_LIST = TYPE_PARAMETER_BOUNDS;
+  IStubElementType<GrReferenceListStub, GrReferenceList> TYPE_PARAMETER_EXTENDS_BOUND_LIST = TYPE_PARAMETER_BOUNDS_LIST;
 
   IElementType DEFAULT_ANNOTATION_VALUE = new GroovyElementType("default annotation value");
 

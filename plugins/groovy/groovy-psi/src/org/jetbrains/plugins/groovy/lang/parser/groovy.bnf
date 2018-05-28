@@ -522,19 +522,19 @@ type_parameter_list ::= '<' type_parameters '>'
 private type_parameters ::= type_parameter type_parameters_tail*
 private type_parameters_tail ::= ',' type_parameter { pin = 1 }
 
-type_parameter ::= IDENTIFIER (type_parameter_bounds | empty_type_parameter_bounds)
+type_parameter ::= IDENTIFIER (type_parameter_bounds_list | empty_type_parameter_bounds_list)
 {
   name = 'type parameter'
   elementTypeClass = 'org.jetbrains.plugins.groovy.lang.psi.stubs.elements.GrTypeParameterElementType'
 }
-type_parameter_bounds ::= 'extends' type_parameter_bounds_list
+type_parameter_bounds_list ::= 'extends' type_parameter_bounds
 {
   pin = 1
   elementTypeClass = 'org.jetbrains.plugins.groovy.lang.psi.stubs.elements.GrTypeParameterBoundsElementType'
 }
-empty_type_parameter_bounds ::= { elementType = type_parameter_bounds }
-private type_parameter_bounds_list ::= type_code_reference type_parameter_bounds_list_tail*
-private type_parameter_bounds_list_tail ::= '&' type_code_reference { pin = 1 }
+empty_type_parameter_bounds_list ::= { elementType = type_parameter_bounds_list }
+private type_parameter_bounds ::= type_code_reference type_parameter_bounds_tail*
+private type_parameter_bounds_tail ::= '&' type_code_reference { pin = 1 }
 
 type_argument_list ::= diamond_type_argument_list | non_empty_type_argument_list
 private diamond_type_argument_list ::=  <<isDiamondAllowed>> fast_l_angle '>'
@@ -918,19 +918,19 @@ private priority1_1 ::= new_anonymous_expression | new_expression
 
 new_expression ::= 'new' type_argument_list?
                    (primitive_type_element | <<allowDiamond code_reference>>)
-                   (call_argument_list_start call_argument_list | array_declarator)
+                   (call_argument_list_start call_argument_list | array_declaration)
 {
   pin = 1
 }
-new_anonymous_expression ::= 'new' type_argument_list? anonymous_class
+new_anonymous_expression ::= 'new' type_argument_list? anonymous_type_definition
 {
   elementType = new_expression
 }
-anonymous_class ::= code_reference call_argument_list class_body
+anonymous_type_definition ::= code_reference call_argument_list class_body
 {
   elementTypeClass = 'org.jetbrains.plugins.groovy.lang.psi.stubs.elements.GrAnonymousElementType'
 }
-array_declarator ::= mandatory_expression optional_expression* { consumeTokenMethod = 'consumeTokenFast' }
+array_declaration ::= mandatory_expression optional_expression* { consumeTokenMethod = 'consumeTokenFast' }
 private mandatory_expression ::= '[' expression ']' { pin = 1 consumeTokenMethod = 'consumeTokenFast' }
 private optional_expression ::= '[' expression? ']' { pin = 1 consumeTokenMethod = 'consumeTokenFast' }
 
