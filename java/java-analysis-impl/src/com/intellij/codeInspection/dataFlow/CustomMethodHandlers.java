@@ -49,6 +49,7 @@ class CustomMethodHandlers {
     staticCall(JAVA_LANG_STRING, "valueOf").parameterCount(1),
     staticCall(JAVA_LANG_MATH, "abs", "sqrt", "min", "max")
   );
+  private static final int MAX_STRING_CONSTANT_LENGTH_TO_TRACK = 1024;
 
   interface CustomMethodHandler {
 
@@ -223,7 +224,9 @@ class CustomMethodHandlers {
       value = memoryState.getConstantValue((DfaVariableValue)value);
     }
     if (value instanceof DfaConstValue) {
-      return ((DfaConstValue)value).getValue();
+      Object constant = ((DfaConstValue)value).getValue();
+      if (constant instanceof String && ((String)constant).length() > MAX_STRING_CONSTANT_LENGTH_TO_TRACK) return null;
+      return constant;
     }
     return null;
   }
