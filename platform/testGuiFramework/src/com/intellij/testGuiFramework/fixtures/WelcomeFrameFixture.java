@@ -39,7 +39,7 @@ public class WelcomeFrameFixture extends ComponentFixture<WelcomeFrameFixture, F
         }
         return false;
       }
-    }, GuiTestUtil.LONG_TIMEOUT);
+    }, GuiTestUtil.INSTANCE.getLONG_TIMEOUT());
 
     for (Frame frame : Frame.getFrames()) {
       if (frame instanceof FlatWelcomeFrame && frame.isShowing()) {

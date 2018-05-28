@@ -2,8 +2,8 @@
 package com.intellij.testGuiFramework.util.scenarios
 
 import com.intellij.testGuiFramework.fixtures.JDialogFixture
-import com.intellij.testGuiFramework.impl.GuiTestCase
-import com.intellij.testGuiFramework.impl.testTreeItemExist
+import com.intellij.testGuiFramework.framework.GuiTestUtil.defaultTimeout
+import com.intellij.testGuiFramework.impl.*
 import com.intellij.testGuiFramework.util.logUIStep
 import com.intellij.testGuiFramework.util.scenarios.ProjectStructureDialogModel.Constants.buttonCancel
 import com.intellij.testGuiFramework.util.scenarios.ProjectStructureDialogModel.Constants.itemLibrary
@@ -38,7 +38,7 @@ class ProjectStructureDialogModel(val testCase: GuiTestCase) : TestUtilsClass(te
 val GuiTestCase.projectStructureDialogModel by ProjectStructureDialogModel
 
 fun ProjectStructureDialogModel.connectDialog(): JDialogFixture =
-  testCase.dialog(projectStructureTitle, true, testCase.defaultTimeout)
+  testCase.dialog(projectStructureTitle, true, defaultTimeout)
 
 fun ProjectStructureDialogModel.checkInProjectStructure(actions: GuiTestCase.()->Unit){
   with(guiTestCase){

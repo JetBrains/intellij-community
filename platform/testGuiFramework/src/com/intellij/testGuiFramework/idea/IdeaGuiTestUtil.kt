@@ -11,7 +11,9 @@ import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.projectRoots.impl.JavaSdkImpl
 import com.intellij.openapi.util.io.FileUtil.pathsEqual
 import com.intellij.openapi.util.text.StringUtil
-import com.intellij.testGuiFramework.framework.GuiTestUtil.*
+import com.intellij.testGuiFramework.framework.GuiTestUtil
+import com.intellij.testGuiFramework.framework.GuiTestUtil.JDK_HOME_FOR_TESTS
+import com.intellij.testGuiFramework.framework.GuiTestUtil.getSystemPropertyOrEnvironmentVariable
 import org.fest.swing.edt.GuiActionRunner.execute
 import org.fest.swing.edt.GuiTask
 import org.junit.Assert.fail
@@ -29,7 +31,7 @@ object IdeaGuiTestUtil{
     var jdkHome: String? = getSystemPropertyOrEnvironmentVariable(JDK_HOME_FOR_TESTS)
     if (StringUtil.isEmpty(jdkHome) || !JdkUtil.checkForJdk(jdkHome!!)) {
       //than use bundled JDK
-      jdkHome = getBundledJdkLocation()
+      jdkHome = GuiTestUtil.bundledJdkLocation
     }
     val jdkPath = File(jdkHome)
 
@@ -87,12 +89,12 @@ object IdeaGuiTestUtil{
     var jdkHome: String? = getSystemPropertyOrEnvironmentVariable(JDK_HOME_FOR_TESTS)
     if (StringUtil.isEmpty(jdkHome) || !checkForJdk(jdkHome!!)) {
       //than use bundled JDK
-      jdkHome = getBundledJdkLocation()
+      jdkHome = GuiTestUtil.bundledJdkLocation
     }
-    if (StringUtil.isEmpty(jdkHome) || !checkForJdk(jdkHome!!)) {
+    if (StringUtil.isEmpty(jdkHome) || !checkForJdk(jdkHome)) {
       fail("Please specify the path to a valid JDK using system property " + JDK_HOME_FOR_TESTS)
     }
-    return jdkHome!!
+    return jdkHome
   }
 
 }

@@ -1,6 +1,7 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.projectWizard.kotlin.model
 
+import com.intellij.testGuiFramework.impl.jTree
 import com.intellij.testGuiFramework.impl.selectWithKeyboard
 import com.intellij.testGuiFramework.util.logError
 import com.intellij.testGuiFramework.util.logUIStep

@@ -4,6 +4,8 @@ package com.intellij.testGuiFramework.tests.community.focus
 import com.intellij.openapi.actionSystem.ActionManager
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.testGuiFramework.fixtures.IdeFrameFixture
+import com.intellij.testGuiFramework.framework.GuiTestUtil.defaultTimeout
+import com.intellij.testGuiFramework.framework.GuiTestUtil.textfield
 import com.intellij.testGuiFramework.impl.GuiTestCase
 import com.intellij.testGuiFramework.impl.GuiTestUtilKt
 import com.intellij.testGuiFramework.tests.community.CommunityProjectCreator
@@ -85,7 +87,7 @@ class GoToClassFocusTest : GuiTestCase() {
       findSearchWindow()
     }
     with(guiTestCase) {
-      val textfield = textfield("", searchWindow, guiTestCase.defaultTimeout)
+      val textfield = textfield("", searchWindow, defaultTimeout)
       Assert.assertEquals(typedString, textfield.target().text)
     }
   }

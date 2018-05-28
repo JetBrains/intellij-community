@@ -2,6 +2,7 @@
 package com.intellij.testGuiFramework.util.scenarios
 
 import com.intellij.testGuiFramework.impl.GuiTestCase
+import com.intellij.testGuiFramework.impl.actionLink
 import com.intellij.testGuiFramework.util.logTestStep
 import com.intellij.testGuiFramework.util.scenarios.WelcomePageDialogModel.Constants.actionCreateNewProject
 import com.intellij.testGuiFramework.utils.TestUtilsClass
@@ -11,7 +12,8 @@ class WelcomePageDialogModel(val testCase: GuiTestCase) : TestUtilsClass(testCas
   companion object : TestUtilsClassCompanion<WelcomePageDialogModel>(
     { WelcomePageDialogModel(it) }
   )
-  object Constants{
+
+  object Constants {
     const val actionCreateNewProject = "Create New Project"
     const val actionImportProject = "Create Import Project"
     const val actionOpen = "Open"
@@ -23,11 +25,9 @@ class WelcomePageDialogModel(val testCase: GuiTestCase) : TestUtilsClass(testCas
 
 val GuiTestCase.welcomePageDialogModel by WelcomePageDialogModel
 
-fun WelcomePageDialogModel.createNewProject(){
-  with(testCase){
-    welcomeFrame {
-      logTestStep(actionCreateNewProject)
-      actionLink(actionCreateNewProject).click()
-    }
+fun WelcomePageDialogModel.createNewProject() {
+  with(testCase) {
+    logTestStep(actionCreateNewProject)
+    guiTestRule.findWelcomeFrame().actionLink(actionCreateNewProject).click()
   }
 }

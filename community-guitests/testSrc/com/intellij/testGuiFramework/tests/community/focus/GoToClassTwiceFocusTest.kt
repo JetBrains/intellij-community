@@ -5,10 +5,9 @@ import com.intellij.openapi.actionSystem.ShortcutSet
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.keymap.KeymapUtil
 import com.intellij.testGuiFramework.fixtures.IdeFrameFixture
-import com.intellij.testGuiFramework.impl.GuiTestCase
-import com.intellij.testGuiFramework.impl.GuiTestUtilKt
-import com.intellij.testGuiFramework.impl.LogActionsDuringTest
-import com.intellij.testGuiFramework.impl.ScreenshotsDuringTest
+import com.intellij.testGuiFramework.framework.GuiTestUtil.textfield
+import com.intellij.testGuiFramework.framework.GuiTestUtil.defaultTimeout
+import com.intellij.testGuiFramework.impl.*
 import com.intellij.testGuiFramework.tests.community.CommunityProjectCreator
 import com.intellij.testGuiFramework.util.Key.ESCAPE
 import org.fest.swing.core.SmartWaitRobot
@@ -101,7 +100,7 @@ class GoToClassTwiceFocusTest : GuiTestCase() {
       findSearchWindow()
     }
     with(guiTestCase) {
-      val textfield = textfield("", searchWindow, guiTestCase.defaultTimeout)
+      val textfield = textfield("", searchWindow, defaultTimeout)
       Assert.assertEquals(typedString, textfield.target().text)
     }
   }

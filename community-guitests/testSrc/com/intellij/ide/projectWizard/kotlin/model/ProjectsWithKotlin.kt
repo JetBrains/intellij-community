@@ -3,8 +3,8 @@ package com.intellij.ide.projectWizard.kotlin.model
 
 import com.intellij.openapi.application.PathManager
 import com.intellij.testGuiFramework.fixtures.JDialogFixture
-import com.intellij.testGuiFramework.impl.gradleReimport
-import com.intellij.testGuiFramework.impl.waitAMoment
+import com.intellij.testGuiFramework.framework.GuiTestUtil.defaultTimeout
+import com.intellij.testGuiFramework.impl.*
 import com.intellij.testGuiFramework.util.*
 import com.intellij.testGuiFramework.util.scenarios.*
 import org.fest.swing.exception.ComponentLookupException

@@ -465,7 +465,7 @@ public class IdeFrameFixture extends ComponentFixture<IdeFrameFixture, IdeFrameI
         RunConfigurationComboBoxFixture runConfigurationComboBox = RunConfigurationComboBoxFixture.find(IdeFrameFixture.this);
         return isNotEmpty(runConfigurationComboBox.getText());
       }
-    }, GuiTestUtil.SHORT_TIMEOUT);
+    }, GuiTestUtil.INSTANCE.getSHORT_TIMEOUT());
 
     waitForBackgroundTasksToFinish();
     findGradleSyncAction().waitUntilEnabledAndShowing();
@@ -551,15 +551,15 @@ public class IdeFrameFixture extends ComponentFixture<IdeFrameFixture, IdeFrameI
   @NotNull
   public IdeFrameFixture waitForBackgroundTasksToFinish() {
     pause(new Condition("Background tasks to finish") {
-            @Override
-            public boolean test() {
-              ProgressManager progressManager = ProgressManager.getInstance();
-              return !progressManager.hasModalProgressIndicator() &&
-                     !progressManager.hasProgressIndicator() &&
-                     !progressManager.hasUnsafeProgressIndicator();
-            }
-          }
-      , GuiTestUtil.FIFTEEN_MIN_TIMEOUT);
+                  @Override
+                  public boolean test() {
+                    ProgressManager progressManager = ProgressManager.getInstance();
+                    return !progressManager.hasModalProgressIndicator() &&
+                           !progressManager.hasProgressIndicator() &&
+                           !progressManager.hasUnsafeProgressIndicator();
+                  }
+                }
+      , GuiTestUtil.INSTANCE.getFIFTEEN_MIN_TIMEOUT());
     robot().waitForIdle();
     return this;
   }

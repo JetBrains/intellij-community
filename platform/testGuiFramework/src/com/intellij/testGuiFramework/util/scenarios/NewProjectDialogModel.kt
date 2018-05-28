@@ -3,8 +3,8 @@ package com.intellij.testGuiFramework.util.scenarios
 
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.testGuiFramework.fixtures.JDialogFixture
-import com.intellij.testGuiFramework.impl.GuiTestCase
-import com.intellij.testGuiFramework.impl.waitAMoment
+import com.intellij.testGuiFramework.framework.GuiTestUtil.defaultTimeout
+import com.intellij.testGuiFramework.impl.*
 import com.intellij.testGuiFramework.util.*
 import com.intellij.testGuiFramework.util.scenarios.NewProjectDialogModel.Constants.buttonFinish
 import com.intellij.testGuiFramework.util.scenarios.NewProjectDialogModel.Constants.buttonNext
@@ -152,7 +152,7 @@ class NewProjectDialogModel(val testCase: GuiTestCase) : TestUtilsClass(testCase
 val GuiTestCase.newProjectDialogModel by NewProjectDialogModel
 
 fun NewProjectDialogModel.connectDialog(): JDialogFixture =
-  testCase.dialog(NewProjectDialogModel.Constants.newProjectTitle, true, testCase.defaultTimeout)
+  testCase.dialog(NewProjectDialogModel.Constants.newProjectTitle, true, defaultTimeout)
 
 fun assertProjectPathExists(projectPath: String) {
   assert(FileUtil.exists(projectPath)) { "Test project $projectPath should be created before test starting" }

@@ -34,7 +34,7 @@ public class InputDialogFixture extends IdeaDialogFixture<DialogWrapper> {
   @NotNull
   public static InputDialogFixture findByTitle(@NotNull Robot robot, @NotNull final String title) {
     final Ref<DialogWrapper> wrapperRef = new Ref<DialogWrapper>();
-    JDialog dialog = GuiTestUtil.waitUntilFound(robot, new GenericTypeMatcher<JDialog>(JDialog.class) {
+    JDialog dialog = GuiTestUtil.INSTANCE.waitUntilFound(robot, new GenericTypeMatcher<JDialog>(JDialog.class) {
       @Override
       protected boolean isMatching(@NotNull JDialog dialog) {
         if (!title.equals(dialog.getTitle()) || !dialog.isShowing()) {
@@ -59,7 +59,7 @@ public class InputDialogFixture extends IdeaDialogFixture<DialogWrapper> {
     assertNotNull(input);
     JTextComponentFixture inputFixture = new JTextComponentFixture(robot(), input);
     inputFixture.enterText(text);
-    GuiTestUtil.findAndClickOkButton(this);
+    GuiTestUtil.INSTANCE.findAndClickOkButton(this);
   }
 
   private InputDialogFixture(@NotNull Robot robot, @NotNull JDialog target, @NotNull DialogWrapper dialogWrapper) {
