@@ -131,8 +131,7 @@ public class InferredAnnotationsManagerImpl extends InferredAnnotationsManager {
       return null;
     }
 
-    if (NullableNotNullManager.findNullabilityDefaultInHierarchy(method, true) != null ||
-        NullableNotNullManager.findNullabilityDefaultInHierarchy(method, false) != null) {
+    if (manager.findNullityDefaultInHierarchy(method) != null) {
       return null;
     }
 
