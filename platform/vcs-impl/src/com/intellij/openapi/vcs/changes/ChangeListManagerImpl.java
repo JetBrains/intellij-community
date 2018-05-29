@@ -159,6 +159,10 @@ public class ChangeListManagerImpl extends ChangeListManagerEx implements Projec
   @Override
   public void scheduleAutomaticEmptyChangeListDeletion(@NotNull LocalChangeList oldList, boolean silently) {
     synchronized (myDataLock) {
+      if (LOG.isDebugEnabled()) {
+        LOG.debug(String.format("Schedule empty changelist deletion: %s, silently = %s", oldList.getName(), silently));
+      }
+
       if (silently) {
         myListsToBeDeletedSilently.add(oldList.getId());
       }
@@ -185,6 +189,11 @@ public class ChangeListManagerImpl extends ChangeListManagerEx implements Projec
     };
 
     synchronized (myDataLock) {
+      if (LOG.isDebugEnabled()) {
+        LOG.debug(String.format("Empty changelist deletion, scheduled:\nsilently: %s\nasking: %s",
+                                myListsToBeDeletedSilently, myListsToBeDeleted));
+      }
+
       myListsToBeDeleted.removeAll(myListsToBeDeletedSilently);
 
       listsToBeDeletedSilently = ContainerUtil.mapNotNull(myListsToBeDeletedSilently, toDeleteMapping);
@@ -201,6 +210,11 @@ public class ChangeListManagerImpl extends ChangeListManagerEx implements Projec
       }
 
       myEmptyListDeletionScheduled = false;
+
+      if (LOG.isDebugEnabled()) {
+        LOG.debug(String.format("Empty changelist deletion, to be deleted:\nsilently: %s\nasking: %s",
+                                listsToBeDeletedSilently, listsToBeDeleted));
+      }
     }
 
     if (myConfig.REMOVE_EMPTY_INACTIVE_CHANGELISTS == Value.DO_NOTHING_SILENTLY ||

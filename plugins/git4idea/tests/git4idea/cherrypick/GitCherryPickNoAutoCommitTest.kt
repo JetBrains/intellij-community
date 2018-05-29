@@ -49,6 +49,7 @@ class GitCherryPickNoAutoCommitTest : GitCherryPickTest() {
 
     assertLastMessage("fix #1\n\n(cherry picked from commit ${shortHash(commit)})")
     assertSuccessfulNotification("Cherry-pick successful", "${shortHash(commit)} fix #1")
+    changeListManager.assertNoChanges()
     changeListManager.waitScheduledChangelistDeletions()
     changeListManager.assertOnlyDefaultChangelist()
   }
@@ -87,6 +88,7 @@ class GitCherryPickNoAutoCommitTest : GitCherryPickTest() {
       fix #1
 
       (cherry picked from commit ${shortHash(commits[0])})""")
+    changeListManager.assertNoChanges()
     changeListManager.waitScheduledChangelistDeletions()
     changeListManager.assertOnlyDefaultChangelist()
   }

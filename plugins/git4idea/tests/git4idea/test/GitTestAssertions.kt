@@ -99,6 +99,10 @@ fun GitPlatformTest.assertLogMessages(vararg messages: String) {
   }
 }
 
+fun ChangeListManager.assertNoChanges() {
+  PlatformTestCase.assertEmpty("No changes is expected: ${allChanges.joinToString()}}", allChanges)
+}
+
 fun ChangeListManager.assertOnlyDefaultChangelist() {
   val DEFAULT = MockChangeListManager.DEFAULT_CHANGE_LIST_NAME
   PlatformTestCase.assertEquals("Only default changelist is expected among: ${dumpChangeLists()}", 1, changeListsNumber)

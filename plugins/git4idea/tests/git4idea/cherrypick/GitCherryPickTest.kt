@@ -82,6 +82,7 @@ abstract class GitCherryPickTest : GitSingleRepoTest() {
     }
     assertSuccessfulNotification("Cherry-pick successful",
                                  "${shortHash(commit)} on_master")
+    changeListManager.assertNoChanges()
     changeListManager.waitScheduledChangelistDeletions()
     changeListManager.assertOnlyDefaultChangelist()
   }
