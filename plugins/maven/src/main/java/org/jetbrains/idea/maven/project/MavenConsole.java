@@ -42,7 +42,7 @@ public abstract class MavenConsole {
     "FATAL_ERROR", MavenServerConsole.LEVEL_FATAL
   );
 
-  public MavenConsole(MavenExecutionOptions.LoggingLevel outputLevel, boolean printStrackTrace) {
+  public MavenConsole(MavenExecutionOptions.LoggingLevel outputLevel, boolean printStackTrace) {
     myOutputLevel = outputLevel.getLevel();
   }
 
