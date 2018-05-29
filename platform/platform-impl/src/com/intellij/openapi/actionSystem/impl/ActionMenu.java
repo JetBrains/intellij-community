@@ -17,6 +17,7 @@ import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.openapi.wm.IdeFrame;
 import com.intellij.openapi.wm.StatusBar;
 import com.intellij.ui.components.JBMenu;
+import com.intellij.ui.mac.foundation.NSDefaults;
 import com.intellij.ui.plaf.beg.IdeaMenuUI;
 import com.intellij.ui.plaf.gtk.GtkMenuUI;
 import com.intellij.util.ReflectionUtil;
@@ -218,7 +219,7 @@ public final class ActionMenu extends JBMenu {
       Icon icon = presentation.getIcon();
       if (SystemInfo.isMacSystemMenu && ActionPlaces.MAIN_MENU.equals(myPlace)) {
         // JDK can't paint correctly our HiDPI icons at the system menu bar
-        icon = IconLoader.get1xIcon(icon, UIUtil.isUnderDarcula());
+        icon = IconLoader.getMenuBarIcon(icon, NSDefaults.isDarkMenuBar());
       }
       setIcon(icon);
       if (presentation.getDisabledIcon() != null) {

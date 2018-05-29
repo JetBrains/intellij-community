@@ -442,9 +442,12 @@ public final class IconLoader {
   /**
    *  For internal usage. Converts the icon to 1x scale when applicable.
    */
-  public static Icon get1xIcon(Icon icon, boolean dark) {
+  public static Icon getMenuBarIcon(Icon icon, boolean dark) {
     if (icon instanceof LazyIcon) {
       icon = ((LazyIcon)icon).getOrComputeIcon();
+    }
+    if (icon instanceof MenuBarIconProvider) {
+      return ((MenuBarIconProvider)icon).getMenuBarIcon(dark);
     }
     if (icon instanceof CachedImageIcon) {
       Image img = ((CachedImageIcon)icon).loadFromUrl(ScaleContext.createIdentity(), dark);
@@ -452,6 +455,7 @@ public final class IconLoader {
         icon = new ImageIcon(img);
       }
     }
+
     return icon;
   }
 
@@ -719,6 +723,10 @@ public final class IconLoader {
     }
 
     protected abstract Icon compute();
+  }
+
+  public interface MenuBarIconProvider {
+    Icon getMenuBarIcon(boolean isDark);
   }
 
   private static class LabelHolder {

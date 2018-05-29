@@ -156,6 +156,14 @@ public class NSDefaults {
   @NotNull
   public static Domain readTouchBarDomain() { return new NSDefaults().readDomain(ourTouchBarDomain); }
 
+  public static boolean isDarkMenuBar() {
+    if (SystemInfo.isMac && !SystemInfo.isMacOSHighSierra) {
+      final String sval = new NSDefaults().readStringVal("AppleInterfaceStyle");
+      return sval != null && sval.equals("Dark");
+    }
+    return false;
+  }
+
   // for debug
   private List<String> _listAllKeys() {
     List<String> res = new ArrayList<String>(100);
