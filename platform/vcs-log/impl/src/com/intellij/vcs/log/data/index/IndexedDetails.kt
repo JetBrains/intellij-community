@@ -13,97 +13,52 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.vcs.log.data.index;
+package com.intellij.vcs.log.data.index
 
-import com.intellij.vcs.log.Hash;
-import com.intellij.vcs.log.VcsUser;
-import com.intellij.vcs.log.data.LoadingDetails;
-import com.intellij.vcs.log.data.VcsLogStorage;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
+import com.intellij.vcs.log.Hash
+import com.intellij.vcs.log.VcsUser
+import com.intellij.vcs.log.data.LoadingDetails
+import com.intellij.vcs.log.data.VcsLogStorage
 
-import java.util.List;
+class IndexedDetails(private val dataGetter: IndexDataGetter,
+                     storage: VcsLogStorage,
+                     private val commitIndex: Int,
+                     loadingTaskIndex: Long) : LoadingDetails({ storage.getCommitId(commitIndex) }, loadingTaskIndex) {
+  private val _fullMessage by lazy { dataGetter.getFullMessage(commitIndex) }
 
-public class IndexedDetails extends LoadingDetails {
-  @NotNull private final IndexDataGetter myDataGetter;
-  private final int myCommitIndex;
-  @Nullable private String myFullMessage;
-
-  public IndexedDetails(@NotNull IndexDataGetter dataGetter,
-                        @NotNull VcsLogStorage storage,
-                        int commitIndex,
-                        long loadingTaskIndex) {
-    super(() -> storage.getCommitId(commitIndex), loadingTaskIndex);
-    myDataGetter = dataGetter;
-    myCommitIndex = commitIndex;
+  override fun getFullMessage(): String {
+    return _fullMessage ?: super.getFullMessage()
   }
 
-  @Nullable
-  private String getFullMessageFromIndex() {
-    if (myFullMessage == null) {
-      myFullMessage = myDataGetter.getFullMessage(myCommitIndex);
+  override fun getSubject(): String {
+    return _fullMessage?.let { getSubject(it) } ?: super.getSubject()
+  }
+
+  override fun getParents(): List<Hash> {
+    return dataGetter.getParents(commitIndex)
+  }
+
+  override fun getAuthor(): VcsUser {
+    return dataGetter.getAuthor(commitIndex) ?: super.getAuthor()
+  }
+
+  override fun getCommitter(): VcsUser {
+    return dataGetter.getCommitter(commitIndex) ?: super.getCommitter()
+  }
+
+  override fun getAuthorTime(): Long {
+    return dataGetter.getAuthorTime(commitIndex) ?: super.getAuthorTime()
+  }
+
+  override fun getCommitTime(): Long {
+    return dataGetter.getCommitTime(commitIndex) ?: super.getCommitTime()
+  }
+
+  companion object {
+    @JvmStatic
+    fun getSubject(fullMessage: String): String {
+      val subjectEnd = fullMessage.indexOf("\n\n")
+      return if (subjectEnd > 0) fullMessage.substring(0, subjectEnd).replace("\n", " ") else fullMessage.replace("\n", " ")
     }
-    return myFullMessage;
-  }
-
-  @NotNull
-  @Override
-  public String getFullMessage() {
-    String message = getFullMessageFromIndex();
-    if (message != null) return message;
-    return super.getFullMessage();
-  }
-
-  @NotNull
-  @Override
-  public String getSubject() {
-    String message = getFullMessageFromIndex();
-    if (message != null) {
-      return getSubject(message);
-    }
-    return super.getSubject();
-  }
-
-  @NotNull
-  public static String getSubject(@NotNull String fullMessage) {
-    int subjectEnd = fullMessage.indexOf("\n\n");
-    if (subjectEnd > 0) return fullMessage.substring(0, subjectEnd).replace("\n", " ");
-    return fullMessage.replace("\n", " ");
-  }
-
-  @NotNull
-  @Override
-  public List<Hash> getParents() {
-    return myDataGetter.getParents(myCommitIndex);
-  }
-
-  @NotNull
-  @Override
-  public VcsUser getAuthor() {
-    VcsUser author = myDataGetter.getAuthor(myCommitIndex);
-    if (author != null) return author;
-    return super.getAuthor();
-  }
-
-  @NotNull
-  @Override
-  public VcsUser getCommitter() {
-    VcsUser committer = myDataGetter.getCommitter(myCommitIndex);
-    if (committer != null) return committer;
-    return super.getCommitter();
-  }
-
-  @Override
-  public long getAuthorTime() {
-    Long time = myDataGetter.getAuthorTime(myCommitIndex);
-    if (time != null) return time;
-    return super.getAuthorTime();
-  }
-
-  @Override
-  public long getCommitTime() {
-    Long time = myDataGetter.getCommitTime(myCommitIndex);
-    if (time != null) return time;
-    return super.getCommitTime();
   }
 }
