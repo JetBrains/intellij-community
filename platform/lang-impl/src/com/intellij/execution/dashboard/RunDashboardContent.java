@@ -147,10 +147,7 @@ public class RunDashboardContent extends JPanel implements TreeContent, Disposab
       public void contentRemoved(ContentManagerEvent event) {
         Content content = event.getContent();
         myContentActions.remove(content);
-        updateContentToolbar(content);
-        if (myContentManager.getContentCount() == 0 && !RunDashboardManager.getInstance(project).isShowConfigurations()) {
-          RunDashboardManager.getInstance(project).setShowConfigurations(true);
-        }
+        updateContentToolbar(myContentManager.getSelectedContent());
       }
 
       @Override
