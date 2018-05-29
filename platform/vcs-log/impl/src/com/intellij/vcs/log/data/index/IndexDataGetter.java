@@ -19,6 +19,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Condition;
+import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.Throwable2Computable;
 import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -115,15 +116,15 @@ public class IndexDataGetter {
     return null;
   }
 
-  @NotNull
+  @Nullable
   public List<Hash> getParents(int index) {
     try {
       List<Integer> parentsIndexes = myIndexStorage.parents.get(index);
-      if (parentsIndexes == null) return Collections.emptyList();
+      if (parentsIndexes == null) return null;
       List<Hash> result = ContainerUtil.newArrayList();
       for (int parentIndex : parentsIndexes) {
         CommitId id = myLogStorage.getCommitId(parentIndex);
-        if (id == null) return Collections.emptyList();
+        if (id == null) return null;
         result.add(id.getHash());
       }
       return result;
@@ -131,7 +132,7 @@ public class IndexDataGetter {
     catch (IOException e) {
       myFatalErrorsConsumer.consume(this, e);
     }
-    return Collections.emptyList();
+    return null;
   }
 
   @NotNull

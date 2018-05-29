@@ -35,7 +35,7 @@ class IndexedDetails(private val dataGetter: IndexDataGetter,
   }
 
   override fun getParents(): List<Hash> {
-    return dataGetter.getParents(commitIndex)
+    return dataGetter.getParents(commitIndex) ?: super.getParents()
   }
 
   override fun getAuthor(): VcsUser {
