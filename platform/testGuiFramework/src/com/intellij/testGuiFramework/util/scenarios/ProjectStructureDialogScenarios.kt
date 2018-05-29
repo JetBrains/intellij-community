@@ -38,27 +38,25 @@ fun ProjectStructureDialogScenarios.openProjectStructureAndCheck(actions: GuiTes
       var isCorrectDialogOpen = false
       for (currentAttempt in 0..numberOfAttempts) {
         waitAMoment()
-        logUIStep("Cannot open '$projectStructureTitle' dialog.")
-        break
-//        logUIStep("Call '$projectStructureTitle' dialog with menu action. Attempt ${currentAttempt + 1}")
-//        invokeMainMenu("ShowProjectStructureSettings")
-//                logUIStep("Call '$projectStructureTitle' dialog with Ctrl+Shift+Alt+S. Attempt ${currentAttempt + 1}")
-//                shortcut(Modifier.CONTROL + Modifier.SHIFT + Modifier.ALT + Key.S)
-//        val activeDialog = getActiveModalDialog()
-//        logUIStep("Active dialog: ${activeDialog?.title}")
-//        if (activeDialog?.title == projectStructureTitle) {
-//          projectStructureDialogModel.checkInProjectStructure {
-//            isCorrectDialogOpen = true
-//            actions()
-//          }
-//        }
-//        else {
-//          if (activeDialog != null) {
-//            logUIStep("Active dialog is incorrect, going to close it with Escape")
-//            shortcut(Key.ESCAPE)
-//          }
-//        }
-//        if (isCorrectDialogOpen) break
+        logUIStep("Call '$projectStructureTitle' dialog with menu action. Attempt ${currentAttempt + 1}")
+        invokeMainMenu("ShowProjectStructureSettings")
+                logUIStep("Call '$projectStructureTitle' dialog with Ctrl+Shift+Alt+S. Attempt ${currentAttempt + 1}")
+                shortcut(Modifier.CONTROL + Modifier.SHIFT + Modifier.ALT + Key.S)
+        val activeDialog = getActiveModalDialog()
+        logUIStep("Active dialog: ${activeDialog?.title}")
+        if (activeDialog?.title == projectStructureTitle) {
+          projectStructureDialogModel.checkInProjectStructure {
+            isCorrectDialogOpen = true
+            actions()
+          }
+        }
+        else {
+          if (activeDialog != null) {
+            logUIStep("Active dialog is incorrect, going to close it with Escape")
+            shortcut(Key.ESCAPE)
+          }
+        }
+        if (isCorrectDialogOpen) break
       }
     }
   }
