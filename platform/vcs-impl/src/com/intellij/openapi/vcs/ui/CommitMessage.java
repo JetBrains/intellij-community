@@ -25,7 +25,7 @@ import com.intellij.openapi.actionSystem.ActionGroup;
 import com.intellij.openapi.actionSystem.ActionManager;
 import com.intellij.openapi.actionSystem.ActionToolbar;
 import com.intellij.openapi.actionSystem.DataProvider;
-import com.intellij.openapi.application.WriteAction;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.SpellCheckingEditorCustomizationProvider;
@@ -68,7 +68,7 @@ public class CommitMessage extends JPanel implements Disposable, DataProvider, C
   @NotNull private final EditorTextField myEditorField;
   @Nullable private final TitledSeparator mySeparator;
 
-  @NotNull private List<ChangeList> myChangeLists = Collections.emptyList(); // guarded with WriteLock
+  @NotNull private List<ChangeList> myChangeLists = Collections.emptyList(); // guarded with this
 
   public CommitMessage(@NotNull Project project) {
     this(project, true, true, true);
@@ -209,18 +209,14 @@ public class CommitMessage extends JPanel implements Disposable, DataProvider, C
   }
 
   @CalledInAwt
-  public void setChangeList(@NotNull ChangeList value) {
-    setChangeLists(Collections.singletonList(value));
-  }
-
-  @CalledInAwt
-  public void setChangeLists(@NotNull List<ChangeList> value) {
-    WriteAction.run(() -> myChangeLists = value);
+  public synchronized void setChangeList(@NotNull ChangeList value) {
+    ApplicationManager.getApplication().assertIsDispatchThread();
+    myChangeLists = Collections.singletonList(value);
   }
 
   @NotNull
   @CalledWithReadLock
-  public List<ChangeList> getChangeLists() {
+  public synchronized List<ChangeList> getChangeLists() {
     return myChangeLists;
   }
 
