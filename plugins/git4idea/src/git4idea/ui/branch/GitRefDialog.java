@@ -2,14 +2,19 @@
 package git4idea.ui.branch;
 
 import com.google.common.collect.Streams;
+import com.intellij.codeInsight.completion.CompletionResultSet;
 import com.intellij.dvcs.repo.Repository;
+import com.intellij.openapi.Disposable;
+import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.progress.util.BackgroundTaskUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.ui.TextFieldWithAutoCompletionListProvider;
 import com.intellij.ui.components.JBLabel;
+import com.intellij.util.concurrency.FutureResult;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.MultiMap;
 import com.intellij.util.textCompletion.DefaultTextCompletionValueDescriptor;
@@ -22,11 +27,13 @@ import com.intellij.vcs.log.data.DataPack;
 import com.intellij.vcs.log.impl.VcsGoToRefComparator;
 import com.intellij.vcs.log.impl.VcsLogManager;
 import com.intellij.vcs.log.impl.VcsProjectLog;
+import com.intellij.vcs.log.ui.actions.TwoStepCompletionProvider;
 import com.intellij.vcs.log.ui.actions.VcsRefCompletionProvider;
 import git4idea.GitBranch;
 import git4idea.GitLocalBranch;
-import git4idea.GitReference;
 import git4idea.GitRemoteBranch;
+import git4idea.GitTag;
+import git4idea.branch.GitBranchUtil;
 import git4idea.log.GitRefManager;
 import git4idea.repo.GitRepository;
 import gnu.trove.THashSet;
@@ -36,6 +43,7 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.util.*;
+import java.util.concurrent.ExecutionException;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -55,7 +63,7 @@ public class GitRefDialog extends DialogWrapper {
     setTitle(title);
     setButtonsAlignment(SwingConstants.CENTER);
 
-    TextCompletionProvider completionProvider = getCompletionProvider(project, repositories);
+    TextCompletionProvider completionProvider = getCompletionProvider(project, repositories, getDisposable());
 
     myTextField = new TextFieldWithCompletion(project, completionProvider, "", true, true, false);
 
@@ -69,7 +77,8 @@ public class GitRefDialog extends DialogWrapper {
 
   @NotNull
   private static TextCompletionProvider getCompletionProvider(@NotNull Project project,
-                                                              @NotNull List<GitRepository> repositories) {
+                                                              @NotNull List<GitRepository> repositories,
+                                                              @NotNull Disposable disposable) {
     VcsLogManager logManager = VcsProjectLog.getInstance(project).getLogManager();
     if (logManager != null) {
       List<VirtualFile> roots = ContainerUtil.map(repositories, Repository::getRoot);
@@ -80,8 +89,29 @@ public class GitRefDialog extends DialogWrapper {
       }
     }
     List<GitBranch> branches = collectCommonBranches(repositories);
-    return new MyTextFieldWithAutoCompletionListProvider(branches);
+    FutureResult<Collection<GitTag>> tagsFuture = scheduleCollectCommonTags(repositories, disposable);
+    return new MySimpleCompletionListProvider(branches, tagsFuture);
   }
+
+  private static FutureResult<Collection<GitTag>> scheduleCollectCommonTags(@NotNull List<GitRepository> repositories,
+                                                                            @NotNull Disposable disposable) {
+    FutureResult<Collection<GitTag>> futureResult = new FutureResult<>();
+    ApplicationManager.getApplication().executeOnPooledThread(() -> {
+      futureResult.set(BackgroundTaskUtil.runUnderDisposeAwareIndicator(disposable, () -> {
+        return collectCommon(repositories.stream().map(repository -> {
+          try {
+            List<String> tags = GitBranchUtil.getAllTags(repository.getProject(), repository.getRoot());
+            return ContainerUtil.map(tags, GitTag::new);
+          }
+          catch (VcsException e) {
+            return Collections.emptyList();
+          }
+        }));
+      }));
+    });
+    return futureResult;
+  }
+
 
   @NotNull
   public String getReference() {
@@ -168,23 +198,36 @@ public class GitRefDialog extends DialogWrapper {
     }
   }
 
-  private static class MyTextFieldWithAutoCompletionListProvider extends TextFieldWithAutoCompletionListProvider<GitBranch> {
-    private final Comparator<GitBranch> myComparator = Comparator.<GitBranch, Boolean>comparing(branch -> branch.isRemote())
-      .thenComparing(GitReference::getName, StringUtil::naturalCompare);
+  private static class MySimpleCompletionListProvider extends TwoStepCompletionProvider<TagOrBranch> {
+    @NotNull private final List<GitBranch> myBranches;
+    @NotNull private final FutureResult<Collection<GitTag>> myTagsFuture;
 
-    public MyTextFieldWithAutoCompletionListProvider(@NotNull List<GitBranch> branches) {
-      super(branches);
+    public MySimpleCompletionListProvider(@NotNull List<GitBranch> branches,
+                                          @NotNull FutureResult<Collection<GitTag>> tagsFuture) {
+      super(new TagOrBranchDescriptor());
+      myBranches = branches;
+      myTagsFuture = tagsFuture;
     }
 
     @NotNull
     @Override
-    protected String getLookupString(@NotNull GitBranch branch) {
-      return branch.getName();
+    protected Stream<? extends TagOrBranch> collectSync(@NotNull CompletionResultSet result) {
+      return myBranches.stream()
+                       .filter(branch -> result.getPrefixMatcher().prefixMatches(branch.getName()))
+                       .map(TagOrBranch::new);
     }
 
+    @NotNull
     @Override
-    public int compare(@NotNull GitBranch branch1, @NotNull GitBranch branch2) {
-      return myComparator.compare(branch1, branch2);
+    protected Stream<? extends TagOrBranch> collectAsync(@NotNull CompletionResultSet result) {
+      try {
+        return myTagsFuture.get().stream()
+                           .filter(tag -> result.getPrefixMatcher().prefixMatches(tag.getName()))
+                           .map(TagOrBranch::new);
+      }
+      catch (ExecutionException | InterruptedException e) {
+        return Stream.empty();
+      }
     }
   }
 
@@ -217,6 +260,56 @@ public class GitRefDialog extends DialogWrapper {
     public boolean equals(VcsRef o1, VcsRef o2) {
       return Comparing.equal(o1.getName(), o2.getName()) &&
              Comparing.equal(o1.getType(), o2.getType());
+    }
+  }
+
+  private static class TagOrBranchDescriptor extends DefaultTextCompletionValueDescriptor<TagOrBranch> {
+    @NotNull
+    @Override
+    public String getLookupString(@NotNull TagOrBranch item) {
+      return item.getName();
+    }
+
+    @Override
+    public int compare(TagOrBranch item1, TagOrBranch item2) {
+      // local branches -> remote branches -> tags
+      if (item1.isTag() != item2.isTag()) return item1.isTag() ? 1 : -1;
+      if (item1.isRemoteBranch() != item2.isRemoteBranch()) return item1.isRemoteBranch() ? 1 : -1;
+      return StringUtil.naturalCompare(item1.getName(), item2.getName());
+    }
+  }
+
+  private static class TagOrBranch {
+    @Nullable private final GitBranch myBranch;
+    @Nullable private final GitTag myTag;
+
+    public TagOrBranch(@NotNull GitBranch branch) {
+      myBranch = branch;
+      myTag = null;
+    }
+
+    public TagOrBranch(@NotNull GitTag tag) {
+      myBranch = null;
+      myTag = tag;
+    }
+
+    public boolean isTag() {
+      return myTag != null;
+    }
+
+    public boolean isRemoteBranch() {
+      return myBranch != null && myBranch.isRemote();
+    }
+
+    @NotNull
+    public String getName() {
+      if (myBranch != null) {
+        return myBranch.getName();
+      }
+      else {
+        assert myTag != null;
+        return myTag.getName();
+      }
     }
   }
 }
