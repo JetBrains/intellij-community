@@ -439,7 +439,7 @@ public class BreakpointsDialog extends DialogWrapper {
 
   @Override
   public void toFront() {
-    getWindow().setBounds(getWindow().getBounds()); // will fo fit to screen
+    getWindow().setBounds(getWindow().getBounds()); // will force fit to screen
     super.toFront();
   }
 
