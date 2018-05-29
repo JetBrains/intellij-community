@@ -2030,13 +2030,13 @@ public class PluginManagerConfigurableNew
       else {
         InstalledPluginsState pluginsState = InstalledPluginsState.getInstance();
         PluginId id = myPlugin.getPluginId();
+
         if (pluginsState.wasInstalled(id) || pluginsState.wasUpdated(id)) {
           myRestartButton = new RestartButton(myPluginsModel);
           myRestartButton.setFocusable(false);
           myBaselinePanel.addButtonComponent(myRestartButton);
         }
-
-        if (update) {
+        else if (update) {
           myUpdateButton = new UpdateButton();
           myUpdateButton.setFocusable(false);
           myUpdateButton.addActionListener(e -> myPluginsModel.installOrUpdatePlugin(myPlugin, false));
@@ -2742,6 +2742,13 @@ public class PluginManagerConfigurableNew
     }
 
     private void addInstallButton() {
+      if (InstalledPluginsState.getInstance().wasInstalled(myPlugin.getPluginId())) {
+        RestartButton restartButton = new RestartButton(myPluginModel);
+        restartButton.setFocusable(false);
+        add(myLastComponent = restartButton);
+        return;
+      }
+
       myInstallButton.setFocusable(false);
       myInstallButton.addActionListener(e -> myPluginModel.installOrUpdatePlugin(myPlugin, true));
       add(myLastComponent = myInstallButton);
@@ -2922,7 +2929,12 @@ public class PluginManagerConfigurableNew
       JPanel buttons = new NonOpaquePanel(new HorizontalLayout(JBUI.scale(6)));
       buttons.setBorder(JBUI.Borders.emptyTop(1));
 
-      if (myPlugin instanceof IdeaPluginDescriptorImpl && ((IdeaPluginDescriptorImpl)myPlugin).isDeleted()) {
+      InstalledPluginsState pluginsState = InstalledPluginsState.getInstance();
+      PluginId id = myPlugin.getPluginId();
+
+      if ((myPlugin instanceof IdeaPluginDescriptorImpl && ((IdeaPluginDescriptorImpl)myPlugin).isDeleted()) ||
+          pluginsState.wasInstalled(id) ||
+          pluginsState.wasUpdated(id)) {
         buttons.add(myRestartButton = new RestartButton(myPluginsModel));
       }
       else {
@@ -3658,39 +3670,34 @@ public class PluginManagerConfigurableNew
         pluginNode.setDepends(Arrays.asList(descriptor.getDependentPluginIds()), descriptor.getOptionalDependentPluginIds());
         pluginNode.setRepositoryName(PluginInstaller.UNKNOWN_HOST_MARKER);
       }
-      List<PluginNode> list = ContainerUtil.newArrayList(pluginNode);
+      List<PluginNode> pluginsToInstall = ContainerUtil.newArrayList(pluginNode);
 
-      if (PluginManagerMain.suggestToEnableInstalledDependantPlugins(this, list)) {
+      if (PluginManagerMain.suggestToEnableInstalledDependantPlugins(this, pluginsToInstall)) {
         needRestart = true;
       }
 
-      installPlugin(list, prepareToInstall(descriptor, install));
+      installPlugin(pluginsToInstall, getAllPlugins(), this, prepareToInstall(descriptor, install));
     }
 
-    private static void installPlugin(@NotNull List<PluginNode> list, @NotNull InstallPluginInfo info) {
+    private static void installPlugin(@NotNull List<PluginNode> pluginsToInstall,
+                                      @NotNull List<IdeaPluginDescriptor> allPlugins,
+                                      @NotNull PluginManagerMain.PluginEnabler pluginEnabler,
+                                      @NotNull InstallPluginInfo info) {
       ApplicationManager.getApplication().executeOnPooledThread(() -> {
         boolean cancel = false;
         boolean error = false;
+
         try {
-          for (int i = 0; i < 100; i++) {
-            info.indicator.setFraction(i / 600d);
-          }
-          for (int i = 100; i < 160; i++) {
-            Thread.sleep(100);
-            info.indicator.checkCanceled();
-            info.indicator.setFraction(i / 600d);
-            if (i == 159) {
-              //throw new RuntimeException();
-            }
-          }
+          error = !PluginInstaller.prepareToInstall(pluginsToInstall, allPlugins, pluginEnabler, info.indicator);
         }
-        catch (ProcessCanceledException | InterruptedException e) {
+        catch (ProcessCanceledException e) {
           cancel = true;
         }
-        catch (Exception e) {
+        catch (Throwable e) {
           PluginManagerMain.LOG.error(e);
           error = true;
         }
+
         boolean success = !error;
         boolean _cancel = cancel;
         ApplicationManager.getApplication().invokeLater(() -> info.finish(success, _cancel), ModalityState.any());
@@ -3767,18 +3774,27 @@ public class PluginManagerConfigurableNew
         detailPanel.hideProgress(success);
       }
 
-      if (info.install && myInstalling != null && myInstalling.ui != null) {
-        if (myInstallingPlugins.isEmpty()) {
-          myDownloadedPanel.removeGroup(myInstalling);
+      if (info.install) {
+        if (myInstalling != null && myInstalling.ui != null) {
+          if (myInstallingPlugins.isEmpty()) {
+            myDownloadedPanel.removeGroup(myInstalling);
+          }
+          else {
+            myDownloadedPanel.removeFromGroup(myInstalling, descriptor);
+            myInstalling.titleWithCount();
+          }
+          myDownloadedPanel.doLayout();
         }
-        else {
-          myDownloadedPanel.removeFromGroup(myInstalling, descriptor);
-          myInstalling.titleWithCount();
+        if (success) {
+          appendOrUpdateDescriptor(descriptor);
         }
-        myDownloadedPanel.doLayout();
       }
 
       info.indicator.cancel();
+
+      if (!success) {
+        Messages.showErrorDialog("Plugin download or installing failed", IdeBundle.message("action.download.and.install.plugin"));
+      }
     }
 
     @NotNull
