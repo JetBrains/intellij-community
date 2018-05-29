@@ -179,10 +179,12 @@ class MethodReturnInferenceVisitor {
       delegateCalls = ContainerUtil.newArrayList(delegates.get(delegates.keySet().iterator().next()));
     }
     if (hasNulls) {
-      Nullness nullness = hasSystemExit ? Nullness.UNKNOWN : Nullness.NULLABLE;
+      if (hasSystemExit) {
+        return new MethodReturnInferenceResult.Predefined(Nullness.UNKNOWN);
+      }
       return delegateCalls == null || hasNotNulls || hasErrors || hasUnknowns
-             ? new MethodReturnInferenceResult.Predefined(nullness)
-             : new MethodReturnInferenceResult.FromDelegate(nullness, delegateCalls);
+             ? new MethodReturnInferenceResult.Predefined(Nullness.NULLABLE)
+             : new MethodReturnInferenceResult.FromDelegate(Nullness.NULLABLE, delegateCalls);
     }
     if (hasErrors || hasUnknowns || delegates.size() > 1) {
       return null;
