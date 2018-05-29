@@ -26,6 +26,8 @@ class CircletConnectionComponent(project: Project) :
     var loginModel: LoginModel? = null
         private set
 
+    val connected: Signal<Unit> = Signal.create()
+
     override fun initComponent() {
         myProject.settings.serverUrl.view(lifetime) { urlLifetime, url ->
             loginModel = null
@@ -80,6 +82,8 @@ class CircletConnectionComponent(project: Project) :
     }
 
     private fun notifyConnected(lifetime: Lifetime) {
+        connected.fire()
+
         myProject.notify(lifetime, "Signed in")
     }
 

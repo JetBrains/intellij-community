@@ -1,5 +1,6 @@
 package circlet.tools
 
+import circlet.components.*
 import circlet.reviews.*
 import circlet.utils.*
 import com.intellij.openapi.project.*
@@ -12,6 +13,12 @@ class CircletReviewsToolWindowPanel(project: Project) :
 
     init {
         setContent(form.panel)
+
+        project.connection.connected.forEach(lifetime) {
+            if (project.reviewsToolWindow?.isVisible == true) {
+                form.reload()
+            }
+        }
     }
 
     fun reload() {
