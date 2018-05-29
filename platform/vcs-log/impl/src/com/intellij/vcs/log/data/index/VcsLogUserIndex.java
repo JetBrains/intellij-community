@@ -71,6 +71,11 @@ public class VcsLogUserIndex extends VcsLogFullDetailsIndex<Void> {
     return myUserRegistry.getUserById(notNull(getFirstItem(userIds)));
   }
 
+  @Nullable
+  public VcsUser getUserById(int id) throws IOException {
+    return myUserRegistry.getUserById(id);
+  }
+
   private static class UserIndexer implements DataIndexer<Integer, Void, VcsFullCommitDetails> {
     @NotNull private final VcsUserRegistryImpl myRegistry;
     @NotNull private Consumer<Exception> myFatalErrorConsumer = LOG::error;

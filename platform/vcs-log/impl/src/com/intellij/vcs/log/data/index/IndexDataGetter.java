@@ -278,6 +278,20 @@ public class IndexDataGetter {
     return executeAndCatch(() -> myIndexStorage.users.getAuthorForCommit(commit));
   }
 
+  @Nullable
+  public VcsUser getCommitter(int commit) {
+    return executeAndCatch(() -> {
+      Integer committer = myIndexStorage.committers.get(commit);
+      if (committer != null) {
+        return myIndexStorage.users.getUserById(committer);
+      }
+      if (myIndexStorage.commits.contains(commit)) {
+        return myIndexStorage.users.getAuthorForCommit(commit);
+      }
+      return null;
+    });
+  }
+
   private void processRuntimeException(@NotNull RuntimeException e) {
     if (e instanceof ProcessCanceledException) throw e;
     myIndexStorage.markCorrupted();

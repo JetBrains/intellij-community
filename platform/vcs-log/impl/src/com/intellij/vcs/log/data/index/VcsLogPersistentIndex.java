@@ -193,6 +193,9 @@ public class VcsLogPersistentIndex implements VcsLogIndex, Disposable {
       if (!(detail instanceof VcsIndexableDetails) || ((VcsIndexableDetails)detail).hasRenames()) {
         myIndexStorage.renames.put(index);
       }
+      if (!detail.getAuthor().equals(detail.getCommitter())) {
+        myIndexStorage.committers.put(index, myUserRegistry.getUserId(detail.getCommitter()));
+      }
 
       myIndexStorage.commits.put(index);
     }
@@ -211,6 +214,7 @@ public class VcsLogPersistentIndex implements VcsLogIndex, Disposable {
         myIndexStorage.parents.force();
         myIndexStorage.renames.flush();
         myIndexStorage.commits.flush();
+        myIndexStorage.committers.force();
       }
     }
     catch (StorageException e) {
@@ -305,11 +309,13 @@ public class VcsLogPersistentIndex implements VcsLogIndex, Disposable {
     private static final String MESSAGES = "messages";
     private static final String PARENTS = "parents";
     private static final String RENAMES = "renames";
+    private static final String COMMITTERS = "committers";
     private static final int MESSAGES_VERSION = 0;
     @NotNull public final PersistentSet<Integer> commits;
     @NotNull public final PersistentMap<Integer, String> messages;
     @NotNull public final PersistentMap<Integer, List<Integer>> parents;
     @NotNull public final PersistentSet<Integer> renames;
+    @NotNull public final PersistentMap<Integer, Integer> committers;
     @NotNull public final VcsLogMessagesTrigramIndex trigrams;
     @NotNull public final VcsLogUserIndex users;
     @NotNull public final VcsLogPathsIndex paths;
@@ -349,6 +355,11 @@ public class VcsLogPersistentIndex implements VcsLogIndex, Disposable {
         File renamesStorage = getStorageFile(INDEX, RENAMES, logId, version);
         renames = new PersistentSetImpl<>(renamesStorage, EnumeratorIntegerDescriptor.INSTANCE, Page.PAGE_SIZE, null, version);
         Disposer.register(this, () -> catchAndWarn(renames::close));
+
+        File committersStorage = getStorageFile(INDEX, COMMITTERS, logId, version);
+        committers = new PersistentHashMap<>(committersStorage, EnumeratorIntegerDescriptor.INSTANCE, EnumeratorIntegerDescriptor.INSTANCE,
+                                             Page.PAGE_SIZE, version);
+        Disposer.register(this, () -> catchAndWarn(committers::close));
       }
       catch (Throwable t) {
         Disposer.dispose(this);

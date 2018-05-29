@@ -88,8 +88,8 @@ public class IndexedDetails extends LoadingDetails {
   @NotNull
   @Override
   public VcsUser getCommitter() {
-    VcsUser author = myDataGetter.getAuthor(myCommitIndex);
-    if (author != null) return author;
+    VcsUser committer = myDataGetter.getCommitter(myCommitIndex);
+    if (committer != null) return committer;
     return super.getCommitter();
   }
 }
