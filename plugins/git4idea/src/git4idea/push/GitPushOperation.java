@@ -28,7 +28,6 @@ import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.util.BackgroundTaskUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
-import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vcs.update.UpdatedFiles;
@@ -56,7 +55,6 @@ import git4idea.update.GitRebaseOverMergeProblem;
 import git4idea.update.GitUpdateProcess;
 import git4idea.update.GitUpdateResult;
 import git4idea.update.GitUpdater;
-import git4idea.util.GitPreservingProcess;
 import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -139,7 +137,6 @@ public class GitPushOperation {
 
     final Map<GitRepository, GitPushRepoResult> results = ContainerUtil.newHashMap();
     Map<GitRepository, GitUpdateResult> updatedRoots = ContainerUtil.newHashMap();
-    GitPreservingProcess preservingProcess = null;
 
     try {
       Collection<GitRepository> remainingRoots = myPushSpecs.keySet();
@@ -185,13 +182,7 @@ public class GitPushOperation {
             beforePushLabel = LocalHistory.getInstance().putSystemLabel(myProject, "Before push");
           }
           Collection<GitRepository> rootsToUpdate = getRootsToUpdate(updateSettings, result.rejected.keySet());
-          Pair<GitUpdateResult, GitPreservingProcess> pair = update(rootsToUpdate, updateSettings.getUpdateMethod(),
-                                                                    rebaseOverMergeProblemDetected == null,
-                                                                    preservingProcess == null);
-          if (preservingProcess == null) { // multiple updates => multiple preserving processes, but all are fake ones except the first
-            preservingProcess = pair.second;
-          }
-          GitUpdateResult updateResult = pair.first;
+          GitUpdateResult updateResult = update(rootsToUpdate, updateSettings.getUpdateMethod(), rebaseOverMergeProblemDetected == null);
           for (GitRepository repository : rootsToUpdate) {
             updatedRoots.put(repository, updateResult); // TODO update result in GitUpdateProcess is a single for several roots
           }
@@ -204,9 +195,6 @@ public class GitPushOperation {
       if (myPushProcessCustomization != null) myPushProcessCustomization.executeAfterPush(results);
     }
     finally {
-      if (preservingProcess != null) {
-        preservingProcess.load();
-      }
       if (beforePushLabel != null) {
         afterPushLabel = LocalHistory.getInstance().putSystemLabel(myProject, "After push");
       }
@@ -465,30 +453,17 @@ public class GitPushOperation {
   }
 
   @NotNull
-  protected Pair<GitUpdateResult, GitPreservingProcess> update(@NotNull Collection<GitRepository> rootsToUpdate,
-                                                               @NotNull UpdateMethod updateMethod,
-                                                               boolean checkForRebaseOverMergeProblem,
-                                                               boolean stashBeforeUpdate) {
-    GitUpdateProcess updateProcess = new GitUpdateProcess(myProject, myProgressIndicator,
-                                                          new HashSet<>(rootsToUpdate), UpdatedFiles.create(),
-                                                          checkForRebaseOverMergeProblem, false) {
-      @Override
-      protected boolean stashBeforeUpdate() {
-        return stashBeforeUpdate;
-      }
-
-      @Override
-      protected boolean unstashAfterUpdate() {
-        return false;
-      }
-    };
-    GitUpdateResult updateResult = updateProcess.update(updateMethod);
-    GitPreservingProcess preservingProcess = stashBeforeUpdate ? updateProcess.getPreservingProcess() : null;
+  protected GitUpdateResult update(@NotNull Collection<GitRepository> rootsToUpdate,
+                                   @NotNull UpdateMethod updateMethod,
+                                   boolean checkForRebaseOverMergeProblem) {
+    GitUpdateResult updateResult = new GitUpdateProcess(myProject, myProgressIndicator,
+                                                        new HashSet<>(rootsToUpdate), UpdatedFiles.create(),
+                                                        checkForRebaseOverMergeProblem, false).update(updateMethod);
     for (GitRepository repository : rootsToUpdate) {
       repository.getRoot().refresh(true, true);
       repository.update();
     }
-    return Pair.create(updateResult, preservingProcess);
+    return updateResult;
   }
 
   private static class ResultWithOutput {
