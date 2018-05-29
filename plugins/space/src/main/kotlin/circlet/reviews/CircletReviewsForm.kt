@@ -19,7 +19,7 @@ class CircletReviewsForm(private val project: Project, override val lifetime: Li
 
     fun reload() {
         launch(UiDispatch.coroutineContext) {
-            val reviews = project.connection.loginModel?.clientOrNull?.codeReview?.listReviews(
+            val reviews = project.clientOrNull?.codeReview?.listReviews(
                 BatchInfo(null, 30), ProjectKey(project.settings.projectKey.value), false
             )?.data ?: return@launch
 

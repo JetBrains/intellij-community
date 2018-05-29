@@ -48,8 +48,7 @@ class CircletConnectionComponent(project: Project) :
 
                 loginModel!!.meSession.view(urlLifetime) { sessionStateLifetime, meSession ->
                     if (meSession is MeSession.ClientReady) {
-                        meSession.clientSession.client.connectionStatus.view(sessionStateLifetime) {
-                            connectionStateLifetime, connectionState ->
+                        meSession.clientSession.client.connectionStatus.view(sessionStateLifetime) { connectionStateLifetime, connectionState ->
                             when (connectionState) {
                                 ConnectionStatus.CONNECTED -> notifyConnected(connectionStateLifetime)
                                 ConnectionStatus.CONNECTING -> notifyReconnect(connectionStateLifetime)
@@ -137,3 +136,4 @@ class CircletConnectionComponent(project: Project) :
 }
 
 val Project.connection: CircletConnectionComponent get() = getComponent()
+val Project.clientOrNull: KCircletClient? get() = connection.loginModel?.clientOrNull

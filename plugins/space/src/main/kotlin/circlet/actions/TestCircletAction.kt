@@ -11,7 +11,7 @@ import runtime.*
 class TestCircletAction : AnAction() {
     override fun update(e: AnActionEvent) {
         e.presentation.isEnabledAndVisible =
-            e.project?.connection?.loginModel?.clientOrNull?.connectionStatus?.value == ConnectionStatus.CONNECTED
+            e.project?.clientOrNull?.connectionStatus?.value == ConnectionStatus.CONNECTED
     }
 
     override fun actionPerformed(e: AnActionEvent) {
