@@ -21,6 +21,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.Alarm;
 import com.intellij.util.Consumer;
 import com.intellij.util.PsiErrorElementUtil;
+import com.intellij.util.SingleAlarm;
 import com.intellij.util.messages.MessageBusConnection;
 import gnu.trove.THashSet;
 import org.jetbrains.annotations.NotNull;
@@ -31,32 +32,29 @@ import java.util.Set;
 
 public class DelayedDocumentWatcher implements AutoTestWatcher {
 
-  // All instance fields are be accessed from EDT
+  // All instance fields should be accessed in EDT
   private final Project myProject;
-  private final Alarm myAlarm;
   private final int myDelayMillis;
   private final Consumer<Integer> myModificationStampConsumer;
   private final Condition<VirtualFile> myChangedFileFilter;
   private final MyDocumentAdapter myListener;
-  private final Runnable myAlarmRunnable;
 
+  private Disposable myDisposable;
+  private SingleAlarm myAlarm;
   private final Set<VirtualFile> myChangedFiles = new THashSet<>();
   private boolean myDocumentSavingInProgress = false;
   private MessageBusConnection myConnection;
   private int myModificationStamp = 0;
-  private Disposable myListenerDisposable;
 
   public DelayedDocumentWatcher(@NotNull Project project,
                                 int delayMillis,
                                 @NotNull Consumer<Integer> modificationStampConsumer,
                                 @Nullable Condition<VirtualFile> changedFileFilter) {
     myProject = project;
-    myAlarm = new Alarm(Alarm.ThreadToUse.SWING_THREAD, project);
     myDelayMillis = delayMillis;
     myModificationStampConsumer = modificationStampConsumer;
     myChangedFileFilter = changedFileFilter;
     myListener = new MyDocumentAdapter();
-    myAlarmRunnable = new MyRunnable();
   }
 
   @NotNull
@@ -66,9 +64,9 @@ public class DelayedDocumentWatcher implements AutoTestWatcher {
 
   public void activate() {
     if (myConnection == null) {
-      myListenerDisposable = Disposer.newDisposable();
-      Disposer.register(myProject, myListenerDisposable);
-      EditorFactory.getInstance().getEventMulticaster().addDocumentListener(myListener, myListenerDisposable);
+      myDisposable = Disposer.newDisposable();
+      Disposer.register(myProject, myDisposable);
+      EditorFactory.getInstance().getEventMulticaster().addDocumentListener(myListener, myDisposable);
       myConnection = ApplicationManager.getApplication().getMessageBus().connect(myProject);
       myConnection.subscribe(AppTopics.FILE_DOCUMENT_SYNC, new FileDocumentManagerListener() {
         @Override
@@ -77,15 +75,16 @@ public class DelayedDocumentWatcher implements AutoTestWatcher {
           ApplicationManager.getApplication().invokeLater(() -> myDocumentSavingInProgress = false, ModalityState.any());
         }
       });
+      myAlarm = new SingleAlarm(new MyRunnable(), myDelayMillis, Alarm.ThreadToUse.SWING_THREAD, myDisposable);
     }
   }
 
   public void deactivate() {
+    if (myDisposable != null) {
+      Disposer.dispose(myDisposable);
+      myDisposable = null;
+    }
     if (myConnection != null) {
-      if (myListenerDisposable != null) {
-        Disposer.dispose(myListenerDisposable);
-        myListenerDisposable = null;
-      }
       myConnection.disconnect();
       myConnection = null;
     }
@@ -121,8 +120,7 @@ public class DelayedDocumentWatcher implements AutoTestWatcher {
         myChangedFiles.add(file);
       }
 
-      myAlarm.cancelRequest(myAlarmRunnable);
-      myAlarm.addRequest(myAlarmRunnable, myDelayMillis);
+      myAlarm.cancelAndRequest();
       myModificationStamp++;
     }
   }
