@@ -1185,14 +1185,13 @@ interface Test {
   }
 
 
-  fun _testIdea175161() {
+  fun testIdea175161() {
     getSettings().RIGHT_MARGIN = 160;
     getSettings().WRAP_COMMENTS = true;
     getSettings().KEEP_LINE_BREAKS = false;
 
     doTextTest(
-"""
-package com.company;
+"""package com.company;
 
 public class Test {
 
@@ -1206,14 +1205,13 @@ public class Test {
 }
 """,
 
-"""
-package com.company;
+"""package com.company;
 
 public class Test {
 
     /**
-     * Shortcut method for EntryDto items. This method will fetch the id from {@code item} and pass it to {@link #test2(Object, Object, Object, Object, Object)}.
-     * Make sure the dto item returns a non-null id.
+     * Shortcut method for EntryDto items. This method will fetch the id from {@code item} and pass it to {@link #test2(Object, Object, Object, Object,
+     * Object)}. Make sure the dto item returns a non-null id.
      */
     public void test() {
     }

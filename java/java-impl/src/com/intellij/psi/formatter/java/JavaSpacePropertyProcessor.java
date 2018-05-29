@@ -1193,6 +1193,9 @@ public class JavaSpacePropertyProcessor extends JavaElementVisitor {
     else if (myRole1 == ChildRole.OPERATION_SIGN) {
       createSpaceInCode(mySettings.SPACE_AROUND_UNARY_OPERATOR);
     }
+    else if (myType2 == JavaDocTokenType.DOC_COMMENT_LEADING_ASTERISKS) {
+      createSpaceProperty(false, true, 0);
+    }
     else if ((myType1 == JavaDocTokenType.DOC_TAG_VALUE_TOKEN || myType1 == JavaDocElementType.DOC_TAG_VALUE_ELEMENT) &&
              (myType2 == JavaDocTokenType.DOC_TAG_VALUE_TOKEN || myType2 == JavaDocElementType.DOC_TAG_VALUE_ELEMENT)) {
       createSpaceInCode(true);
