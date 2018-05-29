@@ -27,14 +27,22 @@ import org.jetbrains.annotations.NotNull;
 public class LowMemoryWatcher {
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.util.LowMemoryWatcher");
 
-  private static final WeakList<Runnable> ourListeners = new WeakList<Runnable>();
-  private final Runnable myRunnable;
+  public enum LowMemoryWatcherType {
+    ALWAYS,
+    ONLY_AFTER_GC
+  }
 
-  static void onLowMemorySignalReceived() {
-    LOG.info("Low memory signal received.");
-    for (Runnable watcher : ourListeners.toStrongList()) {
+  private static final WeakList<LowMemoryWatcher> ourListeners = new WeakList<LowMemoryWatcher>();
+  private final Runnable myRunnable;
+  private final LowMemoryWatcherType myType;
+
+  static void onLowMemorySignalReceived(boolean afterGc) {
+    LOG.info("Low memory signal received: afterGc=" + afterGc);
+    for (LowMemoryWatcher watcher : ourListeners.toStrongList()) {
       try {
-        watcher.run();
+        if (watcher.myType == LowMemoryWatcherType.ALWAYS || (watcher.myType == LowMemoryWatcherType.ONLY_AFTER_GC && afterGc)) {
+          watcher.myRunnable.run();
+        }
       }
       catch (Throwable e) {
         LOG.info(e);
@@ -50,17 +58,26 @@ public class LowMemoryWatcher {
    *                 - in arbitrary thread
    *                 - in unpredictable time
    *                 - multiple copies in parallel so please make it reentrant.
+   * @param notificationType When ONLY_AFTER_GC, then the runnable will be invoked only if the low-memory condition still exists after GC.
+   *                         When ALWAYS, then the runnable also will be invoked when the low-memory condition is detected before GC.
+   *
    */
   @Contract(pure = true)
+  public static LowMemoryWatcher register(@NotNull Runnable runnable, @NotNull LowMemoryWatcherType notificationType) {
+    return new LowMemoryWatcher(runnable, notificationType);
+  }
+
+  @Contract(pure = true)
   public static LowMemoryWatcher register(@NotNull Runnable runnable) {
-    return new LowMemoryWatcher(runnable);
+    return new LowMemoryWatcher(runnable, LowMemoryWatcherType.ALWAYS);
   }
 
   /**
    * Registers a runnable to run on low memory events. The notifications will be issued until parentDisposable is disposed.
    */
-  public static void register(@NotNull Runnable runnable, @NotNull Disposable parentDisposable) {
-    final LowMemoryWatcher watcher = new LowMemoryWatcher(runnable);
+  public static void register(@NotNull Runnable runnable, @NotNull LowMemoryWatcherType notificationType,
+                              @NotNull Disposable parentDisposable) {
+    final LowMemoryWatcher watcher = new LowMemoryWatcher(runnable, notificationType);
     Disposer.register(parentDisposable, new Disposable() {
       @Override
       public void dispose() {
@@ -69,13 +86,18 @@ public class LowMemoryWatcher {
     });
   }
 
-  private LowMemoryWatcher(@NotNull Runnable runnable) {
+  public static void register(@NotNull Runnable runnable, @NotNull Disposable parentDisposable) {
+    register(runnable, LowMemoryWatcherType.ALWAYS, parentDisposable);
+  }
+
+  private LowMemoryWatcher(@NotNull Runnable runnable, @NotNull LowMemoryWatcherType type) {
     myRunnable = runnable;
-    ourListeners.add(runnable);
+    myType = type;
+    ourListeners.add(this);
   }
 
   public void stop() {
-    ourListeners.remove(myRunnable);
+    ourListeners.remove(this);
   }
 
   /**

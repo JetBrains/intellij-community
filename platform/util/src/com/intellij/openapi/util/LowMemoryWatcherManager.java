@@ -18,6 +18,7 @@ package com.intellij.openapi.util;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.registry.Registry;
+import com.intellij.util.Consumer;
 import com.intellij.util.concurrency.SequentialTaskExecutor;
 import org.jetbrains.annotations.NotNull;
 
@@ -42,15 +43,15 @@ public class LowMemoryWatcherManager implements Disposable {
 
   private Future<?> mySubmitted; // guarded by ourJanitor
   private final AtomicBoolean myProcessing = new AtomicBoolean();
-  private final Runnable myJanitor = new Runnable() {
+  private final Consumer<Boolean> myJanitor = new Consumer<Boolean>() {
     @Override
-    public void run() {
+    public void consume(@NotNull Boolean afterGc) {
       // null mySubmitted before all listeners called to avoid data race when listener added in the middle of the execution and is lost
       // this may however cause listeners to execute more than once (potentially even in parallel)
       synchronized (myJanitor) {
         mySubmitted = null;
       }
-      LowMemoryWatcher.onLowMemorySignalReceived();
+      LowMemoryWatcher.onLowMemorySignalReceived(afterGc);
     }
   };
 
@@ -58,13 +59,11 @@ public class LowMemoryWatcherManager implements Disposable {
     myExecutorService = SequentialTaskExecutor.createSequentialApplicationPoolExecutor("LowMemoryWatcherManager", executorService);
     try {
       for (MemoryPoolMXBean bean : ManagementFactory.getMemoryPoolMXBeans()) {
-        if (bean.getType() == MemoryType.HEAP &&
-        // we check both vars since we are interested in oldgen near exhaustion, and that's the only bean that supports both
-            bean.isCollectionUsageThresholdSupported() && 
-            bean.isUsageThresholdSupported()) {
+        if (bean.getType() == MemoryType.HEAP && bean.isCollectionUsageThresholdSupported() && bean.isUsageThresholdSupported()) {
           long max = bean.getUsage().getMax();
           long threshold = Math.min((long) (max * getOccupiedMemoryThreshold()), max - MEM_THRESHOLD);
           if (threshold > 0) {
+            bean.setUsageThreshold(threshold);
             bean.setCollectionUsageThreshold(threshold);
           }
         }
@@ -80,16 +79,25 @@ public class LowMemoryWatcherManager implements Disposable {
   private final NotificationListener myLowMemoryListener = new NotificationListener() {
     @Override
     public void handleNotification(Notification notification, Object __) {
-      if (MemoryNotificationInfo.MEMORY_COLLECTION_THRESHOLD_EXCEEDED.equals(notification.getType())) {
+      boolean memoryThreshold = MemoryNotificationInfo.MEMORY_THRESHOLD_EXCEEDED.equals(notification.getType());
+      boolean memoryCollectionThreshold = MemoryNotificationInfo.MEMORY_COLLECTION_THRESHOLD_EXCEEDED.equals(notification.getType());
+
+      if (memoryThreshold || memoryCollectionThreshold) {
+        final boolean afterGc = memoryCollectionThreshold;
 
         if (Registry.is("low.memory.watcher.sync", true)) {
-          handleEventImmediately();
+          handleEventImmediately(afterGc);
           return;
         }
 
         synchronized (myJanitor) {
           if (mySubmitted == null) {
-            mySubmitted = myExecutorService.submit(myJanitor);
+            mySubmitted = myExecutorService.submit(new Runnable() {
+              @Override
+              public void run() {
+                myJanitor.consume(afterGc);
+              }
+            });
           }
         }
       }
@@ -105,10 +113,10 @@ public class LowMemoryWatcherManager implements Disposable {
     }
   }
 
-  private void handleEventImmediately() {
+  private void handleEventImmediately(boolean afterGc) {
     if (myProcessing.compareAndSet(false, true)) {
       try {
-        myJanitor.run();
+        myJanitor.consume(afterGc);
       }
       finally {
         myProcessing.set(false);
