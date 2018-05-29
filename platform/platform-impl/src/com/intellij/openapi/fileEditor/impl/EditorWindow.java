@@ -448,7 +448,7 @@ public class EditorWindow {
       disposeTabs();
       if (currentFile != null) {
         currentFile.putUserData(FileEditorManagerImpl.CLOSING_TO_REOPEN, null);
-        getManager().openFileImpl2(this, currentFile, focusEditor && myOwner.getCurrentWindow() == this);
+        getManager().openFileImpl2(this, currentFile, focusEditor);
       }
       else {
         myPanel.repaint();
@@ -649,6 +649,10 @@ public class EditorWindow {
 
   public void setSelectedEditor(final EditorComposite editor, final boolean focusEditor) {
     if (myTabbedPane == null) {
+      if (focusEditor && editor != null) {
+        JComponent preferred = editor.getPreferredFocusedComponent();
+        if (preferred != null) IdeFocusManager.findInstanceByComponent(preferred).requestFocus(preferred, true);
+      }
       return;
     }
     if (editor != null) {
