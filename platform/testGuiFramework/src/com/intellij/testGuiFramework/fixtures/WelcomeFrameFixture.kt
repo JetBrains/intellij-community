@@ -3,6 +3,9 @@ package com.intellij.testGuiFramework.fixtures
 
 import com.intellij.openapi.wm.impl.welcomeScreen.FlatWelcomeFrame
 import com.intellij.testGuiFramework.framework.GuiTestUtil
+import com.intellij.testGuiFramework.impl.GuiRobot
+import com.intellij.testGuiFramework.impl.actionLink
+import com.intellij.testGuiFramework.impl.popupClick
 import org.fest.swing.core.Robot
 import org.fest.swing.exception.ComponentLookupException
 import org.fest.swing.timing.Condition
@@ -36,6 +39,13 @@ class WelcomeFrameFixture private constructor(robot: Robot,
     return MessagesFixture.findByTitle(robot(), target(), title)
   }
 
+  fun openPluginsDialog()/*: JDialogFixture*/{
+    actionLink("Configure")
+    popupClick("Plugins")
+    // TODO: make return JDialogFixture object of Plugins dialog
+    // need to rework PluginsDialogModel to get rid of GuiTestCase object
+  }
+
   companion object {
     fun find(robot: Robot): WelcomeFrameFixture {
       Pause.pause(object : Condition("Welcome Frame to show up") {
@@ -56,5 +66,7 @@ class WelcomeFrameFixture private constructor(robot: Robot,
       }
       throw ComponentLookupException("Unable to find 'Welcome' window")
     }
+
+    fun findSimple(): WelcomeFrameFixture = find(GuiRobot.robot)
   }
 }

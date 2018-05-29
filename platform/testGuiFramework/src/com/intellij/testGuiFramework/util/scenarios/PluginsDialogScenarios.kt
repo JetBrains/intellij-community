@@ -1,8 +1,10 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.testGuiFramework.util.scenarios
 
-import com.intellij.testGuiFramework.framework.GuiTestUtil
-import com.intellij.testGuiFramework.impl.*
+import com.intellij.testGuiFramework.impl.GuiTestCase
+import com.intellij.testGuiFramework.impl.GuiTestThread
+import com.intellij.testGuiFramework.impl.GuiTestUtilKt
+import com.intellij.testGuiFramework.impl.button
 import com.intellij.testGuiFramework.launcher.GuiTestOptions
 import com.intellij.testGuiFramework.remote.transport.MessageType
 import com.intellij.testGuiFramework.remote.transport.TransportMessage
@@ -21,11 +23,8 @@ val GuiTestCase.pluginsDialogScenarios: PluginsDialogScenarios by PluginsDialogS
 
 fun PluginsDialogScenarios.uninstallPlugin(pluginName: String) {
   with(testCase) {
-    welcomeFrame {
-      // TODO: copy-pasted 3 times - extract a method to WelcomePageModel
-      logTestStep("Open `Plugins` dialog")
-      actionLink("Configure").click()
-      popupClick("Plugins")
+    welcomePageDialogModel.openPluginsDialog()
+    if (pluginsDialogModel.isPluginInstalled(pluginName)) {
       val uninstallButton = pluginsDialogModel.getUninstallButton(pluginName)
       if (uninstallButton != null) {
         logTestStep("Uninstall `$pluginName` plugin")
@@ -37,6 +36,8 @@ fun PluginsDialogScenarios.uninstallPlugin(pluginName: String) {
       }
       dialog("IDE and Plugin Updates", timeout = 5L) { button("Postpone").click() }
     }
+    else
+      pluginsDialogModel.pressCancel()
   }
 }
 
@@ -60,26 +61,18 @@ fun PluginsDialogScenarios.actionAndRestart(actionFunction: () -> Unit) {
 
 fun PluginsDialogScenarios.installPluginFromDisk(pluginFileName: String) {
   with(testCase) {
-    welcomeFrame {
-      logTestStep("Open `Plugins` dialog")
-      actionLink("Configure").click()
-      popupClick("Plugins")
-      pluginsDialogModel.installPluginFromDisk(pluginFileName)
-      dialog("IDE and Plugin Updates", timeout = 5L) { button("Postpone").click() }
-    }
+    welcomePageDialogModel.openPluginsDialog()
+    pluginsDialogModel.installPluginFromDisk(pluginFileName)
+    dialog("IDE and Plugin Updates", timeout = 5L) { button("Postpone").click() }
   }
 }
 
 fun PluginsDialogScenarios.isPluginRequiredVersionInstalled(pluginName: String, pluginVersion: String): Boolean {
   var result = false
   with(testCase) {
-    welcomeFrame {
-      logTestStep("Open `Plugins` dialog")
-      actionLink("Configure").click()
-      popupClick("Plugins")
-      result = pluginsDialogModel.isPluginRequiredVersionInstalled(pluginName, pluginVersion)
-      pluginsDialogModel.pressCancel()
-    }
+    welcomePageDialogModel.openPluginsDialog()
+    result = pluginsDialogModel.isPluginRequiredVersionInstalled(pluginName, pluginVersion)
+    pluginsDialogModel.pressCancel()
   }
   return result
 }
