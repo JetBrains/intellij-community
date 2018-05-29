@@ -21,6 +21,7 @@ import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.Sdk;
+import com.intellij.openapi.ui.TextBrowseFolderListener;
 import com.intellij.openapi.ui.TextFieldWithBrowseButton;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.ui.popup.PopupStep;
@@ -31,12 +32,11 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiFileSystemItem;
-import com.intellij.ui.PanelWithAnchor;
-import com.intellij.ui.RawCommandLineEditor;
-import com.intellij.ui.UserActivityProviderComponent;
+import com.intellij.ui.*;
 import com.intellij.ui.components.JBCheckBox;
 import com.intellij.ui.components.JBComboBoxLabel;
 import com.intellij.ui.components.JBLabel;
+import com.intellij.util.ui.JBUI;
 import com.jetbrains.PySymbolFieldWithBrowseButton;
 import com.jetbrains.PySymbolFieldWithBrowseButtonKt;
 import com.jetbrains.extensions.python.FileChooserDescriptorExtKt;
@@ -50,6 +50,8 @@ import javax.swing.*;
 import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
 import java.awt.*;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.util.List;
@@ -73,6 +75,10 @@ public class PythonRunConfigurationForm implements PythonRunConfigurationParams,
   private final PySymbolFieldWithBrowseButton myModuleField;
   private JBComboBoxLabel myTargetComboBox;
   private JPanel myModuleFieldPanel;
+  private TextFieldWithBrowseButton myInputFileTextFieldWithBrowseButton;
+  private JPanel myExecutionOptionsPlaceholder;
+  private JPanel myExecutionOptionsPanel;
+  private JBCheckBox myRedirectInputCheckBox;
   private boolean myModuleMode;
 
   public PythonRunConfigurationForm(PythonRunConfiguration configuration) {
@@ -111,7 +117,7 @@ public class PythonRunConfigurationForm implements PythonRunConfigurationParams,
     myEmulateTerminalCheckbox.addChangeListener(
       (ChangeEvent e) -> updateShowCommandLineEnabled());
 
-    setAnchor(myCommonOptionsForm.getAnchor());
+    setAnchor(myRedirectInputCheckBox.getAnchor());
 
     final Module module = configuration.getModule();
     final Sdk sdk = configuration.getSdk();
@@ -131,6 +137,19 @@ public class PythonRunConfigurationForm implements PythonRunConfigurationParams,
     myModuleFieldPanel.add(myModuleField, BorderLayout.CENTER);
 
     //myTargetComboBox.addActionListener(e -> updateRunModuleMode());
+
+    myInputFileTextFieldWithBrowseButton.addBrowseFolderListener(new TextBrowseFolderListener(FileChooserDescriptorFactory.createSingleFileDescriptor(), myProject));
+    HideableDecorator executionOptionsDecorator = new HideableDecorator(myExecutionOptionsPlaceholder, "Execution", false);
+    myExecutionOptionsPanel.setBorder(JBUI.Borders.empty(5, 0));
+    executionOptionsDecorator.setOn(true);
+    executionOptionsDecorator.setContentComponent(myExecutionOptionsPanel);
+
+    myRedirectInputCheckBox.addActionListener(new ActionListener() {
+      @Override
+      public void actionPerformed(ActionEvent e) {
+        myInputFileTextFieldWithBrowseButton.setEnabled(myRedirectInputCheckBox.isSelected());
+      }
+    });
   }
 
   private void updateRunModuleMode() {
@@ -233,11 +252,32 @@ public class PythonRunConfigurationForm implements PythonRunConfigurationParams,
   public void setMultiprocessMode(boolean multiprocess) {
   }
 
+  @NotNull
+  public String getInputFile() {
+    return myInputFileTextFieldWithBrowseButton.getText();
+  }
+
+  public void setInputFile(@NotNull String inputFile) {
+    myInputFileTextFieldWithBrowseButton.setText(inputFile);
+  }
+
+  @Override
+  public boolean isRedirectInput() {
+    return myRedirectInputCheckBox.isSelected();
+  }
+
+  @Override
+  public void setRedirectInput(boolean isRedirectInput) {
+    myRedirectInputCheckBox.setSelected(isRedirectInput);
+    myInputFileTextFieldWithBrowseButton.setEnabled(isRedirectInput);
+  }
+
   @Override
   public void setAnchor(JComponent anchor) {
     this.anchor = anchor;
     myScriptParametersLabel.setAnchor(anchor);
     myCommonOptionsForm.setAnchor(anchor);
+    myRedirectInputCheckBox.setAnchor(anchor);
   }
 
   @Override
