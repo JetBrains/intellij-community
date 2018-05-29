@@ -34,7 +34,7 @@ public class ExtractArtifactActionTest extends ArtifactEditorActionTestCase {
     final VirtualFile jar = getJDomJar();
     createEditor(addArtifact(root().lib(addProjectLibrary(null, "dom", jar))), true);
 
-    selectNode("jdom.jar");
+    selectNode(jar.getName());
     assertWillNotBePerformed();
   }
 
