@@ -2,11 +2,12 @@
 package com.intellij.execution.testframework.autotest;
 
 import com.intellij.AppTopics;
+import com.intellij.codeInsight.lookup.LookupEx;
+import com.intellij.codeInsight.lookup.LookupManager;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.application.ReadAction;
-import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.EditorFactory;
 import com.intellij.openapi.editor.event.DocumentEvent;
 import com.intellij.openapi.editor.event.DocumentListener;
@@ -26,6 +27,8 @@ import gnu.trove.THashSet;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.beans.PropertyChangeEvent;
+import java.beans.PropertyChangeListener;
 import java.util.Collection;
 import java.util.Set;
 
@@ -74,6 +77,16 @@ public class DelayedDocumentWatcher implements AutoTestWatcher {
           ApplicationManager.getApplication().invokeLater(() -> myDocumentSavingInProgress = false, ModalityState.any());
         }
       });
+      LookupManager.getInstance(myProject).addPropertyChangeListener(new PropertyChangeListener() {
+        @Override
+        public void propertyChange(PropertyChangeEvent evt) {
+          if (LookupManager.PROP_ACTIVE_LOOKUP.equals(evt.getPropertyName()) && evt.getNewValue() == null
+              && !myChangedFiles.isEmpty()) {
+            myAlarm.cancelAndRequest();
+          }
+        }
+      }, myDisposable);
+
       myAlarm = new SingleAlarm(new MyRunnable(), myDelayMillis, Alarm.ThreadToUse.SWING_THREAD, myDisposable);
     }
   }
@@ -103,8 +116,7 @@ public class DelayedDocumentWatcher implements AutoTestWatcher {
          */
         return;
       }
-      final Document document = event.getDocument();
-      final VirtualFile file = FileDocumentManager.getInstance().getFile(document);
+      final VirtualFile file = FileDocumentManager.getInstance().getFile(event.getDocument());
       if (file == null) {
         return;
       }
@@ -129,9 +141,17 @@ public class DelayedDocumentWatcher implements AutoTestWatcher {
     public void run() {
       final int oldModificationStamp = myModificationStamp;
       asyncCheckErrors(myChangedFiles, errorsFound -> {
+        if (Disposer.isDisposed(myDisposable)) {
+          return;
+        }
         if (myModificationStamp != oldModificationStamp) {
           // 'documentChanged' event was raised during async checking files for errors
           // Do nothing in that case, this method will be invoked subsequently.
+          return;
+        }
+        LookupEx activeLookup = LookupManager.getInstance(myProject).getActiveLookup();
+        if (activeLookup != null && activeLookup.isCompletion()) {
+          // This method will be invoked when the completion popup is hidden.
           return;
         }
         if (errorsFound) {
@@ -145,8 +165,8 @@ public class DelayedDocumentWatcher implements AutoTestWatcher {
     }
   }
 
-  private void asyncCheckErrors(@NotNull final Collection<VirtualFile> files,
-                                @NotNull final Consumer<Boolean> errorsFoundConsumer) {
+  private void asyncCheckErrors(@NotNull Collection<VirtualFile> files,
+                                @NotNull Consumer<Boolean> errorsFoundConsumer) {
     ApplicationManager.getApplication().executeOnPooledThread(() -> {
       final boolean errorsFound = ReadAction.compute(() -> {
         for (VirtualFile file : files) {
