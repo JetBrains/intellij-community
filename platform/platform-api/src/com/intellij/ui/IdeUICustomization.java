@@ -33,4 +33,11 @@ public class IdeUICustomization {
   public String getProjectViewTitle() {
     return StringUtil.capitalize(getProjectConceptName());
   }
+
+  /**
+   * Returns the title of the "Non-Project Files" scope.
+   */
+  public String getNonProjectFilesScopeTitle() {
+    return "Non-" + StringUtil.capitalize(getProjectConceptName()) + " Files";
+  }
 }
