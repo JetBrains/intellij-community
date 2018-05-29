@@ -26,6 +26,7 @@ import com.intellij.openapi.vcs.VcsException
 import com.intellij.openapi.vcs.changes.VcsDirtyScopeManager
 import com.intellij.openapi.vfs.VfsUtil
 import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.openapi.wm.IdeFocusManager
 import com.intellij.ui.ColoredTreeCellRenderer
 import com.intellij.ui.DoubleClickListener
 import com.intellij.ui.SimpleTextAttributes
@@ -101,7 +102,7 @@ open class MultipleFileMergeDialog2(
         }
       }
 
-      SpeedSearchUtil.applySpeedSearchHighlighting(this@MultipleFileMergeDialog2.table, this, true, selected)
+      SpeedSearchUtil.applySpeedSearchHighlighting(table, this, true, selected)
     }
 
     override fun calcFocusedState() = table.hasFocus()
@@ -455,6 +456,7 @@ open class MultipleFileMergeDialog2(
       DiffManager.getInstance().showMerge(project, request)
     }
     updateModelFromFiles()
+    IdeFocusManager.getInstance(project).requestFocus(table, false)
   }
 
   private fun getSessionResolution(result: MergeResult): MergeSession.Resolution = when (result) {
