@@ -56,7 +56,7 @@ public abstract class GroovyResolverProcessor implements PsiScopeProcessor, Elem
   private final boolean myIsLValue;
 
   protected final @NotNull PsiType[] myTypeArguments;
-  protected final @NotNull NullableLazyValue<PsiType[]> myArgumentTypes; // TODO: should be removed with new API
+  protected final @NotNull NullableLazyValue<PsiType[]> myArgumentTypes;
 
   protected final List<GrResolverProcessor<? extends GroovyResolveResult>> myAccessorProcessors;
   protected final MultiMap<GroovyResolveKind, GroovyResolveResult> myCandidates = MultiMap.create();
@@ -75,7 +75,7 @@ public abstract class GroovyResolverProcessor implements PsiScopeProcessor, Elem
 
     myTypeArguments = ref.getTypeArguments();
     if (kinds.contains(GroovyResolveKind.METHOD) || myIsLValue) {
-      myArgumentTypes = NullableLazyValue.createValue(() -> PsiUtil.getArgumentTypes(ref, false, null));
+      myArgumentTypes = NullableLazyValue.createValue(() -> buildArgumentTypes());
     }
     else {
       myArgumentTypes = NullableLazyValue.createValue(() -> null);
@@ -103,7 +103,8 @@ public abstract class GroovyResolverProcessor implements PsiScopeProcessor, Elem
     GrExpression expression = myRef.getQualifierExpression();
     if (expression instanceof GrMethodCallExpression) {
       return getTopLevelType(expression);
-    } else {
+    }
+    else {
       return PsiImplUtil.getQualifierType(myRef);
     }
   }
@@ -160,14 +161,16 @@ public abstract class GroovyResolverProcessor implements PsiScopeProcessor, Elem
       GroovyInferenceSession session = new GroovyInferenceSessionBuilder(myRef, methodCandidate).build();
       PsiSubstitutor applicabilitySubst = session.inferSubst();
 
-      final boolean isApplicable = isApplicable(eraseTypes(methodCandidate.getArgumentTypes()), methodCandidate.getMethod(), applicabilitySubst, myRef, true);
+      final boolean isApplicable =
+        isApplicable(eraseTypes(methodCandidate.getArgumentTypes()), methodCandidate.getMethod(), applicabilitySubst, myRef, true);
       candidate = new GroovyMethodResultImpl(
         method, resolveContext, spreadState,
         applicabilitySubst,
         () -> {
           GroovyInferenceSession inferenceSession =
-            new GroovyInferenceSessionBuilder(myRef, methodCandidate).addReturnConstraint().resolveMode(false).build();
-          return inferenceSession.inferSubst();
+            new GroovyInferenceSessionBuilder(myRef, methodCandidate).addReturnConstraint().resolveMode(false).startFromTop(true).build();
+          PsiSubstitutor substitutor = inferenceSession.inferSubst(myRef);
+          return substitutor;
         },
         methodCandidate,
         false,
@@ -208,7 +211,8 @@ public abstract class GroovyResolverProcessor implements PsiScopeProcessor, Elem
     return new MethodCandidate(method, siteSubstitutor, qualifierConstraint, argumentConstraints, myRef);
   }
 
-  Argument buildQualifier(@NotNull ResolveState state, GrExpression qualifierExpression) {
+  @NotNull
+  private Argument buildQualifier(@NotNull ResolveState state, GrExpression qualifierExpression) {
     final PsiType resolvedThis = state.get(ClassHint.THIS_TYPE);
     final SpreadState spreadState = state.get(SpreadState.SPREAD_STATE);
 
@@ -224,8 +228,8 @@ public abstract class GroovyResolverProcessor implements PsiScopeProcessor, Elem
     return new Argument(resolvedThis != null ? resolvedThis : type, null);
   }
 
-  List<Argument> buildArguments() {
-
+  @NotNull
+  private List<Argument> buildArguments() {
     PsiElement parent = myRef.getParent();
     if (parent instanceof GrCall) {
       List<Argument> result = new ArrayList<>();
@@ -246,13 +250,26 @@ public abstract class GroovyResolverProcessor implements PsiScopeProcessor, Elem
       return result;
     }
 
-    PsiType[] argumentTypes = myArgumentTypes.getValue();
+    PsiType[] argumentTypes = PsiUtil.getArgumentTypes(myRef, false, null);
     if (argumentTypes == null) return Collections.emptyList();
     return Arrays.stream(argumentTypes).map((t) -> new Argument(t, null)).collect(Collectors.toList());
   }
 
+  @NotNull
+  private PsiType[] buildArgumentTypes() {
+    return buildArguments().stream().map(it -> {
+      if (it.getExpression() != null) {
+        return getTopLevelType(it.getExpression());
+      } else {
+        return it.getType();
+      }
+    }).toArray(PsiType[]::new);
+  }
 
-  private static PsiSubstitutor updateSubst(PsiType[] arguments, PsiTypeParameter[] parameters, PsiSubstitutor substitutor) {
+  @NotNull
+  private static PsiSubstitutor updateSubst(@NotNull PsiType[] arguments,
+                                            @NotNull PsiTypeParameter[] parameters,
+                                            @NotNull PsiSubstitutor substitutor) {
     if (arguments.length != parameters.length) return substitutor;
     for (int i = 0; i < arguments.length; i++) {
       substitutor.put(parameters[i], arguments[i]);

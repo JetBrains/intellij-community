@@ -26,7 +26,13 @@ class GroovyInferenceSession(typeParams: Array<PsiTypeParameter>,
 
   fun inferSubst(ref: GrReferenceExpression): PsiSubstitutor {
     repeatInferencePhases()
-    val session = myNestedSessions[ref] ?: return PsiSubstitutor.EMPTY
-    return session.inferSubst()
+    findSession(ref)?.let { return it.result() }
+    return PsiSubstitutor.EMPTY
+  }
+
+  private fun findSession(ref: GrReferenceExpression): GroovyInferenceSession? {
+    myNestedSessions[ref]?.let { return it }
+    myNestedSessions.values.forEach { nested -> nested.findSession(ref)?.let { return it }}
+    return null
   }
 }

@@ -468,7 +468,7 @@ _Boolean(null)
   void testInnerWarning() {
     testHighlighting('''\
 public static void main(String[] args) {
-    bar <warning descr="'bar' in '_' cannot be applied to '(java.lang.Number)'">(foo(foo(foo<warning descr="'foo' in '_' cannot be applied to '(java.lang.String)'">('2')</warning>)))</warning>
+    bar <warning descr="'bar' in '_' cannot be applied to '(T)'">(foo(foo(foo<warning descr="'foo' in '_' cannot be applied to '(java.lang.String)'">('2')</warning>)))</warning>
 }
 
 static def <T extends Number> T foo(T abc) {
