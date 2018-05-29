@@ -100,7 +100,7 @@ public class GitPreservingProcess {
             LOG.debug("loading");
             load();
           }
-          else {
+          else if (shouldNotifyLocalChangesAreNotRestored()) {
             mySaver.notifyLocalChangesAreNotRestored();
           }
         }
@@ -109,6 +109,10 @@ public class GitPreservingProcess {
     };
 
     new GitFreezingProcess(myProject, myOperationTitle, operation).execute();
+  }
+
+  protected boolean shouldNotifyLocalChangesAreNotRestored() {
+    return true;
   }
 
   /**
