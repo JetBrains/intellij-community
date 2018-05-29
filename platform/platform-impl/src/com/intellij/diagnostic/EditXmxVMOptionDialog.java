@@ -14,7 +14,7 @@ import javax.swing.*;
 import java.awt.event.ActionEvent;
 import java.io.File;
 
-public class ChangeMemoryDialog extends DialogWrapper {
+public class EditXmxVMOptionDialog extends DialogWrapper {
 
   final ApplicationEx app = (ApplicationEx)ApplicationManager.getApplication();
   final boolean isRestartCapable = app.isRestartCapable();
@@ -26,12 +26,12 @@ public class ChangeMemoryDialog extends DialogWrapper {
   private JBLabel myHeapCurrentValueLabel;
   private JBLabel mySettingsFileHintLabel;
 
-  public ChangeMemoryDialog(long unusedMemory, long totalMemory) {
+  public EditXmxVMOptionDialog(long unusedMemory, long totalMemory) {
     this();
     mySettingsFileHintLabel.setText(IdeBundle.message("change.memory.usage", unusedMemory / 1024 / 1024, totalMemory / 1024 / 1024));
   }
 
-  public ChangeMemoryDialog() {
+  public EditXmxVMOptionDialog() {
     super(false);
     setTitle(IdeBundle.message("change.memory.title"));
 

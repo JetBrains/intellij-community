@@ -29,7 +29,7 @@ public class LowMemoryNotifier implements ApplicationComponent {
         @Override
         public void actionPerformed(@NotNull AnActionEvent e, @NotNull Notification notification) {
           Runtime rt = Runtime.getRuntime();
-          new ChangeMemoryDialog(rt.freeMemory(), rt.maxMemory()).show();
+          new EditXmxVMOptionDialog(rt.freeMemory(), rt.maxMemory()).show();
           notification.expire();
         }
       });
