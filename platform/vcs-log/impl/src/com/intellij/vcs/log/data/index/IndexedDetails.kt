@@ -24,6 +24,11 @@ class IndexedDetails(private val dataGetter: IndexDataGetter,
                      storage: VcsLogStorage,
                      private val commitIndex: Int,
                      loadingTaskIndex: Long) : LoadingDetails({ storage.getCommitId(commitIndex) }, loadingTaskIndex) {
+  private val _parents by lazy { dataGetter.getParents(commitIndex) }
+  private val _author by lazy { dataGetter.getAuthor(commitIndex) }
+  private val _committer by lazy { dataGetter.getCommitter(commitIndex) }
+  private val _authorTime by lazy { dataGetter.getAuthorTime(commitIndex) }
+  private val _commitTime by lazy { dataGetter.getCommitTime(commitIndex) }
   private val _fullMessage by lazy { dataGetter.getFullMessage(commitIndex) }
 
   override fun getFullMessage(): String {
@@ -35,23 +40,23 @@ class IndexedDetails(private val dataGetter: IndexDataGetter,
   }
 
   override fun getParents(): List<Hash> {
-    return dataGetter.getParents(commitIndex) ?: super.getParents()
+    return _parents ?: super.getParents()
   }
 
   override fun getAuthor(): VcsUser {
-    return dataGetter.getAuthor(commitIndex) ?: super.getAuthor()
+    return _author ?: super.getAuthor()
   }
 
   override fun getCommitter(): VcsUser {
-    return dataGetter.getCommitter(commitIndex) ?: super.getCommitter()
+    return _committer ?: super.getCommitter()
   }
 
   override fun getAuthorTime(): Long {
-    return dataGetter.getAuthorTime(commitIndex) ?: super.getAuthorTime()
+    return _authorTime ?: super.getAuthorTime()
   }
 
   override fun getCommitTime(): Long {
-    return dataGetter.getCommitTime(commitIndex) ?: super.getCommitTime()
+    return _commitTime ?: super.getCommitTime()
   }
 
   companion object {
