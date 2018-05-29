@@ -18,7 +18,7 @@ fun setupLowPriorityExecution(commandLine: GeneralCommandLine, executablePath: S
       commandLine.parametersList.prependAll("/c", "start", "/b", "/low", "/wait", GeneralCommandLine.inescapableQuote(""), executablePath)
     }
     else {
-      commandLine.exePath = "/usr/bin/nice"
+      commandLine.exePath = nicePath
       commandLine.parametersList.prependAll("-n", "10", executablePath)
     }
   }
@@ -34,4 +34,5 @@ private fun canRunLowPriority(): Boolean {
   return true
 }
 
-private val niceExists by lazy { File("/usr/bin/nice").exists() }
+private const val nicePath = "/usr/bin/nice"
+private val niceExists by lazy { File(nicePath).exists() }
