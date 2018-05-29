@@ -463,7 +463,18 @@ public abstract class Breakpoint<P extends JavaBreakpointProperties> implements 
   }
 
   protected String calculateEventClass(EvaluationContextImpl context, LocatableEvent event) throws EvaluateException {
-    return event.location().declaringType().name();
+    String className = null;
+    final ObjectReference thisObject = (ObjectReference)context.computeThisObject();
+    if (thisObject != null) {
+      className = thisObject.referenceType().name();
+    }
+    else {
+      final StackFrameProxyImpl frame = context.getFrameProxy();
+      if (frame != null) {
+        className = frame.location().declaringType().name();
+      }
+    }
+    return className;
   }
 
   protected static boolean typeMatchesClassFilters(@Nullable String typeName, ClassFilter[] includeFilters, ClassFilter[] exludeFilters) {
