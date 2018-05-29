@@ -962,8 +962,8 @@ java_library(
 java_library(
     name = "guava-testlib",
     visibility = ["//visibility:public"],
-    exports = ["//tools/adt/idea/android/lib:guava-testlib-21.0"],
-    runtime_deps = ["//tools/adt/idea/android/lib:guava-testlib-21.0"],
+    exports = ["//prebuilts/tools/common/m2/repository/com/google/guava/guava-testlib/21.0:jar"],
+    runtime_deps = ["//prebuilts/tools/common/m2/repository/com/google/guava/guava-testlib/21.0:jar"],
 )
 
 # managed by go/iml_to_build

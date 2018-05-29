@@ -1,11 +1,12 @@
 <component name="libraryTable">
-  <library name="guava-testlib">
+  <library name="guava-testlib" type="repository">
+    <properties include-transitive-deps="false" maven-id="com.google.guava:guava-testlib:21.0" />
     <CLASSES>
-      <root url="jar://$PROJECT_DIR$/../adt/idea/android/lib/guava-testlib-21.0.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/com/google/guava/guava-testlib/21.0/guava-testlib-21.0.jar!/" />
     </CLASSES>
     <JAVADOC />
     <SOURCES>
-      <root url="jar://$PROJECT_DIR$/../adt/idea/android/lib/src/guava-testlib-21.0-sources.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/com/google/guava/guava-testlib/21.0/guava-testlib-21.0-sources.jar!/" />
     </SOURCES>
   </library>
 </component>
