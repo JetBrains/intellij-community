@@ -40,7 +40,7 @@ class WelcomeFrameFixture private constructor(robot: Robot,
   }
 
   fun openPluginsDialog()/*: JDialogFixture*/{
-    actionLink("Configure")
+    actionLink("Configure").click()
     popupClick("Plugins")
     // TODO: make return JDialogFixture object of Plugins dialog
     // need to rework PluginsDialogModel to get rid of GuiTestCase object
