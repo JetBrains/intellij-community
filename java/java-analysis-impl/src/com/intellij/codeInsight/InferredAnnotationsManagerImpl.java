@@ -5,6 +5,7 @@ import com.intellij.codeInspection.bytecodeAnalysis.ProjectBytecodeAnalysis;
 import com.intellij.codeInspection.dataFlow.*;
 import com.intellij.codeInspection.dataFlow.inference.JavaSourceInference;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.source.PsiMethodImpl;
@@ -21,9 +22,13 @@ import static com.intellij.codeInsight.AnnotationUtil.*;
 import static com.intellij.codeInspection.dataFlow.JavaMethodContractUtil.ORG_JETBRAINS_ANNOTATIONS_CONTRACT;
 
 public class InferredAnnotationsManagerImpl extends InferredAnnotationsManager {
+  private static final Key<Boolean> INFERRED_ANNOTATION = Key.create("INFERRED_ANNOTATION");
+
   private static final Set<String> INFERRED_ANNOTATIONS =
     ContainerUtil.set(NOT_NULL, NULLABLE, ORG_JETBRAINS_ANNOTATIONS_CONTRACT, Mutability.UNMODIFIABLE_ANNOTATION,
                       Mutability.UNMODIFIABLE_VIEW_ANNOTATION);
+  private static final Set<String> EXPERIMENTAL_INFERRED_ANNOTATIONS =
+    ContainerUtil.set(Mutability.UNMODIFIABLE_ANNOTATION, Mutability.UNMODIFIABLE_VIEW_ANNOTATION);
   private final Project myProject;
 
   public InferredAnnotationsManagerImpl(Project project) {
@@ -107,7 +112,7 @@ public class InferredAnnotationsManagerImpl extends InferredAnnotationsManager {
   private PsiAnnotation getInferredMutabilityAnnotation(@NotNull PsiModifierListOwner owner) {
     if (!(owner instanceof PsiMethodImpl)) return null;
     PsiMethodImpl method = (PsiMethodImpl)owner;
-    PsiModifierList modifiers = (method).getModifierList();
+    PsiModifierList modifiers = method.getModifierList();
     if (modifiers.hasAnnotation(Mutability.UNMODIFIABLE_ANNOTATION) ||
         modifiers.hasAnnotation(Mutability.UNMODIFIABLE_VIEW_ANNOTATION)) {
       return null;
@@ -238,6 +243,14 @@ public class InferredAnnotationsManagerImpl extends InferredAnnotationsManager {
 
   @Override
   public boolean isInferredAnnotation(@NotNull PsiAnnotation annotation) {
-    return annotation.getUserData(ProjectBytecodeAnalysis.INFERRED_ANNOTATION) != null;
+    return annotation.getUserData(INFERRED_ANNOTATION) != null;
+  }
+
+  public static void markInferred(@NotNull PsiAnnotation annotation) {
+    annotation.putUserData(INFERRED_ANNOTATION, Boolean.TRUE);
+  }
+
+  public static boolean isExperimentalInferredAnnotation(@NotNull PsiAnnotation annotation) {
+    return EXPERIMENTAL_INFERRED_ANNOTATIONS.contains(annotation.getQualifiedName());
   }
 }
