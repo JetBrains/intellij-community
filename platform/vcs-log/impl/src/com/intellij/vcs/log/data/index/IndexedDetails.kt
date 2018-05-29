@@ -16,6 +16,8 @@
 package com.intellij.vcs.log.data.index
 
 import com.intellij.vcs.log.Hash
+import com.intellij.vcs.log.VcsCommitMetadata
+import com.intellij.vcs.log.VcsLogObjectsFactory
 import com.intellij.vcs.log.VcsUser
 import com.intellij.vcs.log.data.LoadingDetails
 import com.intellij.vcs.log.data.VcsLogStorage
@@ -64,6 +66,23 @@ class IndexedDetails(private val dataGetter: IndexDataGetter,
     fun getSubject(fullMessage: String): String {
       val subjectEnd = fullMessage.indexOf("\n\n")
       return if (subjectEnd > 0) fullMessage.substring(0, subjectEnd).replace("\n", " ") else fullMessage.replace("\n", " ")
+    }
+
+    @JvmStatic
+    fun createMetadata(commitIndex: Int,
+                       dataGetter: IndexDataGetter,
+                       storage: VcsLogStorage,
+                       factory: VcsLogObjectsFactory): VcsCommitMetadata? {
+      val commitId = storage.getCommitId(commitIndex) ?: return null
+      val parents = dataGetter.getParents(commitIndex) ?: return null
+      val author = dataGetter.getAuthor(commitIndex) ?: return null
+      val committer = dataGetter.getCommitter(commitIndex) ?: return null
+      val authorTime = dataGetter.getAuthorTime(commitIndex) ?: return null
+      val commitTime = dataGetter.getCommitTime(commitIndex) ?: return null
+      val fullMessage = dataGetter.getFullMessage(commitIndex) ?: return null
+
+      return factory.createCommitMetadata(commitId.hash, parents, commitTime, commitId.root, getSubject(fullMessage), author.name,
+                                          author.email, fullMessage, committer.name, committer.email, authorTime)
     }
   }
 }
