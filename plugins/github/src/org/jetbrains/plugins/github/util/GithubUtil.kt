@@ -16,6 +16,7 @@ import com.intellij.openapi.vfs.VirtualFile
 import git4idea.repo.GitRemote
 import git4idea.repo.GitRepository
 import org.jetbrains.plugins.github.authentication.GithubAuthenticationManager
+import org.jetbrains.plugins.github.exceptions.GithubMissingTokenException
 import java.io.IOException
 import java.net.UnknownHostException
 import java.util.concurrent.ScheduledFuture
@@ -118,9 +119,8 @@ object GithubUtil {
       GithubAuthDataHolder(GithubAuthData.createAnonymous(account.server.toString()))
     }
     else {
-      GithubAuthDataHolder(GithubAuthData.createTokenAuth(account.server.toString(),
-                                                          authManager.getTokenForAccount(account),
-                                                          true))
+      val token = authManager.getTokenForAccount(account) ?: throw GithubMissingTokenException(account)
+      GithubAuthDataHolder(GithubAuthData.createTokenAuth(account.server.toString(), token, true))
     }
   }
 

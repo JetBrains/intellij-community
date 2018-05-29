@@ -1,7 +1,6 @@
 package org.jetbrains.plugins.github;
 
 import com.intellij.notification.NotificationType;
-import com.intellij.openapi.progress.EmptyProgressIndicator;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.util.Ref;
 import git4idea.commands.Git;
@@ -110,7 +109,7 @@ public class GithubShareProjectTest extends GithubShareProjectTestBase {
   }
 
   protected void checkGithubExists() throws IOException {
-    GithubRepoDetailed githubInfo = myApiTaskExecutor.execute(new EmptyProgressIndicator(), myAccount, c -> {
+    GithubRepoDetailed githubInfo = myApiTaskExecutor.execute(myAccount, c -> {
       String username = GithubApiUtil.getCurrentUser(c).getLogin();
       return GithubApiUtil.getDetailedRepoInfo(c, username, PROJECT_NAME);
     });
