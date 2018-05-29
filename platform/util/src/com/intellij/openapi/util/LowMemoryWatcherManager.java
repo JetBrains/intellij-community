@@ -58,11 +58,14 @@ public class LowMemoryWatcherManager implements Disposable {
     myExecutorService = SequentialTaskExecutor.createSequentialApplicationPoolExecutor("LowMemoryWatcherManager", executorService);
     try {
       for (MemoryPoolMXBean bean : ManagementFactory.getMemoryPoolMXBeans()) {
-        if (bean.getType() == MemoryType.HEAP && bean.isUsageThresholdSupported()) {
+        if (bean.getType() == MemoryType.HEAP &&
+        // we check both vars since we are interested in oldgen near exhaustion, and that's the only bean that supports both
+            bean.isCollectionUsageThresholdSupported() && 
+            bean.isUsageThresholdSupported()) {
           long max = bean.getUsage().getMax();
           long threshold = Math.min((long) (max * getOccupiedMemoryThreshold()), max - MEM_THRESHOLD);
           if (threshold > 0) {
-            bean.setUsageThreshold(threshold);
+            bean.setCollectionUsageThreshold(threshold);
           }
         }
       }
@@ -77,7 +80,7 @@ public class LowMemoryWatcherManager implements Disposable {
   private final NotificationListener myLowMemoryListener = new NotificationListener() {
     @Override
     public void handleNotification(Notification notification, Object __) {
-      if (MemoryNotificationInfo.MEMORY_THRESHOLD_EXCEEDED.equals(notification.getType())) {
+      if (MemoryNotificationInfo.MEMORY_COLLECTION_THRESHOLD_EXCEEDED.equals(notification.getType())) {
 
         if (Registry.is("low.memory.watcher.sync", true)) {
           handleEventImmediately();
