@@ -416,15 +416,17 @@ public class RunDashboardContent extends JPanel implements TreeContent, Disposab
     treeGroup.add(collapseAllAction);
 
     treeGroup.addSeparator();
-    myGroupers.stream().filter(grouper -> !grouper.getRule().isAlwaysEnabled()).forEach(grouper -> treeGroup.add(new GroupAction(grouper)));
+    List<RunDashboardGrouper> groupers =
+      myGroupers.stream().filter(grouper -> !grouper.getRule().isAlwaysEnabled()).collect(Collectors.toList());
+    if (!groupers.isEmpty()) {
+      treeGroup.add(new GroupByActionGroup(groupers));
+    }
+    treeGroup.add(new StatusActionGroup());
 
     treeGroup.addSeparator();
     AnAction treeActions = ActionManager.getInstance().getAction(RUN_DASHBOARD_TREE_TOOLBAR);
     treeActions.registerCustomShortcutSet(this, null);
     treeGroup.add(treeActions);
-
-    treeGroup.addSeparator();
-    treeGroup.add(new StatusActionGroup());
 
     ActionToolbar treeActionsToolBar = ActionManager.getInstance().createActionToolbar(PLACE_TOOLBAR, treeGroup, true);
     toolBarPanel.add(treeActionsToolBar.getComponent(), BorderLayout.CENTER);
@@ -481,6 +483,17 @@ public class RunDashboardContent extends JPanel implements TreeContent, Disposab
     return mySplitter.getProportion();
   }
 
+  private class GroupByActionGroup extends DefaultActionGroup implements CheckedActionGroup {
+    GroupByActionGroup(List<RunDashboardGrouper> groupers) {
+      super(ExecutionBundle.message("run.dashboard.group.by.action.name"), true);
+      getTemplatePresentation().setIcon(AllIcons.Actions.GroupBy);
+
+      for (RunDashboardGrouper grouper : groupers) {
+        add(new GroupAction(grouper));
+      }
+    }
+  }
+
   private class GroupAction extends ToggleAction implements DumbAware {
     private final RunDashboardGrouper myGrouper;
 
@@ -516,9 +529,7 @@ public class RunDashboardContent extends JPanel implements TreeContent, Disposab
 
   private class StatusActionGroup extends DefaultActionGroup implements CheckedActionGroup {
     StatusActionGroup() {
-      setPopup(true);
-
-      getTemplatePresentation().setText(ExecutionBundle.message("run.dashboard.filter.by.status.action.name"));
+      super(ExecutionBundle.message("run.dashboard.filter.by.status.action.name"), true);
       getTemplatePresentation().setIcon(AllIcons.General.Filter);
 
       for (final RunDashboardRunConfigurationStatus status : new RunDashboardRunConfigurationStatus[]{STARTED, FAILED, STOPPED, CONFIGURED}) {

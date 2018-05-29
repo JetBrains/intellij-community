@@ -16,8 +16,10 @@
 package com.intellij.execution.dashboard.tree;
 
 import com.intellij.execution.ExecutionBundle;
-import com.intellij.execution.dashboard.*;
-import com.intellij.icons.AllIcons;
+import com.intellij.execution.dashboard.RunDashboardGroup;
+import com.intellij.execution.dashboard.RunDashboardGroupingRule;
+import com.intellij.execution.dashboard.RunDashboardRunConfigurationNode;
+import com.intellij.execution.dashboard.RunDashboardRunConfigurationStatus;
 import com.intellij.ide.util.treeView.AbstractTreeNode;
 import com.intellij.ide.util.treeView.smartTree.ActionPresentation;
 import com.intellij.ide.util.treeView.smartTree.ActionPresentationData;
@@ -44,7 +46,7 @@ public class StatusDashboardGroupingRule implements RunDashboardGroupingRule {
   public ActionPresentation getPresentation() {
     return new ActionPresentationData(ExecutionBundle.message("run.dashboard.group.by.status.action.name"),
                                       ExecutionBundle.message("run.dashboard.group.by.status.action.name"),
-                                      AllIcons.Actions.GroupByPrefix); // TODO [konstantin.aleev] provide new icon
+                                      null);
   }
 
   @Override
