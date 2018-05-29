@@ -92,4 +92,18 @@ public class IndexedDetails extends LoadingDetails {
     if (committer != null) return committer;
     return super.getCommitter();
   }
+
+  @Override
+  public long getAuthorTime() {
+    Long time = myDataGetter.getAuthorTime(myCommitIndex);
+    if (time != null) return time;
+    return super.getAuthorTime();
+  }
+
+  @Override
+  public long getCommitTime() {
+    Long time = myDataGetter.getCommitTime(myCommitIndex);
+    if (time != null) return time;
+    return super.getCommitTime();
+  }
 }

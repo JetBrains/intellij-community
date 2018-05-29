@@ -26,6 +26,7 @@ import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vcs.VcsNotifier;
@@ -196,6 +197,7 @@ public class VcsLogPersistentIndex implements VcsLogIndex, Disposable {
       if (!detail.getAuthor().equals(detail.getCommitter())) {
         myIndexStorage.committers.put(index, myUserRegistry.getUserId(detail.getCommitter()));
       }
+      myIndexStorage.timestamps.put(index, Pair.create(detail.getAuthorTime(), detail.getCommitTime()));
 
       myIndexStorage.commits.put(index);
     }
@@ -215,6 +217,7 @@ public class VcsLogPersistentIndex implements VcsLogIndex, Disposable {
         myIndexStorage.renames.flush();
         myIndexStorage.commits.flush();
         myIndexStorage.committers.force();
+        myIndexStorage.timestamps.force();
       }
     }
     catch (StorageException e) {
@@ -310,12 +313,14 @@ public class VcsLogPersistentIndex implements VcsLogIndex, Disposable {
     private static final String PARENTS = "parents";
     private static final String RENAMES = "renames";
     private static final String COMMITTERS = "committers";
+    private static final String TIMESTAMPS = "timestamps";
     private static final int MESSAGES_VERSION = 0;
     @NotNull public final PersistentSet<Integer> commits;
     @NotNull public final PersistentMap<Integer, String> messages;
     @NotNull public final PersistentMap<Integer, List<Integer>> parents;
     @NotNull public final PersistentSet<Integer> renames;
     @NotNull public final PersistentMap<Integer, Integer> committers;
+    @NotNull public final PersistentMap<Integer, Pair<Long, Long>> timestamps;
     @NotNull public final VcsLogMessagesTrigramIndex trigrams;
     @NotNull public final VcsLogUserIndex users;
     @NotNull public final VcsLogPathsIndex paths;
@@ -360,6 +365,11 @@ public class VcsLogPersistentIndex implements VcsLogIndex, Disposable {
         committers = new PersistentHashMap<>(committersStorage, EnumeratorIntegerDescriptor.INSTANCE, EnumeratorIntegerDescriptor.INSTANCE,
                                              Page.PAGE_SIZE, version);
         Disposer.register(this, () -> catchAndWarn(committers::close));
+
+        File timestampsStorage = getStorageFile(INDEX, TIMESTAMPS, logId, version);
+        timestamps = new PersistentHashMap<>(timestampsStorage, EnumeratorIntegerDescriptor.INSTANCE, new LongPairDataExternalizer(),
+                                             Page.PAGE_SIZE, version);
+        Disposer.register(this, () -> catchAndWarn(timestamps::close));
       }
       catch (Throwable t) {
         Disposer.dispose(this);

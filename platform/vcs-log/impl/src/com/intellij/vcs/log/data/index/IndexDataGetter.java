@@ -292,6 +292,24 @@ public class IndexDataGetter {
     });
   }
 
+  @Nullable
+  public Long getAuthorTime(int commit) {
+    return executeAndCatch(() -> {
+      Pair<Long, Long> time = myIndexStorage.timestamps.get(commit);
+      if (time == null) return null;
+      return time.first;
+    });
+  }
+
+  @Nullable
+  public Long getCommitTime(int commit) {
+    return executeAndCatch(() -> {
+      Pair<Long, Long> time = myIndexStorage.timestamps.get(commit);
+      if (time == null) return null;
+      return time.second;
+    });
+  }
+
   private void processRuntimeException(@NotNull RuntimeException e) {
     if (e instanceof ProcessCanceledException) throw e;
     myIndexStorage.markCorrupted();
