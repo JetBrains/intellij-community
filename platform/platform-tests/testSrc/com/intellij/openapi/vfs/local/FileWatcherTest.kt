@@ -450,10 +450,10 @@ class FileWatcherTest : BareTestFixtureTestCase() {
   }
 
   // tests the same scenarios with an active file watcher (prevents explicit marking of refreshed paths)
-  @Test fun testPartialRefresh() = LocalFileSystemTest.doTestPartialRefresh(tempDir.newFolder("top"))
-  @Test fun testInterruptedRefresh() = LocalFileSystemTest.doTestInterruptedRefresh(tempDir.newFolder("top"))
-  @Test fun testRefreshAndFindFile() = LocalFileSystemTest.doTestRefreshAndFindFile(tempDir.newFolder("top"))
-  @Test fun testRefreshEquality() = LocalFileSystemTest.doTestRefreshEquality(tempDir.newFolder("top"))
+  @Test fun testPartialRefresh(): Unit = LocalFileSystemTest.doTestPartialRefresh(tempDir.newFolder("top"))
+  @Test fun testInterruptedRefresh(): Unit = LocalFileSystemTest.doTestInterruptedRefresh(tempDir.newFolder("top"))
+  @Test fun testRefreshAndFindFile(): Unit = LocalFileSystemTest.doTestRefreshAndFindFile(tempDir.newFolder("top"))
+  @Test fun testRefreshEquality(): Unit = LocalFileSystemTest.doTestRefreshEquality(tempDir.newFolder("top"))
 
   @Test fun testUnicodePaths() {
     val name = IoTestUtil.getUnicodeName()
