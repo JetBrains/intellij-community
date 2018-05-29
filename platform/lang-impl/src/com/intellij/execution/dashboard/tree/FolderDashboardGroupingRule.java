@@ -51,11 +51,6 @@ public class FolderDashboardGroupingRule implements RunDashboardGroupingRule {
   }
 
   @Override
-  public int getPriority() {
-    return Priorities.BY_FOLDER;
-  }
-
-  @Override
   public boolean isAlwaysEnabled() {
     return true;
   }

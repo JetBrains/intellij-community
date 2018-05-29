@@ -50,11 +50,6 @@ public class ConfigurationTypeDashboardGroupingRule implements RunDashboardGroup
   }
 
   @Override
-  public int getPriority() {
-    return Priorities.BY_TYPE;
-  }
-
-  @Override
   public boolean isAlwaysEnabled() {
     return false;
   }

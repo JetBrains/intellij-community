@@ -81,7 +81,6 @@ public class RunDashboardManagerImpl implements RunDashboardManager, PersistentS
     myReuseCondition = this::canReuseContent;
 
     myGroupers = Arrays.stream(RunDashboardGroupingRule.EP_NAME.getExtensions())
-      .sorted(RunDashboardGroupingRule.PRIORITY_COMPARATOR)
       .map(RunDashboardGrouper::new)
       .collect(Collectors.toList());
   }

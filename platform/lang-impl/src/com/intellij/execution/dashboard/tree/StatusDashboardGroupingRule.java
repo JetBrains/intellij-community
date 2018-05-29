@@ -48,11 +48,6 @@ public class StatusDashboardGroupingRule implements RunDashboardGroupingRule {
   }
 
   @Override
-  public int getPriority() {
-    return Priorities.BY_STATUS;
-  }
-
-  @Override
   public boolean isAlwaysEnabled() {
     return false;
   }
