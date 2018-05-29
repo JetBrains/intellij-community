@@ -4,11 +4,13 @@
 package com.jetbrains.python.codeInsight.stdlib
 
 import com.intellij.psi.PsiElement
+import com.intellij.psi.util.QualifiedName
 import com.jetbrains.python.PyNames
 import com.jetbrains.python.psi.*
 import com.jetbrains.python.psi.PyKnownDecoratorUtil.KnownDecorator
 import com.jetbrains.python.psi.impl.PyEvaluator
 import com.jetbrains.python.psi.resolve.PyResolveContext
+import com.jetbrains.python.psi.resolve.PyResolveUtil
 import com.jetbrains.python.psi.types.TypeEvalContext
 
 
@@ -33,6 +35,19 @@ fun parseDataclassParameters(cls: PyClass, context: TypeEvalContext): PyDataclas
       KnownDecorator.ATTR_DATACLASS to PyDataclassParameters.Type.ATTRS
     )
   )
+}
+
+fun resolvesToOmittedDefault(expression: PyExpression, type: PyDataclassParameters.Type): Boolean {
+  if (expression is PyReferenceExpression) {
+    val qNames = PyResolveUtil.resolveImportedElementQNameLocally(expression)
+
+    return when (type) {
+      PyDataclassParameters.Type.STD -> QualifiedName.fromComponents("dataclasses", "MISSING") in qNames
+      PyDataclassParameters.Type.ATTRS -> QualifiedName.fromComponents("attr", "NOTHING") in qNames
+    }
+  }
+
+  return false
 }
 
 private fun parseDataclassParameters(cls: PyClass,

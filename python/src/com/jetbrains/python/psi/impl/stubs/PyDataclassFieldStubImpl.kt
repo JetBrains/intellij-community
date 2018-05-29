@@ -8,8 +8,8 @@ import com.intellij.psi.stubs.StubOutputStream
 import com.intellij.psi.util.QualifiedName
 import com.jetbrains.python.PyNames
 import com.jetbrains.python.codeInsight.stdlib.PyDataclassParameters
+import com.jetbrains.python.codeInsight.stdlib.resolvesToOmittedDefault
 import com.jetbrains.python.psi.PyCallExpression
-import com.jetbrains.python.psi.PyExpression
 import com.jetbrains.python.psi.PyReferenceExpression
 import com.jetbrains.python.psi.PyTargetExpression
 import com.jetbrains.python.psi.impl.PyEvaluator
@@ -64,18 +64,18 @@ class PyDataclassFieldStubImpl private constructor(private val calleeName: Quali
       val initValue = PyEvaluator.evaluateAsBoolean(call.getKeywordArgument("init")) ?: true
 
       if (type == PyDataclassParameters.Type.STD) {
-        val missing = QualifiedName.fromComponents("dataclasses", "MISSING")
+        val default = call.getKeywordArgument("default")
+        val defaultFactory = call.getKeywordArgument("default_factory")
 
-        val hasDefault = existsAndDoesNotResolveTo(call.getKeywordArgument("default"), missing)
-        val hasDefaultFactory = existsAndDoesNotResolveTo(call.getKeywordArgument("default_factory"), missing)
-
-        return Triple(hasDefault, hasDefaultFactory, initValue)
+        return Triple(default != null && !resolvesToOmittedDefault(default, type),
+                      defaultFactory != null && !resolvesToOmittedDefault(defaultFactory, type),
+                      initValue)
       }
       else if (type == PyDataclassParameters.Type.ATTRS) {
         val default = call.getKeywordArgument("default")
         val hasFactory = call.getKeywordArgument("factory").let { it != null && it.text != PyNames.NONE }
 
-        if (existsAndDoesNotResolveTo(default, QualifiedName.fromComponents("attr", "NOTHING"))) {
+        if (default != null && !resolvesToOmittedDefault(default, type)) {
           val callee = (default as? PyCallExpression)?.callee as? PyReferenceExpression
           val hasFactoryInDefault =
             callee != null &&
@@ -88,11 +88,6 @@ class PyDataclassFieldStubImpl private constructor(private val calleeName: Quali
       }
 
       return null
-    }
-
-    private fun existsAndDoesNotResolveTo(expression: PyExpression?, qualifiedName: QualifiedName): Boolean {
-      return expression != null &&
-             (expression !is PyReferenceExpression || !PyResolveUtil.resolveImportedElementQNameLocally(expression).contains(qualifiedName))
     }
   }
 

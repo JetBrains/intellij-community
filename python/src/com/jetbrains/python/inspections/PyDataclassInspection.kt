@@ -8,7 +8,6 @@ import com.intellij.codeInspection.ProblemHighlightType
 import com.intellij.codeInspection.ProblemsHolder
 import com.intellij.psi.PsiElementVisitor
 import com.intellij.psi.PsiNameIdentifierOwner
-import com.intellij.psi.util.QualifiedName
 import com.intellij.util.containers.ContainerUtil
 import com.jetbrains.python.PyNames
 import com.jetbrains.python.codeInsight.stdlib.*
@@ -18,7 +17,6 @@ import com.jetbrains.python.psi.impl.PyCallExpressionHelper
 import com.jetbrains.python.psi.impl.PyEvaluator
 import com.jetbrains.python.psi.impl.stubs.PyDataclassFieldStubImpl
 import com.jetbrains.python.psi.resolve.PyResolveContext
-import com.jetbrains.python.psi.resolve.PyResolveUtil
 import com.jetbrains.python.psi.types.*
 
 class PyDataclassInspection : PyInspection() {
@@ -116,13 +114,7 @@ class PyDataclassInspection : PyInspection() {
               }
               else {
                 val assignedValue = it.findAssignedValue()
-
-                val nothing = QualifiedName.fromComponents("attr", "NOTHING")
-                val missing = QualifiedName.fromComponents("dataclasses", "MISSING")
-
-                assignedValue != null &&
-                (assignedValue !is PyReferenceExpression ||
-                 !PyResolveUtil.resolveImportedElementQNameLocally(assignedValue).any { it == nothing || it == missing })
+                assignedValue != null && !resolvesToOmittedDefault(assignedValue, dataclassParameters.type)
               }
             }
           )
@@ -460,11 +452,8 @@ class PyDataclassInspection : PyInspection() {
 
                 val default = call.getKeywordArgument("default")
                 val factory = call.getKeywordArgument("factory")
-                val nothing = QualifiedName.fromComponents("attr", "NOTHING")
 
-                if (default != null &&
-                    factory != null &&
-                    !(default is PyReferenceExpression && PyResolveUtil.resolveImportedElementQNameLocally(default).contains(nothing))) {
+                if (default != null && factory != null && !resolvesToOmittedDefault(default, PyDataclassParameters.Type.ATTRS)) {
                   registerProblem(call.argumentList, "Cannot specify both 'default' and 'factory'", ProblemHighlightType.GENERIC_ERROR)
                 }
               }
