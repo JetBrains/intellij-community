@@ -62,6 +62,8 @@ import static git4idea.util.GitUIUtil.*;
 
 /**
  * Handles update process (pull via merge or rebase) for several roots.
+ *
+ * @author Kirill Likhodedov
  */
 public class GitUpdateProcess {
   private static final Logger LOG = Logger.getInstance(GitUpdateProcess.class);
@@ -77,8 +79,6 @@ public class GitUpdateProcess {
   private final UpdatedFiles myUpdatedFiles;
   @NotNull private final ProgressIndicator myProgressIndicator;
   @NotNull private final GitMerger myMerger;
-
-  @Nullable private GitPreservingProcess myPreservingProcess;
 
   public GitUpdateProcess(@NotNull Project project,
                           @Nullable ProgressIndicator progressIndicator,
@@ -143,14 +143,6 @@ public class GitUpdateProcess {
     return result;
   }
 
-  protected boolean unstashAfterUpdate() {
-    return true;
-  }
-
-  protected boolean stashBeforeUpdate() {
-    return true;
-  }
-
   @NotNull
   private GitUpdateResult updateImpl(@NotNull UpdateMethod updateMethod) {
     Map<VirtualFile, GitBranchPair> trackedBranches = checkTrackedBranchesConfiguration();
@@ -203,14 +195,12 @@ public class GitUpdateProcess {
     // save local changes if needed (update via merge may perform without saving).
     final Collection<VirtualFile> myRootsToSave = ContainerUtil.newArrayList();
     LOG.info("updateImpl: identifying if save is needed...");
-    if (stashBeforeUpdate()) {
-      for (Map.Entry<GitRepository, GitUpdater> entry : updaters.entrySet()) {
-        GitRepository repo = entry.getKey();
-        GitUpdater updater = entry.getValue();
-        if (updater.isSaveNeeded()) {
-          myRootsToSave.add(repo.getRoot());
-          LOG.info("update| root " + repo + " needs save");
-        }
+    for (Map.Entry<GitRepository, GitUpdater> entry : updaters.entrySet()) {
+      GitRepository repo = entry.getKey();
+      GitUpdater updater = entry.getValue();
+      if (updater.isSaveNeeded()) {
+        myRootsToSave.add(repo.getRoot());
+        LOG.info("update| root " + repo + " needs save");
       }
     }
 
@@ -218,33 +208,30 @@ public class GitUpdateProcess {
     final Ref<Boolean> incomplete = Ref.create(false);
     final Ref<GitUpdateResult> compoundResult = Ref.create();
     final Map<GitRepository, GitUpdater> finalUpdaters = updaters;
-    myPreservingProcess = new GitPreservingProcess(myProject, myGit, myRootsToSave, "Update", "Remote",
-                                                   GitVcsSettings.getInstance(myProject).updateChangesPolicy(), myProgressIndicator, () -> {
-      LOG.info("updateImpl: updating...");
-      GitRepository currentlyUpdatedRoot = null;
-      try {
-        for (GitRepository repo : myRepositories) {
-          GitUpdater updater = finalUpdaters.get(repo);
-          if (updater == null) continue;
-          currentlyUpdatedRoot = repo;
-          GitUpdateResult res = updater.update();
-          LOG.info("updating root " + currentlyUpdatedRoot + " finished: " + res);
-          if (res == GitUpdateResult.INCOMPLETE) {
-            incomplete.set(true);
-          }
-          compoundResult.set(joinResults(compoundResult.get(), res));
-        }
-      }
-      catch (VcsException e) {
-        String rootName = (currentlyUpdatedRoot == null) ? "" : getShortRepositoryName(currentlyUpdatedRoot);
-        LOG.info("Error updating changes for root " + currentlyUpdatedRoot, e);
-        notifyImportantError(myProject, "Error updating " + rootName,
-                             "Updating " + rootName + " failed with an error: " + e.getLocalizedMessage());
-      }
-    });
-    myPreservingProcess.execute(() -> {
-      if (!unstashAfterUpdate()) return false;
-
+    new GitPreservingProcess(myProject, myGit, myRootsToSave, "Update", "Remote",
+                             GitVcsSettings.getInstance(myProject).updateChangesPolicy(), myProgressIndicator, () -> {
+                               LOG.info("updateImpl: updating...");
+                               GitRepository currentlyUpdatedRoot = null;
+                               try {
+                                 for (GitRepository repo : myRepositories) {
+                                   GitUpdater updater = finalUpdaters.get(repo);
+                                   if (updater == null) continue;
+                                   currentlyUpdatedRoot = repo;
+                                   GitUpdateResult res = updater.update();
+                                   LOG.info("updating root " + currentlyUpdatedRoot + " finished: " + res);
+                                   if (res == GitUpdateResult.INCOMPLETE) {
+                                     incomplete.set(true);
+                                   }
+                                   compoundResult.set(joinResults(compoundResult.get(), res));
+                                 }
+                               }
+                               catch (VcsException e) {
+                                 String rootName = (currentlyUpdatedRoot == null) ? "" : getShortRepositoryName(currentlyUpdatedRoot);
+                                 LOG.info("Error updating changes for root " + currentlyUpdatedRoot, e);
+                                 notifyImportantError(myProject, "Error updating " + rootName,
+                                                      "Updating " + rootName + " failed with an error: " + e.getLocalizedMessage());
+                               }
+                             }).execute(() -> {
       // Note: compoundResult normally should not be null, because the updaters map was checked for non-emptiness.
       // But if updater.update() fails with exception for the first root, then the value would not be assigned.
       // In this case we don't restore local changes either, because update failed.
@@ -306,11 +293,6 @@ public class GitUpdateProcess {
       LOG.info("update| root=" + root + " ,updater=" + updater);
     }
     return updaters;
-  }
-
-  @Nullable
-  public GitPreservingProcess getPreservingProcess() {
-    return myPreservingProcess;
   }
 
   @NotNull
