@@ -23,7 +23,7 @@ import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.util.ArrayUtil;
-import com.pty4j.PtyProcess;
+import com.pty4j.PtyProcessBuilder;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.File;
@@ -98,14 +98,17 @@ public class PtyCommandLine extends GeneralCommandLine {
     Map<String, String> env = new HashMap<>();
     setupEnvironment(env);
 
-    if (isRedirectErrorStream()) {
-      LOG.error("Launching process with PTY and redirected error stream is unsupported yet");
-    }
-
     String[] command = ArrayUtil.toStringArray(commands);
     File workDirectory = getWorkDirectory();
     String directory = workDirectory != null ? workDirectory.getPath() : null;
     boolean cygwin = myUseCygwinLaunch && SystemInfo.isWindows;
-    return PtyProcess.exec(command, env, directory, console, cygwin, getPtyLogFile());
+    PtyProcessBuilder builder = new PtyProcessBuilder(command)
+      .setEnvironment(env)
+      .setDirectory(directory)
+      .setConsole(console)
+      .setCygwin(cygwin)
+      .setLogFile(getPtyLogFile())
+      .setRedirectErrorStream(isRedirectErrorStream());
+    return builder.start();
   }
 }
