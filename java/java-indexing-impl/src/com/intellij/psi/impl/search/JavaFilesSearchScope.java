@@ -31,6 +31,8 @@ public class JavaFilesSearchScope extends GlobalSearchScope {
 
   @Override
   public boolean contains(@NotNull VirtualFile file) {
+    if (file.isDirectory())
+      return false;
     FileViewProvider viewProvider = myPsiManager.findViewProvider(file);
     return viewProvider != null && viewProvider.getLanguages().contains(JavaLanguage.INSTANCE);
   }
