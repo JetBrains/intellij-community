@@ -979,12 +979,17 @@ public class UsageViewImpl implements UsageViewEx {
   }
 
   public void expandAll() {
+    processAllOnEDT(() -> TreeUtil.expandAll(myTree));
+  }
+
+  private void processAllOnEDT(@NotNull Runnable task) {
+    if (isDisposed) return;
     ApplicationManager.getApplication().assertIsDispatchThread();
     fireEvents();  // drain all remaining insertion events in the queue
 
     expandingAll = true;
     try {
-      TreeUtil.expandAll(myTree);
+      task.run();
     }
     finally {
       expandingAll = false;
@@ -993,16 +998,18 @@ public class UsageViewImpl implements UsageViewEx {
   }
 
   private void collapseAll() {
-    ApplicationManager.getApplication().assertIsDispatchThread();
-    fireEvents();
-    TreeUtil.collapseAll(myTree, 3);
-    TreeUtil.expand(myTree, 2);
+    processAllOnEDT(() -> {
+      TreeUtil.collapseAll(myTree, 3);
+      TreeUtil.expand(myTree, 2);
+    });
+  }
+
+  private void expandTree(int levels) {
+    processAllOnEDT(() -> TreeUtil.expand(myTree, levels));
   }
 
   void expandRoot() {
-    ApplicationManager.getApplication().assertIsDispatchThread();
-    fireEvents();
-    TreeUtil.expand(myTree, 1);
+    expandTree(1);
   }
 
   @NotNull
@@ -1083,11 +1090,7 @@ public class UsageViewImpl implements UsageViewEx {
     myModel.reset();
     if (!myPresentation.isDetachedMode()) {
       //noinspection SSBasedInspection
-      SwingUtilities.invokeLater(() -> {
-        if (isDisposed) return;
-        fireEvents();
-        TreeUtil.expand(myTree, 2);
-      });
+      SwingUtilities.invokeLater(() -> expandTree(2));
     }
   }
 
