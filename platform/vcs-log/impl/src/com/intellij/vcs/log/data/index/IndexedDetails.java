@@ -16,6 +16,7 @@
 package com.intellij.vcs.log.data.index;
 
 import com.intellij.vcs.log.Hash;
+import com.intellij.vcs.log.VcsUser;
 import com.intellij.vcs.log.data.LoadingDetails;
 import com.intellij.vcs.log.data.VcsLogStorage;
 import org.jetbrains.annotations.NotNull;
@@ -74,5 +75,21 @@ public class IndexedDetails extends LoadingDetails {
   @Override
   public List<Hash> getParents() {
     return myDataGetter.getParents(myCommitIndex);
+  }
+
+  @NotNull
+  @Override
+  public VcsUser getAuthor() {
+    VcsUser author = myDataGetter.getAuthor(myCommitIndex);
+    if (author != null) return author;
+    return super.getAuthor();
+  }
+
+  @NotNull
+  @Override
+  public VcsUser getCommitter() {
+    VcsUser author = myDataGetter.getAuthor(myCommitIndex);
+    if (author != null) return author;
+    return super.getCommitter();
   }
 }

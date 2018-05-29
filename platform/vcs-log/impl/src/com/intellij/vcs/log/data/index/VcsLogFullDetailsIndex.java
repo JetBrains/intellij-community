@@ -27,6 +27,7 @@ import com.intellij.vcs.log.VcsFullCommitDetails;
 import com.intellij.vcs.log.impl.FatalErrorHandler;
 import gnu.trove.TIntHashSet;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
 import java.io.IOException;
@@ -109,6 +110,14 @@ public class VcsLogFullDetailsIndex<T> implements Disposable {
     return myMapReduceIndex.getData(key).forEach((id, value) -> consumer.test(value, id));
   }
 
+  @Nullable
+  protected Collection<Integer> getKeysForCommit(int commit) throws IOException {
+    MapBasedForwardIndex<Integer, T, Collection<Integer>> index = myMapReduceIndex.getForwardIndex();
+    if (index == null) return null;
+
+    return index.getInput(commit);
+  }
+
   public void update(int commitId, @NotNull VcsFullCommitDetails details) {
     checkDisposed();
     myMapReduceIndex.update(commitId, details).compute();
@@ -146,6 +155,14 @@ public class VcsLogFullDetailsIndex<T> implements Disposable {
                                                new IntCollectionDataExternalizer(), Page.PAGE_SIZE);
               }
             } : new EmptyForwardIndex<>());
+    }
+
+    @Nullable
+    public MapBasedForwardIndex<Integer, T, Collection<Integer>> getForwardIndex() {
+      if (myForwardIndex instanceof MapBasedForwardIndex) {
+        return ((MapBasedForwardIndex<Integer, T, Collection<Integer>>)myForwardIndex);
+      }
+      return null;
     }
 
     @Override

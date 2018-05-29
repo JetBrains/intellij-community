@@ -273,6 +273,11 @@ public class IndexDataGetter {
     return TroveUtil.intersect(filteredByMessage, filteredByPath, filteredByUser);
   }
 
+  @Nullable
+  public VcsUser getAuthor(int commit) {
+    return executeAndCatch(() -> myIndexStorage.users.getAuthorForCommit(commit));
+  }
+
   private void processRuntimeException(@NotNull RuntimeException e) {
     if (e instanceof ProcessCanceledException) throw e;
     myIndexStorage.markCorrupted();
