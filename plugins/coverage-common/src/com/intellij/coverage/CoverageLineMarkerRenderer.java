@@ -298,7 +298,7 @@ public class CoverageLineMarkerRenderer implements ActiveGutterRenderer, LineMar
     }
 
     protected int next(final int idx, int size) {
-      if (idx == 0) return size - 1;
+      if (idx <= 0) return size - 1;
       return idx - 1;
     }
 
