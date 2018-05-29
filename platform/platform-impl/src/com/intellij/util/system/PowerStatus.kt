@@ -30,7 +30,11 @@ private fun getWindowsPowerStatus(): PowerStatus {
   if (!JnaLoader.isLoaded()) return PowerStatus.UNKNOWN
   val systemPowerStatus = SYSTEM_POWER_STATUS()
   if (!kernel32.GetSystemPowerStatus(systemPowerStatus)) return PowerStatus.UNKNOWN
-  return if (systemPowerStatus.ACLineStatus.toInt() == 1) PowerStatus.AC_POWER else PowerStatus.BATTERY
+  return when(systemPowerStatus.ACLineStatus.toInt()) {
+    1 -> PowerStatus.AC_POWER
+    0 -> PowerStatus.BATTERY
+    else -> PowerStatus.UNKNOWN
+  }
 }
 
 class SYSTEM_POWER_STATUS : Structure() {
