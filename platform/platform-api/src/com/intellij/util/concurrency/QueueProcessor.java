@@ -73,9 +73,13 @@ public class QueueProcessor<T> {
 
   @NotNull
   private static <T> PairConsumer<T, Runnable> wrappingProcessor(@NotNull final Consumer<T> processor) {
-    return (item, runnable) -> {
-      runSafely(() -> processor.consume(item));
-      runnable.run();
+    return (item, continuation) -> {
+      try {
+        runSafely(() -> processor.consume(item));
+      }
+      finally {
+        continuation.run();
+      }
     };
   }
 
