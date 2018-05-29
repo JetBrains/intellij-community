@@ -37,13 +37,17 @@ public class PythonRunConfiguration extends AbstractPythonRunConfiguration
   public static final String SHOW_COMMAND_LINE = "SHOW_COMMAND_LINE";
   public static final String EMULATE_TERMINAL = "EMULATE_TERMINAL";
   public static final String MODULE_MODE = "MODULE_MODE";
+  public static final String REDIRECT_INPUT = "REDIRECT_INPUT";
+  public static final String INPUT_FILE = "INPUT_FILE";
 
   private String myScriptName;
   private String myScriptParameters;
   private boolean myShowCommandLineAfterwards = false;
   private boolean myEmulateTerminal = false;
   private boolean myModuleMode = false;
+  @NotNull private String myInputFile = "";
   private final Pattern myQualifiedNameRegex = Pattern.compile("^[a-zA-Z0-9._]+[a-zA-Z0-9_]$");
+  private boolean myRedirectInput = false;
 
   protected PythonRunConfiguration(Project project, ConfigurationFactory configurationFactory) {
     super(project, configurationFactory);
@@ -125,6 +129,8 @@ public class PythonRunConfiguration extends AbstractPythonRunConfiguration
     myShowCommandLineAfterwards = Boolean.parseBoolean(JDOMExternalizerUtil.readField(element, SHOW_COMMAND_LINE, "false"));
     myEmulateTerminal = Boolean.parseBoolean(JDOMExternalizerUtil.readField(element, EMULATE_TERMINAL, "false"));
     myModuleMode = Boolean.parseBoolean(JDOMExternalizerUtil.readField(element, MODULE_MODE, "false"));
+    myRedirectInput = Boolean.parseBoolean(JDOMExternalizerUtil.readField(element, REDIRECT_INPUT, "false"));
+    myInputFile  = JDOMExternalizerUtil.readField(element, INPUT_FILE, "");
   }
 
   public void writeExternal(@NotNull Element element) throws WriteExternalException {
@@ -134,6 +140,8 @@ public class PythonRunConfiguration extends AbstractPythonRunConfiguration
     JDOMExternalizerUtil.writeField(element, SHOW_COMMAND_LINE, Boolean.toString(myShowCommandLineAfterwards));
     JDOMExternalizerUtil.writeField(element, EMULATE_TERMINAL, Boolean.toString(myEmulateTerminal));
     JDOMExternalizerUtil.writeField(element, MODULE_MODE, Boolean.toString(myModuleMode));
+    JDOMExternalizerUtil.writeField(element, REDIRECT_INPUT, Boolean.toString(myRedirectInput));
+    JDOMExternalizerUtil.writeField(element, INPUT_FILE, myInputFile);
   }
 
   public AbstractPythonRunConfigurationParams getBaseParams() {
@@ -147,6 +155,8 @@ public class PythonRunConfiguration extends AbstractPythonRunConfiguration
     target.setScriptParameters(source.getScriptParameters());
     target.setShowCommandLineAfterwards(source.showCommandLineAfterwards());
     target.setEmulateTerminal(source.emulateTerminal());
+    target.setRedirectInput(source.isRedirectInput());
+    target.setInputFile(source.getInputFile());
   }
 
   @Override
@@ -186,5 +196,26 @@ public class PythonRunConfiguration extends AbstractPythonRunConfiguration
   @Override
   public void setModuleMode(boolean moduleMode) {
     myModuleMode = moduleMode;
+  }
+
+  @NotNull
+  @Override
+  public String getInputFile() {
+    return myInputFile;
+  }
+
+  @Override
+  public void setInputFile(@NotNull String inputFile) {
+    myInputFile = inputFile;
+  }
+
+  @Override
+  public boolean isRedirectInput() {
+    return myRedirectInput;
+  }
+
+  @Override
+  public void setRedirectInput(boolean isRedirectInput) {
+    myRedirectInput = isRedirectInput;
   }
 }

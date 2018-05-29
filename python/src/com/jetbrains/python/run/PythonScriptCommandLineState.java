@@ -46,6 +46,8 @@ import com.jetbrains.python.sdk.PythonEnvUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.io.File;
+import java.util.List;
 import java.util.Map;
 
 /**
@@ -194,6 +196,10 @@ public class PythonScriptCommandLineState extends PythonCommandLineState {
 
     if (!StringUtil.isEmptyOrSpaces(myConfig.getWorkingDirectory())) {
       commandLine.setWorkDirectory(myConfig.getWorkingDirectory());
+    }
+    String inputFile = myConfig.getInputFile();
+    if (myConfig.isRedirectInput() && !StringUtil.isEmptyOrSpaces(inputFile)) {
+      commandLine.withInput(new File(inputFile));
     }
   }
 
