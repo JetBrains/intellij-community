@@ -202,7 +202,11 @@ public class TouchBarsManager {
     // NOTE: WindowEvent.WINDOW_GAINED_FOCUS can be fired when frame focuse
     if (e.getID() == FocusEvent.FOCUS_GAINED) {
       ourProjectData.forEach((project, data) -> {
-        final ToolWindow dtw = ToolWindowManagerEx.getInstanceEx(project).getToolWindow(ToolWindowId.DEBUG);
+        final ToolWindowManagerEx twm = ToolWindowManagerEx.getInstanceEx(project);
+        if (twm == null)
+          return;
+
+        final ToolWindow dtw = twm.getToolWindow(ToolWindowId.DEBUG);
         if (dtw == null)
           return;
 
