@@ -30,6 +30,7 @@ import javax.swing.tree.TreeModel;
 import javax.swing.tree.TreePath;
 import javax.swing.tree.TreeSelectionModel;
 import java.util.List;
+import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
 
@@ -39,7 +40,7 @@ class DiscoveredTestsTree extends Tree implements DataProvider {
   public DiscoveredTestsTree(String title) {
     myModel = new DiscoveredTestsTreeModel();
     setModel(new AsyncTreeModel(myModel));
-    HintUpdateSupply.installSimpleHintUpdateSupply(this);
+    HintUpdateSupply.installHintUpdateSupply(this, DiscoveredTestsTree::obj2psi);
     TreeUIHelper.getInstance().installTreeSpeedSearch(this, o -> {
       Object component = o.getLastPathComponent();
       return component instanceof PsiMember ? ((PsiMember)component).getName() : null;
@@ -116,9 +117,18 @@ class DiscoveredTestsTree extends Tree implements DataProvider {
     return myModel.getTestMethods();
   }
 
+  @Nullable
   public PsiElement getSelectedElement() {
     TreePath path = getSelectionModel().getSelectionPath();
-    return ObjectUtils.tryCast(path == null ? null : path.getLastPathComponent(), PsiElement.class);
+    return obj2psi(path == null ? null : path.getLastPathComponent());
+  }
+
+  @Nullable
+  private static PsiElement obj2psi(@Nullable Object obj) {
+    return Optional.ofNullable(ObjectUtils.tryCast(obj, DiscoveredTestsTreeModel.Node.class))
+                   .map(n -> n.getPointer())
+                   .map(p -> p.getElement())
+                   .orElse(null);
   }
 
   public int getTestCount() {
@@ -133,18 +143,19 @@ class DiscoveredTestsTree extends Tree implements DataProvider {
       List<PsiElement> result = ContainerUtil.newSmartList();
       TreeModel model = getModel();
       for (TreePath p : paths) {
-        Object e = p.getLastPathComponent();
+        Object o = p.getLastPathComponent();
+        PsiElement e = obj2psi(o);
         if (e instanceof PsiMethod) {
-          result.add((PsiMethod)e);
+          result.add(e);
         }
         else {
           int count = model.getChildCount(e);
-          if (count == 0 && e instanceof PsiElement) {
-            result.add((PsiElement)e);
+          if (count == 0 && e != null) {
+            result.add(e);
           }
           else {
             for (int i = 0; i < count; i++) {
-              ContainerUtil.addIfNotNull(result, ObjectUtils.tryCast(model.getChild(e, i), PsiMethod.class));
+              ContainerUtil.addIfNotNull(result, ObjectUtils.tryCast(obj2psi(model.getChild(e, i)), PsiMethod.class));
             }
           }
         }
