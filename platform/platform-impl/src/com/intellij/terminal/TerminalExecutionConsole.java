@@ -17,10 +17,7 @@ package com.intellij.terminal;
 
 import com.intellij.execution.filters.Filter;
 import com.intellij.execution.filters.HyperlinkInfo;
-import com.intellij.execution.process.ProcessAdapter;
-import com.intellij.execution.process.ProcessEvent;
-import com.intellij.execution.process.ProcessHandler;
-import com.intellij.execution.process.ProcessOutputTypes;
+import com.intellij.execution.process.*;
 import com.intellij.execution.ui.ConsoleView;
 import com.intellij.execution.ui.ConsoleViewContentType;
 import com.intellij.execution.ui.ObservableConsoleView;
@@ -46,6 +43,7 @@ import com.jediterm.terminal.model.TerminalTextBuffer;
 import com.jediterm.terminal.ui.TerminalSession;
 import com.jediterm.terminal.ui.settings.SettingsProvider;
 import com.jediterm.terminal.util.CharUtils;
+import com.pty4j.PtyProcess;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -356,5 +354,9 @@ public class TerminalExecutionConsole implements ConsoleView, ObservableConsoleV
   @Override
   public void dispose() {
     myTerminalWidget = null;
+  }
+
+  public static boolean isAcceptable(@NotNull ProcessHandler processHandler) {
+    return processHandler instanceof OSProcessHandler && ((OSProcessHandler)processHandler).getProcess() instanceof PtyProcess;
   }
 }
