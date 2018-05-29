@@ -19,8 +19,6 @@ class CircletReviewsToolWindowFactory : ToolWindowFactory, DumbAware {
 
         val contentManager = toolWindow.contentManager
 
-        contentManager.addContent(content)
-
         contentManager.addContentManagerListener(object : ContentManagerAdapter() {
             override fun contentAdded(event: ContentManagerEvent) {
                 content.updateDisplayName()
@@ -31,8 +29,10 @@ class CircletReviewsToolWindowFactory : ToolWindowFactory, DumbAware {
             }
         })
 
+        val toolWindowVisible = toolWindow.isVisible
+
         project.toolWindowManagerEx.addToolWindowManagerListener(object : ToolWindowManagerAdapter() {
-            private var previouslyVisible = toolWindow.isVisible
+            private var previouslyVisible = toolWindowVisible
 
             override fun stateChanged() {
                 val visible = project.reviewsToolWindow?.isVisible ?: return
@@ -44,6 +44,12 @@ class CircletReviewsToolWindowFactory : ToolWindowFactory, DumbAware {
                 previouslyVisible = visible
             }
         })
+
+        contentManager.addContent(content)
+
+        if (toolWindowVisible) {
+            panel.reload()
+        }
     }
 
     companion object {
