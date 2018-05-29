@@ -241,7 +241,11 @@ public class GitUpdateProcess {
         notifyImportantError(myProject, "Error updating " + rootName,
                              "Updating " + rootName + " failed with an error: " + e.getLocalizedMessage());
       }
-    });
+    }) {
+      protected boolean shouldNotifyLocalChangesAreNotRestored() {
+        return unstashAfterUpdate();
+      }
+    };
     myPreservingProcess.execute(() -> {
       if (!unstashAfterUpdate()) return false;
 
