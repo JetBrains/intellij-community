@@ -26,9 +26,11 @@ class RobotTestRule: ExternalResource() {
   override fun before() {
     myRobot = SmartWaitRobot() // acquires ScreenLock
 //    myRobot!!.settings().delayBetweenEvents(30)
+    GuiRobot.initializeRobot(myRobot!!)
   }
 
   override fun after() {
+    GuiRobot.releaseRobot()
     myRobot!!.cleanUpWithoutDisposingWindows()  // releases ScreenLock
   }
 

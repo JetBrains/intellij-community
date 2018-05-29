@@ -55,11 +55,7 @@ class GuiTestRule : TestRule {
 
   var CREATE_NEW_PROJECT_ACTION_NAME: String = "Create New Project"
 
-  private val myRobotTestRule: RobotTestRule by lazy {
-    val robotTestRule = RobotTestRule()
-    GuiRobot.initializeRobot(robotTestRule.getRobot())
-    return@lazy robotTestRule
-  }
+  private val myRobotTestRule = RobotTestRule()
   private val myFatalErrorsFlusher = FatalErrorsFlusher()
   private var myProjectPath: File? = null
     set

@@ -12,4 +12,8 @@ object GuiRobot {
     if (_robot != null) throw IllegalStateException("Robot already has been initialized")
     else _robot = robot
   }
+
+  fun releaseRobot() {
+    _robot = null
+  }
 }
