@@ -19,7 +19,7 @@ class GrUnnecessaryAliasInspection : GroovySuppressableInspectionTool(), Cleanup
     private val fix = RemoveElementQuickFix(message("unnecessary.alias.fix"))
   }
 
-  override fun buildVisitor(holder: ProblemsHolder, isOnTheFly: Boolean) = object : PsiElementVisitor() {
+  override fun buildVisitor(holder: ProblemsHolder, isOnTheFly: Boolean): PsiElementVisitor = object : PsiElementVisitor() {
 
     override fun visitElement(element: PsiElement) {
       val alias = element as? GrImportAlias ?: return

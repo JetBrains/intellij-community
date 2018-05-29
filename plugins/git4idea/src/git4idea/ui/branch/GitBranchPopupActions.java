@@ -44,11 +44,13 @@ import org.jetbrains.annotations.Nullable;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
+import java.util.Set;
 
 import static com.intellij.dvcs.ui.BranchActionGroupPopup.wrapWithMoreActionIfNeeded;
 import static com.intellij.dvcs.ui.BranchActionUtil.FAVORITE_BRANCH_COMPARATOR;
 import static com.intellij.dvcs.ui.BranchActionUtil.getNumOfTopShownBranches;
 import static com.intellij.util.ObjectUtils.notNull;
+import static com.intellij.util.containers.ContainerUtil.map2Set;
 import static git4idea.GitStatisticsCollectorKt.reportUsage;
 import static git4idea.GitUtil.HEAD;
 import static git4idea.branch.GitBranchType.LOCAL;
@@ -551,7 +553,8 @@ class GitBranchPopupActions {
 
     public MergeAction(@NotNull Project project, @NotNull List<GitRepository> repositories, @NotNull String branchName,
                        boolean localBranch) {
-      super("Merge into Current");
+      super("Merge into Current",
+            String.format("Merge %s into %s", getBranchPresentation(branchName), getCurrentBranchPresentation(repositories)), null);
       myProject = project;
       myRepositories = repositories;
       myBranchName = branchName;
@@ -579,7 +582,8 @@ class GitBranchPopupActions {
     private final String myBranchName;
 
     public RebaseAction(@NotNull Project project, @NotNull List<GitRepository> repositories, @NotNull String branchName) {
-      super("Rebase Current onto Selected");
+      super("Rebase Current onto Selected",
+            String.format("Rebase %s onto %s", getCurrentBranchPresentation(repositories), getBranchPresentation(branchName)), null);
       myProject = project;
       myRepositories = repositories;
       myBranchName = branchName;
@@ -599,8 +603,10 @@ class GitBranchPopupActions {
     private final String myBranchName;
 
     public CheckoutWithRebaseAction(@NotNull Project project, @NotNull List<GitRepository> repositories, @NotNull String branchName) {
-      super("Checkout with Rebase", "Checkout the given branch, and rebase it on current branch in one step, " +
-                                    "just like `git rebase HEAD " + branchName + "` would do.", null);
+      super("Checkout with Rebase",
+            String.format("Checkout %s, and rebase it onto %s in one step (like `git rebase HEAD %s`)",
+                          getBranchPresentation(branchName), getCurrentBranchPresentation(repositories), branchName),
+            null);
       myProject = project;
       myRepositories = repositories;
       myBranchName = branchName;
@@ -612,5 +618,17 @@ class GitBranchPopupActions {
       brancher.rebaseOnCurrent(myRepositories, myBranchName);
       reportUsage("git.branch.checkout.with.rebase");
     }
+  }
+
+  @Nullable
+  private static String getCurrentBranchPresentation(@NotNull Collection<GitRepository> repositories) {
+    Set<String> currentBranches = map2Set(repositories, Repository::getCurrentBranchName);
+    if (currentBranches.size() == 1) return getBranchPresentation(currentBranches.iterator().next());
+    return "current branch";
+  }
+
+  @Nullable
+  private static String getBranchPresentation(@NotNull String branch) {
+    return String.format("'%s'", branch);
   }
 }

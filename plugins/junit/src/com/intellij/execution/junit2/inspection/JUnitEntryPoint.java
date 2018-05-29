@@ -84,7 +84,7 @@ public class JUnitEntryPoint extends EntryPointWithVisibilityLevel {
       return PsiUtil.ACCESS_LEVEL_PACKAGE_LOCAL;
     }
 
-    return -1;
+    return ACCESS_LEVEL_INVALID;
   }
 
   @Override

@@ -63,10 +63,11 @@ public class CompoundPositionManager extends PositionManagerEx implements MultiR
   }
 
   private <T> T iterate(Processor<T> processor, T defaultValue, SourcePosition position, boolean ignorePCE) {
+    FileType fileType = position != null ? position.getFile().getFileType() : null;
     for (PositionManager positionManager : myPositionManagers) {
-      if (position != null) {
+      if (fileType != null) {
         Set<? extends FileType> types = positionManager.getAcceptedFileTypes();
-        if (types != null && !types.contains(position.getFile().getFileType())) {
+        if (types != null && !types.contains(fileType)) {
           continue;
         }
       }

@@ -174,10 +174,11 @@ public class GitFileUtils {
     GitBinaryHandler h = new GitBinaryHandler(project, root, GitCommand.CAT_FILE);
     h.setSilent(true);
     if (CAT_FILE_SUPPORTS_TEXTCONV.existsIn(project) &&
-        Registry.is("git.use.textconv")) {
+        Registry.is("git.read.content.with.textconv")) {
       h.addParameters("--textconv");
     }
-    else if (CAT_FILE_SUPPORTS_FILTERS.existsIn(project)) {
+    else if (CAT_FILE_SUPPORTS_FILTERS.existsIn(project) &&
+             Registry.is("git.read.content.with.filters")) {
       h.addParameters("--filters");
     }
     else {

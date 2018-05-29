@@ -16,6 +16,7 @@ import com.intellij.openapi.vfs.VirtualFile
 import git4idea.repo.GitRemote
 import git4idea.repo.GitRepository
 import org.jetbrains.plugins.github.authentication.GithubAuthenticationManager
+import org.jetbrains.plugins.github.exceptions.GithubMissingTokenException
 import java.io.IOException
 import java.net.UnknownHostException
 import java.util.concurrent.ScheduledFuture
@@ -27,10 +28,10 @@ import java.util.concurrent.TimeUnit
 object GithubUtil {
 
   @JvmField
-  val LOG = Logger.getInstance("github")
-  const val SERVICE_DISPLAY_NAME = "GitHub"
-  const val DEFAULT_TOKEN_NOTE = "IntelliJ Plugin"
-  const val GIT_AUTH_PASSWORD_SUBSTITUTE = "x-oauth-basic"
+  val LOG: Logger = Logger.getInstance("github")
+  const val SERVICE_DISPLAY_NAME: String = "GitHub"
+  const val DEFAULT_TOKEN_NOTE: String = "IntelliJ Plugin"
+  const val GIT_AUTH_PASSWORD_SUBSTITUTE: String = "x-oauth-basic"
 
   @JvmStatic
   fun addCancellationListener(run: () -> Unit): ScheduledFuture<*> {
@@ -118,9 +119,8 @@ object GithubUtil {
       GithubAuthDataHolder(GithubAuthData.createAnonymous(account.server.toString()))
     }
     else {
-      GithubAuthDataHolder(GithubAuthData.createTokenAuth(account.server.toString(),
-                                                          authManager.getTokenForAccount(account),
-                                                          true))
+      val token = authManager.getTokenForAccount(account) ?: throw GithubMissingTokenException(account)
+      GithubAuthDataHolder(GithubAuthData.createTokenAuth(account.server.toString(), token, true))
     }
   }
 

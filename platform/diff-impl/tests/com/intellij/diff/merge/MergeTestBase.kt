@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.diff.merge
 
 import com.intellij.diff.DiffContentFactoryImpl
@@ -24,7 +10,6 @@ import com.intellij.diff.util.DiffUtil
 import com.intellij.diff.util.Side
 import com.intellij.diff.util.TextDiffType
 import com.intellij.diff.util.ThreeSide
-import com.intellij.idea.ActionsBundle
 import com.intellij.openapi.actionSystem.ActionPlaces
 import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.AnActionEvent
@@ -99,11 +84,10 @@ abstract class MergeTestBase : HeavyDiffTestCase() {
     //
 
     fun runApplyNonConflictsAction(side: ThreeSide) {
-      runActionById(side.select("Diff.ApplyNonConflicts.Left", "Diff.ApplyNonConflicts", "Diff.ApplyNonConflicts.Right")!!)
+      runActionById(side.select("Left", "All", "Right")!!)
     }
 
-    private fun runActionById(id: String): Boolean {
-      val text = ActionsBundle.actionText(id)
+    private fun runActionById(text: String): Boolean {
       val action = actions.filter { text == it.templatePresentation.text }.single()
       return runAction(action)
     }

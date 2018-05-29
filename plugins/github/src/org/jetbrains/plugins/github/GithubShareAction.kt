@@ -119,7 +119,10 @@ class GithubShareAction : DumbAwareAction("Share Project on GitHub", "Easily sha
       if (!authManager.ensureHasAccounts(project)) return
       val accounts = authManager.getAccounts()
 
+      val apiTaskExecutor = service<GithubApiTaskExecutor>()
+      val accountInformationProvider = service<GithubAccountInformationProvider>()
       val gitHelper = service<GithubGitHelper>()
+      val git = service<Git>()
 
       // pre-load list of user repositories and flag for private repo creation
       object : Task.Modal(project, "Accessing Github", true) {
@@ -133,10 +136,9 @@ class GithubShareAction : DumbAwareAction("Share Project on GitHub", "Easily sha
 
         @Throws(IOException::class)
         private fun loadAccountInfo(indicator: ProgressIndicator, account: GithubAccount): Pair<Boolean, Set<String>> {
-          val provider = service<GithubAccountInformationProvider>()
-          return service<GithubApiTaskExecutor>().execute(indicator, account, GithubTask { connection ->
+          return apiTaskExecutor.execute(indicator, account, GithubTask { connection ->
             // ability to create private repos and list of repos
-            val user = provider.getAccountInformation(account, connection)
+            val user = GithubApiUtil.getCurrentUser(connection)
             val canCreatePrivateRepo = user.canCreatePrivateRepo()
             val names = GithubApiUtil.getUserRepos(connection).mapSmartSet { it.name }
             canCreatePrivateRepo to names
@@ -161,9 +163,7 @@ class GithubShareAction : DumbAwareAction("Share Project on GitHub", "Easily sha
             return
           }
 
-          doShare(project,
-                  gitRepository,
-                  shareDialog.getRepositoryName(),
+          doShare(shareDialog.getRepositoryName(),
                   shareDialog.isPrivate(),
                   shareDialog.getRemoteName(),
                   shareDialog.getDescription(),
@@ -173,184 +173,181 @@ class GithubShareAction : DumbAwareAction("Share Project on GitHub", "Easily sha
         override fun onThrowable(error: Throwable) {
           GithubNotifications.showErrorDialog(project, "Failed to Connect to GitHub", error)
         }
-      }.queue()
-    }
 
-    private fun doShare(project: Project,
-                        gitRepository: GitRepository?,
-                        name: String,
-                        isPrivate: Boolean,
-                        remoteName: String,
-                        description: String,
-                        account: GithubAccount) {
-      val accountInformationProvider = service<GithubAccountInformationProvider>()
-      val gitHelper = service<GithubGitHelper>()
-      val git = service<Git>()
-      object : Task.Backgroundable(project, "Sharing Project on GitHub...") {
-        private lateinit var url: String
+        private fun doShare(name: String,
+                            isPrivate: Boolean,
+                            remoteName: String,
+                            description: String,
+                            account: GithubAccount) {
 
-        override fun run(indicator: ProgressIndicator) {
-          // create GitHub repo (network)
-          LOG.info("Creating GitHub repository")
-          indicator.text = "Creating GitHub repository..."
-          url = service<GithubApiTaskExecutor>()
-            .execute(indicator, account, GithubTask { c -> GithubApiUtil.createRepo(c, name, description, isPrivate).htmlUrl })
-          LOG.info("Successfully created GitHub repository")
+          object : Task.Backgroundable(project, "Sharing Project on GitHub...") {
+            private lateinit var url: String
 
-          val root = gitRepository?.root ?: project.baseDir
-          // creating empty git repo if git is not initialized
-          LOG.info("Binding local project with GitHub")
-          if (gitRepository == null) {
-            LOG.info("No git detected, creating empty git repo")
-            indicator.text = "Creating empty git repo..."
-            if (!createEmptyGitRepository(project, root)) {
-              return
-            }
-          }
+            override fun run(indicator: ProgressIndicator) {
+              // create GitHub repo (network)
+              LOG.info("Creating GitHub repository")
+              indicator.text = "Creating GitHub repository..."
+              url = apiTaskExecutor
+                .execute(indicator, account, GithubTask { c -> GithubApiUtil.createRepo(c, name, description, isPrivate).htmlUrl })
+              LOG.info("Successfully created GitHub repository")
 
-          val repositoryManager = GitUtil.getRepositoryManager(project)
-          val repository = repositoryManager.getRepositoryForRoot(root)
-          if (repository == null) {
-            GithubNotifications.showError(project, "Failed to create GitHub Repository", "Can't find Git repository")
-            return
-          }
-
-          indicator.text = "Retrieving username..."
-          val username = accountInformationProvider.getAccountInformation(indicator, account).login
-          val remoteUrl = gitHelper.getRemoteUrl(account.server, username, name)
-
-          //git remote add origin git@github.com:login/name.git
-          LOG.info("Adding GitHub as a remote host")
-          indicator.text = "Adding GitHub as a remote host..."
-          git.addRemote(repository, remoteName, remoteUrl).getOutputOrThrow()
-          repository.update()
-
-          // create sample commit for binding project
-          if (!performFirstCommitIfRequired(project, root, repository, indicator, name, url)) {
-            return
-          }
-
-          //git push origin master
-          LOG.info("Pushing to github master")
-          indicator.text = "Pushing to github master..."
-          if (!pushCurrentBranch(project, repository, remoteName, remoteUrl, name, url)) {
-            return
-          }
-
-          GithubNotifications.showInfoURL(project, "Successfully shared project on GitHub", name, url)
-        }
-
-        private fun createEmptyGitRepository(project: Project,
-                                             root: VirtualFile): Boolean {
-          val result = Git.getInstance().init(project, root)
-          if (!result.success()) {
-            VcsNotifier.getInstance(project).notifyError(GitBundle.getString("initializing.title"), result.errorOutputAsHtmlString)
-            LOG.info("Failed to create empty git repo: " + result.errorOutputAsJoinedString)
-            return false
-          }
-          GitInit.refreshAndConfigureVcsMappings(project, root, root.path)
-          return true
-        }
-
-        private fun performFirstCommitIfRequired(project: Project,
-                                                 root: VirtualFile,
-                                                 repository: GitRepository,
-                                                 indicator: ProgressIndicator,
-                                                 name: String,
-                                                 url: String): Boolean {
-          // check if there is no commits
-          if (!repository.isFresh) {
-            return true
-          }
-
-          LOG.info("Trying to commit")
-          try {
-            LOG.info("Adding files for commit")
-            indicator.text = "Adding files to git..."
-
-            // ask for files to add
-            val trackedFiles = ChangeListManager.getInstance(project).affectedFiles
-            val untrackedFiles = filterOutIgnored(project, repository.untrackedFilesHolder.retrieveUntrackedFiles())
-            trackedFiles.removeAll(untrackedFiles) // fix IDEA-119855
-
-            val allFiles = ArrayList<VirtualFile>()
-            allFiles.addAll(trackedFiles)
-            allFiles.addAll(untrackedFiles)
-
-            val dialog = invokeAndWaitIfNeed(indicator.modalityState) {
-              GithubUntrackedFilesDialog(project, allFiles).apply {
-                if (!trackedFiles.isEmpty()) {
-                  selectedFiles = trackedFiles
+              val root = gitRepository?.root ?: project.baseDir
+              // creating empty git repo if git is not initialized
+              LOG.info("Binding local project with GitHub")
+              if (gitRepository == null) {
+                LOG.info("No git detected, creating empty git repo")
+                indicator.text = "Creating empty git repo..."
+                if (!createEmptyGitRepository(project, root)) {
+                  return
                 }
-                DialogManager.show(this)
               }
+
+              val repositoryManager = GitUtil.getRepositoryManager(project)
+              val repository = repositoryManager.getRepositoryForRoot(root)
+              if (repository == null) {
+                GithubNotifications.showError(project, "Failed to create GitHub Repository", "Can't find Git repository")
+                return
+              }
+
+              indicator.text = "Retrieving username..."
+              val username = apiTaskExecutor.execute(indicator, account, accountInformationProvider.usernameTask)
+              val remoteUrl = gitHelper.getRemoteUrl(account.server, username, name)
+
+              //git remote add origin git@github.com:login/name.git
+              LOG.info("Adding GitHub as a remote host")
+              indicator.text = "Adding GitHub as a remote host..."
+              git.addRemote(repository, remoteName, remoteUrl).getOutputOrThrow()
+              repository.update()
+
+              // create sample commit for binding project
+              if (!performFirstCommitIfRequired(project, root, repository, indicator, name, url)) {
+                return
+              }
+
+              //git push origin master
+              LOG.info("Pushing to github master")
+              indicator.text = "Pushing to github master..."
+              if (!pushCurrentBranch(project, repository, remoteName, remoteUrl, name, url)) {
+                return
+              }
+
+              GithubNotifications.showInfoURL(project, "Successfully shared project on GitHub", name, url)
             }
 
-            val files2commit = dialog.selectedFiles
-            if (!dialog.isOK || files2commit.isEmpty()) {
-              GithubNotifications.showInfoURL(project, "Successfully created empty repository on GitHub", name, url)
-              return false
+            private fun createEmptyGitRepository(project: Project,
+                                                 root: VirtualFile): Boolean {
+              val result = Git.getInstance().init(project, root)
+              if (!result.success()) {
+                VcsNotifier.getInstance(project).notifyError(GitBundle.getString("initializing.title"), result.errorOutputAsHtmlString)
+                LOG.info("Failed to create empty git repo: " + result.errorOutputAsJoinedString)
+                return false
+              }
+              GitInit.refreshAndConfigureVcsMappings(project, root, root.path)
+              return true
             }
 
-            val files2add = ContainerUtil.intersection(untrackedFiles, files2commit)
-            val files2rm = ContainerUtil.subtract(trackedFiles, files2commit)
-            val modified = HashSet(trackedFiles)
-            modified.addAll(files2commit)
+            private fun performFirstCommitIfRequired(project: Project,
+                                                     root: VirtualFile,
+                                                     repository: GitRepository,
+                                                     indicator: ProgressIndicator,
+                                                     name: String,
+                                                     url: String): Boolean {
+              // check if there is no commits
+              if (!repository.isFresh) {
+                return true
+              }
 
-            GitFileUtils.addFiles(project, root, files2add)
-            GitFileUtils.deleteFilesFromCache(project, root, files2rm)
+              LOG.info("Trying to commit")
+              try {
+                LOG.info("Adding files for commit")
+                indicator.text = "Adding files to git..."
 
-            // commit
-            LOG.info("Performing commit")
-            indicator.text = "Performing commit..."
-            val handler = GitLineHandler(project, root, GitCommand.COMMIT)
-            handler.setStdoutSuppressed(false)
-            handler.addParameters("-m", dialog.commitMessage)
-            handler.endOptions()
-            Git.getInstance().runCommand(handler).getOutputOrThrow()
+                // ask for files to add
+                val trackedFiles = ChangeListManager.getInstance(project).affectedFiles
+                val untrackedFiles = filterOutIgnored(project, repository.untrackedFilesHolder.retrieveUntrackedFiles())
+                trackedFiles.removeAll(untrackedFiles) // fix IDEA-119855
 
-            VcsFileUtil.markFilesDirty(project, modified)
-          }
-          catch (e: VcsException) {
-            LOG.warn(e)
-            GithubNotifications.showErrorURL(project, "Can't finish GitHub sharing process", "Successfully created project ", "'$name'",
-                                             " on GitHub, but initial commit failed:<br/>" + GithubUtil.getErrorTextFromException(e), url)
-            return false
-          }
+                val allFiles = ArrayList<VirtualFile>()
+                allFiles.addAll(trackedFiles)
+                allFiles.addAll(untrackedFiles)
 
-          LOG.info("Successfully created initial commit")
-          return true
-        }
+                val dialog = invokeAndWaitIfNeed(indicator.modalityState) {
+                  GithubUntrackedFilesDialog(project, allFiles).apply {
+                    if (!trackedFiles.isEmpty()) {
+                      selectedFiles = trackedFiles
+                    }
+                    DialogManager.show(this)
+                  }
+                }
 
-        private fun filterOutIgnored(project: Project, files: Collection<VirtualFile>): Collection<VirtualFile> {
-          val changeListManager = ChangeListManager.getInstance(project)
-          val vcsManager = ProjectLevelVcsManager.getInstance(project)
-          return ContainerUtil.filter(files) { file -> !changeListManager.isIgnoredFile(file) && !vcsManager.isIgnored(file) }
-        }
+                val files2commit = dialog.selectedFiles
+                if (!dialog.isOK || files2commit.isEmpty()) {
+                  GithubNotifications.showInfoURL(project, "Successfully created empty repository on GitHub", name, url)
+                  return false
+                }
 
-        private fun pushCurrentBranch(project: Project,
-                                      repository: GitRepository,
-                                      remoteName: String,
-                                      remoteUrl: String,
-                                      name: String,
-                                      url: String): Boolean {
-          val currentBranch = repository.currentBranch
-          if (currentBranch == null) {
-            GithubNotifications.showErrorURL(project, "Can't finish GitHub sharing process", "Successfully created project ", "'$name'",
-                                             " on GitHub, but initial push failed: no current branch", url)
-            return false
-          }
-          val result = git.push(repository, remoteName, remoteUrl, currentBranch.name, true)
-          if (!result.success()) {
-            GithubNotifications.showErrorURL(project, "Can't finish GitHub sharing process", "Successfully created project ", "'$name'",
-                                             " on GitHub, but initial push failed:<br/>" + result.errorOutputAsHtmlString, url)
-            return false
-          }
-          return true
-        }
+                val files2add = ContainerUtil.intersection(untrackedFiles, files2commit)
+                val files2rm = ContainerUtil.subtract(trackedFiles, files2commit)
+                val modified = HashSet(trackedFiles)
+                modified.addAll(files2commit)
 
-        override fun onThrowable(error: Throwable) {
-          GithubNotifications.showError(project, "Failed to create GitHub Repository", error)
+                GitFileUtils.addFiles(project, root, files2add)
+                GitFileUtils.deleteFilesFromCache(project, root, files2rm)
+
+                // commit
+                LOG.info("Performing commit")
+                indicator.text = "Performing commit..."
+                val handler = GitLineHandler(project, root, GitCommand.COMMIT)
+                handler.setStdoutSuppressed(false)
+                handler.addParameters("-m", dialog.commitMessage)
+                handler.endOptions()
+                Git.getInstance().runCommand(handler).getOutputOrThrow()
+
+                VcsFileUtil.markFilesDirty(project, modified)
+              }
+              catch (e: VcsException) {
+                LOG.warn(e)
+                GithubNotifications.showErrorURL(project, "Can't finish GitHub sharing process", "Successfully created project ", "'$name'",
+                                                 " on GitHub, but initial commit failed:<br/>" + GithubUtil.getErrorTextFromException(e),
+                                                 url)
+                return false
+              }
+
+              LOG.info("Successfully created initial commit")
+              return true
+            }
+
+            private fun filterOutIgnored(project: Project, files: Collection<VirtualFile>): Collection<VirtualFile> {
+              val changeListManager = ChangeListManager.getInstance(project)
+              val vcsManager = ProjectLevelVcsManager.getInstance(project)
+              return ContainerUtil.filter(files) { file -> !changeListManager.isIgnoredFile(file) && !vcsManager.isIgnored(file) }
+            }
+
+            private fun pushCurrentBranch(project: Project,
+                                          repository: GitRepository,
+                                          remoteName: String,
+                                          remoteUrl: String,
+                                          name: String,
+                                          url: String): Boolean {
+              val currentBranch = repository.currentBranch
+              if (currentBranch == null) {
+                GithubNotifications.showErrorURL(project, "Can't finish GitHub sharing process", "Successfully created project ", "'$name'",
+                                                 " on GitHub, but initial push failed: no current branch", url)
+                return false
+              }
+              val result = git.push(repository, remoteName, remoteUrl, currentBranch.name, true)
+              if (!result.success()) {
+                GithubNotifications.showErrorURL(project, "Can't finish GitHub sharing process", "Successfully created project ", "'$name'",
+                                                 " on GitHub, but initial push failed:<br/>" + result.errorOutputAsHtmlString, url)
+                return false
+              }
+              return true
+            }
+
+            override fun onThrowable(error: Throwable) {
+              GithubNotifications.showError(project, "Failed to create GitHub Repository", error)
+            }
+          }.queue()
         }
       }.queue()
     }

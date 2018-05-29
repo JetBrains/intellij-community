@@ -5,8 +5,10 @@ import com.intellij.lang.annotation.AnnotationHolder
 import org.jetbrains.plugins.groovy.GroovyBundle.message
 import org.jetbrains.plugins.groovy.lang.psi.GroovyElementTypes
 import org.jetbrains.plugins.groovy.lang.psi.GroovyElementVisitor
+import org.jetbrains.plugins.groovy.lang.psi.api.GrInExpression
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrAssignmentExpression
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrBinaryExpression
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrInstanceOfExpression
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.path.GrIndexProperty
 
 internal class GroovyAnnotatorPre30(private val holder: AnnotationHolder) : GroovyElementVisitor() {
@@ -17,6 +19,22 @@ internal class GroovyAnnotatorPre30(private val holder: AnnotationHolder) : Groo
     val tokenType = operator.node.elementType
     if (tokenType === GroovyElementTypes.T_ID || tokenType === GroovyElementTypes.T_NID) {
       holder.createErrorAnnotation(operator, message("operator.is.not.supported.in", tokenType))
+    }
+  }
+
+  override fun visitInExpression(expression: GrInExpression) {
+    super.visitInExpression(expression)
+    val negation = expression.negationToken
+    if (negation != null) {
+      holder.createErrorAnnotation(negation, message("unsupported.negated.in"))
+    }
+  }
+
+  override fun visitInstanceofExpression(expression: GrInstanceOfExpression) {
+    super.visitInstanceofExpression(expression)
+    val negation = expression.negationToken
+    if (negation != null) {
+      holder.createErrorAnnotation(negation, message("unsupported.negated.instanceof"))
     }
   }
 

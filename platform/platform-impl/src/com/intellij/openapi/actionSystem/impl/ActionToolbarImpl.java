@@ -134,6 +134,7 @@ public class ActionToolbarImpl extends JPanel implements ActionToolbar, QuickAct
   private JComponent myTargetComponent;
   private boolean myReservePlaceAutoPopupIcon = true;
   private boolean myAddSeparatorFirst;
+  private boolean myShowSeparatorTitles = false;
 
   public ActionToolbarImpl(String place,
                            @NotNull final ActionGroup actionGroup,
@@ -311,7 +312,7 @@ public class ActionToolbarImpl extends JPanel implements ActionToolbar, QuickAct
       if (action instanceof Separator) {
         if (isLastElementSeparator) continue;
         if (i > 0 && i < actions.size() - 1) {
-          add(new MySeparator(((Separator) action).getText()));
+          add(new MySeparator(myShowSeparatorTitles ? ((Separator) action).getText() : null));
           isLastElementSeparator = true;
           continue;
         }
@@ -1168,6 +1169,11 @@ public class ActionToolbarImpl extends JPanel implements ActionToolbar, QuickAct
   @Override
   public DataContext getToolbarDataContext() {
     return getDataContext();
+  }
+
+  @Override
+  public void setShowSeparatorTitles(boolean showSeparatorTitles) {
+    myShowSeparatorTitles = showSeparatorTitles;
   }
 
   protected DataContext getDataContext() {

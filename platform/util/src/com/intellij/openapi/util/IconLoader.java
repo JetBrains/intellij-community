@@ -289,8 +289,13 @@ public final class IconLoader {
 
   @Nullable
   public static Image toImage(@NotNull Icon icon) {
+    return toImage(icon, null);
+  }
+
+  @Nullable
+  public static Image toImage(@NotNull Icon icon, @Nullable ScaleContext ctx) {
     if (icon instanceof CachedImageIcon) {
-      icon = ((CachedImageIcon)icon).getRealIcon();
+      icon = ((CachedImageIcon)icon).getRealIcon(ctx);
     }
     if (icon instanceof ImageIcon) {
       return ((ImageIcon)icon).getImage();

@@ -350,7 +350,9 @@ public class DataFlowRunner {
       PsiClass aClass = ((DfaExpressionFactory.ThisSource)var.getSource()).getPsiElement();
       DfaValue value = factory.createTypeValue(var.getVariableType(), Nullness.NOT_NULL);
       if (method.getContainingClass() == aClass && MutationSignature.fromMethod(method).preservesThis()) {
-        return factory.withFact(value, DfaFactType.MUTABILITY, Mutability.UNMODIFIABLE);
+        // Unmodifiable view, because we cannot call mutating methods, but it's not guaranteed that all fields are stable
+        // as fields may not contribute to the visible state
+        return factory.withFact(value, DfaFactType.MUTABILITY, Mutability.UNMODIFIABLE_VIEW);
       }
       return null;
     }

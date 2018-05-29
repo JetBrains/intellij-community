@@ -15,7 +15,7 @@ import com.intellij.util.text.StringFactory;
 import org.jdom.*;
 import org.jdom.filter.Filter;
 import org.jdom.input.SAXBuilder;
-import org.jdom.input.SAXHandler;
+import org.jdom.input.sax.SAXHandler;
 import org.jdom.output.Format;
 import org.jdom.output.XMLOutputter;
 import org.jetbrains.annotations.Contract;

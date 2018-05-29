@@ -241,6 +241,7 @@ public interface CallMatcher extends Predicate<PsiMethodCallExpression> {
     @Contract("null -> false")
     public boolean methodMatches(PsiMethod method) {
       if (method == null) return false;
+      if (!myNames.contains(method.getName())) return false;
       PsiClass aClass = method.getContainingClass();
       if (aClass == null) return false;
       return myCallType.matches(aClass, myClassName, method.hasModifierProperty(PsiModifier.STATIC)) &&

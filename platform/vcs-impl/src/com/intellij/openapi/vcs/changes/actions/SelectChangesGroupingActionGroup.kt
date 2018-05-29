@@ -11,7 +11,7 @@ import com.intellij.ui.popup.list.PopupListElementRenderer
 import java.awt.Graphics
 
 class SelectChangesGroupingActionGroup : DefaultActionGroup(), DumbAware {
-  override fun canBePerformed(context: DataContext) = true
+  override fun canBePerformed(context: DataContext): Boolean = true
 
   override fun update(e: AnActionEvent) {
     e.presentation.isEnabled = e.getData(ChangesGroupingSupport.KEY) != null

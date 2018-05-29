@@ -27,12 +27,12 @@ open class UastBinaryExpressionWithTypeKind(val name: String) {
 
   companion object {
     @JvmField
-    val TYPE_CAST = TypeCast("as")
+    val TYPE_CAST: TypeCast = TypeCast("as")
 
     @JvmField
-    val INSTANCE_CHECK = InstanceCheck("is")
+    val INSTANCE_CHECK: InstanceCheck = InstanceCheck("is")
 
     @JvmField
-    val UNKNOWN = UastBinaryExpressionWithTypeKind("<unknown>")
+    val UNKNOWN: UastBinaryExpressionWithTypeKind = UastBinaryExpressionWithTypeKind("<unknown>")
   }
 }

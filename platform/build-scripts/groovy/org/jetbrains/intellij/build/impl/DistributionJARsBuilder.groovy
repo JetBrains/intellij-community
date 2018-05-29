@@ -142,6 +142,7 @@ class DistributionJARsBuilder {
       removeVersionFromProjectLibraryJarNames("Log4J")
       removeVersionFromProjectLibraryJarNames("jna")
       removeVersionFromProjectLibraryJarNames("jetbrains-annotations-java5")
+      removeVersionFromProjectLibraryJarNames("JDOM")
     }
   }
 

@@ -25,6 +25,7 @@ List<String> projectLibraries = [
   "commons-codec",
   "commons-logging",
   "Trove4j",
+  "JDOM",
   "NanoXML",
   "Guava",
   "JUnit4",

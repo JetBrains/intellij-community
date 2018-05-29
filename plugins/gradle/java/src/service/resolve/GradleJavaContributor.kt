@@ -2,6 +2,7 @@
 package org.jetbrains.plugins.gradle.service.resolve
 
 import com.intellij.patterns.ElementPattern
+import com.intellij.patterns.PsiJavaElementPattern
 import com.intellij.patterns.PsiJavaPatterns.psiElement
 import com.intellij.patterns.StandardPatterns.or
 import com.intellij.psi.PsiElement
@@ -13,6 +14,7 @@ import org.jetbrains.plugins.gradle.service.resolve.GradleCommonClassNames.*
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrClosableBlock
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.TypesUtil
+import org.jetbrains.plugins.groovy.lang.psi.patterns.GroovyClosurePattern
 import org.jetbrains.plugins.groovy.lang.psi.patterns.groovyClosure
 import org.jetbrains.plugins.groovy.lang.psi.patterns.psiMethod
 import org.jetbrains.plugins.groovy.lang.resolve.delegatesTo.DelegatesToInfo
@@ -23,8 +25,8 @@ import org.jetbrains.plugins.groovy.lang.resolve.delegatesTo.DelegatesToInfo
  */
 class GradleJavaContributor : GradleMethodContextContributor {
   companion object {
-    val sourceSetsClosure = groovyClosure().inMethod(psiMethod(GRADLE_API_JAVA_PLUGIN_CONVENTION, "sourceSets"))
-    val sourceSetReference = object : ElementPattern<PsiElement> {
+    val sourceSetsClosure: GroovyClosurePattern = groovyClosure().inMethod(psiMethod(GRADLE_API_JAVA_PLUGIN_CONVENTION, "sourceSets"))
+    val sourceSetReference: ElementPattern<PsiElement> = object : ElementPattern<PsiElement> {
       override fun getCondition() = null
       override fun accepts(o: Any?) = false
       override fun accepts(o: Any?, context: ProcessingContext): Boolean {
@@ -32,7 +34,7 @@ class GradleJavaContributor : GradleMethodContextContributor {
       }
     }
 
-    val sourceDirectorySetClosure = psiElement().andOr(
+    val sourceDirectorySetClosure: PsiJavaElementPattern.Capture<PsiElement> = psiElement().andOr(
       groovyClosure().inMethod(or(psiMethod(GRADLE_API_SOURCE_SET, "java"),
                                   psiMethod(GRADLE_API_SOURCE_SET, "resources"))))
   }

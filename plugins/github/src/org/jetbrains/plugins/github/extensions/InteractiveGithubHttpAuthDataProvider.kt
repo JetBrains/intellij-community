@@ -1,6 +1,7 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.github.extensions
 
+import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.project.Project
 import com.intellij.util.AuthData
 import git4idea.DialogManager
@@ -29,7 +30,12 @@ internal class InteractiveGithubHttpAuthDataProvider(private val project: Projec
     DialogManager.show(dialog)
     if (!dialog.isOK) return null
     val account = dialog.account
+    val modalityStateSupplier = { parentComponent?.let(ModalityState::stateForComponent) ?: ModalityState.any() }
+    val token = authenticationManager.getOrRequestTokenForAccount(account,
+                                                                  parentComponent = parentComponent,
+                                                                  modalityStateSupplier = modalityStateSupplier)
+                ?: return null
     if (dialog.setDefault) authenticationManager.setDefaultAccount(project, account)
-    return AuthData(GithubUtil.GIT_AUTH_PASSWORD_SUBSTITUTE, authenticationManager.getTokenForAccount(account))
+    return AuthData(GithubUtil.GIT_AUTH_PASSWORD_SUBSTITUTE, token)
   }
 }

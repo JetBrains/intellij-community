@@ -612,4 +612,5 @@ public class DataFlowInspectionTest extends DataFlowInspectionTestCase {
   public void testObjectLocality() { doTest(); }
   public void testInstanceOfForUnknownVariable() { doTest(); }
   public void testNanComparisonWrong() { doTest(); }
+  public void testConstantMethods() { doTest(); }
 }

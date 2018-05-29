@@ -640,13 +640,9 @@ public class InferenceSession {
   public void registerReturnTypeConstraints(PsiType returnType, PsiType targetType, PsiElement context) {
     returnType = substituteWithInferenceVariables(returnType);
     if (myErased) {
-      final InferenceVariable inferenceVariable = getInferenceVariable(returnType);
-      if (inferenceVariable != null) {
-        final PsiSubstitutor substitutor = resolveSubset(Collections.singletonList(inferenceVariable), mySiteSubstitutor);
-        returnType = substitutor.substitute(inferenceVariable);
-        if (returnType == null) return;
-      }
-      addConstraint(new TypeCompatibilityConstraint(targetType, TypeConversionUtil.erasure(returnType)));
+      PsiSubstitutor currentSubstitutor = resolveSubset(myInferenceVariables, mySiteSubstitutor);
+      addConstraint(new TypeCompatibilityConstraint(targetType,
+                                                    TypeConversionUtil.erasure(currentSubstitutor.substitute(returnType))));
     }
     else if (FunctionalInterfaceParameterizationUtil.isWildcardParameterized(returnType)) {
       final PsiClassType.ClassResolveResult resolveResult = PsiUtil.resolveGenericsClassInType(returnType);

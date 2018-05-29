@@ -176,6 +176,7 @@
   elementType('.*_reference_expression') = reference_expression
   elementType('.*_class_type_element') = class_type_element
   consumeTokenMethod('.*_expression') = 'consumeTokenFast'
+  consumeTokenMethod('.*_expression_tail') = 'consumeTokenFast'
   consumeTokenMethod('.*_shift.*_sign') = 'consumeTokenFast'
   consumeTokenMethod('fast.*') = 'consumeTokenFast'
   consumeTokenMethod('.*_type_definition') = 'consumeTokenFast'
@@ -313,11 +314,12 @@ left annotation_type_definition ::= '@' ('interface') annotation_definition_head
   elementTypeClass = 'org.jetbrains.plugins.groovy.lang.psi.stubs.elements.GrAnnotationDefinitionElementType'
 }
 
-class_body ::= '{' mb_nl class_members '}'
+class_body ::= '{' class_body_inner '}'
 {
   pin = 1
   elementTypeClass = 'org.jetbrains.plugins.groovy.lang.psi.stubs.elements.GrTypeDefinitionBodyElementType'
 }
+class_body_inner ::= mb_separators class_members { elementType = '' name = '' }
 enum_body ::= '{' mb_nl enum_members '}'
 {
   pin = 1
@@ -521,19 +523,19 @@ type_parameter_list ::= '<' type_parameters '>'
 private type_parameters ::= type_parameter type_parameters_tail*
 private type_parameters_tail ::= ',' type_parameter { pin = 1 }
 
-type_parameter ::= IDENTIFIER (type_parameter_bounds | empty_type_parameter_bounds)
+type_parameter ::= IDENTIFIER (type_parameter_bounds_list | empty_type_parameter_bounds_list)
 {
   name = 'type parameter'
   elementTypeClass = 'org.jetbrains.plugins.groovy.lang.psi.stubs.elements.GrTypeParameterElementType'
 }
-type_parameter_bounds ::= 'extends' type_parameter_bounds_list
+type_parameter_bounds_list ::= 'extends' type_parameter_bounds
 {
   pin = 1
   elementTypeClass = 'org.jetbrains.plugins.groovy.lang.psi.stubs.elements.GrTypeParameterBoundsElementType'
 }
-empty_type_parameter_bounds ::= { elementType = type_parameter_bounds }
-private type_parameter_bounds_list ::= type_code_reference type_parameter_bounds_list_tail*
-private type_parameter_bounds_list_tail ::= '&' type_code_reference { pin = 1 }
+empty_type_parameter_bounds_list ::= { elementType = type_parameter_bounds_list }
+private type_parameter_bounds ::= type_code_reference type_parameter_bounds_tail*
+private type_parameter_bounds_tail ::= '&' type_code_reference { pin = 1 }
 
 type_argument_list ::= diamond_type_argument_list | non_empty_type_argument_list
 private diamond_type_argument_list ::=  <<isDiamondAllowed>> fast_l_angle '>'
@@ -574,17 +576,21 @@ private mb_separators ::= separator*
 
 private top_levels ::= top_level_item* clear_error
 private top_level_item ::= <<addVariant "statement">> <<separated_item top_level_end top_level top_level_start>>
-private top_level ::= import | block_level
+private top_level ::= import | statement
 private top_level_start ::= 'import' | block_level_start
 private top_level_end ::= separators | <<eof>>
 
-private block_levels ::= block_level_item* clear_error
-private block_level_item ::= <<addVariant "statement">> <<separated_item block_level_end block_level block_level_start>>
-private block_level ::= type_definition | tuple_var_declaration | statement
+// FIXME parse extended statement inside statement rule, i.e. expect separators after extended statement
+private extended_statement_item ::= <<extendedStatement>> mb_separators
+
+block_levels ::= block_level_item* clear_error { elementType = '' name = '' }
+private block_level_item ::= extended_statement_item
+                           | <<addVariant "statement">> <<separated_item block_level_end statement block_level_start>>
 private block_level_start ::= statement_start | class_level_start
 private block_level_end ::= top_level_end | &'}'
 
-private case_level_item ::= <<addVariant "statement">> <<separated_item case_level_end block_level case_level_start>>
+private case_level_item ::= extended_statement_item
+                          | <<addVariant "statement">> <<separated_item case_level_end statement case_level_start>>
 private case_level_start ::= statement_start | class_level_start | 'case' | 'default'
 private case_level_end ::= block_level_end | &('case' | 'default')
 {
@@ -671,13 +677,13 @@ statement ::= if_statement
             | assert_statement
             | throw_statement
             | labeled_statement
-            | parse_block_declaration
-            | <<extendedStatement>>
+            | type_definition | <<withProtectedLastVariantPos tuple_var_declaration>> | parse_block_declaration
             | expression_or_application
 {
   elementType = ''
 }
 
+private branch ::= <<extendedStatement>> | block_or_statement
 private block_or_statement ::= block_statement | statement
 
 block_statement ::= lazy_block
@@ -686,11 +692,11 @@ if_statement ::= 'if' after_if_keyword
 {
   pin = 1
 }
-private after_if_keyword ::= '(' mb_nl expression mb_nl ')' mb_nl block_or_statement [mb_nl ';'] else_branch?
+private after_if_keyword ::= '(' mb_nl expression mb_nl ')' mb_nl branch [mb_nl ';'] else_branch?
 {
   pin = 1
 }
-private else_branch ::= mb_nl 'else' mb_nl block_or_statement
+private else_branch ::= mb_nl 'else' mb_nl branch
 {
   pin = 2
 }
@@ -733,12 +739,12 @@ finally_clause ::= 'finally' lazy_block
   pin = 1
 }
 
-while_statement ::= 'while' ('(' mb_nl expression mb_nl ')' mb_nl block_or_statement)
+while_statement ::= 'while' ('(' mb_nl expression mb_nl ')' mb_nl branch)
 {
   pin('.*') = 1
 }
 
-for_statement ::= 'for' (('(' mb_nl for_clause mb_nl ')') mb_nl block_or_statement?)
+for_statement ::= 'for' (('(' mb_nl for_clause mb_nl ')') mb_nl for_body?)
 {
   pin('.*') = 1
 }
@@ -762,6 +768,8 @@ traditional_for_parameter ::= for_parameter_inner mb_initializer
 }
 private semicolon_recovery ::= !';' r_par_recovery
 private r_par_recovery ::= !')'
+// FIXME get rid of this weird logic
+private for_body ::= &<<extendedStatement>> | block_or_statement
 
 synchronized_statement ::= 'synchronized' '(' expression ')' lazy_block
 {
@@ -911,19 +919,19 @@ private priority1_1 ::= new_anonymous_expression | new_expression
 
 new_expression ::= 'new' type_argument_list?
                    (primitive_type_element | <<allowDiamond code_reference>>)
-                   (call_argument_list_start call_argument_list | array_declarator)
+                   (call_argument_list_start call_argument_list | array_declaration)
 {
   pin = 1
 }
-new_anonymous_expression ::= 'new' type_argument_list? anonymous_class
+new_anonymous_expression ::= 'new' type_argument_list? anonymous_type_definition
 {
   elementType = new_expression
 }
-anonymous_class ::= code_reference call_argument_list class_body
+anonymous_type_definition ::= code_reference call_argument_list class_body
 {
   elementTypeClass = 'org.jetbrains.plugins.groovy.lang.psi.stubs.elements.GrAnonymousElementType'
 }
-array_declarator ::= mandatory_expression optional_expression* { consumeTokenMethod = 'consumeTokenFast' }
+array_declaration ::= mandatory_expression optional_expression* { consumeTokenMethod = 'consumeTokenFast' }
 private mandatory_expression ::= '[' expression ']' { pin = 1 consumeTokenMethod = 'consumeTokenFast' }
 private optional_expression ::= '[' expression? ']' { pin = 1 consumeTokenMethod = 'consumeTokenFast' }
 
@@ -1032,14 +1040,12 @@ right_shift_sign ::= '>' '>'
 right_shift_unsigned_sign ::= '>' '>' '>'
 range_expression ::= expression ('..' | '..<') expression
 
-private priority7 ::= relational_expression | instanceof_expression | as_expression
-relational_expression ::= expression relational_operator expression
-private relational_operator ::= '<' !'<' | '<=' | '>' !'>' | '>=' | 'in' { consumeTokenMethod = 'consumeTokenFast' }
-
-instanceof_expression ::= expression ('instanceof' (type_element | expect_type))
-{
-  pin('.*') = 1
-}
+private priority7 ::= relational_expression | in_expression | instanceof_expression | as_expression
+relational_expression ::= expression relational_operator mb_nl expression
+private relational_operator ::= '<' !'<' | '<=' | '>' !'>' | '>=' { consumeTokenMethod = 'consumeTokenFast' }
+in_expression ::= expression mb_not ('in') expression
+instanceof_expression ::= expression instanceof_expression_tail
+private instanceof_expression_tail ::= mb_not ('instanceof') (type_element | expect_type) { pin = 2 }
 as_expression ::= expression 'as' type_element
 
 private priority8 ::= equality_expression | compare_expression | regex_find_expression | regex_match_expression
@@ -1087,7 +1093,7 @@ tuple ::= '(' unqualified_reference_expression (',' unqualified_reference_expres
 
 
 // region Applications
-private expression_or_application ::= <<notApplicationArguments expression_or_application_inner>>
+expression_or_application ::= <<notApplicationArguments expression_or_application_inner>> { elementType = '' name = '' }
 private expression_or_application_inner ::= expression application*
 private application ::= <<parseApplication application_ref application_expression application_call application_index>>
 {
@@ -1098,7 +1104,7 @@ left application_ref ::= IDENTIFIER | simple_literal_tokens
   elementType = reference_expression
   consumeTokenMethod = 'consumeTokenFast'
 }
-left application_expression ::= application_argument_list
+left application_expression ::= application_argument_list | clear_variants_and_fail
 left application_call ::= call_argument_list lazy_closure* | empty_argument_list lazy_closure+ { elementType = method_call_expression }
 left application_index ::= mb_question index_expression_argument_list
 // endregion
@@ -1232,6 +1238,7 @@ private meta mb_nl_group ::= <<something>> | <<withProtectedLastVariantPos (nl <
 private empty ::= ()
 
 private mb_question ::= '?'? { consumeTokenMethod = 'consumeTokenFast' }
+private mb_not ::= '!'? { consumeTokenMethod = 'consumeTokenFast' }
 
 private fast_colon ::= ':'
 private fast_comma ::= ','

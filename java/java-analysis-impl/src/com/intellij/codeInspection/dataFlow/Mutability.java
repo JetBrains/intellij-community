@@ -4,6 +4,7 @@
 package com.intellij.codeInspection.dataFlow;
 
 import com.intellij.codeInsight.AnnotationUtil;
+import com.intellij.codeInsight.InferredAnnotationsManagerImpl;
 import com.intellij.codeInspection.dataFlow.inference.JavaSourceInference;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
@@ -25,8 +26,6 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.Collections;
 import java.util.List;
-
-import static com.intellij.codeInspection.bytecodeAnalysis.ProjectBytecodeAnalysis.INFERRED_ANNOTATION;
 
 public enum Mutability {
   /**
@@ -84,7 +83,7 @@ public enum Mutability {
     if (myAnnotation == null) return null;
     return CachedValuesManager.getManager(project).getCachedValue(project, myKey, () -> {
       PsiAnnotation annotation = JavaPsiFacade.getElementFactory(project).createAnnotationFromText("@" + myAnnotation, null);
-      annotation.putUserData(INFERRED_ANNOTATION, Boolean.TRUE);
+      InferredAnnotationsManagerImpl.markInferred(annotation);
       ((LightVirtualFile)annotation.getContainingFile().getViewProvider().getVirtualFile()).setWritable(false);
       return CachedValueProvider.Result.create(annotation, ModificationTracker.NEVER_CHANGED);
     }, false);

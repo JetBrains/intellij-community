@@ -24,29 +24,23 @@ public class NST {
   private static final String ourRegistryKeyTouchbar = "ide.mac.touchbar.use";
   private static final NSTLibrary ourNSTLibrary; // NOTE: JNA is stateless (doesn't have any limitations of multi-threaded use)
 
+  private static String MIN_OS_VERSION = "10.12.2";
+  static boolean isSupportedOS() { return SystemInfo.isMac && SystemInfo.isOsVersionAtLeast(MIN_OS_VERSION); }
+
   static {
     final Application app = ApplicationManager.getApplication();
     final boolean isUIPresented = app != null && !app.isHeadlessEnvironment() && !app.isUnitTestMode() && !app.isCommandLine();
-    final boolean isSystemSupportTouchbar = SystemInfo.isMac && SystemInfo.isOsVersionAtLeast("10.12.2");
     final boolean isRegistryKeyEnabled = Registry.is(ourRegistryKeyTouchbar, false);
     NSTLibrary lib = null;
     if (
       isUIPresented
-      && isSystemSupportTouchbar
+      && isSupportedOS()
       && isRegistryKeyEnabled
-      && SystemSettingsTouchBar.isTouchBarServerRunning()
+      && SystemSettingsWrapper.isTouchBarServerRunning()
     ) {
       try {
-        UrlClassLoader.loadPlatformLibrary("nst");
-
-        // Set JNA to convert java.lang.String to char* using UTF-8, and match that with
-        // the way we tell CF to interpret our char*
-        // May be removed if we use toStringViaUTF16
-        System.setProperty("jna.encoding", "UTF8");
-
-        final Map<String, Object> nstOptions = new HashMap<>();
-        lib = Native.loadLibrary("nst", NSTLibrary.class, nstOptions);
-      } catch (RuntimeException e) {
+        lib = loadLibrary();
+      } catch (Throwable e) {
         LOG.error("Failed to load nst library for touchbar: ", e);
       }
 
@@ -60,7 +54,7 @@ public class NST {
             lib.releaseTouchBar(test);
             LOG.info("nst library works properly, successfully created and released native touchbar object");
           }
-        } catch (RuntimeException e) {
+        } catch (Throwable e) {
           LOG.error("nst library was loaded, but can't be used: ", e);
         }
       } else {
@@ -68,7 +62,7 @@ public class NST {
       }
     } else if (!isUIPresented)
       LOG.debug("unit-test mode, skip nst loading");
-    else if (!isSystemSupportTouchbar)
+    else if (!isSupportedOS())
       LOG.info("OS doesn't support touchbar, skip nst loading");
     else if (!isRegistryKeyEnabled)
       LOG.info("registry key '" + ourRegistryKeyTouchbar + "' is disabled, skip nst loading");
@@ -76,6 +70,18 @@ public class NST {
       LOG.info("touchbar-server isn't running, skip nst loading");
 
     ourNSTLibrary = lib;
+  }
+
+  static NSTLibrary loadLibrary() {
+    UrlClassLoader.loadPlatformLibrary("nst");
+
+    // Set JNA to convert java.lang.String to char* using UTF-8, and match that with
+    // the way we tell CF to interpret our char*
+    // May be removed if we use toStringViaUTF16
+    System.setProperty("jna.encoding", "UTF8");
+
+    final Map<String, Object> nstOptions = new HashMap<>();
+    return Native.loadLibrary("nst", NSTLibrary.class, nstOptions);
   }
 
   public static boolean isAvailable() { return ourNSTLibrary != null; }

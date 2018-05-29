@@ -1,6 +1,7 @@
 package org.jetbrains.builtInWebServer
 
 import com.google.common.base.Function
+import com.google.common.cache.Cache
 import com.google.common.cache.CacheBuilder
 import com.google.common.cache.CacheLoader
 import com.intellij.ProjectTopics
@@ -30,7 +31,7 @@ private val cacheSize: Long = 4096 * 4
  * Implement [WebServerRootsProvider] to add your provider
  */
 class WebServerPathToFileManager(application: Application, private val project: Project) {
-  val pathToInfoCache = CacheBuilder.newBuilder().maximumSize(cacheSize).expireAfterAccess(10, TimeUnit.MINUTES).build<String, PathInfo>()!!
+  val pathToInfoCache: Cache<String, PathInfo> = CacheBuilder.newBuilder().maximumSize(cacheSize).expireAfterAccess(10, TimeUnit.MINUTES).build<String, PathInfo>()!!
   // time to expire should be greater than pathToFileCache
   private val virtualFileToPathInfo = CacheBuilder.newBuilder().maximumSize(cacheSize).expireAfterAccess(11, TimeUnit.MINUTES).build<VirtualFile, PathInfo>()
   
@@ -94,7 +95,7 @@ class WebServerPathToFileManager(application: Application, private val project: 
   }
 
   companion object {
-    @JvmStatic fun getInstance(project: Project) = ServiceManager.getService(project, WebServerPathToFileManager::class.java)!!
+    @JvmStatic fun getInstance(project: Project): WebServerPathToFileManager = ServiceManager.getService(project, WebServerPathToFileManager::class.java)!!
   }
 
   private fun clearCache() {
@@ -128,7 +129,7 @@ class WebServerPathToFileManager(application: Application, private val project: 
     return pathInfo
   }
 
-  fun getPath(file: VirtualFile) = getPathInfo(file)?.path
+  fun getPath(file: VirtualFile): String? = getPathInfo(file)?.path
 
   fun getPathInfo(child: VirtualFile): PathInfo? {
     var result = virtualFileToPathInfo.getIfPresent(child)
@@ -149,7 +150,7 @@ class WebServerPathToFileManager(application: Application, private val project: 
     return result
   }
 
-  fun getResolver(path: String) = if (path.isEmpty()) EMPTY_PATH_RESOLVER else RELATIVE_PATH_RESOLVER
+  fun getResolver(path: String): FileResolver = if (path.isEmpty()) EMPTY_PATH_RESOLVER else RELATIVE_PATH_RESOLVER
 }
 
 interface FileResolver {

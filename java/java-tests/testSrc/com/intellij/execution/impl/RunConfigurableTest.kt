@@ -38,7 +38,7 @@ class RunConfigurableTest {
   companion object {
     @JvmField
     @ClassRule
-    val projectRule = ProjectRule()
+    val projectRule: ProjectRule = ProjectRule()
 
     private fun createRunManager(element: Element): RunManagerImpl {
       val runManager = RunManagerImpl(projectRule.project)
@@ -56,11 +56,11 @@ class RunConfigurableTest {
 
   @JvmField
   @Rule
-  val edtRule = EdtRule()
+  val edtRule: EdtRule = EdtRule()
 
   @JvmField
   @Rule
-  val disposableRule = DisposableRule()
+  val disposableRule: DisposableRule = DisposableRule()
 
   private val configurable: RunConfigurable by lazy {
     val result = MockRunConfigurable(createRunManager(loadElement(RunConfigurableTest::class.java.getResourceAsStream("folders.xml"))))

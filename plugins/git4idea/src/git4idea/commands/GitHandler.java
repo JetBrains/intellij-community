@@ -11,6 +11,7 @@ import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.ProcessEventListener;
+import com.intellij.openapi.vcs.RemoteFilePath;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vfs.CharsetToolkit;
 import com.intellij.openapi.vfs.VfsUtil;
@@ -259,7 +260,12 @@ public abstract class GitHandler {
   public void addRelativePaths(@NotNull final Collection<FilePath> filePaths) {
     checkNotStarted();
     for (FilePath path : filePaths) {
-      myCommandLine.addParameter(VcsFileUtil.relativePath(getWorkingDirectory(), path));
+      if (path instanceof RemoteFilePath) {
+        myCommandLine.addParameter(path.getPath());
+      }
+      else {
+        myCommandLine.addParameter(VcsFileUtil.relativePath(getWorkingDirectory(), path));
+      }
     }
   }
 

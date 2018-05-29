@@ -7,6 +7,7 @@ import com.intellij.openapi.application.PathManager
 import com.intellij.openapi.application.invokeAndWaitIfNeed
 import com.intellij.openapi.components.PathMacroManager
 import com.intellij.openapi.components.StateStorageOperation
+import com.intellij.openapi.components.TrackingPathMacroSubstitutor
 import com.intellij.openapi.components.impl.BasePathMacroManager
 import com.intellij.openapi.components.impl.stores.FileStorageCoreUtil
 import com.intellij.openapi.components.service
@@ -21,12 +22,12 @@ import org.jdom.Element
 
 private class ApplicationPathMacroManager : BasePathMacroManager(null)
 
-const val APP_CONFIG = "\$APP_CONFIG$"
+const val APP_CONFIG: String = "\$APP_CONFIG$"
 private const val FILE_STORAGE_DIR = "options"
 private const val DEFAULT_STORAGE_SPEC = "${PathManager.DEFAULT_OPTIONS_FILE_NAME}${FileStorageCoreUtil.DEFAULT_EXT}"
 
 class ApplicationStoreImpl(private val application: Application, pathMacroManager: PathMacroManager? = null) : ComponentStoreWithExtraComponents() {
-  override val storageManager = ApplicationStorageManager(application, pathMacroManager)
+  override val storageManager: ApplicationStorageManager = ApplicationStorageManager(application, pathMacroManager)
 
   // number of app components require some state, so, we load default state in test mode
   override val loadPolicy: StateLoadPolicy
@@ -69,7 +70,7 @@ class ApplicationStorageManager(application: Application, pathMacroManager: Path
     }
   }
 
-  override fun getMacroSubstitutor(fileSpec: String) = if (fileSpec == "${PathMacrosImpl.EXT_FILE_NAME}${FileStorageCoreUtil.DEFAULT_EXT}") null else super.getMacroSubstitutor(fileSpec)
+  override fun getMacroSubstitutor(fileSpec: String): TrackingPathMacroSubstitutor? = if (fileSpec == "${PathMacrosImpl.EXT_FILE_NAME}${FileStorageCoreUtil.DEFAULT_EXT}") null else super.getMacroSubstitutor(fileSpec)
 
   override val isUseXmlProlog: Boolean
     get() = false
@@ -93,9 +94,9 @@ class ApplicationStorageManager(application: Application, pathMacroManager: Path
     }
   }
 
-  override fun normalizeFileSpec(fileSpec: String) = removeMacroIfStartsWith(super.normalizeFileSpec(fileSpec), APP_CONFIG)
+  override fun normalizeFileSpec(fileSpec: String): String = removeMacroIfStartsWith(super.normalizeFileSpec(fileSpec), APP_CONFIG)
 
-  override fun expandMacros(path: String) = if (path[0] == '$') {
+  override fun expandMacros(path: String): String = if (path[0] == '$') {
     super.expandMacros(path)
   }
   else {

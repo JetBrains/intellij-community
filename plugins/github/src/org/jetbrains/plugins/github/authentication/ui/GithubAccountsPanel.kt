@@ -19,6 +19,7 @@ import com.intellij.util.progress.ProgressVisibilityManager
 import com.intellij.util.ui.*
 import com.intellij.util.ui.components.BorderLayoutPanel
 import icons.GithubIcons
+import org.jetbrains.plugins.github.api.GithubApiTaskExecutor
 import org.jetbrains.plugins.github.api.GithubServerPath
 import org.jetbrains.plugins.github.api.data.GithubUserDetailed
 import org.jetbrains.plugins.github.authentication.accounts.GithubAccount
@@ -28,6 +29,8 @@ import org.jetbrains.plugins.github.exceptions.GithubAuthenticationException
 import java.awt.*
 import java.awt.event.MouseAdapter
 import java.awt.event.MouseEvent
+import java.net.URL
+import javax.imageio.ImageIO
 import javax.swing.*
 import javax.swing.event.ListDataEvent
 import javax.swing.event.ListDataListener
@@ -35,7 +38,9 @@ import javax.swing.event.ListDataListener
 private const val ACCOUNT_PICTURE_SIZE: Int = 40
 private const val LINK_TAG = "EDIT_LINK"
 
-internal class GithubAccountsPanel(private val project: Project, private val accountInformationProvider: GithubAccountInformationProvider)
+internal class GithubAccountsPanel(private val project: Project,
+                                   private val apiTaskExecutor: GithubApiTaskExecutor,
+                                   private val accountInformationProvider: GithubAccountInformationProvider)
   : BorderLayoutPanel(), Disposable {
 
   private val accountListModel = CollectionListModel<GithubAccountDecorator>().apply {
@@ -208,12 +213,14 @@ internal class GithubAccountsPanel(private val project: Project, private val acc
       lateinit var data: Pair<GithubUserDetailed, Image>
 
       override fun run(indicator: ProgressIndicator) {
-        data = if (newToken != null) {
-          accountInformationProvider.getAccountInformationWithPicture(indicator, accountData.account.server, newToken)
+        val task = accountInformationProvider.informationTask
+        val details = if (newToken != null) {
+          GithubApiTaskExecutor.execute(indicator, accountData.account.server, newToken, task)
         }
         else {
-          accountInformationProvider.getAccountInformationWithPicture(indicator, accountData.account)
+          apiTaskExecutor.execute(indicator, accountData.account, task, true)
         }
+        data = details to ImageIO.read(URL(details.avatarUrl))
       }
 
       override fun onSuccess() {

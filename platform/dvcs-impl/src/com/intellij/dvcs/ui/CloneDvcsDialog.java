@@ -21,6 +21,7 @@ import com.intellij.dvcs.DvcsUtil;
 import com.intellij.dvcs.hosting.RepositoryHostingService;
 import com.intellij.dvcs.hosting.RepositoryListLoader;
 import com.intellij.ide.impl.ProjectUtil;
+import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.ActionManager;
 import com.intellij.openapi.actionSystem.IdeActions;
 import com.intellij.openapi.application.ApplicationManager;
@@ -375,9 +376,11 @@ public abstract class CloneDvcsDialog extends DialogWrapper {
           public void onSuccess() {
             if (myTestResult.isSuccess()) {
               myRepositoryTestValidationInfo = null;
+              Disposable dialogDisposable = getDisposable();
+              if (Disposer.isDisposed(dialogDisposable)) return;
               JBPopupFactory.getInstance()
                             .createBalloonBuilder(new JLabel(DvcsBundle.getString("clone.repository.url.test.success.message")))
-                            .setDisposable(getDisposable())
+                            .setDisposable(dialogDisposable)
                             .createBalloon()
                             .show(new RelativePoint(myTestButton, new Point(myTestButton.getWidth() / 2,
                                                                             myTestButton.getHeight())),

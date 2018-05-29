@@ -144,7 +144,16 @@ Object foo(Object o) { if (o == null) return o.hashCode(); return 2; }
   void "test System exit"() {
     assert inferNullity(parse('String foo(Object obj) {try {return bar();} catch(Exception ex) {System.exit(1);return null;}}')) == UNKNOWN
   }
-  
+
+  void "test System exit2"() {
+    assert inferNullity(parse('String foo(boolean b) {' +
+                              'if(b) return null;' +
+                              'try {x();} ' +
+                              'catch(Exception ex) {System.exit(1);return null;}' +
+                              'return "xyz".trim();' +
+                              '}')) == UNKNOWN
+  }
+
   protected abstract Nullness inferNullity(PsiMethod method)
 
   protected PsiMethod parse(String method) {

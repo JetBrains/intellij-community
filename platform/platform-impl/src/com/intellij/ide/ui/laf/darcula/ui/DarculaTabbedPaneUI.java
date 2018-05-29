@@ -15,16 +15,246 @@
  */
 package com.intellij.ide.ui.laf.darcula.ui;
 
+import com.intellij.ui.JBColor;
+import com.intellij.util.ui.JBInsets;
+import com.intellij.util.ui.JBUI;
+import com.intellij.util.ui.JBValue;
+import sun.swing.SwingUtilities2;
+
 import javax.swing.*;
 import javax.swing.plaf.ComponentUI;
 import javax.swing.plaf.basic.BasicTabbedPaneUI;
+import javax.swing.text.View;
+import java.awt.*;
+import java.awt.event.*;
+import java.beans.PropertyChangeListener;
+
+import static com.intellij.util.ui.JBUI.CurrentTheme.Focus.TabbedPane.*;
 
 /**
  * @author Konstantin Bulenkov
  */
 public class DarculaTabbedPaneUI extends BasicTabbedPaneUI {
+  private enum TabStyle {
+    underline, fill
+  }
+
+  private TabStyle tabStyle;
+  private PropertyChangeListener borderTypePropertyListener;
+  private MouseListener          paneMouseListener;
+  private MouseMotionListener    paneMouseMotionListener;
+
+  private int hoverTab = -1;
+
+  public static final JBValue OFFSET = new JBValue.Float(1);
+
   @SuppressWarnings({"MethodOverridesStaticMethodOfSuperclass", "UnusedDeclaration"})
   public static ComponentUI createUI(JComponent c) {
     return new DarculaTabbedPaneUI();
   }
+
+  @Override
+  protected void installDefaults() {
+    super.installDefaults();
+
+    Object rStyle = UIManager.get("TabbedPane.tabFillStyle");
+    tabStyle = rStyle != null ? TabStyle.valueOf(rStyle.toString()) : TabStyle.underline;
+    contentBorderInsets = tabPane.getTabLayoutPolicy() == JTabbedPane.WRAP_TAB_LAYOUT ? JBUI.insetsTop(1) : JBUI.emptyInsets();
+  }
+
+  @Override
+  protected void installListeners() {
+    super.installListeners();
+
+    borderTypePropertyListener = evt -> {
+      boolean fullBorder = tabPane.getClientProperty("JTabbedPane.hasFullBorder") == Boolean.TRUE;
+      contentBorderInsets = (tabPane.getTabLayoutPolicy() == JTabbedPane.WRAP_TAB_LAYOUT) ?
+                            fullBorder ? JBUI.insets(1) : JBUI.insetsTop(1) :
+                            fullBorder ? JBUI.insets(0, 1, 1, 1) : JBUI.emptyInsets();
+      tabPane.revalidate();
+      tabPane.repaint();
+    };
+
+    tabPane.addPropertyChangeListener("JTabbedPane.hasFullBorder", borderTypePropertyListener);
+    tabPane.addPropertyChangeListener("tabLayoutPolicy", borderTypePropertyListener);
+
+    paneMouseListener = new MouseAdapter() {
+      public void mouseEntered(MouseEvent e) {
+        hoverTab = tabForCoordinate(tabPane, e.getX(), e.getY());
+        tabPane.repaint();
+      }
+
+      public void mouseExited(MouseEvent e) {
+        hoverTab = -1;
+        tabPane.repaint();
+      }
+    };
+
+    tabPane.addMouseListener(paneMouseListener);
+
+    paneMouseMotionListener = new MouseMotionAdapter() {
+      public void mouseMoved(MouseEvent e) {
+        hoverTab = tabForCoordinate(tabPane, e.getX(), e.getY());
+        tabPane.repaint();
+      }
+    };
+    tabPane.addMouseMotionListener(paneMouseMotionListener);
+  }
+
+  @Override
+  protected void uninstallListeners() {
+    super.uninstallListeners();
+    if (borderTypePropertyListener != null) {
+      tabPane.removePropertyChangeListener("JTabbedPane.hasFullBorder", borderTypePropertyListener);
+    }
+
+    if (paneMouseListener != null) {
+      tabPane.removeMouseListener(paneMouseListener);
+    }
+
+    if (paneMouseMotionListener != null) {
+      tabPane.removeMouseMotionListener(paneMouseMotionListener);
+    }
+  }
+
+  @Override
+  protected Insets getContentBorderInsets(int tabPlacement) {
+    Insets i = JBInsets.create(contentBorderInsets);
+    rotateInsets(contentBorderInsets, i, tabPlacement);
+    return i;
+  }
+
+  @Override
+  protected void paintTabArea(Graphics g, int tabPlacement, int selectedIndex) {
+    if (tabPane.getTabLayoutPolicy() == JTabbedPane.SCROLL_TAB_LAYOUT) {
+      Rectangle bounds = g.getClipBounds();
+      g.setColor(JBColor.namedColor("TabbedPane.contentAreaColor", 0xbfbfbf));
+
+      if (tabPlacement == LEFT || tabPlacement == RIGHT) {
+        g.fillRect(bounds.x + bounds.width - OFFSET.get(), bounds.y, OFFSET.get(), bounds.y + bounds.height);
+      } else {
+        g.fillRect(bounds.x, bounds.y + bounds.height - OFFSET.get(), bounds.x + bounds.width, OFFSET.get());
+      }
+    }
+    super.paintTabArea(g, tabPlacement, selectedIndex);
+  }
+
+  @Override
+  protected void paintTabBackground(Graphics g, int tabPlacement, int tabIndex, int x, int y, int w, int h, boolean isSelected) {
+    switch (tabStyle) {
+      case fill:
+        if (tabPane.isEnabled()) {
+          g.setColor(isSelected ? ENABLED_SELECTED_COLOR : tabIndex == hoverTab ? HOVER_COLOR : tabPane.getBackground());
+        } else {
+          g.setColor(isSelected ? DISABLED_SELECTED_COLOR : tabPane.getBackground());
+        }
+        break;
+
+      case underline:
+      default:
+        if (tabPane.isEnabled()) {
+          g.setColor(tabIndex == hoverTab ? HOVER_COLOR : tabPane.getBackground());
+        }
+        break;
+    }
+
+    if (tabPane.getTabLayoutPolicy() == JTabbedPane.SCROLL_TAB_LAYOUT) {
+      if (tabPlacement == LEFT || tabPlacement == RIGHT) {
+        w -= OFFSET.get();
+      } else {
+        h -= OFFSET.get();
+      }
+    }
+
+    g.fillRect(x, y, w, h);
+  }
+
+  @Override
+  protected void paintTabBorder(Graphics g, int tabPlacement, int tabIndex, int x, int y, int w, int h, boolean isSelected) {
+    if (isSelected && tabStyle == TabStyle.underline) {
+      g.setColor(tabPane.isEnabled() ?  ENABLED_SELECTED_COLOR : DISABLED_SELECTED_COLOR);
+
+      int offset = tabPane.getTabLayoutPolicy() == JTabbedPane.WRAP_TAB_LAYOUT ? OFFSET.get() : SELECTION_HEIGHT.get();
+
+      switch(tabPlacement) {
+        case LEFT:
+          g.fillRect(x + w - offset, y, SELECTION_HEIGHT.get(), h);
+          break;
+        case RIGHT:
+          g.fillRect(x - offset, y, SELECTION_HEIGHT.get(), h);
+          break;
+        case BOTTOM:
+          g.fillRect(x, y - offset, w, SELECTION_HEIGHT.get());
+          break;
+        case TOP:
+        default:
+          g.fillRect(x, y + h - offset, w, SELECTION_HEIGHT.get());
+      }
+    }
+  }
+
+  @Override
+  protected int calculateTabWidth(int tabPlacement, int tabIndex, FontMetrics metrics) {
+    Insets tabInsets = getTabInsets(tabPlacement, tabIndex);
+    int width = tabInsets.left + tabInsets.right;
+    Component tabComponent = tabPane.getTabComponentAt(tabIndex);
+    if (tabComponent != null) {
+      width += tabComponent.getPreferredSize().width;
+    } else {
+      Icon icon = getIconForTab(tabIndex);
+      if (icon != null) {
+        width += icon.getIconWidth() + textIconGap;
+      }
+      View v = getTextViewForTab(tabIndex);
+      if (v != null) {
+        // html
+        width += (int) v.getPreferredSpan(View.X_AXIS);
+      } else {
+        // plain text
+        String title = tabPane.getTitleAt(tabIndex);
+        width += SwingUtilities2.stringWidth(tabPane, metrics, title);
+      }
+    }
+    return width;
+  }
+
+  @Override
+  protected int calculateTabHeight(int tabPlacement, int tabIndex, int fontHeight) {
+    int height = 0;
+    Component c = tabPane.getTabComponentAt(tabIndex);
+    if (c != null) {
+      height = c.getPreferredSize().height;
+    } else {
+      View v = getTextViewForTab(tabIndex);
+      if (v != null) {
+        // html
+        height += (int) v.getPreferredSpan(View.Y_AXIS);
+      } else {
+        // plain text
+        height += fontHeight;
+      }
+      Icon icon = getIconForTab(tabIndex);
+
+      if (icon != null) {
+        height = Math.max(height, icon.getIconHeight());
+      }
+    }
+    Insets tabInsets = getTabInsets(tabPlacement, tabIndex);
+    height += tabInsets.top + tabInsets.bottom;
+
+    int minHeight = TAB_HEIGHT.get() - (tabPane.getTabLayoutPolicy() == JTabbedPane.WRAP_TAB_LAYOUT ? OFFSET.get() : 0);
+    return Math.max(height, minHeight);
+  }
+
+  @Override
+  protected void paintContentBorderTopEdge(Graphics g, int tabPlacement, int selectedIndex, int x, int y, int w, int h) {}
+
+  @Override
+  protected void paintContentBorderLeftEdge(Graphics g, int tabPlacement, int selectedIndex, int x, int y, int w, int h) {}
+
+  @Override
+  protected void paintContentBorderRightEdge(Graphics g, int tabPlacement, int selectedIndex, int x, int y, int w, int h) {}
+
+  @Override
+  protected void paintContentBorderBottomEdge(Graphics g, int tabPlacement, int selectedIndex, int x, int y, int w, int h) {}
 }

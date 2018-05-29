@@ -38,11 +38,11 @@ class DefaultChangesGroupingPolicy(val project: Project, val model: DefaultTreeM
   }
 
   companion object {
-    val CONFLICTS_NODE_CACHE = Key.create<ChangesBrowserNode<*>>("ChangesTree.ConflictsNodeCache")
+    val CONFLICTS_NODE_CACHE: Key<ChangesBrowserNode<*>> = Key.create<ChangesBrowserNode<*>>("ChangesTree.ConflictsNodeCache")
   }
 
   class Factory @JvmOverloads constructor(val project: Project, val forLocalChanges: Boolean = false) : ChangesGroupingPolicyFactory() {
-    override fun createGroupingPolicy(model: DefaultTreeModel) =
+    override fun createGroupingPolicy(model: DefaultTreeModel): ChangesGroupingPolicy =
       if (forLocalChanges) DefaultChangesGroupingPolicy(project, model) else NoneChangesGroupingPolicy
   }
 }

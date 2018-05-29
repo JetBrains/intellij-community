@@ -86,5 +86,5 @@ class GroovyInlayParameterHintsProvider : InlayParameterHintsProvider {
 
   override fun getDefaultBlackList(): Set<String> = blackList
 
-  override fun getBlackListDependencyLanguage() = JavaLanguage.INSTANCE
+  override fun getBlackListDependencyLanguage(): JavaLanguage = JavaLanguage.INSTANCE
 }

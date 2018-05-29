@@ -97,9 +97,9 @@ class GithubShareDialog(project: Project,
     ).mapNotNull { it() }
   }
 
-  override fun getHelpId() = "github.share"
-  override fun getDimensionServiceKey() = "Github.ShareDialog"
-  override fun getPreferredFocusedComponent() = repositoryTextField
+  override fun getHelpId(): String = "github.share"
+  override fun getDimensionServiceKey(): String = "Github.ShareDialog"
+  override fun getPreferredFocusedComponent(): JBTextField = repositoryTextField
 
   fun getRepositoryName(): String = repositoryTextField.text
   fun getRemoteName(): String = remoteTextField.text

@@ -13,7 +13,7 @@ import org.jdom.JDOMException
 import org.jdom.Parent
 import org.jdom.filter.ElementFilter
 import org.jdom.input.SAXBuilder
-import org.jdom.input.SAXHandler
+import org.jdom.input.sax.SAXHandler
 import org.xml.sax.EntityResolver
 import org.xml.sax.InputSource
 import org.xml.sax.XMLReader

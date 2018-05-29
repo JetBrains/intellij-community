@@ -1,6 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package com.intellij.codeInsight.highlighting;
 
@@ -532,7 +530,7 @@ public class BraceHighlightingHandler {
           TextRange range = new TextRange(start, lbraceEnd);
           int line1 = myDocument.getLineNumber(range.getStartOffset());
           int line2 = myDocument.getLineNumber(range.getEndOffset());
-          line1 = Math.max(line1, line2 - 5);
+          line1 = Math.max(line1, line2 - EditorFragmentComponent.getAvailableVisualLinesAboveEditor(myEditor) + 1);
           range = new TextRange(myDocument.getLineStartOffset(line1), range.getEndOffset());
           HintManager.getInstance().hideAllHints();
           LightweightHint hint = EditorFragmentComponent.showEditorFragmentHint(myEditor, range, true, true);

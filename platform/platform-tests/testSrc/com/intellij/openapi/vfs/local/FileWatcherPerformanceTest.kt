@@ -26,7 +26,7 @@ private const val NUM_FILES = 1000
 
 @Ignore
 class FileWatcherPerformanceTest : BareTestFixtureTestCase() {
-  @Rule @JvmField val tempDir = TempDirectory()
+  @Rule @JvmField val tempDir: TempDirectory = TempDirectory()
 
   private var tracing: Boolean = false
   private lateinit var watcher: FileWatcher

@@ -22,7 +22,7 @@ Groovy script
   PsiElement(,)(',')
   Reference expression
     PsiElement(identifier)('c')
-  PsiErrorElement:<expression> expected, got ')'
+  PsiErrorElement:')' unexpected
     PsiElement())(')')
   PsiElement(=)('=')
   Generalized list

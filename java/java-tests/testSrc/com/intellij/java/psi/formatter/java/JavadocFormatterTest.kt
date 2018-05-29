@@ -1183,4 +1183,43 @@ interface Test {
 """
     )
   }
+
+
+  fun testIdea175161() {
+    getSettings().RIGHT_MARGIN = 160;
+    getSettings().WRAP_COMMENTS = true;
+    getSettings().KEEP_LINE_BREAKS = false;
+
+    doTextTest(
+"""package com.company;
+
+public class Test {
+
+    /**
+     * Shortcut method for EntryDto items. This method will fetch the id from {@code item} and pass it to
+     * {@link #test2(Object, Object, Object, Object, Object)}. Make sure the dto item returns a non-null id.
+     */
+    public void test() {}
+
+    private void test2(Object a, Object b, Object c, Object d, Object e) {}
+}
+""",
+
+"""package com.company;
+
+public class Test {
+
+    /**
+     * Shortcut method for EntryDto items. This method will fetch the id from {@code item} and pass it to {@link #test2(Object, Object, Object, Object,
+     * Object)}. Make sure the dto item returns a non-null id.
+     */
+    public void test() {
+    }
+
+    private void test2(Object a, Object b, Object c, Object d, Object e) {
+    }
+}
+"""
+    )
+  }
 }

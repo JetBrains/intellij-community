@@ -10,7 +10,6 @@ import com.intellij.openapi.actionSystem.DefaultActionGroup;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Ref;
-import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 
@@ -41,7 +40,6 @@ public class QuickChangeLookAndFeel extends QuickSwitchSchemeAction {
     final boolean wasDarcula = UIUtil.isUnderDarcula();
     lafMan.setCurrentLookAndFeel(lf);
 
-    if (StringUtil.equals(cur != null ? cur.getClassName() : null, lf.getClassName())) return;
     Runnable updater = () -> {
       // a twist not to updateUI twice: here and in DarculaInstaller
       // double updateUI shall be avoided and causes NPE in some components (HelpView)

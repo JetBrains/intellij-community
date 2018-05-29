@@ -22,19 +22,19 @@ package org.jetbrains.uast
 open class UastClassKind(val text: String) {
   companion object {
     @JvmField
-    val CLASS = UastClassKind("class")
+    val CLASS: UastClassKind = UastClassKind("class")
 
     @JvmField
-    val INTERFACE = UastClassKind("interface")
+    val INTERFACE: UastClassKind = UastClassKind("interface")
 
     @JvmField
-    val ANNOTATION = UastClassKind("annotation")
+    val ANNOTATION: UastClassKind = UastClassKind("annotation")
 
     @JvmField
-    val ENUM = UastClassKind("enum")
+    val ENUM: UastClassKind = UastClassKind("enum")
 
     @JvmField
-    val OBJECT = UastClassKind("object")
+    val OBJECT: UastClassKind = UastClassKind("object")
   }
 
   override fun toString(): String {

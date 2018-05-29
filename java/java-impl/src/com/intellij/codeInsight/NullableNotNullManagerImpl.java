@@ -20,12 +20,10 @@ import com.intellij.util.containers.ContainerUtil;
 import one.util.streamex.StreamEx;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import org.jetbrains.jps.model.serialization.java.compiler.JpsJavaCompilerNotNullableSerializer;
 
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.List;
+import java.util.*;
 
 @State(name = "NullableNotNullManager")
 public class NullableNotNullManagerImpl extends NullableNotNullManager implements PersistentStateComponent<Element> {
@@ -115,6 +113,45 @@ public class NullableNotNullManagerImpl extends NullableNotNullManager implement
       }
     }
     return result;
+  }
+
+  @Override
+  protected NullityDefault isJsr305Default(@NotNull PsiAnnotation annotation, @NotNull PsiAnnotation.TargetType[] placeTargetTypes) {
+    PsiClass declaration = resolveAnnotationType(annotation);
+    PsiModifierList modList = declaration == null ? null : declaration.getModifierList();
+    if (modList == null) return null;
+
+    PsiAnnotation tqDefault = AnnotationUtil.findAnnotation(declaration, true, "javax.annotation.meta.TypeQualifierDefault");
+    if (tqDefault == null) return null;
+
+    Set<PsiAnnotation.TargetType> required = AnnotationTargetUtil.extractRequiredAnnotationTargets(tqDefault.findAttributeValue(null));
+    if (required == null || (!required.isEmpty() && !ContainerUtil.intersects(required, Arrays.asList(placeTargetTypes)))) return null;
+    
+    for (PsiAnnotation qualifier : modList.getAnnotations()) {
+      Nullness nullness = getJsr305QualifierNullness(qualifier);
+      if (nullness != null) {
+        return new NullityDefault(annotation, nullness == Nullness.NULLABLE);
+      }
+    }
+    return null;
+  }
+
+  @Nullable
+  private static PsiClass resolveAnnotationType(@NotNull PsiAnnotation annotation) {
+    PsiJavaCodeReferenceElement element = annotation.getNameReferenceElement();
+    PsiElement declaration = element == null ? null : element.resolve();
+    if (!(declaration instanceof PsiClass) || !((PsiClass)declaration).isAnnotationType()) return null;
+    return (PsiClass)declaration;
+  }
+
+  @Nullable
+  private Nullness getJsr305QualifierNullness(@NotNull PsiAnnotation qualifier) {
+    String qName = qualifier.getQualifiedName();
+    if (qName == null || !qName.startsWith("javax.annotation.")) return null;
+
+    if (qName.equals(JAVAX_ANNOTATION_NULLABLE) && getNullables().contains(qName)) return Nullness.NULLABLE;
+    if (qName.equals(JAVAX_ANNOTATION_NONNULL)) return extractNullityFromWhenValue(qualifier);
+    return null;
   }
 
   private static boolean isNullabilityNickName(@NotNull PsiClass candidate) {

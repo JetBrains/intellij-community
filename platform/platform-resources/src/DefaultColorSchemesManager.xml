@@ -123,12 +123,14 @@
       </option>
       <option name="DEFAULT_REASSIGNED_PARAMETER">
         <value>
-          <option name="FOREGROUND" value="6060c0" deuteranopia="1948a6" protanopia="1948a6"/>
+          <option name="EFFECT_COLOR" value="909090"/>
+          <option name="EFFECT_TYPE" value="1"/>
         </value>
       </option>
       <option name="DEFAULT_REASSIGNED_LOCAL_VARIABLE">
         <value>
-          <option name="FOREGROUND" value="6060c0" deuteranopia="1948a6" protanopia="1948a6"/>
+          <option name="EFFECT_COLOR" value="909090"/>
+          <option name="EFFECT_TYPE" value="1"/>
         </value>
       </option>
       <option name="DEFAULT_STATIC_METHOD">
@@ -1550,12 +1552,14 @@
       </option>
       <option name="DEFAULT_REASSIGNED_PARAMETER">
         <value>
-          <option name="FOREGROUND" value="80bac0" deuteranopia="828eba" protanopia="828eba"/>
+          <option name="EFFECT_COLOR" value="707d95" />
+          <option name="EFFECT_TYPE" value="1" />
         </value>
       </option>
       <option name="DEFAULT_REASSIGNED_LOCAL_VARIABLE">
         <value>
-          <option name="FOREGROUND" value="80bac0" deuteranopia="828eba" protanopia="828eba"/>
+          <option name="EFFECT_COLOR" value="707d95" />
+          <option name="EFFECT_TYPE" value="1" />
         </value>
       </option>
       <option name="DELETED_TEXT_ATTRIBUTES">

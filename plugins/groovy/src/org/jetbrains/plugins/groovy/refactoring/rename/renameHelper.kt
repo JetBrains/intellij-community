@@ -19,7 +19,7 @@ import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiManager
 import com.intellij.psi.PsiMember
 
-fun PsiElement?.getNewNameFromTransformations(newName: String) = (this as? PsiMember)?.let {
+fun PsiElement?.getNewNameFromTransformations(newName: String): String = (this as? PsiMember)?.let {
   doGetNewNameFromTransformations(it, newName)
 } ?: newName
 
@@ -32,6 +32,6 @@ private fun doGetNewNameFromTransformations(member: PsiMember, newName: String):
   return null
 }
 
-fun isQualificationNeeded(manager: PsiManager, before: PsiElement, after: PsiElement) = GrRenameHelper.EP_NAME.extensions.any {
+fun isQualificationNeeded(manager: PsiManager, before: PsiElement, after: PsiElement): Boolean = GrRenameHelper.EP_NAME.extensions.any {
   it.isQualificationNeeded(manager, before, after)
 }

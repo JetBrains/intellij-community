@@ -15,6 +15,7 @@
  */
 package org.jetbrains.plugins.groovy.highlighter
 
+import com.intellij.openapi.editor.colors.TextAttributesKey
 import com.intellij.openapi.options.colors.AttributesDescriptor
 import com.intellij.openapi.options.colors.ColorDescriptor
 import com.intellij.openapi.options.colors.ColorSettingsPage
@@ -122,20 +123,20 @@ class GroovyColorSettingsPage : ColorSettingsPage {
     )
   }
 
-  override fun getDisplayName() = "Groovy"
+  override fun getDisplayName(): String = "Groovy"
 
   override fun getIcon(): Icon? = JetgroovyIcons.Groovy.Groovy_16x16
 
-  override fun getAttributeDescriptors() = attributes
+  override fun getAttributeDescriptors(): Array<AttributesDescriptor> = attributes
 
   override fun getColorDescriptors(): Array<out ColorDescriptor> = ColorDescriptor.EMPTY_ARRAY
 
-  override fun getHighlighter() = GroovySyntaxHighlighter()
+  override fun getHighlighter(): GroovySyntaxHighlighter = GroovySyntaxHighlighter()
 
-  override fun getAdditionalHighlightingTagToDescriptorMap() = additionalTags
+  override fun getAdditionalHighlightingTagToDescriptorMap(): Map<String, TextAttributesKey> = additionalTags
 
   @NonNls
-  override fun getDemoText() = """<keyword>package</keyword> highlighting
+  override fun getDemoText(): String = """<keyword>package</keyword> highlighting
 ###
 
 <groovydoc>/**

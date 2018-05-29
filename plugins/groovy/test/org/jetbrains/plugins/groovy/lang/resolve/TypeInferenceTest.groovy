@@ -466,6 +466,15 @@ def bar(oo) {
 ''', null)
   }
 
+  void testNegatedInstanceOfInferring1() {
+    doTest('''\
+def bar(oo) {
+  boolean b = oo !instanceof String || oo != null
+  o<caret>o
+}
+''', null)
+  }
+
   void testInstanceOfInferring2() {
     doTest('''\
 def bar(oo) {
@@ -473,6 +482,15 @@ def bar(oo) {
   oo
 }
 ''', null)
+  }
+
+  void testNegatedInstanceOfInferring2() {
+    doTest('''\
+def bar(oo) {
+  boolean b = oo !instanceof String || o<caret>o != null
+  oo
+}
+''', JAVA_LANG_STRING)
   }
 
   void testInstanceOfInferring3() {
@@ -484,10 +502,28 @@ def bar(oo) {
 ''', String.canonicalName)
   }
 
+  void testNegatedInstanceOfInferring3() {
+    doTest('''\
+def bar(oo) {
+  boolean b = oo !instanceof String && o<caret>o != null
+  oo
+}
+''', null)
+  }
+
   void testInstanceOfInferring4() {
     doTest('''\
 def bar(oo) {
   boolean b = oo instanceof String && oo != null
+  o<caret>o
+}
+''', null)
+  }
+
+  void testNegatedInstanceOfInferring4() {
+    doTest('''\
+def bar(oo) {
+  boolean b = oo !instanceof String && oo != null
   o<caret>o
 }
 ''', null)
@@ -507,10 +543,35 @@ def foo(def oo) {
 ''', null)
   }
 
+  void testNegatedInstanceOfInferring5() {
+    doTest('''\
+def foo(def oo) {
+  if (oo !instanceof String || oo !instanceof CharSequence) {
+    oo
+  }
+  else {
+    o<caret>o
+  }
+
+}
+''', JAVA_LANG_STRING)
+  }
+
   void testInstanceOfInferring6() {
     doTest('''\
 def foo(bar) {
   if (!(bar instanceof String) && bar instanceof Runnable) {
+    ba<caret>r
+  }
+}''', 'java.lang.Runnable')
+  }
+
+  void testNegatedInstanceOfInferring6() {
+    doTest('''\
+def foo(bar) {
+  if (!(bar !instanceof String) || bar !instanceof Runnable) {
+    
+  } else {
     ba<caret>r
   }
 }''', 'java.lang.Runnable')
@@ -521,6 +582,14 @@ def foo(bar) {
 def foo(ii) {
   if (ii in String)
     print i<caret>i
+}''', 'java.lang.String'
+  }
+
+  void testNegatedInString() {
+    doTest '''\
+def foo(ii) {
+  if (ii !in String) {}
+  else print i<caret>i
 }''', 'java.lang.String'
   }
 
@@ -867,5 +936,11 @@ class W {
   }
 }
 ''', 'W'
+  }
+
+  void 'test elvis assignment'() {
+    doExprTest 'def a; a ?= "hello"', 'java.lang.String'
+    doExprTest 'def a = ""; a ?= null', 'java.lang.String'
+    doExprTest 'def a = "s"; a ?= 1', '[java.io.Serializable,java.lang.Comparable<? extends java.io.Serializable>]'
   }
 }

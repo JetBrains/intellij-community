@@ -1,14 +1,15 @@
 <component name="libraryTable">
-  <library name="JDOM">
+  <library name="JDOM" type="repository">
+    <properties maven-id="org.jetbrains.intellij.deps:jdom:2.0.6" />
     <ANNOTATIONS>
-      <root url="file://$PROJECT_DIR$/java/jdkAnnotations"/>
+      <root url="file://$PROJECT_DIR$/java/jdkAnnotations" />
     </ANNOTATIONS>
     <CLASSES>
-      <root url="jar://$PROJECT_DIR$/lib/jdom.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/intellij/deps/jdom/2.0.6/jdom-2.0.6.jar!/" />
     </CLASSES>
     <JAVADOC />
     <SOURCES>
-      <root url="jar://$PROJECT_DIR$/lib/src/jdom.zip!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/intellij/deps/jdom/2.0.6/jdom-2.0.6-sources.jar!/" />
     </SOURCES>
   </library>
 </component>

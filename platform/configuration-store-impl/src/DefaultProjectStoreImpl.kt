@@ -46,7 +46,7 @@ class DefaultProjectStoreImpl(override val project: ProjectImpl, private val pat
 
   private val storage by lazy { DefaultProjectStorage(Paths.get(ApplicationManager.getApplication().stateStore.storageManager.expandMacros(FILE_SPEC)), FILE_SPEC, pathMacroManager) }
 
-  override val storageManager = object : StateStorageManager {
+  override val storageManager: StateStorageManager = object : StateStorageManager {
     override val componentManager: ComponentManager?
       get() = null
 
@@ -68,14 +68,14 @@ class DefaultProjectStoreImpl(override val project: ProjectImpl, private val pat
     override fun getOldStorage(component: Any, componentName: String, operation: StateStorageOperation) = storage
   }
 
-  override fun isUseLoadedStateAsExisting(storage: StateStorage) = false
+  override fun isUseLoadedStateAsExisting(storage: StateStorage): Boolean = false
 
   // don't want to optimize and use already loaded data - it will add unnecessary complexity and implementation-lock (currently we store loaded archived state in memory, but later implementation can be changed)
-  fun getStateCopy() = storage.loadLocalData()
+  fun getStateCopy(): Element? = storage.loadLocalData()
 
-  override fun getPathMacroManagerForDefaults() = pathMacroManager
+  override fun getPathMacroManagerForDefaults(): PathMacroManager = pathMacroManager
 
-  override fun <T> getStorageSpecs(component: PersistentStateComponent<T>, stateSpec: State, operation: StateStorageOperation) = listOf(PROJECT_FILE_STORAGE_ANNOTATION)
+  override fun <T> getStorageSpecs(component: PersistentStateComponent<T>, stateSpec: State, operation: StateStorageOperation): List<FileStorageAnnotation> = listOf(PROJECT_FILE_STORAGE_ANNOTATION)
 
   override fun setPath(path: String) {
   }

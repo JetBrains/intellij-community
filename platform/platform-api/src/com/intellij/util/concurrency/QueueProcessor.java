@@ -73,9 +73,11 @@ public class QueueProcessor<T> {
 
   @NotNull
   private static <T> PairConsumer<T, Runnable> wrappingProcessor(@NotNull final Consumer<T> processor) {
-    return (item, runnable) -> {
-      runSafely(() -> processor.consume(item));
-      runnable.run();
+    return (item, continuation) -> {
+      // try-with-resources is the most simple way to ensure no suppressed exception is lost
+      try (SilentAutoClosable ignored = continuation::run) {
+        runSafely(() -> processor.consume(item));
+      }
     };
   }
 
@@ -264,6 +266,12 @@ public class QueueProcessor<T> {
     synchronized (myQueue) {
       return !myQueue.isEmpty();
     }
+  }
+
+  @FunctionalInterface
+  protected interface SilentAutoClosable extends AutoCloseable {
+    @Override
+    void close();
   }
 
   public static final class RunnableConsumer implements Consumer<Runnable> {
