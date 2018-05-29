@@ -164,17 +164,22 @@ fun assertProjectPathExists(projectPath: String) {
  * @param libs - path to additional library/framework that should be checked
  * Note: only one library/framework can be checked!
  * */
-fun NewProjectDialogModel.createJavaProject(projectPath: String, vararg libs: String) {
+fun NewProjectDialogModel.createJavaProject(projectPath: String, libs: Collection<Array<String>>) {
   assertProjectPathExists(projectPath)
   with(guiTestCase) {
     with(connectDialog()) {
       val list: JListFixture = jList(groupJava)
       list.clickItem(groupJava)
-      if (libs.isNotEmpty()) {
-        logUIStep("Include `${libs.joinToString()}` to the project")
-        checkboxTree(*libs).clickCheckbox(*libs)
+      if (libs.isEmpty()) {
+        // TODO: add ability to choose template
+        button(buttonNext).click()
       }
-      else button(buttonNext).click()
+      else {
+        for (lib in libs) {
+          logUIStep("Include `${lib.joinToString()}` to the project")
+          checkboxTree(*lib).clickCheckbox(*lib)
+        }
+      }
       button(buttonNext).click()
       logUIStep("Fill Project location with `$projectPath`")
       textfield(textProjectLocation).click()
@@ -196,18 +201,23 @@ fun NewProjectDialogModel.createJavaProject(projectPath: String, vararg libs: St
  * @param libs - path to additional library/framework that should be checked
  * Note: only one library/framework can be checked!
  * */
-fun NewProjectDialogModel.createJavaEnterpriseProject(projectPath: String, vararg libs: String) {
+fun NewProjectDialogModel.createJavaEnterpriseProject(projectPath: String, libs: Collection<Array<String>>) {
   assertProjectPathExists(projectPath)
   with(guiTestCase) {
     with(connectDialog()) {
       val list: JListFixture = jList(groupJava)
       assertGroupPresent(NewProjectDialogModel.Groups.JavaEnterprise)
       list.clickItem(groupJavaEnterprise)
-      if (libs.isNotEmpty()) {
-        logUIStep("Include `${libs.joinToString()}` to the project")
-        checkboxTree(*libs).clickCheckbox(*libs)
+      if (libs.isEmpty()) {
+        // TODO: add ability to choose template
+        button(buttonNext).click()
       }
-      else button(buttonNext).click()
+      else {
+        for (lib in libs) {
+          logUIStep("Include `${lib.joinToString()}` to the project")
+          checkboxTree(*lib).clickCheckbox(*lib)
+        }
+      }
       button(buttonNext).click()
       logUIStep("Fill Project location with `$projectPath`")
       textfield(textProjectLocation).click()
@@ -437,16 +447,18 @@ fun NewProjectDialogModel.assertGroupPresent(group: NewProjectDialogModel.Groups
  * @param libs - path to additional library/framework that should be checked
  * Note: only one library/framework can be checked!
  * */
-internal fun NewProjectDialogModel.createProjectInGroup(group: NewProjectDialogModel.Groups, projectPath: String, vararg libs: String) {
+internal fun NewProjectDialogModel.createProjectInGroup(group: NewProjectDialogModel.Groups,
+                                                        projectPath: String,
+                                                        libs: Collection<Array<String>>) {
   assertProjectPathExists(projectPath)
   with(guiTestCase) {
     with(connectDialog()) {
       val list: JListFixture = jList(groupJava)
       assertGroupPresent(group)
       list.clickItem(group.toString())
-      if (libs.isNotEmpty()) {
-        logUIStep("Include `${libs.joinToString()}` to the project")
-        checkboxTree(*libs).clickCheckbox(*libs)
+      for (lib in libs) {
+        logUIStep("Include `${lib.joinToString()}` to the project")
+        checkboxTree(*lib).clickCheckbox(*lib)
       }
       button(buttonNext).click()
       logUIStep("Fill Project location with `$projectPath`")
@@ -463,18 +475,18 @@ internal fun NewProjectDialogModel.createProjectInGroup(group: NewProjectDialogM
   }
 }
 
-fun NewProjectDialogModel.createJBossProject(projectPath: String, vararg libs: String){
-  createProjectInGroup(NewProjectDialogModel.Groups.JBoss, projectPath, *libs)
+fun NewProjectDialogModel.createJBossProject(projectPath: String, libs: Collection<Array<String>>) {
+  createProjectInGroup(NewProjectDialogModel.Groups.JBoss, projectPath, libs)
 }
 
-fun NewProjectDialogModel.createSpringProject(projectPath: String, vararg libs: String){
-  createProjectInGroup(NewProjectDialogModel.Groups.Spring, projectPath, *libs)
+fun NewProjectDialogModel.createSpringProject(projectPath: String, libs: Collection<Array<String>>) {
+  createProjectInGroup(NewProjectDialogModel.Groups.Spring, projectPath, libs)
 }
 
-fun NewProjectDialogModel.createGroovyProject(projectPath: String, vararg libs: String){
-  createProjectInGroup(NewProjectDialogModel.Groups.Groovy, projectPath, *libs)
+fun NewProjectDialogModel.createGroovyProject(projectPath: String, libs: Collection<Array<String>>) {
+  createProjectInGroup(NewProjectDialogModel.Groups.Groovy, projectPath, libs)
 }
 
-fun NewProjectDialogModel.createGriffonProject(projectPath: String, vararg libs: String){
-  createProjectInGroup(NewProjectDialogModel.Groups.Griffon, projectPath, *libs)
+fun NewProjectDialogModel.createGriffonProject(projectPath: String, libs: Collection<Array<String>>) {
+  createProjectInGroup(NewProjectDialogModel.Groups.Griffon, projectPath, libs)
 }

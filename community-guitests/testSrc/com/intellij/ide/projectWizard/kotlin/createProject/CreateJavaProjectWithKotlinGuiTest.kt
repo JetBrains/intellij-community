@@ -9,7 +9,7 @@ class CreateJavaProjectWithKotlinGuiTest : KotlinGuiTestCase() {
   @Test
   @JvmName("java_with_jvm")
   fun createJavaWithKotlinJvmProject() {
-    createJavaProject(projectFolder, kotlinLibs[KotlinKind.JVM]!!.javaProject.frameworkName)
+    createJavaProject(projectFolder, listOf(arrayOf(kotlinLibs[KotlinKind.JVM]!!.javaProject.frameworkName)))
     projectStructureDialogScenarios.checkKotlinLibsInStructureFromPlugin(
       kotlinKind = KotlinKind.JVM,
       kotlinVersion = KotlinTestProperties.kotlin_artifact_version
@@ -19,7 +19,7 @@ class CreateJavaProjectWithKotlinGuiTest : KotlinGuiTestCase() {
   @Test
   @JvmName("java_with_js")
   fun createJavaWithKotlinJSProject() {
-    createJavaProject(projectFolder, kotlinLibs[KotlinKind.JS]!!.javaProject.frameworkName)
+    createJavaProject(projectFolder, listOf(arrayOf(kotlinLibs[KotlinKind.JS]!!.javaProject.frameworkName)))
     projectStructureDialogScenarios.checkKotlinLibsInStructureFromPlugin(
       kotlinKind = KotlinKind.JS,
       kotlinVersion = KotlinTestProperties.kotlin_artifact_version

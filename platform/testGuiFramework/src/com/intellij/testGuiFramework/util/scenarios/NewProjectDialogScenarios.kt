@@ -13,27 +13,27 @@ class NewProjectDialogScenarios(val testCase: GuiTestCase) : TestUtilsClass(test
 
 val GuiTestCase.newProjectDialogScenarios by NewProjectDialogScenarios
 
-fun NewProjectDialogScenarios.createJavaProjectScenario(projectPath: String, vararg libs: String) {
+fun NewProjectDialogScenarios.createJavaProjectScenario(projectPath: String, libs: Collection<Array<String>>) {
   with(testCase) {
     assertProjectPathExists(projectPath)
     welcomePageDialogModel.createNewProject()
-    newProjectDialogModel.createJavaProject(projectPath, *libs)
+    newProjectDialogModel.createJavaProject(projectPath, libs)
   }
 }
 
-fun NewProjectDialogScenarios.createJavaEnterpriseProjectScenario(projectPath: String, vararg libs: String) {
+fun NewProjectDialogScenarios.createJavaEnterpriseProjectScenario(projectPath: String, libs: Collection<Array<String>>) {
   with(testCase) {
     assertProjectPathExists(projectPath)
     welcomePageDialogModel.createNewProject()
-    newProjectDialogModel.createJavaEnterpriseProject(projectPath, *libs)
+    newProjectDialogModel.createJavaEnterpriseProject(projectPath, libs)
   }
 }
 
-fun NewProjectDialogScenarios.createJBossProjectScenario(projectPath: String, vararg libs: String) {
+fun NewProjectDialogScenarios.createJBossProjectScenario(projectPath: String, libs: Collection<Array<String>>) {
   with(testCase) {
     assertProjectPathExists(projectPath)
     welcomePageDialogModel.createNewProject()
-    newProjectDialogModel.createJBossProject(projectPath, *libs)
+    newProjectDialogModel.createJBossProject(projectPath, libs)
   }
 }
 
@@ -45,11 +45,11 @@ fun NewProjectDialogScenarios.createJBossProjectScenario(projectPath: String, va
  * @param libs - path to additional library/framework that should be checked
  * Note: only one library/framework can be checked!
  * */
-fun NewProjectDialogScenarios.createProjectInGroupScenario(group: NewProjectDialogModel.Groups, projectPath: String, vararg libs: String) {
+fun NewProjectDialogScenarios.createProjectInGroupScenario(group: NewProjectDialogModel.Groups, projectPath: String, libs: Collection<Array<String>>) {
   with(testCase) {
     assertProjectPathExists(projectPath)
     welcomePageDialogModel.createNewProject()
-    newProjectDialogModel.createProjectInGroup(group, projectPath, *libs)
+    newProjectDialogModel.createProjectInGroup(group, projectPath, libs)
   }
 }
 

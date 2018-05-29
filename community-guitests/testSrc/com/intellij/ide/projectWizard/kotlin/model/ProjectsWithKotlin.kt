@@ -22,10 +22,10 @@ import org.hamcrest.core.Is.`is` as Matcher_Is
  */
 fun KotlinGuiTestCase.createJavaProject(
   projectPath: String,
-  vararg framework: String = emptyArray()) {
+  framework: Collection<Array<String>> = emptyList()) {
   welcomePageDialogModel.createNewProject()
   newProjectDialogModel.assertGroupPresent(NewProjectDialogModel.Groups.Kotlin)
-  newProjectDialogModel.createJavaProject(projectPath, *framework)
+  newProjectDialogModel.createJavaProject(projectPath, framework)
   waitAMoment()
 }
 
