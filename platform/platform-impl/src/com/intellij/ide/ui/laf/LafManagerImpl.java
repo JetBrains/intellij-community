@@ -5,7 +5,10 @@ import com.intellij.CommonBundle;
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.IdeBundle;
 import com.intellij.ide.WelcomeWizardUtil;
-import com.intellij.ide.ui.*;
+import com.intellij.ide.ui.LafManager;
+import com.intellij.ide.ui.LafManagerListener;
+import com.intellij.ide.ui.UISettings;
+import com.intellij.ide.ui.UIThemeProvider;
 import com.intellij.ide.ui.laf.darcula.DarculaInstaller;
 import com.intellij.ide.ui.laf.darcula.DarculaLaf;
 import com.intellij.ide.ui.laf.darcula.DarculaLookAndFeelInfo;
@@ -89,7 +92,6 @@ public final class LafManagerImpl extends LafManager implements PersistentStateC
 
   private final EventDispatcher<LafManagerListener> myEventDispatcher = EventDispatcher.create(LafManagerListener.class);
   private final UIManager.LookAndFeelInfo[] myLaFs;
-  private final UIDefaults ourDefaults;
   private UIManager.LookAndFeelInfo myCurrentLaf;
   private final Map<UIManager.LookAndFeelInfo, HashMap<String, Object>> myStoredDefaults = ContainerUtil.newHashMap();
 
@@ -108,7 +110,6 @@ public final class LafManagerImpl extends LafManager implements PersistentStateC
   LafManagerImpl() {
     List<UIManager.LookAndFeelInfo> lafList = ContainerUtil.newArrayList();
 
-    ourDefaults = (UIDefaults)UIManager.getDefaults().clone();
     if (SystemInfo.isMac) {
       String className = useIntelliJInsteadOfAqua() ? IntelliJLaf.class.getName() : UIManager.getSystemLookAndFeelClassName();
       lafList.add(new UIManager.LookAndFeelInfo("Light", className));
@@ -326,9 +327,6 @@ public final class LafManagerImpl extends LafManager implements PersistentStateC
       LOG.error("unknown LookAndFeel : " + lookAndFeelInfo);
       return;
     }
-
-    UIManager.getDefaults().clear();
-    UIManager.getDefaults().putAll(ourDefaults);
     // Set L&F
     if (IdeaLookAndFeelInfo.CLASS_NAME.equals(lookAndFeelInfo.getClassName())) { // that is IDEA default LAF
       IdeaLaf laf = new IdeaLaf();
