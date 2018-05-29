@@ -1,0 +1,12 @@
+<component name="libraryTable">
+  <library name="kotlin-plugin">
+    <CLASSES>
+      <root url="jar://$PROJECT_DIR$/../../prebuilts/tools/common/kotlin-plugin/Kotlin/lib/kotlin-plugin.jar!/" />
+      <root url="jar://$PROJECT_DIR$/../../prebuilts/tools/common/kotlin-plugin/Kotlin/lib/android-extensions-compiler.jar!/" />
+      <root url="jar://$PROJECT_DIR$/../../prebuilts/tools/common/kotlin-plugin/Kotlin/lib/kotlin-gradle-tooling.jar!/" />
+      <root url="jar://$PROJECT_DIR$/../../prebuilts/tools/common/kotlin-plugin/Kotlin/lib/jps/kotlin-jps-plugin.jar!/" />
+    </CLASSES>
+    <JAVADOC />
+    <SOURCES />
+  </library>
+</component>

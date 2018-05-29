@@ -86,6 +86,10 @@ iml_project(
         "//tools/adt/idea/android-common:intellij.android.common",
         "//tools/adt/idea/android-debuggers",
         "//tools/adt/idea/android-debuggers:android-debuggers-tests",
+        "//tools/adt/idea/android-kotlin:intellij.android.kotlin.extensions",
+        "//tools/adt/idea/android-kotlin:intellij.android.kotlin.extensions.jps",
+        "//tools/adt/idea/android-kotlin:intellij.android.kotlin.idea",
+        "//tools/adt/idea/android-kotlin:intellij.android.kotlin.output.parser",
         "//tools/adt/idea/android-lang",
         "//tools/adt/idea/android-lang:android-lang-tests",
         "//tools/adt/idea/android-layout-inspector",
@@ -812,6 +816,10 @@ iml_module(
         "//tools/adt/idea/designer:intellij.android.designer[module]",
         "//tools/adt/idea/smali:intellij.android.smali[module]",
         "//tools/idea/platform/build-scripts:intellij.platform.buildScripts[module, test]",
+        "//tools/adt/idea/android-kotlin:intellij.android.kotlin.idea[module]",
+        "//tools/adt/idea/android-kotlin:intellij.android.kotlin.extensions[module]",
+        "//tools/adt/idea/android-kotlin:intellij.android.kotlin.output.parser[module]",
+        "//tools/adt/idea/android-kotlin:intellij.android.kotlin.extensions.jps[module]",
     ],
 )
 

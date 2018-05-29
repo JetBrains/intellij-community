@@ -1215,3 +1215,23 @@ java_library(
     exports = ["//prebuilts/tools/common/m2/repository/org/hdrhistogram/HdrHistogram/2.1.4:jar"],
     runtime_deps = ["//prebuilts/tools/common/m2/repository/org/hdrhistogram/HdrHistogram/2.1.4:jar"],
 )
+
+# managed by go/iml_to_build
+java_library(
+    name = "kotlin-plugin",
+    visibility = ["//visibility:public"],
+    # do not sort: must match IML order
+    exports = [
+        "//prebuilts/tools/common/kotlin-plugin:Kotlin/lib/android-extensions-compiler",
+        "//prebuilts/tools/common/kotlin-plugin:Kotlin/lib/jps/kotlin-jps-plugin",
+        "//prebuilts/tools/common/kotlin-plugin:Kotlin/lib/kotlin-gradle-tooling",
+        "//prebuilts/tools/common/kotlin-plugin:Kotlin/lib/kotlin-plugin",
+    ],
+    # do not sort: must match IML order
+    runtime_deps = [
+        "//prebuilts/tools/common/kotlin-plugin:Kotlin/lib/android-extensions-compiler",
+        "//prebuilts/tools/common/kotlin-plugin:Kotlin/lib/jps/kotlin-jps-plugin",
+        "//prebuilts/tools/common/kotlin-plugin:Kotlin/lib/kotlin-gradle-tooling",
+        "//prebuilts/tools/common/kotlin-plugin:Kotlin/lib/kotlin-plugin",
+    ],
+)
