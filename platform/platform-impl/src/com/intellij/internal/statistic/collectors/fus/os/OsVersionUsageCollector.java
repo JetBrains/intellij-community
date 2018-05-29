@@ -16,6 +16,7 @@ import java.util.Collections;
 import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 public class OsVersionUsageCollector extends ApplicationUsagesCollector {
   @NotNull
@@ -43,14 +44,14 @@ public class OsVersionUsageCollector extends ApplicationUsagesCollector {
   public static String getLinuxOSVersion() {
     String releaseId = null, releaseVersion = null;
 
-    try {
-      Map<String, String> values = Files.lines(Paths.get("/etc/os-release"))
-                                        .map(line -> StringUtil.split(line, "="))
-                                        .filter(parts -> parts.size() == 2)
-                                        .collect(
-                                          Collectors.toMap(parts -> parts.get(0), parts -> StringUtil.unquoteString(parts.get(1))));
-      releaseId = values.get("ID");
-      releaseVersion = values.get("VERSION_ID");
+    try (Stream<String> lines = Files.lines(Paths.get("/etc/os-release"))) {
+      Map<String, String> releases = lines
+        .map(line -> StringUtil.split(line, "="))
+        .filter(parts -> parts.size() == 2)
+        .collect(Collectors.toMap(parts -> parts.get(0), parts -> StringUtil.unquoteString(parts.get(1))));
+
+      releaseId = releases.get("ID");
+      releaseVersion = releases.get("VERSION_ID");
     }
     catch (IOException ignored) {
     }

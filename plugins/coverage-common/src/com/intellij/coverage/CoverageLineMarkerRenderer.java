@@ -363,7 +363,9 @@ public class CoverageLineMarkerRenderer implements ActiveGutterRenderer, LineMar
       int idx = list.indexOf(myNewToOldConverter != null ? myNewToOldConverter.fun(myLineNumber).intValue() : myLineNumber);
       while (true) {
         final int index = next(idx, size);
-        final LineData lineData = myLines.get(list.get(index));
+        Integer key = list.get(index);
+        if (key == myLineNumber) return null;
+        final LineData lineData = myLines.get(key);
         idx = index;
         if (lineData != null && lineData.getStatus() != currentStatus) {
           final Integer line = list.get(idx);

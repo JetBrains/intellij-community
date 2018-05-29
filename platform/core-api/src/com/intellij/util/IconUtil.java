@@ -228,7 +228,11 @@ public class IconUtil {
   }
 
   public static Image toImage(@NotNull Icon icon) {
-    return IconLoader.toImage(icon);
+    return toImage(icon, null);
+  }
+
+  public static Image toImage(@NotNull Icon icon, @Nullable ScaleContext ctx) {
+    return IconLoader.toImage(icon, ctx);
   }
 
   @NotNull

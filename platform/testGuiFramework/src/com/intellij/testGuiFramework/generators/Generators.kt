@@ -268,7 +268,7 @@ class HyperlinkLabelGenerator : ComponentCodeGenerator<HyperlinkLabel> {
   override fun accept(cmp: Component): Boolean = cmp is HyperlinkLabel
   override fun generate(cmp: HyperlinkLabel, me: MouseEvent, cp: Point): String {
     //we assume, that hyperlink label has only one highlighted region
-    val linkText = cmp.hightlightedRegionsBoundsMap.keys.toList().firstOrNull() ?: "null"
+    val linkText = cmp.highlightedRegionsBoundsMap.keys.toList().firstOrNull() ?: "null"
     return """hyperlinkLabel("${cmp.text}").clickLink("$linkText")"""
   }
 }
@@ -278,7 +278,7 @@ class HyperlinkLabelInNotificationPanelGenerator : ComponentCodeGenerator<Hyperl
   override fun priority(): Int = 1
   override fun generate(cmp: HyperlinkLabel, me: MouseEvent, cp: Point): String {
     //we assume, that hyperlink label has only one highlighted region
-    val linkText = cmp.hightlightedRegionsBoundsMap.keys.toList().firstOrNull() ?: "null"
+    val linkText = cmp.highlightedRegionsBoundsMap.keys.toList().firstOrNull() ?: "null"
     return """editor { notificationPanel().clickLink("$linkText") }"""
   }
 }

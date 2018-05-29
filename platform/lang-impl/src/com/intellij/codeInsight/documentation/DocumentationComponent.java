@@ -489,9 +489,8 @@ public class DocumentationComponent extends JPanel implements Disposable, DataPr
             component.setBounds(0, 0, r.width, r.height);
           }
           else {
-            int insets = 3;
             Dimension d = component.getPreferredSize();
-            component.setBounds(r.width - d.width - insets, r.height - d.height - insets, d.width, d.height);
+            component.setBounds(r.width - d.width - 2, r.height - d.height - 3, d.width, d.height);
           }
         }
       }
@@ -520,15 +519,12 @@ public class DocumentationComponent extends JPanel implements Disposable, DataPr
     gearActions.addAll(actions);
     Presentation presentation = new Presentation();
     presentation.setIcon(AllIcons.General.GearPlain);
-    myCorner = new ActionButton(gearActions, presentation, ActionPlaces.UNKNOWN, new Dimension(22, 22)) {
+    myCorner = new ActionButton(gearActions, presentation, ActionPlaces.UNKNOWN, new Dimension(20, 20)) {
       @Override
       public void paintComponent(Graphics g) {
-        g.setColor(myEditorPane.getBackground());
-        g.fillRect(0, 0, getSize().width, getSize().height);
         paintButtonLook(g);
       }
     };
-    myCorner.setOpaque(true);
     myCorner.setNoIconsInPopup(true);
     layeredPane.add(myCorner);
     layeredPane.setLayer(myCorner, JLayeredPane.POPUP_LAYER);
@@ -569,18 +565,18 @@ public class DocumentationComponent extends JPanel implements Disposable, DataPr
     editorKit.getStyleSheet().addRule("pre {font-family:\"" + editorFontName + "\"}");
     editorKit.getStyleSheet().addRule("html { padding-bottom: 5px; }");
     editorKit.getStyleSheet().addRule("a { color: #" + ColorUtil.toHex(getLinkColor()) + "; text-decoration: none;}");
-    editorKit.getStyleSheet().addRule(".definition { padding: 3px 10px 1px 7px; border-bottom: thin solid #" + ColorUtil.toHex(ColorUtil.mix(DOCUMENTATION_COLOR, BORDER_COLOR, 0.5)) + "; }");
-    editorKit.getStyleSheet().addRule(".content { padding: 5px 9px 0 7px; max-width: 100% }");
-    editorKit.getStyleSheet().addRule(".bottom { padding: 3px 9px 0 7px; }");
-    editorKit.getStyleSheet().addRule(".bottom-no-content { padding: 5px 9px 0 7px; }");
+    editorKit.getStyleSheet().addRule(".definition { padding: 3px 17px 1px 7px; border-bottom: thin solid #" + ColorUtil.toHex(ColorUtil.mix(DOCUMENTATION_COLOR, BORDER_COLOR, 0.5)) + "; }");
+    editorKit.getStyleSheet().addRule(".content { padding: 5px 16px 0 7px; max-width: 100% }");
+    editorKit.getStyleSheet().addRule(".bottom { padding: 3px 16px 0 7px; }");
+    editorKit.getStyleSheet().addRule(".bottom-no-content { padding: 5px 16px 0 7px; }");
     editorKit.getStyleSheet().addRule("p { padding: 1px 0 2px 0; }");
-    editorKit.getStyleSheet().addRule("ul { padding: 5px 9px 0 7px; }");
+    editorKit.getStyleSheet().addRule("ul { padding: 5px 16px 0 7px; }");
     editorKit.getStyleSheet().addRule("li { padding: 1px 0 2px 0; }");
     editorKit.getStyleSheet().addRule(".grayed { color: #909090; display: inline;}");
     editorKit.getStyleSheet().addRule(".centered { text-align: center}");
 
     // sections table
-    editorKit.getStyleSheet().addRule(".sections { padding: 0 9px 0 7px; border-spacing: 0; }");
+    editorKit.getStyleSheet().addRule(".sections { padding: 0 16px 0 7px; border-spacing: 0; }");
     editorKit.getStyleSheet().addRule("tr { margin: 0 0 0 0; padding: 0 0 0 0; }");
     editorKit.getStyleSheet().addRule("td { margin: 2px 0 3.5px 0; padding: 0 0 0 0; }");
     editorKit.getStyleSheet().addRule(".section { color: " + ColorUtil.toHtmlColor(SECTION_COLOR) + "; padding-right: 4px}");

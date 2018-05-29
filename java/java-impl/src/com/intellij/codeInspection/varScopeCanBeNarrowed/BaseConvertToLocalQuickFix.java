@@ -176,6 +176,12 @@ public abstract class BaseConvertToLocalQuickFix<V extends PsiVariable> implemen
                                        NotNullFunction<PsiDeclarationStatement, PsiElement> action,
                                        Collection<PsiReference> references) {
     final PsiDeclarationStatement declaration = elementFactory.createVariableDeclarationStatement(localName, variable.getType(), initializer);
+    if (references.stream()
+                  .map(PsiReference::getElement)
+                  .anyMatch(element -> element instanceof PsiExpression && 
+                                       PsiUtil.isAccessedForWriting((PsiExpression)element))) { 
+      PsiUtil.setModifierProperty((PsiLocalVariable)declaration.getDeclaredElements()[0], PsiModifier.FINAL, false);
+    }
     final PsiElement newDeclaration = action.fun(declaration);
     retargetReferences(elementFactory, localName, references);
     return newDeclaration;

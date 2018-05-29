@@ -10,6 +10,7 @@ import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.components.SettingsSavingComponent
 import com.intellij.openapi.diagnostic.runAndLogException
 import org.jetbrains.annotations.TestOnly
+import org.jetbrains.concurrency.Promise
 import org.jetbrains.concurrency.runAsync
 import java.nio.file.Paths
 
@@ -84,7 +85,7 @@ class PasswordSafeImpl @JvmOverloads constructor(val settings: PasswordSafeSetti
   }
 
   // maybe in the future we will use native async, so, this method added here instead "if need, just use runAsync in your code"
-  override fun getAsync(attributes: CredentialAttributes) = runAsync { get(attributes) }
+  override fun getAsync(attributes: CredentialAttributes): Promise<Credentials?> = runAsync { get(attributes) }
 
   override fun save() {
     (currentProvider as? KeePassCredentialStore)?.save()

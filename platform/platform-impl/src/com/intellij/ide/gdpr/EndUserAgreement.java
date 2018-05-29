@@ -167,6 +167,10 @@ public final class EndUserAgreement {
       myVersion = parseVersion(text);
     }
 
+    public boolean isPrivacyPolicy() {
+      return PRIVACY_POLICY_DOCUMENT_NAME.equals(myName);
+    }
+
     public boolean isAccepted() {
       final Version thisVersion = getVersion();
       if (thisVersion.isUnknown() || MAGIC_VERSION.equals(thisVersion)) {

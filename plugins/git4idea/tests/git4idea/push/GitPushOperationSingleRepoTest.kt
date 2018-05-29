@@ -23,7 +23,6 @@ import com.intellij.openapi.util.text.StringUtil
 import com.intellij.openapi.vcs.Executor
 import com.intellij.openapi.vcs.update.FileGroup
 import com.intellij.openapi.vcs.update.UpdatedFiles
-import com.intellij.testFramework.UsefulTestCase
 import com.intellij.util.containers.ContainerUtil
 import git4idea.branch.GitBranchUtil
 import git4idea.config.GitVersionSpecialty
@@ -33,6 +32,7 @@ import git4idea.repo.GitRepository
 import git4idea.test.*
 import git4idea.update.GitRebaseOverMergeProblem
 import git4idea.update.GitUpdateResult
+import git4idea.util.GitPreservingProcess
 import org.junit.Assume.assumeTrue
 import java.io.File
 import java.util.Collections.singletonMap
@@ -141,10 +141,11 @@ class GitPushOperationSingleRepoTest : GitPushOperationBaseTest() {
     val pushSpec = makePushSpec(repository, "master", "origin/master")
 
     val result = object : GitPushOperation(project, pushSupport, singletonMap(repository, pushSpec), null, false, false) {
-      override fun update(rootsToUpdate: Collection<GitRepository>,
+      override fun update(rootsToUpdate: MutableCollection<GitRepository>,
                           updateMethod: UpdateMethod,
-                          checkForRebaseOverMergeProblem: Boolean): GitUpdateResult {
-        val updateResult = super.update(rootsToUpdate, updateMethod, checkForRebaseOverMergeProblem)
+                          checkForRebaseOverMergeProblem: Boolean,
+                          stashBeforeUpdate: Boolean): Pair<GitUpdateResult, GitPreservingProcess> {
+        val updateResult = super.update(rootsToUpdate, updateMethod, checkForRebaseOverMergeProblem, stashBeforeUpdate)
         pushCommitFromBro()
         return updateResult
       }
@@ -169,10 +170,11 @@ class GitPushOperationSingleRepoTest : GitPushOperationBaseTest() {
     val result = object : GitPushOperation(project, pushSupport, singletonMap(repository, pushSpec), null, false, false) {
       internal var updateHappened: Boolean = false
 
-      override fun update(rootsToUpdate: Collection<GitRepository>,
+      override fun update(rootsToUpdate: MutableCollection<GitRepository>,
                           updateMethod: UpdateMethod,
-                          checkForRebaseOverMergeProblem: Boolean): GitUpdateResult {
-        val updateResult = super.update(rootsToUpdate, updateMethod, checkForRebaseOverMergeProblem)
+                          checkForRebaseOverMergeProblem: Boolean,
+                          stashBeforeUpdate: Boolean): Pair<GitUpdateResult, GitPreservingProcess> {
+        val updateResult = super.update(rootsToUpdate, updateMethod, checkForRebaseOverMergeProblem, stashBeforeUpdate)
         if (!updateHappened) {
           updateHappened = true
           pushCommitFromBro()
@@ -426,6 +428,49 @@ class GitPushOperationSingleRepoTest : GitPushOperationBaseTest() {
     assertEquals(UpdateMethod.BRANCH_DEFAULT, settings.updateType)
   }
 
+  // IDEA-76774
+  fun `test local changes are stashed-unstashed only once for several push rejections`() {
+    pushCommitFromBro()
+    cd(repository)
+    makeCommit("afile.txt")
+    val localFile = repository.file("local-changes.txt")
+    localFile.create("Local changes").add()
+
+    updateRepositories()
+    refresh()
+    updateChangeListManager()
+
+    agreeToUpdate(GitRejectedPushUpdateDialog.REBASE_EXIT_CODE)
+
+    val pushSpec = makePushSpec(repository, "master", "origin/master")
+
+    var stashCalled = 0
+    git.stashListener = {
+      stashCalled++
+    }
+
+    var pushRejected = 0
+
+    val result = object : GitPushOperation(project, pushSupport, singletonMap(repository, pushSpec), null, false, false) {
+      override fun update(rootsToUpdate: MutableCollection<GitRepository>,
+                          updateMethod: UpdateMethod,
+                          checkForRebaseOverMergeProblem: Boolean,
+                          stashBeforeUpdate: Boolean): Pair<GitUpdateResult, GitPreservingProcess> {
+        val updateResult = super.update(rootsToUpdate, updateMethod, checkForRebaseOverMergeProblem, stashBeforeUpdate)
+        if (pushRejected < 2) {
+          pushCommitFromBro()
+          pushRejected++
+        }
+        return updateResult
+      }
+    }.execute()
+
+    assertResult(SUCCESS, 1, "master", "origin/master", result)
+    assertTrue("Locally changed file wasn't unstashed", localFile.exists())
+    repository.assertStatus(localFile.file, 'A')
+    assertEquals("Stash should have been called only once", 1, stashCalled)
+  }
+
   private fun generateUpdateNeeded() {
     pushCommitFromBro()
     cd(repository)
@@ -464,8 +509,8 @@ class GitPushOperationSingleRepoTest : GitPushOperationBaseTest() {
                            updatedFiles: List<String>?,
                            actualResult: GitPushResult) {
     assertResult(type, pushedCommits, from, to, updateResult, actualResult.results[repository]!!)
-    UsefulTestCase.assertSameElements("Updated files set is incorrect",
-        getUpdatedFiles(actualResult.updatedFiles), ContainerUtil.notNullize(updatedFiles))
+    if (updatedFiles != null)
+      assertSameElements("Updated files set is incorrect", getUpdatedFiles(actualResult.updatedFiles), updatedFiles)
   }
 
   private fun getUpdatedFiles(updatedFiles: UpdatedFiles): Collection<String> {

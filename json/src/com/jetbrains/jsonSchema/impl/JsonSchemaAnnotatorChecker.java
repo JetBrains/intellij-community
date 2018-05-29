@@ -10,7 +10,6 @@ import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiElement;
-import com.intellij.util.ArrayUtil;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.SmartList;
 import com.intellij.util.ThreeState;
@@ -286,9 +285,13 @@ class JsonSchemaAnnotatorChecker {
       if (required != null) {
         for (String req : required) {
           if (!set.contains(req)) {
+            JsonSchemaObject propertySchema = resolvePropertySchema(schema, req);
             error("Missing required property '" + req + "'", value.getDelegate(),
                   JsonValidationError.FixableIssueKind.MissingProperty,
-                  new JsonValidationError.MissingPropertyIssueData(req, resolvePropertyType(schema, req)));
+                  new JsonValidationError.MissingPropertyIssueData(req,
+                                                                   propertySchema == null ? null : propertySchema.getType(),
+                                                                   propertySchema == null ? null : propertySchema.getDefault(),
+                                                                   propertySchema != null && propertySchema.getEnum() != null));
           }
         }
       }
@@ -305,10 +308,14 @@ class JsonSchemaAnnotatorChecker {
             final List<String> list = entry.getValue();
             for (String s : list) {
               if (!set.contains(s)) {
+                JsonSchemaObject propertySchema = resolvePropertySchema(schema, s);
                 error("Dependency is violated: '" + s + "' must be specified, since '" + entry.getKey() + "' is specified",
                       value.getDelegate(),
                       JsonValidationError.FixableIssueKind.MissingProperty,
-                      new JsonValidationError.MissingPropertyIssueData(s, resolvePropertyType(schema, s)));
+                      new JsonValidationError.MissingPropertyIssueData(s,
+                                                                       propertySchema == null ? null : propertySchema.getType(),
+                                                                       propertySchema == null ? null : propertySchema.getDefault(),
+                                                                       propertySchema != null && propertySchema.getEnum() != null));
               }
             }
           }
@@ -325,6 +332,25 @@ class JsonSchemaAnnotatorChecker {
     }
 
     validateAsJsonSchema(object.getDelegate());
+  }
+
+  private static JsonSchemaObject resolvePropertySchema(@NotNull JsonSchemaObject schema, String req) {
+    if (schema.getProperties().containsKey(req)) {
+      return schema.getProperties().get(req);
+    }
+    else {
+      JsonSchemaObject propertySchema = schema.getMatchingPatternPropertySchema(req);
+      if (propertySchema != null) {
+        return propertySchema;
+      }
+      else {
+        JsonSchemaObject additionalPropertiesSchema = schema.getAdditionalPropertiesSchema();
+        if (additionalPropertiesSchema != null) {
+          return additionalPropertiesSchema;
+        }
+      }
+    }
+    return null;
   }
 
   @Nullable
@@ -443,8 +469,7 @@ class JsonSchemaAnnotatorChecker {
       }
     }
     error("Value should be one of: [" + StringUtil.join(objects, o -> o.toString(), ", ") + "]", value,
-          JsonValidationError.FixableIssueKind.NonEnumValue,
-          new JsonValidationError.NonEnumValueIssueData(ContainerUtil.map(objects, o -> o.toString()).toArray(ArrayUtil.EMPTY_STRING_ARRAY)));
+          JsonValidationError.FixableIssueKind.NonEnumValue, null);
   }
 
   private static boolean equalsIgnoreQuotesAndCase(@NotNull final String s1, @NotNull final String s2) {

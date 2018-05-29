@@ -17,3 +17,10 @@ abstract class ParamFail extends ParamBase implements <warning descr="Non-annota
 
 abstract class ParamFail2 extends ParamBase implements <warning descr="Non-null parameter 's' in method 'setString2' from 'ParamBase' should not override non-annotated parameter from 'NonAnnotatedInt'">NonAnnotatedInt</warning> { }
 
+
+interface NonNullEnum {
+  @NotNull
+  String name();
+}
+
+enum NonNullEnumImpl implements NonNullEnum {}

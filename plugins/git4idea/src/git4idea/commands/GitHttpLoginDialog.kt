@@ -14,6 +14,7 @@ import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.UI.PanelFactory.grid
 import com.intellij.util.ui.UI.PanelFactory.panel
 import com.intellij.util.ui.UIUtil
+import com.intellij.util.ui.components.BorderLayoutPanel
 import git4idea.remote.InteractiveGitHttpAuthDataProvider
 import java.awt.event.ActionEvent
 import javax.swing.AbstractAction
@@ -51,7 +52,7 @@ class GitHttpLoginDialog @JvmOverloads constructor(project: Project,
     init()
   }
 
-  override fun createCenterPanel() = JBUI.Panels
+  override fun createCenterPanel(): BorderLayoutPanel = JBUI.Panels
     .simplePanel(0, UIUtil.DEFAULT_VGAP)
     .addToCenter(grid()
                    .add(panel(usernameField).withLabel("Username:"))
@@ -65,7 +66,7 @@ class GitHttpLoginDialog @JvmOverloads constructor(project: Project,
                          if (passwordField.password.isEmpty()) ValidationInfo("Password cannot be empty", passwordField) else null)
   }
 
-  override fun createSouthAdditionalPanel() = Wrapper(additionalProvidersButton)
+  override fun createSouthAdditionalPanel(): Wrapper = Wrapper(additionalProvidersButton)
     .apply { border = JBUI.Borders.emptyRight(UIUtil.DEFAULT_HGAP) }
 
   override fun getPreferredFocusedComponent(): JComponent = if (usernameField.text.isBlank()) usernameField else passwordField

@@ -55,6 +55,6 @@ fun isUnderTransformation(clazz: PsiClass?): Boolean {
   return clazz is GrTypeDefinition && clazz in transformationContext
 }
 
-infix operator fun TransformationContext.plusAssign(method: PsiMethod) = addMethod(method)
+infix operator fun TransformationContext.plusAssign(method: PsiMethod): Unit = addMethod(method)
 
-infix operator fun TransformationContext.plusAssign(field: GrField) = addField(field)
+infix operator fun TransformationContext.plusAssign(field: GrField): Unit = addField(field)

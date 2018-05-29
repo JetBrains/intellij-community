@@ -66,7 +66,7 @@ class GithubLoginDialog @JvmOverloads constructor(private val project: Project,
   private lateinit var login: String
   private lateinit var token: String
 
-  var tokenNote = GithubUtil.DEFAULT_TOKEN_NOTE
+  var tokenNote: String = GithubUtil.DEFAULT_TOKEN_NOTE
   private var tokenAcquisitionError: ValidationInfo? = null
 
   init {
@@ -164,9 +164,9 @@ class GithubLoginDialog @JvmOverloads constructor(private val project: Project,
     }
   }
 
-  override fun createSouthAdditionalPanel() = southAdditionalPanel
-  override fun createCenterPanel() = centerPanel
-  override fun getPreferredFocusedComponent() = currentUi.getPreferredFocus()
+  override fun createSouthAdditionalPanel(): Wrapper = southAdditionalPanel
+  override fun createCenterPanel(): Wrapper = centerPanel
+  override fun getPreferredFocusedComponent(): JComponent = currentUi.getPreferredFocus()
 
   private fun applyUi(ui: CredentialsUI) {
     currentUi = ui

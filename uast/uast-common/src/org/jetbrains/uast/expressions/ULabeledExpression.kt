@@ -41,12 +41,12 @@ interface ULabeledExpression : UExpression, ULabeled {
     visitor.afterVisitLabeledExpression(this)
   }
 
-  override fun <D, R> accept(visitor: UastTypedVisitor<D, R>, data: D) =
+  override fun <D, R> accept(visitor: UastTypedVisitor<D, R>, data: D): R =
     visitor.visitLabeledExpression(this, data)
 
-  override fun evaluate() = expression.evaluate()
+  override fun evaluate(): Any? = expression.evaluate()
 
-  override fun asLogString() = log("label = $label")
+  override fun asLogString(): String = log("label = $label")
 
-  override fun asRenderString() = "$label@ ${expression.asRenderString()}"
+  override fun asRenderString(): String = "$label@ ${expression.asRenderString()}"
 }

@@ -18,10 +18,10 @@ data class PyRequirementImpl(private val name: String,
                              private val installOptions: List<String>,
                              private val extras: String) : PyRequirement {
 
-  override fun getName() = name
-  override fun getExtras() = extras
-  override fun getVersionSpecs() = versionSpecs
-  override fun getInstallOptions() = installOptions
+  override fun getName(): String = name
+  override fun getExtras(): String = extras
+  override fun getVersionSpecs(): List<PyRequirementVersionSpec> = versionSpecs
+  override fun getInstallOptions(): List<String> = installOptions
 
   override fun match(packages: Collection<PyPackage>): PyPackage? {
     val normalizedName = name.replace('_', '-')

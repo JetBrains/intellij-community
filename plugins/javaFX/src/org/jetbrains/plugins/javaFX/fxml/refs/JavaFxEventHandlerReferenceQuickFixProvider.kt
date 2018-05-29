@@ -11,6 +11,7 @@ import com.intellij.psi.PsiModifier
 import com.intellij.psi.PsiSubstitutor
 import com.intellij.psi.PsiType
 import com.intellij.psi.codeStyle.JavaCodeStyleSettings
+import com.intellij.psi.codeStyle.SuggestedNameInfo
 import com.intellij.psi.util.createSmartPointer
 import com.intellij.psi.xml.XmlAttribute
 import com.intellij.psi.xml.XmlAttributeValue
@@ -20,12 +21,12 @@ import org.jetbrains.plugins.javaFX.fxml.JavaFxPsiUtil
 
 class JavaFxEventHandlerReferenceQuickFixProvider : UnresolvedReferenceQuickFixProvider<JavaFxEventHandlerReference>() {
 
-  override fun getReferenceClass() = JavaFxEventHandlerReference::class.java
+  override fun getReferenceClass(): Class<JavaFxEventHandlerReference> = JavaFxEventHandlerReference::class.java
 
   override fun registerFixes(ref: JavaFxEventHandlerReference, registrar: QuickFixActionRegistrar) {
     val controller = ref.myController ?: return
     if (ref.myEventHandler != null) return
-    val element = ref.element ?: return
+    val element = ref.element
     val request = CreateEventHandlerRequest(element)
     createMethodActions(controller, request).forEach(registrar::register)
   }
@@ -45,9 +46,9 @@ class CreateEventHandlerRequest(element: XmlAttributeValue) : CreateMethodReques
 
   private val myElement get() = myPointer.element!!
 
-  override fun getMethodName() = myElement.value!!.substring(1)
+  override fun getMethodName(): String = myElement.value!!.substring(1)
 
-  override fun getReturnType() = listOf(expectedType(PsiType.VOID, ExpectedType.Kind.EXACT))
+  override fun getReturnType(): List<ExpectedType> = listOf(expectedType(PsiType.VOID, ExpectedType.Kind.EXACT))
 
   override fun getExpectedParameters(): List<ExpectedParameter> {
     val eventType = expectedType(getEventType(myElement), ExpectedType.Kind.EXACT)
@@ -55,18 +56,18 @@ class CreateEventHandlerRequest(element: XmlAttributeValue) : CreateMethodReques
     return listOf(parameter)
   }
 
-  override fun getParameters() = getParameters(expectedParameters, myProject)
+  override fun getParameters(): List<Pair<SuggestedNameInfo, List<ExpectedType>>> = getParameters(expectedParameters, myProject)
 
-  override fun getModifiers() = setOf(myVisibility)
+  override fun getModifiers(): Set<JvmModifier> = setOf(myVisibility)
 
-  override fun getAnnotations() = if (myVisibility != JvmModifier.PUBLIC) {
+  override fun getAnnotations(): List<AnnotationRequest> = if (myVisibility != JvmModifier.PUBLIC) {
     listOf(annotationRequest(JavaFxCommonNames.JAVAFX_FXML_ANNOTATION))
   }
   else {
     emptyList()
   }
 
-  override fun getTargetSubstitutor() = PsiJvmSubstitutor(myProject, PsiSubstitutor.EMPTY)
+  override fun getTargetSubstitutor(): PsiJvmSubstitutor = PsiJvmSubstitutor(myProject, PsiSubstitutor.EMPTY)
 }
 
 private fun getVisibility(project: Project): JvmModifier {

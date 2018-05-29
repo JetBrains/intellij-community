@@ -20,6 +20,10 @@ public class ContributorSearchResult<T> {
     this.hasMoreItems = hasMoreItems;
   }
 
+  public ContributorSearchResult(List<T> items) {
+    this(items, false);
+  }
+
   public List<T> getItems() {
     return items;
   }

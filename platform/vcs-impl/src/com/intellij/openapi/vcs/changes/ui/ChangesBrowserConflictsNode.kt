@@ -22,5 +22,5 @@ class ChangesBrowserConflictsNode(val project: Project) : ChangesBrowserNode<Uni
     AbstractVcsHelper.getInstance(project).showMergeDialog(ChangesUtil.getFiles(allChangesUnder.stream()).collect(Collectors.toList()))
   }
 
-  override fun getSortWeight() = CONFLICTS_SORT_WEIGHT
+  override fun getSortWeight(): Int = CONFLICTS_SORT_WEIGHT
 }

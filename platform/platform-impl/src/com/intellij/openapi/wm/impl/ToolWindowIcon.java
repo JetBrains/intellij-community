@@ -7,6 +7,7 @@ import com.intellij.ui.ColorUtil;
 import com.intellij.ui.Gray;
 import com.intellij.util.IconUtil;
 import com.intellij.util.ui.ImageUtil;
+import com.intellij.util.ui.JBUI.ScaleContext;
 import com.intellij.util.ui.UIUtil;
 
 import javax.swing.*;
@@ -71,7 +72,10 @@ public class ToolWindowIcon implements Icon {
         }
       }
     };
-    g.drawImage(ImageUtil.filter(IconUtil.toImage(myIcon), filter), x, y, null);
+    ScaleContext ctx = ScaleContext.create(c, (Graphics2D)g);
+    Image rawImage = ImageUtil.filter(IconUtil.toImage(myIcon, ctx), filter);
+    Image hidpiImage = ImageUtil.ensureHiDPI(rawImage, ctx);
+    UIUtil.drawImage(g, hidpiImage, x, y, null);
   }
 
   private static int getBaseGray() {

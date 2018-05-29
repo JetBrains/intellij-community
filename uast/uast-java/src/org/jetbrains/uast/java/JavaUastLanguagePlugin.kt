@@ -27,9 +27,9 @@ import org.jetbrains.uast.java.expressions.JavaUSynchronizedExpression
 import org.jetbrains.uast.java.kinds.JavaSpecialExpressionKinds
 
 class JavaUastLanguagePlugin : UastLanguagePlugin {
-  override val priority = 0
+  override val priority: Int = 0
 
-  override fun isFileSupported(fileName: String) = fileName.endsWith(".java", ignoreCase = true)
+  override fun isFileSupported(fileName: String): Boolean = fileName.endsWith(".java", ignoreCase = true)
 
   override val language: Language
     get() = JavaLanguage.INSTANCE

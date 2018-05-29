@@ -88,8 +88,8 @@ class ImageSizeOptimizer(val projectHome: File) {
   }
 
   class OptimizedImage(val file: File, val image: BufferedImage, val optimizedArray: ByteArray) {
-    val sizeBefore = file.length()
-    val sizeAfter = optimizedArray.size
+    val sizeBefore: Long = file.length()
+    val sizeAfter: Int = optimizedArray.size
 
     val compressionStats: String get() {
       val compression = (sizeBefore - sizeAfter) * 100 / sizeBefore

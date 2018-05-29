@@ -16,7 +16,7 @@ data class PyPackageVersion internal constructor(val epoch: String? = null,
   /**
    * String representation that follows spelling described in [PEP-440][https://www.python.org/dev/peps/pep-0440/#normalization]
    */
-  val presentableText
+  val presentableText: String
     get() =
       sequenceOf(epochPresentable(), release, pre, postPresentable(), devPresentable(), localPresentable())
         .filterNotNull()

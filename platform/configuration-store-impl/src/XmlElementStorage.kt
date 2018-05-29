@@ -22,19 +22,19 @@ abstract class XmlElementStorage protected constructor(val fileSpec: String,
                                                        private val pathMacroSubstitutor: TrackingPathMacroSubstitutor? = null,
                                                        roamingType: RoamingType? = RoamingType.DEFAULT,
                                                        private val provider: StreamProvider? = null) : StorageBaseEx<StateMap>() {
-  val roamingType = roamingType ?: RoamingType.DEFAULT
+  val roamingType: RoamingType = roamingType ?: RoamingType.DEFAULT
 
   protected abstract fun loadLocalData(): Element?
 
-  override final fun getSerializedState(storageData: StateMap, component: Any?, componentName: String, archive: Boolean) = storageData.getState(componentName, archive)
+  override final fun getSerializedState(storageData: StateMap, component: Any?, componentName: String, archive: Boolean): Element? = storageData.getState(componentName, archive)
 
   override fun archiveState(storageData: StateMap, componentName: String, serializedState: Element?) {
     storageData.archive(componentName, serializedState)
   }
 
-  override fun hasState(storageData: StateMap, componentName: String) = storageData.hasState(componentName)
+  override fun hasState(storageData: StateMap, componentName: String): Boolean = storageData.hasState(componentName)
 
-  override fun loadData() = loadElement()?.let { loadState(it) } ?: StateMap.EMPTY
+  override fun loadData(): StateMap = loadElement()?.let { loadState(it) } ?: StateMap.EMPTY
 
   private fun loadElement(useStreamProvider: Boolean = true): Element? {
     var element: Element? = null
@@ -70,7 +70,7 @@ abstract class XmlElementStorage protected constructor(val fileSpec: String,
     storageDataRef.set(loadState(element))
   }
 
-  override fun startExternalization() = if (checkIsSavingDisabled()) null else createSaveSession(getStorageData())
+  override fun startExternalization(): StateStorage.ExternalizationSession? = if (checkIsSavingDisabled()) null else createSaveSession(getStorageData())
 
   protected abstract fun createSaveSession(states: StateMap): StateStorage.ExternalizationSession
 
@@ -101,7 +101,7 @@ abstract class XmlElementStorage protected constructor(val fileSpec: String,
 
     private val newLiveStates = THashMap<String, Element>()
 
-    override fun createSaveSession() = if (copiedStates == null || storage.checkIsSavingDisabled()) null else this
+    override fun createSaveSession(): XmlElementStorageSaveSession<T>? = if (copiedStates == null || storage.checkIsSavingDisabled()) null else this
 
     override fun setSerializedState(componentName: String, element: Element?) {
       val normalized = element?.normalizeRootName()

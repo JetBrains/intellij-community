@@ -51,8 +51,8 @@ public abstract class VirtualFileContentsChangedAdapter implements VirtualFileLi
     onFileChange(event.getFile());
   }
 
-  protected abstract void onFileChange(@NotNull final VirtualFile file);
-  protected abstract void onBeforeFileChange(@NotNull final VirtualFile file);
+  protected abstract void onFileChange(@NotNull final VirtualFile fileOrDirectory);
+  protected abstract void onBeforeFileChange(@NotNull final VirtualFile fileOrDirectory);
 
   @Override
   public void fileDeleted(@NotNull VirtualFileEvent event) {

@@ -27,12 +27,12 @@ import com.intellij.psi.util.PsiUtil
  * @see <a href="http://openjdk.java.net/jeps/261">JEP 261: Module System</a>
  */
 class JavaPlatformModuleSystem : JavaModuleSystemEx {
-  override fun getName() = "Java Platform Module System"
+  override fun getName(): String = "Java Platform Module System"
 
-  override fun isAccessible(targetPackageName: String, targetFile: PsiFile?, place: PsiElement) =
+  override fun isAccessible(targetPackageName: String, targetFile: PsiFile?, place: PsiElement): Boolean =
     checkAccess(targetPackageName, targetFile, place, quick = true) == null
 
-  override fun checkAccess(targetPackageName: String, targetFile: PsiFile?, place: PsiElement) =
+  override fun checkAccess(targetPackageName: String, targetFile: PsiFile?, place: PsiElement): ErrorWithFixes? =
     checkAccess(targetPackageName, targetFile, place, quick = false)
 
   private fun checkAccess(targetPackageName: String, targetFile: PsiFile?, place: PsiElement, quick: Boolean): ErrorWithFixes? {

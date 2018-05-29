@@ -58,5 +58,5 @@ class GithubAccountInformationProvider(private val apiTaskExecutor: GithubApiTas
   }
 
   @Throws(IOException::class)
-  fun getAccountUsername(indicator: ProgressIndicator, account: GithubAccount) = getAccountInformation(indicator, account).login
+  fun getAccountUsername(indicator: ProgressIndicator, account: GithubAccount): String = getAccountInformation(indicator, account).login
 }

@@ -191,6 +191,7 @@ public class GraphInferenceHighlightingTest extends LightDaemonAnalyzerTestCase 
   public void testVarargsMethodPreferred() { doTest(); }
   public void testSameNamedFreshVariables() { doTest(); }
   public void testEnsureOrderOfFreshVariablesWhenCaptureNonProperTypes() { doTest(); }
+  public void testFreshVariablesBounds() { doTest(); }
 
   public void testApplicabilityCheckFailsExpressionTypeCheckPasses() {
     doTest();

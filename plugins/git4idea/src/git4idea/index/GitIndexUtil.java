@@ -84,16 +84,16 @@ public class GitIndexUtil {
   public static StagedFile listTree(@NotNull GitRepository repository,
                                     @NotNull FilePath filePath,
                                     @NotNull VcsRevisionNumber revision) throws VcsException {
-    List<StagedFile> result = listTree(repository, Collections.singleton(filePath), revision);
-    if (result.size() != 1) return null;
-    return result.get(0);
+    List<StagedFileOrDirectory> result = listTree(repository, Collections.singleton(filePath), revision);
+    if (result.size() != 1 || !(result.get(0) instanceof StagedFile)) return null;
+    return (StagedFile)result.get(0);
   }
 
   @NotNull
-  public static List<StagedFile> listTree(@NotNull GitRepository repository,
-                                          @NotNull Collection<FilePath> filePath,
-                                          @NotNull VcsRevisionNumber revision) throws VcsException {
-    List<StagedFile> result = new ArrayList<>();
+  public static List<StagedFileOrDirectory> listTree(@NotNull GitRepository repository,
+                                                     @NotNull Collection<FilePath> filePath,
+                                                     @NotNull VcsRevisionNumber revision) throws VcsException {
+    List<StagedFileOrDirectory> result = new ArrayList<>();
     VirtualFile root = repository.getRoot();
 
     GitLineHandler h = new GitLineHandler(repository.getProject(), root, GitCommand.LS_TREE);
@@ -135,7 +135,7 @@ public class GitIndexUtil {
   }
 
   @Nullable
-  public static StagedFile parseListTreeRecord(@NotNull VirtualFile root, @NotNull String line) {
+  public static StagedFileOrDirectory parseListTreeRecord(@NotNull VirtualFile root, @NotNull String line) {
     try {
       StringScanner s = new StringScanner(line);
       String permissions = s.spaceToken();
@@ -143,9 +143,12 @@ public class GitIndexUtil {
       String hash = s.tabToken();
       String filePath = s.line();
 
+      FilePath path = VcsUtil.getFilePath(root, GitUtil.unescapePath(filePath));
+
+      if ("tree".equals(type)) return new StagedDirectory(path);
+      if ("commit".equals(type)) return new StagedSubrepo(path);
       if (!"blob".equals(type)) return null;
 
-      FilePath path = VcsUtil.getFilePath(root, GitUtil.unescapePath(filePath));
       boolean executable = EXECUTABLE_MODE.equals(permissions);
       return new StagedFile(path, hash, executable);
     }
@@ -217,20 +220,25 @@ public class GitIndexUtil {
     return h.run();
   }
 
-  public static class StagedFile {
-    @NotNull private final FilePath myPath;
-    @NotNull private final String myBlobHash;
-    private final boolean myExecutable;
+  public static class StagedFileOrDirectory {
+    @NotNull protected final FilePath myPath;
 
-    public StagedFile(@NotNull FilePath path, @NotNull String blobHash, boolean executable) {
-      myPath = path;
-      myBlobHash = blobHash;
-      myExecutable = executable;
-    }
+    public StagedFileOrDirectory(@NotNull FilePath path) {myPath = path;}
 
     @NotNull
     public FilePath getPath() {
       return myPath;
+    }
+  }
+
+  public static class StagedFile extends StagedFileOrDirectory {
+    @NotNull private final String myBlobHash;
+    private final boolean myExecutable;
+
+    public StagedFile(@NotNull FilePath path, @NotNull String blobHash, boolean executable) {
+      super(path);
+      myBlobHash = blobHash;
+      myExecutable = executable;
     }
 
     @NotNull
@@ -240,6 +248,18 @@ public class GitIndexUtil {
 
     public boolean isExecutable() {
       return myExecutable;
+    }
+  }
+
+  public static class StagedDirectory extends StagedFileOrDirectory {
+    public StagedDirectory(@NotNull FilePath path) {
+      super(path);
+    }
+  }
+
+  public static class StagedSubrepo extends StagedFileOrDirectory {
+    public StagedSubrepo(@NotNull FilePath path) {
+      super(path);
     }
   }
 }

@@ -52,13 +52,13 @@ internal val DEPRECATED_PROJECT_FILE_STORAGE_ANNOTATION = FileStorageAnnotation(
 abstract class ProjectStoreBase(override final val project: ProjectImpl) : ComponentStoreWithExtraComponents(), IProjectStore {
   // protected setter used in upsource
   // Zelix KlassMaster - ERROR: Could not find method 'getScheme()'
-  var scheme = StorageScheme.DEFAULT
+  var scheme: StorageScheme = StorageScheme.DEFAULT
 
-  override final var loadPolicy = StateLoadPolicy.LOAD
+  override final var loadPolicy: StateLoadPolicy = StateLoadPolicy.LOAD
 
-  override final fun isOptimiseTestLoadSpeed() = loadPolicy != StateLoadPolicy.LOAD
+  override final fun isOptimiseTestLoadSpeed(): Boolean = loadPolicy != StateLoadPolicy.LOAD
 
-  override final fun getStorageScheme() = scheme
+  override final fun getStorageScheme(): StorageScheme = scheme
 
   override abstract val storageManager: StateStorageManagerImpl
 
@@ -72,14 +72,14 @@ abstract class ProjectStoreBase(override final val project: ProjectImpl) : Compo
     loadPolicy = if (value) StateLoadPolicy.NOT_LOAD else StateLoadPolicy.LOAD
   }
 
-  override fun getProjectFilePath() = storageManager.expandMacro(PROJECT_FILE)
+  override fun getProjectFilePath(): String = storageManager.expandMacro(PROJECT_FILE)
 
   /**
    * `null` for default or non-directory based project.
    */
-  override fun getProjectConfigDir() = if (isDirectoryBased) storageManager.expandMacro(PROJECT_CONFIG_DIR) else null
+  override fun getProjectConfigDir(): String? = if (isDirectoryBased) storageManager.expandMacro(PROJECT_CONFIG_DIR) else null
 
-  override final fun getWorkspaceFilePath() = storageManager.expandMacro(StoragePathMacros.WORKSPACE_FILE)
+  override final fun getWorkspaceFilePath(): String = storageManager.expandMacro(StoragePathMacros.WORKSPACE_FILE)
 
   override final fun clearStorages() {
     storageManager.clearStorages()
@@ -235,11 +235,11 @@ abstract class ProjectStoreBase(override final val project: ProjectImpl) : Compo
     return FileUtil.isAncestor(PathUtilRt.getParentPath(projectFilePath), filePath, false)
   }
 
-  override fun getDirectoryStorePath(ignoreProjectStorageScheme: Boolean) = if (!ignoreProjectStorageScheme && !isDirectoryBased) null else PathUtilRt.getParentPath(projectFilePath).nullize()
+  override fun getDirectoryStorePath(ignoreProjectStorageScheme: Boolean): String? = if (!ignoreProjectStorageScheme && !isDirectoryBased) null else PathUtilRt.getParentPath(projectFilePath).nullize()
 
-  override fun getDirectoryStoreFile() = directoryStorePath?.let { LocalFileSystem.getInstance().findFileByPath(it) }
+  override fun getDirectoryStoreFile(): VirtualFile? = directoryStorePath?.let { LocalFileSystem.getInstance().findFileByPath(it) }
 
-  override fun getDirectoryStorePathOrBase() = PathUtilRt.getParentPath(projectFilePath)
+  override fun getDirectoryStorePathOrBase(): String = PathUtilRt.getParentPath(projectFilePath)
 }
 
 private open class ProjectStoreImpl(project: ProjectImpl, private val pathMacroManager: PathMacroManager) : ProjectStoreBase(project) {

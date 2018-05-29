@@ -146,8 +146,12 @@ public class RefParameterImpl extends RefJavaElementImpl implements RefParameter
         }
       }
     }
-    if (expression instanceof PsiLiteralExpression && ((PsiLiteralExpression)expression).getValue() == null) {
-      return null;
+    if (expression instanceof PsiLiteralExpression) {
+      if (((PsiLiteralExpression)expression).getValue() == null) {
+        return null;
+      }
+      //don't unescape/escape to insert into the source file
+      return expression.getText();
     }
     Object constValue = JavaConstantExpressionEvaluator.computeConstantExpression(expression, false);
     return constValue == null ? VALUE_IS_NOT_CONST : constValue instanceof String ? "\"" + constValue + "\"" : constValue;

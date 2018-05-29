@@ -48,7 +48,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
-import java.io.UnsupportedEncodingException;
 import java.nio.charset.Charset;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -435,12 +434,9 @@ public class IdeaGateway {
   }
 
   private static byte[] bytesFromDocument(@NotNull Document d) {
-    try {
-      return d.getText().getBytes(getFile(d).getCharset().name());
-    }
-    catch (UnsupportedEncodingException e) {
-      return d.getText().getBytes();
-    }
+    VirtualFile file = getFile(d);
+    Charset charset = file != null ? file.getCharset() : EncodingRegistry.getInstance().getDefaultCharset();
+    return d.getText().getBytes(charset);
   }
 
   public String stringFromBytes(@NotNull byte[] bytes, @NotNull String path) {

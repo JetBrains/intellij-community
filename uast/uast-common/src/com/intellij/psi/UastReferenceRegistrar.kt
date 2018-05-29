@@ -66,7 +66,7 @@ abstract class UastLiteralReferenceProvider : UastReferenceProvider() {
 
 }
 
-fun uastLiteralReferenceProvider(provider: (ULiteralExpression, PsiLanguageInjectionHost) -> Array<PsiReference>) =
+fun uastLiteralReferenceProvider(provider: (ULiteralExpression, PsiLanguageInjectionHost) -> Array<PsiReference>): UastLiteralReferenceProvider =
   object : UastLiteralReferenceProvider() {
 
     override fun getReferencesByULiteral(uLiteral: ULiteralExpression,

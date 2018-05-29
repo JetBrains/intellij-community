@@ -115,7 +115,7 @@ final class ContractConverter {
   }
 
   static final class ContractConversionException extends Exception {
-    public ContractConversionException(String message) {
+    ContractConversionException(String message) {
       super(message);
     }
   }

@@ -350,10 +350,31 @@ class C {
           assert decl.valid
         }
       }
-      catch (any) {
-        throw new RuntimeException("Failed with cancelAt=$cancelAt", any)
+      catch (Throwable e) {
+        throw new RuntimeException("Failed with cancelAt=$cancelAt", e)
       }
     }
 
+  }
+
+  void 'test no SOE when AST spine building queries file stub'() {
+    def file = fixture.addFileToProject('a.groovy', '@Anno int var') as GroovyFileImpl
+
+    assert file.node
+    GrVariableDeclaration decl = SyntaxTraverser.psiTraverser(file).filter(GrVariableDeclaration).first()
+    assert decl
+    
+    for (i in 1..2) {
+      assert PsiAnchor.create(decl) instanceof PsiAnchor.StubIndexReference
+
+      GCUtil.tryGcSoftlyReachableObjects()
+
+      WriteCommandAction.runWriteCommandAction(project) {
+        file.viewProvider.document.insertString(0, ' ')
+        PsiDocumentManager.getInstance(project).commitAllDocuments()
+      }
+      assert decl.node
+      assert decl.valid
+    }
   }
 }

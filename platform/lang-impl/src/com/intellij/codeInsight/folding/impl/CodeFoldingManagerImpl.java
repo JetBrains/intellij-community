@@ -32,7 +32,6 @@ import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
 import java.awt.*;
 import java.awt.event.MouseEvent;
 import java.util.Collection;
@@ -111,17 +110,7 @@ public class CodeFoldingManagerImpl extends CodeFoldingManager implements Projec
             // editor content, hence, we show max(2; available visual lines number) instead.
             // P.S. '2' is used here in assumption that many java methods have javadocs which first line is just '/**'.
             // So, it's not too useful to show only it even when available vertical space is not big enough.
-            int availableVisualLines = 2;
-            JComponent editorComponent = editor.getComponent();
-            Container editorComponentParent = editorComponent.getParent();
-            if (editorComponentParent != null) {
-              Container contentPane = editorComponent.getRootPane().getContentPane();
-              if (contentPane != null) {
-                int y = SwingUtilities.convertPoint(editorComponentParent, editorComponent.getLocation(), contentPane).y;
-                int visualLines = y / editor.getLineHeight();
-                availableVisualLines = Math.max(availableVisualLines, visualLines);
-              }
-            }
+            int availableVisualLines = EditorFragmentComponent.getAvailableVisualLinesAboveEditor(editor);
             int startVisualLine = editor.offsetToVisualPosition(textOffset).line;
             int desiredEndVisualLine = Math.max(0, editor.xyToVisualPosition(new Point(0, visibleArea.y)).line - 1);
             int endVisualLine = startVisualLine + availableVisualLines;

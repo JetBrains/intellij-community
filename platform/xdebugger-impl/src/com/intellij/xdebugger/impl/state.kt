@@ -16,36 +16,36 @@ import com.intellij.xdebugger.impl.breakpoints.XExpressionState
 @Tag("breakpoint-manager")
 class BreakpointManagerState : BaseState() {
   @get:XCollection(propertyElementName = "default-breakpoints")
-  var defaultBreakpoints by list<BreakpointState<*, *, *>>()
+  var defaultBreakpoints: MutableList<BreakpointState<*, *, *>> by list<BreakpointState<*, *, *>>()
 
   @get:XCollection(elementTypes = arrayOf(BreakpointState::class, LineBreakpointState::class), style = XCollection.Style.v2)
-  var breakpoints by list<BreakpointState<*, *, *>>()
+  var breakpoints: MutableList<BreakpointState<*, *, *>> by list<BreakpointState<*, *, *>>()
 
   @get:XCollection(propertyElementName = "breakpoints-defaults", elementTypes = arrayOf(BreakpointState::class, LineBreakpointState::class))
-  var breakpointsDefaults by list<BreakpointState<*, *, *>>()
+  var breakpointsDefaults: MutableList<BreakpointState<*, *, *>> by list<BreakpointState<*, *, *>>()
 
   @get:Tag("breakpoints-dialog")
   var breakpointsDialogProperties: XBreakpointsDialogState? = null
 
-  var defaultGroup by string()
+  var defaultGroup: String? by string()
 }
 
 @Tag("watches-manager")
 class WatchesManagerState : BaseState() {
   @get:Property(surroundWithTag = false)
   @get:XCollection
-  var expressions by list<ConfigurationState>()
+  var expressions: MutableList<ConfigurationState> by list<ConfigurationState>()
 }
 
 @Tag("configuration")
 class ConfigurationState @JvmOverloads constructor(name: String? = null, expressions: List<XExpression>? = null) : BaseState() {
   @get:Attribute
-  var name by string()
+  var name: String? by string()
 
   @Suppress("MemberVisibilityCanPrivate")
   @get:Property(surroundWithTag = false)
   @get:XCollection
-  var expressionStates by list<WatchState>()
+  var expressionStates: MutableList<WatchState> by list<WatchState>()
 
   init {
     // passed values are not default - constructor provided only for convenience

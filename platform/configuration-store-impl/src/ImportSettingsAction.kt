@@ -22,6 +22,7 @@ import gnu.trove.THashSet
 import java.io.File
 import java.io.IOException
 import java.io.InputStream
+import java.nio.file.Path
 import java.nio.file.Paths
 import java.util.zip.ZipException
 import java.util.zip.ZipInputStream
@@ -49,7 +50,7 @@ open class ImportSettingsAction : AnAction(), DumbAware {
       }
   }
 
-  protected open fun getExportableComponents(relativePaths: Set<String>) = getExportableComponentsMap(false, true, onlyPaths = relativePaths)
+  protected open fun getExportableComponents(relativePaths: Set<String>): Map<Path, List<ExportableItem>> = getExportableComponentsMap(false, true, onlyPaths = relativePaths)
   protected open fun getMarkedComponents(components: Set<ExportableItem>): Set<ExportableItem> = components
 
   protected open fun doImport(saveFile: File) {

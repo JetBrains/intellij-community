@@ -58,7 +58,9 @@ public abstract class GlobalSearchScope extends SearchScope implements ProjectAw
    *         a negative integer (-1), if file1 is located in the classpath after file2
    *         zero - otherwise or when the files are not comparable.
    */
-  public abstract int compare(@NotNull VirtualFile file1, @NotNull VirtualFile file2);
+  public int compare(@NotNull VirtualFile file1, @NotNull VirtualFile file2) {
+    return 0;
+  }
 
   // optimization methods:
 
