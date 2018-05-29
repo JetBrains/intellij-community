@@ -519,7 +519,7 @@ public class RunDashboardManagerImpl implements RunDashboardManager, PersistentS
       for (RunDashboardGrouper grouper : myGroupers) {
         if (grouper.getRule().getName().equals(ruleState.name) && !grouper.getRule().isAlwaysEnabled()) {
           grouper.setEnabled(ruleState.enabled);
-          return;
+          break;
         }
       }
     }
