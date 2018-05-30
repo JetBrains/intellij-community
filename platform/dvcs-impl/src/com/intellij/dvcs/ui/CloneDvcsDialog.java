@@ -390,6 +390,7 @@ public abstract class CloneDvcsDialog extends DialogWrapper {
               myRepositoryTestValidationInfo =
                 new ValidationInfo(DvcsBundle.message("clone.repository.url.test.failed.message", myTestResult.myErrorMessage),
                                    myRepositoryUrlCombobox);
+              startTrackingValidation();
             }
             myRepositoryTestProgressIndicator = null;
           }
