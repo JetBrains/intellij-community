@@ -135,6 +135,7 @@ public class GitBranchUtil {
   @NotNull
   public static List<String> getAllTags(@NotNull Project project, @NotNull VirtualFile root) throws VcsException {
     GitLineHandler h = new GitLineHandler(project, root, GitCommand.TAG);
+    h.addParameters("-l");
     h.setSilent(true);
 
     List<String> tags = new ArrayList<>();
