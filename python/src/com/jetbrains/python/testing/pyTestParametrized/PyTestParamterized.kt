@@ -29,7 +29,14 @@ internal fun PyFunction.getParametersFromGenerator(): List<String> {
   return decoratorList.decorators
     .filter { it.name == "parametrize" }
     .mapNotNull { pyEvaluator.evaluate(it.arguments.firstOrNull()) }
-    .filterIsInstance(String::class.java)
-    .flatMap { it.split(",") }
-    .map(String::trim)
+    .flatMap {
+      when (it) {
+        //For cases when parameters are written as literals "spam,eggs"
+        is String -> it.split(',').map(String::trim)
+        // For cases when written as tuple or list: ("spam", "eggs")
+        is List<*> -> it.filterIsInstance<String>()
+        else -> emptyList()
+      }
+    }
 }
+
