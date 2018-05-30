@@ -10,7 +10,7 @@ import static java.util.Arrays.asList;
 public class Main {
   public static long testNestedScope(List<String> list) {
       long count = 0L;
-      for (String l : list) {
+      for (String l: list) {
           if (l != null) {
               (new Consumer<String>() {
                   String lst = "hello";
@@ -27,7 +27,7 @@ public class Main {
 
   public static long testNestedScope2(List<String> list) {
       long count = 0L;
-      for (String l : list) {
+      for (String l: list) {
           if (l != null) {
               (new Consumer<String>() {
                   String list = "hello";
@@ -44,7 +44,7 @@ public class Main {
 
   private static long testAnonymousConflictingVar(Map<String, List<String>> strings) {
       long sum = 0L;
-      for (Map.Entry<String, List<String>> e : strings.entrySet()) {
+      for (Map.Entry<String, List<String>> e: strings.entrySet()) {
           if (!e.getKey().isEmpty()) {
               long count = e.getValue().stream().filter(new Predicate<>() {
                   // we're inside anonymous class
@@ -61,7 +61,7 @@ public class Main {
 
   private static long testLambdaConflictingVar(Map<String, List<String>> strings) {
       long sum = 0L;
-      for (Map.Entry<String, List<String>> e : strings.entrySet()) {
+      for (Map.Entry<String, List<String>> e: strings.entrySet()) {
           if (!e.getKey().isEmpty()) {
               long count = count(e.getValue(), s -> e.getKey().equals(s));
               sum += count;
@@ -72,7 +72,7 @@ public class Main {
 
   private static long testLambdaNotConflictingVar(Map<String, List<String>> strings) {
       long sum = 0L;
-      for (Map.Entry<String, List<String>> s : strings.entrySet()) {
+      for (Map.Entry<String, List<String>> s: strings.entrySet()) {
           if (!s.getKey().isEmpty()) {
               long count = count(s.getValue(), sx -> s.getKey().equals(sx));
               sum += count;

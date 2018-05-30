@@ -3,8 +3,8 @@ class Example {
         new Runnable() {
             @Override
             public void run() {
-                for (T t : foo) {
-                    <caret>
+                for (T t: foo) {
+
                 }
             }
         };

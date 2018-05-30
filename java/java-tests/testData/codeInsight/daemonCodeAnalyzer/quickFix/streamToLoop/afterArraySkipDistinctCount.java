@@ -9,7 +9,7 @@ public class Main {
       long count = 0L;
       Set<Integer> uniqueValues = new HashSet<>();
       long toSkip = 1;
-      for (Integer integer : new Integer[]{1, 2, 3, 2, 3}) {
+      for (Integer integer: new Integer[]{1, 2, 3, 2, 3}) {
           if (toSkip > 0) {
               toSkip--;
               continue;

@@ -5,8 +5,8 @@ class BarGoo {}
 class Foo {
     {
         List<BarGoo> goos;
-        for (BarGoo goo : goos) {
-            <caret>
+        for (BarGoo goo: goos) {
+            
         }
     }
 }

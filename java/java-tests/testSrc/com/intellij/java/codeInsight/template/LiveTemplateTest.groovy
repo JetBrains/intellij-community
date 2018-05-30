@@ -316,7 +316,7 @@ import  java.util.*;
 public class Main {
     List<String> getStringList(int i){
         List<String> ints = null;
-        for (String item : getStringList(<caret>)) {
+        for (String item: getStringList(<caret>)) {
             ;
         }
         return new ArrayList<>(i);
@@ -352,7 +352,7 @@ import  java.util.*;
 public class Main {
     List<String> getStringList(int i){
         List<String> ints = null;
-        for (String <selection>item</selection> : ints) {
+        for (String <selection>item</selection>: ints) {
             ;
         }
         return new ArrayList<>(i);
@@ -919,7 +919,7 @@ class Foo {
     myFixture.configureByText "a.java", "class A { public void B() { I<caret> } }"
     myFixture.type('\t')
     myFixture.checkResult("class A { public void B() {\n" +
-                          "    for (Object o :) {\n" +
+                          "    for (Object o:) {\n" +
                           "        \n" +
                           "    }\n" +
                           "} }")
@@ -1257,7 +1257,7 @@ class Foo {{
     LightPlatformCodeInsightTestCase.delete(myFixture.editor, myFixture.project)
     myFixture.checkResult """
 class Foo {{
-    for (Object o : <caret> {
+    for (Object o: <caret> {
         
     }
 }}

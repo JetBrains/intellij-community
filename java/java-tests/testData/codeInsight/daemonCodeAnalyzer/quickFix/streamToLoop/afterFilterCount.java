@@ -5,7 +5,7 @@ import java.util.Arrays;
 public class Main {
   private static long countInRange(int... input) {
       long count = 0L;
-      for (int x : input) {
+      for (int x: input) {
           if (x > 0) {
               if (x < 10) {
                   count++;
@@ -18,7 +18,7 @@ public class Main {
   private static long countInRange1(int... input) {
     int x = 1;
       long count = 0L;
-      for (int y : input) {
+      for (int y: input) {
           if (y > 0) {
               if (y < 10) {
                   count++;
@@ -32,7 +32,7 @@ public class Main {
     int x = 1;
     int y = 2;
       long count = 0L;
-      for (int i : input) {
+      for (int i: input) {
           if (i > 0) {
               if (i < 10) {
                   count++;
@@ -47,7 +47,7 @@ public class Main {
     int y = 2;
     int i = 3;
       long count = 0L;
-      for (int x1 : input) {
+      for (int x1: input) {
           if (x1 > 0) {
               if (x1 < 10) {
                   count++;
@@ -61,7 +61,7 @@ public class Main {
     int x = 1;
     int i = 3;
       long result = 0L;
-      for (int count : input) {
+      for (int count: input) {
           if (count > 0) {
               if (count < 10) {
                   result++;
