@@ -44,7 +44,7 @@ public abstract class AbstractShowDiffAction extends AbstractVcsAction {
 
   protected static void updateDiffAction(@NotNull Presentation presentation,
                                          @NotNull VcsContext vcsContext) {
-    presentation.setEnabled(isEnabled(vcsContext, VcsBackgroundableActions.COMPARE_WITH));
+    presentation.setEnabled(isEnabled(vcsContext, true));
     presentation.setVisible(isVisible(vcsContext));
   }
 
@@ -59,7 +59,7 @@ public abstract class AbstractShowDiffAction extends AbstractVcsAction {
       .anyMatch(Objects::nonNull);
   }
 
-  protected static boolean isEnabled(@NotNull VcsContext vcsContext, @Nullable VcsBackgroundableActions actionKey) {
+  protected static boolean isEnabled(@NotNull VcsContext vcsContext, boolean disableIfRunning) {
     Project project = vcsContext.getProject();
     if (project == null) return false;
 
@@ -68,7 +68,11 @@ public abstract class AbstractShowDiffAction extends AbstractVcsAction {
     VirtualFile file = getIfSingle(vcsContext.getSelectedFilesStream());
     if (file == null || file.isDirectory()) return false;
 
-    if (actionKey != null && BackgroundableActionLock.isLocked(project, actionKey, VcsBackgroundableActions.keyFrom(file))) return false;
+    if (disableIfRunning) {
+      if (BackgroundableActionLock.isLocked(project, VcsBackgroundableActions.COMPARE_WITH, VcsBackgroundableActions.keyFrom(file))) {
+        return false;
+      }
+    }
 
     AbstractVcs vcs = ChangesUtil.getVcsForFile(file, project);
     if (vcs == null || vcs.getDiffProvider() == null) return false;
