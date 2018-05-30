@@ -68,10 +68,7 @@ import org.fest.swing.timing.Timeout.timeout
 import org.fest.util.Strings.isNullOrEmpty
 import org.fest.util.Strings.quote
 import org.junit.Assert.assertNotNull
-import java.awt.Component
-import java.awt.Container
-import java.awt.Frame
-import java.awt.Toolkit
+import java.awt.*
 import java.awt.event.KeyEvent
 import java.io.File
 import java.io.IOException
@@ -766,5 +763,14 @@ object GuiTestUtil {
    */
   fun copyToClipboard(string: String) = Clipboard.copyToClipboard(string)
 
+  fun getActiveModalDialog(): Dialog? {
+    val activeWindow = java.awt.KeyboardFocusManager.getCurrentKeyboardFocusManager().activeWindow
+    if (activeWindow is Dialog) {
+      if (activeWindow.modalityType == java.awt.Dialog.ModalityType.APPLICATION_MODAL) {
+        return activeWindow
+      }
+    }
+    return null
+  }
 
 }
