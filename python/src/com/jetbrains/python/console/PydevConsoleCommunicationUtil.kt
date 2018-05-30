@@ -45,12 +45,16 @@ fun createArrayChunk(response: GetArrayResponse, frameAccessor: PyFrameAccessor)
   val rowHeaders = arrayListOf<String>()
   val colHeaders = arrayListOf<ArrayChunk.ColHeader>()
 
-  for (colHeader in response.headers.colHeaders) {
-    colHeaders.add(ArrayChunk.ColHeader(colHeader.label, colHeader.type, colHeader.format, colHeader.max, colHeader.min))
+  response.headers?.colHeaders?.let {
+    for (colHeader in it) {
+      colHeaders.add(ArrayChunk.ColHeader(colHeader.label, colHeader.type, colHeader.format, colHeader.max, colHeader.min))
+    }
   }
 
-  for (rowHeader in response.headers.rowHeaders) {
-    rowHeaders.add(rowHeader.label)
+  response.headers?.rowHeaders?.let {
+    for (rowHeader in it) {
+      rowHeaders.add(rowHeader.label)
+    }
   }
 
   result.setColHeaders(colHeaders);
@@ -64,7 +68,7 @@ fun createArrayChunk(response: GetArrayResponse, frameAccessor: PyFrameAccessor)
   for ((rowIndex, responseRowArray: List<String>) in responseData.withIndex()) {
     val rowValues = arrayOfNulls<Any>(responseRowArray.size)
     for ((colIndex, responseColArray: String) in responseRowArray.withIndex()) {
-      rowValues[colIndex] = responseColArray[colIndex]
+      rowValues[colIndex] = responseColArray
     }
     data[rowIndex] = rowValues
   }
