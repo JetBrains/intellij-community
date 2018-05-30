@@ -236,9 +236,9 @@ public class VcsCachingHistory {
   }
 
   @NotNull
-  private static BackgroundableActionLock getHistoryLock(@NotNull AbstractVcs vcs,
-                                                         @NotNull VcsBackgroundableActions actionKey,
-                                                         @NotNull FilePath filePath) {
+  public static BackgroundableActionLock getHistoryLock(@NotNull AbstractVcs vcs,
+                                                        @NotNull VcsBackgroundableActions actionKey,
+                                                        @NotNull FilePath filePath) {
     return getLock(vcs.getProject(), actionKey, filePath.getPath());
   }
 
