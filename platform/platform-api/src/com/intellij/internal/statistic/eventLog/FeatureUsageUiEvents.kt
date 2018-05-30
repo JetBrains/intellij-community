@@ -5,7 +5,8 @@ import com.intellij.openapi.ui.DialogWrapper
 import com.intellij.util.containers.ContainerUtil
 
 object FeatureUsageUiEvents {
-  private const val UI_RECORDER_ID = "ui-recorder"
+  private const val DIALOGS_ID = "ui.dialogs"
+  private const val SETTINGS_ID = "ui.settings"
 
   private val SELECT_CONFIGURABLE_DATA = HashMap<String, Any>()
   private val APPLY_CONFIGURABLE_DATA = HashMap<String, Any>()
@@ -28,34 +29,33 @@ object FeatureUsageUiEvents {
   }
 
   fun logSelectConfigurable(name: String) {
-    FeatureUsageLogger.log(UI_RECORDER_ID, name, SELECT_CONFIGURABLE_DATA)
+    FeatureUsageLogger.log(SETTINGS_ID, name, SELECT_CONFIGURABLE_DATA)
   }
 
   fun logApplyConfigurable(name: String) {
-    FeatureUsageLogger.log(UI_RECORDER_ID, name, APPLY_CONFIGURABLE_DATA)
+    FeatureUsageLogger.log(SETTINGS_ID, name, APPLY_CONFIGURABLE_DATA)
   }
 
   fun logResetConfigurable(name: String) {
-    FeatureUsageLogger.log(UI_RECORDER_ID, name, RESET_CONFIGURABLE_DATA)
+    FeatureUsageLogger.log(SETTINGS_ID, name, RESET_CONFIGURABLE_DATA)
   }
 
   fun logShowDialog(name: String) {
-    FeatureUsageLogger.log(UI_RECORDER_ID, name, SHOW_DIALOG_DATA)
+    FeatureUsageLogger.log(DIALOGS_ID, name, SHOW_DIALOG_DATA)
   }
 
   fun logCloseDialog(name: String, exitCode: Int) {
     val customData: MutableMap<String, Any>
     if (exitCode == DialogWrapper.OK_EXIT_CODE) {
-      FeatureUsageLogger.log(UI_RECORDER_ID, name, CLOSE_OK_DIALOG_DATA)
+      FeatureUsageLogger.log(DIALOGS_ID, name, CLOSE_OK_DIALOG_DATA)
     }
     else if (exitCode == DialogWrapper.CANCEL_EXIT_CODE) {
-      FeatureUsageLogger.log(UI_RECORDER_ID, name, CLOSE_CANCEL_DIALOG_DATA)
+      FeatureUsageLogger.log(DIALOGS_ID, name, CLOSE_CANCEL_DIALOG_DATA)
     }
     else {
-      FeatureUsageLogger.log(UI_RECORDER_ID, name, SHOW_DIALOG_DATA)
       customData = ContainerUtil.newHashMap<String, Any>(CLOSE_OK_DIALOG_DATA)
       customData["code"] = exitCode
-      FeatureUsageLogger.log(UI_RECORDER_ID, name, customData)
+      FeatureUsageLogger.log(DIALOGS_ID, name, customData)
     }
   }
 }

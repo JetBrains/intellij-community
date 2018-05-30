@@ -81,7 +81,7 @@ class FeatureUsageFileEventLogger : FeatureUsageEventLogger {
 
   private fun dispose(logger: Logger) {
     myLogExecutor.execute(Runnable {
-      log(logger, LogEvent(sessionId, bucket, "feature-usage-stats", recorderVersion, "ideaapp.closed"))
+      log(logger, LogEvent(sessionId, bucket, "trigger", recorderVersion, "ideaapp.closed"))
       logLastEvent(logger)
     })
   }
