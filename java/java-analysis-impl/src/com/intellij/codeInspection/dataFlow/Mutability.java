@@ -31,22 +31,22 @@ public enum Mutability {
   /**
    * Mutability is not known; probably value can be mutated
    */
-  UNKNOWN("Unknown", null),
+  UNKNOWN("unknown", null),
   /**
    * A value is known to be mutable (e.g. elements are sometimes added to the collection)
    */
-  MUTABLE("Modifiable", null),
+  MUTABLE("modifiable", null),
   /**
    * A value is known to be immutable. For collection no elements could be added, removed or altered (though if collection
    * contains mutable elements, they still could be mutated).
    */
-  UNMODIFIABLE("Unmodifiable", "org.jetbrains.annotations.Unmodifiable"),
+  UNMODIFIABLE("unmodifiable", "org.jetbrains.annotations.Unmodifiable"),
   /**
    * A value is known to be an immutable view over a possibly mutable value: it cannot be mutated directly using this
    * reference; however subsequent reads (e.g. {@link java.util.Collection#size}) may return different results if the
    * underlying value is mutated by somebody else.
    */
-  UNMODIFIABLE_VIEW("Unmodifiable view", "org.jetbrains.annotations.UnmodifiableView");
+  UNMODIFIABLE_VIEW("unmodifiable view", "org.jetbrains.annotations.UnmodifiableView");
 
   public static final @NotNull String UNMODIFIABLE_ANNOTATION = UNMODIFIABLE.myAnnotation;
   public static final @NotNull String UNMODIFIABLE_VIEW_ANNOTATION = UNMODIFIABLE_VIEW.myAnnotation;
