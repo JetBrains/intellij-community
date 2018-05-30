@@ -418,14 +418,32 @@ public class PyDocumentationBuilder {
           final String ancestorName = ancestor.getName();
           final String ancestorQualifiedName = ancestor.getQualifiedName();
 
-          final String ancestorLink = pyClass == ancestor
-                                      ? PyDocumentationLink.toContainingClass(ancestorName)
-                                      : ancestorName != null && ancestorQualifiedName != null
-                                        ? PyDocumentationLink.toPossibleClass(ancestorName, ancestorQualifiedName, pyClass, context)
-                                        : null;
+          final String ancestorLink;
+          if (!isFromClass) {
+            final String qualified = inherited.getQualifiedName();
+            if (qualified != null) {
+              ancestorLink = PyDocumentationLink.toFunction(inherited);
+            }
+            else {
+              // TODO add a way to reference such local methods
+              ancestorLink = ancestorName + "." + inherited.getName();
+            }
+          }
+          else {
+            if (pyClass == ancestor) {
+              ancestorLink = PyDocumentationLink.toContainingClass(ancestorName);
+            }
+            else if (ancestorQualifiedName != null && ancestorName != null) {
+              ancestorLink = PyDocumentationLink.toPossibleClass(ancestorName, ancestorQualifiedName, pyClass, context);
+            }
+            else {
+              // TODO add a way to reference other local classes
+              ancestorLink = ancestorName;
+            }
+
+          }
           if (ancestorLink != null) {
-            final ChainIterable<String> link = mySectionsMap.get(PyBundle.message("QDOC.documentation.is.copied.from"));
-            link.addWith(TagCode, isFromClass ? $(ancestorLink) : $(PyDocumentationLink.toFunction(inherited)));
+            mySectionsMap.get(PyBundle.message("QDOC.documentation.is.copied.from")).addWith(TagCode, $(ancestorLink));
           }
           myContent.add(formatDocString(pyFunction, inheritedDoc));
           return;
