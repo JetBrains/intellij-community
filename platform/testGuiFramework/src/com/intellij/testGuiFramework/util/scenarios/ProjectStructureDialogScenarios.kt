@@ -1,6 +1,7 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.testGuiFramework.util.scenarios
 
+import com.intellij.testGuiFramework.framework.GuiTestUtil
 import com.intellij.testGuiFramework.impl.GuiTestCase
 import com.intellij.testGuiFramework.impl.waitAMoment
 import com.intellij.testGuiFramework.util.logTestStep
@@ -21,15 +22,6 @@ class ProjectStructureDialogScenarios(testCase: GuiTestCase) : TestUtilsClass(te
 val GuiTestCase.projectStructureDialogScenarios by ProjectStructureDialogScenarios
 
 fun ProjectStructureDialogScenarios.openProjectStructureAndCheck(actions: GuiTestCase.() -> Unit) {
-  fun getActiveModalDialog(): Dialog? {
-    val activeWindow = java.awt.KeyboardFocusManager.getCurrentKeyboardFocusManager().activeWindow
-    if (activeWindow is Dialog) {
-      if (activeWindow.modalityType == java.awt.Dialog.ModalityType.APPLICATION_MODAL) {
-        return activeWindow
-      }
-    }
-    return null
-  }
   with(guiTestCase) {
     val projectStructureTitle = ProjectStructureDialogModel.Constants.projectStructureTitle
     logTestStep("Check structure of the project")
@@ -42,7 +34,7 @@ fun ProjectStructureDialogScenarios.openProjectStructureAndCheck(actions: GuiTes
         invokeMainMenu("ShowProjectStructureSettings")
                 logUIStep("Call '$projectStructureTitle' dialog with Ctrl+Shift+Alt+S. Attempt ${currentAttempt + 1}")
                 shortcut(Modifier.CONTROL + Modifier.SHIFT + Modifier.ALT + Key.S)
-        val activeDialog = getActiveModalDialog()
+        val activeDialog = GuiTestUtil.getActiveModalDialog()
         logUIStep("Active dialog: ${activeDialog?.title}")
         if (activeDialog?.title == projectStructureTitle) {
           projectStructureDialogModel.checkInProjectStructure {

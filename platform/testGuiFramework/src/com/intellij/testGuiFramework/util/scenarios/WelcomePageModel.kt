@@ -27,6 +27,7 @@ val GuiTestCase.welcomePageDialogModel by WelcomePageDialogModel
 
 fun WelcomePageDialogModel.createNewProject() {
   WelcomeFrameFixture.findSimple().createNewProject()
+  testCase.newProjectDialogModel.waitLoadingTemplates()
 }
 
 fun WelcomePageDialogModel.openPluginsDialog():JDialogFixture{

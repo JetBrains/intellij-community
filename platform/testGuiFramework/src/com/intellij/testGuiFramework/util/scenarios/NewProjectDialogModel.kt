@@ -44,6 +44,7 @@ import com.intellij.testGuiFramework.utils.TestUtilsClass
 import com.intellij.testGuiFramework.utils.TestUtilsClassCompanion
 import org.fest.swing.fixture.JListFixture
 import org.fest.swing.timing.Pause
+import javax.swing.JDialog
 
 class NewProjectDialogModel(val testCase: GuiTestCase) : TestUtilsClass(testCase) {
   companion object : TestUtilsClassCompanion<NewProjectDialogModel>(
@@ -494,4 +495,11 @@ fun NewProjectDialogModel.createGroovyProject(projectPath: String, libs: Collect
 
 fun NewProjectDialogModel.createGriffonProject(projectPath: String, libs: Collection<Array<String>>) {
   createProjectInGroup(NewProjectDialogModel.Groups.Griffon, projectPath, libs)
+}
+
+fun NewProjectDialogModel.waitLoadingTemplates(){
+  GuiTestUtilKt.waitUntilGone(robot = GuiRobot.robot,
+                              timeoutInSeconds = 10,
+                              matcher = GuiTestUtilKt.typeMatcher(
+                                JDialog::class.java) { it.isShowing && it.title == "Loading Templates"})
 }
