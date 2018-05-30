@@ -65,9 +65,24 @@ public class VcsLogFullDetailsIndex<T> implements Disposable {
     myIndexer = indexer;
     myFatalErrorHandler = fatalErrorHandler;
 
-    myMapReduceIndex = new MyMapReduceIndex(externalizer, new MyIndexExtension(myIndexer, externalizer, version), version, hasForwardIndex);
+    myMapReduceIndex = createMapReduceIndex(externalizer, version, hasForwardIndex);
 
     Disposer.register(disposableParent, this);
+  }
+
+  @NotNull
+  private MyMapReduceIndex createMapReduceIndex(@NotNull DataExternalizer<T> dataExternalizer, int version, boolean hasForwardIndex)
+    throws IOException {
+    MyIndexExtension extension = new MyIndexExtension(myIndexer, dataExternalizer, version);
+    ForwardIndex<Integer, T> forwardIndex = hasForwardIndex ? new KeyCollectionBasedForwardIndex<Integer, T>(extension) {
+      @NotNull
+      @Override
+      public PersistentHashMap<Integer, Collection<Integer>> createMap() throws IOException {
+        File storageFile = getStorageFile(INDEX, myName + ".idx", myLogId, version);
+        return new PersistentHashMap<>(storageFile, new IntInlineKeyDescriptor(), new IntCollectionDataExternalizer(), Page.PAGE_SIZE);
+      }
+    } : new EmptyForwardIndex<>();
+    return new MyMapReduceIndex(extension, new MyMapIndexStorage<>(myName, myLogId, dataExternalizer), forwardIndex);
   }
 
   @NotNull
@@ -139,22 +154,10 @@ public class VcsLogFullDetailsIndex<T> implements Disposable {
   }
 
   private class MyMapReduceIndex extends MapReduceIndex<Integer, T, VcsFullCommitDetails> {
-    public MyMapReduceIndex(@NotNull DataExternalizer<T> externalizer,
-                            @NotNull MyIndexExtension extension,
-                            int version,
-                            boolean hasForwardIndex)
-      throws IOException {
-      super(extension,
-            new MyMapIndexStorage<>(myName, myLogId, externalizer),
-            hasForwardIndex ? new KeyCollectionBasedForwardIndex<Integer, T>(extension) {
-              @NotNull
-              @Override
-              public PersistentHashMap<Integer, Collection<Integer>> createMap() throws IOException {
-                File storageFile = getStorageFile(INDEX, myName + ".idx", myLogId, version);
-                return new PersistentHashMap<>(storageFile, new IntInlineKeyDescriptor(),
-                                               new IntCollectionDataExternalizer(), Page.PAGE_SIZE);
-              }
-            } : new EmptyForwardIndex<>());
+    public MyMapReduceIndex(@NotNull MyIndexExtension extension,
+                            @NotNull MyMapIndexStorage<T> mapIndexStorage,
+                            @NotNull ForwardIndex<Integer, T> forwardIndex) {
+      super(extension, mapIndexStorage, forwardIndex);
     }
 
     @Nullable
