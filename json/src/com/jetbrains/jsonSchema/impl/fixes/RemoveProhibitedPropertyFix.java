@@ -7,8 +7,6 @@ import com.intellij.json.JsonElementTypes;
 import com.intellij.json.psi.JsonProperty;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiElement;
-import com.intellij.psi.SmartPointerManager;
-import com.intellij.psi.SmartPsiElementPointer;
 import com.intellij.psi.impl.source.tree.LeafPsiElement;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.jetbrains.jsonSchema.impl.JsonValidationError;
@@ -16,11 +14,9 @@ import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 
 public class RemoveProhibitedPropertyFix implements LocalQuickFix {
-  private final SmartPsiElementPointer<PsiElement> myPointer;
   private final JsonValidationError.ProhibitedPropertyIssueData myData;
 
-  public RemoveProhibitedPropertyFix(PsiElement node, JsonValidationError.ProhibitedPropertyIssueData data) {
-    myPointer = SmartPointerManager.createPointer(node);
+  public RemoveProhibitedPropertyFix(JsonValidationError.ProhibitedPropertyIssueData data) {
     myData = data;
   }
 
@@ -40,7 +36,7 @@ public class RemoveProhibitedPropertyFix implements LocalQuickFix {
 
   @Override
   public void applyFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
-    PsiElement element = myPointer.getElement();
+    PsiElement element = descriptor.getPsiElement();
     if (!(element instanceof JsonProperty)) return;
     assert myData.propertyName.equals(((JsonProperty)element).getName());
     PsiElement forward = PsiTreeUtil.skipWhitespacesForward(element);
