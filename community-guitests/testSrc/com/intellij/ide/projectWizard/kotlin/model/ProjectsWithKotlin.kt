@@ -561,6 +561,11 @@ fun KotlinGuiTestCase.openPomXml(vararg projectName: String) {
   openFileFromProjectView(*projectName, "pom.xml")
 }
 
+fun KotlinGuiTestCase.editSettingsGradle(){
+  val fileName = "$projectFolder/settings.gradle"
+  if (KotlinTestProperties.isArtifactOnlyInDevRep) addDevRepositoryToBuildGradle(fileName, isKotlinDslUsed = false)
+}
+
 fun KotlinGuiTestCase.editBuildGradle(
   kotlinVersion: String,
   isKotlinDslUsed: Boolean = false,
@@ -684,6 +689,7 @@ fun KotlinGuiTestCase.testCreateGradleAndConfigureKotlin(
   }
   waitAMoment(extraTimeOut)
   saveAndCloseCurrentEditor()
+  editSettingsGradle()
   editBuildGradle(
     kotlinVersion = kotlinVersion,
     isKotlinDslUsed = gradleOptions.useKotlinDsl
