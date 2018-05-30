@@ -55,7 +55,7 @@ class InterpreterInterface(BaseInterpreterInterface):
             self.notification_tries+=1
             if self.notification_tries>self.notification_max_tries:
                 return
-            completions = self.getCompletions("%", "%")
+            completions = self.do_get_completions("%", "%")
             magic_commands = [x[0] for x in completions]
 
             server = self.get_server()
