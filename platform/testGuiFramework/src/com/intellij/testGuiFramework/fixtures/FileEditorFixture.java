@@ -84,15 +84,13 @@ public class FileEditorFixture extends EditorFixture {
    */
   @Nullable
   public String getCurrentFileName() {
-    final String[] fileName = {null};
-    execute(new GuiTask() {
+    return execute(new GuiQuery<String>() {
       @Override
-      protected void executeInEDT() throws Throwable {
+      protected String executeInEDT() throws Throwable {
         VirtualFile currentFile = getCurrentFile();
-        fileName[0] = currentFile != null ? currentFile.getName() : null;
+        return currentFile != null ? currentFile.getName() : null;
       }
     });
-    return fileName[0];
   }
 
   /**
