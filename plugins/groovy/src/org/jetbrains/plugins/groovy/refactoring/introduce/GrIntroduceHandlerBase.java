@@ -2,7 +2,7 @@
 package org.jetbrains.plugins.groovy.refactoring.introduce;
 
 import com.intellij.codeInsight.highlighting.HighlightManager;
-import com.intellij.diagnostic.LogMessageEx;
+import com.intellij.diagnostic.AttachmentFactory;
 import com.intellij.lang.LanguageRefactoringSupport;
 import com.intellij.lang.refactoring.RefactoringSupportProvider;
 import com.intellij.openapi.actionSystem.DataContext;
@@ -683,7 +683,7 @@ public abstract class GrIntroduceHandlerBase<Settings extends GrIntroduceSetting
 
   public static void assertStatement(@Nullable PsiElement anchor, @NotNull PsiElement scope) {
     if (!(anchor instanceof GrStatement)) {
-      LogMessageEx.error(LOG, "cannot find anchor for variable", scope.getText());
+      LOG.error("cannot find anchor for variable", new Throwable(), AttachmentFactory.createContext(scope.getText()));
     }
   }
 

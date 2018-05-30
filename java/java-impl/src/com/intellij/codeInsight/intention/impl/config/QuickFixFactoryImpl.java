@@ -24,7 +24,6 @@ import com.intellij.codeInspection.ex.EntryPointsManagerBase;
 import com.intellij.codeInspection.unusedSymbol.UnusedSymbolLocalInspectionBase;
 import com.intellij.codeInspection.util.SpecialAnnotationsUtil;
 import com.intellij.diagnostic.AttachmentFactory;
-import com.intellij.diagnostic.LogMessageEx;
 import com.intellij.lang.annotation.HighlightSeverity;
 import com.intellij.lang.java.request.CreateConstructorFromUsage;
 import com.intellij.lang.java.request.CreateMethodFromUsage;
@@ -797,9 +796,9 @@ public class QuickFixFactoryImpl extends QuickFixFactory {
       if (oldStamp != document.getModificationStamp()) {
         String afterText = file.getText();
         if (Comparing.strEqual(beforeText, afterText)) {
-          LOG.error(
-            LogMessageEx.createEvent("Import optimizer  hasn't optimized any imports", file.getViewProvider().getVirtualFile().getPath(),
-                                     AttachmentFactory.createAttachment(file.getViewProvider().getVirtualFile())));
+          LOG.error("Import optimizer hasn't optimized any imports",
+                    new Throwable(file.getViewProvider().getVirtualFile().getPath()),
+                    AttachmentFactory.createAttachment(file.getViewProvider().getVirtualFile()));
         }
       }
     });
