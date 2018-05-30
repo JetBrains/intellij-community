@@ -84,8 +84,15 @@ public class FileEditorFixture extends EditorFixture {
    */
   @Nullable
   public String getCurrentFileName() {
-    VirtualFile currentFile = getCurrentFile();
-    return currentFile != null ? currentFile.getName() : null;
+    final String[] fileName = {null};
+    execute(new GuiTask() {
+      @Override
+      protected void executeInEDT() throws Throwable {
+        VirtualFile currentFile = getCurrentFile();
+        fileName[0] = currentFile != null ? currentFile.getName() : null;
+      }
+    });
+    return fileName[0];
   }
 
   /**
@@ -367,5 +374,4 @@ public class FileEditorFixture extends EditorFixture {
   public Boolean hasTab(@NotNull final String tabName) {
     return tabs.hasTab(tabName);
   }
-
 }
