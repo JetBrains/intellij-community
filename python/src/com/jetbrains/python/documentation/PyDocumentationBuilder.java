@@ -387,12 +387,13 @@ public class PyDocumentationBuilder {
   }
 
   private void addInheritedDocString(@NotNull final PyFunction pyFunction, @Nullable final PyClass pyClass) {
+    final TypeEvalContext context = TypeEvalContext.userInitiated(pyFunction.getProject(), pyFunction.getContainingFile());
     final String methodName = pyFunction.getName();
     if (pyClass == null || methodName == null) {
       return;
     }
     final boolean isConstructor = PyNames.INIT.equals(methodName);
-    Iterable<PyClass> classes = pyClass.getAncestorClasses(null);
+    Iterable<PyClass> classes = pyClass.getAncestorClasses(context);
     if (isConstructor) {
       // look at our own class again and maybe inherit class's doc
       classes = new ChainIterable<>(pyClass).add(classes);
@@ -401,7 +402,7 @@ public class PyDocumentationBuilder {
       PyStringLiteralExpression docstringElement = null;
       PyFunction inherited = null;
       boolean isFromClass = false;
-      if (isConstructor) docstringElement = getEffectiveDocStringExpression(pyClass);
+      if (isConstructor) docstringElement = getEffectiveDocStringExpression(ancestor);
       if (docstringElement != null) {
         isFromClass = true;
       }
@@ -416,7 +417,6 @@ public class PyDocumentationBuilder {
         if (inheritedDoc.length() > 1) {
           final String ancestorName = ancestor.getName();
           final String ancestorQualifiedName = ancestor.getQualifiedName();
-          final TypeEvalContext context = TypeEvalContext.userInitiated(pyFunction.getProject(), pyFunction.getContainingFile());
 
           final String ancestorLink = pyClass == ancestor
                                       ? PyDocumentationLink.toContainingClass(ancestorName)
