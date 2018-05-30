@@ -234,7 +234,7 @@ public class GradleExecutionHelper {
                                      @NotNull String projectPath,
                                      @NotNull GradleExecutionSettings settings,
                                      @NotNull ExternalSystemTaskNotificationListener listener,
-                                     @NotNull CancellationTokenSource cancellationTokenSource) {
+                                     @NotNull CancellationToken cancellationToken) {
 
     if (!settings.getDistributionType().isWrapped()) return;
 
@@ -264,7 +264,7 @@ public class GradleExecutionHelper {
         final File tempFile = writeToFileGradleInitScript(StringUtil.join(lines, SystemProperties.getLineSeparator()));
         settings.withArguments(GradleConstants.INIT_SCRIPT_CMD_OPTION, tempFile.getAbsolutePath());
         BuildLauncher launcher = getBuildLauncher(id, connection, settings, listener);
-        launcher.withCancellationToken(cancellationTokenSource.token());
+        launcher.withCancellationToken(cancellationToken);
         launcher.forTasks("wrapper");
         launcher.run();
         String wrapperPropertyFile = FileUtil.loadFile(wrapperPropertyFileLocation);
