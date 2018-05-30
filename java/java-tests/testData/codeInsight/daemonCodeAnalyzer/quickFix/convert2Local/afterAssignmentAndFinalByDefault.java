@@ -2,8 +2,8 @@
 class Test {
 
     int getFoo1() {
-        int myFoo = 1;
-    myFoo = 5;
+        int myFoo;
+        while (true) myFoo = 1;
     return myFoo;
   }
 }
