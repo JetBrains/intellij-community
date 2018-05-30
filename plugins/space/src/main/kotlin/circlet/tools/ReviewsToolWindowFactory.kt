@@ -8,9 +8,9 @@ import com.intellij.openapi.wm.*
 import com.intellij.openapi.wm.ex.*
 import com.intellij.ui.content.*
 
-class CircletReviewsToolWindowFactory : ToolWindowFactory, DumbAware {
+class ReviewsToolWindowFactory : ToolWindowFactory, DumbAware {
     override fun createToolWindowContent(project: Project, toolWindow: ToolWindow) {
-        val panel = CircletReviewsToolWindowPanel(project)
+        val panel = ReviewsToolWindowPanel(project)
         val content = ContentFactory.SERVICE.getInstance().createContent(panel, "", false)
 
         Disposer.register(content, panel)
@@ -59,7 +59,7 @@ class CircletReviewsToolWindowFactory : ToolWindowFactory, DumbAware {
 
 val Project.reviewsToolWindow: ToolWindow?
     get() = computeSafe {
-        toolWindowManager.getToolWindow(CircletReviewsToolWindowFactory.TOOL_WINDOW_ID)
+        toolWindowManager.getToolWindow(ReviewsToolWindowFactory.TOOL_WINDOW_ID)
     }
 
 private fun Content.updateDisplayName() {

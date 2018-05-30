@@ -20,7 +20,7 @@ import java.awt.*
 import java.net.*
 import java.util.concurrent.*
 
-class CircletConnectionComponent(project: Project) :
+class ConnectionComponent(project: Project) :
     AbstractProjectComponent(project), Lifetimed by LifetimedOnDisposable(project) {
 
     var loginModel: LoginModel? = null
@@ -95,7 +95,7 @@ class CircletConnectionComponent(project: Project) :
     }
 
     private fun enable() {
-        ShowSettingsUtil.getInstance().showSettingsDialog(myProject, CircletConnectionConfigurable::class.java)
+        ShowSettingsUtil.getInstance().showSettingsDialog(myProject, ConnectionConfigurable::class.java)
     }
 
     private fun disable() {
@@ -135,5 +135,5 @@ class CircletConnectionComponent(project: Project) :
     }
 }
 
-val Project.connection: CircletConnectionComponent get() = getComponent()
+val Project.connection: ConnectionComponent get() = getComponent()
 val Project.clientOrNull: KCircletClient? get() = connection.loginModel?.clientOrNull

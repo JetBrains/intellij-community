@@ -9,8 +9,8 @@ import runtime.reactive.*
     name = "CircletProjectSettings",
     storages = [Storage(value = "CircletClient.xml", roamingType = RoamingType.DISABLED)]
 )
-class CircletProjectSettings(project: Project) :
-    Lifetimed by LifetimedOnDisposable(project), PersistentStateComponent<CircletProjectSettings.MutableState> {
+class ProjectSettings(project: Project) :
+    Lifetimed by LifetimedOnDisposable(project), PersistentStateComponent<ProjectSettings.MutableState> {
 
     data class State(
         val serverUrl: String = "",
@@ -47,9 +47,9 @@ class CircletProjectSettings(project: Project) :
     }
 }
 
-val Project.settings: CircletProjectSettings get() = getService()
+val Project.settings: ProjectSettings get() = getService()
 
-val CircletProjectSettings.State.isIntegrationAvailable: Boolean get() =
+val ProjectSettings.State.isIntegrationAvailable: Boolean get() =
     serverUrl.isNotEmpty() && projectKey.isNotEmpty()
 
 class PropertyWithSuspendableUpdates<T> private constructor(

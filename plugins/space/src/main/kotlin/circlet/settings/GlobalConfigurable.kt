@@ -4,8 +4,8 @@ import circlet.messages.*
 import com.intellij.openapi.options.*
 import javax.swing.*
 
-class CircletGlobalConfigurable : SearchableConfigurable {
-    private val form = CircletGlobalConfigurableForm()
+class GlobalConfigurable : SearchableConfigurable {
+    private val form = GlobalConfigurableForm()
 
     override fun isModified(): Boolean = false
 

@@ -18,15 +18,15 @@
     <depends>com.intellij.modules.platform</depends>
 
     <extensions defaultExtensionNs="com.intellij">
-        <projectService serviceImplementation="circlet.settings.CircletProjectSettings"/>
+        <projectService serviceImplementation="circlet.settings.ProjectSettings"/>
 
         <applicationConfigurable id="circlet.settings.global" groupId="tools"
-                                 instance="circlet.settings.CircletGlobalConfigurable"/>
+                                 instance="circlet.settings.GlobalConfigurable"/>
         <projectConfigurable id="circlet.settings.connection" groupId="tools" parentId="circlet.settings.global"
-                             instance="circlet.settings.CircletConnectionConfigurable"/>
+                             instance="circlet.settings.ConnectionConfigurable"/>
 
         <toolWindow id="Code reviews" anchor="bottom" canCloseContents="true"
-                    factoryClass="circlet.tools.CircletReviewsToolWindowFactory"/>
+                    factoryClass="circlet.tools.ReviewsToolWindowFactory"/>
     </extensions>
 
     <application-components>
@@ -37,11 +37,11 @@
 
     <project-components>
         <component>
-            <implementation-class>circlet.components.CircletConnectionComponent</implementation-class>
+            <implementation-class>circlet.components.ConnectionComponent</implementation-class>
         </component>
 
         <component>
-            <implementation-class>circlet.tools.CircletToolWindowsManager</implementation-class>
+            <implementation-class>circlet.tools.ToolWindowsManager</implementation-class>
         </component>
     </project-components>
 

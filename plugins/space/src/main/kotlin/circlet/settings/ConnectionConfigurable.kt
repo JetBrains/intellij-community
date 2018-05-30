@@ -5,8 +5,8 @@ import com.intellij.openapi.options.*
 import com.intellij.openapi.project.*
 import javax.swing.*
 
-class CircletConnectionConfigurable(private val project: Project) : SearchableConfigurable {
-    private val form = CircletConnectionConfigurableForm()
+class ConnectionConfigurable(private val project: Project) : SearchableConfigurable {
+    private val form = ConnectionConfigurableForm()
 
     private val serverUrlWithProtocol: String
         get() {

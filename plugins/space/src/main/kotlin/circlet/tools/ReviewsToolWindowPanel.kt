@@ -6,10 +6,10 @@ import circlet.utils.*
 import com.intellij.openapi.project.*
 import com.intellij.openapi.ui.*
 
-class CircletReviewsToolWindowPanel(project: Project) :
+class ReviewsToolWindowPanel(project: Project) :
     SimpleToolWindowPanel(false, true), LifetimedDisposable by SimpleLifetimedDisposable() {
 
-    private val form = CircletReviewsForm(project, lifetime)
+    private val form = ReviewsForm(project, lifetime)
 
     init {
         setContent(form.panel)

@@ -12,7 +12,7 @@ import runtime.async.*
 import runtime.reactive.*
 import javax.swing.*
 
-class CircletReviewsForm(private val project: Project, override val lifetime: Lifetime) :
+class ReviewsForm(private val project: Project, override val lifetime: Lifetime) :
     Lifetimed {
 
     lateinit var panel: JPanel

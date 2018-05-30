@@ -7,7 +7,7 @@ import com.intellij.openapi.project.*
 import com.intellij.openapi.wm.ex.*
 import runtime.reactive.*
 
-class CircletToolWindowsManager(project: Project) :
+class ToolWindowsManager(project: Project) :
     AbstractProjectComponent(project), Lifetimed by LifetimedOnDisposable(project) {
 
     override fun initComponent() {
@@ -28,7 +28,7 @@ class CircletToolWindowsManager(project: Project) :
         updateToolWindows(myProject.settings.stateProperty.value, ids)
     }
 
-    private fun updateToolWindows(state: CircletProjectSettings.State, ids: Array<String> = TOOL_WINDOW_IDS) {
+    private fun updateToolWindows(state: ProjectSettings.State, ids: Array<String> = TOOL_WINDOW_IDS) {
         val available = state.isIntegrationAvailable
         val toolWindowManager = myProject.toolWindowManager
 
@@ -36,6 +36,6 @@ class CircletToolWindowsManager(project: Project) :
     }
 
     private companion object {
-        private val TOOL_WINDOW_IDS = arrayOf(CircletReviewsToolWindowFactory.TOOL_WINDOW_ID)
+        private val TOOL_WINDOW_IDS = arrayOf(ReviewsToolWindowFactory.TOOL_WINDOW_ID)
     }
 }

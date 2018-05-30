@@ -3,7 +3,7 @@ package circlet.settings
 import com.intellij.ui.components.*
 import javax.swing.*
 
-class CircletConnectionConfigurableForm {
+class ConnectionConfigurableForm {
     lateinit var panel: JPanel
         private set
 

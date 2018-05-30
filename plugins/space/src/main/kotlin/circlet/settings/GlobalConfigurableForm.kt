@@ -2,7 +2,7 @@ package circlet.settings
 
 import javax.swing.*
 
-class CircletGlobalConfigurableForm {
+class GlobalConfigurableForm {
     lateinit var panel: JPanel
         private set
 }
