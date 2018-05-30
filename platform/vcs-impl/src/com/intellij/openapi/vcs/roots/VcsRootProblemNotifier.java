@@ -1,23 +1,9 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.vcs.roots;
 
 import com.intellij.idea.ActionsBundle;
 import com.intellij.notification.Notification;
-import com.intellij.notification.NotificationListener;
+import com.intellij.notification.NotificationAction;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.diagnostic.Logger;
@@ -38,7 +24,6 @@ import com.intellij.vcsUtil.VcsUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.event.HyperlinkEvent;
 import java.util.Collection;
 import java.util.HashSet;
 import java.util.List;
@@ -73,7 +58,7 @@ public class VcsRootProblemNotifier {
 
   @NotNull private static final Function<VcsRootError, String> ROOT_TO_PRESENTABLE = rootError -> {
     if (rootError.getMapping().equals(PROJECT_CONSTANT)) return StringUtil.escapeXml(rootError.getMapping());
-    return toSystemDependentName(rootError.getMapping());
+    return StringUtil.shortenPathWithEllipsis(FileUtil.getLocationRelativeToUserHome(toSystemDependentName(rootError.getMapping())), 30, true);
   };
 
   public static VcsRootProblemNotifier getInstance(@NotNull Project project) {
@@ -130,11 +115,33 @@ public class VcsRootProblemNotifier {
 
     synchronized (NOTIFICATION_LOCK) {
       expireNotification();
-      NotificationListener listener = new MyNotificationListener(myProject, mySettings, myVcsManager, importantUnregisteredRoots);
       VcsNotifier notifier = VcsNotifier.getInstance(myProject);
+
+      NotificationAction enableIntegration = NotificationAction.create("Enable Integration", (event, notification) ->{
+        List<VcsDirectoryMapping> mappings = myVcsManager.getDirectoryMappings();
+        for (VcsRootError root : importantUnregisteredRoots) {
+          mappings = VcsUtil.addMapping(mappings, root.getMapping(), root.getVcsKey().getName());
+        }
+        myVcsManager.setDirectoryMappings(mappings);
+      });
+
+      NotificationAction configure = NotificationAction.create("Configure", (event, notification) -> {
+        if (!myProject.isDisposed()) {
+          ShowSettingsUtil.getInstance().showSettingsDialog(myProject, ActionsBundle.message("group.VcsGroup.text"));
+          Collection<VcsRootError> errorsAfterPossibleFix = getInstance(myProject).scan();
+          if (errorsAfterPossibleFix.isEmpty() && !notification.isExpired()) {
+            notification.expire();
+          }
+        }
+      });
+
+      NotificationAction ignore = NotificationAction.create("Ignore", (event, notification) -> {
+        mySettings.addIgnoredUnregisteredRoots(ContainerUtil.map(importantUnregisteredRoots, VcsRootError::getMapping));
+        notification.expire();
+      });
       myNotification = invalidRoots.isEmpty()
-                       ? notifier.notifyMinorInfo(title, description, listener)
-                       : notifier.notifyError(title, description, listener);
+                       ? notifier.notifyMinorInfo(title, description, enableIntegration, configure, ignore)
+                       : notifier.notifyError(title, description, configure);
     }
   }
 
@@ -186,20 +193,19 @@ public class VcsRootProblemNotifier {
     if (!unregisteredRoots.isEmpty()) {
       if (unregisteredRoots.size() == 1) {
         VcsRootError unregisteredRoot = unregisteredRoots.iterator().next();
-        description.append(String.format("The directory %s is under %s, but is not registered in the Settings.",
+        description.append(String.format("%s is under %s",
                                          ROOT_TO_PRESENTABLE.fun(unregisteredRoot), unregisteredRoot.getVcsKey().getName()));
       }
       else {
-        description.append("The following directories are roots of VCS repositories, but they are not registered in the Settings: <br/>" +
+        description.append("The following directories are roots of " + getVcsName(unregisteredRoots) +
+                           " repositories: <br/>" +
                            joinRootsForPresentation(unregisteredRoots));
       }
       description.append("<br/>");
     }
 
-    String add = invalidRoots.isEmpty() ? "<a href='add'>Add " + pluralize("root", unregisteredRoots.size()) + "</a>&nbsp;&nbsp;" : "";
-    String configure = "<a href='configure'>Configure</a>";
     String ignore = invalidRoots.isEmpty() ? "&nbsp;&nbsp;<a href='ignore'>Ignore</a>" : "";
-    description.append(add + configure + ignore);
+    description.append(ignore);
 
     return description.toString();
   }
@@ -221,12 +227,27 @@ public class VcsRootProblemNotifier {
       title = "Invalid VCS root " + pluralize("mapping", invalidRoots.size());
     }
     else if (invalidRoots.isEmpty()) {
-      title = "Unregistered VCS " + pluralize("root", unregisteredRoots.size()) + " detected";
+      String vcs = getVcsName(unregisteredRoots);
+      title = "Configure " + vcs + " Integration";
     }
     else {
       title = "VCS root configuration problems";
     }
     return title;
+  }
+
+  private static String getVcsName(Collection<VcsRootError> roots) {
+    String result = null;
+    for (VcsRootError root : roots) {
+      String vcsName = root.getVcsKey().getName();
+      if (result == null) {
+        result = vcsName;
+      }
+      else if (!result.equals(vcsName)) {
+        return "VCS";
+      }
+    }
+    return result;
   }
 
   @NotNull
@@ -243,45 +264,5 @@ public class VcsRootProblemNotifier {
   @NotNull
   private static Collection<VcsRootError> getInvalidRoots(@NotNull Collection<VcsRootError> errors) {
     return filter(errors, error -> error.getType() == VcsRootError.Type.EXTRA_MAPPING);
-  }
-
-  private static class MyNotificationListener extends NotificationListener.Adapter {
-
-    @NotNull private final Project myProject;
-    @NotNull private final VcsConfiguration mySettings;
-    @NotNull private final ProjectLevelVcsManager myVcsManager;
-    @NotNull private final Collection<VcsRootError> myImportantUnregisteredRoots;
-
-    private MyNotificationListener(@NotNull Project project,
-                                   @NotNull VcsConfiguration settings,
-                                   @NotNull ProjectLevelVcsManager vcsManager,
-                                   @NotNull Collection<VcsRootError> importantUnregisteredRoots) {
-      myProject = project;
-      mySettings = settings;
-      myVcsManager = vcsManager;
-      myImportantUnregisteredRoots = importantUnregisteredRoots;
-    }
-
-    @Override
-    protected void hyperlinkActivated(@NotNull Notification notification, @NotNull HyperlinkEvent event) {
-      if (event.getDescription().equals("configure") && !myProject.isDisposed()) {
-        ShowSettingsUtil.getInstance().showSettingsDialog(myProject, ActionsBundle.message("group.VcsGroup.text"));
-        Collection<VcsRootError> errorsAfterPossibleFix = getInstance(myProject).scan();
-        if (errorsAfterPossibleFix.isEmpty() && !notification.isExpired()) {
-          notification.expire();
-        }
-      }
-      else if (event.getDescription().equals("ignore")) {
-        mySettings.addIgnoredUnregisteredRoots(ContainerUtil.map(myImportantUnregisteredRoots, VcsRootError::getMapping));
-        notification.expire();
-      }
-      else if (event.getDescription().equals("add")) {
-        List<VcsDirectoryMapping> mappings = myVcsManager.getDirectoryMappings();
-        for (VcsRootError root : myImportantUnregisteredRoots) {
-          mappings = VcsUtil.addMapping(mappings, root.getMapping(), root.getVcsKey().getName());
-        }
-        myVcsManager.setDirectoryMappings(mappings);
-      }
-    }
   }
 }
