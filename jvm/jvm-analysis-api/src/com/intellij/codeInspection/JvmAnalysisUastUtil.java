@@ -6,10 +6,13 @@ import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiClassType;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiType;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.uast.*;
 
+//TODO move to UastUtils.kt? Split all UAST utils to several less common util classes/files?
+@ApiStatus.Experimental
 public final class JvmAnalysisUastUtil {
   @Nullable
   public static UCallExpression getUCallExpression(@NotNull PsiElement element) {
@@ -34,17 +37,26 @@ public final class JvmAnalysisUastUtil {
   }
 
   @Nullable
-  public static String getExpressionReturnTypePsiClassFqnName(@NotNull UCallExpression expression) {
-    PsiClass psiClass = getTypePsiClass(expression.getReturnType());
-    return psiClass == null ? null : psiClass.getQualifiedName();
+  public static String getExpressionReturnTypePsiClassFqn(@NotNull UCallExpression expression) {
+    return getTypeClassFqn(expression.getReturnType());
   }
 
   @Nullable
   public static PsiClass getTypePsiClass(@Nullable PsiType type) {
-    if (!(type instanceof PsiClassType)) {
-      return null;
-    }
+    if (!(type instanceof PsiClassType)) return null;
     return ((PsiClassType)type).rawType().resolve();
+  }
+
+  @Nullable
+  public static String getExpressionReceiverTypeClassFqn(@NotNull UCallExpression expression) {
+    return getTypeClassFqn(expression.getReceiverType());
+  }
+
+  @Nullable
+  public static String getTypeClassFqn(@Nullable PsiType type) {
+    PsiClass psiClass = getTypePsiClass(type);
+    if (psiClass == null) return null;
+    return psiClass.getQualifiedName();
   }
 
   //TODO use UastContext#isExpressionValueUsed ?
