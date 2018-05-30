@@ -1001,10 +1001,7 @@ public abstract class AbstractJavaBlock extends AbstractBlock implements JavaBlo
     final WrappingStrategy wrappingStrategy = new WrappingStrategy(Wrap.createWrap(getWrapType(mySettings.ENUM_CONSTANTS_WRAP), true)) {
       @Override
       protected boolean shouldWrap(IElementType type) {
-        return type != JavaTokenType.COMMA
-               && type != JavaTokenType.SEMICOLON
-               && type != JavaTokenType.END_OF_LINE_COMMENT
-               && type != JavaTokenType.C_STYLE_COMMENT;
+        return type == JavaElementType.ENUM_CONSTANT;
       }
     };
     while (child != null) {
