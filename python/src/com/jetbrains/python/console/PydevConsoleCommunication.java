@@ -78,7 +78,7 @@ public class PydevConsoleCommunication extends AbstractConsoleCommunication impl
    */
   @Nullable private TThreadPoolServer myServer;
 
-  private static final Logger LOG = Logger.getInstance(PydevConsoleCommunication.class.getName());
+  private static final Logger LOG = Logger.getInstance(PydevConsoleCommunication.class);
 
   /**
    * Input that should be sent to the server (waiting for raw_input)
