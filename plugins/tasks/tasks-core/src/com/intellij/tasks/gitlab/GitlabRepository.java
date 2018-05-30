@@ -3,21 +3,23 @@ package com.intellij.tasks.gitlab;
 import com.google.gson.Gson;
 import com.google.gson.reflect.TypeToken;
 import com.intellij.openapi.util.Comparing;
+import com.intellij.tasks.LocalTask;
 import com.intellij.tasks.Task;
 import com.intellij.tasks.TaskRepositoryType;
 import com.intellij.tasks.gitlab.model.GitlabIssue;
 import com.intellij.tasks.gitlab.model.GitlabProject;
 import com.intellij.tasks.impl.gson.TaskGsonUtil;
 import com.intellij.tasks.impl.httpclient.NewBaseRepositoryImpl;
-import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.xmlb.annotations.Tag;
 import com.intellij.util.xmlb.annotations.Transient;
 import org.apache.http.HttpException;
 import org.apache.http.HttpRequest;
 import org.apache.http.HttpRequestInterceptor;
+import org.apache.http.client.HttpClient;
 import org.apache.http.client.ResponseHandler;
 import org.apache.http.client.methods.HttpGet;
+import org.apache.http.client.methods.HttpPost;
 import org.apache.http.client.utils.URIBuilder;
 import org.apache.http.protocol.HttpContext;
 import org.jetbrains.annotations.NonNls;
@@ -27,9 +29,11 @@ import org.jetbrains.annotations.TestOnly;
 
 import java.io.IOException;
 import java.net.URI;
+import java.net.URISyntaxException;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.Optional;
 import java.util.regex.Pattern;
 
 import static com.intellij.tasks.impl.httpclient.TaskResponseUtil.GsonMultipleObjectsDeserializer;
@@ -136,7 +140,7 @@ public class GitlabRepository extends NewBaseRepositoryImpl {
         .addParameter("page", String.valueOf(pageNum))
         .addParameter("per_page", "30")
         .build();
-      final List<GitlabProject> page = getHttpClient().execute(new HttpGet(paginatedProjectsUrl), handler);
+      final List<GitlabProject> page = super.getHttpClient().execute(new HttpGet(paginatedProjectsUrl), handler);
       // Gitlab's REST API doesn't allow to know beforehand how many projects are available
       if (page.isEmpty()) {
         break;
@@ -152,7 +156,7 @@ public class GitlabRepository extends NewBaseRepositoryImpl {
   @NotNull
   public GitlabProject fetchProject(int id) throws Exception {
     final HttpGet request = new HttpGet(getRestApiUrl("project", id));
-    return getHttpClient().execute(request, new GsonSingleObjectDeserializer<>(GSON, GitlabProject.class));
+    return super.getHttpClient().execute(request, new GsonSingleObjectDeserializer<>(GSON, GitlabProject.class));
   }
 
   @NotNull
@@ -168,7 +172,7 @@ public class GitlabRepository extends NewBaseRepositoryImpl {
       uriBuilder.addParameter("state", "opened");
     }
     final ResponseHandler<List<GitlabIssue>> handler = new GsonMultipleObjectsDeserializer<>(GSON, LIST_OF_ISSUES_TYPE);
-    return getHttpClient().execute(new HttpGet(uriBuilder.build()), handler);
+    return super.getHttpClient().execute(new HttpGet(uriBuilder.build()), handler);
   }
 
   private String getIssuesUrl() {
@@ -186,7 +190,7 @@ public class GitlabRepository extends NewBaseRepositoryImpl {
     ensureProjectsDiscovered();
     final HttpGet request = new HttpGet(getRestApiUrl("projects", projectId, "issues", issueId));
     final ResponseHandler<GitlabIssue> handler = new GsonSingleObjectDeserializer<>(GSON, GitlabIssue.class, true);
-    return getHttpClient().execute(request, handler);
+    return super.getHttpClient().execute(request, handler);
   }
 
   @Override
@@ -259,5 +263,30 @@ public class GitlabRepository extends NewBaseRepositoryImpl {
   @Transient
   public void setProjects(@NotNull List<GitlabProject> projects) {
     myProjects = projects;
+  }
+
+  @Override
+  public void updateTimeSpent(@NotNull LocalTask task, @NotNull String timeSpent, @NotNull String comment)
+    throws URISyntaxException, IOException {
+    //Need project ID, so find Project from task
+    final Optional<GitlabProject> projectOptional = getProjects().stream().filter(proj -> proj.getName() != null && proj.getName().equals(task.getProject())).findFirst();
+    if (!projectOptional.isPresent())
+      throw new IllegalStateException("Task project is not defined");
+
+    //Create request http://example.gitlab.com/projects/1/issues/1/add_time_spent?duration=1h30m
+    final GitlabProject project = projectOptional.get();
+    final URIBuilder builder = new URIBuilder(getRestApiUrl("projects", project.getId(), "issues", task.getId(), "add_spent_time"))
+      .addParameter("duration", timeSpent);
+    final HttpPost method = new HttpPost(builder.build());
+
+    //Send request, update issue on remote
+    super.getHttpClient().execute(method);
+  }
+
+  @NotNull
+  @Override
+  @TestOnly
+  public HttpClient getHttpClient() {
+    return super.getHttpClient();
   }
 }
