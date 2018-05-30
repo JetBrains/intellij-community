@@ -13,7 +13,7 @@ class Lists {
 
 public class Test {
   public void test() {
-      List<String> list = IntStream.range(0, 10).filter(i -> i % 2 == 0).mapToObj(String::valueOf).collect(Collectors.toList());
+    List<String> list = IntStream.range(0, 10).filter(i -> i % 2 == 0).mapToObj(String::valueOf).collect(Collectors.toList());
       System.out.println(list);
   }
 }

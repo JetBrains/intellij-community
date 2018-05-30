@@ -4,7 +4,7 @@ import java.util.stream.Collectors;
 
 public class Main {
   private Map<Integer, ArrayList<String>> test(String... list) {
-      Map<Integer, ArrayList<String>> map = Arrays.stream(list).filter(Objects::nonNull).collect(Collectors.groupingBy(String::length, Collectors.toCollection(ArrayList::new)));
+    Map<Integer, ArrayList<String>> map = Arrays.stream(list).filter(Objects::nonNull).collect(Collectors.groupingBy(String::length, Collectors.toCollection(ArrayList::new)));
       return map;
   }
 
