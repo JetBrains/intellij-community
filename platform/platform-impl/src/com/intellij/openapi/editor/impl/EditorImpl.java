@@ -505,12 +505,17 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     myFoldingModel.flushCaretShift();
     myScrollBarOrientation = VERTICAL_SCROLLBAR_RIGHT;
 
-    mySoftWrapModel.addSoftWrapChangeListener(new SoftWrapChangeListenerAdapter() {
+    mySoftWrapModel.addSoftWrapChangeListener(new SoftWrapChangeListener() {
       @Override
       public void recalculationEnds() {
         if (myCaretModel.isUpToDate()) {
           myCaretModel.updateVisualPosition();
         }
+      }
+
+      @Override
+      public void softWrapsChanged() {
+        myGutterComponent.clearLineToGutterRenderersCache();
       }
     });
 
