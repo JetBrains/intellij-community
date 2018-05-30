@@ -783,6 +783,7 @@
                    implementationClass="com.jetbrains.python.codeInsight.functionTypeComments.PyFunctionTypeAnnotationVisitorFilter"/>
 
     <pythonFlavorProvider implementation="com.jetbrains.python.sdk.flavors.MayaFlavorProvider"/>
+    <pythonFlavorProvider implementation="com.jetbrains.python.sdk.flavors.MaxFlavorProvider"/>
     <pyPregeneratedSkeletonsProvider id="default" implementation="com.jetbrains.python.sdk.skeletons.DefaultPregeneratedSkeletonsProvider"/>
   </extensions>
 
