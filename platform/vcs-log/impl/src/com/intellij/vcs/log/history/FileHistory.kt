@@ -3,7 +3,6 @@ package com.intellij.vcs.log.history
 
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.vcs.FilePath
-import com.intellij.util.ObjectUtils.notNull
 import com.intellij.util.containers.ContainerUtil
 import com.intellij.util.containers.Stack
 import com.intellij.vcs.log.data.index.VcsLogPathsIndex
@@ -15,7 +14,6 @@ import com.intellij.vcs.log.graph.utils.DfsUtil
 import com.intellij.vcs.log.graph.utils.LinearGraphUtils
 import com.intellij.vcs.log.graph.utils.impl.BitSetFlags
 import gnu.trove.TIntObjectHashMap
-import gnu.trove.TIntProcedure
 
 internal class FileHistoryRefiner(private val myVisibleGraph: VisibleGraphImpl<Int>,
                                   private val myNamesData: FileNamesData) : DfsUtil.NodeVisitor {
@@ -28,7 +26,7 @@ internal class FileHistoryRefiner(private val myVisibleGraph: VisibleGraphImpl<I
   private val excluded = ContainerUtil.newHashSet<Int>()
 
   fun refine(row: Int, startPath: FilePath): Boolean {
-    if (myNamesData.hasRenames()) {
+    if (myNamesData.hasRenames) {
       paths.push(startPath)
       DfsUtil.walk(LinearGraphUtils.asLiteLinearGraph(myVisibleGraph.linearGraph), row, this)
     }
@@ -52,7 +50,7 @@ internal class FileHistoryRefiner(private val myVisibleGraph: VisibleGraphImpl<I
     val currentNodeId = myVisibleGraph.getNodeId(currentNode)
     val currentCommit = permanentCommitsInfo.getCommitId(currentNodeId)
 
-    val previousPath = notNull(ContainerUtil.findLast(paths) { path -> path != null })
+    val previousPath = paths.findLast { it != null }!!
     var currentPath: FilePath? = previousPath
 
     if (previousNode != DfsUtil.NextNode.NODE_NOT_FOUND) {
@@ -88,14 +86,10 @@ internal class FileHistoryRefiner(private val myVisibleGraph: VisibleGraphImpl<I
 
   private fun findPathWithoutConflict(nodeId: Int, pathGetter: (Int) -> FilePath?): FilePath? {
     val parents = permanentLinearGraph.getNodes(nodeId, LiteLinearGraph.NodeFilter.DOWN)
-    val path = pathGetter(parents[0])
+    val path = pathGetter(parents.first())
     if (parents.size == 1) return path
 
-    for (parent in ContainerUtil.subList(parents, 1)) {
-      if (pathGetter(parent) != path) {
-        return null
-      }
-    }
+    if (parents.subList(1, parents.size).find { pathGetter(it) != path } != null) return null
     return path
   }
 
@@ -106,20 +100,17 @@ internal class FileHistoryRefiner(private val myVisibleGraph: VisibleGraphImpl<I
 
 abstract class FileNamesData {
   private val commitToPathAndChanges = TIntObjectHashMap<MutableMap<FilePath, MutableMap<Int, VcsLogPathsIndex.ChangeData?>>>()
-  private var hasRenames = false
+  var hasRenames = false
+    private set
 
   val commits: Set<Int>
     get() {
       val result = ContainerUtil.newHashSet<Int>()
-      commitToPathAndChanges.forEach(TIntProcedure { result.add(it) })
+      commitToPathAndChanges.forEach { result.add(it) }
       return result
     }
 
   protected abstract fun getPathById(pathId: Int): FilePath
-
-  fun hasRenames(): Boolean {
-    return hasRenames
-  }
 
   fun add(commit: Int,
           path: FilePath,
@@ -131,18 +122,10 @@ abstract class FileNamesData {
       commitToPathAndChanges.put(commit, pathToChanges)
     }
 
-    if (!hasRenames) {
-      for (data in changes) {
-        if (data == null) continue
-        if (data.isRename) {
-          hasRenames = true
-          break
-        }
-      }
-    }
+    hasRenames = hasRenames || changes.find { it != null && it.isRename } != null
 
-    var parentToChangesMap: MutableMap<Int, VcsLogPathsIndex.ChangeData?>? = pathToChanges[path]
-    if (parentToChangesMap == null) parentToChangesMap = ContainerUtil.newHashMap<Int, VcsLogPathsIndex.ChangeData?>()
+    val parentToChangesMap: MutableMap<Int, VcsLogPathsIndex.ChangeData?> = pathToChanges[path]
+                                                                            ?: ContainerUtil.newHashMap<Int, VcsLogPathsIndex.ChangeData?>()
     if (!parents.isEmpty()) {
       LOG.assertTrue(parents.size == changes.size)
       for (i in changes.indices) {
@@ -171,15 +154,15 @@ abstract class FileNamesData {
     val changes = filesToChangesMap!![childPath] ?: return childPath
 
     val change = changes[parent]
-    if (change == null) {
-      LOG.assertTrue(changes.size > 1)
-      return childPath
+    return when (change?.kind) {
+      VcsLogPathsIndex.ChangeKind.RENAMED_FROM -> null
+      VcsLogPathsIndex.ChangeKind.RENAMED_TO -> getPathById(change.otherPath)
+      null -> {
+        LOG.assertTrue(changes.size > 1)
+        childPath
+      }
+      else -> childPath
     }
-    if (change.kind == VcsLogPathsIndex.ChangeKind.RENAMED_FROM) return null
-    return if (change.kind == VcsLogPathsIndex.ChangeKind.RENAMED_TO) {
-      getPathById(change.otherPath)
-    }
-    else childPath
   }
 
   fun getPathInChildRevision(commit: Int, parentIndex: Int, parentPath: FilePath): FilePath? {
@@ -187,12 +170,12 @@ abstract class FileNamesData {
     LOG.assertTrue(filesToChangesMap != null, "Missing commit $commit")
     val changes = filesToChangesMap!![parentPath] ?: return parentPath
 
-    val change = changes[parentIndex] ?: return parentPath
-    if (change.kind == VcsLogPathsIndex.ChangeKind.RENAMED_TO) return null
-    return if (change.kind == VcsLogPathsIndex.ChangeKind.RENAMED_FROM) {
-      getPathById(change.otherPath)
+    val change = changes[parentIndex]
+    return when (change?.kind) {
+      VcsLogPathsIndex.ChangeKind.RENAMED_TO -> null
+      VcsLogPathsIndex.ChangeKind.RENAMED_FROM -> getPathById(change.otherPath)
+      else -> parentPath
     }
-    else parentPath
   }
 
   fun affects(id: Int, path: FilePath): Boolean {
@@ -204,7 +187,7 @@ abstract class FileNamesData {
 
     commitToPathAndChanges.forEachEntry { commit, filesToChanges ->
       if (filesToChanges.size == 1) {
-        result[commit] = ContainerUtil.getFirstItem(filesToChanges.keys)
+        result[commit] = filesToChanges.keys.first()
       }
       else {
         for ((key, value) in filesToChanges) {
