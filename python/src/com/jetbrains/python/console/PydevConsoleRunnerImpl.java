@@ -110,7 +110,7 @@ public class PydevConsoleRunnerImpl implements PydevConsoleRunner {
   public static final String CONSOLE_START_COMMAND = "import sys; print('Python %s on %s' % (sys.version, sys.platform))\n" +
                                                      "sys.path.extend([" + WORKING_DIR_AND_PYTHON_PATHS + "])\n";
   public static final String STARTED_BY_RUNNER = "startedByRunner";
-  private static final Logger LOG = Logger.getInstance(PydevConsoleRunnerImpl.class.getName());
+  private static final Logger LOG = Logger.getInstance(PydevConsoleRunnerImpl.class);
   @SuppressWarnings("SpellCheckingInspection")
   public static final String PYDEV_PYDEVCONSOLE_PY = "pydev/pydevconsole.py";
   public static final int PORTS_WAITING_TIMEOUT = 20000;
