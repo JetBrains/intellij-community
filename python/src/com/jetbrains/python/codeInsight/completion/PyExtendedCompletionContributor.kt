@@ -36,12 +36,11 @@ abstract class PyExtendedCompletionContributor : CompletionContributor() {
 
   protected val stringLiteralInsertHandler: InsertHandler<LookupElement> = InsertHandler { context, item ->
     val element = item.psiElement
-    if (element == null) {
-      return@InsertHandler
-    }
+    if (element == null) return@InsertHandler
     if (element is PyQualifiedNameOwner) {
       insertStringLiteralPrefix(element.qualifiedName, element.name, context)
-    } else {
+    }
+    else {
       val importPath = QualifiedNameFinder.findCanonicalImportPath(element, null)
       if (importPath != null) {
         insertStringLiteralPrefix(importPath.toString(), importPath.lastComponent.toString(), context)
