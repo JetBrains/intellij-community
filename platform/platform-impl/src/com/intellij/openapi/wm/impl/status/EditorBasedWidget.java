@@ -114,7 +114,6 @@ public abstract class EditorBasedWidget implements StatusBarWidget, FileEditorMa
     return FileDocumentManager.getInstance().getFile(document);
   }
 
-
   @Nullable
   protected final Project getProject() {
     return myProject;
