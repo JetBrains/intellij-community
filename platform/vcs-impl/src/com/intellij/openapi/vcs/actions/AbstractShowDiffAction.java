@@ -103,10 +103,9 @@ public abstract class AbstractShowDiffAction extends AbstractVcsAction{
     }
   }
 
-  protected DiffActionExecutor getExecutor(@NotNull DiffProvider diffProvider,
-                                           @NotNull VirtualFile selectedFile,
-                                           @NotNull Project project,
-                                           @Nullable Editor editor) {
-    return new DiffActionExecutor.CompareToCurrentExecutor(diffProvider, selectedFile, project, editor, getKey());
-  }
+  @NotNull
+  protected abstract DiffActionExecutor getExecutor(@NotNull DiffProvider diffProvider,
+                                                    @NotNull VirtualFile selectedFile,
+                                                    @NotNull Project project,
+                                                    @Nullable Editor editor);
 }
