@@ -15,15 +15,4 @@ class CreateJavaProjectWithKotlinGuiTest : KotlinGuiTestCase() {
       kotlinVersion = KotlinTestProperties.kotlin_artifact_version
     )
   }
-
-  @Test
-  @JvmName("java_with_js")
-  fun createJavaWithKotlinJSProject() {
-    createJavaProject(projectFolder, listOf(arrayOf(kotlinLibs[KotlinKind.JS]!!.javaProject.frameworkName)))
-    projectStructureDialogScenarios.checkKotlinLibsInStructureFromPlugin(
-      kotlinKind = KotlinKind.JS,
-      kotlinVersion = KotlinTestProperties.kotlin_artifact_version
-    )
-  }
-
 }
