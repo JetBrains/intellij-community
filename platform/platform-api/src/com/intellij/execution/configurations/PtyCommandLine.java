@@ -176,13 +176,4 @@ public class PtyCommandLine extends GeneralCommandLine {
       .setRedirectErrorStream(isRedirectErrorStream());
     return builder.start();
   }
-
-  /**
-   * @deprecated use {@link #setConsoleMode(boolean)} and {@link #startProcessWithPty(List)} instead
-   */
-  @NotNull
-  public Process startProcessWithPty(@NotNull List<String> commands, boolean console) throws IOException {
-    setConsoleMode(console);
-    return startProcessWithPty(commands);
-  }
 }
