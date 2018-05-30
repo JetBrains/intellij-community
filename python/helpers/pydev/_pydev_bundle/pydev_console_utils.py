@@ -122,7 +122,7 @@ class StdIn(BaseStdIn):
         try:
             # server = xmlrpclib.Server('http://%s:%s' % (self.host, self.client_port))
             # requested_input = server.RequestInput()
-            requested_input = self.rpc_client.RequestInput()
+            requested_input = self.rpc_client.requestInput()
             if not requested_input:
                 return '\n'  # Yes, a readline must return something (otherwise we can get an EOFError on the input() call).
             return requested_input
@@ -463,7 +463,7 @@ class BaseInterpreterInterface:
     def ShowConsole(self):
         server = self.get_server()
         if server is not None:
-            server.ShowConsole()
+            server.showConsole()
 
     def finish_exec(self, more):
         self.interruptable = False
@@ -471,7 +471,7 @@ class BaseInterpreterInterface:
         server = self.get_server()
 
         if server is not None:
-            return server.NotifyFinished(more)
+            return server.notifyFinished(more)
         else:
             return True
 
