@@ -213,7 +213,6 @@ open class MultipleFileMergeDialog2(
     mergeButton.isEnabled = haveSelection && !haveUnmergeableFiles
   }
 
-
   private fun getSelectedFiles(): List<VirtualFile> {
     return TreeUtil.collectSelectedObjectsOfType(table.tree, VirtualFile::class.java)
   }
@@ -222,11 +221,9 @@ open class MultipleFileMergeDialog2(
     return true
   }
 
-  override fun createActions(): Array<Action> = arrayOf(cancelAction)
-
-
-  override fun getCancelAction(): Action = super.getCancelAction().apply {
-    putValue(Action.NAME, CommonBundle.getCloseButtonText())
+  override fun createActions(): Array<Action> {
+    cancelAction.putValue(Action.NAME, CommonBundle.getCloseButtonText())
+    return arrayOf(cancelAction)
   }
 
   override fun dispose() {
