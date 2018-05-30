@@ -19,6 +19,7 @@ import com.intellij.openapi.actionSystem.Presentation;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.AbstractVcs;
+import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.ProjectLevelVcsManager;
 import com.intellij.openapi.vcs.changes.ChangeListManager;
 import com.intellij.openapi.vcs.changes.ChangesUtil;
@@ -68,8 +69,10 @@ public abstract class AbstractShowDiffAction extends AbstractVcsAction {
     VirtualFile file = getIfSingle(vcsContext.getSelectedFilesStream());
     if (file == null || file.isDirectory()) return false;
 
+    FilePath filePath = VcsUtil.getFilePath(file);
+
     if (disableIfRunning) {
-      if (BackgroundableActionLock.isLocked(project, VcsBackgroundableActions.COMPARE_WITH, VcsBackgroundableActions.keyFrom(file))) {
+      if (BackgroundableActionLock.isLocked(project, VcsBackgroundableActions.COMPARE_WITH, filePath)) {
         return false;
       }
     }
@@ -77,7 +80,7 @@ public abstract class AbstractShowDiffAction extends AbstractVcsAction {
     AbstractVcs vcs = ChangesUtil.getVcsForFile(file, project);
     if (vcs == null || vcs.getDiffProvider() == null) return false;
 
-    if (!AbstractVcs.fileInVcsByFileStatus(project, VcsUtil.getFilePath(file))) return false;
+    if (!AbstractVcs.fileInVcsByFileStatus(project, filePath)) return false;
 
     return true;
   }
