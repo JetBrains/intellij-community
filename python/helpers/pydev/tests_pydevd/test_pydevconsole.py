@@ -74,13 +74,13 @@ class Test(unittest.TestCase):
                     self.assertEqual([u'50', u'input_request'], found[1:]) # IPython 5.1
                     self.assertTrue(found[0].startswith(u'Out'))
 
-            comps = interpreter.getCompletions('foo.', 'foo.')
+            comps = interpreter.do_get_completions('foo.', 'foo.')
             self.assertTrue(
                 ('CONSTANT', '', '', '3') in comps or ('CONSTANT', '', '', '4') in comps, \
                 'Found: %s' % comps
             )
 
-            comps = interpreter.getCompletions('"".', '"".')
+            comps = interpreter.do_get_completions('"".', '"".')
             self.assertTrue(
                 ('__add__', 'x.__add__(y) <==> x+y', '', '3') in comps or
                 ('__add__', '', '', '4') in comps or
@@ -90,21 +90,21 @@ class Test(unittest.TestCase):
             )
 
 
-            completions = interpreter.getCompletions('', '')
+            completions = interpreter.do_get_completions('', '')
             for c in completions:
                 if c[0] == 'AssertionError':
                     break
             else:
                 self.fail('Could not find AssertionError')
 
-            completions = interpreter.getCompletions('Assert', 'Assert')
+            completions = interpreter.do_get_completions('Assert', 'Assert')
             for c in completions:
                 if c[0] == 'RuntimeError':
                     self.fail('Did not expect to find RuntimeError there')
 
-            self.assertTrue(('__doc__', None, '', '3') not in interpreter.getCompletions('foo.CO', 'foo.'))
+            self.assertTrue(('__doc__', None, '', '3') not in interpreter.do_get_completions('foo.CO', 'foo.'))
 
-            comps = interpreter.getCompletions('va', 'va')
+            comps = interpreter.do_get_completions('va', 'va')
             self.assertTrue(('val', '', '', '3') in comps or ('val', '', '', '4') in comps)
 
             interpreter.add_exec(CodeFragment('s = "mystring"'))
