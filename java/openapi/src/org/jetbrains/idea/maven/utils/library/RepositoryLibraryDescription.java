@@ -116,13 +116,13 @@ public class RepositoryLibraryDescription {
   }
 
   public String getDisplayName(String version) {
-    if (version.equals(LatestVersionId)) {
+    if (LatestVersionId.equals(version)) {
       version = LatestVersionDisplayName;
     }
-    else if (version.equals(ReleaseVersionId)) {
+    else if (ReleaseVersionId.equals(version)) {
       version = ReleaseVersionDisplayName;
     }
-    return getDisplayName() + ":" + version;
+    return getDisplayName() + (version == null ? "" : ":" + version);
   }
 
   public String getMavenCoordinates(String version) {
