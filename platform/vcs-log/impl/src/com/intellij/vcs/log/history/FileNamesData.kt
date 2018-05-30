@@ -1,153 +1,142 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-package com.intellij.vcs.log.history;
+package com.intellij.vcs.log.history
 
-import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.vcs.FilePath;
-import com.intellij.util.containers.ContainerUtil;
-import com.intellij.vcs.log.data.index.VcsLogPathsIndex;
-import gnu.trove.TIntObjectHashMap;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
+import com.intellij.openapi.diagnostic.Logger
+import com.intellij.openapi.vcs.FilePath
+import com.intellij.util.containers.ContainerUtil
+import com.intellij.vcs.log.data.index.VcsLogPathsIndex
+import gnu.trove.TIntObjectHashMap
+import gnu.trove.TIntProcedure
 
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
+abstract class FileNamesData {
+  private val commitToPathAndChanges = TIntObjectHashMap<MutableMap<FilePath, MutableMap<Int, VcsLogPathsIndex.ChangeData?>>>()
+  private var hasRenames = false
 
-public abstract class FileNamesData {
-  private static final Logger LOG = Logger.getInstance(FileNamesData.class);
-  @NotNull private final TIntObjectHashMap<Map<FilePath, Map<Integer, VcsLogPathsIndex.ChangeData>>> myCommitToPathAndChanges =
-    new TIntObjectHashMap<>();
-  private boolean myHasRenames = false;
-
-  protected abstract FilePath getPathById(int pathId);
-
-  public boolean hasRenames() {
-    return myHasRenames;
-  }
-
-  public void add(int commit,
-                  @NotNull FilePath path,
-                  @NotNull List<VcsLogPathsIndex.ChangeData> changes,
-                  @NotNull List<Integer> parents) {
-    Map<FilePath, Map<Integer, VcsLogPathsIndex.ChangeData>> pathToChanges = myCommitToPathAndChanges.get(commit);
-    if (pathToChanges == null) {
-      pathToChanges = ContainerUtil.newHashMap();
-      myCommitToPathAndChanges.put(commit, pathToChanges);
+  val commits: Set<Int>
+    get() {
+      val result = ContainerUtil.newHashSet<Int>()
+      commitToPathAndChanges.forEach(TIntProcedure { result.add(it) })
+      return result
     }
 
-    if (!myHasRenames) {
-      for (VcsLogPathsIndex.ChangeData data : changes) {
-        if (data == null) continue;
-        if (data.isRename()) {
-          myHasRenames = true;
-          break;
+  protected abstract fun getPathById(pathId: Int): FilePath
+
+  fun hasRenames(): Boolean {
+    return hasRenames
+  }
+
+  fun add(commit: Int,
+          path: FilePath,
+          changes: List<VcsLogPathsIndex.ChangeData?>,
+          parents: List<Int>) {
+    var pathToChanges: MutableMap<FilePath, MutableMap<Int, VcsLogPathsIndex.ChangeData?>>? = commitToPathAndChanges.get(commit)
+    if (pathToChanges == null) {
+      pathToChanges = ContainerUtil.newHashMap<FilePath, MutableMap<Int, VcsLogPathsIndex.ChangeData?>>()
+      commitToPathAndChanges.put(commit, pathToChanges)
+    }
+
+    if (!hasRenames) {
+      for (data in changes) {
+        if (data == null) continue
+        if (data.isRename) {
+          hasRenames = true
+          break
         }
       }
     }
 
-    Map<Integer, VcsLogPathsIndex.ChangeData> parentToChangesMap = pathToChanges.get(path);
-    if (parentToChangesMap == null) parentToChangesMap = ContainerUtil.newHashMap();
+    var parentToChangesMap: MutableMap<Int, VcsLogPathsIndex.ChangeData?>? = pathToChanges[path]
+    if (parentToChangesMap == null) parentToChangesMap = ContainerUtil.newHashMap<Int, VcsLogPathsIndex.ChangeData?>()
     if (!parents.isEmpty()) {
-      LOG.assertTrue(parents.size() == changes.size());
-      for (int i = 0; i < changes.size(); i++) {
-        VcsLogPathsIndex.ChangeData existing = parentToChangesMap.get(parents.get(i));
+      LOG.assertTrue(parents.size == changes.size)
+      for (i in changes.indices) {
+        val existing = parentToChangesMap[parents[i]]
         if (existing != null) {
           // since we occasionally reindex commits with different rename limit
           // it can happen that we have several change data for a file in a commit
           // one with rename, other without
           // we want to keep a renamed-one, so throwing the other one out
-          if (existing.isRename()) continue;
+          if (existing.isRename) continue
         }
-        parentToChangesMap.put(parents.get(i), changes.get(i));
+        parentToChangesMap[parents[i]] = changes[i]
       }
     }
     else {
       // initial commit
-      LOG.assertTrue(changes.size() == 1);
-      parentToChangesMap.put(-1, changes.get(0));
+      LOG.assertTrue(changes.size == 1)
+      parentToChangesMap[-1] = changes[0]
     }
-    pathToChanges.put(path, parentToChangesMap);
+    pathToChanges[path] = parentToChangesMap
   }
 
-  @Nullable
-  public FilePath getPathInParentRevision(int commit, int parent, @NotNull FilePath childPath) {
-    Map<FilePath, Map<Integer, VcsLogPathsIndex.ChangeData>> filesToChangesMap = myCommitToPathAndChanges.get(commit);
-    LOG.assertTrue(filesToChangesMap != null, "Missing commit " + commit);
-    Map<Integer, VcsLogPathsIndex.ChangeData> changes = filesToChangesMap.get(childPath);
-    if (changes == null) return childPath;
+  fun getPathInParentRevision(commit: Int, parent: Int, childPath: FilePath): FilePath? {
+    val filesToChangesMap = commitToPathAndChanges.get(commit)
+    LOG.assertTrue(filesToChangesMap != null, "Missing commit $commit")
+    val changes = filesToChangesMap!![childPath] ?: return childPath
 
-    VcsLogPathsIndex.ChangeData change = changes.get(parent);
+    val change = changes[parent]
     if (change == null) {
-      LOG.assertTrue(changes.size() > 1);
-      return childPath;
+      LOG.assertTrue(changes.size > 1)
+      return childPath
     }
-    if (change.kind.equals(VcsLogPathsIndex.ChangeKind.RENAMED_FROM)) return null;
-    if (change.kind.equals(VcsLogPathsIndex.ChangeKind.RENAMED_TO)) {
-      return getPathById(change.otherPath);
+    if (change.kind == VcsLogPathsIndex.ChangeKind.RENAMED_FROM) return null
+    return if (change.kind == VcsLogPathsIndex.ChangeKind.RENAMED_TO) {
+      getPathById(change.otherPath)
     }
-    return childPath;
+    else childPath
   }
 
-  @Nullable
-  public FilePath getPathInChildRevision(int commit, int parentIndex, @NotNull FilePath parentPath) {
-    Map<FilePath, Map<Integer, VcsLogPathsIndex.ChangeData>> filesToChangesMap = myCommitToPathAndChanges.get(commit);
-    LOG.assertTrue(filesToChangesMap != null, "Missing commit " + commit);
-    Map<Integer, VcsLogPathsIndex.ChangeData> changes = filesToChangesMap.get(parentPath);
-    if (changes == null) return parentPath;
+  fun getPathInChildRevision(commit: Int, parentIndex: Int, parentPath: FilePath): FilePath? {
+    val filesToChangesMap = commitToPathAndChanges.get(commit)
+    LOG.assertTrue(filesToChangesMap != null, "Missing commit $commit")
+    val changes = filesToChangesMap!![parentPath] ?: return parentPath
 
-    VcsLogPathsIndex.ChangeData change = changes.get(parentIndex);
-    if (change == null) return parentPath;
-    if (change.kind.equals(VcsLogPathsIndex.ChangeKind.RENAMED_TO)) return null;
-    if (change.kind.equals(VcsLogPathsIndex.ChangeKind.RENAMED_FROM)) {
-      return getPathById(change.otherPath);
+    val change = changes[parentIndex] ?: return parentPath
+    if (change.kind == VcsLogPathsIndex.ChangeKind.RENAMED_TO) return null
+    return if (change.kind == VcsLogPathsIndex.ChangeKind.RENAMED_FROM) {
+      getPathById(change.otherPath)
     }
-    return parentPath;
+    else parentPath
   }
 
-  public boolean affects(int id, @NotNull FilePath path) {
-    return myCommitToPathAndChanges.containsKey(id) && myCommitToPathAndChanges.get(id).containsKey(path);
+  fun affects(id: Int, path: FilePath): Boolean {
+    return commitToPathAndChanges.containsKey(id) && commitToPathAndChanges.get(id).containsKey(path)
   }
 
-  @NotNull
-  public Set<Integer> getCommits() {
-    Set<Integer> result = ContainerUtil.newHashSet();
-    myCommitToPathAndChanges.forEach(result::add);
-    return result;
-  }
+  fun buildPathsMap(): Map<Int, FilePath> {
+    val result = ContainerUtil.newHashMap<Int, FilePath>()
 
-  @NotNull
-  public Map<Integer, FilePath> buildPathsMap() {
-    Map<Integer, FilePath> result = ContainerUtil.newHashMap();
-
-    myCommitToPathAndChanges.forEachEntry((commit, filesToChanges) -> {
-      if (filesToChanges.size() == 1) {
-        result.put(commit, ContainerUtil.getFirstItem(filesToChanges.keySet()));
+    commitToPathAndChanges.forEachEntry { commit, filesToChanges ->
+      if (filesToChanges.size == 1) {
+        result[commit] = ContainerUtil.getFirstItem(filesToChanges.keys)
       }
       else {
-        for (Map.Entry<FilePath, Map<Integer, VcsLogPathsIndex.ChangeData>> fileToChange : filesToChanges.entrySet()) {
-          VcsLogPathsIndex.ChangeData changeData = ContainerUtil.find(fileToChange.getValue().values(),
-                                                                      ch -> ch != null &&
-                                                                            !ch.kind.equals(VcsLogPathsIndex.ChangeKind.RENAMED_FROM));
+        for ((key, value) in filesToChanges) {
+          val changeData = value.values.find { ch -> ch != null && ch.kind != VcsLogPathsIndex.ChangeKind.RENAMED_FROM }
           if (changeData != null) {
-            result.put(commit, fileToChange.getKey());
-            break;
+            result[commit] = key
+            break
           }
         }
       }
 
-      return true;
-    });
+      true
+    }
 
-    return result;
+    return result
   }
 
-  public boolean isTrivialMerge(int commit, @NotNull FilePath path) {
-    if (!myCommitToPathAndChanges.containsKey(commit)) return false;
-    Map<Integer, VcsLogPathsIndex.ChangeData> data = myCommitToPathAndChanges.get(commit).get(path);
+  fun isTrivialMerge(commit: Int, path: FilePath): Boolean {
+    if (!commitToPathAndChanges.containsKey(commit)) return false
+    val data = commitToPathAndChanges.get(commit)[path]
     // strictly speaking, the criteria for merge triviality is a little bit more tricky than this:
     // some merges have just reverted changes in one of the branches
     // they need to be displayed
     // but we skip them instead
-    return data != null && data.size() > 1 && data.containsValue(null);
+    return data != null && data.size > 1 && data.containsValue(null)
+  }
+
+  companion object {
+    private val LOG = Logger.getInstance(FileNamesData::class.java)
   }
 }
