@@ -18,14 +18,12 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.ColumnInfo;
+import com.intellij.vcs.log.Hash;
 import com.intellij.vcs.log.impl.HashImpl;
 import com.intellij.vcsUtil.VcsFileUtil;
 import com.intellij.vcsUtil.VcsRunnable;
 import com.intellij.vcsUtil.VcsUtil;
-import git4idea.GitFileRevision;
-import git4idea.GitLocalBranch;
-import git4idea.GitRevisionNumber;
-import git4idea.GitUtil;
+import git4idea.*;
 import git4idea.commands.*;
 import git4idea.history.GitHistoryUtils;
 import git4idea.i18n.GitBundle;
@@ -376,10 +374,16 @@ public class GitMergeProvider implements MergeProvider2 {
   }
 
   public static String resolveBranchName(GitRepository repository, GitRevisionNumber revisionNumber) {
-    Collection<GitLocalBranch> localBranchesByHash = repository.getBranches().findLocalBranchesByHash(
-      HashImpl.build(revisionNumber.asString()));
+    Hash hash = HashImpl.build(revisionNumber.asString());
+    Collection<GitLocalBranch> localBranchesByHash = repository.getBranches().findLocalBranchesByHash(hash);
     if (localBranchesByHash.size() == 1) {
       return localBranchesByHash.iterator().next().getName();
+    }
+    if (localBranchesByHash.isEmpty()) {
+      Collection<GitRemoteBranch> remoteBranchesByHash = repository.getBranches().findRemoteBranchesByHash(hash);
+      if (remoteBranchesByHash.size() == 1) {
+        return remoteBranchesByHash.iterator().next().getName();
+      }
     }
     return revisionNumber.getShortRev();
   }
