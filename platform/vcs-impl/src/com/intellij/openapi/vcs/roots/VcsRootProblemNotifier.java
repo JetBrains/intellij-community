@@ -203,10 +203,6 @@ public class VcsRootProblemNotifier {
       }
       description.append("<br/>");
     }
-
-    String ignore = invalidRoots.isEmpty() ? "&nbsp;&nbsp;<a href='ignore'>Ignore</a>" : "";
-    description.append(ignore);
-
     return description.toString();
   }
 
