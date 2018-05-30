@@ -176,8 +176,10 @@ open class MultipleFileMergeDialog2(
     for ((index, columnInfo) in tableModel.columns.withIndex()) {
       val column = table.columnModel.getColumn(index)
       columnInfo.maxStringValue?.let {
-        column.maxWidth = Math.max(table.getFontMetrics(table.font).stringWidth(it),
-                                   table.getFontMetrics(table.tableHeader.font).stringWidth(columnInfo.name)) + columnInfo.additionalWidth
+        val width = Math.max(table.getFontMetrics(table.font).stringWidth(it),
+                             table.getFontMetrics(table.tableHeader.font).stringWidth(columnInfo.name)) + columnInfo.additionalWidth
+        column.maxWidth = width
+        column.preferredWidth = width
       }
     }
   }
