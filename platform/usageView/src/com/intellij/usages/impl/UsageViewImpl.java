@@ -147,11 +147,11 @@ public class UsageViewImpl implements UsageViewEx {
   private Splitter myPreviewSplitter;
   private volatile ProgressIndicator associatedProgress; // the progress that current find usages is running under
 
-  // true if usages tree is currently expanding
+  // true if usages tree is currently expanding or collapsing
   // (either at the end of find usages thanks to the 'expand usages after find' setting or
-  // because the user pressed 'expand all' button. During this, some ugly hacks applied
+  // because the user pressed 'expand all' or 'collapse all' button. During this, some ugly hacks applied
   // to speed up the expanding (see getExpandedDescendants() here and UsageViewTreeCellRenderer.customizeCellRenderer())
-  private boolean expandingAll;
+  private boolean myExpandingCollapsing;
   private final UsageViewTreeCellRenderer myUsageViewTreeCellRenderer;
   private Usage myOriginUsage;
   @Nullable private Runnable myRerunActivity;
@@ -223,7 +223,7 @@ public class UsageViewImpl implements UsageViewEx {
             // hack to avoid quadratic expandAll()
             @Override
             public Enumeration<TreePath> getExpandedDescendants(TreePath parent) {
-              return expandingAll ? EmptyEnumeration.getInstance() : super.getExpandedDescendants(parent);
+              return myExpandingCollapsing ? EmptyEnumeration.getInstance() : super.getExpandedDescendants(parent);
             }
           };
           myTree.setName("UsageViewTree");
@@ -483,7 +483,7 @@ public class UsageViewImpl implements UsageViewEx {
 
   private void clearRendererCache() {
     ApplicationManager.getApplication().assertIsDispatchThread();
-    if (expandingAll) return; // to avoid quadratic row enumeration
+    if (myExpandingCollapsing) return; // to avoid quadratic row enumeration
     // clear renderer cache of node preferred size
     TreeUI ui = myTree.getUI();
     if (ui instanceof BasicTreeUI) {
@@ -680,7 +680,7 @@ public class UsageViewImpl implements UsageViewEx {
         Object component = path.getLastPathComponent();
         if (component instanceof Node) {
           Node node = (Node)component;
-          if (!expandingAll && node.needsUpdate()) {
+          if (!myExpandingCollapsing && node.needsUpdate()) {
             List<Node> toUpdate = new ArrayList<>();
             checkNodeValidity(node, path, toUpdate);
             queueUpdateBulk(toUpdate, EmptyRunnable.getInstance());
@@ -991,33 +991,38 @@ public class UsageViewImpl implements UsageViewEx {
   }
 
   public void expandAll() {
-    processAllOnEDT(() -> TreeUtil.expandAll(myTree));
+    doExpandingCollapsing(() -> TreeUtil.expandAll(myTree));
   }
 
-  private void processAllOnEDT(@NotNull Runnable task) {
+  private void expandTree(int levels) {
+    doExpandingCollapsing(() -> TreeUtil.expand(myTree, levels));
+  }
+
+  /**
+   * Allows to skip a lot of {@link #clearRendererCache}, received via {@link TreeExpansionListener}.
+   *
+   * @param task that expands or collapses a tree
+   */
+  private void doExpandingCollapsing(@NotNull Runnable task) {
     if (isDisposed) return;
     ApplicationManager.getApplication().assertIsDispatchThread();
     fireEvents();  // drain all remaining insertion events in the queue
 
-    expandingAll = true;
+    myExpandingCollapsing = true;
     try {
       task.run();
     }
     finally {
-      expandingAll = false;
+      myExpandingCollapsing = false;
     }
     clearRendererCache();
   }
 
   private void collapseAll() {
-    processAllOnEDT(() -> {
+    doExpandingCollapsing(() -> {
       TreeUtil.collapseAll(myTree, 3);
       TreeUtil.expand(myTree, 2);
     });
-  }
-
-  private void expandTree(int levels) {
-    processAllOnEDT(() -> TreeUtil.expand(myTree, levels));
   }
 
   void expandRoot() {
