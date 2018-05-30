@@ -38,6 +38,7 @@ import com.intellij.testGuiFramework.util.scenarios.NewProjectDialogModel.Consta
 import com.intellij.testGuiFramework.util.scenarios.NewProjectDialogModel.Constants.textArtifactId
 import com.intellij.testGuiFramework.util.scenarios.NewProjectDialogModel.Constants.textGroupId
 import com.intellij.testGuiFramework.util.scenarios.NewProjectDialogModel.Constants.textProjectLocation
+import com.intellij.testGuiFramework.util.scenarios.NewProjectDialogModel.Constants.textProjectName
 import com.intellij.testGuiFramework.util.scenarios.NewProjectDialogModel.Constants.textRootModuleName
 import com.intellij.testGuiFramework.utils.TestUtilsClass
 import com.intellij.testGuiFramework.utils.TestUtilsClassCompanion
@@ -55,6 +56,7 @@ class NewProjectDialogModel(val testCase: GuiTestCase) : TestUtilsClass(testCase
     const val buttonNext = "Next"
     const val buttonFinish = "Finish"
     const val textProjectLocation = "Project location:"
+    const val textProjectName = "Project name:"
     const val textGroupId = "GroupId"
     const val textArtifactId = "ArtifactId"
     const val checkKotlinDsl = "Kotlin DSL build script"
@@ -182,7 +184,8 @@ fun NewProjectDialogModel.createJavaProject(projectPath: String, libs: Collectio
       }
       button(buttonNext).click()
       logUIStep("Fill Project location with `$projectPath`")
-      textfield(textProjectLocation).click()
+      textfield(textProjectName).click()
+      shortcut(Key.TAB)
       shortcut(Modifier.CONTROL + Key.X)
       typeText(projectPath)
       logUIStep("Close New Project dialog with Finish")
@@ -280,7 +283,9 @@ fun NewProjectDialogModel.createGradleProject(projectPath: String, gradleOptions
       }
       button(buttonNext).click()
       logUIStep("Fill Project location with `$projectPath`")
-      textfield(textProjectLocation).click()
+      // Field "Project location" is located under additional panel and has location [0,0], that's why we usually click into field "Project name"
+      textfield(textProjectName).click()
+      shortcut(Key.TAB)
       shortcut(Modifier.CONTROL + Key.X)
       typeText(projectPath)
       logUIStep("Close New Project dialog with Finish")
