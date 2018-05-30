@@ -78,12 +78,10 @@ public class ParametrizedDuplicates {
 
   @Nullable
   public static ParametrizedDuplicates findDuplicates(@NotNull ExtractMethodProcessor originalProcessor) {
-    PsiElement[] pattern = originalProcessor.myElements;
-    if (pattern.length == 0) {
+    DuplicatesFinder finder = createDuplicatesFinder(originalProcessor, DuplicatesFinder.MatchType.PARAMETRIZED);
+    if (finder == null) {
       return null;
     }
-
-    DuplicatesFinder finder = createDuplicatesFinder(originalProcessor, DuplicatesFinder.MatchType.PARAMETRIZED);
     List<Match> matches = finder.findDuplicates(originalProcessor.myTargetClass);
     matches = filterNestedSubexpressions(matches);
     if (matches.isEmpty()) {
@@ -92,6 +90,7 @@ public class ParametrizedDuplicates {
 
     Map<PsiExpression, String> predefinedNames = foldParameters(originalProcessor, matches);
 
+    PsiElement[] pattern = originalProcessor.myElements;
     ParametrizedDuplicates duplicates = new ParametrizedDuplicates(pattern, originalProcessor);
     if (!duplicates.initMatches(pattern, matches)) {
       return null;
@@ -111,6 +110,9 @@ public class ParametrizedDuplicates {
 
     // As folded parameters don't work along with extracted parameters we need to apply the finder again to actually fold the parameters
     DuplicatesFinder finder = createDuplicatesFinder(originalProcessor, DuplicatesFinder.MatchType.FOLDED);
+    if (finder == null) {
+      return Collections.emptyMap();
+    }
     Map<Match, Match> foldedMatches = new HashMap<>();
     Map<DuplicatesFinder.Parameter, VariableData> parametersToFold = new LinkedHashMap<>();
     for (VariableData data : originalProcessor.getInputVariables().getInputVariables()) {
@@ -184,10 +186,13 @@ public class ParametrizedDuplicates {
     return true;
   }
 
-  @NotNull
+  @Nullable
   private static DuplicatesFinder createDuplicatesFinder(@NotNull ExtractMethodProcessor processor,
                                                          @NotNull DuplicatesFinder.MatchType matchType) {
     PsiElement[] elements = getFilteredElements(processor.myElements);
+    if (elements.length == 0) {
+      return null;
+    }
     Set<PsiVariable> effectivelyLocal = processor.getEffectivelyLocalVariables();
 
     InputVariables inputVariables = matchType == DuplicatesFinder.MatchType.PARAMETRIZED
