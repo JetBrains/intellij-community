@@ -1611,7 +1611,13 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
     actualText = StringUtil.convertLineSeparators(actualText);
 
     if (!Comparing.equal(expectedText, actualText)) {
-      if (loader.filePath != null && !loader.caretState.hasExplicitCaret()) {
+      if (loader.filePath != null) {
+        if (loader.caretState.hasExplicitCaret()) {
+          int offset = editor.getCaretModel().getOffset();
+          if (offset > -1) {
+            actualText = new StringBuilder(actualText).insert(offset, "<caret>").toString();
+          }
+        }
         throw new FileComparisonFailure(expectedFile, expectedText, actualText, loader.filePath);
       }
       else {
