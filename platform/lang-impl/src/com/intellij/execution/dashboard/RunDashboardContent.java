@@ -44,6 +44,7 @@ import com.intellij.ui.content.*;
 import com.intellij.ui.treeStructure.Tree;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.ui.tree.TreeModelAdapter;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -51,6 +52,7 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import javax.swing.event.TreeExpansionEvent;
 import javax.swing.event.TreeExpansionListener;
+import javax.swing.event.TreeModelEvent;
 import javax.swing.tree.DefaultMutableTreeNode;
 import java.awt.*;
 import java.awt.event.MouseEvent;
@@ -408,7 +410,7 @@ public class RunDashboardContent extends JPanel implements TreeContent, Disposab
 
     DefaultActionGroup treeGroup = new DefaultActionGroup();
 
-    TreeExpander treeExpander = new DefaultTreeExpander(myTree);
+    TreeExpander treeExpander = new RunDashboardTreeExpander();
     AnAction expandAllAction = CommonActionsManager.getInstance().createExpandAllAction(treeExpander, this);
     treeGroup.add(expandAllAction);
 
@@ -481,6 +483,41 @@ public class RunDashboardContent extends JPanel implements TreeContent, Disposab
 
   public float getContentProportion() {
     return mySplitter.getProportion();
+  }
+
+  private class RunDashboardTreeExpander extends DefaultTreeExpander {
+    boolean myFlat;
+
+    RunDashboardTreeExpander() {
+      super(myTree);
+      myTreeModel.addTreeModelListener(new TreeModelAdapter() {
+        @Override
+        public void treeStructureChanged(TreeModelEvent e) {
+          myFlat = isFlat();
+        }
+      });
+    }
+
+    @Override
+    public boolean canExpand() {
+      return super.canExpand() && !myFlat;
+    }
+
+    @Override
+    public boolean canCollapse() {
+      return super.canCollapse() && !myFlat;
+    }
+
+    private boolean isFlat() {
+      Object root = myTreeModel.getRoot();
+      for (int i = 0; i < myTreeModel.getChildCount(root); i++) {
+        Object child = myTreeModel.getChild(root, i);
+        if (myTreeModel.getChildCount(child) > 0) {
+          return false;
+        }
+      }
+      return true;
+    }
   }
 
   private class GroupByActionGroup extends DefaultActionGroup implements CheckedActionGroup {
