@@ -85,13 +85,24 @@ public final class TrailingSpacesStripper implements FileDocumentManagerListener
           @Override
           public void run() {
             CommandProcessor.getInstance().runUndoTransparentAction(() -> {
-              if (CharArrayUtil.containsOnlyWhiteSpaces(content.subSequence(start, end)) && doStrip) {
+              if (CharArrayUtil.containsOnlyWhiteSpaces(content.subSequence(start, end)) && doStrip &&
+                  (!settings.isKeepTrailingSpacesOnCaretLine() || !hasCaretIn(start, end))) {
                 document.deleteString(start, end);
               }
               else {
                 document.insertString(end, "\n");
               }
             });
+          }
+
+          private boolean hasCaretIn(int start, int end) {
+            Editor activeEditor = getActiveEditor(document);
+            final List<Caret> carets = activeEditor == null ? Collections.emptyList() : activeEditor.getCaretModel().getAllCarets();
+            for (Caret caret : carets) {
+              int offset = caret.getOffset();
+              if (offset >= start && offset <= end) return true;
+            }
+            return false;
           }
         });
       }
