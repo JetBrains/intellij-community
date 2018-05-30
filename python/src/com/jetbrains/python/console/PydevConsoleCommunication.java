@@ -554,10 +554,10 @@ public class PydevConsoleCommunication extends AbstractConsoleCommunication impl
             evaluationExpressions.add(GetVariableCommand.composeName(asyncValue.getDebugValue()));
           }
           final int seq = getNextFullValueSeq();
+          myCallbackHashMap.put(seq, pyAsyncValues);
+
           // @alexander todo add specific exception to the method (previously processed by `checkError()`)
           myClient.loadFullValue(seq, evaluationExpressions);
-
-          myCallbackHashMap.put(seq, pyAsyncValues);
 
           // @alexander todo it was expected here that `loadFullValue()` might return `List<PyDebugValue>` somehow...
         }
