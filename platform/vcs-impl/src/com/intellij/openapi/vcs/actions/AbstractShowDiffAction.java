@@ -60,27 +60,22 @@ public abstract class AbstractShowDiffAction extends AbstractVcsAction {
   }
 
   protected static boolean isEnabled(@NotNull VcsContext vcsContext, @Nullable VcsBackgroundableActions actionKey) {
-    boolean result = false;
     Project project = vcsContext.getProject();
+    if (project == null) return false;
 
-    if (project != null && isVisible(vcsContext)) {
-      VirtualFile file = getIfSingle(vcsContext.getSelectedFilesStream());
-      result = file != null && isEnabled(project, file, actionKey);
-    }
+    if (!isVisible(vcsContext)) return false;
 
-    return result;
-  }
+    VirtualFile file = getIfSingle(vcsContext.getSelectedFilesStream());
+    if (file == null || file.isDirectory()) return false;
 
-  private static boolean isEnabled(@NotNull Project project, @NotNull VirtualFile file, @Nullable VcsBackgroundableActions actionKey) {
-    boolean result = false;
+    if (actionKey != null && BackgroundableActionLock.isLocked(project, actionKey, VcsBackgroundableActions.keyFrom(file))) return false;
 
-    if (!file.isDirectory() &&
-        (actionKey == null || !BackgroundableActionLock.isLocked(project, actionKey, VcsBackgroundableActions.keyFrom(file)))) {
-      AbstractVcs vcs = ChangesUtil.getVcsForFile(file, project);
-      result = vcs != null && vcs.getDiffProvider() != null && AbstractVcs.fileInVcsByFileStatus(project, VcsUtil.getFilePath(file));
-    }
+    AbstractVcs vcs = ChangesUtil.getVcsForFile(file, project);
+    if (vcs == null || vcs.getDiffProvider() == null) return false;
 
-    return result;
+    if (!AbstractVcs.fileInVcsByFileStatus(project, VcsUtil.getFilePath(file))) return false;
+
+    return true;
   }
 
   @Override
