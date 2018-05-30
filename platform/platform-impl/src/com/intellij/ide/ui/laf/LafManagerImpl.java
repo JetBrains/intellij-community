@@ -387,7 +387,7 @@ public final class LafManagerImpl extends LafManager implements PersistentStateC
       }
     }
 
-    myCurrentLaf = ObjectUtils.chooseNotNull(findLaf(lookAndFeelInfo.getClassName()), lookAndFeelInfo);
+    myCurrentLaf = ObjectUtils.chooseNotNull(lookAndFeelInfo, findLaf(lookAndFeelInfo.getClassName()));
   }
 
   public static void updateForDarcula(boolean isDarcula) {
