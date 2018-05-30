@@ -734,7 +734,7 @@ open class GuiTestCase {
       }
     }
     catch (e: WaitTimedOutError){
-      throw ComponentLookupException("""JTree "${if (pathStrings.isNotEmpty()) "by path $pathStrings" else ""}"""")
+      throw ComponentLookupException("""JTree "${if (pathStrings.isNotEmpty()) "by path ${pathStrings.toList()}" else ""}"""")
     }
     return ExtendedTreeFixture(guiTestRule.robot(), myTree)
   }
