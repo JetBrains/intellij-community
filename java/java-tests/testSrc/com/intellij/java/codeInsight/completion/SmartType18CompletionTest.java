@@ -219,6 +219,11 @@ public void testConvertToObjectStream() {
   }
 
   public void testCollectionsEmptyMap() { doTest(true); }
+  public void testExpectedSuperOfLowerBound() { 
+    configureByTestName();
+    myFixture.complete(CompletionType.SMART, 1);
+    checkResultByFile("/" + getTestName(false) + "-out.java");
+  }
 
   private void doTest() {
     doTest(true);

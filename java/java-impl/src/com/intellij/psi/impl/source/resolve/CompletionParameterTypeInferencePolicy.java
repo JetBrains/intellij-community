@@ -55,7 +55,7 @@ public class CompletionParameterTypeInferencePolicy extends ProcessCandidatePara
 
   @Override
   public PsiType adjustInferredType(PsiManager manager, PsiType guess, ConstraintType constraintType) {
-    if (guess != null && !(guess instanceof PsiWildcardType)) {
+    if (guess != null && !(guess instanceof PsiWildcardType) && guess != PsiType.NULL) {
       if (constraintType == ConstraintType.SUPERTYPE) return PsiWildcardType.createExtends(manager, guess);
       else if (constraintType == ConstraintType.SUBTYPE) return PsiWildcardType.createSuper(manager, guess);
     }
