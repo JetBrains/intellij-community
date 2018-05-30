@@ -356,6 +356,7 @@ public class PsiDiamondTypeUtil {
     PsiElementFactory factory = JavaPsiFacade.getInstance(element.getProject()).getElementFactory();
     for(PsiMethodCallExpression call : PsiTreeUtil.collectElementsOfType(element, PsiMethodCallExpression.class)) {
       PsiType[] arguments = call.getTypeArguments();
+      if (arguments.length == 0) continue;
       PsiMethod method = call.resolveMethod();
       if(method != null) {
         PsiTypeParameter[] parameters = method.getTypeParameters();
