@@ -3,6 +3,8 @@ package com.intellij.ide.actions.searcheverywhere;
 
 import com.google.common.collect.Lists;
 import com.intellij.ide.ui.UISettings;
+import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.popup.JBPopup;
@@ -19,6 +21,8 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import java.awt.*;
 import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Comparator;
 import java.util.List;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
@@ -28,8 +32,8 @@ import static com.intellij.ide.actions.SearchEverywhereAction.SEARCH_EVERYWHERE_
 public class SearchEverywhereManagerImpl implements SearchEverywhereManager {
 
   private final Project myProject;
-  private final List<SearchEverywhereContributor> myShownContributors = new ArrayList<>();
-  private final List<SearchEverywhereContributor> myServiceContributors = new ArrayList<>();
+  private final List<SearchEverywhereContributorFactory> myContributorFactories = SearchEverywhereContributor.getProviders();
+
 
   private JBPopup myBalloon;
   private SearchEverywhereUI mySearchEverywhereUI;
@@ -39,61 +43,60 @@ public class SearchEverywhereManagerImpl implements SearchEverywhereManager {
 
   public SearchEverywhereManagerImpl(Project project) {
     myProject = project;
-    fillContributors();
-  }
-
-  private void fillContributors() {
-    // fill shown contributors
-    myShownContributors.addAll(SearchEverywhereContributor.getProvidersSorted());
-
-    // fill service contributors
-    TopHitSEContributor topHitContributor = new TopHitSEContributor(s -> mySearchEverywhereUI.getSearchField().setText(s));
-    myServiceContributors.add(topHitContributor);
-    RecentFilesSEContributor recentContributor = new RecentFilesSEContributor();
-    myServiceContributors.add(recentContributor);
   }
 
   @Override
-  public void show(@NotNull String selectedContributorID, @Nullable String searchText) {
+  public void show(@NotNull String selectedContributorID, @Nullable String searchText, @NotNull AnActionEvent initEvent) {
     if (isShown()) {
-      setShownContributor(selectedContributorID);
+      throw new IllegalStateException("Method should cannot be called whe popup is shown");
+    }
+
+    Project project = initEvent.getProject();
+    List<SearchEverywhereContributor> serviceContributors = Arrays.asList(
+      new TopHitSEContributor(project, initEvent.getData(PlatformDataKeys.CONTEXT_COMPONENT),
+                              s -> mySearchEverywhereUI.getSearchField().setText(s)),
+      new RecentFilesSEContributor(project)
+    );
+
+    List<SearchEverywhereContributor> contributors = myContributorFactories.stream()
+                                                                           .map(factory -> factory.createContributor(initEvent))
+                                                                           .sorted(Comparator.comparingInt(SearchEverywhereContributor::getSortWeight))
+                                                                           .collect(Collectors.toList());
+
+    mySearchEverywhereUI = createView(myProject, serviceContributors, contributors);
+    mySearchEverywhereUI.switchToContributor(selectedContributorID);
+    if (searchText != null && !searchText.isEmpty()) {
+      mySearchEverywhereUI.getSearchField().setText(searchText);
+      mySearchEverywhereUI.getSearchField().selectAll();
+    }
+
+    myHistoryIterator = myHistoryList.getIterator(selectedContributorID);
+    myBalloon = JBPopupFactory.getInstance().createComponentPopupBuilder(mySearchEverywhereUI, mySearchEverywhereUI.getSearchField())
+                              .setProject(myProject)
+                              .setResizable(false)
+                              .setModalContext(false)
+                              .setCancelOnClickOutside(true)
+                              .setRequestFocus(true)
+                              .setCancelKeyEnabled(false)
+                              .setCancelCallback(() -> {
+                                saveSearchText();
+                                return true;
+                              })
+                              .addUserData("SIMPLE_WINDOW")
+                              .setResizable(true)
+                              .setMovable(true)
+                              .createPopup();
+    Disposer.register(myBalloon, mySearchEverywhereUI);
+
+    myProject.putUserData(SEARCH_EVERYWHERE_POPUP, myBalloon);
+    Disposer.register(myBalloon, () -> myProject.putUserData(SEARCH_EVERYWHERE_POPUP, null));
+
+    RelativePoint showingPoint = calculateShowingPoint();
+    if (showingPoint != null) {
+      myBalloon.show(showingPoint);
     }
     else {
-      mySearchEverywhereUI = createView(myProject, myServiceContributors, myShownContributors);
-      mySearchEverywhereUI.switchToContributor(selectedContributorID);
-      if (searchText != null && !searchText.isEmpty()) {
-        mySearchEverywhereUI.getSearchField().setText(searchText);
-        mySearchEverywhereUI.getSearchField().selectAll();
-      }
-
-      myHistoryIterator = myHistoryList.getIterator(selectedContributorID);
-      myBalloon = JBPopupFactory.getInstance().createComponentPopupBuilder(mySearchEverywhereUI, mySearchEverywhereUI.getSearchField())
-                                .setProject(myProject)
-                                .setResizable(false)
-                                .setModalContext(false)
-                                .setCancelOnClickOutside(true)
-                                .setRequestFocus(true)
-                                .setCancelKeyEnabled(false)
-                                .setCancelCallback(() -> {
-                                  saveSearchText();
-                                  return true;
-                                })
-                                .addUserData("SIMPLE_WINDOW")
-                                .setResizable(true)
-                                .setMovable(true)
-                                .createPopup();
-      Disposer.register(myBalloon, mySearchEverywhereUI);
-
-      myProject.putUserData(SEARCH_EVERYWHERE_POPUP, myBalloon);
-      Disposer.register(myBalloon, () -> myProject.putUserData(SEARCH_EVERYWHERE_POPUP, null));
-
-      RelativePoint showingPoint = calculateShowingPoint();
-      if (showingPoint != null) {
-        myBalloon.show(showingPoint);
-      }
-      else {
-        myBalloon.showInFocusCenter();
-      }
+      myBalloon.showInFocusCenter();
     }
   }
 

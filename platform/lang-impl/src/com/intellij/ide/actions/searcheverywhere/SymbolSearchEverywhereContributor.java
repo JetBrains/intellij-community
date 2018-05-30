@@ -5,6 +5,7 @@ import com.intellij.ide.IdeBundle;
 import com.intellij.ide.util.NavigationItemListCellRenderer;
 import com.intellij.ide.util.gotoByName.ChooseByNameModel;
 import com.intellij.ide.util.gotoByName.GotoSymbolModel2;
+import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.project.Project;
 import com.intellij.ui.IdeUICustomization;
 import org.jetbrains.annotations.NotNull;
@@ -15,6 +16,10 @@ import javax.swing.*;
  * @author Konstantin Bulenkov
  */
 public class SymbolSearchEverywhereContributor extends AbstractGotoSEContributor {
+
+  public SymbolSearchEverywhereContributor(Project project) {
+    super(project);
+  }
 
   @NotNull
   @Override
@@ -38,8 +43,15 @@ public class SymbolSearchEverywhereContributor extends AbstractGotoSEContributor
   }
 
   @Override
-  public ListCellRenderer getElementsRenderer(Project project) {
+  public ListCellRenderer getElementsRenderer() {
     return new NavigationItemListCellRenderer();
+  }
+
+  public static class Factory implements SearchEverywhereContributorFactory {
+    @Override
+    public SearchEverywhereContributor createContributor(AnActionEvent initEvent) {
+      return new SymbolSearchEverywhereContributor(initEvent.getProject());
+    }
   }
 
 }

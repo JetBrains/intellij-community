@@ -292,7 +292,7 @@
     <extensionPoint name="anonymousElementProvider"
                     interface="com.intellij.navigation.AnonymousElementProvider"/>
     <extensionPoint name="searchEverywhereContributor"
-                    interface="com.intellij.ide.actions.searcheverywhere.SearchEverywhereContributor"/>
+                    interface="com.intellij.ide.actions.searcheverywhere.SearchEverywhereContributorFactory"/>
 
     <extensionPoint name="gotoRelatedProvider" interface="com.intellij.navigation.GotoRelatedProvider"/>
 
