@@ -220,6 +220,9 @@
       <implementation-class>com.intellij.ide.GeneratedSourceFileChangeTrackerImpl</implementation-class>
     </component>
 
+    <component>
+      <implementation-class>com.intellij.internal.statistic.collectors.fus.fileTypes.FileExtensionUsagesCollectorComponent</implementation-class>
+    </component>
   </project-components>
 
   <module-components>
