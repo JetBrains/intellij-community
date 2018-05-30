@@ -873,7 +873,7 @@ public class AbstractPopup implements JBPopup {
 
       int i = Registry.intValue("ide.popup.resizable.border.sensitivity", 4);
       WindowResizeListener resizeListener = new WindowResizeListener(
-        myContent,
+        myComponent,
         myMovable ? JBUI.insets(i) : JBUI.insets(0, 0, i, i),
         isToDrawMacCorner() ? AllIcons.General.MacCorner : null) {
         private Cursor myCursor;
@@ -883,6 +883,7 @@ public class AbstractPopup implements JBPopup {
           if (myCursor != cursor || myCursor != Cursor.getDefaultCursor()) {
             glass.setCursor(cursor, this);
             myCursor = cursor;
+            super.setCursor(content, cursor);
           }
         }
       };
