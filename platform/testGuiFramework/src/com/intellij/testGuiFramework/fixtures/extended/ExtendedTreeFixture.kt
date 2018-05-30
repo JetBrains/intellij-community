@@ -60,7 +60,8 @@ open class ExtendedTreeFixture(val robot: Robot, val tree: JTree) : JTreeFixture
 
   fun clickPath(pathStrings: List<String>, mouseClickInfo: MouseClickInfo): Unit = myDriver.clickPath(tree, pathStrings, mouseClickInfo)
 
-  fun clickPath(vararg pathStrings: String, mouseClickInfo: MouseClickInfo): Unit = myDriver.clickPath(tree, pathStrings.toList(), mouseClickInfo)
+  fun clickPath(vararg pathStrings: String, mouseClickInfo: MouseClickInfo): Unit = myDriver.clickPath(tree, pathStrings.toList(),
+                                                                                                       mouseClickInfo)
 
   fun clickPath(pathStrings: List<String>, button: MouseButton = MouseButton.LEFT_BUTTON, times: Int = 1): Unit = myDriver.clickPath(tree,
                                                                                                                                      pathStrings,
@@ -163,13 +164,7 @@ open class ExtendedTreeFixture(val robot: Robot, val tree: JTree) : JTreeFixture
       currentNode = currentNode.parent as DefaultMutableTreeNode
       result.add(0, currentNode.toString())
     }
-    //Test tool window JTree has root="[root]"
-    //Settings JTree has root=""
-    if (tree.model.root.toString() == "[root]") {
-      result[0] = "Test Results"
-    }else if (tree.model.root.toString() == ""){
-      result.removeAt(0)
-    }
+    result[0] = this.valueAt(0)!!
     return result
   }
 
