@@ -257,7 +257,7 @@ public class CustomActionsSchema implements PersistentStateComponent<Element> {
     ActionGroup actionGroup = (ActionGroup)ActionManager.getInstance().getAction(id);
     if (actionGroup != null) { // if a plugin is disabled
       String name = myIdToName.get(id);
-      ActionGroup corrected = CustomizationUtil.correctActionGroup(actionGroup, this, name, name);
+      ActionGroup corrected = CustomizationUtil.correctActionGroup(actionGroup, this, name, name, true);
       myIdToActionGroup.put(id, corrected);
       return corrected;
     }
