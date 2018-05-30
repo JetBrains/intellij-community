@@ -19,11 +19,11 @@ package com.intellij.openapi.vcs.roots
 
 import com.intellij.openapi.extensions.Extensions
 import com.intellij.openapi.util.io.FileUtil
-import com.intellij.openapi.util.io.FileUtil.toSystemDependentName
 import com.intellij.openapi.vcs.VcsConfiguration
 import com.intellij.openapi.vcs.VcsRootChecker
 import com.intellij.openapi.vcs.changes.committed.MockAbstractVcs
 import com.intellij.openapi.vcs.roots.VcsRootBaseTest.DOT_MOCK
+import com.intellij.openapi.vcs.roots.VcsRootProblemNotifier.getPresentableMapping
 import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.vcs.test.VcsPlatformTest
 import com.intellij.vcsUtil.VcsUtil.getFilePath
@@ -73,11 +73,9 @@ class VcsRootProblemNotifierTest : VcsPlatformTest() {
     rootProblemNotifier.rescanAndNotifyIfNeeded()
 
     assertFalse("No roots should be auto-added since it is not the simple case", vcsManager.hasAnyMappings())
-    assertSuccessfulNotification("Unregistered VCS roots detected","""
-      The following directories are roots of VCS repositories, but they are not registered in the Settings:
-      ${toSystemDependentName(projectPath)}
-      ${toSystemDependentName(subRoot.path)}
-      <a>Add roots</a> <a>Configure</a> <a>Ignore</a>
+    assertSuccessfulNotification("mock Repositories Found","""
+      ${getPresentableMapping(projectPath)}
+      ${getPresentableMapping(subRoot.path)}
       """.trimIndent())
   }
 
@@ -105,10 +103,7 @@ class VcsRootProblemNotifierTest : VcsPlatformTest() {
     rootProblemNotifier.rescanAndNotifyIfNeeded()
 
     assertFalse("The root shouldn't be auto-added because it is not the only one", vcsManager.hasAnyMappings())
-    assertSuccessfulNotification("Unregistered VCS root detected","""
-      The directory ${toSystemDependentName(projectPath)} is under mock, but is not registered in the Settings.
-      <a>Add root</a> <a>Configure</a> <a>Ignore</a>
-      """.trimIndent())
+    assertSuccessfulNotification("mock Repository Found", getPresentableMapping(projectPath))
   }
 
   private fun createNestedRoots(): File {

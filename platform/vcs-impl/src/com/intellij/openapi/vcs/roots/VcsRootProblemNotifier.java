@@ -1,6 +1,7 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.vcs.roots;
 
+import com.google.common.annotations.VisibleForTesting;
 import com.intellij.idea.ActionsBundle;
 import com.intellij.notification.Notification;
 import com.intellij.notification.NotificationAction;
@@ -58,7 +59,7 @@ public class VcsRootProblemNotifier {
 
   @NotNull private static final Function<VcsRootError, String> ROOT_TO_PRESENTABLE = rootError -> {
     if (rootError.getMapping().equals(PROJECT_CONSTANT)) return StringUtil.escapeXml(rootError.getMapping());
-    return StringUtil.shortenPathWithEllipsis(FileUtil.getLocationRelativeToUserHome(toSystemDependentName(rootError.getMapping())), 30, true);
+    return getPresentableMapping(rootError.getMapping());
   };
 
   public static VcsRootProblemNotifier getInstance(@NotNull Project project) {
@@ -256,5 +257,13 @@ public class VcsRootProblemNotifier {
   @NotNull
   private static Collection<VcsRootError> getInvalidRoots(@NotNull Collection<VcsRootError> errors) {
     return filter(errors, error -> error.getType() == VcsRootError.Type.EXTRA_MAPPING);
+  }
+
+
+  @VisibleForTesting
+  @NotNull
+  static String getPresentableMapping(String mapping) {
+    return StringUtil
+      .shortenPathWithEllipsis(FileUtil.getLocationRelativeToUserHome(toSystemDependentName(mapping)), 30, true);
   }
 }
