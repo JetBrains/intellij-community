@@ -222,9 +222,8 @@ public class IdeErrorsDialog extends DialogWrapper implements MessagePoolListene
       }
       else if (index == 0) {
         MessageCluster cluster = selectedCluster();
-        AbstractMessage message = cluster.first;
         myAttachmentArea.setText(cluster.detailsText);
-        myAttachmentArea.setEditable(!(message.isSubmitted() || message.isSubmitting()));
+        myAttachmentArea.setEditable(cluster.isUnsent());
       }
       else {
         myAttachmentArea.setText(selectedMessage().getAllAttachments().get(index - 1).getDisplayText());
@@ -245,8 +244,9 @@ public class IdeErrorsDialog extends DialogWrapper implements MessagePoolListene
       protected void textChanged(DocumentEvent e) {
         if (myAttachmentsList.getSelectedIndex() == 0) {
           String detailsText = myAttachmentArea.getText();
-          selectedCluster().detailsText = detailsText;
-          setOKActionEnabled(isOKActionEnabled() && !StringUtil.isEmptyOrSpaces(detailsText));
+          MessageCluster cluster = selectedCluster();
+          cluster.detailsText = detailsText;
+          setOKActionEnabled(cluster.canSubmit() && !StringUtil.isEmptyOrSpaces(detailsText));
         }
       }
     });
@@ -423,25 +423,18 @@ public class IdeErrorsDialog extends DialogWrapper implements MessagePoolListene
 
   private void updateControls() {
     MessageCluster cluster = selectedCluster();
-    AbstractMessage message = cluster.first;
     ErrorReportSubmitter submitter = cluster.submitter;
 
     cluster.messages.forEach(m -> m.setRead(true));
 
-    boolean unsent = !(message.isSubmitted() || message.isSubmitting());
-    boolean canReport = unsent && submitter != null;
-
     updateLabels(cluster);
-
-    updateDetails(message, canReport);
-
+    updateDetails(cluster);
     if (myInternalMode) {
-      updateAssigneePanel(message, submitter, unsent);
+      updateAssigneePanel(cluster);
     }
-
     updateCredentialsPanel(submitter);
 
-    setOKActionEnabled(canReport);
+    setOKActionEnabled(cluster.canSubmit());
     setOKButtonText(submitter != null ? submitter.getReportActionText() : DiagnosticBundle.message("error.report.impossible.action"));
     setOKButtonTooltip(submitter != null ? null : DiagnosticBundle.message("error.report.impossible.tooltip"));
   }
@@ -537,7 +530,10 @@ public class IdeErrorsDialog extends DialogWrapper implements MessagePoolListene
     }
   }
 
-  private void updateDetails(AbstractMessage message, boolean canReport) {
+  private void updateDetails(MessageCluster cluster) {
+    AbstractMessage message = cluster.first;
+    boolean canReport = cluster.canSubmit();
+
     myCommentArea.setText(message.getAdditionalInfo());
     myCommentArea.setCaretPosition(0);
     myCommentArea.setEditable(canReport);
@@ -551,11 +547,11 @@ public class IdeErrorsDialog extends DialogWrapper implements MessagePoolListene
     myAttachmentsList.setEditable(canReport);
   }
 
-  private void updateAssigneePanel(AbstractMessage message, ErrorReportSubmitter submitter, boolean unsent) {
-    if (submitter instanceof ITNReporter) {
+  private void updateAssigneePanel(MessageCluster cluster) {
+    if (cluster.submitter instanceof ITNReporter) {
       myAssigneePanel.setVisible(true);
-      myAssigneeCombo.setEnabled(unsent);
-      Integer assignee = message.getAssigneeId();
+      myAssigneeCombo.setEnabled(cluster.isUnsent());
+      Integer assignee = cluster.first.getAssigneeId();
       if (assignee == null) {
         myAssigneeCombo.setSelectedIndex(-1);
       }
@@ -832,6 +828,14 @@ public class IdeErrorsDialog extends DialogWrapper implements MessagePoolListene
 
       String userMessage = message.getMessage(), stacktrace = message.getThrowableText();
       return StringUtil.isEmptyOrSpaces(userMessage) ? stacktrace : userMessage + "\n\n" + stacktrace;
+    }
+
+    private boolean isUnsent() {
+      return !(first.isSubmitted() || first.isSubmitting());
+    }
+
+    private boolean canSubmit() {
+      return submitter != null && isUnsent();
     }
 
     private Pair<String, String> decouple() {
