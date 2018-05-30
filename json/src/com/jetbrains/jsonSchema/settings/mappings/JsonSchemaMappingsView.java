@@ -11,6 +11,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.ComboBox;
 import com.intellij.openapi.ui.MessageType;
 import com.intellij.openapi.ui.TextFieldWithBrowseButton;
+import com.intellij.openapi.ui.panel.ComponentPanelBuilder;
 import com.intellij.openapi.ui.popup.Balloon;
 import com.intellij.openapi.ui.popup.BalloonBuilder;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
@@ -132,7 +133,12 @@ public class JsonSchemaMappingsView implements Disposable {
     wrapper.add(myErrorIcon, BorderLayout.WEST);
     wrapper.add(myError, BorderLayout.CENTER);
     builder.addComponent(wrapper);
-    builder.addComponentFillVertically(decorator.createPanel(), 5);
+    JPanel panel = decorator.createPanel();
+    panel.setBorder(BorderFactory.createCompoundBorder(JBUI.Borders.empty(0, 8), panel.getBorder()));
+    builder.addComponentFillVertically(panel, 5);
+    JLabel commentComponent = ComponentPanelBuilder.createCommentComponent("Path to file, directory or file name pattern *.config.json", false);
+    commentComponent.setBorder(JBUI.Borders.empty(0, 8, 5, 0));
+    builder.addComponent(commentComponent);
 
     myComponent = builder.getPanel();
   }
