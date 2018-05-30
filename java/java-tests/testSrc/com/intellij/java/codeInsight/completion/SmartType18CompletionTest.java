@@ -224,6 +224,11 @@ public void testConvertToObjectStream() {
     myFixture.complete(CompletionType.SMART, 1);
     checkResultByFile("/" + getTestName(false) + "-out.java");
   }
+  public void testLowerBoundOfFreshVariable() { 
+    configureByTestName();
+    myFixture.complete(CompletionType.SMART, 1);
+    checkResultByFile("/" + getTestName(false) + "-out.java");
+  }
 
   private void doTest() {
     doTest(true);
