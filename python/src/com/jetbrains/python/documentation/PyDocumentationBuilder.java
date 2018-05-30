@@ -76,6 +76,7 @@ public class PyDocumentationBuilder {
   private final ChainIterable<String> myEpilog;      // sequence for doc "copied from" notices and such
 
   private final Map<String, ChainIterable<String>> mySectionsMap = FactoryMap.createMap(item -> new ChainIterable<>(), LinkedHashMap::new);
+  private final TypeEvalContext myContext;
 
   private static final Pattern ourSpacesPattern = Pattern.compile("^\\s+");
 
@@ -87,15 +88,15 @@ public class PyDocumentationBuilder {
     myContent = new ChainIterable<>();
     mySections = new ChainIterable<>();
     myEpilog = new ChainIterable<>();
+    myContext = TypeEvalContext.userInitiated(myElement.getProject(), myElement.getContainingFile());
   }
 
   @Nullable
   public String build() {
-    final TypeEvalContext context = TypeEvalContext.userInitiated(myElement.getProject(), myElement.getContainingFile());
     final PsiElement outerElement = myOriginalElement != null ? myOriginalElement.getParent() : null;
 
-    PsiElement elementDefinition = resolveToDocStringOwner(context);
-    final PsiElement propertyDefinition = buildFromProperty(elementDefinition, outerElement, context);
+    PsiElement elementDefinition = resolveToDocStringOwner();
+    final PsiElement propertyDefinition = buildFromProperty(elementDefinition, outerElement);
     boolean isProperty = false;
     if (propertyDefinition != null) {
       isProperty = true;
@@ -106,7 +107,7 @@ public class PyDocumentationBuilder {
       buildFromDocstring(((PyDocStringOwner)elementDefinition), isProperty);
     }
     else if (elementDefinition instanceof PyNamedParameter) {
-      buildFromParameter((PyNamedParameter)elementDefinition, context);
+      buildFromParameter((PyNamedParameter)elementDefinition);
     }
 
     if (elementDefinition != null) {
@@ -193,7 +194,7 @@ public class PyDocumentationBuilder {
     }
   }
 
-  private void buildFromParameter(@NotNull PyNamedParameter parameter, @NotNull TypeEvalContext context) {
+  private void buildFromParameter(@NotNull PyNamedParameter parameter) {
     final PyFunction func = PsiTreeUtil.getParentOfType(parameter, PyFunction.class, true, PyLambdaExpression.class);
     final String funcName = func == null ? PyNames.UNNAMED_ELEMENT : func.getName();
     myProlog
@@ -213,13 +214,11 @@ public class PyDocumentationBuilder {
         }
       }
     }
-    myBody.add(PythonDocumentationProvider.describeParameter(parameter, context));
+    myBody.add(PythonDocumentationProvider.describeParameter(parameter, myContext));
   }
 
   @Nullable
-  private PsiElement buildFromProperty(@NotNull PsiElement elementDefinition,
-                                       @Nullable PsiElement outerElement,
-                                       @NotNull TypeEvalContext context) {
+  private PsiElement buildFromProperty(@NotNull PsiElement elementDefinition, @Nullable PsiElement outerElement) {
     if (myOriginalElement == null) {
       return null;
     }
@@ -234,7 +233,7 @@ public class PyDocumentationBuilder {
     if (qualifier == null) {
       return null;
     }
-    final PyType type = context.getType(qualifier);
+    final PyType type = myContext.getType(qualifier);
     if (!(type instanceof PyClassType)) {
       return null;
     }
@@ -248,7 +247,7 @@ public class PyDocumentationBuilder {
     final Maybe<PyCallable> accessor = property.getByDirection(direction);
     myProlog.addItem("property ").addWith(TagBold, $().addWith(TagCode, $(elementName)))
             .addItem(" of ")
-            .add(PythonDocumentationProvider.describeClass(cls, Function.identity(), TO_ONE_LINE_AND_ESCAPE, true, true, context));
+            .add(PythonDocumentationProvider.describeClass(cls, Function.identity(), TO_ONE_LINE_AND_ESCAPE, true, true, myContext));
 
     // Choose appropriate docstring
     String docstring = null;
@@ -316,13 +315,12 @@ public class PyDocumentationBuilder {
     if (docStringExpression != null && !isProperty) {
       myContent.add(formatDocString(myElement, docStringExpression.getStringValue()));
     }
-    final TypeEvalContext context = TypeEvalContext.userInitiated(elementDefinition.getProject(), elementDefinition.getContainingFile());
 
     if (elementDefinition instanceof PyClass) {
       pyClass = (PyClass)elementDefinition;
       myBody.add(PythonDocumentationProvider.describeDecorators(pyClass, WRAP_IN_ITALIC, ESCAPE_AND_SAVE_NEW_LINES_AND_SPACES, BR, BR));
       myBody
-        .add(PythonDocumentationProvider.describeClass(pyClass, WRAP_IN_BOLD, ESCAPE_AND_SAVE_NEW_LINES_AND_SPACES, false, true, context));
+        .add(PythonDocumentationProvider.describeClass(pyClass, WRAP_IN_BOLD, ESCAPE_AND_SAVE_NEW_LINES_AND_SPACES, false, true, myContext));
     }
     else if (elementDefinition instanceof PyFunction) {
       final PyFunction pyFunction = (PyFunction)elementDefinition;
@@ -331,13 +329,13 @@ public class PyDocumentationBuilder {
         if (pyClass != null) {
           myBody
             .addWith(TagSmall,
-                     PythonDocumentationProvider.describeClass(pyClass, Function.identity(), TO_ONE_LINE_AND_ESCAPE, true, true, context))
+                     PythonDocumentationProvider.describeClass(pyClass, Function.identity(), TO_ONE_LINE_AND_ESCAPE, true, true, myContext))
             .addItem(BR)
             .addItem(BR);
         }
       }
       myBody.add(PythonDocumentationProvider.describeDecorators(pyFunction, WRAP_IN_ITALIC, ESCAPE_AND_SAVE_NEW_LINES_AND_SPACES, BR, BR));
-      myBody.add(PythonDocumentationProvider.describeFunction(pyFunction, WRAP_IN_BOLD, ESCAPE_AND_SAVE_NEW_LINES_AND_SPACES, context));
+      myBody.add(PythonDocumentationProvider.describeFunction(pyFunction, WRAP_IN_BOLD, ESCAPE_AND_SAVE_NEW_LINES_AND_SPACES, myContext));
       if (docStringExpression == null && !isProperty) {
         addInheritedDocString(pyFunction, pyClass);
       }
@@ -355,7 +353,7 @@ public class PyDocumentationBuilder {
           .addItem(" of class ")
           .addItem(PyDocumentationLink.toContainingClass(WRAP_IN_CODE.apply(target.getContainingClass().getName())));
       }
-      myBody.add(PythonDocumentationProvider.describeTarget(target, context));
+      myBody.add(PythonDocumentationProvider.describeTarget(target, myContext));
     }
   }
 
@@ -364,12 +362,12 @@ public class PyDocumentationBuilder {
   }
 
   @NotNull
-  private PsiElement resolveToDocStringOwner(@NotNull TypeEvalContext context) {
+  private PsiElement resolveToDocStringOwner() {
     // here the ^Q target is already resolved; the resolved element may point to intermediate assignments
     if (myElement instanceof PyTargetExpression && ((PyTargetExpression)myElement).getDocStringValue() == null) {
       final PyExpression assignedValue = ((PyTargetExpression)myElement).findAssignedValue();
       if (assignedValue instanceof PyReferenceExpression) {
-        final PsiElement resolved = resolveWithoutImplicits((PyReferenceExpression)assignedValue, context);
+        final PsiElement resolved = resolveWithoutImplicits((PyReferenceExpression)assignedValue);
         if (resolved instanceof PyDocStringOwner) {
           mySectionsMap.get(PyBundle.message("QDOC.assigned.to")).addWith(TagCode, $(((PyTargetExpression)myElement).getName()));
           return resolved;
@@ -380,20 +378,19 @@ public class PyDocumentationBuilder {
   }
 
   @Nullable
-  private static PsiElement resolveWithoutImplicits(@NotNull PyReferenceExpression element, @NotNull TypeEvalContext context) {
-    final PyResolveContext resolveContext = PyResolveContext.noImplicits().withTypeEvalContext(context);
+  private PsiElement resolveWithoutImplicits(@NotNull PyReferenceExpression element) {
+    final PyResolveContext resolveContext = PyResolveContext.noImplicits().withTypeEvalContext(myContext);
     final QualifiedResolveResult resolveResult = element.followAssignmentsChain(resolveContext);
     return resolveResult.isImplicit() ? null : resolveResult.getElement();
   }
 
   private void addInheritedDocString(@NotNull final PyFunction pyFunction, @Nullable final PyClass pyClass) {
-    final TypeEvalContext context = TypeEvalContext.userInitiated(pyFunction.getProject(), pyFunction.getContainingFile());
     final String methodName = pyFunction.getName();
     if (pyClass == null || methodName == null) {
       return;
     }
     final boolean isConstructor = PyNames.INIT.equals(methodName);
-    Iterable<PyClass> classes = pyClass.getAncestorClasses(context);
+    Iterable<PyClass> classes = pyClass.getAncestorClasses(myContext);
     if (isConstructor) {
       // look at our own class again and maybe inherit class's doc
       classes = new ChainIterable<>(pyClass).add(classes);
@@ -434,7 +431,7 @@ public class PyDocumentationBuilder {
               ancestorLink = PyDocumentationLink.toContainingClass(ancestorName);
             }
             else if (ancestorQualifiedName != null && ancestorName != null) {
-              ancestorLink = PyDocumentationLink.toPossibleClass(ancestorName, ancestorQualifiedName, pyClass, context);
+              ancestorLink = PyDocumentationLink.toPossibleClass(ancestorName, ancestorQualifiedName, pyClass, myContext);
             }
             else {
               // TODO add a way to reference other local classes
