@@ -425,7 +425,7 @@ public class PyDocumentationBuilder {
                                         : null;
           if (ancestorLink != null) {
             final ChainIterable<String> link = mySectionsMap.get(PyBundle.message("QDOC.documentation.is.copied.from"));
-            link.addWith(TagCode, isFromClass ? $(ancestorLink) : $(ancestorLink).addItem("." + methodName));
+            link.addWith(TagCode, isFromClass ? $(ancestorLink) : $(PyDocumentationLink.toFunction(inherited)));
           }
           myContent.add(formatDocString(pyFunction, inheritedDoc));
           return;
