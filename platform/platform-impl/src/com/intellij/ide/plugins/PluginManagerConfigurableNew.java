@@ -27,6 +27,8 @@ import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.ui.popup.ListPopup;
+import com.intellij.openapi.updateSettings.impl.PluginDownloader;
+import com.intellij.openapi.updateSettings.impl.UpdateChecker;
 import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
@@ -73,6 +75,7 @@ import java.text.SimpleDateFormat;
 import java.util.*;
 import java.util.List;
 import java.util.Map.Entry;
+import java.util.concurrent.ExecutionException;
 import java.util.regex.Pattern;
 
 import static com.intellij.util.ui.UIUtil.uiChildren;
@@ -99,6 +102,7 @@ public class PluginManagerConfigurableNew
 
   private CardLayoutPanel<Object, Object, JComponent> myCardPanel;
   private TabHeaderComponent myTabHeaderComponent;
+  private CountTabName myUpdatesTabName;
   private TopComponentController myTopController;
   private final SearchTextField mySearchTextField;
 
@@ -262,7 +266,7 @@ public class PluginManagerConfigurableNew
 
     myTabHeaderComponent.addTab("Trending");
     myTabHeaderComponent.addTab("Installed");
-    myTabHeaderComponent.addTab(() -> "Updates (" + 5 + ")");
+    myTabHeaderComponent.addTab(myUpdatesTabName = new CountTabName(myTabHeaderComponent, "Updates"));
 
     int selectionTab = getStoredSelectionTab();
     myTabHeaderComponent.setSelection(selectionTab);
@@ -432,7 +436,7 @@ public class PluginManagerConfigurableNew
   @NotNull
   private JComponent createInstalledPanel(@NotNull LinkListener<Pair<IdeaPluginDescriptor, Integer>> listener) {
     PluginsGroupComponent panel = new PluginsGroupComponent(new PluginsListLayout(), new MultiSelectionEventHandler(), listener, 1,
-                                                            descriptor -> new ListPluginComponent(myPluginsModel, descriptor, null));
+                                                            descriptor -> new ListPluginComponent(myPluginsModel, descriptor, false));
 
     PluginsGroup installing = new PluginsGroup("Installing");
     installing.descriptors.addAll(MyPluginModel.getInstallingPlugins());
@@ -472,7 +476,7 @@ public class PluginManagerConfigurableNew
       downloaded.sortByName();
       downloaded.titleWithCount(downloadedEnabled);
       panel.addGroup(downloaded);
-      myPluginsModel.addEnabledGroup(downloaded); // XXX: set for update page
+      myPluginsModel.addEnabledGroup(downloaded);
     }
 
     myPluginsModel.setDownloadedGroup(panel, downloaded, installing);
@@ -480,7 +484,7 @@ public class PluginManagerConfigurableNew
     bundled.sortByName();
     bundled.titleWithCount(bundledEnabled);
     panel.addGroup(bundled);
-    myPluginsModel.addEnabledGroup(bundled); // XXX: set for update page
+    myPluginsModel.addEnabledGroup(bundled);
 
     return createScrollPane(panel);
   }
@@ -489,46 +493,56 @@ public class PluginManagerConfigurableNew
   private JComponent createUpdatesPanel(@NotNull LinkListener<Pair<IdeaPluginDescriptor, Integer>> listener) {
     PluginsGroupComponent panel =
       new PluginsGroupComponent(new PluginsListLayout(), new MultiSelectionEventHandler(), listener, 2,
-                                // TODO: for update plugin find descriptor from PluginManagerCore.getPlugins()
-                                descriptor -> new ListPluginComponent(myPluginsModel, descriptor, (PluginNode)descriptor));
+                                descriptor -> new ListPluginComponent(myPluginsModel, descriptor, true));
     panel.getEmptyText().setText("No updates available.");
 
     try {
-      List<IdeaPluginDescriptor> list = RepositoryHelper.loadCachedPlugins();
+      Collection<PluginDownloader> updates =
+        ApplicationManager.getApplication().executeOnPooledThread(() -> UpdateChecker.getPluginUpdates()).get();
 
-      if (list != null) {
-        PluginsGroup group = new PluginsGroup("Available Updates");
+      if (ContainerUtil.isEmpty(updates)) {
+        myUpdatesTabName.setCount(0);
+      }
+      else {
+        PluginsGroup group = new PluginsGroup("Available Updates") {
+          @Override
+          public void titleWithCount() {
+            int count = 0;
+            for (CellPluginComponent component : ui.plugins) {
+              if (((ListPluginComponent)component).myUpdateButton != null) {
+                count++;
+              }
+            }
+
+            title = myTitlePrefix + " (" + count + ")";
+            updateTitle();
+            rightAction.setVisible(count > 0);
+            myUpdatesTabName.setCount(count);
+          }
+        };
+
         group.rightAction = new LinkLabel<>("Update All", null);
         group.rightAction.setListener(new LinkListener<Object>() {
           @Override
           public void linkSelected(LinkLabel aSource, Object aLinkData) {
             for (CellPluginComponent component : group.ui.plugins) {
-              if (!MyPluginModel.isInstallingOrUpdate(component.myPlugin)) {
-                ((ListPluginComponent)component).myUpdateButton.doClick();
-              }
+              ((ListPluginComponent)component).updatePlugin();
             }
           }
         }, null);
 
-        for (int i = list.size() - 1; i > 0; i--) {
-          IdeaPluginDescriptor descriptor = list.get(i);
-          if (!StringUtil.isEmptyOrSpaces(descriptor.getChangeNotes())) {
-            group.descriptors.add(descriptor);
-            if (group.descriptors.size() > 9) {
-              break;
-            }
-          }
+        for (PluginDownloader toUpdateDownloader : updates) {
+          group.descriptors.add(toUpdateDownloader.getDescriptor());
         }
 
-        if (!group.descriptors.isEmpty()) {
-          group.sortByName();
-          group.titleWithCount();
-          panel.addGroup(group);
-        }
+        group.sortByName();
+        panel.addGroup(group);
+        group.titleWithCount();
+
+        myPluginsModel.setUpdateGroup(group);
       }
     }
-    catch (IOException e) {
-      e.printStackTrace();
+    catch (InterruptedException | ExecutionException ignore) {
     }
 
     return createScrollPane(panel);
@@ -756,6 +770,10 @@ public class PluginManagerConfigurableNew
 
     public void addTab(@NotNull Computable<String> titleComputable) {
       myTabs.add(titleComputable);
+      update();
+    }
+
+    public void update() {
       mySizeInfo = null;
       revalidate();
       repaint();
@@ -876,6 +894,29 @@ public class PluginManagerConfigurableNew
       x += JBUI.scale(10);
       mySizeInfo.width = x + toolbarSize.width;
       mySizeInfo.toolbarX = x;
+    }
+  }
+
+  private static class CountTabName implements Computable<String> {
+    private final TabHeaderComponent myTabComponent;
+    private final String myBaseName;
+    private int myCount = -1;
+
+    public CountTabName(@NotNull TabHeaderComponent component, @NotNull String baseName) {
+      myTabComponent = component;
+      myBaseName = baseName;
+    }
+
+    public void setCount(int count) {
+      if (myCount != count) {
+        myCount = count;
+        myTabComponent.update();
+      }
+    }
+
+    @Override
+    public String compute() {
+      return myCount == -1 ? myBaseName : myBaseName + " (" + myCount + ")";
     }
   }
 
@@ -1582,14 +1623,12 @@ public class PluginManagerConfigurableNew
       for (UIPluginGroup group : groups) {
         for (CellPluginComponent plugin : group.plugins) {
           JEditorPane description = plugin.myDescription;
-          if (description == null) {
-            continue;
-          }
-
-          plugin.doLayout();
-          int parentWidth = width - SwingUtilities.convertPoint(description.getParent(), description.getLocation(), plugin).x;
-          if (parentWidth > 0) {
-            description.putClientProperty("parent.width", new Integer(parentWidth));
+          if (description != null) {
+            plugin.doLayout();
+            int parentWidth = width - SwingUtilities.convertPoint(description.getParent(), description.getLocation(), plugin).x;
+            if (parentWidth > 0) {
+              description.putClientProperty("parent.width", new Integer(parentWidth));
+            }
           }
 
           plugin.doLayout();
@@ -1725,7 +1764,7 @@ public class PluginManagerConfigurableNew
   }
 
   private static class PluginsGroup {
-    private final String myTitlePrefix;
+    protected final String myTitlePrefix;
     public String title;
     public JLabel titleLabel;
     public LinkLabel<Object> rightAction;
@@ -1757,7 +1796,7 @@ public class PluginManagerConfigurableNew
       updateTitle();
     }
 
-    private void updateTitle() {
+    protected void updateTitle() {
       if (titleLabel != null) {
         titleLabel.setText(title);
       }
@@ -1994,9 +2033,7 @@ public class PluginManagerConfigurableNew
     private RestartButton myRestartButton;
     private final BaselinePanel myBaselinePanel = new BaselinePanel();
 
-    public ListPluginComponent(@NotNull MyPluginModel pluginsModel,
-                               @NotNull IdeaPluginDescriptor plugin,
-                               @Nullable PluginNode pluginForUpdate) {
+    public ListPluginComponent(@NotNull MyPluginModel pluginsModel, @NotNull IdeaPluginDescriptor plugin, boolean pluginForUpdate) {
       super(plugin);
       myPluginsModel = pluginsModel;
       pluginsModel.addComponent(this);
@@ -2008,7 +2045,7 @@ public class PluginManagerConfigurableNew
       setLayout(new BorderLayout(JBUI.scale(8), 0));
       setBorder(JBUI.Borders.empty(5, 10, 10, 10));
 
-      createButtons(pluginForUpdate != null);
+      createButtons(pluginForUpdate);
 
       JPanel westPanel = new NonOpaquePanel(createCheckboxIconLayout());
       westPanel.setBorder(JBUI.Borders.emptyTop(5));
@@ -2024,14 +2061,14 @@ public class PluginManagerConfigurableNew
       addNameComponent(myBaselinePanel);
       myName.setVerticalAlignment(SwingConstants.TOP);
 
-      createVersion(pluginForUpdate);
+      createVersion(pluginForUpdate ? (PluginNode)plugin : null);
       updateErrors();
 
-      if (pluginForUpdate == null) {
-        addDescriptionComponent(centerPanel, getShortDescription(plugin, false), new LineFunction(1, true));
+      if (pluginForUpdate) {
+        addDescriptionComponent(centerPanel, getChangeNotes(plugin), new LineFunction(3, false));
       }
       else {
-        addDescriptionComponent(centerPanel, getChangeNotes(plugin), new LineFunction(3, false));
+        addDescriptionComponent(centerPanel, getShortDescription(plugin, false), new LineFunction(1, true));
       }
 
       if (MyPluginModel.isInstallingOrUpdate(plugin)) {
@@ -2220,7 +2257,7 @@ public class PluginManagerConfigurableNew
       changeUpdateToRestart();
     }
 
-    private void changeUpdateToRestart() {
+    public void changeUpdateToRestart() {
       boolean layout = false;
 
       if (myUpdateButton != null) {
@@ -2246,6 +2283,12 @@ public class PluginManagerConfigurableNew
       }
       updateErrors();
       setSelection(mySelection, false);
+    }
+
+    public void updatePlugin() {
+      if (myUpdateButton != null) {
+        myUpdateButton.doClick();
+      }
     }
 
     @Override
@@ -3626,12 +3669,13 @@ public class PluginManagerConfigurableNew
 
   private static class MyPluginModel extends InstalledPluginsTableModel implements PluginManagerMain.PluginEnabler {
     private final List<ListPluginComponent> myListComponents = new ArrayList<>();
-    private final Map<String, ListPluginComponent> myListMap = new HashMap<>();
-    private final Map<String, GridCellPluginComponent> myGridMap = new HashMap<>();
+    private final Map<IdeaPluginDescriptor, ListPluginComponent> myListMap = new HashMap<>();
+    private final Map<IdeaPluginDescriptor, GridCellPluginComponent> myGridMap = new HashMap<>();
     private final List<PluginsGroup> myEnabledGroups = new ArrayList<>();
     private PluginsGroupComponent myDownloadedPanel;
     private PluginsGroup myDownloaded;
     private PluginsGroup myInstalling;
+    private PluginsGroup myUpdates;
     private TopComponentController myTopController;
 
     private static final Set<IdeaPluginDescriptor> myInstallingPlugins = new HashSet<>();
@@ -3666,10 +3710,10 @@ public class PluginManagerConfigurableNew
           return;
         }
         myListComponents.add((ListPluginComponent)component);
-        myListMap.put(component.myPlugin.getPluginId().getIdString(), (ListPluginComponent)component);
+        myListMap.put(component.myPlugin, (ListPluginComponent)component);
       }
       else {
-        myGridMap.put(component.myPlugin.getPluginId().getIdString(), (GridCellPluginComponent)component);
+        myGridMap.put(component.myPlugin, (GridCellPluginComponent)component);
       }
     }
 
@@ -3709,9 +3753,8 @@ public class PluginManagerConfigurableNew
       }
       List<PluginNode> pluginsToInstall = ContainerUtil.newArrayList(pluginNode);
 
-      if (PluginManagerMain.suggestToEnableInstalledDependantPlugins(this, pluginsToInstall)) {
-        needRestart = true;
-      }
+      PluginManagerMain.suggestToEnableInstalledDependantPlugins(this, pluginsToInstall);
+      needRestart = true;
 
       installPlugin(pluginsToInstall, getAllPlugins(), this, prepareToInstall(descriptor, install));
     }
@@ -3773,12 +3816,11 @@ public class PluginManagerConfigurableNew
         myDownloadedPanel.doLayout();
       }
 
-      String idKey = descriptor.getPluginId().getIdString();
-      GridCellPluginComponent gridComponent = myGridMap.get(idKey);
+      GridCellPluginComponent gridComponent = myGridMap.get(descriptor);
       if (gridComponent != null) {
         gridComponent.showProgress();
       }
-      ListPluginComponent listComponent = myListMap.get(idKey);
+      ListPluginComponent listComponent = myListMap.get(descriptor);
       if (listComponent != null) {
         listComponent.showProgress();
       }
@@ -3797,12 +3839,11 @@ public class PluginManagerConfigurableNew
         myTopController.showProgress(false);
       }
 
-      String idKey = descriptor.getPluginId().getIdString();
-      GridCellPluginComponent gridComponent = myGridMap.get(idKey);
+      GridCellPluginComponent gridComponent = myGridMap.get(descriptor);
       if (gridComponent != null) {
         gridComponent.hideProgress(success);
       }
-      ListPluginComponent listComponent = myListMap.get(idKey);
+      ListPluginComponent listComponent = myListMap.get(descriptor);
       if (listComponent != null) {
         listComponent.hideProgress(success);
       }
@@ -3824,6 +3865,19 @@ public class PluginManagerConfigurableNew
         }
         if (success) {
           appendOrUpdateDescriptor(descriptor);
+        }
+      }
+      else if (success) {
+        if (myDownloaded != null && myDownloaded.ui != null) {
+          PluginId pluginId = descriptor.getPluginId();
+          CellPluginComponent component =
+            ContainerUtil.find(myDownloaded.ui.plugins, _component -> pluginId.equals(_component.myPlugin.getPluginId()));
+          if (component != null) {
+            ((ListPluginComponent)component).changeUpdateToRestart();
+          }
+        }
+        if (myUpdates != null) {
+          myUpdates.titleWithCount();
         }
       }
 
@@ -3863,6 +3917,10 @@ public class PluginManagerConfigurableNew
       myDownloadedPanel = panel;
       myDownloaded = downloaded;
       myInstalling = installing;
+    }
+
+    public void setUpdateGroup(@NotNull PluginsGroup group) {
+      myUpdates = group;
     }
 
     @Override
