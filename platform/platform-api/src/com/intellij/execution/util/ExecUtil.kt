@@ -1,131 +1,111 @@
-// Copyright 2000-2017 JetBrains s.r.o.
-//
-// Licensed under the Apache License, Version 2.0 (the "License");
-// you may not use this file except in compliance with the License.
-// You may obtain a copy of the License at
-//
-// http://www.apache.org/licenses/LICENSE-2.0
-//
-// Unless required by applicable law or agreed to in writing, software
-// distributed under the License is distributed on an "AS IS" BASIS,
-// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-// See the License for the specific language governing permissions and
-// limitations under the License.
-package com.intellij.execution.util;
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+package com.intellij.execution.util
 
-import com.intellij.execution.CommandLineUtil;
-import com.intellij.execution.ExecutionException;
-import com.intellij.execution.configurations.GeneralCommandLine;
-import com.intellij.execution.process.CapturingProcessHandler;
-import com.intellij.execution.process.ProcessOutput;
-import com.intellij.openapi.application.PathManager;
-import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.util.NotNullLazyValue;
-import com.intellij.openapi.util.SystemInfo;
-import com.intellij.openapi.util.io.FileUtil;
-import com.intellij.openapi.util.io.PathExecLazyValue;
-import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.util.containers.ContainerUtil;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
+import com.intellij.execution.CommandLineUtil
+import com.intellij.execution.ExecutionException
+import com.intellij.execution.configurations.GeneralCommandLine
+import com.intellij.execution.process.CapturingProcessHandler
+import com.intellij.execution.process.ProcessOutput
+import com.intellij.openapi.application.PathManager
+import com.intellij.openapi.diagnostic.Logger
+import com.intellij.openapi.util.SystemInfo
+import com.intellij.openapi.util.io.FileUtil
+import com.intellij.openapi.util.io.PathExecLazyValue
+import com.intellij.openapi.util.text.StringUtil
+import com.intellij.util.containers.ContainerUtil
+import java.io.*
+import java.nio.charset.Charset
+import java.nio.charset.StandardCharsets
+import java.util.*
 
-import java.io.*;
-import java.nio.charset.Charset;
-import java.nio.charset.StandardCharsets;
-import java.util.Arrays;
-import java.util.List;
-import java.util.Map;
+object ExecUtil {
 
-public class ExecUtil {
-  private static final NotNullLazyValue<Boolean> hasGkSudo = new PathExecLazyValue("gksudo");
-  private static final NotNullLazyValue<Boolean> hasKdeSudo = new PathExecLazyValue("kdesudo");
-  private static final NotNullLazyValue<Boolean> hasPkExec = new PathExecLazyValue("pkexec");
-  private static final NotNullLazyValue<Boolean> hasGnomeTerminal = new PathExecLazyValue("gnome-terminal");
-  private static final NotNullLazyValue<Boolean> hasKdeTerminal = new PathExecLazyValue("konsole");
-  private static final NotNullLazyValue<Boolean> hasXTerm = new PathExecLazyValue("xterm");
+  private val hasGkSudo = PathExecLazyValue("gksudo")
+  private val hasKdeSudo = PathExecLazyValue("kdesudo")
+  private val hasPkExec = PathExecLazyValue("pkexec")
+  private val hasGnomeTerminal = PathExecLazyValue("gnome-terminal")
+  private val hasKdeTerminal = PathExecLazyValue("konsole")
+  private val hasXTerm = PathExecLazyValue("xterm")
 
-  private ExecUtil() { }
+  @JvmStatic
+  val osascriptPath: String
+    get() = "/usr/bin/osascript"
 
-  @NotNull
-  public static String loadTemplate(@NotNull ClassLoader loader, @NotNull String templateName, @Nullable Map<String, String> variables) throws IOException {
-    @SuppressWarnings("IOResourceOpenedButNotSafelyClosed") InputStream stream = loader.getResourceAsStream(templateName);
-    if (stream == null) {
-      throw new IOException("Template '" + templateName + "' not found by " + loader);
+  @JvmStatic
+  val openCommandPath: String
+    get() = "/usr/bin/open"
+
+  @JvmStatic
+  val windowsShellName: String
+    get() = CommandLineUtil.getWinShellName()
+
+  @Throws(IOException::class)
+  @JvmStatic
+  fun loadTemplate(loader: ClassLoader, templateName: String, variables: Map<String, String>?): String {
+    val stream = loader.getResourceAsStream(templateName) ?: throw IOException("Template '$templateName' not found by $loader")
+
+    val template = FileUtil.loadTextAndClose(InputStreamReader(stream, StandardCharsets.UTF_8))
+    if (variables == null || variables.size == 0) {
+      return template
     }
 
-    String template = FileUtil.loadTextAndClose(new InputStreamReader(stream, StandardCharsets.UTF_8));
-    if (variables == null || variables.size() == 0) {
-      return template;
-    }
-
-    StringBuilder buffer = new StringBuilder(template);
-    for (Map.Entry<String, String> var : variables.entrySet()) {
-      String name = var.getKey();
-      int pos = buffer.indexOf(name);
+    val buffer = StringBuilder(template)
+    for ((name, value) in variables) {
+      val pos = buffer.indexOf(name)
       if (pos >= 0) {
-        buffer.replace(pos, pos + name.length(), var.getValue());
+        buffer.replace(pos, pos + name.length, value)
       }
     }
-    return buffer.toString();
+    return buffer.toString()
   }
 
-  @NotNull
-  public static File createTempExecutableScript(@NotNull String prefix, @NotNull String suffix, @NotNull String content) throws IOException, ExecutionException {
-    File tempDir = new File(PathManager.getTempPath());
-    File tempFile = FileUtil.createTempFile(tempDir, prefix, suffix, true, true);
-    FileUtil.writeToFile(tempFile, content.getBytes(StandardCharsets.UTF_8));
+  @Throws(IOException::class, ExecutionException::class)
+  @JvmStatic
+  fun createTempExecutableScript(prefix: String, suffix: String, content: String): File {
+    val tempDir = File(PathManager.getTempPath())
+    val tempFile = FileUtil.createTempFile(tempDir, prefix, suffix, true, true)
+    FileUtil.writeToFile(tempFile, content.toByteArray(StandardCharsets.UTF_8))
     if (!tempFile.setExecutable(true, true)) {
-      throw new ExecutionException("Failed to make temp file executable: " + tempFile);
+      throw ExecutionException("Failed to make temp file executable: $tempFile")
     }
-    return tempFile;
+    return tempFile
   }
 
-  @NotNull
-  public static String getOsascriptPath() {
-    return "/usr/bin/osascript";
+  @Throws(ExecutionException::class)
+  @JvmStatic
+  fun execAndGetOutput(commandLine: GeneralCommandLine): ProcessOutput {
+    return CapturingProcessHandler(commandLine).runProcess()
   }
 
-  @NotNull
-  public static String getOpenCommandPath() {
-    return "/usr/bin/open";
+  @Throws(ExecutionException::class)
+  @JvmStatic
+  fun execAndGetOutput(commandLine: GeneralCommandLine, timeoutInMilliseconds: Int): ProcessOutput {
+    return CapturingProcessHandler(commandLine).runProcess(timeoutInMilliseconds)
   }
 
-  @NotNull
-  public static String getWindowsShellName() {
-    return CommandLineUtil.getWinShellName();
-  }
-
-  @NotNull
-  public static ProcessOutput execAndGetOutput(@NotNull GeneralCommandLine commandLine) throws ExecutionException {
-    return new CapturingProcessHandler(commandLine).runProcess();
-  }
-
-  @NotNull
-  public static ProcessOutput execAndGetOutput(@NotNull GeneralCommandLine commandLine, int timeoutInMilliseconds)
-    throws ExecutionException {
-    return new CapturingProcessHandler(commandLine).runProcess(timeoutInMilliseconds);
-  }
-
-  @Nullable
-  public static String execAndReadLine(@NotNull GeneralCommandLine commandLine) {
+  @JvmStatic
+  fun execAndReadLine(commandLine: GeneralCommandLine): String? {
     try {
-      return readFirstLine(commandLine.createProcess().getInputStream(), commandLine.getCharset());
+      return readFirstLine(commandLine.createProcess().inputStream, commandLine.charset)
     }
-    catch (ExecutionException e) {
-      Logger.getInstance(ExecUtil.class).debug(e);
-      return null;
+    catch (e: ExecutionException) {
+      Logger.getInstance("com.intellij.execution.util.ExecUtil").debug(e)
+      return null
     }
+
   }
 
-  @Nullable
-  public static String readFirstLine(@NotNull InputStream stream, @Nullable Charset cs) {
-    try (BufferedReader reader = new BufferedReader(cs == null ? new InputStreamReader(stream) : new InputStreamReader(stream, cs))) {
-      return reader.readLine();
+  @JvmStatic
+  fun readFirstLine(stream: InputStream, cs: Charset?): String? {
+    try {
+      BufferedReader(
+        if (cs == null) InputStreamReader(stream) else InputStreamReader(stream, cs)).use { reader -> return reader.readLine() }
     }
-    catch (IOException e) {
-      Logger.getInstance(ExecUtil.class).debug(e);
-      return null;
+    catch (e: IOException) {
+      Logger.getInstance("com.intellij.execution.util.ExecUtil").debug(e)
+      return null
     }
+
   }
 
   /**
@@ -137,58 +117,59 @@ public class ExecUtil {
    * @param prompt the prompt string for the users
    * @return the results of running the process
    */
-  @NotNull
-  public static Process sudo(@NotNull GeneralCommandLine commandLine, @NotNull String prompt) throws ExecutionException, IOException {
-    return sudoCommand(commandLine, prompt).createProcess();
+  @Throws(ExecutionException::class, IOException::class)
+  @JvmStatic
+  fun sudo(commandLine: GeneralCommandLine, prompt: String): Process {
+    return sudoCommand(commandLine, prompt).createProcess()
   }
 
-  @NotNull
-  private static GeneralCommandLine sudoCommand(@NotNull GeneralCommandLine commandLine, @NotNull String prompt) throws ExecutionException, IOException {
-    if (SystemInfo.isUnix && "root".equals(System.getenv("USER"))) {
-      return commandLine;
+  @Throws(ExecutionException::class, IOException::class)
+  private fun sudoCommand(commandLine: GeneralCommandLine, prompt: String): GeneralCommandLine {
+    if (SystemInfo.isUnix && "root" == System.getenv("USER")) {
+      return commandLine
     }
 
-    List<String> command = ContainerUtil.newArrayList();
-    command.add(commandLine.getExePath());
-    command.addAll(commandLine.getParametersList().getList());
+    val command = ContainerUtil.newArrayList<String>()
+    command.add(commandLine.exePath)
+    command.addAll(commandLine.parametersList.list)
 
-    final GeneralCommandLine sudoCommandLine;
+    val sudoCommandLine: GeneralCommandLine
     if (SystemInfo.isWinVistaOrNewer) {
       // launcher.exe process with elevated permissions on UAC.
-      final File launcherExe = PathManager.findBinFileWithException("launcher.exe");
-      sudoCommandLine = new GeneralCommandLine(launcherExe.getPath());
-      sudoCommandLine.setWorkDirectory(commandLine.getWorkDirectory());
-      sudoCommandLine.addParameter(commandLine.getExePath());
-      sudoCommandLine.addParameters(commandLine.getParametersList().getParameters());
-      sudoCommandLine.getEnvironment().putAll(commandLine.getEffectiveEnvironment());
+      val launcherExe = PathManager.findBinFileWithException("launcher.exe")
+      sudoCommandLine = GeneralCommandLine(launcherExe.path)
+      sudoCommandLine.setWorkDirectory(commandLine.workDirectory)
+      sudoCommandLine.addParameter(commandLine.exePath)
+      sudoCommandLine.addParameters(commandLine.parametersList.parameters)
+      sudoCommandLine.environment.putAll(commandLine.effectiveEnvironment)
     }
     else if (SystemInfo.isMac) {
-      String escapedCommandLine = StringUtil.join(command, ExecUtil::escapeAppleScriptArgument, " & \" \" & ");
-      String escapedScript = "tell current application\n" +
-                             "   activate\n" +
-                             "   do shell script " + escapedCommandLine + " with administrator privileges without altering line endings\n" +
-                             "end tell";
-      sudoCommandLine = new GeneralCommandLine(getOsascriptPath(), "-e", escapedScript);
+      val escapedCommandLine = StringUtil.join(command, { escapeAppleScriptArgument(it) }, " & \" \" & ")
+      val escapedScript = "tell current application\n" +
+                          "   activate\n" +
+                          "   do shell script " + escapedCommandLine + " with administrator privileges without altering line endings\n" +
+                          "end tell"
+      sudoCommandLine = GeneralCommandLine(osascriptPath, "-e", escapedScript)
     }
-    else if (hasGkSudo.getValue()) {
-      List<String> sudoCommand = ContainerUtil.newArrayList();
-      sudoCommand.addAll(Arrays.asList("gksudo", "--message", prompt, "--"));
-      sudoCommand.addAll(command);
-      sudoCommandLine = new GeneralCommandLine(sudoCommand);
+    else if (hasGkSudo.value) {
+      val sudoCommand = ContainerUtil.newArrayList<String>()
+      sudoCommand.addAll(Arrays.asList("gksudo", "--message", prompt, "--"))
+      sudoCommand.addAll(command)
+      sudoCommandLine = GeneralCommandLine(sudoCommand)
     }
-    else if (hasKdeSudo.getValue()) {
-      List<String> sudoCommand = ContainerUtil.newArrayList();
-      sudoCommand.addAll(Arrays.asList("kdesudo", "--comment", prompt, "--"));
-      sudoCommand.addAll(command);
-      sudoCommandLine = new GeneralCommandLine(sudoCommand);
+    else if (hasKdeSudo.value) {
+      val sudoCommand = ContainerUtil.newArrayList<String>()
+      sudoCommand.addAll(Arrays.asList("kdesudo", "--comment", prompt, "--"))
+      sudoCommand.addAll(command)
+      sudoCommandLine = GeneralCommandLine(sudoCommand)
     }
-    else if (hasPkExec.getValue()) {
-      command.add(0, "pkexec");
-      sudoCommandLine = new GeneralCommandLine(command);
+    else if (hasPkExec.value) {
+      command.add(0, "pkexec")
+      sudoCommandLine = GeneralCommandLine(command)
     }
     else if (SystemInfo.isUnix && hasTerminalApp()) {
-      String escapedCommandLine = StringUtil.join(command, ExecUtil::escapeUnixShellArgument, " ");
-      File script = createTempExecutableScript(
+      val escapedCommandLine = StringUtil.join(command, { escapeUnixShellArgument(it) }, " ")
+      val script = createTempExecutableScript(
         "sudo", ".sh",
         "#!/bin/sh\n" +
         "echo " + escapeUnixShellArgument(prompt) + "\n" +
@@ -197,92 +178,113 @@ public class ExecUtil {
         "STATUS=$?\n" +
         "echo\n" +
         "read -p \"Press Enter to close this window...\" TEMP\n" +
-        "exit $STATUS\n");
-      sudoCommandLine = new GeneralCommandLine(getTerminalCommand("Install", script.getAbsolutePath()));
+        "exit \$STATUS\n")
+      sudoCommandLine = GeneralCommandLine(getTerminalCommand("Install", script.absolutePath))
     }
     else {
-      throw new UnsupportedOperationException("Unsupported OS/desktop: " + SystemInfo.OS_NAME + '/' + SystemInfo.SUN_DESKTOP);
+      throw UnsupportedOperationException("Unsupported OS/desktop: " + SystemInfo.OS_NAME + '/'.toString() + SystemInfo.SUN_DESKTOP)
     }
 
     return sudoCommandLine
-      .withWorkDirectory(commandLine.getWorkDirectory())
-      .withEnvironment(commandLine.getEnvironment())
-      .withParentEnvironmentType(commandLine.getParentEnvironmentType())
-      .withRedirectErrorStream(commandLine.isRedirectErrorStream());
+      .withWorkDirectory(commandLine.workDirectory)
+      .withEnvironment(commandLine.environment)
+      .withParentEnvironmentType(commandLine.parentEnvironmentType)
+      .withRedirectErrorStream(commandLine.isRedirectErrorStream)
   }
 
-  @NotNull
-  public static ProcessOutput sudoAndGetOutput(@NotNull GeneralCommandLine commandLine, @NotNull String prompt) throws IOException, ExecutionException {
-    return execAndGetOutput(sudoCommand(commandLine, prompt));
+  @Throws(IOException::class, ExecutionException::class)
+  @JvmStatic
+  fun sudoAndGetOutput(commandLine: GeneralCommandLine, prompt: String): ProcessOutput {
+    return execAndGetOutput(sudoCommand(commandLine, prompt))
   }
 
-  @NotNull
-  private static String escapeAppleScriptArgument(@NotNull String arg) {
-    return "quoted form of \"" + arg.replace("\"", "\\\"") + "\"";
+  private fun escapeAppleScriptArgument(arg: String): String {
+    return "quoted form of \"" + arg.replace("\"", "\\\"") + "\""
   }
 
-  @NotNull
-  public static String escapeUnixShellArgument(@NotNull String arg) {
-    return "'" + arg.replace("'", "'\"'\"'") + "'";
+  @JvmStatic
+  fun escapeUnixShellArgument(arg: String): String {
+    return "'" + arg.replace("'", "'\"'\"'") + "'"
   }
 
-  public static boolean hasTerminalApp() {
-    return SystemInfo.isWindows || SystemInfo.isMac || hasKdeTerminal.getValue() || hasGnomeTerminal.getValue() || hasXTerm.getValue();
+  @JvmStatic
+  fun hasTerminalApp(): Boolean {
+    return SystemInfo.isWindows || SystemInfo.isMac || hasKdeTerminal.value || hasGnomeTerminal.value || hasXTerm.value
   }
 
-  @NotNull
-  public static List<String> getTerminalCommand(@Nullable String title, @NotNull String command) {
+  @JvmStatic
+  fun getTerminalCommand(title: String?, command: String): List<String> {
+    var title = title
     if (SystemInfo.isWindows) {
-      title = title != null ? title.replace('"', '\'') : "";
-      return Arrays.asList(getWindowsShellName(), "/c", "start", GeneralCommandLine.inescapableQuote(title), command);
+      title = title?.replace('"', '\'') ?: ""
+      return Arrays.asList(windowsShellName, "/c", "start", GeneralCommandLine.inescapableQuote(title), command)
     }
     else if (SystemInfo.isMac) {
-      return Arrays.asList(getOpenCommandPath(), "-a", "Terminal", command);
+      return Arrays.asList(openCommandPath, "-a", "Terminal", command)
     }
-    else if (hasKdeTerminal.getValue()) {
-      return title != null ? Arrays.asList("konsole", "-p", "tabtitle=\"" + title.replace('"', '\'') + "\"", "-e", command)
-                           : Arrays.asList("konsole", "-e", command);
+    else if (hasKdeTerminal.value) {
+      return if (title != null)
+        Arrays.asList("konsole", "-p", "tabtitle=\"" + title.replace('"', '\'') + "\"", "-e", command)
+      else
+        Arrays.asList("konsole", "-e", command)
     }
-    else if (hasGnomeTerminal.getValue()) {
-      return title != null ? Arrays.asList("gnome-terminal", "-t", title, "-x", command)
-                           : Arrays.asList("gnome-terminal", "-x", command);
+    else if (hasGnomeTerminal.value) {
+      return if (title != null)
+        Arrays.asList("gnome-terminal", "-t", title, "-x", command)
+      else
+        Arrays.asList("gnome-terminal", "-x", command)
     }
-    else if (hasXTerm.getValue()) {
-      return title != null ? Arrays.asList("xterm", "-T", title, "-e", command)
-                           : Arrays.asList("xterm", "-e", command);
+    else if (hasXTerm.value) {
+      return if (title != null)
+        Arrays.asList("xterm", "-T", title, "-e", command)
+      else
+        Arrays.asList("xterm", "-e", command)
     }
 
-    throw new UnsupportedOperationException("Unsupported OS/desktop: " + SystemInfo.OS_NAME + '/' + SystemInfo.SUN_DESKTOP);
+    throw UnsupportedOperationException("Unsupported OS/desktop: " + SystemInfo.OS_NAME + '/'.toString() + SystemInfo.SUN_DESKTOP)
   }
 
   //<editor-fold desc="Deprecated stuff.">
-  /** @deprecated use {@code new GeneralCommandLine(command).createProcess().waitFor()} (to be removed in IDEA 16) */
-  public static int execAndGetResult(String... command) throws ExecutionException, InterruptedException {
-    assert command != null && command.length > 0;
-    return new GeneralCommandLine(command).createProcess().waitFor();
+
+  @Deprecated("use {@code new GeneralCommandLine(command).createProcess().waitFor()} (to be removed in IDEA 16) ")
+  @Throws(ExecutionException::class, InterruptedException::class)
+  @JvmStatic
+  fun execAndGetResult(vararg command: String): Int {
+    assert(command != null && command.size > 0)
+    return GeneralCommandLine(*command).createProcess().waitFor()
   }
 
-  /** @deprecated use {@code new GeneralCommandLine(command).createProcess().waitFor()} (to be removed in IDEA 16) */
-  public static int execAndGetResult(@NotNull List<String> command) throws ExecutionException, InterruptedException {
-    return new GeneralCommandLine(command).createProcess().waitFor();
+
+  @Deprecated("use {@code new GeneralCommandLine(command).createProcess().waitFor()} (to be removed in IDEA 16) ")
+  @Throws(ExecutionException::class, InterruptedException::class)
+  @JvmStatic
+  fun execAndGetResult(command: List<String>): Int {
+    return GeneralCommandLine(command).createProcess().waitFor()
   }
 
-  /** @deprecated use {@link #execAndGetOutput(GeneralCommandLine)} instead (to be removed in IDEA 16) */
-  public static ProcessOutput execAndGetOutput(@NotNull List<String> command, @Nullable String workDir) throws ExecutionException {
-    GeneralCommandLine commandLine = new GeneralCommandLine(command).withWorkDirectory(workDir);
-    return new CapturingProcessHandler(commandLine).runProcess();
+
+  @Deprecated("use {@link #execAndGetOutput(GeneralCommandLine)} instead (to be removed in IDEA 16) ")
+  @Throws(ExecutionException::class)
+  @JvmStatic
+  fun execAndGetOutput(command: List<String>, workDir: String?): ProcessOutput {
+    val commandLine = GeneralCommandLine(command).withWorkDirectory(workDir)
+    return CapturingProcessHandler(commandLine).runProcess()
   }
 
-  /** @deprecated use {@link #execAndReadLine(GeneralCommandLine)} instead (to be removed in IDEA 16) */
-  public static String execAndReadLine(String... command) {
-    return execAndReadLine(new GeneralCommandLine(command));
+
+  @Deprecated("use {@link #execAndReadLine(GeneralCommandLine)} instead (to be removed in IDEA 16) ")
+  @JvmStatic
+  fun execAndReadLine(vararg command: String): String? {
+    return execAndReadLine(GeneralCommandLine(*command))
   }
 
-  /** @deprecated use {@link #execAndReadLine(GeneralCommandLine)} instead (to be removed in IDEA 16) */
-  public static String execAndReadLine(@Nullable Charset charset, String... command) {
-    GeneralCommandLine commandLine = new GeneralCommandLine(command);
-    if (charset != null) commandLine = commandLine.withCharset(charset);
-    return execAndReadLine(commandLine);
+
+  @Deprecated("use {@link #execAndReadLine(GeneralCommandLine)} instead (to be removed in IDEA 16) ")
+  @JvmStatic
+  fun execAndReadLine(charset: Charset?, vararg command: String): String? {
+    var commandLine = GeneralCommandLine(*command)
+    if (charset != null) commandLine = commandLine.withCharset(charset)
+    return execAndReadLine(commandLine)
   }
   //</editor-fold>
 }
