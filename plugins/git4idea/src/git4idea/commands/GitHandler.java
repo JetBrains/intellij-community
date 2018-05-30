@@ -3,7 +3,7 @@ package git4idea.commands;
 
 import com.intellij.execution.ExecutionException;
 import com.intellij.execution.configurations.GeneralCommandLine;
-import com.intellij.execution.configurations.LowPriorityProcessRunnerKt;
+import com.intellij.execution.util.ExecUtil;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
@@ -195,7 +195,7 @@ public abstract class GitHandler {
    */
   public void setWithLowPriority(boolean isLowPriority) {
     if (isLowPriority) {
-      LowPriorityProcessRunnerKt.setupLowPriorityExecution(myCommandLine, myPathToExecutable);
+      ExecUtil.setupLowPriorityExecution(myCommandLine, myPathToExecutable);
     }
     else {
       myCommandLine.setExePath(myPathToExecutable);
