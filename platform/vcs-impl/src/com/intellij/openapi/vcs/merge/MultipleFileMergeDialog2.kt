@@ -71,7 +71,7 @@ open class MultipleFileMergeDialog2(
   private var groupByDirectory = VcsConfiguration.getInstance(project).GROUP_MULTIFILE_MERGE_BY_DIRECTORY
 
   private val virtualFileRenderer = object : ChangesBrowserNodeRenderer(project, { !groupByDirectory }, false) {
-    override fun calcFocusedState() = table.hasFocus()
+    override fun calcFocusedState() = UIUtil.isAncestor(this@MultipleFileMergeDialog2.peer.window, IdeFocusManager.getInstance(project).focusOwner)
   }
 
   init {
