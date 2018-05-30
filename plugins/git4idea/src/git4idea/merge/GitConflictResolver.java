@@ -61,11 +61,28 @@ public class GitConflictResolver {
     private String myErrorNotificationTitle = "";
     private String myErrorNotificationAdditionalDescription = "";
     private String myMergeDescription = "";
-    private MergeDialogCustomizer myMergeDialogCustomizer = new MergeDialogCustomizer() {
-      @Override public String getMultipleFileMergeDescription(@NotNull Collection<VirtualFile> files) {
-        return myMergeDescription;
-      }
-    };
+    private MergeDialogCustomizer myMergeDialogCustomizer;
+
+    public Params() {
+      myMergeDialogCustomizer = new MergeDialogCustomizer() {
+        @Override public String getMultipleFileMergeDescription(@NotNull Collection<VirtualFile> files) {
+          return myMergeDescription;
+        }
+      };
+    }
+
+    public Params(Project project) {
+      GitMergeProvider provider = (GitMergeProvider)GitVcs.getInstance(project).getMergeProvider();
+
+      myMergeDialogCustomizer = new GitDefaultMergeDialogCustomizer(provider) {
+        @Override public String getMultipleFileMergeDescription(@NotNull Collection<VirtualFile> files) {
+          if (!StringUtil.isEmpty(myMergeDescription)) {
+            return myMergeDescription;
+          }
+          return super.getMultipleFileMergeDescription(files);
+        }
+      };
+    }
 
     /**
      * @param reverseMerge specify {@code true} if reverse merge provider has to be used for merging - it is the case of rebase or stash.

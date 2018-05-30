@@ -7,6 +7,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.Trinity;
+import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.VcsException;
@@ -29,6 +30,7 @@ import git4idea.commands.*;
 import git4idea.history.GitHistoryUtils;
 import git4idea.i18n.GitBundle;
 import git4idea.index.GitIndexUtil;
+import git4idea.rebase.GitRebaseUtils;
 import git4idea.repo.GitRepository;
 import git4idea.repo.GitRepositoryManager;
 import git4idea.util.GitFileUtils;
@@ -327,6 +329,10 @@ public class GitMergeProvider implements MergeProvider2 {
     if (mergeBranch != null) {
       return mergeBranch;
     }
+    String rebaseOntoBranch = resolveRebaseOntoBranch(repository.getRoot());
+    if (rebaseOntoBranch != null) {
+      return rebaseOntoBranch;
+    }
 
     try {
       GitRevisionNumber.resolve(myProject, repository.getRoot(), CHERRY_PICK_HEAD);
@@ -346,12 +352,36 @@ public class GitMergeProvider implements MergeProvider2 {
     catch (VcsException e) {
       return null;
     }
-    Collection<GitLocalBranch>
-      localBranchesByHash = repository.getBranches().findLocalBranchesByHash(HashImpl.build(mergeHeadRevisionNumber.asString()));
+    return resolveBranchName(repository, mergeHeadRevisionNumber);
+  }
+
+  @Nullable
+  public String resolveRebaseOntoBranch(@NotNull VirtualFile root) {
+    File rebaseDir = GitRebaseUtils.getRebaseDir(myProject, root);
+    if (rebaseDir == null) {
+      return null;
+    }
+    String ontoHash;
+    try {
+      ontoHash = FileUtil.loadFile(new File(rebaseDir, "onto")).trim();
+    }
+    catch (IOException e) {
+      return null;
+    }
+    GitRepository repo = GitRepositoryManager.getInstance(myProject).getRepositoryForRoot(root);
+    if (repo == null) {
+      return null;
+    }
+    return resolveBranchName(repo, new GitRevisionNumber(ontoHash));
+  }
+
+  public static String resolveBranchName(GitRepository repository, GitRevisionNumber revisionNumber) {
+    Collection<GitLocalBranch> localBranchesByHash = repository.getBranches().findLocalBranchesByHash(
+      HashImpl.build(revisionNumber.asString()));
     if (localBranchesByHash.size() == 1) {
       return localBranchesByHash.iterator().next().getName();
     }
-    return null;
+    return revisionNumber.getShortRev();
   }
 
   @Nullable
