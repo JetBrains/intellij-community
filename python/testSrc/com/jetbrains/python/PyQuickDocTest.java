@@ -124,19 +124,27 @@ public class PyQuickDocTest extends LightMarkedTestCase {
   }
 
   public void testInheritedMethod() {
-    Map<String, PsiElement> marks = loadTest();
-    assertEquals(2, marks.size());
-    PsiElement docElement = marks.get("<the_doc>").getParent(); // ident -> expr
-    assertTrue(docElement instanceof PyStringLiteralExpression);
-    String docText = ((PyStringLiteralExpression)docElement).getStringValue();
-    assertNotNull(docText);
+    checkHTMLOnly();
+  }
 
-    PsiElement ref_elt = marks.get("<the_ref>").getParent(); // ident -> expr
-    final PyDocStringOwner docOwner = (PyDocStringOwner)((PyReferenceExpression)ref_elt).getReference().resolve();
-    assertNotNull(docOwner);
-    assertNull(docOwner.getDocStringExpression()); // no direct doc!
+  public void testInheritedMethodOfInnerClass() {
+    checkHTMLOnly();
+  }
 
-    checkByHTML(myProvider.generateDoc(docOwner, null));
+  public void testClassDocstringForConstructor() {
+    checkHTMLOnly();
+  }
+
+  public void testInnerClassDocstringForConstructor() {
+    checkHTMLOnly();
+  }
+
+  public void testAncestorClassDocstringForConstructor() {
+    checkHTMLOnly();
+  }
+
+  public void testAncestorInnerClassDocstringForConstructor() {
+    checkHTMLOnly();
   }
 
   public void testPropNewGetter() {
