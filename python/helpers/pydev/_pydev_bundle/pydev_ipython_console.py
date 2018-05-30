@@ -62,7 +62,7 @@ class InterpreterInterface(BaseInterpreterInterface):
 
             if server is not None:
                 try:
-                    server.NotifyAboutMagic(magic_commands, self.interpreter.is_automagic())
+                    server.notifyAboutMagic(magic_commands, self.interpreter.is_automagic())
                     self.notification_succeeded = True
                 except :
                     self.notification_succeeded = False
