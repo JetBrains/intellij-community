@@ -224,7 +224,7 @@ public class VcsRootProblemNotifier {
     }
     else if (invalidRoots.isEmpty()) {
       String vcs = getVcsName(unregisteredRoots);
-      title = "Configure " + vcs + " Integration";
+      title = "Enable " + vcs + " Integration";
     }
     else {
       title = "VCS root configuration problems";
