@@ -71,6 +71,7 @@ public final class LafManagerImpl extends LafManager implements PersistentStateC
 
   @NonNls private static final String ELEMENT_LAF = "laf";
   @NonNls private static final String ATTRIBUTE_CLASS_NAME = "class-name";
+  @NonNls private static final String ATTRIBUTE_THEME_NAME = "themeId";
   @NonNls private static final String GNOME_THEME_PROPERTY_NAME = "gnome.Net/ThemeName";
 
   @NonNls private static final String[] ourPatchableFontResources = {"Button.font", "ToggleButton.font", "RadioButton.font",
@@ -227,15 +228,30 @@ public final class LafManagerImpl extends LafManager implements PersistentStateC
   @Override
   public void loadState(@NotNull final Element element) {
     String className = null;
+    String themeId = null;
+    UIManager.LookAndFeelInfo laf = null;
     Element lafElement = element.getChild(ELEMENT_LAF);
     if (lafElement != null) {
       className = lafElement.getAttributeValue(ATTRIBUTE_CLASS_NAME);
+      themeId = lafElement.getAttributeValue(ATTRIBUTE_THEME_NAME);
+      if (themeId != null) {
+        for (UIManager.LookAndFeelInfo f : myLaFs) {
+          if (f instanceof UIThemeBasedLookAndFeelInfo) {
+            if (((UIThemeBasedLookAndFeelInfo)f).getTheme().getId().equals(themeId)) {
+              laf = f;
+              break;
+            }
+          }
+        }
+      }
       if (className != null && ourLafClassesAliases.containsKey(className)) {
         className = ourLafClassesAliases.get(className);
       }
     }
 
-    UIManager.LookAndFeelInfo laf = findLaf(className);
+    if (laf == null) {
+      laf = findLaf(className);
+    }
     // If LAF is undefined (wrong class name or something else) we have set default LAF anyway.
     if (laf == null) {
       laf = getDefaultLaf();
@@ -257,6 +273,10 @@ public final class LafManagerImpl extends LafManager implements PersistentStateC
       if (className != null) {
         Element child = new Element(ELEMENT_LAF);
         child.setAttribute(ATTRIBUTE_CLASS_NAME, className);
+
+        if (myCurrentLaf instanceof UIThemeBasedLookAndFeelInfo) {
+          child.setAttribute(ATTRIBUTE_THEME_NAME, ((UIThemeBasedLookAndFeelInfo)myCurrentLaf).getTheme().getId());
+        }
         element.addContent(child);
       }
     }

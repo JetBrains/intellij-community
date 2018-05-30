@@ -26,6 +26,7 @@ public class UITheme {
   private String name;
   private boolean dark;
   private String author;
+  private String id;
   private Map<String, Object> ui;
   private Map<String, Object> icons;
 
@@ -44,8 +45,14 @@ public class UITheme {
     return author;
   }
 
-  public static UITheme loadFromJson(InputStream stream) throws IOException {
-    return new ObjectMapper().readValue(stream, UITheme.class);
+  public static UITheme loadFromJson(InputStream stream, @NotNull String themeId) throws IOException {
+    UITheme theme = new ObjectMapper().readValue(stream, UITheme.class);
+    theme.id = themeId;
+    return theme;
+  }
+
+  public String getId() {
+    return id;
   }
 
   public void applyProperties(UIDefaults defaults) {
