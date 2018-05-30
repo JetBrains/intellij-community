@@ -27,7 +27,7 @@ fun findProtectedRemoteBranch(repository: GitRepository, branches: Collection<St
   val settings = GitSharedSettings.getInstance(repository.project)
   // protected branches hold patterns for branch names without remote names
   return repository.branches.remoteBranches.
-      filter { settings.isBranchProtected(it.nameForRemoteOperations) }.
-      map { it.nameForLocalOperations }.
-      filter { branches.contains(it) }.firstOrNull()
+    filter { settings.isBranchProtected(it.nameForRemoteOperations) }.
+    map { it.nameForLocalOperations }.
+    firstOrNull { branches.contains(it) }
 }
