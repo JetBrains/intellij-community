@@ -21,7 +21,10 @@ import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.ui.*;
+import com.intellij.ui.AnActionButton;
+import com.intellij.ui.AnActionButtonRunnable;
+import com.intellij.ui.DocumentAdapter;
+import com.intellij.ui.ToolbarDecorator;
 import com.intellij.ui.awt.RelativePoint;
 import com.intellij.ui.components.JBLabel;
 import com.intellij.ui.components.JBTextField;
@@ -47,7 +50,6 @@ import java.util.concurrent.TimeUnit;
 import java.util.function.Consumer;
 
 import static com.jetbrains.jsonSchema.remote.JsonFileResolver.isHttpPath;
-import static com.jetbrains.jsonSchema.settings.mappings.JsonSchemaConfigurable.isValidURL;
 
 /**
  * @author Irina.Chernushina on 2/2/2016.
@@ -113,11 +115,7 @@ public class JsonSchemaMappingsView implements Disposable {
     });
 
     final FormBuilder builder = FormBuilder.createFormBuilder();
-    final ErrorLabel label = new ErrorLabel(JsonBundle.message("json.schema.file.selector.title"));
-    schemaFieldBacking.getDocument().addDocumentListener(new SchemaFieldErrorMessageProvider(schemaFieldBacking, label));
-    if (schemaFieldBacking.getText().isEmpty()) {
-      label.setErrorText("Schema path cannot be empty", JBColor.RED);
-    }
+    final JBLabel label = new JBLabel(JsonBundle.message("json.schema.file.selector.title"));
     builder.addLabeledComponent(label, mySchemaField);
     label.setLabelFor(mySchemaField);
     label.setBorder(JBUI.Borders.empty(0, 10));
@@ -317,36 +315,6 @@ public class JsonSchemaMappingsView implements Disposable {
         myTableView.getListTableModel().fireTableDataChanged();
         myTreeUpdater.run();
       }
-    }
-  }
-
-  private static class SchemaFieldErrorMessageProvider extends DocumentAdapter {
-    private final JBTextField mySchemaFieldBacking;
-    private final ErrorLabel myLabel;
-
-    public SchemaFieldErrorMessageProvider(JBTextField schemaFieldBacking, ErrorLabel label) {
-      mySchemaFieldBacking = schemaFieldBacking;
-      myLabel = label;
-    }
-
-    protected void textChanged(DocumentEvent e) {
-      String text = mySchemaFieldBacking.getText().trim();
-      if (text.isEmpty()) {
-        myLabel.setErrorText("Schema path cannot be empty", JBColor.RED);
-        return;
-      }
-
-      if (isHttpPath(text)) {
-        if (!isValidURL(text)) {
-          myLabel.setErrorText("Invalid schema URL", JBColor.RED);
-          return;
-        }
-      }
-      else if (!new File(text).exists()) {
-        myLabel.setErrorText("Schema file doesn't exist", JBColor.RED);
-        return;
-      }
-      myLabel.setErrorText(null, null);
     }
   }
 }
