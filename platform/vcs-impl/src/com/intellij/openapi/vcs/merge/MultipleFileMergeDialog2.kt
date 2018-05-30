@@ -9,8 +9,6 @@ import com.intellij.diff.merge.MergeRequest
 import com.intellij.diff.merge.MergeResult
 import com.intellij.diff.merge.MergeUtil
 import com.intellij.diff.util.DiffUtil
-import com.intellij.icons.AllIcons
-import com.intellij.ide.presentation.VirtualFilePresentation
 import com.intellij.openapi.command.WriteCommandAction.writeCommandAction
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.diff.impl.mergeTool.MergeVersion
@@ -19,20 +17,19 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.ex.ProjectManagerEx
 import com.intellij.openapi.ui.DialogWrapper
 import com.intellij.openapi.ui.Messages
-import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.vcs.VcsBundle
 import com.intellij.openapi.vcs.VcsConfiguration
 import com.intellij.openapi.vcs.VcsException
 import com.intellij.openapi.vcs.changes.VcsDirtyScopeManager
-import com.intellij.openapi.vfs.VfsUtil
+import com.intellij.openapi.vcs.changes.ui.ChangesBrowserNodeRenderer
+import com.intellij.openapi.vcs.changes.ui.ChangesGroupingSupport
+import com.intellij.openapi.vcs.changes.ui.NoneChangesGroupingFactory
+import com.intellij.openapi.vcs.changes.ui.TreeModelBuilder
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.wm.IdeFocusManager
-import com.intellij.ui.ColoredTreeCellRenderer
 import com.intellij.ui.DoubleClickListener
-import com.intellij.ui.SimpleTextAttributes
 import com.intellij.ui.TableSpeedSearch
 import com.intellij.ui.layout.*
-import com.intellij.ui.speedSearch.SpeedSearchUtil
 import com.intellij.ui.treeStructure.treetable.ListTreeTableModelOnColumns
 import com.intellij.ui.treeStructure.treetable.TreeTable
 import com.intellij.ui.treeStructure.treetable.TreeTableModel
@@ -45,14 +42,18 @@ import java.awt.event.ActionEvent
 import java.awt.event.MouseEvent
 import java.io.IOException
 import java.util.*
-import javax.swing.*
+import javax.swing.AbstractAction
+import javax.swing.Action
+import javax.swing.JButton
+import javax.swing.JComponent
 import javax.swing.tree.DefaultMutableTreeNode
+import javax.swing.tree.TreeNode
 
 /**
  * @author yole
  */
 open class MultipleFileMergeDialog2(
-  private val project: Project?,
+  private val project: Project,
   files: List<VirtualFile>,
   private val mergeProvider: MergeProvider,
   private val mergeDialogCustomizer: MergeDialogCustomizer
@@ -67,44 +68,9 @@ open class MultipleFileMergeDialog2(
   private lateinit var mergeButton: JButton
   private val tableModel = ListTreeTableModelOnColumns(DefaultMutableTreeNode(), createColumns())
   private val projectManager = ProjectManagerEx.getInstanceEx()
-  private var groupByDirectory = project?.let { VcsConfiguration.getInstance(it).GROUP_MULTIFILE_MERGE_BY_DIRECTORY } ?: false
+  private var groupByDirectory = VcsConfiguration.getInstance(project).GROUP_MULTIFILE_MERGE_BY_DIRECTORY
 
-  private val comparator = compareBy<DefaultMutableTreeNode> {
-    (it.userObject as? VirtualFile)?.path ?: (it.userObject as String)
-  }
-
-  private val virtualFileRenderer = object : ColoredTreeCellRenderer() {
-    override fun customizeCellRenderer(tree: JTree,
-                                       value: Any?,
-                                       selected: Boolean,
-                                       expanded: Boolean,
-                                       leaf: Boolean,
-                                       row: Int,
-                                       hasFocus: Boolean) {
-      val data = (value as DefaultMutableTreeNode).userObject
-      when (data) {
-        is String -> {
-          icon = AllIcons.Nodes.Folder
-          val parent = value.parent as DefaultMutableTreeNode
-          val parentPath = parent.userObject as String?
-          append(if (parentPath == null) FileUtil.getLocationRelativeToUserHome(data) else data.substring(parentPath.length + 1))
-        }
-
-        is VirtualFile -> {
-          icon = VirtualFilePresentation.getIcon(data)
-          append(data.name, SimpleTextAttributes.REGULAR_ATTRIBUTES)
-          if (!groupByDirectory) {
-            val parent = data.parent
-            if (parent != null) {
-              append(" (" + FileUtil.getLocationRelativeToUserHome(FileUtil.toSystemDependentName(parent.presentableUrl)) + ")", SimpleTextAttributes.GRAYED_ATTRIBUTES)
-            }
-          }
-        }
-      }
-
-      SpeedSearchUtil.applySpeedSearchHighlighting(table, this, true, selected)
-    }
-
+  private val virtualFileRenderer = object : ChangesBrowserNodeRenderer(project, { !groupByDirectory }, false) {
     override fun calcFocusedState() = table.hasFocus()
   }
 
@@ -218,7 +184,7 @@ open class MultipleFileMergeDialog2(
 
   private fun toggleGroupByDirectory(state: Boolean) {
     groupByDirectory = state
-    project?.let { VcsConfiguration.getInstance(it).GROUP_MULTIFILE_MERGE_BY_DIRECTORY = groupByDirectory }
+    VcsConfiguration.getInstance(project).GROUP_MULTIFILE_MERGE_BY_DIRECTORY = groupByDirectory
     val firstSelectedFile = getSelectedFiles().firstOrNull()
     updateTree()
     if (firstSelectedFile != null) {
@@ -228,68 +194,14 @@ open class MultipleFileMergeDialog2(
   }
 
   private fun updateTree() {
-    val root = DefaultMutableTreeNode()
-    tableModel.setRoot(root)
-    val commonAncestor = if (groupByDirectory) VfsUtil.getCommonAncestor(files) else null
-    if (commonAncestor != null) {
-      buildGroupedFileTree(root, commonAncestor)
-    }
-    else {
-      for (file in files.sortedBy { it.path }) {
-        tableModel.insertNodeInto(DefaultMutableTreeNode(file, false), root, root.childCount)
-      }
-    }
+    val factory = if (groupByDirectory)
+      ChangesGroupingSupport.collectFactories(project).getByKey(ChangesGroupingSupport.DIRECTORY_GROUPING)
+    else
+      NoneChangesGroupingFactory
+    val model = TreeModelBuilder.buildFromVirtualFiles(project, factory, files)
+    tableModel.setRoot(model.root as TreeNode)
     TreeUtil.expandAll(table.tree)
   }
-
-  private fun buildGroupedFileTree(root: DefaultMutableTreeNode, commonAncestor: VirtualFile) {
-    val directoryNodes = mutableMapOf<String, DefaultMutableTreeNode>()
-    val commonAncestorNode = DefaultMutableTreeNode(commonAncestor.path)
-    directoryNodes[commonAncestor.path] = commonAncestorNode
-    tableModel.insertNodeInto(commonAncestorNode, root, 0)
-
-    for (file in files) {
-      var currentParentNode = commonAncestorNode
-      var index = commonAncestor.path.length
-      val lastIndex = file.path.lastIndexOf('/')
-      while (index < lastIndex) {
-        val nextIndex = file.path.indexOf('/', index)
-        val path = file.path.substring(0, nextIndex)
-        val directoryNode = directoryNodes.getOrPut(path) {
-          DefaultMutableTreeNode(path).also {
-            TreeUtil.insertNode(it, currentParentNode, tableModel, comparator)
-          }
-        }
-        index = nextIndex + 1
-        currentParentNode = directoryNode
-      }
-
-      TreeUtil.insertNode(
-        DefaultMutableTreeNode(file, false), currentParentNode, tableModel,
-        comparator
-      )
-    }
-
-    collapseMiddlePaths(commonAncestorNode)
-  }
-
-  private fun collapseMiddlePaths(node: DefaultMutableTreeNode) {
-    if (node.childCount == 1) {
-      val child = node.firstChild as DefaultMutableTreeNode
-      if (child.userObject is String) {
-        val parent = node.parent as DefaultMutableTreeNode
-        tableModel.removeNodeFromParent(node)
-        TreeUtil.insertNode(child, parent, tableModel, comparator)
-        collapseMiddlePaths(child)
-      }
-    }
-    else {
-      for (child in node.children()) {
-        collapseMiddlePaths(child as DefaultMutableTreeNode)
-      }
-    }
-  }
-
 
   private fun updateButtonState() {
     val selectedFiles = getSelectedFiles()
@@ -378,7 +290,7 @@ open class MultipleFileMergeDialog2(
       mergeProvider.conflictResolvedForFile(file)
     }
     processedFiles.add(file)
-    project?.let { VcsDirtyScopeManager.getInstance(it).fileDirty(file) }
+    VcsDirtyScopeManager.getInstance(project).fileDirty(file)
   }
 
   private fun updateModelFromFiles() {
