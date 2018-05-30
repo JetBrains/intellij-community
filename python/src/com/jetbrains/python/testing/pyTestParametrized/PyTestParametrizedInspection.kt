@@ -7,6 +7,7 @@ import com.intellij.codeInspection.ProblemsHolder
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiElementVisitor
 import com.intellij.psi.PsiErrorElement
+import com.intellij.psi.impl.source.tree.LeafPsiElement
 import com.jetbrains.python.PyBundle
 import com.jetbrains.python.inspections.PyInspection
 import com.jetbrains.python.psi.PyFunction
@@ -28,7 +29,7 @@ class PyTestParametrizedInspection : PyInspection() {
           if (diff.isNotEmpty()) {
             // Some params are not declared
             val problemSource = element.parameterList.lastChild ?: element.parameterList
-            if(problemSource is PsiErrorElement) {
+            if (problemSource is PsiErrorElement || problemSource !is LeafPsiElement) {
               return // Error element can't be passed to registerProblem
             }
             holder.registerProblem(problemSource, "Following arguments are not declared but provided by decorator: $diff",
