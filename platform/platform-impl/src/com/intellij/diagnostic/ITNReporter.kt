@@ -4,12 +4,11 @@ package com.intellij.diagnostic
 import com.intellij.CommonBundle
 import com.intellij.credentialStore.hasOnlyUserName
 import com.intellij.credentialStore.isFulfilled
-import com.intellij.errorreport.bean.ErrorBean
+import com.intellij.diagnostic.ITNProxy.ErrorBean
 import com.intellij.errorreport.error.InternalEAPException
 import com.intellij.errorreport.error.NoSuchEAPUserException
 import com.intellij.errorreport.error.UpdateAvailableException
 import com.intellij.ide.DataManager
-import com.intellij.ide.plugins.PluginManager
 import com.intellij.idea.IdeaLogger
 import com.intellij.notification.NotificationListener
 import com.intellij.notification.NotificationType
@@ -28,7 +27,8 @@ import java.awt.Component
 import java.lang.Exception
 import javax.swing.Icon
 
-private var previousExceptionThreadId = 0
+private const val INTERVAL = 10 * 60 * 1000L  // an interval between exceptions to form a chain, ms
+@Volatile private var previousReport: Pair<Long, Int>? = null  // (timestamp, threadID) of last reported exception
 
 open class ITNReporter : ErrorReportSubmitter() {
   override fun getReportActionText(): String = DiagnosticBundle.message("error.report.to.jetbrains.action")
@@ -43,21 +43,18 @@ open class ITNReporter : ErrorReportSubmitter() {
                       consumer: Consumer<SubmittedReportInfo>): Boolean {
     val event = events[0]
 
-    val errorBean = ErrorBean(event.throwable, IdeaLogger.ourLastActionId)
-    errorBean.message = event.message
-    errorBean.description = additionalInfo
+    val pluginInfo = IdeErrorsDialog.getPluginInfo(event)
 
-    setPluginInfo(event, errorBean)
+    val lastActionId = IdeaLogger.ourLastActionId
 
-    val data = event.data
-    if (data is AbstractMessage) {
-      errorBean.assigneeId = data.assigneeId
-      errorBean.attachments = data.includedAttachments
+    var previousReportId = -1
+    val previousException = previousReport
+    val eventData = event.data
+    if (previousException != null && eventData is AbstractMessage && eventData.date.time - previousException.first in 0..INTERVAL) {
+      previousReportId = previousException.second
     }
 
-    if (previousExceptionThreadId != 0) {
-      errorBean.previousException = previousExceptionThreadId
-    }
+    val errorBean = ErrorBean(event, additionalInfo, pluginInfo?.first, pluginInfo?.second, lastActionId, previousReportId)
 
     val project = CommonDataKeys.PROJECT.getData(DataManager.getInstance().getDataContext(parentComponent))
 
@@ -70,17 +67,13 @@ open class ITNReporter : ErrorReportSubmitter() {
   open fun showErrorInRelease(event: IdeaLoggingEvent): Boolean = false
 }
 
-fun setPluginInfo(event: IdeaLoggingEvent, errorBean: ErrorBean) {
-  val t = event.throwable
-  if (t != null) {
-    val pluginId = IdeErrorsDialog.findPluginId(t)
-    if (pluginId != null) {
-      val ideaPluginDescriptor = PluginManager.getPlugin(pluginId)
-      if (ideaPluginDescriptor != null && (!ideaPluginDescriptor.isBundled || ideaPluginDescriptor.allowBundledUpdate())) {
-        errorBean.pluginName = ideaPluginDescriptor.name
-        errorBean.pluginVersion = ideaPluginDescriptor.version
-      }
-    }
+/** @deprecated use [IdeErrorsDialog.getPluginInfo] (to be removed in IDEA 2019) */
+@Suppress("unused", "DEPRECATION")
+fun setPluginInfo(event: IdeaLoggingEvent, errorBean: com.intellij.errorreport.bean.ErrorBean) {
+  val pluginInfo = IdeErrorsDialog.getPluginInfo(event)
+  if (pluginInfo != null) {
+    errorBean.pluginName = pluginInfo.first
+    errorBean.pluginVersion = pluginInfo.second
   }
 }
 
@@ -104,13 +97,14 @@ private fun submit(errorBean: ErrorBean, parentComponent: Component, callback: C
   }
 
   ITNProxy.sendError(project, credentials?.userName, credentials?.getPasswordAsString(), errorBean,
-                     { threadId -> onSuccess(threadId, callback, project) },
+                     { threadId -> onSuccess(threadId, errorBean.event.data, callback, project) },
                      { e -> onError(e, errorBean, parentComponent, callback, project) })
   return true
 }
 
-private fun onSuccess(threadId: Int, callback: Consumer<SubmittedReportInfo>, project: Project?) {
-  previousExceptionThreadId = threadId
+private fun onSuccess(threadId: Int, eventData: Any?, callback: Consumer<SubmittedReportInfo>, project: Project?) {
+  previousReport = if (eventData is AbstractMessage) eventData.date.time to threadId else null
+
   val linkText = threadId.toString()
   val reportInfo = SubmittedReportInfo(ITNProxy.getBrowseUrl(threadId), linkText, SubmittedReportInfo.SubmissionStatus.NEW_ISSUE)
   callback.consume(reportInfo)

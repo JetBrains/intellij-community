@@ -7,10 +7,8 @@ import com.intellij.util.ExceptionUtil;
 import java.util.Collections;
 import java.util.List;
 
-/**
- * @author stathik
- * @since May 5, 2003
- */
+/** @deprecated trivial and not particularly helpful, could be replaced with {@link java.util.Map} (to be removed in IDEA 2020) */
+@SuppressWarnings({"unused", "DeprecatedIsStillUsed"})
 public class ErrorBean {
   private final String stackTrace;
   private final String lastAction;
@@ -70,12 +68,12 @@ public class ErrorBean {
     this.pluginVersion = pluginVersion;
   }
 
-  public void setAttachments(List<Attachment> attachments) {
-    this.attachments = attachments;
-  }
-
   public List<Attachment> getAttachments() {
     return attachments;
+  }
+
+  public void setAttachments(List<Attachment> attachments) {
+    this.attachments = attachments;
   }
 
   public Integer getAssigneeId() {
