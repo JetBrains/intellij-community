@@ -432,6 +432,22 @@ public class UsageInfo2UsageAdapter implements UsageInModule,
   @Override
   @NotNull
   public TextChunk[] getText() {
+    return doUpdateCachedText();
+  }
+
+  @Nullable
+  @Override
+  public TextChunk[] getCachedText() {
+    return SoftReference.dereference(myTextChunks);
+  }
+
+  @Override
+  public void updateCachedText() {
+    doUpdateCachedText();
+  }
+
+  @NotNull
+  private TextChunk[] doUpdateCachedText() {
     TextChunk[] chunks = SoftReference.dereference(myTextChunks);
     final long currentModificationStamp = getCurrentModificationStamp();
     boolean isModified = currentModificationStamp != myModificationStamp;

@@ -250,11 +250,19 @@ public class LambdaCanBeMethodReferenceInspection extends AbstractBaseJavaLocalI
       return null;
     }
     if (expression instanceof PsiNewExpression) {
-      PsiExpression qualifier = ((PsiNewExpression)expression).getQualifier();
-      if (qualifier != null) return null;
+      PsiNewExpression newExpression = (PsiNewExpression)expression;
+      if (newExpression.getQualifier() != null ||
+          newExpression.getAnonymousClass() != null ||
+          newExpression.getArrayInitializer() != null) {
+        return null;
+      }
       return new MethodReferenceCandidate(expression, true, true);
     }
     else if (expression instanceof PsiMethodCallExpression) {
+      for (PsiExpression arg : ((PsiMethodCallExpression)expression).getArgumentList().getExpressions()) {
+        arg = PsiUtil.skipParenthesizedExprDown(arg);
+        if (!(arg instanceof PsiReferenceExpression) || ((PsiReferenceExpression)arg).getQualifier() != null) return null;
+      }
       return new MethodReferenceCandidate(expression,
                                           checkQualifier(((PsiMethodCallExpression)expression).getMethodExpression().getQualifier()), true);
     }
@@ -296,8 +304,11 @@ public class LambdaCanBeMethodReferenceInspection extends AbstractBaseJavaLocalI
 
   @NotNull
   public static PsiExpression replaceLambdaWithMethodReference(@NotNull PsiLambdaExpression lambda) {
-    PsiElement body = LambdaUtil.extractSingleExpressionFromBody(lambda.getBody());
-    final PsiExpression candidate = canBeMethodReferenceProblem(body, lambda.getParameterList().getParameters(), lambda.getFunctionalInterfaceType(), lambda);
+    MethodReferenceCandidate methodRefCandidate = extractMethodReferenceCandidateExpression(lambda.getBody());
+    if (methodRefCandidate == null || !methodRefCandidate.mySafeQualifier || !methodRefCandidate.myConformsCodeStyle) return lambda;
+    PsiExpression candidate =
+      canBeMethodReferenceProblem(lambda.getParameterList().getParameters(), lambda.getFunctionalInterfaceType(), lambda,
+                                  methodRefCandidate.myExpression);
     return tryConvertToMethodReference(lambda, candidate);
   }
 

@@ -4,7 +4,7 @@ import java.util.Arrays;
 
 public class Main {
   public long test(String[] array) {
-      long longStrings = Arrays.stream(array).map(String::trim).filter(trimmed -> trimmed.length() > 10).count();
+    long longStrings = Arrays.stream(array).map(String::trim).filter(trimmed -> trimmed.length() > 10).count();
       return longStrings;
   }
 }

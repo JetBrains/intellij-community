@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2014 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.vcs;
 
 import com.intellij.notification.*;
@@ -71,6 +57,19 @@ public class VcsNotifier {
   }
 
   @NotNull
+  public Notification notify(@NotNull NotificationGroup notificationGroup,
+                             @NotNull String title,
+                             @NotNull String message,
+                             @NotNull NotificationType type,
+                             NotificationAction... actions) {
+    Notification notification = createNotification(notificationGroup, title, message, type, null);
+    for (NotificationAction action : actions) {
+      notification.addAction(action);
+    }
+    return notify(notification);
+  }
+
+  @NotNull
   public Notification notify(@NotNull Notification notification) {
     notification.notify(myProject);
     return notification;
@@ -78,7 +77,7 @@ public class VcsNotifier {
 
   @NotNull
   public Notification notifyError(@NotNull String title, @NotNull String message) {
-    return notifyError(title, message, null);
+    return notifyError(title, message, (NotificationListener)null);
   }
 
   @NotNull
@@ -87,8 +86,13 @@ public class VcsNotifier {
   }
 
   @NotNull
+  public Notification notifyError(@NotNull String title, @NotNull String message, NotificationAction... actions) {
+    return notify(IMPORTANT_ERROR_NOTIFICATION, title, message, NotificationType.ERROR, actions);
+  }
+
+  @NotNull
   public Notification notifyWeakError(@NotNull String message) {
-    return notify(NOTIFICATION_GROUP_ID, "", message, NotificationType.ERROR, null);
+    return notify(NOTIFICATION_GROUP_ID, "", message, NotificationType.ERROR, (NotificationAction)null);
   }
 
   @NotNull
@@ -108,7 +112,7 @@ public class VcsNotifier {
 
   @NotNull
   public Notification notifyImportantInfo(@NotNull String title, @NotNull String message) {
-    return notify(IMPORTANT_ERROR_NOTIFICATION, title, message, NotificationType.INFORMATION, null);
+    return notify(IMPORTANT_ERROR_NOTIFICATION, title, message, NotificationType.INFORMATION, (NotificationAction)null);
   }
 
   @NotNull
@@ -153,7 +157,7 @@ public class VcsNotifier {
 
   @NotNull
   public Notification notifyImportantWarning(@NotNull String title, @NotNull String message) {
-    return notify(IMPORTANT_ERROR_NOTIFICATION, title, message, NotificationType.WARNING, null);
+    return notify(IMPORTANT_ERROR_NOTIFICATION, title, message, NotificationType.WARNING, (NotificationAction)null);
   }
 
   @NotNull
@@ -163,7 +167,7 @@ public class VcsNotifier {
 
   @NotNull
   public Notification notifyMinorInfo(@NotNull String title, @NotNull String message) {
-    return notifyMinorInfo(title, message, null);
+    return notifyMinorInfo(title, message, (NotificationAction)null);
   }
 
   @NotNull
@@ -171,7 +175,12 @@ public class VcsNotifier {
     return notify(STANDARD_NOTIFICATION, title, message, NotificationType.INFORMATION, listener);
   }
 
+  @NotNull
+  public Notification notifyMinorInfo(@NotNull String title, @NotNull String message, NotificationAction... actions) {
+    return notify(STANDARD_NOTIFICATION, title, message, NotificationType.INFORMATION, actions);
+  }
+
   public Notification logInfo(@NotNull String title, @NotNull String message) {
-    return notify(SILENT_NOTIFICATION, title, message, NotificationType.INFORMATION, null);
+    return notify(SILENT_NOTIFICATION, title, message, NotificationType.INFORMATION, (NotificationAction)null);
   }
 }
