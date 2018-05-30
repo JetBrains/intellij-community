@@ -57,7 +57,7 @@ public class PtyCommandLine extends GeneralCommandLine {
   @Override
   protected Process startProcess(@NotNull List<String> commands) throws IOException {
     try {
-      return startProcessWithPty(commands, myConsoleMode);
+      return startProcessWithPty(commands);
     }
     catch (Throwable t) {
       File logFile = getPtyLogFile();
@@ -94,7 +94,7 @@ public class PtyCommandLine extends GeneralCommandLine {
   }
 
   @NotNull
-  public Process startProcessWithPty(@NotNull List<String> commands, boolean console) throws IOException {
+  public Process startProcessWithPty(@NotNull List<String> commands) throws IOException {
     Map<String, String> env = new HashMap<>();
     setupEnvironment(env);
 
@@ -105,10 +105,19 @@ public class PtyCommandLine extends GeneralCommandLine {
     PtyProcessBuilder builder = new PtyProcessBuilder(command)
       .setEnvironment(env)
       .setDirectory(directory)
-      .setConsole(console)
+      .setConsole(myConsoleMode)
       .setCygwin(cygwin)
       .setLogFile(getPtyLogFile())
       .setRedirectErrorStream(isRedirectErrorStream());
     return builder.start();
+  }
+
+  /**
+   * @deprecated use {@link #setConsoleMode(boolean)} and {@link #startProcessWithPty(List)} instead
+   */
+  @NotNull
+  public Process startProcessWithPty(@NotNull List<String> commands, boolean console) throws IOException {
+    setConsoleMode(console);
+    return startProcessWithPty(commands);
   }
 }
