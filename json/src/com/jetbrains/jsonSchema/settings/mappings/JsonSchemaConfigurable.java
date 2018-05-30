@@ -1,5 +1,5 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-package com.jetbrains.jsonSchema;
+package com.jetbrains.jsonSchema.settings.mappings;
 
 import com.intellij.execution.configurations.RuntimeConfigurationWarning;
 import com.intellij.openapi.options.ConfigurationException;
@@ -7,7 +7,6 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.MessageType;
 import com.intellij.openapi.ui.NamedConfigurable;
 import com.intellij.openapi.util.Comparing;
-import com.intellij.openapi.util.Couple;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
@@ -15,8 +14,8 @@ import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.impl.http.HttpVirtualFile;
 import com.intellij.util.Function;
-import com.intellij.util.UriUtil;
 import com.intellij.util.Urls;
+import com.jetbrains.jsonSchema.UserDefinedJsonSchemaConfiguration;
 import com.jetbrains.jsonSchema.impl.JsonSchemaReader;
 import com.jetbrains.jsonSchema.remote.JsonFileResolver;
 import org.jetbrains.annotations.Nls;
@@ -124,13 +123,8 @@ public class JsonSchemaConfigurable extends NamedConfigurable<UserDefinedJsonSch
     mySchema.setRelativePathToSchema(myView.getSchemaSubPath());
   }
 
-  public static boolean isHttpPath(@NotNull String schemaFieldText) {
-    Couple<String> couple = UriUtil.splitScheme(schemaFieldText);
-    return couple.first.startsWith("http");
-  }
-
   public static boolean isValidURL(@NotNull final String url) {
-    return isHttpPath(url) && Urls.parse(url, false) != null;
+    return JsonFileResolver.isHttpPath(url) && Urls.parse(url, false) != null;
   }
 
   private void doValidation() throws ConfigurationException {
@@ -143,7 +137,7 @@ public class JsonSchemaConfigurable extends NamedConfigurable<UserDefinedJsonSch
     VirtualFile vFile;
     String filename;
 
-    if (isHttpPath(schemaSubPath)) {
+    if (JsonFileResolver.isHttpPath(schemaSubPath)) {
       filename = schemaSubPath;
 
       if (!isValidURL(schemaSubPath)) {

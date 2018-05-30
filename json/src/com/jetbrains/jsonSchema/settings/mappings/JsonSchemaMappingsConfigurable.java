@@ -1,5 +1,5 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-package com.jetbrains.jsonSchema;
+package com.jetbrains.jsonSchema.settings.mappings;
 
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
 import com.intellij.openapi.Disposable;
@@ -17,6 +17,8 @@ import com.intellij.util.Function;
 import com.intellij.util.IconUtil;
 import com.intellij.util.ThreeState;
 import com.intellij.util.containers.MultiMap;
+import com.jetbrains.jsonSchema.JsonSchemaMappingsProjectConfiguration;
+import com.jetbrains.jsonSchema.UserDefinedJsonSchemaConfiguration;
 import com.jetbrains.jsonSchema.ide.JsonSchemaService;
 import com.jetbrains.jsonSchema.impl.JsonSchemaVersion;
 import org.jetbrains.annotations.Nls;
@@ -28,7 +30,7 @@ import javax.swing.tree.DefaultTreeModel;
 import java.io.File;
 import java.util.*;
 
-import static com.jetbrains.jsonSchema.JsonSchemaConfigurable.isHttpPath;
+import static com.jetbrains.jsonSchema.remote.JsonFileResolver.isHttpPath;
 
 /**
  * @author Irina.Chernushina on 2/2/2016.

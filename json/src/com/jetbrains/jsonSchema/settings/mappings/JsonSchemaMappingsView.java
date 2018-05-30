@@ -1,36 +1,33 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-package com.jetbrains.jsonSchema;
+package com.jetbrains.jsonSchema.settings.mappings;
 
-import com.intellij.icons.AllIcons;
 import com.intellij.json.JsonBundle;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.CommonShortcuts;
-import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory;
 import com.intellij.openapi.fileEditor.OpenFileDescriptor;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.ComboBox;
-import com.intellij.openapi.ui.DialogBuilder;
 import com.intellij.openapi.ui.MessageType;
 import com.intellij.openapi.ui.TextFieldWithBrowseButton;
 import com.intellij.openapi.ui.popup.Balloon;
 import com.intellij.openapi.ui.popup.BalloonBuilder;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
-import com.intellij.openapi.util.Disposer;
-import com.intellij.openapi.util.Getter;
+import com.intellij.openapi.ui.popup.PopupStep;
+import com.intellij.openapi.ui.popup.util.BaseListPopupStep;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.*;
+import com.intellij.ui.awt.RelativePoint;
 import com.intellij.ui.components.JBLabel;
-import com.intellij.ui.components.JBPanel;
-import com.intellij.ui.components.JBRadioButton;
 import com.intellij.ui.components.JBTextField;
 import com.intellij.ui.table.TableView;
-import com.intellij.util.Alarm;
 import com.intellij.util.ui.*;
+import com.jetbrains.jsonSchema.JsonMappingKind;
+import com.jetbrains.jsonSchema.UserDefinedJsonSchemaConfiguration;
 import com.jetbrains.jsonSchema.extension.JsonSchemaInfo;
 import com.jetbrains.jsonSchema.impl.JsonSchemaVersion;
 import org.jetbrains.annotations.NotNull;
@@ -39,21 +36,17 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import javax.swing.event.DocumentEvent;
 import javax.swing.table.DefaultTableCellRenderer;
+import javax.swing.table.TableCellEditor;
 import javax.swing.table.TableCellRenderer;
 import java.awt.*;
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
-import java.awt.event.MouseAdapter;
-import java.awt.event.MouseEvent;
 import java.io.File;
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Consumer;
 
-import static com.jetbrains.jsonSchema.JsonSchemaConfigurable.isHttpPath;
-import static com.jetbrains.jsonSchema.JsonSchemaConfigurable.isValidURL;
+import static com.jetbrains.jsonSchema.remote.JsonFileResolver.isHttpPath;
+import static com.jetbrains.jsonSchema.settings.mappings.JsonSchemaConfigurable.isValidURL;
 
 /**
  * @author Irina.Chernushina on 2/2/2016.
@@ -61,6 +54,7 @@ import static com.jetbrains.jsonSchema.JsonSchemaConfigurable.isValidURL;
 public class JsonSchemaMappingsView implements Disposable {
   private static final String ADD_SCHEMA_MAPPING = "settings.json.schema.add.mapping";
   private static final String EDIT_SCHEMA_MAPPING = "settings.json.schema.edit.mapping";
+  private static final String REMOVE_SCHEMA_MAPPING = "settings.json.schema.remove.mapping";
   private final Runnable myTreeUpdater;
   private final Consumer<String> mySchemaPathChangedCallback;
   private TableView<UserDefinedJsonSchemaConfiguration.Item> myTableView;
@@ -83,23 +77,19 @@ public class JsonSchemaMappingsView implements Disposable {
 
   private void createUI(final Project project) {
     myProject = project;
-    myTableView = new JsonMappingsTableView();
+    MyAddActionButtonRunnable addActionButtonRunnable = new MyAddActionButtonRunnable();
+
+    myTableView = new JsonMappingsTableView(addActionButtonRunnable);
     myTableView.getTableHeader().setVisible(false);
     final ToolbarDecorator decorator = ToolbarDecorator.createDecorator(myTableView);
-    final MyEditActionButtonRunnableImpl editAction = new MyEditActionButtonRunnableImpl(project);
+    final MyEditActionButtonRunnableImpl editAction = new MyEditActionButtonRunnableImpl();
     decorator.setRemoveAction(new MyRemoveActionButtonRunnable())
-             .setAddAction(new MyAddActionButtonRunnable(project))
+             .setRemoveActionName(REMOVE_SCHEMA_MAPPING)
+             .setAddAction(addActionButtonRunnable)
+             .setAddActionName(JsonBundle.message(ADD_SCHEMA_MAPPING))
              .setEditAction(editAction)
+             .setEditActionName(JsonBundle.message(EDIT_SCHEMA_MAPPING))
              .disableUpDownActions();
-
-    myTableView.addMouseListener(new MouseAdapter() {
-      @Override
-      public void mouseClicked(MouseEvent e) {
-        if (e.getClickCount() == 2) {
-          editAction.execute();
-        }
-      }
-    });
 
     JBTextField schemaFieldBacking = new JBTextField();
     mySchemaField = new TextFieldWithBrowseButton(schemaFieldBacking);
@@ -201,7 +191,7 @@ public class JsonSchemaMappingsView implements Disposable {
     return FileUtil.toSystemDependentName(JsonSchemaInfo.getRelativePath(myProject, schemaFieldText));
   }
 
-  private static ColumnInfo[] createColumns() {
+  private ColumnInfo[] createColumns() {
     return new ColumnInfo[] { new MappingItemColumnInfo() };
   }
 
@@ -209,7 +199,7 @@ public class JsonSchemaMappingsView implements Disposable {
     return myComponent;
   }
 
-  private static class MappingItemColumnInfo extends ColumnInfo<UserDefinedJsonSchemaConfiguration.Item, String> {
+  private class MappingItemColumnInfo extends ColumnInfo<UserDefinedJsonSchemaConfiguration.Item, String> {
     public MappingItemColumnInfo() {super("");}
 
     @Nullable
@@ -230,159 +220,70 @@ public class JsonSchemaMappingsView implements Disposable {
                                                        int row,
                                                        int column) {
           JLabel label = (JLabel)super.getTableCellRendererComponent(table, value, isSelected, hasFocus, row, column);
-          label.setIcon(item.directory ? AllIcons.Nodes.Folder : item.pattern ? AllIcons.FileTypes.Unknown : AllIcons.FileTypes.Any_type);
+          label.setIcon(item.mappingKind.getIcon());
           return label;
         }
       };
     }
-  }
 
-  private abstract class MyAddOrEditActionButtonRunnableBase implements AnActionButtonRunnable {
-    private final Project myProject;
-
-    public MyAddOrEditActionButtonRunnableBase(Project project) {
-      myProject = project;
+    @Nullable
+    @Override
+    public TableCellEditor getEditor(UserDefinedJsonSchemaConfiguration.Item item) {
+      return new JsonMappingsTableCellEditor(item, myProject, myTreeUpdater);
     }
 
     @Override
-    public abstract void run(AnActionButton button);
-
-    protected void doRun(@Nullable UserDefinedJsonSchemaConfiguration.Item currentItem, int selectedRow) {
-      final JBPanel panel = new JBPanel(new GridBagLayout());
-      final GridBag bag = new GridBag();
-
-      final JBTextField patternField = new JBTextField();
-      final TextFieldWithBrowseButton directoryField = new TextFieldWithBrowseButton();
-      if (currentItem != null && currentItem.directory) {
-        directoryField.setText(currentItem.path);
-      }
-      final TextFieldWithBrowseButton fileField = new TextFieldWithBrowseButton();
-      if (currentItem != null && !currentItem.directory && !currentItem.pattern) {
-        fileField.setText(currentItem.path);
-      }
-
-      bag.setDefaultAnchor(GridBagConstraints.NORTHWEST);
-      final JBRadioButton radioPattern = new JBRadioButton("Filename pattern:");
-      final JBRadioButton radioDirectory = new JBRadioButton("Files under:");
-      final JBRadioButton radioFile = new JBRadioButton("File:");
-
-      panel.add(radioDirectory, bag.nextLine().next().fillCellNone().weightx(0));
-      panel.add(directoryField, bag.next().fillCellHorizontally().weightx(1));
-
-      panel.add(radioPattern, bag.nextLine().next().fillCellNone().weightx(0));
-      panel.add(patternField, bag.next().fillCellHorizontally().weightx(1));
-
-      panel.add(radioFile, bag.nextLine().next().fillCellNone().weightx(0));
-      panel.add(fileField, bag.next().fillCellHorizontally().weightx(1));
-
-      SwingHelper.installFileCompletionAndBrowseDialog(myProject, directoryField, "Select Folder", FileChooserDescriptorFactory.createSingleFolderDescriptor());
-      SwingHelper.installFileCompletionAndBrowseDialog(myProject, fileField, "Select File", FileChooserDescriptorFactory.createSingleFileDescriptor());
-
-      final ButtonGroup group = new ButtonGroup();
-      group.add(radioPattern);
-      group.add(radioDirectory);
-      group.add(radioFile);
-
-      if (currentItem == null) {
-        radioDirectory.setSelected(true);
-      }
-      else {
-        if (currentItem.pattern) radioPattern.setSelected(true);
-        else if (currentItem.directory) radioDirectory.setSelected(true);
-        else radioFile.setSelected(true);
-      }
-
-      patternField.setMinimumSize(new Dimension(JBUI.scale(200), UIUtil.getInformationIcon().getIconHeight()));
-      patternField.getEmptyText().setText("Example: *.config.json");
-      if (currentItem != null && currentItem.pattern) {
-        patternField.setText(currentItem.path);
-      }
-
-      final DialogBuilder builder = new DialogBuilder();
-      String addOrEdit = currentItem == null ? "Add" : "Edit";
-      builder.setTitle(addOrEdit + " JSON Schema Mapping");
-      builder.setNorthPanel(panel);
-      builder.setPreferredFocusComponent(directoryField);
-      builder.setDimensionServiceKey("com.jetbrains.jsonSchema.JsonSchemaMappingsView#add");
-      builder.setHelpId(currentItem == null ? ADD_SCHEMA_MAPPING : EDIT_SCHEMA_MAPPING);
-
-      final Getter<String> textGetter = () -> {
-        if (radioPattern.isSelected()) {
-          return patternField.getText();
-        }
-
-        final String text;
-        if (radioDirectory.isSelected()) {
-          text = directoryField.getText();
-        } else {
-          text = fileField.getText();
-        }
-        return JsonSchemaInfo.getRelativePath(myProject, text);
-      };
-      final Alarm alarm = new Alarm(Alarm.ThreadToUse.SWING_THREAD);
-      final Runnable updaterValidator = new Runnable() {
-        @Override
-        public void run() {
-          if (!patternField.isVisible()) return;
-          patternField.setEnabled(radioPattern.isSelected());
-          directoryField.setEnabled(radioDirectory.isSelected());
-          fileField.setEnabled(radioFile.isSelected());
-          builder.setOkActionEnabled(!StringUtil.isEmptyOrSpaces(textGetter.get()));
-
-          alarm.addRequest(this, 300, ModalityState.any());
-        }
-      };
-      alarm.addRequest(updaterValidator, 300, ModalityState.any());
-      updaterValidator.run();
-      final ActionListener listener = new ActionListener() {
-        @Override
-        public void actionPerformed(ActionEvent e) {
-          updaterValidator.run();
-        }
-      };
-      radioPattern.addActionListener(listener);
-      radioDirectory.addActionListener(listener);
-      radioFile.addActionListener(listener);
-
-      if (myProject == null || myProject.getBasePath() == null) {
-        radioDirectory.setEnabled(false);
-        radioFile.setEnabled(false);
-        directoryField.setEnabled(false);
-        fileField.setEnabled(false);
-      }
-
-      if (builder.showAndGet()) {
-        final String pattern = textGetter.get();
-        final UserDefinedJsonSchemaConfiguration.Item item =
-          new UserDefinedJsonSchemaConfiguration.Item(pattern, radioPattern.isSelected(), radioDirectory.isSelected());
-        if (currentItem != null) {
-          myTableView.getListTableModel().removeRow(selectedRow);
-          myTableView.getListTableModel().insertRow(selectedRow, item);
-          myTableView.setSelection(Collections.singleton(item));
-        }
-        else {
-          myTableView.getListTableModel().addRow(item);
-        }
-        myTreeUpdater.run();
-      }
-      Disposer.dispose(alarm);
+    public boolean isCellEditable(UserDefinedJsonSchemaConfiguration.Item item) {
+      return true;
     }
   }
 
-  private class MyAddActionButtonRunnable extends MyAddOrEditActionButtonRunnableBase {
-    public MyAddActionButtonRunnable(Project project) {
-      super(project);
+  class MyAddActionButtonRunnable implements AnActionButtonRunnable {
+    public MyAddActionButtonRunnable() {
+      super();
     }
 
     @Override
     public void run(AnActionButton button) {
-      doRun(null, -1);
+      RelativePoint point = button.getPreferredPopupPoint();
+      if (point == null) {
+        point = new RelativePoint(button.getContextComponent(), new Point(0, 0));
+      }
+      JBPopupFactory.getInstance().createListPopup(new BaseListPopupStep<JsonMappingKind>(null,
+                                                                                          JsonMappingKind.values()) {
+        @NotNull
+        @Override
+        public String getTextFor(JsonMappingKind value) {
+          return "Add " + StringUtil.capitalizeWords(value.getDescription(), true);
+        }
+
+        @Override
+        public Icon getIconFor(JsonMappingKind value) {
+          return value.getIcon();
+        }
+
+        @Override
+        public PopupStep onChosen(JsonMappingKind selectedValue, boolean finalChoice) {
+          if (finalChoice) {
+            return doFinalStep(() -> doRun(selectedValue));
+          }
+          return PopupStep.FINAL_CHOICE;
+        }
+      }).show(point);
+    }
+
+    void doRun(JsonMappingKind mappingKind) {
+      UserDefinedJsonSchemaConfiguration.Item currentItem = new UserDefinedJsonSchemaConfiguration.Item("", mappingKind);
+      myTableView.getListTableModel().addRow(currentItem);
+      myTableView.editCellAt(myTableView.getListTableModel().getRowCount() - 1, 0);
+
+      myTreeUpdater.run();
     }
   }
 
-  private class MyEditActionButtonRunnableImpl extends MyAddOrEditActionButtonRunnableBase {
-    public MyEditActionButtonRunnableImpl(Project project) {
-      super(project);
+  private class MyEditActionButtonRunnableImpl implements AnActionButtonRunnable {
+    public MyEditActionButtonRunnableImpl() {
+      super();
     }
 
     @Override
@@ -393,9 +294,7 @@ public class JsonSchemaMappingsView implements Disposable {
     public void execute() {
       int selectedRow = myTableView.getSelectedRow();
       if (selectedRow == -1) return;
-      UserDefinedJsonSchemaConfiguration.Item item = myTableView.getListTableModel().getItem(selectedRow);
-      if (item == null) return;
-      doRun(item, selectedRow);
+      myTableView.editCellAt(selectedRow, 0);
     }
   }
 
@@ -442,28 +341,6 @@ public class JsonSchemaMappingsView implements Disposable {
         return;
       }
       myLabel.setErrorText(null, null);
-    }
-  }
-
-  private class JsonMappingsTableView extends TableView<UserDefinedJsonSchemaConfiguration.Item> {
-    private final StatusText myEmptyText;
-
-    public JsonMappingsTableView() {
-      myEmptyText = new StatusText() {
-        @Override
-        protected boolean isStatusVisible() {
-          return isEmpty();
-        }
-      };
-      myEmptyText.setText("No schema mappings defined");
-      myEmptyText.appendSecondaryText("Add mapping for a file, folder or pattern", SimpleTextAttributes.LINK_ATTRIBUTES,
-                                      e -> new MyAddActionButtonRunnable(myProject).doRun(null, -1));
-    }
-
-    @NotNull
-    @Override
-    public StatusText getEmptyText() {
-      return myEmptyText;
     }
   }
 }
