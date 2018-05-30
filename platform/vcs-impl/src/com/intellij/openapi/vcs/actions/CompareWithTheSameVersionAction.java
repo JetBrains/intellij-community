@@ -22,11 +22,12 @@ import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-public class CompareWithTheSameVersionAction extends AbstractShowDiffAction{
+public class CompareWithTheSameVersionAction extends AbstractShowDiffAction {
+  @NotNull
   protected DiffActionExecutor getExecutor(@NotNull DiffProvider diffProvider,
                                            @NotNull VirtualFile selectedFile,
                                            @NotNull Project project,
                                            @Nullable Editor editor) {
-    return new DiffActionExecutor.CompareToCurrentExecutor(diffProvider, selectedFile, project, editor, getKey());
+    return new DiffActionExecutor.CompareToCurrentExecutor(diffProvider, selectedFile, project, editor);
   }
 }

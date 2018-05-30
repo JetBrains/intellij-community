@@ -36,22 +36,16 @@ import java.util.stream.Stream;
 import static com.intellij.util.ObjectUtils.assertNotNull;
 import static com.intellij.util.containers.UtilKt.getIfSingle;
 
-public abstract class AbstractShowDiffAction extends AbstractVcsAction{
-
+public abstract class AbstractShowDiffAction extends AbstractVcsAction {
   @Override
   protected void update(@NotNull VcsContext vcsContext, @NotNull Presentation presentation) {
-    updateDiffAction(presentation, vcsContext, getKey());
+    updateDiffAction(presentation, vcsContext);
   }
 
   protected static void updateDiffAction(@NotNull Presentation presentation,
-                                         @NotNull VcsContext vcsContext,
-                                         @Nullable VcsBackgroundableActions actionKey) {
-    presentation.setEnabled(isEnabled(vcsContext, actionKey));
+                                         @NotNull VcsContext vcsContext) {
+    presentation.setEnabled(isEnabled(vcsContext, VcsBackgroundableActions.COMPARE_WITH));
     presentation.setVisible(isVisible(vcsContext));
-  }
-
-  protected VcsBackgroundableActions getKey() {
-    return VcsBackgroundableActions.COMPARE_WITH;
   }
 
   protected static boolean isVisible(@NotNull VcsContext vcsContext) {
