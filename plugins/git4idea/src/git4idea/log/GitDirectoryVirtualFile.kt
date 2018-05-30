@@ -26,7 +26,7 @@ class GitDirectoryVirtualFile(
 
   private val cachedChildren by lazy {
     val gitRevisionNumber = GitRevisionNumber(commit.id.asString())
-    val remotePath = if (path.isEmpty()) "" else path + "/"
+    val remotePath = if (path.isEmpty()) "." else path + "/"
 
     val tree = GitIndexUtil.listTree(repo, listOf(RemoteFilePath(remotePath, true)), gitRevisionNumber)
     val result = tree.map {
