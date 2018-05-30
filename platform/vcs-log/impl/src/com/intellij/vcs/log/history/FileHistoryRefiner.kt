@@ -5,7 +5,6 @@ import com.intellij.openapi.vcs.FilePath
 import com.intellij.util.ObjectUtils.notNull
 import com.intellij.util.containers.ContainerUtil
 import com.intellij.util.containers.Stack
-import com.intellij.vcs.log.data.index.IndexDataGetter
 import com.intellij.vcs.log.graph.api.LiteLinearGraph
 import com.intellij.vcs.log.graph.api.permanent.PermanentCommitsInfo
 import com.intellij.vcs.log.graph.impl.facade.VisibleGraphImpl
@@ -15,7 +14,7 @@ import com.intellij.vcs.log.graph.utils.LinearGraphUtils
 import com.intellij.vcs.log.graph.utils.impl.BitSetFlags
 
 internal class FileHistoryRefiner(private val myVisibleGraph: VisibleGraphImpl<Int>,
-                                  private val myNamesData: IndexDataGetter.FileNamesData) : DfsUtil.NodeVisitor {
+                                  private val myNamesData: FileNamesData) : DfsUtil.NodeVisitor {
   private val permanentCommitsInfo: PermanentCommitsInfo<Int> = myVisibleGraph.permanentGraph.permanentCommitsInfo
   private val permanentLinearGraph: LiteLinearGraph = LinearGraphUtils.asLiteLinearGraph(myVisibleGraph.permanentGraph.linearGraph)
 

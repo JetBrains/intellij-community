@@ -29,7 +29,6 @@ import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.util.containers.ContainerUtil
 import com.intellij.vcs.log.*
 import com.intellij.vcs.log.data.*
-import com.intellij.vcs.log.data.index.IndexDataGetter
 import com.intellij.vcs.log.graph.GraphCommit
 import com.intellij.vcs.log.graph.GraphCommitImpl
 import com.intellij.vcs.log.graph.PermanentGraph
@@ -214,7 +213,7 @@ internal class FileHistoryFilterer(logData: VcsLogData) : VcsLogFilterer {
 
     private fun getCurrentRow(pack: DataPack,
                               visibleGraph: VisibleGraph<Int>,
-                              fileIndexData: IndexDataGetter.FileNamesData): Int {
+                              fileIndexData: FileNamesData): Int {
       val permanentGraph = pack.permanentGraph
       if (permanentGraph is PermanentGraphImpl<*>) {
         val hash = hash ?: getHead(pack)
@@ -239,7 +238,7 @@ internal class FileHistoryFilterer(logData: VcsLogData) : VcsLogFilterer {
     private fun findAncestorRowAffectingFile(permanentGraph: PermanentGraphImpl<Int>,
                                              hash: Hash,
                                              visibleGraph: VisibleGraph<Int>,
-                                             fileNamesData: IndexDataGetter.FileNamesData): Int {
+                                             fileNamesData: FileNamesData): Int {
       val result = Ref<Int>()
 
       val commitsInfo = permanentGraph.permanentCommitsInfo
