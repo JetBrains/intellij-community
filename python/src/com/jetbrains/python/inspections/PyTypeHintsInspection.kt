@@ -8,10 +8,12 @@ import com.intellij.openapi.util.TextRange
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiElementVisitor
 import com.intellij.psi.PsiFileFactory
+import com.intellij.psi.util.PsiTreeUtil
 import com.intellij.psi.util.QualifiedName
 import com.jetbrains.python.PyNames
 import com.jetbrains.python.codeInsight.controlflow.ControlFlowCache
 import com.jetbrains.python.codeInsight.controlflow.ReadWriteInstruction
+import com.jetbrains.python.codeInsight.controlflow.ScopeOwner
 import com.jetbrains.python.codeInsight.dataflow.scope.ScopeUtil
 import com.jetbrains.python.codeInsight.functionTypeComments.PyFunctionTypeAnnotationDialect
 import com.jetbrains.python.codeInsight.typing.PyTypingTypeProvider
@@ -72,17 +74,7 @@ class PyTypeHintsInspection : PyInspection() {
     override fun visitPySubscriptionExpression(node: PySubscriptionExpression) {
       super.visitPySubscriptionExpression(node)
 
-      val operand = node.operand as? PyReferenceExpression ?: return
-      val index = node.indexExpression ?: return
-
-      val callableQName = QualifiedName.fromDottedString(PyTypingTypeProvider.CALLABLE)
-
-      PyResolveUtil.resolveImportedElementQNameLocally(operand).forEach {
-        when (it) {
-          genericQName -> checkGenericParameters(index)
-          callableQName -> checkCallableParameters(index)
-        }
-      }
+      checkParameters(node)
     }
 
     override fun visitPyReferenceExpression(node: PyReferenceExpression) {
@@ -438,6 +430,33 @@ class PyTypeHintsInspection : PyInspection() {
       return Pair(if (seenGeneric) genericTypeVars else null, nonGenericTypeVars)
     }
 
+    private fun checkParameters(node: PySubscriptionExpression) {
+      val operand = node.operand as? PyReferenceExpression ?: return
+      val index = node.indexExpression ?: return
+
+      val callableQName = QualifiedName.fromDottedString(PyTypingTypeProvider.CALLABLE)
+      val qNames = PyResolveUtil.resolveImportedElementQNameLocally(operand)
+
+      var typingOnly = true
+      var callableExists = false
+
+      qNames.forEach {
+        when (it) {
+          genericQName -> checkGenericParameters(index)
+          callableQName -> {
+            callableExists = true
+            checkCallableParameters(index)
+          }
+        }
+
+        typingOnly = typingOnly && it.firstComponent == PyTypingTypeProvider.TYPING
+      }
+
+      if (qNames.isNotEmpty() && typingOnly) {
+        checkTypingMemberParameters(index, callableExists)
+      }
+    }
+
     private fun checkGenericParameters(index: PyExpression) {
       val parameters = (index as? PyTupleExpression)?.elements ?: arrayOf(index)
       val typeVars = mutableSetOf<PsiElement>()
@@ -496,6 +515,26 @@ class PyTypeHintsInspection : PyInspection() {
                           if (first is PyParenthesizedExpression) ReplaceWithListQuickFix() else SurroundElementWithSquareBracketsQuickFix())
         }
       }
+    }
+
+    private fun checkTypingMemberParameters(index: PyExpression, isCallable: Boolean) {
+      val parameters = if (index is PyTupleExpression) index.elements else arrayOf(index)
+
+      parameters
+        .asSequence()
+        .drop(if (isCallable) 1 else 0)
+        .forEach {
+          if (it is PyListLiteralExpression) {
+            registerProblem(it,
+                            "Parameters to generic types must be types",
+                            ProblemHighlightType.GENERIC_ERROR,
+                            null,
+                            RemoveSquareBracketsQuickFix())
+          }
+          else if (it is PyReferenceExpression && multiFollowAssignmentsChain(it).any { it is PyListLiteralExpression }) {
+            registerProblem(it, "Parameters to generic types must be types", ProblemHighlightType.GENERIC_ERROR)
+          }
+        }
     }
 
     private fun checkTupleMatching(expression: PyExpression) {
@@ -690,6 +729,37 @@ class PyTypeHintsInspection : PyInspection() {
         val list = PyElementGenerator.getInstance(project).createListLiteral()
         elements.forEach { list.add(it) }
         element.replace(list)
+      }
+    }
+
+    private class RemoveSquareBracketsQuickFix : LocalQuickFix {
+
+      override fun getFamilyName() = "Remove square brackets"
+
+      override fun applyFix(project: Project, descriptor: ProblemDescriptor) {
+        val element = descriptor.psiElement as? PyListLiteralExpression ?: return
+
+        val subscription = PsiTreeUtil.getParentOfType(element, PySubscriptionExpression::class.java, true, ScopeOwner::class.java)
+        val index = subscription?.indexExpression ?: return
+
+        val newIndexElements = if (index is PyTupleExpression) {
+          index.elements.flatMap { if (it == element) element.elements.asList() else listOf(it) }
+        }
+        else {
+          element.elements.asList()
+        }
+
+        if (newIndexElements.size == 1) {
+          index.replace(newIndexElements.first())
+        }
+        else {
+          val newIndexText = newIndexElements.joinToString(prefix = "(", postfix = ")") { it.text }
+
+          val expression = PyElementGenerator.getInstance(project).createExpressionFromText(LanguageLevel.forElement(element), newIndexText)
+          val newIndex = (expression as? PyParenthesizedExpression)?.containedExpression as? PyTupleExpression ?: return
+
+          index.replace(newIndex)
+        }
       }
     }
   }

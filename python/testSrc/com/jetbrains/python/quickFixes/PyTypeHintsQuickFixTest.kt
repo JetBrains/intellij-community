@@ -100,4 +100,52 @@ class PyTypeHintsQuickFixTest : PyQuickFixTestCase() {
   fun testFunctionAnnotationAndTypeComment() {
     doQuickFixTest(PyTypeHintsInspection::class.java, "Remove function annotations", LanguageLevel.PYTHON35)
   }
+
+  // PY-20530
+  fun testOneElementListAsTypingMemberParameter() {
+    doQuickFixTest(PyTypeHintsInspection::class.java, "Remove square brackets", LanguageLevel.PYTHON37)
+  }
+
+  // PY-20530
+  fun testMultipleElementListAsTypingMemberParameter() {
+    doQuickFixTest(PyTypeHintsInspection::class.java, "Remove square brackets", LanguageLevel.PYTHON37)
+  }
+
+  // PY-20530
+  fun testOneElementListInTupleAsTypingMemberParameter() {
+    doQuickFixTest(PyTypeHintsInspection::class.java, "Remove square brackets", LanguageLevel.PYTHON37)
+  }
+
+  // PY-20530
+  fun testMultipleElementListInTupleAsTypingMemberParameter() {
+    doQuickFixTest(PyTypeHintsInspection::class.java, "Remove square brackets", LanguageLevel.PYTHON37)
+  }
+
+  // PY-20530
+  fun testReferenceToListAsTypingMemberParameter() {
+    runWithLanguageLevel(
+      LanguageLevel.PYTHON37,
+      {
+        myFixture.enableInspections(PyTypeHintsInspection::class.java)
+        myFixture.configureByFile("${getTestName(true)}.py")
+        myFixture.checkHighlighting(true, false, false)
+
+        assertEmpty(myFixture.filterAvailableIntentions("Remove square brackets"))
+      }
+    )
+  }
+
+  // PY-20530
+  fun testReferenceToListInTupleAsTypingMemberParameter() {
+    runWithLanguageLevel(
+      LanguageLevel.PYTHON37,
+      {
+        myFixture.enableInspections(PyTypeHintsInspection::class.java)
+        myFixture.configureByFile("${getTestName(true)}.py")
+        myFixture.checkHighlighting(true, false, false)
+
+        assertEmpty(myFixture.filterAvailableIntentions("Remove square brackets"))
+      }
+    )
+  }
 }

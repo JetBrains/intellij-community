@@ -763,6 +763,29 @@ public class PyTypeHintsInspectionTest extends PyInspectionTestCase {
                  "        pass");
   }
 
+  // PY-20530
+  public void testTypingMemberParameters() {
+    runWithLanguageLevel(
+      LanguageLevel.PYTHON36,
+      () -> doTestByText(
+        "from typing import Callable, List\n" +
+        "\n" +
+        "foo1: Callable[[int], <error descr=\"Parameters to generic types must be types\">[int]</error>] = None\n" +
+        "foo2: Callable[[int], <error descr=\"Parameters to generic types must be types\">[int, str]</error>] = None\n" +
+        "foo3: List[<error descr=\"Parameters to generic types must be types\">[int]</error>]\n" +
+        "foo4: List[<error descr=\"Parameters to generic types must be types\">[int, str]</error>]\n" +
+        "\n" +
+        "l1 = [int]\n" +
+        "l2 = [int, str]\n" +
+        "\n" +
+        "foo5: Callable[[int], <error descr=\"Parameters to generic types must be types\">l1</error>] = None\n" +
+        "foo6: Callable[[int], <error descr=\"Parameters to generic types must be types\">l2</error>] = None\n" +
+        "foo7: List[<error descr=\"Parameters to generic types must be types\">l1</error>]\n" +
+        "foo8: List[<error descr=\"Parameters to generic types must be types\">l2</error>]"
+      )
+    );
+  }
+
   @NotNull
   @Override
   protected Class<? extends PyInspection> getInspectionClass() {
