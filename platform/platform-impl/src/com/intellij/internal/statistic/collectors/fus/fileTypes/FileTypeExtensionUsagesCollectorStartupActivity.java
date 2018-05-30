@@ -4,7 +4,6 @@ package com.intellij.internal.statistic.collectors.fus.fileTypes;
 import com.intellij.internal.statistic.service.fus.collectors.FUSProjectUsageTrigger;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.ex.AnActionListener;
-import com.intellij.openapi.components.AbstractProjectComponent;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.actionSystem.EditorAction;
 import com.intellij.openapi.editor.actionSystem.EditorWriteActionHandler;
@@ -13,23 +12,20 @@ import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.fileEditor.FileEditorManagerEvent;
 import com.intellij.openapi.fileEditor.FileEditorManagerListener;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.startup.StartupActivity;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.messages.MessageBusConnection;
 import org.jetbrains.annotations.NotNull;
 
-public class FileExtensionUsagesCollectorComponent extends AbstractProjectComponent {
-  public FileExtensionUsagesCollectorComponent(Project project) {
-    super(project);
-  }
-
+public class FileTypeExtensionUsagesCollectorStartupActivity implements StartupActivity {
   @Override
-  public void projectOpened() {
-    MessageBusConnection myConnection = myProject.getMessageBus().connect();
+  public void runActivity(@NotNull Project project) {
+    MessageBusConnection myConnection = project.getMessageBus().connect();
     myConnection.subscribe(FileEditorManagerListener.FILE_EDITOR_MANAGER, new FileEditorManagerListener() {
       @Override
       public void fileOpened(@NotNull FileEditorManager source, @NotNull VirtualFile file) {
-        FUSProjectUsageTrigger.getInstance(myProject).trigger(FileExtensionOpenUsageTriggerCollector.class, file.getExtension() != null ? file.getExtension() : file.getName());
-        FUSProjectUsageTrigger.getInstance(myProject).trigger(FileTypeOpenUsageTriggerCollector.class, file.getFileType().getName());
+        FUSProjectUsageTrigger.getInstance(project).trigger(FileExtensionOpenUsageTriggerCollector.class, file.getExtension() != null ? file.getExtension() : file.getName());
+        FUSProjectUsageTrigger.getInstance(project).trigger(FileTypeOpenUsageTriggerCollector.class, file.getFileType().getName());
       }
 
       @Override
@@ -51,12 +47,12 @@ public class FileExtensionUsagesCollectorComponent extends AbstractProjectCompon
 
       private void onChange(DataContext dataContext) {
         final Editor editor = CommonDataKeys.EDITOR.getData(dataContext);
-        if (editor == null || editor.getProject() != myProject) return;
+        if (editor == null || editor.getProject() != project) return;
         VirtualFile file = FileDocumentManager.getInstance().getFile(editor.getDocument());
         if (file != null) {
-          FUSProjectUsageTrigger.getInstance(myProject).trigger(FileExtensionEditUsageTriggerCollector.class,
+          FUSProjectUsageTrigger.getInstance(project).trigger(FileExtensionEditUsageTriggerCollector.class,
                                                                 file.getExtension() != null ? file.getExtension() : file.getName());
-          FUSProjectUsageTrigger.getInstance(myProject).trigger(FileTypeEditUsageTriggerCollector.class, file.getFileType().getName());
+          FUSProjectUsageTrigger.getInstance(project).trigger(FileTypeEditUsageTriggerCollector.class, file.getFileType().getName());
         }
       }
 
@@ -64,6 +60,6 @@ public class FileExtensionUsagesCollectorComponent extends AbstractProjectCompon
       public void beforeEditorTyping(char c, DataContext dataContext) {
         onChange(dataContext);
       }
-    }, myProject);
+    }, project);
   }
 }
