@@ -355,21 +355,21 @@ fun KotlinGuiTestCase.configureKotlinFromGradleMavenSelectValues(
 fun KotlinGuiTestCase.configureKotlinJvmFromGradle(
   kotlinVersion: String,
   module: String = "") {
-    configureKotlinFromGradleMaven(
-      logText = "Open `Configure Kotlin with Gradle` dialog",
-      menuTitle = "ConfigureKotlinInProject",
-      dialogTitle =  "Configure Kotlin with Gradle",
-      kotlinVersion = kotlinVersion,
-      module = module)
+  configureKotlinFromGradleMaven(
+    logText = "Open `Configure Kotlin with Java with Gradle` dialog",
+    menuTitle = "ConfigureKotlinInProject",
+    dialogTitle = "Configure Kotlin with Java with Gradle",
+    kotlinVersion = kotlinVersion,
+    module = module)
 }
 
 fun KotlinGuiTestCase.configureKotlinJsFromGradle(
   kotlinVersion: String,
   module: String = "") {
   configureKotlinFromGradleMaven(
-    logText = "Open `Configure Kotlin JavaScript with Gradle` dialog",
+    logText = "Open `Configure Kotlin with JavaScript with Gradle` dialog",
     menuTitle = "ConfigureKotlinJsInProject",
-    dialogTitle = "Configure Kotlin with Gradle (JavaScript)",
+    dialogTitle = "Configure Kotlin with JavaScript with Gradle",
     kotlinVersion = kotlinVersion,
     module = module)
 }
@@ -378,9 +378,9 @@ fun KotlinGuiTestCase.configureKotlinJvmFromMaven(
   kotlinVersion: String,
   module: String = "") {
   configureKotlinFromGradleMaven(
-    logText = "Open `Configure Kotlin with Maven` dialog",
+    logText = "Open `Configure Kotlin with Java with Maven` dialog",
     menuTitle = "ConfigureKotlinInProject",
-    dialogTitle = "Configure Kotlin with Maven",
+    dialogTitle = "Configure Kotlin with Java with Maven",
     kotlinVersion = kotlinVersion,
     module = module)
 }
@@ -389,9 +389,9 @@ fun KotlinGuiTestCase.configureKotlinJsFromMaven(
   kotlinVersion: String,
   module: String = "") {
   configureKotlinFromGradleMaven(
-    logText = "Open `Configure Kotlin JavaScript with Maven` dialog",
+    logText = "Open `Configure Kotlin with JavaScript with Maven` dialog",
     menuTitle = "ConfigureKotlinJsInProject",
-    dialogTitle = "Configure Kotlin with Maven (JavaScript)",
+    dialogTitle = "Configure Kotlin with JavaScript with Maven",
     kotlinVersion = kotlinVersion,
     module = module)
 }
