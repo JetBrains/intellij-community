@@ -575,29 +575,4 @@ public class PyDocumentationBuilder {
     final PyDocStringOwner originalOwner = as(original, PyDocStringOwner.class);
     return originalOwner != null ? originalOwner.getDocStringExpression() : null;
   }
-
-  private static class RootFinder implements RootVisitor {
-    private String myResult;
-    private final String myPath;
-
-    private RootFinder(String path) {
-      myPath = path;
-    }
-
-    @Override
-    public boolean visitRoot(@NotNull VirtualFile root, @Nullable Module module, @Nullable Sdk sdk, boolean isModuleSource) {
-      final String vpath = VfsUtilCore.urlToPath(root.getUrl());
-      if (myPath.startsWith(vpath)) {
-        myResult = vpath;
-        return false;
-      }
-      else {
-        return true;
-      }
-    }
-
-    String getResult() {
-      return myResult;
-    }
-  }
 }
