@@ -66,7 +66,7 @@ class TNettyClientTransport(private val host: String,
         override fun initChannel(ch: SocketChannel) {
           ch.pipeline().addLast(LoggingHandler(LogLevel.DEBUG))
 
-          ch.pipeline().addLast(LengthFieldBasedFrameDecoder(1024, 0, 4, 0, 4))
+          ch.pipeline().addLast(LengthFieldBasedFrameDecoder(1048576, 0, 4, 0, 4))
           ch.pipeline().addLast(LengthFieldPrepender(4))
 
           ch.pipeline().addLast(DirectedMessageCodec())

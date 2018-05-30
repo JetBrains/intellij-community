@@ -75,7 +75,7 @@ class TNettyServerTransport(port: Int) : TServerTransport() {
             ch.pipeline().addLast(LoggingHandler())
 
             // `FixedLengthFrameDecoder` is excessive but convenient
-            ch.pipeline().addLast(LengthFieldBasedFrameDecoder(1024, 0, 4, 0, 4))
+            ch.pipeline().addLast(LengthFieldBasedFrameDecoder(1048576, 0, 4, 0, 4))
             ch.pipeline().addLast(LengthFieldPrepender(4))
             // `DirectedMessageCodec` is above Thrift messages
             ch.pipeline().addLast(DirectedMessageCodec())
