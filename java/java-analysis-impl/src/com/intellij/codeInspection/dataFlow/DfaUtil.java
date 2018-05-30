@@ -60,9 +60,10 @@ public class DfaUtil {
     });
   }
 
-  @Nullable
+  @NotNull
   public static Nullness checkNullness(@Nullable final PsiVariable variable, @Nullable final PsiElement context) {
-    return checkNullness(variable, context, null);
+    Nullness nullness = checkNullness(variable, context, null);
+    return nullness != null ? nullness : Nullness.UNKNOWN;
   }
 
   /**

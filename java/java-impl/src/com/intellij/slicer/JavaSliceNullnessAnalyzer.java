@@ -67,7 +67,7 @@ public class JavaSliceNullnessAnalyzer extends SliceNullnessAnalyzerBase {
 
     if (value instanceof PsiLocalVariable || value instanceof PsiParameter) {
       Nullness result = DfaUtil.checkNullness((PsiVariable)value, context);
-      if (result != null && result != Nullness.UNKNOWN) {
+      if (result != Nullness.UNKNOWN) {
         return result;
       }
     }
