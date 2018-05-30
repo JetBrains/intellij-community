@@ -125,7 +125,7 @@ public class VcsRootProblemNotifier {
         myVcsManager.setDirectoryMappings(mappings);
       });
 
-      NotificationAction configure = NotificationAction.create("Configure", (event, notification) -> {
+      NotificationAction configure = NotificationAction.create("Configure...", (event, notification) -> {
         if (!myProject.isDisposed()) {
           ShowSettingsUtil.getInstance().showSettingsDialog(myProject, ActionsBundle.message("group.VcsGroup.text"));
           Collection<VcsRootError> errorsAfterPossibleFix = getInstance(myProject).scan();
@@ -193,15 +193,11 @@ public class VcsRootProblemNotifier {
     if (!unregisteredRoots.isEmpty()) {
       if (unregisteredRoots.size() == 1) {
         VcsRootError unregisteredRoot = unregisteredRoots.iterator().next();
-        description.append(String.format("%s is under %s",
-                                         ROOT_TO_PRESENTABLE.fun(unregisteredRoot), unregisteredRoot.getVcsKey().getName()));
+        description.append(ROOT_TO_PRESENTABLE.fun(unregisteredRoot));
       }
       else {
-        description.append("The following directories are roots of " + getVcsName(unregisteredRoots) +
-                           " repositories: <br/>" +
-                           joinRootsForPresentation(unregisteredRoots));
+        description.append(joinRootsForPresentation(unregisteredRoots));
       }
-      description.append("<br/>");
     }
     return description.toString();
   }
@@ -224,7 +220,7 @@ public class VcsRootProblemNotifier {
     }
     else if (invalidRoots.isEmpty()) {
       String vcs = getVcsName(unregisteredRoots);
-      title = "Enable " + vcs + " Integration";
+      title =  vcs + " " + pluralize("Repository", unregisteredRoots.size()) + " Found";
     }
     else {
       title = "VCS root configuration problems";
