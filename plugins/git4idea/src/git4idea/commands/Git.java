@@ -155,8 +155,19 @@ public interface Git {
   @NotNull
   GitCommandResult show(@NotNull GitRepository repository, @NotNull String... params);
 
+  /**
+   * @deprecated Use {@link #cherryPick(GitRepository, String, boolean, boolean, GitLineHandlerListener...)}
+   */
+  @Deprecated
   @NotNull
   GitCommandResult cherryPick(@NotNull GitRepository repository, @NotNull String hash, boolean autoCommit,
+                              @NotNull GitLineHandlerListener... listeners);
+
+  @NotNull
+  GitCommandResult cherryPick(@NotNull GitRepository repository,
+                              @NotNull String hash,
+                              boolean autoCommit,
+                              boolean addCherryPickedFromSuffix,
                               @NotNull GitLineHandlerListener... listeners);
 
   @NotNull

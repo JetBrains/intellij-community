@@ -52,7 +52,7 @@ class GitApplyChangesProcess(private val project: Project,
                              private val appliedWord: String,
                              private val command: (GitRepository, Hash, Boolean, List<GitLineHandlerListener>) -> GitCommandResult,
                              private val emptyCommitDetector: (GitCommandResult) -> Boolean,
-                             private val defaultCommitMessageGenerator: (VcsFullCommitDetails) -> String,
+                             private val defaultCommitMessageGenerator: (GitRepository, VcsFullCommitDetails) -> String,
                              private val preserveCommitMetadata: Boolean,
                              private val cleanupBeforeCommit: (GitRepository) -> Unit = {}) {
   private val LOG = logger<GitApplyChangesProcess>()
@@ -91,7 +91,7 @@ class GitApplyChangesProcess(private val project: Project,
       val localChangesOverwrittenDetector = GitSimpleEventDetector(LOCAL_CHANGES_OVERWRITTEN_BY_CHERRY_PICK)
       val untrackedFilesDetector = GitUntrackedFilesOverwrittenByOperationDetector(repository.root)
 
-      val commitMessage = defaultCommitMessageGenerator(commit)
+      val commitMessage = defaultCommitMessageGenerator(repository, commit)
       val changeList = createChangeList(commitMessage, commit)
       val previousDefaultChangelist = changeListManager.defaultChangeList
 

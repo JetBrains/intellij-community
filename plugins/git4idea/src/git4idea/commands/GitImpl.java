@@ -472,8 +472,20 @@ public class GitImpl extends GitImplBase {
   @NotNull
   public GitCommandResult cherryPick(@NotNull GitRepository repository, @NotNull String hash, boolean autoCommit,
                                      @NotNull GitLineHandlerListener... listeners) {
+    return cherryPick(repository, hash, autoCommit, true, listeners);
+  }
+
+  @NotNull
+  @Override
+  public GitCommandResult cherryPick(@NotNull GitRepository repository,
+                                     @NotNull String hash,
+                                     boolean autoCommit,
+                                     boolean addCherryPickedFromSuffix,
+                                     @NotNull GitLineHandlerListener... listeners) {
     final GitLineHandler handler = new GitLineHandler(repository.getProject(), repository.getRoot(), GitCommand.CHERRY_PICK);
-    handler.addParameters("-x");
+    if (addCherryPickedFromSuffix) {
+      handler.addParameters("-x");
+    }
     if (!autoCommit) {
       handler.addParameters("-n");
     }

@@ -24,3 +24,5 @@ fun findProtectedRemoteBranchContainingCommit(repository: GitRepository, hash: H
   val containingBranches = GitBranchUtil.getBranches(repository.project, repository.root, false, true, hash.asString())
   return findProtectedRemoteBranch(repository, containingBranches)
 }
+
+fun isCommitPublished(repository: GitRepository, hash: Hash) : Boolean = findProtectedRemoteBranchContainingCommit(repository, hash) != null
