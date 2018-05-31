@@ -170,17 +170,28 @@ public class PythonDocumentationProvider extends AbstractDocumentationProvider i
     //}
   }
 
-  @SuppressWarnings("Duplicates")
   @NotNull
   static ChainIterable<String> describeTarget(@NotNull PyTargetExpression target, @NotNull TypeEvalContext context) {
     final ChainIterable<String> result = new ChainIterable<>();
     result.addItem(StringUtil.escapeXml(StringUtil.notNullize(target.getName())));
     result.addItem(": ");
     describeTypeWithLinks(context.getType(target), context, target, result);
+    // Can return not physical elements such as foo()[0] for assignments like x, _ = foo()
+    final PyExpression value = target.findAssignedValue();
+    if (value != null) {
+      result.addItem(" = ");
+      final String initializerText = value.getText();
+      final int index = initializerText.indexOf("\n");
+      if (index < 0) {
+        result.addItem(StringUtil.escapeXml(initializerText));
+      }
+      else {
+        result.addItem(StringUtil.escapeXml(initializerText.substring(0, index))).addItem("...");
+      }
+    }
     return result;
   }
 
-  @SuppressWarnings("Duplicates")
   @NotNull
   static ChainIterable<String> describeParameter(@NotNull PyNamedParameter parameter, @NotNull TypeEvalContext context) {
     final ChainIterable<String> result = new ChainIterable<>();

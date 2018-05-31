@@ -404,5 +404,18 @@ public class PyQuickDocTest extends LightMarkedTestCase {
     });
   }
 
+  // PY-14785
+  public void testMultilineAssignedValueForTarget() {
+    checkHTMLOnly();
+  }
 
+  // PY-14785
+  public void testUnmatchedAssignedValueForTarget() {
+    checkHTMLOnly();
+  }
+
+  // PY-14785
+  public void testSingleLineAssignedValueForTarget() {
+    checkHTMLOnly();
+  }
 }
