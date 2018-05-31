@@ -58,7 +58,7 @@ class GithubGitHelper(private val githubSettings: GithubSettings,
 
   companion object {
     @JvmStatic
-    fun findGitRepository(project: Project, file: VirtualFile?): GitRepository? {
+    fun findGitRepository(project: Project, file: VirtualFile? = null): GitRepository? {
       val manager = GitUtil.getRepositoryManager(project)
       val repositories = manager.repositories
       if (repositories.size == 0) {
