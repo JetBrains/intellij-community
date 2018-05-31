@@ -9,8 +9,8 @@ object GuiRobot {
     get() = _robot ?: throw IllegalStateException("Robot must be initialized before using")
 
   fun initializeRobot(robot: Robot) {
-    if (_robot != null) throw IllegalStateException("Robot already has been initialized")
-    else _robot = robot
+    if (_robot != null) releaseRobot() //throw IllegalStateException("Robot already has been initialized")
+    _robot = robot
   }
 
   fun releaseRobot() {
