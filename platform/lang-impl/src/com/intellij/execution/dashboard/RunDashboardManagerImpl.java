@@ -421,9 +421,9 @@ public class RunDashboardManagerImpl implements RunDashboardManager, PersistentS
           myDashboardToToolWindowContents.clear();
           myToolWindowContentManager.removeAllContents(true);
           myToolWindowContentManager.addContent(myToolWindowContent);
-          updateToolWindowContentTabHeader(myContentManager.getSelectedContent());
           myToolWindowContentManager.addContentManagerListener(myToolWindowContentManagerListener);
         }
+        updateToolWindowContentTabHeader(myContentManager.getSelectedContent());
       }
       else {
         if (containsConfigurationsContent) {
