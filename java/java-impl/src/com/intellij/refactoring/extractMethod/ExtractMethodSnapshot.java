@@ -28,6 +28,7 @@ public class ExtractMethodSnapshot {
   public final SmartPsiElementPointer<PsiVariable> myOutputVariable;
   public final SmartPsiElementPointer<PsiVariable> myArtificialOutputVariable;
   public final List<VariableDataSnapshot> myVariableDatum;
+  public final boolean myFoldable;
   public final SmartPsiElementPointer<PsiClass> myTargetClass;
 
   public ExtractMethodSnapshot(@NotNull ExtractMethodProcessor from) {
@@ -48,6 +49,8 @@ public class ExtractMethodSnapshot {
                                  ? smartPointerManager.createSmartPsiElementPointer(from.myArtificialOutputVariable) : null;
 
     myVariableDatum = StreamEx.of(from.myVariableDatum).map(data -> new VariableDataSnapshot(data, myProject)).toList();
+    myFoldable = from.myInputVariables.isFoldable();
+
     myTargetClass = from.myTargetClass != null ? smartPointerManager.createSmartPsiElementPointer(from.myTargetClass) : null;
   }
 }
