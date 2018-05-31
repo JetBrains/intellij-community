@@ -19,15 +19,21 @@ import com.google.common.base.Strings;
 import com.intellij.jarRepository.JarRepositoryManager;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.ui.ComboBox;
 import com.intellij.ui.CollectionComboBoxModel;
 import com.intellij.ui.components.JBCheckBox;
 import com.intellij.ui.components.JBLabel;
+import com.intellij.ui.components.labels.SwingActionLink;
 import com.intellij.util.containers.JBIterable;
+import com.intellij.util.ui.ThreeStateCheckBox;
+import com.intellij.util.ui.UI;
+import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.idea.maven.aether.ArtifactDependencyNode;
 import org.jetbrains.idea.maven.utils.library.RepositoryLibraryDescription;
 import org.jetbrains.idea.maven.utils.library.propertiesEditor.RepositoryLibraryPropertiesModel;
 
@@ -39,11 +45,11 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.ItemEvent;
 import java.awt.event.ItemListener;
-import java.util.ArrayList;
-import java.util.Arrays;
+import java.util.*;
 import java.util.List;
 
 public class RepositoryLibraryPropertiesEditor {
+  private static final Logger LOG = Logger.getInstance(RepositoryLibraryPropertiesEditor.class);
   @NotNull private final Project project;
   State currentState;
   List<String> versions;
@@ -59,10 +65,12 @@ public class RepositoryLibraryPropertiesEditor {
   private JBCheckBox downloadSourcesCheckBox;
   private JBCheckBox downloadJavaDocsCheckBox;
   private JBLabel mavenCoordinates;
-  private JBCheckBox myIncludeTransitiveDepsCheckBox;
+  private final ThreeStateCheckBox myIncludeTransitiveDepsCheckBox;
   private JPanel myPropertiesPanel;
+  private JPanel myTransitiveDependenciesPanel;
 
   @NotNull private final ModelChangeListener onChangeListener;
+  private final SwingActionLink myManageDependenciesLink;
 
   public interface ModelChangeListener {
     void onChange(RepositoryLibraryPropertiesEditor editor);
@@ -90,7 +98,18 @@ public class RepositoryLibraryPropertiesEditor {
     this.project = project == null ? ProjectManager.getInstance().getDefaultProject() : project;
     repositoryLibraryDescription = description;
     mavenCoordinates.setCopyable(true);
-    myIncludeTransitiveDepsCheckBox.setVisible(allowExcludingTransitiveDependencies);
+    myIncludeTransitiveDepsCheckBox = new ThreeStateCheckBox(UIUtil.replaceMnemonicAmpersand("Include &transitive dependencies"));
+    myIncludeTransitiveDepsCheckBox.setThirdStateEnabled(false);
+    myTransitiveDependenciesPanel.add(myIncludeTransitiveDepsCheckBox);
+    myManageDependenciesLink = new SwingActionLink(new AbstractAction("Configure") {
+      @Override
+      public void actionPerformed(ActionEvent e) {
+        configureTransitiveDependencies();
+      }
+    });
+    myManageDependenciesLink.setBorder(UI.Borders.emptyLeft(10));
+    myTransitiveDependenciesPanel.add(myManageDependenciesLink);
+    myTransitiveDependenciesPanel.setVisible(allowExcludingTransitiveDependencies);
     myReloadButton.addActionListener(new ActionListener() {
       @Override
       public void actionPerformed(ActionEvent e) {
@@ -104,7 +123,23 @@ public class RepositoryLibraryPropertiesEditor {
         mavenCoordinates.setText(repositoryLibraryDescription.getMavenCoordinates(model.getVersion()));
       }
     };
+    updateManageDependenciesLink();
     reloadVersionsAsync();
+  }
+
+  private void configureTransitiveDependencies() {
+    String selectedVersion = getSelectedVersion();
+    LOG.assertTrue(selectedVersion != null);
+
+    ArtifactDependencyNode root = JarRepositoryManager.loadDependenciesTree(repositoryLibraryDescription, selectedVersion, project);
+    if (root == null) return;
+
+    Set<String> dependencies = new DependencyExclusionEditor(root, mainPanel).selectExcludedDependencies(model.getExcludedDependencies());
+    if (dependencies != null) {
+      model.setExcludedDependencies(dependencies);
+      updateIncludeTransitiveDepsCheckBoxState();
+      onChangeListener.onChange(this);
+    }
   }
 
   private static VersionKind getVersionKind(String version) {
@@ -168,6 +203,7 @@ public class RepositoryLibraryPropertiesEditor {
     int selection = getSelection(model.getVersion(), versions);
     versionSelector.setSelectedIndex(selection);
     onChangeListener.onChange(this);
+    updateManageDependenciesLink();
   }
 
   private VersionKind getSelectedVersionKind() {
@@ -225,6 +261,7 @@ public class RepositoryLibraryPropertiesEditor {
       public void itemStateChanged(ItemEvent e) {
         model.setVersion(getSelectedVersion());
         onChangeListener.onChange(RepositoryLibraryPropertiesEditor.this);
+        updateManageDependenciesLink();
       }
     });
     downloadSourcesCheckBox.setSelected(model.isDownloadSources());
@@ -243,16 +280,31 @@ public class RepositoryLibraryPropertiesEditor {
         onChangeListener.onChange(RepositoryLibraryPropertiesEditor.this);
       }
     });
-    myIncludeTransitiveDepsCheckBox.setSelected(model.isIncludeTransitiveDependencies());
+    updateIncludeTransitiveDepsCheckBoxState();
     myIncludeTransitiveDepsCheckBox.addChangeListener(new ChangeListener() {
       @Override
       public void stateChanged(ChangeEvent e) {
-        model.setIncludeTransitiveDependencies(myIncludeTransitiveDepsCheckBox.isSelected());
+        updateManageDependenciesLink();
+        ThreeStateCheckBox.State state = myIncludeTransitiveDepsCheckBox.getState();
+        if (state != ThreeStateCheckBox.State.DONT_CARE) {
+          model.setExcludedDependencies(Collections.emptyList());
+        }
+        model.setIncludeTransitiveDependencies(state != ThreeStateCheckBox.State.NOT_SELECTED);
         onChangeListener.onChange(RepositoryLibraryPropertiesEditor.this);
       }
     });
+    updateManageDependenciesLink();
   }
 
+  private void updateIncludeTransitiveDepsCheckBoxState() {
+    myIncludeTransitiveDepsCheckBox.setState(!model.isIncludeTransitiveDependencies() ? ThreeStateCheckBox.State.NOT_SELECTED :
+                                             model.getExcludedDependencies().isEmpty() ? ThreeStateCheckBox.State.SELECTED : ThreeStateCheckBox.State.DONT_CARE);
+  }
+
+  private void updateManageDependenciesLink() {
+    boolean enable = myIncludeTransitiveDepsCheckBox.getState() != ThreeStateCheckBox.State.NOT_SELECTED && getSelectedVersion() != null;
+    myManageDependenciesLink.setEnabled(enable);
+  }
 
   private void versionsLoaded(final @Nullable List<String> versions) {
     this.versions = versions;

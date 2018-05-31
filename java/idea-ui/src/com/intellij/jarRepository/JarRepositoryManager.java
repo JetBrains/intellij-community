@@ -53,6 +53,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.concurrency.AsyncPromise;
 import org.jetbrains.concurrency.Promise;
+import org.jetbrains.idea.maven.aether.ArtifactDependencyNode;
 import org.jetbrains.idea.maven.aether.ArtifactKind;
 import org.jetbrains.idea.maven.aether.ArtifactRepositoryManager;
 import org.jetbrains.idea.maven.aether.ProgressConsumer;
@@ -263,6 +264,27 @@ public class JarRepositoryManager {
   public static Promise<Collection<String>> getAvailableVersions(Project project, RepositoryLibraryDescription libraryDescription) {
     final List<RemoteRepositoryDescription> repos = RemoteRepositoriesConfiguration.getInstance(project).getRepositories();
     return submitBackgroundJob(project, "Looking up available versions for " + libraryDescription.getDisplayName(), new VersionResolveJob(libraryDescription, repos));
+  }
+
+  @Nullable
+  public static ArtifactDependencyNode loadDependenciesTree(@NotNull RepositoryLibraryDescription description, @NotNull String version, Project project) {
+    List<RemoteRepositoryDescription> repositories = RemoteRepositoriesConfiguration.getInstance(project).getRepositories();
+    return submitModalJob(project, "Resolving Maven Dependencies", new AetherJob<ArtifactDependencyNode>(repositories) {
+      @Override
+      protected String getProgressText() {
+        return "Loading dependencies of " + description.getMavenCoordinates(version);
+      }
+
+      @Override
+      protected ArtifactDependencyNode perform(ProgressIndicator progress, ArtifactRepositoryManager manager) throws Exception {
+        return manager.collectDependencies(description.getGroupId(), description.getArtifactId(), version);
+      }
+
+      @Override
+      protected ArtifactDependencyNode getDefaultResult() {
+        return null;
+      }
+    });
   }
 
   private static void notifyArtifactsDownloaded(Project project, Collection<OrderRoot> roots) {
@@ -533,7 +555,7 @@ public class JarRepositoryManager {
       final String version = myDesc.getVersion();
       try {
         return manager.resolveDependencyAsArtifact(myDesc.getGroupId(), myDesc.getArtifactId(), version, myKinds,
-                                                   myDesc.isIncludeTransitiveDependencies());
+                                                   myDesc.isIncludeTransitiveDependencies(), myDesc.getExcludedDependencies());
       }
       catch (TransferCancelledException e) {
         throw new ProcessCanceledException(e);
@@ -548,7 +570,7 @@ public class JarRepositoryManager {
         }
         try {
           return manager.resolveDependencyAsArtifact(myDesc.getGroupId(), myDesc.getArtifactId(), resolvedVersion, myKinds,
-                                                     myDesc.isIncludeTransitiveDependencies());
+                                                     myDesc.isIncludeTransitiveDependencies(), myDesc.getExcludedDependencies());
         }
         catch (TransferCancelledException e1) {
           throw new ProcessCanceledException(e1);
