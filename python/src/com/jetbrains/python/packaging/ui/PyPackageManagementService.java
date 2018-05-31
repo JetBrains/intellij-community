@@ -75,10 +75,9 @@ public class PyPackageManagementService extends PackageManagementServiceEx {
   @Nullable
   @Override
   public List<String> getAllRepositories() {
-    final PyPackageService packageService = PyPackageService.getInstance();
     final List<String> result = new ArrayList<>();
-    if (!packageService.PYPI_REMOVED) result.add(PyPIPackageUtil.PYPI_LIST_URL);
-    result.addAll(packageService.additionalRepositories);
+    if (!PyPackageService.getInstance().PYPI_REMOVED) result.add(PyPIPackageUtil.PYPI_LIST_URL);
+    result.addAll(getAdditionalRepositories());
     return result;
   }
 
@@ -95,8 +94,8 @@ public class PyPackageManagementService extends PackageManagementServiceEx {
   @NotNull
   @Override
   public List<RepoPackage> getAllPackages() throws IOException {
-    PyPIPackageUtil.INSTANCE.loadAndGetPackages();
-    PyPIPackageUtil.INSTANCE.loadAndGetAdditionalPackages(false);
+    PyPIPackageUtil.INSTANCE.loadPackages();
+    PyPIPackageUtil.INSTANCE.loadAdditionalPackages(getAdditionalRepositories(), false);
     return getAllPackagesCached();
   }
 
@@ -104,7 +103,7 @@ public class PyPackageManagementService extends PackageManagementServiceEx {
   @Override
   public List<RepoPackage> reloadAllPackages() throws IOException {
     PyPIPackageUtil.INSTANCE.updatePyPICache();
-    PyPIPackageUtil.INSTANCE.loadAndGetAdditionalPackages(true);
+    PyPIPackageUtil.INSTANCE.loadAdditionalPackages(getAdditionalRepositories(), true);
     return getAllPackagesCached();
   }
 
@@ -116,14 +115,18 @@ public class PyPackageManagementService extends PackageManagementServiceEx {
     if (!PyPackageService.getInstance().PYPI_REMOVED) {
       result.addAll(getCachedPyPIPackages());
     }
-    result.addAll(PyPIPackageUtil.INSTANCE.getAdditionalPackages());
+    result.addAll(PyPIPackageUtil.INSTANCE.getAdditionalPackages(getAdditionalRepositories()));
     return result;
+  }
+
+  private static List<String> getAdditionalRepositories() {
+    return PyPackageService.getInstance().additionalRepositories;
   }
 
   @NotNull
   private static List<RepoPackage> getCachedPyPIPackages() {
     // Don't show URL next to the package name in "Available Packages" if only PyPI is in use
-    final boolean customRepoConfigured = !PyPackageService.getInstance().additionalRepositories.isEmpty();
+    final boolean customRepoConfigured = !getAdditionalRepositories().isEmpty();
     final String url = customRepoConfigured ? PyPIPackageUtil.PYPI_LIST_URL : "";
     return ContainerUtil.map(PyPIPackageCache.getInstance().getPackageNames(), name -> new RepoPackage(name, url, null));
   }
@@ -376,7 +379,7 @@ public class PyPackageManagementService extends PackageManagementServiceEx {
   public void fetchLatestVersion(@NotNull InstalledPackage pkg, @NotNull CatchingConsumer<String, Exception> consumer) {
     myExecutorService.submit(() -> {
       try {
-        PyPIPackageUtil.INSTANCE.loadAndGetPackages();
+        PyPIPackageUtil.INSTANCE.loadPackages();
         final String version = PyPIPackageUtil.INSTANCE.fetchLatestPackageVersion(myProject, pkg.getName());
         consumer.consume(StringUtil.notNullize(version));
       }

@@ -22,6 +22,7 @@ import com.intellij.util.io.HttpRequests;
 import com.intellij.webcore.packaging.RepoPackage;
 import com.jetbrains.python.PythonHelpersLocator;
 import one.util.streamex.EntryStream;
+import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -80,10 +81,14 @@ public class PyPIPackageUtil {
 
   /**
    * Contains cached packages taken from additional repositories.
-   * 
-   * @see #getAdditionalPackages() 
    */
-  private volatile List<RepoPackage> myAdditionalPackages = null;
+  protected final LoadingCache<String, List<RepoPackage>> myAdditionalPackages = CacheBuilder.newBuilder().build(
+    new CacheLoader<String, List<RepoPackage>>() {
+      @Override
+      public List<RepoPackage> load(@NotNull String key) throws Exception {
+        return getPackagesFromAdditionalRepository(key);
+      }
+    });
 
   /**
    * Contains cached package information retrieved through PyPI's JSON API.
@@ -154,20 +159,21 @@ public class PyPIPackageUtil {
   }
 
   @NotNull
-  public List<RepoPackage> getAdditionalPackages() {
-    return myAdditionalPackages != null ? Collections.unmodifiableList(myAdditionalPackages) : Collections.emptyList();
+  public List<RepoPackage> getAdditionalPackages(List<String> repositories) {
+    return StreamEx.of(myAdditionalPackages.getAllPresent(repositories).values()).flatMap(StreamEx::of).toList();
   }
 
-  @NotNull
-  public List<RepoPackage> loadAndGetAdditionalPackages(boolean alwaysRefresh) throws IOException {
-    if (myAdditionalPackages == null || alwaysRefresh) {
-      final Set<RepoPackage> uniquePackages = new TreeSet<>();
-      for (String url : PyPackageService.getInstance().additionalRepositories) {
-        uniquePackages.addAll(getPackagesFromAdditionalRepository(url));
+  public void loadAdditionalPackages(@NotNull List<String> repositories, boolean alwaysRefresh) throws IOException {
+    if (alwaysRefresh) {
+      for (String url : repositories) {
+        myAdditionalPackages.refresh(url);
       }
-      myAdditionalPackages = new ArrayList<>(uniquePackages);
     }
-    return Collections.unmodifiableList(myAdditionalPackages);
+    else {
+      for (String url : repositories) {
+        getCachedValueOrRethrowIO(myAdditionalPackages, url);
+      }
+    }
   }
 
   @NotNull
@@ -411,7 +417,7 @@ public class PyPIPackageUtil {
     });
   }
 
-  public void loadAndGetPackages() throws IOException {
+  public void loadPackages() throws IOException {
     // This lock is solely to prevent multiple threads from updating
     // the mammoth cache of PyPI packages simultaneously.
     synchronized (myPyPIPackageCacheUpdateLock) {
