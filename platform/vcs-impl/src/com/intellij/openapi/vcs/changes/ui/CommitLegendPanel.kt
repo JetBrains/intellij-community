@@ -3,7 +3,7 @@
 package com.intellij.openapi.vcs.changes.ui
 
 import com.intellij.openapi.vcs.FileStatus
-import com.intellij.openapi.vcs.VcsBundle
+import com.intellij.openapi.vcs.VcsBundle.message
 import com.intellij.ui.SimpleColoredComponent
 import com.intellij.ui.SimpleTextAttributes
 
@@ -15,21 +15,22 @@ open class CommitLegendPanel(private val myInfoCalculator: InfoCalculator) {
 
   open fun update() {
     myRootPanel.clear()
-    appendText(myInfoCalculator.new, myInfoCalculator.includedNew, FileStatus.ADDED, VcsBundle.message("commit.legend.new"))
-    appendText(myInfoCalculator.modified, myInfoCalculator.includedModified, FileStatus.MODIFIED,
-               VcsBundle.message("commit.legend.modified"))
-    appendText(myInfoCalculator.deleted, myInfoCalculator.includedDeleted, FileStatus.DELETED, VcsBundle.message("commit.legend.deleted"))
-    appendText(myInfoCalculator.unversioned, myInfoCalculator.includedUnversioned, FileStatus.UNKNOWN,
-               VcsBundle.message("commit.legend.unversioned"))
+    appendLegend()
   }
 
-  protected fun appendText(total: Int, included: Int, fileStatus: FileStatus, labelName: String) {
+  private fun appendLegend() = with(myInfoCalculator) {
+    append(new, includedNew, FileStatus.ADDED, message("commit.legend.new"))
+    append(modified, includedModified, FileStatus.MODIFIED, message("commit.legend.modified"))
+    append(deleted, includedDeleted, FileStatus.DELETED, message("commit.legend.deleted"))
+    append(unversioned, includedUnversioned, FileStatus.UNKNOWN, message("commit.legend.unversioned"))
+  }
+
+  protected fun append(total: Int, included: Int, fileStatus: FileStatus, labelName: String) {
     if (total > 0) {
       if (!isPanelEmpty) {
         appendSpace()
       }
-      val pattern = if (total == included) "%s %d" else "%s %d of %d"
-      val text = String.format(pattern, labelName, included, total)
+      val text = if (total == included) "$labelName $included" else "$labelName $included of $total"
       myRootPanel.append(text, SimpleTextAttributes(SimpleTextAttributes.STYLE_PLAIN, fileStatus.color))
     }
   }
