@@ -701,8 +701,11 @@ public class DfaMemoryStateImpl implements DfaMemoryState {
     if (value instanceof DfaVariableValue) {
       DfaVariableValue var = (DfaVariableValue)value;
       if (!isUnknownState(var)) {
-        DfaVariableState state = getVariableState(var).withoutFact(factType);
-        setVariableState(var, state);
+        DfaVariableState state = findVariableState(var);
+        if (state != null) {
+          state = state.withoutFact(factType);
+          setVariableState(var, state);
+        }
       }
     }
   }
