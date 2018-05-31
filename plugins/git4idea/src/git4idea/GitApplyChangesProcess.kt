@@ -138,7 +138,7 @@ class GitApplyChangesProcess(private val project: Project,
           }
         }
         else if (untrackedFilesDetector.wasMessageDetected()) {
-          var description = getSuccessfulCommitDetailsIfAny(successfulCommits)
+          val description = getSuccessfulCommitDetailsIfAny(successfulCommits)
 
           GitUntrackedFilesHelper.notifyUntrackedFilesOverwrittenBy(project, repository.root,
                                                                     untrackedFilesDetector.relativeFilePaths, operationName, description)
