@@ -32,6 +32,7 @@ import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.TestOnly;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -45,6 +46,7 @@ public class IntentionManagerImpl extends IntentionManager implements Disposable
 
   private final List<IntentionAction> myActions = ContainerUtil.createLockFreeCopyOnWriteList();
   private final IntentionManagerSettings mySettings;
+  private boolean myIntentionsDisabled;
 
   private final Alarm myInitActionsAlarm = new Alarm(Alarm.ThreadToUse.POOLED_THREAD, this);
 
@@ -266,12 +268,14 @@ public class IntentionManagerImpl extends IntentionManager implements Disposable
   @Override
   @NotNull
   public IntentionAction[] getIntentionActions() {
+    if (myIntentionsDisabled) return IntentionAction.EMPTY_ARRAY;
     return myActions.toArray(IntentionAction.EMPTY_ARRAY);
   }
 
   @NotNull
   @Override
   public IntentionAction[] getAvailableIntentionActions() {
+    if (myIntentionsDisabled) return IntentionAction.EMPTY_ARRAY;
     checkForDuplicates();
     List<IntentionAction> list = new ArrayList<>(myActions.size());
     for (IntentionAction action : myActions) {
@@ -307,5 +311,10 @@ public class IntentionManagerImpl extends IntentionManager implements Disposable
 
   public boolean hasActiveRequests() {
     return !myInitActionsAlarm.isEmpty();
+  }
+
+  @TestOnly
+  public void disableIntentions() {
+    myIntentionsDisabled = true;
   }
 }

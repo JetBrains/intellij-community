@@ -17,6 +17,8 @@ package com.intellij.java.codeInsight.daemon.quickFix;
 
 
 import com.intellij.codeInsight.daemon.quickFix.LightQuickFixParameterizedTestCase;
+import com.intellij.codeInsight.intention.IntentionManager;
+import com.intellij.codeInsight.intention.impl.config.IntentionManagerImpl;
 import com.intellij.codeInspection.LocalInspectionTool;
 import com.intellij.codeInspection.streamMigration.StreamApiMigrationInspection;
 import com.intellij.pom.java.LanguageLevel;
@@ -53,6 +55,7 @@ public class StreamApiMigrationInspectionTestSuite {
     @NotNull
     @Override
     protected LocalInspectionTool[] configureLocalInspectionTools() {
+      ((IntentionManagerImpl)IntentionManager.getInstance()).disableIntentions();
       StreamApiMigrationInspection inspection = new StreamApiMigrationInspection();
       inspection.SUGGEST_FOREACH = true;
       return new LocalInspectionTool[]{
