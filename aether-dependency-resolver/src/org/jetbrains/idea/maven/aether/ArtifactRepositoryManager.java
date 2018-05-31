@@ -267,8 +267,8 @@ public class ArtifactRepositoryManager {
     }
     final List<Artifact> result = new ArrayList<>(kinds.size() * constraints.size());
     for (ArtifactKind kind : kinds) {
-      for (VersionConstraint constr : constraints) {
-        result.add(new DefaultArtifact(groupId, artifactId, kind.getClassifier(), kind.getExtension(), constr.toString()));
+      for (VersionConstraint constraint : constraints) {
+        result.add(new DefaultArtifact(groupId, artifactId, kind.getClassifier(), kind.getExtension(), constraint.toString()));
       }
     }
     return result;
