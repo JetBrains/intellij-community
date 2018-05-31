@@ -389,4 +389,20 @@ public class PyQuickDocTest extends LightMarkedTestCase {
       }
     );
   }
+
+  public void testPlainTextDocstringsQuotesPlacementDoesntAffectFormatting() {
+    runWithDocStringFormat(DocStringFormat.PLAIN, () -> {
+      final Map<String, PsiElement> map = loadTest();
+      final PsiElement inline = map.get("<ref1>");
+      final String inlineDoc = myProvider.generateDoc(assertInstanceOf(inline.getParent(), PyFunction.class), inline);
+
+      final PsiElement framed = map.get("<ref2>");
+      final String framedDoc = myProvider.generateDoc(assertInstanceOf(framed.getParent(), PyFunction.class), framed);
+
+      assertEquals(inlineDoc, framedDoc);
+      checkByHTML(inlineDoc);
+    });
+  }
+
+
 }
