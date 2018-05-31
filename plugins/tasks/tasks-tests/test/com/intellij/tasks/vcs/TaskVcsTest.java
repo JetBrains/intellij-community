@@ -43,16 +43,14 @@ import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.vcsUtil.VcsUtil;
 import icons.TasksIcons;
+import org.easymock.EasyMock;
 import org.jetbrains.annotations.NotNull;
-import org.mockito.Mockito;
 
 import javax.swing.*;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Date;
 import java.util.List;
-
-import static org.mockito.Mockito.when;
 
 public class TaskVcsTest extends CodeInsightFixtureTestCase {
   private TestRepository myRepository;
@@ -330,9 +328,10 @@ public class TaskVcsTest extends CodeInsightFixtureTestCase {
   private void commitChanges(LocalChangeList changeList, List<Change> changes) {
     String commitMessage = changeList.getName();
 
-    CheckinProjectPanel panel = Mockito.mock(CheckinProjectPanel.class, Mockito.withSettings().stubOnly());
-    when(panel.getProject()).thenReturn(getProject());
-    when(panel.getCommitMessage()).thenReturn(commitMessage);
+    CheckinProjectPanel panel = EasyMock.createMock(CheckinProjectPanel.class);
+    EasyMock.expect(panel.getProject()).andReturn(getProject());
+    EasyMock.expect(panel.getCommitMessage()).andReturn(commitMessage);
+    EasyMock.replay(panel);
 
     CheckinHandler checkinHandler = new TaskCheckinHandlerFactory().createHandler(panel, new CommitContext());
 
