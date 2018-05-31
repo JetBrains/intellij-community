@@ -206,7 +206,11 @@ public class FindPopupPanel extends JBPanel implements FindUI {
         }
         showPoint = new RelativePoint(parent, new Point((parent.getSize().width - getPreferredSize().width) / 2, height));
       }
-      mySearchComponent.selectAll();
+      ApplicationManager.getApplication().invokeLater(() -> {
+        if (mySearchComponent.getCaret() != null) {
+          mySearchComponent.selectAll();
+        }
+      });
       WindowMoveListener windowListener = new WindowMoveListener(this);
       myTitlePanel.addMouseListener(windowListener);
       myTitlePanel.addMouseMotionListener(windowListener);
