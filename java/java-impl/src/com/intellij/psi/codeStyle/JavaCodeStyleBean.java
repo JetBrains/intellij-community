@@ -944,12 +944,6 @@ public class JavaCodeStyleBean extends CodeStyleBean {
 
   public void setPlaceAssignmentSignOnNextLine(boolean value) {getCommonSettings().PLACE_ASSIGNMENT_SIGN_ON_NEXT_LINE = value;}
 
-  public WrapType getLabeledStatementWrap() {
-    return intToWrapType(getCommonSettings().LABELED_STATEMENT_WRAP);
-  }
-
-  public void setLabeledStatementWrap(WrapType value) {getCommonSettings().LABELED_STATEMENT_WRAP = wrapTypeToInt(value);}
-
   public boolean isWrapComments() {
     return getCommonSettings().WRAP_COMMENTS;
   }
