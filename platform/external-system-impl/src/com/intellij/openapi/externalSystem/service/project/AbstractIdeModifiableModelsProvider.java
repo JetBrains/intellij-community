@@ -301,7 +301,7 @@ public abstract class AbstractIdeModifiableModelsProvider extends IdeModelsProvi
   public List<Module> getAllDependentModules(@NotNull Module module) {
     final ArrayList<Module> list = new ArrayList<>();
     final Graph<Module> graph = getModuleGraph();
-    for (Iterator<Module> i = graph.getOut(module); i.hasNext();) {
+    for (Iterator<Module> i = graph.getOut(module); i.hasNext(); ) {
       list.add(i.next());
     }
     return list;
@@ -310,7 +310,7 @@ public abstract class AbstractIdeModifiableModelsProvider extends IdeModelsProvi
   private ModifiableWorkspace doGetModifiableWorkspace() {
     return ReadAction.compute(() ->
                                 ServiceManager.getService(myProject, ExternalProjectsWorkspaceImpl.class)
-                                  .createModifiableWorkspace(this));
+                                              .createModifiableWorkspace(this));
   }
 
   private Graph<Module> getModuleGraph() {
@@ -429,7 +429,8 @@ public abstract class AbstractIdeModifiableModelsProvider extends IdeModelsProvi
 
       if (myModifiableModuleModel != null) {
         ModifiableModelCommitter.multiCommit(rootModels1, myModifiableModuleModel);
-      } else {
+      }
+      else {
         for (ModifiableRootModel model : rootModels1) {
           model.commit();
         }
@@ -439,7 +440,7 @@ public abstract class AbstractIdeModifiableModelsProvider extends IdeModelsProvi
       }
 
       for (Map.Entry<Module, ModifiableFacetModel> each : myModifiableFacetModels.entrySet()) {
-        if(!each.getKey().isDisposed()) {
+        if (!each.getKey().isDisposed()) {
           each.getValue().commit();
         }
       }
@@ -463,7 +464,7 @@ public abstract class AbstractIdeModifiableModelsProvider extends IdeModelsProvi
       Disposer.dispose(each);
     }
 
-    if(myModifiableModuleModel != null && myModifiableModuleModel.isChanged()) {
+    if (myModifiableModuleModel != null && myModifiableModuleModel.isChanged()) {
       myModifiableModuleModel.dispose();
     }
     if (myModifiableArtifactModel != null) {
@@ -502,9 +503,9 @@ public abstract class AbstractIdeModifiableModelsProvider extends IdeModelsProvi
       ModifiableWorkspace workspace = getModifiableWorkspace();
       assert workspace != null;
       workspace.addSubstitution(ownerModule.getName(),
-                                            workspaceModule.getName(),
-                                            libraryOrderEntry.getLibraryName(),
-                                            libraryOrderEntry.getScope());
+                                workspaceModule.getName(),
+                                libraryOrderEntry.getLibraryName(),
+                                libraryOrderEntry.getScope());
       modifiableRootModel.removeOrderEntry(libraryOrderEntry);
       return moduleOrderEntry;
     }
@@ -548,9 +549,9 @@ public abstract class AbstractIdeModifiableModelsProvider extends IdeModelsProvi
     if (workspace == null) return;
 
     final List<String> oldModules = Arrays.stream(ModuleManager.getInstance(myProject).getModules())
-      .map(module -> module.getName()).collect(Collectors.toList());
+                                          .map(module -> module.getName()).collect(Collectors.toList());
     final List<String> newModules = Arrays.stream(myModifiableModuleModel.getModules())
-      .map(module -> module.getName()).collect(Collectors.toList());
+                                          .map(module -> module.getName()).collect(Collectors.toList());
 
     final Collection<String> removedModules = new THashSet<>(oldModules);
     removedModules.removeAll(newModules);
