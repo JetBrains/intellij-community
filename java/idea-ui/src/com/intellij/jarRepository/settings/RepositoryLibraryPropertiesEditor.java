@@ -209,7 +209,7 @@ public class RepositoryLibraryPropertiesEditor {
 
   private void reloadVersionsAsync() {
     setState(State.Loading);
-    JarRepositoryManager.getAvailableVersionsAsync(project, repositoryLibraryDescription, result -> versionsLoaded(new ArrayList<>(result)));
+    JarRepositoryManager.getAvailableVersions(project, repositoryLibraryDescription).onSuccess(result -> versionsLoaded(new ArrayList<>(result)));
   }
 
   private void initVersionsPanel() {

@@ -259,17 +259,6 @@ public class JarRepositoryManager {
     );
   }
 
-  public static void getAvailableVersionsAsync(Project project,  RepositoryLibraryDescription libraryDescription, Consumer<Collection<String>> resultProcessor) {
-    final List<RemoteRepositoryDescription> repos = RemoteRepositoriesConfiguration.getInstance(project).getRepositories();
-    submitBackgroundJob(project, "Looking up available versions for " + libraryDescription.getDisplayName(), new VersionResolveJob(libraryDescription, repos)
-      .andThen(
-        versions -> {
-          resultProcessor.accept(versions);
-          return versions;
-        }
-      ));
-  }
-
   @NotNull
   public static Promise<Collection<String>> getAvailableVersions(Project project, RepositoryLibraryDescription libraryDescription) {
     final List<RemoteRepositoryDescription> repos = RemoteRepositoriesConfiguration.getInstance(project).getRepositories();
