@@ -320,7 +320,7 @@ public class PyDocumentationBuilder {
       if (!isProperty) {
         pyClass = pyFunction.getContainingClass();
         if (pyClass != null) {
-          final String link = getLinkToClass(pyClass);
+          final String link = getLinkToClass(pyClass, true);
           if (link != null) {
             myProlog.addItem(link);
           }
@@ -405,7 +405,6 @@ public class PyDocumentationBuilder {
         final String inheritedDoc = docstringElement.getStringValue();
         if (inheritedDoc.length() > 1) {
           final String ancestorName = ancestor.getName();
-          final String ancestorQualifiedName = ancestor.getQualifiedName();
 
           final String ancestorLink;
           if (!isFromClass) {
@@ -419,12 +418,7 @@ public class PyDocumentationBuilder {
             }
           }
           else {
-            if (pyClass == ancestor) {
-              ancestorLink = PyDocumentationLink.toContainingClass(ancestorName);
-            }
-            else {
-              ancestorLink = getLinkToClass(ancestor);
-            }
+            ancestorLink = getLinkToClass(ancestor, false);
           }
           if (ancestorLink != null) {
             mySectionsMap.get(PyBundle.message("QDOC.documentation.is.copied.from")).addWith(TagCode, $(ancestorLink));
@@ -515,12 +509,22 @@ public class PyDocumentationBuilder {
   }
 
   @Nullable
-  private String getLinkToClass(@NotNull PyClass pyClass) {
+  private String getLinkToClass(@NotNull PyClass pyClass, boolean preferQualifiedName) {
     final String qualifiedName = pyClass.getQualifiedName();
-    if (qualifiedName != null && pyClass.getName() != null) {
-      return PyDocumentationLink.toPossibleClass(pyClass.getName(), qualifiedName, pyClass, myContext);
+    final String shortName = pyClass.getName();
+
+    final String linkText = preferQualifiedName && qualifiedName != null ? qualifiedName : shortName;
+    if (linkText == null) {
+      return null;
     }
-    return pyClass.getName();
+
+    if (qualifiedName != null) {
+      return PyDocumentationLink.toPossibleClass(linkText, qualifiedName, pyClass, myContext);
+    }
+    else if (PsiTreeUtil.getParentOfType(myElement, PyClass.class, false) == pyClass) {
+      return PyDocumentationLink.toContainingClass(linkText);
+    }
+    return linkText;
   }
 
   @Nullable
