@@ -1,100 +1,36 @@
-/*
- * Copyright 2000-2011 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
-package com.intellij.openapi.vcs.changes.ui;
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+package com.intellij.openapi.vcs.changes.ui
 
-import com.intellij.openapi.vcs.changes.Change;
-import com.intellij.util.Processor;
-import org.jetbrains.annotations.NotNull;
+import com.intellij.openapi.vcs.changes.Change
 
-import java.util.Collections;
-import java.util.List;
+private val MODIFIED_FILTER = { it: Change -> it.type == Change.Type.MODIFICATION || it.type == Change.Type.MOVED }
+private val NEW_FILTER = { it: Change -> it.type == Change.Type.NEW }
+private val DELETED_FILTER = { it: Change -> it.type == Change.Type.DELETED }
 
-public class ChangeInfoCalculator implements CommitLegendPanel.InfoCalculator {
-  @NotNull private List<Change> myDisplayedChanges;
-  @NotNull private List<Change> myIncludedChanges;
-  private int myUnversionedFilesCount;
-  private int myIncludedUnversionedFilesCount;
+class ChangeInfoCalculator : CommitLegendPanel.InfoCalculator {
+  private var myDisplayedChanges = emptyList<Change>()
+  private var myIncludedChanges = emptyList<Change>()
 
-  public ChangeInfoCalculator() {
-    myDisplayedChanges = Collections.emptyList();
-    myIncludedChanges = Collections.emptyList();
-    myUnversionedFilesCount = 0;
-    myIncludedUnversionedFilesCount = 0;
-  }
+  override val new get() = myDisplayedChanges.count(NEW_FILTER)
+  override val modified get() = myDisplayedChanges.count(MODIFIED_FILTER)
+  override val deleted get() = myDisplayedChanges.count(DELETED_FILTER)
+  override var unversioned: Int = 0
+    private set
 
-  public void update(@NotNull List<Change> displayedChanges, @NotNull List<Change> includedChanges) {
-    update(displayedChanges, includedChanges, 0, 0);
-  }
+  override val includedNew get() = myIncludedChanges.count(NEW_FILTER)
+  override val includedModified get() = myIncludedChanges.count(MODIFIED_FILTER)
+  override val includedDeleted get() = myIncludedChanges.count(DELETED_FILTER)
+  override var includedUnversioned: Int = 0
+    private set
 
-  public void update(@NotNull List<Change> displayedChanges,
-                     @NotNull List<Change> includedChanges,
-                     int unversionedFilesCount,
-                     int includedUnversionedFilesCount) {
-    myDisplayedChanges = displayedChanges;
-    myIncludedChanges = includedChanges;
-    myUnversionedFilesCount = unversionedFilesCount;
-    myIncludedUnversionedFilesCount = includedUnversionedFilesCount;
-  }
-
-  public int getNew() {
-    return countMatchingItems(myDisplayedChanges, NEW_FILTER);
-  }
-
-  public int getModified() {
-    return countMatchingItems(myDisplayedChanges, MODIFIED_FILTER);
-  }
-
-  public int getDeleted() {
-    return countMatchingItems(myDisplayedChanges, DELETED_FILTER);
-  }
-
-  @Override
-  public int getUnversioned() {
-    return myUnversionedFilesCount;
-  }
-
-  public int getIncludedNew() {
-    return countMatchingItems(myIncludedChanges, NEW_FILTER);
-  }
-
-  public int getIncludedModified() {
-    return countMatchingItems(myIncludedChanges, MODIFIED_FILTER);
-  }
-
-  public int getIncludedDeleted() {
-    return countMatchingItems(myIncludedChanges, DELETED_FILTER);
-  }
-
-  @Override
-  public int getIncludedUnversioned() {
-    return myIncludedUnversionedFilesCount;
-  }
-
-  private static final Processor<Change> MODIFIED_FILTER =
-    item -> item.getType() == Change.Type.MODIFICATION || item.getType() == Change.Type.MOVED;
-  private static final Processor<Change> NEW_FILTER = item -> item.getType() == Change.Type.NEW;
-  private static final Processor<Change> DELETED_FILTER = item -> item.getType() == Change.Type.DELETED;
-
-  private static <T> int countMatchingItems(@NotNull List<T> items, @NotNull Processor<T> filter) {
-    int count = 0;
-
-    for (T item : items) {
-      if (filter.process(item)) count++;
-    }
-
-    return count;
+  @JvmOverloads
+  fun update(displayedChanges: List<Change>,
+             includedChanges: List<Change>,
+             unversionedFilesCount: Int = 0,
+             includedUnversionedFilesCount: Int = 0) {
+    myDisplayedChanges = displayedChanges
+    myIncludedChanges = includedChanges
+    unversioned = unversionedFilesCount
+    includedUnversioned = includedUnversionedFilesCount
   }
 }
