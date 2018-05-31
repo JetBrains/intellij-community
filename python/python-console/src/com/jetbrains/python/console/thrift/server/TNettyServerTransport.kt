@@ -1,8 +1,10 @@
 package com.jetbrains.python.console.thrift.server
 
+import com.intellij.openapi.diagnostic.Logger
+import com.intellij.util.ConcurrencyUtil
 import com.jetbrains.python.console.thrift.DirectedMessage
 import com.jetbrains.python.console.thrift.DirectedMessageCodec
-import com.jetbrains.python.console.thrift.TNettyCumulativeTransport
+import com.jetbrains.python.console.thrift.TCumulativeTransport
 import io.netty.bootstrap.ServerBootstrap
 import io.netty.channel.ChannelHandlerContext
 import io.netty.channel.ChannelInitializer
@@ -16,8 +18,11 @@ import io.netty.handler.codec.LengthFieldPrepender
 import io.netty.handler.logging.LoggingHandler
 import org.apache.thrift.transport.TServerTransport
 import org.apache.thrift.transport.TTransport
+import org.apache.thrift.transport.TTransportException
 import java.util.concurrent.BlockingQueue
 import java.util.concurrent.LinkedBlockingQueue
+import java.util.concurrent.TimeUnit
+import java.util.concurrent.atomic.AtomicBoolean
 
 /**
  *
@@ -31,6 +36,10 @@ class TNettyServerTransport(port: Int) : TServerTransport() {
 
   override fun acceptImpl(): TTransport = nettyServer.accept()
 
+  override fun interrupt() {
+    close()
+  }
+
   override fun close() {
     nettyServer.close()
   }
@@ -38,16 +47,18 @@ class TNettyServerTransport(port: Int) : TServerTransport() {
   fun getReverseTransport(): TTransport = nettyServer.takeReverseTransport()
 
   private class NettyServer(val port: Int) {
+    private val closed: AtomicBoolean = AtomicBoolean(false)
+
     private val acceptQueue: BlockingQueue<TTransport> = LinkedBlockingQueue()
     private val reverseTransportQueue: BlockingQueue<TTransport> = LinkedBlockingQueue()
 
     // The first one, often called 'boss', accepts an incoming connection.
-    private val bossGroup = NioEventLoopGroup() // (1)
+    private val bossGroup = NioEventLoopGroup(0, ConcurrencyUtil.newNamedThreadFactory("Python Console NIO Event Loop Boss")) // (1)
 
     // The second one, often called 'worker', handles the traffic of the
     // accepted connection once the boss accepts the connection and registers
     // the accepted connection to the worker.
-    private val workerGroup = NioEventLoopGroup()
+    private val workerGroup = NioEventLoopGroup(0, ConcurrencyUtil.newNamedThreadFactory("Python Console NIO Event Loop Worker"))
 
     fun listen() {
       // TODO check state!
@@ -72,7 +83,9 @@ class TNettyServerTransport(port: Int) : TServerTransport() {
         .childHandler(object : ChannelInitializer<SocketChannel>() { // (4)
           @Throws(Exception::class)
           override fun initChannel(ch: SocketChannel) {
-            ch.pipeline().addLast(LoggingHandler())
+            LOG.debug("Connection to Thrift server on $port received")
+
+            ch.pipeline().addLast(LoggingHandler("#${TNettyServerTransport::class.java.name}"))
 
             // `FixedLengthFrameDecoder` is excessive but convenient
             ch.pipeline().addLast(LengthFieldBasedFrameDecoder(1048576, 0, 4, 0, 4))
@@ -97,6 +110,13 @@ class TNettyServerTransport(port: Int) : TServerTransport() {
                   it.write(msg.content)
                   it.flush()
                 }
+              }
+
+              override fun channelInactive(ctx: ChannelHandlerContext) {
+                thriftTransport.close()
+                reverseTransport.close()
+
+                ctx.fireChannelInactive()
               }
             })
 
@@ -125,6 +145,8 @@ class TNettyServerTransport(port: Int) : TServerTransport() {
       // many times as you want (with different bind addresses.)
       val f = b.bind(port).sync() // (7)
 
+      LOG.debug("Running Netty server on $port")
+
       // TODO move to `close()`
       /*
             // Wait until the server socket is closed.
@@ -134,19 +156,38 @@ class TNettyServerTransport(port: Int) : TServerTransport() {
       */
     }
 
-    fun accept(): TTransport = acceptQueue.take()
+    fun accept(): TTransport {
+      try {
+        while (true) {
+          val acceptedTransport = acceptQueue.poll(100L, TimeUnit.MILLISECONDS)
+          if (closed.get()) {
+            throw TTransportException("Netty server is closed")
+          }
+          if (acceptedTransport != null) {
+            return acceptedTransport
+          }
+        }
+      }
+      catch (e: InterruptedException) {
+        throw TTransportException(e)
+      }
+    }
 
     fun takeReverseTransport(): TTransport = reverseTransportQueue.take()
 
     fun close() {
-      workerGroup.shutdownGracefully()
-      bossGroup.shutdownGracefully()
+      if (closed.compareAndSet(false, true)) {
+        LOG.debug("Closing Netty server")
 
-      // TODO close server channel!
+        workerGroup.shutdownGracefully()
+        bossGroup.shutdownGracefully()
+
+        // TODO close server channel!
+      }
     }
   }
 
-  private class TNettyTransport(private val channel: SocketChannel) : TNettyCumulativeTransport() {
+  private class TNettyTransport(private val channel: SocketChannel) : TCumulativeTransport() {
     override fun isOpen(): Boolean = channel.isOpen
 
     override fun writeMessage(content: ByteArray) {
@@ -154,11 +195,15 @@ class TNettyServerTransport(port: Int) : TServerTransport() {
     }
   }
 
-  private class TNettyClientTransport(private val channel: SocketChannel) : TNettyCumulativeTransport() {
+  private class TNettyClientTransport(private val channel: SocketChannel) : TCumulativeTransport() {
     override fun isOpen(): Boolean = channel.isOpen
 
     override fun writeMessage(content: ByteArray) {
       channel.writeAndFlush(DirectedMessage(DirectedMessage.MessageDirection.REQUEST, content))
     }
+  }
+
+  companion object {
+    val LOG = Logger.getInstance(TNettyServerTransport::class.java)
   }
 }

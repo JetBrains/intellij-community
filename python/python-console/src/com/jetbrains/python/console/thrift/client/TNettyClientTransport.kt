@@ -2,7 +2,7 @@ package com.jetbrains.python.console.thrift.client
 
 import com.jetbrains.python.console.thrift.DirectedMessage
 import com.jetbrains.python.console.thrift.DirectedMessageCodec
-import com.jetbrains.python.console.thrift.TNettyCumulativeTransport
+import com.jetbrains.python.console.thrift.TCumulativeTransport
 import io.netty.bootstrap.Bootstrap
 import io.netty.buffer.ByteBuf
 import io.netty.buffer.Unpooled
@@ -121,7 +121,7 @@ class TNettyClientTransport(private val host: String,
 
   private fun getChannel(): Channel = channel ?: throw IllegalStateException("`channel` must not be `null`")
 
-  private inner class TNettyTransport : TNettyCumulativeTransport() {
+  private inner class TNettyTransport : TCumulativeTransport() {
     override fun isOpen(): Boolean = channel?.isOpen == true
 
     override fun writeMessage(content: ByteArray) {
