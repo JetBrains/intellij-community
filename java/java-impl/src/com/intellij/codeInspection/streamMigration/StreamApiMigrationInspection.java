@@ -40,6 +40,7 @@ import javax.swing.*;
 import java.util.Collection;
 import java.util.List;
 import java.util.Objects;
+import java.util.function.Predicate;
 
 import static com.intellij.codeInspection.streamMigration.OperationReductionMigration.SUM_OPERATION;
 import static com.intellij.util.ObjectUtils.tryCast;
@@ -306,13 +307,16 @@ public class StreamApiMigrationInspection extends AbstractBaseJavaLocalInspectio
   }
 
   static boolean isVariableSuitableForStream(PsiVariable variable, PsiStatement statement, TerminalBlock tb) {
-    if (ReferencesSearch.search(variable).forEach(ref -> {
-      PsiExpression expression = tryCast(ref.getElement(), PsiExpression.class);
-      return expression == null ||
-             !PsiUtil.isAccessedForWriting(expression) ||
-             tb.operations().anyMatch(op -> op.isWriteAllowed(variable, expression));
-    })) {
-      return true;
+    PsiElement block = PsiUtil.getVariableCodeBlock(variable, statement);
+    if (block != null) {
+      Predicate<PsiElement> notAllowedWrite = e -> {
+        if (!(e instanceof PsiReferenceExpression)) return false;
+        PsiReferenceExpression ref = (PsiReferenceExpression)e;
+        return PsiUtil.isAccessedForWriting(ref) &&
+               ref.isReferenceTo(variable) &&
+               tb.operations().noneMatch(op -> op.isWriteAllowed(variable, ref));
+      };
+      if (PsiTreeUtil.processElements(block, notAllowedWrite.negate()::test)) return true;
     }
     return HighlightControlFlowUtil.isEffectivelyFinal(variable, statement, null);
   }
