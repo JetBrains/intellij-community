@@ -4,10 +4,10 @@ package com.intellij.ide.actions.searcheverywhere;
 import com.intellij.ide.IdeBundle;
 import com.intellij.ide.actions.GotoActionAction;
 import com.intellij.ide.ui.search.BooleanOptionDescription;
-import com.intellij.ide.util.gotoByName.ChooseByNameModel;
 import com.intellij.ide.util.gotoByName.GotoActionItemProvider;
 import com.intellij.ide.util.gotoByName.GotoActionModel;
 import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.project.Project;
@@ -17,24 +17,19 @@ import org.jetbrains.annotations.NotNull;
 import javax.swing.*;
 import java.awt.*;
 
-//todo not extends AbstractGotoSEContributor #UX-1
-public class ActionSearchEverywhereContributor extends AbstractGotoSEContributor {
+public class ActionSearchEverywhereContributor implements SearchEverywhereContributor {
+  private static final Logger LOG = Logger.getInstance(ActionSearchEverywhereContributor.class);
+
+  private final Project myProject;
   private final Component myContextComponent;
-  private final Editor myEditor;
   private final GotoActionModel myModel;
   private final GotoActionItemProvider myProvider;
 
   public ActionSearchEverywhereContributor(Project project, Component contextComponent, Editor editor) {
-    super(project);
-    this.myContextComponent = contextComponent;
-    this.myEditor = editor;
+    myProject = project;
+    myContextComponent = contextComponent;
     myModel = new GotoActionModel(project, contextComponent, editor);
     myProvider = new GotoActionItemProvider(myModel);
-  }
-
-  @Override
-  protected ChooseByNameModel createModel(Project project) {
-    return new GotoActionModel(project, myContextComponent, myEditor);
   }
 
   @NotNull
@@ -63,12 +58,26 @@ public class ActionSearchEverywhereContributor extends AbstractGotoSEContributor
     }
 
     ContributorSearchResult.Builder<Object> builder = ContributorSearchResult.builder();
-    myProvider.filterElements(pattern, o -> {
-                              if (!everywhere && o.value instanceof GotoActionModel.ActionWrapper && !((GotoActionModel.ActionWrapper)o.value).isAvailable()) {
-                                return true;
-                              }
-                              return addFoundElement(o, myModel, builder, progressIndicator, elementsLimit);
-                            });
+    myProvider.filterElements(pattern, element -> {
+      if (!everywhere && element.value instanceof GotoActionModel.ActionWrapper && !((GotoActionModel.ActionWrapper) element.value).isAvailable()) {
+        return true;
+      }
+
+      if (progressIndicator.isCanceled()) return false;
+      if (element == null) {
+        LOG.error("Null action has been returned from model");
+        return true;
+      }
+
+      if (builder.itemsCount() < elementsLimit) {
+        builder.addItem(element);
+        return true;
+      }
+      else {
+        builder.setHasMore(true);
+        return false;
+      }
+    });
 
     return builder.build();
   }
@@ -83,9 +92,16 @@ public class ActionSearchEverywhereContributor extends AbstractGotoSEContributor
     return false;
   }
 
+  @NotNull
   @Override
-  protected boolean isDumbModeSupported() {
-    return true;
+  public String getSearchProviderId() {
+    return ActionSearchEverywhereContributor.class.getSimpleName();
+  }
+
+  @NotNull
+  @Override
+  public DataContext getDataContextForItem(Object element) {
+    return DataContext.EMPTY_CONTEXT;
   }
 
   @Override
@@ -102,11 +118,6 @@ public class ActionSearchEverywhereContributor extends AbstractGotoSEContributor
     boolean inplaceChange = selected instanceof GotoActionModel.ActionWrapper
                             && ((GotoActionModel.ActionWrapper) selected).getAction() instanceof ToggleAction;
     return !inplaceChange;
-  }
-
-  @Override
-  protected Object getItemData(String dataId, Object element) {
-    return null;
   }
 
   public static class Factory implements SearchEverywhereContributorFactory {
