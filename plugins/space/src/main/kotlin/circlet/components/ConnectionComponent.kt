@@ -106,7 +106,7 @@ class ConnectionComponent(project: Project) :
 
     fun authenticate() {
         loginModel?.let { model ->
-            val lt = seq.next()
+            val lt = seq.next().nested()
             val server = embeddedServer(Jetty, 8080) {
                 routing {
                     get("auth") {

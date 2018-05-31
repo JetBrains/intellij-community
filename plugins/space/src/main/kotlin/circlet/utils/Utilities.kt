@@ -21,7 +21,7 @@ val application: Application
     get() = ApplicationManager.getApplication()
 
 fun Disposable.attachLifetime(): Lifetime {
-    val lifetime = Lifetime()
+    val lifetime = LifetimeSource()
 
     Disposer.register(this, Disposable { lifetime.terminate() })
 
@@ -35,10 +35,12 @@ class LifetimedOnDisposable(disposable: Disposable) : Lifetimed {
 interface LifetimedDisposable : Lifetimed, Disposable
 
 class SimpleLifetimedDisposable : LifetimedDisposable {
-    override val lifetime: Lifetime = Lifetime()
+    private val lifetimeSource = LifetimeSource()
+
+    override val lifetime: Lifetime = lifetimeSource
 
     override fun dispose() {
-        lifetime.terminate()
+        lifetimeSource.terminate()
     }
 }
 
