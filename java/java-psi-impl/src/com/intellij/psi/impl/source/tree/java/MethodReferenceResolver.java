@@ -16,7 +16,6 @@
 package com.intellij.psi.impl.source.tree.java;
 
 import com.intellij.codeInsight.PsiEquivalenceUtil;
-import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.source.resolve.ParameterTypeInferencePolicy;
@@ -42,8 +41,6 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class MethodReferenceResolver implements ResolveCache.PolyVariantContextResolver<PsiMethodReferenceExpressionImpl> {
-  private static final Logger LOG = Logger.getInstance(MethodReferenceResolver.class);
-
   @NotNull
   @Override
   public JavaResolveResult[] resolve(@NotNull final PsiMethodReferenceExpressionImpl reference, @NotNull final PsiFile containingFile, boolean incompleteCode) {
@@ -190,7 +187,7 @@ public class MethodReferenceResolver implements ResolveCache.PolyVariantContextR
     return false;
   }
 
-  protected PsiType getInterfaceType(PsiMethodReferenceExpression reference) {
+  private static PsiType getInterfaceType(PsiMethodReferenceExpression reference) {
     return reference.getFunctionalInterfaceType();
   }
 
@@ -406,12 +403,12 @@ public class MethodReferenceResolver implements ResolveCache.PolyVariantContextR
         final PsiElement element = candidateInfo.getElement();
         if (element instanceof PsiMethod) {
           final boolean isStatic = ((PsiMethod)element).hasModifierProperty(PsiModifier.STATIC);
-          if (shouldBeStatic && isStatic || !shouldBeStatic && !isStatic) {
+          if (shouldBeStatic == isStatic) {
             for (CandidateInfo secondCandidate : secondCandidates) {
               final PsiElement psiElement = secondCandidate.getElement();
               if (psiElement instanceof PsiMethod) {
                 final boolean oppositeStatic = ((PsiMethod)psiElement).hasModifierProperty(PsiModifier.STATIC);
-                if (shouldBeStatic && !oppositeStatic || !shouldBeStatic && oppositeStatic) {
+                if (shouldBeStatic != oppositeStatic) {
                   return null;
                 }
               }
@@ -426,9 +423,6 @@ public class MethodReferenceResolver implements ResolveCache.PolyVariantContextR
 
   private static boolean arrayCreationSignature(MethodSignature signature) {
     final PsiType[] parameterTypes = signature.getParameterTypes();
-    if (parameterTypes.length == 1 && parameterTypes[0] != null && TypeConversionUtil.isAssignable(PsiType.INT, parameterTypes[0])) {
-      return true;
-    }
-    return false;
+    return parameterTypes.length == 1 && parameterTypes[0] != null && TypeConversionUtil.isAssignable(PsiType.INT, parameterTypes[0]);
   }
 }
