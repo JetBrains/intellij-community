@@ -3,6 +3,7 @@ package com.intellij.ide.actions;
 
 import com.intellij.featureStatistics.FeatureUsageTracker;
 import com.intellij.ide.DataManager;
+import com.intellij.ide.actions.searcheverywhere.ActionSearchEverywhereContributor;
 import com.intellij.ide.ui.search.BooleanOptionDescription;
 import com.intellij.ide.ui.search.OptionDescription;
 import com.intellij.ide.util.gotoByName.ChooseByNamePopup;
@@ -50,6 +51,16 @@ import java.util.Set;
 import static com.intellij.openapi.keymap.KeymapUtil.getActiveKeymapShortcuts;
 
 public class GotoActionAction extends GotoActionBase implements DumbAware {
+
+  @Override
+  public void actionPerformed(@NotNull AnActionEvent e) {
+    if (Registry.is("new.search.everywhere")) {
+      showInSearchEverywherePopup(ActionSearchEverywhereContributor.class.getSimpleName(), e);
+    } else {
+      super.actionPerformed(e);
+    }
+  }
+
   @Override
   public void gotoActionPerformed(@NotNull AnActionEvent e) {
     Project project = e.getProject();
