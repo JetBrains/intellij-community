@@ -160,6 +160,11 @@ public interface GitBrancher {
   void renameBranch(@NotNull String currentName, @NotNull String newName, @NotNull List<GitRepository> repositories);
 
   /**
+   * Deletes tag
+   */
+  void deleteTag(@NotNull String name, @NotNull List<GitRepository> repositories);
+
+  /**
    * What should be done after successful merging a branch: delete the merged branch, propose to delete or do nothing.
    */
   enum DeleteOnMergeOption {

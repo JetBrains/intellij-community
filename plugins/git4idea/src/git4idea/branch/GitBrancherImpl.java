@@ -168,6 +168,16 @@ class GitBrancherImpl implements GitBrancher {
     }.runInBackground();
   }
 
+  @Override
+  public void deleteTag(@NotNull String name, @NotNull List<GitRepository> repositories) {
+    new CommonBackgroundTask(myProject, "Deleting " + name, null) {
+      @Override
+      public void execute(@NotNull ProgressIndicator indicator) {
+        newWorker(indicator).deleteTag(name, repositories);
+      }
+    }.runInBackground();
+  }
+
   /**
    * Executes common operations before/after executing the actual branch operation.
    */

@@ -110,6 +110,10 @@ public interface Git {
                                 @Nullable GitLineHandlerListener listener, @NotNull String reference);
 
   @NotNull
+  GitCommandResult deleteTag(@NotNull GitRepository repository, @NotNull String tagName,
+                             @NotNull GitLineHandlerListener... listeners);
+
+  @NotNull
   GitCommandResult branchDelete(@NotNull GitRepository repository, @NotNull String branchName, boolean force,
                                 @NotNull GitLineHandlerListener... listeners);
 

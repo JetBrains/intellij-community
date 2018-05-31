@@ -101,6 +101,11 @@ public final class GitBranchWorker {
     new GitDeleteBranchOperation(myProject, myGit, myUiHandler, repositories, branchName).execute();
   }
 
+  public void deleteTag(@NotNull final String tagName, @NotNull final List<GitRepository> repositories) {
+    updateInfo(repositories);
+    new GitDeleteTagOperation(myProject, myGit, myUiHandler, repositories, tagName).execute();
+  }
+
   public void deleteRemoteBranch(@NotNull final String branchName, @NotNull final List<GitRepository> repositories) {
     updateInfo(repositories);
     new GitDeleteRemoteBranchOperation(myProject, myGit, myUiHandler, repositories, branchName).execute();
