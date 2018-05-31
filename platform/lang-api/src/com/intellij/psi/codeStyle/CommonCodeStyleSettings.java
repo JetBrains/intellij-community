@@ -418,7 +418,7 @@ public class CommonCodeStyleSettings {
   public boolean ALIGN_MULTILINE_PARAMETERS_IN_CALLS = false;
   public boolean ALIGN_MULTILINE_RESOURCES = true;
   public boolean ALIGN_MULTILINE_FOR = true;
-  /** @deprecated Use {@link org.jetbrains.plugins.ruby.settings.RubyCodeStyleSettings#INDENT_WHEN_CASES} instead */
+
   @Deprecated
   public boolean INDENT_WHEN_CASES = true;
 
@@ -847,6 +847,7 @@ public class CommonCodeStyleSettings {
   public int ASSIGNMENT_WRAP = DO_NOT_WRAP;
   public boolean PLACE_ASSIGNMENT_SIGN_ON_NEXT_LINE = false;
 
+  @Deprecated
   public int LABELED_STATEMENT_WRAP = WRAP_ALWAYS;
 
   public boolean WRAP_COMMENTS = false;
