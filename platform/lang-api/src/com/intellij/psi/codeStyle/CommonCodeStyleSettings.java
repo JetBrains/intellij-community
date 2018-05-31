@@ -341,23 +341,7 @@ public class CommonCodeStyleSettings {
   @BraceStyleConstant public int METHOD_BRACE_STYLE = END_OF_LINE;
   @BraceStyleConstant public int LAMBDA_BRACE_STYLE = END_OF_LINE;
 
-  /**
-   * Defines if 'flying geese' style should be used for curly braces formatting, e.g. if we want to format code like
-   * <p/>
-   * <pre>
-   *     class Test {
-   *         {
-   *             System.out.println();
-   *         }
-   *     }
-   * </pre>
-   * to
-   * <pre>
-   *     class Test { {
-   *         System.out.println();
-   *     } }
-   * </pre>
-   */
+  @Deprecated
   public boolean USE_FLYING_GEESE_BRACES = false;
 
   public boolean DO_NOT_INDENT_TOP_LEVEL_CLASS_MEMBERS = false;
