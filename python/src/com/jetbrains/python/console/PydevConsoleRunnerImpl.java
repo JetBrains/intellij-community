@@ -529,7 +529,7 @@ public class PydevConsoleRunnerImpl implements PydevConsoleRunner {
   private void initAndRun(@NotNull GeneralCommandLine generalCommandLine) throws ExecutionException {
     // Create Server process
     final Process process = createProcess(generalCommandLine);
-    UIUtil.invokeLaterIfNeeded(() -> {
+    UIUtil.invokeAndWaitIfNeeded((Runnable)() -> {
       // Init console view
       myConsoleView = createConsoleView();
       if (myConsoleView != null) {
