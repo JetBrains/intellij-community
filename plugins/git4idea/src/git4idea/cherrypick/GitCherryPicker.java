@@ -79,7 +79,7 @@ public class GitCherryPicker extends VcsCherryPicker {
   @NotNull
   private String createCommitMessage(@NotNull GitRepository repository, @NotNull VcsFullCommitDetails commit) {
     String message = commit.getFullMessage();
-    if (shouldAddSuffix(repository, commit.getId())) message += "\n\n(cherry picked from commit " + commit.getId().toShortString() + ")";
+    if (shouldAddSuffix(repository, commit.getId())) message += "\n\n(cherry picked from commit " + commit.getId().asString() + ")";
     return message;
   }
 
