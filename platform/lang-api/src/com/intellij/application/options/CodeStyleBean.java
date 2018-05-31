@@ -41,6 +41,38 @@ public abstract class CodeStyleBean implements Serializable {
     myRootSettings.setRightMargin(getLanguage(), rightMargin);
   }
 
+  public int getIndentSize() {
+    return getIndentOptions(false).INDENT_SIZE;
+  }
+
+  public void setIndentSize(int indentSize) {
+    getIndentOptions(true).INDENT_SIZE = indentSize;
+  }
+
+  public int getTabSize() {
+    return getIndentOptions(false).TAB_SIZE;
+  }
+
+  public void setTabSize(int tabSize) {
+    getIndentOptions(true).TAB_SIZE = tabSize;
+  }
+
+  public boolean isUseSmartTabs() {
+    return getIndentOptions(false).SMART_TABS;
+  }
+
+  public void setUseSmartTabs(boolean useSmartTabs) {
+    getIndentOptions(true).SMART_TABS = useSmartTabs;
+  }
+
+  public boolean isUseTabCharacter() {
+    return getIndentOptions(false).USE_TAB_CHARACTER;
+  }
+
+  public void setUseTabCharacter(boolean useTabCharacter) {
+    getIndentOptions(true).USE_TAB_CHARACTER = useTabCharacter;
+  }
+
   @NotNull
   public CommonCodeStyleSettings.WrapOnTyping getWrapOnTyping() {
     for (CommonCodeStyleSettings.WrapOnTyping c : CommonCodeStyleSettings.WrapOnTyping.values()) {
@@ -56,6 +88,15 @@ public abstract class CodeStyleBean implements Serializable {
   @NotNull
   protected final CommonCodeStyleSettings getCommonSettings() {
     return myRootSettings.getCommonSettings(getLanguage());
+  }
+
+  @NotNull
+  protected final CommonCodeStyleSettings.IndentOptions getIndentOptions(boolean isWritable) {
+    CommonCodeStyleSettings.IndentOptions indentOptions = getCommonSettings().getIndentOptions();
+    if (indentOptions == null && isWritable) {
+      indentOptions = getCommonSettings().initIndentOptions();
+    }
+    return indentOptions != null ? indentOptions : myRootSettings.OTHER_INDENT_OPTIONS;
   }
 
   @NotNull
