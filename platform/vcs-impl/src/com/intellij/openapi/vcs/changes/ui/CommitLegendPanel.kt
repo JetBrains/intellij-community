@@ -6,6 +6,9 @@ import com.intellij.openapi.vcs.FileStatus
 import com.intellij.openapi.vcs.VcsBundle.message
 import com.intellij.ui.SimpleColoredComponent
 import com.intellij.ui.SimpleTextAttributes
+import kotlin.math.max
+
+private val FileStatus.attributes get() = SimpleTextAttributes(SimpleTextAttributes.STYLE_PLAIN, color)
 
 open class CommitLegendPanel(private val myInfoCalculator: InfoCalculator) {
   private val myRootPanel = SimpleColoredComponent()
@@ -19,19 +22,28 @@ open class CommitLegendPanel(private val myInfoCalculator: InfoCalculator) {
   }
 
   private fun appendLegend() = with(myInfoCalculator) {
-    append(new, includedNew, FileStatus.ADDED, message("commit.legend.new"))
-    append(modified, includedModified, FileStatus.MODIFIED, message("commit.legend.modified"))
-    append(deleted, includedDeleted, FileStatus.DELETED, message("commit.legend.deleted"))
-    append(unversioned, includedUnversioned, FileStatus.UNKNOWN, message("commit.legend.unversioned"))
+    appendAdded(includedNew, includedUnversioned)
+    append(includedModified, FileStatus.MODIFIED, message("commit.legend.modified"))
+    append(includedDeleted, FileStatus.DELETED, message("commit.legend.deleted"))
   }
 
-  protected fun append(total: Int, included: Int, fileStatus: FileStatus, labelName: String) {
-    if (total > 0) {
+  protected fun append(included: Int, fileStatus: FileStatus, labelName: String) {
+    if (included > 0) {
       if (!isPanelEmpty) {
         appendSpace()
       }
-      val text = if (total == included) "$labelName $included" else "$labelName $included of $total"
-      myRootPanel.append(text, SimpleTextAttributes(SimpleTextAttributes.STYLE_PLAIN, fileStatus.color))
+      myRootPanel.append("$included $labelName", fileStatus.attributes)
+    }
+  }
+
+  private fun appendAdded(new: Int, unversioned: Int) {
+    if (new > 0 || unversioned > 0) {
+      if (!isPanelEmpty) {
+        appendSpace()
+      }
+      val labelName = message("commit.legend.new")
+      val text = if (new > 0 && unversioned > 0) "$new+$unversioned $labelName" else "${max(new, unversioned)} $labelName"
+      myRootPanel.append(text, FileStatus.ADDED.attributes)
     }
   }
 
