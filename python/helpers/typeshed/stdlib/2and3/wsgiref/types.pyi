@@ -1,7 +1,7 @@
 # Type declaration for a WSGI Function
 #
-# wsgiref/types.py doesn't exist and neither does WSGIApplication, it's a type
-# provided for type checking purposes.
+# wsgiref/types.py doesn't exist and neither do the types defined in this
+# file. They are provided for type checking purposes.
 #
 # This means you cannot simply import wsgiref.types in your code. Instead,
 # use the `TYPE_CHECKING` flag from the typing module:
@@ -15,27 +15,28 @@
 # you need to use 'WSGIApplication' and not simply WSGIApplication when type
 # hinting your code.  Otherwise Python will raise NameErrors.
 
-import sys
-from typing import Callable, Dict, Iterable, List, Optional, Tuple, Type, Union, Any
+from typing import Callable, Dict, Iterable, List, Optional, Tuple, Type, Union, Any, Text, Protocol
 from types import TracebackType
 
 _exc_info = Tuple[Optional[Type[BaseException]],
                   Optional[BaseException],
                   Optional[TracebackType]]
-if sys.version_info < (3,):
-    _Text = Union[unicode, str]
-    _BText = _Text
-else:
-    _Text = str
-    _BText = Union[bytes, str]
-WSGIEnvironment = Dict[_Text, Any]
-WSGIApplication = Callable[
-    [
-        WSGIEnvironment,
-        Union[
-            Callable[[_Text, List[Tuple[_Text, _Text]]], Callable[[_BText], None]],
-            Callable[[_Text, List[Tuple[_Text, _Text]], _exc_info], Callable[[_BText], None]]
-        ]
-    ],
-    Iterable[_BText]
+StartResponse = Union[
+    Callable[[Text, List[Tuple[Text, Text]]], Callable[[bytes], None]],
+    Callable[[Text, List[Tuple[Text, Text]], _exc_info], Callable[[bytes], None]]
 ]
+WSGIEnvironment = Dict[Text, Any]
+WSGIApplication = Callable[[WSGIEnvironment, StartResponse], Iterable[bytes]]
+
+# WSGI input streams per PEP 3333
+class InputStream(Protocol):
+    def read(self, size: int = ...) -> bytes: ...
+    def readline(self, size: int = ...) -> bytes: ...
+    def readlines(self, hint: int = ...) -> List[bytes]: ...
+    def __iter__(self) -> Iterable[bytes]: ...
+
+# WSGI error streams per PEP 3333
+class ErrorStream(Protocol):
+    def flush(self) -> None: ...
+    def write(self, s: str) -> None: ...
+    def writelines(self, seq: List[str]) -> None: ...

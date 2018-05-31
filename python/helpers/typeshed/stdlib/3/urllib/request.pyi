@@ -1,8 +1,8 @@
 # Stubs for urllib.request (Python 3.4)
 
 from typing import (
-    Any, Callable, Dict, List, IO, Mapping, Optional, Sequence, Tuple, TypeVar,
-    Union, overload,
+    Any, Callable, ClassVar, Dict, List, IO, Mapping, Optional, Sequence, Tuple,
+    TypeVar, Union, overload,
 )
 from http.client import HTTPResponse, HTTPMessage
 from http.cookiejar import CookieJar
@@ -41,15 +41,15 @@ class Request:
         @full_url.deleter
         def full_url(self) -> None: ...
     else:
-        full_url = ...  # type: str
-    type = ...  # type: str
-    host = ...  # type: str
-    origin_req_host = ...  # type: str
-    selector = ...  # type: str
-    data = ...  # type: Optional[bytes]
-    headers = ...  # type: Dict[str, str]
-    unverifiable = ...  # type: bool
-    method = ...  # type: Optional[str]
+        full_url: str
+    type: str
+    host: str
+    origin_req_host: str
+    selector: str
+    data: Optional[bytes]
+    headers: Dict[str, str]
+    unverifiable: bool
+    method: Optional[str]
     def __init__(self, url: str, data: Optional[bytes] = ...,
             headers: Dict[str, str] =..., origin_req_host: Optional[str] = ...,
             unverifiable: bool = ..., method: Optional[str] = ...) -> None: ...
@@ -68,6 +68,7 @@ class Request:
     def header_items(self) -> List[Tuple[str, str]]: ...
 
 class OpenerDirector:
+    addheaders: List[Tuple[str, str]]
     def add_handler(self, handler: BaseHandler) -> None: ...
     def open(self, url: Union[str, Request], data: Optional[bytes] = ...,
              timeout: float = ...) -> _UrlopenRet: ...
@@ -75,7 +76,8 @@ class OpenerDirector:
 
 
 class BaseHandler:
-    parent = ...  # type: OpenerDirector
+    handler_order: ClassVar[int]
+    parent: OpenerDirector
     def add_parent(self, parent: OpenerDirector) -> None: ...
     def close(self) -> None: ...
     def http_error_nnn(self, req: Request, fp: IO[str], code: int, msg: int,
@@ -97,7 +99,7 @@ class HTTPRedirectHandler(BaseHandler):
                        hdrs: Mapping[str, str]) -> Optional[_UrlopenRet]: ...
 
 class HTTPCookieProcessor(BaseHandler):
-    cookiejar = ...  # type: CookieJar
+    cookiejar: CookieJar
     def __init__(self, cookiejar: Optional[CookieJar] = ...) -> None: ...
 
 class ProxyHandler(BaseHandler):
@@ -192,7 +194,7 @@ def urlretrieve(url: str, filename: Optional[str] = ...,
 def urlcleanup() -> None: ...
 
 class URLopener:
-    version = ...  # type: str
+    version: ClassVar[str]
     def __init__(self, proxies: Optional[Dict[str, str]] = ...,
                  **x509: str) -> None: ...
     def open(self, fullurl: str, data: Optional[bytes] = ...) -> _UrlopenRet: ...

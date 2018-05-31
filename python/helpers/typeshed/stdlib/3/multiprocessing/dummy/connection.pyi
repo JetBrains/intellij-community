@@ -2,7 +2,6 @@ from typing import Any, List, Optional, Tuple, Type, TypeVar
 
 from queue import Queue
 
-__all__ = ...  # type: List[str]
 families = ...  # type: List[None]
 
 _TConnection = TypeVar('_TConnection', bound=Connection)

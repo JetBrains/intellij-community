@@ -3,7 +3,6 @@ from datetime import date, datetime, timedelta
 
 from ._common import weekday
 
-__all__ = ...  # type: List[str]
 
 _SelfT = TypeVar('_SelfT', bound=relativedelta)
 _DateT = TypeVar('_DateT', date, datetime)

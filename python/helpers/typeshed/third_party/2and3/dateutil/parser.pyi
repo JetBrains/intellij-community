@@ -3,7 +3,6 @@ from datetime import datetime, tzinfo
 
 _FileOrStr = Union[bytes, Text, IO[str], IO[Any]]
 
-__all__ = ...  # type: List[str]
 
 class parserinfo(object):
     JUMP = ...  # type: List[str]

@@ -2,7 +2,6 @@ from typing import Any, Iterable, List, Optional, Union, TextIO, Tuple, TypeVar
 
 _T = TypeVar('_T')
 
-__all__ = ...  # type: List[str]
 
 class Popen3:
     sts = ...  # type: int

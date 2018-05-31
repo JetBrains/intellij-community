@@ -1,6 +1,8 @@
 from google.protobuf.internal.containers import (
     RepeatedCompositeFieldContainer,
 )
+from google.protobuf.internal import well_known_types
+
 from google.protobuf.message import (
     Message,
 )
@@ -36,7 +38,7 @@ class NullValue(int):
 NULL_VALUE: NullValue
 
 
-class Struct(Message):
+class Struct(Message, well_known_types.Struct):
     class FieldsEntry(Message):
         key = ...  # type: Text
 
@@ -90,7 +92,7 @@ class _Value(Message):
 Value = _Value
 
 
-class ListValue(Message):
+class ListValue(Message, well_known_types.ListValue):
 
     @property
     def values(self) -> RepeatedCompositeFieldContainer[Value]: ...
