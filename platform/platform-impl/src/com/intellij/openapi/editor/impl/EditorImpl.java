@@ -429,8 +429,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
           }
         }
 
-        updateCaretCursor();
-        myCaretCursor.repaint();
+        makeCaretVisibleNow();
       }
     };
 
@@ -2581,6 +2580,16 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
           }
         }
       }
+    }
+  }
+
+  private void makeCaretVisibleNow() {
+    if (myCaretCursor.myIsShown) {
+      myCaretCursor.myStartTime = System.currentTimeMillis();
+    }
+    else {
+      updateCaretCursor();
+      myCaretCursor.repaint();
     }
   }
 
