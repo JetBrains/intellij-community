@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package git4idea.rebase
+package git4idea
 
 import git4idea.config.GitSharedSettings
 import git4idea.repo.GitRepository

@@ -27,6 +27,7 @@ import com.intellij.vcs.log.*
 import com.intellij.vcs.log.data.VcsLogData
 import git4idea.GitUtil.HEAD
 import git4idea.GitUtil.getRepositoryManager
+import git4idea.findProtectedRemoteBranch
 import git4idea.repo.GitRepository
 
 /**

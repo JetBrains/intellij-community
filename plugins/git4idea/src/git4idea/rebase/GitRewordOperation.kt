@@ -25,6 +25,7 @@ import git4idea.commands.GitCommand
 import git4idea.commands.GitLineHandler
 import git4idea.config.GitConfigUtil
 import git4idea.config.GitVersionSpecialty
+import git4idea.findProtectedRemoteBranch
 import git4idea.history.GitLogUtil
 import git4idea.rebase.GitRebaseEntry.Action.PICK
 import git4idea.rebase.GitRebaseEntry.Action.REWORD
