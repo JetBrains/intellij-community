@@ -15,21 +15,16 @@
  */
 package com.jetbrains.python.documentation;
 
+import com.intellij.application.options.CodeStyle;
 import com.intellij.lang.ASTNode;
 import com.intellij.lang.documentation.DocumentationMarkup;
-import com.intellij.openapi.module.Module;
-import com.intellij.openapi.project.Project;
-import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.LineTokenizer;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiElement;
-import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.QualifiedName;
-import com.intellij.util.ArrayUtil;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.FactoryMap;
 import com.jetbrains.python.*;
@@ -42,25 +37,23 @@ import com.jetbrains.python.psi.impl.PyPsiUtils;
 import com.jetbrains.python.psi.resolve.PyResolveContext;
 import com.jetbrains.python.psi.resolve.QualifiedNameFinder;
 import com.jetbrains.python.psi.resolve.QualifiedResolveResult;
-import com.jetbrains.python.psi.resolve.RootVisitor;
 import com.jetbrains.python.psi.types.PyClassType;
 import com.jetbrains.python.psi.types.PyType;
 import com.jetbrains.python.psi.types.TypeEvalContext;
 import com.jetbrains.python.pyi.PyiUtil;
 import com.jetbrains.python.toolbox.ChainIterable;
 import com.jetbrains.python.toolbox.Maybe;
+import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.FileNotFoundException;
 import java.io.FileReader;
 import java.io.IOException;
-import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.function.Function;
-import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 import static com.jetbrains.python.documentation.DocumentationBuilderKit.*;
@@ -327,11 +320,10 @@ public class PyDocumentationBuilder {
       if (!isProperty) {
         pyClass = pyFunction.getContainingClass();
         if (pyClass != null) {
-          myBody
-            .addWith(TagSmall,
-                     PythonDocumentationProvider.describeClass(pyClass, Function.identity(), TO_ONE_LINE_AND_ESCAPE, true, true, myContext))
-            .addItem(BR)
-            .addItem(BR);
+          final String link = getLinkToClass(pyClass);
+          if (link != null) {
+            myProlog.addItem(link);
+          }
         }
       }
       myBody.add(PythonDocumentationProvider.describeDecorators(pyFunction, WRAP_IN_ITALIC, ESCAPE_AND_SAVE_NEW_LINES_AND_SPACES, BR, BR));
@@ -430,14 +422,9 @@ public class PyDocumentationBuilder {
             if (pyClass == ancestor) {
               ancestorLink = PyDocumentationLink.toContainingClass(ancestorName);
             }
-            else if (ancestorQualifiedName != null && ancestorName != null) {
-              ancestorLink = PyDocumentationLink.toPossibleClass(ancestorName, ancestorQualifiedName, pyClass, myContext);
-            }
             else {
-              // TODO add a way to reference other local classes
-              ancestorLink = ancestorName;
+              ancestorLink = getLinkToClass(ancestor);
             }
-
           }
           if (ancestorLink != null) {
             mySectionsMap.get(PyBundle.message("QDOC.documentation.is.copied.from")).addWith(TagCode, $(ancestorLink));
@@ -474,21 +461,21 @@ public class PyDocumentationBuilder {
 
   @NotNull
   private static ChainIterable<String> formatDocString(@NotNull PsiElement element, @NotNull String docstring) {
-    final Project project = element.getProject();
 
     final List<String> formatted = PyStructuredDocstringFormatter.formatDocstring(element, docstring);
     if (formatted != null) {
       return new ChainIterable<>(formatted);
     }
 
-    boolean isFirstLine;
-    final String[] lines = removeCommonIndentation(docstring);
-
+    final List<String> origLines = LineTokenizer.tokenizeIntoList(docstring.trim(), false, false);
+    final List<String> updatedLines = StreamEx.of(PyIndentUtil.removeCommonIndent(origLines, true))
+                                              .takeWhile(line -> !line.startsWith(PyConsoleUtil.ORDINARY_PROMPT))
+                                              .toList();
     final ChainIterable<String> result = new ChainIterable<>();
     // reconstruct back, dropping first empty fragment as needed
-    isFirstLine = true;
-    final int tabSize = CodeStyleSettingsManager.getSettings(project).getTabSize(PythonFileType.INSTANCE);
-    for (String line : lines) {
+    boolean isFirstLine = true;
+    final int tabSize = CodeStyle.getIndentOptions(element.getContainingFile()).TAB_SIZE;
+    for (String line : updatedLines) {
       if (isFirstLine && ourSpacesPattern.matcher(line).matches()) continue; // ignore all initial whitespace
       if (isFirstLine) {
         isFirstLine = false;
@@ -508,44 +495,6 @@ public class PyDocumentationBuilder {
     return result;
   }
 
-  public static String[] removeCommonIndentation(@NotNull final String docstring) {
-    // detect common indentation
-    final String[] lines = LineTokenizer.tokenize(docstring, false);
-    boolean isFirst = true;
-    int cutWidth = Integer.MAX_VALUE;
-    int firstIndentedLine = 0;
-    for (String frag : lines) {
-      if (frag.length() == 0) continue;
-      int padWidth = 0;
-      final Matcher matcher = ourSpacesPattern.matcher(frag);
-      if (matcher.find()) {
-        padWidth = matcher.end();
-      }
-      if (isFirst) {
-        isFirst = false;
-        if (padWidth == 0) {    // first line may have zero padding
-          firstIndentedLine = 1;
-          continue;
-        }
-      }
-      if (padWidth < cutWidth) cutWidth = padWidth;
-    }
-    // remove common indentation
-    if (cutWidth > 0 && cutWidth < Integer.MAX_VALUE) {
-      for (int i = firstIndentedLine; i < lines.length; i += 1) {
-        if (lines[i].length() >= cutWidth) {
-          lines[i] = lines[i].substring(cutWidth);
-        }
-      }
-    }
-    final List<String> result = new ArrayList<>();
-    for (String line : lines) {
-      if (line.startsWith(PyConsoleUtil.ORDINARY_PROMPT)) break;
-      result.add(line);
-    }
-    return ArrayUtil.toStringArray(result);
-  }
-
   private void addModulePath(@NotNull PyFile followed) {
     // what to prepend to a module description?
     final VirtualFile file = followed.getVirtualFile();
@@ -563,6 +512,15 @@ public class PyDocumentationBuilder {
         myProlog.addWith(TagSpan.withAttribute("path", path), $("").addWith(TagSmall, $(path)));
       }
     }
+  }
+
+  @Nullable
+  private String getLinkToClass(@NotNull PyClass pyClass) {
+    final String qualifiedName = pyClass.getQualifiedName();
+    if (qualifiedName != null && pyClass.getName() != null) {
+      return PyDocumentationLink.toPossibleClass(pyClass.getName(), qualifiedName, pyClass, myContext);
+    }
+    return pyClass.getName();
   }
 
   @Nullable
