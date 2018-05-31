@@ -15,10 +15,10 @@ import com.intellij.vcs.log.graph.utils.LinearGraphUtils
 import com.intellij.vcs.log.graph.utils.impl.BitSetFlags
 import gnu.trove.TIntObjectHashMap
 
-internal class FileHistoryRefiner(private val myVisibleGraph: VisibleGraphImpl<Int>,
-                                  private val myNamesData: FileNamesData) : DfsUtil.NodeVisitor {
-  private val permanentCommitsInfo: PermanentCommitsInfo<Int> = myVisibleGraph.permanentGraph.permanentCommitsInfo
-  private val permanentLinearGraph: LiteLinearGraph = LinearGraphUtils.asLiteLinearGraph(myVisibleGraph.permanentGraph.linearGraph)
+internal class FileHistoryRefiner(private val visibleGraph: VisibleGraphImpl<Int>,
+                                  private val namesData: FileNamesData) : DfsUtil.NodeVisitor {
+  private val permanentCommitsInfo: PermanentCommitsInfo<Int> = visibleGraph.permanentGraph.permanentCommitsInfo
+  private val permanentLinearGraph: LiteLinearGraph = LinearGraphUtils.asLiteLinearGraph(visibleGraph.permanentGraph.linearGraph)
 
   private val paths = Stack<FilePath>()
   private val visibilityBuffer = BitSetFlags(permanentLinearGraph.nodesCount()) // a reusable buffer for bfs
@@ -26,19 +26,19 @@ internal class FileHistoryRefiner(private val myVisibleGraph: VisibleGraphImpl<I
   private val excluded = ContainerUtil.newHashSet<Int>()
 
   fun refine(row: Int, startPath: FilePath): Boolean {
-    if (myNamesData.hasRenames) {
+    if (namesData.hasRenames) {
       paths.push(startPath)
-      DfsUtil.walk(LinearGraphUtils.asLiteLinearGraph(myVisibleGraph.linearGraph), row, this)
+      DfsUtil.walk(LinearGraphUtils.asLiteLinearGraph(visibleGraph.linearGraph), row, this)
     }
     else {
-      pathsForCommits.putAll(myNamesData.buildPathsMap())
+      pathsForCommits.putAll(namesData.buildPathsMap())
     }
 
     for (commit in pathsForCommits.keys) {
       val path = pathsForCommits[commit]
       if (path != null) {
-        if (!myNamesData.affects(commit, path)) excluded.add(commit)
-        if (myNamesData.isTrivialMerge(commit, path)) excluded.add(commit)
+        if (!namesData.affects(commit, path)) excluded.add(commit)
+        if (namesData.isTrivialMerge(commit, path)) excluded.add(commit)
       }
     }
 
@@ -47,19 +47,19 @@ internal class FileHistoryRefiner(private val myVisibleGraph: VisibleGraphImpl<I
   }
 
   override fun enterNode(currentNode: Int, previousNode: Int, down: Boolean) {
-    val currentNodeId = myVisibleGraph.getNodeId(currentNode)
+    val currentNodeId = visibleGraph.getNodeId(currentNode)
     val currentCommit = permanentCommitsInfo.getCommitId(currentNodeId)
 
     val previousPath = paths.findLast { it != null }!!
     var currentPath: FilePath? = previousPath
 
     if (previousNode != DfsUtil.NextNode.NODE_NOT_FOUND) {
-      val previousNodeId = myVisibleGraph.getNodeId(previousNode)
+      val previousNodeId = visibleGraph.getNodeId(previousNode)
       val previousCommit = permanentCommitsInfo.getCommitId(previousNodeId)
 
       if (down) {
         val pathGetter = { parentIndex: Int ->
-          myNamesData.getPathInParentRevision(previousCommit, permanentCommitsInfo.getCommitId(parentIndex), previousPath)
+          namesData.getPathInParentRevision(previousCommit, permanentCommitsInfo.getCommitId(parentIndex), previousPath)
         }
         currentPath = findPathWithoutConflict(previousNodeId, pathGetter)
         if (currentPath == null) {
@@ -69,7 +69,7 @@ internal class FileHistoryRefiner(private val myVisibleGraph: VisibleGraphImpl<I
       }
       else {
         val pathGetter = { parentIndex: Int ->
-          myNamesData.getPathInChildRevision(currentCommit, permanentCommitsInfo.getCommitId(parentIndex), previousPath)
+          namesData.getPathInChildRevision(currentCommit, permanentCommitsInfo.getCommitId(parentIndex), previousPath)
         }
         currentPath = findPathWithoutConflict(currentNodeId, pathGetter)
         if (currentPath == null) {
