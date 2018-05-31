@@ -278,7 +278,7 @@ public class JarRepositoryManager {
     Notifications.Bus.notify(new Notification("Repository", title, sb.toString(), NotificationType.INFORMATION), project);
   }
 
-  public static void searchArtifacts(final Project project, String coord, final Consumer<Collection<Pair<RepositoryArtifactDescription, RemoteRepositoryDescription>>> resultProcessor) {
+  public static void searchArtifacts(final Project project, String coord, final Consumer<? super Collection<Pair<RepositoryArtifactDescription, RemoteRepositoryDescription>>> resultProcessor) {
     if (coord == null || coord.length() == 0) {
       return;
     }
@@ -325,11 +325,11 @@ public class JarRepositoryManager {
     });
   }
 
-  public static void searchRepositories(final Project project, final Collection<String> serviceUrls, final Processor<Collection<RemoteRepositoryDescription>> resultProcessor) {
+  public static void searchRepositories(final Project project, final Collection<String> serviceUrls, final Processor<? super Collection<RemoteRepositoryDescription>> resultProcessor) {
     ProgressManager.getInstance().run(new Task.Backgroundable(project, "Maven", false) {
 
       public void run(@NotNull ProgressIndicator indicator) {
-        final Ref<List<RemoteRepositoryDescription>> result = Ref.create(Collections.<RemoteRepositoryDescription>emptyList());
+        final Ref<List<RemoteRepositoryDescription>> result = Ref.create(Collections.emptyList());
         try {
           final ArrayList<RemoteRepositoryDescription> repoList = new ArrayList<>();
           for (String url : serviceUrls) {
