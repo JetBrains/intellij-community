@@ -1,5 +1,6 @@
 package org.jetbrains.plugins.github.ui
 
+import com.intellij.openapi.progress.ProcessCanceledException
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.DialogWrapper
 import com.intellij.openapi.ui.ValidationInfo
@@ -13,6 +14,7 @@ import com.intellij.util.ui.UI
 import com.intellij.util.ui.UI.PanelFactory.grid
 import com.intellij.util.ui.UI.PanelFactory.panel
 import com.intellij.util.ui.UIUtil
+import com.intellij.util.ui.dialog.DialogUtils
 import org.jetbrains.annotations.TestOnly
 import org.jetbrains.plugins.github.authentication.accounts.GithubAccount
 import org.jetbrains.plugins.github.authentication.ui.GithubAccountCombobox
@@ -20,16 +22,17 @@ import org.jetbrains.plugins.github.ui.util.DialogValidationUtils.RecordUniqueVa
 import org.jetbrains.plugins.github.ui.util.DialogValidationUtils.chain
 import org.jetbrains.plugins.github.ui.util.DialogValidationUtils.notBlank
 import org.jetbrains.plugins.github.ui.util.Validator
+import java.awt.Component
 import java.util.regex.Pattern
 import javax.swing.JComponent
 import javax.swing.JTextArea
+
 
 class GithubShareDialog(project: Project,
                         accounts: Set<GithubAccount>,
                         defaultAccount: GithubAccount?,
                         existingRemotes: Set<String>,
-                        private val accountsInfo: Map<GithubAccount,
-                          Pair<@ParameterName("isPrivateRepoAllowed") Boolean, @ParameterName("existingRepos") Set<String>>>)
+                        private val accountInformationSupplier: (GithubAccount, Component) -> Pair<Boolean, Set<String>>)
   : DialogWrapper(project) {
 
   private val GITHUB_REPO_PATTERN = Pattern.compile("[a-zA-Z0-9_.-]+")
@@ -42,19 +45,34 @@ class GithubShareDialog(project: Project,
   private val existingRepoValidator = RecordUniqueValidator(repositoryTextField, "Repository with selected name already exists")
   private val existingRemoteValidator = RecordUniqueValidator(remoteTextField, "Remote with selected name already exists")
     .apply { records = existingRemotes }
+  private var accountInformationLoadingError: ValidationInfo? = null
 
   init {
     title = "Share Project On GitHub"
     setOKButtonText("Share")
     init()
-    switchAccount(accountSelector.selectedItem as GithubAccount)
+    DialogUtils.invokeLaterAfterDialogShown(this) { switchAccount(accountSelector.selectedItem as GithubAccount) }
   }
 
   private fun switchAccount(account: GithubAccount) {
-    accountsInfo[account]!!.let {
-      privateCheckBox.isEnabled = it.first
-      if (!it.first) privateCheckBox.toolTipText = "Your account doesn't support private repositories"
-      existingRepoValidator.records = it.second
+    try {
+      accountInformationLoadingError = null
+      accountInformationSupplier(account, window).let {
+        privateCheckBox.isEnabled = it.first
+        if (!it.first) privateCheckBox.toolTipText = "Your account doesn't support private repositories"
+        else privateCheckBox.toolTipText = null
+        existingRepoValidator.records = it.second
+      }
+    }
+    catch (e: Exception) {
+      accountInformationLoadingError = if (e is ProcessCanceledException) {
+        ValidationInfo("Cannot load information for $account:\nProcess cancelled")
+      }
+      else ValidationInfo("Cannot load information for $account:\n$e")
+      privateCheckBox.isEnabled = false
+      privateCheckBox.toolTipText = null
+      existingRepoValidator.records = emptySet()
+      startTrackingValidation()
     }
   }
 
@@ -88,12 +106,12 @@ class GithubShareDialog(project: Project,
       else null
     }
 
-    return listOf(
-      chain({ notBlank(repositoryTextField, "No repository name selected") },
-            repositoryNamePatternMatchValidator,
-            existingRepoValidator),
-      chain({ notBlank(remoteTextField, "No remote name selected") },
-            existingRemoteValidator)
+    return listOf({ accountInformationLoadingError },
+                  chain({ notBlank(repositoryTextField, "No repository name selected") },
+                        repositoryNamePatternMatchValidator,
+                        existingRepoValidator),
+                  chain({ notBlank(remoteTextField, "No remote name selected") },
+                        existingRemoteValidator)
     ).mapNotNull { it() }
   }
 
