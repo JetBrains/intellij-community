@@ -11,9 +11,8 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.uast.*;
 
-//TODO move to UastUtils.kt? Split all UAST utils to several less common util classes/files?
 @ApiStatus.Experimental
-public final class JvmAnalysisUastUtil {
+public final class AnalysisUastUtil {
   @Nullable
   public static UCallExpression getUCallExpression(@NotNull PsiElement element) {
     UCallExpression callExpression = UastContextKt.toUElement(element, UCallExpression.class);
