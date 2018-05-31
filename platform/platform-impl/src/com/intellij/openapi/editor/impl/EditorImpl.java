@@ -429,7 +429,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
           }
         }
 
-        makeCaretVisibleNow();
+        updateCaretCursorAndRepaintIfNeeded();
       }
     };
 
@@ -2583,12 +2583,13 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     }
   }
 
-  private void makeCaretVisibleNow() {
+  private void updateCaretCursorAndRepaintIfNeeded() {
+    myUpdateCursor = true;
     if (myCaretCursor.myIsShown) {
       myCaretCursor.myStartTime = System.currentTimeMillis();
     }
     else {
-      updateCaretCursor();
+      myCaretCursor.myIsShown = true;
       myCaretCursor.repaint();
     }
   }
