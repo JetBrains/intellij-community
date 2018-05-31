@@ -389,3 +389,7 @@ def var_to_struct(val, name, doTrim=True, additional_in_xml='', evaluate_full_va
     return debug_value
     # return ''.join((xml, xml_qualifier, xml_value, xml_container, additional_in_xml, ' />\n'))
 
+
+def var_to_str(val, doTrim=True, evaluate_full_value=True):
+    struct = var_to_struct(val, '', doTrim, '', evaluate_full_value)
+    return struct.value
