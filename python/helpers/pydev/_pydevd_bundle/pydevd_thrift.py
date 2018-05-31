@@ -315,24 +315,11 @@ def var_to_struct(val, name, doTrim=True, additional_in_xml='', evaluate_full_va
 
                 elif v.__class__ in (list, tuple):
                     if len(v) > 300:
-                        value = '%s: %s' % (str(v.__class__), '<Too big to print. Len: %s>' % (len(v),))
+                        value = '<Too big to print. Len: %s>' % (len(v),)
                     else:
-                        value = '%s: %s' % (str(v.__class__), v)
+                        value = str(v)
                 else:
-                    try:
-                        cName = str(v.__class__)
-                        if cName.find('.') != -1:
-                            cName = cName.split('.')[-1]
-
-                        elif cName.find("'") != -1:  # does not have '.' (could be something like <type 'int'>)
-                            cName = cName[cName.index("'") + 1:]
-
-                        if cName.endswith("'>"):
-                            cName = cName[:-2]
-                    except:
-                        cName = str(v.__class__)
-
-                    value = '%s: %s' % (cName, v)
+                    value = str(v)
             else:
                 value = str(v)
         except:
