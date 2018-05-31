@@ -6,7 +6,9 @@ import pickle
 from _pydev_imps._pydev_saved_modules import thread
 from _pydevd_bundle.pydevd_constants import get_frame, get_thread_id, xrange
 from _pydevd_bundle.pydevd_custom_frames import get_custom_frame
+from _pydevd_bundle.pydevd_thrift import var_to_str
 from _pydevd_bundle.pydevd_xml import ExceptionOnEvaluate, get_type, var_to_xml
+from pydev_console.thrift_communication import console_thrift
 
 try:
     from StringIO import StringIO
@@ -749,7 +751,7 @@ def array_to_meta_thrift_struct(array, name, format):
     if type in "biufc":
         bounds = (array.min(), array.max())
     # return array, slice_to_xml(slice, rows, cols, format, type, bounds), rows, cols, format
-    array_chunk = python_console_thrift.GetArrayResponse()
+    array_chunk = console_thrift.GetArrayResponse()
     array_chunk.slice = slice
     array_chunk.rows = rows
     array_chunk.cols = cols
@@ -776,7 +778,7 @@ def dataframe_to_thrift_struct(df, name, roffset, coffset, rows, cols, format):
     num_rows = df.shape[0]
     num_cols = df.shape[1] if dim > 1 else 1
     # xml = slice_to_xml(name, num_rows, num_cols, "", "", (0, 0))
-    array_chunk = python_console_thrift.GetArrayResponse()
+    array_chunk = console_thrift.GetArrayResponse()
     array_chunk.slice = name
     array_chunk.rows = num_rows
     array_chunk.cols = num_cols
@@ -826,7 +828,7 @@ def dataframe_to_thrift_struct(df, name, roffset, coffset, rows, cols, format):
 
 
 def array_data_to_thrift_struct(rows, cols, get_row):
-    array_data = python_console_thrift.ArrayData()
+    array_data = console_thrift.ArrayData()
     # xml = "<arraydata rows=\"%s\" cols=\"%s\"/>\n" % (rows, cols)
     array_data.rows = rows
     array_data.cols = cols
@@ -834,9 +836,10 @@ def array_data_to_thrift_struct(rows, cols, get_row):
     data = []
     for row in range(rows):
         # xml += "<row index=\"%s\"/>\n" % to_string(row)
-        for value in get_row(row):
-            # xml += var_to_xml(value, '')
-            data.append(value)
+        # for value in get_row(row):
+        #     xml += var_to_xml(value, '')
+        data.append([var_to_str(value) for value in get_row(row)])
+
     array_data.data = data
     # return xml
     return array_data
@@ -844,13 +847,13 @@ def array_data_to_thrift_struct(rows, cols, get_row):
 
 def header_data_to_thrift_struct(rows, cols, dtypes, col_bounds, col_to_format, df, dim):
     # xml = "<headerdata rows=\"%s\" cols=\"%s\">\n" % (rows, cols)
-    array_headers = python_console_thrift.ArrayHeaders()
+    array_headers = console_thrift.ArrayHeaders()
     col_headers = []
     for col in range(cols):
         col_label = get_label(df.axes[1].values[col]) if dim > 1 else str(col)
         bounds = col_bounds[col]
         col_format = "%" + col_to_format(col)
-        col_header = python_console_thrift.ColHeader()
+        col_header = console_thrift.ColHeader()
         # col_header.index = col
         col_header.label = col_label
         col_header.type = dtypes[col]
@@ -860,7 +863,7 @@ def header_data_to_thrift_struct(rows, cols, dtypes, col_bounds, col_to_format, 
         col_headers.append(col_header)
     row_headers = []
     for row in range(rows):
-        row_header = python_console_thrift.RowHeader()
+        row_header = console_thrift.RowHeader()
         row_header.index = row
         row_header.label = get_label(df.axes[0].values[row])
         row_headers.append(row_header)

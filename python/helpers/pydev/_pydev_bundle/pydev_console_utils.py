@@ -8,7 +8,7 @@ from _pydev_bundle.pydev_imports import _queue, Exec
 from _pydev_imps._pydev_saved_modules import thread
 from _pydevd_bundle import pydevd_thrift
 from _pydevd_bundle import pydevd_vars
-from _pydevd_bundle.pydevd_constants import IS_JYTHON, dict_iter_items, NEXT_VALUE_SEPARATOR
+from _pydevd_bundle.pydevd_constants import IS_JYTHON, dict_iter_items
 from pydev_console.thrift_communication import console_thrift
 
 try:
@@ -536,7 +536,7 @@ class BaseInterpreterInterface:
         # xml.write(pydevd_vars.var_to_xml(result, expression))
         # xml.write("</xml>")
         # return xml.getvalue()
-        return pydevd_thrift.var_to_struct(result, expression)
+        return [pydevd_thrift.var_to_struct(result, expression)]
 
     def do_get_completions(self, text, act_tok):
         """Retrieves completion options.
@@ -582,7 +582,8 @@ class BaseInterpreterInterface:
         """
         frame_variables = self.get_namespace()
         var_objects = []
-        vars = scope_attrs.split(NEXT_VALUE_SEPARATOR)
+        # vars = scope_attrs.split(NEXT_VALUE_SEPARATOR)
+        vars = scope_attrs
         for var_attrs in vars:
             if '\t' in var_attrs:
                 name, attrs = var_attrs.split('\t', 1)
