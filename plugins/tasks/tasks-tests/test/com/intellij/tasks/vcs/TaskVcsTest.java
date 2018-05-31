@@ -330,21 +330,16 @@ public class TaskVcsTest extends CodeInsightFixtureTestCase {
   private void commitChanges(LocalChangeList changeList, List<Change> changes) {
     String commitMessage = changeList.getName();
 
-    CheckinProjectPanel panel = Mockito.mock(CheckinProjectPanel.class);
-    try {
-      when(panel.getProject()).thenReturn(getProject());
-      when(panel.getCommitMessage()).thenReturn(commitMessage);
+    CheckinProjectPanel panel = Mockito.mock(CheckinProjectPanel.class, Mockito.withSettings().stubOnly());
+    when(panel.getProject()).thenReturn(getProject());
+    when(panel.getCommitMessage()).thenReturn(commitMessage);
 
-      CheckinHandler checkinHandler = new TaskCheckinHandlerFactory().createHandler(panel, new CommitContext());
+    CheckinHandler checkinHandler = new TaskCheckinHandlerFactory().createHandler(panel, new CommitContext());
 
-      List<CheckinHandler> handlers = ContainerUtil.list(checkinHandler);
-      CommitHelper helper = new CommitHelper(getProject(), changeList, changes, "Commit", commitMessage, handlers, false, true,
-                                             new PseudoMap<>(), null);
-      helper.doCommit();
-    }
-    finally {
-      Mockito.reset(panel);
-    }
+    List<CheckinHandler> handlers = ContainerUtil.list(checkinHandler);
+    CommitHelper helper = new CommitHelper(getProject(), changeList, changes, "Commit", commitMessage, handlers, false, true,
+                                           new PseudoMap<>(), null);
+    helper.doCommit();
   }
 
   private LocalChangeList addChangeList(String title) {
