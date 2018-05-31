@@ -98,6 +98,8 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.Scanner;
+import java.util.concurrent.Future;
+import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 
 import static com.intellij.execution.runners.AbstractConsoleRunnerWithHistory.registerActionShortcuts;
@@ -132,6 +134,8 @@ public class PydevConsoleRunnerImpl implements PydevConsoleRunner {
 
 
   private static final long HANDSHAKE_TIMEOUT = 60000;
+
+  private static final long CONNECTION_TIMEOUT = HANDSHAKE_TIMEOUT;
 
   private RemoteConsoleProcessData myRemoteConsoleProcessData;
 
@@ -421,13 +425,26 @@ public class PydevConsoleRunnerImpl implements PydevConsoleRunner {
       Map<String, String> envs = generalCommandLine.getEnvironment();
       EncodingEnvironmentUtil.setLocaleEnvironmentIfMac(envs, generalCommandLine.getCharset());
 
+      Future<Void> connectionFuture;
+      // first of all - start server
+      try {
+        // todo use process in `PydevConsoleCommunication`
+        myPydevConsoleCommunication = new PydevConsoleCommunication(myProject, myPorts[0], null, myPorts[1]);
+        // todo we might want to add a timeout here on start
+        connectionFuture = myPydevConsoleCommunication.startServer();
+      }
+      catch (Exception e) {
+        throw new ExecutionException(e.getMessage(), e);
+      }
+
       final Process server = generalCommandLine.createProcess();
 
       try {
-        myPydevConsoleCommunication = new PydevConsoleCommunication(myProject, myPorts[0], server, myPorts[1]);
+        // todo we might want to add a timeout here
+        connectionFuture.get(CONNECTION_TIMEOUT, TimeUnit.SECONDS);
       }
       catch (Exception e) {
-        throw new ExecutionException(e.getMessage());
+        throw new ExecutionException(e.getMessage(), e);
       }
       return server;
     }
