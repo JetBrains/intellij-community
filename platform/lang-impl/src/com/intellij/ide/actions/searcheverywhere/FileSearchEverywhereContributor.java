@@ -66,12 +66,12 @@ public class FileSearchEverywhereContributor extends AbstractGotoSEContributor {
   }
 
   @Override
-  protected Object getItemData(String dataId, Object element) {
+  public Object getDataForItem(Object element, String dataId) {
     if (CommonDataKeys.PSI_FILE.is(dataId)) {
       return element;
     }
 
-    return super.getItemData(dataId, element);
+    return super.getDataForItem(element, dataId);
   }
 
   @Override

@@ -229,8 +229,7 @@ public class SearchEverywhereUI extends BorderLayoutPanel implements Disposable,
     }
 
     SearchEverywhereContributor contributor = myListModel.getContributorForIndex(index);
-    DataContext context = contributor.getDataContextForItem(myListModel.getElementAt(index));
-    return context.getData(dataId);
+    return contributor.getDataForItem(myListModel.getElementAt(index), dataId);
   }
 
   @Override

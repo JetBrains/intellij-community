@@ -3,7 +3,6 @@
  */
 package com.intellij.ide.actions.searcheverywhere;
 
-import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.progress.ProgressIndicator;
 import org.jetbrains.annotations.NotNull;
@@ -44,8 +43,7 @@ public interface SearchEverywhereContributor {
 
   ListCellRenderer getElementsRenderer();
 
-  @NotNull
-  DataContext getDataContextForItem(Object element);
+  Object getDataForItem(Object element, String dataId);
 
   static List<SearchEverywhereContributorFactory> getProviders() {
     return Arrays.asList(EP_NAME.getExtensions());

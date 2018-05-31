@@ -98,10 +98,9 @@ public class ActionSearchEverywhereContributor implements SearchEverywhereContri
     return ActionSearchEverywhereContributor.class.getSimpleName();
   }
 
-  @NotNull
   @Override
-  public DataContext getDataContextForItem(Object element) {
-    return DataContext.EMPTY_CONTEXT;
+  public Object getDataForItem(Object element, String dataId) {
+    return null;
   }
 
   @Override
