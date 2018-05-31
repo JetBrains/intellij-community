@@ -119,11 +119,11 @@ public class InferenceSession {
     myInferenceSessionContainer = new InferenceSessionContainer();
   }
 
-  public static PsiType createTypeParameterTypeWithUpperBound(PsiType upperBound, PsiElement place) {
+  public static PsiType createTypeParameterTypeWithUpperBound(@NotNull PsiType upperBound, @NotNull PsiElement place) {
     final PsiElementFactory elementFactory = JavaPsiFacade.getElementFactory(place.getProject());
 
     final PsiTypeParameter parameter = elementFactory.createTypeParameterFromText("T", place);
-    parameter.putUserData(TypeConversionUtil.UPPER_BOUND, upperBound);
+    TypeConversionUtil.setInferredBoundsForSynthetic(parameter, null, upperBound);
 
     return elementFactory.createType(parameter);
   }
@@ -1106,16 +1106,20 @@ public class InferenceSession {
       PsiTypeParameter parameter = yVars[i];
       final InferenceVariable var = vars.get(i);
       final PsiType lub = getLowerBound(var, substitutor);
+      PsiType lowerBound;
       if (lub != PsiType.NULL) {
         for (PsiClassType upperBoundType : parameter.getExtendsListTypes()) {
           if (!TypeConversionUtil.isAssignable(upperBoundType, lub)) {
             return false;
           }
         }
-        parameter.putUserData(TypeConversionUtil.LOWER_BOUND, lub);
+        lowerBound = lub;
       }
-      parameter.putUserData(TypeConversionUtil.UPPER_BOUND,
-                            composeBound(var, InferenceBound.UPPER, UPPER_BOUND_FUNCTION, ySubstitutor.putAll(substitutor), true));
+      else {
+        lowerBound = null;
+      }
+      PsiType upperBound = composeBound(var, InferenceBound.UPPER, UPPER_BOUND_FUNCTION, ySubstitutor.putAll(substitutor), true);
+      TypeConversionUtil.setInferredBoundsForSynthetic(parameter, lowerBound, upperBound);
       TypeConversionUtil.markAsFreshVariable(parameter, myContext);
       if (!var.addBound(elementFactory.createType(parameter), InferenceBound.EQ, myIncorporationPhase)) {
         return false;
@@ -1168,7 +1172,7 @@ public class InferenceSession {
         //restore captured wildcard from method return type when no additional constraints were inferred
         //to preserve equality of type arguments
         if (capturedWildcard != null &&
-            capturedWildcard.getUpperBound().equals(TypeConversionUtil.getUpperBound(aClass))) {
+            capturedWildcard.getUpperBound().equals(TypeConversionUtil.getInferredUpperBoundForSynthetic((PsiTypeParameter)aClass))) {
           eqBound = capturedWildcard;
         }
       }
@@ -1324,16 +1328,16 @@ public class InferenceSession {
                                Function<? super Pair<PsiType, PsiType>, ? extends PsiType> fun,
                                PsiSubstitutor substitutor,
                                boolean includeNonProperBounds) {
-    final List<PsiType> lowerBounds = variable.getBounds(boundType);
+    final List<PsiType> bounds = variable.getBounds(boundType);
     PsiType lub = PsiType.NULL;
-    for (PsiType lowerBound : lowerBounds) {
-      lowerBound = substituteNonProperBound(lowerBound, substitutor);
-      if (includeNonProperBounds || isProperType(lowerBound)) {
+    for (PsiType bound : bounds) {
+      bound = substituteNonProperBound(bound, substitutor);
+      if (includeNonProperBounds || isProperType(bound)) {
         if (lub == PsiType.NULL) {
-          lub = lowerBound;
+          lub = bound;
         }
         else {
-          final Pair<PsiType, PsiType> pair = Pair.create(lub, lowerBound);
+          final Pair<PsiType, PsiType> pair = Pair.create(lub, bound);
           lub = fun.fun(pair);
           if (lub == null) {
             return PsiType.NULL;

@@ -58,8 +58,8 @@ public class TypeConversionUtil {
     }
   };
   private static final Key<PsiElement> ORIGINAL_CONTEXT = Key.create("ORIGINAL_CONTEXT");
-  public static final Key<PsiType> LOWER_BOUND = Key.create("LowBound");
-  public static final Key<PsiType> UPPER_BOUND = Key.create("UpperBound");
+  private static final Key<PsiType> LOWER_BOUND = Key.create("LowBound");
+  private static final Key<PsiType> UPPER_BOUND = Key.create("UpperBound");
 
   static {
     TYPE_TO_RANK_MAP.put(PsiType.BYTE, BYTE_RANK);
@@ -800,7 +800,7 @@ public class TypeConversionUtil {
       if (right instanceof PsiClassType) {
         PsiClass aClass = ((PsiClassType)right).resolve();
         if (aClass instanceof PsiTypeParameter) {
-          PsiType upperBound = getUpperBound(aClass);
+          PsiType upperBound = getInferredUpperBoundForSynthetic((PsiTypeParameter)aClass);
           return upperBound != null && isAssignable(left, upperBound, allowUncheckedConversion, capture);
         }
       }
@@ -1445,12 +1445,26 @@ public class TypeConversionUtil {
     parameter.putUserData(ORIGINAL_CONTEXT, context);
   }
 
-  public static PsiType getUpperBound(@NotNull PsiClass psiClass) {
+  /**
+   * the upper bound for the non-physical (and may be non-denotable) type parameter temporarily created during type inference
+   * @see com.intellij.psi.impl.source.resolve.graphInference.InferenceSession
+   */
+  public static PsiType getInferredUpperBoundForSynthetic(@NotNull PsiTypeParameter psiClass) {
     return psiClass.getUserData(UPPER_BOUND);
   }
 
-  public static PsiType getLowerBound(@NotNull PsiClass psiClass) {
+  /**
+   * the lower bound for the non-physical (and may be non-denotable) type parameter temporarily created during type inference
+   * @see com.intellij.psi.impl.source.resolve.graphInference.InferenceSession
+   */
+  public static PsiType getInferredLowerBoundForSynthetic(@NotNull PsiTypeParameter psiClass) {
     return psiClass.getUserData(LOWER_BOUND);
+  }
+
+  public static void setInferredBoundsForSynthetic(@NotNull PsiTypeParameter parameter, PsiType lowerBound, @NotNull PsiType upperBound) {
+    assert !parameter.isPhysical() : parameter;
+    parameter.putUserData(UPPER_BOUND, upperBound);
+    parameter.putUserData(LOWER_BOUND, lowerBound);
   }
 
   @FunctionalInterface
