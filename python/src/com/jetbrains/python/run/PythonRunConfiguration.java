@@ -76,6 +76,9 @@ public class PythonRunConfiguration extends AbstractPythonRunConfiguration
         throw new RuntimeConfigurationWarning("Provide a qualified name of a module");
       }
     }
+    if (isRedirectInput() && !new File(myInputFile).exists()) {
+      throw new RuntimeConfigurationWarning("Input file doesn't exist");
+    }
   }
 
   public String suggestedName() {
