@@ -13,10 +13,11 @@ public enum  BraceStyle {
 
   private final int value;
 
-  BraceStyle(int value) {
+  BraceStyle(@CommonCodeStyleSettings.BraceStyleConstant int value) {
     this.value = value;
   }
 
+  @CommonCodeStyleSettings.BraceStyleConstant
   public final int intValue() {
     return value;
   }
