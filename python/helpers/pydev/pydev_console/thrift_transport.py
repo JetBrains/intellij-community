@@ -1,26 +1,24 @@
 import socket
 import struct
+import sys
 import threading
-from io import BytesIO
+from io import BytesIO, SEEK_CUR
 
+from thriftpy.thrift import TClient
 from thriftpy.transport import TTransportBase, readall
 
 REQUEST = 0
 RESPONSE = 1
 
 
-def _readall_buffered(read_fn, try_fill_buffer_fn, sz):
+def _read_anything(read_fn, sz):
     buff = b''
     have = 0
-    while have < sz:
+    while have == 0:
         chunk = read_fn(sz - have)
 
         have += len(chunk)
         buff += chunk
-
-        if len(chunk) == 0:
-            # `fill_buffer_fn` should raise an exception if it could not fill the buffer
-            try_fill_buffer_fn(sz - have)
 
     return buff
 
@@ -42,35 +40,39 @@ class MultiplexedSocketReader(object):
         """
         Invoked form server-side of the bidirectional transport.
         """
-        return _readall_buffered(self._read_request_buffer, self._try_fill_buffer, sz)
+        return _read_anything(self._read_request_buffer, sz)
 
     def read_response(self, sz):
         """
         Invoked form client-side of the bidirectional transport.
         """
-        return _readall_buffered(self._read_response_buffer, self._try_fill_buffer, sz)
+        return _read_anything(self._read_response_buffer, sz)
 
     def _read_request_buffer(self, sz):
-        with self._request_buffer_lock:
-            self._request_buffer.read(sz)
+        return self._request_buffer.read(sz)
 
     def _read_response_buffer(self, sz):
-        with self._response_buffer_lock:
-            self._response_buffer.read(sz)
+        return self._response_buffer.read(sz)
 
-    def _try_fill_buffer(self):
+    # noinspection PyUnusedLocal
+    def _try_fill_buffer(self, sz):
+        # todo use `sz` argument
+        thread_name = threading.current_thread().name
+
         with self._read_socket_lock:
             direction, frame = self._read_frame()
 
         if direction == REQUEST:
             with self._request_buffer_lock:
                 self._request_buffer.write(frame)
+                self._request_buffer.seek(-len(frame), SEEK_CUR)
         elif direction == RESPONSE:
             with self._response_buffer_lock:
                 self._response_buffer.write(frame)
+                self._response_buffer.seek(-len(frame), SEEK_CUR)
 
     def _read_frame(self):
-        # todo use sz argument!
+        # todo introduce sz argument
 
         buff = readall(self._socket.recv, 4)
         sz, = struct.unpack('!i', buff)
@@ -84,18 +86,28 @@ class MultiplexedSocketReader(object):
             frame = readall(self._socket.recv, sz - 1)
             return direction, frame
 
+    def start_reading(self):
+        t = threading.Thread(target=self._reading)
+        t.start()
+
+    def _reading(self):
+        while True:
+            self._try_fill_buffer(1)
+
 
 class SocketWriter(object):
 
     def __init__(self, sock):
         self._socket = sock
+        self._send_lock = threading.RLock()
 
     def write(self, buf):
-        self._socket.send(buf)
-        self._socket.flush()
+        with self._send_lock:
+            self._socket.sendall(buf)
 
 
 class FramedWriter(object):
+    MAX_BUFFER_SIZE = 4096
 
     def __init__(self):
         self._buffer = BytesIO()
@@ -107,7 +119,25 @@ class FramedWriter(object):
         raise NotImplementedError
 
     def write(self, buf):
-        self._buffer.write(buf)
+        buf_len = len(buf)
+        bytes_written = 0
+        while bytes_written < buf_len:
+            # buffer_size will be updated on self.flush()
+            buffer_size = sys.getsizeof(self._buffer)
+
+            bytes_to_write = buf_len - bytes_written
+
+            if buffer_size + bytes_to_write > self.MAX_BUFFER_SIZE:
+                write_till_byte = bytes_written + (self.MAX_BUFFER_SIZE - buffer_size)
+
+                self._buffer.write(buf[bytes_written:write_till_byte])
+                self.flush()
+
+                bytes_written = write_till_byte
+            else:
+                # the whole buffer processed
+                self._buffer.write(buf[bytes_written:])
+                bytes_written = buf_len
 
     def flush(self):
         # reset wbuf before write/flush to preserve state on underlying failure
@@ -122,6 +152,9 @@ class FramedWriter(object):
         # good job of managing string buffer operations without excessive
         # copies
         self._get_writer().write(struct.pack("!i", len(out)) + out)
+
+    def close(self):
+        self._buffer.close()
 
 
 class TBidirectionalClientTransport(TTransportBase, FramedWriter):
@@ -138,7 +171,7 @@ class TBidirectionalClientTransport(TTransportBase, FramedWriter):
         self._server_transport = None
 
     def _get_writer(self):
-        raise self._writer
+        return self._writer
 
     def _get_write_direction(self):
         return REQUEST
@@ -160,8 +193,14 @@ class TBidirectionalClientTransport(TTransportBase, FramedWriter):
         return self._client_socket
 
     def open(self):
-        self._client_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        client_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        client_socket.connect((self.host, self.port))
+
+        self._client_socket = client_socket
+
         self._reader = MultiplexedSocketReader(self._client_socket)
+        self._reader.start_reading()
+
         self._writer = SocketWriter(self._client_socket)
 
         self._server_transport = TReversedServerTransport(self._reader.read_request, self._writer)
