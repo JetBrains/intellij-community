@@ -151,10 +151,6 @@ public class ArtifactRepositoryManager {
     );
   }
 
-  public void addRemoteRepository(final String id, final String url) {
-    myRemoteRepositories.add(createRemoteRepository(id, url));
-  }
-
   public Collection<File> resolveDependency(String groupId, String artifactId, String version, boolean includeTransitiveDependencies) throws Exception {
     final List<File> files = new ArrayList<>();
     for (Artifact artifact : resolveDependencyAsArtifact(groupId, artifactId, version, EnumSet.of(ArtifactKind.ARTIFACT), includeTransitiveDependencies)) {
@@ -259,10 +255,6 @@ public class ArtifactRepositoryManager {
 
   public static Version asVersion(@Nullable String str) throws InvalidVersionSpecificationException {
     return ourVersioning.parseVersion(str == null? "" : str);
-  }
-  
-  public static VersionRange asVersionRange(@Nullable String str) throws InvalidVersionSpecificationException {
-    return ourVersioning.parseVersionRange(str == null? "" : str);
   }
 
   public static VersionConstraint asVersionConstraint(@Nullable String str) throws InvalidVersionSpecificationException {
