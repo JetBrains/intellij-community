@@ -33,14 +33,14 @@ import javax.swing.text.html.HTMLEditorKit;
 import javax.swing.text.html.parser.ParserDelegator;
 import java.io.IOException;
 import java.io.Reader;
-import java.io.UnsupportedEncodingException;
-import java.net.URLDecoder;
 import java.nio.file.Files;
 import java.nio.file.Paths;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
+import java.util.Map;
 import java.util.concurrent.ExecutionException;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
+import java.util.stream.Collectors;
 
 public class PyPIPackageUtil {
   private static final Logger LOG = Logger.getInstance(PyPIPackageUtil.class);
@@ -178,33 +178,10 @@ public class PyPIPackageUtil {
 
   @NotNull
   private static List<RepoPackage> getPackagesFromAdditionalRepository(@NotNull String url) throws IOException {
-    final List<RepoPackage> result = new ArrayList<>();
-    final boolean simpleIndex = url.endsWith("simple/");
-    final List<String> packagesList = parsePyPIListFromWeb(url, simpleIndex);
-
-    for (String pyPackage : packagesList) {
-      if (simpleIndex) {
-        final Pair<String, String> nameVersion = splitNameVersion(StringUtil.trimTrailing(pyPackage, '/'));
-        result.add(new RepoPackage(nameVersion.getFirst(), url, nameVersion.getSecond()));
-      }
-      else {
-        try {
-          final Pattern repositoryPattern = Pattern.compile(url + "([^/]*)/([^/]*)$");
-          final Matcher matcher = repositoryPattern.matcher(URLDecoder.decode(pyPackage, "UTF-8"));
-          if (matcher.find()) {
-            final String packageName = matcher.group(1);
-            final String packageVersion = matcher.group(2);
-            if (!packageName.contains(" ")) {
-              result.add(new RepoPackage(packageName, url, packageVersion));
-            }
-          }
-        }
-        catch (UnsupportedEncodingException e) {
-          LOG.warn(e.getMessage());
-        }
-      }
-    }
-    return result;
+    return parsePyPIListFromWeb(url)
+      .stream()
+      .map(s -> new RepoPackage(s, url, null))
+      .collect(Collectors.toList());
   }
 
   public void fillPackageDetails(@NotNull String packageName, @NotNull CatchingConsumer<PackageDetails.Info, Exception> callback) {
@@ -349,68 +326,34 @@ public class PyPIPackageUtil {
   public void updatePyPICache() throws IOException {
     final PyPackageService service = PyPackageService.getInstance();
     if (service.PYPI_REMOVED) return;
-    final List<String> decodedNames = parsePyPIList(parsePyPIListFromWeb(PYPI_LIST_URL, true));
-    PyPIPackageCache.reload(decodedNames);
+    PyPIPackageCache.reload(parsePyPIListFromWeb(PYPI_LIST_URL));
     service.LAST_TIME_CHECKED = System.currentTimeMillis();
   }
 
   @NotNull
-  private static List<String> parsePyPIList(@NotNull List<String> packages) {
-    final List<String> decodedNames = new ArrayList<>();
-    for (String pyPackage : packages) {
-      try {
-        final String packageName = URLDecoder.decode(pyPackage, "UTF-8");
-        if (!packageName.contains(" ")) {
-          decodedNames.add(packageName);
-        }
-      }
-      catch (UnsupportedEncodingException e) {
-        LOG.warn(e.getMessage());
-      }
-    }
-    return decodedNames;
-  }
-
-  @NotNull
-  private static List<String> parsePyPIListFromWeb(@NotNull String url, boolean isSimpleIndex) throws IOException {
+  private static List<String> parsePyPIListFromWeb(@NotNull String url) throws IOException {
     LOG.debug("Fetching index of all packages available on " + url);
     return HttpRequests.request(url).userAgent(getUserAgent()).connect(request -> {
       final List<String> packages = new ArrayList<>();
       final Reader reader = request.getReader();
       new ParserDelegator().parse(reader, new HTMLEditorKit.ParserCallback() {
-        boolean inTable = false;
         HTML.Tag myTag;
 
         @Override
         public void handleStartTag(@NotNull HTML.Tag tag, @NotNull MutableAttributeSet set, int i) {
           myTag = tag;
-          if (!isSimpleIndex) {
-            if ("table".equals(tag.toString())) {
-              inTable = !inTable;
-            }
-
-            if (inTable && "a".equals(tag.toString())) {
-              packages.add(String.valueOf(set.getAttribute(HTML.Attribute.HREF)));
-            }
-          }
         }
 
         @Override
         public void handleText(@NotNull char[] data, int pos) {
-          if (isSimpleIndex) {
-            if (myTag != null && "a".equals(myTag.toString())) {
-              packages.add(String.valueOf(data));
-            }
+          if (myTag != null && "a".equals(myTag.toString())) {
+            packages.add(String.valueOf(data));
           }
         }
 
         @Override
-        public void handleEndTag(@NotNull HTML.Tag tag, int i) {
-          if (!isSimpleIndex) {
-            if ("table".equals(tag.toString())) {
-              inTable = !inTable;
-            }
-          }
+        public void handleEndTag(@NotNull HTML.Tag t, int pos) {
+          myTag = null;
         }
       }, true);
       return packages;
