@@ -1,5 +1,6 @@
 <component name="ProjectRunConfigurationManager">
   <configuration default="false" name="OneStudio" type="Application" factoryName="Application">
+    <log_file path="$PROJECT_DIR$/onestudio/system/log/idea.log" checked="true" skipped="true" show_all="false" alias="idea.log" />
     <option name="MAIN_CLASS_NAME" value="com.intellij.idea.Main" />
     <option name="VM_PARAMETERS" value="-ea -Xms2048m -Xmx4096m -Didea.is.internal=true -Didea.platform.prefix=AndroidStudio -Dandroid.extra_templates.path=../../../sdk/templates -Dapple.laf.useScreenMenuBar=true -Dcom.apple.mrj.application.apple.menu.about.name=AndroidStudio -Dsun.awt.disablegrab=true -Dawt.useSystemAAFontSettings=lcd -Dsun.java2d.renderer=sun.java2d.marlin.MarlinRenderingEngine -XX:ReservedCodeCacheSize=1024M -Ddisable.android.first.run=true -Dcaches.indexerThreadsCount=16 -Dstudio.projectview=true -Didea.classpath.index.enabled=false -Dandroid.sdk.custom.url=file:///google/data/ro/teams/android-sdk-g3-releng/android_sdk/aswb.xml -Dplugin.path=../../../prebuilts/tools/common/kotlin-plugin/Kotlin,../../../tools/vendor/google3/blaze/prebuilts/g3plugins/opt/android-studio-3.2/plugin-updates/g3plugins -Didea.config.path=../onestudio/config -Didea.system.path=../onestudio/system" />
     <option name="PROGRAM_PARAMETERS" value="" />
