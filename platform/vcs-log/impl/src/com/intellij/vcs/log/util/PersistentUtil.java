@@ -22,6 +22,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.PathUtilRt;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.indexing.impl.MapIndexStorage;
 import com.intellij.util.io.*;
 import com.intellij.vcs.log.VcsLogProvider;
 import org.jetbrains.annotations.NotNull;
@@ -99,16 +100,28 @@ public class PersistentUtil {
   public static File getStorageFile(@NotNull String subdirName,
                                     @NotNull String kind,
                                     @NotNull String id,
-                                    int version) {
+                                    int version,
+                                    boolean forMapIndexStorage) {
     File subdir = new File(LOG_CACHE, subdirName);
     String safeLogId = PathUtilRt.suggestFileName(id, true, true);
-    File file = getFileName(kind, subdir, safeLogId, version);
-    if (!file.exists()) {
+    File baseFile = getFileName(kind, subdir, safeLogId, version);
+    File storageFile = forMapIndexStorage ? MapIndexStorage.getIndexStorageFile(baseFile) : baseFile;
+    if (!storageFile.exists()) {
       for (int oldVersion = 0; oldVersion < version; oldVersion++) {
-        IOUtil.deleteAllFilesStartingWith(getFileName(kind, subdir, safeLogId, oldVersion));
+        File baseOldStorageFile = getFileName(kind, subdir, safeLogId, oldVersion);
+        File oldStorageFile = forMapIndexStorage ? MapIndexStorage.getIndexStorageFile(baseOldStorageFile) : baseOldStorageFile;
+        IOUtil.deleteAllFilesStartingWith(oldStorageFile);
       }
     }
-    return file;
+    return baseFile;
+  }
+
+  @NotNull
+  public static File getStorageFile(@NotNull String subdirName,
+                                    @NotNull String kind,
+                                    @NotNull String id,
+                                    int version) {
+    return getStorageFile(subdirName, kind, id, version, false);
   }
 
   @NotNull

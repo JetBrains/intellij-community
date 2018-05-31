@@ -182,7 +182,7 @@ public class VcsLogFullDetailsIndex<T> implements Disposable {
   private static class MyMapIndexStorage<T> extends MapIndexStorage<Integer, T> {
     public MyMapIndexStorage(@NotNull String name, @NotNull String logId, @NotNull DataExternalizer<T> externalizer)
       throws IOException {
-      super(getStorageFile(INDEX, name, logId, getVersion()), EnumeratorIntegerDescriptor.INSTANCE, externalizer, 5000, false);
+      super(getStorageFile(INDEX, name, logId, getVersion(), true), EnumeratorIntegerDescriptor.INSTANCE, externalizer, 5000, false);
     }
 
     @Override
