@@ -6,11 +6,14 @@ import circlet.components.*
 import circlet.platform.api.*
 import circlet.settings.*
 import com.intellij.openapi.project.*
+import klogging.*
 import kotlinx.coroutines.experimental.*
 import runtime.*
 import runtime.async.*
 import runtime.reactive.*
 import javax.swing.*
+
+private val LOG = KLoggers.logger("circlet.reviews.ReviewsFormKt")
 
 class ReviewsForm(private val project: Project, override val lifetime: Lifetime) :
     Lifetimed {
@@ -44,7 +47,12 @@ private fun <T> Lifetimed.updater(name: String, update: suspend (T) -> Unit): Ch
 
     launch(UiDispatch.coroutineContext, start = CoroutineStart.UNDISPATCHED) {
         channel.forEach {
-            update(it)
+            try {
+                update(it)
+            }
+            catch (t: Throwable) {
+                LOG.error(t) { "Updater '$name' error" } // TODO
+            }
         }
     }
 
