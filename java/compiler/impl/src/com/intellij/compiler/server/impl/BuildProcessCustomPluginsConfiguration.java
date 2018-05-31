@@ -43,6 +43,10 @@ public class BuildProcessCustomPluginsConfiguration implements PersistentStateCo
     return ServiceManager.getService(project, BuildProcessCustomPluginsConfiguration.class);
   }
 
+  public List<String> getProjectLibraries() {
+    return myState.myProjectLibraries;
+  }
+
   public List<String> getCustomPluginsClasspath() {
     return ReadAction.compute(() -> {
       List<String> result = new ArrayList<>();
