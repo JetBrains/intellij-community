@@ -32,7 +32,10 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiFileSystemItem;
-import com.intellij.ui.*;
+import com.intellij.ui.HideableDecorator;
+import com.intellij.ui.PanelWithAnchor;
+import com.intellij.ui.RawCommandLineEditor;
+import com.intellij.ui.UserActivityProviderComponent;
 import com.intellij.ui.components.JBCheckBox;
 import com.intellij.ui.components.JBComboBoxLabel;
 import com.intellij.ui.components.JBLabel;
@@ -50,11 +53,10 @@ import javax.swing.*;
 import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
 import java.awt.*;
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.util.List;
+import java.util.Objects;
 
 /**
  * @author yole
@@ -114,9 +116,6 @@ public class PythonRunConfigurationForm implements PythonRunConfigurationParams,
     //myTargetComboBox.setSelectedIndex(0);
     myEmulateTerminalCheckbox.setSelected(false);
 
-    myEmulateTerminalCheckbox.addChangeListener(
-      (ChangeEvent e) -> updateShowCommandLineEnabled());
-
     setAnchor(myRedirectInputCheckBox.getAnchor());
 
     final Module module = configuration.getModule();
@@ -144,12 +143,21 @@ public class PythonRunConfigurationForm implements PythonRunConfigurationParams,
     executionOptionsDecorator.setOn(true);
     executionOptionsDecorator.setContentComponent(myExecutionOptionsPanel);
 
-    myRedirectInputCheckBox.addActionListener(new ActionListener() {
+    myRedirectInputCheckBox.addItemListener(e -> myInputFileTextFieldWithBrowseButton.setEnabled(myRedirectInputCheckBox.isSelected()));
+
+    final ButtonGroup group = new ButtonGroup() {
       @Override
-      public void actionPerformed(ActionEvent e) {
-        myInputFileTextFieldWithBrowseButton.setEnabled(myRedirectInputCheckBox.isSelected());
+      public void setSelected(ButtonModel model, boolean isSelected) {
+        if (!isSelected && Objects.equals(getSelection(), model)) {
+          clearSelection();
+          return;
+        }
+        super.setSelected(model, isSelected);
       }
-    });
+    };
+    group.add(myEmulateTerminalCheckbox);
+    group.add(myRedirectInputCheckBox);
+    group.add(myShowCommandLineCheckbox);
   }
 
   private void updateRunModuleMode() {
@@ -167,13 +175,8 @@ public class PythonRunConfigurationForm implements PythonRunConfigurationParams,
     }
   }
 
-  private void updateShowCommandLineEnabled() {
-    myShowCommandLineCheckbox.setEnabled(!myEmulateTerminalCheckbox.isVisible() || !myEmulateTerminalCheckbox.isSelected());
-  }
-
   private void emulateTerminalEnabled(boolean flag) {
     myEmulateTerminalCheckbox.setVisible(flag);
-    updateShowCommandLineEnabled();
   }
 
   public JComponent getPanel() {
