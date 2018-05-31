@@ -28,6 +28,7 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.util.Alarm;
 import com.intellij.util.IncorrectOperationException;
+import com.intellij.util.ThrowableRunnable;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -314,7 +315,14 @@ public class IntentionManagerImpl extends IntentionManager implements Disposable
   }
 
   @TestOnly
-  public void disableIntentions() {
+  public <T extends Throwable> void withDisabledIntentions(ThrowableRunnable<T> runnable) throws T {
+    boolean oldIntentionsDisabled = myIntentionsDisabled;
     myIntentionsDisabled = true;
+    try {
+      runnable.run();
+    }
+    finally {
+      myIntentionsDisabled = oldIntentionsDisabled;
+    }
   }
 }
