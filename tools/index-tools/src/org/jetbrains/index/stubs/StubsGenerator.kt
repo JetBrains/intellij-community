@@ -33,7 +33,7 @@ open class StubsGenerator(private val stubsVersion: String, private val stubsSto
 
   private val serializationManager = SerializationManagerImpl(File("$stubsStorageFilePath.names"))
 
-  fun buildStubsForRoots(roots: List<VirtualFile>) {
+  fun buildStubsForRoots(roots: Collection<VirtualFile>) {
     try {
       buildIndexForRoots(roots)
     }

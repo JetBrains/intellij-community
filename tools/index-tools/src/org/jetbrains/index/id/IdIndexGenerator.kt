@@ -26,7 +26,7 @@ open class IdIndexGenerator(private val idIndexStorageFilePath: String) : IndexG
                              HashCodeDescriptor.instance, IdIndexMapDataExternalizer())
   }
 
-  fun buildIdIndexForRoots(rootFiles: List<VirtualFile>) {
+  fun buildIdIndexForRoots(rootFiles: Collection<VirtualFile>) {
     buildIndexForRoots(rootFiles)
   }
 }

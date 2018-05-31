@@ -29,7 +29,7 @@ abstract class IndexGenerator<Value>(private val indexStorageFilePath: String) {
     constructor() : this(AtomicInteger(0), AtomicInteger(0))
   }
 
-  protected fun buildIndexForRoots(roots: List<VirtualFile>) {
+  protected fun buildIndexForRoots(roots: Collection<VirtualFile>) {
     val hashing = FileContentHashing()
 
     val storage = createStorage(indexStorageFilePath)
