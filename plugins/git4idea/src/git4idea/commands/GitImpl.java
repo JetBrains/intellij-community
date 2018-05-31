@@ -294,6 +294,21 @@ public class GitImpl extends GitImplBase {
     return runCommand(h);
   }
 
+  @NotNull
+  @Override
+  public GitCommandResult deleteTag(@NotNull GitRepository repository,
+                                    @NotNull String tagName,
+                                    @NotNull GitLineHandlerListener... listeners) {
+    final GitLineHandler h = new GitLineHandler(repository.getProject(), repository.getRoot(), GitCommand.TAG);
+    h.setSilent(false);
+    h.addParameters("-d");
+    h.addParameters(tagName);
+    for (GitLineHandlerListener listener : listeners) {
+      h.addLineListener(listener);
+    }
+    return runCommand(h);
+  }
+
   /**
    * {@code git branch -d <reference>} or {@code git branch -D <reference>}
    */

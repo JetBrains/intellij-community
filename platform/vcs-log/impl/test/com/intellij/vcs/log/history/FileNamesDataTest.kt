@@ -1,5 +1,5 @@
-// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-package com.intellij.vcs.log.data.index
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+package com.intellij.vcs.log.history
 
 import com.intellij.openapi.vcs.FilePath
 import com.intellij.openapi.vcs.LocalFilePath
@@ -85,7 +85,7 @@ class FileNamesDataTest : TestCase() {
   private fun modification() = ChangeData(MODIFIED, -1)
 }
 
-private class TestFileNamesData : IndexDataGetter.FileNamesData() {
+private class TestFileNamesData : FileNamesData() {
   private val pathEnumerator = BiDirectionalEnumerator<String>(1, canonicalStrategy<String>())
 
   override fun getPathById(pathId: Int): FilePath = LocalFilePath(pathEnumerator.getValue(pathId), false)

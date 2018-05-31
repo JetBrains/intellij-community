@@ -209,4 +209,4 @@ def get_run_validators() -> bool: ...
 
 s = attributes = attrs
 ib = attr = attrib
-dataclass = attrs # Technically, partial(attrs, auto_attribs=True) ;)
+dataclass = attrs  # Technically, partial(attrs, auto_attribs=True) ;)

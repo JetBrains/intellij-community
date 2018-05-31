@@ -27,6 +27,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.ui.EmptyIcon;
 import git4idea.GitBranch;
 import git4idea.GitLocalBranch;
 import git4idea.actions.GitAbstractRebaseAction;
@@ -617,6 +618,51 @@ class GitBranchPopupActions {
       GitBrancher brancher = GitBrancher.getInstance(myProject);
       brancher.rebaseOnCurrent(myRepositories, myBranchName);
       reportUsage("git.branch.checkout.with.rebase");
+    }
+  }
+
+  static class TagActions extends BranchActionGroup {
+    private final Project myProject;
+    private final List<GitRepository> myRepositories;
+    private final String myTagName;
+    private final GitRepository mySelectedRepository;
+
+    TagActions(@NotNull Project project, @NotNull List<GitRepository> repositories, @NotNull String tagName,
+               @NotNull GitRepository selectedRepository) {
+      myProject = project;
+      myRepositories = repositories;
+      myTagName = tagName;
+      mySelectedRepository = selectedRepository;
+      getTemplatePresentation().setText(tagName, false); // no mnemonics
+      setIcons(EmptyIcon.ICON_16, EmptyIcon.ICON_16, EmptyIcon.ICON_16, EmptyIcon.ICON_16); // no favorites
+    }
+
+    @NotNull
+    @Override
+    public AnAction[] getChildren(@Nullable AnActionEvent e) {
+      return new AnAction[]{
+        new DeleteTagAction(myProject, myRepositories, myTagName)
+      };
+    }
+
+    private static class DeleteTagAction extends DumbAwareAction {
+      private final Project myProject;
+      private final List<GitRepository> myRepositories;
+      private final String myTagName;
+
+      DeleteTagAction(Project project, List<GitRepository> repositories, String tagName) {
+        super("Delete");
+        myProject = project;
+        myRepositories = repositories;
+        myTagName = tagName;
+      }
+
+      @Override
+      public void actionPerformed(AnActionEvent e) {
+        GitBrancher brancher = GitBrancher.getInstance(myProject);
+        brancher.deleteTag(myTagName, myRepositories);
+        reportUsage("git.tag.delete.local");
+      }
     }
   }
 

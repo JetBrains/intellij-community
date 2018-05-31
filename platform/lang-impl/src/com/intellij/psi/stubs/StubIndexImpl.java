@@ -328,30 +328,20 @@ public class StubIndexImpl extends StubIndex implements PersistentStateComponent
                                        @NotNull StubIdListContainerAction action) {
     final FileBasedIndexImpl fileBasedIndex = (FileBasedIndexImpl)FileBasedIndex.getInstance();
     ID<Integer, SerializedStubTree> stubUpdatingIndexId = StubUpdatingIndex.INDEX_ID;
-    myAccessValidator.checkAccessingIndexDuringOtherIndexProcessing(stubUpdatingIndexId);
     final MyIndex<Key> index = (MyIndex<Key>)getAsyncState().myIndices.get(indexKey);   // wait for initialization to finish
 
     fileBasedIndex.ensureUpToDate(stubUpdatingIndexId, project, scope);
 
     UpdatableIndex<Integer, SerializedStubTree, FileContent> stubUpdatingIndex = fileBasedIndex.getIndex(stubUpdatingIndexId);
     try {
-      myAccessValidator.checkAccessingIndexDuringOtherIndexProcessing(stubUpdatingIndexId);
-
       try {
-        // disable up-to-date check to avoid locks on attempt to acquire index write lock while holding at the same time the readLock for this index
-        FileBasedIndexImpl.disableUpToDateCheckForCurrentThread();
-
         stubUpdatingIndex.getReadLock().lock();
-
-        myAccessValidator.startedProcessingActivityForIndex(stubUpdatingIndexId);
-
-        return index.getData(key).forEach(action);
+        // disable up-to-date check to avoid locks on attempt to acquire index write lock while holding at the same time the readLock for this index
+        return FileBasedIndexImpl.disableUpToDateCheckIn(()->
+               myAccessValidator.validate(stubUpdatingIndexId, ()->index.getData(key).forEach(action)));
       }
       finally {
-        myAccessValidator.stoppedProcessingActivityForIndex(stubUpdatingIndexId);
         stubUpdatingIndex.getReadLock().unlock();
-        FileBasedIndexImpl.enableUpToDateCheckForCurrentThread();
-
         wipeProblematicFileIdsForParticularKeyAndStubIndex(indexKey, key, stubUpdatingIndex);
       }
     }
@@ -427,11 +417,9 @@ public class StubIndexImpl extends StubIndex implements PersistentStateComponent
     final MyIndex<K> index = (MyIndex<K>)getAsyncState().myIndices.get(indexKey); // wait for initialization to finish
     FileBasedIndex.getInstance().ensureUpToDate(StubUpdatingIndex.INDEX_ID, scope.getProject(), scope);
 
-    myAccessValidator.checkAccessingIndexDuringOtherIndexProcessing(StubUpdatingIndex.INDEX_ID);
     try {
-      myAccessValidator.startedProcessingActivityForIndex(StubUpdatingIndex.INDEX_ID);
-      FileBasedIndexImpl.disableUpToDateCheckForCurrentThread();
-      return index.processAllKeys(processor, scope, idFilter);
+      return FileBasedIndexImpl.disableUpToDateCheckIn(()->
+        myAccessValidator.validate(StubUpdatingIndex.INDEX_ID, () -> index.processAllKeys(processor, scope, idFilter)));
     }
     catch (StorageException e) {
       forceRebuild(e);
@@ -442,10 +430,6 @@ public class StubIndexImpl extends StubIndex implements PersistentStateComponent
         forceRebuild(e);
       }
       throw e;
-    }
-    finally {
-      FileBasedIndexImpl.enableUpToDateCheckForCurrentThread();
-      myAccessValidator.stoppedProcessingActivityForIndex(StubUpdatingIndex.INDEX_ID);
     }
     return true;
   }

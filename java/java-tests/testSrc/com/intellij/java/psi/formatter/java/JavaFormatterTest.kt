@@ -2,6 +2,7 @@
 package com.intellij.java.psi.formatter.java
 
 import com.intellij.application.options.CodeStyle
+import com.intellij.formatting.WrapType
 import com.intellij.lang.java.JavaLanguage
 import com.intellij.openapi.command.CommandProcessor
 import com.intellij.openapi.command.WriteCommandAction
@@ -27,7 +28,7 @@ import org.jetbrains.annotations.NonNls
  */
 class JavaFormatterTest : AbstractJavaFormatterTest() {
   fun testPaymentManager() {
-    AbstractJavaFormatterTest.getSettings().KEEP_LINE_BREAKS = false
+    codeStyleBean.isKeepLineBreaks = false
     doTest("paymentManager.java", "paymentManager_after.java")
   }
 
@@ -47,7 +48,6 @@ class JavaFormatterTest : AbstractJavaFormatterTest() {
   fun testLabel1() {
     val settings = AbstractJavaFormatterTest.getSettings()
 
-    settings.LABELED_STATEMENT_WRAP = CommonCodeStyleSettings.WRAP_ALWAYS
     settings.rootSettings.getIndentOptions(StdFileTypes.JAVA).LABEL_INDENT_ABSOLUTE = true
     settings.rootSettings.getIndentOptions(StdFileTypes.JAVA).LABEL_INDENT_SIZE = 0
 
@@ -60,21 +60,25 @@ class JavaFormatterTest : AbstractJavaFormatterTest() {
   }
 
   fun testNullMethodParameter() {
-    val settings = AbstractJavaFormatterTest.getSettings()
-    settings.CALL_PARAMETERS_WRAP = CommonCodeStyleSettings.WRAP_ALWAYS
-    settings.ALIGN_MULTILINE_PARAMETERS_IN_CALLS = true
+    codeStyleBean.apply{
+      callParametersWrap = WrapType.ALWAYS
+      isAlignMultilineParametersInCalls = true
+    }
     doTest("NullMethodParameter.java", "NullMethodParameter_after.java")
   }
 
   fun test_DoNot_JoinLines_If_KeepLineBreaksIsOn() {
-    AbstractJavaFormatterTest.getSettings().KEEP_LINE_BREAKS = true
-    AbstractJavaFormatterTest.getSettings().METHOD_ANNOTATION_WRAP = CommonCodeStyleSettings.DO_NOT_WRAP
+    codeStyleBean.apply {
+      isKeepLineBreaks = true
+      methodAnnotationWrap = WrapType.NONE
+    }
     doTextTest(
       "public class Test<Param> {\n" +
       "    @SuppressWarnings(\"unchecked\")\n" +
       "        void executeParallel(Param... params) {\n" +
       "    }\n" +
       "}",
+
       "public class Test<Param> {\n" +
       "    @SuppressWarnings(\"unchecked\")\n" +
       "    void executeParallel(Param... params) {\n" +
@@ -84,8 +88,10 @@ class JavaFormatterTest : AbstractJavaFormatterTest() {
   }
 
   fun test_DoNot_JoinLines_If_KeepLineBreaksIsOn_WithMultipleAnnotations() {
-    AbstractJavaFormatterTest.getSettings().KEEP_LINE_BREAKS = true
-    AbstractJavaFormatterTest.getSettings().METHOD_ANNOTATION_WRAP = CommonCodeStyleSettings.DO_NOT_WRAP
+    codeStyleBean.apply {
+      isKeepLineBreaks = true
+      methodAnnotationWrap = WrapType.NONE
+    }
     doTextTest(
       "public class Test<Param> {\n" +
       "    @Override @SuppressWarnings(\"unchecked\")\n" +
@@ -119,8 +125,7 @@ class JavaFormatterTest : AbstractJavaFormatterTest() {
   }
 
   fun testJavaDoc() {
-    val settings = AbstractJavaFormatterTest.getSettings()
-    settings.BLANK_LINES_AROUND_FIELD = 1
+    codeStyleBean.blankLinesAroundField = 1
     doTest("JavaDoc.java", "JavaDoc_after.java")
   }
 
@@ -147,9 +152,10 @@ class JavaFormatterTest : AbstractJavaFormatterTest() {
   }
 
   fun testAlignMultiLine() {
-    val settings = AbstractJavaFormatterTest.getSettings()
-    settings.ALIGN_MULTILINE_PARENTHESIZED_EXPRESSION = true
-    settings.ALIGN_MULTILINE_BINARY_OPERATION = true
+    codeStyleBean.apply {
+      isAlignMultilineParenthesizedExpression = true
+      isAlignMultilineBinaryOperation = true
+    }
     doTest()
   }
 
@@ -158,10 +164,11 @@ class JavaFormatterTest : AbstractJavaFormatterTest() {
   }
 
   fun testSynchronizedBlock() {
-    val settings = AbstractJavaFormatterTest.getSettings()
-    settings.SPACE_BEFORE_SYNCHRONIZED_PARENTHESES = false
-    settings.SPACE_WITHIN_SYNCHRONIZED_PARENTHESES = false
-    settings.SPACE_BEFORE_SYNCHRONIZED_LBRACE = false
+    codeStyleBean.apply {
+      isSpaceBeforeSynchronizedParentheses = false
+      isSpaceWithinSynchronizedParentheses = false
+      isSpaceBeforeSynchronizedLeftBrace = false
+    }
     doTest()
   }
 
@@ -219,26 +226,27 @@ class JavaFormatterTest : AbstractJavaFormatterTest() {
   }
 
   fun testTernaryExpression() {
-    val settings = AbstractJavaFormatterTest.getSettings()
-    settings.ALIGN_MULTILINE_TERNARY_OPERATION = true
+    codeStyleBean.isAlignMultilineTernaryOperation = true
     doTest()
 
-    settings.ALIGN_MULTILINE_TERNARY_OPERATION = false
+    codeStyleBean.isAlignMultilineTernaryOperation = false
     doTest("TernaryExpression.java", "TernaryExpression_DoNotAlign_after.java")
 
   }
 
   fun testAlignAssignment() {
-    val settings = AbstractJavaFormatterTest.getSettings()
-    settings.ALIGN_MULTILINE_ASSIGNMENT = true
-    settings.ALIGN_MULTILINE_BINARY_OPERATION = true
+    codeStyleBean.apply {
+      isAlignMultilineAssignment = true
+      isAlignMultilineBinaryOperation = true
+    }
     doTest()
   }
 
   fun testAlignFor() {
-    val settings = AbstractJavaFormatterTest.getSettings()
-    settings.ALIGN_MULTILINE_BINARY_OPERATION = true
-    settings.ALIGN_MULTILINE_FOR = true
+    codeStyleBean.apply {
+      isAlignMultilineBinaryOperation = true
+      isAlignMultilineFor = true
+    }
     doTest()
   }
 
@@ -263,26 +271,33 @@ class JavaFormatterTest : AbstractJavaFormatterTest() {
   }
 
   fun test2() {
-    val settings = AbstractJavaFormatterTest.getSettings()
-    settings.ALIGN_MULTILINE_PARAMETERS_IN_CALLS = true
+    codeStyleBean.isAlignMultilineParametersInCalls = true
     doTest()
   }
 
   fun testBlocks() {
-    val settings = AbstractJavaFormatterTest.getSettings()
-    settings.KEEP_LINE_BREAKS = false
+    codeStyleBean.isKeepLineBreaks = false
     doTest()
   }
 
   @Throws(IncorrectOperationException::class)
   fun testBinaryOperation() {
-    val settings = AbstractJavaFormatterTest.getSettings()
-
     @NonNls val text = "class Foo {\n" + "    void foo () {\n" + "        xxx = aaa + bbb \n" + "        + ccc + eee + ddd;\n" + "    }\n" + "}"
 
-
-    settings.ALIGN_MULTILINE_BINARY_OPERATION = true
-    settings.ALIGN_MULTILINE_ASSIGNMENT = true
+    codeStyleBean.apply {
+      isAlignMultilineBinaryOperation = true
+      isAlignMultilineAssignment = true
+    }
+    doTextTest(text, "class Foo {\n" +
+                     "    void foo() {\n" +
+                     "        xxx = aaa + bbb\n" +
+                     "              + ccc + eee + ddd;\n" +
+                     "    }\n" +
+                     "}")
+    codeStyleBean.apply {
+      isAlignMultilineBinaryOperation = true
+      isAlignMultilineAssignment = false
+    }
     doTextTest(text, "class Foo {\n" +
                      "    void foo() {\n" +
                      "        xxx = aaa + bbb\n" +
@@ -290,18 +305,10 @@ class JavaFormatterTest : AbstractJavaFormatterTest() {
                      "    }\n" +
                      "}")
 
-    settings.ALIGN_MULTILINE_BINARY_OPERATION = true
-    settings.ALIGN_MULTILINE_ASSIGNMENT = false
-    doTextTest(text, "class Foo {\n" +
-                     "    void foo() {\n" +
-                     "        xxx = aaa + bbb\n" +
-                     "              + ccc + eee + ddd;\n" +
-                     "    }\n" +
-                     "}")
-
-
-    settings.ALIGN_MULTILINE_BINARY_OPERATION = false
-    settings.ALIGN_MULTILINE_ASSIGNMENT = true
+    codeStyleBean.apply {
+      isAlignMultilineBinaryOperation = false
+      isAlignMultilineAssignment = true
+    }
     doTextTest(text, "class Foo {\n" +
                      "    void foo() {\n" +
                      "        xxx = aaa + bbb\n" +
@@ -309,18 +316,17 @@ class JavaFormatterTest : AbstractJavaFormatterTest() {
                      "    }\n" +
                      "}")
 
+    codeStyleBean.apply {
+      isAlignMultilineAssignment = false
+      isAlignMultilineBinaryOperation = false
+    }
 
-    settings.ALIGN_MULTILINE_ASSIGNMENT = false
-    settings.ALIGN_MULTILINE_BINARY_OPERATION = false
     doTextTest(text, "class Foo {\n" +
                      "    void foo() {\n" +
                      "        xxx = aaa + bbb\n" +
                      "                + ccc + eee + ddd;\n" +
                      "    }\n" +
                      "}")
-
-    settings.ALIGN_MULTILINE_ASSIGNMENT = false
-    settings.ALIGN_MULTILINE_BINARY_OPERATION = false
 
     doTextTest(text, "class Foo {\n" +
                      "    void foo() {\n" +
@@ -330,7 +336,7 @@ class JavaFormatterTest : AbstractJavaFormatterTest() {
                      "}")
 
 
-    settings.ALIGN_MULTILINE_BINARY_OPERATION = true
+    codeStyleBean.isAlignMultilineBinaryOperation = true
 
     doTextTest("class Foo {\n" + "    void foo () {\n" + "        xxx = aaa + bbb \n" + "        - ccc + eee + ddd;\n" + "    }\n" + "}",
                "class Foo {\n" +
@@ -378,10 +384,10 @@ class JavaFormatterTest : AbstractJavaFormatterTest() {
   }
 
   fun testStringBinaryOperation() {
-    val settings = AbstractJavaFormatterTest.getSettings()
-
-    settings.ALIGN_MULTILINE_ASSIGNMENT = false
-    settings.ALIGN_MULTILINE_BINARY_OPERATION = false
+    codeStyleBean.apply {
+      isAlignMultilineAssignment = false
+      isAlignMultilineBinaryOperation = false
+    }
 
     doTextTest("class Foo {\n" + "    void foo () {\n" + "String s = \"abc\" +\n" + "\"def\";" + "    }\n" + "}",
 
@@ -1012,15 +1018,15 @@ class JavaFormatterTest : AbstractJavaFormatterTest() {
   }
 
   fun testAssertStatementWrapping() {
-    AbstractJavaFormatterTest.getSettings().ASSERT_STATEMENT_WRAP = CommonCodeStyleSettings.WRAP_AS_NEEDED
-    AbstractJavaFormatterTest.getSettings().BINARY_OPERATION_WRAP = CommonCodeStyleSettings.DO_NOT_WRAP
-    AbstractJavaFormatterTest.getSettings().RIGHT_MARGIN = 40
+    codeStyleBean.assertStatementWrap = WrapType.NORMAL
+    codeStyleBean.binaryOperationWrap = WrapType.NONE
+    codeStyleBean.rightMargin = 40
     val facade = LightIdeaTestCase.getJavaFacade()
     val effectiveLanguageLevel = LanguageLevelProjectExtension.getInstance(facade.project).languageLevel
     try {
       LanguageLevelProjectExtension.getInstance(facade.project).languageLevel = LanguageLevel.JDK_1_5
 
-      AbstractJavaFormatterTest.getSettings().ASSERT_STATEMENT_COLON_ON_NEXT_LINE = false
+      codeStyleBean.isAssertStatementColonOnNextLine = false
       doTextTest("class Foo {\n" +
                  "    void foo() {\n" +
                  "        assert methodWithVeryVeryLongName() : foo;\n" +
@@ -1035,7 +1041,7 @@ class JavaFormatterTest : AbstractJavaFormatterTest() {
                         "    }\n" +
                         "}\n")
 
-      AbstractJavaFormatterTest.getSettings().ASSERT_STATEMENT_COLON_ON_NEXT_LINE = true
+      codeStyleBean.isAssertStatementColonOnNextLine = true
       doTextTest("class Foo {\n" +
                  "    void foo() {\n" +
                  "        assert methodWithVeryVeryLongName() : foo;\n" +
@@ -3552,7 +3558,7 @@ public class Test {
   }
 
   fun testBlankLinesBeforeClassEnd_afterField () {
-    AbstractJavaFormatterTest.getSettings().BLANK_LINES_BEFORE_CLASS_END = 2;
+    codeStyleBean.blankLinesBeforeClassEnd = 2
     doTextTest(
 """
 public class Test {
@@ -3576,7 +3582,7 @@ public class Test {
 
 
   fun testBlankLinesBeforeClassEnd_afterInnerClass () {
-    AbstractJavaFormatterTest.getSettings().BLANK_LINES_BEFORE_CLASS_END = 2;
+    codeStyleBean.blankLinesBeforeClassEnd = 2
     doTextTest(
 """
 public class Test {
