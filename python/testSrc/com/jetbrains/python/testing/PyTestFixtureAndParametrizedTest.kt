@@ -24,8 +24,14 @@ class PyTestFixtureAndParametrizedTest : PyTestCase() {
     myFixture.checkHighlighting(true, false, true)
   }
 
-  fun testCompletion() {
+  fun testTypeCompletion() {
+    myFixture.copyDirectoryToProject(".", ".")
+    myFixture.configureByFile("test_parametrized.py")
+    myFixture.completeBasicAllCarets(null)
+    myFixture.checkResultByFile("after_test_parametrized.txt")
+  }
 
+  fun testCompletion() {
     myFixture.copyDirectoryToProject(".", ".")
     myFixture.configureByFile("test_test.py")
     myFixture.completeBasicAllCarets(null)
