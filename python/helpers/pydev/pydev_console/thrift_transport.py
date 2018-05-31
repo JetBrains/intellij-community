@@ -257,3 +257,14 @@ class TReversedServerAcceptedTransport(FramedWriter):
 
     def read(self, sz):
         return self._read_fn(sz)
+
+
+class TSyncClient(TClient):
+
+    def __init__(self, service, iprot, oprot=None):
+        super(TSyncClient, self).__init__(service, iprot, oprot)
+        self._lock = threading.RLock()
+
+    def _req(self, _api, *args, **kwargs):
+        with self._lock:
+            return super(TSyncClient, self)._req(_api, *args, **kwargs)

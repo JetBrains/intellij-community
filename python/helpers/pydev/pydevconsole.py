@@ -2,7 +2,7 @@
 Entry point module to start the interactive console.
 '''
 from _pydev_imps._pydev_saved_modules import thread
-from pydev_console.thrift_rpc import make_rpc_client, make_rpc_server
+from pydev_console.thrift_rpc import make_rpc_client, start_rpc_server
 
 start_new_thread = thread.start_new_thread
 
@@ -326,6 +326,28 @@ def start_console_server(host, port, interpreter):
         if connection_queue is not None:
             connection_queue.put(False)
 
+
+def enable_thrift_logging():
+    import logging
+
+    # create logger
+    logger = logging.getLogger('thriftpy')
+    logger.setLevel(logging.DEBUG)
+
+    # create console handler and set level to debug
+    ch = logging.StreamHandler()
+    ch.setLevel(logging.DEBUG)
+
+    # create formatter
+    formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
+
+    # add formatter to ch
+    ch.setFormatter(formatter)
+
+    # add ch to logger
+    logger.addHandler(ch)
+
+
 def start_server(host, port, client_port, client_host = None):
     if not client_host:
         client_host = host
@@ -336,11 +358,13 @@ def start_server(host, port, client_port, client_host = None):
 
     from pydev_console.thrift_communication import console_thrift
 
+    enable_thrift_logging()
+
     client_service = console_thrift.IDE
 
     client, server_transport = make_rpc_client(client_service, client_host, client_port)
 
-    interpreter = InterpreterInterface(client_host, client_port, threading.currentThread(), client)
+    interpreter = InterpreterInterface(threading.currentThread(), None, client)
 
     # start_new_thread(start_console_server,(host, port, interpreter))
     # we do not need to start the server in a new thread because it does not need to accept a client connection, it already has it
@@ -355,9 +379,7 @@ def start_server(host, port, client_port, client_host = None):
     # `InterpreterInterface` implements all methods required for the handler
     server_handler = interpreter
 
-    server = make_rpc_server(server_transport, server_service, server_handler)
-    # todo as `server.serve()` is excessive we may want to get rid of `server` as `TThreadedServer`
-    server.serve()
+    start_rpc_server(server_transport, server_service, server_handler)
 
     process_exec_queue(interpreter)
 
