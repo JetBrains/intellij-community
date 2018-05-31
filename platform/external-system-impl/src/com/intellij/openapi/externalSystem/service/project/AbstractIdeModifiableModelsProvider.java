@@ -416,8 +416,17 @@ public abstract class AbstractIdeModifiableModelsProvider extends IdeModelsProvi
         updateSubstitutions();
       }
       processExternalArtifactDependencies();
-      for (Library.ModifiableModel each : myModifiableLibraryModels.values()) {
-        each.commit();
+      for (Map.Entry<Library, Library.ModifiableModel> entry : myModifiableLibraryModels.entrySet()) {
+        Library fromLibrary = entry.getKey();
+        Library.ModifiableModel modifiableModel = entry.getValue();
+        // removed and (previously) not committed library is being disposed by LibraryTableBase.LibraryModel.removeLibrary
+        // the modifiable model of such library shouldn't be committed
+        if (fromLibrary instanceof LibraryEx && ((LibraryEx)fromLibrary).isDisposed()) {
+          Disposer.dispose(modifiableModel);
+        }
+        else {
+          modifiableModel.commit();
+        }
       }
       getModifiableProjectLibrariesModel().commit();
 
