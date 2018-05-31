@@ -1,4 +1,4 @@
-// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.index
 
 import com.google.common.hash.HashCode
@@ -36,7 +36,7 @@ abstract class IndexGenerator<Value>(private val indexStorageFilePath: String) {
 
     println("Writing indices to ${storage.baseFile.absolutePath}")
 
-    try {
+    storage.use {
       val map = HashMap<HashCode, Pair<String, Value>>()
 
       for (file in roots) {
@@ -51,9 +51,6 @@ abstract class IndexGenerator<Value>(private val indexStorageFilePath: String) {
 
         println("${stats.indexed.get()} entries written, ${stats.skipped.get()} skipped")
       }
-    }
-    finally {
-      storage.close()
     }
   }
 
@@ -79,8 +76,7 @@ abstract class IndexGenerator<Value>(private val indexStorageFilePath: String) {
             stats.indexed.incrementAndGet()
 
             if (CHECK_HASH_COLLISIONS) {
-              map.put(hashCode,
-                      Pair(fileContent.contentAsText.toString(), value))
+              map[hashCode] = Pair(fileContent.contentAsText.toString(), value)
             }
           }
           else {

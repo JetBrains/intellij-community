@@ -1,4 +1,4 @@
-// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.index.id
 
 import com.google.common.hash.HashCode
@@ -22,7 +22,7 @@ open class IdIndexGenerator(private val idIndexStorageFilePath: String) : IndexG
   }
 
   override fun createStorage(stubsStorageFilePath: String): PersistentHashMap<HashCode, Map<IdIndexEntry, Int>> {
-    return PersistentHashMap(File(idIndexStorageFilePath + ".input"),
+    return PersistentHashMap(File("$idIndexStorageFilePath.input"),
                              HashCodeDescriptor.instance, IdIndexMapDataExternalizer())
   }
 

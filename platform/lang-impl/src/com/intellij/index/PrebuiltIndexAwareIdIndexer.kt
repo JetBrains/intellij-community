@@ -1,4 +1,4 @@
-// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.index
 
 import com.intellij.openapi.diagnostic.Logger
@@ -17,7 +17,7 @@ import java.io.DataOutput
 abstract class PrebuiltIndexAwareIdIndexer : PrebuiltIndexProviderBase<Map<IdIndexEntry, Int>>(), LexingIdIndexer {
   companion object {
     private val LOG = Logger.getInstance("#com.intellij.index.PrebuiltIndexAwareIdIndexer")
-    val ID_INDEX_FILE_NAME: String = "id-index"
+    const val ID_INDEX_FILE_NAME: String = "id-index"
   }
 
   override val indexName: String get() = ID_INDEX_FILE_NAME
@@ -57,7 +57,7 @@ class IdIndexMapDataExternalizer : DataExternalizer<Map<IdIndexEntry, Int>> {
     for (i in 0 until size) {
       val wordHash = DataInputOutputUtil.readINT(`in`)
       val value = DataInputOutputUtil.readINT(`in`)
-      map.put(IdIndexEntry(wordHash), value)
+      map[IdIndexEntry(wordHash)] = value
     }
     return map
   }
