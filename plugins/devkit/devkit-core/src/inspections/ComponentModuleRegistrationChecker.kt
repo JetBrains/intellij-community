@@ -99,8 +99,9 @@ fun checkProperXmlFileForExtension(element: Extension,
 
   for (childDescription in element.genericInfo.fixedChildrenDescriptions) {
     val domElement = childDescription.getValues(element).firstOrNull() ?: continue
-    val text = domElement.xmlTag?.value?.text ?: continue
-    val project = domElement.xmlTag.project
+    val xmlTag = domElement.xmlTag ?: continue
+    val text = xmlTag.value.text
+    val project = xmlTag.project
     val psiClass = JavaPsiFacade.getInstance(project).findClass(text, GlobalSearchScope.projectScope(project))
     if (psiClass != null && checkProperXmlFileForClass(element, holder, psiClass, ignoreClassList)) return
   }
