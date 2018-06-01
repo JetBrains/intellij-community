@@ -101,9 +101,9 @@ public class HgLogProvider implements VcsLogProvider {
                               @NotNull Consumer<VcsFullCommitDetails> commitConsumer,
                               boolean isForIndexing)
     throws VcsException {
-    // parameter isBackground is currently not used
+    // parameter isForIndexing is currently not used
     // since this method is not called from index yet, fast always is false
-    // but when implementing indexing mercurial commits, we'll need to avoid rename/move detection when isBackground = true
+    // but when implementing indexing mercurial commits, we'll need to avoid rename/move detection when isForIndexing = true
 
     HgVcs hgvcs = HgVcs.getInstance(myProject);
     assert hgvcs != null;
