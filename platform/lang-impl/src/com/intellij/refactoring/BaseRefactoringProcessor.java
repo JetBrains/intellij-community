@@ -494,8 +494,11 @@ public abstract class BaseRefactoringProcessor implements Runnable {
       DumbService.getInstance(myProject).completeJustSubmittedTasks();
 
       for(Map.Entry<RefactoringHelper, Object> e: preparedData.entrySet()) {
-        //noinspection unchecked
-        e.getKey().performOperation(myProject, e.getValue());
+        // Android Studio: Workaround for b/79220682
+        if (shouldApplyRefactoringHelper(e.getKey())) {
+          //noinspection unchecked
+          e.getKey().performOperation(myProject, e.getValue());
+        }
       }
       myTransaction.commit();
       if (Registry.is("run.refactorings.under.progress")) {
@@ -518,6 +521,14 @@ public abstract class BaseRefactoringProcessor implements Runnable {
         StatusBarUtil.setStatusBarInfo(myProject, RefactoringBundle.message("statusBar.noUsages"));
       }
     }
+  }
+
+  // Android Studio: Workaround for b/79220682
+  /**
+   * Allows custom refactorings to decide whether a specific helper should apply or not
+   */
+  protected boolean shouldApplyRefactoringHelper(@NotNull RefactoringHelper key) {
+    return true;
   }
 
   protected boolean isToBeChanged(@NotNull UsageInfo usageInfo) {
