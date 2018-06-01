@@ -156,7 +156,7 @@ public abstract class PlatformTestCase extends UsefulTestCase implements DataPro
   private static final String[] PREFIX_CANDIDATES = {
     "Rider", "GoLand",
     null,
-    "AppCode", "CLion", "CidrCommon",
+    "AppCode", "CLion", "CidrCommonTests",
     "DataGrip",
     "Python", "PyCharmCore",
     "Ruby",

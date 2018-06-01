@@ -66,4 +66,9 @@ public class CompletionParameterTypeInferencePolicy extends ProcessCandidatePara
   public boolean isVarargsIgnored() {
     return true;
   }
+
+  @Override
+  public boolean inferLowerBoundForFreshVariables() {
+    return true;
+  }
 }

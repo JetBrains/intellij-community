@@ -541,7 +541,10 @@ public class RedundantCastUtil {
             if (opposite == null || conditionalType instanceof PsiPrimitiveType &&
                                     !Comparing.equal(conditionalType, opposite.getType())) return;
           }
-        } else if (parent instanceof PsiSynchronizedStatement && expr != null && expr.getType() instanceof PsiPrimitiveType) {
+        }
+        else if (parent instanceof PsiSynchronizedStatement &&
+                 expr != null &&
+                 (expr.getType() instanceof PsiPrimitiveType || expr instanceof PsiFunctionalExpression)) {
           return;
         } else if (expr instanceof PsiLambdaExpression || expr instanceof PsiMethodReferenceExpression) {
           if (parent instanceof PsiParenthesizedExpression && parent.getParent() instanceof PsiReferenceExpression) {

@@ -1859,4 +1859,12 @@ class Bar {{
     checkResult()
   }
 
+  void testRemoveUnusedImportOfSameName() {
+    myFixture.addClass("package foo; public class List {}")
+    configureByTestName()
+    lookup.currentItem = myFixture.lookupElements.find { it.object instanceof PsiClass && ((PsiClass)it.object).qualifiedName == 'java.util.List' }
+    myFixture.type('\n')
+    checkResult()
+  }
+
 }

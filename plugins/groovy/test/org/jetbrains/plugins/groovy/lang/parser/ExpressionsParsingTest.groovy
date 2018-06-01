@@ -656,6 +656,8 @@ class ExpressionsParsingTest extends GroovyParsingTestCase {
 
   void testindex$safeIndexVsTernary3() { doTest() }
 
+  void testindex$safeIndexVsTernary4() { doTest() }
+
   void testindex$safeIndexNewLineAfterQ() { doTest() }
 
   void testindex$safeIndexNewLineBeforeQ() { doTest() }

@@ -4,12 +4,14 @@ package com.jetbrains.python.testing.pyTestParametrized
 import com.intellij.psi.PsiElement
 import com.jetbrains.python.inspections.PyInspectionExtension
 import com.jetbrains.python.psi.PyNamedParameter
+import com.jetbrains.python.psi.types.TypeEvalContext
 
 /**
  * EP to skip "unused" inspection
  */
 class PyTestParametrizedInspectionExtension : PyInspectionExtension() {
 
-  override fun ignoreUnused(local: PsiElement): Boolean = local is PyNamedParameter && local.isParametrized()
+  override fun ignoreUnused(local: PsiElement): Boolean = local is PyNamedParameter && local.isParametrized(
+    TypeEvalContext.codeAnalysis(local.project, local.containingFile))
 
 }

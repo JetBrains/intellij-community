@@ -12,6 +12,7 @@ import com.jetbrains.python.PyBundle
 import com.jetbrains.python.inspections.PyInspection
 import com.jetbrains.python.psi.PyFunction
 import com.jetbrains.python.psi.PyParameter
+import com.jetbrains.python.psi.types.TypeEvalContext
 
 /**
  * Check that all parameters from parametrize decorator are declared by function
@@ -22,7 +23,9 @@ class PyTestParametrizedInspection : PyInspection() {
                             session: LocalInspectionToolSession): PsiElementVisitor = object : PsiElementVisitor() {
     override fun visitElement(element: PsiElement?) {
       if (element is PyFunction) {
-        val requiredParameters = element.getParametersFromGenerator()
+        val requiredParameters = element
+          .getParametersOfParametrized(TypeEvalContext.codeAnalysis(element.project, element.containingFile))
+          .map(PyTestParameter::name)
         if (requiredParameters.isNotEmpty()) {
           val declaredParameters = element.parameterList.parameters.mapNotNull(PyParameter::getName)
           val diff = requiredParameters.minus(declaredParameters)

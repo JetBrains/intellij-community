@@ -36,7 +36,7 @@ class ObjectAllocationInLoop {
   boolean checkPatterns(String[] patterns) {
     for (String pattern : patterns) {
       try {
-        Pattern.<warning descr="Indirect object allocation via 'compile()' call in loop">compile</warning>(pattern);
+        Pattern.<warning descr="Object allocation via 'compile()' call in loop">compile</warning>(pattern);
       }
       catch (PatternSyntaxException exception) {
         return false;

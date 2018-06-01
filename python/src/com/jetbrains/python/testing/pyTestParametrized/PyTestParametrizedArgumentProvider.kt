@@ -12,5 +12,8 @@ import com.jetbrains.python.testing.PyFunctionArgumentProvider
  */
 internal object PyTestParametrizedArgumentProvider : PyFunctionArgumentProvider {
   override fun getArguments(function: PyFunction, evalContext: TypeEvalContext, module: Module) =
-    function.getParametersFromGenerator().map { PyFunctionArgument(it) }
+    function.getParametersOfParametrized(TypeEvalContext.codeAnalysis(function.project, function.containingFile))
+      .map {
+        PyFunctionArgument(it.name)
+      }
 }

@@ -429,7 +429,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
           }
         }
 
-        updateCaretCursorAndRepaintIfNeeded();
+        updateCaretCursor();
       }
     };
 
@@ -2559,7 +2559,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
 
     @Override
     public void run() {
-      if (myEditor != null && !myEditor.myUpdateCursor) {
+      if (myEditor != null) {
         CaretCursor activeCursor = myEditor.myCaretCursor;
 
         long time = System.currentTimeMillis();
@@ -2583,7 +2583,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     }
   }
 
-  private void updateCaretCursorAndRepaintIfNeeded() {
+  void updateCaretCursor() {
     myUpdateCursor = true;
     if (myCaretCursor.myIsShown) {
       myCaretCursor.myStartTime = System.currentTimeMillis();
@@ -2592,12 +2592,6 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
       myCaretCursor.myIsShown = true;
       myCaretCursor.repaint();
     }
-  }
-
-  // The caller should also request repainting of caret region
-  void updateCaretCursor() {
-    myUpdateCursor = true;
-    myCaretCursor.myIsShown = true;
   }
 
   private void setCursorPosition() {
