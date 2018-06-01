@@ -655,6 +655,7 @@ public class PsiBuilderImpl extends UserDataHolderBase implements PsiBuilder {
     }
   }
 
+  @NotNull
   @Override
   public CharSequence getOriginalText() {
     return myText;

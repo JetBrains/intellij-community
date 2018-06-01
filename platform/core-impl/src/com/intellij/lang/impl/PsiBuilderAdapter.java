@@ -28,10 +28,11 @@ import org.jetbrains.annotations.Nullable;
 public class PsiBuilderAdapter implements PsiBuilder {
   protected final PsiBuilder myDelegate;
 
-  public PsiBuilderAdapter(final PsiBuilder delegate) {
+  public PsiBuilderAdapter(@NotNull PsiBuilder delegate) {
     myDelegate = delegate;
   }
 
+  @NotNull
   public PsiBuilder getDelegate() {
     return myDelegate;
   }
@@ -41,6 +42,7 @@ public class PsiBuilderAdapter implements PsiBuilder {
     return myDelegate.getProject();
   }
 
+  @NotNull
   @Override
   public CharSequence getOriginalText() {
     return myDelegate.getOriginalText();
