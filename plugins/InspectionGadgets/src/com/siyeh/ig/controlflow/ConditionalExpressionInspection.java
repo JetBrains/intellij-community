@@ -80,15 +80,25 @@ public class ConditionalExpressionInspection extends BaseInspection {
     if (!quickFix) {
       return null;
     }
-    return new ReplaceWithIfFix();
+    final boolean changesSemantics = ((Boolean)infos[1]).booleanValue();
+    return new ReplaceWithIfFix(changesSemantics);
   }
 
   private static class ReplaceWithIfFix extends InspectionGadgetsFix {
+
+    private final boolean myChangesSemantics;
+
+    public ReplaceWithIfFix(boolean changesSemantics) {
+      myChangesSemantics = changesSemantics;
+    }
+
     @Nls
     @NotNull
     @Override
     public String getFamilyName() {
-      return InspectionGadgetsBundle.message("conditional.expression.quickfix");
+      return myChangesSemantics
+             ? InspectionGadgetsBundle.message("conditional.expression.semantics.quickfix")
+             : InspectionGadgetsBundle.message("conditional.expression.quickfix");
     }
 
     @Override
@@ -271,7 +281,9 @@ public class ConditionalExpressionInspection extends BaseInspection {
         if (expressionContext && (ignoreExpressionContext || isVisibleHighlight(expression))) {
           return;
         }
-        registerError(expression, !expressionContext);
+        boolean nestedConditional = ParenthesesUtils.getParentSkipParentheses(expression) instanceof PsiConditionalExpression;
+        registerError(expression, nestedConditional ? ProblemHighlightType.INFORMATION : ProblemHighlightType.GENERIC_ERROR_OR_WARNING,
+                      !expressionContext, nestedConditional);
       }
     }
 
