@@ -1809,7 +1809,7 @@ public class ProjectViewImpl extends ProjectView implements PersistentStateCompo
         }
       }
       else {
-        List<TreeVisitor> visitors = AsyncProjectViewSupport.createVisitors(Arrays.asList(myElements));
+        List<TreeVisitor> visitors = AbstractProjectViewPane.createVisitors(myElements);
         if (1 == visitors.size()) {
           TreeUtil.visit(tree, visitors.get(0), path -> {
             if (path != null) TreeUtil.selectPath(tree, path);

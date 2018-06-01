@@ -34,7 +34,6 @@ import org.jetbrains.annotations.NotNull;
 import javax.swing.*;
 import javax.swing.tree.DefaultMutableTreeNode;
 import javax.swing.tree.TreePath;
-import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
 
@@ -248,20 +247,6 @@ class AsyncProjectViewSupport {
         return Action.CONTINUE;
       }
     }, list, false);
-  }
-
-  static List<TreeVisitor> createVisitors(Iterable<Object> iterable) {
-    if (iterable == null) return Collections.emptyList();
-    List<TreeVisitor> visitors = new SmartList<>();
-    for (Object object : iterable) {
-      if (object instanceof AbstractTreeNode) {
-        AbstractTreeNode node = (AbstractTreeNode)object;
-        object = node.getValue();
-      }
-      TreeVisitor visitor = AbstractProjectViewPane.createVisitor(object);
-      if (visitor != null) visitors.add(visitor);
-    }
-    return visitors;
   }
 
   private static void setModel(@NotNull JTree tree, @NotNull AsyncTreeModel model) {
