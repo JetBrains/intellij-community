@@ -72,7 +72,7 @@ public class CodeStyleBeanAccessorGenerator {
         if (myFieldName.endsWith("_WRAP")) {
           return ValueType.WRAP;
         }
-        else if (myFieldName.endsWith("_BRACE_STYLE")) {
+        else if (myFieldName.endsWith("BRACE_STYLE")) {
           return ValueType.BRACE_STYLE;
         }
         else if (myFieldName.endsWith("_BRACE_FORCE")) {
