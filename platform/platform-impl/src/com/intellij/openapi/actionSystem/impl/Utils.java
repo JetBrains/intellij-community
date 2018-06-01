@@ -333,19 +333,6 @@ public class Utils{
     doUpdate(false, anAction, event1, presentation);
   }
 
-  @Deprecated
-  // Use #expandActionGroup with isModalContext instead
-  public static void fillMenu(@NotNull final ActionGroup group,
-                              final JComponent component,
-                              final boolean enableMnemonics,
-                              final PresentationFactory presentationFactory,
-                              @NotNull DataContext context,
-                              final String place,
-                              final boolean isWindowMenu,
-                              final boolean mayDataContextBeInvalid) {
-    fillMenu(group, component, enableMnemonics, presentationFactory, context, place, isWindowMenu, mayDataContextBeInvalid, false);
-  }
-
   public static void fillMenu(@NotNull final ActionGroup group,
                               final JComponent component,
                               final boolean enableMnemonics,
@@ -354,7 +341,8 @@ public class Utils{
                               final String place,
                               final boolean isWindowMenu,
                               final boolean mayDataContextBeInvalid,
-                              boolean isInModalContext) {
+                              boolean isInModalContext,
+                              final boolean useDarkIcons) {
     final ActionCallback menuBuilt = new ActionCallback();
     final boolean checked = group instanceof CheckedActionGroup;
 
@@ -420,13 +408,13 @@ public class Utils{
       else if (action instanceof ActionGroup &&
                !(((ActionGroup)action).canBePerformed(context) &&
                  !hasVisibleChildren((ActionGroup)action, presentationFactory, context, place))) {
-        ActionMenu menu = new ActionMenu(context, place, (ActionGroup)action, presentationFactory, enableMnemonics, false);
+        ActionMenu menu = new ActionMenu(context, place, (ActionGroup)action, presentationFactory, enableMnemonics, false, useDarkIcons);
         component.add(menu);
         children.add(menu);
       }
       else {
         final ActionMenuItem each =
-          new ActionMenuItem(action, presentationFactory.getPresentation(action), place, context, enableMnemonics, !fixMacScreenMenu, checked);
+          new ActionMenuItem(action, presentationFactory.getPresentation(action), place, context, enableMnemonics, !fixMacScreenMenu, checked, useDarkIcons);
         component.add(each);
         children.add(each);
       }
@@ -435,7 +423,7 @@ public class Utils{
     if (list.isEmpty()) {
       final ActionMenuItem each =
         new ActionMenuItem(EMPTY_MENU_FILLER, presentationFactory.getPresentation(EMPTY_MENU_FILLER), place, context, enableMnemonics,
-                           !fixMacScreenMenu, checked);
+                           !fixMacScreenMenu, checked, useDarkIcons);
       component.add(each);
       children.add(each);
     }
