@@ -2460,6 +2460,12 @@ public class StructuralSearchTest extends StructuralSearchTestCase {
 
     options.fillSearchCriteria("case '_a* :");
     assertEquals("MINIMUM ZERO not applicable for a", checkApplicableConstraints(options));
+
+    options.fillSearchCriteria("int '_a:* ;");
+    assertEquals("TEXT HIERARCHY not applicable for a", checkApplicableConstraints(options));
+
+    options.fillSearchCriteria("void '_a:* ();");
+    assertEquals("TEXT HIERARCHY not applicable for a", checkApplicableConstraints(options));
   }
 
   public void testFindInnerClass() {
