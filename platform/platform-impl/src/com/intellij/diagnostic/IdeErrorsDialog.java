@@ -404,21 +404,18 @@ public class IdeErrorsDialog extends DialogWrapper implements MessagePoolListene
   private static AbstractMessage pack(GroupedLogMessage message) {
     AbstractMessage mainCause = message.getMessages().get(0);
 
-    List<Attachment> attachments = new ArrayList<>();
-    attachments.add(null);
-    StringBuilder stacktraces = new StringBuilder();
+    List<Attachment> attachments = new ArrayList<>(mainCause.getAllAttachments());
+    StringBuilder stacktraces = new StringBuilder("Following exceptions happened soon after this one, most probably they are induced.");
     for (AbstractMessage each : message.getMessages()) {
-      attachments.addAll(each.getAllAttachments());
       if (each != mainCause) {
-        if (stacktraces.length() > 0) stacktraces.append("\n\n\n");
-        stacktraces.append(TIMESTAMP_FORMAT.format(each.getDate())).append('\n');
+        stacktraces.append("\n\n\n").append(TIMESTAMP_FORMAT.format(each.getDate())).append('\n');
         if (!StringUtil.isEmptyOrSpaces(each.getMessage())) stacktraces.append(each.getMessage()).append('\n');
         stacktraces.append(each.getThrowableText());
       }
     }
     attachments.set(0, new Attachment(INDUCED_STACKTRACES_ATTACHMENT, stacktraces.toString()));
 
-    return new LogMessage(mainCause.getThrowable(), mainCause.getMessage(), attachments);
+    return new RepackedLogMessage(mainCause.getThrowable(), mainCause.getMessage(), attachments, message);
   }
 
   private void updateControls() {
@@ -850,6 +847,21 @@ public class IdeErrorsDialog extends DialogWrapper implements MessagePoolListene
       else {
         return pair("*** exception class was changed or removed", detailsText);
       }
+    }
+  }
+
+  private static class RepackedLogMessage extends LogMessage {
+    private final GroupedLogMessage myOriginal;
+
+    private RepackedLogMessage(Throwable throwable, String message, List<Attachment> attachments, GroupedLogMessage original) {
+      super(throwable, message, attachments);
+      myOriginal = original;
+    }
+
+    @Override
+    public void setRead(boolean isRead) {
+      super.setRead(isRead);
+      myOriginal.setRead(isRead);
     }
   }
 

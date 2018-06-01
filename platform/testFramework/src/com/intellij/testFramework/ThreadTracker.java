@@ -25,6 +25,7 @@ import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.project.impl.ProjectManagerImpl;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.ShutDownTracker;
+import com.intellij.openapi.vfs.newvfs.persistent.FlushingDaemon;
 import com.intellij.util.ReflectionUtil;
 import com.intellij.util.WaitFor;
 import com.intellij.util.containers.ContainerUtil;
@@ -101,6 +102,7 @@ public class ThreadTracker {
     wellKnownOffenders.add("VM Thread");
     wellKnownOffenders.add("YJPAgent-Telemetry");
     wellKnownOffenders.add("Batik CleanerThread");
+    wellKnownOffenders.add(FlushingDaemon.NAME);
 
     Application application = ApplicationManager.getApplication();
     // LeakHunter might be accessed first time after Application is already disposed (during test framework shutdown).    

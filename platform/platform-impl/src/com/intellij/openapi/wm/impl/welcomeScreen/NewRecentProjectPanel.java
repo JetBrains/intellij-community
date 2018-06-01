@@ -257,9 +257,6 @@ public class NewRecentProjectPanel extends RecentProjectPanel {
             } else if (value instanceof ReopenProjectAction) {
               final NonOpaquePanel p = new NonOpaquePanel(new BorderLayout());
               name.setText(((ReopenProjectAction)value).getProjectName());
-              if (!isSelected) {
-                name.setForeground(UIUtil.getInactiveTextColor());
-              }
               final String realPath = PathUtil.toSystemDependentName(((ReopenProjectAction)value).getProjectPath());
               path.setText(getTitle2Text((ReopenProjectAction)value, path, JBUI.scale(isInsideGroup ? 80 : 60)));
               if (!realPath.equals(path.getText())) {

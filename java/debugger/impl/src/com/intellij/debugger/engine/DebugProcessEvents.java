@@ -27,6 +27,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.MessageType;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Pair;
+import com.intellij.util.ConcurrencyUtil;
 import com.intellij.util.Consumer;
 import com.intellij.util.concurrency.AppExecutorUtil;
 import com.intellij.xdebugger.XDebugSession;
@@ -70,7 +71,7 @@ public class DebugProcessEvents extends DebugProcessImpl {
     if(vm != null) {
       vmAttached();
       myEventThread = new DebuggerEventThread();
-      ApplicationManager.getApplication().executeOnPooledThread(myEventThread);
+      ApplicationManager.getApplication().executeOnPooledThread(ConcurrencyUtil.underThreadNameRunnable("DebugProcessEvents", myEventThread));
     }
   }
 
@@ -130,9 +131,6 @@ public class DebugProcessEvents extends DebugProcessImpl {
 
     @Override
     public void run() {
-      String oldThreadName = Thread.currentThread().getName();
-      Thread.currentThread().setName("DebugProcessEvents");
-
       try {
         EventQueue eventQueue = myVmProxy.eventQueue();
         while (!isStopped()) {
@@ -267,7 +265,6 @@ public class DebugProcessEvents extends DebugProcessImpl {
       }
       finally {
         Thread.interrupted(); // reset interrupted status
-        Thread.currentThread().setName(oldThreadName);
       }
     }
 

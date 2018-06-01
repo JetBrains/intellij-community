@@ -15,11 +15,19 @@
  */
 package com.intellij.openapi.vcs.actions;
 
-import com.intellij.openapi.vcs.impl.VcsBackgroundableActions;
+import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.project.Project;
+import com.intellij.openapi.vcs.diff.DiffProvider;
+import com.intellij.openapi.vfs.VirtualFile;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
-public class CompareWithTheSameVersionAction extends AbstractShowDiffAction{
-  @Override
-  protected VcsBackgroundableActions getKey() {
-    return VcsBackgroundableActions.COMPARE_WITH;
+public class CompareWithTheSameVersionAction extends AbstractShowDiffAction {
+  @NotNull
+  protected DiffActionExecutor getExecutor(@NotNull DiffProvider diffProvider,
+                                           @NotNull VirtualFile selectedFile,
+                                           @NotNull Project project,
+                                           @Nullable Editor editor) {
+    return new DiffActionExecutor.CompareToCurrentExecutor(diffProvider, selectedFile, project, editor);
   }
 }
