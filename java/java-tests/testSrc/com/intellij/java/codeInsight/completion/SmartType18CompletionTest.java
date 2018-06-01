@@ -220,14 +220,10 @@ public void testConvertToObjectStream() {
 
   public void testCollectionsEmptyMap() { doTest(true); }
   public void testExpectedSuperOfLowerBound() { 
-    configureByTestName();
-    myFixture.complete(CompletionType.SMART, 1);
-    checkResultByFile("/" + getTestName(false) + "-out.java");
+    doTest(false);
   }
   public void testLowerBoundOfFreshVariable() { 
-    configureByTestName();
-    myFixture.complete(CompletionType.SMART, 1);
-    checkResultByFile("/" + getTestName(false) + "-out.java");
+    doTest(false);
   }
 
   private void doTest() {
