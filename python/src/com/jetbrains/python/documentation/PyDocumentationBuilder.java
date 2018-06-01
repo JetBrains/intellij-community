@@ -190,7 +190,7 @@ public class PyDocumentationBuilder {
 
   private void buildFromParameter(@NotNull PyNamedParameter parameter) {
     final PyFunction func = PsiTreeUtil.getParentOfType(parameter, PyFunction.class, true, PyLambdaExpression.class);
-    final String link = func != null ? getLinkToFunction(func, true) : PyNames.UNNAMED_ELEMENT;
+    final String link = func != null ? getLinkToFunction(func, true) : StringUtil.escapeXml(PyNames.UNNAMED_ELEMENT);
     if (link != null) {
       myProlog
         .addItem("Parameter ")
