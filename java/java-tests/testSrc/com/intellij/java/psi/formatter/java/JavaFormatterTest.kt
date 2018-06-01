@@ -2,6 +2,8 @@
 package com.intellij.java.psi.formatter.java
 
 import com.intellij.application.options.CodeStyle
+import com.intellij.formatting.BraceStyle
+import com.intellij.formatting.ForceBraces
 import com.intellij.formatting.WrapType
 import com.intellij.lang.java.JavaLanguage
 import com.intellij.openapi.command.CommandProcessor
@@ -191,29 +193,30 @@ class JavaFormatterTest : AbstractJavaFormatterTest() {
   }
 
   fun testIfElse() {
-    val settings = AbstractJavaFormatterTest.getSettings()
-    settings.IF_BRACE_FORCE = CommonCodeStyleSettings.DO_NOT_FORCE
-    settings.FOR_BRACE_FORCE = CommonCodeStyleSettings.FORCE_BRACES_IF_MULTILINE
-    settings.WHILE_BRACE_FORCE = CommonCodeStyleSettings.FORCE_BRACES_IF_MULTILINE
-    settings.DOWHILE_BRACE_FORCE = CommonCodeStyleSettings.FORCE_BRACES_IF_MULTILINE
+    codeStyleBean.apply {
+      ifBraceForce = ForceBraces.Never
+      forBraceForce = ForceBraces.IfMultiline
+      whileBraceForce = ForceBraces.IfMultiline
+      doWhileBraceForce = ForceBraces.IfMultiline
 
-    settings.ELSE_ON_NEW_LINE = true
-    settings.SPECIAL_ELSE_IF_TREATMENT = false
-    settings.WHILE_ON_NEW_LINE = true
-    settings.CATCH_ON_NEW_LINE = true
-    settings.FINALLY_ON_NEW_LINE = true
-    settings.ALIGN_MULTILINE_BINARY_OPERATION = true
-    settings.ALIGN_MULTILINE_TERNARY_OPERATION = true
-    settings.ALIGN_MULTILINE_ASSIGNMENT = true
-    settings.ALIGN_MULTILINE_EXTENDS_LIST = true
-    settings.ALIGN_MULTILINE_THROWS_LIST = true
-    settings.ALIGN_MULTILINE_PARENTHESIZED_EXPRESSION = true
-    settings.ALIGN_MULTILINE_FOR = true
-    settings.ALIGN_MULTILINE_PARAMETERS_IN_CALLS = true
-    settings.ALIGN_MULTILINE_PARAMETERS = true
-    settings.KEEP_SIMPLE_BLOCKS_IN_ONE_LINE = true
-    settings.WHILE_ON_NEW_LINE = true
-    settings.BRACE_STYLE = CommonCodeStyleSettings.END_OF_LINE
+      isElseOnNewLine = true
+      isSpecialElseIfTreatment = false
+      isWhileOnNewLine = true
+      isCatchOnNewLine = true
+      isFinallyOnNewLine = true
+      isAlignMultilineBinaryOperation = true
+      isAlignMultilineTernaryOperation = true
+      isAlignMultilineAssignment = true
+      isAlignMultilineExtendsList = true
+      isAlignMultilineThrowsList = true
+      isAlignMultilineParenthesizedExpression = true
+      isAlignMultilineFor = true
+      isAlignMultilineParametersInCalls = true
+      isAlignMultilineParameters = true
+      isKeepSimpleBlocksInOneLine = true
+      isWhileOnNewLine = true
+      braceStyle = BraceStyle.EndOfLine
+    }
     doTest()
   }
 

@@ -36,6 +36,11 @@ public class GeneratorTest extends PropertyCheckerTestCase {
     assertEquals("a", checkGeneratesExample(stringsOf(asciiPrintableChars()),
                                             s -> s.contains("a"),
                                             10));
+
+    String aWithB = checkGeneratesExample(stringsOf(IntDistribution.uniform(2, 100), asciiPrintableChars()),
+                                     s -> s.contains("a") && s.contains("b"),
+                                     27);
+    assertTrue(aWithB, "ab".equals(aWithB) || "ba".equals(aWithB));
   }
 
   public void testLetterStringContains() {
@@ -88,7 +93,7 @@ public class GeneratorTest extends PropertyCheckerTestCase {
   }
 
   public void testListNotLongerThanMaxDefaultSize() {
-    PropertyChecker.customized().withIterationCount(1_000).forAll(listsOf(integers()), l -> l.size() <= PropertyChecker.DEFAULT_MAX_SIZE_HINT);
+    PropertyChecker.customized().withIterationCount(100_000).forAll(listsOf(integers()), l -> l.size() <= PropertyChecker.DEFAULT_MAX_SIZE_HINT);
   }
 
   public void testNonEmptyList() {

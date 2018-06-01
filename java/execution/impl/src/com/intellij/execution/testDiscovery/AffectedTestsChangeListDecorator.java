@@ -13,13 +13,14 @@ import com.intellij.ui.ColoredTreeCellRenderer;
 import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.ui.UIUtil;
+import org.jetbrains.annotations.NotNull;
 
 import static com.intellij.ui.SimpleTextAttributes.STYLE_UNDERLINE;
 
 public class AffectedTestsChangeListDecorator implements ChangeListDecorator {
   private final Project myProject;
 
-  public AffectedTestsChangeListDecorator(final Project project) {
+  public AffectedTestsChangeListDecorator(@NotNull Project project) {
     myProject = project;
   }
 
@@ -30,7 +31,7 @@ public class AffectedTestsChangeListDecorator implements ChangeListDecorator {
                                  boolean expanded,
                                  boolean hasFocus) {
     if (!Registry.is("show.affected.tests.in.changelists")) return;
-    if (!ShowDiscoveredTestsAction.isEnabled()) return;
+    if (!ShowDiscoveredTestsAction.isEnabled(myProject)) return;
     if (changeList.getChanges().isEmpty()) return;
 
     renderer.append(", ", SimpleTextAttributes.GRAYED_ATTRIBUTES);

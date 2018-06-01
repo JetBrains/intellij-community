@@ -31,6 +31,7 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.keymap.KeymapUtil;
 import com.intellij.openapi.module.Module;
+import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.popup.JBPopup;
 import com.intellij.openapi.ui.popup.PopupChooserBuilder;
@@ -76,8 +77,7 @@ public class ShowDiscoveredTestsAction extends AnAction {
   @Override
   public void update(AnActionEvent e) {
     e.getPresentation().setEnabledAndVisible(
-      e.getProject() != null &&
-      isEnabled() &&
+      isEnabled(e.getProject()) &&
       (findMethodAtCaret(e) != null || e.getData(VcsDataKeys.CHANGES) != null)
     );
   }
@@ -151,7 +151,8 @@ public class ShowDiscoveredTestsAction extends AnAction {
     showDiscoveredTests(project, dataContext, title, asJavaMethods);
   }
 
-  public static boolean isEnabled() {
+  public static boolean isEnabled(@Nullable Project project) {
+    if (project == null || DumbService.isDumb(project)) return false;
     return Registry.is(TestDiscoveryExtension.TEST_DISCOVERY_REGISTRY_KEY) || ApplicationManager.getApplication().isInternal();
   }
 

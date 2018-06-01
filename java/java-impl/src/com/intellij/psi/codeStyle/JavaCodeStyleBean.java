@@ -3,6 +3,7 @@ package com.intellij.psi.codeStyle;
 
 import com.intellij.application.options.CodeStyleBean;
 import com.intellij.formatting.BraceStyle;
+import com.intellij.formatting.ForceBraces;
 import com.intellij.formatting.WrapType;
 import com.intellij.lang.Language;
 import com.intellij.lang.java.JavaLanguage;
@@ -148,11 +149,13 @@ public class JavaCodeStyleBean extends CodeStyleBean {
 
   public void setBlankLinesBeforeClassEnd(int value) {getCommonSettings().BLANK_LINES_BEFORE_CLASS_END = value;}
 
-  public int getBraceStyle() {
-    return getCommonSettings().BRACE_STYLE;
+  public BraceStyle getBraceStyle() {
+    return BraceStyle.fromInt(getCommonSettings().BRACE_STYLE);
   }
 
-  public void setBraceStyle(int value) {getCommonSettings().BRACE_STYLE = value;}
+  public void setBraceStyle(BraceStyle value) {
+    getCommonSettings().BRACE_STYLE = value.intValue();
+  }
 
   public BraceStyle getClassBraceStyle() {
     return BraceStyle.fromInt(getCommonSettings().CLASS_BRACE_STYLE);
@@ -962,29 +965,29 @@ public class JavaCodeStyleBean extends CodeStyleBean {
 
   public void setAssertStatementColonOnNextLine(boolean value) {getCommonSettings().ASSERT_STATEMENT_COLON_ON_NEXT_LINE = value;}
 
-  public int getIfBraceForce() {
-    return getCommonSettings().IF_BRACE_FORCE;
+  public ForceBraces getIfBraceForce() {
+    return ForceBraces.fromInt(getCommonSettings().IF_BRACE_FORCE);
   }
 
-  public void setIfBraceForce(int value) {getCommonSettings().IF_BRACE_FORCE = value;}
+  public void setIfBraceForce(ForceBraces value) {getCommonSettings().IF_BRACE_FORCE = value.intValue();}
 
-  public int getDoWhileBraceForce() {
-    return getCommonSettings().DOWHILE_BRACE_FORCE;
+  public ForceBraces getDoWhileBraceForce() {
+    return ForceBraces.fromInt(getCommonSettings().DOWHILE_BRACE_FORCE);
   }
 
-  public void setDoWhileBraceForce(int value) {getCommonSettings().DOWHILE_BRACE_FORCE = value;}
+  public void setDoWhileBraceForce(ForceBraces value) {getCommonSettings().DOWHILE_BRACE_FORCE = value.intValue();}
 
-  public int getWhileBraceForce() {
-    return getCommonSettings().WHILE_BRACE_FORCE;
+  public ForceBraces getWhileBraceForce() {
+    return ForceBraces.fromInt(getCommonSettings().WHILE_BRACE_FORCE);
   }
 
-  public void setWhileBraceForce(int value) {getCommonSettings().WHILE_BRACE_FORCE = value;}
+  public void setWhileBraceForce(ForceBraces value) {getCommonSettings().WHILE_BRACE_FORCE = value.intValue();}
 
-  public int getForBraceForce() {
-    return getCommonSettings().FOR_BRACE_FORCE;
+  public ForceBraces getForBraceForce() {
+    return ForceBraces.fromInt(getCommonSettings().FOR_BRACE_FORCE);
   }
 
-  public void setForBraceForce(int value) {getCommonSettings().FOR_BRACE_FORCE = value;}
+  public void setForBraceForce(ForceBraces value) {getCommonSettings().FOR_BRACE_FORCE = value.intValue();}
 
   public boolean isWrapLongLines() {
     return getCommonSettings().WRAP_LONG_LINES;

@@ -37,7 +37,7 @@ class GenerativeDataStructure extends AbstractDataStructure {
   }
 
   @Override
-  public <T> T generateConditional(@NotNull Generator<T> generator, @NotNull Predicate<T> condition) {
+  public <T> T generateConditional(@NotNull Generator<T> generator, @NotNull Predicate<? super T> condition) {
     for (int i = 0; i < 100; i++) {
       GenerativeDataStructure structure = subStructure(generator, childSizeHint());
       T value = generator.getGeneratorFunction().apply(structure);

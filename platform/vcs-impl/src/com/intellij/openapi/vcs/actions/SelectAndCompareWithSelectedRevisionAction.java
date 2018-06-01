@@ -22,7 +22,6 @@ import com.intellij.openapi.vcs.ProjectLevelVcsManager;
 import com.intellij.openapi.vcs.diff.DiffProvider;
 import com.intellij.openapi.vcs.diff.RevisionSelector;
 import com.intellij.openapi.vcs.history.VcsRevisionNumber;
-import com.intellij.openapi.vcs.impl.VcsBackgroundableActions;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.NotNull;
 
@@ -46,7 +45,7 @@ public class SelectAndCompareWithSelectedRevisionAction extends AbstractVcsActio
       final VcsRevisionNumber vcsRevisionNumber = selector.selectNumber(file);
 
       if (vcsRevisionNumber != null) {
-        DiffActionExecutor.showDiff(diffProvider, vcsRevisionNumber, file, project, VcsBackgroundableActions.COMPARE_WITH);
+        DiffActionExecutor.showDiff(diffProvider, vcsRevisionNumber, file, project);
       }
     }
 
@@ -56,6 +55,6 @@ public class SelectAndCompareWithSelectedRevisionAction extends AbstractVcsActio
 
   @Override
   protected void update(@NotNull VcsContext vcsContext, @NotNull Presentation presentation) {
-    AbstractShowDiffAction.updateDiffAction(presentation, vcsContext, VcsBackgroundableActions.COMPARE_WITH);
+    AbstractShowDiffAction.updateDiffAction(presentation, vcsContext);
   }
 }

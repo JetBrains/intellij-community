@@ -33,5 +33,5 @@ public interface DataStructure {
   <T> T generateNonShrinkable(@NotNull Generator<T> generator);
 
   /** @see Generator#suchThat */
-  <T> T generateConditional(@NotNull Generator<T> generator, @NotNull Predicate<T> condition);
+  <T> T generateConditional(@NotNull Generator<T> generator, @NotNull Predicate<? super T> condition);
 }
