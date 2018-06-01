@@ -44,9 +44,9 @@ public class SmartPointerManagerImpl extends SmartPointerManager {
   private final Key<SmartPointerTracker> POINTERS_KEY;
   private final PsiDocumentManagerBase myPsiDocManager;
 
-  public SmartPointerManagerImpl(Project project) {
+  public SmartPointerManagerImpl(Project project, PsiDocumentManagerBase psiDocManager) {
     myProject = project;
-    myPsiDocManager = (PsiDocumentManagerBase)PsiDocumentManager.getInstance(myProject);
+    myPsiDocManager = psiDocManager;
     POINTERS_KEY = Key.create("SMART_POINTERS for "+project);
   }
 
@@ -71,9 +71,9 @@ public class SmartPointerManagerImpl extends SmartPointerManager {
 
   @NotNull
   public <E extends PsiElement> SmartPsiElementPointer<E> createSmartPsiElementPointer(@NotNull E element,
-                                                                                        PsiFile containingFile,
-                                                                                        boolean forInjected) {
-    if (containingFile != null && !containingFile.isValid() || containingFile == null && !element.isValid()) {
+                                                                                       PsiFile containingFile,
+                                                                                       boolean forInjected) {
+    if (containingFile == null ? !element.isValid() : !containingFile.isValid()) {
       if (containingFile != null) {
         PsiUtilCore.ensureValid(containingFile);
       }
@@ -194,7 +194,7 @@ public class SmartPointerManagerImpl extends SmartPointerManager {
     return SmartPsiElementPointerImpl.pointsToTheSameElementAs(pointer1, pointer2);
   }
 
-  public void updatePointers(Document document, FrozenDocument frozen, List<DocumentEvent> events) {
+  public void updatePointers(@NotNull Document document, @NotNull FrozenDocument frozen, @NotNull List<DocumentEvent> events) {
     VirtualFile file = FileDocumentManager.getInstance().getFile(document);
     SmartPointerTracker list = file == null ? null : getTracker(file);
     if (list != null) list.updateMarkers(frozen, events);
@@ -205,10 +205,12 @@ public class SmartPointerManagerImpl extends SmartPointerManager {
     if (list != null) list.updatePointerTargetsAfterReparse();
   }
 
+  @NotNull
   Project getProject() {
     return myProject;
   }
 
+  @NotNull
   PsiDocumentManagerBase getPsiDocumentManager() {
     return myPsiDocManager;
   }

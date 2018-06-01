@@ -76,7 +76,12 @@ public class ColorUtil {
 
   @NotNull
   private static Color hackBrightness(@NotNull Color color, int howMuch, float hackValue) {
-    final float[] hsb = Color.RGBtoHSB(color.getRed(), color.getGreen(), color.getBlue(), null);
+    return hackBrightness(color.getRed(), color.getGreen(), color.getBlue(), howMuch, hackValue);
+  }
+
+  @NotNull
+  public static Color hackBrightness(int r, int g, int b, int howMuch, float hackValue) {
+    final float[] hsb = Color.RGBtoHSB(r, g, b, null);
     float brightness = hsb[2];
     for (int i = 0; i < howMuch; i++) {
       brightness = Math.min(1, Math.max(0, brightness * hackValue));
