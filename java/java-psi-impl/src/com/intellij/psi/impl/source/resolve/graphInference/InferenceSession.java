@@ -1105,6 +1105,7 @@ public class InferenceSession {
     for (int i = 0; i < yVars.length; i++) {
       PsiTypeParameter parameter = yVars[i];
       final InferenceVariable var = vars.get(i);
+      final PsiType upperBound = composeBound(var, InferenceBound.UPPER, UPPER_BOUND_FUNCTION, ySubstitutor.putAll(substitutor), true);
       final PsiType lub = getLowerBound(var, substitutor);
       PsiType lowerBound;
       if (lub != PsiType.NULL) {
@@ -1115,10 +1116,12 @@ public class InferenceSession {
         }
         lowerBound = lub;
       }
+      else if (myPolicy.inferLowerBoundForFreshVariables()) {
+        lowerBound = upperBound;
+      }
       else {
         lowerBound = null;
       }
-      PsiType upperBound = composeBound(var, InferenceBound.UPPER, UPPER_BOUND_FUNCTION, ySubstitutor.putAll(substitutor), true);
       TypeConversionUtil.setInferredBoundsForSynthetic(parameter, lowerBound, upperBound);
       TypeConversionUtil.markAsFreshVariable(parameter, myContext);
       if (!var.addBound(elementFactory.createType(parameter), InferenceBound.EQ, myIncorporationPhase)) {
