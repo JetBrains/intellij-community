@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.lang.java.parser;
 
 import com.intellij.AbstractBundle;
@@ -114,10 +100,10 @@ public class FileParser {
   }
 
   private void parsePackageStatement(PsiBuilder builder) {
-    final PsiBuilder.Marker statement = builder.mark();
+    PsiBuilder.Marker statement = builder.mark();
 
     if (!expect(builder, JavaTokenType.PACKAGE_KEYWORD)) {
-      final PsiBuilder.Marker modList = builder.mark();
+      PsiBuilder.Marker modList = builder.mark();
       myParser.getDeclarationParser().parseAnnotations(builder);
       done(modList, JavaElementType.MODIFIER_LIST);
       if (!expect(builder, JavaTokenType.PACKAGE_KEYWORD)) {
@@ -126,7 +112,7 @@ public class FileParser {
       }
     }
 
-    final PsiBuilder.Marker ref = myParser.getReferenceParser().parseJavaCodeReference(builder, true, false, false, false);
+    PsiBuilder.Marker ref = myParser.getReferenceParser().parseJavaCodeReference(builder, true, false, false, false);
     if (ref == null) {
       statement.error(JavaErrorMessages.message("expected.class.or.interface"));
       return;
@@ -152,7 +138,7 @@ public class FileParser {
         continue;
       }
 
-      final PsiBuilder.Marker statement = parseImportStatement(builder);
+      PsiBuilder.Marker statement = parseImportStatement(builder);
       if (statement != null) {
         isEmpty = false;
         if (invalidElements != null) {
@@ -186,13 +172,13 @@ public class FileParser {
   protected PsiBuilder.Marker parseImportStatement(PsiBuilder builder) {
     if (builder.getTokenType() != JavaTokenType.IMPORT_KEYWORD) return null;
 
-    final PsiBuilder.Marker statement = builder.mark();
+    PsiBuilder.Marker statement = builder.mark();
     builder.advanceLexer();
 
-    final boolean isStatic = expect(builder, JavaTokenType.STATIC_KEYWORD);
-    final IElementType type = isStatic ? JavaElementType.IMPORT_STATIC_STATEMENT : JavaElementType.IMPORT_STATEMENT;
+    boolean isStatic = expect(builder, JavaTokenType.STATIC_KEYWORD);
+    IElementType type = isStatic ? JavaElementType.IMPORT_STATIC_STATEMENT : JavaElementType.IMPORT_STATEMENT;
 
-    final boolean isOk = myParser.getReferenceParser().parseImportCodeReference(builder, isStatic);
+    boolean isOk = myParser.getReferenceParser().parseImportCodeReference(builder, isStatic);
     if (isOk) {
       semicolon(builder);
     }
