@@ -6,14 +6,24 @@ def my_fixture():
     pass
 
 @pytest.fixture
-def ham(my_fixture):
+def ham(my_fixture  ):
     pass
 
 
-def test_sample_test(my_fixture):
+def test_sample_test(my_fixture ):
     pass
 
 @pytest.mark.parametrize(('spam,eggs'), [(1,1), (2,3), (3,3)])
 @pytest.mark.parametrize('first,second', [(1,1), (2,3), (3,3)])
-def test_sample(spam,eggs,first,second):
+def test_sample(spam    ,eggs    ,first   ,second ):
     pass
+
+@pytest.mark.parametrize('first,second', [('a', 1), (1, 'a')])
+def test_sample(first, second):
+
+    first.bit_length()  #
+    first.format()#
+    first.__xor__(  )#
+    second.bit_length() #
+    second.format()#
+    second.__xor__( )#

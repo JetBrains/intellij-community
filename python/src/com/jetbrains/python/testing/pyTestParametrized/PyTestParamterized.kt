@@ -8,10 +8,7 @@ import com.jetbrains.python.psi.PyFunction
 import com.jetbrains.python.psi.PyNamedParameter
 import com.jetbrains.python.psi.PyTypedElement
 import com.jetbrains.python.psi.impl.PyEvaluator
-import com.jetbrains.python.psi.types.PyCollectionType
-import com.jetbrains.python.psi.types.PyTupleType
-import com.jetbrains.python.psi.types.PyType
-import com.jetbrains.python.psi.types.TypeEvalContext
+import com.jetbrains.python.psi.types.*
 import com.jetbrains.python.testing.isTestElement
 
 /**
@@ -49,11 +46,25 @@ private fun getParametersFromDecorator(decorator: PyDecorator, evalContext: Type
     return parameterNames.map { PyTestParameter(it) }
   }
 
+  //Type information may be available
+
+  val parameterTypes = arrayOfNulls<PyType?>(parameterNames.size)
+
   val iteratedItemType = valuesExpression.iteratedItemType
-  return when (iteratedItemType) {
-    is PyTupleType -> parameterNames.mapIndexed { i, s -> PyTestParameter(s, iteratedItemType.getElementType(i)) }
-    else -> parameterNames.map { PyTestParameter(it, iteratedItemType) }
+
+  when (iteratedItemType) {
+    is PyUnionType -> {
+      //Could be union of tuples
+      val members = iteratedItemType.members
+      for (i in 0 until parameterTypes.size) {
+        parameterTypes[i] = PyUnionType.union(members.map { (it as? PyTupleType)?.getElementType(i) })
+      }
+    }
+    is PyTupleType -> iteratedItemType.elementTypes.forEachIndexed { i, type -> parameterTypes[i] = type }
+    !is PyCollectionType -> parameterTypes.fill(iteratedItemType)
   }
+
+  return parameterNames.mapIndexed { i, name -> PyTestParameter(name, parameterTypes[i]) }
 }
 
 

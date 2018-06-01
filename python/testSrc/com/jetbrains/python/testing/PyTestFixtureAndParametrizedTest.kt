@@ -34,7 +34,7 @@ class PyTestFixtureAndParametrizedTest : PyTestCase() {
   fun testCompletion() {
     myFixture.copyDirectoryToProject(".", ".")
     myFixture.configureByFile("test_test.py")
-    myFixture.completeBasicAllCarets(null)
+    myFixture.completeBasicAllCarets('\t')
     myFixture.checkResultByFile("after_test_test.txt")
   }
 }
