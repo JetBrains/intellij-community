@@ -53,7 +53,7 @@ public class Generator<T> {
    * Invokes "this" generator, and then applies the given function to transform the generated value in any way.
    * The function should not depend on anything besides its argument.
    */
-  public <V> Generator<V> map(@NotNull Function<T,V> fun) {
+  public <V> Generator<V> map(@NotNull Function<? super T, ? extends V> fun) {
     return from(data -> fun.apply(myFunction.apply(data)));
   }
 
@@ -62,7 +62,7 @@ public class Generator<T> {
    * depends on the generated value.
    * The function should not depend on anything besides its argument.
    */
-  public <V> Generator<V> flatMap(@NotNull Function<T,Generator<V>> fun) {
+  public <V> Generator<V> flatMap(@NotNull Function<? super T, ? extends Generator<V>> fun) {
     return from(data -> {
       T value = data.generate(this);
       Generator<V> result = fun.apply(value);
@@ -95,7 +95,7 @@ public class Generator<T> {
    * (e.g. {@code integers().suchThat(i -> i > 0 && i <= 10)} 
    * where the condition would be {@code true} in just 10 of about 4 billion times). In such cases, please consider changing the generator instead of using {@code suchThat}.
    */
-  public Generator<T> suchThat(@NotNull Predicate<T> condition) {
+  public Generator<T> suchThat(@NotNull Predicate<? super T> condition) {
     return from(data -> data.generateConditional(this, condition));
   }
 
@@ -126,7 +126,7 @@ public class Generator<T> {
   }
 
   /** Delegates to one of the given generators with equal probability */
-  public static <T> Generator<T> anyOf(List<Generator<? extends T>> alternatives) {
+  public static <T> Generator<T> anyOf(List<? extends Generator<? extends T>> alternatives) {
     if (alternatives.isEmpty()) throw new IllegalArgumentException("No alternatives to choose from");
     return from(data -> {
       int index = data.generateNonShrinkable(integers(0, alternatives.size() - 1));
@@ -148,7 +148,7 @@ public class Generator<T> {
   }
 
   /** Gets the data from two generators and invokes the given function to produce a result based on the two generated values. */
-  public static <A,B,C> Generator<C> zipWith(Generator<A> gen1, Generator<B> gen2, BiFunction<A,B,C> zip) {
+  public static <A,B,C> Generator<C> zipWith(Generator<A> gen1, Generator<B> gen2, BiFunction<? super A, ? super B, ? extends C> zip) {
     return from(data -> zip.apply(data.generate(gen1), data.generate(gen2)));
   }
 
@@ -162,7 +162,7 @@ public class Generator<T> {
    * @return the generator returned from the passed function
    */
   @NotNull
-  public static <T> Generator<T> recursive(@NotNull Function<Generator<T>, Generator<T>> createGenerator) {
+  public static <T> Generator<T> recursive(@NotNull Function<? super Generator<T>, ? extends Generator<T>> createGenerator) {
     AtomicReference<Generator<T>> ref = new AtomicReference<>();
     Generator<T> result = from(data -> ref.get().getGeneratorFunction().apply(data));
     ref.set(createGenerator.apply(result));
