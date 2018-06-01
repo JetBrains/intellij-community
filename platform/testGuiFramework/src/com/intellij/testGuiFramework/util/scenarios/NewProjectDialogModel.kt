@@ -161,13 +161,15 @@ fun assertProjectPathExists(projectPath: String) {
   assert(FileUtil.exists(projectPath)) { "Test project $projectPath should be created before test starting" }
 }
 
+typealias LibrariesSet = Set<Array<String>>
+
 /**
  * Creates a new project from Java group
  * @param projectPath - path where the project is going to be created
  * @param libs - path to additional library/framework that should be checked
  * Note: only one library/framework can be checked!
  * */
-fun NewProjectDialogModel.createJavaProject(projectPath: String, libs: Collection<Array<String>>) {
+fun NewProjectDialogModel.createJavaProject(projectPath: String, libs: LibrariesSet) {
   assertProjectPathExists(projectPath)
   with(guiTestCase) {
     with(connectDialog()) {
@@ -205,7 +207,7 @@ fun NewProjectDialogModel.createJavaProject(projectPath: String, libs: Collectio
  * @param libs - path to additional library/framework that should be checked
  * Note: only one library/framework can be checked!
  * */
-fun NewProjectDialogModel.createJavaEnterpriseProject(projectPath: String, libs: Collection<Array<String>>) {
+fun NewProjectDialogModel.createJavaEnterpriseProject(projectPath: String, libs: LibrariesSet) {
   assertProjectPathExists(projectPath)
   with(guiTestCase) {
     with(connectDialog()) {
@@ -455,7 +457,7 @@ fun NewProjectDialogModel.assertGroupPresent(group: NewProjectDialogModel.Groups
  * */
 internal fun NewProjectDialogModel.createProjectInGroup(group: NewProjectDialogModel.Groups,
                                                         projectPath: String,
-                                                        libs: Collection<Array<String>>) {
+                                                        libs: LibrariesSet) {
   assertProjectPathExists(projectPath)
   with(guiTestCase) {
     with(connectDialog()) {
@@ -481,19 +483,19 @@ internal fun NewProjectDialogModel.createProjectInGroup(group: NewProjectDialogM
   }
 }
 
-fun NewProjectDialogModel.createJBossProject(projectPath: String, libs: Collection<Array<String>>) {
+fun NewProjectDialogModel.createJBossProject(projectPath: String, libs: LibrariesSet) {
   createProjectInGroup(NewProjectDialogModel.Groups.JBoss, projectPath, libs)
 }
 
-fun NewProjectDialogModel.createSpringProject(projectPath: String, libs: Collection<Array<String>>) {
+fun NewProjectDialogModel.createSpringProject(projectPath: String, libs: LibrariesSet) {
   createProjectInGroup(NewProjectDialogModel.Groups.Spring, projectPath, libs)
 }
 
-fun NewProjectDialogModel.createGroovyProject(projectPath: String, libs: Collection<Array<String>>) {
+fun NewProjectDialogModel.createGroovyProject(projectPath: String, libs: LibrariesSet) {
   createProjectInGroup(NewProjectDialogModel.Groups.Groovy, projectPath, libs)
 }
 
-fun NewProjectDialogModel.createGriffonProject(projectPath: String, libs: Collection<Array<String>>) {
+fun NewProjectDialogModel.createGriffonProject(projectPath: String, libs: LibrariesSet) {
   createProjectInGroup(NewProjectDialogModel.Groups.Griffon, projectPath, libs)
 }
 

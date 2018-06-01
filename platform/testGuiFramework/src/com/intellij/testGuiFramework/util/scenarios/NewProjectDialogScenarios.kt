@@ -13,7 +13,7 @@ class NewProjectDialogScenarios(val testCase: GuiTestCase) : TestUtilsClass(test
 
 val GuiTestCase.newProjectDialogScenarios by NewProjectDialogScenarios
 
-fun NewProjectDialogScenarios.createJavaProjectScenario(projectPath: String, libs: Collection<Array<String>>) {
+fun NewProjectDialogScenarios.createJavaProjectScenario(projectPath: String, libs: LibrariesSet) {
   with(testCase) {
     assertProjectPathExists(projectPath)
     welcomePageDialogModel.createNewProject()
@@ -21,7 +21,7 @@ fun NewProjectDialogScenarios.createJavaProjectScenario(projectPath: String, lib
   }
 }
 
-fun NewProjectDialogScenarios.createJavaEnterpriseProjectScenario(projectPath: String, libs: Collection<Array<String>>) {
+fun NewProjectDialogScenarios.createJavaEnterpriseProjectScenario(projectPath: String, libs: LibrariesSet) {
   with(testCase) {
     assertProjectPathExists(projectPath)
     welcomePageDialogModel.createNewProject()
@@ -29,7 +29,7 @@ fun NewProjectDialogScenarios.createJavaEnterpriseProjectScenario(projectPath: S
   }
 }
 
-fun NewProjectDialogScenarios.createJBossProjectScenario(projectPath: String, libs: Collection<Array<String>>) {
+fun NewProjectDialogScenarios.createJBossProjectScenario(projectPath: String, libs: LibrariesSet) {
   with(testCase) {
     assertProjectPathExists(projectPath)
     welcomePageDialogModel.createNewProject()
@@ -45,7 +45,7 @@ fun NewProjectDialogScenarios.createJBossProjectScenario(projectPath: String, li
  * @param libs - path to additional library/framework that should be checked
  * Note: only one library/framework can be checked!
  * */
-fun NewProjectDialogScenarios.createProjectInGroupScenario(group: NewProjectDialogModel.Groups, projectPath: String, libs: Collection<Array<String>>) {
+fun NewProjectDialogScenarios.createProjectInGroupScenario(group: NewProjectDialogModel.Groups, projectPath: String, libs: LibrariesSet) {
   with(testCase) {
     assertProjectPathExists(projectPath)
     welcomePageDialogModel.createNewProject()
