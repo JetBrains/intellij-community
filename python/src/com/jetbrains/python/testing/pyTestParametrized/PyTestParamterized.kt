@@ -1,8 +1,8 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.jetbrains.python.testing.pyTestParametrized
 
-import com.intellij.psi.util.PsiTreeUtil
 import com.intellij.util.ThreeState
+import com.jetbrains.python.codeInsight.dataflow.scope.ScopeUtil
 import com.jetbrains.python.psi.PyDecorator
 import com.jetbrains.python.psi.PyFunction
 import com.jetbrains.python.psi.PyNamedParameter
@@ -20,9 +20,10 @@ internal fun PyNamedParameter.isParametrized(evalContext: TypeEvalContext) = asP
 /**
  * Fetch [PyTestParameter] associated with certain param
  */
-internal fun PyNamedParameter.asParametrized(evalContext: TypeEvalContext) = PsiTreeUtil.getParentOfType(this, PyFunction::class.java)
-  ?.getParametersOfParametrized(evalContext)
-  ?.find { it.name == name }
+internal fun PyNamedParameter.asParametrized(evalContext: TypeEvalContext) =
+  (ScopeUtil.getScopeOwner(this) as? PyFunction)
+    ?.getParametersOfParametrized(evalContext)
+    ?.find { it.name == name }
 
 
 private fun getParametersFromDecorator(decorator: PyDecorator, evalContext: TypeEvalContext): List<PyTestParameter> {

@@ -41,7 +41,7 @@ private object PyFunctionArgumentCompletion : CompletionProvider<CompletionParam
   override fun addCompletions(parameters: CompletionParameters, context: ProcessingContext?, result: CompletionResultSet) {
     val pyFunction = PsiTreeUtil.getParentOfType(parameters.position, PyParameterList::class.java)?.containingFunction ?: return
     val module = ModuleUtilCore.findModuleForPsiElement(pyFunction) ?: return
-    val typeEvalContext = TypeEvalContext.userInitiated(pyFunction.project, pyFunction.containingFile)
+    val typeEvalContext = TypeEvalContext.codeCompletion(pyFunction.project, pyFunction.containingFile)
     val usedParams = pyFunction.getParameters(typeEvalContext).mapNotNull { it.name }.toSet()
     completionProviders
       .flatMap { it.getArguments(pyFunction, typeEvalContext, module) }
