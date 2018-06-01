@@ -3,7 +3,7 @@ package circlet.klogging.impl
 import com.intellij.openapi.diagnostic.*
 import klogging.impl.*
 
-class ApplicationLogger(private val logger: Logger) : BaseLogger {
+abstract class ApplicationLogger(protected val logger: Logger) : BaseLogger {
     override val isTraceEnabled: Boolean get() = logger.isTraceEnabled
     override val isDebugEnabled: Boolean get() = logger.isDebugEnabled
     override val isInfoEnabled: Boolean get() = true
@@ -26,10 +26,6 @@ class ApplicationLogger(private val logger: Logger) : BaseLogger {
         logger.warn(message.toString())
     }
 
-    override fun error(message: Any?) {
-        logger.warn(message.toString())
-    }
-
     override fun trace(t: Throwable, message: Any?) {
         logger.trace(message.toString())
         logger.trace(t)
@@ -44,10 +40,6 @@ class ApplicationLogger(private val logger: Logger) : BaseLogger {
     }
 
     override fun warn(t: Throwable, message: Any?) {
-        logger.warn(message.toString(), t)
-    }
-
-    override fun error(t: Throwable, message: Any?) {
         logger.warn(message.toString(), t)
     }
 }

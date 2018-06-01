@@ -4,11 +4,11 @@ import circlet.client.*
 import circlet.client.api.*
 import circlet.components.*
 import circlet.platform.api.*
+import circlet.runtime.*
 import circlet.settings.*
 import com.intellij.openapi.project.*
 import klogging.*
 import kotlinx.coroutines.experimental.*
-import runtime.*
 import runtime.async.*
 import runtime.reactive.*
 import javax.swing.*
@@ -38,14 +38,14 @@ class ReviewsForm(private val project: Project, override val lifetime: Lifetime)
     }
 
     private fun reload(reviews: List<CodeReviewShortInfo>) {
-        println("reviews = $reviews")
+        println("reviews = $reviews") // TODO
     }
 }
 
 private fun <T> Lifetimed.updater(name: String, update: suspend (T) -> Unit): Channel<T> {
     val channel = boundedChannel<T>(name, 0, lifetime)
 
-    launch(UiDispatch.coroutineContext, start = CoroutineStart.UNDISPATCHED) {
+    launch(ApplicationUiDispatch.contextWithExplicitLog, start = CoroutineStart.UNDISPATCHED) {
         channel.forEach {
             try {
                 update(it)

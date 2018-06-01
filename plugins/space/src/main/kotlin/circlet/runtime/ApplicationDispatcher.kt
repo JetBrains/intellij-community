@@ -1,5 +1,6 @@
 package circlet.runtime
 
+import circlet.klogging.impl.*
 import com.intellij.openapi.application.*
 import kotlinx.coroutines.experimental.*
 import runtime.*
@@ -8,14 +9,18 @@ import kotlin.coroutines.experimental.*
 
 class ApplicationDispatcher(private val application: Application) : Dispatcher {
     private val executor = Executors.newSingleThreadScheduledExecutor { runnable ->
-        val thread = Thread(runnable, "application auxiliary scheduler")
+        val thread = Thread(runnable, "Application Auxiliary Scheduler")
+
         thread.isDaemon = true
         thread
     }
-    private val context = ApplicationCoroutineContext(application, executor) + logUnhandledCoroutineException()
+
+    private val context = ApplicationCoroutineContext(application, executor)
+    private val contextWithErrorToWarningLog = context + logUnhandledCoroutineException(ERROR_TO_WARNING_LOG)
+    val contextWithExplicitLog: CoroutineContext = context + logUnhandledCoroutineException(EXPLICIT_LOG)
 
     override val coroutineContext: CoroutineContext
-        get() = context
+        get() = contextWithErrorToWarningLog
 
     override fun dispatch(runnable: () -> Unit) {
         application.invokeLater(runnable)
@@ -26,6 +31,7 @@ class ApplicationDispatcher(private val application: Application) : Dispatcher {
             application.invokeLater(r)
         }
         val disposable = executor.schedule(invoke, delay.toLong(), TimeUnit.MILLISECONDS)
+
         return TaskCancellable(disposable)
     }
 
@@ -34,11 +40,16 @@ class ApplicationDispatcher(private val application: Application) : Dispatcher {
             application.invokeLater(r)
         }
         val disposable = executor.scheduleAtFixedRate(invoke, delay.toLong(), interval.toLong(), TimeUnit.MILLISECONDS)
+
         return TaskCancellable(disposable)
     }
 }
 
-private class ApplicationCoroutineContext(private val application: Application, private val executor: ScheduledExecutorService) : CoroutineDispatcher(), Delay {
+private class ApplicationCoroutineContext(
+    private val application: Application,
+    private val executor: ScheduledExecutorService
+) : CoroutineDispatcher(), Delay {
+
     override fun dispatch(context: CoroutineContext, block: Runnable) {
         application.invokeLater(block)
     }
@@ -49,6 +60,7 @@ private class ApplicationCoroutineContext(private val application: Application, 
                 with(continuation) { this@ApplicationCoroutineContext.resumeUndispatched(Unit) }
             }
         }
+
         executor.schedule(toResume, time, unit)
     }
 
@@ -58,6 +70,11 @@ private class ApplicationCoroutineContext(private val application: Application, 
                 block.run()
             }
         }
+
         return DisposableFutureHandle(executor.schedule(toResume, time, unit))
     }
 }
+
+private const val LOG_NAME = "circlet.runtime.ApplicationDispatcherKt"
+private val ERROR_TO_WARNING_LOG = ErrorToWarningKLoggers.logger(LOG_NAME)
+private val EXPLICIT_LOG = ExplicitKLoggers.logger(LOG_NAME)
