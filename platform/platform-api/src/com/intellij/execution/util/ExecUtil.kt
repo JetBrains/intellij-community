@@ -213,17 +213,17 @@ object ExecUtil {
   }
 
   @JvmStatic
-  fun setupLowPriorityExecution(commandLine: GeneralCommandLine, executablePath: String) {
-    if (!canRunLowPriority()) {
-      commandLine.exePath = executablePath
-    }
-    else if (SystemInfo.isWindows) {
-      commandLine.exePath = "cmd"
-      commandLine.parametersList.prependAll("/c", "start", "/b", "/low", "/wait", GeneralCommandLine.inescapableQuote(""), executablePath)
-    }
-    else {
-      commandLine.exePath = nicePath
-      commandLine.parametersList.prependAll("-n", "10", executablePath)
+  fun setupLowPriorityExecution(commandLine: GeneralCommandLine) {
+    if (canRunLowPriority()) {
+      val executablePath = commandLine.exePath
+      if (SystemInfo.isWindows) {
+        commandLine.exePath = windowsShellName
+        commandLine.parametersList.prependAll("/c", "start", "/b", "/low", "/wait", GeneralCommandLine.inescapableQuote(""), executablePath)
+      }
+      else {
+        commandLine.exePath = nicePath
+        commandLine.parametersList.prependAll("-n", "10", executablePath)
+      }
     }
   }
 
