@@ -225,7 +225,7 @@ public class ExternalProjectsViewImpl extends SimpleToolWindowPanel implements D
       }
     });
 
-    ExternalSystemApiUtil.subscribe(myProject, myExternalSystemId, new ExternalSystemSettingsListenerAdapter(){
+    ExternalSystemApiUtil.subscribe(myProject, myExternalSystemId, new ExternalSystemSettingsListenerAdapter() {
       @Override
       public void onUseAutoImportChange(boolean currentValue, @NotNull final String linkedProjectPath) {
         scheduleStructureRequest(() -> {
@@ -233,7 +233,7 @@ public class ExternalProjectsViewImpl extends SimpleToolWindowPanel implements D
           final List<ProjectNode> projectNodes = myStructure.getNodes(ProjectNode.class);
           for (ProjectNode projectNode : projectNodes) {
             final ProjectData projectData = projectNode.getData();
-            if(projectData != null && projectData.getLinkedExternalProjectPath().equals(linkedProjectPath)) {
+            if (projectData != null && projectData.getLinkedExternalProjectPath().equals(linkedProjectPath)) {
               projectNode.updateProject();
               break;
             }
@@ -566,7 +566,7 @@ public class ExternalProjectsViewImpl extends SimpleToolWindowPanel implements D
       }
     }
 
-    if(tasks.isEmpty()) return null;
+    if (tasks.isEmpty()) return null;
 
     taskExecutionInfo.getSettings().setExternalSystemIdString(myExternalSystemId.toString());
     taskExecutionInfo.getSettings().setExternalProjectPath(projectPath);
