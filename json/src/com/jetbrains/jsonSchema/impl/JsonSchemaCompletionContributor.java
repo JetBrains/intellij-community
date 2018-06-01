@@ -222,10 +222,14 @@ public class JsonSchemaCompletionContributor extends CompletionContributor {
     }
 
     private void suggestByType(JsonSchemaObject schema, JsonSchemaType type) {
+      if (JsonSchemaType._string.equals(type)) {
+        addPossibleStringValue(schema);
+      }
+      if (myInsideStringLiteral){
+        return;
+      }
       if (JsonSchemaType._boolean.equals(type)) {
         addPossibleBooleanValue(type);
-      } else if (JsonSchemaType._string.equals(type)) {
-        addPossibleStringValue(schema);
       } else if (JsonSchemaType._null.equals(type)) {
         addValueVariant("null", null);
       } else if (JsonSchemaType._array.equals(type)) {
