@@ -17,12 +17,10 @@ package com.jetbrains.python.documentation
 
 import com.intellij.codeInsight.documentation.DocumentationManagerProtocol
 import com.intellij.psi.PsiElement
+import com.intellij.psi.PsiFileSystemItem
 import com.intellij.psi.util.PsiTreeUtil
 import com.intellij.psi.util.QualifiedName
-import com.jetbrains.python.psi.PyClass
-import com.jetbrains.python.psi.PyFunction
-import com.jetbrains.python.psi.PyNamedParameter
-import com.jetbrains.python.psi.PyPsiFacade
+import com.jetbrains.python.psi.*
 import com.jetbrains.python.psi.types.PyClassType
 import com.jetbrains.python.psi.types.PyTypeParser
 import com.jetbrains.python.psi.types.TypeEvalContext
@@ -33,6 +31,7 @@ object PyDocumentationLink {
   private const val LINK_TYPE_PARAM = "#param#"
   private const val LINK_TYPE_TYPENAME = "#typename#"
   private const val LINK_TYPE_FUNC = "#func#"
+  private const val LINK_TYPE_MODULE = "#module#"
 
   @JvmStatic
   fun toContainingClass(content: String?): String {
@@ -73,14 +72,32 @@ object PyDocumentationLink {
   }
 
   @JvmStatic
+  fun toModule(content: String, qualifiedName: String): String {
+    return "<a href=\"${DocumentationManagerProtocol.PSI_ELEMENT_PROTOCOL}$LINK_TYPE_MODULE$qualifiedName\">$content</a>"
+  }
+
+  @JvmStatic
   fun elementForLink(link: String, element: PsiElement, context: TypeEvalContext): PsiElement? {
     return when {
       link == LINK_TYPE_CLASS -> containingClass(element)
       link == LINK_TYPE_PARAM -> parameterPossibleClass(element, context)
       link.startsWith(LINK_TYPE_TYPENAME) -> possibleClass(link.substring(LINK_TYPE_TYPENAME.length), element, context)
       link.startsWith(LINK_TYPE_FUNC) -> possibleFunction(link.substring(LINK_TYPE_FUNC.length), element)
+      link.startsWith(LINK_TYPE_MODULE) -> possibleModule(link.substring(LINK_TYPE_MODULE.length), element)
       else -> null
     }
+  }
+
+  private fun possibleModule(qualifiedName: String, element: PsiElement): PyFile? {
+    val facade = PyPsiFacade.getInstance(element.project)
+    val qName = QualifiedName.fromDottedString(qualifiedName)
+
+    val resolveContext = facade.createResolveContextFromFoothold(element)
+    return facade.resolveQualifiedName(qName, resolveContext)
+      .filterIsInstance<PsiFileSystemItem>()
+      .map { PyUtil.turnDirIntoInit(it) }
+      .filterIsInstance<PyFile>()
+      .firstOrNull()
   }
 
   @JvmStatic
