@@ -129,4 +129,10 @@ class WithLambdaUnfriendlyOverloads {
   private <T> T foo() {
     return null;
   }
+
+  void testSynchronized() {
+    synchronized (Integer.valueOf(123)) {
+      System.out.println("hello");
+    }
+  }
 }
