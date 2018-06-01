@@ -1,7 +1,6 @@
 // Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.jetbrains.python;
 
-import com.intellij.codeInsight.TargetElementUtil;
 import com.intellij.codeInsight.documentation.DocumentationManager;
 import com.intellij.psi.PsiElement;
 import com.jetbrains.python.documentation.PyDocumentationSettings;
@@ -38,12 +37,12 @@ public class PyQuickDocTest extends LightMarkedTestCase {
   }
 
   private void checkByHTML(@NotNull String text) {
-    assertSameLinesWithFile(getTestDataPath() + "/quickdoc/" + getTestName(false) + ".html", text);
+    assertSameLinesWithFile(getTestDataPath() + getTestName(false) + ".html", text);
   }
 
   @Override
   protected Map<String, PsiElement> loadTest() {
-    return configureByFile("/quickdoc/" + getTestName(false) + ".py");
+    return configureByFile(getTestName(false) + ".py");
   }
 
   private void checkRefDocPair() {
@@ -215,6 +214,29 @@ public class PyQuickDocTest extends LightMarkedTestCase {
     checkHTMLOnly();
   }
 
+  public void testParamOfInnerFunction() {
+    checkHTMLOnly();
+  }
+
+  public void testParamOfInnerClassMethod() {
+    checkHTMLOnly();
+  }
+
+  public void testParamOfFunctionInModuleWithIllegalName() {
+    final Map<String, PsiElement> marks = configureByFile(getTestName(false) + "/illegal name.py");
+    final PsiElement originalElement = marks.get("<the_ref>");
+    final DocumentationManager manager = DocumentationManager.getInstance(myFixture.getProject());
+    final PsiElement target = manager.findTargetElement(myFixture.getEditor(),
+                                                        originalElement.getTextOffset(),
+                                                        myFixture.getFile(),
+                                                        originalElement);
+    checkByHTML(myProvider.generateDoc(target, originalElement));
+  }
+
+  public void testParamOfLambda() {
+    checkHTMLOnly();
+  }
+
   public void testInstanceAttr() {
     checkHTMLOnly();
   }
@@ -251,7 +273,7 @@ public class PyQuickDocTest extends LightMarkedTestCase {
 
   // PY-13422
   public void testNumPyOnesDoc() {
-    myFixture.copyDirectoryToProject("/quickdoc/" + getTestName(false), "");
+    myFixture.copyDirectoryToProject(getTestName(false), "");
     checkHover();
   }
 
@@ -417,5 +439,10 @@ public class PyQuickDocTest extends LightMarkedTestCase {
   // PY-14785
   public void testSingleLineAssignedValueForTarget() {
     checkHTMLOnly();
+  }
+
+  @Override
+  protected String getTestDataPath() {
+    return super.getTestDataPath() + "/quickdoc/";
   }
 }
