@@ -54,6 +54,7 @@ import java.awt.*;
 import java.awt.event.InputEvent;
 import java.util.*;
 import java.util.List;
+import java.util.stream.Collectors;
 
 /**
  * @author Vladislav.Soroka
@@ -80,6 +81,7 @@ public class ExternalProjectsViewImpl extends SimpleToolWindowPanel implements D
   private SimpleTree myTree;
   @NotNull
   private final NotificationGroup myNotificationGroup;
+  private final List<ExternalSystemViewContributor> myViewContributors;
 
   private ExternalProjectsViewState myState = new ExternalProjectsViewState();
 
@@ -97,6 +99,10 @@ public class ExternalProjectsViewImpl extends SimpleToolWindowPanel implements D
     String notificationId = "notification.group.id." + externalSystemId.getId().toLowerCase(Locale.ENGLISH);
     NotificationGroup registeredGroup = NotificationGroup.findRegisteredGroup(notificationId);
     myNotificationGroup = registeredGroup != null ? registeredGroup : NotificationGroup.toolWindowGroup(notificationId, toolWindowId);
+    myViewContributors = Arrays.stream(ExternalSystemViewContributor.EP_NAME.getExtensions())
+                               .filter(c -> ProjectSystemId.IDE.equals(c.getSystemId()) ||
+                                            myExternalSystemId.equals(c.getSystemId()))
+                               .collect(Collectors.toList());
   }
 
   @Nullable
@@ -389,12 +395,7 @@ public class ExternalProjectsViewImpl extends SimpleToolWindowPanel implements D
                                                  @NotNull DataNode<?> dataNode) {
     final List<ExternalSystemNode<?>> result = new SmartList<>();
     final MultiMap<Key<?>, DataNode<?>> groups = ExternalSystemApiUtil.group(dataNode.getChildren());
-    for (ExternalSystemViewContributor contributor : ExternalSystemViewContributor.EP_NAME.getExtensions()) {
-      if (!contributor.getSystemId().equals(ProjectSystemId.IDE) &&
-          !contributor.getSystemId().equals(externalProjectsView.getSystemId())) {
-        continue;
-      }
-
+    for (ExternalSystemViewContributor contributor : myViewContributors) {
       final MultiMap<Key<?>, DataNode<?>> dataNodes = new ContainerUtil.KeyOrderedMultiMap<>();
       for (Key<?> key : contributor.getKeys()) {
         ContainerUtil.putIfNotNull(key, groups.get(key), dataNodes);
