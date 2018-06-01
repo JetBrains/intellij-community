@@ -957,7 +957,16 @@ public class JavaMatchingVisitor extends JavaElementVisitor {
       myMatchingVisitor.setResult(myMatchingVisitor.matchOptionally(initializer, var2Initializer));
     }
     finally {
-      myMatchingVisitor.scopeMatch(nameIdentifier, isTypedVar, var2.getNameIdentifier());
+      final PsiIdentifier identifier = var2.getNameIdentifier();
+      final String name;
+      if (identifier == null && (name = var2.getName()) != null) {
+        // when matching a stub or compiled code
+        final PsiIdentifier fakeIdentifier = JavaPsiFacade.getElementFactory(var2.getProject()).createIdentifier(name);
+        myMatchingVisitor.scopeMatch(nameIdentifier, isTypedVar, fakeIdentifier);
+      }
+      else {
+        myMatchingVisitor.scopeMatch(nameIdentifier, isTypedVar, identifier);
+      }
     }
   }
 

@@ -2,11 +2,13 @@
 package com.intellij.structuralsearch;
 
 import com.intellij.openapi.fileTypes.StdFileTypes;
+import com.intellij.psi.PsiElement;
 import com.intellij.structuralsearch.plugin.ui.Configuration;
 import com.intellij.structuralsearch.plugin.ui.SearchConfiguration;
 
 import java.util.List;
 import java.util.Map;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -142,18 +144,26 @@ public class JavaPredefinedConfigurationsTest extends StructuralSearchTestCase {
            "  <T extends U, V> X(int i) {}" +
            "}",
            "<T> X(String s) {}", "<T extends U, V> X(int i) {}");
+    doTest(configurationMap.remove(SSRBundle.message("predefined.configuration.all.methods.of.the.class.within.hierarchy")),
+           "class X {}",
+           PsiElement::getText,
+           "registerNatives", "getClass", "hashCode", "equals", "clone", "toString", "notify", "notifyAll", "wait", "wait", "wait", "finalize");
     //assertTrue("untested configurations: " + configurationMap.keySet(), configurationMap.isEmpty());
   }
 
   private void doTest(Configuration template, String source, String... results) {
+    doTest(template, source, e -> StructuralSearchUtil.getPresentableElement(e).getText(), results);
+  }
+
+  private void doTest(Configuration template, String source, Function<? super PsiElement, String> resultConverter, String... expectedResults) {
     if (!(template instanceof SearchConfiguration)) fail();
     final SearchConfiguration searchConfiguration = (SearchConfiguration)template;
     options = searchConfiguration.getMatchOptions();
     final List<MatchResult> matches = testMatcher.testFindMatches(source, options, true, StdFileTypes.JAVA, null, false);
-    assertEquals(template.getName(), results.length, matches.size());
-    for (int i = 0; i < matches.size(); i++) {
-      final String matchText = StructuralSearchUtil.getPresentableElement(matches.get(i).getMatch()).getText();
-      assertEquals(template.getName(), results[i], matchText);
+    assertEquals(template.getName(), expectedResults.length, matches.size());
+    String[] actualResults = matches.stream().map(MatchResult::getMatch).map(resultConverter).toArray(String[]::new);
+    for (int i = 0; i < actualResults.length; i++) {
+      assertEquals(template.getName(), expectedResults[i], actualResults[i]);
     }
   }
 }
