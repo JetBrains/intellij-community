@@ -134,6 +134,7 @@ import java.io.IOException;
 import java.io.UncheckedIOException;
 import java.util.*;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.function.Predicate;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -1759,7 +1760,20 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
     InlayHintsChecker checker = new InlayHintsChecker(this);
     try {
       checker.setUp();
-      checker.checkInlays();
+      checker.checkParameterHints();
+    }
+    finally {
+      checker.tearDown();
+    }
+  }
+
+  @Override
+  public void testInlays(java.util.function.Function<? super Inlay, String> inlayPresenter,
+                         Predicate<? super Inlay> inlayFilter) {
+    InlayHintsChecker checker = new InlayHintsChecker(this);
+    try {
+      checker.setUp();
+      checker.checkInlays(inlayPresenter::apply, inlayFilter::test);
     }
     finally {
       checker.tearDown();
