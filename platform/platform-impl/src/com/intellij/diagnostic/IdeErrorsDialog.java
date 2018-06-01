@@ -418,7 +418,7 @@ public class IdeErrorsDialog extends DialogWrapper implements MessagePoolListene
     }
     attachments.set(0, new Attachment(INDUCED_STACKTRACES_ATTACHMENT, stacktraces.toString()));
 
-    return new LogMessage(mainCause.getThrowable(), mainCause.getMessage(), attachments);
+    return new RepackedLogMessage(mainCause.getThrowable(), mainCause.getMessage(), attachments, message);
   }
 
   private void updateControls() {
@@ -850,6 +850,21 @@ public class IdeErrorsDialog extends DialogWrapper implements MessagePoolListene
       else {
         return pair("*** exception class was changed or removed", detailsText);
       }
+    }
+  }
+
+  private static class RepackedLogMessage extends LogMessage {
+    private final GroupedLogMessage myOriginal;
+
+    private RepackedLogMessage(Throwable throwable, String message, List<Attachment> attachments, GroupedLogMessage original) {
+      super(throwable, message, attachments);
+      myOriginal = original;
+    }
+
+    @Override
+    public void setRead(boolean isRead) {
+      super.setRead(isRead);
+      myOriginal.setRead(isRead);
     }
   }
 

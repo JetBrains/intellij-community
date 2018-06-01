@@ -4,7 +4,6 @@ import sys
 
 _Str = Union[bytes, str]
 
-__all__ = ...  # type: Tuple[str]
 
 uses_relative = ...  # type: List[str]
 uses_netloc = ...  # type: List[str]

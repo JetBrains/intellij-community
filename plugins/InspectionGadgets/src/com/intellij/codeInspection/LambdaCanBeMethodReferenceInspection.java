@@ -256,12 +256,17 @@ public class LambdaCanBeMethodReferenceInspection extends AbstractBaseJavaLocalI
           newExpression.getArrayInitializer() != null) {
         return null;
       }
+      PsiExpressionList argumentList = newExpression.getArgumentList();
+      if (argumentList != null) {
+        for (PsiExpression arg : argumentList.getExpressions()) {
+          if (!isMethodReferenceArgCandidate(arg)) return null;
+        }
+      }
       return new MethodReferenceCandidate(expression, true, true);
     }
     else if (expression instanceof PsiMethodCallExpression) {
       for (PsiExpression arg : ((PsiMethodCallExpression)expression).getArgumentList().getExpressions()) {
-        arg = PsiUtil.skipParenthesizedExprDown(arg);
-        if (!(arg instanceof PsiReferenceExpression) || ((PsiReferenceExpression)arg).getQualifier() != null) return null;
+        if (!isMethodReferenceArgCandidate(arg)) return null;
       }
       return new MethodReferenceCandidate(expression,
                                           checkQualifier(((PsiMethodCallExpression)expression).getMethodExpression().getQualifier()), true);
@@ -269,16 +274,18 @@ public class LambdaCanBeMethodReferenceInspection extends AbstractBaseJavaLocalI
 
     JavaCodeStyleSettings javaSettings = JavaCodeStyleSettings.getInstance(expression.getContainingFile());
     if (expression instanceof PsiInstanceOfExpression) {
-      return new MethodReferenceCandidate(expression, true,
-                                          javaSettings.REPLACE_INSTANCEOF);
+      if (!isMethodReferenceArgCandidate(((PsiInstanceOfExpression)expression).getOperand())) return null;
+      return new MethodReferenceCandidate(expression, true, javaSettings.REPLACE_INSTANCEOF);
     }
     else if (expression instanceof PsiBinaryExpression) {
-      if (ExpressionUtils.getValueComparedWithNull((PsiBinaryExpression)expression) != null) {
-        return new MethodReferenceCandidate(expression, true,
-                                            javaSettings.REPLACE_NULL_CHECK);
+      PsiExpression comparedWithNull =
+        PsiUtil.skipParenthesizedExprDown(ExpressionUtils.getValueComparedWithNull((PsiBinaryExpression)expression));
+      if (isMethodReferenceArgCandidate(comparedWithNull)) {
+        return new MethodReferenceCandidate(expression, true, javaSettings.REPLACE_NULL_CHECK);
       }
     }
     else if (expression instanceof PsiTypeCastExpression) {
+      if (!isMethodReferenceArgCandidate(((PsiTypeCastExpression)expression).getOperand())) return null;
       PsiTypeElement typeElement = ((PsiTypeCastExpression)expression).getCastType();
       if (typeElement != null) {
         PsiJavaCodeReferenceElement refs = typeElement.getInnermostComponentReferenceElement();
@@ -291,6 +298,11 @@ public class LambdaCanBeMethodReferenceInspection extends AbstractBaseJavaLocalI
       }
     }
     return null;
+  }
+
+  private static boolean isMethodReferenceArgCandidate(PsiExpression arg) {
+    arg = PsiUtil.skipParenthesizedExprDown(arg);
+    return arg instanceof PsiReferenceExpression && ((PsiReferenceExpression)arg).getQualifier() == null;
   }
 
   public static void replaceAllLambdasWithMethodReferences(PsiElement root) {

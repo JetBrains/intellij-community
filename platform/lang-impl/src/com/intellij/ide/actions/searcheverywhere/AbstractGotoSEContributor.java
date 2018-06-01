@@ -13,10 +13,15 @@ import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiElement;
 import org.jetbrains.annotations.NotNull;
 
-import javax.swing.*;
 import java.awt.event.InputEvent;
 
 public abstract class AbstractGotoSEContributor implements SearchEverywhereContributor {
+
+  protected final Project myProject;
+
+  protected AbstractGotoSEContributor(Project project) {
+    myProject = project;
+  }
 
   @NotNull
   @Override
@@ -27,34 +32,39 @@ public abstract class AbstractGotoSEContributor implements SearchEverywhereContr
   private static final Logger LOG = Logger.getInstance(AbstractGotoSEContributor.class);
 
   @Override
-  public ContributorSearchResult<Object> search(Project project, String pattern, boolean everywhere, ProgressIndicator progressIndicator, int elementsLimit) {
-    if (!isDumbModeSupported() && DumbService.getInstance(project).isDumb()) {
+  public ContributorSearchResult<Object> search(String pattern, boolean everywhere, ProgressIndicator progressIndicator, int elementsLimit) {
+    if (!isDumbModeSupported() && DumbService.getInstance(myProject).isDumb()) {
       return ContributorSearchResult.empty();
     }
 
-    ChooseByNameModel model = createModel(project);
-    ChooseByNamePopup popup = ChooseByNamePopup.createPopup(project, model, (PsiElement)null);
+    ChooseByNameModel model = createModel(myProject);
+    ChooseByNamePopup popup = ChooseByNamePopup.createPopup(myProject, model, (PsiElement)null);
     ContributorSearchResult.Builder<Object> builder = ContributorSearchResult.builder();
-    popup.getProvider().filterElements(popup, pattern, everywhere, progressIndicator, o -> {
-                                         if (progressIndicator.isCanceled()) return false;
-                                         if (o == null) {
-                                           LOG.error("Null returned from " + model + " in " + this);
-                                           return true;
-                                         }
-
-                                         if (builder.itemsCount() < elementsLimit ) {
-                                           builder.addItem(o);
-                                           return true;
-                                         } else {
-                                           builder.setHasMore(true);
-                                           return false;
-                                         }
-                                       }
+    popup.getProvider().filterElements(popup, pattern, everywhere, progressIndicator,
+                                       o -> addFoundElement(o, model, builder, progressIndicator, elementsLimit)
     );
 
     return builder.build();
   }
 
+  protected boolean addFoundElement(Object element, ChooseByNameModel model, ContributorSearchResult.Builder<Object> resultBuilder,
+                                    ProgressIndicator progressIndicator, int elementsLimit) {
+    if (progressIndicator.isCanceled()) return false;
+    if (element == null) {
+      LOG.error("Null returned from " + model + " in " + this);
+      return true;
+    }
+
+    if (resultBuilder.itemsCount() < elementsLimit ) {
+      resultBuilder.addItem(element);
+      return true;
+    } else {
+      resultBuilder.setHasMore(true);
+      return false;
+    }
+  }
+
+  //todo param is unnecessary #UX-1
   protected abstract ChooseByNameModel createModel(Project project);
 
   @Override
@@ -63,12 +73,7 @@ public abstract class AbstractGotoSEContributor implements SearchEverywhereContr
   }
 
   @Override
-  public ListCellRenderer getElementsRenderer(Project project) {
-    return null;
-  }
-
-  @Override
-  public boolean processSelectedItem(Project project, Object selected, int modifiers) {
+  public boolean processSelectedItem(Object selected, int modifiers) {
     //todo maybe another elements types
     if (selected instanceof PsiElement) {
       NavigationUtil.activateFileWithPsiElement((PsiElement) selected, (modifiers & InputEvent.SHIFT_MASK) != 0);

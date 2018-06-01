@@ -1,6 +1,8 @@
 from google.protobuf.internal.containers import (
     RepeatedScalarFieldContainer,
 )
+from google.protobuf.internal import well_known_types
+
 from google.protobuf.message import (
     Message,
 )
@@ -11,7 +13,7 @@ from typing import (
 )
 
 
-class FieldMask(Message):
+class FieldMask(Message, well_known_types.FieldMask):
     paths = ...  # type: RepeatedScalarFieldContainer[Text]
 
     def __init__(self,

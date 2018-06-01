@@ -389,14 +389,14 @@ class GitApplyChangesProcess(private val project: Project,
                          commitAuthor: String,
                          commitMessage: String,
                          operationName: String
-  ) : GitConflictResolver(project, git, setOf(root), makeParams(commitHash, commitAuthor, commitMessage, operationName)) {
+  ) : GitConflictResolver(project, git, setOf(root), makeParams(project, commitHash, commitAuthor, commitMessage, operationName)) {
     override fun notifyUnresolvedRemain() {/* we show a [possibly] compound notification after applying all commits.*/
     }
   }
 }
 
-private fun makeParams(commitHash: String, commitAuthor: String, commitMessage: String, operationName: String): GitConflictResolver.Params {
-  val params = GitConflictResolver.Params()
+private fun makeParams(project: Project, commitHash: String, commitAuthor: String, commitMessage: String, operationName: String): GitConflictResolver.Params {
+  val params = GitConflictResolver.Params(project)
   params.setErrorNotificationTitle("${operationName.capitalize()}ed with conflicts")
   params.setMergeDialogCustomizer(MergeDialogCustomizer(commitHash, commitAuthor, commitMessage, operationName))
   return params

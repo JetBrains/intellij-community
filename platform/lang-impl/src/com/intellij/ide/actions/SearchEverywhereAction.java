@@ -583,7 +583,7 @@ public class SearchEverywhereAction extends AnAction implements CustomComponentA
 
       IdeEventQueue.getInstance().getPopupManager().closeAllPopups(false);
       String text = GotoActionBase.getInitialTextForNavigation(e.getData(CommonDataKeys.EDITOR));
-      seManager.show(searchProviderID, text);
+      seManager.show(searchProviderID, text, e);
       return;
     }
 

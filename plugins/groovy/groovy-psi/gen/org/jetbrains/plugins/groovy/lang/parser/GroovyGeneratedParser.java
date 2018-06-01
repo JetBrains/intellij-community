@@ -7075,14 +7075,25 @@ public class GroovyGeneratedParser implements PsiParser, LightPsiParser {
     return r;
   }
 
-  // mb_question index_expression_argument_list
+  // mb_question index_expression_argument_list !fast_colon
   private static boolean index_expression_0(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "index_expression_0")) return false;
     boolean r;
     Marker m = enter_section_(b);
     r = mb_question(b, l + 1);
     r = r && index_expression_argument_list(b, l + 1);
+    r = r && index_expression_0_2(b, l + 1);
     exit_section_(b, m, null, r);
+    return r;
+  }
+
+  // !fast_colon
+  private static boolean index_expression_0_2(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "index_expression_0_2")) return false;
+    boolean r;
+    Marker m = enter_section_(b, l, _NOT_);
+    r = !fast_colon(b, l + 1);
+    exit_section_(b, l, m, r, false, null);
     return r;
   }
 

@@ -49,8 +49,9 @@ public class CustomizationUtil {
   public static ActionGroup correctActionGroup(final ActionGroup group,
                                                final CustomActionsSchema schema,
                                                final String defaultGroupName,
-                                               final String rootGroupName) {
-    if (!schema.isCorrectActionGroup(group, defaultGroupName)) {
+                                               final String rootGroupName,
+                                               boolean force) {
+    if (!force && !schema.isCorrectActionGroup(group, defaultGroupName)) {
       return group;
     }
 
@@ -113,7 +114,7 @@ public class CustomizationUtil {
     for (int i = 0; i < reorderedChildren.size(); i++) {
       if (reorderedChildren.get(i) instanceof ActionGroup) {
         final ActionGroup groupToCorrect = (ActionGroup)reorderedChildren.get(i);
-        final AnAction correctedAction = correctActionGroup(groupToCorrect, schema, "", rootGroupName);
+        final AnAction correctedAction = correctActionGroup(groupToCorrect, schema, "", rootGroupName, false);
         reorderedChildren.set(i, correctedAction);
       }
     }

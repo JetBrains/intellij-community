@@ -107,12 +107,12 @@ public interface UastCallMatcher {
 
     private boolean receiverTypeMatches(@NotNull UCallExpression expression) {
       return myReceiverTypeClassFqn == null ||
-             myReceiverTypeClassFqn.equals(JvmAnalysisUastUtil.getExpressionReceiverTypeClassFqn(expression));
+             myReceiverTypeClassFqn.equals(AnalysisUastUtil.getExpressionReceiverTypeClassFqn(expression));
     }
 
     private boolean returnTypeMatches(@NotNull UCallExpression expression) {
       return myReturnTypeClassFqn == null ||
-             myReturnTypeClassFqn.equals(JvmAnalysisUastUtil.getExpressionReturnTypePsiClassFqn(expression));
+             myReturnTypeClassFqn.equals(AnalysisUastUtil.getExpressionReturnTypePsiClassFqn(expression));
     }
 
     private boolean argumentsMatch(@NotNull UCallExpression expression) {
@@ -132,12 +132,12 @@ public interface UastCallMatcher {
         UExpression argumentExpression = argumentExpressions.get(i);
         PsiType argumentExpressionType = argumentExpression.getExpressionType();
         if (!myMatchArgumentTypeInheritors) {
-          if (!requiredArgumentTypeClassFqn.equals(JvmAnalysisUastUtil.getTypeClassFqn(argumentExpressionType))) {
+          if (!requiredArgumentTypeClassFqn.equals(AnalysisUastUtil.getTypeClassFqn(argumentExpressionType))) {
             return false;
           }
         }
         else {
-          PsiClass argumentExpressionTypeClass = JvmAnalysisUastUtil.getTypePsiClass(argumentExpressionType);
+          PsiClass argumentExpressionTypeClass = AnalysisUastUtil.getTypePsiClass(argumentExpressionType);
           if (argumentExpressionTypeClass == null) return false;
 
           //TODO probably this can be optimized using BFS

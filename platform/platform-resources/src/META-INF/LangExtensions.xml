@@ -919,6 +919,10 @@
     <statistics.projectUsagesCollector implementation="com.intellij.internal.statistic.collectors.fus.fileTypes.FileExtensionUsagesCollector"/>
     <statistics.projectUsagesCollector implementation="com.intellij.internal.statistic.collectors.fus.fileTypes.FileExtensionOpenUsageTriggerCollector"/>
     <statistics.projectUsagesCollector implementation="com.intellij.internal.statistic.collectors.fus.fileTypes.FileExtensionEditUsageTriggerCollector"/>
+    <statistics.projectUsagesCollector implementation="com.intellij.internal.statistic.collectors.fus.fileTypes.FileTypeOpenUsageTriggerCollector"/>
+    <statistics.projectUsagesCollector implementation="com.intellij.internal.statistic.collectors.fus.fileTypes.FileTypeEditUsageTriggerCollector"/>
+
+    <postStartupActivity implementation="com.intellij.internal.statistic.collectors.fus.fileTypes.FileTypeExtensionUsagesCollectorStartupActivity"/>
 
     <statistics.usagesCollector implementation="com.intellij.facet.impl.statistics.FrameworkUsagesCollector"/>
     <statistics.usagesCollector implementation="com.intellij.facet.impl.statistics.ModuleTypeUsagesCollector"/>
@@ -1110,9 +1114,10 @@
     <projectService serviceInterface="com.intellij.ide.actions.searcheverywhere.SearchEverywhereManager"
                     serviceImplementation="com.intellij.ide.actions.searcheverywhere.SearchEverywhereManagerImpl"/>
 
-    <searchEverywhereContributor implementation="com.intellij.ide.actions.searcheverywhere.ClassSearchEverywhereContributor" />
-    <searchEverywhereContributor implementation="com.intellij.ide.actions.searcheverywhere.FileSearchEverywhereContributor" />
-    <searchEverywhereContributor implementation="com.intellij.ide.actions.searcheverywhere.SymbolSearchEverywhereContributor" />
+    <searchEverywhereContributor implementation="com.intellij.ide.actions.searcheverywhere.ClassSearchEverywhereContributor$Factory" />
+    <searchEverywhereContributor implementation="com.intellij.ide.actions.searcheverywhere.FileSearchEverywhereContributor$Factory" />
+    <searchEverywhereContributor implementation="com.intellij.ide.actions.searcheverywhere.SymbolSearchEverywhereContributor$Factory" />
+    <searchEverywhereContributor implementation="com.intellij.ide.actions.searcheverywhere.ActionSearchEverywhereContributor$Factory" />
 
     <projectService serviceImplementation="com.intellij.ide.actions.runAnything.RunAnythingCache"/>
 

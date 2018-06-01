@@ -1719,7 +1719,7 @@ public class ExtractMethodProcessor implements MatchProvider {
           PsiElement[] declaredElements = declarationStatement.getDeclaredElements();
           PsiExpression initializer = ((PsiVariable)declaredElements[0]).getInitializer();
 
-          Nullness nullness = DfaUtil.checkNullness(variableCopy, initializer, bodyCopy);
+          Nullness nullness = DfaUtil.tryCheckNullness(variableCopy, initializer, bodyCopy);
           if (nullness == null) {
             return null;
           }

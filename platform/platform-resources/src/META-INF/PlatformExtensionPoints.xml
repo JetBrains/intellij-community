@@ -308,6 +308,7 @@
 
     <extensionPoint name="experimentalFeature" beanClass="com.intellij.openapi.application.ExperimentalFeatureImpl" />
     <extensionPoint name="themeProvider" beanClass="com.intellij.ide.ui.UIThemeProvider">
+      <with attribute="id"/>
       <with attribute="path"/>
     </extensionPoint>
 

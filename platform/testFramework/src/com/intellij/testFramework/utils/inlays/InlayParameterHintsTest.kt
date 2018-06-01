@@ -3,10 +3,12 @@
  */
 package com.intellij.testFramework.utils.inlays
 
+import com.intellij.codeInsight.daemon.impl.HintRenderer
 import com.intellij.codeInsight.daemon.impl.ParameterHintsPresentationManager
 import com.intellij.codeInsight.hints.settings.ParameterNameHintsSettings
 import com.intellij.openapi.command.WriteCommandAction
 import com.intellij.openapi.editor.Document
+import com.intellij.openapi.editor.Inlay
 import com.intellij.openapi.editor.VisualPosition
 import com.intellij.openapi.editor.ex.EditorSettingsExternalizable
 import com.intellij.openapi.util.TextRange
@@ -42,19 +44,36 @@ class InlayHintsChecker(private val myFixture: CodeInsightTestFixture) {
     hintSettings.loadState(default.state)
   }
 
-  fun checkInlays() {
+  fun checkParameterHints() {
+    val manager = ParameterHintsPresentationManager.getInstance()
+    checkInlays({ (it.renderer as HintRenderer).text ?: throw IllegalArgumentException("No text set to hint") },
+                { manager.isParameterHint(it) })
+  }
+
+  fun checkInlays(inlayPresenter: (Inlay) -> String, inlayFilter: (Inlay) -> Boolean) {
     val file = myFixture.file
     val document = myFixture.getDocument(file)
     val originalText = document.text
     val expectedInlaysAndCaret = extractInlaysAndCaretInfo(document)
     myFixture.doHighlighting()
-    verifyInlaysAndCaretInfo(expectedInlaysAndCaret, originalText)
+    verifyInlaysAndCaretInfo(expectedInlaysAndCaret, originalText, inlayPresenter, inlayFilter)
   }
 
-  fun verifyInlaysAndCaretInfo(expectedInlaysAndCaret: CaretAndInlaysInfo, originalText: String) {
+  fun verifyInlaysAndCaretInfo(expectedInlaysAndCaret: CaretAndInlaysInfo,
+                               originalText: String) {
+    val manager = ParameterHintsPresentationManager.getInstance()
+    verifyInlaysAndCaretInfo(expectedInlaysAndCaret, originalText,
+                             { (it.renderer as HintRenderer).text ?: throw IllegalArgumentException("No text set to hint") },
+                             { manager.isParameterHint(it) })
+  }
+
+  private fun verifyInlaysAndCaretInfo(expectedInlaysAndCaret: CaretAndInlaysInfo,
+                                       originalText: String,
+                                       inlayPresenter: (Inlay) -> String,
+                                       inlayFilter: (Inlay) -> Boolean) {
     val file = myFixture.file
     val document = myFixture.getDocument(file)
-    val actual: List<ParamHintInfo> = getActualInlays()
+    val actual: List<InlayInfo> = getActualInlays(inlayPresenter, inlayFilter)
 
     val expected = expectedInlaysAndCaret.inlays
 
@@ -99,14 +118,27 @@ class InlayHintsChecker(private val myFixture: CodeInsightTestFixture) {
     }
   }
 
-  private fun getActualInlays(): List<ParamHintInfo> {
+  private fun getActualInlays(inlayPresenter: (Inlay) -> String,
+                              inlayFilter: (Inlay) -> Boolean): List<InlayInfo> {
     val editor = myFixture.editor
     val allInlays = editor.inlayModel.getInlineElementsInRange(0, editor.document.textLength)
 
     val hintManager = ParameterHintsPresentationManager.getInstance()
     return allInlays
-      .filter { hintManager.isParameterHint(it) }
-      .map { ParamHintInfo(it.offset, hintManager.getHintText(it), hintManager.isHighlighted(it), hintManager.isCurrent(it))}
+      .filterNotNull()
+      .filter { inlayFilter(it) }
+      .map {
+        val isHighlighted: Boolean
+        val isCurrent: Boolean
+        if (hintManager.isParameterHint(it)) {
+          isHighlighted = hintManager.isHighlighted(it)
+          isCurrent = hintManager.isCurrent(it)
+        } else {
+          isHighlighted = false
+          isCurrent = false
+        }
+        InlayInfo(it.offset, inlayPresenter(it),  isHighlighted, isCurrent)
+      }
       .sortedBy { it.offset }
   }
 
@@ -114,7 +146,7 @@ class InlayHintsChecker(private val myFixture: CodeInsightTestFixture) {
     val text = document.text
     val matcher = pattern.matcher(text)
 
-    val inlays = mutableListOf<ParamHintInfo>()
+    val inlays = mutableListOf<InlayInfo>()
     var extractedLength = 0
     var caretOffset : Int? = null
     var inlaysBeforeCaret = 0
@@ -126,20 +158,16 @@ class InlayHintsChecker(private val myFixture: CodeInsightTestFixture) {
       val matchedLength = matcher.end() - start
 
       val realStartOffset = start - extractedLength
-      if (matcher.group(1) != null) {
-        caretOffset = realStartOffset
-        inlays.asReversed()
-          .takeWhile { it.offset == caretOffset }
-          .forEach { inlaysBeforeCaret++ }
-      }
-      else if (matcher.group(2) != null) {
-        selectionStart = realStartOffset
-      }
-      else if (matcher.group(3) != null) {
-        selectionEnd = realStartOffset
-      }
-      else {
-        inlays += ParamHintInfo(realStartOffset, matcher.group(5), matcher.group(4).startsWith("H"), matcher.group(4).endsWith("INT"))
+      when {
+        matcher.group(1) != null -> {
+          caretOffset = realStartOffset
+          inlays.asReversed()
+            .takeWhile { it.offset == caretOffset }
+            .forEach { inlaysBeforeCaret++ }
+        }
+        matcher.group(2) != null -> selectionStart = realStartOffset
+        matcher.group(3) != null -> selectionEnd = realStartOffset
+        else -> inlays += InlayInfo(realStartOffset, matcher.group(5), matcher.group(4).startsWith("H"), matcher.group(4).endsWith("INT"))
       }
 
       removeText(document, realStartOffset, matchedLength)
@@ -161,6 +189,6 @@ class InlayHintsChecker(private val myFixture: CodeInsightTestFixture) {
 }
 
 class CaretAndInlaysInfo (val caretOffset: Int?, val inlaysBeforeCaret: Int, val selection: TextRange?, 
-                          val inlays: List<ParamHintInfo>)
+                          val inlays: List<InlayInfo>)
 
-data class ParamHintInfo (val offset: Int, val text: String, val highlighted: Boolean, val current: Boolean)
+data class InlayInfo (val offset: Int, val text: String, val highlighted: Boolean, val current: Boolean)

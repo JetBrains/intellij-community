@@ -17,28 +17,46 @@
 package com.intellij.codeInspection.htmlInspections;
 
 import com.intellij.codeInsight.daemon.XmlErrorMessages;
+import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.codeInspection.ProblemDescriptor;
+import com.intellij.lang.Language;
+import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
+import com.intellij.psi.FileViewProvider;
 import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiFile;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.xml.XmlAttribute;
+import com.intellij.util.IncorrectOperationException;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 
 /**
  * @author spleaner
  */
-public class RemoveAttributeIntentionAction implements LocalQuickFix {
+public class RemoveAttributeIntentionAction implements LocalQuickFix, IntentionAction {
   private final String myLocalName;
 
   public RemoveAttributeIntentionAction(final String localName) {
     myLocalName = localName;
   }
 
+  public RemoveAttributeIntentionAction() {
+    myLocalName = null;
+  }
+
   @Override
   @NotNull
   public String getName() {
     return XmlErrorMessages.message("remove.attribute.quickfix.text", myLocalName);
+  }
+
+  @Nls(capitalization = Nls.Capitalization.Sentence)
+  @NotNull
+  @Override
+  public String getText() {
+    return myLocalName != null? getName() : getFamilyName();
   }
 
   @Override
@@ -48,11 +66,48 @@ public class RemoveAttributeIntentionAction implements LocalQuickFix {
   }
 
   @Override
+  public boolean isAvailable(@NotNull Project project, Editor editor, PsiFile file) {
+    return getAttribute(editor, file) != null;
+  }
+
+  @Override
+  public void invoke(@NotNull Project project, Editor editor, PsiFile file) throws IncorrectOperationException {
+    removeAttribute(getAttribute(editor, file));
+  }
+
+  @Override
+  public boolean startInWriteAction() {
+    return true;
+  }
+
+  @Override
   public void applyFix(@NotNull final Project project, @NotNull final ProblemDescriptor descriptor) {
     PsiElement e = descriptor.getPsiElement();
-    final XmlAttribute myAttribute = PsiTreeUtil.getParentOfType(e, XmlAttribute.class);
+    removeAttribute(e);
+  }
+
+  protected void removeAttribute(PsiElement e) {
+    final XmlAttribute myAttribute = PsiTreeUtil.getParentOfType(e, XmlAttribute.class, false);
     if (myAttribute == null) return;
 
     myAttribute.delete();
+  }
+
+  private static XmlAttribute getAttribute(Editor editor, PsiFile file) {
+    int offset = editor.getCaretModel().getOffset();
+    FileViewProvider provider = file.getViewProvider();
+    for (Language language : provider.getLanguages()) {
+      PsiElement element = provider.findElementAt(offset, language);
+      XmlAttribute attribute = PsiTreeUtil.getParentOfType(element, XmlAttribute.class);
+      if (attribute != null) {
+        return attribute;
+      }
+      element = provider.findElementAt(offset - 1, language);
+      attribute = PsiTreeUtil.getParentOfType(element, XmlAttribute.class);
+      if (attribute != null) {
+        return attribute;
+      }
+    }
+    return null;
   }
 }

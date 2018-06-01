@@ -1347,6 +1347,11 @@ public class PythonCompletionTest extends PyTestCase {
     runWithLanguageLevel(LanguageLevel.PYTHON34, this::assertSingleVariantInExtendedCompletion);
   }
 
+  // PY-29158
+  public void testModuleStringLiteralCompletion() {
+    doMultiFileTest(CompletionType.BASIC, 2);
+  }
+
   // PY-28341
   public void testCompletionForUsedAttribute() {
     doMultiFileTest();

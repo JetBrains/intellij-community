@@ -581,7 +581,8 @@ public class GradleProjectResolverUtil {
               library.addPath(LibraryPathType.BINARY, artifact.getPath());
             }
             depOwnerDataNode = ownerDataNode.createChild(ProjectKeys.LIBRARY_DEPENDENCY, libraryDependencyData);
-          } else {
+          }
+          else {
             depOwnerDataNode = ownerDataNode;
           }
         }
@@ -600,7 +601,7 @@ public class GradleProjectResolverUtil {
 
           // put transitive dependencies to the ownerDataNode,
           // since we can not determine from what project dependency artifact it was originated
-          if(projectDependencyInfos.size() > 1) {
+          if (projectDependencyInfos.size() > 1) {
             depOwnerDataNode = ownerDataNode;
           }
         }
@@ -729,9 +730,8 @@ public class GradleProjectResolverUtil {
     final String taskName;
     if (StringUtil.startsWith(taskPath, ":")) {
       final int i = taskPath.lastIndexOf(':');
-      String path = taskPath.substring(0, i);
-      moduleNode = findModuleById(projectNode, path);
-      if (moduleNode == null || !FileUtil.isAncestor(moduleNode.getData().getLinkedExternalProjectPath(), modulePath, false)) {
+      moduleNode = i == 0 ? null : findModuleById(projectNode, taskPath.substring(0, i));
+      if (moduleNode == null) {
         moduleNode = findModule(projectNode, modulePath);
       }
       taskName = (i + 1) <= taskPath.length() ? taskPath.substring(i + 1) : taskPath;

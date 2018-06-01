@@ -119,10 +119,7 @@ public class UnstableApiUsageInspection extends LocalInspectionTool {
       return resolvedConstructor;
     }
 
-    if (reference instanceof ResolvingHint) {
-      if (((ResolvingHint)reference).canResolveTo(PsiModifierListOwner.class)) {
-        return (PsiModifierListOwner)reference.resolve();
-      }
+    if (reference instanceof ResolvingHint && !((ResolvingHint)reference).canResolveTo(PsiModifierListOwner.class)) {
       return null;
     }
 

@@ -20,6 +20,10 @@ import java.util.stream.Stream;
 
 public class RecentFilesSEContributor extends FileSearchEverywhereContributor {
 
+  public RecentFilesSEContributor(Project project) {
+    super(project);
+  }
+
   @NotNull
   @Override
   public String getSearchProviderId() {
@@ -43,12 +47,12 @@ public class RecentFilesSEContributor extends FileSearchEverywhereContributor {
   }
 
   @Override
-  public ContributorSearchResult<Object> search(Project project, String pattern, boolean everywhere, ProgressIndicator progressIndicator, int elementsLimit) {
+  public ContributorSearchResult<Object> search(String pattern, boolean everywhere, ProgressIndicator progressIndicator, int elementsLimit) {
     MinusculeMatcher matcher = NameUtil.buildMatcher("*" + pattern).build();
-    List<VirtualFile> opened = Arrays.asList(FileEditorManager.getInstance(project).getSelectedFiles());
-    List<VirtualFile> history = Lists.reverse(EditorHistoryManager.getInstance(project).getFileList());
+    List<VirtualFile> opened = Arrays.asList(FileEditorManager.getInstance(myProject).getSelectedFiles());
+    List<VirtualFile> history = Lists.reverse(EditorHistoryManager.getInstance(myProject).getFileList());
 
-    PsiManager psiManager = PsiManager.getInstance(project);
+    PsiManager psiManager = PsiManager.getInstance(myProject);
     Stream<VirtualFile> stream = history.stream();
     if (!StringUtil.isEmptyOrSpaces(pattern)) {
       stream = stream.filter(file -> matcher.matches(file.getName()));

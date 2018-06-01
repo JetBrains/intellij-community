@@ -351,7 +351,7 @@ public abstract class GotoActionBase extends AnAction {
     }
 
     IdeEventQueue.getInstance().getPopupManager().closeAllPopups(false);
-    seManager.show(searchProviderID, getInitialTextForNavigation(evnt.getData(CommonDataKeys.EDITOR)));
+    seManager.show(searchProviderID, getInitialTextForNavigation(evnt.getData(CommonDataKeys.EDITOR)), evnt);
   }
 
   private static boolean historyEnabled() {

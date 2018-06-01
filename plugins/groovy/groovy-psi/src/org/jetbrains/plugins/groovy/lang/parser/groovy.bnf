@@ -1008,7 +1008,7 @@ private cast_expression_pin ::= '(' capital_type_element ')' priority1_4 { pin =
 private cast_expression_no_pin ::= '(' type_element ')' priority1_4
 
 private priority1_5 ::= index_expression | postfix_unary_expression
-index_expression ::= expression mb_question index_expression_argument_list
+index_expression ::= expression mb_question index_expression_argument_list !fast_colon
 index_expression_argument_list ::= !empty_map '[' bracket_argument_list_inner ']'
 {
   pin = 2

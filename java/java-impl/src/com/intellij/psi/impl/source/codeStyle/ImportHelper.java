@@ -430,6 +430,7 @@ public class ImportHelper{
     String packageName = getPackageOrClassName(className);
     String shortName = PsiNameHelper.getShortClassName(className);
 
+    findUnusedSingleImport(file, shortName).ifPresent(PsiElement::delete);
     PsiClass conflictSingleRef = findSingleImportByShortName(file, shortName);
     if (conflictSingleRef != null && !forceReimport){
       return className.equals(conflictSingleRef.getQualifiedName());
@@ -520,6 +521,25 @@ public class ImportHelper{
       LOG.error(e);
     }
     return true;
+  }
+
+  private static Optional<PsiImportStatement> findUnusedSingleImport(PsiJavaFile file, String name) {
+    PsiImportList importList = file.getImportList();
+    if (importList != null) {
+      for (PsiImportStatement statement : importList.getImportStatements()) {
+        PsiJavaCodeReferenceElement ref = statement.getImportReference();
+        if (!statement.isOnDemand() && ref != null && name.equals(ref.getReferenceName())) {
+          PsiElement target = statement.resolve();
+          if (target instanceof PsiClass) {
+            Collection<PsiReference> all = ReferencesSearch.search(target, new LocalSearchScope(file)).findAll();
+            if (all.size() == 1 && PsiTreeUtil.isAncestor(statement, all.iterator().next().getElement(), true)) {
+              return Optional.of(statement);
+            }
+          }
+        }
+      }
+    }
+    return Optional.empty();
   }
 
   private static boolean containsInCurrentPackage(@NotNull PsiJavaFile file, PsiClass curRefClass) {

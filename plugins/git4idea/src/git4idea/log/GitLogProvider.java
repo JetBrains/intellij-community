@@ -248,7 +248,7 @@ public class GitLogProvider implements VcsLogProvider {
   private Set<String> readCurrentTagNames(@NotNull VirtualFile root) throws VcsException {
     StopWatch sw = StopWatch.start("reading tags in " + root.getName());
     Set<String> tags = newHashSet();
-    GitTag.listAsStrings(myProject, root, tags, null);
+    tags.addAll(GitBranchUtil.getAllTags(myProject, root));
     sw.report();
     return tags;
   }

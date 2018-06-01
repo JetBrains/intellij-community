@@ -68,7 +68,7 @@
     <basicWordSelectionFilter implementation="com.jetbrains.python.editor.selectWord.PyBasicWordSelectionFilter"/>
     <stripTrailingSpacesFilterFactory implementation="com.jetbrains.python.editor.PyStripTrailingSpacesFilterFactory"/>
     <completion.contributor language="Python"
-                            implementationClass="com.jetbrains.python.testing.pyTestFixtures.PyTestFixtureCompletionContributor"/>
+                            implementationClass="com.jetbrains.python.testing.PyFunctionArgumentCompletionContributor"/>
     <completion.contributor language="Python"
                             implementationClass="com.jetbrains.python.codeInsight.completion.PyKeywordCompletionContributor"/>
     <completion.contributor language="Python"
@@ -721,6 +721,7 @@
 
     <dialectsTokenSetContributor implementation="com.jetbrains.python.PythonTokenSetContributor"/>
     <pyClassMembersProvider implementation="com.jetbrains.python.codeInsight.stdlib.PyStdlibClassMembersProvider"/>
+    <typeProvider implementation="com.jetbrains.python.testing.pyTestParametrized.PyTestParametrizedTypeProvider"/>
     <typeProvider implementation="com.jetbrains.python.codeInsight.stdlib.PyStdlibTypeProvider"/>
     <typeProvider implementation="com.jetbrains.python.testing.pyTestFixtures.PyTextFixtureTypeProvider"/>
     <typeProvider implementation="com.jetbrains.python.codeInsight.stdlib.PyDataclassTypeProvider"/>

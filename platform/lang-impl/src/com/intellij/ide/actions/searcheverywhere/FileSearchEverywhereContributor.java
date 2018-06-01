@@ -5,6 +5,7 @@ import com.intellij.codeInsight.navigation.NavigationUtil;
 import com.intellij.ide.IdeBundle;
 import com.intellij.ide.util.gotoByName.ChooseByNameModel;
 import com.intellij.ide.util.gotoByName.GotoFileModel;
+import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiElement;
@@ -18,6 +19,10 @@ import java.awt.event.InputEvent;
  * @author Konstantin Bulenkov
  */
 public class FileSearchEverywhereContributor extends AbstractGotoSEContributor {
+
+  public FileSearchEverywhereContributor(Project project) {
+    super(project);
+  }
 
   @NotNull
   @Override
@@ -46,12 +51,12 @@ public class FileSearchEverywhereContributor extends AbstractGotoSEContributor {
   }
 
   @Override
-  public ListCellRenderer getElementsRenderer(Project project) {
-    return createModel(project).getListCellRenderer();
+  public ListCellRenderer getElementsRenderer() {
+    return createModel(myProject).getListCellRenderer();
   }
 
   @Override
-  public boolean processSelectedItem(Project project, Object selected, int modifiers) {
+  public boolean processSelectedItem(Object selected, int modifiers) {
     //todo maybe another elements types
     if (selected instanceof PsiElement) {
       NavigationUtil.activateFileWithPsiElement((PsiElement) selected, (modifiers & InputEvent.SHIFT_MASK) != 0);
@@ -72,5 +77,12 @@ public class FileSearchEverywhereContributor extends AbstractGotoSEContributor {
   @Override
   protected boolean isDumbModeSupported() {
     return true;
+  }
+
+  public static class Factory implements SearchEverywhereContributorFactory {
+    @Override
+    public SearchEverywhereContributor createContributor(AnActionEvent initEvent) {
+      return new FileSearchEverywhereContributor(initEvent.getProject());
+    }
   }
 }

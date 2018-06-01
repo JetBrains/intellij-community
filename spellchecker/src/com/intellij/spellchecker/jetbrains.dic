@@ -1,6 +1,7 @@
 Liskov
 accessor
 accessors
+additivity
 agentmain
 aggregator
 ajax
@@ -43,6 +44,7 @@ backtrace
 barcode
 basedir
 basename
+bashrc
 basicfile
 batis
 bfile
@@ -294,6 +296,8 @@ iphone
 iphoneos
 isnan
 isnull
+iterable
+iterables
 jacoco
 javabean
 javabeans
@@ -428,6 +432,7 @@ nchar
 nclob
 ndbcluster
 netflix
+ngram
 nmake
 nmtoken
 noarchivelog
@@ -609,6 +614,7 @@ rlike
 rmdir
 rollup
 rowdependencies
+rsync
 rtree
 rtti
 rubymine
@@ -617,6 +623,7 @@ rvalue
 rvalues
 samskivert
 savepoint
+sbin
 scala
 schemas
 screenshots
@@ -625,6 +632,7 @@ scriptlets
 scrollbar
 scrollbars
 securefile
+sendmail
 serializable
 serializer
 serializers
@@ -635,6 +643,7 @@ severities
 sfinae
 sftp
 shader
+sharding
 sigabrt
 sigaio
 sigalrm
@@ -723,6 +732,7 @@ subtree
 subtrees
 subview
 subviews
+sudo
 superclass
 superclasses
 superinterface
@@ -746,6 +756,7 @@ thiscall
 throwable
 thymeleaf
 thymes
+timeline
 timestamp
 tinyblob
 tinyint

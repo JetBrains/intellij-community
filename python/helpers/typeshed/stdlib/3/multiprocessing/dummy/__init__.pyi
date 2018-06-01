@@ -12,8 +12,6 @@ from queue import Queue
 
 JoinableQueue = Queue
 
-__all__ = ...  # type: List[str]
-
 
 class DummyProcess(threading.Thread):
     _children = ...  # type: weakref.WeakKeyDictionary

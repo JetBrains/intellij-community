@@ -428,7 +428,7 @@ public class SearchEverywhereUI extends BorderLayoutPanel implements Disposable,
           if (currentRestartRequest != myCalcThreadRestartRequestId) {
             return;
           }
-          myCalcThread = new CalcThread(myProject, pattern, null);
+          myCalcThread = new CalcThread(pattern, null);
 
           myCurrentWorker = myCalcThread.start();
         }
@@ -523,7 +523,7 @@ public class SearchEverywhereUI extends BorderLayoutPanel implements Disposable,
           if (currentRestartRequest != myCalcThreadRestartRequestId) {
             return;
           }
-          myCalcThread = new CalcThread(myProject, getSearchPattern(), contributor);
+          myCalcThread = new CalcThread(getSearchPattern(), contributor);
 
           myCurrentWorker = myCalcThread.start();
         }
@@ -532,7 +532,7 @@ public class SearchEverywhereUI extends BorderLayoutPanel implements Disposable,
   }
 
   private void gotoSelectedItem(Object value, SearchEverywhereContributor contributor, int modifiers) {
-    boolean closePopup = contributor.processSelectedItem(myProject, value, modifiers);
+    boolean closePopup = contributor.processSelectedItem(value, modifiers);
     if (closePopup) {
       stopSearching();
       searchFinishedHandler.run();
@@ -562,14 +562,12 @@ public class SearchEverywhereUI extends BorderLayoutPanel implements Disposable,
 
   @SuppressWarnings("Duplicates") //todo remove suppress #UX-1
   private class CalcThread implements Runnable {
-    private final Project project;
     private final String pattern;
     private final ProgressIndicator myProgressIndicator = new ProgressIndicatorBase();
     private final ActionCallback myDone = new ActionCallback();
     private final SearchEverywhereContributor contributorToExpand;
 
-    public CalcThread(@NotNull Project project, @NotNull String pattern, @Nullable SearchEverywhereContributor expand) {
-      this.project = project;
+    public CalcThread(@NotNull String pattern, @Nullable SearchEverywhereContributor expand) {
       this.pattern = pattern;
       contributorToExpand = expand;
     }
@@ -638,7 +636,7 @@ public class SearchEverywhereUI extends BorderLayoutPanel implements Disposable,
     private boolean addContributorItems(SearchEverywhereContributor contributor, int count, boolean clearBefore) {
       boolean[] found = {false};
       ApplicationManager.getApplication().runReadAction(() -> {
-        ContributorSearchResult<Object> results = contributor.search(project, pattern, isUseNonProjectItems(), myProgressIndicator, count);
+        ContributorSearchResult<Object> results = contributor.search(pattern, isUseNonProjectItems(), myProgressIndicator, count);
         found[0] = !results.isEmpty();
 
         if (clearBefore) {
@@ -699,7 +697,7 @@ public class SearchEverywhereUI extends BorderLayoutPanel implements Disposable,
       }
 
       SearchEverywhereContributor contributor = myListModel.getContributorForIndex(index);
-      Component component = contributor.getElementsRenderer(myProject)
+      Component component = contributor.getElementsRenderer()
                                        .getListCellRendererComponent(list, value, index, isSelected, cellHasFocus);
 
       if (isAllTabSelected() && myListModel.isGroupFirstItem(index)) {
@@ -933,7 +931,7 @@ public class SearchEverywhereUI extends BorderLayoutPanel implements Disposable,
               if (!progressIndicator.isCanceled()) {
                 ApplicationManager.getApplication().runReadAction(() -> {
                   //todo overflow #UX-1
-                  List<Object> foundElements = contributor.search(myProject, searchText, everywhere, progressIndicator);
+                  List<Object> foundElements = contributor.search(searchText, everywhere, progressIndicator);
                   fillUsages(foundElements, usages, targets);
                 });
               }

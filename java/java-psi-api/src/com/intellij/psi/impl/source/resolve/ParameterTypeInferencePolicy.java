@@ -42,4 +42,13 @@ public abstract class ParameterTypeInferencePolicy {
   public boolean isVarargsIgnored() {
     return false;
   }
+
+  /**
+   * For infinite type declarations, like {@code Foo<T extends Foo<T>>}, inference introduces fake fresh "fixed" type parameters.
+   * These fresh parameters respect constraints, created during inference session. For completion, it makes sense to define lower bounds
+   * even if no appropriate constraints were detected, as probably the corresponding argument is currently completed. 
+   */
+  public boolean inferLowerBoundForFreshVariables() {
+    return false;
+  }
 }

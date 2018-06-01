@@ -82,7 +82,10 @@ public abstract class MasterDetailsComponent implements Configurable, DetailsCom
       if (node == null) return;
 
       myState.setLastEditedConfigurable(getNodePathString(node)); //survive after rename;
-      myDetails.setText(node.getConfigurable().getBannerSlogan());
+      NamedConfigurable configurable = node.getConfigurable();
+      if (configurable != null) {
+        myDetails.setText(configurable.getBannerSlogan());
+      }
       node.reloadNode((DefaultTreeModel)myTree.getModel());
       fireItemsChangedExternally();
     }

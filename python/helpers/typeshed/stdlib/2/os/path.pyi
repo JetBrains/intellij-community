@@ -1,3 +1,4 @@
+# NB: path.pyi and stdlib/2 and stdlib/3 must remain consistent!
 # Stubs for os.path
 # Ron Murawski <ron@horizonchess.com>
 
@@ -140,9 +141,9 @@ else:
     def join(path: AnyStr, *paths: AnyStr) -> AnyStr: ...
 
 @overload
-def relpath(path: _StrPath, start: Optional[_StrPath] = ...) -> Text: ...  # type: ignore
+def relpath(path: _BytesPath, start: Optional[_BytesPath] = ...) -> bytes: ...  # type: ignore
 @overload
-def relpath(path: _BytesPath, start: _BytesPath) -> bytes: ...
+def relpath(path: _StrPath, start: Optional[_StrPath] = ...) -> Text: ...
 
 def samefile(path1: _PathType, path2: _PathType) -> bool: ...
 def sameopenfile(fp1: int, fp2: int) -> bool: ...

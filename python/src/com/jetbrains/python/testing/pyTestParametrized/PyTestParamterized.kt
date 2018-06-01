@@ -3,33 +3,76 @@ package com.jetbrains.python.testing.pyTestParametrized
 
 import com.intellij.psi.util.PsiTreeUtil
 import com.intellij.util.ThreeState
+import com.jetbrains.python.psi.PyDecorator
 import com.jetbrains.python.psi.PyFunction
 import com.jetbrains.python.psi.PyNamedParameter
+import com.jetbrains.python.psi.PyTypedElement
 import com.jetbrains.python.psi.impl.PyEvaluator
+import com.jetbrains.python.psi.types.PyCollectionType
+import com.jetbrains.python.psi.types.PyTupleType
+import com.jetbrains.python.psi.types.PyType
 import com.jetbrains.python.psi.types.TypeEvalContext
 import com.jetbrains.python.testing.isTestElement
 
 /**
  * @return Boolean is parameter provided to function by parametrized decorator
  */
-fun PyNamedParameter.isParametrized(): Boolean = PsiTreeUtil.getParentOfType(this, PyFunction::class.java)
-                                                   ?.getParametersFromGenerator()
-                                                   ?.contains(name)
-                                                 ?: false
+internal fun PyNamedParameter.isParametrized(evalContext: TypeEvalContext) = asParametrized(evalContext) != null
+
+
+/**
+ * Fetch [PyTestParameter] associated with certain param
+ */
+internal fun PyNamedParameter.asParametrized(evalContext: TypeEvalContext) = PsiTreeUtil.getParentOfType(this, PyFunction::class.java)
+  ?.getParametersOfParametrized(evalContext)
+  ?.find { it.name == name }
+
+
+private fun getParametersFromDecorator(decorator: PyDecorator, evalContext: TypeEvalContext): List<PyTestParameter> {
+  val decoratorArguments = decorator.arguments
+  val evaluator = PyEvaluator()
+  val parameterNamesExpression = evaluator.evaluate(decoratorArguments.firstOrNull()) ?: return emptyList()
+  // (parameterNamesExpression, [valuesExpression])
+  val valuesExpression = (decoratorArguments.getOrNull(1) as? PyTypedElement)?.let { evalContext.getType(it) } as? PyCollectionType
+
+
+  val parameterNames = when (parameterNamesExpression) {
+  //For cases when parameters are written as literals "spam,eggs"
+    is String -> parameterNamesExpression.split(',').map(String::trim)
+  // For cases when written as tuple or list: ("spam", "eggs")
+    is List<*> -> parameterNamesExpression.filterIsInstance<String>()
+    else -> emptyList()
+  }
+
+  if (valuesExpression == null) {
+    //No type info available
+    return parameterNames.map { PyTestParameter(it) }
+  }
+
+  val iteratedItemType = valuesExpression.iteratedItemType
+  return when (iteratedItemType) {
+    is PyTupleType -> parameterNames.mapIndexed { i, s -> PyTestParameter(s, iteratedItemType.getElementType(i)) }
+    else -> parameterNames.map { PyTestParameter(it, iteratedItemType) }
+  }
+}
+
+
+/**
+ * Parameter passed from parametrized
+ */
+internal data class PyTestParameter(val name: String, val type: PyType? = null)
 
 /**
  * @return List<String> if test function decorated with parametrize -- return parameter names
  */
-internal fun PyFunction.getParametersFromGenerator(): List<String> {
+internal fun PyFunction.getParametersOfParametrized(evalContext: TypeEvalContext): List<PyTestParameter> {
   val decoratorList = decoratorList ?: return emptyList()
-  if (!isTestElement(this, ThreeState.NO, TypeEvalContext.codeAnalysis(project, containingFile))) {
+  if (!isTestElement(this, ThreeState.NO, evalContext)) {
     return emptyList()
   }
-  val pyEvaluator = PyEvaluator()
   return decoratorList.decorators
     .filter { it.name == "parametrize" }
-    .mapNotNull { pyEvaluator.evaluate(it.arguments.firstOrNull()) }
-    .filterIsInstance(String::class.java)
-    .flatMap { it.split(",") }
-    .map(String::trim)
+    .flatMap { getParametersFromDecorator(it, evalContext) }
+
 }
+

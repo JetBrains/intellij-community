@@ -219,6 +219,12 @@ public void testConvertToObjectStream() {
   }
 
   public void testCollectionsEmptyMap() { doTest(true); }
+  public void testExpectedSuperOfLowerBound() { 
+    doTest(false);
+  }
+  public void testLowerBoundOfFreshVariable() { 
+    doTest(false);
+  }
 
   private void doTest() {
     doTest(true);

@@ -430,7 +430,6 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
         }
 
         updateCaretCursor();
-        myCaretCursor.repaint();
       }
     };
 
@@ -505,12 +504,17 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     myFoldingModel.flushCaretShift();
     myScrollBarOrientation = VERTICAL_SCROLLBAR_RIGHT;
 
-    mySoftWrapModel.addSoftWrapChangeListener(new SoftWrapChangeListenerAdapter() {
+    mySoftWrapModel.addSoftWrapChangeListener(new SoftWrapChangeListener() {
       @Override
       public void recalculationEnds() {
         if (myCaretModel.isUpToDate()) {
           myCaretModel.updateVisualPosition();
         }
+      }
+
+      @Override
+      public void softWrapsChanged() {
+        myGutterComponent.clearLineToGutterRenderersCache();
       }
     });
 
@@ -2555,7 +2559,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
 
     @Override
     public void run() {
-      if (myEditor != null && !myEditor.myUpdateCursor) {
+      if (myEditor != null) {
         CaretCursor activeCursor = myEditor.myCaretCursor;
 
         long time = System.currentTimeMillis();
@@ -2579,10 +2583,15 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     }
   }
 
-  // The caller should also request repainting of caret region
   void updateCaretCursor() {
     myUpdateCursor = true;
-    myCaretCursor.myIsShown = true;
+    if (myCaretCursor.myIsShown) {
+      myCaretCursor.myStartTime = System.currentTimeMillis();
+    }
+    else {
+      myCaretCursor.myIsShown = true;
+      myCaretCursor.repaint();
+    }
   }
 
   private void setCursorPosition() {

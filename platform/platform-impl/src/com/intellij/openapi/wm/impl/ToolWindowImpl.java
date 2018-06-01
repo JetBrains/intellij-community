@@ -507,6 +507,19 @@ public final class ToolWindowImpl implements ToolWindowEx {
     return myDecorator != null ? myDecorator.createPopupGroup() : null;
   }
 
+  @SuppressWarnings("unused")
+  public void removeStripeButton() {
+    if (myDecorator != null) {
+      myDecorator.removeStripeButton();
+    }
+  }
+  @SuppressWarnings("unused")
+  public void showStripeButton() {
+    if (myDecorator != null) {
+      myDecorator.showStripeButton();
+    }
+  }
+
   @Override
   public void setDefaultState(@Nullable final ToolWindowAnchor anchor, @Nullable final ToolWindowType type, @Nullable final Rectangle floatingBounds) {
     myToolWindowManager.setDefaultState(this, anchor, type, floatingBounds);

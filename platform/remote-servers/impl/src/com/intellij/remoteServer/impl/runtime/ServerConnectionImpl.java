@@ -276,7 +276,7 @@ public class ServerConnectionImpl<D extends DeploymentConfiguration> implements 
           undeployInProgress.getSubDeployments().forEach(deployment -> namesToDispose.add(deployment.getName()));
         }
 
-        myPerProjectLogManagers.values().forEach(nextForProject -> namesToDispose.forEach(name -> nextForProject.disposeManager(name)));
+        namesToDispose.forEach(name -> disposeAllLogs(name));
 
         myEventDispatcher.queueDeploymentsChanged(ServerConnectionImpl.this);
         computeDeployments(myRuntimeInstance, EmptyRunnable.INSTANCE);
@@ -293,6 +293,14 @@ public class ServerConnectionImpl<D extends DeploymentConfiguration> implements 
         myEventDispatcher.queueDeploymentsChanged(ServerConnectionImpl.this);
       }
     });
+  }
+
+  public void disposeAllLogs(@NotNull DeploymentImpl deployment) {
+    disposeAllLogs(deployment.getName());
+  }
+
+  private void disposeAllLogs(@NotNull String deploymentName) {
+    myPerProjectLogManagers.values().forEach(nextForProject -> nextForProject.disposeManager(deploymentName));
   }
 
   @NotNull

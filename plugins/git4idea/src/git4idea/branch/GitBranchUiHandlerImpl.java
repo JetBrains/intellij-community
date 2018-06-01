@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2013 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package git4idea.branch;
 
 import com.intellij.notification.Notification;
@@ -88,7 +74,7 @@ public class GitBranchUiHandlerImpl implements GitBranchUiHandler {
         public void hyperlinkUpdate(@NotNull Notification notification,
                                     @NotNull HyperlinkEvent event) {
           if (event.getEventType() == HyperlinkEvent.EventType.ACTIVATED && event.getDescription().equals("resolve")) {
-            GitConflictResolver.Params params = new GitConflictResolver.Params().
+            GitConflictResolver.Params params = new GitConflictResolver.Params(myProject).
               setMergeDescription(String.format("The following files have unresolved conflicts. You need to resolve them before %s.",
                                                 operationName)).
               setErrorNotificationTitle("Unresolved files remain.");

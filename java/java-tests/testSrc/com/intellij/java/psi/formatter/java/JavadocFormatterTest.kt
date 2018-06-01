@@ -9,9 +9,10 @@ import com.intellij.testFramework.LightPlatformTestCase
 
 class JavadocFormatterTest : AbstractJavaFormatterTest() {
   fun testRightMargin() {
-    getSettings().WRAP_LONG_LINES = true
-    getSettings().RIGHT_MARGIN = 35
-
+    codeStyleBean.apply {
+      isWrapLongLines = true
+      rightMargin = 35
+    }
     doTextTest(
       "/** Here is one-line java-doc comment */" +
       "class Foo {\n" +
@@ -46,8 +47,10 @@ class X {
   }
 
   fun testDoNotWrapLink() {
-    getSettings().WRAP_LONG_LINES = true
-    getSettings().RIGHT_MARGIN = 70
+    codeStyleBean.apply {
+      isWrapLongLines = true
+      rightMargin = 70
+    }
 
     doTextTest(
       "/**\n" +
@@ -65,8 +68,10 @@ class X {
   }
 
   fun testNoWrapInALink() {
-    getSettings().WRAP_LONG_LINES = true
-    getSettings().RIGHT_MARGIN = 70
+    codeStyleBean.apply {
+      isWrapLongLines = true
+      rightMargin = 70
+    }
 
     doTextTest(
       "/**\n" +
@@ -154,9 +159,11 @@ public class T {
   }
 
   fun testEA49739() {
-    getSettings().WRAP_LONG_LINES = true
-    getSettings().RIGHT_MARGIN = 35
-    getSettings().WRAP_COMMENTS = true
+    codeStyleBean.apply {
+      isWrapLongLines = true
+      rightMargin = 35
+      isWrapComments = true
+    }
 
     doTextTest(
       "class A {\n" +
@@ -180,10 +187,12 @@ public class T {
   }
 
   fun testOneLineCommentWrappedByRightMarginIntoMultiLine() {
-    getSettings().WRAP_COMMENTS = true
-    getJavaSettings().ENABLE_JAVADOC_FORMATTING = true
-    getJavaSettings().JD_DO_NOT_WRAP_ONE_LINE_COMMENTS = true
-    getSettings().RIGHT_MARGIN = 35
+    codeStyleBean.apply {
+      isWrapComments = true
+      isEnableJavadocFormatting = true
+      isJavaDocDoNotWrapOneLineComments = true
+      rightMargin = 35
+    }
 
     doTextTest(
       """/** Here is one-line java-doc comment */class Foo {
@@ -199,9 +208,11 @@ class Foo {
 
   fun testLineFeedsArePreservedDuringWrap() {
     // Inspired by IDEA-61895
-    getSettings().WRAP_COMMENTS = true
-    getJavaSettings().JD_PRESERVE_LINE_FEEDS = true
-    getSettings().RIGHT_MARGIN = 48
+    codeStyleBean.apply {
+      isWrapComments = true
+      isJavaDocPreserveLineFeeds = true
+      rightMargin = 48
+    }
 
     doTextTest(
       """/**
@@ -221,19 +232,22 @@ class Test {
   }
 
   fun testSCR11296() {
-    val settings = getSettings()
-    settings.RIGHT_MARGIN = 50
-    settings.WRAP_COMMENTS = true
-    getJavaSettings().ENABLE_JAVADOC_FORMATTING = true
-    getJavaSettings().JD_P_AT_EMPTY_LINES = false
-    getJavaSettings().JD_KEEP_EMPTY_LINES = false
+    codeStyleBean.apply {
+      rightMargin = 50
+      isWrapComments = true
+      isEnableJavadocFormatting = true
+      isJavaDocPAtEmptyLines = false
+      isJavaDocKeepEmptyLines = false
+    }
     doTest()
   }
 
   fun testSCR2632() {
-    getJavaSettings().ENABLE_JAVADOC_FORMATTING = true
-    getSettings().WRAP_COMMENTS = true
-    getSettings().RIGHT_MARGIN = 20
+    codeStyleBean.apply {
+      isEnableJavadocFormatting = true
+      isWrapComments = true
+      rightMargin = 20
+    }
 
     doTextTest(
       """/**
@@ -254,7 +268,7 @@ class A {
   }
 
   fun testPreserveExistingSelfClosingTagsAndGenerateOnlyPTag() {
-    getJavaSettings().ENABLE_JAVADOC_FORMATTING = true
+    codeStyleBean.isEnableJavadocFormatting = true
     LanguageLevelProjectExtension.getInstance(LightPlatformTestCase.getProject()).languageLevel = LanguageLevel.JDK_1_7
 
     doTextTest(
@@ -279,8 +293,10 @@ class T {
 
   fun testParagraphTagGeneration() {
     // Inspired by IDEA-61811
-    getJavaSettings().ENABLE_JAVADOC_FORMATTING = true
-    getJavaSettings().JD_P_AT_EMPTY_LINES = true
+    codeStyleBean.apply {
+      isEnableJavadocFormatting = true
+      isJavaDocPAtEmptyLines = true
+    }
     LanguageLevelProjectExtension.getInstance(LightPlatformTestCase.getProject()).languageLevel = LanguageLevel.JDK_1_7
 
     doTextTest(
@@ -313,8 +329,10 @@ class Test {
 
   fun testParameterDescriptionNotOnNewLine() {
     // IDEA-107383
-    getJavaSettings().ENABLE_JAVADOC_FORMATTING = true
-    getJavaSettings().JD_ALIGN_PARAM_COMMENTS = true
+    codeStyleBean.apply {
+      isEnableJavadocFormatting = true
+      isJavaDocAlignParamComments = true
+    }
 
     doClassTest(
       """/**
@@ -336,9 +354,11 @@ public void register(int protocolId, int connectedUserIdHandlerFromServer) {
 
   fun testWrappedParameterDescription() {
     // Inspired by IDEA-13072
-    getJavaSettings().ENABLE_JAVADOC_FORMATTING = true
-    getSettings().WRAP_COMMENTS = true
-    getJavaSettings().JD_PARAM_DESCRIPTION_ON_NEW_LINE = true
+    codeStyleBean.apply {
+      isEnableJavadocFormatting = true
+      isWrapComments = true
+      isJavaDocParamDescriptionOnNewLine = true
+    }
 
     doClassTest(
       """/**
@@ -369,8 +389,10 @@ void test(int first, int second, int third, int forth) {
   }
 
   fun testExceptionAlignmentCorrect() {
-    getJavaSettings().ENABLE_JAVADOC_FORMATTING = true
-    getJavaSettings().JD_ALIGN_EXCEPTION_COMMENTS = true
+    codeStyleBean.apply {
+      isEnableJavadocFormatting = true
+      isJavaDocAlignExceptionComments = true
+    }
 
     doTextTest(
       """public class Controller {
@@ -403,8 +425,10 @@ void test(int first, int second, int third, int forth) {
   }
 
   fun testDoNotWrapMultiLineCommentIntoOneLine() {
-    getJavaSettings().ENABLE_JAVADOC_FORMATTING = true
-    getJavaSettings().JD_DO_NOT_WRAP_ONE_LINE_COMMENTS = true
+    codeStyleBean.apply{
+      isEnableJavadocFormatting = true
+      isJavaDocDoNotWrapOneLineComments = true
+    }
 
     val test = """/**
  * foo
@@ -416,8 +440,10 @@ public Object next() {
   }
 
   fun testLeaveOneLineComment() {
-    getJavaSettings().ENABLE_JAVADOC_FORMATTING = true
-    getJavaSettings().JD_DO_NOT_WRAP_ONE_LINE_COMMENTS = true
+    codeStyleBean.apply {
+      isEnableJavadocFormatting = true
+      isJavaDocDoNotWrapOneLineComments = true
+    }
 
     val test = """/** foo */
 public Object next() {
@@ -427,8 +453,10 @@ public Object next() {
   }
 
   fun testWrapOneLineComment() {
-    getJavaSettings().ENABLE_JAVADOC_FORMATTING = true
-    getJavaSettings().JD_DO_NOT_WRAP_ONE_LINE_COMMENTS = false
+    codeStyleBean.apply {
+      isEnableJavadocFormatting = true
+      isJavaDocDoNotWrapOneLineComments = false
+    }
 
     doClassTest(
       """/** foo */
@@ -445,8 +473,10 @@ public Object next() {
   }
 
   fun testWrapStrangeComment() {
-    getJavaSettings().ENABLE_JAVADOC_FORMATTING = true
-    getJavaSettings().JD_DO_NOT_WRAP_ONE_LINE_COMMENTS = false
+    codeStyleBean.apply {
+      isEnableJavadocFormatting = true
+      isJavaDocDoNotWrapOneLineComments = false
+    }
 
     doClassTest(
       """/** foo */
@@ -463,8 +493,10 @@ public Object next() {
   }
 
   fun testWrapStrangeCommentIfNotWrapOneLines() {
-    getJavaSettings().ENABLE_JAVADOC_FORMATTING = true
-    getJavaSettings().JD_DO_NOT_WRAP_ONE_LINE_COMMENTS = true
+    codeStyleBean.apply {
+      isEnableJavadocFormatting = true
+      isJavaDocDoNotWrapOneLineComments = true
+    }
     doClassTest(
       """/** foo
  */public Object next() {
@@ -480,11 +512,13 @@ public Object next() {
   }
 
   fun testReturnTagAlignment() {
-    getJavaSettings().ENABLE_JAVADOC_FORMATTING = true
-    getSettings().RIGHT_MARGIN = 80
-    getJavaSettings().JD_LEADING_ASTERISKS_ARE_ENABLED = true
-    getSettings().WRAP_COMMENTS = true
-    getSettings().WRAP_LONG_LINES = true
+    codeStyleBean.apply {
+      isEnableJavadocFormatting = true
+      rightMargin = 80
+      isJavaDocLeadingAsterisksAreEnabled = true
+      isWrapComments = true
+      isWrapLongLines = true
+    }
 
     doClassTest(
       """    /**
@@ -508,11 +542,13 @@ public int method(int parameter) {
   }
 
   fun testReturnTagAlignmentWithPreTagOnFirstLine() {
-    getJavaSettings().ENABLE_JAVADOC_FORMATTING = true
-    getSettings().RIGHT_MARGIN = 80
-    getJavaSettings().JD_LEADING_ASTERISKS_ARE_ENABLED = true
-    getSettings().WRAP_COMMENTS = true
-    getSettings().WRAP_LONG_LINES = true
+    codeStyleBean.apply {
+      isEnableJavadocFormatting = true
+      rightMargin = 80
+      isJavaDocLeadingAsterisksAreEnabled = true
+      isWrapComments = true
+      isWrapLongLines = true
+    }
 
     doClassTest(
       """
@@ -536,9 +572,11 @@ public int method(int parameter) {
   }
 
   fun testDoNotMergeCommentLines() {
-    getJavaSettings().ENABLE_JAVADOC_FORMATTING = true
-    getJavaSettings().JD_PRESERVE_LINE_FEEDS = true
-    getSettings().WRAP_COMMENTS = true
+    codeStyleBean.apply {
+      isEnableJavadocFormatting = true
+      isJavaDocPreserveLineFeeds = true
+      isWrapComments = true
+    }
 
     doClassTest(
       """/**
@@ -560,11 +598,13 @@ public class TestCase {
   }
 
   fun testSeeTagAlignment() {
-    getJavaSettings().ENABLE_JAVADOC_FORMATTING = true
-    getSettings().RIGHT_MARGIN = 80
-    getJavaSettings().JD_LEADING_ASTERISKS_ARE_ENABLED = true
-    getSettings().WRAP_COMMENTS = true
-    getSettings().WRAP_LONG_LINES = true
+    codeStyleBean.apply {
+      isEnableJavadocFormatting = true
+      rightMargin = 80
+      isJavaDocLeadingAsterisksAreEnabled = true
+      isWrapComments = true
+      isWrapLongLines = true
+    }
 
     doClassTest(
       """    /**
@@ -586,11 +626,13 @@ public int method(int parameter) {
   }
 
   fun testDummySinceTagAlignment() {
-    getJavaSettings().ENABLE_JAVADOC_FORMATTING = true
-    getSettings().RIGHT_MARGIN = 80
-    getJavaSettings().JD_LEADING_ASTERISKS_ARE_ENABLED = true
-    getSettings().WRAP_COMMENTS = true
-    getSettings().WRAP_LONG_LINES = true
+    codeStyleBean.apply {
+      isEnableJavadocFormatting = true
+      rightMargin = 80
+      isJavaDocLeadingAsterisksAreEnabled = true
+      isWrapComments = true
+      isWrapLongLines = true
+    }
 
     doClassTest(
       """    /**
@@ -612,11 +654,13 @@ public int method(int parameter) {
   }
 
   fun testDummyDeprecatedTagAlignment() {
-    getJavaSettings().ENABLE_JAVADOC_FORMATTING = true
-    getSettings().RIGHT_MARGIN = 80
-    getJavaSettings().JD_LEADING_ASTERISKS_ARE_ENABLED = true
-    getSettings().WRAP_COMMENTS = true
-    getSettings().WRAP_LONG_LINES = true
+    codeStyleBean.apply {
+      isEnableJavadocFormatting = true
+      rightMargin = 80
+      isJavaDocLeadingAsterisksAreEnabled = true
+      isWrapComments = true
+      isWrapLongLines = true
+    }
 
     doClassTest(
       """    /**
@@ -638,13 +682,15 @@ public int method(int parameter) {
   }
 
   fun testJavadocFormattingIndependentOfMethodIndentation() {
-    currentCodeStyleSettings.setRightMargin(JavaLanguage.INSTANCE, 50)
-    getJavaSettings().ENABLE_JAVADOC_FORMATTING = true
-    getSettings().WRAP_COMMENTS = true
-    getJavaSettings().JD_LEADING_ASTERISKS_ARE_ENABLED = true
-    getJavaSettings().JD_P_AT_EMPTY_LINES = false
-    getJavaSettings().JD_KEEP_EMPTY_LINES = false
-    getJavaSettings().JD_ADD_BLANK_AFTER_DESCRIPTION = false
+    codeStyleBean.apply {
+      rightMargin = 50
+      isEnableJavadocFormatting = true
+      isWrapComments = true
+      isJavaDocLeadingAsterisksAreEnabled = true
+      isJavaDocPAtEmptyLines = false
+      isJavaDocKeepEmptyLines = false
+      isJavaDocAddBlankAfterDescription = false
+    }
 
     formatEveryoneAndCheckIfResultEqual(
       """class A {
@@ -677,10 +723,12 @@ void foo() {
   }
 
   fun testJavadocAlignmentForInnerClasses() {
-    currentCodeStyleSettings.setRightMargin(JavaLanguage.INSTANCE, 40)
-    getJavaSettings().ENABLE_JAVADOC_FORMATTING = true
-    getSettings().WRAP_COMMENTS = true
-    getJavaSettings().JD_LEADING_ASTERISKS_ARE_ENABLED = true
+    codeStyleBean.apply {
+      rightMargin = 40
+      isEnableJavadocFormatting = true
+      isWrapComments = true
+      isJavaDocLeadingAsterisksAreEnabled = true
+    }
 
     doTextTest(
       """public class Outer {
@@ -727,11 +775,12 @@ public int innerMagic() {
   }
 
   fun testAlignmentWithNoTopClassMembersIndentation() {
-    currentCodeStyleSettings.setRightMargin(JavaLanguage.INSTANCE, 40)
-    getSettings().WRAP_COMMENTS = true
-    getJavaSettings().JD_LEADING_ASTERISKS_ARE_ENABLED = true
-    getSettings().DO_NOT_INDENT_TOP_LEVEL_CLASS_MEMBERS = true
-
+    codeStyleBean.apply {
+      rightMargin = 40
+      isWrapComments = true
+      isJavaDocLeadingAsterisksAreEnabled = true
+      isDoNotIndentTopLevelClassMembers = true
+    }
     doTextTest(
       """public class Outer {
 class Inner {
@@ -800,9 +849,11 @@ public static void main(String[] args) {
   }
 
   fun testDoNotWrapLongLineCommentWithSpaceInStart() {
-    getSettings().KEEP_FIRST_COLUMN_COMMENT = true
-    getSettings().WRAP_LONG_LINES = true
-    getSettings().RIGHT_MARGIN = 200
+    codeStyleBean.apply {
+      isKeepFirstColumnComment = true
+      isWrapLongLines = true
+      rightMargin = 200
+    }
 
     val test = """public class JiraIssue {
 
@@ -814,8 +865,10 @@ public static void main(String[] args) {
   }
 
   fun testNotGenerateSelfClosingPTagIfLanguageLevelJava8() {
-    getJavaSettings().JD_P_AT_EMPTY_LINES = true
-    getJavaSettings().ENABLE_JAVADOC_FORMATTING = true
+    codeStyleBean.apply {
+      isJavaDocPAtEmptyLines = true
+      isEnableJavadocFormatting = true
+    }
 
     doClassTest(
       """/**
@@ -838,8 +891,10 @@ public void voo() {
   }
 
   fun testPTagIfLanguageLevelNotJava8() {
-    getJavaSettings().JD_P_AT_EMPTY_LINES = true
-    getJavaSettings().ENABLE_JAVADOC_FORMATTING = true
+    codeStyleBean.apply {
+      isJavaDocPAtEmptyLines = true
+      isEnableJavadocFormatting = true
+    }
     LanguageLevelProjectExtension.getInstance(LightPlatformTestCase.getProject()).languageLevel = LanguageLevel.JDK_1_7
 
     doClassTest(
@@ -863,8 +918,10 @@ public void voo() {
   }
 
   fun testDoNotTouchSingleLineComments() {
-    getJavaSettings().JD_DO_NOT_WRAP_ONE_LINE_COMMENTS = true
-    getJavaSettings().ENABLE_JAVADOC_FORMATTING = true
+    codeStyleBean.apply {
+      isJavaDocDoNotWrapOneLineComments = true
+      isEnableJavadocFormatting = true
+    }
 
     doClassTest(
       """/****** AAAAAAA *******/
@@ -879,8 +936,10 @@ public void t() {
   }
 
   fun testKeepPTags() {
-    getJavaSettings().JD_P_AT_EMPTY_LINES = true
-    getJavaSettings().ENABLE_JAVADOC_FORMATTING = true
+    codeStyleBean.apply {
+      isJavaDocPAtEmptyLines = true
+      isEnableJavadocFormatting = true
+    }
 
     doClassTest(
       """/**
@@ -1027,9 +1086,11 @@ module M {
   }
 
   fun testRichHtml() {
-    getSettings().WRAP_COMMENTS = true
-    getSettings().RIGHT_MARGIN = 50
-    getJavaSettings().JD_ADD_BLANK_AFTER_DESCRIPTION = false
+    codeStyleBean.apply {
+      isWrapComments = true
+      rightMargin = 50
+      isJavaDocAddBlankAfterDescription = false
+    }
     doTextTest(
       """public class Test {
     /**
@@ -1089,7 +1150,7 @@ module M {
    * See [IDEA-153768](https://youtrack.jetbrains.com/issue/IDEA-153768)
    */
   fun testPTagsBeforeTags() {
-    getJavaSettings().JD_P_AT_EMPTY_LINES = true
+    codeStyleBean.isJavaDocPAtEmptyLines = true
     doTextTest(
 """
 package com.company;
@@ -1137,8 +1198,10 @@ public class Test {
    * See [IDEA-21623](https://youtrack.jetbrains.com/issue/IDEA-21623)
    */
   fun testPreTagWithAttributes() {
-    getSettings().WRAP_COMMENTS = true
-    getSettings().RIGHT_MARGIN = 60
+    codeStyleBean.apply {
+      isWrapComments = true
+      rightMargin = 60
+    }
 
     doTextTest(
 """
@@ -1186,9 +1249,11 @@ interface Test {
 
 
   fun testIdea175161() {
-    getSettings().RIGHT_MARGIN = 160;
-    getSettings().WRAP_COMMENTS = true;
-    getSettings().KEEP_LINE_BREAKS = false;
+    codeStyleBean.apply {
+      rightMargin = 160
+      isWrapComments = true
+      isKeepLineBreaks = false
+    }
 
     doTextTest(
 """package com.company;

@@ -55,8 +55,8 @@ open class BrowserLauncherAppless : BrowserLauncher() {
     private val defaultBrowserCommand: List<String>?
       get() {
         return when {
-          SystemInfo.isWindows -> listOf(ExecUtil.getWindowsShellName(), "/c", "start", GeneralCommandLine.inescapableQuote(""))
-          SystemInfo.isMac -> listOf(ExecUtil.getOpenCommandPath())
+          SystemInfo.isWindows -> listOf(ExecUtil.windowsShellName, "/c", "start", GeneralCommandLine.inescapableQuote(""))
+          SystemInfo.isMac -> listOf(ExecUtil.openCommandPath)
           SystemInfo.isUnix && SystemInfo.hasXdgOpen() -> listOf("xdg-open")
           else -> null
         }
@@ -81,7 +81,7 @@ open class BrowserLauncherAppless : BrowserLauncher() {
       }
     }
 
-    fun isOpenCommandUsed(command: GeneralCommandLine): Boolean = SystemInfo.isMac && ExecUtil.getOpenCommandPath() == command.exePath
+    fun isOpenCommandUsed(command: GeneralCommandLine): Boolean = SystemInfo.isMac && ExecUtil.openCommandPath == command.exePath
   }
 
   override fun open(url: String): Unit = openOrBrowse(url, false)

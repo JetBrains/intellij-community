@@ -60,18 +60,16 @@ public class DfaUtil {
     });
   }
 
-  @Nullable
+  @NotNull
   public static Nullness checkNullness(@Nullable final PsiVariable variable, @Nullable final PsiElement context) {
-    return checkNullness(variable, context, null);
+    Nullness nullness = tryCheckNullness(variable, context, null);
+    return nullness != null ? nullness : Nullness.UNKNOWN;
   }
 
-  /**
-   * @return {@code null} means "can't get results of DFA"
-   */
-  @Nullable
-  public static Nullness checkNullness(@Nullable final PsiVariable variable,
-                                       @Nullable final PsiElement context,
-                                       @Nullable final PsiElement outerBlock) {
+  @Nullable("null means DFA analysis has failed (too complex to analyze)")
+  public static Nullness tryCheckNullness(@Nullable final PsiVariable variable,
+                                          @Nullable final PsiElement context,
+                                          @Nullable final PsiElement outerBlock) {
     if (variable == null || context == null) return null;
 
     final PsiElement codeBlock = outerBlock == null ? DfaPsiUtil.getEnclosingCodeBlock(variable, context) : outerBlock;

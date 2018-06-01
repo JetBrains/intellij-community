@@ -55,7 +55,7 @@ public class JsonSchemaMappingsProjectConfiguration implements PersistentStateCo
     VirtualFile projectBaseDir = myProject.getBaseDir();
     for (UserDefinedJsonSchemaConfiguration configuration : myState.myState.values()) {
       for (UserDefinedJsonSchemaConfiguration.Item pattern : configuration.patterns) {
-        if (pattern.pattern || pattern.directory) continue;
+        if (pattern.mappingKind != JsonMappingKind.File) continue;
         VirtualFile relativeFile = VfsUtil.findRelativeFile(projectBaseDir, pattern.getPathParts());
         if (Objects.equals(relativeFile, file) || file.getUrl().equals(pattern.path)) {
           return configuration;

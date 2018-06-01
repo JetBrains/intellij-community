@@ -19,7 +19,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 
-import static com.jetbrains.jsonSchema.JsonSchemaConfigurable.isHttpPath;
+import static com.jetbrains.jsonSchema.remote.JsonFileResolver.isHttpPath;
 
 /**
  * @author Irina.Chernushina on 2/13/2016.

@@ -1,6 +1,5 @@
 from typing import Any, IO, Sequence, Tuple, Union, List, Dict
 
-__all__ = ...  # type: List[str]
 DEFAULTSECT = ...  # type: str
 MAX_INTERPOLATION_DEPTH = ...  # type: int
 

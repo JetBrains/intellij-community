@@ -2,7 +2,6 @@
 
 from typing import Any, Callable, Dict, Generator, Iterator, List, Tuple, Union, Iterable
 
-__all__ = ...  # type: List[str]
 __author__ = ...  # type: str
 __credits__ = ...  # type: str
 

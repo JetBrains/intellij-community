@@ -431,7 +431,8 @@ public class EditorWindow {
       }
     }
     else if (myTabbedPane != null) {
-      final boolean focusEditor = ToolWindowManager.getInstance(getManager().getProject()).isEditorComponentActive();
+      final boolean focusEditor = this == myOwner.getCurrentWindow() &&
+                                  ToolWindowManager.getInstance(getManager().getProject()).isEditorComponentActive();
       final VirtualFile currentFile = getSelectedFile();
       if (currentFile != null) {
         // do not close associated language console on tab placement change
@@ -648,14 +649,9 @@ public class EditorWindow {
   }
 
   public void setSelectedEditor(final EditorComposite editor, final boolean focusEditor) {
-    if (myTabbedPane == null) {
-      if (focusEditor && editor != null) {
-        JComponent preferred = editor.getPreferredFocusedComponent();
-        if (preferred != null) IdeFocusManager.findInstanceByComponent(preferred).requestFocus(preferred, true);
-      }
-      return;
-    }
-    if (editor != null) {
+    if (editor == null) return; // nothing to select or to focus
+    if (myTabbedPane != null) {
+      // select an editor in a tabbed pane and then focus an editor if needed
       final int index = findFileIndex(editor.getFile());
       if (index != -1) {
         UIUtil.invokeLaterIfNeeded(() -> {
@@ -664,6 +660,11 @@ public class EditorWindow {
           }
         });
       }
+    }
+    else if (focusEditor) {
+      // focus an editor in tabless mode
+      JComponent preferred = editor.getPreferredFocusedComponent();
+      if (preferred != null) IdeFocusManager.findInstanceByComponent(preferred).requestFocus(preferred, true);
     }
   }
 

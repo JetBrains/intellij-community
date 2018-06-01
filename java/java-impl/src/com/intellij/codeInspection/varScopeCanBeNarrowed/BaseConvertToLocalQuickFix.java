@@ -117,12 +117,7 @@ public abstract class BaseConvertToLocalQuickFix<V extends PsiVariable> implemen
         variable,
         refsSet,
         delete,
-        declaration -> {
-          if (!mayBeFinal(firstElement, references)) {
-            PsiUtil.setModifierProperty((PsiModifierListOwner)declaration.getDeclaredElements()[0], PsiModifier.FINAL, false);
-          }
-          return anchor.replace(declaration);
-        }
+        declaration -> anchor.replace(declaration)
       );
     }
 
@@ -218,15 +213,6 @@ public abstract class BaseConvertToLocalQuickFix<V extends PsiVariable> implemen
 
   @NotNull
   protected abstract String suggestLocalName(@NotNull Project project, @NotNull V variable, @NotNull PsiCodeBlock scope);
-
-  private static boolean mayBeFinal(PsiElement firstElement, @NotNull Collection<PsiReference> references) {
-    for (PsiReference reference : references) {
-      final PsiElement element = reference.getElement();
-      if (element == firstElement) continue;
-      if (element instanceof PsiExpression && PsiUtil.isAccessedForWriting((PsiExpression)element)) return false;
-    }
-    return true;
-  }
 
   private static void retargetReferences(PsiElementFactory elementFactory, String localName, Collection<PsiReference> refs)
     throws IncorrectOperationException {
