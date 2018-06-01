@@ -22,7 +22,7 @@ public class NSTLibTest extends TestCase {
     assertNotNull("Failed to load nst library for touchbar: native loader returns null", lib);
 
     // NOTE: it's difficult to promise correct library work in the system without running tb-server (this condition must be equals to isSettingsDomainExists())
-    Assume.assumeTrue(SystemSettingsWrapper.isTouchBarServerRunning());
+    Assume.assumeTrue(Utils.isTouchBarServerRunning());
 
     try {
       // small check that loaded library can create native objects

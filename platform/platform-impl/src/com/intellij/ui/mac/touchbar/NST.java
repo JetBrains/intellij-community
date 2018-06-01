@@ -36,7 +36,7 @@ public class NST {
       isUIPresented
       && isSupportedOS()
       && isRegistryKeyEnabled
-      && SystemSettingsWrapper.isTouchBarServerRunning()
+      && Utils.isTouchBarServerRunning()
     ) {
       try {
         lib = loadLibrary();
