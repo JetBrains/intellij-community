@@ -256,7 +256,7 @@ public class AppUIUtil {
       if (!agreement.isAccepted()) {
         try {
           // todo: does not seem to request focus when shown
-          SwingUtilities.invokeAndWait(() -> showEndUserAgreementText(agreement.getText()));
+          SwingUtilities.invokeAndWait(() -> showEndUserAgreementText(agreement.getText(), agreement.isPrivacyPolicy()));
           EndUserAgreement.setAccepted(agreement);
         }
         catch (Exception e) {
@@ -296,10 +296,11 @@ public class AppUIUtil {
   /**
    * todo: update to support GDPR requirements
    *
-   * @param htmlText Updated version of Privacy Policy text if any.
+   * @param htmlText Updated version of Privacy Policy or EULA text if any.
    *                 If it's {@code null}, the standard text from bundled resources would be used.
+   * @param isPrivacyPolicy  true if this document is a privacy policy
    */
-  public static void showEndUserAgreementText(@NotNull String htmlText) {
+  public static void showEndUserAgreementText(@NotNull String htmlText, final boolean isPrivacyPolicy) {
     DialogWrapper dialog = new DialogWrapper(true) {
       @Override
       protected JComponent createCenterPanel() {
@@ -379,7 +380,12 @@ public class AppUIUtil {
       }
     };
     dialog.setModal(true);
-    dialog.setTitle(ApplicationNamesInfo.getInstance().getFullProductName() + " User License Agreement");
+    if (isPrivacyPolicy) {
+      dialog.setTitle(ApplicationInfoImpl.getShadowInstance().getShortCompanyName() + " Privacy Policy");
+    }
+    else {
+      dialog.setTitle(ApplicationNamesInfo.getInstance().getFullProductName() + " User License Agreement");
+    }
     dialog.setSize(JBUI.scale(509), JBUI.scale(395));
     dialog.show();
   }

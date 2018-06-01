@@ -368,14 +368,26 @@ public class DataFlowInspectionTest extends DataFlowInspectionTestCase {
   }
   
   public void testTypeQualifierNickname() {
+    myFixture.addClass("package javax.annotation.meta; public @interface TypeQualifierNickname {}");
     addJavaxNullabilityAnnotations(myFixture);
-
-    myFixture.addClass("package bar;" +
-                       "import javax.annotation.meta.*;" +
-                       "@TypeQualifierNickname() @javax.annotation.NonNull(when = Maybe.MAYBE) " +
-                       "public @interface NullableNick {}");
+    addNullableNick();
 
     doTest();
+  }
+
+  public void testTypeQualifierNicknameWithoutDeclarations() {
+    addJavaxNullabilityAnnotations(myFixture);
+    addNullableNick();
+
+    myFixture.enableInspections(new DataFlowInspection());
+    myFixture.testHighlighting(true, false, true, "TypeQualifierNickname.java");
+  }
+
+  private void addNullableNick() {
+    myFixture.addClass("package bar;" +
+                       "@javax.annotation.meta.TypeQualifierNickname() " +
+                       "@javax.annotation.Nonnull(when = javax.annotation.meta.When.MAYBE) " +
+                       "public @interface NullableNick {}");
   }
 
   public static void addJavaxDefaultNullabilityAnnotations(final JavaCodeInsightTestFixture fixture) {
@@ -392,8 +404,6 @@ public class DataFlowInspectionTest extends DataFlowInspectionTestCase {
                      "public @interface TypeQualifierDefault { java.lang.annotation.ElementType[] value() default {};}");
     fixture.addClass("package javax.annotation.meta;" +
                      "public enum When { ALWAYS, UNKNOWN, MAYBE, NEVER }");
-    fixture.addClass("package javax.annotation.meta;" +
-                     "public @interface TypeQualifierNickname {}");
 
     fixture.addClass("package javax.annotation;" +
                      "import javax.annotation.meta.*;" +

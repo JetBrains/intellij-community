@@ -19,6 +19,7 @@ import com.intellij.openapi.vfs.newvfs.NewVirtualFile;
 import com.intellij.openapi.vfs.newvfs.events.*;
 import com.intellij.testFramework.LoggedErrorProcessor;
 import com.intellij.testFramework.PlatformTestCase;
+import com.intellij.testFramework.PsiTestUtil;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.PathUtil;
 import com.intellij.util.io.DataInputOutputUtil;
@@ -187,6 +188,60 @@ public class PersistentFsTest extends PlatformTestCase {
     assertEquals(1, logCount[0]);
   }
 
+  public void testIterInDbChildrenWorksForRemovedDirsAfterRestart() throws IOException {
+    // test (re)creates <testName>/subDir/subSubDir/Foo.txt outside tested/watched project and checks removal events on subDir / subSubDir / Foo.txt
+    // test starts real testing ("after restart") after launching second time using same VFS
+    // hours spent writing this test: 4
+    VirtualFile projectStructure = PsiTestUtil.createTestProjectStructure(myProject, myModule, myFilesToDelete);
+    String testName = getTestName(false);
+
+    // wrt persistence subDir becomes partially loaded and subsubDir becomes fully loaded
+    File nestedDirOutsideTheProject = new File(projectStructure.getPath() + "../../../"+testName + "/subDir", "subSubDir").getCanonicalFile();
+    Disposable disposable = null;
+
+    try {
+      boolean atleastSecondRun = nestedDirOutsideTheProject.getParentFile().getParentFile().exists();
+      StringBuilder eventLog = new StringBuilder();
+
+      if (atleastSecondRun) {
+        disposable = Disposer.newDisposable();
+        getProject().getMessageBus().connect(disposable).subscribe(VirtualFileManager.VFS_CHANGES, new BulkFileListener() {
+          @Override
+          public void before(@NotNull List<? extends VFileEvent> events) {
+            for(VFileEvent event:events) {
+              if (event instanceof VFileDeleteEvent) process(((VFileDeleteEvent)event).getFile());
+            }
+          }
+          private void process(VirtualFile file) {
+            String path = file.getPath();
+            eventLog.append(path.substring(path.indexOf(testName) + testName.length() + 1)).append("\n");
+            Iterable<VirtualFile> files = ((NewVirtualFile)file).iterInDbChildren();
+            for(VirtualFile nested:files) process(nested);
+          }
+        });
+      }
+
+      // recreating structure will fire vfs removal events
+      VirtualFile nestedDirOutsideTheProjectFile = VfsUtil.createDirectories(nestedDirOutsideTheProject.getPath());
+      WriteAction.run(() -> nestedDirOutsideTheProjectFile.createChildData(null, "Foo.txt"));
+
+      // subsubDir becomes fully loaded wrt persistence
+      nestedDirOutsideTheProjectFile.getChildren();
+
+      if (atleastSecondRun) {
+        assertEquals("subDir\n" +
+                     "subDir/subSubDir\n" +
+                     "subDir/subSubDir/Foo.txt\n",
+                     eventLog.toString()
+        );
+      }
+    } finally {
+      if (disposable != null) Disposer.dispose(disposable);
+      // remove <testName>/subDir via java.io to have vfs events on next test launch
+      FileUtil.delete(nestedDirOutsideTheProject.getParentFile());
+    }
+  }
+  
   public void testModCountIncreases() throws IOException {
     VirtualFile vFile = setupFile();
     ManagingFS managingFS = ManagingFS.getInstance();
