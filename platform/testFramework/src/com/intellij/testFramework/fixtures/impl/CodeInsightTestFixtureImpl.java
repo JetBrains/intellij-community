@@ -1617,6 +1617,10 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
           if (offset > -1) {
             actualText = new StringBuilder(actualText).insert(offset, "<caret>").toString();
           }
+          expectedText = loader.fileText;
+          if (stripTrailingSpaces) {
+            expectedText = stripTrailingSpaces(expectedText);
+          }
         }
         throw new FileComparisonFailure(expectedFile, expectedText, actualText, loader.filePath);
       }
@@ -1960,11 +1964,13 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
   }
 
   private static class SelectionAndCaretMarkupLoader {
+    private final String fileText;
     private final String filePath;
     private final String newFileText;
     private final EditorTestUtil.CaretAndSelectionState caretState;
 
     private SelectionAndCaretMarkupLoader(@NotNull String fileText, String filePath) {
+      this.fileText = fileText;
       this.filePath = filePath;
       final Document document = EditorFactory.getInstance().createDocument(fileText);
       caretState = EditorTestUtil.extractCaretAndSelectionMarkers(document);
