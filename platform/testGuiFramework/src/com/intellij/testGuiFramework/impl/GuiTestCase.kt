@@ -86,7 +86,6 @@ open class GuiTestCase {
   val defaultSettingsTitle: String = if (isMac()) "Preferences for New Projects" else "Settings for New Projects"
   val slash: String = File.separator
 
-
   fun robot() = guiTestRule.robot()
 
   //********************KOTLIN DSL FOR GUI TESTING*************************

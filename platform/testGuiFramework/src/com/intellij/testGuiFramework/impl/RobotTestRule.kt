@@ -21,22 +21,14 @@ import org.junit.rules.ExternalResource
 
 class RobotTestRule: ExternalResource() {
 
-  private var myRobot: Robot? = null
-
   override fun before() {
-    myRobot = SmartWaitRobot() // acquires ScreenLock
-//    myRobot!!.settings().delayBetweenEvents(30)
-    GuiRobot.initializeRobot(myRobot!!)
+    GuiRobot.initializeRobot()
   }
 
   override fun after() {
     GuiRobot.releaseRobot()
-    myRobot!!.cleanUpWithoutDisposingWindows()  // releases ScreenLock
   }
 
-  fun getRobot(): Robot {
-    myRobot ?: before()
-    return myRobot ?: throw Exception("Robot initialization error!")
-  }
+  fun getRobot(): Robot = GuiRobot.robot
 
 }

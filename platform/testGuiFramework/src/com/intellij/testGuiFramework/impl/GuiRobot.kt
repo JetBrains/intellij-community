@@ -2,18 +2,23 @@
 package com.intellij.testGuiFramework.impl
 
 import org.fest.swing.core.Robot
+import org.fest.swing.core.SmartWaitRobot
 
 object GuiRobot {
-  private var _robot: Robot? = null
+  private var myRobot: Robot? = null
   val robot: Robot
-    get() = _robot ?: throw IllegalStateException("Robot must be initialized before using")
+    get() {
+      if(myRobot == null) initializeRobot()
+      return myRobot ?: throw IllegalStateException("Cannot initialize the robot")
+    }
 
-  fun initializeRobot(robot: Robot) {
-    if (_robot != null) releaseRobot() //throw IllegalStateException("Robot already has been initialized")
-    _robot = robot
+  fun initializeRobot() {
+    if (myRobot != null) releaseRobot()
+    myRobot = SmartWaitRobot() // acquires ScreenLock
   }
 
   fun releaseRobot() {
-    _robot = null
+    myRobot!!.cleanUpWithoutDisposingWindows()  // releases ScreenLock
+    myRobot = null
   }
 }
