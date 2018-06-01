@@ -79,6 +79,11 @@ public class FindUIHelper implements Disposable {
     AnAction action = ActionManager.getInstance().getAction(actionName);
     new AnAction() {
       @Override
+      public boolean isDumbAware() {
+        return action.isDumbAware();
+      }
+
+      @Override
       public void actionPerformed(@NotNull AnActionEvent e) {
         ui.saveSettings();
         FindUtil.initStringToFindWithSelection(myModel, e.getData(CommonDataKeys.EDITOR));
