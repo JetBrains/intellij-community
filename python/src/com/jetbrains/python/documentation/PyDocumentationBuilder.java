@@ -500,7 +500,7 @@ public class PyDocumentationBuilder {
     else {
       QualifiedName name = QualifiedNameFinder.findShortestImportableQName(followed);
       if (name != null) {
-        myProlog.add($("Module "))
+        myProlog.add($(PyUtil.isPackage(followed) ? "Package " : "Module "))
                 .addWith(TagBold, $(ObjectUtils.chooseNotNull(QualifiedNameFinder.canonizeQualifiedName(name, null), name).toString()));
       }
       else {
