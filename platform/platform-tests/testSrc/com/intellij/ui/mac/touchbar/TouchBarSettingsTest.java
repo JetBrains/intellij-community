@@ -5,11 +5,13 @@ import com.intellij.execution.ExecutionException;
 import com.intellij.execution.configurations.GeneralCommandLine;
 import com.intellij.execution.process.ProcessOutput;
 import com.intellij.execution.util.ExecUtil;
+import com.intellij.openapi.util.SystemInfo;
+import com.intellij.ui.mac.foundation.NSDefaults;
 import junit.framework.TestCase;
 import org.junit.Assume;
 import org.junit.Test;
 
-public class SystemSettingsWrapperTest extends TestCase {
+public class TouchBarSettingsTest extends TestCase {
   private static final String testAppID = "com.apple.terminal";
 
   @Test
@@ -33,17 +35,32 @@ public class SystemSettingsWrapperTest extends TestCase {
   }
 
   @Test
-  public void testSettingsWrite() {
+  public void testSettingsRead() {
+    Assume.assumeTrue(SystemInfo.isMac);
+
+    final NSDefaults settings = new NSDefaults();
+    final NSDefaults.Domain dom = settings.readDomain("loginwindow");
+    assertTrue(dom.isValid());
+
+    final String sysVer = dom.readStringVal("SystemVersionStampAsString");
+    assertNotNull(sysVer);
+    assertFalse(sysVer.isEmpty());
+  }
+
+  @Test
+  public void testTouchBarSettingsWrite() {
     Assume.assumeTrue(NST.isSupportedOS());
 
-    final SystemSettingsWrapper settings = new SystemSettingsWrapper(testAppID);
-    Assume.assumeTrue(settings.isSettingsDomainExists());
+    final NSDefaults settings = new NSDefaults();
+    final NSDefaults.Domain dom = settings.readTouchBarDomain();
 
-    final boolean enabled = settings.isShowFnKeysEnabled();
-    settings.setShowFnKeysEnabled(!enabled, false);
-    assertEquals(settings.isShowFnKeysEnabled(), !enabled);
+    Assume.assumeTrue(dom.isValid());
 
-    settings.setShowFnKeysEnabled(enabled, false);
-    assertEquals(settings.isShowFnKeysEnabled(), enabled);
+    final boolean enabled = NSDefaults.isShowFnKeysEnabled(testAppID);
+    NSDefaults.setShowFnKeysEnabled(testAppID, !enabled);
+    assertEquals(NSDefaults.isShowFnKeysEnabled(testAppID), !enabled);
+
+    NSDefaults.setShowFnKeysEnabled(testAppID, enabled);
+    assertEquals(NSDefaults.isShowFnKeysEnabled(testAppID), enabled);
   }
 }

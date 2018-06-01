@@ -5,6 +5,8 @@ import com.intellij.execution.ExecutionException;
 import com.intellij.execution.configurations.GeneralCommandLine;
 import com.intellij.execution.process.ProcessOutput;
 import com.intellij.execution.util.ExecUtil;
+import com.intellij.openapi.application.ex.ApplicationInfoEx;
+import com.intellij.openapi.application.impl.ApplicationInfoImpl;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.SystemInfo;
 
@@ -12,10 +14,9 @@ import java.io.IOException;
 
 public class Utils {
   private static final Logger LOG = Logger.getInstance(Utils.class);
-
   private static final String TB_SERVER_PROCESS = SystemInfo.isMacOSHighSierra ? "TouchBarServer" : "TouchBarAgent";
 
-  static boolean isTouchBarServerRunning() {
+  public static boolean isTouchBarServerRunning() {
     final GeneralCommandLine cmdLine = new GeneralCommandLine("pgrep", TB_SERVER_PROCESS);
     try {
       final ProcessOutput out = ExecUtil.execAndGetOutput(cmdLine);
@@ -26,7 +27,7 @@ public class Utils {
     return false;
   }
 
-  static void restartServer() {
+  public static void restartTouchBarServer() {
     try {
       ExecUtil.sudo(new GeneralCommandLine("pkill", TB_SERVER_PROCESS), "");
     } catch (ExecutionException e) {
@@ -34,5 +35,18 @@ public class Utils {
     } catch (IOException e) {
       LOG.error(e);
     }
+  }
+
+  public static String getAppId() {
+    final ApplicationInfoEx appEx = ApplicationInfoImpl.getInstanceEx();
+    if (appEx == null) // unit-test case
+      return null;
+
+    return appEx.isEAP() ? "com.jetbrains.intellij-EAP" : "com.jetbrains.intellij";
+
+    // TODO: obtain "OS X Application identifier' via platform api or use next table:
+    // IDEA: com.jetbrains.intellij
+    // AppCode: com.jetbrains.AppCode
+    // PyCharm: com.jetbrains.pycharm
   }
 }
