@@ -20,7 +20,6 @@ import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.Function;
 import com.intellij.util.ObjectUtils;
-import com.intellij.util.containers.ContainerUtil;
 import com.intellij.vcsUtil.VcsUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -105,7 +104,7 @@ public class VcsRootProblemNotifier {
       }
     }
 
-    List<String> unregRootPaths = ContainerUtil.map(importantUnregisteredRoots, VcsRootError::getMapping);
+    List<String> unregRootPaths = map(importantUnregisteredRoots, VcsRootError::getMapping);
     if (invalidRoots.isEmpty() && (importantUnregisteredRoots.isEmpty() || myReportedUnregisteredRoots.containsAll(unregRootPaths))) {
       return;
     }
@@ -137,7 +136,7 @@ public class VcsRootProblemNotifier {
       });
 
       NotificationAction ignore = NotificationAction.create("Ignore", (event, notification) -> {
-        mySettings.addIgnoredUnregisteredRoots(ContainerUtil.map(importantUnregisteredRoots, VcsRootError::getMapping));
+        mySettings.addIgnoredUnregisteredRoots(map(importantUnregisteredRoots, VcsRootError::getMapping));
         notification.expire();
       });
       myNotification = invalidRoots.isEmpty()
