@@ -88,7 +88,7 @@ public class GeneratorTest extends PropertyCheckerTestCase {
   }
 
   public void testListNotLongerThanMaxDefaultSize() {
-    PropertyChecker.customized().withIterationCount(1_000).forAll(listsOf(integers()), l -> l.size() <= PropertyChecker.DEFAULT_MAX_SIZE_HINT);
+    PropertyChecker.customized().withIterationCount(100_000).forAll(listsOf(integers()), l -> l.size() <= PropertyChecker.DEFAULT_MAX_SIZE_HINT);
   }
 
   public void testNonEmptyList() {
