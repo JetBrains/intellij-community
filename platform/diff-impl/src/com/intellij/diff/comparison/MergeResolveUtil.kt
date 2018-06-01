@@ -29,10 +29,10 @@ object MergeResolveUtil {
   @JvmStatic
   fun tryResolve(leftText: CharSequence, baseText: CharSequence, rightText: CharSequence): CharSequence? {
     try {
-      val resolved = tryResolve(leftText, baseText, rightText, ComparisonPolicy.DEFAULT)
+      val resolved = trySimpleResolve(leftText, baseText, rightText, ComparisonPolicy.DEFAULT)
       if (resolved != null) return resolved
 
-      return tryResolve(leftText, baseText, rightText, ComparisonPolicy.IGNORE_WHITESPACES)
+      return trySimpleResolve(leftText, baseText, rightText, ComparisonPolicy.IGNORE_WHITESPACES)
     }
     catch (e: DiffTooBigException) {
       return null
@@ -65,52 +65,59 @@ object MergeResolveUtil {
   }
 }
 
-private fun tryResolve(leftText: CharSequence, baseText: CharSequence, rightText: CharSequence,
-                       policy: ComparisonPolicy): CharSequence? {
-  val texts = listOf(leftText, baseText, rightText)
-
-  val changes = ByWord.compare(leftText, baseText, rightText, policy, DumbProgressIndicator.INSTANCE)
-
-  val newContent = StringBuilder()
-
-  var last = 0
-  for (fragment in changes) {
-    val type = DiffUtil.getWordMergeType(fragment, texts, policy)
-    if (type.diffType == TextDiffType.CONFLICT) return null;
-
-    val baseStart = fragment.getStartOffset(ThreeSide.BASE)
-    val baseEnd = fragment.getEndOffset(ThreeSide.BASE)
-
-    newContent.append(baseText, last, baseStart)
-
-    if (type.isChange(Side.LEFT)) {
-      val leftStart = fragment.getStartOffset(ThreeSide.LEFT)
-      val leftEnd = fragment.getEndOffset(ThreeSide.LEFT)
-      newContent.append(leftText, leftStart, leftEnd)
-    }
-    else {
-      val rightStart = fragment.getStartOffset(ThreeSide.RIGHT)
-      val rightEnd = fragment.getEndOffset(ThreeSide.RIGHT)
-      newContent.append(rightText, rightStart, rightEnd)
-    }
-    last = baseEnd
-  }
-
-  newContent.append(baseText, last, baseText.length)
-  return newContent.toString()
+private fun trySimpleResolve(leftText: CharSequence, baseText: CharSequence, rightText: CharSequence,
+                             policy: ComparisonPolicy): CharSequence? {
+  return SimpleHelper(leftText, baseText, rightText).execute(policy)
 }
 
 private fun tryGreedyResolve(leftText: CharSequence, baseText: CharSequence, rightText: CharSequence,
                              policy: ComparisonPolicy): CharSequence? {
-  return Helper(leftText, baseText, rightText).execute(policy)
+  return GreedyHelper(leftText, baseText, rightText).execute(policy)
 }
 
-private class Helper(val leftText: CharSequence, val baseText: CharSequence, val rightText: CharSequence) {
-  val newContent = StringBuilder()
+private class SimpleHelper(val leftText: CharSequence, val baseText: CharSequence, val rightText: CharSequence) {
+  private val newContent = StringBuilder()
 
-  var lastBaseOffset = 0
-  var index1 = 0
-  var index2 = 0
+  private var last = 0
+
+  fun execute(policy: ComparisonPolicy): CharSequence? {
+    val texts = listOf(leftText, baseText, rightText)
+
+    val changes = ByWord.compare(leftText, baseText, rightText, policy, DumbProgressIndicator.INSTANCE)
+
+    for (fragment in changes) {
+      val type = DiffUtil.getWordMergeType(fragment, texts, policy)
+      if (type.diffType == TextDiffType.CONFLICT) return null;
+
+      val baseStart = fragment.getStartOffset(ThreeSide.BASE)
+      val baseEnd = fragment.getEndOffset(ThreeSide.BASE)
+
+      newContent.append(baseText, last, baseStart)
+
+      if (type.isChange(Side.LEFT)) {
+        val leftStart = fragment.getStartOffset(ThreeSide.LEFT)
+        val leftEnd = fragment.getEndOffset(ThreeSide.LEFT)
+        newContent.append(leftText, leftStart, leftEnd)
+      }
+      else {
+        val rightStart = fragment.getStartOffset(ThreeSide.RIGHT)
+        val rightEnd = fragment.getEndOffset(ThreeSide.RIGHT)
+        newContent.append(rightText, rightStart, rightEnd)
+      }
+      last = baseEnd
+    }
+
+    newContent.append(baseText, last, baseText.length)
+    return newContent.toString()
+  }
+}
+
+private class GreedyHelper(val leftText: CharSequence, val baseText: CharSequence, val rightText: CharSequence) {
+  private val newContent = StringBuilder()
+
+  private var lastBaseOffset = 0
+  private var index1 = 0
+  private var index2 = 0
 
   fun execute(policy: ComparisonPolicy): CharSequence? {
     val fragments1 = ByWord.compare(baseText, leftText, policy, DumbProgressIndicator.INSTANCE)
