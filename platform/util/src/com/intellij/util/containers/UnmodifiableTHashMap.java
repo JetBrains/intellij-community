@@ -13,9 +13,9 @@ import java.util.Map;
 import java.util.Set;
 
 public class UnmodifiableTHashMap<K,V> extends THashMap<K,V> {
-  public UnmodifiableTHashMap(@NotNull Map<? extends K, ? extends V> map) {
-    //noinspection unchecked
-    this(CANONICAL, map);
+  public UnmodifiableTHashMap(@NotNull TObjectHashingStrategy<K> strategy, K k, V v) {
+    super(strategy);
+    super.put(k, v);
   }
 
   public UnmodifiableTHashMap(@NotNull TObjectHashingStrategy<K> strategy,
