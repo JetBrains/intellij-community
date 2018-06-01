@@ -15,7 +15,6 @@ import com.intellij.psi.formatter.java.wrap.JavaWrapManager;
 import com.intellij.psi.impl.source.tree.ChildRole;
 import com.intellij.psi.impl.source.tree.CompositeElement;
 import com.intellij.psi.impl.source.tree.JavaElementType;
-import com.intellij.psi.javadoc.PsiDocComment;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.ArrayUtil;
@@ -139,11 +138,6 @@ public class JavaChildWrapArranger {
           else {
             return Wrap.createWrap(getWrapType(getAnnotationWrapType(parent, child, settings)), true);
           }
-        }
-      }
-      else if (nodeType == JavaElementType.ENUM_CONSTANT) {
-        if (prev instanceof PsiDocComment && prev.textContains('\n')) {
-          return Wrap.createWrap(WrapType.ALWAYS, true);
         }
       }
 

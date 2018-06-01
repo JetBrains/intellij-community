@@ -144,7 +144,6 @@ public class JavaFormatterWrapTest extends AbstractJavaFormatterTest {
 
   public void testEnumConstantsMixedWithCommentsWrapping() {
     // IDEA-180049
-    getSettings().RIGHT_MARGIN = 80;
 
     // Expect comments to be wrapped
     doTextTest(

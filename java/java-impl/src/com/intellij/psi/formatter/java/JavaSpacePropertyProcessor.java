@@ -27,6 +27,8 @@ import com.intellij.psi.impl.source.jsp.jspJava.JspClassLevelDeclarationStatemen
 import com.intellij.psi.impl.source.jsp.jspJava.JspCodeBlock;
 import com.intellij.psi.impl.source.jsp.jspJava.JspJavaComment;
 import com.intellij.psi.impl.source.tree.*;
+import com.intellij.psi.impl.source.tree.java.EnumConstantElement;
+import com.intellij.psi.javadoc.PsiDocComment;
 import com.intellij.psi.javadoc.PsiDocTag;
 import com.intellij.psi.tree.ChildRoleBase;
 import com.intellij.psi.tree.IElementType;
@@ -248,6 +250,9 @@ public class JavaSpacePropertyProcessor extends JavaElementVisitor {
     else if (myRole2 == ChildRole.RBRACE && aClass.isEnum()) {
       createParenthSpace(true, false);
     }
+    else if (myRole1 == ChildRole.COMMA && aClass.isEnum() && isJavadocHoldingEnumConstant(myChild2)) {
+      createParenthSpace(true, true);
+    }
     else if (aClass instanceof PsiAnonymousClass && ElementType.JAVA_PLAIN_COMMENT_BIT_SET.contains(myChild1.getElementType())) {
       ASTNode prev = myChild1.getTreePrev();
       if (prev.getElementType() == TokenType.WHITE_SPACE && !StringUtil.containsLineBreak(prev.getChars())) {
@@ -267,6 +272,13 @@ public class JavaSpacePropertyProcessor extends JavaElementVisitor {
     else {
       processClassBody();
     }
+  }
+
+  private static boolean isJavadocHoldingEnumConstant(@NotNull ASTNode node) {
+    if (!(node instanceof EnumConstantElement)) return false;
+    ASTNode firstChildNode = node.getFirstChildNode();
+    if (!(firstChildNode instanceof PsiDocComment)) return false;
+    return true;
   }
 
   @NotNull
@@ -1716,6 +1728,9 @@ public class JavaSpacePropertyProcessor extends JavaElementVisitor {
     }
     else if (myRole1 == ChildRole.MODIFIER_LIST && myRole2 == ChildRole.NAME) {
       createSpaceInCode(true);
+    }
+    else if (myRole1 == ChildRole.DOC_COMMENT && myRole2 == ChildRole.NAME) {
+      createParenthSpace(true, true);
     }
   }
 
