@@ -190,13 +190,14 @@ public class PyDocumentationBuilder {
 
   private void buildFromParameter(@NotNull PyNamedParameter parameter) {
     final PyFunction func = PsiTreeUtil.getParentOfType(parameter, PyFunction.class, true, PyLambdaExpression.class);
-    final String funcName = func == null ? PyNames.UNNAMED_ELEMENT : func.getName();
-    myProlog
-      .addItem("Parameter ")
-      .addWith(TagBold, $().addWith(TagCode, $(parameter.getName())))
-      .addItem(" of ")
-      // TODO links to functions
-      .addWith(TagCode, $(funcName));
+    final String link = func != null ? getLinkToFunction(func, true) : PyNames.UNNAMED_ELEMENT;
+    if (link != null) {
+      myProlog
+        .addItem("Parameter ")
+        .addWith(TagBold, $(parameter.getName()))
+        .addItem(" of ")
+        .addItem(link);
+    }
 
     if (func != null) {
       final PyStringLiteralExpression docString = getEffectiveDocStringExpression(func);
@@ -420,22 +421,7 @@ public class PyDocumentationBuilder {
       if (docstringElement != null) {
         final String inheritedDoc = docstringElement.getStringValue();
         if (inheritedDoc.length() > 1) {
-          final String ancestorName = ancestor.getName();
-
-          final String ancestorLink;
-          if (!isFromClass) {
-            final String qualified = inherited.getQualifiedName();
-            if (qualified != null) {
-              ancestorLink = PyDocumentationLink.toFunction(inherited);
-            }
-            else {
-              // TODO add a way to reference such local methods
-              ancestorLink = ancestorName + "." + inherited.getName();
-            }
-          }
-          else {
-            ancestorLink = getLinkToClass(ancestor, false);
-          }
+          final String ancestorLink = isFromClass ? getLinkToClass(ancestor, false) : getLinkToFunction(inherited, false);
           if (ancestorLink != null) {
             mySectionsMap.get(PyBundle.message("QDOC.documentation.is.copied.from")).addWith(TagCode, $(ancestorLink));
           }
@@ -549,6 +535,24 @@ public class PyDocumentationBuilder {
     }
     else if (PsiTreeUtil.getParentOfType(myElement, PyClass.class, false) == pyClass) {
       return PyDocumentationLink.toContainingClass(linkText);
+    }
+    return linkText;
+  }
+
+  @Nullable
+  private String getLinkToFunction(@NotNull PyFunction function, boolean preferQualifiedName) {
+    final String qualifiedName = function.getQualifiedName();
+    final PyClass pyClass = function.getContainingClass();
+    // Preserve name of a containing class even if the whole qualified name can't be constructed
+    final String shortName = pyClass == null ? function.getName() : pyClass.getName() + "." + function.getName();
+
+    final String linkText = preferQualifiedName && qualifiedName != null ? qualifiedName : shortName;
+    if (linkText == null || function.getName() == null || (pyClass != null && pyClass.getName() == null)) {
+      return null;
+    }
+
+    if (qualifiedName != null) {
+      return PyDocumentationLink.toFunction(linkText, function);
     }
     return linkText;
   }
