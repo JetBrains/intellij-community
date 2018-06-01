@@ -16,6 +16,7 @@
 package com.intellij.ide;
 
 import com.intellij.application.options.CodeStyle;
+import com.intellij.application.options.CodeStyleBean;
 import com.intellij.application.options.IndentOptionsEditor;
 import com.intellij.application.options.JavaIndentOptionsEditor;
 import com.intellij.lang.Language;
@@ -30,6 +31,7 @@ import com.intellij.psi.codeStyle.*;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.LocalTimeCounter;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import static com.intellij.application.options.JavaDocFormattingPanel.*;
 
@@ -293,6 +295,12 @@ public class JavaLanguageCodeStyleSettingsProvider extends LanguageCodeStyleSett
       };
     }
     return super.getDocCommentSettings(file);
+  }
+
+  @Nullable
+  @Override
+  public CodeStyleBean createBean() {
+    return new JavaCodeStyleBean();
   }
 
   private static final String GENERAL_CODE_SAMPLE =
