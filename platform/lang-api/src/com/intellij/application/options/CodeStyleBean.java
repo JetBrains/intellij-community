@@ -6,6 +6,7 @@ import com.intellij.lang.Language;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.psi.codeStyle.CommonCodeStyleSettings;
 import com.intellij.psi.codeStyle.CustomCodeStyleSettings;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.Serializable;
@@ -18,6 +19,7 @@ import java.io.Serializable;
  * @see CustomCodeStyleSettings
  */
 @SuppressWarnings("unused")
+@ApiStatus.Experimental
 public abstract class CodeStyleBean implements Serializable {
 
   private @NotNull CodeStyleSettings myRootSettings;
