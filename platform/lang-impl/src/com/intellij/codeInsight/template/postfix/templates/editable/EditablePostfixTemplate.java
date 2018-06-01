@@ -70,7 +70,7 @@ public abstract class EditablePostfixTemplate extends PostfixTemplate {
     }
 
     if (ApplicationManager.getApplication().isUnitTestMode()) {
-      PsiElement item = ContainerUtil.getLastItem(expressions);
+      PsiElement item = ContainerUtil.getFirstItem(expressions);
       assert item != null;
       prepareAndExpandForChooseExpression(item, editor);
       return;
