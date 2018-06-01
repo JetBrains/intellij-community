@@ -49,6 +49,7 @@ public final class ActionMenu extends JBMenu {
   private MenuItemSynchronizer myMenuItemSynchronizer;
   private StubItem myStubItem;  // A PATCH!!! Do not remove this code, otherwise you will lose all keyboard navigation in JMenuBar.
   private final boolean myTopLevel;
+  private final boolean myUseDarkIcons;
   private Disposable myDisposable;
 
   public ActionMenu(final DataContext context,
@@ -56,7 +57,9 @@ public final class ActionMenu extends JBMenu {
                     final ActionGroup group,
                     final PresentationFactory presentationFactory,
                     final boolean enableMnemonics,
-                    final boolean topLevel) {
+                    final boolean topLevel,
+                    final boolean useDarkIcons
+  ) {
     myContext = context;
     myPlace = place;
     myGroup = ActionRef.fromAction(group);
@@ -64,6 +67,7 @@ public final class ActionMenu extends JBMenu {
     myPresentation = myPresentationFactory.getPresentation(group);
     myMnemonicEnabled = enableMnemonics;
     myTopLevel = topLevel;
+    myUseDarkIcons = useDarkIcons;
 
     updateUI();
 
@@ -219,7 +223,7 @@ public final class ActionMenu extends JBMenu {
       Icon icon = presentation.getIcon();
       if (SystemInfo.isMacSystemMenu && ActionPlaces.MAIN_MENU.equals(myPlace)) {
         // JDK can't paint correctly our HiDPI icons at the system menu bar
-        icon = IconLoader.getMenuBarIcon(icon, NSDefaults.isDarkMenuBar());
+        icon = IconLoader.getMenuBarIcon(icon, myUseDarkIcons);
       }
       setIcon(icon);
       if (presentation.getDisabledIcon() != null) {
@@ -313,7 +317,8 @@ public final class ActionMenu extends JBMenu {
       mayContextBeInvalid = true;
     }
 
-    Utils.fillMenu(myGroup.getAction(), this, myMnemonicEnabled, myPresentationFactory, context, myPlace, true, mayContextBeInvalid, LaterInvocator.isInModalContext());
+    final boolean isDarkMenu = SystemInfo.isMacSystemMenu ? NSDefaults.isDarkMenuBar() : false;
+    Utils.fillMenu(myGroup.getAction(), this, myMnemonicEnabled, myPresentationFactory, context, myPlace, true, mayContextBeInvalid, LaterInvocator.isInModalContext(), isDarkMenu);
   }
 
   private class MenuItemSynchronizer implements PropertyChangeListener {

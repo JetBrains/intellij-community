@@ -18,7 +18,6 @@ import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.ui.components.JBCheckBoxMenuItem;
-import com.intellij.ui.mac.foundation.NSDefaults;
 import com.intellij.ui.plaf.beg.BegMenuItemUI;
 import com.intellij.ui.plaf.gtk.GtkMenuItemUI;
 import com.intellij.util.ui.EmptyIcon;
@@ -53,6 +52,7 @@ public class ActionMenuItem extends JBCheckBoxMenuItem {
   private AnActionEvent myEvent;
   private MenuItemSynchronizer myMenuItemSynchronizer;
   private boolean myToggled;
+  private final boolean myUseDarkIcons;
 
   public ActionMenuItem(final AnAction action,
                         final Presentation presentation,
@@ -60,7 +60,8 @@ public class ActionMenuItem extends JBCheckBoxMenuItem {
                         @NotNull DataContext context,
                         final boolean enableMnemonics,
                         final boolean prepareNow,
-                        final boolean insideCheckedGroup) {
+                        final boolean insideCheckedGroup,
+                        final boolean useDarkIcons) {
     myAction = ActionRef.fromAction(action);
     myPresentation = presentation;
     myPlace = place;
@@ -68,6 +69,7 @@ public class ActionMenuItem extends JBCheckBoxMenuItem {
     myEnableMnemonics = enableMnemonics;
     myToggleable = action instanceof Toggleable;
     myInsideCheckedGroup = insideCheckedGroup;
+    myUseDarkIcons = useDarkIcons;
 
     myEvent = new AnActionEvent(null, context, place, myPresentation, ActionManager.getInstance(), 0, true, false);
     addActionListener(new ActionTransmitter());
@@ -250,7 +252,7 @@ public class ActionMenuItem extends JBCheckBoxMenuItem {
   public void setIcon(Icon icon) {
     if (SystemInfo.isMacSystemMenu && ActionPlaces.MAIN_MENU.equals(myPlace)) {
       // JDK can't paint correctly our HiDPI icons at the system menu bar
-      icon = IconLoader.getMenuBarIcon(icon, NSDefaults.isDarkMenuBar());
+      icon = IconLoader.getMenuBarIcon(icon, myUseDarkIcons);
     }
     super.setIcon(icon);
   }
