@@ -4,16 +4,16 @@ package com.jetbrains.python.testing.pyTestParametrized
 import com.intellij.openapi.module.Module
 import com.jetbrains.python.psi.PyFunction
 import com.jetbrains.python.psi.types.TypeEvalContext
-import com.jetbrains.python.testing.PyFunctionArgument
-import com.jetbrains.python.testing.PyFunctionArgumentProvider
+import com.jetbrains.python.testing.PyTestFunctionParameter
+import com.jetbrains.python.testing.PyTestFunctionParameterProvider
 
 /**
  * test decorated with parametrize must have appropriate parameter names
  */
-internal object PyTestParametrizedArgumentProvider : PyFunctionArgumentProvider {
+internal object PyTestParameterFromParametrizeProvider : PyTestFunctionParameterProvider {
   override fun getArguments(function: PyFunction, evalContext: TypeEvalContext, module: Module) =
     function.getParametersOfParametrized(TypeEvalContext.codeAnalysis(function.project, function.containingFile))
       .map {
-        PyFunctionArgument(it.name)
+        PyTestFunctionParameter(it.name)
       }
 }
