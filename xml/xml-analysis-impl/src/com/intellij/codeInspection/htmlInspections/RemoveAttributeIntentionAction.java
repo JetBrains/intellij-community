@@ -56,7 +56,7 @@ public class RemoveAttributeIntentionAction implements LocalQuickFix, IntentionA
   @NotNull
   @Override
   public String getText() {
-    return getFamilyName();
+    return myLocalName != null? getName() : getFamilyName();
   }
 
   @Override
