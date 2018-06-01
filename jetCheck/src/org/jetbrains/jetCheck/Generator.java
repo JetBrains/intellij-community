@@ -181,6 +181,11 @@ public class Generator<T> {
     return integers(min, max).map(i -> (char)i.intValue());
   }
 
+  /** Generates characters that occur in the given string */
+  public static Generator<Character> charsFrom(String possibleChars) {
+    return sampledFrom(IntStream.range(0, possibleChars.length()).mapToObj(possibleChars::charAt).collect(Collectors.toList()));
+  }
+
   /** Generates ASCII characters excluding the system ones (lower than 32) */
   public static Generator<Character> asciiPrintableChars() {
     return charsInRange((char)32, (char)126);
@@ -210,17 +215,24 @@ public class Generator<T> {
 
   /** Generates (possibly empty) random strings consisting of the given characters (provided as a string) */
   public static Generator<String> stringsOf(@NotNull String possibleChars) {
-    List<Character> chars = IntStream.range(0, possibleChars.length()).mapToObj(possibleChars::charAt).collect(Collectors.toList());
-    return stringsOf(sampledFrom(chars));
+    return stringsOf(charsFrom(possibleChars));
   }
 
   /** Generates (possibly empty) random strings consisting of characters provided by the given generator */
   public static Generator<String> stringsOf(@NotNull Generator<Character> charGen) {
-    return listsOf(charGen).map(chars -> {
-      StringBuilder sb = new StringBuilder();
-      chars.forEach(sb::append);
-      return sb.toString();
-    });
+    return listsOf(charGen).map(Generator::charsToString);
+  }
+
+  /** Generates (possibly empty) random strings of length in the given distribution, consisting of characters provided by the given generator */
+  public static Generator<String> stringsOf(@NotNull IntDistribution length, @NotNull Generator<Character> charGen) {
+    return listsOf(length, charGen).map(Generator::charsToString);
+  }
+
+  @NotNull
+  private static String charsToString(List<Character> chars) {
+    StringBuilder sb = new StringBuilder();
+    chars.forEach(sb::append);
+    return sb.toString();
   }
 
   /** Generates random strings consisting ASCII letters and digit and starting with a letter */

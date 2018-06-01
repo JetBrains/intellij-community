@@ -36,6 +36,11 @@ public class GeneratorTest extends PropertyCheckerTestCase {
     assertEquals("a", checkGeneratesExample(stringsOf(asciiPrintableChars()),
                                             s -> s.contains("a"),
                                             10));
+
+    String aWithB = checkGeneratesExample(stringsOf(IntDistribution.uniform(2, 100), asciiPrintableChars()),
+                                     s -> s.contains("a") && s.contains("b"),
+                                     27);
+    assertTrue(aWithB, "ab".equals(aWithB) || "ba".equals(aWithB));
   }
 
   public void testLetterStringContains() {
