@@ -2,7 +2,9 @@
 package com.jetbrains.python;
 
 import com.intellij.codeInsight.documentation.DocumentationManager;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiManager;
 import com.jetbrains.python.documentation.PyDocumentationSettings;
 import com.jetbrains.python.documentation.PythonDocumentationProvider;
 import com.jetbrains.python.documentation.docstrings.DocStringFormat;
@@ -11,6 +13,8 @@ import com.jetbrains.python.psi.*;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Map;
+
+import static com.jetbrains.python.psi.PyUtil.as;
 
 /**
  * @author dcheryasov
@@ -439,6 +443,13 @@ public class PyQuickDocTest extends LightMarkedTestCase {
   // PY-14785
   public void testSingleLineAssignedValueForTarget() {
     checkHTMLOnly();
+  }
+
+  public void testPackage() {
+    myFixture.copyDirectoryToProject(getTestName(false), "");
+    final VirtualFile file = myFixture.findFileInTempDir("pkg/__init__.py");
+    final PyFile init = as(PsiManager.getInstance(myFixture.getProject()).findFile(file), PyFile.class);
+    checkByHTML(myProvider.generateDoc(init, init));
   }
 
   @Override
