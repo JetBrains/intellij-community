@@ -23,6 +23,7 @@ import com.intellij.openapi.util.text.LineTokenizer;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiFile;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.QualifiedName;
 import com.intellij.util.ObjectUtils;
@@ -309,6 +310,16 @@ public class PyDocumentationBuilder {
       myContent.add(formatDocString(myElement, docStringExpression.getStringValue()));
     }
 
+    if (PyUtil.isTopLevel(elementDefinition)) {
+      final PsiFile containing = elementDefinition.getContainingFile();
+      if (containing instanceof PyFile) {
+        final String link = getLinkToModule((PyFile)containing);
+        if (link != null) {
+          myProlog.addItem(link);
+        }
+      }
+    }
+
     if (elementDefinition instanceof PyClass) {
       pyClass = (PyClass)elementDefinition;
       myBody.add(PythonDocumentationProvider.describeDecorators(pyClass, WRAP_IN_ITALIC, ESCAPE_AND_SAVE_NEW_LINES_AND_SPACES, BR, BR));
@@ -502,10 +513,20 @@ public class PyDocumentationBuilder {
                 .addWith(TagBold, $(ObjectUtils.chooseNotNull(QualifiedNameFinder.canonizeQualifiedName(name, null), name).toString()));
       }
       else {
-        String path = file.getPath();
-        myProlog.addWith(TagSpan.withAttribute("path", path), $("").addWith(TagSmall, $(path)));
+        final String path = file.getPath();
+        myProlog.addWith(TagSpan.withAttribute("path", path), $(path));
       }
     }
+  }
+
+  @Nullable
+  private String getLinkToModule(@NotNull PyFile module) {
+    final QualifiedName name = QualifiedNameFinder.findCanonicalImportPath(module, null);
+    if (name != null) {
+      return PyDocumentationLink.toModule(name.toString(), name.toString());
+    }
+    final VirtualFile vFile = module.getVirtualFile();
+    return vFile != null ? vFile.getPath() : null;
   }
 
   @Nullable
