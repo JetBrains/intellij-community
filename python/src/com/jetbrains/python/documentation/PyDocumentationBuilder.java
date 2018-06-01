@@ -239,9 +239,13 @@ public class PyDocumentationBuilder {
 
     final AccessDirection direction = AccessDirection.of((PyElement)outerElement);
     final Maybe<PyCallable> accessor = property.getByDirection(direction);
-    myProlog.addItem("property ").addWith(TagBold, $().addWith(TagCode, $(elementName)))
-            .addItem(" of ")
-            .add(PythonDocumentationProvider.describeClass(cls, Function.identity(), TO_ONE_LINE_AND_ESCAPE, true, true, myContext));
+    final String link = getLinkToClass(cls, true);
+    if (link != null) {
+      myProlog.addItem("Property ")
+              .addWith(TagBold, $(elementName))
+              .addItem(" of ")
+              .addItem(link);
+    }
 
     // Choose appropriate docstring
     String docstring = null;
@@ -349,12 +353,13 @@ public class PyDocumentationBuilder {
     else if (elementDefinition instanceof PyTargetExpression) {
       final PyTargetExpression target = (PyTargetExpression)elementDefinition;
       if (isAttribute() && !isProperty) {
-        final String type = PyUtil.isInstanceAttribute(target) ? "Instance attribute " : "Class attribute ";
-        myProlog
-          .addItem(type)
-          .addWith(TagBold, $().addWith(TagCode, $(elementDefinition.getName())))
-          .addItem(" of class ")
-          .addItem(PyDocumentationLink.toContainingClass(WRAP_IN_CODE.apply(target.getContainingClass().getName())));
+        @SuppressWarnings("ConstantConditions") final String link = getLinkToClass(target.getContainingClass(), true);
+        if (link != null) {
+          myProlog.addItem(PyUtil.isInstanceAttribute(target) ? "Instance attribute " : "Class attribute ")
+                  .addWith(TagBold, $(elementDefinition.getName()))
+                  .addItem(" of ")
+                  .addItem(link);
+        }
       }
       myBody.add(PythonDocumentationProvider.describeTarget(target, myContext));
     }
