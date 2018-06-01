@@ -1293,7 +1293,7 @@ public class ExpressionUtils {
         replacement instanceof PsiPolyadicExpression &&
         ((PsiPolyadicExpression)parent).getOperationTokenType() == ((PsiPolyadicExpression)replacement).getOperationTokenType()) {
       int idx = ArrayUtil.indexOf(((PsiPolyadicExpression)parent).getOperands(), expressionToReplace);
-      if (idx > 0) {
+      if (idx >= 0) {
         PsiPolyadicExpression copyParentPolyadic = (PsiPolyadicExpression)parent.copy();
         new CommentTracker().replaceAndRestoreComments(copyParentPolyadic.getOperands()[idx], replacement);
         PsiExpression recreateCopyFromText = JavaPsiFacade.getElementFactory(parent.getProject())
