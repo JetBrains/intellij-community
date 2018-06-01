@@ -102,7 +102,6 @@ public class TouchBarsManager {
       return;
 
     final ID app = Foundation.invoke("NSApplication", "sharedApplication");
-    Foundation.invoke(app, "setAutomaticCustomizeTouchBarMenuItemEnabled:", true);
 
     ApplicationManager.getApplication().getMessageBus().connect().subscribe(ProjectManager.TOPIC, new ProjectManagerListener() {
       @Override
