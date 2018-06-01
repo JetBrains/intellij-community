@@ -195,10 +195,7 @@ public abstract class GitHandler {
    */
   public void setWithLowPriority(boolean isLowPriority) {
     if (isLowPriority) {
-      ExecUtil.setupLowPriorityExecution(myCommandLine, myPathToExecutable);
-    }
-    else {
-      myCommandLine.setExePath(myPathToExecutable);
+      ExecUtil.setupLowPriorityExecution(myCommandLine);
     }
   }
 
