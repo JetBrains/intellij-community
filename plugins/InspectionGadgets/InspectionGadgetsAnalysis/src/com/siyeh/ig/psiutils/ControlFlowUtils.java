@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2017 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2018 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -549,6 +549,10 @@ public class ControlFlowUtils {
       }
     }
     return i == count;
+  }
+
+  public static <T extends PsiElement> boolean isNestedElement(@NotNull T element, @NotNull Class<T> aClass) {
+    return PsiTreeUtil.getParentOfType(element, aClass, true, PsiClass.class, PsiLambdaExpression.class) != null;
   }
 
   public static boolean isEmptyCodeBlock(PsiCodeBlock codeBlock) {
