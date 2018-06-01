@@ -19,7 +19,7 @@ public interface SearchEverywhereContributor {
 
   String ALL_CONTRIBUTORS_GROUP_ID = SearchEverywhereContributor.class.getSimpleName() + ".All";
 
-  ExtensionPointName<SearchEverywhereContributorFactory> EP_NAME = ExtensionPointName.create("com.intellij.searchEverywhereContributor");
+  ExtensionPointName<SearchEverywhereContributorFactory<?>> EP_NAME = ExtensionPointName.create("com.intellij.searchEverywhereContributor");
 
   @NotNull
   String getSearchProviderId();
@@ -45,7 +45,7 @@ public interface SearchEverywhereContributor {
 
   Object getDataForItem(Object element, String dataId);
 
-  static List<SearchEverywhereContributorFactory> getProviders() {
+  static List<SearchEverywhereContributorFactory<?>> getProviders() {
     return Arrays.asList(EP_NAME.getExtensions());
   }
 }

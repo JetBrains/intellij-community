@@ -130,11 +130,11 @@ public class GotoFileAction extends GotoActionBase implements DumbAware {
    * <li>File type with greater name is greater (case is ignored).</li>
    * </ol>
    */
-  static class FileTypeComparator implements Comparator<FileType> {
+  public static class FileTypeComparator implements Comparator<FileType> {
     /**
      * an instance of comparator
      */
-    static final Comparator<FileType> INSTANCE = new FileTypeComparator();
+    public static final Comparator<FileType> INSTANCE = new FileTypeComparator();
 
     /**
      * {@inheritDoc}

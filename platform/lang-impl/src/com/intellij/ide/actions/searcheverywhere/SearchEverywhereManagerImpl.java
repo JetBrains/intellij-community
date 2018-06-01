@@ -20,9 +20,7 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Comparator;
+import java.util.*;
 import java.util.List;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
@@ -32,8 +30,8 @@ import static com.intellij.ide.actions.SearchEverywhereAction.SEARCH_EVERYWHERE_
 public class SearchEverywhereManagerImpl implements SearchEverywhereManager {
 
   private final Project myProject;
-  private final List<SearchEverywhereContributorFactory> myContributorFactories = SearchEverywhereContributor.getProviders();
-
+  private final List<SearchEverywhereContributorFactory<?>> myContributorFactories = SearchEverywhereContributor.getProviders();
+  private final Map<String, SearchEverywhereContributorFilter<?>> myContributorFilters = new HashMap<>();
 
   private JBPopup myBalloon;
   private SearchEverywhereUI mySearchEverywhereUI;
@@ -58,12 +56,18 @@ public class SearchEverywhereManagerImpl implements SearchEverywhereManager {
       new RecentFilesSEContributor(project)
     );
 
-    List<SearchEverywhereContributor> contributors = myContributorFactories.stream()
-                                                                           .map(factory -> factory.createContributor(initEvent))
-                                                                           .sorted(Comparator.comparingInt(SearchEverywhereContributor::getSortWeight))
-                                                                           .collect(Collectors.toList());
+    List<SearchEverywhereContributor> contributors = new ArrayList<>();
+    myContributorFactories.forEach(factory -> {
+      SearchEverywhereContributor contributor = factory.createContributor(initEvent);
+      myContributorFilters.computeIfAbsent(contributor.getSearchProviderId(), s -> factory.createFilter());
+      contributors.add(contributor);
+    });
+    Collections.sort(contributors, Comparator.comparingInt(SearchEverywhereContributor::getSortWeight));
+    myContributorFilters.computeIfAbsent(SearchEverywhereContributor.ALL_CONTRIBUTORS_GROUP_ID,
+                                         s -> new SearchEverywhereContributorFilterImpl<>(contributors, contributor -> contributor.getGroupName(), contributor -> null)
+    );
 
-    mySearchEverywhereUI = createView(myProject, serviceContributors, contributors);
+    mySearchEverywhereUI = createView(myProject, serviceContributors, contributors, myContributorFilters);
     mySearchEverywhereUI.switchToContributor(selectedContributorID);
     if (searchText != null && !searchText.isEmpty()) {
       mySearchEverywhereUI.getSearchField().setText(searchText);
@@ -149,8 +153,9 @@ public class SearchEverywhereManagerImpl implements SearchEverywhereManager {
 
   private SearchEverywhereUI createView(Project project,
                                         List<SearchEverywhereContributor> serviceContributors,
-                                        List<SearchEverywhereContributor> allContributors) {
-    SearchEverywhereUI view = new SearchEverywhereUI(project, serviceContributors, allContributors);
+                                        List<SearchEverywhereContributor> allContributors,
+                                        Map<String, SearchEverywhereContributorFilter<?>> contributorFilters) {
+    SearchEverywhereUI view = new SearchEverywhereUI(project, serviceContributors, allContributors, contributorFilters);
     view.addPropertyChangeListener("preferredSize", evt -> {
       if (isShown()) {
         myBalloon.pack(true, true);

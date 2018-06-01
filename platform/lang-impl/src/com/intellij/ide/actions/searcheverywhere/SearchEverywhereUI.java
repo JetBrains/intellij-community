@@ -2,13 +2,14 @@
 package com.intellij.ide.actions.searcheverywhere;
 
 import com.google.common.collect.Lists;
+import com.intellij.execution.runners.ExecutionUtil;
 import com.intellij.find.findUsages.PsiElement2UsageTargetAdapter;
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.IdeBundle;
+import com.intellij.ide.util.ElementsChooser;
 import com.intellij.ide.util.gotoByName.QuickSearchComponent;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
-import com.intellij.openapi.actionSystem.impl.ActionButton;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.keymap.KeymapUtil;
@@ -17,11 +18,16 @@ import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.progress.util.ProgressIndicatorBase;
+import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.popup.JBPopup;
+import com.intellij.openapi.ui.popup.JBPopupFactory;
+import com.intellij.openapi.ui.popup.JBPopupListener;
+import com.intellij.openapi.ui.popup.LightweightWindowEvent;
 import com.intellij.openapi.util.ActionCallback;
+import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Pair;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.codeStyle.MinusculeMatcher;
@@ -63,6 +69,7 @@ public class SearchEverywhereUI extends BorderLayoutPanel implements Disposable,
   public static final int MULTIPLE_CONTRIBUTORS_ELEMENTS_LIMIT = 15;
 
   private final List<SearchEverywhereContributor> allContributors;
+  private final Map<String, SearchEverywhereContributorFilter<?>> myContributorFilters;
   private final Project myProject;
 
   private SETab mySelectedTab;
@@ -84,8 +91,10 @@ public class SearchEverywhereUI extends BorderLayoutPanel implements Disposable,
 
   private Runnable searchFinishedHandler = () -> {};
 
-  public SearchEverywhereUI(Project project, List<SearchEverywhereContributor> serviceContributors,
-                            List<SearchEverywhereContributor> contributors) {
+  public SearchEverywhereUI(Project project,
+                            List<SearchEverywhereContributor> serviceContributors,
+                            List<SearchEverywhereContributor> contributors,
+                            Map<String, SearchEverywhereContributorFilter<?>> filters) {
     withMinimumWidth(670);
     withPreferredWidth(670);
     withBackground(JBUI.CurrentTheme.SearchEverywhere.dialogBackground());
@@ -94,6 +103,7 @@ public class SearchEverywhereUI extends BorderLayoutPanel implements Disposable,
     allContributors = new ArrayList<>();
     allContributors.addAll(serviceContributors);
     allContributors.addAll(contributors);
+    myContributorFilters = filters;
 
     myNonProjectCB = new JBCheckBox();
     myNonProjectCB.setOpaque(false);
@@ -323,19 +333,14 @@ public class SearchEverywhereUI extends BorderLayoutPanel implements Disposable,
     res.add(myNonProjectCB);
     res.add(Box.createHorizontalStrut(JBUI.scale(19)));
 
-    AnAction pinAction = new ShowInFindToolWindowAction();
-    ActionButton pinButton = new ActionButton(pinAction, pinAction.getTemplatePresentation(), ActionPlaces.UNKNOWN, ActionToolbar.DEFAULT_MINIMUM_BUTTON_SIZE);
-    res.add(pinButton);
-    res.add(Box.createHorizontalStrut(JBUI.scale(10)));
+    DefaultActionGroup actionGroup = new DefaultActionGroup();
+    actionGroup.addAction(new ShowInFindToolWindowAction());
+    actionGroup.addAction(new ShowFilterAction());
 
-    AnAction emptyAction = new AnAction(AllIcons.General.Filter) {
-      @Override
-      public void actionPerformed(AnActionEvent e) {}
-    };
-    ActionButton filterButton = new ActionButton(emptyAction, emptyAction.getTemplatePresentation(), ActionPlaces.UNKNOWN, ActionToolbar.DEFAULT_MINIMUM_BUTTON_SIZE);
-    res.add(filterButton);
-    res.add(Box.createHorizontalStrut(JBUI.scale(10)));
-
+    ActionToolbar toolbar = ActionManager.getInstance().createActionToolbar("search.everywhere.toolbar", actionGroup, true);
+    JComponent toolbarComponent = toolbar.getComponent();
+    toolbarComponent.setOpaque(false);
+    res.add(toolbarComponent);
     return res;
   }
 
@@ -976,6 +981,127 @@ public class SearchEverywhereUI extends BorderLayoutPanel implements Disposable,
       UsageTarget[] targetsArray = targets.isEmpty() ? UsageTarget.EMPTY_ARRAY : PsiElement2UsageTargetAdapter.convert(PsiUtilCore.toPsiElementArray(targets));
       Usage[] usagesArray = usages.toArray(Usage.EMPTY_ARRAY);
       UsageViewManager.getInstance(myProject).showUsages(targetsArray, usagesArray, presentation);
+    }
+  }
+
+  private class ShowFilterAction extends ToggleAction implements DumbAware {
+    private JBPopup myFilterPopup;
+
+    public ShowFilterAction() {
+      super("Filter", "Filter files by type", AllIcons.General.Filter);
+    }
+
+    @Override
+    public boolean isSelected(final AnActionEvent e) {
+      return myFilterPopup != null && !myFilterPopup.isDisposed();
+    }
+
+    @Override
+    public void setSelected(final AnActionEvent e, final boolean state) {
+      if (state) {
+        showPopup(e.getInputEvent().getComponent());
+      }
+      else {
+        if (myFilterPopup != null && !myFilterPopup.isDisposed()) {
+          myFilterPopup.cancel();
+        }
+      }
+    }
+
+    @Override
+    public void update(@NotNull AnActionEvent e) {
+      Icon icon = getTemplatePresentation().getIcon();
+      e.getPresentation().setIcon(isActive() ? ExecutionUtil.getLiveIndicator(icon) : icon);
+      e.getPresentation().setEnabled(myContributorFilters.get(getSelectedContributorID()) != null);
+      e.getPresentation().putClientProperty(SELECTED_PROPERTY, isSelected(e));
+    }
+
+    private boolean isActive() {
+      String contributorID = getSelectedContributorID();
+      SearchEverywhereContributorFilter<?> filter = myContributorFilters.get(contributorID);
+      if (filter == null) {
+        return false;
+      }
+      return filter.getAllElements().size() != filter.getSelectedElements().size();
+    }
+
+    private void showPopup(Component anchor) {
+      if (myFilterPopup != null) {
+        return;
+      }
+      JBPopupListener popupCloseListener = new JBPopupListener() {
+        @Override
+        public void onClosed(LightweightWindowEvent event) {
+          myFilterPopup = null;
+        }
+      };
+      myFilterPopup = JBPopupFactory.getInstance()
+                                    .createComponentPopupBuilder(createFilterPanel(), null)
+                                    .setModalContext(false)
+                                    .setFocusable(false)
+                                    .setResizable(true)
+                                    .setCancelOnClickOutside(false)
+                                    .setMinSize(new Dimension(200, 200))
+                                    .setDimensionServiceKey(myProject, "GotoFile_FileTypePopup", false)
+                                    .addListener(popupCloseListener)
+                                    .createPopup();
+      Disposer.register(SearchEverywhereUI.this, myFilterPopup);
+      myFilterPopup.showUnderneathOf(anchor);
+    }
+
+    private JComponent createFilterPanel() {
+      SearchEverywhereContributorFilter<?> filter = myContributorFilters.get(getSelectedContributorID());
+      ElementsChooser<?> chooser = filterToChooser(filter);
+
+      JPanel panel = new JPanel();
+      panel.setLayout(new BoxLayout(panel, BoxLayout.Y_AXIS));
+      panel.add(chooser);
+      JPanel buttons = new JPanel();
+      JButton all = new JButton("All");
+      all.addActionListener(new ActionListener() {
+        @Override
+        public void actionPerformed(final ActionEvent e) {
+          chooser.setAllElementsMarked(true);
+        }
+      });
+      buttons.add(all);
+      JButton none = new JButton("None");
+      none.addActionListener(new ActionListener() {
+        @Override
+        public void actionPerformed(final ActionEvent e) {
+          chooser.setAllElementsMarked(false);
+        }
+      });
+      buttons.add(none);
+      JButton invert = new JButton("Invert");
+      invert.addActionListener(new ActionListener() {
+        @Override
+        public void actionPerformed(final ActionEvent e) {
+          chooser.invertSelection();
+        }
+      });
+      buttons.add(invert);
+      panel.add(buttons);
+      return panel;
+    }
+
+    private <T> ElementsChooser<T> filterToChooser(SearchEverywhereContributorFilter<T> filter) {
+      ElementsChooser<T> res = new ElementsChooser<T>(filter.getAllElements(), false) {
+        @Override
+        protected String getItemText(@NotNull T value) {
+          return filter.getElementText(value);
+        }
+
+        @Nullable
+        @Override
+        protected Icon getItemIcon(@NotNull T value) {
+          return filter.getElementIcon(value);
+        }
+      };
+      res.markElements(filter.getSelectedElements());
+      ElementsChooser.ElementsMarkListener<T> listener = (element, isMarked) -> filter.setSelected(element, isMarked);
+      res.addElementsMarkListener(listener);
+      return res;
     }
   }
 

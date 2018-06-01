@@ -13,6 +13,7 @@ import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
@@ -119,14 +120,21 @@ public class ActionSearchEverywhereContributor implements SearchEverywhereContri
     return !inplaceChange;
   }
 
-  public static class Factory implements SearchEverywhereContributorFactory {
+  public static class Factory implements SearchEverywhereContributorFactory<Void> {
 
+    @NotNull
     @Override
     public SearchEverywhereContributor createContributor(AnActionEvent initEvent) {
       return new ActionSearchEverywhereContributor(
         initEvent.getProject(),
         initEvent.getData(PlatformDataKeys.CONTEXT_COMPONENT),
         initEvent.getData(CommonDataKeys.EDITOR));
+    }
+
+    @Nullable
+    @Override
+    public SearchEverywhereContributorFilter<Void> createFilter() {
+      return null;
     }
   }
 }
