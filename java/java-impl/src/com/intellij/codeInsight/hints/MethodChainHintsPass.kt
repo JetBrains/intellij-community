@@ -23,11 +23,8 @@ class MethodChainHintsPass(
 
   override fun collectElementHints(element: PsiElement, collector: (offset: Int, hint: String) -> Unit) {
     val call = element as? PsiMethodCallExpression ?: return
-    val qualifier = call.methodExpression.qualifierExpression
-    if (qualifier != null && qualifier is PsiMethodCallExpression) {
-      val callSibling = qualifier.nextSibling
-      if (callSibling is PsiWhiteSpace && callSibling.textContains('\n')) return // Not first call
-    }
+    if (!isFirstCall(call)) return
+
     val next = call.nextSibling
     if (!(next is PsiWhiteSpace && next.textContains('\n'))) return
     val chain = collectChain(call)
@@ -48,6 +45,29 @@ class MethodChainHintsPass(
       val offset = currentCall.textRange.endOffset
       collector.invoke(offset, types[index].presentableText)
     }
+  }
+
+  private fun isFirstCall(call: PsiMethodCallExpression): Boolean {
+    val document = myEditor.document
+    val callLine = document.getLineNumber(call.argumentList.textOffset)
+
+    val callForQualifier = ExpressionUtils.getCallForQualifier(call)
+    if (callForQualifier == null ||
+        document.getLineNumber(callForQualifier.argumentList.textOffset) == callLine) return false
+
+    val firstQualifierCall = call.methodExpression.qualifier as? PsiMethodCallExpression
+    if (firstQualifierCall != null) {
+      if (document.getLineNumber(firstQualifierCall.argumentList.textOffset) != callLine) return false
+      var currentQualifierCall: PsiMethodCallExpression = firstQualifierCall
+      while (true) {
+        val qualifier = currentQualifierCall.methodExpression.qualifier
+        if (qualifier == null) return false
+        if (qualifier !is PsiMethodCallExpression) return true
+        if (document.getLineNumber(qualifier.argumentList.textOffset) != callLine) return false
+        currentQualifierCall = qualifier
+      }
+    }
+    return true
   }
 
   private fun collectChain(call: PsiMethodCallExpression): List<PsiMethodCallExpression> {
