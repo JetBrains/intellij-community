@@ -36,7 +36,7 @@ public abstract class AbstractIndentParser implements PsiParser {
   protected boolean myNewLine = true;
 
   @NotNull
-  public ASTNode parse(IElementType root, PsiBuilder builder) {
+  public ASTNode parse(@NotNull IElementType root, @NotNull PsiBuilder builder) {
     myNewLines = new HashMap<>();
     myIndents = new HashMap<>();
     myBuilder = builder;
