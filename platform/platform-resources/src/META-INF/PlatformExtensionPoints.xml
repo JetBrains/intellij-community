@@ -226,6 +226,8 @@
 
     <extensionPoint name="pluginReplacement" interface="com.intellij.ide.plugins.PluginReplacement"/>
 
+    <extensionPoint name="pluginVersionChecker" interface="com.intellij.ide.plugins.PluginVersionChecker"/>
+
     <extensionPoint name="ui.suitableFontProvider" interface="com.intellij.ui.SuitableFontProvider"/>
 
     <extensionPoint name="schemeImporter" beanClass="com.intellij.openapi.options.SchemeImporterEP">
