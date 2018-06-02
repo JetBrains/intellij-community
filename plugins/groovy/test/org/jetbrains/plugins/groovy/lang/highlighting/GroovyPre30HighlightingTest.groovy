@@ -30,4 +30,8 @@ class GroovyPre30HighlightingTest extends GrHighlightingTestBase {
   void 'test negated instanceof'() {
     fixture.testHighlighting testName + '.groovy'
   }
+
+  void 'test method reference'() {
+    fixture.testHighlighting testName + '.groovy'
+  }
 }

@@ -81,4 +81,8 @@ I i = {3}
   void 'test negated instanceof'() {
     fixture.testHighlighting testName + '.groovy'
   }
+
+  void 'test method reference'() {
+    fixture.testHighlighting testName + '.groovy'
+  }
 }
