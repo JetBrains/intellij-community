@@ -60,6 +60,7 @@
     T_SAFE_DOT = '?.'
     T_SPREAD_DOT = '*.'
     T_METHOD_CLOSURE = '.&'
+    T_METHOD_REFERENCE = '::'
     T_Q = '?'
     T_ELVIS = '?:'
 
@@ -974,7 +975,7 @@ qualified_reference_expression ::= expression (mb_nl reference_dot) <<mb_nl_grou
   elementType = reference_expression
 }
 property_expression ::= expression (mb_nl property_dot) <<mb_nl_group (type_argument_list? property_expression_identifiers)>>
-private method_reference_dot ::= '.&' { consumeTokenMethod = 'consumeTokenFast' }
+private method_reference_dot ::= '.&' | '::' { consumeTokenMethod = 'consumeTokenFast' }
 private reference_dot ::= '.' attribute_dot? | '?.' attribute_dot? | '*.' { consumeTokenMethod = 'consumeTokenFast' }
 private attribute_dot ::= mb_nl ('@') { consumeTokenMethod = 'consumeTokenFast' }
 private property_dot ::= reference_dot | method_reference_dot

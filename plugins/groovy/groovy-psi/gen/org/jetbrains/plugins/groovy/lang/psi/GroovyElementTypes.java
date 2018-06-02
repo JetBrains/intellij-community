@@ -270,6 +270,7 @@ public interface GroovyElementTypes {
   IElementType T_LSH_ASSIGN = new GroovyElementType("<<=");
   IElementType T_LT = new GroovyElementType("<");
   IElementType T_METHOD_CLOSURE = new GroovyElementType(".&");
+  IElementType T_METHOD_REFERENCE = new GroovyElementType("::");
   IElementType T_MINUS = new GroovyElementType("-");
   IElementType T_MINUS_ASSIGN = new GroovyElementType("-=");
   IElementType T_NEQ = new GroovyElementType("!=");

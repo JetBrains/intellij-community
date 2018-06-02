@@ -4039,9 +4039,16 @@ public class GroovyGeneratedParser implements PsiParser, LightPsiParser {
   }
 
   /* ********************************************************** */
-  // '.&'
+  // '.&' | '::'
   static boolean method_reference_dot(PsiBuilder b, int l) {
-    return consumeTokenFast(b, T_METHOD_CLOSURE);
+    if (!recursion_guard_(b, l, "method_reference_dot")) return false;
+    if (!nextTokenIsFast(b, T_METHOD_CLOSURE, T_METHOD_REFERENCE)) return false;
+    boolean r;
+    Marker m = enter_section_(b);
+    r = consumeTokenFast(b, T_METHOD_CLOSURE);
+    if (!r) r = consumeTokenFast(b, T_METHOD_REFERENCE);
+    exit_section_(b, m, null, r);
+    return r;
   }
 
   /* ********************************************************** */
