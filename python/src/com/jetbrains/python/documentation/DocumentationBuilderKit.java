@@ -35,7 +35,7 @@ class DocumentationBuilderKit {
   static final TagWrapper TagCode = new TagWrapper("code");
   static final TagWrapper TagSpan = new TagWrapper("span");
 
-  final static @NonNls String BR = "<br>";
+  public final static @NonNls String BR = "<br>";
 
   @NotNull
   static final Function<String, String> ESCAPE_ONLY = StringUtil::escapeXml;

@@ -54,7 +54,6 @@ import java.io.IOException;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.function.Function;
 import java.util.regex.Pattern;
 
 import static com.jetbrains.python.documentation.DocumentationBuilderKit.*;
@@ -343,7 +342,7 @@ public class PyDocumentationBuilder {
         }
       }
       myBody.add(PythonDocumentationProvider.describeDecorators(pyFunction, WRAP_IN_ITALIC, ESCAPE_AND_SAVE_NEW_LINES_AND_SPACES, BR, BR));
-      myBody.add(PythonDocumentationProvider.describeFunction(pyFunction, WRAP_IN_BOLD, ESCAPE_AND_SAVE_NEW_LINES_AND_SPACES, myContext));
+      myBody.add(PythonDocumentationProvider.describeFunction(pyFunction, myContext, false));
       if (docStringExpression == null && !isProperty) {
         addInheritedDocString(pyFunction, pyClass);
       }

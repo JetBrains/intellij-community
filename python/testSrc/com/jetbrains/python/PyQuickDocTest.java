@@ -455,6 +455,26 @@ public class PyQuickDocTest extends LightMarkedTestCase {
     runWithLanguageLevel(LanguageLevel.PYTHON35, this::checkHTMLOnly);
   }
 
+  // PY-30103
+  public void testFunctionWrapping() {
+    runWithLanguageLevel(LanguageLevel.PYTHON35, this::checkHTMLOnly);
+  }
+
+  // PY-30103
+  public void testReturnTypeWrappedBecauseTooLongItself() {
+    runWithLanguageLevel(LanguageLevel.PYTHON35, this::checkHTMLOnly);
+  }
+
+  // PY-30103
+  public void testReturnTypeWrappedBecauseOfParameters() {
+    runWithLanguageLevel(LanguageLevel.PYTHON35, this::checkHTMLOnly);
+  }
+
+  // PY-30103
+  public void testReturnTypeWrappedBecauseOfFunctionName() {
+    runWithLanguageLevel(LanguageLevel.PYTHON35, this::checkHTMLOnly);
+  }
+
   public void testPackage() {
     myFixture.copyDirectoryToProject(getTestName(false), "");
     final VirtualFile file = myFixture.findFileInTempDir("pkg/__init__.py");
