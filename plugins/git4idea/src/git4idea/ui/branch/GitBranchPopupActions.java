@@ -623,7 +623,10 @@ class GitBranchPopupActions {
   @Nullable
   private static String getCurrentBranchPresentation(@NotNull Collection<GitRepository> repositories) {
     Set<String> currentBranches = map2Set(repositories, Repository::getCurrentBranchName);
-    if (currentBranches.size() == 1) return getBranchPresentation(currentBranches.iterator().next());
+    if (currentBranches.size() == 1) {
+      String branch = currentBranches.iterator().next();
+      return branch == null ? "detached head" : getBranchPresentation(branch);
+    }
     return "current branch";
   }
 
