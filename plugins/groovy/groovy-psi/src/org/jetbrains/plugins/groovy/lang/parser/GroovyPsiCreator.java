@@ -10,6 +10,7 @@ import org.jetbrains.plugins.groovy.lang.groovydoc.psi.GroovyDocPsiCreator;
 import org.jetbrains.plugins.groovy.lang.lexer.GroovyElementType;
 import org.jetbrains.plugins.groovy.lang.psi.impl.GrImportAliasImpl;
 import org.jetbrains.plugins.groovy.lang.psi.impl.GrInExpressionImpl;
+import org.jetbrains.plugins.groovy.lang.psi.impl.GrMethodReferenceExpressionImpl;
 import org.jetbrains.plugins.groovy.lang.psi.impl.GroovyASTPsiElementImpl;
 import org.jetbrains.plugins.groovy.lang.psi.impl.auxiliary.GrListOrMapImpl;
 import org.jetbrains.plugins.groovy.lang.psi.impl.auxiliary.GrThrowsClauseImpl;
@@ -205,6 +206,7 @@ public class GroovyPsiCreator {
 
     //Paths
     if (elem == REFERENCE_EXPRESSION) return new GrReferenceExpressionImpl(node);
+    if (elem == METHOD_REFERENCE_EXPRESSION) return new GrMethodReferenceExpressionImpl(node);
     if (elem == PROPERTY_EXPRESSION) return new GrPropertySelectionImpl(node);
     if (elem == METHOD_CALL_EXPRESSION) return new GrMethodCallExpressionImpl(node);
     if (elem == INDEX_EXPRESSION) return new GrIndexPropertyImpl(node);

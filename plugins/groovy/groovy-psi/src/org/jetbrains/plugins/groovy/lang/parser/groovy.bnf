@@ -173,7 +173,6 @@
   extends(".*_expression") = expression
   extends(".*_type_element") = type_element
   elementType('.*_modifier_list') = modifier_list
-  elementType('.*_reference_expression') = reference_expression
   elementType('.*_class_type_element') = class_type_element
   consumeTokenMethod('.*_expression') = 'consumeTokenFast'
   consumeTokenMethod('.*_expression_tail') = 'consumeTokenFast'
@@ -851,7 +850,7 @@ private priority0 ::= unqualified_reference_expression
 unqualified_reference_expression ::= IDENTIFIER
                                    | 'this'
                                    | 'super'
-                                   | ('in' | 'def' | 'trait') &dot
+                                   | ('in' | 'def' | 'trait') &(reference_dot | '.&')
                                    | (STR_SQ | STR_DQ) &string_literal_as_reference
 {
   elementType = reference_expression
@@ -968,15 +967,17 @@ private non_empty_list_or_map ::= '[' bracket_argument_list_item bracket_argumen
   pin = 2
 }
 
-private qualified_expressions ::= qualified_reference_expression | property_expression
-qualified_reference_expression ::= expression <<qualified_reference_op qualified_reference_expression_identifiers>>
-property_expression ::= expression <<qualified_reference_op property_expression_identifiers>>
-private meta qualified_reference_op ::= (mb_nl dot) <<mb_nl_group (type_argument_list? <<identifiers>>)>>
-private dot ::= '.' attribute_dot? | '?.' attribute_dot? | '.&' | '*.' { consumeTokenMethod = 'consumeTokenFast' }
-private attribute_dot ::= mb_nl ('@')
+private qualified_expressions ::= method_reference_expression | qualified_reference_expression | property_expression
+method_reference_expression ::= expression (mb_nl method_reference_dot) (mb_nl qualified_reference_expression_identifiers)
+qualified_reference_expression ::= expression (mb_nl reference_dot) <<mb_nl_group (type_argument_list? qualified_reference_expression_identifiers)>>
 {
-  consumeTokenMethod = 'consumeTokenFast'
+  elementType = reference_expression
 }
+property_expression ::= expression (mb_nl property_dot) <<mb_nl_group (type_argument_list? property_expression_identifiers)>>
+private method_reference_dot ::= '.&' { consumeTokenMethod = 'consumeTokenFast' }
+private reference_dot ::= '.' attribute_dot? | '?.' attribute_dot? | '*.' { consumeTokenMethod = 'consumeTokenFast' }
+private attribute_dot ::= mb_nl ('@') { consumeTokenMethod = 'consumeTokenFast' }
+private property_dot ::= reference_dot | method_reference_dot
 private qualified_reference_expression_identifiers ::= IDENTIFIER
                                                      | STR_SQ | STR_DQ
                                                      | regex_literal

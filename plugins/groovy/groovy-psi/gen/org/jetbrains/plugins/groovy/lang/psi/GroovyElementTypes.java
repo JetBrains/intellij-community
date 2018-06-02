@@ -111,6 +111,7 @@ public interface GroovyElementTypes {
   GroovyElementType LOR_EXPRESSION = new GroovyElementType("LOR_EXPRESSION");
   GrMethodElementType METHOD = new GrMethodElementType("METHOD");
   GroovyElementType METHOD_CALL_EXPRESSION = new GroovyElementType("METHOD_CALL_EXPRESSION");
+  GroovyElementType METHOD_REFERENCE_EXPRESSION = new GroovyElementType("METHOD_REFERENCE_EXPRESSION");
   GrModifierListElementType MODIFIER_LIST = new GrModifierListElementType("MODIFIER_LIST");
   GroovyElementType MULTIPLICATIVE_EXPRESSION = new GroovyElementType("MULTIPLICATIVE_EXPRESSION");
   GroovyElementType NAMED_ARGUMENT = new GroovyElementType("NAMED_ARGUMENT");
