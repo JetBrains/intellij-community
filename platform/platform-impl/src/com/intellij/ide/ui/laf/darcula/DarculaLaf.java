@@ -130,9 +130,6 @@ public class DarculaLaf extends BasicLookAndFeel {
         applySystemFonts(defaults);
       }
       defaults.put("EditorPane.font", defaults.getFont("TextField.font"));
-      if (SystemInfo.isMacOSYosemite) {
-        System.out.println("!!!");;
-      }
       return defaults;
     }
     catch (Exception e) {
