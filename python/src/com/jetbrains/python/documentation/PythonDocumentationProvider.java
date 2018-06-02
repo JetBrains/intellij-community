@@ -22,6 +22,7 @@ import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.QualifiedName;
 import com.intellij.util.io.HttpRequests;
+import com.intellij.xml.CommonXmlStrings;
 import com.jetbrains.python.PyNames;
 import com.jetbrains.python.PyTokenTypes;
 import com.jetbrains.python.PythonDialectsTokenSetProvider;
@@ -64,6 +65,8 @@ import static com.jetbrains.python.documentation.DocumentationBuilderKit.*;
  */
 public class PythonDocumentationProvider extends AbstractDocumentationProvider implements ExternalDocumentationProvider {
 
+  private static final int RETURN_TYPE_WRAPPING_THRESHOLD = 80;
+
   // provides ctrl+hover info
   @Override
   @Nullable
@@ -92,7 +95,7 @@ public class PythonDocumentationProvider extends AbstractDocumentationProvider i
 
       result
         .add(describeDecorators(function, Function.identity(), TO_ONE_LINE_AND_ESCAPE, ", ", "\n"))
-        .add(describeFunction(function, Function.identity(), ESCAPE_ONLY, context));
+        .add(describeFunction(function, context, true));
 
       final String docStringSummary = getDocStringSummary(function);
       if (docStringSummary != null) {
@@ -139,15 +142,13 @@ public class PythonDocumentationProvider extends AbstractDocumentationProvider i
   }
 
   @NotNull
-  static ChainIterable<String> describeFunction(@NotNull PyFunction function,
-                                                @NotNull Function<String, String> escapedNameMapper,
-                                                @NotNull Function<String, String> escaper,
-                                                @NotNull TypeEvalContext context) {
+  static ChainIterable<String> describeFunction(@NotNull PyFunction function, @NotNull TypeEvalContext context, boolean forTooltip) {
 
-    final ChainIterable<String> result = describeFunctionWithTypes(function, escaper, escapedNameMapper, context);
+    final ChainIterable<String> result = new ChainIterable<>(describeFunctionWithTypes(function, context, forTooltip));
 
     if (!PyiUtil.isOverload(function, context)) {
       final List<PyFunction> overloads = PyiUtil.getOverloads(function, context);
+      final Function<String, String> escaper = forTooltip ? Function.identity() : PythonDocumentationProvider::saveSpaces;
       if (!overloads.isEmpty()) {
         result.addItem(escaper.apply("\nPossible types:\n"));
         boolean first = true;
@@ -202,30 +203,57 @@ public class PythonDocumentationProvider extends AbstractDocumentationProvider i
   }
 
   @NotNull
-  private static ChainIterable<String> describeFunctionWithTypes(@NotNull PyFunction function,
-                                                                 @NotNull Function<String, String> escaper,
-                                                                 @NotNull Function<String, String> escapedNameMapper,
-                                                                 @NotNull TypeEvalContext context) {
-    final ChainIterable<String> result = new ChainIterable<>();
+  private static String describeFunctionWithTypes(@NotNull PyFunction function,
+                                                  @NotNull TypeEvalContext context,
+                                                  boolean forTooltip) {
+    final StringBuilder result = new StringBuilder();
     // TODO wrapping of long signatures
     if (function.isAsync()) {
-      result.addItem(ESCAPE_AND_SAVE_NEW_LINES_AND_SPACES.apply("async "));
+      result.append(saveSpaces("async "));
     }
-    result.addItem(ESCAPE_AND_SAVE_NEW_LINES_AND_SPACES.apply("def "))
-          .addItem(escapedNameMapper.apply(function.getName()))
-          .addItem("(");
+    result.append(saveSpaces("def "));
+    final String name = StringUtil.notNullize(function.getName(), PyNames.UNNAMED_ELEMENT);
+    int firstParamOffset = result.length() + name.length();
+    int lastLineOffset = 0;
+    if (forTooltip) {
+      result.append(escaped(name));
+    }
+    else {
+      appendWithTags(result, escaped(name), "b");
+    }
+
+    result.append("(");
+    firstParamOffset++;
+
     boolean first = true;
     for (PyCallableParameter parameter : function.getParameters(context)) {
       if (!first) {
-        result.addItem(ESCAPE_AND_SAVE_NEW_LINES_AND_SPACES.apply(", "));
+        result.append(",");
+        if (forTooltip) {
+          result.append(CommonXmlStrings.NBSP);
+        }
+        else {
+          result.append(BR);
+          lastLineOffset = result.length();
+          // alignment
+          StringUtil.repeatSymbol(result, ' ', firstParamOffset);
+        }
       }
-      result.addItem(parameter.getName()).addItem(ESCAPE_AND_SAVE_NEW_LINES_AND_SPACES.apply(": "));
-      describeTypeWithLinks(parameter.getType(context), context, function, result);
+      result.append(escaped(StringUtil.notNullize(parameter.getName(), PyNames.UNNAMED_ELEMENT)))
+            .append(saveSpaces(": "));
+      result.append(formatTypeWithLinks(parameter.getType(context), function, context));
       first = false;
     }
-    result.addItem(ESCAPE_AND_SAVE_NEW_LINES_AND_SPACES.apply(") -> "));
-    describeTypeWithLinks(context.getReturnType(function), context, function, result);
-    return result;
+
+    result.append(")");
+
+    final int wrappingOffset = result.length();
+    result.append(saveSpaces(" -> "))
+          .append(formatTypeWithLinks(context.getReturnType(function), function, context));
+    if (!forTooltip && StringUtil.stripHtml(result.substring(lastLineOffset), false).length() > RETURN_TYPE_WRAPPING_THRESHOLD) {
+      result.insert(wrappingOffset, saveSpaces("\n "));
+    }
+    return result.toString();
   }
 
   @Nullable
@@ -681,4 +709,32 @@ public class PythonDocumentationProvider extends AbstractDocumentationProvider i
     }
     return super.getCustomDocumentationElement(editor, file, contextElement);
   }
+
+  private static void appendWithTags(@NotNull StringBuilder result, @NotNull String escapedContent, @NotNull String... tags) {
+    for (String tag : tags) {
+      result.append("<").append(tag).append(">");
+    }
+    result.append(escapedContent);
+    for (int i = tags.length - 1; i >= 0; i--) {
+      result.append("</").append(tags[i]).append(">");
+    }
+  }
+
+  @NotNull
+  private static String escaped(@NotNull String unescaped) {
+    return StringUtil.escapeXml(unescaped);
+  }
+
+  @NotNull
+  private static String saveSpaces(@NotNull String text) {
+    return ESCAPE_AND_SAVE_NEW_LINES_AND_SPACES.apply(text);
+  }
+
+  @NotNull
+  private static String formatTypeWithLinks(@Nullable PyType type, @NotNull PsiElement anchor, @NotNull TypeEvalContext context) {
+    final ChainIterable<String> holder = new ChainIterable<>();
+    describeTypeWithLinks(type, context, anchor, holder);
+    return holder.toString();
+  }
+
 }
