@@ -154,16 +154,18 @@ public abstract class AbstractIdeModifiableModelsProvider extends IdeModelsProvi
   @NotNull
   @Override
   public Module newModule(@NotNull ModuleData moduleData) {
-    String filePath = moduleData.getModuleFilePath();
-    String moduleTypeId = moduleData.getModuleTypeId();
+    String imlName = null;
     for (String candidate : suggestModuleNameCandidates(moduleData)) {
       Module module = findIdeModule(candidate);
       if (module == null) {
-        filePath = toCanonicalPath(moduleData.getModuleFileDirectoryPath() + "/" + candidate + ModuleFileType.DOT_DEFAULT_EXTENSION);
+        imlName = candidate;
         break;
       }
     }
-    return newModule(filePath, moduleTypeId);
+    assert imlName != null : "Too many duplicated module names";
+
+    String filePath = toCanonicalPath(moduleData.getModuleFileDirectoryPath() + "/" + imlName + ModuleFileType.DOT_DEFAULT_EXTENSION);
+    return newModule(filePath, moduleData.getModuleTypeId());
   }
 
   @Nullable
