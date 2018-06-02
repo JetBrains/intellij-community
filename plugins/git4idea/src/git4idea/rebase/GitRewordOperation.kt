@@ -219,7 +219,5 @@ class GitRewordOperation(private val repository: GitRepository,
       notifySuccess()
       succeeded = true
     }
-
-    override fun shouldRefreshOnSuccess(successType: GitSuccessfulRebase.SuccessType) = false
   }
 }

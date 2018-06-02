@@ -315,11 +315,7 @@ public class GitRebaseProcess {
 
   private boolean shouldBeRefreshed(@NotNull GitRebaseStatus rebaseStatus) {
     return rebaseStatus.getType() != GitRebaseStatus.Type.SUCCESS ||
-           shouldRefreshOnSuccess(((GitSuccessfulRebase)rebaseStatus).getSuccessType());
-  }
-
-  protected boolean shouldRefreshOnSuccess(@NotNull SuccessType successType) {
-    return successType != SuccessType.UP_TO_DATE;
+           ((GitSuccessfulRebase)rebaseStatus).getSuccessType() != SuccessType.UP_TO_DATE;
   }
 
   private boolean saveDirtyRootsInitially(@NotNull List<GitRepository> repositories) {
