@@ -445,6 +445,16 @@ public class PyQuickDocTest extends LightMarkedTestCase {
     checkHTMLOnly();
   }
 
+  // PY-29339
+  public void testAsyncFunctionTooltip() {
+    runWithLanguageLevel(LanguageLevel.PYTHON35, this::checkHover);
+  }
+
+  // PY-29339
+  public void testAsyncFunctionQuickDoc() {
+    runWithLanguageLevel(LanguageLevel.PYTHON35, this::checkHTMLOnly);
+  }
+
   public void testPackage() {
     myFixture.copyDirectoryToProject(getTestName(false), "");
     final VirtualFile file = myFixture.findFileInTempDir("pkg/__init__.py");
