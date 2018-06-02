@@ -208,7 +208,12 @@ public class PythonDocumentationProvider extends AbstractDocumentationProvider i
                                                                  @NotNull TypeEvalContext context) {
     final ChainIterable<String> result = new ChainIterable<>();
     // TODO wrapping of long signatures
-    result.addItem(ESCAPE_AND_SAVE_NEW_LINES_AND_SPACES.apply("def ")).addItem(escapedNameMapper.apply(function.getName())).addItem("(");
+    if (function.isAsync()) {
+      result.addItem(ESCAPE_AND_SAVE_NEW_LINES_AND_SPACES.apply("async "));
+    }
+    result.addItem(ESCAPE_AND_SAVE_NEW_LINES_AND_SPACES.apply("def "))
+          .addItem(escapedNameMapper.apply(function.getName()))
+          .addItem("(");
     boolean first = true;
     for (PyCallableParameter parameter : function.getParameters(context)) {
       if (!first) {
