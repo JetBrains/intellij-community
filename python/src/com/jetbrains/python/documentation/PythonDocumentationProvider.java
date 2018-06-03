@@ -226,10 +226,12 @@ public class PythonDocumentationProvider extends AbstractDocumentationProvider i
     firstParamOffset++;
 
     boolean first = true;
-    for (PyCallableParameter parameter : function.getParameters(context)) {
+    boolean firstIsSelf = false;
+    final List<PyCallableParameter> parameters = function.getParameters(context);
+    for (PyCallableParameter parameter : parameters) {
       if (!first) {
         result.append(",");
-        if (forTooltip) {
+        if (forTooltip || firstIsSelf && parameters.size() == 2) {
           result.append(CommonXmlStrings.NBSP);
         }
         else {
@@ -238,6 +240,9 @@ public class PythonDocumentationProvider extends AbstractDocumentationProvider i
           // alignment
           StringUtil.repeatSymbol(result, ' ', firstParamOffset);
         }
+      }
+      else {
+        firstIsSelf = parameter.isSelf();
       }
       result.append(escaped(StringUtil.notNullize(parameter.getName(), PyNames.UNNAMED_ELEMENT)))
             .append(saveSpaces(": "));
