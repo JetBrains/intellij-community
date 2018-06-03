@@ -53,7 +53,6 @@ import com.intellij.util.ui.JBUI
 import com.intellij.vcsUtil.VcsUtil
 import org.jetbrains.annotations.CalledInAwt
 import java.awt.BorderLayout
-import java.awt.Graphics
 import java.awt.Point
 import java.lang.ref.WeakReference
 import java.util.*
@@ -506,12 +505,11 @@ class PartialLocalLineStatusTracker(project: Project,
   protected class MyLineStatusMarkerRenderer(override val tracker: PartialLocalLineStatusTracker) :
     LineStatusTracker.LocalLineStatusMarkerRenderer(tracker) {
 
-    override fun paint(editor: Editor, range: Range, g: Graphics) {
-      if (range !is LocalRange ||
-          range.changelistId == tracker.defaultMarker.changelistId) {
-        super.paint(editor, range, g)
-      } else {
-        paintIgnoredRange(g, editor, range)
+    override fun createMerger(editor: Editor): VisibleRangeMerger {
+      return object : VisibleRangeMerger(editor) {
+        override fun isIgnored(range: Range): Boolean {
+          return range is LocalRange && range.changelistId != tracker.defaultMarker.changelistId
+        }
       }
     }
 
