@@ -22,6 +22,7 @@ import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
+import com.intellij.psi.impl.source.resolve.JavaResolveCache;
 import com.intellij.psi.impl.source.resolve.graphInference.InferenceSession;
 import com.intellij.psi.infos.CandidateInfo;
 import com.intellij.psi.infos.MethodCandidateInfo;
@@ -29,7 +30,9 @@ import com.intellij.psi.scope.PsiConflictResolver;
 import com.intellij.psi.scope.conflictResolvers.JavaMethodsConflictResolver;
 import com.intellij.psi.scope.processor.MethodCandidatesProcessor;
 import com.intellij.psi.search.GlobalSearchScope;
-import com.intellij.psi.util.*;
+import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.psi.util.PsiUtil;
+import com.intellij.psi.util.TypeConversionUtil;
 import com.intellij.util.Function;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.VisibilityUtil;
@@ -148,22 +151,18 @@ public class PsiDiamondTypeImpl extends PsiDiamondType {
         final Boolean accepted = type.accept(anonymousTypeVisitor);
         if (accepted != null && !accepted.booleanValue()) {
           return PsiDiamondTypeImpl.DiamondInferenceResult.ANONYMOUS_INNER_RESULT;
-        } 
+        }
       }
     }
     return inferenceResult;
   }
 
-  private static JavaResolveResult getStaticFactory(final PsiNewExpression newExpression, final PsiElement context) {
-    return context == newExpression && !MethodCandidateInfo.isOverloadCheck()
-           ? CachedValuesManager.getCachedValue(newExpression,
-                                                () -> new CachedValueProvider.Result<>(
-                                                  getStaticFactoryCandidateInfo(newExpression, newExpression),
-                                                  PsiModificationTracker.MODIFICATION_COUNT))
-           : getStaticFactoryCandidateInfo(newExpression, context);
+  private static JavaResolveResult getStaticFactory(@NotNull PsiNewExpression newExpression, @NotNull PsiElement context) {
+    return JavaResolveCache.getInstance(newExpression.getProject()).getNewExpressionStaticFactory(newExpression, context,
+              PsiDiamondTypeImpl::getStaticFactoryCandidateInfo);
   }
 
-  public static DiamondInferenceResult resolveInferredTypesNoCheck(final PsiNewExpression newExpression, final PsiElement context) {
+  public static DiamondInferenceResult resolveInferredTypesNoCheck(@NotNull PsiNewExpression newExpression, @NotNull PsiElement context) {
     final JavaResolveResult staticFactoryCandidateInfo = getStaticFactory(newExpression, context);
     if (staticFactoryCandidateInfo == null) {
       return DiamondInferenceResult.NULL_RESULT;
@@ -231,8 +230,7 @@ public class PsiDiamondTypeImpl extends PsiDiamondType {
     return result;
   }
 
-  private static JavaResolveResult getStaticFactoryCandidateInfo(final PsiNewExpression newExpression,
-                                                                 final PsiElement context) {
+  private static JavaResolveResult getStaticFactoryCandidateInfo(@NotNull PsiNewExpression newExpression, @NotNull PsiElement context) {
     return ourDiamondGuard.doPreventingRecursion(context, false, () -> {
 
       final PsiExpressionList argumentList = newExpression.getArgumentList();
@@ -262,7 +260,7 @@ public class PsiDiamondTypeImpl extends PsiDiamondType {
   }
 
   @Nullable
-  public static JavaResolveResult[] collectStaticFactories(PsiNewExpression newExpression, final PsiConflictResolver... conflictResolvers) {
+  public static JavaResolveResult[] collectStaticFactories(@NotNull PsiNewExpression newExpression, @NotNull PsiConflictResolver... conflictResolvers) {
     PsiExpressionList argumentList = newExpression.getArgumentList();
     if (argumentList == null) {
       return null;
@@ -274,13 +272,13 @@ public class PsiDiamondTypeImpl extends PsiDiamondType {
       return null;
     }
 
-    final List<CandidateInfo> candidates = new ArrayList<>();
     PsiMethod[] constructors = psiClass.getConstructors();
     if (constructors.length == 0) {
       //default constructor
       constructors = new PsiMethod[] {null};
     }
 
+    final List<CandidateInfo> candidates = new ArrayList<>();
     final MethodCandidatesProcessor
       processor = new MethodCandidatesProcessor(argumentList, argumentList.getContainingFile(), conflictResolvers, candidates) {
       @Override
@@ -312,7 +310,7 @@ public class PsiDiamondTypeImpl extends PsiDiamondType {
   }
 
   @Nullable
-  private static PsiClass findClass(PsiNewExpression newExpression) {
+  private static PsiClass findClass(@NotNull PsiNewExpression newExpression) {
     final PsiJavaCodeReferenceElement classReference = newExpression.getClassOrAnonymousClassReference();
     if (classReference != null) {
       final String text = classReference.getReferenceName();
@@ -339,12 +337,12 @@ public class PsiDiamondTypeImpl extends PsiDiamondType {
   }
 
   @Nullable
-  private static PsiMethod generateStaticFactory(@Nullable PsiMethod constructor,
-                                                 PsiClass containingClass,
-                                                 PsiTypeParameter[] params,
+  private static PsiMethod generateStaticFactory(@Nullable PsiMethod constructor, // null means default
+                                                 @NotNull PsiClass containingClass,
+                                                 @NotNull PsiTypeParameter[] params,
                                                  PsiJavaCodeReferenceElement reference) {
     final StringBuilder buf = new StringBuilder();
-    final String modifier = VisibilityUtil.getVisibilityModifier(constructor != null ? constructor.getModifierList() : containingClass.getModifierList());
+    final String modifier = VisibilityUtil.getVisibilityModifier(constructor == null ? containingClass.getModifierList() : constructor.getModifierList());
     if (!PsiModifier.PACKAGE_LOCAL.equals(modifier)) {
       buf.append(modifier);
       buf.append(" ");
@@ -372,7 +370,7 @@ public class PsiDiamondTypeImpl extends PsiDiamondType {
 
     String qualifiedName = containingClass.getQualifiedName();
 
-    PsiElement qualifier = reference != null ? reference.getQualifier() : null;
+    PsiElement qualifier = reference == null ? null : reference.getQualifier();
     if (qualifier instanceof PsiJavaCodeReferenceElement) {
       final JavaResolveResult resolveResult = ((PsiJavaCodeReferenceElement)qualifier).advancedResolve(false);
       final PsiElement element = resolveResult.getElement();
@@ -414,7 +412,7 @@ public class PsiDiamondTypeImpl extends PsiDiamondType {
     buf.append("{}");
 
     try {
-      return elementFactory.createMethodFromText(buf.toString(), constructor != null ? constructor : containingClass);
+      return elementFactory.createMethodFromText(buf.toString(), constructor == null ? containingClass : constructor);
     }
     catch (IncorrectOperationException e) {
       return null;
@@ -422,7 +420,7 @@ public class PsiDiamondTypeImpl extends PsiDiamondType {
   }
 
   @NotNull
-  private static PsiTypeParameter[] getAllTypeParams(PsiTypeParameterListOwner listOwner, PsiClass containingClass) {
+  private static PsiTypeParameter[] getAllTypeParams(@Nullable PsiTypeParameterListOwner listOwner, @NotNull PsiClass containingClass) {
     Set<PsiTypeParameter> params = new LinkedHashSet<>();
     Collections.addAll(params, containingClass.getTypeParameters());
     if (listOwner != null) {
@@ -514,17 +512,17 @@ public class PsiDiamondTypeImpl extends PsiDiamondType {
   /**
    * from JDK-8062373 Allow diamond to be used with anonymous classes
    * It is a compile-time error if the superclass or superinterface type of the anonymous class, T, or any subexpression of T, has one of the following forms:
-   *  - A type variable (4.4) that was not declared as a type parameter (such as a type variable produced by capture conversion (5.1.10)) 
-   *  - An intersection type (4.9) 
+   *  - A type variable (4.4) that was not declared as a type parameter (such as a type variable produced by capture conversion (5.1.10))
+   *  - An intersection type (4.9)
    *  - A class or interface type, where the class or interface declaration is not accessible from the class or interface in which the expression appears.
-   * 
+   *
    * The term "subexpression" includes type arguments of parameterized types (4.5), bounds of wildcards (4.5.1), and element types of array types (10.1).
    * It excludes bounds of type variables.
    */
   private static class InferredAnonymousTypeVisitor extends PsiTypeVisitor<Boolean> {
     private final PsiElement myExpression;
 
-    public InferredAnonymousTypeVisitor(PsiElement expression) {
+    InferredAnonymousTypeVisitor(PsiElement expression) {
       myExpression = expression;
     }
 
