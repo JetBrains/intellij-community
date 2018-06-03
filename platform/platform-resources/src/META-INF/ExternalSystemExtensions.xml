@@ -58,7 +58,8 @@
     <!--Tool window services-->
     <externalProjectDataService implementation="com.intellij.openapi.externalSystem.service.task.ToolWindowModuleService"/>
     <externalProjectDataService implementation="com.intellij.openapi.externalSystem.service.task.ToolWindowTaskService"/>
-    <externalSystemViewContributor implementation="com.intellij.openapi.externalSystem.view.ExternalSystemViewDefaultContributor"/>
+    <externalSystemViewContributor id="default" order="last"
+                                   implementation="com.intellij.openapi.externalSystem.view.ExternalSystemViewDefaultContributor"/>
 
     <!--Execution-->
     <programRunner implementation="com.intellij.openapi.externalSystem.service.execution.ExternalSystemTaskRunner"/>

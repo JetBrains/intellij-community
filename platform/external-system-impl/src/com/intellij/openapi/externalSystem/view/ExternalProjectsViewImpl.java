@@ -476,6 +476,16 @@ public class ExternalProjectsViewImpl extends SimpleToolWindowPanel implements D
     }
   }
 
+  @Nullable
+  String getDisplayName(@Nullable DataNode node) {
+    if (node == null) return null;
+    return myViewContributors.stream()
+                             .map(contributor -> contributor.getDisplayName(node))
+                             .filter(Objects::nonNull)
+                             .findFirst()
+                             .orElse(null);
+  }
+
   private void scheduleTasksRebuild() {
     scheduleStructureRequest(() -> {
       assert myStructure != null;
