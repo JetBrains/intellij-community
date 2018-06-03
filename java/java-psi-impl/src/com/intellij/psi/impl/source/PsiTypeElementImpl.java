@@ -37,15 +37,13 @@ import org.jetbrains.annotations.Nullable;
 import java.lang.ref.WeakReference;
 import java.util.List;
 
-import static com.intellij.util.containers.ContainerUtil.copyAndClear;
-
 public class PsiTypeElementImpl extends CompositePsiElement implements PsiTypeElement {
-  @SuppressWarnings({"UnusedDeclaration"})
+  @SuppressWarnings("UnusedDeclaration")
   public PsiTypeElementImpl() {
     this(JavaElementType.TYPE);
   }
 
-  protected PsiTypeElementImpl(IElementType type) {
+  PsiTypeElementImpl(@NotNull IElementType type) {
     super(type);
   }
 
@@ -65,6 +63,7 @@ public class PsiTypeElementImpl extends CompositePsiElement implements PsiTypeEl
     return CachedValuesManager.getCachedValue(this, () -> CachedValueProvider.Result.create(calculateType(), PsiModificationTracker.MODIFICATION_COUNT));
   }
 
+  @NotNull
   private PsiType calculateType() {
     PsiType inferredType = PsiAugmentProvider.getInferredType(this);
     if (inferredType != null) {
@@ -186,9 +185,9 @@ public class PsiTypeElementImpl extends CompositePsiElement implements PsiTypeEl
     return null;
   }
 
-  private static boolean isSelfReferenced(PsiExpression initializer, PsiElement parent) {
+  private static boolean isSelfReferenced(@NotNull PsiExpression initializer, PsiElement parent) {
     class SelfReferenceVisitor extends JavaRecursiveElementVisitor {
-      private boolean referenced = false;
+      private boolean referenced;
 
       @Override
       public void visitElement(PsiElement element) {
@@ -213,11 +212,11 @@ public class PsiTypeElementImpl extends CompositePsiElement implements PsiTypeEl
   @Override
   public boolean isInferredType() {
     PsiElement firstChild = getFirstChild();
-    return firstChild != null && PsiUtil.isJavaToken(firstChild, JavaTokenType.VAR_KEYWORD);
+    return PsiUtil.isJavaToken(firstChild, JavaTokenType.VAR_KEYWORD);
   }
 
   @NotNull
-  private Computable<PsiJavaCodeReferenceElement> getReferenceComputable(PsiJavaCodeReferenceElement ref) {
+  private Computable<PsiJavaCodeReferenceElement> getReferenceComputable(@NotNull PsiJavaCodeReferenceElement ref) {
     final PsiElement parent = getParent();
     if (parent instanceof PsiMethod || parent instanceof PsiVariable) {
       return computeFromTypeOwner(parent, new WeakReference<>(ref));
@@ -227,7 +226,7 @@ public class PsiTypeElementImpl extends CompositePsiElement implements PsiTypeEl
   }
 
   @NotNull
-  private static Computable<PsiJavaCodeReferenceElement> computeFromTypeOwner(final PsiElement parent, final WeakReference<PsiJavaCodeReferenceElement> ref) {
+  private static Computable<PsiJavaCodeReferenceElement> computeFromTypeOwner(final PsiElement parent, @NotNull WeakReference<PsiJavaCodeReferenceElement> ref) {
     return new Computable<PsiJavaCodeReferenceElement>() {
       volatile WeakReference<PsiJavaCodeReferenceElement> myCache = ref;
 
@@ -249,10 +248,12 @@ public class PsiTypeElementImpl extends CompositePsiElement implements PsiTypeEl
     };
   }
 
-  private static TypeAnnotationProvider createProvider(List<PsiAnnotation> annotations) {
-    return TypeAnnotationProvider.Static.create(copyAndClear(annotations, PsiAnnotation.ARRAY_FACTORY, true));
+  @NotNull
+  private static TypeAnnotationProvider createProvider(@NotNull List<PsiAnnotation> annotations) {
+    return TypeAnnotationProvider.Static.create(ContainerUtil.copyAndClear(annotations, PsiAnnotation.ARRAY_FACTORY, true));
   }
 
+  @NotNull
   private List<PsiType> collectTypes() {
     List<PsiTypeElement> typeElements = PsiTreeUtil.getChildrenOfTypeAsList(this, PsiTypeElement.class);
     return ContainerUtil.map(typeElements, typeElement -> typeElement.getType());
@@ -265,9 +266,7 @@ public class PsiTypeElementImpl extends CompositePsiElement implements PsiTypeEl
     if (firstChildNode.getElementType() == JavaElementType.TYPE) {
       return SourceTreeToPsiMap.<PsiTypeElement>treeToPsiNotNull(firstChildNode).getInnermostComponentReferenceElement();
     }
-    else {
-      return getReferenceElement();
-    }
+    return getReferenceElement();
   }
 
   @Nullable
