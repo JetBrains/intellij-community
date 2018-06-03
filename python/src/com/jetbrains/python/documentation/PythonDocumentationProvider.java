@@ -244,9 +244,11 @@ public class PythonDocumentationProvider extends AbstractDocumentationProvider i
       else {
         firstIsSelf = parameter.isSelf();
       }
-      result.append(escaped(StringUtil.notNullize(parameter.getName(), PyNames.UNNAMED_ELEMENT)))
-            .append(saveSpaces(": "));
-      result.append(formatTypeWithLinks(parameter.getType(context), function, context));
+      result.append(escaped(StringUtil.notNullize(parameter.getName(), PyNames.UNNAMED_ELEMENT)));
+      if (!parameter.isSelf()) {
+        result.append(saveSpaces(": "));
+        result.append(formatTypeWithLinks(parameter.getType(context), function, context));
+      }
       first = false;
     }
 
