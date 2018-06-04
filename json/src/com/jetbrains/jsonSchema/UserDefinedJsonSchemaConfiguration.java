@@ -35,6 +35,7 @@ import com.jetbrains.jsonSchema.impl.JsonSchemaVersion;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.io.File;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
@@ -239,7 +240,7 @@ public class UserDefinedJsonSchemaConfiguration {
 
     @NotNull
     private static String normalizePath(String path) {
-      return path.replace('\\', '/');
+      return StringUtil.trimEnd(path.replace('\\', '/').replace('/', File.separatorChar), File.separatorChar);
     }
 
     public String getPath() {
@@ -267,6 +268,9 @@ public class UserDefinedJsonSchemaConfiguration {
     }
 
     public String getPresentation() {
+      if (mappingKind == JsonMappingKind.Directory && StringUtil.isEmpty(path)) {
+        return mappingKind.getPrefix() + "[Project Directory]";
+      }
       return mappingKind.getPrefix() + path;
     }
 

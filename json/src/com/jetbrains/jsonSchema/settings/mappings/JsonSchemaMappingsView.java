@@ -58,7 +58,7 @@ public class JsonSchemaMappingsView implements Disposable {
   private static final String ADD_SCHEMA_MAPPING = "settings.json.schema.add.mapping";
   private static final String EDIT_SCHEMA_MAPPING = "settings.json.schema.edit.mapping";
   private static final String REMOVE_SCHEMA_MAPPING = "settings.json.schema.remove.mapping";
-  private final Runnable myTreeUpdater;
+  private final TreeUpdater myTreeUpdater;
   private final Consumer<String> mySchemaPathChangedCallback;
   private TableView<UserDefinedJsonSchemaConfiguration.Item> myTableView;
   private JComponent myComponent;
@@ -71,7 +71,7 @@ public class JsonSchemaMappingsView implements Disposable {
   private boolean myInitialized;
 
   public JsonSchemaMappingsView(Project project,
-                                Runnable treeUpdater,
+                                TreeUpdater treeUpdater,
                                 Consumer<String> schemaPathChangedCallback) {
     myTreeUpdater = treeUpdater;
     mySchemaPathChangedCallback = schemaPathChangedCallback;
@@ -134,7 +134,7 @@ public class JsonSchemaMappingsView implements Disposable {
     JPanel panel = decorator.createPanel();
     panel.setBorder(BorderFactory.createCompoundBorder(JBUI.Borders.empty(0, 8), panel.getBorder()));
     builder.addComponentFillVertically(panel, 5);
-    JLabel commentComponent = ComponentPanelBuilder.createCommentComponent("Path to file, directory or file name pattern *.config.json", false);
+    JLabel commentComponent = ComponentPanelBuilder.createCommentComponent("Path to file or directory relative to project root, or file name pattern like *.config.json", false);
     commentComponent.setBorder(JBUI.Borders.empty(0, 8, 5, 0));
     builder.addComponent(commentComponent);
 
@@ -145,10 +145,10 @@ public class JsonSchemaMappingsView implements Disposable {
   public void dispose() {
   }
 
-  public void setError(final String text) {
+  public void setError(final String text, boolean showWarning) {
     myErrorText = text;
-    myError.setVisible(text != null);
-    myErrorIcon.setVisible(text != null);
+    myError.setVisible(showWarning && text != null);
+    myErrorIcon.setVisible(showWarning && text != null);
   }
 
   private void attachNavigateToSchema() {
@@ -281,7 +281,7 @@ public class JsonSchemaMappingsView implements Disposable {
       myTableView.getListTableModel().addRow(currentItem);
       myTableView.editCellAt(myTableView.getListTableModel().getRowCount() - 1, 0);
 
-      myTreeUpdater.run();
+      myTreeUpdater.updateTree(false);
     }
   }
 
@@ -313,7 +313,7 @@ public class JsonSchemaMappingsView implements Disposable {
           ++cnt;
         }
         myTableView.getListTableModel().fireTableDataChanged();
-        myTreeUpdater.run();
+        myTreeUpdater.updateTree(true);
       }
     }
   }

@@ -50,9 +50,9 @@ public class JsonSchemaMappingsConfigurable extends MasterDetailsComponent imple
 
   @NotNull
   private final Project myProject;
-  private final Runnable myTreeUpdater = () -> {
+  private final TreeUpdater myTreeUpdater = showWarning -> {
     TREE_UPDATER.run();
-    updateWarningText();
+    updateWarningText(showWarning);
   };
 
   private final Function<String, String> myNameCreator = s -> createUniqueName(s);
@@ -127,7 +127,7 @@ public class JsonSchemaMappingsConfigurable extends MasterDetailsComponent imple
 
   private void addCreatedMappings(@NotNull final UserDefinedJsonSchemaConfiguration info) {
     final JsonSchemaConfigurable configurable = new JsonSchemaConfigurable(myProject, "", info, myTreeUpdater, myNameCreator);
-    configurable.setError(myError);
+    configurable.setError(myError, true);
     final MyNode node = new MyNode(configurable);
     addNode(node, myRoot);
     selectNodeInTree(node, true);
@@ -144,7 +144,7 @@ public class JsonSchemaMappingsConfigurable extends MasterDetailsComponent imple
       final JsonSchemaConfigurable configurable =
         new JsonSchemaConfigurable(myProject, isHttpPath(pathToSchema) || new File(pathToSchema).isAbsolute() ? pathToSchema : new File(myProject.getBasePath(), pathToSchema).getPath(),
                                    info, myTreeUpdater, myNameCreator);
-      configurable.setError(myError);
+      configurable.setError(myError, true);
       myRoot.add(new MyNode(configurable));
     }
     ((DefaultTreeModel) myTree.getModel()).reload(myRoot);
@@ -209,7 +209,7 @@ public class JsonSchemaMappingsConfigurable extends MasterDetailsComponent imple
     return !storedList.equals(uiList);
   }
 
-  private void updateWarningText() {
+  private void updateWarningText(boolean showWarning) {
     final MultiMap<String, UserDefinedJsonSchemaConfiguration.Item> patternsMap = new MultiMap<>();
     final StringBuilder sb = new StringBuilder();
     final List<UserDefinedJsonSchemaConfiguration> list;
@@ -221,6 +221,7 @@ public class JsonSchemaMappingsConfigurable extends MasterDetailsComponent imple
       return;
     }
     for (UserDefinedJsonSchemaConfiguration info : list) {
+      info.refreshPatterns();
       final JsonSchemaPatternComparator comparator = new JsonSchemaPatternComparator(myProject);
       final List<UserDefinedJsonSchemaConfiguration.Item> patterns = info.getPatterns();
       for (UserDefinedJsonSchemaConfiguration.Item pattern : patterns) {
@@ -247,7 +248,7 @@ public class JsonSchemaMappingsConfigurable extends MasterDetailsComponent imple
     while (children.hasMoreElements()) {
       Object o = children.nextElement();
       if (o instanceof MyNode && ((MyNode)o).getConfigurable() instanceof JsonSchemaConfigurable) {
-        ((JsonSchemaConfigurable) ((MyNode)o).getConfigurable()).setError(myError);
+        ((JsonSchemaConfigurable) ((MyNode)o).getConfigurable()).setError(myError, showWarning);
       }
     }
   }
@@ -284,7 +285,7 @@ public class JsonSchemaMappingsConfigurable extends MasterDetailsComponent imple
   @Override
   public void reset() {
     fillTree();
-    updateWarningText();
+    updateWarningText(true);
   }
 
   @Override

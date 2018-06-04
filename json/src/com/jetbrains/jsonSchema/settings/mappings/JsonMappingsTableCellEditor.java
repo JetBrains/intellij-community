@@ -33,9 +33,9 @@ class JsonMappingsTableCellEditor extends AbstractTableCellEditor {
   final JPanel myWrapper;
   private final UserDefinedJsonSchemaConfiguration.Item myItem;
   private final Project myProject;
-  private final Runnable myTreeUpdater;
+  private final TreeUpdater myTreeUpdater;
 
-  public JsonMappingsTableCellEditor(UserDefinedJsonSchemaConfiguration.Item item, Project project, Runnable treeUpdater) {
+  public JsonMappingsTableCellEditor(UserDefinedJsonSchemaConfiguration.Item item, Project project, TreeUpdater treeUpdater) {
     myItem = item;
     myProject = project;
     myTreeUpdater = treeUpdater;
@@ -111,7 +111,7 @@ class JsonMappingsTableCellEditor extends AbstractTableCellEditor {
   @Override
   public boolean stopCellEditing() {
     myItem.setPath(myComponent.getChildComponent().getText());
-    myTreeUpdater.run();
+    myTreeUpdater.updateTree(true);
     return super.stopCellEditing();
   }
 

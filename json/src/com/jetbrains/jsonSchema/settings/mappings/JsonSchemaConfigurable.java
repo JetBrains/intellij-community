@@ -32,7 +32,7 @@ public class JsonSchemaConfigurable extends NamedConfigurable<UserDefinedJsonSch
   private final Project myProject;
   @NotNull private final String mySchemaFilePath;
   @NotNull private final UserDefinedJsonSchemaConfiguration mySchema;
-  @Nullable private final Runnable myTreeUpdater;
+  @Nullable private final TreeUpdater myTreeUpdater;
   @NotNull private final Function<String, String> myNameCreator;
   private JsonSchemaMappingsView myView;
   private String myDisplayName;
@@ -40,9 +40,13 @@ public class JsonSchemaConfigurable extends NamedConfigurable<UserDefinedJsonSch
 
   public JsonSchemaConfigurable(Project project,
                                 @NotNull String schemaFilePath, @NotNull UserDefinedJsonSchemaConfiguration schema,
-                                @Nullable Runnable updateTree,
+                                @Nullable TreeUpdater updateTree,
                                 @NotNull Function<String, String> nameCreator) {
-    super(true, updateTree);
+    super(true, () -> {
+      if (updateTree != null) {
+        updateTree.updateTree(true);
+      }
+    });
     myProject = project;
     mySchemaFilePath = schemaFilePath;
     mySchema = schema;
@@ -88,7 +92,7 @@ public class JsonSchemaConfigurable extends NamedConfigurable<UserDefinedJsonSch
           }
         }
       });
-      myView.setError(myError);
+      myView.setError(myError, true);
     }
     return myView.getComponent();
   }
@@ -206,10 +210,10 @@ public class JsonSchemaConfigurable extends NamedConfigurable<UserDefinedJsonSch
     if (myView != null) Disposer.dispose(myView);
   }
 
-  public void setError(String error) {
+  public void setError(String error, boolean showWarning) {
     myError = error;
     if (myView != null) {
-      myView.setError(error);
+      myView.setError(error, showWarning);
     }
   }
 }
