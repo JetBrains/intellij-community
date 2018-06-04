@@ -334,8 +334,8 @@ public class StubIndexImpl extends StubIndex implements PersistentStateComponent
 
     UpdatableIndex<Integer, SerializedStubTree, FileContent> stubUpdatingIndex = fileBasedIndex.getIndex(stubUpdatingIndexId);
     try {
+      stubUpdatingIndex.getReadLock().lock();
       try {
-        stubUpdatingIndex.getReadLock().lock();
         // disable up-to-date check to avoid locks on attempt to acquire index write lock while holding at the same time the readLock for this index
         return FileBasedIndexImpl.disableUpToDateCheckIn(()->
                myAccessValidator.validate(stubUpdatingIndexId, ()->index.getData(key).forEach(action)));
