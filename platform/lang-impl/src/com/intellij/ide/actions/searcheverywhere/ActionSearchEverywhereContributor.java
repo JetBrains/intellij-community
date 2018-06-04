@@ -18,7 +18,7 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import java.awt.*;
 
-public class ActionSearchEverywhereContributor implements SearchEverywhereContributor {
+public class ActionSearchEverywhereContributor implements SearchEverywhereContributor<Void> {
   private static final Logger LOG = Logger.getInstance(ActionSearchEverywhereContributor.class);
 
   private final Project myProject;
@@ -52,6 +52,7 @@ public class ActionSearchEverywhereContributor implements SearchEverywhereContri
   @Override
   public ContributorSearchResult<Object> search(String pattern,
                                                 boolean everywhere,
+                                                SearchEverywhereContributorFilter<Void> filter,
                                                 ProgressIndicator progressIndicator,
                                                 int elementsLimit) {
     if (StringUtil.isEmptyOrSpaces(pattern)) {
@@ -124,7 +125,7 @@ public class ActionSearchEverywhereContributor implements SearchEverywhereContri
 
     @NotNull
     @Override
-    public SearchEverywhereContributor createContributor(AnActionEvent initEvent) {
+    public SearchEverywhereContributor<Void> createContributor(AnActionEvent initEvent) {
       return new ActionSearchEverywhereContributor(
         initEvent.getProject(),
         initEvent.getData(PlatformDataKeys.CONTEXT_COMPONENT),

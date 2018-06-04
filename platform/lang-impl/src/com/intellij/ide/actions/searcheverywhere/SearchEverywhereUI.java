@@ -68,7 +68,8 @@ public class SearchEverywhereUI extends BorderLayoutPanel implements Disposable,
   public static final int SINGLE_CONTRIBUTOR_ELEMENTS_LIMIT = 30;
   public static final int MULTIPLE_CONTRIBUTORS_ELEMENTS_LIMIT = 15;
 
-  private final List<SearchEverywhereContributor> allContributors;
+  private final List<SearchEverywhereContributor> myServiceContributors;
+  private final List<SearchEverywhereContributor> myShownContributors;
   private final Map<String, SearchEverywhereContributorFilter<?>> myContributorFilters;
   private final Project myProject;
 
@@ -100,9 +101,8 @@ public class SearchEverywhereUI extends BorderLayoutPanel implements Disposable,
     withBackground(JBUI.CurrentTheme.SearchEverywhere.dialogBackground());
 
     myProject = project;
-    allContributors = new ArrayList<>();
-    allContributors.addAll(serviceContributors);
-    allContributors.addAll(contributors);
+    myServiceContributors = serviceContributors;
+    myShownContributors  = contributors;
     myContributorFilters = filters;
 
     myNonProjectCB = new JBCheckBox();
@@ -620,7 +620,7 @@ public class SearchEverywhereUI extends BorderLayoutPanel implements Disposable,
         anyFound = addContributorItems(selectedContributor, SINGLE_CONTRIBUTOR_ELEMENTS_LIMIT, true);
       } else {
         boolean clearBefore = true;
-        for (SearchEverywhereContributor contributor : allContributors) {
+        for (SearchEverywhereContributor contributor : getUsedContributors()) {
           anyFound |= addContributorItems(contributor, MULTIPLE_CONTRIBUTORS_ELEMENTS_LIMIT, clearBefore);
           clearBefore = false;
         }
@@ -640,7 +640,7 @@ public class SearchEverywhereUI extends BorderLayoutPanel implements Disposable,
     private boolean addContributorItems(SearchEverywhereContributor contributor, int count, boolean clearBefore) {
       boolean[] found = {false};
       ApplicationManager.getApplication().runReadAction(() -> {
-        ContributorSearchResult<Object> results = contributor.search(pattern, isUseNonProjectItems(), myProgressIndicator, count);
+        ContributorSearchResult<Object> results = contributor.search(pattern, isUseNonProjectItems(), myContributorFilters.get(contributor.getSearchProviderId()), myProgressIndicator, count);
         found[0] = !results.isEmpty();
 
         if (clearBefore) {
@@ -690,6 +690,17 @@ public class SearchEverywhereUI extends BorderLayoutPanel implements Disposable,
       ApplicationManager.getApplication().executeOnPooledThread(this);
       return myDone;
     }
+  }
+
+  @NotNull
+  private List<SearchEverywhereContributor> getUsedContributors() {
+    SearchEverywhereContributorFilter<String> contributorsFilter =
+      (SearchEverywhereContributorFilter<String>) myContributorFilters.get(SearchEverywhereContributor.ALL_CONTRIBUTORS_GROUP_ID);
+    List<SearchEverywhereContributor> contributors = new ArrayList<>(myServiceContributors);
+    myShownContributors.stream()
+                       .filter(contributor -> contributorsFilter.isSelected(contributor.getSearchProviderId()))
+                       .forEach(contributor -> contributors.add(contributor));
+    return contributors;
   }
 
   private class CompositeCellRenderer implements ListCellRenderer<Object> {
@@ -887,7 +898,7 @@ public class SearchEverywhereUI extends BorderLayoutPanel implements Disposable,
     public void actionPerformed(AnActionEvent e) {
       stopSearching();
 
-      Collection<SearchEverywhereContributor> contributors = isAllTabSelected() ? allContributors : Collections.singleton(mySelectedTab.getContributor().get());
+      Collection<SearchEverywhereContributor> contributors = isAllTabSelected() ? getUsedContributors() : Collections.singleton(mySelectedTab.getContributor().get());
       contributors = contributors.stream()
                                  .filter(SearchEverywhereContributor::showInFindResults)
                                  .collect(Collectors.toList());
@@ -935,7 +946,7 @@ public class SearchEverywhereUI extends BorderLayoutPanel implements Disposable,
               if (!progressIndicator.isCanceled()) {
                 ApplicationManager.getApplication().runReadAction(() -> {
                   //todo overflow #UX-1
-                  List<Object> foundElements = contributor.search(searchText, everywhere, progressIndicator);
+                  List<Object> foundElements = contributor.search(searchText, everywhere, myContributorFilters.get(contributor.getSearchProviderId()), progressIndicator);
                   fillUsages(foundElements, usages, targets);
                 });
               }
@@ -1051,7 +1062,7 @@ public class SearchEverywhereUI extends BorderLayoutPanel implements Disposable,
 
     private JComponent createFilterPanel() {
       SearchEverywhereContributorFilter<?> filter = myContributorFilters.get(getSelectedContributorID());
-      ElementsChooser<?> chooser = filterToChooser(filter);
+      ElementsChooser<?> chooser = createChooser(filter);
 
       JPanel panel = new JPanel();
       panel.setLayout(new BoxLayout(panel, BoxLayout.Y_AXIS));
@@ -1085,7 +1096,7 @@ public class SearchEverywhereUI extends BorderLayoutPanel implements Disposable,
       return panel;
     }
 
-    private <T> ElementsChooser<T> filterToChooser(SearchEverywhereContributorFilter<T> filter) {
+    private <T> ElementsChooser<T> createChooser(SearchEverywhereContributorFilter<T> filter) {
       ElementsChooser<T> res = new ElementsChooser<T>(filter.getAllElements(), false) {
         @Override
         protected String getItemText(@NotNull T value) {
@@ -1099,7 +1110,10 @@ public class SearchEverywhereUI extends BorderLayoutPanel implements Disposable,
         }
       };
       res.markElements(filter.getSelectedElements());
-      ElementsChooser.ElementsMarkListener<T> listener = (element, isMarked) -> filter.setSelected(element, isMarked);
+      ElementsChooser.ElementsMarkListener<T> listener = (element, isMarked) -> {
+        filter.setSelected(element, isMarked);
+        rebuildList();
+      };
       res.addElementsMarkListener(listener);
       return res;
     }

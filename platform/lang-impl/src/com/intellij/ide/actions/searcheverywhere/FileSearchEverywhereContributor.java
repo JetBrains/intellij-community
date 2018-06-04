@@ -4,7 +4,7 @@ package com.intellij.ide.actions.searcheverywhere;
 import com.intellij.codeInsight.navigation.NavigationUtil;
 import com.intellij.ide.IdeBundle;
 import com.intellij.ide.actions.GotoFileAction;
-import com.intellij.ide.util.gotoByName.ChooseByNameModel;
+import com.intellij.ide.util.gotoByName.FilteringGotoByModel;
 import com.intellij.ide.util.gotoByName.GotoFileModel;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
@@ -25,7 +25,7 @@ import java.util.stream.Stream;
 /**
  * @author Konstantin Bulenkov
  */
-public class FileSearchEverywhereContributor extends AbstractGotoSEContributor {
+public class FileSearchEverywhereContributor extends AbstractGotoSEContributor<FileType> {
 
   public FileSearchEverywhereContributor(Project project) {
     super(project);
@@ -48,7 +48,7 @@ public class FileSearchEverywhereContributor extends AbstractGotoSEContributor {
   }
 
   @Override
-  protected ChooseByNameModel createModel(Project project) {
+  protected FilteringGotoByModel<FileType> createModel(Project project) {
     return new GotoFileModel(project){
       @Override
       public boolean isSlashlessMatchingEnabled() {
@@ -89,7 +89,7 @@ public class FileSearchEverywhereContributor extends AbstractGotoSEContributor {
   public static class Factory implements SearchEverywhereContributorFactory<FileType> {
     @NotNull
     @Override
-    public SearchEverywhereContributor createContributor(AnActionEvent initEvent) {
+    public SearchEverywhereContributor<FileType> createContributor(AnActionEvent initEvent) {
       return new FileSearchEverywhereContributor(initEvent.getProject());
     }
 

@@ -4,6 +4,7 @@ package com.intellij.ide.actions.searcheverywhere;
 import com.intellij.codeInsight.navigation.NavigationUtil;
 import com.intellij.ide.util.gotoByName.ChooseByNameModel;
 import com.intellij.ide.util.gotoByName.ChooseByNamePopup;
+import com.intellij.ide.util.gotoByName.FilteringGotoByModel;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProgressIndicator;
@@ -14,7 +15,7 @@ import org.jetbrains.annotations.NotNull;
 
 import java.awt.event.InputEvent;
 
-public abstract class AbstractGotoSEContributor implements SearchEverywhereContributor {
+public abstract class AbstractGotoSEContributor<F> implements SearchEverywhereContributor<F> {
 
   protected final Project myProject;
 
@@ -31,12 +32,13 @@ public abstract class AbstractGotoSEContributor implements SearchEverywhereContr
   private static final Logger LOG = Logger.getInstance(AbstractGotoSEContributor.class);
 
   @Override
-  public ContributorSearchResult<Object> search(String pattern, boolean everywhere, ProgressIndicator progressIndicator, int elementsLimit) {
+  public ContributorSearchResult<Object> search(String pattern, boolean everywhere, SearchEverywhereContributorFilter<F> filter, ProgressIndicator progressIndicator, int elementsLimit) {
     if (!isDumbModeSupported() && DumbService.getInstance(myProject).isDumb()) {
       return ContributorSearchResult.empty();
     }
 
-    ChooseByNameModel model = createModel(myProject);
+    FilteringGotoByModel<F> model = createModel(myProject);
+    model.setFilterItems(filter.getSelectedElements());
     ChooseByNamePopup popup = ChooseByNamePopup.createPopup(myProject, model, (PsiElement)null);
     ContributorSearchResult.Builder<Object> builder = ContributorSearchResult.builder();
     popup.getProvider().filterElements(popup, pattern, everywhere, progressIndicator,
@@ -64,7 +66,7 @@ public abstract class AbstractGotoSEContributor implements SearchEverywhereContr
   }
 
   //todo param is unnecessary #UX-1
-  protected abstract ChooseByNameModel createModel(Project project);
+  protected abstract FilteringGotoByModel<F> createModel(Project project);
 
   @Override
   public boolean showInFindResults() {

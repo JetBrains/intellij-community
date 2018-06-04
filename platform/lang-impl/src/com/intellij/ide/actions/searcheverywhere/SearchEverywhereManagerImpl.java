@@ -57,14 +57,21 @@ public class SearchEverywhereManagerImpl implements SearchEverywhereManager {
     );
 
     List<SearchEverywhereContributor> contributors = new ArrayList<>();
+    Map<String, String> contributorsNames = new LinkedHashMap<>();
     myContributorFactories.forEach(factory -> {
       SearchEverywhereContributor contributor = factory.createContributor(initEvent);
       myContributorFilters.computeIfAbsent(contributor.getSearchProviderId(), s -> factory.createFilter());
       contributors.add(contributor);
+      contributorsNames.put(contributor.getSearchProviderId(), contributor.getGroupName());
     });
     Collections.sort(contributors, Comparator.comparingInt(SearchEverywhereContributor::getSortWeight));
     myContributorFilters.computeIfAbsent(SearchEverywhereContributor.ALL_CONTRIBUTORS_GROUP_ID,
-                                         s -> new SearchEverywhereContributorFilterImpl<>(contributors, contributor -> contributor.getGroupName(), contributor -> null)
+                                         s -> {
+                                           List<String> ids = contributors.stream()
+                                                                          .map(contributor -> contributor.getSearchProviderId())
+                                                                          .collect(Collectors.toList());
+                                           return new SearchEverywhereContributorFilterImpl<>(ids, id -> contributorsNames.get(id), id -> null);
+                                         }
     );
 
     mySearchEverywhereUI = createView(myProject, serviceContributors, contributors, myContributorFilters);

@@ -4,11 +4,11 @@ import com.intellij.openapi.actionSystem.AnActionEvent;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-public interface SearchEverywhereContributorFactory<T> {
+public interface SearchEverywhereContributorFactory<F> {
 
   @NotNull
-  SearchEverywhereContributor createContributor(AnActionEvent initEvent);
+  SearchEverywhereContributor<F> createContributor(AnActionEvent initEvent);
 
   @Nullable
-  SearchEverywhereContributorFilter<T> createFilter();
+  SearchEverywhereContributorFilter<F> createFilter();
 }

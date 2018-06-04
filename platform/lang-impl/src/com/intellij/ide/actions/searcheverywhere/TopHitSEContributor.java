@@ -38,7 +38,7 @@ import java.util.List;
 import java.util.function.Consumer;
 import java.util.function.Function;
 
-public class TopHitSEContributor implements SearchEverywhereContributor {
+public class TopHitSEContributor implements SearchEverywhereContributor<Void> {
 
   private final Collection<SearchTopHitProvider> myTopHitProviders = Arrays.asList(SearchTopHitProvider.EP_NAME.getExtensions());
 
@@ -80,7 +80,7 @@ public class TopHitSEContributor implements SearchEverywhereContributor {
   }
 
   @Override
-  public ContributorSearchResult<Object> search(String pattern, boolean everywhere, ProgressIndicator progressIndicator, int elementsLimit) {
+  public ContributorSearchResult<Object> search(String pattern, boolean everywhere, SearchEverywhereContributorFilter<Void> filter, ProgressIndicator progressIndicator, int elementsLimit) {
     Collection<Object> res = new LinkedHashSet<>();
     final Function<Object, Boolean> consumer = o -> {
       if (elementsLimit < 0 || res.size() < elementsLimit) {

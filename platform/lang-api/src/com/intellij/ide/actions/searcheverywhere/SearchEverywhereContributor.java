@@ -15,7 +15,7 @@ import java.util.List;
  * @author Konstantin Bulenkov
  */
 //todo generic? #UX-1
-public interface SearchEverywhereContributor {
+public interface SearchEverywhereContributor<F> {
 
   String ALL_CONTRIBUTORS_GROUP_ID = SearchEverywhereContributor.class.getSimpleName() + ".All";
 
@@ -33,10 +33,12 @@ public interface SearchEverywhereContributor {
 
   boolean showInFindResults();
 
-  ContributorSearchResult<Object> search(String pattern, boolean everywhere, ProgressIndicator progressIndicator, int elementsLimit);
+  ContributorSearchResult<Object> search(String pattern, boolean everywhere, SearchEverywhereContributorFilter<F> filter,
+                                         ProgressIndicator progressIndicator, int elementsLimit);
 
-  default List<Object> search(String pattern, boolean everywhere, ProgressIndicator progressIndicator) {
-    return search(pattern, everywhere, progressIndicator, -1).getItems();
+  default List<Object> search(String pattern, boolean everywhere, SearchEverywhereContributorFilter<F> filter,
+                              ProgressIndicator progressIndicator) {
+    return search(pattern, everywhere, filter, progressIndicator, -1).getItems();
   }
 
   boolean processSelectedItem(Object selected, int modifiers);
