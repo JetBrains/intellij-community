@@ -17,13 +17,11 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.arguments.GrArgument
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrClosableBlock
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.branch.GrReturnStatement
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.branch.GrThrowStatement
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrAssignmentExpression
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrMethodCall
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.*
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.path.GrIndexProperty
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefinitionBody
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod
+import org.jetbrains.plugins.groovy.lang.psi.impl.signatures.GrClosureSignatureUtil
 import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil
 
 class GroovyInferenceSessionBuilder(val ref: GrReferenceExpression, val candidate: MethodCandidate) {
@@ -99,6 +97,7 @@ class GroovyInferenceSessionBuilder(val ref: GrReferenceExpression, val candidat
 
   private fun getReturnConstraintType(call: GrMethodCall): PsiType? {
     val parent = call.parent
+    val gparent = parent?.parent
     val parentMethod = PsiTreeUtil.getParentOfType(parent, GrMethod::class.java, true, GrClosableBlock::class.java)
 
     if (parent is GrReturnStatement && parentMethod != null) {
@@ -112,8 +111,18 @@ class GroovyInferenceSessionBuilder(val ref: GrReferenceExpression, val candidat
     else if (parent is GrAssignmentExpression && call == parent.rValue) {
       val lValue = PsiUtil.skipParentheses(parent.lValue, false)
       return if (lValue is GrExpression && lValue !is GrIndexProperty) lValue.nominalType else null
-    }
-    else if (parent is GrVariable) {
+    } else if (parent is GrArgumentList && gparent is GrNewExpression) { // TODO: fix with moving constructor resolve to new API
+      val resolveResult = gparent.advancedResolve()
+      val parameters = GrClosureSignatureUtil.mapArgumentsToParameters(
+        resolveResult,
+        gparent,
+        false,
+        true,
+        gparent.namedArguments,
+        gparent.expressionArguments,
+        gparent.closureArguments)
+      return parameters?.get(call)?.second
+    } else if (parent is GrVariable) {
       return parent.declaredType
     }
     return null

@@ -23,7 +23,7 @@ class TypeConstraint(val leftType: PsiType, private val rightType: PsiType?, val
     if (argType !is GrClosureType)
       argType = com.intellij.psi.util.PsiUtil.captureToplevelWildcards(argType, context)
 
-    val t = session.substituteWithInferenceVariables(leftType)
+    val t = session.siteSubstitutor.substitute(session.substituteWithInferenceVariables(leftType))
     val s = session.siteSubstitutor.substitute(session.substituteWithInferenceVariables(argType))
 
     constraints.add(TypeCompatibilityConstraint(t, s))
