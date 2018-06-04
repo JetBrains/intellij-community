@@ -4,6 +4,8 @@ package org.jetbrains.plugins.gradle.importing;
 import com.intellij.compiler.CompilerConfiguration;
 import com.intellij.compiler.CompilerConfigurationImpl;
 import com.intellij.compiler.CompilerWorkspaceConfiguration;
+import com.intellij.compiler.impl.javaCompiler.javac.JavacConfiguration;
+import org.jetbrains.jps.model.java.compiler.JpsJavaCompilerOptions;
 import org.junit.Test;
 
 /**
@@ -26,6 +28,11 @@ public class GradleJavaSettingsImportingTest extends GradleSettingsImportingTest
         "      enableAutomake false\n" +
         "      parallelCompilation true\n" +
         "      rebuildModuleOnDependencyChange false\n" +
+        "      javac {\n" +
+        "        preferTargetJDKCompiler false\n" +
+        "        javacAdditionalOptions '-Dkey=val'\n" +
+        "        generateNoWarnings true\n" +
+        "      }\n" +
         "    }\n" +
         "  }\n" +
         "}")
@@ -42,5 +49,10 @@ public class GradleJavaSettingsImportingTest extends GradleSettingsImportingTest
     assertFalse(workspaceConfiguration.MAKE_PROJECT_ON_SAVE);
     assertTrue(workspaceConfiguration.PARALLEL_COMPILATION);
     assertFalse(workspaceConfiguration.REBUILD_ON_DEPENDENCY_CHANGE);
+
+    final JpsJavaCompilerOptions javacOpts = JavacConfiguration.getOptions(myProject, JavacConfiguration.class);
+    assertFalse(javacOpts.PREFER_TARGET_JDK_COMPILER);
+    assertEquals("-Dkey=val", javacOpts.ADDITIONAL_OPTIONS_STRING);
+    assertTrue(javacOpts.GENERATE_NO_WARNINGS);
   }
 }
