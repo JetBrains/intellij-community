@@ -233,12 +233,3 @@ private fun PsiElement.resolveQualifiedType(name: String, qualifier: GrReference
   classQualifier.processDeclarations(processor, ResolveState.initial(), null, this)
   return processor.result
 }
-
-internal fun GrReferenceExpression.resolveMethodReference(): Collection<GroovyResolveResult> {
-  val name = referenceName ?: return emptyList()
-  val type = qualifier?.type ?: return emptyList()
-  val place = this
-  val processor = MethodReferenceProcessor(name)
-  type.processReceiverType(processor, ResolveState.initial(), place)
-  return processor.results
-}
