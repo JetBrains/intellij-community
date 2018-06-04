@@ -43,7 +43,7 @@ public class ComparisonToNaNInspection extends BaseInspection {
   public String buildErrorString(Object... infos) {
     final PsiBinaryExpression comparison = (PsiBinaryExpression)infos[0];
     final IElementType tokenType = comparison.getOperationTokenType();
-    if (!tokenType.equals(JavaTokenType.NE)) {
+    if (tokenType.equals(JavaTokenType.NE)) {
       return InspectionGadgetsBundle.message("comparison.to.nan.problem.descriptor2");
     }
     else {
