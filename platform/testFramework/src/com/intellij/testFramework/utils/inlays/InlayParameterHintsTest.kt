@@ -44,11 +44,11 @@ class InlayHintsChecker(private val myFixture: CodeInsightTestFixture) {
     hintSettings.loadState(default.state)
   }
 
-  fun checkParameterHints() {
-    val manager = ParameterHintsPresentationManager.getInstance()
-    checkInlays({ (it.renderer as HintRenderer).text ?: throw IllegalArgumentException("No text set to hint") },
-                { manager.isParameterHint(it) })
-  }
+  val manager = ParameterHintsPresentationManager.getInstance()
+  val inlayPresenter: (Inlay) -> String = { (it.renderer as HintRenderer).text ?: throw IllegalArgumentException("No text set to hint") }
+  val inlayFilter: (Inlay) -> Boolean = { manager.isParameterHint(it) }
+
+  fun checkParameterHints() = checkInlays(inlayPresenter, inlayFilter)
 
   fun checkInlays(inlayPresenter: (Inlay) -> String, inlayFilter: (Inlay) -> Boolean) {
     val file = myFixture.file
@@ -60,12 +60,8 @@ class InlayHintsChecker(private val myFixture: CodeInsightTestFixture) {
   }
 
   fun verifyInlaysAndCaretInfo(expectedInlaysAndCaret: CaretAndInlaysInfo,
-                               originalText: String) {
-    val manager = ParameterHintsPresentationManager.getInstance()
-    verifyInlaysAndCaretInfo(expectedInlaysAndCaret, originalText,
-                             { (it.renderer as HintRenderer).text ?: throw IllegalArgumentException("No text set to hint") },
-                             { manager.isParameterHint(it) })
-  }
+                               originalText: String) =
+    verifyInlaysAndCaretInfo(expectedInlaysAndCaret, originalText, inlayPresenter, inlayFilter)
 
   private fun verifyInlaysAndCaretInfo(expectedInlaysAndCaret: CaretAndInlaysInfo,
                                        originalText: String,
