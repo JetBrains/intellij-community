@@ -6,6 +6,7 @@ import circlet.components.*
 import circlet.platform.api.*
 import circlet.runtime.*
 import circlet.settings.*
+import circlet.utils.*
 import com.intellij.openapi.project.*
 import klogging.*
 import kotlinx.coroutines.experimental.*
@@ -15,8 +16,8 @@ import javax.swing.*
 
 private val LOG = KLoggers.logger("circlet.reviews.ReviewsFormKt")
 
-class ReviewsForm(private val project: Project, override val lifetime: Lifetime) :
-    Lifetimed {
+class ReviewsForm(private val project: Project, parentLifetime: Lifetime) :
+    Lifetimed by NestedLifetimed(parentLifetime) {
 
     lateinit var panel: JPanel
         private set
