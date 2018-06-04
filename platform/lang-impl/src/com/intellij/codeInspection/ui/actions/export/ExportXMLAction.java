@@ -1,37 +1,20 @@
-// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-
-package com.intellij.codeInspection.ui.actions;
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+package com.intellij.codeInspection.ui.actions.export;
 
 import com.intellij.application.options.CodeStyle;
-import com.intellij.codeEditor.printing.ExportToHTMLSettings;
 import com.intellij.codeInspection.InspectionApplication;
 import com.intellij.codeInspection.InspectionsBundle;
 import com.intellij.codeInspection.ex.GlobalInspectionContextImpl;
 import com.intellij.codeInspection.ex.InspectionToolWrapper;
 import com.intellij.codeInspection.ex.ScopeToolState;
 import com.intellij.codeInspection.ex.Tools;
-import com.intellij.codeInspection.export.ExportToHTMLDialog;
-import com.intellij.codeInspection.export.InspectionTreeHtmlWriter;
 import com.intellij.codeInspection.ui.InspectionNode;
 import com.intellij.codeInspection.ui.InspectionResultsView;
 import com.intellij.codeInspection.ui.InspectionToolPresentation;
 import com.intellij.codeInspection.ui.InspectionTreeNode;
-import com.intellij.icons.AllIcons;
-import com.intellij.ide.BrowserUtil;
-import com.intellij.openapi.actionSystem.AnAction;
-import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.components.PathMacroManager;
-import com.intellij.openapi.progress.ProcessCanceledException;
-import com.intellij.openapi.progress.ProgressManager;
-import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.ui.Messages;
-import com.intellij.openapi.ui.popup.JBPopupFactory;
-import com.intellij.openapi.ui.popup.ListPopup;
-import com.intellij.openapi.ui.popup.PopupStep;
-import com.intellij.openapi.ui.popup.util.BaseListPopupStep;
-import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.JDOMUtil;
 import com.intellij.util.ui.tree.TreeUtil;
 import gnu.trove.THashSet;
@@ -45,72 +28,22 @@ import java.io.IOException;
 import java.util.HashSet;
 import java.util.Set;
 
-public class ExportHTMLAction extends AnAction implements DumbAware {
-  private final InspectionResultsView myView;
-  @NonNls private static final String PROBLEMS = "problems";
-  @NonNls private static final String HTML = "HTML";
-  @NonNls private static final String XML = "XML";
+public class ExportXMLAction extends ExportActionBase {
 
-  public ExportHTMLAction(final InspectionResultsView view) {
-    super(InspectionsBundle.message("inspection.action.export.html"), null, AllIcons.ToolbarDecorator.Export);
-    myView = view;
+  @NonNls private static final String PROBLEMS = "problems";
+
+  @Override
+  public boolean isExportToHTML() {
+    return false;
   }
 
   @Override
-  public void actionPerformed(AnActionEvent e) {
-    final ListPopup popup = JBPopupFactory.getInstance().createListPopup(
-      new BaseListPopupStep<String>(InspectionsBundle.message("inspection.action.export.popup.title"), HTML, XML) {
-        @Override
-        public PopupStep onChosen(final String selectedValue, final boolean finalChoice) {
-          return doFinalStep(() -> exportHTML(Comparing.strEqual(selectedValue, HTML)));
-        }
-      });
-    InspectionResultsView.showPopup(e, popup);
+  public String getTitle() {
+    return InspectionsBundle.message("inspection.generating.xml.progress.title");
   }
 
-  private void exportHTML(final boolean exportToHTML) {
-    ExportToHTMLDialog exportToHTMLDialog = new ExportToHTMLDialog(myView.getProject(), exportToHTML);
-    final ExportToHTMLSettings exportToHTMLSettings = ExportToHTMLSettings.getInstance(myView.getProject());
-    if (exportToHTMLSettings.OUTPUT_DIRECTORY == null) {
-      exportToHTMLSettings.OUTPUT_DIRECTORY = PathManager.getHomePath() + File.separator + "inspections";
-    }
-    exportToHTMLDialog.reset();
-    if (!exportToHTMLDialog.showAndGet()) {
-      return;
-    }
-    exportToHTMLDialog.apply();
-
-    final String outputDirectoryName = exportToHTMLSettings.OUTPUT_DIRECTORY;
-    ApplicationManager.getApplication().invokeLater(() -> {
-      final Runnable exportRunnable = () -> ApplicationManager.getApplication().runReadAction(() -> {
-        if (!exportToHTML) {
-          dump2xml(outputDirectoryName);
-        }
-        else {
-          try {
-            new InspectionTreeHtmlWriter(myView, outputDirectoryName);
-          }
-          catch (ProcessCanceledException e) {
-            // Do nothing here.
-          }
-        }
-      });
-
-      if (!ProgressManager.getInstance().runProcessWithProgressSynchronously(exportRunnable,
-                                                                             InspectionsBundle.message(exportToHTML
-                                                                                                       ? "inspection.generating.html.progress.title"
-                                                                                                       : "inspection.generating.xml.progress.title"), true,
-                                                                             myView.getProject())) {
-        return;
-      }
-
-      if (exportToHTML && exportToHTMLSettings.OPEN_IN_BROWSER) {
-        BrowserUtil.browse(new File(exportToHTMLSettings.OUTPUT_DIRECTORY, "index.html"));
-      }
-    });
-  }
-
-  private void dump2xml(final String outputDirectoryName) {
+  @Override
+  protected void performExport(@NotNull InspectionResultsView myView, @NotNull String outputDirectoryName) {
     try {
       final File outputDir = new File(outputDirectoryName);
       if (!outputDir.exists() && !outputDir.mkdirs()) {
@@ -127,7 +60,7 @@ public class ExportHTMLAction extends AnAction implements DumbAware {
           InspectionToolWrapper toolWrapper = toolNode.getToolWrapper();
           if (!visitedWrappers.add(toolWrapper)) return true;
 
-          final Set<InspectionToolWrapper> toolWrappers = getWorkedTools(toolNode);
+          final Set<InspectionToolWrapper> toolWrappers = getWorkedTools(myView, toolNode);
           for (InspectionToolWrapper wrapper : toolWrappers) {
             InspectionToolPresentation presentation = myView.getGlobalInspectionContext().getPresentation(wrapper);
             if (!toolNode.isExcluded()) {
@@ -166,7 +99,7 @@ public class ExportHTMLAction extends AnAction implements DumbAware {
   }
 
   @NotNull
-  private Set<InspectionToolWrapper> getWorkedTools(@NotNull InspectionNode node) {
+  private Set<InspectionToolWrapper> getWorkedTools(@NotNull InspectionResultsView myView, @NotNull InspectionNode node) {
     final Set<InspectionToolWrapper> result = new HashSet<>();
     final InspectionToolWrapper wrapper = node.getToolWrapper();
     if (myView.getCurrentProfileName() == null){

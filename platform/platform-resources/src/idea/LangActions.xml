@@ -1054,6 +1054,8 @@
       <action id="SuppressFixes" class="com.intellij.codeInspection.ui.actions.suppress.SuppressActionWrapper"/>
       <separator/>
       <action id="EditInspectionSettings" class="com.intellij.codeInspection.ui.actions.EditSettingsAction"/>
+      <action id="CodeInspectionExport.HTML" text="HTML" class="com.intellij.codeInspection.ui.actions.export.ExportHTMLAction"/>
+      <action id="CodeInspectionExport.XML" text="XML" class="com.intellij.codeInspection.ui.actions.export.ExportXMLAction"/>
       <action id="DisableInspection" class="com.intellij.codeInspection.ui.actions.KeyAwareInspectionViewAction$DisableInspection"/>
       <action id="RunInspectionOn" class="com.intellij.codeInspection.ui.actions.KeyAwareInspectionViewAction$RunInspectionOn"/>
     </group>
