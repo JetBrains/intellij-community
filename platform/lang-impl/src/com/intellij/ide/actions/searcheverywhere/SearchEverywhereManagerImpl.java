@@ -9,6 +9,7 @@ import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.popup.JBPopup;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
+import com.intellij.openapi.util.DimensionService;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.wm.WindowManager;
 import com.intellij.openapi.wm.impl.IdeFrameImpl;
@@ -28,6 +29,8 @@ import java.util.stream.Collectors;
 import static com.intellij.ide.actions.SearchEverywhereAction.SEARCH_EVERYWHERE_POPUP;
 
 public class SearchEverywhereManagerImpl implements SearchEverywhereManager {
+
+  private static final String LOCATION_SETTINGS_KEY = "search.everywhere.popup";
 
   private final Project myProject;
   private final List<SearchEverywhereContributorFactory<?>> myContributorFactories = SearchEverywhereContributor.getProviders();
@@ -91,6 +94,7 @@ public class SearchEverywhereManagerImpl implements SearchEverywhereManager {
                               .setCancelKeyEnabled(false)
                               .setCancelCallback(() -> {
                                 saveSearchText();
+                                saveLocation();
                                 return true;
                               })
                               .addUserData("SIMPLE_WINDOW")
@@ -103,6 +107,12 @@ public class SearchEverywhereManagerImpl implements SearchEverywhereManager {
     Disposer.register(myBalloon, () -> myProject.putUserData(SEARCH_EVERYWHERE_POPUP, null));
 
     RelativePoint showingPoint = calculateShowingPoint();
+    DimensionService service = DimensionService.getInstance();
+    Dimension savedSize = service.getSize(LOCATION_SETTINGS_KEY);
+    if (savedSize != null) {
+      myBalloon.setSize(savedSize);
+    }
+
     if (showingPoint != null) {
       myBalloon.show(showingPoint);
     }
@@ -151,6 +161,12 @@ public class SearchEverywhereManagerImpl implements SearchEverywhereManager {
       return null;
     }
 
+    Point savedLocation = DimensionService.getInstance().getLocation(LOCATION_SETTINGS_KEY);
+    if (savedLocation != null) {
+      SwingUtilities.convertPointFromScreen(savedLocation, parent);
+      return new RelativePoint(parent, savedLocation);
+    }
+
     int height = UISettings.getInstance().getShowMainToolbar() ? 135 : 115;
     if (parent instanceof IdeFrameImpl && ((IdeFrameImpl)parent).isInFullScreen()) {
       height -= 20;
@@ -196,6 +212,14 @@ public class SearchEverywhereManagerImpl implements SearchEverywhereManager {
     if (!searchText.isEmpty()) {
       myHistoryList.saveText(searchText, mySearchEverywhereUI.getSelectedContributorID());
     }
+  }
+
+  private void saveLocation() {
+    Dimension size = myBalloon.getSize();
+    Point location = myBalloon.getLocationOnScreen();
+    DimensionService service = DimensionService.getInstance();
+    service.setSize(LOCATION_SETTINGS_KEY, size);
+    service.setLocation(LOCATION_SETTINGS_KEY, location);
   }
 
   private void showHistoryItem(boolean next) {
