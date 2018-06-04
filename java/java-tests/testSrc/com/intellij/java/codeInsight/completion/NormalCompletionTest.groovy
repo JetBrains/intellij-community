@@ -1351,6 +1351,7 @@ class XInternalError {}
   void testNoClosingWhenChoosingWithParenBeforeIdentifier() { doTest '(' }
 
   void testPackageInMemberType() { doTest() }
+  void testPackageInMemberTypeGeneric() { doTest() }
 
   void testConstantInAnno() { doTest('\n') }
 
