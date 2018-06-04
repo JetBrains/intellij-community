@@ -37,6 +37,7 @@ import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import sun.lwawt.macosx.CPlatformWindow;
 
 import javax.swing.*;
 import javax.swing.plaf.FontUIResource;
@@ -896,22 +897,24 @@ public final class LafManagerImpl extends LafManager implements PersistentStateC
         UIUtil.markAsTypeAheadAware(window);
       }
       if (isHeavyWeightPopup && ((RootPaneContainer)window).getRootPane().getClientProperty(cleanupKey) == null) {
-        ((RootPaneContainer)window).getRootPane().putClientProperty(cleanupKey, cleanupKey);
+        final JRootPane rootPane = ((RootPaneContainer)window).getRootPane();
+        rootPane.putClientProperty(CPlatformWindow.WINDOW_ALPHA, 1.0f);
+        rootPane.putClientProperty(cleanupKey, cleanupKey);
         window.addWindowListener(new WindowAdapter() {
           @Override
           public void windowOpened(WindowEvent e) {
             // cleanup will be handled by AbstractPopup wrapper
-            if (PopupUtil.getPopupContainerFor(((RootPaneContainer)window).getRootPane()) != null) {
+            if (PopupUtil.getPopupContainerFor(rootPane) != null) {
               window.removeWindowListener(this);
-              ((RootPaneContainer)window).getRootPane().putClientProperty(cleanupKey, null);
+              rootPane.putClientProperty(cleanupKey, null);
             }
           }
 
           @Override
           public void windowClosed(WindowEvent e) {
             window.removeWindowListener(this);
-            ((RootPaneContainer)window).getRootPane().putClientProperty(cleanupKey, null);
-            DialogWrapper.cleanupRootPane(((RootPaneContainer)window).getRootPane());
+            rootPane.putClientProperty(cleanupKey, null);
+            DialogWrapper.cleanupRootPane(rootPane);
             DialogWrapper.cleanupWindowListeners(window);
           }
         });
