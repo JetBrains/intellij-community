@@ -148,15 +148,14 @@ public class PythonDocumentationProvider extends AbstractDocumentationProvider i
 
     if (!PyiUtil.isOverload(function, context)) {
       final List<PyFunction> overloads = PyiUtil.getOverloads(function, context);
-      final Function<String, String> escaper = forTooltip ? Function.identity() : PythonDocumentationProvider::saveSpaces;
       if (!overloads.isEmpty()) {
-        result.addItem(escaper.apply("\nPossible types:\n"));
+        result.addItem("\nPossible types:\n");
         boolean first = true;
         for (PyFunction overload : overloads) {
           if (!first) {
-            result.addItem(escaper.apply("\n"));
+            result.addItem("\n");
           }
-          result.addItem(escaper.apply("\u2022 ")); // &bull; -- bullet point
+          result.addItem("\u2022 "); // &bull; -- bullet point
           describeTypeWithLinks(context.getType(overload), context, function, result);
           first = false;
         }
@@ -209,9 +208,9 @@ public class PythonDocumentationProvider extends AbstractDocumentationProvider i
     final StringBuilder result = new StringBuilder();
     // TODO wrapping of long signatures
     if (function.isAsync()) {
-      result.append(saveSpaces("async "));
+      result.append("async ");
     }
-    result.append(saveSpaces("def "));
+    result.append("def ");
     final String name = StringUtil.notNullize(function.getName(), PyNames.UNNAMED_ELEMENT);
     int firstParamOffset = result.length() + name.length();
     int lastLineOffset = 0;
@@ -232,10 +231,10 @@ public class PythonDocumentationProvider extends AbstractDocumentationProvider i
       if (!first) {
         result.append(",");
         if (forTooltip || firstIsSelf && parameters.size() == 2) {
-          result.append(CommonXmlStrings.NBSP);
+          result.append(" ");
         }
         else {
-          result.append(BR);
+          result.append("\n");
           lastLineOffset = result.length();
           // alignment
           StringUtil.repeatSymbol(result, ' ', firstParamOffset);
@@ -246,7 +245,7 @@ public class PythonDocumentationProvider extends AbstractDocumentationProvider i
       }
       result.append(escaped(StringUtil.notNullize(parameter.getName(), PyNames.UNNAMED_ELEMENT)));
       if (!parameter.isSelf()) {
-        result.append(saveSpaces(": "));
+        result.append(": ");
         result.append(formatTypeWithLinks(parameter.getType(context), function, context));
       }
       first = false;
@@ -255,10 +254,10 @@ public class PythonDocumentationProvider extends AbstractDocumentationProvider i
     result.append(")");
 
     final int wrappingOffset = result.length();
-    result.append(saveSpaces(" -> "))
+    result.append(escaped(" -> "))
           .append(formatTypeWithLinks(context.getReturnType(function), function, context));
     if (!forTooltip && StringUtil.stripHtml(result.substring(lastLineOffset), false).length() > RETURN_TYPE_WRAPPING_THRESHOLD) {
-      result.insert(wrappingOffset, saveSpaces("\n "));
+      result.insert(wrappingOffset, "\n ");
     }
     return result.toString();
   }
