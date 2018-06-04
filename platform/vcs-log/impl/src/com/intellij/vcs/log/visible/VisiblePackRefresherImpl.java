@@ -41,6 +41,8 @@ import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.Future;
 
+import static com.intellij.vcs.log.visible.VcsLogFiltererImpl.areFiltersAffectedByIndexing;
+
 public class VisiblePackRefresherImpl implements VisiblePackRefresher, Disposable {
   private static final Logger LOG = Logger.getInstance(VisiblePackRefresherImpl.class);
 
@@ -72,7 +74,7 @@ public class VisiblePackRefresherImpl implements VisiblePackRefresher, Disposabl
       boolean hasChanges = myState.getVisiblePack() != state.getVisiblePack();
       myState = state;
       if (hasChanges) {
-        for (VisiblePackChangeListener listener : myVisiblePackChangeListeners) {
+        for (VisiblePackChangeListener listener: myVisiblePackChangeListeners) {
           listener.onVisiblePackChange(state.getVisiblePack());
         }
       }
@@ -177,7 +179,7 @@ public class VisiblePackRefresherImpl implements VisiblePackRefresher, Disposabl
 
       if (!requestsToRun.isEmpty()) {
         ApplicationManager.getApplication().invokeLater(() -> {
-          for (MoreCommitsRequest request : requestsToRun) {
+          for (MoreCommitsRequest request: requestsToRun) {
             request.onLoaded.run();
           }
         });
@@ -211,7 +213,7 @@ public class VisiblePackRefresherImpl implements VisiblePackRefresher, Disposabl
       if (!state.isValid()) {
         if (validateRequest != null && validateRequest.validate) {
           state = state.withValid(true);
-          return refresh(state, filterRequest, moreCommitsRequests);
+          return refresh(state, filterRequest != null, moreCommitsRequests);
         }
         else { // validateRequest == null || !validateRequest.validate
           // remember filters
@@ -223,23 +225,20 @@ public class VisiblePackRefresherImpl implements VisiblePackRefresher, Disposabl
           state = state.withValid(false);
           // invalidate
           if (filterRequest != null) {
-            state = refresh(state, filterRequest, moreCommitsRequests);
+            state = refresh(state, true, moreCommitsRequests);
           }
           return state.withVisiblePack(new SnapshotVisiblePackBuilder(myLogData.getStorage()).build(state.getVisiblePack()));
         }
 
+        // only doing something if there are some other requests or a relevant indexing request
+        boolean indexingFinished = !indexingRequests.isEmpty() &&
+                                   areFiltersAffectedByIndexing(state.getFilters(),
+                                                                ContainerUtil.map(indexingRequests, IndexingFinishedRequest::getRoot));
         Request nonValidateRequest =
           ContainerUtil.find(requests, request -> !(request instanceof ValidateRequest) && !(request instanceof IndexingFinishedRequest));
-
-        // only doing something if there are some other requests or a relevant indexing request
-        if (nonValidateRequest != null) {
-          return refresh(state, filterRequest, moreCommitsRequests);
-        }
-        else if (!indexingRequests.isEmpty()) {
-          if (VcsLogFiltererImpl.areFiltersAffectedByIndexing(state.getFilters(),
-                                                              ContainerUtil.map(indexingRequests, IndexingFinishedRequest::getRoot))) {
-            return refresh(state, filterRequest, moreCommitsRequests);
-          }
+        if (nonValidateRequest != null || indexingFinished) {
+          // "more commits needed" has no effect if filter changes; it also can't come after filter change request
+          return refresh(state, filterRequest != null, moreCommitsRequests);
         }
         return state;
       }
@@ -247,7 +246,7 @@ public class VisiblePackRefresherImpl implements VisiblePackRefresher, Disposabl
 
     @NotNull
     private State refresh(@NotNull State state,
-                          @Nullable FilterRequest filterRequest,
+                          boolean resetCommitCount,
                           @NotNull List<MoreCommitsRequest> moreCommitsRequests) {
       DataPack dataPack = myLogData.getDataPack();
 
@@ -257,8 +256,7 @@ public class VisiblePackRefresherImpl implements VisiblePackRefresher, Disposabl
         return state;
       }
 
-      if (filterRequest != null) {
-        // "more commits needed" has no effect if filter changes; it also can't come after filter change request
+      if (resetCommitCount) {
         state = state.withCommitCount(CommitCountStage.INITIAL);
       }
       else if (!moreCommitsRequests.isEmpty()) {
