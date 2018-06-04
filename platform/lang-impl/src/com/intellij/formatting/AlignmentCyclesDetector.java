@@ -17,6 +17,7 @@ package com.intellij.formatting;
 
 import com.intellij.openapi.util.Pair;
 import com.intellij.util.containers.ContainerUtil;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.*;
 
@@ -33,7 +34,7 @@ public class AlignmentCyclesDetector {
     myTotalAlignmentsCount = totalAlignmentsCount;
   }
   
-  public void registerOffsetResponsibleBlock(LeafBlockWrapper block) {
+  public void registerOffsetResponsibleBlock(@NotNull LeafBlockWrapper block) {
     myOffsetResponsibleBlock = block;
     final WhiteSpace whitespace = block.getWhiteSpace();
     myBeforeTotalSpaces = whitespace != null ? whitespace.getTotalSpaces() : 0;

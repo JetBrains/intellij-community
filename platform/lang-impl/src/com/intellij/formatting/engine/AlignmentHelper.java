@@ -58,7 +58,9 @@ public class AlignmentHelper {
       myDocument, alignment, currentBlock, myAlignmentMappings, myBackwardShiftedAlignedBlocks,
       myBlockIndentOptions.getIndentOptions(currentBlock));
     final LeafBlockWrapper offsetResponsibleBlock = alignment.getOffsetRespBlockBefore(currentBlock);
-    myCyclesDetector.registerOffsetResponsibleBlock(offsetResponsibleBlock);
+    if (offsetResponsibleBlock != null) {
+      myCyclesDetector.registerOffsetResponsibleBlock(offsetResponsibleBlock);
+    }
     BlockAlignmentProcessor.Result result = alignmentProcessor.applyAlignment(context);
     switch (result) {
       case TARGET_BLOCK_PROCESSED_NOT_ALIGNED:
