@@ -1788,7 +1788,7 @@
                      groupKey="group.names.numeric.issues" enabledByDefault="false" level="WARNING"
                      implementationClass="com.siyeh.ig.numeric.ComparisonOfShortAndCharInspection"/>
     <localInspection groupPath="Java" language="JAVA" shortName="ComparisonToNaN" bundle="com.siyeh.InspectionGadgetsBundle" key="comparison.to.nan.display.name"
-                     groupBundle="messages.InspectionsBundle" groupKey="group.names.numeric.issues" enabledByDefault="false" level="WARNING"
+                     groupBundle="messages.InspectionsBundle" groupKey="group.names.numeric.issues" enabledByDefault="true" level="WARNING"
                      implementationClass="com.siyeh.ig.numeric.ComparisonToNaNInspection"/>
     <localInspection groupPath="Java" language="JAVA" shortName="ConfusingFloatingPointLiteral" bundle="com.siyeh.InspectionGadgetsBundle"
                      key="confusing.floating.point.literal.display.name" groupBundle="messages.InspectionsBundle"
