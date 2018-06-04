@@ -24,17 +24,22 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFileSystemItem;
 import com.intellij.psi.PsiManager;
 import com.intellij.psi.SmartPsiElementPointer;
 import com.intellij.ui.awt.RelativeRectangle;
 import com.intellij.util.IconUtil;
+import com.intellij.util.containers.JBIterable;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.tree.DefaultMutableTreeNode;
 import javax.swing.tree.TreePath;
 import java.awt.*;
+import java.awt.datatransfer.Transferable;
+import java.awt.datatransfer.UnsupportedFlavorException;
 import java.io.File;
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -170,6 +175,17 @@ public class FavoritesPanel {
               if (bounds != null) {
                 mgr.setOrder(listFrom, listTo, event.getPoint().y < bounds.y + bounds.height / 2);
               }
+            }
+          }
+          else if (obj instanceof Transferable && ((Transferable)obj).isDataFlavorSupported(DnDEventImpl.ourDataFlavor)) {
+            List<PsiElement> elements = Collections.emptyList();
+            try {
+              Object data = ((Transferable)obj).getTransferData(DnDEventImpl.ourDataFlavor);
+              if (data instanceof Object[]) elements = JBIterable.of((Object[])data).filter(PsiElement.class).toList();
+            }
+            catch (IOException | UnsupportedFlavorException ignored) {}
+            if (!elements.isEmpty()) {
+              myViewPanel.dropPsiElements(mgr, node, elements.toArray(PsiElement.EMPTY_ARRAY));
             }
           }
           else if (obj instanceof TransferableWrapper) {
