@@ -780,7 +780,7 @@ public class JavaSpacePropertyProcessor extends JavaElementVisitor {
     else if (myRole1 == ChildRole.LPARENTH || myRole2 == ChildRole.RPARENTH) {
       createSpaceInCode(mySettings.SPACE_WITHIN_FOR_PARENTHESES);
     }
-    else if (myRole1 == ChildRole.FOR_ITERATION_PARAMETER && myRole2 == ChildRole.COLON ||
+    else if ((myRole1 == ChildRole.FOR_ITERATION_PARAMETER && myRole2 == ChildRole.COLON && myJavaSettings.SPACE_BEFORE_COLON_IN_FOREACH) ||
              myRole1 == ChildRole.COLON && myRole2 == ChildRole.FOR_ITERATED_VALUE) {
       createSpaceInCode(true);
     }
