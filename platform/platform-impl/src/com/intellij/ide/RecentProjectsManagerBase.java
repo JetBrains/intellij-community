@@ -67,13 +67,13 @@ public abstract class RecentProjectsManagerBase extends RecentProjectsManager im
   }
 
   public static class State {
-    public List<String> recentPaths = new SmartList<>();
-    public List<String> openPaths = new SmartList<>();
-    public Map<String, String> names = ContainerUtil.newLinkedHashMap();
-    public List<ProjectGroup> groups = new SmartList<>();
+    public final List<String> recentPaths = new SmartList<>();
+    public final List<String> openPaths = new SmartList<>();
+    public final Map<String, String> names = ContainerUtil.newLinkedHashMap();
+    public final List<ProjectGroup> groups = new SmartList<>();
     public String lastPath;
     public String pid;
-    public Map<String, RecentProjectMetaInfo> additionalInfo = ContainerUtil.newLinkedHashMap();
+    public final Map<String, RecentProjectMetaInfo> additionalInfo = ContainerUtil.newLinkedHashMap();
 
     public String lastProjectLocation;
 
