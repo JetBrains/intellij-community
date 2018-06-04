@@ -33,11 +33,11 @@ public class CodeStyleBeanGenerator {
 
   public String generateBeanMethods() {
     StringBuilder sb = new StringBuilder();
+    generateMethodsFor(CommonCodeStyleSettings.IndentOptions.class, sb, getSupportedIndentOptions());
     generateMethodsFor(CommonCodeStyleSettings.class, sb, getSupportedFields());
     for (CustomCodeStyleSettings customSettings : getCustomSettings()) {
       generateMethodsFor(customSettings.getClass(), sb, null);
     }
-    generateMethodsFor(CommonCodeStyleSettings.IndentOptions.class, sb, getSupportedIndentOptions());
     return sb.toString();
   }
 
