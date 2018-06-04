@@ -413,7 +413,7 @@ public class IdeErrorsDialog extends DialogWrapper implements MessagePoolListene
         stacktraces.append(each.getThrowableText());
       }
     }
-    attachments.set(0, new Attachment(INDUCED_STACKTRACES_ATTACHMENT, stacktraces.toString()));
+    attachments.add(new Attachment(INDUCED_STACKTRACES_ATTACHMENT, stacktraces.toString()));
 
     return new RepackedLogMessage(mainCause.getThrowable(), mainCause.getMessage(), attachments, message);
   }
