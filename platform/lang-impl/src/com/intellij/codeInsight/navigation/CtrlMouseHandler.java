@@ -290,7 +290,7 @@ public class CtrlMouseHandler extends AbstractProjectComponent {
     if (result == null && fallbackToBasicInfo) {
       result = doGenerateInfo(element);
     }
-    return result == null ? DocInfo.EMPTY : new DocInfo(result, documentationProvider, element);
+    return result == null ? DocInfo.EMPTY : new DocInfo(result, documentationProvider);
   }
 
   @Nullable
@@ -444,7 +444,7 @@ public class CtrlMouseHandler extends AbstractProjectComponent {
     @Override
     @NotNull
     public DocInfo getInfo() {
-      return new DocInfo(CodeInsightBundle.message("multiple.implementations.tooltip"), null, null);
+      return new DocInfo(CodeInsightBundle.message("multiple.implementations.tooltip"), null);
     }
 
     @Override
@@ -563,7 +563,7 @@ public class CtrlMouseHandler extends AbstractProjectComponent {
           @Override
           public DocInfo getInfo() {
             String name = UsageViewUtil.getType(element) + " '"+ UsageViewUtil.getShortName(element)+"'";
-            return new DocInfo("Show usages of "+name, null, element);
+            return new DocInfo("Show usages of "+name, null);
           }
   
           @Override
@@ -624,7 +624,7 @@ public class CtrlMouseHandler extends AbstractProjectComponent {
       
 
       Dimension newSize = component.getPreferredSize();
-      if (newSize.width == oldSize.width && newSize.height == oldSize.height) {
+      if (newSize.width == oldSize.width) {
         return;
       }
       component.setPreferredSize(new Dimension(newSize.width, newSize.height));
@@ -951,16 +951,14 @@ public class CtrlMouseHandler extends AbstractProjectComponent {
   }
 
   private static class DocInfo {
-    public static final DocInfo EMPTY = new DocInfo(null, null, null);
+    public static final DocInfo EMPTY = new DocInfo(null, null);
 
     @Nullable public final String text;
     @Nullable public final DocumentationProvider docProvider;
-    @Nullable public final PsiElement documentationAnchor;
 
-    DocInfo(@Nullable String text, @Nullable DocumentationProvider provider, @Nullable PsiElement documentationAnchor) {
+    DocInfo(@Nullable String text, @Nullable DocumentationProvider provider) {
       this.text = text;
       docProvider = provider;
-      this.documentationAnchor = documentationAnchor;
     }
   }
   
