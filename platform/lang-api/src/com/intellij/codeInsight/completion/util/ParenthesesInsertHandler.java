@@ -160,7 +160,7 @@ public abstract class ParenthesesInsertHandler<T extends LookupElement> implemen
       editor.getCaretModel().moveToOffset(context.getTailOffset());
     }
     else if (!mySpaceBeforeParentheses) {
-      TabOutScopesTracker.getInstance().registerEmptyScope(editor, editor.getCaretModel().getOffset());
+      TabOutScopesTracker.getInstance().registerEmptyScopeAtCaret(editor);
     }
   }
 

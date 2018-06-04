@@ -65,6 +65,14 @@ public class EditorTabOutTest extends AbstractParameterInfoTestCase {
     checkResult("class C { int[] ar = new int[123]<caret> }");
   }
 
+  public void testWhile() {
+    configureJava("class C { void m() { whil<caret> } }");
+    complete();
+    type("true");
+    tabOut();
+    checkResult("class C { void m() { while (true)<caret>} }");
+  }
+
   private void tabOut() {
     myFixture.performEditorAction(IdeActions.ACTION_BRACE_OR_QUOTE_OUT);
   }
