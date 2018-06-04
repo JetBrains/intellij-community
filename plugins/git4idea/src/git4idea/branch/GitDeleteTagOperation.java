@@ -8,9 +8,11 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vcs.VcsNotifier;
+import com.intellij.util.containers.ContainerUtil;
 import git4idea.GitRevisionNumber;
 import git4idea.GitTag;
 import git4idea.GitUtil;
@@ -20,7 +22,6 @@ import git4idea.commands.GitCompoundResult;
 import git4idea.repo.GitRepository;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.Map;
@@ -144,6 +145,8 @@ class GitDeleteTagOperation extends GitBranchOperation {
   }
 
   private void pushRemotesInBackground() {
-    GitBrancher.getInstance(myProject).deleteRemoteTag(myTagName, new ArrayList<>(getRepositories()));
+    GitBrancher.getInstance(myProject).deleteRemoteTag(myTagName, ContainerUtil.map2Map(getRepositories(), it -> {
+      return Pair.create(it, myDeletedTagTips.get(it));
+    }));
   }
 }

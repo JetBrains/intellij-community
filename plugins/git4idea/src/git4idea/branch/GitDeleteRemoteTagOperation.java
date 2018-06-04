@@ -9,23 +9,30 @@ import git4idea.GitTag;
 import git4idea.commands.Git;
 import git4idea.commands.GitCommandResult;
 import git4idea.commands.GitCompoundResult;
+import git4idea.push.GitPushParams.ForceWithLease;
 import git4idea.push.GitPushParamsImpl;
+import git4idea.push.GitPushParamsImpl.ForceWithLeaseReference;
 import git4idea.repo.GitRemote;
 import git4idea.repo.GitRepository;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Collection;
 import java.util.List;
+import java.util.Map;
 
+import static java.util.Collections.emptyList;
 import static java.util.Collections.singletonList;
 
 class GitDeleteRemoteTagOperation extends GitBranchOperation {
+  @NotNull private final Map<GitRepository, String> myRepositories;
   private final String myTagName;
 
   public GitDeleteRemoteTagOperation(@NotNull Project project, @NotNull Git git,
-                                     @NotNull GitBranchUiHandler handler, @NotNull List<GitRepository> repositories,
+                                     @NotNull GitBranchUiHandler handler,
+                                     @NotNull Map<GitRepository, String> repositories,
                                      @NotNull String name) {
-    super(project, git, handler, repositories);
+    super(project, git, handler, repositories.keySet());
+    myRepositories = repositories;
     myTagName = name;
   }
 
@@ -39,6 +46,11 @@ class GitDeleteRemoteTagOperation extends GitBranchOperation {
     GitCompoundResult result = new GitCompoundResult(myProject);
     Collection<GitRepository> repositories = getRepositories();
     for (GitRepository repository: repositories) {
+      String expectedCommit = myRepositories.get(repository);
+      List<ForceWithLease> forceWithLease = expectedCommit != null
+                                            ? singletonList(new ForceWithLeaseReference(tagFullName, expectedCommit))
+                                            : emptyList();
+
       for (GitRemote remote: repository.getRemotes()) {
         GitCommandResult lsRemoteResult = myGit.lsRemoteRefs(myProject, repository.getRoot(), remote, singletonList(tagFullName), "--tags");
         if (!lsRemoteResult.success()) {
@@ -48,7 +60,7 @@ class GitDeleteRemoteTagOperation extends GitBranchOperation {
 
         if (hasTagOnRemote(tagFullName, lsRemoteResult.getOutput())) {
           GitCommandResult pushResult = myGit.push(repository, new GitPushParamsImpl(remote, ":" + tagFullName,
-                                                                                     false, false, false, null));
+                                                                                     false, false, false, null, forceWithLease));
           result.append(repository, pushResult);
 
           if (pushResult.success()) {

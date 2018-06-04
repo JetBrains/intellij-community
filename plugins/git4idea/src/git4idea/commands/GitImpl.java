@@ -409,7 +409,7 @@ public class GitImpl extends GitImplBase {
                                @NotNull String spec,
                                boolean updateTracking,
                                @NotNull GitLineHandlerListener... listeners) {
-    return doPush(repository, remote, singleton(url), spec, false, updateTracking, false, null, listeners);
+    return doPush(repository, remote, singleton(url), spec, false, updateTracking, false, Collections.emptyList(), null, listeners);
   }
 
   @Override
@@ -418,7 +418,8 @@ public class GitImpl extends GitImplBase {
                                @NotNull GitPushParams pushParams,
                                GitLineHandlerListener... listeners) {
     return doPush(repository, pushParams.getRemote().getName(), pushParams.getRemote().getPushUrls(), pushParams.getSpec(),
-                  pushParams.isForce(), pushParams.shouldSetupTracking(), pushParams.shouldSkipHooks(), pushParams.getTagMode(), listeners);
+                  pushParams.isForce(), pushParams.shouldSetupTracking(), pushParams.shouldSkipHooks(), pushParams.getForceWithLease(),
+                  pushParams.getTagMode(), listeners);
   }
 
   @NotNull
@@ -429,6 +430,7 @@ public class GitImpl extends GitImplBase {
                                   final boolean force,
                                   final boolean updateTracking,
                                   final boolean skipHook,
+                                  final List<GitPushParams.ForceWithLease> forceWithLease,
                                   @Nullable final String tagMode,
                                   @NotNull final GitLineHandlerListener... listeners) {
     return runCommand(() -> {
@@ -448,6 +450,15 @@ public class GitImpl extends GitImplBase {
       }
       if (force) {
         h.addParameters("--force");
+      }
+      for (GitPushParams.ForceWithLease lease : forceWithLease) {
+        String parameter = lease.getParameter();
+        if (parameter != null) {
+          h.addParameters("--force-with-lease=" + parameter);
+        }
+        else {
+          h.addParameters("--force-with-lease");
+        }
       }
       if (tagMode != null) {
         h.addParameters(tagMode);
