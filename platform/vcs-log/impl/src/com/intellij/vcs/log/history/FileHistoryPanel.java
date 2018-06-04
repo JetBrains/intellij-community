@@ -94,7 +94,7 @@ public class FileHistoryPanel extends JPanel implements DataProvider, Disposable
 
     myDetailsSplitter = new OnePixelSplitter(true, "vcs.log.history.details.splitter.proportion", 0.7f);
     JComponent tableWithProgress = VcsLogUiUtil.installProgress(VcsLogUiUtil.setupScrolledGraph(myGraphTable, SideBorder.LEFT),
-                                                                logData, this);
+                                                                logData, ui.getId(), this);
     myDetailsSplitter.setFirstComponent(tableWithProgress);
     myDetailsSplitter.setSecondComponent(myUi.getProperties().get(CommonUiProperties.SHOW_DETAILS) ? myDetailsPanel : null);
 

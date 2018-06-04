@@ -82,7 +82,7 @@ public class FileHistoryUi extends AbstractVcsLogUi {
                        @NotNull FilePath path,
                        @Nullable Hash revision,
                        @NotNull VirtualFile root) {
-    super(path.getPath() + (revision == null ? "" : revision.asString()), logData, manager, refresher);
+    super(getFileHistoryLogId(path, revision), logData, manager, refresher);
     myUiProperties = uiProperties;
 
     myIndexDataGetter = ObjectUtils.assertNotNull(logData.getIndex().getDataGetter());
@@ -98,6 +98,11 @@ public class FileHistoryUi extends AbstractVcsLogUi {
 
     myPropertiesChangeListener = new MyPropertiesChangeListener();
     myUiProperties.addChangeListener(myPropertiesChangeListener);
+  }
+
+  @NotNull
+  public static String getFileHistoryLogId(@NotNull FilePath path, @Nullable Hash revision) {
+    return path.getPath() + (revision == null ? "" : revision.asString());
   }
 
   @Nullable

@@ -63,6 +63,7 @@ public class VcsLogData implements Disposable, VcsLogDataProvider {
     }
   };
   public static final int RECENT_COMMITS_COUNT = Registry.intValue("vcs.log.recent.commits.count");
+  public static final VcsLogProgress.ProgressKey DATA_PACK_REFRESH = new VcsLogProgress.ProgressKey("data pack");
 
   @NotNull private final Project myProject;
   @NotNull private final Map<VirtualFile, VcsLogProvider> myLogProviders;
@@ -216,7 +217,7 @@ public class VcsLogData implements Disposable, VcsLogDataProvider {
           }
         };
         CoreProgressManager manager = (CoreProgressManager)ProgressManager.getInstance();
-        ProgressIndicator indicator = myRefresher.getProgress().createProgressIndicator();
+        ProgressIndicator indicator = myRefresher.getProgress().createProgressIndicator(DATA_PACK_REFRESH);
         Future<?> future = manager.runProcessWithProgressAsynchronously(backgroundable, indicator, null);
         myInitialization = new SingleTaskController.SingleTaskImpl(future, indicator);
       }
