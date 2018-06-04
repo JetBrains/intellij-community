@@ -38,11 +38,7 @@ public class TouchBarSettingsTest extends TestCase {
   public void testSettingsRead() {
     Assume.assumeTrue(SystemInfo.isMac);
 
-    final NSDefaults settings = new NSDefaults();
-    final NSDefaults.Domain dom = settings.readDomain("loginwindow");
-    assertTrue(dom.isValid());
-
-    final String sysVer = dom.readStringVal("SystemVersionStampAsString");
+    final String sysVer = NSDefaults.readStringVal("loginwindow", "SystemVersionStampAsString");
     assertNotNull(sysVer);
     assertFalse(sysVer.isEmpty());
   }
@@ -51,10 +47,7 @@ public class TouchBarSettingsTest extends TestCase {
   public void testTouchBarSettingsWrite() {
     Assume.assumeTrue(NST.isSupportedOS());
 
-    final NSDefaults settings = new NSDefaults();
-    final NSDefaults.Domain dom = settings.readTouchBarDomain();
-
-    Assume.assumeTrue(dom.isValid());
+    Assume.assumeTrue(NSDefaults.isDomainExists(NSDefaults.ourTouchBarDomain));
 
     final boolean enabled = NSDefaults.isShowFnKeysEnabled(testAppID);
     NSDefaults.setShowFnKeysEnabled(testAppID, !enabled);
