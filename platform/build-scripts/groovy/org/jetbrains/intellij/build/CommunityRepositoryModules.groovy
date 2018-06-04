@@ -317,6 +317,7 @@ class CommunityRepositoryModules {
       withProjectLibrary("com.android.tools.analytics-library:tracker:26.1.2")
       withProjectLibrary("com.android.tools:annotations:26.1.2")
       withProjectLibrary("com.android.tools:sdk-common:26.1.2")
+      withProjectLibrary("com.android.tools.ddms:ddmlib:26.1.2")
       withProjectLibrary("com.android.tools.build:manifest-merger:26.1.2")
       withProjectLibrary("analytics-protos")
 
