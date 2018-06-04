@@ -105,11 +105,14 @@ class PyAddPipEnvPanel(private val project: Project?,
   /**
    * Checks if `pipenv` is available on `$PATH`.
    */
-  private fun validatePipEnvExecutable(): ValidationInfo? =
-    when (getPipEnvExecutable()) {
-      null -> ValidationInfo("Pipenv executable is not found on \$PATH")
+  private fun validatePipEnvExecutable(): ValidationInfo? {
+    val executable = getPipEnvExecutable() ?: return ValidationInfo("Pipenv executable is not found on \$PATH")
+    return when {
+      !executable.exists() -> ValidationInfo("${executable.absolutePath} is not found")
+      !executable.canExecute() -> ValidationInfo("Cannot execute ${executable.absolutePath}")
       else -> null
     }
+  }
 
   /**
    * Checks if the pipenv for the project hasn't been already added.

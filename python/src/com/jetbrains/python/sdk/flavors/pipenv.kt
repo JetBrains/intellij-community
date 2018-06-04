@@ -64,15 +64,22 @@ var Sdk.isPipEnv: Boolean
   }
 
 /**
- * Finds the pipenv executable in `$PATH`.
+ * Detects the pipenv executable in `$PATH`.
  */
-fun getPipEnvExecutable(): File? {
+fun detectPipEnvExecutable(): File? {
   val name = when {
     SystemInfo.isWindows -> "pipenv.exe"
     else -> "pipenv"
   }
   return PathEnvironmentVariableUtil.findInPath(name)
 }
+
+/**
+ * Returns the configured pipenv executable or detects it automatically.
+ */
+fun getPipEnvExecutable(): File? =
+  PySdkSettings.instance.pipEnvPath?.let { File(it) } ?: detectPipEnvExecutable()
+
 
 /**
  * Sets up the pipenv environment under the modal progress window.
@@ -162,7 +169,7 @@ fun runPipEnv(projectPath: @SystemDependent String, vararg args: String): String
       isCancelled ->
         throw RunCanceledByUserException()
       exitCode != 0 ->
-        throw PyExecutionException("Cannot run Python from Pipenv", executable, args.asList(),
+        throw PyExecutionException("Error Running Pipenv", executable, args.asList(),
                                    stdout, stderr, exitCode, emptyList())
       else -> stdout
     }
