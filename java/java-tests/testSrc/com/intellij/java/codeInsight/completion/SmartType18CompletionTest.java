@@ -168,6 +168,7 @@ public class SmartType18CompletionTest extends LightFixtureCompletionTestCase {
   public void testNoAnonymousOuterMethodReference() { doAntiTest(); }
 
   public void testMethodReferenceOnAncestor() { doTest(true); }
+  public void testObjectsNonNull() { doTest(true); }
 
   public void testNoLambdaSuggestionForGenericsFunctionalInterfaceMethod() {
     configureByFile("/" + getTestName(false) + ".java");
@@ -274,7 +275,7 @@ public void testConvertToObjectStream() {
 
   public void testPreferLambdaOverGenericGetter() {
     configureByTestName();
-    myFixture.assertPreferredCompletionItems(0, "s -> ", "isEmpty", "getSomeGenericValue");
+    myFixture.assertPreferredCompletionItems(0, "s -> ", "isEmpty", "isNull", "nonNull", "getSomeGenericValue");
   }
 
   public void testNoInaccessibleConstructorRef() {

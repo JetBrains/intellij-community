@@ -22,7 +22,6 @@ import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.codeInsight.lookup.LookupElementBuilder;
 import com.intellij.icons.AllIcons;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
@@ -257,14 +256,32 @@ public class FunctionalExpressionCompletionProvider extends CompletionProvider<C
     List<LookupElement> result = new ArrayList<>();
     for (PsiClass psiClass : JBIterable.generate(PsiTreeUtil.getParentOfType(originalPosition, PsiClass.class), PsiClass::getContainingClass)) {
       for (PsiMethod psiMethod : psiClass.getMethods()) {
-        if (psiMethod.hasModifierProperty(PsiModifier.STATIC) &&
-            hasAppropriateReturnType(expectedReturnType, psiMethod, substitutor) &&
-            isSignatureAppropriate(psiMethod, params, substitutor, 0, originalPosition)) {
+        if (isMatchingStaticMethod(params, originalPosition, substitutor, expectedReturnType, psiMethod)) {
           result.add(createMethodRefOnClass(functionalInterfaceType, psiMethod, psiClass));
         }
       }
     }
+
+    PsiClass objects = JavaPsiFacade.getInstance(originalPosition.getProject())
+                                    .findClass(CommonClassNames.JAVA_UTIL_OBJECTS, originalPosition.getResolveScope());
+    if (objects != null) {
+      for (PsiMethod nonNull : objects.getMethods()) {
+        if (isMatchingStaticMethod(params, originalPosition, substitutor, expectedReturnType, nonNull)) {
+          result.add(createMethodRefOnClass(functionalInterfaceType, nonNull, objects));
+        }
+      }
+    }
+
     return result;
+  }
+
+  private static boolean isMatchingStaticMethod(PsiParameter[] params,
+                                                PsiElement originalPosition,
+                                                PsiSubstitutor substitutor,
+                                                PsiType expectedReturnType, PsiMethod psiMethod) {
+    return psiMethod.hasModifierProperty(PsiModifier.STATIC) &&
+           hasAppropriateReturnType(expectedReturnType, psiMethod, substitutor) &&
+           isSignatureAppropriate(psiMethod, params, substitutor, 0, originalPosition);
   }
 
   private static List<LookupElement> collectVariantsByReceiver(boolean prioritize,
@@ -310,7 +327,7 @@ public class FunctionalExpressionCompletionProvider extends CompletionProvider<C
     if (parameterList.getParametersCount() == params.length - offset) {
       final PsiParameter[] referenceMethodParams = parameterList.getParameters();
       for (int i = 0; i < params.length - offset; i++) {
-        if (!Comparing.equal(referenceMethodParams[i].getType(), substitutor.substitute(params[i + offset].getType()))) {
+        if (!TypeConversionUtil.isAssignable(referenceMethodParams[i].getType(), substitutor.substitute(params[i + offset].getType()))) {
           return false;
         }
       }
