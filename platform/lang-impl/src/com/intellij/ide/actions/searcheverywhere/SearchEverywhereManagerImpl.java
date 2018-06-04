@@ -2,7 +2,6 @@
 package com.intellij.ide.actions.searcheverywhere;
 
 import com.google.common.collect.Lists;
-import com.intellij.ide.ui.UISettings;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.project.DumbAwareAction;
@@ -12,7 +11,6 @@ import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.util.DimensionService;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.wm.WindowManager;
-import com.intellij.openapi.wm.impl.IdeFrameImpl;
 import com.intellij.ui.SearchTextField;
 import com.intellij.ui.awt.RelativePoint;
 import com.intellij.util.ui.UIUtil;
@@ -102,23 +100,31 @@ public class SearchEverywhereManagerImpl implements SearchEverywhereManager {
                               .setMovable(true)
                               .createPopup();
     Disposer.register(myBalloon, mySearchEverywhereUI);
+    myBalloon.pack(true, true);
 
     myProject.putUserData(SEARCH_EVERYWHERE_POPUP, myBalloon);
     Disposer.register(myBalloon, () -> myProject.putUserData(SEARCH_EVERYWHERE_POPUP, null));
 
-    RelativePoint showingPoint = calculateShowingPoint();
     DimensionService service = DimensionService.getInstance();
     Dimension savedSize = service.getSize(LOCATION_SETTINGS_KEY);
     if (savedSize != null) {
       myBalloon.setSize(savedSize);
     }
 
-    if (showingPoint != null) {
-      myBalloon.show(showingPoint);
-    }
-    else {
+    Component topLevelParent = getTopLevelParent();
+    if (topLevelParent == null) {
       myBalloon.showInFocusCenter();
+      return;
     }
+
+    Point savedLocation = DimensionService.getInstance().getLocation(LOCATION_SETTINGS_KEY);
+    if (savedLocation != null) {
+      SwingUtilities.convertPointFromScreen(savedLocation, topLevelParent);
+      myBalloon.show(new RelativePoint(topLevelParent, savedLocation));
+      return;
+    }
+
+    myBalloon.showInCenterOf(topLevelParent);
   }
 
   @Override
@@ -152,26 +158,12 @@ public class SearchEverywhereManagerImpl implements SearchEverywhereManager {
     mySearchEverywhereUI.setUseNonProjectItems(show);
   }
 
-  private RelativePoint calculateShowingPoint() {
+  @Nullable
+  private Component getTopLevelParent() {
     final Window window = myProject != null
                           ? WindowManager.getInstance().suggestParentWindow(myProject)
                           : KeyboardFocusManager.getCurrentKeyboardFocusManager().getFocusedWindow();
-    Component parent = UIUtil.findUltimateParent(window);
-    if (parent == null) {
-      return null;
-    }
-
-    Point savedLocation = DimensionService.getInstance().getLocation(LOCATION_SETTINGS_KEY);
-    if (savedLocation != null) {
-      SwingUtilities.convertPointFromScreen(savedLocation, parent);
-      return new RelativePoint(parent, savedLocation);
-    }
-
-    int height = UISettings.getInstance().getShowMainToolbar() ? 135 : 115;
-    if (parent instanceof IdeFrameImpl && ((IdeFrameImpl)parent).isInFullScreen()) {
-      height -= 20;
-    }
-    return new RelativePoint(parent, new Point((parent.getSize().width - mySearchEverywhereUI.getPreferredSize().width) / 2, height));
+    return UIUtil.findUltimateParent(window);
   }
 
   private SearchEverywhereUI createView(Project project,
@@ -179,11 +171,6 @@ public class SearchEverywhereManagerImpl implements SearchEverywhereManager {
                                         List<SearchEverywhereContributor> allContributors,
                                         Map<String, SearchEverywhereContributorFilter<?>> contributorFilters) {
     SearchEverywhereUI view = new SearchEverywhereUI(project, serviceContributors, allContributors, contributorFilters);
-    view.addPropertyChangeListener("preferredSize", evt -> {
-      if (isShown()) {
-        myBalloon.pack(true, true);
-      }
-    });
 
     view.setSearchFinishedHandler(() -> {
       if (isShown()) {
