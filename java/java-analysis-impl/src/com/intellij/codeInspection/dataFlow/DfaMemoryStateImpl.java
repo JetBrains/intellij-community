@@ -864,7 +864,7 @@ public class DfaMemoryStateImpl implements DfaMemoryState {
       applyEquivalenceRelation(dfaRelation, dfaLeft, dfaRight);
       return relationType == RelationType.NE;
     }
-    if (canBeNaN(dfaLeft) && canBeNaN(dfaRight)) {
+    if ((canBeNaN(dfaLeft) && !isNull(dfaRight)) || (canBeNaN(dfaRight) && !isNull(dfaLeft))) {
       if (dfaLeft == dfaRight &&
           dfaLeft instanceof DfaVariableValue &&
           !(((DfaVariableValue)dfaLeft).getVariableType() instanceof PsiPrimitiveType)) {
