@@ -1045,7 +1045,7 @@ public class PyUnresolvedReferencesInspection extends PyInspection {
       final PyInspectionExtension[] extensions = Extensions.getExtensions(PyInspectionExtension.EP_NAME);
       final List<PsiElement> unused = collectUnusedImportElements();
       for (PsiElement element : unused) {
-        if (Arrays.stream(extensions).anyMatch(extension -> extension.ignoreUnused(element))) {
+        if (Arrays.stream(extensions).anyMatch(extension -> extension.ignoreUnused(element, myTypeEvalContext))) {
           continue;
         }
         if (element.getTextLength() > 0) {

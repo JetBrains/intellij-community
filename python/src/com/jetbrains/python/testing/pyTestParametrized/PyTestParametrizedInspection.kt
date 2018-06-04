@@ -10,9 +10,9 @@ import com.intellij.psi.PsiErrorElement
 import com.intellij.psi.impl.source.tree.LeafPsiElement
 import com.jetbrains.python.PyBundle
 import com.jetbrains.python.inspections.PyInspection
+import com.jetbrains.python.inspections.PyInspectionVisitor
 import com.jetbrains.python.psi.PyFunction
 import com.jetbrains.python.psi.PyParameter
-import com.jetbrains.python.psi.types.TypeEvalContext
 
 /**
  * Check that all parameters from parametrize decorator are declared by function
@@ -20,11 +20,11 @@ import com.jetbrains.python.psi.types.TypeEvalContext
 class PyTestParametrizedInspection : PyInspection() {
   override fun buildVisitor(holder: ProblemsHolder,
                             isOnTheFly: Boolean,
-                            session: LocalInspectionToolSession): PsiElementVisitor = object : PsiElementVisitor() {
+                            session: LocalInspectionToolSession): PsiElementVisitor = object : PyInspectionVisitor(holder, session) {
     override fun visitElement(element: PsiElement?) {
       if (element is PyFunction) {
         val requiredParameters = element
-          .getParametersOfParametrized(TypeEvalContext.codeAnalysis(element.project, element.containingFile))
+          .getParametersOfParametrized(myTypeEvalContext)
           .map(PyTestParameter::name)
         if (requiredParameters.isNotEmpty()) {
           val declaredParameters = element.parameterList.parameters.mapNotNull(PyParameter::getName)

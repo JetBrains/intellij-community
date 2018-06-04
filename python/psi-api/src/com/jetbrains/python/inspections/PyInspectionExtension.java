@@ -17,7 +17,7 @@ import java.util.List;
 public abstract class PyInspectionExtension {
   public static final ExtensionPointName<PyInspectionExtension> EP_NAME = ExtensionPointName.create("Pythonid.inspectionExtension");
 
-  public boolean ignoreUnused(PsiElement local) {
+  public boolean ignoreUnused(PsiElement local, TypeEvalContext evalContext) {
     return false;
   }
 

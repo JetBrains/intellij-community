@@ -11,7 +11,7 @@ import com.jetbrains.python.psi.types.TypeEvalContext
  */
 class PyTestParametrizedInspectionExtension : PyInspectionExtension() {
 
-  override fun ignoreUnused(local: PsiElement): Boolean = local is PyNamedParameter && local.isParametrized(
-    TypeEvalContext.codeAnalysis(local.project, local.containingFile))
+  override fun ignoreUnused(local: PsiElement, evalContext: TypeEvalContext) =
+    local is PyNamedParameter && local.isParametrized(evalContext)
 
 }
