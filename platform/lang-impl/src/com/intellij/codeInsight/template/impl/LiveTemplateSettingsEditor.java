@@ -294,10 +294,10 @@ public class LiveTemplateSettingsEditor extends JPanel {
       String oldPrefix = "";
       for (TemplateContextType type : getApplicableContexts()) {
         final TemplateContextType base = type.getBaseContextType();
-        String ownName = UIUtil.removeMnemonic(type.getPresentableName());
+        String ownName = presentableName(type);
         String prefix = "";
         if (base != null && !(base instanceof EverywhereContextType)) {
-          prefix = UIUtil.removeMnemonic(base.getPresentableName()) + ": ";
+          prefix = presentableName(base) + ": ";
           ownName = StringUtil.decapitalize(ownName);
         }
         if (type instanceof EverywhereContextType) {
@@ -362,6 +362,11 @@ public class LiveTemplateSettingsEditor extends JPanel {
     return panel;
   }
 
+  @NotNull
+  private static String presentableName(TemplateContextType type) {
+    return UIUtil.removeMnemonic(type.getPresentableName());
+  }
+
   private boolean disposeContextPopup() {
     if (myContextPopup != null && myContextPopup.isVisible()) {
       myContextPopup.cancel();
@@ -407,7 +412,7 @@ public class LiveTemplateSettingsEditor extends JPanel {
       }
     };
 
-    for (TemplateContextType type : hierarchy.get(null)) {
+    for (TemplateContextType type : sortContexts(hierarchy.get(null))) {
       addContextNode(hierarchy, root, type, context);
     }
 
@@ -431,16 +436,21 @@ public class LiveTemplateSettingsEditor extends JPanel {
     return panel;
   }
 
+  @NotNull
+  private static List<TemplateContextType> sortContexts(Collection<TemplateContextType> contextTypes) {
+    return ContainerUtil.sorted(contextTypes, (o1, o2) -> StringUtil.compare(presentableName(o1), presentableName(o2), true));
+  }
+
   private static void addContextNode(MultiMap<TemplateContextType, TemplateContextType> hierarchy,
                                      CheckedTreeNode parent,
                                      TemplateContextType type, TemplateContext context) {
-    final Collection<TemplateContextType> children = hierarchy.get(type);
-    final String name = UIUtil.removeMnemonic(type.getPresentableName());
-    final CheckedTreeNode node = new CheckedTreeNode(Pair.create(children.isEmpty() ? type : null, name));
+    Collection<TemplateContextType> children = hierarchy.get(type);
+    String name = presentableName(type);
+    CheckedTreeNode node = new CheckedTreeNode(Pair.create(children.isEmpty() ? type : null, name));
     parent.add(node);
 
     if (!children.isEmpty()) {
-      for (TemplateContextType child : children) {
+      for (TemplateContextType child : sortContexts(children)) {
         addContextNode(hierarchy, node, child, context);
       }
       final CheckedTreeNode other = new CheckedTreeNode(Pair.create(type, "Other"));
