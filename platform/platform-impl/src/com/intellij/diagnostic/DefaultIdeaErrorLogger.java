@@ -2,7 +2,6 @@
 package com.intellij.diagnostic;
 
 import com.android.tools.analytics.AnalyticsSettings;
-import com.android.tools.analytics.UsageTracker;
 import com.android.utils.NullLogger;
 import com.intellij.diagnostic.VMOptions.MemoryKind;
 import com.intellij.ide.ExceptionRegistry;
@@ -72,7 +71,7 @@ public class DefaultIdeaErrorLogger implements ErrorLogger {
     if (ourLoggerBroken) return;
 
     // Android Studio: track exception count
-    if (AnalyticsSettings.getInstance(new NullLogger()).hasOptedIn()) {
+    if (AnalyticsSettings.getInstance(new NullLogger()).getOptedIn()) {
       Throwable t = event.getThrowable();
       if (t != null) {
         if (isReportableCrash(t)) {

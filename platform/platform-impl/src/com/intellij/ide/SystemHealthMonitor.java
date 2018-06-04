@@ -712,7 +712,7 @@ public class SystemHealthMonitor implements ApplicationComponent {
   }
 
   public static void reportException(@NotNull Throwable t, @NotNull StackTrace stackTrace) {
-    if (!AnalyticsSettings.getInstance(new NullLogger()).hasOptedIn()) {
+    if (!AnalyticsSettings.getInstance(new NullLogger()).getOptedIn()) {
       return;
     }
 
@@ -725,7 +725,7 @@ public class SystemHealthMonitor implements ApplicationComponent {
   }
 
   private static void reportAnr(@NotNull String fileName, @NotNull List<String> threadDump) {
-    if (!AnalyticsSettings.getInstance(new NullLogger()).hasOptedIn()) {
+    if (!AnalyticsSettings.getInstance(new NullLogger()).getOptedIn()) {
       return;
     }
 
@@ -738,7 +738,7 @@ public class SystemHealthMonitor implements ApplicationComponent {
   }
 
   private static void reportCrashes(@NotNull List<StudioCrashDetails> descriptions) {
-    if (!AnalyticsSettings.getInstance(new NullLogger()).hasOptedIn()) {
+    if (!AnalyticsSettings.getInstance(new NullLogger()).getOptedIn()) {
       return;
     }
 
