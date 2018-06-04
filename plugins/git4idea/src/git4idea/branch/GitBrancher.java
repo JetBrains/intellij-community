@@ -165,6 +165,11 @@ public interface GitBrancher {
   void deleteTag(@NotNull String name, @NotNull List<GitRepository> repositories);
 
   /**
+   * Deletes tag on all remotes
+   */
+  void deleteRemoteTag(@NotNull String name, @NotNull List<GitRepository> repositories);
+
+  /**
    * What should be done after successful merging a branch: delete the merged branch, propose to delete or do nothing.
    */
   enum DeleteOnMergeOption {

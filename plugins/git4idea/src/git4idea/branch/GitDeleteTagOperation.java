@@ -8,6 +8,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vcs.VcsNotifier;
 import git4idea.GitRevisionNumber;
@@ -19,6 +20,7 @@ import git4idea.commands.GitCompoundResult;
 import git4idea.repo.GitRepository;
 import org.jetbrains.annotations.NotNull;
 
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.Map;
@@ -31,8 +33,6 @@ import static com.intellij.openapi.vcs.VcsNotifier.STANDARD_NOTIFICATION;
 class GitDeleteTagOperation extends GitBranchOperation {
 
   private static final Logger LOG = Logger.getInstance(GitDeleteTagOperation.class);
-
-  private static final String RESTORE = "Restore";
 
   @NotNull private final String myTagName;
   @NotNull private final VcsNotifier myNotifier;
@@ -82,7 +82,17 @@ class GitDeleteTagOperation extends GitBranchOperation {
   protected void notifySuccess() {
     String message = "<b>Deleted Tag:</b> " + myTagName;
     Notification notification = STANDARD_NOTIFICATION.createNotification("", message, NotificationType.INFORMATION, null);
-    notification.addAction(NotificationAction.createSimple(RESTORE, () -> restoreInBackground(notification)));
+    notification.addAction(NotificationAction.createSimple("Restore", () -> restoreInBackground(notification)));
+
+    int remotes = 0;
+    for (GitRepository repository: getRepositories()) {
+      remotes += repository.getRemotes().size();
+    }
+
+    if (remotes > 0) {
+      String text = "Delete on " + StringUtil.pluralize("Remote", remotes);
+      notification.addAction(NotificationAction.createSimple(text, () -> pushRemotesInBackground()));
+    }
     myNotifier.notify(notification);
   }
 
@@ -131,5 +141,9 @@ class GitDeleteTagOperation extends GitBranchOperation {
   @NotNull
   public String getSuccessMessage() {
     throw new UnsupportedOperationException();
+  }
+
+  private void pushRemotesInBackground() {
+    GitBrancher.getInstance(myProject).deleteRemoteTag(myTagName, new ArrayList<>(getRepositories()));
   }
 }

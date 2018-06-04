@@ -43,8 +43,7 @@ import java.util.*;
 
 import static git4idea.GitUtil.COMMENT_CHAR;
 import static java.util.Arrays.asList;
-import static java.util.Collections.singleton;
-import static java.util.Collections.singletonList;
+import static java.util.Collections.*;
 
 /**
  * Easy-to-use wrapper of common native Git commands.
@@ -570,7 +569,7 @@ public class GitImpl extends GitImplBase {
   public GitCommandResult lsRemote(@NotNull final Project project,
                                    @NotNull final File workingDir,
                                    @NotNull final String url) {
-    return doLsRemote(project, workingDir, url, singleton(url));
+    return doLsRemote(project, workingDir, url, singleton(url), emptyList());
   }
 
   @NotNull
@@ -579,7 +578,17 @@ public class GitImpl extends GitImplBase {
                                    @NotNull VirtualFile workingDir,
                                    @NotNull GitRemote remote,
                                    String... additionalParameters) {
-    return doLsRemote(project, VfsUtilCore.virtualToIoFile(workingDir), remote.getName(), remote.getUrls(), additionalParameters);
+    return lsRemoteRefs(project, workingDir, remote, emptyList(), additionalParameters);
+  }
+
+  @NotNull
+  @Override
+  public GitCommandResult lsRemoteRefs(@NotNull Project project,
+                                       @NotNull VirtualFile workingDir,
+                                       @NotNull GitRemote remote,
+                                       @NotNull List<String> refs,
+                                       String... additionalParameters) {
+    return doLsRemote(project, VfsUtilCore.virtualToIoFile(workingDir), remote.getName(), remote.getUrls(), refs, additionalParameters);
   }
 
   @NotNull
@@ -706,11 +715,13 @@ public class GitImpl extends GitImplBase {
                                       @NotNull final File workingDir,
                                       @NotNull final String remoteId,
                                       @NotNull final Collection<String> authenticationUrls,
+                                      @NotNull final List<String> refs,
                                       final String... additionalParameters) {
     return runCommand(() -> {
       GitLineHandler h = new GitLineHandler(project, workingDir, GitCommand.LS_REMOTE);
       h.addParameters(additionalParameters);
       h.addParameters(remoteId);
+      h.addParameters(refs);
       h.setUrls(authenticationUrls);
       return h;
     });

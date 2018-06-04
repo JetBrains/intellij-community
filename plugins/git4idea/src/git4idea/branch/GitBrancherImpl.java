@@ -170,10 +170,20 @@ class GitBrancherImpl implements GitBrancher {
 
   @Override
   public void deleteTag(@NotNull String name, @NotNull List<GitRepository> repositories) {
-    new CommonBackgroundTask(myProject, "Deleting " + name, null) {
+    new CommonBackgroundTask(myProject, "Deleting tag " + name, null) {
       @Override
       public void execute(@NotNull ProgressIndicator indicator) {
         newWorker(indicator).deleteTag(name, repositories);
+      }
+    }.runInBackground();
+  }
+
+  @Override
+  public void deleteRemoteTag(@NotNull String name, @NotNull List<GitRepository> repositories) {
+    new CommonBackgroundTask(myProject, "Deleting tag " + name + " on remote", null) {
+      @Override
+      public void execute(@NotNull ProgressIndicator indicator) {
+        newWorker(indicator).deleteRemoteTag(name, repositories);
       }
     }.runInBackground();
   }
