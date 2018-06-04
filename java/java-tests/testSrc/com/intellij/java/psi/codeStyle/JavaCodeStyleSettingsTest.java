@@ -178,6 +178,8 @@ public class JavaCodeStyleSettingsTest extends CodeStyleTestCase {
       "  <option name=\"keepSimpleClassesInOneLine\" value=\"false\" />\n" +
       "  <option name=\"keepSimpleLambdasInOneLine\" value=\"false\" />\n" +
       "  <option name=\"keepSimpleMethodsInOneLine\" value=\"false\" />\n" +
+      "  <option name=\"labelIndent\" value=\"0\" />\n" +
+      "  <option name=\"labelIndentAbsolute\" value=\"false\" />\n" +
       "  <option name=\"lambdaBraceStyle\" value=\"EndOfLine\" />\n" +
       "  <option name=\"layoutStaticImportsSeparately\" value=\"true\" />\n" +
       "  <option name=\"lineCommentAddSpace\" value=\"false\" />\n" +

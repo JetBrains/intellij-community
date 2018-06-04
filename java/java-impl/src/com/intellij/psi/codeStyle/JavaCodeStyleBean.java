@@ -29,6 +29,22 @@ public class JavaCodeStyleBean extends CodeStyleBean {
 
   public void setContinuationIndent(int value) {getIndentOptions(true).CONTINUATION_INDENT_SIZE = value;}
 
+  public int getLabelIndent() {
+    return getIndentOptions(false).LABEL_INDENT_SIZE;
+  }
+
+  public void setLabelIndent(int value) {
+    getIndentOptions(true).LABEL_INDENT_SIZE = value;
+  }
+
+  public boolean isLabelIndentAbsolute() {
+    return getIndentOptions(false).LABEL_INDENT_ABSOLUTE;
+  }
+
+  public void setLabelIndentAbsolute(boolean value) {
+    getIndentOptions(true).LABEL_INDENT_ABSOLUTE = value;
+  }
+
   public int getTabSize() {
     return getIndentOptions(false).TAB_SIZE;
   }
