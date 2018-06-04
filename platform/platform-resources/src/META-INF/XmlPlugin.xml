@@ -511,7 +511,7 @@
     </intentionAction>
     <intentionAction>
       <category>XML</category>
-      <className>com.intellij.codeInspection.htmlInspections.RemoveAttributeIntentionAction</className>
+      <className>com.intellij.codeInsight.daemon.impl.analysis.RemoveAttributeIntentionFix</className>
     </intentionAction>
     <intentionAction>
       <category>XML</category>

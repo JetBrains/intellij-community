@@ -16,6 +16,7 @@
 package com.intellij.codeInspection.htmlInspections;
 
 import com.intellij.codeInsight.daemon.XmlErrorMessages;
+import com.intellij.codeInsight.daemon.impl.analysis.RemoveAttributeIntentionFix;
 import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.codeInspection.ProblemsHolder;
 import com.intellij.codeInspection.XmlQuickFixFactory;
@@ -97,7 +98,7 @@ public class HtmlUnknownBooleanAttributeInspectionBase extends HtmlUnknownElemen
             LocalQuickFix[] quickFixes = !html5 ? new LocalQuickFix[]{
               new AddCustomHtmlElementIntentionAction(BOOLEAN_ATTRIBUTE_KEY, name, XmlBundle.message("add.custom.html.boolean.attribute", name)),
               XmlQuickFixFactory.getInstance().addAttributeValueFix(attribute),
-              new RemoveAttributeIntentionAction(name),
+              new RemoveAttributeIntentionFix(name),
             } : new LocalQuickFix[] {
               XmlQuickFixFactory.getInstance().addAttributeValueFix(attribute)
             };
