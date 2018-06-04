@@ -48,6 +48,9 @@ public class CodeStyleBeanAccessorGenerator {
     addMapping("LBRACE", "LeftBrace");
     addMapping("INSTANCEOF", "InstanceOf");
     addMapping("DOWHILE", "DoWhile");
+    addMapping("INDENT_SIZE", "Indent");
+    addMapping("CONTINUATION_INDENT_SIZE", "ContinuationIndent");
+    addMapping("PARM", "Param");
   }
 
   public CodeStyleBeanAccessorGenerator(@NotNull Field field) {
@@ -156,9 +159,12 @@ public class CodeStyleBeanAccessorGenerator {
            myField.getAnnotation(Deprecated.class) == null;
   }
 
-  String getContainerClassAccessor() {
+  String getContainerClassAccessor(boolean isWriteAccess) {
     if (myContainerClass == CommonCodeStyleSettings.class) {
       return "getCommonSettings()";
+    }
+    else if (myContainerClass == CommonCodeStyleSettings.IndentOptions.class) {
+      return "getIndentOptions(" + isWriteAccess + ")";
     }
     myImports.add(myContainerClass.getName());
     return "getCustomSettings(" + myContainerClass.getSimpleName() + ".class)";
@@ -177,21 +183,21 @@ public class CodeStyleBeanAccessorGenerator {
       if (valueType == ValueType.WRAP) {
         output
           .append("return intToWrapType(")
-          .append(getContainerClassAccessor())
+          .append(getContainerClassAccessor(false))
           .append(".").append(myFieldName)
           .append(");\n");
       }
       else if (valueType == ValueType.BRACE_STYLE || valueType == ValueType.FORCE_BRACES) {
         output
           .append("return ").append(typeString).append(".fromInt(")
-          .append(getContainerClassAccessor())
+          .append(getContainerClassAccessor(false))
           .append(".").append(myFieldName)
           .append(");\n");
       }
       else {
         output
           .append("return ")
-          .append((getContainerClassAccessor()))
+          .append((getContainerClassAccessor(false)))
           .append(".").append(myFieldName).append(";\n");
       }
       output
@@ -214,7 +220,7 @@ public class CodeStyleBeanAccessorGenerator {
         .append(typeString).append(" value")
         .append("){");
       output
-        .append(getContainerClassAccessor())
+        .append(getContainerClassAccessor(true))
         .append(".").append(myFieldName).append("= ");
       final ValueType valueType = getValueType();
       if (valueType == ValueType.WRAP) {

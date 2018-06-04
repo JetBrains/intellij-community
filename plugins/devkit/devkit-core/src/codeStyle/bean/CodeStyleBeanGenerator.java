@@ -1,6 +1,8 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.devkit.codeStyle.bean;
 
+import com.intellij.application.options.IndentOptionsEditor;
+import com.intellij.application.options.SmartIndentOptionsEditor;
 import com.intellij.lang.Language;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.util.Ref;
@@ -35,7 +37,26 @@ public class CodeStyleBeanGenerator {
     for (CustomCodeStyleSettings customSettings : getCustomSettings()) {
       generateMethodsFor(customSettings.getClass(), sb, null);
     }
+    generateMethodsFor(CommonCodeStyleSettings.IndentOptions.class, sb, getSupportedIndentOptions());
     return sb.toString();
+  }
+
+  private Set<String> getSupportedIndentOptions() {
+    LanguageCodeStyleSettingsProvider provider = LanguageCodeStyleSettingsProvider.forLanguage(myLanguage);
+    if (provider == null) return Collections.emptySet();
+    Set<String> indentOptions = ContainerUtil.newHashSet();
+    IndentOptionsEditor editor = provider.getIndentOptionsEditor();
+    if (editor != null) {
+      indentOptions.add("TAB_SIZE");
+      indentOptions.add("USE_TAB_CHARACTER");
+      indentOptions.add("INDENT_SIZE");
+      if (editor instanceof SmartIndentOptionsEditor) {
+        indentOptions.add("CONTINUATION_INDENT_SIZE");
+        indentOptions.add("SMART_TABS");
+        indentOptions.add("KEEP_INDENTS_ON_EMPTY_LINES");
+      }
+    }
+    return indentOptions;
   }
 
   private Set<String> getSupportedFields() {
