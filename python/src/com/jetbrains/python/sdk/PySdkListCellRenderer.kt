@@ -70,6 +70,11 @@ open class PySdkListCellRenderer(private val sdkModifiers: Map<Sdk, SdkModificat
       else ->
         append(name)
     }
+    if (sdk.isPipEnv) {
+      sdk.versionString?.let {
+        append(" $it", SimpleTextAttributes.GRAYED_SMALL_ATTRIBUTES)
+      }
+    }
     val homePath = sdk.homePath
     val relHomePath = homePath?.let { FileUtil.getLocationRelativeToUserHome(it) }
     if (relHomePath != null && homePath !in name && relHomePath !in name) {
