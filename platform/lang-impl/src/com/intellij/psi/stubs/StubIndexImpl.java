@@ -20,6 +20,7 @@ import com.intellij.openapi.vfs.newvfs.ManagingFS;
 import com.intellij.openapi.vfs.newvfs.persistent.PersistentFS;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.search.GlobalSearchScope;
+import com.intellij.util.ConcurrencyUtil;
 import com.intellij.util.Processor;
 import com.intellij.util.Processors;
 import com.intellij.util.SmartList;
@@ -334,16 +335,18 @@ public class StubIndexImpl extends StubIndex implements PersistentStateComponent
 
     UpdatableIndex<Integer, SerializedStubTree, FileContent> stubUpdatingIndex = fileBasedIndex.getIndex(stubUpdatingIndexId);
     try {
-      stubUpdatingIndex.getReadLock().lock();
-      try {
-        // disable up-to-date check to avoid locks on attempt to acquire index write lock while holding at the same time the readLock for this index
-        return FileBasedIndexImpl.disableUpToDateCheckIn(()->
-               myAccessValidator.validate(stubUpdatingIndexId, ()->index.getData(key).forEach(action)));
-      }
-      finally {
-        stubUpdatingIndex.getReadLock().unlock();
-        wipeProblematicFileIdsForParticularKeyAndStubIndex(indexKey, key, stubUpdatingIndex);
-      }
+      return myAccessValidator.validate(stubUpdatingIndexId, ()-> {
+        try {
+          return FileBasedIndexImpl.disableUpToDateCheckIn(() ->
+             ConcurrencyUtil.withLock(stubUpdatingIndex.getReadLock(), () ->
+               // disable up-to-date check to avoid locks on attempt to acquire index write lock while holding at the same time the readLock for this index
+               index.getData(key).forEach(action)
+             ));
+        }
+        finally {
+          wipeProblematicFileIdsForParticularKeyAndStubIndex(indexKey, key, stubUpdatingIndex);
+        }
+      });
     }
     catch (StorageException e) {
       forceRebuild(e);
