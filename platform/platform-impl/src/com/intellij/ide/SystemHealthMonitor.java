@@ -1,7 +1,9 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide;
 
+import com.android.tools.analytics.AnalyticsSettings;
 import com.android.tools.analytics.UsageTracker;
+import com.android.utils.NullLogger;
 import com.google.common.base.Charsets;
 import com.google.common.base.Joiner;
 import com.google.common.collect.ImmutableMap;
@@ -166,10 +168,10 @@ public class SystemHealthMonitor implements ApplicationComponent {
         @Override
         public void uiFreezeFinished(int lengthInSeconds) {
           // track how long the IDE was frozen
-          UsageTracker.getInstance().log(AndroidStudioEvent.newBuilder()
-                                           .setKind(EventKind.STUDIO_PERFORMANCE_STATS)
-                                           .setStudioPerformanceStats(StudioPerformanceStats.newBuilder()
-                                                                        .setUiFreezeTimeMs(lengthInSeconds * 1000)));
+          UsageTracker.log(AndroidStudioEvent.newBuilder()
+              .setKind(EventKind.STUDIO_PERFORMANCE_STATS)
+              .setStudioPerformanceStats(StudioPerformanceStats.newBuilder()
+                  .setUiFreezeTimeMs(lengthInSeconds * 1000)));
         }
 
         @Override
@@ -380,7 +382,7 @@ public class SystemHealthMonitor implements ApplicationComponent {
   // Use this method to log crash events, so crashes on internal builds don't get logged.
   private static void logUsageOnlyIfNotInternalApplication(AndroidStudioEvent.Builder eventBuilder) {
     if (!ApplicationManager.getApplication().isInternal()) {
-      UsageTracker.getInstance().log(eventBuilder);
+      UsageTracker.log(eventBuilder);
     } else {
       LOG.debug("SystemHealthMonitor would send following analytics event in the release build: " + eventBuilder.build());
     }
@@ -389,7 +391,7 @@ public class SystemHealthMonitor implements ApplicationComponent {
   // Use this method to log crash events, so crashes on internal builds don't get logged.
   private static void logUsageOnlyIfNotInternalApplication(long eventTimeMs, AndroidStudioEvent.Builder eventBuilder) {
     if (!ApplicationManager.getApplication().isInternal()) {
-      UsageTracker.getInstance().log(eventTimeMs, eventBuilder);
+      UsageTracker.log(eventTimeMs, eventBuilder);
     } else {
       logUsageOnlyIfNotInternalApplication(eventBuilder);
     }
@@ -600,14 +602,14 @@ public class SystemHealthMonitor implements ApplicationComponent {
         }
         invocations.add(invocationKind);
       } else {
-        UsageTracker.getInstance().log(AndroidStudioEvent.newBuilder()
-                                         .setCategory(EventCategory.STUDIO_UI)
-                                         .setKind(EventKind.STUDIO_UI_ACTION_STATS)
-                                         .setUiActionStats(UIActionStats.newBuilder()
-                                                             .setActionClassName(actionName)
-                                                             .setInvocationKind(invocationKind)
-                                                             .setInvocations(1)
-                                                             .setDirect(true)));
+        UsageTracker.log(AndroidStudioEvent.newBuilder()
+            .setCategory(EventCategory.STUDIO_UI)
+            .setKind(EventKind.STUDIO_UI_ACTION_STATS)
+            .setUiActionStats(UIActionStats.newBuilder()
+                .setActionClassName(actionName)
+                .setInvocationKind(invocationKind)
+                .setInvocations(1)
+                .setDirect(true)));
       }
     }
   }
@@ -641,27 +643,27 @@ public class SystemHealthMonitor implements ApplicationComponent {
 
     for (Map.Entry<String, Multiset<InvocationKind>> actionEntry : currentInvocations.entrySet()) {
       for (Multiset.Entry<InvocationKind> invocationEntry : actionEntry.getValue().entrySet()) {
-        UsageTracker.getInstance().log(AndroidStudioEvent.newBuilder()
-                                       .setCategory(EventCategory.STUDIO_UI)
-                                       .setKind(EventKind.STUDIO_UI_ACTION_STATS)
-                                       .setUiActionStats(UIActionStats.newBuilder()
-                                                         .setActionClassName(actionEntry.getKey())
-                                                         .setInvocationKind(invocationEntry.getElement())
-                                                         .setInvocations(invocationEntry.getCount())));
+        UsageTracker.log(AndroidStudioEvent.newBuilder()
+            .setCategory(EventCategory.STUDIO_UI)
+            .setKind(EventKind.STUDIO_UI_ACTION_STATS)
+            .setUiActionStats(UIActionStats.newBuilder()
+                .setActionClassName(actionEntry.getKey())
+                .setInvocationKind(invocationEntry.getElement())
+                .setInvocations(invocationEntry.getCount())));
       }
     }
 
     // Move to the EDT since myEventDurationsMs structure can only be accessed from that thread.
     ApplicationManager.getApplication().invokeLater(() -> {
       StudioPerformanceStats.Builder statsProto =
-        StudioPerformanceStats.newBuilder()
-                              .setEventServiceTimeSamplePeriod(IdeEventQueue.EVENT_TIMING_INTERVAL)
-                              .setEventServiceTimeMs(HistogramUtil.toProto(myEventDurationsMs))
-                              .setWriteLockWaitTimeMs(HistogramUtil.toProto(myWriteLockWaitTimesMs));
-      UsageTracker.getInstance().log(AndroidStudioEvent.newBuilder()
-                                                       .setCategory(EventCategory.STUDIO_UI)
-                                                       .setKind(EventKind.STUDIO_PERFORMANCE_STATS)
-                                                       .setStudioPerformanceStats(statsProto));
+          StudioPerformanceStats.newBuilder()
+              .setEventServiceTimeSamplePeriod(IdeEventQueue.EVENT_TIMING_INTERVAL)
+              .setEventServiceTimeMs(HistogramUtil.toProto(myEventDurationsMs))
+              .setWriteLockWaitTimeMs(HistogramUtil.toProto(myWriteLockWaitTimesMs));
+      UsageTracker.log(AndroidStudioEvent.newBuilder()
+                           .setCategory(EventCategory.STUDIO_UI)
+                           .setKind(EventKind.STUDIO_PERFORMANCE_STATS)
+                           .setStudioPerformanceStats(statsProto));
       myEventDurationsMs.reset();
       myWriteLockWaitTimesMs.reset();
     });
@@ -710,7 +712,7 @@ public class SystemHealthMonitor implements ApplicationComponent {
   }
 
   public static void reportException(@NotNull Throwable t, @NotNull StackTrace stackTrace) {
-    if (!UsageTracker.getInstance().getAnalyticsSettings().hasOptedIn()) {
+    if (!AnalyticsSettings.getInstance(new NullLogger()).hasOptedIn()) {
       return;
     }
 
@@ -723,7 +725,7 @@ public class SystemHealthMonitor implements ApplicationComponent {
   }
 
   private static void reportAnr(@NotNull String fileName, @NotNull List<String> threadDump) {
-    if (!UsageTracker.getInstance().getAnalyticsSettings().hasOptedIn()) {
+    if (!AnalyticsSettings.getInstance(new NullLogger()).hasOptedIn()) {
       return;
     }
 
@@ -736,7 +738,7 @@ public class SystemHealthMonitor implements ApplicationComponent {
   }
 
   private static void reportCrashes(@NotNull List<StudioCrashDetails> descriptions) {
-    if (!UsageTracker.getInstance().getAnalyticsSettings().hasOptedIn()) {
+    if (!AnalyticsSettings.getInstance(new NullLogger()).hasOptedIn()) {
       return;
     }
 

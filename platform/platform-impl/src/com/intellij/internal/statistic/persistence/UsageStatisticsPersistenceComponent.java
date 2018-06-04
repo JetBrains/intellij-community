@@ -197,9 +197,8 @@ public class UsageStatisticsPersistenceComponent extends BasicSentUsagesPersiste
     AnalyticsSettings settings = UsageTracker.updateSettingsAndTracker(allowed, logger, scheduler);
 
     // Update usage tracker maximums for long-lived process.
-    UsageTracker tracker = UsageTracker.getInstance();
-    tracker.setMaxJournalTime(10, TimeUnit.MINUTES);
-    tracker.setMaxJournalSize(1000);
+    UsageTracker.setMaxJournalTime(10, TimeUnit.MINUTES);
+    UsageTracker.setMaxJournalSize(1000);
 
     ApplicationInfo application = ApplicationInfo.getInstance();
 

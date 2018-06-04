@@ -116,7 +116,7 @@ public class UnindexedFilesUpdater extends DumbModeTask {
     CacheUpdateRunner.processFiles(indicator, files, myProject, content -> myIndex.indexFileContent(myProject, content));
     int durationMs = (int)(System.currentTimeMillis() - startTimeMs);
     ApplicationManager.getApplication().executeOnPooledThread(
-      () -> UsageTracker.getInstance().log(
+      () -> UsageTracker.log(
         AndroidStudioEvent.newBuilder()
                           .setKind(AndroidStudioEvent.EventKind.INTELLIJ_INDEXING_STATS)
                           .setIntellijIndexingStats(
