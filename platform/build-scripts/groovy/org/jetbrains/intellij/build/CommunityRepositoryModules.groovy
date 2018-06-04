@@ -308,15 +308,13 @@ class CommunityRepositoryModules {
       withResourceFromModule("android.sdktools.layoutlib-resources", ".", "lib/layoutlib") // todo replace this with runtime downloading
       withResourceFromModule("android.sdktools.sdklib", "../templates", "lib/templates")
 
-      // we put it to plugin instead of ide in original Android Studio layout
-      withModule("android.sdktools.common", "android-base-common.jar")
-
       withProjectLibrary("studio-profiler-grpc-1.0-jarjar")
       withProjectLibrary("archive-patcher")
       withProjectLibrary("com.android.tools.analytics-library:shared:26.1.2")
       withProjectLibrary("com.android.tools.analytics-library:tracker:26.1.2")
       withProjectLibrary("com.android.tools:annotations:26.1.2")
       withProjectLibrary("com.android.tools:sdk-common:26.1.2")
+      withProjectLibrary("com.android.tools:common:26.1.2")
       withProjectLibrary("com.android.tools.ddms:ddmlib:26.1.2")
       withProjectLibrary("com.android.tools.build:manifest-merger:26.1.2")
       withProjectLibrary("analytics-protos")

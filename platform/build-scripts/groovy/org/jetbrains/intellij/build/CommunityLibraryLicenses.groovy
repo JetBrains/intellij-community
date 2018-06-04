@@ -42,6 +42,7 @@ class CommunityLibraryLicenses {
     new LibraryLicense(name: "Android Repository", libraryName: "com.android.tools:repository:26.1.2", license: "Apache 2.0", url: "http://source.android.com/"),
     new LibraryLicense(name: "Android Sdk Common", libraryName: "com.android.tools:sdk-common:26.1.2", license: "Apache 2.0", url: "http://source.android.com/"),
     new LibraryLicense(name: "Android Ddm Library", libraryName: "com.android.tools.ddms:ddmlib:26.1.2", license: "Apache 2.0", url: "http://source.android.com/"),
+    new LibraryLicense(name: "Android Common Library", libraryName: "com.android.tools:common:26.1.2", license: "Apache 2.0", url: "http://source.android.com/"),
     new LibraryLicense(name: "Android DEX library", libraryName: "dexlib2", license: "Apache 2.0", url: "http://source.android.com/"),
     new LibraryLicense(name: "Android Sherpa library", libraryName: "sherpa-solver", license: "Apache 2.0", url: "http://source.android.com/"),
     new LibraryLicense(name: "Android Jimfs library", libraryName: "jimfs", license: "Apache 2.0", url: "https://github.com/google/jimfs"),

@@ -363,7 +363,6 @@
       <module fileurl="file://$PROJECT_DIR$/android/tools-base/apkparser/binary-resources/android.sdktools.binary-resources.iml" filepath="$PROJECT_DIR$/android/tools-base/apkparser/binary-resources/android.sdktools.binary-resources.iml" />
       <module fileurl="file://$PROJECT_DIR$/android/tools-base/chunkio/android.sdktools.chunkio.iml" filepath="$PROJECT_DIR$/android/tools-base/chunkio/android.sdktools.chunkio.iml" />
       <module fileurl="file://$PROJECT_DIR$/android/tools-base/chunkio-processor/android.sdktools.chunkio-processor.iml" filepath="$PROJECT_DIR$/android/tools-base/chunkio-processor/android.sdktools.chunkio-processor.iml" />
-      <module fileurl="file://$PROJECT_DIR$/android/tools-base/common/android.sdktools.common.iml" filepath="$PROJECT_DIR$/android/tools-base/common/android.sdktools.common.iml" />
       <module fileurl="file://$PROJECT_DIR$/android/tools-base/draw9patch/android.sdktools.draw9patch.iml" filepath="$PROJECT_DIR$/android/tools-base/draw9patch/android.sdktools.draw9patch.iml" />
       <module fileurl="file://$PROJECT_DIR$/android/tools-base/device_validator/dvlib/android.sdktools.dvlib.iml" filepath="$PROJECT_DIR$/android/tools-base/device_validator/dvlib/android.sdktools.dvlib.iml" />
       <module fileurl="file://$PROJECT_DIR$/android/tools-base/fakeadbserver/android.sdktools.fakeadbserver.iml" filepath="$PROJECT_DIR$/android/tools-base/fakeadbserver/android.sdktools.fakeadbserver.iml" />
