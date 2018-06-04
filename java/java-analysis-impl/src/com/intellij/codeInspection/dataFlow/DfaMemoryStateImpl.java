@@ -441,7 +441,10 @@ public class DfaMemoryStateImpl implements DfaMemoryState {
 
 
   private boolean isEffectivelyNaN(@NotNull DfaValue dfaValue) {
-    return isNaN(dfaValue) || getEquivalentValues(dfaValue).stream().anyMatch(DfaMemoryStateImpl::isNaN);
+    for (DfaValue eqClass : getEquivalentValues(dfaValue)) {
+      if (isNaN(eqClass)) return true;
+    }
+    return false;
   }
 
   List<EqClass> getEqClasses() {
