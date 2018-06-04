@@ -27,7 +27,7 @@ class PyTestFixtureAndParametrizedTest : PyTestCase() {
   fun testTypeCompletion() {
     myFixture.copyDirectoryToProject(".", ".")
     myFixture.configureByFile("test_parametrized.py")
-    myFixture.completeBasicAllCarets(null)
+    myFixture.completeBasicAllCarets('\t')
     myFixture.checkResultByFile("after_test_parametrized.txt")
   }
 
