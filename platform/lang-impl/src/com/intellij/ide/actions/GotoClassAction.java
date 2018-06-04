@@ -42,7 +42,6 @@ import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.playback.commands.ActionCommand;
 import com.intellij.openapi.util.Disposer;
-import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.pom.Navigatable;
@@ -62,7 +61,7 @@ import java.util.List;
 public class GotoClassAction extends GotoActionBase implements DumbAware {
   @Override
   public void actionPerformed(@NotNull AnActionEvent e) {
-    if (Registry.is("new.search.everywhere") || Experiments.isFeatureEnabled("new.search.everywhere")) {
+    if (Experiments.isFeatureEnabled("new.search.everywhere")) {
       showInSearchEverywherePopup(ClassSearchEverywhereContributor.class.getSimpleName(), e);
       return;
     }
