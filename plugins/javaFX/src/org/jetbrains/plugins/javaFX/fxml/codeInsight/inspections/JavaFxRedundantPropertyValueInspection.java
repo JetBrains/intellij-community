@@ -71,7 +71,7 @@ public class JavaFxRedundantPropertyValueInspection extends XmlSuppressableInspe
         if (isEqualValue(tagClass, attributeValue, defaultValue, descriptor.getDeclaration())) {
           holder.registerProblem(attribute, "Attribute is redundant because it contains default value",
                                  ProblemHighlightType.GENERIC_ERROR_OR_WARNING,
-                                 new RemoveAttributeIntentionFix(attributeName, attribute));
+                                 new RemoveAttributeIntentionFix(attributeName));
         }
       }
 
