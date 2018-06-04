@@ -987,7 +987,7 @@ public class JavaSpacePropertyProcessor extends JavaElementVisitor {
       return Spacing.createDependentLFSpacing(spaces, spaces, dependantRange, false, mySettings.KEEP_BLANK_LINES_IN_CODE);
     }
     else {
-      return Spacing.createSpacing(spaces, spaces, 0, false, mySettings.KEEP_BLANK_LINES_IN_CODE);
+      return Spacing.createSpacing(spaces, spaces, 0, false, 0);
     }
   }
 
