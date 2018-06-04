@@ -17,6 +17,42 @@ public class JavaCodeStyleBean extends CodeStyleBean {
     return JavaLanguage.INSTANCE;
   }
 
+  public int getIndent() {
+    return getIndentOptions(false).INDENT_SIZE;
+  }
+
+  public void setIndent(int value) {getIndentOptions(true).INDENT_SIZE = value;}
+
+  public int getContinuationIndent() {
+    return getIndentOptions(false).CONTINUATION_INDENT_SIZE;
+  }
+
+  public void setContinuationIndent(int value) {getIndentOptions(true).CONTINUATION_INDENT_SIZE = value;}
+
+  public int getTabSize() {
+    return getIndentOptions(false).TAB_SIZE;
+  }
+
+  public void setTabSize(int value) {getIndentOptions(true).TAB_SIZE = value;}
+
+  public boolean isUseTabCharacter() {
+    return getIndentOptions(false).USE_TAB_CHARACTER;
+  }
+
+  public void setUseTabCharacter(boolean value) {getIndentOptions(true).USE_TAB_CHARACTER = value;}
+
+  public boolean isSmartTabs() {
+    return getIndentOptions(false).SMART_TABS;
+  }
+
+  public void setSmartTabs(boolean value) {getIndentOptions(true).SMART_TABS = value;}
+
+  public boolean isKeepIndentsOnEmptyLines() {
+    return getIndentOptions(false).KEEP_INDENTS_ON_EMPTY_LINES;
+  }
+
+  public void setKeepIndentsOnEmptyLines(boolean value) {getIndentOptions(true).KEEP_INDENTS_ON_EMPTY_LINES = value;}
+
   public boolean isLineCommentAtFirstColumn() {
     return getCommonSettings().LINE_COMMENT_AT_FIRST_COLUMN;
   }
@@ -153,9 +189,7 @@ public class JavaCodeStyleBean extends CodeStyleBean {
     return BraceStyle.fromInt(getCommonSettings().BRACE_STYLE);
   }
 
-  public void setBraceStyle(BraceStyle value) {
-    getCommonSettings().BRACE_STYLE = value.intValue();
-  }
+  public void setBraceStyle(BraceStyle value) {getCommonSettings().BRACE_STYLE = value.intValue();}
 
   public BraceStyle getClassBraceStyle() {
     return BraceStyle.fromInt(getCommonSettings().CLASS_BRACE_STYLE);
@@ -1331,11 +1365,11 @@ public class JavaCodeStyleBean extends CodeStyleBean {
     getCustomSettings(JavaCodeStyleSettings.class).JD_ALIGN_EXCEPTION_COMMENTS = value;
   }
 
-  public boolean isJavaDocAddBlankAfterParmComments() {
+  public boolean isJavaDocAddBlankAfterParamComments() {
     return getCustomSettings(JavaCodeStyleSettings.class).JD_ADD_BLANK_AFTER_PARM_COMMENTS;
   }
 
-  public void setJavaDocAddBlankAfterParmComments(boolean value) {
+  public void setJavaDocAddBlankAfterParamComments(boolean value) {
     getCustomSettings(JavaCodeStyleSettings.class).JD_ADD_BLANK_AFTER_PARM_COMMENTS = value;
   }
 
@@ -1436,5 +1470,4 @@ public class JavaCodeStyleBean extends CodeStyleBean {
   public void setJavaDocIndentOnContinuation(boolean value) {
     getCustomSettings(JavaCodeStyleSettings.class).JD_INDENT_ON_CONTINUATION = value;
   }
-
 }

@@ -125,6 +125,7 @@ public class JavaCodeStyleSettingsTest extends CodeStyleTestCase {
       "  <option name=\"classBraceStyle\" value=\"EndOfLine\" />\n" +
       "  <option name=\"classCountToUseImportOnDemand\" value=\"5\" />\n" +
       "  <option name=\"classNamesInJavadoc\" value=\"1\" />\n" +
+      "  <option name=\"continuationIndent\" value=\"8\" />\n" +
       "  <option name=\"doNotIndentTopLevelClassMembers\" value=\"false\" />\n" +
       "  <option name=\"doNotWrapAfterSingleAnnotation\" value=\"false\" />\n" +
       "  <option name=\"doWhileBraceForce\" value=\"Never\" />\n" +
@@ -144,12 +145,12 @@ public class JavaCodeStyleSettingsTest extends CodeStyleTestCase {
       "  <option name=\"generateFinalLocals\" value=\"false\" />\n" +
       "  <option name=\"generateFinalParameters\" value=\"false\" />\n" +
       "  <option name=\"ifBraceForce\" value=\"Never\" />\n" +
+      "  <option name=\"indent\" value=\"4\" />\n" +
       "  <option name=\"indentCaseFromSwitch\" value=\"true\" />\n" +
-      "  <option name=\"indentSize\" value=\"4\" />\n" +
       "  <option name=\"insertInnerClassImports\" value=\"false\" />\n" +
       "  <option name=\"insertOverrideAnnotation\" value=\"true\" />\n" +
       "  <option name=\"javaDocAddBlankAfterDescription\" value=\"true\" />\n" +
-      "  <option name=\"javaDocAddBlankAfterParmComments\" value=\"false\" />\n" +
+      "  <option name=\"javaDocAddBlankAfterParamComments\" value=\"false\" />\n" +
       "  <option name=\"javaDocAddBlankAfterReturn\" value=\"false\" />\n" +
       "  <option name=\"javaDocAlignExceptionComments\" value=\"true\" />\n" +
       "  <option name=\"javaDocAlignParamComments\" value=\"true\" />\n" +
@@ -170,6 +171,7 @@ public class JavaCodeStyleSettingsTest extends CodeStyleTestCase {
       "  <option name=\"keepBlankLinesInDeclarations\" value=\"2\" />\n" +
       "  <option name=\"keepControlStatementInOneLine\" value=\"true\" />\n" +
       "  <option name=\"keepFirstColumnComment\" value=\"true\" />\n" +
+      "  <option name=\"keepIndentsOnEmptyLines\" value=\"false\" />\n" +
       "  <option name=\"keepLineBreaks\" value=\"true\" />\n" +
       "  <option name=\"keepMultipleExpressionsInOneLine\" value=\"false\" />\n" +
       "  <option name=\"keepSimpleBlocksInOneLine\" value=\"false\" />\n" +
@@ -206,6 +208,7 @@ public class JavaCodeStyleSettingsTest extends CodeStyleTestCase {
       "  <option name=\"resourceListRightParenOnNextLine\" value=\"false\" />\n" +
       "  <option name=\"resourceListWrap\" value=\"NONE\" />\n" +
       "  <option name=\"rightMargin\" value=\"120\" />\n" +
+      "  <option name=\"smartTabs\" value=\"false\" />\n" +
       "  <option name=\"spaceAfterClosingAngleBracketInTypeArgument\" value=\"false\" />\n" +
       "  <option name=\"spaceAfterColon\" value=\"true\" />\n" +
       "  <option name=\"spaceAfterComma\" value=\"true\" />\n" +
@@ -293,7 +296,6 @@ public class JavaCodeStyleSettingsTest extends CodeStyleTestCase {
       "  <option name=\"useExternalAnnotations\" value=\"false\" />\n" +
       "  <option name=\"useFqClassNames\" value=\"false\" />\n" +
       "  <option name=\"useSingleClassImports\" value=\"true\" />\n" +
-      "  <option name=\"useSmartTabs\" value=\"false\" />\n" +
       "  <option name=\"useTabCharacter\" value=\"false\" />\n" +
       "  <option name=\"variableAnnotationWrap\" value=\"NONE\" />\n" +
       "  <option name=\"visibility\" value=\"public\" />\n" +
