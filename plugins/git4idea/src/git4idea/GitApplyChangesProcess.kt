@@ -319,7 +319,7 @@ class GitApplyChangesProcess(private val project: Project,
     }
     var description = commitDetails(commit)
     description += getSuccessfulCommitDetailsIfAny(successfulCommits)
-    vcsNotifier.notifyMinorWarning("${operationName.capitalize()} cancelled", description, null)
+    vcsNotifier.notifyMinorWarning("${operationName.capitalize()} cancelled", description)
   }
 
   private fun notifyError(content: String,

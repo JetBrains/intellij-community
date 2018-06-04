@@ -3,7 +3,6 @@ package git4idea.merge;
 
 import com.intellij.notification.Notification;
 import com.intellij.notification.NotificationAction;
-import com.intellij.notification.NotificationListener;
 import com.intellij.notification.NotificationType;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
@@ -250,9 +249,7 @@ public class GitConflictResolver {
     final String description = "Couldn't check the working tree for unmerged files because of an error.";
     VcsNotifier.getInstance(myProject).notifyError(myParams.myErrorNotificationTitle,
                                                    description + myParams.myErrorNotificationAdditionalDescription + "<br/>" +
-                                                   e.getLocalizedMessage(),
-                                                   (NotificationListener)null
-    );
+                                                   e.getLocalizedMessage());
   }
 
   /**

@@ -92,7 +92,7 @@ public class VcsNotifier {
 
   @NotNull
   public Notification notifyWeakError(@NotNull String message) {
-    return notify(NOTIFICATION_GROUP_ID, "", message, NotificationType.ERROR, (NotificationListener)null);
+    return notify(NOTIFICATION_GROUP_ID, "", message, NotificationType.ERROR);
   }
 
   @NotNull
@@ -112,7 +112,7 @@ public class VcsNotifier {
 
   @NotNull
   public Notification notifyImportantInfo(@NotNull String title, @NotNull String message) {
-    return notify(IMPORTANT_ERROR_NOTIFICATION, title, message, NotificationType.INFORMATION, (NotificationListener)null);
+    return notify(IMPORTANT_ERROR_NOTIFICATION, title, message, NotificationType.INFORMATION);
   }
 
   @NotNull
@@ -157,7 +157,7 @@ public class VcsNotifier {
 
   @NotNull
   public Notification notifyImportantWarning(@NotNull String title, @NotNull String message) {
-    return notify(IMPORTANT_ERROR_NOTIFICATION, title, message, NotificationType.WARNING, (NotificationListener)null);
+    return notify(IMPORTANT_ERROR_NOTIFICATION, title, message, NotificationType.WARNING);
   }
 
   @NotNull
@@ -181,6 +181,6 @@ public class VcsNotifier {
   }
 
   public Notification logInfo(@NotNull String title, @NotNull String message) {
-    return notify(SILENT_NOTIFICATION, title, message, NotificationType.INFORMATION, (NotificationListener)null);
+    return notify(SILENT_NOTIFICATION, title, message, NotificationType.INFORMATION);
   }
 }
