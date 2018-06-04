@@ -69,7 +69,7 @@ public abstract class PsiFileImpl extends ElementBase implements PsiFileEx, PsiF
   protected final PsiManagerEx myManager;
   public static final Key<Boolean> BUILDING_STUB = new Key<>("Don't use stubs mark!");
   private final PsiLock myPsiLock;
-  private final ThreadLocal<Boolean> myLoadingAst = new ThreadLocal<>();
+  private volatile boolean myLoadingAst;
 
   protected PsiFileImpl(@NotNull IElementType elementType, IElementType contentElementType, @NotNull FileViewProvider provider) {
     this(provider);
@@ -209,12 +209,12 @@ public abstract class PsiFileImpl extends ElementBase implements PsiFileEx, PsiF
       treeElement = createFileElement(viewProvider.getContents());
       treeElement.setPsi(this);
 
-      myLoadingAst.set(true);
+      myLoadingAst = true;
       try {
         updateTrees(myTrees.withAst(createTreeElementPointer(treeElement)));
       }
       finally {
-        myLoadingAst.remove();
+        myLoadingAst = false;
       }
 
       if (LOG.isDebugEnabled() && viewProvider.isPhysical()) {
@@ -593,9 +593,7 @@ public abstract class PsiFileImpl extends ElementBase implements PsiFileEx, PsiF
     final StubTree derefd = derefStub();
     if (derefd != null) return derefd;
 
-    if (Boolean.TRUE.equals(getUserData(BUILDING_STUB)) || 
-        Boolean.TRUE.equals(myLoadingAst.get()) ||
-        getElementTypeForStubBuilder() == null) {
+    if (Boolean.TRUE.equals(getUserData(BUILDING_STUB)) || myLoadingAst || getElementTypeForStubBuilder() == null) {
       return null;
     }
 
