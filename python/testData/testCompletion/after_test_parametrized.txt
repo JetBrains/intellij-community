@@ -12,3 +12,7 @@ def test_returns_correct_result(test_input, expected, x, y):  # False positive: 
     x.bit_length()
     test_input.__len__()
     expected.bit_length()
+
+@pytest.mark.parametrize(('x', 'y'), [(1, 2, 3, 4)])  # Too many values in tuple, should be 2
+def test_wrong_number_of_parameters(x, y):
+    x.bit_length()

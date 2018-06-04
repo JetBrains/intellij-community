@@ -61,7 +61,7 @@ private fun getParametersFromDecorator(decorator: PyDecorator, evalContext: Type
         parameterTypes[i] = PyUnionType.union(members.map { (it as? PyTupleType)?.getElementType(i) })
       }
     }
-    is PyTupleType -> iteratedItemType.elementTypes.forEachIndexed { i, type -> parameterTypes[i] = type }
+    is PyTupleType -> iteratedItemType.elementTypes.forEachIndexed { i, type -> if (parameterTypes.size > i) parameterTypes[i] = type }
     !is PyCollectionType -> parameterTypes.fill(iteratedItemType)
   }
 
