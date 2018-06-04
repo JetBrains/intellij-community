@@ -30,9 +30,7 @@ import com.intellij.psi.scope.PsiConflictResolver;
 import com.intellij.psi.scope.conflictResolvers.JavaMethodsConflictResolver;
 import com.intellij.psi.scope.processor.MethodCandidatesProcessor;
 import com.intellij.psi.search.GlobalSearchScope;
-import com.intellij.psi.util.PsiTreeUtil;
-import com.intellij.psi.util.PsiUtil;
-import com.intellij.psi.util.TypeConversionUtil;
+import com.intellij.psi.util.*;
 import com.intellij.util.Function;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.VisibilityUtil;
@@ -158,8 +156,9 @@ public class PsiDiamondTypeImpl extends PsiDiamondType {
   }
 
   private static JavaResolveResult getStaticFactory(@NotNull PsiNewExpression newExpression, @NotNull PsiElement context) {
-    return JavaResolveCache.getInstance(newExpression.getProject()).getNewExpressionStaticFactory(newExpression, context,
-              PsiDiamondTypeImpl::getStaticFactoryCandidateInfo);
+    return context != newExpression || MethodCandidateInfo.isOverloadCheck() ? getStaticFactoryCandidateInfo(newExpression, context) :
+           JavaResolveCache.getInstance(newExpression.getProject()).getNewExpressionStaticFactory(newExpression,
+              newExp -> getStaticFactoryCandidateInfo(newExp, newExp));
   }
 
   public static DiamondInferenceResult resolveInferredTypesNoCheck(@NotNull PsiNewExpression newExpression, @NotNull PsiElement context) {

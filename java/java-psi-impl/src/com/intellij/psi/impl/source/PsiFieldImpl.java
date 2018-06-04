@@ -44,7 +44,6 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import java.lang.ref.Reference;
 import java.util.*;
-import java.util.function.BiFunction;
 
 public class PsiFieldImpl extends JavaStubPsiElement<PsiFieldStub> implements PsiField, PsiVariableEx, Queryable {
   private volatile Reference<PsiType> myCachedType;
@@ -266,15 +265,6 @@ public class PsiFieldImpl extends JavaStubPsiElement<PsiFieldStub> implements Ps
     return ElementPresentationUtil.addVisibilityIcon(this, flags, baseIcon);
   }
 
-  private static class OurConstValueComputer implements BiFunction<PsiFieldImpl, Set<PsiVariable>, Object> {
-    private static final OurConstValueComputer INSTANCE = new OurConstValueComputer();
-
-    @Override
-    public Object apply(PsiFieldImpl variable, Set<PsiVariable> visitedVars) {
-      return variable.doComputeConstantValue(visitedVars);
-    }
-  }
-
   @Nullable
   private Object doComputeConstantValue(@Nullable Set<PsiVariable> visitedVars) {
     PsiType type = getType();
@@ -295,7 +285,7 @@ public class PsiFieldImpl extends JavaStubPsiElement<PsiFieldStub> implements Ps
   public Object computeConstantValue(Set<PsiVariable> visitedVars) {
     if (!hasModifierProperty(PsiModifier.FINAL)) return null;
 
-    return JavaResolveCache.getInstance(getProject()).computeConstantValueWithCaching(this, visitedVars, OurConstValueComputer.INSTANCE);
+    return JavaResolveCache.getInstance(getProject()).getFieldConstantValue(this, visitedVars, (field, variables)->field.doComputeConstantValue(variables));
   }
 
   @Override

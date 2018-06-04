@@ -22,6 +22,7 @@ import com.intellij.psi.*;
 import com.intellij.psi.augment.PsiAugmentProvider;
 import com.intellij.psi.impl.PsiImplUtil;
 import com.intellij.psi.impl.PsiJavaParserFacadeImpl;
+import com.intellij.psi.impl.source.resolve.JavaResolveCache;
 import com.intellij.psi.impl.source.tree.*;
 import com.intellij.psi.scope.PsiScopeProcessor;
 import com.intellij.psi.tree.IElementType;
@@ -38,7 +39,8 @@ import java.lang.ref.WeakReference;
 import java.util.List;
 
 public class PsiTypeElementImpl extends CompositePsiElement implements PsiTypeElement {
-  @SuppressWarnings("UnusedDeclaration")
+  /** created implicitly by {@link JavaElementType.JavaCompositeElementType#createCompositeNode()} */
+  @SuppressWarnings("UnusedDeclaration") 
   public PsiTypeElementImpl() {
     this(JavaElementType.TYPE);
   }
@@ -60,7 +62,7 @@ public class PsiTypeElementImpl extends CompositePsiElement implements PsiTypeEl
   @Override
   @NotNull
   public PsiType getType() {
-    return CachedValuesManager.getCachedValue(this, () -> CachedValueProvider.Result.create(calculateType(), PsiModificationTracker.MODIFICATION_COUNT));
+    return JavaResolveCache.getInstance(getProject()).getTypeElementType(this, element -> element.calculateType());
   }
 
   @NotNull

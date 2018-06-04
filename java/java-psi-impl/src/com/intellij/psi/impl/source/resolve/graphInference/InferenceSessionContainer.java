@@ -76,9 +76,13 @@ public class InferenceSessionContainer {
           //But overload resolution can depend on type of lambda parameter. As it can't depend on lambda body,
           //traversing down would stop at lambda level and won't take into account overloaded method
           !MethodCandidateInfo.ourOverloadGuard.currentStack().contains(argumentList)) {
-        final PsiCall topLevelCall =
-          parent instanceof PsiExpression && !PsiPolyExpressionUtil.isPolyExpression((PsiExpression)parent) ? null :
-          LambdaUtil.treeWalkUp(parent);
+        final PsiCall topLevelCall = PsiResolveHelper.ourGraphGuard.doPreventingRecursion(parent, false,
+            () -> {
+              if (parent instanceof PsiExpression && !PsiPolyExpressionUtil.isPolyExpression((PsiExpression)parent)) {
+                return null;
+              }
+              return LambdaUtil.treeWalkUp(parent);
+            });
 
         if (topLevelCall != null) {
           InferenceSession session;

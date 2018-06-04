@@ -31,6 +31,7 @@ import com.intellij.psi.impl.PsiManagerImpl;
 import com.intellij.psi.impl.source.PsiClassReferenceType;
 import com.intellij.psi.impl.source.PsiFieldImpl;
 import com.intellij.psi.impl.source.PsiImmediateClassType;
+import com.intellij.psi.impl.source.PsiTypeElementImpl;
 import com.intellij.psi.impl.source.resolve.graphInference.InferenceSession;
 import com.intellij.psi.impl.source.resolve.graphInference.PsiPolyExpressionUtil;
 import com.intellij.psi.infos.MethodCandidateInfo;
@@ -45,6 +46,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.BiFunction;
 
@@ -53,10 +55,11 @@ public class JavaResolveCache {
 
   private static final NotNullLazyKey<JavaResolveCache, Project> INSTANCE_KEY = ServiceManager.createLazyKey(JavaResolveCache.class);
 
-  private final AtomicReference<Map<PsiExpression, PsiType>> myCalculatedTypes = new AtomicReference<>();
+  private final AtomicReference<Map<PsiExpression, PsiType>> myExpressionTypes = new AtomicReference<>();
+  private final AtomicReference<Map<PsiTypeElementImpl, Object>> myTypeElementTypes = new AtomicReference<>(); // PsiType or NULL
   private final AtomicReference<Map<PsiFieldImpl,Object>> myFieldToConstValueMapPhysical = new AtomicReference<>();
   private final AtomicReference<Map<PsiFieldImpl,Object>> myFieldToConstValueMapNonPhysical = new AtomicReference<>();
-  private final AtomicReference<Map<PsiNewExpression, Object>> myStaticFactories = new AtomicReference<>(); // JavaResolveResult or NULL
+  private final AtomicReference<ConcurrentMap<PsiNewExpression, Object>> myStaticFactories = new AtomicReference<>(); // JavaResolveResult or NULL
   private final AtomicReference<Map<PsiCall, Object>> myTopLevelInferenceSessions = new AtomicReference<>(); // InferenceSession or NULL
 
   private static final Object NULL = Key.create("NULL"); // the object to put into maps to denote resolvers return null
@@ -77,7 +80,8 @@ public class JavaResolveCache {
   }
 
   private void clearCaches(boolean isPhysical) {
-    myCalculatedTypes.set(null);
+    myExpressionTypes.set(null);
+    myTypeElementTypes.set(null);
     if (isPhysical) {
       myFieldToConstValueMapPhysical.set(null);
     }
@@ -91,8 +95,8 @@ public class JavaResolveCache {
     final boolean isOverloadCheck = MethodCandidateInfo.isOverloadCheck() || LambdaUtil.isLambdaParameterCheck();
     final boolean polyExpression = PsiPolyExpressionUtil.isPolyExpression(expr);
 
-    Map<PsiExpression, PsiType> map = myCalculatedTypes.get();
-    if (map == null) map = ConcurrencyUtil.cacheOrGet(myCalculatedTypes, ContainerUtil.createConcurrentWeakKeySoftValueMap());
+    Map<PsiExpression, PsiType> map = myExpressionTypes.get();
+    if (map == null) map = ConcurrencyUtil.cacheOrGet(myExpressionTypes, ContainerUtil.createConcurrentWeakKeySoftValueMap());
 
     PsiType type = isOverloadCheck && polyExpression ? null : map.get(expr);
     if (type == null) {
@@ -136,9 +140,9 @@ public class JavaResolveCache {
   }
 
   @Nullable
-  public Object computeConstantValueWithCaching(@NotNull PsiFieldImpl variable,
-                                                @Nullable Set<PsiVariable> visitedVars,
-                                                @NotNull BiFunction<? super PsiFieldImpl, ? super Set<PsiVariable>, Object> computer){
+  public Object getFieldConstantValue(@NotNull PsiFieldImpl variable,
+                                      @Nullable Set<PsiVariable> visitedVars,
+                                      @NotNull BiFunction<? super PsiFieldImpl, ? super Set<PsiVariable>, Object> computer){
     boolean physical = variable.isPhysical();
 
     AtomicReference<Map<PsiFieldImpl, Object>> ref = physical ? myFieldToConstValueMapPhysical : myFieldToConstValueMapNonPhysical;
@@ -155,22 +159,24 @@ public class JavaResolveCache {
   }
 
   @Nullable
-  public JavaResolveResult getNewExpressionStaticFactory(@NotNull PsiNewExpression newExpression, @NotNull PsiElement context, @NotNull BiFunction<? super PsiNewExpression, ? super PsiElement, ? extends JavaResolveResult> computer) {
-    AtomicReference<Map<PsiNewExpression, Object>> ref = myStaticFactories;
-    Map<PsiNewExpression, Object> map = ref.get();
+  public JavaResolveResult getNewExpressionStaticFactory(@NotNull PsiNewExpression newExpression,
+                                                         @NotNull Function<? super PsiNewExpression, ? extends JavaResolveResult> computer) {
+    AtomicReference<ConcurrentMap<PsiNewExpression, Object>> ref = myStaticFactories;
+    ConcurrentMap<PsiNewExpression, Object> map = ref.get();
     if (map == null) map = ConcurrencyUtil.cacheOrGet(ref, ContainerUtil.createConcurrentWeakMap());
 
     Object cached = map.get(newExpression);
+    if (cached == null) {
+      JavaResolveResult result = computer.fun(newExpression);
+      cached = ConcurrencyUtil.cacheOrGet(map, newExpression, result == null ? NULL : result);
+    }
     if (cached == NULL) return null;
-    if (cached != null) return (JavaResolveResult)cached;
-
-    JavaResolveResult result = computer.apply(newExpression, context);
-    map.put(newExpression, result == null ? NULL : result);
-    return result;
+    return (JavaResolveResult)cached;
   }
 
   @Nullable
-  public InferenceSession getTopLevelInferenceSession(@NotNull PsiCall topLevelCall, @NotNull Function<? super PsiCall, ? extends InferenceSession> computer) {
+  public InferenceSession getTopLevelInferenceSession(@NotNull PsiCall topLevelCall,
+                                                      @NotNull Function<? super PsiCall, ? extends InferenceSession> computer) {
     AtomicReference<Map<PsiCall, Object>> ref = myTopLevelInferenceSessions;
     Map<PsiCall, Object> map = ref.get();
     if (map == null) map = ConcurrencyUtil.cacheOrGet(ref, ContainerUtil.createConcurrentWeakMap());
@@ -181,6 +187,21 @@ public class JavaResolveCache {
 
     InferenceSession result = computer.fun(topLevelCall);
     map.put(topLevelCall, result == null ? NULL : result);
+    return result;
+  }
+
+  public PsiType getTypeElementType(@NotNull PsiTypeElementImpl typeElement,
+                                    @NotNull Function<? super PsiTypeElementImpl, ? extends PsiType> computer) {
+    AtomicReference<Map<PsiTypeElementImpl, Object>> ref = myTypeElementTypes;
+    Map<PsiTypeElementImpl, Object> map = ref.get();
+    if (map == null) map = ConcurrencyUtil.cacheOrGet(ref, ContainerUtil.createConcurrentWeakMap());
+
+    Object cached = map.get(typeElement);
+    if (cached == NULL) return null;
+    if (cached != null) return (PsiType)cached;
+
+    PsiType result = computer.fun(typeElement);
+    map.put(typeElement, result == null ? NULL : result);
     return result;
   }
 }
