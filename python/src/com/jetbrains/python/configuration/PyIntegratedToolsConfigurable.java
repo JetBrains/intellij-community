@@ -32,12 +32,15 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.ui.TextFieldWithBrowseButton;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.CollectionComboBoxModel;
 import com.intellij.ui.IdeBorderFactory;
 import com.intellij.ui.ListCellRendererWrapper;
+import com.intellij.ui.components.JBTextField;
 import com.intellij.util.FileContentUtil;
 import com.intellij.util.FileContentUtilCore;
+import com.intellij.util.ObjectUtils;
 import com.jetbrains.python.PyBundle;
 import com.jetbrains.python.PythonFileType;
 import com.jetbrains.python.ReSTService;
@@ -48,7 +51,9 @@ import com.jetbrains.python.packaging.PyPackageRequirementsSettings;
 import com.jetbrains.python.packaging.PyPackageUtil;
 import com.jetbrains.python.packaging.PyRequirementsKt;
 import com.jetbrains.python.psi.PyUtil;
+import com.jetbrains.python.sdk.PySdkSettings;
 import com.jetbrains.python.sdk.PythonSdkType;
+import com.jetbrains.python.sdk.flavors.PipenvKt;
 import com.jetbrains.python.testing.PyTestFrameworkService;
 import com.jetbrains.python.testing.PythonTestConfigurationsModel;
 import com.jetbrains.python.testing.TestRunnerService;
@@ -58,6 +63,7 @@ import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import java.awt.*;
+import java.io.File;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
@@ -78,6 +84,9 @@ public class PyIntegratedToolsConfigurable implements SearchableConfigurable {
   private JPanel myDocStringsPanel;
   private JPanel myRestPanel;
   private JCheckBox renderExternal;
+  private JPanel myPackagingPanel;
+  private JPanel myTestsPanel;
+  private TextFieldWithBrowseButton myPipEnvPathField;
 
   public PyIntegratedToolsConfigurable(@NotNull Module module) {
     myModule = module;
@@ -106,6 +115,8 @@ public class PyIntegratedToolsConfigurable implements SearchableConfigurable {
 
     myDocStringsPanel.setBorder(IdeBorderFactory.createTitledBorder("Docstrings"));
     myRestPanel.setBorder(IdeBorderFactory.createTitledBorder("reStructuredText"));
+    myPackagingPanel.setBorder(IdeBorderFactory.createTitledBorder("Packaging"));
+    myTestsPanel.setBorder(IdeBorderFactory.createTitledBorder("Testing"));
   }
 
   @NotNull
@@ -220,6 +231,9 @@ public class PyIntegratedToolsConfigurable implements SearchableConfigurable {
     if (!getRequirementsPath().equals(myRequirementsPathField.getText())) {
       return true;
     }
+    if (!myPipEnvPathField.getText().equals(StringUtil.notNullize(PySdkSettings.getInstance().getPipEnvPath()))) {
+      return true;
+    }
     return false;
   }
 
@@ -250,6 +264,7 @@ public class PyIntegratedToolsConfigurable implements SearchableConfigurable {
     myDocumentationSettings.setAnalyzeDoctest(analyzeDoctest.isSelected());
     PyPackageRequirementsSettings.getInstance(myModule).setRequirementsPath(myRequirementsPathField.getText());
     DaemonCodeAnalyzer.getInstance(myProject).restart();
+    PySdkSettings.getInstance().setPipEnvPath(StringUtil.nullize(myPipEnvPathField.getText()));
   }
 
   public void reparseFiles(final List<String> extensions) {
@@ -278,6 +293,19 @@ public class PyIntegratedToolsConfigurable implements SearchableConfigurable {
     analyzeDoctest.setSelected(myDocumentationSettings.isAnalyzeDoctest());
     renderExternal.setSelected(myDocumentationSettings.isRenderExternalDocumentation());
     myRequirementsPathField.setText(getRequirementsPath());
+    final JBTextField pipEnvText = ObjectUtils.tryCast(myPipEnvPathField.getTextField(), JBTextField.class);
+    if (pipEnvText != null) {
+      final String savedPath = PySdkSettings.getInstance().getPipEnvPath();
+      if (savedPath != null) {
+        pipEnvText.setText(savedPath);
+      }
+      else {
+        final File executable = PipenvKt.detectPipEnvExecutable();
+        if (executable != null) {
+          pipEnvText.getEmptyText().setText("Auto-detected: " + executable.getAbsolutePath());
+        }
+      }
+    }
   }
 
   @NotNull
