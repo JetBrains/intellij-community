@@ -472,6 +472,9 @@ public class GotoActionModel implements ChooseByNameModel, Comparator<Object>, D
   public static class GroupMapping implements Comparable<GroupMapping> {
     private final List<List<ActionGroup>> myPaths = new ArrayList<>();
 
+    @Nullable private String myBestGroupName;
+    private boolean myBestNameComputed;
+
     @NotNull
     public static GroupMapping createFromText(String text) {
       GroupMapping mapping = new GroupMapping();
@@ -486,13 +489,27 @@ public class GotoActionModel implements ChooseByNameModel, Comparator<Object>, D
 
     @Override
     public int compareTo(@NotNull GroupMapping o) {
-      return Comparing.compare(getGroupName(), o.getGroupName());
+      return Comparing.compare(getBestGroupName(), o.getBestGroupName());
     }
 
     @Nullable
-    public String getGroupName() {
+    public String getBestGroupName() {
+      if (myBestNameComputed) return myBestGroupName;
       List<ActionGroup> path = ContainerUtil.getFirstItem(myPaths);
       return path != null ? getPathName(path) : null;
+    }
+
+    private void updateBeforeShow(@NotNull DataContext context) {
+      if (myBestNameComputed) return;
+      myBestNameComputed = true;
+
+      for (List<ActionGroup> path : myPaths) {
+        String name = getActualPathName(path, context);
+        if (name != null) {
+          myBestGroupName = name;
+          return;
+        }
+      }
     }
 
     @NotNull
@@ -505,6 +522,17 @@ public class GotoActionModel implements ChooseByNameModel, Comparator<Object>, D
       String name = "";
       for (ActionGroup group: path) {
         name = appendGroupName(name, group, group.getTemplatePresentation());
+      }
+      return StringUtil.nullize(name);
+    }
+
+    @Nullable
+    private static String getActualPathName(@NotNull List<ActionGroup> path, @NotNull DataContext context) {
+      String name = "";
+      for (ActionGroup group : path) {
+        Presentation presentation = updateActionBeforeShow(group, context).getPresentation();
+        if (!presentation.isVisible()) return null;
+        name = appendGroupName(name, group, presentation);
       }
       return StringUtil.nullize(name);
     }
@@ -594,7 +622,10 @@ public class GotoActionModel implements ChooseByNameModel, Comparator<Object>, D
     @NotNull
     public Presentation getPresentation() {
       if (myPresentation != null) return myPresentation;
-      Runnable r = () -> myPresentation = updateActionBeforeShow(myAction, myDataContext).getPresentation();
+      Runnable r = () -> {
+        myPresentation = updateActionBeforeShow(myAction, myDataContext).getPresentation();
+        if (myGroupMapping != null) myGroupMapping.updateBeforeShow(myDataContext);
+      };
       if (ApplicationManager.getApplication().isDispatchThread()) {
         r.run();
       }
@@ -612,7 +643,7 @@ public class GotoActionModel implements ChooseByNameModel, Comparator<Object>, D
     @Nullable
     public String getGroupName() {
       if (myGroupMapping == null) return null;
-      String groupName = myGroupMapping.getGroupName();
+      String groupName = myGroupMapping.getBestGroupName();
       if (myAction instanceof ActionGroup && Comparing.equal(myAction.getTemplatePresentation().getText(), groupName)) return null;
       return groupName;
     }
