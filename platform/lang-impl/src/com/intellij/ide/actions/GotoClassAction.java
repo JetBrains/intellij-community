@@ -32,6 +32,7 @@ import com.intellij.navigation.AnonymousElementProvider;
 import com.intellij.navigation.ChooseByNameRegistry;
 import com.intellij.navigation.NavigationItem;
 import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.application.Experiments;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.fileEditor.FileEditor;
 import com.intellij.openapi.fileEditor.FileEditorManager;
@@ -61,7 +62,7 @@ import java.util.List;
 public class GotoClassAction extends GotoActionBase implements DumbAware {
   @Override
   public void actionPerformed(@NotNull AnActionEvent e) {
-    if (Registry.is("new.search.everywhere")) {
+    if (Registry.is("new.search.everywhere") || Experiments.isFeatureEnabled("new.search.everywhere")) {
       showInSearchEverywherePopup(ClassSearchEverywhereContributor.class.getSimpleName(), e);
       return;
     }
