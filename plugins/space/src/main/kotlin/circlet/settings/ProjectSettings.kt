@@ -10,7 +10,8 @@ import runtime.reactive.*
     storages = [Storage(value = "CircletClient.xml", roamingType = RoamingType.DISABLED)]
 )
 class ProjectSettings(project: Project) :
-    Lifetimed by LifetimedOnDisposable(project), PersistentStateComponent<ProjectSettings.MutableState> {
+    AbstractProjectComponent(project), LifetimedComponent by SimpleLifetimedComponent(),
+    PersistentStateComponent<ProjectSettings.MutableState> {
 
     data class State(
         val serverUrl: String = "",

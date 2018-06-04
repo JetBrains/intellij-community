@@ -6,7 +6,6 @@ import com.intellij.openapi.application.*
 import com.intellij.openapi.components.*
 import com.intellij.openapi.project.*
 import com.intellij.openapi.util.*
-import com.intellij.xml.util.*
 import runtime.reactive.*
 
 inline fun <reified T : Any> ComponentManager.getComponent(): T =
@@ -20,40 +19,24 @@ inline fun <reified T : Any> T?.checkService(container: Any): T =
 val application: Application
     get() = ApplicationManager.getApplication()
 
-fun Disposable.attachLifetime(): Lifetime {
-    val lifetime = Lifetime()
+interface LifetimedComponent : Lifetimed, BaseComponent
 
-    Disposer.register(this, Disposable { lifetime.terminate() })
-
-    return lifetime
-}
-
-class LifetimedOnDisposable(disposable: Disposable) : Lifetimed {
-    override val lifetime: Lifetime = disposable.attachLifetime()
+class SimpleLifetimedComponent : SimpleLifetimed(), LifetimedComponent {
+    override fun disposeComponent() {
+        lifetime.terminate()
+    }
 }
 
 interface LifetimedDisposable : Lifetimed, Disposable
 
-class SimpleLifetimedDisposable : LifetimedDisposable {
-    override val lifetime: Lifetime = Lifetime()
-
+class SimpleLifetimedDisposable : SimpleLifetimed(), LifetimedDisposable {
     override fun dispose() {
         lifetime.terminate()
     }
 }
 
-fun Project.notify(lifetime: Lifetime, text: String, handler: (() -> Unit)? = null) {
-    notify(lifetime, text, handler?.let { NotificationListener { _, _ -> it() } })
-}
-
-fun Project.notify(lifetime: Lifetime, text: String, listener: NotificationListener?) {
-    Notification(
-        "Circlet",
-        "Circlet",
-        XmlStringUtil.wrapInHtml(text),
-        NotificationType.INFORMATION,
-        listener
-    ).notify(lifetime, this)
+open class SimpleLifetimed : Lifetimed {
+    final override val lifetime: Lifetime = Lifetime()
 }
 
 fun Notification.notify(lifetime: Lifetime, project: Project?) {

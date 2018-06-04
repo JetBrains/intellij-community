@@ -6,9 +6,12 @@ import circlet.client.api.*
 import circlet.platform.client.*
 import circlet.settings.*
 import circlet.utils.*
+import com.intellij.notification.*
+import com.intellij.notification.Notification
 import com.intellij.openapi.components.*
 import com.intellij.openapi.options.*
 import com.intellij.openapi.project.*
+import com.intellij.xml.util.*
 import io.ktor.application.*
 import io.ktor.http.*
 import io.ktor.response.*
@@ -21,7 +24,7 @@ import java.net.*
 import java.util.concurrent.*
 
 class ConnectionComponent(project: Project) :
-    AbstractProjectComponent(project), Lifetimed by LifetimedOnDisposable(project) {
+    AbstractProjectComponent(project), LifetimedComponent by SimpleLifetimedComponent() {
 
     var loginModel: LoginModel? = null
         private set
@@ -137,3 +140,14 @@ class ConnectionComponent(project: Project) :
 
 val Project.connection: ConnectionComponent get() = getComponent()
 val Project.clientOrNull: KCircletClient? get() = connection.loginModel?.clientOrNull
+
+
+private fun Project.notify(lifetime: Lifetime, text: String, handler: (() -> Unit)? = null) {
+    Notification(
+        "Circlet",
+        "Circlet",
+        XmlStringUtil.wrapInHtml(text),
+        NotificationType.INFORMATION,
+        handler?.let { NotificationListener { _, _ -> it() } }
+    ).notify(lifetime, this)
+}
