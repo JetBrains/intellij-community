@@ -142,6 +142,46 @@ public class JavaFormatterWrapTest extends AbstractJavaFormatterTest {
     );
   }
 
+  public void testEnumCommentsWrapping() {
+    // Inspired by IDEA-130575
+    getSettings().ENUM_CONSTANTS_WRAP = CommonCodeStyleSettings.WRAP_ALWAYS;
+
+    doTextTest(
+      "public enum Test {\n" +
+      "\n" +
+      "  TEST1(\"test\"),//comment 1\n" +
+      "  TEST2(\"test\");//comment 2\n" +
+      "\n" +
+      "  private String value;\n" +
+      "\n" +
+      "  Test(String value) {\n" +
+      "    this.value = value;\n" +
+      "  }\n" +
+      "\n" +
+      "  public String getValue() {\n" +
+      "    return value;\n" +
+      "  }\n" +
+      "\n" +
+      "}",
+      "public enum Test {\n" +
+      "\n" +
+      "    TEST1(\"test\"),//comment 1\n" +
+      "    TEST2(\"test\");//comment 2\n" +
+      "\n" +
+      "    private String value;\n" +
+      "\n" +
+      "    Test(String value) {\n" +
+      "        this.value = value;\n" +
+      "    }\n" +
+      "\n" +
+      "    public String getValue() {\n" +
+      "        return value;\n" +
+      "    }\n" +
+      "\n" +
+      "}"
+    );
+  }
+
   public void testIDEA123074() {
     getSettings().CALL_PARAMETERS_WRAP = CommonCodeStyleSettings.WRAP_ALWAYS;
     String before = "final GeoZone geoZone1 = new GeoZone(APPROACHING, new Polygon(point(\"0.0\", \"0.0\"), point(\"10.0\", \"0.0\")," +
@@ -655,8 +695,8 @@ public class JavaFormatterWrapTest extends AbstractJavaFormatterTest {
                  "execute(() -> {\n" +
                  "});");
   }
-  
-  
+
+
   public void testDisableWrapLongLinesInFormatterMarkers() {
     getSettings().WRAP_LONG_LINES = true;
     getSettings().getRootSettings().FORMATTER_TAGS_ENABLED = true;

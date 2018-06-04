@@ -1048,8 +1048,15 @@ public abstract class AbstractJavaBlock extends AbstractBlock implements JavaBlo
                                    @Nullable ASTNode child,
                                    ASTNode last)
   {
-    final WrappingStrategy wrappingStrategy = WrappingStrategy.createDoNotWrapCommaStrategy(Wrap
-      .createWrap(getWrapType(mySettings.ENUM_CONSTANTS_WRAP), true));
+    final WrappingStrategy wrappingStrategy = new WrappingStrategy(Wrap.createWrap(getWrapType(mySettings.ENUM_CONSTANTS_WRAP), true)) {
+      @Override
+      protected boolean shouldWrap(IElementType type) {
+        return type != JavaTokenType.COMMA
+               && type != JavaTokenType.SEMICOLON
+               && type != JavaTokenType.END_OF_LINE_COMMENT
+               && type != JavaTokenType.C_STYLE_COMMENT;
+      }
+    };
     while (child != null) {
       if (!FormatterUtil.containsWhiteSpacesOnly(child) && child.getTextLength() > 0) {
         result.add(createJavaBlock(child, mySettings, myJavaSettings, Indent.getNormalIndent(),
