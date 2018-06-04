@@ -145,7 +145,7 @@ public class SplitDeclarationAction extends PsiElementBaseIntentionAction {
       PsiLocalVariable var = (PsiLocalVariable)decl.getDeclaredElements()[0];
       var.normalizeDeclaration();
       PsiExpressionStatement statement = (PsiExpressionStatement)JavaPsiFacade.getInstance(psiManager.getProject()).getElementFactory()
-        .createStatementFromText(var.getName() + "=xxx;", null);
+        .createStatementFromText(var.getName() + "=xxx;", decl);
       statement = (PsiExpressionStatement)CodeStyleManager.getInstance(project).reformat(statement);
       PsiAssignmentExpression assignment = (PsiAssignmentExpression)statement.getExpression();
       CommentTracker commentTracker = new CommentTracker();
@@ -172,7 +172,7 @@ public class SplitDeclarationAction extends PsiElementBaseIntentionAction {
         PsiExpressionStatement replaced = (PsiExpressionStatement)decl.replace(statement);
         if (!(parent instanceof PsiCodeBlock)) {
           final PsiBlockStatement blockStatement =
-            (PsiBlockStatement)JavaPsiFacade.getElementFactory(project).createStatementFromText("{}", null);
+            (PsiBlockStatement)JavaPsiFacade.getElementFactory(project).createStatementFromText("{}", block);
           final PsiCodeBlock codeBlock = blockStatement.getCodeBlock();
           codeBlock.add(varDeclStatement);
           codeBlock.add(block);
