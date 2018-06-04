@@ -5,13 +5,13 @@ import com.intellij.structuralsearch.MalformedPatternException;
 import com.intellij.structuralsearch.MatchOptions;
 import com.intellij.structuralsearch.MatchVariableConstraint;
 import com.intellij.structuralsearch.plugin.ui.Configuration;
-import org.hamcrest.CoreMatchers;
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.ExpectedException;
 
-import static org.hamcrest.CoreMatchers.containsString;
+import java.util.Arrays;
+
 import static org.hamcrest.CoreMatchers.equalTo;
 import static org.junit.Assert.*;
 
@@ -296,6 +296,13 @@ public class StringToConstraintsTransformerTest {
   @Test
   public void testSameTargetMultipleTimes() {
     test("'a = 'a;");
+  }
+
+  @Test
+  public void testBrackets() {
+    test("'_x:[exprtype( java\\.lang\\.String\\[\\]\\[\\] )]");
+    final MatchVariableConstraint constraint = myOptions.getVariableConstraint("x");
+    assertEquals("java.lang.String[][]", constraint.getNameOfExprType());
   }
 
   private void expectException(String criteria, String exceptionMessage) {
