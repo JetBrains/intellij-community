@@ -369,7 +369,8 @@ public class CommitChangeListDialog extends DialogWrapper implements CheckinProj
       setComment(initialSelection, comment);
     }
 
-    myCommitOptions = new CommitOptionsPanel(this, myHandlers, getAffectedVcses());
+    //noinspection unchecked
+    myCommitOptions = new CommitOptionsPanel(this, myHandlers, (Set)getAffectedVcses());
     restoreState();
 
     myWarningLabel = new JBLabel();
