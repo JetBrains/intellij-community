@@ -3614,4 +3614,21 @@ public class Test {
 """
     )
   }
+
+  fun testSpacing() {
+    doTextTest(
+      "enum A{\n" +
+      "  B,\n" +
+      "  /** or like this */C();\n" +
+      "}",
+
+      "enum A {\n" +
+       "    B,\n" +
+       "    /**\n" +
+       "     * or like this\n" +
+       "     */\n" +
+       "    C();\n" +
+       "}"
+    )
+  }
 }

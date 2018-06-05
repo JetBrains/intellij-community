@@ -182,6 +182,26 @@ public class JavaFormatterWrapTest extends AbstractJavaFormatterTest {
     );
   }
 
+  public void testEnumConstantsMixedWithCommentsWrapping() {
+    // IDEA-180049
+
+    // Expect comments to be wrapped
+    doTextTest(
+      "public enum FormatTest {\n" +
+      "    FOO, /**\n" +
+      "    * some description\n" +
+      "    */ BAR, BAZ;\n" +
+      "}",
+      "public enum FormatTest {\n" +
+      "    FOO,\n" +
+      "    /**\n" +
+      "     * some description\n" +
+      "     */\n" +
+      "    BAR, BAZ;\n" +
+      "}"
+    );
+  }
+
   public void testIDEA123074() {
     getSettings().CALL_PARAMETERS_WRAP = CommonCodeStyleSettings.WRAP_ALWAYS;
     String before = "final GeoZone geoZone1 = new GeoZone(APPROACHING, new Polygon(point(\"0.0\", \"0.0\"), point(\"10.0\", \"0.0\")," +
@@ -209,6 +229,29 @@ public class JavaFormatterWrapTest extends AbstractJavaFormatterTest {
 
     // Expecting the code to be left as-is
     doClassTest(text, text);
+  }
+
+  public void testClassAnnotationsWithoutModifier() {
+    // Inspired by IDEA-178795
+    getSettings().CLASS_ANNOTATION_WRAP = CommonCodeStyleSettings.DO_NOT_WRAP;
+    getSettings().KEEP_LINE_BREAKS = true;
+
+    // Expecting the code to be left as-is
+    String text = "@Test\n" +
+                  "class MyClass {\n" +
+                  "}";
+    doTextTest(text, text);
+  }
+
+  public void testClassAnnotationsWithoutModifierSameLine() {
+    // Inspired by IDEA-178795
+    getSettings().CLASS_ANNOTATION_WRAP = CommonCodeStyleSettings.DO_NOT_WRAP;
+    getSettings().KEEP_LINE_BREAKS = true;
+
+    // Expecting the code to be left as-is
+    String text = "@Test class MyClass {\n" +
+                  "}";
+    doTextTest(text, text);
   }
 
   public void testWrapCompoundStringLiteralThatEndsAtRightMargin() {
