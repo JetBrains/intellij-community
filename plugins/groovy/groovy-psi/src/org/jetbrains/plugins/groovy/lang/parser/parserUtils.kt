@@ -61,7 +61,7 @@ private val referenceWasQualified: Key<Boolean> = Key.create("groovy.parse.ref.w
 
 @Suppress("LiftReturnOrAssignment")
 fun classIdentifier(builder: PsiBuilder, level: Int): Boolean {
-  if (builder.tokenType == IDENTIFIER) {
+  if (builder.tokenType === IDENTIFIER) {
     builder[currentClassNames]!!.push(builder.tokenText)
     builder.advanceLexer()
     return true
@@ -78,7 +78,7 @@ fun popClassIdentifier(builder: PsiBuilder, level: Int): Boolean {
 
 fun constructorIdentifier(builder: PsiBuilder, level: Int): Boolean {
   return builder.advanceIf {
-    tokenType == IDENTIFIER && tokenText == this[currentClassNames]!!.peek()
+    tokenType === IDENTIFIER && tokenText == this[currentClassNames]!!.peek()
   }
 }
 
@@ -210,7 +210,7 @@ fun notApplicationArguments(builder: PsiBuilder, level: Int, parser: Parser): Bo
 fun isApplicationArguments(builder: PsiBuilder, level: Int): Boolean = builder[parseApplicationArguments]
 
 fun closureArgumentSeparator(builder: PsiBuilder, level: Int, closureArguments: Parser): Boolean {
-  if (builder.tokenType == NL) {
+  if (builder.tokenType === NL) {
     if (isApplicationArguments(builder, level)) {
       return false
     }
