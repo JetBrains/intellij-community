@@ -27,7 +27,7 @@ abstract class LightGroovyTestCase extends LightCodeInsightFixtureTestCase {
   void setUp() throws Exception {
     super.setUp()
     // avoid PSI/document/model changes are not allowed during highlighting
-    Extensions.getExtensions(ToolExtensionPoints.DEAD_CODE_TOOL, null);
+    Extensions.getExtensions(ToolExtensionPoints.DEAD_CODE_TOOL, null)
   }
 
   @Override
@@ -143,6 +143,7 @@ public class HashMap<K,V> extends AbstractMap<K,V> implements Map<K,V>, Cloneabl
 
 package junit.framework;
 
+@SuppressWarnings({"Contract", "MethodOverridesStaticMethodOfSuperclass", "RedundantThrows"}) 
 public abstract class TestCase extends junit.framework.Assert implements junit.framework.Test {
     private java.lang.String fName;
 
