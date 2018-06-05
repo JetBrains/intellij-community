@@ -11,6 +11,7 @@ import com.intellij.testGuiFramework.util.scenarios.NewProjectDialogModel.Consta
 import com.intellij.testGuiFramework.util.scenarios.NewProjectDialogModel.Constants.checkCreateFromArchetype
 import com.intellij.testGuiFramework.util.scenarios.NewProjectDialogModel.Constants.checkCreateJsModule
 import com.intellij.testGuiFramework.util.scenarios.NewProjectDialogModel.Constants.checkCreateJvmModule
+import com.intellij.testGuiFramework.util.scenarios.NewProjectDialogModel.Constants.checkCreateProjectFromTemplate
 import com.intellij.testGuiFramework.util.scenarios.NewProjectDialogModel.Constants.checkKotlinDsl
 import com.intellij.testGuiFramework.util.scenarios.NewProjectDialogModel.Constants.comboHierarchyKind
 import com.intellij.testGuiFramework.util.scenarios.NewProjectDialogModel.Constants.groupAndroid
@@ -36,6 +37,7 @@ import com.intellij.testGuiFramework.util.scenarios.NewProjectDialogModel.Consta
 import com.intellij.testGuiFramework.util.scenarios.NewProjectDialogModel.Constants.groupStaticWeb
 import com.intellij.testGuiFramework.util.scenarios.NewProjectDialogModel.Constants.itemKotlinMpp
 import com.intellij.testGuiFramework.util.scenarios.NewProjectDialogModel.Constants.textArtifactId
+import com.intellij.testGuiFramework.util.scenarios.NewProjectDialogModel.Constants.textBasePackage
 import com.intellij.testGuiFramework.util.scenarios.NewProjectDialogModel.Constants.textGroupId
 import com.intellij.testGuiFramework.util.scenarios.NewProjectDialogModel.Constants.textProjectLocation
 import com.intellij.testGuiFramework.util.scenarios.NewProjectDialogModel.Constants.textProjectName
@@ -56,8 +58,10 @@ class NewProjectDialogModel(val testCase: GuiTestCase) : TestUtilsClass(testCase
     const val newProjectTitle = "New Project"
     const val buttonNext = "Next"
     const val buttonFinish = "Finish"
-    const val textProjectLocation = "Project location:"
+    const val checkCreateProjectFromTemplate = "Create project from template"
     const val textProjectName = "Project name:"
+    const val textProjectLocation = "Project location:"
+    const val textBasePackage = "Base package:"
     const val textGroupId = "GroupId"
     const val textArtifactId = "ArtifactId"
     const val checkKotlinDsl = "Kotlin DSL build script"
@@ -169,20 +173,25 @@ typealias LibrariesSet = Set<Array<String>>
  * @param libs - path to additional library/framework that should be checked
  * Note: only one library/framework can be checked!
  * */
-fun NewProjectDialogModel.createJavaProject(projectPath: String, libs: LibrariesSet) {
+fun NewProjectDialogModel.createJavaProject(projectPath: String, libs: LibrariesSet = emptySet(), template: String = "", basePackage: String = "") {
   assertProjectPathExists(projectPath)
+  val setLibraries = libs.isNotEmpty()
+  val setTemplate = template.isNotEmpty()
   with(guiTestCase) {
     with(connectDialog()) {
       val list: JListFixture = jList(groupJava)
       list.clickItem(groupJava)
-      if (libs.isEmpty()) {
-        // TODO: add ability to choose template
-        button(buttonNext).click()
-      }
-      else {
+      if (setLibraries) {
         for (lib in libs) {
           logUIStep("Include `${lib.joinToString()}` to the project")
           checkboxTree(*lib).clickCheckbox(*lib)
+        }
+      }
+      else {
+        button(buttonNext).click()
+        if(setTemplate){
+          checkbox(checkCreateProjectFromTemplate).isSelected = true
+          jList(template).clickItem(template)
         }
       }
       button(buttonNext).click()
@@ -191,6 +200,13 @@ fun NewProjectDialogModel.createJavaProject(projectPath: String, libs: Libraries
       shortcut(Key.TAB)
       shortcut(Modifier.CONTROL + Key.X)
       typeText(projectPath)
+      if(setTemplate && basePackage.isNotEmpty()){
+        // base package is set only for Command Line app template
+        logUIStep("Set Base package to `$basePackage`")
+        textfield(textBasePackage).click()
+        shortcut(Modifier.CONTROL + Key.X)
+        typeText(basePackage)
+      }
       logUIStep("Close New Project dialog with Finish")
       button(buttonFinish).click()
     }
@@ -207,7 +223,7 @@ fun NewProjectDialogModel.createJavaProject(projectPath: String, libs: Libraries
  * @param libs - path to additional library/framework that should be checked
  * Note: only one library/framework can be checked!
  * */
-fun NewProjectDialogModel.createJavaEnterpriseProject(projectPath: String, libs: LibrariesSet) {
+fun NewProjectDialogModel.createJavaEnterpriseProject(projectPath: String, libs: LibrariesSet = emptySet(), template: String = "") {
   assertProjectPathExists(projectPath)
   with(guiTestCase) {
     with(connectDialog()) {
@@ -215,8 +231,11 @@ fun NewProjectDialogModel.createJavaEnterpriseProject(projectPath: String, libs:
       assertGroupPresent(NewProjectDialogModel.Groups.JavaEnterprise)
       list.clickItem(groupJavaEnterprise)
       if (libs.isEmpty()) {
-        // TODO: add ability to choose template
         button(buttonNext).click()
+        if(template.isNotEmpty()){
+          checkbox(checkCreateProjectFromTemplate).isSelected = true
+          jList(template).clickItem(template)
+        }
       }
       else {
         for (lib in libs) {
