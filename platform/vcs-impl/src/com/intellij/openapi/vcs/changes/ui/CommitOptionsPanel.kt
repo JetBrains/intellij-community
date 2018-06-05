@@ -13,11 +13,12 @@ import com.intellij.openapi.vcs.checkin.CheckinChangeListSpecificComponent
 import com.intellij.openapi.vcs.checkin.CheckinHandler
 import com.intellij.openapi.vcs.ui.RefreshableOnComponent
 import com.intellij.openapi.vfs.VirtualFile
-import com.intellij.ui.IdeBorderFactory
-import com.intellij.ui.ScrollPaneFactory
+import com.intellij.ui.IdeBorderFactory.createTitledBorder
+import com.intellij.ui.ScrollPaneFactory.createScrollPane
 import com.intellij.util.ui.JBUI
+import com.intellij.util.ui.JBUI.Panels.simplePanel
+import com.intellij.util.ui.UIUtil.removeMnemonic
 import com.intellij.util.ui.components.BorderLayoutPanel
-import java.awt.BorderLayout
 import java.util.Collections.unmodifiableList
 import javax.swing.Box
 import javax.swing.JPanel
@@ -60,25 +61,19 @@ class CommitOptionsPanel(private val myCommitPanel: CheckinProjectPanel,
   }
 
   private fun init(vcses: Collection<AbstractVcs<*>>): Boolean {
-    val borderTitleName = myCommitPanel.commitActionName.replace("_", "").replace("&", "")
+    val borderTitleName = removeMnemonic(myCommitPanel.commitActionName)
     var hasVcsOptions = false
     val vcsCommitOptions = Box.createVerticalBox()
     for (vcs in vcses.sortedWith(VCS_COMPARATOR)) {
-      val checkinEnvironment = vcs.checkinEnvironment
-      if (checkinEnvironment != null) {
-        val options = checkinEnvironment.createAdditionalOptionsPanel(myCommitPanel, additionalData)
-        if (options != null) {
-          val vcsOptions = JPanel(BorderLayout())
-          vcsOptions.add(options.component, BorderLayout.CENTER)
-          vcsOptions.border = IdeBorderFactory.createTitledBorder(vcs.displayName, true)
-          vcsCommitOptions.add(vcsOptions)
-          myPerVcsOptionsPanels[vcs] = vcsOptions
-          myAdditionalComponents.add(options)
-          if (options is CheckinChangeListSpecificComponent) {
-            myCheckinChangeListSpecificComponents.add(options)
-          }
-          hasVcsOptions = true
+      vcs.checkinEnvironment?.createAdditionalOptionsPanel(myCommitPanel, additionalData)?.let { options ->
+        val vcsOptions = simplePanel(options.component).withBorder(createTitledBorder(vcs.displayName))
+        vcsCommitOptions.add(vcsOptions)
+        myPerVcsOptionsPanels[vcs] = vcsOptions
+        myAdditionalComponents.add(options)
+        if (options is CheckinChangeListSpecificComponent) {
+          myCheckinChangeListSpecificComponents.add(options)
         }
+        hasVcsOptions = true
       }
     }
 
@@ -87,16 +82,13 @@ class CommitOptionsPanel(private val myCommitPanel: CheckinProjectPanel,
     val beforeBox = Box.createVerticalBox()
     val afterBox = Box.createVerticalBox()
     for (handler in myHandlers) {
-      val beforePanel = handler.beforeCheckinConfigurationPanel
-      if (beforePanel != null) {
+      handler.beforeCheckinConfigurationPanel?.let {
         beforeVisible = true
-        addCheckinHandlerComponent(beforePanel, beforeBox)
+        addCheckinHandlerComponent(it, beforeBox)
       }
-
-      val afterPanel = handler.getAfterCheckinConfigurationPanel(this)
-      if (afterPanel != null) {
+      handler.getAfterCheckinConfigurationPanel(this)?.let {
         afterVisible = true
-        addCheckinHandlerComponent(afterPanel, afterBox)
+        addCheckinHandlerComponent(it, afterBox)
       }
     }
 
@@ -110,27 +102,18 @@ class CommitOptionsPanel(private val myCommitPanel: CheckinProjectPanel,
 
     if (beforeVisible) {
       beforeBox.add(Box.createVerticalGlue())
-      val beforePanel = JPanel(BorderLayout())
-      beforePanel.add(beforeBox)
-      beforePanel.border = IdeBorderFactory.createTitledBorder(
-        message("border.standard.checkin.options.group", borderTitleName), true)
-      optionsBox.add(beforePanel)
+      optionsBox.add(
+        simplePanel(beforeBox).withBorder(createTitledBorder(message("border.standard.checkin.options.group", borderTitleName))))
     }
 
     if (afterVisible) {
       afterBox.add(Box.createVerticalGlue())
-      val afterPanel = JPanel(BorderLayout())
-      afterPanel.add(afterBox)
-      afterPanel.border = IdeBorderFactory.createTitledBorder(
-        message("border.standard.after.checkin.options.group", borderTitleName), true)
-      optionsBox.add(afterPanel)
+      optionsBox.add(
+        simplePanel(afterBox).withBorder(createTitledBorder(message("border.standard.after.checkin.options.group", borderTitleName))))
     }
 
     optionsBox.add(Box.createVerticalGlue())
-    val additionalOptionsPanel = JPanel(BorderLayout())
-    additionalOptionsPanel.add(optionsBox, BorderLayout.NORTH)
-
-    val optionsPane = ScrollPaneFactory.createScrollPane(additionalOptionsPanel, true)
+    val optionsPane = createScrollPane(simplePanel().addToTop(optionsBox), true)
     addToCenter(optionsPane).withBorder(JBUI.Borders.emptyLeft(10))
     return false
   }
