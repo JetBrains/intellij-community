@@ -409,7 +409,20 @@ public class DiffShelvedChangesActionProvider implements AnActionExtensionProvid
           return createDiffRequestForDeleted(patch);
         }
         else {
-          return createDiffRequestForModified(patch, myCommitContext, context, indicator);
+          String path = chooseNotNull(patch.getAfterName(), patch.getBeforeName());
+          CharSequence baseContents = Extensions.findExtension(PatchEP.EP_NAME, myProject, BaseRevisionTextPatchEP.class)
+                                                .provideContent(path, myCommitContext);
+
+          ApplyPatchForBaseRevisionTexts texts =
+            ApplyPatchForBaseRevisionTexts.create(myProject, myFile, myPatchContext.getPathBeforeRename(myFile), patch, baseContents);
+
+          if (texts.isBaseRevisionLoaded()) {
+            assert !texts.isAppliedSomehow();
+            return createDiffRequestUsingBase(texts);
+          }
+          else {
+            return createDiffRequestUsingLocal(texts, patch, context, indicator);
+          }
         }
       }
       catch (VcsException e) {
@@ -429,35 +442,26 @@ public class DiffShelvedChangesActionProvider implements AnActionExtensionProvid
     }
 
     @NotNull
-    private DiffRequest createDiffRequestForModified(@NotNull TextFilePatch patch,
-                                                     @NotNull CommitContext commitContext,
-                                                     @NotNull UserDataHolder context,
-                                                     @NotNull ProgressIndicator indicator) throws DiffRequestProducerException {
-      CharSequence baseContents = Extensions.findExtension(PatchEP.EP_NAME, myProject, BaseRevisionTextPatchEP.class)
-                                            .provideContent(chooseNotNull(patch.getAfterName(), patch.getBeforeName()), commitContext);
-      ApplyPatchForBaseRevisionTexts texts =
-        ApplyPatchForBaseRevisionTexts.create(myProject, myFile, myPatchContext.getPathBeforeRename(myFile), patch, baseContents);
-      //found base
-      if (texts.isBaseRevisionLoaded()) {
-        assert !texts.isAppliedSomehow();
+    private DiffRequest createDiffRequestUsingBase(@NotNull ApplyPatchForBaseRevisionTexts texts) {
+      DiffContentFactory contentFactory = DiffContentFactory.getInstance();
+      DiffContent leftContent = myWithLocal
+                                ? contentFactory.create(myProject, myFile)
+                                : contentFactory.create(myProject, assertNotNull(texts.getBase()), myFile);
+      return new SimpleDiffRequest(getName(), leftContent, contentFactory.create(myProject, texts.getPatched(), myFile),
+                                   myWithLocal ? CURRENT_VERSION : BASE_VERSION, SHELVED_VERSION);
+    }
 
-        //normal diff
-        DiffContentFactory contentFactory = DiffContentFactory.getInstance();
-        DiffContent leftContent = myWithLocal
-                                  ? contentFactory.create(myProject, myFile)
-                                  : contentFactory.create(myProject, assertNotNull(texts.getBase()), myFile);
-        return new SimpleDiffRequest(getName(), leftContent, contentFactory.create(myProject, texts.getPatched(), myFile),
-                                     myWithLocal ? CURRENT_VERSION : BASE_VERSION, SHELVED_VERSION);
+    private DiffRequest createDiffRequestUsingLocal(@NotNull ApplyPatchForBaseRevisionTexts texts,
+                                                    @NotNull TextFilePatch patch,
+                                                    @NotNull UserDataHolder context,
+                                                    @NotNull ProgressIndicator indicator) throws DiffRequestProducerException {
+      DiffRequest diffRequest = myChange.isConflictingChange(myProject)
+                                ? createConflictDiffRequest(myProject, myFile, patch, SHELVED_VERSION, texts, getName())
+                                : createDiffRequest(myProject, myChange.getChange(myProject), getName(), context, indicator);
+      if (!myWithLocal) {
+        DiffUtil.addNotification(createNotification(DIFF_WITH_BASE_ERROR + " Showing difference with local version"), diffRequest);
       }
-      else {
-        DiffRequest diffRequest = myChange.isConflictingChange(myProject)
-                                  ? createConflictDiffRequest(myProject, myFile, patch, SHELVED_VERSION, texts, getName())
-                                  : createDiffRequest(myProject, myChange.getChange(myProject), getName(), context, indicator);
-        if (!myWithLocal) {
-          DiffUtil.addNotification(createNotification(DIFF_WITH_BASE_ERROR + " Showing difference with local version"), diffRequest);
-        }
-        return diffRequest;
-      }
+      return diffRequest;
     }
   }
 
