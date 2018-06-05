@@ -467,7 +467,8 @@ public class HelpTooltip implements Disposable {
   }
 
   private static Border textBorder(boolean isDefault) {
-    return new JBEmptyBorder(UIManager.getInsets(isDefault ? "HelpTooltip.defaultTextBorderInsets" : "HelpTooltip.smallTextBorderInsets"));
+    Insets i = UIManager.getInsets(isDefault ? "HelpTooltip.defaultTextBorderInsets" : "HelpTooltip.smallTextBorderInsets");
+    return i != null ? new JBEmptyBorder(i) : JBUI.Borders.empty();
   }
 
   private static Font modifyFont(Font font) {
