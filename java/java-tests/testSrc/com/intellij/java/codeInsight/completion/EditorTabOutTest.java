@@ -73,6 +73,20 @@ public class EditorTabOutTest extends AbstractParameterInfoTestCase {
     checkResult("class C { void m() { while (true)<caret>} }");
   }
 
+  public void testAddImport() {
+    configureJava("class C {\n" +
+                  "  java.util.List<caret>\n" +
+                  "}");
+    type("<ArrayList");
+    runImportClassIntention();
+    tabOut();
+    checkResult("import java.util.ArrayList;\n" +
+                "\n" +
+                "class C {\n" +
+                "  java.util.List<ArrayList><caret>\n" +
+                "}");
+  }
+
   private void tabOut() {
     myFixture.performEditorAction(IdeActions.ACTION_BRACE_OR_QUOTE_OUT);
   }
@@ -83,5 +97,9 @@ public class EditorTabOutTest extends AbstractParameterInfoTestCase {
 
   private void right() {
     myFixture.performEditorAction(IdeActions.ACTION_EDITOR_MOVE_CARET_RIGHT);
+  }
+
+  private void runImportClassIntention() {
+    myFixture.launchAction(myFixture.findSingleIntention("Import class"));
   }
 }
