@@ -168,14 +168,16 @@ public class DiffShelvedChangesActionProvider implements AnActionExtensionProvid
 
       try {
         if (isNewFile) {
-          diffRequestProducers.add(new NewFileTextShelveDiffRequestProducer(project, shelvedChange, filePath));
+          diffRequestProducers.add(new NewFileTextShelveDiffRequestProducer(project, shelvedChange, filePath,
+                                                                            preloader, commitContext, withLocal));
         }
         else {
+          // isNewFile -> parent directory, !isNewFile -> file
           VirtualFile file = ApplyFilePatchBase.findPatchTarget(patchContext, beforePath, afterPath, isNewFile);
           if (file == null || !file.exists()) throw new FileNotFoundException(beforePath);
 
-          diffRequestProducers.add(new TextShelveDiffRequestProducer(project, shelvedChange, filePath, file, patchContext, preloader,
-                                                                     commitContext, withLocal));
+          diffRequestProducers.add(new TextShelveDiffRequestProducer(project, shelvedChange, filePath, file,
+                                                                     patchContext, preloader, commitContext, withLocal));
         }
       }
       catch (IOException e) {
@@ -357,17 +359,44 @@ public class DiffShelvedChangesActionProvider implements AnActionExtensionProvid
   }
 
   private static class NewFileTextShelveDiffRequestProducer extends BaseTextShelveDiffRequestProducer {
+    @NotNull private final PatchesPreloader myPreloader;
+    @NotNull private final CommitContext myCommitContext;
+    private final boolean myWithLocal;
+
     public NewFileTextShelveDiffRequestProducer(@NotNull Project project,
                                                 @NotNull ShelvedChange change,
-                                                @NotNull FilePath filePath) {
+                                                @NotNull FilePath filePath,
+                                                @NotNull PatchesPreloader preloader,
+                                                @NotNull CommitContext commitContext,
+                                                boolean withLocal) {
       super(project, change, filePath);
+      myPreloader = preloader;
+      myCommitContext = commitContext;
+      myWithLocal = withLocal;
     }
 
     @NotNull
     @Override
     public DiffRequest process(@NotNull UserDataHolder context, @NotNull ProgressIndicator indicator)
       throws DiffRequestProducerException, ProcessCanceledException {
-      return createDiffRequest(myProject, myChange.getChange(myProject), getName(), context, indicator);
+      VirtualFile file = myFilePath.getVirtualFile();
+      if (myWithLocal && file != null) {
+        try {
+          TextFilePatch patch = myPreloader.getPatch(myChange, myCommitContext);
+
+          DiffContentFactory contentFactory = DiffContentFactory.getInstance();
+          DiffContent leftContent = contentFactory.create(myProject, file);
+          DiffContent rightContent = contentFactory.create(myProject, patch.getSingleHunkPatchText(), file);
+
+          return new SimpleDiffRequest(getName(), leftContent, rightContent, CURRENT_VERSION, SHELVED_VERSION);
+        }
+        catch (VcsException e) {
+          throw new DiffRequestProducerException("Can't show diff for '" + getFilePath() + "'", e);
+        }
+      }
+      else {
+        return createDiffRequest(myProject, myChange.getChange(myProject), getName(), context, indicator);
+      }
     }
   }
 
