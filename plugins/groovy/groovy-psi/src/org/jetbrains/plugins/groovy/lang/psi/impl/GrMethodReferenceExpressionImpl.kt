@@ -5,6 +5,7 @@ import com.intellij.lang.ASTNode
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiMethod
 import com.intellij.psi.PsiType
+import org.jetbrains.plugins.groovy.lang.psi.GroovyTokenSets.METHOD_REFERENCE_DOTS
 import org.jetbrains.plugins.groovy.lang.psi.api.GroovyResolveResult
 import org.jetbrains.plugins.groovy.lang.psi.dataFlow.types.TypeInferenceHelper
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.GrReferenceExpressionImpl
@@ -16,6 +17,8 @@ class GrMethodReferenceExpressionImpl(node: ASTNode) : GrReferenceExpressionImpl
   companion object {
     const val CONSTRUCTOR_REFERENCE_NAME = "new"
   }
+
+  override fun getDotToken(): PsiElement = findNotNullChildByType(METHOD_REFERENCE_DOTS)
 
   override fun resolve(incomplete: Boolean): Collection<GroovyResolveResult> {
     return TypeInferenceHelper.getCurrentContext().resolve(this, incomplete, GrMethodReferenceResolver)

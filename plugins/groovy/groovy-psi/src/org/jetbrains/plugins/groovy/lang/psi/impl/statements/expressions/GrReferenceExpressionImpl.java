@@ -45,6 +45,7 @@ import org.jetbrains.plugins.groovy.lang.typing.GrTypeCalculator;
 
 import java.util.*;
 
+import static org.jetbrains.plugins.groovy.lang.psi.GroovyTokenSets.REFERENCE_DOTS;
 import static org.jetbrains.plugins.groovy.lang.resolve.GrReferenceResolveRunnerKt.resolveReferenceExpression;
 
 /**
@@ -521,7 +522,7 @@ public class GrReferenceExpressionImpl extends GrReferenceElementImpl<GrExpressi
   @Override
   @Nullable
   public PsiElement getDotToken() {
-    return findChildByType(TokenSets.DOTS);
+    return findChildByType(REFERENCE_DOTS);
   }
 
   @Override
