@@ -2,42 +2,31 @@ package circlet.components
 
 import circlet.app.*
 import circlet.bootstrap.*
-import circlet.client.api.*
 import circlet.platform.client.*
 import circlet.settings.*
 import circlet.utils.*
 import com.intellij.notification.*
-import com.intellij.notification.Notification
 import com.intellij.openapi.components.*
 import com.intellij.openapi.options.*
 import com.intellij.openapi.project.*
 import com.intellij.xml.util.*
-import io.ktor.application.*
-import io.ktor.http.*
-import io.ktor.response.*
-import io.ktor.routing.*
-import io.ktor.server.engine.*
-import io.ktor.server.jetty.*
 import runtime.reactive.*
-import runtime.utils.*
-import java.awt.*
-import java.net.*
-import java.util.concurrent.*
 
 class ConnectionComponent(project: Project) :
     AbstractProjectComponent(project), LifetimedComponent by SimpleLifetimedComponent() {
 
-    var loginModel: LoginModel? = null
-        private set
+    val loginModel: LoginModel? get() = connection?.loginModel
+
+    private var connection: Connection? = null
 
     val connected: Signal<Unit> = Signal.create()
 
     override fun initComponent() {
         myProject.settings.serverUrl.view(lifetime) { urlLifetime, url ->
-            loginModel = null
+            connection = null
 
             if (url.isNotBlank()) {
-                loginModel = connections.get(url, urlLifetime).value
+                connection = connections.get(url, urlLifetime).value
 
                 loginModel!!.meUser.view(urlLifetime) { userStatusLifetime, userStatus ->
                     if (userStatus === UserStatus.NoUser) {
@@ -101,37 +90,8 @@ class ConnectionComponent(project: Project) :
         myProject.settings.serverUrl.value = ""
     }
 
-    private val seq = SequentialLifetimes(lifetime)
-
     fun authenticate() {
-        loginModel?.let { model ->
-            val lt = seq.next()
-            val port = selectFreePort(10000)
-            val server = embeddedServer(Jetty, port, "localhost") {
-                routing {
-                    get("auth") {
-                        val token = call.parameters[TOKEN_PARAMETER]!!
-
-                        model.signIn(token, "")
-
-                        call.respondText(
-                            "Authorization successful! Now you can close this page and return to the IDE.",
-                            ContentType.Text.Html
-                        )
-
-                        lt.terminate()
-                    }
-                }
-            }.start(wait = false)
-
-            lt.add {
-                server.stop(100, 5000, TimeUnit.MILLISECONDS)
-            }
-
-            Desktop.getDesktop().browse(URI(
-                Navigator.login("http://localhost:$port/auth").absoluteHref(model.server)
-            ))
-        }
+        connection?.authenticate()
     }
 }
 

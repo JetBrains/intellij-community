@@ -59,7 +59,6 @@
             <reference id="Circlet.TestCircletActionRef" ref="Circlet.TestCircletAction"/>
         </group>
 
-
     </actions>
 
 </idea-plugin>
