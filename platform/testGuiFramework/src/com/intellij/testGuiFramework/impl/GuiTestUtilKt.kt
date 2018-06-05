@@ -269,11 +269,11 @@ object GuiTestUtilKt {
   fun <ReturnType> computeOnEdtWithTry(query: () -> ReturnType?): ReturnType? {
     val result = GuiActionRunner.execute(object : GuiQuery<Pair<ReturnType?, Throwable?>>() {
       override fun executeInEDT(): kotlin.Pair<ReturnType?, Throwable?> {
-        try {
-          return Pair(query(), null)
+        return try {
+          Pair(query(), null)
         }
         catch (e: Exception) {
-          return Pair(null, e)
+          Pair(null, e)
         }
       }
     })
