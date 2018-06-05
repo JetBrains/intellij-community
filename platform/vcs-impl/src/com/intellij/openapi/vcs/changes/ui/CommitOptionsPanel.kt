@@ -116,15 +116,17 @@ class CommitOptionsPanel(private val myCommitPanel: CheckinProjectPanel,
     return false
   }
 
-  private fun verticalPanel(title: String) = JPanel(VerticalFlowLayout(0, 0)).apply {
-    border = createTitledBorder(title)
-  }
-
   private fun addCheckinHandlerComponent(component: RefreshableOnComponent, container: JComponent) {
     container.add(component.component)
     myAdditionalComponents.add(component)
     if (component is CheckinChangeListSpecificComponent) {
       myCheckinChangeListSpecificComponents.add(component)
+    }
+  }
+
+  companion object {
+    fun verticalPanel(title: String) = JPanel(VerticalFlowLayout(0, 0)).apply {
+      border = createTitledBorder(title)
     }
   }
 }

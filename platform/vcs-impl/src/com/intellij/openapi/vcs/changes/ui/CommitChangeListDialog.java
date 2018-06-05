@@ -451,9 +451,9 @@ public class CommitChangeListDialog extends DialogWrapper implements CheckinProj
   }
 
   @NotNull
-  private static List<CheckinHandler> createCheckinHandlers(@NotNull Project project,
-                                                            @NotNull CheckinProjectPanel checkinPanel,
-                                                            @NotNull CommitContext commitContext) {
+  public static List<CheckinHandler> createCheckinHandlers(@NotNull Project project,
+                                                           @NotNull CheckinProjectPanel checkinPanel,
+                                                           @NotNull CommitContext commitContext) {
     List<CheckinHandler> handlers = new ArrayList<>();
     for (BaseCheckinHandlerFactory factory : getCheckInFactories(project)) {
       CheckinHandler handler = factory.createHandler(checkinPanel, commitContext);
