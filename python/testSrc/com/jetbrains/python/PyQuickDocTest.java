@@ -466,11 +466,6 @@ public class PyQuickDocTest extends LightMarkedTestCase {
   }
 
   // PY-30103
-  public void testReturnTypeWrappedBecauseTooLongItself() {
-    runWithLanguageLevel(LanguageLevel.PYTHON35, this::checkHTMLOnly);
-  }
-
-  // PY-30103
   public void testReturnTypeWrappedBecauseOfParameters() {
     runWithLanguageLevel(LanguageLevel.PYTHON35, this::checkHTMLOnly);
   }
