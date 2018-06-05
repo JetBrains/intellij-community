@@ -16,7 +16,6 @@
 package com.intellij.testGuiFramework.launcher
 
 import com.intellij.openapi.application.PathManager
-import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.vfs.VfsUtilCore
 import com.intellij.testGuiFramework.impl.GuiTestStarter
@@ -25,6 +24,7 @@ import com.intellij.testGuiFramework.launcher.classpath.PathUtils
 import com.intellij.testGuiFramework.launcher.ide.CommunityIde
 import com.intellij.testGuiFramework.launcher.ide.Ide
 import com.intellij.testGuiFramework.launcher.system.SystemInfo
+import org.apache.log4j.Logger
 import org.jetbrains.jps.model.JpsElementFactory
 import org.jetbrains.jps.model.JpsProject
 import org.jetbrains.jps.model.java.JpsJavaExtensionService
@@ -51,7 +51,7 @@ import kotlin.concurrent.thread
  */
 object GuiTestLocalLauncher {
 
-  private val LOG = Logger.getInstance("#com.intellij.testGuiFramework.launcher.GuiTestLocalLauncher")
+  private val LOG: Logger = org.apache.log4j.Logger.getLogger("#com.intellij.testGuiFramework.framework.GuiTestSuite")!!
 
   var process: Process? = null
 
@@ -104,7 +104,7 @@ object GuiTestLocalLauncher {
                        timeOut: Long = 0,
                        timeOutUnit: TimeUnit = TimeUnit.SECONDS,
                        args: List<String>) {
-    LOG.info("Running $ide locally \n with args: $args")
+    LOG.info("Running $ide locally \n with args: ${args.joinToString(" ")}")
     //do not limit IDE starting if we are using debug mode to not miss the debug listening period
     val conditionalTimeout = if (GuiTestOptions.isDebug()) 0 else timeOut
     val startLatch = CountDownLatch(1)
@@ -181,7 +181,7 @@ object GuiTestLocalLauncher {
 
     if (commandName != null) resultingArgs = resultingArgs.plus(commandName)
     if (port != 0) resultingArgs = resultingArgs.plus("port=$port")
-    LOG.info("Running with args: ${resultingArgs.joinToString(" ")}")
+//    LOG.info("Running with args: ${resultingArgs.joinToString(" ")}")
 
     return resultingArgs
   }
@@ -194,7 +194,7 @@ object GuiTestLocalLauncher {
     )
     if (SystemInfo.isMac()) resultingArgs.add(0, "open")
     if (port != 0) resultingArgs.add("port=$port")
-    LOG.info("Running with args: ${resultingArgs.joinToString(" ")}")
+//    LOG.info("Running with args: ${resultingArgs.joinToString(" ")}")
     return resultingArgs
   }
 
