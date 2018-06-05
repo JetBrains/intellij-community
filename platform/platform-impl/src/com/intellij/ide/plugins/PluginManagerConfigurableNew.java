@@ -75,7 +75,6 @@ import java.text.SimpleDateFormat;
 import java.util.*;
 import java.util.List;
 import java.util.Map.Entry;
-import java.util.concurrent.ExecutionException;
 import java.util.regex.Pattern;
 
 import static com.intellij.util.ui.UIUtil.uiChildren;
@@ -352,7 +351,7 @@ public class PluginManagerConfigurableNew
 
     if (myShutdownCallback == null && myPluginsModel.createShutdownCallback) {
       myShutdownCallback = () -> ApplicationManager.getApplication().invokeLater(
-        () -> PluginManagerConfigurable.shutdownOrRestartApp(IdeBundle.message("update.notifications.title")));
+        () -> PluginManagerConfigurable.shutdownOrRestartApp(IdeBundle.message("update.notifications.title")), ModalityState.any());
     }
   }
 
@@ -491,59 +490,62 @@ public class PluginManagerConfigurableNew
 
   @NotNull
   private JComponent createUpdatesPanel(@NotNull LinkListener<Pair<IdeaPluginDescriptor, Integer>> listener) {
-    PluginsGroupComponent panel =
-      new PluginsGroupComponent(new PluginsListLayout(), new MultiSelectionEventHandler(), listener, 2,
-                                descriptor -> new ListPluginComponent(myPluginsModel, descriptor, true));
+    PluginsGroupComponentWithProgress panel =
+      new PluginsGroupComponentWithProgress(new PluginsListLayout(), new MultiSelectionEventHandler(), listener, 2,
+                                            descriptor -> new ListPluginComponent(myPluginsModel, descriptor, true));
     panel.getEmptyText().setText("No updates available.");
 
-    try {
-      Collection<PluginDownloader> updates =
-        ApplicationManager.getApplication().executeOnPooledThread(() -> UpdateChecker.getPluginUpdates()).get();
+    ApplicationManager.getApplication().executeOnPooledThread(() -> {
+      Collection<PluginDownloader> updates = UpdateChecker.getPluginUpdates();
 
-      if (ContainerUtil.isEmpty(updates)) {
-        myUpdatesTabName.setCount(0);
-      }
-      else {
-        PluginsGroup group = new PluginsGroup("Available Updates") {
-          @Override
-          public void titleWithCount() {
-            int count = 0;
-            for (CellPluginComponent component : ui.plugins) {
-              if (((ListPluginComponent)component).myUpdateButton != null) {
-                count++;
+      ApplicationManager.getApplication().invokeLater(() -> {
+        panel.stopLoading();
+
+        if (ContainerUtil.isEmpty(updates)) {
+          myUpdatesTabName.setCount(0);
+        }
+        else {
+          PluginsGroup group = new PluginsGroup("Available Updates") {
+            @Override
+            public void titleWithCount() {
+              int count = 0;
+              for (CellPluginComponent component : ui.plugins) {
+                if (((ListPluginComponent)component).myUpdateButton != null) {
+                  count++;
+                }
+              }
+
+              title = myTitlePrefix + " (" + count + ")";
+              updateTitle();
+              rightAction.setVisible(count > 0);
+              myUpdatesTabName.setCount(count);
+            }
+          };
+
+          group.rightAction = new LinkLabel<>("Update All", null);
+          group.rightAction.setListener(new LinkListener<Object>() {
+            @Override
+            public void linkSelected(LinkLabel aSource, Object aLinkData) {
+              for (CellPluginComponent component : group.ui.plugins) {
+                ((ListPluginComponent)component).updatePlugin();
               }
             }
+          }, null);
 
-            title = myTitlePrefix + " (" + count + ")";
-            updateTitle();
-            rightAction.setVisible(count > 0);
-            myUpdatesTabName.setCount(count);
+          for (PluginDownloader toUpdateDownloader : updates) {
+            group.descriptors.add(toUpdateDownloader.getDescriptor());
           }
-        };
 
-        group.rightAction = new LinkLabel<>("Update All", null);
-        group.rightAction.setListener(new LinkListener<Object>() {
-          @Override
-          public void linkSelected(LinkLabel aSource, Object aLinkData) {
-            for (CellPluginComponent component : group.ui.plugins) {
-              ((ListPluginComponent)component).updatePlugin();
-            }
-          }
-        }, null);
+          group.sortByName();
+          panel.addGroup(group);
+          group.titleWithCount();
 
-        for (PluginDownloader toUpdateDownloader : updates) {
-          group.descriptors.add(toUpdateDownloader.getDescriptor());
+          myPluginsModel.setUpdateGroup(group);
         }
 
-        group.sortByName();
-        panel.addGroup(group);
-        group.titleWithCount();
-
-        myPluginsModel.setUpdateGroup(group);
-      }
-    }
-    catch (InterruptedException | ExecutionException ignore) {
-    }
+        panel.doLayout();
+      }, ModalityState.any());
+    });
 
     return createScrollPane(panel);
   }
@@ -584,7 +586,7 @@ public class PluginManagerConfigurableNew
       pane.getHorizontalScrollBar().setValue(0);
       pane.getVerticalScrollBar().setValue(0);
       panel.initialSelection();
-    });
+    }, ModalityState.any());
     return pane;
   }
 
@@ -1086,6 +1088,71 @@ public class PluginManagerConfigurableNew
     }
   }
 
+  private static class PluginsGroupComponentWithProgress extends PluginsGroupComponent {
+    private AsyncProcessIcon myIcon = new AsyncProcessIcon.Big("Loading") {
+      @NotNull
+      @Override
+      protected Rectangle calculateBounds(@NotNull JComponent container) {
+        Dimension size = container.getSize();
+        Dimension iconSize = getPreferredSize();
+        return new Rectangle((size.width - iconSize.width) / 2, (size.height - iconSize.height) / 2, iconSize.width, iconSize.height);
+      }
+    };
+
+    public PluginsGroupComponentWithProgress(@NotNull LayoutManager layout,
+                                             @NotNull EventHandler eventHandler,
+                                             @NotNull LinkListener<Pair<IdeaPluginDescriptor, Integer>> listener,
+                                             @NotNull Integer listenerData,
+                                             @NotNull Function<IdeaPluginDescriptor, CellPluginComponent> function) {
+      super(layout, eventHandler, listener, listenerData, function);
+      myIcon.setOpaque(false);
+      myIcon.setPaintPassiveIcon(false);
+      add(myIcon);
+      myIcon.resume();
+    }
+
+    @Override
+    public void removeNotify() {
+      super.removeNotify();
+      if (myIcon != null && ScreenUtil.isStandardAddRemoveNotify(this)) {
+        dispose();
+      }
+    }
+
+    @Override
+    public void doLayout() {
+      super.doLayout();
+      if (myIcon != null) {
+        myIcon.updateLocation(this);
+      }
+    }
+
+    @Override
+    public void paint(Graphics g) {
+      super.paint(g);
+      if (myIcon != null) {
+        myIcon.updateLocation(this);
+      }
+    }
+
+    public void stopLoading() {
+      if (myIcon != null) {
+        myIcon.suspend();
+        myIcon.setVisible(false);
+        dispose();
+        doLayout();
+        revalidate();
+        repaint();
+      }
+    }
+
+    private void dispose() {
+      remove(myIcon);
+      Disposer.dispose(myIcon);
+      myIcon = null;
+    }
+  }
+
   private static class EventHandler {
     public static final EventHandler EMPTY = new EventHandler();
 
@@ -1571,7 +1638,7 @@ public class PluginManagerConfigurableNew
         if (component.getSelection() == SelectionType.NONE) {
           component.setSelection(SelectionType.HOVER);
         }
-      });
+      }, ModalityState.any());
     }
   }
 
@@ -2061,7 +2128,9 @@ public class PluginManagerConfigurableNew
       addNameComponent(myBaselinePanel);
       myName.setVerticalAlignment(SwingConstants.TOP);
 
-      createVersion(pluginForUpdate ? (PluginNode)plugin : null);
+      if (pluginForUpdate) {
+        createVersion();
+      }
       updateErrors();
 
       if (pluginForUpdate) {
@@ -2178,23 +2247,21 @@ public class PluginManagerConfigurableNew
       };
     }
 
-    private void createVersion(@Nullable PluginNode plugin) {
-      if (plugin == null) {
-        return;
-      }
-
-      String version = StringUtil.defaultIfEmpty(plugin.getVersion(), null);
+    private void createVersion() {
+      String version = StringUtil.defaultIfEmpty(myPlugin.getVersion(), null);
       if (version != null) {
         myVersion = new JLabel("Version " + version);
         myVersion.setOpaque(false);
         myBaselinePanel.addVersionComponent(installTiny(myVersion));
       }
 
-      String date = getLastUpdatedDate(plugin);
-      if (date != null) {
-        myLastUpdated = new JLabel(date, AllIcons.Plugins.Updated, SwingConstants.CENTER);
-        myLastUpdated.setOpaque(false);
-        myBaselinePanel.addVersionComponent(installTiny(myLastUpdated));
+      if (myPlugin instanceof PluginNode) {
+        String date = getLastUpdatedDate(myPlugin);
+        if (date != null) {
+          myLastUpdated = new JLabel(date, AllIcons.Plugins.Updated, SwingConstants.CENTER);
+          myLastUpdated.setOpaque(false);
+          myBaselinePanel.addVersionComponent(installTiny(myLastUpdated));
+        }
       }
     }
 
