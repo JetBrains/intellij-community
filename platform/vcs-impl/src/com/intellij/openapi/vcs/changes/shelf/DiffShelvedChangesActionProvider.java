@@ -176,15 +176,19 @@ public class DiffShelvedChangesActionProvider implements AnActionExtensionProvid
         continue;
       }
 
+      if (isNewFile) {
+        diffRequestProducers.add(new NewFileTextShelveDiffRequestProducer(project, shelvedChange, filePath));
+        continue;
+      }
+
       diffRequestProducers.add(new BaseTextShelveDiffRequestProducer(project, shelvedChange, filePath) {
         @NotNull
         @Override
         public DiffRequest process(@NotNull UserDataHolder context, @NotNull ProgressIndicator indicator)
           throws DiffRequestProducerException, ProcessCanceledException {
-          if (!isNewFile && file.getFileType() == UnknownFileType.INSTANCE) {
+          if (file.getFileType() == UnknownFileType.INSTANCE) {
             return new UnknownFileTypeDiffRequest(file, getName());
           }
-          if (isNewFile) return createDiffRequest(project, shelvedChange.getChange(project), getName(), context, indicator);
 
           final TextFilePatch patch;
           try {
@@ -417,6 +421,21 @@ public class DiffShelvedChangesActionProvider implements AnActionExtensionProvid
       catch (VcsException e) {
         throw new DiffRequestProducerException("Can't show diff for '" + getFilePath() + "'", e);
       }
+    }
+  }
+
+  private static class NewFileTextShelveDiffRequestProducer extends BaseTextShelveDiffRequestProducer {
+    public NewFileTextShelveDiffRequestProducer(@NotNull Project project,
+                                                @NotNull ShelvedChange change,
+                                                @NotNull FilePath filePath) {
+      super(project, change, filePath);
+    }
+
+    @NotNull
+    @Override
+    public DiffRequest process(@NotNull UserDataHolder context, @NotNull ProgressIndicator indicator)
+      throws DiffRequestProducerException, ProcessCanceledException {
+      return createDiffRequest(myProject, myChange.getChange(myProject), getName(), context, indicator);
     }
   }
 
