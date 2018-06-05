@@ -460,9 +460,32 @@ public class LambdaUtil {
           gParent = gParent.getParent();
         }
 
+        JavaResolveResult[] results = null;
         if (gParent instanceof PsiMethodCallExpression) {
+          results = ((PsiMethodCallExpression)gParent).getMethodExpression().multiResolve(true);
+        }
+        else if (gParent instanceof PsiConstructorCall){
+          final JavaPsiFacade facade = JavaPsiFacade.getInstance(gParent.getProject());
+          PsiExpressionList argumentList = ((PsiCall)gParent).getArgumentList();
+          if (argumentList != null) {
+            PsiClassType classType = null;
+            if (gParent instanceof PsiNewExpression) {
+              PsiJavaCodeReferenceElement ref = ((PsiNewExpression)gParent).getClassReference();
+              classType = ref != null ? facade.getElementFactory().createType(ref) : null;
+            }
+            else if (gParent instanceof PsiEnumConstant) {
+              PsiClass containingClass = ((PsiEnumConstant)gParent).getContainingClass();
+              classType = containingClass != null ? facade.getElementFactory().createType(containingClass) : null;
+            }
+            
+            if (classType != null) {
+              results = facade.getResolveHelper().multiResolveConstructor(classType, argumentList, gParent);
+            }
+          }
+        }
+        
+        if (results != null) {
           final Set<PsiType> types = new HashSet<>();
-          final JavaResolveResult[] results = ((PsiMethodCallExpression)gParent).getMethodExpression().multiResolve(true);
           for (JavaResolveResult result : results) {
             final PsiType functionalExpressionType = getSubstitutedType(functionalExpression, true, lambdaIdx, result);
             if (functionalExpressionType != null && types.add(functionalExpressionType)) {

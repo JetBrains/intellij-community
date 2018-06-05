@@ -283,6 +283,12 @@ class Test88 {
     myFixture.assertPreferredCompletionItems(0, 'toString', 'wait')
   }
 
+  void testLambdaInAmbiguousConstructorCall() {
+    configureByTestName()
+    selectItem(myItems.find { it.lookupString.contains('Empty') })
+    checkResultByFileName()
+  }
+
   void testLambdaWithSuperWildcardInAmbiguousCall() {
     configureByTestName()
     myFixture.assertPreferredCompletionItems(0, 'substring', 'substring', 'subSequence')
