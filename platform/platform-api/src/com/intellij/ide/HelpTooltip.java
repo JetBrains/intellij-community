@@ -29,6 +29,7 @@ import com.intellij.ui.components.panels.VerticalLayout;
 import com.intellij.util.Alarm;
 import com.intellij.util.NotNullProducer;
 import com.intellij.util.ui.GraphicsUtil;
+import com.intellij.util.ui.JBEmptyBorder;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
@@ -467,7 +468,7 @@ public class HelpTooltip implements Disposable {
   }
 
   private static Border textBorder(boolean isDefault) {
-    return UIManager.getBorder(isDefault ? "HelpTooltip.defaultTextBorderInsets" : "HelpTooltip.smallTextBorderInsets");
+    return new JBEmptyBorder(UIManager.getInsets(isDefault ? "HelpTooltip.defaultTextBorderInsets" : "HelpTooltip.smallTextBorderInsets"));
   }
 
   private static Font modifyFont(Font font) {
