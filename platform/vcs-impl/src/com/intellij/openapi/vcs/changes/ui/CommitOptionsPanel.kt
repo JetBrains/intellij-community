@@ -125,7 +125,7 @@ class CommitOptionsPanel(private val myCommitPanel: CheckinProjectPanel,
   }
 
   companion object {
-    fun verticalPanel(title: String) = JPanel(VerticalFlowLayout(0, 0)).apply {
+    fun verticalPanel(title: String) = JPanel(VerticalFlowLayout(0, 5)).apply {
       border = createTitledBorder(title)
     }
   }
