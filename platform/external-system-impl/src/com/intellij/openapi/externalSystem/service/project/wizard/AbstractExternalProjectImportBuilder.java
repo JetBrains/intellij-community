@@ -227,9 +227,11 @@ public abstract class AbstractExternalProjectImportBuilder<C extends AbstractImp
     myExternalProjectNode = null;
 
     // resolve dependencies
-    final Runnable resolveDependenciesTask = () -> ExternalSystemUtil.refreshProject(
-      project, myExternalSystemId, projectSettings.getExternalProjectPath(),
-      createFinalImportCallback(project, projectSettings), false, ProgressExecutionMode.IN_BACKGROUND_ASYNC, true);
+    final Runnable resolveDependenciesTask = () -> {
+      ExternalSystemUtil.refreshProject(project, myExternalSystemId, projectSettings.getExternalProjectPath(),
+        createFinalImportCallback(project, projectSettings), false, ProgressExecutionMode.IN_BACKGROUND_ASYNC, true);
+      project.getMessageBus().syncPublisher(ExternalSystemListener.TOPIC).importFinished(externalProjectNode.getData(), modules);
+    };
     if (!isFromUI) {
       resolveDependenciesTask.run();
     }
