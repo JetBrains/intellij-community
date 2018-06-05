@@ -217,7 +217,7 @@ public class SpellCheckingInspection extends LocalInspectionTool {
     @Override
     public void consume(TextRange textRange) {
       String word = textRange.substring(myText);
-      if (myHolder.isOnTheFly() && myAlreadyChecked.contains(word)) {
+      if (!myHolder.isOnTheFly() && myAlreadyChecked.contains(word)) {
         return;
       }
 
