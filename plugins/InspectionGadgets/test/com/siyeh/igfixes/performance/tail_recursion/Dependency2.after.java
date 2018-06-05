@@ -8,7 +8,7 @@ class Dependency2 {
                 ids2 = ids11;
                 continue;
             }
-            for (String id : ids1) {
+            for (String id: ids1) {
                 if (ids2.contains(id)) return true;
             }
             return false;
