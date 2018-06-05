@@ -8,7 +8,7 @@ public class Main {
       boolean seen = false;
       String best = null;
       Comparator<String> comparator = Comparator.comparing(String::length);
-      for (String string : strings) {
+      for (String string: strings) {
           if (!seen || comparator.compare(string, best) > 0) {
               seen = true;
               best = string;
@@ -20,7 +20,7 @@ public class Main {
   public static OptionalDouble testMaxDouble(List<String> strings) {
       boolean seen = false;
       double best = 0;
-      for (String string : strings) {
+      for (String string: strings) {
           double length = string.length();
           if (!seen || Double.compare(length, best) > 0) {
               seen = true;
@@ -33,7 +33,7 @@ public class Main {
   private static Optional<String> testMaxLambda(Map<String, List<String>> dependencies, String fruits, Map<String, Integer> weights) {
       boolean seen = false;
       String best = null;
-      for (String s : dependencies.get(fruits)) {
+      for (String s: dependencies.get(fruits)) {
           if (!seen || weights.get(s) - weights.get(best) > 0) {
               seen = true;
               best = s;
@@ -45,7 +45,7 @@ public class Main {
   private static Optional<String> testMaxLambdaTernary(Map<String, List<String>> dependencies, String fruits, Map<String, String> weights) {
       boolean seen = false;
       String best = null;
-      for (String s : dependencies.get(fruits)) {
+      for (String s: dependencies.get(fruits)) {
           if (!seen || (s.compareTo(best) < 0 ? -1 : s.compareTo(best) > 0 ? 1 : 0) > 0) {
               seen = true;
               best = s;
@@ -57,7 +57,7 @@ public class Main {
   private static Optional<String> testMaxReverseOrder(Map<String, List<String>> dependencies, String fruits, Map<String, String> weights) {
       boolean seen = false;
       String best = null;
-      for (String s : dependencies.get(fruits)) {
+      for (String s: dependencies.get(fruits)) {
           if (!seen || best.compareTo(s) > 0) {
               seen = true;
               best = s;
@@ -69,7 +69,7 @@ public class Main {
   public static String testMinPassedComparator(List<String> strings, Comparator<String> cmp) {
       boolean seen = false;
       String best = null;
-      for (String string : strings) {
+      for (String string: strings) {
           if (!seen || cmp.compare(string, best) < 0) {
               seen = true;
               best = string;
@@ -82,7 +82,7 @@ public class Main {
       boolean seen = false;
       String best = null;
       Comparator<CharSequence> comparator1 = comparator.reversed();
-      for (String string : strings) {
+      for (String string: strings) {
           if (!seen || comparator1.compare(string, best) < 0) {
               seen = true;
               best = string;
@@ -94,7 +94,7 @@ public class Main {
   public static int testMinInt(List<String> strings, IntSupplier supplier) {
       boolean seen = false;
       int best = 0;
-      for (String string : strings) {
+      for (String string: strings) {
           int length = string.length();
           if (!seen || length < best) {
               seen = true;
@@ -106,7 +106,7 @@ public class Main {
 
   public static int testMinMaxValue(List<String> strings) {
       int best = Integer.MAX_VALUE;
-      for (String string : strings) {
+      for (String string: strings) {
           int length = string.length();
           if (length < best)
               best = length;
@@ -116,7 +116,7 @@ public class Main {
 
   public static long testMaxMinValue(List<String> strings) {
       long max = Long.MIN_VALUE;
-      for (String string : strings) {
+      for (String string: strings) {
           long length = string.length();
           if (length > max)
               max = length;

@@ -8,7 +8,7 @@ import java.util.stream.Collectors;
 public class Main {
   private static List<Integer> getPositiveDoubled(int... input) {
       List<Integer> list = new ArrayList<>();
-      for (int x : input) {
+      for (int x: input) {
           if (x > 0) {
               Integer integer = x * 2;
               list.add(integer);

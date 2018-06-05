@@ -14,7 +14,7 @@ class Collectors {
 class MyFile {
   public static List<String> testList(String[] args) {
       List<String> result = new ArrayList<>();
-      for (String arg : args) {
+      for (String arg: args) {
           if (arg != null) {
               result.add(arg);
           }
@@ -25,7 +25,7 @@ class MyFile {
 
   public static Set<String> testSet(String[] args) {
       Set<String> set = new HashSet<>();
-      for (String arg : args) {
+      for (String arg: args) {
           if (arg != null) {
               set.add(arg);
           }
@@ -35,7 +35,7 @@ class MyFile {
 
   public static Map<String, String> testMap(String[] args) {
       Map<String, String> map = new HashMap<>();
-      for (String arg : args) {
+      for (String arg: args) {
           if (arg != null) {
               if (map.put(arg.trim(), arg) != null) {
                   throw new IllegalStateException("Duplicate key");

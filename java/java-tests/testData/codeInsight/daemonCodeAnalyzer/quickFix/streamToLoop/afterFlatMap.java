@@ -11,12 +11,12 @@ import static java.util.Arrays.asList;
 public class Main {
   private static long testChain(List<? extends String> list) {
       long count = 0L;
-      for (Object o : Arrays.asList(0, null, "1", list)) {
-          for (Object o1 : Arrays.asList(o)) {
-              for (Object o2 : Arrays.asList(o1)) {
-                  for (Object o3 : Arrays.asList(o2)) {
-                      for (Object o4 : Arrays.asList(o3)) {
-                          for (Object o5 : Arrays.asList(o4)) {
+      for (Object o: Arrays.asList(0, null, "1", list)) {
+          for (Object o1: Arrays.asList(o)) {
+              for (Object o2: Arrays.asList(o1)) {
+                  for (Object o3: Arrays.asList(o2)) {
+                      for (Object o4: Arrays.asList(o3)) {
+                          for (Object o5: Arrays.asList(o4)) {
                               count++;
                           }
                       }
@@ -29,7 +29,7 @@ public class Main {
 
   public static void testComplexFilter(List<String> list) {
       List<Integer> result = new ArrayList<>();
-      for (String x : list) {
+      for (String x: list) {
           if (x != null) {
               Predicate<Integer> predicate = Predicate.isEqual(x.length());
               for (int i = 0; i < 10; i++) {
@@ -44,9 +44,9 @@ public class Main {
   }
 
   public void testConditional(List<List<String>> list) {
-      for (List<String> lst : list) {
+      for (List<String> lst: list) {
           if (lst != null) {
-              for (String s : lst) {
+              for (String s: lst) {
                   System.out.println(s);
               }
           }
@@ -55,9 +55,9 @@ public class Main {
 
   private static long testDistinctUnpluralize(List<List<String>> nested) {
       long count = 0L;
-      for (List<String> names : nested) {
+      for (List<String> names: nested) {
           Set<String> uniqueValues = new HashSet<>();
-          for (String name : names) {
+          for (String name: names) {
               if (uniqueValues.add(name)) {
                   count++;
               }
@@ -129,8 +129,8 @@ public class Main {
 
   private static List<String> testMethodRef(List<List<String>> list) {
       List<String> result = new ArrayList<>();
-      for (List<String> strings : list) {
-          for (String string : strings) {
+      for (List<String> strings: list) {
+          for (String string: strings) {
               result.add(string);
           }
       }
@@ -139,8 +139,8 @@ public class Main {
 
   private static List<String> testMethodRef2(List<String[]> list) {
       List<String> result = new ArrayList<>();
-      for (String[] strings : list) {
-          for (String t : strings) {
+      for (String[] strings: list) {
+          for (String t: strings) {
               result.add(t);
           }
       }
@@ -149,8 +149,8 @@ public class Main {
 
   private static List<List<String>> testMethodRef3(List<List<List<String>>> list) {
       List<List<String>> result = new ArrayList<>();
-      for (List<List<String>> lists : list) {
-          for (List<String> strings : lists) {
+      for (List<List<String>> lists: list) {
+          for (List<String> strings: lists) {
               result.add(strings);
           }
       }
@@ -159,10 +159,10 @@ public class Main {
 
   private static long testBoundRename(Map<String, List<String>> strings) {
       long count = 0L;
-      for (Map.Entry<String, List<String>> e : strings.entrySet()) {
+      for (Map.Entry<String, List<String>> e: strings.entrySet()) {
           if (!e.getKey().isEmpty()) {
               String sInner = e.getKey();
-              for (String s : e.getValue()) {
+              for (String s: e.getValue()) {
                   if (sInner.equals(s)) {
                       count++;
                   }
@@ -174,11 +174,11 @@ public class Main {
 
   public static IntSummaryStatistics testNestedFlatMap(List<List<List<String>>> list) {
       IntSummaryStatistics stat = new IntSummaryStatistics();
-      for (List<List<String>> l : list) {
+      for (List<List<String>> l: list) {
           if (l != null) {
-              for (List<String> lst : l) {
+              for (List<String> lst: l) {
                   if (lst != null) {
-                      for (String str : lst) {
+                      for (String str: lst) {
                           int length = str.length();
                           stat.accept(length);
                       }
@@ -191,9 +191,9 @@ public class Main {
 
   public static LongSummaryStatistics testNestedMap(List<List<String>> list) {
       LongSummaryStatistics stat = new LongSummaryStatistics();
-      for (List<String> a : list) {
+      for (List<String> a: list) {
           if (a != null) {
-              for (String s : a) {
+              for (String s: a) {
                   long length = s.length();
                   stat.accept(length);
               }
@@ -205,7 +205,7 @@ public class Main {
   public static IntSummaryStatistics testNestedSkip(int... values) {
       IntSummaryStatistics stat = new IntSummaryStatistics();
       long toSkipOuter = 2;
-      for (int x : values) {
+      for (int x: values) {
           if (toSkipOuter > 0) {
               toSkipOuter--;
               continue;
@@ -227,7 +227,7 @@ public class Main {
   public static IntSummaryStatistics testNestedSkip2(int... values) {
       IntSummaryStatistics stat = new IntSummaryStatistics();
       long toSkip = 2;
-      for (int x : values) {
+      for (int x: values) {
           if (x > 0) {
               long toSkipInner = x;
               for (int i = 0; i < 100; i++) {
@@ -247,15 +247,15 @@ public class Main {
   }
 
   public String testSorted(List<List<String>> list) {
-      for (List<String> lst : list) {
+      for (List<String> lst: list) {
           List<String> toSort = new ArrayList<>();
-          for (String x : lst) {
+          for (String x: lst) {
               if (x != null) {
                   toSort.add(x);
               }
           }
           toSort.sort(null);
-          for (String x : toSort) {
+          for (String x: toSort) {
               if (x.length() < 5) {
                   return x;
               }
