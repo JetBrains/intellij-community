@@ -1,22 +1,17 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-package com.intellij.ui.tree;
+package com.intellij.ui.tree.project;
 
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.roots.ModuleRootEvent;
-import com.intellij.openapi.roots.ModuleRootListener;
 import com.intellij.openapi.roots.ModuleRootManager;
-import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileFilter;
-import com.intellij.openapi.vfs.newvfs.BulkFileListener;
-import com.intellij.openapi.vfs.newvfs.events.*;
+import com.intellij.ui.tree.BaseTreeModel;
 import com.intellij.util.SmartList;
 import com.intellij.util.ThreeState;
 import com.intellij.util.concurrency.Invoker;
 import com.intellij.util.concurrency.InvokerSupplier;
-import com.intellij.util.messages.MessageBusConnection;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -29,9 +24,7 @@ import java.util.function.BiFunction;
 import java.util.function.Consumer;
 import java.util.function.Predicate;
 
-import static com.intellij.ProjectTopics.PROJECT_ROOTS;
 import static com.intellij.openapi.vfs.VfsUtilCore.isAncestor;
-import static com.intellij.openapi.vfs.VirtualFileManager.VFS_CHANGES;
 import static com.intellij.ui.tree.TreePathUtil.pathToCustomNode;
 import static java.util.Collections.emptyList;
 
@@ -41,49 +34,22 @@ public final class ProjectFileTreeModel extends BaseTreeModel<ProjectFileNode> i
 
   public ProjectFileTreeModel(@NotNull Project project) {
     root = new ProjectNode(project);
-    MessageBusConnection connection = project.getMessageBus().connect(this);
-    connection.subscribe(PROJECT_ROOTS, new ModuleRootListener() {
+    new ProjectFileListener(project, invoker) {
       @Override
-      public void rootsChanged(ModuleRootEvent event) {
-        onValidThread(() -> {
-          root.valid = false; // need to reload content roots
-          pathChanged(null);
-        });
+      protected void updateFromRoot() {
+        root.valid = false; // need to reload content roots
+        pathChanged(null);
       }
-    });
-    connection.subscribe(VFS_CHANGES, new BulkFileListener() {
+
       @Override
-      public void after(@NotNull List<? extends VFileEvent> events) {
-        onValidThread(() -> {
-          for (VFileEvent event : events) {
-            if (event instanceof VFileCreateEvent) {
-              VFileCreateEvent create = (VFileCreateEvent)event;
-              invalidate(create.getParent());
-            }
-            else if (event instanceof VFileCopyEvent) {
-              VFileCopyEvent copy = (VFileCopyEvent)event;
-              invalidate(copy.getNewParent());
-            }
-            else if (event instanceof VFileMoveEvent) {
-              VFileMoveEvent move = (VFileMoveEvent)event;
-              invalidate(move.getNewParent());
-              invalidate(move.getOldParent());
-              invalidate(move.getFile());
-            }
-            else {
-              VirtualFile file = event.getFile();
-              if (file != null) {
-                if (event instanceof VFileDeleteEvent) {
-                  VirtualFile parent = file.getParent();
-                  if (parent != null) invalidate(parent);
-                }
-                invalidate(file);
-              }
-            }
+      protected void updateFromFile(@NotNull VirtualFile file, @Nullable Module module) {
+        root.children.stream().filter(node -> node.contains(file, module)).forEach(node -> {
+          if (node.invalidate(file) && node.valid && root.valid) {
+            node.invalidateLater(invoker, ProjectFileTreeModel.this::pathChanged);
           }
         });
       }
-    });
+    };
   }
 
   @NotNull
@@ -150,23 +116,6 @@ public final class ProjectFileTreeModel extends BaseTreeModel<ProjectFileNode> i
     return visible;
   }
 
-  public void invalidate(VirtualFile file) {
-    onValidThread(() -> {
-      if (root.project.isDisposed()) return;
-      ProjectRootManager manager = ProjectRootManager.getInstance(root.project);
-      if (manager == null) return;
-
-      Module module = manager.getFileIndex().getModuleForFile(file);
-      if (module == null || module.isDisposed()) return;
-
-      for (RootNode node : root.children) {
-        if (node.module == module && node.invalidate(file) && node.valid && root.valid) {
-          node.invalidateLater(invoker, this::pathChanged);
-        }
-      }
-    });
-  }
-
   public void setFilter(@Nullable VirtualFileFilter filter) {
     onValidThread(() -> {
       if (root.filter == null && filter == null) return;
@@ -183,9 +132,9 @@ public final class ProjectFileTreeModel extends BaseTreeModel<ProjectFileNode> i
 
   private static final class Mapper<N extends FileNode> implements BiFunction<VirtualFile, Module, N> {
     private final HashMap<VirtualFile, N> map = new HashMap<>();
-    private final BiFunction<VirtualFile, Module, N> function;
+    private final BiFunction<? super VirtualFile, ? super Module, ? extends N> function;
 
-    Mapper(@NotNull List<N> list, @NotNull BiFunction<VirtualFile, Module, N> function) {
+    Mapper(@NotNull List<N> list, @NotNull BiFunction<? super VirtualFile, ? super Module, ? extends N> function) {
       list.forEach(node -> map.put(node.file, node));
       this.function = function;
     }
@@ -302,6 +251,10 @@ public final class ProjectFileTreeModel extends BaseTreeModel<ProjectFileNode> i
       return file.getName();
     }
 
+    boolean contains(@NotNull VirtualFile file, @Nullable Module module) {
+      return this.module == module && isAncestor(this.file, file, false);
+    }
+
     @NotNull
     @Override
     List<FileNode> getChildren(@NotNull List<FileNode> oldList) {
@@ -348,9 +301,6 @@ public final class ProjectFileTreeModel extends BaseTreeModel<ProjectFileNode> i
     }
 
     boolean invalidate(VirtualFile file) {
-      if (!isAncestor(this.file, file, false)) {
-        return false; // the file does not belong this root
-      }
       List<VirtualFile> list = accumulator;
       if (!list.isEmpty()) {
         for (VirtualFile ancestor : list) {
@@ -369,7 +319,7 @@ public final class ProjectFileTreeModel extends BaseTreeModel<ProjectFileNode> i
       return true;
     }
 
-    void invalidateLater(@NotNull Invoker invoker, @NotNull Consumer<TreePath> consumer) {
+    void invalidateLater(@NotNull Invoker invoker, @NotNull Consumer<? super TreePath> consumer) {
       long count = counter.incrementAndGet();
       invoker.invokeLater(() -> {
         // is this request still actual after 10 ms?
@@ -393,7 +343,7 @@ public final class ProjectFileTreeModel extends BaseTreeModel<ProjectFileNode> i
       }, 10);
     }
 
-    void invalidateNow(Consumer<FileNode> consumer) {
+    void invalidateNow(Consumer<? super FileNode> consumer) {
       List<VirtualFile> list = accumulator;
       if (!list.isEmpty()) {
         HashMap<VirtualFile, VirtualFile> map = new HashMap<>();
