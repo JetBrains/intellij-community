@@ -9,7 +9,6 @@ import com.intellij.navigation.NavigationItem;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.extensions.Extensions;
@@ -56,8 +55,6 @@ import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.tree.TreeModelAdapter;
 import com.intellij.util.ui.tree.TreeUtil;
-import com.intellij.util.ui.update.MergingUpdateQueue;
-import com.intellij.util.ui.update.Update;
 import gnu.trove.THashSet;
 import gnu.trove.TIntArrayList;
 import org.jetbrains.annotations.NonNls;
@@ -88,7 +85,6 @@ public class UsageViewImpl implements UsageViewEx {
   private final UsageNodeTreeBuilder myBuilder;
   private MyPanel myRootPanel; // accessed in EDT only
   private JTree myTree; // accessed in EDT only
-  private ActionToolbar myActionsToolbar;  // accessed in EDT only
   private final ScheduledFuture<?> myFireEventsFuture;
   private Content myContent;
 
@@ -157,10 +153,6 @@ public class UsageViewImpl implements UsageViewEx {
   @Nullable private Runnable myRerunActivity;
   private boolean myDisposeSmartPointersOnClose = true;
   private final Queue<Future<?>> updateRequests = new Queue<>(10); // guarded by insertionRequests
-
-  private final MergingUpdateQueue myControlsUpdateQueue = new MergingUpdateQueue("UsageView controls", 200, true, myRootPanel, this, null, false);;
-  @NotNull
-  private volatile ControlsState myCachedControlsState = new ControlsState(false, false, false);
 
   public UsageViewImpl(@NotNull final Project project,
                        @NotNull UsageViewPresentation presentation,
@@ -238,9 +230,8 @@ public class UsageViewImpl implements UsageViewEx {
           myRootPanel.add(toolWindowPanel, BorderLayout.CENTER);
 
           JPanel toolbarPanel = new JPanel(new BorderLayout());
-          myActionsToolbar = createActionsToolbar();
-          toolbarPanel.add(myActionsToolbar.getComponent(), BorderLayout.WEST);
-          toolbarPanel.add(createFiltersToolbar().getComponent(), BorderLayout.CENTER);
+          toolbarPanel.add(createActionsToolbar(), BorderLayout.WEST);
+          toolbarPanel.add(createFiltersToolbar(), BorderLayout.CENTER);
           toolWindowPanel.setToolbar(toolbarPanel);
 
           myCentralPanel = new JPanel(new BorderLayout());
@@ -294,8 +285,6 @@ public class UsageViewImpl implements UsageViewEx {
               }
             }
           });
-
-          updateControlsImmediately();
         }
       });
     }
@@ -706,7 +695,7 @@ public class UsageViewImpl implements UsageViewEx {
   }
 
   @NotNull
-  private ActionToolbar createActionsToolbar() {
+  private JComponent createActionsToolbar() {
     ApplicationManager.getApplication().assertIsDispatchThread();
 
     DefaultActionGroup group = new DefaultActionGroup() {
@@ -732,11 +721,11 @@ public class UsageViewImpl implements UsageViewEx {
   }
 
   @NotNull
-  private ActionToolbar toUsageViewToolbar(@NotNull DefaultActionGroup group) {
+  private JComponent toUsageViewToolbar(@NotNull DefaultActionGroup group) {
     ApplicationManager.getApplication().assertIsDispatchThread();
     ActionToolbar actionToolbar = ActionManager.getInstance().createActionToolbar(ActionPlaces.USAGE_VIEW_TOOLBAR, group, false);
     actionToolbar.setTargetComponent(myRootPanel);
-    return actionToolbar;
+    return actionToolbar.getComponent();
   }
 
   @SuppressWarnings("WeakerAccess") // used in rider
@@ -745,7 +734,7 @@ public class UsageViewImpl implements UsageViewEx {
   }
 
   @NotNull
-  private ActionToolbar createFiltersToolbar() {
+  private JComponent createFiltersToolbar() {
     ApplicationManager.getApplication().assertIsDispatchThread();
     final DefaultActionGroup group = new DefaultActionGroup();
 
@@ -1285,42 +1274,6 @@ public class UsageViewImpl implements UsageViewEx {
     checkNodeValidity(root, new TreePath(root), toUpdate);
     queueUpdateBulk(toUpdate, EmptyRunnable.getInstance());
     updateOnSelectionChanged();
-    queueControlsUpdate();
-  }
-
-  private void queueControlsUpdate() {
-    if (isDisposed()) return;
-
-    OccurenceNavigatorSupport.Descriptors descriptors = myRootPanel.getAllDescriptors();
-    myControlsUpdateQueue.queue(new Update("controls update") {
-      @Override
-      public void run() {
-        if (isDisposed()) return;
-
-        if (!runReadActionWithRetries(() -> updateControlsImmediately(descriptors))) {
-          ApplicationManager.getApplication().invokeLater(UsageViewImpl.this::queueControlsUpdate);
-        }
-      }
-
-      @Override
-      public boolean canEat(Update update) {
-        return true;
-      }
-    });
-  }
-
-  private void updateControlsImmediately() {
-    updateControlsImmediately(myRootPanel.getAllDescriptors());
-  }
-
-  private void updateControlsImmediately(@Nullable OccurenceNavigatorSupport.Descriptors descriptors) {
-    boolean prevOccurence = descriptors != null && descriptors.canNavigate(false);
-    boolean nextOccurence = descriptors != null && descriptors.canNavigate(true);
-    boolean rerun = canPerformReRun();
-
-    myCachedControlsState = new ControlsState(prevOccurence, nextOccurence, rerun);
-
-    GuiUtils.invokeLaterIfNeeded(() -> myActionsToolbar.updateActionsImmediately(), ModalityState.defaultModalityState());
   }
 
   private void queueUpdateBulk(@NotNull List<Node> toUpdate, @NotNull Runnable onCompletedInEdt) {
@@ -1393,7 +1346,6 @@ public class UsageViewImpl implements UsageViewEx {
       catch (IndexNotReadyException ignore) {
       }
     }
-    queueControlsUpdate();
   }
 
   private void checkNodeValidity(@NotNull TreeNode node, @NotNull TreePath path, @NotNull List<? super Node> result) {
@@ -1456,7 +1408,6 @@ public class UsageViewImpl implements UsageViewEx {
         ToolTipManager.sharedInstance().unregisterComponent(myTree);
       }
       myUpdateAlarm.cancelAllRequests();
-      myControlsUpdateQueue.cancelAllUpdates();
     }
     if (myDisposeSmartPointersOnClose) {
       disposeSmartPointers();
@@ -1605,10 +1556,6 @@ public class UsageViewImpl implements UsageViewEx {
     catch (PsiInvalidElementAccessException e) {
       return false;
     }
-  }
-
-  public boolean isReRunActionEnabled() {
-    return myCachedControlsState.canPerformRerun;
   }
 
   private boolean checkReadonlyUsages() {
@@ -1786,7 +1733,7 @@ public class UsageViewImpl implements UsageViewEx {
     Object userObject = node.getUserObject();
     if (userObject instanceof Navigatable) {
       final Navigatable navigatable = (Navigatable)userObject;
-      return new Navigatable() {
+      return navigatable.canNavigate() ? new Navigatable() {
         @Override
         public void navigate(boolean requestFocus) {
           navigatable.navigate(allowRequestFocus && requestFocus);
@@ -1801,7 +1748,7 @@ public class UsageViewImpl implements UsageViewEx {
         public boolean canNavigateToSource() {
           return navigatable.canNavigateToSource();
         }
-      };
+      } : null;
     }
     return null;
   }
@@ -1884,33 +1831,24 @@ public class UsageViewImpl implements UsageViewEx {
       mySupport = null;
     }
 
-    @Nullable
-    OccurenceNavigatorSupport.Descriptors getAllDescriptors() {
-      return mySupport == null ? null : mySupport.getAllDescriptors();
-    }
-
     @Override
     public boolean hasNextOccurence() {
-      return myCachedControlsState.hasNextOccurence;
+      return mySupport != null && mySupport.hasNextOccurence();
     }
 
     @Override
     public boolean hasPreviousOccurence() {
-      return myCachedControlsState.hasPrevOccurence;
+      return mySupport != null && mySupport.hasPreviousOccurence();
     }
 
     @Override
     public OccurenceInfo goNextOccurence() {
-      OccurenceInfo result = mySupport != null ? mySupport.goNextOccurence() : null;
-      updateControlsImmediately();
-      return result;
+      return mySupport != null ? mySupport.goNextOccurence() : null;
     }
 
     @Override
     public OccurenceInfo goPreviousOccurence() {
-      OccurenceInfo result = mySupport != null ? mySupport.goPreviousOccurence() : null;
-      updateControlsImmediately();
-      return result;
+      return mySupport != null ? mySupport.goPreviousOccurence() : null;
     }
 
     @Override
@@ -1991,18 +1929,6 @@ public class UsageViewImpl implements UsageViewEx {
           }
         }
       }
-    }
-  }
-
-  private static class ControlsState {
-    final boolean hasPrevOccurence;
-    final boolean hasNextOccurence;
-    final boolean canPerformRerun;
-
-    private ControlsState(boolean hasPrevOccurence, boolean hasNextOccurence, boolean canPerformRerun) {
-      this.hasPrevOccurence = hasPrevOccurence;
-      this.hasNextOccurence = hasNextOccurence;
-      this.canPerformRerun = canPerformRerun;
     }
   }
 
