@@ -47,7 +47,7 @@ public class Utils {
     try (NSAutoreleaseLock lock = new NSAutoreleaseLock()) {
       final ID bundle = Foundation.invoke("NSBundle", "mainBundle");
       final ID dict = Foundation.invoke(bundle, "infoDictionary");
-      final ID appID = Foundation.invoke(dict, "objectForKey:", "CFBundleIdentifier");
+      final ID appID = Foundation.invoke(dict, "objectForKey:", Foundation.nsString("CFBundleIdentifier"));
       final String sappId = Foundation.toStringViaUTF8(appID);
       if (sappId != null)
         LOG.info("mac OS application id: " + sappId);
