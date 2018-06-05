@@ -3,6 +3,7 @@ package org.jetbrains.plugins.groovy.annotator
 
 import com.intellij.lang.annotation.AnnotationHolder
 import org.jetbrains.plugins.groovy.GroovyBundle.message
+import org.jetbrains.plugins.groovy.annotator.intentions.ReplaceDotFix
 import org.jetbrains.plugins.groovy.lang.psi.GroovyElementTypes.*
 import org.jetbrains.plugins.groovy.lang.psi.GroovyElementVisitor
 import org.jetbrains.plugins.groovy.lang.psi.api.GrInExpression
@@ -60,7 +61,11 @@ internal class GroovyAnnotatorPre30(private val holder: AnnotationHolder) : Groo
     val dot = expression.dotToken ?: return
     val tokenType = dot.node.elementType
     if (tokenType === T_METHOD_REFERENCE) {
-      holder.createErrorAnnotation(dot, message("operator.is.not.supported.in", tokenType))
+      holder.createErrorAnnotation(dot, message("operator.is.not.supported.in", tokenType)).apply {
+        val descriptor = createDescriptor(dot)
+        val fix = ReplaceDotFix(tokenType, T_METHOD_CLOSURE)
+        registerFix(fix, descriptor)
+      }
     }
   }
 }
