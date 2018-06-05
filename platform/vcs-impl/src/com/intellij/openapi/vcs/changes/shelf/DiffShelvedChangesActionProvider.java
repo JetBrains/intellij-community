@@ -433,22 +433,43 @@ public class DiffShelvedChangesActionProvider implements AnActionExtensionProvid
     @NotNull
     private DiffRequest createDiffRequestForDeleted(@NotNull TextFilePatch patch) {
       DiffContentFactory contentFactory = DiffContentFactory.getInstance();
-      DiffContent leftContent = myWithLocal
-                                ? contentFactory.create(myProject, myFile)
-                                : contentFactory.create(myProject, patch.getSingleHunkPatchText(), myFile);
-      return new SimpleDiffRequest(getName(), leftContent,
-                                   contentFactory.createEmpty(),
-                                   myWithLocal ? CURRENT_VERSION : SHELVED_VERSION, null);
+
+      DiffContent leftContent;
+      String leftTitle;
+      if (myWithLocal) {
+        leftContent = contentFactory.create(myProject, myFile);
+        leftTitle = CURRENT_VERSION;
+      }
+      else {
+        leftContent = contentFactory.create(myProject, patch.getSingleHunkPatchText(), myFile);
+        leftTitle = SHELVED_VERSION;
+      }
+
+      DiffContent rightContent = contentFactory.createEmpty();
+      String rightTitle = null;
+
+      return new SimpleDiffRequest(getName(), leftContent, rightContent, leftTitle, rightTitle);
     }
 
     @NotNull
     private DiffRequest createDiffRequestUsingBase(@NotNull ApplyPatchForBaseRevisionTexts texts) {
       DiffContentFactory contentFactory = DiffContentFactory.getInstance();
-      DiffContent leftContent = myWithLocal
-                                ? contentFactory.create(myProject, myFile)
-                                : contentFactory.create(myProject, assertNotNull(texts.getBase()), myFile);
-      return new SimpleDiffRequest(getName(), leftContent, contentFactory.create(myProject, texts.getPatched(), myFile),
-                                   myWithLocal ? CURRENT_VERSION : BASE_VERSION, SHELVED_VERSION);
+
+      DiffContent leftContent;
+      String leftTitle;
+      if (myWithLocal) {
+        leftContent = contentFactory.create(myProject, myFile);
+        leftTitle = CURRENT_VERSION;
+      }
+      else {
+        leftContent = contentFactory.create(myProject, assertNotNull(texts.getBase()), myFile);
+        leftTitle = BASE_VERSION;
+      }
+
+      DiffContent rightContent = contentFactory.create(myProject, texts.getPatched(), myFile);
+      String rightTitle = SHELVED_VERSION;
+
+      return new SimpleDiffRequest(getName(), leftContent, rightContent, leftTitle, rightTitle);
     }
 
     private DiffRequest createDiffRequestUsingLocal(@NotNull ApplyPatchForBaseRevisionTexts texts,
