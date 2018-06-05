@@ -43,7 +43,6 @@ import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.ui.FilterComponent;
 import com.intellij.util.Alarm;
 import com.intellij.util.ArrayUtil;
-import com.intellij.util.PairConsumer;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.accessibility.AccessibleContextUtil;
 import com.intellij.util.ui.accessibility.ScreenReader;
@@ -63,6 +62,7 @@ import java.io.IOException;
 import java.io.OutputStream;
 import java.io.Reader;
 import java.util.List;
+import java.util.function.BiConsumer;
 
 /**
  * @author Eugene.Kudelevsky
@@ -475,11 +475,11 @@ public abstract class LogConsoleBase extends AdditionalTabComponent implements L
     }
   }
 
-  private int printMessageToConsole(@NotNull String line, @NotNull PairConsumer<String, Key> printer) {
+  private int printMessageToConsole(@NotNull String line, @NotNull BiConsumer<String, Key> printer) {
     if (myContentPreprocessor != null) {
       List<LogFragment> fragments = myContentPreprocessor.parseLogLine(line + '\n');
       for (LogFragment fragment : fragments) {
-        printer.consume(myFormatter.formatMessage(fragment.getText()), fragment.getOutputType());
+        printer.accept(myFormatter.formatMessage(fragment.getText()), fragment.getOutputType());
       }
       return line.length() + 1;
     }
@@ -490,9 +490,9 @@ public abstract class LogConsoleBase extends AdditionalTabComponent implements L
         if (key != null) {
           final String messagePrefix = processingResult.getMessagePrefix();
           if (messagePrefix != null) {
-            printer.consume(myFormatter.formatPrefix(messagePrefix), key);
+            printer.accept(myFormatter.formatPrefix(messagePrefix), key);
           }
-          printer.consume(myFormatter.formatMessage(line) + "\n", key);
+          printer.accept(myFormatter.formatMessage(line) + "\n", key);
           return (messagePrefix != null ? messagePrefix.length() : 0) + line.length() + 1;
         }
       }
