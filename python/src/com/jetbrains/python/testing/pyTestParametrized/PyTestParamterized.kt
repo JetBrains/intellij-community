@@ -31,7 +31,7 @@ private fun getParametersFromDecorator(decorator: PyDecorator, evalContext: Type
   val evaluator = PyEvaluator()
   val parameterNamesExpression = evaluator.evaluate(decoratorArguments.firstOrNull()) ?: return emptyList()
   // (parameterNamesExpression, [valuesExpression])
-  val valuesExpression = (decoratorArguments.getOrNull(1) as? PyTypedElement)?.let { evalContext.getType(it) } as? PyCollectionType
+  val valuesExpression = (decoratorArguments.getOrNull(1) as? PyTypedElement)?.let { evalContext.getType(it) }
 
 
   val parameterNames = when (parameterNamesExpression) {
@@ -45,6 +45,11 @@ private fun getParametersFromDecorator(decorator: PyDecorator, evalContext: Type
   if (valuesExpression == null) {
     //No type info available
     return parameterNames.map { PyTestParameter(it) }
+  }
+
+  //Value expression could be scalar
+  if (valuesExpression !is PyCollectionType) {
+    return parameterNames.map { PyTestParameter(it, valuesExpression) }
   }
 
   //Type information may be available

@@ -21,4 +21,7 @@ def test_wrong_number_of_parameters(x, y):
 def test_foo(y):
    y.bit_length()   #
    y.__xor__(   )#
-   y.upper()#
+
+@pytest.mark.parametrize("y", 3)
+def test_int_foo(y):
+   y.__xor__(   )#
