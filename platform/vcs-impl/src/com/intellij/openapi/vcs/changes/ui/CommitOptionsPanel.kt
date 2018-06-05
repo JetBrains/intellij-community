@@ -2,6 +2,7 @@
 package com.intellij.openapi.vcs.changes.ui
 
 import com.intellij.openapi.Disposable
+import com.intellij.openapi.ui.VerticalFlowLayout
 import com.intellij.openapi.vcs.AbstractVcs
 import com.intellij.openapi.vcs.CheckinProjectPanel
 import com.intellij.openapi.vcs.VcsBundle.message
@@ -21,6 +22,7 @@ import com.intellij.util.ui.UIUtil.removeMnemonic
 import com.intellij.util.ui.components.BorderLayoutPanel
 import java.util.Collections.unmodifiableList
 import javax.swing.Box
+import javax.swing.JComponent
 import javax.swing.JPanel
 import kotlin.collections.component1
 import kotlin.collections.component2
@@ -61,12 +63,11 @@ class CommitOptionsPanel(private val myCommitPanel: CheckinProjectPanel,
   }
 
   private fun init(vcses: Collection<AbstractVcs<*>>): Boolean {
-    val borderTitleName = removeMnemonic(myCommitPanel.commitActionName)
     var hasVcsOptions = false
     val vcsCommitOptions = Box.createVerticalBox()
     for (vcs in vcses.sortedWith(VCS_COMPARATOR)) {
       vcs.checkinEnvironment?.createAdditionalOptionsPanel(myCommitPanel, additionalData)?.let { options ->
-        val vcsOptions = simplePanel(options.component).withBorder(createTitledBorder(vcs.displayName))
+        val vcsOptions = verticalPanel(vcs.displayName).apply { add(options.component) }
         vcsCommitOptions.add(vcsOptions)
         myPerVcsOptionsPanels[vcs] = vcsOptions
         myAdditionalComponents.add(options)
@@ -79,16 +80,17 @@ class CommitOptionsPanel(private val myCommitPanel: CheckinProjectPanel,
 
     var beforeVisible = false
     var afterVisible = false
-    val beforeBox = Box.createVerticalBox()
-    val afterBox = Box.createVerticalBox()
+    val actionName = removeMnemonic(myCommitPanel.commitActionName)
+    val beforeOptions = verticalPanel(message("border.standard.checkin.options.group", actionName))
+    val afterOptions = verticalPanel(message("border.standard.after.checkin.options.group", actionName))
     for (handler in myHandlers) {
       handler.beforeCheckinConfigurationPanel?.let {
         beforeVisible = true
-        addCheckinHandlerComponent(it, beforeBox)
+        addCheckinHandlerComponent(it, beforeOptions)
       }
       handler.getAfterCheckinConfigurationPanel(this)?.let {
         afterVisible = true
-        addCheckinHandlerComponent(it, afterBox)
+        addCheckinHandlerComponent(it, afterOptions)
       }
     }
 
@@ -101,15 +103,11 @@ class CommitOptionsPanel(private val myCommitPanel: CheckinProjectPanel,
     }
 
     if (beforeVisible) {
-      beforeBox.add(Box.createVerticalGlue())
-      optionsBox.add(
-        simplePanel(beforeBox).withBorder(createTitledBorder(message("border.standard.checkin.options.group", borderTitleName))))
+      optionsBox.add(beforeOptions)
     }
 
     if (afterVisible) {
-      afterBox.add(Box.createVerticalGlue())
-      optionsBox.add(
-        simplePanel(afterBox).withBorder(createTitledBorder(message("border.standard.after.checkin.options.group", borderTitleName))))
+      optionsBox.add(afterOptions)
     }
 
     optionsBox.add(Box.createVerticalGlue())
@@ -118,7 +116,11 @@ class CommitOptionsPanel(private val myCommitPanel: CheckinProjectPanel,
     return false
   }
 
-  private fun addCheckinHandlerComponent(component: RefreshableOnComponent, container: Box) {
+  private fun verticalPanel(title: String) = JPanel(VerticalFlowLayout(0, 0)).apply {
+    border = createTitledBorder(title)
+  }
+
+  private fun addCheckinHandlerComponent(component: RefreshableOnComponent, container: JComponent) {
     container.add(component.component)
     myAdditionalComponents.add(component)
     if (component is CheckinChangeListSpecificComponent) {
