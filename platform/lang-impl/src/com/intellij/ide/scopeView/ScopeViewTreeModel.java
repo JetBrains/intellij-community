@@ -40,6 +40,7 @@ import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiFileSystemItem;
+import com.intellij.psi.PsiManager;
 import com.intellij.psi.impl.file.PsiDirectoryFactory;
 import com.intellij.psi.search.scope.ProblemsScope;
 import com.intellij.psi.search.scope.ProjectFilesScope;
@@ -173,21 +174,34 @@ public final class ScopeViewTreeModel extends BaseTreeModel<AbstractTreeNode> im
   }
 
   @Nullable
-  public PsiElement getPsiElement(Object object) {
+  public Object getContent(Object object) {
     if (object instanceof GroupNode) {
       GroupNode node = (GroupNode)object;
       object = node.getSingleRoot();
     }
     if (object instanceof FileNode) {
       FileNode node = (FileNode)object;
-      return node.getPsiElement();
+      PsiElement element = node.getPsiElement();
+      if (element == null || node.compacted == null) return element;
+      Project project = node.getProject();
+      if (project == null || project.isDisposed()) return null;
+      PsiManager manager = PsiManager.getInstance(project);
+      List<PsiElement> list = new SmartList<>(element);
+      node.compacted.stream().filter(VirtualFile::isValid).forEach(file -> {
+        PsiFileSystemItem item = file.isDirectory() ? manager.findDirectory(file) : manager.findFile(file);
+        if (item != null) list.add(item);
+      });
+      return list.toArray();
+    }
+    if (object instanceof NodeDescriptor) {
+      NodeDescriptor descriptor = (NodeDescriptor)object;
+      object = descriptor.getElement();
     }
     if (object instanceof AbstractTreeNode) {
       AbstractTreeNode node = (AbstractTreeNode)object;
-      Object value = node.getValue();
-      if (value instanceof PsiElement) return (PsiElement)value;
+      object = node.getValue();
     }
-    return null;
+    return object;
   }
 
   @NotNull
