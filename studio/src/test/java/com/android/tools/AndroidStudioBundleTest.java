@@ -31,7 +31,8 @@ public class AndroidStudioBundleTest {
                                        "android-studio.mac.zip",
                                        "android-studio.tar.gz");
 
-    Benchmark benchmark = new Benchmark("Android Studio Binary Size");
+    Benchmark benchmark =
+      new Benchmark.Builder("Android Studio Binary Size").build();
     for (String file : files) {
       // getWorkspaceFile asserts the file exists.
       File binary = TestUtils.getWorkspaceFile("tools/idea/" + file);
