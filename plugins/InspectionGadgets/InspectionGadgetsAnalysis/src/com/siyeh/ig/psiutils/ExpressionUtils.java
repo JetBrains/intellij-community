@@ -1303,4 +1303,16 @@ public class ExpressionUtils {
     }
     return null;
   }
+
+  /**
+   * Returns true if expression is evaluated in void context (i.e. its return value is not used)
+   * @param expression expression to check
+   * @return true if expression is evaluated in void context. More precisely if its parent is expression statement or lambda with void SAM
+   */
+  public static boolean isVoidContext(PsiExpression expression) {
+    PsiElement element = PsiUtil.skipParenthesizedExprUp(expression.getParent());
+    return element instanceof PsiExpressionStatement ||
+           (element instanceof PsiLambdaExpression &&
+            PsiType.VOID.equals(LambdaUtil.getFunctionalInterfaceReturnType((PsiLambdaExpression)element)));
+  }
 }
