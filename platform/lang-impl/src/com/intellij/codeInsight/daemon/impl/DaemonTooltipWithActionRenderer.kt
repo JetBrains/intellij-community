@@ -19,11 +19,9 @@ import com.intellij.openapi.keymap.KeymapManager
 import com.intellij.openapi.keymap.KeymapUtil
 import com.intellij.openapi.keymap.KeymapUtil.getActiveKeymapShortcuts
 import com.intellij.openapi.project.DumbAware
+import com.intellij.openapi.ui.GraphicsConfig
 import com.intellij.openapi.util.text.StringUtil
-import com.intellij.ui.HintHint
-import com.intellij.ui.HyperlinkAdapter
-import com.intellij.ui.HyperlinkLabel
-import com.intellij.ui.LightweightHint
+import com.intellij.ui.*
 import com.intellij.ui.components.JBLabel
 import com.intellij.util.ui.GridBag
 import com.intellij.util.ui.Html
@@ -32,6 +30,7 @@ import com.intellij.util.ui.UIUtil
 import java.awt.*
 import java.awt.event.KeyEvent
 import java.awt.event.MouseEvent
+import java.awt.geom.RoundRectangle2D
 import java.util.*
 import javax.swing.JComponent
 import javax.swing.JPanel
@@ -40,7 +39,10 @@ import javax.swing.MenuSelectionManager
 import javax.swing.event.HyperlinkEvent
 
 
-val runActionCustomShortcutSet: CustomShortcutSet = CustomShortcutSet(KeyStroke.getKeyStroke(KeyEvent.VK_ENTER, KeyEvent.SHIFT_DOWN_MASK or KeyEvent.ALT_DOWN_MASK ))
+val runActionCustomShortcutSet: CustomShortcutSet = CustomShortcutSet(
+  KeyStroke.getKeyStroke(KeyEvent.VK_ENTER, KeyEvent.SHIFT_DOWN_MASK or KeyEvent.ALT_DOWN_MASK))
+
+val backgroundLight: Color = Color(241, 239, 203)
 
 internal class DaemonTooltipWithActionRenderer(text: String?,
                                                private val tooltipAction: TooltipAction?,
@@ -99,7 +101,7 @@ internal class DaemonTooltipWithActionRenderer(text: String?,
     val settingsComponent = createSettingsComponent(hint, hintHint, tooltipReloader)
 
     val settingsConstraints = GridBagConstraints(1, 0, 1, 1, 0.0, 0.0, GridBagConstraints.NORTH, GridBagConstraints.HORIZONTAL,
-                                                 JBUI.emptyInsets(), 0, 0)
+                                                 JBUI.insets(3, 3, 0, 3), 0, 0)
     grid.add(settingsComponent, settingsConstraints)
 
     addActionsRow(hintHint, hint, editor, actions, grid)
@@ -110,12 +112,15 @@ internal class DaemonTooltipWithActionRenderer(text: String?,
                             editor: Editor,
                             actions: ArrayList<AnAction>,
                             grid: JComponent) {
-    if (tooltipAction == null) return
-    
-    val buttons = JPanel(GridBagLayout())
-    buttons.background = hintHint.textBackground
-    buttons.border = JBUI.Borders.empty()
+    if (tooltipAction == null || !hintHint.isAwtTooltip) return
 
+
+    val buttons = JPanel(GridBagLayout())
+    val wrapper = createActionPanelWithBackground(hint, grid)
+    wrapper.add(buttons, BorderLayout.WEST)
+
+    buttons.border = JBUI.Borders.empty()
+    buttons.isOpaque = false
 
     val runFixAction = Runnable {
       hint.hide()
@@ -129,7 +134,7 @@ internal class DaemonTooltipWithActionRenderer(text: String?,
       .fillCellHorizontally()
       .anchor(GridBagConstraints.WEST)
 
-    buttons.add(createActionLabel(tooltipAction.text, runFixAction, hintHint.textBackground), gridBag.next())
+    buttons.add(createActionLabel(tooltipAction.text, runFixAction, hintHint.textBackground), gridBag.next().insets(3, 6, 3, 0))
     buttons.add(createHint(shortcutRunActionText), gridBag.next().insets(0, 3, 0, 6))
 
     val showAllFixes = Runnable {
@@ -137,8 +142,8 @@ internal class DaemonTooltipWithActionRenderer(text: String?,
       tooltipAction.showAllActions(editor)
     }
 
-    buttons.add(createActionLabel("More actions...", showAllFixes, hintHint.textBackground), gridBag.next())
-    buttons.add(createHint(shortcutShowAllActionsText), gridBag.next().insets(0, 3, 0, 0))
+    buttons.add(createActionLabel("More actions...", showAllFixes, hintHint.textBackground), gridBag.next().insets(3, 6, 3, 0))
+    buttons.add(createHint(shortcutShowAllActionsText), gridBag.next().fillCellHorizontally().insets(0, 3, 0, 6))
 
     actions.add(object : AnAction() {
       override fun actionPerformed(e: AnActionEvent?) {
@@ -160,9 +165,44 @@ internal class DaemonTooltipWithActionRenderer(text: String?,
       }
     })
 
-    val buttonsConstraints = GridBagConstraints(0, 1, 2, 1, 0.0, 0.0, GridBagConstraints.WEST, GridBagConstraints.WEST,
-                                                JBUI.insetsTop(3), 0, 0)
-    grid.add(buttons, buttonsConstraints)
+    val buttonsConstraints = GridBagConstraints(0, 1, 2, 1, 0.0, 0.0, GridBagConstraints.WEST, GridBagConstraints.HORIZONTAL,
+                                                JBUI.insetsTop(0), 0, 0)
+
+    grid.add(wrapper, buttonsConstraints)
+  }
+
+  private fun createActionPanelWithBackground(hint: LightweightHint,
+                                              grid: JComponent): JPanel {
+    val wrapper: JPanel = object : JPanel(BorderLayout()) {
+      override fun paint(g: Graphics?) {
+        if (UIUtil.isUnderDarcula()) {
+          super.paint(g)
+          return
+        }
+        g!!.color = backgroundLight
+        val graphics2D = g as Graphics2D
+        val cfg = GraphicsConfig(g)
+        cfg.setAntialiasing(true)
+
+        graphics2D.fill(RoundRectangle2D.Double(1.0, 0.0, bounds.width - 2.5,
+                                                (bounds.height / 2).toDouble(),
+                                                0.0, 0.0))
+
+        val double = RoundRectangle2D.Double(1.0, 0.0, bounds.width - 2.5,
+                                             (bounds.height - 1).toDouble(),
+                                             BalloonImpl.ARC.toDouble(),
+                                             BalloonImpl.ARC.toDouble())
+
+        graphics2D.fill(double)
+
+        cfg.restore()
+        super.paint(g)
+      }
+    }
+    
+    wrapper.isOpaque = false
+    wrapper.border = JBUI.Borders.empty()
+    return wrapper
   }
 
   private fun getKeymap(key: String): String {
@@ -202,7 +242,6 @@ internal class DaemonTooltipWithActionRenderer(text: String?,
       }
     }
 
-
     return super.canAutoHideOn(event)
   }
 
@@ -212,6 +251,10 @@ internal class DaemonTooltipWithActionRenderer(text: String?,
     init {
       isPopup = true
     }
+  }
+
+  override fun isContentAction(dressedText: String?): Boolean {
+    return super.isContentAction(dressedText) || tooltipAction != null
   }
 
   private fun createSettingsComponent(hint: LightweightHint,
@@ -226,22 +269,19 @@ internal class DaemonTooltipWithActionRenderer(text: String?,
     val actionGroup = SettingsActionGroup(actions)
 
     val settingsButton = object : ActionButton(actionGroup, presentation, ActionPlaces.UNKNOWN, Dimension(18, 18)) {
-      override fun paintComponent(g: Graphics) {
-        g.color = hintHint.textBackground
-        g.fillRect(0, 0, size.width, size.height)
+      override fun paintComponent(g: Graphics?) {
         paintButtonLook(g)
       }
     }
-
-    settingsButton.isOpaque = true
     settingsButton.setNoIconsInPopup(true)
     settingsButton.border = JBUI.Borders.empty()
+    settingsButton.isOpaque = false
 
     val wrapper = JPanel(BorderLayout())
     wrapper.add(settingsButton, BorderLayout.EAST)
     wrapper.border = JBUI.Borders.empty()
     wrapper.background = hintHint.textBackground
-
+    wrapper.isOpaque = false
     return wrapper
   }
 
@@ -277,7 +317,11 @@ internal class DaemonTooltipWithActionRenderer(text: String?,
 
 
 fun createActionLabel(text: String, action: Runnable, background: Color): HyperlinkLabel {
-  val label = HyperlinkLabel(text, background)
+  val label = object : HyperlinkLabel(text, background) {
+    override fun getTextOffset(): Int {
+      return 0
+    }
+  }
   label.border = JBUI.Borders.empty()
   label.addHyperlinkListener(object : HyperlinkAdapter() {
     override fun hyperlinkActivated(e: HyperlinkEvent) {
