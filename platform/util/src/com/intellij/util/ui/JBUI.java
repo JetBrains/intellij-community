@@ -1655,6 +1655,10 @@ public class JBUI {
       public static int maxListHeght() {
         return JBUI.scale(600);
       }
+
+      public static Color listSeparatorColor() {
+        return JBColor.namedColor("SearchEverywhere.List.Separator.Color", 0xdcdcdc);
+      }
     }
   }
 

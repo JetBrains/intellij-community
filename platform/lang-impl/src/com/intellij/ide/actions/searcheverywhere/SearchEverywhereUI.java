@@ -750,8 +750,8 @@ public class SearchEverywhereUI extends BorderLayoutPanel implements Disposable,
       setLayout(myLayout);
       setBackground(UIUtil.getListBackground(false));
       titleLabel = groupInfoLabel("Group");
-      SeparatorComponent separatorComponent = new SeparatorComponent(titleLabel.getPreferredSize().height / 2, UIUtil.getLabelDisabledForeground(), null);
-
+      SeparatorComponent separatorComponent =
+        new SeparatorComponent(titleLabel.getPreferredSize().height / 2, JBUI.CurrentTheme.SearchEverywhere.listSeparatorColor(),null);
 
       JPanel topPanel = JBUI.Panels.simplePanel(5, 0)
                                            .addToCenter(separatorComponent)
