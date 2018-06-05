@@ -8,7 +8,7 @@ import com.intellij.psi.ResolveState
 import com.intellij.psi.scope.ElementClassHint
 import com.intellij.util.SmartList
 import org.jetbrains.plugins.groovy.lang.psi.api.GroovyResolveResult
-import org.jetbrains.plugins.groovy.lang.resolve.ElementGroovyResult
+import org.jetbrains.plugins.groovy.lang.resolve.ElementResolveResult
 import org.jetbrains.plugins.groovy.lang.resolve.GrResolverProcessor
 
 internal class MethodReferenceProcessor(methodName: String) : ProcessorWithCommonHints(), GrResolverProcessor<GroovyResolveResult> {
@@ -31,7 +31,7 @@ internal class MethodReferenceProcessor(methodName: String) : ProcessorWithCommo
 
   private fun result(element: PsiMethod, state: ResolveState): GroovyResolveResult {
     val substitutor = state[PsiSubstitutor.KEY]
-    return object : ElementGroovyResult<PsiMethod>(element) {
+    return object : ElementResolveResult<PsiMethod>(element) {
       override fun getSubstitutor() = substitutor
     }
   }

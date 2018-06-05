@@ -10,7 +10,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrConstructorInvocat
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression;
 import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
-import org.jetbrains.plugins.groovy.lang.resolve.ElementGroovyResult;
+import org.jetbrains.plugins.groovy.lang.resolve.ElementResolveResult;
 
 import java.util.Arrays;
 import java.util.Collection;
@@ -29,7 +29,7 @@ public class GrThisReferenceResolver {
       else {
         PsiClass aClass = PsiUtil.getContextClass(ref);
         if (aClass != null) {
-          return Collections.singletonList(new ElementGroovyResult<>(aClass));
+          return Collections.singletonList(new ElementResolveResult<>(aClass));
         }
       }
     }

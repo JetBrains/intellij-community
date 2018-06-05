@@ -6,7 +6,7 @@ import com.intellij.psi.PsiSubstitutor
 import org.jetbrains.plugins.groovy.lang.psi.api.GroovyResolveResult
 import org.jetbrains.plugins.groovy.lang.psi.api.SpreadState
 
-open class ElementGroovyResult<out T : PsiElement>(private val element: T) : GroovyResolveResult {
+open class ElementResolveResult<out T : PsiElement>(private val element: T) : GroovyResolveResult {
 
   final override fun getElement(): T = element
 
@@ -29,7 +29,7 @@ open class ElementGroovyResult<out T : PsiElement>(private val element: T) : Gro
   override fun equals(other: Any?): Boolean {
     if (this === other) return true
     if (javaClass != other?.javaClass) return false
-    other as ElementGroovyResult<*>
+    other as ElementResolveResult<*>
     return element == other.element
   }
 
