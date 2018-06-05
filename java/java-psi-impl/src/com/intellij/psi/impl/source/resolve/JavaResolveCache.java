@@ -25,6 +25,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.NotNullLazyKey;
 import com.intellij.openapi.util.RecursionGuard;
+import com.intellij.openapi.util.RecursionManager;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.AnyPsiChangeListener;
 import com.intellij.psi.impl.PsiManagerImpl;
@@ -38,6 +39,7 @@ import com.intellij.psi.infos.MethodCandidateInfo;
 import com.intellij.psi.util.TypeConversionUtil;
 import com.intellij.util.ConcurrencyUtil;
 import com.intellij.util.Function;
+import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.messages.MessageBus;
 import org.jetbrains.annotations.NonNls;
@@ -56,11 +58,11 @@ public class JavaResolveCache {
   private static final NotNullLazyKey<JavaResolveCache, Project> INSTANCE_KEY = ServiceManager.createLazyKey(JavaResolveCache.class);
 
   private final AtomicReference<Map<PsiExpression, PsiType>> myExpressionTypes = new AtomicReference<>();
-  private final AtomicReference<Map<PsiTypeElementImpl, Object>> myTypeElementTypes = new AtomicReference<>(); // PsiType or NULL
   private final AtomicReference<Map<PsiFieldImpl,Object>> myFieldToConstValueMapPhysical = new AtomicReference<>();
   private final AtomicReference<Map<PsiFieldImpl,Object>> myFieldToConstValueMapNonPhysical = new AtomicReference<>();
+  private final AtomicReference<ConcurrentMap<PsiTypeElementImpl, Object>> myTypeElementTypes = new AtomicReference<>(); // PsiType or NULL
   private final AtomicReference<ConcurrentMap<PsiNewExpression, Object>> myStaticFactories = new AtomicReference<>(); // JavaResolveResult or NULL
-  private final AtomicReference<Map<PsiCall, Object>> myTopLevelInferenceSessions = new AtomicReference<>(); // InferenceSession or NULL
+  private final AtomicReference<ConcurrentMap<PsiCall, Object>> myTopLevelInferenceSessions = new AtomicReference<>(); // InferenceSession or NULL
 
   private static final Object NULL = Key.create("NULL"); // the object to put into maps to denote resolvers return null
 
@@ -110,7 +112,6 @@ public class JavaResolveCache {
       if (isOverloadCheck && polyExpression) {
         return type;
       }
-
       if (type == null) type = TypeConversionUtil.NULL_TYPE;
       map.put(expr, type);
 
@@ -158,50 +159,40 @@ public class JavaResolveCache {
     return result;
   }
 
+  private static <T extends PsiElement, R> R getOrCompute(@NotNull AtomicReference<ConcurrentMap<T, Object>> ref,
+                                                          @NotNull T element,
+                                                          @NotNull Function<? super T, ? extends R> computer) {
+
+    ConcurrentMap<T, Object> map = ref.get();
+    if (map == null) map = ConcurrencyUtil.cacheOrGet(ref, ContainerUtil.createConcurrentWeakKeySoftValueMap());
+
+    Object cached = map.get(element);
+    if (cached == null) {
+      RecursionGuard.StackStamp stamp = RecursionManager.createGuard("JavaResolveCache.computer").markStack();
+      cached = ObjectUtils.notNull(computer.fun(element), NULL);
+      if (stamp.mayCacheNow()) {
+        cached = ConcurrencyUtil.cacheOrGet(map, element, cached);
+      }
+    }
+    if (cached == NULL) return null;
+    //noinspection unchecked
+    return (R)cached;
+  }
+
   @Nullable
   public JavaResolveResult getNewExpressionStaticFactory(@NotNull PsiNewExpression newExpression,
                                                          @NotNull Function<? super PsiNewExpression, ? extends JavaResolveResult> computer) {
-    AtomicReference<ConcurrentMap<PsiNewExpression, Object>> ref = myStaticFactories;
-    ConcurrentMap<PsiNewExpression, Object> map = ref.get();
-    if (map == null) map = ConcurrencyUtil.cacheOrGet(ref, ContainerUtil.createConcurrentWeakMap());
-
-    Object cached = map.get(newExpression);
-    if (cached == null) {
-      JavaResolveResult result = computer.fun(newExpression);
-      cached = ConcurrencyUtil.cacheOrGet(map, newExpression, result == null ? NULL : result);
-    }
-    if (cached == NULL) return null;
-    return (JavaResolveResult)cached;
+    return getOrCompute(myStaticFactories, newExpression, computer);
   }
 
   @Nullable
   public InferenceSession getTopLevelInferenceSession(@NotNull PsiCall topLevelCall,
                                                       @NotNull Function<? super PsiCall, ? extends InferenceSession> computer) {
-    AtomicReference<Map<PsiCall, Object>> ref = myTopLevelInferenceSessions;
-    Map<PsiCall, Object> map = ref.get();
-    if (map == null) map = ConcurrencyUtil.cacheOrGet(ref, ContainerUtil.createConcurrentWeakMap());
-
-    Object cached = map.get(topLevelCall);
-    if (cached == NULL) return null;
-    if (cached != null) return (InferenceSession)cached;
-
-    InferenceSession result = computer.fun(topLevelCall);
-    map.put(topLevelCall, result == null ? NULL : result);
-    return result;
+    return getOrCompute(myTopLevelInferenceSessions, topLevelCall, computer);
   }
 
   public PsiType getTypeElementType(@NotNull PsiTypeElementImpl typeElement,
                                     @NotNull Function<? super PsiTypeElementImpl, ? extends PsiType> computer) {
-    AtomicReference<Map<PsiTypeElementImpl, Object>> ref = myTypeElementTypes;
-    Map<PsiTypeElementImpl, Object> map = ref.get();
-    if (map == null) map = ConcurrencyUtil.cacheOrGet(ref, ContainerUtil.createConcurrentWeakMap());
-
-    Object cached = map.get(typeElement);
-    if (cached == NULL) return null;
-    if (cached != null) return (PsiType)cached;
-
-    PsiType result = computer.fun(typeElement);
-    map.put(typeElement, result == null ? NULL : result);
-    return result;
+    return getOrCompute(myTypeElementTypes, typeElement, computer);
   }
 }
