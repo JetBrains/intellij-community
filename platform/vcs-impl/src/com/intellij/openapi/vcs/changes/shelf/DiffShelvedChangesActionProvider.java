@@ -166,89 +166,21 @@ public class DiffShelvedChangesActionProvider implements AnActionExtensionProvid
       final FilePath filePath = VcsUtil.getFilePath(new File(base, afterPath == null ? beforePath : afterPath));
       final boolean isNewFile = FileStatus.ADDED.equals(shelvedChange.getFileStatus());
 
-      final VirtualFile file; // isNewFile -> parent directory, !isNewFile -> file
       try {
-        file = ApplyFilePatchBase.findPatchTarget(patchContext, beforePath, afterPath, isNewFile);
-        if (!isNewFile && (file == null || !file.exists())) throw new FileNotFoundException(beforePath);
+        if (isNewFile) {
+          diffRequestProducers.add(new NewFileTextShelveDiffRequestProducer(project, shelvedChange, filePath));
+        }
+        else {
+          VirtualFile file = ApplyFilePatchBase.findPatchTarget(patchContext, beforePath, afterPath, isNewFile);
+          if (file == null || !file.exists()) throw new FileNotFoundException(beforePath);
+
+          diffRequestProducers.add(new TextShelveDiffRequestProducer(project, shelvedChange, filePath, file, patchContext, preloader,
+                                                                     commitContext, withLocal));
+        }
       }
       catch (IOException e) {
         diffRequestProducers.add(new PatchShelveDiffRequestProducer(project, shelvedChange, filePath, preloader, commitContext));
-        continue;
       }
-
-      if (isNewFile) {
-        diffRequestProducers.add(new NewFileTextShelveDiffRequestProducer(project, shelvedChange, filePath));
-        continue;
-      }
-
-      diffRequestProducers.add(new BaseTextShelveDiffRequestProducer(project, shelvedChange, filePath) {
-        @NotNull
-        @Override
-        public DiffRequest process(@NotNull UserDataHolder context, @NotNull ProgressIndicator indicator)
-          throws DiffRequestProducerException, ProcessCanceledException {
-          if (file.getFileType() == UnknownFileType.INSTANCE) {
-            return new UnknownFileTypeDiffRequest(file, getName());
-          }
-
-          final TextFilePatch patch;
-          try {
-            patch = preloader.getPatch(shelvedChange, commitContext);
-          }
-          catch (VcsException e) {
-            throw new DiffRequestProducerException("Can't show diff for '" + getName() + "'", e);
-          }
-
-          if (patch.isDeletedFile()) {
-            return createDiffRequestForDeleted(patch);
-          }
-          return createDiffRequestForModified(patch, commitContext, context, indicator);
-        }
-
-        @NotNull
-        private DiffRequest createDiffRequestForDeleted(@NotNull TextFilePatch patch) {
-          assert file != null;
-          DiffContentFactory contentFactory = DiffContentFactory.getInstance();
-          DiffContent leftContent = withLocal
-                                    ? contentFactory.create(project, file)
-                                    : contentFactory.create(project, patch.getSingleHunkPatchText(), file);
-          return new SimpleDiffRequest(getName(), leftContent,
-                                       contentFactory.createEmpty(),
-                                       withLocal ? CURRENT_VERSION : SHELVED_VERSION, null);
-        }
-
-        @NotNull
-        private DiffRequest createDiffRequestForModified(@NotNull TextFilePatch patch,
-                                                         @NotNull CommitContext commitContext,
-                                                         @NotNull UserDataHolder context,
-                                                         @NotNull ProgressIndicator indicator) throws DiffRequestProducerException {
-          assert file != null;
-          CharSequence baseContents = Extensions.findExtension(PatchEP.EP_NAME, project, BaseRevisionTextPatchEP.class)
-            .provideContent(chooseNotNull(patch.getAfterName(), patch.getBeforeName()), commitContext);
-          ApplyPatchForBaseRevisionTexts texts =
-            ApplyPatchForBaseRevisionTexts.create(project, file, patchContext.getPathBeforeRename(file), patch, baseContents);
-          //found base
-          if (texts.isBaseRevisionLoaded()) {
-            assert !texts.isAppliedSomehow();
-
-            //normal diff
-            DiffContentFactory contentFactory = DiffContentFactory.getInstance();
-            DiffContent leftContent = withLocal
-                                      ? contentFactory.create(project, file)
-                                      : contentFactory.create(project, assertNotNull(texts.getBase()), file);
-            return new SimpleDiffRequest(getName(), leftContent, contentFactory.create(project, texts.getPatched(), file),
-                                         withLocal ? CURRENT_VERSION : BASE_VERSION, SHELVED_VERSION);
-          }
-          else {
-            DiffRequest diffRequest = shelvedChange.isConflictingChange(project)
-                                      ? createConflictDiffRequest(project, file, patch, SHELVED_VERSION, texts, getName())
-                                      : createDiffRequest(project, shelvedChange.getChange(project), getName(), context, indicator);
-            if (!withLocal) {
-              DiffUtil.addNotification(createNotification(DIFF_WITH_BASE_ERROR + " Showing difference with local version"), diffRequest);
-            }
-            return diffRequest;
-          }
-        }
-      });
     }
   }
 
@@ -436,6 +368,95 @@ public class DiffShelvedChangesActionProvider implements AnActionExtensionProvid
     public DiffRequest process(@NotNull UserDataHolder context, @NotNull ProgressIndicator indicator)
       throws DiffRequestProducerException, ProcessCanceledException {
       return createDiffRequest(myProject, myChange.getChange(myProject), getName(), context, indicator);
+    }
+  }
+
+  private static class TextShelveDiffRequestProducer extends BaseTextShelveDiffRequestProducer {
+    @NotNull private final VirtualFile myFile;
+    @NotNull private final ApplyPatchContext myPatchContext;
+    @NotNull private final PatchesPreloader myPreloader;
+    @NotNull private final CommitContext myCommitContext;
+    private final boolean myWithLocal;
+
+    public TextShelveDiffRequestProducer(@NotNull Project project,
+                                         @NotNull ShelvedChange change,
+                                         @NotNull FilePath filePath,
+                                         @NotNull VirtualFile file,
+                                         @NotNull ApplyPatchContext patchContext,
+                                         @NotNull PatchesPreloader preloader,
+                                         @NotNull CommitContext commitContext,
+                                         boolean withLocal) {
+      super(project, change, filePath);
+      myFile = file;
+      myPatchContext = patchContext;
+      myPreloader = preloader;
+      myCommitContext = commitContext;
+      myWithLocal = withLocal;
+    }
+
+    @NotNull
+    @Override
+    public DiffRequest process(@NotNull UserDataHolder context, @NotNull ProgressIndicator indicator)
+      throws DiffRequestProducerException, ProcessCanceledException {
+      if (myFile.getFileType() == UnknownFileType.INSTANCE) {
+        return new UnknownFileTypeDiffRequest(myFile, getName());
+      }
+
+      final TextFilePatch patch;
+      try {
+        patch = myPreloader.getPatch(myChange, myCommitContext);
+      }
+      catch (VcsException e) {
+        throw new DiffRequestProducerException("Can't show diff for '" + getName() + "'", e);
+      }
+
+      if (patch.isDeletedFile()) {
+        return createDiffRequestForDeleted(patch);
+      }
+      return createDiffRequestForModified(patch, myCommitContext, context, indicator);
+    }
+
+    @NotNull
+    private DiffRequest createDiffRequestForDeleted(@NotNull TextFilePatch patch) {
+      DiffContentFactory contentFactory = DiffContentFactory.getInstance();
+      DiffContent leftContent = myWithLocal
+                                ? contentFactory.create(myProject, myFile)
+                                : contentFactory.create(myProject, patch.getSingleHunkPatchText(), myFile);
+      return new SimpleDiffRequest(getName(), leftContent,
+                                   contentFactory.createEmpty(),
+                                   myWithLocal ? CURRENT_VERSION : SHELVED_VERSION, null);
+    }
+
+    @NotNull
+    private DiffRequest createDiffRequestForModified(@NotNull TextFilePatch patch,
+                                                     @NotNull CommitContext commitContext,
+                                                     @NotNull UserDataHolder context,
+                                                     @NotNull ProgressIndicator indicator) throws DiffRequestProducerException {
+      CharSequence baseContents = Extensions.findExtension(PatchEP.EP_NAME, myProject, BaseRevisionTextPatchEP.class)
+                                            .provideContent(chooseNotNull(patch.getAfterName(), patch.getBeforeName()), commitContext);
+      ApplyPatchForBaseRevisionTexts texts =
+        ApplyPatchForBaseRevisionTexts.create(myProject, myFile, myPatchContext.getPathBeforeRename(myFile), patch, baseContents);
+      //found base
+      if (texts.isBaseRevisionLoaded()) {
+        assert !texts.isAppliedSomehow();
+
+        //normal diff
+        DiffContentFactory contentFactory = DiffContentFactory.getInstance();
+        DiffContent leftContent = myWithLocal
+                                  ? contentFactory.create(myProject, myFile)
+                                  : contentFactory.create(myProject, assertNotNull(texts.getBase()), myFile);
+        return new SimpleDiffRequest(getName(), leftContent, contentFactory.create(myProject, texts.getPatched(), myFile),
+                                     myWithLocal ? CURRENT_VERSION : BASE_VERSION, SHELVED_VERSION);
+      }
+      else {
+        DiffRequest diffRequest = myChange.isConflictingChange(myProject)
+                                  ? createConflictDiffRequest(myProject, myFile, patch, SHELVED_VERSION, texts, getName())
+                                  : createDiffRequest(myProject, myChange.getChange(myProject), getName(), context, indicator);
+        if (!myWithLocal) {
+          DiffUtil.addNotification(createNotification(DIFF_WITH_BASE_ERROR + " Showing difference with local version"), diffRequest);
+        }
+        return diffRequest;
+      }
     }
   }
 
