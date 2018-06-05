@@ -18,4 +18,10 @@ trait HighlightingTest {
     fixture.enableInspections inspections
     fixture.testHighlighting testName + '.groovy'
   }
+
+  void highlightingTest(String text) {
+    fixture.enableInspections inspections
+    fixture.configureByText '_.groovy', text
+    fixture.checkHighlighting()
+  }
 }
