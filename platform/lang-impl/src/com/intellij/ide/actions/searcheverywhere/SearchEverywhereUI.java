@@ -638,36 +638,34 @@ public class SearchEverywhereUI extends BorderLayoutPanel implements Disposable,
     }
 
     private boolean addContributorItems(SearchEverywhereContributor contributor, int count, boolean clearBefore) {
-      boolean[] found = {false};
-      ApplicationManager.getApplication().runReadAction(() -> {
-        ContributorSearchResult<Object> results = contributor.search(pattern, isUseNonProjectItems(), myContributorFilters.get(contributor.getSearchProviderId()), myProgressIndicator, count);
-        found[0] = !results.isEmpty();
+      ContributorSearchResult<Object> results =
+        contributor.search(pattern, isUseNonProjectItems(), myContributorFilters.get(contributor.getSearchProviderId()), myProgressIndicator, count);
+      boolean found = !results.isEmpty();
 
-        if (clearBefore) {
-          listOperationsAlarm.cancelAllRequests();
+      if (clearBefore) {
+        listOperationsAlarm.cancelAllRequests();
+      }
+
+      listOperationsAlarm.addRequest(() -> {
+        if (isCanceled()) {
+          return;
         }
 
-        listOperationsAlarm.addRequest(() -> {
-          if (isCanceled()) {
-            return;
-          }
+        Dimension oldSize = getPreferredSize();
+        if (clearBefore) {
+          myListModel.clear();
+        }
+        List<Object> itemsToAdd = results.getItems().stream()
+                                         .filter(o -> !myListModel.contains(o))
+                                         .collect(Collectors.toList());
+        if (!itemsToAdd.isEmpty()) {
+          myListModel.addElements(itemsToAdd, contributor, results.hasMoreItems());
+          ScrollingUtil.ensureSelectionExists(myResultsList);
+        }
+        firePropertyChange("preferredSize", oldSize, getPreferredSize());
+      }, 0);
 
-          Dimension oldSize = getPreferredSize();
-          if (clearBefore) {
-            myListModel.clear();
-          }
-          List<Object> itemsToAdd = results.getItems().stream()
-                                           .filter(o -> !myListModel.contains(o))
-                                           .collect(Collectors.toList());
-          if (!itemsToAdd.isEmpty()) {
-            myListModel.addElements(itemsToAdd, contributor, results.hasMoreItems());
-            ScrollingUtil.ensureSelectionExists(myResultsList);
-          }
-          firePropertyChange("preferredSize", oldSize, getPreferredSize());
-        }, 0);
-      });
-
-      return found[0];
+      return found;
     }
 
     protected void check() {
@@ -944,11 +942,10 @@ public class SearchEverywhereUI extends BorderLayoutPanel implements Disposable,
           public void run(@NotNull ProgressIndicator indicator) {
             contributorsForAdditionalSearch.forEach(contributor -> {
               if (!progressIndicator.isCanceled()) {
-                ApplicationManager.getApplication().runReadAction(() -> {
-                  //todo overflow #UX-1
-                  List<Object> foundElements = contributor.search(searchText, everywhere, myContributorFilters.get(contributor.getSearchProviderId()), progressIndicator);
-                  fillUsages(foundElements, usages, targets);
-                });
+                //todo overflow #UX-1
+                List<Object> foundElements =
+                  contributor.search(searchText, everywhere, myContributorFilters.get(contributor.getSearchProviderId()), progressIndicator);
+                fillUsages(foundElements, usages, targets);
               }
             });
           }

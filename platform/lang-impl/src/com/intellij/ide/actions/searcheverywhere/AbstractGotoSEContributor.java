@@ -6,6 +6,7 @@ import com.intellij.ide.util.gotoByName.ChooseByNameModel;
 import com.intellij.ide.util.gotoByName.ChooseByNamePopup;
 import com.intellij.ide.util.gotoByName.FilteringGotoByModel;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.project.DumbService;
@@ -41,9 +42,11 @@ public abstract class AbstractGotoSEContributor<F> implements SearchEverywhereCo
     model.setFilterItems(filter.getSelectedElements());
     ChooseByNamePopup popup = ChooseByNamePopup.createPopup(myProject, model, (PsiElement)null);
     ContributorSearchResult.Builder<Object> builder = ContributorSearchResult.builder();
-    popup.getProvider().filterElements(popup, pattern, everywhere, progressIndicator,
-                                       o -> addFoundElement(o, model, builder, progressIndicator, elementsLimit)
-    );
+    ApplicationManager.getApplication().runReadAction(() -> {
+      popup.getProvider().filterElements(popup, pattern, everywhere, progressIndicator,
+                                         o -> addFoundElement(o, model, builder, progressIndicator, elementsLimit)
+      );
+    });
 
     return builder.build();
   }

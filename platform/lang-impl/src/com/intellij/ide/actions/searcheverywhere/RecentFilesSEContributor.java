@@ -2,6 +2,7 @@
 package com.intellij.ide.actions.searcheverywhere;
 
 import com.google.common.collect.Lists;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.fileEditor.impl.EditorHistoryManager;
 import com.intellij.openapi.fileTypes.FileType;
@@ -14,6 +15,7 @@ import com.intellij.psi.codeStyle.MinusculeMatcher;
 import com.intellij.psi.codeStyle.NameUtil;
 import org.jetbrains.annotations.NotNull;
 
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -53,15 +55,21 @@ public class RecentFilesSEContributor extends FileSearchEverywhereContributor {
     List<VirtualFile> opened = Arrays.asList(FileEditorManager.getInstance(myProject).getSelectedFiles());
     List<VirtualFile> history = Lists.reverse(EditorHistoryManager.getInstance(myProject).getFileList());
 
-    PsiManager psiManager = PsiManager.getInstance(myProject);
-    Stream<VirtualFile> stream = history.stream();
-    if (!StringUtil.isEmptyOrSpaces(pattern)) {
-      stream = stream.filter(file -> matcher.matches(file.getName()));
-    }
-    List<Object> res = stream.filter(vf -> !opened.contains(vf) && vf.isValid())
-                             .distinct()
-                             .map(vf -> psiManager.findFile(vf))
-                             .collect(Collectors.toList());
+    List<Object> res = new ArrayList<>();
+    ApplicationManager.getApplication().runReadAction(
+      () -> {
+        PsiManager psiManager = PsiManager.getInstance(myProject);
+        Stream<VirtualFile> stream = history.stream();
+        if (!StringUtil.isEmptyOrSpaces(pattern)) {
+          stream = stream.filter(file -> matcher.matches(file.getName()));
+        }
+        res.addAll(stream.filter(vf -> !opened.contains(vf) && vf.isValid())
+                         .distinct()
+                         .map(vf -> psiManager.findFile(vf))
+                         .collect(Collectors.toList())
+        );
+      }
+    );
 
     return res.size() > elementsLimit
            ? new ContributorSearchResult<>(res.subList(0, elementsLimit), true)
