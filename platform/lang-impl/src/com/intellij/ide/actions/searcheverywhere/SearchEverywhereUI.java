@@ -2,6 +2,7 @@
 package com.intellij.ide.actions.searcheverywhere;
 
 import com.google.common.collect.Lists;
+import com.intellij.codeInsight.hint.HintUtil;
 import com.intellij.execution.runners.ExecutionUtil;
 import com.intellij.find.findUsages.PsiElement2UsageTargetAdapter;
 import com.intellij.icons.AllIcons;
@@ -150,7 +151,7 @@ public class SearchEverywhereUI extends BorderLayoutPanel implements Disposable,
     String hint = IdeBundle.message("searcheverywhere.history.shortcuts.hint",
                                     KeymapUtil.getKeystrokeText(SearchTextField.ALT_SHOW_HISTORY_KEYSTROKE),
                                     KeymapUtil.getKeystrokeText(SearchTextField.SHOW_HISTORY_KEYSTROKE));
-    JLabel hintLabel = new JLabel(hint);
+    JLabel hintLabel = HintUtil.createAdComponent(hint, JBUI.Borders.empty(), SwingConstants.LEFT);
     hintLabel.setOpaque(false);
     hintLabel.setForeground(JBColor.GRAY);
     pnl.add(hintLabel, BorderLayout.SOUTH);
