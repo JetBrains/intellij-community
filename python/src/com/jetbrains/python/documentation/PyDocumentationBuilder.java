@@ -16,6 +16,7 @@
 package com.jetbrains.python.documentation;
 
 import com.intellij.application.options.CodeStyle;
+import com.intellij.codeInsight.CodeInsightBundle;
 import com.intellij.lang.ASTNode;
 import com.intellij.lang.documentation.DocumentationMarkup;
 import com.intellij.openapi.util.io.FileUtil;
@@ -38,6 +39,7 @@ import com.jetbrains.python.psi.impl.PyPsiUtils;
 import com.jetbrains.python.psi.resolve.PyResolveContext;
 import com.jetbrains.python.psi.resolve.QualifiedNameFinder;
 import com.jetbrains.python.psi.resolve.QualifiedResolveResult;
+import com.jetbrains.python.psi.types.PyCallableParameter;
 import com.jetbrains.python.psi.types.PyClassType;
 import com.jetbrains.python.psi.types.PyType;
 import com.jetbrains.python.psi.types.TypeEvalContext;
@@ -309,7 +311,7 @@ public class PyDocumentationBuilder {
 
   private void buildFromDocstring(@NotNull final PyDocStringOwner elementDefinition, boolean isProperty) {
     PyClass pyClass = null;
-    final PyStringLiteralExpression docStringExpression = getEffectiveDocStringExpression(elementDefinition);
+    PyStringLiteralExpression docStringExpression = getEffectiveDocStringExpression(elementDefinition);
     if (docStringExpression != null && !isProperty) {
       myContent.add(formatDocString(myElement, docStringExpression.getStringValue()));
     }
@@ -344,7 +346,10 @@ public class PyDocumentationBuilder {
       myBody.add(PythonDocumentationProvider.describeDecorators(pyFunction, WRAP_IN_ITALIC, ESCAPE_AND_SAVE_NEW_LINES_AND_SPACES, BR, BR));
       myBody.add(PythonDocumentationProvider.describeFunction(pyFunction, myContext, false));
       if (docStringExpression == null && !isProperty) {
-        addInheritedDocString(pyFunction, pyClass);
+        docStringExpression = addInheritedDocString(pyFunction, pyClass);
+      }
+      if (docStringExpression != null) {
+        formatParametersAndReturnValue(docStringExpression, pyFunction);
       }
     }
     else if (elementDefinition instanceof PyFile) {
@@ -362,6 +367,29 @@ public class PyDocumentationBuilder {
         }
       }
       myBody.add(PythonDocumentationProvider.describeTarget(target, myContext));
+    }
+  }
+
+  private void formatParametersAndReturnValue(@NotNull PyStringLiteralExpression docstring, @NotNull PyFunction function) {
+    final StructuredDocString structured = DocStringUtil.parseDocString(docstring);
+
+    final String paramList = StreamEx.of(function.getParameters(myContext))
+                                     .filter(param -> param.getName() != null && structured.getParamDescription(param.getName()) != null)
+                                     .map(param -> {
+                                       final String name = param.getName();
+                                       final String description = structured.getParamDescription(name);
+                                       return "<p>" + name + " &ndash; " + description + "</p>";
+                                     })
+                                     .joining();
+
+
+    if (!paramList.isEmpty()) {
+      mySectionsMap.get(CodeInsightBundle.message("javadoc.parameters")).addItem(paramList);
+    }
+
+    final String returnDescription = structured.getReturnDescription();
+    if (returnDescription != null) {
+      mySectionsMap.get(CodeInsightBundle.message("javadoc.returns")).addItem(returnDescription);
     }
   }
 
@@ -392,10 +420,11 @@ public class PyDocumentationBuilder {
     return resolveResult.isImplicit() ? null : resolveResult.getElement();
   }
 
-  private void addInheritedDocString(@NotNull final PyFunction pyFunction, @Nullable final PyClass pyClass) {
+  @Nullable
+  private PyStringLiteralExpression addInheritedDocString(@NotNull final PyFunction pyFunction, @Nullable final PyClass pyClass) {
     final String methodName = pyFunction.getName();
     if (pyClass == null || methodName == null) {
-      return;
+      return null;
     }
     final boolean isConstructor = PyNames.INIT.equals(methodName);
     Iterable<PyClass> classes = pyClass.getAncestorClasses(myContext);
@@ -425,7 +454,7 @@ public class PyDocumentationBuilder {
             mySectionsMap.get(PyBundle.message("QDOC.documentation.is.copied.from")).addWith(TagCode, $(ancestorLink));
           }
           myContent.add(formatDocString(pyFunction, inheritedDoc));
-          return;
+          return docstringElement;
         }
       }
     }
@@ -434,11 +463,13 @@ public class PyDocumentationBuilder {
     // for well-known methods, copy built-in doc string.
     // TODO: also handle predefined __xxx__ that are not part of 'object'.
     if (PyNames.UNDERSCORED_ATTRIBUTES.contains(methodName)) {
-      addPredefinedMethodDoc(pyFunction, methodName);
+      return addPredefinedMethodDoc(pyFunction, methodName);
     }
+    return null;
   }
 
-  private void addPredefinedMethodDoc(@NotNull PyFunction fun, @NotNull String methodName) {
+  @Nullable
+  private PyStringLiteralExpression addPredefinedMethodDoc(@NotNull PyFunction fun, @NotNull String methodName) {
     final PyClassType objectType = PyBuiltinCache.getInstance(fun).getObjectType(); // old- and new-style classes share the __xxx__ stuff
     if (objectType != null) {
       final PyClass objectClass = objectType.getPyClass();
@@ -450,8 +481,10 @@ public class PyDocumentationBuilder {
           mySectionsMap.get(PyBundle.message("QDOC.documentation.is.copied.from")).addItem("built-in description");
           myContent.add(formatDocString(fun, predefinedDoc));
         }
+        return predefinedDocstring;
       }
     }
+    return null;
   }
 
   @NotNull
