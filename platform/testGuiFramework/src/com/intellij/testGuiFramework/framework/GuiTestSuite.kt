@@ -16,9 +16,13 @@
 package com.intellij.testGuiFramework.framework
 
 import com.intellij.testGuiFramework.launcher.GuiTestLocalLauncher
+import com.intellij.testGuiFramework.launcher.GuiTestOptions
 import com.intellij.testGuiFramework.launcher.ide.Ide
 import org.apache.log4j.Logger
+import org.junit.runner.Description
 import org.junit.runner.Runner
+import org.junit.runner.manipulation.Filter
+import org.junit.runner.manipulation.NoTestsRemainException
 import org.junit.runner.notification.Failure
 import org.junit.runner.notification.RunNotifier
 import org.junit.runners.Suite
@@ -27,15 +31,45 @@ import org.junit.runners.model.RunnerBuilder
 class GuiTestSuite(private val suiteClass: Class<*>, builder: RunnerBuilder) : Suite(suiteClass, builder) {
 
   //IDE type to run suite tests with
-  val myIde: Ide = getIdeFromAnnotation(suiteClass)
   var isFirstStart: Boolean = true
-  val UNDEFINED_FIRST_CLASS: String = "undefined"
-  val myFirstStartClassName: String by lazy {
+
+  private val myIde: Ide = getIdeFromAnnotation(suiteClass)
+  private val UNDEFINED_FIRST_CLASS = "undefined"
+  private val myFirstStartClassName: String by lazy {
     val annotation = suiteClass.getAnnotation(FirstStartWith::class.java)
     val value = annotation?.value
     if (value != null) value.java.canonicalName else UNDEFINED_FIRST_CLASS
   }
-  val LOG: Logger = org.apache.log4j.Logger.getLogger("#com.intellij.testGuiFramework.framework.GuiTestSuite")!!
+  private val LOG: Logger = org.apache.log4j.Logger.getLogger("#com.intellij.testGuiFramework.framework.GuiTestSuite")!!
+
+  private val testsFilter by lazy {
+    object: Filter() {
+
+      val filteredClassNameSet: Set<String> by lazy {
+        GuiTestOptions.getFilteredListOfTests().split(",").toSet()
+      }
+
+      override fun shouldRun(description: Description?): Boolean {
+        description?: return true
+        return filteredClassNameSet.contains(description.testClass.simpleName)
+      }
+
+      override fun describe() = "It filters test classes by their short names listed in system property `${GuiTestOptions.FILTER_KEY}`"
+    }
+  }
+
+  init {
+    try {
+      if (GuiTestOptions.shouldTestsBeFiltered()) {
+        LOG.info("Tests filter is applied, next tests will be run: ${testsFilter.filteredClassNameSet.joinToString(", ")}")
+        filter(testsFilter)
+      }
+    }
+    catch (e: NoTestsRemainException) {
+      e.printStackTrace()
+    }
+  }
+
 
   override fun runChild(runner: Runner, notifier: RunNotifier?) {
     try {
