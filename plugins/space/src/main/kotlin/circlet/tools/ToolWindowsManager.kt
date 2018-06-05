@@ -5,10 +5,9 @@ import circlet.utils.*
 import com.intellij.openapi.components.*
 import com.intellij.openapi.project.*
 import com.intellij.openapi.wm.ex.*
-import runtime.reactive.*
 
 class ToolWindowsManager(project: Project) :
-    AbstractProjectComponent(project), Lifetimed by LifetimedOnDisposable(project) {
+    AbstractProjectComponent(project), LifetimedComponent by SimpleLifetimedComponent() {
 
     override fun initComponent() {
         myProject.settings.stateProperty.forEach(lifetime) { updateToolWindows(it) }

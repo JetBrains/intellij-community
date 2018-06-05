@@ -2,43 +2,31 @@ package circlet.components
 
 import circlet.app.*
 import circlet.bootstrap.*
-import circlet.client.api.*
 import circlet.platform.client.*
 import circlet.settings.*
 import circlet.utils.*
+import com.intellij.notification.*
 import com.intellij.openapi.components.*
 import com.intellij.openapi.options.*
 import com.intellij.openapi.project.*
-import io.ktor.application.*
-import io.ktor.http.*
-import io.ktor.response.*
-import io.ktor.routing.*
-import io.ktor.server.engine.*
-import io.ktor.server.jetty.*
+import com.intellij.xml.util.*
 import runtime.reactive.*
-import java.awt.*
-import java.net.*
-import java.util.concurrent.*
 
 class ConnectionComponent(project: Project) :
-    AbstractProjectComponent(project), Lifetimed by LifetimedOnDisposable(project) {
+    AbstractProjectComponent(project), LifetimedComponent by SimpleLifetimedComponent() {
 
-    var loginModel: LoginModel? = null
-        private set
+    val loginModel: LoginModel? get() = connection?.loginModel
+
+    private var connection: Connection? = null
 
     val connected: Signal<Unit> = Signal.create()
 
     override fun initComponent() {
         myProject.settings.serverUrl.view(lifetime) { urlLifetime, url ->
-            loginModel = null
+            connection = null
 
-            if (url.isNotEmpty()) {
-                loginModel = LoginModel(
-                    persistence = IdeaPersistence.substorage("$url-"),
-                    server = url,
-                    appLifetime = urlLifetime,
-                    notificationKind = NotificationKind.Ide
-                )
+            if (url.isNotBlank()) {
+                connection = connections.get(url, urlLifetime).value
 
                 loginModel!!.meUser.view(urlLifetime) { userStatusLifetime, userStatus ->
                     if (userStatus === UserStatus.NoUser) {
@@ -102,38 +90,21 @@ class ConnectionComponent(project: Project) :
         myProject.settings.serverUrl.value = ""
     }
 
-    private val seq = SequentialLifetimes(lifetime)
-
     fun authenticate() {
-        loginModel?.let { model ->
-            val lt = seq.next().nested()
-            val server = embeddedServer(Jetty, 8080) {
-                routing {
-                    get("auth") {
-                        val token = call.parameters[TOKEN_PARAMETER]!!
-
-                        model.signIn(token, "")
-
-                        call.respondText(
-                            "Authorization successful! Now you can close this page and return to the IDE.",
-                            ContentType.Text.Html
-                        )
-
-                        lt.terminate()
-                    }
-                }
-            }.start(wait = false)
-
-            lt.add {
-                server.stop(100, 5000, TimeUnit.MILLISECONDS)
-            }
-
-            Desktop.getDesktop().browse(URI(
-                Navigator.login("http://localhost:8080/auth").absoluteHref(model.server)
-            ))
-        }
+        connection?.authenticate()
     }
 }
 
 val Project.connection: ConnectionComponent get() = getComponent()
 val Project.clientOrNull: KCircletClient? get() = connection.loginModel?.clientOrNull
+
+
+private fun Project.notify(lifetime: Lifetime, text: String, handler: (() -> Unit)? = null) {
+    Notification(
+        "Circlet",
+        "Circlet",
+        XmlStringUtil.wrapInHtml(text),
+        NotificationType.INFORMATION,
+        handler?.let { NotificationListener { _, _ -> it() } }
+    ).notify(lifetime, this)
+}
