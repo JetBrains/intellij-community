@@ -20,16 +20,19 @@ import com.intellij.rt.execution.testFrameworks.AbstractExpectedPatterns;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.regex.Pattern;
 
 public class ExpectedPatterns extends AbstractExpectedPatterns {
   private static final List PATTERNS = new ArrayList();
 
+  private static final Pattern ASSERT_EQUALS_PATTERN = Pattern.compile("expected:<(.*)> but was:<(.*)>", Pattern.DOTALL | Pattern.CASE_INSENSITIVE);
+  private static final Pattern ASSERT_EQUALS_CHAINED_PATTERN = Pattern.compile("but was:<(.*)>", Pattern.DOTALL | Pattern.CASE_INSENSITIVE);
+  
   private static final String[] PATTERN_STRINGS = new String[]{
     "\nexpected: is \"(.*)\"\n\\s*got: \"(.*)\"\n",
     "\nexpected: is \"(.*)\"\n\\s*but: was \"(.*)\"",
     "\nexpected: (.*)\n\\s*got: (.*)",
     "expected same:<(.*)> was not:<(.*)>",
-    "expected:<(.*?)> but was:<(.*?)>",
     "\nexpected: \"(.*)\"\n\\s*but: was \"(.*)\"",
     "expected: (.*)\\s*but: was (.*)",
     "expected: (.*)\\s*but was: (.*)",
@@ -64,6 +67,10 @@ public class ExpectedPatterns extends AbstractExpectedPatterns {
     final String message = assertion.getMessage();
     if (message != null  && acceptedByThreshold(message.length())) {
       try {
+        ComparisonFailureData assertEqualsNotification = createExceptionNotification(message, ASSERT_EQUALS_PATTERN);
+        if (assertEqualsNotification != null) {
+          return ASSERT_EQUALS_CHAINED_PATTERN.matcher(assertEqualsNotification.getExpected()).find() ? null : assertEqualsNotification;
+        }
         return createExceptionNotification(message);
       }
       catch (Throwable ignored) {}
