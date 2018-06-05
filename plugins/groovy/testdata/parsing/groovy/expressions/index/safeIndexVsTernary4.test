@@ -1,4 +1,5 @@
 a == null ? [b] : [c]
+a == null ? [b]
 -----
 Groovy script
   Conditional expression
@@ -26,3 +27,21 @@ Groovy script
       Reference expression
         PsiElement(identifier)('c')
       PsiElement(])(']')
+  PsiElement(new line)('\n')
+  Relational expression
+    Reference expression
+      PsiElement(identifier)('a')
+    PsiWhiteSpace(' ')
+    PsiElement(==)('==')
+    PsiWhiteSpace(' ')
+    Property by index
+      Literal
+        PsiElement(null)('null')
+      PsiWhiteSpace(' ')
+      PsiElement(?)('?')
+      PsiWhiteSpace(' ')
+      Arguments
+        PsiElement([)('[')
+        Reference expression
+          PsiElement(identifier)('b')
+        PsiElement(])(']')

@@ -3266,6 +3266,12 @@ public class GroovyGeneratedParser implements PsiParser, LightPsiParser {
   }
 
   /* ********************************************************** */
+  // '?'
+  static boolean fast_question(PsiBuilder b, int l) {
+    return consumeTokenFast(b, T_Q);
+  }
+
+  /* ********************************************************** */
   // SLASHY_CONTENT
   static boolean fast_slashy_content(PsiBuilder b, int l) {
     return consumeTokenFast(b, SLASHY_CONTENT);
@@ -6617,7 +6623,7 @@ public class GroovyGeneratedParser implements PsiParser, LightPsiParser {
   // 12: BINARY(power_expression)
   // 13: PREFIX(prefix_unary_expression)
   // 14: PREFIX(not_expression) ATOM(cast_expression)
-  // 15: POSTFIX(index_expression) POSTFIX(postfix_unary_expression)
+  // 15: POSTFIX(index_expression) POSTFIX(safe_index_expression) POSTFIX(postfix_unary_expression)
   // 16: POSTFIX(method_reference_expression) POSTFIX(qualified_reference_expression) POSTFIX(property_expression)
   // 17: POSTFIX(method_call_expression) ATOM(lazy_closure) ATOM(list_or_map)
   // 18: ATOM(new_anonymous_expression) ATOM(new_expression)
@@ -6738,7 +6744,11 @@ public class GroovyGeneratedParser implements PsiParser, LightPsiParser {
         r = expression(b, l, 12);
         exit_section_(b, l, m, POWER_EXPRESSION, r, true, null);
       }
-      else if (g < 15 && index_expression_0(b, l + 1)) {
+      else if (g < 15 && index_expression_argument_list(b, l + 1)) {
+        r = true;
+        exit_section_(b, l, m, INDEX_EXPRESSION, r, true, null);
+      }
+      else if (g < 15 && safe_index_expression_0(b, l + 1)) {
         r = true;
         exit_section_(b, l, m, INDEX_EXPRESSION, r, true, null);
       }
@@ -7056,21 +7066,21 @@ public class GroovyGeneratedParser implements PsiParser, LightPsiParser {
     return r;
   }
 
-  // mb_question index_expression_argument_list !fast_colon
-  private static boolean index_expression_0(PsiBuilder b, int l) {
-    if (!recursion_guard_(b, l, "index_expression_0")) return false;
+  // fast_question index_expression_argument_list !fast_colon
+  private static boolean safe_index_expression_0(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "safe_index_expression_0")) return false;
     boolean r;
     Marker m = enter_section_(b);
-    r = mb_question(b, l + 1);
+    r = fast_question(b, l + 1);
     r = r && index_expression_argument_list(b, l + 1);
-    r = r && index_expression_0_2(b, l + 1);
+    r = r && safe_index_expression_0_2(b, l + 1);
     exit_section_(b, m, null, r);
     return r;
   }
 
   // !fast_colon
-  private static boolean index_expression_0_2(PsiBuilder b, int l) {
-    if (!recursion_guard_(b, l, "index_expression_0_2")) return false;
+  private static boolean safe_index_expression_0_2(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "safe_index_expression_0_2")) return false;
     boolean r;
     Marker m = enter_section_(b, l, _NOT_);
     r = !fast_colon(b, l + 1);

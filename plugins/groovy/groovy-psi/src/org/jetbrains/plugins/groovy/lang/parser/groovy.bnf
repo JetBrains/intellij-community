@@ -1009,8 +1009,9 @@ private cast_expression_start ::= '(' (IDENTIFIER | primitive_type) { consumeTok
 private cast_expression_pin ::= '(' capital_type_element ')' priority1_4 { pin = 3 }
 private cast_expression_no_pin ::= '(' type_element ')' priority1_4
 
-private priority1_5 ::= index_expression | postfix_unary_expression
-index_expression ::= expression mb_question index_expression_argument_list !fast_colon
+private priority1_5 ::= index_expression | safe_index_expression | postfix_unary_expression
+index_expression ::= expression index_expression_argument_list
+safe_index_expression ::= expression fast_question index_expression_argument_list !fast_colon { elementType = index_expression }
 index_expression_argument_list ::= !empty_map '[' bracket_argument_list_inner ']'
 {
   pin = 2
@@ -1242,6 +1243,7 @@ private empty ::= ()
 private mb_question ::= '?'? { consumeTokenMethod = 'consumeTokenFast' }
 private mb_not ::= '!'? { consumeTokenMethod = 'consumeTokenFast' }
 
+private fast_question ::= '?'
 private fast_colon ::= ':'
 private fast_comma ::= ','
 private fast_l_angle ::= '<'
