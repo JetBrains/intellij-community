@@ -3,20 +3,23 @@ package com.intellij.openapi.vcs.changes.ui
 
 import com.intellij.openapi.options.UnnamedConfigurable
 import com.intellij.openapi.vcs.CheckinProjectPanel
-import com.intellij.openapi.vcs.checkin.CheckinHandlerUtil
+import com.intellij.openapi.vcs.checkin.CheckinHandlerUtil.disableWhenDumb
+import com.intellij.openapi.vcs.configurable.CommitOptionsConfigurable
 import com.intellij.openapi.vcs.ui.RefreshableOnComponent
 import com.intellij.ui.NonFocusableCheckBox
 import java.util.function.Consumer
 import javax.swing.JComponent
 
-open class BooleanCommitOption(panel: CheckinProjectPanel,
+open class BooleanCommitOption(private val checkinPanel: CheckinProjectPanel,
                                text: String,
                                disableWhenDumb: Boolean,
                                private val getter: () -> Boolean,
                                private val setter: Consumer<Boolean>) : RefreshableOnComponent, UnnamedConfigurable {
   protected val checkBox = NonFocusableCheckBox(text).also {
-    if (disableWhenDumb) CheckinHandlerUtil.disableWhenDumb(panel.project, it, "Impossible until indices are up-to-date")
+    if (disableWhenDumb && !isInSettings) disableWhenDumb(checkinPanel.project, it, "Impossible until indices are up-to-date")
   }
+
+  private val isInSettings get() = checkinPanel is CommitOptionsConfigurable.CheckinPanel
 
   override fun refresh() {
   }
