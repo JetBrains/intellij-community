@@ -72,7 +72,7 @@ import  java.util.*;
 public class Main {
     List<String> getStringList(int i){
         List<String> ints = null;
-        for (String item : getStringList(<caret>)) {
+        for (String item: getStringList(<caret>)) {
             ;
         }
         return new ArrayList<>(i);
@@ -108,7 +108,7 @@ import  java.util.*;
 public class Main {
     List<String> getStringList(int i){
         List<String> ints = null;
-        for (String <selection>item</selection> : ints) {
+        for (String <selection>item</selection>: ints) {
             ;
         }
         return new ArrayList<>(i);
@@ -478,7 +478,7 @@ java.util.List<? extends Integer> list;
     myFixture.type('\tgetCreatedTags()\n')
     myFixture.checkResult '''class A { Iterable<String> getCreatedTags() { }
 {
-    for (String createdTag : getCreatedTags()) {
+    for (String createdTag: getCreatedTags()) {
         
     }
 }}'''
