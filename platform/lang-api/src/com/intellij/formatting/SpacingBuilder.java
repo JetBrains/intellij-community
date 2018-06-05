@@ -46,13 +46,20 @@ public class SpacingBuilder {
                                      childBlock2.getNode().getElementType());
     }
 
-    public Spacing createSpacing(@NotNull Block parentBlock) {
+    /**
+     * @param parentRange the range that includes both children blocks (usually the range of the parent block).
+     */
+    @NotNull
+    Spacing createSpacing(@NotNull TextRange parentRange) {
       return Spacing.createSpacing(myMinSpaces, myMaxSpaces, myMinLF, myKeepLineBreaks, myKeepBlankLines);
     }
 
+    /**
+     * @deprecated use #createSpacing(com.intellij.openapi.util.TextRange) instead
+     */
     @Deprecated
-    public Spacing createSpacing(@NotNull ASTBlock parentBlock, @NotNull ASTBlock childBlock1, @NotNull ASTBlock childBlock2) {
-      return this.createSpacing(parentBlock);
+    Spacing createSpacing(@NotNull ASTBlock parentBlock, @NotNull ASTBlock childBlock1, @NotNull ASTBlock childBlock2) {
+      return this.createSpacing(parentBlock.getTextRange());
     }
   }
 
@@ -65,15 +72,16 @@ public class SpacingBuilder {
       super(condition, minSpaces, maxSpaces, 1, keepLineBreaks, keepBlankLines);
     }
 
+    @NotNull
     @Override
-    public Spacing createSpacing(@NotNull Block parentBlock) {
-      final TextRange range = parentBlock.getTextRange();
-      return Spacing.createDependentLFSpacing(myMinSpaces, myMaxSpaces, range, myKeepLineBreaks, myKeepBlankLines);
+    Spacing createSpacing(@NotNull TextRange parentRange) {
+      return Spacing.createDependentLFSpacing(myMinSpaces, myMaxSpaces, parentRange, myKeepLineBreaks, myKeepBlankLines);
     }
 
-    @Override @Deprecated
-    public Spacing createSpacing(@NotNull ASTBlock parentBlock, @NotNull ASTBlock childBlock1, @NotNull ASTBlock childBlock2) {
-      return this.createSpacing(parentBlock);
+
+    @Override @Deprecated @SuppressWarnings("deprecation")
+    Spacing createSpacing(@NotNull ASTBlock parentBlock, @NotNull ASTBlock childBlock1, @NotNull ASTBlock childBlock2) {
+      return this.createSpacing(parentBlock.getTextRange());
     }
   }
 
@@ -351,7 +359,7 @@ public class SpacingBuilder {
                             @NotNull IElementType child2Type) {
     for (SpacingRule rule : myRules) {
       if (rule.matches(parentType, child1Type, child2Type)) {
-        return rule.createSpacing(parentBlock);
+        return rule.createSpacing(parentBlock.getTextRange());
       }
     }
     return null;
@@ -371,7 +379,7 @@ public class SpacingBuilder {
     }
     for (SpacingRule rule : myRules) {
       if (rule.matches((ASTBlock)parent, (ASTBlock)child1, (ASTBlock) child2)) {
-        return rule.createSpacing(parent);
+        return rule.createSpacing(parent.getTextRange());
       }
     }
     return null;
