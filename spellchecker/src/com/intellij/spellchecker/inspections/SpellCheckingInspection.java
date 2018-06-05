@@ -124,10 +124,9 @@ public class SpellCheckingInspection extends LocalInspectionTool {
   private static void addBatchDescriptor(PsiElement element,
                                          int offset,
                                          @NotNull TextRange textRange,
-                                         @NotNull ProblemsHolder holder,
-                                         String wordWithTypo) {
+                                         @NotNull ProblemsHolder holder) {
     SpellCheckerQuickFix[] fixes = SpellcheckingStrategy.getDefaultBatchFixes();
-    ProblemDescriptor problemDescriptor = createProblemDescriptor(element, offset, textRange, holder, fixes, false, wordWithTypo);
+    ProblemDescriptor problemDescriptor = createProblemDescriptor(element, offset, textRange, fixes, false);
     holder.registerProblem(problemDescriptor);
   }
 
@@ -139,13 +138,13 @@ public class SpellCheckingInspection extends LocalInspectionTool {
                                    ? strategy.getRegularFixes(element, offset, textRange, useRename, wordWithTypo)
                                    : SpellcheckingStrategy.getDefaultRegularFixes(useRename, wordWithTypo, element);
 
-    final ProblemDescriptor problemDescriptor = createProblemDescriptor(element, offset, textRange, holder, fixes, true, wordWithTypo);
+    final ProblemDescriptor problemDescriptor = createProblemDescriptor(element, offset, textRange, fixes, true);
     holder.registerProblem(problemDescriptor);
   }
 
-  private static ProblemDescriptor createProblemDescriptor(PsiElement element, int offset, TextRange textRange, ProblemsHolder holder,
+  private static ProblemDescriptor createProblemDescriptor(PsiElement element, int offset, TextRange textRange,
                                                            SpellCheckerQuickFix[] fixes,
-                                                           boolean onTheFly, String wordWithTypo) {
+                                                           boolean onTheFly) {
     SpellcheckingStrategy strategy = getSpellcheckingStrategy(element, element.getLanguage());
     final Tokenizer tokenizer = strategy != null ? strategy.getTokenizer(element) : null;
     if (tokenizer != null) {
@@ -241,7 +240,7 @@ public class SpellCheckingInspection extends LocalInspectionTool {
         }
         else {
           myAlreadyChecked.add(word);
-          addBatchDescriptor(myElement, myOffset, textRange, myHolder, word);
+          addBatchDescriptor(myElement, myOffset, textRange, myHolder);
         }
       }
     }
