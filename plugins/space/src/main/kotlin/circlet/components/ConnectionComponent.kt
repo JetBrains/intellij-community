@@ -19,6 +19,7 @@ import io.ktor.routing.*
 import io.ktor.server.engine.*
 import io.ktor.server.jetty.*
 import runtime.reactive.*
+import runtime.utils.*
 import java.awt.*
 import java.net.*
 import java.util.concurrent.*
@@ -105,7 +106,8 @@ class ConnectionComponent(project: Project) :
     fun authenticate() {
         loginModel?.let { model ->
             val lt = seq.next()
-            val server = embeddedServer(Jetty, 8080) {
+            val port = selectFreePort(10000)
+            val server = embeddedServer(Jetty, port, "localhost") {
                 routing {
                     get("auth") {
                         val token = call.parameters[TOKEN_PARAMETER]!!
@@ -127,7 +129,7 @@ class ConnectionComponent(project: Project) :
             }
 
             Desktop.getDesktop().browse(URI(
-                Navigator.login("http://localhost:8080/auth").absoluteHref(model.server)
+                Navigator.login("http://localhost:$port/auth").absoluteHref(model.server)
             ))
         }
     }
