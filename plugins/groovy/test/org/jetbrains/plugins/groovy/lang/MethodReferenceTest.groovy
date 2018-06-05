@@ -1,10 +1,13 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.groovy.lang
 
+import com.intellij.codeInspection.LocalInspectionTool
 import com.intellij.psi.search.searches.MethodReferencesSearch
 import com.intellij.testFramework.LightProjectDescriptor
 import groovy.transform.CompileStatic
 import org.jetbrains.plugins.groovy.GroovyLightProjectDescriptor
+import org.jetbrains.plugins.groovy.codeInspection.assignment.GroovyAssignabilityCheckInspection
+import org.jetbrains.plugins.groovy.codeInspection.untypedUnresolvedAccess.GrUnresolvedAccessInspection
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.typedef.members.GrConstructorImpl
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.typedef.members.GrMethodImpl
 import org.jetbrains.plugins.groovy.lang.psi.impl.synthetic.DefaultConstructor
@@ -19,6 +22,7 @@ class MethodReferenceTest extends GroovyResolveTestCase implements TypingTest, R
 
   final LightProjectDescriptor projectDescriptor = GroovyLightProjectDescriptor.GROOVY_3_0
   final String basePath = TestUtils.testDataPath + 'lang/methodReferences/'
+  final Collection<Class<? extends LocalInspectionTool>> inspections = [GrUnresolvedAccessInspection, GroovyAssignabilityCheckInspection]
 
   void 'test method reference in static context'() {
     fixture.addFileToProject 'classes.groovy', '''\
