@@ -9,6 +9,8 @@ import com.intellij.openapi.application.ex.ApplicationInfoEx;
 import com.intellij.openapi.application.impl.ApplicationInfoImpl;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.SystemInfo;
+import com.intellij.ui.mac.foundation.Foundation;
+import com.intellij.ui.mac.foundation.ID;
 
 import java.io.IOException;
 
@@ -41,6 +43,17 @@ public class Utils {
     final ApplicationInfoEx appEx = ApplicationInfoImpl.getInstanceEx();
     if (appEx == null) // unit-test case
       return null;
+
+    try (NSAutoreleaseLock lock = new NSAutoreleaseLock()) {
+      final ID bundle = Foundation.invoke("NSBundle", "mainBundle");
+      final ID dict = Foundation.invoke(bundle, "infoDictionary");
+      final ID appID = Foundation.invoke(dict, "objectForKey:", "CFBundleIdentifier");
+      final String sappId = Foundation.toStringViaUTF8(appID);
+      if (sappId != null)
+        LOG.info("mac OS application id: " + sappId);
+      else
+        LOG.info("mac OS application id is null");
+    }
 
     return appEx.isEAP() ? "com.jetbrains.intellij-EAP" : "com.jetbrains.intellij";
 
