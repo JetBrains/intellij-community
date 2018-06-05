@@ -46,10 +46,7 @@ import junit.framework.TestCase;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.jetCheck.Generator;
 
-import java.util.Arrays;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 
 /**
  * @author peter
@@ -90,12 +87,13 @@ public class InvokeCompletion extends ActionOnFile {
         PsiTestUtil.checkPsiStructureWithCommit(getFile(), PsiTestUtil::checkStubsMatchText);
         //noinspection deprecation
         Editor caretEditor = InjectedLanguageUtil.getEditorForInjectedLanguageNoCommit(editor, getFile());
-        performCompletion(caretEditor, PsiUtilBase.getPsiFileInEditor(caretEditor, project), completionChar, env);
+        performCompletion(caretEditor, Objects.requireNonNull(PsiUtilBase.getPsiFileInEditor(caretEditor, project)), completionChar, env);
         PsiTestUtil.checkPsiStructureWithCommit(getFile(), PsiTestUtil::checkStubsMatchText);
       }
       catch (Throwable e) {
         LOG.debug("Text before completion:\n" + textBefore);
         env.logMessage("Error happened, the file's text before invoking printed to the debug log, search for 'Text before completion' there");
+        throw e;
       }
       finally {
         Disposer.dispose(raiseCompletionLimit);

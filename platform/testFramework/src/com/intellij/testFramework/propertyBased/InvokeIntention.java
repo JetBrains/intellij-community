@@ -25,6 +25,8 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.fileEditor.OpenFileDescriptor;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.roots.impl.PushedFilePropertiesUpdater;
+import com.intellij.openapi.util.Conditions;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
@@ -74,13 +76,16 @@ public class InvokeIntention extends ActionOnFile {
     return result;
   }
 
-  private void doInvokeIntention(int offset, @Nullable Environment env) {
+  private void doInvokeIntention(int offset, Environment env) {
     Project project = getProject();
     Editor editor = FileEditorManager.getInstance(project).openTextEditor(new OpenFileDescriptor(project, getVirtualFile(), offset), true);
+    assert editor != null;
 
-    boolean hasErrors = !highlightErrors(project, editor).isEmpty();
+    boolean containsErrorElements = MadTestingUtil.containsErrorElements(getFile().getViewProvider());
+    boolean hasErrors = !highlightErrors(project, editor).isEmpty() || containsErrorElements;
 
     PsiFile file = PsiUtilBase.getPsiFileInEditor(editor, getProject());
+    assert file != null;
     IntentionAction intention = chooseIntention(env, getAvailableIntentions(editor, file));
     if (intention == null) return;
 
@@ -98,8 +103,9 @@ public class InvokeIntention extends ActionOnFile {
     Long stampBefore = changedDocument == null ? null : changedDocument.getModificationStamp();
 
     Disposable disposable = Disposer.newDisposable();
-    if (MadTestingUtil.containsErrorElements(file.getViewProvider())) {
+    if (containsErrorElements) {
       Registry.get("ide.check.structural.psi.text.consistency.in.tests").setValue(false, disposable);
+      Disposer.register(disposable, this::restoreAfterPotentialPsiTextInconsistency);
     }
 
     Runnable r = () -> CodeInsightTestFixtureImpl.invokeIntention(intention, file, editor, intention.getText());
@@ -140,14 +146,16 @@ public class InvokeIntention extends ActionOnFile {
     }
     catch (Throwable error) {
       LOG.debug("Error occurred, text before intention invocation:\n" + textBefore);
-      if (env != null) {
-        env.logMessage("Error happened, the file's text before invoking printed to the debug log, search for 'text before intention invocation' there");
-      }
+      env.logMessage("Error happened, the file's text before invoking printed to the debug log, search for 'text before intention invocation' there");
       throw error;
     }
     finally {
       Disposer.dispose(disposable);
     }
+  }
+
+  private void restoreAfterPotentialPsiTextInconsistency() {
+    PushedFilePropertiesUpdater.getInstance(getProject()).filePropertiesChanged(getVirtualFile(), Conditions.alwaysTrue());
   }
 
   protected List<String> extractCommentsReformattedToSingleWhitespace(PsiFile file) {
@@ -183,7 +191,6 @@ public class InvokeIntention extends ActionOnFile {
     return changedFile == null ? null : changedFile.getViewProvider().getDocument();
   }
 
-  @Nullable
   private List<IntentionAction> getAvailableIntentions(Editor editor, PsiFile file) {
     List<IntentionAction> actions =
       ContainerUtil.filter(CodeInsightTestFixtureImpl.getAvailableIntentions(editor, file), myPolicy::mayInvokeIntention);
