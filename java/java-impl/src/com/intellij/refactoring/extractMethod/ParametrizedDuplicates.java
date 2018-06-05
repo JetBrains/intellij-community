@@ -593,16 +593,24 @@ public class ParametrizedDuplicates {
     if (pattern == copy) return;
     if (pattern instanceof PsiExpression && copy instanceof PsiExpression && replaceablePatterns.contains(pattern)) {
       expressions.put((PsiExpression)pattern, (PsiExpression)copy);
+      return;
     }
 
-    if (pattern instanceof PsiReferenceExpression && copy instanceof PsiReferenceExpression) {
-      PsiElement resolvedPattern = ((PsiReferenceExpression)pattern).resolve();
-      PsiElement resolvedCopy = ((PsiReferenceExpression)copy).resolve();
+    if (pattern instanceof PsiJavaCodeReferenceElement && copy instanceof PsiJavaCodeReferenceElement) {
+      PsiElement resolvedPattern = ((PsiJavaCodeReferenceElement)pattern).resolve();
+      PsiElement resolvedCopy = ((PsiJavaCodeReferenceElement)copy).resolve();
       if (resolvedPattern != resolvedCopy && resolvedPattern instanceof PsiVariable && resolvedCopy instanceof PsiVariable) {
         variables.put((PsiVariable)resolvedPattern, (PsiVariable)resolvedCopy);
       }
+      PsiElement patternQualifier = ((PsiJavaCodeReferenceElement)pattern).getQualifier();
+      PsiElement copyQualifier = ((PsiJavaCodeReferenceElement)copy).getQualifier();
+      if (patternQualifier != null && copyQualifier != null) {
+        collectCopyMapping(patternQualifier, copyQualifier, replaceablePatterns, expressions, variables);
+      }
+      return;
     }
-    else if (pattern instanceof PsiVariable && copy instanceof PsiVariable) {
+
+    if (pattern instanceof PsiVariable && copy instanceof PsiVariable) {
       variables.put((PsiVariable)pattern, (PsiVariable)copy);
     }
 
