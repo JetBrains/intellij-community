@@ -17,6 +17,7 @@ package com.siyeh.ipp.exceptions;
 
 import com.intellij.psi.*;
 import com.siyeh.IntentionPowerPackBundle;
+import com.siyeh.ig.psiutils.CommentTracker;
 import com.siyeh.ipp.base.MutablyNamedIntention;
 import com.siyeh.ipp.base.PsiElementPredicate;
 import org.jetbrains.annotations.NotNull;
@@ -47,7 +48,7 @@ public class ObscureThrownExceptionsIntention extends MutablyNamedIntention {
     final PsiElementFactory factory = JavaPsiFacade.getElementFactory(element.getProject());
     final PsiJavaCodeReferenceElement referenceElement = factory.createClassReferenceElement(commonSuperClass);
     final PsiReferenceList newReferenceList = factory.createReferenceList(new PsiJavaCodeReferenceElement[]{referenceElement});
-    referenceList.replace(newReferenceList);
+    new CommentTracker().replaceAndRestoreComments(referenceList, newReferenceList);
   }
 
   @Nullable
