@@ -25,3 +25,6 @@ def test_foo(y):
 @pytest.mark.parametrize("y", 3)
 def test_int_foo(y):
    y.__xor<caret>#
+
+
+@pytest.mark.parame<caret>
