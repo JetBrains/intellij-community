@@ -35,16 +35,14 @@ import java.util.HashSet;
 import java.util.Set;
 
 public class JavaAnalysisScope extends AnalysisScope {
-  public static final int PACKAGE = 5;
-
-  public JavaAnalysisScope(PsiPackage pack, Module module) {
+  public JavaAnalysisScope(@NotNull PsiPackage pack, Module module) {
     super(pack.getProject());
     myModule = module;
     myElement = pack;
     myType = PACKAGE;
   }
 
-  public JavaAnalysisScope(final PsiJavaFile psiFile) {
+  JavaAnalysisScope(@NotNull PsiJavaFile psiFile) {
     super(psiFile);
   }
 
@@ -102,12 +100,10 @@ public class JavaAnalysisScope extends AnalysisScope {
 
   @Override
   protected void initFilesSet() {
-    if (myType == PACKAGE) {
-      myFilesSet = new HashSet<>();
-      accept(createFileSearcher());
-      return;
-    }
     super.initFilesSet();
+    if (myType == PACKAGE) {
+      accept(createFileSearcher());
+    }
   }
 
   @Override
