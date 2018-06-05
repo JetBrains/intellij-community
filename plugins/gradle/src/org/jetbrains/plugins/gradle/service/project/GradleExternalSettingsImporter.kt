@@ -13,6 +13,7 @@ import com.intellij.openapi.externalSystem.service.project.settings.Configuratio
 import com.intellij.openapi.project.Project
 import com.intellij.util.ObjectUtils.consumeIfCast
 import org.jetbrains.plugins.gradle.execution.GradleBeforeRunTaskProvider
+import org.jetbrains.plugins.gradle.settings.GradleSystemRunningSettings
 import org.jetbrains.plugins.gradle.util.GradleConstants
 
 class GradleBeforeRunTaskImporter: BeforeRunTaskImporter {
@@ -67,5 +68,25 @@ class GradleTaskTriggersImporter : ConfigurationHandler {
                                   "afterBuild" to ExternalSystemTaskActivator.Phase.AFTER_COMPILE,
                                   "beforeRebuild" to ExternalSystemTaskActivator.Phase.BEFORE_REBUILD,
                                   "afterRebuild" to ExternalSystemTaskActivator.Phase.AFTER_REBUILD)
+  }
+}
+
+class ActionDelegateConfigImporter: ConfigurationHandler {
+  override fun apply(project: Project, modelsProvider: IdeModifiableModelsProvider, configuration: ConfigurationData) {
+    val config = configuration.find("actionDelegationConfig") as? Map<String, *> ?: return
+    val settings = GradleSystemRunningSettings.getInstance()
+
+    consumeIfCast(config["delegateBuildRunToGradle"], java.lang.Boolean::class.java) { settings.isUseGradleAwareMake = it.booleanValue() }
+    consumeIfCast(config["testRunner"], String::class.java) {
+      settings.preferredTestRunner = TEST_RUNNER_MAP[it] ?: return@consumeIfCast
+    }
+  }
+
+  companion object {
+    private val TEST_RUNNER_MAP = mapOf(
+      "PLATFORM" to GradleSystemRunningSettings.PreferredTestRunner.PLATFORM_TEST_RUNNER,
+      "GRADLE" to GradleSystemRunningSettings.PreferredTestRunner.GRADLE_TEST_RUNNER,
+      "CHOOSE_PER_TEST" to GradleSystemRunningSettings.PreferredTestRunner.CHOOSE_PER_TEST
+    )
   }
 }

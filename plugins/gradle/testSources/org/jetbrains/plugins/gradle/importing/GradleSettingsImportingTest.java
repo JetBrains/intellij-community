@@ -33,6 +33,7 @@ import org.intellij.lang.annotations.Language;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.gradle.settings.GradleSettings;
+import org.jetbrains.plugins.gradle.settings.GradleSystemRunningSettings;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
@@ -340,6 +341,28 @@ public class GradleSettingsImportingTest extends GradleImportingTestCase {
     final List<String> beforeSyncTasks = activation.state.getTasks(ExternalSystemTaskActivator.Phase.BEFORE_SYNC);
 
     assertContain(beforeSyncTasks, ":projects", ":tasks");
+  }
+
+  @Test
+  public void testActionDelegationImport() throws Exception {
+    importProject(
+      withGradleIdeaExtPlugin(
+        "import org.jetbrains.gradle.ext.*\n" +
+        "import static org.jetbrains.gradle.ext.ActionDelegationConfig.TestRunner.*\n" +
+        "idea {\n" +
+        "  project.settings {\n" +
+        "    delegateActions {\n" +
+        "      delegateBuildRunToGradle = true\n" +
+        "      testRunner = CHOOSE_PER_TEST\n" +
+        "    }\n" +
+        "  }\n" +
+        "}")
+    );
+
+    GradleSystemRunningSettings settings = GradleSystemRunningSettings.getInstance();
+
+    assertTrue(settings.isUseGradleAwareMake());
+    assertEquals(GradleSystemRunningSettings.PreferredTestRunner.CHOOSE_PER_TEST, settings.getPreferredTestRunner());
   }
 
   private String getGradlePluginPath() {
