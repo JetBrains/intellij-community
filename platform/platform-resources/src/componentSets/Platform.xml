@@ -148,6 +148,10 @@
     <component>
       <implementation-class>com.intellij.ide.customize.WelcomeWizardHelper</implementation-class>
     </component>
+
+    <component>
+      <implementation-class>com.intellij.diagnostic.LowMemoryNotifier</implementation-class>
+    </component>
   </application-components>
 
   <project-components>
