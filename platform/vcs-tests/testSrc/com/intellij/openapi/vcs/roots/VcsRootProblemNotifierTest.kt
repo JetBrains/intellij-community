@@ -17,6 +17,7 @@
 
 package com.intellij.openapi.vcs.roots
 
+import com.intellij.openapi.application.runWriteAction
 import com.intellij.openapi.extensions.Extensions
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.vcs.VcsConfiguration
@@ -24,7 +25,8 @@ import com.intellij.openapi.vcs.VcsRootChecker
 import com.intellij.openapi.vcs.changes.committed.MockAbstractVcs
 import com.intellij.openapi.vcs.roots.VcsRootBaseTest.DOT_MOCK
 import com.intellij.openapi.vcs.roots.VcsRootProblemNotifier.getPresentableMapping
-import com.intellij.openapi.vfs.LocalFileSystem
+import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.testFramework.runInEdtAndGet
 import com.intellij.vcs.test.VcsPlatformTest
 import com.intellij.vcsUtil.VcsUtil.getFilePath
 import java.io.File
@@ -58,8 +60,8 @@ class VcsRootProblemNotifierTest : VcsPlatformTest() {
 
   override fun getDebugLogCategories() = super.getDebugLogCategories().plus("#com.intellij.openapi.vcs.roots")
 
-  fun `test root is added automatically in simple case`() {
-    assertTrue(File(projectPath, DOT_MOCK).mkdir())
+  fun `test single root equal to project dir is auto-added silently`() {
+    projectRoot.createRepoDir()
 
     VcsRootProblemNotifier.getInstance(myProject).rescanAndNotifyIfNeeded()
 
@@ -67,16 +69,62 @@ class VcsRootProblemNotifierTest : VcsPlatformTest() {
     assertSameElements(vcsManager.allVersionedRoots, projectRoot)
   }
 
-  fun `test nothing is added automatically if two roots detected`() {
+  fun `test single root deeply under project dir is auto-added and reported`() {
+    val deepRoot = projectRoot.createDir("lib")
+    deepRoot.createRepoDir()
+
+    VcsRootProblemNotifier.getInstance(myProject).rescanAndNotifyIfNeeded()
+
+    // "Root under project dir should be auto-added"
+    assertSameElements(vcsManager.allVersionedRoots, deepRoot)
+    assertSuccessfulNotification("mock Integration Enabled for Repository", getPresentableMapping(deepRoot.path))
+  }
+
+  fun `test two roots under project dir are auto-added and reported`() {
     val subRoot = createNestedRoots()
 
     rootProblemNotifier.rescanAndNotifyIfNeeded()
 
-    assertFalse("No roots should be auto-added since it is not the simple case", vcsManager.hasAnyMappings())
-    assertSuccessfulNotification("mock Repositories Found","""
+    assertSameElements(vcsManager.allVersionedRoots, projectRoot, subRoot)
+    assertSuccessfulNotification("mock Integration Enabled for Repositories","""
       ${getPresentableMapping(projectPath)}
       ${getPresentableMapping(subRoot.path)}
       """.trimIndent())
+  }
+
+  fun `test root above project dir is auto-added and reported`() {
+    val aboveRoot = testRootFile
+    aboveRoot.createRepoDir()
+
+    VcsRootProblemNotifier.getInstance(myProject).rescanAndNotifyIfNeeded()
+
+    assertSameElements(vcsManager.allVersionedRoots, aboveRoot)
+    assertSuccessfulNotification("mock Integration Enabled for Repository", getPresentableMapping(aboveRoot.path))
+  }
+
+  fun `test root above project dir and deeply under project dir are auto-added and reported`() {
+    val deepRoot = projectRoot.createDir("lib")
+    deepRoot.createRepoDir()
+    val aboveRoot = testRootFile
+    aboveRoot.createRepoDir()
+
+    VcsRootProblemNotifier.getInstance(myProject).rescanAndNotifyIfNeeded()
+
+    assertSameElements(vcsManager.allVersionedRoots, aboveRoot, deepRoot)
+    assertSuccessfulNotification("mock Integration Enabled for Repositories","""
+      ${getPresentableMapping(aboveRoot.path)}
+      ${getPresentableMapping(deepRoot.path)}
+      """.trimIndent())
+  }
+
+  fun `test if project dir is a root and there is a root above project dir, the first is auto-added silently, second is ignored`() {
+    testRootFile.createRepoDir()
+    projectRoot.createRepoDir()
+
+    VcsRootProblemNotifier.getInstance(myProject).rescanAndNotifyIfNeeded()
+
+    assertSameElements(vcsManager.allVersionedRoots, projectRoot)
+    assertNoNotification()
   }
 
   // IDEA-168690
@@ -106,13 +154,16 @@ class VcsRootProblemNotifierTest : VcsPlatformTest() {
     assertSuccessfulNotification("mock Repository Found", getPresentableMapping(projectPath))
   }
 
-  private fun createNestedRoots(): File {
-    assertTrue(File(projectPath, DOT_MOCK).mkdir())
-    val subRoot = File(projectPath, "lib")
-    assertTrue(File(subRoot, DOT_MOCK).mkdirs())
-    LocalFileSystem.getInstance().refreshAndFindFileByIoFile(subRoot)
+  private fun createNestedRoots(): VirtualFile {
+    projectRoot.createRepoDir()
+    val subRoot = projectRoot.createDir("lib")
+    subRoot.createRepoDir()
     return subRoot
   }
+
+  private fun VirtualFile.createRepoDir() = createDir(DOT_MOCK)
+
+  private fun VirtualFile.createDir(name: String) = runInEdtAndGet { runWriteAction { this.createChildDirectory(this, name) } }
 
   private fun getExtensionPoint() = Extensions.getRootArea().getExtensionPoint(VcsRootChecker.EXTENSION_POINT_NAME)
 
