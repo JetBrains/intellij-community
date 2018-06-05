@@ -253,12 +253,11 @@ public class PythonDocumentationProvider extends AbstractDocumentationProvider i
 
     result.append(")");
 
-    final int wrappingOffset = result.length();
+    if (!forTooltip && StringUtil.stripHtml(result.substring(lastLineOffset), false).length() > RETURN_TYPE_WRAPPING_THRESHOLD) {
+      result.append("\n ");
+    }
     result.append(escaped(" -> "))
           .append(formatTypeWithLinks(context.getReturnType(function), function, context));
-    if (!forTooltip && StringUtil.stripHtml(result.substring(lastLineOffset), false).length() > RETURN_TYPE_WRAPPING_THRESHOLD) {
-      result.insert(wrappingOffset, "\n ");
-    }
     return result.toString();
   }
 
