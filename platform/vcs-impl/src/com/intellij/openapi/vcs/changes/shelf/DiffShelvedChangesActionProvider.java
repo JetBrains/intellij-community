@@ -141,22 +141,14 @@ public class DiffShelvedChangesActionProvider implements AnActionExtensionProvid
     }
   }
 
-  private static void processBinaryFiles(@NotNull final Project project,
+  private static void processBinaryFiles(@NotNull Project project,
                                          @NotNull List<ShelvedBinaryFile> files,
                                          @NotNull List<ShelveDiffRequestProducer> diffRequestProducers) {
     final String base = project.getBasePath();
     for (final ShelvedBinaryFile shelvedChange : files) {
       final File file = new File(base, shelvedChange.AFTER_PATH == null ? shelvedChange.BEFORE_PATH : shelvedChange.AFTER_PATH);
       final FilePath filePath = VcsUtil.getFilePath(file);
-      diffRequestProducers.add(new ShelveDiffRequestProducer(shelvedChange, filePath) {
-        @NotNull
-        @Override
-        public DiffRequest process(@NotNull UserDataHolder context, @NotNull ProgressIndicator indicator)
-          throws DiffRequestProducerException, ProcessCanceledException {
-          Change change = shelvedChange.createChange(project);
-          return createDiffRequest(project, change, getName(), context, indicator);
-        }
-      });
+      diffRequestProducers.add(new BinaryShelveDiffRequestProducer(project, shelvedChange, filePath));
     }
   }
 
@@ -180,7 +172,7 @@ public class DiffShelvedChangesActionProvider implements AnActionExtensionProvid
         if (!isNewFile && (file == null || !file.exists())) throw new FileNotFoundException(beforePath);
       }
       catch (IOException e) {
-        diffRequestProducers.add(new ShelveDiffRequestProducer(shelvedChange, filePath) {
+        diffRequestProducers.add(new BaseTextShelveDiffRequestProducer(project, shelvedChange, filePath) {
           @NotNull
           @Override
           public DiffRequest process(@NotNull UserDataHolder context, @NotNull ProgressIndicator indicator)
@@ -201,7 +193,7 @@ public class DiffShelvedChangesActionProvider implements AnActionExtensionProvid
         continue;
       }
 
-      diffRequestProducers.add(new ShelveDiffRequestProducer(shelvedChange, filePath) {
+      diffRequestProducers.add(new BaseTextShelveDiffRequestProducer(project, shelvedChange, filePath) {
         @NotNull
         @Override
         public DiffRequest process(@NotNull UserDataHolder context, @NotNull ProgressIndicator indicator)
@@ -353,30 +345,20 @@ public class DiffShelvedChangesActionProvider implements AnActionExtensionProvid
   }
 
   private static abstract class ShelveDiffRequestProducer implements ChangeDiffRequestChain.Producer {
-    @Nullable private final ShelvedChange myTextChange;
-    @Nullable private final ShelvedBinaryFile myBinaryChange;
-    @NotNull private final FilePath myFilePath;
+    @NotNull protected final FilePath myFilePath;
 
-    public ShelveDiffRequestProducer(@NotNull ShelvedChange textChange, @NotNull FilePath filePath) {
-      myBinaryChange = null;
-      myTextChange = textChange;
-      myFilePath = filePath;
-    }
-
-    public ShelveDiffRequestProducer(@NotNull ShelvedBinaryFile binaryChange, @NotNull FilePath filePath) {
-      myBinaryChange = binaryChange;
-      myTextChange = null;
+    public ShelveDiffRequestProducer(@NotNull FilePath filePath) {
       myFilePath = filePath;
     }
 
     @Nullable
     public ShelvedChange getTextChange() {
-      return myTextChange;
+      return null;
     }
 
     @Nullable
     public ShelvedBinaryFile getBinaryChange() {
-      return myBinaryChange;
+      return null;
     }
 
     @NotNull
@@ -387,20 +369,66 @@ public class DiffShelvedChangesActionProvider implements AnActionExtensionProvid
 
     @NotNull
     @Override
-    public FileStatus getFileStatus() {
-      if (myTextChange != null) {
-        return myTextChange.getFileStatus();
-      }
-      else {
-        assert myBinaryChange != null;
-        return myBinaryChange.getFileStatus();
-      }
+    public FilePath getFilePath() {
+      return myFilePath;
+    }
+  }
+
+  private static class BinaryShelveDiffRequestProducer extends ShelveDiffRequestProducer {
+    @NotNull private final Project myProject;
+    @NotNull private final ShelvedBinaryFile myBinaryChange;
+
+    public BinaryShelveDiffRequestProducer(@NotNull Project project,
+                                           @NotNull ShelvedBinaryFile change,
+                                           @NotNull FilePath filePath) {
+      super(filePath);
+      myBinaryChange = change;
+      myProject = project;
     }
 
     @NotNull
     @Override
-    public FilePath getFilePath() {
-      return myFilePath;
+    public DiffRequest process(@NotNull UserDataHolder context, @NotNull ProgressIndicator indicator)
+      throws DiffRequestProducerException, ProcessCanceledException {
+      Change change = myBinaryChange.createChange(myProject);
+      return createDiffRequest(myProject, change, getName(), context, indicator);
+    }
+
+    @NotNull
+    @Override
+    public FileStatus getFileStatus() {
+      return myBinaryChange.getFileStatus();
+    }
+
+    @NotNull
+    @Override
+    public ShelvedBinaryFile getBinaryChange() {
+      return myBinaryChange;
+    }
+  }
+
+  private static abstract class BaseTextShelveDiffRequestProducer extends ShelveDiffRequestProducer {
+    @NotNull protected final Project myProject;
+    @NotNull protected final ShelvedChange myChange;
+
+    public BaseTextShelveDiffRequestProducer(@NotNull Project project,
+                                             @NotNull ShelvedChange change,
+                                             @NotNull FilePath filePath) {
+      super(filePath);
+      myChange = change;
+      myProject = project;
+    }
+
+    @NotNull
+    @Override
+    public FileStatus getFileStatus() {
+      return myChange.getFileStatus();
+    }
+
+    @NotNull
+    @Override
+    public ShelvedChange getTextChange() {
+      return myChange;
     }
   }
 }
