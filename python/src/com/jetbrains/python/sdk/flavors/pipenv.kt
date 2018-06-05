@@ -30,6 +30,9 @@ import com.intellij.openapi.vfs.StandardFileSystems
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.util.PathUtil
 import com.jetbrains.python.packaging.PyExecutionException
+import com.jetbrains.python.packaging.PyPackageManager
+import com.jetbrains.python.packaging.PyPackageManagers
+import com.jetbrains.python.packaging.PyRequirement
 import com.jetbrains.python.sdk.*
 import icons.PythonIcons
 import org.jetbrains.annotations.SystemDependent
@@ -187,11 +190,32 @@ fun detectAndSetupPipEnv(project: Project?, module: Module?, existingSdks: List<
 }
 
 /**
- * URLs of package sources configured in the Pipfile.lock of the module associated with this SDK.
+ * The URLs of package sources configured in the Pipfile.lock of the module associated with this SDK.
  */
 val Sdk.pipFileLockSources: List<String>
   get() = parsePipFileLock()?.meta?.sources?.mapNotNull { it.url } ?:
           listOf(PIPENV_DEFAULT_SOURCE_URL)
+
+/**
+ * The list of requirements defined in the Pipfile.lock of the module associated with this SDK.
+ */
+val Sdk.pipFileLockRequirements: List<PyRequirement>?
+  get() {
+    fun toRequirements(packages: Map<String, PipFileLockPackage>): List<PyRequirement> =
+      packages
+        .asSequence()
+        .filterNot { (_, pkg) -> pkg.editable ?: false }
+        .flatMap { (name, pkg) -> packageManager.parseRequirements("$name${pkg.version ?: ""}").asSequence() }
+        .toList()
+
+    val pipFileLock = parsePipFileLock() ?: return null
+    val packages = pipFileLock.packages?.let { toRequirements(it) } ?: emptyList()
+    val devPackages = pipFileLock.devPackages?.let { toRequirements(it) } ?: emptyList()
+    return packages + devPackages
+  }
+
+private val Sdk.packageManager: PyPackageManager
+  get() = PyPackageManagers.getInstance().forSdk(this)
 
 /**
  * A quick-fix for setting up the pipenv for the module of the current PSI element.
@@ -249,9 +273,14 @@ private val Sdk.pipFileLock: VirtualFile?
   get() =
     associatedModulePath?.let { StandardFileSystems.local().findFileByPath(it)?.findChild(PIP_FILE_LOCK) }
 
-private data class PipFileLock(@SerializedName("_meta") var meta: PipFileLockMeta?)
+private data class PipFileLock(@SerializedName("_meta") var meta: PipFileLockMeta?,
+                               @SerializedName("default") var packages: Map<String, PipFileLockPackage>?,
+                               @SerializedName("develop") var devPackages: Map<String, PipFileLockPackage>?)
 
 private data class PipFileLockMeta(@SerializedName("sources") var sources: List<PipFileLockSource>?)
 
 private data class PipFileLockSource(@SerializedName("url") var url: String?)
+
+private data class PipFileLockPackage(@SerializedName("version") var version: String?,
+                                      @SerializedName("editable") var editable: Boolean?)
 

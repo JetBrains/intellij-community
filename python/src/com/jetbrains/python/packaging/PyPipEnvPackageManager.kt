@@ -11,7 +11,9 @@ import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.roots.OrderRootType
 import com.intellij.openapi.vfs.VfsUtil
 import com.jetbrains.python.sdk.PythonSdkType
+import com.jetbrains.python.sdk.flavors.pipFileLockRequirements
 import com.jetbrains.python.sdk.flavors.runPipEnv
+import com.jetbrains.python.sdk.pythonSdk
 
 /**
  * @author vlan
@@ -83,7 +85,8 @@ class PyPipEnvPackageManager(val sdk: Sdk) : PyPackageManager() {
     return packages ?: emptyList()
   }
 
-  override fun getRequirements(module: Module): List<PyRequirement>? = null
+  override fun getRequirements(module: Module): List<PyRequirement>? =
+    module.pythonSdk?.pipFileLockRequirements
 
   override fun parseRequirements(text: String): List<PyRequirement> =
     PyPackageUtil.fix(PyRequirement.fromText(text))
