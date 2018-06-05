@@ -33,6 +33,9 @@
         <component>
             <implementation-class>circlet.components.CircletApplicationComponent</implementation-class>
         </component>
+        <component>
+            <implementation-class>circlet.components.ConnectionsComponent</implementation-class>
+        </component>
     </application-components>
 
     <project-components>

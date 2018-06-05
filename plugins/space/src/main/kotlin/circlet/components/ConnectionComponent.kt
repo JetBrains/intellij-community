@@ -36,12 +36,7 @@ class ConnectionComponent(project: Project) :
             loginModel = null
 
             if (url.isNotBlank()) {
-                loginModel = LoginModel(
-                    persistence = IdeaPersistence.substorage("$url-"),
-                    server = url,
-                    appLifetime = urlLifetime,
-                    notificationKind = NotificationKind.Ide
-                )
+                loginModel = connections.get(url, urlLifetime).value
 
                 loginModel!!.meUser.view(urlLifetime) { userStatusLifetime, userStatus ->
                     if (userStatus === UserStatus.NoUser) {
