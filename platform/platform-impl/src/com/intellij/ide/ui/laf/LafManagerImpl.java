@@ -95,6 +95,9 @@ public final class LafManagerImpl extends LafManager implements PersistentStateC
   private UIManager.LookAndFeelInfo myCurrentLaf;
   private final Map<UIManager.LookAndFeelInfo, HashMap<String, Object>> myStoredDefaults = ContainerUtil.newHashMap();
 
+  // A constant from Mac OS X implementation. See CPlatformWindow.WINDOW_ALPHA
+  public static final String WINDOW_ALPHA = "Window.alpha";
+
   private static final Map<String, String> ourLafClassesAliases = ContainerUtil.newHashMap();
   static {
     ourLafClassesAliases.put("idea.dark.laf.classname", DarculaLookAndFeelInfo.CLASS_NAME);
@@ -896,22 +899,24 @@ public final class LafManagerImpl extends LafManager implements PersistentStateC
         UIUtil.markAsTypeAheadAware(window);
       }
       if (isHeavyWeightPopup && ((RootPaneContainer)window).getRootPane().getClientProperty(cleanupKey) == null) {
-        ((RootPaneContainer)window).getRootPane().putClientProperty(cleanupKey, cleanupKey);
+        final JRootPane rootPane = ((RootPaneContainer)window).getRootPane();
+        rootPane.putClientProperty(WINDOW_ALPHA, 1.0f);
+        rootPane.putClientProperty(cleanupKey, cleanupKey);
         window.addWindowListener(new WindowAdapter() {
           @Override
           public void windowOpened(WindowEvent e) {
             // cleanup will be handled by AbstractPopup wrapper
-            if (PopupUtil.getPopupContainerFor(((RootPaneContainer)window).getRootPane()) != null) {
+            if (PopupUtil.getPopupContainerFor(rootPane) != null) {
               window.removeWindowListener(this);
-              ((RootPaneContainer)window).getRootPane().putClientProperty(cleanupKey, null);
+              rootPane.putClientProperty(cleanupKey, null);
             }
           }
 
           @Override
           public void windowClosed(WindowEvent e) {
             window.removeWindowListener(this);
-            ((RootPaneContainer)window).getRootPane().putClientProperty(cleanupKey, null);
-            DialogWrapper.cleanupRootPane(((RootPaneContainer)window).getRootPane());
+            rootPane.putClientProperty(cleanupKey, null);
+            DialogWrapper.cleanupRootPane(rootPane);
             DialogWrapper.cleanupWindowListeners(window);
           }
         });
