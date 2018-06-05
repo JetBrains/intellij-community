@@ -172,24 +172,7 @@ public class DiffShelvedChangesActionProvider implements AnActionExtensionProvid
         if (!isNewFile && (file == null || !file.exists())) throw new FileNotFoundException(beforePath);
       }
       catch (IOException e) {
-        diffRequestProducers.add(new BaseTextShelveDiffRequestProducer(project, shelvedChange, filePath) {
-          @NotNull
-          @Override
-          public DiffRequest process(@NotNull UserDataHolder context, @NotNull ProgressIndicator indicator)
-            throws DiffRequestProducerException, ProcessCanceledException {
-            try {
-              TextFilePatch patch = preloader.getPatch(shelvedChange, commitContext);
-              PatchDiffRequest patchDiffRequest =
-                new PatchDiffRequest(createAppliedTextPatch(patch), getName(), VcsBundle.message("patch.apply.conflict.patch"));
-              DiffUtil.addNotification(createNotification("Cannot find local file for '" + chooseNotNull(beforePath, afterPath) + "'"),
-                                       patchDiffRequest);
-              return patchDiffRequest;
-            }
-            catch (VcsException e) {
-              throw new DiffRequestProducerException("Can't show diff for '" + getName() + "'", e);
-            }
-          }
-        });
+        diffRequestProducers.add(new PatchShelveDiffRequestProducer(project, shelvedChange, filePath, preloader, commitContext));
         continue;
       }
 
@@ -404,6 +387,36 @@ public class DiffShelvedChangesActionProvider implements AnActionExtensionProvid
     @Override
     public ShelvedBinaryFile getBinaryChange() {
       return myBinaryChange;
+    }
+  }
+
+  private static class PatchShelveDiffRequestProducer extends BaseTextShelveDiffRequestProducer {
+    private final PatchesPreloader myPreloader;
+    private final CommitContext myCommitContext;
+
+    public PatchShelveDiffRequestProducer(@NotNull Project project,
+                                          @NotNull ShelvedChange change,
+                                          @NotNull FilePath filePath,
+                                          @NotNull PatchesPreloader preloader,
+                                          @NotNull CommitContext commitContext) {
+      super(project, change, filePath);
+      myPreloader = preloader;
+      myCommitContext = commitContext;
+    }
+
+    @NotNull
+    @Override
+    public DiffRequest process(@NotNull UserDataHolder context, @NotNull ProgressIndicator indicator) throws DiffRequestProducerException {
+      try {
+        TextFilePatch patch = myPreloader.getPatch(myChange, myCommitContext);
+        AppliedTextPatch appliedTextPatch = createAppliedTextPatch(patch);
+        PatchDiffRequest request = new PatchDiffRequest(appliedTextPatch, getName(), VcsBundle.message("patch.apply.conflict.patch"));
+        DiffUtil.addNotification(createNotification("Cannot find local file for '" + getFilePath() + "'"), request);
+        return request;
+      }
+      catch (VcsException e) {
+        throw new DiffRequestProducerException("Can't show diff for '" + getFilePath() + "'", e);
+      }
     }
   }
 
