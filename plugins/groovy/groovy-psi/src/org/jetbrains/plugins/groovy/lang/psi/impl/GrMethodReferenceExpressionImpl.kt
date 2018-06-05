@@ -2,6 +2,8 @@
 package org.jetbrains.plugins.groovy.lang.psi.impl
 
 import com.intellij.lang.ASTNode
+import com.intellij.psi.PsiElement
+import com.intellij.psi.PsiMethod
 import com.intellij.psi.PsiType
 import org.jetbrains.plugins.groovy.lang.psi.api.GroovyResolveResult
 import org.jetbrains.plugins.groovy.lang.psi.dataFlow.types.TypeInferenceHelper
@@ -24,6 +26,19 @@ class GrMethodReferenceExpressionImpl(node: ASTNode) : GrReferenceExpressionImpl
   override fun getNominalType(): PsiType? = type
 
   override fun hasMemberPointer(): Boolean = true
+
+  override fun handleElementRename(newElementName: String?): PsiElement {
+    if (referenceName == CONSTRUCTOR_REFERENCE_NAME && resolvesToConstructors()) {
+      return this // don't update reference name
+    }
+    return super.handleElementRename(newElementName)
+  }
+
+  private fun resolvesToConstructors(): Boolean {
+    return resolve(false).all { result ->
+      (result.element as? PsiMethod)?.isConstructor ?: false
+    }
+  }
 
   override fun toString(): String = "Method reference expression"
 }

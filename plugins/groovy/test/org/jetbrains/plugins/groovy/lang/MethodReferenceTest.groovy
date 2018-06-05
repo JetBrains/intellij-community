@@ -1,6 +1,7 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.groovy.lang
 
+import com.intellij.psi.search.searches.MethodReferencesSearch
 import com.intellij.testFramework.LightProjectDescriptor
 import groovy.transform.CompileStatic
 import org.jetbrains.plugins.groovy.GroovyLightProjectDescriptor
@@ -106,4 +107,24 @@ class D {
   void 'test constructors highlighting'() { highlightingTest() }
 
   void 'test array constructors highlighting'() { highlightingTest() }
+
+  void 'test constructor search and rename'() {
+    fixture.addFileToProject 'classes.groovy', 'class A { A(String p){} }'
+    configureByText '''\
+<caret>A::new
+A::'new'
+A::"new"
+'''
+
+    def clazz = fixture.findClass 'A'
+    def constructor = clazz.constructors[0]
+    assert MethodReferencesSearch.search(constructor).size() == 3
+
+    fixture.renameElementAtCaret 'B'
+    fixture.checkResult '''\
+B::new
+B::'new'
+B::"new"
+'''
+  }
 }
