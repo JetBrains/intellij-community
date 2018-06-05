@@ -19,6 +19,17 @@ class MethodReferenceTest extends GroovyResolveTestCase implements TypingTest, R
   final LightProjectDescriptor projectDescriptor = GroovyLightProjectDescriptor.GROOVY_3_0
   final String basePath = TestUtils.testDataPath + 'lang/methodReferences/'
 
+  void 'test method reference in static context'() {
+    fixture.addFileToProject 'classes.groovy', '''\
+class C { 
+  C(int a) {}
+  static foo() {}
+'''
+    def results = multiResolveByText 'C::<caret>foo'
+    assert results.size() == 1
+    assert results[0].element instanceof GrMethodImpl
+  }
+
   void 'test multiple constructors'() {
     def results = multiResolveByText '''\
 class D {

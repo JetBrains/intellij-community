@@ -6,6 +6,7 @@ import com.intellij.psi.impl.light.LightMethodBuilder
 import org.jetbrains.plugins.groovy.GroovyLanguage
 import org.jetbrains.plugins.groovy.lang.psi.api.GroovyResolveResult
 import org.jetbrains.plugins.groovy.lang.psi.impl.GrMethodReferenceExpressionImpl
+import org.jetbrains.plugins.groovy.lang.psi.impl.GrMethodReferenceExpressionImpl.Companion.CONSTRUCTOR_REFERENCE_NAME
 import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil.getConstructorCandidates
 import org.jetbrains.plugins.groovy.lang.resolve.ResolveUtil.unwrapClassType
 import org.jetbrains.plugins.groovy.lang.resolve.processors.MethodReferenceProcessor
@@ -31,10 +32,15 @@ internal object GrMethodReferenceResolver : GroovyResolver<GrMethodReferenceExpr
       processor.results
     }
 
-    val constructors = when (unwrapped) {
-      is PsiClassType -> getConstructorCandidates(unwrapped, null, ref).toList()
-      is PsiArrayType -> fakeArrayConstructors(unwrapped, ref.manager)
-      else -> emptyList()
+    val constructors = if (name == CONSTRUCTOR_REFERENCE_NAME) {
+      when (unwrapped) {
+        is PsiClassType -> getConstructorCandidates(unwrapped, null, ref).toList()
+        is PsiArrayType -> fakeArrayConstructors(unwrapped, ref.manager)
+        else -> emptyList()
+      }
+    }
+    else {
+      emptyList()
     }
 
     return instanceContext + staticContext + constructors

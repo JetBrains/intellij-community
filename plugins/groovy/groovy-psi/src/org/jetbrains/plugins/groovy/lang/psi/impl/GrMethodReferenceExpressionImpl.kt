@@ -11,6 +11,10 @@ import org.jetbrains.plugins.groovy.lang.typing.GrTypeCalculator.getTypeFromCalc
 
 class GrMethodReferenceExpressionImpl(node: ASTNode) : GrReferenceExpressionImpl(node) {
 
+  companion object {
+    const val CONSTRUCTOR_REFERENCE_NAME = "new"
+  }
+
   override fun resolve(incomplete: Boolean): Collection<GroovyResolveResult> {
     return TypeInferenceHelper.getCurrentContext().resolve(this, incomplete, GrMethodReferenceResolver)
   }
