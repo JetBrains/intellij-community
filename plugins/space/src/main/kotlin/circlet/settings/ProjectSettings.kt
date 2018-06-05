@@ -51,7 +51,7 @@ class ProjectSettings(project: Project) :
 val Project.settings: ProjectSettings get() = getService()
 
 val ProjectSettings.State.isIntegrationAvailable: Boolean get() =
-    serverUrl.isNotEmpty() && projectKey.isNotEmpty()
+    serverUrl.isNotBlank() && projectKey.isNotBlank()
 
 class PropertyWithSuspendableUpdates<T> private constructor(
     private val lifetime: Lifetime,

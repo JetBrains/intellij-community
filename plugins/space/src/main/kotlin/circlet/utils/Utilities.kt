@@ -39,10 +39,6 @@ open class SimpleLifetimed : Lifetimed {
     final override val lifetime: Lifetime = Lifetime()
 }
 
-class NestedLifetimed(parentLifetime: Lifetime) : Lifetimed {
-    override val lifetime: Lifetime = parentLifetime.nested()
-}
-
 fun Notification.notify(lifetime: Lifetime, project: Project?) {
     lifetime.add { expire() }
 

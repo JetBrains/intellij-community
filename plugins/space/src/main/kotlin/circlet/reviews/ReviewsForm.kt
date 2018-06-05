@@ -6,12 +6,12 @@ import circlet.components.*
 import circlet.platform.api.*
 import circlet.runtime.*
 import circlet.settings.*
-import circlet.utils.*
 import com.intellij.openapi.project.*
 import klogging.*
 import kotlinx.coroutines.experimental.*
 import runtime.async.*
 import runtime.reactive.*
+import runtime.utils.*
 import javax.swing.*
 
 private val LOG = KLoggers.logger("circlet.reviews.ReviewsFormKt")

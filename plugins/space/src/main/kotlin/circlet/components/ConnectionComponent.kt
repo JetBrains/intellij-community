@@ -35,7 +35,7 @@ class ConnectionComponent(project: Project) :
         myProject.settings.serverUrl.view(lifetime) { urlLifetime, url ->
             loginModel = null
 
-            if (url.isNotEmpty()) {
+            if (url.isNotBlank()) {
                 loginModel = LoginModel(
                     persistence = IdeaPersistence.substorage("$url-"),
                     server = url,
