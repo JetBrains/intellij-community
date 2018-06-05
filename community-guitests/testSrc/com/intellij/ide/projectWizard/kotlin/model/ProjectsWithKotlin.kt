@@ -4,6 +4,7 @@ package com.intellij.ide.projectWizard.kotlin.model
 import com.intellij.openapi.application.PathManager
 import com.intellij.testGuiFramework.fixtures.JDialogFixture
 import com.intellij.testGuiFramework.framework.GuiTestUtil.defaultTimeout
+import com.intellij.testGuiFramework.framework.GuiTestUtil.fileSearchAndReplace
 import com.intellij.testGuiFramework.impl.*
 import com.intellij.testGuiFramework.util.*
 import com.intellij.testGuiFramework.util.scenarios.*
@@ -366,18 +367,6 @@ fun KotlinGuiTestCase.makeTestRoot(projectPath: String, testRoot: String) {
     }
     popup("Mark Directory as", "Test Sources Root")
   }
-}
-
-fun fileSearchAndReplace(fileName: String, condition: (String) -> String) {
-  val buffer = mutableListOf<String>()
-  val inputFile = Paths.get(fileName)
-  for (line in Files.readAllLines(inputFile)) {
-    buffer.add(condition(line))
-  }
-  val tmpFile = Files.createTempFile(inputFile.fileName.toString(), "tmp")
-  Files.write(tmpFile, buffer)
-  Files.copy(tmpFile, inputFile, StandardCopyOption.REPLACE_EXISTING)
-  tmpFile.toFile().deleteOnExit()
 }
 
 fun KotlinGuiTestCase.editorSearchAndReplace(isRegex: Boolean, isReplaceAll: Boolean, search: String, vararg replace: String) {
