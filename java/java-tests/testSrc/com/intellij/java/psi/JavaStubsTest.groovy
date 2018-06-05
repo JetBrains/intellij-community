@@ -345,4 +345,9 @@ class A {
     PsiTestUtil.checkStubsMatchText(file)
   }
 
+  void "test identifier dot before class"() {
+    def file = myFixture.addFileToProject('a.java', 'class A {{ public id.class B {}}}')
+    PsiTestUtil.checkStubsMatchText(file)
+  }
+
 }
