@@ -402,18 +402,19 @@ public class DiffShelvedChangesActionProvider implements AnActionExtensionProvid
         return new UnknownFileTypeDiffRequest(myFile, getName());
       }
 
-      final TextFilePatch patch;
       try {
-        patch = myPreloader.getPatch(myChange, myCommitContext);
+        TextFilePatch patch = myPreloader.getPatch(myChange, myCommitContext);
+
+        if (patch.isDeletedFile()) {
+          return createDiffRequestForDeleted(patch);
+        }
+        else {
+          return createDiffRequestForModified(patch, myCommitContext, context, indicator);
+        }
       }
       catch (VcsException e) {
-        throw new DiffRequestProducerException("Can't show diff for '" + getName() + "'", e);
+        throw new DiffRequestProducerException("Can't show diff for '" + getFilePath() + "'", e);
       }
-
-      if (patch.isDeletedFile()) {
-        return createDiffRequestForDeleted(patch);
-      }
-      return createDiffRequestForModified(patch, myCommitContext, context, indicator);
     }
 
     @NotNull
