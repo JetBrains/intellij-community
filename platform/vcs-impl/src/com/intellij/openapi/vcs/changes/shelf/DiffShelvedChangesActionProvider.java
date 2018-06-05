@@ -103,7 +103,7 @@ public class DiffShelvedChangesActionProvider implements AnActionExtensionProvid
     final List<ShelvedChange> textChanges = changeList.getChanges(project);
     final List<ShelvedBinaryFile> binaryChanges = changeList.getBinaryFiles();
 
-    final List<MyDiffRequestProducer> diffRequestProducers = new ArrayList<>();
+    final List<ShelveDiffRequestProducer> diffRequestProducers = new ArrayList<>();
 
     processTextChanges(project, textChanges, diffRequestProducers, withLocal);
     processBinaryFiles(project, binaryChanges, diffRequestProducers);
@@ -117,7 +117,7 @@ public class DiffShelvedChangesActionProvider implements AnActionExtensionProvid
 
     int index = 0;
     for (int i = 0; i < diffRequestProducers.size(); i++) {
-      MyDiffRequestProducer producer = diffRequestProducers.get(i);
+      ShelveDiffRequestProducer producer = diffRequestProducers.get(i);
       if (selectedChanges.contains(producer.getBinaryChange()) || selectedChanges.contains(producer.getTextChange())) {
         index = i;
         break;
@@ -143,12 +143,12 @@ public class DiffShelvedChangesActionProvider implements AnActionExtensionProvid
 
   private static void processBinaryFiles(@NotNull final Project project,
                                          @NotNull List<ShelvedBinaryFile> files,
-                                         @NotNull List<MyDiffRequestProducer> diffRequestProducers) {
+                                         @NotNull List<ShelveDiffRequestProducer> diffRequestProducers) {
     final String base = project.getBasePath();
     for (final ShelvedBinaryFile shelvedChange : files) {
       final File file = new File(base, shelvedChange.AFTER_PATH == null ? shelvedChange.BEFORE_PATH : shelvedChange.AFTER_PATH);
       final FilePath filePath = VcsUtil.getFilePath(file);
-      diffRequestProducers.add(new MyDiffRequestProducer(shelvedChange, filePath) {
+      diffRequestProducers.add(new ShelveDiffRequestProducer(shelvedChange, filePath) {
         @NotNull
         @Override
         public DiffRequest process(@NotNull UserDataHolder context, @NotNull ProgressIndicator indicator)
@@ -162,7 +162,7 @@ public class DiffShelvedChangesActionProvider implements AnActionExtensionProvid
 
   private static void processTextChanges(@NotNull final Project project,
                                          @NotNull List<ShelvedChange> changesFromFirstList,
-                                         @NotNull List<MyDiffRequestProducer> diffRequestProducers,
+                                         @NotNull List<ShelveDiffRequestProducer> diffRequestProducers,
                                          boolean withLocal) {
     final String base = project.getBasePath();
     final ApplyPatchContext patchContext = new ApplyPatchContext(project.getBaseDir(), 0, false, false);
@@ -180,7 +180,7 @@ public class DiffShelvedChangesActionProvider implements AnActionExtensionProvid
         if (!isNewFile && (file == null || !file.exists())) throw new FileNotFoundException(beforePath);
       }
       catch (IOException e) {
-        diffRequestProducers.add(new MyDiffRequestProducer(shelvedChange, filePath) {
+        diffRequestProducers.add(new ShelveDiffRequestProducer(shelvedChange, filePath) {
           @NotNull
           @Override
           public DiffRequest process(@NotNull UserDataHolder context, @NotNull ProgressIndicator indicator)
@@ -201,7 +201,7 @@ public class DiffShelvedChangesActionProvider implements AnActionExtensionProvid
         continue;
       }
 
-      diffRequestProducers.add(new MyDiffRequestProducer(shelvedChange, filePath) {
+      diffRequestProducers.add(new ShelveDiffRequestProducer(shelvedChange, filePath) {
         @NotNull
         @Override
         public DiffRequest process(@NotNull UserDataHolder context, @NotNull ProgressIndicator indicator)
@@ -352,18 +352,18 @@ public class DiffShelvedChangesActionProvider implements AnActionExtensionProvid
     }
   }
 
-  private static abstract class MyDiffRequestProducer implements ChangeDiffRequestChain.Producer {
+  private static abstract class ShelveDiffRequestProducer implements ChangeDiffRequestChain.Producer {
     @Nullable private final ShelvedChange myTextChange;
     @Nullable private final ShelvedBinaryFile myBinaryChange;
     @NotNull private final FilePath myFilePath;
 
-    public MyDiffRequestProducer(@NotNull ShelvedChange textChange, @NotNull FilePath filePath) {
+    public ShelveDiffRequestProducer(@NotNull ShelvedChange textChange, @NotNull FilePath filePath) {
       myBinaryChange = null;
       myTextChange = textChange;
       myFilePath = filePath;
     }
 
-    public MyDiffRequestProducer(@NotNull ShelvedBinaryFile binaryChange, @NotNull FilePath filePath) {
+    public ShelveDiffRequestProducer(@NotNull ShelvedBinaryFile binaryChange, @NotNull FilePath filePath) {
       myBinaryChange = binaryChange;
       myTextChange = null;
       myFilePath = filePath;
