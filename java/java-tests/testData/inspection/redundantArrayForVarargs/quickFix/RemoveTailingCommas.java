@@ -1,6 +1,7 @@
 public class Main {
     public static void main(String[] args) {
-        display(new S<caret>tring[]{
+        display(new //c1
+                  S<caret>tring[]{
                 "hi",
         });
     }
