@@ -18,6 +18,7 @@ package com.jetbrains.python.documentation.docstrings;
 import com.google.common.collect.Lists;
 import com.intellij.execution.configurations.GeneralCommandLine;
 import com.intellij.execution.process.ProcessOutput;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
@@ -40,6 +41,7 @@ import java.io.File;
 import java.nio.ByteBuffer;
 import java.nio.charset.Charset;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 
 /**
@@ -72,6 +74,10 @@ public class PyStructuredDocstringFormatter {
     final DocStringFormat format = DocStringUtil.guessDocStringFormat(preparedDocstring, element);
     if (format == DocStringFormat.PLAIN) {
       return null;
+    }
+
+    if (ApplicationManager.getApplication().isUnitTestMode()) {
+      return Collections.singletonList("Unittest placehoder");
     }
 
     final StructuredDocString structuredDocString = DocStringUtil.parseDocStringContent(format, preparedDocstring);
