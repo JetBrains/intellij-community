@@ -2135,7 +2135,7 @@ public class GroovyGeneratedParser implements PsiParser, LightPsiParser {
   }
 
   /* ********************************************************** */
-  // 'class' class_definition_header mb_nl class_body <<resetClassIdentifier>>
+  // 'class' class_definition_header mb_nl class_body <<popClassIdentifier>>
   public static boolean class_type_definition(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "class_type_definition")) return false;
     if (!nextTokenIsFast(b, KW_CLASS)) return false;
@@ -2146,7 +2146,7 @@ public class GroovyGeneratedParser implements PsiParser, LightPsiParser {
     p = r; // pin = class_definition_header
     r = r && report_error_(b, mb_nl(b, l + 1));
     r = p && report_error_(b, class_body(b, l + 1)) && r;
-    r = p && resetClassIdentifier(b, l + 1) && r;
+    r = p && popClassIdentifier(b, l + 1) && r;
     exit_section_(b, l, m, r, p, null);
     return r || p;
   }
@@ -3070,7 +3070,7 @@ public class GroovyGeneratedParser implements PsiParser, LightPsiParser {
   }
 
   /* ********************************************************** */
-  // 'enum' enum_definition_header mb_nl enum_body <<resetClassIdentifier>>
+  // 'enum' enum_definition_header mb_nl enum_body <<popClassIdentifier>>
   public static boolean enum_type_definition(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "enum_type_definition")) return false;
     if (!nextTokenIsFast(b, KW_ENUM)) return false;
@@ -3081,7 +3081,7 @@ public class GroovyGeneratedParser implements PsiParser, LightPsiParser {
     p = r; // pin = enum_definition_header
     r = r && report_error_(b, mb_nl(b, l + 1));
     r = p && report_error_(b, enum_body(b, l + 1)) && r;
-    r = p && resetClassIdentifier(b, l + 1) && r;
+    r = p && popClassIdentifier(b, l + 1) && r;
     exit_section_(b, l, m, r, p, null);
     return r || p;
   }
@@ -3771,7 +3771,7 @@ public class GroovyGeneratedParser implements PsiParser, LightPsiParser {
   }
 
   /* ********************************************************** */
-  // 'interface' interface_definition_header mb_nl class_body <<resetClassIdentifier>>
+  // 'interface' interface_definition_header mb_nl class_body <<popClassIdentifier>>
   public static boolean interface_type_definition(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "interface_type_definition")) return false;
     if (!nextTokenIsFast(b, KW_INTERFACE)) return false;
@@ -3782,7 +3782,7 @@ public class GroovyGeneratedParser implements PsiParser, LightPsiParser {
     p = r; // pin = interface_definition_header
     r = r && report_error_(b, mb_nl(b, l + 1));
     r = p && report_error_(b, class_body(b, l + 1)) && r;
-    r = p && resetClassIdentifier(b, l + 1) && r;
+    r = p && popClassIdentifier(b, l + 1) && r;
     exit_section_(b, l, m, r, p, null);
     return r || p;
   }

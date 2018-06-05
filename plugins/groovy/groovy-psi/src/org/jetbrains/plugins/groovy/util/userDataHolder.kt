@@ -2,6 +2,7 @@
 package org.jetbrains.plugins.groovy.util
 
 import com.intellij.openapi.util.Key
+import com.intellij.openapi.util.KeyWithDefaultValue
 import com.intellij.openapi.util.UserDataHolderUnprotected
 
 internal inline fun <V : Any, R> UserDataHolderUnprotected.withKey(key: Key<V>, value: V?, crossinline computation: () -> R): R {
@@ -19,7 +20,15 @@ internal inline fun <V : Any, R> UserDataHolderUnprotected.withKey(key: Key<V>, 
 }
 
 internal operator fun <V : Any> UserDataHolderUnprotected.get(key: Key<V>): V? {
-  return getUserDataUnprotected(key)
+  getUserDataUnprotected(key)?.let {
+    return it
+  }
+  if (key is KeyWithDefaultValue<V>) {
+    val value = key.defaultValue
+    this[key] = value
+    return value
+  }
+  return null
 }
 
 internal operator fun UserDataHolderUnprotected.get(key: Key<Boolean>): Boolean {

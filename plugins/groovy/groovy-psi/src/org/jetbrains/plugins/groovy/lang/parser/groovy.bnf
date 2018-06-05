@@ -287,12 +287,12 @@ private trait_definition_header ::= IDENTIFIER type_parameter_list? nl_extends n
 private enum_definition_header ::= <<classIdentifier>> nl_non_empty_extends? nl_implements
 private annotation_definition_header ::= IDENTIFIER
 
-left class_type_definition ::= 'class' class_definition_header mb_nl class_body <<resetClassIdentifier>>
+left class_type_definition ::= 'class' class_definition_header mb_nl class_body <<popClassIdentifier>>
 {
   pin = class_definition_header
   elementTypeClass = 'org.jetbrains.plugins.groovy.lang.psi.stubs.elements.GrClassDefinitionElementType'
 }
-left interface_type_definition ::= 'interface' interface_definition_header mb_nl class_body <<resetClassIdentifier>>
+left interface_type_definition ::= 'interface' interface_definition_header mb_nl class_body <<popClassIdentifier>>
 {
   pin = interface_definition_header
   elementTypeClass = 'org.jetbrains.plugins.groovy.lang.psi.stubs.elements.GrInterfaceDefinitionElementType'
@@ -302,7 +302,7 @@ left trait_type_definition ::= 'trait' trait_definition_header mb_nl class_body
   pin = trait_definition_header
   elementTypeClass = 'org.jetbrains.plugins.groovy.lang.psi.stubs.elements.GrTraitElementType'
 }
-left enum_type_definition ::= 'enum' enum_definition_header mb_nl enum_body <<resetClassIdentifier>>
+left enum_type_definition ::= 'enum' enum_definition_header mb_nl enum_body <<popClassIdentifier>>
 {
   pin = enum_definition_header
   elementTypeClass = 'org.jetbrains.plugins.groovy.lang.psi.stubs.elements.GrEnumDefinitionElementType'
