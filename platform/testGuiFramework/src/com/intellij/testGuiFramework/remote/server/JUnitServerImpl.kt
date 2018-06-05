@@ -160,7 +160,7 @@ class JUnitServerImpl : JUnitServer {
     }
   }
 
-  inner class ServerSendThread(val connection: Socket, val objectOutputStream: ObjectOutputStream) : Thread(SEND_THREAD) {
+  inner class ServerSendThread(private val connection: Socket, val objectOutputStream: ObjectOutputStream) : Thread(SEND_THREAD) {
 
     override fun run() {
       LOG.info("Server Send Thread started")
@@ -185,7 +185,7 @@ class JUnitServerImpl : JUnitServer {
 
   }
 
-  inner class ServerReceiveThread(val connection: Socket, val objectInputStream: ObjectInputStream) : Thread(RECEIVE_THREAD) {
+  inner class ServerReceiveThread(private val connection: Socket, val objectInputStream: ObjectInputStream) : Thread(RECEIVE_THREAD) {
 
     override fun run() {
       try {
