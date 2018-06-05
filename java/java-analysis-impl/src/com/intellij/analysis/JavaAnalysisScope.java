@@ -100,10 +100,12 @@ public class JavaAnalysisScope extends AnalysisScope {
 
   @Override
   protected void initFilesSet() {
-    super.initFilesSet();
     if (myType == PACKAGE) {
+      myFilesSet = new HashSet<>();
       accept(createFileSearcher());
+      return;
     }
+    super.initFilesSet();
   }
 
   @Override

@@ -51,13 +51,13 @@ public class AnalysisScope {
   public static final int DIRECTORY = 2;
   public static final int FILE = 3;
   public static final int MODULE = 4;
+  static final int PACKAGE = 5;
   public static final int INVALID = 6;
-  public static final int PACKAGE = 5;
   public static final int MODULES = 7;
   public static final int CUSTOM = 8;
   public static final int VIRTUAL_FILES = 9;
   public static final int UNCOMMITTED_FILES = 10;
-  @MagicConstant(intValues = {PROJECT, DIRECTORY, FILE, MODULE, INVALID, PACKAGE, MODULES, CUSTOM, VIRTUAL_FILES, UNCOMMITTED_FILES})
+  @MagicConstant(intValues = {PROJECT, DIRECTORY, FILE, MODULE, PACKAGE, INVALID, MODULES, CUSTOM, VIRTUAL_FILES, UNCOMMITTED_FILES})
   public @interface Type { }
 
   @NotNull
@@ -71,7 +71,7 @@ public class AnalysisScope {
   @Type protected int myType;
 
   private final Set<VirtualFile> myVFiles;  // initial files and directories the scope is configured on
-  private Set<VirtualFile> myFilesSet;    // set of files (not directories) this scope consists of. calculated in initFilesSet()
+  Set<VirtualFile> myFilesSet;    // set of files (not directories) this scope consists of. calculated in initFilesSet()
 
   private boolean myIncludeTestSource = true;
 
