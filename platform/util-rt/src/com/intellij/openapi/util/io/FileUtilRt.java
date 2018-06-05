@@ -414,7 +414,15 @@ public class FileUtilRt {
       try {
         File f = calcName(dir, prefix, suffix, i);
 
-        boolean success = isDirectory ? f.mkdir() : f.createNewFile();
+        final boolean success;
+        final String exists = f.exists() ? " exists" : " doesn't exist";
+        try {
+          success = isDirectory ? f.mkdir() : f.createNewFile();
+        } catch (IOException e) {
+          logger().error("File: " + f.getPath() + exists, e);
+          throw e;
+        }
+
         if (!success) {
           String[] children = f.getParentFile().list();
           List<String> list = children == null ? Collections.<String>emptyList() : Arrays.asList(children);
