@@ -410,7 +410,11 @@ mGSTRING_LITERAL = {mDOUBLE_QUOTED_LITERAL} | {mTRIPLE_DOUBLE_QUOTED_LITERAL}
   {WHITE_SPACE} {
     return TokenType.WHITE_SPACE;
   }
-  "/"/[^/*=] {
+  "/=" {
+    yyendstate(DIVISION_EXPECTED);
+    return storeToken(T_DIV_ASSIGN);
+  }
+  "/"/[^/*] {
     yyendstate(DIVISION_EXPECTED);
     return storeToken(T_DIV);
   }
@@ -438,7 +442,6 @@ mGSTRING_LITERAL = {mDOUBLE_QUOTED_LITERAL} | {mTRIPLE_DOUBLE_QUOTED_LITERAL}
                                             return storeToken(T_LBRACE);
                                           }
 "?"                                       { return storeToken(T_Q); }
-"/="                                      { return storeToken(T_DIV_ASSIGN); }
 "("                                       { return storeToken(T_LPAREN); }
 ")"                                       { return storeToken(T_RPAREN); }
 "["                                       { return storeToken(T_LBRACK); }

@@ -400,6 +400,8 @@ class ExpressionsParsingTest extends GroovyParsingTestCase {
 
   void testregex$regex_begin2() throws Throwable { doTest() }
 
+  void testregex$slashyEq() { doTest() }
+
   void testregex$multiLineSlashy() throws Throwable { doTest() }
 
   void testregex$dollarSlashy() throws Throwable { doTest() }
