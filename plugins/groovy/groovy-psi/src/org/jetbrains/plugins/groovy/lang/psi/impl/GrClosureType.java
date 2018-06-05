@@ -124,7 +124,8 @@ public class GrClosureType extends GrLiteralClassType {
     return new GrClosureType(languageLevel, myScope, myFacade, mySignature, myTypeArgs);
   }
 
-  public static GrClosureType create(GroovyResolveResult[] results, GroovyPsiElement context) {
+  @NotNull
+  public static GrClosureType create(@NotNull Iterable<? extends GroovyResolveResult> results, @NotNull GroovyPsiElement context) {
     List<GrClosureSignature> signatures = new ArrayList<>();
     for (GroovyResolveResult result : results) {
       if (result.getElement() instanceof PsiMethod) {

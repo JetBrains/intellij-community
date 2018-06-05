@@ -196,11 +196,6 @@ public class GrReferenceExpressionImpl extends GrReferenceElementImpl<GrExpressi
       }
     }
 
-    IElementType dotType = getDotTokenType();
-    if (dotType == GroovyTokenTypes.mMEMBER_POINTER) {
-      return GrClosureType.create(multiResolve(false), this);
-    }
-
     if (ResolveUtil.isDefinitelyKeyOfMap(this)) {
       return getTypeFromMapAccess(this);
     }
