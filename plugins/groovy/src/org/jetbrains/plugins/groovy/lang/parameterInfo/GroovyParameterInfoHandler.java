@@ -33,10 +33,10 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMe
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrReflectedMethod;
 import org.jetbrains.plugins.groovy.lang.psi.api.types.GrClosureParameter;
 import org.jetbrains.plugins.groovy.lang.psi.impl.GrClosureType;
-import org.jetbrains.plugins.groovy.lang.psi.impl.GroovyResolveResultImpl;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.TypesUtil;
 import org.jetbrains.plugins.groovy.lang.psi.util.GrInnerClassConstructorUtil;
 import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
+import org.jetbrains.plugins.groovy.lang.resolve.ElementResolveResult;
 import org.jetbrains.plugins.groovy.lang.resolve.ResolveUtil;
 
 import java.util.*;
@@ -69,7 +69,7 @@ public class GroovyParameterInfoHandler implements ParameterInfoHandlerWithTabAc
       List<GroovyResolveResult> methods = new ArrayList<>();
       for (PsiElement element : elements) {
         if (element instanceof PsiMethod) {
-          methods.add(new GroovyResolveResultImpl(element, true));
+          methods.add(new ElementResolveResult<>(element));
         }
       }
       return ArrayUtil.toObjectArray(methods);
