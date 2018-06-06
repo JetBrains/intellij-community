@@ -64,8 +64,7 @@ public class EpydocStringTest extends TestCase {
   }
 
   public void testMultipleTags() {
-    EpydocString docString = createEpydocDocString("    \"\"\"\n" +
-                                                   "    Run the given function wrapped with seteuid/setegid calls.\n" +
+    EpydocString docString = createEpydocDocString("    Run the given function wrapped with seteuid/setegid calls.\n" +
                                                    "\n" +
                                                    "    This will try to minimize the number of seteuid/setegid calls, comparing\n" +
                                                    "    current and wanted permissions\n" +
@@ -81,13 +80,15 @@ public class EpydocStringTest extends TestCase {
                                                    "\n" +
                                                    "    @param *args: arguments passed to function\n" +
                                                    "    @param **kwargs: keyword arguments passed to C{function}\n" +
-                                                   "    \"\"\"");
+                                                   "    \n" +
+                                                   "    @return: the return value of the function");
 
     final List<String> params = docString.getParameters();
     assertOrderedEquals(params, "euid", "egid", "function", "*args", "**kwargs");
     assertEquals("effective UID used to call the function.", docString.getParamDescription("euid"));
     assertEquals("effective GID used to call the function.", docString.getParamDescription("egid"));
-    assertEquals("arguments passed to function.", docString.getParamDescription("args"));
+    assertEquals("arguments passed to function", docString.getParamDescription("args"));
+    assertEquals("the return value of the function", docString.getReturnDescription());
   }
 
   public void testInlineMarkupToHTML() {
