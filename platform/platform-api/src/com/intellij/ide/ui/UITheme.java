@@ -7,6 +7,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.ColorUtil;
 import com.intellij.util.ui.JBDimension;
 import com.intellij.util.ui.JBInsets;
+import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -103,6 +104,8 @@ public class UITheme {
       return parseSize(value);
     } else if (key.endsWith("Width")) {
       return getInteger(value);
+    } else if (key.endsWith("grayFilter")) {
+      return parseGrayFilter(value);
     } else {
       final Color color = parseColor(value);
       final Integer invVal = getInteger(value);
@@ -127,6 +130,13 @@ public class UITheme {
                         Integer.parseInt(numbers.get(1)),
                         Integer.parseInt(numbers.get(2)),
                         Integer.parseInt(numbers.get(3))).asUIResource();
+  }
+
+  private static UIUtil.GrayFilter parseGrayFilter(String value) {
+    java.util.List<String> numbers = StringUtil.split(value, ",");
+    return new UIUtil.GrayFilter(Integer.parseInt(numbers.get(0)),
+                                 Integer.parseInt(numbers.get(1)),
+                                 Integer.parseInt(numbers.get(2))).asUIResource();
   }
 
   @SuppressWarnings("UseJBColor")

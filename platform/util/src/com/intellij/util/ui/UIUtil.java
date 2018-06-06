@@ -41,6 +41,7 @@ import javax.swing.event.UndoableEditListener;
 import javax.swing.plaf.ButtonUI;
 import javax.swing.plaf.ComboBoxUI;
 import javax.swing.plaf.FontUIResource;
+import javax.swing.plaf.UIResource;
 import javax.swing.plaf.basic.BasicComboBoxUI;
 import javax.swing.plaf.basic.BasicRadioButtonUI;
 import javax.swing.plaf.basic.BasicTextUI;
@@ -201,53 +202,12 @@ public class UIUtil {
     drawLine(g, startX, bottomY, endX, bottomY, null, color);
   }
 
-  private static final RGBImageFilter DEFAULT_GRAY_FILTER = new GrayFilter(
-    Registry.get("ide.grayfilter.default.brightness").asInteger(),
-    Registry.get("ide.grayfilter.default.contrast").asInteger(),
-    Registry.get("ide.grayfilter.default.alpha").asInteger()
-  );
-  private static final RGBImageFilter DARCULA_GRAY_FILTER = new GrayFilter(
-    Registry.get("ide.grayfilter.darcula.brightness").asInteger(),
-    Registry.get("ide.grayfilter.darcula.contrast").asInteger(),
-    Registry.get("ide.grayfilter.darcula.alpha").asInteger()
-  );
-
   public static RGBImageFilter getGrayFilter() {
-    return isUnderDarcula() ? DARCULA_GRAY_FILTER : DEFAULT_GRAY_FILTER;
+    return GrayFilter.namedFilter("grayFilter", new GrayFilter(33, -35, 100));
   }
 
-  @ApiStatus.Experimental
-  public static void setGrayFilterProperty(String prop, int value) {
-    GrayFilter filter = (GrayFilter)getGrayFilter();
-    if ("brightness".equals(prop)) {
-      filter.setBrightness(value);
-    }
-    else if ("contrast".equals(prop)) {
-      filter.setContrast(value);
-    }
-    else if ("alpha".equals(prop)) {
-      filter.setAlpha(value);
-    }
-    else {
-      return;
-    }
-    String key = "ide.grayfilter." + (isUnderDarcula() ? "darcula." : "default.") + prop;
-    Registry.get(key).setValue(value);
-  }
-
-  @ApiStatus.Experimental
-  public static int getGrayFilterProperty(String prop) {
-    GrayFilter filter = (GrayFilter)getGrayFilter();
-    if ("brightness".equals(prop)) {
-      return filter.getBrightness();
-    }
-    else if ("contrast".equals(prop)) {
-      return filter.getContrast();
-    }
-    else if ("alpha".equals(prop)) {
-      return filter.getAlpha();
-    }
-    throw new IllegalArgumentException("wrong property: " + prop);
+  public static RGBImageFilter getTextGrayFilter() {
+    return GrayFilter.namedFilter("text.grayFilter", new GrayFilter(20, 0, 100));
   }
 
   @ApiStatus.Experimental
@@ -328,6 +288,21 @@ public class UIUtil {
       int a = ((rgb >> 24) & 0xff) * alpha / 100;
 
       return (a << 24) | (gray << 16) | (gray << 8) | gray;
+    }
+
+    public GrayFilterUIResource asUIResource() {
+      return new GrayFilterUIResource(this);
+    }
+
+    public static class GrayFilterUIResource extends GrayFilter implements UIResource {
+      public GrayFilterUIResource(GrayFilter filter) {
+        super(filter.origBrightness, filter.origContrast, filter.alpha);
+      }
+    }
+
+    @NotNull
+    public static GrayFilter namedFilter(String resourceName, GrayFilter defaultFilter) {
+      return ObjectUtils.notNull((GrayFilter)UIManager.get(resourceName), defaultFilter);
     }
   }
 
