@@ -226,7 +226,7 @@ public class InjectLanguageAction implements IntentionAction, LowPriorityAction 
         PropertiesComponent.getInstance().setValue(LAST_INJECTED_LANGUAGE, injectable.getId());
       })
       .setMinSize(minSize)
-      .setNamerForFiltering(language -> language.getDisplayName())
+      .setNamerForFiltering(language -> language.getDisplayName());
     if (lastInjected != null) {
       builder = builder.setSelectedValue(lastInjected, true);
     }
