@@ -211,7 +211,7 @@ public class MadTestingUtil {
   @NotNull
   public static Supplier<MadTestingAction> actionsOnFileContents(CodeInsightTestFixture fixture, String rootPath,
                                                                   FileFilter fileFilter,
-                                                                  Function<PsiFile, Generator<? extends MadTestingAction>> actions) {
+                                                                  Function<PsiFile, ? extends Generator<? extends MadTestingAction>> actions) {
     Generator<File> randomFiles = randomFiles(rootPath, fileFilter);
     return () -> env -> new RunAll()
       .append(() -> {
@@ -219,17 +219,19 @@ public class MadTestingUtil {
         VirtualFile vFile = copyFileToProject(ioFile, fixture, rootPath);
         PsiFile psiFile = fixture.getPsiManager().findFile(vFile);
         if (psiFile instanceof PsiBinaryFile || psiFile instanceof PsiPlainTextFile) {
+          //noinspection UseOfSystemOutOrSystemErr
           System.err.println("Can't check " + vFile + " due to incorrect file type: " + psiFile + " of " + psiFile.getClass());
           return;
         }
         env.executeCommands(Generator.from(data -> data.generate(actions.apply(fixture.getPsiManager().findFile(vFile)))));
       })
       .append(() -> WriteAction.run(() -> {
-        for (VirtualFile file : fixture.getTempDirFixture().getFile("").getChildren()) {
+        for (VirtualFile file : Objects.requireNonNull(fixture.getTempDirFixture().getFile("")).getChildren()) {
           file.delete(fixture);
         }
       }))
       .append(() -> PsiDocumentManager.getInstance(fixture.getProject()).commitAllDocuments())
+      .append(() -> UIUtil.dispatchAllInvocationEvents())
       .run();
   }
 
@@ -287,7 +289,7 @@ public class MadTestingUtil {
 
   private static class FileGenerator implements Function<DataStructure, File> {
     private static final com.intellij.util.Function<File, JBIterable<File>> FS_TRAVERSAL =
-      TreeTraversal.PRE_ORDER_DFS.traversal((File f) -> f.isDirectory() ? Arrays.asList(f.listFiles()) : Collections.emptyList());
+      TreeTraversal.PRE_ORDER_DFS.traversal((File f) -> f.isDirectory() ? Arrays.asList(Objects.requireNonNull(f.listFiles())) : Collections.emptyList());
     private final File myRoot;
     private final FileFilter myFilter;
 
