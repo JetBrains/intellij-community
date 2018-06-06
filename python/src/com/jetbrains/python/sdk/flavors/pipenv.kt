@@ -29,10 +29,8 @@ import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.vfs.StandardFileSystems
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.util.PathUtil
-import com.jetbrains.python.packaging.PyExecutionException
-import com.jetbrains.python.packaging.PyPackageManager
-import com.jetbrains.python.packaging.PyPackageManagers
-import com.jetbrains.python.packaging.PyRequirement
+import com.jetbrains.python.inspections.PyPackageRequirementsInspection
+import com.jetbrains.python.packaging.*
 import com.jetbrains.python.sdk.*
 import icons.PythonIcons
 import org.jetbrains.annotations.SystemDependent
@@ -225,9 +223,6 @@ class UsePipEnvQuickFix : LocalQuickFix {
     fun isApplicable(module: Module): Boolean = module.pipFile != null
 
     fun setUpPipEnv(project: Project, module: Module) {
-      if (project.isDisposed || module.isDisposed) {
-        return
-      }
       val sdksModel = ProjectSdksModel().apply {
         reset(project)
       }
@@ -251,8 +246,31 @@ class UsePipEnvQuickFix : LocalQuickFix {
     val module = ModuleUtilCore.findModuleForPsiElement(element) ?: return
     // Invoke the setup later to escape the write action of the quick fix in order to show the modal progress dialog
     ApplicationManager.getApplication().invokeLater {
+      if (project.isDisposed || module.isDisposed) return@invokeLater
       setUpPipEnv(project, module)
     }
+  }
+}
+
+/**
+ * A quick-fix for installing packages specified in Pipfile.
+ */
+class PipEnvInstallQuickFix : LocalQuickFix {
+  companion object {
+    fun pipEnvInstall(project: Project, module: Module) {
+      val sdk = module.pythonSdk ?: return
+      val listener = PyPackageRequirementsInspection.RunningPackagingTasksListener(module)
+      val ui = PyPackageManagerUI(project, sdk, listener)
+      ui.install(null, listOf("--dev"))
+    }
+  }
+
+  override fun getFamilyName() = "Install requirements from Pipfile"
+
+  override fun applyFix(project: Project, descriptor: ProblemDescriptor) {
+    val element = descriptor.psiElement ?: return
+    val module = ModuleUtilCore.findModuleForPsiElement(element) ?: return
+    pipEnvInstall(project, module)
   }
 }
 

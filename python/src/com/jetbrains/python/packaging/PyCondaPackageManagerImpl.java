@@ -57,8 +57,9 @@ public class PyCondaPackageManagerImpl extends PyPackageManagerImpl {
   }
 
   @Override
-  public void install(@NotNull List<PyRequirement> requirements, @NotNull List<String> extraArgs) throws ExecutionException {
+  public void install(@Nullable List<PyRequirement> requirements, @NotNull List<String> extraArgs) throws ExecutionException {
     if (useConda) {
+      if (requirements == null) return;
       final ArrayList<String> arguments = new ArrayList<>();
       for (PyRequirement requirement : requirements) {
         arguments.add(requirement.getPresentableText());
