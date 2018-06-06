@@ -765,7 +765,7 @@ public class DirectoryIndexTest extends DirectoryIndexTestCase {
   }
 
   public void testFileModuleExcludeRootUnderDirectoryRoot() {
-    VirtualFile fileExcludeRoot = createChildData(mySrcDir1, "fileExcludeRoot.txt");
+    VirtualFile fileExcludeRoot = createChildDirectory(mySrcDir1, "fileExcludeRoot");
     assertTrue(myFileIndex.isInContent(fileExcludeRoot));
     assertTrue(myFileIndex.isInSource(fileExcludeRoot));
     assertIteratedContent(myFileIndex, Collections.singletonList(fileExcludeRoot), null);
@@ -788,9 +788,9 @@ public class DirectoryIndexTest extends DirectoryIndexTestCase {
   }
 
   public void testFileModuleExcludeRootUnderFileRoot() {
-    VirtualFile fileRoot = createChildData(myRootVFile, "fileRoot.txt");
+    VirtualFile fileRoot = createChildDirectory(myRootVFile, "fileRoot");
     PsiTestUtil.addContentRoot(myModule, fileRoot);
-    checkInfo(fileRoot, myModule, false, false, "", null);
+    checkInfo(fileRoot, myModule, false, false, null, null);
     assertTrue(myFileIndex.isInContent(fileRoot));
     assertIteratedContent(myFileIndex, Collections.singletonList(fileRoot), null);
 
@@ -801,7 +801,7 @@ public class DirectoryIndexTest extends DirectoryIndexTestCase {
 
     // removing file exclude root
     PsiTestUtil.removeExcludedRoot(myModule, fileRoot);
-    checkInfo(fileRoot, myModule, false, false, "", null);
+    checkInfo(fileRoot, myModule, false, false, null, null);
     assertTrue(myFileIndex.isInContent(fileRoot));
     assertIteratedContent(myFileIndex, Collections.singletonList(fileRoot), null);
   }
