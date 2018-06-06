@@ -16,7 +16,6 @@ import com.intellij.ui.IdeUICustomization;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
 import java.awt.event.InputEvent;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -55,11 +54,6 @@ public class FileSearchEverywhereContributor extends AbstractGotoSEContributor<F
         return false;
       }
     };
-  }
-
-  @Override
-  public ListCellRenderer getElementsRenderer() {
-    return createModel(myProject).getListCellRenderer();
   }
 
   @Override

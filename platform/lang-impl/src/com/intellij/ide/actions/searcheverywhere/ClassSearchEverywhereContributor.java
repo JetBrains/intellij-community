@@ -2,7 +2,6 @@
 package com.intellij.ide.actions.searcheverywhere;
 
 import com.intellij.ide.IdeBundle;
-import com.intellij.ide.util.NavigationItemListCellRenderer;
 import com.intellij.ide.util.gotoByName.FilteringGotoByModel;
 import com.intellij.ide.util.gotoByName.GotoClassModel2;
 import com.intellij.lang.DependentLanguage;
@@ -48,11 +47,6 @@ public class ClassSearchEverywhereContributor extends AbstractGotoSEContributor<
   @Override
   protected FilteringGotoByModel<Language> createModel(Project project) {
     return new GotoClassModel2(project);
-  }
-
-  @Override
-  public ListCellRenderer getElementsRenderer() {
-    return new NavigationItemListCellRenderer();
   }
 
   public static class Factory implements SearchEverywhereContributorFactory<Language> {
