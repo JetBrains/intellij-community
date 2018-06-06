@@ -108,7 +108,7 @@ public class ShowExpressionTypeHandler implements CodeInsightActionHandler {
     boolean exactRange = false;
     TextRange range = EditorUtil.getSelectionInAnyMode(editor);
     final Map<PsiElement, ExpressionTypeProvider> map = ContainerUtil.newLinkedHashMap();
-    int offset = TargetElementUtil.adjustOffset(file, editor.getDocument(), range.getStartOffset());
+    int offset = !range.isEmpty() ? range.getStartOffset() : TargetElementUtil.adjustOffset(file, editor.getDocument(), range.getStartOffset());
     for (int i = 0; i < 3 && map.isEmpty() && offset > i; i++) {
       PsiElement elementAt = file.findElementAt(offset - i);
       if (elementAt == null) continue;
