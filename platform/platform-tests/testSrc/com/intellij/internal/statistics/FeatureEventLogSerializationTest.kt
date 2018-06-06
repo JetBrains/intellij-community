@@ -3,10 +3,7 @@ package com.intellij.internal.statistics
 
 import com.google.gson.JsonObject
 import com.google.gson.JsonParser
-import com.intellij.internal.statistic.eventLog.LogEvent
-import com.intellij.internal.statistic.eventLog.LogEventRecord
-import com.intellij.internal.statistic.eventLog.LogEventRecordRequest
-import com.intellij.internal.statistic.eventLog.LogEventSerializer
+import com.intellij.internal.statistic.eventLog.*
 import com.intellij.openapi.util.io.FileUtil
 import org.junit.Test
 import kotlin.test.assertEquals
@@ -134,6 +131,99 @@ class FeatureEventLogSerializationTest {
     testDeserialization(firstBatch, secondBatch)
   }
 
+  @Test
+  fun testEmptyWhitelist() {
+    val all = ArrayList<LogEvent>()
+    all.add(LogEvent("session-id", "999.9999", "-1", "recorder-id", "1", "first"))
+    all.add(LogEvent("session-id", "999.9999", "-1", "recorder-id-1", "1", "second"))
+    all.add(LogEvent("session-id", "999.9999", "-1", "recorder-id-2", "1", "third"))
+
+    testWhitelist(HashSet(), all, ArrayList())
+  }
+
+  @Test
+  fun testWhitelist() {
+    val first = LogEvent("session-id", "999.9999", "-1", "recorder-id", "1", "first")
+    val second = LogEvent("session-id", "999.9999", "-1", "recorder-id-1", "1", "second")
+    val third = LogEvent("session-id", "999.9999", "-1", "recorder-id", "1", "third")
+
+    val all = ArrayList<LogEvent>()
+    all.add(first)
+    all.add(second)
+    all.add(third)
+    val filtered = ArrayList<LogEvent>()
+    filtered.add(first)
+    filtered.add(third)
+
+    val whitelist = HashSet<String>()
+    whitelist.add("recorder-id")
+    testWhitelist(whitelist, all, filtered)
+  }
+
+  @Test
+  fun testWhitelistWithMultiGroups() {
+    val first = LogEvent("session-id", "999.9999", "-1", "recorder-id", "1", "first")
+    val second = LogEvent("session-id", "999.9999", "-1", "recorder-id-1", "1", "second")
+    val third = LogEvent("session-id", "999.9999", "-1", "recorder-id-2", "1", "third")
+
+    val all = ArrayList<LogEvent>()
+    all.add(first)
+    all.add(second)
+    all.add(third)
+    val filtered = ArrayList<LogEvent>()
+    filtered.add(first)
+    filtered.add(third)
+
+    val whitelist = HashSet<String>()
+    whitelist.add("recorder-id")
+    whitelist.add("recorder-id-2")
+    testWhitelist(whitelist, all, filtered)
+  }
+
+  @Test
+  fun testWhitelistAll() {
+    val first = LogEvent("session-id", "999.9999", "-1", "recorder-id", "1", "first")
+    val second = LogEvent("session-id", "999.9999", "-1", "recorder-id-1", "1", "second")
+    val third = LogEvent("session-id", "999.9999", "-1", "recorder-id-2", "1", "third")
+
+    val all = ArrayList<LogEvent>()
+    all.add(first)
+    all.add(second)
+    all.add(third)
+    val filtered = ArrayList<LogEvent>()
+    filtered.add(first)
+    filtered.add(second)
+    filtered.add(third)
+
+    val whitelist = HashSet<String>()
+    whitelist.add("recorder-id")
+    whitelist.add("recorder-id-1")
+    whitelist.add("recorder-id-2")
+    testWhitelist(whitelist, all, filtered)
+  }
+
+  private fun testWhitelist(whitelist: Set<String>, all: List<LogEvent>, filtered: List<LogEvent>) {
+    val records = ArrayList<LogEventRecord>()
+    if (!filtered.isEmpty()) {
+      records.add(LogEventRecord(filtered))
+    }
+    val expected = requestByRecords(records)
+
+    val log = FileUtil.createTempFile("feature-event-log", ".log")
+    try {
+      val out = StringBuilder()
+      for (event in all) {
+        out.append(LogEventSerializer.toString(event)).append("\n")
+      }
+      FileUtil.writeToFile(log, out.toString())
+      val actual = LogEventRecordRequest.create(log, "IU", "user-id", 600, LogEventWhitelistFilter(whitelist))
+      assertEquals(expected, actual)
+    }
+    finally {
+      FileUtil.delete(log)
+    }
+  }
+
   private fun testDeserialization(vararg batches: List<LogEvent>) {
     val events = ArrayList<LogEvent>()
     val records = ArrayList<LogEventRecord>()
@@ -150,7 +240,7 @@ class FeatureEventLogSerializationTest {
         out.append(LogEventSerializer.toString(event)).append("\n")
       }
       FileUtil.writeToFile(log, out.toString())
-      val actual = LogEventRecordRequest.create(log, "IU", "user-id", 600)
+      val actual = LogEventRecordRequest.create(log, "IU", "user-id", 600, LogEventTrueFilter)
       assertEquals(expected, actual)
     }
     finally {

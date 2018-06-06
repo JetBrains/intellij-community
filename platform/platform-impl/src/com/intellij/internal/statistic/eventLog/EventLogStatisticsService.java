@@ -8,6 +8,7 @@ import com.intellij.internal.statistic.connect.StatisticsService;
 import com.intellij.internal.statistic.persistence.UsageStatisticsPersistenceComponent;
 import com.intellij.notification.Notification;
 import com.intellij.notification.NotificationListener;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.io.BufferExposingByteArrayOutputStream;
 import com.intellij.openapi.util.text.StringUtil;
@@ -42,12 +43,14 @@ public class EventLogStatisticsService implements StatisticsService {
       return new StatisticsResult(StatisticsResult.ResultCode.NOT_PERMITTED_SERVER, "NOT_PERMITTED");
     }
 
+    final LogEventFilter filter = ApplicationManager.getApplication().isInternal() ? LogEventTrueFilter.INSTANCE :
+                                  new LogEventWhitelistFilter(mySettingsService.getWhitelistedGroups());
     try {
       int succeed = 0;
       final List<File> logs = FeatureUsageLogger.INSTANCE.getLogFiles();
       final List<File> toRemove = new ArrayList<>(logs.size());
       for (File file : logs) {
-        final LogEventRecordRequest recordRequest = LogEventRecordRequest.Companion.create(file);
+        final LogEventRecordRequest recordRequest = LogEventRecordRequest.Companion.create(file, filter);
         final String error = validate(recordRequest, file);
         if (StringUtil.isNotEmpty(error) || recordRequest == null) {
           if (LOG.isTraceEnabled()) {
