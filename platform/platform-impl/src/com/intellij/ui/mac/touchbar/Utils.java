@@ -44,22 +44,17 @@ public class Utils {
     if (appEx == null) // unit-test case
       return null;
 
+    String appId = null;
     try (NSAutoreleaseLock lock = new NSAutoreleaseLock()) {
       final ID bundle = Foundation.invoke("NSBundle", "mainBundle");
       final ID dict = Foundation.invoke(bundle, "infoDictionary");
-      final ID appID = Foundation.invoke(dict, "objectForKey:", Foundation.nsString("CFBundleIdentifier"));
-      final String sappId = Foundation.toStringViaUTF8(appID);
-      if (sappId != null)
-        LOG.info("mac OS application id: " + sappId);
-      else
-        LOG.info("mac OS application id is null");
+      final ID nsAppID = Foundation.invoke(dict, "objectForKey:", Foundation.nsString("CFBundleIdentifier"));
+      appId = Foundation.toStringViaUTF8(nsAppID);
     }
 
-    return appEx.isEAP() ? "com.jetbrains.intellij-EAP" : "com.jetbrains.intellij";
+    if (appId == null || appId.isEmpty())
+      LOG.error("can't obtain application id from NSBundle.mainBundle");
 
-    // TODO: obtain "OS X Application identifier' via platform api or use next table:
-    // IDEA: com.jetbrains.intellij
-    // AppCode: com.jetbrains.AppCode
-    // PyCharm: com.jetbrains.pycharm
+    return appId;
   }
 }

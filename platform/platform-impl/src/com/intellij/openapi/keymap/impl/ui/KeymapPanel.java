@@ -216,15 +216,17 @@ public class KeymapPanel extends JPanel implements SearchableConfigurable, Confi
 
     if (TouchBarsManager.isTouchBarAvailable()) {
       final String appId = Utils.getAppId();
-      final JCheckBox useFn = new JCheckBox("Show function keys in Touch Bar", NSDefaults.isShowFnKeysEnabled(appId));
-      useFn.addChangeListener(new ChangeListener() {
-        public void stateChanged(ChangeEvent e) {
-          final boolean changed = NSDefaults.setShowFnKeysEnabled(appId, useFn.isSelected());
-          if (changed)
-            Utils.restartTouchBarServer();
-        }
-      });
-      panel.add(useFn, BorderLayout.SOUTH);
+      if (appId != null && !appId.isEmpty()) {
+        final JCheckBox useFn = new JCheckBox("Show function keys in Touch Bar", NSDefaults.isShowFnKeysEnabled(appId));
+        useFn.addChangeListener(new ChangeListener() {
+          public void stateChanged(ChangeEvent e) {
+            final boolean changed = NSDefaults.setShowFnKeysEnabled(appId, useFn.isSelected());
+            if (changed)
+              Utils.restartTouchBarServer();
+          }
+        });
+        panel.add(useFn, BorderLayout.SOUTH);
+      }
     }
 
     return panel;
