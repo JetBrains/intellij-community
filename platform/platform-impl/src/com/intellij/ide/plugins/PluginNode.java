@@ -53,6 +53,7 @@ public class PluginNode implements IdeaPluginDescriptor {
   private boolean myEnabled = true;
   private String myRating;
   private boolean myIncomplete;
+  private List<String> myTags;
 
   public PluginNode() { }
 
@@ -256,6 +257,18 @@ public class PluginNode implements IdeaPluginDescriptor {
 
   public void addDepends(String id) {
     (myDependencies != null ? myDependencies : (myDependencies = new ArrayList<>())).add(PluginId.getId(id));
+  }
+
+  public List<String> getTags() {
+    return myTags;
+  }
+
+  public void setTags(List<String> tags) {
+    myTags = new ArrayList<>(tags);
+  }
+
+  public void addTags(String tag) {
+    (myTags != null ? myTags : (myTags = new ArrayList<>())).add(tag);
   }
 
   /**
