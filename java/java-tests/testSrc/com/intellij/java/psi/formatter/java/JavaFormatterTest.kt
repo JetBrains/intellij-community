@@ -1812,6 +1812,30 @@ class JavaFormatterTest : AbstractJavaFormatterTest() {
     }
   }
 
+  fun testWrapBetweenCommaAndSemicolon() {
+      doTextTest("""
+enum Foo {
+    VALUE_A,
+    VALUE_B,;
+
+    Foo() {
+        // whatever
+    }
+}
+            """.trimIndent(),
+                 """
+enum Foo {
+    VALUE_A,
+    VALUE_B,
+    ;
+
+    Foo() {
+        // whatever
+    }
+}
+                 """.trimIndent())
+  }
+
   @Throws(IncorrectOperationException::class)
   fun testRemoveBraceBeforeInstanceOf() {
     doTextTest("class ReformatInstanceOf {\n" +
