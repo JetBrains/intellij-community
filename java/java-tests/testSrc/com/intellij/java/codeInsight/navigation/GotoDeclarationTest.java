@@ -91,4 +91,10 @@ public class GotoDeclarationTest extends LightCodeInsightTestCase {
     assertNotNull(item);
     assertTrue(item instanceof PsiClass && CommonClassNames.JAVA_LANG_STRING.equals(((PsiClass)item).getQualifiedName()));
   }
+
+  public void testArrayIndexNotCovered() {
+    configureFromFileText("A.java", "class A {{ String[] arr; int index; arr[index]<caret>; }}");
+    PsiElement element = GotoDeclarationAction.findTargetElement(getProject(), getEditor(), getEditor().getCaretModel().getOffset());
+    assertNull("Unexpected " + element, element);
+  }
 }

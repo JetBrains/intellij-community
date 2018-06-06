@@ -139,7 +139,7 @@ public class TargetElementUtil extends TargetElementUtilBase {
       correctedOffset--;
     }
     if (correctedOffset >= 0) {
-      char charAt = text.charAt(correctedOffset);
+      char charAt = text.charAt(offset);
       if (isIdentifierPart(file, text, correctedOffset) ||
           charAt == '\'' || charAt == '"' || charAt == ')' || charAt == ']') {
         return correctedOffset;
