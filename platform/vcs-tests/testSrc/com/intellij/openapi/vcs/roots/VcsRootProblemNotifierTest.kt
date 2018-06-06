@@ -76,7 +76,7 @@ class VcsRootProblemNotifierTest : VcsPlatformTest() {
 
     // "Root under project dir should be auto-added"
     assertSameElements(vcsManager.allVersionedRoots, deepRoot)
-    assertSuccessfulNotification("mock Integration Enabled for Repository", getPath(deepRoot.path))
+    assertSuccessfulNotification("mock Integration Enabled", getPath(deepRoot.path))
   }
 
   fun `test two roots under project dir are auto-added and reported`() {
@@ -85,7 +85,7 @@ class VcsRootProblemNotifierTest : VcsPlatformTest() {
     notifier.rescanAndNotifyIfNeeded()
 
     assertSameElements(vcsManager.allVersionedRoots, projectRoot, subRoot)
-    assertSuccessfulNotification("mock Integration Enabled for Repositories","""
+    assertSuccessfulNotification("mock Integration Enabled","""
       ${getPath(projectPath)}
       ${getPath(subRoot.path)}
       """.trimIndent())
@@ -98,7 +98,7 @@ class VcsRootProblemNotifierTest : VcsPlatformTest() {
     notifier.rescanAndNotifyIfNeeded()
 
     assertSameElements(vcsManager.allVersionedRoots, aboveRoot)
-    assertSuccessfulNotification("mock Integration Enabled for Repository", getPath(aboveRoot.path))
+    assertSuccessfulNotification("mock Integration Enabled", getPath(aboveRoot.path))
   }
 
   fun `test root above project dir and deeply under project dir are auto-added and reported`() {
@@ -110,7 +110,7 @@ class VcsRootProblemNotifierTest : VcsPlatformTest() {
     notifier.rescanAndNotifyIfNeeded()
 
     assertSameElements(vcsManager.allVersionedRoots, aboveRoot, deepRoot)
-    assertSuccessfulNotification("mock Integration Enabled for Repositories","""
+    assertSuccessfulNotification("mock Integration Enabled","""
       ${getPath(aboveRoot.path)}
       ${getPath(deepRoot.path)}
       """.trimIndent())
