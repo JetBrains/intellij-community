@@ -213,7 +213,7 @@ public class InjectLanguageAction implements IntentionAction, LowPriorityAction 
     final List<Injectable> injectables = getAllInjectables();
 
     final String lastInjectedId = PropertiesComponent.getInstance().getValue(LAST_INJECTED_LANGUAGE);
-    Injectable lastInjected = lastInjectedId != null ? ContainerUtil.find(injectables, injectable1 -> lastInjectedId.equals(lastInjectedId)) : null;
+    Injectable lastInjected = lastInjectedId != null ? ContainerUtil.find(injectables, injectable -> lastInjectedId.equals(injectable.getId())) : null;
 
     Dimension minSize = new JLabel(PlainTextLanguage.INSTANCE.getDisplayName(), EmptyIcon.ICON_16, SwingConstants.LEFT).getMinimumSize();
     minSize.height *= 4;
@@ -227,10 +227,8 @@ public class InjectLanguageAction implements IntentionAction, LowPriorityAction 
       })
       .setMinSize(minSize)
       .setNamerForFiltering(language -> language.getDisplayName())
-      .setSelectedValue(lastInjected, true);
     if (lastInjected != null) {
-      Injectable injectable = ContainerUtil.find(injectables, o -> lastInjected.equals(o.getId()));
-      builder = builder.setSelectedValue(injectable, true);
+      builder = builder.setSelectedValue(lastInjected, true);
     }
     builder.createPopup().showInBestPositionFor(editor);
     return true;
