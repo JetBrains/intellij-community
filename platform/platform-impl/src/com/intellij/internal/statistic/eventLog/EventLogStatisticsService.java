@@ -38,7 +38,7 @@ public class EventLogStatisticsService implements StatisticsService {
       return new StatisticsResult(StatisticsResult.ResultCode.ERROR_IN_CONFIG, "ERROR: unknown Statistics Service URL.");
     }
 
-    if (!mySettingsService.isTransmissionPermitted()) {
+    if (mySettingsService.getPermittedTraffic() == 0) {
       return new StatisticsResult(StatisticsResult.ResultCode.NOT_PERMITTED_SERVER, "NOT_PERMITTED");
     }
 
