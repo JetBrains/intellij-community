@@ -37,6 +37,7 @@ import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.TestOnly;
 
 import javax.swing.*;
 import javax.swing.plaf.FontUIResource;
@@ -1023,5 +1024,14 @@ public final class LafManagerImpl extends LafManager implements PersistentStateC
             LafIconLookup.getSelectedIcon(NAME),
             LafIconLookup.getDisabledIcon(NAME));
     }
+  }
+
+  private static LafManagerImpl ourTestInstance;
+  @TestOnly
+  public static LafManagerImpl getTestInstance() {
+    if (ourTestInstance == null) {
+      ourTestInstance = new LafManagerImpl();
+    }
+    return ourTestInstance;
   }
 }
