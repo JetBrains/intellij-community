@@ -8,20 +8,22 @@ package com.intellij.internal.statistic.eventLog
 import com.intellij.util.containers.ContainerUtil
 import java.util.*
 
-open class LogEvent(session: String, bucket: String, recorderId: String, recorderVersion: String, type: String) {
+open class LogEvent(session: String, build : String, bucket: String, recorderId: String, recorderVersion: String, type: String) {
   val session: String = escape(session)
+  val build: String = escape(build)
   val bucket: String = escape(bucket)
   val time: Long = System.currentTimeMillis()
-  val recorder: LogEventRecorder = LogEventRecorder(escape(recorderId), escape(recorderVersion))
-  val action: LogEventAction = LogEventAction(escape(type))
+  val group: LogEventRecorder = LogEventRecorder(escape(recorderId), escape(recorderVersion))
+  val event: LogEventAction = LogEventAction(escape(type))
 
   fun shouldMerge(next: LogEvent): Boolean {
     if (session != next.session) return false
     if (bucket != next.bucket) return false
-    if (recorder.id != next.recorder.id) return false
-    if (recorder.version != next.recorder.version) return false
-    if (action.id != next.action.id) return false
-    if (action.data != next.action.data) return false
+    if (build != next.build) return false
+    if (group.id != next.group.id) return false
+    if (group.version != next.group.version) return false
+    if (event.id != next.event.id) return false
+    if (event.data != next.event.data) return false
     return true
   }
 
@@ -33,9 +35,10 @@ open class LogEvent(session: String, bucket: String, recorderId: String, recorde
 
     if (session != other.session) return false
     if (bucket != other.bucket) return false
+    if (build != other.build) return false
     if (time != other.time) return false
-    if (recorder != other.recorder) return false
-    if (action != other.action) return false
+    if (group != other.group) return false
+    if (event != other.event) return false
 
     return true
   }
@@ -43,9 +46,10 @@ open class LogEvent(session: String, bucket: String, recorderId: String, recorde
   override fun hashCode(): Int {
     var result = session.hashCode()
     result = 31 * result + bucket.hashCode()
+    result = 31 * result + build.hashCode()
     result = 31 * result + time.hashCode()
-    result = 31 * result + recorder.hashCode()
-    result = 31 * result + action.hashCode()
+    result = 31 * result + group.hashCode()
+    result = 31 * result + event.hashCode()
     return result
   }
 }
@@ -71,7 +75,12 @@ class LogEventRecorder(val id: String, val version: String) {
 }
 
 class LogEventAction(val id: String) {
+  var count: Int = 1
   var data: MutableMap<String, Any> = Collections.emptyMap()
+
+  fun increment() {
+    count++
+  }
 
   fun addData(key: String, value: Any) {
     if (data.isEmpty()) {
