@@ -345,6 +345,14 @@ class A {
     PsiTestUtil.checkStubsMatchText(file)
   }
 
+  void "test add reference into broken extends list"() {
+    def file = myFixture.addFileToProject('a.java', 'class A extends.ends Foo { int a; }')
+    WriteCommandAction.runWriteCommandAction(project) {
+      myFixture.findClass("A").extendsList.add(JavaPsiFacade.getElementFactory(project).createReferenceElementByFQClassName(CommonClassNames.JAVA_LANG_OBJECT, file.resolveScope))
+    }
+    PsiTestUtil.checkStubsMatchText(file)
+  }
+
   void "test identifier dot before class"() {
     def file = myFixture.addFileToProject('a.java', 'class A {{ public id.class B {}}}')
     PsiTestUtil.checkStubsMatchText(file)
