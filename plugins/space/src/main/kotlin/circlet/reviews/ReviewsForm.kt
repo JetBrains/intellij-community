@@ -32,7 +32,7 @@ class ReviewsForm(private val project: Project, parentLifetime: Lifetime) :
 
     private suspend fun reloadImpl() {
         val reviews = project.clientOrNull?.codeReview?.listReviews(
-            BatchInfo(null, 30), ProjectKey(project.settings.projectKey.value), null
+            BatchInfo(null, 30), ProjectKey(project.settings.projectKey.value), null, null
         )?.data ?: return
 
         reload(reviews)
