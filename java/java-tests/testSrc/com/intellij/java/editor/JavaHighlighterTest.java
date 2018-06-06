@@ -15,6 +15,7 @@ import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.psi.JavaDocTokenType;
 import com.intellij.psi.JavaTokenType;
 import com.intellij.testFramework.LightCodeInsightTestCase;
+import com.intellij.testFramework.propertyBased.CheckHighlighterConsistency;
 
 import java.util.ArrayList;
 
@@ -28,10 +29,14 @@ public class JavaHighlighterTest extends LightCodeInsightTestCase {
 
   @Override
   protected void tearDown() throws Exception {
-    for (Editor editor : myEditorsToRelease) {
-      EditorFactory.getInstance().releaseEditor(editor);
+    try {
+      for (Editor editor : myEditorsToRelease) {
+        EditorFactory.getInstance().releaseEditor(editor);
+      }
     }
-    super.tearDown();
+    finally {
+      super.tearDown();
+    }
   }
 
   public void testJavaDocCreation() {
@@ -88,8 +93,7 @@ public class JavaHighlighterTest extends LightCodeInsightTestCase {
         final String text1 = "/**\n  * <co";
         final String text2 = text1 + " \n  * @param someParam\n  */";
         final String text3 = text2 + "class";
-        String text = text3;
-        initDocument(text);
+        initDocument(text3);
 
         HighlighterIterator iterator = myHighlighter.createIterator(text2.length());
         assertEquals(JavaTokenType.CLASS_KEYWORD, iterator.getTokenType());
@@ -140,8 +144,21 @@ public class JavaHighlighterTest extends LightCodeInsightTestCase {
     assertEquals(JavaDocTokenType.DOC_TAG_NAME, iterator.getTokenType());
   }
 
+  public void testEnteringSomeQuotes() {
+    Editor editor = initDocument("class C {\n" +
+                                 "  void foo() {\n" +
+                                 "    first();\n" +
+                                 "    second();\n" +
+                                 "  }\n" +
+                                 "}");
+    WriteCommandAction.runWriteCommandAction(getProject(), () -> {
+      myDocument.insertString(myDocument.getText().lastIndexOf("first"), "'''");
+      myDocument.insertString(myDocument.getText().lastIndexOf("second"), " ");
+    });
+    CheckHighlighterConsistency.performCheck(editor);
+  }
 
-  private void initDocument(String text) {
+  private Editor initDocument(String text) {
     EditorFactory editorFactory = EditorFactory.getInstance();
     myDocument = editorFactory.createDocument(text);
     final Editor editor = editorFactory.createEditor(myDocument, getProject());
@@ -151,5 +168,6 @@ public class JavaHighlighterTest extends LightCodeInsightTestCase {
     ((EditorEx) editor).setHighlighter(myHighlighter);
 
     myEditorsToRelease.add(editor);
+    return editor;
   }
 }
