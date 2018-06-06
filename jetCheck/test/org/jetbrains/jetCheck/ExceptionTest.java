@@ -70,8 +70,8 @@ public class ExceptionTest extends PropertyCheckerTestCase {
 
   public void testUsingWrongDataStructure() {
     Generator<Integer> gen = from(data1 -> {
-      int i1 = data1.drawInt();
-      int i2 = data1.generate(from(data2 -> data1.drawInt()));
+      int i1 = data1.generate(naturals());
+      int i2 = data1.generate(from(data2 -> data1.generate(integers())));
       return i1 + i2;
     });
     try {

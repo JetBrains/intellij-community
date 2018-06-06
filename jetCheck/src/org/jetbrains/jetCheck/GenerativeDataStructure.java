@@ -24,7 +24,7 @@ class GenerativeDataStructure extends AbstractDataStructure {
   }
 
   @Override
-  public int drawInt(@NotNull IntDistribution distribution) {
+  int drawInt(@NotNull IntDistribution distribution) {
     dataTracker.checkContext(this);
     int i = random.drawInt(distribution);
     node.addChild(new IntData(node.id.childId(null), i, distribution));
@@ -42,14 +42,14 @@ class GenerativeDataStructure extends AbstractDataStructure {
   }
 
   @Override
-  public <T> T generateNonShrinkable(@NotNull Generator<T> generator) {
+  <T> T generateNonShrinkable(@NotNull Generator<T> generator) {
     GenerativeDataStructure data = subStructure(generator, sizeHint);
     data.node.shrinkProhibited = true;
     return dataTracker.generateOn(generator, data, this);
   }
 
   @Override
-  public <T> T generateConditional(@NotNull Generator<T> generator, @NotNull Predicate<? super T> condition) {
+  <T> T generateConditional(@NotNull Generator<T> generator, @NotNull Predicate<? super T> condition) {
     for (int i = 0; i < 100; i++) {
       GenerativeDataStructure structure = subStructure(generator, childSizeHint());
       T value = dataTracker.generateOn(generator, structure, this);

@@ -16,7 +16,7 @@ class ReplayDataStructure extends AbstractDataStructure {
   }
 
   @Override
-  public int drawInt(@NotNull IntDistribution distribution) {
+  int drawInt(@NotNull IntDistribution distribution) {
     return customizer.suggestInt(nextChild(IntData.class), distribution);
   }
 
@@ -35,12 +35,12 @@ class ReplayDataStructure extends AbstractDataStructure {
   }
 
   @Override
-  public <T> T generateNonShrinkable(@NotNull Generator<T> generator) {
+  <T> T generateNonShrinkable(@NotNull Generator<T> generator) {
     return generate(generator);
   }
 
   @Override
-  public <T> T generateConditional(@NotNull Generator<T> generator, @NotNull Predicate<? super T> condition) {
+  <T> T generateConditional(@NotNull Generator<T> generator, @NotNull Predicate<? super T> condition) {
     T value = generate(generator);
     if (!condition.test(value)) throw new CannotRestoreValue();
     return value;

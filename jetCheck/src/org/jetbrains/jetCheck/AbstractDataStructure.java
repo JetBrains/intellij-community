@@ -1,5 +1,9 @@
 package org.jetbrains.jetCheck;
 
+import org.jetbrains.annotations.NotNull;
+
+import java.util.function.Predicate;
+
 /**
  * @author peter
  */
@@ -20,5 +24,15 @@ abstract class AbstractDataStructure implements DataStructure {
   public int getSizeHint() {
     return sizeHint;
   }
+
+  abstract int drawInt(@NotNull IntDistribution distribution);
+
+  int suggestCollectionSize() {
+    return drawInt(IntDistribution.uniform(0, getSizeHint()));
+  }
+
+  abstract <T> T generateNonShrinkable(@NotNull Generator<T> generator);
+
+  abstract <T> T generateConditional(@NotNull Generator<T> generator, @NotNull Predicate<? super T> condition);
 
 }

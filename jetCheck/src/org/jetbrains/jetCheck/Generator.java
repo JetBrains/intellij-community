@@ -15,9 +15,14 @@ import java.util.stream.IntStream;
 
 /**
  * A generator for objects based on random data from {@link DataStructure}.<p/>
+ *
+ * A generator is a function that takes a source of random data (which is DataStructure) and, using that random data
+ * (e.g. by calling more primitive generators and reinterpreting their results), constructs a value of type {@code T}.
+ * For data structures returning the same data, generators should produce equivalent values.<p/>
  * 
  * Generators for standard types can be obtained using static methods of this class (e.g. {@link #integers}, {@link #listsOf} etc).
- * Generators for custom types can be created by deriving them from standard types (e.g. via {@link #map}, {@link #flatMap}, {@link #zipWith}) or by writing your own from scratch ({@link #from(Function)}).  
+ * Generators for custom types can be created by deriving them from standard types (e.g. via {@link #map}, {@link #flatMap}, {@link #zipWith})
+ * or by writing your own from scratch ({@link #from(Function)}).
  */
 public class Generator<T> {
   private final Function<DataStructure, T> myFunction;
@@ -28,8 +33,7 @@ public class Generator<T> {
 
   /**
    * Creates a generator from a custom function, that creates objects of the given type based on the data from {@link DataStructure}.
-   * The generator may call {@link DataStructure#drawInt} methods directly (and interpret those ints in any way it wishes),
-   * or (preferably) invoke other generators using {@link DataStructure#generate(Generator)}.<p/>
+   * The generator may invoke other, more primitive, generators using {@link DataStructure#generate(Generator)}.<p/>
    * 
    * When a property is falsified, the DataStructure is attempted to be minimized, and the generator will be run on
    * ever "smaller" versions of it, this enables automatic minimization on all kinds of generated types.<p/>
@@ -78,7 +82,7 @@ public class Generator<T> {
    * shrinkable values there can lead to doubling of the shrinking time.
    */
   public Generator<T> noShrink() {
-    return from(data -> data.generateNonShrinkable(this));
+    return from(data -> ((AbstractDataStructure)data).generateNonShrinkable(this));
   }
 
   /**
@@ -96,7 +100,7 @@ public class Generator<T> {
    * where the condition would be {@code true} in just 10 of about 4 billion times). In such cases, please consider changing the generator instead of using {@code suchThat}.
    */
   public Generator<T> suchThat(@NotNull Predicate<? super T> condition) {
-    return from(data -> data.generateConditional(this, condition));
+    return from(data -> ((AbstractDataStructure)data).generateConditional(this, condition));
   }
 
   // ------------------------------------
@@ -129,7 +133,7 @@ public class Generator<T> {
   public static <T> Generator<T> anyOf(List<? extends Generator<? extends T>> alternatives) {
     if (alternatives.isEmpty()) throw new IllegalArgumentException("No alternatives to choose from");
     return from(data -> {
-      int index = data.generateNonShrinkable(integers(0, alternatives.size() - 1));
+      int index = ((AbstractDataStructure)data).generateNonShrinkable(integers(0, alternatives.size() - 1));
       return data.generate(alternatives.get(index));
     });
   }
@@ -248,7 +252,7 @@ public class Generator<T> {
 
   /** Generates any integers */
   public static Generator<Integer> integers() {
-    return from(data -> data.drawInt());
+    return integers(BoundedIntDistribution.ALL_INTS);
   }
 
   public static Generator<Integer> naturals() {
@@ -262,14 +266,14 @@ public class Generator<T> {
 
   /** Generates integers with the given distribution */
   public static Generator<Integer> integers(@NotNull IntDistribution distribution) {
-    return from(data -> data.drawInt(distribution));
+    return from(data -> ((AbstractDataStructure)data).drawInt(distribution));
   }
 
   /** Generates any doubles, including infinities and NaN */
   public static Generator<Double> doubles() {
     return from(data -> {
-      long i1 = data.drawInt();
-      long i2 = data.drawInt();
+      long i1 = data.generate(integers(BoundedIntDistribution.ALL_INTS));
+      long i2 = data.generate(integers(BoundedIntDistribution.ALL_INTS));
       return Double.longBitsToDouble((i1 << 32) + (i2 & 0xffffffffL));
     });
   }
@@ -278,7 +282,7 @@ public class Generator<T> {
 
   /** Generates (possibly empty) lists of values produced by the given generator */
   public static <T> Generator<List<T>> listsOf(Generator<T> itemGenerator) {
-    return from(data -> generateList(itemGenerator, data, data.suggestCollectionSize()));
+    return from(data -> generateList(itemGenerator, data, ((AbstractDataStructure)data).suggestCollectionSize()));
   }
 
   /** Generates non-empty lists of values produced by the given generator */
@@ -288,7 +292,7 @@ public class Generator<T> {
 
   /** Generates lists of values produced by the given generator. The list length is determined by the given distribution. */
   public static <T> Generator<List<T>> listsOf(IntDistribution length, Generator<T> itemGenerator) {
-    return from(data -> generateList(itemGenerator, data, data.drawInt(length)));
+    return from(data -> generateList(itemGenerator, data, ((AbstractDataStructure)data).drawInt(length)));
   }
 
   private static <T> List<T> generateList(Generator<T> itemGenerator, DataStructure data, int size) {
