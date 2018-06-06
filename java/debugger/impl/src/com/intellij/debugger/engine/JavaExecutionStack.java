@@ -179,6 +179,12 @@ public class JavaExecutionStack extends XExecutionStack {
       return myAdded <= 10 ? Priority.NORMAL : Priority.LOW;
     }
 
+    private void addFrameIfNeeded(XStackFrame frame, boolean last) {
+      if (++myAdded > mySkip) {
+        myContainer.addStackFrames(Collections.singletonList(frame), last);
+      }
+    }
+
     @Override
     public void contextAction(@NotNull SuspendContextImpl suspendContext) {
       if (myContainer.isObsolete()) return;
@@ -199,9 +205,7 @@ public class JavaExecutionStack extends XExecutionStack {
           }
         }
         if (first || showFrame(frame)) {
-          if (++myAdded > mySkip) {
-            myContainer.addStackFrames(Collections.singletonList(frame), false);
-          }
+          addFrameIfNeeded(frame, false);
         }
 
         // replace the rest with the related stack (if available)
@@ -213,12 +217,12 @@ public class JavaExecutionStack extends XExecutionStack {
             boolean separator = true;
             for (StackFrameItem stackFrame : relatedStack) {
               if (i > StackCapturingLineBreakpoint.MAX_STACK_LENGTH) {
-                myContainer.addStackFrames(Collections.singletonList(new XStackFrame() {
+                addFrameIfNeeded(new XStackFrame() {
                   @Override
                   public void customizePresentation(@NotNull ColoredTextContainer component) {
                     component.append("Too many frames, the rest is truncated...", SimpleTextAttributes.REGULAR_ITALIC_ATTRIBUTES);
                   }
-                }), true);
+                }, true);
                 return;
               }
               i++;
@@ -229,7 +233,7 @@ public class JavaExecutionStack extends XExecutionStack {
               StackFrameItem.CapturedStackFrame newFrame = stackFrame.createFrame(myDebugProcess);
               if (showFrame(newFrame)) {
                 newFrame.setWithSeparator(separator);
-                myContainer.addStackFrames(Collections.singletonList(newFrame), false);
+                addFrameIfNeeded(newFrame, false);
                 separator = false;
               }
             }
