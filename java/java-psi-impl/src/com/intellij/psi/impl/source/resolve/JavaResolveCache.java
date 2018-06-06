@@ -161,14 +161,14 @@ public class JavaResolveCache {
 
   private static <T extends PsiElement, R> R getOrCompute(@NotNull AtomicReference<ConcurrentMap<T, Object>> ref,
                                                           @NotNull T element,
-                                                          @NotNull Function<? super T, ? extends R> computer) {
+                                                          @NotNull Function<? super T, ? extends R> computer, String id) {
 
     ConcurrentMap<T, Object> map = ref.get();
     if (map == null) map = ConcurrencyUtil.cacheOrGet(ref, ContainerUtil.createConcurrentWeakKeySoftValueMap());
 
     Object cached = map.get(element);
     if (cached == null) {
-      RecursionGuard.StackStamp stamp = RecursionManager.createGuard("JavaResolveCache.computer").markStack();
+      RecursionGuard.StackStamp stamp = RecursionManager.createGuard(id).markStack();
       cached = ObjectUtils.notNull(computer.fun(element), NULL);
       if (stamp.mayCacheNow()) {
         cached = ConcurrencyUtil.cacheOrGet(map, element, cached);
@@ -182,17 +182,17 @@ public class JavaResolveCache {
   @Nullable
   public JavaResolveResult getNewExpressionStaticFactory(@NotNull PsiNewExpression newExpression,
                                                          @NotNull Function<? super PsiNewExpression, ? extends JavaResolveResult> computer) {
-    return getOrCompute(myStaticFactories, newExpression, computer);
+    return getOrCompute(myStaticFactories, newExpression, computer, "JavaResolveCache.getNewExpressionStaticFactory");
   }
 
   @Nullable
   public InferenceSession getTopLevelInferenceSession(@NotNull PsiCall topLevelCall,
                                                       @NotNull Function<? super PsiCall, ? extends InferenceSession> computer) {
-    return getOrCompute(myTopLevelInferenceSessions, topLevelCall, computer);
+    return getOrCompute(myTopLevelInferenceSessions, topLevelCall, computer, "JavaResolveCache.getTopLevelInferenceSession");
   }
 
   public PsiType getTypeElementType(@NotNull PsiTypeElementImpl typeElement,
                                     @NotNull Function<? super PsiTypeElementImpl, ? extends PsiType> computer) {
-    return getOrCompute(myTypeElementTypes, typeElement, computer);
+    return getOrCompute(myTypeElementTypes, typeElement, computer, "JavaResolveCache.getTypeElementType");
   }
 }
