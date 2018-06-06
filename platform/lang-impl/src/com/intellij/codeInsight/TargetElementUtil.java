@@ -138,7 +138,7 @@ public class TargetElementUtil extends TargetElementUtilBase {
     else if (!isIdentifierPart(file, text, offset)) {
       correctedOffset--;
     }
-    if (correctedOffset >= 0) {
+    if (correctedOffset >= 0 && offset < document.getTextLength()) {
       char charAt = text.charAt(offset);
       if (isIdentifierPart(file, text, correctedOffset) ||
           charAt == '\'' || charAt == '"' || charAt == ')' || charAt == ']') {
