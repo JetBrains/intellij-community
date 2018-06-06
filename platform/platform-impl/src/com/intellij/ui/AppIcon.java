@@ -263,7 +263,7 @@ public abstract class AppIcon {
 
         int myImgWidth = img.myImg.getWidth();
         if (myImgWidth != 128) {
-          okIcon = IconUtil.scale(okIcon, myImgWidth / 128);
+          okIcon = IconUtil.scale(okIcon, frame.getComponent(), myImgWidth / 128);
         }
 
         int x = myImgWidth - okIcon.getIconWidth();
