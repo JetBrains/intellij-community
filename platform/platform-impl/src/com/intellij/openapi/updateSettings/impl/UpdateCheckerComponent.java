@@ -134,7 +134,7 @@ public class UpdateCheckerComponent implements Disposable, ApplicationComponent 
   }
 
   private void snapPackageNotification(Application app) {
-    if (!isSnap() && !mySettings.isCheckNeeded()) return;
+    if (!isSnap() || !mySettings.isCheckNeeded()) return;
 
     app.executeOnPooledThread(() -> {
       final BuildNumber currentBuild = ApplicationInfo.getInstance().getBuild();
