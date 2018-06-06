@@ -33,6 +33,7 @@ public abstract class AbstractParameterInfoTestCase extends LightFixtureCompleti
 
   @Override
   protected void tearDown() throws Exception {
+    ParameterInfoController.disposeAll(getEditor());
     try {
       CodeInsightSettings.getInstance().PARAMETER_INFO_DELAY = myStoredAutoPopupDelay;
     }
@@ -41,25 +42,21 @@ public abstract class AbstractParameterInfoTestCase extends LightFixtureCompleti
     }
   }
 
-  public void configureJava(String text) {
+  protected void configureJava(String text) {
     myFixture.configureByText(JavaFileType.INSTANCE, text);
   }
 
-  public void showParameterInfo() {
+  protected void showParameterInfo() {
     myFixture.performEditorAction(IdeActions.ACTION_EDITOR_SHOW_PARAMETER_INFO);
     UIUtil.dispatchAllInvocationEvents();
   }
 
-  public void checkHintContents(String hintText) {
+  protected void checkHintContents(String hintText) {
     assertEquals(hintText, myHintFixture.getCurrentHintText());
   }
 
   public void checkResult(String text) {
     myFixture.checkResult(text);
-  }
-
-  public void type(String text) {
-    myFixture.type(text);
   }
 
   public void complete(String partOfItemText) {
@@ -89,7 +86,7 @@ public abstract class AbstractParameterInfoTestCase extends LightFixtureCompleti
     AutoPopupController.getInstance(getProject()).waitForDelayedActions(1, TimeUnit.MINUTES);
   }
 
-  public void waitForAllAsyncStuff() throws TimeoutException {
+  protected void waitForAllAsyncStuff() throws TimeoutException {
     waitForParameterInfoUpdate();
     myFixture.doHighlighting();
     waitTillAnimationCompletes(getEditor());
