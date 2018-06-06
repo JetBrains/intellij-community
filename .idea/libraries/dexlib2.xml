@@ -1,13 +1,14 @@
 <component name="libraryTable">
-  <library name="dexlib2">
+  <library name="dexlib2" type="repository">
+    <properties maven-id="org.smali:dexlib2:2.2.3" />
     <CLASSES>
-      <root url="jar://$PROJECT_DIR$/../adt/idea/android/lib/dexlib2-2.2.1.jar!/" />
-      <root url="jar://$PROJECT_DIR$/../adt/idea/android/lib/util-2.2.1.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/org/smali/dexlib2/2.2.3/dexlib2-2.2.3.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/org/smali/util/2.2.3/util-2.2.3.jar!/" />
     </CLASSES>
     <JAVADOC />
     <SOURCES>
-      <root url="jar://$PROJECT_DIR$/../adt/idea/android/lib/src/dexlib2-2.2.1-sources.jar!/" />
-      <root url="jar://$PROJECT_DIR$/../adt/idea/android/lib/src/util-2.2.1-sources.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/org/smali/dexlib2/2.2.3/dexlib2-2.2.3-sources.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/org/smali/util/2.2.3/util-2.2.3-sources.jar!/" />
     </SOURCES>
   </library>
 </component>

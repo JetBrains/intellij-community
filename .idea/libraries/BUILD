@@ -742,8 +742,8 @@ java_library(
 java_library(
     name = "baksmali",
     visibility = ["//visibility:public"],
-    exports = ["//tools/adt/idea/android/lib:baksmali-2.2.1"],
-    runtime_deps = ["//tools/adt/idea/android/lib:baksmali-2.2.1"],
+    exports = ["//prebuilts/tools/common/m2/repository/org/smali/baksmali/2.2.3:jar"],
+    runtime_deps = ["//prebuilts/tools/common/m2/repository/org/smali/baksmali/2.2.3:jar"],
 )
 
 # managed by go/iml_to_build
@@ -752,13 +752,13 @@ java_library(
     visibility = ["//visibility:public"],
     # do not sort: must match IML order
     exports = [
-        "//tools/adt/idea/android/lib:dexlib2-2.2.1",
-        "//tools/adt/idea/android/lib:util-2.2.1",
+        "//prebuilts/tools/common/m2/repository/org/smali/dexlib2/2.2.3:jar",
+        "//prebuilts/tools/common/m2/repository/org/smali/util/2.2.3:jar",
     ],
     # do not sort: must match IML order
     runtime_deps = [
-        "//tools/adt/idea/android/lib:dexlib2-2.2.1",
-        "//tools/adt/idea/android/lib:util-2.2.1",
+        "//prebuilts/tools/common/m2/repository/org/smali/dexlib2/2.2.3:jar",
+        "//prebuilts/tools/common/m2/repository/org/smali/util/2.2.3:jar",
     ],
 )
 
