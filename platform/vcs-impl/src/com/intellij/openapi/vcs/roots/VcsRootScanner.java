@@ -20,8 +20,6 @@ import com.intellij.openapi.progress.util.BackgroundTaskUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ModuleRootEvent;
 import com.intellij.openapi.roots.ModuleRootListener;
-import com.intellij.openapi.vcs.ProjectLevelVcsManager;
-import com.intellij.openapi.vcs.VcsListener;
 import com.intellij.openapi.vcs.VcsRootChecker;
 import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.openapi.vfs.newvfs.BulkFileListener;
@@ -33,7 +31,7 @@ import org.jetbrains.annotations.NotNull;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
 
-public class VcsRootScanner implements BulkFileListener, ModuleRootListener, VcsListener {
+public class VcsRootScanner implements BulkFileListener, ModuleRootListener {
 
   @NotNull private final VcsRootProblemNotifier myRootProblemNotifier;
   @NotNull private final VcsRootChecker[] myCheckers;
@@ -50,7 +48,6 @@ public class VcsRootScanner implements BulkFileListener, ModuleRootListener, Vcs
     myCheckers = checkers;
 
     final MessageBus messageBus = project.getMessageBus();
-    messageBus.connect().subscribe(ProjectLevelVcsManager.VCS_CONFIGURATION_CHANGED, this);
     messageBus.connect().subscribe(VirtualFileManager.VFS_CHANGES, this);
     messageBus.connect().subscribe(ProjectTopics.PROJECT_ROOTS, this);
 
@@ -72,11 +69,6 @@ public class VcsRootScanner implements BulkFileListener, ModuleRootListener, Vcs
 
   @Override
   public void rootsChanged(ModuleRootEvent event) {
-    scheduleScan();
-  }
-
-  @Override
-  public void directoryMappingChanged() {
     scheduleScan();
   }
 
