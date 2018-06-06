@@ -30,5 +30,6 @@ iml_module(
         "//tools/idea/java/jsp-openapi:intellij.jsp[module]",
         "//tools/idea/java/java-psi-api:intellij.java.psi[module]",
         "//tools/idea/resources-en:intellij.java.resources.en[module]",
+        "//tools/idea/.idea/libraries:JDOM",
     ],
 )

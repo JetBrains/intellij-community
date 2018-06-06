@@ -9,12 +9,8 @@ iml_module(
         "gen",
     ],
     iml_files = ["intellij.devkit.iml"],
-    package_prefixes = {
-        "testSources": "org.jetbrains.idea.devkit",
-        "src": "org.jetbrains.idea.devkit",
-    },
+    package_prefixes = {"src": "org.jetbrains.idea.devkit"},
     resources = ["resources"],
-    test_srcs = ["testSources"],
     test_tags = ["manual"],
     visibility = ["//visibility:public"],
     # do not sort: must match IML order
@@ -42,7 +38,7 @@ iml_module(
         "//tools/idea/xml/impl:intellij.xml.impl[module]",
         "//tools/idea/.idea/libraries:Guava",
         "//tools/idea/.idea/libraries:Xerces",
-        "//tools/idea/plugins/devkit/lib:dtdparser113",
+        "//tools/idea/plugins/devkit/devkit-core:lib/dtdparser113",
         "//tools/idea/spellchecker:intellij.spellchecker[module]",
         "//tools/idea/plugins/properties/properties-psi-api:intellij.properties.psi[module]",
         "//tools/idea/platform/lang-impl:intellij.platform.lang.impl[module]",
@@ -50,10 +46,14 @@ iml_module(
         "//tools/idea/xml/dom-impl:intellij.xml.dom.impl[module]",
         "//tools/idea/images:intellij.platform.images[module]",
         "//tools/idea/uast/uast-common:intellij.platform.uast[module]",
-        "//tools/idea/plugins/gradle:intellij.gradle[module]",
-        "//tools/idea/.idea/libraries:assertJ[test]",
-        "//tools/idea/xml/dom-tests:intellij.xml.dom.tests[module, test]",
-        "//tools/idea/.idea/libraries:TestNG[test]",
-        "//tools/idea:intellij.java.compiler.tests[module, test]",
+        "//tools/idea/plugins/gradle/java:intellij.gradle.java[module]",
+        "//tools/idea/.idea/libraries:protobuf",
     ],
+)
+
+# managed by go/iml_to_build
+java_import(
+    name = "lib/dtdparser113",
+    jars = ["lib/dtdparser113.jar"],
+    visibility = ["//visibility:public"],
 )

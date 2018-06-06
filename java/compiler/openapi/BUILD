@@ -27,5 +27,9 @@ iml_module(
         "//tools/idea/platform/configuration-store-impl:intellij.platform.configurationStore.impl",
         "//tools/idea/platform/built-in-server:intellij.platform.builtInServer.impl",
     ],
-    deps = ["//tools/idea/java/openapi:intellij.java[module]"],
+    # do not sort: must match IML order
+    deps = [
+        "//tools/idea/java/openapi:intellij.java[module]",
+        "//tools/idea/.idea/libraries:JDOM",
+    ],
 )

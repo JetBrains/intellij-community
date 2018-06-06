@@ -32,7 +32,6 @@ iml_module(
         "//tools/idea/platform/lang-impl:intellij.platform.lang.impl[module]",
         "//tools/idea/platform/testFramework:intellij.platform.testFramework[module, test]",
         "//tools/idea/xml/relaxng/lib:rngom-20051226-patched",
-        "//tools/idea/xml/relaxng/lib:isorelax",
         "//tools/idea/xml/relaxng/lib:trang-core",
         "//tools/idea/xml/relaxng/lib:jing",
     ],

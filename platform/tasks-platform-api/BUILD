@@ -10,5 +10,6 @@ iml_module(
     deps = [
         "//tools/idea/platform/platform-api:intellij.platform.ide[module]",
         "//tools/idea/platform/vcs-api:intellij.platform.vcs[module]",
+        "//tools/idea/.idea/libraries:JDOM",
     ],
 )

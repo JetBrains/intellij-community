@@ -23,10 +23,7 @@ iml_module(
     test_tags = ["manual"],
     visibility = ["//visibility:public"],
     # do not sort: must match IML order
-    exports = [
-        "//tools/idea/.idea/libraries:JDOM",
-        "//tools/idea/.idea/libraries:assertJ",
-    ],
+    exports = ["//tools/idea/.idea/libraries:assertJ"],
     # do not sort: must match IML order
     deps = [
         "//tools/idea/.idea/libraries:KotlinJavaRuntime[test]",

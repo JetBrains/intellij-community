@@ -47,5 +47,6 @@ iml_module(
         "//tools/idea/.idea/libraries:XmlBeans",
         "//tools/idea/RegExpSupport:intellij.regexp[module]",
         "//tools/idea/platform/lang-api:intellij.platform.lang[module]",
+        "//tools/idea/.idea/libraries:xml-resolver",
     ],
 )

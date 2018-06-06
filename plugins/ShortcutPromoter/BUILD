@@ -12,5 +12,6 @@ iml_module(
         "//tools/idea/platform/core-api:intellij.platform.core[module]",
         "//tools/idea/platform/editor-ui-api:intellij.platform.editor[module]",
         "//tools/idea/platform/platform-api:intellij.platform.ide[module]",
+        "//tools/idea/.idea/libraries:JDOM",
     ],
 )

@@ -57,5 +57,6 @@ iml_module(
         "//tools/idea/RegExpSupport:intellij.regexp[module]",
         "//tools/idea/platform/external-system-impl:intellij.platform.externalSystem.impl[module, test]",
         "//tools/idea/platform/lang-impl:intellij.platform.lang.tests[module, test]",
+        "//tools/idea/.idea/libraries:protobuf",
     ],
 )

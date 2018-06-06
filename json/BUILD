@@ -32,7 +32,6 @@ iml_module(
         "//tools/idea/platform/core-api:intellij.platform.core[module]",
         "//tools/idea/platform/platform-api:intellij.platform.ide[module]",
         "//tools/idea/platform/lang-impl:intellij.platform.lang.impl[module]",
-        "//tools/idea/xml/openapi:intellij.xml[module]",
         "//tools/idea/spellchecker:intellij.spellchecker[module]",
         "//tools/idea/.idea/libraries:Guava",
         "//tools/idea/.idea/libraries:gson",

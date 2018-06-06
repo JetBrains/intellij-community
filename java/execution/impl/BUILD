@@ -36,7 +36,11 @@ iml_module(
         "//tools/idea/java/java-indexing-api:intellij.java.indexing[module]",
         "//tools/idea/platform/smRunner:intellij.platform.smRunner[module]",
         "//tools/idea/java/execution/jshell-protocol:intellij.java.jshell.protocol[module]",
-        "//tools/idea/.idea/libraries:Coverage",
+        "//tools/idea/.idea/libraries:intellij-coverage",
+        "//tools/idea/.idea/libraries:intellij-test-discovery",
         "//tools/idea/platform/external-system-api:intellij.platform.externalSystem[module]",
+        "//tools/idea/.idea/libraries:gson",
+        "//tools/idea/.idea/libraries:jackson",
+        "//tools/idea/.idea/libraries:miglayout-swing",
     ],
 )

@@ -12,5 +12,6 @@ iml_module(
         "//tools/idea/platform/core-api:intellij.platform.core[module]",
         "//tools/idea/.idea/libraries:picocontainer",
         "//tools/idea/.idea/libraries:Guava",
+        "//tools/idea/.idea/libraries:JDOM",
     ],
 )

@@ -38,6 +38,9 @@ iml_module(
         "//tools/idea:intellij.platform.jps.build_and_others[module, test]",
         "//tools/idea/.idea/libraries:mockito[test]",
         "//tools/idea/.idea/libraries:assertJ[test]",
+        "//tools/idea/plugins/stats-collector/features:intellij.statsCollector.features[module]",
         "//tools/idea/plugins/stats-collector/log-events:intellij.statsCollector.logEvents[module]",
+        "//tools/idea/.idea/libraries:commons-codec",
+        "//tools/idea/.idea/libraries:org.apache.httpcomponents_fluent-hc",
     ],
 )

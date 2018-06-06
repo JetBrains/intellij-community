@@ -38,5 +38,6 @@ iml_module(
         "//tools/idea/platform/vcs-tests:intellij.platform.vcs.tests[module, test]",
         "//tools/idea/platform/tasks-platform-api:intellij.platform.tasks[module, test]",
         "//tools/idea/platform/tasks-platform-impl:intellij.platform.tasks.impl[module, test]",
+        "//tools/idea/.idea/libraries:http-client-3.1[test]",
     ],
 )

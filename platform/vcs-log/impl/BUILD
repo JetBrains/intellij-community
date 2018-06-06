@@ -51,5 +51,6 @@ iml_module(
         "//tools/idea/platform/vcs-tests:intellij.platform.vcs.tests[module, test]",
         "//tools/idea/platform/util:intellij.platform.util[module]",
         "//tools/idea/.idea/libraries:assertJ[test]",
+        "//tools/idea/.idea/libraries:miglayout-swing",
     ],
 )

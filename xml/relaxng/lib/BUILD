@@ -7,13 +7,6 @@ java_import(
 
 # managed by go/iml_to_build
 java_import(
-    name = "isorelax",
-    jars = ["isorelax.jar"],
-    visibility = ["//visibility:public"],
-)
-
-# managed by go/iml_to_build
-java_import(
     name = "trang-core",
     jars = ["trang-core.jar"],
     visibility = ["//visibility:public"],

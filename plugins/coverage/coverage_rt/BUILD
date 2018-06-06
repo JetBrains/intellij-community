@@ -12,6 +12,7 @@ iml_module(
         "//tools/idea/plugins/testng_rt:intellij.testng.rt[module]",
         "//tools/idea/plugins/junit_rt:intellij.junit.rt[module]",
         "//tools/idea/.idea/libraries:TestNG",
-        "//tools/idea/.idea/libraries:Coverage",
+        "//tools/idea/.idea/libraries:intellij-coverage",
+        "//tools/idea/.idea/libraries:intellij-test-discovery",
     ],
 )

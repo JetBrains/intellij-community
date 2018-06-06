@@ -20,5 +20,6 @@ iml_module(
         "//tools/idea/platform/vcs-api/vcs-api-core:intellij.platform.vcs.core[module]",
         "//tools/idea/platform/diff-api:intellij.platform.diff[module]",
         "//tools/idea/.idea/libraries:StreamEx",
+        "//tools/idea/.idea/libraries:JDOM",
     ],
 )

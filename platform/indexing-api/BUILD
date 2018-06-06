@@ -12,5 +12,6 @@ iml_module(
         "//tools/idea/platform/core-api:intellij.platform.core[module]",
         "//tools/idea/platform/projectModel-api:intellij.platform.projectModel[module]",
         "//tools/idea/.idea/libraries:NanoXML",
+        "//tools/idea/.idea/libraries:JDOM",
     ],
 )

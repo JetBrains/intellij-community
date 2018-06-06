@@ -31,7 +31,6 @@ iml_module(
         "//tools/idea/platform/projectModel-api:intellij.platform.projectModel[module]",
         "//tools/idea/platform/projectModel-impl:intellij.platform.projectModel.impl[module]",
         "//tools/idea/platform/platform-impl:intellij.platform.ide.impl[module]",
-        "//tools/idea/.idea/libraries:Netty",
         "//tools/idea/xml/openapi:intellij.xml[module]",
         "//tools/idea/platform/xdebugger-api:intellij.platform.debugger[module]",
         "//tools/idea/.idea/libraries:Guava",
@@ -42,6 +41,8 @@ iml_module(
         "//tools/idea/platform/built-in-server-api:intellij.platform.builtInServer[module]",
         "//tools/idea/platform/vcs-api:intellij.platform.vcs[module]",
         "//tools/idea/.idea/libraries:KotlinJavaRuntime",
+        "//tools/idea/.idea/libraries:netty-codec-http",
+        "//tools/idea/.idea/libraries:netty-handler",
     ],
 )
 
@@ -76,7 +77,6 @@ iml_module(
         "//tools/idea/platform/projectModel-api:intellij.platform.projectModel[module]",
         "//tools/idea/platform/projectModel-impl:intellij.platform.projectModel.impl[module]",
         "//tools/idea/platform/platform-impl:intellij.platform.ide.impl[module]",
-        "//tools/idea/.idea/libraries:Netty",
         "//tools/idea/xml/openapi:intellij.xml[module]",
         "//tools/idea/platform/xdebugger-api:intellij.platform.debugger[module]",
         "//tools/idea/.idea/libraries:Guava",
@@ -89,5 +89,6 @@ iml_module(
         "//tools/idea/.idea/libraries:KotlinJavaRuntime[test]",
         "//tools/idea/.idea/libraries:assertJ[test]",
         "//tools/idea/platform/built-in-server:intellij.platform.builtInServer.impl[module]",
+        "//tools/idea/.idea/libraries:netty-codec-http[test]",
     ],
 )

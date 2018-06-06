@@ -28,5 +28,7 @@ iml_module(
         "//tools/idea/plugins/tasks/tasks-core:intellij.tasks.core[module]",
         "//tools/idea/platform/lang-api:intellij.platform.lang[module]",
         "//tools/idea/platform/lang-impl:intellij.platform.lang.impl[module]",
+        "//tools/idea/.idea/libraries:http-client-3.1",
+        "//tools/idea/.idea/libraries:XmlRPC",
     ],
 )

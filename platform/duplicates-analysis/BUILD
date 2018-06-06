@@ -45,5 +45,6 @@ iml_module(
         "//tools/idea/platform/indexing-api:intellij.platform.indexing[module]",
         "//tools/idea/platform/projectModel-api:intellij.platform.projectModel[module]",
         "//tools/idea/platform/projectModel-impl:intellij.platform.projectModel.impl[module]",
+        "//tools/idea/.idea/libraries:XStream",
     ],
 )

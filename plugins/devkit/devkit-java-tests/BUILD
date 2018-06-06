@@ -2,10 +2,10 @@ load("//tools/base/bazel:bazel.bzl", "iml_module")
 
 # managed by go/iml_to_build
 iml_module(
-    name = "intellij.devkit.kotlin.tests",
-    iml_files = ["intellij.devkit.kotlin.tests.iml"],
+    name = "intellij.devkit.java.tests",
+    iml_files = ["intellij.devkit.java.tests.iml"],
     test_srcs = ["testSrc"],
-    test_tags = ["manual"],  # fails after IDEA 181.2784.17 merge
+    test_tags = ["manual"],
     visibility = ["//visibility:public"],
     # do not sort: must match IML order
     runtime_deps = [
@@ -17,9 +17,5 @@ iml_module(
         "//tools/idea/plugins/devkit/jps-plugin:intellij.devkit.jps",
         "//tools/idea/plugins/IntelliLang/intellilang-jps-plugin:intellij.java.langInjection.jps",
     ],
-    # do not sort: must match IML order
-    deps = [
-        "//tools/idea/.idea/libraries:KotlinJavaRuntime[test]",
-        "//tools/idea/plugins/devkit/devkit-tests-api:intellij.devkit.tests[module]",
-    ],
+    deps = ["//tools/idea/plugins/devkit/devkit-tests-api:intellij.devkit.tests[module]"],
 )

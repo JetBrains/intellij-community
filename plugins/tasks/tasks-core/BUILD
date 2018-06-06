@@ -17,8 +17,6 @@ iml_module(
         "//tools/idea/plugins/tasks/tasks-core/lib:axis-jaxrpc-1.4",
         "//tools/idea/plugins/tasks/tasks-core/lib:axis-saaj-1.3",
         "//tools/idea/plugins/tasks/tasks-core/lib:wsdl4j-1.4",
-        "//tools/idea/.idea/libraries:http-client-3.1",
-        "//tools/idea/.idea/libraries:XmlRPC",
         "//tools/idea/.idea/libraries:gson",
         "//tools/idea/xml/impl:intellij.xml.impl",
         "//tools/idea/platform/core-api:intellij.platform.core",
@@ -49,7 +47,6 @@ iml_module(
         "//tools/idea/plugins/tasks/tasks-core/lib:axis-jaxrpc-1.4",
         "//tools/idea/plugins/tasks/tasks-core/lib:axis-saaj-1.3",
         "//tools/idea/plugins/tasks/tasks-core/lib:wsdl4j-1.4",
-        "//tools/idea/.idea/libraries:http-client-3.1",
         "//tools/idea/.idea/libraries:XmlRPC",
         "//tools/idea/.idea/libraries:gson",
         "//tools/idea/xml/impl:intellij.xml.impl[module]",
@@ -64,5 +61,6 @@ iml_module(
         "//tools/idea/.idea/libraries:http-client",
         "//tools/idea/platform/tasks-platform-impl:intellij.platform.tasks.impl[module]",
         "//tools/idea/platform/tasks-platform-api:intellij.platform.tasks[module]",
+        "//tools/idea/.idea/libraries:http-client-3.1",
     ],
 )

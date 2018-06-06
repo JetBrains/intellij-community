@@ -46,7 +46,6 @@ iml_module(
         "//tools/idea/xml/xml-analysis-impl:intellij.xml.analysis.impl[module]",
         "//tools/idea/.idea/libraries:swingx",
         "//tools/idea/xml/xml-structure-view-impl:intellij.xml.structureView.impl[module]",
-        "//tools/idea/.idea/libraries:Netty",
         "//tools/idea/platform/xdebugger-api:intellij.platform.debugger[module]",
         "//tools/idea/platform/built-in-server-api:intellij.platform.builtInServer[module]",
         "//tools/idea/platform/vcs-impl:intellij.platform.vcs.impl[module]",

@@ -12,5 +12,6 @@ iml_module(
         "//tools/idea/plugins/cvs:intellij.vcs.cvs.javacvs[module]",
         "//tools/idea/platform/vcs-api:intellij.platform.vcs[module]",
         "//tools/idea/plugins/cvs/lib:trilead-ssh2-build213",
+        "//tools/idea/.idea/libraries:JDOM",
     ],
 )

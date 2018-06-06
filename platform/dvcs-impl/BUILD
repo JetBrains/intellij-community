@@ -42,5 +42,6 @@ iml_module(
         "//tools/idea/platform/testFramework:intellij.platform.testFramework[module, test]",
         "//tools/idea/.idea/libraries:mockito[test]",
         "//tools/idea/platform/vcs-tests:intellij.platform.vcs.tests[module, test]",
+        "//tools/idea/.idea/libraries:miglayout-swing",
     ],
 )

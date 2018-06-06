@@ -17,8 +17,6 @@ iml_module(
     exports = [
         "//tools/idea/platform/util:intellij.platform.util",
         "//tools/idea/platform/extensions:intellij.platform.extensions",
-        "//tools/idea/.idea/libraries:NanoXML",
-        "//tools/idea/.idea/libraries:microba",
         "//tools/idea/xml/openapi:intellij.xml",
         "//tools/idea/platform/platform-api:intellij.platform.ide",
         "//tools/idea/platform/lang-api:intellij.platform.lang",

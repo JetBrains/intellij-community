@@ -32,5 +32,6 @@ iml_module(
         "//tools/idea/xml/dom-impl:intellij.xml.dom.impl[module, test]",
         "//tools/idea/.idea/libraries:XmlBeans",
         "//tools/idea/platform/platform-tests:intellij.platform.tests[module, test]",
+        "//tools/idea/.idea/libraries:xml-resolver[test]",
     ],
 )

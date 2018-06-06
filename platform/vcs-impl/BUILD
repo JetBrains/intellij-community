@@ -48,5 +48,6 @@ iml_module(
         "//tools/idea/platform/diff-impl:intellij.platform.diff.impl[module]",
         "//tools/idea/platform/vcs-log/api:intellij.platform.vcs.log[module]",
         "//tools/idea/.idea/libraries:swingx",
+        "//tools/idea/.idea/libraries:miglayout-swing",
     ],
 )

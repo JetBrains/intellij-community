@@ -32,6 +32,6 @@ iml_module(
         "//tools/idea/.idea/libraries:gson",
         "//tools/idea/platform/util:intellij.platform.util[module]",
         "//tools/idea/platform/platform-impl:intellij.platform.ide.impl[module]",
-        "//tools/idea/.idea/libraries:Netty",
+        "//tools/idea/.idea/libraries:netty-codec-http",
     ],
 )

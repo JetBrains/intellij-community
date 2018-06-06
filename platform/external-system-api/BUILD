@@ -20,6 +20,8 @@ iml_module(
     ],
     # do not sort: must match IML order
     runtime_deps = [
+        "//tools/idea/.idea/libraries:Objenesis",
+        "//tools/idea/.idea/libraries:jackson",
         "//tools/idea/platform/usageView:intellij.platform.usageView",
         "//tools/idea/platform/lvcs-impl:intellij.platform.lvcs.impl",
         "//tools/idea/xml/xml-structure-view-impl:intellij.xml.structureView.impl",
@@ -42,8 +44,7 @@ iml_module(
         "//tools/idea/java/compiler/openapi:intellij.java.compiler[module]",
         "//tools/idea/platform/external-system-rt:intellij.platform.externalSystem.rt[module]",
         "//tools/idea/.idea/libraries:KotlinJavaRuntime",
+        "//tools/idea/.idea/libraries:JDOM",
         "//tools/idea/.idea/libraries:de.ruedigermoeller_fst",
-        "//tools/idea/.idea/libraries:javassist",
-        "//tools/idea/.idea/libraries:Objenesis",
     ],
 )

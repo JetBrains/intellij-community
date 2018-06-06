@@ -42,5 +42,7 @@ iml_module(
         "//tools/idea/platform/dvcs-api:intellij.platform.vcs.dvcs[module]",
         "//tools/idea/platform/lang-impl:intellij.platform.lang.impl[module]",
         "//tools/idea/platform/vcs-tests:intellij.platform.vcs.tests[module, test]",
+        "//tools/idea/.idea/libraries:XStream[test]",
+        "//tools/idea/.idea/libraries:miglayout-swing",
     ],
 )

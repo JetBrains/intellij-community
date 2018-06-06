@@ -12,5 +12,6 @@ iml_module(
         "//tools/idea/platform/core-api:intellij.platform.core[module]",
         "//tools/idea/platform/lang-api:intellij.platform.lang[module]",
         "//tools/idea/platform/remote-servers/agent-rt:intellij.platform.remoteServers.agent.rt[module]",
+        "//tools/idea/.idea/libraries:JDOM",
     ],
 )

@@ -29,8 +29,8 @@ iml_module(
         "//tools/idea/platform/platform-impl:intellij.platform.ide.impl[module]",
         "//tools/idea/platform/script-debugger/backend:intellij.platform.scriptDebugger.backend[module]",
         "//tools/idea/platform/xdebugger-impl:intellij.platform.debugger.impl[module]",
-        "//tools/idea/.idea/libraries:Netty",
         "//tools/idea/.idea/libraries:Guava",
         "//tools/idea/platform/lang-impl:intellij.platform.lang.impl[module]",
+        "//tools/idea/.idea/libraries:netty-codec-http",
     ],
 )

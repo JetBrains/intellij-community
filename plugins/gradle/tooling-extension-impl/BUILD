@@ -27,17 +27,17 @@ iml_module(
     visibility = ["//visibility:public"],
     # do not sort: must match IML order
     runtime_deps = [
+        "//tools/idea/platform/lvcs-impl:intellij.platform.lvcs.impl",
         "//tools/idea/xml/relaxng:intellij.relaxng",
         "//tools/idea/platform/tasks-platform-impl:intellij.platform.tasks.impl",
         "//tools/idea/json:intellij.json",
         "//tools/idea/platform/credential-store:intellij.platform.credentialStore",
         "//tools/idea/java/compiler/instrumentation-util-8:intellij.java.compiler.instrumentationUtil.java8",
-        "//tools/idea/plugins/IntelliLang/intellilang-jps-plugin:intellij.java.langInjection.jps",
     ],
     # do not sort: must match IML order
     deps = [
         "//tools/idea/plugins/gradle/tooling-extension-impl:intellij.gradle.toolingExtension.impl[module]",
-        "//tools/idea/plugins/gradle:intellij.gradle[module]",
+        "//tools/idea/plugins/gradle:intellij.gradle.common[module]",
         "//tools/idea:intellij.platform.jps.build_and_others[module, test]",
     ],
 )

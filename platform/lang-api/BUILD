@@ -12,7 +12,6 @@ iml_module(
     exports = [
         "//tools/idea/platform/platform-api:intellij.platform.ide",
         "//tools/idea/platform/lvcs-api:intellij.platform.lvcs",
-        "//tools/idea/.idea/libraries:NanoXML",
         "//tools/idea/platform/indexing-api:intellij.platform.indexing",
         "//tools/idea/platform/projectModel-api:intellij.platform.projectModel",
         "//tools/idea/platform/analysis-api:intellij.platform.analysis",
@@ -24,9 +23,11 @@ iml_module(
         "//tools/idea/.idea/libraries:NanoXML",
         "//tools/idea/platform/indexing-api:intellij.platform.indexing[module]",
         "//tools/idea/platform/projectModel-api:intellij.platform.projectModel[module]",
-        "//tools/idea/.idea/libraries:JUnit4[test]",
-        "//tools/idea/.idea/libraries:Mocks[test]",
         "//tools/idea/platform/analysis-api:intellij.platform.analysis[module]",
         "//tools/idea/.idea/libraries:KotlinJavaRuntime",
+        "//tools/idea/.idea/libraries:JDOM",
+        "//tools/idea/.idea/libraries:Mocks[test]",
+        "//tools/idea/.idea/libraries:JUnit4[test]",
+        "//tools/idea/.idea/libraries:hamcrest[test]",
     ],
 )

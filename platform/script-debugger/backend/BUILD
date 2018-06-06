@@ -33,6 +33,6 @@ iml_module(
         "//tools/idea/platform/script-debugger/protocol/protocol-reader-runtime:intellij.platform.scriptDebugger.protocolReaderRuntime[module]",
         "//tools/idea/platform/platform-api:intellij.platform.ide[module]",
         "//tools/idea/platform/platform-impl:intellij.platform.ide.impl[module]",
-        "//tools/idea/.idea/libraries:Netty",
+        "//tools/idea/.idea/libraries:netty-codec-http",
     ],
 )

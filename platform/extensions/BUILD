@@ -8,11 +8,6 @@ iml_module(
     test_srcs = ["testSrc"],
     visibility = ["//visibility:public"],
     # do not sort: must match IML order
-    exports = [
-        "//tools/idea/.idea/libraries:XStream",
-        "//tools/idea/.idea/libraries:JDOM",
-    ],
-    # do not sort: must match IML order
     deps = [
         "//tools/idea/.idea/libraries:XStream",
         "//tools/idea/.idea/libraries:JDOM",
@@ -20,6 +15,6 @@ iml_module(
         "//tools/idea/platform/util:intellij.platform.util[module]",
         "//tools/idea/.idea/libraries:JUnit4[test]",
         "//tools/idea/.idea/libraries:Xerces[test]",
-        "//tools/idea/.idea/libraries:hamcrest[test]",
+        "//tools/idea/.idea/libraries:assertJ[test]",
     ],
 )

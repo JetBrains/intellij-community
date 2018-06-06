@@ -13,7 +13,6 @@ iml_module(
         "//tools/idea/.idea/libraries:Trove4j",
         "//tools/idea/platform/annotations:intellij.platform.annotations.java5",
         "//tools/idea/platform/util-rt:intellij.platform.util.rt",
-        "//tools/idea/.idea/libraries:Snappy-Java",
     ],
     # do not sort: must match IML order
     deps = [
@@ -26,7 +25,6 @@ iml_module(
         "//tools/idea/platform/util-rt:intellij.platform.util.rt[module]",
         "//tools/idea/.idea/libraries:jna",
         "//tools/idea/.idea/libraries:OroMatcher",
-        "//tools/idea/.idea/libraries:Snappy-Java",
         "//tools/idea/.idea/libraries:imgscalr",
         "//tools/idea/.idea/libraries:xmlgraphics-commons",
         "//tools/idea/.idea/libraries:batik",

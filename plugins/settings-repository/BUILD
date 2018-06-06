@@ -4,12 +4,10 @@ load("//tools/base/bazel:bazel.bzl", "iml_module")
 iml_module(
     name = "intellij.settingsRepository",
     # do not sort: must match IML order
-    srcs = [
-        "resources",
-        "src",
-    ],
+    srcs = ["src"],
     iml_files = ["intellij.settingsRepository.iml"],
     package_prefixes = {"src": "org.jetbrains.settingsRepository"},
+    resources = ["resources"],
     # do not sort: must match IML order
     test_runtime_deps = [
         "//tools/idea/xml/xml-analysis-impl:intellij.xml.analysis.impl",

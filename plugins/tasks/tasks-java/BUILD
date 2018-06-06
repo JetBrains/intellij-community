@@ -25,5 +25,6 @@ iml_module(
         "//tools/idea/java/debugger/openapi:intellij.java.debugger[module]",
         "//tools/idea:intellij.platform.jps.build_and_others[module]",
         "//tools/idea/platform/tasks-platform-api:intellij.platform.tasks[module]",
+        "//tools/idea/.idea/libraries:JDOM",
     ],
 )

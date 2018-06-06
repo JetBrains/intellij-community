@@ -39,10 +39,11 @@ iml_module(
         "//tools/idea/platform/projectModel-impl:intellij.platform.projectModel.impl[module]",
         "//tools/idea/platform/platform-impl:intellij.platform.ide.impl[module]",
         "//tools/idea/platform/bootstrap:intellij.platform.bootstrap[module]",
-        "//tools/idea/.idea/libraries:xpp3-1.1.4-min",
         "//tools/idea/platform/vcs-api:intellij.platform.vcs[module]",
         "//tools/idea/.idea/libraries:assertJ[test]",
         "//tools/idea/platform/testFramework/extensions:intellij.platform.testExtensions[module, test]",
         "//tools/idea/platform/testFramework:intellij.platform.testFramework[module, test]",
+        "//tools/idea/.idea/libraries:XStream",
+        "//tools/idea/.idea/libraries:lz4-java",
     ],
 )

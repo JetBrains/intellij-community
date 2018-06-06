@@ -35,5 +35,6 @@ iml_module(
         "//tools/idea/jps/model-serialization:intellij.platform.jps.model.serialization[module]",
         "//tools/idea/.idea/libraries:gant-groovy",
         "//tools/idea/.idea/libraries:Log4J",
+        "//tools/idea/.idea/libraries:protobuf",
     ],
 )

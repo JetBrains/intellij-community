@@ -15,7 +15,8 @@ iml_module(
     # do not sort: must match IML order
     exports = [
         "//tools/idea/.idea/libraries:ASM",
-        "//tools/idea/.idea/libraries:Coverage",
+        "//tools/idea/.idea/libraries:intellij-coverage",
+        "//tools/idea/.idea/libraries:intellij-test-discovery",
         "//tools/idea/.idea/libraries:Trove4j",
     ],
     # do not sort: must match IML order
@@ -39,7 +40,8 @@ iml_module(
         "//tools/idea/platform/extensions:intellij.platform.extensions[module]",
         "//tools/idea/platform/annotations:intellij.platform.annotations.java5[module]",
         "//tools/idea/.idea/libraries:ASM",
-        "//tools/idea/.idea/libraries:Coverage",
+        "//tools/idea/.idea/libraries:intellij-coverage",
+        "//tools/idea/.idea/libraries:intellij-test-discovery",
         "//tools/idea/.idea/libraries:Trove4j",
         "//tools/idea/platform/testRunner:intellij.platform.testRunner[module]",
         "//tools/idea/platform/lang-impl:intellij.platform.lang.impl[module]",

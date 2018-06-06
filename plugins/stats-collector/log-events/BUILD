@@ -13,6 +13,7 @@ iml_module(
     deps = [
         "//tools/idea/.idea/libraries:KotlinJavaRuntime",
         "//tools/idea/.idea/libraries:gson",
+        "//tools/idea/platform/annotations:intellij.platform.annotations[module]",
         "//tools/idea/.idea/libraries:JUnit4[test]",
         "//tools/idea/.idea/libraries:assertJ[test]",
     ],

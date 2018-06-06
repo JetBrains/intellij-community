@@ -30,7 +30,6 @@ iml_module(
         "//tools/idea/.idea/libraries:ASM",
         "//tools/idea/.idea/libraries:cli-parser",
         "//tools/idea/.idea/libraries:JDOM",
-        "//tools/idea/.idea/libraries:Netty",
         "//tools/idea/.idea/libraries:protobuf",
         "//tools/idea/.idea/libraries:Log4J",
         "//tools/idea/.idea/libraries:jna",
@@ -38,6 +37,8 @@ iml_module(
         "//tools/idea/plugins/ui-designer/jps-plugin:intellij.java.guiForms.jps",
         "//tools/idea/plugins/groovy/jps-plugin:intellij.groovy.jps",
         "//tools/idea/plugins/groovy/rt:intellij.groovy.rt",
+        "//tools/idea/.idea/libraries:netty-codec-http",
+        "//tools/idea/.idea/libraries:netty-handler",
         "//tools/idea/java/compiler/instrumentation-util-8:intellij.java.compiler.instrumentationUtil.java8",
         "//tools/idea/java/java-runtime:intellij.java.rt",
     ],
@@ -80,5 +81,6 @@ iml_module(
         "//tools/idea/.idea/libraries:KotlinJavaRuntime",
         "//tools/idea/platform/util:intellij.platform.util[module]",
         "//tools/idea/.idea/libraries:JUnit4[test]",
+        "//tools/idea/platform/testFramework/core:intellij.platform.testFramework.core[module, test]",
     ],
 )

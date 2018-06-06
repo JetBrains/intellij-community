@@ -35,7 +35,6 @@ iml_module(
         "//tools/idea/.idea/libraries:OroMatcher",
         "//tools/idea/platform/icons:intellij.platform.icons[module]",
         "//tools/idea/platform/projectModel-api:intellij.platform.projectModel[module]",
-        "//tools/idea/.idea/libraries:Netty",
         "//tools/idea/.idea/libraries:proxy-vole",
         "//tools/idea/platform/analysis-api:intellij.platform.analysis[module]",
         "//tools/idea/platform/editor-ui-api:intellij.platform.editor[module]",
@@ -45,5 +44,8 @@ iml_module(
         "//tools/idea/.idea/libraries:jna",
         "//tools/idea/.idea/libraries:KotlinJavaRuntime",
         "//tools/idea/.idea/libraries:ini4j",
+        "//tools/idea/.idea/libraries:JDOM",
+        "//tools/idea/.idea/libraries:jackson",
+        "//tools/idea/.idea/libraries:netty-codec-http",
     ],
 )
