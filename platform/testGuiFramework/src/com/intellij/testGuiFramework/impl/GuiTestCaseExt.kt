@@ -1,6 +1,7 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.testGuiFramework.impl
 
+import com.intellij.testGuiFramework.fixtures.GutterFixture
 import com.intellij.testGuiFramework.fixtures.extended.ExtendedTreeFixture
 import com.intellij.testGuiFramework.util.*
 import org.fest.swing.timing.Pause
@@ -11,6 +12,9 @@ import org.junit.Rule
 import org.junit.rules.ErrorCollector
 import org.junit.rules.TemporaryFolder
 import org.junit.rules.TestName
+import java.io.File
+import java.nio.file.Files
+import java.nio.file.Paths
 
 open class GuiTestCaseExt : GuiTestCase() {
 
@@ -145,4 +149,102 @@ fun GuiTestCase.mavenReimport() {
       }
     }
   }
+}
+
+fun GuiTestCase.checkProjectIsCompiled(expectedStatus: String) {
+  val textEventLog = "Event Log"
+  ideFrame {
+    logTestStep("Going to check how the project compiles")
+    invokeMainMenu("CompileProject")
+    shortcut(Modifier.CONTROL + Modifier.SHIFT + Key.A)
+    waitAMoment()
+    typeText(textEventLog)
+    shortcut(Key.ENTER)
+    toolwindow(id = textEventLog) {
+      content(tabName = "") {
+        editor{
+          val lastLine = this.getCurrentFileContents(false)?.lines()?.last { it.trim().isNotEmpty() } ?: ""
+          assert(lastLine.contains(expectedStatus)) {
+            "Line `$lastLine` doesn't contain expected status `$expectedStatus`"
+          }
+        }
+      }
+    }
+  }
+}
+
+fun GuiTestCase.checkRunConfiguration(vararg configuration: String) {
+  val cfgName = configuration[configuration.size - 1]
+  val runDebugConfigurations = "Run/Debug Configurations"
+  ideFrame {
+    logTestStep("Going to check presence of Run/Debug configuration `$cfgName`")
+    navigationBar {
+      assert(exists { button(cfgName) }) { "Button `$cfgName` not found on Navigation bar" }
+      button(cfgName).click()
+      popupClick("Edit Configurations...")
+    }
+    dialog(runDebugConfigurations) {
+      assert(exists { jTree(*configuration) })
+      jTree(*configuration).clickPath(*configuration)
+      button("Cancel").click()
+    }
+  }
+}
+
+fun GuiTestCase.checkProjectIsRun(configuration: String, message: String){
+  val buttonRun = "Run"
+  logTestStep("Going to run configuration `$configuration`")
+  ideFrame {
+    navigationBar {
+      actionButton(buttonRun).click()
+    }
+    waitAMoment()
+    toolwindow(id = buttonRun) {
+      content(tabName = configuration) {
+        editor {
+          val output = this.getCurrentFileContents(false)?.lines()?.filter { it.trim().isNotEmpty() } ?: listOf()
+          assert(output.firstOrNull { it.contains(message) } != null){
+            "Run output:\n" +
+            "\t${output.joinToString("\n\t")}\n" +
+            "doesn't contain expected message `$message`"
+          }
+        }
+      }
+    }
+  }
+}
+
+fun GuiTestCase.checkRunGutterIcons(expectedNumberOfRunIcons: Int, expectedRunLines: List<String>){
+  ideFrame {
+    logTestStep("Going to check whether $expectedNumberOfRunIcons `Run` gutter icons are present")
+    editor {
+      assert(gutter.isGutterIconPresent(GutterFixture.GutterIcon.RUN_SCRIPT)){
+        "No `Run` icons found on gutter panel"
+      }
+      val gutterRunLines = gutter.linesWithGutterIcon(GutterFixture.GutterIcon.RUN_SCRIPT)
+      assert(gutterRunLines.size == expectedNumberOfRunIcons) {
+        "Found ${gutterRunLines.size} gutter icons `Run`, but expected $expectedNumberOfRunIcons"
+      }
+      val contents = this@editor.getCurrentFileContents(false)?.lines() ?: listOf()
+      for((index, line) in gutterRunLines.withIndex()){
+        // line numbers start with 1, but index in the contents list starts with 0
+        val currentLine = contents[line - 1]
+        val expectedLine = expectedRunLines[index]
+        assert(currentLine.contains(expectedLine)){
+          "At line #$line the actual text is `$currentLine`, but it was expected `$expectedLine`"
+        }
+      }
+    }
+  }
+}
+
+fun GuiTestCase.checkFileExists(filePath: String){
+  logTestStep("Going to check whether file `$filePath` created")
+  assert(File(filePath).exists()) { "Can't find a file `$filePath`" }
+}
+
+fun GuiTestCase.checkFileContainsLine(filePath: String, line: String){
+  val inputFile = Paths.get(filePath)
+  logTestStep("Going to check whether ${inputFile.fileName} contains line `$line`")
+  assert(Files.readAllLines(inputFile).contains(line)) { "Line `$line` not found" }
 }
