@@ -30,8 +30,6 @@ import com.intellij.openapi.wm.ToolWindowId;
 import com.intellij.openapi.wm.ex.ToolWindowManagerEx;
 import com.intellij.openapi.wm.ex.ToolWindowManagerListener;
 import com.intellij.ui.components.JBOptionButton;
-import com.intellij.ui.mac.foundation.Foundation;
-import com.intellij.ui.mac.foundation.ID;
 import com.intellij.ui.popup.list.ListPopupImpl;
 import org.jetbrains.annotations.NotNull;
 
@@ -100,8 +98,6 @@ public class TouchBarsManager {
   public static void initialize() {
     if (!isTouchBarAvailable())
       return;
-
-    final ID app = Foundation.invoke("NSApplication", "sharedApplication");
 
     ApplicationManager.getApplication().getMessageBus().connect().subscribe(ProjectManager.TOPIC, new ProjectManagerListener() {
       @Override
@@ -198,7 +194,7 @@ public class TouchBarsManager {
     if (!isTouchBarAvailable())
       return;
 
-    // NOTE: WindowEvent.WINDOW_GAINED_FOCUS can be fired when frame focuse
+    // NOTE: WindowEvent.WINDOW_GAINED_FOCUS can be fired when frame focused
     if (e.getID() == FocusEvent.FOCUS_GAINED) {
       ourProjectData.forEach((project, data) -> {
         final ToolWindowManagerEx twm = ToolWindowManagerEx.getInstanceEx(project);
