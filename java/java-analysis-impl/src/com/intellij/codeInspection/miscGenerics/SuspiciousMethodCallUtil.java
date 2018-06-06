@@ -220,7 +220,8 @@ public class SuspiciousMethodCallUtil {
               }
               return InspectionsBundle.message("inspection.suspicious.collections.method.calls.problem.descriptor",
                                                PsiFormatUtil.formatType(qualifierType, 0, PsiSubstitutor.EMPTY),
-                                               PsiFormatUtil.formatType(itemType, 0, PsiSubstitutor.EMPTY));
+                                               PsiFormatUtil.formatType(itemType, 0, PsiSubstitutor.EMPTY), 
+                                               "objects");
             }
           }
           return null;
@@ -246,7 +247,11 @@ public class SuspiciousMethodCallUtil {
           if (qualifierType != null) {
             message = InspectionsBundle.message("inspection.suspicious.collections.method.calls.problem.descriptor",
                                                 PsiFormatUtil.formatType(qualifierType, 0, PsiSubstitutor.EMPTY),
-                                                PsiFormatUtil.formatType(argType, 0, PsiSubstitutor.EMPTY));
+                                                PsiFormatUtil.formatType(argType, 0, PsiSubstitutor.EMPTY), 
+                                                InheritanceUtil.isInheritor(patternClass, CommonClassNames.JAVA_UTIL_MAP) 
+                                                ? index == 0 
+                                                  ? "keys" : "values" 
+                                                : "objects");
           }
         }
       }
