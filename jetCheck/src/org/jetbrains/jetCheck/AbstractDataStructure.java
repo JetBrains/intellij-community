@@ -1,7 +1,5 @@
 package org.jetbrains.jetCheck;
 
-import org.jetbrains.annotations.NotNull;
-
 /**
  * @author peter
  */
@@ -23,11 +21,4 @@ abstract class AbstractDataStructure implements DataStructure {
     return sizeHint;
   }
 
-  @Override
-  public <T> T generate(@NotNull Generator<T> generator) {
-    return generator.getGeneratorFunction().apply(subStructure(generator, childSizeHint()));
-  }
-
-  @NotNull
-  abstract DataStructure subStructure(@NotNull Generator<?> generator, int childSizeHint);
 }

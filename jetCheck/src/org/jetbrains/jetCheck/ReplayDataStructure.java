@@ -29,10 +29,9 @@ class ReplayDataStructure extends AbstractDataStructure {
     return (E)next;
   }
 
-  @NotNull
   @Override
-  DataStructure subStructure(@NotNull Generator<?> generator, int childSizeHint) {
-    return new ReplayDataStructure(nextChild(StructureNode.class), childSizeHint, customizer);
+  public <T> T generate(@NotNull Generator<T> generator) {
+    return generator.getGeneratorFunction().apply(new ReplayDataStructure(nextChild(StructureNode.class), childSizeHint(), customizer));
   }
 
   @Override
