@@ -16,8 +16,8 @@
 package com.android.tools;
 
 import com.android.testutils.TestUtils;
-import com.android.tools.perflogger.BenchmarkLogger;
-import com.android.tools.perflogger.BenchmarkLogger.*;
+import com.android.tools.perflogger.Metric;
+import com.android.tools.perflogger.Benchmark;
 import org.junit.Test;
 
 import java.io.File;
@@ -36,7 +36,7 @@ public class AndroidStudioBundleTest {
       // getWorkspaceFile asserts the file exists.
       File binary = TestUtils.getWorkspaceFile("tools/idea/" + file);
 
-      BenchmarkLogger.log(benchmark, file, binary.length());
+      benchmark.log(file, binary.length());
     }
 
     // TODO handle failure cases
