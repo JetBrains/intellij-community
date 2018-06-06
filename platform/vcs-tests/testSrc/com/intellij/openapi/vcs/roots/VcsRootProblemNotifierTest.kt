@@ -20,6 +20,7 @@ package com.intellij.openapi.vcs.roots
 import com.intellij.openapi.application.runWriteAction
 import com.intellij.openapi.extensions.Extensions
 import com.intellij.openapi.util.io.FileUtil
+import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.vcs.VcsConfiguration
 import com.intellij.openapi.vcs.VcsRootChecker
 import com.intellij.openapi.vcs.changes.committed.MockAbstractVcs
@@ -45,12 +46,14 @@ class VcsRootProblemNotifierTest : VcsPlatformTest() {
     vcsManager.registerVcs(vcs)
 
     notifier = VcsRootProblemNotifier.getInstance(myProject)
+    Registry.get("vcs.root.auto.add.nofity").setValue(true)
   }
 
   override fun tearDown() {
     try {
       if (wasInit { checker }) getExtensionPoint().unregisterExtension(checker)
       if (wasInit { vcs }) vcsManager.unregisterVcs(vcs)
+      Registry.get("vcs.root.auto.add.nofity").resetToDefault()
     }
     finally {
       super.tearDown()

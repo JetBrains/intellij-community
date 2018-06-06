@@ -104,6 +104,11 @@ public class VcsRootProblemNotifier {
         return;
       }
 
+      // Don't display the notification about registered roots unless configured to do so
+      if (!Registry.is("vcs.root.auto.add.nofity")) {
+        return;
+      }
+
       title = makeTitle(importantUnregisteredRoots, invalidRoots, true);
       description = makeDescription(importantUnregisteredRoots, invalidRoots);
       notificationActions = new NotificationAction[]{getConfigureNotificationAction()};
