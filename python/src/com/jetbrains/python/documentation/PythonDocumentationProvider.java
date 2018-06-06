@@ -22,7 +22,6 @@ import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.QualifiedName;
 import com.intellij.util.io.HttpRequests;
-import com.intellij.xml.CommonXmlStrings;
 import com.jetbrains.python.PyNames;
 import com.jetbrains.python.PyTokenTypes;
 import com.jetbrains.python.PythonDialectsTokenSetProvider;
@@ -728,11 +727,6 @@ public class PythonDocumentationProvider extends AbstractDocumentationProvider i
   @NotNull
   private static String escaped(@NotNull String unescaped) {
     return StringUtil.escapeXml(unescaped);
-  }
-
-  @NotNull
-  private static String saveSpaces(@NotNull String text) {
-    return ESCAPE_AND_SAVE_NEW_LINES_AND_SPACES.apply(text);
   }
 
   @NotNull

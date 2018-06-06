@@ -39,7 +39,6 @@ import com.jetbrains.python.psi.impl.PyPsiUtils;
 import com.jetbrains.python.psi.resolve.PyResolveContext;
 import com.jetbrains.python.psi.resolve.QualifiedNameFinder;
 import com.jetbrains.python.psi.resolve.QualifiedResolveResult;
-import com.jetbrains.python.psi.types.PyCallableParameter;
 import com.jetbrains.python.psi.types.PyClassType;
 import com.jetbrains.python.psi.types.PyType;
 import com.jetbrains.python.psi.types.TypeEvalContext;
@@ -105,20 +104,18 @@ public class PyDocumentationBuilder {
       buildFromParameter((PyNamedParameter)elementDefinition);
     }
 
-    if (elementDefinition != null) {
-      final ASTNode node = elementDefinition.getNode();
-      if (node != null && PythonDialectsTokenSetProvider.INSTANCE.getKeywordTokens().contains(node.getElementType())) {
-        String documentationName = elementDefinition.getText();
-        if (node.getElementType() == PyTokenTypes.AS_KEYWORD || node.getElementType() == PyTokenTypes.ELSE_KEYWORD) {
-          final PyTryExceptStatement statement = PsiTreeUtil.getParentOfType(elementDefinition, PyTryExceptStatement.class);
-          if (statement != null) documentationName = "try";
-        }
-        else if (node.getElementType() == PyTokenTypes.IN_KEYWORD) {
-          final PyForStatement statement = PsiTreeUtil.getParentOfType(elementDefinition, PyForStatement.class);
-          if (statement != null) documentationName = "for";
-        }
-        buildForKeyword(documentationName);
+    final ASTNode node = elementDefinition.getNode();
+    if (node != null && PythonDialectsTokenSetProvider.INSTANCE.getKeywordTokens().contains(node.getElementType())) {
+      String documentationName = elementDefinition.getText();
+      if (node.getElementType() == PyTokenTypes.AS_KEYWORD || node.getElementType() == PyTokenTypes.ELSE_KEYWORD) {
+        final PyTryExceptStatement statement = PsiTreeUtil.getParentOfType(elementDefinition, PyTryExceptStatement.class);
+        if (statement != null) documentationName = "try";
       }
+      else if (node.getElementType() == PyTokenTypes.IN_KEYWORD) {
+        final PyForStatement statement = PsiTreeUtil.getParentOfType(elementDefinition, PyForStatement.class);
+        if (statement != null) documentationName = "for";
+      }
+      buildForKeyword(documentationName);
     }
 
     if (!mySectionsMap.isEmpty()) {
@@ -530,7 +527,7 @@ public class PyDocumentationBuilder {
       myProlog.addWith(TagSmall, $(PyBundle.message("QDOC.module.path.unknown")));
     }
     else {
-      QualifiedName name = QualifiedNameFinder.findShortestImportableQName(followed);
+      final QualifiedName name = QualifiedNameFinder.findShortestImportableQName(followed);
       if (name != null) {
         myProlog.add($(PyUtil.isPackage(followed) ? "Package " : "Module "))
                 .addWith(TagBold, $(ObjectUtils.chooseNotNull(QualifiedNameFinder.canonizeQualifiedName(name, null), name).toString()));
@@ -543,7 +540,7 @@ public class PyDocumentationBuilder {
   }
 
   @Nullable
-  private String getLinkToModule(@NotNull PyFile module) {
+  private static String getLinkToModule(@NotNull PyFile module) {
     final QualifiedName name = QualifiedNameFinder.findCanonicalImportPath(module, null);
     if (name != null) {
       return PyDocumentationLink.toModule(name.toString(), name.toString());
@@ -572,7 +569,7 @@ public class PyDocumentationBuilder {
   }
 
   @Nullable
-  private String getLinkToFunction(@NotNull PyFunction function, boolean preferQualifiedName) {
+  private static String getLinkToFunction(@NotNull PyFunction function, boolean preferQualifiedName) {
     final String qualifiedName = function.getQualifiedName();
     final PyClass pyClass = function.getContainingClass();
     // Preserve name of a containing class even if the whole qualified name can't be constructed
