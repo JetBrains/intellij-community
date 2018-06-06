@@ -555,9 +555,7 @@ public final class InternalDecorator extends JPanel implements Queryable, DataPr
 
   void removeStripeButton() {
     fireVisibleOnPanelChanged(false);
-    if (getToolWindow().isActive()) {
-      fireHidden();
-    }
+    fireHidden();
   }
 
   void showStripeButton() {
