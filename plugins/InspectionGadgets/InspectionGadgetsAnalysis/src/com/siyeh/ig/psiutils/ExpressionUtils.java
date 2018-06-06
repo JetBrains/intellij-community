@@ -262,6 +262,7 @@ public class ExpressionUtils {
         }
         return e;
       })
+      .nonNull()
       .flatMap(e -> {
         if(e instanceof PsiMethodCallExpression && GET_OR_DEFAULT.matches(e)) {
           return StreamEx.of(e, ((PsiMethodCallExpression)e).getArgumentList().getExpressions()[1]);
