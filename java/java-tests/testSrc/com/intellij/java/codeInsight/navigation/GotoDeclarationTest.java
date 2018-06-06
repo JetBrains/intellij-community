@@ -98,6 +98,13 @@ public class GotoDeclarationTest extends LightCodeInsightTestCase {
     assertNull("Unexpected " + element, element);
   }
 
+  public void testStringRefNotCovered() {
+    configureFromFileText("A.java", "class A {{ foo(\"java\"<caret>); }}");
+    int offset = getEditor().getCaretModel().getOffset();
+    assertInstanceOf(GotoDeclarationAction.findTargetElement(getProject(), getEditor(), offset - 1), PsiDirectory.class);
+    assertNull(GotoDeclarationAction.findTargetElement(getProject(), getEditor(), offset));
+  }
+
   public void testEndOfFile() {
     configureFromFileText("A.java", "class A {{ String[] arr; arr<caret>");
     PsiElement element = GotoDeclarationAction.findTargetElement(getProject(), getEditor(), getEditor().getCaretModel().getOffset());
