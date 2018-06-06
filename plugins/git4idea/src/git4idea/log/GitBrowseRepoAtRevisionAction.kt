@@ -18,7 +18,7 @@ class GitBrowseRepoAtRevisionAction : VcsLogAction<GitRepository>() {
     val repo = grouped.keySet().single()
     val commit = grouped.values().single()
     val root = GitDirectoryVirtualFile(repo, null, "", commit)
-    showRepositoryBrowser(project, root, repo.root.name + " at " + commit.id.toShortString())
+    showRepositoryBrowser(project, root, repo.root, repo.root.name + " at " + commit.id.toShortString())
   }
 
   override fun isVisible(project: Project, grouped: MultiMap<GitRepository, Hash>): Boolean {

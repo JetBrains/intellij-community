@@ -12,9 +12,20 @@ import com.intellij.openapi.fileChooser.ex.RootFileElement
 import com.intellij.openapi.fileChooser.impl.FileTreeBuilder
 import com.intellij.openapi.fileEditor.FileEditorManager
 import com.intellij.openapi.fileEditor.OpenFileDescriptor
+import com.intellij.openapi.fileEditor.impl.LoadTextUtil
 import com.intellij.openapi.fileTypes.FileTypeManager
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.vcs.FilePath
+import com.intellij.openapi.vcs.RemoteFilePath
+import com.intellij.openapi.vcs.actions.VcsContextFactory
+import com.intellij.openapi.vcs.changes.ByteBackedContentRevision
+import com.intellij.openapi.vcs.changes.Change
+import com.intellij.openapi.vcs.changes.ContentRevision
+import com.intellij.openapi.vcs.changes.CurrentContentRevision
+import com.intellij.openapi.vcs.changes.actions.diff.ShowDiffAction
+import com.intellij.openapi.vcs.history.VcsRevisionNumber
 import com.intellij.openapi.vcs.vfs.AbstractVcsVirtualFile
+import com.intellij.openapi.vcs.vfs.VcsVirtualFile
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.wm.ToolWindow
 import com.intellij.openapi.wm.ToolWindowAnchor
@@ -23,6 +34,7 @@ import com.intellij.ui.ScrollPaneFactory
 import com.intellij.ui.content.ContentFactory
 import com.intellij.util.PlatformIcons
 import java.awt.BorderLayout
+import java.io.File
 import java.util.*
 import javax.swing.Icon
 import javax.swing.JPanel
@@ -31,7 +43,7 @@ import javax.swing.tree.DefaultTreeModel
 
 const val TOOLWINDOW_ID = "Repositories"
 
-fun showRepositoryBrowser(project: Project, root: AbstractVcsVirtualFile, title: String) {
+fun showRepositoryBrowser(project: Project, root: AbstractVcsVirtualFile, localRoot: VirtualFile, title: String) {
   val toolWindowManager = ToolWindowManager.getInstance(project)
   val repoToolWindow = toolWindowManager.getToolWindow(TOOLWINDOW_ID)
                        ?: registerRepositoriesToolWindow(toolWindowManager)
@@ -44,7 +56,7 @@ fun showRepositoryBrowser(project: Project, root: AbstractVcsVirtualFile, title:
     }
   }
 
-  val contentPanel = RepositoryBrowserPanel(project, root)
+  val contentPanel = RepositoryBrowserPanel(project, root, localRoot)
 
   val content = ContentFactory.SERVICE.getInstance().createContent(contentPanel, title, true)
   repoToolWindow.contentManager.addContent(content)
@@ -58,9 +70,12 @@ private fun registerRepositoriesToolWindow(toolWindowManager: ToolWindowManager)
   return toolWindow
 }
 
+val REPOSITORY_BROWSER_DATA_KEY = DataKey.create<RepositoryBrowserPanel>("com.intellij.openapi.vcs.impl.RepositoryBrowserPanel")
+
 class RepositoryBrowserPanel(
-  private val project: Project,
-  val root: AbstractVcsVirtualFile
+  val project: Project,
+  val root: AbstractVcsVirtualFile,
+  val localRoot: VirtualFile
 ) : JPanel(BorderLayout()), DataProvider {
   private val fileSystemTree: FileSystemTreeImpl
 
@@ -98,6 +113,7 @@ class RepositoryBrowserPanel(
 
     val actionGroup = DefaultActionGroup()
     actionGroup.add(ActionManager.getInstance().getAction(IdeActions.ACTION_EDIT_SOURCE))
+    actionGroup.add(ActionManager.getInstance().getAction("Vcs.ShowDiffWithLocal"))
     fileSystemTree.registerMouseListener(actionGroup)
 
     val scrollPane = ScrollPaneFactory.createScrollPane(fileSystemTree.tree)
@@ -113,7 +129,58 @@ class RepositoryBrowserPanel(
           .filter { !it.isDirectory }
           .map { OpenFileDescriptor(project, it) }
           .toTypedArray()
+      REPOSITORY_BROWSER_DATA_KEY.`is`(dataId) -> this
       else -> null
     }
+  }
+
+  fun hasSelectedFiles() = fileSystemTree.selectedFiles.any { it is VcsVirtualFile }
+
+  fun getSelectionAsChanges(): List<Change> {
+    return fileSystemTree.selectedFiles
+      .filterIsInstance<VcsVirtualFile>()
+      .map { createChangeVsLocal(it) }
+  }
+
+  private fun createChangeVsLocal(file: VcsVirtualFile): Change {
+    val repoRevision = VcsVirtualFileContentRevision(file)
+    val localPath = File(localRoot.path, file.path)
+    val localRevision = CurrentContentRevision(VcsContextFactory.SERVICE.getInstance().createFilePathOn(localPath))
+    return Change(repoRevision, localRevision)
+  }
+}
+
+class DiffRepoWithLocalAction : AnActionExtensionProvider {
+  override fun isActive(e: AnActionEvent): Boolean {
+    return e.getData(REPOSITORY_BROWSER_DATA_KEY) != null
+  }
+
+  override fun update(e: AnActionEvent) {
+    val repoBrowser = e.getData(REPOSITORY_BROWSER_DATA_KEY) ?: return
+    e.presentation.isEnabled = repoBrowser.hasSelectedFiles()
+  }
+
+  override fun actionPerformed(e: AnActionEvent) {
+    val repoBrowser = e.getData(REPOSITORY_BROWSER_DATA_KEY) ?: return
+    val changes = repoBrowser.getSelectionAsChanges()
+    ShowDiffAction.showDiffForChange(repoBrowser.project, changes)
+  }
+}
+
+class VcsVirtualFileContentRevision(private val vcsVirtualFile: VcsVirtualFile) : ContentRevision, ByteBackedContentRevision {
+  override fun getContent(): String? {
+    return contentAsBytes?.let { LoadTextUtil.getTextByBinaryPresentation(it, vcsVirtualFile).toString() }
+  }
+
+  override fun getContentAsBytes(): ByteArray? {
+    return vcsVirtualFile.fileRevision?.content
+  }
+
+  override fun getFile(): FilePath {
+    return RemoteFilePath(vcsVirtualFile.path, vcsVirtualFile.isDirectory)
+  }
+
+  override fun getRevisionNumber(): VcsRevisionNumber {
+    return vcsVirtualFile.fileRevision?.revisionNumber ?: VcsRevisionNumber.NULL
   }
 }
