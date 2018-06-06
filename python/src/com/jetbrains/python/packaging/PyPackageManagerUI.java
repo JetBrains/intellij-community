@@ -68,7 +68,7 @@ public class PyPackageManagerUI {
     ProgressManager.getInstance().run(new InstallManagementTask(myProject, mySdk, myListener));
   }
 
-  public void install(@NotNull final List<PyRequirement> requirements, @NotNull final List<String> extraArgs) {
+  public void install(@Nullable final List<PyRequirement> requirements, @NotNull final List<String> extraArgs) {
     ProgressManager.getInstance().run(new InstallTask(myProject, mySdk, requirements, extraArgs, myListener));
   }
 
@@ -225,12 +225,12 @@ public class PyPackageManagerUI {
   }
 
   private static class InstallTask extends PackagingTask {
-    @NotNull private final List<PyRequirement> myRequirements;
+    @Nullable private final List<PyRequirement> myRequirements;
     @NotNull private final List<String> myExtraArgs;
 
     public InstallTask(@Nullable Project project,
                        @NotNull Sdk sdk,
-                       @NotNull List<PyRequirement> requirements,
+                       @Nullable List<PyRequirement> requirements,
                        @NotNull List<String> extraArgs,
                        @Nullable Listener listener) {
       super(project, sdk, "Installing packages", listener);
@@ -242,27 +242,42 @@ public class PyPackageManagerUI {
     @Override
     protected List<ExecutionException> runTask(@NotNull ProgressIndicator indicator) {
       final List<ExecutionException> exceptions = new ArrayList<>();
-      final int size = myRequirements.size();
       final PyPackageManager manager = PyPackageManagers.getInstance().forSdk(mySdk);
-      for (int i = 0; i < size; i++) {
-        final PyRequirement requirement = myRequirements.get(i);
-        indicator.setText(String.format("Installing package '%s'...", requirement.getPresentableText()));
-        if (i == 0) {
-          indicator.setIndeterminate(true);
-        }
-        else {
-          indicator.setIndeterminate(false);
-          indicator.setFraction((double)i / size);
-        }
+      if (myRequirements == null) {
+        indicator.setText("Installing packages...");
+        indicator.setIndeterminate(true);
         try {
-          manager.install(Collections.singletonList(requirement), myExtraArgs);
+          manager.install(null, myExtraArgs);
         }
         catch (RunCanceledByUserException e) {
           exceptions.add(e);
-          break;
         }
         catch (ExecutionException e) {
           exceptions.add(e);
+        }
+      }
+      else {
+        final int size = myRequirements.size();
+        for (int i = 0; i < size; i++) {
+          final PyRequirement requirement = myRequirements.get(i);
+          indicator.setText(String.format("Installing package '%s'...", requirement.getPresentableText()));
+          if (i == 0) {
+            indicator.setIndeterminate(true);
+          }
+          else {
+            indicator.setIndeterminate(false);
+            indicator.setFraction((double)i / size);
+          }
+          try {
+            manager.install(Collections.singletonList(requirement), myExtraArgs);
+          }
+          catch (RunCanceledByUserException e) {
+            exceptions.add(e);
+            break;
+          }
+          catch (ExecutionException e) {
+            exceptions.add(e);
+          }
         }
       }
       manager.refresh();
@@ -278,7 +293,9 @@ public class PyPackageManagerUI {
     @NotNull
     @Override
     protected String getSuccessDescription() {
-      return "Installed packages: " + PyPackageUtil.requirementsToString(myRequirements);
+      return myRequirements != null ?
+             "Installed packages: " + PyPackageUtil.requirementsToString(myRequirements) :
+             "Installed all requirements";
     }
 
     @NotNull

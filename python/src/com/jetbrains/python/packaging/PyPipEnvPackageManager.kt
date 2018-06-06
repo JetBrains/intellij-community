@@ -30,10 +30,11 @@ class PyPipEnvPackageManager(val sdk: Sdk) : PyPackageManager() {
     install(parseRequirements(requirementString), emptyList())
   }
 
-  override fun install(requirements: List<PyRequirement>, extraArgs: List<String>) {
-    val args = listOf("install") +
-               requirements.flatMap { it.installOptions } +
-               extraArgs
+  override fun install(requirements: List<PyRequirement>?, extraArgs: List<String>) {
+    val args = listOfNotNull(listOf("install"),
+                             requirements?.flatMap { it.installOptions },
+                             extraArgs)
+      .flatten()
     try {
       runPipEnv(sdk, *args.toTypedArray())
     }

@@ -178,7 +178,8 @@ public class PyPackageManagerImpl extends PyPackageManager {
   }
 
   @Override
-  public void install(@NotNull List<PyRequirement> requirements, @NotNull List<String> extraArgs) throws ExecutionException {
+  public void install(@Nullable List<PyRequirement> requirements, @NotNull List<String> extraArgs) throws ExecutionException {
+    if (requirements == null) return;
     installManagement();
     final List<String> args = new ArrayList<>();
     args.add(INSTALL);
