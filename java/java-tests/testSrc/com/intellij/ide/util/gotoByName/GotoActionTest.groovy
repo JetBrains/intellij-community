@@ -135,7 +135,7 @@ class GotoActionTest extends LightCodeInsightFixtureTestCase {
 
   private MatchedValue matchedAction(AnAction action, String pattern, MatchMode mode = MatchMode.NAME, boolean isAvailable = true) {
     def model = new GotoActionModel(project, null, null)
-    def wrapper = new ActionWrapper(action, "", mode, DataContext.EMPTY_CONTEXT, model) {
+    def wrapper = new ActionWrapper(action, null, mode, DataContext.EMPTY_CONTEXT, model) {
       @Override
       boolean isAvailable() {
         return isAvailable
