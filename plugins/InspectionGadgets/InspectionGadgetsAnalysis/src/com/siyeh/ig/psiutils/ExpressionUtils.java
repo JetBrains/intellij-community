@@ -1316,4 +1316,34 @@ public class ExpressionUtils {
            (element instanceof PsiLambdaExpression &&
             PsiType.VOID.equals(LambdaUtil.getFunctionalInterfaceReturnType((PsiLambdaExpression)element)));
   }
+
+  /**
+   * Looks for expression which given expression is compared to (either with ==, != or {@code equals()} call)
+   *
+   * @param expression expression which is compared to something else
+   * @return another expression the supplied one is compared to or null if comparison is not detected
+   */
+  @Nullable
+  public static PsiExpression getExpressionComparedTo(@NotNull PsiExpression expression) {
+    PsiElement parent = PsiUtil.skipParenthesizedExprUp(expression.getParent());
+    if (parent instanceof PsiBinaryExpression) {
+      PsiBinaryExpression binOp = (PsiBinaryExpression)parent;
+      if (ComparisonUtils.isEqualityComparison(binOp)) {
+        PsiExpression leftOperand = PsiUtil.skipParenthesizedExprDown(binOp.getLOperand());
+        PsiExpression rightOperand = PsiUtil.skipParenthesizedExprDown(binOp.getROperand());
+        return PsiTreeUtil.isAncestor(leftOperand, expression, false) ? rightOperand : leftOperand;
+      }
+    }
+    if (parent instanceof PsiExpressionList) {
+      PsiMethodCallExpression call = tryCast(parent.getParent(), PsiMethodCallExpression.class);
+      if (call != null && MethodCallUtils.isEqualsCall(call)) {
+        return PsiUtil.skipParenthesizedExprDown(call.getMethodExpression().getQualifierExpression());
+      }
+    }
+    PsiMethodCallExpression call = getCallForQualifier(expression);
+    if (call != null && MethodCallUtils.isEqualsCall(call)) {
+      return PsiUtil.skipParenthesizedExprDown(ArrayUtil.getFirstElement(call.getArgumentList().getExpressions()));
+    }
+    return null;
+  }
 }
