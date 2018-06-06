@@ -108,7 +108,11 @@ class RepositoryBrowserPanel(
   override fun getData(dataId: String?): Any? {
     return when {
       CommonDataKeys.VIRTUAL_FILE_ARRAY.`is`(dataId) -> fileSystemTree.selectedFiles
-      CommonDataKeys.NAVIGATABLE_ARRAY.`is`(dataId) -> fileSystemTree.selectedFiles.map { OpenFileDescriptor(project, it) }.toTypedArray()
+      CommonDataKeys.NAVIGATABLE_ARRAY.`is`(dataId) ->
+        fileSystemTree.selectedFiles
+          .filter { !it.isDirectory }
+          .map { OpenFileDescriptor(project, it) }
+          .toTypedArray()
       else -> null
     }
   }
