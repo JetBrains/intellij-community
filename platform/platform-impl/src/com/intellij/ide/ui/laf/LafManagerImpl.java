@@ -405,7 +405,7 @@ public final class LafManagerImpl extends LafManager implements PersistentStateC
 
     if (lookAndFeelInfo instanceof UIThemeBasedLookAndFeelInfo) {
       try {
-        ((UIThemeBasedLookAndFeelInfo)lookAndFeelInfo).installTheme(UIManager.getDefaults());
+        ((UIThemeBasedLookAndFeelInfo)lookAndFeelInfo).installTheme(UIManager.getLookAndFeelDefaults());
       }
       catch (Exception e) {
         Messages.showMessageDialog(
@@ -418,7 +418,7 @@ public final class LafManagerImpl extends LafManager implements PersistentStateC
     }
 
     if (SystemInfo.isMacOSYosemite) {
-      installMacOSXFonts(UIManager.getDefaults());
+      installMacOSXFonts(UIManager.getLookAndFeelDefaults());
     }
 
     myCurrentLaf = ObjectUtils.chooseNotNull(lookAndFeelInfo, findLaf(lookAndFeelInfo.getClassName()));
