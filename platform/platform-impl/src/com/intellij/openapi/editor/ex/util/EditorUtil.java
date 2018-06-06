@@ -808,12 +808,20 @@ public final class EditorUtil {
    * Performs inlay-aware conversion of offset to visual position in editor. If there are inlays at given position, their
    * 'related to preceding text' property will be taken account to determine resulting position. Specifically, resulting position will
    * match caret's visual position if it's moved to the given offset using {@link Caret#moveToOffset(int)} call.
+   * <p>
+   * NOTE: if editor is an {@link EditorWindow}, corresponding offset is treated as an offset in injected editor, but returned position
+   * is always related to host editor.
    *
    * @see Inlay#isRelatedToPrecedingText()
    */
   @NotNull
   public static VisualPosition inlayAwareOffsetToVisualPosition(@NotNull Editor editor, int offset) {
-    VisualPosition pos = editor.logicalToVisualPosition(editor.offsetToLogicalPosition(offset));
+    LogicalPosition logicalPosition = editor.offsetToLogicalPosition(offset);
+    if (editor instanceof EditorWindow) {
+      logicalPosition = ((EditorWindow)editor).injectedToHost(logicalPosition);
+      editor = ((EditorWindow)editor).getDelegate();
+    }
+    VisualPosition pos = editor.logicalToVisualPosition(logicalPosition);
     Inlay inlay;
     while ((inlay = editor.getInlayModel().getInlineElementAt(pos)) != null) {
       if (inlay.isRelatedToPrecedingText()) break;
