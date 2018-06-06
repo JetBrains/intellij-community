@@ -564,7 +564,7 @@ public class SearchEverywhereAction extends AnAction implements CustomComponentA
   }
 
   public void actionPerformed(AnActionEvent e, MouseEvent me) {
-    if (Experiments.isFeatureEnabled("new.search.everywhere")) {
+    if (Experiments.isFeatureEnabled("new.search.everywhere") && e.getProject() != null) {
       //todo[mikhail.sokolov] show new UI
       String searchProviderID = SearchEverywhereContributor.ALL_CONTRIBUTORS_GROUP_ID;
 
