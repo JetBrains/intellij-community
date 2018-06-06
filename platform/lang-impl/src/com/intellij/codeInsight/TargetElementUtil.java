@@ -138,10 +138,10 @@ public class TargetElementUtil extends TargetElementUtilBase {
     else if (!isIdentifierPart(file, text, offset)) {
       correctedOffset--;
     }
-    if (correctedOffset >= 0 && offset < document.getTextLength()) {
-      char charAt = text.charAt(offset);
-      if (isIdentifierPart(file, text, correctedOffset) ||
-          charAt == '\'' || charAt == '"' || charAt == ')' || charAt == ']') {
+    if (correctedOffset >= 0) {
+      char charAt = offset < textLength ? text.charAt(offset) : '\0';
+      if (charAt == '\'' || charAt == '"' || charAt == ')' || charAt == ']' ||
+          isIdentifierPart(file, text, correctedOffset)) {
         return correctedOffset;
       }
     }
