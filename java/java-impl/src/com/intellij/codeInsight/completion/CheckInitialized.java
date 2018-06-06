@@ -20,11 +20,11 @@ import com.intellij.codeInsight.daemon.ImplicitUsageProvider;
 import com.intellij.psi.*;
 import com.intellij.psi.filters.ElementFilter;
 import com.intellij.psi.infos.CandidateInfo;
-import com.intellij.psi.search.LocalSearchScope;
-import com.intellij.psi.search.searches.ReferencesSearch;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.JavaPsiConstructorUtil;
+import com.intellij.util.containers.ContainerUtil;
+import com.siyeh.ig.psiutils.VariableAccessUtils;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -139,15 +139,8 @@ class CheckInitialized implements ElementFilter {
   private static boolean isInitializedBeforeConstructor(PsiField field, PsiClass containingClass) {
     if (field.getInitializer() != null) return true;
 
-    for (PsiClassInitializer initializer : containingClass.getInitializers()) {
-      for (PsiReference ref : ReferencesSearch.search(field, new LocalSearchScope(initializer)).findAll()) {
-        if (ref instanceof PsiReferenceExpression && PsiUtil.isAccessedForWriting((PsiReferenceExpression)ref)) {
-          return true;
-        }
-      }
-    }
-
-    return false;
+    return ContainerUtil.exists(containingClass.getInitializers(), i -> 
+      !i.hasModifierProperty(PsiModifier.STATIC) && VariableAccessUtils.variableIsAssigned(field, i, false));
   }
 
   @Override
