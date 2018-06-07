@@ -8,6 +8,7 @@ import com.intellij.internal.statistic.connect.StatisticsService;
 import com.intellij.internal.statistic.persistence.UsageStatisticsPersistenceComponent;
 import com.intellij.notification.Notification;
 import com.intellij.notification.NotificationListener;
+import com.intellij.openapi.application.PermanentInstallationID;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.io.BufferExposingByteArrayOutputStream;
 import com.intellij.openapi.util.text.StringUtil;
@@ -41,7 +42,8 @@ public class EventLogStatisticsService implements StatisticsService {
       return new StatisticsResult(StatisticsResult.ResultCode.ERROR_IN_CONFIG, "ERROR: unknown Statistics Service URL.");
     }
 
-    if (settings.getPermittedTraffic() == 0) {
+    if (!isSendLogsEnabled(settings.getPermittedTraffic())) {
+      cleanupAllFiles();
       return new StatisticsResult(StatisticsResult.ResultCode.NOT_PERMITTED_SERVER, "NOT_PERMITTED");
     }
 
@@ -92,7 +94,7 @@ public class EventLogStatisticsService implements StatisticsService {
         }
       }
 
-      cleanupSentFiles(toRemove);
+      cleanupFiles(toRemove);
 
       UsageStatisticsPersistenceComponent.getInstance().setEventLogSentTime(System.currentTimeMillis());
       return decorator.toResult();
@@ -101,6 +103,14 @@ public class EventLogStatisticsService implements StatisticsService {
       LOG.info(e);
       throw new StatServiceException("Error during data sending.", e);
     }
+  }
+
+  private static boolean isSendLogsEnabled(int percent) {
+    if (percent == 0) {
+      return false;
+    }
+    final String userId = PermanentInstallationID.get();
+    return (Math.abs(userId.hashCode()) % 100) < percent;
   }
 
   @Nullable
@@ -127,7 +137,19 @@ public class EventLogStatisticsService implements StatisticsService {
     return null;
   }
 
-  private static void cleanupSentFiles(@NotNull List<File> toRemove) {
+  private static void cleanupAllFiles() {
+    try {
+      final List<File> logs = FeatureUsageLogger.INSTANCE.getLogFiles();
+      if (!logs.isEmpty()) {
+        cleanupFiles(logs);
+      }
+    }
+    catch (Exception e) {
+      LOG.info(e);
+    }
+  }
+
+  private static void cleanupFiles(@NotNull List<File> toRemove) {
     for (File file : toRemove) {
       if (!file.delete()) {
         LOG.warn("Failed deleting event log: " + file.getName());
