@@ -596,7 +596,7 @@
     <postStartupActivity implementation="com.intellij.tasks.context.BranchContextTracker$TrackerStartupActivity"/>
 
     <!-- experiments -->
-    <experimentalFeature id="inline.browse.button" internalFeature="true" percentOfUsers="0">
+    <experimentalFeature id="inline.browse.button" percentOfUsers="100">
       <description>Inlines browse button inside TextFieldWithBrowseButton component</description>
     </experimentalFeature>
     <experimentalFeature id="new.search.everywhere" internalFeature="true" percentOfUsers="100">
