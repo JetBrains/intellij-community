@@ -81,17 +81,6 @@ class GitDeleteTagOperation extends GitBranchOperation {
     myNotifier.notify(notification);
   }
 
-  @Override
-  protected void rollback() {
-    GitCompoundResult result = doRollback();
-    if (result.totalSuccess()) {
-      myNotifier.notifySuccess("Rollback Successful", "Restored tag " + myTagName);
-    }
-    else {
-      myNotifier.notifyError("Error during rollback of tag deletion", result.getErrorOutputWithReposIndication());
-    }
-  }
-
   @NotNull
   private GitCompoundResult doRollback() {
     GitCompoundResult result = new GitCompoundResult(myProject);
@@ -101,25 +90,6 @@ class GitDeleteTagOperation extends GitBranchOperation {
       repository.getRepositoryFiles().refresh();
     }
     return result;
-  }
-
-  @NotNull
-  public String getSuccessMessage() {
-    return String.format("Deleted tag %s", formatTagName(myTagName));
-  }
-
-  @NotNull
-  @Override
-  protected String getRollbackProposal() {
-    return "However tag deletion has succeeded for the following " + repositories() + ":<br/>" +
-           successfulRepositoriesJoined() +
-           "<br/>You may rollback (recreate " + myTagName + " in these roots) not to let tags diverge.";
-  }
-
-  @NotNull
-  @Override
-  protected String getOperationName() {
-    return "tag deletion";
   }
 
   @NotNull
@@ -144,5 +114,27 @@ class GitDeleteTagOperation extends GitBranchOperation {
     else {
       myNotifier.notifyError("Couldn't Restore " + formatTagName(myTagName), result.getErrorOutputWithReposIndication());
     }
+  }
+
+  @Override
+  protected void rollback() {
+    throw new UnsupportedOperationException();
+  }
+
+  @NotNull
+  @Override
+  protected String getRollbackProposal() {
+    throw new UnsupportedOperationException();
+  }
+
+  @NotNull
+  @Override
+  protected String getOperationName() {
+    throw new UnsupportedOperationException();
+  }
+
+  @NotNull
+  public String getSuccessMessage() {
+    throw new UnsupportedOperationException();
   }
 }
