@@ -70,6 +70,12 @@ public class VcsRootDetectorTest extends VcsRootBaseTest {
     doTest(new VcsRootConfiguration().vcsRoots(names), myRepository, myRepository.getName());
   }
 
+  public void testDontDetectAboveIfProjectIsIgnoredThere() throws IOException {
+    myRootChecker.setIgnored(myRepository);
+    assertTrue(new File(testRoot, DOT_MOCK).mkdir());
+    doTest(new VcsRootConfiguration().vcsRoots(testRoot.getPath()), myRepository);
+  }
+
   public void testOneAboveAndSeveralUnderProject() throws IOException {
     String[] names = {".", myRepository.getName() + "/community", myRepository.getName() + "/contrib"};
     doTest(new VcsRootConfiguration().vcsRoots(names), myRepository, names);

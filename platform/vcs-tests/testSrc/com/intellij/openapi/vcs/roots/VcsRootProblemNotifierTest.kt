@@ -170,13 +170,4 @@ class VcsRootProblemNotifierTest : VcsPlatformTest() {
   private fun getExtensionPoint() = Extensions.getRootArea().getExtensionPoint(VcsRootChecker.EXTENSION_POINT_NAME)
 
   private fun getPath(path: String) = notifier.getPresentableMapping(path)
-
-  private class MockRootChecker(private val vcs: MockAbstractVcs) : VcsRootChecker() {
-    override fun getSupportedVcs() = vcs.keyInstanceMethod!!
-
-    override fun isRoot(path: String) = File(path, DOT_MOCK).exists()
-
-    override fun isVcsDir(path: String) = path.toLowerCase().endsWith(DOT_MOCK)
-  }
-
 }

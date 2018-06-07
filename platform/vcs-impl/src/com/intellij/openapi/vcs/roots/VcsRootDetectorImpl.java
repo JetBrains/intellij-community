@@ -137,7 +137,7 @@ public class VcsRootDetectorImpl implements VcsRootDetector {
 
     VirtualFile par = dir.getParent();
     while (par != null && !par.equals(VfsUtil.getUserHomeDir())) {
-      AbstractVcs vcs = getVcsFor(par);
+      AbstractVcs vcs = getVcsFor(par, dir);
       if (vcs != null) return new VcsRoot(vcs, par);
       par = par.getParent();
     }
@@ -146,8 +146,13 @@ public class VcsRootDetectorImpl implements VcsRootDetector {
 
   @Nullable
   private AbstractVcs getVcsFor(@NotNull VirtualFile dir) {
+    return getVcsFor(dir, null);
+  }
+
+  @Nullable
+  private AbstractVcs getVcsFor(@NotNull VirtualFile maybeRoot, @Nullable VirtualFile dirToCheckForIgnore) {
     List<AbstractVcs> vcss = StreamEx.of(myCheckers).
-      filter(it -> it.isRoot(dir.getPath())).
+      filter(it -> it.isRoot(maybeRoot.getPath()) && (dirToCheckForIgnore == null || !it.isIgnored(maybeRoot, dirToCheckForIgnore))).
       map(it -> myVcsManager.findVcsByName(it.getSupportedVcs().getName())).
       toList();
 
@@ -155,7 +160,7 @@ public class VcsRootDetectorImpl implements VcsRootDetector {
       return vcss.get(0);
     }
     else if (vcss.size() > 1) {
-      LOG.info("Dir " + dir + " is under several VCSs: " + vcss);
+      LOG.info("Dir " + maybeRoot + " is under several VCSs: " + vcss);
     }
     return null;
   }
