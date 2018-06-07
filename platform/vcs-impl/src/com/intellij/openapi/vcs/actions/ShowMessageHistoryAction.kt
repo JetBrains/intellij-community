@@ -5,7 +5,6 @@ import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.editor.actions.ContentChooser
 import com.intellij.openapi.project.DumbAwareAction
 import com.intellij.openapi.vcs.CheckinProjectPanel
-import com.intellij.openapi.vcs.CommitMessageI
 import com.intellij.openapi.vcs.VcsBundle.message
 import com.intellij.openapi.vcs.VcsConfiguration
 import com.intellij.openapi.vcs.VcsDataKeys
@@ -47,6 +46,5 @@ class ShowMessageHistoryAction : DumbAwareAction() {
     }
   }
 
-  private fun getCommitMessage(e: AnActionEvent): CommitMessageI? =
-    e.getData(CheckinProjectPanel.PANEL_KEY) as? CommitMessageI ?: e.getData(VcsDataKeys.COMMIT_MESSAGE_CONTROL)
+  private fun getCommitMessage(e: AnActionEvent) = e.getData(VcsDataKeys.COMMIT_MESSAGE_CONTROL)
 }
