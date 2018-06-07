@@ -133,12 +133,13 @@ public class PythonSdkAdditionalData implements SdkAdditionalData {
 
     if (myAssociatedModulePath != null) {
       rootElement.setAttribute(ASSOCIATED_PROJECT_PATH, myAssociatedModulePath);
-      // XXX: We have to persist the pipenv flag since pipenv is no different from a regular
-      // virtualenv and currently we want to handle pipenvs differently. Consider adding an SDK
-      // extension mechanism for that
-      if (myIsPipEnv) {
-        rootElement.setAttribute(IS_PIPENV, "true");
-      }
+    }
+
+    // XXX: We have to persist the pipenv flag since pipenv is no different from a regular
+    // virtualenv and currently we want to handle pipenvs differently. Consider adding an SDK
+    // extension mechanism for that
+    if (myIsPipEnv) {
+      rootElement.setAttribute(IS_PIPENV, "true");
     }
   }
 
