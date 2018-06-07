@@ -77,6 +77,10 @@ public class SearchEverywhereManagerImpl implements SearchEverywhereManager {
 
     mySearchEverywhereUI = createView(myProject, serviceContributors, contributors, myContributorFilters);
     mySearchEverywhereUI.switchToContributor(selectedContributorID);
+    if (searchText == null && !SearchEverywhereContributor.ALL_CONTRIBUTORS_GROUP_ID.equals(selectedContributorID)) {
+      searchText = myHistoryList.getLastSearchForContributor(selectedContributorID);
+    }
+
     if (searchText != null && !searchText.isEmpty()) {
       mySearchEverywhereUI.getSearchField().setText(searchText);
       mySearchEverywhereUI.getSearchField().selectAll();
@@ -253,7 +257,7 @@ public class SearchEverywhereManagerImpl implements SearchEverywhereManager {
     }
 
     public void saveText(String text, String contributorID) {
-      String lastHistoryItem = lastSearchForContributor(contributorID);
+      String lastHistoryItem = getLastSearchForContributor(contributorID);
       if (text.equals(lastHistoryItem)) {
         return;
       }
@@ -269,7 +273,7 @@ public class SearchEverywhereManagerImpl implements SearchEverywhereManager {
       }
     }
 
-    private String lastSearchForContributor(String contributorID) {
+    public String getLastSearchForContributor(String contributorID) {
       if (historyList.isEmpty()) {
         return null;
       }
