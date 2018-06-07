@@ -526,6 +526,8 @@ fun KotlinGuiTestCase.openPomXml(vararg projectName: String) {
 }
 
 fun KotlinGuiTestCase.editSettingsGradle(){
+  //   if project is configured to old Kotlin version, it must be released and no changes are required in the settings.gradle file
+  if (!KotlinTestProperties.isActualKotlinUsed()) return
   val fileName = "$projectFolder/settings.gradle"
   if (KotlinTestProperties.isArtifactOnlyInDevRep) addDevRepositoryToBuildGradle(fileName, isKotlinDslUsed = false)
 }
