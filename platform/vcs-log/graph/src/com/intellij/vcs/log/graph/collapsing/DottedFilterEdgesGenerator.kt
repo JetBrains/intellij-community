@@ -19,31 +19,25 @@ import com.intellij.vcs.log.graph.api.EdgeFilter
 import com.intellij.vcs.log.graph.api.LiteLinearGraph
 import com.intellij.vcs.log.graph.api.LiteLinearGraph.NodeFilter
 import com.intellij.vcs.log.graph.api.elements.GraphEdge
+import com.intellij.vcs.log.graph.api.elements.GraphEdgeType
 import com.intellij.vcs.log.graph.api.elements.GraphEdgeType.*
 import com.intellij.vcs.log.graph.utils.LinearGraphUtils
 
-class DottedFilterEdgesGenerator private constructor(private val collapsedGraph: CollapsedGraph,
-                                                     private val modification: CollapsedGraph.Modification,
-                                                     private val upIndex: Int,
-                                                     private val downIndex: Int) {
-
-  private val liteDelegateGraph: LiteLinearGraph = LinearGraphUtils.asLiteLinearGraph(collapsedGraph.delegatedGraph)
+abstract class DottedFilterEdgesGenerator internal constructor(private val graph: LiteLinearGraph,
+                                                               private val upIndex: Int,
+                                                               private val downIndex: Int) {
   private val numbers: ShiftNumber = ShiftNumber(upIndex, downIndex)
 
-  private fun nodeIsVisible(nodeIndex: Int): Boolean {
-    return collapsedGraph.isNodeVisible(nodeIndex)
-  }
+  protected abstract fun nodeIsVisible(nodeIndex: Int): Boolean
 
-  private fun addDottedEdge(nodeIndex1: Int, nodeIndex2: Int) {
-    modification.createEdge(GraphEdge(nodeIndex1, nodeIndex2, null, DOTTED))
-  }
+  protected abstract fun addDottedEdge(nodeIndex1: Int, nodeIndex2: Int)
 
-  private fun addDottedArrow(nodeIndex: Int, isUp: Boolean) {
-    modification.createEdge(GraphEdge(nodeIndex, null, null, if (isUp) DOTTED_ARROW_UP else DOTTED_ARROW_DOWN))
-  }
+  protected abstract fun addDottedArrow(nodeIndex: Int, isUp: Boolean)
+
+  protected abstract fun hasDottedEdges(nodeIndex: Int, isUp: Boolean): Boolean
 
   // update specified range
-  private fun update() {
+  internal fun update() {
     downWalk()
     cleanup()
     upWalk()
@@ -53,16 +47,6 @@ class DottedFilterEdgesGenerator private constructor(private val collapsedGraph:
     for (currentNodeIndex in upIndex..downIndex) {
       numbers.setNumber(currentNodeIndex, Integer.MAX_VALUE)
     }
-  }
-
-  private fun hasDottedEdges(nodeIndex: Int, isUp: Boolean): Boolean {
-    for (edge in modification.edgesToAdd.getAdjacentEdges(nodeIndex, EdgeFilter.NORMAL_ALL)) {
-      if (edge.type == DOTTED) {
-        if (isUp && LinearGraphUtils.isEdgeUp(edge, nodeIndex)) return true
-        if (!isUp && LinearGraphUtils.isEdgeDown(edge, nodeIndex)) return false
-      }
-    }
-    return false
   }
 
   private fun addEdgeOrArrow(currentNodeIndex: Int, anotherNodeIndex: Int, isUp: Boolean) {
@@ -81,7 +65,7 @@ class DottedFilterEdgesGenerator private constructor(private val collapsedGraph:
       if (nodeIsVisible(currentNodeIndex)) {
         var nearlyUp = Integer.MIN_VALUE
         var maxAdjNumber = Integer.MIN_VALUE
-        for (upNode in liteDelegateGraph.getNodes(currentNodeIndex, NodeFilter.UP)) {
+        for (upNode in graph.getNodes(currentNodeIndex, NodeFilter.UP)) {
           if (upNode < upIndex) {
             addEdgeOrArrow(currentNodeIndex, upNode, true)
             continue
@@ -107,7 +91,7 @@ class DottedFilterEdgesGenerator private constructor(private val collapsedGraph:
         // node currentNodeIndex invisible
 
         var nearlyUp = Integer.MIN_VALUE
-        for (upNode in liteDelegateGraph.getNodes(currentNodeIndex, NodeFilter.UP)) {
+        for (upNode in graph.getNodes(currentNodeIndex, NodeFilter.UP)) {
           if (nodeIsVisible(upNode)) {
             nearlyUp = Math.max(nearlyUp, upNode)
           }
@@ -125,7 +109,7 @@ class DottedFilterEdgesGenerator private constructor(private val collapsedGraph:
       if (nodeIsVisible(currentNodeIndex)) {
         var nearlyDown = Integer.MAX_VALUE
         var minAdjNumber = Integer.MAX_VALUE
-        for (downNode in liteDelegateGraph.getNodes(currentNodeIndex, NodeFilter.DOWN)) {
+        for (downNode in graph.getNodes(currentNodeIndex, NodeFilter.DOWN)) {
           if (downNode > downIndex) {
             addEdgeOrArrow(currentNodeIndex, downNode, false)
             continue
@@ -151,7 +135,7 @@ class DottedFilterEdgesGenerator private constructor(private val collapsedGraph:
         // node currentNodeIndex invisible
 
         var nearlyDown = Integer.MAX_VALUE
-        for (downNode in liteDelegateGraph.getNodes(currentNodeIndex, NodeFilter.DOWN)) {
+        for (downNode in graph.getNodes(currentNodeIndex, NodeFilter.DOWN)) {
           if (nodeIsVisible(downNode)) {
             nearlyDown = Math.min(nearlyDown, downNode)
           }
@@ -164,32 +148,92 @@ class DottedFilterEdgesGenerator private constructor(private val collapsedGraph:
     }
   }
 
-
-  internal class ShiftNumber(private val startIndex: Int, private val endIndex: Int) {
-    private val numbers: IntArray = IntArray(endIndex - startIndex + 1)
-
-    private fun inRange(nodeIndex: Int): Boolean {
-      return nodeIndex in startIndex..endIndex
-    }
-
-    fun getNumber(nodeIndex: Int): Int {
-      return if (inRange(nodeIndex)) numbers[nodeIndex - startIndex] else -1
-
-    }
-
-    fun setNumber(nodeIndex: Int, value: Int) {
-      if (inRange(nodeIndex)) {
-        numbers[nodeIndex - startIndex] = value
-      }
-    }
-  }
-
   companion object {
     @JvmStatic
     fun update(collapsedGraph: CollapsedGraph, upDelegateNodeIndex: Int, downDelegateNodeIndex: Int) {
       val modification = collapsedGraph.startModification()
-      DottedFilterEdgesGenerator(collapsedGraph, modification, upDelegateNodeIndex, downDelegateNodeIndex).update()
+      DottedFilterEdgesGeneratorImpl(collapsedGraph, modification, upDelegateNodeIndex, downDelegateNodeIndex).update()
       modification.apply()
+    }
+
+    fun hideInplace(collapsedGraph: CollapsedGraph, toHide: Set<Int>) {
+      val modification = collapsedGraph.startModification()
+      InplaceFilterEdgesGenerator(collapsedGraph, modification, toHide).update()
+      toHide.forEach { modification.hideNode(collapsedGraph.convertToDelegateNodeIndex(it)) }
+      modification.apply()
+    }
+  }
+}
+
+class DottedFilterEdgesGeneratorImpl(private val collapsedGraph: CollapsedGraph,
+                                     private val modification: CollapsedGraph.Modification,
+                                     upIndex: Int,
+                                     downIndex: Int) :
+  DottedFilterEdgesGenerator(LinearGraphUtils.asLiteLinearGraph(collapsedGraph.delegatedGraph), upIndex, downIndex) {
+
+  override fun nodeIsVisible(nodeIndex: Int): Boolean {
+    return collapsedGraph.isNodeVisible(nodeIndex)
+  }
+
+  override fun addDottedEdge(nodeIndex1: Int, nodeIndex2: Int) {
+    modification.createEdge(GraphEdge.createNormalEdge(nodeIndex1, nodeIndex2, DOTTED))
+  }
+
+  override fun addDottedArrow(nodeIndex: Int, isUp: Boolean) {
+    modification.createEdge(GraphEdge.createEdgeWithTargetId(nodeIndex, null, if (isUp) DOTTED_ARROW_UP else DOTTED_ARROW_DOWN))
+  }
+
+  override fun hasDottedEdges(nodeIndex: Int, isUp: Boolean): Boolean = modification.hasDottedEdges(nodeIndex, isUp)
+}
+
+private fun CollapsedGraph.Modification.hasDottedEdges(nodeIndex: Int, isUp: Boolean): Boolean {
+  for (edge in edgesToAdd.getAdjacentEdges(nodeIndex, EdgeFilter.NORMAL_ALL)) {
+    if (edge.type == DOTTED) {
+      if (isUp && LinearGraphUtils.isEdgeUp(edge, nodeIndex)) return true
+      if (!isUp && LinearGraphUtils.isEdgeDown(edge, nodeIndex)) return false
+    }
+  }
+  return false
+}
+
+class InplaceFilterEdgesGenerator(private val collapsedGraph: CollapsedGraph,
+                                  private val modification: CollapsedGraph.Modification,
+                                  private val toHide: Set<Int>) : DottedFilterEdgesGenerator(
+  LinearGraphUtils.asLiteLinearGraph(collapsedGraph.compiledGraph), 0, collapsedGraph.compiledGraph.nodesCount() - 1) {
+
+  override fun nodeIsVisible(nodeIndex: Int): Boolean = !toHide.contains(nodeIndex)
+
+  override fun addDottedEdge(nodeIndex1: Int, nodeIndex2: Int) {
+    val delegateIndex1 = collapsedGraph.convertToDelegateNodeIndex(nodeIndex1)
+    val delegateIndex2 = collapsedGraph.convertToDelegateNodeIndex(nodeIndex2)
+    modification.createEdge(GraphEdge.createNormalEdge(delegateIndex1, delegateIndex2, GraphEdgeType.DOTTED))
+  }
+
+  override fun addDottedArrow(nodeIndex: Int, isUp: Boolean) {
+    val delegateIndex = collapsedGraph.convertToDelegateNodeIndex(nodeIndex)
+    modification.createEdge(GraphEdge.createEdgeWithTargetId(delegateIndex, null, if (isUp) DOTTED_ARROW_UP else DOTTED_ARROW_DOWN))
+  }
+
+  override fun hasDottedEdges(nodeIndex: Int, isUp: Boolean): Boolean {
+    val delegateIndex = collapsedGraph.convertToDelegateNodeIndex(nodeIndex)
+    return modification.hasDottedEdges(delegateIndex, isUp)
+  }
+}
+
+internal class ShiftNumber(private val startIndex: Int, private val endIndex: Int) {
+  private val numbers: IntArray = IntArray(endIndex - startIndex + 1)
+
+  private fun inRange(nodeIndex: Int): Boolean {
+    return nodeIndex in startIndex..endIndex
+  }
+
+  fun getNumber(nodeIndex: Int): Int {
+    return if (inRange(nodeIndex)) numbers[nodeIndex - startIndex] else -1
+  }
+
+  fun setNumber(nodeIndex: Int, value: Int) {
+    if (inRange(nodeIndex)) {
+      numbers[nodeIndex - startIndex] = value
     }
   }
 }
