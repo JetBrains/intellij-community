@@ -17,7 +17,6 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.*;
 import com.intellij.openapi.editor.event.*;
 import com.intellij.openapi.editor.ex.util.EditorUtil;
-import com.intellij.openapi.editor.impl.EditorImpl;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.IndexNotReadyException;
 import com.intellij.openapi.project.Project;
@@ -174,9 +173,7 @@ public class ParameterInfoController extends UserDataHolderBase implements Visib
       }
     };
     LookupManager.getInstance(project).addPropertyChangeListener(lookupListener, this);
-    if (myEditor instanceof EditorImpl) {
-      Disposer.register(((EditorImpl)myEditor).getDisposable(), this);
-    }
+    EditorUtil.disposeWithEditor(myEditor, this);
 
     myComponent.update(mySingleParameterInfo); // to have correct preferred size
     if (showHint) {
@@ -495,14 +492,6 @@ public class ParameterInfoController extends UserDataHolderBase implements Visib
 
     }
     throw new TimeoutException();
-  }
-
-  @TestOnly
-  public static void disposeAll(@NotNull Editor editor) {
-    ParameterInfoController[] controllers = getAllControllers(editor).toArray(new ParameterInfoController[0]);
-    for (ParameterInfoController controller: controllers) {
-      Disposer.dispose(controller);
-    }
   }
 
   /**

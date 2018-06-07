@@ -33,7 +33,6 @@ public abstract class AbstractParameterInfoTestCase extends LightFixtureCompleti
 
   @Override
   protected void tearDown() throws Exception {
-    ParameterInfoController.disposeAll(getEditor());
     try {
       CodeInsightSettings.getInstance().PARAMETER_INFO_DELAY = myStoredAutoPopupDelay;
     }
