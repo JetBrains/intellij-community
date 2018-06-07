@@ -707,7 +707,8 @@ public class SearchEverywhereUI extends BorderLayoutPanel implements Disposable,
     @Override
     public Component getListCellRendererComponent(JList list, Object value, int index, boolean isSelected, boolean cellHasFocus) {
       if (myListModel.isMoreElement(index)) {
-        return moreRenderer.getListCellRendererComponent(list, value, index, isSelected, cellHasFocus);
+        Component cmp = moreRenderer.getListCellRendererComponent(list, value, index, isSelected, cellHasFocus);
+        return wrap(cmp, 1, 7);
       }
 
       SearchEverywhereContributor contributor = myListModel.getContributorForIndex(index);
@@ -715,10 +716,21 @@ public class SearchEverywhereUI extends BorderLayoutPanel implements Disposable,
                                        .getListCellRendererComponent(list, value, index, isSelected, cellHasFocus);
 
       if (isAllTabSelected() && myListModel.isGroupFirstItem(index)) {
-        return groupTitleRenderer.withDisplayedData(contributor.getGroupName(), component);
+        component = groupTitleRenderer.withDisplayedData(contributor.getGroupName(), component);
       }
 
-      return component;
+      return wrap(component, 1, 0);
+    }
+
+    private Component wrap(Component cmp, int verticalGap, int hotizontalGap) {
+      JPanel panel = new JPanel(new BorderLayout());
+      panel.setOpaque(cmp.isOpaque());
+      if (cmp.isOpaque()) {
+        panel.setBackground(cmp.getBackground());
+      }
+      panel.add(cmp, BorderLayout.CENTER);
+      panel.setBorder(JBUI.Borders.empty(verticalGap, hotizontalGap));
+      return panel;
     }
   }
 
@@ -757,7 +769,7 @@ public class SearchEverywhereUI extends BorderLayoutPanel implements Disposable,
       JPanel topPanel = JBUI.Panels.simplePanel(5, 0)
                                            .addToCenter(separatorComponent)
                                            .addToLeft(titleLabel)
-                                           .withBorder(JBUI.Borders.empty())
+                                           .withBorder(JBUI.Borders.empty(0, 7))
                                            .withBackground(UIUtil.getListBackground());
       add(topPanel, BorderLayout.NORTH);
     }
