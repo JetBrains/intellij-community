@@ -32,6 +32,7 @@ import com.intellij.openapi.wm.ex.ToolWindowManagerListener;
 import com.intellij.ui.components.JBOptionButton;
 import com.intellij.ui.popup.list.ListPopupImpl;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import javax.swing.Timer;
@@ -246,10 +247,13 @@ public class TouchBarsManager {
     );
   }
 
-  public static TouchBar showDlgButtonsBar(List<JButton> jbuttons, Project project) {
+  public static @Nullable Runnable showDlgButtonsBar(List<JButton> jbuttons, Project project) {
+    if (!isTouchBarAvailable())
+      return null;
+
     final TouchBar tb = _createButtonsBar(jbuttons, project);
     _showTempTouchBar(tb, BarType.DIALOG);
-    return tb;
+    return ()->{closeTouchBar(tb, true);};
   }
 
   synchronized public static void showStopRunningBar(TouchBar tb) {
