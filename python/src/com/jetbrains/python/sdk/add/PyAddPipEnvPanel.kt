@@ -7,6 +7,7 @@ import com.intellij.openapi.module.ModuleUtil
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.ui.ValidationInfo
+import com.intellij.openapi.util.SystemInfo
 import com.intellij.ui.components.JBCheckBox
 import com.intellij.util.PlatformUtils
 import com.intellij.util.ui.FormBuilder
@@ -106,13 +107,19 @@ class PyAddPipEnvPanel(private val project: Project?,
    * Checks if `pipenv` is available on `$PATH`.
    */
   private fun validatePipEnvExecutable(): ValidationInfo? {
-    val executable = getPipEnvExecutable() ?: return ValidationInfo("Pipenv executable is not found on \$PATH")
+    val tip = "Specify the correct path to pipenv in ${getSettingsMenuName()} | Tools | Python Integrated Tools."
+    val executable = getPipEnvExecutable() ?: return ValidationInfo("Pipenv executable is not found on \$PATH. $tip")
     return when {
-      !executable.exists() -> ValidationInfo("${executable.absolutePath} is not found")
+      !executable.exists() -> ValidationInfo("File ${executable.absolutePath} is not found. $tip")
       !executable.canExecute() -> ValidationInfo("Cannot execute ${executable.absolutePath}")
       else -> null
     }
   }
+  private fun getSettingsMenuName() =
+    when {
+      SystemInfo.isMac -> "Preferences"
+      else -> "Settings"
+    }
 
   /**
    * Checks if the pipenv for the project hasn't been already added.
