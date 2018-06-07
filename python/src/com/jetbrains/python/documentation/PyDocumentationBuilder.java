@@ -388,6 +388,17 @@ public class PyDocumentationBuilder {
     if (returnDescription != null) {
       mySectionsMap.get(CodeInsightBundle.message("javadoc.returns")).addItem(returnDescription);
     }
+
+    final String exceptionList = StreamEx.of(structured.getRaisedExceptions())
+                                   .map(name -> {
+                                     final String description = structured.getRaisedExceptionDescription(name);
+                                     return "<p>" + name + (StringUtil.isNotEmpty(description) ? " &ndash; " + description : "") + "</p>";
+                                   })
+                                   .joining();
+
+    if (!exceptionList.isEmpty()) {
+      mySectionsMap.get(PyBundle.message("QDOC.raises")).addItem(exceptionList);
+    }
   }
 
   private boolean isAttribute() {

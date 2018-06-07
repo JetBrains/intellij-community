@@ -499,6 +499,14 @@ public class PyQuickDocTest extends LightMarkedTestCase {
     checkHTMLOnly();
   }
 
+  public void testExceptionDescriptionRest() {
+    checkHTMLOnly();
+  }
+
+  public void testExceptionDescriptionGoogle() {
+    checkHTMLOnly();
+  }
+
   public void testPackage() {
     myFixture.copyDirectoryToProject(getTestName(false), "");
     final VirtualFile file = myFixture.findFileInTempDir("pkg/__init__.py");
