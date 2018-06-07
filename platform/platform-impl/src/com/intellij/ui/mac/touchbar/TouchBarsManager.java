@@ -206,11 +206,9 @@ public class TouchBarsManager {
 
         final ToolWindow dtw = twm.getToolWindow(ToolWindowId.DEBUG);
         final ToolWindow rtw = twm.getToolWindow(ToolWindowId.RUN_DASHBOARD);
-        if (dtw == null && rtw == null)
-          return;
 
-        final Component compD = dtw.getComponent();
-        final Component compR = dtw.getComponent();
+        final Component compD = dtw != null ? dtw.getComponent() : null;
+        final Component compR = rtw != null ? rtw.getComponent() : null;
         if (compD == null && compR == null)
           return;
 
