@@ -17,6 +17,7 @@
 package com.intellij.psi.controlFlow;
 
 import com.intellij.psi.*;
+import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.ObjectUtils;
 import org.jetbrains.annotations.NotNull;
 
@@ -55,7 +56,7 @@ public class LocalsOrMyInstanceFieldsControlFlowPolicy implements ControlFlowPol
    * the reference actually resolves to variable.
    */
   public static boolean isLocalOrMyInstanceReference(PsiReferenceExpression variableReference) {
-    PsiExpression qualifierExpression = variableReference.getQualifierExpression();
+    PsiExpression qualifierExpression = PsiUtil.skipParenthesizedExprDown(variableReference.getQualifierExpression());
     // JLS 16: "Such an assignment is defined to occur if and only if either the simple name of the variable
     // (or, for a field, its simple name qualified by this) occurs on the left hand side of an assignment operator"
     // Qualified this is not allowed by spec

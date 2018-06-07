@@ -255,10 +255,10 @@ class QualifiedThis {
 
 class ParenthesizedThis {
   final int x;
-  final int y = (this).x + 1; // allowed as qualifier is not naked 'this'!
+  final int y = <error descr="Variable '(this).x' might not have been initialized">(this).x</error> + 1; // javac allows this?
 
   ParenthesizedThis() {
-    <error descr="Cannot assign a value to final variable 'x'">(this).x</error> = 5;
-    this.x = 6;
+    (this).x = 5;
+    <error descr="Variable 'x' might already have been assigned to">this.x</error> = 6;
   }
 }
