@@ -34,9 +34,7 @@ import com.jetbrains.python.psi.impl.PyBuiltinCache;
 import com.jetbrains.python.psi.impl.PyClassImpl;
 import com.jetbrains.python.psi.resolve.PyResolveContext;
 import com.jetbrains.python.psi.resolve.QualifiedNameFinder;
-import com.jetbrains.python.psi.types.PyCallableParameter;
-import com.jetbrains.python.psi.types.PyType;
-import com.jetbrains.python.psi.types.TypeEvalContext;
+import com.jetbrains.python.psi.types.*;
 import com.jetbrains.python.pyi.PyiFile;
 import com.jetbrains.python.pyi.PyiUtil;
 import com.jetbrains.python.toolbox.ChainIterable;
@@ -58,6 +56,7 @@ import java.util.function.Function;
 
 import static com.jetbrains.python.documentation.DocumentationBuilderKit.ESCAPE_ONLY;
 import static com.jetbrains.python.documentation.DocumentationBuilderKit.TO_ONE_LINE_AND_ESCAPE;
+import static com.jetbrains.python.psi.PyUtil.as;
 
 /**
  * Provides quick docs for classes, methods, and functions.
@@ -211,14 +210,14 @@ public class PythonDocumentationProvider extends AbstractDocumentationProvider i
       result.append("async ");
     }
     result.append("def ");
-    final String name = StringUtil.notNullize(function.getName(), PyNames.UNNAMED_ELEMENT);
-    int firstParamOffset = result.length() + name.length();
+    final String funcName = StringUtil.notNullize(function.getName(), PyNames.UNNAMED_ELEMENT);
+    int firstParamOffset = result.length() + funcName.length();
     int lastLineOffset = 0;
     if (forTooltip) {
-      result.append(escaped(name));
+      result.append(escaped(funcName));
     }
     else {
-      appendWithTags(result, escaped(name), "b");
+      appendWithTags(result, escaped(funcName), "b");
     }
 
     result.append("(");
@@ -244,15 +243,36 @@ public class PythonDocumentationProvider extends AbstractDocumentationProvider i
         firstIsSelf = parameter.isSelf();
       }
 
-      if (parameter.getParameter() instanceof PySingleStarParameter) {
-        result.append("*");
+      String paramName = parameter.getName();
+      PyType paramType = parameter.getType(context);
+      boolean showType = true;
+      if (parameter.isPositionalContainer()) {
+        paramName = "*" + StringUtil.notNullize(paramName, "args");
+        final PyTupleType tupleType = as(paramType, PyTupleType.class);
+        if (tupleType != null) {
+          paramType = tupleType.getIteratedItemType();
+        }
+      }
+      else if (parameter.isKeywordContainer()) {
+        paramName = "**" + StringUtil.notNullize(paramName, "kwargs");
+        final PyCollectionType genericType = as(paramType, PyCollectionType.class);
+        if (genericType != null && genericType.getPyClass() == PyBuiltinCache.getInstance(function).getClass("dict")) {
+          final List<PyType> typeParams = genericType.getElementTypes();
+          paramType = typeParams.size() == 2 ? typeParams.get(1) : null;
+        }
+      }
+      else if (parameter.getParameter() instanceof PySingleStarParameter) {
+        paramName = "*";
+        showType = false;
       }
       else {
-        result.append(escaped(StringUtil.notNullize(parameter.getName(), PyNames.UNNAMED_ELEMENT)));
-        if (!parameter.isSelf()) {
-          result.append(": ");
-          result.append(formatTypeWithLinks(parameter.getType(context), function, context));
-        }
+        paramName = StringUtil.notNullize(paramName, PyNames.UNNAMED_ELEMENT);
+        showType = !parameter.isSelf();
+      }
+      result.append(escaped(paramName));
+      if (showType) {
+        result.append(": ");
+        result.append(formatTypeWithLinks(paramType, function, context));
       }
       first = false;
     }
