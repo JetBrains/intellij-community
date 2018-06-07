@@ -22,6 +22,7 @@ import java.util.List;
 
 public class JsonCachedValues {
   private static final Key<CachedValue<JsonSchemaObject>> JSON_OBJECT_CACHE_KEY = Key.create("JsonSchemaObjectCache");
+
   @Nullable
   public static JsonSchemaObject getSchemaObject(@NotNull VirtualFile schemaFile, @NotNull Project project) {
     JsonFileResolver.startFetchingHttpFileIfNeeded(schemaFile, project);
@@ -40,10 +41,14 @@ public class JsonCachedValues {
     return null;
   }
 
-  private static final Key<CachedValue<String>> SCHEMA_URL_KEY = Key.create("JsonSchemaUrlCache");
+  static final String URL_CACHE_KEY = "JsonSchemaUrlCache";
+  private static final Key<CachedValue<String>> SCHEMA_URL_KEY = Key.create(URL_CACHE_KEY);
   @Nullable
   public static String getSchemaUrlFromSchemaProperty(@NotNull VirtualFile file,
                                                        @NotNull Project project) {
+    String value = JsonSchemaFileValuesIndex.getCachedValue(project, file, URL_CACHE_KEY);
+    if (value != null) return value;
+
     PsiFile psiFile = resolveFile(file, project);
     return !(psiFile instanceof JsonFile) ? null : CachedValueProviderOnPsiFile
       .getOrCompute(psiFile, JsonCachedValues::fetchSchemaUrl, SCHEMA_URL_KEY);
@@ -56,7 +61,7 @@ public class JsonCachedValues {
   }
 
   @Nullable
-  private static String fetchSchemaUrl(@Nullable PsiFile f) {
+  static String fetchSchemaUrl(@Nullable PsiFile f) {
     if (!(f instanceof JsonFile)) return null;
 
     JsonValue topLevelValue = ((JsonFile)f).getTopLevelValue();
@@ -68,18 +73,21 @@ public class JsonCachedValues {
     return value instanceof JsonStringLiteral ? ((JsonStringLiteral)value).getValue() : null;
   }
 
-  private static final Key<CachedValue<String>> SCHEMA_ID_CACHE_KEY = Key.create("JsonSchemaIdCache");
+  static final String ID_CACHE_KEY = "JsonSchemaIdCache";
+  private static final Key<CachedValue<String>> SCHEMA_ID_CACHE_KEY = Key.create(ID_CACHE_KEY);
   @Nullable
   public static String getSchemaId(@NotNull final VirtualFile schemaFile,
                                    @NotNull final Project project) {
-    if (!schemaFile.isValid()) return null;
+    String value = JsonSchemaFileValuesIndex.getCachedValue(project, schemaFile, ID_CACHE_KEY);
+    if (value != null) return value;
+
     final PsiFile psiFile = resolveFile(schemaFile, project);
     if (!(psiFile instanceof JsonFile)) return null;
-    return CachedValueProviderOnPsiFile.getOrCompute(psiFile, JsonCachedValues::getSchemaId, SCHEMA_ID_CACHE_KEY);
+    return CachedValueProviderOnPsiFile.getOrCompute(psiFile, JsonCachedValues::fetchSchemaId, SCHEMA_ID_CACHE_KEY);
   }
 
   @Nullable
-  private static String getSchemaId(@NotNull PsiFile psiFile) {
+  static String fetchSchemaId(@NotNull PsiFile psiFile) {
     final JsonObject topLevelValue = ObjectUtils.tryCast(((JsonFile)psiFile).getTopLevelValue(), JsonObject.class);
     return topLevelValue == null ? null : readId(topLevelValue);
   }
