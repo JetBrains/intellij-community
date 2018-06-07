@@ -1,6 +1,8 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package git4idea.branch;
 
+import com.intellij.notification.Notification;
+import com.intellij.notification.NotificationType;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.VcsNotifier;
@@ -20,6 +22,7 @@ import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 
+import static com.intellij.openapi.vcs.VcsNotifier.STANDARD_NOTIFICATION;
 import static java.util.Collections.emptyList;
 import static java.util.Collections.singletonList;
 
@@ -77,19 +80,19 @@ class GitDeleteRemoteTagOperation extends GitBranchOperation {
 
 
     boolean hasMultipleRemotes = ContainerUtil.exists(repositories, it -> it.getRemotes().size() > 1);
-    String onRemotes = hasMultipleRemotes ? " on remotes" : " on remote";
+    String onRemotes = hasMultipleRemotes ? " on Remotes" : " on Remote";
 
     if (successRemotes > 0) {
-      String title = "Deleted tag " + myTagName + onRemotes;
-      VcsNotifier.getInstance(myProject).notifySuccess(title, "");
+      String message = "<b>Deleted Tag" + onRemotes + ":</b> " + myTagName;
+      notifySuccess("", message);
     }
     else if (successRemotes == 0 && failureRemotes == 0) {
-      String message = "Tag " + myTagName + " doesn't exist" + onRemotes;
-      VcsNotifier.getInstance(myProject).notifySuccess("", message);
+      String message = "<b>Tag Doesn't Exist" + onRemotes + ":</b> " + myTagName;
+      notifySuccess("", message);
     }
 
     if (!result.totalSuccess()) {
-      String title = "Failed to delete tag " + myTagName + onRemotes;
+      String title = "Failed to delete tag " + myTagName + StringUtil.toLowerCase(onRemotes);
       VcsNotifier.getInstance(myProject).notifyError(title, result.getErrorOutputWithReposIndication());
     }
   }
@@ -101,6 +104,11 @@ class GitDeleteRemoteTagOperation extends GitBranchOperation {
       if (split.size() != 2) return false;
       return tagFullName.equals(split.get(1));
     });
+  }
+
+  private void notifySuccess(@NotNull String title, @NotNull String message) {
+    Notification notification = STANDARD_NOTIFICATION.createNotification(title, message, NotificationType.INFORMATION, null);
+    VcsNotifier.getInstance(myProject).notify(notification);
   }
 
   @Override
