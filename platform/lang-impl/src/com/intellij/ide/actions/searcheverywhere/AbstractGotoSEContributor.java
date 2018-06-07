@@ -79,8 +79,7 @@ public abstract class AbstractGotoSEContributor<F> implements SearchEverywhereCo
   }
 
   @Override
-  public boolean processSelectedItem(Object selected, int modifiers) {
-    //todo maybe another elements types
+  public boolean processSelectedItem(Object selected, int modifiers, String searchText) {
     if (selected instanceof PsiElement) {
       NavigationUtil.activateFileWithPsiElement((PsiElement) selected, (modifiers & InputEvent.SHIFT_MASK) != 0);
     }

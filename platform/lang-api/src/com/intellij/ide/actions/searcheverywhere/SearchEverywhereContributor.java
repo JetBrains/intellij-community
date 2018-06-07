@@ -39,7 +39,7 @@ public interface SearchEverywhereContributor<F> {
     return search(pattern, everywhere, filter, progressIndicator, -1).getItems();
   }
 
-  boolean processSelectedItem(Object selected, int modifiers);
+  boolean processSelectedItem(Object selected, int modifiers, String searchText);
 
   ListCellRenderer getElementsRenderer(JList<?> list);
 

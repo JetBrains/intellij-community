@@ -516,7 +516,7 @@ public class SearchEverywhereUI extends BorderLayoutPanel implements Disposable,
     if (myListModel.isMoreElement(i)) {
       showMoreElements(contributor);
     } else {
-      gotoSelectedItem(myListModel.getElementAt(i), contributor, modifiers);
+      gotoSelectedItem(myListModel.getElementAt(i), contributor, modifiers, getSearchPattern());
     }
   }
 
@@ -536,8 +536,8 @@ public class SearchEverywhereUI extends BorderLayoutPanel implements Disposable,
     }
   }
 
-  private void gotoSelectedItem(Object value, SearchEverywhereContributor contributor, int modifiers) {
-    boolean closePopup = contributor.processSelectedItem(value, modifiers);
+  private void gotoSelectedItem(Object value, SearchEverywhereContributor contributor, int modifiers, String searchText) {
+    boolean closePopup = contributor.processSelectedItem(value, modifiers, searchText);
     if (closePopup) {
       stopSearching();
       searchFinishedHandler.run();
