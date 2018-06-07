@@ -34,9 +34,9 @@ import org.jetbrains.annotations.Nullable;
 import java.util.List;
 
 public class AddMissingPropertyFix implements LocalQuickFix, BatchQuickFix<CommonProblemDescriptor> {
-  private final JsonValidationError.MissingPropertyIssueData myData;
+  private final JsonValidationError.MissingMultiplePropsIssueData myData;
 
-  public AddMissingPropertyFix(JsonValidationError.MissingPropertyIssueData data) {
+  public AddMissingPropertyFix(JsonValidationError.MissingMultiplePropsIssueData data) {
     myData = data;
   }
 
@@ -44,14 +44,14 @@ public class AddMissingPropertyFix implements LocalQuickFix, BatchQuickFix<Commo
   @NotNull
   @Override
   public String getFamilyName() {
-    return "Add missing property";
+    return "Add missing properties";
   }
 
   @Nls(capitalization = Nls.Capitalization.Sentence)
   @NotNull
   @Override
   public String getName() {
-    return getFamilyName() + " '" + myData.propertyName + "'";
+    return "Add missing " + myData.getMessage(true);
   }
 
   @Override
@@ -60,6 +60,9 @@ public class AddMissingPropertyFix implements LocalQuickFix, BatchQuickFix<Commo
     Ref<Boolean> hadComma = Ref.create(false);
     if (!(element instanceof JsonObject)) return;
     PsiElement newElement = performFix(project, element, hadComma);
+    // if we have more than one property, don't expand templates and don't move the caret
+    if (newElement == null) return;
+
     JsonValue value = ((JsonProperty)newElement).getValue();
     FileEditor fileEditor = FileEditorManager.getInstance(project).getSelectedEditor(element.getContainingFile().getVirtualFile());
     EditorEx editor = EditorUtil.getEditorEx(fileEditor);
@@ -70,7 +73,7 @@ public class AddMissingPropertyFix implements LocalQuickFix, BatchQuickFix<Commo
     }
     TemplateManager templateManager = TemplateManager.getInstance(project);
     TemplateBuilderImpl builder = new TemplateBuilderImpl(newElement);
-    builder.replaceElement(value, myData.hasEnumItems
+    builder.replaceElement(value, myData.myMissingPropertyIssues.iterator().next().hasEnumItems
                                     ? new MacroCallNode(new CompleteMacro())
                                     : new ConstantNode(value.getText()));
     Template template = builder.buildTemplate();
@@ -85,29 +88,37 @@ public class AddMissingPropertyFix implements LocalQuickFix, BatchQuickFix<Commo
 
   private PsiElement performFix(@NotNull Project project, PsiElement element, Ref<Boolean> hadComma) {
     JsonElementGenerator generator = new JsonElementGenerator(project);
-    Object defaultValueObject = myData.defaultValue;
-    String defaultValue = defaultValueObject instanceof String ? StringUtil.wrapWithDoubleQuote(defaultValueObject.toString()) : null;
+
     Ref<PsiElement> newElementRef = Ref.create(null);
 
     WriteAction.run(() -> {
-      PsiElement newElement = element
-                        .addBefore(
-                          generator.createProperty(myData.propertyName, defaultValue == null ? getDefaultValueFromType() : defaultValue),
-                          element.getLastChild());
-                      PsiElement backward = PsiTreeUtil.skipWhitespacesBackward(newElement);
-                      if (backward instanceof JsonProperty) {
-                        element.addAfter(generator.createComma(), backward);
-                        hadComma.set(true);
-                      }
-                      newElementRef.set(newElement);
-                    });
+      boolean isSingle = myData.myMissingPropertyIssues.size() == 1;
+      for (JsonValidationError.MissingPropertyIssueData issue: myData.myMissingPropertyIssues) {
+        Object defaultValueObject = issue.defaultValue;
+        String defaultValue = defaultValueObject instanceof String ? StringUtil.wrapWithDoubleQuote(defaultValueObject.toString()) : null;
+        PsiElement newElement = element
+          .addBefore(
+            generator.createProperty(issue.propertyName, defaultValue == null ? getDefaultValueFromType(issue) : defaultValue),
+            element.getLastChild());
+        PsiElement backward = PsiTreeUtil.skipWhitespacesBackward(newElement);
+        if (backward instanceof JsonProperty) {
+          element.addAfter(generator.createComma(), backward);
+          hadComma.set(true);
+        }
+        if (isSingle) {
+          newElementRef.set(newElement);
+        }
+      }
+
+
+     });
 
     return newElementRef.get();
   }
 
   @NotNull
-  private String getDefaultValueFromType() {
-    JsonSchemaType propertyType = myData.propertyType;
+  private static String getDefaultValueFromType(JsonValidationError.MissingPropertyIssueData issue) {
+    JsonSchemaType propertyType = issue.propertyType;
     return propertyType == null ? "" : propertyType.getDefaultValue();
   }
 
