@@ -57,7 +57,10 @@ abstract class FirstStart(val ideType: IdeType) {
           takeScreenshot(e)
           throw exceptionWithHierarchy(e)
         }
-        else -> throw e
+        else -> {
+          takeScreenshot(e)
+          throw e
+        }
       }
     }
   }
