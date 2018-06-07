@@ -27,6 +27,7 @@ import com.intellij.openapi.vcs.VcsRoot;
 import com.intellij.openapi.vcs.VcsRootChecker;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
+import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -67,8 +68,8 @@ public class VcsRootDetectorImpl implements VcsRootDetector {
         return roots;
       }
     }
-    List<VcsRoot> rootsAbove = scanForSingleRootAboveDir(startDir);
-    roots.addAll(rootsAbove);
+    VcsRoot rootAbove = scanForSingleRootAboveDir(startDir);
+    if (rootAbove != null) roots.add(rootAbove);
     return roots;
   }
 
@@ -88,8 +89,8 @@ public class VcsRootDetectorImpl implements VcsRootDetector {
         }
       }
       if (shouldScanAbove) {
-        List<VcsRoot> rootsAbove = scanForSingleRootAboveDir(contentRoot);
-        rootsInsideRoot.addAll(rootsAbove);
+        VcsRoot rootAbove = scanForSingleRootAboveDir(contentRoot);
+        if (rootAbove != null) rootsInsideRoot.add(rootAbove);
       }
       vcsRoots.addAll(rootsInsideRoot);
     }
@@ -107,9 +108,9 @@ public class VcsRootDetectorImpl implements VcsRootDetector {
     if (ReadAction.compute(() -> myProject.isDisposed() || !dir.isDirectory() || myProjectManager.getFileIndex().isExcluded(dir))) {
       return roots;
     }
-    List<AbstractVcs> vcsList = getVcsListFor(dir);
-    LOG.debug("Found following VCSs: " + vcsList);
-    for (AbstractVcs vcs : vcsList) {
+    AbstractVcs vcs = getVcsFor(dir);
+    if (vcs != null) {
+      LOG.debug("Found VCS " + vcs + " in " + dir);
       roots.add(new VcsRoot(vcs, dir));
     }
     for (VirtualFile child : dir.getChildren()) {
@@ -128,35 +129,34 @@ public class VcsRootDetectorImpl implements VcsRootDetector {
     return scanForRootsInsideDir(dir, 0);
   }
 
-  @NotNull
-  private List<VcsRoot> scanForSingleRootAboveDir(@NotNull final VirtualFile dir) {
-    List<VcsRoot> roots = new ArrayList<>();
+  @Nullable
+  private VcsRoot scanForSingleRootAboveDir(@NotNull final VirtualFile dir) {
     if (myProject.isDisposed()) {
-      return roots;
+      return null;
     }
 
     VirtualFile par = dir.getParent();
     while (par != null && !par.equals(VfsUtil.getUserHomeDir())) {
-      List<AbstractVcs> vcsList = getVcsListFor(par);
-      for (AbstractVcs vcs : vcsList) {
-        roots.add(new VcsRoot(vcs, par));
-      }
-      if (!roots.isEmpty()) {
-        return roots;
-      }
+      AbstractVcs vcs = getVcsFor(par);
+      if (vcs != null) return new VcsRoot(vcs, par);
       par = par.getParent();
     }
-    return roots;
+    return null;
   }
 
-  @NotNull
-  private List<AbstractVcs> getVcsListFor(@NotNull VirtualFile dir) {
-    List<AbstractVcs> vcsList = new ArrayList<>();
-    for (VcsRootChecker checker : myCheckers) {
-      if (checker.isRoot(dir.getPath())) {
-        vcsList.add(myVcsManager.findVcsByName(checker.getSupportedVcs().getName()));
-      }
+  @Nullable
+  private AbstractVcs getVcsFor(@NotNull VirtualFile dir) {
+    List<AbstractVcs> vcss = StreamEx.of(myCheckers).
+      filter(it -> it.isRoot(dir.getPath())).
+      map(it -> myVcsManager.findVcsByName(it.getSupportedVcs().getName())).
+      toList();
+
+    if (vcss.size() == 1) {
+      return vcss.get(0);
     }
-    return vcsList;
+    else if (vcss.size() > 1) {
+      LOG.info("Dir " + dir + " is under several VCSs: " + vcss);
+    }
+    return null;
   }
 }
