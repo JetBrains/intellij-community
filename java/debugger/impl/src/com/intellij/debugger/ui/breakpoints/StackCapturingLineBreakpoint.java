@@ -10,7 +10,6 @@ import com.intellij.debugger.engine.evaluation.expression.EvaluatorBuilderImpl;
 import com.intellij.debugger.engine.evaluation.expression.ExpressionEvaluator;
 import com.intellij.debugger.engine.evaluation.expression.ExpressionEvaluatorImpl;
 import com.intellij.debugger.engine.events.SuspendContextCommandImpl;
-import com.intellij.debugger.impl.DebuggerUtilsEx;
 import com.intellij.debugger.jdi.*;
 import com.intellij.debugger.memory.utils.StackFrameItem;
 import com.intellij.debugger.settings.CapturePoint;
@@ -314,10 +313,9 @@ public class StackCapturingLineBreakpoint extends WildcardMethodBreakpoint {
     VirtualMachineProxyImpl virtualMachineProxy = process.getVirtualMachineProxy();
     List<Value> args = Arrays.asList(key, virtualMachineProxy.mirrorOf(MAX_STACK_LENGTH));
     Pair<ClassType, Method> finalMethodPair = methodPair;
-    Value resArray = DebuggerUtilsEx.computeAndKeep(
+    Value resArray = evaluationContext.computeAndKeep(
       () -> process.invokeMethod(evaluationContext, finalMethodPair.first, finalMethodPair.second,
-                                 args, ObjectReference.INVOKE_SINGLE_THREADED, true),
-      evaluationContext);
+                                 args, ObjectReference.INVOKE_SINGLE_THREADED, true));
     if (resArray instanceof ArrayReference) {
       List<Value> values = ((ArrayReference)resArray).getValues();
       List<StackFrameItem> res = new ArrayList<>(values.size());
