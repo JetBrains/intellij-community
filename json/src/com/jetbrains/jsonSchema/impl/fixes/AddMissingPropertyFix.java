@@ -25,6 +25,7 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.DocumentUtil;
 import com.intellij.util.containers.ContainerUtil;
+import com.jetbrains.jsonSchema.impl.JsonSchemaType;
 import com.jetbrains.jsonSchema.impl.JsonValidationError;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
@@ -91,7 +92,7 @@ public class AddMissingPropertyFix implements LocalQuickFix, BatchQuickFix<Commo
     WriteAction.run(() -> {
       PsiElement newElement = element
                         .addBefore(
-                          generator.createProperty(myData.propertyName, defaultValue == null ? myData.propertyType.getDefaultValue() : defaultValue),
+                          generator.createProperty(myData.propertyName, defaultValue == null ? getDefaultValueFromType() : defaultValue),
                           element.getLastChild());
                       PsiElement backward = PsiTreeUtil.skipWhitespacesBackward(newElement);
                       if (backward instanceof JsonProperty) {
@@ -102,6 +103,12 @@ public class AddMissingPropertyFix implements LocalQuickFix, BatchQuickFix<Commo
                     });
 
     return newElementRef.get();
+  }
+
+  @NotNull
+  private String getDefaultValueFromType() {
+    JsonSchemaType propertyType = myData.propertyType;
+    return propertyType == null ? "" : propertyType.getDefaultValue();
   }
 
   @Override
