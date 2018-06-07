@@ -581,7 +581,7 @@ public class GeneratedParserUtilBase {
           else if (tokenType == state.braces[0].getRightBraceType()) parenCount --;
         }
         if (!(builder.rawTokenIndex() < lastErrorPos)) break;
-        builder.advanceLexer();
+        state.tokenAdvancer.parse(builder, frame.level + 1);
         eatMoreFlag = eatMore.parse(builder, frame.level + 1);
       }
       boolean errorReported = frame.errorReportedAt == initialPos || !result && frame.errorReportedAt >= frame.position;
@@ -590,10 +590,10 @@ public class GeneratedParserUtilBase {
           errorReported = reportError(builder, state, frame, false, true, true);
         }
         else if (eatMoreFlag) {
-          builder.advanceLexer();
+          state.tokenAdvancer.parse(builder, frame.level + 1);
         }
         if (eatMore.parse(builder, frame.level + 1)) {
-          parseAsTree(state, builder, frame.level + 1, DUMMY_BLOCK, true, TOKEN_ADVANCER, eatMore);
+          parseAsTree(state, builder, frame.level + 1, DUMMY_BLOCK, true, state.tokenAdvancer, eatMore);
         }
       }
       else if (eatMoreFlagOnce || !result && frame.position != builder.rawTokenIndex() || frame.errorReportedAt > initialPos) {
@@ -777,7 +777,7 @@ public class GeneratedParserUtilBase {
     String message = sb.toString();
     if (advance) {
       PsiBuilder.Marker mark = builder.mark();
-      builder.advanceLexer();
+      state.tokenAdvancer.parse(builder, frame.level + 1);
       mark.error(message);
     }
     else if (inner) {
@@ -908,23 +908,24 @@ public class GeneratedParserUtilBase {
   }
 
   public static class ErrorState {
-    TokenSet[] extendsSets;
-    public PairProcessor<IElementType, IElementType> altExtendsChecker;
+
+    public Frame currentFrame;
+    public CompletionState completionState;
+    MyList<Variant> variants = new MyList<>(INITIAL_VARIANTS_SIZE);
+    MyList<Variant> unexpected = new MyList<>(INITIAL_VARIANTS_SIZE / 10);
 
     int predicateCount;
     int level;
     boolean predicateSign = true;
     boolean suppressErrors;
     Hooks<?> hooks;
-    public Frame currentFrame;
-    public CompletionState completionState;
 
+    TokenSet[] extendsSets;
+    public PairProcessor<IElementType, IElementType> altExtendsChecker;
     private boolean caseSensitive;
     public BracePair[] braces;
+    public Parser tokenAdvancer = TOKEN_ADVANCER;
     public boolean altMode;
-
-    MyList<Variant> variants = new MyList<>(INITIAL_VARIANTS_SIZE);
-    MyList<Variant> unexpected = new MyList<>(INITIAL_VARIANTS_SIZE / 10);
 
     final LimitedPool<Variant> VARIANTS = new LimitedPool<>(VARIANTS_POOL_SIZE, new LimitedPool.ObjectFactory<Variant>() {
       @NotNull
@@ -1198,7 +1199,7 @@ public class GeneratedParserUtilBase {
           parens.addFirst(Pair.create(builder.mark(), prev == null ? null : prev.first));
         }
         checkSiblings(chunkType, parens, siblings);
-        builder.advanceLexer();
+        state.tokenAdvancer.parse(builder, level);
         if (tokenType == rBrace) {
           Pair<PsiBuilder.Marker, PsiBuilder.Marker> pair = parens.removeFirst();
           pair.first.done(chunkType);
