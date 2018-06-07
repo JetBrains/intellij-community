@@ -25,21 +25,16 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.NotNullLazyKey;
 import com.intellij.openapi.util.RecursionGuard;
-import com.intellij.openapi.util.RecursionManager;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.AnyPsiChangeListener;
 import com.intellij.psi.impl.PsiManagerImpl;
 import com.intellij.psi.impl.source.PsiClassReferenceType;
-import com.intellij.psi.impl.source.PsiFieldImpl;
 import com.intellij.psi.impl.source.PsiImmediateClassType;
-import com.intellij.psi.impl.source.PsiTypeElementImpl;
-import com.intellij.psi.impl.source.resolve.graphInference.InferenceSession;
 import com.intellij.psi.impl.source.resolve.graphInference.PsiPolyExpressionUtil;
 import com.intellij.psi.infos.MethodCandidateInfo;
 import com.intellij.psi.util.TypeConversionUtil;
 import com.intellij.util.ConcurrencyUtil;
 import com.intellij.util.Function;
-import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.messages.MessageBus;
 import org.jetbrains.annotations.NonNls;
@@ -50,25 +45,21 @@ import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.atomic.AtomicReference;
-import java.util.function.BiFunction;
 
 public class JavaResolveCache {
   private static final Logger LOG = Logger.getInstance("#com.intellij.psi.impl.source.resolve.JavaResolveCache");
 
   private static final NotNullLazyKey<JavaResolveCache, Project> INSTANCE_KEY = ServiceManager.createLazyKey(JavaResolveCache.class);
 
-  private final AtomicReference<Map<PsiExpression, PsiType>> myExpressionTypes = new AtomicReference<>();
-  private final AtomicReference<Map<PsiFieldImpl,Object>> myFieldToConstValueMapPhysical = new AtomicReference<>();
-  private final AtomicReference<Map<PsiFieldImpl,Object>> myFieldToConstValueMapNonPhysical = new AtomicReference<>();
-  private final AtomicReference<ConcurrentMap<PsiTypeElementImpl, Object>> myTypeElementTypes = new AtomicReference<>(); // PsiType or NULL
-  private final AtomicReference<ConcurrentMap<PsiNewExpression, Object>> myStaticFactories = new AtomicReference<>(); // JavaResolveResult or NULL
-  private final AtomicReference<ConcurrentMap<PsiCall, Object>> myTopLevelInferenceSessions = new AtomicReference<>(); // InferenceSession or NULL
-
-  private static final Object NULL = Key.create("NULL"); // the object to put into maps to denote resolvers return null
-
   public static JavaResolveCache getInstance(Project project) {
     return INSTANCE_KEY.getValue(project);
   }
+
+  private final AtomicReference<ConcurrentMap<PsiExpression, PsiType>> myCalculatedTypes = new AtomicReference<>();
+  private final AtomicReference<Map<PsiVariable,Object>> myVarToConstValueMapPhysical = new AtomicReference<>();
+  private final AtomicReference<Map<PsiVariable,Object>> myVarToConstValueMapNonPhysical = new AtomicReference<>();
+
+  private static final Object NULL = Key.create("NULL");
 
   public JavaResolveCache(@Nullable("can be null in com.intellij.core.JavaCoreApplicationEnvironment.JavaCoreApplicationEnvironment") MessageBus messageBus) {
     if (messageBus != null) {
@@ -82,14 +73,11 @@ public class JavaResolveCache {
   }
 
   private void clearCaches(boolean isPhysical) {
-    myExpressionTypes.set(null);
-    myTypeElementTypes.set(null);
+    myCalculatedTypes.set(null);
     if (isPhysical) {
-      myFieldToConstValueMapPhysical.set(null);
+      myVarToConstValueMapPhysical.set(null);
     }
-    myFieldToConstValueMapNonPhysical.set(null);
-    myStaticFactories.set(null);
-    myTopLevelInferenceSessions.set(null);
+    myVarToConstValueMapNonPhysical.set(null);
   }
 
   @Nullable
@@ -97,8 +85,8 @@ public class JavaResolveCache {
     final boolean isOverloadCheck = MethodCandidateInfo.isOverloadCheck() || LambdaUtil.isLambdaParameterCheck();
     final boolean polyExpression = PsiPolyExpressionUtil.isPolyExpression(expr);
 
-    Map<PsiExpression, PsiType> map = myExpressionTypes.get();
-    if (map == null) map = ConcurrencyUtil.cacheOrGet(myExpressionTypes, ContainerUtil.createConcurrentWeakKeySoftValueMap());
+    ConcurrentMap<PsiExpression, PsiType> map = myCalculatedTypes.get();
+    if (map == null) map = ConcurrencyUtil.cacheOrGet(myCalculatedTypes, ContainerUtil.createConcurrentWeakKeySoftValueMap());
 
     PsiType type = isOverloadCheck && polyExpression ? null : map.get(expr);
     if (type == null) {
@@ -112,6 +100,7 @@ public class JavaResolveCache {
       if (isOverloadCheck && polyExpression) {
         return type;
       }
+
       if (type == null) type = TypeConversionUtil.NULL_TYPE;
       map.put(expr, type);
 
@@ -141,58 +130,24 @@ public class JavaResolveCache {
   }
 
   @Nullable
-  public Object getFieldConstantValue(@NotNull PsiFieldImpl variable,
-                                      @Nullable Set<PsiVariable> visitedVars,
-                                      @NotNull BiFunction<? super PsiFieldImpl, ? super Set<PsiVariable>, Object> computer){
+  public Object computeConstantValueWithCaching(@NotNull PsiVariable variable, @NotNull ConstValueComputer computer, Set<PsiVariable> visitedVars){
     boolean physical = variable.isPhysical();
 
-    AtomicReference<Map<PsiFieldImpl, Object>> ref = physical ? myFieldToConstValueMapPhysical : myFieldToConstValueMapNonPhysical;
-    Map<PsiFieldImpl, Object> map = ref.get();
+    AtomicReference<Map<PsiVariable, Object>> ref = physical ? myVarToConstValueMapPhysical : myVarToConstValueMapNonPhysical;
+    Map<PsiVariable, Object> map = ref.get();
     if (map == null) map = ConcurrencyUtil.cacheOrGet(ref, ContainerUtil.createConcurrentWeakMap());
 
     Object cached = map.get(variable);
     if (cached == NULL) return null;
     if (cached != null) return cached;
 
-    Object result = computer.apply(variable, visitedVars);
+    Object result = computer.execute(variable, visitedVars);
     map.put(variable, result == null ? NULL : result);
     return result;
   }
 
-  private static <T extends PsiElement, R> R getOrCompute(@NotNull AtomicReference<ConcurrentMap<T, Object>> ref,
-                                                          @NotNull T element,
-                                                          @NotNull Function<? super T, ? extends R> computer, String id) {
-
-    ConcurrentMap<T, Object> map = ref.get();
-    if (map == null) map = ConcurrencyUtil.cacheOrGet(ref, ContainerUtil.createConcurrentWeakKeySoftValueMap());
-
-    Object cached = map.get(element);
-    if (cached == null) {
-      RecursionGuard.StackStamp stamp = RecursionManager.createGuard(id).markStack();
-      cached = ObjectUtils.notNull(computer.fun(element), NULL);
-      if (stamp.mayCacheNow()) {
-        cached = ConcurrencyUtil.cacheOrGet(map, element, cached);
-      }
-    }
-    if (cached == NULL) return null;
-    //noinspection unchecked
-    return (R)cached;
-  }
-
-  @Nullable
-  public JavaResolveResult getNewExpressionStaticFactory(@NotNull PsiNewExpression newExpression,
-                                                         @NotNull Function<? super PsiNewExpression, ? extends JavaResolveResult> computer) {
-    return getOrCompute(myStaticFactories, newExpression, computer, "JavaResolveCache.getNewExpressionStaticFactory");
-  }
-
-  @Nullable
-  public InferenceSession getTopLevelInferenceSession(@NotNull PsiCall topLevelCall,
-                                                      @NotNull Function<? super PsiCall, ? extends InferenceSession> computer) {
-    return getOrCompute(myTopLevelInferenceSessions, topLevelCall, computer, "JavaResolveCache.getTopLevelInferenceSession");
-  }
-
-  public PsiType getTypeElementType(@NotNull PsiTypeElementImpl typeElement,
-                                    @NotNull Function<? super PsiTypeElementImpl, ? extends PsiType> computer) {
-    return getOrCompute(myTypeElementTypes, typeElement, computer, "JavaResolveCache.getTypeElementType");
+  @FunctionalInterface
+  public interface ConstValueComputer{
+    Object execute(@NotNull PsiVariable variable, Set<PsiVariable> visitedVars);
   }
 }
