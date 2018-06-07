@@ -12,11 +12,13 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Pair;
 import com.intellij.psi.PsiElement;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import java.awt.event.InputEvent;
+import java.util.regex.Matcher;
 
 public abstract class AbstractGotoSEContributor<F> implements SearchEverywhereContributor<F> {
 
@@ -103,5 +105,36 @@ public abstract class AbstractGotoSEContributor<F> implements SearchEverywhereCo
 
   protected boolean isDumbModeSupported() {
     return false;
+  }
+
+  protected static Pair<Integer, Integer> getLineAndColumn(String text) {
+    int line = getLineAndColumnRegexpGroup(text, 2);
+    int column = getLineAndColumnRegexpGroup(text, 3);
+
+    if (line != -1) {
+      column = 0;
+    }
+
+    return new Pair<>(line, column);
+  }
+
+  private static int getLineAndColumnRegexpGroup(String text, int groupNumber) {
+    final Matcher matcher = ChooseByNamePopup.patternToDetectLinesAndColumns.matcher(text);
+    if (matcher.matches()) {
+      try {
+        if (groupNumber <= matcher.groupCount()) {
+          final String group = matcher.group(groupNumber);
+          if (group != null) return Integer.parseInt(group) - 1;
+        }
+      }
+      catch (NumberFormatException ignored) {
+      }
+    }
+
+    return -1;
+  }
+
+  protected static boolean openInCurrentWindow(int modifiers) {
+    return (modifiers & InputEvent.SHIFT_MASK) == 0;
   }
 }

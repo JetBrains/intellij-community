@@ -3,7 +3,6 @@ package com.intellij.ide.actions.searcheverywhere;
 
 import com.intellij.ide.IdeBundle;
 import com.intellij.ide.actions.GotoFileAction;
-import com.intellij.ide.util.gotoByName.ChooseByNamePopup;
 import com.intellij.ide.util.gotoByName.FilteringGotoByModel;
 import com.intellij.ide.util.gotoByName.GotoFileModel;
 import com.intellij.openapi.actionSystem.AnActionEvent;
@@ -19,9 +18,7 @@ import com.intellij.ui.IdeUICustomization;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.awt.event.InputEvent;
 import java.util.List;
-import java.util.regex.Matcher;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -67,7 +64,7 @@ public class FileSearchEverywhereContributor extends AbstractGotoSEContributor<F
       if (file != null) {
         Pair<Integer, Integer> pos = getLineAndColumn(searchText);
         OpenFileDescriptor descriptor = new OpenFileDescriptor(myProject, file, pos.first, pos.second);
-        descriptor.setUseCurrentWindow((modifiers & InputEvent.SHIFT_MASK) == 0);
+        descriptor.setUseCurrentWindow(openInCurrentWindow(modifiers));
         if (descriptor.canNavigate()) {
           descriptor.navigate(true);
           return true;
@@ -76,33 +73,6 @@ public class FileSearchEverywhereContributor extends AbstractGotoSEContributor<F
     }
 
     return super.processSelectedItem(selected, modifiers, searchText);
-  }
-
-  private static Pair<Integer, Integer> getLineAndColumn(String text) {
-    int line = getLineAndColumnRegexpGroup(text, 2);
-    int column = getLineAndColumnRegexpGroup(text, 3);
-
-    if (line != -1) {
-      column = 0;
-    }
-
-    return new Pair<>(line, column);
-  }
-
-  private static int getLineAndColumnRegexpGroup(String text, int groupNumber) {
-    final Matcher matcher = ChooseByNamePopup.patternToDetectLinesAndColumns.matcher(text);
-    if (matcher.matches()) {
-      try {
-        if (groupNumber <= matcher.groupCount()) {
-          final String group = matcher.group(groupNumber);
-          if (group != null) return Integer.parseInt(group) - 1;
-        }
-      }
-      catch (NumberFormatException ignored) {
-      }
-    }
-
-    return -1;
   }
 
   @Override
