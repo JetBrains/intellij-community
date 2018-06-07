@@ -465,23 +465,7 @@ public class LambdaUtil {
           results = ((PsiMethodCallExpression)gParent).getMethodExpression().multiResolve(true);
         }
         else if (gParent instanceof PsiConstructorCall){
-          final JavaPsiFacade facade = JavaPsiFacade.getInstance(gParent.getProject());
-          PsiExpressionList argumentList = ((PsiCall)gParent).getArgumentList();
-          if (argumentList != null) {
-            PsiClassType classType = null;
-            if (gParent instanceof PsiNewExpression) {
-              PsiJavaCodeReferenceElement ref = ((PsiNewExpression)gParent).getClassReference();
-              classType = ref != null ? facade.getElementFactory().createType(ref) : null;
-            }
-            else if (gParent instanceof PsiEnumConstant) {
-              PsiClass containingClass = ((PsiEnumConstant)gParent).getContainingClass();
-              classType = containingClass != null ? facade.getElementFactory().createType(containingClass) : null;
-            }
-            
-            if (classType != null) {
-              results = facade.getResolveHelper().multiResolveConstructor(classType, argumentList, gParent);
-            }
-          }
+          results = getConstructorCandidates((PsiConstructorCall)gParent);
         }
         
         if (results != null) {
@@ -497,6 +481,28 @@ public class LambdaUtil {
       }
     }
     return false;
+  }
+
+  @Nullable
+  private static JavaResolveResult[] getConstructorCandidates(PsiConstructorCall parentCall) {
+    final JavaPsiFacade facade = JavaPsiFacade.getInstance(parentCall.getProject());
+    PsiExpressionList argumentList = parentCall.getArgumentList();
+    if (argumentList != null) {
+      PsiClassType classType = null;
+      if (parentCall instanceof PsiNewExpression) {
+        PsiJavaCodeReferenceElement ref = ((PsiNewExpression)parentCall).getClassReference();
+        classType = ref != null ? facade.getElementFactory().createType(ref) : null;
+      }
+      else if (parentCall instanceof PsiEnumConstant) {
+        PsiClass containingClass = ((PsiEnumConstant)parentCall).getContainingClass();
+        classType = containingClass != null ? facade.getElementFactory().createType(containingClass) : null;
+      }
+      
+      if (classType != null) {
+        return facade.getResolveHelper().multiResolveConstructor(classType, argumentList, parentCall);
+      }
+    }
+    return null;
   }
 
   @Nullable
