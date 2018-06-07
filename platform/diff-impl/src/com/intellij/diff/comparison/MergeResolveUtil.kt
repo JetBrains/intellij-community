@@ -113,22 +113,59 @@ private class SimpleHelper(val leftText: CharSequence, val baseText: CharSequenc
   }
 
   private fun appendBase(range: MergeRange) {
-    newContent.append(baseText, range.start2, range.end2)
+    if (range.isEmpty) return
+
+    val policy = ComparisonPolicy.DEFAULT
+
+    if (isUnchangedRange(range, policy)) {
+      append(range, ThreeSide.BASE)
+    }
+    else {
+      val type = getConflictType(range, policy)
+      if (type.isChange(Side.LEFT)) {
+        append(range, ThreeSide.LEFT)
+      }
+      else if (type.isChange(Side.RIGHT)) {
+        append(range, ThreeSide.RIGHT)
+      }
+      else {
+        append(range, ThreeSide.BASE)
+      }
+    }
   }
 
   private fun appendConflict(range: MergeRange, policy: ComparisonPolicy): Boolean {
-    val type = DiffUtil.getWordMergeType(MergeWordFragmentImpl(range), texts, policy)
-    if (type.diffType == TextDiffType.CONFLICT) return false;
+    val type = getConflictType(range, policy)
+    if (type.diffType == TextDiffType.CONFLICT) return false
 
     if (type.isChange(Side.LEFT)) {
-      newContent.append(leftText, range.start1, range.end1)
+      append(range, ThreeSide.LEFT)
     }
     else {
-      newContent.append(rightText, range.start3, range.end3)
+      append(range, ThreeSide.RIGHT)
     }
+
     return true
   }
+
+  private fun append(range: MergeRange, side: ThreeSide) {
+    when (side) {
+      ThreeSide.LEFT -> newContent.append(leftText, range.start1, range.end1)
+      ThreeSide.BASE -> newContent.append(baseText, range.start2, range.end2)
+      ThreeSide.RIGHT -> newContent.append(rightText, range.start3, range.end3)
+    }
+  }
+
+  private fun getConflictType(range: MergeRange, policy: ComparisonPolicy): MergeConflictType {
+    return DiffUtil.getWordMergeType(MergeWordFragmentImpl(range), texts, policy)
+  }
+
+  private fun isUnchangedRange(range: MergeRange, policy: ComparisonPolicy): Boolean {
+    return DiffUtil.compareWordMergeContents(MergeWordFragmentImpl(range), texts, policy, ThreeSide.BASE, ThreeSide.LEFT) &&
+           DiffUtil.compareWordMergeContents(MergeWordFragmentImpl(range), texts, policy, ThreeSide.BASE, ThreeSide.RIGHT)
+  }
 }
+
 
 private class GreedyHelper(val leftText: CharSequence, val baseText: CharSequence, val rightText: CharSequence) {
   private val newContent = StringBuilder()

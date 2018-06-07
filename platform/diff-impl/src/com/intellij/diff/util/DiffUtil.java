@@ -1293,11 +1293,11 @@ public class DiffUtil {
                         BooleanGetter.FALSE);
   }
 
-  private static boolean compareWordMergeContents(@NotNull MergeWordFragment fragment,
-                                                  @NotNull List<? extends CharSequence> texts,
-                                                  @NotNull ComparisonPolicy policy,
-                                                  @NotNull ThreeSide side1,
-                                                  @NotNull ThreeSide side2) {
+  public static boolean compareWordMergeContents(@NotNull MergeWordFragment fragment,
+                                                 @NotNull List<? extends CharSequence> texts,
+                                                 @NotNull ComparisonPolicy policy,
+                                                 @NotNull ThreeSide side1,
+                                                 @NotNull ThreeSide side2) {
     int start1 = fragment.getStartOffset(side1);
     int end1 = fragment.getEndOffset(side1);
     int start2 = fragment.getStartOffset(side2);
