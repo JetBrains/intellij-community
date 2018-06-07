@@ -15,6 +15,7 @@
  */
 package com.jetbrains.python.documentation;
 
+import com.google.common.collect.Lists;
 import com.intellij.application.options.CodeStyle;
 import com.intellij.codeInsight.CodeInsightBundle;
 import com.intellij.lang.ASTNode;
@@ -28,6 +29,7 @@ import com.intellij.psi.PsiFile;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.QualifiedName;
 import com.intellij.util.ObjectUtils;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.FactoryMap;
 import com.jetbrains.python.*;
 import com.jetbrains.python.console.PyConsoleUtil;
@@ -39,6 +41,7 @@ import com.jetbrains.python.psi.impl.PyPsiUtils;
 import com.jetbrains.python.psi.resolve.PyResolveContext;
 import com.jetbrains.python.psi.resolve.QualifiedNameFinder;
 import com.jetbrains.python.psi.resolve.QualifiedResolveResult;
+import com.jetbrains.python.psi.types.PyCallableParameter;
 import com.jetbrains.python.psi.types.PyClassType;
 import com.jetbrains.python.psi.types.PyType;
 import com.jetbrains.python.psi.types.TypeEvalContext;
@@ -52,9 +55,7 @@ import org.jetbrains.annotations.Nullable;
 import java.io.FileNotFoundException;
 import java.io.FileReader;
 import java.io.IOException;
-import java.util.LinkedHashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.regex.Pattern;
 
 import static com.jetbrains.python.documentation.DocumentationBuilderKit.*;
@@ -120,8 +121,17 @@ public class PyDocumentationBuilder {
 
     if (!mySectionsMap.isEmpty()) {
       mySections.addItem(DocumentationMarkup.SECTIONS_START);
+      final List<String> firstSections = Lists.newArrayList(CodeInsightBundle.message("javadoc.parameters"),
+                                                            PyBundle.message("QDOC.keyword.args"),
+                                                            CodeInsightBundle.message("javadoc.returns"),
+                                                            PyBundle.message("QDOC.raises"));
+      firstSections.retainAll(mySectionsMap.keySet());
+
+      final ArrayList<String> remainingSections = new ArrayList<>(mySectionsMap.keySet());
+      remainingSections.removeAll(firstSections);
+
       // FactoryMap's entrySet() returns pairs without particular order even for LinkedHashMap
-      for (String header : mySectionsMap.keySet()) {
+      for (String header : ContainerUtil.concat(firstSections, remainingSections)) {
         mySections.addItem(DocumentationMarkup.SECTION_HEADER_START);
         mySections.addItem(header);
         mySections.addItem(DocumentationMarkup.SECTION_SEPARATOR);
@@ -370,10 +380,12 @@ public class PyDocumentationBuilder {
   private void formatParametersAndReturnValue(@NotNull PyStringLiteralExpression docstring, @NotNull PyFunction function) {
     final StructuredDocString structured = DocStringUtil.parseDocString(docstring);
 
-    final String paramList = StreamEx.of(function.getParameters(myContext))
-                                     .filter(param -> param.getName() != null && structured.getParamDescription(param.getName()) != null)
-                                     .map(param -> {
-                                       final String name = param.getName();
+    final List<PyCallableParameter> parameters = function.getParameters(myContext);
+    final Set<String> actualNames = ContainerUtil.map2SetNotNull(parameters, PyCallableParameter::getName);
+    // Retain the actual order of parameters
+    final String paramList = StreamEx.of(actualNames)
+                                     .filter(name -> structured.getParamDescription(name) != null)
+                                     .map(name -> {
                                        final String description = structured.getParamDescription(name);
                                        return "<p>" + name + " &ndash; " + description + "</p>";
                                      })
@@ -382,6 +394,20 @@ public class PyDocumentationBuilder {
 
     if (!paramList.isEmpty()) {
       mySectionsMap.get(CodeInsightBundle.message("javadoc.parameters")).addItem(paramList);
+    }
+
+    final List<String> allKeywordArgs = structured.getKeywordArguments();
+    if (!ContainerUtil.exists(parameters, PyCallableParameter::isKeywordContainer)) {
+      allKeywordArgs.retainAll(actualNames);
+    }
+    final String keywordArgsList = StreamEx.of(allKeywordArgs)
+                                           .map(name -> {
+                                             final String description = structured.getKeywordArgumentDescription(name);
+                                             return "<p>" + name + " &ndash; " + StringUtil.notNullize(description) + "</p>";
+                                           })
+                                           .joining();
+    if (!keywordArgsList.isEmpty()) {
+      mySectionsMap.get(PyBundle.message("QDOC.keyword.args")).addItem(keywordArgsList);
     }
 
     final String returnDescription = structured.getReturnDescription();
