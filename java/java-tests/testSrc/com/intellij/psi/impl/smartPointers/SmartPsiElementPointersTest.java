@@ -904,7 +904,7 @@ public class SmartPsiElementPointersTest extends CodeInsightTestCase {
     String text = StringUtil.repeatSymbol(' ', 100000);
     PsiFile file = createFile("a.txt", text);
 
-    PlatformTestUtil.startPerformanceTest(getTestName(false), 500, () -> {
+    PlatformTestUtil.startPerformanceTest(getTestName(false), 650, () -> {
       List<SmartPsiFileRange> pointers = new ArrayList<>();
       for (int i = 0; i < text.length() - 1; i++) {
         pointers.add(getPointerManager().createSmartPsiFileRangePointer(file, new TextRange(i, i + 1)));
