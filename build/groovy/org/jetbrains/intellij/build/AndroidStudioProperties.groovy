@@ -319,9 +319,14 @@ class AndroidStudioProperties extends BaseIdeaProperties {
       buildContext.ant.unzip(src: "$root/tools/external/gradle/gradle-$gradleVersion-bin.zip", dest: "$targetDirectory/gradle")
       // when creating gradle wrappers for UI test projects, we need a zipped copy of gradle to point to
       if (buildContext.options.includeUiTests) {
-        buildContext.ant.copy(todir: "$targetDirectory/gradle") {
+        buildContext.ant.copy(todir: "$targetDirectory/gradle/gradle-$gradleVersion") {
           fileset(file: "$root/tools/external/gradle/gradle-$gradleVersion-bin.zip")
         }
+        buildContext.ant.copy(todir: "$targetDirectory/gradle/m2repository/com/android/databinding") {
+          fileset(dir: "$root/out/repo/com/android/databinding")
+        }
+        buildContext.ant.unzip(src: "$root/bazel-bin/tools/adt/idea/android/test_deps.zip", dest: "$targetDirectory/gradle/m2repository")
+        buildContext.ant.unzip(src: "$root/bazel-bin/tools/adt/idea/uitest-framework/uitest_deps.zip", dest: "$targetDirectory/gradle/m2repository")
       }
 
       buildContext.ant.copy(todir: "$targetDirectory/gradle/m2repository") {
