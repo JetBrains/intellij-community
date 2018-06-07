@@ -39,7 +39,8 @@ fun KotlinGuiTestCase.createJavaProject(
       else button("Next").click()
       button("Next").click()
       logUIStep("Fill Project location with `$projectPath`")
-      textfield("Project location:").click()
+      textfield("Project name:").click()
+      shortcut(Key.TAB)
       shortcut(Modifier.CONTROL + Key.X)
       typeText(projectPath)
       logUIStep("Close New Project dialog with Finish")
@@ -115,7 +116,8 @@ fun KotlinGuiTestCase.createGradleProject(
       }
       button("Next").click()
       logUIStep("Fill Project location with `$projectPath`")
-      textfield("Project location:").click()
+      textfield("Project name:").click()
+      shortcut(Key.TAB)
       shortcut(Modifier.CONTROL + Key.X)
       typeText(projectPath)
       logUIStep("Close New Project dialog with Finish")
@@ -180,7 +182,8 @@ fun KotlinGuiTestCase.createMavenProject(
 
       button("Next").click()
       logUIStep("Fill Project location with `$projectPath`")
-      textfield("Project location:").click()
+      textfield("Project name:").click()
+      shortcut(Key.TAB)
       shortcut(Modifier.CONTROL + Key.X)
       typeText(projectPath)
 
@@ -215,7 +218,8 @@ fun KotlinGuiTestCase.createKotlinProject(
       button("Next").click()
 
       logUIStep("Fill Project location with `$projectPath`")
-      textfield("Project location:").click()
+      textfield("Project name:").click()
+      shortcut(Key.TAB)
       shortcut(Modifier.CONTROL + Key.X)
       typeText(projectPath)
 
@@ -960,7 +964,8 @@ fun KotlinGuiTestCase.createKotlinMPProject(
       button("Next").click()
       button("Next").click()
       logUIStep("Type project location `$projectPath`")
-      textfield("Project location:").click()
+      textfield("Project name:").click()
+      shortcut(Key.TAB)
       shortcut(Modifier.CONTROL + Key.A)
       typeText(projectPath)
       button("Finish").click()
