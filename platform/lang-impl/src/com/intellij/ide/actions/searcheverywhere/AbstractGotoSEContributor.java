@@ -3,17 +3,22 @@ package com.intellij.ide.actions.searcheverywhere;
 
 import com.intellij.codeInsight.navigation.NavigationUtil;
 import com.intellij.ide.actions.SearchEverywherePsiRenderer;
+import com.intellij.ide.util.EditSourceUtil;
 import com.intellij.ide.util.gotoByName.ChooseByNameModel;
 import com.intellij.ide.util.gotoByName.ChooseByNamePopup;
 import com.intellij.ide.util.gotoByName.FilteringGotoByModel;
+import com.intellij.navigation.NavigationItem;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.fileEditor.OpenFileDescriptor;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiElement;
+import com.intellij.psi.util.PsiUtilCore;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -82,8 +87,26 @@ public abstract class AbstractGotoSEContributor<F> implements SearchEverywhereCo
 
   @Override
   public boolean processSelectedItem(Object selected, int modifiers, String searchText) {
-    if (selected instanceof PsiElement) {
-      NavigationUtil.activateFileWithPsiElement((PsiElement) selected, (modifiers & InputEvent.SHIFT_MASK) != 0);
+    if (selected instanceof PsiElement && ((PsiElement)selected).isValid()) {
+      PsiElement psiElement = (PsiElement) selected;
+      psiElement = psiElement.getNavigationElement();
+      VirtualFile file = PsiUtilCore.getVirtualFile(psiElement);
+
+      Pair<Integer, Integer> position = getLineAndColumn(searchText);
+      boolean positionSpecified = position.first >= 0 || position.second >= 0;
+      if (file != null && positionSpecified) {
+        OpenFileDescriptor descriptor = new OpenFileDescriptor(psiElement.getProject(), file, position.first, position.second);
+        descriptor = descriptor.setUseCurrentWindow(openInCurrentWindow(modifiers));
+        if (descriptor.canNavigate()) {
+          descriptor.navigate(true);
+          return true;
+        }
+      }
+
+      NavigationUtil.activateFileWithPsiElement(psiElement, openInCurrentWindow(modifiers));
+    }
+    else {
+      EditSourceUtil.navigate(((NavigationItem)selected), true, openInCurrentWindow(modifiers));
     }
 
     return true;
