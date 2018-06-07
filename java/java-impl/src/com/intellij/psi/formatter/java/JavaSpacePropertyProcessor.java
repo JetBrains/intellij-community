@@ -227,7 +227,7 @@ public class JavaSpacePropertyProcessor extends JavaElementVisitor {
     }
     else if (myRole1 == ChildRole.LBRACE || isEndOfLineCommentAfterLBrace(myChild1)) {
       if (aClass.isEnum()) {
-        createParenthSpace(true, false);
+        createSpacingForOneLineEnum();
       }
       else if (myRole2 == ChildRole.RBRACE && mySettings.KEEP_SIMPLE_CLASSES_IN_ONE_LINE) {
         int spaces = mySettings.SPACE_WITHIN_BRACES ? 1 : 0;
@@ -249,8 +249,7 @@ public class JavaSpacePropertyProcessor extends JavaElementVisitor {
       }
     }
     else if (myRole2 == ChildRole.RBRACE && aClass.isEnum()) {
-      myResult = Spacing.createDependentLFSpacing(0, 0, myParent.getTextRange(), mySettings.KEEP_LINE_BREAKS,
-                                                  mySettings.KEEP_BLANK_LINES_IN_DECLARATIONS);
+      createSpacingForOneLineEnum();
     }
     else if (myRole1 == ChildRole.COMMA && aClass.isEnum() && isJavadocHoldingEnumConstant(myChild2)) {
       createParenthSpace(true, true);
@@ -277,6 +276,17 @@ public class JavaSpacePropertyProcessor extends JavaElementVisitor {
     else {
       processClassBody();
     }
+  }
+
+  private void createSpacingForOneLineEnum() {
+    // Ignore comments in front of enum for dependent spacing
+    PsiElement first = myParent.getFirstChild();
+    while (first instanceof PsiDocComment) {
+      first = first.getNextSibling();
+    }
+    TextRange textRange = new TextRange(first.getTextOffset(), myParent.getTextRange().getEndOffset());
+    myResult = Spacing.createDependentLFSpacing(0, 0, textRange, mySettings.KEEP_LINE_BREAKS,
+                                                mySettings.KEEP_BLANK_LINES_IN_DECLARATIONS);
   }
 
   private static boolean isJavadocHoldingEnumConstant(@NotNull ASTNode node) {
