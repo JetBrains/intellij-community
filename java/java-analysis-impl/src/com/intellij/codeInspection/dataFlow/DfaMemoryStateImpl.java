@@ -375,7 +375,9 @@ public class DfaMemoryStateImpl implements DfaMemoryState {
   public boolean isSuperStateOf(DfaMemoryStateImpl that) {
     if (myEphemeral && !that.myEphemeral) return false;
     if (myStack.size() != that.myStack.size()) return false;
-    if (StreamEx.zip(myStack, that.myStack, DfaMemoryStateImpl::isSuperValue).has(false)) return false;
+    for (int i = 0; i < myStack.size(); i++) {
+      if (!isSuperValue(myStack.get(i), that.myStack.get(i))) return false;
+    }
     if (!equalsByUnknownVariables(that) ||
         !that.getDistinctClassPairs().containsAll(getDistinctClassPairs())) {
       return false;
@@ -384,10 +386,10 @@ public class DfaMemoryStateImpl implements DfaMemoryState {
     Set<EqClass> thatClasses = that.getNonTrivialEqClasses();
     if(!thisClasses.equals(thatClasses)) {
       // If any two values are equivalent in this, they also must be equivalent in that
-      if(thisClasses.stream().anyMatch(
-        thisClass -> thatClasses.stream().noneMatch(
-          thatClass -> thisClass.forEach(thatClass::contains)))) {
-        return false;
+      for (EqClass thisClass: thisClasses) {
+        if (thatClasses.stream().noneMatch(thatClass -> thisClass.forEach(thatClass::contains))) {
+          return false;
+        }
       }
     }
     Set<DfaVariableValue> values = new HashSet<>(this.myVariableStates.keySet());
