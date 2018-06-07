@@ -8,12 +8,11 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vcs.VcsNotifier;
-import com.intellij.util.containers.ContainerUtil;
 import git4idea.GitRevisionNumber;
 import git4idea.GitTag;
+import git4idea.GitUtil;
 import git4idea.commands.Git;
 import git4idea.commands.GitCommandResult;
 import git4idea.commands.GitCompoundResult;
@@ -21,6 +20,7 @@ import git4idea.repo.GitRepository;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Collection;
+import java.util.HashMap;
 import java.util.Map;
 
 import static com.intellij.openapi.vcs.VcsNotifier.STANDARD_NOTIFICATION;
@@ -37,27 +37,32 @@ class GitDeleteTagOperation extends GitBranchOperation {
   @NotNull private final String myTagName;
   @NotNull private final VcsNotifier myNotifier;
 
-  @NotNull private final Map<GitRepository, String> myDeletedTagTips;
+  @NotNull private final Map<GitRepository, String> myDeletedTagTips = new HashMap<>();
 
   GitDeleteTagOperation(@NotNull Project project, @NotNull Git git, @NotNull GitBranchUiHandler uiHandler,
                         @NotNull Collection<GitRepository> repositories, @NotNull String tagName) {
     super(project, git, uiHandler, repositories);
     myTagName = tagName;
     myNotifier = VcsNotifier.getInstance(myProject);
-    myDeletedTagTips = ContainerUtil.map2MapNotNull(repositories, (GitRepository repo) -> {
-      try {
-        GitRevisionNumber revisionNumber = GitRevisionNumber.resolve(myProject, repo.getRoot(), GitTag.REFS_TAGS_PREFIX + tagName);
-        return Pair.create(repo, revisionNumber.asString());
-      }
-      catch (VcsException e) {
-        LOG.error("Couldn't find hash for tag " + myTagName + " in " + repo);
-        return null;
-      }
-    });
   }
 
   @Override
   public void execute() {
+    for (GitRepository repository: getRepositories()) {
+      try {
+        GitRevisionNumber revisionNumber = GitRevisionNumber.resolve(myProject, repository.getRoot(), GitTag.REFS_TAGS_PREFIX + myTagName);
+        myDeletedTagTips.put(repository, revisionNumber.asString());
+      }
+      catch (VcsException e) {
+        String title = "Couldn't find tag " + myTagName;
+        if (!GitUtil.justOneGitRepository(myProject)) {
+          title += " in " + repository.getPresentableUrl();
+        }
+        fatalError(title, "");
+        return;
+      }
+    }
+
     while (hasMoreRepositories()) {
       GitRepository repository = next();
       GitCommandResult result = myGit.deleteTag(repository, myTagName);
@@ -81,52 +86,6 @@ class GitDeleteTagOperation extends GitBranchOperation {
     myNotifier.notify(notification);
   }
 
-  @Override
-  protected void rollback() {
-    GitCompoundResult result = doRollback();
-    if (result.totalSuccess()) {
-      myNotifier.notifySuccess("Rollback Successful", "Restored tag " + myTagName);
-    }
-    else {
-      myNotifier.notifyError("Error during rollback of tag deletion", result.getErrorOutputWithReposIndication());
-    }
-  }
-
-  @NotNull
-  private GitCompoundResult doRollback() {
-    GitCompoundResult result = new GitCompoundResult(myProject);
-    for (GitRepository repository : getSuccessfulRepositories()) {
-      GitCommandResult res = myGit.createNewTag(repository, myTagName, null, myDeletedTagTips.get(repository));
-      result.append(repository, res);
-      repository.getRepositoryFiles().refresh();
-    }
-    return result;
-  }
-
-  @NotNull
-  public String getSuccessMessage() {
-    return String.format("Deleted tag %s", formatTagName(myTagName));
-  }
-
-  @NotNull
-  @Override
-  protected String getRollbackProposal() {
-    return "However tag deletion has succeeded for the following " + repositories() + ":<br/>" +
-           successfulRepositoriesJoined() +
-           "<br/>You may rollback (recreate " + myTagName + " in these roots) not to let tags diverge.";
-  }
-
-  @NotNull
-  @Override
-  protected String getOperationName() {
-    return "tag deletion";
-  }
-
-  @NotNull
-  private static String formatTagName(@NotNull String name) {
-    return "<b><code>" + name + "</code></b>";
-  }
-
   private void restoreInBackground(@NotNull Notification notification) {
     new Task.Backgroundable(myProject, "Restoring Tag " + myTagName + "...") {
       @Override
@@ -137,12 +96,40 @@ class GitDeleteTagOperation extends GitBranchOperation {
   }
 
   private void rollbackTagDeletion(@NotNull Notification notification) {
-    GitCompoundResult result = doRollback();
+    GitCompoundResult result = new GitCompoundResult(myProject);
+    for (GitRepository repository: getSuccessfulRepositories()) {
+      GitCommandResult res = myGit.createNewTag(repository, myTagName, null, myDeletedTagTips.get(repository));
+      result.append(repository, res);
+      repository.getRepositoryFiles().refresh();
+    }
+
     if (result.totalSuccess()) {
       notification.expire();
     }
     else {
-      myNotifier.notifyError("Couldn't Restore " + formatTagName(myTagName), result.getErrorOutputWithReposIndication());
+      myNotifier.notifyError("Couldn't Restore <b><code>" + myTagName + "</code></b>", result.getErrorOutputWithReposIndication());
     }
+  }
+
+  @Override
+  protected void rollback() {
+    throw new UnsupportedOperationException();
+  }
+
+  @NotNull
+  @Override
+  protected String getRollbackProposal() {
+    throw new UnsupportedOperationException();
+  }
+
+  @NotNull
+  @Override
+  protected String getOperationName() {
+    throw new UnsupportedOperationException();
+  }
+
+  @NotNull
+  public String getSuccessMessage() {
+    throw new UnsupportedOperationException();
   }
 }

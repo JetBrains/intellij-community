@@ -45,7 +45,6 @@ import org.jetbrains.annotations.TestOnly;
 
 import javax.swing.*;
 import java.awt.*;
-import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 import java.util.ArrayList;
 import java.util.List;
@@ -166,14 +165,11 @@ public class ParameterInfoController extends UserDataHolderBase implements Visib
       updateWhenAllCommitted();
     });
 
-    PropertyChangeListener lookupListener = new PropertyChangeListener() {
-      @Override
-      public void propertyChange(PropertyChangeEvent evt) {
-        if (LookupManager.PROP_ACTIVE_LOOKUP.equals(evt.getPropertyName())) {
-          Lookup lookup = (Lookup)evt.getNewValue();
-          if (lookup != null) {
-            adjustPositionForLookup(lookup);
-          }
+    PropertyChangeListener lookupListener = evt -> {
+      if (LookupManager.PROP_ACTIVE_LOOKUP.equals(evt.getPropertyName())) {
+        Lookup lookup = (Lookup)evt.getNewValue();
+        if (lookup != null) {
+          adjustPositionForLookup(lookup);
         }
       }
     };
@@ -360,12 +356,12 @@ public class ParameterInfoController extends UserDataHolderBase implements Visib
     }
   }
 
-  public static boolean hasPrevOrNextParameter(Editor editor, int lbraceOffset, boolean isNext) {
+  static boolean hasPrevOrNextParameter(Editor editor, int lbraceOffset, boolean isNext) {
     ParameterInfoController controller = findControllerAtOffset(editor, lbraceOffset);
     return controller != null && controller.getPrevOrNextParameterOffset(isNext) != -1;
   }
 
-  public static void prevOrNextParameter(Editor editor, int lbraceOffset, boolean isNext) {
+  static void prevOrNextParameter(Editor editor, int lbraceOffset, boolean isNext) {
     ParameterInfoController controller = findControllerAtOffset(editor, lbraceOffset);
     int newOffset = controller != null ? controller.getPrevOrNextParameterOffset(isNext) : -1;
     if (newOffset != -1) {
@@ -419,7 +415,7 @@ public class ParameterInfoController extends UserDataHolderBase implements Visib
 
     @SuppressWarnings("unchecked") PsiElement[] parameters = handler.getActualParameters(argList);
     int currentParameterIndex =
-      noDelimiter ? JBIterable.of(parameters).indexOf((o) -> o.getTextRange().containsOffset(offset)) :
+      noDelimiter ? JBIterable.of(parameters).indexOf(o -> o.getTextRange().containsOffset(offset)) :
       ParameterInfoUtils.getCurrentParameterIndex(argList.getNode(), offset, handler.getActualParameterDelimiterType());
     if (CodeInsightSettings.getInstance().SHOW_PARAMETER_NAME_HINTS_ON_COMPLETION) {
       if (currentParameterIndex < 0 || currentParameterIndex >= parameters.length) return -1;
@@ -427,7 +423,7 @@ public class ParameterInfoController extends UserDataHolderBase implements Visib
       int prevOrNextParameterIndex = currentParameterIndex + (isNext ? 1 : -1);
       if (prevOrNextParameterIndex < 0 || prevOrNextParameterIndex >= parameters.length) {
         PsiElement parameterOwner = myComponent.getParameterOwner();
-        return (parameterOwner != null && parameterOwner.isValid()) ? parameterOwner.getTextRange().getEndOffset() : -1;
+        return parameterOwner != null && parameterOwner.isValid() ? parameterOwner.getTextRange().getEndOffset() : -1;
       }
       else {
         return getParameterNavigationOffset(parameters[prevOrNextParameterIndex], text);
@@ -501,6 +497,14 @@ public class ParameterInfoController extends UserDataHolderBase implements Visib
     throw new TimeoutException();
   }
 
+  @TestOnly
+  public static void disposeAll(@NotNull Editor editor) {
+    ParameterInfoController[] controllers = getAllControllers(editor).toArray(new ParameterInfoController[0]);
+    for (ParameterInfoController controller: controllers) {
+      Disposer.dispose(controller);
+    }
+  }
+
   /**
    * Returned Point is in layered pane coordinate system.
    * Second value is a {@link HintManager.PositionFlags position flag}.
@@ -554,11 +558,11 @@ public class ParameterInfoController extends UserDataHolderBase implements Visib
     return Registry.is("java.completion.argument.live.template") && !CodeInsightSettings.getInstance().SHOW_PARAMETER_NAME_HINTS_ON_COMPLETION;
   }
 
-  public class MyUpdateParameterInfoContext implements UpdateParameterInfoContext {
+  private class MyUpdateParameterInfoContext implements UpdateParameterInfoContext {
     private final int myOffset;
     private final PsiFile myFile;
 
-    public MyUpdateParameterInfoContext(final int offset, final PsiFile file) {
+    MyUpdateParameterInfoContext(final int offset, final PsiFile file) {
       myOffset = offset;
       myFile = file;
     }
@@ -684,11 +688,11 @@ public class ParameterInfoController extends UserDataHolderBase implements Visib
     public final List<Integer> startOffsets;
     public final List<Integer> endOffsets;
 
-    public SignatureItem(String text,
-                         boolean deprecated,
-                         boolean disabled,
-                         List<Integer> startOffsets,
-                         List<Integer> endOffsets) {
+    SignatureItem(String text,
+                  boolean deprecated,
+                  boolean disabled,
+                  List<Integer> startOffsets,
+                  List<Integer> endOffsets) {
       this.text = text;
       this.deprecated = deprecated;
       this.disabled = disabled;
@@ -711,7 +715,7 @@ public class ParameterInfoController extends UserDataHolderBase implements Visib
     private Point previousBestPoint;
     private Short previousBestPosition;
 
-    public MyBestLocationPointProvider(final Editor editor) {
+    MyBestLocationPointProvider(final Editor editor) {
       myEditor = editor;
     }
 
@@ -725,10 +729,7 @@ public class ParameterInfoController extends UserDataHolderBase implements Visib
         TextRange range = list.getTextRange();
         TextRange rangeWithoutParens = TextRange.from(range.getStartOffset() + 1, Math.max(range.getLength() - 2, 0));
         if (!rangeWithoutParens.contains(offset)) {
-          if (offset < rangeWithoutParens.getStartOffset())
-            offset = rangeWithoutParens.getStartOffset();
-          else
-            offset = rangeWithoutParens.getEndOffset();
+          offset = offset < rangeWithoutParens.getStartOffset() ? rangeWithoutParens.getStartOffset() : rangeWithoutParens.getEndOffset();
           pos = null;
         }
       }
@@ -753,7 +754,7 @@ public class ParameterInfoController extends UserDataHolderBase implements Visib
   }
 
   private static class WrapperPanel extends JPanel {
-    public WrapperPanel() {
+    WrapperPanel() {
       super(new BorderLayout());
       setBorder(JBUI.Borders.empty());
     }

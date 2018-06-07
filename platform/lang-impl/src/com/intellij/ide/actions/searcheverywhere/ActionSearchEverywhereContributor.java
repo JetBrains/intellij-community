@@ -85,7 +85,7 @@ public class ActionSearchEverywhereContributor implements SearchEverywhereContri
   }
 
   @Override
-  public ListCellRenderer getElementsRenderer() {
+  public ListCellRenderer getElementsRenderer(JList<?> list) {
     return myModel.getListCellRenderer();
   }
 

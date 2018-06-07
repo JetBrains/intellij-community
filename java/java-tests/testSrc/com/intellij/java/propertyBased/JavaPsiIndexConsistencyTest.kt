@@ -51,7 +51,7 @@ class JavaPsiIndexConsistencyTest : LightCodeInsightFixtureTestCase() {
       listOf(AddImport, AddEnum, InvisiblePsiChange) + 
       listOf(true, false).map { ChangeLanguageLevel(if (it) LanguageLevel.HIGHEST else LanguageLevel.JDK_1_3) }
     ),
-      1, Generator.from { data -> TextChange(data.generateConditional(Generator.asciiIdentifiers()) { !JavaLexer.isKeyword(it, LanguageLevel.HIGHEST) },
+      1, Generator.from { data -> TextChange(data.generate(Generator.asciiIdentifiers().suchThat { !JavaLexer.isKeyword(it, LanguageLevel.HIGHEST) }),
                                                    data.generate(Generator.booleans()),
                                                    data.generate(Generator.booleans())) })
     PropertyChecker.customized().forAll(Generator.listsOf(genAction)) { actions ->

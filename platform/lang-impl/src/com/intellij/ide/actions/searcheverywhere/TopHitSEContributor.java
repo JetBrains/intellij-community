@@ -123,7 +123,7 @@ public class TopHitSEContributor implements SearchEverywhereContributor<Void> {
   }
 
   @Override
-  public ListCellRenderer getElementsRenderer() {
+  public ListCellRenderer getElementsRenderer(JList<?> list) {
     return new TopHitRenderer(myProject);
   }
 

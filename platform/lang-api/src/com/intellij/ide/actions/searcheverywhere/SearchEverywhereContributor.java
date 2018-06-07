@@ -43,7 +43,7 @@ public interface SearchEverywhereContributor<F> {
 
   boolean processSelectedItem(Object selected, int modifiers);
 
-  ListCellRenderer getElementsRenderer();
+  ListCellRenderer getElementsRenderer(JList<?> list);
 
   Object getDataForItem(Object element, String dataId);
 

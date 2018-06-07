@@ -2,7 +2,6 @@
 package com.intellij.ide.actions.searcheverywhere;
 
 import com.intellij.ide.IdeBundle;
-import com.intellij.ide.util.NavigationItemListCellRenderer;
 import com.intellij.ide.util.gotoByName.FilteringGotoByModel;
 import com.intellij.ide.util.gotoByName.GotoSymbolModel2;
 import com.intellij.lang.DependentLanguage;
@@ -14,7 +13,6 @@ import com.intellij.ui.IdeUICustomization;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -46,11 +44,6 @@ public class SymbolSearchEverywhereContributor extends AbstractGotoSEContributor
   @Override
   protected FilteringGotoByModel<Language> createModel(Project project) {
     return new GotoSymbolModel2(project);
-  }
-
-  @Override
-  public ListCellRenderer getElementsRenderer() {
-    return new NavigationItemListCellRenderer();
   }
 
   public static class Factory implements SearchEverywhereContributorFactory<Language> {

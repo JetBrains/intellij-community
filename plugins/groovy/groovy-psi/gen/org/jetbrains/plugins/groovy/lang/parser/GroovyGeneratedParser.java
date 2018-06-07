@@ -1739,7 +1739,7 @@ public class GroovyGeneratedParser implements PsiParser, LightPsiParser {
   }
 
   /* ********************************************************** */
-  // '(' capital_type_element ')' priority1_4
+  // '(' capital_type_element ')' not_colon priority1_4
   static boolean cast_expression_pin(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "cast_expression_pin")) return false;
     if (!nextTokenIs(b, T_LPAREN)) return false;
@@ -1748,7 +1748,8 @@ public class GroovyGeneratedParser implements PsiParser, LightPsiParser {
     r = consumeToken(b, T_LPAREN);
     r = r && capital_type_element(b, l + 1);
     r = r && consumeToken(b, T_RPAREN);
-    p = r; // pin = 3
+    r = r && not_colon(b, l + 1);
+    p = r; // pin = 4
     r = r && expression(b, l + 1, 13);
     exit_section_(b, l, m, r, p, null);
     return r || p;
@@ -4409,6 +4410,17 @@ public class GroovyGeneratedParser implements PsiParser, LightPsiParser {
   }
 
   /* ********************************************************** */
+  // !fast_colon
+  static boolean not_colon(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "not_colon")) return false;
+    boolean r;
+    Marker m = enter_section_(b, l, _NOT_);
+    r = !fast_colon(b, l + 1);
+    exit_section_(b, l, m, r, false, null);
+    return r;
+  }
+
+  /* ********************************************************** */
   // '{' mb_separators block_levels '}'
   public static boolean open_block(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "open_block")) return false;
@@ -7066,25 +7078,15 @@ public class GroovyGeneratedParser implements PsiParser, LightPsiParser {
     return r;
   }
 
-  // fast_question index_expression_argument_list !fast_colon
+  // fast_question index_expression_argument_list not_colon
   private static boolean safe_index_expression_0(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "safe_index_expression_0")) return false;
     boolean r;
     Marker m = enter_section_(b);
     r = fast_question(b, l + 1);
     r = r && index_expression_argument_list(b, l + 1);
-    r = r && safe_index_expression_0_2(b, l + 1);
+    r = r && not_colon(b, l + 1);
     exit_section_(b, m, null, r);
-    return r;
-  }
-
-  // !fast_colon
-  private static boolean safe_index_expression_0_2(PsiBuilder b, int l) {
-    if (!recursion_guard_(b, l, "safe_index_expression_0_2")) return false;
-    boolean r;
-    Marker m = enter_section_(b, l, _NOT_);
-    r = !fast_colon(b, l + 1);
-    exit_section_(b, l, m, r, false, null);
     return r;
   }
 

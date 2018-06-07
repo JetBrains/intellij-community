@@ -649,14 +649,8 @@ public class HighlightControlFlowUtil {
                                      @NotNull PsiField field,
                                      @NotNull PsiReferenceExpression reference,
                                      @NotNull PsiFile containingFile) {
-
     if (!containingFile.getManager().areElementsEquivalent(enclosingCtrOrInitializer.getContainingClass(), field.getContainingClass())) return false;
-    PsiExpression qualifierExpression = reference.getQualifierExpression();
-    // JLS 16: "Such an assignment is defined to occur if and only if either the simple name of the variable
-    // (or, for a field, its simple name qualified by this) occurs on the left hand side of an assignment operator"
-    // Qualified this is not allowed by spec
-    return qualifierExpression == null || (qualifierExpression instanceof PsiThisExpression &&
-                                           ((PsiThisExpression)qualifierExpression).getQualifier() == null);
+    return LocalsOrMyInstanceFieldsControlFlowPolicy.isLocalOrMyInstanceReference(reference);
   }
 
 

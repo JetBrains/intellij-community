@@ -296,13 +296,18 @@ public class UsagePreviewPanel extends UsageContextPanelBase implements DataProv
     if (isDisposed) return null;
     Project project = psiFile.getProject();
 
-    Editor editor = EditorFactory.getInstance().createEditor(document, project, psiFile.getVirtualFile(), !myIsEditor, EditorKind.PREVIEW);
+    Editor editor = EditorFactory.getInstance().createEditor(document, project, psiFile.getVirtualFile(), !myIsEditor, getEditorKind());
 
     EditorSettings settings = editor.getSettings();
     customizeEditorSettings(settings);
 
     editor.putUserData(PREVIEW_EDITOR_FLAG, this);
     return editor;
+  }
+
+  @NotNull
+  protected EditorKind getEditorKind() {
+    return EditorKind.PREVIEW;
   }
 
   protected void customizeEditorSettings(EditorSettings settings) {

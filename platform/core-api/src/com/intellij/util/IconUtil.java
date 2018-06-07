@@ -399,16 +399,12 @@ public class IconUtil {
     }
   }
 
+  /**
+   * @deprecated use {@link #scale(Icon, Component, float)}
+   */
+  @Deprecated
   @NotNull
   public static Icon scale(@NotNull final Icon source, double _scale) {
-    final int hiDPIScale;
-    if (source instanceof ImageIcon) {
-      Image image = ((ImageIcon)source).getImage();
-      hiDPIScale = image instanceof JBHiDPIScaledImage ? 2 : 1;
-    }
-    else {
-      hiDPIScale = 1;
-    }
     final double scale = Math.min(32, Math.max(.1, _scale));
     return new Icon() {
       @Override
@@ -429,12 +425,12 @@ public class IconUtil {
 
       @Override
       public int getIconWidth() {
-        return (int)(source.getIconWidth() * scale) / hiDPIScale;
+        return (int)(source.getIconWidth() * scale);
       }
 
       @Override
       public int getIconHeight() {
-        return (int)(source.getIconHeight() * scale) / hiDPIScale;
+        return (int)(source.getIconHeight() * scale);
       }
     };
   }
@@ -490,17 +486,13 @@ public class IconUtil {
   @NotNull
   public static Icon scaleByFont(@NotNull Icon icon, @Nullable Component ancestor, float fontSize) {
     float scale = JBUI.getFontScale(fontSize);
-    if (icon instanceof ScalableIcon) {
-      if (icon instanceof ScaleContextAware) {
-        ScaleContextAware ctxIcon = (ScaleContextAware)icon;
-        ctxIcon.updateScaleContext(ancestor != null ? ScaleContext.create(ancestor) : null);
-        // take into account the user scale of the icon
-        double usrScale = ctxIcon.getScaleContext().getScale(USR_SCALE);
-        scale /= usrScale;
-      }
-      return ((ScalableIcon)icon).scale(scale);
+    if (icon instanceof ScaleContextAware) {
+      ScaleContextAware ctxIcon = (ScaleContextAware)icon;
+      // take into account the user scale of the icon
+      double usrScale = ctxIcon.getScaleContext().getScale(USR_SCALE);
+      scale /= usrScale;
     }
-    return scale(icon, scale);
+    return scale(icon, ancestor, scale);
   }
 
   @NotNull

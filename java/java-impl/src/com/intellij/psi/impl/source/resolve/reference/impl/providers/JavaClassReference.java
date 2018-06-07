@@ -239,29 +239,35 @@ public class JavaClassReference extends GenericReference implements PsiJavaRefer
   @Override
   @NotNull
   public Object[] getVariants() {
-    PsiElement context = getCompletionContext();
-    if (context instanceof PsiPackage) {
-      return processPackage((PsiPackage)context);
-    }
-    if (context instanceof PsiClass) {
-      final PsiClass aClass = (PsiClass)context;
-
-      if (myInStaticImport) {
-        return ArrayUtil.mergeArrays(aClass.getInnerClasses(), aClass.getFields(), ArrayUtil.OBJECT_ARRAY_FACTORY);
+    List<Object> result = ContainerUtil.newArrayList();
+    for (PsiElement context : getCompletionContexts()) {
+      if (context instanceof PsiPackage) {
+        result.addAll(processPackage((PsiPackage)context));
       }
-      else if (isDefinitelyStatic()) {
-        final PsiClass[] psiClasses = aClass.getInnerClasses();
-        final List<PsiClass> staticClasses = new ArrayList<>(psiClasses.length);
-
-        for (PsiClass c : psiClasses) {
-          if (c.hasModifierProperty(PsiModifier.STATIC)) {
-            staticClasses.add(c);
-          }
+      else if (context instanceof PsiClass) {
+        if (myInStaticImport) {
+          Collections.addAll(result, ((PsiClass)context).getInnerClasses());
+          Collections.addAll(result, ((PsiClass)context).getFields());
         }
-        return staticClasses.isEmpty() ? PsiClass.EMPTY_ARRAY : staticClasses.toArray(PsiClass.EMPTY_ARRAY);
+        else if (isDefinitelyStatic()) {
+          result.addAll(ContainerUtil.filter(((PsiClass)context).getInnerClasses(), c -> c.hasModifierProperty(PsiModifier.STATIC)));
+        }
       }
     }
-    return ArrayUtil.EMPTY_OBJECT_ARRAY;
+    return result.toArray();
+  }
+
+  private List<? extends PsiElement> getCompletionContexts() {
+    List<PsiElement> result = ContainerUtil.newArrayList();
+
+    ContainerUtil.addIfNotNull(result, getCompletionContext());
+
+    List<String> imports = JavaClassReferenceProvider.IMPORTS.getValue(getOptions());
+    if (imports != null && getContextReference() == null) {
+      result.addAll(ContainerUtil.mapNotNull(imports, JavaPsiFacade.getInstance(getElement().getProject())::findPackage));
+    }
+
+    return result;
   }
 
   @Nullable
@@ -284,7 +290,7 @@ public class JavaClassReference extends GenericReference implements PsiJavaRefer
   }
 
   @NotNull
-  private LookupElement[] processPackage(@NotNull PsiPackage aPackage) {
+  private List<LookupElement> processPackage(@NotNull PsiPackage aPackage) {
     final ArrayList<LookupElement> list = ContainerUtil.newArrayList();
     final int startOffset = StringUtil.isEmpty(aPackage.getName()) ? 0 : aPackage.getQualifiedName().length() + 1;
     final GlobalSearchScope scope = getScope(getJavaContextFile());
@@ -315,7 +321,7 @@ public class JavaClassReference extends GenericReference implements PsiJavaRefer
         list.add(JavaClassNameCompletionContributor.createClassLookupItem(clazz, false));
       }
     }
-    return list.toArray(LookupElement.EMPTY_ARRAY);
+    return list;
   }
 
   @Nullable

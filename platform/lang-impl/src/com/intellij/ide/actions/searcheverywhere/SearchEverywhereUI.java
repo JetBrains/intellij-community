@@ -711,7 +711,7 @@ public class SearchEverywhereUI extends BorderLayoutPanel implements Disposable,
       }
 
       SearchEverywhereContributor contributor = myListModel.getContributorForIndex(index);
-      Component component = contributor.getElementsRenderer()
+      Component component = contributor.getElementsRenderer(myResultsList)
                                        .getListCellRendererComponent(list, value, index, isSelected, cellHasFocus);
 
       if (isAllTabSelected() && myListModel.isGroupFirstItem(index)) {

@@ -20,6 +20,7 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.editor.EditorKind;
 import com.intellij.openapi.editor.event.DocumentListener;
 import com.intellij.openapi.help.HelpManager;
 import com.intellij.openapi.keymap.KeymapUtil;
@@ -650,6 +651,12 @@ public class FindPopupPanel extends JBPanel implements FindUI {
       @Override
       public Dimension getPreferredSize() {
         return new Dimension(myResultsPreviewTable.getWidth(), Math.max(getHeight(), getLineHeight() * 15));
+      }
+
+      @NotNull
+      @Override
+      protected EditorKind getEditorKind() {
+        return EditorKind.PREVIEW_UNDER_READ_ACTION;
       }
     };
     Disposer.register(myDisposable, myUsagePreviewPanel);

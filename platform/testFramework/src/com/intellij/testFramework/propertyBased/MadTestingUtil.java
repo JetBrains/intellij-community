@@ -49,7 +49,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.jetCheck.DataStructure;
 import org.jetbrains.jetCheck.Generator;
-import org.jetbrains.jetCheck.IntDistribution;
 
 import java.io.File;
 import java.io.FileFilter;
@@ -317,8 +316,8 @@ public class MadTestingUtil {
 
         List<File> toChoose = preferDirs(data, children);
         Collections.sort(toChoose, Comparator.comparing(File::getName));
-        int index = data.drawInt(IntDistribution.uniform(0, toChoose.size() - 1));
-        File generated = generateRandomFile(data, toChoose.get(index), exhausted);
+        File chosen = data.generate(Generator.sampledFrom(toChoose));
+        File generated = generateRandomFile(data, chosen, exhausted);
         if (generated != null) {
           return generated;
         }
@@ -341,7 +340,7 @@ public class MadTestingUtil {
       }
 
       int ratio = Math.max(100, dirs.size() / files.size());
-      return data.drawInt() % ratio != 0 ? dirs : files;
+      return data.generate(Generator.integers(0, ratio - 1)) != 0 ? dirs : files;
     }
   }
 }

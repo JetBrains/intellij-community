@@ -37,6 +37,7 @@ import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.TestOnly;
 
 import javax.swing.*;
 import javax.swing.plaf.FontUIResource;
@@ -405,7 +406,7 @@ public final class LafManagerImpl extends LafManager implements PersistentStateC
 
     if (lookAndFeelInfo instanceof UIThemeBasedLookAndFeelInfo) {
       try {
-        ((UIThemeBasedLookAndFeelInfo)lookAndFeelInfo).installTheme(UIManager.getDefaults());
+        ((UIThemeBasedLookAndFeelInfo)lookAndFeelInfo).installTheme(UIManager.getLookAndFeelDefaults());
       }
       catch (Exception e) {
         Messages.showMessageDialog(
@@ -418,7 +419,7 @@ public final class LafManagerImpl extends LafManager implements PersistentStateC
     }
 
     if (SystemInfo.isMacOSYosemite) {
-      installMacOSXFonts(UIManager.getDefaults());
+      installMacOSXFonts(UIManager.getLookAndFeelDefaults());
     }
 
     myCurrentLaf = ObjectUtils.chooseNotNull(lookAndFeelInfo, findLaf(lookAndFeelInfo.getClassName()));
@@ -1023,5 +1024,14 @@ public final class LafManagerImpl extends LafManager implements PersistentStateC
             LafIconLookup.getSelectedIcon(NAME),
             LafIconLookup.getDisabledIcon(NAME));
     }
+  }
+
+  private static LafManagerImpl ourTestInstance;
+  @TestOnly
+  public static LafManagerImpl getTestInstance() {
+    if (ourTestInstance == null) {
+      ourTestInstance = new LafManagerImpl();
+    }
+    return ourTestInstance;
   }
 }

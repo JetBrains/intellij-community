@@ -270,6 +270,9 @@ public class ContentEntryImpl extends RootModelComponentBase implements ContentE
   @Override
   public ExcludeFolder addExcludeFolder(@NotNull VirtualFile file) {
     assert !isDisposed();
+    if (!file.isDirectory()) {
+      throw new IllegalArgumentException("File must be folder but got: "+file);
+    }
     assertCanAddFolder(file);
     return addExcludeFolder(new ExcludeFolderImpl(file, this));
   }

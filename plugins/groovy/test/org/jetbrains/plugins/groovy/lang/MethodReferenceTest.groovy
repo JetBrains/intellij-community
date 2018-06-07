@@ -5,7 +5,7 @@ import com.intellij.codeInspection.LocalInspectionTool
 import com.intellij.psi.search.searches.MethodReferencesSearch
 import com.intellij.testFramework.LightProjectDescriptor
 import groovy.transform.CompileStatic
-import org.jetbrains.plugins.groovy.GroovyLightProjectDescriptor
+import org.jetbrains.plugins.groovy.GroovyProjectDescriptors
 import org.jetbrains.plugins.groovy.codeInspection.assignment.GroovyAssignabilityCheckInspection
 import org.jetbrains.plugins.groovy.codeInspection.untypedUnresolvedAccess.GrUnresolvedAccessInspection
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.typedef.members.GrConstructorImpl
@@ -20,7 +20,7 @@ import org.jetbrains.plugins.groovy.util.TypingTest
 @CompileStatic
 class MethodReferenceTest extends GroovyResolveTestCase implements TypingTest, ResolveTest, HighlightingTest {
 
-  final LightProjectDescriptor projectDescriptor = GroovyLightProjectDescriptor.GROOVY_3_0
+  final LightProjectDescriptor projectDescriptor = GroovyProjectDescriptors.GROOVY_3_0
   final String basePath = TestUtils.testDataPath + 'lang/methodReferences/'
   final Collection<Class<? extends LocalInspectionTool>> inspections = [GrUnresolvedAccessInspection, GroovyAssignabilityCheckInspection]
 

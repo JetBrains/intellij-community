@@ -216,6 +216,7 @@ public class WrapperTypeMayBePrimitiveInspection extends AbstractBaseJavaLocalIn
                                                             @NotNull BoxingInfo boxingInfo) {
       IElementType operationTokenType = binaryExpression.getOperationTokenType();
       PsiExpression other = ExpressionUtils.getOtherOperand(binaryExpression, boxingInfo.myVariable);
+      if (other == null) return false;
       PsiType type = other.getType();
       if (operationTokenType == JavaTokenType.EQEQ || operationTokenType == JavaTokenType.NE) {
         if (!(type instanceof PsiPrimitiveType) || PsiType.NULL.equals(type)) return false;

@@ -7,6 +7,7 @@ import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.LanguageFileType;
+import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.popup.ListPopup;
 import com.intellij.openapi.util.text.StringUtil;
@@ -60,6 +61,10 @@ class JsonSchemaStatusWidget extends EditorBasedStatusBarPopup {
     }
   }
 
+  private boolean hasAccessToSymbols() {
+    return !DumbService.getInstance(myProject).isDumb();
+  }
+
   @NotNull
   @Override
   protected WidgetState getWidgetState(@Nullable VirtualFile file) {
@@ -69,6 +74,10 @@ class JsonSchemaStatusWidget extends EditorBasedStatusBarPopup {
     FileType fileType = file.getFileType();
     if (!(fileType instanceof LanguageFileType) || !(((LanguageFileType)fileType).getLanguage() instanceof JsonLanguage)) {
       return WidgetState.HIDDEN;
+    }
+
+    if (!hasAccessToSymbols()) {
+      return new MyWidgetState("Index updating is in progress", "Updating indexes", false);
     }
 
     Collection<VirtualFile> schemaFiles = myService.getSchemaFilesForFile(file);
@@ -234,6 +243,24 @@ class JsonSchemaStatusWidget extends EditorBasedStatusBarPopup {
 
   @Override
   protected void registerCustomListeners() {
+    class Listener implements DumbService.DumbModeListener {
+      volatile boolean isDumbMode;
+
+      @Override
+      public void enteredDumbMode() {
+        isDumbMode = true;
+        update();
+      }
+
+      @Override
+      public void exitDumbMode() {
+        isDumbMode = false;
+        update();
+      }
+    }
+
+    Listener listener = new Listener();
+    myConnection.subscribe(DumbService.DUMB_MODE, listener);
   }
 
   @NotNull

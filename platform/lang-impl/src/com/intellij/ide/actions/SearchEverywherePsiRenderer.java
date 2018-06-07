@@ -45,7 +45,7 @@ import java.util.LinkedList;
 /**
 * @author Konstantin Bulenkov
 */
-class SearchEverywherePsiRenderer extends PsiElementListCellRenderer<PsiElement> {
+public class SearchEverywherePsiRenderer extends PsiElementListCellRenderer<PsiElement> {
 
   private final JList myList;
 

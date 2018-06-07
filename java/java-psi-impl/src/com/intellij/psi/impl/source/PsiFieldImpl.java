@@ -265,8 +265,17 @@ public class PsiFieldImpl extends JavaStubPsiElement<PsiFieldStub> implements Ps
     return ElementPresentationUtil.addVisibilityIcon(this, flags, baseIcon);
   }
 
+  private static class OurConstValueComputer implements JavaResolveCache.ConstValueComputer {
+    private static final OurConstValueComputer INSTANCE = new OurConstValueComputer();
+
+    @Override
+    public Object execute(@NotNull PsiVariable variable, Set<PsiVariable> visitedVars) {
+      return ((PsiFieldImpl)variable)._computeConstantValue(visitedVars);
+    }
+  }
+
   @Nullable
-  private Object doComputeConstantValue(@Nullable Set<PsiVariable> visitedVars) {
+  private Object _computeConstantValue(@Nullable Set<PsiVariable> visitedVars) {
     PsiType type = getType();
     // javac rejects all non primitive and non String constants, although JLS states constants "variables whose initializers are constant expressions"
     if (!(type instanceof PsiPrimitiveType) && !type.equalsToText("java.lang.String")) return null;
@@ -285,7 +294,7 @@ public class PsiFieldImpl extends JavaStubPsiElement<PsiFieldStub> implements Ps
   public Object computeConstantValue(Set<PsiVariable> visitedVars) {
     if (!hasModifierProperty(PsiModifier.FINAL)) return null;
 
-    return JavaResolveCache.getInstance(getProject()).getFieldConstantValue(this, visitedVars, (field, variables)->field.doComputeConstantValue(variables));
+    return JavaResolveCache.getInstance(getProject()).computeConstantValueWithCaching(this, OurConstValueComputer.INSTANCE, visitedVars);
   }
 
   @Override

@@ -249,6 +249,16 @@ class QualifiedThis {
 
   QualifiedThis() {
     <error descr="Cannot assign a value to final variable 'x'">QualifiedThis.this.x</error> = 5;
-    <error descr="Variable 'x' might already have been assigned to">this.x</error> = 5;
+    this.x = 5;
+  }
+}
+
+class ParenthesizedThis {
+  final int x;
+  final int y = (this).x + 1; // allowed as qualifier is not naked 'this'!
+
+  ParenthesizedThis() {
+    <error descr="Cannot assign a value to final variable 'x'">(this).x</error> = 5;
+    this.x = 6;
   }
 }

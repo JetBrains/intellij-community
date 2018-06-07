@@ -1,6 +1,4 @@
-/*
- * Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.debugger.actions;
 
 import com.intellij.debugger.engine.DebugProcessImpl;
@@ -47,7 +45,7 @@ public class ShowRelatedStackAction extends AnAction {
     List<JavaValue> values = ViewAsGroup.getSelectedValues(e);
     if (values.size() == 1) {
       ValueDescriptorImpl descriptor = values.get(0).getDescriptor();
-      if (descriptor.canMark()) {
+      if (descriptor.isValueReady()) {
         DebuggerContextImpl debuggerContext = DebuggerAction.getDebuggerContext(e.getDataContext());
         return StackCapturingLineBreakpoint.getRelatedStack((ObjectReference)descriptor.getValue(), debuggerContext.getDebugProcess());
       }

@@ -35,7 +35,7 @@ public class UsageTrigger implements PersistentStateComponent<UsageTrigger.State
   private State myState = new State();
 
   public static void trigger(@NotNull @NonNls String feature) {
-    FeatureUsageLogger.INSTANCE.log("feature-usage-stats", feature);
+    FeatureUsageLogger.INSTANCE.log("trigger", feature);
     getInstance().doTrigger(feature);
   }
 

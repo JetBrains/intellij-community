@@ -144,7 +144,7 @@ public class JUnit4TestListener extends RunListener {
       }
     }
 
-    myPrintStream.println("\n##teamcity[testStarted name=\'" + escapeName(methodName) + "\' " + 
+    myPrintStream.println("\n##teamcity[testStarted name=\'" + escapeName(methodName.replaceFirst("/", ".")) + "\' " + 
                           getTestMethodLocation(methodName, classFQN) + "]");
     myCurrentTestStart = currentTime();
   }
@@ -196,7 +196,7 @@ public class JUnit4TestListener extends RunListener {
   private void testFinishedNoDumping(final String methodName) {
     if (methodName != null) {
       final long duration = currentTime() - myCurrentTestStart;
-      myPrintStream.println("\n##teamcity[testFinished name=\'" + escapeName(methodName) +
+      myPrintStream.println("\n##teamcity[testFinished name=\'" + escapeName(methodName.replaceFirst("/", ".")) +
                             (duration > 0 ? "\' duration=\'"  + Long.toString(duration) : "") + "\']");
     }
     myCurrentTest = null;
@@ -225,7 +225,7 @@ public class JUnit4TestListener extends RunListener {
       }
     }
     else {
-      testFailure(failure, description, messageName, methodName);
+      testFailure(failure, description, messageName, methodName.replaceFirst("/", "."));
     }
   }
 
@@ -314,7 +314,7 @@ public class JUnit4TestListener extends RunListener {
       methodName = JUnit4ReflectionUtil.getMethodName(description);
       if (methodName != null && (parent == null || !isParameter(parent))) {
         String shortName = getShortName(JUnit4ReflectionUtil.getClassName(description));
-        methodName = shortName.length() == 0 ?  methodName : shortName + "." + methodName;
+        methodName = shortName.length() == 0 ?  methodName : shortName + "/" + methodName;
       }
 
       if (!acceptNull && methodName == null && description.getChildren().isEmpty()) {
@@ -331,11 +331,11 @@ public class JUnit4TestListener extends RunListener {
     if (methodName == null) {
       for (Iterator iterator = description.getChildren().iterator(); iterator.hasNext(); ) {
         final Description testDescription = (Description)iterator.next();
-        testIgnored(testDescription, getFullMethodName(testDescription));
+        testIgnored(testDescription, getFullMethodName(testDescription));//todo
       }
     }
     else {
-      testIgnored(description, methodName);
+      testIgnored(description, methodName.replaceFirst("/", "."));
     }
   }
 
@@ -472,7 +472,7 @@ public class JUnit4TestListener extends RunListener {
         if (isWarning(methodName, className) && parent != null) {
           className = JUnit4ReflectionUtil.getClassName(parent);
         }
-        myPrintStream.println("##teamcity[suiteTreeNode name=\'" + escapeName(methodName) + "\' " + getTestMethodLocation(methodName, className) + "]");
+        myPrintStream.println("##teamcity[suiteTreeNode name=\'" + escapeName(methodName.replaceFirst("/", ".")) + "\' " + getTestMethodLocation(methodName, className) + "]");
       }
 
       return;
@@ -510,7 +510,7 @@ public class JUnit4TestListener extends RunListener {
   }
 
   private static String getTestMethodLocation(String methodName, String className) {
-    return "locationHint=\'java:test://" + escapeName(className + "." + getShortName(methodName)) + "\'";
+    return "locationHint=\'java:test://" + escapeName(className + "/" + getShortName(methodName)) + "\'";
   }
 
   private static boolean isParameter(Description description) {
@@ -531,13 +531,13 @@ public class JUnit4TestListener extends RunListener {
       //param name
       return fqName;
     }
-    int lastPointIdx = fqName.lastIndexOf('.');
-    if (idx > 0 && fqName.endsWith("]")) {
-      lastPointIdx = fqName.substring(0, idx).lastIndexOf('.');
+    String fqNameWithoutParams = idx > 0 && fqName.endsWith("]") ? fqName.substring(0, idx) : fqName;
+    int classEnd = fqNameWithoutParams.indexOf('/');
+    if (classEnd >= 0) {
+      return fqName.substring(classEnd + 1);
     }
-    if (lastPointIdx >= 0) {
-      return fqName.substring(lastPointIdx + 1);
-    }
-    return fqName;
+
+    int dotInClassFQNIdx = fqNameWithoutParams.lastIndexOf('.');
+    return dotInClassFQNIdx > -1 ? fqName.substring(dotInClassFQNIdx + 1) : fqName;
   }
 }

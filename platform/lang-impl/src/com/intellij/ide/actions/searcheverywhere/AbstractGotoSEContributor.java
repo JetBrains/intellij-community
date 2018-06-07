@@ -2,6 +2,7 @@
 package com.intellij.ide.actions.searcheverywhere;
 
 import com.intellij.codeInsight.navigation.NavigationUtil;
+import com.intellij.ide.actions.SearchEverywherePsiRenderer;
 import com.intellij.ide.util.gotoByName.ChooseByNameModel;
 import com.intellij.ide.util.gotoByName.ChooseByNamePopup;
 import com.intellij.ide.util.gotoByName.FilteringGotoByModel;
@@ -14,6 +15,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiElement;
 import org.jetbrains.annotations.NotNull;
 
+import javax.swing.*;
 import java.awt.event.InputEvent;
 
 public abstract class AbstractGotoSEContributor<F> implements SearchEverywhereContributor<F> {
@@ -93,6 +95,11 @@ public abstract class AbstractGotoSEContributor<F> implements SearchEverywhereCo
     }
 
     return null;
+  }
+
+  @Override
+  public ListCellRenderer getElementsRenderer(JList<?> list) {
+    return new SearchEverywherePsiRenderer(list);
   }
 
   protected boolean isDumbModeSupported() {

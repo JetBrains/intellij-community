@@ -4365,8 +4365,8 @@ public class PluginManagerConfigurableNew
       setSouthEastWest(PluginLogoDisabledJBError_40 = new LayeredIcon(3), AllIcons.Plugins.PluginLogoDisabled_40, disabledJBLogo,
                        AllIcons.Plugins.ModifierInvalid);
 
-      Icon jbLogo2x = IconUtil.scale(AllIcons.Plugins.ModifierJBLogo, 2);
-      Icon errorLogo2x = IconUtil.scale(AllIcons.Plugins.ModifierInvalid, 2);
+      Icon jbLogo2x = IconUtil.scale(AllIcons.Plugins.ModifierJBLogo, null, 2);
+      Icon errorLogo2x = IconUtil.scale(AllIcons.Plugins.ModifierInvalid, null, 2);
 
       setSouthEast(PluginLogoJB_80 = new LayeredIcon(2), AllIcons.Plugins.PluginLogo_80, jbLogo2x);
       setSouthWest(PluginLogoError_80 = new LayeredIcon(2), AllIcons.Plugins.PluginLogo_80, errorLogo2x);

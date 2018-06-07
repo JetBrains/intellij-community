@@ -428,7 +428,6 @@ public abstract class PsiDocumentManagerBase extends PsiDocumentManager implemen
     final PsiFile psiFile = getPsiFile(document);
     if (psiFile == null) {
       myUncommittedDocuments.remove(document);
-      runAfterCommitActions(document);
       return; // the project must be closing or file deleted
     }
 
@@ -863,13 +862,11 @@ public abstract class PsiDocumentManagerBase extends PsiDocumentManager implemen
 
     VirtualFile virtualFile = FileDocumentManager.getInstance().getFile(document);
     if (virtualFile == null || !FileIndexFacade.getInstance(myProject).isInContent(virtualFile)) {
-      runAfterCommitActions(document);
       return;
     }
 
     final PsiFile psiFile = getPsiFile(document);
     if (psiFile == null) {
-      runAfterCommitActions(document);
       return;
     }
 
