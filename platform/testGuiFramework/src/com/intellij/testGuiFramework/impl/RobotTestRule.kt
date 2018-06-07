@@ -20,10 +20,6 @@ import org.junit.rules.ExternalResource
 
 class RobotTestRule: ExternalResource() {
 
-  override fun before() {
-    GuiRobotHolder.initializeRobot()
-  }
-
   override fun after() {
     GuiRobotHolder.releaseRobot()
   }

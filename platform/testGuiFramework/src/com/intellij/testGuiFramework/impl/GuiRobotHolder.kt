@@ -5,20 +5,30 @@ import org.fest.swing.core.Robot
 import org.fest.swing.core.SmartWaitRobot
 
 object GuiRobotHolder {
+  @Volatile
   private var myRobot: Robot? = null
   val robot: Robot
     get() {
-      if(myRobot == null) initializeRobot()
+      if(myRobot == null)
+        synchronized(this) {
+          if(myRobot == null) initializeRobot()
+        }
       return myRobot ?: throw IllegalStateException("Cannot initialize the robot")
     }
 
-  fun initializeRobot() {
+  private fun initializeRobot() {
     if (myRobot != null) releaseRobot()
     myRobot = SmartWaitRobot() // acquires ScreenLock
   }
 
   fun releaseRobot() {
-    myRobot!!.cleanUpWithoutDisposingWindows()  // releases ScreenLock
-    myRobot = null
+    if(myRobot != null) {
+      synchronized(this){
+        if (myRobot != null){
+          myRobot!!.cleanUpWithoutDisposingWindows()  // releases ScreenLock
+          myRobot = null
+        }
+      }
+    }
   }
 }
