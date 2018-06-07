@@ -27,6 +27,7 @@ import java.util.Map;
 public class JsonSchemaFileValuesIndex extends FileBasedIndexExtension<String, String> {
   public static final ID<String, String> INDEX_ID = ID.create("json.file.root.values");
   private static final int VERSION = 1;
+  public static final String NULL = "$NULL$";
 
   @NotNull
   @Override
@@ -42,8 +43,10 @@ public class JsonSchemaFileValuesIndex extends FileBasedIndexExtension<String, S
         PsiFile file = inputData.getPsiFile();
         assert file instanceof JsonFile;
         HashMap<String, String> map = ContainerUtil.newHashMap();
-        map.put(JsonCachedValues.URL_CACHE_KEY, JsonCachedValues.fetchSchemaUrl(file));
-        map.put(JsonCachedValues.ID_CACHE_KEY, JsonCachedValues.fetchSchemaId(file));
+        String schemaUrl = JsonCachedValues.fetchSchemaUrl(file);
+        map.put(JsonCachedValues.URL_CACHE_KEY, schemaUrl == null ? NULL : schemaUrl);
+        String schemaId = JsonCachedValues.fetchSchemaId(file);
+        map.put(JsonCachedValues.ID_CACHE_KEY, schemaId == null ? NULL : schemaId);
         return map;
       }
     };
@@ -64,16 +67,14 @@ public class JsonSchemaFileValuesIndex extends FileBasedIndexExtension<String, S
   @Override
   public DataExternalizer<String> getValueExternalizer() {
     return new DataExternalizer<String>() {
-      private static final String NULL = "$NULL$";
       @Override
       public void save(@NotNull DataOutput out, String value) throws IOException {
-        out.writeUTF(value == null ? NULL : value);
+        out.writeUTF(value);
       }
 
       @Override
       public String read(@NotNull DataInput in) throws IOException {
-        String result = in.readUTF();
-        return NULL.equals(result) ? null : result;
+        return in.readUTF();
       }
     };
   }
@@ -101,7 +102,9 @@ public class JsonSchemaFileValuesIndex extends FileBasedIndexExtension<String, S
     for (String key: keys) {
       if (requestedKey.equals(key)) {
         List<String> values = FileBasedIndex.getInstance().getValues(INDEX_ID, key, GlobalSearchScope.fileScope(project, file));
-        if (values.size() == 1) return values.get(0);
+        if (values.size() == 1) {
+          return values.get(0);
+        }
       }
     }
 

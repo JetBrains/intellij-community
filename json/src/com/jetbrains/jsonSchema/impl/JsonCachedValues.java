@@ -47,7 +47,9 @@ public class JsonCachedValues {
   public static String getSchemaUrlFromSchemaProperty(@NotNull VirtualFile file,
                                                        @NotNull Project project) {
     String value = JsonSchemaFileValuesIndex.getCachedValue(project, file, URL_CACHE_KEY);
-    if (value != null) return value;
+    if (value != null) {
+      return JsonSchemaFileValuesIndex.NULL.equals(value) ? null : value;
+    }
 
     PsiFile psiFile = resolveFile(file, project);
     return !(psiFile instanceof JsonFile) ? null : CachedValueProviderOnPsiFile
@@ -79,7 +81,9 @@ public class JsonCachedValues {
   public static String getSchemaId(@NotNull final VirtualFile schemaFile,
                                    @NotNull final Project project) {
     String value = JsonSchemaFileValuesIndex.getCachedValue(project, schemaFile, ID_CACHE_KEY);
-    if (value != null) return value;
+    if (value != null) {
+      return JsonSchemaFileValuesIndex.NULL.equals(value) ? null : value;
+    }
 
     final PsiFile psiFile = resolveFile(schemaFile, project);
     if (!(psiFile instanceof JsonFile)) return null;
