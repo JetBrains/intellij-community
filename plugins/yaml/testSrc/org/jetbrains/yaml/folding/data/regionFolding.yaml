@@ -1,0 +1,7 @@
+<fold text='bigList: <4 items>'>bigList:
+  - <fold text='item1'>item1</fold>
+  <fold text='internal'># region internal
+  - <fold text='item2'>item2</fold>
+  - <fold text='item3'>item3</fold>
+  # endregion</fold>
+  - <fold text='item4'>item4</fold></fold>

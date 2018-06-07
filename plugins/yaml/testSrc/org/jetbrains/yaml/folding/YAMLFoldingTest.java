@@ -35,6 +35,10 @@ public class YAMLFoldingTest extends LightPlatformCodeInsightFixtureTestCase {
     defaultTest();
   }
 
+  public void testRegionFolding() {
+    defaultTest();
+  }
+
   public void defaultTest() {
     myFixture.testFolding(getTestDataPath() + getTestName(true) + ".yaml");
   }
