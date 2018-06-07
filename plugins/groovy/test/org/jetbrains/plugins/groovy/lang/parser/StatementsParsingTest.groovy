@@ -1,8 +1,6 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.groovy.lang.parser
 
-import com.intellij.idea.Bombed
-
 /**
  * @author peter
  */
@@ -101,9 +99,6 @@ class StatementsParsingTest extends GroovyParsingTestCase {
 
   void testFor$for1() throws Throwable { doTest() }
 
-  @Bombed(month = 6, day = 10, user = "daniil")
-  void testFor$for10() throws Throwable { doTest() }
-
   void testFor$for11() throws Throwable { doTest() }
 
   void testFor$for12() throws Throwable { doTest() }
@@ -116,7 +111,6 @@ class StatementsParsingTest extends GroovyParsingTestCase {
 
   void testFor$for4() throws Throwable { doTest() }
 
-  @Bombed(month = 6, day = 10, user = "daniil")
   void testFor$for5() throws Throwable { doTest() }
 
   void testFor$for6() throws Throwable { doTest() }
@@ -125,8 +119,13 @@ class StatementsParsingTest extends GroovyParsingTestCase {
 
   void testFor$for8() throws Throwable { doTest() }
 
-  @Bombed(month = 6, day = 10, user = "daniil")
   void testFor$for9() throws Throwable { doTest() }
+
+  void testFor$idenfierAfterLParen() { doTest() }
+
+  void testFor$keywordOnly() { doTest() }
+
+  void testFor$lParen() { doTest() }
 
   void testIfstmt$if1() throws Throwable { doTest() }
 

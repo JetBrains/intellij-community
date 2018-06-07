@@ -1,5 +1,4 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-
 package org.jetbrains.plugins.groovy.completion
 
 import com.intellij.application.options.CodeStyle
@@ -10,7 +9,6 @@ import com.intellij.codeInsight.completion.impl.CamelHumpMatcher
 import com.intellij.codeInsight.lookup.LookupElement
 import com.intellij.codeInsight.lookup.LookupElementPresentation
 import com.intellij.codeInsight.lookup.PsiTypeLookupItem
-import com.intellij.idea.Bombed
 import com.intellij.psi.statistics.StatisticsManager
 import com.intellij.psi.statistics.impl.StatisticsManagerImpl
 import com.intellij.psi.util.PsiTreeUtil
@@ -930,7 +928,6 @@ class Instantiation {}
     assertEquals 'instanceof', myFixture.lookupElementStrings[0]
   }
 
-  @Bombed(month = 6, day = 10, user = "daniil")
   void testForFinal() {
     assert doContainsTest('final', '''
 class Fopppp {
@@ -1220,7 +1217,6 @@ new Base().fie<caret>x''')
     assert myFixture.lookupElementStrings == ['field1']
   }
 
-  @Bombed(month = 6, day = 10, user = "daniil")
   void testForIn() {
     assert doContainsTest('in', 'for (int i i<caret>')
     assert doContainsTest('in', 'for (i i<caret>')

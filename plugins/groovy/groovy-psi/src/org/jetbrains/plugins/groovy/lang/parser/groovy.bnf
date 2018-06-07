@@ -731,7 +731,7 @@ catch_clause ::= 'catch' '(' parse_catch_parameter ')' lazy_block
 }
 private parse_catch_parameter ::= <<parseTailLeftFlat catch_parameter_start catch_parameter>>
 private catch_parameter_start ::= modifier_list catch_parameter_type_element?
-private catch_parameter_type_element ::= type_element &IDENTIFIER
+private catch_parameter_type_element ::= type_element_followed_by_identifier
                                        | type_element disjunction_type_element
 catch_parameter ::= IDENTIFIER { elementType = parameter }
 finally_clause ::= 'finally' lazy_block
@@ -744,32 +744,23 @@ while_statement ::= 'while' ('(' mb_nl expression mb_nl ')' mb_nl branch)
   pin('.*') = 1
 }
 
-for_statement ::= 'for' (('(' mb_nl for_clause mb_nl ')') mb_nl for_body?)
-{
-  pin('.*') = 1
-}
-private for_clause ::= for_in_clause | traditional_for_clause
-for_in_clause ::= for_parameter (':' | 'in') expression
+private type_element_followed_by_identifier ::= type_element &IDENTIFIER
+private mb_type_element ::= type_element_followed_by_identifier?
 
-private for_parameter_inner ::= modifier_list [type_element &IDENTIFIER] IDENTIFIER
-for_parameter ::= for_parameter_inner
-{
-  elementType = parameter
-}
-traditional_for_clause ::= (traditional_for_parameter ';' | ';') expression? ';' mb_nl expression?
-{
-  pin('.*') = 1
-  recoverWhile = r_par_recovery
-}
-traditional_for_parameter ::= for_parameter_inner mb_initializer
-{
-  elementType = parameter
-  recoverWhile = semicolon_recovery
-}
-private semicolon_recovery ::= !';' r_par_recovery
-private r_par_recovery ::= !')'
+for_statement ::= 'for' (for_header mb_nl for_body) { pin('.*') = 1 }
+private for_header ::= '(' mb_nl for_clause mb_nl ')' { pin = 1 }
+private for_clause ::= for_in_clause | traditional_for_clause
+
+for_in_clause ::= for_in_parameter (':' | 'in') expression { consumeTokenMethod = 'consumeTokenFast' }
+for_in_parameter ::= modifier_list mb_type_element IDENTIFIER | clear_variants_and_fail { elementType = parameter }
+
+traditional_for_clause ::= empty for_clause_initialization? ';' expression? ';' mb_nl expression? { pin = 1 }
+private for_clause_initialization ::= traditional_for_parameter | expression | clear_variants_and_fail
+traditional_for_parameter ::= traditional_for_parameter_inner mb_initializer { elementType = parameter }
+private traditional_for_parameter_inner ::= non_empty_modifier_list mb_type_element IDENTIFIER
+                                          | empty_modifier_list type_element IDENTIFIER
 // FIXME get rid of this weird logic
-private for_body ::= &<<extendedStatement>> | block_or_statement
+private for_body ::= &<<extendedStatement>> | &';' | block_or_statement { name = 'loop body' }
 
 synchronized_statement ::= 'synchronized' '(' expression ')' lazy_block
 {
