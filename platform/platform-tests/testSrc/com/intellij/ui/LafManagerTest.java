@@ -29,7 +29,7 @@ public class LafManagerTest extends PlatformTestCase {
       lafManager.setCurrentLookAndFeel(new DarculaLookAndFeelInfo());
       lafManager.updateUI();
       Font font = UIManager.getFont("Label.font");
-      assertEquals("Font name is not changed", newFontName, font.getFamily());
+      assertEquals("Font name is not changed", newFontName, font.getName());
       assertEquals("Font size is not changed", newFontSize, font.getSize());
     } finally {
       UISettings.getInstance().setFontFace(fontFace);
