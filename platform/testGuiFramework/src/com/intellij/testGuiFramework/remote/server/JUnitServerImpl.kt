@@ -121,11 +121,11 @@ class JUnitServerImpl : JUnitServer {
   }
 
   override fun isConnected(): Boolean {
-    try {
-      return connection.isConnected
+    return try {
+      connection.isConnected && !connection.isClosed
     }
     catch (lateInitException: UninitializedPropertyAccessException) {
-      return false
+      false
     }
   }
 
@@ -141,6 +141,7 @@ class JUnitServerImpl : JUnitServer {
     serverReceiveThread.interrupt()
     LOG.info("Server Receive Thread joined")
     connection.close()
+    isStarted = false
   }
 
 

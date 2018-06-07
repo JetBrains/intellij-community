@@ -8,11 +8,16 @@ import org.junit.runner.RunWith
 @RunWith(GuiTestSuiteRunner::class)
 open class GuiTestSuite {
 
-  @BeforeClass
-  fun setUp() {
+  companion object {
+    @BeforeClass
+    @JvmStatic
+    fun setUp() {
+    }
+
+    @AfterClass
+    @JvmStatic
+    fun tearDown() {
+    }
   }
 
-  @AfterClass
-  fun tearDown() {
-  }
 }
