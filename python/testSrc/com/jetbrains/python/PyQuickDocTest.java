@@ -524,6 +524,10 @@ public class PyQuickDocTest extends LightMarkedTestCase {
     runWithLanguageLevel(LanguageLevel.PYTHON36, this::checkHTMLOnly);
   }
 
+  public void testArgsKwargsTypes() {
+    checkHTMLOnly();
+  }
+
   public void testPackage() {
     myFixture.copyDirectoryToProject(getTestName(false), "");
     final VirtualFile file = myFixture.findFileInTempDir("pkg/__init__.py");
