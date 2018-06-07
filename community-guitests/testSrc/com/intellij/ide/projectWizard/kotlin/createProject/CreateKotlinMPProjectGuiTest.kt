@@ -20,6 +20,7 @@ class CreateKotlinMPProjectGuiTest : KotlinGuiTestCase() {
       setOfMPPModules = MPPModules.mppFullSet()
     )
     waitAMoment(extraTimeOut)
+    editSettingsGradle()
     editBuildGradle(
       kotlinVersion = kotlinVersion,
       isKotlinDslUsed = false,
@@ -75,6 +76,7 @@ class CreateKotlinMPProjectGuiTest : KotlinGuiTestCase() {
       setOfMPPModules = MPPModules.mppFullSet()
     )
     waitAMoment(extraTimeOut)
+    editSettingsGradle()
     editBuildGradle(
       kotlinVersion = kotlinVersion,
       isKotlinDslUsed = false,
