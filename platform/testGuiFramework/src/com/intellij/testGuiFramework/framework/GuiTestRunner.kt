@@ -72,6 +72,7 @@ class GuiTestRunner internal constructor(val runner: GuiTestRunnerInterface) {
     try {
       if (!server.isConnected()) {
         val localIde = runner.ide ?: getIdeFromAnnotation(method.declaringClass)
+        SERVER_LOG.info("Starting IDE ($localIde) with port for running tests: ${server.getPort()}")
         runIde(port = server.getPort(), ide = localIde)
         if (!server.isStarted()) {
           server.start()
