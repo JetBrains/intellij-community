@@ -26,6 +26,7 @@ import com.jetbrains.python.PyNames;
 import com.jetbrains.python.PyTokenTypes;
 import com.jetbrains.python.PythonDialectsTokenSetProvider;
 import com.jetbrains.python.codeInsight.stdlib.PyStdlibDocumentationLinkProvider;
+import com.jetbrains.python.codeInsight.typing.PyTypingTypeProvider;
 import com.jetbrains.python.console.PydevConsoleRunner;
 import com.jetbrains.python.console.PydevDocumentationProvider;
 import com.jetbrains.python.documentation.docstrings.DocStringUtil;
@@ -267,7 +268,9 @@ public class PythonDocumentationProvider extends AbstractDocumentationProvider i
       }
       else {
         paramName = StringUtil.notNullize(paramName, PyNames.UNNAMED_ELEMENT);
-        showType = !parameter.isSelf();
+        final PyNamedParameter named = as(parameter.getParameter(), PyNamedParameter.class);
+        // Don't show type for "self" unless it's explicitly annotated
+        showType = !parameter.isSelf() || (named != null && new PyTypingTypeProvider().getParameterType(named, function, context) != null);
       }
       result.append(escaped(paramName));
       if (showType) {
