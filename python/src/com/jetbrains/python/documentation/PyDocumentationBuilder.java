@@ -351,7 +351,7 @@ public class PyDocumentationBuilder {
         }
       }
       myBody.add(PythonDocumentationProvider.describeDecorators(pyFunction, WRAP_IN_ITALIC, ESCAPE_AND_SAVE_NEW_LINES_AND_SPACES, BR, BR));
-      myBody.add(PythonDocumentationProvider.describeFunction(pyFunction, myContext, false));
+      myBody.add(PythonDocumentationProvider.describeFunction(pyFunction, myOriginalElement, myContext, false));
       if (docStringExpression == null && !isProperty) {
         docStringExpression = addInheritedDocString(pyFunction, pyClass);
       }

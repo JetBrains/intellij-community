@@ -95,7 +95,7 @@ public class PythonDocumentationProvider extends AbstractDocumentationProvider i
 
       result
         .add(describeDecorators(function, Function.identity(), TO_ONE_LINE_AND_ESCAPE, ", ", "\n"))
-        .add(describeFunction(function, context, true));
+        .add(describeFunction(function, originalElement, context, true));
 
       final String docStringSummary = getDocStringSummary(function);
       if (docStringSummary != null) {
@@ -142,11 +142,14 @@ public class PythonDocumentationProvider extends AbstractDocumentationProvider i
   }
 
   @NotNull
-  static ChainIterable<String> describeFunction(@NotNull PyFunction function, @NotNull TypeEvalContext context, boolean forTooltip) {
+  static ChainIterable<String> describeFunction(@NotNull PyFunction function,
+                                                @Nullable PsiElement original,
+                                                @NotNull TypeEvalContext context,
+                                                boolean forTooltip) {
 
     final ChainIterable<String> result = new ChainIterable<>(describeFunctionWithTypes(function, context, forTooltip));
 
-    if (!PyiUtil.isOverload(function, context)) {
+    if (showOverloads(function, original, context)) {
       final List<PyFunction> overloads = PyiUtil.getOverloads(function, context);
       if (!overloads.isEmpty()) {
         result.addItem("\nPossible types:\n");
@@ -168,6 +171,15 @@ public class PythonDocumentationProvider extends AbstractDocumentationProvider i
     //  result.addItem(escaper.apply("\nInferred type: "));
     //  describeTypeWithLinks(context.getType(function), context, function, result);
     //}
+  }
+
+  private static boolean showOverloads(@NotNull PyFunction definition, @Nullable PsiElement original, @NotNull TypeEvalContext context) {
+    if (!PyiUtil.isOverload(definition, context)) {
+      return true;
+    }
+    final PyFunction containing = PsiTreeUtil.getParentOfType(original, PyFunction.class, false,
+                                                              PyStatementList.class, PyParameterList.class);
+    return containing == null || !(containing == original || containing.getNameIdentifier() == original);
   }
 
   @NotNull
