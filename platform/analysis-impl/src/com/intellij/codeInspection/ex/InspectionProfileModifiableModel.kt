@@ -4,14 +4,16 @@ package com.intellij.codeInspection.ex
 import com.intellij.codeInspection.InspectionEP
 import com.intellij.codeInspection.InspectionProfileEntry
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.util.Comparing
 import com.intellij.openapi.util.InvalidDataException
 import com.intellij.openapi.util.WriteExternalException
 import com.intellij.profile.codeInspection.ProjectInspectionProfileManager
 import com.intellij.psi.PsiElement
 import com.intellij.psi.search.scope.packageSet.NamedScope
 import com.intellij.util.Consumer
+import gnu.trove.THashSet
 
-open class InspectionProfileModifiableModel(val source: InspectionProfileImpl) : InspectionProfileImpl(source.name, source.myToolSupplier, source.profileManager, source.myBaseProfile, null) {
+open class InspectionProfileModifiableModel(val source: InspectionProfileImpl) : InspectionProfileImpl(source.name, source.myToolSupplier, source.profileManager, null) {
   private var modified = false
 
   init {
@@ -64,34 +66,55 @@ open class InspectionProfileModifiableModel(val source: InspectionProfileImpl) :
     }
   }
 
-  fun isProperSetting(toolId: String): Boolean {
-    if (myBaseProfile != null) {
-      val tools = myBaseProfile.getToolsOrNull(toolId, null)
-      val currentTools = myTools.get(toolId)
-      return tools != currentTools
+  override fun getChangedToolNames(): MutableSet<String> {
+    if (myChangedToolNames == null) {
+      synchronized(myLock) {
+        if (myChangedToolNames == null) {
+          initInspectionTools(null)
+          val names = myTools.keys
+          val map = THashSet<String>(names.size)
+          for (toolId in names) {
+            if (!toolSettingsAreEqual(toolId, source, this)) {
+              map.add(toolId)
+            }
+          }
+          myChangedToolNames = map
+          return map
+        }
+      }
     }
-    return false
+    return myChangedToolNames!!
+  }
+
+
+  private fun toolSettingsAreEqual(toolName: String, profile1: InspectionProfileImpl, profile2: InspectionProfileImpl): Boolean {
+    val toolList1 = profile1.myTools[toolName]
+    val toolList2 = profile2.myTools[toolName]
+    return Comparing.equal<Tools>(toolList1, toolList2)
+  }
+
+  fun isProperSetting(toolId: String): Boolean {
+    val tools = source.getToolsOrNull(toolId, null)
+    val currentTools = myTools.get(toolId)
+    return tools != currentTools
   }
 
   fun isProperSetting(toolId: String, scope: NamedScope, project: Project): Boolean {
-    if (myBaseProfile != null) {
-      val baseDefaultWrapper = myBaseProfile.getToolsOrNull(toolId, null)?.defaultState?.tool
-      val actualWrapper = myTools[toolId]?.tools?.first { s -> scope == s.getScope(project) }?.tool
-      return baseDefaultWrapper != null && actualWrapper != null && ScopeToolState.areSettingsEqual(baseDefaultWrapper, actualWrapper)
-    }
-    return false
+    val baseDefaultWrapper = source.getToolsOrNull(toolId, null)?.defaultState?.tool
+    val actualWrapper = myTools[toolId]?.tools?.first { s -> scope == s.getScope(project) }?.tool
+    return baseDefaultWrapper != null && actualWrapper != null && ScopeToolState.areSettingsEqual(baseDefaultWrapper, actualWrapper)
   }
 
   fun resetToBase(project: Project?) {
     initInspectionTools(project)
 
-    copyToolsConfigurations(myBaseProfile, project)
+    copyToolsConfigurations(source, project)
     myChangedToolNames = null
     myUninitializedSettings.clear()
   }
 
   fun resetToBase(toolId: String, scope: NamedScope, project: Project?) {
-    val baseDefaultWrapper = myBaseProfile.getToolsOrNull(toolId, null)?.defaultState?.tool!!
+    val baseDefaultWrapper = source.getToolsOrNull(toolId, null)?.defaultState?.tool!!
     val state = myTools[toolId]?.tools?.first { s -> scope == s.getScope(project) }!!
     state.tool = copyToolSettings(baseDefaultWrapper)
   }
@@ -121,6 +144,11 @@ open class InspectionProfileModifiableModel(val source: InspectionProfileImpl) :
 
   fun disableTool(toolShortName: String, element: PsiElement) {
     getTools(toolShortName, element.project).disableTool(element)
+  }
+
+  override fun profileChanged() {
+    super.profileChanged()
+    myChangedToolNames = null
   }
 
   override fun toString(): String = "$name (copy)"

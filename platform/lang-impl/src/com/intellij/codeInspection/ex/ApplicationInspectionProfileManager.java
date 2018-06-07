@@ -215,7 +215,8 @@ public class ApplicationInspectionProfileManager extends BaseInspectionProfileMa
     // use default as base, not random custom profile
     InspectionProfileImpl result = mySchemeManager.findSchemeByName(InspectionProfileKt.DEFAULT_PROFILE_NAME);
     if (result == null) {
-      InspectionProfileImpl profile = new InspectionProfileImpl(InspectionProfileKt.DEFAULT_PROFILE_NAME, InspectionToolRegistrar.getInstance(), this, null, null);
+      InspectionProfileImpl profile = new InspectionProfileImpl(InspectionProfileKt.DEFAULT_PROFILE_NAME, InspectionToolRegistrar.getInstance(), this,
+                                                                null);
       addProfile(profile);
       return profile;
     }

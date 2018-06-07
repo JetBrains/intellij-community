@@ -87,7 +87,7 @@ class ConvertModuleGroupsToQualifiedNamesDialog(val project: Project) : DialogWr
     }
     val file = PsiDocumentManager.getInstance(project).getPsiFile(document)
     file?.putUserData(InspectionProfileWrapper.CUSTOMIZATION_KEY, Function {
-      val profile = InspectionProfileImpl("Module names", inspections, null)
+      val profile = InspectionProfileImpl("Module names", inspections)
       for (spellCheckingToolName in SpellCheckingEditorCustomizationProvider.getInstance().spellCheckingToolNames) {
         profile.getToolsOrNull(spellCheckingToolName, project)?.isEnabled = false
       }
