@@ -107,10 +107,9 @@ public class InvokeCompletion extends ActionOnFile {
                                  char completionChar,
                                  Environment env) {
     int caretOffset = editor.getCaretModel().getOffset();
-    int adjustedOffset = TargetElementUtil.adjustOffset(file, getDocument(), caretOffset);
 
-    PsiElement leaf = file.findElementAt(adjustedOffset);
-    PsiReference ref = file.findReferenceAt(adjustedOffset);
+    PsiElement leaf = file.findElementAt(TargetElementUtil.adjustOffset(file, getDocument(), caretOffset));
+    PsiReference ref = TargetElementUtil.findReference(editor);
 
     String expectedVariant = leaf == null ? null : myPolicy.getExpectedVariant(editor, file, leaf, ref);
     boolean prefixEqualsExpected = isPrefixEqualToExpectedVariant(caretOffset, leaf, ref, expectedVariant);
