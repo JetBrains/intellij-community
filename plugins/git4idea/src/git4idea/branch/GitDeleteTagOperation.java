@@ -81,22 +81,6 @@ class GitDeleteTagOperation extends GitBranchOperation {
     myNotifier.notify(notification);
   }
 
-  @NotNull
-  private GitCompoundResult doRollback() {
-    GitCompoundResult result = new GitCompoundResult(myProject);
-    for (GitRepository repository : getSuccessfulRepositories()) {
-      GitCommandResult res = myGit.createNewTag(repository, myTagName, null, myDeletedTagTips.get(repository));
-      result.append(repository, res);
-      repository.getRepositoryFiles().refresh();
-    }
-    return result;
-  }
-
-  @NotNull
-  private static String formatTagName(@NotNull String name) {
-    return "<b><code>" + name + "</code></b>";
-  }
-
   private void restoreInBackground(@NotNull Notification notification) {
     new Task.Backgroundable(myProject, "Restoring Tag " + myTagName + "...") {
       @Override
@@ -107,12 +91,18 @@ class GitDeleteTagOperation extends GitBranchOperation {
   }
 
   private void rollbackTagDeletion(@NotNull Notification notification) {
-    GitCompoundResult result = doRollback();
+    GitCompoundResult result = new GitCompoundResult(myProject);
+    for (GitRepository repository: getSuccessfulRepositories()) {
+      GitCommandResult res = myGit.createNewTag(repository, myTagName, null, myDeletedTagTips.get(repository));
+      result.append(repository, res);
+      repository.getRepositoryFiles().refresh();
+    }
+
     if (result.totalSuccess()) {
       notification.expire();
     }
     else {
-      myNotifier.notifyError("Couldn't Restore " + formatTagName(myTagName), result.getErrorOutputWithReposIndication());
+      myNotifier.notifyError("Couldn't Restore <b><code>" + myTagName + "</code></b>", result.getErrorOutputWithReposIndication());
     }
   }
 
