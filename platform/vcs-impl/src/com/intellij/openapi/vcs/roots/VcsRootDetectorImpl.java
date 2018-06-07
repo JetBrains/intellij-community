@@ -25,6 +25,7 @@ import com.intellij.openapi.vcs.AbstractVcs;
 import com.intellij.openapi.vcs.ProjectLevelVcsManager;
 import com.intellij.openapi.vcs.VcsRoot;
 import com.intellij.openapi.vcs.VcsRootChecker;
+import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -135,7 +136,7 @@ public class VcsRootDetectorImpl implements VcsRootDetector {
     }
 
     VirtualFile par = dir.getParent();
-    while (par != null) {
+    while (par != null && !par.equals(VfsUtil.getUserHomeDir())) {
       List<AbstractVcs> vcsList = getVcsListFor(par);
       for (AbstractVcs vcs : vcsList) {
         roots.add(new VcsRoot(vcs, par));
