@@ -17,7 +17,6 @@ import com.intellij.util.ui.JBUI.BaseScaleContext.UpdateListener;
 import com.intellij.util.ui.JBUI.RasterJBIcon;
 import com.intellij.util.ui.JBUI.ScaleContext;
 import com.intellij.util.ui.UIUtil;
-import com.sun.javaws.IconUtil;
 import org.jetbrains.annotations.*;
 
 import javax.swing.*;
