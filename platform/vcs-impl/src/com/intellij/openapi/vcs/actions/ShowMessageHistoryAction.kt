@@ -2,12 +2,33 @@
 package com.intellij.openapi.vcs.actions
 
 import com.intellij.openapi.actionSystem.AnActionEvent
-import com.intellij.openapi.editor.actions.ContentChooser
+import com.intellij.openapi.application.ApplicationManager.getApplication
+import com.intellij.openapi.command.CommandProcessor
+import com.intellij.openapi.command.undo.UndoManager
+import com.intellij.openapi.editor.actions.ContentChooser.RETURN_SYMBOL
+import com.intellij.openapi.editor.colors.EditorFontType
+import com.intellij.openapi.fileEditor.impl.text.TextEditorProvider
 import com.intellij.openapi.project.DumbAwareAction
+import com.intellij.openapi.project.Project
+import com.intellij.openapi.ui.popup.JBPopup
+import com.intellij.openapi.ui.popup.JBPopupFactory
+import com.intellij.openapi.ui.popup.JBPopupListener
+import com.intellij.openapi.ui.popup.LightweightWindowEvent
+import com.intellij.openapi.util.text.StringUtil.convertLineSeparators
+import com.intellij.openapi.util.text.StringUtil.first
 import com.intellij.openapi.vcs.CheckinProjectPanel
-import com.intellij.openapi.vcs.VcsBundle.message
 import com.intellij.openapi.vcs.VcsConfiguration
 import com.intellij.openapi.vcs.VcsDataKeys
+import com.intellij.openapi.vcs.ui.CommitMessage
+import com.intellij.ui.ColoredListCellRenderer
+import com.intellij.ui.awt.RelativePoint
+import com.intellij.ui.speedSearch.SpeedSearchUtil.applySpeedSearchHighlighting
+import com.intellij.util.ObjectUtils.sentinel
+import com.intellij.util.ui.JBUI.scale
+import com.intellij.vcs.commit.CommitMessageInspectionProfile.getSubjectRightMargin
+import java.awt.Point
+import javax.swing.JList
+import javax.swing.ListSelectionModel.SINGLE_SELECTION
 
 /**
  * Action showing the history of recently used commit messages. Source code of this class is provided
@@ -30,21 +51,61 @@ class ShowMessageHistoryAction : DumbAwareAction() {
   override fun actionPerformed(e: AnActionEvent) {
     val project = e.project!!
     val commitMessage = getCommitMessage(e)!!
-    val configuration = VcsConfiguration.getInstance(project)
-    val contentChooser = object : ContentChooser<String>(project, message("dialog.title.choose.commit.message.from.history"), false) {
-      override fun removeContentAt(content: String) = configuration.removeMessage(content)
-      override fun getStringRepresentationFor(content: String) = content
-      override fun getContents(): List<String> = configuration.recentMessages.reversed()
-    }
 
-    if (contentChooser.showAndGet()) {
-      val selectedIndex = contentChooser.selectedIndex
-
-      if (selectedIndex >= 0) {
-        commitMessage.setCommitMessage(contentChooser.allContents[selectedIndex])
-      }
-    }
+    createPopup(project, commitMessage, VcsConfiguration.getInstance(project).recentMessages.reversed())
+      .showInBestPositionFor(e.dataContext)
   }
 
-  private fun getCommitMessage(e: AnActionEvent) = e.getData(VcsDataKeys.COMMIT_MESSAGE_CONTROL)
+  private fun createPopup(project: Project, commitMessage: CommitMessage, messages: List<String>): JBPopup {
+    var chosenMessage: String? = null
+    val rightMargin = getSubjectRightMargin(project)
+    val previewCommandGroup = sentinel("Preview Commit Message")
+
+    return JBPopupFactory.getInstance().createPopupChooserBuilder(messages)
+      .setFont(commitMessage.editorField.editor?.colorsScheme?.getFont(EditorFontType.PLAIN))
+      .setSelectionMode(SINGLE_SELECTION)
+      .setItemSelectedCallback { it?.let { preview(project, commitMessage, it, previewCommandGroup) } }
+      .setItemChosenCallback { chosenMessage = it }
+      .setRenderer(object : ColoredListCellRenderer<String>() {
+        override fun customizeCellRenderer(list: JList<out String>, value: String, index: Int, selected: Boolean, hasFocus: Boolean) {
+          append(first(convertLineSeparators(value, RETURN_SYMBOL), rightMargin, false))
+
+          applySpeedSearchHighlighting(list, this, true, selected)
+        }
+      })
+      .addListener(object : JBPopupListener {
+        override fun beforeShown(event: LightweightWindowEvent) {
+          val popup = event.asPopup()
+          val relativePoint = RelativePoint(commitMessage.editorField, Point(0, -scale(3)))
+          val screenPoint = Point(relativePoint.screenPoint).apply { translate(0, -popup.size.height) }
+
+          popup.setLocation(screenPoint)
+        }
+
+        override fun onClosed(event: LightweightWindowEvent) {
+          // Use invokeLater() as onClosed() is called before callback from setItemChosenCallback
+          getApplication().invokeLater { chosenMessage ?: cancelPreview(project, commitMessage) }
+        }
+      })
+      .setNamerForFiltering { it }
+      .createPopup()
+  }
+
+  private fun preview(project: Project,
+                      commitMessage: CommitMessage,
+                      message: String,
+                      groupId: Any) =
+    CommandProcessor.getInstance().executeCommand(project, {
+      commitMessage.setCommitMessage(message)
+      commitMessage.editorField.selectAll()
+    }, "", groupId, commitMessage.editorField.document)
+
+  private fun cancelPreview(project: Project, commitMessage: CommitMessage) {
+    val manager = UndoManager.getInstance(project)
+    val fileEditor = commitMessage.editorField.editor?.let { TextEditorProvider.getInstance().getTextEditor(it) }
+
+    if (manager.isUndoAvailable(fileEditor)) manager.undo(fileEditor)
+  }
+
+  private fun getCommitMessage(e: AnActionEvent) = e.getData(VcsDataKeys.COMMIT_MESSAGE_CONTROL) as? CommitMessage
 }
