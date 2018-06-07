@@ -16,6 +16,7 @@
 
 package com.intellij.stats.storage
 
+import com.intellij.openapi.application.PathManager
 import java.io.File
 import java.io.FileFilter
 import java.nio.file.Files
@@ -53,8 +54,7 @@ open class UniqueFilesProvider(private val baseFileName: String,
     override fun getUniqueFile(): File {
         val dir = getStatsDataDirectory()
 
-        val currentMaxIndex = dir
-                .listFiles(FileFilter { it.isFile })
+        val currentMaxIndex = dir.filesOnly()
                 .filter { it.name.startsWith(baseFileName) }
                 .map { it.name.substringAfter('_') }
                 .filter { it.isIntConvertable() }
@@ -68,10 +68,11 @@ open class UniqueFilesProvider(private val baseFileName: String,
 
     override fun getDataFiles(): List<File> {
         val dir = getStatsDataDirectory()
-        return dir.listFiles(FileFilter { it.isFile })
+        return dir.filesOnly()
                 .filter { it.name.startsWith(baseFileName) }
                 .filter { it.name.substringAfter('_').isIntConvertable() }
                 .sortedBy { it.getChunkNumber() }
+                .toList()
     }
 
     override fun getStatsDataDirectory(): File {
@@ -91,5 +92,21 @@ open class UniqueFilesProvider(private val baseFileName: String,
         } catch (e: NumberFormatException) {
             false
         }
+    }
+
+    private fun File.filesOnly(): Sequence<File> {
+        val files: Array<out File>? = this.listFiles(FileFilter { it.isFile })
+        if (files == null) {
+            val diagnostics = when {
+                !exists() -> "file does not exist"
+                !isDirectory -> "file is not a directory"
+                isFile -> "file should be a directory but it is a file"
+                else -> "unknown error"
+            }
+
+            throw Exception("Invalid directory path: ${this.relativeTo(File(PathManager.getSystemPath()))}. Info: $diagnostics")
+        }
+
+        return files.asSequence()
     }
 }
