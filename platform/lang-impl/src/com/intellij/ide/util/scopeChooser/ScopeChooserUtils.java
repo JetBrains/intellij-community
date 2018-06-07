@@ -30,6 +30,9 @@ public class ScopeChooserUtils {
   private ScopeChooserUtils() {
   }
 
+  /**
+   * @return custom or standard scope with the provided name; if <code>scopeName</code> is <code>null</code> or matching scope doesn't exist then empty scope is returned
+   */
   @NotNull
   public static GlobalSearchScope findScopeByName(@NotNull Project project, @Nullable String scopeName) {
     NamedScope namedScope = scopeName == null ? null : ChangeListsScopesProvider.getInstance(project).getCustomScope(scopeName);
@@ -46,7 +49,7 @@ public class ScopeChooserUtils {
       return intersectWithContentScope(project, scope);
     }
     if (namedScope == null) {
-      namedScope = ProjectFilesScope.INSTANCE;
+      return GlobalSearchScope.EMPTY_SCOPE;
     }
     GlobalSearchScope scope = GlobalSearchScopesCore.filterScope(project, namedScope);
     if (namedScope instanceof ProjectFilesScope ||
