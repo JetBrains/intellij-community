@@ -14,7 +14,6 @@ import java.util.function.Consumer;
 
 public class TouchBar implements NSTLibrary.ItemCreator {
   static final Logger LOG = Logger.getInstance(TouchBar.class);
-  private static final boolean IS_LOGGING_ENABLED = false;
 
   protected final @NotNull String myName;    // just for logging/debugging
   protected ID myNativePeer;        // java wrapper holds native object
@@ -50,16 +49,16 @@ public class TouchBar implements NSTLibrary.ItemCreator {
   public String toString() { return myName + "_" + myNativePeer; }
 
   @Override
-  public ID createItem(@NotNull String uid) {
+  public ID createItem(@NotNull String uid) { // called from AppKit (when NSTouchBarDelegate create items)
     if (myCustomEsc != null && myCustomEsc.myUid.equals(uid))
       return myCustomEsc.getNativePeer();
 
     TBItem item = findItem(uid);
     if (item == null) {
-      trace("can't find TBItem with uid '%s'", uid);
+      LOG.error("can't find TBItem with uid '%s'", uid);
       return ID.NIL;
     }
-    trace("create native peer for item '%s'", uid);
+    // System.out.println("create native peer for item '" + uid + "'");
     return item.getNativePeer();
   }
 
@@ -178,11 +177,6 @@ public class TouchBar implements NSTLibrary.ItemCreator {
       if (item.myUid.equals(uid))
         return item;
     return null;
-  }
-
-  private void trace(String fmt, Object... args) {
-    if (IS_LOGGING_ENABLED)
-      LOG.trace("TouchBar [" + myName + "]: " + String.format(fmt, args));
   }
 
   private void _closeSelf() { TouchBarsManager.closeTouchBar(this, false); }
