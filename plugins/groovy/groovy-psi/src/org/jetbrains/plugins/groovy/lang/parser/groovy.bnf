@@ -1006,12 +1006,12 @@ private priority1_4 ::= not_expression | cast_expression
 not_expression ::= ('~' | '!') expression { elementType = unary_expression }
 cast_expression ::= &cast_expression_start (cast_expression_pin | cast_expression_no_pin)
 private cast_expression_start ::= '(' (IDENTIFIER | primitive_type) { consumeTokenMethod = 'consumeTokenFast' }
-private cast_expression_pin ::= '(' capital_type_element ')' priority1_4 { pin = 3 }
+private cast_expression_pin ::= '(' capital_type_element ')' not_colon priority1_4 { pin = 4 }
 private cast_expression_no_pin ::= '(' type_element ')' priority1_4
 
 private priority1_5 ::= index_expression | safe_index_expression | postfix_unary_expression
 index_expression ::= expression index_expression_argument_list
-safe_index_expression ::= expression fast_question index_expression_argument_list !fast_colon { elementType = index_expression }
+safe_index_expression ::= expression fast_question index_expression_argument_list not_colon { elementType = index_expression }
 index_expression_argument_list ::= !empty_map '[' bracket_argument_list_inner ']'
 {
   pin = 2
@@ -1242,6 +1242,8 @@ private empty ::= ()
 
 private mb_question ::= '?'? { consumeTokenMethod = 'consumeTokenFast' }
 private mb_not ::= '!'? { consumeTokenMethod = 'consumeTokenFast' }
+
+private not_colon ::= !fast_colon
 
 private fast_question ::= '?'
 private fast_colon ::= ':'
