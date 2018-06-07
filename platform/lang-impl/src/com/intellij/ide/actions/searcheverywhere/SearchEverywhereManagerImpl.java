@@ -78,8 +78,10 @@ public class SearchEverywhereManagerImpl implements SearchEverywhereManager {
 
     mySearchEverywhereUI = createView(myProject, serviceContributors, contributors, myContributorFilters);
     mySearchEverywhereUI.switchToContributor(selectedContributorID);
+
+    myHistoryIterator = myHistoryList.getIterator(selectedContributorID);
     if (searchText == null && !ALL_CONTRIBUTORS_GROUP_ID.equals(selectedContributorID)) {
-      searchText = myHistoryList.getLastSearchForContributor(selectedContributorID);
+      searchText = myHistoryIterator.prev();
     }
 
     if (searchText != null && !searchText.isEmpty()) {
@@ -87,7 +89,6 @@ public class SearchEverywhereManagerImpl implements SearchEverywhereManager {
       mySearchEverywhereUI.getSearchField().selectAll();
     }
 
-    myHistoryIterator = myHistoryList.getIterator(selectedContributorID);
     myBalloon = JBPopupFactory.getInstance().createComponentPopupBuilder(mySearchEverywhereUI, mySearchEverywhereUI.getSearchField())
                               .setProject(myProject)
                               .setResizable(false)
@@ -274,7 +275,7 @@ public class SearchEverywhereManagerImpl implements SearchEverywhereManager {
       }
     }
 
-    public String getLastSearchForContributor(String contributorID) {
+    private String getLastSearchForContributor(String contributorID) {
       if (historyList.isEmpty()) {
         return null;
       }
