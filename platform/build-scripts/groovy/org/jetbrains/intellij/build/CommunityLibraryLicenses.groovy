@@ -136,7 +136,7 @@ class CommunityLibraryLicenses {
     new LibraryLicense(name: "Gherkin", libraryName: "Gherkin", version: "2.12.2", license: "MIT",
                        licenseUrl: "http://www.apache.org/licenses/LICENSE-2.0.txt", url: "https://github.com/cucumber/gherkin"),
     new LibraryLicense(name: "Google Feedback", libraryName: "GoogleFeedback.jar", version: "", license: "TBD"),
-    new LibraryLicense(name: "Gradle", version: "4.7", license: "Apache 2.0", url: "http://gradle.org/",
+    new LibraryLicense(name: "Gradle", version: "4.8", license: "Apache 2.0", url: "http://gradle.org/",
                        licenseUrl: "http://gradle.org/license"),
     new LibraryLicense(name: "Groovy", version: "2.4.6", license: "Apache 2.0", url: "http://groovy-lang.org/"),
     new LibraryLicense(name: "Gson", version: "2.8.4", libraryName: "gson", license: "Apache 2.0", url: "http://code.google.com/p/google-gson/"),
