@@ -24,7 +24,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.regex.Matcher;
@@ -187,22 +186,24 @@ public abstract class TagBasedDocString extends DocStringLineParser implements S
   @Nullable
   public Substring getTagValue(String[] tagNames, @NotNull String argName) {
     for (String tagName : tagNames) {
-      Map<Substring, Substring> argValues = myArgTagValues.get(tagName);
-      if (argValues != null) {
-        return argValues.get(new Substring(argName));
+      final Map<Substring, Substring> argValues = myArgTagValues.get(tagName);
+      final Substring key = new Substring(argName);
+      if (argValues != null && argValues.containsKey(key)) {
+        return argValues.get(key);
       }
     }
     return null;
   }
 
   public List<Substring> getTagArguments(String... tagNames) {
+    final List<Substring> result = new ArrayList<>();
     for (String tagName : tagNames) {
       final Map<Substring, Substring> map = myArgTagValues.get(tagName);
       if (map != null) {
-        return new ArrayList<>(map.keySet());
+        result.addAll(map.keySet());
       }
     }
-    return Collections.emptyList();
+    return result;
   }
 
   @NotNull
