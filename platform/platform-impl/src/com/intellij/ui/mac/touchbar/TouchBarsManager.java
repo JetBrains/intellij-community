@@ -275,18 +275,19 @@ public class TouchBarsManager {
         defIndex = c;
         continue;
       }
-      groupButtons.add(new TBItemButton(
-        "message_dlg_bar_group_item_" + c,
-        null, DialogWrapper.extractMnemonic(sb).second, NSTLibrary.run2act(actions[c]), -1, 0
-      ));
+      groupButtons.add(
+        new TBItemButton("message_dlg_bar_group_item_" + c)
+          .setText(DialogWrapper.extractMnemonic(sb).second)
+          .setAction(NSTLibrary.run2act(actions[c])));
     }
     Collections.reverse(groupButtons);
 
     if (defIndex >= 0)
-      groupButtons.add(new TBItemButton(
-        "message_dlg_bar_group_item_default",
-        null, DialogWrapper.extractMnemonic(buttons[defIndex]).second, NSTLibrary.run2act(actions[defIndex]), -1, NSTLibrary.BUTTON_FLAG_COLORED
-      ));
+      groupButtons.add(
+        new TBItemButton("message_dlg_bar_group_item_default")
+          .setText(DialogWrapper.extractMnemonic(buttons[defIndex]).second)
+          .setAction(NSTLibrary.run2act(actions[defIndex]))
+          .setFlags(true, false));
 
     final TouchBar tb;
     try (NSAutoreleaseLock lock = new NSAutoreleaseLock()) {

@@ -2,7 +2,6 @@
 package com.intellij.ui.mac.touchbar;
 
 import com.intellij.icons.AllIcons;
-import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.ui.mac.foundation.ID;
 import org.jetbrains.annotations.NotNull;
@@ -38,7 +37,11 @@ public class TouchBar implements NSTLibrary.ItemCreator {
 
   public TouchBar(@NotNull String touchbarName, boolean replaceEsc, boolean releaseOnClose) {
     myName = touchbarName;
-    myCustomEsc = replaceEsc ? new TBItemButton(genNewID("esc"), AllIcons.Actions.Cancel, null, this::_closeSelf) : null;
+    if (replaceEsc)
+      myCustomEsc = new TBItemButton(genNewID("esc")).setIcon(AllIcons.Actions.Cancel).setAction(this::_closeSelf);
+    else
+      myCustomEsc = null;
+
     myNativePeer = NST.createTouchBar(touchbarName, this, myCustomEsc != null ? myCustomEsc.myUid : null);
     myReleaseOnClose = releaseOnClose;
   }
@@ -78,31 +81,7 @@ public class TouchBar implements NSTLibrary.ItemCreator {
   //
 
   public TBItemButton addButton() {
-    final TBItemButton butt = new TBItemButton(genNewID("button"), null, null, null);
-    myItems.add(butt);
-    return butt;
-  }
-
-  public TBItemButton addButton(Icon icon, String text, NSTLibrary.Action action) {
-    final TBItemButton butt = new TBItemButton(genNewID("button"), icon, text, action);
-    myItems.add(butt);
-    return butt;
-  }
-
-  public TBItemButton addButton(Icon icon, String text, NSTLibrary.Action action, int buttonFlags) {
-    final TBItemButton butt = new TBItemButton(genNewID("button"), icon, text, action, -1, buttonFlags);
-    myItems.add(butt);
-    return butt;
-  }
-
-  public TBItemButton addButton(Icon icon, String text, String actionId) {
-    final TBItemButton butt = new TBItemButton(genNewID("button"), icon, text, new PlatformAction(actionId));
-    myItems.add(butt);
-    return butt;
-  }
-
-  public TBItemButton addButton(Icon icon, String text, AnAction act) {
-    final TBItemButton butt = new TBItemButton(genNewID("button"), icon, text, new PlatformAction(act));
+    final TBItemButton butt = new TBItemButton(genNewID("button"));
     myItems.add(butt);
     return butt;
   }
@@ -119,13 +98,12 @@ public class TouchBar implements NSTLibrary.ItemCreator {
     return popover;
   }
 
-  public TBItemScrubber addScrubber(int width) {
-    final TBItemScrubber scrubber = new TBItemScrubber(genNewID("scrubber"), width);
+  public TBItemScrubber addScrubber() {
+    final int defaultScrubberWidth = 500;
+    final TBItemScrubber scrubber = new TBItemScrubber(genNewID("scrubber"), defaultScrubberWidth);
     myItems.add(scrubber);
     return scrubber;
   }
-
-  public TBItemScrubber addScrubber() { return addScrubber(500); }
 
   public void addSpacing(boolean large) {
     final SpacingItem spacing = new SpacingItem(large ? "static_touchbar_item_large_space" : "static_touchbar_item_small_space");
