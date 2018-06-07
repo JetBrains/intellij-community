@@ -64,6 +64,7 @@ import com.jetbrains.python.remote.PyRemoteSdkAdditionalDataBase;
 import com.jetbrains.python.remote.PythonRemoteInterpreterManager;
 import com.jetbrains.python.run.PyVirtualEnvReader;
 import com.jetbrains.python.sdk.flavors.CPythonSdkFlavor;
+import com.jetbrains.python.sdk.flavors.PipenvKt;
 import com.jetbrains.python.sdk.flavors.PythonSdkFlavor;
 import icons.PythonIcons;
 import org.jdom.Element;
@@ -220,6 +221,9 @@ public final class PythonSdkType extends SdkType {
       return false;
     }
     final VirtualFile interpreter = sdk.getHomeDirectory();
+    if (PipenvKt.isPipEnv(sdk) && PySdkExtKt.getAssociatedModule(sdk) == null) {
+      return true;
+    }
     return interpreter == null || !interpreter.exists();
   }
 

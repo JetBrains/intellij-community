@@ -218,7 +218,12 @@ private val Sdk.packageManager: PyPackageManager
 /**
  * A quick-fix for setting up the pipenv for the module of the current PSI element.
  */
-class UsePipEnvQuickFix : LocalQuickFix {
+class UsePipEnvQuickFix(sdk: Sdk?, module: Module) : LocalQuickFix {
+  private val quickFixName = when {
+    sdk != null && sdk.associatedModule != module -> "Fix Pipenv interpreter"
+    else -> "Use Pipenv interpreter"
+  }
+
   companion object {
     fun isApplicable(module: Module): Boolean = module.pipFile != null
 
@@ -234,12 +239,15 @@ class UsePipEnvQuickFix : LocalQuickFix {
       if (sdk == newSdk) {
         SdkConfigurationUtil.addSdk(newSdk)
       }
+      else {
+        sdk.associateWithModule(module, false)
+      }
       project.pythonSdk = sdk
       module.pythonSdk = sdk
     }
   }
 
-  override fun getFamilyName() = "Use Pipenv interpreter"
+  override fun getFamilyName() = quickFixName
 
   override fun applyFix(project: Project, descriptor: ProblemDescriptor) {
     val element = descriptor.psiElement ?: return
@@ -259,6 +267,7 @@ class PipEnvInstallQuickFix : LocalQuickFix {
   companion object {
     fun pipEnvInstall(project: Project, module: Module) {
       val sdk = module.pythonSdk ?: return
+      if (!sdk.isPipEnv) return
       val listener = PyPackageRequirementsInspection.RunningPackagingTasksListener(module)
       val ui = PyPackageManagerUI(project, sdk, listener)
       ui.install(null, listOf("--dev"))

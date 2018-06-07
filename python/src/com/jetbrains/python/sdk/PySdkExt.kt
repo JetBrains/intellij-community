@@ -18,9 +18,11 @@ package com.jetbrains.python.sdk
 import com.intellij.execution.ExecutionException
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.module.Module
+import com.intellij.openapi.module.ModuleManager
 import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.progress.Task
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.project.ProjectManager
 import com.intellij.openapi.project.rootManager
 import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.projectRoots.impl.SdkConfigurationUtil
@@ -46,6 +48,7 @@ import java.nio.file.Paths
  */
 
 fun findBaseSdks(existingSdks: List<Sdk>): List<Sdk> {
+  // TODO: Filter out non-Python SDKs
   val existing = existingSdks.filter { it.isSystemWide }
   val detected = detectSystemWideSdks(existingSdks)
   return existing + detected
@@ -116,6 +119,15 @@ fun Sdk.isAssociatedWithAnotherModule(module: Module?): Boolean {
 val Sdk.associatedModulePath: String?
   // TODO: Support .project associations
   get() = associatedPathFromAdditionalData /*?: associatedPathFromDotProject*/
+
+val Sdk.associatedModule: Module?
+  get() {
+    val associatedPath = associatedModulePath
+    return ProjectManager.getInstance().openProjects
+      .asSequence()
+      .flatMap { ModuleManager.getInstance(it).modules.asSequence() }
+      .firstOrNull { it?.basePath == associatedPath }
+  }
 
 fun Sdk.adminPermissionsNeeded(): Boolean {
   val homePath = homePath ?: return false
