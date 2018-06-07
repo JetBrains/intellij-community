@@ -12,34 +12,89 @@ public class TBItemButton extends TBItem {
   protected @Nullable NSTLibrary.Action myAction;
   protected @Nullable Icon myIcon;
   protected @Nullable String myText;
-  protected int myWidth;
-  protected int myFlags;
+  protected int myWidth = -1;
+  protected int myFlags = 0;
 
   private int myUpdateOptions;
 
-  protected TBItemButton(@NotNull String uid) { this(uid, null, null, null, -1, 0); }
+  TBItemButton(@NotNull String uid) { super(uid); }
 
-  TBItemButton(@NotNull String uid, Icon icon, String text, NSTLibrary.Action action) { this(uid, icon, text, action, -1, 0); }
+  public TBItemButton setIcon(Icon icon) {
+    if (!_equals(icon, myIcon)) {
+      myIcon = icon;
+      if (myNativePeer != ID.NIL) {
+        myUpdateOptions |= NSTLibrary.BUTTON_UPDATE_IMG;
+        _updateNativePeer();
+      }
+    }
 
-  TBItemButton(@NotNull String uid, Icon icon, String text, NSTLibrary.Action action, int buttWidth) { this(uid, icon, text, action, buttWidth, 0); }
-
-  TBItemButton(@NotNull String uid, Icon icon, String text, NSTLibrary.Action action, int buttWidth, int buttonFlags) {
-    super(uid);
-    myAction = action;
-    myIcon = icon;
-    myText = text;
-    myWidth = buttWidth;
-    myFlags = buttonFlags;
+    return this;
   }
 
-  void setWidth(int width) { _update(myIcon, myText, myAction, width, myFlags); }
+  public TBItemButton setText(String text) {
+    if (!Comparing.equal(text, myText)) {
+      myText = text;
+      if (myNativePeer != ID.NIL) {
+        myUpdateOptions |= NSTLibrary.BUTTON_UPDATE_TEXT;
+        _updateNativePeer();
+      }
+    }
+
+    return this;
+  }
+
+  public TBItemButton setAction(NSTLibrary.Action action) {
+    if (action != myAction) {
+      myAction = action;
+      if (myNativePeer != ID.NIL) {
+        myUpdateOptions |= NSTLibrary.BUTTON_UPDATE_ACTION;
+        _updateNativePeer();
+      }
+    }
+
+    return this;
+  }
+
+  public TBItemButton setWidth(int width) {
+    if (width != myWidth) {
+      myWidth = width;
+      if (myNativePeer != ID.NIL) {
+        myUpdateOptions |= NSTLibrary.BUTTON_UPDATE_WIDTH;
+        _updateNativePeer();
+      }
+    }
+
+    return this;
+  }
 
   // [-128, 127], 0 is the default value
-  void setPriority(byte prio) { _update(myIcon, myText, myAction, myWidth, myFlags | NSTLibrary.priority2mask(prio)); }
+  public TBItemButton setPriority(byte prio) {
+    final int flags = myFlags | NSTLibrary.priority2mask(prio);
+    if (flags != myFlags) {
+      myFlags = flags;
+      if (myNativePeer != ID.NIL) {
+        myUpdateOptions |= NSTLibrary.BUTTON_UPDATE_FLAGS;
+        _updateNativePeer();
+      }
+    }
 
-  void update(Icon icon, String text, NSTLibrary.Action action) { _update(icon, text, action, myWidth, myFlags); }
-  void update(Icon icon, String text) { _update(icon, text, myAction, myWidth, myFlags); }
-  void update(Icon icon) { _update(icon, myText, myAction, myWidth, myFlags); }
+    return this;
+  }
+
+  public TBItemButton setFlags(boolean isSelected, boolean isDisabled) {
+    int flags = _applyFlag(myFlags, isSelected, NSTLibrary.BUTTON_FLAG_SELECTED);
+    flags = _applyFlag(flags, isDisabled, NSTLibrary.BUTTON_FLAG_DISABLED);
+    if (flags != myFlags) {
+      myFlags = flags;
+      if (myNativePeer != ID.NIL) {
+        myUpdateOptions |= NSTLibrary.BUTTON_UPDATE_FLAGS;
+        _updateNativePeer();
+      }
+    }
+
+    return this;
+  }
+
   void update(Icon icon, String text, boolean isSelected, boolean isDisabled) {
     int flags = _applyFlag(myFlags, isSelected, NSTLibrary.BUTTON_FLAG_SELECTED);
     flags = _applyFlag(flags, isDisabled, NSTLibrary.BUTTON_FLAG_DISABLED);
