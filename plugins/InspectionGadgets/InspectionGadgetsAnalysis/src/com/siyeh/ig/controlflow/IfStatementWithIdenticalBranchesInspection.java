@@ -54,7 +54,7 @@ public class IfStatementWithIdenticalBranchesInspection extends AbstractBaseJava
           IfInspectionResult result = inspector.inspect(ifStatement, thenStatements, elseStatements, isOnTheFly);
           if (result != null) {
             ProblemHighlightType highlightType = result.myIsWarning ? ProblemHighlightType.WEAK_WARNING : ProblemHighlightType.INFORMATION;
-            holder.registerProblem(result.myElementToHighlight, result.myMessage, highlightType, result.myFix);
+            holder.registerProblem(result.myElementToHighlight, InspectionsBundle.message("inspection.common.if.parts.description"), highlightType, result.myFix);
           }
         }
       }
