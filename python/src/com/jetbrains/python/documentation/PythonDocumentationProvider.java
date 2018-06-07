@@ -56,7 +56,8 @@ import java.util.List;
 import java.util.Optional;
 import java.util.function.Function;
 
-import static com.jetbrains.python.documentation.DocumentationBuilderKit.*;
+import static com.jetbrains.python.documentation.DocumentationBuilderKit.ESCAPE_ONLY;
+import static com.jetbrains.python.documentation.DocumentationBuilderKit.TO_ONE_LINE_AND_ESCAPE;
 
 /**
  * Provides quick docs for classes, methods, and functions.
@@ -242,10 +243,16 @@ public class PythonDocumentationProvider extends AbstractDocumentationProvider i
       else {
         firstIsSelf = parameter.isSelf();
       }
-      result.append(escaped(StringUtil.notNullize(parameter.getName(), PyNames.UNNAMED_ELEMENT)));
-      if (!parameter.isSelf()) {
-        result.append(": ");
-        result.append(formatTypeWithLinks(parameter.getType(context), function, context));
+
+      if (parameter.getParameter() instanceof PySingleStarParameter) {
+        result.append("*");
+      }
+      else {
+        result.append(escaped(StringUtil.notNullize(parameter.getName(), PyNames.UNNAMED_ELEMENT)));
+        if (!parameter.isSelf()) {
+          result.append(": ");
+          result.append(formatTypeWithLinks(parameter.getType(context), function, context));
+        }
       }
       first = false;
     }

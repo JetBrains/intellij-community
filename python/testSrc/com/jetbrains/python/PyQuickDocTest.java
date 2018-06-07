@@ -507,6 +507,23 @@ public class PyQuickDocTest extends LightMarkedTestCase {
     checkHTMLOnly();
   }
 
+  public void testKeywordArgsDescriptionRest() {
+    checkHTMLOnly();
+  }
+
+  // PY-11425
+  public void testKeywordArgsDescriptionEpydoc() {
+    checkHTMLOnly();
+  }
+
+  public void testKeywordArgsDescriptionGoogle() {
+    checkHTMLOnly();
+  }
+
+  public void testKeywordArgsDescriptionForMissingParameter() {
+    runWithLanguageLevel(LanguageLevel.PYTHON36, this::checkHTMLOnly);
+  }
+
   public void testPackage() {
     myFixture.copyDirectoryToProject(getTestName(false), "");
     final VirtualFile file = myFixture.findFileInTempDir("pkg/__init__.py");

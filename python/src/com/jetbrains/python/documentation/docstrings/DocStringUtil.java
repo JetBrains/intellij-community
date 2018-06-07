@@ -196,6 +196,7 @@ public class DocStringUtil {
 
   public static boolean isLikeSphinxDocString(@NotNull String text) {
     return text.contains(":param ") ||
+           text.contains(":key ") ||  text.contains(":keyword ") ||
            text.contains(":return:") || text.contains(":returns:") ||
            text.contains(":raise ") || text.contains(":raises ") || text.contains(":except ") || text.contains(":exception ") ||
            text.contains(":rtype") || text.contains(":type");
@@ -203,6 +204,7 @@ public class DocStringUtil {
 
   public static boolean isLikeEpydocDocString(@NotNull String text) {
     return text.contains("@param ") ||
+           text.contains("@kwarg ") || text.contains("@keyword ") || text.contains("@kwparam ") ||
            text.contains("@raise ") || text.contains("@raises ") || text.contains("@except ") || text.contains("@exception ") ||
            text.contains("@return:") ||
            text.contains("@rtype") || text.contains("@type");
