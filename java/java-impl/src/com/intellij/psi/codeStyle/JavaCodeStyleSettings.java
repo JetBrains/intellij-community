@@ -105,6 +105,7 @@ public class JavaCodeStyleSettings extends CustomCodeStyleSettings implements Im
 
   public int CLASS_NAMES_IN_JAVADOC = FULLY_QUALIFY_NAMES_IF_NOT_IMPORTED;
   public boolean SPACE_BEFORE_COLON_IN_FOREACH = true;
+  public boolean SPACE_AROUND_ONE_LINE_ENUM = false;
 
   public boolean useFqNamesInJavadocAlways() {
     return CLASS_NAMES_IN_JAVADOC == FULLY_QUALIFY_NAMES_ALWAYS;
