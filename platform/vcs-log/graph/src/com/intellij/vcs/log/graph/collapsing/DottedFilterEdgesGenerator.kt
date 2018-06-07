@@ -13,205 +13,183 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.vcs.log.graph.collapsing;
+package com.intellij.vcs.log.graph.collapsing
 
-import com.intellij.vcs.log.graph.api.EdgeFilter;
-import com.intellij.vcs.log.graph.api.LiteLinearGraph;
-import com.intellij.vcs.log.graph.api.LiteLinearGraph.NodeFilter;
-import com.intellij.vcs.log.graph.api.elements.GraphEdge;
-import com.intellij.vcs.log.graph.utils.LinearGraphUtils;
-import org.jetbrains.annotations.NotNull;
+import com.intellij.vcs.log.graph.api.EdgeFilter
+import com.intellij.vcs.log.graph.api.LiteLinearGraph
+import com.intellij.vcs.log.graph.api.LiteLinearGraph.NodeFilter
+import com.intellij.vcs.log.graph.api.elements.GraphEdge
+import com.intellij.vcs.log.graph.api.elements.GraphEdgeType.*
+import com.intellij.vcs.log.graph.utils.LinearGraphUtils
 
-import static com.intellij.vcs.log.graph.api.elements.GraphEdgeType.*;
+class DottedFilterEdgesGenerator private constructor(private val collapsedGraph: CollapsedGraph,
+                                                     private val modification: CollapsedGraph.Modification,
+                                                     private val upIndex: Int,
+                                                     private val downIndex: Int) {
 
-public class DottedFilterEdgesGenerator {
-  public static void update(@NotNull CollapsedGraph collapsedGraph, int upDelegateNodeIndex, int downDelegateNodeIndex) {
-    CollapsedGraph.Modification modification = collapsedGraph.startModification();
-    new DottedFilterEdgesGenerator(collapsedGraph, modification, upDelegateNodeIndex, downDelegateNodeIndex).update();
-    modification.apply();
+  private val liteDelegateGraph: LiteLinearGraph = LinearGraphUtils.asLiteLinearGraph(collapsedGraph.delegatedGraph)
+  private val numbers: ShiftNumber = ShiftNumber(upIndex, downIndex)
+
+  private fun nodeIsVisible(nodeIndex: Int): Boolean {
+    return collapsedGraph.isNodeVisible(nodeIndex)
   }
 
-  @NotNull private final CollapsedGraph myCollapsedGraph;
-  @NotNull private final CollapsedGraph.Modification myModification;
-
-  @NotNull private final LiteLinearGraph myLiteDelegateGraph;
-
-  private final int myUpIndex;
-  private final int myDownIndex;
-  @NotNull private final ShiftNumber myNumbers;
-
-  private DottedFilterEdgesGenerator(@NotNull CollapsedGraph collapsedGraph,
-                                     @NotNull CollapsedGraph.Modification modification,
-                                     int upIndex,
-                                     int downIndex) {
-    myCollapsedGraph = collapsedGraph;
-    myModification = modification;
-    myLiteDelegateGraph = LinearGraphUtils.asLiteLinearGraph(collapsedGraph.getDelegatedGraph());
-    myUpIndex = upIndex;
-    myDownIndex = downIndex;
-    myNumbers = new ShiftNumber(upIndex, downIndex);
+  private fun addDottedEdge(nodeIndex1: Int, nodeIndex2: Int) {
+    modification.createEdge(GraphEdge(nodeIndex1, nodeIndex2, null, DOTTED))
   }
 
-  private boolean nodeIsVisible(int nodeIndex) {
-    return myCollapsedGraph.isNodeVisible(nodeIndex);
-  }
-
-  private void addDottedEdge(int nodeIndex1, int nodeIndex2) {
-    myModification.createEdge(new GraphEdge(nodeIndex1, nodeIndex2, null, DOTTED));
-  }
-
-  private void addDottedArrow(int nodeIndex, boolean isUp) {
-    myModification.createEdge(new GraphEdge(nodeIndex, null, null, isUp ? DOTTED_ARROW_UP : DOTTED_ARROW_DOWN));
+  private fun addDottedArrow(nodeIndex: Int, isUp: Boolean) {
+    modification.createEdge(GraphEdge(nodeIndex, null, null, if (isUp) DOTTED_ARROW_UP else DOTTED_ARROW_DOWN))
   }
 
   // update specified range
-  private void update() {
-    downWalk();
-    cleanup();
-    upWalk();
+  private fun update() {
+    downWalk()
+    cleanup()
+    upWalk()
   }
 
-  private void cleanup() {
-    for (int currentNodeIndex = myUpIndex; currentNodeIndex <= myDownIndex; currentNodeIndex++) {
-      myNumbers.setNumber(currentNodeIndex, Integer.MAX_VALUE);
+  private fun cleanup() {
+    for (currentNodeIndex in upIndex..downIndex) {
+      numbers.setNumber(currentNodeIndex, Integer.MAX_VALUE)
     }
   }
 
-  private boolean hasDottedEdges(int nodeIndex, boolean isUp) {
-    for (GraphEdge edge : myModification.getEdgesToAdd().getAdjacentEdges(nodeIndex, EdgeFilter.NORMAL_ALL)) {
-      if (edge.getType() == DOTTED) {
-        if (isUp && LinearGraphUtils.isEdgeUp(edge, nodeIndex)) return true;
-        if (!isUp && LinearGraphUtils.isEdgeDown(edge, nodeIndex)) return false;
+  private fun hasDottedEdges(nodeIndex: Int, isUp: Boolean): Boolean {
+    for (edge in modification.edgesToAdd.getAdjacentEdges(nodeIndex, EdgeFilter.NORMAL_ALL)) {
+      if (edge.type == DOTTED) {
+        if (isUp && LinearGraphUtils.isEdgeUp(edge, nodeIndex)) return true
+        if (!isUp && LinearGraphUtils.isEdgeDown(edge, nodeIndex)) return false
       }
     }
-    return false;
+    return false
   }
 
-  private void addEdgeOrArrow(int currentNodeIndex, int anotherNodeIndex, boolean isUp) {
+  private fun addEdgeOrArrow(currentNodeIndex: Int, anotherNodeIndex: Int, isUp: Boolean) {
     if (hasDottedEdges(currentNodeIndex, isUp)) {
       if (nodeIsVisible(anotherNodeIndex)) {
-        addDottedEdge(currentNodeIndex, anotherNodeIndex);
+        addDottedEdge(currentNodeIndex, anotherNodeIndex)
       }
       else {
-        addDottedArrow(currentNodeIndex, isUp);
+        addDottedArrow(currentNodeIndex, isUp)
       }
     }
   }
 
-  private void downWalk() {
-    for (int currentNodeIndex = myUpIndex; currentNodeIndex <= myDownIndex; currentNodeIndex++) {
+  private fun downWalk() {
+    for (currentNodeIndex in upIndex..downIndex) {
       if (nodeIsVisible(currentNodeIndex)) {
-        int nearlyUp = Integer.MIN_VALUE;
-        int maxAdjNumber = Integer.MIN_VALUE;
-        for (int upNode : myLiteDelegateGraph.getNodes(currentNodeIndex, NodeFilter.UP)) {
-          if (upNode < myUpIndex) {
-            addEdgeOrArrow(currentNodeIndex, upNode, true);
-            continue;
+        var nearlyUp = Integer.MIN_VALUE
+        var maxAdjNumber = Integer.MIN_VALUE
+        for (upNode in liteDelegateGraph.getNodes(currentNodeIndex, NodeFilter.UP)) {
+          if (upNode < upIndex) {
+            addEdgeOrArrow(currentNodeIndex, upNode, true)
+            continue
           }
 
           if (nodeIsVisible(upNode)) {
-            maxAdjNumber = Math.max(maxAdjNumber, myNumbers.getNumber(upNode));
+            maxAdjNumber = Math.max(maxAdjNumber, numbers.getNumber(upNode))
           }
           else {
-            nearlyUp = Math.max(nearlyUp, myNumbers.getNumber(upNode));
+            nearlyUp = Math.max(nearlyUp, numbers.getNumber(upNode))
           }
         }
 
         if (nearlyUp == maxAdjNumber || nearlyUp == Integer.MIN_VALUE) {
-          myNumbers.setNumber(currentNodeIndex, maxAdjNumber);
+          numbers.setNumber(currentNodeIndex, maxAdjNumber)
         }
         else {
-          addDottedEdge(currentNodeIndex, nearlyUp);
-          myNumbers.setNumber(currentNodeIndex, nearlyUp);
+          addDottedEdge(currentNodeIndex, nearlyUp)
+          numbers.setNumber(currentNodeIndex, nearlyUp)
         }
       }
       else {
         // node currentNodeIndex invisible
 
-        int nearlyUp = Integer.MIN_VALUE;
-        for (int upNode : myLiteDelegateGraph.getNodes(currentNodeIndex, NodeFilter.UP)) {
+        var nearlyUp = Integer.MIN_VALUE
+        for (upNode in liteDelegateGraph.getNodes(currentNodeIndex, NodeFilter.UP)) {
           if (nodeIsVisible(upNode)) {
-            nearlyUp = Math.max(nearlyUp, upNode);
+            nearlyUp = Math.max(nearlyUp, upNode)
           }
           else {
-            if (upNode >= myUpIndex) nearlyUp = Math.max(nearlyUp, myNumbers.getNumber(upNode));
+            if (upNode >= upIndex) nearlyUp = Math.max(nearlyUp, numbers.getNumber(upNode))
           }
         }
-        myNumbers.setNumber(currentNodeIndex, nearlyUp);
+        numbers.setNumber(currentNodeIndex, nearlyUp)
       }
     }
   }
 
-  private void upWalk() {
-    for (int currentNodeIndex = myDownIndex; currentNodeIndex >= myUpIndex; currentNodeIndex--) {
+  private fun upWalk() {
+    for (currentNodeIndex in downIndex downTo upIndex) {
       if (nodeIsVisible(currentNodeIndex)) {
-        int nearlyDown = Integer.MAX_VALUE;
-        int minAdjNumber = Integer.MAX_VALUE;
-        for (int downNode : myLiteDelegateGraph.getNodes(currentNodeIndex, NodeFilter.DOWN)) {
-          if (downNode > myDownIndex) {
-            addEdgeOrArrow(currentNodeIndex, downNode, false);
-            continue;
+        var nearlyDown = Integer.MAX_VALUE
+        var minAdjNumber = Integer.MAX_VALUE
+        for (downNode in liteDelegateGraph.getNodes(currentNodeIndex, NodeFilter.DOWN)) {
+          if (downNode > downIndex) {
+            addEdgeOrArrow(currentNodeIndex, downNode, false)
+            continue
           }
 
           if (nodeIsVisible(downNode)) {
-            minAdjNumber = Math.min(minAdjNumber, myNumbers.getNumber(downNode));
+            minAdjNumber = Math.min(minAdjNumber, numbers.getNumber(downNode))
           }
           else {
-            nearlyDown = Math.min(nearlyDown, myNumbers.getNumber(downNode));
+            nearlyDown = Math.min(nearlyDown, numbers.getNumber(downNode))
           }
         }
 
         if (nearlyDown == minAdjNumber || nearlyDown == Integer.MAX_VALUE) {
-          myNumbers.setNumber(currentNodeIndex, minAdjNumber);
+          numbers.setNumber(currentNodeIndex, minAdjNumber)
         }
         else {
-          addDottedEdge(currentNodeIndex, nearlyDown);
-          myNumbers.setNumber(currentNodeIndex, nearlyDown);
+          addDottedEdge(currentNodeIndex, nearlyDown)
+          numbers.setNumber(currentNodeIndex, nearlyDown)
         }
       }
       else {
         // node currentNodeIndex invisible
 
-        int nearlyDown = Integer.MAX_VALUE;
-        for (int downNode : myLiteDelegateGraph.getNodes(currentNodeIndex, NodeFilter.DOWN)) {
+        var nearlyDown = Integer.MAX_VALUE
+        for (downNode in liteDelegateGraph.getNodes(currentNodeIndex, NodeFilter.DOWN)) {
           if (nodeIsVisible(downNode)) {
-            nearlyDown = Math.min(nearlyDown, downNode);
+            nearlyDown = Math.min(nearlyDown, downNode)
           }
           else {
-            if (downNode <= myDownIndex) nearlyDown = Math.min(nearlyDown, myNumbers.getNumber(downNode));
+            if (downNode <= downIndex) nearlyDown = Math.min(nearlyDown, numbers.getNumber(downNode))
           }
         }
-        myNumbers.setNumber(currentNodeIndex, nearlyDown);
+        numbers.setNumber(currentNodeIndex, nearlyDown)
       }
     }
   }
 
 
-  static class ShiftNumber {
-    private final int startIndex;
-    private final int endIndex;
-    private final int[] numbers;
+  internal class ShiftNumber(private val startIndex: Int, private val endIndex: Int) {
+    private val numbers: IntArray = IntArray(endIndex - startIndex + 1)
 
-    ShiftNumber(int startIndex, int endIndex) {
-      this.startIndex = startIndex;
-      this.endIndex = endIndex;
-      numbers = new int[endIndex - startIndex + 1];
+    private fun inRange(nodeIndex: Int): Boolean {
+      return nodeIndex in startIndex..endIndex
     }
 
-    private boolean inRange(int nodeIndex) {
-      return startIndex <= nodeIndex && nodeIndex <= endIndex;
+    fun getNumber(nodeIndex: Int): Int {
+      return if (inRange(nodeIndex)) numbers[nodeIndex - startIndex] else -1
+
     }
 
-    protected int getNumber(int nodeIndex) {
-      if (inRange(nodeIndex)) return numbers[nodeIndex - startIndex];
-
-      return -1;
-    }
-
-    protected void setNumber(int nodeIndex, int value) {
+    fun setNumber(nodeIndex: Int, value: Int) {
       if (inRange(nodeIndex)) {
-        numbers[nodeIndex - startIndex] = value;
+        numbers[nodeIndex - startIndex] = value
       }
+    }
+  }
+
+  companion object {
+    @JvmStatic
+    fun update(collapsedGraph: CollapsedGraph, upDelegateNodeIndex: Int, downDelegateNodeIndex: Int) {
+      val modification = collapsedGraph.startModification()
+      DottedFilterEdgesGenerator(collapsedGraph, modification, upDelegateNodeIndex, downDelegateNodeIndex).update()
+      modification.apply()
     }
   }
 }
