@@ -615,15 +615,10 @@ variable_declaration_tail ::= variable (',' mb_nl variable)*
 }
 variable ::= var { elementTypeClass = 'org.jetbrains.plugins.groovy.lang.psi.stubs.elements.GrVariableElementType' }
 
-tuple_var_declaration ::= tuple_modifier_list tuple_var_declaration_tuple tuple_initializer
+tuple_var_declaration ::= non_empty_modifier_list tuple_var_declaration_tuple tuple_initializer
 {
   elementType = variable_declaration
   pin = tuple_var_declaration_tuple
-  consumeTokenMethod = 'consumeTokenFast'
-}
-tuple_modifier_list ::= def_modifier
-{
-  consumeTokenMethod = 'consumeTokenFast'
 }
 private tuple_var_declaration_tuple ::= '(' tuple_var_declaration_item (',' tuple_var_declaration_item)* ')'
 {

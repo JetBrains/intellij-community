@@ -6072,25 +6072,12 @@ public class GroovyGeneratedParser implements PsiParser, LightPsiParser {
   }
 
   /* ********************************************************** */
-  // def_modifier
-  public static boolean tuple_modifier_list(PsiBuilder b, int l) {
-    if (!recursion_guard_(b, l, "tuple_modifier_list")) return false;
-    if (!nextTokenIsFast(b, KW_DEF)) return false;
-    boolean r;
-    Marker m = enter_section_(b);
-    r = def_modifier(b, l + 1);
-    exit_section_(b, m, MODIFIER_LIST, r);
-    return r;
-  }
-
-  /* ********************************************************** */
-  // tuple_modifier_list tuple_var_declaration_tuple tuple_initializer
+  // non_empty_modifier_list tuple_var_declaration_tuple tuple_initializer
   public static boolean tuple_var_declaration(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "tuple_var_declaration")) return false;
-    if (!nextTokenIsFast(b, KW_DEF)) return false;
     boolean r, p;
-    Marker m = enter_section_(b, l, _NONE_, VARIABLE_DECLARATION, null);
-    r = tuple_modifier_list(b, l + 1);
+    Marker m = enter_section_(b, l, _NONE_, VARIABLE_DECLARATION, "<tuple var declaration>");
+    r = non_empty_modifier_list(b, l + 1);
     r = r && tuple_var_declaration_tuple(b, l + 1);
     p = r; // pin = tuple_var_declaration_tuple
     r = r && tuple_initializer(b, l + 1);

@@ -261,6 +261,8 @@ class StatementsParsingTest extends GroovyParsingTestCase {
 
   void testTuples$tupleNotInit() throws Throwable { doTest() }
 
+  void testTuples$tupleNotInit2() { doTest() }
+
   void testTuples$tupleOneVarInLine() throws Throwable { doTest() }
 
   void testTuples$tupleTypeErr() throws Throwable { doTest() }
@@ -268,6 +270,8 @@ class StatementsParsingTest extends GroovyParsingTestCase {
   void testTuples$tupleWithoutDef() throws Throwable { doTest() }
 
   void testTuples$tupleWithoutVariables() { doTest() }
+
+  void testTuples$differentModifiers() { doTest() }
 
   void testTypedef$classes$abstr() throws Throwable { doTest() }
 
