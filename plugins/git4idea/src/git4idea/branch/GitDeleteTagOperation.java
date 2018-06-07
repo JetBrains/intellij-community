@@ -106,14 +106,20 @@ class GitDeleteTagOperation extends GitBranchOperation {
     }.queue();
   }
 
-  private void rollbackTagDeletion(@NotNull Notification notification) {
-    GitCompoundResult result = new GitCompoundResult(myProject);
-    for (GitRepository repository: getSuccessfulRepositories()) {
-      GitCommandResult res = myGit.createNewTag(repository, myTagName, null, myDeletedTagTips.get(repository));
-      result.append(repository, res);
-      repository.getRepositoryFiles().refresh();
+  @Override
+  protected void rollback() {
+    GitCompoundResult result = doRollback();
+    if (result.totalSuccess()) {
+      Notification notification = STANDARD_NOTIFICATION.createNotification("Rollback Successful", "Restored tag " + myTagName, NotificationType.INFORMATION, null);
+      myNotifier.notify(notification);
     }
+    else {
+      myNotifier.notifyError("Error during rollback of tag deletion", result.getErrorOutputWithReposIndication());
+    }
+  }
 
+  private void rollbackTagDeletion(@NotNull Notification notification) {
+    GitCompoundResult result = doRollback();
     if (result.totalSuccess()) {
       notification.expire();
     }
@@ -122,15 +128,23 @@ class GitDeleteTagOperation extends GitBranchOperation {
     }
   }
 
-  @Override
-  protected void rollback() {
-    throw new UnsupportedOperationException();
+  @NotNull
+  private GitCompoundResult doRollback() {
+    GitCompoundResult result = new GitCompoundResult(myProject);
+    for (GitRepository repository: getSuccessfulRepositories()) {
+      GitCommandResult res = myGit.createNewTag(repository, myTagName, null, myDeletedTagTips.get(repository));
+      result.append(repository, res);
+      repository.getRepositoryFiles().refresh();
+    }
+    return result;
   }
 
   @NotNull
   @Override
   protected String getRollbackProposal() {
-    throw new UnsupportedOperationException();
+    return "However tag deletion has succeeded for the following " + repositories() + ":<br/>" +
+           successfulRepositoriesJoined() +
+           "<br/>You may rollback (recreate " + myTagName + " in these roots) not to let tags diverge.";
   }
 
   @NotNull
