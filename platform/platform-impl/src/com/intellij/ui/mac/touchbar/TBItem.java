@@ -6,8 +6,8 @@ import com.intellij.ui.mac.foundation.ID;
 import org.jetbrains.annotations.NotNull;
 
 abstract class TBItem {
-  final String myUid;
-  protected ID myNativePeer = ID.NIL; // java wrapper holds native object
+  final @NotNull String myUid;
+  protected @NotNull ID myNativePeer = ID.NIL; // java wrapper holds native object
   protected boolean myIsVisible = true;
 
   TBItem(@NotNull String uid) { myUid = uid; }
