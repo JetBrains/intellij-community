@@ -29,7 +29,7 @@ public class LocalsOrMyInstanceFieldsControlFlowPolicy implements ControlFlowPol
   @Override
   public PsiVariable getUsedVariable(@NotNull PsiReferenceExpression refExpr) {
     PsiExpression qualifier = PsiUtil.skipParenthesizedExprDown(refExpr.getQualifierExpression());
-    if (qualifier == null || qualifier instanceof PsiThisExpression) {
+    if (qualifier == null || (qualifier instanceof PsiThisExpression && ((PsiThisExpression)qualifier).getQualifier() == null)) {
       PsiElement resolved = refExpr.resolve();
       if (!(resolved instanceof PsiVariable)) return null;
       return (PsiVariable)resolved;

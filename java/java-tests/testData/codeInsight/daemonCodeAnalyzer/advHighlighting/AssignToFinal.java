@@ -249,6 +249,6 @@ class QualifiedThis {
 
   QualifiedThis() {
     <error descr="Cannot assign a value to final variable 'x'">QualifiedThis.this.x</error> = 5;
-    <error descr="Variable 'x' might already have been assigned to">this.x</error> = 5;
+    this.x = 5;
   }
 }
