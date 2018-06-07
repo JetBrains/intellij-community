@@ -72,6 +72,10 @@ public class XmlAttributeInsertHandler implements InsertHandler<LookupElement> {
     final boolean hasQuotes = CharArrayUtil.regionMatches(chars, caretOffset, "=\"") ||
                               CharArrayUtil.regionMatches(chars, caretOffset, "='");
     if (!hasQuotes) {
+      if (CharArrayUtil.regionMatches(chars, caretOffset, "=")) {
+        document.deleteString(caretOffset, caretOffset + 1);
+      }
+
       PsiElement fileContext = file.getContext();
       String toInsert = null;
 
