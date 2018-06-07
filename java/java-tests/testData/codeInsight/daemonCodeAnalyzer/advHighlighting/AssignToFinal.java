@@ -252,3 +252,13 @@ class QualifiedThis {
     this.x = 5;
   }
 }
+
+class ParenthesizedThis {
+  final int x;
+  final int y = (this).x + 1; // allowed as qualifier is not naked 'this'!
+
+  ParenthesizedThis() {
+    <error descr="Cannot assign a value to final variable 'x'">(this).x</error> = 5;
+    this.x = 6;
+  }
+}
