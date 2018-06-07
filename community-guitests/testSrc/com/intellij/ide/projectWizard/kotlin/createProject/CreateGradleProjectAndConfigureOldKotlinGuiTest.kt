@@ -9,9 +9,10 @@ class CreateGradleProjectAndConfigureOldKotlinGuiTest : KotlinGuiTestCase() {
   @Test
   @JvmName("gradle_cfg_jvm_old1231")
   fun createGradleAndConfigureKotlinJvmOldVersion1231() {
+    KotlinTestProperties.kotlin_artifact_version = "1.2.31"
     testCreateGradleAndConfigureKotlin(
       kotlinKind = KotlinKind.JVM,
-      kotlinVersion = "1.2.31",
+      kotlinVersion = KotlinTestProperties.kotlin_artifact_version,
       project = kotlinLibs[KotlinKind.JVM]!!.gradleGProject,
       expectedFacet = FacetStructure(
         targetPlatform = TargetPlatform.JVM18,
@@ -26,9 +27,10 @@ class CreateGradleProjectAndConfigureOldKotlinGuiTest : KotlinGuiTestCase() {
   @Test
   @JvmName("gradle_cfg_jvm_old1161")
   fun createGradleAndConfigureKotlinJvmOldVersion1161() {
+    KotlinTestProperties.kotlin_artifact_version = "1.1.61"
     testCreateGradleAndConfigureKotlin(
       kotlinKind = KotlinKind.JVM,
-      kotlinVersion = "1.1.61",
+      kotlinVersion = KotlinTestProperties.kotlin_artifact_version,
       project = kotlinLibs[KotlinKind.JVM]!!.gradleGProject,
       expectedFacet = FacetStructure(
         targetPlatform = TargetPlatform.JVM18,

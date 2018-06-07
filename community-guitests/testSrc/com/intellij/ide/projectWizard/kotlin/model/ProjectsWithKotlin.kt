@@ -685,7 +685,9 @@ fun KotlinGuiTestCase.changeKotlinVersionInBuildGradle(fileName: String,
       val regex = """(id|kotlin)\s?\(?[\'\"](.*)[\'\"]\)? version [\'\"](.*)[\'\"]"""
         .trimIndent()
         .toRegex(RegexOption.IGNORE_CASE)
+      if(regex.find(it) != null)
       it.replace(regex.find(it)!!.groupValues[3], kotlinVersion)
+      else it
     }
     else it
   }
