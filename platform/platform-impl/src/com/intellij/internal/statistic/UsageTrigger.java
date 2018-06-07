@@ -39,6 +39,11 @@ public class UsageTrigger implements PersistentStateComponent<UsageTrigger.State
     getInstance().doTrigger(feature);
   }
 
+  public static void trigger(@NotNull @NonNls String groupId, @NotNull @NonNls String feature) {
+    FeatureUsageLogger.INSTANCE.log(groupId, feature);
+    getInstance().doTrigger(feature);
+  }
+
   public static void triggerOnce(@NotNull @NonNls String feature) {
     if (!getInstance().myState.myValues.containsKey(feature)) {
       getInstance().doTrigger(feature);
