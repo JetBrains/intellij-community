@@ -12,16 +12,16 @@ import org.jetbrains.annotations.NotNull;
 import java.util.Collections;
 import java.util.Set;
 
-public class EventLogStatisticsSettingsService extends SettingsConnectionService {
-  private static final Logger LOG = Logger.getInstance("com.intellij.internal.statistic.eventLog.EventLogStatisticsSettingsService");
+public class EventLogExternalSettingsService extends SettingsConnectionService implements EventLogSettingsService {
+  private static final Logger LOG = Logger.getInstance("com.intellij.internal.statistic.eventLog.EventLogExternalSettingsService");
   private static final String APPROVED_GROUPS_SERVICE = "white-list-service";
   private static final String PERCENT_TRAFFIC = "percent-traffic";
 
-  public static EventLogStatisticsSettingsService getInstance() {
-    return new EventLogStatisticsSettingsService();
+  public static EventLogExternalSettingsService getInstance() {
+    return new EventLogExternalSettingsService();
   }
 
-  private EventLogStatisticsSettingsService() {
+  protected EventLogExternalSettingsService() {
     super(((ApplicationInfoImpl)ApplicationInfoImpl.getShadowInstance()).getEventLogSettingsUrl(), null);
   }
 
@@ -31,6 +31,7 @@ public class EventLogStatisticsSettingsService extends SettingsConnectionService
     return ArrayUtil.mergeArrays(super.getAttributeNames(), PERCENT_TRAFFIC, APPROVED_GROUPS_SERVICE);
   }
 
+  @Override
   public int getPermittedTraffic() {
     final String permitted = getSettingValue(PERCENT_TRAFFIC);
     if (permitted != null) {
@@ -44,17 +45,20 @@ public class EventLogStatisticsSettingsService extends SettingsConnectionService
     return 0;
   }
 
+  @Override
   @NotNull
-  public Set<String> getWhitelistedGroups() {
+  public LogEventFilter getEventFilter() {
+    final Set<String> whitelist = getWhitelistedGroups();
+    return new LogEventWhitelistFilter(whitelist);
+  }
+
+  @NotNull
+  private Set<String> getWhitelistedGroups() {
     final String approvedGroupsServiceUrl = getSettingValue(APPROVED_GROUPS_SERVICE);
     if (approvedGroupsServiceUrl == null) {
       return Collections.emptySet();
     }
-    return FUStatisticsWhiteListGroupsService.getApprovedGroups(getProductRelatedUrl(approvedGroupsServiceUrl));
-  }
-
-  @NotNull
-  public String getProductRelatedUrl(@NotNull  String approvedGroupsServiceUrl) {
-    return approvedGroupsServiceUrl + ApplicationInfo.getInstance().getBuild().getProductCode() + ".json";
+    final String productUrl = approvedGroupsServiceUrl + ApplicationInfo.getInstance().getBuild().getProductCode() + ".json";
+    return FUStatisticsWhiteListGroupsService.getApprovedGroups(productUrl);
   }
 }
