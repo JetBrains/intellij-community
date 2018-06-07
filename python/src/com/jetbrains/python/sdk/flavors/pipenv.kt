@@ -212,9 +212,6 @@ val Sdk.pipFileLockRequirements: List<PyRequirement>?
     return packages + devPackages
   }
 
-private val Sdk.packageManager: PyPackageManager
-  get() = PyPackageManagers.getInstance().forSdk(this)
-
 /**
  * A quick-fix for setting up the pipenv for the module of the current PSI element.
  */
@@ -282,6 +279,9 @@ class PipEnvInstallQuickFix : LocalQuickFix {
     pipEnvInstall(project, module)
   }
 }
+
+private val Sdk.packageManager: PyPackageManager
+  get() = PyPackageManagers.getInstance().forSdk(this)
 
 private fun Sdk.parsePipFileLock(): PipFileLock? {
   // TODO: Log errors if Pipfile.lock is not found
