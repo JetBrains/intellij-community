@@ -276,7 +276,7 @@ public class SearchEverywhereUI extends BorderLayoutPanel implements Disposable,
   }
 
   private boolean isAllTabSelected() {
-    return SearchEverywhereContributor.ALL_CONTRIBUTORS_GROUP_ID.equals(getSelectedContributorID());
+    return SearchEverywhereManagerImpl.ALL_CONTRIBUTORS_GROUP_ID.equals(getSelectedContributorID());
   }
 
   private JTextField createSearchField() {
@@ -383,7 +383,7 @@ public class SearchEverywhereUI extends BorderLayoutPanel implements Disposable,
     public String getID() {
       return getContributor()
         .map(SearchEverywhereContributor::getSearchProviderId)
-        .orElse(SearchEverywhereContributor.ALL_CONTRIBUTORS_GROUP_ID);
+        .orElse(SearchEverywhereManagerImpl.ALL_CONTRIBUTORS_GROUP_ID);
     }
 
     public Optional<SearchEverywhereContributor> getContributor() {
@@ -694,7 +694,7 @@ public class SearchEverywhereUI extends BorderLayoutPanel implements Disposable,
   @NotNull
   private List<SearchEverywhereContributor> getUsedContributors() {
     SearchEverywhereContributorFilter<String> contributorsFilter =
-      (SearchEverywhereContributorFilter<String>) myContributorFilters.get(SearchEverywhereContributor.ALL_CONTRIBUTORS_GROUP_ID);
+      (SearchEverywhereContributorFilter<String>) myContributorFilters.get(SearchEverywhereManagerImpl.ALL_CONTRIBUTORS_GROUP_ID);
     List<SearchEverywhereContributor> contributors = new ArrayList<>(myServiceContributors);
     myShownContributors.stream()
                        .filter(contributor -> contributorsFilter.isSelected(contributor.getSearchProviderId()))
