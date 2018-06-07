@@ -251,6 +251,19 @@ public class UserDefinedJsonSchemaConfiguration {
       this.path = normalizePath(path);
     }
 
+    public String getError() {
+      switch (mappingKind) {
+        case File:
+          return !StringUtil.isEmpty(path) ? null : "Empty file path doesn't match anything";
+        case Pattern:
+          return !StringUtil.isEmpty(path) ? null : "Empty pattern matches everything";
+        case Directory:
+          return null;
+      }
+
+      return "Unknown mapping kind";
+    }
+
     public boolean isPattern() {
       return mappingKind == JsonMappingKind.Pattern;
     }
