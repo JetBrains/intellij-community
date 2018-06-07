@@ -25,7 +25,6 @@ import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.Pair;
-import com.intellij.openapi.util.RecursionManager;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
@@ -36,7 +35,9 @@ import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiManager;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.util.PsiTreeUtil;
-import com.intellij.psi.xml.*;
+import com.intellij.psi.xml.XmlElement;
+import com.intellij.psi.xml.XmlFile;
+import com.intellij.psi.xml.XmlTag;
 import com.intellij.testFramework.LightVirtualFile;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
@@ -77,16 +78,16 @@ public class MavenDomUtil {
 
   public static boolean isProjectFile(PsiFile file) {
     if (!(file instanceof XmlFile)) return false;
-    if (MavenUtil.isPomFileName(file.getName())) return true;
 
-    XmlFileHeader xmlFileHeader = getXmlFileHeader((XmlFile)file);
-    if (!"project".equals(xmlFileHeader.getRootTagLocalName())) return false;
-    String xmlns = xmlFileHeader.getRootTagNamespace();
+    XmlTag rootTag = ((XmlFile)file).getRootTag();
+    if (rootTag == null || !"project".equals(rootTag.getName())) return false;
+
+    String xmlns = rootTag.getAttributeValue("xmlns");
     if (xmlns != null && xmlns.startsWith("http://maven.apache.org/POM/")) {
       return true;
     }
 
-    return false;
+    return MavenUtil.isPomFileName(file.getName());
   }
 
   public static boolean isProfilesFile(PsiFile file) {
@@ -98,17 +99,16 @@ public class MavenDomUtil {
   public static boolean isSettingsFile(PsiFile file) {
     if (!(file instanceof XmlFile)) return false;
 
-    XmlFileHeader xmlFileHeader = getXmlFileHeader((XmlFile)file);
-    if (!"settings".equals(xmlFileHeader.getRootTagLocalName())) return false;
-    String xmlns = xmlFileHeader.getRootTagNamespace();
+    XmlTag rootTag = ((XmlFile)file).getRootTag();
+    if (rootTag == null || !"settings".equals(rootTag.getName())) return false;
+
+    String xmlns = rootTag.getAttributeValue("xmlns");
     if (xmlns != null) {
       return xmlns.contains("maven");
     }
 
-    XmlTag rootTag = ((XmlFile)file).getRootTag();
-    if (rootTag == null) return false;
-
     boolean hasTag = false;
+
     for (PsiElement e = rootTag.getFirstChild(); e != null; e = e.getNextSibling()) {
       if (e instanceof XmlTag) {
         if (SUBTAGS_IN_SETTINGS_FILE.contains(((XmlTag)e).getName())) return true;
@@ -118,16 +118,6 @@ public class MavenDomUtil {
 
     return !hasTag;
   }
-
-  private static XmlFileHeader getXmlFileHeader(@NotNull XmlFile xmlFile) {
-    XmlFileHeader xmlFileHeader =
-      RecursionManager.doPreventingRecursion(xmlFile, false, () -> DomService.getInstance().getXmlFileHeader(xmlFile));
-    if (xmlFileHeader == null) {
-      xmlFileHeader = NanoXmlUtil.parseHeader(xmlFile);
-    }
-    return xmlFileHeader;
-  }
-
 
   public static boolean isMavenFile(PsiElement element) {
     return isMavenFile(element.getContainingFile());
