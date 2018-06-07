@@ -16,6 +16,7 @@
 package git4idea.ui.branch;
 
 import com.intellij.dvcs.DvcsUtil;
+import com.intellij.dvcs.MultiRootBranches;
 import com.intellij.dvcs.branch.DvcsBranchPopup;
 import com.intellij.dvcs.repo.AbstractRepositoryManager;
 import com.intellij.dvcs.ui.BranchActionGroup;
@@ -138,7 +139,7 @@ class GitBranchPopup extends DvcsBranchPopup<GitRepository> {
       .sorted(FAVORITE_BRANCH_COMPARATOR)
       .collect(toList());
     int topShownBranches = getNumOfTopShownBranches(localBranchActions);
-    String currentBranch = myMultiRootBranchConfig.getCurrentBranch();
+    String currentBranch = MultiRootBranches.getCommonCurrentBranch(allRepositories);
     if (currentBranch != null) {
       localBranchActions
         .add(0, new GitBranchPopupActions.CurrentBranchActions(myProject, allRepositories, currentBranch, myCurrentRepository));

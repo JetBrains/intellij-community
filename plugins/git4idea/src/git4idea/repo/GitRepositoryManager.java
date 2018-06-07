@@ -16,6 +16,7 @@
 package git4idea.repo;
 
 import com.intellij.dvcs.DvcsUtil;
+import com.intellij.dvcs.MultiRootBranches;
 import com.intellij.dvcs.branch.DvcsSyncSettings;
 import com.intellij.dvcs.repo.AbstractRepositoryManager;
 import com.intellij.dvcs.repo.VcsRepositoryManager;
@@ -30,7 +31,6 @@ import git4idea.GitUtil;
 import git4idea.GitVcs;
 import git4idea.config.GitVcsSettings;
 import git4idea.rebase.GitRebaseSpec;
-import git4idea.ui.branch.GitMultiRootBranchConfig;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -69,13 +69,22 @@ public class GitRepositoryManager extends AbstractRepositoryManager<GitRepositor
 
   @Override
   public boolean isSyncEnabled() {
-    return mySettings.getSyncSetting() == DvcsSyncSettings.Value.SYNC && !new GitMultiRootBranchConfig(getRepositories()).diverged();
+    return mySettings.getSyncSetting() == DvcsSyncSettings.Value.SYNC && !MultiRootBranches.diverged(getRepositories());
   }
 
   @NotNull
   @Override
   public List<GitRepository> getRepositories() {
     return getRepositories(GitRepository.class);
+  }
+
+  @Override
+  public boolean shouldProposeSyncControl() {
+    return !thereAreSubmodulesInProject() && super.shouldProposeSyncControl();
+  }
+
+  private boolean thereAreSubmodulesInProject() {
+    return getRepositories().stream().anyMatch(repo -> !repo.getSubmodules().isEmpty());
   }
 
   @Nullable
