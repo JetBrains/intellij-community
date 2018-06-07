@@ -77,6 +77,8 @@ public class JavaLanguageCodeStyleSettingsProvider extends LanguageCodeStyleSett
       groupName = CodeStyleSettingsCustomizable.SPACES_OTHER;
       consumer.showCustomOption(JavaCodeStyleSettings.class, "SPACE_BEFORE_COLON_IN_FOREACH", ApplicationBundle.message(
         "checkbox.spaces.before.colon.in.foreach"), groupName);
+      consumer.showCustomOption(JavaCodeStyleSettings.class, "SPACE_AROUND_ONE_LINE_ENUM", ApplicationBundle.message(
+        "checkbox.spaces.around.one.line.enum"), groupName);
     }
     else if (settingsType == SettingsType.WRAPPING_AND_BRACES_SETTINGS) {
       consumer.showStandardOptions("RIGHT_MARGIN",
