@@ -16,19 +16,18 @@
 package com.intellij.testGuiFramework.impl
 
 import org.fest.swing.core.Robot
-import org.fest.swing.core.SmartWaitRobot
 import org.junit.rules.ExternalResource
 
 class RobotTestRule: ExternalResource() {
 
   override fun before() {
-    GuiRobot.initializeRobot()
+    GuiRobotHolder.initializeRobot()
   }
 
   override fun after() {
-    GuiRobot.releaseRobot()
+    GuiRobotHolder.releaseRobot()
   }
 
-  fun getRobot(): Robot = GuiRobot.robot
+  fun getRobot(): Robot = GuiRobotHolder.robot
 
 }

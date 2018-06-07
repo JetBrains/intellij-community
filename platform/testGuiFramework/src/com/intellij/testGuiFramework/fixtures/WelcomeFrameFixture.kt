@@ -3,7 +3,7 @@ package com.intellij.testGuiFramework.fixtures
 
 import com.intellij.openapi.wm.impl.welcomeScreen.FlatWelcomeFrame
 import com.intellij.testGuiFramework.framework.GuiTestUtil
-import com.intellij.testGuiFramework.impl.GuiRobot
+import com.intellij.testGuiFramework.impl.GuiRobotHolder
 import com.intellij.testGuiFramework.impl.actionLink
 import com.intellij.testGuiFramework.impl.popupClick
 import org.fest.swing.core.Robot
@@ -67,6 +67,6 @@ class WelcomeFrameFixture private constructor(robot: Robot,
       throw ComponentLookupException("Unable to find 'Welcome' window")
     }
 
-    fun findSimple(): WelcomeFrameFixture = find(GuiRobot.robot)
+    fun findSimple(): WelcomeFrameFixture = find(GuiRobotHolder.robot)
   }
 }

@@ -519,7 +519,7 @@ fun NewProjectDialogModel.createGriffonProject(projectPath: String, libs: Librar
 }
 
 fun NewProjectDialogModel.waitLoadingTemplates(){
-  GuiTestUtilKt.waitUntilGone(robot = GuiRobot.robot,
+  GuiTestUtilKt.waitUntilGone(robot = GuiRobotHolder.robot,
                               timeoutInSeconds = 10,
                               matcher = GuiTestUtilKt.typeMatcher(
                                 JDialog::class.java) { it.isShowing && it.title == "Loading Templates"})

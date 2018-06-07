@@ -4,7 +4,7 @@ package com.intellij.testGuiFramework.impl
 import org.fest.swing.core.Robot
 import org.fest.swing.core.SmartWaitRobot
 
-object GuiRobot {
+object GuiRobotHolder {
   private var myRobot: Robot? = null
   val robot: Robot
     get() {
