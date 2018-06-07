@@ -85,7 +85,7 @@ public class XmlAttributeInsertHandler implements InsertHandler<LookupElement> {
 
       if (!insertQuotes) toInsert = "=";
 
-      if (caretOffset >= document.getTextLength() || "/> \n\t\r".indexOf(document.getCharsSequence().charAt(caretOffset)) < 0) {
+      if (caretOffset < document.getTextLength() && "/> \n\t\r".indexOf(document.getCharsSequence().charAt(caretOffset)) < 0) {
         document.insertString(caretOffset, toInsert + " ");
       }
       else {
