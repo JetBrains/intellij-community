@@ -44,56 +44,12 @@ import java.util.*;
 import java.util.List;
 
 public class TouchBarsManager {
-  private final static boolean IS_LOGGING_ENABLED = false;
   private static final Logger LOG = Logger.getInstance(TouchBarsManager.class);
   private static final ArrayDeque<BarContainer> ourTouchBarStack = new ArrayDeque<>();
   private static final TouchBarHolder ourTouchBarHolder = new TouchBarHolder();
   private static long ourCurrentKeyMask;
 
   private static final Map<Project, ProjectData> ourProjectData = new HashMap<>(); // NOTE: probably it is better to use api of UserDataHolder
-
-  public static void attachEditorBar(EditorEx editor) {
-    if (!isTouchBarAvailable())
-      return;
-
-    final Project proj = editor.getProject();
-    if (proj == null)
-      return;
-
-    editor.addFocusListener(new FocusChangeListener() {
-      @Override
-      public void focusGained(Editor editor) {
-        _elevateTouchBar(_getProjData(proj).get(BarType.DEFAULT));
-      }
-      @Override
-      public void focusLost(Editor editor) {}
-    });
-  }
-
-  public static void attachPopupBar(@NotNull ListPopupImpl listPopup) {
-    if (!isTouchBarAvailable())
-      return;
-
-    listPopup.addPopupListener(new JBPopupListener() {
-        private TouchBar myPopupBar = _createScrubberBarFromPopup(listPopup);
-        @Override
-        public void beforeShown(LightweightWindowEvent event) {
-          _showTempTouchBar(myPopupBar, BarType.POPUP);
-        }
-        @Override
-        public void onClosed(LightweightWindowEvent event) {
-          closeTouchBar(myPopupBar, true);
-          myPopupBar = null;
-        }
-      }
-    );
-  }
-
-  public static TouchBar showDlgButtonsBar(List<JButton> jbuttons, Project project) {
-    final TouchBar tb = _createButtonsBar(jbuttons, project);
-    _showTempTouchBar(tb, BarType.DIALOG);
-    return tb;
-  }
 
   public static void initialize() {
     if (!isTouchBarAvailable())
@@ -102,7 +58,7 @@ public class TouchBarsManager {
     ApplicationManager.getApplication().getMessageBus().connect().subscribe(ProjectManager.TOPIC, new ProjectManagerListener() {
       @Override
       public void projectOpened(Project project) {
-        trace("opened project %s, set default touchbar", project);
+        // System.out.println("opened project " + project + ", set default touchbar");
 
         final ProjectData pd = _getProjData(project);
         showTouchBar(pd.get(BarType.DEFAULT));
@@ -153,7 +109,7 @@ public class TouchBarsManager {
       }
       @Override
       public void projectClosed(Project project) {
-        trace("closed project %s, hide touchbar", project);
+        // System.out.println("closed project " + project + ", hide touchbar");
         final ProjectData pd = _getProjData(project);
         closeTouchBar(pd.get(BarType.DEFAULT));
         pd.releaseAll();
@@ -173,6 +129,37 @@ public class TouchBarsManager {
   }
 
   public static boolean isTouchBarAvailable() { return NST.isAvailable(); }
+
+  synchronized public static void showTouchBar(BarContainer bar) {
+    if (bar == null)
+      return;
+
+    final BarContainer top = ourTouchBarStack.peek();
+    if (top == bar)
+      return;
+
+    ourTouchBarStack.remove(bar);
+    ourTouchBarStack.push(bar);
+    _setBarContainer(bar);
+  }
+
+  synchronized public static void closeTouchBar(TouchBar tb, boolean doRelease) {
+    if (tb == null)
+      return;
+
+    if (doRelease)
+      tb.release();
+
+    if (ourTouchBarStack.isEmpty())
+      return;
+
+    BarContainer top = ourTouchBarStack.peek();
+    if (top.get() == tb) {
+      ourTouchBarStack.pop();
+      _setBarContainer(ourTouchBarStack.peek());
+    } else
+      ourTouchBarStack.removeIf(bc -> bc.isTemporary() && bc.get() == tb);
+  }
 
   public static void onInputEvent(InputEvent e) {
     if (!isTouchBarAvailable())
@@ -222,6 +209,48 @@ public class TouchBarsManager {
     }
   }
 
+  public static void attachEditorBar(EditorEx editor) {
+    if (!isTouchBarAvailable())
+      return;
+
+    final Project proj = editor.getProject();
+    if (proj == null)
+      return;
+
+    editor.addFocusListener(new FocusChangeListener() {
+      @Override
+      public void focusGained(Editor editor) {
+        _elevateTouchBar(_getProjData(proj).get(BarType.DEFAULT));
+      }
+      @Override
+      public void focusLost(Editor editor) {}
+    });
+  }
+
+  public static void attachPopupBar(@NotNull ListPopupImpl listPopup) {
+    if (!isTouchBarAvailable())
+      return;
+
+    listPopup.addPopupListener(new JBPopupListener() {
+        private TouchBar myPopupBar = _createScrubberBarFromPopup(listPopup);
+        @Override
+        public void beforeShown(LightweightWindowEvent event) {
+          _showTempTouchBar(myPopupBar, BarType.POPUP);
+        }
+        @Override
+        public void onClosed(LightweightWindowEvent event) {
+          closeTouchBar(myPopupBar, true);
+          myPopupBar = null;
+        }
+      }
+    );
+  }
+
+  public static TouchBar showDlgButtonsBar(List<JButton> jbuttons, Project project) {
+    final TouchBar tb = _createButtonsBar(jbuttons, project);
+    _showTempTouchBar(tb, BarType.DIALOG);
+    return tb;
+  }
 
   synchronized public static void showStopRunningBar(TouchBar tb) {
     _showTempTouchBar(tb, BarType.DIALOG);
@@ -273,37 +302,6 @@ public class TouchBarsManager {
     tb.selectVisibleItemsToShow();
     BarContainer container = new BarContainer(type, tb, null);
     showTouchBar(container);
-  }
-
-  synchronized public static void closeTouchBar(TouchBar tb, boolean doRelease) {
-    if (tb == null)
-      return;
-
-    if (doRelease)
-      tb.release();
-
-    if (ourTouchBarStack.isEmpty())
-      return;
-
-    BarContainer top = ourTouchBarStack.peek();
-    if (top.get() == tb) {
-      ourTouchBarStack.pop();
-      _setBarContainer(ourTouchBarStack.peek());
-    } else
-      ourTouchBarStack.removeIf(bc -> bc.isTemporary() && bc.get() == tb);
-  }
-
-  synchronized public static void showTouchBar(BarContainer bar) {
-    if (bar == null)
-      return;
-
-    final BarContainer top = ourTouchBarStack.peek();
-    if (top == bar)
-      return;
-
-    ourTouchBarStack.remove(bar);
-    ourTouchBarStack.push(bar);
-    _setBarContainer(bar);
   }
 
   synchronized private static void _elevateTouchBar(BarContainer bar) {
@@ -382,11 +380,6 @@ public class TouchBarsManager {
         myCurrentBar.onBeforeShow();
       NST.setTouchBar(myCurrentBar);
     }
-  }
-
-  private static void trace(String fmt, Object... args) {
-    if (IS_LOGGING_ENABLED)
-      LOG.trace(String.format(fmt, args));
   }
 
   private static TouchBar _createButtonsBar(List<JButton> jbuttons, Project project) {
