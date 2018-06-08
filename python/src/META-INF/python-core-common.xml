@@ -935,4 +935,10 @@
       <implementation-class>com.jetbrains.python.testing.PyTestLegacyInteropInitializer</implementation-class>
     </component>
   </application-components>
+
+  <project-components>
+    <component>
+      <implementation-class>com.jetbrains.python.sdk.flavors.PipEnvPipFileWatcherComponent</implementation-class>
+    </component>
+  </project-components>
 </idea-plugin>
