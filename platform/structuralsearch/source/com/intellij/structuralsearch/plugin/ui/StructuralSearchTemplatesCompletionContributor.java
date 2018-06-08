@@ -14,13 +14,14 @@ public class StructuralSearchTemplatesCompletionContributor extends CompletionCo
   public void fillCompletionVariants(@NotNull CompletionParameters parameters, @NotNull CompletionResultSet result) {
     if (parameters.getEditor().getUserData(StructuralSearchDialog.STRUCTURAL_SEARCH) == null) return;
     String prefix = TextFieldWithAutoCompletionListProvider.getCompletionPrefix(parameters);
-    CompletionResultSet insensitive = result.caseInsensitive().withPrefixMatcher(new CamelHumpMatcher(prefix));
+    CompletionResultSet insensitive = result.withPrefixMatcher(new CamelHumpMatcher(prefix));
     ConfigurationManager configurationManager = ConfigurationManager.getInstance(parameters.getPosition().getProject());
     for (String configurationName: configurationManager.getAllConfigurationNames()) {
       Configuration configuration = configurationManager.findConfigurationByName(configurationName);
       if (configuration == null) continue;
       LookupElementBuilder element = LookupElementBuilder.create(configuration, configuration.getMatchOptions().getSearchPattern())
                                                          .withLookupString(configurationName)
+                                                         .withCaseSensitivity(false)
                                                          .withPresentableText(configurationName);
       insensitive.addElement(element);
     }
