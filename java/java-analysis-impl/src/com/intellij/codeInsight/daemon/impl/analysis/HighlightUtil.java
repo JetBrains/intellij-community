@@ -59,6 +59,7 @@ import org.jetbrains.annotations.PropertyKey;
 import java.util.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+import java.util.stream.Stream;
 
 public class HighlightUtil extends HighlightUtilBase {
   private static final Logger LOG = Logger.getInstance("#com.intellij.codeInsight.daemon.impl.analysis.HighlightUtil");
@@ -419,40 +420,52 @@ public class HighlightUtil extends HighlightUtilBase {
 
   static HighlightInfo checkVarTypeApplicability(@NotNull PsiVariable variable) {
     PsiTypeElement typeElement = variable.getTypeElement();
-    if (typeElement != null && typeElement.isInferredType() && variable instanceof PsiLocalVariable) {
-      PsiExpression initializer = variable.getInitializer();
-      if (initializer == null) {
-        String message = JavaErrorMessages.message("lvti.no.initializer");
-        return HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).descriptionAndTooltip(message).range(typeElement).create();
-      }
-      if (initializer instanceof PsiFunctionalExpression) {
-        boolean lambda = initializer instanceof PsiLambdaExpression;
-        String message = JavaErrorMessages.message(lambda ? "lvti.lambda" : "lvti.method.ref");
-        return HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).descriptionAndTooltip(message).range(typeElement).create();
-      }
+    if (typeElement != null && typeElement.isInferredType()) {
+      if (variable instanceof PsiLocalVariable) {
+        PsiExpression initializer = variable.getInitializer();
+        if (initializer == null) {
+          String message = JavaErrorMessages.message("lvti.no.initializer");
+          return HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).descriptionAndTooltip(message).range(typeElement).create();
+        }
+        if (initializer instanceof PsiFunctionalExpression) {
+          boolean lambda = initializer instanceof PsiLambdaExpression;
+          String message = JavaErrorMessages.message(lambda ? "lvti.lambda" : "lvti.method.ref");
+          return HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).descriptionAndTooltip(message).range(typeElement).create();
+        }
 
-      PsiElement parent = variable.getParent();
-      if (parent instanceof PsiDeclarationStatement && ((PsiDeclarationStatement)parent).getDeclaredElements().length > 1) {
-        String message = JavaErrorMessages.message("lvti.compound");
-        return HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).descriptionAndTooltip(message).range(variable).create();
-      }
+        PsiElement parent = variable.getParent();
+        if (parent instanceof PsiDeclarationStatement && ((PsiDeclarationStatement)parent).getDeclaredElements().length > 1) {
+          String message = JavaErrorMessages.message("lvti.compound");
+          return HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).descriptionAndTooltip(message).range(variable).create();
+        }
 
-      PsiType lType = variable.getType();
-      if (lType instanceof PsiArrayType && !lType.equals(typeElement.getType())) {
+        if (isArray(variable)) {
+          String message = JavaErrorMessages.message("lvti.array");
+          return HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).descriptionAndTooltip(message).range(typeElement).create();
+        }
+
+        PsiType lType = variable.getType();
+        if (PsiType.NULL.equals(lType)) {
+          String message = JavaErrorMessages.message("lvti.null");
+          return HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).descriptionAndTooltip(message).range(typeElement).create();
+        }
+        if (PsiType.VOID.equals(lType)) {
+          String message = JavaErrorMessages.message("lvti.void");
+          return HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).descriptionAndTooltip(message).range(typeElement).create();
+        }
+      }
+      else if (variable instanceof PsiParameter && variable.getParent() instanceof PsiParameterList && isArray(variable)) {
         String message = JavaErrorMessages.message("lvti.array");
-        return HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).descriptionAndTooltip(message).range(typeElement).create();
-      }
-      if (PsiType.NULL.equals(lType)) {
-        String message = JavaErrorMessages.message("lvti.null");
-        return HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).descriptionAndTooltip(message).range(typeElement).create();
-      }
-      if (PsiType.VOID.equals(lType)) {
-        String message = JavaErrorMessages.message("lvti.void");
         return HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).descriptionAndTooltip(message).range(typeElement).create();
       }
     }
 
     return null;
+  }
+
+  private static boolean isArray(PsiVariable variable) {
+    // Java-style 'var' arrays are prohibited by the parser; for C-style ones, looking for a bracket is enough
+    return Stream.of(variable.getChildren()).anyMatch(e -> PsiUtil.isJavaToken(e, JavaTokenType.LBRACKET));
   }
 
   @Nullable
