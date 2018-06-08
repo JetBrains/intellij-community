@@ -7,12 +7,11 @@ import com.intellij.openapi.vcs.FilePath
 import com.intellij.util.containers.ContainerUtil
 import com.intellij.util.containers.Stack
 import com.intellij.vcs.log.data.index.VcsLogPathsIndex
-import com.intellij.vcs.log.graph.VisibleGraph
+import com.intellij.vcs.log.graph.api.LinearGraph
 import com.intellij.vcs.log.graph.api.LiteLinearGraph
 import com.intellij.vcs.log.graph.api.permanent.PermanentCommitsInfo
-import com.intellij.vcs.log.graph.impl.facade.PermanentGraphImpl
+import com.intellij.vcs.log.graph.api.permanent.PermanentGraphInfo
 import com.intellij.vcs.log.graph.impl.facade.ReachableNodes
-import com.intellij.vcs.log.graph.impl.facade.VisibleGraphImpl
 import com.intellij.vcs.log.graph.utils.BfsUtil
 import com.intellij.vcs.log.graph.utils.DfsUtil
 import com.intellij.vcs.log.graph.utils.LinearGraphUtils
@@ -21,17 +20,17 @@ import gnu.trove.TIntObjectHashMap
 
 internal fun findAncestorRowAffectingFile(commitId: Int,
                                           filePath: FilePath,
-                                          permanentGraph: PermanentGraphImpl<Int>,
-                                          visibleGraph: VisibleGraph<Int>,
+                                          visibleLinearGraph: LinearGraph,
+                                          permanentGraphInfo: PermanentGraphInfo<Int>,
                                           fileNamesData: FileNamesData): Int {
-  val result = Ref<Int>()
+  val resultNodeId = Ref<Int>()
 
-  val commitsInfo = permanentGraph.permanentCommitsInfo
-  val reachableNodes = ReachableNodes(LinearGraphUtils.asLiteLinearGraph(permanentGraph.linearGraph))
+  val commitsInfo = permanentGraphInfo.permanentCommitsInfo
+  val reachableNodes = ReachableNodes(LinearGraphUtils.asLiteLinearGraph(permanentGraphInfo.linearGraph))
   reachableNodes.walk(setOf(commitsInfo.getNodeId(commitId)), true) { currentNode ->
     val id = commitsInfo.getCommitId(currentNode)
     if (fileNamesData.affects(id, filePath)) {
-      result.set(currentNode)
+      resultNodeId.set(currentNode)
       false // stop walk, we have found it
     }
     else {
@@ -39,17 +38,18 @@ internal fun findAncestorRowAffectingFile(commitId: Int,
     }
   }
 
-  if (!result.isNull) {
-    return visibleGraph.getVisibleRowIndex(commitsInfo.getCommitId(result.get()))!!
+  if (!resultNodeId.isNull) {
+    return visibleLinearGraph.getNodeIndex(resultNodeId.get())!!
   }
 
   return -1
 }
 
-internal class FileHistoryRefiner(private val visibleGraph: VisibleGraphImpl<Int>,
+internal class FileHistoryRefiner(private val visibleLinearGraph: LinearGraph,
+                                  permanentGraphInfo: PermanentGraphInfo<Int>,
                                   private val namesData: FileNamesData) : DfsUtil.NodeVisitor {
-  private val permanentCommitsInfo: PermanentCommitsInfo<Int> = visibleGraph.permanentGraph.permanentCommitsInfo
-  private val permanentLinearGraph: LiteLinearGraph = LinearGraphUtils.asLiteLinearGraph(visibleGraph.permanentGraph.linearGraph)
+  private val permanentCommitsInfo: PermanentCommitsInfo<Int> = permanentGraphInfo.permanentCommitsInfo
+  private val permanentLinearGraph: LiteLinearGraph = LinearGraphUtils.asLiteLinearGraph(permanentGraphInfo.linearGraph)
 
   private val paths = Stack<FilePath>()
   private val visibilityBuffer = BitSetFlags(permanentLinearGraph.nodesCount()) // a reusable buffer for bfs
@@ -59,7 +59,7 @@ internal class FileHistoryRefiner(private val visibleGraph: VisibleGraphImpl<Int
   fun refine(row: Int, startPath: FilePath): Boolean {
     if (namesData.hasRenames) {
       paths.push(startPath)
-      DfsUtil.walk(LinearGraphUtils.asLiteLinearGraph(visibleGraph.linearGraph), row, this)
+      DfsUtil.walk(LinearGraphUtils.asLiteLinearGraph(visibleLinearGraph), row, this)
     }
     else {
       pathsForCommits.putAll(namesData.buildPathsMap())
@@ -78,14 +78,14 @@ internal class FileHistoryRefiner(private val visibleGraph: VisibleGraphImpl<Int
   }
 
   override fun enterNode(currentNode: Int, previousNode: Int, down: Boolean) {
-    val currentNodeId = visibleGraph.getNodeId(currentNode)
+    val currentNodeId = visibleLinearGraph.getNodeId(currentNode)
     val currentCommit = permanentCommitsInfo.getCommitId(currentNodeId)
 
     val previousPath = paths.findLast { it != null }!!
     var currentPath: FilePath? = previousPath
 
     if (previousNode != DfsUtil.NextNode.NODE_NOT_FOUND) {
-      val previousNodeId = visibleGraph.getNodeId(previousNode)
+      val previousNodeId = visibleLinearGraph.getNodeId(previousNode)
       val previousCommit = permanentCommitsInfo.getCommitId(previousNodeId)
 
       if (down) {

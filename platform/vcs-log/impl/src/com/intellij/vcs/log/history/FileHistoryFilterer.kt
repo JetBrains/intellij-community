@@ -33,7 +33,7 @@ import com.intellij.vcs.log.graph.GraphCommitImpl
 import com.intellij.vcs.log.graph.PermanentGraph
 import com.intellij.vcs.log.graph.VisibleGraph
 import com.intellij.vcs.log.graph.api.LiteLinearGraph
-import com.intellij.vcs.log.graph.impl.facade.PermanentGraphImpl
+import com.intellij.vcs.log.graph.api.permanent.PermanentGraphInfo
 import com.intellij.vcs.log.graph.impl.facade.VisibleGraphImpl
 import com.intellij.vcs.log.graph.utils.LinearGraphUtils
 import com.intellij.vcs.log.impl.HashImpl
@@ -176,9 +176,15 @@ internal class FileHistoryFilterer(logData: VcsLogData) : VcsLogFilterer {
       var pathsMap: Map<Int, FilePath>? = null
       if (visibleGraph.visibleCommitCount > 0) {
         if (visibleGraph is VisibleGraphImpl<*>) {
-          val row = getCurrentRow(dataPack, visibleGraph, data)
+          val visibleLinearGraph = (visibleGraph as VisibleGraphImpl<Int>).linearGraph
+          val permanentGraphInfo: PermanentGraphInfo<Int> = visibleGraph.permanentGraph
+
+          val hash = hash ?: getHead(dataPack)
+          val row = hash?.let {
+            findAncestorRowAffectingFile(storage.getCommitIndex(it, root), filePath, visibleLinearGraph, permanentGraphInfo, data)
+          } ?: 0
           if (row >= 0) {
-            val refiner = FileHistoryRefiner(visibleGraph as VisibleGraphImpl<Int>, data)
+            val refiner = FileHistoryRefiner(visibleLinearGraph, permanentGraphInfo, data)
             if (refiner.refine(row, filePath)) {
               // creating a vg is the most expensive task, so trying to avoid that when unnecessary
               visibleGraph = vcsLogFilterer.createVisibleGraph(dataPack, sortType, matchingHeads, refiner.pathsForCommits.keys)
@@ -207,20 +213,6 @@ internal class FileHistoryFilterer(logData: VcsLogData) : VcsLogFilterer {
           }
         }
       }
-    }
-
-    private fun getCurrentRow(pack: DataPack,
-                              visibleGraph: VisibleGraph<Int>,
-                              fileIndexData: FileNamesData): Int {
-      val permanentGraph = pack.permanentGraph
-      if (permanentGraph is PermanentGraphImpl<*>) {
-        val hash = hash ?: getHead(pack)
-        if (hash != null) {
-          val commitIndex = storage.getCommitIndex(hash, root)
-          return findAncestorRowAffectingFile(commitIndex, filePath, permanentGraph as PermanentGraphImpl<Int>, visibleGraph, fileIndexData)
-        }
-      }
-      return 0
     }
 
     private fun getHead(pack: DataPack): Hash? {
