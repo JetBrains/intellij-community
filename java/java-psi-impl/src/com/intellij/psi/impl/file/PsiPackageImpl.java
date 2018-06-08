@@ -369,6 +369,12 @@ public class PsiPackageImpl extends PsiPackageBase implements PsiPackage, Querya
     PsiPackageImplementationHelper.getInstance().navigate(this, requestFocus);
   }
 
+  public boolean mayHaveContentInScope(@NotNull GlobalSearchScope scope) {
+    return getDirectories(scope).length > 0 ||
+           getClasses(scope).length > 0 ||
+           ContainerUtil.exists(occursInPackagePrefixes(), scope::contains);
+  }
+
   private class PackageAnnotationValueProvider implements CachedValueProvider<PsiModifierList> {
     @Override
     public Result<PsiModifierList> compute() {

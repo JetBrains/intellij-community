@@ -106,7 +106,7 @@ public class ActionSearchEverywhereContributor implements SearchEverywhereContri
   }
 
   @Override
-  public boolean processSelectedItem(Object selected, int modifiers) {
+  public boolean processSelectedItem(Object selected, int modifiers, String text) {
     selected = ((GotoActionModel.MatchedValue) selected).value;
 
     if (selected instanceof BooleanOptionDescription) {

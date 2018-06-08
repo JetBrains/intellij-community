@@ -8,7 +8,6 @@ import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.EditorFactory;
 import com.intellij.openapi.editor.ex.EditorEx;
-import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.ZipperUpdater;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -72,11 +71,10 @@ public class JsonSchemaVfsListener extends BulkVirtualFileListenerAdapter {
       myUpdater = new ZipperUpdater(200, Alarm.ThreadToUse.POOLED_THREAD, project);
       myService = service;
       myRunnable = () -> {
-        if (DumbService.isDumb(project)) return;
         Collection<VirtualFile> scope = new HashSet<>(myDirtySchemas);
         myDirtySchemas.removeAll(scope);
 
-        Collection<VirtualFile> finalScope = ContainerUtil.filter(scope, file -> myService.isSchemaFile(file));
+        Collection<VirtualFile> finalScope = ContainerUtil.filter(scope, file -> myService.isApplicableToFile(file) && myService.isSchemaFile(file));
         if (finalScope.isEmpty()) return;
         myProject.getMessageBus().syncPublisher(JSON_SCHEMA_CHANGED).run();
 

@@ -17,8 +17,6 @@ import java.util.List;
 //todo generic? #UX-1
 public interface SearchEverywhereContributor<F> {
 
-  String ALL_CONTRIBUTORS_GROUP_ID = SearchEverywhereContributor.class.getSimpleName() + ".All";
-
   ExtensionPointName<SearchEverywhereContributorFactory<?>> EP_NAME = ExtensionPointName.create("com.intellij.searchEverywhereContributor");
 
   @NotNull
@@ -41,11 +39,15 @@ public interface SearchEverywhereContributor<F> {
     return search(pattern, everywhere, filter, progressIndicator, -1).getItems();
   }
 
-  boolean processSelectedItem(Object selected, int modifiers);
+  boolean processSelectedItem(Object selected, int modifiers, String searchText);
 
   ListCellRenderer getElementsRenderer(JList<?> list);
 
   Object getDataForItem(Object element, String dataId);
+
+  default String filterControlSymbols(String pattern) {
+    return pattern;
+  }
 
   static List<SearchEverywhereContributorFactory<?>> getProviders() {
     return Arrays.asList(EP_NAME.getExtensions());

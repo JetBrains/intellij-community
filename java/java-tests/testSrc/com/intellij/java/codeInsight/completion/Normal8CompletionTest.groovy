@@ -375,4 +375,11 @@ class Test88 {
     assert !('finalize' in myFixture.lookupElementStrings)
   }
 
+  void "test do not suggest inaccessible methods"() {
+    myFixture.configureByText 'a.java',
+                              'import java.util.*; class F { { new ArrayList<String>().forEach(O<caret>) }}'
+    myFixture.completeBasic()
+    assert !('finalize' in myFixture.lookupElementStrings)
+  }
+
 }

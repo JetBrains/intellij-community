@@ -429,6 +429,8 @@ public class RunAnythingAction extends AnAction implements CustomComponentAction
       onDone = () -> RunAnythingUtil.executeMatched(dataContext, pattern);
     }
     finally {
+      triggerUsed();
+
       final ActionCallback callback = onPopupFocusLost();
       if (onDone != null) {
         callback.doWhenDone(onDone);
@@ -859,9 +861,7 @@ public class RunAnythingAction extends AnAction implements CustomComponentAction
                    .registerCustomShortcutSet(CustomShortcutSet.fromString("shift TAB"), editor, balloon);
     AnAction escape = ActionManager.getInstance().getAction("EditorEscape");
     DumbAwareAction.create(e -> {
-      if (myIsUsedTrigger) {
-        FeatureUsageTracker.getInstance().triggerFeatureUsed(RUN_ANYTHING);
-      }
+      triggerUsed();
 
       if (myBalloon != null && myBalloon.isVisible()) {
         myBalloon.cancel();
@@ -919,6 +919,13 @@ public class RunAnythingAction extends AnAction implements CustomComponentAction
         e.getPresentation().setEnabled(editor.getCaretPosition() == 0);
       }
     }.registerCustomShortcutSet(CustomShortcutSet.fromString("LEFT"), editor, balloon);
+  }
+
+  private void triggerUsed() {
+    if (myIsUsedTrigger) {
+      FeatureUsageTracker.getInstance().triggerFeatureUsed(RUN_ANYTHING);
+    }
+    myIsUsedTrigger = false;
   }
 
 
@@ -1247,7 +1254,6 @@ public class RunAnythingAction extends AnAction implements CustomComponentAction
                     }
                   }
                   myActionEvent = null;
-                  myIsUsedTrigger = false;
                   myLastInputText = null;
                 });
               }

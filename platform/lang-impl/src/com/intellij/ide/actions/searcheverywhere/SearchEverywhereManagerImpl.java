@@ -28,6 +28,7 @@ import static com.intellij.ide.actions.SearchEverywhereAction.SEARCH_EVERYWHERE_
 
 public class SearchEverywhereManagerImpl implements SearchEverywhereManager {
 
+  public static final String ALL_CONTRIBUTORS_GROUP_ID = "SearchEverywhereContributor.All";
   private static final String LOCATION_SETTINGS_KEY = "search.everywhere.popup";
 
   private final Project myProject;
@@ -66,7 +67,7 @@ public class SearchEverywhereManagerImpl implements SearchEverywhereManager {
       contributorsNames.put(contributor.getSearchProviderId(), contributor.getGroupName());
     });
     Collections.sort(contributors, Comparator.comparingInt(SearchEverywhereContributor::getSortWeight));
-    myContributorFilters.computeIfAbsent(SearchEverywhereContributor.ALL_CONTRIBUTORS_GROUP_ID,
+    myContributorFilters.computeIfAbsent(ALL_CONTRIBUTORS_GROUP_ID,
                                          s -> {
                                            List<String> ids = contributors.stream()
                                                                           .map(contributor -> contributor.getSearchProviderId())
@@ -77,12 +78,17 @@ public class SearchEverywhereManagerImpl implements SearchEverywhereManager {
 
     mySearchEverywhereUI = createView(myProject, serviceContributors, contributors, myContributorFilters);
     mySearchEverywhereUI.switchToContributor(selectedContributorID);
+
+    myHistoryIterator = myHistoryList.getIterator(selectedContributorID);
+    if (searchText == null && !ALL_CONTRIBUTORS_GROUP_ID.equals(selectedContributorID)) {
+      searchText = myHistoryIterator.prev();
+    }
+
     if (searchText != null && !searchText.isEmpty()) {
       mySearchEverywhereUI.getSearchField().setText(searchText);
       mySearchEverywhereUI.getSearchField().selectAll();
     }
 
-    myHistoryIterator = myHistoryList.getIterator(selectedContributorID);
     myBalloon = JBPopupFactory.getInstance().createComponentPopupBuilder(mySearchEverywhereUI, mySearchEverywhereUI.getSearchField())
                               .setProject(myProject)
                               .setResizable(false)
@@ -253,7 +259,7 @@ public class SearchEverywhereManagerImpl implements SearchEverywhereManager {
     }
 
     public void saveText(String text, String contributorID) {
-      String lastHistoryItem = lastSearchForContributor(contributorID);
+      String lastHistoryItem = getLastSearchForContributor(contributorID);
       if (text.equals(lastHistoryItem)) {
         return;
       }
@@ -269,12 +275,12 @@ public class SearchEverywhereManagerImpl implements SearchEverywhereManager {
       }
     }
 
-    private String lastSearchForContributor(String contributorID) {
+    private String getLastSearchForContributor(String contributorID) {
       if (historyList.isEmpty()) {
         return null;
       }
 
-      if (SearchEverywhereContributor.ALL_CONTRIBUTORS_GROUP_ID.equals(contributorID)) {
+      if (ALL_CONTRIBUTORS_GROUP_ID.equals(contributorID)) {
         return historyList.get(historyList.size() - 1).getSearchText();
       } else {
         return Lists.reverse(historyList)
@@ -287,7 +293,7 @@ public class SearchEverywhereManagerImpl implements SearchEverywhereManager {
     }
 
     private List<String> getHistoryForContributor(String contributorID) {
-      if (SearchEverywhereContributor.ALL_CONTRIBUTORS_GROUP_ID.equals(contributorID)) {
+      if (ALL_CONTRIBUTORS_GROUP_ID.equals(contributorID)) {
         List<String> res = filteredHistory(item -> true);
         int size = res.size();
         return size > HISTORY_LIMIT ? res.subList(size - HISTORY_LIMIT, size) : res;

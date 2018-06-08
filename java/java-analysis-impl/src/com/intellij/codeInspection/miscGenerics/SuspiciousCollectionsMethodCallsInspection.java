@@ -13,7 +13,6 @@ import com.intellij.psi.*;
 import com.intellij.psi.util.MethodSignature;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.ObjectUtils;
-import com.intellij.util.containers.IntArrayList;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -41,17 +40,14 @@ public class SuspiciousCollectionsMethodCallsInspection extends AbstractBaseJava
   @Override
   @NotNull
   public PsiElementVisitor buildVisitor(@NotNull final ProblemsHolder holder, final boolean isOnTheFly) {
-    final List<PsiMethod> patternMethods = new ArrayList<>();
-    final IntArrayList typeParamIndices = new IntArrayList();
-    final IntArrayList argIndices = new IntArrayList();
+    final List<SuspiciousMethodCallUtil.PatternMethod> patternMethods = new ArrayList<>();
     return new JavaElementVisitor() {
       @Override
       public void visitMethodCallExpression(PsiMethodCallExpression methodCall) {
         final PsiExpression[] args = methodCall.getArgumentList().getExpressions();
         if (args.length < 1) return;
         for (int idx = 0; idx < Math.min(2, args.length); idx ++) {
-          String message = getSuspiciousMethodCallMessage(methodCall, REPORT_CONVERTIBLE_METHOD_CALLS,
-                                                          patternMethods, typeParamIndices, argIndices, args[idx], idx);
+          String message = getSuspiciousMethodCallMessage(methodCall, REPORT_CONVERTIBLE_METHOD_CALLS, patternMethods, args[idx], idx);
           if (message != null) {
             holder.registerProblem(methodCall.getArgumentList().getExpressions()[idx], message);
           }
@@ -66,7 +62,7 @@ public class SuspiciousCollectionsMethodCallsInspection extends AbstractBaseJava
         if (interfaceMethod != null && interfaceMethod.getParameterList().getParametersCount() == 1) {
           final PsiSubstitutor psiSubstitutor = LambdaUtil.getSubstitutor(interfaceMethod, functionalInterfaceResolveResult);
           final MethodSignature signature = interfaceMethod.getSignature(psiSubstitutor);
-          String message = SuspiciousMethodCallUtil.getSuspiciousMethodCallMessage(expression, signature.getParameterTypes()[0], REPORT_CONVERTIBLE_METHOD_CALLS, patternMethods, typeParamIndices, argIndices, 0);
+          String message = SuspiciousMethodCallUtil.getSuspiciousMethodCallMessage(expression, signature.getParameterTypes()[0], REPORT_CONVERTIBLE_METHOD_CALLS, patternMethods, 0);
           if (message != null) {
             holder.registerProblem(ObjectUtils.notNull(expression.getReferenceNameElement(), expression), message);
           }
@@ -95,20 +91,18 @@ public class SuspiciousCollectionsMethodCallsInspection extends AbstractBaseJava
 
   private static String getSuspiciousMethodCallMessage(PsiMethodCallExpression methodCall,
                                                        boolean reportConvertibleMethodCalls,
-                                                       List<PsiMethod> patternMethods,
-                                                       IntArrayList typeParamIndices,
-                                                       IntArrayList argIndices,
-                                                       PsiExpression arg, 
+                                                       List<SuspiciousMethodCallUtil.PatternMethod> patternMethods,
+                                                       PsiExpression arg,
                                                        int i) {
     PsiType argType = arg.getType();
     boolean exactType = arg instanceof PsiNewExpression;
     final String plainMessage = SuspiciousMethodCallUtil
-      .getSuspiciousMethodCallMessage(methodCall, arg, argType, exactType || reportConvertibleMethodCalls, patternMethods, typeParamIndices, argIndices, i);
+      .getSuspiciousMethodCallMessage(methodCall, arg, argType, exactType || reportConvertibleMethodCalls, patternMethods, i);
     if (plainMessage != null && !exactType) {
       TypeConstraint constraint = CommonDataflow.getExpressionFact(arg, DfaFactType.TYPE_CONSTRAINT);
       if (constraint != null) {
         PsiType type = constraint.getPsiType();
-        if (type != null && SuspiciousMethodCallUtil.getSuspiciousMethodCallMessage(methodCall, arg, type, reportConvertibleMethodCalls, patternMethods, typeParamIndices, argIndices, i) == null) {
+        if (type != null && SuspiciousMethodCallUtil.getSuspiciousMethodCallMessage(methodCall, arg, type, reportConvertibleMethodCalls, patternMethods, i) == null) {
           return null;
         }
       }

@@ -102,7 +102,7 @@ public class TopHitSEContributor implements SearchEverywhereContributor<Void> {
   }
 
   @Override
-  public boolean processSelectedItem(Object selected, int modifiers) {
+  public boolean processSelectedItem(Object selected, int modifiers, String text) {
     if (selected instanceof BooleanOptionDescription) {
       final BooleanOptionDescription option = (BooleanOptionDescription) selected;
       option.setOptionState(!option.isOptionEnabled());

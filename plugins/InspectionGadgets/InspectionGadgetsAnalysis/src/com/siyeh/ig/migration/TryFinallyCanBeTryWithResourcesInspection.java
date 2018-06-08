@@ -113,25 +113,32 @@ public class TryFinallyCanBeTryWithResourcesInspection extends BaseInspection {
         PsiLocalVariable variable = locals.get(0);
         PsiStatement declaration = PsiTreeUtil.getParentOfType(variable, PsiStatement.class);
         if (declaration == null) return;
+        if (declaration.getParent() != tryStatement.getParent()) return;
         List<PsiStatement> statements = collectStatementsBetween(declaration, tryStatement);
         PsiJavaToken lBrace = tryBlock.getLBrace();
         if (lBrace != null) {
           for (int i = statements.size() - 1; i >= 0; i--) {
             PsiStatement statement = statements.get(i);
             tryBlock.addAfter(statement, lBrace);
-            statement.delete();
+            if (statement.isValid()) {
+              statement.delete();
+            }
           }
         }
       }
-      restoreStatements(tryStatement, tryBlock, context);
+      restoreStatementsBeforeLastVariableInTryResource(tryStatement, tryBlock, context);
 
 
       for (PsiStatement statement : context.myStatementsToDelete) {
-        new CommentTracker().deleteAndRestoreComments(statement);
+        if (statement.isValid()) {
+          new CommentTracker().deleteAndRestoreComments(statement);
+        }
       }
       for (ResourceVariable variable : context.myResourceVariables) {
         if (!variable.myUsedOutsideTry) {
-          new CommentTracker().deleteAndRestoreComments(variable.myVariable);
+          if (variable.myVariable.isValid()) {
+            new CommentTracker().deleteAndRestoreComments(variable.myVariable);
+          }
         }
       }
       sb.append(tryBlock.getText());
@@ -154,9 +161,9 @@ public class TryFinallyCanBeTryWithResourcesInspection extends BaseInspection {
     }
 
 
-    private static void restoreStatements(PsiTryStatement tryStatement,
-                                          PsiCodeBlock tryBlock,
-                                          Context context) {
+    private static void restoreStatementsBeforeLastVariableInTryResource(PsiTryStatement tryStatement,
+                                                                         PsiCodeBlock tryBlock,
+                                                                         Context context) {
       Optional<PsiExpression> lastInTryVariable = StreamEx.of(context.myResourceVariables)
                                                           .map(v -> v.myInitializer)
                                                           .filter(e -> e != null && PsiTreeUtil.isAncestor(tryBlock, e, false))
@@ -216,7 +223,6 @@ public class TryFinallyCanBeTryWithResourcesInspection extends BaseInspection {
       if (finallyBlock == null) return null;
       PsiCodeBlock tryBlock = tryStatement.getTryBlock();
       if (tryBlock == null) return null;
-      //if (tryStatement.getResourceList() != null) return null;
       PsiStatement[] tryStatements = tryBlock.getStatements();
       PsiStatement[] finallyStatements = finallyBlock.getStatements();
       BitSet closedVariableStatementIndices = new BitSet(finallyStatements.length);

@@ -89,8 +89,6 @@ internal class MigLayoutBuilder(val spacing: SpacingConfiguration, val isUseMagi
     lc.isVisualPadding = spacing.isCompensateVisualPaddings
     lc.hideMode = 3
 
-    configureGapBetweenColumns()
-
     // if constraint specified only for rows 0 and 1, MigLayout will use constraint 1 for any rows with index 1+ (see LayoutUtil.getIndexSafe - use last element if index > size)
     val rowConstraints = AC()
     rowConstraints.align(if (isUseMagic) "baseline" else "top")
@@ -172,6 +170,7 @@ internal class MigLayoutBuilder(val spacing: SpacingConfiguration, val isUseMagi
     }
 
     rootRow.subRows?.let {
+      configureGapBetweenColumns(it)
       processRows(it)
     }
 
@@ -179,9 +178,9 @@ internal class MigLayoutBuilder(val spacing: SpacingConfiguration, val isUseMagi
     componentConstraints.clear()
   }
 
-  private fun configureGapBetweenColumns() {
+  private fun configureGapBetweenColumns(subRows: List<MigLayoutRow>) {
     var startColumnIndexToApplyHorizontalGap = 0
-    if (rootRow.subRows!!.any { it.isLabeledIncludingSubRows }) {
+    if (subRows.any { it.isLabeledIncludingSubRows }) {
       // using columnConstraints instead of component gap allows easy debug (proper painting of debug grid)
       columnConstraints.gap("${spacing.labelColumnHorizontalGap}px!", 0)
       columnConstraints.grow(0f, 0)
