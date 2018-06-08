@@ -2,17 +2,21 @@
 package com.intellij.structuralsearch.plugin.ui;
 
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
+import com.intellij.codeInsight.template.impl.TemplateEditorUtil;
 import com.intellij.find.FindBundle;
 import com.intellij.find.FindSettings;
+import com.intellij.icons.AllIcons;
 import com.intellij.ide.IdeBundle;
 import com.intellij.ide.util.scopeChooser.ScopeChooserCombo;
 import com.intellij.lang.Language;
+import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.actionSystem.impl.ActionToolbarImpl;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.editor.EditorFactory;
 import com.intellij.openapi.editor.SelectionModel;
 import com.intellij.openapi.editor.event.DocumentEvent;
 import com.intellij.openapi.editor.event.DocumentListener;
@@ -26,9 +30,6 @@ import com.intellij.openapi.ui.ComboBox;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.TextRange;
-import com.intellij.openapi.wm.ToolWindow;
-import com.intellij.openapi.wm.ToolWindowId;
-import com.intellij.openapi.wm.ToolWindowManager;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
@@ -38,28 +39,33 @@ import com.intellij.psi.search.SearchScope;
 import com.intellij.structuralsearch.*;
 import com.intellij.structuralsearch.impl.matcher.compiler.PatternCompiler;
 import com.intellij.structuralsearch.plugin.StructuralSearchPlugin;
-import com.intellij.ui.IdeBorderFactory;
-import com.intellij.ui.TitledSeparator;
+import com.intellij.ui.EditorTextField;
 import com.intellij.util.Alarm;
-import com.intellij.util.ui.JBUI;
+import com.intellij.util.ObjectUtils;
+import com.intellij.util.SmartList;
+import com.intellij.util.ui.LafIconLookup;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
-import java.awt.event.ActionEvent;
 import java.awt.event.ItemEvent;
 import java.awt.event.ItemListener;
-import java.util.*;
+import java.beans.PropertyChangeEvent;
+import java.beans.PropertyChangeListener;
+import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 
 /**
  *  Class to show the user the request for search
  */
-public class SearchDialog extends DialogWrapper {
+public class StructuralSearchDialog extends DialogWrapper {
   protected SearchContext searchContext;
 
   // text for search
-  protected Editor searchCriteriaEdit;
+  protected EditorTextField searchCriteriaEdit;
 
   // options of search scope
   private ScopeChooserCombo myScopeChooserCombo;
@@ -69,8 +75,6 @@ public class SearchDialog extends DialogWrapper {
 
   private FileTypeSelector fileTypes;
   private JComboBox<String> contexts;
-  private JLabel status;
-  private JLabel statusText;
 
   protected Configuration myConfiguration;
   private JCheckBox openInNewTab;
@@ -89,14 +93,13 @@ public class SearchDialog extends DialogWrapper {
 
   private String mySavedEditorText;
   private JPanel myContentPanel;
-  private JComponent myEditorPanel;
-  private JButton myEditVariablesButton;
+  private boolean myFilterEnabled = false;
 
-  public SearchDialog(SearchContext searchContext) {
+  public StructuralSearchDialog(SearchContext searchContext) {
     this(searchContext, true, true);
   }
 
-  public SearchDialog(SearchContext searchContext, boolean showScope, boolean runFindActionOnClose) {
+  public StructuralSearchDialog(SearchContext searchContext, boolean showScope, boolean runFindActionOnClose) {
     super(searchContext.getProject(), true);
 
     if (showScope) setModal(false);
@@ -130,37 +133,23 @@ public class SearchDialog extends DialogWrapper {
     initiateValidation();
   }
 
-  protected Editor createEditor(final SearchContext searchContext, String text) {
-    Editor editor = null;
+  protected EditorTextField createEditor(final SearchContext searchContext, String text) {
+    final FileTypeInfo info = fileTypes.getSelectedItem();
+    assert info != null;
+    final FileType fileType = info.getFileType();
+    final Language dialect = info.getDialect();
 
-    if (fileTypes != null) {
-      final FileTypeInfo info = fileTypes.getSelectedItem();
-      if (info != null) {
-        final FileType fileType = info.getFileType();
-        final Language dialect = info.getDialect();
-
-        final StructuralSearchProfile profile = StructuralSearchUtil.getProfileByFileType(fileType);
-        if (profile != null) {
-          editor = profile.createEditor(searchContext.getProject(), fileType, dialect, text);
-        }
-      }
-    }
-
-    if (editor == null) {
-      final EditorFactory factory = EditorFactory.getInstance();
-      final Document document = factory.createDocument("");
-      editor = factory.createEditor(document, searchContext.getProject());
-      editor.getSettings().setFoldingOutlineShown(false);
-    }
-
-    editor.getDocument().addDocumentListener(new DocumentListener() {
+    final StructuralSearchProfile profile = StructuralSearchUtil.getProfileByFileType(fileType);
+    assert profile != null;
+    final Document document = profile.createDocument(searchContext.getProject(), fileType, dialect, text);
+    document.addDocumentListener(new DocumentListener() {
       @Override
       public void documentChanged(final DocumentEvent event) {
         initiateValidation();
       }
     });
 
-    return editor;
+    return new EditorTextField(document, searchContext.getProject(), fileType);
   }
 
   void initiateValidation() {
@@ -170,7 +159,7 @@ public class SearchDialog extends DialogWrapper {
         final boolean valid = isValid();
         final boolean compiled = isCompiled();
         ApplicationManager.getApplication().invokeLater(() -> {
-          myEditVariablesButton.setEnabled(compiled);
+          myFilterEnabled = compiled;
           getOKAction().setEnabled(valid);
         });
       }
@@ -178,7 +167,7 @@ public class SearchDialog extends DialogWrapper {
         throw e;
       }
       catch (RuntimeException e) {
-        Logger.getInstance(SearchDialog.class).error(e);
+        Logger.getInstance(StructuralSearchDialog.class).error(e);
       }
     }, 250);
   }
@@ -191,62 +180,35 @@ public class SearchDialog extends DialogWrapper {
     }
   }
 
-  protected void buildOptions(JPanel searchOptions) {
-    recursiveMatching = new JCheckBox(SSRBundle.message("recursive.matching.checkbox"), true);
-    if (isRecursiveSearchEnabled()) {
-      searchOptions.add(UIUtil.createOptionLine(recursiveMatching));
-    }
-
-    caseSensitiveMatch = new JCheckBox(FindBundle.message("find.options.case.sensitive"), true);
-    searchOptions.add(UIUtil.createOptionLine(caseSensitiveMatch));
-
-    final List<FileType> types = new ArrayList<>();
-
-    for (FileType fileType : StructuralSearchUtil.getSuitableFileTypes()) {
-      if (StructuralSearchUtil.getProfileByFileType(fileType) != null) {
-        types.add(fileType);
-      }
-    }
-    Collections.sort(types, (o1, o2) -> o1.getName().compareToIgnoreCase(o2.getName()));
-
-    fileTypes = new FileTypeSelector(types);
-    contexts = new ComboBox<>(60);
-
-    final JLabel jLabel = new JLabel(SSRBundle.message("search.dialog.file.type.label"));
-    final JLabel jLabel2 = new JLabel(SSRBundle.message("search.dialog.context.label"));
-    searchOptions.add(UIUtil.createOptionLine(jLabel, fileTypes, jLabel2, contexts));
-
-    jLabel.setLabelFor(fileTypes);
-    jLabel2.setLabelFor(contexts);
-
-    detectFileTypeAndDialect();
-
-    fileTypes.setSelectedItem(ourFtSearchVariant, ourDialect);
-    fileTypes.addItemListener(new ItemListener() {
-      @Override
-      public void itemStateChanged(ItemEvent e) {
-        if (e.getStateChange() == ItemEvent.SELECTED) {
-          updateContexts();
-          updateEditor();
-          initiateValidation();
-        }
-      }
-    });
-    contexts.setSelectedItem(ourContext);
-
-    updateContexts();
-  }
-
   void updateEditor() {
     if (myContentPanel != null) {
-      if (myEditorPanel != null) {
-        myContentPanel.remove(myEditorPanel);
+      if (searchCriteriaEdit != null) {
+        mySavedEditorText = searchCriteriaEdit.getText();
+        myContentPanel.remove(searchCriteriaEdit);
       }
-      disposeEditorContent();
-      myEditorPanel = createEditorContent();
-      myContentPanel.add(myEditorPanel, BorderLayout.CENTER);
+      searchCriteriaEdit = createEditor(searchContext, mySavedEditorText != null ? mySavedEditorText : "");
+      myContentPanel.add(searchCriteriaEdit, BorderLayout.CENTER);
       myContentPanel.revalidate();
-      searchCriteriaEdit.putUserData(SubstitutionShortInfoHandler.CURRENT_CONFIGURATION_KEY, myConfiguration);
+      final StructuralSearchProfile profile = StructuralSearchUtil.getProfileByFileType(ourFtSearchVariant);
+      assert profile != null;
+
+      searchCriteriaEdit.addPropertyChangeListener(new PropertyChangeListener() {
+        @Override
+        public void propertyChange(PropertyChangeEvent evt) {
+          final Editor editor = searchCriteriaEdit.getEditor();
+          if (editor == null) return;
+          TemplateEditorUtil.setHighlighter(editor, profile.getTemplateContextType());
+          SubstitutionShortInfoHandler.install(editor);
+          editor.putUserData(SubstitutionShortInfoHandler.CURRENT_CONFIGURATION_KEY, myConfiguration);
+          final Project project = searchContext.getProject();
+          PsiFile psiFile = PsiDocumentManager.getInstance(project).getPsiFile(searchCriteriaEdit.getDocument());
+          if (psiFile != null) {
+            DaemonCodeAnalyzer.getInstance(project).setHighlightingEnabled(psiFile, false);
+          }
+          searchCriteriaEdit.removePropertyChangeListener(this);
+        }
+      });
+
     }
   }
 
@@ -313,10 +275,15 @@ public class SearchDialog extends DialogWrapper {
 
   public void setValuesFromConfig(Configuration configuration) {
     myConfiguration = createConfiguration(configuration);
-    setDialogTitle(myConfiguration);
     final MatchOptions matchOptions = myConfiguration.getMatchOptions();
 
-    UIUtil.setContent(searchCriteriaEdit, matchOptions.getSearchPattern());
+    //UIUtil.setContent(searchCriteriaEdit.getEditor(), matchOptions.getSearchPattern());
+    final Document document = searchCriteriaEdit.getDocument();
+    CommandProcessor.getInstance().executeCommand(searchContext.getProject(), () -> {
+      ApplicationManager.getApplication().runWriteAction(() -> {
+        document.replaceString(0, document.getTextLength(), matchOptions.getSearchPattern());
+      });
+    }, null, null);
 
     recursiveMatching.setSelected(isRecursiveSearchEnabled() && matchOptions.isRecursiveSearch());
     caseSensitiveMatch.setSelected(matchOptions.isCaseSensitiveMatch());
@@ -325,11 +292,10 @@ public class SearchDialog extends DialogWrapper {
     if (matchOptions.getPatternContext() != null) {
       contexts.setSelectedItem(matchOptions.getPatternContext());
     }
-    searchCriteriaEdit.putUserData(SubstitutionShortInfoHandler.CURRENT_CONFIGURATION_KEY, myConfiguration);
-  }
-
-  void setDialogTitle(final Configuration configuration) {
-    setTitle(getDefaultTitle() + " - " + configuration.getName());
+    final Editor editor = searchCriteriaEdit.getEditor();
+    if (editor != null) {
+      editor.putUserData(SubstitutionShortInfoHandler.CURRENT_CONFIGURATION_KEY, myConfiguration);
+    }
   }
 
   public Configuration createConfiguration(Configuration template) {
@@ -340,11 +306,11 @@ public class SearchDialog extends DialogWrapper {
     setTextForEditor(text, searchCriteriaEdit);
   }
 
-  protected final void setTextForEditor(final String selection, Editor editor) {
+  protected final void setTextForEditor(final String selection, EditorTextField editor) {
+    editor.setText(selection);
+    editor.selectAll();
     final Project project = searchContext.getProject();
-    UIUtil.setContent(editor, selection);
     final Document document = editor.getDocument();
-    editor.getSelectionModel().setSelection(0, document.getTextLength());
     final PsiDocumentManager documentManager = PsiDocumentManager.getInstance(project);
     documentManager.commitDocument(document);
     final PsiFile file = documentManager.getPsiFile(document);
@@ -363,50 +329,13 @@ public class SearchDialog extends DialogWrapper {
     return SSRBundle.message("structural.search.title");
   }
 
-  protected JComponent createEditorContent() {
-    final JPanel result = new JPanel(new BorderLayout());
-
-    searchCriteriaEdit = createEditor(searchContext, mySavedEditorText != null ? mySavedEditorText : "");
-    result.add(BorderLayout.CENTER, searchCriteriaEdit.getComponent());
-    result.setMinimumSize(new Dimension(150, 100));
-
-    final JPanel labelPanel = new JPanel(new FlowLayout(FlowLayout.LEFT, 2, 0));
-    labelPanel.add(new JLabel(SSRBundle.message("search.template")));
-
-    labelPanel.add(UIUtil.createCompleteMatchInfo(() -> myConfiguration));
-    result.add(BorderLayout.NORTH, labelPanel);
-
-    return result;
-  }
-
-  protected int getRowsCount() {
-    return 4;
-  }
-
   @Override
   protected JComponent createCenterPanel() {
     myContentPanel = new JPanel(new BorderLayout());
-    myEditorPanel = createEditorContent();
-    myContentPanel.add(BorderLayout.CENTER, myEditorPanel);
-    myContentPanel.add(BorderLayout.SOUTH, Box.createVerticalStrut(8));
-    JComponent centerPanel = new JPanel(new BorderLayout());
-    {
-      JPanel panel = new JPanel(new BorderLayout());
-      panel.add(BorderLayout.CENTER, myContentPanel);
-      panel.add(BorderLayout.SOUTH, createTemplateManagementButtons());
-      centerPanel.add(BorderLayout.CENTER, panel);
-    }
+    searchCriteriaEdit = createEditor(searchContext, mySavedEditorText != null ? mySavedEditorText : "");
+    myContentPanel.add(BorderLayout.CENTER, searchCriteriaEdit);
 
-    JPanel optionsContent = new JPanel(new BorderLayout());
-    centerPanel.add(BorderLayout.SOUTH, optionsContent);
-
-    JPanel searchOptions = new JPanel();
-    searchOptions.setLayout(new GridLayout(getRowsCount(), 1, 0, 0));
-    searchOptions.setBorder(IdeBorderFactory.createTitledBorder(SSRBundle.message("ssdialog.options.group.border"),
-                                                                true));
-
-    JPanel allOptions = new JPanel(new BorderLayout());
-    if (myShowScopePanel) {
+    if (myShowScopePanel) { // todo remove me
       myScopeChooserCombo = new ScopeChooserCombo(
         searchContext.getProject(),
         true,
@@ -414,168 +343,172 @@ public class SearchDialog extends DialogWrapper {
         FindSettings.getInstance().getDefaultScopeName()
       );
       Disposer.register(myDisposable, myScopeChooserCombo);
-      JPanel scopePanel = new JPanel(new GridBagLayout());
-
-      TitledSeparator separator = new TitledSeparator(SSRBundle.message("search.dialog.scope.label"), myScopeChooserCombo.getComboBox());
-      scopePanel.add(separator, new GridBagConstraints(0, 0, 1, 1, 1, 1, GridBagConstraints.WEST, GridBagConstraints.HORIZONTAL,
-                                                       JBUI.insetsTop(5), 0, 0));
-
-      scopePanel.add(myScopeChooserCombo, new GridBagConstraints(0, 1, 1, 1, 1, 1, GridBagConstraints.WEST, GridBagConstraints.HORIZONTAL,
-                                                                 JBUI.insetsLeft(10), 0, 0));
-
-      allOptions.add(
-        scopePanel,
-        BorderLayout.SOUTH
-      );
-
-      myScopeChooserCombo.getComboBox().addItemListener(new ItemListener() {
-        @Override
-        public void itemStateChanged(ItemEvent e) {
-          initiateValidation();
-        }
-      });
+      myScopeChooserCombo.getComboBox().addItemListener(e -> initiateValidation());
     }
     else {
       myScopeChooserCombo = null;
     }
 
-
-    buildOptions(searchOptions);
-
-    allOptions.add(searchOptions, BorderLayout.CENTER);
-    optionsContent.add(allOptions, BorderLayout.CENTER);
-
-    if (myRunFindActionOnClose) {
-      JPanel panel = new JPanel(new BorderLayout());
-      panel.setBorder(BorderFactory.createEmptyBorder(0, 4, 0, 0));
-      openInNewTab = new JCheckBox(FindBundle.message("find.open.in.new.tab.checkbox"));
-      openInNewTab.setSelected(FindSettings.getInstance().isShowResultsInSeparateView());
-      ToolWindow findWindow = ToolWindowManager.getInstance(searchContext.getProject()).getToolWindow(ToolWindowId.FIND);
-      openInNewTab.setEnabled(findWindow != null && findWindow.isAvailable());
-      panel.add(openInNewTab, BorderLayout.EAST);
-
-      optionsContent.add(BorderLayout.SOUTH, panel);
-    }
+    JPanel scopePanel = new ScopePanel();
+    myContentPanel.add(BorderLayout.SOUTH, scopePanel);
 
     updateEditor();
-    return centerPanel;
+    return myContentPanel;
   }
 
-
+  @Nullable
   @Override
-  protected JComponent createSouthPanel() {
-    final JPanel statusPanel = new JPanel(new BorderLayout(5, 0));
-    statusPanel.add(super.createSouthPanel(), BorderLayout.NORTH);
-    statusPanel.add(statusText = new JLabel(SSRBundle.message("status.message")), BorderLayout.WEST);
-    statusPanel.add(status = new JLabel(), BorderLayout.CENTER);
-    status.setMinimumSize(new Dimension(0, 0));
-    return statusPanel;
-  }
-
-  private JPanel createTemplateManagementButtons() {
-    JPanel panel = new JPanel(null);
-    panel.setLayout(new BoxLayout(panel, BoxLayout.X_AXIS));
-    panel.add(Box.createHorizontalGlue());
-
-    panel.add(
-      createJButtonForAction(new AbstractAction() {
-        {
-          putValue(NAME, SSRBundle.message("save.template.text.button"));
+  protected JComponent createNorthPanel() {
+    final DefaultActionGroup historyActionGroup = new DefaultActionGroup(new AnAction(getShowHistoryIcon()) {
+      @Override
+      public void actionPerformed(AnActionEvent e) {
+        SelectTemplateDialog dialog = new SelectTemplateDialog(searchContext.getProject(), true, isReplaceDialog());
+        if (!dialog.showAndGet()) {
+          return;
         }
+        Configuration[] configurations = dialog.getSelectedConfigurations();
+        if (configurations.length == 1) {
+          setSearchPattern(configurations[0]);
+          initiateValidation();
+        }
+      }
+    });
+    ActionToolbarImpl historyToolbar =
+      (ActionToolbarImpl)ActionManager.getInstance().createActionToolbar(ActionPlaces.EDITOR_TOOLBAR, historyActionGroup, true);
+    historyToolbar.setLayoutPolicy(ActionToolbar.NOWRAP_LAYOUT_POLICY);
+    final JLabel label = new JLabel(SSRBundle.message("search.template"));
+    UIUtil.installCompleteMatchInfo(label, () -> myConfiguration);
+
+    recursiveMatching = new JCheckBox(SSRBundle.message("recursive.matching.checkbox"), true);
+    recursiveMatching.setVisible(isRecursiveSearchEnabled());
+    caseSensitiveMatch = new JCheckBox(FindBundle.message("find.popup.case.sensitive"), true);
+    final List<FileType> types = new ArrayList<>();
+    for (FileType fileType : StructuralSearchUtil.getSuitableFileTypes()) {
+      if (StructuralSearchUtil.getProfileByFileType(fileType) != null) {
+        types.add(fileType);
+      }
+    }
+    Collections.sort(types, (o1, o2) -> o1.getName().compareToIgnoreCase(o2.getName()));
+    fileTypes = new FileTypeSelector(types);
+    fileTypes.setMinimumAndPreferredWidth(200);
+    fileTypes.setSelectedItem(ourFtSearchVariant, ourDialect);
+    fileTypes.addItemListener(new ItemListener() {
+      @Override
+      public void itemStateChanged(ItemEvent e) {
+        if (e.getStateChange() == ItemEvent.SELECTED) {
+          updateContexts();
+          updateEditor();
+          initiateValidation();
+        }
+      }
+    });
+    final JLabel fileTypeLabel = new JLabel(SSRBundle.message("search.dialog.file.type.label"));
+    fileTypeLabel.setLabelFor(fileTypes);
+    contexts = new ComboBox<>(60); // todo remove me, dummy
+    final DefaultActionGroup templateActionGroup = new DefaultActionGroup(
+      new AnAction(SSRBundle.message("save.template.text.button")) {
 
         @Override
-        public void actionPerformed(ActionEvent e) {
-          final Configuration configuration = getConfiguration();
-          if (!ConfigurationManager.getInstance(getProject()).showSaveTemplateAsDialog(configuration)) {
+        public void actionPerformed(AnActionEvent e) {
+          ConfigurationManager.getInstance(getProject()).showSaveTemplateAsDialog(getConfiguration());
+        }
+      },
+      new AnAction(SSRBundle.message("copy.existing.template.button")) {
+        @Override
+        public void actionPerformed(AnActionEvent e) {
+          SelectTemplateDialog dialog = new SelectTemplateDialog(searchContext.getProject(), false, isReplaceDialog());
+          if (!dialog.showAndGet()) {
             return;
           }
-          setDialogTitle(configuration);
-        }
-      })
-    );
-
-    panel.add(Box.createHorizontalStrut(8));
-
-    panel.add(
-      myEditVariablesButton = createJButtonForAction(
-        new AbstractAction() {
-          {
-            putValue(NAME, SSRBundle.message("edit.variables.button"));
-          }
-
-          @Override
-          public void actionPerformed(ActionEvent e) {
-            new EditVarConstraintsDialog(
-              searchContext.getProject(),
-              myConfiguration,
-              getVariablesFromListeners(),
-              fileTypes.getSelectedFileType()
-            ).show();
-            initiateValidation();
+          Configuration[] configurations = dialog.getSelectedConfigurations();
+          if (configurations.length == 1) {
+            setSearchPattern(configurations[0]);
           }
         }
-      )
+      }
+    );
+    templateActionGroup.setPopup(true);
+    templateActionGroup.getTemplatePresentation().setIcon(AllIcons.General.GearPlain);
+
+    final AnAction filterAction = new AnAction(AllIcons.General.Filter) {
+      @Override
+      public void actionPerformed(AnActionEvent e) {
+        new EditVarConstraintsDialog(
+          searchContext.getProject(),
+          myConfiguration,
+          getVariablesFromListeners(),
+          fileTypes.getSelectedFileType()
+        ).show();
+        initiateValidation();
+      }
+
+      @Override
+      public void update(AnActionEvent e) {
+        e.getPresentation().setEnabled(myFilterEnabled);
+      }
+    };
+    final DefaultActionGroup optionsActionGroup = new DefaultActionGroup(filterAction, templateActionGroup);
+    ActionToolbarImpl optionsToolbar =
+      (ActionToolbarImpl)ActionManager.getInstance().createActionToolbar(ActionPlaces.EDITOR_TOOLBAR, optionsActionGroup, true);
+    optionsToolbar.setLayoutPolicy(ActionToolbar.NOWRAP_LAYOUT_POLICY);
+    optionsToolbar.setForceMinimumSize(true);
+
+    final JPanel northPanel = new JPanel(null);
+    final GroupLayout layout = new GroupLayout(northPanel);
+    northPanel.setLayout(layout);
+    layout.setHonorsVisibility(true);
+    layout.setHorizontalGroup(
+      layout.createSequentialGroup()
+            .addComponent(historyToolbar, GroupLayout.PREFERRED_SIZE, GroupLayout.DEFAULT_SIZE, GroupLayout.PREFERRED_SIZE)
+            .addComponent(label)
+            .addPreferredGap(LayoutStyle.ComponentPlacement.UNRELATED, 20, Integer.MAX_VALUE)
+            .addComponent(recursiveMatching)
+            .addPreferredGap(LayoutStyle.ComponentPlacement.UNRELATED, 15, 15)
+            .addComponent(caseSensitiveMatch)
+            .addPreferredGap(LayoutStyle.ComponentPlacement.UNRELATED, 15, 15)
+            .addComponent(fileTypeLabel)
+            .addPreferredGap(LayoutStyle.ComponentPlacement.RELATED, 5, 5)
+            .addComponent(fileTypes)
+            .addComponent(optionsToolbar, GroupLayout.PREFERRED_SIZE, GroupLayout.DEFAULT_SIZE, GroupLayout.PREFERRED_SIZE)
+    );
+    layout.setVerticalGroup(
+      layout.createParallelGroup(GroupLayout.Alignment.BASELINE)
+            .addComponent(historyToolbar)
+            .addComponent(label)
+            .addComponent(recursiveMatching)
+            .addComponent(caseSensitiveMatch)
+            .addComponent(fileTypeLabel)
+            .addComponent(fileTypes)
+            .addComponent(optionsToolbar)
     );
 
-    panel.add(Box.createHorizontalStrut(8));
+    detectFileTypeAndDialect();
+    return northPanel;
+  }
 
-    panel.add(
-      createJButtonForAction(
-        new AbstractAction() {
-          {
-            putValue(NAME, SSRBundle.message("history.button"));
-          }
-
-          @Override
-          public void actionPerformed(ActionEvent e) {
-            SelectTemplateDialog dialog = new SelectTemplateDialog(searchContext.getProject(), true, isReplaceDialog());
-            if (!dialog.showAndGet()) {
-              return;
-            }
-            Configuration[] configurations = dialog.getSelectedConfigurations();
-            if (configurations.length == 1) {
-              setSearchPattern(configurations[0]);
-              initiateValidation();
-            }
-          }
-        }
-      )
-    );
-
-    panel.add(Box.createHorizontalStrut(8));
-
-    panel.add(
-      createJButtonForAction(
-        new AbstractAction() {
-          {
-            putValue(NAME, SSRBundle.message("copy.existing.template.button"));
-          }
-
-          @Override
-          public void actionPerformed(ActionEvent e) {
-            SelectTemplateDialog dialog = new SelectTemplateDialog(searchContext.getProject(), false, isReplaceDialog());
-            if (!dialog.showAndGet()) {
-              return;
-            }
-            Configuration[] configurations = dialog.getSelectedConfigurations();
-            if (configurations.length == 1) {
-              setSearchPattern(configurations[0]);
-            }
-          }
-        }
-      )
-    );
-
+  @Nullable
+  @Override
+  protected JPanel createSouthAdditionalPanel() {
+    if (!myRunFindActionOnClose) return null;
+    JPanel panel = new JPanel(new BorderLayout());
+    panel.setBorder(BorderFactory.createEmptyBorder(0, 6, 0, 0));
+    openInNewTab = new JCheckBox(SSRBundle.message("open.in.new.tab.checkbox"));
+    openInNewTab.setSelected(FindSettings.getInstance().isShowResultsInSeparateView());
+    panel.add(openInNewTab, BorderLayout.EAST);
     return panel;
   }
 
   protected List<String> getVariablesFromListeners() {
-    return getVarsFrom(searchCriteriaEdit);
+    final Editor editor = searchCriteriaEdit.getEditor();
+    if (editor == null) {
+      return new SmartList<>();
+    }
+    return getVarsFrom(editor);
   }
 
   protected static List<String> getVarsFrom(Editor searchCriteriaEdit) {
     SubstitutionShortInfoHandler handler = SubstitutionShortInfoHandler.retrieve(searchCriteriaEdit);
-    return (handler == null) ? new ArrayList<>() : new ArrayList<>(handler.getVariables());
+    return (handler == null) ? new SmartList<>() : new ArrayList<>(handler.getVariables());
   }
 
   public final Project getProject() {
@@ -618,7 +551,7 @@ public class SearchDialog extends DialogWrapper {
 
   @Override
   public JComponent getPreferredFocusedComponent() {
-    return searchCriteriaEdit.getContentComponent();
+    return searchCriteriaEdit;
   }
 
   @Override
@@ -679,16 +612,19 @@ public class SearchDialog extends DialogWrapper {
       reportMessage(e.getMessage(), searchCriteriaEdit);
       return false;
     }
-    reportMessage("", null);
+    reportMessage(null, searchCriteriaEdit);
     return true;
   }
 
-  protected void reportMessage(String message, Editor editor) {
-    com.intellij.util.ui.UIUtil.invokeLaterIfNeeded(() -> {
-      status.setText(message);
-      status.setToolTipText(message);
-      status.revalidate();
-      statusText.setLabelFor(editor != null ? editor.getContentComponent() : null);
+  protected void reportMessage(String message, EditorTextField editor) {
+      com.intellij.util.ui.UIUtil.invokeLaterIfNeeded(() -> {
+      editor.putClientProperty("JComponent.outline", message == null ? null : "error");
+      editor.setToolTipText(message);
+      editor.repaint();
+      //status.setText(message);
+      //status.setToolTipText(message);
+      //status.revalidate();
+      //statusText.setLabelFor(editor != null ? editor.getContentComponent() : null);
     });
   }
 
@@ -723,28 +659,18 @@ public class SearchDialog extends DialogWrapper {
 
   @Override
   public void dispose() {
-    disposeEditorContent();
-
-    myAlarm.cancelAllRequests();
-
-    super.dispose();
     StructuralSearchPlugin.getInstance(getProject()).setDialogVisible(false);
-  }
-
-  protected void disposeEditorContent() {
-    mySavedEditorText = searchCriteriaEdit.getDocument().getText();
-
-    // this will remove from myExcludedSet
-    final PsiFile file = PsiDocumentManager.getInstance(searchContext.getProject()).getPsiFile(searchCriteriaEdit.getDocument());
-    if (file != null) {
-      DaemonCodeAnalyzer.getInstance(searchContext.getProject()).setHighlightingEnabled(file, true);
-    }
-
-    EditorFactory.getInstance().releaseEditor(searchCriteriaEdit);
+    myAlarm.cancelAllRequests();
+    searchCriteriaEdit.removeNotify();
+    super.dispose();
   }
 
   @Override
   protected String getHelpId() {
     return "find.structuredSearch";
+  }
+
+  private static Icon getShowHistoryIcon() {
+    return ObjectUtils.coalesce(UIManager.getIcon("TextField.darcula.searchWithHistory.icon"), LafIconLookup.getIcon("searchWithHistory"));
   }
 }
