@@ -411,8 +411,9 @@ public class FileUtilRt {
     int i = 0;
     int maxFileNumber = 10;
     while (true) {
+      File f = null;
       try {
-        File f = calcName(dir, prefix, suffix, i);
+        f = calcName(dir, prefix, suffix, i);
 
         boolean success = isDirectory ? f.mkdir() : f.createNewFile();
         if (!success) {
@@ -427,6 +428,7 @@ public class FileUtilRt {
       }
       catch (IOException e) { // Win32 createFileExclusively access denied
         if (++exceptionsCount >= 100) {
+          logger().error("createFileExclusively win32: " + (f != null ? f.getPath() : "f == null"), e);
           throw e;
         }
       }
