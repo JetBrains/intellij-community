@@ -420,8 +420,11 @@ public class SearchEverywhereUI extends BorderLayoutPanel implements Disposable,
     }
 
     String pattern = getSearchPattern();
+    String matcherString = mySelectedTab.getContributor()
+                                        .map(contributor -> contributor.filterControlSymbols(pattern))
+                                        .orElse(pattern);
 
-    MinusculeMatcher matcher = NameUtil.buildMatcher("*" + pattern, NameUtil.MatchingCaseSensitivity.NONE);
+    MinusculeMatcher matcher = NameUtil.buildMatcher("*" + matcherString, NameUtil.MatchingCaseSensitivity.NONE);
     MatcherHolder.associateMatcher(myResultsList, matcher);
 
     //assert project != null;
@@ -1063,7 +1066,7 @@ public class SearchEverywhereUI extends BorderLayoutPanel implements Disposable,
                                     .setResizable(true)
                                     .setCancelOnClickOutside(false)
                                     .setMinSize(new Dimension(200, 200))
-                                    .setDimensionServiceKey(myProject, "GotoFile_FileTypePopup", false)
+                                    .setDimensionServiceKey(myProject, "Search_Everywhere_Filter_Popup", false)
                                     .addListener(popupCloseListener)
                                     .createPopup();
       Disposer.register(SearchEverywhereUI.this, myFilterPopup);

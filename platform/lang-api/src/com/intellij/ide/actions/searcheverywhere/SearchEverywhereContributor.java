@@ -45,6 +45,10 @@ public interface SearchEverywhereContributor<F> {
 
   Object getDataForItem(Object element, String dataId);
 
+  default String filterControlSymbols(String pattern) {
+    return pattern;
+  }
+
   static List<SearchEverywhereContributorFactory<?>> getProviders() {
     return Arrays.asList(EP_NAME.getExtensions());
   }

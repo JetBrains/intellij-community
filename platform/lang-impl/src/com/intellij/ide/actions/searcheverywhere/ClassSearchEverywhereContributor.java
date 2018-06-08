@@ -103,6 +103,19 @@ public class ClassSearchEverywhereContributor extends AbstractGotoSEContributor<
     return true;
   }
 
+  @Override
+  public String filterControlSymbols(String pattern) {
+    if (pattern.indexOf('#') != -1) {
+      pattern = applyPatternFilter(pattern, ChooseByNamePopup.patternToDetectMembers);
+    }
+
+    if (pattern.indexOf('$') != -1) {
+      pattern = applyPatternFilter(pattern, ChooseByNamePopup.patternToDetectAnonymousClasses);
+    }
+
+    return super.filterControlSymbols(pattern);
+  }
+
   private static String pathToAnonymousClass(String searchedText) {
     final Matcher matcher = ChooseByNamePopup.patternToDetectAnonymousClasses.matcher(searchedText);
     if (matcher.matches()) {
