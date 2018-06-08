@@ -66,6 +66,11 @@ public class RedundantCastInspection extends GenericsInspectionToolBase {
   }
 
   @Override
+  public ProblemDescriptor[] checkField(@NotNull PsiField field, @NotNull InspectionManager manager, boolean isOnTheFly) {
+    return getDescriptions(field, manager, isOnTheFly);
+  }
+
+  @Override
   public void writeSettings(@NotNull Element node) throws WriteExternalException {
     if (IGNORE_SUSPICIOUS_METHOD_CALLS) {
       super.writeSettings(node);
