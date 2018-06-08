@@ -420,50 +420,39 @@ public class HighlightUtil extends HighlightUtilBase {
 
   static HighlightInfo checkVarTypeApplicability(@NotNull PsiVariable variable) {
     PsiTypeElement typeElement = variable.getTypeElement();
-    if (typeElement != null && typeElement.isInferredType()) {
+    if (typeElement != null && typeElement.isInferredType() && variable instanceof PsiLocalVariable) {
+      PsiExpression initializer = variable.getInitializer();
+      if (initializer == null) {
+        String message = JavaErrorMessages.message("lvti.no.initializer");
+        return HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).descriptionAndTooltip(message).range(typeElement).create();
+      }
+      if (initializer instanceof PsiFunctionalExpression) {
+        boolean lambda = initializer instanceof PsiLambdaExpression;
+        String message = JavaErrorMessages.message(lambda ? "lvti.lambda" : "lvti.method.ref");
+        return HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).descriptionAndTooltip(message).range(typeElement).create();
+      }
+
       PsiElement parent = variable.getParent();
-      if (variable instanceof PsiLocalVariable) {
-        PsiExpression initializer = variable.getInitializer();
-        if (initializer == null) {
-          return HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR)
-            .descriptionAndTooltip("Cannot infer type: 'var' on variable without initializer")
-            .range(typeElement).create();
-        }
+      if (parent instanceof PsiDeclarationStatement && ((PsiDeclarationStatement)parent).getDeclaredElements().length > 1) {
+        String message = JavaErrorMessages.message("lvti.compound");
+        return HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).descriptionAndTooltip(message).range(variable).create();
+      }
 
-        if (initializer instanceof PsiFunctionalExpression) {
-          return HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR)
-            .descriptionAndTooltip("Cannot infer type: " + (initializer instanceof PsiLambdaExpression ? "lambda expression" : "method reference") +
-                                   " requires an explicit target type")
-            .range(typeElement).create();
-        }
-
-        if (parent instanceof PsiDeclarationStatement && ((PsiDeclarationStatement)parent).getDeclaredElements().length > 1) {
-          return HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR)
-            .descriptionAndTooltip("'var' is not allowed in a compound declaration")
-            .range(variable).create();
-        }
-
-        PsiType lType = variable.getType();
-        if (lType instanceof PsiArrayType && !lType.equals(typeElement.getType())) {
-          return HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR)
-            .descriptionAndTooltip("'var' is not allowed as an element type of an array")
-            .range(typeElement)
-            .create();
-        }
-
-        if (PsiType.NULL.equals(lType)) {
-          return HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR)
-            .descriptionAndTooltip("Cannot infer type: variable initializer is 'null'")
-            .range(typeElement).create();
-        }
-
-        if (PsiType.VOID.equals(lType)) {
-          return HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR)
-            .descriptionAndTooltip("Cannot infer type: variable initializer is 'void'")
-            .range(typeElement).create();
-        }
+      PsiType lType = variable.getType();
+      if (lType instanceof PsiArrayType && !lType.equals(typeElement.getType())) {
+        String message = JavaErrorMessages.message("lvti.array");
+        return HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).descriptionAndTooltip(message).range(typeElement).create();
+      }
+      if (PsiType.NULL.equals(lType)) {
+        String message = JavaErrorMessages.message("lvti.null");
+        return HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).descriptionAndTooltip(message).range(typeElement).create();
+      }
+      if (PsiType.VOID.equals(lType)) {
+        String message = JavaErrorMessages.message("lvti.void");
+        return HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).descriptionAndTooltip(message).range(typeElement).create();
       }
     }
+
     return null;
   }
 
