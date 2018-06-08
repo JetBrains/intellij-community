@@ -79,12 +79,6 @@ public abstract class NullableNotNullManager {
   @NotNull
   public abstract String getDefaultNullable();
 
-  @Nullable
-  public String getNullable(@NotNull PsiModifierListOwner owner) {
-    PsiAnnotation annotation = getNullableAnnotation(owner, false);
-    return annotation == null ? null : annotation.getQualifiedName();
-  }
-
   private String checkContainer(PsiAnnotation annotation) {
     if (annotation == null) {
       return null;
@@ -161,12 +155,6 @@ public abstract class NullableNotNullManager {
   private PsiAnnotation copyAnnotation(PsiModifierListOwner owner, PsiAnnotation annotation) {
     String notNull = checkContainer(annotation);
     return notNull != null ? JavaPsiFacade.getElementFactory(owner.getProject()).createAnnotationFromText("@" + notNull, owner) : null;
-  }
-
-  @Nullable
-  public String getNotNull(@NotNull PsiModifierListOwner owner) {
-    PsiAnnotation annotation = getNotNullAnnotation(owner, false);
-    return annotation == null ? null : annotation.getQualifiedName();
   }
 
   public abstract void setDefaultNotNull(@NotNull String defaultNotNull);

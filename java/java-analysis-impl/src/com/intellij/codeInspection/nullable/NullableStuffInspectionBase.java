@@ -578,14 +578,12 @@ public class NullableStuffInspectionBase extends AbstractBaseJavaLocalInspection
   @NotNull
   private static String getPresentableAnnoName(@NotNull PsiModifierListOwner owner) {
     NullableNotNullManager manager = NullableNotNullManager.getInstance(owner.getProject());
-    Set<String> names = ContainerUtil.newHashSet(manager.getNullables());
-    names.addAll(manager.getNotNulls());
-
-    PsiAnnotation annotation = AnnotationUtil.findAnnotationInHierarchy(owner, names);
-    if (annotation != null) return getPresentableAnnoName(annotation);
-
-    String anno = manager.getNotNull(owner);
-    return StringUtil.getShortName(anno != null ? anno : StringUtil.notNullize(manager.getNullable(owner), "???"));
+    PsiAnnotation anno = manager.findEffectiveNullabilityAnnotation(owner);
+    String name = anno == null ? null : anno.getQualifiedName();
+    if (name == null) {
+      return "???";
+    }
+    return StringUtil.getShortName(name);
   }
 
   public static String getPresentableAnnoName(@NotNull PsiAnnotation annotation) {
