@@ -428,8 +428,12 @@ public class FileUtilRt {
       }
       catch (IOException e) { // Win32 createFileExclusively access denied
         if (++exceptionsCount >= 100) {
+
+          String[] children = f.getParentFile().list();
+          String list = children == null ? "temp is empty" : Arrays.toString(children);
           logger().error("createFileExclusively win32: " + (f != null ? f.getPath() : "f == null"), e);
-          throw e;
+          logger().error(list);
+          throw new RuntimeException("exceptionCount >= 100, maxFileNumber = " + maxFileNumber, e);
         }
       }
       i++; // for some reason the file1 can't be created (previous file1 was deleted but got locked by anti-virus?). try file2.
