@@ -15,9 +15,34 @@
  */
 package com.intellij.codeInspection.dataFlow;
 
+import com.intellij.codeInsight.NullableNotNullManager;
+import com.intellij.psi.PsiAnnotation;
+import com.intellij.psi.PsiModifierListOwner;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
+
 /**
 * @author cdr
 */
 public enum Nullness {
-  NOT_NULL, NULLABLE,UNKNOWN
+  NOT_NULL, NULLABLE, UNKNOWN;
+
+  /**
+   * Convert nullability annotation returned by {@link NullableNotNullManager#findEffectiveNullabilityAnnotation(PsiModifierListOwner)}
+   * to {@code Nullness} value
+   *
+   * @param annotation annotation to convert
+   * @return Nullness value
+   */
+  @NotNull
+  public static Nullness fromAnnotation(@Nullable PsiAnnotation annotation) {
+    if (annotation == null) return UNKNOWN;
+    if (NullableNotNullManager.isNullableAnnotation(annotation) || NullableNotNullManager.isContainerNullableAnnotation(annotation)) {
+      return NULLABLE;
+    }
+    if (NullableNotNullManager.isNotNullAnnotation(annotation) || NullableNotNullManager.isContainerNotNullAnnotation(annotation)) {
+      return NOT_NULL;
+    }
+    return UNKNOWN;
+  }
 }

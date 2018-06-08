@@ -933,11 +933,10 @@ public class NullableStuffInspectionBase extends AbstractBaseJavaLocalInspection
   public static boolean isNullableNotInferred(@NotNull PsiModifierListOwner owner, boolean checkBases) {
     Project project = owner.getProject();
     NullableNotNullManager manager = NullableNotNullManager.getInstance(project);
-    if (!manager.isNullable(owner, checkBases)) return false;
-    if (DfaPsiUtil.getTypeNullability(getMemberType(owner)) == Nullness.NULLABLE) return true;
-
     PsiAnnotation anno = manager.getNullableAnnotation(owner, checkBases);
-    return !(anno != null && AnnotationUtil.isInferredAnnotation(anno));
+    if (anno == null) return false;
+
+    return DfaPsiUtil.getTypeNullability(getMemberType(owner)) == Nullness.NULLABLE || !AnnotationUtil.isInferredAnnotation(anno);
   }
 
   private static PsiType getMemberType(@NotNull PsiModifierListOwner owner) {

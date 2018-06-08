@@ -761,10 +761,17 @@ public class DataFlowInspectionBase extends AbstractBaseJavaLocalInspectionTool 
                                      Set<PsiElement> reportedAnchors,
                                      @NotNull PsiElement block) {
     final PsiMethod method = getScopeMethod(block);
-    if (method == null || NullableStuffInspectionBase.isNullableNotInferred(method, true)) return;
+    if (method == null) return;
+    NullableNotNullManager manager = NullableNotNullManager.getInstance(holder.getProject());
+    PsiAnnotation anno = manager.findEffectiveNullabilityAnnotation(method);
+    Nullness annoNullness = Nullness.fromAnnotation(anno);
+    if (annoNullness == Nullness.NULLABLE) {
+      assert anno != null;
+      if (!AnnotationUtil.isInferredAnnotation(anno)) return;
+      if (DfaPsiUtil.getTypeNullability(method.getReturnType()) == Nullness.NULLABLE) return;
+    }
 
-    PsiAnnotation notNullAnno = NullableNotNullManager.getInstance(method.getProject()).getNotNullAnnotation(method, true);
-    if (notNullAnno == null && (!SUGGEST_NULLABLE_ANNOTATIONS || block.getParent() instanceof PsiLambdaExpression)) return;
+    if (annoNullness != Nullness.NOT_NULL && (!SUGGEST_NULLABLE_ANNOTATIONS || block.getParent() instanceof PsiLambdaExpression)) return;
 
     PsiType returnType = method.getReturnType();
     // no warnings in void lambdas, where the expression is not returned anyway
@@ -777,15 +784,15 @@ public class DataFlowInspectionBase extends AbstractBaseJavaLocalInspectionTool 
       final PsiExpression expr = problem.getAnchor();
       if (!reportedAnchors.add(expr)) continue;
 
-      if (notNullAnno != null) {
-        String presentable = NullableStuffInspectionBase.getPresentableAnnoName(notNullAnno);
+      if (annoNullness == Nullness.NOT_NULL) {
+        assert anno != null;
+        String presentable = NullableStuffInspectionBase.getPresentableAnnoName(anno);
         final String text = isNullLiteralExpression(expr)
                             ? InspectionsBundle.message("dataflow.message.return.null.from.notnull", presentable)
                             : InspectionsBundle.message("dataflow.message.return.nullable.from.notnull", presentable);
         holder.registerProblem(expr, text);
       }
       else if (AnnotationUtil.isAnnotatingApplicable(expr)) {
-        final NullableNotNullManager manager = NullableNotNullManager.getInstance(expr.getProject());
         final String defaultNullable = manager.getDefaultNullable();
         final String presentableNullable = StringUtil.getShortName(defaultNullable);
         final String text = isNullLiteralExpression(expr)

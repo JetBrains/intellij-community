@@ -84,11 +84,9 @@ public class DfaPsiUtil {
       return Nullness.NOT_NULL;
     }
 
-    if (NullableNotNullManager.isNullable(owner)) {
-      return Nullness.NULLABLE;
-    }
-    if (isNotNullLocally(owner, ignoreParameterNullabilityInference)) {
-      return Nullness.NOT_NULL;
+    Nullness fromAnnotation = getNullabilityFromAnnotation(owner, ignoreParameterNullabilityInference);
+    if (fromAnnotation != Nullness.UNKNOWN) {
+      return fromAnnotation;
     }
 
     if (owner instanceof PsiMethod && isMapMethodWithUnknownNullity((PsiMethod)owner)) {
@@ -110,6 +108,17 @@ public class DfaPsiUtil {
     }
 
     return Nullness.UNKNOWN;
+  }
+
+  @NotNull
+  private static Nullness getNullabilityFromAnnotation(PsiModifierListOwner owner, boolean ignoreParameterNullabilityInference) {
+    NullableNotNullManager manager = NullableNotNullManager.getInstance(owner.getProject());
+    PsiAnnotation annotation = manager.findEffectiveNullabilityAnnotation(owner);
+    if (annotation == null ||
+        (ignoreParameterNullabilityInference && owner instanceof PsiParameter && AnnotationUtil.isInferredAnnotation(annotation))) {
+      return Nullness.UNKNOWN;
+    }
+    return Nullness.fromAnnotation(annotation);
   }
 
   private static boolean isMapMethodWithUnknownNullity(@NotNull PsiMethod method) {
@@ -245,25 +254,6 @@ public class DfaPsiUtil {
       }
     }
     return Nullness.UNKNOWN;
-  }
-
-  private static boolean isNotNullLocally(@NotNull PsiModifierListOwner owner, boolean ignoreParameterNullabilityInference) {
-    NullableNotNullManager nnnm = NullableNotNullManager.getInstance(owner.getProject());
-    PsiAnnotation notNullAnno = nnnm.getNotNullAnnotation(owner, true);
-    if (notNullAnno == null ||
-        ignoreParameterNullabilityInference && owner instanceof PsiParameter && AnnotationUtil.isInferredAnnotation(notNullAnno)) {
-      return false;
-    }
-
-    if (!(owner instanceof PsiParameter)) return true; // notnull on a super method requires all inheritors to return notnull as well
-
-    // @NotNull on a super parameter doesn't prohibit calling the inheritors with null args, if they're ready for that.
-    // so treat parameters as @NotNull only if they're annotated explicitly, or if they're in a scope of some nullity default annotation.
-    return isOwnAnnotation(owner, notNullAnno) || nnnm.isContainerAnnotation(notNullAnno);
-  }
-
-  private static boolean isOwnAnnotation(@NotNull PsiModifierListOwner owner, @NotNull PsiAnnotation anno) {
-    return AnnotationUtil.findAnnotation(owner, anno.getQualifiedName()) == anno;
   }
 
   private static boolean isEnumPredefinedMethod(PsiMethod method) {

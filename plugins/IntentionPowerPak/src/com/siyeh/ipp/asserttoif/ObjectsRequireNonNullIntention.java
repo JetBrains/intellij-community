@@ -17,6 +17,7 @@ package com.siyeh.ipp.asserttoif;
 
 import com.intellij.codeInsight.AnnotationUtil;
 import com.intellij.codeInsight.NullableNotNullManager;
+import com.intellij.codeInspection.dataFlow.Nullness;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
@@ -109,8 +110,9 @@ public class ObjectsRequireNonNullIntention extends Intention {
       if (ClassUtils.findClass("java.util.Objects", element) == null) {
         return false;
       }
-      final PsiAnnotation annotation = NullableNotNullManager.getInstance(variable.getProject()).getNotNullAnnotation(variable, true);
-      if (annotation != null && !AnnotationUtil.isExternalAnnotation(annotation) && !AnnotationUtil.isInferredAnnotation(annotation)) {
+      final PsiAnnotation annotation = NullableNotNullManager.getInstance(variable.getProject()).findEffectiveNullabilityAnnotation(variable);
+      if (annotation != null && Nullness.fromAnnotation(annotation) == Nullness.NOT_NULL &&
+          !AnnotationUtil.isExternalAnnotation(annotation) && !AnnotationUtil.isInferredAnnotation(annotation)) {
         return true;
       }
       final PsiStatement referenceStatement = PsiTreeUtil.getParentOfType(referenceExpression, PsiStatement.class);

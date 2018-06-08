@@ -6,7 +6,11 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.RecursionManager;
 import com.intellij.psi.*;
+import com.intellij.psi.util.CachedValueProvider;
+import com.intellij.psi.util.CachedValuesManager;
+import com.intellij.psi.util.PsiModificationTracker;
 import com.intellij.psi.util.TypeConversionUtil;
+import com.intellij.util.ArrayUtil;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -14,6 +18,7 @@ import org.jetbrains.annotations.Nullable;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 import static com.intellij.codeInsight.AnnotationUtil.*;
 
@@ -50,6 +55,7 @@ public abstract class NullableNotNullManager {
     "org.checkerframework.checker.nullness.compatqual.NonNullDecl",
     "org.checkerframework.checker.nullness.compatqual.NonNullType"
   };
+  private static final List<String> DEFAULT_ALL = Arrays.asList(ArrayUtil.mergeArrays(DEFAULT_NULLABLES, DEFAULT_NOT_NULLS));
 
   protected NullableNotNullManager(Project project) {
     myProject = project;
@@ -203,6 +209,57 @@ public abstract class NullableNotNullManager {
     return nullityDefault != null && nullityDefault.isNullableDefault == nullable ? nullityDefault.annotation : null;
   }
 
+  /**
+   * Returns nullability annotation (either nullable, or non-nullable) which has effect for given element.
+   * To figure out its exact effect can be subsequently checked using {@link #isNullableAnnotation(PsiAnnotation)},
+   * {@link #isNotNullAnnotation(PsiAnnotation)}, {@link #isContainerNullableAnnotation(PsiAnnotation)} or
+   * {@link #isContainerNotNullAnnotation(PsiAnnotation)}. May return explicit, inferred, external or
+   * default nullability annotation for class/package.
+   *
+   * @param owner
+   * @return effective nullability annotation, or null if not found.
+   */
+  @Nullable
+  public PsiAnnotation findEffectiveNullabilityAnnotation(@NotNull PsiModifierListOwner owner) {
+    return CachedValuesManager.getCachedValue(owner, () -> CachedValueProvider.Result
+      .create(doFindEffectiveNullabilityAnnotation(owner), PsiModificationTracker.MODIFICATION_COUNT));
+  }
+
+  @Nullable
+  private PsiAnnotation doFindEffectiveNullabilityAnnotation(@NotNull PsiModifierListOwner owner) {
+    PsiType type = getOwnerType(owner);
+    if (type == null || TypeConversionUtil.isPrimitiveAndNotNull(type)) return null;
+
+    Set<String> annotationNames = ContainerUtil.newHashSet(getNullablesWithNickNames());
+    annotationNames.addAll(getNotNullsWithNickNames());
+    Set<String> extraAnnotations = DEFAULT_ALL.stream().filter(anno -> !annotationNames.contains(anno)).collect(Collectors.toSet());
+    annotationNames.addAll(extraAnnotations);
+
+    PsiAnnotation annotation = findPlainAnnotation(owner, true, annotationNames);
+    if (annotation != null) {
+      if (extraAnnotations.contains(annotation.getQualifiedName())) {
+        // Deliberately excluded known standard annotation still has precedence over default class-level or package-level annotation:
+        // return null in this case
+        return null;
+      }
+      return annotation;
+    }
+
+    if (owner instanceof PsiParameter) {
+      List<PsiParameter> superParameters = getSuperAnnotationOwners((PsiParameter)owner);
+      if (!superParameters.isEmpty()) {
+        PsiAnnotation superParameterAnnotation = takeAnnotationFromSuperParameters((PsiParameter)owner, superParameters);
+        return superParameterAnnotation != null && isContainerNotNullAnnotation(superParameterAnnotation) ? superParameterAnnotation : null;
+      }
+    }
+
+    NullityDefault nullityDefault = findNullityDefaultInHierarchy(owner);
+    if (nullityDefault != null && (nullityDefault.isNullableDefault || !hasHardcodedContracts(owner))) {
+      return nullityDefault.annotation;
+    }
+    return null;
+  }
+
   private PsiAnnotation takeAnnotationFromSuperParameters(@NotNull PsiParameter owner, final List<PsiParameter> superOwners) {
     return RecursionManager.doPreventingRecursion(owner, true, () -> {
       for (PsiParameter superOwner : superOwners) {
@@ -216,15 +273,22 @@ public abstract class NullableNotNullManager {
   private PsiAnnotation findPlainNullityAnnotation(@NotNull PsiModifierListOwner owner, boolean checkBases) {
     Set<String> qNames = ContainerUtil.newHashSet(getNullablesWithNickNames());
     qNames.addAll(getNotNullsWithNickNames());
+    return findPlainAnnotation(owner, checkBases, qNames);
+  }
+
+  @Nullable
+  private static PsiAnnotation findPlainAnnotation(@NotNull PsiModifierListOwner owner,
+                                                   boolean checkBases,
+                                                   Set<String> qualifiedNames) {
     PsiAnnotation memberAnno = checkBases && owner instanceof PsiMethod
-                               ? findAnnotationInHierarchy(owner, qNames)
-                               : findAnnotation(owner, qNames);
+                               ? findAnnotationInHierarchy(owner, qualifiedNames)
+                               : findAnnotation(owner, qualifiedNames);
     PsiType type = getOwnerType(owner);
     if (memberAnno != null) {
       return preferTypeAnnotation(memberAnno, type);
     }
     if (type != null) {
-      return ContainerUtil.find(type.getAnnotations(), a -> qNames.contains(a.getQualifiedName()));
+      return ContainerUtil.find(type.getAnnotations(), a -> qualifiedNames.contains(a.getQualifiedName()));
     }
     return null;
   }
@@ -357,5 +421,17 @@ public abstract class NullableNotNullManager {
 
   public static boolean isNotNullAnnotation(@NotNull PsiAnnotation annotation) {
     return getInstance(annotation.getProject()).getNotNullsWithNickNames().contains(annotation.getQualifiedName());
+  }
+
+  public static boolean isContainerNullableAnnotation(@NotNull PsiAnnotation annotation) {
+    PsiAnnotation.TargetType[] acceptAnyTarget = PsiAnnotation.TargetType.values();
+    NullityDefault nullityDefault = getInstance(annotation.getProject()).checkNullityDefault(annotation, acceptAnyTarget, false);
+    return nullityDefault != null && nullityDefault.isNullableDefault;
+  }
+
+  public static boolean isContainerNotNullAnnotation(@NotNull PsiAnnotation annotation) {
+    PsiAnnotation.TargetType[] acceptAnyTarget = PsiAnnotation.TargetType.values();
+    NullityDefault nullityDefault = getInstance(annotation.getProject()).checkNullityDefault(annotation, acceptAnyTarget, false);
+    return nullityDefault != null && !nullityDefault.isNullableDefault;
   }
 }
