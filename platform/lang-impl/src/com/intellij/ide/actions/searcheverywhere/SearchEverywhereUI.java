@@ -462,8 +462,9 @@ public class SearchEverywhereUI extends BorderLayoutPanel implements Disposable,
           }
         }
 
-        if (e.getKeyCode() == KeyEvent.VK_ENTER) {
-          elementSelected(myResultsList.getSelectedIndex(), e.getModifiers());
+        int index = myResultsList.getSelectedIndex();
+        if (e.getKeyCode() == KeyEvent.VK_ENTER && index >= 0) {
+          elementSelected(index, e.getModifiers());
         }
       }
     });
@@ -491,7 +492,7 @@ public class SearchEverywhereUI extends BorderLayoutPanel implements Disposable,
         if (e.getButton() == MouseEvent.BUTTON1) {
           e.consume();
           final int i = myResultsList.locationToIndex(e.getPoint());
-          if (i != -1) {
+          if (i > -1) {
             myResultsList.setSelectedIndex(i);
             elementSelected(i, e.getModifiers());
           }
