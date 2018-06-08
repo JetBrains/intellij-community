@@ -20,7 +20,8 @@ public class StructuralSearchTemplatesCompletionContributor extends CompletionCo
       Configuration configuration = configurationManager.findConfigurationByName(configurationName);
       if (configuration == null) continue;
       LookupElementBuilder element = LookupElementBuilder.create(configuration, configuration.getMatchOptions().getSearchPattern())
-                                                         .withPresentableText(configuration.getName());
+                                                         .withLookupString(configurationName)
+                                                         .withPresentableText(configurationName);
       insensitive.addElement(element);
     }
   }
