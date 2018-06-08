@@ -8,42 +8,15 @@ import org.jetbrains.annotations.Nullable;
  */
 public abstract class IconPathPatcher {
   /**
-   * @deprecated
-   * @see #patchPath(String, Class)
-   */
-  @Nullable
-  public String patchPath(String path) {
-    return patchPath(path, null);
-  }
-
-  /**
    * Patches the path or returns null if nothing has patched
    * @param path path to the icon
-   * @param classLoader ClassLoader of the icon is requested from
    * @return patched path or null
    */
   @Nullable
-  public String patchPath(String path, ClassLoader classLoader) {
-    return null;
-  }
+  public abstract String patchPath(String path);
 
-  /**
-   * @deprecated
-   * @see #getContextClass(String, Class)
-   */
-  @Deprecated
-  public Class getContextClass(String path) {
-    return null;
-  }
-
-  /**
-   * Return ClassLoader for icon path or returns null if nothing has patched
-   * @param path path to the icon
-   * @param originalClassLoader ClassLoader of the icon is requested from
-   * @return patched icon ClassLoader or null
-   */
   @Nullable
-  public ClassLoader getContextClassLoader(String path, ClassLoader originalClassLoader) {
+  public Class getContextClass(String path) {
     return null;
   }
 }

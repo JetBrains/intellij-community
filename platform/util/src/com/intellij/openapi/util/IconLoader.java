@@ -185,15 +185,14 @@ public final class IconLoader {
   @Nullable
   public static Icon findIcon(@NotNull String path, @NotNull Class aClass, boolean computeNow, boolean strict) {
     String originalPath = path;
-    ClassLoader classLoader = aClass.getClassLoader();
-    Pair<String, ClassLoader> patchedPath = patchPath(path, classLoader);
+    Pair<String, Class> patchedPath = patchPath(path);
     path = patchedPath.first;
     if (patchedPath.second != null) {
-      classLoader = patchedPath.second;
+      aClass = patchedPath.second;
     }
-    if (isReflectivePath(path)) return getReflectiveIcon(path, classLoader);
+    if (isReflectivePath(path)) return getReflectiveIcon(path, aClass.getClassLoader());
 
-    URL myURL = findURL(path, classLoader);
+    URL myURL = findURL(path, aClass);
     if (myURL == null) {
       if (strict) throw new RuntimeException("Can't find icon in '" + path + "' near " + aClass);
       return null;
@@ -201,18 +200,18 @@ public final class IconLoader {
     final Icon icon = findIcon(myURL);
     if (icon instanceof CachedImageIcon) {
       ((CachedImageIcon)icon).myOriginalPath = originalPath;
-      ((CachedImageIcon)icon).myClassLoader = classLoader;
+      ((CachedImageIcon)icon).myClassLoader = aClass.getClassLoader();
     }
     return icon;
   }
 
   @NotNull
-  private static Pair<String, ClassLoader> patchPath(@NotNull String path, ClassLoader classLoader) {
+  private static Pair<String, Class> patchPath(@NotNull String path) {
     for (IconPathPatcher patcher : ourPatchers) {
-      String newPath = patcher.patchPath(path, classLoader);
+      String newPath = patcher.patchPath(path);
       if (newPath != null) {
         LOG.info("replace '" + path + "' with '" + newPath + "'");
-        return Pair.create(newPath, patcher.getContextClassLoader(path, classLoader));
+        return Pair.create(newPath, patcher.getContextClass(path));
       }
     }
     return Pair.create(path, null);
@@ -269,10 +268,10 @@ public final class IconLoader {
   @Nullable
   public static Icon findIcon(@NotNull String path, @NotNull ClassLoader classLoader) {
     String originalPath = path;
-    Pair<String, ClassLoader> patchedPath = patchPath(path, null);
+    Pair<String, Class> patchedPath = patchPath(path);
     path = patchedPath.first;
     if (patchedPath.second != null) {
-      classLoader = patchedPath.second;
+      classLoader = patchedPath.second.getClassLoader();
     }
     if (isReflectivePath(path)) return getReflectiveIcon(path, classLoader);
     if (!StringUtil.startsWithChar(path, '/')) return null;
@@ -562,10 +561,10 @@ public final class IconLoader {
         myScaledIconsCache.clear();
         if (numberOfPatchers != ourPatchers.size()) {
           numberOfPatchers = ourPatchers.size();
-          Pair<String, ClassLoader> patchedPath = patchPath(myOriginalPath, null);
+          Pair<String, Class> patchedPath = patchPath(myOriginalPath);
           String path = myOriginalPath == null ? null : patchedPath.first;
           if (patchedPath.second != null) {
-            myClassLoader = patchedPath.second;
+            myClassLoader = patchedPath.second.getClassLoader();
           }
           if (myClassLoader != null && path != null && path.startsWith("/")) {
             path = path.substring(1);
