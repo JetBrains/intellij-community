@@ -139,6 +139,28 @@ class StatementsParsingTest extends GroovyParsingTestCase {
 
   void testIfstmt$if6() throws Throwable { doTest() }
 
+  void testIfstmt$applicaitonCondition() { doTest() }
+
+  void testIfstmt$keywordOnly() { doTest() }
+
+  void testIfstmt$keywordLParen() { doTest() }
+
+  void testIfstmt$noCondition() { doTest() }
+
+  void testIfstmt$noRParen() { doTest() }
+
+  void testIfstmt$noThen() { doTest() }
+
+  void testIfstmt$noThenNL() { doTest() }
+
+  void testIfstmt$noElse() { doTest() }
+
+  void testIfstmt$noThenWithElse() { doTest() }
+
+  void testIfstmt$nls() { doTest() }
+
+  void testIfstmt$separatorsBeforeElse() { doTest() }
+
   void testImports$imp0() throws Throwable { doTest() }
 
   void testImports$imp1() throws Throwable { doTest() }
