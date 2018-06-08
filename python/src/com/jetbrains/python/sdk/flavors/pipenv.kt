@@ -296,6 +296,9 @@ class PipEnvInstallQuickFix : LocalQuickFix {
   }
 }
 
+/**
+ * Watches for edits in Pipfiles inside modules with a pipenv SDK set.
+ */
 class PipEnvPipFileWatcherComponent(val project: Project) : ProjectComponent {
   override fun projectOpened() {
     val editorFactoryListener = object : EditorFactoryListener {
@@ -327,7 +330,7 @@ class PipEnvPipFileWatcherComponent(val project: Project) : ProjectComponent {
           module.pipFileLock == null -> "not found"
           else -> "out of date"
         }
-        val title = "Pipfile.lock for ${module.name} is ${what}"
+        val title = "$PIP_FILE_LOCK for ${module.name} is $what"
         val content = "Run <a href='#lock'>pipenv lock</a> or <a href='#update'>pipenv update</a>"
         val notification = LOCK_NOTIFICATION_GROUP.createNotification(title, null, content,
                                                                       NotificationType.INFORMATION) { notification, event ->
@@ -336,7 +339,7 @@ class PipEnvPipFileWatcherComponent(val project: Project) : ProjectComponent {
           FileDocumentManager.getInstance().saveAllDocuments()
           when (event.description) {
             "#lock" ->
-              runPipEnvInBackground(module, listOf("lock"), "Locking Pipfile")
+              runPipEnvInBackground(module, listOf("lock"), "Locking $PIP_FILE")
             "#update" ->
               runPipEnvInBackground(module, listOf("update", "--dev"), "Updating Pipenv environment")
           }
@@ -386,7 +389,7 @@ private val Document.virtualFile: VirtualFile?
 private fun VirtualFile.getModule(project: Project): Module? =
   ModuleUtil.findModuleForFile(this, project)
 
-private val LOCK_NOTIFICATION_GROUP = NotificationGroup("Pipfile Watcher", NotificationDisplayType.STICKY_BALLOON, false)
+private val LOCK_NOTIFICATION_GROUP = NotificationGroup("$PIP_FILE Watcher", NotificationDisplayType.STICKY_BALLOON, false)
 
 private val Sdk.packageManager: PyPackageManager
   get() = PyPackageManagers.getInstance().forSdk(this)
