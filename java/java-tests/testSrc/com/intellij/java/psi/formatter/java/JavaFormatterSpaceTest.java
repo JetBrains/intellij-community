@@ -696,4 +696,10 @@ public class JavaFormatterSpaceTest extends AbstractJavaFormatterTest {
     getJavaSettings().SPACE_BEFORE_COLON_IN_FOREACH = true;
     doMethodTest("for (int i:arr) ;", "for (int i : arr) ;");
   }
+
+  public void testOneLineEnumSpacing() {
+    getJavaSettings().SPACE_INSIDE_ONE_LINE_ENUM_BRACES = true;
+    doTextTest("enum E {E1, E2}",
+               "enum E { E1, E2 }");
+  }
 }
