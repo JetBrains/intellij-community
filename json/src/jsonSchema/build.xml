@@ -40,6 +40,34 @@
                 toFile="${idea.project.home}/plugins/JavaScriptLanguage/src/jsonSchemas/webpack-schema4.json" />
   </target>
 
+  <target name="webpack4plugins">
+    <get_schema fromUrl="https://raw.githubusercontent.com/webpack/webpack/master/schemas/plugins/BannerPlugin.json"
+                toFile="${idea.project.home}/plugins/JavaScriptLanguage/src/jsonSchemas/webpackPlugins/BannerPlugin.json" />
+    <get_schema fromUrl="https://raw.githubusercontent.com/webpack/webpack/master/schemas/plugins/DllPlugin.json"
+                toFile="${idea.project.home}/plugins/JavaScriptLanguage/src/jsonSchemas/webpackPlugins/DllPlugin.json" />
+    <get_schema fromUrl="https://raw.githubusercontent.com/webpack/webpack/master/schemas/plugins/DllReferencePlugin.json"
+                toFile="${idea.project.home}/plugins/JavaScriptLanguage/src/jsonSchemas/webpackPlugins/DllReferencePlugin.json" />
+    <get_schema fromUrl="https://raw.githubusercontent.com/webpack/webpack/master/schemas/plugins/HashedModuleIdsPlugin.json"
+                toFile="${idea.project.home}/plugins/JavaScriptLanguage/src/jsonSchemas/webpackPlugins/HashedModuleIdsPlugin.json" />
+    <get_schema fromUrl="https://raw.githubusercontent.com/webpack/webpack/master/schemas/plugins/LoaderOptionsPlugin.json"
+                toFile="${idea.project.home}/plugins/JavaScriptLanguage/src/jsonSchemas/webpackPlugins/LoaderOptionsPlugin.json" />
+    <get_schema fromUrl="https://raw.githubusercontent.com/webpack/webpack/master/schemas/plugins/SourceMapDevToolPlugin.json"
+                toFile="${idea.project.home}/plugins/JavaScriptLanguage/src/jsonSchemas/webpackPlugins/SourceMapDevToolPlugin.json" />
+    <get_schema fromUrl="https://raw.githubusercontent.com/webpack/webpack/master/schemas/plugins/WatchIgnorePlugin.json"
+                toFile="${idea.project.home}/plugins/JavaScriptLanguage/src/jsonSchemas/webpackPlugins/WatchIgnorePlugin.json" />
+
+    <get_schema fromUrl="https://raw.githubusercontent.com/webpack/webpack/master/schemas/plugins/debug/ProfilingPlugin.json"
+                toFile="${idea.project.home}/plugins/JavaScriptLanguage/src/jsonSchemas/webpackPlugins/debug/ProfilingPlugin.json" />
+
+    <get_schema fromUrl="https://raw.githubusercontent.com/webpack/webpack/master/schemas/plugins/optimize/AggressiveSplittingPlugin.json"
+                toFile="${idea.project.home}/plugins/JavaScriptLanguage/src/jsonSchemas/webpackPlugins/optimize/AggressiveSplittingPlugin.json" />
+    <get_schema fromUrl="https://raw.githubusercontent.com/webpack/webpack/master/schemas/plugins/optimize/LimitChunkCountPlugin.json"
+                toFile="${idea.project.home}/plugins/JavaScriptLanguage/src/jsonSchemas/webpackPlugins/optimize/LimitChunkCountPlugin.json" />
+    <get_schema fromUrl="https://raw.githubusercontent.com/webpack/webpack/master/schemas/plugins/optimize/MinChunkSizePlugin.json"
+                toFile="${idea.project.home}/plugins/JavaScriptLanguage/src/jsonSchemas/webpackPlugins/optimize/MinChunkSizePlugin.json" />
+
+  </target>
+
   <target name="nodejs">
     <get_schema fromUrl="http://json.schemastore.org/package"
                 toFile="${idea.project.home}/plugins/NodeJS/src/com/jetbrains/nodejs/packageJson/packageJsonSchema.json" />
@@ -93,5 +121,6 @@
     <antcall target="tslint" />
     <antcall target="nodejs" />
     <antcall target="webpack4" />
+    <antcall target="webpack4plugins" />
   </target>
 </project>
