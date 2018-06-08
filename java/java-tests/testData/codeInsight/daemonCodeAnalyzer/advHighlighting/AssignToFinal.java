@@ -255,10 +255,10 @@ class QualifiedThis {
 
 class ParenthesizedThis {
   final int x;
-  final int y = <error descr="Variable '(this).x' might not have been initialized">(this).x</error> + 1; // javac allows this?
+  final int y = <error descr="Variable '(this).x' might not have been initialized">(this).x</error> + 1;
 
   ParenthesizedThis() {
-    (this).x = 5;
+    (this).x = 5; // javac disallows this -- probably a bug in javac
     <error descr="Variable 'x' might already have been assigned to">this.x</error> = 6;
   }
 }
