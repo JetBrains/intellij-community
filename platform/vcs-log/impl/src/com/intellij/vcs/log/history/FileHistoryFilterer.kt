@@ -35,7 +35,6 @@ import com.intellij.vcs.log.graph.VisibleGraph
 import com.intellij.vcs.log.graph.api.LiteLinearGraph
 import com.intellij.vcs.log.graph.impl.facade.PermanentGraphImpl
 import com.intellij.vcs.log.graph.impl.facade.VisibleGraphImpl
-import com.intellij.vcs.log.graph.impl.facade.hideInplace
 import com.intellij.vcs.log.graph.utils.LinearGraphUtils
 import com.intellij.vcs.log.impl.HashImpl
 import com.intellij.vcs.log.impl.VcsLogFilterCollectionImpl
@@ -184,29 +183,12 @@ internal class FileHistoryFilterer(logData: VcsLogData) : VcsLogFilterer {
         return VisiblePack.EMPTY
       }
 
-      val pathsMap = mutableMapOf<Int, FilePath>()
-      val visibleGraph = permanentGraph.createVisibleGraph(sortType, matchingHeads,
-                                                           data.commits) preprocess@{ controller, permanentGraphInfo ->
-        val visibleLinearGraph = controller.compiledGraph
-        val hash = hash ?: getHead(dataPack)
-        val row = hash?.let {
-          findAncestorRowAffectingFile(storage.getCommitIndex(it, root), filePath, visibleLinearGraph, permanentGraphInfo, data)
-        } ?: 0
-        if (row >= 0) {
-          val refiner = FileHistoryRefiner(visibleLinearGraph, permanentGraphInfo, data)
-          if (refiner.refine(row, filePath)) {
-            // creating a vg is the most expensive task, so trying to avoid that when unnecessary
-            val hidden = hideInplace(controller, permanentGraphInfo, refiner.excluded)
-            if (!hidden) LOG.error("Could not hide excluded commits from history for " + filePath.path)
-            pathsMap.putAll(refiner.pathsForCommits)
-            return@preprocess
-          }
-        }
-        pathsMap.putAll(data.buildPathsMap())
-      }
+      val commit = (hash ?: getHead(dataPack))?.let { storage.getCommitIndex(it, root) }
+      val historyBuilder = FileHistoryBuilder(commit, filePath, data)
+      val visibleGraph = permanentGraph.createVisibleGraph(sortType, matchingHeads, data.commits, historyBuilder)
 
       if (!filePath.isDirectory) reindexFirstCommitsIfNeeded(visibleGraph)
-      return FileHistoryVisiblePack(dataPack, visibleGraph, false, filters, pathsMap)
+      return FileHistoryVisiblePack(dataPack, visibleGraph, false, filters, historyBuilder.pathsMap)
     }
 
     private fun reindexFirstCommitsIfNeeded(graph: VisibleGraph<Int>) {

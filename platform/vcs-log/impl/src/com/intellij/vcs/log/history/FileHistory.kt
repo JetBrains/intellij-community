@@ -11,12 +11,43 @@ import com.intellij.vcs.log.graph.api.LinearGraph
 import com.intellij.vcs.log.graph.api.LiteLinearGraph
 import com.intellij.vcs.log.graph.api.permanent.PermanentCommitsInfo
 import com.intellij.vcs.log.graph.api.permanent.PermanentGraphInfo
+import com.intellij.vcs.log.graph.impl.facade.LinearGraphController
 import com.intellij.vcs.log.graph.impl.facade.ReachableNodes
+import com.intellij.vcs.log.graph.impl.facade.hideInplace
 import com.intellij.vcs.log.graph.utils.BfsUtil
 import com.intellij.vcs.log.graph.utils.DfsUtil
 import com.intellij.vcs.log.graph.utils.LinearGraphUtils
 import com.intellij.vcs.log.graph.utils.impl.BitSetFlags
 import gnu.trove.TIntObjectHashMap
+import java.util.function.BiConsumer
+
+internal class FileHistoryBuilder(private val startCommit: Int?,
+                                  private val startPath: FilePath,
+                                  private val fileNamesData: FileNamesData) : BiConsumer<LinearGraphController, PermanentGraphInfo<Int>> {
+  val pathsMap = mutableMapOf<Int, FilePath>()
+
+  override fun accept(controller: LinearGraphController, permanentGraphInfo: PermanentGraphInfo<Int>) {
+    val visibleLinearGraph = controller.compiledGraph
+
+    val row = startCommit?.let {
+      findAncestorRowAffectingFile(startCommit, startPath, visibleLinearGraph, permanentGraphInfo, fileNamesData)
+    } ?: 0
+    if (row >= 0) {
+      val refiner = FileHistoryRefiner(visibleLinearGraph, permanentGraphInfo, fileNamesData)
+      if (refiner.refine(row, startPath)) {
+        val hidden = hideInplace(controller, permanentGraphInfo, refiner.excluded)
+        if (!hidden) LOG.error("Could not hide excluded commits from history for " + startPath.path)
+        pathsMap.putAll(refiner.pathsForCommits)
+        return
+      }
+    }
+    pathsMap.putAll(fileNamesData.buildPathsMap())
+  }
+
+  companion object {
+    private val LOG = Logger.getInstance(FileHistoryBuilder::class.java)
+  }
+}
 
 internal fun findAncestorRowAffectingFile(commitId: Int,
                                           filePath: FilePath,
