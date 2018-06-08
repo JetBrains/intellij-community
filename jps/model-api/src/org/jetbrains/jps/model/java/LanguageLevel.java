@@ -10,7 +10,7 @@ import org.jetbrains.annotations.NotNull;
  * @author nik
  */
 public enum LanguageLevel {
-  JDK_1_3(3), JDK_1_4(4), JDK_1_5(5), JDK_1_6(6), JDK_1_7(7), JDK_1_8(8), JDK_1_9(9), JDK_10(10), JDK_11(11), JDK_11_PREVIEW(11), JDK_X(12);
+  JDK_1_3(3), JDK_1_4(4), JDK_1_5(5), JDK_1_6(6), JDK_1_7(7), JDK_1_8(8), JDK_1_9(9), JDK_10(10), JDK_11(11), JDK_X(12);
 
   private final JavaVersion myVersion;
 
