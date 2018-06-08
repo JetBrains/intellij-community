@@ -19,11 +19,9 @@ public class TouchbarTest {
     Foundation.init();
     NST.loadLibrary();
 
-    try (NSAutoreleaseLock lock = new NSAutoreleaseLock()) {
-      final TouchBar testTB = _createTestScrubberTouchbar();
-      testTB.selectVisibleItemsToShow();
-      NST.setTouchBar(testTB);
-    }
+    final TouchBar testTB = _createTestScrubberTouchbar();
+    testTB.selectVisibleItemsToShow();
+    NST.setTouchBar(testTB);
 
     final JFrame f = new JFrame();
     f.setDefaultCloseOperation(WindowConstants.EXIT_ON_CLOSE);
@@ -33,9 +31,9 @@ public class TouchbarTest {
 
   private static TouchBar _createTestButtonsTouchbar() {
     final TouchBar testTB = new TouchBar("test", false);
-    testTB.addButton().setText("test1").setAction(createPrintTextCallback("pressed test1 button"));
-    testTB.addButton().setText("test2").setAction(createPrintTextCallback("pressed test2 button"));
-    testTB.addButton().setIcon(AllIcons.Toolwindows.ToolWindowRun).setAction(createPrintTextCallback("pressed image button"));
+    testTB.addButton().setText("test1").setThreadSafeAction(createPrintTextCallback("pressed test1 button"));
+    testTB.addButton().setText("test2").setThreadSafeAction(createPrintTextCallback("pressed test2 button"));
+    testTB.addButton().setIcon(AllIcons.Toolwindows.ToolWindowRun).setThreadSafeAction(createPrintTextCallback("pressed image button"));
     return testTB;
   }
 
@@ -44,16 +42,15 @@ public class TouchbarTest {
     testTB.addSpacing(true);
 
     final TBItemScrubber scrubber = testTB.addScrubber();
-    List<TBItemScrubber.ItemData> scrubberItems = new ArrayList<>();
     for (int c = 0; c < 11; ++c) {
       String txt;
       if (c == 3)           txt = "very very long text";
       else                  txt = String.format("r%1.2f", Math.random());
       int finalC = c;
-      scrubberItems.add(new TBItemScrubber.ItemData(AllIcons.Toolwindows.ToolWindowPalette, txt,
-                                                    () -> System.out.println("performed action of scrubber item at index " + finalC + " [thread:" + Thread.currentThread() + "]")));
+      scrubber.addItem(AllIcons.Toolwindows.ToolWindowPalette, txt, () -> {
+        System.out.println("performed action of scrubber item at index " + finalC + " [thread:" + Thread.currentThread() + "]");
+      });
     }
-    scrubber.setItems(scrubberItems);
 
     return testTB;
   }
@@ -61,17 +58,17 @@ public class TouchbarTest {
   private static TouchBar _createTestAllTouchbar() {
     final TouchBar testTB = new TouchBar("test", false);
     testTB.addSpacing(true);
-    testTB.addButton().setText("test1").setAction(createPrintTextCallback("pressed test1 button"));
-    testTB.addButton().setText("test2").setAction(createPrintTextCallback("pressed test2 button"));
+    testTB.addButton().setText("test1").setThreadSafeAction(createPrintTextCallback("pressed test1 button"));
+    testTB.addButton().setText("test2").setThreadSafeAction(createPrintTextCallback("pressed test2 button"));
     testTB.addSpacing(false);
-    testTB.addButton().setIcon(AllIcons.Toolwindows.ToolWindowRun).setAction(createPrintTextCallback("pressed image button"));
+    testTB.addButton().setIcon(AllIcons.Toolwindows.ToolWindowRun).setThreadSafeAction(createPrintTextCallback("pressed image button"));
 
     final TouchBar tapHoldTB = new TouchBar("test_popover_tap_and_hold", false);
     final TouchBar expandTB = new TouchBar("test_configs_popover_expand", false);
     final int configPopoverWidth = 143;
     testTB.addPopover(AllIcons.Toolwindows.ToolWindowBuild, "test-popover", configPopoverWidth, expandTB, tapHoldTB);
 
-    expandTB.addButton().setIcon(AllIcons.Toolwindows.ToolWindowDebugger).setAction(createPrintTextCallback("pressed popover-image button"));
+    expandTB.addButton().setIcon(AllIcons.Toolwindows.ToolWindowDebugger).setThreadSafeAction(createPrintTextCallback("pressed popover-image button"));
     final TBItemScrubber scrubber = expandTB.addScrubber();
     List<TBItemScrubber.ItemData> scrubberItems = new ArrayList<>();
     for (int c = 0; c < 15; ++c) {
@@ -84,19 +81,14 @@ public class TouchbarTest {
     }
     expandTB.selectVisibleItemsToShow();
 
-    tapHoldTB.addButton().setIcon(AllIcons.Toolwindows.ToolWindowPalette).setAction(createPrintTextCallback("pressed tap-hold-image button"));
+    tapHoldTB.addButton().setIcon(AllIcons.Toolwindows.ToolWindowPalette).setThreadSafeAction(createPrintTextCallback("pressed tap-hold-image button"));
     tapHoldTB.selectVisibleItemsToShow();
 
     return testTB;
   }
 
-  private static NSTLibrary.Action createPrintTextCallback(String text) {
-    return new NSTLibrary.Action() {
-      @Override
-      public void execute() {
-        System.out.println(text + " [thread:" + Thread.currentThread() + "]");
-      }
-    };
+  private static Runnable createPrintTextCallback(String text) {
+    return ()->{ System.out.println(text + " [thread:" + Thread.currentThread() + "]"); };
   }
 }
 

@@ -17,6 +17,7 @@ import java.awt.event.InputEvent;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.function.BiConsumer;
 
 class ProjectData {
   private static final Logger LOG = Logger.getInstance(ProjectData.class);
@@ -78,13 +79,13 @@ class ProjectData {
       return;
     }
 
-    final ActionGroup mainLayout = TouchBarActionBase.getCustomizedGroup(barId);
+    final ActionGroup mainLayout = BuildUtils.getCustomizedGroup(barId);
     if (mainLayout == null) {
       LOG.info("can't create touchbar because corresponding ActionGroup isn't defined (seems that user deleted it), context: " + barId);
       return;
     }
 
-    final Map<String, ActionGroup> strmod2alt = TouchBarActionBase.getAltLayouts(mainLayout);
+    final Map<String, ActionGroup> strmod2alt = BuildUtils.getAltLayouts(mainLayout);
     final Map<Long, TouchBar> alts = new HashMap<>();
     if (strmod2alt != null && !strmod2alt.isEmpty()) {
       for (String modId: strmod2alt.keySet()) {
@@ -93,11 +94,11 @@ class ProjectData {
           // System.out.println("ERROR: zero mask for modId="+modId);
           continue;
         }
-        alts.put(mask, new TouchBarActionBase(type.name() + "_" + modId, myProject, strmod2alt.get(modId), replaceEsc));
+        alts.put(mask, TouchBar.buildFromGroup(type.name() + "_" + modId, strmod2alt.get(modId), replaceEsc));
       }
     }
 
-    container.set(new TouchBarActionBase(type.name(), myProject, mainLayout, replaceEsc), alts);
+    container.set(TouchBar.buildFromGroup(type.name(), mainLayout, replaceEsc), alts);
   }
 
   void releaseAll() {
@@ -112,6 +113,11 @@ class ProjectData {
       bc.release();
       _fillBarContainer(bc);
     });
+  }
+
+  void forEach(BiConsumer<? super BarType, ? super BarContainer> proc) {
+    ApplicationManager.getApplication().assertIsDispatchThread();
+    myBars.forEach(proc);
   }
 
   int getDbgSessions() { return myActiveDebugSessions.get(); }

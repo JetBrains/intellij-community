@@ -28,8 +28,8 @@ static NSMutableArray * _convertItems(ScrubberItemData * items, int count) {
     NSMutableArray * nsarray = [[[NSMutableArray alloc] initWithCapacity:count] autorelease];
     for (int c = 0; c < count; ++c) {
         ScrubberItem * si = [[[ScrubberItem alloc] init] autorelease];
-        si.text = getText(&items[c]);
-        si.img = getImg(&items[c]);
+        si.text = createString(&items[c]);
+        si.img = createImg(&items[c]);
         si.jaction = items[c].action;
         [nsarray addObject:si];
     }
@@ -45,7 +45,7 @@ static NSMutableArray * _convertItems(ScrubberItemData * items, int count) {
 }
 
 - (NSScrubberItemView *)scrubber:(NSScrubber *)scrubber viewForItemAtIndex:(NSInteger)itemIndex {
-    // NOTE: called from AppKit
+    // NOTE: called from AppKit-thread (creation when TB becomes visible), uses default autorelease-pool (create before event processing)
     nstrace(@"scrubber [%@]: create viewForItemAtIndex %d", self.identifier, itemIndex);
     ScrubberItemView *itemView = [scrubber makeItemWithIdentifier:g_scrubberItemIdentifier owner:nil];
 
@@ -60,7 +60,7 @@ static NSMutableArray * _convertItems(ScrubberItemData * items, int count) {
 }
 
 - (NSSize)scrubber:(NSScrubber *)scrubber layout:(NSScrubberFlowLayout *)layout sizeForItemAtIndex:(NSInteger)itemIndex {
-    // NOTE: called from AppKit (when update layout)
+    // NOTE: called from AppKit-thread (creation when TB becomes visible), uses default autorelease-pool (create before event processing)
     ScrubberItem * itemData = [self.items objectAtIndex:itemIndex];
     if (itemData == nil) {
         nserror(@"scrubber [%@]: null item-data at index %d", self.identifier, itemIndex);
@@ -98,7 +98,7 @@ static NSMutableArray * _convertItems(ScrubberItemData * items, int count) {
 
 @end
 
-// NOTE: called from AppKit (when TB becomes visible)
+// NOTE: called from AppKit-thread (creation when TB becomes visible), uses default autorelease-pool (create before event processing)
 id createScrubber(const char* uid, int itemWidth, ScrubberItemData * items, int count) {
     NSString * nsid = [NSString stringWithUTF8String:uid];
     nstrace(@"create scrubber [%@] (thread: %@)", nsid, [NSThread currentThread]);
