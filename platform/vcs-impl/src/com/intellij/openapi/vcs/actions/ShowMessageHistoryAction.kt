@@ -1,7 +1,9 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.vcs.actions
 
+import com.intellij.ide.TextCopyProvider
 import com.intellij.openapi.actionSystem.AnActionEvent
+import com.intellij.openapi.actionSystem.PlatformDataKeys.COPY_PROVIDER
 import com.intellij.openapi.application.ApplicationManager.getApplication
 import com.intellij.openapi.command.CommandProcessor
 import com.intellij.openapi.command.undo.UndoManager
@@ -24,6 +26,7 @@ import com.intellij.ui.ColoredListCellRenderer
 import com.intellij.ui.awt.RelativePoint
 import com.intellij.ui.speedSearch.SpeedSearchUtil.applySpeedSearchHighlighting
 import com.intellij.util.ObjectUtils.sentinel
+import com.intellij.util.containers.nullize
 import com.intellij.util.ui.JBUI.scale
 import com.intellij.vcs.commit.CommitMessageInspectionProfile.getSubjectRightMargin
 import java.awt.Point
@@ -58,13 +61,17 @@ class ShowMessageHistoryAction : DumbAwareAction() {
 
   private fun createPopup(project: Project, commitMessage: CommitMessage, messages: List<String>): JBPopup {
     var chosenMessage: String? = null
+    var selectedMessage: String? = null
     val rightMargin = getSubjectRightMargin(project)
     val previewCommandGroup = sentinel("Preview Commit Message")
 
     return JBPopupFactory.getInstance().createPopupChooserBuilder(messages)
       .setFont(commitMessage.editorField.editor?.colorsScheme?.getFont(EditorFontType.PLAIN))
       .setSelectionMode(SINGLE_SELECTION)
-      .setItemSelectedCallback { it?.let { preview(project, commitMessage, it, previewCommandGroup) } }
+      .setItemSelectedCallback {
+        selectedMessage = it
+        it?.let { preview(project, commitMessage, it, previewCommandGroup) }
+      }
       .setItemChosenCallback { chosenMessage = it }
       .setRenderer(object : ColoredListCellRenderer<String>() {
         override fun customizeCellRenderer(list: JList<out String>, value: String, index: Int, selected: Boolean, hasFocus: Boolean) {
@@ -89,6 +96,17 @@ class ShowMessageHistoryAction : DumbAwareAction() {
       })
       .setNamerForFiltering { it }
       .createPopup()
+      .apply {
+        setDataProvider { dataId ->
+          when (dataId) {
+          // default list action does not work as "CopyAction" is invoked first, but with other copy provider
+            COPY_PROVIDER.name -> object : TextCopyProvider() {
+              override fun getTextLinesToCopy() = listOfNotNull(selectedMessage).nullize()
+            }
+            else -> null
+          }
+        }
+      }
   }
 
   private fun preview(project: Project,
