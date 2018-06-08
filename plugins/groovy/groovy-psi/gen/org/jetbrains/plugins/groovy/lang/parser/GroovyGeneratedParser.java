@@ -375,49 +375,37 @@ public class GroovyGeneratedParser implements PsiParser, LightPsiParser {
   }
 
   /* ********************************************************** */
-  // '(' mb_nl expression mb_nl ')' mb_nl branch [mb_nl ';'] else_branch?
+  // if_header mb_nl branch [mb_separators else_branch]
   static boolean after_if_keyword(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "after_if_keyword")) return false;
     if (!nextTokenIs(b, T_LPAREN)) return false;
     boolean r, p;
     Marker m = enter_section_(b, l, _NONE_);
-    r = consumeToken(b, T_LPAREN);
+    r = if_header(b, l + 1);
     p = r; // pin = 1
     r = r && report_error_(b, mb_nl(b, l + 1));
-    r = p && report_error_(b, expression(b, l + 1, -1)) && r;
-    r = p && report_error_(b, mb_nl(b, l + 1)) && r;
-    r = p && report_error_(b, consumeToken(b, T_RPAREN)) && r;
-    r = p && report_error_(b, mb_nl(b, l + 1)) && r;
     r = p && report_error_(b, branch(b, l + 1)) && r;
-    r = p && report_error_(b, after_if_keyword_7(b, l + 1)) && r;
-    r = p && after_if_keyword_8(b, l + 1) && r;
+    r = p && after_if_keyword_3(b, l + 1) && r;
     exit_section_(b, l, m, r, p, null);
     return r || p;
   }
 
-  // [mb_nl ';']
-  private static boolean after_if_keyword_7(PsiBuilder b, int l) {
-    if (!recursion_guard_(b, l, "after_if_keyword_7")) return false;
-    after_if_keyword_7_0(b, l + 1);
+  // [mb_separators else_branch]
+  private static boolean after_if_keyword_3(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "after_if_keyword_3")) return false;
+    after_if_keyword_3_0(b, l + 1);
     return true;
   }
 
-  // mb_nl ';'
-  private static boolean after_if_keyword_7_0(PsiBuilder b, int l) {
-    if (!recursion_guard_(b, l, "after_if_keyword_7_0")) return false;
+  // mb_separators else_branch
+  private static boolean after_if_keyword_3_0(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "after_if_keyword_3_0")) return false;
     boolean r;
     Marker m = enter_section_(b);
-    r = mb_nl(b, l + 1);
-    r = r && consumeToken(b, T_SEMI);
+    r = mb_separators(b, l + 1);
+    r = r && else_branch(b, l + 1);
     exit_section_(b, m, null, r);
     return r;
-  }
-
-  // else_branch?
-  private static boolean after_if_keyword_8(PsiBuilder b, int l) {
-    if (!recursion_guard_(b, l, "after_if_keyword_8")) return false;
-    else_branch(b, l + 1);
-    return true;
   }
 
   /* ********************************************************** */
@@ -2776,15 +2764,14 @@ public class GroovyGeneratedParser implements PsiParser, LightPsiParser {
   }
 
   /* ********************************************************** */
-  // mb_nl 'else' mb_nl branch
+  // 'else' mb_nl branch
   static boolean else_branch(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "else_branch")) return false;
-    if (!nextTokenIs(b, "", KW_ELSE, NL)) return false;
+    if (!nextTokenIs(b, KW_ELSE)) return false;
     boolean r, p;
     Marker m = enter_section_(b, l, _NONE_);
-    r = mb_nl(b, l + 1);
-    r = r && consumeToken(b, KW_ELSE);
-    p = r; // pin = 2
+    r = consumeToken(b, KW_ELSE);
+    p = r; // pin = 1
     r = r && report_error_(b, mb_nl(b, l + 1));
     r = p && branch(b, l + 1) && r;
     exit_section_(b, l, m, r, p, null);
@@ -3489,6 +3476,23 @@ public class GroovyGeneratedParser implements PsiParser, LightPsiParser {
     p = r; // pin = 1
     r = r && report_error_(b, mb_nl(b, l + 1));
     r = p && for_body(b, l + 1) && r;
+    exit_section_(b, l, m, r, p, null);
+    return r || p;
+  }
+
+  /* ********************************************************** */
+  // '(' mb_nl expression_or_application mb_nl ')'
+  static boolean if_header(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "if_header")) return false;
+    if (!nextTokenIs(b, T_LPAREN)) return false;
+    boolean r, p;
+    Marker m = enter_section_(b, l, _NONE_);
+    r = consumeToken(b, T_LPAREN);
+    p = r; // pin = 1
+    r = r && report_error_(b, mb_nl(b, l + 1));
+    r = p && report_error_(b, expression_or_application(b, l + 1)) && r;
+    r = p && report_error_(b, mb_nl(b, l + 1)) && r;
+    r = p && consumeToken(b, T_RPAREN) && r;
     exit_section_(b, l, m, r, p, null);
     return r || p;
   }
