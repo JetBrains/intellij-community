@@ -20,6 +20,7 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.SelectionModel;
 import com.intellij.openapi.editor.event.DocumentEvent;
 import com.intellij.openapi.editor.event.DocumentListener;
+import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.LanguageFileType;
 import com.intellij.openapi.progress.ProcessCanceledException;
@@ -29,6 +30,7 @@ import com.intellij.openapi.project.ProjectManagerListener;
 import com.intellij.openapi.ui.ComboBox;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiElement;
@@ -43,9 +45,9 @@ import com.intellij.ui.EditorTextField;
 import com.intellij.util.Alarm;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.SmartList;
+import com.intellij.util.textCompletion.TextCompletionUtil;
 import com.intellij.util.ui.LafIconLookup;
 import org.jetbrains.annotations.NonNls;
-import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
@@ -62,6 +64,7 @@ import java.util.List;
  *  Class to show the user the request for search
  */
 public class StructuralSearchDialog extends DialogWrapper {
+  static final Key<Boolean> STRUCTURAL_SEARCH = Key.create("STRUCTURAL_SEARCH_AREA");
   protected SearchContext searchContext;
 
   // text for search
@@ -149,7 +152,15 @@ public class StructuralSearchDialog extends DialogWrapper {
       }
     });
 
-    return new EditorTextField(document, searchContext.getProject(), fileType);
+    return new EditorTextField(document, searchContext.getProject(), fileType) {
+      @Override
+      protected EditorEx createEditor() {
+        EditorEx editorEx = super.createEditor();
+        TextCompletionUtil.installCompletionHint(editorEx);
+        editorEx.putUserData(STRUCTURAL_SEARCH, true);
+        return editorEx;
+      }
+    };
   }
 
   void initiateValidation() {
