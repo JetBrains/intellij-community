@@ -15,15 +15,18 @@
  */
 package com.intellij.codeInspection.dataFlow;
 
+import com.intellij.codeInsight.Nullability;
 import com.intellij.codeInsight.NullableNotNullManager;
 import com.intellij.psi.PsiAnnotation;
 import com.intellij.psi.PsiModifierListOwner;
+import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 /**
-* @author cdr
+* @deprecated use {@link Nullability}
 */
+@Deprecated
 public enum Nullness {
   NOT_NULL, NULLABLE, UNKNOWN;
 
@@ -44,5 +47,31 @@ public enum Nullness {
       return NOT_NULL;
     }
     return UNKNOWN;
+  }
+
+  @Contract(pure = true)
+  public Nullability toNullability() {
+    switch (this) {
+      case NOT_NULL:
+        return Nullability.NOT_NULL;
+      case NULLABLE:
+        return Nullability.NULLABLE;
+      case UNKNOWN:
+        return Nullability.UNKNOWN;
+    }
+    throw new InternalError("Unexpected enum value");
+  }
+
+  @Contract(pure = true)
+  public static Nullness fromNullability(Nullability nullability) {
+    switch (nullability) {
+      case NOT_NULL:
+        return NOT_NULL;
+      case NULLABLE:
+        return NULLABLE;
+      case UNKNOWN:
+        return UNKNOWN;
+    }
+    throw new InternalError("Unexpected enum value");
   }
 }
