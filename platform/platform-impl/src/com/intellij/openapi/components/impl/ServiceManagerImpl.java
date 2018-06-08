@@ -2,13 +2,17 @@
 package com.intellij.openapi.components.impl;
 
 import com.intellij.ide.plugins.PluginManager;
+import com.intellij.internal.statistic.eventLog.FeatureUsageStateEvents;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.AccessToken;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.impl.ApplicationImpl;
 import com.intellij.openapi.components.ComponentManager;
 import com.intellij.openapi.components.PersistentStateComponent;
 import com.intellij.openapi.components.ServiceDescriptor;
+import com.intellij.openapi.components.State;
 import com.intellij.openapi.components.ex.ComponentManagerEx;
+import com.intellij.openapi.components.impl.stores.StoreUtil;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.*;
 import com.intellij.openapi.extensions.impl.ExtensionComponentAdapter;
@@ -212,12 +216,22 @@ public class ServiceManagerImpl implements Disposable {
           myComponentManager.initializeComponent(instance, true);
 
           myInitializedComponentInstance = instance;
+          if (myInitializedComponentInstance instanceof PersistentStateComponent) {
+            invokeOnInitialization((PersistentStateComponent)myInitializedComponentInstance, myComponentManager instanceof ApplicationImpl);
+          }
           return instance;
         }
         finally {
           token.finish();
         }
       }
+    }
+
+    private static <T> void invokeOnInitialization(@NotNull PersistentStateComponent<T> component, boolean isAppLevel) {
+      ApplicationManager.getApplication().invokeLater(() -> {
+        State spec = StoreUtil.getStateSpec(component);
+        FeatureUsageStateEvents.INSTANCE.logConfigurationState(spec.name(), component, isAppLevel);
+      });
     }
 
     @NotNull

@@ -269,7 +269,7 @@ public class BeanBinding extends NotNullDeserializeBinding {
   }
 
   @NotNull
-  static List<MutableAccessor> getAccessors(@NotNull Class<?> aClass) {
+  public static List<MutableAccessor> getAccessors(@NotNull Class<?> aClass) {
     List<MutableAccessor> accessors = ourAccessorCache.get(aClass);
     if (accessors != null) {
       return accessors;

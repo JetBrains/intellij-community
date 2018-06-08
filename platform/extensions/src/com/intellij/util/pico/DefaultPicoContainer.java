@@ -192,6 +192,29 @@ public class DefaultPicoContainer implements AreaPicoContainer {
   @Nullable
   public <T> T getComponentInstanceIfInstantiated(@NotNull String componentKey) {
     ComponentAdapter adapter = getFromCache(componentKey);
+    return getComponentInstanceIfInstantiated(componentKey, adapter);
+  }
+
+  @NotNull
+  public <T> List<T> getInstantiatedComponents(@NotNull Class<T> componentType) {
+    List<T> result = null;
+    for (Map.Entry<Object, ComponentAdapter> entry : componentKeyToAdapterCache.entrySet()) {
+      ComponentAdapter adapter = entry.getValue();
+      if (ReflectionUtil.isAssignable(componentType, adapter.getComponentImplementation())) {
+        Object component = getComponentInstanceIfInstantiated(entry.getKey(), entry.getValue());
+        if (component != null && componentType.isInstance(component)) {
+          if (result == null) {
+            result = new ArrayList<>();
+          }
+          result.add((T)component);
+        }
+      }
+    }
+    return result == null ? Collections.emptyList() : result;
+  }
+
+  @Nullable
+  public <T> T getComponentInstanceIfInstantiated(@NotNull Object componentKey, ComponentAdapter adapter) {
     if (!(adapter instanceof LazyComponentAdapter)) {
       //noinspection unchecked
       return (T)getComponentInstance(componentKey);
