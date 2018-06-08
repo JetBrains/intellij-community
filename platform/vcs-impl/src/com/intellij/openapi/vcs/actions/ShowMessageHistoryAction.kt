@@ -67,6 +67,7 @@ class ShowMessageHistoryAction : DumbAwareAction() {
 
     return JBPopupFactory.getInstance().createPopupChooserBuilder(messages)
       .setFont(commitMessage.editorField.editor?.colorsScheme?.getFont(EditorFontType.PLAIN))
+      .setVisibleRowCount(7)
       .setSelectionMode(SINGLE_SELECTION)
       .setItemSelectedCallback {
         selectedMessage = it
