@@ -11,9 +11,8 @@ import com.intellij.vcs.log.graph.api.LinearGraph
 import com.intellij.vcs.log.graph.api.LiteLinearGraph
 import com.intellij.vcs.log.graph.api.permanent.PermanentCommitsInfo
 import com.intellij.vcs.log.graph.api.permanent.PermanentGraphInfo
-import com.intellij.vcs.log.graph.impl.facade.LinearGraphController
-import com.intellij.vcs.log.graph.impl.facade.ReachableNodes
-import com.intellij.vcs.log.graph.impl.facade.hideInplace
+import com.intellij.vcs.log.graph.collapsing.CollapsedGraph
+import com.intellij.vcs.log.graph.impl.facade.*
 import com.intellij.vcs.log.graph.utils.BfsUtil
 import com.intellij.vcs.log.graph.utils.DfsUtil
 import com.intellij.vcs.log.graph.utils.LinearGraphUtils
@@ -30,14 +29,19 @@ internal class FileHistoryBuilder(private val startCommit: Int?,
   override fun accept(controller: LinearGraphController, permanentGraphInfo: PermanentGraphInfo<Int>) {
     pathsMap.putAll(refine(controller, startCommit, permanentGraphInfo))
 
-    val trivialMerges = mutableSetOf<Int>()
+    val trivialCandidates = mutableSetOf<Int>()
     pathsMap.forEach { c, p ->
       if (fileNamesData.isTrivialMerge(c, p)) {
-        trivialMerges.add(c)
+        trivialCandidates.add(c)
       }
     }
-    hideInplace(controller, permanentGraphInfo, trivialMerges)
-    trivialMerges.forEach { pathsMap.remove(it) }
+
+    modifyGraph(controller) { collapsedGraph ->
+      val trivialMerges = hideTrivialMerges(collapsedGraph) { nodeId: Int ->
+        trivialCandidates.contains(permanentGraphInfo.permanentCommitsInfo.getCommitId(nodeId))
+      }
+      trivialMerges.forEach { pathsMap.remove(permanentGraphInfo.permanentCommitsInfo.getCommitId(it)) }
+    }
   }
 
   private fun refine(controller: LinearGraphController,
@@ -53,7 +57,7 @@ internal class FileHistoryBuilder(private val startCommit: Int?,
         val refiner = FileHistoryRefiner(visibleLinearGraph, permanentGraphInfo, fileNamesData)
         val (paths, excluded) = refiner.refine(row, startPath)
         if (!excluded.isEmpty()) {
-          val hidden = hideInplace(controller, permanentGraphInfo, excluded)
+          val hidden = hideCommits(controller, permanentGraphInfo, excluded)
           if (!hidden) LOG.error("Could not hide excluded commits from history for " + startPath.path)
         }
         return paths
@@ -64,6 +68,42 @@ internal class FileHistoryBuilder(private val startCommit: Int?,
 
   companion object {
     private val LOG = Logger.getInstance(FileHistoryBuilder::class.java)
+  }
+}
+
+fun hideTrivialMerges(collapsedGraph: CollapsedGraph,
+                      isCandidateNodeId: (Int) -> Boolean): Set<Int> {
+  val result = mutableSetOf<Int>()
+  val graph = LinearGraphUtils.asLiteLinearGraph(collapsedGraph.compiledGraph)
+
+  for (v in graph.nodesCount() - 1 downTo 0) {
+    val nodeId = collapsedGraph.compiledGraph.getNodeId(v)
+    if (isCandidateNodeId(nodeId)) {
+      val downNodes = graph.getNodes(v, LiteLinearGraph.NodeFilter.DOWN)
+      if (downNodes.size == 1) {
+        result.add(nodeId)
+        hideTrivialMerge(collapsedGraph, graph, v, downNodes.single())
+      }
+      else if (downNodes.size == 2) {
+        val lowerParent = downNodes.max()!!
+        val upperParent = downNodes.min()!!
+        if (DfsUtil.isAncestor(graph, lowerParent, upperParent)) {
+          result.add(nodeId)
+          hideTrivialMerge(collapsedGraph, graph, v, upperParent)
+        }
+      }
+    }
+  }
+
+  return result
+}
+
+private fun hideTrivialMerge(collapsedGraph: CollapsedGraph, graph: LiteLinearGraph, node: Int, singleParent: Int) {
+  collapsedGraph.modify {
+    hideRow(node)
+    for (upNode in graph.getNodes(node, LiteLinearGraph.NodeFilter.UP)) {
+      connectRows(upNode, singleParent)
+    }
   }
 }
 
