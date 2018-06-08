@@ -27,7 +27,6 @@ import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.project.ProjectManagerListener;
-import com.intellij.openapi.ui.ComboBox;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Key;
@@ -77,7 +76,6 @@ public class StructuralSearchDialog extends DialogWrapper {
   private JCheckBox caseSensitiveMatch;
 
   private FileTypeSelector fileTypes;
-  private JComboBox<String> contexts;
 
   protected Configuration myConfiguration;
   private JCheckBox openInNewTab;
@@ -223,23 +221,6 @@ public class StructuralSearchDialog extends DialogWrapper {
     }
   }
 
-  void updateContexts() {
-    final FileType fileType = fileTypes.getSelectedFileType();
-    final StructuralSearchProfile profile = StructuralSearchUtil.getProfileByFileType(fileType);
-
-    if (profile instanceof StructuralSearchProfileBase) {
-      final String[] contextNames = ((StructuralSearchProfileBase)profile).getContextNames();
-      if (contextNames.length > 0) {
-        contexts.setModel(new DefaultComboBoxModel<>(contextNames));
-        contexts.setSelectedItem(contextNames[0]);
-        contexts.setEnabled(true);
-        return;
-      }
-    }
-    contexts.setSelectedItem(null);
-    contexts.setEnabled(false);
-  }
-
   private void detectFileTypeAndDialect() {
     final PsiFile file = searchContext.getFile();
     if (file != null) {
@@ -299,10 +280,7 @@ public class StructuralSearchDialog extends DialogWrapper {
     recursiveMatching.setSelected(isRecursiveSearchEnabled() && matchOptions.isRecursiveSearch());
     caseSensitiveMatch.setSelected(matchOptions.isCaseSensitiveMatch());
 
-    fileTypes.setSelectedItem(matchOptions.getFileType(), matchOptions.getDialect());
-    if (matchOptions.getPatternContext() != null) {
-      contexts.setSelectedItem(matchOptions.getPatternContext());
-    }
+    fileTypes.setSelectedItem(matchOptions.getFileType(), matchOptions.getDialect(), matchOptions.getPatternContext());
     final Editor editor = searchCriteriaEdit.getEditor();
     if (editor != null) {
       editor.putUserData(SubstitutionShortInfoHandler.CURRENT_CONFIGURATION_KEY, myConfiguration);
@@ -402,12 +380,11 @@ public class StructuralSearchDialog extends DialogWrapper {
     Collections.sort(types, (o1, o2) -> o1.getName().compareToIgnoreCase(o2.getName()));
     fileTypes = new FileTypeSelector(types);
     fileTypes.setMinimumAndPreferredWidth(200);
-    fileTypes.setSelectedItem(ourFtSearchVariant, ourDialect);
+    fileTypes.setSelectedItem(ourFtSearchVariant, ourDialect, ourContext);
     fileTypes.addItemListener(new ItemListener() {
       @Override
       public void itemStateChanged(ItemEvent e) {
         if (e.getStateChange() == ItemEvent.SELECTED) {
-          updateContexts();
           updateEditor();
           initiateValidation();
         }
@@ -415,7 +392,6 @@ public class StructuralSearchDialog extends DialogWrapper {
     });
     final JLabel fileTypeLabel = new JLabel(SSRBundle.message("search.dialog.file.type.label"));
     fileTypeLabel.setLabelFor(fileTypes);
-    contexts = new ComboBox<>(60); // todo remove me, dummy
     final DefaultActionGroup templateActionGroup = new DefaultActionGroup(
       new AnAction(SSRBundle.message("save.template.text.button")) {
 
@@ -653,7 +629,7 @@ public class StructuralSearchDialog extends DialogWrapper {
     final FileTypeInfo info = fileTypes.getSelectedItem();
     ourFtSearchVariant = info != null ? info.getFileType() : null;
     ourDialect = info != null ? info.getDialect() : null;
-    ourContext = (String)contexts.getSelectedItem();
+    ourContext = info != null ? info.getContext() : null;
     FileType fileType = ourFtSearchVariant;
     options.setFileType(fileType);
     options.setDialect(ourDialect);
