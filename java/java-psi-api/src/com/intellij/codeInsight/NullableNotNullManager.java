@@ -221,15 +221,15 @@ public abstract class NullableNotNullManager {
    */
   @Nullable
   public PsiAnnotation findEffectiveNullabilityAnnotation(@NotNull PsiModifierListOwner owner) {
+    PsiType type = getOwnerType(owner);
+    if (type == null || TypeConversionUtil.isPrimitiveAndNotNull(type)) return null;
+
     return CachedValuesManager.getCachedValue(owner, () -> CachedValueProvider.Result
       .create(doFindEffectiveNullabilityAnnotation(owner), PsiModificationTracker.MODIFICATION_COUNT));
   }
 
   @Nullable
   private PsiAnnotation doFindEffectiveNullabilityAnnotation(@NotNull PsiModifierListOwner owner) {
-    PsiType type = getOwnerType(owner);
-    if (type == null || TypeConversionUtil.isPrimitiveAndNotNull(type)) return null;
-
     Set<String> annotationNames = ContainerUtil.newHashSet(getNullablesWithNickNames());
     annotationNames.addAll(getNotNullsWithNickNames());
     Set<String> extraAnnotations = DEFAULT_ALL.stream().filter(anno -> !annotationNames.contains(anno)).collect(Collectors.toSet());
