@@ -1,6 +1,7 @@
 // Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.jetbrains.python.tools
 
+import com.intellij.ide.BootstrapClassLoaderUtil
 import com.intellij.idea.IdeaTestApplication
 import com.intellij.index.PrebuiltIndexAwareIdIndexer
 import com.intellij.openapi.application.PathManager
@@ -67,5 +68,7 @@ private fun createApp(): IdeaTestApplication {
   candidates[0] = "PyCharm"
   System.setProperty(PathManager.PROPERTY_PLUGINS_PATH, FileUtil.createTempDirectory("pystubs", "plugins").absolutePath)
   System.setProperty(PathManager.PROPERTY_SYSTEM_PATH, FileUtil.createTempDirectory("pystubs", "system").absolutePath)
+  System.setProperty(PathManager.PROPERTY_CONFIG_PATH, FileUtil.createTempDirectory("pystubs", "config").absolutePath)
+  Thread.currentThread().contextClassLoader = BootstrapClassLoaderUtil.initClassLoader()
   return IdeaTestApplication.getInstance()
 }
