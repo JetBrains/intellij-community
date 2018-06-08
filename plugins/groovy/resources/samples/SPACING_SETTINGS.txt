@@ -36,6 +36,7 @@ class Foo {
     } while (condition)
     def cl = {Math.sin(it)}
     print ckl(2)
+    assert condition : message
   }
 
   def inject(x) {"cos($x) = ${Math.cos(x)}"}

@@ -43,6 +43,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.arguments.GrNamedArg
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.arguments.GrSpreadArgument;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrClosableBlock;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrOpenBlock;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.branch.GrAssertStatement;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.clauses.GrForInClause;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.*;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.literals.GrLiteral;
@@ -912,7 +913,15 @@ public class GroovySpacingProcessor extends GroovyElementVisitor {
     }
   }
 
-
+  @Override
+  public void visitAssertStatement(@NotNull GrAssertStatement assertStatement) {
+    if (myType2 == T_COLON || myType2 == T_COMMA) {
+      createSpaceInCode(myGroovySettings.SPACE_BEFORE_ASSERT_SEPARATOR);
+    }
+    else if (myType1 == T_COLON || myType1 == T_COMMA) {
+      createSpaceInCode(myGroovySettings.SPACE_AFTER_ASSERT_SEPARATOR);
+    }
+  }
 
   @Override
   public void visitIfStatement(@NotNull GrIfStatement ifStatement) {

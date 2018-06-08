@@ -227,6 +227,8 @@ public class GroovyLanguageCodeStyleSettingsProvider extends LanguageCodeStyleSe
       consumer.showCustomOption(GroovyCodeStyleSettings.class, "SPACE_WITHIN_GSTRING_INJECTION_BRACES", "GString injection braces", CodeStyleSettingsCustomizable.SPACES_WITHIN);
       consumer.showCustomOption(GroovyCodeStyleSettings.class, "SPACE_WITHIN_TUPLE_EXPRESSION", "Tuple assignment expression", CodeStyleSettingsCustomizable.SPACES_WITHIN);
       consumer.showCustomOption(GroovyCodeStyleSettings.class, "SPACE_AROUND_REGEX_OPERATORS", "Regexp expression (==~, =~)", CodeStyleSettingsCustomizable.SPACES_AROUND_OPERATORS);
+      consumer.showCustomOption(GroovyCodeStyleSettings.class, "SPACE_BEFORE_ASSERT_SEPARATOR", "Before 'assert' separator", CodeStyleSettingsCustomizable.SPACES_OTHER);
+      consumer.showCustomOption(GroovyCodeStyleSettings.class, "SPACE_AFTER_ASSERT_SEPARATOR", "After 'assert' separator", CodeStyleSettingsCustomizable.SPACES_OTHER);
       return;
     }
     if (settingsType == BLANK_LINES_SETTINGS) {

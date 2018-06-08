@@ -128,6 +128,10 @@ class GroovyCodeStyleFormatterTest extends GroovyFormatterTestCase {
 
   void testSpace_in_named_arg_false() throws Throwable { doTest() }
 
+  void testAssertSeparatorSpace() { doTest() }
+
+  void testAssertSeparatorNoSpace() { doTest() }
+
   void testSpaceInNamedArgBeforeColon() { doTest() }
 
   void testAnonymousVsLBraceOnNewLine() { doTest() }
