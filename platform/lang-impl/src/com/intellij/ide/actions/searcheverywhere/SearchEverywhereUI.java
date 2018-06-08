@@ -116,7 +116,9 @@ public class SearchEverywhereUI extends BorderLayoutPanel implements Disposable,
     JPanel suggestionsPanel = createSuggestionsPanel();
 
     myResultsList.setModel(myListModel);
+    myResultsList.setFocusable(false);
     myResultsList.setCellRenderer(new CompositeCellRenderer());
+    myResultsList.setSelectionMode(ListSelectionModel.MULTIPLE_INTERVAL_SELECTION);
 
     ScrollingUtil.installActions(myResultsList, getSearchField());
 
@@ -462,9 +464,22 @@ public class SearchEverywhereUI extends BorderLayoutPanel implements Disposable,
           }
         }
 
-        int index = myResultsList.getSelectedIndex();
-        if (e.getKeyCode() == KeyEvent.VK_ENTER && index >= 0) {
-          elementSelected(index, e.getModifiers());
+        if (e.isShiftDown()) {
+          if (e.getKeyCode() == KeyEvent.VK_DOWN) {
+            //ScrollingUtil.moveDown(myResultsList, e.getModifiersEx());
+            myResultsList.dispatchEvent(e);
+            e.consume();
+          }
+          if (e.getKeyCode() == KeyEvent.VK_UP) {
+            //ScrollingUtil.moveUp(myResultsList, e.getModifiersEx());
+            myResultsList.dispatchEvent(e);
+            e.consume();
+          }
+        }
+
+        int[] indices = myResultsList.getSelectedIndices();
+        if (e.getKeyCode() == KeyEvent.VK_ENTER && indices.length != 0) {
+          elementsSelected(indices, e.getModifiers());
         }
       }
     });
@@ -489,12 +504,13 @@ public class SearchEverywhereUI extends BorderLayoutPanel implements Disposable,
     myResultsList.addMouseListener(new MouseAdapter() {
       @Override
       public void mouseClicked(MouseEvent e) {
-        if (e.getButton() == MouseEvent.BUTTON1) {
+        boolean multiSelectMode = e.isShiftDown() || e.isControlDown();
+        if (e.getButton() == MouseEvent.BUTTON1 && !multiSelectMode) {
           e.consume();
           final int i = myResultsList.locationToIndex(e.getPoint());
           if (i > -1) {
             myResultsList.setSelectedIndex(i);
-            elementSelected(i, e.getModifiers());
+            elementsSelected(new int[]{i}, e.getModifiers());
           }
         }
       }
@@ -515,12 +531,29 @@ public class SearchEverywhereUI extends BorderLayoutPanel implements Disposable,
     });
   }
 
-  private void elementSelected(int i, int modifiers) {
-    SearchEverywhereContributor contributor = myListModel.getContributorForIndex(i);
-    if (myListModel.isMoreElement(i)) {
+  private void elementsSelected(int[] indexes, int modifiers) {
+    if (indexes.length == 1 && myListModel.isMoreElement(indexes[0])) {
+      SearchEverywhereContributor contributor = myListModel.getContributorForIndex(indexes[0]);
       showMoreElements(contributor);
+      return;
+    }
+
+    indexes = Arrays.stream(indexes)
+                    .filter(i -> !myListModel.isMoreElement(i))
+                    .toArray();
+
+    boolean closePopup = false;
+    for (int i: indexes) {
+      SearchEverywhereContributor contributor = myListModel.getContributorForIndex(i);
+      Object value = myListModel.getElementAt(i);
+      closePopup |= contributor.processSelectedItem(value, modifiers, getSearchPattern());
+    }
+
+    if (closePopup) {
+      stopSearching();
+      searchFinishedHandler.run();
     } else {
-      gotoSelectedItem(myListModel.getElementAt(i), contributor, modifiers, getSearchPattern());
+      myResultsList.repaint();
     }
   }
 
