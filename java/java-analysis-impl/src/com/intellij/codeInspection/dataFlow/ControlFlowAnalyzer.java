@@ -1634,36 +1634,55 @@ public class ControlFlowAnalyzer extends JavaElementVisitor {
     addInstruction(new ReturnInstruction(myFactory.controlTransfer(kind, myTrapStack), anchor));
   }
 
-  @Override public void visitMethodCallExpression(PsiMethodCallExpression expression) {
-    startElement(expression);
+  @Override
+  public void visitMethodCallExpression(PsiMethodCallExpression call) {
+    ArrayDeque<PsiMethodCallExpression> calls = new ArrayDeque<>();
+    while (true) {
+      calls.addFirst(call);
+      startElement(call);
 
+      if (tryInline(call)) {
+        finishElement(call);
+        calls.removeFirst();
+        break;
+      }
+
+      PsiExpression qualifierExpression = call.getMethodExpression().getQualifierExpression();
+
+      if (qualifierExpression == null) {
+        DfaValue thisVariable = myFactory.getExpressionFactory().getQualifierOrThisVariable(call.getMethodExpression());
+        if (thisVariable != null) {
+          addInstruction(new PushInstruction(thisVariable, null));
+        }
+        else {
+          pushUnknown();
+        }
+        break;
+      }
+      call = ObjectUtils.tryCast(PsiUtil.skipParenthesizedExprDown(qualifierExpression), PsiMethodCallExpression.class);
+      if (call == null) {
+        qualifierExpression.accept(this);
+        break;
+      }
+    }
+
+    calls.forEach(this::finishCall);
+  }
+
+  private boolean tryInline(PsiMethodCallExpression call) {
     if (myInlining) {
-      for (CallInliner inliner : INLINERS) {
-        if (inliner.tryInlineCall(new CFGBuilder(this), expression)) {
-          finishElement(expression);
-          return;
+      for (CallInliner inliner: INLINERS) {
+        if (inliner.tryInlineCall(new CFGBuilder(this), call)) {
+          return true;
         }
       }
     }
+    return false;
+  }
 
-    PsiReferenceExpression methodExpression = expression.getMethodExpression();
-    PsiExpression qualifierExpression = methodExpression.getQualifierExpression();
-
-    if (qualifierExpression != null) {
-      qualifierExpression.accept(this);
-    }
-    else {
-      DfaValue thisVariable = myFactory.getExpressionFactory().getQualifierOrThisVariable(methodExpression);
-      if (thisVariable != null) {
-        addInstruction(new PushInstruction(thisVariable, null));
-      }
-      else {
-        pushUnknown();
-      }
-    }
-
-    PsiExpression[] expressions = expression.getArgumentList().getExpressions();
-    JavaResolveResult result = methodExpression.advancedResolve(false);
+  private void finishCall(PsiMethodCallExpression call) {
+    PsiExpression[] expressions = call.getArgumentList().getExpressions();
+    JavaResolveResult result = call.getMethodExpression().advancedResolve(false);
     PsiElement method = result.getElement();
     PsiParameter[] parameters = method instanceof PsiMethod ? ((PsiMethod)method).getParameterList().getParameters() : null;
 
@@ -1675,8 +1694,8 @@ public class ControlFlowAnalyzer extends JavaElementVisitor {
       }
     }
 
-    addBareCall(expression, expression.getMethodExpression());
-    finishElement(expression);
+    addBareCall(call, call.getMethodExpression());
+    finishElement(call);
   }
 
   void addBareCall(@Nullable PsiMethodCallExpression expression, @NotNull PsiReferenceExpression reference) {
