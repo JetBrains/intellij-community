@@ -94,29 +94,31 @@ public class IconScaleTest extends BareTestFixtureTestCase {
     test(new RowIcon(new CachedImageIcon(new File(getIconPath()).toURI().toURL())), BaseScaleContext.create(ctx));
   }
 
-  private static void test(Icon icon, BaseScaleContext ctx) {
-    ((ScaleContextAware)icon).updateScaleContext(ctx);
+  private static void test(Icon icon, BaseScaleContext bctx) {
+    ((ScaleContextAware)icon).updateScaleContext(bctx);
+
+    ScaleContext ctx = ScaleContext.create(bctx);
 
     int usrSize = (int)Math.round(ICON_BASE_SIZE * ctx.getScale(USR_SCALE));
     int devSize = (int)Math.round(usrSize * ctx.getScale(SYS_SCALE));
 
-    assertEquals("unexpected icon user width", usrSize, icon.getIconWidth());
-    assertEquals("unexpected icon user height", usrSize, icon.getIconHeight());
-    assertEquals("unexpected icon real width", devSize, ImageUtil.getRealWidth(IconUtil.toImage(icon)));
-    assertEquals("unexpected icon real height", devSize, ImageUtil.getRealHeight(IconUtil.toImage(icon)));
+    assertEquals("unexpected icon user width " + bctx, usrSize, icon.getIconWidth());
+    assertEquals("unexpected icon user height " + bctx, usrSize, icon.getIconHeight());
+    assertEquals("unexpected icon real width " + bctx, devSize, ImageUtil.getRealWidth(IconUtil.toImage(icon, ctx)));
+    assertEquals("unexpected icon real height " + bctx, devSize, ImageUtil.getRealHeight(IconUtil.toImage(icon, ctx)));
 
     Icon scaledIcon = IconUtil.scale(icon, null, ICON_OBJ_SCALE);
 
-    assertNotSame("scaled instance of the icon", icon, scaledIcon);
-    assertEquals("ScaleContext of the original icon changed", ctx, ((ScaleContextAware)icon).getScaleContext());
+    assertNotSame("scaled instance of the icon " + bctx, icon, scaledIcon);
+    assertEquals("ScaleContext of the original icon changed " + bctx, bctx, ((ScaleContextAware)icon).getScaleContext());
 
     int scaledUsrSize = Math.round(usrSize * ICON_OBJ_SCALE);
     int scaledDevSize = Math.round(devSize * ICON_OBJ_SCALE);
 
-    assertEquals("unexpected scaled icon user width", scaledUsrSize, scaledIcon.getIconWidth());
-    assertEquals("unexpected scaled icon user height", scaledUsrSize, scaledIcon.getIconHeight());
-    assertEquals("unexpected scaled icon real width", scaledDevSize, ImageUtil.getRealWidth(IconUtil.toImage(scaledIcon)));
-    assertEquals("unexpected scaled icon real height", scaledDevSize, ImageUtil.getRealHeight(IconUtil.toImage(scaledIcon)));
+    assertEquals("unexpected scaled icon user width " + bctx, scaledUsrSize, scaledIcon.getIconWidth());
+    assertEquals("unexpected scaled icon user height " + bctx, scaledUsrSize, scaledIcon.getIconHeight());
+    assertEquals("unexpected scaled icon real width " + bctx, scaledDevSize, ImageUtil.getRealWidth(IconUtil.toImage(scaledIcon, ctx)));
+    assertEquals("unexpected scaled icon real height " + bctx, scaledDevSize, ImageUtil.getRealHeight(IconUtil.toImage(scaledIcon, ctx)));
 
     // Additionally check that the original image hasn't changed after scaling
     Pair<BufferedImage, Graphics2D> pair = createImageAndGraphics(ctx.getScale(SYS_SCALE), icon.getIconWidth(), icon.getIconHeight());
@@ -125,7 +127,7 @@ public class IconScaleTest extends BareTestFixtureTestCase {
 
     icon.paintIcon(null, g2d, 0, 0);
 
-    BufferedImage goldImage = loadImage(getIconPath(), ScaleContext.create(ctx));
+    BufferedImage goldImage = loadImage(getIconPath(), ctx);
 
     ImageComparator.compareAndAssert(
       new ImageComparator.AASmootherComparator(0.1, 0.1, new Color(0, 0, 0, 0)), goldImage, iconImage, null);

@@ -5,6 +5,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.reference.SoftReference;
 import com.intellij.ui.RetrievableIcon;
+import com.intellij.ui.paint.PaintUtil.RoundingMode;
 import com.intellij.util.ConcurrencyUtil;
 import com.intellij.util.ImageLoader;
 import com.intellij.util.ReflectionUtil;
@@ -291,6 +292,9 @@ public final class IconLoader {
 
   @Nullable
   public static Image toImage(@NotNull Icon icon, @Nullable ScaleContext ctx) {
+    if (icon instanceof RetrievableIcon) {
+      icon = ((RetrievableIcon)icon).retrieveIcon();
+    }
     if (icon instanceof CachedImageIcon) {
       icon = ((CachedImageIcon)icon).getRealIcon(ctx);
     }
@@ -298,13 +302,21 @@ public final class IconLoader {
       return ((ImageIcon)icon).getImage();
     }
     else {
-      final int w = icon.getIconWidth();
-      final int h = icon.getIconHeight();
-      final BufferedImage image = GraphicsEnvironment.getLocalGraphicsEnvironment()
-        .getDefaultScreenDevice().getDefaultConfiguration().createCompatibleImage(w, h, Transparency.TRANSLUCENT);
-      final Graphics2D g = image.createGraphics();
-      icon.paintIcon(null, g, 0, 0);
-      g.dispose();
+      BufferedImage image;
+      if (GraphicsEnvironment.isHeadless()) { // for testing purpose
+        image = UIUtil.createImage(ctx, icon.getIconWidth(), icon.getIconHeight(), BufferedImage.TYPE_INT_ARGB, RoundingMode.FLOOR);
+      } else {
+        // [tav] todo: match the screen with the provided ctx
+        image = GraphicsEnvironment.getLocalGraphicsEnvironment()
+                                   .getDefaultScreenDevice().getDefaultConfiguration()
+                                   .createCompatibleImage(icon.getIconWidth(), icon.getIconHeight(), Transparency.TRANSLUCENT);
+      }
+      Graphics2D g = image.createGraphics();
+      try {
+        icon.paintIcon(null, g, 0, 0);
+      } finally {
+        g.dispose();
+      }
       return image;
     }
   }
