@@ -36,6 +36,7 @@ import com.intellij.vcs.log.impl.FatalErrorHandler;
 import com.intellij.vcs.log.impl.VcsIndexableDetails;
 import com.intellij.vcs.log.util.PersistentUtil;
 import com.intellij.vcsUtil.VcsUtil;
+import gnu.trove.TByteObjectHashMap;
 import gnu.trove.THashMap;
 import gnu.trove.TIntHashSet;
 import org.jetbrains.annotations.NotNull;
@@ -298,14 +299,14 @@ public class VcsLogPathsIndex extends VcsLogFullDetailsIndex<List<VcsLogPathsInd
       int afterId = myPathsEnumerator.enumerate(afterPath);
       List<ChangeData> changeDataList = getOrCreateChangeDataListForPath(commitChangesMap, afterId, parentsCount);
       if (beforePath == null) {
-        addChange(changeDataList, parent, new ChangeData(ChangeKind.MODIFIED, -1));
+        addChange(changeDataList, parent, ChangeData.MODIFIED);
       }
       else {
         int beforeId = myPathsEnumerator.enumerate(beforePath);
         if (beforeId == afterId && !SystemInfo.isFileSystemCaseSensitive) {
           // case only rename in case insensitive file system
           // since ids for before and after paths are the same we just treating this rename as a modification
-          addChange(changeDataList, parent, new ChangeData(ChangeKind.MODIFIED, -1));
+          addChange(changeDataList, parent, ChangeData.MODIFIED);
         }
         else {
           addChange(changeDataList, parent, new ChangeData(ChangeKind.RENAMED_TO, beforeId));
@@ -322,7 +323,7 @@ public class VcsLogPathsIndex extends VcsLogFullDetailsIndex<List<VcsLogPathsInd
       if (changeDataList == null) {
         changeDataList = ContainerUtil.newSmartList();
         for (int i = 0; i < parentsCount; i++) {
-          changeDataList.add(null);
+          changeDataList.add(ChangeData.NOT_CHANGED);
         }
         pathIdToChangeDataListsMap.put(pathId, changeDataList);
       }
@@ -331,11 +332,12 @@ public class VcsLogPathsIndex extends VcsLogFullDetailsIndex<List<VcsLogPathsInd
 
     private static void addChange(@NotNull List<ChangeData> changeDataList, int parentIndex, @NotNull ChangeData change) {
       ChangeData existingChange = changeDataList.get(parentIndex);
-      // most of the time, existing change is null
+      // most of the time, existing change is ChangeData.NOT_CHANGED
       // but in case insensitive fs it is possible to have several changes for one file
       // example two changes: R: abc -> AAA, D: aaa
       // in this case we keep rename information
-      if (existingChange == null || (existingChange.kind != ChangeKind.RENAMED_FROM && existingChange.kind != ChangeKind.RENAMED_TO)) {
+      if (ChangeData.NOT_CHANGED.equals(existingChange) ||
+          (existingChange.kind != ChangeKind.RENAMED_FROM && existingChange.kind != ChangeKind.RENAMED_TO)) {
         changeDataList.set(parentIndex, change);
       }
     }
@@ -365,15 +367,9 @@ public class VcsLogPathsIndex extends VcsLogFullDetailsIndex<List<VcsLogPathsInd
     public void save(@NotNull DataOutput out, List<ChangeData> value) throws IOException {
       DataInputOutputUtil.writeINT(out, value.size());
       for (ChangeData data: value) {
-        if (data == null) {
-          out.writeBoolean(false);
-        }
-        else {
-          out.writeBoolean(true);
-          out.writeByte(data.kind.id);
-          if (data.kind == ChangeKind.RENAMED_TO || data.kind == ChangeKind.RENAMED_FROM) {
-            out.writeInt(data.otherPath);
-          }
+        out.writeByte(data.kind.id);
+        if (data.kind == ChangeKind.RENAMED_TO || data.kind == ChangeKind.RENAMED_FROM) {
+          out.writeInt(data.otherPath);
         }
       }
     }
@@ -384,20 +380,15 @@ public class VcsLogPathsIndex extends VcsLogFullDetailsIndex<List<VcsLogPathsInd
 
       int size = DataInputOutputUtil.readINT(in);
       for (int i = 0; i < size; i++) {
-        if (in.readBoolean()) {
-          ChangeKind kind = ChangeKind.getKind(in.readByte());
-          int otherPath;
-          if (kind == ChangeKind.RENAMED_TO || kind == ChangeKind.RENAMED_FROM) {
-            otherPath = in.readInt();
-          }
-          else {
-            otherPath = -1;
-          }
-          value.add(new ChangeData(kind, otherPath));
+        ChangeKind kind = ChangeKind.getChangeKindById(in.readByte());
+        int otherPath;
+        if (kind == ChangeKind.RENAMED_TO || kind == ChangeKind.RENAMED_FROM) {
+          otherPath = in.readInt();
         }
         else {
-          value.add(null);
+          otherPath = -1;
         }
+        value.add(new ChangeData(kind, otherPath));
       }
 
       return value;
@@ -405,6 +396,9 @@ public class VcsLogPathsIndex extends VcsLogFullDetailsIndex<List<VcsLogPathsInd
   }
 
   public static class ChangeData {
+    public static final ChangeData NOT_CHANGED = new ChangeData(ChangeKind.NOT_CHANGED, -1);
+    public static final ChangeData MODIFIED = new ChangeData(ChangeKind.MODIFIED, -1);
+
     @NotNull public final ChangeKind kind;
     public final int otherPath;
 
@@ -435,7 +429,8 @@ public class VcsLogPathsIndex extends VcsLogFullDetailsIndex<List<VcsLogPathsInd
   public enum ChangeKind {
     MODIFIED((byte)0),
     RENAMED_FROM((byte)1),
-    RENAMED_TO((byte)2);
+    RENAMED_TO((byte)2),
+    NOT_CHANGED((byte)3); // we do not want to have nulls in lists
 
     public final byte id;
 
@@ -443,16 +438,17 @@ public class VcsLogPathsIndex extends VcsLogFullDetailsIndex<List<VcsLogPathsInd
       this.id = id;
     }
 
-    public static ChangeKind getKind(byte id) {
-      switch (id) {
-        case (0):
-          return MODIFIED;
-        case (1):
-          return RENAMED_FROM;
-        case (2):
-          return RENAMED_TO;
+    private static final TByteObjectHashMap<ChangeKind> KINDS = new TByteObjectHashMap<>();
+
+    static {
+      for (ChangeKind kind: ChangeKind.values()) {
+        KINDS.put(kind.id, kind);
       }
-      throw new IllegalArgumentException("No change kind with id " + id);
+    }
+
+    @NotNull
+    public static ChangeKind getChangeKindById(byte id) {
+      return KINDS.get(id);
     }
   }
 
