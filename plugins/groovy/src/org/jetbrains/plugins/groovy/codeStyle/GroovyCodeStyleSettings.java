@@ -48,7 +48,7 @@ public class GroovyCodeStyleSettings extends CustomCodeStyleSettings implements 
   public boolean SPACE_WITHIN_TUPLE_EXPRESSION = false;
   public boolean INDENT_LABEL_BLOCKS = true;
   public boolean SPACE_AROUND_REGEX_OPERATORS = true;
-  public boolean SPACE_BEFORE_ASSERT_SEPARATOR = true;
+  public boolean SPACE_BEFORE_ASSERT_SEPARATOR = false;
   public boolean SPACE_AFTER_ASSERT_SEPARATOR = true;
 
   //imports
