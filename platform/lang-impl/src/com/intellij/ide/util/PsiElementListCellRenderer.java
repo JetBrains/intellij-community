@@ -164,7 +164,7 @@ public abstract class PsiElementListCellRenderer<T extends PsiElement> extends J
         if (nameAttributes == null) nameAttributes = new SimpleTextAttributes(SimpleTextAttributes.STYLE_PLAIN, color);
 
         if (name == null) {
-          LOG.error("Null name for PSI element " + element + " (by " + PsiElementListCellRenderer.this + ")");
+          LOG.error("Null name for PSI element " + element.getClass() + " (by " + PsiElementListCellRenderer.this + ")");
           name = "Unknown";
         }
         SpeedSearchUtil.appendColoredFragmentForMatcher(name, this, nameAttributes, myMatchers.nameMatcher, bgColor, selected);
