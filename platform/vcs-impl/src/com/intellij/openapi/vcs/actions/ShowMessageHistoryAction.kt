@@ -96,6 +96,7 @@ class ShowMessageHistoryAction : DumbAwareAction() {
         }
       })
       .setNamerForFiltering { it }
+      .setAutoPackHeightOnFiltering(false)
       .createPopup()
       .apply {
         setDataProvider { dataId ->
