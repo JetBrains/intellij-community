@@ -33,8 +33,9 @@ import com.intellij.vcs.log.graph.GraphCommitImpl
 import com.intellij.vcs.log.graph.PermanentGraph
 import com.intellij.vcs.log.graph.VisibleGraph
 import com.intellij.vcs.log.graph.api.LiteLinearGraph
-import com.intellij.vcs.log.graph.api.permanent.PermanentGraphInfo
+import com.intellij.vcs.log.graph.impl.facade.PermanentGraphImpl
 import com.intellij.vcs.log.graph.impl.facade.VisibleGraphImpl
+import com.intellij.vcs.log.graph.impl.facade.hideInplace
 import com.intellij.vcs.log.graph.utils.LinearGraphUtils
 import com.intellij.vcs.log.impl.HashImpl
 import com.intellij.vcs.log.impl.VcsLogFilterCollectionImpl
@@ -44,6 +45,7 @@ import com.intellij.vcs.log.util.VcsLogUtil
 import com.intellij.vcs.log.visible.CommitCountStage
 import com.intellij.vcs.log.visible.VcsLogFilterer
 import com.intellij.vcs.log.visible.VcsLogFiltererImpl
+import com.intellij.vcs.log.visible.VcsLogFiltererImpl.matchesNothing
 import com.intellij.vcs.log.visible.VisiblePack
 import com.intellij.vcsUtil.VcsUtil
 
@@ -171,31 +173,36 @@ internal class FileHistoryFilterer(logData: VcsLogData) : VcsLogFilterer {
                                 filters: VcsLogFilterCollection): VisiblePack {
       val matchingHeads = vcsLogFilterer.getMatchingHeads(dataPack.refsModel, setOf(root), filters)
       val data = indexDataGetter.buildFileNamesData(filePath)
-      var visibleGraph = vcsLogFilterer.createVisibleGraph(dataPack, sortType, matchingHeads, data.commits)
 
-      var pathsMap: Map<Int, FilePath>? = null
-      if (visibleGraph.visibleCommitCount > 0) {
-        if (visibleGraph is VisibleGraphImpl<*>) {
-          val visibleLinearGraph = (visibleGraph as VisibleGraphImpl<Int>).linearGraph
-          val permanentGraphInfo: PermanentGraphInfo<Int> = visibleGraph.permanentGraph
-
-          val hash = hash ?: getHead(dataPack)
-          val row = hash?.let {
-            findAncestorRowAffectingFile(storage.getCommitIndex(it, root), filePath, visibleLinearGraph, permanentGraphInfo, data)
-          } ?: 0
-          if (row >= 0) {
-            val refiner = FileHistoryRefiner(visibleLinearGraph, permanentGraphInfo, data)
-            if (refiner.refine(row, filePath)) {
-              // creating a vg is the most expensive task, so trying to avoid that when unnecessary
-              visibleGraph = vcsLogFilterer.createVisibleGraph(dataPack, sortType, matchingHeads, refiner.pathsForCommits.keys)
-              pathsMap = refiner.pathsForCommits
-            }
-          }
-        }
+      val permanentGraph = dataPack.permanentGraph
+      if (permanentGraph !is PermanentGraphImpl) {
+        val visibleGraph = vcsLogFilterer.createVisibleGraph(dataPack, sortType, matchingHeads, data.commits)
+        return FileHistoryVisiblePack(dataPack, visibleGraph, false, filters, data.buildPathsMap())
       }
 
-      if (pathsMap == null) {
-        pathsMap = data.buildPathsMap()
+      if (matchesNothing(matchingHeads) || matchesNothing(data.commits)) {
+        return VisiblePack.EMPTY
+      }
+
+      val pathsMap = mutableMapOf<Int, FilePath>()
+      val visibleGraph = permanentGraph.createVisibleGraph(sortType, matchingHeads,
+                                                           data.commits) preprocess@{ controller, permanentGraphInfo ->
+        val visibleLinearGraph = controller.compiledGraph
+        val hash = hash ?: getHead(dataPack)
+        val row = hash?.let {
+          findAncestorRowAffectingFile(storage.getCommitIndex(it, root), filePath, visibleLinearGraph, permanentGraphInfo, data)
+        } ?: 0
+        if (row >= 0) {
+          val refiner = FileHistoryRefiner(visibleLinearGraph, permanentGraphInfo, data)
+          if (refiner.refine(row, filePath)) {
+            // creating a vg is the most expensive task, so trying to avoid that when unnecessary
+            val hidden = hideInplace(controller, permanentGraphInfo, refiner.excluded)
+            if (!hidden) LOG.error("Could not hide excluded commits from history for " + filePath.path)
+            pathsMap.putAll(refiner.pathsForCommits)
+            return@preprocess
+          }
+        }
+        pathsMap.putAll(data.buildPathsMap())
       }
 
       if (!filePath.isDirectory) reindexFirstCommitsIfNeeded(visibleGraph)

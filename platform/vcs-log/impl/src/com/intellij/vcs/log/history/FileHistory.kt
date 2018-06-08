@@ -54,7 +54,7 @@ internal class FileHistoryRefiner(private val visibleLinearGraph: LinearGraph,
   private val paths = Stack<FilePath>()
   private val visibilityBuffer = BitSetFlags(permanentLinearGraph.nodesCount()) // a reusable buffer for bfs
   val pathsForCommits = ContainerUtil.newHashMap<Int, FilePath>()
-  private val excluded = ContainerUtil.newHashSet<Int>()
+  val excluded = ContainerUtil.newHashSet<Int>()
 
   fun refine(row: Int, startPath: FilePath): Boolean {
     if (namesData.hasRenames) {
