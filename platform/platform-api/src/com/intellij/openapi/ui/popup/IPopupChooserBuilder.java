@@ -53,6 +53,8 @@ public interface IPopupChooserBuilder<T> {
 
   IPopupChooserBuilder<T> setNamerForFiltering(Function<T, String> namer);
 
+  IPopupChooserBuilder<T> setAutoPackHeightOnFiltering(boolean autoPackHeightOnFiltering);
+
   IPopupChooserBuilder<T> setModalContext(boolean modalContext);
 
   @NotNull

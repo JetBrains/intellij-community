@@ -88,6 +88,7 @@ class PopupListAdapter<T> implements PopupChooserBuilder.PopupComponentAdapter<T
   @Override
   public JComponent buildFinalComponent() {
     myListWithFilter = (ListWithFilter)ListWithFilter.wrap(myList, new MyListWrapper(myList), myBuilder.getItemsNamer());
+    myListWithFilter.setAutoPackHeight(myBuilder.isAutoPackHeightOnFiltering());
     return myListWithFilter;
   }
 
