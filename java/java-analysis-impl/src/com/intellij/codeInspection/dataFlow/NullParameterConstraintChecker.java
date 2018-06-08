@@ -1,6 +1,7 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInspection.dataFlow;
 
+import com.intellij.codeInsight.Nullability;
 import com.intellij.codeInsight.NullableNotNullManager;
 import com.intellij.codeInspection.dataFlow.instructions.AssignInstruction;
 import com.intellij.codeInspection.dataFlow.instructions.Instruction;
@@ -53,7 +54,7 @@ class NullParameterConstraintChecker extends DataFlowRunner {
     for (int index = 0; index < parameters.length; index++) {
       PsiParameter parameter = parameters[index];
       if (!(parameter.getType() instanceof PsiPrimitiveType) &&
-          NullableNotNullManager.getInstance(method.getProject()).findEffectiveNullabilityAnnotation(parameter) == null &&
+          NullableNotNullManager.getInstance(method.getProject()).findEffectiveNullability(parameter) == Nullability.UNKNOWN &&
           JavaNullMethodArgumentUtil.hasNullArgument(method, index)) {
         nullableParameters.add(parameter);
       }

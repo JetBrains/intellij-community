@@ -2,6 +2,8 @@
 package com.intellij.codeInspection.dataFlow;
 
 import com.intellij.codeInsight.AnnotationUtil;
+import com.intellij.codeInsight.Nullability;
+import com.intellij.codeInsight.NullabilityAnnotationInfo;
 import com.intellij.codeInsight.NullableNotNullManager;
 import com.intellij.codeInsight.daemon.impl.analysis.HighlightControlFlowUtil;
 import com.intellij.codeInsight.daemon.impl.analysis.JavaGenericsUtil;
@@ -84,9 +86,9 @@ public class DfaPsiUtil {
       return Nullness.NOT_NULL;
     }
 
-    Nullness fromAnnotation = getNullabilityFromAnnotation(owner, ignoreParameterNullabilityInference);
-    if (fromAnnotation != Nullness.UNKNOWN) {
-      return fromAnnotation;
+    Nullability fromAnnotation = getNullabilityFromAnnotation(owner, ignoreParameterNullabilityInference);
+    if (fromAnnotation != Nullability.UNKNOWN) {
+      return Nullness.fromNullability(fromAnnotation);
     }
 
     if (owner instanceof PsiMethod && isMapMethodWithUnknownNullity((PsiMethod)owner)) {
@@ -111,14 +113,14 @@ public class DfaPsiUtil {
   }
 
   @NotNull
-  private static Nullness getNullabilityFromAnnotation(PsiModifierListOwner owner, boolean ignoreParameterNullabilityInference) {
+  private static Nullability getNullabilityFromAnnotation(PsiModifierListOwner owner, boolean ignoreParameterNullabilityInference) {
     NullableNotNullManager manager = NullableNotNullManager.getInstance(owner.getProject());
-    PsiAnnotation annotation = manager.findEffectiveNullabilityAnnotation(owner);
-    if (annotation == null ||
-        (ignoreParameterNullabilityInference && owner instanceof PsiParameter && AnnotationUtil.isInferredAnnotation(annotation))) {
-      return Nullness.UNKNOWN;
+    NullabilityAnnotationInfo info = manager.findEffectiveNullabilityAnnotationInfo(owner);
+    if (info == null ||
+        ignoreParameterNullabilityInference && owner instanceof PsiParameter && AnnotationUtil.isInferredAnnotation(info.getAnnotation())) {
+      return Nullability.UNKNOWN;
     }
-    return Nullness.fromAnnotation(annotation);
+    return info.getNullability();
   }
 
   private static boolean isMapMethodWithUnknownNullity(@NotNull PsiMethod method) {

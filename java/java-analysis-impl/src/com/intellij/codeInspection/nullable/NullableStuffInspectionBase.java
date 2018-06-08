@@ -3,6 +3,7 @@ package com.intellij.codeInspection.nullable;
 
 import com.intellij.codeInsight.AnnotationTargetUtil;
 import com.intellij.codeInsight.AnnotationUtil;
+import com.intellij.codeInsight.NullabilityAnnotationInfo;
 import com.intellij.codeInsight.NullableNotNullManager;
 import com.intellij.codeInsight.daemon.GroupNames;
 import com.intellij.codeInsight.daemon.impl.analysis.HighlightControlFlowUtil;
@@ -513,10 +514,11 @@ public class NullableStuffInspectionBase extends AbstractBaseJavaLocalInspection
   }
 
   private static void checkNotNullFieldsInitialized(PsiField field, NullableNotNullManager manager, @NotNull ProblemsHolder holder) {
-    PsiAnnotation annotation = manager.getNotNullAnnotation(field, false);
-    if (annotation == null || HighlightControlFlowUtil.isFieldInitializedAfterObjectConstruction(field)) return;
+    NullabilityAnnotationInfo info = manager.findEffectiveNullabilityAnnotationInfo(field);
+    if (info == null || HighlightControlFlowUtil.isFieldInitializedAfterObjectConstruction(field)) return;
 
-    boolean byDefault = manager.isContainerAnnotation(annotation);
+    boolean byDefault = info.isContainer();
+    PsiAnnotation annotation = info.getAnnotation();
     PsiJavaCodeReferenceElement name = annotation.getNameReferenceElement();
     holder.registerProblem(annotation.isPhysical() && !byDefault ? annotation : field.getNameIdentifier(),
                            (byDefault && name != null ? "@" + name.getReferenceName() : "Not-null") + " fields must be initialized");
@@ -578,8 +580,8 @@ public class NullableStuffInspectionBase extends AbstractBaseJavaLocalInspection
   @NotNull
   private static String getPresentableAnnoName(@NotNull PsiModifierListOwner owner) {
     NullableNotNullManager manager = NullableNotNullManager.getInstance(owner.getProject());
-    PsiAnnotation anno = manager.findEffectiveNullabilityAnnotation(owner);
-    String name = anno == null ? null : anno.getQualifiedName();
+    NullabilityAnnotationInfo info = manager.findEffectiveNullabilityAnnotationInfo(owner);
+    String name = info == null ? null : info.getAnnotation().getQualifiedName();
     if (name == null) {
       return "???";
     }

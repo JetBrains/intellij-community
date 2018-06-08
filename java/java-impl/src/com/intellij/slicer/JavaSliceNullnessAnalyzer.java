@@ -15,6 +15,7 @@
  */
 package com.intellij.slicer;
 
+import com.intellij.codeInsight.Nullability;
 import com.intellij.codeInsight.NullableNotNullManager;
 import com.intellij.codeInspection.dataFlow.DfaUtil;
 import com.intellij.codeInspection.dataFlow.Nullness;
@@ -45,9 +46,8 @@ public class JavaSliceNullnessAnalyzer extends SliceNullnessAnalyzerBase {
     if (value instanceof PsiMethodCallExpression) {
       PsiMethod method = ((PsiMethodCallExpression)value).resolveMethod();
       if (method != null) {
-        PsiAnnotation annotation = NullableNotNullManager.getInstance(method.getProject()).findEffectiveNullabilityAnnotation(method);
-        Nullness nullness = Nullness.fromAnnotation(annotation);
-        if (nullness != Nullness.UNKNOWN) return nullness;
+        Nullability nullability = NullableNotNullManager.getInstance(method.getProject()).findEffectiveNullability(method);
+        return Nullness.fromNullability(nullability);
       }
     }
     if (value instanceof PsiPolyadicExpression && ((PsiPolyadicExpression)value).getOperationTokenType() == JavaTokenType.PLUS) {
@@ -75,12 +75,13 @@ public class JavaSliceNullnessAnalyzer extends SliceNullnessAnalyzerBase {
       }
     }
 
+    if (value instanceof PsiEnumConstant) return Nullness.NOT_NULL;
+
     if (value instanceof PsiModifierListOwner) {
-      if (NullableNotNullManager.isNotNull((PsiModifierListOwner)value)) return Nullness.NOT_NULL;
-      if (NullableNotNullManager.isNullable((PsiModifierListOwner)value)) return Nullness.NULLABLE;
+      return Nullness
+        .fromNullability(NullableNotNullManager.getInstance(value.getProject()).findEffectiveNullability(((PsiModifierListOwner)value)));
     }
 
-    if (value instanceof PsiEnumConstant) return Nullness.NOT_NULL;
     return Nullness.UNKNOWN;
   }
 }

@@ -2,9 +2,7 @@
 
 package com.intellij.codeInspection.dataFlow;
 
-import com.intellij.codeInsight.AnnotationUtil;
-import com.intellij.codeInsight.ExpressionUtil;
-import com.intellij.codeInsight.NullableNotNullManager;
+import com.intellij.codeInsight.*;
 import com.intellij.codeInsight.daemon.GroupNames;
 import com.intellij.codeInsight.intention.AddAnnotationPsiFix;
 import com.intellij.codeInspection.*;
@@ -763,15 +761,15 @@ public class DataFlowInspectionBase extends AbstractBaseJavaLocalInspectionTool 
     final PsiMethod method = getScopeMethod(block);
     if (method == null) return;
     NullableNotNullManager manager = NullableNotNullManager.getInstance(holder.getProject());
-    PsiAnnotation anno = manager.findEffectiveNullabilityAnnotation(method);
-    Nullness annoNullness = Nullness.fromAnnotation(anno);
-    if (annoNullness == Nullness.NULLABLE) {
-      assert anno != null;
+    NullabilityAnnotationInfo info = manager.findEffectiveNullabilityAnnotationInfo(method);
+    PsiAnnotation anno = info == null ? null : info.getAnnotation();
+    Nullability annoNullness = info == null ? Nullability.UNKNOWN : info.getNullability();
+    if (annoNullness == Nullability.NULLABLE) {
       if (!AnnotationUtil.isInferredAnnotation(anno)) return;
       if (DfaPsiUtil.getTypeNullability(method.getReturnType()) == Nullness.NULLABLE) return;
     }
 
-    if (annoNullness != Nullness.NOT_NULL && (!SUGGEST_NULLABLE_ANNOTATIONS || block.getParent() instanceof PsiLambdaExpression)) return;
+    if (annoNullness != Nullability.NOT_NULL && (!SUGGEST_NULLABLE_ANNOTATIONS || block.getParent() instanceof PsiLambdaExpression)) return;
 
     PsiType returnType = method.getReturnType();
     // no warnings in void lambdas, where the expression is not returned anyway
@@ -784,8 +782,7 @@ public class DataFlowInspectionBase extends AbstractBaseJavaLocalInspectionTool 
       final PsiExpression expr = problem.getAnchor();
       if (!reportedAnchors.add(expr)) continue;
 
-      if (annoNullness == Nullness.NOT_NULL) {
-        assert anno != null;
+      if (annoNullness == Nullability.NOT_NULL) {
         String presentable = NullableStuffInspectionBase.getPresentableAnnoName(anno);
         final String text = isNullLiteralExpression(expr)
                             ? InspectionsBundle.message("dataflow.message.return.null.from.notnull", presentable)

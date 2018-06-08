@@ -40,4 +40,18 @@ public class NullabilityAnnotationInfo {
   public boolean isContainer() {
     return myContainer;
   }
+
+  /**
+   * @return true if this annotation is an external annotation
+   */
+  public boolean isExternal() {
+    return AnnotationUtil.isExternalAnnotation(myAnnotation);
+  }
+
+  /**
+   * @return true if this annotation is an inferred annotation
+   */
+  public boolean isInferred() {
+    return AnnotationUtil.isInferredAnnotation(myAnnotation);
+  }
 }
