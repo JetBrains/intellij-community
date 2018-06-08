@@ -138,7 +138,7 @@ class PopupListAdapter<T> implements PopupChooserBuilder.PopupComponentAdapter<T
 
     private MyListWrapper(final JList list) {
       super(UIUtil.isUnderAquaLookAndFeel() ? 0 : -1);
-      list.setVisibleRowCount(15);
+      list.setVisibleRowCount(myBuilder.getVisibleRowCount());
       setViewportView(list);
 
 

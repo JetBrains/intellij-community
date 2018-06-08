@@ -93,5 +93,7 @@ public interface IPopupChooserBuilder<T> {
 
   IPopupChooserBuilder<T> setFont(Font f);
 
+  IPopupChooserBuilder<T> setVisibleRowCount(int visibleRowCount);
+
   ListComponentUpdater getBackgroundUpdater();
 }
