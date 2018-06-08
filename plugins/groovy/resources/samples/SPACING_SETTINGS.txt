@@ -1,0 +1,39 @@
+class Foo {
+  @Annotation(param="foo")
+  @Ann([1, 2])
+  public static <T1, T2> void foo(int x, int y) {
+    for (int i = 0; i < x; i++) {
+      y += (y ^ 0x123) << 2
+    }
+
+    10.times {
+      print it
+    }
+    int j = 0
+    while (j < 10) {
+      try {
+        if (0 < x && x < 10) {
+          while (x != y) {
+            x = f(x * 3 + 5)
+          }
+        } else {
+          synchronized (this) {
+            switch (e.getCode()) {
+            //...
+            }
+          }
+        }
+      } catch (MyException e) {
+        logError(method: "foo", exception: e)
+      } finally {
+        int[] arr = (int[]) g(y)
+        x = y >= 0 ? arr[y] : -1
+        y = [1, 2, 3] ?: 4
+      }
+    }
+    def cl = {Math.sin(it)}
+    print ckl(2)
+  }
+
+  def inject(x) {"cos($x) = ${Math.cos(x)}"}
+}

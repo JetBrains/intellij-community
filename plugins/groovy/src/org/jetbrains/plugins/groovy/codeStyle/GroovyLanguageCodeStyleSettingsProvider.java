@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.groovy.codeStyle;
 
 import com.intellij.application.options.IndentOptionsEditor;
@@ -28,6 +14,13 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.GroovyLanguage;
 
 import javax.swing.*;
+import java.io.IOException;
+import java.util.EnumMap;
+import java.util.Map;
+
+import static com.intellij.openapi.util.io.StreamUtil.readText;
+import static com.intellij.psi.codeStyle.LanguageCodeStyleSettingsProvider.SettingsType.*;
+import static java.nio.charset.StandardCharsets.UTF_8;
 
 /**
  * @author Rustam Vishnyakov
@@ -47,7 +40,7 @@ public class GroovyLanguageCodeStyleSettingsProvider extends LanguageCodeStyleSe
   @Override
   public void customizeSettings(@NotNull CodeStyleSettingsCustomizable consumer,
                                 @NotNull SettingsType settingsType) {
-    if (settingsType == SettingsType.WRAPPING_AND_BRACES_SETTINGS) {
+    if (settingsType == WRAPPING_AND_BRACES_SETTINGS) {
       consumer.showStandardOptions(
         "RIGHT_MARGIN",
         "WRAP_ON_TYPING",
@@ -158,7 +151,7 @@ public class GroovyLanguageCodeStyleSettingsProvider extends LanguageCodeStyleSe
                                 CodeStyleSettingsCustomizable.WRAP_OPTIONS, CodeStyleSettingsCustomizable.WRAP_VALUES);
       return;
     }
-    if (settingsType == SettingsType.SPACING_SETTINGS) {
+    if (settingsType == SPACING_SETTINGS) {
       consumer.showStandardOptions("INSERT_FIRST_SPACE_IN_LINE",
                                    "SPACE_AROUND_ASSIGNMENT_OPERATORS",
                                    "SPACE_AROUND_LOGICAL_OPERATORS",
@@ -236,7 +229,7 @@ public class GroovyLanguageCodeStyleSettingsProvider extends LanguageCodeStyleSe
       consumer.showCustomOption(GroovyCodeStyleSettings.class, "SPACE_AROUND_REGEX_OPERATORS", "Regexp expression (==~, =~)", CodeStyleSettingsCustomizable.SPACES_AROUND_OPERATORS);
       return;
     }
-    if (settingsType == SettingsType.BLANK_LINES_SETTINGS) {
+    if (settingsType == BLANK_LINES_SETTINGS) {
 
       consumer.showStandardOptions(
         "KEEP_BLANK_LINES_IN_DECLARATIONS",
@@ -273,17 +266,30 @@ public class GroovyLanguageCodeStyleSettingsProvider extends LanguageCodeStyleSe
 
   @Override
   public String getCodeSample(@NotNull SettingsType settingsType) {
-    switch (settingsType) {
-      case INDENT_SETTINGS: return INDENT_OPTIONS_SAMPLE;
-      case SPACING_SETTINGS: return SPACING_SAMPLE;
-      case WRAPPING_AND_BRACES_SETTINGS: return WRAPPING_CODE_SAMPLE;
-      case BLANK_LINES_SETTINGS: return BLANK_LINE_SAMPLE;
-      default:
-        return "";
-    }
+    return SAMPLES.get(settingsType);
   }
 
+  private static final Map<SettingsType, String> SAMPLES;
 
+  static {
+    Map<SettingsType, String> samples = new EnumMap<>(SettingsType.class);
+    for (SettingsType type: new SettingsType[]{BLANK_LINES_SETTINGS, SPACING_SETTINGS, WRAPPING_AND_BRACES_SETTINGS, INDENT_SETTINGS}) {
+      samples.put(type, loadSample(type));
+    }
+    SAMPLES = samples;
+  }
+
+  private static String loadSample(@NotNull SettingsType settingsType) {
+    String name = "/samples/" + settingsType.name() + ".txt";
+    try {
+      return readText(
+        GroovyLanguageCodeStyleSettingsProvider.class.getResourceAsStream(name), UTF_8
+      );
+    }
+    catch (IOException ignored) {
+    }
+    return "";
+  }
 
   @Override
   public IndentOptionsEditor getIndentOptionsEditor() {
@@ -361,181 +367,4 @@ public class GroovyLanguageCodeStyleSettingsProvider extends LanguageCodeStyleSe
       }
     };
   }
-
-
-
-  private static final String INDENT_OPTIONS_SAMPLE =
-    /*
-    "topLevelLabel:\n" +
-    "foo(42)\n" +
-    */
-    "def foo(int arg) {\n" +
-    "  label1:\n" +
-    "  for (i in 1..10) {\n" +
-    "    label2:\n" +
-    "    foo(i)\n" +
-    "  }\n" +
-    "  return Math.max(arg,\n" +
-    "      0)\n" +
-    "}\n\n" +
-    "class HelloSpock extends spock.lang.Specification {\n" +
-    "  def \"length of Spock's and his friends' names\"() {\n" +
-    "    expect:\n" +
-    "    name.size() == length\n" +
-    "\n" +
-    "    where:\n" +
-    "    name | length | foo\n" +
-    "    \"Spock\" | 5\n" +
-    "    \"Kirk\" | 4 | xxx | yyy\n" +
-    "    \"Scotty\" | 6 |dddddddddd | fff\n" +
-    "\n" +
-    "    //aaa\n" +
-    "    a | b | c\n" +
-    "  }\n" +
-    "}\n";
-  
-  private static final String SPACING_SAMPLE =
-    "class Foo {\n" +
-    "  @Annotation(param=\"foo\")\n"+
-    "  @Ann([1, 2])\n" +
-    "  public static <T1, T2> void foo(int x, int y) {\n" +
-    "    for (int i = 0; i < x; i++) {\n" +
-    "      y += (y ^ 0x123) << 2\n" +
-    "    }\n" +
-    "    \n" +
-    "    10.times {\n" +
-    "      print it\n" +
-    "    }\n" +
-    "    int j = 0\n" +
-    "    while (j < 10) {\n" +
-    "      try {\n" +
-    "        if (0 < x && x < 10) {\n" +
-    "          while (x != y) {\n" +
-    "            x = f(x * 3 + 5)\n" +
-    "          }\n" +
-    "        } else {\n" +
-    "          synchronized (this) {\n" +
-    "            switch (e.getCode()) {\n" +
-    "            //...\n" +
-    "            }\n" +
-    "          }\n" +
-    "        }\n" +
-    "      } catch (MyException e) {\n" +
-    "        logError(method: \"foo\", exception: e)\n" +
-    "      } finally {\n" +
-    "        int[] arr = (int[]) g(y)\n" +
-    "        x = y >= 0 ? arr[y] : -1\n" +
-    "        y = [1, 2, 3] ?: 4\n" +
-    "      }\n" +
-    "    }\n" +
-    "    def cl = {Math.sin(it)}\n" +
-    "    print ckl(2) " +
-    "  }\n" +
-    "  \n" +
-    "  def inject(x) {\"cos($x) = ${Math.cos(x)}\"} \n" +
-    "\n" +
-    "}";
-  private static final String WRAPPING_CODE_SAMPLE =
-    "/*\n" +
-    " * This is a sample file.\n" +
-    " */\n" +
-    "\n" +
-    "public class ThisIsASampleClass extends C1 implements I1, I2, I3, I4, I5 {\n" +
-    "  private int f1 = 1\n" +
-    "  private String field2 = \"\"\n" +
-    "  public void foo1(int i1, int i2, int i3, int i4, int i5, int i6, int i7) {}\n" +
-    "  public static void longerMethod() throws Exception1, Exception2, Exception3 {\n" +
-    "// todo something\n" +
-    "    int\n" +
-    "i = 0\n" +
-    "    int var1 = 1; int var2 = 2\n" +
-    "    foo1(0x0051, 0x0052, 0x0053, 0x0054, 0x0055, 0x0056, 0x0057)\n" +
-    "    int x = (3 + 4 + 5 + 6) * (7 + 8 + 9 + 10) * (11 + 12 + 13 + 14 + 0xFFFFFFFF)\n" +
-    "    String s1, s2, s3\n" +
-    "    s1 = s2 = s3 = \"012345678901456\"\n" +
-    "    assert i + j + k + l + n+ m <= 2 : \"assert description\"\n" +
-    "    int y = 2 > 3 ? 7 + 8 + 9 : 11 + 12 + 13\n" +
-    "    super.getFoo().foo().getBar().bar()\n" +
-    "\n" +
-    "    label: \n" +
-    "    if (2 < 3) return else if (2 > 3) return else return\n" +
-    "    for (int i = 0; i < 0xFFFFFF; i += 2) System.out.println(i)\n" +
-    "    print([\n" +
-    "       l1: expr1,\n" +
-    "       label2: expr2\n" +
-    "    ])\n" +
-    "    while (x < 50000) x++\n" +
-    "    switch (a) {\n" +
-    "    case 0:\n" +
-    "      doCase0()\n" +
-    "      break\n" +
-    "    default:\n" +
-    "      doDefault()\n" +
-    "    }\n" +
-    "    try {\n" +
-    "      doSomething()\n" +
-    "    } catch (Exception e) {\n" +
-    "      processException(e)\n" +
-    "    } finally {\n" +
-    "      processFinally()\n" +
-    "    }\n" +
-    "  }\n" +
-    "    public static void test() \n" +
-    "        throws Exception { \n" +
-    "        foo.foo().bar(\"arg1\", \n" +
-    "                      \"arg2\") \n" +
-    "        new Object() {}\n" +
-    "    } \n" +
-    "    class TestInnerClass {}\n" +
-    "    interface TestInnerInterface {}\n" +
-    "}\n" +
-    "\n" +
-    "enum Breed {\n" +
-    "    Dalmatian(), Labrador(), Dachshund()\n" +
-    "}\n" +
-    "\n" +
-    "@Annotation1 @Annotation2 @Annotation3(param1=\"value1\", param2=\"value2\") @Annotation4 class Foo {\n" +
-    "    @Annotation1 @Annotation3(param1=\"value1\", param2=\"value2\") public static void foo(){\n" +
-    "    }\n" +
-    "    @Annotation1 @Annotation3(param1=\"value1\", param2=\"value2\") public static int myFoo\n" +
-    "    public void method(@Annotation1 @Annotation3(param1=\"value1\", param2=\"value2\") final int param){\n" +
-    "        @Annotation1 @Annotation3(param1=\"value1\", param2=\"value2\") final int localVariable\n" +
-    "    }\n" +
-    "}";
-
-
-  private static final String BLANK_LINE_SAMPLE =
-    "/*\n" +
-    " * This is a sample file.\n" +
-    " */\n" +
-    "package com.intellij.samples\n" +
-    "\n" +
-    "import com.intellij.idea.Main\n" +
-    "\n" +
-    "import javax.swing.*\n" +
-    "import java.util.Vector\n" +
-    "\n" +
-    "public class Foo {\n" +
-    "  private int field1\n" +
-    "  private int field2\n" +
-    "\n" +
-    "  public void foo1() {\n" +
-    "      new Runnable() {\n" +
-    "          public void run() {\n" +
-    "          }\n" +
-    "      }\n" +
-    "  }\n" +
-    "\n" +
-    "  public class InnerClass {\n" +
-    "  }\n" +
-    "}\n" +
-    "class AnotherClass {\n" +
-    "}\n" +
-    "interface TestInterface {\n" +
-    "    int MAX = 10\n" +
-    "    int MIN = 1\n" +
-    "    def method1()\n" +
-    "    void method2()\n" +
-    "}";
-
 }
