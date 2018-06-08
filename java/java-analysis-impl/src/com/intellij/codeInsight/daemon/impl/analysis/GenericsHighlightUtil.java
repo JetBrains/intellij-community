@@ -1461,7 +1461,11 @@ public class GenericsHighlightUtil {
                                                              @NotNull TextRange range,
                                                              boolean checkParameters) {
     final JavaPsiFacade factory = JavaPsiFacade.getInstance(aClass.getProject());
-    for (PsiClassType superType : aClass.getSuperTypes()) {
+    PsiElementFactory elementFactory = factory.getElementFactory();
+    for (PsiClassType.ClassResolveResult superClassResolveResult : PsiClassImplUtil.getScopeCorrectedSuperTypes(aClass, resolveScope)) {
+      PsiClass superClass = superClassResolveResult.getElement();
+      if (superClass == null) continue;
+      PsiClassType superType = elementFactory.createType(superClass, superClassResolveResult.getSubstitutor());
       final String notAccessibleErrorMessage = isTypeAccessible(superType, new HashSet<>(), checkParameters, resolveScope, factory);
       if (notAccessibleErrorMessage != null) {
         return HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR)
