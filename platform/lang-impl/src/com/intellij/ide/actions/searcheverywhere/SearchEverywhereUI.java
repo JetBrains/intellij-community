@@ -59,6 +59,7 @@ import java.awt.event.*;
 import java.util.*;
 import java.util.List;
 import java.util.stream.Collectors;
+import java.util.stream.IntStream;
 
 /**
  * @author Konstantin Bulenkov
@@ -232,17 +233,31 @@ public class SearchEverywhereUI extends BorderLayoutPanel implements Disposable,
   @Nullable
   @Override
   public Object getData(String dataId) {
-    //common data section---------------------
-    //todo
+    IntStream indicesStream = Arrays.stream(myResultsList.getSelectedIndices())
+                                    .filter(i -> !myListModel.isMoreElement(i));
 
-    //item-specific data section--------------
-    int index = myResultsList.getSelectedIndex();
-    if (index < 0 || myListModel.isMoreElement(index)) {
-      return null;
+    //common data section---------------------
+    if (LangDataKeys.PSI_ELEMENT_ARRAY.is(dataId)) {
+      List<PsiElement> elements = indicesStream.mapToObj(i -> {
+                                                  SearchEverywhereContributor contributor = myListModel.getContributorForIndex(i);
+                                                  Object item = myListModel.getElementAt(i);
+                                                  Object psi = contributor.getDataForItem(item, CommonDataKeys.PSI_ELEMENT.getName());
+                                                  return (PsiElement)psi;
+                                                })
+                                                .filter(Objects::nonNull)
+                                                .collect(Collectors.toList());
+      return PsiUtilCore.toPsiElementArray(elements);
     }
 
-    SearchEverywhereContributor contributor = myListModel.getContributorForIndex(index);
-    return contributor.getDataForItem(myListModel.getElementAt(index), dataId);
+    //item-specific data section--------------
+    return indicesStream.mapToObj(i -> {
+                          SearchEverywhereContributor contributor = myListModel.getContributorForIndex(i);
+                          Object item = myListModel.getElementAt(i);
+                          return contributor.getDataForItem(item, dataId);
+                        })
+                        .filter(Objects::nonNull)
+                        .findFirst()
+                        .orElse(null);
   }
 
   @Override
