@@ -16,8 +16,8 @@ class ApplicationDispatcher(private val application: Application) : Dispatcher {
     }
 
     private val context = ApplicationCoroutineContext(application, executor)
-    private val contextWithErrorToWarningLog = context + logUnhandledCoroutineException(ERROR_TO_WARNING_LOG)
-    val contextWithExplicitLog: CoroutineContext = context + logUnhandledCoroutineException(EXPLICIT_LOG)
+    private val contextWithErrorToWarningLog = context + CoroutineExceptionLogger.create(ERROR_TO_WARNING_LOG)
+    val contextWithExplicitLog: CoroutineContext = context + CoroutineExceptionLogger.create(EXPLICIT_LOG)
 
     override val coroutineContext: CoroutineContext
         get() = contextWithErrorToWarningLog
