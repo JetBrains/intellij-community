@@ -1,10 +1,7 @@
 // Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInspection.nullable;
 
-import com.intellij.codeInsight.AnnotationTargetUtil;
-import com.intellij.codeInsight.AnnotationUtil;
-import com.intellij.codeInsight.NullabilityAnnotationInfo;
-import com.intellij.codeInsight.NullableNotNullManager;
+import com.intellij.codeInsight.*;
 import com.intellij.codeInsight.daemon.GroupNames;
 import com.intellij.codeInsight.daemon.impl.analysis.HighlightControlFlowUtil;
 import com.intellij.codeInsight.daemon.impl.analysis.JavaGenericsUtil;
@@ -515,7 +512,11 @@ public class NullableStuffInspectionBase extends AbstractBaseJavaLocalInspection
 
   private static void checkNotNullFieldsInitialized(PsiField field, NullableNotNullManager manager, @NotNull ProblemsHolder holder) {
     NullabilityAnnotationInfo info = manager.findEffectiveNullabilityAnnotationInfo(field);
-    if (info == null || HighlightControlFlowUtil.isFieldInitializedAfterObjectConstruction(field)) return;
+    if (info == null ||
+        info.getNullability() != Nullability.NOT_NULL ||
+        HighlightControlFlowUtil.isFieldInitializedAfterObjectConstruction(field)) {
+      return;
+    }
 
     boolean byDefault = info.isContainer();
     PsiAnnotation annotation = info.getAnnotation();
@@ -820,16 +821,24 @@ public class NullableStuffInspectionBase extends AbstractBaseJavaLocalInspection
                                                                 boolean isOnFly,
                                                                 int parameterIdx,
                                                                 PsiParameter parameter) {
-    if (REPORT_NULLS_PASSED_TO_NOT_NULL_PARAMETER && isOnFly && isNotNullNotInferred(parameter, false, false)) {
-      PsiAnnotation notNullAnnotation = nullableManager.getNotNullAnnotation(parameter, false);
-      if (JavaNullMethodArgumentUtil.hasNullArgument(method, parameterIdx)) {
-        boolean physical = PsiTreeUtil.isAncestor(parameter, notNullAnnotation, true);
-        holder.registerProblem(physical ? notNullAnnotation : parameter.getNameIdentifier(),
-                               InspectionsBundle.message("inspection.nullable.problems.NotNull.parameter.receives.null.literal", getPresentableAnnoName(parameter)),
-                               ProblemHighlightType.GENERIC_ERROR_OR_WARNING,
-                               createNavigateToNullParameterUsagesFix(parameter));
-      }
+    if (!REPORT_NULLS_PASSED_TO_NOT_NULL_PARAMETER || !isOnFly) return;
+    PsiElement elementToHighlight;
+    if (DfaPsiUtil.getTypeNullability(getMemberType(parameter)) == Nullness.NOT_NULL) {
+      elementToHighlight = parameter.getNameIdentifier();
+    } else {
+      NullabilityAnnotationInfo info = nullableManager.findOwnNullabilityAnnotationInfo(parameter);
+      if (info == null || info.isInferred()) return;
+      PsiAnnotation notNullAnnotation = info.getAnnotation();
+      boolean physical = PsiTreeUtil.isAncestor(parameter, notNullAnnotation, true);
+      elementToHighlight = physical ? notNullAnnotation : parameter.getNameIdentifier();
     }
+    if (elementToHighlight == null || !JavaNullMethodArgumentUtil.hasNullArgument(method, parameterIdx)) return;
+
+    holder.registerProblem(elementToHighlight,
+                           InspectionsBundle.message("inspection.nullable.problems.NotNull.parameter.receives.null.literal",
+                                                     getPresentableAnnoName(parameter)),
+                           ProblemHighlightType.GENERIC_ERROR_OR_WARNING,
+                           createNavigateToNullParameterUsagesFix(parameter));
   }
 
   private void checkOverriders(@NotNull PsiMethod method,
