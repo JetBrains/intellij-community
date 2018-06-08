@@ -4,11 +4,11 @@ package com.intellij.ui.mac.touchbar;
 import com.intellij.ide.DataManager;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.ex.ActionManagerEx;
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.IconLoader;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
@@ -17,7 +17,7 @@ import java.awt.event.KeyEvent;
 
 import static java.awt.event.ComponentEvent.COMPONENT_FIRST;
 
-public class TBItemAnActionButton extends TBItemButton {
+class TBItemAnActionButton extends TBItemButton {
   private static final boolean LOG_ICON_ERRORS = System.getProperty("touchbar.log.icon.errors", "false").equals("true");
 
   public static final int SHOWMODE_IMAGE_ONLY = 0;
@@ -36,24 +36,22 @@ public class TBItemAnActionButton extends TBItemButton {
 
   private Component myComponent;
 
-  TBItemAnActionButton(@NotNull String uid, @NotNull AnAction action, boolean hiddenWhenDisabled, int showMode, ModalityState modality) {
-    super(uid);
+  TBItemAnActionButton(@NotNull String uid, @Nullable ItemListener listener, @NotNull AnAction action, boolean hiddenWhenDisabled, int showMode, ModalityState modality) {
+    super(uid, listener);
     myAnAction = action;
     myActionId = ActionManager.getInstance().getId(myAnAction);
-    myAction = () -> {
-      if (modality != null)
-        ApplicationManager.getApplication().invokeLater(() -> _performAction(), modality);
-      else
-        ApplicationManager.getApplication().invokeLater(() -> _performAction());
-    };
+
+    setAction(this::_performAction, true, modality);
 
     myAutoVisibility = true;
     myHiddenWhenDisabled = hiddenWhenDisabled;
-    myIsVisible = false;
     myShowMode = showMode;
   }
 
-  void setComponent(Component component/*for DataCtx*/) { myComponent = component; }
+  @Override
+  public String toString() { return String.format("%s [%s]", myActionId, myUid); }
+
+  TBItemAnActionButton setComponent(Component component/*for DataCtx*/) { myComponent = component; return this; }
 
   void updateAnAction(Presentation presentation) {
     final DataContext dctx = DataManager.getInstance().getDataContext(_getComponent());
@@ -69,7 +67,7 @@ public class TBItemAnActionButton extends TBItemButton {
   }
 
   boolean isAutoVisibility() { return myAutoVisibility; }
-  public void setAutoVisibility(boolean autoVisibility) { myAutoVisibility = autoVisibility; }
+  void setAutoVisibility(boolean autoVisibility) { myAutoVisibility = autoVisibility; }
 
   AnAction getAnAction() { return myAnAction; }
 
@@ -82,7 +80,7 @@ public class TBItemAnActionButton extends TBItemButton {
     final boolean visibilityChanged = isVisible != myIsVisible;
     if (visibilityChanged) {
       myIsVisible = isVisible;
-      // LOG.info(String.format("[%s:%s] visibility changed: now is %s", myUid, myActionId, isVisible ? "visible" : "hidden"));
+      // System.out.println(String.format("%s: visibility changed, now is [%s]", toString(), isVisible ? "visible" : "hidden"));
     }
     return visibilityChanged;
   }

@@ -14,8 +14,6 @@ enum BarType {
 }
 
 class BarContainer {
-
-
   private final @NotNull BarType myType;
   private Map<Long, TouchBar> myKeyMask2Alt;
   private @NotNull TouchBar myMain;
@@ -55,10 +53,9 @@ class BarContainer {
   boolean isTemporary() { return myType == BarType.POPUP || myType == BarType.DIALOG; }
 
   void setComponent(Component component) {
-    if (myMain instanceof TouchBarActionBase)
-      ((TouchBarActionBase)myMain).setComponent(component);
+    myMain.setComponent(component);
     if (myKeyMask2Alt != null)
-      myKeyMask2Alt.values().forEach(tb -> { if (tb instanceof TouchBarActionBase) ((TouchBarActionBase)tb).setComponent(component); });
+      myKeyMask2Alt.values().forEach(tb -> { tb.setComponent(component); });
   }
 
   void release() {

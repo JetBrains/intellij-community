@@ -92,7 +92,7 @@ static void _setButtonData(NSButtonJAction *button, int updateOptions, int butto
     }
 }
 
-// NOTE: called from AppKit (creation when TB becomes visible)
+// NOTE: called from AppKit-thread (creation when TB becomes visible), uses default autorelease-pool (create before event processing)
 id createButton(
         const char *uid,
         int buttonWidth,
@@ -101,7 +101,7 @@ id createButton(
         const char *raster4ByteRGBA, int w, int h,
         execute jaction
 ) {
-    NSString *nsUid = getString(uid);
+    NSString *nsUid = createStringFromUTF8(uid);
     nstrace(@"create button [%@] (thread: %@)", nsUid, [NSThread currentThread]);
 
     NSCustomTouchBarItem *customItemForButton = [[NSCustomTouchBarItem alloc] initWithIdentifier:nsUid]; // create non-autorelease object to be owned by java-wrapper
@@ -109,7 +109,7 @@ id createButton(
     [button setBezelStyle:NSRoundedBezelStyle];
 
     NSImage *img = createImgFrom4ByteRGBA((const unsigned char *) raster4ByteRGBA, w, h);
-    NSString *nstext = getString(text);
+    NSString *nstext = createStringFromUTF8(text);
     _setButtonData(button, BUTTON_UPDATE_ALL, buttonWidth, buttonFlags, nstext, img, jaction);
     customItemForButton.view = button; // NOTE: view is strong
 
@@ -137,7 +137,7 @@ void updateButton(
 
     NSAutoreleasePool *edtPool = [NSAutoreleasePool new];
     NSImage *img = createImgFrom4ByteRGBA((const unsigned char *) raster4ByteRGBA, w, h);
-    NSString *nstext = getString(text);
+    NSString *nstext = createStringFromUTF8(text);
 
     if ([NSThread isMainThread]) {
         nstrace(@"sync update button [%@] (main thread: %@)", container.identifier, [NSThread currentThread]);
