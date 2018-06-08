@@ -17,7 +17,6 @@ package com.intellij.vcs.log.history
 
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.util.Pair
-import com.intellij.openapi.util.Ref
 import com.intellij.openapi.vcs.AbstractVcs
 import com.intellij.openapi.vcs.FilePath
 import com.intellij.openapi.vcs.ProjectLevelVcsManager
@@ -35,7 +34,6 @@ import com.intellij.vcs.log.graph.PermanentGraph
 import com.intellij.vcs.log.graph.VisibleGraph
 import com.intellij.vcs.log.graph.api.LiteLinearGraph
 import com.intellij.vcs.log.graph.impl.facade.PermanentGraphImpl
-import com.intellij.vcs.log.graph.impl.facade.ReachableNodes
 import com.intellij.vcs.log.graph.impl.facade.VisibleGraphImpl
 import com.intellij.vcs.log.graph.utils.LinearGraphUtils
 import com.intellij.vcs.log.impl.HashImpl
@@ -218,7 +216,8 @@ internal class FileHistoryFilterer(logData: VcsLogData) : VcsLogFilterer {
       if (permanentGraph is PermanentGraphImpl<*>) {
         val hash = hash ?: getHead(pack)
         if (hash != null) {
-          return findAncestorRowAffectingFile(permanentGraph as PermanentGraphImpl<Int>, hash, visibleGraph, fileIndexData)
+          val commitIndex = storage.getCommitIndex(hash, root)
+          return findAncestorRowAffectingFile(commitIndex, filePath, permanentGraph as PermanentGraphImpl<Int>, visibleGraph, fileIndexData)
         }
       }
       return 0
@@ -233,32 +232,6 @@ internal class FileHistoryFilterer(logData: VcsLogData) : VcsLogFilterer {
         return head.commitHash
       }
       return null
-    }
-
-    private fun findAncestorRowAffectingFile(permanentGraph: PermanentGraphImpl<Int>,
-                                             hash: Hash,
-                                             visibleGraph: VisibleGraph<Int>,
-                                             fileNamesData: FileNamesData): Int {
-      val result = Ref<Int>()
-
-      val commitsInfo = permanentGraph.permanentCommitsInfo
-      val reachableNodes = ReachableNodes(LinearGraphUtils.asLiteLinearGraph(permanentGraph.linearGraph))
-      reachableNodes.walk(setOf(commitsInfo.getNodeId(storage.getCommitIndex(hash, root))), true) { currentNode ->
-        val id = commitsInfo.getCommitId(currentNode)
-        if (fileNamesData.affects(id, filePath)) {
-          result.set(currentNode)
-          false // stop walk, we have found it
-        }
-        else {
-          true // continue walk
-        }
-      }
-
-      if (!result.isNull) {
-        return visibleGraph.getVisibleRowIndex(commitsInfo.getCommitId(result.get()))!!
-      }
-
-      return -1
     }
   }
 

@@ -2,18 +2,49 @@
 package com.intellij.vcs.log.history
 
 import com.intellij.openapi.diagnostic.Logger
+import com.intellij.openapi.util.Ref
 import com.intellij.openapi.vcs.FilePath
 import com.intellij.util.containers.ContainerUtil
 import com.intellij.util.containers.Stack
 import com.intellij.vcs.log.data.index.VcsLogPathsIndex
+import com.intellij.vcs.log.graph.VisibleGraph
 import com.intellij.vcs.log.graph.api.LiteLinearGraph
 import com.intellij.vcs.log.graph.api.permanent.PermanentCommitsInfo
+import com.intellij.vcs.log.graph.impl.facade.PermanentGraphImpl
+import com.intellij.vcs.log.graph.impl.facade.ReachableNodes
 import com.intellij.vcs.log.graph.impl.facade.VisibleGraphImpl
 import com.intellij.vcs.log.graph.utils.BfsUtil
 import com.intellij.vcs.log.graph.utils.DfsUtil
 import com.intellij.vcs.log.graph.utils.LinearGraphUtils
 import com.intellij.vcs.log.graph.utils.impl.BitSetFlags
 import gnu.trove.TIntObjectHashMap
+
+internal fun findAncestorRowAffectingFile(commitId: Int,
+                                          filePath: FilePath,
+                                          permanentGraph: PermanentGraphImpl<Int>,
+                                          visibleGraph: VisibleGraph<Int>,
+                                          fileNamesData: FileNamesData): Int {
+  val result = Ref<Int>()
+
+  val commitsInfo = permanentGraph.permanentCommitsInfo
+  val reachableNodes = ReachableNodes(LinearGraphUtils.asLiteLinearGraph(permanentGraph.linearGraph))
+  reachableNodes.walk(setOf(commitsInfo.getNodeId(commitId)), true) { currentNode ->
+    val id = commitsInfo.getCommitId(currentNode)
+    if (fileNamesData.affects(id, filePath)) {
+      result.set(currentNode)
+      false // stop walk, we have found it
+    }
+    else {
+      true // continue walk
+    }
+  }
+
+  if (!result.isNull) {
+    return visibleGraph.getVisibleRowIndex(commitsInfo.getCommitId(result.get()))!!
+  }
+
+  return -1
+}
 
 internal class FileHistoryRefiner(private val visibleGraph: VisibleGraphImpl<Int>,
                                   private val namesData: FileNamesData) : DfsUtil.NodeVisitor {
