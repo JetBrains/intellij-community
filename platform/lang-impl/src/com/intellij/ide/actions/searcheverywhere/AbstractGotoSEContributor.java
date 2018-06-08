@@ -15,6 +15,7 @@ import com.intellij.openapi.fileEditor.OpenFileDescriptor;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -59,6 +60,7 @@ public abstract class AbstractGotoSEContributor<F> implements SearchEverywhereCo
                                          o -> addFoundElement(o, model, builder, progressIndicator, elementsLimit)
       );
     });
+    Disposer.dispose(popup);
 
     return builder.build();
   }
