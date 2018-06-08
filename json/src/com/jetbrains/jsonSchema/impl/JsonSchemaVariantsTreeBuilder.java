@@ -549,7 +549,7 @@ public class JsonSchemaVariantsTreeBuilder {
     private static boolean isInMainSchema(@NotNull JsonSchemaObject parent) {
       final VirtualFile schemaFile = parent.getSchemaFile();
       final JsonSchemaService service = JsonSchemaService.Impl.get(parent.getJsonObject().getProject());
-      if (!service.isSchemaFile(schemaFile)) return false;
+      if (!service.isApplicableToFile(schemaFile) || !service.isSchemaFile(schemaFile)) return false;
 
       final JsonSchemaObject rootSchema = service.getSchemaObjectForSchemaFile(schemaFile);
       if (rootSchema == null) return false;
