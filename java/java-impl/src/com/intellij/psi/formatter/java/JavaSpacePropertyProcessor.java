@@ -284,7 +284,7 @@ public class JavaSpacePropertyProcessor extends JavaElementVisitor {
     while (first instanceof PsiDocComment) {
       first = first.getNextSibling();
     }
-    int spaces = myJavaSettings.SPACE_AROUND_ONE_LINE_ENUM ? 1 : 0;
+    int spaces = myJavaSettings.SPACE_INSIDE_ONE_LINE_ENUM_BRACES ? 1 : 0;
     TextRange textRange = new TextRange(first.getTextOffset(), myParent.getTextRange().getEndOffset());
     myResult = Spacing.createDependentLFSpacing(spaces, spaces, textRange, mySettings.KEEP_LINE_BREAKS,
                                                 mySettings.KEEP_BLANK_LINES_IN_DECLARATIONS);
