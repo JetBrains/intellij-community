@@ -78,7 +78,9 @@ public class InspectionProfileTest extends LightIdeaTestCase {
   }
 
   private static InspectionProfileImpl createProfile(@NotNull InspectionProfileImpl base) {
-    return new InspectionProfileImpl(PROFILE, InspectionToolRegistrar.getInstance());
+    InspectionProfileImpl profile = new InspectionProfileImpl(PROFILE);
+    profile.copyFrom(base);
+    return profile;
   }
 
   public void testSameNameSharedProfile() {
@@ -207,7 +209,7 @@ public class InspectionProfileTest extends LightIdeaTestCase {
     final Element element = JdomKt.loadElement("<profile version=\"1.0\">\n" +
                                                   "  <option name=\"myName\" value=\"" + PROFILE + "\" />\n" +
                                                   "</profile>");
-    InspectionProfileImpl profile = createProfile(new InspectionProfileImpl("foo"));
+    InspectionProfileImpl profile = createProfile(new InspectionProfileImpl(PROFILE));
     profile.readExternal(element);
     profile.getModifiableModel().commit();
     assertThat(profile.writeScheme()).isEqualTo(element);
@@ -238,7 +240,7 @@ public class InspectionProfileTest extends LightIdeaTestCase {
     assertEquals(serialized, serialize(profile));
 
     //make them default
-    profile = createProfile(new InspectionProfileImpl("foo"));
+    profile = createProfile(new InspectionProfileImpl(PROFILE));
     profile.readExternal(unusedProfile);
     profile.modifyProfile(it -> {
       InspectionToolWrapper toolWrapper = it.getInspectionTool("unused", getProject());
@@ -273,7 +275,7 @@ public class InspectionProfileTest extends LightIdeaTestCase {
 
     //check merged
     Element mergedElement = JdomKt.loadElement(mergedText);
-    profile = createProfile(new InspectionProfileImpl("foo"));
+    profile = createProfile(new InspectionProfileImpl(PROFILE));
     profile.readExternal(mergedElement);
     profile.getModifiableModel().commit();
     assertThat(profile.writeScheme()).isEqualTo(mergedElement);
@@ -330,7 +332,7 @@ public class InspectionProfileTest extends LightIdeaTestCase {
                        "    <option name=\"m_maxLength\" value=\"66\" />\n" +
                        "  </inspection_tool>\n" +
                        "</profile>";
-    InspectionProfileImpl profile = createProfile(new InspectionProfileImpl("foo"));
+    InspectionProfileImpl profile = createProfile(new InspectionProfileImpl(PROFILE));
     final Element oldProfile = JdomKt.loadElement(unchanged);
     profile.readExternal(oldProfile);
     profile.getModifiableModel().commit();
@@ -359,7 +361,7 @@ public class InspectionProfileTest extends LightIdeaTestCase {
     final Element element = JdomKt.loadElement("<profile version=\"1.0\">\n" +
                                                   "  <option name=\"myName\" value=\"" + PROFILE + "\" />\n" +
                                                   "</profile>");
-    InspectionProfileImpl profile = createProfile(new InspectionProfileImpl("foo"));
+    InspectionProfileImpl profile = createProfile(new InspectionProfileImpl(PROFILE));
     profile.readExternal(element);
     profile.getModifiableModel().commit();
     assertThat(profile.writeScheme()).isEqualTo(element);
@@ -399,7 +401,7 @@ public class InspectionProfileTest extends LightIdeaTestCase {
     assertEquals(unchanged, serialize(profile));
 
     //make them default
-    profile = createProfile(new InspectionProfileImpl("foo"));
+    profile = createProfile(new InspectionProfileImpl(PROFILE));
     String customSettingsText = "<profile version=\"1.0\">\n" +
                                 "  <option name=\"myName\" value=\"ToConvert\" />\n" +
                                 "  <inspection_tool class=\"AbstractClassNamingConvention\" enabled=\"true\" level=\"WARNING\" enabled_by_default=\"true\" />\n" +
@@ -441,7 +443,7 @@ public class InspectionProfileTest extends LightIdeaTestCase {
 
     //check merged
     Element mergedElement = JdomKt.loadElement(customSettingsText);
-    profile = createProfile(new InspectionProfileImpl("foo"));
+    profile = createProfile(new InspectionProfileImpl(PROFILE));
     profile.readExternal(mergedElement);
     profile.getModifiableModel().commit();
     assertThat(profile.writeScheme()).isEqualTo(mergedElement);
@@ -472,7 +474,7 @@ public class InspectionProfileTest extends LightIdeaTestCase {
                          "  </inspection_tool>\n" +
                          "</profile>";
       final Element allEnabledProfile = JdomKt.loadElement(unchanged);
-      InspectionProfileImpl profile = createProfile(new InspectionProfileImpl("foo"));
+      InspectionProfileImpl profile = createProfile(new InspectionProfileImpl(PROFILE));
       profile.readExternal(allEnabledProfile);
       profile.initInspectionTools();
       assertEquals(unchanged, serialize(profile));
@@ -482,7 +484,7 @@ public class InspectionProfileTest extends LightIdeaTestCase {
     final Element element = JdomKt.loadElement("<profile version=\"1.0\">\n" +
                                                "  <option name=\"myName\" value=\"" + PROFILE + "\" />\n" +
                                                "</profile>");
-    InspectionProfileImpl profile = createProfile(new InspectionProfileImpl("foo"));
+    InspectionProfileImpl profile = createProfile(new InspectionProfileImpl(PROFILE));
     profile.readExternal(element);
     profile.getModifiableModel().commit();
     assertThat(profile.writeScheme()).isEqualTo(element);
@@ -524,7 +526,7 @@ public class InspectionProfileTest extends LightIdeaTestCase {
 
     //check merged
     Element mergedElement = JdomKt.loadElement(customSettingsText);
-    profile = createProfile(new InspectionProfileImpl("foo"));
+    profile = createProfile(new InspectionProfileImpl(PROFILE));
     profile.readExternal(mergedElement);
     profile.getModifiableModel().commit();
     assertThat(profile.writeScheme()).isEqualTo(mergedElement);
@@ -536,7 +538,7 @@ public class InspectionProfileTest extends LightIdeaTestCase {
     final Element element = JdomKt.loadElement("<profile version=\"1.0\">\n" +
                                                "  <option name=\"myName\" value=\"" + PROFILE + "\" />\n" +
                                                "</profile>");
-    InspectionProfileImpl profile = createProfile(new InspectionProfileImpl("foo"));
+    InspectionProfileImpl profile = createProfile(new InspectionProfileImpl(PROFILE));
     profile.readExternal(element);
     profile.getModifiableModel().commit();
     assertThat(profile.writeScheme()).isEqualTo(element);
@@ -576,7 +578,7 @@ public class InspectionProfileTest extends LightIdeaTestCase {
 
     //check merged
     Element mergedElement = JdomKt.loadElement(customSettingsText);
-    profile = createProfile(new InspectionProfileImpl("foo"));
+    profile = createProfile(new InspectionProfileImpl(PROFILE));
     profile.readExternal(mergedElement);
     profile.getModifiableModel().commit();
     assertThat(profile.writeScheme()).isEqualTo(mergedElement);
@@ -585,7 +587,7 @@ public class InspectionProfileTest extends LightIdeaTestCase {
   }
 
   public void testStoredMemberVisibility() throws Exception {
-    InspectionProfileImpl profile = createProfile(new InspectionProfileImpl("foo"));
+    InspectionProfileImpl profile = createProfile(new InspectionProfileImpl(PROFILE));
     profile.readExternal(JdomKt.loadElement("<profile version=\"1.0\">\n" +
                                                "  <inspection_tool class=\"unused\" enabled=\"true\" level=\"WARNING\" enabled_by_default=\"true\">\n" +
                                                "    <option name=\"LOCAL_VARIABLE\" value=\"true\" />\n" +
@@ -761,7 +763,7 @@ public class InspectionProfileTest extends LightIdeaTestCase {
 
   private static void checkMergedNoChanges(String initialText) throws Exception {
     final Element element = JdomKt.loadElement(initialText);
-    InspectionProfileImpl profile = createProfile(new InspectionProfileImpl("foo"));
+    InspectionProfileImpl profile = createProfile(new InspectionProfileImpl(PROFILE));
     profile.readExternal(element);
     profile.getModifiableModel().commit();
     assertEquals(initialText, serialize(profile));
@@ -821,12 +823,11 @@ public class InspectionProfileTest extends LightIdeaTestCase {
   }
 
   private static InspectionProfileImpl createProfile(@NotNull Supplier<List<InspectionToolWrapper>> toolSupplier) {
-    InspectionProfileImpl base = new InspectionProfileImpl("Base", toolSupplier);
     return new InspectionProfileImpl("Foo", toolSupplier);
   }
 
   public void testGlobalInspectionContext() {
-    InspectionProfileImpl profile = new InspectionProfileImpl("Foo");
+    InspectionProfileImpl profile = new InspectionProfileImpl(PROFILE);
     InspectionsKt.disableAllTools(profile);
     profile.enableTool(new UnusedDeclarationInspectionBase(true).getShortName(), getProject());
 
@@ -836,7 +837,7 @@ public class InspectionProfileTest extends LightIdeaTestCase {
   }
 
   public void testInspectionsInitialization() {
-    InspectionProfileImpl foo = new InspectionProfileImpl("foo");
+    InspectionProfileImpl foo = new InspectionProfileImpl(PROFILE);
     assertEquals(0, countInitializedTools(foo));
     foo.initInspectionTools(getProject());
     assertEquals(0, countInitializedTools(foo));
@@ -875,7 +876,7 @@ public class InspectionProfileTest extends LightIdeaTestCase {
   }
 
   public void testInspectionInitializationForSerialization() throws Exception {
-    InspectionProfileImpl foo = new InspectionProfileImpl("foo");
+    InspectionProfileImpl foo = new InspectionProfileImpl(PROFILE);
     foo.readExternal(JdomKt.loadElement("<profile version=\"1.0\">\n" +
                                            "    <option name=\"myName\" value=\"idea.default\" />\n" +
                                            "    <inspection_tool class=\"AbstractMethodCallInConstructor\" enabled=\"true\" level=\"WARNING\" enabled_by_default=\"true\" />\n" +

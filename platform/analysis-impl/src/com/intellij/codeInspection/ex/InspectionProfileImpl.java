@@ -151,7 +151,6 @@ public class InspectionProfileImpl extends NewInspectionProfile {
     if (myChangedToolNames == null) {
       myChangedToolNames = new THashSet<>();
     }
-    ContainerUtil.addIfNotNull(myChangedToolNames, InspectionElementsMerger.getMergedName(shortName));
     myChangedToolNames.add(shortName);
   }
 
@@ -220,8 +219,8 @@ public class InspectionProfileImpl extends NewInspectionProfile {
       }
     }
 
-    Set<String> changedToolNames = getChangedToolNames();
-    if (changedToolNames == null) {
+    NullableLazyValue<Set<String>> changedToolNames = NullableLazyValue.createValue(() -> getChangedToolNames());
+    if (!myLockedProfile && changedToolNames.getValue() == null) {
       return;
     }
 
@@ -235,7 +234,7 @@ public class InspectionProfileImpl extends NewInspectionProfile {
         continue;
       }
 
-      if (!myLockedProfile && !changedToolNames.contains(toolName)) {
+      if (!myLockedProfile && (changedToolNames.getValue() != null && !changedToolNames.getValue().contains(toolName))) {
         markSettingsMerged(toolName, element);
         continue;
       }
@@ -268,7 +267,9 @@ public class InspectionProfileImpl extends NewInspectionProfile {
     String mergedName = InspectionElementsMergerBase.getMergedMarkerName(toolName);
     if (!myUninitializedSettings.containsKey(mergedName)) {
       InspectionElementsMergerBase merger = getMerger(toolName);
-      if (merger != null && merger.markSettingsMerged(myUninitializedSettings)) {
+      if (merger != null &&
+          merger.markSettingsMerged(myUninitializedSettings) &&
+          Arrays.stream(merger.getSourceToolNames()).allMatch(myUninitializedSettings::containsKey)) {
         element.addContent(new Element(INSPECTION_TOOL_TAG).setAttribute(CLASS_TAG, mergedName));
       }
     }
