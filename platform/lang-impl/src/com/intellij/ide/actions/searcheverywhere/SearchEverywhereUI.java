@@ -625,7 +625,8 @@ public class SearchEverywhereUI extends BorderLayoutPanel implements Disposable,
       } else {
         boolean clearBefore = true;
         for (SearchEverywhereContributor contributor : getUsedContributors()) {
-          anyFound |= addContributorItems(contributor, MULTIPLE_CONTRIBUTORS_ELEMENTS_LIMIT, clearBefore);
+          int count = myServiceContributors.contains(contributor) ? -1 : MULTIPLE_CONTRIBUTORS_ELEMENTS_LIMIT; //show ALL items for service contributors
+          anyFound |= addContributorItems(contributor, count, clearBefore);
           clearBefore = false;
         }
       }
@@ -698,6 +699,7 @@ public class SearchEverywhereUI extends BorderLayoutPanel implements Disposable,
   private List<SearchEverywhereContributor> getUsedContributors() {
     SearchEverywhereContributorFilter<String> contributorsFilter =
       (SearchEverywhereContributorFilter<String>) myContributorFilters.get(SearchEverywhereManagerImpl.ALL_CONTRIBUTORS_GROUP_ID);
+
     List<SearchEverywhereContributor> contributors = new ArrayList<>(myServiceContributors);
     myShownContributors.stream()
                        .filter(contributor -> contributorsFilter.isSelected(contributor.getSearchProviderId()))

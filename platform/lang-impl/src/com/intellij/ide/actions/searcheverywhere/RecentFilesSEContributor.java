@@ -72,7 +72,7 @@ public class RecentFilesSEContributor extends FileSearchEverywhereContributor {
       }
     );
 
-    return res.size() > elementsLimit
+    return elementsLimit > 0 && res.size() > elementsLimit
            ? new ContributorSearchResult<>(res.subList(0, elementsLimit), true)
            : new ContributorSearchResult<>(res);
   }
