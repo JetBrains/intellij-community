@@ -430,7 +430,7 @@ public class DialogWrapperPeerImpl extends DialogWrapperPeer {
     myDialog.getWindow().setAutoRequestFocus(true);
 
     if (myTouchBarButtons != null && myProject != null)
-      myTouchBarCloser = TouchBarsManager.showDlgButtonsBar(myTouchBarButtons, myProject);
+      myTouchBarCloser = TouchBarsManager.showDlgButtonsBar(myTouchBarButtons);
 
     try {
       myDialog.show();
