@@ -32,6 +32,7 @@ import org.jetbrains.plugins.groovy.lang.parser.GroovyElementTypes;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyElementVisitor;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFileBase;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElement;
+import org.jetbrains.plugins.groovy.lang.psi.api.GrDoWhileStatement;
 import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.GrListOrMap;
 import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.modifiers.annotation.GrAnnotation;
 import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.modifiers.annotation.GrAnnotationArgumentList;
@@ -60,6 +61,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.types.GrTypeArgumentList;
 import org.jetbrains.plugins.groovy.lang.psi.api.types.GrTypeParameterList;
 import org.jetbrains.plugins.groovy.lang.psi.impl.PsiImplUtil;
 
+import static org.jetbrains.plugins.groovy.lang.psi.GroovyElementTypes.*;
 import static org.jetbrains.plugins.groovy.lang.psi.GroovyTokenSets.*;
 
 /**
@@ -707,6 +709,35 @@ public class GroovySpacingProcessor extends GroovyElementVisitor {
       createSpaceBeforeLBrace(mySettings.SPACE_BEFORE_WHILE_LBRACE, mySettings.BRACE_STYLE,
                               new TextRange(myParent.getTextRange().getStartOffset(), myChild1.getTextRange().getEndOffset()),
                               mySettings.KEEP_SIMPLE_BLOCKS_IN_ONE_LINE);
+    }
+    else {
+      createSpacingBeforeElementInsideControlStatement();
+    }
+  }
+
+  @Override
+  public void visitDoWhileStatement(@NotNull GrDoWhileStatement statement) {
+    if (myType1 == KW_DO) {
+      createSpaceBeforeLBrace(
+        mySettings.SPACE_BEFORE_DO_LBRACE,
+        mySettings.BRACE_STYLE,
+        myChild1.getTextRange(),
+        mySettings.KEEP_SIMPLE_BLOCKS_IN_ONE_LINE
+      );
+    }
+    else if (myType2 == KW_WHILE) {
+      if (mySettings.WHILE_ON_NEW_LINE) {
+        createLF(true);
+      }
+      else {
+        createSpaceInCode(mySettings.SPACE_BEFORE_WHILE_KEYWORD);
+      }
+    }
+    else if (myType2 == T_LPAREN) {
+      createSpaceInCode(mySettings.SPACE_BEFORE_WHILE_PARENTHESES);
+    }
+    else if (myType1 == T_LPAREN || myType2 == T_RPAREN) {
+      createSpaceInCode(mySettings.SPACE_WITHIN_WHILE_PARENTHESES);
     }
     else {
       createSpacingBeforeElementInsideControlStatement();

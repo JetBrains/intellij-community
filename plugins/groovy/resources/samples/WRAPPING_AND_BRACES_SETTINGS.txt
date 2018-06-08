@@ -27,6 +27,9 @@ i = 0
        label2: expr2
     ])
     while (x < 50000) x++
+    do x++ while (x < 50000)
+    do x++
+    while (x < 50000)
     switch (a) {
     case 0:
       doCase0()

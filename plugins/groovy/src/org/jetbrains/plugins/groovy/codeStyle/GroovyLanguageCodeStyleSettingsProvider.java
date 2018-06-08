@@ -97,8 +97,8 @@ public class GroovyLanguageCodeStyleSettingsProvider extends LanguageCodeStyleSe
         "FOR_BRACE_FORCE",
 
         "WHILE_BRACE_FORCE",
-        //"DOWHILE_BRACE_FORCE",
-        //"WHILE_ON_NEW_LINE",
+        "DOWHILE_BRACE_FORCE",
+        "WHILE_ON_NEW_LINE",
 
         "INDENT_CASE_FROM_SWITCH",
 
@@ -198,7 +198,7 @@ public class GroovyLanguageCodeStyleSettingsProvider extends LanguageCodeStyleSe
                                    "SPACE_BEFORE_ELSE_LBRACE",
                                    "SPACE_BEFORE_WHILE_LBRACE",
                                    "SPACE_BEFORE_FOR_LBRACE",
-//                                   "SPACE_BEFORE_DO_LBRACE",
+                                   "SPACE_BEFORE_DO_LBRACE",
                                    "SPACE_BEFORE_SWITCH_LBRACE",
                                    "SPACE_BEFORE_TRY_LBRACE",
                                    "SPACE_BEFORE_CATCH_LBRACE",
@@ -207,7 +207,7 @@ public class GroovyLanguageCodeStyleSettingsProvider extends LanguageCodeStyleSe
 //                                   "SPACE_BEFORE_ARRAY_INITIALIZER_LBRACE",
 //                                   "SPACE_BEFORE_ANNOTATION_ARRAY_INITIALIZER_LBRACE",
                                    "SPACE_BEFORE_ELSE_KEYWORD",
-//                                   "SPACE_BEFORE_WHILE_KEYWORD",
+                                   "SPACE_BEFORE_WHILE_KEYWORD",
                                    "SPACE_BEFORE_CATCH_KEYWORD",
                                    "SPACE_BEFORE_FINALLY_KEYWORD",
                                    "SPACE_BEFORE_QUEST",

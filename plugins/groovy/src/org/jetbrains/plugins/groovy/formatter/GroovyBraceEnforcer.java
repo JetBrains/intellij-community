@@ -20,6 +20,7 @@ import org.jetbrains.plugins.groovy.lang.psi.GroovyFile;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElement;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElementFactory;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyRecursiveElementVisitor;
+import org.jetbrains.plugins.groovy.lang.psi.api.GrDoWhileStatement;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.*;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrCodeBlock;
 
@@ -151,6 +152,14 @@ public class GroovyBraceEnforcer extends GroovyRecursiveElementVisitor {
     if (checkElementContainsRange(statement)) {
       super.visitWhileStatement(statement);
       processStatement(statement, statement.getBody(), myPostProcessor.getSettings().WHILE_BRACE_FORCE);
+    }
+  }
+
+  @Override
+  public void visitDoWhileStatement(@NotNull GrDoWhileStatement statement) {
+    if (checkElementContainsRange(statement)) {
+      super.visitDoWhileStatement(statement);
+      processStatement(statement, statement.getBody(), myPostProcessor.getSettings().DOWHILE_BRACE_FORCE);
     }
   }
 }

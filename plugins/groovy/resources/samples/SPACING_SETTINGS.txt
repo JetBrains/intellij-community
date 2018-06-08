@@ -31,6 +31,9 @@ class Foo {
         y = [1, 2, 3] ?: 4
       }
     }
+    do {
+      operation()
+    } while (condition)
     def cl = {Math.sin(it)}
     print ckl(2)
   }
