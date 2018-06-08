@@ -16,6 +16,8 @@ public interface JavaModuleSystem {
 
   default boolean isAccessible(@NotNull PsiClass target, @NotNull PsiElement place) {
     PsiFile targetFile = target.getContainingFile();
+    if (targetFile == null) return true;
+
     PsiUtilCore.ensureValid(targetFile);
 
     String packageName = PsiUtil.getPackageName(target);
