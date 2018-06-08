@@ -36,6 +36,7 @@ import com.intellij.testGuiFramework.util.scenarios.NewProjectDialogModel.Consta
 import com.intellij.testGuiFramework.util.scenarios.NewProjectDialogModel.Constants.groupSpringInitializer
 import com.intellij.testGuiFramework.util.scenarios.NewProjectDialogModel.Constants.groupStaticWeb
 import com.intellij.testGuiFramework.util.scenarios.NewProjectDialogModel.Constants.itemKotlinMpp
+import com.intellij.testGuiFramework.util.scenarios.NewProjectDialogModel.Constants.progressLoadingTemplates
 import com.intellij.testGuiFramework.util.scenarios.NewProjectDialogModel.Constants.textArtifactId
 import com.intellij.testGuiFramework.util.scenarios.NewProjectDialogModel.Constants.textBasePackage
 import com.intellij.testGuiFramework.util.scenarios.NewProjectDialogModel.Constants.textGroupId
@@ -70,6 +71,7 @@ class NewProjectDialogModel(val testCase: GuiTestCase) : TestUtilsClass(testCase
     const val textRootModuleName = "Root module name:"
     const val checkCreateJvmModule = "Create JVM module:"
     const val checkCreateJsModule = "Create JS module:"
+    const val progressLoadingTemplates = "Loading Templates"
 
     // groups
     const val groupJava = "Java"
@@ -519,8 +521,8 @@ fun NewProjectDialogModel.createGriffonProject(projectPath: String, libs: Librar
 }
 
 fun NewProjectDialogModel.waitLoadingTemplates(){
-  GuiTestUtilKt.waitUntilGone(robot = GuiRobotHolder.robot,
-                              timeoutInSeconds = 10,
-                              matcher = GuiTestUtilKt.typeMatcher(
-                                JDialog::class.java) { it.isShowing && it.title == "Loading Templates"})
+  GuiTestUtilKt.waitProgressDialogUntilGone(
+    GuiRobotHolder.robot,
+    progressTitle = progressLoadingTemplates
+  )
 }
