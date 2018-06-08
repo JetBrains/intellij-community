@@ -94,10 +94,10 @@ public abstract class CodeInsightUtilCore extends FileModificationService {
   }
 
   public static boolean parseStringCharacters(@NotNull String chars, @NotNull StringBuilder outChars, @Nullable int[] sourceOffsets) {
-    return parseStringCharacters(chars, outChars, sourceOffsets, '"', '\'');
+    return parseStringCharacters(chars, outChars, sourceOffsets, true, true, '"', '\'');
   }
 
-  public static boolean parseStringCharacters(@NotNull String chars, @NotNull StringBuilder outChars, @Nullable int[] sourceOffsets, @NotNull char... endChars) {
+  public static boolean parseStringCharacters(@NotNull String chars, @NotNull StringBuilder outChars, @Nullable int[] sourceOffsets, boolean slashMustBeEscaped, boolean exitOnEscapingWrongSymbol, @NotNull char... endChars) {
     assert sourceOffsets == null || sourceOffsets.length == chars.length()+1;
     if (chars.indexOf('\\') < 0) {
       outChars.append(chars);
@@ -206,6 +206,15 @@ public abstract class CodeInsightUtilCore extends FileModificationService {
 
         default:
           if (CharArrayUtil.indexOf(endChars, c, 0, endChars.length) != -1) {
+            outChars.append(c);
+          }
+          else if (!exitOnEscapingWrongSymbol) {
+            if (!slashMustBeEscaped) {
+              outChars.append('\\');
+              if (sourceOffsets != null) {
+                sourceOffsets[outChars.length() - outOffset] = index - 1;
+              }
+            }
             outChars.append(c);
           }
           else {
