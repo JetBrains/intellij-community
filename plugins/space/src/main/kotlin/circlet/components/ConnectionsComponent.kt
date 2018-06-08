@@ -49,6 +49,10 @@ class Connection(val loginModel: LoginModel, connectionLifetime: Lifetime) {
 
                     loginModel.signIn(token, "")
 
+                    call.respondRedirect("success")
+                }
+
+                get("success") {
                     call.respondText(CircletBundle.message("authorization-successful"), ContentType.Text.Html)
 
                     serverLifetime.terminate()
