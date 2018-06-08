@@ -125,4 +125,8 @@ public class WSLUtil {
     processHandler.addProcessListener(INPUT_CLOSE_LISTENER);
     return processHandler;
   }
+
+  public static boolean isSystemCompatible() {
+    return SystemInfo.isWin10OrNewer;
+  }
 }
