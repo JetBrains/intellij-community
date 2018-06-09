@@ -365,7 +365,7 @@ public class VcsDirectoryConfigurationPanel extends JPanel implements Configurab
 
   @NotNull
   private Collection<VcsRootError> findUnregisteredRoots() {
-    return ContainerUtil.filter(VcsRootErrorsFinder.getInstance(myProject).find(),
+    return ContainerUtil.filter(VcsRootErrorsFinder.getInstance(myProject).getOrFind(),
                                 error -> error.getType() == VcsRootError.Type.UNREGISTERED_ROOT);
   }
 
