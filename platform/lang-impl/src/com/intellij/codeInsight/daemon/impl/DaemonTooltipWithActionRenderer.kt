@@ -42,8 +42,6 @@ import javax.swing.event.HyperlinkEvent
 val runActionCustomShortcutSet: CustomShortcutSet = CustomShortcutSet(
   KeyStroke.getKeyStroke(KeyEvent.VK_ENTER, KeyEvent.SHIFT_DOWN_MASK or KeyEvent.ALT_DOWN_MASK))
 
-val backgroundLight: Color = Color(241, 239, 203)
-
 internal class DaemonTooltipWithActionRenderer(text: String?,
                                                private val tooltipAction: TooltipAction?,
                                                width: Int,
@@ -178,23 +176,15 @@ internal class DaemonTooltipWithActionRenderer(text: String?,
                                               grid: JComponent): JPanel {
     val wrapper: JPanel = object : JPanel(BorderLayout()) {
       override fun paint(g: Graphics?) {
-        if (UIUtil.isUnderDarcula()) {
-          super.paint(g)
-          return
-        }
-        g!!.color = backgroundLight
+        g!!.color = UIUtil.getToolTipActionBackground()
         val graphics2D = g as Graphics2D
         val cfg = GraphicsConfig(g)
         cfg.setAntialiasing(true)
 
-        graphics2D.fill(RoundRectangle2D.Double(1.0, 0.0, bounds.width - 2.5,
-                                                (bounds.height / 2).toDouble(),
-                                                0.0, 0.0))
+        graphics2D.fill(RoundRectangle2D.Double(1.0, 0.0, bounds.width - 2.5, (bounds.height / 2).toDouble(), 0.0, 0.0))
 
-        val double = RoundRectangle2D.Double(1.0, 0.0, bounds.width - 2.5,
-                                             (bounds.height - 1).toDouble(),
-                                             BalloonImpl.ARC.toDouble(),
-                                             BalloonImpl.ARC.toDouble())
+        val arc = BalloonImpl.ARC.toDouble()
+        val double = RoundRectangle2D.Double(1.0, 0.0, bounds.width - 2.5, (bounds.height - 1).toDouble(), arc, arc)
 
         graphics2D.fill(double)
 
