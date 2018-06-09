@@ -258,6 +258,8 @@ public abstract class SdkType implements SdkTypeId {
    * @param selectedSdk        current selected sdk in parentComponent
    * @param sdkCreatedCallback the callback to which the created SDK is passed.
    * @since 2017.1
+   * @implSpec method's implementations should not add sdk to the jdkTable neither  invoke {@link SdkType#setupSdkPaths}. Only create and
+   * and pass to the callback. The rest is done by {@link ProjectSdksModel#setupSdk}
    */
   public void showCustomCreateUI(@NotNull SdkModel sdkModel,
                                  @NotNull JComponent parentComponent,
