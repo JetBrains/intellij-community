@@ -16,6 +16,5 @@
     <orderEntry type="library" name="Guava" level="project" />
     <orderEntry type="module" module-name="intellij.tools.index" />
     <orderEntry type="module" module-name="intellij.pycharm.community" exported="" scope="RUNTIME" />
-    <orderEntry type="module" module-name="intellij.platform.bootstrap" />
   </component>
 </module>
