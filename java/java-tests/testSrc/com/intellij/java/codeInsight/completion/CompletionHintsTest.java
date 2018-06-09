@@ -1132,6 +1132,201 @@ public class CompletionHintsTest extends AbstractParameterInfoTestCase {
                           "}");
   }
 
+  public void testVirtualCommaBasicCase() throws Exception {
+    enableVirtualComma();
+
+    configureJava("class C { int mmm(short a, int b, long c){ return 0; } void m() { mm<caret> } }");
+    complete();
+    waitForAllAsyncStuff();
+    checkResultWithInlays("class C { int mmm(short a, int b, long c){ return 0; } void m() { mmm(<HINT text=\"a:\"/><caret><Hint text=\", b:\"/><Hint text=\", c:\"/>) } }");
+    checkHintContents("<html><b>short</b></html>");
+    type("1");
+    next();
+    waitForAllAsyncStuff();
+    checkResultWithInlays("class C { int mmm(short a, int b, long c){ return 0; } void m() { mmm(<Hint text=\"a:\"/>1, <HINT text=\"b:\"/><caret><Hint text=\", c:\"/>) } }");
+    checkHintContents("<html><b>int</b></html>");
+    type("2");
+    next();
+    waitForAllAsyncStuff();
+    checkResultWithInlays("class C { int mmm(short a, int b, long c){ return 0; } void m() { mmm(<Hint text=\"a:\"/>1, <Hint text=\"b:\"/>2, <HINT text=\"c:\"/><caret>) } }");
+    checkHintContents("<html><b>long</b></html>");
+    type("3");
+    next();
+    waitForAllAsyncStuff();
+    checkResultWithInlays("class C { int mmm(short a, int b, long c){ return 0; } void m() { mmm(<hint text=\"a:\"/>1, <hint text=\"b:\"/>2, <hint text=\"c:\"/>3)<caret> } }");
+    checkHintContents(null);
+    prev();
+    waitForAllAsyncStuff();
+    checkResultWithInlays("class C { int mmm(short a, int b, long c){ return 0; } void m() { mmm(<Hint text=\"a:\"/>1, <Hint text=\"b:\"/>2, <HINT text=\"c:\"/>3<caret>) } }");
+    checkHintContents("<html><b>long</b></html>");
+    prev();
+    waitForAllAsyncStuff();
+    checkResultWithInlays("class C { int mmm(short a, int b, long c){ return 0; } void m() { mmm(<Hint text=\"a:\"/>1, <HINT text=\"b:\"/>2<caret>, <Hint text=\"c:\"/>3) } }");
+    checkHintContents("<html><b>int</b></html>");
+    prev();
+    waitForAllAsyncStuff();
+    checkResultWithInlays("class C { int mmm(short a, int b, long c){ return 0; } void m() { mmm(<HINT text=\"a:\"/>1<caret>, <Hint text=\"b:\"/>2, <Hint text=\"c:\"/>3) } }");
+    checkHintContents("<html><b>short</b></html>");
+  }
+
+  public void testVirtualCommaEmptyParams() throws Exception {
+    enableVirtualComma();
+
+    configureJava("class C { int mmm(short a, int b, long c){ return 0; } void m() { mm<caret> } }");
+    complete();
+    waitForAllAsyncStuff();
+    checkResultWithInlays("class C { int mmm(short a, int b, long c){ return 0; } void m() { mmm(<HINT text=\"a:\"/><caret><Hint text=\", b:\"/><Hint text=\", c:\"/>) } }");
+    checkHintContents("<html><b>short</b></html>");
+    next();
+    waitForAllAsyncStuff();
+    checkResultWithInlays("class C { int mmm(short a, int b, long c){ return 0; } void m() { mmm(<Hint text=\"a:\"/>, <HINT text=\"b:\"/><caret><Hint text=\", c:\"/>) } }");
+    checkHintContents("<html><b>int</b></html>");
+    next();
+    waitForAllAsyncStuff();
+    checkResultWithInlays("class C { int mmm(short a, int b, long c){ return 0; } void m() { mmm(<Hint text=\"a:\"/>, <Hint text=\"b:\"/>, <HINT text=\"c:\"/><caret>) } }");
+    checkHintContents("<html><b>long</b></html>");
+    next();
+    waitForAllAsyncStuff();
+    checkResultWithInlays("class C { int mmm(short a, int b, long c){ return 0; } void m() { mmm(<hint text=\"a:\"/>, <hint text=\"b:\"/>, <hint text=\"c:\"/>)<caret> } }");
+    checkHintContents(null);
+    prev();
+    waitForAllAsyncStuff();
+    checkResultWithInlays("class C { int mmm(short a, int b, long c){ return 0; } void m() { mmm(<Hint text=\"a:\"/>, <Hint text=\"b:\"/>, <HINT text=\"c:\"/><caret>) } }");
+    checkHintContents("<html><b>long</b></html>");
+    prev();
+    waitForAllAsyncStuff();
+    checkResultWithInlays("class C { int mmm(short a, int b, long c){ return 0; } void m() { mmm(<Hint text=\"a:\"/>, <HINT text=\"b:\"/><caret><Hint text=\", c:\"/>) } }");
+    checkHintContents("<html><b>int</b></html>");
+    prev();
+    waitForAllAsyncStuff();
+    checkResultWithInlays("class C { int mmm(short a, int b, long c){ return 0; } void m() { mmm(<HINT text=\"a:\"/><caret><Hint text=\", b:\"/><Hint text=\", c:\"/>) } }");
+    checkHintContents("<html><b>short</b></html>");
+  }
+
+  public void testVirtualCommaWithLimit() throws Exception {
+    enableVirtualComma();
+    setParameterHintsLimit(2);
+
+    configureJava("class C {\n" +
+                  "    int mmm(int a, int b, int c, int d) { return 0; }\n" +
+                  "    void m2() { mm<caret> }\n" +
+                  "}");
+    complete();
+    checkResultWithInlays("class C {\n" +
+                          "    int mmm(int a, int b, int c, int d) { return 0; }\n" +
+                          "    void m2() { mmm(<HINT text=\"a:\"/><caret><Hint text=\", b:\"/><Hint text=\"...more:\"/>) }\n" +
+                          "}");
+    type("1");
+    next();
+    waitForAllAsyncStuff();
+    checkResultWithInlays("class C {\n" +
+                          "    int mmm(int a, int b, int c, int d) { return 0; }\n" +
+                          "    void m2() { mmm(<Hint text=\"a:\"/>1, <HINT text=\"b:\"/><caret><Hint text=\"...more:\"/>) }\n" +
+                          "}");
+    type("2");
+    next();
+    waitForAllAsyncStuff();
+    checkResultWithInlays("class C {\n" +
+                          "    int mmm(int a, int b, int c, int d) { return 0; }\n" +
+                          "    void m2() { mmm(<Hint text=\"a:\"/>1, <Hint text=\"b:\"/>2, <HINT text=\"c:\"/><caret><Hint text=\"...more:\"/>) }\n" +
+                          "}");
+    type("3");
+    next();
+    waitForAllAsyncStuff();
+    checkResultWithInlays("class C {\n" +
+                          "    int mmm(int a, int b, int c, int d) { return 0; }\n" +
+                          "    void m2() { mmm(<Hint text=\"a:\"/>1, <Hint text=\"b:\"/>2, <Hint text=\"c:\"/>3, <HINT text=\"d:\"/><caret>) }\n" +
+                          "}");
+    type("4");
+    next();
+    waitForAllAsyncStuff();
+    checkResultWithInlays("class C {\n" +
+                          "    int mmm(int a, int b, int c, int d) { return 0; }\n" +
+                          "    void m2() { mmm(<hint text=\"a:\"/>1, <hint text=\"b:\"/>2, <hint text=\"c:\"/>3, <hint text=\"d:\"/>4)<caret> }\n" +
+                          "}");
+  }
+
+  public void testVirtualCommaWithLimitEmptyParams() throws Exception {
+    enableVirtualComma();
+    setParameterHintsLimit(2);
+
+    configureJava("class C {\n" +
+                  "    int mmm(int a, int b, int c, int d) { return 0; }\n" +
+                  "    void m2() { mm<caret> }\n" +
+                  "}");
+    complete();
+    checkResultWithInlays("class C {\n" +
+                          "    int mmm(int a, int b, int c, int d) { return 0; }\n" +
+                          "    void m2() { mmm(<HINT text=\"a:\"/><caret><Hint text=\", b:\"/><Hint text=\"...more:\"/>) }\n" +
+                          "}");
+    next();
+    waitForAllAsyncStuff();
+    checkResultWithInlays("class C {\n" +
+                          "    int mmm(int a, int b, int c, int d) { return 0; }\n" +
+                          "    void m2() { mmm(<Hint text=\"a:\"/>, <HINT text=\"b:\"/><caret><Hint text=\"...more:\"/>) }\n" +
+                          "}");
+    next();
+    waitForAllAsyncStuff();
+    checkResultWithInlays("class C {\n" +
+                          "    int mmm(int a, int b, int c, int d) { return 0; }\n" +
+                          "    void m2() { mmm(<Hint text=\"a:\"/>, <Hint text=\"b:\"/>, <HINT text=\"c:\"/><caret><Hint text=\"...more:\"/>) }\n" +
+                          "}");
+    next();
+    waitForAllAsyncStuff();
+    checkResultWithInlays("class C {\n" +
+                          "    int mmm(int a, int b, int c, int d) { return 0; }\n" +
+                          "    void m2() { mmm(<Hint text=\"a:\"/>, <Hint text=\"b:\"/>, <Hint text=\"c:\"/>, <HINT text=\"d:\"/><caret>) }\n" +
+                          "}");
+    next();
+    waitForAllAsyncStuff();
+    checkResultWithInlays("class C {\n" +
+                          "    int mmm(int a, int b, int c, int d) { return 0; }\n" +
+                          "    void m2() { mmm(<hint text=\"a:\"/>, <hint text=\"b:\"/>, <hint text=\"c:\"/>, <hint text=\"d:\"/>)<caret> }\n" +
+                          "}");
+    prev();
+    waitForAllAsyncStuff();
+    checkResultWithInlays("class C {\n" +
+                          "    int mmm(int a, int b, int c, int d) { return 0; }\n" +
+                          "    void m2() { mmm(<Hint text=\"a:\"/>, <Hint text=\"b:\"/>, <Hint text=\"c:\"/>, <HINT text=\"d:\"/><caret>) }\n" +
+                          "}");
+    prev();
+    waitForAllAsyncStuff();
+    checkResultWithInlays("class C {\n" +
+                          "    int mmm(int a, int b, int c, int d) { return 0; }\n" +
+                          "    void m2() { mmm(<Hint text=\"a:\"/>, <Hint text=\"b:\"/>, <HINT text=\"c:\"/><caret><Hint text=\"...more:\"/>) }\n" +
+                          "}");
+    prev();
+    waitForAllAsyncStuff();
+    checkResultWithInlays("class C {\n" +
+                          "    int mmm(int a, int b, int c, int d) { return 0; }\n" +
+                          "    void m2() { mmm(<Hint text=\"a:\"/>, <HINT text=\"b:\"/><caret><Hint text=\"...more:\"/>) }\n" +
+                          "}");
+    prev();
+    waitForAllAsyncStuff();
+    checkResultWithInlays("class C {\n" +
+                          "    int mmm(int a, int b, int c, int d) { return 0; }\n" +
+                          "    void m2() { mmm(<HINT text=\"a:\"/><caret><Hint text=\", b:\"/><Hint text=\"...more:\"/>) }\n" +
+                          "}");
+  }
+
+  public void testVirtualCommaWithOverload() throws Exception {
+    enableVirtualComma();
+
+    configureJava("class C { void m() { System.getPro<caret> } }");
+    complete("getProperty(String key, String def)");
+    checkResultWithInlays("class C { void m() { System.getProperty(<HINT text=\"key:\"/><caret><Hint text=\", def:\"/>) } }");
+    type("\"a");
+    waitForAllAsyncStuff();
+    next();
+    waitForAllAsyncStuff();
+    checkResultWithInlays("class C { void m() { System.getProperty(<Hint text=\"key:\"/>\"a\", <HINT text=\"def:\"/><caret>) } }");
+    type("\"b");
+    waitForAllAsyncStuff();
+    next();
+    waitForAllAsyncStuff();
+    checkResultWithInlays("class C { void m() { System.getProperty(<hint text=\"key:\"/>\"a\", <hint text=\"def:\"/>\"b\")<caret> } }");
+  }
+
   private void checkResultWithInlays(String text) {
     myFixture.checkResultWithInlays(text);
   }
@@ -1184,6 +1379,13 @@ public class CompletionHintsTest extends AbstractParameterInfoTestCase {
     RegistryValue registryValue = Registry.get("editor.completion.hints.per.call.limit");
     int storedValue = registryValue.asInteger();
     registryValue.setValue(limit);
+    Disposer.register(getTestRootDisposable(), () -> registryValue.setValue(storedValue));
+  }
+
+  private void enableVirtualComma() {
+    RegistryValue registryValue = Registry.get("editor.completion.hints.virtual.comma");
+    boolean storedValue = registryValue.asBoolean();
+    registryValue.setValue(true);
     Disposer.register(getTestRootDisposable(), () -> registryValue.setValue(storedValue));
   }
 }
