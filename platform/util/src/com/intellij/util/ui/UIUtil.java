@@ -1236,6 +1236,10 @@ public class UIUtil {
   public static Color getToolTipBackground() {
     return UIManager.getColor("ToolTip.background");
   }
+  
+  public static Color getToolTipActionBackground() {
+    return JBColor.namedColor("ToolTip.actions.background", new JBColor(new Color(0xf1f1ca), new Color(0x4d5052))); 
+  }
 
   public static Color getToolTipForeground() {
     return UIManager.getColor("ToolTip.foreground");
