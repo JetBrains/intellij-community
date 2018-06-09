@@ -22,7 +22,7 @@ fun parseVars(vars: List<DebugValue>, parent: PyDebugValue?, frameAccessor: PyFr
 }
 
 fun createPyDebugValue(value: DebugValue, frameAccessor: PyFrameAccessor) =
-  PyDebugValue(value.name, value.type, value.qualifier, value.value,
+  PyDebugValue(value.name, value.type, value.qualifier, value.value ?: "",
                value.isContainer, value.isReturnedValue, value.isIPythonHidden, value.isErrorOnEval,
                frameAccessor)
 
