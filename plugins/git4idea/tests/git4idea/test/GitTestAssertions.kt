@@ -11,7 +11,6 @@ import com.intellij.openapi.vcs.changes.LocalChangeList
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.testFramework.PlatformTestCase
 import com.intellij.testFramework.PlatformTestCase.assertOrderedEquals
-import com.intellij.testFramework.vcs.MockChangeListManager
 import com.intellij.util.ui.UIUtil
 import com.intellij.vcs.log.VcsCommitMetadata
 import com.intellij.vcsUtil.VcsUtil.getFilePath
@@ -99,10 +98,13 @@ fun GitPlatformTest.assertLogMessages(vararg messages: String) {
   }
 }
 
+fun ChangeListManager.assertNoChanges() {
+  PlatformTestCase.assertEmpty("No changes is expected: ${allChanges.joinToString()}}", allChanges)
+}
+
 fun ChangeListManager.assertOnlyDefaultChangelist() {
-  val DEFAULT = MockChangeListManager.DEFAULT_CHANGE_LIST_NAME
   PlatformTestCase.assertEquals("Only default changelist is expected among: ${dumpChangeLists()}", 1, changeListsNumber)
-  PlatformTestCase.assertEquals("Default changelist is not active", DEFAULT, defaultChangeList.name)
+  PlatformTestCase.assertEquals("Default changelist is not active", LocalChangeList.DEFAULT_NAME, defaultChangeList.name)
 }
 
 fun ChangeListManager.waitScheduledChangelistDeletions() {

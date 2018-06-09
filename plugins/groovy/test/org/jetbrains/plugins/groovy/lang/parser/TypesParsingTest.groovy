@@ -135,4 +135,6 @@ class TypesParsingTest extends GroovyParsingTestCase {
   void testmembers$constructorIdentifierAndLeftParen() { doTest() }
 
   void testmembers$identifierAndLeftParen() { doTest() }
+
+  void testmembers$constructorAfterInnerClass() { doTest() }
 }

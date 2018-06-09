@@ -651,7 +651,13 @@ public class ExpectedTypesProvider {
       final int index = Arrays.asList(operands).indexOf(myExpr);
       if (index < 0) return; // broken syntax
 
+      IElementType op = expr.getOperationTokenType();
+      PsiExpression anotherExpr = index > 0 ? operands[0] : 1 < operands.length ? operands[1] : null;
+
       if (myForCompletion && index == 0) {
+        if (op == JavaTokenType.EQEQ || op == JavaTokenType.NE) {
+          ContainerUtil.addIfNotNull(myResult, getEqualsType(anotherExpr));
+        }
         final MyParentVisitor visitor = new MyParentVisitor(expr, true, myClassProvider, myVoidable, myUsedAfter);
         myExpr = (PsiExpression)myExpr.getParent();
         expr.getParent().accept(visitor);
@@ -666,22 +672,22 @@ public class ExpectedTypesProvider {
         }
         return;
       }
-      PsiExpression anotherExpr = index > 0 ? operands[0] : 1 < operands.length ? operands[1] : null;
+     
       PsiType anotherType = anotherExpr != null ? anotherExpr.getType() : null;
-      IElementType i = expr.getOperationTokenType();
-      if (i == JavaTokenType.MINUS ||
-          i == JavaTokenType.ASTERISK ||
-          i == JavaTokenType.DIV ||
-          i == JavaTokenType.PERC ||
-          i == JavaTokenType.LT ||
-          i == JavaTokenType.GT ||
-          i == JavaTokenType.LE ||
-          i == JavaTokenType.GE) {
+      
+      if (op == JavaTokenType.MINUS ||
+          op == JavaTokenType.ASTERISK ||
+          op == JavaTokenType.DIV ||
+          op == JavaTokenType.PERC ||
+          op == JavaTokenType.LT ||
+          op == JavaTokenType.GT ||
+          op == JavaTokenType.LE ||
+          op == JavaTokenType.GE) {
         if (anotherType != null) {
           myResult.add(createInfoImpl(PsiType.DOUBLE, anotherType));
         }
       }
-      else if (i == JavaTokenType.PLUS) {
+      else if (op == JavaTokenType.PLUS) {
         if (anotherType == null || anotherType.equalsToText(CommonClassNames.JAVA_LANG_STRING)) {
           PsiClassType objectType = PsiType.getJavaLangObject(expr.getManager(), expr.getResolveScope());
           myResult.add(createInfoImpl(objectType, anotherType != null ? anotherType : objectType));
@@ -690,18 +696,18 @@ public class ExpectedTypesProvider {
           myResult.add(createInfoImpl(PsiType.DOUBLE, anotherType));
         }
       }
-      else if (i == JavaTokenType.EQEQ || i == JavaTokenType.NE) {
+      else if (op == JavaTokenType.EQEQ || op == JavaTokenType.NE) {
         ContainerUtil.addIfNotNull(myResult, getEqualsType(anotherExpr));
       }
-      else if (i == JavaTokenType.LTLT || i == JavaTokenType.GTGT || i == JavaTokenType.GTGTGT) {
+      else if (op == JavaTokenType.LTLT || op == JavaTokenType.GTGT || op == JavaTokenType.GTGTGT) {
         if (anotherType != null) {
           myResult.add(createInfoImpl(PsiType.LONG, ExpectedTypeInfo.TYPE_BETWEEN, PsiType.SHORT, TailType.NONE));
         }
       }
-      else if (i == JavaTokenType.OROR || i == JavaTokenType.ANDAND) {
+      else if (op == JavaTokenType.OROR || op == JavaTokenType.ANDAND) {
         myResult.add(createInfoImpl(PsiType.BOOLEAN, ExpectedTypeInfo.TYPE_STRICTLY, PsiType.BOOLEAN, TailType.NONE));
       }
-      else if (i == JavaTokenType.OR || i == JavaTokenType.XOR || i == JavaTokenType.AND) {
+      else if (op == JavaTokenType.OR || op == JavaTokenType.XOR || op == JavaTokenType.AND) {
         if (anotherType != null) {
           ExpectedTypeInfoImpl info;
           if (PsiType.BOOLEAN.equals(anotherType)) {

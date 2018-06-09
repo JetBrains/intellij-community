@@ -9,6 +9,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.codeStyle.*;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
@@ -286,5 +287,26 @@ public class CodeStyle {
     CodeStyleSettingsManager codeStyleSettingsManager = CodeStyleSettingsManager.getInstance(project);
     codeStyleSettingsManager.setMainProjectCodeStyle(settings);
     codeStyleSettingsManager.USE_PER_PROJECT_SETTINGS = true;
+  }
+
+  @ApiStatus.Experimental
+  @NotNull
+  public static CodeStyleBean getBean(@NotNull Project project, @NotNull Language language) {
+    LanguageCodeStyleSettingsProvider provider = LanguageCodeStyleSettingsProvider.forLanguage(language);
+    CodeStyleBean codeStyleBean = null;
+    if (provider != null) {
+      codeStyleBean = provider.createBean();
+    }
+    if (codeStyleBean == null) {
+      codeStyleBean = new CodeStyleBean() {
+        @NotNull
+        @Override
+        protected Language getLanguage() {
+          return language;
+        }
+      };
+    }
+    codeStyleBean.setRootSettings(getSettings(project));
+    return codeStyleBean;
   }
 }

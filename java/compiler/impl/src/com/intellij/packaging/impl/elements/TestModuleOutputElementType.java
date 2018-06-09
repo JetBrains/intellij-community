@@ -15,13 +15,14 @@
  */
 package com.intellij.packaging.impl.elements;
 
+import com.intellij.icons.AllIcons;
 import com.intellij.openapi.compiler.CompilerBundle;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModulePointer;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ui.configuration.ModulesProvider;
-import com.intellij.util.PlatformIcons;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import org.jetbrains.jps.model.java.JavaModuleSourceRootTypes;
 
 import javax.swing.*;
@@ -32,7 +33,7 @@ import javax.swing.*;
 public class TestModuleOutputElementType extends ModuleOutputElementTypeBase<TestModuleOutputPackagingElement> {
   public static final TestModuleOutputElementType ELEMENT_TYPE = new TestModuleOutputElementType();
 
-  public TestModuleOutputElementType() {
+  private TestModuleOutputElementType() {
     super("module-test-output", CompilerBundle.message("element.type.name.module.test.output"));
   }
 
@@ -48,10 +49,21 @@ public class TestModuleOutputElementType extends ModuleOutputElementTypeBase<Tes
 
   @Override
   public Icon getCreateElementIcon() {
-    return PlatformIcons.TEST_SOURCE_FOLDER;
+    return AllIcons.Modules.TestSourceFolder;
   }
 
-  public boolean isSuitableModule(ModulesProvider modulesProvider, Module module) {
+  @Override
+  public Icon getElementIcon(@Nullable Module module) {
+    return AllIcons.Modules.TestSourceFolder;
+  }
+
+  @NotNull
+  @Override
+  public String getElementText(@NotNull String moduleName) {
+    return CompilerBundle.message("node.text.0.test.compile.output", moduleName);
+  }
+
+  public boolean isSuitableModule(@NotNull ModulesProvider modulesProvider, @NotNull Module module) {
     return !modulesProvider.getRootModel(module).getSourceRoots(JavaModuleSourceRootTypes.TESTS).isEmpty();
   }
 }

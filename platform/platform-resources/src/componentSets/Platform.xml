@@ -24,9 +24,6 @@
       <interface-class>com.intellij.openapi.vfs.newvfs.ManagingFS</interface-class>
       <implementation-class>com.intellij.openapi.vfs.newvfs.persistent.PersistentFSImpl</implementation-class>
     </component>
-    <component>
-      <implementation-class>com.intellij.openapi.vfs.newvfs.impl.VfsData</implementation-class>
-    </component>
 
     <component>
       <interface-class>com.intellij.openapi.vfs.LocalFileSystem</interface-class>
@@ -150,6 +147,10 @@
     </component>
     <component>
       <implementation-class>com.intellij.ide.customize.WelcomeWizardHelper</implementation-class>
+    </component>
+
+    <component>
+      <implementation-class>com.intellij.diagnostic.LowMemoryNotifier</implementation-class>
     </component>
   </application-components>
 

@@ -22,66 +22,70 @@ import java.util.Map;
 public class NST {
   private static final Logger LOG = Logger.getInstance(NST.class);
   private static final String ourRegistryKeyTouchbar = "ide.mac.touchbar.use";
-  private static final NSTLibrary ourNSTLibrary; // NOTE: JNA is stateless (doesn't have any limitations of multi-threaded use)
+  private static NSTLibrary ourNSTLibrary = null; // NOTE: JNA is stateless (doesn't have any limitations of multi-threaded use)
+
+  private static String MIN_OS_VERSION = "10.12.2";
+  static boolean isSupportedOS() { return SystemInfo.isMac && SystemInfo.isOsVersionAtLeast(MIN_OS_VERSION); }
 
   static {
     final Application app = ApplicationManager.getApplication();
     final boolean isUIPresented = app != null && !app.isHeadlessEnvironment() && !app.isUnitTestMode() && !app.isCommandLine();
-    final boolean isSystemSupportTouchbar = SystemInfo.isMac && SystemInfo.isOsVersionAtLeast("10.12.2");
     final boolean isRegistryKeyEnabled = Registry.is(ourRegistryKeyTouchbar, false);
-    NSTLibrary lib = null;
     if (
       isUIPresented
-      && isSystemSupportTouchbar
+      && isSupportedOS()
       && isRegistryKeyEnabled
-      && SystemSettingsTouchBar.isTouchBarServerRunning()
+      && Utils.isTouchBarServerRunning()
     ) {
       try {
-        UrlClassLoader.loadPlatformLibrary("nst");
-
-        // Set JNA to convert java.lang.String to char* using UTF-8, and match that with
-        // the way we tell CF to interpret our char*
-        // May be removed if we use toStringViaUTF16
-        System.setProperty("jna.encoding", "UTF8");
-
-        final Map<String, Object> nstOptions = new HashMap<>();
-        lib = Native.loadLibrary("nst", NSTLibrary.class, nstOptions);
-      } catch (RuntimeException e) {
+        loadLibrary();
+      } catch (Throwable e) {
         LOG.error("Failed to load nst library for touchbar: ", e);
       }
 
-      if (lib != null) {
+      if (ourNSTLibrary != null) {
         // small check that loaded library works
         try {
-          final ID test = lib.createTouchBar("test", (uid) -> { return ID.NIL; }, null);
+          final ID test = ourNSTLibrary.createTouchBar("test", (uid) -> { return ID.NIL; }, null);
           if (test == null || test == ID.NIL) {
             LOG.error("Failed to create native touchbar object, result is null");
+            ourNSTLibrary = null;
           } else {
-            lib.releaseTouchBar(test);
+            ourNSTLibrary.releaseTouchBar(test);
             LOG.info("nst library works properly, successfully created and released native touchbar object");
           }
-        } catch (RuntimeException e) {
+        } catch (Throwable e) {
           LOG.error("nst library was loaded, but can't be used: ", e);
+          ourNSTLibrary = null;
         }
       } else {
         LOG.error("nst library wasn't loaded");
       }
     } else if (!isUIPresented)
       LOG.debug("unit-test mode, skip nst loading");
-    else if (!isSystemSupportTouchbar)
+    else if (!isSupportedOS())
       LOG.info("OS doesn't support touchbar, skip nst loading");
     else if (!isRegistryKeyEnabled)
       LOG.info("registry key '" + ourRegistryKeyTouchbar + "' is disabled, skip nst loading");
     else
       LOG.info("touchbar-server isn't running, skip nst loading");
+  }
 
-    ourNSTLibrary = lib;
+  static NSTLibrary loadLibrary() {
+    UrlClassLoader.loadPlatformLibrary("nst");
+
+    // Set JNA to convert java.lang.String to char* using UTF-8, and match that with
+    // the way we tell CF to interpret our char*
+    // May be removed if we use toStringViaUTF16
+    System.setProperty("jna.encoding", "UTF8");
+
+    final Map<String, Object> nstOptions = new HashMap<>();
+    return ourNSTLibrary = Native.loadLibrary("nst", NSTLibrary.class, nstOptions);
   }
 
   public static boolean isAvailable() { return ourNSTLibrary != null; }
 
   public static ID createTouchBar(String name, NSTLibrary.ItemCreator creator, String escID) {
-    ApplicationManager.getApplication().assertIsDispatchThread();
     return ourNSTLibrary.createTouchBar(name, creator, escID);
   }
 
@@ -94,7 +98,7 @@ public class NST {
   }
 
   public static void selectItemsToShow(ID tbObj, String[] ids, int count) {
-    ApplicationManager.getApplication().assertIsDispatchThread();
+    _assertIsDispatchThread();
     ourNSTLibrary.selectItemsToShow(tbObj, ids, count);
   }
 
@@ -144,7 +148,7 @@ public class NST {
                                   String text,
                                   Icon icon,
                                   NSTLibrary.Action action) {
-    ApplicationManager.getApplication().assertIsDispatchThread();
+    _assertIsDispatchThread();
     final BufferedImage img = _getImg4ByteRGBA(icon);
     final byte[] raster4ByteRGBA = _getRaster(img);
     final int w = _getImgW(img);
@@ -157,7 +161,7 @@ public class NST {
                                    String text,
                                    Icon icon,
                                    ID tbObjExpand, ID tbObjTapAndHold) {
-    ApplicationManager.getApplication().assertIsDispatchThread();
+    _assertIsDispatchThread();
     final BufferedImage img = _getImg4ByteRGBA(icon);
     final byte[] raster4ByteRGBA = _getRaster(img);
     final int w = _getImgW(img);
@@ -166,7 +170,7 @@ public class NST {
   }
 
   public static void updateScrubber(ID scrubObj, int itemWidth, List<TBItemScrubber.ItemData> items) {
-    ApplicationManager.getApplication().assertIsDispatchThread();
+    _assertIsDispatchThread();
     final NSTLibrary.ScrubberItemData[] vals = _makeItemsArray2(items);
     ourNSTLibrary.updateScrubber(scrubObj, itemWidth, vals, vals != null ? vals.length : 0);
   }
@@ -256,5 +260,13 @@ public class NST {
     final int newIconW = 40;
     final float fMulX = newIconW/(float)icon.getIconWidth();
     return _getImg4ByteRGBA(icon, fMulX);
+  }
+
+  private static void _assertIsDispatchThread() {
+    final Application app = ApplicationManager.getApplication();
+    if (app != null)
+      app.assertIsDispatchThread();
+    else
+      assert SwingUtilities.isEventDispatchThread();
   }
 }

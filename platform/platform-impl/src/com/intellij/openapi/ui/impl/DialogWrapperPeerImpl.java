@@ -190,7 +190,7 @@ public class DialogWrapperPeerImpl extends DialogWrapperPeer {
     else {
       ActionCallback focused = new ActionCallback("DialogFocusedCallback");
       ActionCallback typeAheadDone = new ActionCallback("DialogTypeAheadDone");
-      MyDialog dialog = new MyDialog(owner, wrapper, project, focused, typeAheadDone, typeAhead);
+      MyDialog dialog = new MyDialog(OwnerOptional.fromComponent(owner).get(), wrapper, project, focused, typeAheadDone, typeAhead);
       dialog.setModalityType(ideModalityType.toAwtModality());
       return dialog;
     }

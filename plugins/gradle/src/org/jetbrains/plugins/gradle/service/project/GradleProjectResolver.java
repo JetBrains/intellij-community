@@ -56,7 +56,6 @@ import org.jetbrains.plugins.gradle.model.data.CompositeBuildData;
 import org.jetbrains.plugins.gradle.model.data.GradleSourceSetData;
 import org.jetbrains.plugins.gradle.remote.impl.GradleLibraryNamesMixer;
 import org.jetbrains.plugins.gradle.service.execution.GradleExecutionHelper;
-import org.jetbrains.plugins.gradle.service.execution.UnsupportedCancellationToken;
 import org.jetbrains.plugins.gradle.settings.ClassHolder;
 import org.jetbrains.plugins.gradle.settings.DistributionType;
 import org.jetbrains.plugins.gradle.settings.GradleBuildParticipant;
@@ -129,20 +128,27 @@ public class GradleProjectResolver implements ExternalSystemProjectResolver<Grad
       return projectDataNode;
     }
 
-    if (settings != null) {
-      myHelper.ensureInstalledWrapper(syncTaskId, projectPath, settings, listener);
-    }
-
-    final GradleProjectResolverExtension projectResolverChain = createProjectResolverChain(settings);
     DefaultProjectResolverContext resolverContext = new DefaultProjectResolverContext(syncTaskId, projectPath, settings, listener, false);
-    final DataNode<ProjectData> projectDataNode = myHelper.execute(
-      projectPath, settings, getProjectDataFunction(resolverContext, projectResolverChain, false));
+    final CancellationTokenSource cancellationTokenSource = resolverContext.getCancellationTokenSource();
+    myCancellationMap.putValue(resolverContext.getExternalSystemTaskId(), cancellationTokenSource);
 
-    // auto-discover buildSrc projects of the main and included builds
-    File gradleUserHome = resolverContext.getUserData(GRADLE_HOME_DIR);
-    new GradleBuildSrcProjectsResolver(this, resolverContext, gradleUserHome, settings, listener, syncTaskId, projectResolverChain)
-      .discoverAndAppendTo(projectDataNode);
-    return projectDataNode;
+    try {
+      if (settings != null) {
+        myHelper.ensureInstalledWrapper(syncTaskId, projectPath, settings, listener, cancellationTokenSource.token());
+      }
+
+      final GradleProjectResolverExtension projectResolverChain = createProjectResolverChain(settings);
+      final DataNode<ProjectData> projectDataNode = myHelper.execute(
+        projectPath, settings, getProjectDataFunction(resolverContext, projectResolverChain, false));
+
+      // auto-discover buildSrc projects of the main and included builds
+      File gradleUserHome = resolverContext.getUserData(GRADLE_HOME_DIR);
+      new GradleBuildSrcProjectsResolver(this, resolverContext, gradleUserHome, settings, listener, syncTaskId, projectResolverChain)
+        .discoverAndAppendTo(projectDataNode);
+      return projectDataNode;
+    } finally {
+        myCancellationMap.remove(resolverContext.getExternalSystemTaskId(), cancellationTokenSource);
+    }
   }
 
   @NotNull
@@ -258,19 +264,13 @@ public class GradleProjectResolver implements ExternalSystemProjectResolver<Grad
     GradleExecutionHelper.prepare(buildActionExecutor, resolverCtx.getExternalSystemTaskId(),
                                   executionSettings, resolverCtx.getListener(), resolverCtx.getConnection());
     resolverCtx.checkCancelled();
-
     ProjectImportAction.AllModels allModels;
-    final CancellationTokenSource cancellationTokenSource = GradleConnector.newCancellationTokenSource();
+
     final long startTime = System.currentTimeMillis();
+    final CancellationTokenSource cancellationTokenSource = resolverCtx.getCancellationTokenSource();
     try {
-      resolverCtx.setCancellationTokenSource(cancellationTokenSource);
+      myCancellationMap.putValue(resolverCtx.getExternalSystemTaskId(), cancellationTokenSource);
       buildActionExecutor.withCancellationToken(cancellationTokenSource.token());
-      synchronized (myCancellationMap) {
-        myCancellationMap.putValue(resolverCtx.getExternalSystemTaskId(), cancellationTokenSource);
-        if (gradleVersion != null && gradleVersion.compareTo(GradleVersion.version("2.1")) < 0) {
-          myCancellationMap.putValue(resolverCtx.getExternalSystemTaskId(), new UnsupportedCancellationToken());
-        }
-      }
       allModels = buildActionExecutor.run();
       if (allModels == null) {
         throw new IllegalStateException("Unable to get project model for the project: " + resolverCtx.getProjectPath());
@@ -296,9 +296,7 @@ public class GradleProjectResolver implements ExternalSystemProjectResolver<Grad
     }
     finally {
       final long timeInMs = (System.currentTimeMillis() - startTime);
-      synchronized (myCancellationMap) {
-        myCancellationMap.remove(resolverCtx.getExternalSystemTaskId(), cancellationTokenSource);
-      }
+      myCancellationMap.remove(resolverCtx.getExternalSystemTaskId(), cancellationTokenSource);
       performanceTrace.logPerformance("Gradle data obtained", timeInMs);
       LOG.debug(String.format("Gradle data obtained in %d ms", timeInMs));
     }

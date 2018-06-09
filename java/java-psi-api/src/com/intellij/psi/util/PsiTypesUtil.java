@@ -320,8 +320,27 @@ public class PsiTypesUtil {
     return Comparing.equal(leftType, rightType);
   }
 
-  public static boolean isDenotableType(PsiType type) {
+  /**
+   *  Not compliant to specification, use {@link PsiTypesUtil#isDenotableType(PsiType, PsiElement)} instead
+   */
+  @Deprecated
+  public static boolean isDenotableType(@Nullable PsiType type) {
     return !(type instanceof PsiWildcardType || type instanceof PsiCapturedWildcardType);
+  }
+
+    /**
+     * @param context in which type should be checked
+     * @return false if type is null or has no explicit canonical type representation (e. g. intersection type)
+     */
+  public static boolean isDenotableType(@Nullable PsiType type, @NotNull PsiElement context) {
+    if (type == null) return false;
+    PsiElementFactory elementFactory = JavaPsiFacade.getElementFactory(context.getProject());
+    try {
+      PsiType typeAfterReplacement = elementFactory.createTypeElementFromText(type.getCanonicalText(), context).getType();
+      return type.equals(typeAfterReplacement);
+    } catch (IncorrectOperationException e) {
+      return false;
+    }
   }
   
   public static boolean hasUnresolvedComponents(@NotNull PsiType type) {
@@ -466,20 +485,6 @@ public class PsiTypesUtil {
         bound.accept(this);
       }
       return false;
-    }
-  }
-
-  /**
-   * @param context in which type should be checked
-   * @return true if type has no explicit canonical type representation (e. g. intersection type)
-   */
-  public static boolean isNonDenotableType(@NotNull PsiType type, @NotNull PsiElement context) {
-    PsiElementFactory elementFactory = JavaPsiFacade.getElementFactory(context.getProject());
-    try {
-      PsiType typeAfterReplacement = elementFactory.createTypeElementFromText(type.getCanonicalText(), context).getType();
-      return !type.equals(typeAfterReplacement);
-    } catch (IncorrectOperationException e) {
-      return true;
     }
   }
 }

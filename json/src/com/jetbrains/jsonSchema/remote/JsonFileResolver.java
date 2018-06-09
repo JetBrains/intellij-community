@@ -3,6 +3,7 @@ package com.jetbrains.jsonSchema.remote;
 
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Couple;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -10,6 +11,7 @@ import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.openapi.vfs.impl.http.HttpVirtualFile;
 import com.intellij.openapi.vfs.impl.http.RemoteFileInfo;
 import com.intellij.openapi.vfs.impl.http.RemoteFileState;
+import com.intellij.util.UriUtil;
 import com.intellij.util.Url;
 import com.intellij.util.Urls;
 import com.jetbrains.jsonSchema.JsonSchemaCatalogProjectConfiguration;
@@ -18,8 +20,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
-
-import static com.jetbrains.jsonSchema.JsonSchemaConfigurable.isHttpPath;
 
 public class JsonFileResolver {
   public static boolean isRemoteEnabled(Project project) {
@@ -82,5 +82,10 @@ public class JsonFileResolver {
     if (info == null || info.getState() == RemoteFileState.DOWNLOADING_NOT_STARTED) {
       path.refresh(true, false);
     }
+  }
+
+  public static boolean isHttpPath(@NotNull String schemaFieldText) {
+    Couple<String> couple = UriUtil.splitScheme(schemaFieldText);
+    return couple.first.startsWith("http");
   }
 }

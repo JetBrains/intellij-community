@@ -18,6 +18,8 @@ import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.externalSystem.model.execution.ExternalSystemTaskExecutionSettings;
 import com.intellij.openapi.externalSystem.service.execution.ExternalSystemBeforeRunTask;
 import com.intellij.openapi.externalSystem.service.project.IdeModifiableModelsProvider;
+import com.intellij.openapi.externalSystem.service.project.manage.ExternalProjectsManagerImpl;
+import com.intellij.openapi.externalSystem.service.project.manage.ExternalSystemTaskActivator;
 import com.intellij.openapi.externalSystem.service.project.settings.FacetConfigurationImporter;
 import com.intellij.openapi.externalSystem.service.project.settings.RunConfigurationImporter;
 import com.intellij.openapi.module.Module;
@@ -30,6 +32,8 @@ import com.intellij.psi.codeStyle.CodeStyleSettings;
 import org.intellij.lang.annotations.Language;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.plugins.gradle.settings.GradleSettings;
+import org.jetbrains.plugins.gradle.settings.GradleSystemRunningSettings;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
@@ -312,6 +316,55 @@ public class GradleSettingsImportingTest extends GradleImportingTestCase {
     assertEquals("myParent", childSettings.get("parent"));
   }
 
+  @Test
+  public void testTaskTriggersImport() throws Exception {
+    importProject(
+      withGradleIdeaExtPlugin(
+        "import org.jetbrains.gradle.ext.*\n" +
+        "idea {\n" +
+        "  project.settings {\n" +
+        "    taskTriggers {\n" +
+        "      beforeSync tasks.getByName('projects'), tasks.getByName('tasks')\n" +
+        "    }\n" +
+        "  }\n" +
+        "}")
+    );
+
+    final List<ExternalProjectsManagerImpl.ExternalProjectsStateProvider.TasksActivation> activations =
+      ExternalProjectsManagerImpl.getInstance(myProject).getStateProvider().getAllTasksActivation();
+
+    assertSize(1, activations);
+
+    final ExternalProjectsManagerImpl.ExternalProjectsStateProvider.TasksActivation activation = activations.get(0);
+    assertEquals(GradleSettings.getInstance(myProject).getLinkedProjectsSettings().iterator().next().getExternalProjectPath(),
+                 activation.projectPath);
+    final List<String> beforeSyncTasks = activation.state.getTasks(ExternalSystemTaskActivator.Phase.BEFORE_SYNC);
+
+    assertContain(beforeSyncTasks, ":projects", ":tasks");
+  }
+
+  @Test
+  public void testActionDelegationImport() throws Exception {
+    importProject(
+      withGradleIdeaExtPlugin(
+        "import org.jetbrains.gradle.ext.*\n" +
+        "import static org.jetbrains.gradle.ext.ActionDelegationConfig.TestRunner.*\n" +
+        "idea {\n" +
+        "  project.settings {\n" +
+        "    delegateActions {\n" +
+        "      delegateBuildRunToGradle = true\n" +
+        "      testRunner = CHOOSE_PER_TEST\n" +
+        "    }\n" +
+        "  }\n" +
+        "}")
+    );
+
+    GradleSystemRunningSettings settings = GradleSystemRunningSettings.getInstance();
+
+    assertTrue(settings.isUseGradleAwareMake());
+    assertEquals(GradleSystemRunningSettings.PreferredTestRunner.CHOOSE_PER_TEST, settings.getPreferredTestRunner());
+  }
+
   private String getGradlePluginPath() {
     return getClass().getResource("/testCompilerConfigurationSettingsImport/gradle-idea-ext.jar").toString();
   }
@@ -320,11 +373,13 @@ public class GradleSettingsImportingTest extends GradleImportingTestCase {
   protected String withGradleIdeaExtPlugin(@NonNls @Language("Groovy") String script) {
     return "buildscript {\n" +
            "  repositories {\n" +
+           "    mavenCentral()\n" +
            "    mavenLocal()\n" +
            "  }\n" +
            "  dependencies {\n" +
            "     classpath files('" + getGradlePluginPath() + "')\n" +
            "     classpath 'com.google.code.gson:gson:2+'\n" +
+           "     classpath 'com.google.guava:guava:25.1-jre'\n" +
            "  }\n" +
            "}\n" +
            "apply plugin: 'org.jetbrains.gradle.plugin.idea-ext'\n" +

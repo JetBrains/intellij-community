@@ -27,8 +27,12 @@ import com.intellij.openapi.wm.ToolWindowFactory
 class PythonConsoleToolWindowFactory : ToolWindowFactory, DumbAware {
 
   override fun createToolWindowContent(project: Project, toolWindow: ToolWindow) {
-    val runner = PythonConsoleRunnerFactory.getInstance().createConsoleRunner(project, null)
-    TransactionGuard.submitTransaction(project, Runnable { runner.runSync(true) });
+    val isStartedFromRunner = toolWindow.component.getClientProperty(PydevConsoleRunnerImpl.STARTED_BY_RUNNER)
+    // we need it to distinguish Console toolwindows started by Console Runner from ones started by toolwindow activation
+    if (isStartedFromRunner != "true") {
+      val runner = PythonConsoleRunnerFactory.getInstance().createConsoleRunner(project, null)
+      TransactionGuard.submitTransaction(project, Runnable { runner.runSync(true) })
+    }
   }
 
   companion object {

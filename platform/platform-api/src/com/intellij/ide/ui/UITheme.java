@@ -7,6 +7,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.ColorUtil;
 import com.intellij.util.ui.JBDimension;
 import com.intellij.util.ui.JBInsets;
+import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -23,10 +24,10 @@ import java.util.Map;
  * @author Konstantin Bulenkov
  */
 public class UITheme {
-  private Map<String, Object> myProperties;
   private String name;
   private boolean dark;
   private String author;
+  private String id;
   private Map<String, Object> ui;
   private Map<String, Object> icons;
 
@@ -45,8 +46,14 @@ public class UITheme {
     return author;
   }
 
-  public static UITheme loadFromJson(InputStream stream) throws IOException {
-    return new ObjectMapper().readValue(stream, UITheme.class);
+  public static UITheme loadFromJson(InputStream stream, @NotNull String themeId) throws IOException {
+    UITheme theme = new ObjectMapper().readValue(stream, UITheme.class);
+    theme.id = themeId;
+    return theme;
+  }
+
+  public String getId() {
+    return id;
   }
 
   public void applyProperties(UIDefaults defaults) {
@@ -63,27 +70,21 @@ public class UITheme {
         apply(key + "." + o.getKey(), o.getValue(), defaults);
       }
     } else {
-      if (value instanceof String) {
-        value = parseString(key, (String)value);
-      }
+      value = parseValue(key, value.toString());
       if (key.startsWith("*.")) {
-        //todo[kb] apply for all properties
+        String tail = key.substring(1);
+        Object finalValue = value;
+
+        //please DO NOT invoke forEach on UIDefaults directly
+        ((UIDefaults)defaults.clone()).entrySet().forEach(e -> {
+          if (e.getKey() instanceof String && ((String)e.getKey()).endsWith(tail)) {
+            defaults.put(e.getKey(), finalValue);
+          }
+        });
       } else {
         defaults.put(key, value);
       }
     }
-  }
-
-  private static Object parseString(String key, String value) {
-    //todo[kb] merge with parsing properties file in DarculaLaf
-    if (value.startsWith("#")) {
-      return ColorUtil.fromHex(value);
-    }
-    return value;
-  }
-
-  public void removeProperties(UIDefaults defaults) {
-
   }
 
   public static Object parseValue(String key, @NotNull String value) {
@@ -103,6 +104,8 @@ public class UITheme {
       return parseSize(value);
     } else if (key.endsWith("Width")) {
       return getInteger(value);
+    } else if (key.endsWith("grayFilter")) {
+      return parseGrayFilter(value);
     } else {
       final Color color = parseColor(value);
       final Integer invVal = getInteger(value);
@@ -127,6 +130,13 @@ public class UITheme {
                         Integer.parseInt(numbers.get(1)),
                         Integer.parseInt(numbers.get(2)),
                         Integer.parseInt(numbers.get(3))).asUIResource();
+  }
+
+  private static UIUtil.GrayFilter parseGrayFilter(String value) {
+    java.util.List<String> numbers = StringUtil.split(value, ",");
+    return new UIUtil.GrayFilter(Integer.parseInt(numbers.get(0)),
+                                 Integer.parseInt(numbers.get(1)),
+                                 Integer.parseInt(numbers.get(2))).asUIResource();
   }
 
   @SuppressWarnings("UseJBColor")
@@ -156,14 +166,9 @@ public class UITheme {
     return new JBDimension(Integer.parseInt(numbers.get(0)), Integer.parseInt(numbers.get(1))).asUIResource();
   }
 
-
-  //public static void main(String[] args) throws IOException {
-  //  try (FileInputStream stream = new FileInputStream("C:\\IDEA\\community\\platform\\platform-api\\src\\com\\intellij\\ide\\ui\\example.theme.json")) {
-  //    loadFromJson(stream);
-  //  }
-  //}
-
+  //
   //json deserialization methods
+  //
 
   @SuppressWarnings("unused")
   private void setName(String name) {

@@ -436,7 +436,7 @@ public class RunContentManagerImpl implements RunContentManager, Disposable {
       if (oldDescriptor.isContentReuseProhibited()) {
         return null;
       }
-      if (descriptor != null && oldDescriptor.getReusePolicy().canBeReusedBy(descriptor)) {
+      if (descriptor == null || oldDescriptor.getReusePolicy().canBeReusedBy(descriptor)) {
         return oldDescriptor;
       }
     }

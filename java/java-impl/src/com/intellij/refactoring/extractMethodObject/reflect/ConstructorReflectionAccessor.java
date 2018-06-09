@@ -2,6 +2,7 @@
 package com.intellij.refactoring.extractMethodObject.reflect;
 
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.util.ClassUtil;
 import com.intellij.refactoring.extractMethodObject.ItemToReplaceDescriptor;
@@ -45,14 +46,14 @@ public class ConstructorReflectionAccessor extends ReflectionAccessorBase<Constr
   @Override
   protected void grantAccess(@NotNull ConstructorDescriptor descriptor) {
     String className = ClassUtil.getJVMClassName(descriptor.psiClass);
-    String returnType = PsiReflectionAccessUtil.getAccessibleReturnType(descriptor.psiClass);
+    String returnType = PsiReflectionAccessUtil.getAccessibleReturnType(descriptor.newExpression, descriptor.psiClass);
     PsiExpressionList argumentList = descriptor.newExpression.getArgumentList();
     if (className == null || argumentList == null || returnType == null) {
       LOG.warn("code is incomplete: " + descriptor.newExpression);
       return;
     }
 
-    String methodName = PsiReflectionAccessUtil.getUniqueMethodName(getOuterClass(), "new" + className);
+    String methodName = PsiReflectionAccessUtil.getUniqueMethodName(getOuterClass(), methodName(className));
     ReflectionAccessMethodBuilder methodBuilder = new ReflectionAccessMethodBuilder(methodName);
     methodBuilder.accessedConstructor(className)
                  .setStatic(getOuterClass().hasModifierProperty(PsiModifier.STATIC))
@@ -66,6 +67,16 @@ public class ConstructorReflectionAccessor extends ReflectionAccessorBase<Constr
     String args = StreamEx.of(argumentList.getExpressions()).map(x -> x.getText()).joining(", ", "(", ")");
     String newCallExpression = newPsiMethod.getName() + args;
     descriptor.newExpression.replace(getElementFactory().createExpressionFromText(newCallExpression, descriptor.newExpression));
+  }
+
+  @NotNull
+  private static String methodName(@NotNull String jvmClassName) {
+    String name = StringUtil.substringAfterLast(jvmClassName, ".");
+    if (name == null) {
+      name = jvmClassName;
+    }
+
+    return "new" + StringUtil.capitalize(name);
   }
 
   public static class ConstructorDescriptor implements ItemToReplaceDescriptor {
@@ -95,7 +106,7 @@ public class ConstructorReflectionAccessor extends ReflectionAccessorBase<Constr
       return null;
     }
 
-    public ConstructorDescriptor(@NotNull PsiNewExpression expression, @Nullable PsiMethod constructor, PsiClass psiClass) {
+    public ConstructorDescriptor(@NotNull PsiNewExpression expression, @Nullable PsiMethod constructor, @NotNull PsiClass psiClass) {
       newExpression = expression;
       this.constructor = constructor;
       this.psiClass = psiClass;

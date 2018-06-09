@@ -134,6 +134,7 @@ import java.io.IOException;
 import java.io.UncheckedIOException;
 import java.util.*;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.function.Predicate;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -1610,7 +1611,17 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
     actualText = StringUtil.convertLineSeparators(actualText);
 
     if (!Comparing.equal(expectedText, actualText)) {
-      if (loader.filePath != null && !loader.caretState.hasExplicitCaret()) {
+      if (loader.filePath != null) {
+        if (loader.caretState.hasExplicitCaret()) {
+          int offset = editor.getCaretModel().getOffset();
+          if (offset > -1) {
+            actualText = new StringBuilder(actualText).insert(offset, "<caret>").toString();
+          }
+          expectedText = loader.fileText;
+          if (stripTrailingSpaces) {
+            expectedText = stripTrailingSpaces(expectedText);
+          }
+        }
         throw new FileComparisonFailure(expectedFile, expectedText, actualText, loader.filePath);
       }
       else {
@@ -1759,7 +1770,20 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
     InlayHintsChecker checker = new InlayHintsChecker(this);
     try {
       checker.setUp();
-      checker.checkInlays();
+      checker.checkParameterHints();
+    }
+    finally {
+      checker.tearDown();
+    }
+  }
+
+  @Override
+  public void testInlays(java.util.function.Function<? super Inlay, String> inlayPresenter,
+                         Predicate<? super Inlay> inlayFilter) {
+    InlayHintsChecker checker = new InlayHintsChecker(this);
+    try {
+      checker.setUp();
+      checker.checkInlays(inlayPresenter::apply, inlayFilter::test);
     }
     finally {
       checker.tearDown();
@@ -1940,11 +1964,13 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
   }
 
   private static class SelectionAndCaretMarkupLoader {
+    private final String fileText;
     private final String filePath;
     private final String newFileText;
     private final EditorTestUtil.CaretAndSelectionState caretState;
 
     private SelectionAndCaretMarkupLoader(@NotNull String fileText, String filePath) {
+      this.fileText = fileText;
       this.filePath = filePath;
       final Document document = EditorFactory.getInstance().createDocument(fileText);
       caretState = EditorTestUtil.extractCaretAndSelectionMarkers(document);

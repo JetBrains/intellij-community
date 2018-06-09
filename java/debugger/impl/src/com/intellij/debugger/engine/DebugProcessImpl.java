@@ -406,6 +406,9 @@ public abstract class DebugProcessImpl extends UserDataHolderBase implements Deb
         }
         catch (ObjectCollectedException ignored) {
         }
+        catch (VMDisconnectedException e) {
+          throw e;
+        }
         catch (Exception e) {
           LOG.error(e); // report all for now
         }

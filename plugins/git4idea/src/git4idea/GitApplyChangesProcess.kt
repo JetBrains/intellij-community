@@ -52,7 +52,7 @@ class GitApplyChangesProcess(private val project: Project,
                              private val appliedWord: String,
                              private val command: (GitRepository, Hash, Boolean, List<GitLineHandlerListener>) -> GitCommandResult,
                              private val emptyCommitDetector: (GitCommandResult) -> Boolean,
-                             private val defaultCommitMessageGenerator: (VcsFullCommitDetails) -> String,
+                             private val defaultCommitMessageGenerator: (GitRepository, VcsFullCommitDetails) -> String,
                              private val preserveCommitMetadata: Boolean,
                              private val cleanupBeforeCommit: (GitRepository) -> Unit = {}) {
   private val LOG = logger<GitApplyChangesProcess>()
@@ -91,7 +91,7 @@ class GitApplyChangesProcess(private val project: Project,
       val localChangesOverwrittenDetector = GitSimpleEventDetector(LOCAL_CHANGES_OVERWRITTEN_BY_CHERRY_PICK)
       val untrackedFilesDetector = GitUntrackedFilesOverwrittenByOperationDetector(repository.root)
 
-      val commitMessage = defaultCommitMessageGenerator(commit)
+      val commitMessage = defaultCommitMessageGenerator(repository, commit)
       val changeList = createChangeList(commitMessage, commit)
       val previousDefaultChangelist = changeListManager.defaultChangeList
 
@@ -138,7 +138,7 @@ class GitApplyChangesProcess(private val project: Project,
           }
         }
         else if (untrackedFilesDetector.wasMessageDetected()) {
-          var description = getSuccessfulCommitDetailsIfAny(successfulCommits)
+          val description = getSuccessfulCommitDetailsIfAny(successfulCommits)
 
           GitUntrackedFilesHelper.notifyUntrackedFilesOverwrittenBy(project, repository.root,
                                                                     untrackedFilesDetector.relativeFilePaths, operationName, description)
@@ -319,7 +319,7 @@ class GitApplyChangesProcess(private val project: Project,
     }
     var description = commitDetails(commit)
     description += getSuccessfulCommitDetailsIfAny(successfulCommits)
-    vcsNotifier.notifyMinorWarning("${operationName.capitalize()} cancelled", description, null)
+    vcsNotifier.notifyMinorWarning("${operationName.capitalize()} cancelled", description)
   }
 
   private fun notifyError(content: String,
@@ -389,14 +389,14 @@ class GitApplyChangesProcess(private val project: Project,
                          commitAuthor: String,
                          commitMessage: String,
                          operationName: String
-  ) : GitConflictResolver(project, git, setOf(root), makeParams(commitHash, commitAuthor, commitMessage, operationName)) {
+  ) : GitConflictResolver(project, git, setOf(root), makeParams(project, commitHash, commitAuthor, commitMessage, operationName)) {
     override fun notifyUnresolvedRemain() {/* we show a [possibly] compound notification after applying all commits.*/
     }
   }
 }
 
-private fun makeParams(commitHash: String, commitAuthor: String, commitMessage: String, operationName: String): GitConflictResolver.Params {
-  val params = GitConflictResolver.Params()
+private fun makeParams(project: Project, commitHash: String, commitAuthor: String, commitMessage: String, operationName: String): GitConflictResolver.Params {
+  val params = GitConflictResolver.Params(project)
   params.setErrorNotificationTitle("${operationName.capitalize()}ed with conflicts")
   params.setMergeDialogCustomizer(MergeDialogCustomizer(commitHash, commitAuthor, commitMessage, operationName))
   return params

@@ -648,7 +648,7 @@ public abstract class EntryPointsManagerBase extends EntryPointsManager implemen
     @Override
     @NotNull
     public String getText() {
-      return QuickFixBundle.message("fix.unused.symbol.injection.text", "fields", myQualifiedName);
+      return QuickFixBundle.message("fix.unused.symbol.injection.text",  myQualifiedName);
     }
 
     @Override

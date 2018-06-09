@@ -283,16 +283,11 @@ class JsonSchemaAnnotatorChecker {
     if (object.shouldCheckIntegralRequirements()) {
       final List<String> required = schema.getRequired();
       if (required != null) {
-        for (String req : required) {
-          if (!set.contains(req)) {
-            JsonSchemaObject propertySchema = resolvePropertySchema(schema, req);
-            error("Missing required property '" + req + "'", value.getDelegate(),
-                  JsonValidationError.FixableIssueKind.MissingProperty,
-                  new JsonValidationError.MissingPropertyIssueData(req,
-                                                                   propertySchema == null ? null : propertySchema.getType(),
-                                                                   propertySchema == null ? null : propertySchema.getDefault(),
-                                                                   propertySchema != null && propertySchema.getEnum() != null));
-          }
+        HashSet<String> requiredNames = ContainerUtil.newHashSet(required);
+        requiredNames.removeAll(set);
+        if (!requiredNames.isEmpty()) {
+          JsonValidationError.MissingMultiplePropsIssueData data = createMissingPropertiesData(schema, requiredNames);
+          error("Missing required " + data.getMessage(false), value.getDelegate(), JsonValidationError.FixableIssueKind.MissingProperty, data);
         }
       }
       if (schema.getMinProperties() != null && propertyList.size() < schema.getMinProperties()) {
@@ -306,17 +301,14 @@ class JsonSchemaAnnotatorChecker {
         for (Map.Entry<String, List<String>> entry : dependencies.entrySet()) {
           if (set.contains(entry.getKey())) {
             final List<String> list = entry.getValue();
-            for (String s : list) {
-              if (!set.contains(s)) {
-                JsonSchemaObject propertySchema = resolvePropertySchema(schema, s);
-                error("Dependency is violated: '" + s + "' must be specified, since '" + entry.getKey() + "' is specified",
-                      value.getDelegate(),
-                      JsonValidationError.FixableIssueKind.MissingProperty,
-                      new JsonValidationError.MissingPropertyIssueData(s,
-                                                                       propertySchema == null ? null : propertySchema.getType(),
-                                                                       propertySchema == null ? null : propertySchema.getDefault(),
-                                                                       propertySchema != null && propertySchema.getEnum() != null));
-              }
+            HashSet<String> deps = ContainerUtil.newHashSet(list);
+            deps.removeAll(set);
+            if (!deps.isEmpty()) {
+              JsonValidationError.MissingMultiplePropsIssueData data = createMissingPropertiesData(schema, deps);
+              error("Dependency is violated: " + data.getMessage(false) + " must be specified, since '" + entry.getKey() + "' is specified",
+                    value.getDelegate(),
+                    JsonValidationError.FixableIssueKind.MissingProperty,
+                    data);
             }
           }
         }
@@ -332,6 +324,21 @@ class JsonSchemaAnnotatorChecker {
     }
 
     validateAsJsonSchema(object.getDelegate());
+  }
+
+  @NotNull
+  private static JsonValidationError.MissingMultiplePropsIssueData createMissingPropertiesData(@NotNull JsonSchemaObject schema,
+                                                                                               HashSet<String> requiredNames) {
+    List<JsonValidationError.MissingPropertyIssueData> allProps = ContainerUtil.newArrayList();
+    for (String req: requiredNames) {
+      JsonSchemaObject propertySchema = resolvePropertySchema(schema, req);
+      allProps.add(new JsonValidationError.MissingPropertyIssueData(req,
+                                                                    propertySchema == null ? null : propertySchema.getType(),
+                                                                    propertySchema == null ? null : propertySchema.getDefault(),
+                                                                    propertySchema != null && propertySchema.getEnum() != null));
+    }
+
+    return new JsonValidationError.MissingMultiplePropsIssueData(allProps);
   }
 
   private static JsonSchemaObject resolvePropertySchema(@NotNull JsonSchemaObject schema, String req) {
@@ -351,27 +358,6 @@ class JsonSchemaAnnotatorChecker {
       }
     }
     return null;
-  }
-
-  @Nullable
-  private static JsonSchemaType resolvePropertyType(@NotNull JsonSchemaObject schema, String req) {
-    JsonSchemaType type = null;
-    if (schema.getProperties().containsKey(req)) {
-      type = schema.getProperties().get(req).getType();
-    }
-    else {
-      JsonSchemaObject propertySchema = schema.getMatchingPatternPropertySchema(req);
-      if (propertySchema != null) {
-        type = propertySchema.getType();
-      }
-      else {
-        JsonSchemaObject additionalPropertiesSchema = schema.getAdditionalPropertiesSchema();
-        if (additionalPropertiesSchema != null) {
-          type = additionalPropertiesSchema.getType();
-        }
-      }
-    }
-    return type;
   }
 
   private void validateAsJsonSchema(@NotNull PsiElement objElement) {

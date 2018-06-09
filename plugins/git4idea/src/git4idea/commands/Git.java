@@ -110,6 +110,10 @@ public interface Git {
                                 @Nullable GitLineHandlerListener listener, @NotNull String reference);
 
   @NotNull
+  GitCommandResult deleteTag(@NotNull GitRepository repository, @NotNull String tagName,
+                             @NotNull GitLineHandlerListener... listeners);
+
+  @NotNull
   GitCommandResult branchDelete(@NotNull GitRepository repository, @NotNull String branchName, boolean force,
                                 @NotNull GitLineHandlerListener... listeners);
 
@@ -151,8 +155,19 @@ public interface Git {
   @NotNull
   GitCommandResult show(@NotNull GitRepository repository, @NotNull String... params);
 
+  /**
+   * @deprecated Use {@link #cherryPick(GitRepository, String, boolean, boolean, GitLineHandlerListener...)}
+   */
+  @Deprecated
   @NotNull
   GitCommandResult cherryPick(@NotNull GitRepository repository, @NotNull String hash, boolean autoCommit,
+                              @NotNull GitLineHandlerListener... listeners);
+
+  @NotNull
+  GitCommandResult cherryPick(@NotNull GitRepository repository,
+                              @NotNull String hash,
+                              boolean autoCommit,
+                              boolean addCherryPickedFromSuffix,
                               @NotNull GitLineHandlerListener... listeners);
 
   @NotNull
@@ -194,6 +209,13 @@ public interface Git {
                             @NotNull VirtualFile workingDir,
                             @NotNull GitRemote remote,
                             String... additionalParameters);
+
+  @NotNull
+  GitCommandResult lsRemoteRefs(@NotNull Project project,
+                                @NotNull VirtualFile workingDir,
+                                @NotNull GitRemote remote,
+                                @NotNull List<String> refs,
+                                String... additionalParameters);
 
   @NotNull
   GitCommandResult remotePrune(@NotNull GitRepository repository, @NotNull GitRemote remote);

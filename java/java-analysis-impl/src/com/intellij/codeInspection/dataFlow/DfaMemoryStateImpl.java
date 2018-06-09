@@ -19,6 +19,7 @@ package com.intellij.codeInspection.dataFlow;
 import com.intellij.codeInspection.dataFlow.rangeSet.LongRangeSet;
 import com.intellij.codeInspection.dataFlow.value.*;
 import com.intellij.codeInspection.dataFlow.value.DfaRelationValue.RelationType;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.util.Pair;
@@ -374,7 +375,9 @@ public class DfaMemoryStateImpl implements DfaMemoryState {
   public boolean isSuperStateOf(DfaMemoryStateImpl that) {
     if (myEphemeral && !that.myEphemeral) return false;
     if (myStack.size() != that.myStack.size()) return false;
-    if (StreamEx.zip(myStack, that.myStack, DfaMemoryStateImpl::isSuperValue).has(false)) return false;
+    for (int i = 0; i < myStack.size(); i++) {
+      if (!isSuperValue(myStack.get(i), that.myStack.get(i))) return false;
+    }
     if (!equalsByUnknownVariables(that) ||
         !that.getDistinctClassPairs().containsAll(getDistinctClassPairs())) {
       return false;
@@ -383,10 +386,10 @@ public class DfaMemoryStateImpl implements DfaMemoryState {
     Set<EqClass> thatClasses = that.getNonTrivialEqClasses();
     if(!thisClasses.equals(thatClasses)) {
       // If any two values are equivalent in this, they also must be equivalent in that
-      if(thisClasses.stream().anyMatch(
-        thisClass -> thatClasses.stream().noneMatch(
-          thatClass -> thisClass.forEach(thatClass::contains)))) {
-        return false;
+      for (EqClass thisClass: thisClasses) {
+        if (thatClasses.stream().noneMatch(thatClass -> thisClass.forEach(thatClass::contains))) {
+          return false;
+        }
       }
     }
     Set<DfaVariableValue> values = new HashSet<>(this.myVariableStates.keySet());
@@ -562,7 +565,7 @@ public class DfaMemoryStateImpl implements DfaMemoryState {
   }
 
   private void checkInvariants() {
-    if (!LOG.isDebugEnabled()) return;
+    if (!LOG.isDebugEnabled() && !ApplicationManager.getApplication().isEAP()) return;
     myIdToEqClassesIndices.forEachEntry((id, eqClasses) -> {
       for (int classNum : eqClasses) {
         if (myEqClasses.get(classNum) == null) {
@@ -701,8 +704,11 @@ public class DfaMemoryStateImpl implements DfaMemoryState {
     if (value instanceof DfaVariableValue) {
       DfaVariableValue var = (DfaVariableValue)value;
       if (!isUnknownState(var)) {
-        DfaVariableState state = getVariableState(var).withoutFact(factType);
-        setVariableState(var, state);
+        DfaVariableState state = findVariableState(var);
+        if (state != null) {
+          state = state.withoutFact(factType);
+          setVariableState(var, state);
+        }
       }
     }
   }
@@ -860,7 +866,7 @@ public class DfaMemoryStateImpl implements DfaMemoryState {
       applyEquivalenceRelation(dfaRelation, dfaLeft, dfaRight);
       return relationType == RelationType.NE;
     }
-    if (canBeNaN(dfaLeft) && canBeNaN(dfaRight)) {
+    if ((canBeNaN(dfaLeft) && !isNull(dfaRight)) || (canBeNaN(dfaRight) && !isNull(dfaLeft))) {
       if (dfaLeft == dfaRight &&
           dfaLeft instanceof DfaVariableValue &&
           !(((DfaVariableValue)dfaLeft).getVariableType() instanceof PsiPrimitiveType)) {

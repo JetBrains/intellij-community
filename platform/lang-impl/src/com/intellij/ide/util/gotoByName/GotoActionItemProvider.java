@@ -188,7 +188,7 @@ public class GotoActionItemProvider implements ChooseByNameItemProvider {
     JBIterable<ActionWrapper> actionWrappers = actions.unique().filterMap(action -> {
       MatchMode mode = myModel.actionMatches(pattern, matcher, action);
       if (mode == MatchMode.NONE) return null;
-      return new ActionWrapper(action, myModel.getAnyGroupPath(action), mode, dataContext, myModel);
+      return new ActionWrapper(action, myModel.getGroupMapping(action), mode, dataContext, myModel);
     });
     return processItems(pattern, actionWrappers, consumer);
   }
@@ -205,14 +205,15 @@ public class GotoActionItemProvider implements ChooseByNameItemProvider {
       .filterMap(intentionText -> {
         ApplyIntentionAction intentionAction = intentionMap.get(intentionText);
         if (myModel.actionMatches(pattern, matcher, intentionAction) == MatchMode.NONE) return null;
-        return new ActionWrapper(intentionAction, intentionText, MatchMode.INTENTION, dataContext, myModel);
+        GroupMapping groupMapping = GroupMapping.createFromText(intentionText);
+        return new ActionWrapper(intentionAction, groupMapping, MatchMode.INTENTION, dataContext, myModel);
       });
     return processItems(pattern, intentions, consumer);
   }
 
   @NotNull
   private ActionWrapper wrapAnAction(@NotNull AnAction action, DataContext dataContext) {
-    return new ActionWrapper(action, myModel.getAnyGroupPath(action), MatchMode.NAME, dataContext, myModel);
+    return new ActionWrapper(action, myModel.getGroupMapping(action), MatchMode.NAME, dataContext, myModel);
   }
 
   private final static Logger LOG = Logger.getInstance(GotoActionItemProvider.class);

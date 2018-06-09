@@ -23,6 +23,7 @@ import com.intellij.psi.PsiFile;
 import com.intellij.psi.impl.DebugUtil;
 import com.intellij.psi.impl.FreeThreadedFileViewProvider;
 import com.intellij.psi.impl.source.PsiFileImpl;
+import com.intellij.psi.tree.IStubFileElementType;
 import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.testFramework.LightVirtualFile;
 import com.intellij.util.containers.ContainerUtil;
@@ -77,7 +78,10 @@ public class StubTextInconsistencyException extends RuntimeException implements 
     if (viewProvider instanceof FreeThreadedFileViewProvider || viewProvider.getVirtualFile() instanceof LightVirtualFile) return;
 
     PsiFile bindingRoot = viewProvider.getStubBindingRoot();
-    if (!(bindingRoot instanceof PsiFileImpl) || ((PsiFileImpl)bindingRoot).getElementTypeForStubBuilder() == null) return;
+    if (!(bindingRoot instanceof PsiFileImpl)) return;
+
+    IStubFileElementType fileElementType = ((PsiFileImpl)bindingRoot).getElementTypeForStubBuilder();
+    if (fileElementType == null || !fileElementType.shouldBuildStubFor(viewProvider.getVirtualFile())) return;
 
     List<PsiFileStub> fromText = restoreStubsFromText(viewProvider);
 
@@ -94,7 +98,7 @@ public class StubTextInconsistencyException extends RuntimeException implements 
     for (int i = 0; i < fromPsi.size(); i++) {
       PsiFileStub psiStub = fromPsi.get(i);
       if (!DebugUtil.stubTreeToString(psiStub).equals(DebugUtil.stubTreeToString(fromText.get(i)))) {
-        throw new StubTextInconsistencyException("Stub is inconsistent with text in " + psiStub.getType().getLanguage(),
+        throw new StubTextInconsistencyException("Stub is inconsistent with text in " + file.getLanguage(),
                                                  file, fromText, fromPsi);
       }
     }

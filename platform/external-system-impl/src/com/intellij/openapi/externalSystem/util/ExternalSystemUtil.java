@@ -91,6 +91,7 @@ import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.progress.util.AbstractProgressIndicatorExBase;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.UserDataHolderBase;
@@ -132,6 +133,9 @@ import static com.intellij.util.containers.ContainerUtil.*;
  * @since 4/22/13 9:36 AM
  */
 public class ExternalSystemUtil {
+
+  @NotNull public static final Key<ExternalSystemTaskId> EXTERNAL_SYSTEM_TASK_ID_KEY =
+    Key.create("com.intellij.openapi.externalSystem.util.taskId");
 
   private static final Logger LOG = Logger.getInstance(ExternalSystemUtil.class);
 
@@ -704,7 +708,7 @@ public class ExternalSystemUtil {
   }
 
   @NotNull
-  public static com.intellij.build.events.FailureResult createFailureResult(@NotNull String title,
+  public static FailureResultImpl createFailureResult(@NotNull String title,
                                                                             @NotNull Exception exception,
                                                                             @NotNull ProjectSystemId externalSystemId,
                                                                             @NotNull Project project) {

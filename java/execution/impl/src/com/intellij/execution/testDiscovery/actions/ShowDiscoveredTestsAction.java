@@ -31,6 +31,7 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.keymap.KeymapUtil;
 import com.intellij.openapi.module.Module;
+import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.popup.JBPopup;
 import com.intellij.openapi.ui.popup.PopupChooserBuilder;
@@ -76,7 +77,7 @@ public class ShowDiscoveredTestsAction extends AnAction {
   @Override
   public void update(AnActionEvent e) {
     e.getPresentation().setEnabledAndVisible(
-      isEnabledForProject(e) &&
+      isEnabled(e.getProject()) &&
       (findMethodAtCaret(e) != null || e.getData(VcsDataKeys.CHANGES) != null)
     );
   }
@@ -109,6 +110,13 @@ public class ShowDiscoveredTestsAction extends AnAction {
     Change[] changes = e.getRequiredData(VcsDataKeys.CHANGES);
     Project project = e.getProject();
     assert project != null;
+    showDiscoveredTestsByChanges(project, changes, "Selected Changes", e.getDataContext());
+  }
+
+  public static void showDiscoveredTestsByChanges(@NotNull Project project,
+                                                  @NotNull Change[] changes,
+                                                  @NotNull String title,
+                                                  @NotNull DataContext dataContext) {
     UastMetaLanguage jvmLanguage = Language.findInstance(UastMetaLanguage.class);
 
     List<PsiElement> methods = FormatChangedTextUtil.getInstance().getChangedElements(project, changes, file -> {
@@ -140,11 +148,12 @@ public class ShowDiscoveredTestsAction extends AnAction {
       .filter(Objects::nonNull)
       .toArray(PsiMethod.ARRAY_FACTORY::create);
     FeatureUsageTracker.getInstance().triggerFeatureUsed("test.discovery.selected.changes");
-    showDiscoveredTests(project, e.getDataContext(), "Selected Changes", asJavaMethods);
+    showDiscoveredTests(project, dataContext, title, asJavaMethods);
   }
 
-  static boolean isEnabledForProject(AnActionEvent e) {
-    return (Registry.is(TestDiscoveryExtension.TEST_DISCOVERY_REGISTRY_KEY) || ApplicationManager.getApplication().isInternal()) && e.getProject() != null;
+  public static boolean isEnabled(@Nullable Project project) {
+    if (project == null || DumbService.isDumb(project)) return false;
+    return Registry.is(TestDiscoveryExtension.TEST_DISCOVERY_REGISTRY_KEY) || ApplicationManager.getApplication().isInternal();
   }
 
   @Nullable

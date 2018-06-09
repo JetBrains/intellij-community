@@ -9,11 +9,12 @@ import com.intellij.ide.ui.search.BooleanOptionDescription;
 import com.intellij.ide.ui.search.OptionDescription;
 import com.intellij.navigation.ItemPresentation;
 import com.intellij.navigation.NavigationItem;
-import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.actionSystem.AbbreviationManager;
+import com.intellij.openapi.actionSystem.ActionManager;
+import com.intellij.openapi.actionSystem.AnAction;
+import com.intellij.openapi.actionSystem.Presentation;
 import com.intellij.openapi.actionSystem.ex.ActionUtil;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
@@ -37,13 +38,18 @@ import java.util.List;
 import java.util.function.Consumer;
 import java.util.function.Function;
 
-public class TopHitSEContributor implements SearchEverywhereContributor {
+public class TopHitSEContributor implements SearchEverywhereContributor<Void> {
 
   private final Collection<SearchTopHitProvider> myTopHitProviders = Arrays.asList(SearchTopHitProvider.EP_NAME.getExtensions());
-  private final Consumer<String> searchStringSetter;
 
-  public TopHitSEContributor(Consumer<String> setter) {
-    searchStringSetter = setter;
+  private final Project myProject;
+  private final Component myContextComponent;
+  private final Consumer<String> mySearchStringSetter;
+
+  public TopHitSEContributor(Project project, Component component, Consumer<String> setter) {
+    myProject = project;
+    myContextComponent = component;
+    mySearchStringSetter = setter;
   }
 
   @NotNull
@@ -74,11 +80,7 @@ public class TopHitSEContributor implements SearchEverywhereContributor {
   }
 
   @Override
-  public ContributorSearchResult<Object> search(Project project,
-                                                String pattern,
-                                                boolean everywhere,
-                                                ProgressIndicator progressIndicator,
-                                                int elementsLimit) {
+  public ContributorSearchResult<Object> search(String pattern, boolean everywhere, SearchEverywhereContributorFilter<Void> filter, ProgressIndicator progressIndicator, int elementsLimit) {
     Collection<Object> res = new LinkedHashSet<>();
     final Function<Object, Boolean> consumer = o -> {
       if (elementsLimit < 0 || res.size() < elementsLimit) {
@@ -90,34 +92,59 @@ public class TopHitSEContributor implements SearchEverywhereContributor {
       }
     };
 
-    boolean interrupted = fill(project, pattern, consumer);
+    boolean interrupted = fill(pattern, consumer);
     return new ContributorSearchResult<>(new ArrayList<>(res), interrupted);
   }
 
-  @NotNull
   @Override
-  public DataContext getDataContextForItem(Object element) {
-    return DataContext.EMPTY_CONTEXT;
+  public Object getDataForItem(Object element, String dataId) {
+    return null;
   }
 
-  private boolean fill(Project project, String pattern, Function<Object, Boolean> consumer) {
+  @Override
+  public boolean processSelectedItem(Object selected, int modifiers) {
+    if (selected instanceof BooleanOptionDescription) {
+      final BooleanOptionDescription option = (BooleanOptionDescription) selected;
+      option.setOptionState(!option.isOptionEnabled());
+      return false;
+    }
+
+    if (selected instanceof OptionsTopHitProvider) {
+      setSearchString("#" + ((OptionsTopHitProvider) selected).getId() + " ");
+      return false;
+    }
+
+    if (isActionValue(selected) || isSetting(selected)) {
+      GotoActionAction.openOptionOrPerformAction(selected, "", myProject, myContextComponent);
+      return true;
+    }
+
+    return false;
+  }
+
+  @Override
+  public ListCellRenderer getElementsRenderer(JList<?> list) {
+    return new TopHitRenderer(myProject);
+  }
+
+  private boolean fill(String pattern, Function<Object, Boolean> consumer) {
     if (pattern.startsWith("#") && !pattern.contains(" ")) {
       return fillOptionProviders(pattern, consumer);
     } else {
-      if (fillActions(project, pattern, consumer)) {
+      if (fillActions(pattern, consumer)) {
         return true;
       }
-      return fillFromExtensions(project, pattern, consumer);
+      return fillFromExtensions(pattern, consumer);
     }
   }
 
-  private boolean fillFromExtensions(Project project, String pattern, Function<Object, Boolean> consumer) {
+  private boolean fillFromExtensions(String pattern, Function<Object, Boolean> consumer) {
     for (SearchTopHitProvider provider : myTopHitProviders) {
-      if (provider instanceof OptionsTopHitProvider && !((OptionsTopHitProvider)provider).isEnabled(project)) {
+      if (provider instanceof OptionsTopHitProvider && !((OptionsTopHitProvider)provider).isEnabled(myProject)) {
         continue;
       }
       boolean[] interrupted = {false};
-      provider.consumeTopHits(pattern, o -> interrupted[0] = consumer.apply(o), project);
+      provider.consumeTopHits(pattern, o -> interrupted[0] = consumer.apply(o), myProject);
       if (interrupted[0]) {
         return true;
       }
@@ -126,12 +153,12 @@ public class TopHitSEContributor implements SearchEverywhereContributor {
     return false;
   }
 
-  private boolean fillActions(Project project, String pattern, Function<Object, Boolean> consumer) {
+  private boolean fillActions(String pattern, Function<Object, Boolean> consumer) {
     ActionManager actionManager = ActionManager.getInstance();
     List<String> actions = AbbreviationManager.getInstance().findActions(pattern);
     for (String actionId : actions) {
       AnAction action = actionManager.getAction(actionId);
-      if (!isEnabled(project, action)) {
+      if (!isEnabled(action)) {
         continue;
       }
 
@@ -161,50 +188,18 @@ public class TopHitSEContributor implements SearchEverywhereContributor {
     return false;
   }
 
-  private boolean isEnabled(Project project, final AnAction action) {
+  private boolean isEnabled(final AnAction action) {
     //todo actions from SeaEverywhereAction
     Presentation presentation = action.getTemplatePresentation();
-    if (ActionUtil.isDumbMode(project) && !action.isDumbAware()) {
+    if (ActionUtil.isDumbMode(myProject) && !action.isDumbAware()) {
       return false;
     }
 
     return presentation.isEnabled() && presentation.isVisible() && !StringUtil.isEmpty(presentation.getText());
   }
 
-  @Override
-  public boolean processSelectedItem(Project project, Object selected, int modifiers) {
-    if (selected instanceof BooleanOptionDescription) {
-      final BooleanOptionDescription option = (BooleanOptionDescription) selected;
-      option.setOptionState(!option.isOptionEnabled());
-      return false;
-    }
-
-    if (selected instanceof OptionsTopHitProvider) {
-      setSearchString("#" + ((OptionsTopHitProvider) selected).getId() + " ");
-      return false;
-    }
-
-    if (isActionValue(selected) || isSetting(selected)) {
-      Component component = getProjectCurrentEditor(project);
-      GotoActionAction.openOptionOrPerformAction(selected, "", project, component);
-      return true;
-    }
-
-    return false;
-  }
-
-  private Component getProjectCurrentEditor(Project project) {
-    Editor editor = FileEditorManager.getInstance(project).getSelectedTextEditor();
-    return editor == null ? null : editor.getComponent();
-  }
-
-  @Override
-  public ListCellRenderer getElementsRenderer(Project project) {
-    return new TopHitRenderer(project);
-  }
-
   private void setSearchString(String str) {
-    searchStringSetter.accept(str);
+    mySearchStringSetter.accept(str);
   }
 
   private static class TopHitRenderer extends ColoredListCellRenderer<Object> {

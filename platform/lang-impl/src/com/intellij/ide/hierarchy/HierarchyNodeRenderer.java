@@ -16,6 +16,7 @@
 
 package com.intellij.ide.hierarchy;
 
+import com.intellij.ide.util.treeView.NodeDescriptor;
 import com.intellij.ide.util.treeView.NodeRenderer;
 
 import javax.swing.*;
@@ -48,6 +49,12 @@ public final class HierarchyNodeRenderer extends NodeRenderer {
         final HierarchyNodeDescriptor descriptor = (HierarchyNodeDescriptor)object;
         descriptor.getHighlightedText().customize(this);
         setIcon(descriptor.getIcon());
+      }
+      else if (object instanceof NodeDescriptor) {
+        append(((NodeDescriptor)object).getElement().toString());
+      }
+      else {
+        append(object.toString());
       }
     }
   }

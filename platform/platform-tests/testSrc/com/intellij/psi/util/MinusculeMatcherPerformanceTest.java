@@ -34,7 +34,7 @@ public class MinusculeMatcherPerformanceTest extends TestCase {
       nonMatching.add(NameUtil.buildMatcher(s, NameUtil.MatchingCaseSensitivity.NONE));
     }
 
-    PlatformTestUtil.startPerformanceTest("Matching", 5000, () -> {
+    PlatformTestUtil.startPerformanceTest("Matching", 5_500, () -> {
       for (int i = 0; i < 100_000; i++) {
         for (MinusculeMatcher matcher : matching) {
           Assert.assertTrue(matcher.toString(), matcher.matches(longName));

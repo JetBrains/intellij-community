@@ -3,27 +3,23 @@
  */
 package com.intellij.ide.actions.searcheverywhere;
 
-import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.progress.ProgressIndicator;
-import com.intellij.openapi.project.Project;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import java.util.Arrays;
-import java.util.Comparator;
 import java.util.List;
-import java.util.stream.Collectors;
 
 /**
  * @author Konstantin Bulenkov
  */
 //todo generic? #UX-1
-public interface SearchEverywhereContributor {
+public interface SearchEverywhereContributor<F> {
 
   String ALL_CONTRIBUTORS_GROUP_ID = SearchEverywhereContributor.class.getSimpleName() + ".All";
 
-  ExtensionPointName<SearchEverywhereContributor> EP_NAME = ExtensionPointName.create("com.intellij.searchEverywhereContributor");
+  ExtensionPointName<SearchEverywhereContributorFactory<?>> EP_NAME = ExtensionPointName.create("com.intellij.searchEverywhereContributor");
 
   @NotNull
   String getSearchProviderId();
@@ -37,22 +33,21 @@ public interface SearchEverywhereContributor {
 
   boolean showInFindResults();
 
-  ContributorSearchResult<Object> search(Project project, String pattern, boolean everywhere, ProgressIndicator progressIndicator, int elementsLimit);
+  ContributorSearchResult<Object> search(String pattern, boolean everywhere, SearchEverywhereContributorFilter<F> filter,
+                                         ProgressIndicator progressIndicator, int elementsLimit);
 
-  default List<Object> search(Project project, String pattern, boolean everywhere, ProgressIndicator progressIndicator) {
-    return search(project, pattern, everywhere, progressIndicator, -1).getItems();
+  default List<Object> search(String pattern, boolean everywhere, SearchEverywhereContributorFilter<F> filter,
+                              ProgressIndicator progressIndicator) {
+    return search(pattern, everywhere, filter, progressIndicator, -1).getItems();
   }
 
-  boolean processSelectedItem(Project project, Object selected, int modifiers);
+  boolean processSelectedItem(Object selected, int modifiers);
 
-  ListCellRenderer getElementsRenderer(Project project);
+  ListCellRenderer getElementsRenderer(JList<?> list);
 
-  @NotNull
-  DataContext getDataContextForItem(Object element);
+  Object getDataForItem(Object element, String dataId);
 
-  static List<SearchEverywhereContributor> getProvidersSorted() {
-    return Arrays.stream(EP_NAME.getExtensions())
-      .sorted(Comparator.comparingInt(SearchEverywhereContributor::getSortWeight))
-      .collect(Collectors.toList());
+  static List<SearchEverywhereContributorFactory<?>> getProviders() {
+    return Arrays.asList(EP_NAME.getExtensions());
   }
 }

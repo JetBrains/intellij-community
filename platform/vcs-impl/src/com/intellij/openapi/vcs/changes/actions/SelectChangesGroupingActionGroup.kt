@@ -24,10 +24,10 @@ class SelectChangesGroupingActionGroup : DefaultActionGroup(), DumbAware {
     }
 
     val popup = SelectChangesGroupingActionPopup(group, e.dataContext)
-    val component = e.inputEvent.component
+    val component = e.inputEvent?.component
     when (component) {
       is ActionButtonComponent -> popup.showUnderneathOf(component)
-      else -> popup.showInCenterOf(component)
+      else -> popup.showInBestPositionFor(e.dataContext)
     }
   }
 }

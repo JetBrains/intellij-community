@@ -21,6 +21,18 @@ import org.jetbrains.annotations.Nullable;
 public interface CodeStyleSettingsCustomizable {
   enum OptionAnchor {NONE, BEFORE, AFTER}
 
+  enum IndentOption {
+    INDENT_SIZE,
+    CONTINUATION_INDENT_SIZE,
+    TAB_SIZE,
+    USE_TAB_CHARACTER,
+    SMART_TABS,
+    LABEL_INDENT_SIZE,
+    LABEL_INDENT_ABSOLUTE,
+    USE_RELATIVE_INDENTS,
+    KEEP_INDENTS_ON_EMPTY_LINES
+  }
+
   enum SpacingOption {
     INSERT_FIRST_SPACE_IN_LINE,
     SPACE_AROUND_ASSIGNMENT_OPERATORS,

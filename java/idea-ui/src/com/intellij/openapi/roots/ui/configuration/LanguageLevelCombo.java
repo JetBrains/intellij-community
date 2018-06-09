@@ -26,6 +26,7 @@ public abstract class LanguageLevelCombo extends ComboBox<Object> {
   public LanguageLevelCombo(String defaultItem) {
     myDefaultItem = defaultItem;
     for (LanguageLevel level : LanguageLevel.values()) {
+      if (level.isPreview()) continue;
       addItem(level);
     }
 

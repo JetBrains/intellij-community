@@ -96,7 +96,8 @@ public class DarculaComboBoxUI extends BasicComboBoxUI implements Border, ErrorB
       if ("enabled".equals(e.getPropertyName())) {
         EditorTextField etf = UIUtil.findComponentOfType((JComponent)editor, EditorTextField.class);
         if (etf != null) {
-          Color color = e.getNewValue() == Boolean.FALSE ? UIManager.getColor("ComboBox.disabledBackground") : null;
+          boolean enabled = e.getNewValue() == Boolean.TRUE;
+          Color color = UIManager.getColor(enabled ? "TextField.background" : "ComboBox.disabledBackground");
           etf.setBackground(color);
         }
       }
@@ -455,6 +456,8 @@ public class DarculaComboBoxUI extends BasicComboBoxUI implements Border, ErrorB
         EditorTextField etf = UIUtil.findComponentOfType((JComponent)editor, EditorTextField.class);
         if (etf != null) {
           etf.addFocusListener(editorFocusListener);
+          Color c = UIManager.getColor(comboBox.isEnabled() ? "TextField.background" : "ComboBox.disabledBackground");
+          etf.setBackground(c);
         }
       }
     }

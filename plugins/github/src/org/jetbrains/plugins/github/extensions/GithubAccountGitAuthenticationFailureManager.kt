@@ -2,7 +2,6 @@
 package org.jetbrains.plugins.github.extensions
 
 import com.intellij.openapi.application.ApplicationManager
-import org.jetbrains.plugins.github.authentication.accounts.AccountRemovedListener
 import org.jetbrains.plugins.github.authentication.accounts.AccountTokenChangedListener
 import org.jetbrains.plugins.github.authentication.accounts.GithubAccount
 import org.jetbrains.plugins.github.authentication.accounts.GithubAccountManager
@@ -12,17 +11,13 @@ class GithubAccountGitAuthenticationFailureManager {
   private val storeMap = ConcurrentHashMap<GithubAccount, Set<String>>()
 
   init {
-    val busConnection = ApplicationManager.getApplication().messageBus.connect()
-    busConnection.subscribe(GithubAccountManager.ACCOUNT_TOKEN_CHANGED_TOPIC, object : AccountTokenChangedListener {
-      override fun tokenChanged(account: GithubAccount) {
-        storeMap.remove(account)
-      }
-    })
-    busConnection.subscribe(GithubAccountManager.ACCOUNT_REMOVED_TOPIC, object : AccountRemovedListener {
-      override fun accountRemoved(removedAccount: GithubAccount) {
-        storeMap.remove(removedAccount)
-      }
-    })
+    ApplicationManager.getApplication().messageBus
+      .connect()
+      .subscribe(GithubAccountManager.ACCOUNT_TOKEN_CHANGED_TOPIC, object : AccountTokenChangedListener {
+        override fun tokenChanged(account: GithubAccount) {
+          storeMap.remove(account)
+        }
+      })
   }
 
   fun ignoreAccount(url: String, account: GithubAccount) {

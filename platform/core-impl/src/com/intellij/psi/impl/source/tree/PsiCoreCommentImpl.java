@@ -47,6 +47,6 @@ public class PsiCoreCommentImpl extends LeafPsiElement implements PsiComment {
   @Override
   @NotNull
   public PsiReference[] getReferences() {
-    return ReferenceProvidersRegistry.getReferencesFromProviders(this, PsiComment.class);
+    return ReferenceProvidersRegistry.getReferencesFromProviders(this);
   }
 }

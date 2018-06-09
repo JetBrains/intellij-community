@@ -556,7 +556,9 @@ public class JavaMatchingVisitor extends JavaElementVisitor {
     if (_handler instanceof SubstitutionHandler && (qualifier == null || special)) {
       final SubstitutionHandler handler = (SubstitutionHandler)_handler;
       if (handler.isSubtype() || handler.isStrictSubtype()) {
-        myMatchingVisitor.setResult(checkMatchWithinHierarchy(other, handler, reference));
+        if (myMatchingVisitor.setResult(checkMatchWithinHierarchy(reference, other, handler))) {
+          handler.addResult(other, 0, -1, myMatchingVisitor.getMatchContext());
+        }
       }
       else {
         final PsiElement deparenthesized = other instanceof PsiExpression && context.getOptions().isLooseMatching() ?
@@ -798,6 +800,7 @@ public class JavaMatchingVisitor extends JavaElementVisitor {
 
       RegExpPredicate regExpPredicate = null;
 
+      boolean fullTypeResult = false;
       if (patternArrayDimensions != 0) {
         if (patternArrayDimensions != matchedArrayDimensions) {
           return false;
@@ -815,15 +818,15 @@ public class JavaMatchingVisitor extends JavaElementVisitor {
             }
           });
         }
+        fullTypeResult = true;
       }
 
       try {
-        if (handler.isSubtype() || handler.isStrictSubtype()) {
-          return checkMatchWithinHierarchy(matchedElement, handler, patternElement);
-        }
-        else {
-          return handler.handle(matchedElement, myMatchingVisitor.getMatchContext());
-        }
+        final boolean result = (handler.isSubtype() || handler.isStrictSubtype())
+                               ? checkMatchWithinHierarchy(patternElement, matchedElement, handler)
+                               : handler.validate(matchedElement, 0, -1, myMatchingVisitor.getMatchContext());
+        if (result) handler.addResult(fullTypeResult ? matchedType : matchedElement, 0, -1, myMatchingVisitor.getMatchContext());
+        return result;
       }
       finally {
         if (regExpPredicate != null) regExpPredicate.setNodeTextGenerator(null);
@@ -879,21 +882,21 @@ public class JavaMatchingVisitor extends JavaElementVisitor {
     return index == -1 ? result : result.substring(0, index);
   }
 
-  private boolean checkMatchWithinHierarchy(PsiElement matchElement, SubstitutionHandler handler, PsiElement context) {
+  private boolean checkMatchWithinHierarchy(PsiElement patternElement, PsiElement matchElement, SubstitutionHandler handler) {
     boolean includeInterfaces = true;
     boolean includeClasses = true;
-    final PsiElement contextParent = context.getParent();
+    final PsiElement patternParent = patternElement.getParent();
 
-    if (contextParent instanceof PsiReferenceList) {
-      final PsiElement grandParentContext = contextParent.getParent();
+    if (patternParent instanceof PsiReferenceList) {
+      final PsiElement patternGrandParent = patternParent.getParent();
 
-      if (grandParentContext instanceof PsiClass) {
-        final PsiClass psiClass = (PsiClass)grandParentContext;
+      if (patternGrandParent instanceof PsiClass) {
+        final PsiClass psiClass = (PsiClass)patternGrandParent;
 
-        if (contextParent == psiClass.getExtendsList()) {
+        if (patternParent == psiClass.getExtendsList()) {
           includeInterfaces = psiClass.isInterface();
         }
-        else if (contextParent == psiClass.getImplementsList()) {
+        else if (patternParent == psiClass.getImplementsList()) {
           includeClasses = false;
         }
       }
@@ -908,12 +911,7 @@ public class JavaMatchingVisitor extends JavaElementVisitor {
     while (nodes.hasNext() && negated == handler.validate(nodes.current(), 0, -1, myMatchingVisitor.getMatchContext())) {
       nodes.advance();
     }
-
-    if (negated == nodes.hasNext()) {
-      return false;
-    }
-    handler.addResult(matchElement, 0, -1, myMatchingVisitor.getMatchContext());
-    return true;
+    return negated != nodes.hasNext();
   }
 
   @Override
@@ -959,7 +957,16 @@ public class JavaMatchingVisitor extends JavaElementVisitor {
       myMatchingVisitor.setResult(myMatchingVisitor.matchOptionally(initializer, var2Initializer));
     }
     finally {
-      myMatchingVisitor.scopeMatch(nameIdentifier, isTypedVar, var2.getNameIdentifier());
+      final PsiIdentifier identifier = var2.getNameIdentifier();
+      final String name;
+      if (identifier == null && (name = var2.getName()) != null) {
+        // when matching a stub or compiled code
+        final PsiIdentifier fakeIdentifier = JavaPsiFacade.getElementFactory(var2.getProject()).createIdentifier(name);
+        myMatchingVisitor.scopeMatch(nameIdentifier, isTypedVar, fakeIdentifier);
+      }
+      else {
+        myMatchingVisitor.scopeMatch(nameIdentifier, isTypedVar, identifier);
+      }
     }
   }
 
@@ -1595,7 +1602,9 @@ public class JavaMatchingVisitor extends JavaElementVisitor {
       if (id == null) id = clazz2;
       final SubstitutionHandler handler = (SubstitutionHandler)myMatchingVisitor.getMatchContext().getPattern().getHandler(identifier);
       if (handler.isSubtype() || handler.isStrictSubtype()) {
-        myMatchingVisitor.setResult(checkMatchWithinHierarchy(id, handler, identifier));
+        if (myMatchingVisitor.setResult(checkMatchWithinHierarchy(identifier, id, handler))) {
+          handler.addResult(id, 0, -1, myMatchingVisitor.getMatchContext());
+        }
       }
       else {
         myMatchingVisitor.setResult(myMatchingVisitor.handleTypedElement(identifier, id));

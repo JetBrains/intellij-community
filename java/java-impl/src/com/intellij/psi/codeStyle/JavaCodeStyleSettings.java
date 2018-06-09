@@ -104,7 +104,8 @@ public class JavaCodeStyleSettings extends CustomCodeStyleSettings implements Im
   public static final int SHORTEN_NAMES_ALWAYS_AND_ADD_IMPORT = 3;
 
   public int CLASS_NAMES_IN_JAVADOC = FULLY_QUALIFY_NAMES_IF_NOT_IMPORTED;
-  
+  public boolean SPACE_BEFORE_COLON_IN_FOREACH = false;
+
   public boolean useFqNamesInJavadocAlways() {
     return CLASS_NAMES_IN_JAVADOC == FULLY_QUALIFY_NAMES_ALWAYS;
   }

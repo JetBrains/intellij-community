@@ -96,7 +96,7 @@ public class FieldReflectionAccessor extends ReferenceReflectionAccessorBase<Fie
     String methodName = PsiReflectionAccessUtil.getUniqueMethodName(outerClass, "accessToField" + StringUtil.capitalize(fieldName));
     ReflectionAccessMethodBuilder methodBuilder = new ReflectionAccessMethodBuilder(methodName);
     if (FieldAccessType.GET.equals(accessType)) {
-      String returnType = PsiReflectionAccessUtil.getAccessibleReturnType(resolveFieldType(descriptor));
+      String returnType = PsiReflectionAccessUtil.getAccessibleReturnType(descriptor.expression, resolveFieldType(descriptor));
       if (returnType == null) {
         LOG.warn("Could not resolve field type");
         return null;

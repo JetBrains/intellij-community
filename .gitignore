@@ -11,5 +11,6 @@ build/dependencies/build
 *.pyc
 .idea/libraries/Gradle__*.xml
 .idea/gradle_extensions.xml
+.idea/usage.statistics.xml
 edu/dependencies/build
 edu/dependencies/.gradle

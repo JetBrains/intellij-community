@@ -93,11 +93,12 @@ class IntelliJCoreArtifactsBuilder {
 
         [
           "ASM", "Guava", "picocontainer", "Trove4j", "cli-parser", "lz4-java", "jayatana", "imgscalr", "batik", "xmlgraphics-commons",
-         "JDOM", "OroMatcher", "jna", "Log4J", "StreamEx"
+         "OroMatcher", "jna", "Log4J", "StreamEx"
         ].each {
           projectLibrary(it)
         }
         projectLibrary("jetbrains-annotations-java5", true)
+        projectLibrary("JDOM", true)
       }
       ant.move(file: "$coreArtifactDir/annotations-java5.jar", tofile: "$coreArtifactDir/annotations.jar")
       buildContext.notifyArtifactBuilt(coreArtifactDir)

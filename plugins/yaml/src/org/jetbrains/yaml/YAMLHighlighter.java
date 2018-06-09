@@ -31,31 +31,57 @@ public class YAMLHighlighter {
   static final String ALIAS_ID = "YAML_ALIAS";
 
   // Text default attrs
+  // TODO: RUBY-21691 inline these defaults or move it somewhere
+  // Users of this API should replace these constants on there values
+  // Inform us (in ticket RUBY-21691 or by some other way) if it is important to hold same defaults from another plugin
+  @SuppressWarnings("DeprecatedIsStillUsed")
+  @Deprecated
   public static final TextAttributesKey SCALAR_KEY_DEFAULT_ATTRS = DefaultLanguageHighlighterColors.KEYWORD;
+  @SuppressWarnings("DeprecatedIsStillUsed")
+  @Deprecated
   public static final TextAttributesKey COMMENT_DEFAULT_ATTRS = DefaultLanguageHighlighterColors.DOC_COMMENT;
+  @SuppressWarnings("DeprecatedIsStillUsed")
+  @Deprecated
   public static final TextAttributesKey SCALAR_TEXT_DEFAULT_ATTRS = HighlighterColors.TEXT;
+  @SuppressWarnings("DeprecatedIsStillUsed")
+  @Deprecated
   public static final TextAttributesKey SCALAR_STRING_DEFAULT_ATTRS = DefaultLanguageHighlighterColors.STRING;
+  @SuppressWarnings("DeprecatedIsStillUsed")
+  @Deprecated
   public static final TextAttributesKey SCALAR_DSTRING_DEFAULT_ATTRS = DefaultLanguageHighlighterColors.STRING;
+  @SuppressWarnings("DeprecatedIsStillUsed")
+  @Deprecated
   public static final TextAttributesKey SCALAR_LIST_DEFAULT_ATTRS = HighlighterColors.TEXT;
+  @SuppressWarnings("DeprecatedIsStillUsed")
+  @Deprecated
   public static final TextAttributesKey TEXT_DEFAULT_ATTRS = HighlighterColors.TEXT;
+  @SuppressWarnings("DeprecatedIsStillUsed")
+  @Deprecated
   public static final TextAttributesKey SIGN_DEFAULT_ATTRS = DefaultLanguageHighlighterColors.OPERATION_SIGN;
-  public static final TextAttributesKey ALIAS_DEFAULT_ATTRS = DefaultLanguageHighlighterColors.LABEL;
 
   // text attributes keys
+  @SuppressWarnings("deprecation")
   public static final TextAttributesKey SCALAR_KEY = TextAttributesKey
     .createTextAttributesKey(SCALAR_KEY_ID, SCALAR_KEY_DEFAULT_ATTRS);
+  @SuppressWarnings("deprecation")
   public static final TextAttributesKey SCALAR_TEXT = TextAttributesKey
     .createTextAttributesKey(SCALAR_TEXT_ID, SCALAR_TEXT_DEFAULT_ATTRS);
+  @SuppressWarnings("deprecation")
   public static final TextAttributesKey SCALAR_STRING =
       TextAttributesKey.createTextAttributesKey(SCALAR_STRING_ID, SCALAR_STRING_DEFAULT_ATTRS);
+  @SuppressWarnings("deprecation")
   public static final TextAttributesKey SCALAR_DSTRING =
       TextAttributesKey.createTextAttributesKey(SCALAR_DSTRING_ID, SCALAR_DSTRING_DEFAULT_ATTRS);
+  @SuppressWarnings("deprecation")
   public static final TextAttributesKey SCALAR_LIST = TextAttributesKey
     .createTextAttributesKey(SCALAR_LIST_ID, SCALAR_LIST_DEFAULT_ATTRS);
+  @SuppressWarnings("deprecation")
   public static final TextAttributesKey COMMENT = TextAttributesKey.createTextAttributesKey(COMMENT_ID, COMMENT_DEFAULT_ATTRS);
+  @SuppressWarnings("deprecation")
   public static final TextAttributesKey TEXT = TextAttributesKey.createTextAttributesKey(TEXT_ID, TEXT_DEFAULT_ATTRS);
+  @SuppressWarnings("deprecation")
   public static final TextAttributesKey SIGN = TextAttributesKey.createTextAttributesKey(SIGN_ID, SIGN_DEFAULT_ATTRS);
-  public static final TextAttributesKey ALIAS = TextAttributesKey.createTextAttributesKey(ALIAS_ID, ALIAS_DEFAULT_ATTRS);
+  public static final TextAttributesKey ALIAS = TextAttributesKey.createTextAttributesKey(ALIAS_ID, DefaultLanguageHighlighterColors.LABEL);
   public static final TextAttributesKey ANCHOR = TextAttributesKey.createTextAttributesKey(ANCHOR_ID, ALIAS);
 
   private YAMLHighlighter() {

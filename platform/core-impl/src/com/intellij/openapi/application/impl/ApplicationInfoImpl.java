@@ -894,7 +894,7 @@ public class ApplicationInfoImpl extends ApplicationInfoEx {
       myFUStatisticsSettingsUrl = "https://www.jetbrains.com/idea/statistics/fus-assistant.xml";
       myStatisticsServiceUrl  = "https://www.jetbrains.com/idea/statistics/index.jsp";
       myStatisticsServiceKey  = null;
-      myEventLogSettingsUrl = "https://www.jetbrains.com/idea/statistics/fus-lion-assistant.xml";
+      myEventLogSettingsUrl = "https://www.jetbrains.com/idea/statistics/fus-lion-v2-assistant.xml";
     }
 
     Element thirdPartyElement = getChild(parentNode, ELEMENT_THIRD_PARTY);

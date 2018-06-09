@@ -2,13 +2,15 @@
 package com.intellij.ide.actions.searcheverywhere;
 
 import com.google.common.collect.Lists;
+import com.intellij.codeInsight.hint.HintUtil;
+import com.intellij.execution.runners.ExecutionUtil;
 import com.intellij.find.findUsages.PsiElement2UsageTargetAdapter;
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.IdeBundle;
+import com.intellij.ide.util.ElementsChooser;
 import com.intellij.ide.util.gotoByName.QuickSearchComponent;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
-import com.intellij.openapi.actionSystem.impl.ActionButton;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.keymap.KeymapUtil;
@@ -17,11 +19,16 @@ import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.progress.util.ProgressIndicatorBase;
+import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.popup.JBPopup;
+import com.intellij.openapi.ui.popup.JBPopupFactory;
+import com.intellij.openapi.ui.popup.JBPopupListener;
+import com.intellij.openapi.ui.popup.LightweightWindowEvent;
 import com.intellij.openapi.util.ActionCallback;
+import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Pair;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.codeStyle.MinusculeMatcher;
@@ -39,7 +46,6 @@ import com.intellij.util.Alarm;
 import com.intellij.util.text.MatcherHolder;
 import com.intellij.util.ui.DialogUtil;
 import com.intellij.util.ui.JBUI;
-import com.intellij.util.ui.StatusText;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.components.BorderLayoutPanel;
 import org.jetbrains.annotations.NotNull;
@@ -63,7 +69,9 @@ public class SearchEverywhereUI extends BorderLayoutPanel implements Disposable,
   public static final int SINGLE_CONTRIBUTOR_ELEMENTS_LIMIT = 30;
   public static final int MULTIPLE_CONTRIBUTORS_ELEMENTS_LIMIT = 15;
 
-  private final List<SearchEverywhereContributor> allContributors;
+  private final List<SearchEverywhereContributor> myServiceContributors;
+  private final List<SearchEverywhereContributor> myShownContributors;
+  private final Map<String, SearchEverywhereContributorFilter<?>> myContributorFilters;
   private final Project myProject;
 
   private SETab mySelectedTab;
@@ -85,16 +93,18 @@ public class SearchEverywhereUI extends BorderLayoutPanel implements Disposable,
 
   private Runnable searchFinishedHandler = () -> {};
 
-  public SearchEverywhereUI(Project project, List<SearchEverywhereContributor> serviceContributors,
-                            List<SearchEverywhereContributor> contributors) {
+  public SearchEverywhereUI(Project project,
+                            List<SearchEverywhereContributor> serviceContributors,
+                            List<SearchEverywhereContributor> contributors,
+                            Map<String, SearchEverywhereContributorFilter<?>> filters) {
     withMinimumWidth(670);
     withPreferredWidth(670);
     withBackground(JBUI.CurrentTheme.SearchEverywhere.dialogBackground());
 
     myProject = project;
-    allContributors = new ArrayList<>();
-    allContributors.addAll(serviceContributors);
-    allContributors.addAll(contributors);
+    myServiceContributors = serviceContributors;
+    myShownContributors  = contributors;
+    myContributorFilters = filters;
 
     myNonProjectCB = new JBCheckBox();
     myNonProjectCB.setOpaque(false);
@@ -141,7 +151,7 @@ public class SearchEverywhereUI extends BorderLayoutPanel implements Disposable,
     String hint = IdeBundle.message("searcheverywhere.history.shortcuts.hint",
                                     KeymapUtil.getKeystrokeText(SearchTextField.ALT_SHOW_HISTORY_KEYSTROKE),
                                     KeymapUtil.getKeystrokeText(SearchTextField.SHOW_HISTORY_KEYSTROKE));
-    JLabel hintLabel = new JLabel(hint);
+    JLabel hintLabel = HintUtil.createAdComponent(hint, JBUI.Borders.empty(), SwingConstants.LEFT);
     hintLabel.setOpaque(false);
     hintLabel.setForeground(JBColor.GRAY);
     pnl.add(hintLabel, BorderLayout.SOUTH);
@@ -155,6 +165,7 @@ public class SearchEverywhereUI extends BorderLayoutPanel implements Disposable,
 
   public void setUseNonProjectItems(boolean use) {
     myNonProjectCB.setSelected(use);
+    nonProjectCheckBoxLocked = true;
   }
 
   public boolean isUseNonProjectItems() {
@@ -183,17 +194,22 @@ public class SearchEverywhereUI extends BorderLayoutPanel implements Disposable,
 
   private void switchToTab(SETab tab) {
     mySelectedTab = tab;
-    String text = tab.getContributor()
+
+    String checkBoxText = tab.getContributor()
                      .map(SearchEverywhereContributor::includeNonProjectItemsText)
                      .orElse(IdeBundle.message("checkbox.include.non.project.items", IdeUICustomization.getInstance().getProjectConceptName()));
-    if (text.indexOf(UIUtil.MNEMONIC) != -1) {
-      DialogUtil.setTextWithMnemonic(myNonProjectCB, text);
+    if (checkBoxText.indexOf(UIUtil.MNEMONIC) != -1) {
+      DialogUtil.setTextWithMnemonic(myNonProjectCB, checkBoxText);
     } else {
-      myNonProjectCB.setText(text);
+      myNonProjectCB.setText(checkBoxText);
       myNonProjectCB.setDisplayedMnemonicIndex(-1);
       myNonProjectCB.setMnemonic(0);
     }
     myNonProjectCB.setSelected(false);
+    nonProjectCheckBoxLocked = false;
+
+    myResultsList.getEmptyText().setText(getEmptyText());
+
     repaint();
     rebuildList();
   }
@@ -224,8 +240,7 @@ public class SearchEverywhereUI extends BorderLayoutPanel implements Disposable,
     }
 
     SearchEverywhereContributor contributor = myListModel.getContributorForIndex(index);
-    DataContext context = contributor.getDataContextForItem(myListModel.getElementAt(index));
-    return context.getData(dataId);
+    return contributor.getDataForItem(myListModel.getElementAt(index), dataId);
   }
 
   @Override
@@ -319,19 +334,14 @@ public class SearchEverywhereUI extends BorderLayoutPanel implements Disposable,
     res.add(myNonProjectCB);
     res.add(Box.createHorizontalStrut(JBUI.scale(19)));
 
-    AnAction pinAction = new ShowInFindToolWindowAction();
-    ActionButton pinButton = new ActionButton(pinAction, pinAction.getTemplatePresentation(), ActionPlaces.UNKNOWN, ActionToolbar.DEFAULT_MINIMUM_BUTTON_SIZE);
-    res.add(pinButton);
-    res.add(Box.createHorizontalStrut(JBUI.scale(10)));
+    DefaultActionGroup actionGroup = new DefaultActionGroup();
+    actionGroup.addAction(new ShowInFindToolWindowAction());
+    actionGroup.addAction(new ShowFilterAction());
 
-    AnAction emptyAction = new AnAction(AllIcons.General.Filter) {
-      @Override
-      public void actionPerformed(AnActionEvent e) {}
-    };
-    ActionButton filterButton = new ActionButton(emptyAction, emptyAction.getTemplatePresentation(), ActionPlaces.UNKNOWN, ActionToolbar.DEFAULT_MINIMUM_BUTTON_SIZE);
-    res.add(filterButton);
-    res.add(Box.createHorizontalStrut(JBUI.scale(10)));
-
+    ActionToolbar toolbar = ActionManager.getInstance().createActionToolbar("search.everywhere.toolbar", actionGroup, true);
+    JComponent toolbarComponent = toolbar.getComponent();
+    toolbarComponent.setOpaque(false);
+    res.add(toolbarComponent);
     return res;
   }
 
@@ -423,7 +433,7 @@ public class SearchEverywhereUI extends BorderLayoutPanel implements Disposable,
           if (currentRestartRequest != myCalcThreadRestartRequestId) {
             return;
           }
-          myCalcThread = new CalcThread(myProject, pattern, null);
+          myCalcThread = new CalcThread(pattern, null);
 
           myCurrentWorker = myCalcThread.start();
         }
@@ -469,10 +479,8 @@ public class SearchEverywhereUI extends BorderLayoutPanel implements Disposable,
       }
     });
 
-    myNonProjectCB.addItemListener(e -> {
-      nonProjectCheckBoxLocked = true;
-      rebuildList();
-    });
+    myNonProjectCB.addItemListener(e -> rebuildList());
+    myNonProjectCB.addActionListener(e -> nonProjectCheckBoxLocked = true);
 
     myResultsList.addMouseListener(new MouseAdapter() {
       @Override
@@ -520,7 +528,7 @@ public class SearchEverywhereUI extends BorderLayoutPanel implements Disposable,
           if (currentRestartRequest != myCalcThreadRestartRequestId) {
             return;
           }
-          myCalcThread = new CalcThread(myProject, getSearchPattern(), contributor);
+          myCalcThread = new CalcThread(getSearchPattern(), contributor);
 
           myCurrentWorker = myCalcThread.start();
         }
@@ -529,7 +537,7 @@ public class SearchEverywhereUI extends BorderLayoutPanel implements Disposable,
   }
 
   private void gotoSelectedItem(Object value, SearchEverywhereContributor contributor, int modifiers) {
-    boolean closePopup = contributor.processSelectedItem(myProject, value, modifiers);
+    boolean closePopup = contributor.processSelectedItem(value, modifiers);
     if (closePopup) {
       stopSearching();
       searchFinishedHandler.run();
@@ -559,14 +567,12 @@ public class SearchEverywhereUI extends BorderLayoutPanel implements Disposable,
 
   @SuppressWarnings("Duplicates") //todo remove suppress #UX-1
   private class CalcThread implements Runnable {
-    private final Project project;
     private final String pattern;
     private final ProgressIndicator myProgressIndicator = new ProgressIndicatorBase();
     private final ActionCallback myDone = new ActionCallback();
     private final SearchEverywhereContributor contributorToExpand;
 
-    public CalcThread(@NotNull Project project, @NotNull String pattern, @Nullable SearchEverywhereContributor expand) {
-      this.project = project;
+    public CalcThread(@NotNull String pattern, @Nullable SearchEverywhereContributor expand) {
       this.pattern = pattern;
       contributorToExpand = expand;
     }
@@ -591,7 +597,7 @@ public class SearchEverywhereUI extends BorderLayoutPanel implements Disposable,
       }
       finally {
         if (!isCanceled()) {
-          listOperationsAlarm.addRequest(() -> myResultsList.getEmptyText().setText(StatusText.DEFAULT_EMPTY_TEXT), 0);
+          listOperationsAlarm.addRequest(() -> myResultsList.getEmptyText().setText(getEmptyText()), 0);
         }
         if (!myDone.isProcessed()) {
           myDone.setDone();
@@ -603,7 +609,7 @@ public class SearchEverywhereUI extends BorderLayoutPanel implements Disposable,
       listOperationsAlarm.cancelAllRequests();
       listOperationsAlarm.addRequest(() -> {
         Dimension oldSize = getPreferredSize();
-        myResultsList.getEmptyText().setText("Searching...");
+        myResultsList.getEmptyText().setText(IdeBundle.message("label.choosebyname.searching"));
         myListModel.clear();
         Dimension newSize = getPreferredSize();
         firePropertyChange("preferredSize", oldSize, newSize);
@@ -615,8 +621,8 @@ public class SearchEverywhereUI extends BorderLayoutPanel implements Disposable,
         anyFound = addContributorItems(selectedContributor, SINGLE_CONTRIBUTOR_ELEMENTS_LIMIT, true);
       } else {
         boolean clearBefore = true;
-        for (SearchEverywhereContributor contributor : allContributors) {
-          anyFound = anyFound || addContributorItems(contributor, MULTIPLE_CONTRIBUTORS_ELEMENTS_LIMIT, clearBefore);
+        for (SearchEverywhereContributor contributor : getUsedContributors()) {
+          anyFound |= addContributorItems(contributor, MULTIPLE_CONTRIBUTORS_ELEMENTS_LIMIT, clearBefore);
           clearBefore = false;
         }
       }
@@ -633,36 +639,34 @@ public class SearchEverywhereUI extends BorderLayoutPanel implements Disposable,
     }
 
     private boolean addContributorItems(SearchEverywhereContributor contributor, int count, boolean clearBefore) {
-      boolean[] found = {false};
-      ApplicationManager.getApplication().runReadAction(() -> {
-        ContributorSearchResult<Object> results = contributor.search(project, pattern, isUseNonProjectItems(), myProgressIndicator, count);
-        found[0] = !results.isEmpty();
+      ContributorSearchResult<Object> results =
+        contributor.search(pattern, isUseNonProjectItems(), myContributorFilters.get(contributor.getSearchProviderId()), myProgressIndicator, count);
+      boolean found = !results.isEmpty();
 
-        if (clearBefore) {
-          listOperationsAlarm.cancelAllRequests();
+      if (clearBefore) {
+        listOperationsAlarm.cancelAllRequests();
+      }
+
+      listOperationsAlarm.addRequest(() -> {
+        if (isCanceled()) {
+          return;
         }
 
-        listOperationsAlarm.addRequest(() -> {
-          if (isCanceled()) {
-            return;
-          }
+        Dimension oldSize = getPreferredSize();
+        if (clearBefore) {
+          myListModel.clear();
+        }
+        List<Object> itemsToAdd = results.getItems().stream()
+                                         .filter(o -> !myListModel.contains(o))
+                                         .collect(Collectors.toList());
+        if (!itemsToAdd.isEmpty()) {
+          myListModel.addElements(itemsToAdd, contributor, results.hasMoreItems());
+          ScrollingUtil.ensureSelectionExists(myResultsList);
+        }
+        firePropertyChange("preferredSize", oldSize, getPreferredSize());
+      }, 0);
 
-          Dimension oldSize = getPreferredSize();
-          if (clearBefore) {
-            myListModel.clear();
-          }
-          List<Object> itemsToAdd = results.getItems().stream()
-                                           .filter(o -> !myListModel.contains(o))
-                                           .collect(Collectors.toList());
-          if (!itemsToAdd.isEmpty()) {
-            myListModel.addElements(itemsToAdd, contributor, results.hasMoreItems());
-            ScrollingUtil.ensureSelectionExists(myResultsList);
-          }
-          firePropertyChange("preferredSize", oldSize, getPreferredSize());
-        }, 0);
-      });
-
-      return found[0];
+      return found;
     }
 
     protected void check() {
@@ -687,23 +691,46 @@ public class SearchEverywhereUI extends BorderLayoutPanel implements Disposable,
     }
   }
 
+  @NotNull
+  private List<SearchEverywhereContributor> getUsedContributors() {
+    SearchEverywhereContributorFilter<String> contributorsFilter =
+      (SearchEverywhereContributorFilter<String>) myContributorFilters.get(SearchEverywhereContributor.ALL_CONTRIBUTORS_GROUP_ID);
+    List<SearchEverywhereContributor> contributors = new ArrayList<>(myServiceContributors);
+    myShownContributors.stream()
+                       .filter(contributor -> contributorsFilter.isSelected(contributor.getSearchProviderId()))
+                       .forEach(contributor -> contributors.add(contributor));
+    return contributors;
+  }
+
   private class CompositeCellRenderer implements ListCellRenderer<Object> {
 
     @Override
     public Component getListCellRendererComponent(JList list, Object value, int index, boolean isSelected, boolean cellHasFocus) {
       if (myListModel.isMoreElement(index)) {
-        return moreRenderer.getListCellRendererComponent(list, value, index, isSelected, cellHasFocus);
+        Component cmp = moreRenderer.getListCellRendererComponent(list, value, index, isSelected, cellHasFocus);
+        return wrap(cmp, 1, 7);
       }
 
       SearchEverywhereContributor contributor = myListModel.getContributorForIndex(index);
-      Component component = contributor.getElementsRenderer(myProject)
+      Component component = contributor.getElementsRenderer(myResultsList)
                                        .getListCellRendererComponent(list, value, index, isSelected, cellHasFocus);
 
       if (isAllTabSelected() && myListModel.isGroupFirstItem(index)) {
-        return groupTitleRenderer.withDisplayedData(contributor.getGroupName(), component);
+        component = groupTitleRenderer.withDisplayedData(contributor.getGroupName(), component);
       }
 
-      return component;
+      return wrap(component, 1, 0);
+    }
+
+    private Component wrap(Component cmp, int verticalGap, int hotizontalGap) {
+      JPanel panel = new JPanel(new BorderLayout());
+      panel.setOpaque(cmp.isOpaque());
+      if (cmp.isOpaque()) {
+        panel.setBackground(cmp.getBackground());
+      }
+      panel.add(cmp, BorderLayout.CENTER);
+      panel.setBorder(JBUI.Borders.empty(verticalGap, hotizontalGap));
+      return panel;
     }
   }
 
@@ -736,13 +763,13 @@ public class SearchEverywhereUI extends BorderLayoutPanel implements Disposable,
       setLayout(myLayout);
       setBackground(UIUtil.getListBackground(false));
       titleLabel = groupInfoLabel("Group");
-      SeparatorComponent separatorComponent = new SeparatorComponent(titleLabel.getPreferredSize().height / 2, UIUtil.getLabelDisabledForeground(), null);
-
+      SeparatorComponent separatorComponent =
+        new SeparatorComponent(titleLabel.getPreferredSize().height / 2, JBUI.CurrentTheme.SearchEverywhere.listSeparatorColor(),null);
 
       JPanel topPanel = JBUI.Panels.simplePanel(5, 0)
                                            .addToCenter(separatorComponent)
                                            .addToLeft(titleLabel)
-                                           .withBorder(JBUI.Borders.empty())
+                                           .withBorder(JBUI.Borders.empty(0, 7))
                                            .withBackground(UIUtil.getListBackground());
       add(topPanel, BorderLayout.NORTH);
     }
@@ -882,7 +909,7 @@ public class SearchEverywhereUI extends BorderLayoutPanel implements Disposable,
     public void actionPerformed(AnActionEvent e) {
       stopSearching();
 
-      Collection<SearchEverywhereContributor> contributors = isAllTabSelected() ? allContributors : Collections.singleton(mySelectedTab.getContributor().get());
+      Collection<SearchEverywhereContributor> contributors = isAllTabSelected() ? getUsedContributors() : Collections.singleton(mySelectedTab.getContributor().get());
       contributors = contributors.stream()
                                  .filter(SearchEverywhereContributor::showInFindResults)
                                  .collect(Collectors.toList());
@@ -928,11 +955,10 @@ public class SearchEverywhereUI extends BorderLayoutPanel implements Disposable,
           public void run(@NotNull ProgressIndicator indicator) {
             contributorsForAdditionalSearch.forEach(contributor -> {
               if (!progressIndicator.isCanceled()) {
-                ApplicationManager.getApplication().runReadAction(() -> {
-                  //todo overflow #UX-1
-                  List<Object> foundElements = contributor.search(myProject, searchText, everywhere, progressIndicator);
-                  fillUsages(foundElements, usages, targets);
-                });
+                //todo overflow #UX-1
+                List<Object> foundElements =
+                  contributor.search(searchText, everywhere, myContributorFilters.get(contributor.getSearchProviderId()), progressIndicator);
+                fillUsages(foundElements, usages, targets);
               }
             });
           }
@@ -979,11 +1005,141 @@ public class SearchEverywhereUI extends BorderLayoutPanel implements Disposable,
     }
   }
 
+  private class ShowFilterAction extends ToggleAction implements DumbAware {
+    private JBPopup myFilterPopup;
+
+    public ShowFilterAction() {
+      super("Filter", "Filter files by type", AllIcons.General.Filter);
+    }
+
+    @Override
+    public boolean isSelected(final AnActionEvent e) {
+      return myFilterPopup != null && !myFilterPopup.isDisposed();
+    }
+
+    @Override
+    public void setSelected(final AnActionEvent e, final boolean state) {
+      if (state) {
+        showPopup(e.getInputEvent().getComponent());
+      }
+      else {
+        if (myFilterPopup != null && !myFilterPopup.isDisposed()) {
+          myFilterPopup.cancel();
+        }
+      }
+    }
+
+    @Override
+    public void update(@NotNull AnActionEvent e) {
+      Icon icon = getTemplatePresentation().getIcon();
+      e.getPresentation().setIcon(isActive() ? ExecutionUtil.getLiveIndicator(icon) : icon);
+      e.getPresentation().setEnabled(myContributorFilters.get(getSelectedContributorID()) != null);
+      e.getPresentation().putClientProperty(SELECTED_PROPERTY, isSelected(e));
+    }
+
+    private boolean isActive() {
+      String contributorID = getSelectedContributorID();
+      SearchEverywhereContributorFilter<?> filter = myContributorFilters.get(contributorID);
+      if (filter == null) {
+        return false;
+      }
+      return filter.getAllElements().size() != filter.getSelectedElements().size();
+    }
+
+    private void showPopup(Component anchor) {
+      if (myFilterPopup != null) {
+        return;
+      }
+      JBPopupListener popupCloseListener = new JBPopupListener() {
+        @Override
+        public void onClosed(LightweightWindowEvent event) {
+          myFilterPopup = null;
+        }
+      };
+      myFilterPopup = JBPopupFactory.getInstance()
+                                    .createComponentPopupBuilder(createFilterPanel(), null)
+                                    .setModalContext(false)
+                                    .setFocusable(false)
+                                    .setResizable(true)
+                                    .setCancelOnClickOutside(false)
+                                    .setMinSize(new Dimension(200, 200))
+                                    .setDimensionServiceKey(myProject, "GotoFile_FileTypePopup", false)
+                                    .addListener(popupCloseListener)
+                                    .createPopup();
+      Disposer.register(SearchEverywhereUI.this, myFilterPopup);
+      myFilterPopup.showUnderneathOf(anchor);
+    }
+
+    private JComponent createFilterPanel() {
+      SearchEverywhereContributorFilter<?> filter = myContributorFilters.get(getSelectedContributorID());
+      ElementsChooser<?> chooser = createChooser(filter);
+
+      JPanel panel = new JPanel();
+      panel.setLayout(new BoxLayout(panel, BoxLayout.Y_AXIS));
+      panel.add(chooser);
+      JPanel buttons = new JPanel();
+      JButton all = new JButton("All");
+      all.addActionListener(new ActionListener() {
+        @Override
+        public void actionPerformed(final ActionEvent e) {
+          chooser.setAllElementsMarked(true);
+        }
+      });
+      buttons.add(all);
+      JButton none = new JButton("None");
+      none.addActionListener(new ActionListener() {
+        @Override
+        public void actionPerformed(final ActionEvent e) {
+          chooser.setAllElementsMarked(false);
+        }
+      });
+      buttons.add(none);
+      JButton invert = new JButton("Invert");
+      invert.addActionListener(new ActionListener() {
+        @Override
+        public void actionPerformed(final ActionEvent e) {
+          chooser.invertSelection();
+        }
+      });
+      buttons.add(invert);
+      panel.add(buttons);
+      return panel;
+    }
+
+    private <T> ElementsChooser<T> createChooser(SearchEverywhereContributorFilter<T> filter) {
+      ElementsChooser<T> res = new ElementsChooser<T>(filter.getAllElements(), false) {
+        @Override
+        protected String getItemText(@NotNull T value) {
+          return filter.getElementText(value);
+        }
+
+        @Nullable
+        @Override
+        protected Icon getItemIcon(@NotNull T value) {
+          return filter.getElementIcon(value);
+        }
+      };
+      res.markElements(filter.getSelectedElements());
+      ElementsChooser.ElementsMarkListener<T> listener = (element, isMarked) -> {
+        filter.setSelected(element, isMarked);
+        rebuildList();
+      };
+      res.addElementsMarkListener(listener);
+      return res;
+    }
+  }
+
   private static JLabel groupInfoLabel(String text) {
     JLabel label = new JLabel(text);
     label.setForeground(UIUtil.getLabelDisabledForeground());
     label.setFont(UIUtil.getLabelFont().deriveFont(UIUtil.getFontSize(UIUtil.FontSize.SMALL)));
     label.setOpaque(false);
     return label;
+  }
+
+  private String getEmptyText() {
+    return mySelectedTab.getContributor()
+                        .map(c -> IdeBundle.message("searcheverywhere.nothing.found.for.contributor.anywhere", c.getGroupName()))
+                        .orElse(IdeBundle.message("searcheverywhere.nothing.found.for.all.anywhere"));
   }
 }

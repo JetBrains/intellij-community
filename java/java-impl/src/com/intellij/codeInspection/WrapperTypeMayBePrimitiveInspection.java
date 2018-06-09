@@ -39,13 +39,13 @@ public class WrapperTypeMayBePrimitiveInspection extends AbstractBaseJavaLocalIn
     ourReplacementMap.put(CommonClassNames.JAVA_LANG_BYTE, "parseByte");
   }
 
-  static CallMatcher getValueOfMatcher() {
+  private static CallMatcher getValueOfMatcher() {
     CallMatcher[] matchers = JvmPrimitiveTypeKind.getBoxedFqns()
                                                  .stream()
-                                             .filter(fqn -> !fqn.equals(CommonClassNames.JAVA_LANG_CHARACTER))
-                                             .map(fqn -> CallMatcher.staticCall(fqn, "valueOf")
-                                                                  .parameterTypes(CommonClassNames.JAVA_LANG_STRING))
-                                             .toArray(size -> new CallMatcher[size]);
+                                                 .filter(fqn -> !fqn.equals(CommonClassNames.JAVA_LANG_CHARACTER))
+                                                 .map(fqn -> CallMatcher.staticCall(fqn, "valueOf")
+                                                                        .parameterTypes(CommonClassNames.JAVA_LANG_STRING))
+                                                 .toArray(size -> new CallMatcher[size]);
     return CallMatcher.anyOf(matchers);
   }
 
@@ -174,6 +174,7 @@ public class WrapperTypeMayBePrimitiveInspection extends AbstractBaseJavaLocalIn
         if (method == null) return true;
         PsiParameter[] parameters = method.getParameterList().getParameters();
         int parameterIndex = parameters.length < argumentsIndex + 1 ? parameters.length - 1 : argumentsIndex;
+        if (parameterIndex < 0) return false;
         PsiParameter parameter = parameters[parameterIndex];
         PsiType type = parameter.getType();
         if (type instanceof PsiPrimitiveType) {
@@ -215,6 +216,7 @@ public class WrapperTypeMayBePrimitiveInspection extends AbstractBaseJavaLocalIn
                                                             @NotNull BoxingInfo boxingInfo) {
       IElementType operationTokenType = binaryExpression.getOperationTokenType();
       PsiExpression other = ExpressionUtils.getOtherOperand(binaryExpression, boxingInfo.myVariable);
+      if (other == null) return false;
       PsiType type = other.getType();
       if (operationTokenType == JavaTokenType.EQEQ || operationTokenType == JavaTokenType.NE) {
         if (!(type instanceof PsiPrimitiveType) || PsiType.NULL.equals(type)) return false;

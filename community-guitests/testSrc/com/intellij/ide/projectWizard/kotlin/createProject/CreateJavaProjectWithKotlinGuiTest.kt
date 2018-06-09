@@ -16,17 +16,4 @@ class CreateJavaProjectWithKotlinGuiTest : KotlinGuiTestCase() {
       )
     }
   }
-
-  @Test
-  @JvmName("java_with_js")
-  fun createJavaWithKotlinJSProject() {
-    createJavaProject(projectFolder, kotlinLibs[KotlinKind.JS]!!.javaProject.frameworkName)
-    ideFrame {
-      checkKotlinLibsInStructureFromPlugin(
-        kotlinKind = KotlinKind.JS,
-        kotlinVersion = KotlinTestProperties.kotlin_artifact_version
-      )
-    }
-  }
-
 }

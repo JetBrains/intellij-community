@@ -1,9 +1,7 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.idea;
 
-import com.intellij.diagnostic.LogMessageEx;
+import com.intellij.diagnostic.LogMessage;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ex.ApplicationInfoEx;
 import com.intellij.openapi.application.impl.ApplicationImpl;
@@ -95,8 +93,7 @@ public class IdeaLogger extends Log4jBasedLogger {
 
   @Override
   public void error(String message, @Nullable Throwable t, @NotNull Attachment... attachments) {
-    String trace = ExceptionUtil.getThrowableText(t != null ? t : new Throwable());
-    myLogger.error(LogMessageEx.createEvent(message, trace, attachments));
+    myLogger.error(LogMessage.createEvent(t != null ? t : new Throwable(), message, attachments));
   }
 
   @Override
@@ -120,11 +117,7 @@ public class IdeaLogger extends Log4jBasedLogger {
   }
 
   private void logErrorHeader() {
-    String info = ourApplicationInfoProvider.getInfo();
-
-    if (info != null) {
-      myLogger.error(info);
-    }
+    myLogger.error(ourApplicationInfoProvider.getInfo());
 
     if (ourCompilationTimestamp != null) {
       myLogger.error("Internal version. Compiled " + ourCompilationTimestamp);

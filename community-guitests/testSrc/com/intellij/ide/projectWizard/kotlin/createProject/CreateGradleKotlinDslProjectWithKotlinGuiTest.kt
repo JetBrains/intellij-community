@@ -44,6 +44,7 @@ class CreateGradleKotlinDslProjectWithKotlinGuiTest : KotlinGuiTestCase() {
       isJavaUsed = true,
       isKotlinDslUsed = true)
     waitAMoment(extraTimeOut)
+    editSettingsGradle()
     editBuildGradle(
       kotlinVersion = kotlinVersion,
       isKotlinDslUsed = true,

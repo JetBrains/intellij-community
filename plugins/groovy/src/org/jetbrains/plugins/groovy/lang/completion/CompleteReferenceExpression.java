@@ -47,6 +47,7 @@ import org.jetbrains.plugins.groovy.lang.psi.typeEnhancers.ClosureParameterEnhan
 import org.jetbrains.plugins.groovy.lang.psi.util.GroovyPropertyUtils;
 import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
 import org.jetbrains.plugins.groovy.lang.resolve.ClosureMissingMethodContributor;
+import org.jetbrains.plugins.groovy.lang.resolve.ElementResolveResult;
 import org.jetbrains.plugins.groovy.lang.resolve.ResolveUtil;
 import org.jetbrains.plugins.groovy.lang.resolve.processors.ResolverProcessorImpl;
 import org.jetbrains.plugins.groovy.lang.resolve.processors.SubstitutorComputer;
@@ -145,11 +146,6 @@ public class CompleteReferenceExpression {
       ResolveUtil.treeWalkUp(myRefExpr, myProcessor, true);
 
       ClosureMissingMethodContributor.processMethodsFromClosures(myRefExpr, myProcessor);
-
-      GrExpression runtimeQualifier = PsiImplUtil.getRuntimeQualifier(myRefExpr);
-      if (runtimeQualifier != null) {
-        getVariantsFromQualifier(runtimeQualifier);
-      }
 
       getBindings();
     }
@@ -274,7 +270,7 @@ public class CompleteReferenceExpression {
                                          resolveResult.getSubstitutor(), resolveResult.isAccessible(), resolveResult.isStaticsOK());
     }
     else {
-      return new GroovyResolveResultImpl(field, true);
+      return new ElementResolveResult<>(field);
     }
   }
 
@@ -423,7 +419,7 @@ public class CompleteReferenceExpression {
     }
 
     private boolean shouldSkipPackages() {
-      if (PsiImplUtil.getRuntimeQualifier(myRefExpr) != null) {
+      if (myRefExpr.getQualifierExpression() != null) {
         return false;
       }
 

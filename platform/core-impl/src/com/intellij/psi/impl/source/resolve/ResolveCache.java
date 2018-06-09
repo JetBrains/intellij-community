@@ -49,6 +49,15 @@ public class ResolveCache {
     return ServiceManager.getService(project, ResolveCache.class);
   }
 
+  public ResolveCache(@NotNull MessageBus messageBus) {
+    messageBus.connect().subscribe(PsiManagerImpl.ANY_PSI_CHANGE_TOPIC, new AnyPsiChangeListener.Adapter() {
+      @Override
+      public void beforePsiChanged(boolean isPhysical) {
+        clearCache(isPhysical);
+      }
+    });
+  }
+
   @FunctionalInterface
   public interface AbstractResolver<TRef extends PsiReference, TResult> {
     TResult resolve(@NotNull TRef ref, boolean incompleteCode);
@@ -78,15 +87,6 @@ public class ResolveCache {
    */
   @FunctionalInterface
   public interface Resolver extends AbstractResolver<PsiReference, PsiElement> {
-  }
-
-  public ResolveCache(@NotNull MessageBus messageBus) {
-    messageBus.connect().subscribe(PsiManagerImpl.ANY_PSI_CHANGE_TOPIC, new AnyPsiChangeListener.Adapter() {
-      @Override
-      public void beforePsiChanged(boolean isPhysical) {
-        clearCache(isPhysical);
-      }
-    });
   }
 
   @NotNull

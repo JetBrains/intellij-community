@@ -38,6 +38,7 @@
     </action>
 
     <action class="git4idea.log.GitShowCommitInLogAction" id="Git.SelectInGitLog"/>
+    <action class="git4idea.log.GitBrowseRepoAtRevisionAction" id="Git.BrowseRepoAtRevision"/>
 
     <group id="GitFileActions">
       <reference ref="CheckinFiles"/>
@@ -124,6 +125,7 @@
     <group id="Git.Log.ContextMenu">
       <separator/>
       <reference id="Git.CheckoutRevision"/>
+      <reference id="Git.BrowseRepoAtRevision"/>
       <reference id="Git.CreateNewBranch" />
       <reference id="Git.CreateNewTag" />
       <separator/>

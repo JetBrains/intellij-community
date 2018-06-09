@@ -553,6 +553,16 @@ public final class InternalDecorator extends JPanel implements Queryable, DataPr
     }
   }
 
+  void removeStripeButton() {
+    fireVisibleOnPanelChanged(false);
+    fireHidden();
+  }
+
+  void showStripeButton() {
+    fireVisibleOnPanelChanged(true);
+    fireActivated();
+  }
+
   private final class ChangeAnchorAction extends AnAction implements DumbAware {
     @NotNull private final ToolWindowAnchor myAnchor;
 
@@ -682,10 +692,7 @@ public final class InternalDecorator extends JPanel implements Queryable, DataPr
 
     @Override
     public void actionPerformed(AnActionEvent e) {
-      fireVisibleOnPanelChanged(false);
-      if (getToolWindow().isActive()) {
-        fireHidden();
-      }
+      removeStripeButton();
     }
   }
 

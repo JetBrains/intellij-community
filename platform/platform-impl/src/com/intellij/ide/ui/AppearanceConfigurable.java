@@ -17,6 +17,7 @@ import com.intellij.openapi.options.SearchableConfigurable;
 import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.ui.ComboBox;
 import com.intellij.openapi.util.Comparing;
+import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.wm.ex.WindowManagerEx;
 import com.intellij.ui.FontComboBox;
@@ -127,7 +128,18 @@ public class AppearanceConfigurable implements SearchableConfigurable {
     myComponent.myBackgroundImageButton.addActionListener(ActionUtil.createActionListener(
       "Images.SetBackgroundImage", myComponent.myPanel, ActionPlaces.UNKNOWN));
 
+    myComponent.myDarkWindowHeaders.setSelected(Registry.is("ide.mac.allowDarkWindowDecorations"));
+    updateDarkWindowHeaderVisibility();
+    myComponent.myLafComboBox.addItemListener(x -> updateDarkWindowHeaderVisibility());
+    myComponent.myDarkWindowHeaders.addItemListener(x -> {Registry.get("ide.mac.allowDarkWindowDecorations").setValue(myComponent.myDarkWindowHeaders.isSelected()); LafManager.getInstance().updateUI();});
+
     return myComponent.myPanel;
+  }
+
+  private void updateDarkWindowHeaderVisibility() {
+    Object item = myComponent.myLafComboBox.getSelectedItem();
+    boolean isDarkLaf = item instanceof UIManager.LookAndFeelInfo && ((UIManager.LookAndFeelInfo)item).getClassName().endsWith("DarculaLaf");
+    myComponent.myDarkWindowHeaders.setVisible(SystemInfo.isMac && isDarkLaf);
   }
 
   @Override
@@ -486,6 +498,7 @@ public class AppearanceConfigurable implements SearchableConfigurable {
     private JComboBox myAntialiasingInIDE;
     private JComboBox myAntialiasingInEditor;
     private JButton myBackgroundImageButton;
+    private JBCheckBox myDarkWindowHeaders;
 
     public MyComponent() {
       myOverrideLAFFonts.addActionListener(__ -> updateCombo());

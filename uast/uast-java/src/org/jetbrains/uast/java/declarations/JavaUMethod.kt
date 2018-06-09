@@ -49,7 +49,7 @@ class JavaUAnnotationMethod(
   override val psi: PsiAnnotationMethod,
   languagePlugin: UastLanguagePlugin,
   containingElement: UElement?
-) : JavaUMethod(psi, containingElement), UAnnotationMethod {
+) : JavaUMethod(psi, containingElement), UAnnotationMethod, UDeclarationEx {
 
   override val javaPsi: PsiAnnotationMethod
     get() = psi

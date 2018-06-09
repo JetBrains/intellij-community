@@ -247,7 +247,18 @@ public class JsonSchemaServiceImpl implements JsonSchemaService {
 
   @Override
   public boolean isSchemaFile(@NotNull VirtualFile file) {
-    return myState.getFiles().contains(file) || hasSchemaSchema(file);
+    return myState.getFiles().contains(file)
+           || isSchemaByProvider(file)
+           || hasSchemaSchema(file);
+  }
+
+  private boolean isSchemaByProvider(@NotNull VirtualFile file) {
+    JsonSchemaFileProvider provider = myState.getProvider(file);
+    if (provider == null) return false;
+    VirtualFile schemaFile = provider.getSchemaFile();
+    if (schemaFile == null) return false;
+    String url = schemaFile.getUrl();
+    return url.startsWith("http://json-schema.org/") && url.endsWith("/schema");
   }
 
   @Override

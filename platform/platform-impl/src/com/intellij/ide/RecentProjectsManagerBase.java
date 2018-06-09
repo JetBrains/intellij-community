@@ -67,13 +67,13 @@ public abstract class RecentProjectsManagerBase extends RecentProjectsManager im
   }
 
   public static class State {
-    public List<String> recentPaths = new SmartList<>();
-    public List<String> openPaths = new SmartList<>();
-    public Map<String, String> names = ContainerUtil.newLinkedHashMap();
-    public List<ProjectGroup> groups = new SmartList<>();
+    public final List<String> recentPaths = new SmartList<>();
+    public final List<String> openPaths = new SmartList<>();
+    public final Map<String, String> names = ContainerUtil.newLinkedHashMap();
+    public final List<ProjectGroup> groups = new SmartList<>();
     public String lastPath;
     public String pid;
-    public Map<String, RecentProjectMetaInfo> additionalInfo = ContainerUtil.newLinkedHashMap();
+    public final Map<String, RecentProjectMetaInfo> additionalInfo = ContainerUtil.newLinkedHashMap();
 
     public String lastProjectLocation;
 
@@ -527,7 +527,7 @@ public abstract class RecentProjectsManagerBase extends RecentProjectsManager im
     //return null;
   }
 
-  private void markPathRecent(@SystemIndependent String path) {
+  private void markPathRecent(@SystemIndependent String path, @NotNull Project project) {
     synchronized (myStateLock) {
       if (path.endsWith(File.separator)) {
         path = path.substring(0, path.length() - File.separator.length());
@@ -542,8 +542,16 @@ public abstract class RecentProjectsManagerBase extends RecentProjectsManager im
         group.save(projects);
       }
       myState.additionalInfo.remove(path);
-      myState.additionalInfo.put(path, RecentProjectMetaInfo.create());
+
+      String additionalMetadata = getRecentProjectMetadata(path, project);
+      myState.additionalInfo.put(path, RecentProjectMetaInfo.create(additionalMetadata));
     }
+  }
+
+  @Nullable
+  @SuppressWarnings("unused")
+  protected String getRecentProjectMetadata(@SystemIndependent String path, @NotNull Project project) {
+    return null;
   }
 
   @Nullable
@@ -584,7 +592,7 @@ public abstract class RecentProjectsManagerBase extends RecentProjectsManager im
     public void projectOpened(final Project project) {
       String path = getProjectPath(project);
       if (path != null) {
-        markPathRecent(path);
+        markPathRecent(path, project);
       }
       updateUI();
     }
@@ -610,9 +618,10 @@ public abstract class RecentProjectsManagerBase extends RecentProjectsManager im
     public void projectClosed(final Project project) {
       Project[] openProjects = ProjectManager.getInstance().getOpenProjects();
       if (openProjects.length > 0) {
-        String path = getProjectPath(openProjects[openProjects.length - 1]);
+        Project openProject = openProjects[openProjects.length - 1];
+        String path = getProjectPath(openProject);
         if (path != null) {
-          markPathRecent(path);
+          markPathRecent(path, openProject);
         }
       }
       updateUI();
@@ -776,8 +785,9 @@ public abstract class RecentProjectsManagerBase extends RecentProjectsManager im
     public String binFolder;
     public long projectOpenTimestamp;
     public long buildTimestamp;
+    public String metadata;
 
-    public static RecentProjectMetaInfo create() {
+    public static RecentProjectMetaInfo create(String metadata) {
       RecentProjectMetaInfo info = new RecentProjectMetaInfo();
       info.build = ApplicationInfoEx.getInstanceEx().getBuild().asString();
       info.productionCode = ApplicationInfoEx.getInstanceEx().getBuild().getProductCode();
@@ -785,6 +795,7 @@ public abstract class RecentProjectsManagerBase extends RecentProjectsManager im
       info.binFolder = PathUtil.toSystemIndependentName(PathManager.getBinPath());
       info.projectOpenTimestamp = System.currentTimeMillis();
       info.buildTimestamp = ApplicationInfoEx.getInstanceEx().getBuildDate().getTimeInMillis();
+      info.metadata = metadata;
       return info;
     }
   }

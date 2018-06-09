@@ -1,8 +1,6 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.groovy.lang.parser
 
-import com.intellij.idea.Bombed
-
 /**
  * @author peter
  */
@@ -101,9 +99,6 @@ class StatementsParsingTest extends GroovyParsingTestCase {
 
   void testFor$for1() throws Throwable { doTest() }
 
-  @Bombed(month = 6, day = 10, user = "daniil")
-  void testFor$for10() throws Throwable { doTest() }
-
   void testFor$for11() throws Throwable { doTest() }
 
   void testFor$for12() throws Throwable { doTest() }
@@ -116,7 +111,6 @@ class StatementsParsingTest extends GroovyParsingTestCase {
 
   void testFor$for4() throws Throwable { doTest() }
 
-  @Bombed(month = 6, day = 10, user = "daniil")
   void testFor$for5() throws Throwable { doTest() }
 
   void testFor$for6() throws Throwable { doTest() }
@@ -125,8 +119,13 @@ class StatementsParsingTest extends GroovyParsingTestCase {
 
   void testFor$for8() throws Throwable { doTest() }
 
-  @Bombed(month = 6, day = 10, user = "daniil")
   void testFor$for9() throws Throwable { doTest() }
+
+  void testFor$idenfierAfterLParen() { doTest() }
+
+  void testFor$keywordOnly() { doTest() }
+
+  void testFor$lParen() { doTest() }
 
   void testIfstmt$if1() throws Throwable { doTest() }
 
@@ -183,6 +182,18 @@ class StatementsParsingTest extends GroovyParsingTestCase {
   void testLoop$while6() throws Throwable { doTest() }
 
   void testLoop$while7() throws Throwable { doTest() }
+
+  void testLoop$dowhile0() { doTest() }
+
+  void testLoop$dowhile1() { doTest() }
+
+  void testLoop$dowhile2() { doTest() }
+
+  void testLoop$dowhile3() { doTest() }
+
+  void testLoop$dowhile4() { doTest() }
+
+  void testLoop$dowhile5() { doTest() }
 
   void testMethods$method1() throws Throwable { doTest() }
 
@@ -262,6 +273,8 @@ class StatementsParsingTest extends GroovyParsingTestCase {
 
   void testTuples$tupleNotInit() throws Throwable { doTest() }
 
+  void testTuples$tupleNotInit2() { doTest() }
+
   void testTuples$tupleOneVarInLine() throws Throwable { doTest() }
 
   void testTuples$tupleTypeErr() throws Throwable { doTest() }
@@ -269,6 +282,8 @@ class StatementsParsingTest extends GroovyParsingTestCase {
   void testTuples$tupleWithoutDef() throws Throwable { doTest() }
 
   void testTuples$tupleWithoutVariables() { doTest() }
+
+  void testTuples$differentModifiers() { doTest() }
 
   void testTypedef$classes$abstr() throws Throwable { doTest() }
 

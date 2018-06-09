@@ -8,7 +8,7 @@ public class Main {
       StringBuilder sb = new StringBuilder();
       Set<CharSequence> uniqueValues = new HashSet<>();
       boolean first = true;
-      for (CharSequence charSequence : list) {
+      for (CharSequence charSequence: list) {
           if (first) {
               first = false;
               continue;
@@ -25,7 +25,7 @@ public class Main {
       long toSkip = 2;
       Set<CharSequence> uniqueValues = new HashSet<>();
       boolean first = true;
-      for (CharSequence charSequence : list) {
+      for (CharSequence charSequence: list) {
           if (first) {
               first = false;
               continue;
@@ -45,7 +45,7 @@ public class Main {
       StringJoiner joiner = new StringJoiner(delimiter, "<", ">");
       Set<CharSequence> uniqueValues = new HashSet<>();
       boolean first = true;
-      for (CharSequence charSequence : list) {
+      for (CharSequence charSequence: list) {
           if (first) {
               first = false;
               continue;

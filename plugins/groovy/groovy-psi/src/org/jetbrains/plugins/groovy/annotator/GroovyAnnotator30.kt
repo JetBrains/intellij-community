@@ -16,7 +16,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefini
 /**
  * Check features introduced in groovy 3.0
  */
-class GroovyAnnotator30(private val myHolder: AnnotationHolder, private val atLeast30: Boolean) : GroovyElementVisitor() {
+class GroovyAnnotator30(private val holder: AnnotationHolder) : GroovyElementVisitor() {
 
   override fun visitModifierList(modifierList: GrModifierList) {
     checkDefaultModifier(modifierList)
@@ -24,14 +24,10 @@ class GroovyAnnotator30(private val myHolder: AnnotationHolder, private val atLe
 
   private fun checkDefaultModifier(modifierList: GrModifierList) {
     val modifier = modifierList.getModifier(PsiModifier.DEFAULT) ?: return
-    if (!atLeast30) {
-      myHolder.createErrorAnnotation(modifier, GroovyBundle.message("default.modifier.in.old.versions"))
-      return
-    }
 
     val parentClass = PsiTreeUtil.getParentOfType(modifier, PsiClass::class.java) ?: return
     if (!parentClass.isInterface || (parentClass as? GrTypeDefinition)?.isTrait == true) {
-      val annotation = myHolder.createWarningAnnotation(modifier, GroovyBundle.message("illegal.default.modifier"))
+      val annotation = holder.createWarningAnnotation(modifier, GroovyBundle.message("illegal.default.modifier"))
       registerFix(annotation, GrRemoveModifierFix(PsiModifier.DEFAULT, GroovyBundle.message("illegal.default.modifier.fix")), modifier)
     }
   }

@@ -97,7 +97,7 @@ public class PyConsoleOptions implements PersistentStateComponent<PyConsoleOptio
     public boolean myPassParentEnvs = true;
     public String myWorkingDirectory = "";
     public boolean myAddContentRoots = true;
-    public boolean myAddSourceRoots;
+    public boolean myAddSourceRoots = true;
     @NotNull
     private PathMappingSettings myMappings = new PathMappingSettings();
     private boolean myUseSoftWraps = false;

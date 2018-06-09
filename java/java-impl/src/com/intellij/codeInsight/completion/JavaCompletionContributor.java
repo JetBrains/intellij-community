@@ -116,7 +116,8 @@ public class JavaCompletionContributor extends CompletionContributor {
 
     if (JavaKeywordCompletion.isDeclarationStart(position) ||
         JavaKeywordCompletion.isInsideParameterList(position) ||
-        isInsideAnnotationName(position)) {
+        isInsideAnnotationName(position) ||
+        psiElement().inside(PsiReferenceParameterList.class).accepts(position)) {
       return new OrFilter(ElementClassFilter.CLASS, ElementClassFilter.PACKAGE);
     }
 
@@ -140,10 +141,6 @@ public class JavaCompletionContributor extends CompletionContributor {
     }
 
     if (JavaSmartCompletionContributor.AFTER_NEW.accepts(position)) {
-      return ElementClassFilter.CLASS;
-    }
-
-    if (psiElement().inside(PsiReferenceParameterList.class).accepts(position)) {
       return ElementClassFilter.CLASS;
     }
 

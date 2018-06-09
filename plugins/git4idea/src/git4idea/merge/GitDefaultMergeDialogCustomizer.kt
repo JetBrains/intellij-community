@@ -17,13 +17,14 @@ import git4idea.repo.GitRepositoryManager
 /**
  * @author yole
  */
-class GitDefaultMergeDialogCustomizer(
+open class GitDefaultMergeDialogCustomizer(
   private val gitMergeProvider: GitMergeProvider
 ) : MergeDialogCustomizer() {
   private val project = gitMergeProvider.project
 
   override fun getMultipleFileMergeDescription(files: MutableCollection<VirtualFile>): String? {
     val filesByRoot = GitUtil.sortFilesByGitRoot(files)
+
     val mergeBranches = filesByRoot.keys.map { gitMergeProvider.resolveMergeBranch(it) }
     if (mergeBranches.any { it != null }) {
       return buildString {
@@ -31,6 +32,16 @@ class GitDefaultMergeDialogCustomizer(
         append(mergeBranches.toSet().singleOrNull()?.let { "branch <b>${XmlStringUtil.escapeString(it)}</b>" } ?: "diverging branches ")
         append(" into ")
         append(gitMergeProvider.getSingleCurrentBranchName(filesByRoot.keys)?.let { "branch <b>${XmlStringUtil.escapeString(it)}</b>" } ?: "diverging branches")
+      }
+    }
+
+    val rebaseOntoBranches = filesByRoot.keys.map { gitMergeProvider.resolveRebaseOntoBranch(it) }
+    if (rebaseOntoBranches.any { it != null }) {
+      return buildString {
+        append("<html>Rebasing ")
+        append(gitMergeProvider.getSingleCurrentBranchName(filesByRoot.keys)?.let { "branch <b>${XmlStringUtil.escapeString(it)}</b>" } ?: "diverging branches")
+        append(" onto ")
+        append(rebaseOntoBranches.toSet().singleOrNull()?.let { "branch <b>${XmlStringUtil.escapeString(it)}</b>" } ?: "diverging branches ")
       }
     }
 
@@ -69,7 +80,7 @@ class GitDefaultMergeDialogCustomizer(
     val repository = GitRepositoryManager.getInstance(project).getRepositoryForFile(file)
                      ?: return super.getRightPanelTitle(file, revisionNumber)
 
-    val branchBeingMerged = gitMergeProvider.resolveMergeBranch(repository)
+    val branchBeingMerged = gitMergeProvider.resolveMergeBranch(repository) ?: gitMergeProvider.resolveRebaseOntoBranch(repository.root)
     if (branchBeingMerged != null) {
       val branch = "<html>Changes from branch <b>${XmlStringUtil.escapeString(branchBeingMerged)}</b>"
       if (revisionNumber is GitRevisionNumber) {

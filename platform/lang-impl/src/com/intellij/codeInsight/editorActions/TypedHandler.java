@@ -129,6 +129,10 @@ public class TypedHandler extends TypedActionHandlerBase {
   public void beforeExecute(@NotNull Editor editor, char c, @NotNull DataContext context, @NotNull ActionPlan plan) {
     if (COMPLEX_CHARS.contains(c) || Character.isSurrogate(c)) return;
 
+    for (TypedHandlerDelegate delegate : Extensions.getExtensions(TypedHandlerDelegate.EP_NAME)) {
+      if (!delegate.isImmediatePaintingEnabled(editor, c, context)) return;
+    }
+
     if (editor.isInsertMode()) {
       int offset = plan.getCaretOffset();
       plan.replace(offset, offset, String.valueOf(c));

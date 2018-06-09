@@ -2,23 +2,20 @@
 package com.intellij.execution.testDiscovery.indices;
 
 import com.intellij.openapi.progress.ProgressManager;
-import com.intellij.openapi.util.io.DataInputOutputUtilRt;
 import com.intellij.util.indexing.DataIndexer;
 import com.intellij.util.indexing.IndexExtension;
 import com.intellij.util.indexing.IndexId;
-import com.intellij.util.indexing.impl.*;
+import com.intellij.util.indexing.impl.KeyCollectionBasedForwardIndex;
+import com.intellij.util.indexing.impl.MapIndexStorage;
+import com.intellij.util.indexing.impl.MapReduceIndex;
 import com.intellij.util.io.*;
 import gnu.trove.TIntArrayList;
-import gnu.trove.TLongHashSet;
-import gnu.trove.TLongIterator;
-import gnu.trove.TLongProcedure;
 import org.jetbrains.annotations.NotNull;
 
-import java.io.DataInput;
-import java.io.DataOutput;
 import java.io.File;
 import java.io.IOException;
-import java.util.*;
+import java.util.Collection;
+import java.util.Map;
 
 public class DiscoveredTestsIndex extends MapReduceIndex<Integer, TIntArrayList, DiscoveredTestsIndex.UsedMethods> {
   protected DiscoveredTestsIndex(@NotNull File file) throws IOException {
@@ -27,17 +24,7 @@ public class DiscoveredTestsIndex extends MapReduceIndex<Integer, TIntArrayList,
       @Override
       public PersistentHashMap<Integer, Collection<Integer>> createMap() throws IOException {
         return new PersistentHashMap<>(new File(file, "forward.idx"), EnumeratorIntegerDescriptor.INSTANCE,
-                                       new DataExternalizer<Collection<Integer>>() {
-                                         @Override
-                                         public void save(@NotNull DataOutput out, Collection<Integer> value) throws IOException {
-                                           DataInputOutputUtilRt.writeSeq(out, value, i -> EnumeratorIntegerDescriptor.INSTANCE.save(out, i));
-                                         }
-
-                                         @Override
-                                         public Collection<Integer> read(@NotNull DataInput in) throws IOException {
-                                           return DataInputOutputUtilRt.readSeq(in, () -> EnumeratorIntegerDescriptor.INSTANCE.read(in));
-                                         }
-                                       });
+                                       new IntCollectionDataExternalizer());
       }
     });
   }

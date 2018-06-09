@@ -42,6 +42,7 @@ class ContentTabLabel extends BaseLabel {
 
   private final List<AdditionalIcon> additionalIcons = new ArrayList<>();
   private String txt = null;
+  private int iconWithInsetsWidth;
 
   private final AdditionalIcon closeTabIcon = new AdditionalIcon(closeIcon) {
     private static final String ACTION_NAME = "Close tab";
@@ -140,16 +141,18 @@ class ContentTabLabel extends BaseLabel {
   @Override
   public void setText(String text) {
     txt = text;
-    int iconWidth = updateAndGetInsetsWidth();
+    updateText();
+  }
 
+  private void updateText() {
     FontMetrics fm = getFontMetrics(getFont());
-    int textWidth = SwingUtilities2.stringWidth(this, fm, text);
-    int prefWidth = iconWidth + textWidth;
+    int textWidth = SwingUtilities2.stringWidth(this, fm, txt);
+    int prefWidth = iconWithInsetsWidth + textWidth;
 
     int maxWidth = getMaximumSize().width;
 
     if(prefWidth > maxWidth) {
-      int offset = maxWidth - iconWidth;
+      int offset = maxWidth - iconWithInsetsWidth;
       String s = SwingUtilities2.clipString(this, fm, txt, offset);
       super.setText(s);
       return;
@@ -241,34 +244,42 @@ class ContentTabLabel extends BaseLabel {
     updateTextAndIcon(myContent, isSelected());
   }
 
+
   @Override
   public Dimension getPreferredSize() {
     final Dimension size = super.getPreferredSize();
-    int x = 0;
+    int iconWidth = 0;
     Map<Boolean, List<AdditionalIcon>> map =
       additionalIcons.stream().filter(icon -> icon.getAvailable()).collect(Collectors.groupingBy(icon -> icon.getAfterText()));
 
+    int right = DEFAULT_HORIZONTAL_INSET;
+    int left = DEFAULT_HORIZONTAL_INSET;
+
     if (map.get(false) != null) {
-      x = ICONS_GAP;
+      iconWidth = ICONS_GAP;
 
       for (AdditionalIcon icon : map.get(false)) {
-        icon.setX(x);
-        x += icon.getIconWidth() + ICONS_GAP;
+        icon.setX(iconWidth);
+        iconWidth += icon.getIconWidth() + ICONS_GAP;
       }
 
-      x = 0;
+      left = iconWidth;
+      iconWidth = 0;
     }
-
-    x += size.width;
 
     if (map.get(true) != null) {
+      right = ICONS_GAP + 4;
+
       for (AdditionalIcon icon : map.get(true)) {
-        icon.setX(x + ICONS_GAP - getInsets().right);
-        x += icon.getIconWidth() + ICONS_GAP;
+        icon.setX(iconWidth + size.width + ICONS_GAP - right);
+        iconWidth += icon.getIconWidth() + ICONS_GAP;
       }
     }
 
-    return new Dimension(x, size.height);
+    setBorder(JBUI.Borders.empty(0, left, 0, right));
+    iconWithInsetsWidth = iconWidth + right + left;
+
+    return new Dimension(iconWidth + size.width, size.height);
   }
 
   private int updateAndGetInsetsWidth() {

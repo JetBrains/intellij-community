@@ -6,7 +6,6 @@ import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.codeInspection.ProblemsHolder;
 import com.intellij.codeInspection.ui.SingleCheckboxOptionsPanel;
-import com.intellij.diagnostic.LogMessageEx;
 import com.intellij.lang.java.lexer.JavaLexer;
 import com.intellij.openapi.diagnostic.Attachment;
 import com.intellij.openapi.diagnostic.Logger;
@@ -25,7 +24,6 @@ import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.psi.util.RedundantCastUtil;
 import com.intellij.refactoring.util.RefactoringUtil;
-import com.intellij.util.ExceptionUtil;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
 import com.siyeh.ig.callMatcher.CallMatcher;
@@ -123,7 +121,7 @@ public class StreamToLoopInspection extends AbstractBaseJavaLocalInspectionTool 
         if (!isValidElementType(elementType, call, false)) return null;
         Operation op = Operation.createIntermediate(name, args, outVar, elementType, supportUnknownSources);
         if (op != null) return op;
-        op = TerminalOperation.createTerminal(name, args, elementType, callType, isVoidContext(call.getParent()));
+        op = TerminalOperation.createTerminal(name, args, elementType, callType, ExpressionUtils.isVoidContext(call));
         if (op != null) return op;
       }
       return null;
@@ -145,15 +143,9 @@ public class StreamToLoopInspection extends AbstractBaseJavaLocalInspectionTool 
     return true;
   }
 
-  private static boolean isVoidContext(PsiElement element) {
-    return element instanceof PsiExpressionStatement ||
-           (element instanceof PsiLambdaExpression &&
-            PsiType.VOID.equals(LambdaUtil.getFunctionalInterfaceReturnType((PsiLambdaExpression)element)));
-  }
-
   @Nullable
   static List<OperationRecord> extractIterableForEach(PsiMethodCallExpression terminalCall) {
-    if (!ITERABLE_FOREACH.test(terminalCall) || !isVoidContext(terminalCall.getParent())) return null;
+    if (!ITERABLE_FOREACH.test(terminalCall) || !ExpressionUtils.isVoidContext(terminalCall)) return null;
     PsiExpression qualifier = terminalCall.getMethodExpression().getQualifierExpression();
     if (qualifier == null) return null;
     // Do not visit this path if some class implements both Iterable and Stream
@@ -178,7 +170,7 @@ public class StreamToLoopInspection extends AbstractBaseJavaLocalInspectionTool 
 
   @Nullable
   static List<OperationRecord> extractMapForEach(PsiMethodCallExpression terminalCall) {
-    if (!MAP_FOREACH.test(terminalCall) || !isVoidContext(terminalCall.getParent())) return null;
+    if (!MAP_FOREACH.test(terminalCall) || !ExpressionUtils.isVoidContext(terminalCall)) return null;
     PsiExpression qualifier = terminalCall.getMethodExpression().getQualifierExpression();
     if (qualifier == null) return null;
     // Do not visit this path if some class implements both Map and Stream
@@ -330,9 +322,7 @@ public class StreamToLoopInspection extends AbstractBaseJavaLocalInspectionTool 
         }
       }
       catch (Exception ex) {
-        String text = terminalCall.getText();
-        LOG.error(LogMessageEx.createEvent("Error converting Stream to loop", ExceptionUtil.getThrowableText(ex),
-                                           new Attachment("Stream_code.txt", text)));
+        LOG.error("Error converting Stream to loop", ex, new Attachment("Stream_code.txt", terminalCall.getText()));
       }
     }
 

@@ -1,25 +1,9 @@
-/*
- * Copyright 2000-2014 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.util.xml.impl;
 
-import com.intellij.diagnostic.LogMessageEx;
 import com.intellij.openapi.diagnostic.Attachment;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.psi.PsiElement;
-import com.intellij.psi.impl.DebugUtil;
 import com.intellij.psi.xml.XmlElement;
 import com.intellij.psi.xml.XmlEntityRef;
 import com.intellij.psi.xml.XmlFile;
@@ -126,19 +110,19 @@ public class PhysicalDomParentStrategy implements DomParentStrategy {
         if (nav1 != nav2) {
           PsiElement curContext = findIncluder(element);
           PsiElement navContext = findIncluder(nav1);
-          LOG.error(LogMessageEx.createEvent(
-            "x:include processing error",
-            "nav1,nav2=" + nav1 + ", " + nav2 + ";\n" +
+          LOG.error(
+            "x:include processing error\n" +
+            "nav1,nav2=" + nav1 + "," + nav2 + ";\n" +
             nav1.getContainingFile() + ":" + nav1.getTextRange().getStartOffset() + "!=" + nav2.getContainingFile() + ":" + nav2.getTextRange().getStartOffset() + ";\n" +
             (nav1 == element) + ";" + (nav2 == thatElement) + ";\n" +
             "contexts equal: " +  (curContext == navContext) + ";\n" +
             "curContext?.physical=" + (curContext != null && curContext.isPhysical()) + ";\n" +
             "navContext?.physical=" + (navContext != null && navContext.isPhysical()) + ";\n" +
             "myElement.physical=" + element.isPhysical() + ";\n" +
-            "thatElement.physical=" + thatElement.isPhysical() + "\n" + DebugUtil.currentStackTrace(),
+            "thatElement.physical=" + thatElement.isPhysical(),
+            new Throwable(),
             new Attachment("Including tag text 1.xml", curContext == null ? "null" : curContext.getText()),
-            new Attachment("Including tag text 2.xml", navContext == null ? "null" : navContext.getText())
-          ));
+            new Attachment("Including tag text 2.xml", navContext == null ? "null" : navContext.getText()));
           throw new AssertionError();
         }
       }

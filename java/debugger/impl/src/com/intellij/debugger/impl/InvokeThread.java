@@ -6,6 +6,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
+import com.intellij.util.ConcurrencyUtil;
 import com.sun.jdi.VMDisconnectedException;
 import org.jetbrains.annotations.Async;
 import org.jetbrains.annotations.NotNull;
@@ -44,7 +45,8 @@ public abstract class InvokeThread<E extends PrioritizedTask> {
       }
       ourWorkerRequest.set(this);
       try {
-        myOwner.run(this);
+        ConcurrencyUtil.runUnderThreadName("DebuggerManagerThread", ()->
+        myOwner.run(this));
       } 
       finally {
         ourWorkerRequest.set(null);
@@ -119,9 +121,6 @@ public abstract class InvokeThread<E extends PrioritizedTask> {
   }
 
   private void run(final @NotNull WorkerThreadRequest threadRequest) {
-    String oldThreadName = Thread.currentThread().getName();
-    Thread.currentThread().setName("DebuggerManagerThread");
-
     try {
       DumbService.getInstance(myProject).setAlternativeResolveEnabled(true);
       while(true) {
@@ -170,9 +169,7 @@ public abstract class InvokeThread<E extends PrioritizedTask> {
 
       LOG.debug("Request " + toString() + " exited");
       DumbService.getInstance(myProject).setAlternativeResolveEnabled(false);
-      Thread.currentThread().setName(oldThreadName);
     }
-
   }
 
   private static void reportCommandError(Throwable e) {

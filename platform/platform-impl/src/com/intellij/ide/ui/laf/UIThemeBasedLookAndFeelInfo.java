@@ -10,18 +10,18 @@ import javax.swing.*;
  * @author Konstantin Bulenkov
  */
 public class UIThemeBasedLookAndFeelInfo extends UIManager.LookAndFeelInfo {
-  private UITheme myTheme;
+  private final UITheme myTheme;
 
   public UIThemeBasedLookAndFeelInfo(UITheme theme) {
     super(theme.getName(), theme.isDark() ? DarculaLaf.class.getName() : IntelliJLaf.class.getName());
     myTheme = theme;
   }
 
-  public void installTheme(UIDefaults defaults) {
-    myTheme.applyProperties(defaults);
+  public UITheme getTheme() {
+    return myTheme;
   }
 
-  public void uninstallTheme(UIDefaults defaults) {
-    myTheme.removeProperties(defaults);
+  public void installTheme(UIDefaults defaults) {
+    myTheme.applyProperties(defaults);
   }
 }

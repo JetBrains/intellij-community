@@ -38,8 +38,7 @@ fun <T> invokeAndWaitIfNeed(modalityState: ModalityState? = null, runnable: () -
       catch (e: InvocationTargetException) {
         throw e.cause ?: e
       }
-      @Suppress("UNCHECKED_CAST")
-      return result as T
+      return result!!
     }
   }
   else if (app.isDispatchThread) {
@@ -48,8 +47,7 @@ fun <T> invokeAndWaitIfNeed(modalityState: ModalityState? = null, runnable: () -
   else {
     var result: T? = null
     app.invokeAndWait({ result = runnable() }, modalityState ?: ModalityState.defaultModalityState())
-    @Suppress("UNCHECKED_CAST")
-    return result as T
+    return result!!
   }
 }
 

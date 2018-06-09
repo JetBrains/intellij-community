@@ -83,7 +83,7 @@ public class AppExecutorUtil {
    * which will shutdown itself when {@code parentDisposable} gets disposed.
    */
   @NotNull
-  public static ExecutorService createBoundedApplicationPoolExecutor(@NotNull @Nls(capitalization = Nls.Capitalization.Title) String name, @NotNull Executor backendExecutor, int maxThreads, @NotNull
+  public static BoundedTaskExecutor createBoundedApplicationPoolExecutor(@NotNull @Nls(capitalization = Nls.Capitalization.Title) String name, @NotNull Executor backendExecutor, int maxThreads, @NotNull
                                                                      Disposable parentDisposable) {
     return new BoundedTaskExecutor(name, backendExecutor, maxThreads, parentDisposable);
   }

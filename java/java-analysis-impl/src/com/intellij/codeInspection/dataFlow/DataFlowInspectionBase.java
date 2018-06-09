@@ -21,6 +21,7 @@ import com.intellij.codeInspection.nullable.NullableStuffInspectionBase;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
@@ -665,6 +666,16 @@ public class DataFlowInspectionBase extends AbstractBaseJavaLocalInspectionTool 
         );
       }
       else {
+        if (instruction instanceof BinopInstruction) {
+          TextRange range = ((BinopInstruction)instruction).getAnchorRange();
+          if (range != null) {
+            // report rare cases like a == b == c where "a == b" part is constant
+            String message = InspectionsBundle.message("dataflow.message.constant.condition", Boolean.toString(evaluatesToTrue));
+            holder.registerProblem(psiAnchor, range, message);
+            // do not add to reported anchors if only part of expression was reported
+            return;
+          }
+        }
         reportConstantCondition(holder, psiAnchor, evaluatesToTrue);
       }
       reportedAnchors.add(psiAnchor);

@@ -17,7 +17,7 @@ import java.util.*;
 class GroovyResolverProcessorImpl extends GroovyResolverProcessor implements GrMethodComparator.Context {
 
   GroovyResolverProcessorImpl(@NotNull final GrReferenceExpression ref, @NotNull EnumSet<GroovyResolveKind> kinds, boolean forceRValue) {
-    super(ref, kinds, null, forceRValue);
+    super(ref, kinds, forceRValue);
   }
 
   @NotNull

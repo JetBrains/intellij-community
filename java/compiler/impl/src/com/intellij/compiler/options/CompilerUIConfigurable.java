@@ -16,6 +16,7 @@
 package com.intellij.compiler.options;
 
 import com.intellij.codeInsight.NullableNotNullDialog;
+import com.intellij.codeInsight.NullableNotNullManager;
 import com.intellij.compiler.CompilerConfiguration;
 import com.intellij.compiler.CompilerConfigurationImpl;
 import com.intellij.compiler.CompilerWorkspaceConfiguration;
@@ -83,6 +84,7 @@ public class CompilerUIConfigurable implements SearchableConfigurable, Configura
   private JLabel               myParallelCompilationLegendLabel;
   private JButton              myConfigureAnnotations;
   private JLabel myWarningLabel;
+  private JPanel myAssertNotNullPanel;
 
   public CompilerUIConfigurable(@NotNull final Project project) {
     myProject = project;
@@ -108,7 +110,10 @@ public class CompilerUIConfigurable implements SearchableConfigurable, Configura
                                                       s -> StringUtil.startsWithIgnoreCase(s, "-Xmx")) == null);
       }
     });
-    myConfigureAnnotations.addActionListener(NullableNotNullDialog.createActionListener(myPanel));
+    myConfigureAnnotations.addActionListener(e -> {
+      NullableNotNullDialog.showDialogWithInstrumentationOptions(myPanel);
+      myCbAssertNotNull.setSelected(!NullableNotNullManager.getInstance(myProject).getInstrumentedNotNulls().isEmpty());
+    });
   }
 
   private void tweakControls(@NotNull Project project) {
@@ -140,7 +145,7 @@ public class CompilerUIConfigurable implements SearchableConfigurable, Configura
     Map<Setting, Collection<JComponent>> controls = ContainerUtilRt.newHashMap();
     controls.put(Setting.RESOURCE_PATTERNS, ContainerUtilRt.newArrayList(myResourcePatternsLabel, myResourcePatternsField, myPatternLegendLabel));
     controls.put(Setting.CLEAR_OUTPUT_DIR_ON_REBUILD, Collections.singleton(myCbClearOutputDirectory));
-    controls.put(Setting.ADD_NOT_NULL_ASSERTIONS, Collections.singleton(myCbAssertNotNull));
+    controls.put(Setting.ADD_NOT_NULL_ASSERTIONS, Collections.singleton(myAssertNotNullPanel));
     controls.put(Setting.AUTO_SHOW_FIRST_ERROR_IN_EDITOR, Collections.singleton(myCbAutoShowFirstError));
     controls.put(Setting.DISPLAY_NOTIFICATION_POPUP, Collections.singleton(myCbDisplayNotificationPopup));
     controls.put(Setting.AUTO_MAKE, ContainerUtilRt.newArrayList(myCbEnableAutomake, myEnableAutomakeLegendLabel));

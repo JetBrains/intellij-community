@@ -257,7 +257,7 @@ class EditorGutterComponentImpl extends EditorGutterComponentEx implements Mouse
   }
 
   public void reinitSettings() {
-    updateSize(false, true);
+    updateSize(false, !Boolean.TRUE.equals(myEditor.getUserData(EditorImpl.DONT_SHRINK_GUTTER_SIZE)));
     repaint();
   }
 
@@ -300,7 +300,7 @@ class EditorGutterComponentImpl extends EditorGutterComponentEx implements Mouse
 
     try {
       paintAnnotations(g, startVisualLine, endVisualLine);
-      paintLineMarkers(g, firstVisibleOffset, lastVisibleOffset);
+      paintLineMarkers(g, firstVisibleOffset, lastVisibleOffset, startVisualLine, endVisualLine);
       paintFoldingLines(g, clip);
       paintFoldingTree(g, clip, firstVisibleOffset, lastVisibleOffset);
       paintLineNumbers(g, startVisualLine, endVisualLine);
@@ -459,9 +459,9 @@ class EditorGutterComponentImpl extends EditorGutterComponentEx implements Mouse
     }
   }
 
-  private void paintLineMarkers(Graphics2D g, int firstVisibleOffset, int lastVisibleOffset) {
+  private void paintLineMarkers(Graphics2D g, int firstVisibleOffset, int lastVisibleOffset, int firstVisibleLine, int lastVisibleLine) {
     if (isLineMarkersShown()) {
-      paintGutterRenderers(g, firstVisibleOffset, lastVisibleOffset);
+      paintGutterRenderers(g, firstVisibleOffset, lastVisibleOffset, firstVisibleLine, lastVisibleLine);
     }
   }
 
@@ -760,8 +760,7 @@ class EditorGutterComponentImpl extends EditorGutterComponentEx implements Mouse
       if (!isHighlighterVisible(highlighter)) {
         return;
       }
-      int lineStartOffset = EditorUtil.getNotFoldedLineStartOffset(myEditor, highlighter.getStartOffset());
-      int line = myEditor.getDocument().getLineNumber(lineStartOffset);
+      int line = myEditor.offsetToVisualLine(highlighter.getStartOffset());
       List<GutterMark> renderers = myLineToGutterRenderers.get(line);
       if (renderers == null) {
         renderers = new SmartList<>();
@@ -842,7 +841,8 @@ class EditorGutterComponentImpl extends EditorGutterComponentEx implements Mouse
     return !FoldingUtil.isHighlighterFolded(myEditor, highlighter);
   }
 
-  private void paintGutterRenderers(final Graphics2D g, int firstVisibleOffset, int lastVisibleOffset) {
+  private void paintGutterRenderers(final Graphics2D g,
+                                    int firstVisibleOffset, int lastVisibleOffset, int firstVisibleLine, int lastVisibleLine) {
     Object hint = g.getRenderingHint(RenderingHints.KEY_ANTIALIASING);
     g.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
     try {
@@ -862,8 +862,6 @@ class EditorGutterComponentImpl extends EditorGutterComponentEx implements Mouse
       g.setRenderingHint(RenderingHints.KEY_ANTIALIASING, hint);
     }
 
-    int firstVisibleLine = myEditor.getDocument().getLineNumber(firstVisibleOffset);
-    int lastVisibleLine = myEditor.getDocument().getLineNumber(lastVisibleOffset);
     paintIcons(firstVisibleLine, lastVisibleLine, g);
   }
 
@@ -981,7 +979,7 @@ class EditorGutterComponentImpl extends EditorGutterComponentEx implements Mouse
     int middleCount = 0;
     int middleSize = 0;
     int x = getIconAreaOffset() + 2;
-    final int y = myEditor.logicalPositionToXY(new LogicalPosition(line, 0)).y;
+    final int y = myEditor.visibleLineToY(line);
 
     for (GutterMark r : row) {
       if (!checkDumbAware(r)) continue;
@@ -1505,7 +1503,7 @@ class EditorGutterComponentImpl extends EditorGutterComponentEx implements Mouse
     }
     else {
       final Ref<Point> t = new Ref<>(e.getPoint());
-      int line = EditorUtil.yPositionToLogicalLine(myEditor, e);
+      int line = myEditor.yToVisibleLine(e.getY());
       List<GutterMark> row = getGutterRenderers(line);
       Balloon.Position ballPosition = Balloon.Position.atRight;
       if (row != null) {
@@ -1913,8 +1911,7 @@ class EditorGutterComponentImpl extends EditorGutterComponentEx implements Mouse
   @Override
   @Nullable
   public GutterMark getGutterRenderer(final Point p) {
-    int line = convertPointToLineNumber(p);
-    if (line == -1) return null;
+    int line = myEditor.yToVisibleLine(p.y);
     List<GutterMark> renderers = getGutterRenderers(line);
     if (renderers == null) {
       return null;

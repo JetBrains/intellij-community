@@ -50,7 +50,7 @@ public class JavaClassSupersImpl extends JavaClassSupers {
       bounds = ((InferenceVariable)superClass).getBounds(InferenceBound.LOWER);
     }
     else if (superClass instanceof PsiTypeParameter) {
-      final PsiType lowerBound = TypeConversionUtil.getLowerBound(superClass);
+      final PsiType lowerBound = TypeConversionUtil.getInferredLowerBoundForSynthetic((PsiTypeParameter)superClass);
       if (lowerBound != null) {
         bounds = Collections.singletonList(lowerBound);
       }

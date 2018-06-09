@@ -4,9 +4,7 @@ import java.nio.file.Paths
 
 repositories {
   mavenCentral()
-  if (project.ext.inJetBrainsNetwork) {
-    maven { url "http://repo.labs.intellij.net/intellij-third-party-dependencies/" }
-  }
+  maven { url "http://repo.labs.intellij.net/intellij-third-party-dependencies/" }
   maven { url "https://jetbrains.bintray.com/intellij-third-party-dependencies" }
   maven { url "https://jetbrains.bintray.com/test-discovery" }
   jcenter()
@@ -25,6 +23,7 @@ List<String> projectLibraries = [
   "commons-codec",
   "commons-logging",
   "Trove4j",
+  "JDOM",
   "NanoXML",
   "Guava",
   "JUnit4",

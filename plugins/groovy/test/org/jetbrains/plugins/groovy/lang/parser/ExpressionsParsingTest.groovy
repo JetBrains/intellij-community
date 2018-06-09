@@ -236,6 +236,8 @@ class ExpressionsParsingTest extends GroovyParsingTestCase {
 
   void testparenthed$paren6() throws Throwable { doTest() }
 
+  void testparenthed$capitalNamedArgument() { doTest() }
+
   void testpath$method$ass4() throws Throwable { doTest() }
 
   void testpath$method$clazz1() throws Throwable { doTest() }
@@ -400,6 +402,8 @@ class ExpressionsParsingTest extends GroovyParsingTestCase {
 
   void testregex$regex_begin2() throws Throwable { doTest() }
 
+  void testregex$slashyEq() { doTest() }
+
   void testregex$multiLineSlashy() throws Throwable { doTest() }
 
   void testregex$dollarSlashy() throws Throwable { doTest() }
@@ -463,6 +467,12 @@ class ExpressionsParsingTest extends GroovyParsingTestCase {
   void testrelational$newlineAfterOperator() { doTest() }
 
   void testrelational$noRValue() { doTest() }
+
+  void testrelational$exclamationAfterExpression() { doTest() }
+
+  void testrelational$inNegated() { doTest() }
+
+  void testrelational$instanceOfNegated() { doTest() }
 
   void testspecial$grvy1173() throws Throwable { doTest() }
 
@@ -649,6 +659,10 @@ class ExpressionsParsingTest extends GroovyParsingTestCase {
   void testindex$safeIndexVsTernary2() { doTest() }
 
   void testindex$safeIndexVsTernary3() { doTest() }
+
+  void testindex$safeIndexVsTernary4() { doTest() }
+
+  void testindex$safeIndexVsTernary5() { doTest() }
 
   void testindex$safeIndexNewLineAfterQ() { doTest() }
 

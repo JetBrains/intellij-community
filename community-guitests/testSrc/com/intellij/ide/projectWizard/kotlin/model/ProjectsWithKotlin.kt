@@ -39,7 +39,8 @@ fun KotlinGuiTestCase.createJavaProject(
       else button("Next").click()
       button("Next").click()
       logUIStep("Fill Project location with `$projectPath`")
-      textfield("Project location:").click()
+      textfield("Project name:").click()
+      shortcut(Key.TAB)
       shortcut(Modifier.CONTROL + Key.X)
       typeText(projectPath)
       logUIStep("Close New Project dialog with Finish")
@@ -115,7 +116,8 @@ fun KotlinGuiTestCase.createGradleProject(
       }
       button("Next").click()
       logUIStep("Fill Project location with `$projectPath`")
-      textfield("Project location:").click()
+      textfield("Project name:").click()
+      shortcut(Key.TAB)
       shortcut(Modifier.CONTROL + Key.X)
       typeText(projectPath)
       logUIStep("Close New Project dialog with Finish")
@@ -180,7 +182,8 @@ fun KotlinGuiTestCase.createMavenProject(
 
       button("Next").click()
       logUIStep("Fill Project location with `$projectPath`")
-      textfield("Project location:").click()
+      textfield("Project name:").click()
+      shortcut(Key.TAB)
       shortcut(Modifier.CONTROL + Key.X)
       typeText(projectPath)
 
@@ -215,7 +218,8 @@ fun KotlinGuiTestCase.createKotlinProject(
       button("Next").click()
 
       logUIStep("Fill Project location with `$projectPath`")
-      textfield("Project location:").click()
+      textfield("Project name:").click()
+      shortcut(Key.TAB)
       shortcut(Modifier.CONTROL + Key.X)
       typeText(projectPath)
 
@@ -355,21 +359,21 @@ fun KotlinGuiTestCase.configureKotlinFromGradleMavenSelectValues(
 fun KotlinGuiTestCase.configureKotlinJvmFromGradle(
   kotlinVersion: String,
   module: String = "") {
-    configureKotlinFromGradleMaven(
-      logText = "Open `Configure Kotlin with Gradle` dialog",
-      menuTitle = "ConfigureKotlinInProject",
-      dialogTitle =  "Configure Kotlin with Gradle",
-      kotlinVersion = kotlinVersion,
-      module = module)
+  configureKotlinFromGradleMaven(
+    logText = "Open `Configure Kotlin with Java with Gradle` dialog",
+    menuTitle = "ConfigureKotlinInProject",
+    dialogTitle = "Configure Kotlin with Java with Gradle",
+    kotlinVersion = kotlinVersion,
+    module = module)
 }
 
 fun KotlinGuiTestCase.configureKotlinJsFromGradle(
   kotlinVersion: String,
   module: String = "") {
   configureKotlinFromGradleMaven(
-    logText = "Open `Configure Kotlin JavaScript with Gradle` dialog",
+    logText = "Open `Configure Kotlin with JavaScript with Gradle` dialog",
     menuTitle = "ConfigureKotlinJsInProject",
-    dialogTitle = "Configure Kotlin with Gradle (JavaScript)",
+    dialogTitle = "Configure Kotlin with JavaScript with Gradle",
     kotlinVersion = kotlinVersion,
     module = module)
 }
@@ -378,9 +382,9 @@ fun KotlinGuiTestCase.configureKotlinJvmFromMaven(
   kotlinVersion: String,
   module: String = "") {
   configureKotlinFromGradleMaven(
-    logText = "Open `Configure Kotlin with Maven` dialog",
+    logText = "Open `Configure Kotlin with Java with Maven` dialog",
     menuTitle = "ConfigureKotlinInProject",
-    dialogTitle = "Configure Kotlin with Maven",
+    dialogTitle = "Configure Kotlin with Java with Maven",
     kotlinVersion = kotlinVersion,
     module = module)
 }
@@ -389,9 +393,9 @@ fun KotlinGuiTestCase.configureKotlinJsFromMaven(
   kotlinVersion: String,
   module: String = "") {
   configureKotlinFromGradleMaven(
-    logText = "Open `Configure Kotlin JavaScript with Maven` dialog",
+    logText = "Open `Configure Kotlin with JavaScript with Maven` dialog",
     menuTitle = "ConfigureKotlinJsInProject",
-    dialogTitle = "Configure Kotlin with Maven (JavaScript)",
+    dialogTitle = "Configure Kotlin with JavaScript with Maven",
     kotlinVersion = kotlinVersion,
     module = module)
 }
@@ -558,14 +562,11 @@ fun KotlinGuiTestCase.makeTestRoot(projectPath: String, testRoot: String) {
   }
 }
 
-fun fileSearchAndReplace(fileName: String, isRegex: Boolean, search: String, vararg replace: String) {
+fun fileSearchAndReplace(fileName: String, condition: (String) -> String) {
   val buffer = mutableListOf<String>()
   val inputFile = Paths.get(fileName)
   for (line in Files.readAllLines(inputFile)) {
-    if ((isRegex && line.contains(search.toRegex(RegexOption.IGNORE_CASE))) ||
-        (!isRegex && line.contains(search)))
-      replace.forEach { buffer.add(it) }
-    else buffer.add(line)
+    buffer.add(condition(line))
   }
   val tmpFile = Files.createTempFile(inputFile.fileName.toString(), "tmp")
   Files.write(tmpFile, buffer)
@@ -639,19 +640,17 @@ fun KotlinGuiTestCase.addDevRepositoryToBuildGradle(fileName: String, isKotlinDs
   val urlGDsl = "maven { url 'https://dl.bintray.com/kotlin/kotlin-dev' }"
   val urlKDsl = "maven { setUrl (\"https://dl.bintray.com/kotlin/kotlin-dev/\") }"
   if (isKotlinDslUsed)
-    fileSearchAndReplace(
-      fileName = fileName,
-      isRegex = false,
-      search = mavenCentral,
-      replace = *arrayOf(mavenCentral, urlKDsl)
-    )
+    fileSearchAndReplace(fileName = fileName) {
+      if(it.contains(mavenCentral))
+        listOf(mavenCentral, urlKDsl).joinToString(separator = "\n")
+      else it
+    }
   else
-    fileSearchAndReplace(
-      fileName = fileName,
-      isRegex = false,
-      search = mavenCentral,
-      replace = *arrayOf(mavenCentral, urlGDsl)
-    )
+    fileSearchAndReplace(fileName = fileName) {
+      if(it.contains(mavenCentral))
+        listOf(mavenCentral, urlGDsl).joinToString(separator = "\n")
+      else it
+    }
 }
 
 fun KotlinGuiTestCase.addDevRepositoryToPomXml(fileName: String) {
@@ -675,57 +674,37 @@ fun KotlinGuiTestCase.addDevRepositoryToPomXml(fileName: String) {
         </pluginRepository>
     </pluginRepositories>
     """.split("\n").toTypedArray()
-  fileSearchAndReplace(
-    fileName = fileName,
-    isRegex = false,
-    search = searchedLine,
-    replace = *arrayOf(searchedLine, *changingLine)
-  )
-}
-
-fun KotlinGuiTestCase.changePluginsInBuildGradle(fileName: String,
-                                                 kotlinKind: KotlinKind) {
-  val regex = "plugins\\s*\\{[\\s\\S]*?}"
-  val pluginsJava = "plugins{java}"
-  val pluginsKotlin = when (kotlinKind) {
-    KotlinKind.JVM -> "apply{plugin(\"kotlin\")}"
-    KotlinKind.JS -> "apply{plugin(\"kotlin2js\")}"
-  // TODO: correct when the ability to create MPP projects in Gradle+Kotlin DSL appears
-    KotlinKind.Common -> throw IllegalStateException("Gradle with Kotlin DSL doesn't support Common modules still.")
+  fileSearchAndReplace(fileName = fileName) {
+    if(it.contains(searchedLine))
+      listOf(searchedLine, *changingLine).joinToString(separator = "\n")
+    else it
   }
-
-  fileSearchAndReplace(
-    fileName = fileName,
-    isRegex = true,
-    search = regex,
-    replace = *arrayOf(pluginsJava, pluginsKotlin)
-  )
 }
 
 fun KotlinGuiTestCase.changeKotlinVersionInBuildGradle(fileName: String,
                                                        isKotlinDslUsed: Boolean,
                                                        kotlinVersion: String) {
-  val oldVersion = if (isKotlinDslUsed) "kotlin_version\\s*=\\s*\".*\""
-  else "ext\\.kotlin_version\\s*=\\s*'.*'"
-  val newVersion = if (isKotlinDslUsed) "kotlin_version = \"$kotlinVersion\""
-  else "ext.kotlin_version = '$kotlinVersion'"
-  fileSearchAndReplace(
-    fileName = fileName,
-    isRegex = true,
-    search = oldVersion,
-    replace = *arrayOf(newVersion)
-  )
+  fileSearchAndReplace( fileName = fileName){
+    if (it.contains("kotlin")){
+      val regex = """(id|kotlin)\s?\(?[\'\"](.*)[\'\"]\)? version [\'\"](.*)[\'\"]"""
+        .trimIndent()
+        .toRegex(RegexOption.IGNORE_CASE)
+      if(regex.find(it) != null)
+      it.replace(regex.find(it)!!.groupValues[3], kotlinVersion)
+      else it
+    }
+    else it
+  }
 }
 
 fun KotlinGuiTestCase.changeKotlinVersionInPomXml(fileName: String, kotlinVersion: String) {
   val oldVersion = "<kotlin\\.version>.+<\\/kotlin\\.version>"
   val newVersion = "<kotlin.version>$kotlinVersion</kotlin.version>"
-  fileSearchAndReplace(
-    fileName = fileName,
-    isRegex = true,
-    search = oldVersion,
-    replace = *arrayOf(newVersion)
-  )
+  fileSearchAndReplace(fileName = fileName) {
+    if(it.contains(oldVersion.toRegex(RegexOption.IGNORE_CASE)))
+      newVersion
+    else it
+  }
 }
 
 fun KotlinGuiTestCase.openFileFromProjectView(vararg fileName: String) {
@@ -749,6 +728,13 @@ fun KotlinGuiTestCase.openBuildGradle(isKotlinDslUsed: Boolean, vararg projectNa
 
 fun KotlinGuiTestCase.openPomXml(vararg projectName: String) {
   openFileFromProjectView(*projectName, "pom.xml")
+}
+
+fun KotlinGuiTestCase.editSettingsGradle(){
+  //   if project is configured to old Kotlin version, it must be released and no changes are required in the settings.gradle file
+  if (!KotlinTestProperties.isActualKotlinUsed()) return
+  val fileName = "$projectFolder/settings.gradle"
+  if (KotlinTestProperties.isArtifactOnlyInDevRep) addDevRepositoryToBuildGradle(fileName, isKotlinDslUsed = false)
 }
 
 fun KotlinGuiTestCase.editBuildGradle(
@@ -898,6 +884,7 @@ fun KotlinGuiTestCase.testCreateGradleAndConfigureKotlin(
   }
   waitAMoment(extraTimeOut)
   saveAndCloseCurrentEditor()
+  editSettingsGradle()
   editBuildGradle(
     kotlinVersion = kotlinVersion,
     isKotlinDslUsed = isKotlinDslUsed,
@@ -977,7 +964,8 @@ fun KotlinGuiTestCase.createKotlinMPProject(
       button("Next").click()
       button("Next").click()
       logUIStep("Type project location `$projectPath`")
-      textfield("Project location:").click()
+      textfield("Project name:").click()
+      shortcut(Key.TAB)
       shortcut(Modifier.CONTROL + Key.A)
       typeText(projectPath)
       button("Finish").click()

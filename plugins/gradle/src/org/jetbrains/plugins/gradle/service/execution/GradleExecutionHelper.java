@@ -214,7 +214,7 @@ public class GradleExecutionHelper {
     catch (Throwable e) {
       LOG.debug("Gradle execution error", e);
       Throwable rootCause = ExceptionUtil.getRootCause(e);
-      throw new ExternalSystemException(ExceptionUtil.getMessage(rootCause));
+      throw new ExternalSystemException(ExceptionUtil.getMessage(rootCause), e);
     }
     finally {
       try {
@@ -233,7 +233,8 @@ public class GradleExecutionHelper {
   public void ensureInstalledWrapper(@NotNull ExternalSystemTaskId id,
                                      @NotNull String projectPath,
                                      @NotNull GradleExecutionSettings settings,
-                                     @NotNull ExternalSystemTaskNotificationListener listener) {
+                                     @NotNull ExternalSystemTaskNotificationListener listener,
+                                     @NotNull CancellationToken cancellationToken) {
 
     if (!settings.getDistributionType().isWrapped()) return;
 
@@ -263,6 +264,7 @@ public class GradleExecutionHelper {
         final File tempFile = writeToFileGradleInitScript(StringUtil.join(lines, SystemProperties.getLineSeparator()));
         settings.withArguments(GradleConstants.INIT_SCRIPT_CMD_OPTION, tempFile.getAbsolutePath());
         BuildLauncher launcher = getBuildLauncher(id, connection, settings, listener);
+        launcher.withCancellationToken(cancellationToken);
         launcher.forTasks("wrapper");
         launcher.run();
         String wrapperPropertyFile = FileUtil.loadFile(wrapperPropertyFileLocation);
@@ -274,6 +276,8 @@ public class GradleExecutionHelper {
     }
     catch (Throwable e) {
       LOG.warn("Can't update wrapper", e);
+      Throwable rootCause = ExceptionUtil.getRootCause(e);
+      throw new ExternalSystemException(ExceptionUtil.getMessage(rootCause));
     }
     finally {
       settings.setRemoteProcessIdleTtlInMs(ttlInMs);

@@ -7,7 +7,7 @@
     </content>
     <orderEntry type="jdk" jdkName="IDEA jdk" jdkType="JavaSDK" />
     <orderEntry type="sourceFolder" forTests="false" />
-    <orderEntry type="library" name="Ant" level="project" />
+    <orderEntry type="library" scope="PROVIDED" name="Ant" level="project" />
     <orderEntry type="module" module-name="intellij.java.guiForms.compiler" />
     <orderEntry type="module" module-name="intellij.java.guiForms.rt" />
     <orderEntry type="library" name="ASM" level="project" />

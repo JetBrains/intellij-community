@@ -6,15 +6,15 @@ import com.intellij.ide.ui.search.OptionDescription
 import com.intellij.ide.util.gotoByName.GotoActionModel.ActionWrapper
 import com.intellij.ide.util.gotoByName.GotoActionModel.MatchMode
 import com.intellij.ide.util.gotoByName.GotoActionModel.MatchedValue
+import com.intellij.idea.IdeaTestApplication
 import com.intellij.java.navigation.ChooseByNameTest
-import com.intellij.openapi.actionSystem.ActionManager
-import com.intellij.openapi.actionSystem.AnAction
-import com.intellij.openapi.actionSystem.AnActionEvent
-import com.intellij.openapi.actionSystem.DataContext
+import com.intellij.openapi.actionSystem.*
 import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.project.Project
 import com.intellij.testFramework.PlatformTestUtil
 import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase
 import groovy.transform.CompileStatic
+import org.jetbrains.annotations.NonNls
 
 import java.util.concurrent.TimeUnit
 
@@ -23,6 +23,8 @@ import java.util.concurrent.TimeUnit
  */
 @CompileStatic
 class GotoActionTest extends LightCodeInsightFixtureTestCase {
+  private static final DataKey<Boolean> SHOW_HIDDEN_KEY = DataKey.create("GotoActionTest.DataKey");
+
   void "test shorter actions first despite ellipsis"() {
     def pattern = 'Rebas'
     def fork = 'Rebase my GitHub fork'
@@ -125,6 +127,89 @@ class GotoActionTest extends LightCodeInsightFixtureTestCase {
     }
   }
 
+  void "test same invisible groups are ignored"() {
+    def pattern = "GotoActionTest.TestAction"
+
+    def testAction = createAction(pattern)
+    def outerGroup = createActionGroup("Outer", false)
+    def visibleGroup = createActionGroup("VisibleGroup", false)
+    def hiddenGroup1 = createActionGroup("A HiddenGroup1", true)
+    def hiddenGroup2 = createActionGroup("Z HiddenGroup2", true)
+    outerGroup.add(hiddenGroup1)
+    outerGroup.add(visibleGroup)
+    outerGroup.add(hiddenGroup2)
+    visibleGroup.add(testAction)
+    hiddenGroup1.add(testAction)
+    hiddenGroup2.add(testAction)
+
+    assert getPresentableGroupName(project, pattern, testAction, outerGroup, false) == "Outer | VisibleGroup"
+    assert getPresentableGroupName(project, pattern, testAction, outerGroup, true) == "Outer | A HiddenGroup1"
+
+    outerGroup.remove(visibleGroup)
+
+    assert getPresentableGroupName(project, pattern, testAction, outerGroup, false) == null
+    assert getPresentableGroupName(project, pattern, testAction, outerGroup, true) == "Outer | A HiddenGroup1"
+
+    outerGroup.remove(hiddenGroup1)
+
+    assert getPresentableGroupName(project, pattern, testAction, outerGroup, false) == null
+    assert getPresentableGroupName(project, pattern, testAction, outerGroup, true) == "Outer | Z HiddenGroup2"
+
+    hiddenGroup2.remove(testAction)
+
+    assert getPresentableGroupName(project, pattern, testAction, outerGroup, false) == null
+    assert getPresentableGroupName(project, pattern, testAction, outerGroup, true) == null
+  }
+
+  private static String getPresentableGroupName(Project project, String pattern, AnAction testAction, DefaultActionGroup menuGroup,
+                                                boolean passFlag) {
+    def mainMenuGroup = (DefaultActionGroup)ActionManager.getInstance().getAction(IdeActions.GROUP_MAIN_MENU);
+    ActionManager.instance.registerAction(pattern, testAction)
+    mainMenuGroup.add(menuGroup)
+
+    IdeaTestApplication.getInstance().setDataProvider(new DataProvider() {
+      @Override
+      Object getData(@NonNls String dataId) {
+        if (SHOW_HIDDEN_KEY.is(dataId) && passFlag) return Boolean.TRUE;
+        return null
+      }
+    })
+    try {
+
+
+      def model = new GotoActionModel(project, null, null)
+      def provider = new GotoActionItemProvider(model);
+
+      def popup = ChooseByNamePopup.createPopup(project, model, provider)
+      try {
+        def result = ChooseByNameTest.calcPopupElements(popup, pattern, true)
+        def matches = result.findResults {
+          if (it instanceof MatchedValue) {
+            def value = it.value
+            if (value instanceof ActionWrapper &&
+                (value as ActionWrapper).action == testAction) {
+              return value as ActionWrapper;
+            }
+          }
+          return null
+        }
+        assert matches.size() == 1
+
+        ActionWrapper wrapper = matches[0]
+        wrapper.getPresentation() // update before show
+        return wrapper.groupName
+      }
+      finally {
+        popup.close(false)
+      }
+    }
+    finally {
+      mainMenuGroup.remove(menuGroup)
+      ActionManager.instance.unregisterAction(pattern)
+      IdeaTestApplication.getInstance().setDataProvider(null)
+    }
+  }
+
   private def actionMatches(String pattern, AnAction action) {
     return new GotoActionModel(project, null, null).actionMatches(pattern, GotoActionItemProvider.buildMatcher(pattern), action)
   }
@@ -135,7 +220,7 @@ class GotoActionTest extends LightCodeInsightFixtureTestCase {
 
   private MatchedValue matchedAction(AnAction action, String pattern, MatchMode mode = MatchMode.NAME, boolean isAvailable = true) {
     def model = new GotoActionModel(project, null, null)
-    def wrapper = new ActionWrapper(action, "", mode, DataContext.EMPTY_CONTEXT, model) {
+    def wrapper = new ActionWrapper(action, null, mode, DataContext.EMPTY_CONTEXT, model) {
       @Override
       boolean isAvailable() {
         return isAvailable
@@ -151,6 +236,16 @@ class GotoActionTest extends LightCodeInsightFixtureTestCase {
       }
     }
   }
+
+  private static DefaultActionGroup createActionGroup(String text, boolean hideByDefault) {
+    new DefaultActionGroup(text, true) {
+      @Override
+      void update(AnActionEvent e) {
+        e.presentation.setVisible(!hideByDefault || Boolean.valueOf(e.getData(SHOW_HIDDEN_KEY)))
+      }
+    }
+  }
+
 
   private static MatchedValue matchedOption(String text, String pattern) {
     return new MatchedValue(new OptionDescription(text), pattern)

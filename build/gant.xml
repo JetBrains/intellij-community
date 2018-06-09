@@ -33,7 +33,6 @@
         <include name="*.jar"/>
       </fileset>
       <fileset dir="${idea.lib}">
-        <include name="jdom.jar"/>
         <include name="asm-all.jar"/>
         <include name="snappy-in-java-*.jar"/>
       </fileset>

@@ -215,7 +215,7 @@ public class ApplyPatchDifferentiatedDialog extends DialogWrapper {
         final int inapplicable = myInfoCalculator.getInapplicable();
         if (inapplicable > 0) {
           appendSpace();
-          appendText(inapplicable, inapplicable, FileStatus.MERGED_WITH_CONFLICTS, "Missing Base:");
+          append(inapplicable, FileStatus.MERGED_WITH_CONFLICTS, "missing base");
         }
       }
     };

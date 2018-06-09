@@ -254,7 +254,7 @@ public class IdeFrameFixture extends ComponentFixture<IdeFrameFixture, IdeFrameI
   @NotNull
   public GutterFixture getGutter() {
     if (myGutter == null) {
-      myGutter = new GutterFixture( this);
+      myGutter = new GutterFixture(this);
     }
     return myGutter;
   }
@@ -551,14 +551,14 @@ public class IdeFrameFixture extends ComponentFixture<IdeFrameFixture, IdeFrameI
   @NotNull
   public IdeFrameFixture waitForBackgroundTasksToFinish() {
     pause(new Condition("Background tasks to finish") {
-                  @Override
-                  public boolean test() {
-                    ProgressManager progressManager = ProgressManager.getInstance();
-                    return !progressManager.hasModalProgressIndicator() &&
-                           !progressManager.hasProgressIndicator() &&
-                           !progressManager.hasUnsafeProgressIndicator();
-                  }
-                }
+            @Override
+            public boolean test() {
+              ProgressManager progressManager = ProgressManager.getInstance();
+              return !progressManager.hasModalProgressIndicator() &&
+                     !progressManager.hasProgressIndicator() &&
+                     !progressManager.hasUnsafeProgressIndicator();
+            }
+          }
       , GuiTestUtil.FIFTEEN_MIN_TIMEOUT);
     robot().waitForIdle();
     return this;
@@ -571,16 +571,19 @@ public class IdeFrameFixture extends ComponentFixture<IdeFrameFixture, IdeFrameI
 
   @NotNull
   public IdeFrameFixture waitForStartingIndexing(int secondsToWait) {
-    pause(new Condition("Indexing to start") {
-            @Override
-            public boolean test() {
-              ProgressManager progressManager = ProgressManager.getInstance();
-              return progressManager.hasModalProgressIndicator() ||
-                     progressManager.hasProgressIndicator() ||
-                     progressManager.hasUnsafeProgressIndicator();
+    try {
+      pause(new Condition("Indexing to start") {
+              @Override
+              public boolean test() {
+                ProgressManager progressManager = ProgressManager.getInstance();
+                return progressManager.hasModalProgressIndicator() ||
+                       progressManager.hasProgressIndicator() ||
+                       progressManager.hasUnsafeProgressIndicator();
+              }
             }
-          }
-      , Timeout.timeout(secondsToWait, TimeUnit.SECONDS));
+        , Timeout.timeout(secondsToWait, TimeUnit.SECONDS));
+    }
+    catch (WaitTimedOutError ignored){}
     robot().waitForIdle();
     return this;
   }

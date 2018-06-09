@@ -8,7 +8,7 @@ import java.util.stream.Collectors;
 public class Main {
   private static List<Integer> test(int[] numbers) {
       List<Integer> list = new ArrayList<>();
-      for (int number : numbers) {
+      for (int number: numbers) {
           Integer integer = number;
           list.add(integer);
       }

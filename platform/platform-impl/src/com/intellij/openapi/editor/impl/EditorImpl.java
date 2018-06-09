@@ -135,6 +135,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
   @SuppressWarnings("WeakerAccess")
   public static final Key<Boolean> DISABLE_CARET_POSITION_KEEPING = Key.create("editor.disable.caret.position.keeping");
   static final Key<Boolean> DISABLE_CARET_SHIFT_ON_WHITESPACE_INSERTION = Key.create("editor.disable.caret.shift.on.whitespace.insertion");
+  public static final Key<Boolean> DONT_SHRINK_GUTTER_SIZE = Key.create("dont.shrink.gutter.size");
   private static final boolean HONOR_CAMEL_HUMPS_ON_TRIPLE_CLICK = Boolean.parseBoolean(System.getProperty("idea.honor.camel.humps.on.triple.click"));
   private static final Key<BufferedImage> BUFFER = Key.create("buffer");
   @NotNull private final DocumentEx myDocument;
@@ -430,7 +431,6 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
         }
 
         updateCaretCursor();
-        myCaretCursor.repaint();
       }
     };
 
@@ -472,9 +472,10 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
 
           if (newGuide != null) {
             final Rectangle visibleArea = getScrollingModel().getVisibleArea();
-            final int startLine = newGuide.codeConstructStartLine;
             final int endLine = newGuide.startLine;
-            if (logicalLineToY(startLine) < visibleArea.y) {
+            if (logicalLineToY(endLine) < visibleArea.y) {
+              int startLine = Math.max(newGuide.codeConstructStartLine,
+                                       endLine - EditorFragmentComponent.getAvailableVisualLinesAboveEditor(EditorImpl.this) + 1);
               TextRange textRange = new TextRange(myDocument.getLineStartOffset(startLine), myDocument.getLineEndOffset(endLine));
               myCurrentHint = EditorFragmentComponent.showEditorFragmentHint(EditorImpl.this, textRange, false, false);
             }
@@ -504,12 +505,17 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     myFoldingModel.flushCaretShift();
     myScrollBarOrientation = VERTICAL_SCROLLBAR_RIGHT;
 
-    mySoftWrapModel.addSoftWrapChangeListener(new SoftWrapChangeListenerAdapter() {
+    mySoftWrapModel.addSoftWrapChangeListener(new SoftWrapChangeListener() {
       @Override
       public void recalculationEnds() {
         if (myCaretModel.isUpToDate()) {
           myCaretModel.updateVisualPosition();
         }
+      }
+
+      @Override
+      public void softWrapsChanged() {
+        myGutterComponent.clearLineToGutterRenderersCache();
       }
     });
 
@@ -2554,7 +2560,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
 
     @Override
     public void run() {
-      if (myEditor != null && !myEditor.myUpdateCursor) {
+      if (myEditor != null) {
         CaretCursor activeCursor = myEditor.myCaretCursor;
 
         long time = System.currentTimeMillis();
@@ -2578,10 +2584,15 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     }
   }
 
-  // The caller should also request repainting of caret region
   void updateCaretCursor() {
     myUpdateCursor = true;
-    myCaretCursor.myIsShown = true;
+    if (myCaretCursor.myIsShown) {
+      myCaretCursor.myStartTime = System.currentTimeMillis();
+    }
+    else {
+      myCaretCursor.myIsShown = true;
+      myCaretCursor.repaint();
+    }
   }
 
   private void setCursorPosition() {

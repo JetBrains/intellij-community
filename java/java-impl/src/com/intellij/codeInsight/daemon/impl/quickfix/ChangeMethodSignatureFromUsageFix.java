@@ -70,6 +70,7 @@ public class ChangeMethodSignatureFromUsageFix implements IntentionAction/*, Hig
   private final boolean myChangeAllUsages;
   private final int myMinUsagesNumberToShowDialog;
   ParameterInfoImpl[] myNewParametersInfo;
+  private String myShortName;
   private static final Logger LOG = Logger.getInstance(ChangeMethodSignatureFromUsageFix.class);
 
   public ChangeMethodSignatureFromUsageFix(@NotNull PsiMethod targetMethod,
@@ -88,27 +89,26 @@ public class ChangeMethodSignatureFromUsageFix implements IntentionAction/*, Hig
   @Override
   @NotNull
   public String getText() {
-    final String shortText = getShortText();
-    if (shortText != null) return shortText;
+    final String shortText = myShortName;
+    if (shortText != null) {
+      return shortText;
+    }
     return QuickFixBundle.message("change.method.signature.from.usage.text",
                                   JavaHighlightUtil.formatMethod(myTargetMethod),
                                   myTargetMethod.getName(),
                                   formatTypesList(myNewParametersInfo, myContext));
   }
 
-  @Nullable
-  private String getShortText() {
-    final StringBuilder buf = new StringBuilder();
-    final HashSet<ParameterInfoImpl> newParams = new HashSet<>();
-    final HashSet<ParameterInfoImpl> removedParams = new HashSet<>();
-    final HashSet<ParameterInfoImpl> changedParams = new HashSet<>();
-    getNewParametersInfo(myExpressions, myTargetMethod, mySubstitutor, buf, newParams, removedParams, changedParams);
-
+  private String getShortText(final StringBuilder buf,
+                              final HashSet<ParameterInfoImpl> newParams,
+                              final HashSet<ParameterInfoImpl> removedParams,
+                              final HashSet<ParameterInfoImpl> changedParams) {
     final String targetMethodName = myTargetMethod.getName();
     if (myTargetMethod.getContainingClass().findMethodsByName(targetMethodName, true).length == 1) {
       if (newParams.size() == 1) {
         final ParameterInfoImpl p = newParams.iterator().next();
-        return QuickFixBundle.message("add.parameter.from.usage.text", p.getTypeText(), (ArrayUtil.find(myNewParametersInfo, p) + 1), targetMethodName);
+        return QuickFixBundle
+          .message("add.parameter.from.usage.text", p.getTypeText(), (ArrayUtil.find(myNewParametersInfo, p) + 1), targetMethodName);
       }
       if (removedParams.size() == 1) {
         final ParameterInfoImpl p = removedParams.iterator().next();
@@ -116,7 +116,9 @@ public class ChangeMethodSignatureFromUsageFix implements IntentionAction/*, Hig
       }
       if (changedParams.size() == 1) {
         final ParameterInfoImpl p = changedParams.iterator().next();
-        return QuickFixBundle.message("change.parameter.from.usage.text", (p.getOldIndex() + 1), targetMethodName, myTargetMethod.getParameterList().getParameters()[p.getOldIndex()].getType().getPresentableText(),  p.getTypeText());
+        return QuickFixBundle.message("change.parameter.from.usage.text", (p.getOldIndex() + 1), targetMethodName,
+                                      myTargetMethod.getParameterList().getParameters()[p.getOldIndex()].getType().getPresentableText(),
+                                      p.getTypeText());
       }
     }
     return "<html> Change signature of " + targetMethodName + "(" + buf.toString() + ")</html>";
@@ -154,8 +156,13 @@ public class ChangeMethodSignatureFromUsageFix implements IntentionAction/*, Hig
     }
     if (!mySubstitutor.isValid()) return false;
 
-    myNewParametersInfo = getNewParametersInfo(myExpressions, myTargetMethod, mySubstitutor);
+    final StringBuilder buf = new StringBuilder();
+    final HashSet<ParameterInfoImpl> newParams = new HashSet<>();
+    final HashSet<ParameterInfoImpl> removedParams = new HashSet<>();
+    final HashSet<ParameterInfoImpl> changedParams = new HashSet<>();
+    myNewParametersInfo = getNewParametersInfo(myExpressions, myTargetMethod, mySubstitutor, buf, newParams, removedParams, changedParams);
     if (myNewParametersInfo == null || formatTypesList(myNewParametersInfo, myContext) == null) return false;
+    myShortName = getShortText(buf, newParams, removedParams, changedParams);
     return !isMethodSignatureExists();
   }
 

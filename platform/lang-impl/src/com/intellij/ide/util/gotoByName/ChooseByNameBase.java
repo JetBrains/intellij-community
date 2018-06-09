@@ -1374,6 +1374,7 @@ public abstract class ChooseByNameBase implements ChooseByNameViewModel {
     }
 
     private void scheduleIncrementalListUpdate(Set<Object> elements, int lastCount) {
+      if (ApplicationManager.getApplication().isUnitTestMode()) return;
       myUpdateListAlarm.addRequest(() -> {
         if (myCalcElementsThread != this || !myProgress.isRunning()) return;
 

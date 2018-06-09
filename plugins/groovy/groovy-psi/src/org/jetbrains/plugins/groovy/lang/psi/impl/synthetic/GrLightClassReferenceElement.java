@@ -17,7 +17,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.GroovyResolveResult;
 import org.jetbrains.plugins.groovy.lang.psi.api.types.CodeReferenceKind;
 import org.jetbrains.plugins.groovy.lang.psi.api.types.GrCodeReferenceElement;
 import org.jetbrains.plugins.groovy.lang.psi.api.types.GrTypeArgumentList;
-import org.jetbrains.plugins.groovy.lang.resolve.ElementGroovyResult;
+import org.jetbrains.plugins.groovy.lang.resolve.ElementResolveResult;
 
 import java.util.Collection;
 import java.util.Collections;
@@ -57,7 +57,7 @@ public class GrLightClassReferenceElement extends LightElement implements GrCode
   @Override
   public Collection<? extends GroovyResolveResult> resolve(boolean incomplete) {
     PsiClass clazz = JavaPsiFacade.getInstance(getProject()).findClass(myClassName, myContext.getResolveScope());
-    return clazz == null ? Collections.emptyList() : Collections.singletonList(new ElementGroovyResult<>(clazz));
+    return clazz == null ? Collections.emptyList() : Collections.singletonList(new ElementResolveResult<>(clazz));
   }
 
   @NotNull

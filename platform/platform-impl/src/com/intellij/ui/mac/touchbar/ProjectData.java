@@ -80,7 +80,7 @@ class ProjectData {
 
     final ActionGroup mainLayout = TouchBarActionBase.getCustomizedGroup(barId);
     if (mainLayout == null) {
-      LOG.error("can't create touchbar because corresponding ActionGroup isn't defined, context: " + barId);
+      LOG.info("can't create touchbar because corresponding ActionGroup isn't defined (seems that user deleted it), context: " + barId);
       return;
     }
 

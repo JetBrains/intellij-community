@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.vcs.checkin;
 
 import com.intellij.ide.IdeBundle;
@@ -38,6 +24,7 @@ import com.intellij.openapi.vcs.VcsBundle;
 import com.intellij.openapi.vcs.VcsConfiguration;
 import com.intellij.openapi.vcs.changes.Change;
 import com.intellij.openapi.vcs.changes.CommitExecutor;
+import com.intellij.openapi.vcs.changes.ui.BooleanCommitOption;
 import com.intellij.openapi.vcs.ui.RefreshableOnComponent;
 import com.intellij.openapi.wm.ToolWindow;
 import com.intellij.openapi.wm.ToolWindowManager;
@@ -77,12 +64,13 @@ public class TodoCheckinHandler extends CheckinHandler {
 
   @Override
   public RefreshableOnComponent getBeforeCheckinConfigurationPanel() {
-    JCheckBox checkBox = new JCheckBox(VcsBundle.message("before.checkin.new.todo.check", ""));
-    return new RefreshableOnComponent() {
+    return new BooleanCommitOption(myCheckinProjectPanel, VcsBundle.message("before.checkin.new.todo.check", ""), true,
+                                   () -> myConfiguration.CHECK_NEW_TODO, value -> myConfiguration.CHECK_NEW_TODO = value) {
+      @NotNull
       @Override
       public JComponent getComponent() {
         JPanel panel = new JPanel(new BorderLayout(4, 0));
-        panel.add(checkBox, BorderLayout.WEST);
+        panel.add(getCheckBox(), BorderLayout.WEST);
         setFilterText(myConfiguration.myTodoPanelSettings.todoFilterName);
         if (myConfiguration.myTodoPanelSettings.todoFilterName != null) {
           myTodoFilter = TodoConfiguration.getInstance().getTodoFilter(myConfiguration.myTodoPanelSettings.todoFilterName);
@@ -104,31 +92,16 @@ public class TodoCheckinHandler extends CheckinHandler {
           }
         }, null);
         panel.add(linkLabel, BorderLayout.CENTER);
-
-        CheckinHandlerUtil.disableWhenDumb(myProject, checkBox, "TODO check is impossible until indices are up-to-date");
         return panel;
       }
 
       private void setFilterText(String filterName) {
         if (filterName == null) {
-          checkBox.setText(VcsBundle.message("before.checkin.new.todo.check", IdeBundle.message("action.todo.show.all")));
-        } else {
-          checkBox.setText(VcsBundle.message("before.checkin.new.todo.check", "Filter: " + filterName));
+          getCheckBox().setText(VcsBundle.message("before.checkin.new.todo.check", IdeBundle.message("action.todo.show.all")));
         }
-      }
-
-      @Override
-      public void refresh() {
-      }
-
-      @Override
-      public void saveState() {
-        myConfiguration.CHECK_NEW_TODO = checkBox.isSelected();
-      }
-
-      @Override
-      public void restoreState() {
-        checkBox.setSelected(myConfiguration.CHECK_NEW_TODO);
+        else {
+          getCheckBox().setText(VcsBundle.message("before.checkin.new.todo.check", "Filter: " + filterName));
+        }
       }
     };
   }

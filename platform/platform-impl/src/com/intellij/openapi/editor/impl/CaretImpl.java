@@ -1,8 +1,8 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.editor.impl;
 
+import com.intellij.diagnostic.AttachmentFactory;
 import com.intellij.diagnostic.Dumpable;
-import com.intellij.diagnostic.LogMessageEx;
 import com.intellij.openapi.actionSystem.IdeActions;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
@@ -136,13 +136,14 @@ public class CaretImpl extends UserDataHolderBase implements Caret, Dumpable {
         int textEnd = Math.min(document.getTextLength() - 1, Math.max(offset, actualOffset) + 1);
         CharSequence text = document.getCharsSequence().subSequence(textStart, textEnd);
         int inverseOffset = myEditor.logicalPositionToOffset(logicalPosition);
-        LogMessageEx.error(
-          LOG, "caret moved to wrong offset. Please submit a dedicated ticket and attach current editor's text to it.",
-          "Requested: offset=" + offset + ", logical position='" + logicalPosition + "' but actual: offset=" +
-          actualOffset + ", logical position='" + myLogicalCaret + "' (" + positionByOffsetAfterMove + "). " + myEditor.dumpState() +
-          "\ninterested text [" + textStart + ";" + textEnd + "): '" + text + "'\n debug trace: " + debugBuffer +
-          "\nLogical position -> offset ('" + logicalPosition + "'->'" + inverseOffset + "')"
-        );
+        LOG.error(
+          "caret moved to wrong offset. Please submit a dedicated ticket and attach current editor's text to it.",
+          new Throwable(),
+          AttachmentFactory.createContext(
+            "Requested: offset=" + offset + ", logical position='" + logicalPosition + "' but actual: offset=" +
+            actualOffset + ", logical position='" + myLogicalCaret + "' (" + positionByOffsetAfterMove + "). " + myEditor.dumpState() +
+            "\ninterested text [" + textStart + ";" + textEnd + "): '" + text + "'\n debug trace: " + debugBuffer +
+            "\nLogical position -> offset ('" + logicalPosition + "'->'" + inverseOffset + "')"));
       }
       if (event != null) {
         myEditor.getCaretModel().fireCaretPositionChanged(event);
@@ -169,7 +170,7 @@ public class CaretImpl extends UserDataHolderBase implements Caret, Dumpable {
       return;
     }
     if (myReportCaretMoves) {
-      LogMessageEx.error(LOG, "Unexpected caret move request");
+      LOG.error("Unexpected caret move request", new Throwable());
     }
     if (!myEditor.isStickySelection() && !myEditor.getDocument().isInEventsHandling()) {
       CopyPasteManager.getInstance().stopKillRings();
@@ -474,9 +475,10 @@ public class CaretImpl extends UserDataHolderBase implements Caret, Dumpable {
           }
         }
         else {
-          LogMessageEx.error(LOG, "Invalid editor dimension mapping", "Expected to map visual position '" +
-          visualPosition + "' to offset " + newOffset + " but got the following: -> logical position '" +
-          logicalPosition + "'; -> offset " + tmpOffset + ". State: " + myEditor.dumpState());
+          LOG.error("Invalid editor dimension mapping", new Throwable(), AttachmentFactory.createContext(
+            "Expected to map visual position '" +
+            visualPosition + "' to offset " + newOffset + " but got the following: -> logical position '" +
+            logicalPosition + "'; -> offset " + tmpOffset + ". State: " + myEditor.dumpState()));
         }
       }
     }
@@ -540,7 +542,7 @@ public class CaretImpl extends UserDataHolderBase implements Caret, Dumpable {
       return;
     }
     if (myReportCaretMoves) {
-      LogMessageEx.error(LOG, "Unexpected caret move request");
+      LOG.error("Unexpected caret move request");
     }
     if (!myEditor.isStickySelection() && !myEditor.getDocument().isInEventsHandling() && !pos.equals(myVisibleCaret)) {
       CopyPasteManager.getInstance().stopKillRings();
@@ -606,7 +608,7 @@ public class CaretImpl extends UserDataHolderBase implements Caret, Dumpable {
       return null;
     }
     if (myReportCaretMoves) {
-      LogMessageEx.error(LOG, "Unexpected caret move request");
+      LOG.error("Unexpected caret move request");
     }
     if (!myEditor.isStickySelection() && !myEditor.getDocument().isInEventsHandling() && !pos.equals(myLogicalCaret)) {
       CopyPasteManager.getInstance().stopKillRings();

@@ -5,9 +5,9 @@ import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiTypeParameter
 import com.intellij.psi.ResolveState
 import com.intellij.psi.scope.ElementClassHint
-import org.jetbrains.plugins.groovy.lang.resolve.ElementGroovyResult
+import org.jetbrains.plugins.groovy.lang.resolve.ElementResolveResult
 
-class TypeParameterProcessor(name: String) : FindFirstProcessor<ElementGroovyResult<PsiTypeParameter>>() {
+class TypeParameterProcessor(name: String) : FindFirstProcessor<ElementResolveResult<PsiTypeParameter>>() {
 
   init {
     nameHint(name)
@@ -15,7 +15,7 @@ class TypeParameterProcessor(name: String) : FindFirstProcessor<ElementGroovyRes
     hint(GroovyResolveKind.HINT_KEY, GroovyResolveKind.Hint { it === GroovyResolveKind.TYPE_PARAMETER })
   }
 
-  override fun result(element: PsiElement, state: ResolveState): ElementGroovyResult<PsiTypeParameter>? = (element as? PsiTypeParameter)?.let {
-    ElementGroovyResult(it)
+  override fun result(element: PsiElement, state: ResolveState): ElementResolveResult<PsiTypeParameter>? = (element as? PsiTypeParameter)?.let {
+    ElementResolveResult(it)
   }
 }

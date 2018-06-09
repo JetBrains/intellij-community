@@ -6,7 +6,7 @@ class Foreach {
 
   void foo(List<String> list) {
       try {
-          for (String s : list) {
+          for (String s: list) {
               throw new IllegalArgumentException();
           }
       } catch (IllegalArgumentException e) {

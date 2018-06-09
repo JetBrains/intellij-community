@@ -5,6 +5,8 @@ import git4idea.repo.GitRemote;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.List;
+
 public class GitPushParamsImpl implements GitPushParams {
   @NotNull private final GitRemote myRemote;
   @NotNull private final String mySpec;
@@ -12,20 +14,22 @@ public class GitPushParamsImpl implements GitPushParams {
   private final boolean mySetupTracking;
   private final boolean mySkipHooks;
   @Nullable private final String myTagMode;
+  @NotNull private final List<ForceWithLease> myForceWithLease;
 
   public GitPushParamsImpl(@NotNull GitRemote remote,
                            @NotNull String spec,
                            boolean force,
                            boolean setupTracking,
                            boolean skipHooks,
-                           @Nullable String tagMode) {
-
+                           @Nullable String tagMode,
+                           @NotNull List<ForceWithLease> forceWithLease) {
     myRemote = remote;
     mySpec = spec;
     myForce = force;
     mySetupTracking = setupTracking;
     mySkipHooks = skipHooks;
     myTagMode = tagMode;
+    myForceWithLease = forceWithLease;
   }
 
   @NotNull
@@ -59,5 +63,41 @@ public class GitPushParamsImpl implements GitPushParams {
   @Override
   public String getTagMode() {
     return myTagMode;
+  }
+
+  @NotNull
+  @Override
+  public List<ForceWithLease> getForceWithLease() {
+    return myForceWithLease;
+  }
+
+
+  public static class ForceWithLeaseAll implements ForceWithLease {
+    @Nullable
+    @Override
+    public String getParameter() {
+      return null;
+    }
+  }
+
+  public static class ForceWithLeaseReference implements ForceWithLease {
+    @NotNull private final String myReference;
+    @Nullable private final String myCommit;
+
+    public ForceWithLeaseReference(@NotNull String reference, @Nullable String commit) {
+      myReference = reference;
+      myCommit = commit;
+    }
+
+    @Nullable
+    @Override
+    public String getParameter() {
+      if (myCommit != null) {
+        return myReference + ":" + myCommit;
+      }
+      else {
+        return myReference;
+      }
+    }
   }
 }

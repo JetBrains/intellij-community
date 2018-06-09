@@ -6,7 +6,7 @@ import com.intellij.debugger.DebuggerManagerEx;
 import com.intellij.debugger.engine.DebuggerManagerThreadImpl;
 import com.intellij.debugger.engine.events.DebuggerCommandImpl;
 import com.intellij.ide.actions.ActionsCollector;
-import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.components.AbstractProjectComponent;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.OrderEnumerator;
@@ -14,7 +14,7 @@ import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.util.containers.JBIterable;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.File;
@@ -60,16 +60,13 @@ public class HotSwapManager extends AbstractProjectComponent {
     final long timeStamp = getTimeStamp(session);
     final Map<String, HotSwapFile> modifiedClasses = new HashMap<>();
 
-    final List<File> outputRoots = new ArrayList<>();
-    ApplicationManager.getApplication().runReadAction(() -> {
-      final List<VirtualFile> allDirs = OrderEnumerator.orderEntries(myProject).withoutSdk().withoutLibraries().getPathsList().getRootDirs();
-      for (VirtualFile dir : allDirs) {
-        outputRoots.add(new File(dir.getPath()));
-      }
-    });
-    for (File root : outputRoots) {
-      final String rootPath = FileUtil.toCanonicalPath(root.getPath());
-      collectModifiedClasses(root, rootPath, rootPath + "/", modifiedClasses, progress, timeStamp);
+    List<String> outputPaths = ReadAction.compute(
+      () -> JBIterable.of(OrderEnumerator.orderEntries(myProject).classes().getRoots())
+        .filterMap(o -> o.isDirectory() && !o.getFileSystem().isReadOnly() ? o.getPath() : null)
+        .toList());
+    for (String path : outputPaths) {
+      String rootPath = FileUtil.toCanonicalPath(path);
+      collectModifiedClasses(new File(path), rootPath, rootPath + "/", modifiedClasses, progress, timeStamp);
     }
 
     return modifiedClasses;

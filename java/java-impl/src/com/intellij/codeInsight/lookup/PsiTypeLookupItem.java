@@ -4,14 +4,12 @@ package com.intellij.codeInsight.lookup;
 import com.intellij.codeInsight.completion.*;
 import com.intellij.codeInsight.editorActions.TabOutScopesTracker;
 import com.intellij.diagnostic.AttachmentFactory;
-import com.intellij.diagnostic.LogMessageEx;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.ScrollType;
 import com.intellij.openapi.util.ClassConditionKey;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
-import com.intellij.psi.impl.DebugUtil;
 import com.intellij.psi.impl.source.PostprocessReformattingAspect;
 import com.intellij.psi.impl.source.PsiClassReferenceType;
 import com.intellij.psi.util.PsiFormatUtil;
@@ -296,17 +294,17 @@ public class PsiTypeLookupItem extends LookupItem implements TypedLookupItem {
     int tail = context.getTailOffset();
     int newTail = JavaCompletionUtil.insertClassReference(aClass, file, startOffset, tail);
     if (newTail > context.getDocument().getTextLength() || newTail < 0) {
-      LOG.error(LogMessageEx.createEvent("Invalid offset after insertion ",
-                                         "offset=" + newTail + "\n" +
-                                         "start=" + startOffset + "\n" +
-                                         "tail=" + tail + "\n" +
-                                         "file.length=" + file.getTextLength() + "\n" +
-                                         "document=" + context.getDocument() + "\n" +
-                                         DebugUtil.currentStackTrace(),
-                                         AttachmentFactory.createAttachment(context.getDocument())));
+      LOG.error("Invalid offset after insertion\n" +
+                "offset=" + newTail + "\n" +
+                "start=" + startOffset + "\n" +
+                "tail=" + tail + "\n" +
+                "file.length=" + file.getTextLength() + "\n" +
+                "document=" + context.getDocument() + "\n" +
+                new Throwable(),
+                AttachmentFactory.createAttachment(context.getDocument()));
       return;
-
     }
+
     context.setTailOffset(newTail);
     JavaCompletionUtil.shortenReference(file, context.getStartOffset());
     PostprocessReformattingAspect.getInstance(context.getProject()).doPostponedFormatting();

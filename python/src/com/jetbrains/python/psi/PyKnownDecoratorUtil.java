@@ -6,6 +6,7 @@ import com.intellij.psi.PsiReference;
 import com.intellij.psi.util.QualifiedName;
 import com.intellij.util.containers.ContainerUtil;
 import com.jetbrains.python.PyNames;
+import com.jetbrains.python.psi.resolve.PyResolveContext;
 import com.jetbrains.python.psi.types.TypeEvalContext;
 import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.NotNull;
@@ -70,7 +71,11 @@ public class PyKnownDecoratorUtil {
     DJANGO_UTILS_FUNCTIONAL_CACHED_PROPERTY("django.utils.functional.cached_property"),
     KOMBU_UTILS_CACHED_PROPERTY("kombu.utils.cached_property"),
 
-    DATACLASSES_DATACLASS("dataclasses.dataclass");
+    DATACLASSES_DATACLASS("dataclasses.dataclass"),
+    ATTR_S("attr.__init__.s"),
+    ATTR_ATTRS("attr.__init__.attrs"),
+    ATTR_ATTRIBUTES("attr.__init__.attributes"),
+    ATTR_DATACLASS("attr.__init__.dataclass");
 
     private final QualifiedName myQualifiedName;
 
@@ -204,6 +209,15 @@ public class PyKnownDecoratorUtil {
 
   public static boolean hasGeneratorBasedCoroutineDecorator(@NotNull PyFunction function, @NotNull TypeEvalContext context) {
     return ContainerUtil.exists(getKnownDecorators(function, context), GENERATOR_BASED_COROUTINE_DECORATORS::contains);
+  }
+
+  public static boolean isResolvedToGeneratorBasedCoroutine(@NotNull PyCallExpression receiver,
+                                                            @NotNull PyResolveContext resolveContext,
+                                                            @NotNull TypeEvalContext typeEvalContext) {
+    return StreamEx
+      .of((receiver).multiResolveCalleeFunction(resolveContext))
+      .select(PyFunction.class)
+      .anyMatch(function -> hasGeneratorBasedCoroutineDecorator(function, typeEvalContext));
   }
 
   public static boolean hasRedeclarationDecorator(@NotNull PyFunction function, @NotNull TypeEvalContext context) {

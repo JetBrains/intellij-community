@@ -19,7 +19,9 @@ import com.intellij.icons.AllIcons;
 import com.intellij.ide.projectView.PresentationData;
 import com.intellij.openapi.externalSystem.model.DataNode;
 import com.intellij.openapi.externalSystem.model.Key;
+import com.intellij.openapi.externalSystem.model.ProjectKeys;
 import com.intellij.openapi.externalSystem.model.ProjectSystemId;
+import com.intellij.openapi.externalSystem.model.project.ModuleData;
 import com.intellij.openapi.externalSystem.util.Order;
 import com.intellij.openapi.externalSystem.view.ExternalProjectsView;
 import com.intellij.openapi.externalSystem.view.ExternalSystemNode;
@@ -28,6 +30,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.SmartList;
 import com.intellij.util.containers.MultiMap;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.gradle.model.data.GradleSourceSetData;
 import org.jetbrains.plugins.gradle.util.GradleConstants;
 
@@ -63,6 +66,15 @@ public class GradleViewContributor extends ExternalSystemViewContributor {
     final List<ExternalSystemNode<?>> result = new SmartList<>();
     addCustomSourceSetsNodes(externalProjectsView, dataNodes, result);
     return result;
+  }
+
+  @Nullable
+  @Override
+  public String getDisplayName(@NotNull DataNode node) {
+    if (ProjectKeys.MODULE.equals(node.getKey())) {
+      return ((ModuleData)node.getData()).getId();
+    }
+    return super.getDisplayName(node);
   }
 
   private static void addCustomSourceSetsNodes(@NotNull ExternalProjectsView externalProjectsView,

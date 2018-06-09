@@ -54,3 +54,10 @@ interface UClassInitializer : UDeclaration, PsiClassInitializer {
 
   override fun asLogString(): String = log("isStatic = $isStatic")
 }
+
+/**
+ * @since 2018.2
+ */
+interface UClassInitializerEx : UClassInitializer, UDeclarationEx {
+  override val javaPsi: PsiClassInitializer
+}

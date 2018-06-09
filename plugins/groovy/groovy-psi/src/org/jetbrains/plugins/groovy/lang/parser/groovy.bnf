@@ -60,6 +60,7 @@
     T_SAFE_DOT = '?.'
     T_SPREAD_DOT = '*.'
     T_METHOD_CLOSURE = '.&'
+    T_METHOD_REFERENCE = '::'
     T_Q = '?'
     T_ELVIS = '?:'
 
@@ -173,9 +174,9 @@
   extends(".*_expression") = expression
   extends(".*_type_element") = type_element
   elementType('.*_modifier_list') = modifier_list
-  elementType('.*_reference_expression') = reference_expression
   elementType('.*_class_type_element') = class_type_element
   consumeTokenMethod('.*_expression') = 'consumeTokenFast'
+  consumeTokenMethod('.*_expression_tail') = 'consumeTokenFast'
   consumeTokenMethod('.*_shift.*_sign') = 'consumeTokenFast'
   consumeTokenMethod('fast.*') = 'consumeTokenFast'
   consumeTokenMethod('.*_type_definition') = 'consumeTokenFast'
@@ -287,12 +288,12 @@ private trait_definition_header ::= IDENTIFIER type_parameter_list? nl_extends n
 private enum_definition_header ::= <<classIdentifier>> nl_non_empty_extends? nl_implements
 private annotation_definition_header ::= IDENTIFIER
 
-left class_type_definition ::= 'class' class_definition_header mb_nl class_body <<resetClassIdentifier>>
+left class_type_definition ::= 'class' class_definition_header mb_nl class_body <<popClassIdentifier>>
 {
   pin = class_definition_header
   elementTypeClass = 'org.jetbrains.plugins.groovy.lang.psi.stubs.elements.GrClassDefinitionElementType'
 }
-left interface_type_definition ::= 'interface' interface_definition_header mb_nl class_body <<resetClassIdentifier>>
+left interface_type_definition ::= 'interface' interface_definition_header mb_nl class_body <<popClassIdentifier>>
 {
   pin = interface_definition_header
   elementTypeClass = 'org.jetbrains.plugins.groovy.lang.psi.stubs.elements.GrInterfaceDefinitionElementType'
@@ -302,7 +303,7 @@ left trait_type_definition ::= 'trait' trait_definition_header mb_nl class_body
   pin = trait_definition_header
   elementTypeClass = 'org.jetbrains.plugins.groovy.lang.psi.stubs.elements.GrTraitElementType'
 }
-left enum_type_definition ::= 'enum' enum_definition_header mb_nl enum_body <<resetClassIdentifier>>
+left enum_type_definition ::= 'enum' enum_definition_header mb_nl enum_body <<popClassIdentifier>>
 {
   pin = enum_definition_header
   elementTypeClass = 'org.jetbrains.plugins.groovy.lang.psi.stubs.elements.GrEnumDefinitionElementType'
@@ -614,15 +615,10 @@ variable_declaration_tail ::= variable (',' mb_nl variable)*
 }
 variable ::= var { elementTypeClass = 'org.jetbrains.plugins.groovy.lang.psi.stubs.elements.GrVariableElementType' }
 
-tuple_var_declaration ::= tuple_modifier_list tuple_var_declaration_tuple tuple_initializer
+tuple_var_declaration ::= non_empty_modifier_list tuple_var_declaration_tuple tuple_initializer
 {
   elementType = variable_declaration
   pin = tuple_var_declaration_tuple
-  consumeTokenMethod = 'consumeTokenFast'
-}
-tuple_modifier_list ::= def_modifier
-{
-  consumeTokenMethod = 'consumeTokenFast'
 }
 private tuple_var_declaration_tuple ::= '(' tuple_var_declaration_item (',' tuple_var_declaration_item)* ')'
 {
@@ -668,6 +664,7 @@ statement ::= if_statement
             | switch_statement
             | try_statement
             | while_statement
+            | do_while_statement
             | for_statement
             | synchronized_statement
             | return_statement
@@ -730,7 +727,7 @@ catch_clause ::= 'catch' '(' parse_catch_parameter ')' lazy_block
 }
 private parse_catch_parameter ::= <<parseTailLeftFlat catch_parameter_start catch_parameter>>
 private catch_parameter_start ::= modifier_list catch_parameter_type_element?
-private catch_parameter_type_element ::= type_element &IDENTIFIER
+private catch_parameter_type_element ::= type_element_followed_by_identifier
                                        | type_element disjunction_type_element
 catch_parameter ::= IDENTIFIER { elementType = parameter }
 finally_clause ::= 'finally' lazy_block
@@ -743,32 +740,25 @@ while_statement ::= 'while' ('(' mb_nl expression mb_nl ')' mb_nl branch)
   pin('.*') = 1
 }
 
-for_statement ::= 'for' (('(' mb_nl for_clause mb_nl ')') mb_nl for_body?)
-{
-  pin('.*') = 1
-}
-private for_clause ::= for_in_clause | traditional_for_clause
-for_in_clause ::= for_parameter (':' | 'in') expression
+do_while_statement ::= 'do' mb_nl branch mb_nl 'while' '(' expression ')' { pin = 1 }
 
-private for_parameter_inner ::= modifier_list [type_element &IDENTIFIER] IDENTIFIER
-for_parameter ::= for_parameter_inner
-{
-  elementType = parameter
-}
-traditional_for_clause ::= (traditional_for_parameter ';' | ';') expression? ';' mb_nl expression?
-{
-  pin('.*') = 1
-  recoverWhile = r_par_recovery
-}
-traditional_for_parameter ::= for_parameter_inner mb_initializer
-{
-  elementType = parameter
-  recoverWhile = semicolon_recovery
-}
-private semicolon_recovery ::= !';' r_par_recovery
-private r_par_recovery ::= !')'
+private type_element_followed_by_identifier ::= type_element &IDENTIFIER
+private mb_type_element ::= type_element_followed_by_identifier?
+
+for_statement ::= 'for' (for_header mb_nl for_body) { pin('.*') = 1 }
+private for_header ::= '(' mb_nl for_clause mb_nl ')' { pin = 1 }
+private for_clause ::= for_in_clause | traditional_for_clause
+
+for_in_clause ::= for_in_parameter (':' | 'in') expression { consumeTokenMethod = 'consumeTokenFast' }
+for_in_parameter ::= modifier_list mb_type_element IDENTIFIER | clear_variants_and_fail { elementType = parameter }
+
+traditional_for_clause ::= empty for_clause_initialization? ';' expression? ';' mb_nl expression? { pin = 1 }
+private for_clause_initialization ::= traditional_for_parameter | expression | clear_variants_and_fail
+traditional_for_parameter ::= traditional_for_parameter_inner mb_initializer { elementType = parameter }
+private traditional_for_parameter_inner ::= non_empty_modifier_list mb_type_element IDENTIFIER
+                                          | empty_modifier_list type_element IDENTIFIER
 // FIXME get rid of this weird logic
-private for_body ::= &<<extendedStatement>> | block_or_statement
+private for_body ::= &<<extendedStatement>> | &';' | block_or_statement { name = 'loop body' }
 
 synchronized_statement ::= 'synchronized' '(' expression ')' lazy_block
 {
@@ -850,7 +840,7 @@ private priority0 ::= unqualified_reference_expression
 unqualified_reference_expression ::= IDENTIFIER
                                    | 'this'
                                    | 'super'
-                                   | ('in' | 'def' | 'trait') &dot
+                                   | ('in' | 'def' | 'trait') &(reference_dot | '.&')
                                    | (STR_SQ | STR_DQ) &string_literal_as_reference
 {
   elementType = reference_expression
@@ -967,15 +957,17 @@ private non_empty_list_or_map ::= '[' bracket_argument_list_item bracket_argumen
   pin = 2
 }
 
-private qualified_expressions ::= qualified_reference_expression | property_expression
-qualified_reference_expression ::= expression <<qualified_reference_op qualified_reference_expression_identifiers>>
-property_expression ::= expression <<qualified_reference_op property_expression_identifiers>>
-private meta qualified_reference_op ::= (mb_nl dot) <<mb_nl_group (type_argument_list? <<identifiers>>)>>
-private dot ::= '.' attribute_dot? | '?.' attribute_dot? | '.&' | '*.' { consumeTokenMethod = 'consumeTokenFast' }
-private attribute_dot ::= mb_nl ('@')
+private qualified_expressions ::= method_reference_expression | qualified_reference_expression | property_expression
+method_reference_expression ::= expression (mb_nl method_reference_dot) (mb_nl qualified_reference_expression_identifiers)
+qualified_reference_expression ::= expression (mb_nl reference_dot) <<mb_nl_group (type_argument_list? qualified_reference_expression_identifiers)>>
 {
-  consumeTokenMethod = 'consumeTokenFast'
+  elementType = reference_expression
 }
+property_expression ::= expression (mb_nl property_dot) <<mb_nl_group (type_argument_list? property_expression_identifiers)>>
+private method_reference_dot ::= '.&' | '::' { consumeTokenMethod = 'consumeTokenFast' }
+private reference_dot ::= '.' attribute_dot? | '?.' attribute_dot? | '*.' { consumeTokenMethod = 'consumeTokenFast' }
+private attribute_dot ::= mb_nl ('@') { consumeTokenMethod = 'consumeTokenFast' }
+private property_dot ::= reference_dot | method_reference_dot
 private qualified_reference_expression_identifiers ::= IDENTIFIER
                                                      | STR_SQ | STR_DQ
                                                      | regex_literal
@@ -1003,11 +995,12 @@ private priority1_4 ::= not_expression | cast_expression
 not_expression ::= ('~' | '!') expression { elementType = unary_expression }
 cast_expression ::= &cast_expression_start (cast_expression_pin | cast_expression_no_pin)
 private cast_expression_start ::= '(' (IDENTIFIER | primitive_type) { consumeTokenMethod = 'consumeTokenFast' }
-private cast_expression_pin ::= '(' capital_type_element ')' priority1_4 { pin = 3 }
+private cast_expression_pin ::= '(' capital_type_element ')' not_colon priority1_4 { pin = 4 }
 private cast_expression_no_pin ::= '(' type_element ')' priority1_4
 
-private priority1_5 ::= index_expression | postfix_unary_expression
-index_expression ::= expression mb_question index_expression_argument_list
+private priority1_5 ::= index_expression | safe_index_expression | postfix_unary_expression
+index_expression ::= expression index_expression_argument_list
+safe_index_expression ::= expression fast_question index_expression_argument_list not_colon { elementType = index_expression }
 index_expression_argument_list ::= !empty_map '[' bracket_argument_list_inner ']'
 {
   pin = 2
@@ -1039,14 +1032,12 @@ right_shift_sign ::= '>' '>'
 right_shift_unsigned_sign ::= '>' '>' '>'
 range_expression ::= expression ('..' | '..<') expression
 
-private priority7 ::= relational_expression | instanceof_expression | as_expression
+private priority7 ::= relational_expression | in_expression | instanceof_expression | as_expression
 relational_expression ::= expression relational_operator mb_nl expression
-private relational_operator ::= '<' !'<' | '<=' | '>' !'>' | '>=' | 'in' { consumeTokenMethod = 'consumeTokenFast' }
-
-instanceof_expression ::= expression ('instanceof' (type_element | expect_type))
-{
-  pin('.*') = 1
-}
+private relational_operator ::= '<' !'<' | '<=' | '>' !'>' | '>=' { consumeTokenMethod = 'consumeTokenFast' }
+in_expression ::= expression mb_not ('in') expression
+instanceof_expression ::= expression instanceof_expression_tail
+private instanceof_expression_tail ::= mb_not ('instanceof') (type_element | expect_type) { pin = 2 }
 as_expression ::= expression 'as' type_element
 
 private priority8 ::= equality_expression | compare_expression | regex_find_expression | regex_match_expression
@@ -1239,7 +1230,11 @@ private meta mb_nl_group ::= <<something>> | <<withProtectedLastVariantPos (nl <
 private empty ::= ()
 
 private mb_question ::= '?'? { consumeTokenMethod = 'consumeTokenFast' }
+private mb_not ::= '!'? { consumeTokenMethod = 'consumeTokenFast' }
 
+private not_colon ::= !fast_colon
+
+private fast_question ::= '?'
 private fast_colon ::= ':'
 private fast_comma ::= ','
 private fast_l_angle ::= '<'

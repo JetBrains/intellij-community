@@ -19,10 +19,7 @@ import com.intellij.Patches;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Disposer;
-import com.intellij.util.ExceptionUtil;
-import com.intellij.util.Function;
-import com.intellij.util.ObjectUtils;
-import com.intellij.util.ReflectionUtil;
+import com.intellij.util.*;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
@@ -71,7 +68,7 @@ public class BoundedTaskExecutor extends AbstractExecutorService {
   /**
    * Constructor which automatically shuts down this executor when {@code parent} is disposed.
    */
-  BoundedTaskExecutor(@NotNull @Nls(capitalization = Nls.Capitalization.Title) String name, @NotNull Executor backendExecutor, int maxSimultaneousTasks, @NotNull Disposable parent) {
+  public BoundedTaskExecutor(@NotNull @Nls(capitalization = Nls.Capitalization.Title) String name, @NotNull Executor backendExecutor, int maxSimultaneousTasks, @NotNull Disposable parent) {
     this(name, backendExecutor, maxSimultaneousTasks);
     Disposer.register(parent, new Disposable() {
       @Override
@@ -205,35 +202,28 @@ public class BoundedTaskExecutor extends AbstractExecutorService {
       myBackendExecutor.execute(new Runnable() {
         @Override
         public void run() {
-          String oldName = Thread.currentThread().getName();
-          boolean sameName = myName.equals(oldName);
-          if (!sameName) {
-            Thread.currentThread().setName(myName);
-          }
-          try {
-            Runnable task = currentTask.get();
-            do {
-              currentTask.set(task);
-              try {
-                task.run();
-              }
-              catch (Throwable e) {
-                // do not lose queued tasks because of this exception
+          ConcurrencyUtil.runUnderThreadName(myName, new Runnable() {
+            @Override
+            public void run() {
+              Runnable task = currentTask.get();
+              do {
+                currentTask.set(task);
                 try {
-                  LOG.error(e);
+                  task.run();
                 }
-                catch (Throwable ignored) {
+                catch (Throwable e) {
+                  // do not lose queued tasks because of this exception
+                  try {
+                    LOG.error(e);
+                  }
+                  catch (Throwable ignored) {
+                  }
                 }
+                task = pollOrGiveUp(status);
               }
-              task = pollOrGiveUp(status);
+              while (task != null);
             }
-            while (task != null);
-          }
-          finally {
-            if (!sameName) {
-              Thread.currentThread().setName(oldName);
-            }
-          }
+          });
         }
 
         @Override

@@ -7,6 +7,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.Trinity;
+import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.VcsException;
@@ -17,18 +18,17 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.ColumnInfo;
+import com.intellij.vcs.log.Hash;
 import com.intellij.vcs.log.impl.HashImpl;
 import com.intellij.vcsUtil.VcsFileUtil;
 import com.intellij.vcsUtil.VcsRunnable;
 import com.intellij.vcsUtil.VcsUtil;
-import git4idea.GitFileRevision;
-import git4idea.GitLocalBranch;
-import git4idea.GitRevisionNumber;
-import git4idea.GitUtil;
+import git4idea.*;
 import git4idea.commands.*;
 import git4idea.history.GitHistoryUtils;
 import git4idea.i18n.GitBundle;
 import git4idea.index.GitIndexUtil;
+import git4idea.rebase.GitRebaseUtils;
 import git4idea.repo.GitRepository;
 import git4idea.repo.GitRepositoryManager;
 import git4idea.util.GitFileUtils;
@@ -235,8 +235,8 @@ public class GitMergeProvider implements MergeProvider2 {
         if (!line.contains(blob)) return;
         if (pathAmbiguous[0]) return;
 
-        GitIndexUtil.StagedFile stagedFile = GitIndexUtil.parseListTreeRecord(root, line);
-        if (stagedFile != null && blob.equals(stagedFile.getBlobHash())) {
+        GitIndexUtil.StagedFileOrDirectory stagedFile = GitIndexUtil.parseListTreeRecord(root, line);
+        if (stagedFile instanceof GitIndexUtil.StagedFile && blob.equals(((GitIndexUtil.StagedFile) stagedFile).getBlobHash())) {
           if (result[0] == null) {
             result[0] = stagedFile.getPath();
           }
@@ -327,6 +327,10 @@ public class GitMergeProvider implements MergeProvider2 {
     if (mergeBranch != null) {
       return mergeBranch;
     }
+    String rebaseOntoBranch = resolveRebaseOntoBranch(repository.getRoot());
+    if (rebaseOntoBranch != null) {
+      return rebaseOntoBranch;
+    }
 
     try {
       GitRevisionNumber.resolve(myProject, repository.getRoot(), CHERRY_PICK_HEAD);
@@ -346,12 +350,42 @@ public class GitMergeProvider implements MergeProvider2 {
     catch (VcsException e) {
       return null;
     }
-    Collection<GitLocalBranch>
-      localBranchesByHash = repository.getBranches().findLocalBranchesByHash(HashImpl.build(mergeHeadRevisionNumber.asString()));
+    return resolveBranchName(repository, mergeHeadRevisionNumber);
+  }
+
+  @Nullable
+  public String resolveRebaseOntoBranch(@NotNull VirtualFile root) {
+    File rebaseDir = GitRebaseUtils.getRebaseDir(myProject, root);
+    if (rebaseDir == null) {
+      return null;
+    }
+    String ontoHash;
+    try {
+      ontoHash = FileUtil.loadFile(new File(rebaseDir, "onto")).trim();
+    }
+    catch (IOException e) {
+      return null;
+    }
+    GitRepository repo = GitRepositoryManager.getInstance(myProject).getRepositoryForRoot(root);
+    if (repo == null) {
+      return null;
+    }
+    return resolveBranchName(repo, new GitRevisionNumber(ontoHash));
+  }
+
+  public static String resolveBranchName(GitRepository repository, GitRevisionNumber revisionNumber) {
+    Hash hash = HashImpl.build(revisionNumber.asString());
+    Collection<GitLocalBranch> localBranchesByHash = repository.getBranches().findLocalBranchesByHash(hash);
     if (localBranchesByHash.size() == 1) {
       return localBranchesByHash.iterator().next().getName();
     }
-    return null;
+    if (localBranchesByHash.isEmpty()) {
+      Collection<GitRemoteBranch> remoteBranchesByHash = repository.getBranches().findRemoteBranchesByHash(hash);
+      if (remoteBranchesByHash.size() == 1) {
+        return remoteBranchesByHash.iterator().next().getName();
+      }
+    }
+    return revisionNumber.getShortRev();
   }
 
   @Nullable

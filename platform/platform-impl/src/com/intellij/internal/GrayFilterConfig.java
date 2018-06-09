@@ -13,6 +13,7 @@ import com.intellij.ui.JBColor;
 import com.intellij.util.IJSwingUtilities;
 import com.intellij.util.ui.AbstractTableCellEditor;
 import com.intellij.util.ui.JBUI;
+import com.intellij.util.ui.UIUtil;
 
 import javax.swing.*;
 import javax.swing.event.CellEditorListener;
@@ -20,9 +21,6 @@ import javax.swing.event.ChangeEvent;
 import javax.swing.table.TableCellEditor;
 import javax.swing.table.TableCellRenderer;
 import java.awt.*;
-
-import static com.intellij.util.ui.UIUtil.getGrayFilterProperty;
-import static com.intellij.util.ui.UIUtil.setGrayFilterProperty;
 
 /**
  * @author tav
@@ -128,6 +126,52 @@ public class GrayFilterConfig extends AnAction implements DumbAware {
     dlg.setTitle("GrayFilter");
     dlg.setResizable(false);
     dlg.show();
+  }
+
+  private int getGrayFilterProperty(String prop) {
+    UIUtil.GrayFilter filter = getGrayFilter();
+    if ("brightness".equals(prop)) {
+      return filter.getBrightness();
+    }
+    else if ("contrast".equals(prop)) {
+      return filter.getContrast();
+    }
+    else if ("alpha".equals(prop)) {
+      return filter.getAlpha();
+    }
+    throw new IllegalArgumentException("wrong property: " + prop);
+  }
+
+  protected UIUtil.GrayFilter getGrayFilter() {
+    return (UIUtil.GrayFilter)UIUtil.getGrayFilter();
+  }
+
+  private void setGrayFilterProperty(String prop, int value) {
+    UIUtil.GrayFilter filter = getGrayFilter();
+    int brightness = filter.getBrightness();
+    int contrast = filter.getContrast();
+    int alpha = filter.getAlpha();
+
+    if ("brightness".equals(prop)) {
+      brightness = value;
+    }
+    else if ("contrast".equals(prop)) {
+      contrast = value;
+    }
+    else if ("alpha".equals(prop)) {
+      alpha = value;
+    }
+    else {
+      return;
+    }
+
+    String key = getGrayFilterKey();
+    UIManager.getDefaults().remove(key);
+    UIManager.getDefaults().put(key, new UIUtil.GrayFilter(brightness, contrast, alpha));
+  }
+
+  protected String getGrayFilterKey() {
+    return "grayFilter";
   }
 
   private static void updateUI(Window exclude) {

@@ -32,7 +32,7 @@ public class InferenceSessionContainer {
   private static final Logger LOG = Logger.getInstance(InferenceSessionContainer.class);
   private final Map<PsiElement, InferenceSession> myNestedSessions = new HashMap<>();
 
-  public InferenceSessionContainer() {
+  InferenceSessionContainer() {
   }
 
   public void registerNestedSession(InferenceSession session) {
@@ -157,50 +157,49 @@ public class InferenceSessionContainer {
 
     //we do not investigate lambda return expressions when lambda's return type is already inferred (proper)
     //this way all calls from lambda's return expressions won't appear in nested sessions
-    else {
-      PsiElement gParent = PsiUtil.skipParenthesizedExprUp(parent.getParent());
-      //find the nearest parent which appears in the map and start inference with a provided target type for a nested lambda
-      while (true) {
-        if (gParent instanceof PsiReturnStatement) { //process code block lambda
-          final PsiElement returnContainer = gParent.getParent();
-          if (returnContainer instanceof PsiCodeBlock) {
-            gParent = returnContainer.getParent();
-          }
-        }
-        if (gParent instanceof PsiConditionalExpression) {
-          gParent = PsiUtil.skipParenthesizedExprUp(gParent.getParent());
-        }
-        if (gParent instanceof PsiLambdaExpression) {
-          final PsiCall call = PsiTreeUtil.getParentOfType(gParent, PsiCall.class);
-          if (call != null) {
-            initialInferenceState = compoundInitialState.getInitialState(call);
-            if (initialInferenceState != null) {
-              final PsiExpressionList argumentList = call.getArgumentList();
-              final int idx = LambdaUtil.getLambdaIdx(argumentList, gParent);
-              final JavaResolveResult result = PsiDiamondType.getDiamondsAwareResolveResult(call);
-              final PsiElement method = result.getElement();
-              if (method instanceof PsiMethod && idx > -1) {
-                LOG.assertTrue(argumentList != null);
-                final PsiParameter[] methodParameters = ((PsiMethod)method).getParameterList().getParameters();
-                if (methodParameters.length == 0) {
-                  break;
-                }
 
-                //one of the grand parents were found in the top inference session
-                //start from it as it is the top level call
-                final InferenceSession sessionInsideLambda = new InferenceSession(initialInferenceState);
-                sessionInsideLambda.collectAdditionalAndInfer(methodParameters, argumentList.getExpressions(), ((MethodCandidateInfo)result).createProperties(), compoundInitialState.getInitialSubstitutor());
-                return inferNested(parameters, arguments, parent, properties, sessionInsideLambda);
+    PsiElement gParent = PsiUtil.skipParenthesizedExprUp(parent.getParent());
+    //find the nearest parent which appears in the map and start inference with a provided target type for a nested lambda
+    while (true) {
+      if (gParent instanceof PsiReturnStatement) { //process code block lambda
+        final PsiElement returnContainer = gParent.getParent();
+        if (returnContainer instanceof PsiCodeBlock) {
+          gParent = returnContainer.getParent();
+        }
+      }
+      if (gParent instanceof PsiConditionalExpression) {
+        gParent = PsiUtil.skipParenthesizedExprUp(gParent.getParent());
+      }
+      if (gParent instanceof PsiLambdaExpression) {
+        final PsiCall call = PsiTreeUtil.getParentOfType(gParent, PsiCall.class);
+        if (call != null) {
+          initialInferenceState = compoundInitialState.getInitialState(call);
+          if (initialInferenceState != null) {
+            final PsiExpressionList argumentList = call.getArgumentList();
+            final int idx = LambdaUtil.getLambdaIdx(argumentList, gParent);
+            final JavaResolveResult result = PsiDiamondType.getDiamondsAwareResolveResult(call);
+            final PsiElement method = result.getElement();
+            if (method instanceof PsiMethod && idx > -1) {
+              LOG.assertTrue(argumentList != null);
+              final PsiParameter[] methodParameters = ((PsiMethod)method).getParameterList().getParameters();
+              if (methodParameters.length == 0) {
+                break;
               }
-            }
-            else {
-              gParent = PsiUtil.skipParenthesizedExprUp(call.getParent());
-              continue;
+
+              //one of the grand parents were found in the top inference session
+              //start from it as it is the top level call
+              final InferenceSession sessionInsideLambda = new InferenceSession(initialInferenceState);
+              sessionInsideLambda.collectAdditionalAndInfer(methodParameters, argumentList.getExpressions(), ((MethodCandidateInfo)result).createProperties(), compoundInitialState.getInitialSubstitutor());
+              return inferNested(parameters, arguments, parent, properties, sessionInsideLambda);
             }
           }
+          else {
+            gParent = PsiUtil.skipParenthesizedExprUp(call.getParent());
+            continue;
+          }
         }
-        break;
       }
+      break;
     }
     return null;
   }

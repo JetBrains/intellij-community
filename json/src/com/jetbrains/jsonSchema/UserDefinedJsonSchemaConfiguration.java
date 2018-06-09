@@ -35,9 +35,11 @@ import com.jetbrains.jsonSchema.impl.JsonSchemaVersion;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.io.File;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
+import java.util.Objects;
 import java.util.regex.Pattern;
 
 /**
@@ -46,8 +48,8 @@ import java.util.regex.Pattern;
 @Tag("SchemaInfo")
 public class UserDefinedJsonSchemaConfiguration {
   private final static Comparator<Item> ITEM_COMPARATOR = (o1, o2) -> {
-    if (o1.pattern != o2.pattern) return o1.pattern ? -1 : 1;
-    if (o1.directory != o2.directory) return o1.directory ? -1 : 1;
+    if (o1.isPattern() != o2.isPattern()) return o1.isPattern() ? -1 : 1;
+    if (o1.isDirectory() != o2.isDirectory()) return o1.isDirectory() ? -1 : 1;
     return o1.path.compareToIgnoreCase(o2.path);
   };
 
@@ -136,25 +138,27 @@ public class UserDefinedJsonSchemaConfiguration {
   private List<PairProcessor<Project, VirtualFile>> recalculatePatterns() {
     final List<PairProcessor<Project, VirtualFile>> result = new SmartList<>();
     for (final Item patternText : patterns) {
-      if (patternText.pattern) {
-        result.add(new PairProcessor<Project, VirtualFile>() {
-          private final Pattern pattern = PatternUtil.fromMask(patternText.path);
+      switch (patternText.mappingKind) {
+        case File:
+          result.add((project, vfile) -> vfile.equals(getRelativeFile(project, patternText)) || vfile.getUrl().equals(patternText.path));
+          break;
+        case Pattern:
+          result.add(new PairProcessor<Project, VirtualFile>() {
+            private final Pattern pattern = PatternUtil.fromMask(patternText.path);
 
-          @Override
-          public boolean process(Project project, VirtualFile file) {
-            return JsonSchemaObject.matchPattern(pattern, file.getName());
-          }
-        });
-      }
-      else if (patternText.directory) {
-        result.add((project, vfile) -> {
-          final VirtualFile relativeFile = getRelativeFile(project, patternText);
-          return relativeFile != null && VfsUtilCore.isAncestor(relativeFile, vfile, true)
-            && !JsonSchemaService.Impl.get(project).isSchemaFile(vfile);
-        });
-      }
-      else {
-        result.add((project, vfile) -> vfile.equals(getRelativeFile(project, patternText)) || vfile.getUrl().equals(patternText.path));
+            @Override
+            public boolean process(Project project, VirtualFile file) {
+              return JsonSchemaObject.matchPattern(pattern, file.getName());
+            }
+          });
+          break;
+        case Directory:
+          result.add((project, vfile) -> {
+            final VirtualFile relativeFile = getRelativeFile(project, patternText);
+            return relativeFile != null && VfsUtilCore.isAncestor(relativeFile, vfile, true)
+                   && !JsonSchemaService.Impl.get(project).isSchemaFile(vfile);
+          });
+          break;
       }
     }
     return result;
@@ -219,21 +223,24 @@ public class UserDefinedJsonSchemaConfiguration {
 
   public static class Item {
     public String path;
-    public boolean pattern;
-    public boolean directory;
+    public JsonMappingKind mappingKind = JsonMappingKind.File;
 
     public Item() {
     }
 
+    public Item(String path, JsonMappingKind mappingKind) {
+      this.path = normalizePath(path);
+      this.mappingKind = mappingKind;
+    }
+
     public Item(String path, boolean isPattern, boolean isDirectory) {
       this.path = normalizePath(path);
-      pattern = isPattern;
-      directory = isDirectory;
+      this.mappingKind = isPattern ? JsonMappingKind.Pattern : isDirectory ? JsonMappingKind.Directory : JsonMappingKind.File;
     }
 
     @NotNull
     private static String normalizePath(String path) {
-      return path.replace('\\', '/');
+      return StringUtil.trimEnd(path.replace('\\', '/').replace('/', File.separatorChar), File.separatorChar);
     }
 
     public String getPath() {
@@ -244,25 +251,40 @@ public class UserDefinedJsonSchemaConfiguration {
       this.path = normalizePath(path);
     }
 
+    public String getError() {
+      switch (mappingKind) {
+        case File:
+          return !StringUtil.isEmpty(path) ? null : "Empty file path doesn't match anything";
+        case Pattern:
+          return !StringUtil.isEmpty(path) ? null : "Empty pattern matches everything";
+        case Directory:
+          return null;
+      }
+
+      return "Unknown mapping kind";
+    }
+
     public boolean isPattern() {
-      return pattern;
+      return mappingKind == JsonMappingKind.Pattern;
     }
 
     public void setPattern(boolean pattern) {
-      this.pattern = pattern;
+      mappingKind = pattern ? JsonMappingKind.Pattern : JsonMappingKind.File;
     }
 
     public boolean isDirectory() {
-      return directory;
+      return mappingKind == JsonMappingKind.Directory;
     }
 
     public void setDirectory(boolean directory) {
-      this.directory = directory;
+      mappingKind = directory ? JsonMappingKind.Directory : JsonMappingKind.File;
     }
 
     public String getPresentation() {
-      final String prefix = pattern ? "Pattern: " : (directory ? "Directory: " : "File: ");
-      return prefix + path;
+      if (mappingKind == JsonMappingKind.Directory && StringUtil.isEmpty(path)) {
+        return mappingKind.getPrefix() + "[Project Directory]";
+      }
+      return mappingKind.getPrefix() + path;
     }
 
     public String[] getPathParts() {
@@ -276,8 +298,7 @@ public class UserDefinedJsonSchemaConfiguration {
 
       Item item = (Item)o;
 
-      if (pattern != item.pattern) return false;
-      if (directory != item.directory) return false;
+      if (mappingKind != item.mappingKind) return false;
       //noinspection RedundantIfStatement
       if (path != null ? !path.equals(item.path) : item.path != null) return false;
 
@@ -286,9 +307,8 @@ public class UserDefinedJsonSchemaConfiguration {
 
     @Override
     public int hashCode() {
-      int result = path != null ? path.hashCode() : 0;
-      result = 31 * result + (pattern ? 1 : 0);
-      result = 31 * result + (directory ? 1 : 0);
+      int result = Objects.hashCode(path);
+      result = 31 * result + Objects.hashCode(mappingKind);
       return result;
     }
   }

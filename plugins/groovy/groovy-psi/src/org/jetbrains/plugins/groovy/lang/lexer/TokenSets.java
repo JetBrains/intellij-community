@@ -183,7 +183,7 @@ public interface TokenSets {
                                                 SHIFT_EXPRESSION,
                                                 RANGE_EXPRESSION);
 
-  TokenSet DOTS = TokenSet.create(mSPREAD_DOT, mOPTIONAL_DOT, mMEMBER_POINTER, mDOT);
+  TokenSet DOTS = GroovyTokenSets.DOTS;
 
   TokenSet WHITE_SPACES_OR_COMMENTS = TokenSet.orSet(WHITE_SPACES_SET, COMMENT_SET);
 

@@ -226,6 +226,16 @@ public class NullableStuffInspectionTest extends LightCodeInsightFixtureTestCase
     myFixture.checkHighlighting(true, false, true);
   }
 
+  public void testNullableDefaultOnClassVsNonnullOnPackage() {
+    DataFlowInspectionTest.addJavaxNullabilityAnnotations(myFixture);
+    DataFlowInspectionTest.addJavaxDefaultNullabilityAnnotations(myFixture);
+    myFixture.addFileToProject("foo/package-info.java", "@NonnullByDefault package foo;");
+
+    myFixture.configureFromExistingVirtualFile(myFixture.copyFileToProject(getTestName(false) + ".java", "foo/Classes.java"));
+    myFixture.enableInspections(myInspection);
+    myFixture.checkHighlighting(true, false, true);
+  }
+
   public void testBeanValidationNotNull() {
     myFixture.addClass("package javax.annotation.constraints; public @interface NotNull{}");
     DataFlowInspection8Test.setCustomAnnotations(getProject(), getTestRootDisposable(), "javax.annotation.constraints.NotNull", "javax.annotation.constraints.Nullable");

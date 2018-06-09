@@ -31,6 +31,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.xdebugger.XSourcePosition;
+import com.intellij.xdebugger.frame.XCompositeNode;
 import com.intellij.xdebugger.frame.XValueChildrenList;
 import com.intellij.xdebugger.frame.XValueNode;
 import com.jetbrains.python.console.parsing.PythonConsoleData;
@@ -112,8 +113,10 @@ public class PydevConsoleCommunication extends AbstractConsoleCommunication impl
   private int myFullValueSeq = 0;
   private final Map<Integer, List<PyFrameAccessor.PyAsyncValue<String>>> myCallbackHashMap = new ConcurrentHashMap<>();
 
-  private @Nullable PythonConsoleView myConsoleView;
+  @Nullable private PythonConsoleView myConsoleView;
   private final List<PyFrameListener> myFrameListeners = ContainerUtil.createLockFreeCopyOnWriteList();
+
+  @Nullable private XCompositeNode myCurrentRootNode;
 
   /**
    * Initializes the xml-rpc communication.
@@ -629,7 +632,7 @@ public class PydevConsoleCommunication extends AbstractConsoleCommunication impl
             XValueNode node = value.getLastNode();
             if (node != null && !node.isObsolete()) {
               if (e.getMessage().startsWith("Timeout") || e.getMessage().startsWith("Console already exited")) {
-                value.updateNodeValueAfterLoading(node, " ", "Timeout Exceeded");
+                value.updateNodeValueAfterLoading(node, " ", "", PyVariableViewSettings.LOADING_TIMED_OUT);
               }
               else {
                 LOG.error(e);
@@ -675,6 +678,17 @@ public class PydevConsoleCommunication extends AbstractConsoleCommunication impl
       }
     }
     return new XValueChildrenList();
+  }
+
+  @Override
+  public void setCurrentRootNode(@NotNull XCompositeNode node) {
+    myCurrentRootNode = node;
+  }
+
+  @Override
+  @Nullable
+  public XCompositeNode getCurrentRootNode() {
+    return myCurrentRootNode;
   }
 
   @Override

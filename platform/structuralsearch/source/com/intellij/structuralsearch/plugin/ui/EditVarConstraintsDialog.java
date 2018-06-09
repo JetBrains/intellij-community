@@ -45,7 +45,6 @@ import com.intellij.ui.awt.RelativePoint;
 import com.intellij.ui.components.JBCheckBox;
 import com.intellij.ui.components.fields.IntegerField;
 import com.intellij.util.containers.ContainerUtil;
-import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -197,7 +196,7 @@ class EditVarConstraintsDialog extends DialogWrapper {
       }
     );
 
-    customScriptCode.getButton().addActionListener(new ActionListener() {
+    customScriptCode.addActionListener(new ActionListener() {
       @Override
       public void actionPerformed(@NotNull final ActionEvent e) {
         final List<String> variableNames = ContainerUtil.newArrayList(matchOptions.getVariableConstraintNames());
@@ -234,8 +233,12 @@ class EditVarConstraintsDialog extends DialogWrapper {
   }
 
   boolean validateParameters() {
-    return validateRegExp(regexp) && validateWithin() && validateCounts() && validateRegExp(regexprForExprType) &&
-           validateRegExp(formalArgType) && validateScript();
+    if (Registry.is("ssr.use.regexp.to.specify.type")) {
+      if (!validateRegExp(regexprForExprType) || !validateRegExp(formalArgType)) {
+        return false;
+      }
+    }
+    return validateRegExp(regexp) && validateWithin() && validateCounts() && validateScript();
   }
 
   @Override
@@ -299,7 +302,6 @@ class EditVarConstraintsDialog extends DialogWrapper {
                                    ? referenceTargetConstraint
                                    : '"' + referenceTargetConstraint + '"');
     varInfo.setInvertReference(invertReferenceTarget.isSelected());
-
   }
 
   private static ReplacementVariableDefinition getOrAddReplacementVariableDefinition(String varName, Configuration configuration) {
@@ -361,7 +363,7 @@ class EditVarConstraintsDialog extends DialogWrapper {
                                          myProfile.isApplicableConstraint(UIUtil.EXPECTED_TYPE, nodes, completePattern, false));
       referenceTargetConstraints.setVisible(myProfile.isApplicableConstraint(UIUtil.REFERENCE, nodes, completePattern, false));
       containedInConstraints.setVisible(completePattern);
-      scriptConstraints.setVisible(Registry.is("ssr.enable.script.constraint.on.all.variables") || completePattern);
+      scriptConstraints.setVisible(true);
 
       partOfSearchResults.setEnabled(!completePattern);
     }
@@ -505,8 +507,14 @@ class EditVarConstraintsDialog extends DialogWrapper {
 
   private void createUIComponents() {
     regexp = createRegexComponent();
-    regexprForExprType = createRegexComponent();
-    formalArgType = createRegexComponent();
+    if (Registry.is("ssr.use.regexp.to.specify.type")) {
+      regexprForExprType = createRegexComponent();
+      formalArgType = createRegexComponent();
+    }
+    else {
+      regexprForExprType = createTextComponent();
+      formalArgType = createTextComponent();
+    }
     customScriptCode = new ComponentWithBrowseButton<>(createScriptComponent(), null);
 
     myRegExHelpLabel = RegExHelpPopup.createRegExLink(SSRBundle.message("regular.expression.help.label"), regexp, LOG);
@@ -515,15 +523,20 @@ class EditVarConstraintsDialog extends DialogWrapper {
     referenceTargetTextField = new TextFieldWithAutoCompletionWithBrowseButton(myProject);
   }
 
+  private EditorTextField createTextComponent() {
+    return createEditorComponent("1.txt");
+  }
+
   private EditorTextField createRegexComponent() {
-    @NonNls final String fileName = "1.regexp";
-    final FileType fileType = getFileType(fileName);
-    final Document doc = createDocument(fileName, fileType, "");
-    return new EditorTextField(doc, myProject, fileType);
+    return createEditorComponent("1.regexp");
   }
 
   private EditorTextField createScriptComponent() {
-    @NonNls final String fileName = "1.groovy";
+    return createEditorComponent("1.groovy");
+  }
+
+  @NotNull
+  private EditorTextField createEditorComponent(String fileName) {
     final FileType fileType = getFileType(fileName);
     final Document doc = createDocument(fileName, fileType, "");
     return new EditorTextField(doc, myProject, fileType);

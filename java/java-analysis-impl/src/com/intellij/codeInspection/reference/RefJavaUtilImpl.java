@@ -23,6 +23,7 @@ import com.intellij.psi.util.MethodSignatureUtil;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.VisibilityUtil;
+import com.siyeh.ig.psiutils.ExpressionUtils;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -258,9 +259,7 @@ public class RefJavaUtilImpl extends RefJavaUtil{
     if (call != null) {
       PsiType returnType = psiMethod.getReturnType();
       if (!psiMethod.isConstructor() && !PsiType.VOID.equals(returnType)) {
-        PsiElement parent = call.getParent();
-        if (!(parent instanceof PsiExpressionStatement) && 
-            !(parent instanceof PsiLambdaExpression && PsiType.VOID.equals(LambdaUtil.getFunctionalInterfaceReturnType((PsiFunctionalExpression)parent)))) {
+        if (!ExpressionUtils.isVoidContext(call)) {
           refMethod.setReturnValueUsed(true);
         }
 
@@ -440,12 +439,7 @@ public class RefJavaUtilImpl extends RefJavaUtil{
 
    @Override
    public int compareAccess(String a1, String a2) {
-     int i1 = getAccessNumber(a1);
-     int i2 = getAccessNumber(a2);
-
-     if (i1 == i2) return 0;
-     if (i1 < i2) return -1;
-     return 1;
+     return Integer.compare(getAccessNumber(a1), getAccessNumber(a2));
    }
 
    @SuppressWarnings("StringEquality")

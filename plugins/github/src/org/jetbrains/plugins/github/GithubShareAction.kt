@@ -24,12 +24,14 @@ import com.intellij.openapi.actionSystem.DataProvider
 import com.intellij.openapi.application.invokeAndWaitIfNeed
 import com.intellij.openapi.components.service
 import com.intellij.openapi.progress.ProgressIndicator
+import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.progress.Task
 import com.intellij.openapi.project.DumbAwareAction
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.DialogWrapper
 import com.intellij.openapi.ui.Messages
 import com.intellij.openapi.ui.Splitter
+import com.intellij.openapi.util.ThrowableComputable
 import com.intellij.openapi.vcs.ProjectLevelVcsManager
 import com.intellij.openapi.vcs.VcsDataKeys
 import com.intellij.openapi.vcs.VcsException
@@ -70,6 +72,7 @@ import org.jetbrains.plugins.github.util.GithubGitHelper
 import org.jetbrains.plugins.github.util.GithubNotifications
 import org.jetbrains.plugins.github.util.GithubUtil
 import java.awt.BorderLayout
+import java.awt.Component
 import java.awt.Container
 import java.awt.FlowLayout
 import java.io.IOException
@@ -119,73 +122,54 @@ class GithubShareAction : DumbAwareAction("Share Project on GitHub", "Easily sha
       if (!authManager.ensureHasAccounts(project)) return
       val accounts = authManager.getAccounts()
 
-      val gitHelper = service<GithubGitHelper>()
-
-      // pre-load list of user repositories and flag for private repo creation
-      object : Task.Modal(project, "Accessing Github", true) {
-        private lateinit var accountInfos: Map<GithubAccount, Pair<Boolean, Set<String>>>
-        private lateinit var possibleRemotes: List<String>
-
-        override fun run(indicator: ProgressIndicator) {
-          accountInfos = accounts.associate { it to loadAccountInfo(indicator, it) }
-          possibleRemotes = gitRepository?.let(gitHelper::getAccessibleRemoteUrls).orEmpty()
-        }
-
-        @Throws(IOException::class)
-        private fun loadAccountInfo(indicator: ProgressIndicator, account: GithubAccount): Pair<Boolean, Set<String>> {
-          val provider = service<GithubAccountInformationProvider>()
-          return service<GithubApiTaskExecutor>().execute(indicator, account, GithubTask { connection ->
-            // ability to create private repos and list of repos
-            val user = provider.getAccountInformation(account, connection)
-            val canCreatePrivateRepo = user.canCreatePrivateRepo()
-            val names = GithubApiUtil.getUserRepos(connection).mapSmartSet { it.name }
-            canCreatePrivateRepo to names
-          })
-        }
-
-        override fun onSuccess() {
-          if (possibleRemotes.isNotEmpty()) {
-            val existingRemotesDialog = GithubExistingRemotesDialog(project, possibleRemotes)
-            DialogManager.show(existingRemotesDialog)
-            if (!existingRemotesDialog.isOK) {
-              return
-            }
-          }
-          val shareDialog = GithubShareDialog(project,
-                                              accounts,
-                                              authManager.getDefaultAccount(project),
-                                              gitRepository?.remotes?.map { it.name }?.toSet() ?: emptySet(),
-                                              accountInfos)
-          DialogManager.show(shareDialog)
-          if (!shareDialog.isOK) {
-            return
-          }
-
-          doShare(project,
-                  gitRepository,
-                  shareDialog.getRepositoryName(),
-                  shareDialog.isPrivate(),
-                  shareDialog.getRemoteName(),
-                  shareDialog.getDescription(),
-                  shareDialog.getAccount())
-        }
-
-        override fun onThrowable(error: Throwable) {
-          GithubNotifications.showErrorDialog(project, "Failed to Connect to GitHub", error)
-        }
-      }.queue()
-    }
-
-    private fun doShare(project: Project,
-                        gitRepository: GitRepository?,
-                        name: String,
-                        isPrivate: Boolean,
-                        remoteName: String,
-                        description: String,
-                        account: GithubAccount) {
+      val progressManager = service<ProgressManager>()
+      val apiTaskExecutor = service<GithubApiTaskExecutor>()
       val accountInformationProvider = service<GithubAccountInformationProvider>()
       val gitHelper = service<GithubGitHelper>()
       val git = service<Git>()
+
+      val possibleRemotes = gitRepository?.let(gitHelper::getAccessibleRemoteUrls).orEmpty()
+      if (possibleRemotes.isNotEmpty()) {
+        val existingRemotesDialog = GithubExistingRemotesDialog(project, possibleRemotes)
+        DialogManager.show(existingRemotesDialog)
+        if (!existingRemotesDialog.isOK) {
+          return
+        }
+      }
+
+      val accountInformationLoader = object : (GithubAccount, Component) -> Pair<Boolean, Set<String>> {
+        private val loadedInfo = mutableMapOf<GithubAccount, Pair<Boolean, Set<String>>>()
+
+        @Throws(IOException::class)
+        override fun invoke(account: GithubAccount, parentComponent: Component) = loadedInfo.getOrPut(account) {
+          progressManager.runProcessWithProgressSynchronously(ThrowableComputable<Pair<Boolean, Set<String>>, IOException> {
+            apiTaskExecutor.execute(progressManager.progressIndicator, account, GithubTask { connection ->
+              // ability to create private repos and list of repos
+              val user = GithubApiUtil.getCurrentUser(connection)
+              val canCreatePrivateRepo = user.canCreatePrivateRepo()
+              val names = GithubApiUtil.getUserRepos(connection).mapSmartSet { it.name }
+              canCreatePrivateRepo to names
+            })
+          }, "Loading Account Information For $account", true, project)
+        }
+      }
+
+      val shareDialog = GithubShareDialog(project,
+                                          accounts,
+                                          authManager.getDefaultAccount(project),
+                                          gitRepository?.remotes?.map { it.name }?.toSet() ?: emptySet(),
+                                          accountInformationLoader)
+      DialogManager.show(shareDialog)
+      if (!shareDialog.isOK) {
+        return
+      }
+
+      val name: String = shareDialog.getRepositoryName()
+      val isPrivate: Boolean = shareDialog.isPrivate()
+      val remoteName: String = shareDialog.getRemoteName()
+      val description: String = shareDialog.getDescription()
+      val account: GithubAccount = shareDialog.getAccount()
+
       object : Task.Backgroundable(project, "Sharing Project on GitHub...") {
         private lateinit var url: String
 
@@ -193,7 +177,7 @@ class GithubShareAction : DumbAwareAction("Share Project on GitHub", "Easily sha
           // create GitHub repo (network)
           LOG.info("Creating GitHub repository")
           indicator.text = "Creating GitHub repository..."
-          url = service<GithubApiTaskExecutor>()
+          url = apiTaskExecutor
             .execute(indicator, account, GithubTask { c -> GithubApiUtil.createRepo(c, name, description, isPrivate).htmlUrl })
           LOG.info("Successfully created GitHub repository")
 
@@ -216,7 +200,7 @@ class GithubShareAction : DumbAwareAction("Share Project on GitHub", "Easily sha
           }
 
           indicator.text = "Retrieving username..."
-          val username = accountInformationProvider.getAccountInformation(indicator, account).login
+          val username = apiTaskExecutor.execute(indicator, account, accountInformationProvider.usernameTask)
           val remoteUrl = gitHelper.getRemoteUrl(account.server, username, name)
 
           //git remote add origin git@github.com:login/name.git
@@ -314,7 +298,8 @@ class GithubShareAction : DumbAwareAction("Share Project on GitHub", "Easily sha
           catch (e: VcsException) {
             LOG.warn(e)
             GithubNotifications.showErrorURL(project, "Can't finish GitHub sharing process", "Successfully created project ", "'$name'",
-                                             " on GitHub, but initial commit failed:<br/>" + GithubUtil.getErrorTextFromException(e), url)
+                                             " on GitHub, but initial commit failed:<br/>" + GithubUtil.getErrorTextFromException(e),
+                                             url)
             return false
           }
 

@@ -69,6 +69,7 @@ public abstract class PsiFileImpl extends ElementBase implements PsiFileEx, PsiF
   protected final PsiManagerEx myManager;
   public static final Key<Boolean> BUILDING_STUB = new Key<>("Don't use stubs mark!");
   private final PsiLock myPsiLock;
+  private volatile boolean myLoadingAst;
 
   protected PsiFileImpl(@NotNull IElementType elementType, IElementType contentElementType, @NotNull FileViewProvider provider) {
     this(provider);
@@ -208,7 +209,13 @@ public abstract class PsiFileImpl extends ElementBase implements PsiFileEx, PsiF
       treeElement = createFileElement(viewProvider.getContents());
       treeElement.setPsi(this);
 
-      updateTrees(myTrees.withAst(createTreeElementPointer(treeElement)));
+      myLoadingAst = true;
+      try {
+        updateTrees(myTrees.withAst(createTreeElementPointer(treeElement)));
+      }
+      finally {
+        myLoadingAst = false;
+      }
 
       if (LOG.isDebugEnabled() && viewProvider.isPhysical()) {
         LOG.debug("Loaded text for file " + viewProvider.getVirtualFile().getPresentableUrl());
@@ -586,7 +593,9 @@ public abstract class PsiFileImpl extends ElementBase implements PsiFileEx, PsiF
     final StubTree derefd = derefStub();
     if (derefd != null) return derefd;
 
-    if (Boolean.TRUE.equals(getUserData(BUILDING_STUB)) || getElementTypeForStubBuilder() == null) return null;
+    if (Boolean.TRUE.equals(getUserData(BUILDING_STUB)) || myLoadingAst || getElementTypeForStubBuilder() == null) {
+      return null;
+    }
 
     final VirtualFile vFile = getVirtualFile();
     if (!(vFile instanceof VirtualFileWithId) || !vFile.isValid()) return null;

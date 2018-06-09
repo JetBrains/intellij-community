@@ -17,10 +17,7 @@ import com.intellij.util.ui.JBUI.BaseScaleContext.UpdateListener;
 import com.intellij.util.ui.JBUI.RasterJBIcon;
 import com.intellij.util.ui.JBUI.ScaleContext;
 import com.intellij.util.ui.UIUtil;
-import org.jetbrains.annotations.NonNls;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
-import org.jetbrains.annotations.TestOnly;
+import org.jetbrains.annotations.*;
 
 import javax.swing.*;
 import java.awt.*;
@@ -289,8 +286,13 @@ public final class IconLoader {
 
   @Nullable
   public static Image toImage(@NotNull Icon icon) {
+    return toImage(icon, null);
+  }
+
+  @Nullable
+  public static Image toImage(@NotNull Icon icon, @Nullable ScaleContext ctx) {
     if (icon instanceof CachedImageIcon) {
-      icon = ((CachedImageIcon)icon).getRealIcon();
+      icon = ((CachedImageIcon)icon).getRealIcon(ctx);
     }
     if (icon instanceof ImageIcon) {
       return ((ImageIcon)icon).getImage();
@@ -305,6 +307,22 @@ public final class IconLoader {
       g.dispose();
       return image;
     }
+  }
+
+  @Contract("null, _->null; !null, _->!null")
+  public static Icon copy(@Nullable Icon icon, @Nullable Component ancestor) {
+    if (icon == null) return null;
+    if (icon instanceof CopyableIcon) {
+      return ((CopyableIcon)icon).copy();
+    }
+    BufferedImage image = UIUtil.createImage(ancestor, icon.getIconWidth(), icon.getIconHeight(), BufferedImage.TYPE_INT_ARGB);
+    Graphics2D g = image.createGraphics();
+    try {
+      icon.paintIcon(ancestor, g, 0, 0);
+    } finally {
+      g.dispose();
+    }
+    return new JBImageIcon(image);
   }
 
   @Nullable
@@ -378,7 +396,7 @@ public final class IconLoader {
       graphics.dispose();
 
       Image img = ImageUtil.filter(image, filter);
-      if (UIUtil.isJreHiDPI()) img = RetinaImage.createFrom(img, scale, null);
+      if (UIUtil.isJreHiDPI(ancestor)) img = RetinaImage.createFrom(img, scale, null);
 
       icon = new JBImageIcon(img);
     }
@@ -483,6 +501,7 @@ public final class IconLoader {
       numberOfPatchers = icon.numberOfPatchers;
       myFilters = icon.myFilters;
       useCacheOnLoad = icon.useCacheOnLoad;
+      myClearCacheCounter = icon.myClearCacheCounter;
     }
 
     public CachedImageIcon(@NotNull URL url) {
@@ -607,6 +626,12 @@ public final class IconLoader {
     }
 
     @NotNull
+    @Override
+    public CachedImageIcon copy() {
+      return new CachedImageIcon(this);
+    }
+
+    @NotNull
     private Icon createWithFilter(@NotNull RGBImageFilter filter) {
       CachedImageIcon icon = new CachedImageIcon(this);
       icon.myFilters = new ImageFilter[] {getGlobalFilter(), filter};
@@ -714,6 +739,12 @@ public final class IconLoader {
     }
 
     protected abstract Icon compute();
+
+    @NotNull
+    @Override
+    public Icon copy() {
+      return IconLoader.copy(getOrComputeIcon(), null);
+    }
   }
 
   private static class LabelHolder {

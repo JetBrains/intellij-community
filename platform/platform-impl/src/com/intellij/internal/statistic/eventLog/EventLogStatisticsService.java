@@ -8,6 +8,7 @@ import com.intellij.internal.statistic.connect.StatisticsService;
 import com.intellij.internal.statistic.persistence.UsageStatisticsPersistenceComponent;
 import com.intellij.notification.Notification;
 import com.intellij.notification.NotificationListener;
+import com.intellij.openapi.application.PermanentInstallationID;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.io.BufferExposingByteArrayOutputStream;
 import com.intellij.openapi.util.text.StringUtil;
@@ -24,35 +25,40 @@ import java.util.zip.GZIPOutputStream;
 
 public class EventLogStatisticsService implements StatisticsService {
   private static final Logger LOG = Logger.getInstance("com.intellij.internal.statistic.eventLog.EventLogStatisticsService");
-
-  private static final EventLogStatisticsSettingsService mySettingsService = EventLogStatisticsSettingsService.getInstance();
+  private static final EventLogSettingsService mySettingsService = EventLogExternalSettingsService.getInstance();
 
   @Override
   public StatisticsResult send() {
+    return send(mySettingsService, new EventLogCounterResultDecorator());
+  }
+
+  public static StatisticsResult send(@NotNull EventLogSettingsService settings, @NotNull EventLogResultDecorator decorator) {
     if (!FeatureUsageLogger.INSTANCE.isEnabled()) {
       throw new StatServiceException("Event Log collector is not enabled");
     }
 
-    final String serviceUrl = mySettingsService.getServiceUrl();
+    final String serviceUrl = settings.getServiceUrl();
     if (serviceUrl == null) {
       return new StatisticsResult(StatisticsResult.ResultCode.ERROR_IN_CONFIG, "ERROR: unknown Statistics Service URL.");
     }
 
-    if (!mySettingsService.isTransmissionPermitted()) {
+    if (!isSendLogsEnabled(settings.getPermittedTraffic())) {
+      cleanupAllFiles();
       return new StatisticsResult(StatisticsResult.ResultCode.NOT_PERMITTED_SERVER, "NOT_PERMITTED");
     }
 
+    final LogEventFilter filter = settings.getEventFilter();
     try {
-      int succeed = 0;
       final List<File> logs = FeatureUsageLogger.INSTANCE.getLogFiles();
       final List<File> toRemove = new ArrayList<>(logs.size());
       for (File file : logs) {
-        final LogEventRecordRequest recordRequest = LogEventRecordRequest.Companion.create(file);
+        final LogEventRecordRequest recordRequest = LogEventRecordRequest.Companion.create(file, filter);
         final String error = validate(recordRequest, file);
         if (StringUtil.isNotEmpty(error) || recordRequest == null) {
           if (LOG.isTraceEnabled()) {
             LOG.trace(file.getName() + "-> " + error);
           }
+          decorator.failed(recordRequest);
           toRemove.add(file);
           continue;
         }
@@ -73,10 +79,11 @@ public class EventLogStatisticsService implements StatisticsService {
               }
               return null;
             });
-          succeed++;
+          decorator.succeed(recordRequest);
           toRemove.add(file);
         }
         catch (HttpRequests.HttpStatusException e) {
+          decorator.failed(recordRequest);
           if (e.getStatusCode() == HttpURLConnection.HTTP_BAD_REQUEST) {
             toRemove.add(file);
           }
@@ -87,21 +94,23 @@ public class EventLogStatisticsService implements StatisticsService {
         }
       }
 
-      cleanupSentFiles(toRemove);
+      cleanupFiles(toRemove);
 
       UsageStatisticsPersistenceComponent.getInstance().setEventLogSentTime(System.currentTimeMillis());
-      if (logs.isEmpty()) {
-        return new StatisticsResult(ResultCode.NOTHING_TO_SEND, "No files to upload.");
-      }
-      else if (succeed != logs.size()) {
-        return new StatisticsResult(ResultCode.SENT_WITH_ERRORS, "Uploaded " + succeed + " out of " + logs.size() + " files.");
-      }
-      return new StatisticsResult(ResultCode.SEND, "Uploaded " + succeed + " files.");
+      return decorator.toResult();
     }
     catch (Exception e) {
       LOG.info(e);
       throw new StatServiceException("Error during data sending.", e);
     }
+  }
+
+  private static boolean isSendLogsEnabled(int percent) {
+    if (percent == 0) {
+      return false;
+    }
+    final String userId = PermanentInstallationID.get();
+    return (Math.abs(userId.hashCode()) % 100) < percent;
   }
 
   @Nullable
@@ -128,7 +137,19 @@ public class EventLogStatisticsService implements StatisticsService {
     return null;
   }
 
-  public void cleanupSentFiles(@NotNull List<File> toRemove) {
+  private static void cleanupAllFiles() {
+    try {
+      final List<File> logs = FeatureUsageLogger.INSTANCE.getLogFiles();
+      if (!logs.isEmpty()) {
+        cleanupFiles(logs);
+      }
+    }
+    catch (Exception e) {
+      LOG.info(e);
+    }
+  }
+
+  private static void cleanupFiles(@NotNull List<File> toRemove) {
     for (File file : toRemove) {
       if (!file.delete()) {
         LOG.warn("Failed deleting event log: " + file.getName());
@@ -143,5 +164,33 @@ public class EventLogStatisticsService implements StatisticsService {
   @Override
   public Notification createNotification(@NotNull String groupDisplayId, @Nullable NotificationListener listener) {
     return null;
+  }
+
+  private static class EventLogCounterResultDecorator implements EventLogResultDecorator {
+    private int myFailed = 0;
+    private int mySucceed = 0;
+
+    @Override
+    public void succeed(@NotNull LogEventRecordRequest request) {
+      mySucceed++;
+    }
+
+    @Override
+    public void failed(@Nullable LogEventRecordRequest request) {
+      myFailed++;
+    }
+
+    @NotNull
+    @Override
+    public StatisticsResult toResult() {
+      int total = mySucceed + myFailed;
+      if (total == 0) {
+        return new StatisticsResult(ResultCode.NOTHING_TO_SEND, "No files to upload.");
+      }
+      else if (myFailed > 0) {
+        return new StatisticsResult(ResultCode.SENT_WITH_ERRORS, "Uploaded " + mySucceed + " out of " + total + " files.");
+      }
+      return new StatisticsResult(ResultCode.SEND, "Uploaded " + mySucceed + " files.");
+    }
   }
 }

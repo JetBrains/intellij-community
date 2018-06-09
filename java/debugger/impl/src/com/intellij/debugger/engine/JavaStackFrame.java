@@ -210,7 +210,7 @@ public class JavaStackFrame extends XStackFrame implements JVMStackFrameInfoProv
         Value returnValue = methodValuePair.getSecond();
         // try to keep the value as early as possible
         try {
-          DebuggerUtilsEx.keep(returnValue, evaluationContext);
+          evaluationContext.keep(returnValue);
         }
         catch (ObjectCollectedException ignored) {
         }

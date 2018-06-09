@@ -26,7 +26,7 @@ public class LightAdvRawStringLiteralsTest extends LightCodeInsightFixtureTestCa
   @NotNull
   @Override
   protected LightProjectDescriptor getProjectDescriptor() {
-    return JAVA_11_PREVIEW;
+    return JAVA_X;
   }
 
   public void testStringAssignability() {

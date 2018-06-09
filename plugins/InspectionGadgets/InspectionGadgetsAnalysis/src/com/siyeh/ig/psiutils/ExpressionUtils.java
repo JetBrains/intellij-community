@@ -262,6 +262,7 @@ public class ExpressionUtils {
         }
         return e;
       })
+      .nonNull()
       .flatMap(e -> {
         if(e instanceof PsiMethodCallExpression && GET_OR_DEFAULT.matches(e)) {
           return StreamEx.of(e, ((PsiMethodCallExpression)e).getArgumentList().getExpressions()[1]);
@@ -1293,13 +1294,55 @@ public class ExpressionUtils {
         replacement instanceof PsiPolyadicExpression &&
         ((PsiPolyadicExpression)parent).getOperationTokenType() == ((PsiPolyadicExpression)replacement).getOperationTokenType()) {
       int idx = ArrayUtil.indexOf(((PsiPolyadicExpression)parent).getOperands(), expressionToReplace);
-      if (idx > 0) {
+      if (idx >= 0) {
         PsiPolyadicExpression copyParentPolyadic = (PsiPolyadicExpression)parent.copy();
         new CommentTracker().replaceAndRestoreComments(copyParentPolyadic.getOperands()[idx], replacement);
         PsiExpression recreateCopyFromText = JavaPsiFacade.getElementFactory(parent.getProject())
                                                           .createExpressionFromText(copyParentPolyadic.getText(), parent);
         return ((PsiPolyadicExpression)parent.replace(recreateCopyFromText)).getOperands()[idx];
       }
+    }
+    return null;
+  }
+
+  /**
+   * Returns true if expression is evaluated in void context (i.e. its return value is not used)
+   * @param expression expression to check
+   * @return true if expression is evaluated in void context. More precisely if its parent is expression statement or lambda with void SAM
+   */
+  public static boolean isVoidContext(PsiExpression expression) {
+    PsiElement element = PsiUtil.skipParenthesizedExprUp(expression.getParent());
+    return element instanceof PsiExpressionStatement ||
+           (element instanceof PsiLambdaExpression &&
+            PsiType.VOID.equals(LambdaUtil.getFunctionalInterfaceReturnType((PsiLambdaExpression)element)));
+  }
+
+  /**
+   * Looks for expression which given expression is compared to (either with ==, != or {@code equals()} call)
+   *
+   * @param expression expression which is compared to something else
+   * @return another expression the supplied one is compared to or null if comparison is not detected
+   */
+  @Nullable
+  public static PsiExpression getExpressionComparedTo(@NotNull PsiExpression expression) {
+    PsiElement parent = PsiUtil.skipParenthesizedExprUp(expression.getParent());
+    if (parent instanceof PsiBinaryExpression) {
+      PsiBinaryExpression binOp = (PsiBinaryExpression)parent;
+      if (ComparisonUtils.isEqualityComparison(binOp)) {
+        PsiExpression leftOperand = PsiUtil.skipParenthesizedExprDown(binOp.getLOperand());
+        PsiExpression rightOperand = PsiUtil.skipParenthesizedExprDown(binOp.getROperand());
+        return PsiTreeUtil.isAncestor(leftOperand, expression, false) ? rightOperand : leftOperand;
+      }
+    }
+    if (parent instanceof PsiExpressionList) {
+      PsiMethodCallExpression call = tryCast(parent.getParent(), PsiMethodCallExpression.class);
+      if (call != null && MethodCallUtils.isEqualsCall(call)) {
+        return PsiUtil.skipParenthesizedExprDown(call.getMethodExpression().getQualifierExpression());
+      }
+    }
+    PsiMethodCallExpression call = getCallForQualifier(expression);
+    if (call != null && MethodCallUtils.isEqualsCall(call)) {
+      return PsiUtil.skipParenthesizedExprDown(ArrayUtil.getFirstElement(call.getArgumentList().getExpressions()));
     }
     return null;
   }

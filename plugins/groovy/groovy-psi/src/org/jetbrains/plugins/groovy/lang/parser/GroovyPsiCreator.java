@@ -8,8 +8,7 @@ import com.intellij.psi.tree.IElementType;
 import org.jetbrains.plugins.groovy.lang.groovydoc.lexer.IGroovyDocElementType;
 import org.jetbrains.plugins.groovy.lang.groovydoc.psi.GroovyDocPsiCreator;
 import org.jetbrains.plugins.groovy.lang.lexer.GroovyElementType;
-import org.jetbrains.plugins.groovy.lang.psi.impl.GrImportAliasImpl;
-import org.jetbrains.plugins.groovy.lang.psi.impl.GroovyASTPsiElementImpl;
+import org.jetbrains.plugins.groovy.lang.psi.impl.*;
 import org.jetbrains.plugins.groovy.lang.psi.impl.auxiliary.GrListOrMapImpl;
 import org.jetbrains.plugins.groovy.lang.psi.impl.auxiliary.GrThrowsClauseImpl;
 import org.jetbrains.plugins.groovy.lang.psi.impl.auxiliary.annotation.GrAnnotationArgumentListImpl;
@@ -99,6 +98,7 @@ public class GroovyPsiCreator {
     if (elem == FOR_IN_CLAUSE) return new GrForInClauseImpl(node);
     if (elem == TRADITIONAL_FOR_CLAUSE) return new GrTraditionalForClauseImpl(node);
     if (elem == WHILE_STATEMENT) return new GrWhileStatementImpl(node);
+    if (elem == DO_WHILE_STATEMENT) return new GrDoWhileStatementImpl(node);
     if (elem == TRY_STATEMENT) return new GrTryCatchStatementImpl(node);
     if (elem == CATCH_CLAUSE) return new GrCatchClauseImpl(node);
     if (elem == FINALLY_CLAUSE) return new GrFinallyClauseImpl(node);
@@ -182,6 +182,7 @@ public class GroovyPsiCreator {
     if (elem == REGEX_FIND_EXPRESSION) return new GrRegexFindExpressionImpl(node);
     if (elem == EQUALITY_EXPRESSION) return new GrRelationalExpressionImpl(node);
     if (elem == RELATIONAL_EXPRESSION) return new GrRelationalExpressionImpl(node);
+    if (elem == IN_EXPRESSION) return new GrInExpressionImpl(node);
     if (elem == SHIFT_EXPRESSION) return new GrShiftExpressionImpl(node);
     if (elem == RANGE_EXPRESSION) return new GrRangeExpressionImpl(node);
     if (elem == ADDITIVE_EXPRESSION) return new GrAdditiveExpressionImpl(node);
@@ -203,6 +204,7 @@ public class GroovyPsiCreator {
 
     //Paths
     if (elem == REFERENCE_EXPRESSION) return new GrReferenceExpressionImpl(node);
+    if (elem == METHOD_REFERENCE_EXPRESSION) return new GrMethodReferenceExpressionImpl(node);
     if (elem == PROPERTY_EXPRESSION) return new GrPropertySelectionImpl(node);
     if (elem == METHOD_CALL_EXPRESSION) return new GrMethodCallExpressionImpl(node);
     if (elem == INDEX_EXPRESSION) return new GrIndexPropertyImpl(node);

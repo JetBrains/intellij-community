@@ -61,6 +61,10 @@ public final class GitBranchesCollection {
     return ContainerUtil.filter(myLocalBranches.keySet(), key -> myLocalBranches.get(key).equals(hash));
   }
 
+  public Collection<GitRemoteBranch> findRemoteBranchesByHash(Hash hash) {
+    return ContainerUtil.filter(myRemoteBranches.keySet(), key -> myRemoteBranches.get(key).equals(hash));
+  }
+
   @Nullable
   public GitLocalBranch findLocalBranch(@NotNull String name) {
     return findByName(myLocalBranches.keySet(), name);

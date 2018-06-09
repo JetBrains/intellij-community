@@ -6,7 +6,7 @@ import java.util.stream.*;
 public class Main {
   private static void test(List<String> test) {
       StringBuilder sb = new StringBuilder();
-      for (String s : test) {
+      for (String s: test) {
           sb.append(s);
       }
       System.out.println("x"+ sb.toString() +"y");

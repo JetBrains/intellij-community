@@ -118,6 +118,9 @@ public class TBItemAnActionButton extends TBItemButton {
   private void _performAction() {
     final ActionManagerEx actionManagerEx = ActionManagerEx.getInstanceEx();
     final Component src = _getComponent();
+    if (src == null) // KeyEvent can't have null source object
+      return;
+
     final InputEvent ie = new KeyEvent(src, COMPONENT_FIRST, System.currentTimeMillis(), 0, 0, '\0');
     actionManagerEx.tryToExecute(myAnAction, ie, src, ActionPlaces.TOUCHBAR_GENERAL, true);
   }

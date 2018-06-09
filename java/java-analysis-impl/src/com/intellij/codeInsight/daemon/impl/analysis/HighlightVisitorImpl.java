@@ -912,8 +912,7 @@ public class HighlightVisitorImpl extends JavaElementVisitor implements Highligh
   public void visitMethodCallExpression(PsiMethodCallExpression expression) {
     if (!myHolder.hasErrorResults()) myHolder.add(GenericsHighlightUtil.checkEnumSuperConstructorCall(expression));
     if (!myHolder.hasErrorResults()) myHolder.add(HighlightClassUtil.checkSuperQualifierType(myFile.getProject(), expression));
-    // in case of JSP synthetic method call, do not check
-    if (myFile.isPhysical() && !myHolder.hasErrorResults()) {
+    if (!myHolder.hasErrorResults()) {
       try {
         myHolder.add(HighlightMethodUtil.checkMethodCall(expression, myResolveHelper, myLanguageLevel, myJavaSdkVersion, myFile));
       }

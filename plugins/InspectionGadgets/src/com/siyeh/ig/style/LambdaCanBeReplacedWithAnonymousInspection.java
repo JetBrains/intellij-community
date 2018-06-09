@@ -228,12 +228,12 @@ public class LambdaCanBeReplacedWithAnonymousInspection extends BaseInspection {
             final PsiSubstitutor substitutor =
               LambdaUtil.getSubstitutor(interfaceMethod, PsiUtil.resolveGenericsClassInType(functionalInterfaceType));
             for (PsiType type : interfaceMethod.getSignature(substitutor).getParameterTypes()) {
-              if (!PsiTypesUtil.isDenotableType(type)) {
+              if (!PsiTypesUtil.isDenotableType(type, parent)) {
                 return false;
               }
             }
             final PsiType returnType = LambdaUtil.getFunctionalInterfaceReturnType(functionalInterfaceType);
-            return PsiTypesUtil.isDenotableType(returnType);
+            return PsiTypesUtil.isDenotableType(returnType, parent);
           }
         }
       }

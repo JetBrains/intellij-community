@@ -243,9 +243,9 @@ public class HighlightableComponent extends JComponent implements Accessible {
 
     if (isOpaque()) {
       g.setColor(getBackground());
-      g.fillRect(0,0,textOffset-2,getHeight());
+      g.fillRect(0, 0, Math.max(0, textOffset - 2), getHeight());
       g.setColor(bgColor);
-      g.fillRect(textOffset-2, 0, getWidth(), getHeight());
+      g.fillRect(Math.max(0, textOffset - 2), 0, getWidth(), getHeight());
     }
 
     // paint icon
@@ -351,7 +351,7 @@ public class HighlightableComponent extends JComponent implements Accessible {
     UISettings.setupAntialiasing(g);
   }
 
-  private int getTextOffset() {
+  protected int getTextOffset() {
     if (myIcon == null){
       return 2;
     }

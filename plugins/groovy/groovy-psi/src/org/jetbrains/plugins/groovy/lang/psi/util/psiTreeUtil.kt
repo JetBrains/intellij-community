@@ -8,7 +8,7 @@ import com.intellij.psi.scope.PsiScopeProcessor
 import com.intellij.psi.util.parents
 import com.intellij.util.withPrevious
 import org.jetbrains.plugins.groovy.lang.psi.api.GroovyResolveResult
-import org.jetbrains.plugins.groovy.lang.resolve.ElementGroovyResult
+import org.jetbrains.plugins.groovy.lang.resolve.ElementResolveResult
 import org.jetbrains.plugins.groovy.lang.resolve.GrResolverProcessor
 import org.jetbrains.plugins.groovy.lang.resolve.ResolveUtil.DECLARATION_SCOPE_PASSED
 
@@ -39,7 +39,7 @@ fun <T : GroovyResolveResult> PsiElement.treeWalkUpAndGetSingleResult(processor:
   return treeWalkUpAndGet(processor).singleOrNull()
 }
 
-fun <T : PsiElement> PsiElement.treeWalkUpAndGetSingleElement(processor: GrResolverProcessor<ElementGroovyResult<T>>): T? {
+fun <T : PsiElement> PsiElement.treeWalkUpAndGetSingleElement(processor: GrResolverProcessor<ElementResolveResult<T>>): T? {
   return treeWalkUpAndGetSingleResult(processor)?.element
 }
 

@@ -3,7 +3,7 @@ package git4idea.commands;
 
 import com.intellij.execution.ExecutionException;
 import com.intellij.execution.configurations.GeneralCommandLine;
-import com.intellij.execution.configurations.LowPriorityProcessRunnerKt;
+import com.intellij.execution.util.ExecUtil;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
@@ -11,6 +11,7 @@ import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.ProcessEventListener;
+import com.intellij.openapi.vcs.RemoteFilePath;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vfs.CharsetToolkit;
 import com.intellij.openapi.vfs.VfsUtil;
@@ -194,10 +195,7 @@ public abstract class GitHandler {
    */
   public void setWithLowPriority(boolean isLowPriority) {
     if (isLowPriority) {
-      LowPriorityProcessRunnerKt.setupLowPriorityExecution(myCommandLine, myPathToExecutable);
-    }
-    else {
-      myCommandLine.setExePath(myPathToExecutable);
+      ExecUtil.setupLowPriorityExecution(myCommandLine);
     }
   }
 
@@ -259,7 +257,12 @@ public abstract class GitHandler {
   public void addRelativePaths(@NotNull final Collection<FilePath> filePaths) {
     checkNotStarted();
     for (FilePath path : filePaths) {
-      myCommandLine.addParameter(VcsFileUtil.relativePath(getWorkingDirectory(), path));
+      if (path instanceof RemoteFilePath) {
+        myCommandLine.addParameter(path.getPath());
+      }
+      else {
+        myCommandLine.addParameter(VcsFileUtil.relativePath(getWorkingDirectory(), path));
+      }
     }
   }
 

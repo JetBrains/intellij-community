@@ -193,6 +193,26 @@ object UpdateChecker {
     return strategy.checkForUpdates()
   }
 
+  @JvmStatic
+  @Throws(IOException::class)
+  fun getUpdatesInfo(settings: UpdateSettings): UpdatesInfo? {
+    val updateUrl = Urls.newFromEncoded(updateUrl)
+    LogUtil.debug(LOG, "load update xml (UPDATE_URL='%s')", updateUrl)
+
+    return HttpRequests.request(updateUrl)
+      .forceHttps(settings.canUseSecureConnection())
+      .connect {
+        try {
+          UpdatesInfo(loadElement(it.reader))
+        }
+        catch (e: JDOMException) {
+          // corrupted content, don't bother telling user
+          LOG.info(e)
+          null
+        }
+      }
+  }
+
   private fun checkPluginsUpdate(updateSettings: UpdateSettings,
                                  indicator: ProgressIndicator?,
                                  incompatiblePlugins: MutableCollection<IdeaPluginDescriptor>?,

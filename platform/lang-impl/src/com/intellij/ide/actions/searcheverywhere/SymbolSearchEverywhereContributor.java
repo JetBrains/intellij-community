@@ -2,19 +2,28 @@
 package com.intellij.ide.actions.searcheverywhere;
 
 import com.intellij.ide.IdeBundle;
-import com.intellij.ide.util.NavigationItemListCellRenderer;
-import com.intellij.ide.util.gotoByName.ChooseByNameModel;
+import com.intellij.ide.util.gotoByName.FilteringGotoByModel;
 import com.intellij.ide.util.gotoByName.GotoSymbolModel2;
+import com.intellij.lang.DependentLanguage;
+import com.intellij.lang.Language;
+import com.intellij.lang.LanguageUtil;
+import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.project.Project;
 import com.intellij.ui.IdeUICustomization;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
+import java.util.List;
+import java.util.stream.Collectors;
 
 /**
  * @author Konstantin Bulenkov
  */
-public class SymbolSearchEverywhereContributor extends AbstractGotoSEContributor {
+public class SymbolSearchEverywhereContributor extends AbstractGotoSEContributor<Language> {
+
+  public SymbolSearchEverywhereContributor(Project project) {
+    super(project);
+  }
 
   @NotNull
   @Override
@@ -33,13 +42,30 @@ public class SymbolSearchEverywhereContributor extends AbstractGotoSEContributor
   }
 
   @Override
-  protected ChooseByNameModel createModel(Project project) {
+  protected FilteringGotoByModel<Language> createModel(Project project) {
     return new GotoSymbolModel2(project);
   }
 
-  @Override
-  public ListCellRenderer getElementsRenderer(Project project) {
-    return new NavigationItemListCellRenderer();
+  public static class Factory implements SearchEverywhereContributorFactory<Language> {
+    @NotNull
+    @Override
+    public SearchEverywhereContributor<Language> createContributor(AnActionEvent initEvent) {
+      return new SymbolSearchEverywhereContributor(initEvent.getProject());
+    }
+
+    @Nullable
+    @Override
+    public SearchEverywhereContributorFilter<Language> createFilter() {
+      List<Language> items = Language.getRegisteredLanguages()
+                                     .stream()
+                                     .filter(lang -> lang != Language.ANY && !(lang instanceof DependentLanguage))
+                                     .sorted(LanguageUtil.LANGUAGE_COMPARATOR)
+                                     .collect(Collectors.toList());
+      return new SearchEverywhereContributorFilterImpl<>(items,
+                                                         ClassSearchEverywhereContributor.Factory.LANGUAGE_NAME_EXTRACTOR,
+                                                         ClassSearchEverywhereContributor.Factory.LANGUAGE_ICON_EXTRACTOR
+      );
+    }
   }
 
 }

@@ -883,16 +883,16 @@ public class HighlightUtil extends HighlightUtilBase {
         isAllowed = false;
       }
 
-      if (PsiModifier.PRIVATE.equals(modifier)) {
-        isAllowed &= modifierOwnerParent instanceof PsiClass &&
-                     (!((PsiClass)modifierOwnerParent).isInterface() || PsiUtil.isLanguageLevel9OrHigher(modifierOwner) && !((PsiClass)modifierOwnerParent).isAnnotationType());
+      if (PsiModifier.PRIVATE.equals(modifier) && modifierOwnerParent instanceof PsiClass) {
+        isAllowed &= !((PsiClass)modifierOwnerParent).isInterface() ||
+                      PsiUtil.isLanguageLevel9OrHigher(modifierOwner) && !((PsiClass)modifierOwnerParent).isAnnotationType();
       }
       else if (PsiModifier.STRICTFP.equals(modifier)) {
-        isAllowed &= modifierOwnerParent instanceof PsiClass && (!((PsiClass)modifierOwnerParent).isInterface() || PsiUtil.isLanguageLevel8OrHigher(modifierOwner));
+        isAllowed &= !((PsiClass)modifierOwnerParent).isInterface() || PsiUtil.isLanguageLevel8OrHigher(modifierOwner);
       }
       else if (PsiModifier.PROTECTED.equals(modifier) || PsiModifier.TRANSIENT.equals(modifier) ||
                PsiModifier.SYNCHRONIZED.equals(modifier)) {
-        isAllowed &= modifierOwnerParent instanceof PsiClass && !((PsiClass)modifierOwnerParent).isInterface();
+        isAllowed &= !((PsiClass)modifierOwnerParent).isInterface();
       }
 
       if (containingClass != null && containingClass.isInterface()) {
@@ -1238,7 +1238,7 @@ public class HighlightUtil extends HighlightUtilBase {
 
   @NotNull
   private static List<HighlightInfo> checkMultiCatchParameter(@NotNull final PsiParameter parameter,
-                                                              @NotNull final Collection<PsiClassType> thrownTypes) {
+                                                              @NotNull final Collection<? extends PsiClassType> thrownTypes) {
     final List<PsiTypeElement> typeElements = PsiUtil.getParameterTypeElements(parameter);
     final List<HighlightInfo> highlights = new ArrayList<>(typeElements.size());
 
@@ -2523,12 +2523,36 @@ public class HighlightUtil extends HighlightUtilBase {
     PsiType lRawType = lType instanceof PsiClassType ? ((PsiClassType)lType).rawType() : lType;
     PsiType rRawType = rType instanceof PsiClassType ? ((PsiClassType)rType).rawType() : rType;
     boolean assignable = lRawType == null || rRawType == null || TypeConversionUtil.isAssignable(lRawType, rRawType);
-    String toolTip = JavaErrorMessages.message(
-      "incompatible.types.html.tooltip", redIfNotMatch(lRawType, assignable), requiredRow, redIfNotMatch(rRawType, assignable), foundRow);
+    String toolTip = JavaErrorMessages.message("incompatible.types.html.tooltip",
+                                               redIfNotMatch(lRawType, assignable),
+                                               requiredRow,
+                                               redIfNotMatch(rRawType, assignable),
+                                               foundRow,
+                                               getReasonForIncompatibleTypes(rType));
     String description = JavaErrorMessages.message(
       "incompatible.types", JavaHighlightUtil.formatType(lType), JavaHighlightUtil.formatType(rType));
     return HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(textRange).description(description).escapedToolTip(toolTip)
       .navigationShift(navigationShift).create();
+  }
+
+  private static String getReasonForIncompatibleTypes(PsiType rType) {
+    if (rType instanceof PsiMethodReferenceType) {
+      JavaResolveResult[] results = ((PsiMethodReferenceType)rType).getExpression().multiResolve(false);
+      if (results.length > 1) {
+        PsiElement element1 = results[0].getElement();
+        PsiElement element2 = results[1].getElement();
+        if (element1 instanceof PsiMethod && element2 instanceof PsiMethod) {
+          String candidate1 = PsiFormatUtil.formatMethod((PsiMethod)element1, PsiSubstitutor.EMPTY,
+                                                         PsiFormatUtilBase.SHOW_CONTAINING_CLASS | PsiFormatUtilBase.SHOW_NAME | 
+                                                         PsiFormatUtilBase.SHOW_PARAMETERS, PsiFormatUtilBase.SHOW_TYPE);
+          String candidate2 = PsiFormatUtil.formatMethod((PsiMethod)element2, PsiSubstitutor.EMPTY,
+                                                         PsiFormatUtilBase.SHOW_CONTAINING_CLASS | PsiFormatUtilBase.SHOW_NAME | 
+                                                         PsiFormatUtilBase.SHOW_PARAMETERS, PsiFormatUtilBase.SHOW_TYPE);
+          return JavaErrorMessages.message("incompatible.types.reason.ambiguous.method.reference", candidate1, candidate2);
+        }
+      }
+    }
+    return "";
   }
 
   @NotNull
@@ -2905,7 +2929,7 @@ public class HighlightUtil extends HighlightUtilBase {
     STATIC_INTERFACE_CALLS(LanguageLevel.JDK_1_8, "feature.static.interface.calls"),
     REFS_AS_RESOURCE(LanguageLevel.JDK_1_9, "feature.try.with.resources.refs"),
     MODULES(LanguageLevel.JDK_1_9, "feature.modules"),
-    RAW_LITERALS(LanguageLevel.JDK_11_PREVIEW, "feature.raw.literals");
+    RAW_LITERALS(LanguageLevel.JDK_X, "feature.raw.literals");
 
     private final LanguageLevel level;
     private final String key;

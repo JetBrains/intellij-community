@@ -5,10 +5,7 @@ import com.intellij.debugger.DebuggerBundle;
 import com.intellij.debugger.DebuggerContext;
 import com.intellij.debugger.DebuggerManagerEx;
 import com.intellij.debugger.SourcePosition;
-import com.intellij.debugger.engine.ContextUtil;
-import com.intellij.debugger.engine.JavaValue;
-import com.intellij.debugger.engine.JavaValueModifier;
-import com.intellij.debugger.engine.StackFrameContext;
+import com.intellij.debugger.engine.*;
 import com.intellij.debugger.engine.evaluation.EvaluateException;
 import com.intellij.debugger.engine.evaluation.EvaluateExceptionUtil;
 import com.intellij.debugger.engine.evaluation.EvaluationContextImpl;
@@ -87,7 +84,7 @@ public abstract class EvaluationDescriptor extends ValueDescriptorImpl {
       }
 
       Value value = evaluator.evaluate(thisEvaluationContext);
-      DebuggerUtilsEx.keep(value, thisEvaluationContext);
+      thisEvaluationContext.keep(value);
 
       myModifier = evaluator.getModifier();
       setLvalue(myModifier != null);

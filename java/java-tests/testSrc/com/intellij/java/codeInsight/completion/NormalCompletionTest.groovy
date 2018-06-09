@@ -1351,6 +1351,7 @@ class XInternalError {}
   void testNoClosingWhenChoosingWithParenBeforeIdentifier() { doTest '(' }
 
   void testPackageInMemberType() { doTest() }
+  void testPackageInMemberTypeGeneric() { doTest() }
 
   void testConstantInAnno() { doTest('\n') }
 
@@ -1857,6 +1858,20 @@ class Bar {{
     lookup.currentItem = myFixture.lookupElements.find { it.lookupString.contains('Inner') }
     myFixture.type('\t')
     checkResult()
+  }
+
+  void testRemoveUnusedImportOfSameName() {
+    myFixture.addClass("package foo; public class List {}")
+    configureByTestName()
+    lookup.currentItem = myFixture.lookupElements.find { it.object instanceof PsiClass && ((PsiClass)it.object).qualifiedName == 'java.util.List' }
+    myFixture.type('\n')
+    checkResult()
+  }
+
+  void "test no duplication after new with expected type parameter"() {
+    myFixture.configureByText 'a.java', 'class Foo<T> { T t = new <caret> }'
+    complete()
+    assert myFixture.lookupElements.findAll { it.allLookupStrings.contains('T') }.size() < 2
   }
 
 }

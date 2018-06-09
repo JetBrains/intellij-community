@@ -46,6 +46,7 @@ import com.intellij.openapi.actionSystem.ex.CustomComponentAction;
 import com.intellij.openapi.actionSystem.impl.ActionButton;
 import com.intellij.openapi.actionSystem.impl.ActionToolbarImpl;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.Experiments;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.diagnostic.Logger;
@@ -563,7 +564,7 @@ public class SearchEverywhereAction extends AnAction implements CustomComponentA
   }
 
   public void actionPerformed(AnActionEvent e, MouseEvent me) {
-    if (Registry.is("new.search.everywhere")) {
+    if (Experiments.isFeatureEnabled("new.search.everywhere") && e.getProject() != null) {
       //todo[mikhail.sokolov] show new UI
       String searchProviderID = SearchEverywhereContributor.ALL_CONTRIBUTORS_GROUP_ID;
 
@@ -583,7 +584,7 @@ public class SearchEverywhereAction extends AnAction implements CustomComponentA
 
       IdeEventQueue.getInstance().getPopupManager().closeAllPopups(false);
       String text = GotoActionBase.getInitialTextForNavigation(e.getData(CommonDataKeys.EDITOR));
-      seManager.show(searchProviderID, text);
+      seManager.show(searchProviderID, text, e);
       return;
     }
 

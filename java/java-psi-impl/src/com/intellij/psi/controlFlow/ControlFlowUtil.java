@@ -1623,6 +1623,7 @@ public class ControlFlowUtil {
      * Push an arc of the graph (oldOffset -> newOffset)
      */
     void push(int oldOffset, int newOffset) {
+      LOG.assertTrue(oldOffset >= 0, "negative offset is pushed to walk-through stack");
       if (size >= newOffsets.length) {
         oldOffsets = ArrayUtil.realloc(oldOffsets, size * 3 / 2);
         newOffsets = ArrayUtil.realloc(newOffsets, size * 3 / 2);

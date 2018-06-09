@@ -183,6 +183,10 @@ public class SVGLoader {
     Document document;
     String uri = null;
     try {
+      if (url != null && "jar".equals(url.getProtocol()) && stream != null) {
+        // workaround for BATIK-1217
+        url = new URL(url.getPath());
+      }
       uri = url != null ? url.toURI().toString() : null;
     }
     catch (URISyntaxException ignore) {

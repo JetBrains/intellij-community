@@ -83,6 +83,7 @@ class CreateGradleProjectWithKotlinGuiTest(val testParameters: TestParameters) :
       gradleOptions = BuildGradleOptions().build(),
       framework = project.frameworkName)
     waitAMoment(extraTimeOut)
+    editSettingsGradle()
     editBuildGradle(
       kotlinVersion = kotlinVersion,
       isKotlinDslUsed = false,

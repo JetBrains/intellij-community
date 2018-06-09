@@ -44,9 +44,10 @@ public class UnwrapElseBranchAction extends PsiElementBaseIntentionAction {
       if (elseBranch != null && grandParent != null) {
         if (!(grandParent instanceof PsiCodeBlock)) {
           PsiElementFactory factory = JavaPsiFacade.getElementFactory(project);
-          PsiCodeBlock codeBlock = factory.createCodeBlockFromText("{" + ifStatement.getText() + "}", ifStatement);
-          codeBlock = (PsiCodeBlock)ifStatement.replace(codeBlock);
-          ifStatement = (PsiIfStatement)codeBlock.getStatements()[0];
+          PsiBlockStatement blockStatement =
+            (PsiBlockStatement)factory.createStatementFromText("{" + ifStatement.getText() + "}", ifStatement);
+          blockStatement = (PsiBlockStatement)ifStatement.replace(blockStatement);
+          ifStatement = (PsiIfStatement)blockStatement.getCodeBlock().getStatements()[0];
           elseBranch = ifStatement.getElseBranch();
           LOG.assertTrue(elseBranch != null);
         }

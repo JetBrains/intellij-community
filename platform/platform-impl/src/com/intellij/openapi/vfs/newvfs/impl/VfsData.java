@@ -101,10 +101,6 @@ public class VfsData {
     });
   }
 
-  public static VfsData getInstance() {
-    return ApplicationManager.getApplication().getComponent(VfsData.class);
-  }
-
   private void killInvalidatedFiles() {
     synchronized (myDeadMarker) {
       if (!myDyingIds.isEmpty()) {

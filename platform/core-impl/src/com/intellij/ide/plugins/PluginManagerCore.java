@@ -634,11 +634,11 @@ public class PluginManagerCore {
         return descriptor;
       }
       catch (XmlSerializationException | InvalidDataException e) {
-        getLogger().info("Cannot load " + descriptorFile, e);
+        getLogger().warn("Cannot load " + descriptorFile, e);
         prepareLoadingPluginsErrorMessage(singletonList("File '" + file.getName() + "' contains invalid plugin descriptor."));
       }
       catch (Throwable e) {
-        getLogger().info("Cannot load " + descriptorFile, e);
+        getLogger().warn("Cannot load " + descriptorFile, e);
       }
     }
 

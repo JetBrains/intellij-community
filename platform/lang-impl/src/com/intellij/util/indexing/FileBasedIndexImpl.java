@@ -660,12 +660,21 @@ public class FileBasedIndexImpl extends FileBasedIndex implements BaseComponent,
 
   private static final ThreadLocal<Integer> myUpToDateCheckState = new ThreadLocal<>();
 
-  public static void disableUpToDateCheckForCurrentThread() {
+  public static <T,E extends Throwable> T disableUpToDateCheckIn(@NotNull ThrowableComputable<T, E> runnable) throws E {
+    disableUpToDateCheckForCurrentThread();
+    try {
+      return runnable.compute();
+    }
+    finally {
+      enableUpToDateCheckForCurrentThread();
+    }
+  }
+  private static void disableUpToDateCheckForCurrentThread() {
     final Integer currentValue = myUpToDateCheckState.get();
     myUpToDateCheckState.set(currentValue == null ? 1 : currentValue.intValue() + 1);
   }
 
-  public static void enableUpToDateCheckForCurrentThread() {
+  private static void enableUpToDateCheckForCurrentThread() {
     final Integer currentValue = myUpToDateCheckState.get();
     if (currentValue != null) {
       final int newValue = currentValue.intValue() - 1;
@@ -882,17 +891,7 @@ public class FileBasedIndexImpl extends FileBasedIndex implements BaseComponent,
       //assert project != null : "GlobalSearchScope#getProject() should be not-null for all index queries";
       ensureUpToDate(indexId, project, filter, restrictToFile);
 
-      myAccessValidator.checkAccessingIndexDuringOtherIndexProcessing(indexId);
-
-      try {
-        index.getReadLock().lock();
-        myAccessValidator.startedProcessingActivityForIndex(indexId);
-        return computable.convert(index);
-      }
-      finally {
-        myAccessValidator.stoppedProcessingActivityForIndex(indexId);
-        index.getReadLock().unlock();
-      }
+      return ConcurrencyUtil.withLock(index.getReadLock(), ()->myAccessValidator.validate(indexId, ()->computable.convert(index)));
     }
     catch (StorageException e) {
       scheduleRebuild(indexId, e);
@@ -997,13 +996,7 @@ public class FileBasedIndexImpl extends FileBasedIndex implements BaseComponent,
       final MapReduceIndex index = (MapReduceIndex)state.getIndex(indexId);
       assert index != null;
       final MemoryIndexStorage memStorage = (MemoryIndexStorage)index.getStorage();
-      index.getReadLock().lock();
-      try {
-        memStorage.clearCaches();
-      }
-      finally {
-        index.getReadLock().unlock();
-      }
+      ConcurrencyUtil.withLock(index.getReadLock(), () -> memStorage.clearCaches());
     }
   }
 
@@ -1441,13 +1434,7 @@ public class FileBasedIndexImpl extends FileBasedIndex implements BaseComponent,
       final MapReduceIndex index = (MapReduceIndex)state.getIndex(indexId);
       assert index != null;
       final MemoryIndexStorage memStorage = (MemoryIndexStorage)index.getStorage();
-      index.getWriteLock().lock();
-      try {
-        memStorage.clearMemoryMap();
-      }
-      finally {
-        index.getWriteLock().unlock();
-      }
+      ConcurrencyUtil.withLock(index.getWriteLock(), () -> memStorage.clearMemoryMap());
       memStorage.fireMemoryStorageCleared();
     }
   }
@@ -1727,8 +1714,7 @@ public class FileBasedIndexImpl extends FileBasedIndex implements BaseComponent,
   }
   private void scheduleUpdate(@NotNull final ID<?, ?> indexId, @NotNull Computable<Boolean> update, VirtualFile file, final int inputId, final boolean hasContent) {
     if (runUpdate(false, update)) {
-      myReadLock.lock();
-      try {
+      ConcurrencyUtil.withLock(myReadLock, ()->{
         UpdatableIndex<?, ?, FileContent> index = getIndex(indexId);
         if (hasContent) {
           index.setIndexedStateForFile(inputId, file);
@@ -1736,10 +1722,7 @@ public class FileBasedIndexImpl extends FileBasedIndex implements BaseComponent,
         else {
           index.resetIndexedStateForFile(inputId);
         }
-      }
-      finally {
-        myReadLock.unlock();
-      }
+      });
     }
   }
 
@@ -1983,7 +1966,10 @@ public class FileBasedIndexImpl extends FileBasedIndex implements BaseComponent,
       return myFilesToUpdate.containsKey(Math.abs(getIdMaskingNonIdBasedFile(file)));
     }
 
-    public void ensureUpToDate() {
+    void ensureUpToDate() {
+      if (!isUpToDateCheckEnabled()) {
+        return;
+      }
       //assert ApplicationManager.getApplication().isReadAccessAllowed() || ShutDownTracker.isShutdownHookRunning();
       waitUntilIndicesAreInitialized();
 
@@ -2031,26 +2017,27 @@ public class FileBasedIndexImpl extends FileBasedIndex implements BaseComponent,
       myWorkersFinishedSync.register();
       int phase = myWorkersFinishedSync.getPhase();
       try {
-        myVfsEventsMerger.processChanges(info -> {
-          myWriteLock.lock();
-          try {
-            ProgressManager.getInstance().executeNonCancelableSection(() -> {
-              int fileId = info.getFileId();
-              VirtualFile file = info.getFile();
-              if (info.isTransientStateChanged()) FileBasedIndexImpl.this.doTransientStateChangeForFile(fileId, file);
-              if (info.isBeforeContentChanged()) FileBasedIndexImpl.this.doInvalidateIndicesForFile(fileId, file, true);
-              if (info.isContentChanged()) scheduleFileForIndexing(fileId, file, true);
-              if (info.isFileRemoved()) FileBasedIndexImpl.this.doInvalidateIndicesForFile(fileId, file, false);
-              if (info.isFileAdded()) scheduleFileForIndexing(fileId, file, false);
-            });
-          }
-          finally {
-            IndexingStamp.flushCache(info.getFileId());
-            myWriteLock.unlock();
-          }
-          return true;
-        });
-      } finally {
+        myVfsEventsMerger.processChanges(info ->
+          ConcurrencyUtil.withLock(myWriteLock, () -> {
+            try {
+              ProgressManager.getInstance().executeNonCancelableSection(() -> {
+                int fileId = info.getFileId();
+                VirtualFile file = info.getFile();
+                if (info.isTransientStateChanged()) FileBasedIndexImpl.this.doTransientStateChangeForFile(fileId, file);
+                if (info.isBeforeContentChanged()) FileBasedIndexImpl.this.doInvalidateIndicesForFile(fileId, file, true);
+                if (info.isContentChanged()) scheduleFileForIndexing(fileId, file, true);
+                if (info.isFileRemoved()) FileBasedIndexImpl.this.doInvalidateIndicesForFile(fileId, file, false);
+                if (info.isFileAdded()) scheduleFileForIndexing(fileId, file, false);
+              });
+            }
+            finally {
+              IndexingStamp.flushCache(info.getFileId());
+            }
+            return true;
+          })
+        );
+      }
+      finally {
         myWorkersFinishedSync.arriveAndDeregister();
       }
 

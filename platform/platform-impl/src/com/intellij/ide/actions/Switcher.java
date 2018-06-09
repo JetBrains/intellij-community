@@ -15,6 +15,7 @@ import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.fileEditor.ex.FileEditorManagerEx;
 import com.intellij.openapi.fileEditor.impl.EditorHistoryManager;
+import com.intellij.openapi.fileEditor.impl.EditorTabPresentationUtil;
 import com.intellij.openapi.fileEditor.impl.EditorWindow;
 import com.intellij.openapi.fileEditor.impl.FileEditorManagerImpl;
 import com.intellij.openapi.keymap.KeymapUtil;
@@ -64,8 +65,6 @@ import java.util.*;
 import java.util.List;
 
 import static com.intellij.openapi.keymap.KeymapUtil.getActiveKeymapShortcuts;
-import static com.intellij.openapi.vfs.newvfs.VfsPresentationUtil.getFileBackgroundColor;
-import static com.intellij.openapi.vfs.newvfs.VfsPresentationUtil.getUniquePresentableNameForUI;
 import static java.awt.event.InputEvent.CTRL_DOWN_MASK;
 import static java.awt.event.KeyEvent.*;
 import static javax.swing.KeyStroke.getKeyStroke;
@@ -1221,7 +1220,7 @@ public class Switcher extends AnAction implements DumbAware {
         append(renderedName, SimpleTextAttributes.fromTextAttributes(attributes));
 
         // calc color the same way editor tabs do this, i.e. including EPs
-        Color color = getFileBackgroundColor(project, virtualFile);
+        Color color = EditorTabPresentationUtil.getFileBackgroundColor(project, virtualFile);
 
         if (!selected && color != null) {
           setBackground(color);
@@ -1243,7 +1242,7 @@ public class Switcher extends AnAction implements DumbAware {
     String getNameForRendering() {
       if (myNameForRendering == null) {
         // Recently changed files would also be taken into account (not only open 'visible' files)
-        myNameForRendering = getUniquePresentableNameForUI(myProject, first);
+        myNameForRendering = EditorTabPresentationUtil.getUniqueEditorTabTitle(myProject, first, second);
       }
       return myNameForRendering;
     }

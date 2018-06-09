@@ -182,6 +182,21 @@ class Foo extends java.util.ArrayList {
     myFixture.assertPreferredCompletionItems 0, 'field', 'float'
   }
 
+  void "test suggest fields initialized by init"() {
+    myFixture.configureByText(JavaFileType.INSTANCE, """
+class Foo {
+  final Integer field;
+  
+  { field = 42; }
+  
+  Foo() {
+    equals(f<caret>); 
+  } 
+}""")
+    complete()
+    myFixture.assertPreferredCompletionItems 0, 'field'
+  }
+
   void testInitializerMatters() throws Exception {
     myFixture.configureByText(JavaFileType.INSTANCE, "class Foo {{ String f<caret>x = getFoo(); }; String getFoo() {}; }")
     complete()

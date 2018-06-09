@@ -48,4 +48,8 @@ public interface GroovyTokenSets {
     T_XOR_ASSIGN,
     T_BOR_ASSIGN
   );
+
+  TokenSet REFERENCE_DOTS = create(T_DOT, T_SAFE_DOT, T_SPREAD_DOT);
+  TokenSet METHOD_REFERENCE_DOTS = create(T_METHOD_CLOSURE, T_METHOD_REFERENCE);
+  TokenSet DOTS = orSet(REFERENCE_DOTS, METHOD_REFERENCE_DOTS);
 }

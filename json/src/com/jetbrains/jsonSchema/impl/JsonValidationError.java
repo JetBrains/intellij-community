@@ -2,11 +2,15 @@
 package com.jetbrains.jsonSchema.impl;
 
 import com.intellij.codeInspection.LocalQuickFix;
-import com.intellij.psi.PsiElement;
+import com.intellij.util.containers.ContainerUtil;
 import com.jetbrains.jsonSchema.impl.fixes.AddMissingPropertyFix;
 import com.jetbrains.jsonSchema.impl.fixes.RemoveProhibitedPropertyFix;
 import com.jetbrains.jsonSchema.impl.fixes.SuggestEnumValuesFix;
 import org.jetbrains.annotations.Nullable;
+
+import java.util.Collection;
+import java.util.Iterator;
+import java.util.stream.Collectors;
 
 public class JsonValidationError {
 
@@ -25,6 +29,34 @@ public class JsonValidationError {
 
   public interface IssueData {
 
+  }
+
+  public static class MissingMultiplePropsIssueData implements IssueData {
+    public final Collection<MissingPropertyIssueData> myMissingPropertyIssues;
+
+    public MissingMultiplePropsIssueData(Collection<MissingPropertyIssueData> missingPropertyIssues) {
+      myMissingPropertyIssues = missingPropertyIssues;
+    }
+
+    public String getMessage(boolean trimIfNeeded) {
+      if (myMissingPropertyIssues.size() == 1) {
+        return "property '" + myMissingPropertyIssues.iterator().next().propertyName + "'";
+      }
+
+      Collection<MissingPropertyIssueData> namesToDisplay = myMissingPropertyIssues;
+      boolean trimmed = false;
+      if (trimIfNeeded && namesToDisplay.size() > 3) {
+        namesToDisplay = ContainerUtil.newArrayList();
+        Iterator<MissingPropertyIssueData> iterator = myMissingPropertyIssues.iterator();
+        for (int i = 0; i < 3; i++) {
+          namesToDisplay.add(iterator.next());
+        }
+        trimmed = true;
+      }
+      String allNames = myMissingPropertyIssues.stream().map(p -> "'" + p.propertyName + "'").collect(Collectors.joining(", "));
+      if (trimmed) allNames += ", ...";
+      return "properties " + allNames;
+    }
   }
 
   public static class MissingPropertyIssueData implements IssueData {
@@ -76,14 +108,14 @@ public class JsonValidationError {
   }
 
   @Nullable
-  public LocalQuickFix createFix(PsiElement key) {
+  public LocalQuickFix createFix() {
     switch (myFixableIssueKind) {
       case MissingProperty:
-        return new AddMissingPropertyFix(key, (MissingPropertyIssueData)myIssueData);
+        return new AddMissingPropertyFix((MissingMultiplePropsIssueData)myIssueData);
       case ProhibitedProperty:
-        return new RemoveProhibitedPropertyFix(key, (ProhibitedPropertyIssueData)myIssueData);
+        return new RemoveProhibitedPropertyFix((ProhibitedPropertyIssueData)myIssueData);
       case NonEnumValue:
-        return new SuggestEnumValuesFix(key);
+        return new SuggestEnumValuesFix();
       default:
         return null;
     }
