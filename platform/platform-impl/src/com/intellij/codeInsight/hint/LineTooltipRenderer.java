@@ -18,6 +18,7 @@ package com.intellij.codeInsight.hint;
 import com.intellij.ide.BrowserUtil;
 import com.intellij.ide.IdeTooltipManager;
 import com.intellij.ide.TooltipEvent;
+import com.intellij.ide.actions.ActionsCollector;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.IdeActions;
@@ -171,6 +172,7 @@ public class LineTooltipRenderer extends ComparableObject.Impl implements Toolti
       public void actionPerformed(final AnActionEvent e) {
         // The tooltip gets the focus if using a screen reader and invocation through a keyboard shortcut.
         hintHint.setRequestFocus(ScreenReader.isActive() && (e.getInputEvent() instanceof KeyEvent));
+        ActionsCollector.getInstance().record("tooltip.actions.show.description.shortcut");
         reloader.reload(!expanded);
       }
     });
@@ -197,6 +199,8 @@ public class LineTooltipRenderer extends ComparableObject.Impl implements Toolti
             hint.hide();
             return;
           }
+
+          ActionsCollector.getInstance().record("tooltip.actions.show.description.morelink");
 
           reloader.reload(!expanded);
         }

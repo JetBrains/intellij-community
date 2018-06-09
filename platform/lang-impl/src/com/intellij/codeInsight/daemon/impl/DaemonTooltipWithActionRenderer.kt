@@ -10,6 +10,7 @@ import com.intellij.codeInsight.hint.HintManagerImpl
 import com.intellij.codeInsight.hint.LineTooltipRenderer
 import com.intellij.icons.AllIcons
 import com.intellij.ide.TooltipEvent
+import com.intellij.ide.actions.ActionsCollector
 import com.intellij.ide.ui.UISettings
 import com.intellij.openapi.actionSystem.*
 import com.intellij.openapi.actionSystem.impl.ActionButton
@@ -315,6 +316,7 @@ internal class DaemonTooltipWithActionRenderer(text: String?,
     }
 
     override fun setSelected(e: AnActionEvent, state: Boolean) {
+      ActionsCollector.getInstance().record("tooltip.actions.show.description.gear")
       reloader.reload(state)
     }
 
