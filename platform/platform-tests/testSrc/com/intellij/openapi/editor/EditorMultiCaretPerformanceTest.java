@@ -25,7 +25,7 @@ public class EditorMultiCaretPerformanceTest extends AbstractEditorTest {
     int charactersToType = 100;
     String initialText = StringUtil.repeat("<caret>\n", caretCount);
     initText(initialText);
-    PlatformTestUtil.startPerformanceTest("Typing with large number of carets", 95_000, () -> {
+    PlatformTestUtil.startPerformanceTest("Typing with large number of carets", 100_000, () -> {
       for (int i = 0; i < charactersToType; i++) {
         type('a');
       }
