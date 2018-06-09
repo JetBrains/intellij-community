@@ -112,8 +112,8 @@ public class InspectionProfileImpl extends NewInspectionProfile {
     final InspectionToolWrapper inspectionTool = toolWrapper.createCopy();
     if (toolWrapper.isInitialized()) {
       Element config = new Element("config");
-      toolWrapper.getTool().writeSettings(config);
-      inspectionTool.getTool().readSettings(config);
+      ScopeToolState.tryWriteSettings(toolWrapper.getTool(), config);
+      ScopeToolState.tryReadSettings(inspectionTool.getTool(), config);
     }
     return inspectionTool;
   }
