@@ -103,7 +103,7 @@ internal class DaemonTooltipWithActionRenderer(text: String?,
     val settingsComponent = createSettingsComponent(hintHint, tooltipReloader, hasMore)
 
     val settingsConstraints = GridBagConstraints(1, 0, 1, 1, 0.0, 0.0, GridBagConstraints.NORTH, GridBagConstraints.HORIZONTAL,
-                                                 JBUI.insets(3, 3, 0, 3), 0, 0)
+                                                 JBUI.insets(4, 7, 4, 4), 0, 0)
     grid.add(settingsComponent, settingsConstraints)
 
     if (isShowActions()) {
@@ -138,16 +138,16 @@ internal class DaemonTooltipWithActionRenderer(text: String?,
       .fillCellHorizontally()
       .anchor(GridBagConstraints.WEST)
 
-    buttons.add(createActionLabel(tooltipAction.text, runFixAction, hintHint.textBackground), gridBag.next().insets(3, 6, 3, 0))
-    buttons.add(createHint(shortcutRunActionText), gridBag.next().insets(0, 3, 0, 6))
+    buttons.add(createActionLabel(tooltipAction.text, runFixAction, hintHint.textBackground), gridBag.next().insets(5, 8, 5, 4))
+    buttons.add(createHint(shortcutRunActionText), gridBag.next().insets(0, 4, 0, 12))
 
     val showAllFixes = Runnable {
       hint.hide()
       tooltipAction.showAllActions(editor)
     }
 
-    buttons.add(createActionLabel("More actions...", showAllFixes, hintHint.textBackground), gridBag.next().insets(3, 6, 3, 0))
-    buttons.add(createHint(shortcutShowAllActionsText), gridBag.next().fillCellHorizontally().insets(0, 3, 0, 6))
+    buttons.add(createActionLabel("More actions...", showAllFixes, hintHint.textBackground), gridBag.next().insets(5, 12, 5, 4))
+    buttons.add(createHint(shortcutShowAllActionsText), gridBag.next().fillCellHorizontally().insets(0, 4, 0, 20))
 
     actions.add(object : AnAction() {
       override fun actionPerformed(e: AnActionEvent?) {
@@ -213,8 +213,9 @@ internal class DaemonTooltipWithActionRenderer(text: String?,
 
   private fun createHint(shortcutRunAction: String): JBLabel {
     val fixHint = JBLabel(shortcutRunAction)
-    UIUtil.applyStyle(UIUtil.ComponentStyle.SMALL, fixHint)
     fixHint.fontColor = UIUtil.FontColor.BRIGHTER
+    fixHint.border = JBUI.Borders.empty()
+    fixHint.font = getActionFont()
     return fixHint
   }
 
