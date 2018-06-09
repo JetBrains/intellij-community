@@ -25,7 +25,7 @@ public class PyNotPostfixTemplateTest extends PyPostfixTemplateTestCase {
     doTest();
   }
 
-  public void testParenthesis() {
+  public void testAnd() {
     doTest();
   }
 

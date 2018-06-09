@@ -1,2 +1,2 @@
-while 1 + 1.par<caret>:
+while 1.par<caret>:
     pass

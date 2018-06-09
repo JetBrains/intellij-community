@@ -1,2 +1,2 @@
-while (1 + 1)<caret>:
+while (1)<caret>:
     pass
