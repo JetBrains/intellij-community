@@ -31,8 +31,8 @@ import com.jetbrains.python.psi.LanguageLevel;
 import com.jetbrains.python.psi.PyFile;
 import com.jetbrains.python.sdk.PySdkExtKt;
 import com.jetbrains.python.sdk.PythonSdkType;
-import com.jetbrains.python.sdk.flavors.PipenvKt;
-import com.jetbrains.python.sdk.flavors.UsePipEnvQuickFix;
+import com.jetbrains.python.sdk.pipenv.PipenvKt;
+import com.jetbrains.python.sdk.pipenv.UsePipEnvQuickFix;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -74,6 +74,7 @@ public class PyInterpreterInspection extends PyInspection {
 
       final String interpreterOwner = pyCharm ? "project" : "module";
       final List<LocalQuickFix> fixes = new ArrayList<>();
+      // TODO: Introduce an inspection extension
       if (UsePipEnvQuickFix.Companion.isApplicable(module)) {
         fixes.add(new UsePipEnvQuickFix(sdk, module));
       }
@@ -89,6 +90,7 @@ public class PyInterpreterInspection extends PyInspection {
       else {
         final Module associatedModule = PySdkExtKt.getAssociatedModule(sdk);
         final String associatedName = associatedModule != null ? associatedModule.getName() : PySdkExtKt.getAssociatedModulePath(sdk);
+        // TODO: Introduce an inspection extension
         if (PipenvKt.isPipEnv(sdk) && associatedModule != module) {
           final String message = associatedName != null ?
                                  "Pipenv interpreter is associated with another " + interpreterOwner + ": '" + associatedName + "'" :

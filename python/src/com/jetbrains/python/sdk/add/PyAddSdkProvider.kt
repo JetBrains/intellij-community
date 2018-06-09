@@ -6,6 +6,7 @@ import com.intellij.openapi.module.Module
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.projectRoots.Sdk
 
+// TODO: Merge into a common Python SDK provider
 interface PyAddSdkProvider {
   /**
    * Returns [PyAddSdkView] if applicable.

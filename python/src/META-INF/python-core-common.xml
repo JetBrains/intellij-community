@@ -782,6 +782,11 @@
     <visitorFilter language="PyFunctionTypeComment"
                    implementationClass="com.jetbrains.python.codeInsight.functionTypeComments.PyFunctionTypeAnnotationVisitorFilter"/>
 
+    <!-- Pipenv -->
+    <pyAddSdkProvider implementation="com.jetbrains.python.sdk.pipenv.PyAddPipEnvSdkProvider"/>
+    <pythonFlavorProvider implementation="com.jetbrains.python.sdk.pipenv.PyPipEnvSdkFlavorProvider"/>
+
+    <!-- Other -->
     <pythonFlavorProvider implementation="com.jetbrains.python.sdk.flavors.MayaFlavorProvider"/>
     <pyPregeneratedSkeletonsProvider id="default" implementation="com.jetbrains.python.sdk.skeletons.DefaultPregeneratedSkeletonsProvider"/>
   </extensions>
@@ -935,7 +940,7 @@
 
   <project-components>
     <component>
-      <implementation-class>com.jetbrains.python.sdk.flavors.PipEnvPipFileWatcherComponent</implementation-class>
+      <implementation-class>com.jetbrains.python.sdk.pipenv.PipEnvPipFileWatcherComponent</implementation-class>
     </component>
   </project-components>
 </idea-plugin>

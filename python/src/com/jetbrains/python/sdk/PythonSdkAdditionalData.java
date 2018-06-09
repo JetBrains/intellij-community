@@ -48,7 +48,6 @@ public class PythonSdkAdditionalData implements SdkAdditionalData {
   @NonNls private static final String PATHS_REMOVED_BY_USER_ROOT = "PATHS_REMOVED_BY_USER_ROOT";
   @NonNls private static final String PATH_REMOVED_BY_USER = "PATH_REMOVED_BY_USER";
   @NonNls private static final String ASSOCIATED_PROJECT_PATH = "ASSOCIATED_PROJECT_PATH";
-  @NonNls private static final String IS_PIPENV = "IS_PIPENV";
 
   private final VirtualFilePointerContainer myAddedPaths;
   private final VirtualFilePointerContainer myExcludedPaths;
@@ -56,17 +55,19 @@ public class PythonSdkAdditionalData implements SdkAdditionalData {
   private final PythonSdkFlavor myFlavor;
   private String myAssociatedModulePath;
   private boolean myAssociateWithNewProject;
-  private boolean myIsPipEnv;
 
   public PythonSdkAdditionalData(@Nullable PythonSdkFlavor flavor) {
     myFlavor = flavor;
     myAddedPaths = VirtualFilePointerManager.getInstance().createContainer(ApplicationManager.getApplication());
     myExcludedPaths = VirtualFilePointerManager.getInstance().createContainer(ApplicationManager.getApplication());
   }
-  public PythonSdkAdditionalData(PythonSdkAdditionalData from) {
+
+  protected PythonSdkAdditionalData(@NotNull PythonSdkAdditionalData from) {
     myFlavor = from.getFlavor();
     myAddedPaths = from.myAddedPaths.clone(ApplicationManager.getApplication());
     myExcludedPaths = from.myExcludedPaths.clone(ApplicationManager.getApplication());
+    myAssociatedModulePath = from.myAssociatedModulePath;
+    myAssociateWithNewProject = from.myAssociateWithNewProject;
   }
 
   @NotNull
@@ -119,27 +120,12 @@ public class PythonSdkAdditionalData implements SdkAdditionalData {
     }
   }
 
-  public boolean isPipEnv() {
-    return myIsPipEnv;
-  }
-
-  public void setPipEnv(boolean pipEnv) {
-    myIsPipEnv = pipEnv;
-  }
-
   public void save(@NotNull final Element rootElement) {
     savePaths(rootElement, myAddedPaths, PATHS_ADDED_BY_USER_ROOT, PATH_ADDED_BY_USER);
     savePaths(rootElement, myExcludedPaths, PATHS_REMOVED_BY_USER_ROOT, PATH_REMOVED_BY_USER);
 
     if (myAssociatedModulePath != null) {
       rootElement.setAttribute(ASSOCIATED_PROJECT_PATH, myAssociatedModulePath);
-    }
-
-    // XXX: We have to persist the pipenv flag since pipenv is no different from a regular
-    // virtualenv and currently we want to handle pipenvs differently. Consider adding an SDK
-    // extension mechanism for that
-    if (myIsPipEnv) {
-      rootElement.setAttribute(IS_PIPENV, "true");
     }
   }
 
@@ -159,18 +145,15 @@ public class PythonSdkAdditionalData implements SdkAdditionalData {
   @NotNull
   public static PythonSdkAdditionalData load(Sdk sdk, @Nullable Element element) {
     final PythonSdkAdditionalData data = new PythonSdkAdditionalData(PythonSdkFlavor.getFlavor(sdk.getHomePath()));
-
-    data.load(element, data);
-
+    data.load(element);
     return data;
   }
 
-  protected void load(@Nullable Element element, @NotNull PythonSdkAdditionalData data) {
+  protected void load(@Nullable Element element) {
     collectPaths(JDOMExternalizer.loadStringsList(element, PATHS_ADDED_BY_USER_ROOT, PATH_ADDED_BY_USER),myAddedPaths);
     collectPaths(JDOMExternalizer.loadStringsList(element, PATHS_REMOVED_BY_USER_ROOT, PATH_REMOVED_BY_USER),myExcludedPaths);
     if (element != null) {
-      data.setAssociatedModulePath(element.getAttributeValue(ASSOCIATED_PROJECT_PATH));
-      data.setPipEnv("true".equals(element.getAttributeValue(IS_PIPENV)));
+      setAssociatedModulePath(element.getAttributeValue(ASSOCIATED_PROJECT_PATH));
     }
   }
 

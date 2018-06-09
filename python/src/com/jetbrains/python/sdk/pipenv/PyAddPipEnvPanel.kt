@@ -1,5 +1,5 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-package com.jetbrains.python.sdk.add
+package com.jetbrains.python.sdk.pipenv
 
 import com.intellij.application.options.ModuleListCellRenderer
 import com.intellij.openapi.module.Module
@@ -13,7 +13,8 @@ import com.intellij.util.PlatformUtils
 import com.intellij.util.ui.FormBuilder
 import com.jetbrains.python.PythonModuleTypeBase
 import com.jetbrains.python.sdk.*
-import com.jetbrains.python.sdk.flavors.*
+import com.jetbrains.python.sdk.add.PyAddNewEnvPanel
+import com.jetbrains.python.sdk.add.PySdkPathChoosingComboBox
 import java.awt.BorderLayout
 import java.awt.Dimension
 import java.awt.event.ItemEvent

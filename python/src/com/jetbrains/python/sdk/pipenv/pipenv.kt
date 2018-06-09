@@ -1,5 +1,5 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-package com.jetbrains.python.sdk.flavors
+package com.jetbrains.python.sdk.pipenv
 
 import com.google.gson.Gson
 import com.google.gson.JsonSyntaxException
@@ -12,6 +12,7 @@ import com.intellij.execution.configurations.GeneralCommandLine
 import com.intellij.execution.configurations.PathEnvironmentVariableUtil
 import com.intellij.execution.process.CapturingProcessHandler
 import com.intellij.execution.process.ProcessOutput
+import com.intellij.ide.util.PropertiesComponent
 import com.intellij.notification.NotificationDisplayType
 import com.intellij.notification.NotificationGroup
 import com.intellij.notification.NotificationType
@@ -60,6 +61,7 @@ import javax.swing.Icon
 const val PIP_FILE: String = "Pipfile"
 const val PIP_FILE_LOCK: String = "Pipfile.lock"
 const val PIPENV_DEFAULT_SOURCE_URL: String = "https://pypi.org/simple"
+const val PIPENV_PATH_SETTING: String = "PyCharm.Pipenv.Path"
 
 // TODO: Provide a special icon for pipenv
 val PIPENV_ICON: Icon = PythonIcons.Python.PythonClosed
@@ -75,9 +77,25 @@ val Module.pipFile: VirtualFile?
  * Tells if the SDK was added as a pipenv.
  */
 var Sdk.isPipEnv: Boolean
-  get() = (sdkAdditionalData as? PythonSdkAdditionalData)?.isPipEnv ?: false
+  get() = sdkAdditionalData is PyPipEnvSdkAdditionalData
   set(value) {
-    getOrCreateAdditionalData().isPipEnv = value
+    val oldData = sdkAdditionalData
+    val newData = when (oldData) {
+      is PythonSdkAdditionalData -> PyPipEnvSdkAdditionalData(oldData)
+      else -> PyPipEnvSdkAdditionalData()
+    }
+    val modificator = sdkModificator
+    modificator.sdkAdditionalData = newData
+    ApplicationManager.getApplication().runWriteAction { modificator.commitChanges() }
+  }
+
+/**
+ * The user-set persisted path to the pipenv executable.
+ */
+var PropertiesComponent.pipEnvPath: @SystemDependent String?
+  get() = getValue(PIPENV_PATH_SETTING)
+  set(value) {
+    setValue(PIPENV_PATH_SETTING, value)
   }
 
 /**
@@ -95,8 +113,7 @@ fun detectPipEnvExecutable(): File? {
  * Returns the configured pipenv executable or detects it automatically.
  */
 fun getPipEnvExecutable(): File? =
-  PySdkSettings.instance.pipEnvPath?.let { File(it) } ?: detectPipEnvExecutable()
-
+  PropertiesComponent.getInstance().pipEnvPath?.let { File(it) } ?: detectPipEnvExecutable()
 
 /**
  * Sets up the pipenv environment under the modal progress window.

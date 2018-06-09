@@ -1,5 +1,5 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-package com.jetbrains.python.packaging
+package com.jetbrains.python.packaging.pipenv
 
 import com.intellij.execution.ExecutionException
 import com.intellij.openapi.project.Project
@@ -7,8 +7,11 @@ import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.util.CatchingConsumer
 import com.intellij.webcore.packaging.InstalledPackage
 import com.intellij.webcore.packaging.RepoPackage
+import com.jetbrains.python.packaging.PyPIPackageUtil
+import com.jetbrains.python.packaging.PyPackageManagerUI
+import com.jetbrains.python.packaging.PyRequirement
 import com.jetbrains.python.packaging.ui.PyPackageManagementService
-import com.jetbrains.python.sdk.flavors.pipFileLockSources
+import com.jetbrains.python.sdk.pipenv.pipFileLockSources
 import java.lang.Exception
 
 /**
