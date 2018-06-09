@@ -10,7 +10,9 @@ import java.io.OutputStreamWriter
 import java.lang.reflect.Type
 
 object LogEventSerializer {
-  private val gson = GsonBuilder().registerTypeAdapter(LogEventAction::class.java, LogEventJsonDeserializer()).create()
+  private val gson = GsonBuilder().
+    registerTypeAdapter(LogEventBaseAction::class.java, LogEventJsonDeserializer()).
+    registerTypeAdapter(LogEventBaseAction::class.java, LogEventJsonSerializer()).create()
 
   fun toString(session: Any): String {
     return gson.toJson(session)
@@ -25,11 +27,11 @@ object LogEventSerializer {
   }
 }
 
-class LogEventJsonDeserializer : JsonDeserializer<LogEventAction> {
+class LogEventJsonDeserializer : JsonDeserializer<LogEventBaseAction> {
   @Throws(JsonParseException::class)
-  override fun deserialize(json: JsonElement, typeOfT: Type, context: JsonDeserializationContext): LogEventAction {
+  override fun deserialize(json: JsonElement, typeOfT: Type, context: JsonDeserializationContext): LogEventBaseAction {
     val obj = json.asJsonObject
-    val action = LogEventAction(obj.get("id").asString)
+    val action = createAction(obj)
     if (obj.has("data")) {
       val dataObj = obj.getAsJsonObject("data")
       for ((key, value) in context.deserialize<HashMap<String, Any>>(dataObj, object : TypeToken<HashMap<String, Any>>() {}.type)) {
@@ -43,5 +45,30 @@ class LogEventJsonDeserializer : JsonDeserializer<LogEventAction> {
       }
     }
     return action
+  }
+
+  fun createAction(obj : JsonObject) : LogEventBaseAction {
+    val id = obj.get("id").asString
+    if (obj.has("count")) {
+      val count = obj.get("count").asJsonPrimitive
+      if (count.isNumber) {
+        return LogEventAction(id, count.asInt)
+      }
+    }
+    return LogStateEventAction(id)
+  }
+}
+
+class LogEventJsonSerializer : JsonSerializer<LogEventBaseAction> {
+  override fun serialize(src: LogEventBaseAction?, typeOfSrc: Type?, context: JsonSerializationContext?): JsonElement {
+    if (context != null) {
+      if (src is LogEventAction) {
+        return context.serialize(src, LogEventAction::class.java)
+      }
+      else if (src is LogStateEventAction) {
+        return context.serialize(src, LogStateEventAction::class.java)
+      }
+    }
+    return JsonObject()
   }
 }
