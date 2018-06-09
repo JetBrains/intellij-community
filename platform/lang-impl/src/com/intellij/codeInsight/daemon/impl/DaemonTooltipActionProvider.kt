@@ -12,12 +12,13 @@ import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.editor.ex.TooltipAction
 import com.intellij.psi.PsiDocumentManager
+import com.intellij.psi.PsiFile
 import com.intellij.xml.util.XmlStringUtil
 import java.util.*
 
 class DaemonTooltipActionProvider : TooltipActionProvider {
-  override fun getTooltipAction(info: HighlightInfo, editor: Editor): TooltipAction? {
-    return extractMostPriorityFix(info, editor)
+  override fun getTooltipAction(info: HighlightInfo, editor: Editor, psiFile: PsiFile): TooltipAction? {
+    return extractMostPriorityFix(info, editor, psiFile)
   }
 }
 
@@ -69,7 +70,7 @@ class DaemonTooltipAction(private val myFixText: String, private val myActualOff
 }
 
 
-fun extractMostPriorityFix(highlightInfo: HighlightInfo, editor: Editor): TooltipAction? {
+fun extractMostPriorityFix(highlightInfo: HighlightInfo, editor: Editor, psiFile: PsiFile): TooltipAction? {
   ApplicationManager.getApplication().assertReadAccessAllowed()
 
   val fixes = mutableListOf<HighlightInfo.IntentionActionDescriptor>()
@@ -78,9 +79,7 @@ fun extractMostPriorityFix(highlightInfo: HighlightInfo, editor: Editor): Toolti
 
   fixes.addAll(quickFixActionMarkers.map { it.first }.toList())
 
-  val project = editor.project ?: return null
-  val psiFile = PsiDocumentManager.getInstance(project).getPsiFile(editor.document) ?: return null
-
+  val project = psiFile.project
 
   val intentionsInfo = ShowIntentionsPass.IntentionsInfo()
   ShowIntentionsPass.fillIntentionsInfoForHighlightInfo(highlightInfo, intentionsInfo, fixes)
