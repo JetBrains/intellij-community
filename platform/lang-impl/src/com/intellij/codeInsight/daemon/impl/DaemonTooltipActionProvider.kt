@@ -3,6 +3,7 @@ package com.intellij.codeInsight.daemon.impl
 
 import com.intellij.codeInsight.daemon.impl.tooltips.TooltipActionProvider
 import com.intellij.codeInsight.intention.AbstractEmptyIntentionAction
+import com.intellij.codeInsight.intention.IntentionAction
 import com.intellij.codeInsight.intention.IntentionActionDelegate
 import com.intellij.codeInsight.intention.impl.CachedIntentions
 import com.intellij.codeInsight.intention.impl.ShowIntentionActionsHandler
@@ -18,8 +19,10 @@ import java.util.*
 
 class DaemonTooltipActionProvider : TooltipActionProvider {
   override fun getTooltipAction(info: HighlightInfo, editor: Editor, psiFile: PsiFile): TooltipAction? {
-    return extractMostPriorityFix(info, editor, psiFile)
+    val intention = extractMostPriorityFixFromHighlightInfo(info, editor, psiFile) ?: return null
+    return wrapIntentionToTooltipAction(intention, info)
   }
+
 }
 
 class DaemonTooltipAction(private val myFixText: String, private val myActualOffset: Int) : TooltipAction {
@@ -70,7 +73,7 @@ class DaemonTooltipAction(private val myFixText: String, private val myActualOff
 }
 
 
-fun extractMostPriorityFix(highlightInfo: HighlightInfo, editor: Editor, psiFile: PsiFile): TooltipAction? {
+fun extractMostPriorityFixFromHighlightInfo(highlightInfo: HighlightInfo, editor: Editor, psiFile: PsiFile): IntentionAction? {
   ApplicationManager.getApplication().assertReadAccessAllowed()
 
   val fixes = mutableListOf<HighlightInfo.IntentionActionDescriptor>()
@@ -79,15 +82,21 @@ fun extractMostPriorityFix(highlightInfo: HighlightInfo, editor: Editor, psiFile
 
   fixes.addAll(quickFixActionMarkers.map { it.first }.toList())
 
-  val project = psiFile.project
-
   val intentionsInfo = ShowIntentionsPass.IntentionsInfo()
   ShowIntentionsPass.fillIntentionsInfoForHighlightInfo(highlightInfo, intentionsInfo, fixes)
   intentionsInfo.filterActions(psiFile)
 
+  return getFirstAvailableAction(psiFile, editor, intentionsInfo)
+}
+
+fun getFirstAvailableAction(psiFile: PsiFile,
+                            editor: Editor,
+                            intentionsInfo: ShowIntentionsPass.IntentionsInfo): IntentionAction? {
+  val project = psiFile.project
   val cachedIntentions = CachedIntentions.createAndUpdateActions(project, psiFile, editor, intentionsInfo)
   val allActions = cachedIntentions.allActions
   if (allActions.isEmpty()) return null
+
   allActions.forEach {
     var action = it.action
     if (action is IntentionActionDelegate) {
@@ -98,10 +107,15 @@ fun extractMostPriorityFix(highlightInfo: HighlightInfo, editor: Editor, psiFile
       val text = it.text
       //we cannot properly render html inside the fix button fixes with html text
       if (!XmlStringUtil.isWrappedInHtml(text)) {
-        return DaemonTooltipAction(text, highlightInfo.actualStartOffset)
+        return action
       }
     }
   }
   return null
 }
+
+fun wrapIntentionToTooltipAction(intention: IntentionAction, info: HighlightInfo) =
+  DaemonTooltipAction(intention.text, info.actualStartOffset)
+
+
 
