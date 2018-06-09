@@ -264,7 +264,7 @@ internal class DaemonTooltipWithActionRenderer(text: String?,
                                       reloader: TooltipReloader,
                                       hasMore: Boolean): JComponent {
     val presentation = Presentation()
-    presentation.icon = AllIcons.General.GearPlain
+    presentation.icon = AllIcons.Actions.More
     val actions = mutableListOf<AnAction>()
     actions.add(ShowActionsAction(reloader, tooltipAction != null))
     val docAction = ShowDocAction(reloader, hasMore)
