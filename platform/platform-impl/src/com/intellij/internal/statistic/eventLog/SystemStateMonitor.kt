@@ -25,11 +25,11 @@ class SystemStateMonitor : StartupActivity {
   }
 
   private fun logSystemEvent() {
-    FeatureUsageLogger.log("system.os.name", getOSName())
-    FeatureUsageLogger.log("system.os.version", getOSVersion())
+    FeatureUsageLogger.logState("system.os.name", getOSName())
+    FeatureUsageLogger.logState("system.os.version", getOSVersion())
 
-    FeatureUsageLogger.log("system.jvm.vendor", System.getProperty("java.vendor", "Unknown"))
-    FeatureUsageLogger.log("system.jvm.version", "1." + JavaVersion.current().feature)
+    FeatureUsageLogger.logState("system.jvm.vendor", System.getProperty("java.vendor", "Unknown"))
+    FeatureUsageLogger.logState("system.jvm.version", "1." + JavaVersion.current().feature)
   }
 
   private fun getOSName() : String {

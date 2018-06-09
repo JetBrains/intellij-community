@@ -72,13 +72,13 @@ class FeatureUsageFileEventLogger : FeatureUsageEventLogger {
     return if (str.endsWith(".")) str + "0" else str
   }
 
-  override fun log(recorderId: String, action: String) {
-    log(recorderId, action, Collections.emptyMap())
+  override fun log(recorderId: String, action: String, isState: Boolean) {
+    log(recorderId, action, Collections.emptyMap(), isState)
   }
 
-  override fun log(recorderId: String, action: String, data: Map<String, Any>) {
+  override fun log(recorderId: String, action: String, data: Map<String, Any>, isState: Boolean) {
     myLogExecutor.execute(Runnable {
-      val event = LogEvent(sessionId, build, bucket, recorderId, recorderVersion, action)
+      val event = LogEvent(sessionId, build, bucket, recorderId, recorderVersion, action, isState)
       for (datum in data) {
         event.event.addData(datum.key, datum.value)
       }
@@ -88,7 +88,7 @@ class FeatureUsageFileEventLogger : FeatureUsageEventLogger {
 
   private fun dispose(logger: Logger) {
     myLogExecutor.execute(Runnable {
-      log(logger, LogEvent(sessionId, build, bucket, "lifecycle", recorderVersion, "ideaapp.closed"))
+      log(logger, LogEvent(sessionId, build, bucket, "lifecycle", recorderVersion, "ideaapp.closed", false))
       logLastEvent(logger)
     })
   }

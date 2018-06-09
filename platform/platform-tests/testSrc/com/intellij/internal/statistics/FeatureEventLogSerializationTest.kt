@@ -12,43 +12,43 @@ class FeatureEventLogSerializationTest {
 
   @Test
   fun testEventWithoutData() {
-    testEventSerialization(LogEvent("session-id", "999.9999", "-1", "recorder-id", "1", "test-event-type"))
+    testEventSerialization(LogEvent("session-id", "999.9999", "-1", "recorder-id", "1", "test-event-type"), false)
   }
 
   @Test
   fun testEventWithData() {
     val event = LogEvent("session-id", "999.9999", "-1", "recorder-id", "1", "test-event-type")
     event.event.addData("count", 23)
-    testEventSerialization(event, "count")
+    testEventSerialization(event, false, "count")
   }
 
   @Test
   fun testEventRecorderWithSpaces() {
-    testEventSerialization(LogEvent("session-id", "999.9999", "-1", "recorder id", "1", "test-event-type"))
+    testEventSerialization(LogEvent("session-id", "999.9999", "-1", "recorder id", "1", "test-event-type"), false)
   }
 
   @Test
   fun testEventActionWithTab() {
-    testEventSerialization(LogEvent("session-id", "999.9999", "-1", "recorder-id", "1", "event\ttype"))
+    testEventSerialization(LogEvent("session-id", "999.9999", "-1", "recorder-id", "1", "event\ttype"), false)
   }
 
   @Test
   fun testEventActionWithQuotes() {
-    testEventSerialization(LogEvent("session-id", "999.9999", "-1", "recorder-id", "1", "event\"type"))
+    testEventSerialization(LogEvent("session-id", "999.9999", "-1", "recorder-id", "1", "event\"type"), false)
   }
 
   @Test
   fun testEventActionWithTagInDataKey() {
     val event = LogEvent("session-id", "999.9999", "-1", "recorder-id", "1", "event-type")
     event.event.addData("my key", "value")
-    testEventSerialization(event, "my_key")
+    testEventSerialization(event, false, "my_key")
   }
 
   @Test
   fun testEventActionWithTagInDataValue() {
     val event = LogEvent("session-id", "999.9999", "-1", "recorder-id", "1", "event-type")
     event.event.addData("key", "my value")
-    testEventSerialization(event, "key")
+    testEventSerialization(event, false, "key")
   }
 
   @Test
@@ -79,7 +79,12 @@ class FeatureEventLogSerializationTest {
 
   @Test
   fun testEventWithBuildNumber() {
-    testEventSerialization(LogEvent("session-id", "182.2567.1", "-1", "recorder-id", "1", "test-event-type"))
+    testEventSerialization(LogEvent("session-id", "182.2567.1", "-1", "recorder-id", "1", "test-event-type"), false)
+  }
+
+  @Test
+  fun testStateEvent() {
+    testEventSerialization(LogEvent("session-id", "182.2567.1", "-1", "config-recorder", "1", "my-config", true), true)
   }
 
   @Test
@@ -248,9 +253,9 @@ class FeatureEventLogSerializationTest {
     }
   }
 
-  private fun testEventSerialization(event: LogEvent, vararg dataOptions: String) {
+  private fun testEventSerialization(event: LogEvent, isState: Boolean, vararg dataOptions: String) {
     val line = LogEventSerializer.toString(event)
-    assertLogEventIsValid(JsonParser().parse(line).asJsonObject, false, *dataOptions)
+    assertLogEventIsValid(JsonParser().parse(line).asJsonObject, isState, *dataOptions)
 
     val deserialized = LogEventSerializer.fromString(line)
     assertEquals(event, deserialized)
@@ -293,7 +298,10 @@ class FeatureEventLogSerializationTest {
 
     assert(json.get("event").isJsonObject)
     assert(json.getAsJsonObject("event").get("id").isJsonPrimitive)
-    assertEquals(!isState, json.getAsJsonObject("event").get("count").isJsonPrimitive)
+    assertEquals(!isState, json.getAsJsonObject("event").has("count"))
+    if (!isState) {
+      assert(json.getAsJsonObject("event").get("count").asJsonPrimitive.isNumber)
+    }
 
     assert(json.getAsJsonObject("event").get("data").isJsonObject)
     assert(noTabsOrSpacesOrQuotes(json.getAsJsonObject("event").get("id").asString))
