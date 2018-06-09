@@ -19,9 +19,11 @@ import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.pom.Navigatable;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.util.PsiUtilCore;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.event.InputEvent;
@@ -110,19 +112,11 @@ public abstract class AbstractGotoSEContributor<F> implements SearchEverywhereCo
   @Override
   public boolean processSelectedItem(Object selected, int modifiers, String searchText) {
     if (selected instanceof PsiElement && ((PsiElement)selected).isValid()) {
-      PsiElement psiElement = (PsiElement) selected;
-      psiElement = psiElement.getNavigationElement();
-      VirtualFile file = PsiUtilCore.getVirtualFile(psiElement);
-
-      Pair<Integer, Integer> position = getLineAndColumn(searchText);
-      boolean positionSpecified = position.first >= 0 || position.second >= 0;
-      if (file != null && positionSpecified) {
-        OpenFileDescriptor descriptor = new OpenFileDescriptor(psiElement.getProject(), file, position.first, position.second);
-        descriptor = descriptor.setUseCurrentWindow(openInCurrentWindow(modifiers));
-        if (descriptor.canNavigate()) {
-          descriptor.navigate(true);
-          return true;
-        }
+      PsiElement psiElement = preparePsi((PsiElement) selected, modifiers, searchText);
+      Navigatable extNavigatable = createExtendedNavigatable(psiElement, searchText, modifiers);
+      if (extNavigatable != null && extNavigatable.canNavigate()) {
+        extNavigatable.navigate(true);
+        return true;
       }
 
       NavigationUtil.activateFileWithPsiElement(psiElement, openInCurrentWindow(modifiers));
@@ -155,6 +149,23 @@ public abstract class AbstractGotoSEContributor<F> implements SearchEverywhereCo
 
   protected boolean isDumbModeSupported() {
     return false;
+  }
+
+  @Nullable
+  protected Navigatable createExtendedNavigatable(PsiElement psi, String searchText, int modifiers) {
+    VirtualFile file = PsiUtilCore.getVirtualFile(psi);
+    Pair<Integer, Integer> position = getLineAndColumn(searchText);
+    boolean positionSpecified = position.first >= 0 || position.second >= 0;
+    if (file != null && positionSpecified) {
+      OpenFileDescriptor descriptor = new OpenFileDescriptor(psi.getProject(), file, position.first, position.second);
+      return descriptor.setUseCurrentWindow(openInCurrentWindow(modifiers));
+    }
+
+    return null;
+  }
+
+  protected PsiElement preparePsi(PsiElement psiElement, int modifiers, String searchText) {
+    return psiElement.getNavigationElement();
   }
 
   protected static Pair<Integer, Integer> getLineAndColumn(String text) {
