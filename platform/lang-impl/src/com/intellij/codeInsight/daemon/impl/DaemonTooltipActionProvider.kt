@@ -47,10 +47,10 @@ class DaemonTooltipAction(private val myFixText: String, private val myActualOff
     ShowIntentionActionsHandler().invoke(project, editor, psiFile)
   }
 
-  override fun equals(o: Any?): Boolean {
-    if (this === o) return true
-    if (o == null || javaClass != o.javaClass) return false
-    val info = o as DaemonTooltipAction?
+  override fun equals(other: Any?): Boolean {
+    if (this === other) return true
+    if (other == null || javaClass != other.javaClass) return false
+    val info = other as DaemonTooltipAction?
     return myActualOffset == info!!.myActualOffset && myFixText == info.myFixText
   }
 
