@@ -25,7 +25,7 @@ configurations {
 }
 
 dependencies {
-  kotlinPlugin "com.jetbrains.plugins:org.jetbrains.kotlin:$kotlinPluginBuild@zip"
+  kotlinPlugin "com.jetbrains.plugins:org.jetbrains.kotlin:$kotlinPluginBuild:$kotlinPluginChannel@zip"
 }
 
 task setupKotlinPlugin(dependsOn: configurations.kotlinPlugin, type: Sync) {
