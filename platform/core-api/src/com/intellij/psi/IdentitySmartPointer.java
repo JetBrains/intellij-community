@@ -30,7 +30,7 @@ public class IdentitySmartPointer<T extends PsiElement> implements SmartPsiEleme
   private final T myElement;
   private final PsiFile myFile;
 
-  public IdentitySmartPointer(@NotNull T element, @NotNull PsiFile file) {
+  private IdentitySmartPointer(@NotNull T element, @NotNull PsiFile file) {
     myElement = element;
     myFile = file;
   }
@@ -56,11 +56,13 @@ public class IdentitySmartPointer<T extends PsiElement> implements SmartPsiEleme
     return element.isValid() ? element : null;
   }
 
+  @Override
   public int hashCode() {
     final T elt = getElement();
     return elt == null ? 0 : elt.hashCode();
   }
 
+  @Override
   public boolean equals(Object obj) {
     return obj instanceof SmartPsiElementPointer
            && SmartPointerManager.getInstance(getProject()).pointToTheSameElement(this, (SmartPsiElementPointer)obj);
