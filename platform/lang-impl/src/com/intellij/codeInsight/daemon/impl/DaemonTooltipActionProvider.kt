@@ -9,15 +9,12 @@ import com.intellij.codeInsight.intention.impl.ShowIntentionActionsHandler
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.editor.ex.TooltipAction
-import com.intellij.openapi.util.registry.Registry
 import com.intellij.psi.PsiDocumentManager
 import com.intellij.xml.util.XmlStringUtil
 import java.util.*
 
 class DaemonTooltipActionProvider : TooltipActionProvider {
   override fun getTooltipAction(info: HighlightInfo, editor: Editor): TooltipAction? {
-    if (!Registry.`is`("ide.tooltip.show.with.actions")) return null
-
     return extractMostPriorityFix(info, editor)
   }
 }
