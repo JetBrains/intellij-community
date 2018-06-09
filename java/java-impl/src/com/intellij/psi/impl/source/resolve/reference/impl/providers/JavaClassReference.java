@@ -35,6 +35,7 @@ import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
+import com.intellij.psi.impl.file.PsiPackageImpl;
 import com.intellij.psi.impl.source.resolve.ClassResolverProcessor;
 import com.intellij.psi.impl.source.resolve.ResolveCache;
 import com.intellij.psi.impl.source.resolve.reference.impl.GenericReference;
@@ -469,6 +470,9 @@ public class JavaClassReference extends GenericReference implements PsiJavaRefer
           return javaResolveResult;
         }
       }
+    }
+    if (resolveResult instanceof PsiPackageImpl && !((PsiPackageImpl)resolveResult).mayHaveContentInScope(getElement().getResolveScope())) {
+      return JavaResolveResult.EMPTY;
     }
     return resolveResult != null
            ? new CandidateInfo(resolveResult, PsiSubstitutor.EMPTY, false, false, psiElement)

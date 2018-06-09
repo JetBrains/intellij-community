@@ -15,7 +15,7 @@ public class JavaSdkVersionTest {
     assertEquals(JavaSdkVersion.JDK_1_6, JavaSdkVersion.fromLanguageLevel(LanguageLevel.JDK_1_6));
     assertEquals(JavaSdkVersion.JDK_1_8, JavaSdkVersion.fromLanguageLevel(LanguageLevel.JDK_1_8));
     assertEquals(JavaSdkVersion.JDK_11, JavaSdkVersion.fromLanguageLevel(LanguageLevel.JDK_11));
-    assertEquals(JavaSdkVersion.JDK_11, JavaSdkVersion.fromLanguageLevel(LanguageLevel.JDK_11_PREVIEW));
+    //assertEquals(JavaSdkVersion.JDK_11, JavaSdkVersion.fromLanguageLevel(LanguageLevel.JDK_11_PREVIEW));
   }
 
   @Test

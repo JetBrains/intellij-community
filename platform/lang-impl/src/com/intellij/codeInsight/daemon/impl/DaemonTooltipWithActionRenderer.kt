@@ -10,6 +10,7 @@ import com.intellij.codeInsight.hint.HintManagerImpl
 import com.intellij.codeInsight.hint.LineTooltipRenderer
 import com.intellij.icons.AllIcons
 import com.intellij.ide.TooltipEvent
+import com.intellij.ide.ui.UISettings
 import com.intellij.openapi.actionSystem.*
 import com.intellij.openapi.actionSystem.impl.ActionButton
 import com.intellij.openapi.actionSystem.impl.ActionMenuItem
@@ -20,9 +21,11 @@ import com.intellij.openapi.keymap.KeymapUtil
 import com.intellij.openapi.keymap.KeymapUtil.getActiveKeymapShortcuts
 import com.intellij.openapi.project.DumbAware
 import com.intellij.openapi.ui.GraphicsConfig
+import com.intellij.openapi.util.SystemInfo
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.ui.*
 import com.intellij.ui.components.JBLabel
+import com.intellij.util.ArrayUtil
 import com.intellij.util.ui.GridBag
 import com.intellij.util.ui.Html
 import com.intellij.util.ui.JBUI
@@ -42,12 +45,10 @@ import javax.swing.event.HyperlinkEvent
 val runActionCustomShortcutSet: CustomShortcutSet = CustomShortcutSet(
   KeyStroke.getKeyStroke(KeyEvent.VK_ENTER, KeyEvent.SHIFT_DOWN_MASK or KeyEvent.ALT_DOWN_MASK))
 
-val backgroundLight: Color = Color(241, 239, 203)
-
 internal class DaemonTooltipWithActionRenderer(text: String?,
                                                private val tooltipAction: TooltipAction?,
                                                width: Int,
-                                               comparable: Array<Any>) : DaemonTooltipRenderer(text, width, comparable) {
+                                               comparable: Array<Any>) : DaemonTooltipRenderer(text, width, if (tooltipAction == null) comparable else ArrayUtil.append(comparable, tooltipAction)) {
 
 
   override fun dressDescription(editor: Editor, tooltipText: String, expand: Boolean): String {
@@ -96,15 +97,18 @@ internal class DaemonTooltipWithActionRenderer(text: String?,
                          actions: ArrayList<AnAction>,
                          tooltipReloader: TooltipReloader) {
     super.fillPanel(editor, grid, hint, hintHint, actions, tooltipReloader)
-    if (tooltipAction == null && !LineTooltipRenderer.isActiveHtml(myText!!)) return
+    val hasMore = LineTooltipRenderer.isActiveHtml(myText!!)
+    if (tooltipAction == null && !hasMore) return
 
-    val settingsComponent = createSettingsComponent(hint, hintHint, tooltipReloader)
+    val settingsComponent = createSettingsComponent(hintHint, tooltipReloader, hasMore)
 
     val settingsConstraints = GridBagConstraints(1, 0, 1, 1, 0.0, 0.0, GridBagConstraints.NORTH, GridBagConstraints.HORIZONTAL,
                                                  JBUI.insets(3, 3, 0, 3), 0, 0)
     grid.add(settingsComponent, settingsConstraints)
 
-    addActionsRow(hintHint, hint, editor, actions, grid)
+    if (isShowActions()) {
+      addActionsRow(hintHint, hint, editor, actions, grid)
+    }
   }
 
   private fun addActionsRow(hintHint: HintHint,
@@ -175,23 +179,15 @@ internal class DaemonTooltipWithActionRenderer(text: String?,
                                               grid: JComponent): JPanel {
     val wrapper: JPanel = object : JPanel(BorderLayout()) {
       override fun paint(g: Graphics?) {
-        if (UIUtil.isUnderDarcula()) {
-          super.paint(g)
-          return
-        }
-        g!!.color = backgroundLight
+        g!!.color = UIUtil.getToolTipActionBackground()
         val graphics2D = g as Graphics2D
         val cfg = GraphicsConfig(g)
         cfg.setAntialiasing(true)
 
-        graphics2D.fill(RoundRectangle2D.Double(1.0, 0.0, bounds.width - 2.5,
-                                                (bounds.height / 2).toDouble(),
-                                                0.0, 0.0))
+        graphics2D.fill(RoundRectangle2D.Double(1.0, 0.0, bounds.width - 2.5, (bounds.height / 2).toDouble(), 0.0, 0.0))
 
-        val double = RoundRectangle2D.Double(1.0, 0.0, bounds.width - 2.5,
-                                             (bounds.height - 1).toDouble(),
-                                             BalloonImpl.ARC.toDouble(),
-                                             BalloonImpl.ARC.toDouble())
+        val arc = BalloonImpl.ARC.toDouble()
+        val double = RoundRectangle2D.Double(1.0, 0.0, bounds.width - 2.5, (bounds.height - 1).toDouble(), arc, arc)
 
         graphics2D.fill(double)
 
@@ -199,7 +195,7 @@ internal class DaemonTooltipWithActionRenderer(text: String?,
         super.paint(g)
       }
     }
-    
+
     wrapper.isOpaque = false
     wrapper.border = JBUI.Borders.empty()
     return wrapper
@@ -257,14 +253,14 @@ internal class DaemonTooltipWithActionRenderer(text: String?,
     return super.isContentAction(dressedText) || tooltipAction != null
   }
 
-  private fun createSettingsComponent(hint: LightweightHint,
-                                      hintHint: HintHint,
-                                      reloader: TooltipReloader): JComponent {
+  private fun createSettingsComponent(hintHint: HintHint,
+                                      reloader: TooltipReloader,
+                                      hasMore: Boolean): JComponent {
     val presentation = Presentation()
-    presentation.icon = AllIcons.General.GearPlain
+    presentation.icon = AllIcons.Actions.More
     val actions = mutableListOf<AnAction>()
-    actions.add(ShowActionsAction(hint))
-    val docAction = ShowDocAction(reloader)
+    actions.add(ShowActionsAction(reloader, tooltipAction != null))
+    val docAction = ShowDocAction(reloader, hasMore)
     actions.add(docAction)
     val actionGroup = SettingsActionGroup(actions)
 
@@ -285,7 +281,8 @@ internal class DaemonTooltipWithActionRenderer(text: String?,
     return wrapper
   }
 
-  private inner class ShowActionsAction(val hint: LightweightHint) : ToggleAction("Show Quick fixes"), HintManagerImpl.ActionToIgnore {
+  private inner class ShowActionsAction(val reloader: TooltipReloader, val isEnabled: Boolean) : ToggleAction(
+    "Show Quick fixes"), HintManagerImpl.ActionToIgnore {
 
     override fun isSelected(e: AnActionEvent): Boolean {
       return isShowActions()
@@ -293,11 +290,16 @@ internal class DaemonTooltipWithActionRenderer(text: String?,
 
     override fun setSelected(e: AnActionEvent, state: Boolean) {
       setShowActions(state)
-      hint.hide()
+      reloader.reload(myCurrentWidth > 0)
+    }
+
+    override fun update(e: AnActionEvent) {
+      e.presentation.isEnabled = isEnabled
+      super.update(e)
     }
   }
 
-  private inner class ShowDocAction(val reloader: TooltipReloader) : ToggleAction(
+  private inner class ShowDocAction(val reloader: TooltipReloader, val isEnabled: Boolean) : ToggleAction(
     "Show Inspection Description"), HintManagerImpl.ActionToIgnore, DumbAware, PopupAction {
 
     init {
@@ -311,6 +313,12 @@ internal class DaemonTooltipWithActionRenderer(text: String?,
     override fun setSelected(e: AnActionEvent, state: Boolean) {
       reloader.reload(state)
     }
+
+    override fun update(e: AnActionEvent) {
+      e.presentation.isEnabled = isEnabled
+      super.update(e)
+    }
+
   }
 
 }
@@ -328,8 +336,28 @@ fun createActionLabel(text: String, action: Runnable, background: Color): Hyperl
       action.run()
     }
   })
+  val toolTipFont = getActionFont()
+
+  label.font = toolTipFont
 
   return label
+}
+
+private fun getActionFont(): Font? {
+  val toolTipFont = UIUtil.getToolTipFont()
+  if (toolTipFont == null || SystemInfo.isWindows) return toolTipFont
+
+  //if font was changed from default we dont have a good heuristic to customize it
+  if (JBUI.Fonts.label() != toolTipFont || UISettings.instance.overrideLafFonts) return toolTipFont
+
+  if (SystemInfo.isMac) {
+    return toolTipFont.deriveFont(toolTipFont.size - 1f)
+  }
+  if (SystemInfo.isLinux) {
+    return toolTipFont.deriveFont(toolTipFont.size - 1f)
+  }
+
+  return toolTipFont
 }
 
 

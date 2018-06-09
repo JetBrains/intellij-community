@@ -7,6 +7,7 @@ import com.intellij.openapi.application.ConfigImportHelper
 import com.intellij.openapi.application.PathManager
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.testGuiFramework.fixtures.JDialogFixture
+import com.intellij.testGuiFramework.framework.GuiTestUtil.defaultTimeout
 import com.intellij.testGuiFramework.impl.FirstStart.Utils.button
 import com.intellij.testGuiFramework.impl.FirstStart.Utils.dialog
 import com.intellij.testGuiFramework.impl.FirstStart.Utils.radioButton
@@ -88,7 +89,7 @@ abstract class FirstStart(val ideType: IdeType) {
   }
 
   companion object {
-    var DEFAULT_TIMEOUT: Long = GuiTestCase().defaultTimeout
+    var DEFAULT_TIMEOUT: Long = defaultTimeout
   }
 
   private fun completeFirstStart() {

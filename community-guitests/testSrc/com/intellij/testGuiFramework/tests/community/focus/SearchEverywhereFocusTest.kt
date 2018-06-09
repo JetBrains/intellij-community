@@ -3,24 +3,16 @@ package com.intellij.testGuiFramework.tests.community.focus
 
 import com.intellij.testGuiFramework.fixtures.IdeFrameFixture
 import com.intellij.testGuiFramework.impl.GuiTestCase
-import com.intellij.testGuiFramework.impl.GuiTestUtilKt
 import com.intellij.testGuiFramework.tests.community.CommunityProjectCreator
 import com.intellij.testGuiFramework.util.Key.ESCAPE
 import org.fest.swing.core.SmartWaitRobot
-import org.fest.swing.exception.ComponentLookupException
 import org.fest.swing.timing.Pause
-import org.junit.Assert
 import org.junit.Test
-import java.awt.Container
-import java.awt.Window
 import java.awt.event.InputEvent
-import javax.swing.JLabel
 
 class SearchEverywhereFocusTest : GuiTestCase() {
 
   private val typedString = "here is a demo text"
-  private val expectedText = typedString
-  private val searchWindowLabelText = "Search Everywhere:"
 
   @Test
   fun testSearchEverywhereFocus() {
@@ -31,7 +23,7 @@ class SearchEverywhereFocusTest : GuiTestCase() {
       doubleShift(50)
       fastType(typedString)
       Pause.pause(500)
-      checkTextInSearchWindow(findSearchWindowTwice(), expectedText)
+      FocusIssuesUtil.checkSearchEverywhereUI(typedString)
       shortcut(ESCAPE)
       focusOnEditor()
     }
@@ -52,30 +44,6 @@ class SearchEverywhereFocusTest : GuiTestCase() {
     smartRobot.fastTyping(stringToType)
   }
 
-  private fun GuiTestCase.checkTextInSearchWindow(searchWindow: Container, expectedText: String) {
-    with(this) {
-      val textfield = textfield("", searchWindow, this.defaultTimeout)
-      Assert.assertEquals(expectedText, textfield.target().text)
-    }
-  }
 
-  private fun findSearchWindowTwice() : Container {
-    return try {
-      findSearchWindow(searchWindowLabelText)
-    }
-    catch (cle: ComponentLookupException) {
-      this.robot().waitForIdle()
-      findSearchWindow(searchWindowLabelText)
-    }
-  }
-
-  private fun findSearchWindow(labelText: String): Container {
-    fun checkWindowContainsEnterClassName(it: Window) = GuiTestUtilKt.findAllWithBFS(it,
-                                                                                     JLabel::class.java).firstOrNull { it.text?.contains(labelText) == true } != null
-    return Window.getWindows()
-             .filterNotNull()
-             .firstOrNull { checkWindowContainsEnterClassName(it) } ?: throw ComponentLookupException(
-      "Unable to find search window")
-  }
 
 }

@@ -25,7 +25,6 @@ import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.psi.util.RedundantCastUtil;
-import com.intellij.util.containers.IntArrayList;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -67,6 +66,11 @@ public class RedundantCastInspection extends GenericsInspectionToolBase {
   }
 
   @Override
+  public ProblemDescriptor[] checkField(@NotNull PsiField field, @NotNull InspectionManager manager, boolean isOnTheFly) {
+    return getDescriptions(field, manager, isOnTheFly);
+  }
+
+  @Override
   public void writeSettings(@NotNull Element node) throws WriteExternalException {
     if (IGNORE_SUSPICIOUS_METHOD_CALLS) {
       super.writeSettings(node);
@@ -90,8 +94,7 @@ public class RedundantCastInspection extends GenericsInspectionToolBase {
       final PsiElement gParent = parent.getParent();
       if (gParent instanceof PsiMethodCallExpression && IGNORE_SUSPICIOUS_METHOD_CALLS) {
         final String message = SuspiciousMethodCallUtil
-          .getSuspiciousMethodCallMessage((PsiMethodCallExpression)gParent, operand, operand.getType(), true, new ArrayList<>(),
-                                          new IntArrayList(), new IntArrayList(), 0);
+          .getSuspiciousMethodCallMessage((PsiMethodCallExpression)gParent, operand, operand.getType(), true, new ArrayList<>(), 0);
         if (message != null) {
           return null;
         }

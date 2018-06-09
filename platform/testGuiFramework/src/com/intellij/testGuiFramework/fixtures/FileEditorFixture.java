@@ -12,6 +12,7 @@ import com.intellij.openapi.fileEditor.OpenFileDescriptor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.testGuiFramework.framework.GuiTestUtil;
 import org.fest.swing.core.Robot;
 import org.fest.swing.edt.GuiQuery;
 import org.fest.swing.edt.GuiTask;
@@ -23,8 +24,6 @@ import javax.swing.*;
 import java.util.ArrayList;
 import java.util.List;
 
-import static com.intellij.testGuiFramework.framework.GuiTestUtil.SHORT_TIMEOUT;
-import static com.intellij.testGuiFramework.framework.GuiTestUtil.THIRTY_SEC_TIMEOUT;
 import static org.fest.assertions.Assertions.assertThat;
 import static org.fest.reflect.core.Reflection.method;
 import static org.fest.swing.edt.GuiActionRunner.execute;
@@ -164,7 +163,7 @@ public class FileEditorFixture extends EditorFixture {
           }
         });
       }
-    }, SHORT_TIMEOUT);
+    }, GuiTestUtil.INSTANCE.getSHORT_TIMEOUT());
 
     // TODO: Maybe find a better way to keep Documents in sync with their VirtualFiles.
     invokeActionViaKeystroke("Synchronize");
@@ -270,7 +269,7 @@ public class FileEditorFixture extends EditorFixture {
         }));
         return virtualFileReference.get() != null;
       }
-    }, THIRTY_SEC_TIMEOUT);
+    }, GuiTestUtil.INSTANCE.getTHIRTY_SEC_TIMEOUT());
     return new FileFixture(myFrame.getProject(), virtualFileReference.get());
   }
 

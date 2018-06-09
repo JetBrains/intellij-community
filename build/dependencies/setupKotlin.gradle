@@ -27,7 +27,7 @@ configurations {
 }
 
 dependencies {
-  kotlinPlugin "com.jetbrains.plugins:org.jetbrains.kotlin:$kotlinPluginBuild@zip"
+  kotlinPlugin "com.jetbrains.plugins:org.jetbrains.kotlin:$kotlinPluginBuild:$kotlinPluginChannel@zip"
   kotlinPluginCidr tc(buildTypeId: 'Kotlin_1250_CompilerAllPlugins', version: "${kotlinPluginBuildForKotlinNative.split('-')[0..2].join('-')}", artifactPath: "internal/kotlin-plugin-${kotlinPluginBuildForKotlinNative}.zip")
 }
 

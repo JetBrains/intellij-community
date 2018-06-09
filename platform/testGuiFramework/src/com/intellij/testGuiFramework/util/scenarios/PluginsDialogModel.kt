@@ -3,8 +3,8 @@ package com.intellij.testGuiFramework.util.scenarios
 
 import com.intellij.testGuiFramework.fixtures.JDialogFixture
 import com.intellij.testGuiFramework.fixtures.extended.ExtendedButtonFixture
-import com.intellij.testGuiFramework.impl.GuiTestCase
-import com.intellij.testGuiFramework.impl.GuiTestUtilKt
+import com.intellij.testGuiFramework.framework.GuiTestUtil.defaultTimeout
+import com.intellij.testGuiFramework.impl.*
 import com.intellij.testGuiFramework.util.logInfo
 import com.intellij.testGuiFramework.util.logTestStep
 import com.intellij.testGuiFramework.util.logUIStep
@@ -23,7 +23,7 @@ class PluginsDialogModel(val testCase: GuiTestCase) : TestUtilsClass(testCase) {
 val GuiTestCase.pluginsDialogModel: PluginsDialogModel by PluginsDialogModel
 
 fun PluginsDialogModel.connectDialog(): JDialogFixture =
-    testCase.dialog("Plugins", true, testCase.defaultTimeout)
+    testCase.dialog("Plugins", true, defaultTimeout)
 
 fun PluginsDialogModel.isPluginInstalled(pluginName: String): Boolean {
   val result = try {

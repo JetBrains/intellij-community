@@ -715,6 +715,16 @@ public class PyUnresolvedReferencesInspectionTest extends PyInspectionTestCase {
                  "    return x");
   }
 
+  // PY-30383
+  public void testLambdaMember() {
+    doTestByText("class SomeClass:\n" +
+                 "    def __init__(self):\n" +
+                 "        self.one = lambda x: True\n" +
+                 "        \n" +
+                 "    def some_method(self):\n" +
+                 "        self.one.<warning descr=\"Cannot find reference 'abc' in 'function'\">abc</warning>");
+  }
+
   @NotNull
   @Override
   protected Class<? extends PyInspection> getInspectionClass() {

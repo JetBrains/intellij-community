@@ -160,7 +160,7 @@ public class FunctionalExpressionCompletionProvider extends CompletionProvider<C
         
         PsiMethod[] constructors = psiClass.getConstructors();
         for (PsiMethod psiMethod : constructors) {
-          if (isSignatureAppropriate(psiMethod, params, substitutor, 0, originalPosition)) {
+          if (isSignatureAppropriate(psiMethod, params, substitutor, 0, originalPosition, null)) {
             result.consume(createConstructorReferenceLookup(functionalInterfaceType, eachReturnType));
           }
         }
@@ -240,7 +240,7 @@ public class FunctionalExpressionCompletionProvider extends CompletionProvider<C
       for (PsiMethod psiMethod : psiClass.getMethods()) {
         if (!psiMethod.hasModifierProperty(PsiModifier.STATIC) &&
             hasAppropriateReturnType(expectedReturnType, psiMethod, substitutor) &&
-            isSignatureAppropriate(psiMethod, params, substitutor, 0, originalPosition)) {
+            isSignatureAppropriate(psiMethod, params, substitutor, 0, originalPosition, null)) {
           result.add(createMethodRefOnThis(functionalInterfaceType, psiMethod, first ? null : psiClass));
         }
       }
@@ -281,7 +281,7 @@ public class FunctionalExpressionCompletionProvider extends CompletionProvider<C
                                                 PsiType expectedReturnType, PsiMethod psiMethod) {
     return psiMethod.hasModifierProperty(PsiModifier.STATIC) &&
            hasAppropriateReturnType(expectedReturnType, psiMethod, substitutor) &&
-           isSignatureAppropriate(psiMethod, params, substitutor, 0, originalPosition);
+           isSignatureAppropriate(psiMethod, params, substitutor, 0, originalPosition, null);
   }
 
   private static List<LookupElement> collectVariantsByReceiver(boolean prioritize,
@@ -301,7 +301,7 @@ public class FunctionalExpressionCompletionProvider extends CompletionProvider<C
         if (visited.add(psiMethod.getName()) &&
             !psiMethod.hasModifierProperty(PsiModifier.STATIC) &&
             hasAppropriateReturnType(expectedReturnType, psiMethod, substitutor) &&
-            isSignatureAppropriate(psiMethod, params, substitutor, 1, originalPosition)) {
+            isSignatureAppropriate(psiMethod, params, substitutor, 1, originalPosition, paramClass)) {
           LookupElement methodRefLookupElement = createMethodRefOnClass(functionalInterfaceType, psiMethod, qualifierClass);
           if (prioritize && containingClass == paramClass) {
             methodRefLookupElement = PrioritizedLookupElement.withExplicitProximity(methodRefLookupElement, 1);
@@ -320,8 +320,12 @@ public class FunctionalExpressionCompletionProvider extends CompletionProvider<C
     return returnType != null && TypeConversionUtil.isAssignable(expectedReturnType, substitutor.substitute(returnType));
   }
 
-  private static boolean isSignatureAppropriate(PsiMethod psiMethod, PsiParameter[] params, PsiSubstitutor substitutor, int offset, PsiElement place) {
-    if (!PsiUtil.isAccessible(psiMethod, place, null)) return false;
+  private static boolean isSignatureAppropriate(PsiMethod psiMethod,
+                                                PsiParameter[] params,
+                                                PsiSubstitutor substitutor,
+                                                int offset,
+                                                PsiElement place, PsiClass accessObjectClass) {
+    if (!PsiUtil.isAccessible(psiMethod, place, accessObjectClass)) return false;
     
     PsiParameterList parameterList = psiMethod.getParameterList();
     if (parameterList.getParametersCount() == params.length - offset) {

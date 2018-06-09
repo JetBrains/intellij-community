@@ -1,8 +1,8 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInspection;
 
-import com.intellij.codeInspection.dataFlow.Nullness;
-import com.intellij.codeInspection.dataFlow.NullnessUtil;
+import com.intellij.codeInsight.Nullability;
+import com.intellij.codeInspection.dataFlow.NullabilityUtil;
 import com.intellij.codeInspection.ui.MultipleCheckboxOptionsPanel;
 import com.intellij.codeInspection.util.LambdaGenerationUtil;
 import com.intellij.openapi.project.Project;
@@ -261,7 +261,7 @@ public class ReplaceNullCheckInspection extends AbstractBaseJavaLocalInspectionT
         nonNullDiff = qualifierDiff.getRight();
         if(!ExpressionUtils.isReferenceTo(nullDiff, variable)) return null;
       }
-      if(NullnessUtil.getExpressionNullness(nonNullDiff, true) != Nullness.NOT_NULL) return null;
+      if(NullabilityUtil.getExpressionNullability(nonNullDiff, true) != Nullability.NOT_NULL) return null;
       if(!LambdaGenerationUtil.canBeUncheckedLambda(nonNullDiff)) return null;
       return new NotNullContext(nonNullDiff, nullDiff, nullBranch, reference, ifStatement, toDelete, false);
     }
@@ -305,7 +305,7 @@ public class ReplaceNullCheckInspection extends AbstractBaseJavaLocalInspectionT
       if(ClassUtils.isPrimitive(variable.getType())) return null;
       PsiExpression nonNullBranch = negated ? ternary.getThenExpression() : ternary.getElseExpression();
       if(!ExpressionUtils.isReferenceTo(nonNullBranch, variable)) return null;
-      if(NullnessUtil.getExpressionNullness(nullBranch, true) != Nullness.NOT_NULL) return null;
+      if(NullabilityUtil.getExpressionNullability(nullBranch, true) != Nullability.NOT_NULL) return null;
       if(!LambdaGenerationUtil.canBeUncheckedLambda(nullBranch)) return null;
       return new TernaryNotNullContext(ternary, nullBranch, referenceExpression);
     }

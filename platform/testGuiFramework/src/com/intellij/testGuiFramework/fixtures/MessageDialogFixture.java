@@ -19,6 +19,7 @@ import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.messages.MessageDialog;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.testGuiFramework.framework.GuiTestUtil;
 import org.fest.swing.core.GenericTypeMatcher;
 import org.fest.swing.core.Robot;
 import org.fest.swing.edt.GuiQuery;
@@ -27,21 +28,19 @@ import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 
-import static com.intellij.testGuiFramework.framework.GuiTestUtil.LONG_TIMEOUT;
-import static com.intellij.testGuiFramework.framework.GuiTestUtil.waitUntilFound;
 import static org.fest.swing.edt.GuiActionRunner.execute;
 
 public class MessageDialogFixture extends IdeaDialogFixture<DialogWrapper> implements MessagesFixture.Delegate {
 
   @NotNull
   static MessageDialogFixture findByTitle(@NotNull Robot robot, @NotNull final String title) {
-    return findByTitle(robot, title, LONG_TIMEOUT);
+    return findByTitle(robot, title, GuiTestUtil.INSTANCE.getLONG_TIMEOUT());
   }
 
   @NotNull
   static MessageDialogFixture findByTitle(@NotNull Robot robot, @NotNull final String title, @NotNull Timeout timeout) {
     final Ref<DialogWrapper> wrapperRef = new Ref<DialogWrapper>();
-    JDialog dialog = waitUntilFound(robot, null, new GenericTypeMatcher<JDialog>(JDialog.class) {
+    JDialog dialog = GuiTestUtil.INSTANCE.waitUntilFound(robot, null, new GenericTypeMatcher<JDialog>(JDialog.class) {
       @Override
       protected boolean isMatching(@NotNull JDialog dialog) {
         if (!title.equals(dialog.getTitle()) || !dialog.isShowing()) {
@@ -54,12 +53,12 @@ public class MessageDialogFixture extends IdeaDialogFixture<DialogWrapper> imple
   }
 
   static MessageDialogFixture findAny(@NotNull Robot robot) {
-    return findAny(robot, LONG_TIMEOUT);
+    return findAny(robot, GuiTestUtil.INSTANCE.getLONG_TIMEOUT());
   }
 
   static MessageDialogFixture findAny(@NotNull Robot robot, @NotNull Timeout timeout) {
     final Ref<DialogWrapper> wrapperRef = new Ref<DialogWrapper>();
-    JDialog dialog = waitUntilFound(robot, null, new GenericTypeMatcher<JDialog>(JDialog.class) {
+    JDialog dialog = GuiTestUtil.INSTANCE.waitUntilFound(robot, null, new GenericTypeMatcher<JDialog>(JDialog.class) {
       @Override
       protected boolean isMatching(@NotNull JDialog dialog) {
         return isMessageDialog(dialog, wrapperRef);

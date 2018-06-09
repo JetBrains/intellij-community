@@ -12,6 +12,7 @@ import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.util.DocumentUtil;
 import com.intellij.util.PairFunction;
 import com.intellij.xdebugger.XDebugSession;
 import com.intellij.xdebugger.XDebuggerUtil;
@@ -111,10 +112,8 @@ public abstract class JavaLineBreakpointTypeBase<P extends JavaBreakpointPropert
           }
 
           final int offset = element.getTextOffset();
-          if (offset >= 0) {
-            if (document.getLineNumber(offset) != line) {
-              break;
-            }
+          if (!DocumentUtil.isValidOffset(offset, document) || document.getLineNumber(offset) != line) {
+            break;
           }
           parent = element;
           element = element.getParent();

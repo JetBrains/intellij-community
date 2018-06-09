@@ -52,7 +52,7 @@ public class RunConfigurationsDialogFixture extends ComponentFixture<RunConfigur
 
   @NotNull
   public static RunConfigurationsDialogFixture find(@NotNull Robot robot) {
-    JDialog frame = GuiTestUtil.waitUntilFound(robot, new GenericTypeMatcher<JDialog>(JDialog.class) {
+    JDialog frame = GuiTestUtil.INSTANCE.waitUntilFound(robot, new GenericTypeMatcher<JDialog>(JDialog.class) {
       @Override
       protected boolean isMatching(@NotNull JDialog dialog) {
         return ExecutionBundle.message("run.debug.dialog.title").equals(dialog.getTitle()) && dialog.isShowing();

@@ -2,6 +2,10 @@
 package com.intellij.ide.projectWizard.kotlin.createProject
 
 import com.intellij.ide.projectWizard.kotlin.model.*
+import com.intellij.testGuiFramework.impl.gradleReimport
+import com.intellij.testGuiFramework.impl.waitAMoment
+import com.intellij.testGuiFramework.util.scenarios.NewProjectDialogModel
+import com.intellij.testGuiFramework.util.scenarios.projectStructureDialogScenarios
 import org.junit.Test
 
 class CreateGradleKotlinDslProjectWithKotlinGuiTest : KotlinGuiTestCase() {
@@ -10,7 +14,6 @@ class CreateGradleKotlinDslProjectWithKotlinGuiTest : KotlinGuiTestCase() {
   fun createGradleWithKotlinJvm() {
     createGradleWith(
       projectName = testMethod.methodName,
-      kotlinKind = KotlinKind.JVM,
       kotlinVersion = KotlinTestProperties.kotlin_artifact_version,
       project = kotlinLibs[KotlinKind.JVM]!!.gradleKProject,
       expectedFacet = defaultFacetSettings[TargetPlatform.JVM18]!!)
@@ -21,15 +24,13 @@ class CreateGradleKotlinDslProjectWithKotlinGuiTest : KotlinGuiTestCase() {
   fun createGradleWithKotlinJs() {
     createGradleWith(
       projectName = testMethod.methodName,
-      kotlinKind = KotlinKind.JS,
       kotlinVersion = KotlinTestProperties.kotlin_artifact_version,
       project = kotlinLibs[KotlinKind.JS]!!.gradleKProject,
       expectedFacet = defaultFacetSettings[TargetPlatform.JavaScript]!!)
   }
 
-   fun createGradleWith(
+   private fun createGradleWith(
      projectName: String,
-     kotlinKind: KotlinKind,
      kotlinVersion: String,
      project: ProjectProperties,
      expectedFacet: FacetStructure) {
@@ -37,23 +38,24 @@ class CreateGradleKotlinDslProjectWithKotlinGuiTest : KotlinGuiTestCase() {
     val extraTimeOut = 4000L
     createGradleProject(
       projectPath = projectFolder,
-      group = groupName,
-      artifact = projectName,
-      gradleOptions = BuildGradleOptions().build(),
-      framework = project.frameworkName,
-      isJavaUsed = true,
-      isKotlinDslUsed = true)
+      gradleOptions = NewProjectDialogModel.GradleProjectOptions(
+        group = groupName,
+        artifact = projectName,
+        useKotlinDsl = true,
+        framework = project.frameworkName
+      )
+    )
+    waitAMoment(extraTimeOut)
     waitAMoment(extraTimeOut)
     editSettingsGradle()
     editBuildGradle(
       kotlinVersion = kotlinVersion,
-      isKotlinDslUsed = true,
-      kotlinKind = kotlinKind
+      isKotlinDslUsed = true
     )
     gradleReimport()
     waitAMoment(extraTimeOut)
 
-     checkInProjectStructureGradleExplicitModuleGroups(
+     projectStructureDialogScenarios.checkGradleExplicitModuleGroups(
        project, kotlinVersion, projectName, expectedFacet
      )
   }

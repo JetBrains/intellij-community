@@ -16,11 +16,11 @@
 package com.siyeh.ig.performance;
 
 import com.intellij.codeInsight.BlockUtils;
+import com.intellij.codeInsight.Nullability;
 import com.intellij.codeInsight.NullableNotNullManager;
 import com.intellij.codeInsight.PsiEquivalenceUtil;
 import com.intellij.codeInspection.ProblemDescriptor;
-import com.intellij.codeInspection.dataFlow.Nullness;
-import com.intellij.codeInspection.dataFlow.NullnessUtil;
+import com.intellij.codeInspection.dataFlow.NullabilityUtil;
 import com.intellij.codeInspection.util.ChangeToAppendUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
@@ -327,7 +327,7 @@ public class StringConcatenationInLoopsInspection extends BaseInspection {
 
   private static boolean canBeNull(PsiVariable var) {
     PsiExpression initializer = var.getInitializer();
-    if (initializer != null && NullnessUtil.getExpressionNullness(initializer, true) != Nullness.NOT_NULL) {
+    if (initializer != null && NullabilityUtil.getExpressionNullability(initializer, true) != Nullability.NOT_NULL) {
       return true;
     }
     Processor<PsiReference> isNotNullableWrite = (PsiReference ref) -> {
@@ -337,7 +337,7 @@ public class StringConcatenationInLoopsInspection extends BaseInspection {
       PsiAssignmentExpression assignment = PsiTreeUtil.getParentOfType(expression, PsiAssignmentExpression.class);
       if (assignment == null || assignment.getOperationTokenType() != JavaTokenType.EQ) return true;
       PsiExpression rExpression = assignment.getRExpression();
-      return rExpression == null || NullnessUtil.getExpressionNullness(rExpression, true) == Nullness.NOT_NULL;
+      return rExpression == null || NullabilityUtil.getExpressionNullability(rExpression, true) == Nullability.NOT_NULL;
     };
     return !ReferencesSearch.search(var).forEach(isNotNullableWrite);
   }
@@ -391,7 +391,7 @@ public class StringConcatenationInLoopsInspection extends BaseInspection {
                     PsiVariable builderVariable,
                     PsiElement scope,
                     CommentTracker ct,
-                    Predicate<PsiReferenceExpression> skip) {
+                    Predicate<? super PsiReferenceExpression> skip) {
       Query<PsiReference> query =
         scope == null ? ReferencesSearch.search(variable) : ReferencesSearch.search(variable, new LocalSearchScope(scope));
       Collection<PsiReference> refs = query.findAll();
@@ -410,19 +410,19 @@ public class StringConcatenationInLoopsInspection extends BaseInspection {
       if (myNullables instanceof HashSet) return; // already filled
       myNullables = new HashSet<>();
       PsiExpression initializer = variable.getInitializer();
-      if (initializer != null && NullnessUtil.getExpressionNullness(initializer, true) != Nullness.NOT_NULL) {
+      if (initializer != null && NullabilityUtil.getExpressionNullability(initializer, true) != Nullability.NOT_NULL) {
         myNullables.add(initializer);
       }
       for (PsiReference ref : refs) {
         if (ref instanceof PsiExpression) {
           PsiExpression refExpr = (PsiExpression)ref;
-          if (NullnessUtil.getExpressionNullness(refExpr, true) != Nullness.NOT_NULL) {
+          if (NullabilityUtil.getExpressionNullability(refExpr, true) != Nullability.NOT_NULL) {
             myNullables.add(refExpr);
           }
           if(PsiUtil.isOnAssignmentLeftHand(refExpr)) {
             PsiExpression rExpr =
               ExpressionUtils.getAssignmentTo(PsiTreeUtil.getParentOfType(refExpr, PsiAssignmentExpression.class), variable);
-            if (rExpr != null && NullnessUtil.getExpressionNullness(rExpr, true) != Nullness.NOT_NULL) {
+            if (rExpr != null && NullabilityUtil.getExpressionNullability(rExpr, true) != Nullability.NOT_NULL) {
               myNullables.add(rExpr);
             }
           }

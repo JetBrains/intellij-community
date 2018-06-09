@@ -77,7 +77,7 @@ public abstract class NonClasspathClassFinder extends PsiElementFinder {
       List<VirtualFile> roots = calcClassRoots();
       List<VirtualFile> invalidRoots = ContainerUtil.filter(roots, f -> !f.isValid());
       if (!invalidRoots.isEmpty()) {
-        roots.removeAll(invalidRoots);
+        roots = ContainerUtil.filter(roots, VirtualFile::isValid);
         LOG.error("Invalid roots returned by " + getClass() + ": " + invalidRoots);
       }
       myCache = cache = createCache(roots);

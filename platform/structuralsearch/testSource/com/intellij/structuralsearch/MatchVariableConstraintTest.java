@@ -17,6 +17,7 @@ public class MatchVariableConstraintTest {
     assertEquals("consider dots without following meta chars a regular dot (common mistake)",
                  "java.lang.String", MatchVariableConstraint.convertRegExpTypeToTypeString("java.lang.String"));
     assertEquals("", MatchVariableConstraint.convertRegExpTypeToTypeString("start.*"));
+    assertEquals("parentheses", "int|long", MatchVariableConstraint.convertRegExpTypeToTypeString("(int|long)"));
   }
 
   @Test

@@ -2,6 +2,7 @@
 package com.intellij.ide.projectWizard.kotlin.createProject
 
 import com.intellij.ide.projectWizard.kotlin.model.*
+import com.intellij.testGuiFramework.util.scenarios.projectStructureDialogScenarios
 import org.junit.Ignore
 import org.junit.Test
 
@@ -15,10 +16,9 @@ class CreateJavaProjectAndConfigureKotlinGuiTest : KotlinGuiTestCase() {
       projectPath = projectFolder,
       kotlinKind = KotlinKind.JVM,
       kotlinVersion = KotlinTestProperties.kotlin_artifact_version)
-    checkKotlinLibsInStructureFromProject(
+    projectStructureDialogScenarios.checkKotlinLibsInStructureFromProject(
       projectPath = projectFolder,
-      kotlinKind = KotlinKind.JVM,
-      kotlinVersion = KotlinTestProperties.kotlin_artifact_version)
+      kotlinKind = KotlinKind.JVM)
   }
 
   @Test
@@ -26,7 +26,7 @@ class CreateJavaProjectAndConfigureKotlinGuiTest : KotlinGuiTestCase() {
   fun configureKotlinJvmInJavaProject() {
     createJavaProject(projectFolder)
     configureKotlinJvm(libInPlugin = true)
-    checkKotlinLibsInStructureFromPlugin(
+    projectStructureDialogScenarios.checkKotlinLibsInStructureFromPlugin(
       kotlinKind = KotlinKind.JVM,
       kotlinVersion = KotlinTestProperties.kotlin_artifact_version)
   }
@@ -40,10 +40,9 @@ class CreateJavaProjectAndConfigureKotlinGuiTest : KotlinGuiTestCase() {
       projectPath = projectFolder,
       kotlinKind = KotlinKind.JS,
       kotlinVersion = KotlinTestProperties.kotlin_artifact_version)
-    checkKotlinLibsInStructureFromProject(
+    projectStructureDialogScenarios.checkKotlinLibsInStructureFromProject(
       projectPath = projectFolder,
-      kotlinKind = KotlinKind.JS,
-      kotlinVersion = KotlinTestProperties.kotlin_artifact_version)
+      kotlinKind = KotlinKind.JS)
   }
 
   @Test
@@ -51,7 +50,7 @@ class CreateJavaProjectAndConfigureKotlinGuiTest : KotlinGuiTestCase() {
   fun configureKotlinJSInJavaProject() {
     createJavaProject(projectFolder)
     configureKotlinJs(libInPlugin = true)
-    checkKotlinLibsInStructureFromPlugin(
+    projectStructureDialogScenarios.checkKotlinLibsInStructureFromPlugin(
       kotlinKind = KotlinKind.JS,
       kotlinVersion = KotlinTestProperties.kotlin_artifact_version)
   }

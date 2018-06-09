@@ -3,16 +3,15 @@
  */
 package com.siyeh.ipp.collections;
 
-import com.intellij.codeInsight.NullableNotNullManager;
+import com.intellij.codeInsight.Nullability;
 import com.intellij.codeInsight.intention.HighPriorityAction;
+import com.intellij.codeInspection.dataFlow.NullabilityUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiUtil;
 import com.siyeh.IntentionPowerPackBundle;
 import com.siyeh.ig.PsiReplacementUtil;
 import com.siyeh.ig.psiutils.ClassUtils;
 import com.siyeh.ig.psiutils.CommentTracker;
-import com.siyeh.ig.psiutils.ExpressionUtils;
-import com.siyeh.ig.psiutils.ParenthesesUtils;
 import com.siyeh.ipp.base.Intention;
 import com.siyeh.ipp.base.PsiElementPredicate;
 import org.jetbrains.annotations.NotNull;
@@ -78,7 +77,7 @@ public class ReplaceWithArraysAsListIntention extends Intention implements HighP
       return "java.util.Collections.singletonList";
     }
     if (methodName.equals("emptyList") || methodName.equals("singletonList")) {
-      if (Arrays.stream(arguments).noneMatch(e -> isPossiblyNull(e))) {
+      if (Arrays.stream(arguments).noneMatch(ReplaceWithArraysAsListIntention::isPossiblyNull)) {
         if (PsiUtil.isLanguageLevel9OrHigher(context)) {
           return "java.util.List.of";
         }
@@ -108,22 +107,6 @@ public class ReplaceWithArraysAsListIntention extends Intention implements HighP
   }
 
   private static boolean isPossiblyNull(PsiExpression expression) {
-    expression = ParenthesesUtils.stripParentheses(expression);
-    if (expression instanceof PsiReferenceExpression) {
-      final PsiReferenceExpression referenceExpression = (PsiReferenceExpression)expression;
-      final PsiElement target = referenceExpression.resolve();
-      if (target instanceof PsiModifierListOwner) {
-        final PsiModifierListOwner modifierListOwner = (PsiModifierListOwner)target;
-        return NullableNotNullManager.getInstance(expression.getProject()).isNullable(modifierListOwner, false);
-      }
-    }
-    else if (ExpressionUtils.isNullLiteral(expression)) {
-      return true;
-    }
-    else if (expression instanceof PsiConditionalExpression) {
-      final PsiConditionalExpression conditionalExpression = (PsiConditionalExpression)expression;
-      return isPossiblyNull(conditionalExpression.getThenExpression()) || isPossiblyNull(conditionalExpression.getElseExpression());
-    }
-    return false;
+    return NullabilityUtil.getExpressionNullability(expression) == Nullability.NULLABLE;
   }
 }

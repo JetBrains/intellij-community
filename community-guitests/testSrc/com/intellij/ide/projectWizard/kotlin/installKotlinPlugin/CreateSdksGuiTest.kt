@@ -3,6 +3,7 @@ package com.intellij.ide.projectWizard.kotlin.installKotlinPlugin
 
 import com.intellij.ide.projectWizard.kotlin.model.KotlinGuiTestCase
 import com.intellij.ide.projectWizard.kotlin.model.KotlinTestProperties
+import com.intellij.testGuiFramework.impl.*
 import com.intellij.testGuiFramework.util.logInfo
 import com.intellij.testGuiFramework.util.logTestStep
 import com.intellij.testGuiFramework.util.logUIStep

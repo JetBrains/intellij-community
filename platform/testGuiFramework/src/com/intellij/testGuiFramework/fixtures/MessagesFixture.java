@@ -61,7 +61,7 @@ public class MessagesFixture {
 
   @NotNull
   public static MessagesFixture findAny(@NotNull Robot robot, @NotNull Container root) {
-    return findAny(robot, root, GuiTestUtil.LONG_TIMEOUT);
+    return findAny(robot, root, GuiTestUtil.INSTANCE.getLONG_TIMEOUT());
   }
 
   @NotNull
@@ -90,7 +90,7 @@ public class MessagesFixture {
 
   @NotNull
   public MessagesFixture clickOk() {
-    GuiTestUtil.findAndClickOkButton(myDelegate);
+    GuiTestUtil.INSTANCE.findAndClickOkButton(myDelegate);
     return this;
   }
 
@@ -102,7 +102,7 @@ public class MessagesFixture {
 
   @NotNull
   public MessagesFixture click(@NotNull String text) {
-    GuiTestUtil.findAndClickButton(myDelegate, text);
+    GuiTestUtil.INSTANCE.findAndClickButton(myDelegate, text);
     return this;
   }
 
@@ -119,12 +119,12 @@ public class MessagesFixture {
   }
 
   public void clickCancel() {
-    GuiTestUtil.findAndClickCancelButton(myDelegate);
+    GuiTestUtil.INSTANCE.findAndClickCancelButton(myDelegate);
   }
 
   @NotNull
   static JPanelFixture findMacSheetByTitle(@NotNull Robot robot, @NotNull Container root, @NotNull String title) {
-    return findMacSheetByTitle(robot, root, title, GuiTestUtil.LONG_TIMEOUT);
+    return findMacSheetByTitle(robot, root, title, GuiTestUtil.INSTANCE.getLONG_TIMEOUT());
   }
 
   @NotNull
@@ -139,7 +139,7 @@ public class MessagesFixture {
 
 
   private static JPanelFixture findMacSheetAny(@NotNull Robot robot, @NotNull Container root) {
-    return findMacSheetAny(robot, root, GuiTestUtil.LONG_TIMEOUT);
+    return findMacSheetAny(robot, root, GuiTestUtil.INSTANCE.getLONG_TIMEOUT());
   }
 
   private static JPanelFixture findMacSheetAny(@NotNull Robot robot, @NotNull Container root, @NotNull Timeout timeout) {
@@ -149,12 +149,12 @@ public class MessagesFixture {
 
   @NotNull
   private static JPanel getSheetPanel(@NotNull Robot robot, @NotNull Container root) {
-    return getSheetPanel(robot, root, GuiTestUtil.LONG_TIMEOUT);
+    return getSheetPanel(robot, root, GuiTestUtil.INSTANCE.getLONG_TIMEOUT());
   }
 
   @NotNull
   private static JPanel getSheetPanel(@NotNull Robot robot, @NotNull Container root, @NotNull Timeout timeout) {
-    return GuiTestUtil.waitUntilFound(robot, root, new GenericTypeMatcher<JPanel>(JPanel.class) {
+    return GuiTestUtil.INSTANCE.waitUntilFound(robot, root, new GenericTypeMatcher<JPanel>(JPanel.class) {
         @Override
         protected boolean isMatching(@NotNull JPanel panel) {
           if (panel.getClass().getName().startsWith(SheetController.class.getName()) && panel.isShowing()) {

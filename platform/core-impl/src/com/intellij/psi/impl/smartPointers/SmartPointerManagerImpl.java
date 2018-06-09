@@ -73,13 +73,7 @@ public class SmartPointerManagerImpl extends SmartPointerManager {
   public <E extends PsiElement> SmartPsiElementPointer<E> createSmartPsiElementPointer(@NotNull E element,
                                                                                        PsiFile containingFile,
                                                                                        boolean forInjected) {
-    if (containingFile == null ? !element.isValid() : !containingFile.isValid()) {
-      if (containingFile != null) {
-        PsiUtilCore.ensureValid(containingFile);
-      }
-      PsiUtilCore.ensureValid(element);
-      LOG.error("Invalid element:" + element);
-    }
+    ensureValid(element, containingFile);
     SmartPointerTracker.processQueue();
     SmartPsiElementPointerImpl<E> pointer = getCachedPointer(element);
     if (pointer != null &&
@@ -94,6 +88,16 @@ public class SmartPointerManagerImpl extends SmartPointerManager {
     }
     element.putUserData(CACHED_SMART_POINTER_KEY, new SoftReference<>(pointer));
     return pointer;
+  }
+
+  private static void ensureValid(@NotNull PsiElement element, @Nullable PsiFile containingFile) {
+    boolean valid = containingFile != null ? containingFile.isValid() : element.isValid();
+    if (!valid) {
+      PsiUtilCore.ensureValid(element);
+      if (containingFile != null && !containingFile.isValid()) {
+        throw new PsiInvalidElementAccessException(containingFile, "Element " + element.getClass() + "(" + element.getLanguage() + ")" + " claims to be valid but returns invalid containing file ");
+      }
+    }
   }
 
   private static <E extends PsiElement> SmartPsiElementPointerImpl<E> getCachedPointer(@NotNull E element) {

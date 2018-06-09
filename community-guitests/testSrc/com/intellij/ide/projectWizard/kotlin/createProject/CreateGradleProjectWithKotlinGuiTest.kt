@@ -3,6 +3,10 @@ package com.intellij.ide.projectWizard.kotlin.createProject
 
 import com.intellij.ide.projectWizard.kotlin.model.*
 import com.intellij.testGuiFramework.framework.GuiTestSuiteParam
+import com.intellij.testGuiFramework.impl.gradleReimport
+import com.intellij.testGuiFramework.impl.waitAMoment
+import com.intellij.testGuiFramework.util.scenarios.NewProjectDialogModel
+import com.intellij.testGuiFramework.util.scenarios.projectStructureDialogScenarios
 import org.junit.Test
 import org.junit.runner.RunWith
 import org.junit.runners.Parameterized
@@ -12,21 +16,22 @@ class CreateGradleProjectWithKotlinGuiTest(val testParameters: TestParameters) :
 
   data class TestParameters(
     val projectName: String,
-    val kotlinKind: KotlinKind,
     val project: ProjectProperties,
     val expectedFacet: FacetStructure) {
     override fun toString() = projectName
   }
 
-
   @Test
   fun createGradleWithKotlin() {
     createGradleWith(
-      projectName = testParameters.projectName,
-      kotlinKind = testParameters.kotlinKind,
       kotlinVersion = KotlinTestProperties.kotlin_artifact_version,
       project = testParameters.project,
-      expectedFacet = testParameters.expectedFacet)
+      expectedFacet = testParameters.expectedFacet,
+      gradleOptions = NewProjectDialogModel.GradleProjectOptions(
+        artifact = testParameters.projectName,
+        framework = testParameters.project.frameworkName
+      )
+    )
   }
 
   companion object {
@@ -36,31 +41,26 @@ class CreateGradleProjectWithKotlinGuiTest(val testParameters: TestParameters) :
       return listOf(
         TestParameters(
           projectName = "gradle_with_jvm",
-          kotlinKind = KotlinKind.JVM,
           project = kotlinLibs.getValue(KotlinKind.JVM).gradleGProject,
           expectedFacet = defaultFacetSettings.getValue(TargetPlatform.JVM18)
         ),
         TestParameters(
           projectName = "gradle_mpp_jvm",
-          kotlinKind = KotlinKind.JVM,
           project = kotlinLibs.getValue(KotlinKind.JVM).gradleGMPProject,
           expectedFacet = defaultFacetSettings.getValue(TargetPlatform.JVM18)
         ),
         TestParameters(
           projectName = "gradle_with_js",
-          kotlinKind = KotlinKind.JS,
           project = kotlinLibs.getValue(KotlinKind.JS).gradleGProject,
           expectedFacet = defaultFacetSettings.getValue(TargetPlatform.JavaScript)
         ),
         TestParameters(
           projectName = "gradle_mpp_js",
-          kotlinKind = KotlinKind.JS,
           project = kotlinLibs.getValue(KotlinKind.JS).gradleGMPProject,
           expectedFacet = defaultFacetSettings.getValue(TargetPlatform.JavaScript)
         ),
         TestParameters(
           projectName = "gradle_mpp_common",
-          kotlinKind = KotlinKind.Common,
           project = kotlinLibs.getValue(KotlinKind.Common).gradleGMPProject,
           expectedFacet = defaultFacetSettings.getValue(TargetPlatform.Common)
         )
@@ -69,31 +69,26 @@ class CreateGradleProjectWithKotlinGuiTest(val testParameters: TestParameters) :
   }
 
   private fun createGradleWith(
-    projectName: String,
-    kotlinKind: KotlinKind,
     kotlinVersion: String,
     project: ProjectProperties,
-    expectedFacet: FacetStructure) {
-    val groupName = "group_gradle"
+    expectedFacet: FacetStructure,
+    gradleOptions: NewProjectDialogModel.GradleProjectOptions) {
     val extraTimeOut = 4000L
     createGradleProject(
       projectPath = projectFolder,
-      group = groupName,
-      artifact = projectName,
-      gradleOptions = BuildGradleOptions().build(),
-      framework = project.frameworkName)
+      gradleOptions = gradleOptions
+    )
     waitAMoment(extraTimeOut)
     editSettingsGradle()
     editBuildGradle(
       kotlinVersion = kotlinVersion,
-      isKotlinDslUsed = false,
-      kotlinKind = kotlinKind
+      isKotlinDslUsed = false
     )
     gradleReimport()
     waitAMoment(extraTimeOut)
 
-    checkInProjectStructureGradleExplicitModuleGroups(
-      project, kotlinVersion, projectName, expectedFacet
+    projectStructureDialogScenarios.checkGradleExplicitModuleGroups(
+      project, kotlinVersion, gradleOptions.artifact, expectedFacet
     )
   }
 }

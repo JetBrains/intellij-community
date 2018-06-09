@@ -9,21 +9,18 @@ import com.intellij.codeInsight.intention.impl.ShowIntentionActionsHandler
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.editor.ex.TooltipAction
-import com.intellij.openapi.util.registry.Registry
 import com.intellij.psi.PsiDocumentManager
 import com.intellij.xml.util.XmlStringUtil
 import java.util.*
 
 class DaemonTooltipActionProvider : TooltipActionProvider {
   override fun getTooltipAction(info: HighlightInfo, editor: Editor): TooltipAction? {
-    if (!Registry.`is`("ide.tooltip.show.with.actions")) return null
-
     return extractMostPriorityFix(info, editor)
   }
 }
 
 class DaemonTooltipAction(private val myFixText: String, private val myActualOffset: Int) : TooltipAction {
-
+  
   override fun getText(): String {
     return myFixText
   }
@@ -50,10 +47,10 @@ class DaemonTooltipAction(private val myFixText: String, private val myActualOff
     ShowIntentionActionsHandler().invoke(project, editor, psiFile)
   }
 
-  override fun equals(o: Any?): Boolean {
-    if (this === o) return true
-    if (o == null || javaClass != o.javaClass) return false
-    val info = o as DaemonTooltipAction?
+  override fun equals(other: Any?): Boolean {
+    if (this === other) return true
+    if (other == null || javaClass != other.javaClass) return false
+    val info = other as DaemonTooltipAction?
     return myActualOffset == info!!.myActualOffset && myFixText == info.myFixText
   }
 

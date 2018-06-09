@@ -50,7 +50,7 @@ import com.intellij.ui.tree.AsyncTreeModel;
 import com.intellij.util.*;
 import com.intellij.util.concurrency.AppExecutorUtil;
 import com.intellij.util.concurrency.AppScheduledExecutorService;
-import com.intellij.util.io.ZipUtil;
+import com.intellij.util.io.Decompressor;
 import com.intellij.util.ref.GCUtil;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.tree.TreeUtil;
@@ -84,7 +84,6 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.Function;
 import java.util.function.Predicate;
-import java.util.jar.JarFile;
 
 import static com.intellij.openapi.application.ApplicationManager.getApplication;
 import static org.junit.Assert.assertEquals;
@@ -779,12 +778,8 @@ public class PlatformTestUtil {
       FileUtilRt.createDirectory(tempDirectory1);
       FileUtilRt.createDirectory(tempDirectory2);
 
-      try (JarFile jarFile1 = new JarFile(file1)) {
-        try (JarFile jarFile2 = new JarFile(file2)) {
-          ZipUtil.extract(jarFile1, tempDirectory1, null);
-          ZipUtil.extract(jarFile2, tempDirectory2, null);
-        }
-      }
+      new Decompressor.Zip(file1).extract(tempDirectory1);
+      new Decompressor.Zip(file2).extract(tempDirectory2);
 
       final VirtualFile dirAfter = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(tempDirectory1);
       Assert.assertNotNull(tempDirectory1.toString(), dirAfter);

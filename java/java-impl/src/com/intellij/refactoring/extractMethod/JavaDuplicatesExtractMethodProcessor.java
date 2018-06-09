@@ -44,7 +44,7 @@ public class JavaDuplicatesExtractMethodProcessor extends ExtractMethodProcessor
     myStatic = from.myStatic;
     myIsChainedConstructor = from.myIsChainedConstructor;
     myMethodVisibility = from.myMethodVisibility;
-    myNullness = from.myNullness;
+    myNullability = from.myNullability;
     myReturnType = from.myReturnType;
     myOutputVariables = Arrays.stream(from.myOutputVariables)
       .map(variable -> variablesMapping.getOrDefault(variable, variable))
@@ -95,7 +95,7 @@ public class JavaDuplicatesExtractMethodProcessor extends ExtractMethodProcessor
     myStatic = from.myStatic;
     myIsChainedConstructor = from.myIsChainedConstructor;
     myMethodVisibility = from.myMethodVisibility;
-    myNullness = from.myNullness;
+    myNullability = from.myNullability;
     myReturnType = from.myReturnType.getType();
     myOutputVariables = StreamEx.of(from.myOutputVariables).map(SmartPsiElementPointer::getElement).toArray(new PsiVariable[0]);
     LOG.assertTrue(!ArrayUtil.contains(null, myOutputVariables));
@@ -240,7 +240,6 @@ public class JavaDuplicatesExtractMethodProcessor extends ExtractMethodProcessor
   private boolean isInSameClass(Match match) {
     PsiClass matchClass = PsiTreeUtil.getParentOfType(match.getMatchStart(), PsiClass.class);
     PsiClass psiClass = PsiTreeUtil.getParentOfType(myExtractedMethod, PsiClass.class);
-    return psiClass != null && matchClass != null &&
-           PsiTreeUtil.isAncestor(psiClass, matchClass, false);
+    return matchClass != null && PsiTreeUtil.isAncestor(psiClass, matchClass, false);
   }
 }

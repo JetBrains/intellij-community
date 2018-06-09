@@ -32,6 +32,7 @@ import org.jetbrains.plugins.groovy.lang.parser.GroovyElementTypes;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyElementVisitor;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFileBase;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElement;
+import org.jetbrains.plugins.groovy.lang.psi.api.GrDoWhileStatement;
 import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.GrListOrMap;
 import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.modifiers.annotation.GrAnnotation;
 import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.modifiers.annotation.GrAnnotationArgumentList;
@@ -42,6 +43,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.arguments.GrNamedArg
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.arguments.GrSpreadArgument;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrClosableBlock;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrOpenBlock;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.branch.GrAssertStatement;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.clauses.GrForInClause;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.*;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.literals.GrLiteral;
@@ -60,6 +62,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.types.GrTypeArgumentList;
 import org.jetbrains.plugins.groovy.lang.psi.api.types.GrTypeParameterList;
 import org.jetbrains.plugins.groovy.lang.psi.impl.PsiImplUtil;
 
+import static org.jetbrains.plugins.groovy.lang.psi.GroovyElementTypes.*;
 import static org.jetbrains.plugins.groovy.lang.psi.GroovyTokenSets.*;
 
 /**
@@ -714,6 +717,35 @@ public class GroovySpacingProcessor extends GroovyElementVisitor {
   }
 
   @Override
+  public void visitDoWhileStatement(@NotNull GrDoWhileStatement statement) {
+    if (myType1 == KW_DO) {
+      createSpaceBeforeLBrace(
+        mySettings.SPACE_BEFORE_DO_LBRACE,
+        mySettings.BRACE_STYLE,
+        myChild1.getTextRange(),
+        mySettings.KEEP_SIMPLE_BLOCKS_IN_ONE_LINE
+      );
+    }
+    else if (myType2 == KW_WHILE) {
+      if (mySettings.WHILE_ON_NEW_LINE) {
+        createLF(true);
+      }
+      else {
+        createSpaceInCode(mySettings.SPACE_BEFORE_WHILE_KEYWORD);
+      }
+    }
+    else if (myType2 == T_LPAREN) {
+      createSpaceInCode(mySettings.SPACE_BEFORE_WHILE_PARENTHESES);
+    }
+    else if (myType1 == T_LPAREN || myType2 == T_RPAREN) {
+      createSpaceInCode(mySettings.SPACE_WITHIN_WHILE_PARENTHESES);
+    }
+    else {
+      createSpacingBeforeElementInsideControlStatement();
+    }
+  }
+
+  @Override
   public void visitCatchClause(@NotNull GrCatchClause catchClause) {
     if (isOpenBlock(myType2)) {
       createSpaceBeforeLBrace(mySettings.SPACE_BEFORE_CATCH_LBRACE, mySettings.BRACE_STYLE, null,
@@ -881,7 +913,15 @@ public class GroovySpacingProcessor extends GroovyElementVisitor {
     }
   }
 
-
+  @Override
+  public void visitAssertStatement(@NotNull GrAssertStatement assertStatement) {
+    if (myType2 == T_COLON || myType2 == T_COMMA) {
+      createSpaceInCode(myGroovySettings.SPACE_BEFORE_ASSERT_SEPARATOR);
+    }
+    else if (myType1 == T_COLON || myType1 == T_COMMA) {
+      createSpaceInCode(myGroovySettings.SPACE_AFTER_ASSERT_SEPARATOR);
+    }
+  }
 
   @Override
   public void visitIfStatement(@NotNull GrIfStatement ifStatement) {

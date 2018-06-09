@@ -2,6 +2,7 @@
 package com.intellij.util;
 
 import com.intellij.ui.paint.PaintUtil.RoundingMode;
+import com.intellij.util.ui.JBUI.ScaleContext;
 import org.jetbrains.annotations.NotNull;
 
 import java.awt.*;
@@ -69,6 +70,11 @@ public class RetinaImage { // [tav] todo: create HiDPIImage class
   @NotNull
   public static BufferedImage create(GraphicsConfiguration gc, double width, double height, int type, RoundingMode rm) {
     return new JBHiDPIScaledImage(gc, width, height, type, rm);
+  }
+
+  @NotNull
+  public static BufferedImage create(ScaleContext ctx, double width, double height, int type, RoundingMode rm) {
+    return new JBHiDPIScaledImage(ctx, width, height, type, rm);
   }
 
   /** @deprecated Apple JRE is no longer supported (to be removed in IDEA 2019) */

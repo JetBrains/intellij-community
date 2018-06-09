@@ -107,7 +107,9 @@ public abstract class JavaAwareTestConsoleProperties<T extends ModuleBasedConfig
         PsiFile psiFile = containingClass.getContainingFile();
         Document document = PsiDocumentManager.getInstance(containingClass.getProject()).getDocument(psiFile);
         TextRange textRange = containingMethod.getTextRange();
-        if (textRange == null || document == null || textRange.contains(document.getLineStartOffset(lineNumber))) {
+        if (textRange == null || document == null || 
+            lineNumber < 0 || lineNumber >= document.getLineCount() || 
+            textRange.contains(document.getLineStartOffset(lineNumber))) {
           return new OpenFileDescriptor(containingClass.getProject(), psiFile.getVirtualFile(), lineNumber, 0);
         }
       }
