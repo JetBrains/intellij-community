@@ -42,6 +42,9 @@ public class VcsRootDetectorImpl implements VcsRootDetector {
   @NotNull private final ProjectLevelVcsManager myVcsManager;
   @NotNull private final VcsRootChecker[] myCheckers;
 
+  @Nullable private Collection<VcsRoot> myDetectedRoots;
+  @NotNull private final Object LOCK = new Object();
+
   public VcsRootDetectorImpl(@NotNull Project project,
                              @NotNull ProjectRootManager projectRootManager,
                              @NotNull ProjectLevelVcsManager projectLevelVcsManager) {
@@ -51,13 +54,23 @@ public class VcsRootDetectorImpl implements VcsRootDetector {
     myCheckers = Extensions.getExtensions(VcsRootChecker.EXTENSION_POINT_NAME);
   }
 
+  @Override
   @NotNull
   public Collection<VcsRoot> detect() {
-    return detect(myProject.getBaseDir());
+    synchronized (LOCK) {
+      myDetectedRoots = detect(myProject.getBaseDir());
+      return myDetectedRoots;
+    }
+  }
+
+  @Override
+  @NotNull
+  public Collection<VcsRoot> detect(@Nullable VirtualFile startDir) {
+    return doDetect(startDir);
   }
 
   @NotNull
-  public Collection<VcsRoot> detect(@Nullable VirtualFile startDir) {
+  private Collection<VcsRoot> doDetect(@Nullable VirtualFile startDir) {
     if (startDir == null || myCheckers.length == 0) {
       return Collections.emptyList();
     }
@@ -68,7 +81,18 @@ public class VcsRootDetectorImpl implements VcsRootDetector {
       if (rootAbove != null) roots.add(rootAbove);
     }
     roots.addAll(scanForRootsInContentRoots());
-    return roots;
+    return Collections.unmodifiableSet(roots);
+  }
+
+  @Override
+  @NotNull
+  public Collection<VcsRoot> getOrDetect() {
+    synchronized (LOCK) {
+      if (myDetectedRoots == null) {
+        detect();
+      }
+      return myDetectedRoots;
+    }
   }
 
   @NotNull
