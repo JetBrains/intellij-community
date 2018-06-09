@@ -468,8 +468,8 @@ public final class IconLoader {
    *  For internal usage. Converts the icon to 1x scale when applicable.
    */
   public static Icon get1xIcon(Icon icon, boolean dark) {
-    if (icon instanceof LazyIcon) {
-      icon = ((LazyIcon)icon).getOrComputeIcon();
+    if (icon instanceof RetrievableIcon) {
+      icon = ((RetrievableIcon)icon).retrieveIcon();
     }
     if (icon instanceof CachedImageIcon) {
       Image img = ((CachedImageIcon)icon).loadFromUrl(ScaleContext.createIdentity(), dark);
@@ -701,7 +701,7 @@ public final class IconLoader {
     }
   }
 
-  public abstract static class LazyIcon extends RasterJBIcon {
+  public abstract static class LazyIcon extends RasterJBIcon implements RetrievableIcon {
     private boolean myWasComputed;
     private Icon myIcon;
     private boolean isDarkVariant = USE_DARK_ICONS;
@@ -751,6 +751,12 @@ public final class IconLoader {
     }
 
     protected abstract Icon compute();
+
+    @Nullable
+    @Override
+    public Icon retrieveIcon() {
+      return getOrComputeIcon();
+    }
 
     @NotNull
     @Override
