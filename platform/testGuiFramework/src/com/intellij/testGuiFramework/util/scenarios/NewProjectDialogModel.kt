@@ -4,10 +4,13 @@ package com.intellij.testGuiFramework.util.scenarios
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.testGuiFramework.fixtures.JDialogFixture
 import com.intellij.testGuiFramework.framework.GuiTestUtil.defaultTimeout
+import com.intellij.testGuiFramework.framework.GuiTestUtil.typeText
 import com.intellij.testGuiFramework.impl.*
 import com.intellij.testGuiFramework.util.*
+import com.intellij.testGuiFramework.util.scenarios.NewProjectDialogModel.Constants.buttonCancel
 import com.intellij.testGuiFramework.util.scenarios.NewProjectDialogModel.Constants.buttonFinish
 import com.intellij.testGuiFramework.util.scenarios.NewProjectDialogModel.Constants.buttonNext
+import com.intellij.testGuiFramework.util.scenarios.NewProjectDialogModel.Constants.buttonOk
 import com.intellij.testGuiFramework.util.scenarios.NewProjectDialogModel.Constants.checkCreateFromArchetype
 import com.intellij.testGuiFramework.util.scenarios.NewProjectDialogModel.Constants.checkCreateJsModule
 import com.intellij.testGuiFramework.util.scenarios.NewProjectDialogModel.Constants.checkCreateJvmModule
@@ -37,6 +40,8 @@ import com.intellij.testGuiFramework.util.scenarios.NewProjectDialogModel.Consta
 import com.intellij.testGuiFramework.util.scenarios.NewProjectDialogModel.Constants.groupStaticWeb
 import com.intellij.testGuiFramework.util.scenarios.NewProjectDialogModel.Constants.itemKotlinMpp
 import com.intellij.testGuiFramework.util.scenarios.NewProjectDialogModel.Constants.progressLoadingTemplates
+import com.intellij.testGuiFramework.util.scenarios.NewProjectDialogModel.Constants.progressSearchingForAppServerLibraries
+import com.intellij.testGuiFramework.util.scenarios.NewProjectDialogModel.Constants.textApplicationServer
 import com.intellij.testGuiFramework.util.scenarios.NewProjectDialogModel.Constants.textArtifactId
 import com.intellij.testGuiFramework.util.scenarios.NewProjectDialogModel.Constants.textBasePackage
 import com.intellij.testGuiFramework.util.scenarios.NewProjectDialogModel.Constants.textGroupId
@@ -47,7 +52,6 @@ import com.intellij.testGuiFramework.utils.TestUtilsClass
 import com.intellij.testGuiFramework.utils.TestUtilsClassCompanion
 import org.fest.swing.fixture.JListFixture
 import org.fest.swing.timing.Pause
-import javax.swing.JDialog
 
 class NewProjectDialogModel(val testCase: GuiTestCase) : TestUtilsClass(testCase) {
   companion object : TestUtilsClassCompanion<NewProjectDialogModel>(
@@ -72,6 +76,10 @@ class NewProjectDialogModel(val testCase: GuiTestCase) : TestUtilsClass(testCase
     const val checkCreateJvmModule = "Create JVM module:"
     const val checkCreateJsModule = "Create JS module:"
     const val progressLoadingTemplates = "Loading Templates"
+    const val textApplicationServer = "Application Server:"
+    const val buttonOk = "OK"
+    const val buttonCancel = "Cancel"
+    const val progressSearchingForAppServerLibraries = "Searching for Application Server Libraries"
 
     // groups
     const val groupJava = "Java"
@@ -525,4 +533,39 @@ fun NewProjectDialogModel.waitLoadingTemplates(){
     GuiRobotHolder.robot,
     progressTitle = progressLoadingTemplates
   )
+}
+
+fun NewProjectDialogModel.createAppServer(serverKind: String, serverInstallPath: String) {
+  with(connectDialog()) {
+    val list: JListFixture = jList(groupJavaEnterprise)
+    assertGroupPresent(NewProjectDialogModel.Groups.JavaEnterprise)
+    list.clickItem(groupJavaEnterprise)
+    combobox(textApplicationServer)
+    buttons("New...")[1].click()
+    popupClick(serverKind)
+    guiTestCase.dialog(serverKind) {
+      typeText(serverInstallPath)
+      button(buttonOk).click()
+      GuiTestUtilKt.waitProgressDialogUntilGone(
+        GuiRobotHolder.robot,
+        progressTitle = progressSearchingForAppServerLibraries
+      )
+
+    }
+    button(buttonCancel).click()
+  }
+}
+
+fun NewProjectDialogModel.checkAppServerExists(serverName: String) {
+  with(connectDialog()) {
+    val list: JListFixture = jList(groupJavaEnterprise)
+    assertGroupPresent(NewProjectDialogModel.Groups.JavaEnterprise)
+    list.clickItem(groupJavaEnterprise)
+    val cmb = combobox(textApplicationServer)
+    println(cmb.listItems())
+    assert(combobox(textApplicationServer)
+             .listItems()
+             .contains(serverName)) { "Appserver `$serverName` doesn't exist" }
+    button(buttonCancel).click()
+  }
 }

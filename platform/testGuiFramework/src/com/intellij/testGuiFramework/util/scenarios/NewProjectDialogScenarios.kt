@@ -68,3 +68,12 @@ fun NewProjectDialogScenarios.createMavenProjectScenario(projectPath: String, ma
     newProjectDialogModel.createMavenProject(projectPath, mavenOptions)
   }
 }
+
+fun NewProjectDialogScenarios.createAndCheckAppServer(serverKind: String, serverPath: String, expectedServerName: String) {
+  with(testCase) {
+    welcomePageDialogModel.createNewProject()
+    newProjectDialogModel.createAppServer(serverKind, serverPath)
+    welcomePageDialogModel.createNewProject()
+    newProjectDialogModel.checkAppServerExists(expectedServerName)
+  }
+}
