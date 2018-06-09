@@ -964,7 +964,7 @@ public class GradleDependenciesImportingTest extends GradleImportingTestCase {
       "  configurations.all {\n" +
       "    resolutionStrategy.dependencySubstitution {\n" +
       "      substitute module('project:modA:1.0.0') with project(':modA')\n" +
-      "      substitute module('project:modB:1.0.0') with project(':cmodB')\n" +
+      "      substitute module('project:modB:1.0.0') with project(':modB')\n" +
       "    }\n" +
       "  }\n" +
       "}\n" +
