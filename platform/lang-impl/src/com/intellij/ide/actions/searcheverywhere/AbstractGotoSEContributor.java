@@ -111,7 +111,12 @@ public abstract class AbstractGotoSEContributor<F> implements SearchEverywhereCo
 
   @Override
   public boolean processSelectedItem(Object selected, int modifiers, String searchText) {
-    if (selected instanceof PsiElement && ((PsiElement)selected).isValid()) {
+    if (selected instanceof PsiElement) {
+      if (((PsiElement)selected).isValid()) {
+        LOG.warn("Cannot navigate to invalid PsiElement");
+        return true;
+      }
+
       PsiElement psiElement = preparePsi((PsiElement) selected, modifiers, searchText);
       Navigatable extNavigatable = createExtendedNavigatable(psiElement, searchText, modifiers);
       if (extNavigatable != null && extNavigatable.canNavigate()) {
