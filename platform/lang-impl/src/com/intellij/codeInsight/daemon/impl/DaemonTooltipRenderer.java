@@ -8,6 +8,8 @@ import com.intellij.codeInsight.hint.TooltipLinkHandlerEP;
 import com.intellij.codeInspection.ui.InspectionNodeInfo;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.ui.ColorUtil;
+import com.intellij.ui.JBColor;
 import com.intellij.util.ui.Html;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.xml.util.XmlStringUtil;
@@ -16,6 +18,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
+import java.awt.*;
 import java.util.List;
 
 class DaemonTooltipRenderer extends LineTooltipRenderer {
@@ -55,6 +58,9 @@ class DaemonTooltipRenderer extends LineTooltipRenderer {
             .append(getHtmlForProblemWithLink(problem))
             .append(END_MARKER)
             .append("<p>")
+            .append("<span style=\"color:")
+            .append(ColorUtil.toHex(getDescriptionTitleColor()))
+            .append("\">Inspection info:</span>")
             .append(description)
             .append(UIUtil.BORDER_LINE);
         }
@@ -94,7 +100,13 @@ class DaemonTooltipRenderer extends LineTooltipRenderer {
     }
     return null;
   }
+  
+  @NotNull
+  protected Color getDescriptionTitleColor() {
+    return JBColor.namedColor("tooltips.description.title.text.color", new JBColor(0x919191, 0x919191));
+  }
 
+  @NotNull
   @Override
   protected LineTooltipRenderer createRenderer(@Nullable String text, final int width) {
     return new DaemonTooltipRenderer(text, width, getEqualityObjects());

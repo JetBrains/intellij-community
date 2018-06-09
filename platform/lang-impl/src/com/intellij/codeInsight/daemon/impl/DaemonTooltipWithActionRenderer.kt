@@ -139,7 +139,7 @@ internal class DaemonTooltipWithActionRenderer(text: String?,
       .anchor(GridBagConstraints.WEST)
 
     buttons.add(createActionLabel(tooltipAction.text, runFixAction, hintHint.textBackground), gridBag.next().insets(5, 8, 5, 4))
-    buttons.add(createHint(shortcutRunActionText), gridBag.next().insets(0, 4, 0, 12))
+    buttons.add(createKeymapHint(shortcutRunActionText), gridBag.next().insets(0, 4, 0, 12))
 
     val showAllFixes = Runnable {
       hint.hide()
@@ -147,7 +147,7 @@ internal class DaemonTooltipWithActionRenderer(text: String?,
     }
 
     buttons.add(createActionLabel("More actions...", showAllFixes, hintHint.textBackground), gridBag.next().insets(5, 12, 5, 4))
-    buttons.add(createHint(shortcutShowAllActionsText), gridBag.next().fillCellHorizontally().insets(0, 4, 0, 20))
+    buttons.add(createKeymapHint(shortcutShowAllActionsText), gridBag.next().fillCellHorizontally().insets(0, 4, 0, 20))
 
     actions.add(object : AnAction() {
       override fun actionPerformed(e: AnActionEvent?) {
@@ -211,9 +211,12 @@ internal class DaemonTooltipWithActionRenderer(text: String?,
     return ""
   }
 
-  private fun createHint(shortcutRunAction: String): JBLabel {
-    val fixHint = JBLabel(shortcutRunAction)
-    fixHint.fontColor = UIUtil.FontColor.BRIGHTER
+  private fun createKeymapHint(shortcutRunAction: String): JComponent {
+    val fixHint = object: JBLabel(shortcutRunAction) {
+      override fun getForeground(): Color {
+        return getKeymapColor()
+      }
+    }
     fixHint.border = JBUI.Borders.empty()
     fixHint.font = getActionFont()
     return fixHint
@@ -343,6 +346,11 @@ fun createActionLabel(text: String, action: Runnable, background: Color): Hyperl
 
   return label
 }
+
+private fun getKeymapColor(): Color {
+  return JBColor.namedColor("tooltips.actions.keymap.text.color", JBColor(0x99a4ad, 0x919191))
+}
+
 
 private fun getActionFont(): Font? {
   val toolTipFont = UIUtil.getToolTipFont()
