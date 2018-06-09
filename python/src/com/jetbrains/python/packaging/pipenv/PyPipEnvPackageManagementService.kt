@@ -9,7 +9,7 @@ import com.intellij.webcore.packaging.InstalledPackage
 import com.intellij.webcore.packaging.RepoPackage
 import com.jetbrains.python.packaging.PyPIPackageUtil
 import com.jetbrains.python.packaging.PyPackageManagerUI
-import com.jetbrains.python.packaging.PyRequirement
+import com.jetbrains.python.packaging.PyRequirementParser
 import com.jetbrains.python.packaging.ui.PyPackageManagementService
 import com.jetbrains.python.sdk.pipenv.pipFileLockSources
 import java.lang.Exception
@@ -51,9 +51,9 @@ class PyPipEnvPackageManagementService(project: Project, sdk: Sdk) : PyPackageMa
       }
     })
     val requirement = when {
-      version != null -> PyRequirement(repoPackage.name, version)
-      else -> PyRequirement(repoPackage.name)
-    }
+      version != null -> PyRequirementParser.fromLine("${repoPackage.name}==$version")
+      else -> PyRequirementParser.fromLine(repoPackage.name)
+    } ?: return
     val extraArgs = extraOptions?.split(" +".toRegex()) ?: emptyList()
     ui.install(listOf(requirement), extraArgs)
   }
