@@ -5,19 +5,19 @@ import java.util.function.*;
 import java.util.*;
 
 public class PrivateMethodsSwitchedOff<T> {
-  private boolean process(Processor<T> processor) {
-    return processor.process(null);
+  private boolean process(Processor<T> processor, T t) {
+    return processor.process(t);
   }
-  private Number foo2(Function<?, Number> f) {
-    return ((f)).apply(null);
+  private Number foo2(Function<Number, Number> f) {
+    return ((f)).apply(1);
   }
 
   ////////////// inferred from method call
-  public static <T, V> String map2Set(T[] collection, Function<? super T, <warning descr="Can generalize to '? extends V'">V</warning>> mapper, V v) {
-      return map2((mapper));
+  public static <T, V> Supplier<T> map2Set(T collection, Consumer<<warning descr="Can generalize to '? super T'">T</warning>> mapper) {
+    String s = map2(mapper, collection);
+    return ()-> s == null ? collection : null;
   }
-  private static <T, V> String map2(Function<? super T, ? extends V> mapper) {
+  private static <T> String map2(Consumer<T> mapper, T collection) {
       return null;
   }
-
 }

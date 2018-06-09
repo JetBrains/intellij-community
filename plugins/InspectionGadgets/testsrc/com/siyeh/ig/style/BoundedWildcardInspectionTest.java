@@ -38,11 +38,6 @@ public class BoundedWildcardInspectionTest extends LightInspectionTestCase {
       "public interface Supplier<T> {\n" +
       "    T get();\n" +
       "}",
-
-      "package my;\n" +
-      "public interface Consumer<T> {\n" +
-      "    void consume(T t);\n" +
-      "}"
     };
   }
 
