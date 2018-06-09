@@ -213,7 +213,7 @@ internal class DaemonTooltipWithActionRenderer(text: String?,
   }
 
   private fun createKeymapHint(shortcutRunAction: String): JComponent {
-    val fixHint = object: JBLabel(shortcutRunAction) {
+    val fixHint = object : JBLabel(shortcutRunAction) {
       override fun getForeground(): Color {
         return getKeymapColor()
       }
@@ -271,6 +271,15 @@ internal class DaemonTooltipWithActionRenderer(text: String?,
 
     val settingsButton = object : ActionButton(actionGroup, presentation, ActionPlaces.UNKNOWN, Dimension(18, 18)) {
       override fun paintComponent(g: Graphics?) {
+        val state = popState
+        if (state == ActionButtonComponent.POPPED) {
+          val look = buttonLook
+          look.paintBackground(g!!, this, getSettingsIconHoverBackgroundColor())
+          look.paintIcon(g, this, icon)
+          look.paintBorder(g, this)
+          return
+        }
+
         paintButtonLook(g)
       }
     }
@@ -353,6 +362,9 @@ private fun getKeymapColor(): Color {
   return JBColor.namedColor("tooltips.actions.keymap.text.color", JBColor(0x99a4ad, 0x919191))
 }
 
+private fun getSettingsIconHoverBackgroundColor(): Color {
+  return JBColor.namedColor("tooltips.actions.settings.icon.background.color", JBColor(0xe9eac0, 0x44494c))
+}
 
 private fun getActionFont(): Font? {
   val toolTipFont = UIUtil.getToolTipFont()
