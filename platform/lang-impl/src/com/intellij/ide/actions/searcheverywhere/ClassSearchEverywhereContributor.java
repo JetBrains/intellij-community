@@ -4,7 +4,6 @@ package com.intellij.ide.actions.searcheverywhere;
 import com.intellij.codeInsight.navigation.NavigationUtil;
 import com.intellij.ide.IdeBundle;
 import com.intellij.ide.actions.GotoClassAction;
-import com.intellij.ide.util.gotoByName.ChooseByNamePopup;
 import com.intellij.ide.util.gotoByName.FilteringGotoByModel;
 import com.intellij.ide.util.gotoByName.GotoClassModel2;
 import com.intellij.lang.DependentLanguage;
@@ -61,11 +60,11 @@ public class ClassSearchEverywhereContributor extends AbstractGotoSEContributor<
   @Override
   public String filterControlSymbols(String pattern) {
     if (pattern.indexOf('#') != -1) {
-      pattern = applyPatternFilter(pattern, ChooseByNamePopup.patternToDetectMembers);
+      pattern = applyPatternFilter(pattern, patternToDetectMembers);
     }
 
     if (pattern.indexOf('$') != -1) {
-      pattern = applyPatternFilter(pattern, ChooseByNamePopup.patternToDetectAnonymousClasses);
+      pattern = applyPatternFilter(pattern, patternToDetectAnonymousClasses);
     }
 
     return super.filterControlSymbols(pattern);
@@ -118,7 +117,7 @@ public class ClassSearchEverywhereContributor extends AbstractGotoSEContributor<
   }
 
   private static String pathToAnonymousClass(String searchedText) {
-    final Matcher matcher = ChooseByNamePopup.patternToDetectAnonymousClasses.matcher(searchedText);
+    final Matcher matcher = patternToDetectAnonymousClasses.matcher(searchedText);
     if (matcher.matches()) {
       String path = matcher.group(2);
       if (path != null) {

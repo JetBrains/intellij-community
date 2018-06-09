@@ -32,6 +32,15 @@ import java.util.regex.Pattern;
 
 public abstract class AbstractGotoSEContributor<F> implements SearchEverywhereContributor<F> {
 
+  protected static final Pattern patternToDetectLinesAndColumns = Pattern.compile("(.+?)" + // name, non-greedy matching
+                                                                                "(?::|@|,| |#|#L|\\?l=| on line | at line |:?\\(|:?\\[)" + // separator
+                                                                                "(\\d+)?(?:(?:\\D)(\\d+)?)?" + // line + column
+                                                                                "[)\\]]?" // possible closing paren/brace
+  );
+  protected static final Pattern patternToDetectAnonymousClasses = Pattern.compile("([\\.\\w]+)((\\$[\\d]+)*(\\$)?)");
+  protected static final Pattern patternToDetectMembers = Pattern.compile("(.+)(#)(.*)");
+  protected static final Pattern patternToDetectSignatures = Pattern.compile("(.+#.*)\\(.*\\)");
+
   protected final Project myProject;
 
   protected AbstractGotoSEContributor(Project project) {
@@ -89,7 +98,7 @@ public abstract class AbstractGotoSEContributor<F> implements SearchEverywhereCo
 
   public String filterControlSymbols(String pattern) {
     if (StringUtil.containsAnyChar(pattern, ":,;@[( #") || pattern.contains(" line ") || pattern.contains("?l=")) { // quick test if reg exp should be used
-      return applyPatternFilter(pattern, ChooseByNamePopup.patternToDetectLinesAndColumns);
+      return applyPatternFilter(pattern, patternToDetectLinesAndColumns);
     }
 
     return pattern;
@@ -185,7 +194,7 @@ public abstract class AbstractGotoSEContributor<F> implements SearchEverywhereCo
   }
 
   private static int getLineAndColumnRegexpGroup(String text, int groupNumber) {
-    final Matcher matcher = ChooseByNamePopup.patternToDetectLinesAndColumns.matcher(text);
+    final Matcher matcher = patternToDetectLinesAndColumns.matcher(text);
     if (matcher.matches()) {
       try {
         if (groupNumber <= matcher.groupCount()) {
