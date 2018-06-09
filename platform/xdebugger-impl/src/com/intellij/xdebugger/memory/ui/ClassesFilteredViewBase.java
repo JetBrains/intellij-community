@@ -52,8 +52,7 @@ public abstract class ClassesFilteredViewBase extends BorderLayoutPanel implemen
   // tick on each session paused event
   private final AtomicInteger myTime = new AtomicInteger(0);
 
-  private final AtomicInteger myLastUpdatingTime = new AtomicInteger(Integer.MIN_VALUE);
-
+  private final AtomicInteger myLastUpdatingTime = new AtomicInteger(myTime.intValue());
 
   /**
    * Indicates that view is visible
