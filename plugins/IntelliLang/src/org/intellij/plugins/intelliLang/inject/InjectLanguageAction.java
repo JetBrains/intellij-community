@@ -165,14 +165,27 @@ public class InjectLanguageAction implements IntentionAction, LowPriorityAction 
         }
       }
       if (TemporaryPlacesRegistry.getInstance(project).getLanguageInjectionSupport().addInjectionInPlace(language, host)) {
-        Processor<PsiLanguageInjectionHost> data = host.getUserData(FIX_KEY);
+        Processor<PsiLanguageInjectionHost> fixer = host.getUserData(FIX_KEY);
         String text = StringUtil.escapeXml(language.getDisplayName()) + " was temporarily injected.";
-        if (data != null) {
+        if (fixer != null) {
           SmartPsiElementPointer<PsiLanguageInjectionHost> pointer =
             SmartPointerManager.getInstance(project).createSmartPsiElementPointer(host);
           String fixText = text + "<br>Do you want to insert annotation? " + KeymapUtil
             .getFirstKeyboardShortcutText(ActionManager.getInstance().getAction(IdeActions.ACTION_SHOW_INTENTION_ACTIONS));
-          fixPresenter.showFix(editor, host.getTextRange(), pointer, fixText, data);
+          fixPresenter.showFix(editor, host.getTextRange(), pointer, fixText, host1 -> {
+            List<Pair<PsiElement, TextRange>> files = InjectedLanguageManager.getInstance(project).getInjectedPsiFiles(host1);
+            if (files != null) {
+              for (Pair<PsiElement, TextRange> pair: files) {
+                PsiFile psiFile = (PsiFile)pair.first;
+                LanguageInjectionSupport languageInjectionSupport = psiFile.getUserData(LanguageInjectionSupport.INJECTOR_SUPPORT);
+                if (languageInjectionSupport != null) {
+                  languageInjectionSupport.removeInjectionInPlace(host1);
+                }
+              }
+            }
+            ;
+            return fixer.process(host1);
+          });
         }
         else {
           HintManager.getInstance().showInformationHint(editor, text);

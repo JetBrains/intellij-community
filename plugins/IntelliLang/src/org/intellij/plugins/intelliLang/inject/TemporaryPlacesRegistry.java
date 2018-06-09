@@ -18,6 +18,7 @@ package org.intellij.plugins.intelliLang.inject;
 
 import com.intellij.codeInsight.completion.CompletionUtilCoreImpl;
 import com.intellij.lang.Language;
+import com.intellij.lang.injection.InjectedLanguageManager;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiFile;
@@ -27,12 +28,14 @@ import com.intellij.psi.SmartPsiElementPointer;
 import com.intellij.psi.util.PsiModificationTracker;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.containers.SmartHashSet;
 import org.intellij.plugins.intelliLang.Configuration;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Collections;
 import java.util.List;
+import java.util.Set;
 
 /**
  * @author Gregory.Shrago
@@ -104,13 +107,21 @@ public class TemporaryPlacesRegistry {
   }
 
   private void addInjectionPlace(TempPlace place) {
-    PsiLanguageInjectionHost element = place.elementPointer.getElement();
-    if (element == null) return;
-    List<TempPlace> injectionPoints = getInjectionPlacesSafe();
-    element.putUserData(LanguageInjectionSupport.TEMPORARY_INJECTED_LANGUAGE, place.language);
+    PsiLanguageInjectionHost host = place.elementPointer.getElement();
+    if (host == null) return;
 
+    Set<PsiLanguageInjectionHost> hosts = new SmartHashSet<>();
+
+    InjectedLanguageManager.getInstance(myProject).enumerate(host, (injectedPsi, places) -> {
+      injectedPsi.putUserData(LanguageInjectionSupport.TEMPORARY_INJECTED_LANGUAGE, place.language);
+      for (PsiLanguageInjectionHost.Shred shred: places) {
+        hosts.add(shred.getHost());
+      }
+    });
+
+    List<TempPlace> injectionPoints = getInjectionPlacesSafe();
     for (TempPlace tempPlace : injectionPoints) {
-      if (tempPlace.elementPointer.getElement() == element) {
+      if (hosts.contains(tempPlace.elementPointer.getElement())) {
         injectionPoints.remove(tempPlace);
         break;
       }
@@ -118,6 +129,7 @@ public class TemporaryPlacesRegistry {
     if (place.language != null) {
       injectionPoints.add(place);
     }
+    host.putUserData(LanguageInjectionSupport.TEMPORARY_INJECTED_LANGUAGE, place.language);
   }
 
   public boolean removeHostWithUndo(final Project project, final PsiLanguageInjectionHost host) {
