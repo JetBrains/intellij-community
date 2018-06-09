@@ -62,15 +62,12 @@ public class VcsRootDetectorImpl implements VcsRootDetector {
       return Collections.emptyList();
     }
 
-    final Set<VcsRoot> roots = scanForRootsInsideDir(startDir);
-    roots.addAll(scanForRootsInContentRoots());
-    for (VcsRoot root : roots) {
-      if (startDir.equals(root.getPath())) {
-        return roots;
-      }
+    Set<VcsRoot> roots = scanForRootsInsideDir(startDir);
+    if (shouldScanAbove(startDir, roots)) {
+      VcsRoot rootAbove = scanForSingleRootAboveDir(startDir);
+      if (rootAbove != null) roots.add(rootAbove);
     }
-    VcsRoot rootAbove = scanForSingleRootAboveDir(startDir);
-    if (rootAbove != null) roots.add(rootAbove);
+    roots.addAll(scanForRootsInContentRoots());
     return roots;
   }
 
@@ -84,18 +81,12 @@ public class VcsRootDetectorImpl implements VcsRootDetector {
         continue;
       }
 
-      Set<VcsRoot> rootsInsideRoot = scanForRootsInsideDir(contentRoot);
-      boolean shouldScanAbove = true;
-      for (VcsRoot root : rootsInsideRoot) {
-        if (contentRoot.equals(root.getPath())) {
-          shouldScanAbove = false;
-        }
-      }
-      if (shouldScanAbove) {
+      Set<VcsRoot> vcsRootsInContentRoot = scanForRootsInsideDir(contentRoot);
+      if (shouldScanAbove(contentRoot, vcsRootsInContentRoot)) {
         VcsRoot rootAbove = scanForSingleRootAboveDir(contentRoot);
-        if (rootAbove != null) rootsInsideRoot.add(rootAbove);
+        if (rootAbove != null) vcsRootsInContentRoot.add(rootAbove);
       }
-      vcsRoots.addAll(rootsInsideRoot);
+      vcsRoots.addAll(vcsRootsInContentRoot);
     }
     return vcsRoots;
   }
@@ -120,6 +111,10 @@ public class VcsRootDetectorImpl implements VcsRootDetector {
       roots.addAll(scanForRootsInsideDir(child, depth + 1));
     }
     return roots;
+  }
+
+  private static boolean shouldScanAbove(@NotNull VirtualFile startDir, @NotNull Set<VcsRoot> rootsInsideDir) {
+    return rootsInsideDir.stream().noneMatch(it -> startDir.equals(it.getPath()));
   }
 
   private static boolean depthLimitExceeded(int depth) {
