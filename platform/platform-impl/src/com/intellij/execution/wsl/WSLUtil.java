@@ -71,7 +71,7 @@ public class WSLUtil {
    */
   @NotNull
   public static List<WSLDistribution> getAvailableDistributions() {
-    if (!SystemInfo.isWin10OrNewer) return Collections.emptyList();
+    if (!isSystemCompatible()) return Collections.emptyList();
 
     final Path executableRoot = getExecutableRootPath();
     if (executableRoot == null) return Collections.emptyList();
