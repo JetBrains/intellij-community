@@ -5,22 +5,24 @@ package com.intellij.openapi.vcs.roots;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ModuleRootModificationUtil;
-import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vcs.VcsRoot;
+import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.containers.ContainerUtil;
+import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.jps.model.serialization.PathMacroUtil;
 
 import java.io.File;
 import java.io.IOException;
-import java.util.Arrays;
 import java.util.Collection;
 
+import static com.intellij.openapi.util.io.FileUtil.toSystemIndependentName;
 import static com.intellij.openapi.vcs.Executor.cd;
 import static com.intellij.openapi.vcs.Executor.mkdir;
 import static com.intellij.openapi.vcs.VcsTestUtil.assertEqualCollections;
+import static java.util.Arrays.asList;
 import static java.util.Collections.emptyList;
 import static java.util.Collections.singletonList;
 
@@ -93,11 +95,16 @@ public class VcsRootDetectorTest extends VcsRootBaseTest {
     doTest(new VcsRootConfiguration().vcsRoots("another"), myRepository);
   }
 
-  public void testLinkedSourceRootAloneShouldBeDetected() throws IOException {
-    VcsRootConfiguration vcsRootConfiguration =
-      new VcsRootConfiguration().vcsRoots("linked_root")
-        .contentRoots("linked_root");
-    doTest(vcsRootConfiguration, myRepository, "linked_root");
+  public void testLinkedSourceRootAloneShouldBeDetected() {
+    String linkedRoot = "linked_root";
+    File linkedRootDir = new File(testRoot, linkedRoot);
+    assertTrue(new File(linkedRootDir, DOT_MOCK).mkdirs());
+    myRootModel.addContentEntry(LocalFileSystem.getInstance().refreshAndFindFileByIoFile(linkedRootDir));
+
+    Collection<VcsRoot> roots = detect(projectRoot);
+
+    assertEqualCollections(StreamEx.of(roots).map(it -> it.getPath().getPath()).toList(),
+                           singletonList(toSystemIndependentName(linkedRootDir.getPath())));
   }
 
   public void testLinkedSourceRootAndProjectRootShouldBeDetected() throws IOException {
@@ -117,10 +124,10 @@ public class VcsRootDetectorTest extends VcsRootBaseTest {
   // This is a test of performance optimization via limitation: don't scan deep though the whole VFS, i.e. don't detect deep roots
   public void testDontScanDeeperThan2LevelsBelowAContentRoot() throws IOException {
     VcsRootConfiguration vcsRootConfiguration =
-      new VcsRootConfiguration().vcsRoots("community", "content_root/lev1/lev2", "content_root2/lev1/lev2/lev3")
+      new VcsRootConfiguration().vcsRoots("community", "content_root/lev1", "content_root2/lev1/lev2/lev3")
         .contentRoots("content_root");
     doTest(vcsRootConfiguration,
-           projectRoot, "community", "content_root/lev1/lev2");
+           projectRoot, "community", "content_root/lev1");
   }
 
   public void testDontScanExcludedDirs() throws IOException {
@@ -149,7 +156,7 @@ public class VcsRootDetectorTest extends VcsRootBaseTest {
   public static Collection<String> toAbsolute(@NotNull Collection<String> relPaths, @NotNull final Project project) {
     return ContainerUtil.map(relPaths, s -> {
       try {
-        return FileUtil.toSystemIndependentName(new File(project.getBasePath(), s).getCanonicalPath());
+        return toSystemIndependentName(new File(project.getBasePath(), s).getCanonicalPath());
       }
       catch (IOException e) {
         fail();
@@ -164,7 +171,7 @@ public class VcsRootDetectorTest extends VcsRootBaseTest {
     return ContainerUtil.map(files, root -> {
       VirtualFile file = root.getPath();
       assert file != null;
-      return FileUtil.toSystemIndependentName(file.getPath());
+      return toSystemIndependentName(file.getPath());
     });
   }
 
@@ -178,7 +185,7 @@ public class VcsRootDetectorTest extends VcsRootBaseTest {
                      @NotNull String... expectedPaths) throws IOException {
     setUp(vcsRootConfiguration, startDir);
     Collection<VcsRoot> vcsRoots = detect(startDir);
-    assertRoots(Arrays.asList(expectedPaths), getPaths(
+    assertRoots(asList(expectedPaths), getPaths(
       ContainerUtil.filter(vcsRoots, root -> {
         assert root.getVcs() != null;
         return root.getVcs().getKeyInstanceMethod().equals(myVcs.getKeyInstanceMethod());
