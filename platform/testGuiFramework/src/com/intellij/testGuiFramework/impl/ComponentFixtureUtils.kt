@@ -69,6 +69,26 @@ fun <S, C : Component> ComponentFixture<S, C>.button(name: String, timeout: Long
   }
   else throw unableToFindComponent("""JButton named by $name""")
 
+/**
+ * Finds a list of JButton component in hierarchy of context component with a name and returns ExtendedButtonFixture.
+ * There can be cases when there are several the same named components and it's OK
+ *
+ * @timeout in seconds to find JButton component
+ * @throws ComponentLookupException if no component has not been found or timeout exceeded
+ * @return list of JButton components sorted by locationOnScreen (left to right, top to down)
+ */
+fun <S, C : Component> ComponentFixture<S, C>.buttons(name: String, timeout: Long = defaultTimeout): List<ExtendedButtonFixture> =
+  if (target() is Container) {
+    val jButtons = waitUntilFoundList(target() as Container, JButton::class.java, timeout) {
+      it.isShowing && it.isVisible && it.text == name
+    }
+    jButtons
+      .map { ExtendedButtonFixture(GuiRobotHolder.robot, it) }
+      .sortedBy { it.target().locationOnScreen.x }
+      .sortedBy { it.target().locationOnScreen.y }
+  }
+  else throw unableToFindComponent("""JButton named by $name""")
+
 fun <S, C : Component> ComponentFixture<S, C>.componentWithBrowseButton(boundedLabelText: String,
                                                                         timeout: Long = defaultTimeout): ComponentWithBrowseButtonFixture {
   if (target() is Container) {
@@ -391,4 +411,11 @@ fun <ComponentType : Component> waitUntilFound(container: Container?,
                                                timeout: Long,
                                                matcher: (ComponentType) -> Boolean): ComponentType {
   return GuiTestUtil.waitUntilFound(GuiRobotHolder.robot, container, GuiTestUtilKt.typeMatcher(componentClass) { matcher(it) }, timeout.toFestTimeout())
+}
+
+fun <ComponentType : Component> waitUntilFoundList(container: Container?,
+                                               componentClass: Class<ComponentType>,
+                                               timeout: Long,
+                                               matcher: (ComponentType) -> Boolean): List<ComponentType> {
+  return GuiTestUtil.waitUntilFoundList(container, timeout.toFestTimeout(), GuiTestUtilKt.typeMatcher(componentClass) { matcher(it) })
 }
