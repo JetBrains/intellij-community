@@ -6,6 +6,7 @@ import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.ex.TooltipAction;
 import com.intellij.openapi.extensions.ExtensionPointName;
+import com.intellij.openapi.util.registry.Registry;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -27,6 +28,8 @@ public interface TooltipActionProvider {
 
   @Nullable
   static TooltipAction calcTooltipAction(@NotNull final HighlightInfo info, @NotNull Editor editor) {
+    if (!Registry.is("ide.tooltip.show.with.actions")) return null;
+    
     for (TooltipActionProvider extension : EXTENSION_POINT_NAME.getExtensions()) {
       TooltipAction action = extension.getTooltipAction(info, editor);
       if (action != null) return action;
