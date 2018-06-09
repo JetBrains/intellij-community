@@ -520,23 +520,7 @@ public class PyPackageManagerImpl extends PyPackageManager {
       final ProgressIndicator indicator = ProgressManager.getInstance().getProgressIndicator();
       final ProcessOutput result;
       if (showProgress && indicator != null) {
-        handler.addProcessListener(new ProcessAdapter() {
-          @Override
-          public void onTextAvailable(@NotNull ProcessEvent event, @NotNull Key outputType) {
-            if (outputType == ProcessOutputTypes.STDOUT || outputType == ProcessOutputTypes.STDERR) {
-              for (String line : StringUtil.splitByLines(event.getText())) {
-                final String trimmed = line.trim();
-                if (isMeaningfulOutput(trimmed)) {
-                  indicator.setText2(trimmed);
-                }
-              }
-            }
-          }
-
-          private boolean isMeaningfulOutput(@NotNull String trimmed) {
-            return trimmed.length() > 3;
-          }
-        });
+        handler.addProcessListener(new IndicatedProcessOutputListener(indicator));
         result = handler.runProcessWithProgressIndicator(indicator);
       }
       else {
@@ -582,6 +566,30 @@ public class PyPackageManagerImpl extends PyPackageManager {
       }
     }
     return packages;
+  }
+
+  public static class IndicatedProcessOutputListener extends ProcessAdapter {
+    @NotNull private final ProgressIndicator myIndicator;
+
+    public IndicatedProcessOutputListener(@NotNull ProgressIndicator indicator) {
+      myIndicator = indicator;
+    }
+
+    @Override
+    public void onTextAvailable(@NotNull ProcessEvent event, @NotNull Key outputType) {
+      if (outputType == ProcessOutputTypes.STDOUT || outputType == ProcessOutputTypes.STDERR) {
+        for (String line : StringUtil.splitByLines(event.getText())) {
+          final String trimmed = line.trim();
+          if (isMeaningfulOutput(trimmed)) {
+            myIndicator.setText2(trimmed);
+          }
+        }
+      }
+    }
+
+    private static boolean isMeaningfulOutput(@NotNull String trimmed) {
+      return trimmed.length() > 3;
+    }
   }
 
   private class MySdkRootWatcher implements BulkFileListener {

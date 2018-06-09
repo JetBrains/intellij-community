@@ -174,15 +174,18 @@ fun runPipEnv(projectPath: @SystemDependent String, vararg args: String): String
   val commandLine = GeneralCommandLine(command).withWorkDirectory(projectPath)
   val handler = CapturingProcessHandler(commandLine)
   val indicator = ProgressManager.getInstance().progressIndicator
-  val result = if (indicator != null) {
-    handler.runProcessWithProgressIndicator(indicator)
+  val result = with(handler) {
+    when {
+      indicator != null -> {
+        addProcessListener(PyPackageManagerImpl.IndicatedProcessOutputListener(indicator))
+        runProcessWithProgressIndicator(indicator)
+      }
+      else ->
+        runProcess()
+    }
   }
-  else {
-    // TODO: Show the output at the progress dialog
-    handler.runProcess()
-  }
-  with(result) {
-    return when {
+  return with(result) {
+    when {
       isCancelled ->
         throw RunCanceledByUserException()
       exitCode != 0 ->
