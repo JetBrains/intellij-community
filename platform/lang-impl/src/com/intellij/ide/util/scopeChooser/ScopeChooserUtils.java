@@ -2,17 +2,12 @@
 package com.intellij.ide.util.scopeChooser;
 
 import com.intellij.ide.IdeBundle;
-import com.intellij.ide.scratch.ScratchesNamedScope;
 import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.packageDependencies.ChangeListsScopesProvider;
-import com.intellij.psi.search.GlobalSearchScope;
-import com.intellij.psi.search.GlobalSearchScopes;
-import com.intellij.psi.search.GlobalSearchScopesCore;
-import com.intellij.psi.search.ProjectScope;
+import com.intellij.psi.search.*;
 import com.intellij.psi.search.scope.ProjectFilesScope;
-import com.intellij.psi.search.scope.ProjectProductionScope;
 import com.intellij.psi.search.scope.packageSet.NamedScope;
 import com.intellij.psi.search.scope.packageSet.NamedScopesHolder;
 import com.intellij.util.ArrayUtil;
@@ -31,33 +26,60 @@ public class ScopeChooserUtils {
   }
 
   /**
-   * @return custom or standard scope with the provided name; if <code>scopeName</code> is <code>null</code> or matching scope doesn't exist then empty scope is returned
+   * @return custom or standard scope with the provided name, i.e. scope that matches corresponding item from {@link ScopeChooserCombo}
+   * with the following limitations:
+   * <ul>
+   * <li>module-specific scope is not handled: if <code>scopeName</code> is "Module 'foo'" then {@link ProjectFilesScope} is returned</li>
+   * <li>each returned scope is intersected with the project content</li>
+   * <li>if no known scope with the provided name found then empty scope is returned</li>
+   * </ul>
    */
   @NotNull
   public static GlobalSearchScope findScopeByName(@NotNull Project project, @Nullable String scopeName) {
-    NamedScope namedScope = scopeName == null ? null : ChangeListsScopesProvider.getInstance(project).getCustomScope(scopeName);
-    if (namedScope == null) {
-      namedScope = NamedScopesHolder.getScope(project, scopeName);
-    }
-    if (namedScope == null && OPEN_FILES_SCOPE_NAME.equals(scopeName)) {
+    // logic here is similar to ScopeChooserCombo
+
+    if (scopeName == null) return GlobalSearchScope.EMPTY_SCOPE;
+
+    if (OPEN_FILES_SCOPE_NAME.equals(scopeName)) {
       return intersectWithContentScope(project, GlobalSearchScopes.openFilesScope(project));
     }
-    if (namedScope == null && CURRENT_FILE_SCOPE_NAME.equals(scopeName)) {
+
+    if (CURRENT_FILE_SCOPE_NAME.equals(scopeName)) {
       VirtualFile[] array = FileEditorManager.getInstance(project).getSelectedFiles();
       List<VirtualFile> files = ContainerUtil.createMaybeSingletonList(ArrayUtil.getFirstElement(array));
       GlobalSearchScope scope = GlobalSearchScope.filesScope(project, files, CURRENT_FILE_SCOPE_NAME);
       return intersectWithContentScope(project, scope);
     }
-    if (namedScope == null) {
-      return GlobalSearchScope.EMPTY_SCOPE;
+
+    for (SearchScope scope : PredefinedSearchScopeProvider.getInstance()
+                                                          .getPredefinedScopes(project, null, false, false, false, false, true)) {
+      if (scope instanceof GlobalSearchScope && scope.getDisplayName().equals(scopeName)) {
+        return intersectWithContentScope(project, (GlobalSearchScope)scope);
+      }
     }
-    GlobalSearchScope scope = GlobalSearchScopesCore.filterScope(project, namedScope);
-    if (namedScope instanceof ProjectFilesScope ||
-        namedScope instanceof ProjectProductionScope ||
-        namedScope instanceof ScratchesNamedScope) {
-      return scope;
+
+    for (NamedScope scope : ChangeListsScopesProvider.getInstance(project).getFilteredScopes()) {
+      if (scope.getName().equals(scopeName)) {
+        return intersectWithContentScope(project, GlobalSearchScopesCore.filterScope(project, scope));
+      }
     }
-    return intersectWithContentScope(project, scope);
+
+    for (NamedScopesHolder holder : NamedScopesHolder.getAllNamedScopeHolders(project)) {
+      final NamedScope[] scopes = holder.getEditableScopes();  // predefined scopes already included
+      for (NamedScope scope : scopes) {
+        if (scope.getName().equals(scopeName)) {
+          return intersectWithContentScope(project, GlobalSearchScopesCore.filterScope(project, scope));
+        }
+      }
+    }
+
+    if (scopeName.startsWith("Module '") && scopeName.endsWith("'")) {
+      // Backward compatibility with previous File Watchers behavior.
+      // It never worked correctly for scopes like "Module 'foo'" and always returned ProjectFilesScope in such cases.
+      return ProjectScope.getContentScope(project);
+    }
+
+    return GlobalSearchScope.EMPTY_SCOPE;
   }
 
   @NotNull
