@@ -22,7 +22,10 @@ import com.intellij.util.ui.JBValue;
 import sun.swing.SwingUtilities2;
 
 import javax.swing.*;
+import javax.swing.event.ChangeEvent;
+import javax.swing.event.ChangeListener;
 import javax.swing.plaf.ComponentUI;
+import javax.swing.plaf.UIResource;
 import javax.swing.plaf.basic.BasicTabbedPaneUI;
 import javax.swing.text.View;
 import java.awt.*;
@@ -30,6 +33,7 @@ import java.awt.event.*;
 import java.beans.PropertyChangeListener;
 
 import static com.intellij.util.ui.JBUI.CurrentTheme.Focus.TabbedPane.*;
+import static javax.swing.JViewport.SIMPLE_SCROLL_MODE;
 
 /**
  * @author Konstantin Bulenkov
@@ -257,4 +261,111 @@ public class DarculaTabbedPaneUI extends BasicTabbedPaneUI {
 
   @Override
   protected void paintContentBorderBottomEdge(Graphics g, int tabPlacement, int selectedIndex, int x, int y, int w, int h) {}
+
+  /***********************************************************************************************************************
+   * Scrollable tab pane layout
+   */
+
+  private ScrollableTabSupport tabScroller;
+
+  //@Override
+  //protected LayoutManager createLayoutManager() {
+  //  return (tabPane.getTabLayoutPolicy() == JTabbedPane.SCROLL_TAB_LAYOUT) ?
+  //            new TabbedPaneScrollLayout() :
+  //            new TabbedPaneLayout();
+  //}
+
+  private boolean scrollableTabLayoutEnabled() {
+    return (tabPane.getLayout() instanceof TabbedPaneScrollLayout);
+  }
+
+  @Override
+  protected void installComponents() {
+    if (scrollableTabLayoutEnabled()) {
+      if (tabScroller == null) {
+        tabScroller = new ScrollableTabSupport();
+        tabPane.add(tabScroller.viewport);
+      }
+    } else {
+      super.installComponents();
+    }
+  }
+
+  @Override
+  protected void uninstallComponents() {
+    if (scrollableTabLayoutEnabled()) {
+      tabPane.remove(tabScroller.viewport);
+    } else {
+      super.uninstallComponents();
+    }
+  }
+
+  private class TabbedPaneScrollLayout extends TabbedPaneLayout {
+    @Override
+    protected int preferredTabAreaHeight(int tabPlacement, int width) {
+      return calculateMaxTabHeight(tabPlacement);
+    }
+
+    @Override
+    protected int preferredTabAreaWidth(int tabPlacement, int height) {
+      return calculateMaxTabWidth(tabPlacement);
+    }
+  }
+
+  private class ScrollableTabSupport implements ActionListener, ChangeListener {
+    private final JViewport viewport;
+    private final JPanel    tabPanel;
+    private JButton         menuButton;
+
+    private ScrollableTabSupport() {
+      boolean opaque = tabPane.isOpaque();
+      Color bgColor = UIManager.getColor("TabbedPane.tabAreaBackground");
+      if (bgColor == null) {
+        bgColor = tabPane.getBackground();
+      }
+
+      viewport = new JViewport();
+      viewport.setName("TabbedPane.scrollableViewport");
+      viewport.setScrollMode(SIMPLE_SCROLL_MODE);
+      viewport.setOpaque(opaque);
+      viewport.setBackground(bgColor);
+
+      tabPanel = new JPanel() {
+        @Override
+        public void paintComponent(Graphics g) {
+          super.paintComponent(g);
+          DarculaTabbedPaneUI.this.paintTabArea(g, tabPane.getTabPlacement(), tabPane.getSelectedIndex());
+        }
+      };
+
+      tabPanel.setOpaque(opaque);
+      tabPanel.setBackground(bgColor);
+
+      viewport.setView(tabPanel);
+      //viewport.addChangeListener(this);
+      createMenuButton();
+    }
+
+    private void createMenuButton() {
+      if (menuButton != null) {
+        tabPane.remove(menuButton);
+        menuButton.removeActionListener(this);
+      }
+
+      // TODO: honour tab placement
+      menuButton = new JButton("0");
+      menuButton.addActionListener(this);
+      tabPane.add(menuButton);
+    }
+
+    @Override
+    public void actionPerformed(ActionEvent e) {
+      System.out.printf("Menu click");
+    }
+
+    @Override
+    public void stateChanged(ChangeEvent e) {
+
+    }
+  }
 }

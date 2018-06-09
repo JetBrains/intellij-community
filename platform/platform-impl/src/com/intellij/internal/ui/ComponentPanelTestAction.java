@@ -59,7 +59,7 @@ public class ComponentPanelTestAction extends DumbAwareAction {
       pane.addTab("Component Grid", createComponentGridPanel());
       pane.addTab("Progress Grid", createProgressGridPanel());
 
-      for (int i = 1; i <= 20; i++) {
+      for (int i = 1; i <= 2; i++) {
         String title = "Blank " + i;
         JLabel label = new JLabel(title);
         pane.addTab(title, JBUI.Panels.simplePanel(label));

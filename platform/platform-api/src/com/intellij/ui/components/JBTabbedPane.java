@@ -19,6 +19,7 @@ import com.intellij.openapi.util.SystemInfo;
 import com.intellij.ui.JBColor;
 import com.intellij.ui.ScreenUtil;
 import com.intellij.util.ui.JBSwingUtilities;
+import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
 import org.intellij.lang.annotations.JdkConstants;
 import org.jetbrains.annotations.NonNls;
@@ -65,7 +66,7 @@ public class JBTabbedPane extends JTabbedPane implements HierarchyListener {
     //set custom label for correct work spotlighting in settings
     JLabel label = new JLabel(title);
     label.setIcon(icon);
-    label.setBorder(new EmptyBorder(1,1,1,1));
+    label.setBorder(JBUI.Borders.empty(1));
     setTabComponentAt(index, label);
     updateSelectedTabForeground();
     label.putClientProperty(LABEL_FROM_TABBED_PANE, Boolean.TRUE);
