@@ -10,7 +10,7 @@ import com.intellij.util.lang.JavaVersion
 import java.util.concurrent.TimeUnit
 
 class SystemStateMonitor : StartupActivity {
-  private val INITIAL_DELAY = 5
+  private val INITIAL_DELAY = 0
   private val PERIOD_DELAY = 24 * 60
 
   override fun runActivity(project: Project) {
