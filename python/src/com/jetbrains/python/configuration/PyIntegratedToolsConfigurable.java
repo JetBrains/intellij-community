@@ -22,6 +22,7 @@ import com.intellij.facet.impl.ui.FacetErrorPanel;
 import com.intellij.facet.ui.FacetConfigurationQuickFix;
 import com.intellij.facet.ui.FacetEditorValidator;
 import com.intellij.facet.ui.ValidationResult;
+import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.openapi.fileChooser.FileChooserDescriptor;
 import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory;
 import com.intellij.openapi.fileTypes.PlainTextFileType;
@@ -51,9 +52,8 @@ import com.jetbrains.python.packaging.PyPackageRequirementsSettings;
 import com.jetbrains.python.packaging.PyPackageUtil;
 import com.jetbrains.python.packaging.PyRequirementsKt;
 import com.jetbrains.python.psi.PyUtil;
-import com.jetbrains.python.sdk.PySdkSettings;
 import com.jetbrains.python.sdk.PythonSdkType;
-import com.jetbrains.python.sdk.flavors.PipenvKt;
+import com.jetbrains.python.sdk.pipenv.PipenvKt;
 import com.jetbrains.python.testing.PyTestFrameworkService;
 import com.jetbrains.python.testing.PythonTestConfigurationsModel;
 import com.jetbrains.python.testing.TestRunnerService;
@@ -231,7 +231,7 @@ public class PyIntegratedToolsConfigurable implements SearchableConfigurable {
     if (!getRequirementsPath().equals(myRequirementsPathField.getText())) {
       return true;
     }
-    if (!myPipEnvPathField.getText().equals(StringUtil.notNullize(PySdkSettings.getInstance().getPipEnvPath()))) {
+    if (!myPipEnvPathField.getText().equals(StringUtil.notNullize(PipenvKt.getPipEnvPath(PropertiesComponent.getInstance())))) {
       return true;
     }
     return false;
@@ -264,7 +264,7 @@ public class PyIntegratedToolsConfigurable implements SearchableConfigurable {
     myDocumentationSettings.setAnalyzeDoctest(analyzeDoctest.isSelected());
     PyPackageRequirementsSettings.getInstance(myModule).setRequirementsPath(myRequirementsPathField.getText());
     DaemonCodeAnalyzer.getInstance(myProject).restart();
-    PySdkSettings.getInstance().setPipEnvPath(StringUtil.nullize(myPipEnvPathField.getText()));
+    PipenvKt.setPipEnvPath(PropertiesComponent.getInstance(), StringUtil.nullize(myPipEnvPathField.getText()));
   }
 
   public void reparseFiles(final List<String> extensions) {
@@ -293,9 +293,10 @@ public class PyIntegratedToolsConfigurable implements SearchableConfigurable {
     analyzeDoctest.setSelected(myDocumentationSettings.isAnalyzeDoctest());
     renderExternal.setSelected(myDocumentationSettings.isRenderExternalDocumentation());
     myRequirementsPathField.setText(getRequirementsPath());
+    // TODO: Move pipenv settings into a separate configurable
     final JBTextField pipEnvText = ObjectUtils.tryCast(myPipEnvPathField.getTextField(), JBTextField.class);
     if (pipEnvText != null) {
-      final String savedPath = PySdkSettings.getInstance().getPipEnvPath();
+      final String savedPath = PipenvKt.getPipEnvPath(PropertiesComponent.getInstance());
       if (savedPath != null) {
         pipEnvText.setText(savedPath);
       }

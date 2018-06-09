@@ -1,5 +1,5 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-package com.jetbrains.python.packaging
+package com.jetbrains.python.packaging.pipenv
 
 import com.google.gson.Gson
 import com.google.gson.JsonSyntaxException
@@ -10,9 +10,13 @@ import com.intellij.openapi.module.Module
 import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.roots.OrderRootType
 import com.intellij.openapi.vfs.VfsUtil
+import com.jetbrains.python.packaging.PyPackage
+import com.jetbrains.python.packaging.PyPackageManager
+import com.jetbrains.python.packaging.PyPackageUtil
+import com.jetbrains.python.packaging.PyRequirement
 import com.jetbrains.python.sdk.PythonSdkType
-import com.jetbrains.python.sdk.flavors.pipFileLockRequirements
-import com.jetbrains.python.sdk.flavors.runPipEnv
+import com.jetbrains.python.sdk.pipenv.pipFileLockRequirements
+import com.jetbrains.python.sdk.pipenv.runPipEnv
 import com.jetbrains.python.sdk.pythonSdk
 
 /**

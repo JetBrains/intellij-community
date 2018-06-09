@@ -32,8 +32,8 @@ import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.impl.PyPsiUtils;
 import com.jetbrains.python.sdk.PySdkExtKt;
 import com.jetbrains.python.sdk.PythonSdkType;
-import com.jetbrains.python.sdk.flavors.PipEnvInstallQuickFix;
-import com.jetbrains.python.sdk.flavors.PipenvKt;
+import com.jetbrains.python.sdk.pipenv.PipEnvInstallQuickFix;
+import com.jetbrains.python.sdk.pipenv.PipenvKt;
 import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
@@ -113,6 +113,7 @@ public class PyPackageRequirementsInspection extends PyInspection {
               unsatisfiedNames.add(req.getName() + req.getExtras());
             }
             final List<LocalQuickFix> quickFixes = new ArrayList<>();
+            // TODO: Introduce an inspection extension
             if (PipenvKt.isPipEnv(sdk)) {
               quickFixes.add(new PipEnvInstallQuickFix());
             }

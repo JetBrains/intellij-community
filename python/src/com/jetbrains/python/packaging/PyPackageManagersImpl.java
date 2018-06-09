@@ -18,10 +18,12 @@ package com.jetbrains.python.packaging;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.jetbrains.python.packaging.pipenv.PyPipEnvPackageManagementService;
+import com.jetbrains.python.packaging.pipenv.PyPipEnvPackageManager;
 import com.jetbrains.python.packaging.ui.PyCondaManagementService;
 import com.jetbrains.python.packaging.ui.PyPackageManagementService;
 import com.jetbrains.python.sdk.PythonSdkType;
-import com.jetbrains.python.sdk.flavors.PipenvKt;
+import com.jetbrains.python.sdk.pipenv.PipenvKt;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.HashMap;
@@ -31,6 +33,8 @@ import java.util.Map;
  * @author yole
  */
 public class PyPackageManagersImpl extends PyPackageManagers {
+  // TODO: Introduce a Python SDK provider EP that is capable of providing a custom package manager and a package management service
+
   private final Map<String, PyPackageManager> myInstances = new HashMap<>();
 
   @NotNull

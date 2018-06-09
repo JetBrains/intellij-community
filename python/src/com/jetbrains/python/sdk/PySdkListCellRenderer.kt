@@ -27,9 +27,9 @@ import com.intellij.ui.SimpleTextAttributes
 import com.intellij.ui.TitledSeparator
 import com.intellij.util.ui.JBUI
 import com.jetbrains.python.psi.LanguageLevel
-import com.jetbrains.python.sdk.flavors.PIPENV_ICON
 import com.jetbrains.python.sdk.flavors.PythonSdkFlavor
-import com.jetbrains.python.sdk.flavors.isPipEnv
+import com.jetbrains.python.sdk.pipenv.PIPENV_ICON
+import com.jetbrains.python.sdk.pipenv.isPipEnv
 import java.awt.Component
 import javax.swing.Icon
 import javax.swing.JList
@@ -98,6 +98,7 @@ open class PySdkListCellRenderer(private val sdkModifiers: Map<Sdk, SdkModificat
           IconLoader.getTransparentIcon(icon)
         // XXX: We cannot provide pipenv SDK flavor by path since it's just a regular virtualenv. Consider
         // adding the SDK flavor based on the `Sdk` object itself
+        // TODO: Refactor SDK flavors so they can actually provide icons for SDKs in all cases
         sdk.isPipEnv ->
           PIPENV_ICON
         else ->

@@ -64,8 +64,8 @@ import com.jetbrains.python.remote.PyRemoteSdkAdditionalDataBase;
 import com.jetbrains.python.remote.PythonRemoteInterpreterManager;
 import com.jetbrains.python.run.PyVirtualEnvReader;
 import com.jetbrains.python.sdk.flavors.CPythonSdkFlavor;
-import com.jetbrains.python.sdk.flavors.PipenvKt;
 import com.jetbrains.python.sdk.flavors.PythonSdkFlavor;
+import com.jetbrains.python.sdk.pipenv.PyPipEnvSdkAdditionalData;
 import icons.PythonIcons;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
@@ -221,9 +221,6 @@ public final class PythonSdkType extends SdkType {
       return false;
     }
     final VirtualFile interpreter = sdk.getHomeDirectory();
-    if (PipenvKt.isPipEnv(sdk) && PySdkExtKt.getAssociatedModule(sdk) == null) {
-      return true;
-    }
     return interpreter == null || !interpreter.exists();
   }
 
@@ -459,11 +456,18 @@ public final class PythonSdkType extends SdkType {
   }
 
   @Override
-  public SdkAdditionalData loadAdditionalData(@NotNull final Sdk currentSdk, final Element additional) {
+  public SdkAdditionalData loadAdditionalData(@NotNull final Sdk currentSdk, @Nullable final Element additional) {
     if (RemoteSdkCredentialsHolder.isRemoteSdk(currentSdk.getHomePath())) {
       PythonRemoteInterpreterManager manager = PythonRemoteInterpreterManager.getInstance();
       if (manager != null) {
         return manager.loadRemoteSdkData(currentSdk, additional);
+      }
+    }
+    // TODO: Extract loading additional SDK data into a Python SDK provider
+    if (additional != null) {
+      final PyPipEnvSdkAdditionalData pipEnvData = PyPipEnvSdkAdditionalData.load(additional);
+      if (pipEnvData != null) {
+        return pipEnvData;
       }
     }
     return PythonSdkAdditionalData.load(currentSdk, additional);
