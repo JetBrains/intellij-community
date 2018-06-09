@@ -22,17 +22,9 @@ import com.intellij.openapi.project.Project;
  */
 public class PydevRemoteConsoleCommunication extends PydevConsoleCommunication {
   /**
-   * Initializes the xml-rpc communication.
-   *
-   * @param port       the port where the communication should happen.
-   * @param process    this is the process that was spawned (server for the XML-RPC)
+   * Initializes the bidirectional RPC communication.
    */
-  public PydevRemoteConsoleCommunication(Project project, int port, Process process, int clientPort)
-    throws Exception {
-    super(project, port, process, clientPort);
-  }
-
-  public PydevRemoteConsoleCommunication(Project project, int port, Process process, int clientPort, String clientHost) throws Exception {
-    super(project, clientHost, port, process, clientPort);
+  public PydevRemoteConsoleCommunication(Project project) {
+    super(project);
   }
 }

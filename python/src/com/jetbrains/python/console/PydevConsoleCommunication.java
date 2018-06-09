@@ -39,6 +39,7 @@ import com.jetbrains.python.console.parsing.PythonConsoleData;
 import com.jetbrains.python.console.pydev.AbstractConsoleCommunication;
 import com.jetbrains.python.console.pydev.InterpreterResponse;
 import com.jetbrains.python.console.pydev.PydevCompletionVariant;
+import com.jetbrains.python.console.thrift.client.TNettyClientTransport;
 import com.jetbrains.python.console.thrift.server.TNettyServerTransport;
 import com.jetbrains.python.debugger.*;
 import com.jetbrains.python.debugger.containerview.PyViewNumericContainerAction;
@@ -46,14 +47,11 @@ import com.jetbrains.python.debugger.pydev.GetVariableCommand;
 import org.apache.thrift.TException;
 import org.apache.thrift.protocol.TBinaryProtocol;
 import org.apache.thrift.server.TThreadPoolServer;
+import org.apache.thrift.transport.TServerTransport;
 import org.apache.thrift.transport.TTransport;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.lang.reflect.InvocationHandler;
-import java.lang.reflect.Method;
-import java.lang.reflect.Proxy;
-import java.net.MalformedURLException;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -61,7 +59,6 @@ import java.util.Map;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.Future;
-import java.util.concurrent.locks.ReentrantLock;
 import java.util.stream.Collectors;
 
 import static com.jetbrains.python.console.PydevConsoleCommunicationUtil.*;
@@ -115,40 +112,23 @@ public class PydevConsoleCommunication extends AbstractConsoleCommunication impl
 
   @Nullable private XCompositeNode myCurrentRootNode;
 
-  private final int myClientPort;
-
   /**
-   * Initializes the xml-rpc communication.
-   *
-   * @param port    the port where the communication should happen.
-   * @param process this is the process that was spawned (server for the XML-RPC)
-   * @throws MalformedURLException
+   * Initializes the bidirectional RPC communication.
    */
-  public PydevConsoleCommunication(Project project, int port, Process process, int clientPort) throws Exception {
-    this(project, null, port, process, clientPort);
-  }
-
-  public PydevConsoleCommunication(Project project, String host, int port, Process process, int clientPort) throws Exception {
+  public PydevConsoleCommunication(Project project) {
     super(project);
-    myClientPort = clientPort;
   }
 
-  /**
-   * @return connection future
-   */
-  @NotNull
-  public Future<Void> startServer() {
+  public void startServer(int port) throws InterruptedException {
     IDEHandler serverHandler = new IDEHandler();
     IDE.Processor<IDE.Iface> serverProcessor = new IDE.Processor<>(serverHandler);
     //noinspection IOResourceOpenedButNotSafelyClosed
-    TNettyServerTransport serverTransport = new TNettyServerTransport(myClientPort);
+    TNettyServerTransport serverTransport = new TNettyServerTransport(port);
     TThreadPoolServer server = new TThreadPoolServer(
       new TThreadPoolServer.Args(serverTransport).processor(serverProcessor).protocolFactory(new TBinaryProtocol.Factory())
                                                  .stopTimeoutVal(1));
-    // @alexander todo do not `Thread.start()` here!
-    new Thread(() -> server.serve()).start();
 
-    SettableFuture<Void> connectionFuture = SettableFuture.create();
+    ApplicationManager.getApplication().executeOnPooledThread(() -> server.serve());
 
     ApplicationManager.getApplication().executeOnPooledThread(() -> {
       TTransport clientTransport = serverTransport.getReverseTransport();
@@ -156,7 +136,7 @@ public class PydevConsoleCommunication extends AbstractConsoleCommunication impl
       PythonConsole.Client client = new PythonConsole.Client(clientProtocol);
 
       this.myServer = server;
-      this.myClient = syncPythonConsoleIface(client);
+      this.myClient = PythonConsoleClientUtil.synchronizedPythonConsoleClient(PydevConsoleCommunication.class.getClassLoader(), client);
 
       PyDebugValueExecutionService executionService = PyDebugValueExecutionService.getInstance(myProject);
       executionService.sessionStarted(this);
@@ -166,19 +146,43 @@ public class PydevConsoleCommunication extends AbstractConsoleCommunication impl
           executionService.cancelSubmittedTasks(PydevConsoleCommunication.this);
         }
       });
-
-      // notify that we have connected
-      connectionFuture.set(null);
     });
 
-    try {
-      Thread.sleep(1000L);
-    }
-    catch (InterruptedException e) {
-      Thread.currentThread().interrupt();
-    }
+    serverTransport.waitForBind();
+  }
 
-    return connectionFuture;
+  public void startClient(@NotNull String host, int port, @NotNull Process pythonConsoleProcess) {
+    ApplicationManager.getApplication().executeOnPooledThread(() -> {
+      TNettyClientTransport clientTransport = new TNettyClientTransport(host, port);
+      clientTransport.open();
+
+      TBinaryProtocol clientProtocol = new TBinaryProtocol(clientTransport);
+      PythonConsole.Client client = new PythonConsole.Client(clientProtocol);
+
+      TServerTransport serverTransport = clientTransport.getServerTransport();
+
+      IDEHandler serverHandler = new IDEHandler();
+      IDE.Processor<IDE.Iface> serverProcessor = new IDE.Processor<>(serverHandler);
+
+      TThreadPoolServer server = new TThreadPoolServer(
+        new TThreadPoolServer.Args(serverTransport).processor(serverProcessor).protocolFactory(new TBinaryProtocol.Factory())
+                                                   .stopTimeoutVal(1));
+
+      ApplicationManager.getApplication().executeOnPooledThread(() -> server.serve());
+
+      this.myServer = server;
+      this.myClient = PythonConsoleClientUtil.synchronizedPythonConsoleClient(PydevConsoleCommunication.class.getClassLoader(), client,
+                                                                              pythonConsoleProcess);
+
+      PyDebugValueExecutionService executionService = PyDebugValueExecutionService.getInstance(myProject);
+      executionService.sessionStarted(this);
+      addFrameListener(new PyFrameListener() {
+        @Override
+        public void frameChanged() {
+          executionService.cancelSubmittedTasks(PydevConsoleCommunication.this);
+        }
+      });
+    });
   }
 
   public boolean handshake() {
@@ -193,9 +197,6 @@ public class PydevConsoleCommunication extends AbstractConsoleCommunication impl
     return false;
   }
 
-  /**
-   * Sends {@link #CLOSE} message to the Python console script.
-   */
   private void sendCloseMessageToScript() {
     if (this.myClient != null) {
       new Task.Backgroundable(myProject, "Close Console Communication", true) {
@@ -796,24 +797,5 @@ public class PydevConsoleCommunication extends AbstractConsoleCommunication impl
     public boolean IPythonEditor(String path, String line) {
       return execIPythonEditor(path);
     }
-  }
-
-  @NotNull
-  private static PythonConsole.Iface syncPythonConsoleIface(@NotNull PythonConsole.Iface iface) {
-    ReentrantLock lock = new ReentrantLock();
-    return (PythonConsole.Iface)Proxy
-      .newProxyInstance(PydevConsoleCommunication.class.getClassLoader(), new Class[]{PythonConsole.Iface.class},
-                        new InvocationHandler() {
-                          @Override
-                          public Object invoke(Object proxy, Method method, Object[] args) throws Throwable {
-                            lock.lock();
-                            try {
-                              return method.invoke(iface, args);
-                            }
-                            finally {
-                              lock.unlock();
-                            }
-                          }
-                        });
   }
 }

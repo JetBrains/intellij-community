@@ -1,8 +1,9 @@
 '''
 Entry point module to start the interactive console.
 '''
+from _pydev_bundle._pydev_getopt import gnu_getopt
 from _pydev_imps._pydev_saved_modules import thread
-from pydev_console.thrift_rpc import make_rpc_client, start_rpc_server
+from pydev_console.thrift_rpc import make_rpc_client, start_rpc_server, start_rpc_server_and_make_client
 
 start_new_thread = thread.start_new_thread
 
@@ -348,10 +349,42 @@ def enable_thrift_logging():
     logger.addHandler(ch)
 
 
-def start_server(host, port, client_port, client_host = None):
-    if not client_host:
-        client_host = host
+def start_server():
+    # 0. General stuff
 
+    #replace exit (see comments on method)
+    #note that this does not work in jython!!! (sys method can't be replaced).
+    sys.exit = do_exit
+
+    from pydev_console.thrift_communication import console_thrift
+
+    enable_thrift_logging()
+
+    server_service = console_thrift.PythonConsole
+    client_service = console_thrift.IDE
+
+    # 1. Start Python console server
+
+
+    interpreter = InterpreterInterface(threading.currentThread(), None, None)
+
+    # `InterpreterInterface` implements all methods required for the handler
+    server_handler = interpreter
+
+    server_socket = start_rpc_server_and_make_client('', 0, server_service, client_service, server_handler)
+
+
+    # 2. Print server port for the IDE
+
+    _, server_port = server_socket.getsockname()
+    print(server_port)
+
+    # 3. Wait for IDE to connect to the server
+
+    process_exec_queue(interpreter)
+
+
+def start_client(host, port):
     #replace exit (see comments on method)
     #note that this does not work in jython!!! (sys method can't be replaced).
     sys.exit = do_exit
@@ -362,7 +395,7 @@ def start_server(host, port, client_port, client_host = None):
 
     client_service = console_thrift.IDE
 
-    client, server_transport = make_rpc_client(client_service, client_host, client_port)
+    client, server_transport = make_rpc_client(client_service, host, port)
 
     interpreter = InterpreterInterface(threading.currentThread(), None, client)
 
@@ -542,18 +575,32 @@ if __name__ == '__main__':
     #'Variables' and 'Expressions' views stopped working when debugging interactive console
     import pydevconsole
     sys.stdin = pydevconsole.BaseStdIn(sys.stdin)
-    port, client_port = sys.argv[1:3]
-    from _pydev_bundle import pydev_localhost
 
-    if int(port) == 0 and int(client_port) == 0:
-        (h, p) = pydev_localhost.get_socket_name()
+    # parse command-line arguments
+    optlist, _ = gnu_getopt(sys.argv, 'm:h:p', ['mode=', 'host=', 'port='])
+    mode = None
+    host = None
+    port = None
+    for opt, arg in optlist:
+        if opt in ('-m', '--mode'):
+            mode = arg
+        elif opt in ('-h', '--host'):
+            host = arg
+        elif opt in ('-p', '--port'):
+            port = int(arg)
 
-        client_port = p
+    if mode not in ('client', 'server'):
+        sys.exit(-1)
 
-    if len(sys.argv) > 4:
-        host = sys.argv[3]
-        client_host = sys.argv[4]
-    else:
-        host = client_host = pydev_localhost.get_localhost()
+    if mode == 'client':
+        if not port:
+            # port must be set for client
+            sys.exit(-1)
 
-    pydevconsole.start_server(host, int(port), int(client_port), client_host)
+        if not host:
+            from _pydev_bundle import pydev_localhost
+            host = client_host = pydev_localhost.get_localhost()
+
+        pydevconsole.start_client(host, port)
+    elif mode == 'server':
+        pydevconsole.start_server()
