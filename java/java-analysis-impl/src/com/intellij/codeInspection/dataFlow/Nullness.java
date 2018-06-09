@@ -19,7 +19,7 @@ import com.intellij.codeInsight.Nullability;
 import org.jetbrains.annotations.Contract;
 
 /**
-* @deprecated use {@link Nullability}
+* @deprecated for removal; use {@link Nullability} since 2018.2
 */
 @Deprecated
 public enum Nullness {

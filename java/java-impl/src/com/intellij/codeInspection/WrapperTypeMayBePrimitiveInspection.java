@@ -1,8 +1,8 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInspection;
 
-import com.intellij.codeInspection.dataFlow.Nullness;
-import com.intellij.codeInspection.dataFlow.NullnessUtil;
+import com.intellij.codeInsight.Nullability;
+import com.intellij.codeInspection.dataFlow.NullabilityUtil;
 import com.intellij.lang.jvm.types.JvmPrimitiveTypeKind;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
@@ -45,7 +45,7 @@ public class WrapperTypeMayBePrimitiveInspection extends AbstractBaseJavaLocalIn
                                                  .filter(fqn -> !fqn.equals(CommonClassNames.JAVA_LANG_CHARACTER))
                                                  .map(fqn -> CallMatcher.staticCall(fqn, "valueOf")
                                                                         .parameterTypes(CommonClassNames.JAVA_LANG_STRING))
-                                                 .toArray(size -> new CallMatcher[size]);
+                                                 .toArray(CallMatcher[]::new);
     return CallMatcher.anyOf(matchers);
   }
 
@@ -86,7 +86,7 @@ public class WrapperTypeMayBePrimitiveInspection extends AbstractBaseJavaLocalIn
         myBoxedUnnecessaryOperationCount++;
       }
       else if (!isValueOfCall(expression)) {
-        if (NullnessUtil.getExpressionNullness(expression) != Nullness.NOT_NULL) { // not safe using with primitive
+        if (NullabilityUtil.getExpressionNullability(expression) != Nullability.NOT_NULL) { // not safe using with primitive
           return false;
         }
         myUnboxedUnnecessaryOperationCount++;
@@ -232,7 +232,7 @@ public class WrapperTypeMayBePrimitiveInspection extends AbstractBaseJavaLocalIn
         }
       }
       else {
-        if (NullnessUtil.getExpressionNullness(other) != Nullness.NOT_NULL) return false;
+        if (NullabilityUtil.getExpressionNullability(other) != Nullability.NOT_NULL) return false;
         boxedUnnecessaryOpImpact += 3;
         unboxedUnnecessaryOpImpact += 3;
       }

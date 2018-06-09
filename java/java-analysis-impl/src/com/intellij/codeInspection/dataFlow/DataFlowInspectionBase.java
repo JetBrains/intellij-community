@@ -763,13 +763,13 @@ public class DataFlowInspectionBase extends AbstractBaseJavaLocalInspectionTool 
     NullableNotNullManager manager = NullableNotNullManager.getInstance(holder.getProject());
     NullabilityAnnotationInfo info = manager.findEffectiveNullabilityAnnotationInfo(method);
     PsiAnnotation anno = info == null ? null : info.getAnnotation();
-    Nullability annoNullness = info == null ? Nullability.UNKNOWN : info.getNullability();
-    if (annoNullness == Nullability.NULLABLE) {
+    Nullability nullability = info == null ? Nullability.UNKNOWN : info.getNullability();
+    if (nullability == Nullability.NULLABLE) {
       if (!AnnotationUtil.isInferredAnnotation(anno)) return;
-      if (DfaPsiUtil.getTypeNullability(method.getReturnType()) == Nullness.NULLABLE) return;
+      if (DfaPsiUtil.getTypeNullability(method.getReturnType()) == Nullability.NULLABLE) return;
     }
 
-    if (annoNullness != Nullability.NOT_NULL && (!SUGGEST_NULLABLE_ANNOTATIONS || block.getParent() instanceof PsiLambdaExpression)) return;
+    if (nullability != Nullability.NOT_NULL && (!SUGGEST_NULLABLE_ANNOTATIONS || block.getParent() instanceof PsiLambdaExpression)) return;
 
     PsiType returnType = method.getReturnType();
     // no warnings in void lambdas, where the expression is not returned anyway
@@ -782,7 +782,7 @@ public class DataFlowInspectionBase extends AbstractBaseJavaLocalInspectionTool 
       final PsiExpression expr = problem.getAnchor();
       if (!reportedAnchors.add(expr)) continue;
 
-      if (annoNullness == Nullability.NOT_NULL) {
+      if (nullability == Nullability.NOT_NULL) {
         String presentable = NullableStuffInspectionBase.getPresentableAnnoName(anno);
         final String text = isNullLiteralExpression(expr)
                             ? InspectionsBundle.message("dataflow.message.return.null.from.notnull", presentable)

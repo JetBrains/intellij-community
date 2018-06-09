@@ -1,7 +1,7 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.refactoring.extractMethod;
 
-import com.intellij.codeInspection.dataFlow.Nullness;
+import com.intellij.codeInsight.Nullability;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
 import com.intellij.psi.*;
@@ -22,7 +22,7 @@ public class ExtractMethodSnapshot {
   public final boolean myStatic;
   public final boolean myIsChainedConstructor;
   public final String myMethodVisibility;
-  public final Nullness myNullness;
+  public final Nullability myNullability;
   public final SmartTypePointer myReturnType;
   public final List<SmartPsiElementPointer<PsiVariable>> myOutputVariables;
   public final SmartPsiElementPointer<PsiVariable> myOutputVariable;
@@ -37,7 +37,7 @@ public class ExtractMethodSnapshot {
     myStatic = from.myStatic;
     myIsChainedConstructor = from.myIsChainedConstructor;
     myMethodVisibility = from.myMethodVisibility;
-    myNullness = from.myNullness;
+    myNullability = from.myNullability;
 
     SmartTypePointerManager typePointerManager = SmartTypePointerManager.getInstance(myProject);
     myReturnType = typePointerManager.createSmartTypePointer(from.myReturnType);

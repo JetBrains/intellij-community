@@ -194,9 +194,9 @@ public class NullableNotNullManagerImpl extends NullableNotNullManager implement
     if (required == null || (!required.isEmpty() && !ContainerUtil.intersects(required, Arrays.asList(placeTargetTypes)))) return null;
     
     for (PsiAnnotation qualifier : modList.getAnnotations()) {
-      Nullability nullness = getJsr305QualifierNullness(qualifier);
-      if (nullness != null) {
-        return new NullabilityAnnotationInfo(annotation, nullness, true);
+      Nullability nullability = getJsr305QualifierNullability(qualifier);
+      if (nullability != null) {
+        return new NullabilityAnnotationInfo(annotation, nullability, true);
       }
     }
     return null;
@@ -211,7 +211,7 @@ public class NullableNotNullManagerImpl extends NullableNotNullManager implement
   }
 
   @Nullable
-  private Nullability getJsr305QualifierNullness(@NotNull PsiAnnotation qualifier) {
+  private Nullability getJsr305QualifierNullability(@NotNull PsiAnnotation qualifier) {
     String qName = qualifier.getQualifiedName();
     if (qName == null || !qName.startsWith("javax.annotation.")) return null;
 
@@ -248,8 +248,8 @@ public class NullableNotNullManagerImpl extends NullableNotNullManager implement
     return Nullability.UNKNOWN;
   }
 
-  private List<String> filterNickNames(Nullability nullness) {
-    return StreamEx.of(getAllNullabilityNickNames()).filter(c -> getNickNamedNullability(c) == nullness).map(PsiClass::getQualifiedName).toList();
+  private List<String> filterNickNames(Nullability nullability) {
+    return StreamEx.of(getAllNullabilityNickNames()).filter(c -> getNickNamedNullability(c) == nullability).map(PsiClass::getQualifiedName).toList();
   }
 
   @NotNull
