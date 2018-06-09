@@ -194,7 +194,7 @@ fun NewProjectDialogModel.createJavaProject(projectPath: String, libs: Libraries
       if (setLibraries) {
         for (lib in libs) {
           logUIStep("Include `${lib.joinToString()}` to the project")
-          checkboxTree(*lib).clickCheckbox(*lib)
+          checkboxTree(*lib).check(*lib)
         }
       }
       else {
@@ -250,7 +250,7 @@ fun NewProjectDialogModel.createJavaEnterpriseProject(projectPath: String, libs:
       else {
         for (lib in libs) {
           logUIStep("Include `${lib.joinToString()}` to the project")
-          checkboxTree(*lib).clickCheckbox(*lib)
+          checkboxTree(*lib).check(*lib)
         }
       }
       button(buttonNext).click()
@@ -276,9 +276,9 @@ fun NewProjectDialogModel.createGradleProject(projectPath: String, gradleOptions
       list.clickItem(groupGradle)
       setCheckboxValue(checkKotlinDsl, gradleOptions.useKotlinDsl)
       if (gradleOptions.framework.isNotEmpty()) {
-        checkboxTree(gradleOptions.framework).clickCheckbox(gradleOptions.framework)
+        checkboxTree(gradleOptions.framework).check(gradleOptions.framework)
         if (gradleOptions.isJavaShouldNotBeChecked)
-          checkboxTree(gradleOptions.framework).clickCheckbox("Java")
+          checkboxTree(gradleOptions.framework).uncheck("Java")
       }
       button(buttonNext).click()
       logUIStep("Fill GroupId with `${gradleOptions.group}`")
@@ -495,7 +495,7 @@ internal fun NewProjectDialogModel.createProjectInGroup(group: NewProjectDialogM
       list.clickItem(group.toString())
       for (lib in libs) {
         logUIStep("Include `${lib.joinToString()}` to the project")
-        checkboxTree(*lib).clickCheckbox(*lib)
+        checkboxTree(*lib).check(*lib)
       }
       button(buttonNext).click()
       logUIStep("Fill Project location with `$projectPath`")
