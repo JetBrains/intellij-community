@@ -104,7 +104,9 @@ internal class DaemonTooltipWithActionRenderer(text: String?,
                                                  JBUI.insets(3, 3, 0, 3), 0, 0)
     grid.add(settingsComponent, settingsConstraints)
 
-    addActionsRow(hintHint, hint, editor, actions, grid)
+    if (isShowActions()) {
+      addActionsRow(hintHint, hint, editor, actions, grid)
+    }
   }
 
   private fun addActionsRow(hintHint: HintHint,

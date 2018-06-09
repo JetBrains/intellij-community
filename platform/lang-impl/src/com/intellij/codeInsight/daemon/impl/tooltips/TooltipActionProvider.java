@@ -27,8 +27,6 @@ public interface TooltipActionProvider {
 
   @Nullable
   static TooltipAction calcTooltipAction(@NotNull final HighlightInfo info, @NotNull Editor editor) {
-    if (!isShowActions()) return null;
-    
     for (TooltipActionProvider extension : EXTENSION_POINT_NAME.getExtensions()) {
       TooltipAction action = extension.getTooltipAction(info, editor);
       if (action != null) return action;

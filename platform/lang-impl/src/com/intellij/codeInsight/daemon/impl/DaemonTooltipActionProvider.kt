@@ -23,7 +23,7 @@ class DaemonTooltipActionProvider : TooltipActionProvider {
 }
 
 class DaemonTooltipAction(private val myFixText: String, private val myActualOffset: Int) : TooltipAction {
-
+  
   override fun getText(): String {
     return myFixText
   }
