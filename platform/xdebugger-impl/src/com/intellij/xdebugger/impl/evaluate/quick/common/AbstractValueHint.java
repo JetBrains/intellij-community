@@ -327,6 +327,10 @@ public abstract class AbstractValueHint {
   }
 
   protected <D> void showTreePopup(@NotNull DebuggerTreeCreator<D> creator, @NotNull D descriptor) {
+    if (myEditor.isDisposed()) {
+      return;
+    }
+
     createHighlighter();
     setHighlighterAttributes();
 
