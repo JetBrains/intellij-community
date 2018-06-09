@@ -80,7 +80,7 @@ public class LineTooltipRenderer extends ComparableObject.Impl implements Toolti
       .anchor(GridBagConstraints.CENTER)
       .fillCellHorizontally();
 
-    pane.setBorder(JBUI.Borders.empty(4, 6, 5, 6));
+    pane.setBorder(JBUI.Borders.empty(6, 8, 6, 12));
     grid.add(pane, bag);
     grid.setBackground(hintHint.getTextBackground());
     grid.setBorder(JBUI.Borders.empty());
@@ -142,7 +142,7 @@ public class LineTooltipRenderer extends ComparableObject.Impl implements Toolti
       public void hide() {
         onHide(editorPane);
         super.hide();
-        for (AnAction action : actions) {
+        for (AnAction action: actions) {
           action.unregisterCustomShortcutSet(contentComponent);
         }
       }
@@ -206,7 +206,7 @@ public class LineTooltipRenderer extends ComparableObject.Impl implements Toolti
 
 
     grid.addMouseListener(new MouseAdapter() {
-      
+
       // This listener makes hint transparent for mouse events. It means that hint is closed
       // by MousePressed and this MousePressed goes into the underlying editor component.
       @Override
@@ -218,7 +218,7 @@ public class LineTooltipRenderer extends ComparableObject.Impl implements Toolti
         }
       }
     });
-    
+
     ListenerUtil.addMouseListener(grid, new MouseAdapter() {
 
       @Override
@@ -238,7 +238,7 @@ public class LineTooltipRenderer extends ComparableObject.Impl implements Toolti
         if (parentContainer.contains(newMouseEvent.getPoint())) {
           return;
         }
-        
+
         hint.hide();
       }
     });
