@@ -164,7 +164,7 @@ Object foo(Object o) { if (o == null) return o.hashCode(); return 2; }
     Nullability inferNullability(PsiMethod method) {
       def file = (PsiFileImpl)method.containingFile
       assert !file.contentsLoaded
-      def result = NullableNotNullManager.getInstance(method.getProject()).findEffectiveNullability(method)
+      def result = NullableNotNullManager.getNullability(method)
       assert !file.contentsLoaded
 
       // check inference works same on both light and real AST

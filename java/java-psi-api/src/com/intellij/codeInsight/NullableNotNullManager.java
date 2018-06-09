@@ -211,18 +211,6 @@ public abstract class NullableNotNullManager {
   }
 
   /**
-   * Returns effective nullability derived from annotations for given element.
-   *
-   * @param owner element to find a nullability for
-   * @return effective nullability
-   */
-  @NotNull
-  public Nullability findEffectiveNullability(@NotNull PsiModifierListOwner owner) {
-    NullabilityAnnotationInfo info = findEffectiveNullabilityAnnotationInfo(owner);
-    return info == null ? Nullability.UNKNOWN : info.getNullability();
-  }
-
-  /**
    * Returns nullability annotation info which has effect for given element.
    *
    * @param owner element to find an annotation for
@@ -422,12 +410,35 @@ public abstract class NullableNotNullManager {
   @NotNull
   public abstract List<String> getNotNulls();
 
+  /**
+   * Returns true if given element is known to be nullable
+   *
+   * @param owner element to check
+   * @return true if given element is known to be nullable
+   */
   public static boolean isNullable(@NotNull PsiModifierListOwner owner) {
-    return getInstance(owner.getProject()).findEffectiveNullability(owner) == Nullability.NULLABLE;
+    return getNullability(owner) == Nullability.NULLABLE;
   }
 
+  /**
+   * Returns true if given element is known to be non-nullable
+   *
+   * @param owner element to check
+   * @return true if given element is known to be non-nullable
+   */
   public static boolean isNotNull(@NotNull PsiModifierListOwner owner) {
-    return getInstance(owner.getProject()).findEffectiveNullability(owner) == Nullability.NOT_NULL;
+    return getNullability(owner) == Nullability.NOT_NULL;
+  }
+
+  /**
+   * Returns nullability of given element defined by annotations.
+   *
+   * @param owner element to find nullability for
+   * @return found nullability; {@link Nullability#UNKNOWN} if not specified or non-applicable
+   */
+  public static Nullability getNullability(@NotNull PsiModifierListOwner owner) {
+    NullabilityAnnotationInfo info = getInstance(owner.getProject()).findEffectiveNullabilityAnnotationInfo(owner);
+    return info == null ? Nullability.UNKNOWN : info.getNullability();
   }
 
   @NotNull

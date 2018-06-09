@@ -45,7 +45,7 @@ public class JavaSliceNullnessAnalyzer extends SliceNullnessAnalyzerBase {
     if (value instanceof PsiMethodCallExpression) {
       PsiMethod method = ((PsiMethodCallExpression)value).resolveMethod();
       if (method != null) {
-        return NullableNotNullManager.getInstance(method.getProject()).findEffectiveNullability(method);
+        return NullableNotNullManager.getNullability(method);
       }
     }
     if (value instanceof PsiPolyadicExpression && ((PsiPolyadicExpression)value).getOperationTokenType() == JavaTokenType.PLUS) {
@@ -76,7 +76,7 @@ public class JavaSliceNullnessAnalyzer extends SliceNullnessAnalyzerBase {
     if (value instanceof PsiEnumConstant) return Nullability.NOT_NULL;
 
     if (value instanceof PsiModifierListOwner) {
-      return NullableNotNullManager.getInstance(value.getProject()).findEffectiveNullability(((PsiModifierListOwner)value));
+      return NullableNotNullManager.getNullability((PsiModifierListOwner)value);
     }
 
     return Nullability.UNKNOWN;

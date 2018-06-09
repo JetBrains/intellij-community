@@ -775,8 +775,9 @@ public class NullableStuffInspectionBase extends AbstractBaseJavaLocalInspection
                                fix);
       }
       if (isNotNullParameterOverridingNonAnnotated(nullableManager, parameter, superParameters)) {
-        PsiAnnotation notNullAnnotation = nullableManager.getNotNullAnnotation(parameter, false);
-        assert notNullAnnotation != null;
+        NullabilityAnnotationInfo info = nullableManager.findOwnNullabilityAnnotationInfo(parameter);
+        assert info != null;
+        PsiAnnotation notNullAnnotation = info.getAnnotation();
         boolean physical = PsiTreeUtil.isAncestor(parameter, notNullAnnotation, true);
         final LocalQuickFix fix = physical ? new RemoveAnnotationQuickFix(notNullAnnotation, parameter) : null;
         holder.registerProblem(physical ? notNullAnnotation : parameter.getNameIdentifier(),

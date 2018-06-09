@@ -184,8 +184,7 @@ public class ReturnNullInspectionBase extends BaseInspection {
         return;
       }
 
-      final NullableNotNullManager nullableNotNullManager = NullableNotNullManager.getInstance(method.getProject());
-      if (nullableNotNullManager.isNullable(method, false)) {
+      if (NullableNotNullManager.isNullable(method)) {
         return;
       }
       if (CollectionUtils.isCollectionClassOrInterface(returnType)) {

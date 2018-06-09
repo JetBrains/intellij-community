@@ -54,7 +54,7 @@ class NullParameterConstraintChecker extends DataFlowRunner {
     for (int index = 0; index < parameters.length; index++) {
       PsiParameter parameter = parameters[index];
       if (!(parameter.getType() instanceof PsiPrimitiveType) &&
-          NullableNotNullManager.getInstance(method.getProject()).findEffectiveNullability(parameter) == Nullability.UNKNOWN &&
+          NullableNotNullManager.getNullability(parameter) == Nullability.UNKNOWN &&
           JavaNullMethodArgumentUtil.hasNullArgument(method, index)) {
         nullableParameters.add(parameter);
       }

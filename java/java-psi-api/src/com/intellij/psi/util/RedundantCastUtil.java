@@ -282,20 +282,18 @@ public class RedundantCastUtil {
              MethodSignatureUtil.isSuperMethod(newTargetMethod, targetMethod) &&
              // see SCR11555, SCR14559
              areThrownExceptionsCompatible(targetMethod, newTargetMethod) &&
-             areNullabilityCompatible(project, targetMethod, newTargetMethod))) {
+             areNullabilityCompatible(targetMethod, newTargetMethod))) {
           addToResults(typeCast);
         }
       }
       catch (IncorrectOperationException ignore) { }
     }
 
-    private static boolean areNullabilityCompatible(Project project,
-                                                    final PsiMethod oldTargetMethod,
+    private static boolean areNullabilityCompatible(final PsiMethod oldTargetMethod,
                                                     final PsiMethod newTargetMethod) {
       // the cast may be for the @NotNull which newTargetMethod has whereas the oldTargetMethod doesn't
-      NullableNotNullManager nnm = NullableNotNullManager.getInstance(project);
-      Nullability oldNullability = nnm.findEffectiveNullability(oldTargetMethod);
-      Nullability newNullability = nnm.findEffectiveNullability(newTargetMethod);
+      Nullability oldNullability = NullableNotNullManager.getNullability(oldTargetMethod);
+      Nullability newNullability = NullableNotNullManager.getNullability(newTargetMethod);
       return oldNullability == newNullability;
     }
 
