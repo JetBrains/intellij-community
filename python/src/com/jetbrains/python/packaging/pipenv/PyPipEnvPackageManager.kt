@@ -10,10 +10,11 @@ import com.intellij.openapi.module.Module
 import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.roots.OrderRootType
 import com.intellij.openapi.vfs.VfsUtil
+import com.intellij.openapi.vfs.VirtualFile
 import com.jetbrains.python.packaging.PyPackage
 import com.jetbrains.python.packaging.PyPackageManager
-import com.jetbrains.python.packaging.PyPackageUtil
 import com.jetbrains.python.packaging.PyRequirement
+import com.jetbrains.python.packaging.PyRequirementParser
 import com.jetbrains.python.sdk.PythonSdkType
 import com.jetbrains.python.sdk.pipenv.pipFileLockRequirements
 import com.jetbrains.python.sdk.pipenv.runPipEnv
@@ -94,7 +95,13 @@ class PyPipEnvPackageManager(val sdk: Sdk) : PyPackageManager() {
     module.pythonSdk?.pipFileLockRequirements
 
   override fun parseRequirements(text: String): List<PyRequirement> =
-    PyPackageUtil.fix(PyRequirement.fromText(text))
+    PyRequirementParser.fromText(text)
+
+  override fun parseRequirement(line: String): PyRequirement? =
+    PyRequirementParser.fromLine(line)
+
+  override fun parseRequirements(file: VirtualFile): List<PyRequirement> =
+    PyRequirementParser.fromFile(file)
 
   override fun getDependents(pkg: PyPackage): Set<PyPackage> {
     // TODO: Parse the dependency information from `pipenv graph`
