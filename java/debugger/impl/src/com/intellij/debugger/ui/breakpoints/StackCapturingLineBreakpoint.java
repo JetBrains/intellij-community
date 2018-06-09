@@ -21,6 +21,7 @@ import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.ThrowableComputable;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiElement;
 import com.intellij.ui.SimpleColoredComponent;
@@ -50,7 +51,6 @@ public class StackCapturingLineBreakpoint extends WildcardMethodBreakpoint {
   public static final Key<List<StackCapturingLineBreakpoint>> CAPTURE_BREAKPOINTS = Key.create("CAPTURE_BREAKPOINTS");
   private static final Key<Map<Object, List<StackFrameItem>>> CAPTURED_STACKS = Key.create("CAPTURED_STACKS");
   private static final int MAX_STORED_STACKS = 1000;
-  public static final int MAX_STACK_LENGTH = 500;
 
   private final JavaMethodBreakpointProperties myProperties = new JavaMethodBreakpointProperties();
 
@@ -96,8 +96,8 @@ public class StackCapturingLineBreakpoint extends WildcardMethodBreakpoint {
             Value key = myCaptureEvaluator.evaluate(new EvaluationContextImpl(suspendContext, frameProxy));
             if (key instanceof ObjectReference) {
               List<StackFrameItem> frames = StackFrameItem.createFrames(suspendContext, true);
-              if (frames.size() > MAX_STACK_LENGTH) {
-                frames = frames.subList(0, MAX_STACK_LENGTH);
+              if (frames.size() > getMaxStackLength()) {
+                frames = frames.subList(0, getMaxStackLength());
               }
               stacks.put(getKey((ObjectReference)key), frames);
             }
@@ -311,7 +311,7 @@ public class StackCapturingLineBreakpoint extends WildcardMethodBreakpoint {
     }
 
     VirtualMachineProxyImpl virtualMachineProxy = process.getVirtualMachineProxy();
-    List<Value> args = Arrays.asList(key, virtualMachineProxy.mirrorOf(MAX_STACK_LENGTH));
+    List<Value> args = Arrays.asList(key, virtualMachineProxy.mirrorOf(getMaxStackLength()));
     Pair<ClassType, Method> finalMethodPair = methodPair;
     Value resArray = evaluationContext.computeAndKeep(
       () -> process.invokeMethod(evaluationContext, finalMethodPair.first, finalMethodPair.second,
@@ -456,5 +456,9 @@ public class StackCapturingLineBreakpoint extends WildcardMethodBreakpoint {
 
   public static boolean isAgentEnabled() {
     return DebuggerSettings.getInstance().INSTRUMENTING_AGENT;
+  }
+
+  public static int getMaxStackLength() {
+    return Registry.intValue("debugger.async.stacks.max.depth", 500);
   }
 }

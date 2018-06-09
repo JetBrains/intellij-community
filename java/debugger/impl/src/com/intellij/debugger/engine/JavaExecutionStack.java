@@ -216,7 +216,7 @@ public class JavaExecutionStack extends XExecutionStack {
             int i = 0;
             boolean separator = true;
             for (StackFrameItem stackFrame : relatedStack) {
-              if (i > StackCapturingLineBreakpoint.MAX_STACK_LENGTH) {
+              if (i > StackCapturingLineBreakpoint.getMaxStackLength()) {
                 addFrameIfNeeded(new XStackFrame() {
                   @Override
                   public void customizePresentation(@NotNull ColoredTextContainer component) {
