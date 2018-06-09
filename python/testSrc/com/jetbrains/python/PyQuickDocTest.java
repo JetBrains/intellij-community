@@ -475,7 +475,7 @@ public class PyQuickDocTest extends LightMarkedTestCase {
     runWithLanguageLevel(LanguageLevel.PYTHON35, this::checkHTMLOnly);
   }
 
-  public void testParamDescriptionsOrder() {
+  public void testParamDescriptionOrder() {
     checkHTMLOnly();
   }
 
