@@ -582,12 +582,12 @@ public class HighlightUtil extends HighlightUtilBase {
   }
 
   @NotNull
-  public static String getUnhandledExceptionsDescriptor(@NotNull final Collection<PsiClassType> unhandled) {
+  public static String getUnhandledExceptionsDescriptor(@NotNull final Collection<? extends PsiClassType> unhandled) {
     return getUnhandledExceptionsDescriptor(unhandled, null);
   }
 
   @NotNull
-  private static String getUnhandledExceptionsDescriptor(@NotNull final Collection<PsiClassType> unhandled, @Nullable final String source) {
+  private static String getUnhandledExceptionsDescriptor(@NotNull final Collection<? extends PsiClassType> unhandled, @Nullable final String source) {
     final String exceptions = formatTypes(unhandled);
     return source == null
            ? JavaErrorMessages.message("unhandled.exceptions", exceptions, unhandled.size())
@@ -595,7 +595,7 @@ public class HighlightUtil extends HighlightUtilBase {
   }
 
   @NotNull
-  private static String formatTypes(@NotNull Collection<PsiClassType> unhandled) {
+  private static String formatTypes(@NotNull Collection<? extends PsiClassType> unhandled) {
     return StringUtil.join(unhandled, JavaHighlightUtil::formatType, ", ");
   }
 
@@ -858,12 +858,13 @@ public class HighlightUtil extends HighlightUtilBase {
         if (PsiModifier.PUBLIC.equals(modifier)) {
           isAllowed = modifierOwnerParent instanceof PsiJavaFile ||
                       modifierOwnerParent instanceof PsiClass &&
-                      (modifierOwnerParent instanceof PsiSyntheticClass || ((PsiClass)modifierOwnerParent).getQualifiedName() != null);
+                      (modifierOwnerParent instanceof PsiSyntheticClass || ((PsiClass)modifierOwnerParent).getQualifiedName() != null || !modifierOwnerParent.isPhysical());
         }
         else if (PsiModifier.STATIC.equals(modifier) || PsiModifier.PRIVATE.equals(modifier) || PsiModifier.PROTECTED.equals(modifier) ||
                  PsiModifier.PACKAGE_LOCAL.equals(modifier)) {
           isAllowed = modifierOwnerParent instanceof PsiClass &&
-                      ((PsiClass)modifierOwnerParent).getQualifiedName() != null || FileTypeUtils.isInServerPageFile(modifierOwnerParent);
+                      // non-physical dummy holder might not have FQN
+                      ((PsiClass)modifierOwnerParent).getQualifiedName() != null || FileTypeUtils.isInServerPageFile(modifierOwnerParent) || !modifierOwnerParent.isPhysical();
         }
 
         if (aClass.isEnum()) {
@@ -884,16 +885,16 @@ public class HighlightUtil extends HighlightUtilBase {
         isAllowed = false;
       }
 
+      boolean isInterface = modifierOwnerParent instanceof PsiClass && ((PsiClass)modifierOwnerParent).isInterface();
       if (PsiModifier.PRIVATE.equals(modifier) && modifierOwnerParent instanceof PsiClass) {
-        isAllowed &= !((PsiClass)modifierOwnerParent).isInterface() ||
-                      PsiUtil.isLanguageLevel9OrHigher(modifierOwner) && !((PsiClass)modifierOwnerParent).isAnnotationType();
+        isAllowed &= !isInterface || PsiUtil.isLanguageLevel9OrHigher(modifierOwner) && !((PsiClass)modifierOwnerParent).isAnnotationType();
       }
       else if (PsiModifier.STRICTFP.equals(modifier)) {
-        isAllowed &= !((PsiClass)modifierOwnerParent).isInterface() || PsiUtil.isLanguageLevel8OrHigher(modifierOwner);
+        isAllowed &= !isInterface || PsiUtil.isLanguageLevel8OrHigher(modifierOwner);
       }
       else if (PsiModifier.PROTECTED.equals(modifier) || PsiModifier.TRANSIENT.equals(modifier) ||
                PsiModifier.SYNCHRONIZED.equals(modifier)) {
-        isAllowed &= !((PsiClass)modifierOwnerParent).isInterface();
+        isAllowed &= !isInterface;
       }
 
       if (containingClass != null && containingClass.isInterface()) {
@@ -1204,7 +1205,7 @@ public class HighlightUtil extends HighlightUtilBase {
 
   @Nullable
   static List<HighlightInfo> checkExceptionThrownInTry(@NotNull final PsiParameter parameter,
-                                                       @NotNull final Set<PsiClassType> thrownTypes) {
+                                                       @NotNull final Set<? extends PsiClassType> thrownTypes) {
     final PsiElement declarationScope = parameter.getDeclarationScope();
     if (!(declarationScope instanceof PsiCatchSection)) return null;
 
@@ -1222,7 +1223,7 @@ public class HighlightUtil extends HighlightUtilBase {
 
   @Nullable
   private static HighlightInfo checkSimpleCatchParameter(@NotNull final PsiParameter parameter,
-                                                         @NotNull final Collection<PsiClassType> thrownTypes,
+                                                         @NotNull final Collection<? extends PsiClassType> thrownTypes,
                                                          @NotNull final PsiClassType caughtType) {
     if (ExceptionUtil.isUncheckedExceptionOrSuperclass(caughtType)) return null;
 
@@ -1269,7 +1270,7 @@ public class HighlightUtil extends HighlightUtilBase {
 
   @Nullable
   static Collection<HighlightInfo> checkWithImprovedCatchAnalysis(@NotNull PsiParameter parameter,
-                                                                  @NotNull Collection<PsiClassType> thrownInTryStatement,
+                                                                  @NotNull Collection<? extends PsiClassType> thrownInTryStatement,
                                                                   @NotNull PsiFile containingFile) {
     final PsiElement scope = parameter.getDeclarationScope();
     if (!(scope instanceof PsiCatchSection)) return null;
@@ -2392,7 +2393,7 @@ public class HighlightUtil extends HighlightUtilBase {
     return result.isEmpty() ? null : result;
   }
 
-  private static boolean checkMultipleTypes(@NotNull PsiClass catchClass, @NotNull final List<PsiType> upperCatchTypes) {
+  private static boolean checkMultipleTypes(@NotNull PsiClass catchClass, @NotNull final List<? extends PsiType> upperCatchTypes) {
     for (int i = upperCatchTypes.size() - 1; i >= 0; i--) {
       if (checkSingleType(catchClass, upperCatchTypes.get(i))) return true;
     }
