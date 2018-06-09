@@ -144,6 +144,11 @@ public abstract class AbstractGotoSEContributor<F> implements SearchEverywhereCo
   }
 
   @Override
+  public boolean isMultiselectSupported() {
+    return true;
+  }
+
+  @Override
   public ListCellRenderer getElementsRenderer(JList<?> list) {
     return new SearchEverywherePsiRenderer(list);
   }

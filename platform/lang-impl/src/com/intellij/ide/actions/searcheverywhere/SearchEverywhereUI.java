@@ -120,6 +120,17 @@ public class SearchEverywhereUI extends BorderLayoutPanel implements Disposable,
     myResultsList.setFocusable(false);
     myResultsList.setCellRenderer(new CompositeCellRenderer());
     myResultsList.setSelectionMode(ListSelectionModel.MULTIPLE_INTERVAL_SELECTION);
+    myResultsList.addListSelectionListener(e -> {
+      int[] selectedIndices = myResultsList.getSelectedIndices();
+      if (selectedIndices.length > 1) {
+        boolean multiselectAllowed = Arrays.stream(selectedIndices)
+                                           .allMatch(i -> myListModel.getContributorForIndex(i).isMultiselectSupported());
+        if (!multiselectAllowed) {
+          int index = myResultsList.getLeadSelectionIndex();
+          myResultsList.setSelectedIndex(index);
+        }
+      }
+    });
 
     ScrollingUtil.installActions(myResultsList, getSearchField());
 
