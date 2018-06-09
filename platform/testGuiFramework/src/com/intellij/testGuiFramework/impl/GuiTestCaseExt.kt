@@ -159,6 +159,7 @@ fun GuiTestCase.checkProjectIsCompiled(expectedStatus: String) {
     shortcut(Modifier.CONTROL + Modifier.SHIFT + Key.A)
     waitAMoment()
     typeText(textEventLog)
+    waitAMoment()
     shortcut(Key.ENTER)
     toolwindow(id = textEventLog) {
       content(tabName = "") {
@@ -234,6 +235,7 @@ fun GuiTestCase.checkRunGutterIcons(expectedNumberOfRunIcons: Int, expectedRunLi
           "At line #$line the actual text is `$currentLine`, but it was expected `$expectedLine`"
         }
       }
+      waitUntilErrorAnalysisFinishes()
     }
   }
 }
