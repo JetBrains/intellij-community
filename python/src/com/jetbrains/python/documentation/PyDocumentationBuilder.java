@@ -381,7 +381,7 @@ public class PyDocumentationBuilder {
     final StructuredDocString structured = DocStringUtil.parseDocString(docstring);
 
     final List<PyCallableParameter> parameters = function.getParameters(myContext);
-    final Set<String> actualNames = ContainerUtil.map2SetNotNull(parameters, PyCallableParameter::getName);
+    final List<String> actualNames = ContainerUtil.mapNotNull(parameters, PyCallableParameter::getName);
     // Retain the actual order of parameters
     final String paramList = StreamEx.of(actualNames)
                                      .filter(name -> structured.getParamDescription(name) != null)
@@ -398,7 +398,7 @@ public class PyDocumentationBuilder {
 
     final List<String> allKeywordArgs = structured.getKeywordArguments();
     if (!ContainerUtil.exists(parameters, PyCallableParameter::isKeywordContainer)) {
-      allKeywordArgs.retainAll(actualNames);
+      allKeywordArgs.retainAll(new HashSet<>(actualNames));
     }
     final String keywordArgsList = StreamEx.of(allKeywordArgs)
                                            .map(name -> {
