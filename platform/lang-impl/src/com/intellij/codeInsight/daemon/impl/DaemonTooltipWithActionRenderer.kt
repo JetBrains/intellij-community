@@ -10,6 +10,7 @@ import com.intellij.codeInsight.hint.HintManagerImpl
 import com.intellij.codeInsight.hint.LineTooltipRenderer
 import com.intellij.icons.AllIcons
 import com.intellij.ide.TooltipEvent
+import com.intellij.ide.ui.UISettings
 import com.intellij.openapi.actionSystem.*
 import com.intellij.openapi.actionSystem.impl.ActionButton
 import com.intellij.openapi.actionSystem.impl.ActionMenuItem
@@ -20,6 +21,7 @@ import com.intellij.openapi.keymap.KeymapUtil
 import com.intellij.openapi.keymap.KeymapUtil.getActiveKeymapShortcuts
 import com.intellij.openapi.project.DumbAware
 import com.intellij.openapi.ui.GraphicsConfig
+import com.intellij.openapi.util.SystemInfo
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.ui.*
 import com.intellij.ui.components.JBLabel
@@ -333,8 +335,28 @@ fun createActionLabel(text: String, action: Runnable, background: Color): Hyperl
       action.run()
     }
   })
+  val toolTipFont = getActionFont()
+
+  label.font = toolTipFont
 
   return label
+}
+
+private fun getActionFont(): Font? {
+  val toolTipFont = UIUtil.getToolTipFont()
+  if (toolTipFont == null || SystemInfo.isWindows) return toolTipFont
+
+  //if font was changed from default we dont have a good heuristic to customize it
+  if (JBUI.Fonts.label() != toolTipFont || UISettings.instance.overrideLafFonts) return toolTipFont
+
+  if (SystemInfo.isMac) {
+    return toolTipFont.deriveFont(toolTipFont.size - 1f)
+  }
+  if (SystemInfo.isLinux) {
+    return toolTipFont.deriveFont(toolTipFont.size - 1f)
+  }
+
+  return toolTipFont
 }
 
 
