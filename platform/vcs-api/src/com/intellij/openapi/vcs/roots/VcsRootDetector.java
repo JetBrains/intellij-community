@@ -25,4 +25,10 @@ public interface VcsRootDetector {
    */
   @NotNull
   Collection<VcsRoot> detect(@Nullable VirtualFile startDir);
+
+  /**
+   * Returns the cached result of the previous call to {@link #detect()} if there was any, otherwise calls it and waits for the completion.
+   */
+  @NotNull
+  Collection<VcsRoot> getOrDetect();
 }
