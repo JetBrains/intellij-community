@@ -96,9 +96,10 @@ internal class DaemonTooltipWithActionRenderer(text: String?,
                          actions: ArrayList<AnAction>,
                          tooltipReloader: TooltipReloader) {
     super.fillPanel(editor, grid, hint, hintHint, actions, tooltipReloader)
-    if (tooltipAction == null && !LineTooltipRenderer.isActiveHtml(myText!!)) return
+    val hasMore = LineTooltipRenderer.isActiveHtml(myText!!)
+    if (tooltipAction == null && !hasMore) return
 
-    val settingsComponent = createSettingsComponent(hint, hintHint, tooltipReloader)
+    val settingsComponent = createSettingsComponent(hintHint, tooltipReloader, hasMore)
 
     val settingsConstraints = GridBagConstraints(1, 0, 1, 1, 0.0, 0.0, GridBagConstraints.NORTH, GridBagConstraints.HORIZONTAL,
                                                  JBUI.insets(3, 3, 0, 3), 0, 0)
@@ -201,7 +202,7 @@ internal class DaemonTooltipWithActionRenderer(text: String?,
         super.paint(g)
       }
     }
-    
+
     wrapper.isOpaque = false
     wrapper.border = JBUI.Borders.empty()
     return wrapper
@@ -259,14 +260,14 @@ internal class DaemonTooltipWithActionRenderer(text: String?,
     return super.isContentAction(dressedText) || tooltipAction != null
   }
 
-  private fun createSettingsComponent(hint: LightweightHint,
-                                      hintHint: HintHint,
-                                      reloader: TooltipReloader): JComponent {
+  private fun createSettingsComponent(hintHint: HintHint,
+                                      reloader: TooltipReloader,
+                                      hasMore: Boolean): JComponent {
     val presentation = Presentation()
     presentation.icon = AllIcons.General.GearPlain
     val actions = mutableListOf<AnAction>()
-    actions.add(ShowActionsAction(hint))
-    val docAction = ShowDocAction(reloader)
+    actions.add(ShowActionsAction(reloader, tooltipAction != null))
+    val docAction = ShowDocAction(reloader, hasMore)
     actions.add(docAction)
     val actionGroup = SettingsActionGroup(actions)
 
@@ -287,7 +288,8 @@ internal class DaemonTooltipWithActionRenderer(text: String?,
     return wrapper
   }
 
-  private inner class ShowActionsAction(val hint: LightweightHint) : ToggleAction("Show Quick fixes"), HintManagerImpl.ActionToIgnore {
+  private inner class ShowActionsAction(val reloader: TooltipReloader, val isEnabled: Boolean) : ToggleAction(
+    "Show Quick fixes"), HintManagerImpl.ActionToIgnore {
 
     override fun isSelected(e: AnActionEvent): Boolean {
       return isShowActions()
@@ -295,11 +297,16 @@ internal class DaemonTooltipWithActionRenderer(text: String?,
 
     override fun setSelected(e: AnActionEvent, state: Boolean) {
       setShowActions(state)
-      hint.hide()
+      reloader.reload(myCurrentWidth > 0)
+    }
+
+    override fun update(e: AnActionEvent) {
+      e.presentation.isEnabled = isEnabled
+      super.update(e)
     }
   }
 
-  private inner class ShowDocAction(val reloader: TooltipReloader) : ToggleAction(
+  private inner class ShowDocAction(val reloader: TooltipReloader, val isEnabled: Boolean) : ToggleAction(
     "Show Inspection Description"), HintManagerImpl.ActionToIgnore, DumbAware, PopupAction {
 
     init {
@@ -313,6 +320,12 @@ internal class DaemonTooltipWithActionRenderer(text: String?,
     override fun setSelected(e: AnActionEvent, state: Boolean) {
       reloader.reload(state)
     }
+
+    override fun update(e: AnActionEvent) {
+      e.presentation.isEnabled = isEnabled
+      super.update(e)
+    }
+
   }
 
 }
