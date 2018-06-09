@@ -66,6 +66,7 @@ import static com.jetbrains.python.psi.PyUtil.as;
 public class PythonDocumentationProvider extends AbstractDocumentationProvider implements ExternalDocumentationProvider {
 
   private static final int RETURN_TYPE_WRAPPING_THRESHOLD = 80;
+  private static final String BULLET_POINT = "\u2022";  // &bull;
 
   // provides ctrl+hover info
   @Override
@@ -158,7 +159,7 @@ public class PythonDocumentationProvider extends AbstractDocumentationProvider i
           if (!first) {
             result.addItem("\n");
           }
-          result.addItem("\u2022 "); // &bull; -- bullet point
+          result.addItem(BULLET_POINT).addItem(" ");
           describeTypeWithLinks(context.getType(overload), context, function, result);
           first = false;
         }
@@ -166,11 +167,6 @@ public class PythonDocumentationProvider extends AbstractDocumentationProvider i
     }
 
     return result;
-
-    //if (!PyNames.INIT.equals(name)) {
-    //  result.addItem(escaper.apply("\nInferred type: "));
-    //  describeTypeWithLinks(context.getType(function), context, function, result);
-    //}
   }
 
   private static boolean showOverloads(@NotNull PyFunction definition, @Nullable PsiElement original, @NotNull TypeEvalContext context) {
