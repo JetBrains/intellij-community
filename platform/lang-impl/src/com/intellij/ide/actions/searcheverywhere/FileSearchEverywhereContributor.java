@@ -77,7 +77,7 @@ public class FileSearchEverywhereContributor extends AbstractGotoSEContributor<F
 
   @Override
   public Object getDataForItem(Object element, String dataId) {
-    if (CommonDataKeys.PSI_FILE.is(dataId)) {
+    if (CommonDataKeys.PSI_FILE.is(dataId) && element instanceof PsiFile) {
       return element;
     }
 

@@ -144,7 +144,7 @@ public abstract class AbstractGotoSEContributor<F> implements SearchEverywhereCo
 
   @Override
   public Object getDataForItem(Object element, String dataId) {
-    if (CommonDataKeys.PSI_ELEMENT.is(dataId)) {
+    if (CommonDataKeys.PSI_ELEMENT.is(dataId) && element instanceof PsiElement) {
       return element;
     }
 
