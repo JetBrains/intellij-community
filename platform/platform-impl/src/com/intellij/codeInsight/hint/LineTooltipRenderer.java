@@ -56,6 +56,7 @@ public class LineTooltipRenderer extends ComparableObject.Impl implements Toolti
 
   //is used for suppressing some events while processing links  
   private volatile boolean myActiveLink = false;
+  //mostly is used as a marker that we are in popup with description
   protected final int myCurrentWidth;
 
   protected interface TooltipReloader {
