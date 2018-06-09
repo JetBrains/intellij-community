@@ -93,8 +93,11 @@ fun getFirstAvailableAction(psiFile: PsiFile,
                             editor: Editor,
                             intentionsInfo: ShowIntentionsPass.IntentionsInfo): IntentionAction? {
   val project = psiFile.project
+  
+  //sort the actions
   val cachedIntentions = CachedIntentions.createAndUpdateActions(project, psiFile, editor, intentionsInfo)
   val allActions = cachedIntentions.allActions
+  
   if (allActions.isEmpty()) return null
 
   allActions.forEach {
