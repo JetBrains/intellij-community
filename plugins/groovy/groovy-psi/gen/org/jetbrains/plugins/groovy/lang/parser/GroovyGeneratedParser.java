@@ -5535,7 +5535,6 @@ public class GroovyGeneratedParser implements PsiParser, LightPsiParser {
   //                           | statement_keywords
   //                           | modifier
   //                           | primitive_type
-  //                           | code_reference_identifiers
   static boolean statement_start(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "statement_start")) return false;
     boolean r;
@@ -5545,7 +5544,6 @@ public class GroovyGeneratedParser implements PsiParser, LightPsiParser {
     if (!r) r = statement_keywords(b, l + 1);
     if (!r) r = modifier(b, l + 1);
     if (!r) r = parsePrimitiveType(b, l + 1);
-    if (!r) r = code_reference_identifiers(b, l + 1);
     exit_section_(b, m, null, r);
     return r;
   }

@@ -646,7 +646,6 @@ private statement_start ::= expression_start
                           | statement_keywords
                           | modifier
                           | primitive_type
-                          | code_reference_identifiers
 private statement_keywords ::= 'assert'
                              | 'break'
                              | 'continue'
