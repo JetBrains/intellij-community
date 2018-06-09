@@ -20,6 +20,7 @@ import org.apache.thrift.transport.TServerTransport
 import org.apache.thrift.transport.TTransport
 import org.apache.thrift.transport.TTransportException
 import java.util.concurrent.BlockingQueue
+import java.util.concurrent.CountDownLatch
 import java.util.concurrent.LinkedBlockingQueue
 import java.util.concurrent.TimeUnit
 import java.util.concurrent.atomic.AtomicBoolean
@@ -30,8 +31,19 @@ import java.util.concurrent.atomic.AtomicBoolean
 class TNettyServerTransport(port: Int) : TServerTransport() {
   private val nettyServer: NettyServer = NettyServer(port)
 
+  @Throws(TTransportException::class)
   override fun listen() {
-    nettyServer.listen()
+    try {
+      nettyServer.listen()
+    }
+    catch (e: InterruptedException) {
+      throw TTransportException(e)
+    }
+  }
+
+  @Throws(InterruptedException::class)
+  fun waitForBind() {
+    nettyServer.waitForBind()
   }
 
   override fun acceptImpl(): TTransport = nettyServer.accept()
@@ -59,6 +71,8 @@ class TNettyServerTransport(port: Int) : TServerTransport() {
     // accepted connection once the boss accepts the connection and registers
     // the accepted connection to the worker.
     private val workerGroup = NioEventLoopGroup(0, ConcurrencyUtil.newNamedThreadFactory("Python Console NIO Event Loop Worker"))
+
+    private val serverBound = CountDownLatch(1)
 
     fun listen() {
       // TODO check state!
@@ -143,17 +157,16 @@ class TNettyServerTransport(port: Int) : TServerTransport() {
       // start the server. Here, we bind to the port 8080 of all NICs (network
       // interface cards) in the machine. You can now call the bind() method as
       // many times as you want (with different bind addresses.)
-      val f = b.bind(port).sync() // (7)
+      b.bind(port).sync() // (7)
 
       LOG.debug("Running Netty server on $port")
 
-      // TODO move to `close()`
-      /*
-            // Wait until the server socket is closed.
-            // In this example, this does not happen, but you can do that to gracefully
-            // shut down your server.
-            f.channel().closeFuture().sync()
-      */
+      serverBound.countDown()
+    }
+
+    @Throws(InterruptedException::class)
+    fun waitForBind() {
+      serverBound.await()
     }
 
     fun accept(): TTransport {
@@ -183,6 +196,14 @@ class TNettyServerTransport(port: Int) : TServerTransport() {
         bossGroup.shutdownGracefully()
 
         // TODO close server channel!
+
+        // TODO should we wait for channel close move to `close()`
+        /*
+              // Wait until the server socket is closed.
+              // In this example, this does not happen, but you can do that to gracefully
+              // shut down your server.
+              f.channel().closeFuture().sync()
+        */
       }
     }
   }

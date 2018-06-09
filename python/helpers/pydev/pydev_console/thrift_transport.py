@@ -2,8 +2,8 @@ import socket
 import struct
 import sys
 import threading
-from io import BytesIO, SEEK_CUR
 
+from pydev_console.io import PipeIO
 from thriftpy.thrift import TClient
 from thriftpy.transport import TTransportBase, readall
 
@@ -11,28 +11,13 @@ REQUEST = 0
 RESPONSE = 1
 
 
-def _read_anything(read_fn, sz):
-    buff = b''
-    have = 0
-    while have == 0:
-        chunk = read_fn(sz - have)
-
-        have += len(chunk)
-        buff += chunk
-
-    return buff
-
-
 class MultiplexedSocketReader(object):
 
     def __init__(self, s):
         self._socket = s
 
-        self._request_buffer = BytesIO()
-        self._response_buffer = BytesIO()
-
-        self._request_buffer_lock = threading.RLock()
-        self._response_buffer_lock = threading.RLock()
+        self._request_pipe = PipeIO()
+        self._response_pipe = PipeIO()
 
         self._read_socket_lock = threading.RLock()
 
@@ -40,19 +25,13 @@ class MultiplexedSocketReader(object):
         """
         Invoked form server-side of the bidirectional transport.
         """
-        return _read_anything(self._read_request_buffer, sz)
+        return self._request_pipe.read(sz)
 
     def read_response(self, sz):
         """
         Invoked form client-side of the bidirectional transport.
         """
-        return _read_anything(self._read_response_buffer, sz)
-
-    def _read_request_buffer(self, sz):
-        return self._request_buffer.read(sz)
-
-    def _read_response_buffer(self, sz):
-        return self._response_buffer.read(sz)
+        return self._response_pipe.read(sz)
 
     # noinspection PyUnusedLocal
     def _try_fill_buffer(self, sz):
@@ -63,13 +42,9 @@ class MultiplexedSocketReader(object):
             direction, frame = self._read_frame()
 
         if direction == REQUEST:
-            with self._request_buffer_lock:
-                self._request_buffer.write(frame)
-                self._request_buffer.seek(-len(frame), SEEK_CUR)
+            self._request_pipe.write(frame)
         elif direction == RESPONSE:
-            with self._response_buffer_lock:
-                self._response_buffer.write(frame)
-                self._response_buffer.seek(-len(frame), SEEK_CUR)
+            self._response_pipe.write(frame)
 
     def _read_frame(self):
         # todo introduce sz argument
@@ -110,7 +85,7 @@ class FramedWriter(object):
     MAX_BUFFER_SIZE = 4096
 
     def __init__(self):
-        self._buffer = BytesIO()
+        self._buffer = bytearray()
 
     def _get_writer(self):
         raise NotImplementedError
@@ -130,21 +105,21 @@ class FramedWriter(object):
             if buffer_size + bytes_to_write > self.MAX_BUFFER_SIZE:
                 write_till_byte = bytes_written + (self.MAX_BUFFER_SIZE - buffer_size)
 
-                self._buffer.write(buf[bytes_written:write_till_byte])
+                self._buffer.extend(buf[bytes_written:write_till_byte])
                 self.flush()
 
                 bytes_written = write_till_byte
             else:
                 # the whole buffer processed
-                self._buffer.write(buf[bytes_written:])
+                self._buffer.extend(buf[bytes_written:])
                 bytes_written = buf_len
 
     def flush(self):
         # reset wbuf before write/flush to preserve state on underlying failure
-        out = self._buffer.getvalue()
+        out = bytes(self._buffer)
         # prepend the message with the direction byte
         out = struct.pack("b", self._get_write_direction()) + out
-        self._buffer = BytesIO()
+        self._buffer = bytearray()
 
         # N.B.: Doing this string concatenation is WAY cheaper than making
         # two separate calls to the underlying socket object. Socket writes in
@@ -154,21 +129,18 @@ class FramedWriter(object):
         self._get_writer().write(struct.pack("!i", len(out)) + out)
 
     def close(self):
-        self._buffer.close()
+        self._buffer = bytearray()
+        pass
 
 
 class TBidirectionalClientTransport(TTransportBase, FramedWriter):
-    def __init__(self, host, port):
+    def __init__(self, client_socket, reader, writer):
         super(TBidirectionalClientTransport, self).__init__()
 
-        self.host = host
-        self.port = port
-
         # the following properties will be initialized in `open()`
-        self._client_socket = None
-        self._reader = None
-        self._writer = None
-        self._server_transport = None
+        self._client_socket = client_socket
+        self._reader = reader
+        self._writer = writer
 
     def _get_writer(self):
         return self._writer
@@ -182,28 +154,9 @@ class TBidirectionalClientTransport(TTransportBase, FramedWriter):
         """
         return self._reader.read_response(sz)
 
-    def get_server_transport(self):
-        if not self._server_transport:
-            raise Exception
-
-        return self._server_transport
-
     def is_open(self):
         # todo we may try to monitor reads and writes and put a flag if they fail
         return self._client_socket
-
-    def open(self):
-        client_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-        client_socket.connect((self.host, self.port))
-
-        self._client_socket = client_socket
-
-        self._reader = MultiplexedSocketReader(self._client_socket)
-        self._reader.start_reading()
-
-        self._writer = SocketWriter(self._client_socket)
-
-        self._server_transport = TReversedServerTransport(self._reader.read_request, self._writer)
 
     def close(self):
         # todo should we do something with buffer of the multiplexed reader
@@ -268,3 +221,34 @@ class TSyncClient(TClient):
     def _req(self, _api, *args, **kwargs):
         with self._lock:
             return super(TSyncClient, self)._req(_api, *args, **kwargs)
+
+
+def open_transports_as_client(addr):
+    client_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+    client_socket.connect(addr)
+
+    return _create_client_server_transports(client_socket)
+
+
+def open_transports_as_server(addr):
+    server_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+    server_socket.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
+
+    server_socket.bind(addr)
+    server_socket.listen(1)
+
+    client_socket, address = server_socket.accept()
+
+    raise _create_client_server_transports(client_socket)
+
+
+def _create_client_server_transports(sock):
+    reader = MultiplexedSocketReader(sock)
+    reader.start_reading()
+
+    writer = SocketWriter(sock)
+
+    client_transport = TBidirectionalClientTransport(sock, reader, writer)
+    server_transport = TReversedServerTransport(client_transport._reader.read_request, client_transport._writer)
+
+    return client_transport, server_transport

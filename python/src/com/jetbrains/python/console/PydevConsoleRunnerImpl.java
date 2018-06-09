@@ -44,7 +44,6 @@ import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.ui.Messages;
-import com.intellij.openapi.util.Couple;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.SystemInfo;
@@ -97,7 +96,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Scanner;
 import java.util.concurrent.Future;
-import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 
 import static com.intellij.execution.runners.AbstractConsoleRunnerWithHistory.registerActionShortcuts;
@@ -132,8 +130,6 @@ public class PydevConsoleRunnerImpl implements PydevConsoleRunner {
 
 
   private static final long HANDSHAKE_TIMEOUT = 60000;
-
-  private static final long CONNECTION_TIMEOUT = HANDSHAKE_TIMEOUT;
 
   private RemoteConsoleProcessData myRemoteConsoleProcessData;
 
@@ -391,9 +387,7 @@ public class PydevConsoleRunnerImpl implements PydevConsoleRunner {
     }
     PythonHelper.CONSOLE.addToGroup(group, cmd);
 
-    for (int port : ports) {
-      group.addParameter(String.valueOf(port));
-    }
+    group.addParameters("--mode=client", "--port=" + ports[1]);
 
     return cmd;
   }
@@ -431,27 +425,19 @@ public class PydevConsoleRunnerImpl implements PydevConsoleRunner {
       EncodingEnvironmentUtil.setLocaleEnvironmentIfMac(envs, generalCommandLine.getCharset());
 
       Future<Void> connectionFuture;
+
+      myPydevConsoleCommunication = new PydevConsoleCommunication(myProject);
       // first of all - start server
       try {
         // todo use process in `PydevConsoleCommunication`
-        myPydevConsoleCommunication = new PydevConsoleCommunication(myProject, myPorts[0], null, myPorts[1]);
         // todo we might want to add a timeout here on start
-        connectionFuture = myPydevConsoleCommunication.startServer();
+        myPydevConsoleCommunication.startServer(myPorts[1]);
       }
       catch (Exception e) {
         throw new ExecutionException(e.getMessage(), e);
       }
 
-      final Process server = generalCommandLine.createProcess();
-
-      try {
-        // todo we might want to add a timeout here
-        connectionFuture.get(CONNECTION_TIMEOUT, TimeUnit.SECONDS);
-      }
-      catch (Exception e) {
-        throw new ExecutionException(e.getMessage(), e);
-      }
-      return server;
+      return generalCommandLine.createProcess();
     }
   }
 
@@ -459,9 +445,9 @@ public class PydevConsoleRunnerImpl implements PydevConsoleRunner {
     return PYDEV_PYDEVCONSOLE_PY;
   }
 
-  public static Couple<Integer> getRemotePortsFromProcess(Process process) throws ExecutionException {
+  public static int getRemotePortFromProcess(@NotNull Process process) throws ExecutionException {
     @SuppressWarnings("IOResourceOpenedButNotSafelyClosed") Scanner s = new Scanner(process.getInputStream());
-    return Couple.of(readInt(s, process), readInt(s, process));
+    return readInt(s, process);
   }
 
   private static int readInt(Scanner s, Process process) throws ExecutionException {

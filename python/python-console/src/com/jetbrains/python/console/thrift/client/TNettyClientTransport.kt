@@ -20,6 +20,7 @@ import org.apache.thrift.transport.TServerTransport
 import org.apache.thrift.transport.TTransport
 import java.io.PipedInputStream
 import java.io.PipedOutputStream
+import java.util.concurrent.atomic.AtomicBoolean
 
 class TNettyClientTransport(private val host: String,
                             private val port: Int) : TTransport() {
@@ -37,11 +38,24 @@ class TNettyClientTransport(private val host: String,
   private val serverAcceptedTransport = TNettyTransport()
 
   val serverTransport: TServerTransport = object : TServerTransport() {
+    private val acceptedOnce = AtomicBoolean(false)
+
     override fun listen() {
       // TODO ?
     }
 
-    override fun acceptImpl(): TTransport = serverAcceptedTransport
+    override fun acceptImpl(): TTransport {
+      if (acceptedOnce.compareAndSet(false, true)) {
+        return serverAcceptedTransport
+      }
+
+      val lock = Object()
+      while (true) {
+        synchronized(lock) {
+          lock.wait()
+        }
+      }
+    }
 
     override fun close() {
       // TODO ?
