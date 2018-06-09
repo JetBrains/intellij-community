@@ -16,7 +16,6 @@
 package com.intellij.ui.mac.foundation;
 
 import com.intellij.openapi.util.text.StringUtil;
-import java.util.HashMap;
 import com.sun.jna.*;
 import com.sun.jna.ptr.PointerByReference;
 import org.jetbrains.annotations.NotNull;
@@ -24,10 +23,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
 import java.io.UnsupportedEncodingException;
-import java.util.Arrays;
-import java.util.List;
-import java.util.Map;
-import java.util.UUID;
+import java.util.*;
 
 /**
  * @author spleaner
@@ -376,6 +372,14 @@ public class Foundation {
       }
 
       return result;
+    }
+
+    public static ID toStringDictionary(@NotNull Map<String, String> map) {
+      ID dict = invoke("NSMutableDictionary", "dictionaryWithCapacity:", map.size());
+      for (Map.Entry<String, String> entry : map.entrySet()) {
+        invoke(dict, "setObject:forKey:", nsString(entry.getValue()), nsString(entry.getKey()));
+      }
+      return dict;
     }
   }
 
