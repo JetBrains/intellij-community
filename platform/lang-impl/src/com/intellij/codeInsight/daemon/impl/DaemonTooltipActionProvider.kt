@@ -6,6 +6,7 @@ import com.intellij.codeInsight.intention.AbstractEmptyIntentionAction
 import com.intellij.codeInsight.intention.IntentionActionDelegate
 import com.intellij.codeInsight.intention.impl.CachedIntentions
 import com.intellij.codeInsight.intention.impl.ShowIntentionActionsHandler
+import com.intellij.ide.actions.ActionsCollector
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.editor.ex.TooltipAction
@@ -26,6 +27,8 @@ class DaemonTooltipAction(private val myFixText: String, private val myActualOff
   }
 
   override fun execute(editor: Editor) {
+    ActionsCollector.getInstance().record("tooltip.actions.execute")
+    
     editor.caretModel.moveToOffset(myActualOffset)
     val project = editor.project ?: return
     val psiFile = PsiDocumentManager.getInstance(project).getPsiFile(editor.document) ?: return
@@ -41,6 +44,8 @@ class DaemonTooltipAction(private val myFixText: String, private val myActualOff
   }
 
   override fun showAllActions(editor: Editor) {
+    ActionsCollector.getInstance().record("tooltip.actions.show.all")
+    
     editor.caretModel.moveToOffset(myActualOffset)
     val project = editor.project ?: return
     val psiFile = PsiDocumentManager.getInstance(project).getPsiFile(editor.document) ?: return
