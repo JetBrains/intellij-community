@@ -6,6 +6,7 @@ import com.intellij.codeInsight.intention.AbstractEmptyIntentionAction
 import com.intellij.codeInsight.intention.IntentionActionDelegate
 import com.intellij.codeInsight.intention.impl.CachedIntentions
 import com.intellij.codeInsight.intention.impl.ShowIntentionActionsHandler
+import com.intellij.codeInspection.ex.QuickFixWrapper
 import com.intellij.ide.actions.ActionsCollector
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.editor.Editor
@@ -21,22 +22,25 @@ class DaemonTooltipActionProvider : TooltipActionProvider {
 }
 
 class DaemonTooltipAction(private val myFixText: String, private val myActualOffset: Int) : TooltipAction {
-  
+
   override fun getText(): String {
     return myFixText
   }
 
   override fun execute(editor: Editor) {
     ActionsCollector.getInstance().record("tooltip.actions.execute")
-    
-    editor.caretModel.moveToOffset(myActualOffset)
+
     val project = editor.project ?: return
     val psiFile = PsiDocumentManager.getInstance(project).getPsiFile(editor.document) ?: return
-    val intentions = ShowIntentionsPass.getActionsToShow(editor, psiFile)
+    val intentions = ShowIntentionsPass.getActionsToShow(editor, psiFile, myActualOffset)
     val list = intentions.errorFixesToShow + intentions.inspectionFixesToShow + intentions.intentionsToShow
     for (descriptor in list) {
       val action = descriptor.action
       if (action.text == myFixText) {
+        if (action !is QuickFixWrapper) {
+          //unfortunately it is very common case when q fix uses caret position :(
+          editor.caretModel.moveToOffset(myActualOffset)
+        }
         ShowIntentionActionsHandler.chooseActionAndInvoke(psiFile, editor, action, myFixText)
         return
       }
@@ -45,7 +49,7 @@ class DaemonTooltipAction(private val myFixText: String, private val myActualOff
 
   override fun showAllActions(editor: Editor) {
     ActionsCollector.getInstance().record("tooltip.actions.show.all")
-    
+
     editor.caretModel.moveToOffset(myActualOffset)
     val project = editor.project ?: return
     val psiFile = PsiDocumentManager.getInstance(project).getPsiFile(editor.document) ?: return
