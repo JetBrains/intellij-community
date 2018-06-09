@@ -26,6 +26,7 @@ import com.intellij.openapi.vcs.ProjectLevelVcsManager;
 import com.intellij.openapi.vcs.VcsRoot;
 import com.intellij.openapi.vcs.VcsRootChecker;
 import com.intellij.openapi.vfs.VfsUtil;
+import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.NotNull;
@@ -78,8 +79,10 @@ public class VcsRootDetectorImpl implements VcsRootDetector {
     Set<VcsRoot> vcsRoots = new HashSet<>();
     if (myProject.isDisposed()) return vcsRoots;
 
-    VirtualFile[] roots = myProjectManager.getContentRoots();
-    for (VirtualFile contentRoot : roots) {
+    for (VirtualFile contentRoot : myProjectManager.getContentRoots()) {
+      if (myProject.getBaseDir() != null && VfsUtilCore.isAncestor(myProject.getBaseDir(), contentRoot, false)) {
+        continue;
+      }
 
       Set<VcsRoot> rootsInsideRoot = scanForRootsInsideDir(contentRoot);
       boolean shouldScanAbove = true;
