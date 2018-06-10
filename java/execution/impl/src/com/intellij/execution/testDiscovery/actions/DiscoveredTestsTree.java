@@ -1,6 +1,8 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.execution.testDiscovery.actions;
 
+import com.intellij.ide.CommonActionsManager;
+import com.intellij.ide.DefaultTreeExpander;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.DataProvider;
 import com.intellij.openapi.actionSystem.LangDataKeys;
@@ -96,6 +98,9 @@ class DiscoveredTestsTree extends Tree implements DataProvider {
         }
       }
     });
+    DefaultTreeExpander treeExpander = new DefaultTreeExpander(this);
+    CommonActionsManager.getInstance().createCollapseAllAction(treeExpander, this);
+    CommonActionsManager.getInstance().createExpandAllAction(treeExpander, this);
   }
 
   public void addTest(@NotNull PsiClass testClass,
