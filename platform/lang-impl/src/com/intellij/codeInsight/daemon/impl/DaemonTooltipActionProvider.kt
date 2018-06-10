@@ -36,9 +36,9 @@ class DaemonTooltipAction(private val myFixText: String, private val myActualOff
 
     val project = editor.project ?: return
     val psiFile = PsiDocumentManager.getInstance(project).getPsiFile(editor.document) ?: return
-    val intentions = ShowIntentionsPass.getActionsToShow(editor, psiFile, myActualOffset)
-    val list = intentions.errorFixesToShow + intentions.inspectionFixesToShow + intentions.intentionsToShow
-    for (descriptor in list) {
+    val intentions = ShowIntentionsPass.getAvailableFixes(editor, psiFile, -1, myActualOffset)
+
+    for (descriptor in intentions) {
       val action = descriptor.action
       if (action.text == myFixText) {
         if (action !is QuickFixWrapper) {
