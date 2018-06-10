@@ -89,7 +89,10 @@ class DiscoveredTestsTree extends Tree implements DataProvider {
       protected void process(TreeModelEvent event, EventType type) {
         if (!myAlreadyDone && myModel.getTestCount() != 0) {
           myAlreadyDone = true;
-          EdtInvocationManager.getInstance().invokeLater(() -> TreeUtil.selectFirstNode(DiscoveredTestsTree.this));
+          EdtInvocationManager.getInstance().invokeLater(() -> {
+            TreeUtil.collapseAll(DiscoveredTestsTree.this, 0);
+            TreeUtil.selectFirstNode(DiscoveredTestsTree.this);
+          });
         }
       }
     });
