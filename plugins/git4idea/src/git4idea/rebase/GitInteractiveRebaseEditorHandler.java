@@ -39,6 +39,7 @@ import static com.intellij.CommonBundle.getCancelButtonText;
 import static com.intellij.CommonBundle.getOkButtonText;
 import static com.intellij.openapi.ui.Messages.getQuestionIcon;
 import static com.intellij.openapi.util.text.StringUtil.splitByLinesKeepSeparators;
+import static com.intellij.openapi.util.text.StringUtil.trimLeading;
 import static git4idea.DialogManager.showOkCancelDialog;
 import static git4idea.rebase.GitRebaseEditorMain.ERROR_EXIT_CODE;
 
@@ -98,7 +99,7 @@ public class GitInteractiveRebaseEditorHandler implements Closeable, GitRebaseEd
   protected boolean handleUnstructuredEditor(@NotNull String path) throws IOException {
     String encoding = GitConfigUtil.getCommitEncoding(myProject, myRoot);
     File file = new File(path);
-    String initialText = ignoreComments(FileUtil.loadFile(file, encoding));
+    String initialText = trimLeading(ignoreComments(FileUtil.loadFile(file, encoding)));
 
     String newText = showUnstructuredEditor(initialText);
     if (newText == null) {
