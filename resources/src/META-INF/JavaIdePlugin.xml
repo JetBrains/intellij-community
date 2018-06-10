@@ -71,7 +71,7 @@
       <implementation-class>com.intellij.compiler.backwardRefs.CompilerReferenceServiceImpl</implementation-class>
     </component>
     <component>
-      <implementation-class>com.intellij.execution.testDiscovery.AffectedTestsChangeListDecorator</implementation-class>
+      <implementation-class>com.intellij.execution.testDiscovery.AffectedTestsInChangeListPainter</implementation-class>
     </component>
   </project-components>
 
