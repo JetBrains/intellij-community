@@ -18,6 +18,7 @@ package com.intellij.openapi.vcs.roots;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.Extensions;
+import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.util.registry.Registry;
@@ -117,6 +118,7 @@ public class VcsRootDetectorImpl implements VcsRootDetector {
 
   @NotNull
   private Set<VcsRoot> scanForRootsInsideDir(@NotNull final VirtualFile dir, final int depth) {
+    ProgressManager.checkCanceled();
     LOG.debug("Scanning inside [" + dir + "], depth = " + depth);
     final Set<VcsRoot> roots = new HashSet<>();
     if (depthLimitExceeded(depth)) {
@@ -157,6 +159,7 @@ public class VcsRootDetectorImpl implements VcsRootDetector {
       return null;
     }
 
+    ProgressManager.checkCanceled();
     VirtualFile par = dir.getParent();
     while (par != null && !par.equals(VfsUtil.getUserHomeDir())) {
       AbstractVcs vcs = getVcsFor(par, dir);
