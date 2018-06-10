@@ -138,6 +138,10 @@ class DiscoveredTestsTree extends Tree implements DataProvider {
     return myModel.getTestCount();
   }
 
+  public int getTestClassesCount() {
+    return myModel.getTestClassesCount();
+  }
+
   @Nullable
   @Override
   public Object getData(String dataId) {
