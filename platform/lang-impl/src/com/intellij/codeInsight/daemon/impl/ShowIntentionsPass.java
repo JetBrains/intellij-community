@@ -91,7 +91,7 @@ public class ShowIntentionsPass extends TextEditorHighlightingPass {
   }
   
   @NotNull
-  private static List<HighlightInfo.IntentionActionDescriptor> getAvailableFixes(@NotNull final Editor editor,
+  public static List<HighlightInfo.IntentionActionDescriptor> getAvailableFixes(@NotNull final Editor editor,
                                                                                 @NotNull final PsiFile file,
                                                                                 final int passId,
                                                                                 int offset) {
@@ -186,7 +186,7 @@ public class ShowIntentionsPass extends TextEditorHighlightingPass {
     public final List<HighlightInfo.IntentionActionDescriptor> notificationActionsToShow = ContainerUtil.createLockFreeCopyOnWriteList();
     private int myOffset;
 
-    void filterActions(@Nullable PsiFile psiFile) {
+    public void filterActions(@Nullable PsiFile psiFile) {
       IntentionActionFilter[] filters = IntentionActionFilter.EXTENSION_POINT_NAME.getExtensions();
       filter(intentionsToShow, psiFile, filters);
       filter(errorFixesToShow, psiFile, filters);
