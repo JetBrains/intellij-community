@@ -79,6 +79,7 @@ import java.util.concurrent.TimeUnit
 import java.util.concurrent.TimeUnit.MINUTES
 import java.util.concurrent.TimeUnit.SECONDS
 import java.util.concurrent.atomic.AtomicReference
+import java.util.concurrent.atomic.AtomicReferenceArray
 import javax.annotation.Nonnull
 import javax.swing.*
 import javax.swing.text.JTextComponent
@@ -572,6 +573,31 @@ object GuiTestUtil {
     }, timeout)
 
     return reference.get()
+  }
+
+  /**
+   * Waits for a first component which passes the given matcher under the given root to become visible.
+   */
+  fun <T : Component> waitUntilFoundList(root: Container?,
+                                         timeout: Timeout,
+                                         matcher: GenericTypeMatcher<T>): List<T> {
+    var reference: AtomicReferenceArray<T>? = null
+    Pause.pause(object : Condition("Find component using " + matcher.toString()) {
+      override fun test(): Boolean {
+        val finder = GuiRobotHolder.robot.finder()
+        val allFound = if (root != null) finder.findAll(root, matcher) else finder.findAll(matcher)
+        if (allFound.isNotEmpty()) {
+          reference = AtomicReferenceArray(allFound.size)
+          allFound.withIndex().forEach { (index, found) ->
+            reference!!.set(index, found)
+          }
+        }
+        return allFound.isNotEmpty()
+      }
+    }, timeout)
+
+    return if (reference == null) listOf()
+    else (0 until reference!!.length()).map { reference!!.get(it) }
   }
 
 

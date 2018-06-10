@@ -52,6 +52,7 @@ import com.intellij.openapi.ui.*;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
@@ -156,6 +157,11 @@ public class FindDialog extends DialogWrapper implements FindUI {
   public void showUI() {
     if (haveResultsPreview()) {
       ApplicationManager.getApplication().invokeLater(this::scheduleResultsUpdate, ModalityState.any());
+    }
+    if (Registry.is("ide.find.as.popup") && !SystemInfo.isJetBrainsJvm) {
+      setErrorText("<font color=\"#"+ColorUtil.toHex(UIUtil.getInactiveTextColor())+"\">" +
+                   "There is another version of this dialog in a form of lightweight popup. To use it, run the IDE with the bundled JRE." +
+                   "</font>");
     }
     show();
   }

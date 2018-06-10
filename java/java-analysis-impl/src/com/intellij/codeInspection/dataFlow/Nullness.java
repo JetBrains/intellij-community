@@ -15,34 +15,39 @@
  */
 package com.intellij.codeInspection.dataFlow;
 
-import com.intellij.codeInsight.NullableNotNullManager;
-import com.intellij.psi.PsiAnnotation;
-import com.intellij.psi.PsiModifierListOwner;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
+import com.intellij.codeInsight.Nullability;
+import org.jetbrains.annotations.Contract;
 
 /**
-* @author cdr
+* @deprecated for removal; use {@link Nullability} since 2018.2
 */
+@Deprecated
 public enum Nullness {
   NOT_NULL, NULLABLE, UNKNOWN;
 
-  /**
-   * Convert nullability annotation returned by {@link NullableNotNullManager#findEffectiveNullabilityAnnotation(PsiModifierListOwner)}
-   * to {@code Nullness} value
-   *
-   * @param annotation annotation to convert
-   * @return Nullness value
-   */
-  @NotNull
-  public static Nullness fromAnnotation(@Nullable PsiAnnotation annotation) {
-    if (annotation == null) return UNKNOWN;
-    if (NullableNotNullManager.isNullableAnnotation(annotation) || NullableNotNullManager.isContainerNullableAnnotation(annotation)) {
-      return NULLABLE;
+  @Contract(pure = true)
+  public Nullability toNullability() {
+    switch (this) {
+      case NOT_NULL:
+        return Nullability.NOT_NULL;
+      case NULLABLE:
+        return Nullability.NULLABLE;
+      case UNKNOWN:
+        return Nullability.UNKNOWN;
     }
-    if (NullableNotNullManager.isNotNullAnnotation(annotation) || NullableNotNullManager.isContainerNotNullAnnotation(annotation)) {
-      return NOT_NULL;
+    throw new InternalError("Unexpected enum value");
+  }
+
+  @Contract(pure = true)
+  public static Nullness fromNullability(Nullability nullability) {
+    switch (nullability) {
+      case NOT_NULL:
+        return NOT_NULL;
+      case NULLABLE:
+        return NULLABLE;
+      case UNKNOWN:
+        return UNKNOWN;
     }
-    return UNKNOWN;
+    throw new InternalError("Unexpected enum value");
   }
 }

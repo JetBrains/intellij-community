@@ -16,6 +16,7 @@
 package com.intellij.codeInspection.dataFlow;
 
 import com.intellij.codeInsight.ExceptionUtil;
+import com.intellij.codeInsight.Nullability;
 import com.intellij.codeInsight.daemon.ImplicitUsageProvider;
 import com.intellij.codeInsight.daemon.impl.UnusedSymbolUtil;
 import com.intellij.codeInspection.dataFlow.ControlFlow.ControlFlowOffset;
@@ -936,7 +937,7 @@ public class ControlFlowAnalyzer extends JavaElementVisitor {
       addInstruction(new DereferenceInstruction(qualifier));
     }
 
-    addInstruction(new PushInstruction(myFactory.createTypeValue(expression.getFunctionalInterfaceType(), Nullness.NOT_NULL), expression));
+    addInstruction(new PushInstruction(myFactory.createTypeValue(expression.getFunctionalInterfaceType(), Nullability.NOT_NULL), expression));
 
     finishElement(expression);
   }
@@ -1168,7 +1169,7 @@ public class ControlFlowAnalyzer extends JavaElementVisitor {
 
     DfaValue toPush = myFactory.createValue(expression);
     if (toPush == null) {
-      toPush = myFactory.createTypeValue(expression.getType(), Nullness.UNKNOWN);
+      toPush = myFactory.createTypeValue(expression.getType(), Nullability.UNKNOWN);
     }
     addInstruction(new ArrayAccessInstruction(toPush, expression));
     finishElement(expression);
@@ -1224,7 +1225,7 @@ public class ControlFlowAnalyzer extends JavaElementVisitor {
         arrayWriteTarget = null;
       }
     }
-    DfaValue arrayValue = myFactory.withFact(myFactory.createTypeValue(type, Nullness.NOT_NULL), DfaFactType.LOCALITY, true);
+    DfaValue arrayValue = myFactory.withFact(myFactory.createTypeValue(type, Nullability.NOT_NULL), DfaFactType.LOCALITY, true);
     if (arrayWriteTarget != null) {
       addInstruction(new PushInstruction(arrayWriteTarget, null, true));
       addInstruction(new PushInstruction(arrayValue, expression));
@@ -1242,10 +1243,10 @@ public class ControlFlowAnalyzer extends JavaElementVisitor {
       }
     }
     else {
-      Nullness nullability = Nullness.UNKNOWN;
+      Nullability nullability = Nullability.UNKNOWN;
       if (componentType != null) {
         nullability = DfaPsiUtil.getTypeNullability(componentType);
-        if (nullability == Nullness.UNKNOWN && originalExpression != expression) {
+        if (nullability == Nullability.UNKNOWN && originalExpression != expression) {
           PsiType expectedType = ExpectedTypeUtils.findExpectedType(originalExpression, false);
           if (expectedType instanceof PsiArrayType) {
             nullability = DfaPsiUtil.getTypeNullability(((PsiArrayType)expectedType).getComponentType());
@@ -1256,7 +1257,7 @@ public class ControlFlowAnalyzer extends JavaElementVisitor {
         initializer.accept(this);
         if (componentType != null) {
           generateBoxingUnboxingInstructionFor(initializer, componentType);
-          if (nullability == Nullness.NOT_NULL) {
+          if (nullability == Nullability.NOT_NULL) {
             addInstruction(new CheckNotNullInstruction(NullabilityProblemKind.storingToNotNullArray.problem(initializer)));
           }
         }
@@ -1598,7 +1599,7 @@ public class ControlFlowAnalyzer extends JavaElementVisitor {
       if (type instanceof PsiClassType) {
         type = ((PsiClassType)type).rawType();
       }
-      addInstruction(new PushInstruction(myFactory.createTypeValue(type, Nullness.NOT_NULL), null));
+      addInstruction(new PushInstruction(myFactory.createTypeValue(type, Nullability.NOT_NULL), null));
       addInstruction(new InstanceofInstruction(expression, operand, type));
     }
     else {
@@ -1792,7 +1793,7 @@ public class ControlFlowAnalyzer extends JavaElementVisitor {
       }
       // stack: ... var.length actual_size
       addInstruction(new PushInstruction(var, null, true));
-      DfaValue arrayValue = myFactory.withFact(myFactory.createTypeValue(type, Nullness.NOT_NULL), DfaFactType.LOCALITY, true);
+      DfaValue arrayValue = myFactory.withFact(myFactory.createTypeValue(type, Nullability.NOT_NULL), DfaFactType.LOCALITY, true);
       addInstruction(new PushInstruction(arrayValue, expression));
       addInstruction(new AssignInstruction(expression, var));
       // stack: ... var.length actual_size var
@@ -1829,7 +1830,7 @@ public class ControlFlowAnalyzer extends JavaElementVisitor {
     DfaVariableValue var = getTargetVariable(expression);
     if (var != null && ConstructionUtils.isEmptyCollectionInitializer(expression)) {
       DfaValue collectionValue =
-        myFactory.withFact(myFactory.createTypeValue(expression.getType(), Nullness.NOT_NULL), DfaFactType.LOCALITY, true);
+        myFactory.withFact(myFactory.createTypeValue(expression.getType(), Nullability.NOT_NULL), DfaFactType.LOCALITY, true);
       SpecialField sizeField =
         InheritanceUtil.isInheritor(expression.getType(), JAVA_UTIL_MAP) ? SpecialField.MAP_SIZE : SpecialField.COLLECTION_SIZE;
       new CFGBuilder(this).pop()
@@ -1985,7 +1986,7 @@ public class ControlFlowAnalyzer extends JavaElementVisitor {
       generateBoxingUnboxingInstructionFor(operand, castExpression.getType());
     }
     else {
-      addInstruction(new PushInstruction(myFactory.createTypeValue(castExpression.getType(), Nullness.UNKNOWN), null));
+      addInstruction(new PushInstruction(myFactory.createTypeValue(castExpression.getType(), Nullability.UNKNOWN), null));
     }
 
     final PsiTypeElement typeElement = castExpression.getCastType();
@@ -2008,15 +2009,15 @@ public class ControlFlowAnalyzer extends JavaElementVisitor {
    * Inline code block (lambda or method body) into this CFG. Incoming parameters are assumed to be handled already (if necessary)
    *
    * @param block block to inline
-   * @param resultNullness desired nullness returned by block return statement
+   * @param resultNullability desired nullability returned by block return statement
    * @param target a variable to store the block result (returned via {@code return} statement)
    */
-  void inlineBlock(@NotNull PsiCodeBlock block, @NotNull Nullness resultNullness, @NotNull DfaVariableValue target) {
+  void inlineBlock(@NotNull PsiCodeBlock block, @NotNull Nullability resultNullability, @NotNull DfaVariableValue target) {
     InlinedBlockContext oldBlock = myInlinedBlockContext;
     // Transfer value is pushed to avoid emptying stack beyond this point
     myTrapStack = myTrapStack.prepend(new Trap.InsideInlinedBlock(block));
     addInstruction(new PushInstruction(myFactory.controlTransfer(ReturnTransfer.INSTANCE, FList.emptyList()), null));
-    myInlinedBlockContext = new InlinedBlockContext(block, resultNullness == Nullness.NOT_NULL, target);
+    myInlinedBlockContext = new InlinedBlockContext(block, resultNullability == Nullability.NOT_NULL, target);
     startElement(block);
     block.accept(this);
     finishElement(block);

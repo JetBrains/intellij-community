@@ -85,7 +85,7 @@ public abstract class DfaFactType<T> extends Key<T> {
     @Nullable
     @Override
     Boolean calcFromVariable(@NotNull DfaVariableValue value) {
-      return NullnessUtil.calcCanBeNull(value);
+      return NullabilityUtil.calcCanBeNull(value);
     }
   };
 

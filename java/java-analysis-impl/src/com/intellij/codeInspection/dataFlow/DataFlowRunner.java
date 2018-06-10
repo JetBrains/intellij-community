@@ -2,6 +2,7 @@
 
 package com.intellij.codeInspection.dataFlow;
 
+import com.intellij.codeInsight.Nullability;
 import com.intellij.codeInspection.dataFlow.instructions.*;
 import com.intellij.codeInspection.dataFlow.value.DfaExpressionFactory;
 import com.intellij.codeInspection.dataFlow.value.DfaValue;
@@ -133,7 +134,7 @@ public class DataFlowRunner {
 
   public final RunnerResult analyzeCodeBlock(@NotNull PsiCodeBlock block,
                                              @NotNull InstructionVisitor visitor,
-                                             Consumer<DfaMemoryState> initialStateAdjuster) {
+                                             Consumer<? super DfaMemoryState> initialStateAdjuster) {
     final DfaMemoryState state = createMemoryState();
     initialStateAdjuster.accept(state);
     return analyzeMethod(block, visitor, false, Collections.singleton(state));
@@ -348,7 +349,7 @@ public class DataFlowRunner {
     DfaValueFactory factory = var.getFactory();
     if (var.getSource() instanceof DfaExpressionFactory.ThisSource) {
       PsiClass aClass = ((DfaExpressionFactory.ThisSource)var.getSource()).getPsiElement();
-      DfaValue value = factory.createTypeValue(var.getVariableType(), Nullness.NOT_NULL);
+      DfaValue value = factory.createTypeValue(var.getVariableType(), Nullability.NOT_NULL);
       if (method.getContainingClass() == aClass && MutationSignature.fromMethod(method).preservesThis()) {
         // Unmodifiable view, because we cannot call mutating methods, but it's not guaranteed that all fields are stable
         // as fields may not contribute to the visible state
@@ -483,7 +484,7 @@ public class DataFlowRunner {
     return myInstructions[index];
   }
 
-  public void forNestedClosures(BiConsumer<PsiElement, Collection<? extends DfaMemoryState>> consumer) {
+  public void forNestedClosures(BiConsumer<? super PsiElement, ? super Collection<? extends DfaMemoryState>> consumer) {
     // Copy to avoid concurrent modifications
     MultiMap<PsiElement, DfaMemoryState> closures = new MultiMap<>(myNestedClosures);
     for (PsiElement closure : closures.keySet()) {

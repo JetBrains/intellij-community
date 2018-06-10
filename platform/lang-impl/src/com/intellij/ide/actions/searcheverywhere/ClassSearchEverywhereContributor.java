@@ -4,19 +4,14 @@ package com.intellij.ide.actions.searcheverywhere;
 import com.intellij.codeInsight.navigation.NavigationUtil;
 import com.intellij.ide.IdeBundle;
 import com.intellij.ide.actions.GotoClassAction;
-import com.intellij.ide.util.EditSourceUtil;
-import com.intellij.ide.util.gotoByName.ChooseByNamePopup;
 import com.intellij.ide.util.gotoByName.FilteringGotoByModel;
 import com.intellij.ide.util.gotoByName.GotoClassModel2;
 import com.intellij.lang.DependentLanguage;
 import com.intellij.lang.Language;
 import com.intellij.lang.LanguageUtil;
-import com.intellij.navigation.NavigationItem;
 import com.intellij.openapi.actionSystem.AnActionEvent;
-import com.intellij.openapi.fileEditor.OpenFileDescriptor;
 import com.intellij.openapi.fileTypes.LanguageFileType;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.pom.Navigatable;
@@ -63,61 +58,66 @@ public class ClassSearchEverywhereContributor extends AbstractGotoSEContributor<
   }
 
   @Override
-  public boolean processSelectedItem(Object selected, int modifiers, String searchText) {
-    if (selected instanceof PsiElement && ((PsiElement)selected).isValid()) {
-      PsiElement psiElement = (PsiElement) selected;
-      String path = pathToAnonymousClass(searchText);
-      if (path != null) {
-        psiElement = GotoClassAction.getElement(psiElement, path);
-      }
-      psiElement = psiElement.getNavigationElement();
-      VirtualFile file = PsiUtilCore.getVirtualFile(psiElement);
-
-      Pair<Integer, Integer> position = getLineAndColumn(searchText);
-      boolean positionSpecified = position.first >= 0 || position.second >= 0;
-      if (file != null && positionSpecified) {
-        OpenFileDescriptor descriptor = new OpenFileDescriptor(psiElement.getProject(), file, position.first, position.second);
-        descriptor = descriptor.setUseCurrentWindow(openInCurrentWindow(modifiers));
-        if (descriptor.canNavigate()) {
-          descriptor.navigate(true);
-          return true;
-        }
-      }
-
-      String memberName = getMemberName(searchText);
-      if (file != null && memberName != null) {
-        NavigationUtil.activateFileWithPsiElement(psiElement, openInCurrentWindow(modifiers));
-        Navigatable member = GotoClassAction.findMember(memberName, searchText, psiElement, file);
-        if (member != null) {
-          member.navigate(true);
-          return true;
-        }
-      }
-
-      NavigationUtil.activateFileWithPsiElement(psiElement, openInCurrentWindow(modifiers));
-    }
-    else {
-      EditSourceUtil.navigate(((NavigationItem)selected), true, openInCurrentWindow(modifiers));
-    }
-
-    return true;
-  }
-
-  @Override
   public String filterControlSymbols(String pattern) {
     if (pattern.indexOf('#') != -1) {
-      pattern = applyPatternFilter(pattern, ChooseByNamePopup.patternToDetectMembers);
+      pattern = applyPatternFilter(pattern, patternToDetectMembers);
     }
 
     if (pattern.indexOf('$') != -1) {
-      pattern = applyPatternFilter(pattern, ChooseByNamePopup.patternToDetectAnonymousClasses);
+      pattern = applyPatternFilter(pattern, patternToDetectAnonymousClasses);
     }
 
     return super.filterControlSymbols(pattern);
   }
 
+  @Override
+  protected PsiElement preparePsi(PsiElement psiElement, int modifiers, String searchText) {
+    String path = pathToAnonymousClass(searchText);
+    if (path != null) {
+      psiElement = GotoClassAction.getElement(psiElement, path);
+    }
+    return super.preparePsi(psiElement, modifiers, searchText);
+  }
+
+  @Nullable
+  @Override
+  protected Navigatable createExtendedNavigatable(PsiElement psi, String searchText, int modifiers) {
+    Navigatable res = super.createExtendedNavigatable(psi, searchText, modifiers);
+    if (res != null) {
+      return res;
+    }
+
+    VirtualFile file = PsiUtilCore.getVirtualFile(psi);
+    String memberName = getMemberName(searchText);
+    if (file != null && memberName != null) {
+      Navigatable delegate = GotoClassAction.findMember(memberName, searchText, psi, file);
+      if (delegate != null) {
+        return new Navigatable() {
+          @Override
+          public void navigate(boolean requestFocus) {
+            NavigationUtil.activateFileWithPsiElement(psi, openInCurrentWindow(modifiers));
+            delegate.navigate(true);
+
+          }
+
+          @Override
+          public boolean canNavigate() {
+            return delegate.canNavigate();
+          }
+
+          @Override
+          public boolean canNavigateToSource() {
+            return delegate.canNavigateToSource();
+          }
+        };
+      }
+    }
+
+    return null;
+  }
+
   private static String pathToAnonymousClass(String searchedText) {
-    final Matcher matcher = ChooseByNamePopup.patternToDetectAnonymousClasses.matcher(searchedText);
+    final Matcher matcher = patternToDetectAnonymousClasses.matcher(searchedText);
     if (matcher.matches()) {
       String path = matcher.group(2);
       if (path != null) {

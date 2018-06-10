@@ -18,6 +18,7 @@ package com.intellij.codeInsight.hint;
 import com.intellij.ide.BrowserUtil;
 import com.intellij.ide.IdeTooltipManager;
 import com.intellij.ide.TooltipEvent;
+import com.intellij.ide.actions.ActionsCollector;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.IdeActions;
@@ -56,6 +57,7 @@ public class LineTooltipRenderer extends ComparableObject.Impl implements Toolti
 
   //is used for suppressing some events while processing links  
   private volatile boolean myActiveLink = false;
+  //mostly is used as a marker that we are in popup with description
   protected final int myCurrentWidth;
 
   protected interface TooltipReloader {
@@ -80,7 +82,7 @@ public class LineTooltipRenderer extends ComparableObject.Impl implements Toolti
       .anchor(GridBagConstraints.CENTER)
       .fillCellHorizontally();
 
-    pane.setBorder(JBUI.Borders.empty(4, 6, 5, 6));
+    pane.setBorder(JBUI.Borders.empty(6, 8, 6, 12));
     grid.add(pane, bag);
     grid.setBackground(hintHint.getTextBackground());
     grid.setBorder(JBUI.Borders.empty());
@@ -142,7 +144,7 @@ public class LineTooltipRenderer extends ComparableObject.Impl implements Toolti
       public void hide() {
         onHide(editorPane);
         super.hide();
-        for (AnAction action : actions) {
+        for (AnAction action: actions) {
           action.unregisterCustomShortcutSet(contentComponent);
         }
       }
@@ -170,6 +172,7 @@ public class LineTooltipRenderer extends ComparableObject.Impl implements Toolti
       public void actionPerformed(final AnActionEvent e) {
         // The tooltip gets the focus if using a screen reader and invocation through a keyboard shortcut.
         hintHint.setRequestFocus(ScreenReader.isActive() && (e.getInputEvent() instanceof KeyEvent));
+        ActionsCollector.getInstance().record("tooltip.actions.show.description.shortcut");
         reloader.reload(!expanded);
       }
     });
@@ -197,6 +200,8 @@ public class LineTooltipRenderer extends ComparableObject.Impl implements Toolti
             return;
           }
 
+          ActionsCollector.getInstance().record("tooltip.actions.show.description.morelink");
+
           reloader.reload(!expanded);
         }
       }
@@ -206,7 +211,7 @@ public class LineTooltipRenderer extends ComparableObject.Impl implements Toolti
 
 
     grid.addMouseListener(new MouseAdapter() {
-      
+
       // This listener makes hint transparent for mouse events. It means that hint is closed
       // by MousePressed and this MousePressed goes into the underlying editor component.
       @Override
@@ -218,7 +223,7 @@ public class LineTooltipRenderer extends ComparableObject.Impl implements Toolti
         }
       }
     });
-    
+
     ListenerUtil.addMouseListener(grid, new MouseAdapter() {
 
       @Override
@@ -238,7 +243,7 @@ public class LineTooltipRenderer extends ComparableObject.Impl implements Toolti
         if (parentContainer.contains(newMouseEvent.getPoint())) {
           return;
         }
-        
+
         hint.hide();
       }
     });

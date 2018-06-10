@@ -15,6 +15,7 @@
  */
 package com.intellij.codeInspection.dataFlow;
 
+import com.intellij.codeInsight.Nullability;
 import com.intellij.codeInspection.dataFlow.instructions.*;
 import com.intellij.codeInspection.dataFlow.value.*;
 import com.intellij.psi.PsiArrayAccessExpression;
@@ -98,7 +99,7 @@ public abstract class InstructionVisitor {
                              value instanceof DfaVariableValue ? state.getConstantValue((DfaVariableValue)value) :
                              null;
     PsiType type = constant == null ? null : ObjectUtils.tryCast(constant.getValue(), PsiType.class);
-    state.push(runner.getFactory().createTypeValue(type, Nullness.NOT_NULL));
+    state.push(runner.getFactory().createTypeValue(type, Nullability.NOT_NULL));
     return nextInstruction(instruction, runner, state);
   }
 

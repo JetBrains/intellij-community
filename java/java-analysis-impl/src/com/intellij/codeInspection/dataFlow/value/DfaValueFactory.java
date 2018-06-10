@@ -3,6 +3,7 @@
 package com.intellij.codeInspection.dataFlow.value;
 
 import com.intellij.codeInsight.AnnotationUtil;
+import com.intellij.codeInsight.Nullability;
 import com.intellij.codeInspection.dataFlow.*;
 import com.intellij.codeInspection.dataFlow.rangeSet.LongRangeSet;
 import com.intellij.codeInspection.dataFlow.value.DfaRelationValue.RelationType;
@@ -60,16 +61,18 @@ public class DfaValueFactory {
 
 
   @NotNull
-  public Nullness suggestNullabilityForNonAnnotatedMember(@NotNull PsiModifierListOwner member) {
-    if (myUnknownMembersAreNullable && MEMBER_OR_METHOD_PARAMETER.accepts(member) && AnnotationUtil.getSuperAnnotationOwners(member).isEmpty()) {
-      return Nullness.NULLABLE;
+  public Nullability suggestNullabilityForNonAnnotatedMember(@NotNull PsiModifierListOwner member) {
+    if (myUnknownMembersAreNullable &&
+        MEMBER_OR_METHOD_PARAMETER.accepts(member) &&
+        AnnotationUtil.getSuperAnnotationOwners(member).isEmpty()) {
+      return Nullability.NULLABLE;
     }
-    
-    return Nullness.UNKNOWN;
+
+    return Nullability.UNKNOWN;
   }
 
   @NotNull
-  public DfaValue createTypeValue(@Nullable PsiType type, @NotNull Nullness nullability) {
+  public DfaValue createTypeValue(@Nullable PsiType type, @NotNull Nullability nullability) {
     if (type == null) return DfaUnknownValue.getInstance();
     if (type instanceof PsiPrimitiveType) {
       LongRangeSet range = LongRangeSet.fromType(type);
@@ -78,7 +81,7 @@ public class DfaValueFactory {
       }
     }
     DfaFactMap facts = DfaFactMap.EMPTY.with(DfaFactType.TYPE_CONSTRAINT, createDfaType(type).asConstraint())
-      .with(DfaFactType.CAN_BE_NULL, NullnessUtil.toBoolean(nullability));
+      .with(DfaFactType.CAN_BE_NULL, NullabilityUtil.toBoolean(nullability));
     return getFactFactory().createValue(facts);
   }
 
@@ -264,7 +267,7 @@ public class DfaValueFactory {
     for (PsiExpression expression : expressions) {
       DfaValue expressionValue = createValue(expression);
       if (expressionValue == null) {
-        expressionValue = createTypeValue(expression.getType(), NullnessUtil.getExpressionNullness(expression));
+        expressionValue = createTypeValue(expression.getType(), NullabilityUtil.getExpressionNullability(expression));
       }
       loopElement = loopElement == null ? expressionValue : loopElement.union(expressionValue);
       if (loopElement == DfaUnknownValue.getInstance()) break;

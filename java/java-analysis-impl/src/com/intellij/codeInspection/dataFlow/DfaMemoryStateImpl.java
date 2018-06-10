@@ -16,6 +16,7 @@
 
 package com.intellij.codeInspection.dataFlow;
 
+import com.intellij.codeInsight.Nullability;
 import com.intellij.codeInspection.dataFlow.rangeSet.LongRangeSet;
 import com.intellij.codeInspection.dataFlow.value.*;
 import com.intellij.codeInspection.dataFlow.value.DfaRelationValue.RelationType;
@@ -271,8 +272,8 @@ public class DfaMemoryStateImpl implements DfaMemoryState {
 
   private DfaValue handleFlush(DfaVariableValue flushed, DfaValue value) {
     if (value instanceof DfaVariableValue && (value == flushed || flushed.getDependentVariables().contains(value))) {
-      Nullness nullability = isNotNull(value) ? Nullness.NOT_NULL :
-                             isUnknownState(value) ? Nullness.UNKNOWN : ((DfaVariableValue)value).getInherentNullability();
+      Nullability nullability = isNotNull(value) ? Nullability.NOT_NULL :
+                                isUnknownState(value) ? Nullability.UNKNOWN : ((DfaVariableValue)value).getInherentNullability();
       return myFactory.createTypeValue(((DfaVariableValue)value).getVariableType(), nullability);
     }
     return value;
@@ -750,7 +751,7 @@ public class DfaMemoryStateImpl implements DfaMemoryState {
           relation.getRightOperand() == myFactory.getConstFactory().getNull() &&
           (relation.getLeftOperand() instanceof DfaUnknownValue ||
            (relation.getLeftOperand() instanceof DfaVariableValue &&
-            getVariableState((DfaVariableValue)relation.getLeftOperand()).getNullability() == Nullness.UNKNOWN))) {
+            getVariableState((DfaVariableValue)relation.getLeftOperand()).getNullability() == Nullability.UNKNOWN))) {
         markEphemeral();
       }
     }
@@ -1098,7 +1099,7 @@ public class DfaMemoryStateImpl implements DfaMemoryState {
       DfaVariableValue varValue = (DfaVariableValue)value;
       if (varValue.getVariableType() instanceof PsiPrimitiveType) return true;
       if (isNotNull(varValue)) return true;
-      return getVariableState(varValue).getNullability() != Nullness.NULLABLE;
+      return getVariableState(varValue).getNullability() != Nullability.NULLABLE;
     }
     return true;
   }

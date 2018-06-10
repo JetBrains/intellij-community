@@ -49,6 +49,10 @@ public interface SearchEverywhereContributor<F> {
     return pattern;
   }
 
+  default boolean isMultiselectSupported() {
+    return false;
+  }
+
   static List<SearchEverywhereContributorFactory<?>> getProviders() {
     return Arrays.asList(EP_NAME.getExtensions());
   }

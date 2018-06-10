@@ -3,8 +3,10 @@
 package com.intellij.codeInspection.ex;
 
 import com.intellij.codeHighlighting.HighlightDisplayLevel;
+import com.intellij.codeInspection.InspectionProfileEntry;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.JDOMUtil;
 import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.psi.search.scope.packageSet.NamedScope;
@@ -119,9 +121,9 @@ public class ScopeToolState {
     try {
       @NonNls String tempRoot = "root";
       Element oldToolSettings = new Element(tempRoot);
-      toolWrapper.getTool().writeSettings(oldToolSettings);
+      tryWriteSettings(toolWrapper.getTool(), oldToolSettings);
       Element newToolSettings = new Element(tempRoot);
-      toolWrapper2.getTool().writeSettings(newToolSettings);
+      tryWriteSettings(toolWrapper2.getTool(), newToolSettings);
       return JDOMUtil.areElementsEqual(oldToolSettings, newToolSettings);
     }
     catch (WriteExternalException e) {
@@ -132,6 +134,30 @@ public class ScopeToolState {
 
   public void scopesChanged() {
     myScope = null;
+  }
+
+  public static void tryReadSettings(@NotNull InspectionProfileEntry entry, @NotNull Element node) throws InvalidDataException {
+    try {
+      entry.readSettings(node);
+    }
+    catch (InvalidDataException e) {
+      throw e;
+    }
+    catch (Exception e) {
+      throw new InvalidDataException("Can't read settings for tool #" + entry.getShortName(), e);
+    }
+  }
+
+  public static void tryWriteSettings(@NotNull InspectionProfileEntry entry, @NotNull Element node) throws WriteExternalException {
+    try {
+      entry.writeSettings(node);
+    }
+    catch (WriteExternalException e) {
+      throw e;
+    }
+    catch (Exception e) {
+      throw new WriteExternalException("Can't write settings for tool #" + entry.getShortName(), e);
+    }
   }
 
   private static class ConfigPanelState {

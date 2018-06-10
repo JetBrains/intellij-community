@@ -1,7 +1,7 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInspection.dataFlow.inference;
 
-import com.intellij.codeInspection.dataFlow.Nullness;
+import com.intellij.codeInsight.Nullability;
 import com.intellij.lang.LighterAST;
 import com.intellij.lang.LighterASTNode;
 import com.intellij.openapi.util.Pair;
@@ -180,21 +180,21 @@ class MethodReturnInferenceVisitor {
     }
     if (hasNulls) {
       if (hasSystemExit) {
-        return new MethodReturnInferenceResult.Predefined(Nullness.UNKNOWN);
+        return new MethodReturnInferenceResult.Predefined(Nullability.UNKNOWN);
       }
       return delegateCalls == null || hasNotNulls || hasErrors || hasUnknowns
-             ? new MethodReturnInferenceResult.Predefined(Nullness.NULLABLE)
-             : new MethodReturnInferenceResult.FromDelegate(Nullness.NULLABLE, delegateCalls);
+             ? new MethodReturnInferenceResult.Predefined(Nullability.NULLABLE)
+             : new MethodReturnInferenceResult.FromDelegate(Nullability.NULLABLE, delegateCalls);
     }
     if (hasErrors || hasUnknowns || delegates.size() > 1) {
       return null;
     }
     if (delegateCalls != null) {
-      return new MethodReturnInferenceResult.FromDelegate(hasNotNulls ? Nullness.NOT_NULL : Nullness.UNKNOWN, delegateCalls);
+      return new MethodReturnInferenceResult.FromDelegate(hasNotNulls ? Nullability.NOT_NULL : Nullability.UNKNOWN, delegateCalls);
     }
 
     if (hasNotNulls) {
-      return new MethodReturnInferenceResult.Predefined(Nullness.NOT_NULL);
+      return new MethodReturnInferenceResult.Predefined(Nullability.NOT_NULL);
     }
     return null;
   }

@@ -2,6 +2,7 @@
 package com.intellij.codeInspection.dataFlow;
 
 import com.intellij.codeInsight.JavaPsiEquivalenceUtil;
+import com.intellij.codeInsight.Nullability;
 import com.intellij.codeInsight.daemon.ImplicitUsageProvider;
 import com.intellij.codeInsight.daemon.impl.analysis.JavaGenericsUtil;
 import com.intellij.codeInspection.dataFlow.value.DfaExpressionFactory;
@@ -23,20 +24,20 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
 
-public class NullnessUtil {
+public class NullabilityUtil {
 
   static Boolean calcCanBeNull(DfaVariableValue value) {
     if (value.getSource() instanceof DfaExpressionFactory.ThisSource) {
       return false;
     }
     PsiModifierListOwner var = value.getPsiVariable();
-    Nullness nullability = DfaPsiUtil.getElementNullabilityIgnoringParameterInference(value.getVariableType(), var);
-    if (nullability != Nullness.UNKNOWN) {
+    Nullability nullability = DfaPsiUtil.getElementNullabilityIgnoringParameterInference(value.getVariableType(), var);
+    if (nullability != Nullability.UNKNOWN) {
       return toBoolean(nullability);
     }
     if (var == null) return null;
 
-    Nullness defaultNullability = value.getFactory().suggestNullabilityForNonAnnotatedMember(var);
+    Nullability defaultNullability = value.getFactory().suggestNullabilityForNonAnnotatedMember(var);
 
     if (var instanceof PsiParameter && var.getParent() instanceof PsiForeachStatement) {
       PsiExpression iteratedValue = ((PsiForeachStatement)var.getParent()).getIteratedValue();
@@ -55,11 +56,11 @@ public class NullnessUtil {
     return toBoolean(defaultNullability);
   }
 
-  private static Nullness getNullabilityFromFieldInitializers(PsiField field, Nullness defaultNullability) {
+  private static Nullability getNullabilityFromFieldInitializers(PsiField field, Nullability defaultNullability) {
     if (DfaPsiUtil.isFinalField(field)) {
       PsiExpression initializer = field.getInitializer();
       if (initializer != null) {
-        return getExpressionNullness(initializer);
+        return getExpressionNullability(initializer);
       }
 
       List<PsiExpression> initializers = DfaPsiUtil.findAllConstructorInitializers(field);
@@ -68,17 +69,17 @@ public class NullnessUtil {
       }
 
       for (PsiExpression expression : initializers) {
-        if (getExpressionNullness(expression) == Nullness.NULLABLE) {
-          return Nullness.NULLABLE;
+        if (getExpressionNullability(expression) == Nullability.NULLABLE) {
+          return Nullability.NULLABLE;
         }
       }
 
       if (DfaPsiUtil.isInitializedNotNull(field)) {
-        return Nullness.NOT_NULL;
+        return Nullability.NOT_NULL;
       }
     }
     else if (isOnlyImplicitlyInitialized(field)) {
-      return Nullness.NOT_NULL;
+      return Nullability.NOT_NULL;
     }
     return defaultNullability;
   }
@@ -114,61 +115,61 @@ public class NullnessUtil {
     return result != PsiSearchHelper.SearchCostResult.TOO_MANY_OCCURRENCES;
   }
 
-  public static Nullness getExpressionNullness(@Nullable PsiExpression expression) {
-    return getExpressionNullness(expression, false);
+  public static Nullability getExpressionNullability(@Nullable PsiExpression expression) {
+    return getExpressionNullability(expression, false);
   }
 
   /**
-   * Tries to determine an expression nullness
+   * Tries to determine an expression nullability
    *
    * @param expression an expression to check
    * @param useDataflow whether to use dataflow (more expensive, but may produce more precise result)
-   * @return expression nullness. UNKNOWN if unable to determine;
+   * @return expression nullability. UNKNOWN if unable to determine;
    * NULLABLE if known to possibly have null value; NOT_NULL if definitely never null.
    */
-  public static Nullness getExpressionNullness(@Nullable PsiExpression expression, boolean useDataflow) {
+  public static Nullability getExpressionNullability(@Nullable PsiExpression expression, boolean useDataflow) {
     expression = PsiUtil.skipParenthesizedExprDown(expression);
-    if (expression == null) return Nullness.UNKNOWN;
-    if (expression.textMatches(PsiKeyword.NULL)) return Nullness.NULLABLE;
+    if (expression == null) return Nullability.UNKNOWN;
+    if (expression.textMatches(PsiKeyword.NULL)) return Nullability.NULLABLE;
     if (expression instanceof PsiNewExpression ||
         expression instanceof PsiLiteralExpression ||
         expression instanceof PsiPolyadicExpression ||
         expression instanceof PsiFunctionalExpression ||
         expression.getType() instanceof PsiPrimitiveType) {
-      return Nullness.NOT_NULL;
+      return Nullability.NOT_NULL;
     }
     if (expression instanceof PsiConditionalExpression) {
       PsiExpression thenExpression = ((PsiConditionalExpression)expression).getThenExpression();
       PsiExpression elseExpression = ((PsiConditionalExpression)expression).getElseExpression();
-      if (thenExpression == null || elseExpression == null) return Nullness.UNKNOWN;
+      if (thenExpression == null || elseExpression == null) return Nullability.UNKNOWN;
       PsiExpression condition = ((PsiConditionalExpression)expression).getCondition();
       // simple cases like x == null ? something : x
       PsiReferenceExpression ref = ExpressionUtils.getReferenceExpressionFromNullComparison(condition, true);
       if (ref != null && JavaPsiEquivalenceUtil.areExpressionsEquivalent(ref, elseExpression)) {
-        return getExpressionNullness(thenExpression, useDataflow);
+        return getExpressionNullability(thenExpression, useDataflow);
       }
       // x != null ? x : something
       ref = ExpressionUtils.getReferenceExpressionFromNullComparison(condition, false);
       if (ref != null && JavaPsiEquivalenceUtil.areExpressionsEquivalent(ref, thenExpression)) {
-        return getExpressionNullness(elseExpression, useDataflow);
+        return getExpressionNullability(elseExpression, useDataflow);
       }
       if (useDataflow) {
         return fromBoolean(CommonDataflow.getExpressionFact(expression, DfaFactType.CAN_BE_NULL));
       }
-      Nullness left = getExpressionNullness(thenExpression, false);
-      if (left == Nullness.UNKNOWN) return Nullness.UNKNOWN;
-      Nullness right = getExpressionNullness(elseExpression, false);
-      return left == right ? left : Nullness.UNKNOWN;
+      Nullability left = getExpressionNullability(thenExpression, false);
+      if (left == Nullability.UNKNOWN) return Nullability.UNKNOWN;
+      Nullability right = getExpressionNullability(elseExpression, false);
+      return left == right ? left : Nullability.UNKNOWN;
     }
     if (expression instanceof PsiTypeCastExpression) {
-      return getExpressionNullness(((PsiTypeCastExpression)expression).getOperand(), useDataflow);
+      return getExpressionNullability(((PsiTypeCastExpression)expression).getOperand(), useDataflow);
     }
     if (expression instanceof PsiAssignmentExpression) {
       PsiAssignmentExpression assignment = (PsiAssignmentExpression)expression;
       if(assignment.getOperationTokenType().equals(JavaTokenType.EQ)) {
-        return getExpressionNullness(assignment.getRExpression(), useDataflow);
+        return getExpressionNullability(assignment.getRExpression(), useDataflow);
       }
-      return Nullness.NOT_NULL;
+      return Nullability.NOT_NULL;
     }
     if (useDataflow) {
       return fromBoolean(CommonDataflow.getExpressionFact(expression, DfaFactType.CAN_BE_NULL));
@@ -179,29 +180,29 @@ public class NullnessUtil {
     }
     if (expression instanceof PsiMethodCallExpression) {
       PsiMethod method = ((PsiMethodCallExpression)expression).resolveMethod();
-      return method != null ? DfaPsiUtil.getElementNullability(expression.getType(), method) : Nullness.UNKNOWN;
+      return method != null ? DfaPsiUtil.getElementNullability(expression.getType(), method) : Nullability.UNKNOWN;
     }
-    return Nullness.UNKNOWN;
+    return Nullability.UNKNOWN;
   }
 
   /**
    * Convert from boolean fact which is used to encode nullability in DfaFactType.CAN_BE_NULL
    *
    * @param fact TRUE if NULLABLE, FALSE if NOT_NULL, null if UNKNOWN
-   * @return the corresponding nullness value
+   * @return the corresponding nullability value
    */
   @NotNull
-  public static Nullness fromBoolean(@Nullable Boolean fact) {
-    return fact == null ? Nullness.UNKNOWN : fact ? Nullness.NULLABLE : Nullness.NOT_NULL;
+  public static Nullability fromBoolean(@Nullable Boolean fact) {
+    return fact == null ? Nullability.UNKNOWN : fact ? Nullability.NULLABLE : Nullability.NOT_NULL;
   }
 
   /**
-   * Convert nullness to boolean which is used to encode nullability in DfaFactType.CAN_BE_NULL
+   * Convert nullability to boolean which is used to encode nullability in DfaFactType.CAN_BE_NULL
    *
    * @return TRUE if NULLABLE, FALSE if NOT_NULL, null if UNKNOWN
    */
   @Nullable
-  public static Boolean toBoolean(@NotNull Nullness nullness) {
-    return nullness == Nullness.UNKNOWN ? null : nullness == Nullness.NULLABLE;
+  public static Boolean toBoolean(@NotNull Nullability nullability) {
+    return nullability == Nullability.UNKNOWN ? null : nullability == Nullability.NULLABLE;
   }
 }

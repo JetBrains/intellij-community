@@ -31,7 +31,7 @@ public abstract class SuppressableInspectionTreeNode extends InspectionTreeNode 
   private volatile Boolean myValid;
   private volatile NodeState myPreviousState;
 
-  protected SuppressableInspectionTreeNode(Object userObject, @NotNull InspectionToolPresentation presentation) {
+  SuppressableInspectionTreeNode(Object userObject, @NotNull InspectionToolPresentation presentation) {
     super(userObject);
     myPresentation = presentation;
   }
@@ -57,7 +57,7 @@ public abstract class SuppressableInspectionTreeNode extends InspectionTreeNode 
   @Override
   protected boolean isProblemCountCacheValid() {
     NodeState currentState = calculateState();
-    if (myPreviousState == null || !currentState.equals(myPreviousState)) {
+    if (!currentState.equals(myPreviousState)) {
       myPreviousState = currentState;
       return false;
     }
@@ -212,7 +212,7 @@ public abstract class SuppressableInspectionTreeNode extends InspectionTreeNode 
     }
   }
 
-  protected NodeState calculateState() {
+  private NodeState calculateState() {
     return NodeState.INTERNER.intern(new NodeState(isValid(), isAlreadySuppressedFromView(), isQuickFixAppliedFromView()));
   }
 }
