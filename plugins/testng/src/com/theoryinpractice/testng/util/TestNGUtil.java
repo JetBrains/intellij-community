@@ -246,7 +246,8 @@ public class TestNGUtil {
   }
 
   public static boolean isDisabled(PsiAnnotation annotation) {
-    final PsiAnnotationMemberValue attributeValue = annotation.findDeclaredAttributeValue("enabled");
+    PsiNameValuePair attribute = AnnotationUtil.findDeclaredAttribute(annotation, "enabled");
+    final PsiAnnotationMemberValue attributeValue = attribute != null ? attribute.getDetachedValue() : null;
     return attributeValue != null && attributeValue.textMatches("false");
   }
 
