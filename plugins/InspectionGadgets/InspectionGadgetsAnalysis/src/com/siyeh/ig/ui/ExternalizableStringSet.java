@@ -17,7 +17,6 @@ package com.siyeh.ig.ui;
 
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.JDOMExternalizable;
-import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.containers.OrderedSet;
@@ -78,10 +77,11 @@ public class ExternalizableStringSet extends OrderedSet<String>
   }
 
   @Override
-  public void writeExternal(Element element) throws WriteExternalException {
+  public void writeExternal(Element element) {
     if (hasDefaultValues()) {
       return;
     }
+
     for (String value : this) {
       if (value != null) {
         final Element item = new Element(ITEM);
@@ -95,12 +95,12 @@ public class ExternalizableStringSet extends OrderedSet<String>
    * Write this ExternalizableStringSet to the specified element, with the specified name, if it has non-default values.
    * @param element  the element to write to.
    * @param name  the name of the option.
-   * @throws WriteExternalException
    */
-  public void writeSettings(Element element, String name) throws WriteExternalException {
+  public void writeSettings(Element element, String name) {
     if (hasDefaultValues()) {
       return;
     }
+
     final Element optionElement = new Element("option").setAttribute("name", name);
     final Element valueElement = new Element("value");
     writeExternal(valueElement);
