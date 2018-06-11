@@ -239,12 +239,16 @@ java_library(
     # do not sort: must match IML order
     exports = [
         "//prebuilts/tools/common/kotlin-plugin-ij:Kotlin/kotlinc/lib/kotlin-reflect",
-        "//prebuilts/tools/common/kotlin-plugin-ij:Kotlin/kotlinc/lib/kotlin-runtime",
+        "//prebuilts/tools/common/kotlin-plugin-ij:Kotlin/kotlinc/lib/kotlin-stdlib-jdk7",
+        "//prebuilts/tools/common/kotlin-plugin-ij:Kotlin/kotlinc/lib/kotlin-stdlib-jdk8",
+        "//prebuilts/tools/common/kotlin-plugin-ij:Kotlin/kotlinc/lib/kotlin-stdlib",
     ],
     # do not sort: must match IML order
     runtime_deps = [
         "//prebuilts/tools/common/kotlin-plugin-ij:Kotlin/kotlinc/lib/kotlin-reflect",
-        "//prebuilts/tools/common/kotlin-plugin-ij:Kotlin/kotlinc/lib/kotlin-runtime",
+        "//prebuilts/tools/common/kotlin-plugin-ij:Kotlin/kotlinc/lib/kotlin-stdlib-jdk7",
+        "//prebuilts/tools/common/kotlin-plugin-ij:Kotlin/kotlinc/lib/kotlin-stdlib-jdk8",
+        "//prebuilts/tools/common/kotlin-plugin-ij:Kotlin/kotlinc/lib/kotlin-stdlib",
     ],
 )
 
