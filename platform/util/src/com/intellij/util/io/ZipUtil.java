@@ -2,6 +2,7 @@
 package com.intellij.util.io;
 
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.openapi.util.text.StringUtil;
@@ -125,28 +126,31 @@ public class ZipUtil {
 
   /** @see Decompressor.Zip */
   public static void extract(@NotNull File file, @NotNull File outputDir, @Nullable FilenameFilter filter) throws IOException {
-    new Decompressor.Zip(file).filter(FileFilterAdapter.wrap(filter)).extract(outputDir);
+    new Decompressor.Zip(file).filter(FileFilterAdapter.wrap(outputDir, filter)).extract(outputDir);
   }
 
   /** @see Decompressor.Zip */
   public static void extract(@NotNull File file, @NotNull File outputDir, @Nullable FilenameFilter filter, boolean overwrite) throws IOException {
-    new Decompressor.Zip(file).filter(FileFilterAdapter.wrap(filter)).overwrite(overwrite).extract(outputDir);
+    new Decompressor.Zip(file).filter(FileFilterAdapter.wrap(outputDir, filter)).overwrite(overwrite).extract(outputDir);
   }
 
-  private static class FileFilterAdapter implements FileFilter {
-    private static FileFilterAdapter wrap(FilenameFilter original) {
-      return original == null ? null : new FileFilterAdapter(original);
+  private static class FileFilterAdapter implements Condition<String> {
+    private static FileFilterAdapter wrap(File outputDir, FilenameFilter filter) {
+      return filter == null ? null : new FileFilterAdapter(outputDir, filter);
     }
 
-    private final FilenameFilter myOriginal;
+    private final File myOutputDir;
+    private final FilenameFilter myFilter;
 
-    private FileFilterAdapter(FilenameFilter original) {
-      myOriginal = original;
+    private FileFilterAdapter(File outputDir, FilenameFilter filter) {
+      myOutputDir = outputDir;
+      myFilter = filter;
     }
 
     @Override
-    public boolean accept(File pathname) {
-      return myOriginal.accept(pathname.getParentFile(), pathname.getName());
+    public boolean value(String entryName) {
+      File outputFile = new File(myOutputDir, entryName);
+      return myFilter.accept(outputFile.getParentFile(), outputFile.getName());
     }
   }
 
@@ -203,7 +207,7 @@ public class ZipUtil {
   /** @deprecated use {@link Decompressor.Zip} */
   @ApiStatus.ScheduledForRemoval(inVersion = "2020")
   public static void extract(@NotNull ZipFile zip, @NotNull File outputDir, @Nullable FilenameFilter filter) throws IOException {
-    new Decompressor.Zip(new File(zip.getName())).filter(FileFilterAdapter.wrap(filter)).extract(outputDir);
+    new Decompressor.Zip(new File(zip.getName())).filter(FileFilterAdapter.wrap(outputDir, filter)).extract(outputDir);
   }
 
   /** @deprecated use {@link Decompressor.Zip} */
