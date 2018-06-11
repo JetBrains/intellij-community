@@ -19,7 +19,10 @@ import com.intellij.openapi.application.impl.ApplicationInfoImpl;
 import com.intellij.openapi.extensions.PluginDescriptor;
 import com.intellij.openapi.extensions.PluginId;
 import com.intellij.openapi.fileChooser.ex.FileTextFieldImpl;
-import com.intellij.openapi.options.*;
+import com.intellij.openapi.options.Configurable;
+import com.intellij.openapi.options.ConfigurationException;
+import com.intellij.openapi.options.SearchableConfigurable;
+import com.intellij.openapi.options.ShowSettingsUtil;
 import com.intellij.openapi.options.newEditor.SettingsDialog;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
@@ -35,7 +38,6 @@ import com.intellij.openapi.updateSettings.impl.UpdateChecker;
 import com.intellij.openapi.updateSettings.impl.UpdateSettings;
 import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.io.FileUtil;
-import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.openapi.wm.IdeFrame;
@@ -89,8 +91,8 @@ import static com.intellij.util.ui.UIUtil.uiChildren;
  * @author Alexander Lobas
  */
 public class PluginManagerConfigurableNew
-  implements SearchableConfigurable, Configurable.NoScroll, Configurable.NoMargin, Configurable.TopComponentProvider, OptionalConfigurable {
-  public static final String ID = "preferences.pluginManager2";
+  implements SearchableConfigurable, Configurable.NoScroll, Configurable.NoMargin, Configurable.TopComponentProvider {
+  public static final String ID = "preferences.pluginManager";
 
   private static final String SELECTION_TAB_KEY = "PluginConfigurable.selectionTab";
 
@@ -938,11 +940,6 @@ public class PluginManagerConfigurableNew
         result.add(descriptor);
       }
     }
-  }
-
-  @Override
-  public boolean needDisplay() {
-    return Registry.is("show.new.plugin.page");  // TODO: temp code for show page over registry
   }
 
   @NotNull
