@@ -105,13 +105,7 @@ public class DebuggerSettings implements Cloneable, PersistentStateComponent<Ele
   @Override
   public Element getState() {
     Element state = XmlSerializer.serialize(this, new SkipDefaultsSerializationFilter());
-    try {
-      DebuggerUtilsEx.writeFilters(state, "filter", mySteppingFilters);
-    }
-    catch (WriteExternalException e) {
-      LOG.error(e);
-      return null;
-    }
+    DebuggerUtilsEx.writeFilters(state, "filter", mySteppingFilters);
 
     for (ContentState eachState : myContentStates.values()) {
       final Element content = new Element("content");
