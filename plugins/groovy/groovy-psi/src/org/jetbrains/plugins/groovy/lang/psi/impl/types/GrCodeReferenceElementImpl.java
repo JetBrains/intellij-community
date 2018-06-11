@@ -66,7 +66,7 @@ public class GrCodeReferenceElementImpl extends GrReferenceElementImpl<GrCodeRef
   }
 
   @Override
-  public void accept(GroovyElementVisitor visitor) {
+  public void accept(@NotNull GroovyElementVisitor visitor) {
     visitor.visitCodeReferenceElement(this);
   }
 

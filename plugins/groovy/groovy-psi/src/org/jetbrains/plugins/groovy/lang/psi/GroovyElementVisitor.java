@@ -42,12 +42,9 @@ import org.jetbrains.plugins.groovy.lang.psi.api.toplevel.imports.GrImportStatem
 import org.jetbrains.plugins.groovy.lang.psi.api.toplevel.packaging.GrPackageDefinition;
 import org.jetbrains.plugins.groovy.lang.psi.api.types.*;
 
-/**
- * @author ven
- */
 public abstract class GroovyElementVisitor {
-  public void visitElement(@NotNull GroovyPsiElement element) {
-  }
+
+  public void visitElement(@NotNull GroovyPsiElement element) {}
 
   public void visitFile(@NotNull GroovyFileBase file) {
     visitElement(file);
@@ -301,19 +298,19 @@ public abstract class GroovyElementVisitor {
     visitElement(method);
   }
 
-  public void visitDocMethodReference(@NotNull GrDocMethodReference reference){
+  public void visitDocMethodReference(@NotNull GrDocMethodReference reference) {
     visitElement(reference);
   }
 
-  public void visitDocFieldReference(@NotNull GrDocFieldReference reference){
+  public void visitDocFieldReference(@NotNull GrDocFieldReference reference) {
     visitElement(reference);
   }
 
-  public void visitDocMethodParameterList(@NotNull GrDocMethodParams params){
+  public void visitDocMethodParameterList(@NotNull GrDocMethodParams params) {
     visitElement(params);
   }
 
-  public void visitDocMethodParameter(@NotNull GrDocMethodParameter parameter){
+  public void visitDocMethodParameter(@NotNull GrDocMethodParameter parameter) {
     visitElement(parameter);
   }
 
@@ -453,7 +450,7 @@ public abstract class GroovyElementVisitor {
     visitElement(list);
   }
 
-  public  void visitClassInitializer(@NotNull GrClassInitializer initializer) {
+  public void visitClassInitializer(@NotNull GrClassInitializer initializer) {
     visitElement(initializer);
   }
 

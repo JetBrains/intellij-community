@@ -128,7 +128,7 @@ public class GrUnaryExpressionImpl extends GrExpressionImpl implements GrUnaryEx
   }
 
   @Override
-  public void accept(GroovyElementVisitor visitor) {
+  public void accept(@NotNull GroovyElementVisitor visitor) {
     visitor.visitUnaryExpression(this);
   }
 

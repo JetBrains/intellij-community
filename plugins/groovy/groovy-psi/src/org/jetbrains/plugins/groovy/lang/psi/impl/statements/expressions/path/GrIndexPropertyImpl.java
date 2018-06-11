@@ -62,7 +62,7 @@ public class GrIndexPropertyImpl extends GrExpressionImpl implements GrIndexProp
   }
 
   @Override
-  public void accept(GroovyElementVisitor visitor) {
+  public void accept(@NotNull GroovyElementVisitor visitor) {
     visitor.visitIndexProperty(this);
   }
 

@@ -45,7 +45,7 @@ public class GrArgumentLabelImpl extends GroovyPsiElementImpl implements GrArgum
   }
 
   @Override
-  public void accept(GroovyElementVisitor visitor) {
+  public void accept(@NotNull GroovyElementVisitor visitor) {
     visitor.visitArgumentLabel(this);
   }
 

@@ -57,7 +57,7 @@ public class GrTypeParameterListImpl extends GrStubElementBase<EmptyStub> implem
   }
 
   @Override
-  public void accept(GroovyElementVisitor visitor) {
+  public void accept(@NotNull GroovyElementVisitor visitor) {
     visitor.visitTypeParameterList(this);
   }
 
