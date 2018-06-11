@@ -10,7 +10,8 @@ import com.intellij.psi.tree.IElementType;
 import com.intellij.testFramework.fixtures.LightPlatformCodeInsightFixtureTestCase;
 import org.jetbrains.annotations.NotNull;
 
-public class YAMLEditingTest extends LightPlatformCodeInsightFixtureTestCase {
+/** Test interactive lexing in highlight while typing */
+public class YAMLInteractiveLexingTest extends LightPlatformCodeInsightFixtureTestCase {
   @Override
   protected String getTestDataPath() {
     return PathManagerEx.getCommunityHomePath() + "/plugins/yaml/testSrc/org/jetbrains/yaml/editing/data/";
