@@ -8,6 +8,7 @@
 
   <extensions defaultExtensionNs="com.intellij">
     <!-- YAML -->
+    <lang.formatter language="yaml" implementationClass="org.jetbrains.yaml.formatter.YAMLFormattingModelBuilder"/>
     <lang.parserDefinition language="yaml" implementationClass="org.jetbrains.yaml.YAMLParserDefinition"/>
     <lang.commenter language="yaml" implementationClass="org.jetbrains.yaml.YAMLCommenter"/>
     <lang.syntaxHighlighterFactory language="yaml" implementationClass="org.jetbrains.yaml.YAMLSyntaxHighlighterFactory"/>

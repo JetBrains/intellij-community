@@ -1,0 +1,16 @@
+---
+
+{
+  hello: { world: {
+    bugaga: pp
+  }}
+}
+
+---
+{ t: [
+  a: b,
+  c : { f : {
+    d: d
+  }},
+  hello
+] }
