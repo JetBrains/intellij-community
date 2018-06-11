@@ -59,7 +59,7 @@ open class MultipleFileMergeDialog2(
   private val mergeDialogCustomizer: MergeDialogCustomizer
 ) : DialogWrapper(project) {
 
-  private var files = files.toMutableList()
+  private var unresolvedFiles = files.toMutableList()
   private val mergeSession = (mergeProvider as? MergeProvider2)?.createMergeSession(files)
   val processedFiles: MutableList<VirtualFile> = mutableListOf<VirtualFile>()
   private lateinit var table: TreeTable
@@ -107,7 +107,7 @@ open class MultipleFileMergeDialog2(
 
   override fun createCenterPanel(): JComponent {
     return panel(LCFlags.disableMagic) {
-      val description = mergeDialogCustomizer.getMultipleFileMergeDescription(files)
+      val description = mergeDialogCustomizer.getMultipleFileMergeDescription(unresolvedFiles)
       if (!description.isNullOrBlank()) {
         row {
           label(description!!)
@@ -200,7 +200,7 @@ open class MultipleFileMergeDialog2(
       ChangesGroupingSupport.collectFactories(project).getByKey(ChangesGroupingSupport.DIRECTORY_GROUPING)
     else
       NoneChangesGroupingFactory
-    val model = TreeModelBuilder.buildFromVirtualFiles(project, factory, files)
+    val model = TreeModelBuilder.buildFromVirtualFiles(project, factory, unresolvedFiles)
     tableModel.setRoot(model.root as TreeNode)
     TreeUtil.expandAll(table.tree)
   }
@@ -281,7 +281,7 @@ open class MultipleFileMergeDialog2(
   }
 
   private fun markFileProcessed(file: VirtualFile, resolution: MergeSession.Resolution) {
-    files.remove(file)
+    unresolvedFiles.remove(file)
     if (mergeSession != null) {
       mergeSession.conflictResolvedForFile(file, resolution)
     }
@@ -293,7 +293,7 @@ open class MultipleFileMergeDialog2(
   }
 
   private fun updateModelFromFiles() {
-    if (files.isEmpty()) {
+    if (unresolvedFiles.isEmpty()) {
       doCancelAction()
     }
     else {
