@@ -75,7 +75,7 @@ class JsonSchemaStatusWidget extends EditorBasedStatusBarPopup {
     }
 
     if (!hasAccessToSymbols()) {
-      return new MyWidgetState("Index updating is in progress", "Updating indexes", false);
+      return WidgetState.DUMB_MODE;
     }
 
     if (Arrays.stream(JsonSchemaEnabler.EXTENSION_POINT_NAME.getExtensions()).noneMatch(e -> e.isEnabledForFile(file) && e.shouldShowSwitcherWidget(file))) {
