@@ -388,6 +388,9 @@ public class YAMLParser implements PsiParser, YAMLTokenTypes {
     int indentAddition = getShorthandIndentAddition();
     advanceLexer();
 
+    assert getTokenType() == COLON : "Expected colon";
+    advanceLexer();
+
     final PsiBuilder.Marker rollbackMarker = mark();
 
     passJunk();

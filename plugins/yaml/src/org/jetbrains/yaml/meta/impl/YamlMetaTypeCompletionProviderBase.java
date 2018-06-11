@@ -82,6 +82,9 @@ public abstract class YamlMetaTypeCompletionProviderBase extends CompletionProvi
       YamlScalarType scalarType = (YamlScalarType)metaType;
       if (insertedScalar.getParent() instanceof YAMLKeyValue) {
         PsiElement prevSibling = PsiTreeUtil.skipWhitespacesBackward(insertedScalar);
+        if (isOfType(prevSibling, YAMLTokenTypes.COLON)) {
+          prevSibling = PsiTreeUtil.skipWhitespacesBackward(prevSibling);
+        }
         if (isOfType(prevSibling, YAMLTokenTypes.SCALAR_KEY)) {
           addValueCompletions(insertedScalar, scalarType, result, Collections.emptyMap());
           return;

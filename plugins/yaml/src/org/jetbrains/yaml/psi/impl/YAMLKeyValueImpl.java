@@ -69,7 +69,7 @@ public class YAMLKeyValueImpl extends YAMLPsiElementImpl implements YAMLKeyValue
     }
 
     final String text = keyElement.getText();
-    return StringUtil.unquoteString(text.substring(0, text.length() - 1));
+    return StringUtil.unquoteString(text);
   }
 
   @Nullable
