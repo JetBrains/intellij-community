@@ -54,15 +54,13 @@ public final class ShadowAction {
 
       @Override
       public void hideNotify() {
-        disconnect(true);
+        disposeListeners();
       }
     });
     Disposer.register(parentDisposable, uiNotify);
   }
 
   private void _connect() {
-    disconnect(false);
-
     Application application = ApplicationManager.getApplication();
     if (application == null) {
       return;
@@ -89,20 +87,18 @@ public final class ShadowAction {
     rebound();
   }
 
-  private void disconnect(boolean isRemoveListener) {
+  private void disposeListeners() {
     Disposable disposable = listenerDisposable;
-    if (isRemoveListener && disposable != null) {
+    if (disposable != null) {
       listenerDisposable = null;
       Disposer.dispose(disposable);
     }
+
+    disposeShortcutSetListener();
   }
 
   private void rebound() {
-    Disposable disposable = shortcutSetDisposable;
-    if (disposable != null) {
-      shortcutSetDisposable = null;
-      Disposer.dispose(disposable);
-    }
+    disposeShortcutSetListener();
 
     final KeymapManager keymapManager = getKeymapManager();
     if (keymapManager == null) {
@@ -133,13 +129,20 @@ public final class ShadowAction {
     myAction.registerCustomShortcutSet(shortcutSet, myComponent, shortcutSetDisposable);
   }
 
+  private void disposeShortcutSetListener() {
+    Disposable disposable = shortcutSetDisposable;
+    if (disposable != null) {
+      shortcutSetDisposable = null;
+      Disposer.dispose(disposable);
+    }
+  }
+
   @Nullable
   private static KeymapManager getKeymapManager() {
     return ApplicationManager.getApplication().isDisposed() ? null : KeymapManager.getInstance();
   }
 
   public void reconnect(AnAction copyFromAction) {
-    disconnect(false);
     myCopyFromAction = copyFromAction;
     _connect();
   }
