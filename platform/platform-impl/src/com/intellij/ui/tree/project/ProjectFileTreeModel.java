@@ -1,10 +1,14 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ui.tree.project;
 
+import com.intellij.openapi.extensions.AreaInstance;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ModuleRootManager;
+import com.intellij.openapi.roots.ProjectFileIndex;
+import com.intellij.openapi.vfs.VFileProperty;
+import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileFilter;
 import com.intellij.ui.tree.BaseTreeModel;
@@ -42,8 +46,8 @@ public final class ProjectFileTreeModel extends BaseTreeModel<ProjectFileNode> i
       }
 
       @Override
-      protected void updateFromFile(@NotNull VirtualFile file, @Nullable Module module) {
-        root.children.stream().filter(node -> node.contains(file, module)).forEach(node -> {
+      protected void updateFromFile(@NotNull VirtualFile file, @NotNull AreaInstance area) {
+        root.children.stream().filter(node -> node.contains(file, area, false)).forEach(node -> {
           if (node.invalidate(file) && node.valid && root.valid) {
             node.invalidateLater(invoker, ProjectFileTreeModel.this::pathChanged);
           }
@@ -91,7 +95,7 @@ public final class ProjectFileTreeModel extends BaseTreeModel<ProjectFileNode> i
     if (children.isEmpty()) return emptyList();
     List<ProjectFileNode> result = new SmartList<>();
     VirtualFileFilter filter = root.filter;
-    for (Object child : children) {
+    for (Object child: children) {
       if (child instanceof FileNode && isVisible((FileNode)child, filter)) {
         result.add((FileNode)child);
       }
@@ -100,7 +104,7 @@ public final class ProjectFileTreeModel extends BaseTreeModel<ProjectFileNode> i
   }
 
   private static boolean isVisible(@NotNull FileNode node, @Nullable VirtualFileFilter filter) {
-    if (!node.isValid()) return false;
+    if (!node.getVirtualFile().isValid()) return false;
     if (filter == null) return true;
     ThreeState visibility = node.visibility;
     if (visibility == ThreeState.NO) return false;
@@ -114,6 +118,22 @@ public final class ProjectFileTreeModel extends BaseTreeModel<ProjectFileNode> i
     }
     node.visibility = ThreeState.fromBoolean(visible);
     return visible;
+  }
+
+  private static boolean isExpectedModule(@Nullable Module module, @NotNull VirtualFile file, @NotNull Project project) {
+    return file.isValid() && !project.isDisposed() && module == ProjectFileIndex.getInstance(project).getModuleForFile(file);
+  }
+
+  @NotNull
+  private static Module[] getModules(@NotNull Project project) {
+    ModuleManager manager = ModuleManager.getInstance(project);
+    return manager == null ? Module.EMPTY_ARRAY : manager.getModules();
+  }
+
+  @NotNull
+  private static VirtualFile[] getContentRoots(@NotNull Module module) {
+    ModuleRootManager manager = module.isDisposed() ? null : ModuleRootManager.getInstance(module);
+    return manager == null ? VirtualFile.EMPTY_ARRAY : manager.getContentRoots();
   }
 
   public void setFilter(@Nullable VirtualFileFilter filter) {
@@ -130,20 +150,20 @@ public final class ProjectFileTreeModel extends BaseTreeModel<ProjectFileNode> i
   }
 
 
-  private static final class Mapper<N extends FileNode> implements BiFunction<VirtualFile, Module, N> {
+  private static final class Mapper<N extends FileNode> implements BiFunction<VirtualFile, Object, N> {
     private final HashMap<VirtualFile, N> map = new HashMap<>();
-    private final BiFunction<? super VirtualFile, ? super Module, ? extends N> function;
+    private final BiFunction<? super VirtualFile, ? super Object, ? extends N> function;
 
-    Mapper(@NotNull List<N> list, @NotNull BiFunction<? super VirtualFile, ? super Module, ? extends N> function) {
+    Mapper(@NotNull List<N> list, @NotNull BiFunction<? super VirtualFile, ? super Object, ? extends N> function) {
       list.forEach(node -> map.put(node.file, node));
       this.function = function;
     }
 
     @NotNull
     @Override
-    public final N apply(VirtualFile file, Module module) {
+    public final N apply(VirtualFile file, Object id) {
       N node = map.isEmpty() ? null : map.remove(file);
-      return node != null && node.module == module ? node : function.apply(file, module);
+      return node != null && node.id.equals(id) ? node : function.apply(file, id);
     }
   }
 
@@ -205,18 +225,14 @@ public final class ProjectFileTreeModel extends BaseTreeModel<ProjectFileNode> i
     @NotNull
     @Override
     List<RootNode> getChildren(@NotNull List<RootNode> oldList) {
-      if (project.isDisposed()) return emptyList();
-      ModuleManager moduleManager = ModuleManager.getInstance(project);
-      if (moduleManager == null) return emptyList();
-
       List<RootNode> list = new SmartList<>();
       Mapper<RootNode> mapper = new Mapper<>(oldList, RootNode::new);
-      for (Module module : moduleManager.getModules()) {
-        if (module.isDisposed()) continue;
-        ModuleRootManager manager = ModuleRootManager.getInstance(module);
-        if (manager == null) continue;
-
-        for (VirtualFile file : manager.getContentRoots()) {
+      VirtualFile ancestor = project.getBaseDir();
+      if (ancestor != null && isExpectedModule(null, ancestor, project)) {
+        list.add(mapper.apply(ancestor, project));
+      }
+      for (Module module: getModules(project)) {
+        for (VirtualFile file: getContentRoots(module)) {
           list.add(mapper.apply(file, module));
         }
       }
@@ -229,16 +245,17 @@ public final class ProjectFileTreeModel extends BaseTreeModel<ProjectFileNode> i
 
   private static class FileNode extends Node<FileNode> implements ProjectFileNode {
     final VirtualFile file;
-    final Module module;
+    final Object id;
 
-    FileNode(@NotNull VirtualFile file, @NotNull Module module) {
+    FileNode(@NotNull VirtualFile file, @NotNull Object id) {
       this.file = file;
-      this.module = module;
+      this.id = id;
     }
 
     @NotNull
-    public Module getModule() {
-      return module;
+    @Override
+    public Object getRootID() {
+      return id;
     }
 
     @NotNull
@@ -251,25 +268,41 @@ public final class ProjectFileTreeModel extends BaseTreeModel<ProjectFileNode> i
       return file.getName();
     }
 
-    boolean contains(@NotNull VirtualFile file, @Nullable Module module) {
-      return this.module == module && isAncestor(this.file, file, false);
-    }
-
     @NotNull
     @Override
     List<FileNode> getChildren(@NotNull List<FileNode> oldList) {
       visibility = ThreeState.NO;
-      if (!isValid()) return emptyList();
-      ModuleRootManager manager = ModuleRootManager.getInstance(module);
-      if (manager == null) return emptyList();
+
+      VirtualFile file = getVirtualFile();
+      if (!file.isValid()) return emptyList();
+
       visibility = ThreeState.UNSURE;
+
+      VirtualFile[] children = file.getChildren();
+      if (children == null || children.length == 0) return emptyList();
 
       List<FileNode> list = new SmartList<>();
       Mapper<FileNode> mapper = new Mapper<>(oldList, FileNode::new);
-      manager.getFileIndex().iterateContentUnderDirectory(file
-        , child -> file.equals(child) || list.add(mapper.apply(child, module))
-        , child -> file.equals(child) || file.equals(child.getParent()));
-
+      for (VirtualFile child: children) {
+        if (child.is(VFileProperty.SYMLINK) && VfsUtilCore.isInvalidLink(child)) {
+          continue; // ignore invalid symlink
+        }
+        Object id = getRootID();
+        if (id instanceof VirtualFile) {
+          list.add(mapper.apply(child, id));
+        }
+        else if (id instanceof Project) {
+          if (isExpectedModule(null, child, (Project)id)) {
+            list.add(mapper.apply(child, id));
+          }
+        }
+        else if (id instanceof Module) {
+          Module module = (Module)id;
+          if (!module.isDisposed() && isExpectedModule(module, child, module.getProject())) {
+            list.add(mapper.apply(child, id));
+          }
+        }
+      }
       return list;
     }
 
@@ -279,7 +312,7 @@ public final class ProjectFileTreeModel extends BaseTreeModel<ProjectFileNode> i
           validator = null; // all children will be invalid
           valid = false;
         }
-        for (FileNode node : children) {
+        for (FileNode node: children) {
           node.invalidateChildren(validator);
         }
       }
@@ -291,8 +324,8 @@ public final class ProjectFileTreeModel extends BaseTreeModel<ProjectFileNode> i
     final AtomicLong counter = new AtomicLong();
     final List<VirtualFile> accumulator = new SmartList<>();
 
-    RootNode(@NotNull VirtualFile file, @NotNull Module module) {
-      super(file, module);
+    RootNode(@NotNull VirtualFile file, @NotNull Object id) {
+      super(file, id);
     }
 
     @Override
@@ -303,7 +336,7 @@ public final class ProjectFileTreeModel extends BaseTreeModel<ProjectFileNode> i
     boolean invalidate(VirtualFile file) {
       List<VirtualFile> list = accumulator;
       if (!list.isEmpty()) {
-        for (VirtualFile ancestor : list) {
+        for (VirtualFile ancestor: list) {
           if (isAncestor(ancestor, file, false)) {
             return false; // the file or its parent is already added
           }
@@ -329,7 +362,7 @@ public final class ProjectFileTreeModel extends BaseTreeModel<ProjectFileNode> i
             List<FileNode> list = new SmartList<>();
             invalidateNow(node -> list.add(node));
             if (parent.filter == null) {
-              for (FileNode node : list) {
+              for (FileNode node: list) {
                 TreePath path = pathToCustomNode((Node)node, child -> child.parent);
                 if (path != null) consumer.accept(path);
               }
