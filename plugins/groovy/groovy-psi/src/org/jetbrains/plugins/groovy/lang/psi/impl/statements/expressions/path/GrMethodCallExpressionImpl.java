@@ -29,7 +29,7 @@ public class GrMethodCallExpressionImpl extends GrMethodCallImpl implements GrMe
   }
 
   @Override
-  public void accept(GroovyElementVisitor visitor) {
+  public void accept(@NotNull GroovyElementVisitor visitor) {
     visitor.visitMethodCallExpression(this);
   }
 
