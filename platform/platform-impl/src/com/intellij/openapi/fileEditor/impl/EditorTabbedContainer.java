@@ -112,9 +112,13 @@ public final class EditorTabbedContainer implements Disposable, CloseAction.Clos
     };
     myTabs.setBorder(new MyShadowBorder(myTabs));
     myTabs.setTransferHandler(new MyTransferHandler());
-    myTabs.setDataProvider(new MyDataProvider()).setPopupGroup(
-      () -> (ActionGroup)CustomActionsSchema.getInstance().getCorrectedAction(IdeActions.GROUP_EDITOR_TAB_POPUP), ActionPlaces.EDITOR_TAB_POPUP, false).addTabMouseListener(new TabMouseListener()).getPresentation()
-      .setTabDraggingEnabled(true).setUiDecorator(() -> new UiDecorator.UiDecoration(null, new Insets(TabsUtil.TAB_VERTICAL_PADDING, 8, TabsUtil.TAB_VERTICAL_PADDING, 8))).setTabLabelActionsMouseDeadzone(TimedDeadzone.NULL).setGhostsAlwaysVisible(true).setTabLabelActionsAutoHide(false)
+    myTabs
+      .setDataProvider(new MyDataProvider())
+      .setPopupGroup(
+        () -> (ActionGroup)CustomActionsSchema.getInstance().getCorrectedAction(IdeActions.GROUP_EDITOR_TAB_POPUP), ActionPlaces.EDITOR_TAB_POPUP, false)
+      .addTabMouseListener(new TabMouseListener()).getPresentation()
+      .setTabDraggingEnabled(true).setUiDecorator(() -> new UiDecorator.UiDecoration(null, new Insets(TabsUtil.TAB_VERTICAL_PADDING, 8, TabsUtil.TAB_VERTICAL_PADDING, 8)))
+      .setTabLabelActionsMouseDeadzone(TimedDeadzone.NULL).setGhostsAlwaysVisible(true).setTabLabelActionsAutoHide(false)
       .setActiveTabFillIn(EditorColorsManager.getInstance().getGlobalScheme().getDefaultBackground()).setPaintFocus(false).getJBTabs()
       .addListener(new TabsListener() {
         @Override
@@ -136,14 +140,15 @@ public final class EditorTabbedContainer implements Disposable, CloseAction.Clos
           }
         }
       })
-    .setSelectionChangeHandler((info, requestFocus, doChangeSelection) -> {
-      final ActionCallback result = new ActionCallback();
-      CommandProcessor.getInstance().executeCommand(myProject, () -> {
-        ((IdeDocumentHistoryImpl)IdeDocumentHistory.getInstance(myProject)).onSelectionChanged();
-        result.notify(doChangeSelection.run());
-      }, "EditorChange", null);
-      return result;
-    }).getPresentation().setRequestFocusOnLastFocusedComponent(true);
+      .setSelectionChangeHandler((info, requestFocus, doChangeSelection) -> {
+        final ActionCallback result = new ActionCallback();
+        CommandProcessor.getInstance().executeCommand(myProject, () -> {
+          ((IdeDocumentHistoryImpl)IdeDocumentHistory.getInstance(myProject)).onSelectionChanged();
+          result.notify(doChangeSelection.run());
+        }, "EditorChange", null);
+        return result;
+      });
+    myTabs.getPresentation().setRequestFocusOnLastFocusedComponent(true);
     myTabs.addMouseListener(new MouseAdapter() {
       @Override
       public void mouseClicked(MouseEvent e) {
