@@ -1,4 +1,4 @@
-// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInspection.nullable;
 
 import com.intellij.codeInsight.*;
@@ -822,12 +822,14 @@ public class NullableStuffInspectionBase extends AbstractBaseJavaLocalInspection
                                                                 int parameterIdx,
                                                                 PsiParameter parameter) {
     if (!REPORT_NULLS_PASSED_TO_NOT_NULL_PARAMETER || !isOnFly) return;
+
     PsiElement elementToHighlight;
     if (DfaPsiUtil.getTypeNullability(getMemberType(parameter)) == Nullability.NOT_NULL) {
       elementToHighlight = parameter.getNameIdentifier();
-    } else {
+    }
+    else {
       NullabilityAnnotationInfo info = nullableManager.findOwnNullabilityAnnotationInfo(parameter);
-      if (info == null || info.isInferred()) return;
+      if (info == null || info.getNullability() != Nullability.NOT_NULL || info.isInferred()) return;
       PsiAnnotation notNullAnnotation = info.getAnnotation();
       boolean physical = PsiTreeUtil.isAncestor(parameter, notNullAnnotation, true);
       elementToHighlight = physical ? notNullAnnotation : parameter.getNameIdentifier();
