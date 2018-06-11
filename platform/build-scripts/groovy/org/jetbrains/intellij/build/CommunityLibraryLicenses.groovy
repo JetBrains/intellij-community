@@ -412,7 +412,6 @@ class CommunityLibraryLicenses {
     // Android Studio: added by Change Ib7a30b9c / commit 91531e9
     new LibraryLicense(name: "Java Poet", libraryName: "javapoet", version: "1.8.0", license: "Apache 2.0",
                        url: "https://github.com/square/javapoet"),
-    jetbrainsLibrary("kotlin-stdlib-jre8"),  // Android Studio: added by Change If94a51ef / commit e8d58c9
 
     jetbrainsLibrary("Coverage"),
     jetbrainsLibrary("CoverageReport"),

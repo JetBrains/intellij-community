@@ -1000,22 +1000,6 @@ filegroup(
 
 # managed by go/iml_to_build
 java_library(
-    name = "kotlin-stdlib-jre8",
-    visibility = ["//visibility:public"],
-    # do not sort: must match IML order
-    exports = [
-        "//prebuilts/tools/common/m2/repository/org/jetbrains/kotlin/kotlin-stdlib-jre7/1.2.10:jar",
-        "//prebuilts/tools/common/m2/repository/org/jetbrains/kotlin/kotlin-stdlib-jre8/1.2.10:jar",
-    ],
-    # do not sort: must match IML order
-    runtime_deps = [
-        "//prebuilts/tools/common/m2/repository/org/jetbrains/kotlin/kotlin-stdlib-jre7/1.2.10:jar",
-        "//prebuilts/tools/common/m2/repository/org/jetbrains/kotlin/kotlin-stdlib-jre8/1.2.10:jar",
-    ],
-)
-
-# managed by go/iml_to_build
-java_library(
     name = "cucumber-core_2.0.1",
     visibility = ["//visibility:public"],
     # do not sort: must match IML order
