@@ -2,6 +2,7 @@
 package com.intellij.openapi.wm.impl.status;
 
 import com.intellij.ide.DataManager;
+import com.intellij.ide.IdeBundle;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.actionSystem.PlatformDataKeys;
@@ -209,6 +210,9 @@ public abstract class EditorBasedStatusBarPopup extends EditorBasedWidget implem
     static {
       HIDDEN.setHidden(true);
     }
+
+    // todo: update accordingly to UX-252
+    public static final WidgetState DUMB_MODE = new WidgetState(IdeBundle.message("progress.indexing.scanning"), IdeBundle.message("progress.indexing.updating"), false);
 
     protected WidgetState(String toolTip, String text, boolean actionEnabled) {
       this.toolTip = toolTip;
