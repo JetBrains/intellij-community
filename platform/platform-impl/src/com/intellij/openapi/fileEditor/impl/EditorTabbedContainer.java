@@ -353,7 +353,7 @@ public final class EditorTabbedContainer implements Disposable, CloseAction.Clos
     tab.setTestableUi(new MyQueryable(tab));
 
     final DefaultActionGroup tabActions = new DefaultActionGroup();
-    tabActions.add(new CloseTab(comp, tab));
+    tabActions.add(new CloseTab(comp, file));
 
     tab.setTabLabelActions(tabActions, ActionPlaces.EDITOR_TAB);
     myTabs.addTabSilently(tab, indexToInsert);
@@ -419,10 +419,10 @@ public final class EditorTabbedContainer implements Disposable, CloseAction.Clos
   }
 
   private final class CloseTab extends AnAction implements DumbAware {
-    private final TabInfo myTabInfo;
+    private final VirtualFile myFile;
 
-    CloseTab(@NotNull JComponent c, @NotNull TabInfo info) {
-      myTabInfo = info;
+    CloseTab(@NotNull JComponent c, @NotNull VirtualFile file) {
+      myFile = file;
       new ShadowAction(this, ActionManager.getInstance().getAction(IdeActions.ACTION_CLOSE), c, myTabs);
     }
 
@@ -438,7 +438,6 @@ public final class EditorTabbedContainer implements Disposable, CloseAction.Clos
     public void actionPerformed(final AnActionEvent e) {
       final FileEditorManagerEx mgr = FileEditorManagerEx.getInstanceEx(myProject);
       EditorWindow window;
-      final VirtualFile file = (VirtualFile)myTabInfo.getObject();
       if (ActionPlaces.EDITOR_TAB.equals(e.getPlace())) {
         window = myWindow;
       }
@@ -448,11 +447,11 @@ public final class EditorTabbedContainer implements Disposable, CloseAction.Clos
 
       if (window != null) {
         if (BitUtil.isSet(e.getModifiers(), InputEvent.ALT_MASK)) {
-          window.closeAllExcept(file);
+          window.closeAllExcept(myFile);
         }
         else {
-          if (window.findFileComposite(file) != null) {
-            mgr.closeFile(file, window);
+          if (window.findFileComposite(myFile) != null) {
+            mgr.closeFile(myFile, window);
           }
         }
       }
