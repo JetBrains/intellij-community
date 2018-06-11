@@ -337,17 +337,19 @@ public final class EditorTabbedContainer implements Disposable, CloseAction.Clos
     return info != null ? info.getComponent() : null;
   }
 
-  public void insertTab(final VirtualFile file, final Icon icon, final JComponent comp, final String tooltip, final int indexToInsert) {
-
+  public void insertTab(@NotNull VirtualFile file, final Icon icon, final JComponent comp, final String tooltip, final int indexToInsert) {
     TabInfo tab = myTabs.findInfo(file);
-    if (tab != null) return;
+    if (tab != null) {
+      return;
+    }
 
-    tab = new TabInfo(comp).setText(EditorTabPresentationUtil.getEditorTabTitle(myProject, file, myWindow))
-                           .setTabColor(EditorTabPresentationUtil.getEditorTabBackgroundColor(myProject, file, myWindow))
-                           .setIcon(icon)
-                           .setTooltipText(tooltip)
-                           .setObject(file)
-                           .setDragOutDelegate(myDragOutDelegate);
+    tab = new TabInfo(comp)
+      .setText(EditorTabPresentationUtil.getEditorTabTitle(myProject, file, myWindow))
+      .setTabColor(EditorTabPresentationUtil.getEditorTabBackgroundColor(myProject, file, myWindow))
+      .setIcon(icon)
+      .setTooltipText(tooltip)
+      .setObject(file)
+      .setDragOutDelegate(myDragOutDelegate);
     tab.setTestableUi(new MyQueryable(tab));
 
     final DefaultActionGroup tabActions = new DefaultActionGroup();
@@ -416,13 +418,12 @@ public final class EditorTabbedContainer implements Disposable, CloseAction.Clos
 
   }
 
-  private class CloseTab extends AnAction implements DumbAware {
-    ShadowAction myShadow;
+  private final class CloseTab extends AnAction implements DumbAware {
     private final TabInfo myTabInfo;
 
-    CloseTab(JComponent c, TabInfo info) {
+    CloseTab(@NotNull JComponent c, @NotNull TabInfo info) {
       myTabInfo = info;
-      myShadow = new ShadowAction(this, ActionManager.getInstance().getAction(IdeActions.ACTION_CLOSE), c, myTabs);
+      new ShadowAction(this, ActionManager.getInstance().getAction(IdeActions.ACTION_CLOSE), c, myTabs);
     }
 
     @Override
@@ -458,7 +459,7 @@ public final class EditorTabbedContainer implements Disposable, CloseAction.Clos
     }
   }
 
-  private class MyDataProvider implements DataProvider {
+  private final class MyDataProvider implements DataProvider {
     @Override
     public Object getData(@NonNls final String dataId) {
       if (CommonDataKeys.PROJECT.is(dataId)) {
