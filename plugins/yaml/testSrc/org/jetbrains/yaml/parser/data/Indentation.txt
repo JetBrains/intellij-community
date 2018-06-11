@@ -2,13 +2,15 @@ YAML file
   YAML document
     YAML mapping
       YAML key value
-        PsiElement(scalar key)('name:')
+        PsiElement(scalar key)('name')
+        PsiElement(:)(':')
         PsiWhiteSpace(' ')
         YAML plain scalar text
           PsiElement(text)('Mark McGwire')
       PsiElement(Eol)('\n')
       YAML key value
-        PsiElement(scalar key)('accomplishment:')
+        PsiElement(scalar key)('accomplishment')
+        PsiElement(:)(':')
         PsiWhiteSpace(' ')
         YAML scalar text
           PsiElement(scalar text)('>')
@@ -20,7 +22,8 @@ YAML file
           PsiElement(scalar text)('home run record in 1998.')
           PsiElement(block scalar EOL)('\n')
       YAML key value
-        PsiElement(scalar key)('stats:')
+        PsiElement(scalar key)('stats')
+        PsiElement(:)(':')
         PsiWhiteSpace(' ')
         YAML scalar list
           PsiElement(scalar list)('|')

@@ -2,25 +2,29 @@ YAML file
   YAML document
     YAML mapping
       YAML key value
-        PsiElement(scalar key)('runningTime:')
+        PsiElement(scalar key)('runningTime')
+        PsiElement(:)(':')
         PsiWhiteSpace(' ')
         YAML plain scalar text
           PsiElement(text)('150000')
       PsiElement(Eol)('\n')
       YAML key value
-        PsiElement(scalar key)('scenarios:')
+        PsiElement(scalar key)('scenarios')
+        PsiElement(:)(':')
         PsiElement(Eol)('\n')
         PsiElement(indent)('    ')
         YAML mapping
           YAML key value
-            PsiElement(scalar key)('voice_bundle_change:')
+            PsiElement(scalar key)('voice_bundle_change')
+            PsiElement(:)(':')
             PsiWhiteSpace(' ')
             YAML hash
               PsiElement({)('{')
               PsiElement(Eol)('\n')
               PsiElement(indent)('        ')
               YAML key value
-                PsiElement(scalar key)('dataCycling:')
+                PsiElement(scalar key)('dataCycling')
+                PsiElement(:)(':')
                 PsiWhiteSpace(' ')
                 YAML plain scalar text
                   PsiElement(text)('true')
@@ -30,14 +34,16 @@ YAML file
           PsiElement(Eol)('\n')
           PsiElement(indent)('    ')
           YAML key value
-            PsiElement(scalar key)('smart_overview:')
+            PsiElement(scalar key)('smart_overview')
+            PsiElement(:)(':')
             PsiWhiteSpace(' ')
             YAML hash
               PsiElement({)('{')
               PsiElement(Eol)('\n')
               PsiElement(indent)('        ')
               YAML key value
-                PsiElement(scalar key)('dataCycling:')
+                PsiElement(scalar key)('dataCycling')
+                PsiElement(:)(':')
                 PsiWhiteSpace(' ')
                 YAML plain scalar text
                   PsiElement(text)('true')

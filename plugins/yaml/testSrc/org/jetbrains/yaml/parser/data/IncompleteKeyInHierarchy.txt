@@ -2,16 +2,19 @@ YAML file
   YAML document
     YAML mapping
       YAML key value
-        PsiElement(scalar key)('foo:')
+        PsiElement(scalar key)('foo')
+        PsiElement(:)(':')
         PsiElement(Eol)('\n')
         PsiElement(indent)('  ')
         YAML mapping
           YAML key value
-            PsiElement(scalar key)('bar:')
+            PsiElement(scalar key)('bar')
+            PsiElement(:)(':')
           PsiElement(Eol)('\n')
           PsiElement(indent)('  ')
           YAML key value
-            PsiElement(scalar key)('baz:')
+            PsiElement(scalar key)('baz')
+            PsiElement(:)(':')
             PsiWhiteSpace(' ')
             YAML plain scalar text
               PsiElement(text)('taz')

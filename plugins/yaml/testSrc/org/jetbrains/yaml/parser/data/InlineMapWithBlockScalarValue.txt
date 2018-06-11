@@ -6,7 +6,8 @@ YAML file
         PsiWhiteSpace('  ')
         YAML mapping
           YAML key value
-            PsiElement(scalar key)('key11:')
+            PsiElement(scalar key)('key11')
+            PsiElement(:)(':')
             PsiWhiteSpace(' ')
             YAML scalar list
               PsiElement(scalar list)('|')
@@ -16,7 +17,8 @@ YAML file
               PsiElement(block scalar EOL)('\n')
           PsiElement(indent)('   ')
           YAML key value
-            PsiElement(scalar key)('key12:')
+            PsiElement(scalar key)('key12')
+            PsiElement(:)(':')
             PsiWhiteSpace(' ')
             YAML plain scalar text
               PsiElement(text)('secondValue')
@@ -27,7 +29,8 @@ YAML file
         PsiWhiteSpace('  ')
         YAML mapping
           YAML key value
-            PsiElement(scalar key)(''key21':')
+            PsiElement(scalar key)(''key21'')
+            PsiElement(:)(':')
             PsiWhiteSpace(' ')
             YAML scalar list
               PsiElement(scalar list)('|')
@@ -37,7 +40,8 @@ YAML file
               PsiElement(block scalar EOL)('\n')
           PsiElement(indent)('   ')
           YAML key value
-            PsiElement(scalar key)('key22:')
+            PsiElement(scalar key)('key22')
+            PsiElement(:)(':')
             PsiWhiteSpace(' ')
             YAML plain scalar text
               PsiElement(text)('secondValue')
@@ -48,7 +52,8 @@ YAML file
         PsiWhiteSpace('  ')
         YAML mapping
           YAML key value
-            PsiElement(scalar key)('"key31":')
+            PsiElement(scalar key)('"key31"')
+            PsiElement(:)(':')
             PsiWhiteSpace(' ')
             YAML scalar list
               PsiElement(scalar list)('|')
@@ -58,7 +63,8 @@ YAML file
               PsiElement(block scalar EOL)('\n')
           PsiElement(indent)('   ')
           YAML key value
-            PsiElement(scalar key)('key32:')
+            PsiElement(scalar key)('key32')
+            PsiElement(:)(':')
             PsiWhiteSpace(' ')
             YAML plain scalar text
               PsiElement(text)('secondValue')
