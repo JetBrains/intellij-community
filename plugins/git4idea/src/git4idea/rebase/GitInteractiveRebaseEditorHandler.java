@@ -76,7 +76,7 @@ public class GitInteractiveRebaseEditorHandler implements Closeable, GitRebaseEd
     try {
       if (myRebaseEditorShown) {
         myEditorCancelled = !handleUnstructuredEditor(path);
-        return 0;
+        return myEditorCancelled ? ERROR_EXIT_CODE : 0;
       }
       else {
         setRebaseEditorShown();
