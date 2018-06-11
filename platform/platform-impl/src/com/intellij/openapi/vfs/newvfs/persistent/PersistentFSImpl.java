@@ -1315,6 +1315,11 @@ public class PersistentFSImpl extends PersistentFS implements ApplicationCompone
   }
 
   @TestOnly
+  public void cleanPersistedContent(int id) {
+    doCleanPersistedContent(id);
+  }
+
+  @TestOnly
   public void cleanPersistedContents() {
     int[] roots = FSRecords.listRoots();
     for (int root : roots) {
@@ -1329,10 +1334,13 @@ public class PersistentFSImpl extends PersistentFS implements ApplicationCompone
       }
     }
     else {
-      setFlag(id, MUST_RELOAD_CONTENT, true);
+      doCleanPersistedContent(id);
     }
   }
 
+  private static void doCleanPersistedContent(int id) {
+    setFlag(id, MUST_RELOAD_CONTENT, true);
+  }
 
   private static class FsRoot extends VirtualDirectoryImpl {
     private final String myName;
