@@ -29,6 +29,15 @@ internal class FileHistoryBuilder(private val startCommit: Int?,
 
   override fun accept(controller: LinearGraphController, permanentGraphInfo: PermanentGraphInfo<Int>) {
     pathsMap.putAll(refine(controller, startCommit, permanentGraphInfo))
+
+    val trivialMerges = mutableSetOf<Int>()
+    pathsMap.forEach { c, p ->
+      if (fileNamesData.isTrivialMerge(c, p)) {
+        trivialMerges.add(c)
+      }
+    }
+    hideInplace(controller, permanentGraphInfo, trivialMerges)
+    trivialMerges.forEach { pathsMap.remove(it) }
   }
 
   private fun refine(controller: LinearGraphController,
@@ -107,7 +116,6 @@ internal class FileHistoryRefiner(private val visibleLinearGraph: LinearGraph,
       val path = pathsForCommits[commit]
       if (path != null) {
         if (!namesData.affects(commit, path)) excluded.add(commit)
-        if (namesData.isTrivialMerge(commit, path)) excluded.add(commit)
       }
     }
 
