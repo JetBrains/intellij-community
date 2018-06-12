@@ -28,6 +28,12 @@ internal class FileHistoryBuilder(private val startCommit: Int?,
   val pathsMap = mutableMapOf<Int, FilePath>()
 
   override fun accept(controller: LinearGraphController, permanentGraphInfo: PermanentGraphInfo<Int>) {
+    pathsMap.putAll(refine(controller, startCommit, permanentGraphInfo))
+  }
+
+  private fun refine(controller: LinearGraphController,
+                     startCommit: Int?,
+                     permanentGraphInfo: PermanentGraphInfo<Int>): Map<Int, FilePath> {
     val visibleLinearGraph = controller.compiledGraph
 
     val row = startCommit?.let {
@@ -39,11 +45,10 @@ internal class FileHistoryBuilder(private val startCommit: Int?,
       if (!excluded.isEmpty()) {
         val hidden = hideInplace(controller, permanentGraphInfo, excluded)
         if (!hidden) LOG.error("Could not hide excluded commits from history for " + startPath.path)
-        pathsMap.putAll(paths)
-        return
       }
+      return paths
     }
-    pathsMap.putAll(fileNamesData.buildPathsMap())
+    return fileNamesData.buildPathsMap()
   }
 
   companion object {
