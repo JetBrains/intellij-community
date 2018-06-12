@@ -19,6 +19,7 @@ import com.intellij.vcs.log.graph.utils.DfsUtil
 import com.intellij.vcs.log.graph.utils.LinearGraphUtils
 import com.intellij.vcs.log.graph.utils.impl.BitSetFlags
 import gnu.trove.TIntObjectHashMap
+import java.util.*
 import java.util.function.BiConsumer
 
 internal class FileHistoryBuilder(private val startCommit: Int?,
@@ -34,10 +35,11 @@ internal class FileHistoryBuilder(private val startCommit: Int?,
     } ?: 0
     if (row >= 0) {
       val refiner = FileHistoryRefiner(visibleLinearGraph, permanentGraphInfo, fileNamesData)
-      if (refiner.refine(row, startPath)) {
-        val hidden = hideInplace(controller, permanentGraphInfo, refiner.excluded)
+      val (paths, excluded) = refiner.refine(row, startPath)
+      if (!excluded.isEmpty()) {
+        val hidden = hideInplace(controller, permanentGraphInfo, excluded)
         if (!hidden) LOG.error("Could not hide excluded commits from history for " + startPath.path)
-        pathsMap.putAll(refiner.pathsForCommits)
+        pathsMap.putAll(paths)
         return
       }
     }
@@ -84,10 +86,10 @@ internal class FileHistoryRefiner(private val visibleLinearGraph: LinearGraph,
 
   private val paths = Stack<FilePath>()
   private val visibilityBuffer = BitSetFlags(permanentLinearGraph.nodesCount()) // a reusable buffer for bfs
-  val pathsForCommits = ContainerUtil.newHashMap<Int, FilePath>()
-  val excluded = ContainerUtil.newHashSet<Int>()
+  private val pathsForCommits = ContainerUtil.newHashMap<Int, FilePath>()
+  private val excluded = ContainerUtil.newHashSet<Int>()
 
-  fun refine(row: Int, startPath: FilePath): Boolean {
+  fun refine(row: Int, startPath: FilePath): Pair<HashMap<Int, FilePath>, HashSet<Int>> {
     if (namesData.hasRenames) {
       paths.push(startPath)
       DfsUtil.walk(LinearGraphUtils.asLiteLinearGraph(visibleLinearGraph), row, this)
@@ -105,7 +107,7 @@ internal class FileHistoryRefiner(private val visibleLinearGraph: LinearGraph,
     }
 
     excluded.forEach { pathsForCommits.remove(it) }
-    return !excluded.isEmpty()
+    return Pair(pathsForCommits, excluded)
   }
 
   override fun enterNode(currentNode: Int, previousNode: Int, down: Boolean) {
