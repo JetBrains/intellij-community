@@ -13,6 +13,8 @@ build = None
 aswb = False
 
 class StudioTests(unittest.TestCase):
+  longMessage = True
+
   def artifact_prefix(self):
     if aswb:
       return "aswb-"
@@ -32,6 +34,42 @@ class StudioTests(unittest.TestCase):
       m = re.search("Android Studio.*\.app/Contents/([^/]+)$", f)
       if m:
         self.assertEquals(m.group(1), "Info.plist", "Only Info.plist should be present in Contents (Found " + m.group(1) + ")")
+
+  def find_member_path(self, zip_file, pattern):
+    regex = re.compile(pattern)
+
+    for path in zip_file.namelist():
+      if regex.match(path):
+        return path
+
+    return None
+
+  def test_aswb_mac_custom_properties(self):
+    if not aswb:
+      return
+
+    zip_path = os.path.join(dist_dir, self.artifact_prefix() + build + ".mac.zip")
+
+    with zipfile.ZipFile(zip_path) as mac_zip:
+      properties_path = self.find_member_path(mac_zip, "Android Studio.*\.app/Contents/bin/idea.properties")
+      self.assertIsNotNone(properties_path, "Mac artifact is missing idea.properties file.")
+
+      with mac_zip.open(properties_path, "r") as properties:
+        seen_properties = set()
+        expected_values = {
+          "idea.updates.url": "https://dl.google.com/android/aswb/patches/updates.xml",
+          "idea.patches.url": "https://dl.google.com/android/aswb/patches"
+        }
+
+        for property, value in [line.strip().split("=") for line in properties.readlines()]:
+          self.assertNotIn(property, seen_properties, "idea.properties has multiple definitions for " + property)
+          seen_properties.add(property)
+
+          if property in expected_values:
+            self.assertEquals(value, expected_values[property], "idea.properties sets %s incorrectly" % property)
+
+        missing_properties = [property for property in expected_values if property not in seen_properties]
+        self.assertEquals(len(missing_properties), 0, "idea.properties missing definitions for " + ", ".join(missing_properties))
 
   def test_no_build_files(self):
     if aswb:  # aswb plugin includes a BUILD.bazel in the aspect folder

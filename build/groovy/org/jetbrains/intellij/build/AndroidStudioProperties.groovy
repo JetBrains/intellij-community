@@ -424,47 +424,49 @@ class AndroidStudioProperties extends BaseIdeaProperties {
     }
   }
 
+  class StudioMacDistributionCustomizer extends MacDistributionCustomizer {
+    StudioMacDistributionCustomizer(String projectHome) {
+      urlSchemes = ["idea"]
+      associateIpr = true
+      enableYourkitAgentInEAP = false
+      bundleIdentifier = "com.google.android.studio"
+      dmgImagePath = "$projectHome/build/conf/ideaCE/mac/images/dmg_background.tiff"
+      // For now we have all 3 platform icons checked in and we change
+      // the icons manually. Fix this when the other platforms have the
+      // same mechanisms for our .ico and .svg files
+      icnsPath = "$projectHome/../adt/idea/adt-branding/src/artwork/AndroidStudio.icns"
+      icnsPathForEAP = "$projectHome/../adt/idea/adt-branding/src/artwork/preview/AndroidStudio.icns"
+    }
+
+    @Override
+    String getRootDirectoryName(ApplicationInfoProperties applicationInfo, String buildNumber) {
+      applicationInfo.isEAP ? "Android Studio ${applicationInfo.majorVersion}.${applicationInfo.minorVersion} Preview.app"
+                            : "Android Studio.app"
+    }
+
+    @Override
+    @CompileDynamic
+    void copyAdditionalFiles(BuildContext context, String targetDirectory) {
+      def root = "$context.paths.communityHome/../.."
+      context.ant.copy(todir: "$targetDirectory/plugins/sdk-updates/offline-repo") {
+        fileset(dir: "$root/prebuilts/tools/darwin-x86_64/offline-sdk")
+      }
+
+      def androidRoot = "$root/tools/adt/idea"
+      context.ant.copy(file: "$androidRoot/adt-ui/lib/libwebp/mac/libwebp_jni64.dylib", tofile: "$targetDirectory/plugins/android/lib/libwebp_jni64.dylib")
+
+      context.ant.copy(todir: "$targetDirectory/bin/lldb") {
+        fileset(dir: "$root/prebuilts/tools/darwin-x86_64/lldb")
+      }
+      extraExecutables.add("bin/lldb/bin/LLDBFrontend")
+      extraExecutables.add("bin/lldb/bin/llvm-symbolizer")
+      extraExecutables.add("bin/lldb/bin/minidump_stackwalk")
+    }
+  }
+
   @Override
   MacDistributionCustomizer createMacCustomizer(String projectHome) {
-    return new MacDistributionCustomizer() {
-      {
-        urlSchemes = ["idea"]
-        associateIpr = true
-        enableYourkitAgentInEAP = false
-        bundleIdentifier = "com.google.android.studio"
-        dmgImagePath = "$projectHome/build/conf/ideaCE/mac/images/dmg_background.tiff"
-        // For now we have all 3 platform icons checked in and we change
-        // the icons manually. Fix this when the other platforms have the
-        // same mechanisms for our .ico and .svg files
-        icnsPath = "$projectHome/../adt/idea/adt-branding/src/artwork/AndroidStudio.icns"
-        icnsPathForEAP = "$projectHome/../adt/idea/adt-branding/src/artwork/preview/AndroidStudio.icns"
-      }
-
-      @Override
-      String getRootDirectoryName(ApplicationInfoProperties applicationInfo, String buildNumber) {
-        applicationInfo.isEAP ? "Android Studio ${applicationInfo.majorVersion}.${applicationInfo.minorVersion} Preview.app"
-                              : "Android Studio.app"
-      }
-
-      @Override
-      @CompileDynamic
-      void copyAdditionalFiles(BuildContext context, String targetDirectory) {
-        def root = "$context.paths.communityHome/../.."
-        context.ant.copy(todir: "$targetDirectory/plugins/sdk-updates/offline-repo") {
-          fileset(dir: "$root/prebuilts/tools/darwin-x86_64/offline-sdk")
-        }
-
-        def androidRoot = "$root/tools/adt/idea"
-        context.ant.copy(file: "$androidRoot/adt-ui/lib/libwebp/mac/libwebp_jni64.dylib", tofile: "$targetDirectory/plugins/android/lib/libwebp_jni64.dylib")
-
-        context.ant.copy(todir: "$targetDirectory/bin/lldb") {
-          fileset(dir: "$root/prebuilts/tools/darwin-x86_64/lldb")
-        }
-        extraExecutables.add("bin/lldb/bin/LLDBFrontend")
-        extraExecutables.add("bin/lldb/bin/llvm-symbolizer")
-        extraExecutables.add("bin/lldb/bin/minidump_stackwalk")
-      }
-    }
+    new StudioMacDistributionCustomizer(projectHome)
   }
 
   @Override

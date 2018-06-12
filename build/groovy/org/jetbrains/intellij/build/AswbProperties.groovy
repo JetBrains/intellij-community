@@ -63,4 +63,23 @@ class AswbProperties extends AndroidStudioProperties {
   protected void bundleGradleAndOfflineRepo(BuildContext buildContext, String root, String targetDirectory) {
     // skip bundling gradle/offline repo in ASWB distribution just to reduce the size of the installer we drop into google3
   }
+
+  class AswbMacDistributionCustomizer extends AndroidStudioProperties.StudioMacDistributionCustomizer {
+    AswbMacDistributionCustomizer(String projectHome) {
+      super(projectHome)
+    }
+
+    @Override
+    Map<String, String> getCustomIdeaProperties(ApplicationInfoProperties applicationInfo) {
+      [
+        "idea.updates.url": "https://dl.google.com/android/aswb/patches/updates.xml",
+        "idea.patches.url": "https://dl.google.com/android/aswb/patches"
+      ]
+    }
+  }
+
+  @Override
+  MacDistributionCustomizer createMacCustomizer(String projectHome) {
+    new AswbMacDistributionCustomizer(projectHome)
+  }
 }
