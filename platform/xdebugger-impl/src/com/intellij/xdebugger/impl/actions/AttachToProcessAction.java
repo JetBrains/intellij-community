@@ -7,8 +7,6 @@ import com.intellij.execution.ExecutionException;
 import com.intellij.execution.process.ProcessInfo;
 import com.intellij.execution.runners.ExecutionUtil;
 import com.intellij.icons.AllIcons;
-import com.intellij.internal.statistic.UsageTrigger;
-import com.intellij.internal.statistic.beans.ConvertUsagesUtil;
 import com.intellij.notification.Notification;
 import com.intellij.notification.NotificationType;
 import com.intellij.notification.Notifications;
@@ -569,8 +567,6 @@ public class AttachToProcessAction extends AnAction {
 
     public void startDebugSession(@NotNull Project project) {
       XAttachDebugger debugger = getSelectedDebugger();
-      UsageTrigger.trigger(ConvertUsagesUtil.ensureProperKey("debugger.attach"));
-      UsageTrigger.trigger(ConvertUsagesUtil.ensureProperKey("debugger.attach." + debugger.getDebuggerDisplayName()));
 
       try {
         debugger.attachDebugSession(project, myHost, myInfo);

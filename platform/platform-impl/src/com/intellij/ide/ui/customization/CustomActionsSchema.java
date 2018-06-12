@@ -232,17 +232,12 @@ public class CustomActionsSchema implements PersistentStateComponent<Element> {
   @Override
   public Element getState() {
     Element element = new Element("state");
-    try {
-      //noinspection deprecation
-      DefaultJDOMExternalizer.writeExternal(this, element);
-      for (ActionUrl group : myActions) {
-        Element groupElement = new Element(GROUP);
-        group.writeExternal(groupElement);
-        element.addContent(groupElement);
-      }
-    }
-    catch (WriteExternalException e) {
-      throw new RuntimeException(e);
+    //noinspection deprecation
+    DefaultJDOMExternalizer.writeExternal(this, element);
+    for (ActionUrl group : myActions) {
+      Element groupElement = new Element(GROUP);
+      group.writeExternal(groupElement);
+      element.addContent(groupElement);
     }
     writeIcons(element);
     return element;

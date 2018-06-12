@@ -8,6 +8,7 @@ import org.jetbrains.plugins.groovy.GroovyBundle.message
 import org.jetbrains.plugins.groovy.annotator.intentions.ReplaceDotFix
 import org.jetbrains.plugins.groovy.lang.psi.GroovyElementTypes.*
 import org.jetbrains.plugins.groovy.lang.psi.GroovyElementVisitor
+import org.jetbrains.plugins.groovy.lang.psi.api.GrDoWhileStatement
 import org.jetbrains.plugins.groovy.lang.psi.api.GrInExpression
 import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.modifiers.GrModifierList
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrAssignmentExpression
@@ -17,9 +18,15 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrRefere
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.path.GrIndexProperty
 
 internal class GroovyAnnotatorPre30(private val holder: AnnotationHolder) : GroovyElementVisitor() {
+
   override fun visitModifierList(modifierList: GrModifierList) {
     val modifier = modifierList.getModifier(PsiModifier.DEFAULT) ?: return
     holder.createErrorAnnotation(modifier, GroovyBundle.message("default.modifier.in.old.versions"))
+  }
+
+  override fun visitDoWhileStatement(statement: GrDoWhileStatement) {
+    super.visitDoWhileStatement(statement)
+    holder.createErrorAnnotation(statement.doKeyword, message("unsupported.do.while.statement"))
   }
 
   override fun visitBinaryExpression(expression: GrBinaryExpression) {

@@ -646,7 +646,6 @@ private statement_start ::= expression_start
                           | statement_keywords
                           | modifier
                           | primitive_type
-                          | code_reference_identifiers
 private statement_keywords ::= 'assert'
                              | 'break'
                              | 'continue'
@@ -664,6 +663,7 @@ statement ::= if_statement
             | switch_statement
             | try_statement
             | while_statement
+            | do_while_statement
             | for_statement
             | synchronized_statement
             | return_statement
@@ -683,18 +683,10 @@ private block_or_statement ::= block_statement | statement
 
 block_statement ::= lazy_block
 
-if_statement ::= 'if' after_if_keyword
-{
-  pin = 1
-}
-private after_if_keyword ::= '(' mb_nl expression mb_nl ')' mb_nl branch [mb_nl ';'] else_branch?
-{
-  pin = 1
-}
-private else_branch ::= mb_nl 'else' mb_nl branch
-{
-  pin = 2
-}
+if_statement ::= 'if' after_if_keyword { pin = 1 }
+private after_if_keyword ::= if_header mb_nl branch [mb_separators else_branch] { pin = 1 }
+private if_header ::= '(' mb_nl expression_or_application mb_nl ')' { pin = 1 }
+private else_branch ::= 'else' mb_nl branch { pin = 1 }
 
 switch_statement ::= 'switch' '(' expression ')' (mb_nl switch_body)
 {
@@ -738,6 +730,8 @@ while_statement ::= 'while' ('(' mb_nl expression mb_nl ')' mb_nl branch)
 {
   pin('.*') = 1
 }
+
+do_while_statement ::= 'do' mb_nl branch mb_nl 'while' '(' expression ')' { pin = 1 }
 
 private type_element_followed_by_identifier ::= type_element &IDENTIFIER
 private mb_type_element ::= type_element_followed_by_identifier?

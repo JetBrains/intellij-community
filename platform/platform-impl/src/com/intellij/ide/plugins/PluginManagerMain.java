@@ -617,7 +617,7 @@ public abstract class PluginManagerMain implements Disposable {
     pluginTable.select(descriptors);
   }
 
-  protected static boolean isAccepted(@Nullable String filter, @NotNull Set<String> search, @NotNull IdeaPluginDescriptor descriptor) {
+  public static boolean isAccepted(@Nullable String filter, @NotNull Set<String> search, @NotNull IdeaPluginDescriptor descriptor) {
     if (StringUtil.isEmpty(filter)) return true;
     if (StringUtil.containsIgnoreCase(descriptor.getName(), filter) || isAccepted(search, filter, descriptor.getName())) return true;
     if (isAccepted(search, filter, descriptor.getDescription())) return true;

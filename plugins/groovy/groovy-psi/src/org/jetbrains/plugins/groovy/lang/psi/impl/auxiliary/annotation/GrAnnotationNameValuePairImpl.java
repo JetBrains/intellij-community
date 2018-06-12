@@ -45,7 +45,7 @@ public class GrAnnotationNameValuePairImpl extends GrStubElementBase<GrNameValue
   }
 
   @Override
-  public void accept(GroovyElementVisitor visitor) {
+  public void accept(@NotNull GroovyElementVisitor visitor) {
     visitor.visitAnnotationNameValuePair(this);
   }
 

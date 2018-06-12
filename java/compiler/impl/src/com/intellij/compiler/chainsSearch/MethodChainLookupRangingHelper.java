@@ -127,7 +127,6 @@ public class MethodChainLookupRangingHelper {
   @NotNull
   private static Couple<Integer> calculateParameterInfo(@NotNull PsiMethod method,
                                                         @NotNull ChainCompletionContext context) {
-    NullableNotNullManager nullableNotNullManager = NullableNotNullManager.getInstance(method.getProject());
     int unreachableParametersCount = 0;
     int matchedParametersInContext = 0;
     for (PsiParameter parameter : method.getParameterList().getParameters()) {
@@ -139,7 +138,7 @@ public class MethodChainLookupRangingHelper {
           matchedParametersInContext++;
           continue;
         }
-        if (!nullableNotNullManager.isNullable(parameter, true)) {
+        if (!NullableNotNullManager.isNullable(parameter)) {
           unreachableParametersCount++;
         }
       }

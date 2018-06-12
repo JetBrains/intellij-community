@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2015 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.ui;
 
 import com.intellij.icons.AllIcons;
@@ -327,39 +313,39 @@ public class Splitter extends JPanel implements Splittable {
       myFirstComponent.setBounds(firstRect);
       myDivider.setBounds(dividerRect);
       mySecondComponent.setBounds(secondRect);
-      myFirstComponent.revalidate();
-      mySecondComponent.revalidate();
+      //myFirstComponent.revalidate();
+      //mySecondComponent.revalidate();
     }
     else if (!isNull(myFirstComponent) && myFirstComponent.isVisible()) { // only first component is visible
       hideNull(mySecondComponent);
       myDivider.setVisible(false);
       myFirstComponent.setBounds(0, 0, width, height);
-      myFirstComponent.revalidate();
+      //myFirstComponent.revalidate();
     }
     else if (!isNull(mySecondComponent) && mySecondComponent.isVisible()) { // only second component is visible
       hideNull(myFirstComponent);
       myDivider.setVisible(false);
       mySecondComponent.setBounds(0, 0, width, height);
-      mySecondComponent.revalidate();
+      //mySecondComponent.revalidate();
     }
     else { // both components are null or invisible
       myDivider.setVisible(false);
       if (myFirstComponent != null) {
         myFirstComponent.setBounds(0, 0, 0, 0);
-        myFirstComponent.revalidate();
+        //myFirstComponent.revalidate();
       }
       else {
         hideNull(myFirstComponent);
       }
       if (mySecondComponent != null) {
         mySecondComponent.setBounds(0, 0, 0, 0);
-        mySecondComponent.revalidate();
+        //mySecondComponent.revalidate();
       }
       else {
         hideNull(mySecondComponent);
       }
     }
-    myDivider.revalidate();
+    //myDivider.revalidate();
   }
 
   static boolean isNull(Component component) {

@@ -20,6 +20,8 @@ import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Condition;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
+import com.intellij.psi.codeStyle.CodeStyleManager;
+import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.util.IncorrectOperationException;
 import gnu.trove.THashMap;
@@ -438,6 +440,22 @@ public class PsiTypesUtil {
       newType = newType.createArrayType();
     }
     return newType;
+  }
+
+  /**
+   * @return null if type can't be explicitly specified
+   */
+  @Nullable
+  public static PsiTypeElement replaceWithExplicitType(PsiTypeElement typeElement) {
+    PsiType type = typeElement.getType();
+    if (!isDenotableType(type, typeElement)) {
+      return null;
+    }
+    Project project = typeElement.getProject();
+    PsiTypeElement typeElementByExplicitType = JavaPsiFacade.getElementFactory(project).createTypeElement(type);
+    PsiElement explicitTypeElement = typeElement.replace(typeElementByExplicitType);
+    explicitTypeElement = JavaCodeStyleManager.getInstance(project).shortenClassReferences(explicitTypeElement);
+    return (PsiTypeElement)CodeStyleManager.getInstance(project).reformat(explicitTypeElement);
   }
 
   public static class TypeParameterSearcher extends PsiTypeVisitor<Boolean> {

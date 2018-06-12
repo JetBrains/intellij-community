@@ -2,14 +2,18 @@
 package com.intellij.ide.projectWizard.kotlin.createProject
 
 import com.intellij.ide.projectWizard.kotlin.model.*
+import com.intellij.testGuiFramework.impl.mavenReimport
+import com.intellij.testGuiFramework.impl.waitAMoment
 import com.intellij.testGuiFramework.util.*
+import com.intellij.testGuiFramework.util.scenarios.openProjectStructureAndCheck
+import com.intellij.testGuiFramework.util.scenarios.projectStructureDialogModel
+import com.intellij.testGuiFramework.util.scenarios.projectStructureDialogScenarios
 import org.junit.Test
 
 class CreateMavenProjectWithKotlinGuiTest : KotlinGuiTestCase() {
   @Test
   @JvmName("maven_with_jvm")
   fun createMavenWithKotlinJvm() {
-    val groupName = "group_maven_jvm"
     val projectName = testMethod.methodName
     val kotlinVersion = KotlinTestProperties.kotlin_artifact_version
     val kotlinKind = KotlinKind.JVM
@@ -17,10 +21,9 @@ class CreateMavenProjectWithKotlinGuiTest : KotlinGuiTestCase() {
     if (!isIdeFrameRun()) return
     createMavenProject(
       projectPath = projectFolder,
-      group = groupName,
       artifact = projectName,
-      kotlinVersion = kotlinVersion,
-      archetype = kotlinLibs[kotlinKind]!!.mavenProject.frameworkName)
+      archetype = kotlinLibs[kotlinKind]!!.mavenProject.frameworkName,
+      kotlinVersion = kotlinVersion)
     waitAMoment(extraTimeOut)
     mavenReimport()
     // TODO: remove extra mavenReimport after GUI-72 fixing
@@ -28,8 +31,8 @@ class CreateMavenProjectWithKotlinGuiTest : KotlinGuiTestCase() {
     mavenReimport()
     waitAMoment(extraTimeOut)
 
-    checkInProjectStructure {
-      checkLibrariesFromMavenGradle(
+    projectStructureDialogScenarios.openProjectStructureAndCheck {
+      projectStructureDialogModel.checkLibrariesFromMavenGradle(
         buildSystem = BuildSystem.Maven,
         kotlinVersion = kotlinVersion,
         // TODO: use default set after fix KT-21230
@@ -39,7 +42,7 @@ class CreateMavenProjectWithKotlinGuiTest : KotlinGuiTestCase() {
           "org.jetbrains:annotations:13.0"
         )
       )
-      checkFacetInOneModule(
+      projectStructureDialogModel.checkFacetInOneModule(
         defaultFacetSettings[TargetPlatform.JVM16]!!,
         projectName, "Kotlin"
       )
@@ -50,7 +53,6 @@ class CreateMavenProjectWithKotlinGuiTest : KotlinGuiTestCase() {
   @Test
   @JvmName("maven_with_js")
   fun createMavenWithKotlinJs() {
-    val groupName = "group_maven_js"
     val projectName = testMethod.methodName
     val kotlinVersion = KotlinTestProperties.kotlin_artifact_version
     val kotlinKind = KotlinKind.JS
@@ -58,10 +60,9 @@ class CreateMavenProjectWithKotlinGuiTest : KotlinGuiTestCase() {
     if (!isIdeFrameRun()) return
     createMavenProject(
       projectPath = projectFolder,
-      group = groupName,
       artifact = projectName,
-      kotlinVersion = kotlinVersion,
-      archetype = kotlinLibs[kotlinKind]!!.mavenProject.frameworkName)
+      archetype = kotlinLibs[kotlinKind]!!.mavenProject.frameworkName,
+      kotlinVersion = kotlinVersion)
     waitAMoment(extraTimeOut)
     mavenReimport()
     // TODO: remove extra mavenReimport after GUI-72 fixing
@@ -77,13 +78,13 @@ class CreateMavenProjectWithKotlinGuiTest : KotlinGuiTestCase() {
       )
     )
 
-    checkInProjectStructure {
-      checkLibrariesFromMavenGradle(
+    projectStructureDialogScenarios.openProjectStructureAndCheck {
+      projectStructureDialogModel.checkLibrariesFromMavenGradle(
         buildSystem = BuildSystem.Maven,
         kotlinVersion = kotlinVersion,
         expectedJars = kotlinLibs[kotlinKind]!!.mavenProject.jars.getJars(kotlinVersion)
       )
-      checkFacetInOneModule(
+      projectStructureDialogModel.checkFacetInOneModule(
         expectedFacet,
         projectName, "Kotlin"
       )

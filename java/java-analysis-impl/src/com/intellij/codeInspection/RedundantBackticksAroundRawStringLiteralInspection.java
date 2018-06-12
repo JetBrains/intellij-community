@@ -16,7 +16,7 @@ public class RedundantBackticksAroundRawStringLiteralInspection extends Abstract
   @NotNull
   @Override
   public PsiElementVisitor buildVisitor(@NotNull final ProblemsHolder holder, boolean isOnTheFly) {
-    if (PsiUtil.getLanguageLevel(holder.getFile()) != LanguageLevel.JDK_11_PREVIEW) {
+    if (PsiUtil.getLanguageLevel(holder.getFile()) != LanguageLevel.JDK_X) {
       return PsiElementVisitor.EMPTY_VISITOR;
     }
     return new JavaElementVisitor() {

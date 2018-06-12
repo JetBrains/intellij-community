@@ -71,7 +71,7 @@
       <implementation-class>com.intellij.compiler.backwardRefs.CompilerReferenceServiceImpl</implementation-class>
     </component>
     <component>
-      <implementation-class>com.intellij.execution.testDiscovery.AffectedTestsChangeListDecorator</implementation-class>
+      <implementation-class>com.intellij.execution.testDiscovery.AffectedTestsInChangeListPainter</implementation-class>
     </component>
   </project-components>
 
@@ -331,8 +331,6 @@
                     serviceImplementation="com.intellij.openapi.roots.ui.configuration.IdeaProjectSettingsService"/>
 
     <projectWizard.projectCategory implementation="com.intellij.ide.projectWizard.ModuleTypeCategory$JavaSE"/>
-    <statistics.usagesCollector implementation="com.intellij.ide.projectWizard.ProjectCategoryUsagesCollector"/>
-    <applicationService serviceImplementation="com.intellij.ide.projectWizard.ProjectCategoryUsagesCollector"/>
 
     <projectStructureDetector implementation="com.intellij.ide.util.projectWizard.importSources.impl.JavaProjectStructureDetector" order="first"/>
 
@@ -408,7 +406,7 @@
       <keyboard-shortcut first-keystroke="control shift SEMICOLON" keymap="$default"/>
     </action>
 
-    <action class="com.intellij.execution.testDiscovery.actions.ShowDiscoveredTestsAction" id="ShowDiscoveredTests" text="Show Discovered Tests">
+    <action class="com.intellij.execution.testDiscovery.actions.ShowDiscoveredTestsAction" id="ShowDiscoveredTests" text="Show Affected Tests">
       <add-to-group group-id="RunMenu" anchor="before" relative-to-action="DebugMainMenu"/>
       <add-to-group group-id="ChangesViewPopupMenu" anchor="last"/>
     </action>

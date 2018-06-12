@@ -1,8 +1,6 @@
 // Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.vcs.log.util;
 
-import com.intellij.internal.statistic.UsageTrigger;
-import com.intellij.internal.statistic.beans.ConvertUsagesUtil;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.project.Project;
@@ -207,7 +205,6 @@ public class VcsLogUtil {
   }
 
   public static void triggerUsage(@NotNull String text, boolean isFromHistory) {
-    UsageTrigger.trigger(isFromHistory ? "vcs.history." : "vcs.log." + ConvertUsagesUtil.ensureProperKey(text).replace(" ", ""));
   }
 
   public static boolean maybeRegexp(@NotNull String text) {

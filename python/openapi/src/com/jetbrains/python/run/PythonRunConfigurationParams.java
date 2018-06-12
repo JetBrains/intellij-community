@@ -15,6 +15,8 @@
  */
 package com.jetbrains.python.run;
 
+import org.jetbrains.annotations.NotNull;
+
 /**
  * @author Leonid Shalupov
  */
@@ -40,6 +42,23 @@ public interface PythonRunConfigurationParams {
   }
 
   default void setModuleMode(boolean moduleMode) {
+  }
+
+  default boolean isRedirectInput() {
+    return false;
+  }
+
+  default void setRedirectInput(boolean isRedirectInput) {
+
+  }
+
+  @NotNull
+  default String getInputFile() {
+    return "";
+  }
+
+  default void setInputFile(@NotNull String inputFile) {
+
   }
 }
 

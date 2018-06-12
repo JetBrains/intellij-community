@@ -1079,8 +1079,7 @@ public class ApplicationImpl extends PlatformComponentManagerImpl implements App
   }
 
   private static String describe(Thread o) {
-    if (o == null) return "null";
-    return o + " " + System.identityHashCode(o);
+    return o == null ? "null" : o + " " + System.identityHashCode(o);
   }
 
   private static Thread getEventQueueThread() {
@@ -1107,11 +1106,10 @@ public class ApplicationImpl extends PlatformComponentManagerImpl implements App
     if (isDispatchThread()) return;
     throw new RuntimeExceptionWithAttachments(
       message,
-      " EventQueue.isDispatchThread()=" + EventQueue.isDispatchThread() +
-      " isDispatchThread()=" + isDispatchThread() +
+      "EventQueue.isDispatchThread()=" + EventQueue.isDispatchThread() +
       " Toolkit.getEventQueue()=" + Toolkit.getDefaultToolkit().getSystemEventQueue() +
-      " Current thread: " + describe(Thread.currentThread()) +
-      " SystemEventQueueThread: " + describe(getEventQueueThread()),
+      "\nCurrent thread: " + describe(Thread.currentThread()) +
+      "\nSystemEventQueueThread: " + describe(getEventQueueThread()),
       new Attachment("threadDump.txt", ThreadDumper.dumpThreadsToString()));
   }
 

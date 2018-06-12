@@ -1,6 +1,7 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ui.tree.project;
 
+import com.intellij.openapi.extensions.AreaInstance;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ModuleRootEvent;
@@ -40,7 +41,7 @@ public abstract class ProjectFileListener {
       @Override
       public void after(@NotNull List<? extends VFileEvent> events) {
         invoker.invokeLaterIfNeeded(() -> {
-          for (VFileEvent event : events) {
+          for (VFileEvent event: events) {
             if (event instanceof VFileCreateEvent) {
               VFileCreateEvent create = (VFileCreateEvent)event;
               updateFromFile(create.getParent());
@@ -107,28 +108,27 @@ public abstract class ProjectFileListener {
 
   protected abstract void updateFromRoot();
 
-  protected abstract void updateFromFile(@NotNull VirtualFile file, @Nullable Module module);
+  protected abstract void updateFromFile(@NotNull VirtualFile file, @NotNull AreaInstance area);
 
   public final void updateFromFile(@Nullable VirtualFile file) {
     if (file == null) return;
     invoker.invokeLaterIfNeeded(() -> {
-      if (project.isDisposed()) return;
-      Module module = ProjectFileIndex.getInstance(project).getModuleForFile(file);
-      if (module == null) {
-        VirtualFile ancestor = project.getBaseDir();
-        if (ancestor != null && isAncestor(ancestor, file, false)) {
-          // file does not belong to any content root,
-          // but it is located under the project directory
-          updateFromFile(file, null);
-        }
-      }
-      else if (!module.isDisposed()) {
-        updateFromFile(file, module);
-      }
+      AreaInstance area = findArea(file, project);
+      if (area != null) updateFromFile(file, area);
     });
   }
 
   public final void updateFromElement(@Nullable PsiElement element) {
     updateFromFile(getVirtualFile(element));
+  }
+
+  @Nullable
+  public static AreaInstance findArea(@NotNull VirtualFile file, @Nullable Project project) {
+    if (project == null || project.isDisposed()) return null;
+    Module module = ProjectFileIndex.getInstance(project).getModuleForFile(file);
+    if (module != null) return module.isDisposed() ? null : module;
+    VirtualFile ancestor = project.getBaseDir();
+    // file does not belong to any content root, but it is located under the project directory
+    return ancestor == null || !isAncestor(ancestor, file, false) ? null : project;
   }
 }

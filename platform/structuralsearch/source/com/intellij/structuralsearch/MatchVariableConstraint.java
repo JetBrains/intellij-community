@@ -128,6 +128,9 @@ public class MatchVariableConstraint extends NamedScriptableDefinition {
       else if (c == ']') {
         result.append(']');
       }
+      else if (c == '(' || c == ')') {
+        // do nothing
+      }
       else if (StructuralSearchUtil.isRegExpMetaChar(c)) {
         return ""; // can't convert
       }

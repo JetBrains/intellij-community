@@ -33,8 +33,6 @@ import com.intellij.diff.util.DiffUserDataKeysEx.ScrollToPolicy;
 import com.intellij.diff.util.DiffUtil;
 import com.intellij.diff.util.LineRange;
 import com.intellij.ide.impl.DataManagerImpl;
-import com.intellij.internal.statistic.UsageTrigger;
-import com.intellij.internal.statistic.beans.ConvertUsagesUtil;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.ex.ActionUtil;
@@ -44,6 +42,7 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.diff.DiffBundle;
+import com.intellij.openapi.diff.impl.DiffUsageTriggerCollector;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.LogicalPosition;
 import com.intellij.openapi.project.DumbAware;
@@ -601,7 +600,7 @@ public abstract class DiffRequestProcessor implements Disposable {
     public void actionPerformed(@NotNull AnActionEvent e) {
       if (myState.getActiveTool() == myDiffTool) return;
 
-      UsageTrigger.trigger("diff.DiffSettings.Tool." + ConvertUsagesUtil.ensureProperKey(myDiffTool.getName()));
+      DiffUsageTriggerCollector.trigger("toggle.diff.tool." + myDiffTool.getName());
       moveToolOnTop(myDiffTool);
 
       updateRequest(true);

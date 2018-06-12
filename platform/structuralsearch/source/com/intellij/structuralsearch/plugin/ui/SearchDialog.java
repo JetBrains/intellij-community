@@ -22,7 +22,6 @@ import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.project.ProjectManagerListener;
-import com.intellij.openapi.ui.ComboBox;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.TextRange;
@@ -68,7 +67,6 @@ public class SearchDialog extends DialogWrapper {
   private JCheckBox caseSensitiveMatch;
 
   private FileTypeSelector fileTypes;
-  private JComboBox<String> contexts;
   private JLabel status;
   private JLabel statusText;
 
@@ -141,7 +139,7 @@ public class SearchDialog extends DialogWrapper {
 
         final StructuralSearchProfile profile = StructuralSearchUtil.getProfileByFileType(fileType);
         if (profile != null) {
-          editor = profile.createEditor(searchContext, fileType, dialect, text, useLastConfiguration);
+          editor = profile.createEditor(searchContext.getProject(), fileType, dialect, text);
         }
       }
     }
@@ -210,31 +208,23 @@ public class SearchDialog extends DialogWrapper {
     Collections.sort(types, (o1, o2) -> o1.getName().compareToIgnoreCase(o2.getName()));
 
     fileTypes = new FileTypeSelector(types);
-    contexts = new ComboBox<>(60);
 
     final JLabel jLabel = new JLabel(SSRBundle.message("search.dialog.file.type.label"));
-    final JLabel jLabel2 = new JLabel(SSRBundle.message("search.dialog.context.label"));
-    searchOptions.add(UIUtil.createOptionLine(jLabel, fileTypes, jLabel2, contexts));
-
+    searchOptions.add(UIUtil.createOptionLine(jLabel, fileTypes));
     jLabel.setLabelFor(fileTypes);
-    jLabel2.setLabelFor(contexts);
 
     detectFileTypeAndDialect();
 
-    fileTypes.setSelectedItem(ourFtSearchVariant, ourDialect);
+    fileTypes.setSelectedItem(ourFtSearchVariant, ourDialect, ourContext);
     fileTypes.addItemListener(new ItemListener() {
       @Override
       public void itemStateChanged(ItemEvent e) {
         if (e.getStateChange() == ItemEvent.SELECTED) {
-          updateContexts();
           updateEditor();
           initiateValidation();
         }
       }
     });
-    contexts.setSelectedItem(ourContext);
-
-    updateContexts();
   }
 
   void updateEditor() {
@@ -248,23 +238,6 @@ public class SearchDialog extends DialogWrapper {
       myContentPanel.revalidate();
       searchCriteriaEdit.putUserData(SubstitutionShortInfoHandler.CURRENT_CONFIGURATION_KEY, myConfiguration);
     }
-  }
-
-  void updateContexts() {
-    final FileType fileType = fileTypes.getSelectedFileType();
-    final StructuralSearchProfile profile = StructuralSearchUtil.getProfileByFileType(fileType);
-
-    if (profile instanceof StructuralSearchProfileBase) {
-      final String[] contextNames = ((StructuralSearchProfileBase)profile).getContextNames();
-      if (contextNames.length > 0) {
-        contexts.setModel(new DefaultComboBoxModel<>(contextNames));
-        contexts.setSelectedItem(contextNames[0]);
-        contexts.setEnabled(true);
-        return;
-      }
-    }
-    contexts.setSelectedItem(null);
-    contexts.setEnabled(false);
   }
 
   private void detectFileTypeAndDialect() {
@@ -321,10 +294,7 @@ public class SearchDialog extends DialogWrapper {
     recursiveMatching.setSelected(isRecursiveSearchEnabled() && matchOptions.isRecursiveSearch());
     caseSensitiveMatch.setSelected(matchOptions.isCaseSensitiveMatch());
 
-    fileTypes.setSelectedItem(matchOptions.getFileType(), matchOptions.getDialect());
-    if (matchOptions.getPatternContext() != null) {
-      contexts.setSelectedItem(matchOptions.getPatternContext());
-    }
+    fileTypes.setSelectedItem(matchOptions.getFileType(), matchOptions.getDialect(), matchOptions.getPatternContext());
     searchCriteriaEdit.putUserData(SubstitutionShortInfoHandler.CURRENT_CONFIGURATION_KEY, myConfiguration);
   }
 
@@ -706,7 +676,7 @@ public class SearchDialog extends DialogWrapper {
     final FileTypeInfo info = fileTypes.getSelectedItem();
     ourFtSearchVariant = info != null ? info.getFileType() : null;
     ourDialect = info != null ? info.getDialect() : null;
-    ourContext = (String)contexts.getSelectedItem();
+    ourContext = info != null ? info.getContext() : null;
     FileType fileType = ourFtSearchVariant;
     options.setFileType(fileType);
     options.setDialect(ourDialect);
@@ -746,9 +716,5 @@ public class SearchDialog extends DialogWrapper {
   @Override
   protected String getHelpId() {
     return "find.structuredSearch";
-  }
-
-  public SearchContext getSearchContext() {
-    return searchContext;
   }
 }

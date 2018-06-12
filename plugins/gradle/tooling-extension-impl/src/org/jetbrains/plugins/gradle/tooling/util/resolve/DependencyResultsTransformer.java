@@ -108,7 +108,9 @@ public class DependencyResultsTransformer {
     }
 
     ComponentSelector componentSelector = dependencyResult.getRequested();
-    ModuleComponentIdentifier componentIdentifier = toComponentIdentifier(componentResult.getModuleVersion());
+    ModuleComponentIdentifier componentIdentifier = componentResult.getId() instanceof ModuleComponentIdentifier
+                                                    ? (ModuleComponentIdentifier)componentResult.getId()
+                                                    : toComponentIdentifier(componentResult.getModuleVersion());
 
     String name = componentResult.getModuleVersion().getName();
     String group = componentResult.getModuleVersion().getGroup();

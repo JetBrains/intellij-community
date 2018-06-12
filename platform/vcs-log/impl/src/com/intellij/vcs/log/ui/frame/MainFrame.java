@@ -142,7 +142,7 @@ public class MainFrame extends JPanel implements DataProvider, Disposable {
     JComponent toolbarsAndTable = new JPanel(new BorderLayout());
     toolbarsAndTable.add(toolbars, BorderLayout.NORTH);
     toolbarsAndTable.add(VcsLogUiUtil.installProgress(VcsLogUiUtil.setupScrolledGraph(myGraphTable, SideBorder.TOP),
-                                                      myLogData, this), BorderLayout.CENTER);
+                                                      myLogData, ui.getId(), this), BorderLayout.CENTER);
 
     myChangesBrowserSplitter = new OnePixelSplitter(false, CHANGES_SPLITTER_PROPORTION, 0.7f);
     myChangesBrowserSplitter.setFirstComponent(toolbarsAndTable);

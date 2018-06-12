@@ -4,6 +4,7 @@ package com.intellij.testGuiFramework.tests.community.toolWindow
 import com.intellij.openapi.actionSystem.impl.ActionMenuItem
 import com.intellij.testGuiFramework.fixtures.IdeFrameFixture
 import com.intellij.testGuiFramework.impl.GuiTestCase
+import com.intellij.testGuiFramework.impl.actionButton
 import com.intellij.testGuiFramework.tests.community.CommunityProjectCreator
 import org.fest.swing.timing.Pause
 import org.junit.After

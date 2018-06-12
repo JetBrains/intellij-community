@@ -2,10 +2,10 @@
 package com.intellij.codeInspection;
 
 import com.intellij.codeInsight.ExpressionUtil;
+import com.intellij.codeInsight.Nullability;
 import com.intellij.codeInsight.NullableNotNullManager;
 import com.intellij.codeInsight.intention.impl.StreamRefactoringUtil;
 import com.intellij.codeInspection.dataFlow.DfaUtil;
-import com.intellij.codeInspection.dataFlow.Nullness;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.TextRange;
@@ -1286,7 +1286,7 @@ public class SimplifyStreamApiCallChainsInspection extends AbstractBaseJavaLocal
             if (!PsiType.BOOLEAN.equals(method.getReturnType()) && !NullableNotNullManager.isNotNull(method)) return null;
           }
           else if (!(qualifierArg instanceof PsiLambdaExpression) ||
-                   DfaUtil.inferLambdaNullity((PsiLambdaExpression)qualifierArg) != Nullness.NOT_NULL) {
+                   DfaUtil.inferLambdaNullability((PsiLambdaExpression)qualifierArg) != Nullability.NOT_NULL) {
             return null;
           }
         }

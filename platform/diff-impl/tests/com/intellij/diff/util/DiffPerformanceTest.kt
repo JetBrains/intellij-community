@@ -150,7 +150,7 @@ class DiffPerformanceTest : TestCase() {
   }
 
   fun `test reversed 2000`() {
-    testCpu(1, 500) {
+    testCpu(1, 550) {
       Diff.buildChanges(arr_2000, reversed_2000)
     }
   }

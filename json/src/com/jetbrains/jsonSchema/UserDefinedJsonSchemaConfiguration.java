@@ -155,8 +155,9 @@ public class UserDefinedJsonSchemaConfiguration {
         case Directory:
           result.add((project, vfile) -> {
             final VirtualFile relativeFile = getRelativeFile(project, patternText);
-            return relativeFile != null && VfsUtilCore.isAncestor(relativeFile, vfile, true)
-                   && !JsonSchemaService.Impl.get(project).isSchemaFile(vfile);
+            if (relativeFile == null || !VfsUtilCore.isAncestor(relativeFile, vfile, true)) return false;
+            JsonSchemaService service = JsonSchemaService.Impl.get(project);
+            return service.isApplicableToFile(vfile) && !service.isSchemaFile(vfile);
           });
           break;
       }

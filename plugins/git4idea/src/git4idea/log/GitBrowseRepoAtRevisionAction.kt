@@ -3,7 +3,6 @@ package git4idea.log
 
 import com.intellij.dvcs.repo.AbstractRepositoryManager
 import com.intellij.dvcs.ui.VcsLogAction
-import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vcs.impl.showRepositoryBrowser
 import com.intellij.openapi.vfs.VirtualFile
@@ -19,10 +18,6 @@ class GitBrowseRepoAtRevisionAction : VcsLogAction<GitRepository>() {
     val commit = grouped.values().single()
     val root = GitDirectoryVirtualFile(repo, null, "", commit)
     showRepositoryBrowser(project, root, repo.root, repo.root.name + " at " + commit.id.toShortString())
-  }
-
-  override fun isVisible(project: Project, grouped: MultiMap<GitRepository, Hash>): Boolean {
-    return super.isVisible(project, grouped) && ApplicationManager.getApplication().isInternal
   }
 
   override fun isEnabled(grouped: MultiMap<GitRepository, Hash>): Boolean {

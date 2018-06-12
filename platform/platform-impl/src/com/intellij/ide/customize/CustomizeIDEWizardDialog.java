@@ -17,7 +17,6 @@ package com.intellij.ide.customize;
 
 import com.intellij.ide.cloudConfig.CloudConfigProvider;
 import com.intellij.ide.startup.StartupActionScriptManager;
-import com.intellij.internal.statistic.collectors.legacy.ideSettings.IdeInitialConfigButtonUsages;
 import com.intellij.openapi.application.ApplicationNamesInfo;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.util.text.StringUtil;
@@ -178,7 +177,6 @@ public class CustomizeIDEWizardDialog extends DialogWrapper implements ActionLis
         return;
       }
     }
-    IdeInitialConfigButtonUsages.setSkipRemainingPressedScreen(mySteps.get(myIndex).getClass().getName());
     super.doOKAction();
   }
 

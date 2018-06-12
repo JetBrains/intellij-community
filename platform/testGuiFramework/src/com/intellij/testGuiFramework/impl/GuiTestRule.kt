@@ -165,7 +165,7 @@ class GuiTestRule : TestRule {
         }
       }
       for (i in 0..3) {
-        if (!isFirstStep()) GuiTestUtil.invokeActionViaShortcut(robot(), Key.ESCAPE.name)
+        if (!isFirstStep()) GuiTestUtil.invokeActionViaShortcut(Key.ESCAPE.name)
       }
     }
 
@@ -378,11 +378,11 @@ class GuiTestRule : TestRule {
 
 
   fun getMasterProjectDirPath(projectDirName: String): File {
-    return File(GuiTestUtil.getTestProjectsRootDirPath(), projectDirName)
+    return File(GuiTestUtil.testProjectsRootDirPath, projectDirName)
   }
 
   fun getTestProjectDirPath(projectDirName: String): File {
-    return File(GuiTestUtil.getProjectCreationDirPath(), projectDirName)
+    return File(GuiTestUtil.projectCreationDirPath, projectDirName)
   }
 
   fun cleanUpProjectForImport(projectPath: File) {

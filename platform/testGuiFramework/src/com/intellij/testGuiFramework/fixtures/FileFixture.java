@@ -29,6 +29,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiManager;
+import com.intellij.testGuiFramework.framework.GuiTestUtil;
 import com.intellij.util.CommonProcessors;
 import org.fest.swing.edt.GuiQuery;
 import org.fest.swing.timing.Condition;
@@ -40,7 +41,6 @@ import java.io.File;
 import java.util.Collection;
 
 import static com.intellij.openapi.vfs.VfsUtilCore.virtualToIoFile;
-import static com.intellij.testGuiFramework.framework.GuiTestUtil.SHORT_TIMEOUT;
 import static junit.framework.Assert.assertNotNull;
 import static org.fest.assertions.Assertions.assertThat;
 import static org.fest.reflect.core.Reflection.method;
@@ -73,7 +73,7 @@ public class FileFixture {
           }
         });
       }
-    }, SHORT_TIMEOUT);
+    }, GuiTestUtil.INSTANCE.getSHORT_TIMEOUT());
     return this;
   }
 
@@ -111,7 +111,7 @@ public class FileFixture {
           }
         });
       }
-    }, SHORT_TIMEOUT);
+    }, GuiTestUtil.INSTANCE.getSHORT_TIMEOUT());
     return this;
   }
 
@@ -168,7 +168,7 @@ public class FileFixture {
         assertNotNull(highlightInfos);
         return highlightInfos.size() == expected;
       }
-    }, SHORT_TIMEOUT);
+    }, GuiTestUtil.INSTANCE.getSHORT_TIMEOUT());
 
     return this;
   }

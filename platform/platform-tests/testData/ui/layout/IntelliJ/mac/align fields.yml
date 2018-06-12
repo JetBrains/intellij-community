@@ -32,11 +32,11 @@ componentConstrains:
     spanX: 2097051
     wrap: true
 cellBounds:
-- [0, 0, 142, 16]
-- [148, 0, 332, 16]
-- [0, 26, 142, 21]
-- [148, 26, 332, 21]
+- [0, 0, 145, 15]
+- [151, 0, 329, 15]
+- [0, 25, 145, 21]
+- [151, 25, 329, 21]
 componentBounds:
-  Create Android module: [0, 0, 142, 16]
-  'Android module name:': [0, 28, 139, 16]
-  'JTextField #3': [145, 23, 338, 27]
+  Create Android module: [0, 0, 145, 15]
+  'Android module name:': [0, 28, 142, 15]
+  'JTextField #3': [148, 22, 335, 27]

@@ -421,8 +421,8 @@ public class StubIndexImpl extends StubIndex implements PersistentStateComponent
     FileBasedIndex.getInstance().ensureUpToDate(StubUpdatingIndex.INDEX_ID, scope.getProject(), scope);
 
     try {
-      return FileBasedIndexImpl.disableUpToDateCheckIn(()->
-        myAccessValidator.validate(StubUpdatingIndex.INDEX_ID, () -> index.processAllKeys(processor, scope, idFilter)));
+      return myAccessValidator.validate(StubUpdatingIndex.INDEX_ID, ()->FileBasedIndexImpl.disableUpToDateCheckIn(()->
+        index.processAllKeys(processor, scope, idFilter)));
     }
     catch (StorageException e) {
       forceRebuild(e);

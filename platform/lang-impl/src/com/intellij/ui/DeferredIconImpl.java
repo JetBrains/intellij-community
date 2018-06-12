@@ -30,6 +30,7 @@ import com.intellij.openapi.util.registry.Registry;
 import com.intellij.ui.tabs.impl.TabLabel;
 import com.intellij.util.Alarm;
 import com.intellij.util.Function;
+import com.intellij.util.IconUtil;
 import com.intellij.util.concurrency.SequentialTaskExecutor;
 import com.intellij.util.containers.TransferToEDTQueue;
 import com.intellij.util.ui.EmptyIcon;
@@ -87,16 +88,17 @@ public class DeferredIconImpl<T> extends CachingScalableJBIcon<DeferredIconImpl<
 
   @NotNull
   @Override
-  protected DeferredIconImpl<T> copy() {
+  public DeferredIconImpl<T> copy() {
     return new DeferredIconImpl<>(this);
   }
 
   @NotNull
   @Override
-  public Icon scale(float scale) {
-    if (getScale() != scale && myDelegateIcon instanceof ScalableIcon) {
-      myScaledDelegateIcon = ((ScalableIcon)myDelegateIcon).scale(scale);
-      super.scale(scale);
+  public DeferredIconImpl<T> scale(float scale) {
+    if (getScale() != scale) {
+      DeferredIconImpl<T> icon = super.scale(scale);
+      icon.myScaledDelegateIcon = IconUtil.scale(icon.myDelegateIcon, null, scale);
+      return icon;
     }
     return this;
   }

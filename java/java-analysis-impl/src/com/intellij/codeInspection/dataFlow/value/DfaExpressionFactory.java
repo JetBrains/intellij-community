@@ -16,6 +16,7 @@
 package com.intellij.codeInspection.dataFlow.value;
 
 import com.intellij.codeInsight.AnnotationUtil;
+import com.intellij.codeInsight.Nullability;
 import com.intellij.codeInspection.dataFlow.*;
 import com.intellij.codeInspection.dataFlow.rangeSet.LongRangeSet;
 import com.intellij.openapi.diagnostic.Logger;
@@ -109,7 +110,7 @@ public class DfaExpressionFactory {
     }
 
     if (expression instanceof PsiNewExpression || expression instanceof PsiLambdaExpression) {
-      return myFactory.createTypeValue(expression.getType(), Nullness.NOT_NULL);
+      return myFactory.createTypeValue(expression.getType(), Nullability.NOT_NULL);
     }
 
     final Object value = JavaConstantExpressionEvaluator.computeConstantExpression(expression, false);
@@ -130,7 +131,7 @@ public class DfaExpressionFactory {
         target = ClassUtils.getContainingClass(expression);
       }
       return target == null
-             ? myFactory.createTypeValue(expression.getType(), Nullness.NOT_NULL)
+             ? myFactory.createTypeValue(expression.getType(), Nullability.NOT_NULL)
              : myFactory.getVarFactory().createThisValue(target);
     }
     return null;
@@ -294,7 +295,7 @@ public class DfaExpressionFactory {
     }
     PsiType type = expression.getType();
     if (type instanceof PsiPrimitiveType) return DfaUnknownValue.getInstance();
-    return myFactory.createTypeValue(type, NullnessUtil.getExpressionNullness(expression));
+    return myFactory.createTypeValue(type, NullabilityUtil.getExpressionNullability(expression));
   }
 
   @NotNull

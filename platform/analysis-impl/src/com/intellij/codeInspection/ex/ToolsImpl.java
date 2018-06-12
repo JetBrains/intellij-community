@@ -43,11 +43,6 @@ public class ToolsImpl implements Tools {
     myEnabled = enabled;
   }
 
-  @TestOnly
-  public ToolsImpl(@NotNull InspectionToolWrapper toolWrapper, @NotNull HighlightDisplayLevel level, boolean enabled) {
-    this(toolWrapper, level, enabled, enabled);
-  }
-
   @NotNull
   public ScopeToolState addTool(@NotNull NamedScope scope, @NotNull InspectionToolWrapper toolWrapper, boolean enabled, @NotNull HighlightDisplayLevel level) {
     return insertTool(scope, toolWrapper, enabled, level, myTools != null ? myTools.size() : 0);
@@ -144,7 +139,7 @@ public class ToolsImpl implements Tools {
     inspectionElement.setAttribute(ENABLED_BY_DEFAULT_ATTRIBUTE, Boolean.toString(myDefaultState.isEnabled()));
     InspectionToolWrapper toolWrapper = myDefaultState.getTool();
     if (toolWrapper.isInitialized()) {
-      toolWrapper.getTool().writeSettings(inspectionElement);
+      ScopeToolState.tryWriteSettings(toolWrapper.getTool(), inspectionElement);
     }
   }
 
@@ -209,7 +204,7 @@ public class ToolsImpl implements Tools {
 
     // check if unknown children exists
     if (toolElement.getAttributes().size() > 4 || toolElement.getChildren().size() > scopeElements.size()) {
-      toolWrapper.getTool().readSettings(toolElement);
+      ScopeToolState.tryReadSettings(toolWrapper.getTool(), toolElement);
     }
 
     myEnabled = isEnabled;

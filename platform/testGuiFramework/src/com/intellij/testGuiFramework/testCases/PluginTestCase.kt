@@ -16,9 +16,7 @@
 package com.intellij.testGuiFramework.testCases
 
 import com.intellij.testGuiFramework.fixtures.JDialogFixture
-import com.intellij.testGuiFramework.impl.GuiTestCase
-import com.intellij.testGuiFramework.impl.GuiTestThread
-import com.intellij.testGuiFramework.impl.GuiTestUtilKt
+import com.intellij.testGuiFramework.impl.*
 import com.intellij.testGuiFramework.impl.GuiTestUtilKt.waitProgressDialogUntilGone
 import com.intellij.testGuiFramework.launcher.GuiTestOptions
 import com.intellij.testGuiFramework.remote.transport.MessageType

@@ -40,6 +40,7 @@ public class GitCommand {
   public static final GitCommand CAT_FILE = write("cat-file");
   public static final GitCommand CHECKOUT = write("checkout");
   public static final GitCommand CHECK_ATTR = read("check-attr");
+  public static final GitCommand CHECK_IGNORE = read("check-ignore");
   public static final GitCommand COMMIT = write("commit");
   public static final GitCommand CONFIG = read("config");
   public static final GitCommand CHERRY = read("cherry");

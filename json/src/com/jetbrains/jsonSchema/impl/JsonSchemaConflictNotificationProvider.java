@@ -61,6 +61,7 @@ public class JsonSchemaConflictNotificationProvider extends EditorNotifications.
   @Nullable
   @Override
   public EditorNotificationPanel createNotificationPanel(@NotNull VirtualFile file, @NotNull FileEditor fileEditor) {
+    if (!myJsonSchemaService.isApplicableToFile(file)) return null;
     final Collection<VirtualFile> schemaFiles = myJsonSchemaService.getSchemaFilesForFile(file);
     if (schemaFiles.size() <= 1) return null;
 

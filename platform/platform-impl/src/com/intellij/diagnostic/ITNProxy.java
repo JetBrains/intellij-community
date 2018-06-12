@@ -219,11 +219,11 @@ class ITNProxy {
       append(builder, "previous.exception", Integer.toString(error.previousException));
     }
 
-    String message = error.event.getMessage();
+    String message = StringUtil.notNullize(error.event.getMessage()).trim();
     String stacktrace = error.event.getThrowableText();
     boolean redacted = false;
     if (error.event instanceof IdeaReportingEvent) {
-      String originalMessage = ((IdeaReportingEvent)error.event).getOriginalMessage();
+      String originalMessage = StringUtil.notNullize(((IdeaReportingEvent)error.event).getOriginalMessage()).trim();
       String originalStacktrace = ((IdeaReportingEvent)error.event).getOriginalThrowableText();
       boolean messagesDiffer = !Objects.equals(message, originalMessage);
       boolean tracesDiffer = !Objects.equals(stacktrace, originalStacktrace);
@@ -231,7 +231,7 @@ class ITNProxy {
         String summary = "";
         if (messagesDiffer) summary += "*** message was redacted (" + diff(originalMessage, message) + ")\n";
         if (tracesDiffer) summary += "*** stacktrace was redacted (" + diff(originalStacktrace, stacktrace) + ")\n";
-        message = message != null ? summary + '\n' + message : summary.trim();
+        message = !message.isEmpty() ? summary + '\n' + message : summary.trim();
         redacted = true;
       }
     }
@@ -268,7 +268,7 @@ class ITNProxy {
   }
 
   private static String wc(String s) {
-    return s == null ? "-" : StringUtil.splitByLines(s).length + "/" + s.split("[^\\w']+").length + "/" + s.length();
+    return s.isEmpty() ? "-" : StringUtil.splitByLines(s).length + "/" + s.split("[^\\w']+").length + "/" + s.length();
   }
 
   private static HttpURLConnection post(URL url, byte[] bytes) throws IOException {

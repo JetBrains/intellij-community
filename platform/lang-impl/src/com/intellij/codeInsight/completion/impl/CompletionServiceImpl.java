@@ -21,6 +21,7 @@ import com.intellij.psi.Weigher;
 import com.intellij.psi.WeighingService;
 import com.intellij.psi.impl.DebugUtil;
 import com.intellij.util.Consumer;
+import com.intellij.util.ExceptionUtil;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -33,7 +34,7 @@ import java.util.ArrayList;
 public final class CompletionServiceImpl extends CompletionService {
   private static final Logger LOG = Logger.getInstance("#com.intellij.codeInsight.completion.impl.CompletionServiceImpl");
   private static volatile CompletionPhase ourPhase = CompletionPhase.NoCompletion;
-  private static String ourPhaseTrace;
+  private static Throwable ourPhaseTrace;
 
   public CompletionServiceImpl() {
     ApplicationManager.getApplication().getMessageBus().connect().subscribe(ProjectManager.TOPIC, new ProjectManagerListener() {
@@ -207,12 +208,10 @@ public final class CompletionServiceImpl extends CompletionService {
   }
 
   @SafeVarargs
-  public static boolean assertPhase(@NotNull Class<? extends CompletionPhase>... possibilities) {
+  public static void assertPhase(@NotNull Class<? extends CompletionPhase>... possibilities) {
     if (!isPhase(possibilities)) {
-      LOG.error(ourPhase + "; set at " + ourPhaseTrace);
-      return false;
+      LOG.error(ourPhase + "; set at " + ExceptionUtil.getThrowableText(ourPhaseTrace));
     }
-    return true;
   }
 
   @SafeVarargs
@@ -236,7 +235,7 @@ public final class CompletionServiceImpl extends CompletionService {
 
     Disposer.dispose(oldPhase);
     ourPhase = phase;
-    ourPhaseTrace = DebugUtil.currentStackTrace();
+    ourPhaseTrace = new Throwable();
   }
 
   public static CompletionPhase getCompletionPhase() {

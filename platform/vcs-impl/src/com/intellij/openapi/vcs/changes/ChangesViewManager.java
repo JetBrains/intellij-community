@@ -406,8 +406,8 @@ public class ChangesViewManager implements ChangesViewI, ProjectComponent, Persi
     if (dropPath == null) return null;
 
     ChangesBrowserNode dropNode = (ChangesBrowserNode)dropPath.getLastPathComponent();
-    while (!((ChangesBrowserNode)dropNode.getParent()).isRoot()) {
-      dropNode = (ChangesBrowserNode)dropNode.getParent();
+    while (!dropNode.getParent().isRoot()) {
+      dropNode = dropNode.getParent();
     }
     return dropNode;
   }

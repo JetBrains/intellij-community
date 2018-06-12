@@ -315,14 +315,14 @@ public class ChooseByNamePopup extends ChooseByNameBase implements ChooseByNameP
     return newPopup;
   }
 
-  private static final Pattern patternToDetectLinesAndColumns = Pattern.compile("(.+?)" + // name, non-greedy matching
+  public static final Pattern patternToDetectLinesAndColumns = Pattern.compile("(.+?)" + // name, non-greedy matching
                                                                                 "(?::|@|,| |#|#L|\\?l=| on line | at line |:?\\(|:?\\[)" + // separator
-                                                                                "(\\d+)(?:(?:\\D)(\\d+)?)?" + // line + column
+                                                                                "(\\d+)?(?:(?:\\D)(\\d+)?)?" + // line + column
                                                                                 "[)\\]]?" // possible closing paren/brace
   );
   public static final Pattern patternToDetectAnonymousClasses = Pattern.compile("([\\.\\w]+)((\\$[\\d]+)*(\\$)?)");
-  private static final Pattern patternToDetectMembers = Pattern.compile("(.+)(#)(.*)");
-  private static final Pattern patternToDetectSignatures = Pattern.compile("(.+#.*)\\(.*\\)");
+  public static final Pattern patternToDetectMembers = Pattern.compile("(.+)(#)(.*)");
+  public static final Pattern patternToDetectSignatures = Pattern.compile("(.+#.*)\\(.*\\)");
 
   @Override
   public String transformPattern(String pattern) {

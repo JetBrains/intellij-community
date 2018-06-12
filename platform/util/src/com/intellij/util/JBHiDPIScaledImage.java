@@ -87,6 +87,13 @@ public class JBHiDPIScaledImage extends BufferedImage {
   }
 
   /**
+   * @see #JBHiDPIScaledImage(GraphicsConfiguration, double, double, int)
+   */
+  public JBHiDPIScaledImage(@Nullable JBUI.ScaleContext ctx, double width, double height, int type, @NotNull RoundingMode rm) {
+    this(JBUI.sysScale(ctx), width, height, type, rm);
+  }
+
+  /**
    * Creates a scaled HiDPI-aware BufferedImage, targeting the graphics config.
    *
    * @param gc the graphics config which provides the target scale
@@ -95,11 +102,7 @@ public class JBHiDPIScaledImage extends BufferedImage {
    * @param type the type
    */
   public JBHiDPIScaledImage(@Nullable GraphicsConfiguration gc, double width, double height, int type) {
-    super((int)(width * JBUI.sysScale(gc)), (int)(height * JBUI.sysScale(gc)), type);
-    myImage = null;
-    myUserWidth = width;
-    myUserHeight = height;
-    myScale = JBUI.sysScale(gc);
+    this(gc, width, height, type, RoundingMode.FLOOR);
   }
 
   /**
@@ -112,11 +115,15 @@ public class JBHiDPIScaledImage extends BufferedImage {
    * @param type the type
    */
   public JBHiDPIScaledImage(@Nullable GraphicsConfiguration gc, double width, double height, int type, @NotNull RoundingMode rm) {
-    super(rm.round(width * JBUI.sysScale(gc)), rm.round(height * JBUI.sysScale(gc)), type);
+    this(JBUI.sysScale(gc), width, height, type, rm);
+  }
+
+  private JBHiDPIScaledImage(double scale, double width, double height, int type, @NotNull RoundingMode rm) {
+    super(rm.round(width * scale), rm.round(height * scale), type);
     myImage = null;
     myUserWidth = width;
     myUserHeight = height;
-    myScale = JBUI.sysScale(gc);
+    myScale = scale;
   }
 
   /**

@@ -25,7 +25,6 @@ import com.intellij.icons.AllIcons;
 import com.intellij.ide.CommonActionsManager;
 import com.intellij.ide.errorTreeView.NewErrorTreeViewPanel;
 import com.intellij.idea.ActionsBundle;
-import com.intellij.internal.statistic.UsageTrigger;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
@@ -116,7 +115,6 @@ public class PydevConsoleRunnerImpl implements PydevConsoleRunner {
   @SuppressWarnings("SpellCheckingInspection")
   public static final String PYDEV_PYDEVCONSOLE_PY = "pydev/pydevconsole.py";
   public static final int PORTS_WAITING_TIMEOUT = 20000;
-  private static final String CONSOLE_FEATURE = "python.console";
   private final Project myProject;
   private final String myTitle;
   @Nullable private final String myWorkingDir;
@@ -406,7 +404,6 @@ public class PydevConsoleRunnerImpl implements PydevConsoleRunner {
       PyRemoteSdkAdditionalDataBase data = (PyRemoteSdkAdditionalDataBase)mySdk.getSdkAdditionalData();
       final PyRemotePathMapper pathMapper = PydevConsoleRunner.getPathMapper(myProject, mySdk, myConsoleSettings);
       if (manager != null && data != null && pathMapper != null) {
-        UsageTrigger.trigger(CONSOLE_FEATURE + ".remote");
         RemoteConsoleProcessData remoteConsoleProcessData =
           PythonConsoleRemoteProcessCreatorKt.createRemoteConsoleProcess(generalCommandLine,
                                                                          pathMapper,
@@ -425,7 +422,6 @@ public class PydevConsoleRunnerImpl implements PydevConsoleRunner {
       Map<String, String> envs = generalCommandLine.getEnvironment();
       EncodingEnvironmentUtil.setLocaleEnvironmentIfMac(envs, generalCommandLine.getCharset());
 
-      UsageTrigger.trigger(CONSOLE_FEATURE + ".local");
       final Process server = generalCommandLine.createProcess();
 
       try {

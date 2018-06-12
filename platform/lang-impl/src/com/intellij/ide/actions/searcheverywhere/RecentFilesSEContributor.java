@@ -51,7 +51,8 @@ public class RecentFilesSEContributor extends FileSearchEverywhereContributor {
 
   @Override
   public ContributorSearchResult<Object> search(String pattern, boolean everywhere, SearchEverywhereContributorFilter<FileType> filter, ProgressIndicator progressIndicator, int elementsLimit) {
-    MinusculeMatcher matcher = NameUtil.buildMatcher("*" + pattern).build();
+    String searchString = filterControlSymbols(pattern);
+    MinusculeMatcher matcher = NameUtil.buildMatcher("*" + searchString).build();
     List<VirtualFile> opened = Arrays.asList(FileEditorManager.getInstance(myProject).getSelectedFiles());
     List<VirtualFile> history = Lists.reverse(EditorHistoryManager.getInstance(myProject).getFileList());
 
@@ -60,7 +61,7 @@ public class RecentFilesSEContributor extends FileSearchEverywhereContributor {
       () -> {
         PsiManager psiManager = PsiManager.getInstance(myProject);
         Stream<VirtualFile> stream = history.stream();
-        if (!StringUtil.isEmptyOrSpaces(pattern)) {
+        if (!StringUtil.isEmptyOrSpaces(searchString)) {
           stream = stream.filter(file -> matcher.matches(file.getName()));
         }
         res.addAll(stream.filter(vf -> !opened.contains(vf) && vf.isValid())
@@ -71,7 +72,7 @@ public class RecentFilesSEContributor extends FileSearchEverywhereContributor {
       }
     );
 
-    return res.size() > elementsLimit
+    return elementsLimit > 0 && res.size() > elementsLimit
            ? new ContributorSearchResult<>(res.subList(0, elementsLimit), true)
            : new ContributorSearchResult<>(res);
   }

@@ -1,6 +1,8 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.projectWizard.kotlin.model
 
+import com.intellij.testGuiFramework.util.scenarios.NewProjectDialogModel
+
 const val KOTLIN_PLUGIN_NAME = "Kotlin"
 
 enum class KotlinKind { JVM, JS, Common }
@@ -49,39 +51,39 @@ data class KotlinLib(private val map: Map<String, Any?>) {
 private val kotlinJvm = KotlinLib(mapOf(
   Projects.Kind.title to KotlinKind.JVM,
   Projects.JavaProject.title to ProjectProperties(
-    group = "Java",
+    group = NewProjectDialogModel.Groups.Java.toString(),
     frameworkName = "Kotlin/JVM",
     libName = "KotlinJavaRuntime",
     jars = kotlinJvmJavaKotlinJars
   ),
   Projects.KotlinProject.title to ProjectProperties(
-    group = "Kotlin",
+    group = NewProjectDialogModel.Groups.Kotlin.toString(),
     frameworkName = "Kotlin/JVM",
     libName = "KotlinJavaRuntime",
     jars = kotlinJvmJavaKotlinJars
   ),
   Projects.KotlinMPProject.title to ProjectProperties(
-    group = "Kotlin",
+    group = NewProjectDialogModel.Groups.Kotlin.toString(),
     frameworkName = "Kotlin (Multiplatform - Experimental)",
     jars = kotlinJvmMppKotlin
   ),
   Projects.GradleGProject.title to ProjectProperties(
-    group = "Gradle",
+    group = NewProjectDialogModel.Groups.Gradle.toString(),
     frameworkName = "Kotlin (Java)",
     jars = kotlinJvmGradleLibs
   ),
   Projects.GradleGMPProject.title to ProjectProperties(
-    group = "Gradle",
+    group = NewProjectDialogModel.Groups.Gradle.toString(),
     frameworkName = "Kotlin (Multiplatform JVM - Experimental)",
     jars = kotlinJvmMppGradle
   ),
   Projects.MavenProject.title to ProjectProperties(
-    group = "Maven",
+    group = NewProjectDialogModel.Groups.Maven.toString(),
     frameworkName = "kotlin-archetype-jvm",
     jars = kotlinJvmMavenLibs
   ),
   Projects.GradleKProject.title to ProjectProperties(
-    group = "Gradle",
+    group = NewProjectDialogModel.Groups.Gradle.toString(),
     frameworkName = "Kotlin (Java)",
     jars = kotlinJvmGradleLibs
   )
@@ -90,39 +92,39 @@ private val kotlinJvm = KotlinLib(mapOf(
 private val kotlinJs = KotlinLib(mapOf(
   Projects.Kind.title to KotlinKind.JS,
   Projects.JavaProject.title to ProjectProperties(
-    group = "Java",
+    group = NewProjectDialogModel.Groups.Java.toString(),
     frameworkName = "Kotlin/JS",
     libName = "KotlinJavaScript",
     jars = kotlinJsJavaKotlinLibs
   ),
   Projects.KotlinProject.title to ProjectProperties(
-    group = "Kotlin",
+    group = NewProjectDialogModel.Groups.Kotlin.toString(),
     frameworkName = "Kotlin/JS",
     libName = "KotlinJavaScript",
     jars = kotlinJsJavaKotlinLibs
   ),
   Projects.KotlinMPProject.title to ProjectProperties(
-    group = "Kotlin",
+    group = NewProjectDialogModel.Groups.Kotlin.toString(),
     frameworkName = "Kotlin (Multiplatform - Experimental)",
     jars = kotlinJsGradleLibs
   ),
   Projects.GradleGProject.title to ProjectProperties(
-    group = "Gradle",
+    group = NewProjectDialogModel.Groups.Gradle.toString(),
     frameworkName = "Kotlin (JavaScript)",
     jars = kotlinJsGradleLibs
   ),
   Projects.GradleGMPProject.title to ProjectProperties(
-    group = "Gradle",
+    group = NewProjectDialogModel.Groups.Gradle.toString(),
     frameworkName = "Kotlin (Multiplatform JS - Experimental)",
     jars = kotlinJsMavenLibs
   ),
   Projects.MavenProject.title to ProjectProperties(
-    group = "Maven",
+    group = NewProjectDialogModel.Groups.Maven.toString(),
     frameworkName = "kotlin-archetype-js",
     jars = kotlinJsMavenLibs
   ),
   Projects.GradleKProject.title to ProjectProperties(
-    group = "Gradle",
+    group = NewProjectDialogModel.Groups.Gradle.toString(),
     frameworkName = "Kotlin (JavaScript)",
     jars = kotlinJsGradleKLibs
   )
@@ -131,12 +133,12 @@ private val kotlinJs = KotlinLib(mapOf(
 private val kotlinCommon = KotlinLib(mapOf(
   Projects.Kind.title to KotlinKind.Common,
   Projects.KotlinMPProject.title to ProjectProperties(
-    group = "Kotlin",
+    group = NewProjectDialogModel.Groups.Kotlin.toString(),
     frameworkName = "Kotlin (Multiplatform - Experimental)",
     jars = kotlinCommonMpp
   ),
   Projects.GradleGMPProject.title to ProjectProperties(
-    group = "Gradle",
+    group = NewProjectDialogModel.Groups.Gradle.toString(),
     frameworkName = "Kotlin (Multiplatform Common - Experimental)",
     jars = kotlinCommonMpp
   )

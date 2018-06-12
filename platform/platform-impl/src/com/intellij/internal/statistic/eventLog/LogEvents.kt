@@ -8,13 +8,19 @@ package com.intellij.internal.statistic.eventLog
 import com.intellij.util.containers.ContainerUtil
 import java.util.*
 
-open class LogEvent(session: String, build : String, bucket: String, recorderId: String, recorderVersion: String, type: String) {
+open class LogEvent(session: String,
+                    build: String,
+                    bucket: String,
+                    recorderId: String,
+                    recorderVersion: String,
+                    type: String,
+                    isState: Boolean = false) {
   val session: String = escape(session)
   val build: String = escape(build)
   val bucket: String = escape(bucket)
   val time: Long = System.currentTimeMillis()
   val group: LogEventRecorder = LogEventRecorder(escape(recorderId), escape(recorderVersion))
-  val event: LogEventAction = LogEventAction(escape(type))
+  val event: LogEventBaseAction = if (isState) LogStateEventAction(escape(type)) else LogEventAction(escape(type))
 
   fun shouldMerge(next: LogEvent): Boolean {
     if (session != next.session) return false
@@ -22,8 +28,7 @@ open class LogEvent(session: String, build : String, bucket: String, recorderId:
     if (build != next.build) return false
     if (group.id != next.group.id) return false
     if (group.version != next.group.version) return false
-    if (event.id != next.event.id) return false
-    if (event.data != next.event.data) return false
+    if (!event.shouldMerge(next.event)) return false
     return true
   }
 
@@ -74,12 +79,31 @@ class LogEventRecorder(val id: String, val version: String) {
   }
 }
 
-class LogEventAction(val id: String) {
-  var count: Int = 1
+class LogStateEventAction(id: String) : LogEventBaseAction(id) {
+  override fun increment() {
+  }
+
+  override fun shouldMerge(next: LogEventBaseAction): Boolean {
+    return false
+  }
+}
+
+class LogEventAction(id: String, var count: Int = 1) : LogEventBaseAction(id) {
+  override fun increment() {
+    count++
+  }
+}
+
+open class LogEventBaseAction(val id: String) {
   var data: MutableMap<String, Any> = Collections.emptyMap()
 
-  fun increment() {
-    count++
+  open fun increment() {
+  }
+
+  open fun shouldMerge(next: LogEventBaseAction): Boolean {
+    if (id != next.id) return false
+    if (data != next.data) return false
+    return true
   }
 
   fun addData(key: String, value: Any) {
@@ -88,14 +112,14 @@ class LogEventAction(val id: String) {
     }
 
     val escapedValue = if (value is String) escape(value) else value
-    data.put(escape(key), escapedValue)
+    data[escape(key)] = escapedValue
   }
 
   override fun equals(other: Any?): Boolean {
     if (this === other) return true
     if (javaClass != other?.javaClass) return false
 
-    other as LogEventAction
+    other as LogEventBaseAction
 
     if (id != other.id) return false
     if (data != other.data) return false

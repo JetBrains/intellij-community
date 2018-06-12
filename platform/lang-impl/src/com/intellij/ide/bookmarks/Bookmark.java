@@ -335,7 +335,7 @@ public class Bookmark implements Navigatable, Comparable<Bookmark> {
 
     @NotNull
     @Override
-    protected MnemonicIcon copy() {
+    public MnemonicIcon copy() {
       return new MnemonicIcon(myMnemonic);
     }
 
@@ -441,7 +441,7 @@ public class Bookmark implements Navigatable, Comparable<Bookmark> {
 
     @NotNull
     @Override
-    protected MyCheckedIcon copy() {
+    public MyCheckedIcon copy() {
       return new MyCheckedIcon();
     }
   }

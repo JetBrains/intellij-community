@@ -19,6 +19,7 @@ package com.intellij.psi.impl.source.tree;
 import com.intellij.lang.*;
 import com.intellij.openapi.util.Getter;
 import com.intellij.openapi.util.RecursionManager;
+import com.intellij.openapi.util.StackOverflowPreventedException;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.StubBuilder;
 import com.intellij.psi.impl.PsiManagerEx;
@@ -114,7 +115,7 @@ public class FileElement extends LazyParseableElement implements FileASTNode, Ge
 
       result = RecursionManager.doPreventingRecursion(file, false, () -> new AstSpine(calcStubbedDescendants(type.getBuilder())));
       if (result == null) {
-        throw new StackOverflowError("Endless recursion prevented");
+        throw new StackOverflowPreventedException("Endless recursion prevented");
       }
       myStubbedSpine = result;
     }

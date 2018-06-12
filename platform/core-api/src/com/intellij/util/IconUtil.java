@@ -16,6 +16,7 @@ import com.intellij.ui.*;
 import com.intellij.util.ui.*;
 import com.intellij.util.ui.JBUI.ScaleContext;
 import com.intellij.util.ui.JBUI.ScaleContextAware;
+import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -433,6 +434,16 @@ public class IconUtil {
         return (int)(source.getIconHeight() * scale);
       }
     };
+  }
+
+  /**
+   * Returns a copy of the provided {@code icon}.
+   *
+   * @see CopyableIcon
+   */
+  @Contract("null, _->null; !null, _->!null")
+  public static Icon copy(@Nullable Icon icon, @Nullable Component ancestor) {
+    return IconLoader.copy(icon, ancestor);
   }
 
   /**

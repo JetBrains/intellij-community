@@ -15,6 +15,7 @@ object FeatureUsageUiEvents {
   private val SHOW_DIALOG_DATA = ContainerUtil.newHashMap<String, Any>()
   private val CLOSE_OK_DIALOG_DATA = ContainerUtil.newHashMap<String, Any>()
   private val CLOSE_CANCEL_DIALOG_DATA = ContainerUtil.newHashMap<String, Any>()
+  private val CLOSE_CUSTOM_DIALOG_DATA = ContainerUtil.newHashMap<String, Any>()
 
   init {
     SELECT_CONFIGURABLE_DATA["type"] = "select"
@@ -26,6 +27,8 @@ object FeatureUsageUiEvents {
     CLOSE_OK_DIALOG_DATA["code"] = DialogWrapper.OK_EXIT_CODE
     CLOSE_CANCEL_DIALOG_DATA["type"] = "close"
     CLOSE_CANCEL_DIALOG_DATA["code"] = DialogWrapper.CANCEL_EXIT_CODE
+    CLOSE_CUSTOM_DIALOG_DATA["type"] = "close"
+    CLOSE_CUSTOM_DIALOG_DATA["code"] = DialogWrapper.NEXT_USER_EXIT_CODE
   }
 
   fun logSelectConfigurable(name: String) {
@@ -45,17 +48,16 @@ object FeatureUsageUiEvents {
   }
 
   fun logCloseDialog(name: String, exitCode: Int) {
-    val customData: MutableMap<String, Any>
-    if (exitCode == DialogWrapper.OK_EXIT_CODE) {
-      FeatureUsageLogger.log(DIALOGS_ID, name, CLOSE_OK_DIALOG_DATA)
-    }
-    else if (exitCode == DialogWrapper.CANCEL_EXIT_CODE) {
-      FeatureUsageLogger.log(DIALOGS_ID, name, CLOSE_CANCEL_DIALOG_DATA)
-    }
-    else {
-      customData = ContainerUtil.newHashMap<String, Any>(CLOSE_OK_DIALOG_DATA)
-      customData["code"] = exitCode
-      FeatureUsageLogger.log(DIALOGS_ID, name, customData)
+    if (FeatureUsageLogger.isEnabled()) {
+      if (exitCode == DialogWrapper.OK_EXIT_CODE) {
+        FeatureUsageLogger.log(DIALOGS_ID, name, CLOSE_OK_DIALOG_DATA)
+      }
+      else if (exitCode == DialogWrapper.CANCEL_EXIT_CODE) {
+        FeatureUsageLogger.log(DIALOGS_ID, name, CLOSE_CANCEL_DIALOG_DATA)
+      }
+      else {
+        FeatureUsageLogger.log(DIALOGS_ID, name, CLOSE_CUSTOM_DIALOG_DATA)
+      }
     }
   }
 }

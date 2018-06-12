@@ -387,22 +387,18 @@ public abstract class LogConsoleBase extends AdditionalTabComponent implements L
   }
 
   static void resizeBuffer(@NotNull StringBuffer buffer, int size) {
-    assert size >= 0;
-    int length = buffer.length();
+    final int toRemove = buffer.length() - size;
+    if (toRemove > 0) {
 
-    if (length <= size) {
-      return;
+      int indexOfNewline = buffer.indexOf("\n", toRemove);
+
+      if (indexOfNewline == -1) {
+        buffer.delete(0, toRemove);
+      }
+      else {
+        buffer.delete(0, indexOfNewline + 1);
+      }
     }
-
-    int indexToDeleteTo = length - size;
-    int indexOfNewline = buffer.indexOf("\n", indexToDeleteTo);
-
-    if (indexOfNewline == -1) {
-      buffer.delete(0, indexToDeleteTo);
-      return;
-    }
-
-    buffer.delete(0, indexOfNewline + 1);
   }
 
   @Nullable

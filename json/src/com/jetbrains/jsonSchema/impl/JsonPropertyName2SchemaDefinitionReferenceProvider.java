@@ -36,7 +36,7 @@ public class JsonPropertyName2SchemaDefinitionReferenceProvider extends PsiRefer
     public PsiElement resolveInner() {
       final JsonSchemaService service = JsonSchemaService.Impl.get(myElement.getProject());
       final VirtualFile file = myElement.getContainingFile().getVirtualFile();
-      if (file == null) return null;
+      if (file == null || !service.isApplicableToFile(file)) return null;
       final List<JsonSchemaVariantsTreeBuilder.Step> steps = JsonOriginalPsiWalker.INSTANCE.findPosition(getElement(), true);
       if (steps == null) return null;
       final JsonSchemaObject schemaObject = service.getSchemaObject(file);

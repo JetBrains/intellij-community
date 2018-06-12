@@ -5,8 +5,6 @@ import com.intellij.ide.FrameStateManager;
 import com.intellij.ide.IdeEventQueue;
 import com.intellij.ide.actions.ActivateToolWindowAction;
 import com.intellij.ide.actions.MaximizeActiveDialogAction;
-import com.intellij.internal.statistic.UsageTrigger;
-import com.intellij.internal.statistic.beans.ConvertUsagesUtil;
 import com.intellij.internal.statistic.collectors.fus.actions.persistence.ToolWindowCollector;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.ActionManager;
@@ -2304,6 +2302,5 @@ public class ToolWindowManagerImpl extends ToolWindowManagerEx implements Persis
 
   private static void triggerUsage(@NotNull String feature) {
     //noinspection deprecation
-    UsageTrigger.trigger(ConvertUsagesUtil.escapeDescriptorName(feature));
   }
 }
