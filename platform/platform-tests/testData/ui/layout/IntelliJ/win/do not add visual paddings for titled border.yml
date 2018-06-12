@@ -1,0 +1,54 @@
+layoutConstraints:
+  fillX: true
+  gridGapX:
+    min: &id001 {horizontal: true, unit: 0, value: 0.0}
+    preferred: *id001
+  gridGapY:
+    min: &id002 {horizontal: false, value: 10.0}
+    preferred: *id002
+  hideMode: 3
+  insets:
+  - {horizontal: false, unit: 0, value: 0.0}
+  - {horizontal: true, unit: 0, value: 0.0}
+  - {horizontal: false, unit: 0, value: 0.0}
+  - {horizontal: true, unit: 0, value: 0.0}
+rowConstraints:
+  constraints:
+  - align: {horizontal: false, unit: -1, value: 0.0}
+    gapAfter:
+      max: &id003 {horizontal: true, value: 6.0}
+      min: *id003
+      preferred: *id003
+  - {}
+  count: 2
+columnConstraints:
+  constraints:
+  - gapAfter:
+      max: &id004 {horizontal: true, value: 6.0}
+      min: *id004
+      preferred: *id004
+    grow: 0.0
+  - {}
+  count: 2
+componentConstrains:
+  'Repository:': {}
+  Auto Sync: {spanX: 2097051, wrap: true}
+  Use File -> Settings Repository... to configure:
+    horizontal:
+      gapBefore:
+        min: &id005 {horizontal: true, value: 17.0}
+        preferred: *id005
+    skip: 1
+    spanX: 2097051
+    wrap: true
+  'JPanel #3': {spanX: 2097051, wrap: true}
+cellBounds:
+- [0, 0, 59, 16]
+- [65, 0, 415, 16]
+- [65, 22, 415, 16]
+- [0, 48, 480, 60]
+componentBounds:
+  'Repository:': [0, 0, 59, 16]
+  Auto Sync: [64, -1, 72, 18]
+  Use File -> Settings Repository... to configure: [82, 22, 237, 16]
+  'JPanel #3': [0, 48, 29, 60]
