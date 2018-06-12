@@ -238,6 +238,8 @@ class ExpressionsParsingTest extends GroovyParsingTestCase {
 
   void testparenthed$capitalNamedArgument() { doTest() }
 
+  void testparenthed$capitalListArgument() { doTest() }
+
   void testpath$method$ass4() throws Throwable { doTest() }
 
   void testpath$method$clazz1() throws Throwable { doTest() }

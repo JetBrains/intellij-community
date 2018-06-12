@@ -984,10 +984,8 @@ private property_expression_identifiers ::= parenthesized_expression | lazy_bloc
 
 private priority1_4 ::= not_expression | cast_expression
 not_expression ::= ('~' | '!') expression { elementType = unary_expression }
-cast_expression ::= &cast_expression_start (cast_expression_pin | cast_expression_no_pin)
+cast_expression ::= &cast_expression_start ('(' type_element ')' priority1_4)
 private cast_expression_start ::= '(' (IDENTIFIER | primitive_type) { consumeTokenMethod = 'consumeTokenFast' }
-private cast_expression_pin ::= '(' capital_type_element ')' not_colon priority1_4 { pin = 4 }
-private cast_expression_no_pin ::= '(' type_element ')' priority1_4
 
 private priority1_5 ::= index_expression | safe_index_expression | postfix_unary_expression
 index_expression ::= expression index_expression_argument_list
